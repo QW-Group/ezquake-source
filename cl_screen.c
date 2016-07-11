@@ -233,11 +233,13 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
-qbool SCR_TakingAutoScreenshot(void) {
+qbool SCR_TakingAutoScreenshot(void)
+{
 	return scr_autosshot_countdown > 0;
 }
 
-void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel) {
+void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel)
+{
 	*cancel = (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
 
@@ -467,7 +469,6 @@ static void SCR_CalcRefdef (void) {
 	qbool full        = false;
 	int h;
 	float aspectratio = vid.height ? (float)vid.width / vid.height : 1;
-	float virtual_height = 0;
 	qbool letterbox = scr_fovmode.integer == 1;
 	qbool height_reduced = false;
 
@@ -646,7 +647,7 @@ void SCR_DrawAccel (void) {
 	pos = (int) ((cosinus_val * scale_factor + 1) * length / 2);
 
 	draw_accel_bar(x, y - 2 * charsize, length, charsize, pos);
-	
+
 	cosinus_str[0] = '\0';
 	sprintf(cosinus_str,"%.3f", cosinus_val);
 	Draw_String(x, y - charsize, cosinus_str);
@@ -1082,7 +1083,7 @@ void SCR_SetupAutoID (void) {
 			continue;
 
 		if ((state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)) ||
-			state->modelindex == cl_modelindices[mi_h_player])
+				state->modelindex == cl_modelindices[mi_h_player])
 			continue;
 
 		origin = cent->lerp_origin;
@@ -1205,9 +1206,9 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		}
 
 		Draw_SColoredString(
-			x - AUTOID_ARMORNAME_OFFSET_X * scale,
-			y - AUTOID_ARMORNAME_OFFSET_Y * scale,
-			str2wcs(armor_name), NULL, 0, 0, scale);
+				x - AUTOID_ARMORNAME_OFFSET_X * scale,
+				y - AUTOID_ARMORNAME_OFFSET_Y * scale,
+				str2wcs(armor_name), NULL, 0, 0, scale);
 	}
 
 	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer >= 4))
@@ -1258,19 +1259,19 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		{
 			if (scr_autoid_weaponicon.value) {
 				Draw_SSubPic (
-					x - (bar_length + weapon_pic->width + AUTOID_WEAPON_OFFSET_X) * scale,
-					y - (AUTOID_HEALTHBAR_OFFSET_Y + Q_rint((weapon_pic->height/2.0))) * scale,
-					weapon_pic,
-					0,
-					0,
-					weapon_pic->width,
-					weapon_pic->height,
-					scale);
+						x - (bar_length + weapon_pic->width + AUTOID_WEAPON_OFFSET_X) * scale,
+						y - (AUTOID_HEALTHBAR_OFFSET_Y + Q_rint((weapon_pic->height/2.0))) * scale,
+						weapon_pic,
+						0,
+						0,
+						weapon_pic->width,
+						weapon_pic->height,
+						scale);
 			} else {
 				Draw_SColoredString(
-					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
-					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
-					str2wcs(weapon_name), NULL, 0, 1, scale);
+						x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
+						y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
+						str2wcs(weapon_name), NULL, 0, 1, scale);
 			}
 		}
 	}
@@ -1352,14 +1353,14 @@ qbool ci_initialized = false;
 #define FONT_SIZE (256.0)
 
 #define ADD_CICON_TEXTURE(_ptex, _texnum, _texindex, _components, _s1, _t1, _s2, _t2)	\
-do {																					\
-	ci_textures[_ptex].texnum = _texnum;												\
-	ci_textures[_ptex].components = _components;										\
-	ci_textures[_ptex].coords[_texindex][0] = (_s1 + 1) / FONT_SIZE;					\
-	ci_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / FONT_SIZE;					\
-	ci_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / FONT_SIZE;					\
-	ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
-} while(0);
+	do {																					\
+		ci_textures[_ptex].texnum = _texnum;												\
+		ci_textures[_ptex].components = _components;										\
+		ci_textures[_ptex].coords[_texindex][0] = (_s1 + 1) / FONT_SIZE;					\
+		ci_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / FONT_SIZE;					\
+		ci_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / FONT_SIZE;					\
+		ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
+	} while(0);
 
 void CI_Init (void)
 {
@@ -1457,21 +1458,21 @@ void SCR_SetupCI (void) {
 
 #define DRAW_CI_BILLBOARD(_ptex, _p, _coord)			\
 	glPushMatrix();											\
-	glTranslatef(_p->org[0], _p->org[1], _p->org[2]);		\
-	glScalef(_p->size, _p->size, _p->size);					\
-	if (_p->rotangle)										\
-		glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);	\
-															\
-	glColor4ubv(_p->color);									\
-															\
-	glBegin(GL_QUADS);										\
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);	\
-	glEnd();			\
-						\
-	glPopMatrix();
+glTranslatef(_p->org[0], _p->org[1], _p->org[2]);		\
+glScalef(_p->size, _p->size, _p->size);					\
+if (_p->rotangle)										\
+glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);	\
+\
+glColor4ubv(_p->color);									\
+\
+glBegin(GL_QUADS);										\
+glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);	\
+glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);	\
+glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);	\
+glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);	\
+glEnd();			\
+\
+glPopMatrix();
 
 // probably may be made as macros, but i hate macros cos macroses is unsafe
 static void CI_Bind(ci_texture_t *citex, int *texture)
@@ -1517,7 +1518,7 @@ void DrawCI (void) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glShadeModel(GL_SMOOTH);
 
-// FIXME: i'm not sure which blend mode here better
+	// FIXME: i'm not sure which blend mode here better
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_TEXTURE_2D);
@@ -1604,230 +1605,230 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 	for ( ; *s; s++) {
 		switch( (int) s[0] ) {
-		case '%':
+			case '%':
 
-			s++; // advance
+				s++; // advance
 
-			switch( (int) s[0] ) {
-			case 'n': // draw name
+				switch( (int) s[0] ) {
+					case 'n': // draw name
 
+						if(!width_only) {
+							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
+							str_align_right(tmp, sizeof(tmp), nick, maxname);
+							Draw_ColoredString (x, y, tmp, false);
+						}
+						x += maxname * FONTWIDTH;
+
+						break;
+					case 'w': // draw "best" weapon icon/name
+
+						switch (scr_teaminfo_weapon_style.integer) {
+							case 1:
+								if(!width_only) {
+									if (Has_Both_RL_and_LG(ti_cl->items)) {
+										char *weap_str = tp_name_rlg.string;
+										char weap_white_stripped[32];
+										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
+										Draw_ColoredString (x, y, weap_white_stripped, false);
+									}
+									else {
+										char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
+										char weap_white_stripped[32];
+										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
+										Draw_ColoredString (x, y, weap_white_stripped, false);
+									}
+								}
+								x += 3 * FONTWIDTH;
+								break;
+							default: // draw image by default
+								if(!width_only)
+									if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_cl->items ))) )
+										Draw_SPic (x, y, pic, 0.5);
+								x += 2 * FONTWIDTH;
+
+								break;
+						}
+						break;
+
+					case 'h': // draw health, padding with space on left side
+					case 'H': // draw health, padding with space on right side
+
+						if(!width_only) {
+							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
+							Draw_ColoredString (x, y, tmp, false);
+						}
+						x += 3 * FONTWIDTH;
+
+						break;
+					case 'a': // draw armor, padded with space on left side
+					case 'A': // draw armor, padded with space on right side
+
+						aclr = "";
+
+						//
+						// different styles of armor
+						//
+						switch (scr_teaminfo_armor_style.integer) {
+							case 1: // image prefixed armor value
+								if(!width_only) {
+									if (ti_cl->items & IT_ARMOR3)
+										Draw_SPic (x, y, sb_armor[2], 1.0/3);
+									else if (ti_cl->items & IT_ARMOR2)
+										Draw_SPic (x, y, sb_armor[1], 1.0/3);
+									else if (ti_cl->items & IT_ARMOR1)
+										Draw_SPic (x, y, sb_armor[0], 1.0/3);
+								}
+								x += FONTWIDTH;
+
+								break;
+							case 2: // colored background of armor value
+								if(!width_only) {
+									byte col[4] = {255, 255, 255, 0};
+
+									if (ti_cl->items & IT_ARMOR3) {
+										col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
+									}
+									else if (ti_cl->items & IT_ARMOR2) {
+										col[0] = 255; col[1] = 255; col[2] =   0; col[3] = 255;
+									}
+									else if (ti_cl->items & IT_ARMOR1) {
+										col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
+									}
+
+									glDisable (GL_TEXTURE_2D);
+									glColor4ub(col[0], col[1], col[2], col[3]);
+									glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
+									glEnable (GL_TEXTURE_2D);
+									glColor4f(1, 1, 1, 1);
+								}
+
+								break;
+							case 3: // colored armor value
+								if(!width_only) {
+									if (ti_cl->items & IT_ARMOR3)
+										aclr = "&cf00";
+									else if (ti_cl->items & IT_ARMOR2)
+										aclr = "&cff0";
+									else if (ti_cl->items & IT_ARMOR1)
+										aclr = "&c0f0";
+								}
+
+								break;
+							case 4: // armor value prefixed with letter
+								if(!width_only) {
+									if (ti_cl->items & IT_ARMOR3)
+										Draw_ColoredString (x, y, "r", false);
+									else if (ti_cl->items & IT_ARMOR2)
+										Draw_ColoredString (x, y, "y", false);
+									else if (ti_cl->items & IT_ARMOR1)
+										Draw_ColoredString (x, y, "g", false);
+								}
+								x += FONTWIDTH;
+
+								break;
+						}
+
+						if(!width_only) { // value drawn no matter which style
+							snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
+							Draw_ColoredString (x, y, tmp, false);
+						}
+						x += 3 * FONTWIDTH;
+
+						break;
+					case 'l': // draw location
+
+						if(!width_only) {
+							loc = TP_LocationName(ti_cl->org);
+							if (!loc[0])
+								loc = "unknown";
+
+							str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
+							Draw_ColoredString (x, y, tmp, false);
+						}
+						x += maxloc * FONTWIDTH;
+
+						break;
+
+
+					case 'p': // draw powerups	
+						switch (scr_teaminfo_powerup_style.integer) {
+							case 1: // quad/pent/ring image
+								if(!width_only) {
+									if (ti_cl->items & IT_QUAD)
+										Draw_SPic (x, y, sb_items[5], 1.0/2);
+									x += FONTWIDTH;
+									if (ti_cl->items & IT_INVULNERABILITY)
+										Draw_SPic (x, y, sb_items[3], 1.0/2);
+									x += FONTWIDTH;
+									if (ti_cl->items & IT_INVISIBILITY)
+										Draw_SPic (x, y, sb_items[2], 1.0/2);
+									x += FONTWIDTH;
+								}
+								else { x += 3* FONTWIDTH; }
+								break;
+
+							case 2: // player powerup face
+								if(!width_only) {
+									if ( sb_face_quad && (ti_cl->items & IT_QUAD))
+										Draw_SPic (x, y, sb_face_quad, 1.0/3);
+									x += FONTWIDTH;
+									if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
+										Draw_SPic (x, y, sb_face_invuln, 1.0/3);
+									x += FONTWIDTH;
+									if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
+										Draw_SPic (x, y, sb_face_invis, 1.0/3);
+									x += FONTWIDTH;
+								}
+								else { x += 3* FONTWIDTH; }
+								break;
+
+							case 3: // colored font (QPR)
+								if(!width_only) {
+									if (ti_cl->items & IT_QUAD)
+										Draw_ColoredString (x, y, "&c03fQ", false);
+									x += FONTWIDTH;
+									if (ti_cl->items & IT_INVULNERABILITY)
+										Draw_ColoredString (x, y, "&cf00P", false);
+									x += FONTWIDTH;
+									if (ti_cl->items & IT_INVISIBILITY)
+										Draw_ColoredString (x, y, "&cff0R", false);
+									x += FONTWIDTH;
+								}
+								else { x += 3* FONTWIDTH; }
+								break;
+						}
+						break;
+
+					case '%': // wow, %% result in one %, how smart
+
+						if(!width_only)
+							Draw_ColoredString (x, y, "%", false);
+						x += FONTWIDTH;
+
+						break;
+
+					default: // print %x - that mean sequence unknown
+
+						if(!width_only) {
+							snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
+							Draw_ColoredString (x, y, tmp, false);
+						}
+						x += (s[0] ? 2 : 1) * FONTWIDTH;
+
+						break;
+				}
+
+				break;
+
+			default: // print x
 				if(!width_only) {
-					char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
-					str_align_right(tmp, sizeof(tmp), nick, maxname);
-					Draw_ColoredString (x, y, tmp, false);
+					snprintf(tmp, sizeof(tmp), "%c", s[0]);
+					if (s[0] != ' ') // inhuman smart optimization, do not print space!
+						Draw_ColoredString (x, y, tmp, false);
 				}
-				x += maxname * FONTWIDTH;
-
-				break;
-			case 'w': // draw "best" weapon icon/name
-
-				switch (scr_teaminfo_weapon_style.integer) {
-				case 1:
-					if(!width_only) {
-						if (Has_Both_RL_and_LG(ti_cl->items)) {
-							char *weap_str = tp_name_rlg.string;
-							char weap_white_stripped[32];
-							Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-							Draw_ColoredString (x, y, weap_white_stripped, false);
-						}
-						else {
-							char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
-							char weap_white_stripped[32];
-							Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-							Draw_ColoredString (x, y, weap_white_stripped, false);
-						}
-					}
-					x += 3 * FONTWIDTH;
-					break;
-				default: // draw image by default
-					if(!width_only)
-						if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_cl->items ))) )
-							Draw_SPic (x, y, pic, 0.5);
-					x += 2 * FONTWIDTH;
-
-					break;
-				}
-				break;
-
-			case 'h': // draw health, padding with space on left side
-			case 'H': // draw health, padding with space on right side
-
-				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
-					Draw_ColoredString (x, y, tmp, false);
-				}
-				x += 3 * FONTWIDTH;
-
-				break;
-			case 'a': // draw armor, padded with space on left side
-			case 'A': // draw armor, padded with space on right side
-
-				aclr = "";
-
-				//
-				// different styles of armor
-				//
-				switch (scr_teaminfo_armor_style.integer) {
-				case 1: // image prefixed armor value
-					if(!width_only) {
-						if (ti_cl->items & IT_ARMOR3)
-							Draw_SPic (x, y, sb_armor[2], 1.0/3);
-						else if (ti_cl->items & IT_ARMOR2)
-							Draw_SPic (x, y, sb_armor[1], 1.0/3);
-						else if (ti_cl->items & IT_ARMOR1)
-							Draw_SPic (x, y, sb_armor[0], 1.0/3);
-					}
-					x += FONTWIDTH;
-
-					break;
-				case 2: // colored background of armor value
-					if(!width_only) {
-						byte col[4] = {255, 255, 255, 0};
-
-						if (ti_cl->items & IT_ARMOR3) {
-							col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
-						}
-						else if (ti_cl->items & IT_ARMOR2) {
-							col[0] = 255; col[1] = 255; col[2] =   0; col[3] = 255;
-						}
-						else if (ti_cl->items & IT_ARMOR1) {
-							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
-						}
-
-						glDisable (GL_TEXTURE_2D);
-						glColor4ub(col[0], col[1], col[2], col[3]);
-						glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
-						glEnable (GL_TEXTURE_2D);
-						glColor4f(1, 1, 1, 1);
-					}
-
-					break;
-				case 3: // colored armor value
-					if(!width_only) {
-						if (ti_cl->items & IT_ARMOR3)
-							aclr = "&cf00";
-						else if (ti_cl->items & IT_ARMOR2)
-							aclr = "&cff0";
-						else if (ti_cl->items & IT_ARMOR1)
-							aclr = "&c0f0";
-					}
-
-					break;
-				case 4: // armor value prefixed with letter
-					if(!width_only) {
-						if (ti_cl->items & IT_ARMOR3)
-							Draw_ColoredString (x, y, "r", false);
-						else if (ti_cl->items & IT_ARMOR2)
-							Draw_ColoredString (x, y, "y", false);
-						else if (ti_cl->items & IT_ARMOR1)
-							Draw_ColoredString (x, y, "g", false);
-					}
-					x += FONTWIDTH;
-
-					break;
-				}
-
-				if(!width_only) { // value drawn no matter which style
-					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
-					Draw_ColoredString (x, y, tmp, false);
-				}
-				x += 3 * FONTWIDTH;
-
-				break;
-			case 'l': // draw location
-
-				if(!width_only) {
-					loc = TP_LocationName(ti_cl->org);
-					if (!loc[0])
-						loc = "unknown";
-
-					str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
-					Draw_ColoredString (x, y, tmp, false);
-				}
-				x += maxloc * FONTWIDTH;
-
-				break;
-			
-				
-			case 'p': // draw powerups	
-			switch (scr_teaminfo_powerup_style.integer) {
-				case 1: // quad/pent/ring image
-					if(!width_only) {
-						if (ti_cl->items & IT_QUAD)
-							Draw_SPic (x, y, sb_items[5], 1.0/2);
-							x += FONTWIDTH;
-						if (ti_cl->items & IT_INVULNERABILITY)
-							Draw_SPic (x, y, sb_items[3], 1.0/2);
-							x += FONTWIDTH;
-						if (ti_cl->items & IT_INVISIBILITY)
-							Draw_SPic (x, y, sb_items[2], 1.0/2);
-							x += FONTWIDTH;
-					}
-					else { x += 3* FONTWIDTH; }
-					break;
-
-				case 2: // player powerup face
-					if(!width_only) {
-						if ( sb_face_quad && (ti_cl->items & IT_QUAD))
-							Draw_SPic (x, y, sb_face_quad, 1.0/3);
-							x += FONTWIDTH;
-						if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
-							Draw_SPic (x, y, sb_face_invuln, 1.0/3);
-							x += FONTWIDTH;
-						if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
-							Draw_SPic (x, y, sb_face_invis, 1.0/3);
-							x += FONTWIDTH;
-					}
-					else { x += 3* FONTWIDTH; }
-					break;
-
-				case 3: // colored font (QPR)
-					if(!width_only) {
-						if (ti_cl->items & IT_QUAD)
-							Draw_ColoredString (x, y, "&c03fQ", false);
-							x += FONTWIDTH;
-						if (ti_cl->items & IT_INVULNERABILITY)
-							Draw_ColoredString (x, y, "&cf00P", false);
-							x += FONTWIDTH;
-						if (ti_cl->items & IT_INVISIBILITY)
-							Draw_ColoredString (x, y, "&cff0R", false);
-							x += FONTWIDTH;
-					}
-					else { x += 3* FONTWIDTH; }
-					break;
-			}
-			break;
-
-			case '%': // wow, %% result in one %, how smart
-
-				if(!width_only)
-					Draw_ColoredString (x, y, "%", false);
 				x += FONTWIDTH;
 
 				break;
-
-			default: // print %x - that mean sequence unknown
-
-				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-					Draw_ColoredString (x, y, tmp, false);
-				}
-				x += (s[0] ? 2 : 1) * FONTWIDTH;
-
-				break;
-			}
-
-			break;
-
-		default: // print x
-			if(!width_only) {
-				snprintf(tmp, sizeof(tmp), "%c", s[0]);
-				if (s[0] != ' ') // inhuman smart optimization, do not print space!
-					Draw_ColoredString (x, y, tmp, false);
-			}
-			x += FONTWIDTH;
-
-			break;
 		}
 	}
 
@@ -1855,12 +1856,12 @@ static void SCR_Draw_TeamInfo(void)
 	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
 		if ( !cl.players[i].name[0] || cl.players[i].spectator
 				|| !ti_clients[i].time || ti_clients[i].time + TI_TIMEOUT < r_refdef2.time
-		 	)
+		   )
 			continue;
 
 		// do not show enemy players unless it's MVD and user wishes to show them
 		if (VX_TrackerIsEnemy( i ) && (!cls.mvdplayback || !scr_teaminfo_show_enemies.integer))
-				continue;
+			continue;
 
 		// do not show tracked player to spectator
 		if ((cl.spectator && Cam_TrackNum() == i) && !TEAMINFO_SHOWSELF())
@@ -2014,34 +2015,34 @@ void Parse_Shownick(char *s)
 	switch ( version )
 	{
 		case 1:
-		{
-			client = atoi( Cmd_Argv( arg++ ) );
-        
-			if (client < 0 || client >= MAX_CLIENTS)
 			{
-				Com_DPrintf("Parse_Shownick: wrong client %d\n", client);
+				client = atoi( Cmd_Argv( arg++ ) );
+
+				if (client < 0 || client >= MAX_CLIENTS)
+				{
+					Com_DPrintf("Parse_Shownick: wrong client %d\n", client);
+					return;
+				}
+
+				shownick.client = client;
+
+				shownick.time   = r_refdef2.time;
+
+				shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
+				shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
+				shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
+				shownick.health = atoi( Cmd_Argv( arg++ ) );
+				shownick.armor  = atoi( Cmd_Argv( arg++ ) );
+				shownick.items  = atoi( Cmd_Argv( arg++ ) );
+				strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
+
 				return;
 			}
 
-			shownick.client = client;
-	        
-			shownick.time   = r_refdef2.time;
-        
-			shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
-			shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
-			shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
-			shownick.health = atoi( Cmd_Argv( arg++ ) );
-			shownick.armor  = atoi( Cmd_Argv( arg++ ) );
-			shownick.items  = atoi( Cmd_Argv( arg++ ) );
-			strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
-
-			return;
-		}
-
 		default:
 
-		Com_DPrintf("Parse_Shownick: unsupported version %d\n", version);
-		return;
+			Com_DPrintf("Parse_Shownick: unsupported version %d\n", version);
+			return;
 	}
 }
 
@@ -2167,24 +2168,24 @@ static weaponName_t WS_NameToNum(const char *name)
 }
 
 /*
-static char *WS_NumToName( weaponName_t wp )
-{
-	switch ( wp ) {
-		case wpAXE: return "axe";
-		case wpSG:  return "sg";
-		case wpSSG: return "ssg";
-		case wpNG:  return "ng";
-		case wpSNG: return "sng";
-		case wpGL:  return "gl";
-		case wpRL:  return "rl";
-		case wpLG:  return "lg";
+   static char *WS_NumToName( weaponName_t wp )
+   {
+   switch ( wp ) {
+   case wpAXE: return "axe";
+   case wpSG:  return "sg";
+   case wpSSG: return "ssg";
+   case wpNG:  return "ng";
+   case wpSNG: return "sng";
+   case wpGL:  return "gl";
+   case wpRL:  return "rl";
+   case wpLG:  return "lg";
 
-		// shut up gcc
-		case wpNONE:
-		case wpMAX: return "unknown";
-	}
+// shut up gcc
+case wpNONE:
+case wpMAX: return "unknown";
+}
 
-	return "unknown";
+return "unknown";
 }
 */
 
@@ -2198,7 +2199,7 @@ void Parse_WeaponStats(char *s)
 	arg = 1;
 
 	client = atoi( Cmd_Argv( arg++ ) );
-        
+
 	if (client < 0 || client >= MAX_CLIENTS)
 	{
 		Com_DPrintf("Parse_WeaponStats: wrong client %d\n", client);
@@ -2372,7 +2373,7 @@ static void SCR_MvdWeaponStatsOff_f(void)
 // QW262 -->
 hud_element_t *hud_list=NULL; 
 hud_element_t *prev;
- 
+
 hud_element_t *Hud_FindElement(const char *name)
 {
 	hud_element_t *elem;
@@ -2474,65 +2475,65 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup( a3 );
 			elem->flags = HUD_STRING | HUD_ENABLED;
-		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
-			if (!strcasecmp(a3, "lag"))
-				func = &Hud_LagmeterStr;
-			else if (!strcasecmp(a3, "fps"))
-				func = &Hud_FpsStr;
-			else if (!strcasecmp(a3, "clock"))
-				func = &Hud_ClockStr;
-			else if (!strcasecmp(a3, "speed"))
-				func = &Hud_SpeedStr;
-			else {
-				Com_Printf("\"%s\" is not a standard hud function\n", a3);
-				return;
-			}
-			elem = Hud_NewElement();
-			elem->contents = func;
-			elem->flags = HUD_FUNC | HUD_ENABLED;
-		} else if (!strcasecmp(a2, "img")) {
-			mpic_t *hud_image;
-			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
-			if (!texnum) {
-				Com_Printf("Unable to load hud image \"%s\"\n", a3);
-				return;
-			}
-			hud_image = (mpic_t *) Q_malloc (sizeof(mpic_t));
-			hud_image->texnum = texnum;
-			if (current_texture) {
-				hud_image->width = current_texture->width;
-				hud_image->height = current_texture->height;
-			}
-			else {
-				hud_image->width = image.width;
-				hud_image->height = image.height;
-			}
-			hud_image->sl = 0;
-			hud_image->sh = 1;
-			hud_image->tl = 0;
-			hud_image->th = 1;
-			elem = Hud_NewElement();
-			elem->contents = hud_image;
-			elem->flags = HUD_IMAGE | HUD_ENABLED;
-		*/} else {
-			Com_Printf("\"%s\" is not a valid hud type\n", a2);
-			return;
-		}
+			/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
+			  if (!strcasecmp(a3, "lag"))
+			  func = &Hud_LagmeterStr;
+			  else if (!strcasecmp(a3, "fps"))
+			  func = &Hud_FpsStr;
+			  else if (!strcasecmp(a3, "clock"))
+			  func = &Hud_ClockStr;
+			  else if (!strcasecmp(a3, "speed"))
+			  func = &Hud_SpeedStr;
+			  else {
+			  Com_Printf("\"%s\" is not a standard hud function\n", a3);
+			  return;
+			  }
+			  elem = Hud_NewElement();
+			  elem->contents = func;
+			  elem->flags = HUD_FUNC | HUD_ENABLED;
+			  } else if (!strcasecmp(a2, "img")) {
+			  mpic_t *hud_image;
+			  int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
+			  if (!texnum) {
+			  Com_Printf("Unable to load hud image \"%s\"\n", a3);
+			  return;
+			  }
+			  hud_image = (mpic_t *) Q_malloc (sizeof(mpic_t));
+			  hud_image->texnum = texnum;
+			  if (current_texture) {
+			  hud_image->width = current_texture->width;
+			  hud_image->height = current_texture->height;
+			  }
+			  else {
+			  hud_image->width = image.width;
+			  hud_image->height = image.height;
+			  }
+			  hud_image->sl = 0;
+			  hud_image->sh = 1;
+			  hud_image->tl = 0;
+			  hud_image->th = 1;
+			  elem = Hud_NewElement();
+			  elem->contents = hud_image;
+			  elem->flags = HUD_IMAGE | HUD_ENABLED;
+			  */} else {
+				  Com_Printf("\"%s\" is not a valid hud type\n", a2);
+				  return;
+			  }
 
-		*((unsigned*)&(elem->coords)) = old_coords;
-		elem->width = old_width;
-		elem->alpha = old_alpha;
-		if (!old_enabled)
-			elem->flags &= ~HUD_ENABLED;
+			  *((unsigned*)&(elem->coords)) = old_coords;
+			  elem->width = old_width;
+			  elem->alpha = old_alpha;
+			  if (!old_enabled)
+				  elem->flags &= ~HUD_ENABLED;
 
-// Sergio -->
-// Restoring old hud place in hud_list
-		if (hud_restore) {
-			hud_list = elem->next;
-			elem->next = next;
-			prev->next = elem;
-			}
-// <-- Sergio
+			  // Sergio -->
+			  // Restoring old hud place in hud_list
+			  if (hud_restore) {
+				  hud_list = elem->next;
+				  elem->next = next;
+				  prev->next = elem;
+			  }
+			  // <-- Sergio
 	}
 }
 
@@ -2679,34 +2680,34 @@ void Hud_Width_f(void)
 }
 
 /*
-void Hud_Elem_Font(hud_element_t *elem)
-{
-	if (elem->flags & HUD_IMAGE)
-		return;
+   void Hud_Elem_Font(hud_element_t *elem)
+   {
+   if (elem->flags & HUD_IMAGE)
+   return;
 
-	elem->charset = loadtexture_24bit (Cmd_Argv(2), LOADTEX_CHARS);
+   elem->charset = loadtexture_24bit (Cmd_Argv(2), LOADTEX_CHARS);
 
-}
+   }
 
-void Hud_Font_f(void)
-{
-	hud_element_t *elem;
-	char	*name = Cmd_Argv(1);
+   void Hud_Font_f(void)
+   {
+   hud_element_t *elem;
+   char	*name = Cmd_Argv(1);
 
-	if (Cmd_Argc() != 3)
-		Com_Printf("Usage: hud_font <name> <font>\n");
-	else if (IsRegexp(name)) {
-		if(!ReSearchInit(name))
-			return;
-		Hud_ReSearch_do(Hud_Elem_Font);
-		ReSearchDone();
-	} else {
-		if ((elem = Hud_FindElement(name)))
-			Hud_Elem_Font(elem);
-		else
-			Com_Printf("HudElement \"%s\" not found\n", name);
-	}
-}*/
+   if (Cmd_Argc() != 3)
+   Com_Printf("Usage: hud_font <name> <font>\n");
+   else if (IsRegexp(name)) {
+   if(!ReSearchInit(name))
+   return;
+   Hud_ReSearch_do(Hud_Elem_Font);
+   ReSearchDone();
+   } else {
+   if ((elem = Hud_FindElement(name)))
+   Hud_Elem_Font(elem);
+   else
+   Com_Printf("HudElement \"%s\" not found\n", name);
+   }
+   }*/
 
 void Hud_Elem_Alpha(hud_element_t *elem)
 {
@@ -2891,42 +2892,42 @@ void Hud_BringToFront_f(void)
 }
 
 /*void Hud_Hover_f (void)
-{
-	hud_element_t *elem;
+  {
+  hud_element_t *elem;
 
-	if (Cmd_Argc() != 3) {
-		Com_Printf("hud_hover <name> <alias> : call alias when mouse is over hud\n");
-		return;
-	}
+  if (Cmd_Argc() != 3) {
+  Com_Printf("hud_hover <name> <alias> : call alias when mouse is over hud\n");
+  return;
+  }
 
-	elem = Hud_FindElement(Cmd_Argv(1));
-	if (elem) {
-		if (elem->f_hover)
-			Q_free (elem->f_hover);
-		elem->f_hover = Q_strdup (Cmd_Argv(2));
-	} else {
-		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
-	}
-}
+  elem = Hud_FindElement(Cmd_Argv(1));
+  if (elem) {
+  if (elem->f_hover)
+  Q_free (elem->f_hover);
+  elem->f_hover = Q_strdup (Cmd_Argv(2));
+  } else {
+  Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+  }
+  }
 
-void Hud_Button_f (void)
-{
-	hud_element_t *elem;
+  void Hud_Button_f (void)
+  {
+  hud_element_t *elem;
 
-	if (Cmd_Argc() != 3) {
-		Com_Printf("hud_button <name> <alias> : call alias when mouse button pressed on hud\n");
-		return;
-	}
+  if (Cmd_Argc() != 3) {
+  Com_Printf("hud_button <name> <alias> : call alias when mouse button pressed on hud\n");
+  return;
+  }
 
-	elem = Hud_FindElement(Cmd_Argv(1));
-	if (elem) {
-		if (elem->f_button)
-			Q_free (elem->f_button);
-		elem->f_button = Q_strdup (Cmd_Argv(2));
-	} else {
-		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
-	}
-}*/
+  elem = Hud_FindElement(Cmd_Argv(1));
+  if (elem) {
+  if (elem->f_button)
+  Q_free (elem->f_button);
+  elem->f_button = Q_strdup (Cmd_Argv(2));
+  } else {
+  Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+  }
+  }*/
 
 qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 {
@@ -2939,25 +2940,25 @@ qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 
 	switch (elem->coords[0]) {
 		case 1:	*x = elem->coords[1]*8 + 1;					// top left
-				*y = elem->coords[2]*8;
-				break;
+			*y = elem->coords[2]*8;
+			break;
 		case 2:	*x = vid.conwidth - (elem->coords[1] + l)*8 -1;	// top right
-				*y = elem->coords[2]*8;
-				break;
+			*y = elem->coords[2]*8;
+			break;
 		case 3:	*x = vid.conwidth - (elem->coords[1] + l)*8 -1;	// bottom right
-				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
-				break;
+			*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+			break;
 		case 4:	*x = elem->coords[1]*8 + 1;					// bottom left
-				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
-				break;
+			*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+			break;
 		case 5:	*x = vid.conwidth / 2 - l*4 + elem->coords[1]*8;// top center
-				*y = elem->coords[2]*8;
-				break;
+			*y = elem->coords[2]*8;
+			break;
 		case 6:	*x = vid.conwidth / 2 - l*4 + elem->coords[1]*8;// bottom center
-				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
-				break;
+			*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+			break;
 		default:
-				return false;
+			return false;
 	}
 	return true;
 }
@@ -2994,63 +2995,63 @@ void SCR_DrawHud (void)
 				func = (Hud_Func)elem->contents;
 				st =(*func)();
 				l = strlen(st);
-			/*} else if (elem->flags & HUD_IMAGE) {
-				img = (mpic_t*)elem->contents;
-				l = img->width/8;
-				elem->scr_height = img->height;*/
+				/*} else if (elem->flags & HUD_IMAGE) {
+				  img = (mpic_t*)elem->contents;
+				  l = img->width/8;
+				  elem->scr_height = img->height;*/
 		} else
-				continue;
+			continue;
 
-			if (elem->width && !(elem->flags & (HUD_FUNC|HUD_IMAGE))){
-				if (elem->width < l) {
-					l = elem->width;
-					st[l] = '\0';
-				} else {
-					while (elem->width > l) {
-						st[l++] = ' ';
-					}
-					st[l] = '\0';
+		if (elem->width && !(elem->flags & (HUD_FUNC|HUD_IMAGE))){
+			if (elem->width < l) {
+				l = elem->width;
+				st[l] = '\0';
+			} else {
+				while (elem->width > l) {
+					st[l++] = ' ';
 				}
-			}
-			elem->scr_width = l*8;
-
-			if (!Hud_TranslateCoords (elem, &x, &y))
-				continue;
-
-			if (elem->flags & (HUD_BLINK_B|HUD_BLINK_F))
-				tblink = fmod(cls.realtime, elem->blink)/elem->blink;
-
-			if (!(elem->flags & HUD_BLINK_B) || tblink < 0.5)
-				if (elem->coords[3])
-				{
-					if (elem->alpha < 1)
-						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
-					else
-						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
-				}
-			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
-			{
-				if (!(elem->flags & HUD_IMAGE))
-				{
-					int std_charset = char_textures[0];
-					if (elem->charset)
-						char_textures[0] = elem->charset;
-					if (elem->alpha < 1)
-						Draw_AlphaString (x, y, st, elem->alpha);
-					else
-						Draw_String (x, y, st);
-					char_textures[0] = std_charset;
-				}
-				else
-					if (elem->alpha < 1)
-						Draw_AlphaPic (x, y, img, elem->alpha);
-					else
-						Draw_Pic (x, y, img);
+				st[l] = '\0';
 			}
 		}
+		elem->scr_width = l*8;
+
+		if (!Hud_TranslateCoords (elem, &x, &y))
+			continue;
+
+		if (elem->flags & (HUD_BLINK_B|HUD_BLINK_F))
+			tblink = fmod(cls.realtime, elem->blink)/elem->blink;
+
+		if (!(elem->flags & HUD_BLINK_B) || tblink < 0.5)
+			if (elem->coords[3])
+			{
+				if (elem->alpha < 1)
+					Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
+				else
+					Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
+			}
+		if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
+		{
+			if (!(elem->flags & HUD_IMAGE))
+			{
+				int std_charset = char_textures[0];
+				if (elem->charset)
+					char_textures[0] = elem->charset;
+				if (elem->alpha < 1)
+					Draw_AlphaString (x, y, st, elem->alpha);
+				else
+					Draw_String (x, y, st);
+				char_textures[0] = std_charset;
+			}
+			else
+				if (elem->alpha < 1)
+					Draw_AlphaPic (x, y, img, elem->alpha);
+				else
+					Draw_Pic (x, y, img);
+		}
+		}
 	}
-// Draw Input
-/*	if (key_dest == key_message && chat_team == 100) {
+	// Draw Input
+	/*	if (key_dest == key_message && chat_team == 100) {
 		extern float	con_cursorspeed;
 		extern int	chat_bufferpos;
 
@@ -3062,24 +3063,24 @@ void SCR_DrawHud (void)
 		y = input.y*8;
 
 		if (input.bg)
-			Draw_Fill(x, y, input.len*8, 8, input.bg);
+		Draw_Fill(x, y, input.len*8, 8, input.bg);
 
 		s = chat_buffer[chat_edit];
 		t = chat_buffer[chat_edit][chat_bufferpos];
 		i = chat_bufferpos;
 
 		if (chat_bufferpos > (input.len - 1)) {
-			s += chat_bufferpos - (input.len -1);
-			i = input.len - 1;
+		s += chat_bufferpos - (input.len -1);
+		i = input.len - 1;
 		}
 
 		j = 0;
 		while(s[j] && j<input.len)	{
-			Draw_Character ( x+(j<<3), y, s[j]);
-			j++;
+		Draw_Character ( x+(j<<3), y, s[j]);
+		j++;
 		}
 		Draw_Character ( x+(i<<3), y, 10+((int)(cls.realtime*con_cursorspeed)&1));
-	}*/
+		}*/
 
 }
 
@@ -3103,42 +3104,42 @@ qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 }
 
 /*void Hud_MouseEvent (int x, int y, int buttons)
-{
-	int mouse_buttons = 5;
-	static int old_x, old_y, old_buttons;
-	hud_element_t	*elem;
-	int i;
+  {
+  int mouse_buttons = 5;
+  static int old_x, old_y, old_buttons;
+  hud_element_t	*elem;
+  int i;
 
-	for (i=0 ; i < mouse_buttons ; i++)
-	{
-		if ((buttons & (1<<i)) && !(old_buttons & (1<<i)))
-			break;
-	}
-	if (i < mouse_buttons)
-		++i;
-	else
-		i = 0;
+  for (i=0 ; i < mouse_buttons ; i++)
+  {
+  if ((buttons & (1<<i)) && !(old_buttons & (1<<i)))
+  break;
+  }
+  if (i < mouse_buttons)
+  ++i;
+  else
+  i = 0;
 
-	for (elem = hud_list; elem; elem = elem->next)
-	{
-		if (!(elem->flags & HUD_ENABLED) || !elem->f_hover || !elem->f_button
-			|| !elem->scr_width || !elem->scr_height)
-			continue;
+  for (elem = hud_list; elem; elem = elem->next)
+  {
+  if (!(elem->flags & HUD_ENABLED) || !elem->f_hover || !elem->f_button
+  || !elem->scr_width || !elem->scr_height)
+  continue;
 
-		if (Hud_CheckBounds (elem, x, y))
-		{
-			if (elem->f_hover && !Hud_CheckBounds (elem, old_x, old_y))
-				Cbuf_AddText (va("%s 1 %s\n", elem->f_hover, elem->name));
-			if (i && elem->f_button)
-				Cbuf_AddText (va("%s %d %s\n", elem->f_button, i, elem->name));
-		}
-		else if (elem->f_hover && Hud_CheckBounds (elem, old_x, old_y))
-			Cbuf_AddText (va("%s 0 %s\n", elem->f_hover, elem->name));
-	}
-	old_x = x;
-	old_y = y;
-	old_buttons = buttons;
-}*/
+  if (Hud_CheckBounds (elem, x, y))
+  {
+  if (elem->f_hover && !Hud_CheckBounds (elem, old_x, old_y))
+  Cbuf_AddText (va("%s 1 %s\n", elem->f_hover, elem->name));
+  if (i && elem->f_button)
+  Cbuf_AddText (va("%s %d %s\n", elem->f_button, i, elem->name));
+  }
+  else if (elem->f_hover && Hud_CheckBounds (elem, old_x, old_y))
+  Cbuf_AddText (va("%s 0 %s\n", elem->f_hover, elem->name));
+  }
+  old_x = x;
+  old_y = y;
+  old_buttons = buttons;
+  }*/
 /********************************* TILE CLEAR *********************************/
 
 void SCR_TileClear (void) {
@@ -3155,7 +3156,7 @@ void SCR_TileClear (void) {
 		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines_cleared);
 		// right
 		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0,
-			vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines_cleared);
+				vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines_cleared);
 	}
 	if (r_refdef.vrect.y > 0) {
 		// top
@@ -3164,9 +3165,9 @@ void SCR_TileClear (void) {
 	if (r_refdef.vrect.y + r_refdef.vrect.height < vid.height - sb_lines_cleared) {
 		// bottom
 		Draw_TileClear (r_refdef.vrect.x,
-			r_refdef.vrect.y + r_refdef.vrect.height,
-			r_refdef.vrect.width,
-			vid.height - sb_lines_cleared - (r_refdef.vrect.height + r_refdef.vrect.y));
+				r_refdef.vrect.y + r_refdef.vrect.height,
+				r_refdef.vrect.width,
+				vid.height - sb_lines_cleared - (r_refdef.vrect.height + r_refdef.vrect.y));
 	}
 }
 
@@ -3225,8 +3226,8 @@ static void SCR_UpdateCursor(void)
 
 void SCR_DrawElements(void) 
 {
-  extern qbool  sb_showscores,  sb_showteamscores;
-  extern cvar_t	scr_menudrawhud;
+	extern qbool  sb_showscores,  sb_showteamscores;
+	extern cvar_t	scr_menudrawhud;
 
 	if (scr_drawloading) 
 	{
@@ -3271,7 +3272,7 @@ void SCR_DrawElements(void)
 				{ 
 					// Do not show if +showscores
 					SCR_DrawPause ();
-					
+
 					SCR_DrawAutoID ();
 				}
 
@@ -3282,7 +3283,7 @@ void SCR_DrawElements(void)
 						Draw_Crosshair ();
 					}
 
-     				if (!sb_showscores && !sb_showteamscores)
+					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						// Do not show if +showscores
 						SCR_Draw_TeamInfo();
@@ -3306,7 +3307,7 @@ void SCR_DrawElements(void)
 
 					// VULT STATS
 					SCR_DrawAMFstats();
-					
+
 					// VULT DISPLAY KILLS
 					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 						VX_TrackerThink();
@@ -3347,8 +3348,8 @@ void SCR_DrawElements(void)
 			M_Draw ();
 		}
 
-        SCR_DrawCursor();
-    }
+		SCR_DrawCursor();
+	}
 }
 
 /******************************* UPDATE SCREEN *******************************/
@@ -3594,8 +3595,8 @@ int SCR_Screenshot(char *name) {
 	byte *buffer;
 	image_format_t format;
 
-// name is fullpath now
-//	name = (*name == '/') ? name + 1 : name;
+	// name is fullpath now
+	//	name = (*name == '/') ? name + 1 : name;
 
 	format = SShot_FormatForName(name);
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
@@ -3656,7 +3657,7 @@ int SCR_Screenshot(char *name) {
 		}
 		applyHWGamma(buffer, buffersize);
 		success = Image_WriteTGA(name, buffer, glwidth, glheight)
-					? SSHOT_SUCCESS : SSHOT_FAILED;
+			? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
 	Q_free(buffer);
@@ -3674,19 +3675,19 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 	ext[0] = 0;
 
 	// Find a file name to save it to
-	#ifdef WITH_PNG
+#ifdef WITH_PNG
 	if (!strcasecmp(scr_sshot_format.string, "png"))
 	{
 		strlcpy(ext, "png", 4);
 	}
-	#endif
+#endif
 
-	#ifdef WITH_JPEG
+#ifdef WITH_JPEG
 	if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
 	{
 		strlcpy(ext, "jpg", 4);
 	}
-	#endif
+#endif
 
 	if (!strcasecmp(scr_sshot_format.string, "tga"))
 	{
@@ -3823,8 +3824,8 @@ void SCR_RSShot_f (void) {
 	} else
 #endif
 #endif
-	success = Image_WriteTGA (filename, pixels, width, height)
-		? SSHOT_SUCCESS : SSHOT_FAILED;
+		success = Image_WriteTGA (filename, pixels, width, height)
+			? SSHOT_SUCCESS : SSHOT_FAILED;
 
 	Q_free(base);
 
@@ -3876,9 +3877,9 @@ static void SCR_CheckAutoScreenshot(void) {
 
 	sshot_dir = Sshot_SshotDirectory();
 
-// no, sorry
-//	while (*sshot_dir && (*sshot_dir == '/'))
-//		sshot_dir++; // will skip all '/' chars at the beginning
+	// no, sorry
+	//	while (*sshot_dir && (*sshot_dir == '/'))
+	//		sshot_dir++; // will skip all '/' chars at the beginning
 
 	if (!sshot_dir[0])
 		sshot_dir = cls.gamedir;
@@ -3915,7 +3916,7 @@ void SCR_AutoScreenshot(char *matchname)
 // Capturing to avi.
 void SCR_Movieshot(char *name)
 {
-	#ifdef _WIN32
+#ifdef _WIN32
 	if (Movie_IsCapturingAVI())
 	{
 		int size = 0;
@@ -3956,12 +3957,12 @@ void SCR_Movieshot(char *name)
 		SCR_Screenshot (name);
 	}
 
-	#else // _WIN32
+#else // _WIN32
 
 	// Capturing to avi only supported in windows yet.
 	SCR_Screenshot (name);
 
-	#endif // _WIN32
+#endif // _WIN32
 }
 
 mpic_t *SCR_LoadCursorImage(char *cursorimage)
@@ -4107,7 +4108,7 @@ void SCR_Init (void)
 	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
 
 	Cmd_AddCommand("calc_fov", tmp_calc_fov);
-	
+
 	Cvar_Register (&scr_coloredText);
 
 	// QW 262 HUD
@@ -4143,7 +4144,7 @@ void SCR_Init (void)
 
 	scr_initialized = true;
 
-    ScrollBars_Init();
+	ScrollBars_Init();
 }
 
 void SCR_DrawMultiviewBorders(void)
@@ -4292,47 +4293,47 @@ void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, 
 	switch (position)
 	{
 		case MV_HUD_POS_BOTTOM_LEFT :
-		{
-			(*x) = 0;
-			(*y) = max(0, (view->height - hud_height));
-			break;
-		}
+			{
+				(*x) = 0;
+				(*y) = max(0, (view->height - hud_height));
+				break;
+			}
 		case MV_HUD_POS_BOTTOM_RIGHT :
-		{
-			(*x) = max(0, (view->width - hud_width));
-			(*y) = max(0, (view->height - hud_height));
-			break;
-		}
+			{
+				(*x) = max(0, (view->width - hud_width));
+				(*y) = max(0, (view->height - hud_height));
+				break;
+			}
 		case MV_HUD_POS_TOP_CENTER :
-		{
-			(*x) = max(0, (view->width - hud_width) / 2);
-			(*y) = 0;
-			break;
-		}
+			{
+				(*x) = max(0, (view->width - hud_width) / 2);
+				(*y) = 0;
+				break;
+			}
 		case MV_HUD_POS_TOP_LEFT :
-		{
-			(*x) = 0;
-			(*y) = 0;
-			break;
-		}
+			{
+				(*x) = 0;
+				(*y) = 0;
+				break;
+			}
 		case MV_HUD_POS_TOP_RIGHT :
-		{
-			(*x) = max(0, view->width - hud_width);
-			(*y) = 0;
-			break;
-		}
+			{
+				(*x) = max(0, view->width - hud_width);
+				(*y) = 0;
+				break;
+			}
 		case MV_HUD_POS_GATHERED_CENTER :
-		{
-			SCR_SetMVStatusGatheredPosition (view, hud_width, hud_height, &(*x), &(*y));
-			break;
-		}
+			{
+				SCR_SetMVStatusGatheredPosition (view, hud_width, hud_height, &(*x), &(*y));
+				break;
+			}
 		case MV_HUD_POS_BOTTOM_CENTER :
 		default:
-		{
-			(*x) = max(0, (view->width - hud_width) / 2);
-			(*y) = max(0, (view->height - hud_height));
-			break;
-		}
+			{
+				(*x) = max(0, (view->width - hud_width) / 2);
+				(*y) = max(0, (view->height - hud_height));
+				break;
+			}
 	}
 }
 
@@ -4492,7 +4493,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 
 void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 {
-	#define MV_HEALTH_OPACITY 75
+#define MV_HEALTH_OPACITY 75
 	int health = cl.stats[STAT_HEALTH];
 
 	int health_amount_width = 0;
@@ -4547,34 +4548,34 @@ void SCR_MV_DrawPowerups (int x, int y)
 	extern mpic_t  *sb_face_invis_invuln;
 
 	if (   cl.stats[STAT_ITEMS] & IT_INVULNERABILITY
-		&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
+			&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		// Pentagram + Ring.
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis_invuln->width) / 2,
-			y - sb_face_invis_invuln->height / 2,
-			sb_face_invis_invuln, 0.4);
+				y - sb_face_invis_invuln->height / 2,
+				sb_face_invis_invuln, 0.4);
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
 	{
 		// Pentagram.
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2,
-			sb_face_invuln, 0.4);
+				y - sb_face_invuln->height / 2,
+				sb_face_invuln, 0.4);
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		// Ring.
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis->width) / 2,
-			y - sb_face_invis->height / 2,
-			sb_face_invis, 0.4);
+				y - sb_face_invis->height / 2,
+				sb_face_invis, 0.4);
 	}
 
 	if (cl.stats[STAT_ITEMS] & IT_QUAD)
 	{
 		// Ring.
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
-			y - sb_face_quad->height / 2,
-			sb_face_quad, 0.4);
+				y - sb_face_quad->height / 2,
+				sb_face_quad, 0.4);
 	}
 }
 
@@ -4586,8 +4587,8 @@ void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
 	if (current_weapon)
 	{
 		Draw_Pic (x,
-			y - (current_weapon->height / 4),
-			current_weapon);
+				y - (current_weapon->height / 4),
+				current_weapon);
 	}
 
 	SCR_MV_SetBoundValue (width, MV_HUD_CURRWEAP_WIDTH);
@@ -4604,7 +4605,7 @@ void SCR_MV_DrawCurrentAmmo (int x, int y, int *width, int *height)
 
 void SCR_MV_DrawWeapons (int x, int y, int *width, int *height, int hud_width, int hud_height, qbool vertical)
 {
-	#define WEAPON_COUNT 8
+#define WEAPON_COUNT 8
 	mpic_t *weapon_pic = NULL;
 	int weapon = 0;
 	int weapon_flag = 0;
@@ -4660,7 +4661,7 @@ void SCR_DrawMVStatusView(mv_viewrect_t *view, int style, int position, qbool fl
 	}
 	else if (style >= MV_HUD_STYLE_ALL)
 	{
-		#define MV_HUD_VERTICAL_GAP	4
+#define MV_HUD_VERTICAL_GAP	4
 
 		int name_width = 0;
 		int name_height = 0;
@@ -4712,7 +4713,7 @@ void SCR_DrawMVStatusView(mv_viewrect_t *view, int style, int position, qbool fl
 
 		// Draw the elements vertically? (Add a small gap between the items when
 		// drawing them vertically, otherwise they're too close together).
-		#define MV_FLIP(W,H) if(vertical) { hud_y += (H) + MV_HUD_VERTICAL_GAP; } else { hud_x += (W); }
+#define MV_FLIP(W,H) if(vertical) { hud_y += (H) + MV_HUD_VERTICAL_GAP; } else { hud_x += (W); }
 
 		if (!flip)
 		{
@@ -4934,10 +4935,10 @@ void SCR_DrawMVStatus(void)
 	if (view.x != -1)
 	{
 		SCR_DrawMVStatusView (&view,
-			cl_mvdisplayhud.integer,
-			mv_hudpos,
-			(qbool)cl_mvhudflip.value,
-			(qbool)cl_mvhudvertical.value);
+				cl_mvdisplayhud.integer,
+				mv_hudpos,
+				(qbool)cl_mvhudflip.value,
+				(qbool)cl_mvhudvertical.value);
 	}
 }
 
@@ -5099,27 +5100,27 @@ void SCR_DrawMVStatusStrings(void)
 			// mvinset and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
-										"dead   ",
-										weapon,
-										sAmmo);
+					"dead   ",
+					weapon,
+					sAmmo);
 		}
 		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 400))
 		{
 			// Resolution width <= 400 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
-										"dead   ",
-										weapon,
-										sAmmo);
+					"dead   ",
+					weapon,
+					sAmmo);
 		}
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0)
 		{
 			// > 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
-										"dead   ",
-										weapon,
-										sAmmo);
+					"dead   ",
+					weapon,
+					sAmmo);
 		}
 
 		else if ((cl_multiview.integer == 2) && cl_mvinset.integer && (CURRVIEW == 1))
@@ -5127,35 +5128,35 @@ void SCR_DrawMVStatusStrings(void)
 			// mvinset
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
-												name,
-												armor,
-												cl.players[nPlayernum].stats[STAT_ARMOR],
-												cl.players[nPlayernum].stats[STAT_HEALTH],
-												weapon,
-												sAmmo);
+					name,
+					armor,
+					cl.players[nPlayernum].stats[STAT_ARMOR],
+					cl.players[nPlayernum].stats[STAT_HEALTH],
+					weapon,
+					sAmmo);
 		}
 		else if (cl_multiview.value && vid.width <= 400)
 		{
 			// <= 400 and alive
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
-												name,
-												armor,
-												cl.players[nPlayernum].stats[STAT_ARMOR],
-												cl.players[nPlayernum].stats[STAT_HEALTH],
-												weapon,
-												sAmmo);
+					name,
+					armor,
+					cl.players[nPlayernum].stats[STAT_ARMOR],
+					cl.players[nPlayernum].stats[STAT_HEALTH],
+					weapon,
+					sAmmo);
 		}
 		else
 		{
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
 			snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
-												name,
-												armor,
-												cl.players[nPlayernum].stats[STAT_ARMOR],
-												cl.players[nPlayernum].stats[STAT_HEALTH],
-												weapon,
-												sAmmo);
+					name,
+					armor,
+					cl.players[nPlayernum].stats[STAT_ARMOR],
+					cl.players[nPlayernum].stats[STAT_HEALTH],
+					weapon,
+					sAmmo);
 		}
 	}
 
@@ -5192,10 +5193,10 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	if (cl_multiview.value == 1)
 	{
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
+		xb = vid.width - strlen(strng) * 8 - 12;
+		yb = vid.height - sb_lines - 16;
+		xd = vid.width - strlen(weapons) * 8 - 84;
+		yd = vid.height - sb_lines - 8;
 	}
 	else if (cl_multiview.value == 2)
 	{
@@ -5315,7 +5316,7 @@ void SCR_DrawMVStatusStrings(void)
 
 	// Hud info
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
-		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
+			|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 	{
 		Draw_String(xb, yb, strng);
 	}
@@ -5356,7 +5357,7 @@ void SCR_DrawMVStatusStrings(void)
 
 	// Weapons
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
-		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
+			|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 	{
 		Draw_String(xd, yd, weapons);
 	}
@@ -5369,9 +5370,9 @@ void SCR_DrawMVStatusStrings(void)
 // QW262 -->
 void Hud_262Init (void)
 {
-//
-// register hud commands
-//
+	//
+	// register hud commands
+	//
 	Cmd_AddCommand ("hud262_add",Hud_Add_f);
 	Cmd_AddCommand ("hud262_remove",Hud_Remove_f);
 	Cmd_AddCommand ("hud262_position",Hud_Position_f);
@@ -5385,8 +5386,8 @@ void Hud_262Init (void)
 	Cmd_AddCommand ("hud262_enable",Hud_Enable_f);
 	Cmd_AddCommand ("hud262_list",Hud_List_f);
 	Cmd_AddCommand ("hud262_bringtofront",Hud_BringToFront_f);
-//	Cmd_AddCommand ("hud262_hover",);
-//	Cmd_AddCommand ("hud262_button",Hud_Button_f);
+	//	Cmd_AddCommand ("hud262_hover",);
+	//	Cmd_AddCommand ("hud262_button",Hud_Button_f);
 }
 
 void Hud_262LoadOnFirstStart(void)

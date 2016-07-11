@@ -266,10 +266,10 @@ keyname_t keynames[] = {
 mouse_state_t scr_pointer_state;
 
 /*
-==============================================================================
-			Flushing my array
-==============================================================================
-*/
+   ==============================================================================
+   Flushing my array
+   ==============================================================================
+   */
 void CompleteCommandNew_Reset (void)
 {
 	if ((del_removes) || (key_linepos == key_lineposorig))
@@ -281,10 +281,10 @@ void CompleteCommandNew_Reset (void)
 }
 
 /*
-==============================================================================
-			LINE TYPING INTO THE CONSOLE
-==============================================================================
-*/
+   ==============================================================================
+   LINE TYPING INTO THE CONSOLE
+   ==============================================================================
+   */
 
 qbool CheckForCommand (void) 
 {
@@ -304,7 +304,7 @@ qbool CheckForCommand (void)
 #define COLUMNWIDTH 20
 #define MINCOLUMNWIDTH 18	// the last column may be slightly smaller
 
-	
+
 void PaddedPrint (char *s) 
 {
 	extern int con_linewidth;
@@ -364,36 +364,36 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 			{
 				PaddedPrintMarkAndPad (add_mark);
 				Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-					con_completion_color_name.string, s , con_completion_color_colon.string,
-					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-					con_completion_color_quotes_current.string, con_completion_color_colon.string,
-					con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
-					con_completion_color_quotes_default.string);
+						con_completion_color_name.string, s , con_completion_color_colon.string,
+						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+						con_completion_color_quotes_current.string, con_completion_color_colon.string,
+						con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
+						con_completion_color_quotes_default.string);
 			}
 			else
 			{
 				PaddedPrintMarkAndPad (false);
 				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-					con_completion_color_name.string, s , con_completion_color_colon.string,
-					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-					con_completion_color_quotes_current.string);
+						con_completion_color_name.string, s , con_completion_color_colon.string,
+						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+						con_completion_color_quotes_current.string);
 			}
 			break;
 
 		case 2:	// current only
 			PaddedPrintMarkAndPad (add_mark);
 			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-				con_completion_color_name.string, s , con_completion_color_colon.string,
-				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-				con_completion_color_quotes_current.string);
+					con_completion_color_name.string, s , con_completion_color_colon.string,
+					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+					con_completion_color_quotes_current.string);
 			break;
 
 		case 3:	// default only
 			PaddedPrintMarkAndPad (add_mark);
 			Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-				con_completion_color_name.string, s, con_completion_color_colon.string,
-				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
-				dv, con_completion_color_quotes_default.string);
+					con_completion_color_name.string, s, con_completion_color_colon.string,
+					con_completion_color_quotes_default.string, con_completion_color_value_default.string,
+					dv, con_completion_color_quotes_default.string);
 			break;
 
 		case 4:	// current + default if changed
@@ -403,35 +403,35 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 				{
 					PaddedPrintMarkAndPad (add_mark);
 					Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-						con_completion_color_name.string, s , con_completion_color_colon.string,
-						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-						con_completion_color_quotes_current.string, con_completion_color_colon.string,
-						con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
-						con_completion_color_quotes_default.string);
+							con_completion_color_name.string, s , con_completion_color_colon.string,
+							con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+							con_completion_color_quotes_current.string, con_completion_color_colon.string,
+							con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
+							con_completion_color_quotes_default.string);
 				}
 				else
 				{
 					PaddedPrintMarkAndPad (false);
 					Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-						con_completion_color_name.string, s , con_completion_color_colon.string,
-						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-						con_completion_color_quotes_current.string);
+							con_completion_color_name.string, s , con_completion_color_colon.string,
+							con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+							con_completion_color_quotes_current.string);
 				}
 			}
 			else
 			{
 				PaddedPrintMarkAndPad (add_mark);
 				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-					con_completion_color_name.string, s , con_completion_color_colon.string,
-					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-					con_completion_color_quotes_current.string);
+						con_completion_color_name.string, s , con_completion_color_colon.string,
+						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+						con_completion_color_quotes_current.string);
 			}
 			break;
 
 		case 5:	// none
 			PaddedPrintMarkAndPad (add_mark);
 			Com_Printf ("&c%s%s&r\n",
-				con_completion_color_name.string, s);
+					con_completion_color_name.string, s);
 			break;
 
 		default: // old completion
@@ -478,24 +478,24 @@ void CompleteCommandNew (void)
 	cmd_function_t *s_c;
 	cvar_t *s_v;
 	int s_count;
-	
+
 	static cmd_alias_t *sorted_aliases[4096];
 	static cmd_function_t *sorted_cmds[4096];
 	static cvar_t *sorted_cvars[4096];
 	static jogi_avail_complete_t jogi_avail_complete[4096];
-	
-	#define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
-	#define MAX_SORTED_CVARS (sizeof (sorted_cvars) / sizeof (sorted_cvars[0]))
-	#define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
+
+#define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
+#define MAX_SORTED_CVARS (sizeof (sorted_cvars) / sizeof (sorted_cvars[0]))
+#define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
 
 	extern int Cmd_AliasCompare (const void *,const void *);
 	extern int Cmd_CommandCompare (const void *, const void *);
 	extern int Cvar_CvarCompare (const void *, const void *);
 
 	if (!
-		 (key_linepos < 2
-		  || isspace (key_lines[edit_line][key_linepos - 1]))
-		 &&  !called_second)
+			(key_linepos < 2
+			 || isspace (key_lines[edit_line][key_linepos - 1]))
+			&&  !called_second)
 	{
 
 		count = 0;
@@ -509,8 +509,8 @@ void CompleteCommandNew (void)
 			return;
 
 		for (start = key_linepos - 1;
-		     start >= 1 && !isspace (key_lines[edit_line][start]);
-		     start--)
+				start >= 1 && !isspace (key_lines[edit_line][start]);
+				start--)
 			;
 		if (start == 0)
 			start = 1;
@@ -599,7 +599,7 @@ void CompleteCommandNew (void)
 						count_cvar++;
 					}
 				}
-				
+
 				if (con.x)
 					Com_Printf ("\n");
 			}
@@ -666,8 +666,8 @@ void CompleteCommandNew (void)
 
 		key_linepos += diff_len;
 		key_lines[edit_line][min
-				     (key_linepos + qwcslen(temp),
-				      MAXCMDLINE - 1)] = 0;
+			(key_linepos + qwcslen(temp),
+			 MAXCMDLINE - 1)] = 0;
 		if (start == 1 && key_linepos + qwcslen(temp) < MAXCMDLINE - 1)
 		{
 			for (i = key_linepos + qwcslen(temp); i > 0; i--)
@@ -686,7 +686,7 @@ void CompleteCommandNew (void)
 		while (!(isspace (key_lines[edit_line][key_linepos])) && (key_lines[edit_line][key_linepos] != '\0'))
 		{
 			qwcscpy (key_lines[edit_line] + key_linepos,
-				key_lines[edit_line] + key_linepos + 1);
+					key_lines[edit_line] + key_linepos + 1);
 		}
 
 		key_lineposorig = key_linepos;
@@ -695,9 +695,9 @@ void CompleteCommandNew (void)
 		old_keyline_length = qwcslen( key_lines[edit_line] );
 	}
 	else if ((key_linepos >= 2
-		  || isspace (key_lines[edit_line][key_linepos - 1]))
-		 &&  called_second
-		 && (key_linepos == key_lineposorig) && (old_keyline_length == (int) qwcslen(key_lines[edit_line])))
+				|| isspace (key_lines[edit_line][key_linepos - 1]))
+			&&  called_second
+			&& (key_linepos == key_lineposorig) && (old_keyline_length == (int) qwcslen(key_lines[edit_line])))
 	{
 		if (count != try)
 		{
@@ -711,10 +711,10 @@ void CompleteCommandNew (void)
 			testvar = key_linepos;
 
 			while ((testvar != 0)
-			       && !(isspace (key_lines[edit_line][testvar]))
-			       && (key_lines[edit_line][testvar] != '\\')
-			       && (key_lines[edit_line][testvar] != '$')
-			       && (key_lines[edit_line][testvar] != '/'))
+					&& !(isspace (key_lines[edit_line][testvar]))
+					&& (key_lines[edit_line][testvar] != '\\')
+					&& (key_lines[edit_line][testvar] != '$')
+					&& (key_lines[edit_line][testvar] != '/'))
 			{
 				testvar--;
 			}
@@ -733,12 +733,12 @@ void CompleteCommandNew (void)
 			len = strlen (text);
 
 			memmove (key_lines[edit_line] + key_linepos + len,
-				 key_lines[edit_line] + key_linepos +
-				 last_cmd_length,
-				 (MAXCMDLINE - key_linepos + 1 -
-				  last_cmd_length)*sizeof(wchar));
+					key_lines[edit_line] + key_linepos +
+					last_cmd_length,
+					(MAXCMDLINE - key_linepos + 1 -
+					 last_cmd_length)*sizeof(wchar));
 			memcpy (key_lines[edit_line] + key_linepos, str2wcs(text),
-				len * sizeof(wchar));
+					len * sizeof(wchar));
 
 			del_removes = 1;
 			last_cmd_length = strlen (text);
@@ -750,9 +750,9 @@ void CompleteCommandNew (void)
 		old_keyline_length = qwcslen( key_lines[edit_line] );
 	}
 	else if ((key_linepos >= 2
-		  || isspace (key_lines[edit_line][key_linepos - 1]))
-		 && called_second
-		 && (key_linepos != key_lineposorig))
+				|| isspace (key_lines[edit_line][key_linepos - 1]))
+			&& called_second
+			&& (key_linepos != key_lineposorig))
 	{
 		try = 0;
 		called_second = 0;
@@ -845,7 +845,7 @@ void Key_ClearTyping (void)
 	//if new input is the same as previous one or the line is empty
 	// do not increment edit_line
 	if((wcscmp ((wchar_t*)key_lines[edit_line], (wchar_t*)key_lines[(edit_line - 1) & (CMDLINES - 1)]))
-		&& key_lines[edit_line][1])
+			&& key_lines[edit_line][1])
 		edit_line = (edit_line + 1) & (CMDLINES - 1);
 
 	history_line = edit_line;
@@ -874,409 +874,409 @@ void Key_Console (int key, int unichar)
 	switch (key)
 	{
 		case 'M': case 'm': case 'J': case 'j':		//^M,^J = Enter
-		{
-			if (!keydown[K_CTRL])
-				break;
-			// Fall through.
-		}
-	    case K_ENTER:
-		{
-			CompleteCommandNew_Reset ();
-			con_redchars = false;
-
-			// Backslash text are commands.
-			if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
 			{
-				qbool no_lf = true;
+				if (!keydown[K_CTRL])
+					break;
+				// Fall through.
+			}
+		case K_ENTER:
+			{
+				CompleteCommandNew_Reset ();
+				con_redchars = false;
 
-				// If Ctrl+enter was pressed, regard the chat as a team message.
-				if (((keydown[K_CTRL] && key == K_ENTER) || keydown[K_SHIFT]) && cls.state >= ca_connected)
+				// Backslash text are commands.
+				if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
 				{
-					// Do we have something to say?
-					if (*(key_lines[edit_line] + 1)) 
+					qbool no_lf = true;
+
+					// If Ctrl+enter was pressed, regard the chat as a team message.
+					if (((keydown[K_CTRL] && key == K_ENTER) || keydown[K_SHIFT]) && cls.state >= ca_connected)
 					{
-						Cbuf_AddText ((keydown[K_CTRL] && key == K_ENTER) ? "say_team \"" : "say \"");
-						Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
-						Cbuf_AddText ("\"");
-					}
-					else
-					{
-						no_lf = false;									
-					}
-				}
-				else
-				{
-					if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
-					{
-						Cbuf_AddText (encode_say(key_lines[edit_line] + 2));	// skip the ]/
-					}
-					else
-					{
-						// Check if it's a chat message or a command.
-						if (cls.state == ca_disconnected || (cl_chatmode.value != 1 && CheckForCommand()))
+						// Do we have something to say?
+						if (*(key_lines[edit_line] + 1)) 
 						{
-							Cbuf_AddText (encode_say(key_lines[edit_line] + 1));	// Valid command.
+							Cbuf_AddText ((keydown[K_CTRL] && key == K_ENTER) ? "say_team \"" : "say \"");
+							Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
+							Cbuf_AddText ("\"");
 						}
 						else
 						{
-							// It's a chat message.
-							if (cls.state >= ca_connected)	// Can happen if cl_chatmode is 1
+							no_lf = false;									
+						}
+					}
+					else
+					{
+						if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
+						{
+							Cbuf_AddText (encode_say(key_lines[edit_line] + 2));	// skip the ]/
+						}
+						else
+						{
+							// Check if it's a chat message or a command.
+							if (cls.state == ca_disconnected || (cl_chatmode.value != 1 && CheckForCommand()))
 							{
-								if (cl_chatmode.value == 2 || cl_chatmode.value == 1)
+								Cbuf_AddText (encode_say(key_lines[edit_line] + 1));	// Valid command.
+							}
+							else
+							{
+								// It's a chat message.
+								if (cls.state >= ca_connected)	// Can happen if cl_chatmode is 1
 								{
-									if (*(key_lines[edit_line] + 1)) // Do we have something to say?
+									if (cl_chatmode.value == 2 || cl_chatmode.value == 1)
 									{
-										Cbuf_AddText ("say \"");
-										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
-										Cbuf_AddText ("\"");
+										if (*(key_lines[edit_line] + 1)) // Do we have something to say?
+										{
+											Cbuf_AddText ("say \"");
+											Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
+											Cbuf_AddText ("\"");
 
-										if (con_hide_chat_input.integer)
-											print_in_console = false;
+											if (con_hide_chat_input.integer)
+												print_in_console = false;
+										}
+										else
+										{
+											no_lf = false;									
+										}
 									}
 									else
 									{
-										no_lf = false;									
+										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));	// skip the ]
 									}
 								}
 								else
 								{
-									Cbuf_AddText (encode_say(key_lines[edit_line] + 1));	// skip the ]
+									no_lf = false;
 								}
-							}
-							else
-							{
-								no_lf = false;
 							}
 						}
 					}
-				}
-				if (no_lf)
-				{
-					Cbuf_AddText ("\n");
-				}
-			}
-
-			// cut'n'paste rocks!
-			if (!print_in_console)
-				Print_flags[Print_current] |= PR_SKIP;
-
-			Con_PrintW (key_lines[edit_line]);	// FIXME logging
-
-			// cut'n'paste rocks!
-			if (!print_in_console)
-				Print_flags[Print_current] |= PR_SKIP;
-
-			Con_PrintW (str2wcs("\n"));
-
-			Key_ClearTyping ();
-
-			if (cls.state == ca_disconnected)
-				SCR_UpdateScreen ();	// force an update, because the command
-										// may take some time
-			return;
-		}
-		case K_TAB:
-		{
-			// Command completion
-			if (!(keydown[K_SHIFT]) && keydown[K_CTRL])
-			{
-				CompleteName ();
-			}
-			else
-			{
-				CompleteCommandNew ();
-			}
-			return;
-		}
-		case 'H': case 'h':		// ^H = BACKSPACE
-		{
-			if (!keydown[K_CTRL] || keydown[K_ALT])
-			{
-				break;
-			}
-		}
-		case K_BACKSPACE:
-		{
-			// added by jogi start
-			CompleteCommandNew_Reset();
-			// added by jogi stop
-			
-			// removes word before cursor
-			if(keydown[K_CTRL])
-			{
-				len = 0;
-
-				while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] == ' ')
-				{
-					key_linepos--;
-					len++;
-				}
-
-				while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] != ' ')
-				{
-					key_linepos--;
-					len++;
-				}
-
-				// remove spaces after this word leaving only last one
-				while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][key_linepos - 1] == ' ' && key_lines[edit_line][key_linepos - 2] == ' ')
-				{
-					key_linepos--;
-					len++;
-				}
-
-				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
-			}
-			else
-			{
-				Key_Console_Backspace();
-			}
-
-			// disable red chars mode if the last character was deleted
-			if(key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
-				con_redchars = false;
-
-			return;
-		}
-		case K_DEL:
-		{
-			// added by jogi start
-			if((del_removes) && (key_linepos == key_lineposorig))
-			{
-				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + last_cmd_length);
-
-				del_removes = 0;
-				called_second = 0;
-				try = 0;
-			}
-			// added by jogi stopp
-			
-			// removes word after cursor
-			if(keydown[K_CTRL])
-			{
-				i = key_linepos;
-				len = 0;				
-
-				while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] == ' ')
-				{
-					i++;
-					len++;
-				}
-
-				// don't remove regular chars if we removed spaces before
-				if(len == 0)
-				{
-					while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] != ' ' && key_lines[edit_line][i] != 0)
+					if (no_lf)
 					{
-						i++;
+						Cbuf_AddText ("\n");
+					}
+				}
+
+				// cut'n'paste rocks!
+				if (!print_in_console)
+					Print_flags[Print_current] |= PR_SKIP;
+
+				Con_PrintW (key_lines[edit_line]);	// FIXME logging
+
+				// cut'n'paste rocks!
+				if (!print_in_console)
+					Print_flags[Print_current] |= PR_SKIP;
+
+				Con_PrintW (str2wcs("\n"));
+
+				Key_ClearTyping ();
+
+				if (cls.state == ca_disconnected)
+					SCR_UpdateScreen ();	// force an update, because the command
+				// may take some time
+				return;
+			}
+		case K_TAB:
+			{
+				// Command completion
+				if (!(keydown[K_SHIFT]) && keydown[K_CTRL])
+				{
+					CompleteName ();
+				}
+				else
+				{
+					CompleteCommandNew ();
+				}
+				return;
+			}
+		case 'H': case 'h':		// ^H = BACKSPACE
+			{
+				if (!keydown[K_CTRL] || keydown[K_ALT])
+				{
+					break;
+				}
+			}
+		case K_BACKSPACE:
+			{
+				// added by jogi start
+				CompleteCommandNew_Reset();
+				// added by jogi stop
+
+				// removes word before cursor
+				if(keydown[K_CTRL])
+				{
+					len = 0;
+
+					while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] == ' ')
+					{
+						key_linepos--;
 						len++;
 					}
 
-					// remove spaces after this word
+					while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] != ' ')
+					{
+						key_linepos--;
+						len++;
+					}
+
+					// remove spaces after this word leaving only last one
+					while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][key_linepos - 1] == ' ' && key_lines[edit_line][key_linepos - 2] == ' ')
+					{
+						key_linepos--;
+						len++;
+					}
+
+					qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
+				}
+				else
+				{
+					Key_Console_Backspace();
+				}
+
+				// disable red chars mode if the last character was deleted
+				if(key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
+					con_redchars = false;
+
+				return;
+			}
+		case K_DEL:
+			{
+				// added by jogi start
+				if((del_removes) && (key_linepos == key_lineposorig))
+				{
+					qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + last_cmd_length);
+
+					del_removes = 0;
+					called_second = 0;
+					try = 0;
+				}
+				// added by jogi stopp
+
+				// removes word after cursor
+				if(keydown[K_CTRL])
+				{
+					i = key_linepos;
+					len = 0;				
+
 					while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] == ' ')
 					{
 						i++;
 						len++;
 					}
-				}
 
-				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
-			}
-			else
-			{
-				if(key_linepos < qwcslen(key_lines[edit_line]))
+					// don't remove regular chars if we removed spaces before
+					if(len == 0)
+					{
+						while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] != ' ' && key_lines[edit_line][i] != 0)
+						{
+							i++;
+							len++;
+						}
+
+						// remove spaces after this word
+						while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] == ' ')
+						{
+							i++;
+							len++;
+						}
+					}
+
+					qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
+				}
+				else
 				{
-					qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
+					if(key_linepos < qwcslen(key_lines[edit_line]))
+					{
+						qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
+					}
+				}
+
+				// disable red chars mode if the last character was deleted
+				if (key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
+					con_redchars = false;
+
+				return;
+			}
+		case K_RIGHTARROW:
+			{
+				if (keydown[K_CTRL])
+				{
+					// word right
+					i = qwcslen(key_lines[edit_line]);
+					while (key_linepos < i
+							&& key_lines[edit_line][key_linepos] != ' ')
+						key_linepos++;
+					while (key_linepos < i
+							&& key_lines[edit_line][key_linepos] == ' ')
+						key_linepos++;
+					return;
+				}
+				// added by jogi start
+				CompleteCommandNew_Reset();
+				// added by jogi stop
+				if (key_linepos < qwcslen(key_lines[edit_line]))
+					key_linepos++;
+				return;
+			}
+		case K_LEFTARROW:
+			{
+				if (keydown[K_CTRL])
+				{
+					// word left
+					while (key_linepos > 1
+							&& key_lines[edit_line][key_linepos - 1] ==
+							' ')
+						key_linepos--;
+					while (key_linepos > 1
+							&& key_lines[edit_line][key_linepos - 1] !=
+							' ')
+						key_linepos--;
+					return;
+				}
+				// addeded by jogi start
+				CompleteCommandNew_Reset();
+				// addeded by jogi start
+
+				if (key_linepos > 1)
+					key_linepos--;
+				return;
+			}
+		case 'P': case 'p':		// ^P = back in history
+			{
+				if (!keydown[K_CTRL] || keydown[K_ALT])
+				{
+					break;
 				}
 			}
+		case K_UPARROW:
+			{
+				if (key == K_UPARROW && keydown[K_CTRL])
+				{
+					AdjustConsoleHeight (-10);
+					return;
+				}
 
-			// disable red chars mode if the last character was deleted
-			if (key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
-				con_redchars = false;
+				do
+				{
+					history_line = (history_line - 1) & (CMDLINES - 1);
+				} while (history_line != edit_line && !key_lines[history_line][1]);
 
-			return;
-		}
-		case K_RIGHTARROW:
-		{
-			if (keydown[K_CTRL])
-			{
-				// word right
-				i = qwcslen(key_lines[edit_line]);
-				while (key_linepos < i
-					   && key_lines[edit_line][key_linepos] != ' ')
-					key_linepos++;
-				while (key_linepos < i
-					   && key_lines[edit_line][key_linepos] == ' ')
-					key_linepos++;
-				return;
-			}
-			// added by jogi start
-				CompleteCommandNew_Reset();
-			// added by jogi stop
-			if (key_linepos < qwcslen(key_lines[edit_line]))
-				key_linepos++;
-			return;
-		}
-		case K_LEFTARROW:
-		{
-			if (keydown[K_CTRL])
-			{
-				// word left
-				while (key_linepos > 1
-					   && key_lines[edit_line][key_linepos - 1] ==
-					   ' ')
-					key_linepos--;
-				while (key_linepos > 1
-					   && key_lines[edit_line][key_linepos - 1] !=
-					   ' ')
-					key_linepos--;
-				return;
-			}
-				// addeded by jogi start
-				CompleteCommandNew_Reset();
-				// addeded by jogi start
+				if (history_line == edit_line)
+				{
+					history_line = (edit_line + 1) & (CMDLINES - 1);
+				}
 
-			if (key_linepos > 1)
-				key_linepos--;
-			return;
-		}
-		case 'P': case 'p':		// ^P = back in history
-		{
-			if (!keydown[K_CTRL] || keydown[K_ALT])
-			{
-				break;
-			}
-		}
-	    case K_UPARROW:
-		{
-			if (key == K_UPARROW && keydown[K_CTRL])
-			{
-				AdjustConsoleHeight (-10);
-				return;
-			}
-
-			do
-			{
-				history_line = (history_line - 1) & (CMDLINES - 1);
-			} while (history_line != edit_line && !key_lines[history_line][1]);
-
-			if (history_line == edit_line)
-			{
-				history_line = (edit_line + 1) & (CMDLINES - 1);
-			}
-
-			qwcscpy(key_lines[edit_line], key_lines[history_line]);
-			key_linepos = qwcslen(key_lines[edit_line]);
-			return;
-		}
-		case 'N': case 'n':		// ^N = forward in history
-		{
-			if (!keydown[K_CTRL] || keydown[K_ALT])
-			{
-				break;
-			}
-		}
-		case K_DOWNARROW:
-		{
-			if (key == K_DOWNARROW && keydown[K_CTRL])
-			{
-				AdjustConsoleHeight (10);
-				return;
-			}
-
-			if (history_line == edit_line)
-			{
-				return;
-			}
-
-			do
-			{
-				history_line = (history_line + 1) & (CMDLINES - 1);
-			} while (history_line != edit_line && !key_lines[history_line][1]);
-
-			if (history_line == edit_line)
-			{
-				key_lines[edit_line][0] = con_prompt_charcode.integer;
-				key_lines[edit_line][1] = 0;
-				key_linepos = 1;
-			}
-			else
-			{
 				qwcscpy(key_lines[edit_line], key_lines[history_line]);
 				key_linepos = qwcslen(key_lines[edit_line]);
+				return;
 			}
-			return;
-		}
-	    case K_PGUP:
-	    case K_MWHEELUP:
-		{
-			if (keydown[K_CTRL] && key == K_PGUP)
+		case 'N': case 'n':		// ^N = forward in history
 			{
-				con.display -= ((int)scr_conlines - 22) >> 3;
+				if (!keydown[K_CTRL] || keydown[K_ALT])
+				{
+					break;
+				}
 			}
-			else
+		case K_DOWNARROW:
 			{
-				con.display -= 2;
-			}
+				if (key == K_DOWNARROW && keydown[K_CTRL])
+				{
+					AdjustConsoleHeight (10);
+					return;
+				}
 
-			if (con.display - con.current + con.numlines < 0)
-			{
-				con.display = con.current - con.numlines;
-			}
-			return;
-		}
-	    case K_MWHEELDOWN:
-	    case K_PGDN:
-		{
-			if (keydown[K_CTRL] && key == K_PGDN)
-			{
-				con.display += ((int)scr_conlines - 22) >> 3;
-			}
-			else
-			{
-				con.display += 2;
-			}
+				if (history_line == edit_line)
+				{
+					return;
+				}
 
-			if (con.display - con.current > 0)
-			{
-				con.display = con.current;
+				do
+				{
+					history_line = (history_line + 1) & (CMDLINES - 1);
+				} while (history_line != edit_line && !key_lines[history_line][1]);
+
+				if (history_line == edit_line)
+				{
+					key_lines[edit_line][0] = con_prompt_charcode.integer;
+					key_lines[edit_line][1] = 0;
+					key_linepos = 1;
+				}
+				else
+				{
+					qwcscpy(key_lines[edit_line], key_lines[history_line]);
+					key_linepos = qwcslen(key_lines[edit_line]);
+				}
+				return;
 			}
-			return;
-		}
-	    case K_HOME:
-		{
-			if (keydown[K_CTRL])
+		case K_PGUP:
+		case K_MWHEELUP:
 			{
-				con.display = con.current - con.numlines;
+				if (keydown[K_CTRL] && key == K_PGUP)
+				{
+					con.display -= ((int)scr_conlines - 22) >> 3;
+				}
+				else
+				{
+					con.display -= 2;
+				}
+
+				if (con.display - con.current + con.numlines < 0)
+				{
+					con.display = con.current - con.numlines;
+				}
+				return;
 			}
-			else
+		case K_MWHEELDOWN:
+		case K_PGDN:
 			{
-				key_linepos = 1;
+				if (keydown[K_CTRL] && key == K_PGDN)
+				{
+					con.display += ((int)scr_conlines - 22) >> 3;
+				}
+				else
+				{
+					con.display += 2;
+				}
+
+				if (con.display - con.current > 0)
+				{
+					con.display = con.current;
+				}
+				return;
 			}
-			return;
-		}
-	    case K_END:
-		{
-			if (keydown[K_CTRL])
+		case K_HOME:
 			{
-				con.display = con.current;
+				if (keydown[K_CTRL])
+				{
+					con.display = con.current - con.numlines;
+				}
+				else
+				{
+					key_linepos = 1;
+				}
+				return;
 			}
-			else
+		case K_END:
 			{
-				key_linepos = qwcslen(key_lines[edit_line]);
+				if (keydown[K_CTRL])
+				{
+					con.display = con.current;
+				}
+				else
+				{
+					key_linepos = qwcslen(key_lines[edit_line]);
+				}
+				return;
 			}
-			return;
-		}
 	}
 
 	if (((key == 'V' || key == 'v') && 
 #ifndef __APPLE__
-		 keydown[K_CTRL]
+				keydown[K_CTRL]
 #else
-		 keydown[K_CMD]
+				keydown[K_CMD]
 #endif
-		 && !keydown[K_ALT])
-		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
+				&& !keydown[K_ALT])
+			|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
 
@@ -1292,7 +1292,7 @@ void Key_Console (int key, int unichar)
 			{
 				// Insert the string.
 				memmove (key_lines[edit_line] + key_linepos + len,
-					key_lines[edit_line] + key_linepos, (qwcslen(key_lines[edit_line]) - key_linepos + 1)*sizeof(wchar));
+						key_lines[edit_line] + key_linepos, (qwcslen(key_lines[edit_line]) - key_linepos + 1)*sizeof(wchar));
 				memcpy (key_lines[edit_line] + key_linepos, clipText, len*sizeof(wchar));
 				key_linepos += len;
 			}
@@ -1407,23 +1407,23 @@ void Key_Message (int key, wchar unichar) {
 				switch (chat_team) {
 					case chat_mm2: Cbuf_AddText("say_team \""); break;
 					case chat_qtvtogame: 
-						if (cls.mvdplayback == QTV_PLAYBACK) {
-							Cbuf_AddText("say \"say_game ");  // QTV parses the text, no say_game command has been implemented
-						} else {
-							Cbuf_AddText("// "); // silence output to remove "unknown command" error message
-							Com_Printf("&cf00Error&r: &c090messagemodeqtvtogame&r requires you to be connected to a &c666QTV&r server\n");
-						}
-						break;
+						       if (cls.mvdplayback == QTV_PLAYBACK) {
+							       Cbuf_AddText("say \"say_game ");  // QTV parses the text, no say_game command has been implemented
+						       } else {
+							       Cbuf_AddText("// "); // silence output to remove "unknown command" error message
+							       Com_Printf("&cf00Error&r: &c090messagemodeqtvtogame&r requires you to be connected to a &c666QTV&r server\n");
+						       }
+						       break;
 #ifdef WITH_IRC
 					case chat_irc:
-						if (chat_buffer[0] == '/') {
-							irccommand = true;
-							Cbuf_AddText("irc ");	
-						}
-						else {
-							Cbuf_AddText("irc say \"");
-						}
-						break;
+						       if (chat_buffer[0] == '/') {
+							       irccommand = true;
+							       Cbuf_AddText("irc ");	
+						       }
+						       else {
+							       Cbuf_AddText("irc say \"");
+						       }
+						       break;
 #endif
 
 					default:
@@ -1438,21 +1438,21 @@ void Key_Message (int key, wchar unichar) {
 					Cbuf_AddText("\"\n");
 				}
 			}
-            
+
 			if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
-			    key_dest = key_dest_beforemm;
-            else
-                key_dest = key_game;
+				key_dest = key_dest_beforemm;
+			else
+				key_dest = key_game;
 
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
 			return;
 
 		case K_ESCAPE:
-            if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
-			    key_dest = key_dest_beforemm;
-            else
-                key_dest = key_game;
+			if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
+				key_dest = key_dest_beforemm;
+			else
+				key_dest = key_game;
 
 			chat_buffer[0] = 0;
 			chat_linepos = 0;
@@ -1507,7 +1507,7 @@ void Key_Message (int key, wchar unichar) {
 	}
 
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL] && !keydown[K_ALT])
-		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
+			|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
 
@@ -1520,7 +1520,7 @@ void Key_Message (int key, wchar unichar) {
 			{
 				// insert the string
 				memmove (chat_buffer + chat_linepos + len,
-					chat_buffer + chat_linepos, (qwcslen(chat_buffer) - chat_linepos + 1)*sizeof(wchar));
+						chat_buffer + chat_linepos, (qwcslen(chat_buffer) - chat_linepos + 1)*sizeof(wchar));
 				memcpy (chat_buffer + chat_linepos, clipText, len * sizeof(wchar));
 				chat_linepos += len;
 			}
@@ -1674,7 +1674,7 @@ qbool Key_IsLeftRightSameBind(int b) {
 		return false;
 
 	return	(b == K_CTRL || b == K_ALT || b == K_SHIFT || b == K_WIN) &&
-			(keybindings[b + 1] && keybindings[b + 2] && !strcmp(keybindings[b + 1], keybindings[b + 2]));
+		(keybindings[b + 1] && keybindings[b + 2] && !strcmp(keybindings[b + 1], keybindings[b + 2]));
 }
 
 void Key_Bind_f (void) {
@@ -1869,24 +1869,24 @@ void Key_Init (void) {
 	keyshift['\\'] = '|';
 
 	memset(hudeditorkeys, true, 512 * sizeof(qbool));
-    hudeditorkeys[K_ALT] = true;
-    hudeditorkeys[K_LALT] = true;
-    hudeditorkeys[K_SHIFT] = true;
-    hudeditorkeys[K_LSHIFT] = true;
-    hudeditorkeys[K_CTRL] = true;
-    hudeditorkeys[K_LCTRL] = true;
-    hudeditorkeys['h'] = true;
-    hudeditorkeys['p'] = true;
+	hudeditorkeys[K_ALT] = true;
+	hudeditorkeys[K_LALT] = true;
+	hudeditorkeys[K_SHIFT] = true;
+	hudeditorkeys[K_LSHIFT] = true;
+	hudeditorkeys[K_CTRL] = true;
+	hudeditorkeys[K_LCTRL] = true;
+	hudeditorkeys['h'] = true;
+	hudeditorkeys['p'] = true;
 	hudeditorkeys[K_SPACE] = true;
-    hudeditorkeys[K_F1] = true;
-    hudeditorkeys[K_F2] = true;
-    hudeditorkeys[K_F3] = true;
-    hudeditorkeys[K_F4] = true;
+	hudeditorkeys[K_F1] = true;
+	hudeditorkeys[K_F2] = true;
+	hudeditorkeys[K_F3] = true;
+	hudeditorkeys[K_F4] = true;
 	hudeditorkeys[K_MOUSE1] = true;
 	hudeditorkeys[K_MOUSE2] = true;
 	hudeditorkeys[K_MOUSE3] = true;
 
-    memset(&scr_pointer_state, 0, sizeof(mouse_state_t));
+	memset(&scr_pointer_state, 0, sizeof(mouse_state_t));
 
 	// register our functions
 	Cmd_AddCommand("bindlist",Key_BindList_f);
@@ -1896,7 +1896,7 @@ void Key_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register(&cl_chatmode);
 	Cvar_Register(&con_funchars_mode);
-    Cvar_Register(&con_tilde_mode);
+	Cvar_Register(&con_tilde_mode);
 	Cvar_Register(&con_completion_format);
 	Cvar_Register(&con_completion_color_value_current);
 	Cvar_Register(&con_completion_color_value_default);
@@ -1938,14 +1938,14 @@ static qbool Mouse_EventDispatch(void)
 			break;
 		default:
 			break;
-		// unhandled
+			// unhandled
 		case key_game:
 		case key_console:
 		case key_message:
 			break;
 	}
-    
-    return mouse_handled;
+
+	return mouse_handled;
 }
 
 // called by Key_Event, updates button states
@@ -1973,13 +1973,13 @@ qbool Mouse_ButtonEvent(int key, qbool down)
 // called by cl_screen.c each time it figures out that the mouse has moved
 void Mouse_MoveEvent(void)
 {
-    // no button has been pressed
-    scr_pointer_state.button_down = 0;
-    scr_pointer_state.button_up = 0;
+	// no button has been pressed
+	scr_pointer_state.button_down = 0;
+	scr_pointer_state.button_up = 0;
 
-    // the rest of scr_pointer_state has already been updated by cl_screen module
+	// the rest of scr_pointer_state has already been updated by cl_screen module
 
-    Mouse_EventDispatch();  // so just dispatch the message with new state
+	Mouse_EventDispatch();  // so just dispatch the message with new state
 }
 
 static qbool Key_IsConsoleToggle (int key)
@@ -1991,28 +1991,28 @@ static qbool Key_IsConsoleToggle (int key)
 // or send it to some client module.
 static qbool Key_ConsoleKey(int key)
 {
-    // This makes it possible to type chars under tilde key into the console.
+	// This makes it possible to type chars under tilde key into the console.
 	qbool con_toggle = Key_IsConsoleToggle(key);
-    qbool con_key = (con_tilde_mode.integer && con_toggle && (con_tilde_mode.integer == 1 || !CONSOLE_LINE_EMPTY())) ? true : consolekeys[key];
-    qbool hud_key = (con_tilde_mode.integer && con_toggle) ? true : hudeditorkeys[key];
+	qbool con_key = (con_tilde_mode.integer && con_toggle && (con_tilde_mode.integer == 1 || !CONSOLE_LINE_EMPTY())) ? true : consolekeys[key];
+	qbool hud_key = (con_tilde_mode.integer && con_toggle) ? true : hudeditorkeys[key];
 	qbool demo_controls_key = (con_tilde_mode.integer && con_toggle) ? true : democontrolskey[key];
 
-    if (key_dest == key_menu && Menu_ExecuteKey(key))
-        return false;
-    
-    if ((key_dest == key_console || key_dest == key_message) && !con_key)
-        return false;
-    
-    if (key_dest == key_game && (cls.state == ca_active || !con_key))
-        return false;
+	if (key_dest == key_menu && Menu_ExecuteKey(key))
+		return false;
 
-    if (key_dest == key_hudeditor && !hud_key)
-        return false;
+	if ((key_dest == key_console || key_dest == key_message) && !con_key)
+		return false;
+
+	if (key_dest == key_game && (cls.state == ca_active || !con_key))
+		return false;
+
+	if (key_dest == key_hudeditor && !hud_key)
+		return false;
 
 	if (key_dest == key_demo_controls && !demo_controls_key)
 		return false;
 
-    return true;
+	return true;
 }
 
 // Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
@@ -2044,14 +2044,14 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (down) 
 	{
 		key_repeats[key]++;
-		
+
 		if (key_repeats[key] > 1) 
 		{
 			if ((key != K_BACKSPACE && key != K_DEL
-				&& key != K_LEFTARROW && key != K_RIGHTARROW
-				&& key != K_UPARROW && key != K_DOWNARROW
-				&& key != K_PGUP && key != K_PGDN && (key < 32 || key > 126 || key == '`'))
-				|| (key_dest == key_game && cls.state == ca_active))
+						&& key != K_LEFTARROW && key != K_RIGHTARROW
+						&& key != K_UPARROW && key != K_DOWNARROW
+						&& key != K_PGUP && key != K_PGDN && (key < 32 || key > 126 || key == '`'))
+					|| (key_dest == key_game && cls.state == ca_active))
 			{
 				return;	// ignore most autorepeats
 			}
@@ -2099,11 +2099,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;
 	}
 
-    // Special case for accessing the menu via mouse when in console in disconnected mode:
-    if (key == K_MOUSE2 && key_dest == key_game && cls.state == ca_disconnected)
-    {
-        M_ToggleMenu_f();
-    }
+	// Special case for accessing the menu via mouse when in console in disconnected mode:
+	if (key == K_MOUSE2 && key_dest == key_game && cls.state == ca_disconnected)
+	{
+		M_ToggleMenu_f();
+	}
 
 	if (!down)
 	{
@@ -2147,7 +2147,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 				}
 			}
 		}
-		
+
 		return;
 	}
 
@@ -2167,7 +2167,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (!Key_ConsoleKey(key)) 
 	{
 		kb = keybindings[key];
-		
+
 		if (kb) 
 		{
 			if (Key_TryMovementProtected(kb, down, key)) {
@@ -2250,14 +2250,14 @@ void Key_Event (int key, qbool down)
 
 	assert (key >= 0 && key <= 255);
 
-    if (key >= K_MOUSE1 && key <= K_MOUSE8)
+	if (key >= K_MOUSE1 && key <= K_MOUSE8)
 	{
-        // if the Mouse_ButtonEvent return true means that the window which received
-        // a mouse click handled it and we do not have to send old
-        // K_MOUSE* key event
-        if (Mouse_ButtonEvent(key, down)) 
+		// if the Mouse_ButtonEvent return true means that the window which received
+		// a mouse click handled it and we do not have to send old
+		// K_MOUSE* key event
+		if (Mouse_ButtonEvent(key, down)) 
 			return;
-    }
+	}
 
 	if (key == K_MWHEELDOWN || key == K_MWHEELUP) {
 		// same logic applies here as for handling K_MOUSE1..8 buttons
@@ -2322,7 +2322,7 @@ void OnChange_con_prompt_charcode (cvar_t *var, char *string, qbool *cancel)
 	{
 		// changes prompt in current line
 		key_lines[edit_line][0] = charcode;
-		
+
 		// changes prompt in all lines
 		for (i = 0; i < CMDLINES; i++)
 		{
@@ -2343,31 +2343,31 @@ void OnChange_con_completion_color (cvar_t *var, char *string, qbool *cancel)
 char* escape_regex(char* string)
 {
 	// TODO: Rename and move this to a more appropriate place so other functions may use it (utils.c ?)
-    int i, j, len;
-    char *out = "";
+	int i, j, len;
+	char *out = "";
 
 	len = strlen(string);
 	out = (char*) Q_malloc(len * 2 * sizeof(char));
 
-    for(i = 0, j = 0; i < len; i++)
-    {
-        switch(string[i])
-        {
-            case '+':
-            case '.':
+	for(i = 0, j = 0; i < len; i++)
+	{
+		switch(string[i])
+		{
+			case '+':
+			case '.':
 			case '[':
 			case ']':
-                out[j++] = '\\';
-                out[j++] = string[i];
-                break;
-            default:
-                out[j++] = string[i];
-                break;
-        }
-    }
+				out[j++] = '\\';
+				out[j++] = string[i];
+				break;
+			default:
+				out[j++] = string[i];
+				break;
+		}
+	}
 
-    out[j++] = '\0';
+	out[j++] = '\0';
 
-    return out;
+	return out;
 }
 

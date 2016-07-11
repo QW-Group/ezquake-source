@@ -261,55 +261,55 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 
 void Update_Source(source_data *s)
 {
-    int i;
-    qbool should_dump = false;
-    server_data *servers[MAX_SERVERS];
-    int serversn = 0;
+	int i;
+	qbool should_dump = false;
+	server_data *servers[MAX_SERVERS];
+	int serversn = 0;
 
 	if (s->type == type_dummy)
-        return;
+		return;
 
-    if (s->type == type_file)
-    {
-        // read servers from file
-        char name[1024];
-        snprintf(name, sizeof (name), "sb/%s", s->address.filename);
-        should_dump = Update_Source_From_File(s, name, servers, &serversn);
-        GetLocalTime(&(s->last_update));
-    }
+	if (s->type == type_file)
+	{
+		// read servers from file
+		char name[1024];
+		snprintf(name, sizeof (name), "sb/%s", s->address.filename);
+		should_dump = Update_Source_From_File(s, name, servers, &serversn);
+		GetLocalTime(&(s->last_update));
+	}
 
 	if (s->type == type_url)
 	{	
 		SB_Update_Source_From_URL(s, servers, &serversn);
 	}
 
-    if (s->type == type_master)
-    {
-        // get servers from master server
-        char request[] = {'c', '\n', '\0'};
+	if (s->type == type_master)
+	{
+		// get servers from master server
+		char request[] = {'c', '\n', '\0'};
 
-        socket_t newsocket;
+		socket_t newsocket;
 		struct sockaddr_storage server;
-        int ret = 0, i;
-        unsigned char answer[10000];
-        fd_set fd;
-        struct timeval tv;
+		int ret = 0, i;
+		unsigned char answer[10000];
+		fd_set fd;
+		struct timeval tv;
 		int trynum;
 		int timeout;
 
-        newsocket = UDP_OpenSocket(PORT_ANY);
-        // so we have a socket
+		newsocket = UDP_OpenSocket(PORT_ANY);
+		// so we have a socket
 
-        // send status request
+		// send status request
 
 		for (trynum=0; trynum < sb_masterretries.value; trynum++) {
 			NetadrToSockadr (&(s->address.address), &server);
 			ret = sendto (newsocket, request, sizeof(request), 0,
-						  (struct sockaddr *)&server, sizeof(server) );
+					(struct sockaddr *)&server, sizeof(server) );
 		}
 
-        if (ret < 0)
-            return;
+		if (ret < 0)
+			return;
 
 		timeout = Sys_DoubleTime() + (sb_mastertimeout.value / 1000.0);
 		while (Sys_DoubleTime() < timeout) {
@@ -344,9 +344,9 @@ void Update_Source(source_data *s)
 					int j;
 
 					snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
-						(int)answer[i+0], (int)answer[i+1],
-						(int)answer[i+2], (int)answer[i+3],
-						256 * (int)answer[i+4] + (int)answer[i+5]);
+							(int)answer[i+0], (int)answer[i+1],
+							(int)answer[i+2], (int)answer[i+3],
+							256 * (int)answer[i+4] + (int)answer[i+5]);
 
 					server = Create_Server(buf);
 					for (j=0; j<serversn; j++) {
@@ -355,7 +355,7 @@ void Update_Source(source_data *s)
 							break;
 						}
 					}
-					
+
 					if (!exists)
 						servers[serversn++] = server;
 					else
@@ -363,42 +363,44 @@ void Update_Source(source_data *s)
 				}
 			}
 		}
- 
-        closesocket(newsocket);
-        
-    }
+
+		closesocket(newsocket);
+
+	}
 
 	SB_ServerList_Lock();
-    // copy all servers to source list
-    if (serversn > 0)
-    {
-        Reset_Source(s);
-        s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
+	// copy all servers to source list
+	if (serversn > 0)
+	{
+		Reset_Source(s);
+		s->servers = Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
 		for (i=0; i < serversn; i++)
 			s->servers[i] = servers[i];
-        s->serversn = serversn;
+		s->serversn = serversn;
 		s->servers_allocated = serversn + (s->type == type_file ? MAX_UNBOUND : 0);
 
-        if (s->checked)
-            rebuild_servers_list = 1;
+		if (s->checked)
+			rebuild_servers_list = 1;
 
-        if (sb_mastercache.value)
+		if (sb_mastercache.value)
 		{
 			DumpSource(s);
 			should_dump = false;
 		}
-        GetLocalTime(&(s->last_update));
-    }
-    else
-        if (s->type == type_file)
-        {
-            Reset_Source(s);
-            s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
-        }
+		GetLocalTime(&(s->last_update));
+	}
+	else {
+		if (s->type == type_file)
+		{
+			Reset_Source(s);
+			s->servers = Q_malloc(MAX_UNBOUND * sizeof(server_data *));
+		}
+	}
+
 	SB_ServerList_Unlock();
-    if (should_dump)
-        DumpSource(s);
-    //Com_Printf ("Updating %15.15s: %d servers\n", s->name, serversn);
+	if (should_dump)
+		DumpSource(s);
+	//Com_Printf ("Updating %15.15s: %d servers\n", s->name, serversn);
 }
 
 int updating_sources = 0;

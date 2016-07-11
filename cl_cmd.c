@@ -474,10 +474,10 @@ void CL_PrintQStatReply (char *s) {
 	Com_Printf ("map        %s\n", Info_ValueForKey(s, "map"));
 	if (*(p = Info_ValueForKey(s, "status")))
 		Com_Printf ("status     %s\n", p);
-		Com_Printf ("deathmatch %s\n", Info_ValueForKey(s, "deathmatch"));
-		Com_Printf ("teamplay   %s\n", Info_ValueForKey(s, "teamplay"));
-		Com_Printf ("timelimit  %s\n", Info_ValueForKey(s, "timelimit"));
-		Com_Printf ("fraglimit  %s\n", Info_ValueForKey(s, "fraglimit"));
+	Com_Printf ("deathmatch %s\n", Info_ValueForKey(s, "deathmatch"));
+	Com_Printf ("teamplay   %s\n", Info_ValueForKey(s, "teamplay"));
+	Com_Printf ("timelimit  %s\n", Info_ValueForKey(s, "timelimit"));
+	Com_Printf ("fraglimit  %s\n", Info_ValueForKey(s, "fraglimit"));
 	if ((n = Q_atoi(Info_ValueForKey(s, "needpass")) & 3) != 0)
 		Com_Printf ("needpass   %s%s%s\n", n & 1 ? "player" : "",
 			n == 3 ? ", " : "", n & 2 ? "spectator" : "");
