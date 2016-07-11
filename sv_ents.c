@@ -551,57 +551,57 @@ extern trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec
 
 qbool SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
 {
-    int		i;
-    trace_t	tr;
-    vec3_t	start;
-    vec3_t	end;
+	int		i;
+	trace_t	tr;
+	vec3_t	start;
+	vec3_t	end;
 	qbool	player;
 
-    if (seen->v.movetype == MOVETYPE_PUSH ) //dont cull doors and plats :(
-        return false;
+	if (seen->v.movetype == MOVETYPE_PUSH ) //dont cull doors and plats :(
+		return false;
 
 	i = NUM_FOR_EDICT(seen);
 	player = (i >= 1 && i <= MAX_CLIENTS);
 
 	//1 = only check player models, 2 = check all ents
-    if (sv_cullentities.value == 1 && !player)
-        return false;
+	if (sv_cullentities.value == 1 && !player)
+		return false;
 
-    memset (&tr, 0, sizeof(tr));                
-    tr.fraction = 1;
+	memset (&tr, 0, sizeof(tr));                
+	tr.fraction = 1;
 
-    start[0] = viewer->v.origin[0];
-    start[1] = viewer->v.origin[1];
-    start[2] = viewer->v.origin[2] + viewer->v.view_ofs[2];
+	start[0] = viewer->v.origin[0];
+	start[1] = viewer->v.origin[1];
+	start[2] = viewer->v.origin[2] + viewer->v.view_ofs[2];
 
-    //aim straight at the center of "seen" from our eyes
-    end[0] = 0.5 * (seen->v.mins[0] + seen->v.maxs[0]);
-    end[1] = 0.5 * (seen->v.mins[1] + seen->v.maxs[1]);
-    end[2] = 0.5 * (seen->v.mins[2] + seen->v.maxs[2]);            
+	//aim straight at the center of "seen" from our eyes
+	end[0] = 0.5 * (seen->v.mins[0] + seen->v.maxs[0]);
+	end[1] = 0.5 * (seen->v.mins[1] + seen->v.maxs[1]);
+	end[2] = 0.5 * (seen->v.mins[2] + seen->v.maxs[2]);            
 
-    tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
-    if (tr.fraction == 1)// line hit the ent
-            return false;
+	tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
+	if (tr.fraction == 1)// line hit the ent
+		return false;
 
-    //last attempt to eliminate any flaws...
-    if (player || sv_cullentities.value != 1)
-    {
-        for (i = 0; i < 64; i++)
-        {
-            end[0] = seen->v.origin[0] + offsetrandom(seen->v.mins[0], seen->v.maxs[0]);
-            end[1] = seen->v.origin[1] + offsetrandom(seen->v.mins[1], seen->v.maxs[1]);
-            end[2] = seen->v.origin[2] + offsetrandom(seen->v.mins[2], seen->v.maxs[2]);
+	//last attempt to eliminate any flaws...
+	if (player || sv_cullentities.value != 1)
+	{
+		for (i = 0; i < 64; i++)
+		{
+			end[0] = seen->v.origin[0] + offsetrandom(seen->v.mins[0], seen->v.maxs[0]);
+			end[1] = seen->v.origin[1] + offsetrandom(seen->v.mins[1], seen->v.maxs[1]);
+			end[2] = seen->v.origin[2] + offsetrandom(seen->v.mins[2], seen->v.maxs[2]);
 
-            tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
-            if (tr.fraction == 1)// line hit the ent
+			tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
+			if (tr.fraction == 1)// line hit the ent
 			{
-//				    Com_DPrintf (va("found ent in %i hits\n", i));
-                    return false;
+				//				    Com_DPrintf (va("found ent in %i hits\n", i));
+				return false;
 			}
-        }
-    }
+		}
+	}
 
-    return true;
+	return true;
 }
 
 /*

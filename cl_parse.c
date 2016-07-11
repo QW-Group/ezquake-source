@@ -2714,7 +2714,7 @@ void CL_ParsePrint (void)
 	level = MSG_ReadByte ();
 	s0 = MSG_ReadString ();
 
-// { QTV: check do this string is QTV chat
+	// { QTV: check do this string is QTV chat
 	qtvtmp = SkipQTVLeadingProxies(s0);
 
 	if (qtvtmp)
@@ -2743,7 +2743,7 @@ void CL_ParsePrint (void)
 
 		s0 = qtvstr;
 	}
-// }
+	// }
 
 	s = decode_string (s0);
 
@@ -2800,68 +2800,68 @@ void CL_ParsePrint (void)
 		}
 
 		if (!cl_chatsound.value ||						// no sound at all
-			(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
+				(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
 			suppress_talksound = true;
 
-        chat_sound_file = NULL;
+		chat_sound_file = NULL;
 
 		client = SeparateChat(s0, &type, &msg); // @CHECKME@
 
-        if (client >= 0 && !suppress_talksound)
-        {
+		if (client >= 0 && !suppress_talksound)
+		{
 			if (
-			    (
-			         (type == CHAT_MM1 || type == CHAT_SPEC)
-			      && (msg_filter.value == 1 || msg_filter.value == 3)
-				)
-			 || (
-			         (type == CHAT_MM2)
-			      && (msg_filter.value == 2 || msg_filter.value == 3)
-			    )
-			) {
+					(
+					 (type == CHAT_MM1 || type == CHAT_SPEC)
+					 && (msg_filter.value == 1 || msg_filter.value == 3)
+					)
+					|| (
+						(type == CHAT_MM2)
+						&& (msg_filter.value == 2 || msg_filter.value == 3)
+					   )
+			   ) {
 				return;
 			}
 
-            if (cl.players[client].spectator)
-            {
-                chat_sound_file = con_sound_spec_file.string;
-                chat_sound_vol = con_sound_spec_volume.value;
-            }
-            else
-            {
-                switch (type)
-                {
-                case CHAT_MM1:
-                    chat_sound_file = con_sound_mm1_file.string;
-                    chat_sound_vol = con_sound_mm1_volume.value;
-                    break;
-                case CHAT_MM2:
-                    chat_sound_file = con_sound_mm2_file.string;
-                    chat_sound_vol = con_sound_mm2_volume.value;
-                    break;
-                case CHAT_SPEC:
-                    chat_sound_file = con_sound_spec_file.string;
-                    chat_sound_vol = con_sound_spec_volume.value;
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-        if (chat_sound_file == NULL)
-        {
-            // assign "other" if not recognized
-            chat_sound_file = con_sound_other_file.string;
-            chat_sound_vol = con_sound_other_volume.value;
-        }
-		
-		if (chat_sound_vol > 0) 
+			if (cl.players[client].spectator)
+			{
+				chat_sound_file = con_sound_spec_file.string;
+				chat_sound_vol = con_sound_spec_volume.value;
+			}
+			else
+			{
+				switch (type)
+				{
+					case CHAT_MM1:
+						chat_sound_file = con_sound_mm1_file.string;
+						chat_sound_vol = con_sound_mm1_volume.value;
+						break;
+					case CHAT_MM2:
+						chat_sound_file = con_sound_mm2_file.string;
+						chat_sound_vol = con_sound_mm2_volume.value;
+						break;
+					case CHAT_SPEC:
+						chat_sound_file = con_sound_spec_file.string;
+						chat_sound_vol = con_sound_spec_volume.value;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		if (chat_sound_file == NULL)
 		{
-            S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
+			// assign "other" if not recognized
+			chat_sound_file = con_sound_other_file.string;
+			chat_sound_vol = con_sound_other_volume.value;
 		}
 
-	    if (level >= PRINT_HIGH && s[0]) // actually there are no need for level >= PRINT_HIGH check
-	        VID_NotifyActivity();
+		if (chat_sound_vol > 0) 
+		{
+			S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
+		}
+
+		if (level >= PRINT_HIGH && s[0]) // actually there are no need for level >= PRINT_HIGH check
+			VID_NotifyActivity();
 
 		if (s[0])  // KT sometimes sends empty strings
 		{
@@ -2994,29 +2994,29 @@ void CL_ParseStufftext (void)
 		// If someone requested protocol extensions we support - reply.
 
 #ifdef PROTOCOL_VERSION_FTE
-extern unsigned int CL_SupportedFTEExtensions (void);
+		extern unsigned int CL_SupportedFTEExtensions (void);
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
-extern unsigned int CL_SupportedFTEExtensions2 (void);
+		extern unsigned int CL_SupportedFTEExtensions2 (void);
 #endif // PROTOCOL_VERSION_FTE2
 
 		char tmp[128];
 		char data[1024] = "cmd pext";
 		int ext;
 
-		#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 		ext = cls.fteprotocolextensions ? cls.fteprotocolextensions : CL_SupportedFTEExtensions();
 		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, ext);
 		strlcat(data, tmp, sizeof(data));
-		#endif // PROTOCOL_VERSION_FTE 
+#endif // PROTOCOL_VERSION_FTE 
 
-		#ifdef PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_FTE2
 		ext = cls.fteprotocolextensions2 ? cls.fteprotocolextensions2 : CL_SupportedFTEExtensions2();
 		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
 		strlcat(data, tmp, sizeof(data));
-		#endif // PROTOCOL_VERSION_FTE2 
+#endif // PROTOCOL_VERSION_FTE2 
 
 		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
@@ -3069,11 +3069,11 @@ void CL_SetStat (int stat, int value)
 	}
 	else
 #endif
-	if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME)
-	{
-		cl.servertime_works = true;
-		cl.servertime = cl.stats[STAT_TIME] * 0.001;
-	}
+		if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME)
+		{
+			cl.servertime_works = true;
+			cl.servertime = cl.stats[STAT_TIME] * 0.001;
+		}
 
 	if (cl.stats[STAT_MATCHSTARTTIME])
 	{
@@ -3109,15 +3109,15 @@ void CL_MuzzleFlash (void)
 	{
 		// A monster firing
 		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
-		
+
 		for (j = 0; j < num_ent; j++) 
 		{
 			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
-			
+
 			if (ent->number == i) 
 			{
 				mod = cl.model_precache[ent->modelindex];
-				
+
 				// Special muzzleflashes for some enemies.
 				if (mod->modhint == MOD_SOLDIER)
 				{
@@ -3125,7 +3125,7 @@ void CL_MuzzleFlash (void)
 					VectorMA(ent->origin, 22, forward, org);
 					VectorMA(org, 10, right, org);
 					VectorMA(org, 12, up, org);
-					
+
 					if (amf_part_muzzleflash.value)
 					{
 						if (!ISPAUSED && amf_coronas.value)
@@ -3169,7 +3169,7 @@ void CL_MuzzleFlash (void)
 				dl->radius = 200 + (rand() & 31);
 				dl->minlight = 32;
 				dl->die = cl.time + 0.1;
-				
+
 				// Blue muzzleflashes for shamblers/teslas
 				if (mod->modhint == MOD_SHAMBLER || mod->modhint == MOD_TESLA)
 					dl->type = lt_blue;
@@ -3231,8 +3231,8 @@ void CL_ParseQizmoVoice (void)
 
 	for (i = 0; i < 32; i++)
 		MSG_ReadByte();
-/*
-	int i, seq, bits;
+	/*
+	   int i, seq, bits;
 
 	// Read the two-byte header.
 	seq = MSG_ReadByte();
@@ -3244,8 +3244,8 @@ void CL_ParseQizmoVoice (void)
 
 	// 32 bytes of voice data follow
 	for (i = 0; i < 32; i++)
-		MSG_ReadByte();
-*/
+	MSG_ReadByte();
+	*/
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
@@ -3301,418 +3301,418 @@ void CL_ParseServerMessage (void)
 
 		// Update msg no:
 		if (cmd < NUMMSG)
-    		cl_messages[cmd].msgs++;
+			cl_messages[cmd].msgs++;
 
-	    oldread = msg_readcount;
+		oldread = msg_readcount;
 
 		// Other commands
 		switch (cmd) 
 		{
 			default:
-			{	
-				Host_Error ("CL_ParseServerMessage: Illegible server message (%d)\n", cmd);
-				break;
-			}
-			case svc_nop:
-			{
-				break;
-			}
-			case svc_disconnect:
-			{
-				VID_NotifyActivity();
-
-				if (cls.mvdplayback == QTV_PLAYBACK)
-				{ 
-					// Workaround, do not disconnect in case of QTV playback
-					if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
-						Com_Printf("WARNING: Non-standard disconnect message from QTV '%s'\n", s);
+				{	
+					Host_Error ("CL_ParseServerMessage: Illegible server message (%d)\n", cmd);
 					break;
 				}
-
-				if (cls.mvdplayback == true) // MVD playback, but not QTV stream.
+			case svc_nop:
 				{
-					extern	int		pb_cnt;
+					break;
+				}
+			case svc_disconnect:
+				{
+					VID_NotifyActivity();
 
-					// We still have some data, so lets try ignore disconnect since it probably multy map MVD.
-					if (pb_cnt > 0)
-					{
+					if (cls.mvdplayback == QTV_PLAYBACK)
+					{ 
+						// Workaround, do not disconnect in case of QTV playback
 						if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
-							Com_Printf("WARNING: Non-standard disconnect message in MVD '%s'\n", s);
-
-						Com_DPrintf("Ignoring Server disconnect\n");
+							Com_Printf("WARNING: Non-standard disconnect message from QTV '%s'\n", s);
 						break;
 					}
-				}
 
-				if (cls.state == ca_connected) 
-				{
-					Host_Error( "Server disconnected\n"
+					if (cls.mvdplayback == true) // MVD playback, but not QTV stream.
+					{
+						extern	int		pb_cnt;
+
+						// We still have some data, so lets try ignore disconnect since it probably multy map MVD.
+						if (pb_cnt > 0)
+						{
+							if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
+								Com_Printf("WARNING: Non-standard disconnect message in MVD '%s'\n", s);
+
+							Com_DPrintf("Ignoring Server disconnect\n");
+							break;
+						}
+					}
+
+					if (cls.state == ca_connected) 
+					{
+						Host_Error( "Server disconnected\n"
 								"Server version may not be compatible");
-				} 
-				else if (cls.demoplayback && cls.state == ca_demostart) 
-				{
-					Com_DPrintf("Server disconnect found - hadn't started yet, ignoring.\n");
-				}
-				else 
-				{
-					Com_DPrintf("Server disconnected\n");
-					Host_EndGame();	// The server will be killed if it tries to kick the local player.
-					Host_Abort();
-				}
-				break;
-			}
-			case nq_svc_time:
-			{
-				MSG_ReadFloat();
-				break;
-			}
-			case svc_print:
-			{
-				CL_ParsePrint();
-				break;
-			}
-			case svc_centerprint:
-			{
-				// SCR_CenterPrint (MSG_ReadString ());
-				// Centerprint re-triggers
-				s = MSG_ReadString();
-				
-				if (!cls.demoseeking)
-				{
-					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-						SCR_CenterPrint(s);
-					Print_flags[Print_current] = 0;
-				}
-				break;
-			}
-			case svc_stufftext:
-			{
-				CL_ParseStufftext();
-				break;
-			}
-			case svc_damage:
-			{
-				V_ParseDamage();
-				break;
-			}
-			case svc_serverdata:
-			{
-				Cbuf_ExecuteEx(&cbuf_svc);		// make sure any stuffed commands are done
-				CL_ParseServerData();
-				vid.recalc_refdef = true;		// leave full screen intermission
-				break;
-			}
-			case svc_setangle:
-			{
-				if (cls.mvdplayback)
-					j = MSG_ReadByte();
-
-				for (i = 0; i < 3; i++)
-					newangles[i] = MSG_ReadAngle();
-
-				if (cls.demoseeking)
+					} 
+					else if (cls.demoplayback && cls.state == ca_demostart) 
+					{
+						Com_DPrintf("Server disconnect found - hadn't started yet, ignoring.\n");
+					}
+					else 
+					{
+						Com_DPrintf("Server disconnected\n");
+						Host_EndGame();	// The server will be killed if it tries to kick the local player.
+						Host_Abort();
+					}
 					break;
-
-				if (cls.mvdplayback) 
-				{
-					mvd_fixangle |= 1 << j;
-					if (j == Cam_TrackNum())
-						VectorCopy(newangles, cl.viewangles);
-				} 
-				else 
-				{
-					#ifdef I_WANT_HAX
-					// TODO: detect respawns
-					if (!Cvar_Value("cl_teleports_keep_pitch"))
-						cl.viewangles[0] = newangles[0];
-					cl.viewangles[1] = newangles[1];
-					cl.viewangles[2] = newangles[2];
-					#else
-					VectorCopy (newangles, cl.viewangles);
-					#endif // I_WANT_HAX
 				}
-				break;
-			}
+			case nq_svc_time:
+				{
+					MSG_ReadFloat();
+					break;
+				}
+			case svc_print:
+				{
+					CL_ParsePrint();
+					break;
+				}
+			case svc_centerprint:
+				{
+					// SCR_CenterPrint (MSG_ReadString ());
+					// Centerprint re-triggers
+					s = MSG_ReadString();
+
+					if (!cls.demoseeking)
+					{
+						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+							SCR_CenterPrint(s);
+						Print_flags[Print_current] = 0;
+					}
+					break;
+				}
+			case svc_stufftext:
+				{
+					CL_ParseStufftext();
+					break;
+				}
+			case svc_damage:
+				{
+					V_ParseDamage();
+					break;
+				}
+			case svc_serverdata:
+				{
+					Cbuf_ExecuteEx(&cbuf_svc);		// make sure any stuffed commands are done
+					CL_ParseServerData();
+					vid.recalc_refdef = true;		// leave full screen intermission
+					break;
+				}
+			case svc_setangle:
+				{
+					if (cls.mvdplayback)
+						j = MSG_ReadByte();
+
+					for (i = 0; i < 3; i++)
+						newangles[i] = MSG_ReadAngle();
+
+					if (cls.demoseeking)
+						break;
+
+					if (cls.mvdplayback) 
+					{
+						mvd_fixangle |= 1 << j;
+						if (j == Cam_TrackNum())
+							VectorCopy(newangles, cl.viewangles);
+					} 
+					else 
+					{
+#ifdef I_WANT_HAX
+						// TODO: detect respawns
+						if (!Cvar_Value("cl_teleports_keep_pitch"))
+							cl.viewangles[0] = newangles[0];
+						cl.viewangles[1] = newangles[1];
+						cl.viewangles[2] = newangles[2];
+#else
+						VectorCopy (newangles, cl.viewangles);
+#endif // I_WANT_HAX
+					}
+					break;
+				}
 			case svc_lightstyle:
-			{
-				i = MSG_ReadByte ();
-				if (i >= MAX_LIGHTSTYLES)
-					Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-				strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
-				cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
-				break;
-			}
+				{
+					i = MSG_ReadByte ();
+					if (i >= MAX_LIGHTSTYLES)
+						Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
+					strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+					cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
+					break;
+				}
 			case svc_sound:
-			{
-				CL_ParseStartSoundPacket();
-				break;
-			}
+				{
+					CL_ParseStartSoundPacket();
+					break;
+				}
 			case svc_stopsound:
-			{
-				i = MSG_ReadShort();
-				S_StopSound(i >> 3, i & 7);
-				break;
-			}
+				{
+					i = MSG_ReadShort();
+					S_StopSound(i >> 3, i & 7);
+					break;
+				}
 
 			case svc_updatefrags:
-			{
-				Sbar_Changed();
-				i = MSG_ReadByte();
-				if (i >= MAX_CLIENTS)
-					Host_Error("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
-				cl.players[i].frags = MSG_ReadShort();
-				break;
-			}
+				{
+					Sbar_Changed();
+					i = MSG_ReadByte();
+					if (i >= MAX_CLIENTS)
+						Host_Error("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
+					cl.players[i].frags = MSG_ReadShort();
+					break;
+				}
 			case svc_updateping:
-			{
-				i = MSG_ReadByte();
-				if (i >= MAX_CLIENTS)
-					Host_Error("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
-				cl.players[i].ping = MSG_ReadShort();
-				break;
-			}
+				{
+					i = MSG_ReadByte();
+					if (i >= MAX_CLIENTS)
+						Host_Error("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
+					cl.players[i].ping = MSG_ReadShort();
+					break;
+				}
 			case svc_updatepl:
-			{
-				i = MSG_ReadByte();
-				if (i >= MAX_CLIENTS)
-					Host_Error("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
-				cl.players[i].pl = MSG_ReadByte();
-				break;
-			}
+				{
+					i = MSG_ReadByte();
+					if (i >= MAX_CLIENTS)
+						Host_Error("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
+					cl.players[i].pl = MSG_ReadByte();
+					break;
+				}
 			case svc_updateentertime:
-			{
-				// Time is sent over as seconds ago.
-				i = MSG_ReadByte();
-				if (i >= MAX_CLIENTS)
-					Host_Error ("CL_ParseServerMessage: svc_updateentertime > MAX_CLIENTS");
-				cl.players[i].entertime = (cls.demoplayback ? cls.demotime : cls.realtime) - MSG_ReadFloat();
-				break;
-			}
+				{
+					// Time is sent over as seconds ago.
+					i = MSG_ReadByte();
+					if (i >= MAX_CLIENTS)
+						Host_Error ("CL_ParseServerMessage: svc_updateentertime > MAX_CLIENTS");
+					cl.players[i].entertime = (cls.demoplayback ? cls.demotime : cls.realtime) - MSG_ReadFloat();
+					break;
+				}
 			case svc_spawnbaseline:
-			{
-				i = MSG_ReadShort();
-				CL_ParseBaseline(&cl_entities[i].baseline);
-				break;
-			}
-			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+				{
+					i = MSG_ReadShort();
+					CL_ParseBaseline(&cl_entities[i].baseline);
+					break;
+				}
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
 			case svc_fte_spawnbaseline2:
-			{
-				CL_ParseSpawnBaseline2();
-				break;
-			}
-			#endif // PROTOCOL_VERSION_FTE
+				{
+					CL_ParseSpawnBaseline2();
+					break;
+				}
+#endif // PROTOCOL_VERSION_FTE
 			case svc_spawnstatic:
-			{
-				CL_ParseStatic(false);
-				break;
-			}
-			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+				{
+					CL_ParseStatic(false);
+					break;
+				}
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
 			case svc_fte_spawnstatic2:
-			{
-				if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
-					CL_ParseStatic(true);
-				else
-					Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
-				break;
-			}
-			#endif // PROTOCOL_VERSION_FTE
+				{
+					if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+						CL_ParseStatic(true);
+					else
+						Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
+					break;
+				}
+#endif // PROTOCOL_VERSION_FTE
 			case svc_temp_entity:
-			{
-				CL_ParseTEnt();
-				break;
-			}
+				{
+					CL_ParseTEnt();
+					break;
+				}
 			case svc_killedmonster:
-			{
-				cl.stats[STAT_MONSTERS]++;
-				break;
-			}
+				{
+					cl.stats[STAT_MONSTERS]++;
+					break;
+				}
 			case svc_foundsecret:
-			{
-				cl.stats[STAT_SECRETS]++;
-				break;
-			}
+				{
+					cl.stats[STAT_SECRETS]++;
+					break;
+				}
 			case svc_updatestat:
-			{
-				i = MSG_ReadByte();
-				j = MSG_ReadByte();
-				CL_SetStat(i, j);
-				break;
-			}
+				{
+					i = MSG_ReadByte();
+					j = MSG_ReadByte();
+					CL_SetStat(i, j);
+					break;
+				}
 			case svc_updatestatlong:
-			{
-				i = MSG_ReadByte();
-				j = MSG_ReadLong();
-				CL_SetStat(i, j);
-				break;
-			}
+				{
+					i = MSG_ReadByte();
+					j = MSG_ReadLong();
+					CL_SetStat(i, j);
+					break;
+				}
 			case svc_spawnstaticsound:
-			{
-				CL_ParseStaticSound();
-				break;
-			}
+				{
+					CL_ParseStaticSound();
+					break;
+				}
 			case svc_cdtrack:
-			{
-				cl.cdtrack = MSG_ReadByte ();
-				CDAudio_Play((byte)cl.cdtrack, true);
-				break;
-			}
+				{
+					cl.cdtrack = MSG_ReadByte ();
+					CDAudio_Play((byte)cl.cdtrack, true);
+					break;
+				}
 			case svc_intermission:
-			{
-				cl.intermission = 1;
-				cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
-				cl.solo_completed_time = cl.servertime;
-				vid.recalc_refdef = true;	// go to full screen
-				for (i = 0; i < 3; i++)
-					cl.simorg[i] = MSG_ReadCoord();
-				for (i = 0; i < 3; i++)
-					cl.simangles[i] = MSG_ReadAngle();
-				VectorClear(cl.simvel);
-				TP_ExecTrigger ("f_mapend");
-				break;
-			}
+				{
+					cl.intermission = 1;
+					cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+					cl.solo_completed_time = cl.servertime;
+					vid.recalc_refdef = true;	// go to full screen
+					for (i = 0; i < 3; i++)
+						cl.simorg[i] = MSG_ReadCoord();
+					for (i = 0; i < 3; i++)
+						cl.simangles[i] = MSG_ReadAngle();
+					VectorClear(cl.simvel);
+					TP_ExecTrigger ("f_mapend");
+					break;
+				}
 			case svc_finale:
-			{
-				cl.intermission = 2;
-				cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
-				cl.solo_completed_time = cl.servertime;
-				vid.recalc_refdef = true;	// go to full screen
-				SCR_CenterPrint(MSG_ReadString ());
-				break;
-			}
+				{
+					cl.intermission = 2;
+					cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+					cl.solo_completed_time = cl.servertime;
+					vid.recalc_refdef = true;	// go to full screen
+					SCR_CenterPrint(MSG_ReadString ());
+					break;
+				}
 			case svc_sellscreen:
-			{
-				Cmd_ExecuteString("help");
-				break;
-			}
+				{
+					Cmd_ExecuteString("help");
+					break;
+				}
 			case svc_smallkick:
-			{
-				cl.ideal_punchangle = -2;
-				break;
-			}
+				{
+					cl.ideal_punchangle = -2;
+					break;
+				}
 			case svc_bigkick:
-			{
-				cl.ideal_punchangle = -4;
-				break;
-			}
+				{
+					cl.ideal_punchangle = -4;
+					break;
+				}
 			case svc_muzzleflash:
-			{
-				CL_MuzzleFlash();
-				break;
-			}
+				{
+					CL_MuzzleFlash();
+					break;
+				}
 			case svc_updateuserinfo:
-			{
-				CL_UpdateUserinfo();
-				break;
-			}
+				{
+					CL_UpdateUserinfo();
+					break;
+				}
 			case svc_setinfo:
-			{
-				CL_SetInfo();
-				break;
-			}
+				{
+					CL_SetInfo();
+					break;
+				}
 			case svc_serverinfo:
-			{
-				CL_ParseServerInfoChange();
-				break;
-			}
+				{
+					CL_ParseServerInfoChange();
+					break;
+				}
 			case svc_download:
-			{
-				CL_ParseDownload();
-				break;
-			}
+				{
+					CL_ParseDownload();
+					break;
+				}
 			case svc_playerinfo:
-			{
-				if (cls.demorecording)
 				{
-					CL_InitialiseDemoMessageIfRequired();
-					MSG_WriteByte(&cls.demomessage, svc_playerinfo);
-				}
-				CL_ParsePlayerinfo();
-				break;
-			}
-			case svc_nails:
-			{
-				CL_ParseProjectiles(false);
-				break;
-			}
-			case svc_nails2:
-			{
-				if (!cls.mvdplayback)
-					Host_Error("CL_ParseServerMessage: svc_nails2 without cls.mvdplayback");
-				CL_ParseProjectiles(true);
-				break;
-			}
-			case svc_chokecount: // Some preceding packets were choked
-			{
-				i = MSG_ReadByte();
-				for (j = cls.netchan.incoming_acknowledged - 1; i > 0 && j > cls.netchan.outgoing_sequence - UPDATE_BACKUP; j--) 
-				{
-					if (cl.frames[j & UPDATE_MASK].receivedtime != -3) 
+					if (cls.demorecording)
 					{
-						cl.frames[j & UPDATE_MASK].receivedtime = -2;
-						i--;
+						CL_InitialiseDemoMessageIfRequired();
+						MSG_WriteByte(&cls.demomessage, svc_playerinfo);
 					}
+					CL_ParsePlayerinfo();
+					break;
 				}
-				break;
-			}
+			case svc_nails:
+				{
+					CL_ParseProjectiles(false);
+					break;
+				}
+			case svc_nails2:
+				{
+					if (!cls.mvdplayback)
+						Host_Error("CL_ParseServerMessage: svc_nails2 without cls.mvdplayback");
+					CL_ParseProjectiles(true);
+					break;
+				}
+			case svc_chokecount: // Some preceding packets were choked
+				{
+					i = MSG_ReadByte();
+					for (j = cls.netchan.incoming_acknowledged - 1; i > 0 && j > cls.netchan.outgoing_sequence - UPDATE_BACKUP; j--) 
+					{
+						if (cl.frames[j & UPDATE_MASK].receivedtime != -3) 
+						{
+							cl.frames[j & UPDATE_MASK].receivedtime = -2;
+							i--;
+						}
+					}
+					break;
+				}
 			case svc_modellist:
-			{
-				CL_ParseModellist(false);
-				break;
-			}
-			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+				{
+					CL_ParseModellist(false);
+					break;
+				}
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
 			case svc_fte_modellistshort:
-			{
-				if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
-					CL_ParseModellist(true);
-				else
-					Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
+				{
+					if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+						CL_ParseModellist(true);
+					else
+						Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
 
-				break;
-			}
-			#endif  // PROTOCOL_VERSION_FTE
+					break;
+				}
+#endif  // PROTOCOL_VERSION_FTE
 			case svc_soundlist:
-			{
-				CL_ParseSoundlist();
-				break;
-			}
+				{
+					CL_ParseSoundlist();
+					break;
+				}
 			case svc_packetentities:
-			{
-				CL_ParsePacketEntities(false);
-				break;
-			}
+				{
+					CL_ParsePacketEntities(false);
+					break;
+				}
 			case svc_deltapacketentities:
-			{
-				CL_ParsePacketEntities(true);
-				break;
-			}
+				{
+					CL_ParsePacketEntities(true);
+					break;
+				}
 			case svc_maxspeed:
-			{
-				cl.maxspeed = MSG_ReadFloat();
-				break;
-			}
+				{
+					cl.maxspeed = MSG_ReadFloat();
+					break;
+				}
 			case svc_entgravity :
-			{
-				cl.entgravity = MSG_ReadFloat();
-				break;
-			}
+				{
+					cl.entgravity = MSG_ReadFloat();
+					break;
+				}
 			case svc_setpause:
-			{
-				if (MSG_ReadByte())
-					cl.paused |= PAUSED_SERVER;
-				else
-					cl.paused &= ~PAUSED_SERVER;
+				{
+					if (MSG_ReadByte())
+						cl.paused |= PAUSED_SERVER;
+					else
+						cl.paused &= ~PAUSED_SERVER;
 
-				if (ISPAUSED)
-					CDAudio_Pause();
-				else
-					CDAudio_Resume();
-				break;
-			}
+					if (ISPAUSED)
+						CDAudio_Pause();
+					else
+						CDAudio_Resume();
+					break;
+				}
 			case svc_qizmovoice:
-			{
-				CL_ParseQizmoVoice();
-				break;
-			}
+				{
+					CL_ParseQizmoVoice();
+					break;
+				}
 		}
 
 		// cl_messages, update size

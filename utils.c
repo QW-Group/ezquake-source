@@ -53,21 +53,21 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 
 char *str_repeat (char *str, int amount)
 {
-    char *ret = NULL;
-    int i = 0;
+	char *ret = NULL;
+	int i = 0;
 
-    if (str == NULL)
-        return NULL;
+	if (str == NULL)
+		return NULL;
 
-    if (amount <= 0)
-        amount = 0;
+	if (amount <= 0)
+		amount = 0;
 
-    ret = (char *) Q_calloc(strlen(str) * amount + 1, sizeof(char)); 
+	ret = (char *) Q_calloc(strlen(str) * amount + 1, sizeof(char)); 
 
-    for (i = 0; i < amount; i++)
-        strcat(ret, str);
+	for (i = 0; i < amount; i++)
+		strcat(ret, str);
 
-    return ret;
+	return ret;
 }
 
 char *CreateSpaces(int amount) {
@@ -148,7 +148,7 @@ int StringToRGB_W(char *s, byte *rgb)
 	{
 		rgb[i] = (byte) Q_atoi(result);
 	}
-	
+
 	// TODO: Ok to do this in software also?
 	// Use normal quake pallete if not all arguments where given.
 	if (i < 3)
@@ -170,12 +170,12 @@ byte* StringToRGB(char *s)
 }
 
 /*
-	float f[10];
-	int size = sizeof(f)/sizeof(f[0]);
+   float f[10];
+   int size = sizeof(f)/sizeof(f[0]);
 
-	// this will fill "f" with succesfully parsed floats from first string parammeter
-	// "size" will contain count of parsed floats
-	ParseFloats("1.0 2.0 999 5", f, &size);
+// this will fill "f" with succesfully parsed floats from first string parammeter
+// "size" will contain count of parsed floats
+ParseFloats("1.0 2.0 999 5", f, &size);
 */
 int ParseFloats(char *s, float *f, int *f_size) {
 	int i, argc;
@@ -190,7 +190,7 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	Cmd_TokenizeStringEx(&ctx, s);
 
 	argc = min(Cmd_ArgcEx(&ctx), f_size[0]);
-	
+
 	for(i = 0; i < argc; i++)
 		f[i] = Q_atof(Cmd_ArgvEx(&ctx, i));
 
@@ -313,7 +313,7 @@ char *str_trim(char *str)
 		*str = '\0';
 		return orig_str;
 	}
-	
+
 	start = pos;
 	end = pos++;
 
@@ -452,7 +452,7 @@ static int Player_Compare (const void *p1, const void *p2) {
 	player_info_t *player1, *player2;
 	int team_comp;
 
-    player1 = *((player_info_t **) p1);
+	player1 = *((player_info_t **) p1);
 	player2 = *((player_info_t **) p2);
 
 	if (player1->spectator)
@@ -479,7 +479,7 @@ int Player_NumtoSlot (int num)
 			players[count++] = &cl.players[i];
 		}
 	}
-	
+
 	// Sort them according to team and if they're a spectator.
 	qsort(players, count, sizeof(player_info_t *), Player_Compare);
 
@@ -625,7 +625,7 @@ int Player_GetTrackId(int player_id)
 			players[count++] = &cl.players[i];
 		}
 	}
-	
+
 	// Sort them according to team and if they're a spectator.
 	qsort(players, count, sizeof(player_info_t *), Player_Compare);
 
@@ -659,7 +659,7 @@ int Player_GetSlot(char *arg)
 	{
 		return response;
 	}
-	
+
 	if ((response = Player_NumtoSlot(Q_atoi(arg + 1))) >= 0)
 	{
 		return response;
@@ -694,7 +694,7 @@ void RemoveColors (char *name, size_t len)
 	// get rid of whitespace
 	s = name;
 	for (s = name; *s == '_'; s++) ;
-		memmove (name, s, strlen(s) + 1);
+	memmove (name, s, strlen(s) + 1);
 
 	for (s = name + strlen(name); s > name  &&  (*(s - 1) == '_'); s--)
 		; // empty
@@ -762,22 +762,22 @@ static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
 void CopyToClipboard(const char *text)
 {
 #ifdef _WIN32
-    if (OpenClipboard(NULL))
-    {
-        LPTSTR  lptstrCopy;
-        HGLOBAL hglbCopy;
+	if (OpenClipboard(NULL))
+	{
+		LPTSTR  lptstrCopy;
+		HGLOBAL hglbCopy;
 
-        EmptyClipboard();
-        hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text)+1);
-        lptstrCopy = GlobalLock(hglbCopy);
-        strcpy((char *)lptstrCopy, text);
-        GlobalUnlock(hglbCopy);
-        SetClipboardData(CF_TEXT, hglbCopy);
+		EmptyClipboard();
+		hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text)+1);
+		lptstrCopy = GlobalLock(hglbCopy);
+		strcpy((char *)lptstrCopy, text);
+		GlobalUnlock(hglbCopy);
+		SetClipboardData(CF_TEXT, hglbCopy);
 
-        CloseClipboard();
-    }
+		CloseClipboard();
+	}
 #else
-    strlcpy (clipboard, text, CLIPBOARDSIZE);
+	strlcpy (clipboard, text, CLIPBOARDSIZE);
 #endif
 }
 
@@ -785,33 +785,33 @@ void CopyToClipboard(const char *text)
 char *ReadFromClipboard(void)
 {
 #ifdef _WIN32
-    static char clipbuf[1024];
-    int     i;
-    HANDLE  th;
-    char    *clipText;
+	static char clipbuf[1024];
+	int     i;
+	HANDLE  th;
+	char    *clipText;
 
-    clipbuf[0] = 0;
+	clipbuf[0] = 0;
 
-    if (OpenClipboard(NULL))
-    {
-        th = GetClipboardData(CF_TEXT);
-        if (th)
-        {
-            clipText = GlobalLock(th);
-            if (clipText)
-            {
-                strlcpy(clipbuf, clipText, sizeof (clipbuf));
-                for (i=0; i < strlen(clipbuf); i++)
-                    if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
-                        clipbuf[i] = ' ';
-            }
-            GlobalUnlock(th);
-        }
-        CloseClipboard();
-    }
-    return clipbuf;
+	if (OpenClipboard(NULL))
+	{
+		th = GetClipboardData(CF_TEXT);
+		if (th)
+		{
+			clipText = GlobalLock(th);
+			if (clipText)
+			{
+				strlcpy(clipbuf, clipText, sizeof (clipbuf));
+				for (i=0; i < strlen(clipbuf); i++)
+					if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
+						clipbuf[i] = ' ';
+			}
+			GlobalUnlock(th);
+		}
+		CloseClipboard();
+	}
+	return clipbuf;
 #else
-    return clipboard;
+	return clipboard;
 #endif
 }
 
@@ -851,77 +851,77 @@ qbool Util_F_Match (const char *_msg, char *f_request) {
 	Q_free(msg);
 	return true;
 }
-		
+
 
 void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 {
 	va_list ap;
 	char msg[1024];
-    char buf[256];
-    char *msgp;
+	char buf[256];
+	char *msgp;
 	int i, pad;
-    qbool right;
+	qbool right;
 	char *arg1, *arg2;
-	
-    // we will write the result back to src in code that follows
+
+	// we will write the result back to src in code that follows
 	strlcpy(msg,src,sizeof(msg));
-    msgp = msg;
-    *src = '\0';
+	msgp = msg;
+	*src = '\0';
 
 	while (*msgp)
-    {
+	{
 		if(*msgp != delim)
-        {
-            buf[0] = *msgp++;
-            buf[1] = '\0';
-            strlcat(src, buf, n);
-        }
+		{
+			buf[0] = *msgp++;
+			buf[1] = '\0';
+			strlcat(src, buf, n);
+		}
 		else
-        {
-            // process the delimiter
-            msgp++;
-            if (!*msgp) break;
-            
-            // process the initial minus
-            right = *msgp == '-';
-            if (right) msgp++;
-            if (!*msgp) break;
+		{
+			// process the delimiter
+			msgp++;
+			if (!*msgp) break;
 
-            // process the number
-            pad = atoi(msgp);
-            while (isdigit(*msgp)) msgp++;
-            if (!*msgp) break;
+			// process the initial minus
+			right = *msgp == '-';
+			if (right) msgp++;
+			if (!*msgp) break;
 
-            // go through all available patterns
+			// process the number
+			pad = atoi(msgp);
+			while (isdigit(*msgp)) msgp++;
+			if (!*msgp) break;
+
+			// go through all available patterns
 			va_start(ap, num_args);
 			for (i=0; i < num_args; i++)
-            {
+			{
 				arg1 = va_arg(ap,char *);   // the pattern
-                if (!arg1) break;
-                
-                arg2 = va_arg(ap,char *);   // the string to replace it with
+				if (!arg1) break;
+
+				arg2 = va_arg(ap,char *);   // the string to replace it with
 				if (!arg2) break;
 
 				// the pattern matched
-                if (*msgp == *arg1)
-                {
-                    if (pad)
-                    {
-					    if (right)  snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
-                        else        snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
-                    }
-                    else
-                    {
-                        strlcpy(buf, arg2, sizeof(buf));
+				if (*msgp == *arg1)
+				{
+					if (pad)
+					{
+						if (right)  snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
+						else        snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
 					}
-                    
-                    strlcat(src, buf, n);
-                    break;
+					else
+					{
+						strlcpy(buf, arg2, sizeof(buf));
+					}
+
+					strlcat(src, buf, n);
+					break;
 				}
 			}
 			va_end(ap);
 
-		msgp++;
+			msgp++;
 		}
 	}	
 }
@@ -929,30 +929,30 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 // compares two fun strings
 int funcmp(const char *s1, const char *s2)
 {
-    char *t1, *t2;
-    int ret;
+	char *t1, *t2;
+	int ret;
 
-    if (s1 == NULL  &&  s2 == NULL)
-        return 0;
+	if (s1 == NULL  &&  s2 == NULL)
+		return 0;
 
-    if (s1 == NULL)
-        return -1;
+	if (s1 == NULL)
+		return -1;
 
-    if (s2 == NULL)
-        return 1;
+	if (s2 == NULL)
+		return 1;
 
-    t1 = Q_strdup(s1);
-    t2 = Q_strdup(s2);
+	t1 = Q_strdup(s1);
+	t2 = Q_strdup(s2);
 
-    FunToSort(t1);
-    FunToSort(t2);
+	FunToSort(t1);
+	FunToSort(t2);
 
-    ret = strcmp(t1, t2);
+	ret = strcmp(t1, t2);
 
-    Q_free(t1);
-    Q_free(t2);
+	Q_free(t1);
+	Q_free(t2);
 
-    return ret;
+	return ret;
 }
 
 void FunToSort(char *text)
@@ -976,68 +976,68 @@ void FunToSort(char *text)
 			c  = tolower(c-128);
 		else {
 			switch (c) {
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 6:
-					case 7:
-					case 8:
-					case 9:
-					case 132:   // kwadrat
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 6:
+				case 7:
+				case 8:
+				case 9:
+				case 132:   // kwadrat
 					c = 210; break;
-					case 5:
-					case 14:
-					case 15:
-					case 28:
-					case 133:
-					case 142:
-					case 143:
-					case 156:   // dot
+				case 5:
+				case 14:
+				case 15:
+				case 28:
+				case 133:
+				case 142:
+				case 143:
+				case 156:   // dot
 					c = 201; break;
-					case 29:
-					case 157:   // <
+				case 29:
+				case 157:   // <
 					c = 202; break;
-					case 30:
-					case 158:   // -
+				case 30:
+				case 158:   // -
 					c = 203; break;
-					case 31:
-					case 159:   // >
+				case 31:
+				case 159:   // >
 					c = 204; break;
-					case 128:   // '('
+				case 128:   // '('
 					c = 205; break;
-					case 129:   // '='
+				case 129:   // '='
 					c = 206; break;
-					case 130:   // ')'
+				case 130:   // ')'
 					c = 207; break;
-					case 131:   // '+'
+				case 131:   // '+'
 					c = 208; break;
-					case 127:
-					case 255:   // <-
+				case 127:
+				case 255:   // <-
 					c = 209; break;
-					case 134:   // d1
+				case 134:   // d1
 					c = 211; break;
-					case 135:   // d2
+				case 135:   // d2
 					c = 212; break;
-					case 136:   // d3
+				case 136:   // d3
 					c = 213; break;
-					case 137:   // d4
+				case 137:   // d4
 					c = 214; break;
-					case 16:
-					case 144:   // '['
+				case 16:
+				case 144:   // '['
 					c = '['; break;
-					case 17:
-					case 145:   // ']'
+				case 17:
+				case 145:   // ']'
 					c = ']'; break;
-					case 141:   // '>'
+				case 141:   // '>'
 					c = 200; break;
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 138:
-					case 139:
-					case 140:   // ' '
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 138:
+				case 139:
+				case 140:   // ' '
 					c = ' '; break;
 			}
 		}
@@ -1258,7 +1258,7 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 	{
 		int substring_length = 0;
 		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
-		
+
 		if (resultlength != NULL)
 		{
 			(*resultlength) = substring_length;
@@ -1327,7 +1327,7 @@ qbool ReSearchMatch (const char *str)
 	int offsets[99];
 
 	result = pcre_exec(wildcard_re[wildcard_level-1],
-	                   wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
+			wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
 	return (result>0) ? true : false;
 }
 

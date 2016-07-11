@@ -74,22 +74,22 @@ char* SettingColorName(int color)
 
 float VARFVAL(const cvar_t *v)
 {
-    if ((v->flags & CVAR_LATCH) && v->latchedString)
-        return atof(v->latchedString);
-    else return v->value;
+	if ((v->flags & CVAR_LATCH) && v->latchedString)
+		return atof(v->latchedString);
+	else return v->value;
 }
 
 #define VARSVAL(x) (((x).flags & CVAR_LATCH) ? ((x).latchedString) : ((x).string))
 
 static int STHeight(setting* s) {
 	if (s->advanced && !menu_advanced.value)
-    {
-        return 0;
-    }
+	{
+		return 0;
+	}
 	switch (s->type) {
-	case stt_separator: return LINEHEIGHT*3;
-	case stt_advmark: case stt_basemark: return 0;
-    default: return LINEHEIGHT+PADDING;
+		case stt_separator: return LINEHEIGHT*3;
+		case stt_advmark: case stt_basemark: return 0;
+		default: return LINEHEIGHT+PADDING;
 	}
 }
 
@@ -105,7 +105,7 @@ static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 // tells what is the horizontal position of the left corner of the slider
 static int Slider_Startpos(int w)
 {
-    return w/2 + LETW*2;
+	return w/2 + LETW*2;
 }
 
 static void Setting_DrawIntNum(int x, int y, int w, setting* setting, qbool active)
@@ -154,11 +154,11 @@ static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 
 static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 {
-    // this will make it centered
-    UI_Print_Center(x, y, w, set->label, active);
+	// this will make it centered
+	UI_Print_Center(x, y, w, set->label, active);
 
-    // this will make it aligned to the left side from the center
-    // Setting_PrintLabel(x, y, w, set->label, active);
+	// this will make it aligned to the left side from the center
+	// Setting_PrintLabel(x, y, w, set->label, active);
 }
 
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
@@ -193,9 +193,9 @@ static void Setting_DrawEnum(int x, int y, int w, setting* set, qbool active)
 static void Setting_DrawString(int x, int y, int w, setting* setting, qbool active)
 {
 	int x0 = x;
-    x = Setting_PrintLabel(x,y,w, setting->label, active);
+	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	if (active) {
-        editbox.width = (w - x + x0) / 8;
+		editbox.width = (w - x + x0) / 8;
 		CEditBox_Draw(&editbox, x, y, true);
 	} else {
 		UI_Print(x, y, VARSVAL(*(setting->cvar)), false);
@@ -206,7 +206,7 @@ static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
 	if (VARFVAL(set->cvar) >= 0) {
-	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT, Sbar_ColorForMap(VARFVAL(set->cvar)));
+		Draw_Fill(x, y, LETW*3, LINEHEIGHT, Sbar_ColorForMap(VARFVAL(set->cvar)));
 		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) VARFVAL(set->cvar), COLORNAME(VARFVAL(set->cvar))), active);
 	} else
 		UI_Print(x, y, "off", active);
@@ -271,22 +271,22 @@ static void Setting_Increase(setting* set) {
 		case stt_num:
 		case stt_named:
 		case stt_playercolor:
-			newval = VARFVAL(set->cvar) + set->step;
-			if (set->max >= newval)
-				Cvar_SetValue(set->cvar, newval);
-			else if (set->type == stt_named || set->type == stt_playercolor)
-				Cvar_SetValue(set->cvar, set->min);
-			break;
+					 newval = VARFVAL(set->cvar) + set->step;
+					 if (set->max >= newval)
+						 Cvar_SetValue(set->cvar, newval);
+					 else if (set->type == stt_named || set->type == stt_playercolor)
+						 Cvar_SetValue(set->cvar, set->min);
+					 break;
 		case stt_action: if (set->actionfnc) set->actionfnc(); break;
 		case stt_enum: Setting_IncreaseEnum(set, set->step); break;
 		case stt_intnum:
-			*((int *)set->cvar) += set->step;
-			if (*((int *) set->cvar) > set->max) {
-				*((int *)set->cvar) = set->max;
-			}
-			break;
+			       *((int *)set->cvar) += set->step;
+			       if (*((int *) set->cvar) > set->max) {
+				       *((int *)set->cvar) = set->max;
+			       }
+			       break;
 
-		// unhandled
+			       // unhandled
 		case stt_separator:
 		case stt_string:
 		case stt_bind:
@@ -294,7 +294,7 @@ static void Setting_Increase(setting* set) {
 		case stt_advmark:
 		case stt_basemark:
 		case stt_blank:
-			break;
+			       break;
 	}
 }
 
@@ -307,22 +307,22 @@ static void Setting_Decrease(setting* set) {
 		case stt_num:
 		case stt_named:
 		case stt_playercolor:
-			newval = VARFVAL(set->cvar) - set->step;
-			if (set->min <= newval)
-				Cvar_SetValue(set->cvar, newval);
-			else if (set->type == stt_named || set->type == stt_playercolor)
-				Cvar_SetValue(set->cvar, set->max);
-			break;
+					 newval = VARFVAL(set->cvar) - set->step;
+					 if (set->min <= newval)
+						 Cvar_SetValue(set->cvar, newval);
+					 else if (set->type == stt_named || set->type == stt_playercolor)
+						 Cvar_SetValue(set->cvar, set->max);
+					 break;
 
 		case stt_enum: Setting_IncreaseEnum(set, -set->step); break;
 		case stt_intnum:
-			*((int *)set->cvar) -= set->step;
-			if (*((int *) set->cvar) < set->min) {
-				*((int *)set->cvar) = set->min;
-			}
-			break;
+			       *((int *)set->cvar) -= set->step;
+			       if (*((int *) set->cvar) < set->min) {
+				       *((int *)set->cvar) = set->min;
+			       }
+			       break;
 
-		//unhandled
+			       //unhandled
 		case stt_separator:
 		case stt_action:
 		case stt_string:
@@ -331,7 +331,7 @@ static void Setting_Decrease(setting* set) {
 		case stt_advmark:
 		case stt_basemark:
 		case stt_blank:
-			break;
+			       break;
 	}
 }
 
@@ -344,7 +344,7 @@ static void Setting_Reset(setting* set)
 		case stt_bool:
 			Cvar_ResetVar(set->cvar);
 			break;
-		// unhandled
+			// unhandled
 		case stt_bind:
 		case stt_separator:
 		case stt_custom:
@@ -387,38 +387,38 @@ static void Setting_UnbindKey(setting* set)
 
 static int Settings_PageHeight(const settings_page *page)
 {
-    return page->settings[page->count - 1].top + STHeight(page->settings + page->count - 1);
+	return page->settings[page->count - 1].top + STHeight(page->settings + page->count - 1);
 }
 
 // will find the lowest number of the setting on 'page' that can be used as the lowest viewpoint
 // and will ensure that whole bottom of the page is still visible
 static int Settings_LowestViewpoint(const settings_page *page)
 {
-    int bottom = Settings_PageHeight(page);
+	int bottom = Settings_PageHeight(page);
 
-    // represents the 'top' number we are looking for
-    int best_top = bottom - page->height;
+	// represents the 'top' number we are looking for
+	int best_top = bottom - page->height;
 
-    // presume the lowest viewpoint is the last entry
-    int lwp = page->count - 1;
+	// presume the lowest viewpoint is the last entry
+	int lwp = page->count - 1;
 
-    // this is when the page fits whole on the screen
-    if (bottom < page->height) return 0;
+	// this is when the page fits whole on the screen
+	if (bottom < page->height) return 0;
 
-    if (!page->count) return 0;
+	if (!page->count) return 0;
 
-    // it can only get better from now
-    while (lwp && page->settings[lwp].top >= best_top) lwp--;
+	// it can only get better from now
+	while (lwp && page->settings[lwp].top >= best_top) lwp--;
 
-    return lwp + 1;
+	return lwp + 1;
 }
 
 // adjusts current viewed area of the settings page
 static void CheckViewpoint(settings_page *tab)
 {
-    int lwp = Settings_LowestViewpoint(tab);
+	int lwp = Settings_LowestViewpoint(tab);
 
-    tab->viewpoint = bound(0, tab->viewpoint, lwp);
+	tab->viewpoint = bound(0, tab->viewpoint, lwp);
 
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
 
@@ -503,33 +503,33 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 	s = page->settings + page->marked;
 
 	switch (s->type) {
-	case stt_bool:
-	case stt_named:
-	case stt_num:
-	case stt_string:
-	case stt_playercolor:
-	case stt_enum:
-		buf[0] = 0;
-		helptext = "Further info not available...";
-		Help_VarDescription (s->cvar->name, buf, sizeof(buf));
-		helptext = buf;
-		break;
+		case stt_bool:
+		case stt_named:
+		case stt_num:
+		case stt_string:
+		case stt_playercolor:
+		case stt_enum:
+			buf[0] = 0;
+			helptext = "Further info not available...";
+			Help_VarDescription (s->cvar->name, buf, sizeof(buf));
+			helptext = buf;
+			break;
 
-	case stt_bind:
-		if (page->mode == SPM_BINDING)
-			helptext = "Press the key you want to assiciate with given action";
-		else
-			helptext = "Press Enter to change the associated key; Press Del to remove the binding";
-		break;
+		case stt_bind:
+			if (page->mode == SPM_BINDING)
+				helptext = "Press the key you want to assiciate with given action";
+			else
+				helptext = "Press Enter to change the associated key; Press Del to remove the binding";
+			break;
 
-	case stt_skin:
-		helptext = "Press [Enter] to choose a skin image for this type of player";
-		break;
+		case stt_skin:
+			helptext = "Press [Enter] to choose a skin image for this type of player";
+			break;
 
-	default:
-		if (s->description)
-			helptext = s->description;
-		break;
+		default:
+			if (s->description)
+				helptext = s->description;
+			break;
 	}
 
 	if (full) {
@@ -555,41 +555,41 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 // will draw the skin preview in given window
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
-    static mpic_t *curpic = NULL;
-    static char lastpicname[MAX_PATH] = "";
+	static mpic_t *curpic = NULL;
+	static char lastpicname[MAX_PATH] = "";
 
 	if (!skinfile) return;
 
-// this means the length of "qw/"
+	// this means the length of "qw/"
 #define QWDIRLEN 3
 
 	UI_DrawBox(x, y, w, h);
-    x += LETTERWIDTH;
-    y += LETTERHEIGHT;
-    w -= LETTERWIDTH;
-    h -= LETTERHEIGHT;
+	x += LETTERWIDTH;
+	y += LETTERHEIGHT;
+	w -= LETTERWIDTH;
+	h -= LETTERHEIGHT;
 
-    if (strcmp(lastpicname, skinfile))
-    {
-        char *c;
-        char buf[MAX_PATH];
+	if (strcmp(lastpicname, skinfile))
+	{
+		char *c;
+		char buf[MAX_PATH];
 
-        // get the "qw/skins/freddy" part from the full path
-        if (strlen(skinfile) <= strlen(com_basedir) + QWDIRLEN)
-        {
-            return;
-        }
-        c = skinfile + strlen(com_basedir) + QWDIRLEN + 1;
-        COM_StripExtension(c, buf, sizeof(buf));
+		// get the "qw/skins/freddy" part from the full path
+		if (strlen(skinfile) <= strlen(com_basedir) + QWDIRLEN)
+		{
+			return;
+		}
+		c = skinfile + strlen(com_basedir) + QWDIRLEN + 1;
+		COM_StripExtension(c, buf, sizeof(buf));
 
-        curpic = Draw_CachePicSafe(buf, false, true);
-        strlcpy(lastpicname, skinfile, sizeof(lastpicname));
-    }
+		curpic = Draw_CachePicSafe(buf, false, true);
+		strlcpy(lastpicname, skinfile, sizeof(lastpicname));
+	}
 
-    if (curpic)
-    {
-        Draw_FitPic(x, y, w, h, curpic);
-    }
+	if (curpic)
+	{
+		Draw_FitPic(x, y, w, h, curpic);
+	}
 #undef QWDIRLEN
 }
 
@@ -608,19 +608,19 @@ static int FindSetting_AtPos(const settings_page *page, int top)
 // where the user has clicked on the slidebar
 static void Setting_Slider_Click(const settings_page *page, const mouse_state_t *ms)
 {
-    double p, vmin, vmax, vnew, vsteps;
-    setting* s = page->settings + page->marked;
+	double p, vmin, vmax, vnew, vsteps;
+	setting* s = page->settings + page->marked;
 
-    p = (ms->x - Slider_Startpos(page->width)) / UI_SliderWidth();
-    p = bound(0, p, 1);
+	p = (ms->x - Slider_Startpos(page->width)) / UI_SliderWidth();
+	p = bound(0, p, 1);
 
-    if (s->type != stt_num && s->type != stt_intnum) return;
+	if (s->type != stt_num && s->type != stt_intnum) return;
 
-    vmin = s->min;
-    vmax = s->max;
-    vnew = vmin + (vmax-vmin) * p;
-    for (vsteps = vmin; vsteps < vmax && vsteps < vnew; vsteps += s->step) ; // empty body
-	
+	vmin = s->min;
+	vmax = s->max;
+	vnew = vmin + (vmax-vmin) * p;
+	for (vsteps = vmin; vsteps < vmax && vsteps < vnew; vsteps += s->step) ; // empty body
+
 	if (s->type == stt_intnum) {
 		*((int *) s->cvar) = vsteps;
 	}
@@ -635,7 +635,7 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 	setting_type type;
 	int oldm = tab->marked;
 	char *skinpath;
-    qbool skip_check_viewpoint = false;
+	qbool skip_check_viewpoint = false;
 
 	type = tab->settings[tab->marked].type;
 
@@ -653,8 +653,8 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 			skinpath = FL_GetCurrentPath(&skins_filelist);
 			if (skinpath) {
 				COM_StripExtension(COM_SkipPath(skinpath), buf, sizeof(buf));
-                if (strcmp(buf, "."))
-				    Cvar_Set(tab->settings[tab->marked].cvar, buf);
+				if (strcmp(buf, "."))
+					Cvar_Set(tab->settings[tab->marked].cvar, buf);
 			}
 			tab->mode = SPM_NORMAL;
 			return true;
@@ -668,95 +668,95 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 		return FL_Key(&skins_filelist, key);
 	}
 
-  if (tab->mode == SPM_VIEWHELP) {
-    tab->mode = SPM_NORMAL;
-    return true;
-  }
+	if (tab->mode == SPM_VIEWHELP) {
+		tab->mode = SPM_NORMAL;
+		return true;
+	}
 
 	switch (key) {
-	case K_DOWNARROW:   tab->marked++; break;
-	case K_UPARROW:     tab->marked--; up = true; break;
-	case K_MWHEELDOWN:
-        if (tab->viewpoint < Settings_LowestViewpoint(tab))
-            tab->viewpoint++;
+		case K_DOWNARROW:   tab->marked++; break;
+		case K_UPARROW:     tab->marked--; up = true; break;
+		case K_MWHEELDOWN:
+				    if (tab->viewpoint < Settings_LowestViewpoint(tab))
+					    tab->viewpoint++;
 
-        skip_check_viewpoint = true;
-        break;
+				    skip_check_viewpoint = true;
+				    break;
 
-	case K_MWHEELUP:
-        if (tab->viewpoint > 0)
-            tab->viewpoint--;
-        skip_check_viewpoint = true;
-        break;
+		case K_MWHEELUP:
+				    if (tab->viewpoint > 0)
+					    tab->viewpoint--;
+				    skip_check_viewpoint = true;
+				    break;
 
-    case K_PGDN: tab->marked += 5; break;
-	case K_PGUP: tab->marked -= 5; up = true; break;
-	case K_END: tab->marked = tab->count - 1; up = true; break;
-	case K_HOME: tab->marked = 0; break;
+		case K_PGDN: tab->marked += 5; break;
+		case K_PGUP: tab->marked -= 5; up = true; break;
+		case K_END: tab->marked = tab->count - 1; up = true; break;
+		case K_HOME: tab->marked = 0; break;
 
-	case K_ENTER: case K_MOUSE1: case '=': case KP_PLUS:
-		switch (type) {
-		case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
-		case stt_bind: tab->mode = SPM_BINDING; break;
-		case stt_skin: tab->mode = SPM_CHOOSESKIN; break;
-		default: Setting_Increase(tab->settings + tab->marked); break;
-		}
-		return true;
+		case K_ENTER: case K_MOUSE1: case '=': case KP_PLUS:
+			     switch (type) {
+				     case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
+				     case stt_bind: tab->mode = SPM_BINDING; break;
+				     case stt_skin: tab->mode = SPM_CHOOSESKIN; break;
+				     default: Setting_Increase(tab->settings + tab->marked); break;
+			     }
+			     return true;
 
-	case K_BACKSPACE: case '-': case KP_MINUS:
-		switch (type) {
-		case stt_action: return false;
-		case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
-		default: Setting_Decrease(tab->settings + tab->marked);	return true;
-		}
+		case K_BACKSPACE: case '-': case KP_MINUS:
+			     switch (type) {
+				     case stt_action: return false;
+				     case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
+				     default: Setting_Decrease(tab->settings + tab->marked);	return true;
+			     }
 
-	case K_DEL:
-		switch (type) {
-		case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
-		case stt_bind: Setting_UnbindKey(tab->settings + tab->marked); return true;
-		default: Setting_Reset(tab->settings + tab->marked); return true;
-		}
+		case K_DEL:
+			     switch (type) {
+				     case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
+				     case stt_bind: Setting_UnbindKey(tab->settings + tab->marked); return true;
+				     default: Setting_Reset(tab->settings + tab->marked); return true;
+			     }
 
-	case K_F1:
-	case K_INS:
-		switch (tab->mode) {
-		case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
-		case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
-		// unhandled
-		case SPM_BINDING:
-		case SPM_CHOOSESKIN:
-			break;
-		}
-		break;
+		case K_F1:
+		case K_INS:
+			     switch (tab->mode) {
+				     case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
+				     case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
+							// unhandled
+				     case SPM_BINDING:
+				     case SPM_CHOOSESKIN:
+							break;
+			     }
+			     break;
 
-	case K_MOUSE2:
-		if (tab->mode == SPM_VIEWHELP) {
-			tab->mode = SPM_NORMAL; return true;
-		} else return false;
+		case K_MOUSE2:
+			     if (tab->mode == SPM_VIEWHELP) {
+				     tab->mode = SPM_NORMAL; return true;
+			     } else return false;
 
-	case K_ESCAPE:
-		if (tab->mode == SPM_VIEWHELP) {
-			tab->mode = SPM_NORMAL;
-			return true;
-		} else return false;
+		case K_ESCAPE:
+			     if (tab->mode == SPM_VIEWHELP) {
+				     tab->mode = SPM_NORMAL;
+				     return true;
+			     } else return false;
 
-	default:
-		switch (type) {
-		case stt_string:
-			if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
-				CEditBox_Key(&editbox, key, unichar);
-				return true;
-			}
-			return false;
+		default:
+			     switch (type) {
+				     case stt_string:
+					     if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
+						     CEditBox_Key(&editbox, key, unichar);
+						     return true;
+					     }
+					     return false;
 
-		default: return false;
-		}
+				     default: return false;
+			     }
 	}
 
 	CheckCursor(tab, up);
 
-    if (!skip_check_viewpoint)
-        CheckViewpoint(tab);
+	if (!skip_check_viewpoint)
+		CheckViewpoint(tab);
 
 	EditBoxCheck(tab, oldm, tab->marked);
 	return true;
@@ -764,23 +764,23 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 
 static void Setting_Click(settings_page* page, const mouse_state_t *ms)
 {
-    // don't accept clicks on the label
-    if (ms->x < page->width/2 && (page->settings + page->marked)->type != stt_action) return;
+	// don't accept clicks on the label
+	if (ms->x < page->width/2 && (page->settings + page->marked)->type != stt_action) return;
 
-    if (page->settings[page->marked].type == stt_num) {
-        Setting_Slider_Click(page, ms);
-    } else Settings_Key(page, K_MOUSE1, 0);
+	if (page->settings[page->marked].type == stt_num) {
+		Setting_Slider_Click(page, ms);
+	} else Settings_Key(page, K_MOUSE1, 0);
 }
 
 static void Settings_AdjustScrollBar(settings_page *page)
 {
-    double lwp = Settings_LowestViewpoint(page);
-    double percentage = lwp ? (double) page->viewpoint / lwp : 0;
+	double lwp = Settings_LowestViewpoint(page);
+	double percentage = lwp ? (double) page->viewpoint / lwp : 0;
 
-    // do not adjust the scrollbar if we are scrolling, it would look weird
-    if (page->scrollbar->mouselocked) return;
+	// do not adjust the scrollbar if we are scrolling, it would look weird
+	if (page->scrollbar->mouselocked) return;
 
-    page->scrollbar->curpos = bound(0, percentage, 1);
+	page->scrollbar->curpos = bound(0, percentage, 1);
 }
 
 void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
@@ -810,7 +810,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		return;
 	}
 
-    w -= tab->scrollbar->width;
+	w -= tab->scrollbar->width;
 
 	if (!tab->mini) {
 		if (tab->mode != SPM_VIEWHELP) {
@@ -822,11 +822,11 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		}
 	}
 
-    tab->width = w; tab->height = h;
+	tab->width = w; tab->height = h;
 
-    Settings_AdjustScrollBar(tab);
-    if (tab->height < Settings_PageHeight(tab))
-        ScrollBar_Draw(tab->scrollbar, x + w, y, h);
+	Settings_AdjustScrollBar(tab);
+	if (tab->height < Settings_PageHeight(tab))
+		ScrollBar_Draw(tab->scrollbar, x + w, y, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)
 	{
@@ -851,11 +851,11 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
 			case stt_skin: Setting_DrawSkin(x, y, w, set, active); break;
 			case stt_bind: Setting_DrawBind(x, y, w, set, active, tab->mode == SPM_BINDING); break;
-			// unhandled
+				       // unhandled
 			case stt_advmark:
 			case stt_basemark:
 			case stt_blank:
-				break;
+				       break;
 		}
 		y += ch;
 		//if (i < tab->count)
@@ -878,60 +878,60 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	int nmark;
 	int omark = page->marked;
 
-    // scrollbar associated with this page handles the event
-    // page has to be in normal mode and user is already scrolling or
-    // just started scrolling
-    if (page->mode == SPM_NORMAL && (page->scrollbar->mouselocked ||
-        (ms->x > (page->width - page->scrollbar->width))))
-    {
-        if (ScrollBar_MouseEvent(page->scrollbar, ms))
-        {
-            page->viewpoint = Settings_LowestViewpoint(page) * page->scrollbar->curpos;
-        }
+	// scrollbar associated with this page handles the event
+	// page has to be in normal mode and user is already scrolling or
+	// just started scrolling
+	if (page->mode == SPM_NORMAL && (page->scrollbar->mouselocked ||
+				(ms->x > (page->width - page->scrollbar->width))))
+	{
+		if (ScrollBar_MouseEvent(page->scrollbar, ms))
+		{
+			page->viewpoint = Settings_LowestViewpoint(page) * page->scrollbar->curpos;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    if (page->mode == SPM_NORMAL && ms->button_up == 1) {
-        Setting_Click(page, ms);
-        return true;
-    }
+	if (page->mode == SPM_NORMAL && ms->button_up == 1) {
+		Setting_Click(page, ms);
+		return true;
+	}
 
 	switch (page->mode) {
-	case SPM_BINDING:
-        if (ms->button_down) return true;
-        if (ms->button_up) {
-            Setting_BindKey(page->settings + page->marked, K_MOUSE1 + ms->button_up - 1);
-            page->mode = SPM_NORMAL;
-            return true;
-        }
-        break;
+		case SPM_BINDING:
+			if (ms->button_down) return true;
+			if (ms->button_up) {
+				Setting_BindKey(page->settings + page->marked, K_MOUSE1 + ms->button_up - 1);
+				page->mode = SPM_NORMAL;
+				return true;
+			}
+			break;
 
-    case SPM_CHOOSESKIN:
-        if (FL_Mouse_Event(&skins_filelist, ms)) return true;
-        else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1, 0);
-        return true;
-		break;
+		case SPM_CHOOSESKIN:
+			if (FL_Mouse_Event(&skins_filelist, ms)) return true;
+			else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1, 0);
+			return true;
+			break;
 
-	case SPM_NORMAL:
-		nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
-		nmark = bound(0, nmark, page->count - 1);
-		if ((page->settings[nmark].type == stt_num || page->settings[nmark].type == stt_intnum)
-			&& ms->buttons[1] == true)
-        {
-            Setting_Slider_Click(page, ms);
-        }
-		else if (page->settings[nmark].type != stt_separator)
-		{
-			page->marked = nmark;
-			CheckCursor(page, ms->x < ms->x_old);
-			EditBoxCheck(page, omark, nmark);
-		}
-		return true;
+		case SPM_NORMAL:
+			nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
+			nmark = bound(0, nmark, page->count - 1);
+			if ((page->settings[nmark].type == stt_num || page->settings[nmark].type == stt_intnum)
+					&& ms->buttons[1] == true)
+			{
+				Setting_Slider_Click(page, ms);
+			}
+			else if (page->settings[nmark].type != stt_separator)
+			{
+				page->marked = nmark;
+				CheckCursor(page, ms->x < ms->x_old);
+				EditBoxCheck(page, omark, nmark);
+			}
+			return true;
 
-	case SPM_VIEWHELP:
-		return false;
-		break;
+		case SPM_VIEWHELP:
+			return false;
+			break;
 	}
 	return false;
 }
@@ -947,7 +947,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	page->settings = arr;
 	page->viewpoint = 0;
 	page->mode = SPM_NORMAL;
-    page->scrollbar = ScrollBar_Create(NULL);
+	page->scrollbar = ScrollBar_Create(NULL);
 	page->mini = false;
 
 	for (i = 0; i < size; i++) {
@@ -978,11 +978,11 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 void Settings_MainInit(void)
 {
 	FL_Init(&skins_filelist, "./qw/skins");
-	
+
 	FL_SetDirUpOption(&skins_filelist, false);
 	FL_SetDirsOption(&skins_filelist, false);
 	FL_AddFileType(&skins_filelist, 0, ".pcx");
-    FL_AddFileType(&skins_filelist, 1, ".png");
-    FL_AddFileType(&skins_filelist, 2, ".jpg");
-    FL_AddFileType(&skins_filelist, 3, ".tga");
+	FL_AddFileType(&skins_filelist, 1, ".png");
+	FL_AddFileType(&skins_filelist, 2, ".jpg");
+	FL_AddFileType(&skins_filelist, 3, ".tga");
 }
