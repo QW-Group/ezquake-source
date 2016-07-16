@@ -71,7 +71,7 @@ static void VID_UpdateConRes(void);
 void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
-static SDL_GLContext    *sdl_context;
+static SDL_GLContext    sdl_context;
 
 glconfig_t glConfig;
 qbool vid_hwgamma_enabled = false;
