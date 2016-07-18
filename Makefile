@@ -69,6 +69,9 @@ else
         # From  10.10 at least, expat is a system library
         EXPAT_CFLAGS =
         EXPAT_LIBS = -lexpat
+
+        CURL_CFLAGS =
+        CURL_LIBS = -lcurl
     endif
 endif
 
