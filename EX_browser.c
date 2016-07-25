@@ -1282,11 +1282,11 @@ void Serverinfo_Draw (void)
 
 	strlcpy(buf, " players serverinfo sources ", sizeof(buf));
 	if (serverinfo_pos == 0)
-		memcpy (buf, "\x10πμαωεςσ\x11", 9); // FIXME: non-ascii chars
+		memcpy (buf, "\x10\xF0\xEC\xE1\xF9\xE5\xF2\xF3\x11", 9);
 	if (serverinfo_pos == 1)
-		memcpy (buf + 8, "\x10σεςφεςιξζο\x11", 12); // FIXME: non-ascii chars
+		memcpy (buf + 8, "\x10\xF3\xE5\xF2\xF6\xE5\xF2\xE9\xEE\xE6\xEF\x11", 12); // FIXME: non-ascii chars
 	if (serverinfo_pos == 2)
-		memcpy (buf + 19, "\x10σουςγεσ\x11", 9); // FIXME: non-ascii chars
+		memcpy (buf + 19, "\x10\xF3\xEF\xF5\xF2\xE3\xE5\xF3\x11", 9); // FIXME: non-ascii chars
 
 	UI_Print_Center(x, y+24, w, buf, false);
 
@@ -2088,7 +2088,7 @@ int SB_Servers_Key(int key)
 			if (!SearchNextServer(Servers_pos)) {
 				if (!SearchNextServer(0)) {
 					// FIXME: non-ascii chars
-					strlcpy (searchstring, "ξοτ ζουξδ", sizeof (searchstring));  // not found
+					strlcpy (searchstring, "\xEE\xEF\xF4 \xE6\xEF\xF5\xEE\xE4", sizeof (searchstring));  // not found
 				}
 			}
 		}

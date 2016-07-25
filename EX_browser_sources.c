@@ -940,8 +940,6 @@ void Rebuild_Servers_List(void)
                 if (! found_duplicate) {
                     // if not on list yet
                     if (serversn < server_limit) {
-						if (sources[i]->servers[j]->ping < -1)
-							serversn = serversn;
                         servers[serversn++] = sources[i]->servers[j];
                     }
                     else {

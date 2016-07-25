@@ -2737,9 +2737,9 @@ void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel)
 	else if (amf_inferno_trail.value == 3)
 	{
 		VectorSubtract(start, end, vec);
-		vec[0] =- vec[0];
-		vec[1] =- vec[1];
-		//vec[2] =- vec[2];
+		vec[0] = -vec[0];
+		vec[1] = -vec[1];
+		//vec[2] = -vec[2];
 		vectoangles(vec, dir);
 		col[0] = 0; col[1] = 255; col[2] = 0;
 		FuelRodGunTrail (start, end, dir, &trail);
@@ -2747,9 +2747,9 @@ void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel)
 	else if (amf_inferno_trail.value == 4)
 	{
 		VectorSubtract(start, end, vec);
-		vec[0] =- vec[0]/600;
-		vec[1] =- vec[1]/600;
-		vec[2] =- vec[2]/600;
+		vec[0] = -vec[0]/600;
+		vec[1] = -vec[1]/600;
+		vec[2] = -vec[2]/600;
 		vectoangles(vec, dir);
 		col[0] = 255; col[1] = 70; col[2] = 5;
 		FireballTrailWave (start, end, &trail, col, 2, 0.5, dir);

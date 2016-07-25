@@ -352,7 +352,8 @@ char *Macro_BestWeaponAndAmmo (void)
 	char buf[MAX_MACRO_VALUE];
 
 	snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
-	strlcpy (macro_buf, buf, sizeof(buf));
+
+	strlcpy (macro_buf, buf, sizeof(macro_buf));
 	return macro_buf;
 }
 

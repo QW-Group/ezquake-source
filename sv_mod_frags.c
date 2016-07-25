@@ -76,6 +76,8 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 		{
 			if (fgets(buf, sizeof(buf), fp))
 			{
+				size_t length;
+
 				qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 				// fill system_id
 				str_tok = (char *)strtok(buf, "#");
@@ -91,8 +93,10 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 				qwmsg[i]->reverse = Q_atoi(str_tok) ? true : false;
 				// fill str
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->str =  (char *) Q_malloc (strlen(str_tok) + 1);
-				strlcpy(qwmsg[i]->str, str_tok, strlen(str_tok) + 1);
+
+				length = strlen (str_tok) + 1;
+				qwmsg[i]->str =  (char *) Q_malloc (length);
+				strlcpy(qwmsg[i]->str, str_tok, length);
 			}
 			else
 				break;

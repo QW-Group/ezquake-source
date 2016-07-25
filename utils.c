@@ -1101,7 +1101,7 @@ char *CharsToBrownStatic(char *in) // Print brown characters to console
 
 void CharsToWhite(char* start, char* end)
 {
-	char *p = start;
+	unsigned char *p = (unsigned char *)start;
 
 	while (p < end) {
 		if ( *p > 160 )

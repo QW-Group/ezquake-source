@@ -215,13 +215,15 @@ void SV_LoadGame_f (void) {
 
 	// load the light styles
 	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
+		size_t length;
 		if (fscanf (f, "%s\n", str) != 1) {
 			Com_Printf("Couldn't read lightstyles\n");
 			fclose (f);
 			return;
 		}
-		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
-		strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
+		length = strlen (str) + 1;
+		sv.lightstyles[i] = (char *) Hunk_Alloc (length);
+		strlcpy (sv.lightstyles[i], str, length);
 	}
 
 	// pause until all clients connect
