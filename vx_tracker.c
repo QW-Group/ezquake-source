@@ -80,8 +80,8 @@ typedef struct
 trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
 
 static struct {
-    double time;
-    char text[MAX_SCOREBOARDNAME+20];
+	double time;
+	char text[MAX_SCOREBOARDNAME+20];
 } ownfragtext;
 
 void InitTracker(void)
@@ -130,9 +130,9 @@ void VX_TrackerClear(void)
 	{
 		trackermsg[i].die = -1;
 		trackermsg[i].msg[0] = 0;
-//		trackermsg[i].tt = ; // no need
+		//		trackermsg[i].tt = ; // no need
 	}
-    ownfragtext.text[0] = '\0';
+	ownfragtext.text[0] = '\0';
 }
 
 //When a message fades away, this moves all the other messages up a slot
@@ -166,7 +166,7 @@ void VX_TrackerThink(void)
 
 			trackermsg[i].msg[0] = 0;
 			trackermsg[i].die = -1;
-//			trackermsg[i].tt = ; // no need
+			//			trackermsg[i].tt = ; // no need
 
 			active_track = i; // i slots active
 
@@ -270,23 +270,23 @@ static char *VX_Name(int player)
 // Own Frags Text
 static void VX_OwnFragNew(const char *victim)
 {
-    ownfragtext.time = r_refdef2.time;
-    snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", amf_tracker_own_frag_prefix.string, victim);
+	ownfragtext.time = r_refdef2.time;
+	snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", amf_tracker_own_frag_prefix.string, victim);
 }
 
 int VX_OwnFragTextLen(void)
 {
-    return (int) strlen_color(ownfragtext.text);
+	return (int) strlen_color(ownfragtext.text);
 }
 
 double VX_OwnFragTime(void)
 {
-    return r_refdef2.time - ownfragtext.time;
+	return r_refdef2.time - ownfragtext.time;
 }
 
 const char * VX_OwnFragText(void)
 {
-    return ownfragtext.text;
+	return ownfragtext.text;
 }
 
 // return true if player enemy comparing to u, handle spectator mode
@@ -326,7 +326,7 @@ static char *SuiColor(int player)
 {
 	if (its_you(player))
 		return empty_is_000(amf_tracker_color_suicide.string);
-	
+
 	// with images color_bad == enemy color
 	// without images color bad == bad frag for us
 	if (cl_useimagesinfraglog.integer) {
@@ -437,9 +437,9 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", cl.players[player].name, GetWeaponName(weapon), killer_wcount);
-    
-    if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
-        VX_OwnFragNew(cl.players[player].name);
+
+	if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
+		VX_OwnFragNew(cl.players[player].name);
 
 	VX_TrackerAddText(outstring, tt_death);
 }
@@ -685,7 +685,7 @@ void VXSCR_DrawTrackerString (void)
 	float	alpha = 1;
 	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
-	
+
 	StringToRGB(amf_tracker_frame_color.string);
 
 	if (!active_track)
@@ -809,10 +809,10 @@ void VXSCR_DrawTrackerString (void)
 							if ((pic = Draw_CachePicSafe(fullpath, false, true)))
 							{
 								Draw_FitPic(
-									(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
-									(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
-									im_scale * 8 * 2 * scale,
-									im_scale * 8 * scale, pic);
+										(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
+										(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
+										im_scale * 8 * 2 * scale,
+										im_scale * 8 * scale, pic);
 							}
 						}
 
@@ -839,7 +839,7 @@ void VXSCR_DrawTrackerString (void)
 						rgba[1] = (byte)(255 * ((float)(start[j + 3] - '0') / 9));
 						rgba[2] = (byte)(255 * ((float)(start[j + 4] - '0') / 9));
 
-   						j += 5;
+						j += 5;
 						continue;
 					}
 				}

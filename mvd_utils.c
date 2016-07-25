@@ -76,8 +76,8 @@ typedef struct quad_cams_s {
 } quad_cams_t;
 
 typedef struct cam_id_s {
-		quad_cams_t cam;
-		char *tag;
+	quad_cams_t cam;
+	char *tag;
 } cam_id_t;
 
 quad_cams_t quad_cams[3];
@@ -131,12 +131,12 @@ typedef struct mvd_gameinfo_s {
 	int deathmatch;
 } mvd_gameinfo_t;
 /*
-typedef struct mvd_info_s {
-	mvd_gameinfo_t gameinfo;
-	mvd_player_t player[MAX_CLIENTS];
+   typedef struct mvd_info_s {
+   mvd_gameinfo_t gameinfo;
+   mvd_player_t player[MAX_CLIENTS];
 
-} mvd_info_t;
-*/
+   } mvd_info_t;
+   */
 
 //extern mt_matchstate_t matchstate;
 //extern matchinfo_t matchinfo;
@@ -217,12 +217,12 @@ char *Make_Red (char *s,int i){
 	ret=buf;
 	for (p=s;*p;p++){
 		if (!strspn(p,"1234567890.") || !(i))
-		*ret++=*p | 128;
+			*ret++=*p | 128;
 		else
-		*ret++=*p;
+			*ret++=*p;
 	}
 	*ret=0;
-    return buf;
+	return buf;
 }
 
 void MVD_Init_Info (int player_slot) {
@@ -231,7 +231,7 @@ void MVD_Init_Info (int player_slot) {
 
 	for (z=0,i=0;i<MAX_CLIENTS;i++){
 		if (!cl.players[i].name[0] || cl.players[i].spectator == 1)
-				continue;
+			continue;
 		mvd_new_info[z].id = i;
 		if (player_slot == i || player_slot == MAX_CLIENTS) {
 			mvd_new_info[z].mvdinfo.initialized = false;
@@ -279,7 +279,7 @@ double MVD_RespawnTimeGet(int itemtype)
 		case GA_INFO:
 		case MH_INFO:
 			return 20.0;
-			
+
 		case SSG_INFO:
 		case NG_INFO:
 		case SNG_INFO:
@@ -354,7 +354,7 @@ mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
 		Q_free(item);
 		return mvd_clocklist;
 	}
-	
+
 	ret = item->next;
 	// item->prev is not null
 	if (item->next) {
@@ -407,7 +407,7 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
-	
+
 	while (current && current->clockval - cls.demotime < time_limit) {
 		lines++;
 		current = current->next;
@@ -466,12 +466,12 @@ static void MVD_Took(int player, int item, qbool addclock)
 // to that player at the start of each demo manually)
 void MVD_Demo_Track (void){
 	extern char track_name[16];
-    extern cvar_t demo_playlist_track_name;
+	extern cvar_t demo_playlist_track_name;
 	char track_player[128] = {0};
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("MVD_Demo_Track Started\n");
-	#endif
+#endif
 
 
 	if(strlen(track_name))
@@ -486,9 +486,9 @@ void MVD_Demo_Track (void){
 	}
 
 	mvd_demo_track_run = 1;
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("MVD_Demo_Track Stopped\n");
-	#endif
+#endif
 }
 
 
@@ -558,9 +558,9 @@ void MVD_Info (void){
 
 
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("MVD_Info Started\n");
-	#endif
+#endif
 
 	z=1;
 
@@ -582,58 +582,58 @@ void MVD_Info (void){
 	if (mvd_info_show_header.value){
 		strlcpy(mvd_info_header_string,mvd_info_setup.string,sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string,sizeof(mvd_info_header_string),'%',\
-			10,\
-			"a","Armor",\
-			"f","Frags",\
-			"h","Health",\
-			"l","Location",\
-			"n","Nick",\
-			"P","Ping",\
-			"p","Powerup",\
-			"v","Value",\
-			"w","Cur.Weap.",\
-			"W","Best Weap.");
+				10,\
+				"a","Armor",\
+				"f","Frags",\
+				"h","Health",\
+				"l","Location",\
+				"n","Nick",\
+				"P","Ping",\
+				"p","Powerup",\
+				"v","Value",\
+				"w","Cur.Weap.",\
+				"W","Best Weap.");
 		strlcpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0),sizeof(mvd_info_header_string));
 		Draw_String (x, y+((z++)*8), mvd_info_header_string);
 	}
 
 	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ){
 
-	mvd_info_powerups[0]=0;
-	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
-		//strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
+		mvd_info_powerups[0]=0;
+		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
+			//strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
 
-	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
-		//if (mvd_info_powerups[0])
-		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
-	}
+			if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
+				//if (mvd_info_powerups[0])
+				//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+				//strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
+			}
 
-	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
-		//if (mvd_info_powerups[0])
-		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
-	}
+		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
+			//if (mvd_info_powerups[0])
+			//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+			//strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
+		}
 
-	strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
-    Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
-			10,\
-			"w",va("%s:%i",TP_ItemName(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
-			"W",va("%s:%s",MVD_BestWeapon_strings(i),MVD_BestAmmo(i)),\
-			"a",va("%i",mvd_new_info[i].p_info->stats[STAT_ARMOR]),\
-			"f",va("%i",mvd_new_info[i].p_info->frags),\
-			"h",va("%i",mvd_new_info[i].p_info->stats[STAT_HEALTH]),\
-			"l",TP_LocationName(mvd_new_info[i].p_state->origin),\
-			"n",mvd_new_info[i].p_info->name,\
-			"P",va("%i",mvd_new_info[i].p_info->ping),\
-			"p",mvd_info_powerups,\
-			"v",va("%f",mvd_new_info[i].value));
-	strlcpy(str, mvd_info_final_string,sizeof(str));
-	Draw_String (x, y+((z++)*8), str);
+		strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
+		Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
+				10,\
+				"w",va("%s:%i",TP_ItemName(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
+				"W",va("%s:%s",MVD_BestWeapon_strings(i),MVD_BestAmmo(i)),\
+				"a",va("%i",mvd_new_info[i].p_info->stats[STAT_ARMOR]),\
+				"f",va("%i",mvd_new_info[i].p_info->frags),\
+				"h",va("%i",mvd_new_info[i].p_info->stats[STAT_HEALTH]),\
+				"l",TP_LocationName(mvd_new_info[i].p_state->origin),\
+				"n",mvd_new_info[i].p_info->name,\
+				"P",va("%i",mvd_new_info[i].p_info->ping),\
+				"p",mvd_info_powerups,\
+				"v",va("%f",mvd_new_info[i].value));
+		strlcpy(str, mvd_info_final_string,sizeof(str));
+		Draw_String (x, y+((z++)*8), str);
 
-	#ifdef DEBUG
-	printf("MVD_Info Stopped\n");
-	#endif
+#ifdef DEBUG
+		printf("MVD_Info Stopped\n");
+#endif
 	}
 }
 
@@ -751,7 +751,7 @@ void MVD_Stats_CalcAvgRuns(void)
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		mvd_info_t *pi = &mvd_new_info[i].mvdinfo;
-//		int r = mvd_new_info[i].mvdinfo.run;
+		//		int r = mvd_new_info[i].mvdinfo.run;
 		int tf, ttf, tt;
 		int j;
 		tf = ttf = tt = 0;
@@ -922,7 +922,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 			killdiff = mvd_new_info[i].p_info->frags - mvd_new_info[i].mvdinfo.lastfrags;
 			for (z=0;z<8;z++){
 				if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
-						mvd_new_info[i].mvdinfo.killstats.normal[z].kills+=killdiff;
+					mvd_new_info[i].mvdinfo.killstats.normal[z].kills+=killdiff;
 			}
 			if (mvd_new_info[i].mvdinfo.lfw == -1)
 				mvd_new_info[i].mvdinfo.spawntelefrags+=killdiff;
@@ -931,7 +931,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 					mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].frags+=killdiff;
 			}
 			mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].frags++;
-			}else if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags){
+		}else if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags){
 			killdiff = mvd_new_info[i].mvdinfo.lastfrags - mvd_new_info[i].p_info->frags ;
 			for (z=AXE_INFO;z<=LG_INFO;z++){
 				if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
@@ -946,7 +946,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 					mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].teamfrags+=killdiff;
 			}
 			mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].teamfrags++;
-			}
+		}
 
 
 		mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags ;
@@ -964,7 +964,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	}
 
 	if (mvd_new_info[i].p_state->weaponframe > 0)
-			mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
+		mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 	if (mvd_cg_info.deathmatch!=4){
 		MVD_Status_WP(i, &taken);
 		for (z=SSG_INFO;z<=RA_INFO;z++) {
@@ -990,7 +990,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 			// don't start clock if item was from backpack
 			qbool add_clock = !weapon_from_backpack;
 			Com_DPrintf("player %i took %i, weapon from backpack: %s\n",
-				i, x, weapon_from_backpack ? "yes" : "no");
+					i, x, weapon_from_backpack ? "yes" : "no");
 
 			MVD_Took(i, x, add_clock);
 		}
@@ -1041,15 +1041,15 @@ int MVD_Stats_Gather(void){
 			for(x=0;x<13;x++){ // XXX: x<13? for sure? maybe x<mvd_info_types?
 
 				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)){
-						mvd_new_info[i].mvdinfo.itemstats[x].mention=-1;
-						mvd_new_info[i].mvdinfo.itemstats[x].lost++;
+					mvd_new_info[i].mvdinfo.itemstats[x].mention=-1;
+					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
 				}
 
 				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has){
 					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demotime < 30 )
 						quad_is_active = 0;
-						mvd_new_info[i].mvdinfo.itemstats[x].run++;
-						mvd_new_info[i].mvdinfo.itemstats[x].lost++;
+					mvd_new_info[i].mvdinfo.itemstats[x].run++;
+					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
 				}
 				mvd_new_info[i].mvdinfo.itemstats[x].has=0;
 			}
@@ -1063,18 +1063,18 @@ int MVD_Stats_Gather(void){
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
 			if(!pent_mentioned){
 				pent_mentioned = 1;
-                // fixme
+				// fixme
 				// Com_Printf("pent in 5 secs\n");
 			}
 			if (powerup_cam_active ==1)
-					powerup_cam_active = 3;
+				powerup_cam_active = 3;
 			else if (powerup_cam_active == 0)
-					powerup_cam_active = 2;
+				powerup_cam_active = 2;
 		}
 		if ((((quad_time + 60) - cls.demotime) < 5) && !quad_is_active){
 			if(!quad_mentioned){
 				quad_mentioned = 1;
-                // fixme
+				// fixme
 				// Com_Printf("quad in 5 secs\n");
 			}
 			if (powerup_cam_active ==2)
@@ -1121,23 +1121,23 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
-		mvd_new_info[id].mvdinfo.itemstats[RL_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[LG_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[GL_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[YA_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count),sizeof(str));
+				mvd_new_info[id].mvdinfo.itemstats[RL_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[LG_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[GL_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[YA_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
-    strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
-		mvd_new_info[id].mvdinfo.itemstats[RING_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[PENT_INFO].count,\
-		mvd_new_info[id].mvdinfo.itemstats[MH_INFO].count),sizeof(str));
+	strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
+				mvd_new_info[id].mvdinfo.itemstats[RING_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[PENT_INFO].count,\
+				mvd_new_info[id].mvdinfo.itemstats[MH_INFO].count),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-//	Com_Printf("%f %f %f \n",lasttime,mvd_new_info[id].mvdinfo.das.alivetimestart, mvd_new_info[id].mvdinfo.das.alivetime);
+	//	Com_Printf("%f %f %f \n",lasttime,mvd_new_info[id].mvdinfo.das.alivetimestart, mvd_new_info[id].mvdinfo.das.alivetime);
 	if (cls.demotime >+ lasttime + .1){
 		lasttime=cls.demotime;
 		lasttime1=mvd_new_info[id].mvdinfo.das.alivetime;
@@ -1160,9 +1160,9 @@ void MVD_Status (void){
 		av_tk += mvd_new_info[id].mvdinfo.runs[p].teamfrags;
 	}
 	if (av_t>0){
-	av_t = av_t / (mvd_new_info[id].mvdinfo.run +1);
-	av_f = av_f / (mvd_new_info[id].mvdinfo.run +1);
-	av_tk = av_tk / (mvd_new_info[id].mvdinfo.run +1);
+		av_t = av_t / (mvd_new_info[id].mvdinfo.run +1);
+		av_f = av_f / (mvd_new_info[id].mvdinfo.run +1);
+		av_tk = av_tk / (mvd_new_info[id].mvdinfo.run +1);
 	}
 
 	strlcpy(str,va("%9.3f %3.3f %3.3f",av_t,av_f,av_tk),sizeof(str));
@@ -1192,10 +1192,10 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
-		mvd_new_info[id].mvdinfo.itemstats[RL_INFO].lost,\
-		mvd_new_info[id].mvdinfo.itemstats[LG_INFO].lost,\
-		mvd_new_info[id].mvdinfo.itemstats[GL_INFO].lost,\
-		mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].lost),sizeof(str));
+				mvd_new_info[id].mvdinfo.itemstats[RL_INFO].lost,\
+				mvd_new_info[id].mvdinfo.itemstats[LG_INFO].lost,\
+				mvd_new_info[id].mvdinfo.itemstats[GL_INFO].lost,\
+				mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].lost),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
@@ -1203,19 +1203,19 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
-		mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SNG_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[NG_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].kills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].kills),sizeof(str));
+				mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SNG_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[NG_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].kills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].kills),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	strlcpy(str,va("SPAWN: %i",\
-		mvd_new_info[id].mvdinfo.spawntelefrags),sizeof(str));
+				mvd_new_info[id].mvdinfo.spawntelefrags),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
@@ -1223,18 +1223,18 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
-		mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SNG_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[NG_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].teamkills,\
-		mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].teamkills),sizeof(str));
+				mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SNG_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[NG_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].teamkills,\
+				mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].teamkills),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 	strlcpy(str,va("SPAWN: %i",\
-		mvd_new_info[id].mvdinfo.teamspawntelefrags),sizeof(str));
+				mvd_new_info[id].mvdinfo.teamspawntelefrags),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
@@ -1356,12 +1356,12 @@ void MVD_Powerup_Cams(void){
 			}
 		}
 		/*
-		if (!x){
-				Cvar_SetValue(&mvd_pc_view_1,0);
-				mvd_pc_view_1.string[0]='\0';
-				Com_Printf("wrong tag for mvd_pc_view_1\n");
-		}
-		*/
+		   if (!x){
+		   Cvar_SetValue(&mvd_pc_view_1,0);
+		   mvd_pc_view_1.string[0]='\0';
+		   Com_Printf("wrong tag for mvd_pc_view_1\n");
+		   }
+		   */
 	}
 	if (CURRVIEW == 2 && strlen(mvd_pc_view_2.string)){
 		cam_2=0;
@@ -1378,9 +1378,9 @@ void MVD_Powerup_Cams(void){
 			}
 		}
 		if (!x){
-				Cvar_SetValue(&mvd_pc_view_2,0);
-				mvd_pc_view_2.string[0]='\0';
-				Com_Printf("wrong tag for mvd_pc_view_2\n");
+			Cvar_SetValue(&mvd_pc_view_2,0);
+			mvd_pc_view_2.string[0]='\0';
+			Com_Printf("wrong tag for mvd_pc_view_2\n");
 		}
 	}
 
@@ -1399,9 +1399,9 @@ void MVD_Powerup_Cams(void){
 			}
 		}
 		if (!x){
-				Cvar_SetValue(&mvd_pc_view_3,0);
-				mvd_pc_view_3.string[0]='\0';
-				Com_Printf("wrong tag for mvd_pc_view_3\n");
+			Cvar_SetValue(&mvd_pc_view_3,0);
+			mvd_pc_view_3.string[0]='\0';
+			Com_Printf("wrong tag for mvd_pc_view_3\n");
 		}
 	}
 
@@ -1420,9 +1420,9 @@ void MVD_Powerup_Cams(void){
 			}
 		}
 		if (!x){
-				Cvar_SetValue(&mvd_pc_view_4,0);
-				mvd_pc_view_4.string[0]='\0';
-				Com_Printf("wrong tag for mvd_pc_view_4\n");
+			Cvar_SetValue(&mvd_pc_view_4,0);
+			mvd_pc_view_4.string[0]='\0';
+			Com_Printf("wrong tag for mvd_pc_view_4\n");
 		}
 	}
 }
