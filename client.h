@@ -838,7 +838,7 @@ typedef enum cl_modelindex_s {
 	cl_num_modelindices,
 } cl_modelindex_t;
 
-extern cl_modelindex_t cl_modelindices[cl_num_modelindices];
+extern int cl_modelindices[cl_num_modelindices];
 extern char *cl_modelnames[cl_num_modelindices];
 extern struct model_s *cl_flame0_model;
 

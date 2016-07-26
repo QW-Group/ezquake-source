@@ -134,9 +134,18 @@ const char* GFXPresetRead(void) {
 	}
 }
 void GFXPresetToggle(qbool back) {
-	if (back) fps_mode--; else fps_mode++;
-	if (fps_mode < 0) fps_mode = mode_undef - 1;
-	if (fps_mode >= mode_undef) fps_mode = 0;
+	if (back) {
+		if (fps_mode <= 0) {
+			fps_mode = mode_undef;
+		}
+		--fps_mode;
+	}
+	else {
+		++fps_mode;
+		if (fps_mode >= mode_undef) {
+			fps_mode = 0;
+		}
+	}
 
 	switch (GFXPreset()) {
 	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n"); return;

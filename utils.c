@@ -1103,7 +1103,7 @@ void CharsToWhite(char* start, char* end)
 {
 	unsigned char *p = (unsigned char *)start;
 
-	while (p < end) {
+	while (p < (unsigned char*)end) {
 		if ( *p > 160 )
 			*p -= 128;
 		p++;

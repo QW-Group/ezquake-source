@@ -578,7 +578,7 @@ static char *MT_NameForMatchInfo(matchinfo_t *matchinfo) {
 	case mt_unknown:
 		format = "%n - [Unknown Game, gamedir - %G, %C players] - [%M]"; break;
 	default:
-		if (matchinfo->matchtype >= 0 && matchinfo->matchtype < mt_numtypes) {
+		if (matchinfo->matchtype < mt_numtypes) {
 			format = matchcvars[matchinfo->matchtype].format->string;
 		} else {
 			Sys_Error("Macro_Matchdesc : Unknown match type %d", matchinfo->matchtype);

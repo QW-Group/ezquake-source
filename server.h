@@ -87,7 +87,7 @@ typedef struct
 	int			lastcheck;			// used by PF_checkclient
 	double		lastchecktime;			// for monster ai
 
-	qbool		paused;				// are we paused?
+	byte		paused;				// are we paused?
 	double		pausedsince;		// Sys_DoubleTime() when pause started
 
 	qbool		loadgame;			// handle connections specially

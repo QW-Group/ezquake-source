@@ -994,7 +994,7 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 		return;
 	}
 
-	if (type < 0 || type >= num_particletypes)
+	if (type >= num_particletypes)
 		Sys_Error("AddParticle: Invalid type (%d)", type);
 
 	pt = &particle_types[particle_type_index[type]];
@@ -1207,7 +1207,7 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 
 	assert(size > 0 && time > 0);
 
-	if (type < 0 || type >= num_particletypes)
+	if (type >= num_particletypes)
 		Sys_Error("AddParticle: Invalid type (%d)", type);
 
 	pt = &particle_types[particle_type_index[type]];
@@ -1388,7 +1388,8 @@ void QMB_ParticleExplosion (vec3_t org) {
 void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 	col_t color;
 	vec3_t neworg;
-	int i, scale, blastcount, blastsize, chunkcount, particlecount, bloodcount, z;
+	int i, blastcount, blastsize, chunkcount, particlecount, bloodcount, z;
+	float scale;
 	float blasttime;
 
 	count = max(1, count);
@@ -2844,8 +2845,8 @@ void ParticleSlimeHarcore (vec3_t org)
 	vec3_t dir={0,0,80};
 
 	
-	AddParticle(4, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
-	AddParticle(11, org, 1, lhrandom(1,128), lhrandom(1,10), color, dir);//zerodir);
+	AddParticle(p_lavasplash, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
+	AddParticle(p_staticbubble, org, 1, lhrandom(1,128), lhrandom(1,10), color, dir);//zerodir);
 }
 
 void ParticleSlime (vec3_t org) 
@@ -2853,8 +2854,8 @@ void ParticleSlime (vec3_t org)
 	col_t color={0,200,150, 30};
 	vec3_t dir={0,0,80};
 
-	AddParticle(4, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
-	AddParticle(11, org, 1, lhrandom(1,32), lhrandom(1,10), color, dir);//zerodir);
+	AddParticle(p_lavasplash, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
+	AddParticle(p_staticbubble, org, 1, lhrandom(1,32), lhrandom(1,10), color, dir);//zerodir);
 }
 
 //HyperNewbie Particles
@@ -2892,7 +2893,7 @@ void ParticleBloodPool (vec3_t org)
 	col_t color={30,100,150, 240};
 	vec3_t dir={0,0,80};
 
-	AddParticle(28, org, 1, lhrandom(1,11), lhrandom(1,3), color, dir);
+	AddParticle(p_vxsmoke, org, 1, lhrandom(1,11), lhrandom(1,3), color, dir);
 }
 
 

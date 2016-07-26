@@ -2156,7 +2156,7 @@ void PF2_FS_SeekFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 {
 	fileHandle_t fnum =  stack[0]._int;
 	int offset = stack[1]._int;
-	fsOrigin_t type = (fsOrigin_t) stack[2]._int;
+	int type = stack[2]._int;
 	fnum--;
 
 	if (fnum < 0 || fnum >= MAX_PR2_FILES)
@@ -2165,9 +2165,9 @@ void PF2_FS_SeekFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	if(!pr2_num_open_files)
 		return;
 
-	if(!(pr2_fopen_files[fnum].handle))
+	if (!(pr2_fopen_files[fnum].handle))
 		return;
-	if(type <0 || type > 2)
+	if (type < 0 || type >= sizeof(seek_origin) / sizeof(seek_origin[0]))
 		return;
 
 #if 0

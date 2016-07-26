@@ -56,9 +56,9 @@ extern cvar_t sb_listcache;
 #define PROXY_REPLY_ENTRY_LEN 8
 #define PROXY_REPLY_BUFFER_SIZE (PROXY_REPLY_ENTRY_LEN*MAX_SERVERS)
 
-// current amount of qw servers ~ 300
+// current amount of qw servers ~ 300... but neighbour count means MAX_SERVERS*MAX_NONLEAVES
 #define INVALID_NODE (-1)
-typedef short nodeid_t;
+typedef int nodeid_t;
 
 // only pings 0-999 are in our interest; and -1 for invalid ping
 #define DIST_INFINITY SHRT_MAX

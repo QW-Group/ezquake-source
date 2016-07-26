@@ -107,7 +107,7 @@ static int VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	}
 
 	// We seeked outside the bounds.
-	if ((intfile->position < 0) || (intfile->position > intfile->len))
+	if (intfile->position > intfile->len)
 	{
 		// Be sure we don't have an invalid file position. (Should we do this?)
 		clamp(intfile->position, 0, intfile->len);
