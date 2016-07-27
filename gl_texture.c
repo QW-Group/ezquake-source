@@ -600,17 +600,16 @@ int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data)
 	} 
 	else 
 	{
-		buf = (byte *) Q_calloc (glwidth * glheight, 1);
+		buf = Q_calloc(glwidth * glheight, 1);
 
 		src = data;
 		dest = buf;
-		for (i = 0; i < pic->height; i++) 
-		{
-			memcpy (dest, src, pic->width);
+		for (i = 0; i < pic->height; i++) {
+			memcpy(dest, src, pic->width);
 			src += pic->width;
 			dest += glwidth;
 		}
-		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, buf, TEX_ALPHA, 1);
+		pic->texnum = GL_LoadTexture(fullname, glwidth, glheight, buf, TEX_ALPHA, 1);
 		pic->sl = 0;
 		pic->sh = (float) pic->width / glwidth;
 		pic->tl = 0;

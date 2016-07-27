@@ -493,94 +493,73 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 {
 	char stripped_path[MAX_PATH];
 	char lmp_path[MAX_PATH];
-	char png_path[MAX_PATH];
-	mpic_t *pic, *fpic, *pic_24bit;
+	mpic_t *fpic;
+	mpic_t *pic_24bit;
 	qbool lmp_found = false;
 	qpic_t *dat = NULL;
 	vfsfile_t *v = NULL;
 
-	// Check if the picture was already cached.
-	if ((fpic = CachePic_Find(path)))
+	// Check if the picture was already cached, if so inc refcount.
+	if ((fpic = CachePic_Find(path, true))) {
 		return fpic;
+	}
 
 	// Get the filename without extension.
 	COM_StripExtension(path, stripped_path, sizeof(stripped_path));
 	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
-	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
 	// Try loading the pic from disk.
 
 	// Only load the 24-bit version of the picture.
-	if (only24bit)
-	{
-		if (!(pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
-		{
-			if(crash)
+	if (only24bit) {
+		if (!(pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
+			if(crash) {
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
-
+			}
 			return NULL;
 		}
 
-		// Make a new copy of the returned pic, since it's static
-		// in GL_LoadPicImage and will be overwritten.
-		fpic = (mpic_t *)Q_malloc(sizeof(mpic_t));
-		memcpy(fpic, pic_24bit, sizeof(mpic_t));
-
-		return CachePic_Add(path, fpic);
+		/* This will make a copy of the pic struct */
+		return CachePic_Add(path, pic_24bit);
 	}
 
 	// Load the ".lmp" file.
-	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY)))
-	{
+	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY))) {
 		VFS_CLOSE(v);
 
-		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path, NULL)))
-		{
-			if(crash)
+		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path, NULL))) {
+			if(crash) {
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", lmp_path);
-
+			}
 			return NULL;
 		}
-
 		lmp_found = true;
 
 		// Make sure the width and height are correct.
 		SwapPic (dat);
 	}
 
-	pic = (mpic_t *)Q_malloc(sizeof(mpic_t));
-
 	// Try loading the 24-bit picture.
 	// If that fails load the data for the lmp instead.
-	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
-	{
-		memcpy(pic, pic_24bit, sizeof(mpic_t));
-
+	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
 		// Only use the lmp-data if there was one.
-		if (lmp_found)
-		{
-			pic->width = dat->width;
-			pic->height = dat->height;
+		if (lmp_found) {
+			pic_24bit->width = dat->width;
+			pic_24bit->height = dat->height;
 		}
-	}
-	else if (!dat)
-	{
-		Q_free(pic);
-
-		if(crash)
+		return CachePic_Add(path, pic_24bit);
+	} else if (dat) {
+		mpic_t tmp = {0};
+		tmp.width = dat->width;
+		tmp.height = dat->height;
+		GL_LoadPicTexture(path, &tmp, dat->data);
+		return CachePic_Add(path, &tmp);
+	} else {
+		if(crash) {
 			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
-
+		}
 		return NULL;
 	}
-	else
-	{
-		pic->width = dat->width;
-		pic->height = dat->height;
-		GL_LoadPicTexture (path, pic, dat->data);
-	}
-
-	// Add the picture to the cache.
-	return CachePic_Add(path, pic);
 }
 
 mpic_t *Draw_CachePic (char *path)

@@ -34,13 +34,15 @@ typedef struct cachepic_s
 typedef struct cachepic_node_s 
 {
 	cachepic_t data;
+	unsigned int refcount;
 	struct cachepic_node_s *next;
 } cachepic_node_t;
 
 #define	CACHED_PICS_HDSIZE		64
 
-mpic_t *CachePic_Find(const char *path);
+mpic_t *CachePic_Find(const char *path, qbool inc_refcount);
 mpic_t* CachePic_Add(const char *path, mpic_t *pic);
+qbool CachePic_Remove(const char *path);
 void CachePics_DeInit(void);
 
 int SCR_GetClockStringWidth(const char *s, qbool big, float scale);

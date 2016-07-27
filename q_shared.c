@@ -635,9 +635,15 @@ qbool Q_glob_match (const char *pattern, const char *text)
 	return (*text == '\0');
 }
 
+extern void Com_Printf (char *fmt, ...);
 unsigned int Com_HashKey (const char *str) {
 	unsigned int hash = 0;
 	int c;
+
+	if (!str) {
+		Com_Printf("warning: Com_HashKey called with NULL argument\n");
+		return 0;
+	}
 
 	// the (c&~32) makes it case-insensitive
 	// hash function known as sdbm, used in gawk

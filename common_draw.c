@@ -457,15 +457,54 @@ void SCR_DrawClients(void)
 
 cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
 
-mpic_t *CachePic_Find(const char *path) 
+/*
+ * Removes the pic from the cache if refcount hits zero,
+ * otherwise decreases refcount.
+ */
+qbool CachePic_Remove(const char *path)
+{
+	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
+	cachepic_node_t *searchpos = cachepics[key];
+	cachepic_node_t *old = NULL;
+
+	while (searchpos) {
+		if (!strcmp(searchpos->data.name, path)) {
+			searchpos->refcount--;
+
+			if (searchpos->refcount == 0) {
+				if (old == NULL) {
+					/* It's the first entry in list.
+					 * Set new start to next item in list
+					 * or NULL if we're the only entry.*/
+					cachepics[key] = searchpos->next;
+				} else {
+					/* It's in the middle or end of the list.
+					 * Need to make sure the prev entry points
+					 * to the next one and skips us. */
+					old->next = searchpos->next;
+				}
+				/* Free both data and our entry itself */
+				Q_free(searchpos->data.pic);
+				Q_free(searchpos);
+			}
+			return true;
+		}
+		old = searchpos;
+		searchpos = searchpos->next;
+	}
+	return false;
+}
+
+mpic_t *CachePic_Find(const char *path, qbool inc_refcount) 
 {
 	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
 	cachepic_node_t *searchpos = cachepics[key];
 
-	while (searchpos) 
-	{
-		if (!strcmp(searchpos->data.name, path)) 
-		{
+	while (searchpos) {
+		if (!strcmp(searchpos->data.name, path)) {
+			if (inc_refcount) {
+				searchpos->refcount++;
+			}
 			return searchpos->data.pic;
 		}
 		searchpos = searchpos->next;
@@ -474,24 +513,32 @@ mpic_t *CachePic_Find(const char *path)
 	return NULL;
 }
 
-mpic_t* CachePic_Add(const char *path, mpic_t *pic) 
+/* Copies data if necessary to make use of the refcount */
+mpic_t *CachePic_Add(const char *path, mpic_t *pic) 
 {
 	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
 	cachepic_node_t *searchpos = cachepics[key];
 	cachepic_node_t **nextp = cachepics + key;
 
-	while (searchpos) 
-	{
+	while (searchpos) {
+		/* Check if we already have the entry */
+		if (!strcmp(searchpos->data.name, path)) {
+			searchpos->refcount++;
+			return searchpos->data.pic;
+		}
 		nextp = &searchpos->next;
 		searchpos = searchpos->next;
 	}
 
-	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
-	
-	searchpos->data.pic = pic;
+	/* We didn't find a matching entry, create a new one */
+	searchpos = Q_malloc(sizeof(cachepic_node_t));
 
+	searchpos->data.pic = Q_malloc(sizeof(mpic_t));
+	memcpy(searchpos->data.pic, pic, sizeof(mpic_t));
+	
 	strlcpy(searchpos->data.name, path, sizeof(searchpos->data.name));
 	searchpos->next = NULL; // Terminate the list.
+	searchpos->refcount++;
 	*nextp = searchpos;		// Connect to the list.
 
 	return searchpos->data.pic;
