@@ -33,7 +33,7 @@ echo '#!/bin/sh' > $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo 'DIRNAME=$(dirname "$0")' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo 'if [ ! -f "$DIRNAME"/../Resources/id1/pak1.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'if [ ! -f "$DIRNAME"/../Resources/id1/pak0.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    open "$DIRNAME"/../Resources/id1/' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    exit' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo 'fi' >> $BUNDLE_NAME/Contents/MacOS/ezquake
