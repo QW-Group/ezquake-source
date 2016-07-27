@@ -29,11 +29,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static qbool signalcaught = false;
 
+/* TODO: Make the signal handling thread safe by moving to 
+ *       sigaction instead + block other signals while processing
+ *       to avoid the double signal fault crap.
+ *       
+ *       Should set atomic vars here instead and let the main thread
+ *       process the vars and determine what to do. Makes it possible to
+ *       treat signals differently (in case we don't want to quit the process.
+ *       The things currently called from within the signal handler aren't
+ *       safe to use unless quitting the application.
+ */
 static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo huh?)
 {
 	if (signalcaught)
 	{
 		printf("DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n", sig);
+#ifdef __linux__
+		extern void VID_RestoreSystemGamma(void);
+		VID_RestoreSystemGamma();
+#endif
 		Sys_Quit();
 		exit(0);
 	}
@@ -44,10 +58,9 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 //
 // client related things
 //
-	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown
+	CL_Shutdown(); /* Try to shut down things cleanly */
 
-	Sys_Quit();
-	exit(0);
+	Sys_Quit(); /* calls exit() */
 }
 
 void InitSig(void)

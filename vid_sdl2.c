@@ -92,6 +92,7 @@ static int modelist_count;
 
 #ifdef __linux__
 static unsigned short sysramps[768];
+qbool system_gamma_saved = false;
 #endif
 
 qbool vid_initialized = false;
@@ -390,6 +391,7 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 			once = 0;
 			return;
 		}
+		system_gamma_saved = true;
 		once = 0;
 		gamma_works = 1;
 	}
@@ -408,9 +410,11 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 }
 
 #ifdef __linux__
-static void VID_RestoreSystemGamma(void)
+void VID_RestoreSystemGamma(void)
 {
-	VID_SetDeviceGammaRampReal(sysramps);
+	if (system_gamma_saved) {
+		VID_SetDeviceGammaRampReal(sysramps);
+	}
 }
 #endif
 
