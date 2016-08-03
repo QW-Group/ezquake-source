@@ -949,6 +949,7 @@ void ResetConfigs_f(void)
 qbool LoadCfg(FILE *f)
 {
 	char *fileBuffer;
+	char reset_bindphysical[128];
     int size;
 
 	if (!f) {
@@ -964,8 +965,10 @@ qbool LoadCfg(FILE *f)
 	}
 	fileBuffer[size] = 0;
 
+	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
+	Cbuf_AddText ("con_bindphysical 1\n");
 	Cbuf_AddText (fileBuffer);
-	Cbuf_AddText ("\n");
+	Cbuf_AddText (reset_bindphysical);
 	Q_free(fileBuffer);
 	return true;
 }
