@@ -5119,7 +5119,7 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
 		{
 			// playing qwd demo || mvd spec/demo || playing 
 			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+					((cls.demoplayback || cl.spectator) && ((strcmp(TP_SkinForcingTeam (), sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
 					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
 			{
 				value = sorted_teams[i].frags;
@@ -5168,7 +5168,7 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 		{
 
 			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+					((cls.demoplayback || cl.spectator) && ((strcmp(TP_SkinForcingTeam (), sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
 					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
 			{
 				if(n_teams > 1)
