@@ -298,7 +298,7 @@ void CL_PredictMove (void) {
 	frame_t *from = NULL, *to;
 	qbool angles_lerp = false;
 
-	if (cl.paused)
+	if (cl.paused && !(cls.mvdplayback && cl_multiview.integer))
 		return;
 
 	if (cl.intermission) {
