@@ -1674,16 +1674,17 @@ void CL_LinkPlayers (void)
 		// VULT MOTION TRAILS
 		ent.alpha = 0;
 		// The player object never gets added.
-		if (j == cl.playernum)
-		{
+		if (j == cl.playernum) {
 			// VULT CAMERAS
-			if (cameratype != C_NORMAL && !cl.spectator)
+			if (cameratype != C_NORMAL && !cl.spectator) {
 				ent.alpha = -1;
-			else continue;
+			}
+			else {
+				continue;
+			}
 		}
 
-		if (!Cam_DrawPlayer(j))
-		{
+		if (!Cam_DrawPlayer(j)) {
 			continue;
 		}
 

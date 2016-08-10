@@ -1016,7 +1016,9 @@ void CL_Autotrack_f(void)
 //
 int Cam_TrackNum(void) 
 {
-	// What does this do?!?! mvlatch... /Cokeman 
+	static int mvlatch;
+
+	// If we're free-flying, temporarily turn cl_multiview off
 	if (cl_multiview.value && !locked) 
 	{
 		mvlatch = cl_multiview.value;

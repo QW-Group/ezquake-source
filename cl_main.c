@@ -2666,7 +2666,6 @@ int		nPlayernum;
 
 int		mv_trackslots[4];			// The different track slots for each view.
 char	currteam[MAX_INFO_STRING];  // The name of the current team being tracked in multiview mode.
-int		mvlatch;
 int		nSwapPov;					// Change in POV positive for next, negative for previous.
 int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.

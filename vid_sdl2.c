@@ -267,21 +267,21 @@ void IN_Frame(void)
 
 void Sys_SendKeyEvents(void)
 {
-        IN_Frame();
+	IN_Frame();
 
-        if (sys_inactivesleep.integer > 0) {
-                // Yield the CPU a little
-                if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing) {
+	if (sys_inactivesleep.integer > 0) {
+		// Yield the CPU a little
+		if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing) {
 			if (!cls.download) {
-	                        SDL_Delay(50);
+				SDL_Delay(50);
 			}
-                        scr_skipupdate = 1; // no point to draw anything
-                } else if (!ActiveApp) { // Delay a bit less if just not active window
+			scr_skipupdate = 1; // no point to draw anything
+		} else if (!ActiveApp) { // Delay a bit less if just not active window
 			if (!cls.download) {
-	                        SDL_Delay(20);
+				SDL_Delay(20);
 			}
-                }
-        }
+		}
+	}
 }
 
 void IN_Restart_f(void)
