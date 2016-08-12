@@ -65,7 +65,7 @@ void IN_MouseMove (usercmd_t *cmd)
 		old_mouse_x = mx;
 		old_mouse_y = my;
 
-		if (m_accel.value) {
+		if (m_accel.value > 0.0f) {
 			float accelsens = sensitivity.value;
 			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float) cls.trueframetime);
 
