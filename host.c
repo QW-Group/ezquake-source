@@ -531,7 +531,6 @@ extern void LoadConfig_f(void);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
-	Browser_Init2();
 }
 
 void Startup_Place(void)
@@ -595,6 +594,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_Init ();
 
 	Commands_For_Configs_Init ();
+	Browser_Init2();
 	ConfigManager_Init();
 	ResetBinds();
 

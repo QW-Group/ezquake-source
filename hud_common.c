@@ -2116,31 +2116,18 @@ void SCR_HUD_NetProblem (hud_t *hud) {
 // ============================================================================0
 // Groups
 // ============================================================================0
+#define HUD_NUM_GROUPS 9
 
-mpic_t *hud_pic_group1;
-mpic_t *hud_pic_group2;
-mpic_t *hud_pic_group3;
-mpic_t *hud_pic_group4;
-mpic_t *hud_pic_group5;
-mpic_t *hud_pic_group6;
-mpic_t *hud_pic_group7;
-mpic_t *hud_pic_group8;
-mpic_t *hud_pic_group9;
+mpic_t *hud_group_pics[HUD_NUM_GROUPS];
+qbool hud_group_pics_is_loaded[HUD_NUM_GROUPS];
 
-/* FIXME: Rewrite all this... Temporary workaround to reload pics on vid_restart
- *        since cache (where they are stored) is flushed
+/* Workaround to reload pics on vid_restart
+ * since cache (where they are stored) is flushed
  */
 void HUD_Common_Reset_Group_Pics(void)
 {
-	hud_pic_group1 = NULL;
-	hud_pic_group2 = NULL;
-	hud_pic_group3 = NULL;
-	hud_pic_group4 = NULL;
-	hud_pic_group5 = NULL;
-	hud_pic_group6 = NULL;
-	hud_pic_group7 = NULL;
-	hud_pic_group8 = NULL;
-	hud_pic_group9 = NULL;
+	memset(hud_group_pics, 0, sizeof(hud_group_pics));
+	memset(hud_group_pics_is_loaded, 0, sizeof(hud_group_pics_is_loaded));
 }
 
 void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_scalemode, float pic_alpha)
@@ -2243,267 +2230,77 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 	}
 }
 
-qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
-{
 #define HUD_GROUP_PIC_BASEPATH	"gfx/%s"
-
-	mpic_t *temp_pic = NULL;
+static qbool SCR_HUD_LoadGroupPic(cvar_t *var, unsigned int grp_id, char *newpic)
+{
 	char pic_path[MAX_PATH];
+	mpic_t *tmp_pic = NULL;
 
-	if (!hud_pic)
-	{
-		Com_Printf ("Couldn't load picture %s for hud group. HUD PIC is null\n", newpic);
-		return false;
+	if(newpic && strlen(newpic) > 0) {
+		/* Create path for new pic */
+		snprintf(pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
+
+		// Try loading the pic.
+		if (!(tmp_pic = Draw_CachePicSafe(pic_path, false, true))) {
+			Com_Printf("Couldn't load picture %s for '%s'\n", newpic, var->name);
+			return false;
+		}
 	}
 
-	// If we have no pic name.
-	if(!newpic || !strcmp (newpic, ""))
-	{
-		*hud_pic = NULL;
-		return false;
-	}
+	hud_group_pics[grp_id] = tmp_pic;
 
-	// Get the path for the pic.
-	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
-
-	// Try loading the pic.
-	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, true)))
-	{
-		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
-		return true;
-	}
-
-	// Save the pic.
-	if (hud_pic)
-		*hud_pic = temp_pic;
-
-	return false;
+	return true;
 }
 
-void SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic, qbool *cancel)
+void SCR_HUD_OnChangePic_GroupX(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
+	int idx;
+	int res;
+	res = sscanf(var->name, "hud_group%d_picture", &idx);
+	if (res == 0 || res == EOF) {
+		Com_Printf("Failed to parse group number (OnChange func)\n");
+		*cancel = true;
+	} else {
+		idx--; /* group1 is on index 0 etc */
+		*cancel = Ruleset_BlockHudPicChange() || !SCR_HUD_LoadGroupPic(var, idx, newpic);
+	}
 }
 
-void SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic, qbool *cancel)
+static void SCR_HUD_Groups_Draw(hud_t *hud)
 {
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
-}
+	/* FIXME: Perhaps make some nice structs... */
+	static cvar_t *width[HUD_NUM_GROUPS];
+	static cvar_t *height[HUD_NUM_GROUPS];
+	static cvar_t *picture[HUD_NUM_GROUPS];
+	static cvar_t *pic_alpha[HUD_NUM_GROUPS];
+	static cvar_t *pic_scalemode[HUD_NUM_GROUPS];
+	int res;
+	int idx;
 
-void SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
-}
-
-void SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic, qbool *cancel)
-{
-	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
-}
-
-/* FIXME: Rewrite this ...... */
-void SCR_HUD_Group1(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group1;
+	res = sscanf(hud->name, "group%d", &idx);
+	if (res == 0 || res == EOF) {
+		Com_Printf("Failed to parse group number from \"%s\"\n", hud->name);
+		return;
 	}
-	if (!hud_pic_group1) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group1, picture->string);
+	idx--;
+
+	/* First init */
+	if (width[idx] == NULL) { // first time called
+		width[idx] = HUD_FindVar(hud, "width");
+		height[idx] = HUD_FindVar(hud, "height");
+		picture[idx] = HUD_FindVar(hud, "picture");
+		pic_alpha[idx] = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode[idx] = HUD_FindVar(hud, "pic_scalemode");
+
+		picture[idx]->OnChange = SCR_HUD_OnChangePic_GroupX;
 	}
 
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group1, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group2(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group2;
-	}
-	if (!hud_pic_group2) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group2, picture->string);
+	if (!hud_group_pics_is_loaded[idx]) {
+		SCR_HUD_LoadGroupPic(picture[idx], idx, picture[idx]->string);
+		hud_group_pics_is_loaded[idx] = true;
 	}
 
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group2, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group3(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group3;
-	}
-	if (!hud_pic_group3) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group3, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group3, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group4(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group4;
-	}
-	if (!hud_pic_group4) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group4, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group4, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group5(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group5;
-	}
-	if (!hud_pic_group5) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group5, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group5, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group6(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group6;
-	}
-	if (!hud_pic_group6) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group6, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group6, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group7(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group7;
-	}
-	if (!hud_pic_group7) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group7, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group7, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group8(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group8;
-	}
-	if (!hud_pic_group8) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group8, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group8, pic_scalemode->value, pic_alpha->value);
-}
-
-void SCR_HUD_Group9(hud_t *hud)
-{
-	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
-
-	if (width == NULL) { // first time called
-		width = HUD_FindVar(hud, "width");
-		height = HUD_FindVar(hud, "height");
-		picture = HUD_FindVar(hud, "picture");
-		pic_alpha = HUD_FindVar(hud, "pic_alpha");
-		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
-
-		picture->OnChange = SCR_HUD_OnChangePic_Group9;
-	}
-	if (!hud_pic_group9) {
-		SCR_HUD_LoadGroupPic(picture, &hud_pic_group9, picture->string);
-	}
-
-	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group9, pic_scalemode->value, pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width[idx]->value, height[idx]->value, hud_group_pics[idx], pic_scalemode[idx]->value, pic_alpha[idx]->value);
 }
 
 // player sorting
@@ -7608,7 +7405,7 @@ void CommonDraw_Init(void)
 
 	// groups
 	HUD_Register("group1", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group1,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "left", "top", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group1",
 			"width", "64",
@@ -7618,7 +7415,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group2", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group2,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "center", "top", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group2",
 			"width", "64",
@@ -7628,7 +7425,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group3", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group3,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "right", "top", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group3",
 			"width", "64",
@@ -7638,7 +7435,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group4", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group4,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "left", "center", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group4",
 			"width", "64",
@@ -7648,7 +7445,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group5", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group5,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "center", "center", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group5",
 			"width", "64",
@@ -7658,7 +7455,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group6", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group6,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "right", "center", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group6",
 			"width", "64",
@@ -7668,7 +7465,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group7", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group7,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "left", "bottom", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group7",
 			"width", "64",
@@ -7678,7 +7475,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group8", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group8,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "center", "bottom", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group8",
 			"width", "64",
@@ -7688,7 +7485,7 @@ void CommonDraw_Init(void)
 			"pic_scalemode", "0",
 			NULL);
 	HUD_Register("group9", NULL, "Group element.",
-			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group9,
+			HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Groups_Draw,
 			"0", "screen", "right", "bottom", "0", "0", ".5", "0 0 0", NULL,
 			"name", "group9",
 			"width", "64",
