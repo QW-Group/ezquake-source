@@ -198,8 +198,8 @@ wtf: where else{ }
 /*    
 			if (gl_mtexable)
 			{
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, s, t);
+				qglMultiTexCoord2f (GL_TEXTURE0, s, t);
+				qglMultiTexCoord2f (GL_TEXTURE1, s, t);
 			}
 			else
 */

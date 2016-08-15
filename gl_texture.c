@@ -223,7 +223,7 @@ void GL_Bind (int texnum)
 	glBindTexture (GL_TEXTURE_2D, texnum);
 }
 
-static GLenum oldtarget = GL_TEXTURE0_ARB;
+static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[4] = {-1, -1, -1, -1};
 static qbool mtexenabled = false;
 
@@ -234,8 +234,8 @@ void GL_SelectTexture (GLenum target)
 
 	qglActiveTexture (target);
 
-	cnttextures[oldtarget - GL_TEXTURE0_ARB] = currenttexture;
-	currenttexture = cnttextures[target - GL_TEXTURE0_ARB];
+	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
+	currenttexture = cnttextures[target - GL_TEXTURE0];
 	oldtarget = target;
 }
 
@@ -244,7 +244,7 @@ void GL_DisableMultitexture (void)
 	if (mtexenabled) 
 	{
 		glDisable (GL_TEXTURE_2D);
-		GL_SelectTexture (GL_TEXTURE0_ARB);
+		GL_SelectTexture (GL_TEXTURE0);
 		mtexenabled = false;
 	}
 }
@@ -253,7 +253,7 @@ void GL_EnableMultitexture (void)
 {
 	if (gl_mtexable) 
 	{
-		GL_SelectTexture (GL_TEXTURE1_ARB);
+		GL_SelectTexture (GL_TEXTURE1);
 		glEnable (GL_TEXTURE_2D);
 		mtexenabled = true;
 	}
@@ -994,7 +994,7 @@ void GL_Texture_Init(void)
 	current_texture = NULL; // nice names
 
 	// Multi texture.
-	oldtarget = GL_TEXTURE0_ARB;
+	oldtarget = GL_TEXTURE0;
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++)
 		cnttextures[i] = -1;
 	mtexenabled = false;

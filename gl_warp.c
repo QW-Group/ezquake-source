@@ -416,8 +416,8 @@ void EmitSkyPolys (msurface_t *fa, qbool mtex) {
 			}
 
 			if (mtex) {				
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, ss, tt);
+				qglMultiTexCoord2f (GL_TEXTURE0, s, t);
+				qglMultiTexCoord2f (GL_TEXTURE1, ss, tt);
 			} else {
 				glTexCoord2f (s, t);
 			}
