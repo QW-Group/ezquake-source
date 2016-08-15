@@ -542,7 +542,7 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 
 	c_brush_polys++;
 
-	if (!r_dynamic.value)
+	if (!r_dynamic.value && !fa->cached_dlight)
 		return;
 
 	// check for lightmap modification
@@ -553,13 +553,19 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 		}
 	}
 
-	if (fa->dlightframe == r_framecount)
-		R_BuildDlightList (fa);
-	else
-		numdlights = 0;
+	if (r_dynamic.value) {
+		if (fa->dlightframe == r_framecount) {
+			R_BuildDlightList (fa);
+		} else {
+			numdlights = 0;
+		}
 
-	if (numdlights == 0 && !fa->cached_dlight && !lightstyle_modified)
-		return;
+		if (numdlights == 0 && !fa->cached_dlight && !lightstyle_modified) {
+			return;
+		}
+	} else {
+		numdlights = 0;
+	}
 
 	lightmap_modified[fa->lightmaptexturenum] = true;
 	theRect = &lightmap_rectchange[fa->lightmaptexturenum];
@@ -582,6 +588,35 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 	base = lightmaps + fa->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 3;
 	base += (fa->light_t * BLOCK_WIDTH + fa->light_s) * 3;
 	R_BuildLightMap (fa, base, BLOCK_WIDTH * 3);
+}
+
+static void R_RenderAllDynamicLightmaps(model_t *model)
+{
+	msurface_t *s;
+	unsigned int waterline;
+	unsigned int i;
+	unsigned int k;
+
+	for (i = 0; i < model->numtextures; i++) {
+		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
+			continue;
+		}
+
+		for (waterline = 0; waterline < 2; waterline++) {
+			if (!(s = model->textures[i]->texturechain[waterline])) {
+				continue;
+			}
+
+			for ( ; s; s = s->texturechain) {
+				GL_Bind(lightmap_textures + s->lightmaptexturenum);
+				R_RenderDynamicLightmaps(s);
+				k = s->lightmaptexturenum;
+				if (lightmap_modified[k]) {
+					R_UploadLightMap(k);
+				}
+			}
+		}
+	}
 }
 
 void R_DrawWaterSurfaces (void) {
@@ -942,19 +977,12 @@ void DrawTextureChains (model_t *model, int contents)
 					//bind the lightmap texture
 					GL_SelectTexture(GL_LIGHTMAP_TEXTURE);
 					GL_Bind (lightmap_textures + s->lightmaptexturenum);
-					//update lightmap if its modified by dynamic lights
-					R_RenderDynamicLightmaps (s);
-					k = s->lightmaptexturenum;
-					if (lightmap_modified[k])
-						R_UploadLightMap(k);
 				}
 				else
 				{
 
 					s->polys->chain = lightmap_polys[s->lightmaptexturenum];
 					lightmap_polys[s->lightmaptexturenum] = s->polys;
-
-					R_RenderDynamicLightmaps (s);
 				}
 
                 glBegin (GL_POLYGON);
@@ -1099,12 +1127,6 @@ void R_DrawFlat (model_t *model) {
 			
 			for ( ; s; s = s->texturechain) {
 				GL_Bind (lightmap_textures + s->lightmaptexturenum);
-
-				R_RenderDynamicLightmaps (s);
-				
-				k = s->lightmaptexturenum;
-				if (lightmap_modified[k])
-					R_UploadLightMap(k);
 
 				v = s->polys->verts[0];
 				VectorCopy(s->plane->normal, n);
@@ -1280,6 +1302,7 @@ void R_DrawBrushModel (entity_t *e) {
 
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
+	R_RenderAllDynamicLightmaps(clmodel);
 	if (r_drawflat.value != 0 && clmodel->isworldmodel)
 		if(r_drawflat.integer==1)
 		{
@@ -1416,6 +1439,7 @@ void R_DrawWorld (void)
 	R_DrawEntitiesOnList (&cl_firstpassents);
 
 	//draw the world
+	R_RenderAllDynamicLightmaps(cl.worldmodel);
 	if (r_drawflat.value)
 	{
 		if(r_drawflat.integer==1)
