@@ -780,8 +780,8 @@ void R_DrawAlphaChain (void) {
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
+				qglMultiTexCoord2f (GL_TEXTURE0, v[3], v[4]);
+				qglMultiTexCoord2f (GL_TEXTURE1, v[5], v[6]);
 			} else {
 				glTexCoord2f (v[3], v[4]);
 			}
@@ -893,7 +893,7 @@ void DrawTextureChains (model_t *model, int contents)
 		}
 
 		//bind the world texture
-		GL_SelectTexture(GL_TEXTURE0_ARB);
+		GL_SelectTexture(GL_TEXTURE0);
 		GL_Bind (t->gl_texturenum);
 
 		draw_fbs = gl_fb_bmodels.value /* || isLumaTexture */;
@@ -906,8 +906,8 @@ void DrawTextureChains (model_t *model, int contents)
 				if (gl_add_ext)
 				{
 					doMtex1 = true;
-					GL_EnableTMU(GL_TEXTURE1_ARB);
-					GL_FB_TEXTURE = GL_TEXTURE1_ARB;
+					GL_EnableTMU(GL_TEXTURE1);
+					GL_FB_TEXTURE = GL_TEXTURE1;
 					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
 					GL_Bind (fb_texturenum);
 
@@ -917,7 +917,7 @@ void DrawTextureChains (model_t *model, int contents)
 					if (mtex_lightmaps)
 					{
 						doMtex2 = true;
-						GL_LIGHTMAP_TEXTURE = GL_TEXTURE2_ARB;
+						GL_LIGHTMAP_TEXTURE = GL_TEXTURE2;
 						GL_EnableTMU(GL_LIGHTMAP_TEXTURE);
 						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 					}
@@ -929,7 +929,7 @@ void DrawTextureChains (model_t *model, int contents)
 				}
 				else
 				{
-					GL_DisableTMU(GL_TEXTURE1_ARB);					
+					GL_DisableTMU(GL_TEXTURE1);					
 					render_lightmaps = true;
 					doMtex1 = doMtex2 = mtex_lightmaps = mtex_fbs = false;
 				}
@@ -937,8 +937,8 @@ void DrawTextureChains (model_t *model, int contents)
 			else
 			{
 				doMtex1 = true;
-				GL_EnableTMU(GL_TEXTURE1_ARB);
-				GL_LIGHTMAP_TEXTURE = GL_TEXTURE1_ARB;
+				GL_EnableTMU(GL_TEXTURE1);
+				GL_LIGHTMAP_TEXTURE = GL_TEXTURE1;
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 
 				mtex_lightmaps = true;
@@ -947,7 +947,7 @@ void DrawTextureChains (model_t *model, int contents)
 				if (mtex_fbs)
 				{
 					doMtex2 = true;
-					GL_FB_TEXTURE = GL_TEXTURE2_ARB;
+					GL_FB_TEXTURE = GL_TEXTURE2;
 					GL_EnableTMU(GL_FB_TEXTURE);
 					GL_Bind (fb_texturenum);
 					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, isLumaTexture ? GL_ADD : GL_DECAL);
@@ -997,17 +997,17 @@ void DrawTextureChains (model_t *model, int contents)
 							//Tei: textureless for the world brush models
 							if(gl_textureless.value && model->isworldmodel)
 							{ //Qrack
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
+								qglMultiTexCoord2f (GL_TEXTURE0, 0, 0);
 	                            
 								if (mtex_lightmaps)
 									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
 								if (mtex_fbs)
-									qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+									qglMultiTexCoord2f (GL_TEXTURE2, 0, 0);
 							}
 							else
 							{
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+								qglMultiTexCoord2f (GL_TEXTURE0, v[3], v[4]);
 
 								if (mtex_lightmaps)
 									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
@@ -1059,13 +1059,13 @@ void DrawTextureChains (model_t *model, int contents)
 		}
 
 		if (doMtex1)
-			GL_DisableTMU(GL_TEXTURE1_ARB);
+			GL_DisableTMU(GL_TEXTURE1);
 		if (doMtex2)
-			GL_DisableTMU(GL_TEXTURE2_ARB);
+			GL_DisableTMU(GL_TEXTURE2);
 	}
 
 	if (gl_mtexable)
-		GL_SelectTexture(GL_TEXTURE0_ARB);
+		GL_SelectTexture(GL_TEXTURE0);
 
 	if (gl_fb_bmodels.value)
 	{
@@ -1115,7 +1115,7 @@ void R_DrawFlat (model_t *model) {
 	
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
 	
-	GL_SelectTexture(GL_TEXTURE0_ARB);
+	GL_SelectTexture(GL_TEXTURE0);
 	
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
