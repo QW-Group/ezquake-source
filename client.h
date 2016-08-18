@@ -240,8 +240,9 @@ typedef struct {
 } dlight_t;
 
 typedef struct customlight_s {
-	dlighttype_t	type;
-	byte			color[3];			// use such color if type == lt_custom
+	dlighttype_t    type;
+	byte            color[3];           // use such color if type == lt_custom
+	byte            alpha;
 } customlight_t;
 
 typedef struct {

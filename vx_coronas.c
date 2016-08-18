@@ -334,16 +334,17 @@ void NewCorona (coronatype_t type, vec3_t origin)
 	else if (type == C_ROCKETLIGHT)
 	{
 		dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, &cst_lt);
+		c->alpha = 1;
 		if (cst_lt.type == lt_custom)
 		{
 			VectorCopy(cst_lt.color, c->color);
 			VectorScale(c->color, (1.0/255), c->color); // cast byte to float
+			c->alpha = cst_lt.alpha * (1.0 / 255);
 		}
 		else
 			VectorCopy(bubblecolor[cst_lt.type], c->color);
 		c->scale = 60;
 		c->die = cl.time + 0.01;
-		c->alpha = 1;
 		c->fade = 0;
 		c->growth = 0;
 	}

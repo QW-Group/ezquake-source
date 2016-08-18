@@ -233,6 +233,7 @@ customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random,
 	if (l->type == lt_custom)
 		for (i = 0; i < 3; i++)
 			l->color[i] = min(128, color[i]); // i've seen color set in float form to 0.5 maximum and to 128 in byte form, so keep this tradition even i'm do not understand why they do so
+	l->alpha = color[3];
 
 	return l;
 }
