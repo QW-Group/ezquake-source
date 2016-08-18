@@ -1936,6 +1936,10 @@ qbool CL_GetDemoMessage (void)
 		return false;
 	#endif
 
+	// Only read packets when in main POV
+	if (!CL_Demo_IsPrimaryPointOfView ())
+		return false;
+
 	// Demo paused, don't read anything.
 	if (cl.paused & PAUSED_DEMO)
 	{
@@ -5136,3 +5140,11 @@ void CL_Demo_Init(void)
 
 	Cvar_ResetCurrentGroup();
 }
+qbool CL_Demo_IsPrimaryPointOfView (void)
+{
+	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1)
+		return false;
+
+	return true;
+}
+
