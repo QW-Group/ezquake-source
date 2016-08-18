@@ -373,7 +373,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	lightmap = surf->samples;
 
 	// check for full bright or no light data
-	fullbright = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
+	fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
 
 	if (fullbright)
 	{	// set to full bright
