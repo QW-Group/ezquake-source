@@ -128,7 +128,13 @@ static void CL_CheckForNQDSeekPointFound(void)
 	// If we found demomark, we should stop seeking, so reset time to the proper value.
 	if (cls.demoseeking == DST_SEEKING_FOUND) 
 	{
+		extern cvar_t demo_jump_rewind;
+
 		cls.demotime = demotime; // this will trigger seeking stop
+
+		if (demo_jump_rewind.value < 0) {
+			CL_Demo_Jump (-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
+		}
 	}
 
 	// If we've reached our seek goal, stop seeking.

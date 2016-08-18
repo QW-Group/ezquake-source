@@ -2086,6 +2086,12 @@
         { "name": "qwz", "description": "Qizmo compressed demo." }
       ]
     },
+    "demo_jump_rewind": {
+      "group-id": "40",
+      "desc": "Specifies the automatic rewind time before /demo_jump_mark or /demo_jump_status triggers normal playback",
+      "remarks": "Time in seconds, must be negative.",
+      "type": "float"
+    },
     "demo_getpings": {
       "group-id": "7",
       "desc": "This toggles whether the client should always record pings into the demo or only\nwhen the player died and show(team)scores are being shown (QWCL default).",

@@ -1919,7 +1919,7 @@ void CL_ParseStartSoundPacket(void)
 		}
     }
 
-	if (cls.demoseeking)
+	if (CL_Demo_SkipMessage())
 		return;
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
@@ -2696,12 +2696,12 @@ extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
 
-void CL_ParsePrint (void)
+void CL_ProcessPrint (int level, char* s0)
 {
 	qbool suppress_talksound;
 	wchar *s, str[2048], *p, check_flood;
-	char *s0, *qtvtmp, qtvstr[2048];
-	int level, flags = 0, offset = 0;
+	char *qtvtmp, qtvstr[2048];
+	int flags = 0, offset = 0;
 	size_t len;
 
 	int client;
@@ -2710,9 +2710,6 @@ void CL_ParsePrint (void)
 
 	char *chat_sound_file;
 	float chat_sound_vol = 0.0;
-
-	level = MSG_ReadByte ();
-	s0 = MSG_ReadString ();
 
 	// { QTV: check do this string is QTV chat
 	qtvtmp = SkipQTVLeadingProxies(s0);
@@ -2917,9 +2914,37 @@ void CL_ParsePrint (void)
 	}
 }
 
+void CL_ParsePrint (void)
+{
+	int level = MSG_ReadByte ();
+	char* s0 = MSG_ReadString ();
+
+	if (CL_Demo_SkipMessage())
+		return;
+
+	CL_ProcessPrint (level, s0);
+}
+
 void CL_ParseStufftext (void) 
 {
 	char *s = MSG_ReadString();
+
+	// Always process demomarks, regardless of who inserted them
+	if (!strcmp(s, "//demomark\n"))
+	{
+		// demo mark
+		if (cls.demoseeking == DST_SEEKING_DEMOMARK) {
+			extern cvar_t demo_jump_mark_offset;
+
+			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
+
+			return;
+		}
+	}
+
+	// Any processing after this point will be ignored if not tracking the target player
+	if (cls.state == ca_active && CL_Demo_SkipMessage())
+		return;
 
 	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
 	{
@@ -2982,12 +3007,6 @@ void CL_ParseStufftext (void)
 		// weapon stats
 		extern void Parse_WeaponStats(char *s);
 		Parse_WeaponStats( s + 2 );
-	}
-	else if (!strcmp(s, "//demomark\n"))
-	{
-		// demo mark
-		if (cls.demoseeking == DST_SEEKING_DEMOMARK)
-			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
 	}
 	else if (!strcmp(s, "cmd pext\n"))
 	{
@@ -3096,7 +3115,7 @@ void CL_MuzzleFlash (void)
 
 	i = MSG_ReadShort();
 
-	if (cls.demoseeking)
+	if (CL_Demo_SkipMessage())
 		return;
 
 	if (!cl_muzzleflash.value)
@@ -3377,6 +3396,9 @@ void CL_ParseServerMessage (void)
 					// Centerprint re-triggers
 					s = MSG_ReadString();
 
+					if (CL_Demo_SkipMessage ())
+						break;
+
 					if (!cls.demoseeking)
 					{
 						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
@@ -3410,7 +3432,7 @@ void CL_ParseServerMessage (void)
 					for (i = 0; i < 3; i++)
 						newangles[i] = MSG_ReadAngle();
 
-					if (cls.demoseeking)
+					if (CL_Demo_SkipMessage ())
 						break;
 
 					if (cls.mvdplayback) 
@@ -3450,6 +3472,10 @@ void CL_ParseServerMessage (void)
 			case svc_stopsound:
 				{
 					i = MSG_ReadShort();
+
+					if (CL_Demo_SkipMessage ())
+						break;
+
 					S_StopSound(i >> 3, i & 7);
 					break;
 				}
@@ -3535,6 +3561,7 @@ void CL_ParseServerMessage (void)
 				{
 					i = MSG_ReadByte();
 					j = MSG_ReadByte();
+
 					CL_SetStat(i, j);
 					break;
 				}
@@ -3542,6 +3569,7 @@ void CL_ParseServerMessage (void)
 				{
 					i = MSG_ReadByte();
 					j = MSG_ReadLong();
+
 					CL_SetStat(i, j);
 					break;
 				}
@@ -3586,11 +3614,17 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_smallkick:
 				{
+					if (CL_Demo_SkipMessage ())
+						break;
+
 					cl.ideal_punchangle = -2;
 					break;
 				}
 			case svc_bigkick:
 				{
+					if (CL_Demo_SkipMessage ())
+						break;
+
 					cl.ideal_punchangle = -4;
 					break;
 				}
@@ -3687,12 +3721,22 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_maxspeed:
 				{
-					cl.maxspeed = MSG_ReadFloat();
+					float newspeed = MSG_ReadFloat ();
+
+					if (CL_Demo_SkipMessage ())
+						break;
+
+					cl.maxspeed = newspeed;
 					break;
 				}
 			case svc_entgravity :
 				{
-					cl.entgravity = MSG_ReadFloat();
+					float newgravity = MSG_ReadFloat ();
+
+					if (CL_Demo_SkipMessage ())
+						break;
+
+					cl.entgravity = newgravity;
 					break;
 				}
 			case svc_setpause:
