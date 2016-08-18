@@ -239,6 +239,8 @@ byte		*host_colormap = NULL;
 int		fps_count;
 double		lastfps;
 
+static int next_spec_track = -1;
+
 static void CL_Multiview(void);
 static void CL_MultiviewSaveValues (void);
 static void CL_MultiviewRestoreValues (void);
@@ -2240,6 +2242,7 @@ void CL_Frame (double time)
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
+	next_spec_track = -1;
 
 	if (extratime < minframetime) 
 	{
@@ -2577,6 +2580,11 @@ void CL_Frame (double time)
 	SB_ExecuteQueuedTriggers();
 
 	CL_UpdateCaption(false);
+
+	// Multiview: advance to next player
+	if (next_spec_track >= 0) {
+		spec_track = next_spec_track;
+	}
 }
 
 //============================================================================
@@ -2672,12 +2680,11 @@ int		nSwapPov;					// Change in POV positive for next, negative for previous.
 int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
-static void CL_Multiview(void)
+static void CL_Multiview (void)
 {
 	static int playernum = 0;
 
-	if (!cls.mvdplayback)
-	{
+	if (!cls.mvdplayback) {
 		return;
 	}
 
@@ -2686,9 +2693,8 @@ static void CL_Multiview(void)
 	// Only refresh skins once (to start with), I think this is the best solution for multiview
 	// eg when viewing 4 players in a 2v2.
 	// Also refresh them when the player changes what team to track.
-	if ((!CURRVIEW && cls.state >= ca_connected) || nSwapPov)
-	{
-		TP_RefreshSkins();
+	if ((!CURRVIEW && cls.state >= ca_connected) || nSwapPov) {
+		TP_RefreshSkins ();
 	}
 
 	CL_MultiviewOverrideValues ();
@@ -2855,7 +2861,7 @@ static void CL_Multiview(void)
 	// BUGFIX: Only change the spec_track if the new track target is a player.
 	if (!cl.players[playernum].spectator && cl.players[playernum].name[0])
 	{
-		spec_track = playernum;
+		next_spec_track = playernum;
 	}
 
 	// Make sure we reset variables we suppressed during multiview drawing.
@@ -2968,4 +2974,14 @@ void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
 
 		OnChangeColorForcing(var, value, cancel);
 	}
+}
+
+// Can be used during rendering to find out what the next spec track will be
+//   (especially useful when CURRVIEW == 1 after CL_Multiview() to report who tracked in main view)
+int CL_MultiviewNextPlayer (void)
+{
+	if (next_spec_track >= 0) {
+		return next_spec_track;
+	}
+	return spec_track;
 }

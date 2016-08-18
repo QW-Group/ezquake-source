@@ -964,6 +964,8 @@ extern int		nSwapPov;					// Change in POV positive for next, negative for previ
 extern int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 extern int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
+int CL_MultiviewNextPlayer (void);
+
 //
 // Original values saved between frames for effects that are
 // turned off during multiview mode.

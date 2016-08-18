@@ -335,12 +335,9 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 
 void SCR_HUD_DrawTracking(hud_t *hud)
 {
-	static char tracked_strings[MV_VIEWS][MAX_TRACKING_STRING];
-	static int tracked[MV_VIEWS] = {-1, -1, -1, -1};
-	int views = 1;
-	int view = 0;
 	int x = 0, y = 0, width = 0, height = 0;
 	char track_string[MAX_TRACKING_STRING];
+	int player = CL_MultiviewNextPlayer ();
 
 	static cvar_t *hud_tracking_format = NULL,
 		      *hud_tracking_scale;
@@ -351,76 +348,17 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	}
 
 	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
+	Replace_In_String(track_string, sizeof(track_string), '%', 2,
+			"n", cl.players[player].name,						// Replace %n with player name.
+			"t", cl.teamplay ? cl.players[player].team : "");	// Replace %t with player team if teamplay is on.
+	height = 8 * hud_tracking_scale->value;
+	width = 8 * strlen_color(track_string) * hud_tracking_scale->value;
 
-	if(cls.mvdplayback && cl_multiview.value && CURRVIEW > 0)
-	{
-		//
-		// Multiview.
-		//
-
-		views = cl_multiview.value;
-
-		// Save the currently tracked player for the slot being drawn
-		// (this will be done for all views and we'll get a complete
-		// list over who we're tracking).
-		tracked[CURRVIEW - 1] = spec_track;
-
-		for(view = 0; view < MV_VIEWS; view++)
-		{
-			int new_width = 0;
-
-			// We haven't found who we're tracking in this view.
-			if(tracked[view] < 0)
-			{
-				continue;
-			}
-
-			strlcpy(tracked_strings[view], hud_tracking_format->string, sizeof(tracked_strings[view]));
-
-			Replace_In_String(tracked_strings[view], sizeof(tracked_strings[view]), '%', 3,
-					"v", cl_multiview.value ? va("%d", view+1) : "",			// Replace %v with the current view (in multiview)
-					"n", cl.players[tracked[view]].name,						// Replace %n with player name.
-					"t", cl.teamplay ? cl.players[tracked[view]].team : "");	// Replace %t with player team if teamplay is on.
-
-			// Set the width.
-			new_width = 8 * strlen_color(tracked_strings[view]);
-			width = (new_width > width) ? new_width : width;
+	if (HUD_PrepareDraw (hud, width, height, &x, &y)) {
+		if (cl.spectator && autocam == CAM_TRACK) {
+			// Normal
+			Draw_SString (x, y, track_string, hud_tracking_scale->value);
 		}
-	}
-	else
-	{
-		// Normal.
-		Replace_In_String(track_string, sizeof(track_string), '%', 2,
-				"n", cl.players[spec_track].name,						// Replace %n with player name.
-				"t", cl.teamplay ? cl.players[spec_track].team : "");	// Replace %t with player team if teamplay is on.
-		width = 8 * strlen_color(track_string);
-	}
-
-	height = 8 * views;
-	height *= hud_tracking_scale->value;
-	width *= hud_tracking_scale->value;
-
-	if(!HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		return;
-	}
-
-	if (cls.mvdplayback && cl_multiview.value && autocam == CAM_TRACK)
-	{
-		// Multiview
-		for(view = 0; view < MV_VIEWS; view++)
-		{
-			if(tracked[view] < 0 || CURRVIEW <= 0)
-			{
-				continue;
-			}
-			Draw_SString(x, y + view*8, tracked_strings[view], hud_tracking_scale->value);
-		}
-	}
-	else if (cl.spectator && autocam == CAM_TRACK && !cl_multiview.value)
-	{
-		// Normal
-		Draw_SString(x, y, track_string, hud_tracking_scale->value);
 	}
 }
 
