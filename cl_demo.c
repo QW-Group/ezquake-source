@@ -4918,6 +4918,7 @@ void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking)
 	cls.demotime = newdemotime;
 
 	cls.demoseeking = seeking;
+	Con_ClearNotify ();
 }
 
 double Demo_GetSpeed(void)

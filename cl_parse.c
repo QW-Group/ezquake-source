@@ -1579,8 +1579,10 @@ void CL_ParseServerData (void)
 	}
 
 	// separate the printfs so the server message can have a color
-	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-	Com_Printf ("%c%s\n", 2, str);
+	if (!cls.demoseeking) {
+		Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
+		Com_Printf ("%c%s\n", 2, str);
+	}
 
 	// ask for the sound list next
 	memset(cl.sound_name, 0, sizeof(cl.sound_name));

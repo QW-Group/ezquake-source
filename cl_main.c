@@ -538,7 +538,9 @@ void CL_MakeActive(void)
 		demostarttime = cls.demotime;
 	}
 
-	Con_ClearNotify ();
+	if (!cls.demoseeking) {
+		Con_ClearNotify ();
+	}
 	TP_ExecTrigger ("f_spawn");
 }
 
