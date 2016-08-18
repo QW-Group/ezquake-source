@@ -374,7 +374,7 @@ int CopyDirent(sys_dirent *ent, struct dirent *tmpent)
     return 1;
 }
 
-unsigned long Sys_ReadDirFirst(sys_dirent *ent)
+SysDirEnumHandle Sys_ReadDirFirst(sys_dirent *ent)
 {
     struct dirent *tmpent;
     DIR *dir = opendir(".");
@@ -394,10 +394,10 @@ unsigned long Sys_ReadDirFirst(sys_dirent *ent)
         return 0;
     }
 
-    return (unsigned long)dir;
+    return (SysDirEnumHandle)dir;
 }
 
-int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
+int Sys_ReadDirNext(SysDirEnumHandle search, sys_dirent *ent)
 {
     struct dirent *tmpent;
 
@@ -412,7 +412,7 @@ int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
     return 1;
 }
 
-void Sys_ReadDirClose(unsigned long search)
+void Sys_ReadDirClose(SysDirEnumHandle search)
 {
     closedir((DIR *)search);
 }

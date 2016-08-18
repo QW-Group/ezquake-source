@@ -1054,7 +1054,7 @@ void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
 	ent->hidden = (data->dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) ? 1 : 0;
 }
 
-unsigned long Sys_ReadDirFirst(sys_dirent *ent)
+SysDirEnumHandle Sys_ReadDirFirst(sys_dirent *ent)
 {
     HANDLE search;
     WIN32_FIND_DATA data;
@@ -1066,10 +1066,10 @@ unsigned long Sys_ReadDirFirst(sys_dirent *ent)
 
     MakeDirent(ent, &data);
 
-    return (unsigned long) search;
+    return (SysDirEnumHandle) search;
 }
 
-int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
+int Sys_ReadDirNext(SysDirEnumHandle search, sys_dirent *ent)
 {
     WIN32_FIND_DATA data;
     if (!FindNextFile((HANDLE)search, &data))
@@ -1079,7 +1079,7 @@ int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
     return 1;
 }
 
-void Sys_ReadDirClose(unsigned long search)
+void Sys_ReadDirClose(SysDirEnumHandle search)
 {
     FindClose((HANDLE)search);
 }

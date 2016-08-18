@@ -820,7 +820,7 @@ fail:
 void FL_ReadDir(filelist_t *fl)
 {
 	sys_dirent ent;
-	unsigned long search;
+	SysDirEnumHandle search;
 	int temp;
 	char  olddir[MAX_PATH+1];
 

@@ -60,10 +60,16 @@ typedef struct sys_dirent_s
     SYSTEMTIME time;
 } sys_dirent; 
 
+#ifdef _WIN32
+typedef HANDLE SysDirEnumHandle;
+#else
+typedef unsigned long SysDirEnumHandle;
+#endif
+
 char *Sys_fullpath(char *absPath, const char *relPath, int maxLength);
-unsigned long  Sys_ReadDirFirst(sys_dirent *);               // 0 if failed
-int            Sys_ReadDirNext(unsigned long, sys_dirent *); // 0 if failed (EOF)
-void           Sys_ReadDirClose(unsigned long);
+SysDirEnumHandle  Sys_ReadDirFirst(sys_dirent *);               // 0 if failed
+int            Sys_ReadDirNext(SysDirEnumHandle, sys_dirent *); // 0 if failed (EOF)
+void           Sys_ReadDirClose(SysDirEnumHandle);
 int    Sys_chdir (const char *path);
 char * Sys_getcwd (char *buf, int bufsize);
 
