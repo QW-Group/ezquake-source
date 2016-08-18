@@ -1132,6 +1132,9 @@ void FL_CheckPosition(filelist_t *fl)
 		fl->current_entry = 0;
 	if (fl->current_entry >= fl->num_entries)
 		fl->current_entry = fl->num_entries - 1;
+	if (fl->scrollbar && fl->num_entries > fl->displayed_entries_count) {
+		fl->scrollbar->curpos = fl->display_entry * 1.0f / (fl->num_entries - fl->displayed_entries_count);
+	}
 }
 
 #ifdef WITH_ZIP
