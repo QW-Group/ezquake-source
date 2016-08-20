@@ -103,45 +103,61 @@ static int last_working_display;
 static qbool last_working_values = false;
 
 //
+// OS dependent cvar defaults
+//
+#ifdef __APPLE__
+	#define CVAR_DEF1 "0"
+#else
+	#define CVAR_DEF1 "1"
+#endif
+
+#if defined(__linux__) || defined(__FreeBSD__)
+	#define CVAR_DEF2 "0"
+#else
+	#define CVAR_DEF2 "1"
+#endif
+
+//
 // cvars
 //
-
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_colorbits            = {"vid_colorbits",         "0",   CVAR_LATCH };
-cvar_t r_24bit_depth          = {"vid_24bit_depth",       "1",   CVAR_LATCH };
-cvar_t r_stereo               = {"vid_stereo",            "0",   CVAR_LATCH };
-cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
-cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
-cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
-cvar_t vid_win_height         = {"vid_win_height",        "480", CVAR_LATCH };
-cvar_t vid_hwgammacontrol     = {"vid_hwgammacontrol",    "2",   CVAR_LATCH };
-
+cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH };
+cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH };
+cvar_t r_stereo                   = {"vid_stereo",                 "0",       CVAR_LATCH };
+cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH };
+cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH };
+cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH };
+cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH };
+cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH };
+cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH };
 // TODO: Move the in_* cvars
-cvar_t in_raw                 = {"in_raw",                "1",   CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
-cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse","1",   CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t in_release_mouse_modes = {"in_release_mouse_modes","2",   CVAR_SILENT };
-cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix",     "0"                };
-cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak",   "1.0"              };
-cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
-cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
-cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
-cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
-cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
-cvar_t vid_win_displayNumber  = {"vid_win_displaynumber", "0",   CVAR_SILENT };
-cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
-cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
-cvar_t r_conscale             = {"vid_conscale",          "2.0", CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
-cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
-cvar_t r_verbose              = {"vid_verbose",           "0",   CVAR_SILENT };
-cvar_t r_showextensions       = {"vid_showextensions",    "0",   CVAR_SILENT };
-cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; // It's here because it needs to be registered before window creation
+cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
+cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH  }; /* Needs vid_restart thus vid_.... */
+
+cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
+cvar_t vid_vsync_lag_fix          = {"vid_vsync_lag_fix",          "0"                    };
+cvar_t vid_vsync_lag_tweak        = {"vid_vsync_lag_tweak",        "1.0"                  };
+cvar_t r_swapInterval             = {"vid_vsync",                  "0",       CVAR_SILENT };
+cvar_t r_win_save_pos             = {"vid_win_save_pos",           "1",       CVAR_SILENT };
+cvar_t r_win_save_size            = {"vid_win_save_size",          "1",       CVAR_SILENT };
+cvar_t vid_xpos                   = {"vid_xpos",                   "3",       CVAR_SILENT };
+cvar_t vid_ypos                   = {"vid_ypos",                   "39",      CVAR_SILENT };
+cvar_t vid_win_displayNumber      = {"vid_win_displaynumber",      "0",       CVAR_SILENT };
+cvar_t r_conwidth                 = {"vid_conwidth",               "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
+cvar_t r_conheight                = {"vid_conheight",              "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
+cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
+cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
+cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH }; // It's here because it needs to be registered before window creation
 
 //
 // function declaration
@@ -694,6 +710,8 @@ void VID_Shutdown(void)
 	VID_RestoreSystemGamma();
 #endif
 
+	(void) SDL_GL_MakeCurrent(sdl_window, NULL);
+
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
 		sdl_context = NULL;
@@ -746,6 +764,8 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
 	Cvar_Register(&vid_displayNumber);
+	Cvar_Register(&vid_minimize_on_focus_loss);
+	Cvar_Register(&vid_grab_keyboard);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -938,6 +958,8 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	VID_SDL_InitSubSystem();
+
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
@@ -953,16 +975,14 @@ static void VID_SDL_Init(void)
 		}
 	}
 
+	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
+
 #ifdef __APPLE__
 	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
-	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 #endif
-#if defined(__linux__) || defined(__FreeBSD__)
-	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
-#endif
+	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
-	VID_SDL_InitSubSystem();
 	VID_SDL_GL_SetupAttributes();
 
 	VID_SetupModeList();
