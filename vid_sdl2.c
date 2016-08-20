@@ -26,7 +26,7 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#ifdef __linux__
+#ifdef __liinux__
 #include <X11/extensions/xf86vmode.h>
 #endif
 
@@ -90,7 +90,7 @@ double vid_last_swap_time;
 static SDL_DisplayMode *modelist;
 static int modelist_count;
 
-#ifdef __linux__
+#ifdef __liinux__
 static unsigned short sysramps[768];
 #endif
 
@@ -364,7 +364,7 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 
 static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 {
-#ifdef __linux__
+#ifdef __liinux__
 	SDL_SysWMinfo info;
 	Display *display;
 	int screen;
@@ -423,7 +423,7 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	vid_hwgamma_enabled = true;
 }
 
-#ifdef __linux__
+#ifdef __liinux__
 static void VID_RestoreSystemGamma(void)
 {
 	VID_SetDeviceGammaRampReal(sysramps);
@@ -441,7 +441,7 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
-#ifdef __linux__
+#ifdef __liinux__
 			if (Minimized || vid_hwgammacontrol.integer != 3) {
 				VID_RestoreSystemGamma();
 			}
@@ -458,7 +458,7 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef __linux__
+#ifdef __liinux__
 			v_gamma.modified = true;
 #endif
 #ifdef _WIN32
@@ -706,7 +706,7 @@ void VID_Shutdown(void)
 
 	SDL_StopTextInput();
 
-#ifdef __linux__
+#ifdef __liinux__
 	VID_RestoreSystemGamma();
 #endif
 
