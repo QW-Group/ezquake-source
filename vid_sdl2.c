@@ -727,8 +727,6 @@ void VID_Shutdown(void)
 	}
 #endif
 
-	(void) SDL_GL_MakeCurrent(sdl_window, NULL);
-
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
 		sdl_context = NULL;
