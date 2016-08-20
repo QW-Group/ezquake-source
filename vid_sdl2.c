@@ -92,6 +92,7 @@ static int modelist_count;
 
 #ifdef __linux__
 static unsigned short sysramps[768];
+static qbool use_linux_gamma_workaround;
 #endif
 
 qbool vid_initialized = false;
@@ -141,6 +142,10 @@ cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CV
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH  }; /* Needs vid_restart thus vid_.... */
+
+#ifdef __linux__
+cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
+#endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
 cvar_t vid_vsync_lag_fix          = {"vid_vsync_lag_fix",          "0"                    };
@@ -371,6 +376,12 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	static short once = 1;
 	static short gamma_works = 0;
 
+	if (!use_linux_gamma_workaround) {
+		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+		vid_hwgamma_enabled = true;
+		return;
+	}
+
 	SDL_VERSION(&info.version);
 	screen = SDL_GetWindowDisplayIndex(sdl_window);
 
@@ -442,8 +453,10 @@ static void window_event(SDL_WindowEvent *event)
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
 #ifdef __linux__
-			if (Minimized || vid_hwgammacontrol.integer != 3) {
-				VID_RestoreSystemGamma();
+			if (use_linux_gamma_workaround) {
+				if (Minimized || vid_hwgammacontrol.integer != 3) {
+					VID_RestoreSystemGamma();
+				}
 			}
 #endif
 #ifdef _WIN32
@@ -459,7 +472,9 @@ static void window_event(SDL_WindowEvent *event)
 			ActiveApp = true;
 			scr_skipupdate = 0;
 #ifdef __linux__
-			v_gamma.modified = true;
+			if (use_linux_gamma_workaround) {
+				v_gamma.modified = true;
+			}
 #endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
@@ -707,7 +722,9 @@ void VID_Shutdown(void)
 	SDL_StopTextInput();
 
 #ifdef __linux__
-	VID_RestoreSystemGamma();
+	if (use_linux_gamma_workaround) {
+		VID_RestoreSystemGamma();
+	}
 #endif
 
 	(void) SDL_GL_MakeCurrent(sdl_window, NULL);
@@ -766,6 +783,10 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_displayNumber);
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
+
+#ifdef __linux__
+	Cvar_Register(&vid_gamma_workaround);
+#endif
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1510,6 +1531,10 @@ void VID_Init(unsigned char *palette) {
 	VID_SetPalette(palette);
 
 	VID_RegisterLatchCvars();
+
+#ifdef __linux__
+	use_linux_gamma_workaround = (vid_gamma_workaround.integer != 0);
+#endif
 
 	if (!host_initialized) {
 		VID_RegisterCvars();
