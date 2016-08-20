@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 
-#define	BLOCK_WIDTH		128
-#define	BLOCK_HEIGHT	128
+#define	BLOCK_WIDTH  128
+#define	BLOCK_HEIGHT 128
 
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 
@@ -47,7 +47,7 @@ static int last_lightmap_updated;
 
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
-byte	lightmaps[3 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+byte	lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
 static qbool	gl_invlightmaps = true;
 
@@ -410,7 +410,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 
 	// bound, invert, and shift
 	bl = blocklights;
-	stride -= smax * 3;
+	stride -= smax * 4;
 	for (i = 0; i < tmax; i++, dest += stride) {
 		scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
 		scale *= bound(0.5, gl_modulate.value, 3);
@@ -428,16 +428,17 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 				b = (b >> 8) * s;
 			}
 			if (gl_invlightmaps) {
-				dest[0] = 255 - (r >> 16);
+				dest[2] = 255 - (r >> 16);
 				dest[1] = 255 - (g >> 16);
-				dest[2] = 255 - (b >> 16);
+				dest[0] = 255 - (b >> 16);
 			} else {
-				dest[0] = r >> 16;
+				dest[2] = r >> 16;
 				dest[1] = g >> 16;
-				dest[2] = b >> 16;
+				dest[0] = b >> 16;
 			}
+			dest[3] = 255;
 			bl += 3;
-			dest += 3;
+			dest += 4;
 		}
 	}
 }
@@ -447,8 +448,8 @@ void R_UploadLightMap (int lightmapnum) {
 
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
-	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, theRect->t, BLOCK_WIDTH, theRect->h, GL_RGB, GL_UNSIGNED_BYTE,
-		lightmaps + (lightmapnum * BLOCK_HEIGHT + theRect->t) * BLOCK_WIDTH * 3);
+	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, theRect->t, BLOCK_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+		lightmaps + (lightmapnum * BLOCK_HEIGHT + theRect->t) * BLOCK_WIDTH * 4);
 	theRect->l = BLOCK_WIDTH;
 	theRect->t = BLOCK_HEIGHT;
 	theRect->h = 0;
@@ -585,9 +586,9 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 		theRect->w = fa->light_s - theRect->l + smax;
 	if (theRect->h + theRect->t < fa->light_t + tmax)
 		theRect->h = fa->light_t - theRect->t + tmax;
-	base = lightmaps + fa->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 3;
-	base += (fa->light_t * BLOCK_WIDTH + fa->light_s) * 3;
-	R_BuildLightMap (fa, base, BLOCK_WIDTH * 3);
+	base = lightmaps + fa->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
+	base += (fa->light_t * BLOCK_WIDTH + fa->light_s) * 4;
+	R_BuildLightMap (fa, base, BLOCK_WIDTH * 4);
 }
 
 static void R_RenderAllDynamicLightmaps(model_t *model)
@@ -1639,16 +1640,15 @@ void GL_CreateSurfaceLightmap (msurface_t *surf) {
 		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
 
 	surf->lightmaptexturenum = AllocBlock (smax, tmax, &surf->light_s, &surf->light_t);
-	base = lightmaps + surf->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 3;
-	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * 3;
+	base = lightmaps + surf->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
+	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
-	R_BuildLightMap (surf, base, BLOCK_WIDTH * 3);
+	R_BuildLightMap (surf, base, BLOCK_WIDTH * 4);
 }
 
 //Builds the lightmap texture with all the surfaces from all brush models
 void GL_BuildLightmaps (void) {
 	int i, j;
-	int lightmaptexturenum = 0;
 	model_t	*m;
 
 	memset (allocated, 0, sizeof(allocated));
@@ -1657,19 +1657,6 @@ void GL_BuildLightmaps (void) {
 	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
 
 	r_framecount = 1;		// no dlightcache
-
-	gl_lightmap_format = GL_RGB;
-	if (COM_CheckParm ("-noshadows") && Rulesets_AllowNoShadows())
-		gl_lightmap_format = GL_RGBA4;
-
-	switch (gl_lightmap_format) {
-		case GL_RGBA4:
-			lightmaptexturenum = 2;
-			break;
-		case GL_RGB:
-			lightmaptexturenum = 3;
-			break;
-	}
 
 	for (j = 1; j < MAX_MODELS; j++) {
 		if (!(m = cl.model_precache[j]))
@@ -1703,8 +1690,8 @@ void GL_BuildLightmaps (void) {
 		GL_Bind(lightmap_textures + i);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D (GL_TEXTURE_2D, 0, lightmaptexturenum, BLOCK_WIDTH, BLOCK_HEIGHT, 0,
-			gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * lightmaptexturenum);
+		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0,
+			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * 4);
 	}
 
 	if (gl_mtexable)
