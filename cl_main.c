@@ -1517,7 +1517,7 @@ void CL_ConnectionlessPacket (void)
 		{
 			if (!NET_CompareAdr(net_from, cls.server_adr))
 				return;
-			if (!com_serveractive || developer.value)
+			if ((!com_serveractive || developer.value) && !cls.demoplayback)
 				Com_Printf("&cff5connection:&r %s\n", NET_AdrToString(net_from));
 
 			if (cls.state >= ca_connected) 
@@ -1530,7 +1530,7 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
-			if (!com_serveractive || developer.value)
+			if ((!com_serveractive || developer.value) && !cls.demoplayback)
 				Com_Printf("&c1f1connected!&r\n");
 			allowremotecmd = false; // localid required now for remote cmds
 			break;

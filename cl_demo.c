@@ -3525,11 +3525,12 @@ void CL_Play_f (void)
 	#endif // WITH_ZIP
 	#endif // WITH_VFS_ARCHIVE_LOADING
 
+	strlcpy(name, real_name, sizeof(name));
+
 	#ifdef WIN32
 	//
 	// Decompress QWZ demos to QWD before playing it (using an external app).
 	//
-	strlcpy (name, real_name, sizeof(name) - 4);
 
 	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz"))
 	{
@@ -3561,8 +3562,9 @@ void CL_Play_f (void)
 		{
 			// Strip the extension from the specified filename and append
 			// the one we're currently checking for.
-			COM_StripExtension(real_name, name, sizeof(name));
-			strlcpy(name, va("%s.%s", name, *s), sizeof(name));
+			COM_StripExtension(name, name, sizeof(name));
+			strlcat(name, ".", sizeof(name));
+			strlcat(name, *s, sizeof(name));
 
 			playbackfile = CL_Open_Demo_File(name, true, NULL);
 		}
