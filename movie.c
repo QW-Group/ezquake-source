@@ -278,7 +278,6 @@ double Movie_FrameTime (void)
 double Movie_StartFrame(void) 
 {
 	double time;
-	int views = 1;
 
 	if (Cmd_FindAlias("f_captureframe"))
 	{

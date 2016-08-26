@@ -2936,8 +2936,6 @@ void CL_ParseStufftext (void)
 	{
 		// demo mark
 		if (cls.demoseeking == DST_SEEKING_DEMOMARK) {
-			extern cvar_t demo_jump_mark_offset;
-
 			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
 
 			return;

@@ -31,25 +31,6 @@ static int next_spec_track = -1;
 extern cvar_t gl_polyblend;
 extern cvar_t gl_clear;
 
-//
-// Original values saved between frames for effects that are
-// turned off during multiview mode.
-//
-static float	nContrastExit;				// v_contrast
-static float	nCrosshairExit;
-static float	nfakeshaft;					// cl_fakeshaft
-static int		nPolyblendExit;				// gl_polyblend
-static float	nGlClearExit;				// gl_clear
-static int		nLerpframesExit;
-static int		nWaterwarp;					// r_waterwarp
-static int		nContentblend;				// v_contentblend
-static float	nQuadshift;					// v_quadcshift
-static float	nPentshift;					// v_pentcshift
-static float	nRingshift;					// v_ringcshift
-static float	nDamageshift;				// v_damagecshift
-static float	nSuitshift;					// v_suitcshift
-static int		nBonusflash;				// v_bonusflash
-
 extern cvar_t scr_autoid_healthbar_bg_color;
 extern cvar_t scr_autoid_healthbar_normal_color;
 extern cvar_t scr_autoid_healthbar_mega_color;
