@@ -231,6 +231,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	static qbool changing = false;
 	float test;
 	char *new_val;
+	qbool same_value;
 
 	if (!var)
 		return;
@@ -314,6 +315,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 			return;
 	}
 
+	same_value = value && var->string && (value == var->string || !strcmp (value, var->string));
 	// dup string first (before free) since 'value' and 'var->string' can point at the same memory area.
 	new_val = Q_strdup(value);
 	// free the old value string.
@@ -323,7 +325,9 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
-	Cvar_AutoReset(var);
+	if (!same_value) {
+		Cvar_AutoReset (var);
+	}
 	var->modified = true;
 
 #ifndef CLIENTONLY
