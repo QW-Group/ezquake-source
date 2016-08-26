@@ -64,9 +64,6 @@ float	last_lock = 0;			// Last tracked player.
 
 static int	killer = -1;		// id of the player who killed the player we are now tracking
 
-// true if the player in given slot is an existing player
-#define VALID_PLAYER(i) (cl.players[i].name[0] && !cl.players[i].spectator)
-
 void CL_Cam_SetKiller(int killernum, int victimnum) {
 	if (victimnum != cl.viewplayernum) return;
 	if (killernum < 0 || killernum >= MAX_CLIENTS) return;
@@ -171,7 +168,7 @@ void Cam_Lock(int playernum)
 		Cbuf_AddTextEx (&cbuf_main, "f_trackspectate\n");
 	}
 
-	if (cl_multiview.value && cls.mvdplayback)
+	if (CL_MultiviewEnabled())
 		return; 
 
 	snprintf(st, sizeof (st), "ptrack %i", playernum);
@@ -578,7 +575,7 @@ void Cam_FinishMove(usercmd_t *cmd)
 			return;
 		}
 		// Swap the Multiview mvinset/main view pov when jump button is pressed.
-		nSwapPov = inc;
+		CL_MultiviewTrackingAdjustment (inc);
 	}
 
 	
@@ -820,8 +817,7 @@ void CL_InitCam(void)
  #endif
  
 	// Multiview tracking.	
-	memset(mv_trackslots, -1, sizeof(mv_trackslots));
-	mv_skinsforced = false;
+	CL_MultiviewInitialise ();
 }
 
 //
@@ -855,7 +851,7 @@ void CL_Track (int trackview)
 	if (trackview >= 0 && !strcmp(Cmd_Args(), "off")) 
 	{
 		Com_Printf("Track %d resetting to default\n", trackview);
-		mv_trackslots[trackview] = -1;
+		CL_MultiviewSetTrackSlot (trackview, -1);
 		return;
 	}
 
@@ -914,7 +910,7 @@ void CL_Track (int trackview)
 		// Set the specified track view to track the specified player.
 		if(trackview >= 0)
 		{
-			mv_trackslots[trackview] = slot;
+			CL_MultiviewSetTrackSlot(trackview, slot);
 		}
 
 		locked = true;
@@ -1044,86 +1040,4 @@ int WhoIsSpectated (void)
         return spec_track;
 
     return -1;
-}
-
-void CL_TrackMV1_f(void)
-{
-	CL_Track(MV_VIEW1);	
-}
-
-void CL_TrackMV2_f(void)
-{
-	CL_Track(MV_VIEW2);
-}
-void CL_TrackMV3_f(void)
-{
-	CL_Track(MV_VIEW3);
-}
-void CL_TrackMV4_f(void)
-{
-	CL_Track(MV_VIEW4);
-}
-
-void CL_TrackTeam_f(void) 
-{
-	int i, teamchoice, team_slot_count = 0;
-
-	if (cls.state < ca_connected) 
-	{
-		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
-		return;
-	}
-
-	if (!cl.spectator) 
-	{
-		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
-		return;
-	}
-
-	if (Cmd_Argc() != 2) 
-	{
-		Com_Printf("Usage: %s < 1 | 2 >\n", Cmd_Argv(0));
-		return;
-	}
-
-	// Get the team.
-	teamchoice = atoi(Cmd_Args());
-
-	if(!currteam[0])
-	{
-		// Find the the first team.
-		for(i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(VALID_PLAYER(i) && strcmp(currteam, cl.players[i].team) != 0) {
-				strlcpy(currteam, cl.players[i].team, sizeof(currteam));
-				break;
-			}
-		}
-	}
-
-	// Find the team members.
-	for(i = 0; i < MAX_CLIENTS; i++)
-	{
-		// Find the player slot to track.
-		if(!cl.players[i].spectator && strcmp(cl.players[i].name, "") 
-			&& teamchoice == 1 && !strcmp(currteam, cl.players[i].team))
-		{
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name);
-			team_slot_count++;
-		}
-		else if(!cl.players[i].spectator && strcmp(cl.players[i].name, "") 
-				&& teamchoice == 2 && strcmp(currteam, cl.players[i].team))
-		{
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name);
-			team_slot_count++;
-		}
-
-		// Don't go out of bounds in the mv_trackslots array.
-		if(team_slot_count == 4)
-		{
-			break;
-		}
-	}
-
-	cl_multiview.value = team_slot_count;
 }

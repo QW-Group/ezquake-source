@@ -337,7 +337,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 {
 	int x = 0, y = 0, width = 0, height = 0;
 	char track_string[MAX_TRACKING_STRING];
-	int player = CL_MultiviewNextPlayer ();
+	int player = spec_track;
 
 	static cvar_t *hud_tracking_format = NULL,
 		      *hud_tracking_scale;
@@ -3562,7 +3562,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 			}
 
-			if (cl_multiview.value && CURRVIEW != 1 )  // Only draw bracket for first view, might make todo below unnecessary
+			if (cl_multiview.value && CL_MultiviewCurrentView() != 1 )  // Only draw bracket for first view, might make todo below unnecessary
 			{
 				// TODO: Check if "track team" is set, if it is then draw brackets around that team.
 				//cl.players[nPlayernum]
@@ -4642,7 +4642,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	}
 
 	// Don't update hud item unless first view is beeing displayed
-	if ( CURRVIEW != 1 && CURRVIEW != 0)
+	if ( CL_MultiviewCurrentView() != 1 && CL_MultiviewCurrentView() != 0)
 		return;
 
 	if (cls.mvdplayback)
@@ -5030,14 +5030,81 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value);
 }
 
+static void SCR_Hud_GetScores (int* team, int* enemy, int* position)
+{
+	int i = 0;
+
+	*team = *enemy = *position = 0;
+
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			if(	!strcmp (TP_SkinForcingTeam (), sorted_teams[i].name) )
+			{
+				*position = i + 1;
+
+				if(i == 0)
+				{
+					if (n_teams > 1) {
+						*team = sorted_teams[0].frags;
+						*enemy = sorted_teams[1].frags;
+					}
+					else {
+						*team = sorted_teams[0].frags;
+					}
+				}
+				else
+				{
+					if (n_teams > 1) {
+						*team = sorted_teams[i].frags;
+						*enemy = sorted_teams[0].frags;
+					}
+				}
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			qbool spectating_player = cl.spectator && spec_track == sorted_players[i].playernum;
+			qbool is_player         = !cl.spectator && cl.playernum == sorted_players[i].playernum;
+
+			if (spectating_player || is_player) {
+				*position = i + 1;
+
+				if(i == 0)
+				{
+					if (n_players > 1) {
+						*team = cl.players[sorted_players[0].playernum].frags;
+						*enemy = cl.players[sorted_players[1].playernum].frags;
+					}
+					else {
+						*team = cl.players[sorted_players[0].playernum].frags;
+					}
+				}
+				else
+				{
+					if (n_players > 1) {
+						*team = cl.players[sorted_players[i].playernum].frags;
+						*enemy = cl.players[sorted_players[0].playernum].frags;
+					}
+				}
+				break;
+			}
+		}
+	}
+}
+
 //
 // TODO: decide what to do in freefly mode (and how to catch it?!), now all score_* hud elements just draws "0"
 //
 void SCR_HUD_DrawScoresTeam(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int value = 0;
-	int i;
+	int teamFrags = 0, enemyFrags = 0, position = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5048,45 +5115,15 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	//
-	// AAS: someone please tell me how to do it in a proper way!
-	//
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
-			// playing qwd demo || mvd spec/demo || playing 
-			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(TP_SkinForcingTeam (), sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
-			{
-				value = sorted_teams[i].frags;
-				break;
-			}
-		}
-	}
-	else if(cl.deathmatch)
-	{
-		for(i = 0; i < n_players; i++)
-		{
-			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
-			{
-				value = cl.players[sorted_players[i].playernum].frags;
-				break;
-			}
-		}
-	}
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
 
-	SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, teamFrags, (colorize->integer) ? (teamFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
 
 void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int value = 0;
-	int i;
+	int teamFrags = 0, enemyFrags = 0, position = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5097,47 +5134,15 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	//
-	// AAS: voodoo, again
-	//
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
 
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(TP_SkinForcingTeam (), sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
-			{
-				if(n_teams > 1)
-					value = sorted_teams[i == 0 ? 1 : 0].frags;
-				break;
-			}
-		}
-	}
-	else if(cl.deathmatch)
-	{
-		for(i = 0; i < n_players; i++)
-		{
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
-			{
-				if(n_players > 1)
-					value = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].frags;
-				break;
-			}
-		}
-	}
-
-	SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, enemyFrags, (colorize->integer) ? (enemyFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
 
 void SCR_HUD_DrawScoresDifference(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int value = 0;
-	int i;
+	int teamFrags = 0, enemyFrags = 0, position = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5148,66 +5153,15 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	//
-	// AAS: more voodoo
-	//
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
-			{
-				if(i == 0)
-				{
-					if(n_teams > 1)
-						value = sorted_teams[0].frags - sorted_teams[1].frags;
-					else
-						value = sorted_teams[0].frags;
-				}
-				else
-				{
-					if(n_teams > 1)
-						value = sorted_teams[i].frags - sorted_teams[0].frags;
-				}
-				break;
-			}
-		}
-	}
-	else if(cl.deathmatch)
-	{
-		for(i = 0; i < n_players; i++)
-		{
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
-			{
-				if(i == 0)
-				{
-					if(n_players > 1)
-						value = cl.players[sorted_players[0].playernum].frags - cl.players[sorted_players[1].playernum].frags;
-					else
-						value = cl.players[sorted_players[0].playernum].frags;
-				}
-				else
-				{
-					if(n_players > 1)
-						value = cl.players[sorted_players[i].playernum].frags - cl.players[sorted_players[0].playernum].frags;
-				}
-				break;
-			}
-		}
-	}
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
 
-	SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, teamFrags - enemyFrags, (colorize->integer) ? ((teamFrags - enemyFrags) < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
 
 void SCR_HUD_DrawScoresPosition(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int value = 0;
-	int i;
+	int teamFrags = 0, enemyFrags = 0, position = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5218,37 +5172,9 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	//
-	// AAS: someone, please stop me
-	//
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
-			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
-			{
-				value = i;
-				break;
-			}
-		}
-	}
-	else if(cl.deathmatch)
-	{
-		for(i = 0; i < n_players; i++)
-		{
-			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
-			{
-				value = i;
-				break;
-			}
-		}
-	}
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
 
-	SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, position, (colorize->integer) ? (position != 1 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
 
 /*

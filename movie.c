@@ -280,18 +280,13 @@ double Movie_StartFrame(void)
 	double time;
 	int views = 1;
 
-	if (cl_multiview.value)
-	{
-		views = cl_multiview.value;
-	}
-
 	if (Cmd_FindAlias("f_captureframe"))
 	{
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
 	}
 
 	time = Movie_FrameTime();
-	return bound(1.0 / 1000, time / views, 1.0);
+	return bound(1.0 / 1000, time, 1.0);
 }
 
 void Movie_FinishFrame(void) 
@@ -333,42 +328,14 @@ void Movie_FinishFrame(void)
 	con_suppress = true;
 	#endif // _WIN32
 
-	//SCR_Screenshot(fname);
-	//movie_frame_count++;
-
-	// Only capture a frame after all views have been drawn
-	// in multiview mode. Otherwise always.
-	if (cl_multiview.value && cls.mvdplayback) 
-	{
-		if (CURRVIEW == 1)
-		{
-			SCR_Movieshot(fname);
-		}
-	} 
-	else
-	{
-		SCR_Movieshot(fname);
-	}
+	SCR_Screenshot(fname);
+	movie_frame_count++;
 
 #ifdef _WIN32
 	if (!movie_is_avi)
 #endif
 	{
 		con_suppress = false;
-	}
-
-	// Only count the frame when all the views have been drawn
-	// in multiview mode. (Instead of counting one for each view that is drawn).
-	if (cl_multiview.value && cls.mvdplayback) 
-	{
-		if (CURRVIEW == 1)
-		{
-			movie_frame_count++;
-		}
-	} 
-	else
-	{
-		movie_frame_count++;
 	}
 
 	if (cls.realtime >= movie_start_time + movie_len)

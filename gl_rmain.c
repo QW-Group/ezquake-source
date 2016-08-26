@@ -1754,8 +1754,8 @@ void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble z
 
 	if (cl_multiview.value == 2 && !cl_mvinset.value && cls.mvdplayback)
 		glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
-	else if (cl_multiview.value == 3 && cls.mvdplayback) {
-		if (CURRVIEW == 2)
+	else if (CL_MultiviewActiveViews() == 3) {
+		if (CL_MultiviewCurrentView() == 2)
 			glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
 		else
 			glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
@@ -1776,11 +1776,11 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 2 && cl_mvinset.value) 
 	{
-		if (CURRVIEW == 2)
+		if (CL_MultiviewCurrentView() == 2)
 			glViewport (glx + x, gly + y2, w, h);
-		else if (CURRVIEW == 1 && !cl_sbar.value)
+		else if (CL_MultiviewCurrentView() == 1 && !cl_sbar.value)
 			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (glheight/3)*2, w/3, h/3);
-		else if (CURRVIEW == 1 && cl_sbar.value)
+		else if (CL_MultiviewCurrentView() == 1 && cl_sbar.value)
 			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (h/3)*2, w/3, h/3);
 		else 
 			Com_Printf("ERROR!\n");
@@ -1788,9 +1788,9 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 2 && !cl_mvinset.value) 
 	{
-		if (CURRVIEW == 2)
+		if (CL_MultiviewCurrentView() == 2)
 			glViewport (0, h/2, w, h/2);
-		else if (CURRVIEW == 1)
+		else if (CL_MultiviewCurrentView() == 1)
 			glViewport (0, 0, w, h/2-1);
 		else 
 			Com_Printf("ERROR!\n");
@@ -1799,9 +1799,9 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 3) 
 	{
-		if (CURRVIEW == 2)
+		if (CL_MultiviewCurrentView() == 2)
 			glViewport (0, h/2, w, h/2);
-		else if (CURRVIEW == 3)
+		else if (CL_MultiviewCurrentView() == 3)
 			glViewport (0, 0, w/2, h/2-1);
 		else
 			glViewport (w/2, 0, w/2, h/2-1);
@@ -1809,16 +1809,13 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else 
 	{
-		if (cl_multiview.value > 4)
-			cl_multiview.value = 4;
-
-		if (CURRVIEW == 2)
+		if (CL_MultiviewCurrentView() == 2)
 			glViewport (0, h/2, w/2, h/2);
-		else if (CURRVIEW == 3)
+		else if (CL_MultiviewCurrentView() == 3)
 			glViewport (w/2, h/2, w/2, h/2);
-		else if (CURRVIEW == 4)
+		else if (CL_MultiviewCurrentView() == 4)
 			glViewport (0, 0, w/2, h/2-1);
-		else if (CURRVIEW == 1)
+		else if (CL_MultiviewCurrentView() == 1)
 			glViewport (w/2, 0, w/2, h/2-1);
 	}
 
@@ -1853,12 +1850,12 @@ void R_SetupGL(void)
 	h = y - y2;
 
 	// Multiview
-	if (CURRVIEW && cl_multiview.value && cls.mvdplayback)
+	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled())
 	{
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
 
-	if (!cl_multiview.value || !cls.mvdplayback)
+	if (! CL_MultiviewEnabled())
 	{
 		glViewport (glx + x, gly + y2, w, h);
 	}
@@ -1889,7 +1886,7 @@ void R_SetupGL(void)
 	else
 		glDisable(GL_CULL_FACE);
 
-	if (cl_multiview.value && cls.mvdplayback) {
+	if (CL_MultiviewEnabled()) {
 		glClear (GL_DEPTH_BUFFER_BIT);
 		gldepthmin = 0;
 		gldepthmax = 1;
@@ -2438,6 +2435,12 @@ static void R_RenderSceneBlur(void)
 	}
 }
 
+void R_RenderPostProcess (void)
+{
+	R_RenderSceneBlur();
+	R_BloomBlend();
+}
+
 void R_RenderView(void)
 {
 	extern void DrawCI (void);
@@ -2478,22 +2481,6 @@ void R_RenderView(void)
 	}
 
 	SCR_SetupAutoID ();
-
-	if (cl_multiview.value && cls.mvdplayback)
-	{
-		// Only bloom when we have drawn all views when in multiview.
-		if (CURRVIEW == 1)
-		{
-			R_RenderSceneBlur();
-			R_BloomBlend();
-		}
-	} 
-	else
-	{
-		// Normal, bloom on each frame.
-		R_RenderSceneBlur();
-		R_BloomBlend();
-	}
 
 	if (r_speeds.value) {
 		time2 = Sys_DoubleTime ();

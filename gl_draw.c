@@ -1198,18 +1198,12 @@ void Draw_Crosshair (void)
 	byte *col;
 	extern vrect_t scr_vrect;
 
-	// Multiview
-	if (cls.mvdplayback && cl_multiview.value == 2 && CURRVIEW == 1 && !cl_mvinsetcrosshair.value)
-	{
-		return;
-	}
-
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
 		// Multiview
-		if (cl_multiview.value && cls.mvdplayback)
+		if (CL_MultiviewEnabled())
 		{
 			if (cl_multiview.value == 1)
 			{
@@ -1220,12 +1214,12 @@ void Draw_Crosshair (void)
 			{
 				if (!cl_mvinset.value)
 				{
-					if (CURRVIEW == 1)
+					if (CL_MultiviewCurrentView() == 1)
 					{
 						x = vid.width / 2;
 						y = vid.height * 3/4;
 					}
-					else if (CURRVIEW == 2)
+					else if (CL_MultiviewCurrentView() == 2)
 					{
 						// top cv2
 						x = vid.width / 2;
@@ -1235,13 +1229,13 @@ void Draw_Crosshair (void)
 				else
 				{
 					// inset
-					if (CURRVIEW == 2)
+					if (! CL_MultiviewInsetView())
 					{
 						// normal
 						x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 						y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 					}
-					else if (CURRVIEW == 1)
+					else
 					{
 						x = vid.width - (vid.width/3)/2;
 						if (cl_sbar.value)
@@ -1258,13 +1252,13 @@ void Draw_Crosshair (void)
 			}
 			else if (cl_multiview.value == 3)
 			{
-				if (CURRVIEW == 2)
+				if (CL_MultiviewCurrentView() == 2)
 				{
 					// top
 					x = vid.width / 2;
 					y = vid.height / 4;
 				}
-				else if (CURRVIEW == 3)
+				else if (CL_MultiviewCurrentView() == 3)
 				{
 					// bl
 					x = vid.width / 4;
@@ -1280,27 +1274,27 @@ void Draw_Crosshair (void)
 			}
 			else if (cl_multiview.value >= 4)
 			{
-				if (CURRVIEW == 2)
+				if (CL_MultiviewCurrentView() == 2)
 				{
 					// tl
 					x = vid.width/4;
 					y = vid.height/4;
 				}
-				else if (CURRVIEW == 3)
+				else if (CL_MultiviewCurrentView() == 3)
 				{
 					// tr
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/4;
 
 				}
-				else if (CURRVIEW == 4)
+				else if (CL_MultiviewCurrentView() == 4)
 				{
 					// bl
 					x = vid.width/4;
 					y = vid.height/2 + vid.height/4;
 
 				}
-				else if (CURRVIEW == 1)
+				else if (CL_MultiviewCurrentView() == 1)
 				{
 					// br
 					x = vid.width/2 + vid.width/4;
@@ -1354,10 +1348,13 @@ void Draw_Crosshair (void)
 		}
 
 		// Multiview for the case of mv == 2 with mvinset
-		if (cl_multiview.value == 2 && cls.mvdplayback && cl_mvinset.value)
+		if (CL_MultiviewInsetEnabled())
 		{
-			if (CURRVIEW == 1)
+			if (CL_MultiviewInsetView())
 			{
+				if (!cl_mvinsetcrosshair.value)
+					return;
+
 				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 			}
@@ -1368,7 +1365,7 @@ void Draw_Crosshair (void)
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 			}
 		}
-		else if (cl_multiview.value > 1 && cls.mvdplayback)
+		else if (CL_MultiviewActiveViews() > 1)
 		{
 			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
@@ -1402,37 +1399,35 @@ void Draw_Crosshair (void)
 	else if (crosshair.value)
 	{
 		// Multiview
-		if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
-		{
-			if (cl_sbar.value)
-			{
-				Draw_Character (vid.width - (vid.width/3)/2-4, ((vid.height/3)-sb_lines/3)/2 - 2, '+');
+		if (CL_MultiviewInsetEnabled()) {
+			if (CL_MultiviewInsetView()) {
+				if (cl_sbar.value) {
+					Draw_Character (vid.width - (vid.width / 3) / 2 - 4, ((vid.height / 3) - sb_lines / 3) / 2 - 2, '+');
+				}
+				else {
+					Draw_Character (vid.width - (vid.width / 3) / 2 - 4, (vid.height / 3) / 2 - 2, '+');
+				}
 			}
-			else
-			{
-				Draw_Character (vid.width - (vid.width/3)/2-4, (vid.height/3)/2 - 2, '+');
+			else {
+				Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
 			}
 		}
-		else if (cls.mvdplayback && cl_multiview.value == 2 && !cl_mvinset.value)
-		{
+		else if (CL_MultiviewActiveViews() == 2) {
 			Draw_Character (vid.width / 2 - 4, vid.height * 3/4 - 2, '+');
 			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
 		}
-		else if (cls.mvdplayback && cl_multiview.value == 3)
-		{
+		else if (CL_MultiviewActiveViews() == 3) {
 			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
 			Draw_Character (vid.width / 4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 		}
-		else if (cls.mvdplayback && cl_multiview.value >= 4)
-		{
+		else if (CL_MultiviewActiveViews() == 4) {
 			Draw_Character (vid.width/4 - 4, vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/4 - 2, '+');
 			Draw_Character (vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 		}
-		else
-		{
+		else {
 			Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
 		}
 	}

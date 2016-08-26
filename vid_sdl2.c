@@ -1167,13 +1167,6 @@ void GL_EndRendering (void)
         }
 
 	if (!scr_skipupdate || block_drawing) {
-		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
-		if (cl_multiview.value && cls.mvdplayback) {
-			if (CURRVIEW != 1) {
-				return;
-			}
-		}
-
 		if (vid_vsync_lag_fix.integer > 0) {
 			GL_SwapBuffersWithVsyncFix();
 		} else {

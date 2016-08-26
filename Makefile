@@ -313,7 +313,8 @@ OBJS_c := \
     cd_null.o \
     vid_sdl2.o \
     sys_sdl2.o \
-    in_sdl2.o
+    in_sdl2.o \
+    cl_multiview.o
 
 ### Configuration Options ###
 

@@ -239,14 +239,8 @@ byte		*host_colormap = NULL;
 
 int		fps_count;
 double		lastfps;
-
-static int next_spec_track = -1;
-
-static void CL_Multiview(void);
-static void CL_MultiviewSaveValues (void);
-static void CL_MultiviewRestoreValues (void);
-static void CL_MultiviewOverrideValues (void);
-static qbool CL_MultiviewCvarResetRequired (void);
+qbool physframe;
+double physframetime;
 
 // emodel and pmodel are encrypted to prevent llamas from easily hacking them
 char emodel_name[] = { 'e'^0xe5, 'm'^0xe5, 'o'^0xe5, 'd'^0xe5, 'e'^0xe5, 'l'^0xe5, 0 };
@@ -1292,11 +1286,7 @@ void CL_Disconnect (void)
 	cl.teamfortress = false;
 
 	// Reset values changed by Multiview.
-	if (CL_MultiviewCvarResetRequired()) {
-		CL_MultiviewRestoreValues ();
-		nTrack1duel = nTrack2duel = 0;
-		CURRVIEW = 0;
-	}
+	CL_MultiviewResetCvars ();
 
 	// Stop sounds (especially looping!)
 	S_StopAllSounds();
@@ -2153,9 +2143,9 @@ static double CL_MinFrameTime (void)
 			return 0;
 
 		// Multiview.
-		if (cl_multiview.value > 0 && cls.mvdplayback)
+		if (CL_MultiviewEnabled())
 		{
-			fps = max (30.0, cl_maxfps.value * nNumViews);
+			fps = max (30.0, cl_maxfps.value * CL_MultiviewNumberViews());
 		}
 		else
 		{
@@ -2230,8 +2220,57 @@ void Cl_Reset_Min_fps_f(void)
 void CL_QTVPoll (void);
 void SB_ExecuteQueuedTriggers (void);
 
-qbool physframe;
-double physframetime;
+void CL_LinkEntities (void)
+{
+	if (cls.state >= ca_onserver)
+	{
+		// actually it should be curtime == cls.netchan.last_received but that did not work on float values...
+		qbool recent_packet = (curtime - cls.netchan.last_received < 0.00001);
+		qbool setup_player_prediction = ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0);
+		setup_player_prediction |= recent_packet && !cls.demoplayback && cl_earlypackets.integer;
+
+		Cam_SetViewPlayer();
+
+		if (setup_player_prediction) {
+			// Set up prediction for other players
+			CL_SetUpPlayerPrediction(false);
+			CL_PredictMove();
+			CL_SetUpPlayerPrediction(true);
+		}
+		else {
+			// Do client side motion prediction
+			CL_PredictMove();
+		}
+
+		// build a refresh entity list
+		CL_EmitEntities();
+	}
+}
+
+void CL_SoundFrame (void)
+{
+	if (cls.state == ca_active)
+	{
+		if (!ISPAUSED) {
+			S_Update (r_origin, vpn, vright, vup);
+		} else {
+			// do not play loop sounds (lifts etc.) when paused
+#ifndef INFINITY
+			float temp = 1.0;
+			float infinity = temp / (temp - 1.0);
+			vec3_t hax = { infinity, infinity, infinity };
+#else
+			vec3_t hax = { INFINITY, INFINITY, INFINITY };
+#endif
+			S_Update(hax, vec3_origin, vec3_origin, vec3_origin);
+		}
+		CL_DecayLights ();
+	}
+	else
+	{
+		S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+	}
+}
 
 void CL_Frame (double time) 
 {
@@ -2243,7 +2282,7 @@ void CL_Frame (double time)
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
-	next_spec_track = -1;
+	CL_MultiviewFrameStart ();
 
 	if (extratime < minframetime) 
 	{
@@ -2473,88 +2512,42 @@ void CL_Frame (double time)
 		CL_UserinfoChanged ("chat", char_flags);
 	}
 
-	if (cls.state >= ca_onserver)
-	{
-		qbool setup_player_prediction = ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0);
-		if (!cls.demoplayback && cl_earlypackets.integer)
-		{
-			// actually it should be curtime == cls.netchan.last_received but that did not work on float values...
-			if (curtime - cls.netchan.last_received < 0.00001)
-			{
-				if (!setup_player_prediction)
-				{
-//					Com_DPrintf("force players prediction\n");
-					setup_player_prediction = true;
-				}
-			}
-		}
-		Cam_SetViewPlayer();
-
-		// Set up prediction for other players
-		if (setup_player_prediction)
-		{
-			CL_SetUpPlayerPrediction(false);
-		}
-
-		// Do client side motion prediction
-		CL_PredictMove();
-
-		// Set up prediction for other players
-		if (setup_player_prediction)
-		{
-			CL_SetUpPlayerPrediction(true);
-		}
-
-		// build a refresh entity list
-		CL_EmitEntities();
-	}
-
-	if (!CL_MultiviewCvarResetRequired())
-	{
-		CL_MultiviewSaveValues ();
-	}
-	if (CL_MultiviewCvarResetRequired() && !cl_multiview.value)
-	{
-		CL_MultiviewRestoreValues ();
-	}
-
-	if (cl_multiview.value > 0 && cls.mvdplayback)
-	{
-		CL_Multiview();
-	}
+	CL_MultiviewPreUpdateScreen ();
 
 	// update video
-	SCR_UpdateScreen();
+	if (CL_MultiviewEnabled())
+	{
+		SCR_UpdateScreenPrePlayerView ();
+
+		qbool draw_next_view = true;
+		while (draw_next_view) {
+			draw_next_view = CL_MultiviewAdvanceView ();
+
+			CL_LinkEntities ();
+
+			SCR_UpdateScreenPlayerView (true);
+
+			if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
+				CL_SoundFrame ();
+			}
+
+			// Multiview: advance to next player
+			CL_MultiviewFrameFinish ();
+		}
+
+		SCR_UpdateScreenPostPlayerView ();
+	}
+	else {
+		CL_LinkEntities ();
+
+		SCR_UpdateScreen ();
+
+		CL_SoundFrame ();
+	}
 
 	CL_DecayLights();
 
-	// update audio
-	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
-	{
-		if (cls.state == ca_active)
-		{
-			if (!ISPAUSED) {
-				S_Update (r_origin, vpn, vright, vup);
-			} else {
-				// do not play loop sounds (lifts etc.) when paused
-#ifndef INFINITY
-				float temp = 1.0;
-				float infinity = temp / (temp - 1.0);
-				vec3_t hax = { infinity, infinity, infinity };
-#else
-				vec3_t hax = { INFINITY, INFINITY, INFINITY };
-#endif
-				S_Update(hax, vec3_origin, vec3_origin, vec3_origin);
-			}
-			CL_DecayLights ();
-		}
-		else
-		{
-			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-		}
-
-		CDAudio_Update();
-	}
+	CDAudio_Update();
 
 	MT_Frame();
 
@@ -2581,11 +2574,6 @@ void CL_Frame (double time)
 	SB_ExecuteQueuedTriggers();
 
 	CL_UpdateCaption(false);
-
-	// Multiview: advance to next player
-	if (next_spec_track >= 0) {
-		spec_track = next_spec_track;
-	}
 }
 
 //============================================================================
@@ -2605,340 +2593,6 @@ void CL_Shutdown (void)
 	Sys_CloseIPC();
 	SB_Shutdown();
 	Help_Shutdown();
-}
-
-int CL_IncrLoop(int cview, int max)
-{
-	return (cview >= max) ? 1 : ++cview;
-}
-
-int CL_NextPlayer(int plr)
-{
-	do
-	{
-		plr++;
-	} while ((plr < MAX_CLIENTS) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
-
-	if (plr >= MAX_CLIENTS)
-	{
-		plr = -1;
-
-		do
-		{
-			plr++;
-		} while ((plr < MAX_CLIENTS) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
-	}
-
-	if (plr >= MAX_CLIENTS)
-	{
-		plr = 0;
-	}
-
-	return plr;
-}
-
-int CL_PrevPlayer(int plr)
-{
-	do
-	{
-		plr--;
-	} while ((plr >= 0) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
-
-	if (plr < 0)
-	{
-		plr = MAX_CLIENTS;
-
-		do
-		{
-			plr--;
-		} while ((plr >= 0) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
-	}
-
-	if (plr < 0)
-	{
-		plr = 0;
-	}
-
-	return plr;
-}
-
-// Multiview vars
-// ===================================================================================
-int		CURRVIEW;					// The current view being drawn in multiview mode.
-int		nNumViews;					// The number of views in multiview mode.
-qbool	bExitmultiview;				// Used when saving effect values on each frame.
-
-qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
-									// that the "teammates" should all be colored in the same color as the
-									// person we're tracking (or opposite for enemies), because we're tracking
-									// more than one person. Therefore the teamcolor/enemycolor is set only once,
-									// or when the player chooses to track an entire team.
-int		nPlayernum;
-
-int		mv_trackslots[4];			// The different track slots for each view.
-char	currteam[MAX_INFO_STRING];  // The name of the current team being tracked in multiview mode.
-int		nSwapPov;					// Change in POV positive for next, negative for previous.
-int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
-int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
-
-static void CL_Multiview (void)
-{
-	static int playernum = 0;
-
-	if (!cls.mvdplayback) {
-		return;
-	}
-
-	nNumViews = cl_multiview.value;
-
-	// Only refresh skins once (to start with), I think this is the best solution for multiview
-	// eg when viewing 4 players in a 2v2.
-	// Also refresh them when the player changes what team to track.
-	if ((!CURRVIEW && cls.state >= ca_connected) || nSwapPov) {
-		TP_RefreshSkins ();
-	}
-
-	CL_MultiviewOverrideValues ();
-
-	nPlayernum = playernum;
-
-	// Copy the stats for the player we're about to draw in the next
-	// view to the client state, so that the correct stats are drawn
-	// in the multiview mini-HUD.
-	memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
-
-	//
-	// Increase the current view being rendered.
-	//
-	CURRVIEW = CL_IncrLoop(CURRVIEW, cl_multiview.integer);
-
-	if (cl_mvinset.value && cl_multiview.value == 2)
-	{
-		//
-		// Special case for mvinset and tracking 2 people
-		// this is meant for spectating duels primarily.
-		// Lets the user swap which player is shown in the
-		// main view and the mvinset by pressing jump.
-		//
-
-		// If both the mvinset and main view is set to show
-		// the same player, pick the first player for the main view
-		// and the next after that for the mvinset.
-		if (nTrack1duel == nTrack2duel)
-		{
-			nTrack1duel = CL_NextPlayer(-1);
-			nTrack2duel = CL_NextPlayer(nTrack1duel);
-		}
-
-		// The user pressed jump so we need to swap the pov.
-		if (nSwapPov)
-		{
-			if (nSwapPov > 0) {
-				nTrack1duel = CL_NextPlayer(nTrack1duel);
-				nTrack2duel = CL_NextPlayer(nTrack2duel);
-			} else {
-				nTrack1duel = CL_PrevPlayer(nTrack1duel);
-				nTrack2duel = CL_PrevPlayer(nTrack2duel);
-			}
-			nSwapPov = false;
-		}
-		else
-		{
-			// Set the playernum based on if we're drawing the mvinset
-			// or the main view
-			// (nTrack1duel = main view)
-			// (nTrack2duel = mvinset)
-			playernum = (CURRVIEW == 1) ? nTrack1duel : nTrack2duel;
-		}
-	}
-	else
-	{
-		//
-		// Normal multiview.
-		//
-
-		// Start from the first player on each new frame.
-		playernum = ((CURRVIEW == 1) ? 0 : playernum);
-
-		//
-		// The player pressed jump and wants to change what team is spectated.
-		//
-		if (nSwapPov && cl_multiview.value >= 2 && cl.teamplay)
-		{
-			int j;
-			int team_slot_count = 0;
-			int last_mv_trackslots[4];
-
-			// Save the old track values and reset them.
-			memcpy(last_mv_trackslots, mv_trackslots, sizeof(last_mv_trackslots));
-			memset(mv_trackslots, -1, sizeof(mv_trackslots));
-
-			// Find the new team.
-			for(j = 0; j < MAX_CLIENTS; j++)
-			{
-				if(!cl.players[j].spectator && cl.players[j].name[0])
-				{
-					// Find the opposite team from the one we are tracking now.
-					if(!currteam[0] || strcmp(currteam, cl.players[j].team))
-					{
-						strlcpy(currteam, cl.players[j].team, sizeof(currteam));
-						break;
-					}
-				}
-			}
-
-			// Find the team members.
-			for(j = 0; j < MAX_CLIENTS; j++)
-			{
-				if(!cl.players[j].spectator
-					&& cl.players[j].name[0]
-					&& !strcmp(currteam, cl.players[j].team))
-				{
-					// Find the player slot to track.
-					mv_trackslots[team_slot_count] = Player_StringtoSlot(cl.players[j].name);
-					team_slot_count++;
-				}
-
-				Com_DPrintf("New trackslots: %i %i %i %i\n", mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
-
-				// Don't go out of bounds in the mv_trackslots array.
-				if(team_slot_count == 4)
-				{
-					break;
-				}
-			}
-
-			if(cl_multiview.value == 2 && team_slot_count == 2)
-			{
-				// Switch between 2on2 teams.
-			}
-			else if(cl_multiview.value < team_slot_count || team_slot_count >= 3)
-			{
-				// We don't want to show all from one team and then one of the enemies...
-				cl_multiview.value = team_slot_count;
-			}
-			else if(team_slot_count == 2)
-			{
-				// 2on2... one team on top, on on the bottom
-				// Swap the teams between the top and bottom in a 4 view setup.
-				cl_multiview.value = 4;
-				mv_trackslots[MV_VIEW3] = last_mv_trackslots[MV_VIEW1];
-				mv_trackslots[MV_VIEW4] = last_mv_trackslots[MV_VIEW2];
-				
-				Com_DPrintf("Team on top/bottom trackslots: %i %i %i %i\n", 
-					mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
-			}
-		}
-		else
-		{
-			// Check if the track* values have been set by the user,
-			// otherwise show the first 4 players.
-
-			if(CURRVIEW >= 1 && CURRVIEW <= 4)
-			{
-				// If the value of mv_trackslots[i] is negative, it means that view
-				// doesn't have any track value set so we need to find someone to track using CL_NextPlayer().
-				playernum = ((mv_trackslots[CURRVIEW - 1] < 0) ? CL_NextPlayer(playernum) : mv_trackslots[CURRVIEW - 1]);
-			}
-		}
-	}
-
-	// BUGFIX - Make sure the player we're tracking is still left, might have disconnected since
-	// we picked him for tracking (This would result in being thrown into freefly mode and not being able
-	// to go back into tracking mode when a player disconnected).
-	if (!nSwapPov && (cl.players[playernum].spectator || !cl.players[playernum].name[0]))
-	{
-		mv_trackslots[CURRVIEW - 1] = -1;
-	}
-
-	if (nSwapPov)
-	{
-		Com_DPrintf("Final trackslots: %i %i %i %i\n", mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
-	}
-
-	nSwapPov = false;
-
-	// Set the current player we're tracking for the next view to be drawn.
-	// BUGFIX: Only change the spec_track if the new track target is a player.
-	if (!cl.players[playernum].spectator && cl.players[playernum].name[0])
-	{
-		next_spec_track = playernum;
-	}
-
-	// Make sure we reset variables we suppressed during multiview drawing.
-	bExitmultiview = true;
-}
-
-typedef struct mv_temp_cvar_s {
-	cvar_t* cvar;
-	float   value;
-} mv_temp_cvar_t;
-
-extern cvar_t r_lerpframes;
-
-static mv_temp_cvar_t multiviewCvars[] = {
-	{ &scr_viewsize,      100.0f },
-	{ &cl_fakeshaft,        0.0f },
-	{ &gl_polyblend,        1.0f },
-	{ &gl_clear,            0.0f },
-	{ &r_lerpframes,        1.0f }
-};
-#define MV_CVAR_VIEWSIZE 0                 // we reference saved value when cl_mvinset specified
-
-static void CL_MultiviewSaveValues (void)
-{
-	int i = 0;
-
-	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
-		multiviewCvars[i].value = multiviewCvars[i].cvar->value;
-	}
-
-	CURRVIEW = 0;
-}
-
-static void CL_MultiviewRestoreValues (void)
-{
-	int i = 0;
-
-	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
-		Cvar_SetValue(multiviewCvars[i].cvar, multiviewCvars[i].value);
-	}
-
-	bExitmultiview = false;
-}
-
-static void CL_MultiviewOverrideValues (void)
-{
-	// contrast was disabled for OpenGL build with the note "blanks all but 1 view"
-	// this was due to gl_ztrick in R_Clear(void) that would clear these. FIXED
-	// v_contrast.value = 1;
-
-	// stop fakeshaft as it lerps with the other views
-	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0) {
-		cl_fakeshaft.value = 0;
-	}
-
-	// allow mvinset 1 to use viewsize value
-	scr_viewsize.value = multiviewCvars[MV_CVAR_VIEWSIZE].value;
-	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2) {
-		scr_viewsize.value = 120;
-	}
-
-	// stop small screens
-	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100) {
-		scr_viewsize.value = 100;
-	}
-
-	gl_polyblend.value = 0;
-	gl_clear.value = 0;
-
-	// stop weapon model lerping as it lerps with the other view
-	r_lerpframes.value = 0;
-}
-
-static qbool CL_MultiviewCvarResetRequired (void)
-{
-	return bExitmultiview;
 }
 
 void CL_UpdateCaption(qbool force)
@@ -2975,14 +2629,4 @@ void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
 
 		OnChangeColorForcing(var, value, cancel);
 	}
-}
-
-// Can be used during rendering to find out what the next spec track will be
-//   (especially useful when CURRVIEW == 1 after CL_Multiview() to report who tracked in main view)
-int CL_MultiviewNextPlayer (void)
-{
-	if (next_spec_track >= 0) {
-		return next_spec_track;
-	}
-	return spec_track;
 }

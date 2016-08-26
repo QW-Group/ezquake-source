@@ -1341,7 +1341,7 @@ void MVD_Powerup_Cams(void){
 
 	MVD_PC_Get_Coords();
 
-	if (CURRVIEW == 1 && strlen(mvd_pc_view_1.string)){
+	if (CL_MultiviewCurrentView() == 1 && strlen(mvd_pc_view_1.string)){
 		cam_1=0;
 		for (i=0,x=0;i<6;i++){
 			if(i<=2 && powerup_cam_active == 2)
@@ -1363,7 +1363,7 @@ void MVD_Powerup_Cams(void){
 		   }
 		   */
 	}
-	if (CURRVIEW == 2 && strlen(mvd_pc_view_2.string)){
+	if (CL_MultiviewCurrentView() == 2 && strlen(mvd_pc_view_2.string)){
 		cam_2=0;
 		for (i=0;i<6;i++){
 			if(i<=2 && powerup_cam_active == 2)
@@ -1384,7 +1384,7 @@ void MVD_Powerup_Cams(void){
 		}
 	}
 
-	if (CURRVIEW == 3 && strlen(mvd_pc_view_3.string)){
+	if (CL_MultiviewCurrentView() == 3 && strlen(mvd_pc_view_3.string)){
 		cam_3=0;
 		for (i=0;i<6;i++){
 			if(i<=2 && powerup_cam_active == 2)
@@ -1405,7 +1405,7 @@ void MVD_Powerup_Cams(void){
 		}
 	}
 
-	if (CURRVIEW == 4 && strlen(mvd_pc_view_4.string)){
+	if (CL_MultiviewCurrentView() == 4 && strlen(mvd_pc_view_4.string)){
 		cam_4=0;
 		for (i=0;i<6;i++){
 			if(i<=2 && powerup_cam_active == 2)

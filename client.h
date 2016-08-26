@@ -717,7 +717,6 @@ double Demo_GetSpeed(void);
 void Demo_AdjustSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
 qbool CL_Demo_SkipMessage(void);
-qbool CL_Demo_IsPrimaryPointOfView(void);
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
@@ -943,50 +942,30 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec);
 //
 // Multiview vars
 // ===================================================================================
-#define MV_VIEWS 4
+void CL_MultiviewInitialise (void);
+void CL_MultiviewTrackingAdjustment (int adjustment);
 
-#define	MV_VIEW1 0
-#define	MV_VIEW2 1
-#define	MV_VIEW3 2
-#define	MV_VIEW4 3
-
-extern int		CURRVIEW;					// The current view being drawn in multiview mode.
-extern int		nNumViews;					// The number of views in multiview mode.
-
-extern qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
-											// that the "teammates" should all be colored in the same color as the
-											// person we're tracking (or opposite for enemies), because we're tracking
-											// more than one person. Therefore the teamcolor/enemycolor is set only once,
-											// or when the player chooses to track an entire team.
-extern int		nPlayernum;
-
-extern int		mv_trackslots[4];			// The different track slots for each view.
-extern char		currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
-extern int		nSwapPov;					// Change in POV positive for next, negative for previous.
-extern int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
-extern int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
-
+// Status
+qbool CL_MultiviewEnabled (void);
+qbool CL_MultiviewInsetEnabled (void);
+qbool CL_MultiviewInsetView (void);
+int CL_MultiviewNumberViews (void);
+int CL_MultiviewActiveViews (void);
+int CL_MultiviewCurrentView (void);
 int CL_MultiviewNextPlayer (void);
 
-//
-// Original values saved between frames for effects that are
-// turned off during multiview mode.
-//
-extern float	nContrastExit;				// v_contrast
-extern float	nCrosshairExit;
-extern float	nfakeshaft;					// cl_fakeshaft
-extern int		nPolyblendExit;				// gl_polyblend
-extern float	nGlClearExit;				// gl_clear
-extern int		nLerpframesExit;
-extern int		nWaterwarp;					// r_waterwarp
-extern int		nContentblend;				// v_contentblend
-extern float	nQuadshift;					// v_quadcshift
-extern float	nPentshift;					// v_pentcshift
-extern float	nRingshift;					// v_ringcshift
-extern float	nDamageshift;				// v_damagecshift
-extern float	nSuitshift;					// v_suitcshift
-extern int		nBonusflash;				// v_bonusflash
+void CL_MultiviewSetTrackSlot (int trackNum, int player);
+void CL_MultiviewResetCvars (void);
 
+// Events
+void CL_MultiviewFrameStart (void);
+void CL_MultiviewPreUpdateScreen (void);
+qbool CL_MultiviewAdvanceView (void);
+void CL_MultiviewFrameFinish (void);
+void CL_MultiviewDemoStart (void);
+void CL_MultiviewDemoFinish (void);
+void CL_MultiviewDemoStartRewind (void);
+void CL_MultiviewDemoStopRewind (void);
 
 // ===================================================================================
 // client side min_ping aka delay

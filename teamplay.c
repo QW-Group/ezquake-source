@@ -718,6 +718,7 @@ char *Macro_Need (void)
 		}
 		goto done;
 	}
+
 	// check weapon
 	weapon = 0;
 	for (i = strlen(tp_need_weapon.string) - 1 ; i >= 0 ; i--) {
@@ -1664,117 +1665,6 @@ char *TP_SkinForcingTeam(void)
 	return "";
 }
 
-void MV_UpdateSkins(void)
-{
-	//
-	// Multiview
-	//
-	char friendlyteam[MAX_INFO_STRING] = {'\0'};
-	char tracked_team[MAX_INFO_STRING] = {'\0'};
-	char *skinforcing_team = NULL;
-	qbool trackingteam = false;
-	int i;
-
-	if (cls.state < ca_connected)
-	{
-		return;
-	}
-
-	//
-	// Find out if we're tracking a team.
-	//
-	{
-		// Get the team of the first slot.
-		strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));
-
-		for(i = 0; i < 4; i++)
-		{
-			// Ignore views that aren't tracking anything.
-			if(mv_trackslots[i] < 0)
-			{
-				continue;
-			}
-
-			// Check if the team matches.
-			if(!strcmp(cl.players[mv_trackslots[i]].team, tracked_team))
-			{
-				trackingteam = true;
-				continue;
-			}
-
-			// If one of the slots team doesn't match with the others
-			// then we're not tracking a team.
-			trackingteam = false;
-			break;
-		}
-	}
-
-	//
-	// There has been no skin force yet and we're not tracking a team
-	// so we need to set all players colors.
-	//
-	if(!mv_skinsforced && !trackingteam)
-	{
-		// Only set the colors for all the players once, because
-		// we're tracking multiple people... We can't know who's
-		// a team member or an enemy.
-
-		i = 0;
-
-		// Pick the first team as the "team"-team. (uses teamcolor).
-		while(!friendlyteam[0] && cl.players[i].team[0])
-		{
-			strlcpy(friendlyteam, cl.players[i].team, sizeof(friendlyteam));
-			i++;
-		}
-
-		skinforcing_team = friendlyteam;
-	}
-	else if(trackingteam)
-	{
-		skinforcing_team = tracked_team;
-	}
-
-	// Set the colors based on team.
-	if(skinforcing_team != NULL)
-	{
-		for(i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(!cl.players[i].spectator && cl.players[i].name[0] && !cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
-			{
-				if(strcmp(cl.players[i].team, skinforcing_team))
-				{
-					if (cl_enemytopcolor.integer != -1)
-						cl.players[i].topcolor = cl_enemytopcolor.integer;
-					else
-						cl.players[i].topcolor = cl.players[i].real_topcolor;
-
-					if (cl_enemybottomcolor.integer != -1)
-						cl.players[i].bottomcolor = cl_enemybottomcolor.integer;
-					else
-						cl.players[i].bottomcolor = cl.players[i].real_bottomcolor;
-				}
-				else
-				{
-					if (cl_teamtopcolor.integer != -1)
-						cl.players[i].topcolor = cl_teamtopcolor.integer;
-					else
-						cl.players[i].topcolor = cl.players[i].real_topcolor;
-					
-					if (cl_teambottomcolor.integer != -1)
-						cl.players[i].bottomcolor = cl_teambottomcolor.integer;
-					else
-						cl.players[i].bottomcolor = cl.players[i].real_bottomcolor;
-				}
-			}
-
-			R_TranslatePlayerSkin(i);
-		}
-
-		mv_skinsforced = true;
-	}
-}
-
 static qbool need_skin_refresh;
 void TP_UpdateSkins(void)
 {
@@ -1785,22 +1675,12 @@ void TP_UpdateSkins(void)
 		return;
 	}
 
-	if(cls.mvdplayback && cl_multiview.value)
+	for (slot = 0; slot < MAX_CLIENTS; slot++)
 	{
-		// Need to threat multiview completly different
-		// since we are tracking more than one player
-		// at once.
-		MV_UpdateSkins();
-	}
-	else
-	{
-		for (slot = 0; slot < MAX_CLIENTS; slot++)
+		if (cl.players[slot].skin_refresh)
 		{
-			if (cl.players[slot].skin_refresh)
-			{
-				CL_NewTranslation(slot);
-				cl.players[slot].skin_refresh = false;
-			}
+			CL_NewTranslation(slot);
+			cl.players[slot].skin_refresh = false;
 		}
 	}
 

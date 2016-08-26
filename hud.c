@@ -1467,7 +1467,7 @@ void HUD_Draw(void)
 	// Only draw the hud once in multiview.
 	if (cl_multiview.integer && cls.mvdplayback)
 	{
-		if (CURRVIEW != 1)
+		if (CL_MultiviewCurrentView() != 1)
 		{
 			return;
 		}

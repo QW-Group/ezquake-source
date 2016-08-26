@@ -98,13 +98,10 @@ cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 cvar_t demo_jump_rewind = { "demo_jump_rewind", "-10" };
 
 // Used to save track status when rewinding.
-static int rewind_trackslots[4];
-static int rewind_duel_track1 = 0;
-static int rewind_duel_track2 = 0;
-static int rewind_spec_track = 0;
 static vec3_t rewind_angle;
 static vec3_t rewind_pos;
 static double qtv_demospeed = 1;
+static int rewind_spec_track = 0;
 
 char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
@@ -1903,10 +1900,6 @@ qbool CL_GetDemoMessage (void)
 		return false;
 	#endif
 
-	// Only read packets when in main POV
-	if (!CL_Demo_IsPrimaryPointOfView ())
-		return false;
-
 	// Demo paused, don't read anything.
 	if (cl.paused & PAUSED_DEMO)
 	{
@@ -3646,10 +3639,7 @@ void CL_Play_f (void)
 	strlcpy(cls.demoname, name, sizeof(cls.demoname));
 
 	// Reset multiview track slots.
-	memset(mv_trackslots, -1, sizeof(mv_trackslots));
-	nTrack1duel			= 0;
-	nTrack2duel			= 0;
-	mv_skinsforced		= false;
+	CL_MultiviewDemoStart ();
 
 	// Reset stuff so demo rewinding works.
 	cls.demoseeking		= DST_SEEKING_NONE;
@@ -4104,10 +4094,8 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 		VFS_CLOSE(playbackfile);
 	playbackfile = newf;
 
-	// Reset multiview track slots.
-	memset(mv_trackslots, -1, sizeof(mv_trackslots));
-	nTrack1duel = nTrack2duel = 0;
-	mv_skinsforced = false;
+	// Reset multiview track slots
+	CL_MultiviewDemoStart ();
 
 	// We're now playing a demo.
 	cls.demoplayback	= true;
@@ -4445,9 +4433,8 @@ void CL_Demo_SetSpeed_f (void)
 void CL_Demo_Stop_Rewinding(void) 
 {
 	// Make sure we keep our tracked players after rewinding.
-	memcpy(mv_trackslots, rewind_trackslots, sizeof(mv_trackslots));
-	nTrack1duel			= rewind_duel_track1;
-	nTrack2duel			= rewind_duel_track2;
+	CL_MultiviewDemoStopRewind ();
+
 	if (rewind_spec_track >= 0) 
 	{
 		Cam_Lock(rewind_spec_track);
@@ -4477,10 +4464,9 @@ void CL_Demo_Check_For_Rewind(float nextdemotime)
 		VFS_SEEK(playbackfile, 0, SEEK_SET);
 
 		// We need to save track information.
-		memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));
-		rewind_duel_track1 = nTrack1duel;
-		rewind_duel_track2 = nTrack2duel;
+		CL_MultiviewDemoStartRewind ();
 		rewind_spec_track = WhoIsSpectated(); //spec_track;
+
 		cls.findtrack = false;
 		VectorCopy(cl.viewangles, rewind_angle);
 		VectorCopy(cl.simorg, rewind_pos);
@@ -5134,12 +5120,3 @@ qbool CL_Demo_SkipMessage (void)
 
 	return false;
 }
-
-qbool CL_Demo_IsPrimaryPointOfView (void)
-{
-	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1)
-		return false;
-
-	return true;
-}
-

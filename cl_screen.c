@@ -56,6 +56,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 int				glx, gly, glwidth, glheight;
 
 #define			DEFAULT_SSHOT_FORMAT		"png"
+#define ALPHA_COLOR(x, y) RGBA_TO_COLOR((x)[0],(x)[1],(x)[2],(y))
 
 extern byte	current_pal[768];	// Tonik
 
@@ -221,11 +222,9 @@ qbool	block_drawing;
 double cursor_x = 0, cursor_y = 0;
 
 static int scr_autosshot_countdown = 0;
-static qbool scr_mvsshot_in_progress = false;
 char auto_matchname[2 * MAX_OSPATH];
 
 static void SCR_CheckAutoScreenshot(void);
-static void SCR_CheckMVScreenshot(void);
 void SCR_DrawMultiviewBorders(void);
 void SCR_DrawMVStatus(void);
 void SCR_DrawMVStatusStrings(void);
@@ -692,9 +691,9 @@ void SCR_DrawFPS (void) {
 		return;
 
 	// Multiview
-	if (cl_multiview.value && cls.mvdplayback)
+	if (CL_MultiviewEnabled())
 	{
-		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
+		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/CL_MultiviewNumberViews());
 	}
 	else
 	{
@@ -983,17 +982,17 @@ void SCR_DrawConsole (void) {
 
 /*********************************** AUTOID ***********************************/
 
-#define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
-#define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
-#define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
-#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255, 100, 0
-#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255, 255, 255
+cvar_t scr_autoid_healthbar_bg_color        = { "scr_autoid_healthbar_bg_color", "180 115 115 100", CVAR_COLOR };
+cvar_t scr_autoid_healthbar_normal_color    = { "scr_autoid_healthbar_normal_color", "80 0 0 255", CVAR_COLOR };
+cvar_t scr_autoid_healthbar_mega_color      = { "scr_autoid_healthbar_mega_color", "255 0 0 255", CVAR_COLOR };
+cvar_t scr_autoid_healthbar_two_mega_color  = { "scr_autoid_healthbar_two_mega_color", "255 100 0 255", CVAR_COLOR };
+cvar_t scr_autoid_healthbar_unnatural_color = { "scr_autoid_healthbar_unnatural_color", "255 255 255 255", CVAR_COLOR };
+
+cvar_t scr_autoid_armorbar_green_armor      = { "scr_autoid_armorbar_green_armor", "25 170 0 255", CVAR_COLOR };
+cvar_t scr_autoid_armorbar_yellow_armor     = { "scr_autoid_armorbar_yellow_armor", "255 220 0 255", CVAR_COLOR };
+cvar_t scr_autoid_armorbar_red_armor        = { "scr_autoid_armorbar_red_armor", "255 0 0 255", CVAR_COLOR };
 
 #define AUTOID_HEALTHBAR_OFFSET_Y			16
-
-#define AUTOID_ARMORBAR_GREEN_ARMOR			25, 170, 0
-#define AUTOID_ARMORBAR_YELLOW_ARMOR		255, 220, 0
-#define AUTOID_ARMORBAR_RED_ARMOR			255, 0, 0
 
 #define AUTOID_ARMORBAR_OFFSET_Y			(AUTOID_HEALTHBAR_OFFSET_Y + 5)
 #define AUTOID_ARMORNAME_OFFSET_Y			(AUTOID_ARMORBAR_OFFSET_Y + 8 + 2)
@@ -1136,8 +1135,8 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		health_length = Q_rint((bar_length/100.0) * health);
 
 		// Normal health.
-		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_BG_COLOR, 100));
-		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 255));
+		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_bg_color.color));
+		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_normal_color.color));
 
 		health = autoid_p->player->stats[STAT_HEALTH];
 
@@ -1145,20 +1144,20 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		if(health > 100 && health <= 200)
 		{
 			health_length = Q_rint((bar_length/100.0) * (health - 100));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_mega_color.color));
 		}
 		else if(health > 200 && health <= 250)
 		{
 			// Super health.
 			health_length = Q_rint((bar_length/100.0) * (health - 200));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 255));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_mega_color.color));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_two_mega_color.color));
 		}
 		else if(health > 250)
 		{
 			// Crazy health.
 			// This will never happen during a normal game.
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, 255));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBAVECT_TO_COLOR(scr_autoid_healthbar_unnatural_color.color));
 		}
 	}
 
@@ -1167,30 +1166,28 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	{
 		int armor;
 		int armor_length;
+		cvar_t* armor_color = NULL;
 
 		armor = autoid_p->player->stats[STAT_ARMOR];
 		armor = min(100, armor);
 		armor_length = Q_rint((bar_length/100.0) * armor);
 
-		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
-		{
-			// Green armor.
-			//Draw_AlphaFillRGB(x - bar_length, y - AUTOID_ARMORBAR_OFFSET_Y, bar_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 0.2);
-			//Draw_AlphaFillRGB(x - bar_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 1.0);
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 50));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 255));
+		if (autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
+			armor_color = &scr_autoid_armorbar_green_armor;
 		}
-		else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2)
-		{
-			// Yellow armor.
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 50));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 255));
+		else if (autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
+			armor_color = &scr_autoid_armorbar_yellow_armor;
 		}
-		else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3)
-		{
-			// Red armor.
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 50));
-			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 255));
+		else if (autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3) {
+			armor_color = &scr_autoid_armorbar_red_armor;
+		}
+
+		if (armor_color != NULL) {
+			color_t background = RGBA_TO_COLOR (armor_color->color[0], armor_color->color[1], armor_color->color[2], 50);
+			color_t foreground = RGBAVECT_TO_COLOR (armor_color->color);
+
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, background);
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, foreground);
 		}
 	}
 
@@ -1843,9 +1840,6 @@ static void SCR_Draw_TeamInfo(void)
 
 	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
 
-	if ( CURRVIEW != 1 && CURRVIEW != 0)
-		return;
-
 	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode
 		return;
 
@@ -2305,7 +2299,7 @@ static void SCR_Draw_WeaponStats(void)
 	byte	*col = scr_weaponstats_frame_color.color;
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
 
-	if ( !scr_weaponstats.integer || CURRVIEW > 1 )
+	if ( !scr_weaponstats.integer)
 		return;
 
 	i = ( cl.spectator ? Cam_TrackNum() : cl.playernum );
@@ -3224,7 +3218,42 @@ static void SCR_UpdateCursor(void)
 	}
 }
 
-void SCR_DrawElements(void) 
+void SCR_DrawMultiviewOverviewElements (void)
+{
+	SCR_DrawMultiviewBorders ();
+}
+
+// Elements to be drawn on every view during multiview
+void SCR_DrawMultiviewIndividualElements (void)
+{
+	extern qbool  sb_showscores,  sb_showteamscores;
+
+	// Show autoid in all views
+	if (!sb_showscores && !sb_showteamscores) { 
+		SCR_DrawAutoID ();
+	}
+
+	// Crosshair
+	if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))) {
+		if (!CL_MultiviewInsetView() || cl_mvinsetcrosshair.integer) {
+			Draw_Crosshair ();
+		}
+	}
+
+	// Draw multiview mini-HUD's.
+	if (cl_mvdisplayhud.integer) {
+		if (cl_mvdisplayhud.integer >= 2) {
+			// Graphical with icons.
+			SCR_DrawMVStatus ();
+		}
+		else {
+			// Only strings.
+			SCR_DrawMVStatusStrings ();
+		}
+	}
+}
+
+static void SCR_DrawElements(void) 
 {
 	extern qbool  sb_showscores,  sb_showteamscores;
 	extern cvar_t	scr_menudrawhud;
@@ -3283,9 +3312,9 @@ void SCR_DrawElements(void)
 						Draw_Crosshair ();
 					}
 
+					// Do not show if +showscores
 					if (!sb_showscores && !sb_showteamscores)
 					{ 
-						// Do not show if +showscores
 						SCR_Draw_TeamInfo();
 						SCR_Draw_WeaponStats();
 
@@ -3312,27 +3341,8 @@ void SCR_DrawElements(void)
 					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 						VX_TrackerThink();
 
-					// Multiview
-					if (cl_multiview.integer && cls.mvdplayback)
-					{
-						// Draw multiview mini-HUD's.
-						if (cl_mvdisplayhud.integer)
-						{
-							if(cl_mvdisplayhud.integer >= 2)
-							{
-								// Graphical with icons.
-								SCR_DrawMVStatus();
-							}
-							else
-							{
-								// Only strings.
-								SCR_DrawMVStatusStrings();
-							}
-						}
-
-						// Draw a black border between the views.
-						SCR_DrawMultiviewBorders();
-					}
+					if (CL_MultiviewEnabled())
+						SCR_DrawMultiviewOverviewElements ();
 
 					Sbar_Draw();
 					HUD_Draw();
@@ -3360,25 +3370,19 @@ static void SCR_RenderFrameEnd(void)
 	render_frame_end = Sys_DoubleTime();
 }
 
-// This is called every frame, and can also be called explicitly to flush text to the screen.
-// WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
-void SCR_UpdateScreen (void) 
+qbool SCR_UpdateScreenPrePlayerView (void)
 {
-	static hud_t *hud_netstats = NULL;
 	extern qbool Minimized;
 	static int oldfovmode = 0;
 
-	if (hud_netstats == NULL) // first time
-		hud_netstats = HUD_Find("net");
-
 	if (!scr_initialized) {
 		SCR_RenderFrameEnd();
-		return;
+		return false;
 	}
 
 	if (scr_skipupdate || block_drawing) {
 		SCR_RenderFrameEnd();
-		return;
+		return false;
 	}
 
 	if (scr_disabled_for_loading) {
@@ -3387,14 +3391,14 @@ void SCR_UpdateScreen (void)
 		}
 		else {
 			SCR_RenderFrameEnd();
-			return;
+			return false;
 		}
 	}
 	// Don't suck up any cpu if minimized.
 
 	if (Minimized) {
 		SCR_RenderFrameEnd();
-		return;
+		return false;
 	}
 
 	vid.numpages = 2 + gl_triplebuffer.value;
@@ -3404,7 +3408,7 @@ void SCR_UpdateScreen (void)
 
 	host_screenupdatecount++;  // For HUD.
 
-	// Check for vid changes.
+							   // Check for vid changes.
 	if (oldfov != scr_fov.value) 
 	{
 		oldfov = scr_fov.value;
@@ -3434,10 +3438,13 @@ void SCR_UpdateScreen (void)
 	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
 		Sbar_Changed ();
 
-	// Multiview
-	if (cl_multiview.value && cls.mvdplayback)
-	{
-		SCR_CalcRefdef();
+	return true;
+}
+
+void SCR_UpdateScreenPlayerView (qbool multiview)
+{
+	if (multiview) {
+		SCR_CalcRefdef ();
 	}
 
 	// Do 3D refresh drawing, and then update the screen.
@@ -3455,6 +3462,17 @@ void SCR_UpdateScreen (void)
 
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
+
+	if (multiview) {
+		SCR_DrawMultiviewIndividualElements ();
+	}
+}
+
+void SCR_UpdateScreenPostPlayerView (void)
+{
+	static hud_t *hud_netstats = NULL;
+	if (hud_netstats == NULL) // first time
+		hud_netstats = HUD_Find("net");
 
 	if (r_netgraph.value && scr_newHud.value != 1)
 	{
@@ -3478,37 +3496,31 @@ void SCR_UpdateScreen (void)
 
 	SCR_DrawElements();
 
-	// For multiview:
-	// If we apply the brightness on each update
-	// then the first view that is drawn will be
-	// 4x as bright as the last view for instance.
-	// (using a multiview value of 4 in this example).
-	if(cls.mvdplayback && cl_multiview.value)
-	{
-		if(CURRVIEW == 1)
-		{
-			R_BrightenScreen ();
-		}
-	}
-	else
-	{
-		// Default, apply brightness at every update.
-		R_BrightenScreen ();
-	}
+	R_BrightenScreen ();
 
 	V_UpdatePalette ();
 
-	if (SCR_TakingAutoScreenshot())
-		SCR_CheckAutoScreenshot();
-
-	if (cls.mvdplayback && cl_multiview.value)
-	{
-		SCR_CheckMVScreenshot();
+	if (SCR_TakingAutoScreenshot ()) {
+		SCR_CheckAutoScreenshot ();
 	}
 
 	SCR_RenderFrameEnd();
 
 	GL_EndRendering ();
+}
+
+// This is called every frame, and can also be called explicitly to flush text to the screen.
+// WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
+qbool SCR_UpdateScreen (void)
+{
+	if (!SCR_UpdateScreenPrePlayerView ())
+		return false;
+
+	SCR_UpdateScreenPlayerView (false);
+
+	SCR_UpdateScreenPostPlayerView ();
+
+	return true;
 }
 
 void SCR_UpdateWholeScreen (void) {
@@ -3737,24 +3749,6 @@ void SCR_ScreenShot_f (void)
 	char name[MAX_OSPATH], *filename, *sshot_dir;
 	int success;
 
-	// Multiview
-	if (cls.mvdplayback && cl_multiview.value)
-	{
-		if (CURRVIEW == 1)
-		{
-			scr_mvsshot_in_progress = false;
-
-			// Make sure all gl calls have been drawn.
-			glFinish();
-		}
-		else
-		{
-			scr_mvsshot_in_progress = true;
-			Com_DPrintf ("Waiting with screenshot because all views haven't been drawn... view = %d\n", CURRVIEW);
-			return;
-		}
-	}
-
 	sshot_dir = Sshot_SshotDirectory();
 
 	if (Cmd_Argc() == 2)
@@ -3854,14 +3848,6 @@ void SCR_RSShot_f (void) {
 	}
 
 	remove(filename);
-}
-
-static void SCR_CheckMVScreenshot(void)
-{
-	if(scr_mvsshot_in_progress && cls.mvdplayback && cl_multiview.value)
-	{
-		Cbuf_AddText ("screenshot\n");
-	}
 }
 
 static void SCR_CheckAutoScreenshot(void) {
@@ -4073,6 +4059,16 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid_barlength);
 	Cvar_Register (&scr_autoid_weaponicon);
 	Cvar_Register (&scr_autoid_scale);
+	Cvar_Register (&scr_autoid_healthbar_bg_color);
+	Cvar_Register (&scr_autoid_healthbar_normal_color);
+	Cvar_Register (&scr_autoid_healthbar_mega_color);
+	Cvar_Register (&scr_autoid_healthbar_two_mega_color);
+	Cvar_Register (&scr_autoid_healthbar_unnatural_color);
+
+	Cvar_Register (&scr_autoid_armorbar_green_armor);
+	Cvar_Register (&scr_autoid_armorbar_yellow_armor);
+	Cvar_Register (&scr_autoid_armorbar_red_armor);
+
 	Cvar_Register (&scr_coloredfrags);
 	Cvar_Register (&scr_teaminfo_order);
 	Cvar_Register (&scr_teaminfo_align_right);
@@ -4223,1149 +4219,10 @@ mpic_t * SCR_GetWeaponIconByFlag (int flag)
 	return NULL;
 }
 
-mpic_t *SCR_GetWeaponIconByWeaponNumber (int num)
-{
-	extern mpic_t *sb_weapons[7][8];  // sbar.c Weapon pictures.
-
-	num -= 2;
-
-	if (num >= 0 && num < 8)
-	{
-		return sb_weapons[0][num];
-	}
-
-	return NULL;
-}
-
-mpic_t *SCR_GetActiveWeaponIcon(void)
-{
-	return SCR_GetWeaponIconByFlag (cl.stats[STAT_ACTIVEWEAPON]);
-}
-
-typedef struct mv_viewrect_s
-{
-	int x;
-	int y;
-	int width;
-	int height;
-} mv_viewrect_t;
-
 char *Macro_BestAmmo (void); // Teamplay.c
 void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha); // gl_draw.c
 
-#define MV_HUD_POS_BOTTOM_CENTER	1
-#define MV_HUD_POS_BOTTOM_LEFT		2
-#define MV_HUD_POS_BOTTOM_RIGHT		3
-#define MV_HUD_POS_TOP_CENTER		4
-#define MV_HUD_POS_TOP_LEFT			5
-#define MV_HUD_POS_TOP_RIGHT		6
-#define MV_HUD_POS_GATHERED_CENTER	7
-
-#define MV_HUDPOS(regexp, input, position, cvar) if(Utils_RegExpMatch(regexp, input)) { mv_hudpos = position; found = true; }
-
-int mv_hudpos = MV_HUD_POS_BOTTOM_CENTER;
-
-void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel)
-{
-	qbool found = false;
-
-	MV_HUDPOS ("(top\\s*left|tl)",		newval, MV_HUD_POS_TOP_LEFT, var);
-	MV_HUDPOS ("(top\\s*right|tr)",		newval, MV_HUD_POS_TOP_RIGHT, var);
-	MV_HUDPOS ("(top\\s*center|tc)",	newval, MV_HUD_POS_TOP_CENTER, var);
-	MV_HUDPOS ("(bottom\\s*left|bl)",	newval, MV_HUD_POS_BOTTOM_LEFT, var);
-	MV_HUDPOS ("(bottom\\s*right|br)",	newval, MV_HUD_POS_BOTTOM_RIGHT, var);
-	MV_HUDPOS ("(bottom\\s*center|bc)",	newval, MV_HUD_POS_BOTTOM_CENTER, var);
-	MV_HUDPOS ("(gather|g)",			newval, MV_HUD_POS_GATHERED_CENTER, var);
-
-	if (found)
-	{
-		Cvar_Set (var, newval);
-	}
-
-	*cancel = found;
-}
-
-// SCR_SetMVStatusPosition calls SCR_SetMVStatusGatheredPosition and vice versa.
-void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y);
-
-void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
-{
-	switch (position)
-	{
-		case MV_HUD_POS_BOTTOM_LEFT :
-			{
-				(*x) = 0;
-				(*y) = max(0, (view->height - hud_height));
-				break;
-			}
-		case MV_HUD_POS_BOTTOM_RIGHT :
-			{
-				(*x) = max(0, (view->width - hud_width));
-				(*y) = max(0, (view->height - hud_height));
-				break;
-			}
-		case MV_HUD_POS_TOP_CENTER :
-			{
-				(*x) = max(0, (view->width - hud_width) / 2);
-				(*y) = 0;
-				break;
-			}
-		case MV_HUD_POS_TOP_LEFT :
-			{
-				(*x) = 0;
-				(*y) = 0;
-				break;
-			}
-		case MV_HUD_POS_TOP_RIGHT :
-			{
-				(*x) = max(0, view->width - hud_width);
-				(*y) = 0;
-				break;
-			}
-		case MV_HUD_POS_GATHERED_CENTER :
-			{
-				SCR_SetMVStatusGatheredPosition (view, hud_width, hud_height, &(*x), &(*y));
-				break;
-			}
-		case MV_HUD_POS_BOTTOM_CENTER :
-		default:
-			{
-				(*x) = max(0, (view->width - hud_width) / 2);
-				(*y) = max(0, (view->height - hud_height));
-				break;
-			}
-	}
-}
-
-void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
-{
-	//
-	// Position the huds towards the center of the screen for the different views
-	// so that all the HUD's are close to each other on the screen.
-	//
-
-	if (cl_multiview.value == 2)
-	{
-		if (!cl_mvinset.value)
-		{
-			if (CURRVIEW == 2)
-			{
-				// Top view. (Put the hud at the bottom)
-				SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
-			}
-			else if (CURRVIEW == 1)
-			{
-				// Bottom view. (Put the hud at the top)
-				SCR_SetMVStatusPosition (MV_HUD_POS_TOP_CENTER, view, hud_width, hud_height, x, y);
-			}
-		}
-	}
-	else if (cl_multiview.value == 3)
-	{
-		if (CURRVIEW == 2)
-		{
-			// Top view. (Put the hud at the bottom)
-			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
-		}
-		else if (CURRVIEW == 3)
-		{
-			// Bottom left view. (Put the hud at the top right)
-			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
-		}
-		else if (CURRVIEW == 1)
-		{
-			// Bottom right view. (Put the hud at the top left)
-			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
-		}
-	}
-	else if (cl_multiview.value == 4)
-	{
-		if (CURRVIEW == 2)
-		{
-			// Top left view. (Put the hud at the bottom right)
-			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_RIGHT, view, hud_width, hud_height, x, y);
-		}
-		else if (CURRVIEW == 3)
-		{
-			// Top right view. (Put the hud at the bottom left)
-			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_LEFT, view, hud_width, hud_height, x, y);
-		}
-		else if (CURRVIEW == 4)
-		{
-			// Bottom left view. (Put the hud at the top right)
-			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
-		}
-		else if (CURRVIEW == 1)
-		{
-			// Bottom right view. (Put the hud at the top left)
-			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
-		}
-	}
-}
-
-#define MV_HUD_ARMOR_WIDTH		(5*8)
-#define MV_HUD_HEALTH_WIDTH		(5*8)
-#define MV_HUD_CURRAMMO_WIDTH	(5*8)
-#define MV_HUD_CURRWEAP_WIDTH	(3*8)
-#define MV_HUD_POWERUPS_WIDTH	(2*8)
-#define MV_HUD_POWERUPS_HEIGHT	(2*8)
-
-#define MV_HUD_STYLE_ONLY_NAME	2
-#define MV_HUD_STYLE_ALL		3
-#define MV_HUD_STYLE_ALL_TEXT	4
-#define MV_HUD_STYLE_ALL_FILL	5
-
-void SCR_MV_SetBoundValue (int *var, int val)
-{
-	if (var != NULL)
-	{
-		(*var) = val;
-	}
-}
-
-void SCR_MV_DrawName (int x, int y, int *width, int *height)
-{
-	char *name = cl.players[nPlayernum].name;
-	SCR_MV_SetBoundValue (width, 8*(strlen(name) + 1));
-	SCR_MV_SetBoundValue (height, 8);
-
-	Draw_String(x, y, name);
-}
-
-void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
-{
-	char armor_color_code[6] = "";
-	int armor_amount_width = 0;
-
-	byte armor_color[4] = {0, 0, 0, 75};	// RGBA.
-
-	//
-	// Set the armor text color based on what armor the player has.
-	//
-	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
-	{
-		// Green armor.
-		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
-		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
-
-		armor_color[0] = 80;
-		armor_color[1] = 190;
-		armor_color[2] = 80;
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
-	{
-		// Yellow armor.
-		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
-		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
-
-		armor_color[0] = 250;
-		armor_color[1] = 230;
-		armor_color[2] = 0;
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
-	{
-		// Red armor.
-		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
-		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
-
-		armor_color[0] = 190;
-		armor_color[1] = 50;
-		armor_color[2] = 0;
-	}
-
-	if (cl.stats[STAT_ARMOR] > 0)
-	{
-		//
-		// Background fill for armor.
-		//
-		Draw_AlphaFillRGB(x, y, armor_amount_width, 8, RGBA_TO_COLOR(armor_color[0], armor_color[1], armor_color[2], armor_color[3]));
-
-		// Armor value.
-		if (style >= MV_HUD_STYLE_ALL_TEXT)
-		{
-			Draw_ColoredString(x, y, va("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0);
-		}
-	}
-
-	SCR_MV_SetBoundValue (width, MV_HUD_ARMOR_WIDTH);
-	SCR_MV_SetBoundValue (height, 8);
-}
-
-void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
-{
-#define MV_HEALTH_OPACITY 75
-	int health = cl.stats[STAT_HEALTH];
-
-	int health_amount_width = 0;
-
-	health = min(100, health);
-	health_amount_width = Q_rint(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
-
-	if (health > 0)
-	{
-		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY));
-	}
-
-	health = cl.stats[STAT_HEALTH];
-
-	if (health > 100 && health <= 200)
-	{
-		// Mega health.
-		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
-
-		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY));
-	}
-	else if (health > 200 && health <= 250)
-	{
-		// Super health.
-		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
-
-		Draw_AlphaFillRGB(x, y, MV_HUD_HEALTH_WIDTH, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY));
-		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY));
-	}
-	else if (health > 250)
-	{
-		// Crazy health.
-		Draw_AlphaFillRGB(x, y, MV_HUD_HEALTH_WIDTH, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY));
-
-	}
-
-	// No powerup.
-	if (style >= MV_HUD_STYLE_ALL_TEXT && !(cl.stats[STAT_ITEMS] & IT_INVULNERABILITY))
-	{
-		Draw_String(x, y, va("%4d", health));
-	}
-
-	SCR_MV_SetBoundValue(width, MV_HUD_HEALTH_WIDTH);
-	SCR_MV_SetBoundValue(height, 8);
-}
-
-void SCR_MV_DrawPowerups (int x, int y)
-{
-	extern mpic_t  *sb_face_invis;
-	extern mpic_t  *sb_face_quad;
-	extern mpic_t  *sb_face_invuln;
-	extern mpic_t  *sb_face_invis_invuln;
-
-	if (   cl.stats[STAT_ITEMS] & IT_INVULNERABILITY
-			&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
-	{
-		// Pentagram + Ring.
-		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis_invuln->width) / 2,
-				y - sb_face_invis_invuln->height / 2,
-				sb_face_invis_invuln, 0.4);
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
-	{
-		// Pentagram.
-		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-				y - sb_face_invuln->height / 2,
-				sb_face_invuln, 0.4);
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
-	{
-		// Ring.
-		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis->width) / 2,
-				y - sb_face_invis->height / 2,
-				sb_face_invis, 0.4);
-	}
-
-	if (cl.stats[STAT_ITEMS] & IT_QUAD)
-	{
-		// Ring.
-		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
-				y - sb_face_quad->height / 2,
-				sb_face_quad, 0.4);
-	}
-}
-
-void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
-{
-	mpic_t *current_weapon = NULL;
-	current_weapon = SCR_GetActiveWeaponIcon();
-
-	if (current_weapon)
-	{
-		Draw_Pic (x,
-				y - (current_weapon->height / 4),
-				current_weapon);
-	}
-
-	SCR_MV_SetBoundValue (width, MV_HUD_CURRWEAP_WIDTH);
-	SCR_MV_SetBoundValue (height, 8);
-}
-
-void SCR_MV_DrawCurrentAmmo (int x, int y, int *width, int *height)
-{
-	// Draw the ammo count in blue/greyish color.
-	Draw_ColoredString (x, y, va("&c5CE%4d", cl.stats[STAT_AMMO]), 0);
-	SCR_MV_SetBoundValue (width, MV_HUD_CURRAMMO_WIDTH);
-	SCR_MV_SetBoundValue (height, 8);
-}
-
-void SCR_MV_DrawWeapons (int x, int y, int *width, int *height, int hud_width, int hud_height, qbool vertical)
-{
-#define WEAPON_COUNT 8
-	mpic_t *weapon_pic = NULL;
-	int weapon = 0;
-	int weapon_flag = 0;
-	int weapon_x = 0;
-	int weapon_y = 0;
-
-	// Draw the weapons the user has.
-	for (weapon = 0; weapon < WEAPON_COUNT; weapon++)
-	{
-		weapon_flag = IT_SHOTGUN << weapon;
-
-		if (cl.stats[STAT_ITEMS] & weapon_flag)
-		{
-			// Get the weapon picture and draw it.
-			weapon_pic = SCR_GetWeaponIconByWeaponNumber (weapon + 2);
-			Draw_Pic (x + weapon_x, y + weapon_y, weapon_pic);
-		}
-
-		// Evenly distribute the weapons.
-		if (!vertical)
-		{
-			weapon_x += Q_rint((float)hud_width / WEAPON_COUNT);
-		}
-		else
-		{
-			weapon_y += Q_rint((float)hud_height / WEAPON_COUNT);
-		}
-	}
-}
-
-void SCR_DrawMVStatusView(mv_viewrect_t *view, int style, int position, qbool flip, qbool vertical)
-{
-	int hud_x = 0;
-	int hud_y = 0;
-	int hud_width = 0;
-	int hud_height = 0;
-
-	char *name = cl.players[nPlayernum].name;
-
-	if (style == MV_HUD_STYLE_ONLY_NAME)
-	{
-		// Only draw the players name.
-
-		hud_height = 2*8;
-		hud_width = 8 * (strlen(name) + 1);
-
-		//
-		// Get the position we should draw the hud at.
-		//
-		SCR_SetMVStatusPosition (position, view, hud_width, hud_height, &hud_x, &hud_y);
-
-		Draw_String(view->x + hud_x, view->y + hud_y, name);
-	}
-	else if (style >= MV_HUD_STYLE_ALL)
-	{
-#define MV_HUD_VERTICAL_GAP	4
-
-		int name_width = 0;
-		int name_height = 0;
-		int armor_width = 0;
-		int armor_height = 0;
-		int health_width = 0;
-		int health_height = 0;
-		int currweap_width = 0;
-		int currweap_height = 0;
-		int currammo_width = 0;
-		int currammo_height = 0;
-
-		//
-		// Calculate the total width and height of the hud.
-		//
-		if(!vertical)
-		{
-			hud_height = 3*8;
-			hud_width =
-				8 * (strlen(name)) +				// Name.
-				MV_HUD_ARMOR_WIDTH + 				// Armor + space.
-				MV_HUD_HEALTH_WIDTH + 				// Health.
-				MV_HUD_CURRWEAP_WIDTH +				// Current weapon.
-				MV_HUD_CURRAMMO_WIDTH;				// Current weapon ammo count.
-
-		}
-		else
-		{
-			// Vertical.
-			hud_height = 5 * (8 + MV_HUD_VERTICAL_GAP);
-			hud_width = max (8 * strlen(name), MV_HUD_ARMOR_WIDTH) + MV_HUD_ARMOR_WIDTH;
-		}
-
-		//
-		// Get the position we should draw the hud at.
-		//
-		SCR_SetMVStatusPosition(position, view, hud_width, hud_height, &hud_x, &hud_y);
-
-		//
-		// Draw a fill background.
-		//
-		if(style >= MV_HUD_STYLE_ALL_FILL)
-		{
-			Draw_AlphaFill(view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
-		}
-
-		// Draw powerups in the middle background of the hud.
-		SCR_MV_DrawPowerups(view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));
-
-		// Draw the elements vertically? (Add a small gap between the items when
-		// drawing them vertically, otherwise they're too close together).
-#define MV_FLIP(W,H) if(vertical) { hud_y += (H) + MV_HUD_VERTICAL_GAP; } else { hud_x += (W); }
-
-		if (!flip)
-		{
-			// Name.
-			SCR_MV_DrawName (view->x + hud_x, view->y + hud_y, &name_width, &name_height);
-			MV_FLIP(name_width, name_height);
-
-			// Armor.
-			SCR_MV_DrawArmor (view->x + hud_x, view->y + hud_y, &armor_width, &armor_height, style);
-			MV_FLIP(armor_width, armor_height);
-
-			// Health.
-			SCR_MV_DrawHealth (view->x + hud_x, view->y + hud_y, &health_width, &health_height, style);
-			MV_FLIP(health_width, health_height);
-
-			// Current weapon.
-			SCR_MV_DrawCurrentWeapon (view->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
-			MV_FLIP(currweap_width, currweap_height);
-
-			// Ammo for current weapon.
-			SCR_MV_DrawCurrentAmmo (view->x + hud_x, view->y + hud_y, &currammo_width, &currammo_height);
-			MV_FLIP(currammo_width, currammo_height);
-		}
-		else
-		{
-			//
-			// Flipped horizontally.
-			//
-
-			// Ammo for current weapon.
-			SCR_MV_DrawCurrentAmmo (view->x + hud_x, view->y + hud_y, &currammo_width, &currammo_height);
-			MV_FLIP(currammo_width, currammo_height);
-
-			// Current weapon.
-			SCR_MV_DrawCurrentWeapon (view ->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
-			MV_FLIP(currweap_width, currweap_height);
-
-			// Health.
-			SCR_MV_DrawHealth (view->x + hud_x, view->y + hud_y, &health_width, &health_height, style);
-			MV_FLIP(health_width, health_height);
-
-			// Armor.
-			SCR_MV_DrawArmor (view->x + hud_x, view->y + hud_y, &armor_width, &armor_height, style);
-			MV_FLIP(armor_width, armor_height);
-
-			// Name.
-			SCR_MV_DrawName (view->x + hud_x, view->y + hud_y, &name_width, &name_height);
-			MV_FLIP(name_width, name_height);
-		}
-
-		if (vertical)
-		{
-			// Start in the next column.
-			hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
-			hud_y -= hud_height;
-		}
-		else
-		{
-			// Start on the next row.
-			hud_x -= hud_width;
-			hud_y += hud_height / 2;
-		}
-
-		// Weapons.
-		SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
-	}
-}
-
-void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
-{
-	if (CURRVIEW == 2)
-	{
-		// Top.
-		view->x			= 0;
-		view->y			= 0;
-		view->width		= vid.width;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 1)
-	{
-		// Bottom.
-		view->x			= 0;
-		view->y			= vid.height / 2;
-		view->width		= vid.width;
-		view->height	= vid.height / 2;
-	}
-}
-
-void SCR_SetMVStatusTwoInsetViewRect (mv_viewrect_t *view)
-{
-	if (CURRVIEW == 2)
-	{
-		// Main.
-		view->x			= 0;
-		view->y			= 0;
-		view->width		= vid.width;
-		view->height	= vid.height;
-	}
-	else if (CURRVIEW == 1)
-	{
-		// Top right.
-		view->width		= (vid.width / 3);
-		view->height	= (vid.height / 3);
-		view->x			= (vid.width / 3) * 2;
-		view->y			= 0;
-	}
-}
-
-void SCR_SetMVStatusThreeViewRect (mv_viewrect_t *view)
-{
-	if (CURRVIEW == 2)
-	{
-		// Top.
-		view->x			= 0;
-		view->y			= 0;
-		view->width		= vid.width;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 3)
-	{
-		// Bottom left.
-		view->x			= 0;
-		view->y			= vid.height / 2;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 1)
-	{
-		// Bottom right.
-		view->x			= vid.width / 2;
-		view->y			= vid.height / 2;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-}
-
-void SCR_SetMVStatusFourViewRect (mv_viewrect_t *view)
-{
-	if (CURRVIEW == 2)
-	{
-		// Top left.
-		view->x			= 0;
-		view->y			= 0;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 3)
-	{
-		// Top right.
-		view->x			= vid.width / 2;
-		view->y			= 0;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 4)
-	{
-		// Bottom left.
-		view->x			= 0;
-		view->y			= vid.height / 2;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-	else if (CURRVIEW == 1)
-	{
-		// Bottom right.
-		view->x			= vid.width / 2;
-		view->y			= vid.height / 2;
-		view->width		= vid.width / 2;
-		view->height	= vid.height / 2;
-	}
-}
-
-void SCR_DrawMVStatus(void)
-{
-	mv_viewrect_t view;
-
-	// Only draw mini hud when there are more than 1 views.
-	if (cl_multiview.value <= 1 || !cls.mvdplayback)
-	{
-		return;
-	}
-
-	// Reset the view.
-	memset (&view, -1, sizeof(view));
-
-	//
-	// Get the view rect to draw the hud within based on the current
-	// multiview mode, and what view that is being drawn.
-	//
-	if (cl_multiview.value == 2)
-	{
-		if (cl_mvinset.value)
-		{
-			// Only draw the mini hud for the inset, 
-			// since we probably want the full size hud 
-			// for the main view.
-			if (CURRVIEW == 2)
-			{
-				return;
-			}
-
-			SCR_SetMVStatusTwoInsetViewRect(&view);
-		}
-		else
-		{
-			SCR_SetMVStatusTwoViewRect(&view);
-		}
-	}
-	else if (cl_multiview.value == 3)
-	{
-		SCR_SetMVStatusThreeViewRect (&view);
-	}
-	else if (cl_multiview.value == 4)
-	{
-		SCR_SetMVStatusFourViewRect (&view);
-	}
-
-	// Only draw if we the view rect was set properly.
-	if (view.x != -1)
-	{
-		SCR_DrawMVStatusView (&view,
-				cl_mvdisplayhud.integer,
-				mv_hudpos,
-				(qbool)cl_mvhudflip.value,
-				(qbool)cl_mvhudvertical.value);
-	}
-}
-
-void SCR_DrawMVStatusStrings(void)
-{
-	int xb = 0, yb = 0, xd = 0, yd = 0;
-	char strng[80];
-	char weapons[40];
-	char weapon[3];
-	char sAmmo[3];
-	char pups[4];
-	char armor;
-	char name[16];
-
-	int i;
-
-	extern int powerup_cam_active, cam_1, cam_2, cam_3, cam_4;
-	extern cvar_t mvd_pc_view_1, mvd_pc_view_2, mvd_pc_view_3, mvd_pc_view_4;
-
-	// Only in MVD.
-	if (!cl_multiview.value || !cls.mvdplayback)
-	{
-		return;
-	}
-
-	//
-	// Get the current weapon.
-	//
-	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING)
-	{
-		strlcpy(weapon, "lg", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER)
-	{
-		strlcpy(weapon, "rl", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER)
-	{
-		strlcpy(weapon, "gl", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN)
-	{
-		strlcpy(weapon, "sn", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN)
-	{
-		strlcpy(weapon, "ng", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN)
-	{
-		strlcpy(weapon, "ss", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN)
-	{
-		strlcpy(weapon, "sg", sizeof(weapon));
-	}
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE)
-	{
-		strlcpy(weapon, "ax", sizeof(weapon));
-	}
-	else
-	{
-		strlcpy(weapon, "??", sizeof(weapon));
-	}
-	weapon[0] |= 128;
-	weapon[1] |= 128;
-
-	//
-	// Get current powerups.
-	//
-	pups[0] = pups[1] = pups[2] = ' ';
-	pups[3] = '\0';
-
-	if (cl.stats[STAT_ITEMS] & IT_QUAD)
-	{
-		pups[0] = 'Q';
-		pups[0] |= 128;
-	}
-
-	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
-	{
-		pups[1] = 'R';
-		pups[1] |= 128;
-	}
-
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
-	{
-		pups[2] = 'P';
-		pups[2] |= 128;
-	}
-
-	strng[0] = '\0';
-
-	for (i = 0; i < 8; i++)
-	{
-		weapons[i]=' ';
-		weapons[8] = '\0';
-	}
-
-	if (cl.stats[STAT_ITEMS] & IT_AXE)
-	{
-		weapons[0] = '1' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_SHOTGUN)
-	{
-		weapons[1] = '2' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN)
-	{
-		weapons[2] = '3' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_NAILGUN)
-	{
-		weapons[3] = '4' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN)
-	{
-		weapons[4] = '5' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER)
-	{
-		weapons[5] = '6' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
-	{
-		weapons[6] = '7' - '0' + 0x12;
-	}
-	if (cl.stats[STAT_ITEMS] & IT_SUPER_LIGHTNING || cl.stats[STAT_ITEMS] & IT_LIGHTNING)
-	{
-		weapons[7] = '8' - '0' + 0x12;
-	}
-
-	armor = ' ';
-	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
-	{
-		armor='g';
-		armor |= 128;
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
-	{
-		armor='y';
-		armor |= 128;
-	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
-	{
-		armor='r';
-		armor |= 128;
-	}
-
-	//
-	// Get the player's name.
-	//
-	strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
-
-	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator)
-	{
-		if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (cl_multiview.value == 2) && cl_mvinset.integer)
-		{
-			// mvinset and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
-					"dead   ",
-					weapon,
-					sAmmo);
-		}
-		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 400))
-		{
-			// Resolution width <= 400 and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
-					"dead   ",
-					weapon,
-					sAmmo);
-		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0)
-		{
-			// > 512 and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
-					"dead   ",
-					weapon,
-					sAmmo);
-		}
-
-		else if ((cl_multiview.integer == 2) && cl_mvinset.integer && (CURRVIEW == 1))
-		{
-			// mvinset
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
-					name,
-					armor,
-					cl.players[nPlayernum].stats[STAT_ARMOR],
-					cl.players[nPlayernum].stats[STAT_HEALTH],
-					weapon,
-					sAmmo);
-		}
-		else if (cl_multiview.value && vid.width <= 400)
-		{
-			// <= 400 and alive
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
-					name,
-					armor,
-					cl.players[nPlayernum].stats[STAT_ARMOR],
-					cl.players[nPlayernum].stats[STAT_HEALTH],
-					weapon,
-					sAmmo);
-		}
-		else
-		{
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
-			snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
-					name,
-					armor,
-					cl.players[nPlayernum].stats[STAT_ARMOR],
-					cl.players[nPlayernum].stats[STAT_HEALTH],
-					weapon,
-					sAmmo);
-		}
-	}
-
-	//
-	// Powerup cam stuff.
-	//
-	if (CURRVIEW == 1 && mvd_pc_view_1.string && strlen(mvd_pc_view_1.string) && powerup_cam_active && cam_1)
-	{
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 2 && mvd_pc_view_2.string && strlen(mvd_pc_view_2.string) && powerup_cam_active && cam_2)
-	{
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 3 && mvd_pc_view_3.string && strlen(mvd_pc_view_3.string) && powerup_cam_active && cam_3)
-	{
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 4 && mvd_pc_view_4.string && strlen(mvd_pc_view_4.string) && powerup_cam_active && cam_4)
-	{
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-
-	//
-	// Placement.
-	//
-	if (cl_multiview.value == 1)
-	{
-		xb = vid.width - strlen(strng) * 8 - 12;
-		yb = vid.height - sb_lines - 16;
-		xd = vid.width - strlen(weapons) * 8 - 84;
-		yd = vid.height - sb_lines - 8;
-	}
-	else if (cl_multiview.value == 2)
-	{
-		if (!cl_mvinset.value)
-		{
-			if (CURRVIEW == 2)
-			{
-				// Top
-				xb = vid.width - strlen(strng) * 8 - 12;
-				yb = vid.height / 2 - sb_lines - 16;
-				xd = vid.width - strlen(weapons) * 8 - 84;
-				yd = vid.height / 2 - sb_lines - 8;
-			}
-			else if (CURRVIEW == 1)
-			{
-				// Bottom
-				xb = vid.width - strlen(strng) * 8 - 12;
-				yb = vid.height - sb_lines - 16;
-				xd = vid.width - strlen(weapons) * 8 - 84;
-				yd = vid.height - sb_lines - 8;
-			}
-		}
-		else if (cl_mvinset.value)
-		{
-			if (CURRVIEW == 2)
-			{
-				// Main
-				xb = vid.width - strlen(strng) * 8 - 12;
-				yb = vid.height / 2 - sb_lines - 16;
-				xd = vid.width - strlen(weapons) * 8 - 84;
-				yd = vid.height / 2 - sb_lines - 8;
-			}
-			else if (CURRVIEW == 1)
-			{
-				// Top right
-				xb = vid.width - strlen(strng) * 8; // hud
-				yb = vid.height / 3 - 16;
-				xd = vid.width - strlen(weapons) * 8 - 70; // weapons
-				yd = vid.height / 3 - 8;
-			}
-		}
-	}
-	else if (cl_multiview.value == 3)
-	{
-		if (CURRVIEW == 2)
-		{
-			// top
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height / 2 - sb_lines - 16;
-			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height / 2 - sb_lines - 8;
-		}
-		else if (CURRVIEW == 3)
-		{
-			// Bottom left
-			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
-		}
-		else if (CURRVIEW == 1)
-		{
-			// Bottom right
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
-		}
-	}
-	else if (cl_multiview.value == 4)
-	{
-		if (CURRVIEW == 2)
-		{
-			// Top left
-			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
-			yb = vid.height / 2 - sb_lines - 16;
-			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
-			yd = vid.height/2 - sb_lines - 8;
-		}
-		else if (CURRVIEW == 3)
-		{
-			// Top right
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height / 2 - sb_lines - 16;
-			xd = vid.width - strlen(weapons) - 25 * 8 - 8;
-			yd = vid.height - sb_lines - (vid.height / 1.9);
-			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height / 2 - sb_lines - 8;
-		}
-		else if (CURRVIEW == 4)
-		{
-			// Bottom left
-			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
-		}
-	}
-
-	if (cl_multiview.value == 2 && cl_mvinset.value)
-	{
-		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
-	}
-
-	// Fill the void
-	if (cl_sbar.value && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value)
-	{
-		if (vid.width > 512)
-		{
-			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 3 - 1, 0);
-		}
-		else
-		{
-			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 6 + 1, 0);
-		}
-	}
-
-	// Hud info
-	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
-			|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
-	{
-		Draw_String(xb, yb, strng);
-	}
-	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value)
-	{
-		if (vid.width > 512)
-		{
-			Draw_String(xb, yb, strng);
-		}
-		else
-		{
-			// <= 512 mvinset, just draw the name
-			int var, limit;
-			char namestr[16];
-
-			var = (vid.width - 320) * 0.05;
-			var--;
-			var |= (var >> 1);
-			var |= (var >> 2);
-			var |= (var >> 4);
-			var |= (var >> 8);
-			var |= (var >> 16);
-			var++;
-
-			limit = ceil(7.0 / 192 * vid.width + 4 / 3); // linearly limit length of name for 320->512 conwidth to fit in inset
-			strlcpy(namestr, name, limit);
-
-			if (cl_sbar.value)
-			{
-				Draw_String(vid.width - strlen(namestr) * 8 - var - 2, yb + 1, namestr);
-			}
-			else
-			{
-				Draw_String(vid.width - strlen(namestr) * 8 - var - 2, yb + 4, namestr);
-			}
-		}
-	}
-
-	// Weapons
-	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
-			|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
-	{
-		Draw_String(xd, yd, weapons);
-	}
-	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512  && cl_mvinsethud.value)
-	{
-		Draw_String(xd, yd, weapons);
-	}
-}
+void SCR_OnChangeMVHudPos (cvar_t *var, char *newval, qbool *cancel);
 
 // QW262 -->
 void Hud_262Init (void)
