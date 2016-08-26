@@ -1713,18 +1713,20 @@ void CL_LinkPlayers (void)
 		if (!state->modelindex)
 			continue;
 
-		if (state->modelindex == cl_modelindices[mi_player]) 
+		if (cl_gibfilter.value && state->modelindex == cl_modelindices[mi_h_player]) {
+			continue;
+		}
+
+		if (state->modelindex == cl_modelindices[mi_player])
 		{
 			i = state->frame;
 
-
-			if ((cl_deadbodyfilter.value == 3) & !cl.teamfortress)
-			{ // will instantly filter dead bodies unless gamedir is fortress (because in TF you probably want to see dead bodies as they may be feigned spies)
-					if (ISDEAD(i))
-						continue;
+			if (cl_deadbodyfilter.value == 3 && !cl.teamfortress) {
+				// will instantly filter dead bodies unless gamedir is fortress (in TF they may be feigned spies)
+				if (ISDEAD(i))
+					continue;
 			}
-			if (cl_deadbodyfilter.value == 2) 
-			{
+			else if (cl_deadbodyfilter.value == 2)  {
 				if (ISDEAD(i))
 					continue;
 			} 
