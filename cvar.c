@@ -149,7 +149,7 @@ void Cvar_SetDefault(cvar_t *var, float value)
 	Cvar_Set(var, val);
 }
 
-float Cvar_Value (char *var_name)
+float Cvar_Value (const char *var_name)
 {
 	cvar_t *var = Cvar_Find (var_name);
 
@@ -158,7 +158,7 @@ float Cvar_Value (char *var_name)
 	return Q_atof (var->string);
 }
 
-char *Cvar_String (char *var_name)
+char *Cvar_String (const char *var_name)
 {
 	cvar_t *var = Cvar_Find (var_name);
 

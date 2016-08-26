@@ -992,13 +992,20 @@
       "remarks": "This only applies to the mini-HUD when cl_mvdisplayhud has a value greater than 1. Otherwise old mini-HUD will be used (just strings).",
       "type": "enum",
       "values": [
-        { "name": "bottom center/bc", "description": "" },
-        { "name": "bottom left/bl", "description": "" },
-        { "name": "bottom right/br", "description": "" },
-        { "name": "gather/g", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
-        { "name": "top center/tc", "description": "" },
-        { "name": "top left/tl", "description": "" },
-        { "name": "top right/tr", "description": "" }
+        { "name": "bottom center", "description": "bottom, centered horizontally" },
+        { "name": "bottom left", "description": "bottom, left hand side" },
+        { "name": "bottom right", "description": "bottom, right hand side" },
+        { "name": "gather", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
+        { "name": "top center", "description": "top, centered horizontally" },
+        { "name": "top left", "description": "top, left hand side" },
+        { "name": "top right", "description": "top, right hand side" },
+        { "name": "bc", "description": "bottom, centered horizontally" },
+        { "name": "bl", "description": "bottom, left hand side" },
+        { "name": "br", "description": "bottom, right hand side" },
+        { "name": "g", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
+        { "name": "tc", "description": "top, centered horizontally" },
+        { "name": "tl", "description": "top, left hand side" },
+        { "name": "tr", "description": "top, right hand side" }
       ]
     },
     "cl_mvhudvertical": {
@@ -2139,7 +2146,21 @@
       "remarks": "To be able to use RGB 24bit colors, look for r_enemyskincolor variable.",
       "type": "enum",
       "values": [
-        { "name": "-1", "description": "disabled" }
+        { "name": "-1", "description": "Disabled" },
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
       ]
     },
     "enemyforceskins": {
@@ -2298,7 +2319,7 @@
       "remarks": "This relies on server/mod support to function correctly",
       "type": "enum",
       "values": [
-        { "name": "(empty)", "description": "Not specified (use gender-neutral language)" },
+        { "name": "", "description": "Not specified (use gender-neutral language)" },
         { "name": "0", "description": "Male (he, his)" },
         { "name": "1", "description": "Female (she, her)" },
         { "name": "2", "description": "None (it, its)" }
@@ -3089,7 +3110,7 @@
       "group-id": "50",
       "desc": "This variable determines the the level of detail for textures used on walls. You\ncan use this variable to lower the texture detail used on walls thus increasing\nthe game's performance.",
       "remarks": "X = etc..",
-      "type": "enum",
+      "type": "float",
       "values": [
         { "name": "0", "description": "Original size." },
         { "name": "1", "description": "Half the dimensions." },
@@ -3314,8 +3335,8 @@
     },
     "gl_turbalpha": {
       "group-id": "51",
-      "desc": "This variable determines the level of opacity for liquids, which requires\nthe use of maps that were VISed with transparent water. When using maps that\nhave not been VISed in such a way, you have to use \"r_novis 1\". If \"r_novis\" is\nset to \"1\" or when using a map VISed with transparent water and using setting\n\"gl_turbalpha\" to a value lower than \"1\", the player will be able to see objects \nand walls through liquids if the server allows that. This is a very nice feature \nto have in the game, for more information refer to the \"r_novis\" command. You \ncan use any value between \"0\" and \"1\" for \"gl_turbalpha\", here are some \nExamples:",
-      "type": "enum",
+      "desc": "This variable determines the level of opacity for liquids, which requires the use of maps that were VISed with transparent water. When using maps that have not been VISed in such a way, you have to use \"r_novis 1\". If \"r_novis\" is set to \"1\" or when using a map VISed with transparent water and using setting \"gl_turbalpha\" to a value lower than \"1\", the player will be able to see objects and walls through liquids if the server allows that. This is a very nice feature to have in the game, for more information refer to the \"r_novis\" command. You can use any value between \"0\" and \"1\" for \"gl_turbalpha\", here are some examples:",
+      "type": "float",
       "values": [
         { "name": "0.00", "description": "Transparent." },
         { "name": "0.25", "description": "Low opacity." },
@@ -10309,6 +10330,7 @@
       "desc": "Sets the powerup camera for viewport 1",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10322,6 +10344,7 @@
       "desc": "Sets the powerup camera for viewport 2",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10335,6 +10358,7 @@
       "desc": "Sets the powerup camera for viewport 3",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10348,6 +10372,7 @@
       "desc": "Sets the powerup camera for viewport 4",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -11468,6 +11493,7 @@
       "remarks": "Possible values are: 1 - 7.  Sent to server, requires mod support",
       "type": "enum",
       "values": [
+        { "name": "", "description": "Server decides color" },
         { "name": "0", "description": "White" },
         { "name": "1", "description": "Blue" },
         { "name": "2", "description": "Green" },
@@ -11760,11 +11786,11 @@
     },
     "samelevel": {
       "group-id": "43",
-      "desc": "When enabled, the same level will be played once the match is over",
-      "type": "boolean",
+      "desc": "When enabled, the same level will be played once the match is over\nOther mods use this value to store options",
+      "type": "float",
       "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
+        { "name": "0", "description": "Advance to next map after intermission" },
+        { "name": "1", "description": "Play same map again" }
       ]
     },
     "sb_autohide": {
