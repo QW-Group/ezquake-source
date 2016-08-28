@@ -1038,6 +1038,10 @@ static void VID_SDL_Init(void)
 		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
 	}
 
+	if (!sdl_window) {
+		Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+	}
+
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
 		int index = VID_GetCurrentModeIndex();
 

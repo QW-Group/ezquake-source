@@ -2093,7 +2093,7 @@ void R_Init(void)
 				NULL);
 
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits 
-	if (!strcmp(gl_vendor, "METABYTE/WICKED3D")) 
+	if (gl_vendor && !strcmp(gl_vendor, "METABYTE/WICKED3D")) 
 		Cvar_SetDefault(&gl_solidparticles, 1); 
 
 	R_InitTextures ();	// FIXME: not sure is this safe re-init
