@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: cl_ents.c,v 1.58 2007-09-17 19:37:55 qqshka Exp $
-
 */
 
 #include "quakedef.h"
@@ -38,6 +35,7 @@ extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
 extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 extern cvar_t r_drawvweps;		
+extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
 
 static struct predicted_player {
 	int flags;
@@ -238,8 +236,10 @@ customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random,
 	return l;
 }
 
-dlight_t *CL_AllocDlight (int key) {
-	int i;
+dlight_t *CL_AllocDlight(int key)
+{
+	unsigned int i;
+	unsigned int j;
 	dlight_t *dl;
 
 	// first look for an exact key match
@@ -249,24 +249,32 @@ dlight_t *CL_AllocDlight (int key) {
 			if (dl->key == key) {
 				memset (dl, 0, sizeof(*dl));
 				dl->key = key;
+				cl_dlight_active[i/32] |= (1<<(i%32));
 				return dl;
 			}
 		}
 	}
 
 	// then look for anything else
-	dl = cl_dlights;
-	for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
-		if (dl->die < cl.time) {
-			memset (dl, 0, sizeof(*dl));
-			dl->key = key;
-			return dl;
+	for (i = 0; i < MAX_DLIGHTS/32; i++) {
+		if (cl_dlight_active[i] != 0xffffffff) {
+			for (j = 0; j < 32; j++) {
+				if (!(cl_dlight_active[i] & (1<<j)) && i*32+j < MAX_DLIGHTS) {
+					dl = cl_dlights + i * 32 + j;
+					memset(dl, 0, sizeof(*dl));
+					dl->key = key;
+					cl_dlight_active[i] |= 1<<j;
+					return dl;
+				}
+			}
 		}
 	}
 
 	dl = &cl_dlights[0];
 	memset (dl, 0, sizeof(*dl));
 	dl->key = key;
+	cl_dlight_active[0] |= 1;
+
 	return dl;
 }
 
@@ -299,21 +307,34 @@ void CL_NewDlightEx (int key, vec3_t origin, float radius, float time, customlig
 		VectorCopy(l->color, dl->color);
 }
 
-void CL_DecayLights (void) {
-	int i;
+void CL_DecayLights(void)
+{
+	unsigned int i;
+	unsigned int j;
 	dlight_t *dl;
 
-	if (cls.state < ca_active)
+	if (cls.state < ca_active) {
 		return;
+	}
 
-	dl = cl_dlights;
-	for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
-		if (dl->die < cl.time || !dl->radius)
-			continue;
+	for (i = 0; i < MAX_DLIGHTS/32; i++) {
+		if (cl_dlight_active[i]) {
+			for (j = 0; j < 32; j++) {
+				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+					dl = cl_dlights + i*32 + j;
+					dl->radius -= cls.frametime * dl->decay;
 
-		dl->radius -= cls.frametime * dl->decay;
-		if (dl->radius < 0)
-			dl->radius = 0;
+					if (dl->radius < 0) {
+						dl->radius = 0;
+					}
+
+					if (dl->die < cl.time || !dl->radius) {
+						cl_dlight_active[i] &= ~(1<<j);
+						continue;
+					}
+				}
+			}
+		}
 	}
 }
 

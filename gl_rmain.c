@@ -759,11 +759,13 @@ void R_AliasSetupLighting(entity_t *ent)
 {
 	int minlight, lnum;
 	float add, fbskins;
+	unsigned int i;
+	unsigned int j;
+	unsigned int k;
 	vec3_t dist;
 	model_t *clmodel;
 
 	//VULT COLOURED MODEL LIGHTING
-	int i;
 	float radiusmax = 0;
 
 	clmodel = ent->model;
@@ -803,93 +805,101 @@ void R_AliasSetupLighting(entity_t *ent)
 	full_light = false;
 	ambientlight = shadelight = R_LightPoint (ent->origin);
 
+
+/* FIXME: dimman... cache opt from fod */
 	//VULT COLOURED MODEL LIGHTS
 	if (amf_lighting_colour.value)
 	{
-		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++)
-		{
-			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
-				continue;
+		for (i = 0; i < MAX_DLIGHTS/32; i++) {
+			if (cl_dlight_active[i]) {
+				for (j = 0; j < 32; j++) {
+					if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+						lnum = i*32 + j;
 
-			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
-			add = cl_dlights[lnum].radius - VectorLength(dist);
+						VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+						add = cl_dlights[lnum].radius - VectorLength(dist);
 
-			if (add > 0)
-			{
-				//VULT VERTEX LIGHTING
-				if (amf_lighting_vertex.value)
-				{
-					if (!radiusmax)
-					{
-						radiusmax = cl_dlights[lnum].radius;
-						VectorCopy(cl_dlights[lnum].origin, vertexlight);
-					}
-					else if (cl_dlights[lnum].radius > radiusmax)
-					{
-						radiusmax = cl_dlights[lnum].radius;
-						VectorCopy(cl_dlights[lnum].origin, vertexlight);
-					}
-				}
-
-				if (cl_dlights[lnum].type == lt_custom) {
-					VectorCopy(cl_dlights[lnum].color, dlight_color);
-					VectorScale(dlight_color, (1.0/255), dlight_color); // convert color from byte to float
-				}
-				else
-					VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
-
-				for (i=0;i<3;i++)
-				{
-					lightcolor[i] = lightcolor[i] + (dlight_color[i]*add)*2;
-					if (lightcolor[i] > 256)
-					{
-						switch (i)
+						if (add > 0)
 						{
-							case 0:
-								lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
-								lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
-								break;
-							case 1:
-								lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
-								lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
-								break;
-							case 2:
-								lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
-								lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
-								break;
+							//VULT VERTEX LIGHTING
+							if (amf_lighting_vertex.value)
+							{
+								if (!radiusmax)
+								{
+									radiusmax = cl_dlights[lnum].radius;
+									VectorCopy(cl_dlights[lnum].origin, vertexlight);
+								}
+								else if (cl_dlights[lnum].radius > radiusmax)
+								{
+									radiusmax = cl_dlights[lnum].radius;
+									VectorCopy(cl_dlights[lnum].origin, vertexlight);
+								}
+							}
+
+							if (cl_dlights[lnum].type == lt_custom) {
+								VectorCopy(cl_dlights[lnum].color, dlight_color);
+								VectorScale(dlight_color, (1.0/255), dlight_color); // convert color from byte to float
+							}
+							else
+								VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+
+							for (k=0;k<3;k++)
+							{
+								lightcolor[k] = lightcolor[k] + (dlight_color[k]*add)*2;
+								if (lightcolor[k] > 256)
+								{
+									switch (k)
+									{
+										case 0:
+											lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+											lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+											break;
+										case 1:
+											lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+											lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+											break;
+										case 2:
+											lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+											lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+											break;
+									}
+								}
+							}
 						}
 					}
 				}
-				//ambientlight += add;
 			}
 		}
-	}
-	else
-	{
-		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
-			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
-				continue;
+	} else {
+		for (i = 0; i < MAX_DLIGHTS/32; i++) {
+			if (cl_dlight_active[i]) {
+				for (j = 0; j < 32; j++) {
+					if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+						lnum = i*32 + j;
 
-			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
-			add = cl_dlights[lnum].radius - VectorLength(dist);
+						VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+						add = cl_dlights[lnum].radius - VectorLength(dist);
 
-			if (add > 0)
-			{
-				//VULT VERTEX LIGHTING
-				if (amf_lighting_vertex.value)
-				{
-					if (!radiusmax)
-					{
-						radiusmax = cl_dlights[lnum].radius;
-						VectorCopy(cl_dlights[lnum].origin, vertexlight);
-					}
-					else if (cl_dlights[lnum].radius > radiusmax)
-					{
-						radiusmax = cl_dlights[lnum].radius;
-						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+						if (add > 0)
+						{
+							//VULT VERTEX LIGHTING
+							if (amf_lighting_vertex.value)
+							{
+								if (!radiusmax)
+								{
+									radiusmax = cl_dlights[lnum].radius;
+									VectorCopy(cl_dlights[lnum].origin, vertexlight);
+								}
+								else if (cl_dlights[lnum].radius > radiusmax)
+								{
+									radiusmax = cl_dlights[lnum].radius;
+									VectorCopy(cl_dlights[lnum].origin, vertexlight);
+								}
+							}
+							ambientlight += add;
+						}
 					}
 				}
-				ambientlight += add;
 			}
 		}
 	}

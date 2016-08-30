@@ -92,7 +92,6 @@ typedef struct
 typedef struct player_info_s 
 {
 	int		userid;
-	char	userinfo[MAX_INFO_STRING];
 
 	// Scoreboard information.
 	char	name[MAX_SCOREBOARDNAME];
@@ -100,33 +99,28 @@ typedef struct player_info_s
 	int		frags;
 	int		ping;
 	byte	pl;
+	unsigned char spectator;
 
 	// Skin information.
-	int		topcolor;
-	int		bottomcolor;
+	unsigned char   topcolor;
+	unsigned char   bottomcolor;
 
-	int		_topcolor;
-	int		_bottomcolor;
+	unsigned char   _topcolor;
+	unsigned char   _bottomcolor;
 
-	int		real_topcolor;
-	int		real_bottomcolor;
-	char	team[MAX_INFO_STRING];
-	char	_team[MAX_INFO_STRING];
+	unsigned char   real_topcolor;
+	unsigned char   real_bottomcolor;
 
-    int    fps_msec;
-    int    last_fps;
-    int    fps;						// > 0 - fps, < 0 - invalid, 0 - collecting
-    int    fps_frames;
-    double fps_measure_time;
-    qbool isnear;
+	int    fps_msec;
+	int    last_fps;
+	int    fps;						// > 0 - fps, < 0 - invalid, 0 - collecting
+	int    fps_frames;
+	double fps_measure_time;
+	qbool isnear;
 
-	int		spectator;
-	byte	translations[VID_GRADES*256];
 	skin_t	*skin;
 
-	int		stats[MAX_CL_STATS];
-
-
+	qbool dead;
 	qbool	skin_refresh;
 	qbool	ignored;				// for ignore
 	qbool	validated;				// for authentication
@@ -134,9 +128,12 @@ typedef struct player_info_s
 
 	// VULT DEATH EFFECT
 	// Better putting the dead flag here instead of on the entity so whats dead stays dead
-	qbool dead;
-
-} player_info_t;
+	int		stats[MAX_CL_STATS];
+	byte	translations[VID_GRADES*256];
+	char	userinfo[MAX_INFO_STRING];
+	char	team[MAX_INFO_STRING];
+	char	_team[MAX_INFO_STRING];
+} __attribute__((aligned(64))) player_info_t;
 
 
 typedef struct 
@@ -237,6 +234,7 @@ typedef struct {
 	int				bubble;				// non zero means no flashblend bubble
 	dlighttype_t	type;
 	byte			color[3];			// use such color if type == lt_custom
+	byte unused[3];
 } dlight_t;
 
 typedef struct customlight_s {
@@ -658,11 +656,12 @@ extern cvar_t r_instagibtrail;
 extern cvar_t r_powerupglow;
 
 // FIXME, allocate dynamically
-extern	centity_t		cl_entities[CL_MAX_EDICTS];
-extern	efrag_t			cl_efrags[MAX_EFRAGS];
-extern	entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
-extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-extern	dlight_t		cl_dlights[MAX_DLIGHTS];
+extern	centity_t        cl_entities[CL_MAX_EDICTS];
+extern	efrag_t          cl_efrags[MAX_EFRAGS];
+extern	entity_t         cl_static_entities[MAX_STATIC_ENTITIES];
+extern	lightstyle_t     cl_lightstyle[MAX_LIGHTSTYLES];
+extern	dlight_t         cl_dlights[MAX_DLIGHTS];
+extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
 
 extern byte		*host_basepal;
 extern byte		*host_colormap;

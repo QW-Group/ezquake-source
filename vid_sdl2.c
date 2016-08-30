@@ -737,6 +737,8 @@ void VID_Shutdown(void)
 		sdl_window = NULL;
 	}
 
+	SDL_GL_ResetAttributes();
+
 	if (SDL_WasInit(SDL_INIT_VIDEO) != 0)
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 

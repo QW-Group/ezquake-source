@@ -154,8 +154,10 @@ void R_RenderDlight (dlight_t *light) {
 }
 
 void R_RenderDlights (void) {
-	int i;
+	unsigned int i;
+	unsigned int j;
 	dlight_t *l;
+
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
 	glDepthMask (GL_FALSE);
@@ -164,27 +166,31 @@ void R_RenderDlights (void) {
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_ONE, GL_ONE);
 
-	l = cl_dlights;
-	for (i = 0; i < MAX_DLIGHTS; i++, l++)
-	{
-		if (l->die < r_refdef2.time || !l->radius)
-			continue;
+	for (i = 0; i < MAX_DLIGHTS/32; i++) {
+		if (cl_dlight_active[i]) {
+			for (j = 0; j < 32; j++) {
+				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+					l = cl_dlights + i*32 + j;
 
-		if (l->bubble == 2) // light from rl
-		{
-			if (gl_rl_globe.integer & 1)
-				R_RenderDlight (l);
-			if (gl_rl_globe.integer & 2)
-				R_MarkLights (l, 1 << i, cl.worldmodel->nodes);
+					if (l->bubble == 2) { // light from rl
+						if (gl_rl_globe.integer & 1) {
+							R_RenderDlight (l);
+						}
+						if (gl_rl_globe.integer & 2) {
+							R_MarkLights (l, 1 << (i*32+j), cl.worldmodel->nodes);
+						}
+						continue;
+					}
 
-			continue;
+					R_MarkLights(l, 1 << (i*32 + j), cl.worldmodel->nodes);
+	
+					if (gl_flashblend.integer && !(l->bubble && gl_flashblend.integer != 2)) {
+						R_RenderDlight(l);
+					}
+				}
+			}
 		}
-
-		// do it always
-		R_MarkLights (l, 1 << i, cl.worldmodel->nodes);
-
-		if (gl_flashblend.integer && !(l->bubble && gl_flashblend.integer != 2))
-			R_RenderDlight (l);
+			
 	}
 
 	glColor3ubv (color_white);
@@ -194,180 +200,6 @@ void R_RenderDlights (void) {
 	glDepthMask (GL_TRUE);
 	glShadeModel (GL_FLAT);
 }
-
-//VULT ->
-//LIGHTING
-//The following lighting section is taken entirely from LordHavoc's coloured lighting tutorial
-/*void R_MarkLights (dlight_t *light, int bit, mnode_t *node) {
-	mplane_t *splitplane;
-	float dist;
-	msurface_t *surf;
-	int i;
-	
-	if (node->contents < 0)
-		return;
-
-	splitplane = node->plane;
-	dist = PlaneDiff(light->origin, splitplane);
-	
-	if (dist > light->radius) {
-		R_MarkLights (light, bit, node->children[0]);
-		return;
-	}
-	if (dist < -light->radius) {
-		R_MarkLights (light, bit, node->children[1]);
-		return;
-	}
-		
-	// mark the polygons
-	surf = cl.worldmodel->surfaces + node->firstsurface;
-	for (i = 0; i < node->numsurfaces; i++, surf++) {
-		if (surf->dlightframe != r_dlightframecount) {
-			surf->dlightbits = 0;
-			surf->dlightframe = r_dlightframecount;
-		}
-		surf->dlightbits |= bit;
-	}
-
-	R_MarkLights (light, bit, node->children[0]);
-	R_MarkLights (light, bit, node->children[1]);
-}
-
-void R_PushDlights (void) {
-	int i;
-	dlight_t *l;
-
-	if (gl_flashblend.value)
-		return;
-
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't
-											//  advanced yet for this frame
-	l = cl_dlights;
-
-	for (i = 0; i < MAX_DLIGHTS; i++, l++) {
-		if (l->die < r_refdef2.time || !l->radius)
-			continue;
-		R_MarkLights ( l, 1<<i, cl.worldmodel->nodes );
-	}
-}
-
-
-mplane_t	*lightplane;
-vec3_t		lightspot;
-vec3_t		lightcolor;
-
-int RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end) {
-	float front, back, frac;
-	vec3_t mid;
-
-loc0:
-	if (node->contents < 0)
-		return false;		// didn't hit anything
-	
-	// calculate mid point
-	if (node->plane->type < 3) {
-		front = start[node->plane->type] - node->plane->dist;
-		back = end[node->plane->type] - node->plane->dist;
-	} else {
-		front = DotProduct(start, node->plane->normal) - node->plane->dist;
-		back = DotProduct(end, node->plane->normal) - node->plane->dist;
-	}
-	// optimized recursion
-	if ((back < 0) == (front < 0)) {
-		node = node->children[front < 0];
-		goto loc0;
-	}
-	
-	frac = front / (front-back);
-	mid[0] = start[0] + (end[0] - start[0]) * frac;
-	mid[1] = start[1] + (end[1] - start[1]) * frac;
-	mid[2] = start[2] + (end[2] - start[2]) * frac;
-	
-	// go down front side
-	if (RecursiveLightPoint (color, node->children[front < 0], start, mid)) {
-		return true;	// hit something
-	} else {
-		int i, ds, dt;
-		msurface_t *surf;
-		// check for impact on this node
-		VectorCopy (mid, lightspot);
-		lightplane = node->plane;
-		surf = cl.worldmodel->surfaces + node->firstsurface;
-		for (i = 0; i < node->numsurfaces; i++, surf++) {
-			if (surf->flags & SURF_DRAWTILED)
-				continue;	// no lightmaps
-			ds = (int) ((float) DotProduct (mid, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3]);
-			dt = (int) ((float) DotProduct (mid, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3]);
-			if (ds < surf->texturemins[0] || dt < surf->texturemins[1])
-				continue;
-			
-			ds -= surf->texturemins[0];
-			dt -= surf->texturemins[1];
-			
-			if (ds > surf->extents[0] || dt > surf->extents[1])
-				continue;
-
-			if (surf->samples) {
-				//enhanced to interpolate lighting
-				byte *lightmap;
-				int maps, line3, dsfrac = ds & 15, dtfrac = dt & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
-				float scale;
-				line3 = ((surf->extents[0] >> 4) + 1) * 3;
-				lightmap = surf->samples + ((dt >> 4) * ((surf->extents[0] >> 4) + 1) + (ds >> 4)) * 3; // LordHavoc: *3 for color
-				
-				for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-					scale = (float) d_lightstylevalue[surf->styles[maps]] * 1.0 / 256.0;
-					r00 += (float) lightmap[0] * scale;
-					g00 += (float) lightmap[1] * scale;
-					b00 += (float) lightmap[2] * scale;
-
-					r01 += (float) lightmap[3] * scale;
-					g01 += (float) lightmap[4] * scale;
-					b01 += (float) lightmap[5] * scale;
-
-					r10 += (float) lightmap[line3 + 0] * scale;
-					g10 += (float) lightmap[line3 + 1] * scale;
-					b10 += (float) lightmap[line3 + 2] * scale;
-
-					r11 += (float) lightmap[line3 + 3] * scale;
-					g11 += (float) lightmap[line3 + 4] * scale;
-					b11 += (float) lightmap[line3 + 5] * scale;
-
-					lightmap += ((surf->extents[0] >> 4) + 1) * ((surf->extents[1] >> 4) + 1) * 3; // LordHavoc: *3 for colored lighting
-				}
-				color[0] += (float) ((int) ((((((((r11 - r10) * dsfrac) >> 4) + r10) 
-					- ((((r01 - r00) * dsfrac) >> 4) + r00)) * dtfrac) >> 4) 
-					+ ((((r01 - r00) * dsfrac) >> 4) + r00)));
-				color[1] += (float) ((int) ((((((((g11 - g10) * dsfrac) >> 4) + g10) 
-					- ((((g01 - g00) * dsfrac) >> 4) + g00)) * dtfrac) >> 4) 
-					+ ((((g01 - g00) * dsfrac) >> 4) + g00)));
-				color[2] += (float) ((int) ((((((((b11 - b10) * dsfrac) >> 4) + b10) 
-					- ((((b01 - b00) * dsfrac) >> 4) + b00)) * dtfrac) >> 4) 
-					+ ((((b01 - b00) * dsfrac) >> 4) + b00)));
-			}
-			return true; // success
-		}
-		// go down back side
-		return RecursiveLightPoint (color, node->children[front >= 0], mid, end);
-	}
-}
-
-int R_LightPoint (vec3_t p) {
-	vec3_t end;
-
-	if (!cl.worldmodel->lightdata)
-		return 255;
-
-	end[0] = p[0];
-	end[1] = p[1];
-	end[2] = p[2] - 8192;
-
-	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
-	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);	
-	return (lightcolor[0] + lightcolor[1] + lightcolor[2]) / 3.0;
-}
-
-*/
 
 /*
 =============================================================================
@@ -480,7 +312,6 @@ R_PushDlights
 */
 void R_PushDlights (void)
 {
-	// qqshka: using R_RenderDlights() instead
 }
 
 

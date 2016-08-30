@@ -1200,6 +1200,8 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_DrawBrushModel (entity_t *e) {
 	int i, k, underwater;
+	unsigned int li;
+	unsigned int lj;
 	vec3_t mins, maxs;
 	msurface_t *psurf;
 	float dot;
@@ -1256,16 +1258,22 @@ void R_DrawBrushModel (entity_t *e) {
 
 	// calculate dynamic lighting for bmodel if it's not an instanced model
 	if (clmodel->firstmodelsurface) {
-		for (k = 0; k < MAX_DLIGHTS; k++) {
-			if ((cl_dlights[k].die < r_refdef2.time) || !cl_dlights[k].radius)
-				continue;
+		for (li = 0; li < MAX_DLIGHTS/32; li++) {
+			if (cl_dlight_active[li]) {
+				for (lj = 0; lj < 32; lj++) {
+					if ((cl_dlight_active[li]&(1 << lj)) && li*32 + lj < MAX_DLIGHTS) {
+						k = li*32 + lj;
 
-			if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2))
-				R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
+							R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+						}
+					}
+				}
+			}
 		}
 	}
 
-    glPushMatrix ();
+	glPushMatrix ();
 
 	glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
 	glRotatef (e->angles[1], 0, 0, 1);

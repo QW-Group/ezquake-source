@@ -224,6 +224,7 @@ efrag_t			cl_efrags[MAX_EFRAGS];
 entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
+unsigned int cl_dlight_active[MAX_DLIGHTS/32];
 
 // refresh list
 visentlist_t	cl_firstpassents, cl_visents, cl_alphaents;
@@ -1241,7 +1242,7 @@ void CL_ClearState (void)
 
 	// Clear other arrays.
 	memset(cl_efrags, 0, sizeof(cl_efrags));
-	memset(cl_dlights, 0, sizeof(cl_dlights));
+	memset(cl_dlight_active, 0, sizeof(cl_dlight_active));
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 
