@@ -96,7 +96,7 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 //
 // Slider - Calculates the actual slider position.
 //
-__inline void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
+static inline void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
 {
 	int pos = slider->slider_pos - slider->min_value;
 
@@ -108,7 +108,7 @@ __inline void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
 //
 // Slider - Calculates the gap size between values.
 //
-__inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
+static inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 {
 	slider->range = abs(slider->max_value - slider->min_value);
 
