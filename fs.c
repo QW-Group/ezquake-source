@@ -1602,15 +1602,13 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
-	{
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true)) {
 		return UNZ_ERRNO;
 	}
 
 	// Delete the temp file if it exists (it is created when the filename is received above).
 	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT)
-	{
+	if (retval == -1 && qerrno != ENOENT) {
 		return UNZ_ERRNO;
 	}
 
@@ -1626,11 +1624,13 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	if (retval == UNZ_OK) {
 		char tmp_path[MAX_OSPATH];
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, filename_inzip);
+		if (keep_path) {
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, filename_inzip);
+		} else {
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, COM_SkipPath(filename_inzip));
+		}
 		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	}
-	else
-	{
+	} else {
 		unpack_path[0] = 0;
 	}
 
