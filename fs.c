@@ -1608,8 +1608,7 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	// Delete the temp file if it exists (it is created when the filename is received above).
 	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT)
-	{
+	if (retval == -1 && qerrno != ENOENT) {
 		return UNZ_ERRNO;
 	}
 
@@ -1631,8 +1630,7 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, COM_SkipPath(filename_inzip));
 		}
 		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	}
-	else {
+	} else {
 		unpack_path[0] = 0;
 	}
 
