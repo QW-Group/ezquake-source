@@ -1146,6 +1146,13 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 		UI_Print_Center(x, y+24, w, "Press [space] to refresh the list", true);
 		UI_Print_Center(x, y+40, w, "Mark some sources on the next tab", false);
 		UI_Print_Center(x, y+48, w, "or press [Insert] to add a server", false);
+
+		if (strlen(searchstring))
+		{
+			char line[1024];
+			snprintf(line, sizeof (line), "search for: %-7s", searchstring);
+			UI_Print_Center(x, y+h-8, w, line, true);
+		}
 	}
 
 	// adding server
@@ -2084,14 +2091,8 @@ int SB_Servers_Key(int key)
 			searchstring[len] = c;
 			searchstring[len+1] = 0;
 			resort_servers = 1;
-
-			if (!SearchNextServer(Servers_pos)) {
-				if (!SearchNextServer(0)) {
-					// FIXME: non-ascii chars
-					strlcpy (searchstring, "\xEE\xEF\xF4 \xE6\xEF\xF5\xEE\xE4", sizeof (searchstring));  // not found
-				}
-			}
 		}
+
 		return true;
 	} else {
 		searchtype = search_none;
