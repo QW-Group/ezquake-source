@@ -353,6 +353,10 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	if (!f)
 		return NULL;
 	len = VFS_GETLEN(f);
+	if(len == -1) {
+		VFS_CLOSE(f);
+		return NULL;
+	}
 	if (file_length)
 		*file_length = len;
 
