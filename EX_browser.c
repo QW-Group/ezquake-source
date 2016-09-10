@@ -1147,8 +1147,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 		UI_Print_Center(x, y+40, w, "Mark some sources on the next tab", false);
 		UI_Print_Center(x, y+48, w, "or press [Insert] to add a server", false);
 
-		if (strlen(searchstring))
-		{
+		if (strlen(searchstring)) {
 			char line[1024];
 			snprintf(line, sizeof (line), "search for: %-7s", searchstring);
 			UI_Print_Center(x, y+h-8, w, line, true);
