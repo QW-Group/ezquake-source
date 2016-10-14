@@ -298,8 +298,9 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr);
 int SB_PingTree_GetPathLen(const netadr_t *addr);
 void SB_Proxylist_Unserialize_f(void);
 
-#define SB_TRIGGER_REFRESHDONE    1
-#define SB_TRIGGER_SOURCESUPDATED 2
+#define SB_TRIGGER_REFRESHDONE        1
+#define SB_TRIGGER_SOURCESUPDATED     2
+#define SB_TRIGGER_NOTIFY_PINGTREE    4
 extern int sb_queuedtriggers;
 
 #endif  // __EX_BROWSER__H__

@@ -3347,4 +3347,9 @@ void SB_ExecuteQueuedTriggers(void) {
 		TP_ExecTrigger("f_sbupdatesourcesdone");
 		sb_queuedtriggers &= ~SB_TRIGGER_SOURCESUPDATED;
 	}
+
+	if (sb_queuedtriggers & SB_TRIGGER_NOTIFY_PINGTREE) {
+		Com_Printf("Ping tree has been created\n");
+		sb_queuedtriggers &= ~SB_TRIGGER_NOTIFY_PINGTREE;
+	}
 }

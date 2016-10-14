@@ -633,7 +633,7 @@ int SB_PingTree_Phase2(void *ignored_arg)
 	SB_PingTree_Dijkstra();
 	SB_PingTree_UpdateServerList();
 
-	Com_Printf("Ping tree has been created\n");
+	sb_queuedtriggers |= SB_TRIGGER_NOTIFY_PINGTREE;
 	Sys_SemPost(&phase2thread_lock);
 	building_pingtree = false;
 	pingtree_built = true;
