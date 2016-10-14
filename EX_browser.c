@@ -2063,6 +2063,7 @@ int SB_Servers_Key(int key)
 {
 	if (serversn_passed <= 0 && key == K_BACKSPACE) {
 		searchstring[0] = '\0';
+		searchtype = search_none;
 		resort_servers = 1;
 	}
 
