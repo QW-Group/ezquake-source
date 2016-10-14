@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/glext.h>
 #endif // __GNUC__
 
+#ifdef _MSC_VER
+#include <glext.h>
+#endif
+
 #ifdef FRAMEBUFFERS
 #include "GL/glext.h"
 #endif

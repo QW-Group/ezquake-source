@@ -28,6 +28,9 @@ $Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 */
 // client.h
 
+#if defined(_MSC_VER) && !defined(__attribute__)
+#define __attribute__(A) /**/
+#endif
 
 #define MAX_STATIC_SOUNDS 256
 typedef struct
