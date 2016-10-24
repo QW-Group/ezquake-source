@@ -708,7 +708,7 @@ char *Macro_Need (void)
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
-			vars.needflags |= it_shells;
+			vars.needflags |= it_nails;
 		}
 		if (cl.stats[STAT_CELLS] < tp_need_cells.value)	{
 			if (macro_buf[0])
