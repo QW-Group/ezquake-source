@@ -29,9 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SELF_SOUND_ENTITY 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 #define PLAY_SOUND_ENTITY 0xFFEFFFFE // /play or /playvol command, take distance & direction into account
 
-#ifdef _WIN32
-#include "movie.h" //joe: capturing audio
-#endif
+#include "movie.h" // /demo_capture
 
 extern qbool ActiveApp, Minimized;
 extern cvar_t sys_inactivesound;
@@ -155,13 +153,11 @@ static void S_SoundInfo_f (void)
 
 static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
 {
-#ifdef _WIN32
-	// Mixer is run in main thread when creating .avi, play silence instead
-	if (Movie_IsCapturingAVI()) {
+	// Mixer is run in main thread when capturing, play silence instead
+	if (Movie_IsCapturing()) {
 		SDL_memset(stream, 0, len);
 		return;
 	}
-#endif
 
 	S_LockMixer();
 	shw->buffer = stream;
@@ -912,11 +908,9 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 		}
 	}
 
-#ifdef _WIN32
-	if (Movie_IsCapturingAVI()) {
+	if (Movie_IsCapturing()) {
 		Movie_MixFrameSound(S_Update_);
 	}
-#endif
 
 	S_UnlockMixer();
 }

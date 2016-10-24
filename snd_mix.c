@@ -23,9 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "qsound.h"
-#ifdef _WIN32
-#include "movie.h" //joe: capturing audio
-#endif
+#include "movie.h" // /demo_capture
 
 
 #define PAINTBUFFER_SIZE 512
@@ -95,11 +93,9 @@ static void S_TransferStereo16 (int endtime)
 		else
 			Snd_WriteLinearBlastStereo16 (snd_p, snd_out, clientVolume);
 
-#ifdef _WIN32
-		if (Movie_IsCapturingAVI ()) {
+		if (Movie_IsCapturing()) {
 			Movie_TransferSound (snd_out, snd_linear_count);
 		}
-#endif
 
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);

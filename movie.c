@@ -31,15 +31,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel);
-//int SCR_Screenshot(char *);
+static void WAVCaptureStop (void);
+static void WAVCaptureStart (void);
+int SCR_Screenshot(char *);
 void SCR_Movieshot (char *);	//joe: capturing to avi
 
 //joe: capturing audio
-#ifdef _WIN32
 // Variables for buffering audio
-short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
-int captured_audio_samples;
-#endif
+static short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
+static int captured_audio_samples;
+static qbool frame_has_sound = false;
 
 extern cvar_t scr_sshot_type;
 
@@ -55,8 +56,8 @@ cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
 static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
 static void Movie_Start_AVI_Capture(qbool split);
 static int avi_number = 0;
-static unsigned char aviSoundBuffer[4096] = { 0 };
 #endif
+static unsigned char aviSoundBuffer[4096] = { 0 }; // Static buffer for mixing
 
 static volatile qbool movie_is_capturing = false;
 static double movie_start_time, movie_len;
@@ -129,6 +130,7 @@ static void Movie_Start(double _time)
 			strlcpy (image_ext, "tga", sizeof (image_ext));
 		}
 		movie_is_capturing = true;
+		WAVCaptureStart ();
 	}
 }
 
@@ -145,6 +147,7 @@ void Movie_Stop (qbool restarting) {
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 	}
 #endif
+	WAVCaptureStop ();
 	movie_is_capturing = restarting;
 }
 
@@ -374,10 +377,98 @@ void Movie_FinishFrame(void)
 
 //joe: capturing audio
 #ifdef _WIN32
-static qbool frame_has_sound = false;
-
 qbool Movie_IsCapturingAVI(void) {
 	return movie_is_avi && Movie_IsCapturing();
+}
+#endif
+
+static vfsfile_t *wav_output = NULL;
+static int wav_sample_count = 0;
+
+static void WAVCaptureStart (void)
+{
+	// WAV file format details taken from http://soundfile.sapp.org/doc/WaveFormat/
+	char fname[MAX_PATH];
+
+	int chunkSize = 0;  // We write 0 to start with, need to replace once we know number of samples
+	int fmtBlockSize = LittleLong (16);
+	short fmtFormat = LittleShort (1); // PCM, uncompressed
+	short fmtNumberChannels = LittleShort (shw->numchannels);
+	int fmtSampleRate = LittleLong (shw->khz);
+	int fmtBitsPerSample = 16;
+	int fmtByteRate = shw->khz * fmtNumberChannels * (fmtBitsPerSample / 8);  // 16 = 16 bit sound
+	int fmtBlockAlign = (fmtBitsPerSample / 8) * shw->numchannels; // 16 bit sound
+
+#ifdef _WIN32
+	snprintf (fname, sizeof (fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/audio.wav",
+		movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
+		movie_start_date.wHour, movie_start_date.wMinute, movie_start_date.wSecond);
+#else
+	snprintf (fname, sizeof (fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/audio.wav",
+		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
+		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec);
+#endif
+	if (!(wav_output = FS_OpenVFS (fname, "wb", FS_NONE_OS))) {
+		FS_CreatePath (fname);
+		if (!(wav_output = FS_OpenVFS (fname, "wb", FS_NONE_OS)))
+			return;
+	}
+
+	// RIFF header
+	VFS_WRITE (wav_output, "RIFF", 4);
+	VFS_WRITE (wav_output, &chunkSize, 4);
+	VFS_WRITE (wav_output, "WAVE", 4);
+
+	// "fmt " chunk (24 bytes total)
+	VFS_WRITE (wav_output, "fmt ", 4);
+	VFS_WRITE (wav_output, &fmtBlockSize, 4);
+	VFS_WRITE (wav_output, &fmtFormat, 2);
+	VFS_WRITE (wav_output, &fmtNumberChannels, 2);
+	VFS_WRITE (wav_output, &fmtSampleRate, 4);
+	VFS_WRITE (wav_output, &fmtByteRate, 4);
+	VFS_WRITE (wav_output, &fmtBlockAlign, 2);
+	VFS_WRITE (wav_output, &fmtBitsPerSample, 2);
+
+	// "data" chunk
+	VFS_WRITE (wav_output, "data", 4);
+	VFS_WRITE (wav_output, &chunkSize, 4);
+
+	// actual data will be written as audio mixed each frame
+	wav_sample_count = 0;
+}
+
+static void WAVCaptureFrame (int samples, byte *sample_buffer)
+{
+	int i;
+
+	if (wav_output) {
+		for (i = 0; i < samples; ++i) {
+			unsigned long original = LittleLong (*(unsigned long*)sample_buffer);
+
+			VFS_WRITE (wav_output, &original, 4);
+			sample_buffer += 4;
+		}
+
+		wav_sample_count += samples;
+	}
+}
+
+static void WAVCaptureStop (void)
+{
+	if (wav_output) {
+		// Now we know how many samples, so can fill in the blocks in the file
+		int dataSize = wav_sample_count * 2 * shw->numchannels; // 16 bit sound, stereo
+		int riffChunkSize = 36 + dataSize; // 36 = 4[format field] + (8 + chunk1size)[fmt block] + 8 [subchunk2Id + size fields]
+
+		VFS_SEEK (wav_output, 4, SEEK_SET);
+		VFS_WRITE (wav_output, &riffChunkSize, 4);
+		VFS_SEEK (wav_output, 40, SEEK_SET);   // RIFF header = 12, fmt chunk 24, "data" 4
+		VFS_WRITE (wav_output, &dataSize, 4);
+		VFS_CLOSE (wav_output);
+
+		wav_output = 0;
+		wav_sample_count = 0;
+	}
 }
 
 void Movie_MixFrameSound (void (*mixFunction)(void))
@@ -405,14 +496,22 @@ void Movie_TransferSound(void* data, int snd_linear_count)
 
 	if (captured_audio_samples >= samples_per_frame) {
 		// We have enough audio samples to match one frame of video
-		Capture_WriteAudio(samples_per_frame, (byte *)capture_audio_samples);
+#ifdef _WIN32
+		if (movie_is_avi) {
+			Capture_WriteAudio (samples_per_frame, (byte *)capture_audio_samples);
+		}
+		else {
+			WAVCaptureFrame (samples_per_frame, (byte *)capture_audio_samples);
+		}
+#else
+		WAVCaptureFrame (samples_per_frame, (byte *)capture_audio_samples);
+#endif
 		memcpy (capture_audio_samples, capture_audio_samples + (samples_per_frame << 1), (captured_audio_samples - samples_per_frame) * 2 * shw->numchannels);
 		captured_audio_samples -= samples_per_frame;
 
 		frame_has_sound = true;
 	}
 }
-#endif
 
 static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel) {
 	if (Movie_IsCapturing()) {
