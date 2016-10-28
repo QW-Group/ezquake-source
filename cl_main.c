@@ -624,7 +624,11 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef PROTOCOL_VERSION_FTE2
 unsigned int CL_SupportedFTEExtensions2 (void)
 {
-	unsigned int fteprotextsupported2 = 0;
+	unsigned int fteprotextsupported2 = 0
+#ifdef FTE_PEXT2_VOICECHAT
+		| FTE_PEXT2_VOICECHAT
+#endif
+		;
 
 	if (!cl_pext.value)
 		return 0;

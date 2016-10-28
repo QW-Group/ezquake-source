@@ -30,7 +30,7 @@
     { "id": "29", "name": "Obsolete (3.0) - Invalid", "major-group": "Obsolete" },
     { "id": "30", "name": "Obsolete (3.0) - Software Renderer", "major-group": "Obsolete" },
     { "id": "31", "name": "Obsolete (3.0) - Video", "major-group": "Obsolete" },
-    { "id": "32", "name": "Obsolete (3.0) - VOIP", "major-group": "Obsolete" },
+    { "id": "32", "name": "VOIP", "major-group": "Sound" },
     { "id": "33", "name": "Obsolete (Commands)", "major-group": "Obsolete" },
     { "id": "34", "name": "Obsolete (server infokeys)", "major-group": "Obsolete" },
     { "id": "35", "name": "OpenGL Rendering", "major-group": "Graphics" },
@@ -1421,7 +1421,7 @@
     },
     "cl_voip_capturingvol ": {
       "group-id": "32",
-      "desc": "Voice (VOIP) support. Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
+      "desc": "Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
       "type": "integer"
     },
     "cl_voip_micamp": {

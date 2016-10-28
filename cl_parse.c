@@ -1600,6 +1600,10 @@ void CL_ParseServerData (void)
 
 	// now waiting for downloads, etc
 	cls.state = ca_onserver;
+
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Voip_MapChange();
+#endif
 }
 
 void CL_ParseSoundlist (void)
@@ -3479,6 +3483,14 @@ void CL_ParseServerMessage (void)
 					S_StopSound(i >> 3, i & 7);
 					break;
 				}
+
+#ifdef FTE_PEXT2_VOICECHAT
+			case svc_fte_voicechat:
+			{
+				S_Voip_Parse();
+				break;
+			}
+#endif
 
 			case svc_updatefrags:
 				{

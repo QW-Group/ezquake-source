@@ -3218,6 +3218,39 @@ static void SCR_UpdateCursor(void)
 	}
 }
 
+static void SCR_VoiceMeter(void)
+{
+#ifdef FTE_PEXT2_VOICECHAT
+
+	float	range;
+	int		loudness;
+	int		w1, w2;
+	int		w = 100;												// random.
+	int     h = 8;
+	int     x, y;
+
+	if (!S_Voip_ShowMeter (&x, &y)) {
+		return;
+	}
+
+	loudness = S_Voip_Loudness();
+
+	if (loudness < 0)
+		return;
+
+	range = loudness / 100.0f;
+	range = bound(0.0f, range, 1.0f);
+	w1 = range * w;
+	w2 = w - w1;
+	Draw_String (x, y, "mic ");
+	x += 8 * (sizeof("mic ")-1);
+	Draw_AlphaRectangleRGB(x, y, w1, h, 1, true, RGBA_TO_COLOR(255, 0, 0, 255));
+	x += w1;
+	Draw_AlphaRectangleRGB(x, y, w2, h, 1, true, RGBA_TO_COLOR(0, 255, 0, 255));
+
+#endif // FTE_PEXT2_VOICECHAT
+}
+
 void SCR_DrawMultiviewOverviewElements (void)
 {
 	SCR_DrawMultiviewBorders ();
@@ -3303,6 +3336,8 @@ static void SCR_DrawElements(void)
 					SCR_DrawPause ();
 
 					SCR_DrawAutoID ();
+
+					SCR_VoiceMeter ();
 				}
 
 				if (!cl.intermission) 

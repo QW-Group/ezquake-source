@@ -123,6 +123,12 @@ JANSSON_LIBS ?= $(shell pkg-config jansson --libs)
 CFLAGS += $(JANSSON_CFLAGS)
 LIBS_c += $(JANSSON_LIBS)
 
+SPEEX_LIBS ?= $(shell pkg-config speex --libs) $(shell pkg-config speexdsp --libs)
+ifdef SPEEX_LIBS
+    CFLAGS_c += -DWITH_SPEEX
+endif
+LIBS_c += $(SPEEX_LIBS)
+
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 
@@ -314,7 +320,8 @@ OBJS_c := \
     vid_sdl2.o \
     sys_sdl2.o \
     in_sdl2.o \
-    cl_multiview.o
+    cl_multiview.o \
+    snd_voip.o
 
 ### Configuration Options ###
 

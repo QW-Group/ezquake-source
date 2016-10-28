@@ -125,9 +125,10 @@ typedef struct player_info_s
 
 	qbool dead;
 	qbool	skin_refresh;
-	qbool	ignored;				// for ignore
-	qbool	validated;				// for authentication
-	char	f_server[16];			// for f_server responses
+	qbool	ignored;                // for ignore
+	qbool   vignored;               // for voip-ignore
+	qbool	validated;              // for authentication
+	char	f_server[16];           // for f_server responses
 
 	// VULT DEATH EFFECT
 	// Better putting the dead flag here instead of on the entity so whats dead stays dead
@@ -989,3 +990,18 @@ qbool CL_QueInputPacket(void);
 void CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================
+
+// Sound
+#ifdef FTE_PEXT2_VOICECHAT
+void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
+qbool S_Voip_ShowMeter(int* x, int* y);
+qbool S_Voip_Speaking (unsigned int player);
+int S_Voip_Loudness (void);
+void S_Voip_MapChange (void);
+void S_Voip_Parse (void);
+void S_Voip_Ignore (unsigned int slot, qbool ignore);
+#else
+#define S_Voip_ShowMeter(x, y) false
+#define S_Voip_Speaking(x) false
+#define S_Voip_Loudness 0
+#endif

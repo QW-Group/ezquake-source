@@ -917,7 +917,7 @@ int cmdtime_msec = 0;
 void CL_SendCmd(void)
 {
 	sizebuf_t buf;
-	byte data[128];
+	byte data[1024];
 	usercmd_t *cmd, *oldcmd;
 	int i, checksumIndex, lost;
 	qbool dontdrop;
@@ -1072,6 +1072,10 @@ void CL_SendCmd(void)
 		pps_balance = 0;
 		dropcount = 0;
 	}
+
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Voip_Transmit(clc_voicechat, &buf);
+#endif
 
 	cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
 	// network stats table

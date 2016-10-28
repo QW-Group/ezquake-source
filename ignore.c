@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	$Id: ignore.c,v 1.7 2007-03-11 06:01:40 disconn3ct Exp $
 */
 
-
+#include <SDL_version.h>
 #include "quakedef.h"
 #include "ignore.h"
 #include "utils.h"
@@ -63,7 +63,16 @@ static void Display_Ignorelist(void) {
 			PaddedPrint(cl.players[i].name);
 	if (con.x)
 		Com_Printf ("\n");
-	
+
+#ifdef FTE_PEXT2_VOICECHAT
+	Com_Printf ("\x02" "VOIP Ignore List:\n");
+	for (i = 0; i < MAX_CLIENTS; i++)
+		if (cl.players[i].name[0] && cl.players[i].vignored && !cl.players[i].ignored)
+			PaddedPrint(cl.players[i].name);
+	if (con.x)
+		Com_Printf ("\n");
+#endif
+
 	Com_Printf ("\x02" "Team Ignore List:\n");
 	for (i = 0; i < MAX_TEAMIGNORELIST && ignoreteamlist[i][0]; i++)
 		PaddedPrint(ignoreteamlist[i]);
@@ -90,10 +99,22 @@ static qbool Ignorelist_Add(int slot) {
 		return false;
 
 	cl.players[slot].ignored = true;
+#ifdef FTE_PEXT2_VOICECHAT
+	cl.players[slot].vignored = true;
+	S_Voip_Ignore(slot, true);
+#endif
 	return true;
 }
 
-static qbool Ignorelist_Del(int slot) {
+static qbool Ignorelist_Del (int slot)
+{
+#ifdef FTE_PEXT2_VOICECHAT
+	if (cl.players[slot].vignored) {
+		cl.players[slot].vignored = false;
+		S_Voip_Ignore (slot, false);
+	}
+#endif
+
 	if (cl.players[slot].ignored == false)
 		return false;
 
@@ -114,13 +135,15 @@ static void Ignore_f(void) {
 
 	if ((slot = Player_StringtoSlot(Cmd_Argv(1))) == PLAYER_ID_NOMATCH) {
 		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
-	} else if (slot == PLAYER_NAME_NOMATCH) {
+	}
+	else if (slot == PLAYER_NAME_NOMATCH) {
 		Com_Printf("%s : no player with name %s\n", Cmd_Argv(0), Cmd_Argv(1));
-	} else {
-		if (Ignorelist_Add(slot))
-			Com_Printf("Added user %s to ignore list\n", cl.players[slot].name);
-		else
-			Com_Printf ("User %s is already ignored\n", cl.players[slot].name);
+	}
+	else if (Ignorelist_Add (slot)) {
+		Com_Printf ("Added user %s to ignore list\n", cl.players[slot].name);
+	}
+	else {
+		Com_Printf ("User %s is already ignored\n", cl.players[slot].name);
 	}
 }
 
@@ -411,6 +434,65 @@ void Ignore_ResetFloodList(void) {
 	floodindex = 0;
 }
 
+#ifdef FTE_PEXT2_VOICECHAT
+static qbool Ignorelist_VAdd(int slot)
+{
+	if (cl.players[slot].vignored)
+		return false;
+
+	cl.players[slot].vignored = true;
+	S_Voip_Ignore(slot, true);
+	return true;
+}
+
+static qbool IgnoreList_VDel (int slot)
+{
+	if (!cl.players[slot].vignored)
+		return false;
+
+	cl.players[slot].vignored = false;
+	S_Voip_Ignore(slot, false);
+	return true;
+}
+
+static void VIgnoreToggleCommand (qbool ignore)
+{
+	int c, slot;
+
+	if ((c = Cmd_Argc()) == 1) {
+		Display_Ignorelist();
+		return;
+	}
+	else if (c != 2) {
+		Con_Printf("Usage: %s [userid | name]\n", Cmd_Argv(0));
+		return;
+	}
+
+	if ((slot = Player_StringtoSlot(Cmd_Argv(1))) == PLAYER_ID_NOMATCH) {
+		Con_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
+	}
+	else if (slot == PLAYER_NAME_NOMATCH) {
+		Con_Printf("%s : no player with name %s\n", Cmd_Argv(0), Cmd_Argv(1));
+	}
+	else if (ignore ? (Ignorelist_VAdd (slot)) : (IgnoreList_VDel (slot))) {
+		Con_Printf ("%s user %s %s ignore list\n", ignore ? "Added" : "Removed", cl.players[slot].name, ignore ? "to" : "from");
+	}
+	else {
+		Con_Printf ("User %s is %s ignored\n", cl.players[slot].name, ignore ? "already" : "not");
+	}
+}
+
+static void VIgnore_f(void)
+{
+	VIgnoreToggleCommand (true);
+}
+
+static void VUnignore_f (void)
+{
+	VIgnoreToggleCommand (false);
+}
+#endif
+
 void Ignore_Init(void) {
 	int i;
 
@@ -429,6 +511,10 @@ void Ignore_Init(void) {
 
 	Cvar_ResetCurrentGroup();
 
+#ifdef FTE_PEXT2_VOICECHAT
+	Cmd_AddCommand ("ignore_voip", VIgnore_f);
+	Cmd_AddCommand ("unignore_voip", VUnignore_f);
+#endif
 	Cmd_AddCommand ("ignore", Ignore_f);					
 	Cmd_AddCommand ("ignorelist", IgnoreList_f);			
 	Cmd_AddCommand ("unignore", Unignore_f);				
