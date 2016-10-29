@@ -18,19 +18,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-if [ $# -lt 1 ]; then
-	echo "Usage: $0 <Bundle.app> [..]"
+if [ $# -lt 2 ]; then
+	echo "Usage: $0 <Bundle.app> <executable> [..]"
 	echo ""
-	echo "  This script will parse the 'Info.plist' of 'Bundle.app' for the excutable."
 	echo "  Linked libraries of that executable that are _not_ system libraries will"
 	echo "  be copied inside the bundle into 'Bundle.app/Contents/Frameworks'. The"
 	echo "  executable's linked library paths are updated to their new locations"
 	echo "  inside the bundle."
-	echo ""
-	echo "  You can list additional plugins that are installed inside the bundle to"
-	echo "  be included. Example:"
-	echo ""
-	echo "    $0 MyApp.app MyApp.app/Contents/Frameworks/Plugins/PluginA.so"
 	echo ""
 	exit 1
 fi
@@ -39,13 +33,6 @@ BUNDLE=${1%/}
 
 if [ ! -d "$BUNDLE" ]; then
 	echo "ERROR: Bundle '$BUNDLE' does not exist"
-	exit 1
-fi
-
-EXECUTABLE=$BUNDLE/Contents/MacOS/$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$BUNDLE/Contents/Info.plist")
-
-if [ ! -f "$EXECUTABLE" ]; then
-	echo "ERROR: Executable '$EXECUTABLE' does not exist"
 	exit 1
 fi
 
@@ -96,7 +83,7 @@ function copy_deps {
 	done
 }
 
-for BINARY in "$EXECUTABLE" "${@:2}"; do
+for BINARY in "${@:2}"; do
 	copy_deps "$BINARY"
 done
 
@@ -108,6 +95,6 @@ function fix_symbols {
 
 shopt -s nullglob
 
-for BINARY in "$EXECUTABLE" "${@:2}" "$FRAMEWORK_DIR/"*.dylib "$FRAMEWORK_DIR/"*.so; do
+for BINARY in "${@:2}" "$FRAMEWORK_DIR/"*.dylib "$FRAMEWORK_DIR/"*.so; do
 	fix_symbols "$BINARY"
 done
