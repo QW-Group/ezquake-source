@@ -864,7 +864,7 @@ void CL_QWURL_f (void)
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
 	{
-		Cbuf_AddText(va("connect %s\n", connection_str));
+		Cbuf_AddText(va("join %s\n", connection_str));
 	}
 	else if (!strncmp(command, "challenge?", 10))
 	{
