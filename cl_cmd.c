@@ -1052,49 +1052,49 @@ qbool CL_CheckServerCommand (void) {
 }
 
 usermainbuttons_t CL_GetLastCmd (void) { 
-   int i; 
-   usercmd_t cmd; 
-   usermainbuttons_t ret;
-   static int last_impulse; 
-   static double impulse_time; 
+	usercmd_t cmd;
+	usermainbuttons_t ret;
+	static int last_impulse;
+	static double impulse_time;
 
-//   if (!show_input.value) 
-//      return; 
+	extern void MVD_FlushUserCommands (void);
 
-   i = (cls.netchan.outgoing_sequence-1) & UPDATE_MASK; 
-   cmd = cl.frames[i].cmd; 
+	if (cls.mvdplayback && cl.mvd_time_offset) {
+		int i = 0;
 
-   if (cmd.impulse) { 
-      last_impulse = cmd.impulse; 
-      impulse_time = cls.realtime; 
-   } 
-   if (!(last_impulse && cls.realtime >= impulse_time && 
-      cls.realtime <= impulse_time + 0.2)) 
-      last_impulse = 0; 
+		memset (&ret, 0, sizeof (ret));
 
-   ret.attack = cmd.buttons & BUTTON_ATTACK;
-   ret.jump = cmd.buttons & BUTTON_JUMP;
-   ret.up = cmd.upmove > 0;
-   ret.down = cmd.upmove < 0;
-   ret.forward = cmd.forwardmove > 0;
-   ret.back = cmd.forwardmove < 0;
-   ret.left = cmd.sidemove < 0;
-   ret.right = cmd.sidemove > 0;
+		// Check for latest
+		MVD_FlushUserCommands ();
 
-   return ret;
+		ret.attack = (cl.mvd_user_cmd[0] & 1);
+		ret.jump = (cl.mvd_user_cmd[0] & 2);
+		ret.forward = (cl.mvd_user_cmd[0] & 4);
+		ret.back = (cl.mvd_user_cmd[0] & 8);
+		ret.right = (cl.mvd_user_cmd[0] & 16);
+		ret.left = (cl.mvd_user_cmd[0] & 32);
+		ret.up = (cl.mvd_user_cmd[0] & 64);
+		ret.down = (cl.mvd_user_cmd[0] & 128);
+		return ret;
+	}
 
-   /*
-   snprintf(str, sizeof(str), "%s %s%s%s %s %s %s", 
-      cmd.upmove > 0 ? "up" : cmd.upmove < 0 ? "dn" : "  ", 
-      cmd.sidemove < 0 ? "<-" : "  ", 
-      cmd.forwardmove > 0 ? "^" : cmd.forwardmove < 0 ? "v" : " ", 
-      cmd.sidemove > 0 ? "->" : "  ", 
-      cmd.buttons & BUTTON_JUMP ? "jump" : "    ", 
-      cmd.buttons & BUTTON_ATTACK ? "attk" : "    ", 
-      imp ? va("%-3i", imp) : "   "); 
+	cmd = cl.frames[(cls.netchan.outgoing_sequence - 1) & UPDATE_MASK].cmd;
 
-   x = ELEMENT_X_COORD(show_fps);   // FIXME --> show_input 
-   y = ELEMENT_Y_COORD(show_fps); 
-   Draw_String (x, y, str); 
-   */
+	ret.attack = cmd.buttons & BUTTON_ATTACK;
+	ret.jump = cmd.buttons & BUTTON_JUMP;
+	ret.up = cmd.upmove > 0;
+	ret.down = cmd.upmove < 0;
+	ret.forward = cmd.forwardmove > 0;
+	ret.back = cmd.forwardmove < 0;
+	ret.left = cmd.sidemove < 0;
+	ret.right = cmd.sidemove > 0;
+
+	if (cmd.impulse) {
+		last_impulse = cmd.impulse;
+		impulse_time = cls.realtime;
+	}
+	if (!(last_impulse && cls.realtime >= impulse_time &&
+		cls.realtime <= impulse_time + 0.2))
+		last_impulse = 0;
+	return ret;
 }

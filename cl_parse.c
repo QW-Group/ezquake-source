@@ -3044,6 +3044,12 @@ void CL_ParseStufftext (void)
 		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
 	}
+	else if (!strncmp(s, "//ucmd ", sizeof("//ucmd ") - 1))
+	{
+		extern void MVD_ParseUserCommand (const char* s);
+
+		MVD_ParseUserCommand (s + sizeof("//ucmd ") - 1);
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);

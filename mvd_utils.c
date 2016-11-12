@@ -1466,3 +1466,47 @@ void MVD_Screen (void){
 	MVD_Info ();
 	MVD_Status ();
 }
+
+void MVD_FlushUserCommands (void)
+{
+	int i;
+	float targettime = cls.demotime + cl.mvd_time_offset;
+
+	for (i = 1; i < sizeof (cl.mvd_user_cmd) / sizeof (cl.mvd_user_cmd[0]); ++i) {
+		if (cl.mvd_user_cmd_time[i] && cl.mvd_user_cmd_time[i] <= targettime) {
+			cl.mvd_user_cmd_time[0] = cl.mvd_user_cmd_time[i];
+			cl.mvd_user_cmd[0] = cl.mvd_user_cmd[i];
+			cl.mvd_user_cmd_time[i] = 0;
+			cl.mvd_user_cmd[i] = 0;
+		}
+	}
+}
+
+void MVD_ParseUserCommand (const char* s)
+{
+	float time;
+	int command;
+	int i;
+
+	Cmd_TokenizeString( (char*)s );
+
+	if (Cmd_Argc () != 2) {
+		return;
+	}
+
+	time = atof( Cmd_Argv( 0 ) );
+	command = atoi( Cmd_Argv( 1 ) );
+
+	if (! cl.mvd_time_offset) {
+		cl.mvd_time_offset = time - cls.demotime;
+	}
+
+	MVD_FlushUserCommands ();
+	for (i = 0; i < sizeof (cl.mvd_user_cmd) / sizeof (cl.mvd_user_cmd[0]); ++i) {
+		if (cl.mvd_user_cmd_time[i] == 0) {
+			cl.mvd_user_cmd_time[i] = time;
+			cl.mvd_user_cmd[i] = command;
+			break;
+		}
+	}
+}
