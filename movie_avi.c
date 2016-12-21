@@ -75,6 +75,8 @@ qbool	mp3_driver;
 HACMDRIVER	had;
 HACMSTREAM	hstr;
 ACMSTREAMHEADER	strhdr;
+LONG bytesWritten;
+
 
 extern qbool movie_avi_loaded, movie_acm_loaded;
 extern	cvar_t	movie_codec, movie_fps, movie_mp3, movie_mp3_kbps;
@@ -237,6 +239,7 @@ qbool Capture_Open (char *filename)
 	AVISTREAMINFO		stream_header;
 	char				*fourcc;
 
+	bytesWritten = 0;
 	m_video_frame_counter = m_audio_frame_counter = 0;
 	m_file = NULL;
 	m_codec_fourcc = 0;
@@ -253,6 +256,7 @@ qbool Capture_Open (char *filename)
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't open AVI file\n");
+		Capture_Close ();
 		return false;
 	}
 
@@ -280,6 +284,7 @@ qbool Capture_Open (char *filename)
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't create video stream\n");
+		Capture_Close ();
 		return false;
 	}
 
@@ -296,6 +301,7 @@ qbool Capture_Open (char *filename)
 		if (FAILED(hr))
 		{
 			Com_Printf ("ERROR: Couldn't make compressed video stream\n");
+			Capture_Close ();
 			return false;
 		}
 	}
@@ -304,6 +310,7 @@ qbool Capture_Open (char *filename)
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't set video stream format\n");
+		Capture_Close ();
 		return false;
 	}
 
@@ -326,6 +333,7 @@ qbool Capture_Open (char *filename)
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't create audio stream\n");
+		Capture_Close ();
 		return false;
 	}
 
@@ -340,6 +348,7 @@ qbool Capture_Open (char *filename)
 		if (!mp3_driver)
 		{
 			Com_Printf ("ERROR: Couldn't find any MP3 decoder\n");
+			Capture_Close ();
 			return false;
 		}
 
@@ -364,14 +373,17 @@ qbool Capture_Open (char *filename)
 			{
 			case MMSYSERR_INVALPARAM:
 				Com_Printf ("ERROR: Invalid parameters passed to acmStreamOpen\n");
+				Capture_Close ();
 				return false;
 
 			case ACMERR_NOTPOSSIBLE:
 				Com_Printf ("ERROR: No ACM filter found capable of decoding MP3\n");
+				Capture_Close ();
 				return false;
 
 			default:
 				Com_Printf ("ERROR: Couldn't open ACM decoding stream\n");
+				Capture_Close ();
 				return false;
 			}
 		}
@@ -380,6 +392,7 @@ qbool Capture_Open (char *filename)
 		if (FAILED(hr))
 		{
 			Com_Printf ("ERROR: Couldn't set audio stream format\n");
+			Capture_Close ();
 			return false;
 		}
 	}
@@ -389,6 +402,7 @@ qbool Capture_Open (char *filename)
 		if (FAILED(hr))
 		{
 			Com_Printf ("ERROR: Couldn't set audio stream format\n");
+			Capture_Close ();
 			return false;
 		}
 	}
@@ -398,26 +412,37 @@ qbool Capture_Open (char *filename)
 
 void Capture_Close (void)
 {
-	if (m_uncompressed_video_stream)
+	if (m_uncompressed_video_stream) {
 		qAVIStreamRelease (m_uncompressed_video_stream);
-	if (m_compressed_video_stream)
+		m_uncompressed_video_stream = 0;
+	}
+	if (m_compressed_video_stream) {
 		qAVIStreamRelease (m_compressed_video_stream);
-	if (m_audio_stream)
+		m_compressed_video_stream = 0;
+	}
+	if (m_audio_stream) {
 		qAVIStreamRelease (m_audio_stream);
-	if (m_audio_is_mp3)
-	{
+		m_audio_stream = 0;
+	}
+	if (m_audio_is_mp3) {
 		qacmStreamClose (hstr, 0);
 		qacmDriverClose (had, 0);
+		hstr = 0;
+		had = 0;
 	}
-	if (m_file)
+	if (m_file) {
 		qAVIFileRelease (m_file);
+		m_file = 0;
+	}
 
+	bytesWritten = 0;
 	qAVIFileExit ();
 }
 
 void Capture_WriteVideo (byte *pixel_buffer, int size)
 {
 	HRESULT	hr;
+	LONG frameBytesWritten;
 
 	// Check frame size (TODO: other things too?) hasn't changed
 	if (m_video_frame_size != size)
@@ -434,12 +459,14 @@ void Capture_WriteVideo (byte *pixel_buffer, int size)
 
 	// Write the pixel buffer to to the AVIFile, one sample/frame at the time
 	// set each frame to be a keyframe (it doesn't depend on previous frames).
-	hr = qAVIStreamWrite (Capture_VideoStream(), m_video_frame_counter++, 1, pixel_buffer, m_video_frame_size, AVIIF_KEYFRAME, NULL, NULL);
+	hr = qAVIStreamWrite (Capture_VideoStream(), m_video_frame_counter++, 1, pixel_buffer, m_video_frame_size, AVIIF_KEYFRAME, NULL, &frameBytesWritten);
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't write to AVI file\n");
 		return;
 	}
+
+	bytesWritten += frameBytesWritten;
 }
 
 #ifndef ACM_STREAMSIZEF_SOURCE
@@ -453,59 +480,54 @@ void Capture_WriteVideo (byte *pixel_buffer, int size)
 
 void Capture_WriteAudio (int samples, byte *sample_buffer)
 {
-	HRESULT		hr = E_UNEXPECTED;
-	unsigned long	sample_bufsize;
+	HRESULT        hr = E_UNEXPECTED;
+	LONG           frameBytesWritten;
+	unsigned long  sample_bufsize;
 
-	if (!m_audio_stream)
-	{
+	if (!m_audio_stream) {
 		Com_Printf ("ERROR: Audio stream is NULL\n");
 		return;
 	}
 
 	sample_bufsize = samples * m_wave_format.nBlockAlign;
-	if (m_audio_is_mp3)
-	{
+	if (m_audio_is_mp3) {
 		MMRESULT	mmr;
 		byte		*mp3_buffer;
 		unsigned long	mp3_bufsize;
 
-		if ((mmr = qacmStreamSize(hstr, sample_bufsize, &mp3_bufsize, ACM_STREAMSIZEF_SOURCE)))
-		{
+		if ((mmr = qacmStreamSize (hstr, sample_bufsize, &mp3_bufsize, ACM_STREAMSIZEF_SOURCE))) {
 			Com_Printf ("ERROR: Couldn't get mp3bufsize\n");
 			return;
 		}
-		if (!mp3_bufsize)
-		{
+		if (!mp3_bufsize) {
 			Com_Printf ("ERROR: mp3bufsize is zero\n");
 			return;
 		}
-		mp3_buffer = (byte *) Q_calloc (mp3_bufsize, 1);
+		mp3_buffer = (byte *)Q_calloc (mp3_bufsize, 1);
 
-		memset (&strhdr, 0, sizeof(strhdr));
-		strhdr.cbStruct = sizeof(strhdr);
+		memset (&strhdr, 0, sizeof (strhdr));
+		strhdr.cbStruct = sizeof (strhdr);
 		strhdr.pbSrc = sample_buffer;
 		strhdr.cbSrcLength = sample_bufsize;
 		strhdr.pbDst = mp3_buffer;
 		strhdr.cbDstLength = mp3_bufsize;
 
-		if ((mmr = qacmStreamPrepareHeader(hstr, &strhdr, 0)))
-		{
+		if ((mmr = qacmStreamPrepareHeader (hstr, &strhdr, 0))) {
 			Com_Printf ("ERROR: Couldn't prepare header\n");
 			Q_free (mp3_buffer);
 			return;
 		}
 
-		if ((mmr = qacmStreamConvert(hstr, &strhdr, ACM_STREAMCONVERTF_BLOCKALIGN)))
-		{
+		if ((mmr = qacmStreamConvert (hstr, &strhdr, ACM_STREAMCONVERTF_BLOCKALIGN))) {
 			Com_Printf ("ERROR: Couldn't convert audio stream\n");
 			goto clean;
 		}
 
-		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, mp3_buffer, strhdr.cbDstLengthUsed, AVIIF_KEYFRAME, NULL, NULL);
+		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, mp3_buffer, strhdr.cbDstLengthUsed, AVIIF_KEYFRAME, NULL, &frameBytesWritten);
+		bytesWritten += frameBytesWritten;
 
-clean:
-		if ((mmr = qacmStreamUnprepareHeader(hstr, &strhdr, 0)))
-		{
+	clean:
+		if ((mmr = qacmStreamUnprepareHeader (hstr, &strhdr, 0))) {
 			Com_Printf ("ERROR: Couldn't unprepare header\n");
 			Q_free (mp3_buffer);
 			return;
@@ -513,15 +535,63 @@ clean:
 
 		Q_free (mp3_buffer);
 	}
-	else
-	{
+	else {
 		// The audio is not in MP3 format, just write the WAV data to the avi.
-		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, sample_buffer, samples * m_wave_format.nBlockAlign, AVIIF_KEYFRAME, NULL, NULL);
+		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, sample_buffer, samples * m_wave_format.nBlockAlign, AVIIF_KEYFRAME, NULL, &frameBytesWritten);
+		bytesWritten += frameBytesWritten;
 	}
 
-	if (FAILED(hr))
-	{
+	if (FAILED (hr)) {
 		Com_Printf ("ERROR: Couldn't write to AVI file\n");
 		return;
 	}
+}
+
+LONG Movie_CurrentLength (void)
+{
+	return bytesWritten;
+}
+
+qbool ValidateMovieCodec (char* name)
+{
+	HKEY registryKey;
+	int valueIndex;
+	char valueName[64];
+	DWORD valueLength = sizeof (valueName);
+
+	// Uncompressed stream
+	if (name[0] == 0 || !strcmp (name, "0")) {
+		return true;
+	}
+
+	// Open / Create the key.
+	if (RegCreateKeyEx (HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32",
+		0, NULL, REG_OPTION_NON_VOLATILE, KEY_QUERY_VALUE, NULL, &registryKey, NULL)) {
+		Com_Printf_State (PRINT_WARNING, "Could not read list of valid codecs\n");
+		return true; // assume ok, will find out later
+	}
+
+	strlcpy (valueName, "vidc.", sizeof (valueName));
+	strlcat (valueName, name, sizeof (valueName));
+	if (RegGetValue (registryKey, NULL, valueName, RRF_RT_ANY, NULL, NULL, NULL) == ERROR_SUCCESS) {
+		RegCloseKey (registryKey);
+		return true;
+	}
+
+	Con_Printf ("Warning: '%s' not found in list of valid codecs.\n", name);
+	Con_Printf ("The following codecs are installed:\n", name);
+	for (valueIndex = 0; RegEnumValue (registryKey, valueIndex, valueName, &valueLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS; valueIndex++, valueLength = sizeof (valueName)) {
+		if (! strncmp (valueName, "vidc.", 5)) {
+			Con_Printf ("  %s\n", valueName + 5);
+		}
+	}
+
+	RegCloseKey (registryKey);
+	return false;
+}
+
+void OnChange_movie_codec (cvar_t *var, char *string, qbool *cancel)
+{
+	// Print warning if codec specified isn't installed
+	ValidateMovieCodec (string);
 }

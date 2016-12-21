@@ -2074,7 +2074,8 @@
     },
     "demo_capture_vid_maxlen": {
       "group-id": "7",
-      "desc": "If set, multiple files will be created.  This variable determines length in seconds of each file",
+      "desc": "If set, multiple files will be created.  This variable determines length of each file in MB",
+      "remarks": "The .avi format has issues with files over 2GB in size.",
       "type": "integer"
     },
     "demo_dir": {

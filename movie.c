@@ -49,19 +49,20 @@ cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
 cvar_t   movie_steadycam	=  {"demo_capture_steadycam", "0"};
 
 #ifdef _WIN32
-cvar_t   movie_codec		= {"demo_capture_codec", "0"};	// Capturing to avi
+void OnChange_movie_codec (cvar_t *var, char *string, qbool *cancel);
+LONG Movie_CurrentLength (void);
+cvar_t   movie_codec		= {"demo_capture_codec", "0", 0, OnChange_movie_codec };	// Capturing to avi
 cvar_t   movie_mp3			= {"demo_capture_mp3", "0"};
 cvar_t   movie_mp3_kbps		= {"demo_capture_mp3_kbps", "128"};
 cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
 static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
-static void Movie_Start_AVI_Capture(qbool split);
+static void Movie_Start_AVI_Capture(void);
 static int avi_number = 0;
 #endif
 static unsigned char aviSoundBuffer[4096] = { 0 }; // Static buffer for mixing
 
 static volatile qbool movie_is_capturing = false;
-static double movie_start_time, movie_len;
-static double movie_fragment_start_time;
+static double movie_start_time, movie_len, movie_real_start_time;
 static int movie_frame_count;
 static char	image_ext[4];
 
@@ -105,7 +106,6 @@ static void Movie_Start(double _time)
 	#endif
 	movie_len = _time;
 	movie_start_time = cls.realtime;
-	movie_fragment_start_time = cls.realtime;
 
 	movie_frame_count = 0;
 
@@ -145,6 +145,7 @@ void Movie_Stop (qbool restarting) {
 		S_StopAllSounds();
 
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
+		Com_Printf("  Time: %5.1f seconds\n", Sys_DoubleTime() - movie_real_start_time);
 	}
 #endif
 	WAVCaptureStop ();
@@ -201,23 +202,26 @@ void Movie_Demo_Capture_f(void) {
 			return;
 		}
 
-		Movie_Start_AVI_Capture(movie_vid_maxlen.value > 0 && movie_vid_maxlen.value < time);
+		Movie_Start_AVI_Capture();
 	}
 #endif
 	Movie_Start(time);
 }
 
 #ifdef _WIN32
-static void Movie_Start_AVI_Capture(qbool split) 
+static void Movie_Start_AVI_Capture(void)
 {
 	++avi_number;
 
 	// If we're going to break up the movie, append number
 	char aviname[MAX_OSPATH];
-	if (split)
-		snprintf (aviname, sizeof(aviname), "%s-%03d", movie_avi_filename, avi_number);
-	else 
-		strlcpy (aviname, movie_avi_filename, sizeof(aviname));
+	if (avi_number > 1) {
+		snprintf (aviname, sizeof (aviname), "%s-%03d", movie_avi_filename, avi_number);
+	}
+	else {
+		strlcpy (aviname, movie_avi_filename, sizeof (aviname));
+		movie_real_start_time = Sys_DoubleTime ();
+	}
 
 	if (!(Util_Is_Valid_Filename(aviname))) {
 		Com_Printf(Util_Invalid_Filename_Msg(aviname));
@@ -305,14 +309,15 @@ void Movie_FinishFrame(void)
 	}
 	else 
 	{
+		fname[0] = '\0';
 		// Split up if we're over the time limit for each segment
-		if (movie_vid_maxlen.value && cls.realtime >= movie_fragment_start_time + movie_vid_maxlen.value) 
+		if (movie_vid_maxlen.integer && Movie_CurrentLength() >= movie_vid_maxlen.value * 1024 * 1024) 
 		{
 			double original_start_time = movie_start_time;
 
 			// Close existing, and start again
 			Movie_Stop(true);
-			Movie_Start_AVI_Capture(true);
+			Movie_Start_AVI_Capture();
 			Movie_Start(movie_len);
 
 			// keep track of original start time so we know when to stop for good
@@ -327,7 +332,7 @@ void Movie_FinishFrame(void)
 	con_suppress = true;
 	#endif // _WIN32
 
-	SCR_Screenshot(fname);
+	SCR_Movieshot (fname);
 	movie_frame_count++;
 
 #ifdef _WIN32
@@ -337,8 +342,9 @@ void Movie_FinishFrame(void)
 		con_suppress = false;
 	}
 
-	if (cls.realtime >= movie_start_time + movie_len)
-		Movie_Stop(false);
+	if (cls.realtime >= movie_start_time + movie_len) {
+		Movie_Stop (false);
+	}
 }
 
 //joe: capturing audio
