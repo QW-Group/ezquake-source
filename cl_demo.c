@@ -3469,6 +3469,28 @@ static void CL_DemoPlaybackInit(void)
 	}
 }
 
+char *CL_Macro_DemoName_f (void)
+{
+	static char macrobuf[128];
+
+	if (cls.demoplayback) {
+		COM_StripExtension (COM_SkipPath (cls.demoname), macrobuf, sizeof (macrobuf));
+	}
+	else {
+		macrobuf[0] = '\0';
+	}
+	return macrobuf;
+}
+
+char *CL_Macro_DemoLength_f (void)
+{
+	static char macrobuf[64];
+
+	snprintf (macrobuf, sizeof (macrobuf), "%d", (cls.demoplayback ? (int) ceil(CL_GetDemoLength()) : 0));
+
+	return macrobuf;
+}
+
 //
 // Starts playback of a demo.
 //
@@ -3503,8 +3525,6 @@ void CL_Play_f (void)
 	// Disconnect any current game.
 	Host_EndGame();
 
-	TP_ExecTrigger("f_demostart");
-	
 	// VFS-FIXME: This will affect playing qwz inside a zip
 	#ifndef WITH_VFS_ARCHIVE_LOADING 
 	#ifdef WITH_ZIP
@@ -3647,6 +3667,7 @@ void CL_Play_f (void)
 	cls.demo_rewindtime = 0;
 
 	CL_DemoPlaybackInit();
+	TP_ExecTrigger("f_demostart");
 
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
@@ -5091,6 +5112,10 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("qtv_query_demolist", CL_QTVList_f);
 	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
 	Cmd_AddCommand ("qtv_fixuser", CL_QTVFixUser_f);
+
+	// Macros
+	Cmd_AddMacro ("demoname", CL_Macro_DemoName_f);
+	Cmd_AddMacro ("demolength", CL_Macro_DemoLength_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32
