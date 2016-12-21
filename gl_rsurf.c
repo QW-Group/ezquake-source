@@ -1095,6 +1095,7 @@ void DrawTextureChains (model_t *model, int contents)
 }
 
 void R_DrawFlat (model_t *model) {
+	extern cvar_t gl_outline;
 	msurface_t *s;
 	int waterline, i, k;
 	float *v;
@@ -1164,6 +1165,7 @@ void R_DrawFlat (model_t *model) {
 					glVertex3fv (v);
 				}
 				glEnd ();
+
 				// START shaman FIX /r_drawflat + /gl_caustics {
 				if (waterline && draw_caustics) {
 					s->polys->caustics_chain = caustics_polys;
@@ -1183,6 +1185,53 @@ void R_DrawFlat (model_t *model) {
  // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
+static void R_DrawMapOutline (model_t *model) {
+	extern cvar_t gl_outline, gl_outline_width;
+	msurface_t *s;
+	int waterline, i, k;
+	float *v;
+	vec3_t n;
+	qbool draw_caustics = underwatertexture && gl_caustics.value;
+
+	GL_PolygonOffset(1, 1);
+	glColor3f (1.0f, 1.0f, 1.0f);
+	glLineWidth (bound(0.1, gl_outline_width.value, 3.0));
+
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable (GL_DEPTH_TEST);
+	glDisable (GL_CULL_FACE);
+	glDisable (GL_TEXTURE_2D);
+
+	for (i = 0; i < model->numtextures; i++) {
+		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
+			continue;
+
+		for (waterline = 0; waterline < 2; waterline++) {
+			if (!(s = model->textures[i]->texturechain[waterline]))
+				continue;
+
+			for ( ; s; s = s->texturechain) {
+				GL_Bind (lightmap_textures + s->lightmaptexturenum);
+
+				v = s->polys->verts[0];
+				VectorCopy(s->plane->normal, n);
+				VectorNormalize(n);
+
+				glBegin(GL_LINE_LOOP);
+				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+					glVertex3fv (v);
+				}
+				glEnd ();
+			}
+		}
+	}
+
+	glPopAttrib();
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	GL_PolygonOffset(0, 0);
+}
+
 void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 	char *p;
 	qbool progress = false;
@@ -1200,6 +1249,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_DrawBrushModel (entity_t *e) {
 	int i, k, underwater;
+	extern cvar_t gl_outline;
 	unsigned int li;
 	unsigned int lj;
 	vec3_t mins, maxs;
@@ -1325,6 +1375,10 @@ void R_DrawBrushModel (entity_t *e) {
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
+	if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {
+		R_DrawMapOutline (clmodel);
+	}
+
 	R_DrawSkyChain();
 	R_DrawAlphaChain ();
 
@@ -1425,6 +1479,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 void R_DrawWorld (void)
 {
 	entity_t ent;
+	extern cvar_t gl_outline;
 
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -1461,6 +1516,10 @@ void R_DrawWorld (void)
 	else
 	{
 		DrawTextureChains (cl.worldmodel, 0);
+	}
+
+	if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
+		R_DrawMapOutline (cl.worldmodel);
 	}
 
 	//draw the world alpha textures

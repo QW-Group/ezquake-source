@@ -2843,8 +2843,15 @@
     },
     "gl_outline": {
       "group-id": "35",
-      "desc": "If set, draws outline on models to create rotoscope effect.",
-      "type": "boolean"
+      "desc": "Controls outlining of models and map.",
+      "type": "enum",
+      "remarks": "Outlining of the world is only valid when cheats are enabled",
+      "values": [
+        { "name": "0", "description": "Outlining disabled" },
+        { "name": "1", "description": "Outline models to create rotoscope effect" },
+        { "name": "2", "description": "Outline world" },
+        { "name": "3", "description": "Outline models and world" }
+      ]
     },
     "gl_outline_width": {
       "group-id": "35",

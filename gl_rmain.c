@@ -1007,7 +1007,6 @@ void R_DrawAliasModel(entity_t *ent)
 	//static sfx_t *step;//foosteps sounds, commented out
 	//static int setstep;
 
-	extern qbool RuleSets_DisallowModelOutline (model_t *mod);
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
 	VectorCopy (ent->origin, r_entorigin);
@@ -1156,7 +1155,7 @@ void R_DrawAliasModel(entity_t *ent)
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = (gl_outline.integer && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
+	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
 	if (color32bit) {
 		//

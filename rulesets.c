@@ -51,8 +51,13 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 	}
 }
 
-qbool RuleSets_DisallowModelOutline(model_t *mod)
+qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 {
+	if (mod == NULL) {
+		// World model - only allow in default ruleset, cheats enabled
+		return !(r_refdef2.allow_cheats && rulesetDef.ruleset == rs_default);
+	}
+
 	switch (mod->modhint) {
 		case MOD_EYES:
 			return true;
