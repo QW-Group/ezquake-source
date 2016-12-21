@@ -326,8 +326,8 @@ static int MVD_FindBestPlayerSimple(void) {
 	return b;
 }
 
-static qbool MVD_TrackedHasNoWeapon(void) {
-	int stat = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
+static qbool MVD_TrackedHasNoWeapon(int pov) {
+	int stat = cl.players[pov].stats[STAT_ITEMS];
 	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) return false;
 	else return true;
 }
@@ -341,8 +341,8 @@ static qbool MVD_SomeoneHasWeapon(void) {
 	return false;
 }
 
-static qbool MVD_TrackedHasNoPowerup(void) {
-	int stats = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
+static qbool MVD_TrackedHasNoPowerup(int pov) {
+	int stats = cl.players[pov].stats[STAT_ITEMS];
 	if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return false;
 	else return true;
 }
@@ -366,8 +366,9 @@ static qbool MVD_SomeoneHasPentWithRL(void) {
 }
 
 static qbool MVD_SwitchMoment(void) {
-	if (MVD_TrackedHasNoWeapon() && MVD_SomeoneHasWeapon()) return true;
-	else if (MVD_TrackedHasNoPowerup() && MVD_SomeoneHasPowerup()) return true;
+	int pov = CL_MultiviewAutotrackSlot ();
+	if (MVD_TrackedHasNoWeapon(pov) && MVD_SomeoneHasWeapon()) return true;
+	else if (MVD_TrackedHasNoPowerup(pov) && MVD_SomeoneHasPowerup()) return true;
 	else if (MVD_SomeoneHasPentWithRL()) return true;
 	else return false;
 }

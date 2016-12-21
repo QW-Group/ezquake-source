@@ -1549,8 +1549,13 @@ void CL_TrackTeam_f (void)
 
 void CL_MultiviewSetTrackSlot (int trackSlot, int player)
 {
-	if (trackSlot >= 0 && trackSlot < sizeof (mv_trackslots) / sizeof (mv_trackslots[0]))
+	if (trackSlot >= 0 && trackSlot < sizeof (mv_trackslots) / sizeof (mv_trackslots[0])) {
 		mv_trackslots[trackSlot] = player;
+	}
+	else if (CL_MultiviewInsetEnabled()) {
+		nTrack1duel = player;
+		nTrack2duel = CL_NextPlayer (player);
+	}
 }
 
 void CL_MultiviewPreUpdateScreen (void)
@@ -1570,3 +1575,12 @@ qbool CL_MultiviewAdvanceView (void)
 	return CURRVIEW > 1;
 }
 
+int CL_MultiviewMainView (void)
+{
+	return nTrack1duel;
+}
+
+int CL_MultiviewAutotrackSlot (void)
+{
+	return CL_MultiviewInsetEnabled () ? nTrack1duel : cl.viewplayernum;
+}

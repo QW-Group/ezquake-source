@@ -168,8 +168,10 @@ void Cam_Lock(int playernum)
 		Cbuf_AddTextEx (&cbuf_main, "f_trackspectate\n");
 	}
 
-	if (CL_MultiviewEnabled())
-		return; 
+	if (CL_MultiviewEnabled ()) {
+		CL_MultiviewSetTrackSlot (-1, playernum);
+		return;
+	}
 
 	snprintf(st, sizeof (st), "ptrack %i", playernum);
 
@@ -820,6 +822,16 @@ void CL_InitCam(void)
 	CL_MultiviewInitialise ();
 }
 
+int Cam_MainTrackNum (void)
+{
+	extern int CL_MultiviewMainView (void);
+
+	if (CL_MultiviewInsetEnabled ()) {
+		return CL_MultiviewMainView ();
+	}
+	return Cam_TrackNum ();
+}
+
 //
 // Change what player we are tracking.
 //
@@ -897,7 +909,7 @@ void CL_Track (int trackview)
 	{
 		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
 	} 
-	else if (Cam_TrackNum() != slot || trackview >= 0) 
+	else if (Cam_MainTrackNum() != slot || trackview >= 0)
 	{
 		// If we're not already tracking the found slot
 		// set the camera to track mode and lock it to the selected slot.
