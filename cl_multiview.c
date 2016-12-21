@@ -1401,7 +1401,7 @@ void CL_MultiviewResetCvars (void)
 
 qbool CL_MultiviewEnabled (void)
 {
-	return cl_multiview.value && cls.mvdplayback;
+	return cl_multiview.value && cls.mvdplayback && !cl.intermission;
 }
 
 qbool CL_MultiviewInsetEnabled (void)
