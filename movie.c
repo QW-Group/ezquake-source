@@ -447,7 +447,7 @@ static void WAVCaptureStop (void)
 
 void Movie_MixFrameSound (void (*mixFunction)(void))
 {
-	int samples_required = (int)(0.5 + Movie_FrameTime() * shw->khz) * shw->numchannels;
+	int samples_required = (int)(0.5 + Movie_FrameTime() * shw->khz) * shw->numchannels - (captured_audio_samples << 1);
 
 	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
 	shw->buffer = (unsigned char*)aviSoundBuffer;
