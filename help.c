@@ -643,12 +643,11 @@ void Help_Issues_Variables(void)
 }
 
 // Check all variable values against help files
-static void Help_VerifyConfig_f (void)
+static void Help_VerifyConfig_f(void)
 {
 	extern cvar_t *cvar_vars;
 
 	json_t* varsObj = NULL;
-	int i = 0;
 	int num_errors = 0;
 	const char* name = NULL;
 	json_t* variable = NULL;
@@ -657,46 +656,46 @@ static void Help_VerifyConfig_f (void)
 		return;
 	}
 
-	varsObj = json_object_get (variables_root, "vars");
+	varsObj = json_object_get(variables_root, "vars");
 	if (!varsObj) {
 		return;
 	}
 
-	json_object_foreach (varsObj, name, variable)
+	json_object_foreach(varsObj, name, variable)
 	{
 		cvar_t* cvar     = Cvar_Find(name);
-		const char* type = json_string_value (json_object_get (variable, "type"));
-		json_t* examples = json_object_get (variable, "values");
-		int num_examples = examples && json_is_array (examples) ? json_array_size (examples) : 0;
+		const char* type = json_string_value(json_object_get(variable, "type"));
+		json_t* examples = json_object_get(variable, "values");
+		int num_examples = examples && json_is_array(examples) ? json_array_size(examples) : 0;
 
 		// obsolete cvars might be in documentation so people can see notes using /describe
 		if (cvar == NULL) {
 			continue;
 		}
 
-		if (!strcmp ("boolean", type) && cvar->value != 0 && cvar->value != 1) {
+		if (!strcmp("boolean", type) && cvar->value != 0 && cvar->value != 1) {
 			con_ormask = 128;
-			Con_Printf ("%s", name);
+			Com_Printf ("%s", name);
 			con_ormask = 0;
-			Con_Printf (": boolean, value %f\n", cvar->value);
+			Com_Printf(": boolean, value %f\n", cvar->value);
 			++num_errors;
 		}
-		else if (!strcmp ("enum", type) && num_examples > 0) {
+		else if (!strcmp("enum", type) && num_examples > 0) {
 			qbool found = false;
-			int i = 0;
+			int i;
 
 			for (i = 0; i < num_examples; ++i) {
-				const json_t* value = json_array_get (examples, i);
-				const char*   name = json_string_value (json_object_get (value, "name"));
+				const json_t* value = json_array_get(examples, i);
+				const char*   name = json_string_value(json_object_get(value, "name"));
 
-				found |= !strcmp (name, cvar->string);
+				found |= !strcmp(name, cvar->string);
 			}
 
 			if (!found) {
 				con_ormask = 128;
-				Con_Printf ("%s", name);
+				Con_Printf("%s", name);
 				con_ormask = 0;
-				Con_Printf (": enum, value %s\n", cvar->string);
+				Con_Printf(": enum, value %s\n", cvar->string);
 			}
 		}
 	}

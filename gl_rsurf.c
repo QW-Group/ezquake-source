@@ -1095,7 +1095,6 @@ void DrawTextureChains (model_t *model, int contents)
 }
 
 void R_DrawFlat (model_t *model) {
-	extern cvar_t gl_outline;
 	msurface_t *s;
 	int waterline, i, k;
 	float *v;
@@ -1186,12 +1185,11 @@ void R_DrawFlat (model_t *model) {
 }
 
 static void R_DrawMapOutline (model_t *model) {
-	extern cvar_t gl_outline, gl_outline_width;
+	extern cvar_t gl_outline_width;
 	msurface_t *s;
 	int waterline, i, k;
 	float *v;
 	vec3_t n;
-	qbool draw_caustics = underwatertexture && gl_caustics.value;
 
 	GL_PolygonOffset(1, 1);
 	glColor3f (1.0f, 1.0f, 1.0f);

@@ -1060,8 +1060,6 @@ usermainbuttons_t CL_GetLastCmd (void) {
 	extern void MVD_FlushUserCommands (void);
 
 	if (cls.mvdplayback && cl.mvd_time_offset) {
-		int i = 0;
-
 		memset (&ret, 0, sizeof (ret));
 
 		// Check for latest

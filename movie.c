@@ -42,42 +42,44 @@ static short capture_audio_samples[44100];	// big enough buffer for 1fps at 4410
 static int captured_audio_samples;
 static qbool frame_has_sound = false;
 
-extern cvar_t scr_sshot_type;
-
-cvar_t   movie_fps			=  {"demo_capture_fps", "30.0"};
-cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
-cvar_t   movie_steadycam	=  {"demo_capture_steadycam", "0"};
-
 #ifdef _WIN32
-void OnChange_movie_codec (cvar_t *var, char *string, qbool *cancel);
-LONG Movie_CurrentLength (void);
-cvar_t   movie_codec		= {"demo_capture_codec", "0", 0, OnChange_movie_codec };	// Capturing to avi
-cvar_t   movie_mp3			= {"demo_capture_mp3", "0"};
-cvar_t   movie_mp3_kbps		= {"demo_capture_mp3_kbps", "128"};
-cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
-static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
+void OnChange_movie_codec(cvar_t *var, char *string, qbool *cancel);
+LONG Movie_CurrentLength(void);
+
+static char movie_avi_filename[MAX_OSPATH]; // Stores the user's requested filename
 static void Movie_Start_AVI_Capture(void);
 static int avi_number = 0;
-#endif
-static unsigned char aviSoundBuffer[4096] = { 0 }; // Static buffer for mixing
-
-static volatile qbool movie_is_capturing = false;
-static double movie_start_time, movie_len, movie_real_start_time;
-static int movie_frame_count;
-static char	image_ext[4];
+static double movie_real_start_time;
 
 //joe: capturing to avi
-#ifdef _WIN32
 static qbool movie_is_avi = false;
 qbool movie_avi_loaded = false, movie_acm_loaded = false;
 static char avipath[256];
 static FILE *avifile = NULL;
+cvar_t   movie_codec      = {"demo_capture_codec", "0", 0, OnChange_movie_codec };	// Capturing to avi
+cvar_t   movie_mp3        = {"demo_capture_mp3", "0"};
+cvar_t   movie_mp3_kbps   = {"demo_capture_mp3_kbps", "128"};
+cvar_t   movie_vid_maxlen = {"demo_capture_vid_maxlen", "0"};
 #endif
 
+cvar_t   movie_fps        =  {"demo_capture_fps", "30.0"};
+cvar_t   movie_dir        =  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
+cvar_t   movie_steadycam  =  {"demo_capture_steadycam", "0"};
+
+extern cvar_t scr_sshot_type;
+
+static unsigned char aviSoundBuffer[4096]; // Static buffer for mixing
+
+static volatile qbool movie_is_capturing = false;
+static double movie_start_time, movie_len;
+static int movie_frame_count;
+static char image_ext[4];
+
+
 #ifdef _WIN32
-	static SYSTEMTIME	movie_start_date;
+	static SYSTEMTIME movie_start_date;
 #else
-	struct tm			movie_start_date;
+	struct tm movie_start_date;
 #endif
 
 qbool Movie_IsCapturing(void) {
