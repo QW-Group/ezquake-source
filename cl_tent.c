@@ -855,9 +855,10 @@ void CL_UpdateBeams(void)
 				ent.model = b->model;
 				ent.angles[0] = pitch;
 				ent.angles[1] = yaw;
-				ent.angles[2] = rand() % 360;
-				if (!Rulesets_RestrictParticles())
+				ent.angles[2] = (cl.racing ? 0 : rand() % 360);
+				if ((cl.racing && b->entity >= MAX_CLIENTS) || !Rulesets_RestrictParticles()) {
 					ent.alpha = r_shaftalpha.value;
+				}
 
 				CL_AddEntity (&ent);
 			}
@@ -868,10 +869,11 @@ void CL_UpdateBeams(void)
 					//VULT - Some people might like their lightning beams thicker
 					for (k=0;k<beamstodraw;k++)
 					{
-
 						VectorAdd (org, dist, beamend[k]);
-						for (j = 0; j < 3; j++)
-							beamend[k][j] += f_rnd(-lg_size, lg_size);
+						if (!cl.racing) {
+							for (j = 0; j < 3; j++)
+								beamend[k][j] += f_rnd(-lg_size, lg_size);
+						}
 						VX_LightningBeam (beamstart[k], beamend[k]);
 						VectorCopy (beamend[k], beamstart[k]);
 					}

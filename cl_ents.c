@@ -178,26 +178,26 @@ void CL_ClearScene (void) {
 void CL_AddEntity (entity_t *ent) {
 	visentlist_t *vislist;
 
-	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1))
-	{
+	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		vislist = &cl_visents;
 	}
-	else if (ent->model->type == mod_sprite)
-	{
+	else if (ent->renderfx & RF_NORMALENT) {
+		vislist = &cl_visents;
+	}
+	else if (ent->model->type == mod_sprite) {
 		vislist = &cl_alphaents;
 	}
-	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL)
-	{
+	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
 		vislist = &cl_firstpassents;
 		ent->renderfx |= RF_NOSHADOW;
 	}
-	else
-	{
+	else {
 		vislist = &cl_visents;
 	}
 
-	if (vislist->count < vislist->max)
+	if (vislist->count < vislist->max) {
 		vislist->list[vislist->count++] = *ent;
+	}
 }
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
@@ -1066,6 +1066,21 @@ void CL_LinkPacketEntities(void)
 			CL_AddParticleTrail(&ent, cent, old_origin, &cst_lt, state);
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
+
+		if (cl.racing && cl.race_pacemaker_ent == state->number) {
+			vec3_t diff;
+			float distance;
+
+			VectorSubtract(ent.origin, cl.simorg, diff);
+			distance = VectorLength(diff);
+
+			// If too close to player, just hide entirely
+			if (distance < 24.0f)
+				continue;
+
+			ent.alpha = min(distance, 256.0f) / 512.0f;
+			ent.renderfx |= RF_NORMALENT;
+		}
 
 		CL_AddEntity (&ent);
 	}

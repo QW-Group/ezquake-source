@@ -2288,6 +2288,8 @@ void CL_ProcessServerInfo (void)
 	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
+	cl.racing = !strcmp(Info_ValueForKey(cl.serverinfo, "ktxmode"), "race");
+
 	// Update skins if needed.
 	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
 	cl.teamplay = new_teamplay;
@@ -2943,6 +2945,11 @@ void CL_ParseStufftext (void)
 			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
 
 			return;
+		}
+	}
+	else if (!strncmp(s, "//ktx race ", sizeof("//ktx race ") - 1)) {
+		if (!strncmp(s, "//ktx race pm ", sizeof("//ktx race pm ") - 1)) {
+			cl.race_pacemaker_ent = atoi(s + sizeof("//ktx race pm ") - 1);
 		}
 	}
 

@@ -32,10 +32,11 @@ typedef struct efrag_s {
 	struct efrag_s		*entnext;
 } efrag_t;
 
-#define	RF_WEAPONMODEL	1
-#define	RF_NOSHADOW		2
-#define	RF_LIMITLERP	4
-#define	RF_PLAYERMODEL	8
+#define RF_WEAPONMODEL  1
+#define RF_NOSHADOW     2
+#define RF_LIMITLERP    4
+#define RF_PLAYERMODEL  8
+#define RF_NORMALENT    16
 
 typedef struct entity_s {
 	vec3_t					origin;

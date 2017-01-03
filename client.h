@@ -598,6 +598,9 @@ typedef struct {
 	float       mvd_time_offset;
 	int         mvd_user_cmd[8];
 	float       mvd_user_cmd_time[8];
+
+	qbool       racing;
+	int         race_pacemaker_ent;
 } clientState_t;
 
 extern	clientState_t	cl;
