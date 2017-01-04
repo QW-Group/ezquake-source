@@ -603,7 +603,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Off." },
-        { "name": "1", "description": "Shows the time you spent on server (you'll also see it in the status bar when you press TAB)." },
+        { "name": "1", "description": "Shows the time you spent on server." },
         { "name": "2", "description": "Shows the time of day." }
       ]
     },
@@ -4696,7 +4696,7 @@
         { "name": "0", "description": "Golden brackets around your own frags field." },
         { "name": "1", "description": "Arrow pointing to your own frags field." },
         { "name": "2", "description": "Red rectangle around your own frags fiels." },
-        { "name": "3", "description": "Similar to 1." },
+        { "name": "3", "description": "Similar to 0." },
         { "name": "4", "description": "Sets background color for your own field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for all field to teamcolors enemycolors, all fields 50% transparent, your own field not transparent. Red rectangle around your own field including name and team tag." },
         { "name": "6", "description": "Red rectangle around your own field including name and team tag. Background color only for your own field and set to 'teamcolor'." },
@@ -7899,7 +7899,7 @@
       "desc": "If set, order of player names is fixed, irrespective of who is currently being tracked.",
       "values": [
         { "name": "0", "description": "Current player is always %t" },
-        { "name": "1", "description": "When spectating, leading player is always %t" }
+        { "name": "1", "description": "Fixed order of player names" }
       ]
     },
     "hud_score_bar_frag_length": {
@@ -8988,7 +8988,7 @@
         { "name": "0", "description": "Golden brackets around field with your team frags." },
         { "name": "1", "description": "Arrow pointing to your own team frags field." },
         { "name": "2", "description": "Red rectangle around your own team frags field." },
-        { "name": "3", "description": "Similar to 1." },
+        { "name": "3", "description": "Similar to 0." },
         { "name": "4", "description": "Sets background color for your own team field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for fields to teamcolors and enemycolors. Red rectangle around your own field including name and team tag." },
         { "name": "6", "description": "Red rectangle around your own team field including team tag. Background color only for your own team field and set to 'teamcolor'." },
@@ -12217,8 +12217,7 @@
         { "name": "0", "description": "Compact huds off." },
         { "name": "1", "description": "Will display armour/health/ammo/weapons *very* compactly." },
         { "name": "2", "description": "Will display armour/health/ammo *very* compactly." },
-        { "name": "3", "description": "Displays only health/armour." },
-        { "name": "4", "description": "Is just like \"2\" except it also displays your current weapon's ammo in big numbers." }
+        { "name": "3", "description": "Displays only health/armour." }
       ]
     },
     "scr_compactHudAlign": {
