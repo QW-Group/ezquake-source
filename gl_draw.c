@@ -1917,6 +1917,11 @@ void Draw_InitConback (void)
 	int start;
 	mpic_t *pic_24bit;
 
+	// Level shots init. It's cache based so don't free!
+	// Expect the cache to be wiped thus render the old data invalid
+	last_lvlshot = NULL;
+	last_mapname[0] = 0;
+
 	start = Hunk_LowMark ();
 
 	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp", NULL)))
@@ -1941,10 +1946,6 @@ void Draw_InitConback (void)
 
 	// Free loaded console.
 	Hunk_FreeToLowMark (start);
-
-	// Level shots init
-	last_lvlshot = NULL;
-	last_mapname[0] = 0;
 }
 
 void Draw_ConsoleBackground (int lines)
