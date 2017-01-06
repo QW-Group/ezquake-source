@@ -316,7 +316,7 @@ static qbool FChecks_CmdlineRequest (const char *s)
 			Cbuf_AddText("say disabled\n");
 		} else {
 			Cbuf_AddText("say ");
-			Cbuf_AddText(com_args_original);
+			Cbuf_AddText(COM_GetCmdline());
 			Cbuf_AddText("\n");
 		}
 

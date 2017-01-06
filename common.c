@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-    $Id: common.c,v 1.108 2007-10-13 15:36:55 cokeman1982 Exp $
-
 */
 
 #include "common.h"
@@ -55,6 +52,12 @@ cvar_t	developer = {"developer", "0"};
 cvar_t	host_mapname = {"mapname", "", CVAR_ROM};
 
 qbool com_serveractive = false;
+char com_token[MAX_COM_TOKEN];
+static int com_argc;
+static char **com_argv;
+static char *com_args_original;
+
+com_tokentype_t com_tokentype;
 
 
 /*
@@ -68,18 +71,37 @@ The "game directory" is the first tree on the search path and directory that all
 
 //============================================================================
 
-void COM_StoreOriginalCmdline (int argc, char **argv)
+const char *COM_GetCmdline(void)
 {
-	char buf[4096]; // enough?
-	int i;
+	return (const char *) com_args_original;
+}
 
-	buf[0] = 0;
-	strlcat (buf, " ", sizeof (buf));
+void COM_StoreOriginalCmdline(int argc, char **argv)
+{
+	int i = 0;
+	size_t len = 0;
 
-	for (i=0; i < argc; i++)
-		strlcat (buf, argv[i], sizeof (buf));
+	if (com_args_original) {
+		return;
+	}
 
-	com_args_original = Q_strdup (buf);
+	/* Calculate len to only allocate the memory we need */
+	for (; i < argc; i++) {
+		len += strlen(argv[i]);
+		len += 1; /* Add space between args, last one is for NUL */
+	}
+
+	com_args_original = malloc(len);
+	if (!com_args_original) {
+		Sys_Error("Out of memory");
+	}
+
+	for (i = 0; i < argc; i++) {
+		if (i != 0) {
+			strlcat(com_args_original, " ", len);
+		}
+		strlcat(com_args_original, argv[i], len);
+	}
 }
 
 //============================================================================
@@ -398,14 +420,6 @@ qbool COM_FileExists (char *path)
 
 	return false;
 }
-
-
-char		com_token[MAX_COM_TOKEN];
-static int	com_argc;
-static char	**com_argv;
-char 		*com_args_original;
-
-com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
 extern cvar_t cl_curlybraces;

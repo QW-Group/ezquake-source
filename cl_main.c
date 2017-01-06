@@ -1919,7 +1919,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
-	Cvar_ForceSet (&cl_cmdline, com_args_original);
+	Cvar_ForceSet (&cl_cmdline, (char *) COM_GetCmdline());
 	Cvar_ResetCurrentGroup();
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);

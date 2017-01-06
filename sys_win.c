@@ -646,9 +646,9 @@ void Sys_Init_ (void)
 
 int		argc;
 char	*argv[MAX_NUM_ARGVS];
-static char exename[1024] = {0};
+static char exename[1024];
 
-void ParseCommandLine (char *lpCmdLine) 
+static void ParseCommandLine(char *lpCmdLine) 
 {
     int i;
 	argc = 1;

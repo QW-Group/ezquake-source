@@ -99,8 +99,6 @@ typedef struct sizebuf_s {
 	int		cursize;
 } sizebuf_t;
 
-extern char *com_args_original;
-
 void SZ_Init (sizebuf_t *buf, byte *data, int length);
 void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow);
 void SZ_Clear (sizebuf_t *buf);

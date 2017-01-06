@@ -167,6 +167,7 @@ void COM_InitArgv (int argc, char **argv);
 int COM_Argc (void);
 int COM_CheckParm (char *parm);
 int COM_CheckParmOffset (char *parm, int offset);
+const char *COM_GetCmdline(void);
 
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
