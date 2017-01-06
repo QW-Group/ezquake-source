@@ -1,5 +1,8 @@
 language: c
 
+git:
+  depth: 5
+
 matrix:
   include:
     - os: linux
@@ -12,7 +15,7 @@ matrix:
       compiler: gcc
       env: EZ_CONFIG_FILE=.config_windows
     - os: osx
-      osx_image: beta-xcode6.2
+      osx_image: xcode7.3
       compiler: gcc
     - os: osx
       osx_image: xcode8.2
