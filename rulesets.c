@@ -432,7 +432,7 @@ void Rulesets_OnChange_r_fullbrightSkins(cvar_t *var, char *value, qbool *cancel
 		if (fbskins > 0.0) {
 			Cbuf_AddText(va("say all skins %d%% fullbright\n", (int) (fbskins * 100.0)));
 		} else {
-			Cbuf_AddText(va("say not using fullbright skins\n"));
+			Cbuf_AddText("say not using fullbright skins\n");
 		}
 	}
 }
@@ -516,7 +516,8 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 	if (cls.state == ca_active) {
 		if (cl.standby) {
 			// allow in standby
-			Cbuf_AddText(va("say side step aid (strafescript): %s\n", ival ? "on" : "off"));
+			Cbuf_AddText("say side step aid (strafescript): ");
+			Cbuf_AddText(ival ? "on\n" : "off\n");
 		}
 		else {
 			// disallow during the match

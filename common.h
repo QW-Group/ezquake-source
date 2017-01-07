@@ -419,7 +419,7 @@ void CL_UpdateCaption(qbool force);
 void Con_Init (void);
 
 void SV_Init (void);
-void SV_Shutdown (char *finalmsg);
+void SV_Shutdown (char *err_fmt, ...);
 void SV_Frame (double time);
 
 void SV_Error (char *error, ...);

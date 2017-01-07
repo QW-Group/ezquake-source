@@ -15,8 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- 
-	$Id: sv_ccmds.c 761 2008-02-25 20:39:51Z qqshka $
 */
 
 #include "qwsvdef.h"
@@ -25,7 +23,7 @@ cvar_t	sv_cheats = {"sv_cheats", "0"};
 qbool	sv_allow_cheats = false;
 
 int fp_messages=4, fp_persecond=4, fp_secondsdead=10;
-char fp_msg[255] = { 0 };
+char fp_msg[255];
 extern	cvar_t		sv_logdir; //bliP: 24/7 logdir
 extern	redirect_t	sv_redirected;
 
@@ -401,50 +399,43 @@ map <mapname>
 command from the console or progs.
 ======================
 */
-void SV_Map (qbool now)
+void SV_Map(qbool now)
 {
 	static char	level[MAX_QPATH];
 	static char	expanded[MAX_QPATH];
 	static qbool changed = false;
-	// -> scream
 	vfsfile_t *f;
-	char	*s;
-	//bliP: date check
-	/*time_t	t;
-	struct tm	*tblock;*/
 	date_t date;
-	// <-
 
 	// if now, change it
-	if (now)
-	{
-		if (!changed)
+	if (now) {
+		if (!changed) {
 			return;
+		}
 
 		changed = false;
 
 		// uh, is it possible ?
 
-		if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
-		{
-			Con_Printf ("Can't find %s\n", expanded);
+		if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY))) {
+			Con_Printf("Can't find %s\n", expanded);
 			return;
 		}
 		VFS_CLOSE(f);
 
-		if (sv.mvdrecording)
+		if (sv.mvdrecording) {
 			SV_MVDStop_f();
+		}
 
 		CL_BeginLocalConnection ();
 		SV_BroadcastCommand ("changing\n");
 		SV_SendMessagesToAll ();
 
-		// -> scream
-		if ((int)frag_log_type.value)
-		{
+		if ((int)frag_log_type.value) {
+			char s[1024];
 			//bliP: date check ->
 			SV_TimeOfDay(&date);
-			s = va("\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
+			snprintf(s, sizeof(s), "\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
 			       level,
 			       date.year,
 			       date.mon+1,
@@ -453,38 +444,38 @@ void SV_Map (qbool now)
 			       date.hour,
 			       date.min,
 			       date.sec);
-			//<-
-			if (logs[FRAG_LOG].sv_logfile)
-				SZ_Print (&svs.log[svs.logsequence&1], s);
+
+			if (logs[FRAG_LOG].sv_logfile) {
+				SZ_Print(&svs.log[svs.logsequence&1], s);
+			}
+
 			SV_Write_Log(FRAG_LOG, 0, s);
 		}
-		// <-
 
-		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"));
+		SV_SpawnServer(level, !strcasecmp(Cmd_Argv(0), "devmap"));
 
-		SV_BroadcastCommand ("reconnect\n");
+		SV_BroadcastCommand("reconnect\n");
 
 		return;
 	}
 
 	// get the map name, but don't change now, could be executed from progs.dat
 
-	if (Cmd_Argc() != 2)
-	{
-		Con_Printf ("map <levelname> : continue game on a new level\n");
+	if (Cmd_Argc() != 2) {
+		Con_Printf("map <levelname> : continue game on a new level\n");
 		return;
 	}
 
-	strlcpy (level, Cmd_Argv(1), MAX_QPATH);
+	strlcpy(level, Cmd_Argv(1), MAX_QPATH);
 
 	// check to make sure the level exists
-	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
+	snprintf(expanded, MAX_QPATH, "maps/%s.bsp", level);
 
-	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
-	{
-		Con_Printf ("Can't find %s\n", expanded);
+	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY))) {
+		Con_Printf("Can't find %s\n", expanded);
 		return;
 	}
+
 	VFS_CLOSE(f);
 	changed = true;
 }
@@ -511,7 +502,7 @@ void SV_ReplaceChar(char *s, char from, char to)
 SV_ListFiles_f
 Lists files
 ==================*/
-void SV_ListFiles_f (void)
+void SV_ListFiles_f(void)
 {
 	dir_t	dir;
 	file_t	*list;
@@ -521,7 +512,7 @@ void SV_ListFiles_f (void)
 
 	if (Cmd_Argc() < 2)
 	{
-		Con_Printf ("ls <directory> <match>\n");
+		Con_Printf("ls <directory> <match>\n");
 		return;
 	}
 
@@ -543,10 +534,11 @@ void SV_ListFiles_f (void)
 	}
 
 	Con_Printf("Content of %s/*.*\n", dirname);
-	dir = Sys_listdir(va("%s", dirname), ".*", SORT_BY_NAME);
+	dir = Sys_listdir(dirname, ".*", SORT_BY_NAME);
+	
 	list = dir.files;
-	if (!list->name[0])
-	{
+
+	if (!list->name[0]) {
 		Con_Printf("No files\n");
 		return;
 	}
@@ -554,28 +546,28 @@ void SV_ListFiles_f (void)
 	key = (Cmd_Argc() == 3) ? Cmd_Argv(2) : (char *) "";
 
 	//directories...
-	for (; list->name[0]; list++)
-	{
-		if (!strstr(list->name, key) || !list->isdir)
+	for (; list->name[0]; list++) {
+		if (!strstr(list->name, key) || !list->isdir) {
 			continue;
+		}
 		Con_Printf("- %s\n", list->name);
 	}
 
 	list = dir.files;
 
 	//files...
-	for (; list->name[0]; list++)
-	{
-		if (!strstr(list->name, key) || list->isdir)
+	for (; list->name[0]; list++) {
+		if (!strstr(list->name, key) || list->isdir) {
 			continue;
-		if ((int)list->size / 1024 > 0)
-			Con_Printf("%s %.0fKB (%.2fMB)\n", list->name,
-			           (float)list->size / 1024, (float)list->size / 1024 / 1024);
-		else
+		}
+		if ((int)list->size / 1024 > 0) {
+			Con_Printf("%s %.0fKB (%.2fMB)\n", list->name, (float)list->size / 1024, (float)list->size / 1024 / 1024);
+		} else {
 			Con_Printf("%s %dB\n", list->name, list->size);
+		}
 	}
-	Con_Printf("Total: %d files, %.0fKB (%.2fMB)\n", dir.numfiles,
-	           (float)dir.size / 1024, (float)dir.size / 1024 / 1024);
+
+	Con_Printf("Total: %d files, %.0fKB (%.2fMB)\n", dir.numfiles, (float)dir.size / 1024, (float)dir.size / 1024 / 1024);
 }
 
 /*==================
@@ -617,14 +609,13 @@ void SV_RemoveDirectory_f (void)
 SV_RemoveFile_f
 Remove a file
 ==================*/
-void SV_RemoveFile_f (void)
+void SV_RemoveFile_f(void)
 {
 	char *dirname;
 	char *filename;
 	int i;
 
-	if (Cmd_Argc() < 3)
-	{
+	if (Cmd_Argc() < 3) {
 		Con_Printf("rm <directory> {<filename> | *<token> | *} - removes a file | with token | all\n");
 		return;
 	}
@@ -648,38 +639,53 @@ void SV_RemoveFile_f (void)
 		return;
 	}
 
-	if (*filename == '*') //token, many files
-	{
+	if (*filename == '*') { //token, many files
 		dir_t dir;
 		file_t *list;
 
 		// remove all files with specified token
 		filename++;
 
-		dir = Sys_listdir(va("%s", dirname), ".*", SORT_BY_NAME);
+		dir = Sys_listdir(dirname, ".*", SORT_BY_NAME);
 		list = dir.files;
-		for (i = 0; list->name[0]; list++)
-		{
-			if (!list->isdir && strstr(list->name, filename))
-			{
-				if (!Sys_remove(va("%s/%s", dirname, list->name)))
-				{
+
+		for (i = 0; list->name[0]; list++) {
+			if (!list->isdir && strstr(list->name, filename)) {
+				char *tmp;
+				size_t tmpsize;
+
+				tmpsize = strlen(dirname) + 1 + strlen(list->name) + 1;
+				tmp = malloc(tmpsize);
+				snprintf(tmp, tmpsize, "%s/%s", dirname, list->name);
+				
+				if (!Sys_remove(tmp)) {
 					Con_Printf("Removing %s...\n", list->name);
 					i++;
 				}
+				Q_free(tmp);
 			}
 		}
-		if (i)
+
+		if (i) {
 			Con_Printf("%d files removed\n", i);
-		else
+		} else {
 			Con_Printf("No matching found\n");
+		}
 	}
-	else // 1 file
-	{
-		if (!Sys_remove(va("%s/%s", dirname, filename)))
+	else { // 1 file
+		char *tmp;
+		size_t tmpsize;
+
+		tmpsize = strlen(dirname) + 1 + strlen(filename) + 1;
+		tmp = malloc(tmpsize);
+		snprintf(tmp, tmpsize, "%s/%s", dirname, filename);
+
+		if (!Sys_remove(tmp)) {
 			Con_Printf("File %s succesfully removed\n", filename);
-		else
+		} else {
 			Con_Printf("Unable to remove file %s\n", filename);
+		}
+		Q_free(tmp);
 	}
 }
 
@@ -727,54 +733,6 @@ void SV_ChmodFile_f (void)
 }
 #endif //_WIN32
 
-/*==================
-SV_LocalCommand_f
-Execute system command
-==================*/
-//bliP: REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME ->
-void SV_LocalCommand_f (void)
-{
-	int i, c;
-	char str[1024], *temp_file = "__output_temp_file__";
-
-	if ((c = Cmd_Argc()) < 2)
-	{
-		Con_Printf("localcommand [command]\n");
-		return;
-	}
-
-	str[0] = 0;
-	for (i = 1; i < c; i++)
-	{
-		strlcat (str, Cmd_Argv(i), sizeof(str));
-		strlcat (str, " ", sizeof(str));
-	}
-	strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
-
-	if (system(str) == -1)
-		Con_Printf("command failed\n");
-	else
-	{
-		char	buf[512];
-		FILE	*f;
-		if ((f = fopen(temp_file, "rt")) == NULL)
-			Con_Printf("(empty)\n");
-		else
-		{
-			while (!feof(f))
-			{
-				buf[fread (buf, 1, sizeof(buf) - 1, f)] = 0;
-				Con_Printf("%s", buf);
-			}
-			fclose(f);
-			if (Sys_remove(temp_file))
-				Con_Printf("Unable to remove file %s\n", temp_file);
-		}
-	}
-
-}
-//REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME
-
 /*
 ==================
 SV_Kick_f
@@ -811,6 +769,9 @@ void SV_Kick_f (void)
 			continue;
 		if (cl->userid == uid)
 		{
+			char *logmsg;
+			size_t logmsg_size;
+
 			if (c > 2)
 			{
 				strlcpy (reason, " (", sizeof(reason));
@@ -826,12 +787,17 @@ void SV_Kick_f (void)
 					strlcat (reason, ")", sizeof(reason));
 			}
 
+			logmsg_size = strlen(reason) + strlen("kick\n") + 1;
+			logmsg = malloc(logmsg_size);
+			snprintf(logmsg, logmsg_size, "kick%s\n", reason);
+
 			saved_state = cl->state;
 			cl->state = cs_free; // HACK: don't broadcast to this client
 			SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked%s\n", cl->name, reason);
 			cl->state = (sv_client_state_t) saved_state;
 			SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game%s\n", reason);
-			SV_LogPlayer(cl, va("kick%s\n", reason), 1); //bliP: logging
+			SV_LogPlayer(cl, logmsg, 1); //bliP: logging
+			Q_free(logmsg);
 			SV_DropClient (cl);
 			return;
 		}
@@ -1252,12 +1218,15 @@ void SV_Status_f (void)
 			Con_Printf ("------------------ ---- ----- ------\n");
 			for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
 			{
+				char uid[8] = {0};
+
 				if (!cl->state)
 					continue;
 
+				snprintf(uid, sizeof(uid), "%d", cl->userid);
 				s = NET_BaseAdrToString(cl->netchan.remote_address);
 				Con_Printf ("%-18s %4i %5i %6s %s\n%-36s\n", cl->name, (int)SV_CalcPing(cl),
-							(int)cl->edict->v.frags, Q_yelltext((unsigned char*)va("%d", cl->userid)),
+							(int)cl->edict->v.frags, Q_yelltext((unsigned char *)uid),
 							cl->spectator ? " (s)" : "", (int)sv_use_dns.value ? SV_Resolve(s) : s);
 
 				if (cl->realip.ip[0])
@@ -1319,7 +1288,9 @@ void SV_Check_maps_f(void)
 	dir_t d;
 	file_t *list;
 	int i, j, maps_id1;
-	char *s=NULL, *key;
+	char *s = NULL;
+	char key[8] = {0};
+	char jkey[8] = {0};
 
 	SV_Check_localinfo_maps_support();
 
@@ -1330,7 +1301,7 @@ void SV_Check_maps_f(void)
 		list->name[strlen(list->name) - 4] = 0;
 		if (!list->name[0]) continue;
 
-		key = va("%d", i);
+		snprintf(key, sizeof(key), "%d", i);
 		s = Info_Get(&_localinfo_, key);
 		Info_Set (&_localinfo_, key, list->name);
 
@@ -1349,22 +1320,29 @@ void SV_Check_maps_f(void)
 
 	d = Sys_listdir("qw/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;
-	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++)
-	{
+	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++) {
 		list->name[strlen(list->name) - 4] = 0;
-		if (!list->name[0]) continue;
 
-		for (j = LOCALINFO_MAPS_LIST_START; j <= maps_id1; j++)
-			if (!strncmp(Info_Get(&_localinfo_, va("%d", j)), list->name, MAX_KEY_STRING))
+		if (!list->name[0]) {
+			continue;
+		}
+
+		for (j = LOCALINFO_MAPS_LIST_START; j <= maps_id1; j++) {
+			snprintf(jkey, sizeof(jkey), "%d", j);
+			if (!strncmp(Info_Get(&_localinfo_, jkey), list->name, MAX_KEY_STRING)) {
 				break;
-		if (j <= maps_id1) continue;
+			}
+		}
 
-		key = va("%d", i);
+		if (j <= maps_id1) {
+			continue;
+		}
+
+		snprintf(key, sizeof(key), "%d", i);
 		s = Info_Get(&_localinfo_, key);
 		Info_Set (&_localinfo_, key, list->name);
 
-		if (localinfoChanged)
-		{
+		if (localinfoChanged) {
 			pr_global_struct->time = sv.time;
 			pr_global_struct->self = 0;
 			G_INT(OFS_PARM0) = PR_SetTmpString(key);
@@ -1375,14 +1353,12 @@ void SV_Check_maps_f(void)
 		i++;
 	}
 
-	for (; i <= LOCALINFO_MAPS_LIST_END; i++)
-	{
-		key = va("%d", i);
+	for (; i <= LOCALINFO_MAPS_LIST_END; i++) {
+		snprintf(key, sizeof(key), "%d", i);
 		s = Info_Get(&_localinfo_, key);
 		Info_Set(&_localinfo_, key, "");
 
-		if (localinfoChanged)
-		{
+		if (localinfoChanged) {
 			pr_global_struct->time = sv.time;
 			pr_global_struct->self = 0;
 			G_INT(OFS_PARM0) = PR_SetTmpString(key);
@@ -1766,56 +1742,64 @@ void SV_Gamedir_f (void)
 SV_Snap
 ================
 */
-void SV_Snap (int uid)
+void SV_Snap(int uid)
 {
-	client_t *cl;
-	char pcxname[80];
 	char checkname[MAX_OSPATH];
+	char snapdir[MAX_OSPATH];
+	char pcxname[80];
+	client_t *cl;
 	int i;
 	FILE *f;
 
-	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
-	{
-		if (cl->state < cs_preconnected)
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++) {
+		if (cl->state < cs_preconnected) {
 			continue;
-		if (cl->userid == uid)
+		}
+
+		if (cl->userid == uid) {
 			break;
+		}
 	}
-	if (i >= MAX_CLIENTS)
-	{
-		Con_Printf ("userid not found\n");
+
+	if (i >= MAX_CLIENTS) {
+		Con_Printf("userid not found\n");
 		return;
 	}
 
-	FS_CreatePath (va ("%s/snap/", fs_gamedir));
-	snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
+	snprintf(snapdir, sizeof(snapdir), "%s/snap/", fs_gamedir);
+	FS_CreatePath(snapdir);
 
-	for (i=0 ; i<=99 ; i++)
-	{
+	snprintf(pcxname, sizeof(pcxname), "%d-00.pcx", uid);
+
+	for (i=0 ; i<=99 ; i++) {
 		pcxname[strlen(pcxname) - 6] = i/10 + '0';
 		pcxname[strlen(pcxname) - 5] = i%10 + '0';
-		snprintf (checkname, MAX_OSPATH, "%s/snap/%s", fs_gamedir, pcxname);
-		f = fopen (checkname, "rb");
-		if (!f)
+		snprintf(checkname, sizeof(checkname), "%s%s", snapdir, pcxname);
+		
+		f = fopen(checkname, "rb");
+		if (!f) {
 			break; // file doesn't exist
+		}
 		fclose (f);
 	}
-	if (i==100)
-	{
-		Con_Printf ("Snap: Couldn't create a file, clean some out.\n");
+	if (i==100) {
+		Con_Printf("Snap: Couldn't create a file, clean some out.\n");
 		return;
 	}
 	strlcpy(cl->uploadfn, checkname, MAX_QPATH);
 
 	memcpy(&cl->snap_from, &net_from, sizeof(net_from));
-	if (sv_redirected != RD_NONE)
-		cl->remote_snap = true;
-	else
-		cl->remote_snap = false;
 
-	ClientReliableWrite_Begin (cl, svc_stufftext, 24);
-	ClientReliableWrite_String (cl, "cmd snap\n");
-	Con_Printf ("Requesting snap from user %d...\n", uid);
+	if (sv_redirected != RD_NONE) {
+		cl->remote_snap = true;
+	} else {
+		cl->remote_snap = false;
+	}
+
+	ClientReliableWrite_Begin(cl, svc_stufftext, 24);
+	ClientReliableWrite_String(cl, "cmd snap\n");
+
+	Con_Printf("Requesting snap from user %d...\n", uid);
 }
 
 /*
@@ -1927,8 +1911,6 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("chmod", SV_ChmodFile_f);
 #endif //_WIN32
 	//<-
-	if (COM_CheckParm ("-enablelocalcommand"))
-		Cmd_AddCommand ("localcommand", SV_LocalCommand_f);
 
 	Cmd_AddCommand ("map", SV_Map_f);
 	Cmd_AddCommand ("devmap", SV_Map_f);

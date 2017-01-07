@@ -1445,7 +1445,6 @@ void Com_Printf (char *fmt, ...)
 		CL_SearchForReTriggers (msg, RE_PRINT_INTERNAL);
 
 	// write it to the scrollable buffer
-	//	Con_Print (va("ezQuake: %s", msg));
 	Con_PrintW (str2wcs(msg));
 }
 
@@ -1536,12 +1535,11 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 	if (bufsize > 0)
 	{
 		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
-		if (!strncasecmp(buf, "qw://", 5))
-		{
-			Cbuf_AddText(va("qwurl %s\n", buf));
-		}
-		else
-		{
+		if (!strncasecmp(buf, "qw://", 5)) {
+			Cbuf_AddText("qwurl ");
+			Cbuf_AddText(buf);
+			Cbuf_AddText("\n");
+		} else {
 			Cbuf_AddText(buf);
 		}
 	}

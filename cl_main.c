@@ -864,22 +864,34 @@ void CL_QWURL_f (void)
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
 	{
-		Cbuf_AddText(va("join %s\n", connection_str));
+		Cbuf_AddText("join ");
+		Cbuf_AddText(connection_str);
+		Cbuf_AddText("\n");
 	}
 	else if (!strncmp(command, "challenge?", 10))
 	{
 		CL_QWURL_ProcessChallenge(command + 9);
-		Cbuf_AddText(va("connect %s\n", connection_str));
+		Cbuf_AddText("connect ");
+		Cbuf_AddText(connection_str);
+		Cbuf_AddText("\n");
 	}
 	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))
 	{
-		Cbuf_AddText(va("observe %s\n", connection_str));
+		Cbuf_AddText("observe ");
+		Cbuf_AddText(connection_str);
+		Cbuf_AddText("\n");
 	}
 	else if (!strncasecmp(command, "qtv", 3))
 	{
 		char *password = command + 4;
 
-		Cbuf_AddText(va("qtvplay %s%s\n", connection_str, ((*password) ? va(" %s", password) : "")));
+		Cbuf_AddText("qtvplay ");
+		Cbuf_AddText(connection_str);
+		if (*password) {
+			Cbuf_AddText(" ");
+			Cbuf_AddText(password);
+		}
+		Cbuf_AddText("\n");
 	}
 	else
 	{
@@ -938,7 +950,10 @@ void CL_Connect_f (void)
 
 	if (proxy)
 	{
-		Cbuf_AddText(va("say ,connect %s\n", connect_addr));
+		Cbuf_AddText("say ,connect ");
+		Cbuf_AddText(connect_addr);
+		Cbuf_AddText("\n");
+
 	} 
 	else
 	{
@@ -1101,7 +1116,13 @@ void CL_Join_f (void)
 	{
 		// A server name was given, connect directly or through Qizmo
 		Cvar_Set(&spectator, "");
-		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
+		if (proxy) {
+			Cbuf_AddText("say ,connect ");
+		} else {
+			Cbuf_AddText("connect ");
+		}
+		Cbuf_AddText(Cmd_Argv(1));
+		Cbuf_AddText("\n");
 		return;
 	}
 
@@ -1117,7 +1138,11 @@ void CL_Join_f (void)
 		return;
 	}
 
-	Cbuf_AddText(va("%s\n", proxy ? "say ,reconnect" : "reconnect"));
+	if (proxy) {
+		Cbuf_AddText("say ,reconnect\n");
+	} else {
+		Cbuf_AddText("reconnect\n");
+	}
 }
 
 void CL_Observe_f (void) 
@@ -1137,7 +1162,13 @@ void CL_Observe_f (void)
 	if (Cmd_Argc() == 2) 
 	{
 		// A server name was given, connect directly or through Qizmo
-		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
+		if (proxy) {
+			Cbuf_AddText("say ,connect ");
+		} else {
+			Cbuf_AddText("connect ");
+		}
+		Cbuf_AddText(Cmd_Argv(1));
+		Cbuf_AddText("\n");
 		return;
 	}
 
@@ -1148,7 +1179,11 @@ void CL_Observe_f (void)
 		return;
 	}
 
-	Cbuf_AddText(va("%s\n", proxy ? "say ,reconnect" : "reconnect"));
+	if (proxy) {
+		Cbuf_AddText("say ,reconnect\n");
+	} else {
+		Cbuf_AddText("reconnect\n");
+	}
 }
 
 // Just toggle mode between spec and player.
@@ -1421,11 +1456,15 @@ void CL_Reconnect_f (void)
 			lastnode = prx;
 		}
 		
-		Cbuf_AddText(va("connect %s\n", lastnode));
+		Cbuf_AddText("connect ");
+		Cbuf_AddText(lastnode);
+		Cbuf_AddText("\n");
 	}
 	else if (!connected_via_proxy && cl_proxyaddr.string[0]) {
 		// switch the stuff
-		Cbuf_AddText(va("connect %s\n", cls.servername));
+		Cbuf_AddText("connect ");
+		Cbuf_AddText(cls.servername);
+		Cbuf_AddText("\n");
 	}
 	else {
 		// good old reconnect, no need to do anything special
@@ -2006,6 +2045,9 @@ void EX_FileList_Init(void);
 
 void CL_Init (void) 
 {
+	char qw_dir[MAX_OSPATH];
+	char ezq_dir[MAX_OSPATH];
+
 	// When ezquake was launched via a webpage (qtv) the working directory wasn't properly
 	// set. Changing the directory makes sure it starts out in the directory where ezquake 
 	// is located.
@@ -2024,8 +2066,11 @@ void CL_Init (void)
 
 	ReloadPaletteAndColormap();
 
-	Sys_mkdir(va("%s/qw", com_basedir));
-	Sys_mkdir(va("%s/ezquake", com_basedir));
+	snprintf(qw_dir, sizeof(qw_dir), "%s/qw", com_basedir);
+	snprintf(ezq_dir, sizeof(ezq_dir), "%s/ezquake", com_basedir);
+
+	Sys_mkdir(qw_dir);
+	Sys_mkdir(ezq_dir);
 
 	History_Init();
 	V_Init ();

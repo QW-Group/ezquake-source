@@ -228,6 +228,7 @@ void R_BuildDlightList (msurface_t *surf) {
 	vec3_t impact;
 	mtexinfo_t *tex;
 	int lnum, i, smax, tmax, irad, iminlight, local[2], tdmin, sdmin, distmin;
+	unsigned int dlightbits;
 	dlightinfo_t *light;
 
 	numdlights = 0;
@@ -235,10 +236,13 @@ void R_BuildDlightList (msurface_t *surf) {
 	smax = (surf->extents[0]>>4)+1;
 	tmax = (surf->extents[1]>>4)+1;
 	tex = surf->texinfo;
+	dlightbits = surf->dlightbits;
 
-	for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
+	for (lnum = 0; lnum < MAX_DLIGHTS && dlightbits; lnum++) {
 		if ( !(surf->dlightbits & (1 << lnum) ) )
 			continue;		// not lit by this light
+
+		dlightbits &= ~(1<<lnum);
 
 		dist = PlaneDiff(cl_dlights[lnum].origin, surf->plane);
 		irad = (cl_dlights[lnum].radius - fabs(dist)) * 256;

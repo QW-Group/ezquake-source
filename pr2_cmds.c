@@ -1682,7 +1682,9 @@ void PF2_changelevel(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 		return;
 	last_spawncount = svs.spawncount;
 
-	Cbuf_AddText(va("map %s\n", s));
+	Cbuf_AddText("map ");
+	Cbuf_AddText(s);
+	Cbuf_AddText("\n");
 }
 
 /*
@@ -1694,16 +1696,10 @@ logfrag (killer, killee)
 */
 void PF2_logfrag(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
-	//	edict_t	*ent1, *ent2;
-	int		e1, e2;
-	char	*s;
-	// -> scream
-	time_t		t;
-	struct tm	*tblock;
-	// <-
-
-	//ent1 = G_EDICT(OFS_PARM0);
-	//ent2 = G_EDICT(OFS_PARM1);
+	int e1, e2;
+	char s[1024];
+	time_t t;
+	struct tm *tblock;
 
 	e1 = stack[0]._int;
 	e2 = stack[1]._int;
@@ -1711,23 +1707,22 @@ void PF2_logfrag(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 	if (e1 < 1 || e1 > MAX_CLIENTS || e2 < 1 || e2 > MAX_CLIENTS)
 		return;
 
-	// -> scream
 	t = time (NULL);
 	tblock = localtime (&t);
 
-	//bliP: date check ->
-	if (!tblock)
-		s = va("%s\n", "#bad date#");
-	else
-		if ((int)frag_log_type.value) // need for old-style frag log file
-			s = va("\\frag\\%s\\%s\\%s\\%s\\%d-%d-%d %d:%d:%d\\\n",
+	if (!tblock) {
+		snprintf(s, sizeof(s), "#bad date#\n");
+	} else {
+		if ((int)frag_log_type.value) {        // need for old-style frag log file
+			snprintf(s, sizeof(s), "\\frag\\%s\\%s\\%s\\%s\\%d-%d-%d %d:%d:%d\\\n",
 			       svs.clients[e1-1].name, svs.clients[e2-1].name,
 			       svs.clients[e1-1].team, svs.clients[e2-1].team,
 			       tblock->tm_year + 1900, tblock->tm_mon + 1, tblock->tm_mday,
 			       tblock->tm_hour, tblock->tm_min, tblock->tm_sec);
-		else
-			s = va("\\%s\\%s\\\n",svs.clients[e1-1].name, svs.clients[e2-1].name);
-	// <-
+		} else {
+			snprintf(s, sizeof(s), "\\%s\\%s\\\n",svs.clients[e1-1].name, svs.clients[e2-1].name);
+		}
+	}
 
 	SZ_Print(&svs.log[svs.logsequence & 1], s);
 	SV_Write_Log(FRAG_LOG, 1, s);

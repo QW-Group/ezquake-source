@@ -198,12 +198,21 @@ SV_Shutdown
 Quake calls this before calling Sys_Quit or Sys_Error
 ================
 */
-void SV_Shutdown (char *finalmsg)
+void SV_Shutdown(char *err_fmt, ...)
 {
 	int i;
 
-	if (sv.state)
-		Com_Printf("%s\n", finalmsg);
+
+	if (sv.state) {
+		va_list argptr;
+		char err_msg[1024];
+
+		va_start(argptr,err_fmt);
+		vsnprintf(err_msg, sizeof(err_msg), err_fmt, argptr);
+		va_end(argptr);
+
+		Com_Printf("%s\n", err_msg);
+	}
 
 	Master_Shutdown ();
 
@@ -574,18 +583,25 @@ This message can be up to around 5k with worst case string lengths.
 
 static void SVC_Status (void)
 {
+
 	int top, bottom, ping, i, opt = 0;
-	char *name, *frags;
+	char frags[8] = {0};
+	char *name;
+	const char *spec_prefix = "";
 	client_t *cl;
 
 
-	if (Cmd_Argc() > 1)
+	if (Cmd_Argc() > 1) {
 		opt = Q_atoi(Cmd_Argv(1));
+	}
 
 	SV_BeginRedirect (RD_PACKET);
-	if (opt == STATUS_OLDSTYLE || (opt & STATUS_SERVERINFO))
+
+	if (opt == STATUS_OLDSTYLE || (opt & STATUS_SERVERINFO)) {
 		Con_Printf ("%s\n", svs.info);
-	if (opt == STATUS_OLDSTYLE || (opt & (STATUS_PLAYERS | STATUS_SPECTATORS)))
+	}
+
+	if (opt == STATUS_OLDSTYLE || (opt & (STATUS_PLAYERS | STATUS_SPECTATORS))) {
 		for (i = 0; i < MAX_CLIENTS; i++)
 		{
 			cl = &svs.clients[i];
@@ -599,30 +615,31 @@ static void SVC_Status (void)
 				bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
 				ping   = SV_CalcPing (cl);
 				name   = cl->name;
-				if (cl->spectator)
-				{
-					if (opt & STATUS_SPECTATORS_AS_PLAYERS)
-						frags = "S";
-					else
-					{
+				if (cl->spectator) {
+					if (opt & STATUS_SPECTATORS_AS_PLAYERS) {
+						snprintf(frags, sizeof(frags), "%s", "S");
+					} else {
 						ping  = -ping;
-						frags = "-9999";
-						name  = va("\\s\\%s", name);
+						snprintf(frags, sizeof(frags), "%s", "-9999");
+						spec_prefix = "\\s\\%s";
 					}
+				} else {
+					snprintf(frags, sizeof(frags), "%i", cl->old_frags);
 				}
-				else
-					frags = va("%i", cl->old_frags);
 
-				Con_Printf ("%i %s %i %i \"%s\" \"%s\" %i %i", cl->userid, frags,
-				            (int)(realtime - cl->connection_started)/60, ping, name,
-				            Info_Get (&cl->_userinfo_ctx_, "skin"), top, bottom);
+				Con_Printf ("%i %s %i %i \"%s%s\" \"%s\" %i %i", cl->userid, frags,
+				            (int)(realtime - cl->connection_started)/60, ping, spec_prefix,
+				            name, Info_Get (&cl->_userinfo_ctx_, "skin"), top, bottom);
 
-				if (opt & STATUS_SHOWTEAMS)
+				if (opt & STATUS_SHOWTEAMS) {
 					Con_Printf (" \"%s\"\n", cl->team);
-				else
+				} else {
 					Con_Printf ("\n");
+				}
 			}
 		}
+	}
+
 	SV_EndRedirect ();
 }
 
@@ -1076,6 +1093,7 @@ static void SVC_DirectConnect (void)
 {
 	int spectator;
 	qbool spass, vip, rip_vip;
+	char vipstr[16] = {0};
 
 	int clients, spectators, vips;
 	int qport, i, edictnum;
@@ -1291,7 +1309,8 @@ static void SVC_DirectConnect (void)
 	memset(newcl->name, 0, CLIENT_NAME_LEN);
 #endif
 
-	s = ( vip ? va("%d", vip) : "" );
+	snprintf(vipstr, sizeof(vipstr), "%d", vip);
+	s = ( vip ? vipstr : "" );
 
 	Info_SetStar (&newcl->_userinfo_ctx_, "*VIP", s);
 
@@ -3021,7 +3040,7 @@ SV_CheckVars
 ===================
 */
 
-static void SV_CheckVars (void)
+static void SV_CheckVars(void)
 {
 	static char pw[MAX_KEY_STRING] = {0}, spw[MAX_KEY_STRING] = {0}, vspw[MAX_KEY_STRING]= {0};
 	static float old_maxrate = 0, old_maxdlrate = 0;
@@ -3031,15 +3050,13 @@ static void SV_CheckVars (void)
 		return;
 
 	// check password and spectator_password
-	if (strcmp(password.string, pw) ||
-		strcmp(spectator_password.string, spw) || strcmp(vip_password.string, vspw))
-	{
-		strlcpy (pw, password.string, sizeof(pw));
-		strlcpy (spw, spectator_password.string, sizeof(spw));
-		strlcpy (vspw, vip_password.string, sizeof(vspw));
-		Cvar_Set (&password, pw);
-		Cvar_Set (&spectator_password, spw);
-		Cvar_Set (&vip_password, vspw);
+	if (strcmp(password.string, pw) || strcmp(spectator_password.string, spw) || strcmp(vip_password.string, vspw)) {
+		strlcpy(pw, password.string, sizeof(pw));
+		strlcpy(spw, spectator_password.string, sizeof(spw));
+		strlcpy(vspw, vip_password.string, sizeof(vspw));
+		Cvar_Set(&password, pw);
+		Cvar_Set(&spectator_password, spw);
+		Cvar_Set(&vip_password, vspw);
 
 		v = 0;
 		if (pw[0] && strcmp(pw, "none"))
@@ -3049,25 +3066,26 @@ static void SV_CheckVars (void)
 		if (vspw[0] && strcmp(vspw, "none"))
 			v |= 4;
 
-		Con_DPrintf ("Updated needpass.\n");
-		if (!v)
+		Con_DPrintf("Updated needpass.\n");
+		if (!v) {
 			Info_SetValueForKey (svs.info, "needpass", "", MAX_SERVERINFO_STRING);
-		else
-			Info_SetValueForKey (svs.info, "needpass", va("%i",v), MAX_SERVERINFO_STRING);
+		} else {
+			char vs[16];
+			snprintf(vs, sizeof(vs), "%i", v);
+			Info_SetValueForKey (svs.info, "needpass", vs, MAX_SERVERINFO_STRING);
+		}
 	}
 
 	// check sv_maxrate
-	if ((int)sv_maxrate.value != old_maxrate || (int)sv_maxdownloadrate.value != old_maxdlrate )
-	{
-		client_t	*cl;
-		int			i;
-		char		*val;
+	if ((int)sv_maxrate.value != old_maxrate || (int)sv_maxdownloadrate.value != old_maxdlrate) {
+		client_t *cl;
+		int i;
+		char *val;
 
 		old_maxrate = (int)sv_maxrate.value;
 		old_maxdlrate = (int)sv_maxdownloadrate.value;
 
-		for (i=0, cl = svs.clients ; i<MAX_CLIENTS ; i++, cl++)
-		{
+		for (i=0, cl = svs.clients ; i<MAX_CLIENTS ; i++, cl++) {
 			if (cl->state < cs_preconnected)
 				continue;
 
@@ -3203,6 +3221,7 @@ SV_InitLocal
 */
 void SV_InitLocal (void)
 {
+	char se[16];
 	int		i;
 //	int		len;
 	extern	cvar_t	sv_maxvelocity;
@@ -3396,7 +3415,8 @@ void SV_InitLocal (void)
 //	Info_SetValueForStarKey (svs.info, "*version", QW_VERSION, MAX_SERVERINFO_STRING);
 //	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " QWE_VERSION, MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " VERSION_NUMBER, MAX_SERVERINFO_STRING);
-	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
+	snprintf(se, sizeof(se), "%i", SERVER_EXTENSIONS);
+	Info_SetValueForStarKey (svs.info, "*z_ext", se, MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
 	svs.logsequence = 1;
@@ -3435,14 +3455,27 @@ into a more C freindly form.
 // ktpro crash if absolute value of userinfo keys "ls" or/and "lw" is to large
 static void SV_SetUserInfoKeyLimit (char *key, int limit, client_t *cl, qbool warning_msg)
 {
-	if (warning_msg)
-		SV_ClientPrintf (cl, PRINT_HIGH, "WARNING: You can't set setinfo %s %s %i.\n",
-		                 key, limit > 0 ? ">" : "<", limit);
+	char *tmp;
+	size_t tmp_size;
 
-	Info_Set (&cl->_userinfo_ctx_, key, va("%i", limit));
+	if (warning_msg) {
+		SV_ClientPrintf (cl, PRINT_HIGH, "WARNING: You can't set setinfo %s %s %i.\n", key, limit > 0 ? ">" : "<", limit);
+	}
+
+	tmp_size = strlen(key) + 32; /* to fit the setinfo below + int + NUL */
+	tmp = malloc(tmp_size);
+	if (!tmp) {
+		Sys_Error("Out of memory");
+	}
+
+	snprintf(tmp, tmp_size, "%i", limit);
+	Info_Set (&cl->_userinfo_ctx_, key, tmp);
 
 	MSG_WriteByte (&cl->netchan.message, svc_stufftext);
-	MSG_WriteString (&cl->netchan.message, va("setinfo \"%s\" \"%i\"\n", key, limit));
+
+	snprintf(tmp, tmp_size, "setinfo \"%s\" \"%i\"\n", key, limit);
+	MSG_WriteString (&cl->netchan.message, tmp);
+	Q_free(tmp);
 }
 
 static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
@@ -3454,7 +3487,7 @@ static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
 		SV_SetUserInfoKeyLimit (key, limit, cl, true);
 	else if (value < -limit)
 		SV_SetUserInfoKeyLimit (key, -limit, cl, true);
-	else if (strcmp(value_c, va("%i", value)) && *value_c)
+	else if (*value_c)
 		SV_SetUserInfoKeyLimit (key, value, cl, false);
 }
 // } Added by VVD
@@ -3799,11 +3832,6 @@ void SV_Write_Log(int sv_log, int level, char *msg)
 
 	if (!(logs[sv_log].sv_logfile && *msg))
 		return;
-
-	//bliP: moved telnet bit to on cvar change ->
-	//if (sv_log == TELNET_LOG)
-	//	logs[sv_log].log_level = Cvar_Value("telnet_log_level");
-	//<-
 
 	if (logs[sv_log].log_level < level)
 		return;

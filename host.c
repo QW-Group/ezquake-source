@@ -65,7 +65,7 @@ static jmp_buf 	host_abort;
 
 extern void COM_StoreOriginalCmdline(int argc, char **argv);
 
-char f_system_string[1024] = "";
+char f_system_string[1024];
 
 char * SYSINFO_GetString(void)
 {
@@ -158,7 +158,9 @@ void SYSINFO_Init(void)
 	}
 
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		char mhz[16] = {0};
+		snprintf(mhz, sizeof(mhz), " %dMHz", SYSINFO_MHz);
+		strlcat(f_system_string, mhz, sizeof(f_system_string));
 	}
 
 	if (SYSINFO_3D_description) {
@@ -241,7 +243,9 @@ void SYSINFO_Init(void)
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		char mhz[16] = {0};
+		snprintf(mhz, sizeof(mhz), " %dMHz", SYSINFO_MHz);
+		strlcat(f_system_string, mhz, sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -292,7 +296,9 @@ void SYSINFO_Init(void)
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		char mhz[16] = {0};
+		snprintf(mhz, sizeof(mhz), " %dMHz", SYSINFO_MHz);
+		strlcat(f_system_string, mhz, sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -359,7 +365,9 @@ void SYSINFO_Init(void)
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
+		char mhz[16] = {0};
+		snprintf(mhz, sizeof(mhz), " %dMHz", SYSINFO_MHz);
+		strlcat(f_system_string, mhz, sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -373,47 +381,51 @@ void SYSINFO_Init(void)
 }
 #endif
 
-void Host_Abort (void)
+void Host_Abort(void)
 {
-	longjmp (host_abort, 1);
+	longjmp(host_abort, 1);
 }
 
-void Host_EndGame (void)
+void Host_EndGame(void)
 {
-	SV_Shutdown ("Server was killed");
-	CL_Disconnect ();
+	SV_Shutdown("Server was killed");
+	CL_Disconnect();
 	// clear disconnect messages from loopback
-	NET_ClearLoopback ();
+	NET_ClearLoopback();
 }
 
 //This shuts down both the client and server
-void Host_Error (char *error, ...)
+void Host_Error(char *err_fmt, ...)
 {
 	va_list argptr;
-	char string[1024];
+	char err_msg[1024];
 	static qbool inerror = false;
 
-	if (inerror)
+	if (inerror) {
 		Sys_Error ("Host_Error: recursively entered");
+	}
+
 	inerror = true;
 
-	va_start (argptr,error);
-	vsnprintf (string, sizeof(string), error, argptr);
-	va_end (argptr);
+	va_start(argptr,err_fmt);
+	vsnprintf(err_msg, sizeof(err_msg), err_fmt, argptr);
+	va_end(argptr);
 
-	Com_Printf ("\n===========================\n");
-	Com_Printf ("Host_Error: %s\n",string);
-	Com_Printf ("===========================\n\n");
+	Com_Printf("\n===========================\n");
+	Com_Printf("Host_Error: %s\n", err_msg);
+	Com_Printf("===========================\n\n");
 
-	SV_Shutdown (va("server crashed: %s\n", string));
-	CL_Disconnect ();
+	SV_Shutdown("server crashed: %s\n", err_msg);
 
-	if (!host_initialized)
-		Sys_Error ("Host_Error: %s", string);
+	CL_Disconnect();
+
+	if (!host_initialized) {
+		Sys_Error("Host_Error: %s", err_msg);
+	}
 
 	inerror = false;
 
-	Host_Abort ();
+	Host_Abort();
 }
 
 //memsize is the recommended amount of memory to use for hunk
@@ -535,29 +547,28 @@ extern void LoadConfig_f(void);
 
 void Startup_Place(void)
 {
-    extern cvar_t cl_onload;
+	extern cvar_t cl_onload;
 	extern cvar_t cl_startupdemo;
 
 	if (cl_startupdemo.string[0]) {
-		Cbuf_AddText(va("playdemo %s\n", cl_startupdemo.string));
+		Cbuf_AddText("playdemo ");
+		Cbuf_AddText(cl_startupdemo.string);
+		Cbuf_AddText("\n");
 		key_dest = key_startupdemo;
-	}
-	else if (!strcmp (cl_onload.string, "menu")) {
-		Cbuf_AddText ("togglemenu\n");
-	}
-	else if (!strcmp (cl_onload.string, "browser")) {
-		Cbuf_AddText ("menu_slist\n");
-	}
-	else if (!strcmp (cl_onload.string, "console")) {
+	} else if (!strcmp(cl_onload.string, "menu")) {
+		Cbuf_AddText("togglemenu\n");
+	} else if (!strcmp(cl_onload.string, "browser")) {
+		Cbuf_AddText("menu_slist\n");
+	} else if (!strcmp(cl_onload.string, "console")) {
 		key_dest = key_console;
-	}
-	else {
+	} else {
 		key_dest = key_console;
-		Cbuf_AddText (va ("%s\n", cl_onload.string));
+		Cbuf_AddText(cl_onload.string);
+		Cbuf_AddText("\n");
 	}
 }
 
-void Host_Init (int argc, char **argv, int default_memsize)
+void Host_Init(int argc, char **argv, int default_memsize)
 {
 	vfsfile_t *vf;
 	cvar_t *v;
@@ -568,11 +579,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
-	if (SDL_Init(0) != 0)
-	{
+	if (SDL_Init(0) != 0) {
 		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);
 	}
+
 	atexit(SDL_Quit);
 
 	Host_InitMemory (default_memsize);
@@ -608,7 +619,10 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 	snprintf(cfg, sizeof(cfg), "%s", cfg_name);
 	COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
-	Cbuf_AddText(va("cfg_load %s\n", cfg));
+
+	Cbuf_AddText("cfg_load ");
+	Cbuf_AddText(cfg);
+	Cbuf_AddText("\n");
 	Cbuf_Execute();
 
 	Cbuf_AddEarlyCommands ();
@@ -735,12 +749,12 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
 //to run quit through here before the final handoff to the sys code.
-void Host_Shutdown (void)
+void Host_Shutdown(void)
 {
 	static qbool isdown = false;
 
 	if (isdown) {
-		printf ("recursive shutdown\n");
+		printf("recursive shutdown\n");
 		return;
 	}
 	isdown = true;
@@ -748,33 +762,33 @@ void Host_Shutdown (void)
 	// on low-end systems quit process may last long time (was about 1 minute for me on old compo),
 	// at the same time may repeats repeats repeats some sounds, trying preventing this
 	S_StopAllSounds();
-	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+	S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 
-	SV_Shutdown ("Server quit\n");
+	SV_Shutdown("Server quit\n");
 
 #if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();
 #endif
 
-	CL_Shutdown ();
-	NET_Shutdown ();
+	CL_Shutdown();
+	NET_Shutdown();
 	Con_Shutdown();
 #ifdef WITH_TCL
-	TCL_Shutdown ();
+	TCL_Shutdown();
 #endif
 	qtvlist_deinit();
 }
 
-void Host_Quit (void)
+void Host_Quit(void)
 {
 	// execute user's trigger
-	TP_ExecTrigger ("f_exit");
+	TP_ExecTrigger("f_exit");
 	Cbuf_Execute();
 	
 	// save config (conditional)
 	Config_QuitSave();
 
 	// turn off
-	Host_Shutdown ();
-	Sys_Quit ();
+	Host_Shutdown();
+	Sys_Quit();
 }

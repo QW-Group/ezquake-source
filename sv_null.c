@@ -20,12 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sv_null.c -- this file can stub out the entire server system
 // for pure net-only clients
 
-void SV_Init (void)
+void SV_Init(void)
 {
 }
-void SV_Shutdown (char *finalmsg)
+
+void SV_Shutdown(char *err_fmt, ...)
 {
 }
-void SV_Frame (double time)
+
+void SV_Frame(double time)
 {
 }

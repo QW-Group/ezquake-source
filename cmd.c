@@ -369,15 +369,21 @@ the client and server initialize for the first time.
 
 Other commands are added late, after all initialization is complete.
 */
-void Cbuf_AddEarlyCommands (void)
+void Cbuf_AddEarlyCommands(void)
 {
 	int i;
 
-	for (i = 0; i < COM_Argc () - 2; i++) {
-		if (strcasecmp (COM_Argv(i), "+set"))
+	for (i = 0; i < COM_Argc() - 2; i++) {
+		if (strcasecmp(COM_Argv(i), "+set")) {
 			continue;
+		}
 
-		Cbuf_AddText (va ("set %s %s\n", COM_Argv (i + 1), COM_Argv (i + 2)));
+		Cbuf_AddText("set ");
+		Cbuf_AddText(COM_Argv(i+1));
+		Cbuf_AddText(" ");
+		Cbuf_AddText(COM_Argv(i+2));
+		Cbuf_AddText("\n");
+
 		i += 2;
 	}
 }

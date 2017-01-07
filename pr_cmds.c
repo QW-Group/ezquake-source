@@ -850,21 +850,23 @@ Sends text over to the client's execution buffer
 localcmd (string)
 =================
 */
-void PF_localcmd (void)
+void PF_localcmd(void)
 {
-	char	*str;
+	char *str;
 
 	str = G_STRING(OFS_PARM0);
 
 	if (pr_nqprogs && !strcmp(str, "restart\n")) {
-		Cbuf_AddText (va("map %s\n", host_mapname.string));
+		Cbuf_AddText("map ");
+		Cbuf_AddText(host_mapname.string);
+		Cbuf_AddText("\n");
 		return;
 	}
 
-	Cbuf_AddText (str);
+	Cbuf_AddText(str);
 }
 
-void PF_executecmd (void)
+void PF_executecmd(void)
 {
 	int old_other, old_self; // mod_consolecmd will be executed, so we need to store this
 
@@ -2094,17 +2096,22 @@ static void NQP_Process (void)
 		else if (cmd == svc_updatefrags)
 			nqp_expect = 4;
 		else if (cmd == nq_svc_updatecolors) {
+			char topcolor[4], bottomcolor[4];
+			snprintf(topcolor, sizeof(topcolor), "%i", min(nqp_buf_data[2] & 15, 13));
+			snprintf(bottomcolor, sizeof(bottomcolor), "%i", min((nqp_buf_data[2] >> 4)& 15, 13));
+
 			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
-			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
-			MSG_WriteString (&sv.reliable_datagram, "topcolor");
-			MSG_WriteString (&sv.reliable_datagram, va("%i", min(nqp_buf_data[2] & 15, 13)));
-			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
-			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
-			MSG_WriteString (&sv.reliable_datagram, "bottomcolor");
-			MSG_WriteString (&sv.reliable_datagram, va("%i", min((nqp_buf_data[2] >> 4)& 15, 13)));
-			NQP_Skip (3);
+
+			MSG_WriteByte(&sv.reliable_datagram, svc_setinfo);
+			MSG_WriteByte(&sv.reliable_datagram, nqp_buf_data[1]);
+			MSG_WriteString(&sv.reliable_datagram, "topcolor");
+			MSG_WriteString(&sv.reliable_datagram, topcolor);
+			MSG_WriteByte(&sv.reliable_datagram, svc_setinfo);
+			MSG_WriteByte(&sv.reliable_datagram, nqp_buf_data[1]);
+			MSG_WriteString(&sv.reliable_datagram, "bottomcolor");
+			MSG_WriteString(&sv.reliable_datagram, bottomcolor);
+			NQP_Skip(3);
 		}
 		else if (cmd == nq_svc_updatename) {
 			int slot;
@@ -2513,18 +2520,22 @@ void PF_setspawnparms (void)
 PF_changelevel
 ==============
 */
-void PF_changelevel (void)
+void PF_changelevel(void)
 {
-	char	*s;
-	static	int	last_spawncount;
+	static int last_spawncount;
+	char *s;
 
 	// make sure we don't issue two changelevels
-	if (svs.spawncount == last_spawncount)
+	if (svs.spawncount == last_spawncount) {
 		return;
+	}
+
 	last_spawncount = svs.spawncount;
 
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (va("map %s\n",s));
+	Cbuf_AddText("map ");
+	Cbuf_AddText(s);
+	Cbuf_AddText("\n");
 }
 
 
@@ -2539,11 +2550,9 @@ void PF_logfrag (void)
 {
 	edict_t	*ent1, *ent2;
 	int		e1, e2;
-	char	*s;
-	// -> scream
+	char	s[1024];
 	time_t		t;
 	struct tm	*tblock;
-	// <-
 
 	ent1 = G_EDICT(OFS_PARM0);
 	ent2 = G_EDICT(OFS_PARM1);
@@ -2553,29 +2562,26 @@ void PF_logfrag (void)
 
 	if (e1 < 1 || e1 > MAX_CLIENTS || e2 < 1 || e2 > MAX_CLIENTS)
 		return;
-	// -> scream
-	t = time (NULL);
-	tblock = localtime (&t);
 
-	//bliP: date check ->
-	if (!tblock)
-		s = va("%s\n", "#bad date#");
-	else
-		if ((int)frag_log_type.value) // need for old-style frag log file
-			s = va("\\frag\\%s\\%s\\%s\\%s\\%d-%d-%d %d:%d:%d\\\n",
+	t = time(NULL);
+	tblock = localtime(&t);
+
+	if (!tblock) {
+		snprintf(s, sizeof(s), "#bad date#\n");
+	} else {
+		if ((int)frag_log_type.value) {       // need for old-style frag log file
+			snprintf(s, sizeof(s), "\\frag\\%s\\%s\\%s\\%s\\%d-%d-%d %d:%d:%d\\\n",
 			       svs.clients[e1-1].name, svs.clients[e2-1].name,
 			       svs.clients[e1-1].team, svs.clients[e2-1].team,
 			       tblock->tm_year + 1900, tblock->tm_mon + 1, tblock->tm_mday,
 			       tblock->tm_hour, tblock->tm_min, tblock->tm_sec);
-		else
-			s = va("\\%s\\%s\\\n",svs.clients[e1-1].name, svs.clients[e2-1].name);
-	// <-
-	SZ_Print (&svs.log[svs.logsequence&1], s);
+		} else {
+			snprintf(s, sizeof(s), "\\%s\\%s\\\n",svs.clients[e1-1].name, svs.clients[e2-1].name);
+		}
+	}
+
+	SZ_Print(&svs.log[svs.logsequence&1], s);
 	SV_Write_Log(FRAG_LOG, 1, s);
-	//	SV_Write_Log(MOD_FRAG_LOG, 1, "\n==== PF_logfrag ===={\n");
-	//	SV_Write_Log(MOD_FRAG_LOG, 1, va("%d\n", time(NULL)));
-	//	SV_Write_Log(MOD_FRAG_LOG, 1, s);
-	//	SV_Write_Log(MOD_FRAG_LOG, 1, "}====================\n");
 }
 
 //bliP: map voting ->
@@ -2585,18 +2591,21 @@ finds maps in sv_gamedir either by id number or name
 returns id for exist, 0 for not
 float(string s) findmap
 ==================*/
-void PF_findmap (void)
+void PF_findmap(void)
 {
 	dir_t	dir;
 	file_t *list;
 	char map[MAX_DEMO_NAME];
 	char *s;
+	char *path;
+	char *gamedir;
+	size_t pathsize;
 	int id;
 	int i;
 
 	strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
-	for (i = 0, s = map; *s; s++)
-	{
+
+	for (i = 0, s = map; *s; s++) {
 		if (*s < '0' || *s > '9')
 		{
 			i = 1;
@@ -2605,18 +2614,23 @@ void PF_findmap (void)
 	}
 	id = (i) ? 0 : Q_atoi(map);
 
-	if (!strstr(map, ".bsp"))
+	if (!strstr(map, ".bsp")) {
 		strlcat(map, ".bsp", sizeof(map));
+	}
 
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
+	gamedir = Info_ValueForKey(svs.info, "*gamedir");
+	pathsize = strlen(gamedir) + strlen("/maps") + 1;
+	path = malloc(pathsize);
+
+	snprintf(path, pathsize, "%s/maps", gamedir);
+	dir = Sys_listdir(path, ".bsp$", SORT_BY_NAME);
+	Q_free(path);
+
 	list = dir.files;
 
 	i = 1;
-	while (list->name[0])
-	{
-		if (((id > 0) && (i == id)) || !strcmp(list->name, map))
-		{
+	while (list->name[0]) {
+		if (((id > 0) && (i == id)) || !strcmp(list->name, map)) {
 			G_FLOAT(OFS_RETURN) = i;
 			return;
 		}
@@ -2632,28 +2646,33 @@ PF_findmapname
 returns map name from a map id
 string(float id) findmapname
 ==================*/
-void PF_findmapname (void)
+void PF_findmapname(void)
 {
 	dir_t	dir;
 	file_t *list;
-	//char *s;
+	char *path;
+	char *gamedir;
+	size_t pathsize;
 	int id;
 	int i;
 
 	id = G_FLOAT(OFS_PARM0);
 
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
+	gamedir = Info_ValueForKey(svs.info, "*gamedir");
+	pathsize = strlen(gamedir) + strlen("/maps") + 1;
+	path = malloc(pathsize);
+
+	snprintf(path, pathsize, "%s/maps", gamedir);
+
+	dir = Sys_listdir(path, ".bsp$", SORT_BY_NAME);
+	Q_free(path);
+
 	list = dir.files;
 
 	i = 1;
-	while (list->name[0])
-	{
-		if (i == id)
-		{
+	while (list->name[0]) {
+		if (i == id) {
 			list->name[strlen(list->name) - 4] = 0; //strip .bsp
-			//if ((s = strchr(list->name, '.')))
-			//  *s = '\0';
 			RETURN_STRING(list->name);
 			return;
 		}
@@ -2669,16 +2688,18 @@ prints a range of map names from sv_gamedir (because of the likes of thundervote
 returns position if more maps, 0 if displayed them all
 float(entity client, float level, float range, float start, float style, float footer) listmaps
 ==================*/
-void PF_listmaps (void)
+void PF_listmaps(void)
 {
 	int entnum, level, start, range, foot, style;
-	client_t	*client;
+	client_t *client;
 	char line[256];
 	char tmp[64];
 	char num[16];
+	char *path;
+	char *gamedir;
+	size_t pathsize;
 	dir_t	dir;
 	file_t *list;
-	//char *s;
 	int id, pad;
 	int ti, i, j;
 
@@ -2697,8 +2718,15 @@ void PF_listmaps (void)
 	}
 
 	client = &svs.clients[entnum-1];
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
+
+	gamedir = Info_ValueForKey(svs.info, "*gamedir");
+	pathsize = strlen(gamedir) + strlen("/maps") + 1;
+	path = malloc(pathsize);
+
+	snprintf(path, pathsize, "%s/maps", gamedir);
+	dir = Sys_listdir(path, ".bsp$", SORT_BY_NAME);
+	Q_free(path);
+
 	list = dir.files;
 	snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
 	pad = strlen(tmp);
