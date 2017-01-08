@@ -603,7 +603,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 		if (custom_model) {
 			glDisable(GL_TEXTURE_2D);
-			glColor3ubv(custom_model->color_cvar.color);
+			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
 		}
 
 		for ( ;; )
