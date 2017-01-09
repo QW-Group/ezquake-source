@@ -694,7 +694,30 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 		case K_END: tab->marked = tab->count - 1; up = true; break;
 		case K_HOME: tab->marked = 0; break;
 
-		case K_ENTER: case K_MOUSE1: case '=': case KP_PLUS:
+		case K_RIGHTARROW:
+			switch (type) {
+				case stt_string:
+					CEditBox_Key(&editbox, key, unichar);
+					break;
+				default:
+					Setting_Increase(tab->settings + tab->marked);
+					break;
+			}
+			break;
+		case K_LEFTARROW:
+			switch (type) {
+				case stt_string:
+					CEditBox_Key(&editbox, key, unichar);
+					break;
+				default:
+					Setting_Decrease(tab->settings + tab->marked);
+					break;
+			}
+			break;
+		case K_ENTER:
+		case K_MOUSE1:
+		case '=':
+		case KP_PLUS:
 			     switch (type) {
 				     case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
 				     case stt_bind: tab->mode = SPM_BINDING; break;
