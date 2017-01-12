@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		a) 'settings_page' variable
 		b) array of 'setting' elements, use macros from settings.h to do this
 	2) in some Init function call Settings_Page_Init(a, b); - a and b are variables from steps a and b
-	3) place calls to _Draw and _Kry functions to appropriate places
+	3) place calls to _Draw and _Key functions to appropriate places
  */
 
 #ifndef __SETTINGS_PAGE_H__
