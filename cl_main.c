@@ -84,6 +84,7 @@ cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
+cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -1889,6 +1890,7 @@ void CL_InitLocal (void)
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
 	Cvar_Register (&cl_pext);
 	Cvar_Register (&cl_pext_other);
+	Cvar_Register (&cl_pext_warndemos);
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
 	Cvar_Register (&cl_pext_256packetentities);

@@ -1202,6 +1202,11 @@
         { "name": "true", "description": "" }
       ]
     },
+    "cl_pext_warndemos": {
+      "group-id": "21",
+      "desc": "If set, warning will be displayed when recording a demo that is not backwards compatible with old clients.",
+      "type": "boolean"
+    },
     "cl_physfps": {
       "group-id": "8",
       "desc": "Sets the amount of FPS used to communicate with the server. This variable is used when cl_independentphysics 1 is set, and controls the FPS sent/received to/from the server. The graphical FPS is limited by cl_maxfps (vid_vsync must be 0). When set to 0, the current cl_maxfps value is used. When cl_maxfps is set to 0 too, client displays as much FPS as server and data rate allows.",
