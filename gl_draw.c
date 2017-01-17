@@ -42,15 +42,18 @@ cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 
 
-void OnChange_gl_crosshairimage(cvar_t *, char *, qbool *);
-cvar_t	gl_crosshairimage   = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
+void OnChange_crosshairimage(cvar_t *, char *, qbool *);
+static cvar_t crosshairimage          = {"crosshairimage", "", 0, OnChange_crosshairimage};
 
 void OnChange_gl_consolefont (cvar_t *, char *, qbool *);
-cvar_t	gl_consolefont		= {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
-cvar_t	gl_alphafont		= {"gl_alphafont", "1"};
+cvar_t gl_consolefont                 = {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
+static cvar_t gl_alphafont            = {"gl_alphafont", "1"};
 
-cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
+cvar_t crosshairalpha                 = {"crosshairalpha", "1"};
 
+static cvar_t crosshairscalemethod         = {"crosshairscalemethod", "0"};
+static cvar_t crosshairscale               = {"crosshairscale", "0"};
+static int    current_crosshair_pixel_size = 0;
 
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel);
 cvar_t gl_smoothfont = {"gl_smoothfont", "1", 0, OnChange_gl_smoothfont};
@@ -78,69 +81,73 @@ static byte customcrosshairdata[64];
 #define CROSSHAIR_IMAGE	2
 static int customcrosshair_loaded = CROSSHAIR_NONE;
 
+#define CH_POINT(x,y,size) ((x) + (y) * size)
 
-static byte crosshairdata[NUMCROSSHAIRS][64] = {
-    {
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    },
-    {
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    },
-    {
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    },
-    {
-	0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
-	0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff,
-	0xff, 0xff, 0xfe, 0xff, 0xff, 0xfe, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xfe, 0xff, 0xff, 0xfe, 0xff, 0xff,
-	0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff,
-	0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe
-    },
-    {
-	0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
-	0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xff,
-	0xfe, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xfe, 0xff,
-	0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xff,
-	0xfe, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xfe, 0xff,
-	0xff, 0xfe, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff,
-	0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    },
-    {
-	0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff,
-	0xfe, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xfe, 0xff,
-	0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    }
-};
+static void CreateBuiltinCrosshair(byte* data, int size, int format)
+{
+	int i = 0;
+	int middle = (size / 2) - 1;
+
+	memset(data, 0xff, size * size);
+
+	switch (format) {
+	case 2:
+		// simple cross, alternating stipple effect
+		for (i = 0; i < size; i += 2) {
+			// vertical
+			data[CH_POINT(middle, i, size)] = 0xfe;
+
+			// horizontal
+			data[CH_POINT(i, middle, size)] = 0xfe;
+		}
+		break;
+	case 3:
+		// small cross in center
+		{
+			int length = max(0, size / 8);
+
+			data[CH_POINT(middle, middle, size)] = 0xfe;
+			for (i = 1; i <= length; ++i) {
+				int p1 = CH_POINT(middle - i, middle, size);
+				int p2 = CH_POINT(middle + i, middle, size);
+				int p3 = CH_POINT(middle, middle - i, size);
+				int p4 = CH_POINT(middle, middle + i, size);
+
+				data[p1] = 0xfe;
+				data[p2] = 0xfe;
+				data[p3] = 0xfe;
+				data[p4] = 0xfe;
+			}
+		}
+		break;
+	case 4:
+		// just a dot (scale to make square then circle?)
+		data[CH_POINT(middle, middle, size)] = 0xfe;
+		break;
+	case 5:
+		// diagonals (middle missing)
+		for (i = 0; i < size; ++i) {
+			if (i >= middle - 1 && i <= middle + 1) {
+				continue;
+			}
+			data[CH_POINT(i, i, size)] = 0xfe;
+			data[CH_POINT(size - 1 - i, i, size)] = 0xfe;
+		}
+		break;
+	case 6:
+		// Supposed to be a smiley face, not converting that...
+	case 7:
+		// Square with dot in centre
+		data[CH_POINT(middle, middle, size)] = 0xfe;
+		for (i = 2; i <= size - 4; ++i) {
+			data[CH_POINT(i, 0, size)] = 0xfe;
+			data[CH_POINT(0, i, size)] = 0xfe;
+			data[CH_POINT(i, size - 2, size)] = 0xfe;
+			data[CH_POINT(size - 2, i, size)] = 0xfe;
+		}
+		break;
+	}
+}
 
 // call it when gl_smoothfont changed or after we load charset
 static void Apply_OnChange_gl_smoothfont(int value)
@@ -212,7 +219,7 @@ void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
 	Draw_AdjustConback();
 }
 
-void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
+void OnChange_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 {
 	mpic_t *pic;
 
@@ -272,22 +279,40 @@ void customCrosshair_Init(void)
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
-void Draw_InitCrosshairs(void)
+static int CrosshairPixelSize(void)
+{
+	// 0 = 8, 1 = 16 etc
+	return pow(2, 3 + (int)bound(0, crosshairscale.integer, 5));
+}
+
+static void BuildBuiltinCrosshairs(void)
 {
 	int i;
 	char str[256] = {0};
+	int crosshair_size = CrosshairPixelSize();
 
 	memset(&crosshairpic, 0, sizeof(crosshairpic));
+	for (i = 0; i < NUMCROSSHAIRS; i++) {
+		byte* crosshair_buffer = (byte*)Q_malloc(crosshair_size * crosshair_size);
 
-	for (i = 0; i < NUMCROSSHAIRS; i++)
-	{
 		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
-		crosshairtextures[i] = GL_LoadTexture (str, 8, 8, crosshairdata[i], TEX_ALPHA, 1);
+		CreateBuiltinCrosshair(crosshair_buffer, crosshair_size, i + 2);
+		crosshairtextures[i] = GL_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
+
+		Q_free(crosshair_buffer);
 	}
+	current_crosshair_pixel_size = crosshair_size;
+}
+
+void Draw_InitCrosshairs(void)
+{
+	char str[256] = {0};
+
+	BuildBuiltinCrosshairs();
 	customCrosshair_Init(); // safe re-init
 
-	snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
-	Cvar_Set(&gl_crosshairimage, str);
+	snprintf(str, sizeof(str), "%s", crosshairimage.string);
+	Cvar_Set(&crosshairimage, str);
 }
 
 float overall_alpha = 1.0;
@@ -780,8 +805,10 @@ void Draw_Init (void)
 	Cvar_Register (&scr_menudrawhud);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
-	Cvar_Register (&gl_crosshairimage);
-	Cvar_Register (&gl_crosshairalpha);
+	Cvar_Register (&crosshairimage);
+	Cvar_Register (&crosshairalpha);
+	Cvar_Register (&crosshairscale);
+	Cvar_Register (&crosshairscalemethod);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1192,212 +1219,103 @@ void Draw_String (int x, int y, const char *text)
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, 1, false, 0);
 }
 
+qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size);
+
 void Draw_Crosshair (void)
 {
 	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;
 	byte *col;
 	extern vrect_t scr_vrect;
+	float crosshair_scale = (crosshairscalemethod.integer ? 1 : ((float)glwidth / 320));
+	int crosshair_pixel_size = CrosshairPixelSize();
+
+	if (current_crosshair_pixel_size != crosshair_pixel_size) {
+		BuildBuiltinCrosshairs();
+	}
 
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
-		// Multiview
-		if (CL_MultiviewEnabled())
-		{
-			if (cl_multiview.value == 1)
-			{
-				x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
-				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
-			}
-			else if (cl_multiview.value == 2)
-			{
-				if (!cl_mvinset.value)
-				{
-					if (CL_MultiviewCurrentView() == 1)
-					{
-						x = vid.width / 2;
-						y = vid.height * 3/4;
-					}
-					else if (CL_MultiviewCurrentView() == 2)
-					{
-						// top cv2
-						x = vid.width / 2;
-						y = vid.height / 4;
-					}
-				}
-				else
-				{
-					// inset
-					if (! CL_MultiviewInsetView())
-					{
-						// normal
-						x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
-						y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
-					}
-					else
-					{
-						x = vid.width - (vid.width/3)/2;
-						if (cl_sbar.value)
-						{
-							y = ((vid.height/3)-sb_lines/3)/2;
-						}
-						else
-						{
-							// no sbar
-							y = (vid.height/3)/2;
-						}
-					}
-				}
-			}
-			else if (cl_multiview.value == 3)
-			{
-				if (CL_MultiviewCurrentView() == 2)
-				{
-					// top
-					x = vid.width / 2;
-					y = vid.height / 4;
-				}
-				else if (CL_MultiviewCurrentView() == 3)
-				{
-					// bl
-					x = vid.width / 4;
-					y = vid.height/2 + vid.height/4;
-				}
-				else
-				{
-					// br
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/2 + vid.height/4;
-				}
+		qbool half_size = false;
 
-			}
-			else if (cl_multiview.value >= 4)
-			{
-				if (CL_MultiviewCurrentView() == 2)
-				{
-					// tl
-					x = vid.width/4;
-					y = vid.height/4;
-				}
-				else if (CL_MultiviewCurrentView() == 3)
-				{
-					// tr
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/4;
-
-				}
-				else if (CL_MultiviewCurrentView() == 4)
-				{
-					// bl
-					x = vid.width/4;
-					y = vid.height/2 + vid.height/4;
-
-				}
-				else if (CL_MultiviewCurrentView() == 1)
-				{
-					// br
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/2 + vid.height/4;
-				}
-			}
-		}
-		else
-		{
-			// not mv
-			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
-			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
-		}
-
-		if (!gl_crosshairalpha.value)
+		if (!crosshairalpha.value) {
 			return;
+		}
+
+		if (!CL_MultiviewGetCrosshairCoordinates(true, &x, &y, &half_size)) {
+			return;
+		}
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho(0, glwidth, glheight, 0, -99999, 99999);
+
+		x += crosshair_scale * cl_crossx.value;
+		y += crosshair_scale * cl_crossy.value;
 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		col = crosshaircolor.color;
 
-		if (gl_crosshairalpha.value)
-		{
-            glDisable(GL_ALPHA_TEST);
-            glEnable (GL_BLEND);
-			col[3] = bound(0, gl_crosshairalpha.value, 1) * 255;
-			glColor4ubv (col);
-		}
-		else
-		{
-			glColor3ubv (col);
-		}
+		glDisable(GL_ALPHA_TEST);
+		glEnable (GL_BLEND);
+		col[3] = bound(0, crosshairalpha.value, 1) * 255;
+		glColor4ubv (col);
 
-		if (customcrosshair_loaded & CROSSHAIR_IMAGE)
-		{
-			GL_Bind (crosshairpic.texnum);
-			ofs1 = 4 - 4.0 / crosshairpic.width;
-			ofs2 = 4 + 4.0 / crosshairpic.width;
+		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
+			GL_Bind(crosshairpic.texnum);
+			ofs1 = (crosshairpic.width * 0.5f - 0.5f) * bound(0, crosshairsize.value, 20);
+			ofs2 = (crosshairpic.height * 0.5f + 0.5f) * bound(0, crosshairsize.value, 20);
 			sh = crosshairpic.sh;
 			sl = crosshairpic.sl;
 			th = crosshairpic.th;
 			tl = crosshairpic.tl;
 		}
-		else
-		{
+		else {
 			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
-			ofs1 = 3.5;
-			ofs2 = 4.5;
+			ofs1 = (crosshair_pixel_size * 0.5f - 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
+			ofs2 = (crosshair_pixel_size * 0.5f + 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
 			tl = sl = 0;
 			sh = th = 1;
 		}
 
-		// Multiview for the case of mv == 2 with mvinset
-		if (CL_MultiviewInsetEnabled())
-		{
-			if (CL_MultiviewInsetView())
-			{
-				if (!cl_mvinsetcrosshair.value)
-					return;
-
-				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-			}
-			else
-			{
-				// normal
-				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
-				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
-			}
-		}
-		else if (CL_MultiviewActiveViews() > 1)
-		{
-			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-		}
-		else
-		{
-			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
-			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
+		if (half_size) {
+			ofs1 *= 0.5f;
+			ofs2 *= 0.5f;
 		}
 
-		glBegin (GL_QUADS);
-		glTexCoord2f (sl, tl);
-		glVertex2f (x - ofs1, y - ofs1);
-		glTexCoord2f (sh, tl);
-		glVertex2f (x + ofs2, y - ofs1);
-		glTexCoord2f (sh, th);
-		glVertex2f (x + ofs2, y + ofs2);
-		glTexCoord2f (sl, th);
-		glVertex2f (x - ofs1, y + ofs2);
-		glEnd ();
+#ifdef GL_CLAMP_TO_EDGE
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#else
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
+		glBegin(GL_QUADS);
+		glTexCoord2f(sl, tl);
+		glVertex2f(x - ofs1, y - ofs1);
+		glTexCoord2f(sh, tl);
+		glVertex2f(x + ofs2, y - ofs1);
+		glTexCoord2f(sh, th);
+		glVertex2f(x + ofs2, y + ofs2);
+		glTexCoord2f(sl, th);
+		glVertex2f(x - ofs1, y + ofs2);
+		glEnd();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		if (gl_crosshairalpha.value)
-		{
-			glDisable(GL_BLEND);
-			glEnable (GL_ALPHA_TEST);
-		}
+		glDisable(GL_BLEND);
+		glEnable (GL_ALPHA_TEST);
 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glColor3ubv (color_white);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, vid.width, vid.height, 0, -99999, 99999);
 	}
-	else if (crosshair.value)
-	{
+	else if (crosshair.value) {
 		// Multiview
 		if (CL_MultiviewInsetEnabled()) {
 			if (CL_MultiviewInsetView()) {

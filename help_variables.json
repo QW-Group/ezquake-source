@@ -1853,8 +1853,8 @@
         { "name": "3", "description": "A small cross crosshair." },
         { "name": "4", "description": "A dot crosshair." },
         { "name": "5", "description": "Star wars crosshair." },
-        { "name": "6", "description": "Happyface crosshair." },
-        { "name": "7", "description": "F22 simulator crosshair." }
+        { "name": "6", "description": "F22 simulator crosshair." },
+        { "name": "7", "description": "(same as 6)" }
       ]
     },
     "crosshairalpha": {
@@ -1866,6 +1866,16 @@
         { "name": "true", "description": "Opaque crosshair." }
       ]
     },
+    "crosshairscalemethod": {
+      "group-id": "6",
+      "desc": "Determines how crosshair images are scaled",
+      "remarks": "When changing this value, /crosshairscale & /crosshairsize should be adjusted accordingly.",
+      "type": "boolean",
+      "value": [
+        { "name": "0", "description": "Quake standard scaling: resolution width / 320" },
+        { "name": "1", "description": "No scaling, sizes are in pixels" }
+      ]
+    },
     "crosshaircolor": {
       "group-id": "6",
       "desc": "This variable defines the color of the crosshair.",
@@ -1873,12 +1883,28 @@
     },
     "crosshairimage": {
       "group-id": "6",
-      "desc": "To load the crosshair use \"crosshairimage image_name\" where 'image_name' is the name of the crosshair image you put in the above directory.\nExample, if I have c:\\quake\\ezQuake\\crosshairs\\cross.png I'd use\n\"crosshairimage cross\" to load it.",
+      "desc": "The filename of the crosshair image.",
+      "remarks": "Crosshair images should be placed in ./ezquake/crosshairs or ./qw/crosshairs directory.",
       "type": "string"
+    },
+    "crosshairscale": {
+      "group-id": "6",
+      "desc": "When using built-in crosshairs, increases the resolution of the crosshair, giving a crisper image on screen.",
+      "remarks": "Max value 5.  Increasing this value will require lowering of /crosshairsize to give same size image on screen.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "8x8" },
+        { "name": "1", "description": "16x16" },
+        { "name": "2", "description": "32x32" },
+        { "name": "3", "description": "64x64" },
+        { "name": "4", "description": "128x128" },
+        { "name": "5", "description": "256x256" }
+      ]
     },
     "crosshairsize": {
       "group-id": "6",
-      "desc": "Basically crosshairsize scales the size of the crosshair. \nExample:\ncrosshairsize 0.5 halves the size and crosshair 2 doubles it.",
+      "desc": "Performs basic scaling of the crosshair.",
+      "remarks": "Maximum value 20. For example, /crosshairsize 0.5 halves the size, and /crosshair 2 doubles it.",
       "type": "float"
     },
     "cvar_viewdefault": {
@@ -8474,6 +8500,36 @@
       "desc": "Switches graphical style of sigil 4 icon",
       "type": "float"
     },
+    "hud_sortrules_includeself": {
+      "group-id": "19",
+      "desc": "Determines how the current player is sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "No special treatment, sort as normal." },
+        { "name": "1", "description": "The current player always appears in first place." },
+        { "name": "2", "description": "The current player be in first or second place." }
+      ]
+    },
+    "hud_sortrules_playersort": {
+      "group-id": "19",
+      "desc": "Determines how players are sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Sort by name." },
+        { "name": "1", "description": "Sort by frags, then by name." },
+        { "name": "2", "description": "Sort by team, then name." },
+        { "name": "3", "description": "Sort by team, frags, then name." }
+      ]
+    },
+    "hud_sortrules_teamsort": {
+      "group-id": "19",
+      "desc": "Determines how teams are sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Sort by name." },
+        { "name": "1", "description": "Sort by frags, then by name." }
+      ]
+    },
     "hud_speed_align_x": {
       "group-id": "19",
       "desc": "Sets horizontal align of your current speed",
@@ -8487,7 +8543,7 @@
     "hud_speed_color_fast": {
       "group-id": "19",
       "desc": "Sets the color of the speed hud item when the player is moving at a \"fast\" speed (above 500).",
-      "remarks": "Use the quake pallete colors to set this (0-255).",
+      "remarks": "Use the quake palette colors to set this (0-255).",
       "type": "integer"
     },
     "hud_speed_color_fastest": {

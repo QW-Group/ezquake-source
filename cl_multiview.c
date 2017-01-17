@@ -1584,3 +1584,110 @@ int CL_MultiviewAutotrackSlot (void)
 {
 	return CL_MultiviewInsetEnabled () ? nTrack1duel : cl.viewplayernum;
 }
+
+qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size)
+{
+	extern vrect_t	scr_vrect;
+	extern int glx, gly, glwidth, glheight;
+
+	float x, y;
+	float min_x = scr_vrect.x;
+	float width = scr_vrect.width;
+	float min_y = scr_vrect.y;
+	float height = scr_vrect.height;
+
+	if (use_screen_coords) {
+		min_x = glx;
+		min_y = gly;
+		width = glwidth;
+		height = glheight;
+	}
+
+	x = min_x + 0.5 * width;
+	y = min_y + 0.5 * height;
+	*half_size = false;
+
+	if (CL_MultiviewEnabled()) {
+		int active_views = CL_MultiviewActiveViews();
+
+		if (active_views == 2) {
+			if (CL_MultiviewInsetEnabled()) {
+				// inset
+				if (CL_MultiviewInsetView()) {
+					if (!cl_mvinsetcrosshair.value) {
+						return false;
+					}
+
+					x = min_x + 5.0f * width / 6.0f;
+					if (cl_sbar.value) {
+						y = min_y + (height / 3 - sb_lines / 3) / 2;
+					}
+					else {
+						y = min_y + height / 6; // no sbar
+					}
+
+					*half_size = true;
+				}
+			}
+			else {
+				if (CL_MultiviewCurrentView() == 1)
+				{
+					x = min_x + width / 2;
+					y = min_y + height * 3.0f / 4.0f;
+				}
+				else if (CL_MultiviewCurrentView() == 2)
+				{
+					// top cv2
+					x = min_x + width / 2;
+					y = min_y + height * 1.0f / 4.0f;
+				}
+				*half_size = true;
+			}
+		}
+		else if (active_views == 3) {
+			if (CL_MultiviewCurrentView() == 2) {
+				// top
+				x = min_x + width / 2;
+				y = min_y + height / 4.0f;
+			}
+			else if (CL_MultiviewCurrentView() == 3) {
+				// bl
+				x = min_x + width / 4.0f;
+				y = min_y + height * 3.0f / 4.0f;
+			}
+			else {
+				// br
+				x = min_x + width * 3.0f / 4.0f;
+				y = min_y + height * 3.0f / 4.0f;
+			}
+			*half_size = true;
+		}
+		else if (active_views >= 4) {
+			if (CL_MultiviewCurrentView() == 2) {
+				// tl
+				x = min_x + width / 4.0f;
+				y = min_y + height / 4.0f;
+			}
+			else if (CL_MultiviewCurrentView() == 3) {
+				// tr
+				x = min_x + width * 3.0f / 4.0f;
+				y = min_y + height / 4.0f;
+			}
+			else if (CL_MultiviewCurrentView() == 4) {
+				// bl
+				x = min_x + width / 4.0f;
+				y = min_y + height * 3.0f / 4.0f;
+			}
+			else if (CL_MultiviewCurrentView() == 1) {
+				// br
+				x = min_x + width * 3.0f / 4.0f;
+				y = min_y + height * 3.0f / 4.0f;
+			}
+			*half_size = true;
+		}
+	}
+
+	*cross_x = x;
+	*cross_y = y;
+	return true;
+}

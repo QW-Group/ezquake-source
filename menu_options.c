@@ -188,7 +188,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void Sys_RegisterQWURLProtocol_f(void);
 #endif
-extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+extern cvar_t scr_autoid, crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
 ;
 
@@ -987,7 +987,7 @@ setting settview_arr[] = {
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Crosshair Size", crosshairsize, 0.2, 3, 0.2),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Crosshair Alpha", gl_crosshairalpha, 0.1, 1, 0.1),
+	ADDSET_NUMBER	("Crosshair Alpha", crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 	ADDSET_BASIC_SECTION(),
 
