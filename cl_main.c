@@ -80,7 +80,7 @@ cvar_t	cl_timeout = {"cl_timeout", "60"};
 cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
-#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
@@ -638,19 +638,41 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 }
 #endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+unsigned int CL_SupportedMVDExtensions1(void)
+{
+	unsigned int extensions_supported = 0;
+
+	if (!cl_pext.value)
+		return 0;
+
+#ifdef MVD_PEXT1_FLOATCOORDS
+	if (cl_pext_floatcoords.value) {
+		extensions_supported |= MVD_PEXT1_FLOATCOORDS;
+	}
+#endif
+
+	return extensions_supported;
+}
+#endif
 
 // Called by CL_Connect_f and CL_CheckResend
 static void CL_SendConnectPacket(
 #ifdef PROTOCOL_VERSION_FTE
-							unsigned int ftepext
+	unsigned int ftepext
 #ifdef PROTOCOL_VERSION_FTE2
-							,
+	,
 #endif // PROTOCOL_VERSION_FTE2
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
-							unsigned int ftepext2
+	unsigned int ftepext2
+#ifdef PROTOCOL_VERSION_MVD1
+	,
+#endif
 #endif // PROTOCOL_VERSION_FTE2
-
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int mvdpext1
+#endif
 								) 
 {
 	char data[2048];
@@ -661,12 +683,15 @@ static void CL_SendConnectPacket(
 	if (cls.state != ca_disconnected)
 		return;
 
-	#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions  = (ftepext & CL_SupportedFTEExtensions());
-	#endif // PROTOCOL_VERSION_FTE
-	#ifdef PROTOCOL_VERSION_FTE2
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
 	cls.fteprotocolextensions2  = (ftepext2 & CL_SupportedFTEExtensions2());
-	#endif // PROTOCOL_VERSION_FTE
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_MVD1
+	cls.mvdprotocolextensions1 = (mvdpext1 & CL_SupportedMVDExtensions1());
+#endif
 
 	connect_time = cls.realtime; // For retransmit requests
 	cls.qport = Cvar_Value("qport");
@@ -678,7 +703,7 @@ static void CL_SendConnectPacket(
 
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 
-	#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 	if (cls.fteprotocolextensions) 
 	{
 		char tmp[128];
@@ -686,9 +711,9 @@ static void CL_SendConnectPacket(
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		strlcat(data, tmp, sizeof(data));
 	}
-	#endif // PROTOCOL_VERSION_FTE 
+#endif // PROTOCOL_VERSION_FTE
 
-	#ifdef PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_FTE2
 	if (cls.fteprotocolextensions2) 
 	{
 		char tmp[128];
@@ -696,8 +721,16 @@ static void CL_SendConnectPacket(
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		strlcat(data, tmp, sizeof(data));
 	}
-	#endif // PROTOCOL_VERSION_FTE2 
+#endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+	if (cls.mvdprotocolextensions1) {
+		char tmp[128];
+		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_MVD1, cls.mvdprotocolextensions1);
+		Com_Printf_State(PRINT_DBG, "0x%x is mvd protocol ver and 0x%x is mvdprotocolextensions1\n", PROTOCOL_VERSION_MVD1, cls.mvdprotocolextensions1);
+		strlcat(data, tmp, sizeof(data));
+	}
+#endif
 
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
@@ -724,7 +757,13 @@ void CL_CheckForResend (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				svs.fteprotocolextensions2
+	#ifdef PROTOCOL_VERSION_MVD1
+                ,
+	#endif
 #endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_MVD1
+                svs.mvdprotocolextensions1
+#endif
 				);
 		
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
@@ -1453,6 +1492,9 @@ void CL_ConnectionlessPacket (void)
 	#ifdef PROTOCOL_VERSION_FTE2
 	unsigned int pext2 = 0;
 	#endif // PROTOCOL_VERSION_FTE2
+	#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int pext_mvd1 = 0;
+	#endif
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
@@ -1492,6 +1534,11 @@ void CL_ConnectionlessPacket (void)
 					pext2 = MSG_ReadLong();
 				else
 #endif // PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_MVD1
+				if (c == PROTOCOL_VERSION_MVD1)
+					pext_mvd1 = MSG_ReadLong();
+				else
+#endif
 					MSG_ReadLong();
 			}
 
@@ -1504,7 +1551,13 @@ void CL_ConnectionlessPacket (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				pext2
+#ifdef PROTOCOL_VERSION_MVD1
+				,
+#endif
 #endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_MVD1
+				pext_mvd1
+#endif
 				);
 
 			break;
@@ -1887,7 +1940,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_delay_packet);
 	Cvar_Register (&cl_earlypackets);
 
-#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register (&cl_pext);
 	Cvar_Register (&cl_pext_other);
 	Cvar_Register (&cl_pext_warndemos);

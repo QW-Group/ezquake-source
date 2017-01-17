@@ -1398,6 +1398,10 @@ void CL_ParseServerData (void)
 	cls.fteprotocolextensions2 = 0;
 #endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+	cls.mvdprotocolextensions1 = 0;
+#endif
+
 	for(;;)
 	{
 		protover = MSG_ReadLong ();
@@ -1415,6 +1419,14 @@ void CL_ParseServerData (void)
 		{
 			cls.fteprotocolextensions2 = MSG_ReadLong();
 			Com_DPrintf ("Using FTE extensions2 0x%x\n", cls.fteprotocolextensions2);
+			continue;
+		}
+#endif
+
+#ifdef PROTOCOL_VERSION_MVD1
+		if (protover == PROTOCOL_VERSION_MVD1) {
+			cls.mvdprotocolextensions1 = MSG_ReadLong();
+			Com_DPrintf("Using MVDSV extensions 0x%x\n", cls.mvdprotocolextensions1);
 			continue;
 		}
 #endif
@@ -3042,6 +3054,9 @@ void CL_ParseStufftext (void)
 #ifdef PROTOCOL_VERSION_FTE2
 		extern unsigned int CL_SupportedFTEExtensions2 (void);
 #endif // PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_MVD1
+		extern unsigned int CL_SupportedMVDExtensions1(void);
+#endif
 
 		char tmp[128];
 		char data[1024] = "cmd pext";
@@ -3060,6 +3075,13 @@ void CL_ParseStufftext (void)
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
 		strlcat(data, tmp, sizeof(data));
 #endif // PROTOCOL_VERSION_FTE2 
+
+#ifdef PROTOCOL_VERSION_MVD1
+		ext = cls.mvdprotocolextensions1 ? cls.mvdprotocolextensions1 : CL_SupportedMVDExtensions1();
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_MVD1, ext);
+		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is mvdsv protocol ver and 0x%x is mvdprotocolextensions1\n", PROTOCOL_VERSION_MVD1, ext);
+		strlcat(data, tmp, sizeof(data));
+#endif
 
 		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
@@ -3808,15 +3830,19 @@ void CL_ParseServerMessage (void)
 
 			// Write the change in entities to the demo being recorded
 			// or the net message we just received.
-			if (cmd == svc_deltapacketentities)
+			if (cmd == svc_deltapacketentities || cmd == svc_packetentities) {
 				CL_WriteDemoEntities();
+			}
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
-			else if (cmd == svc_serverdata)
+			else if (cmd == svc_serverdata) {
 				CL_WriteServerdata(&cls.demomessage);
-			else if (cmd != svc_playerinfo)		// We write svc_playerinfo out as we read it in
+			}
+			else if (cmd != svc_playerinfo) {
+				// We write svc_playerinfo out as we read it in
 				SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
+			}
 		}
 	}
 

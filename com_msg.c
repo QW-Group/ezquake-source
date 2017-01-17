@@ -554,6 +554,13 @@ float MSG_ReadCoord (void)
 #endif // FTE_PEXT_FLOATCOORDS
 }
 
+float MSG_ReadFloatCoord(void)
+{
+	float f;
+	MSG_ReadData(&f, 4);
+	return LittleFloat(f);
+}
+
 float MSG_ReadAngle16 (void)
 {
 	return MSG_ReadShort() * (360.0 / 65536);

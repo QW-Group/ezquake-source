@@ -462,20 +462,38 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	if (bits & U_EFFECTS)
 		to->effects = MSG_ReadByte();
 
-	if (bits & U_ORIGIN1)
-		to->origin[0] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN1) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[0] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[0] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE1)
 		to->angles[0] = MSG_ReadAngle();
 
-	if (bits & U_ORIGIN2)
-		to->origin[1] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN2) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[1] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[1] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE2)
 		to->angles[1] = MSG_ReadAngle();
 
-	if (bits & U_ORIGIN3)
-		to->origin[2] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN3) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[2] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[2] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE3)
 		to->angles[2] = MSG_ReadAngle();
@@ -1317,8 +1335,9 @@ void CL_ParsePlayerinfo (void)
 
 		for (i = 0; i < 3; i++) 
 		{
-			if (flags & (DF_ORIGIN << i))
-				state->origin[i] = MSG_ReadCoord ();
+			if (flags & (DF_ORIGIN << i)) {
+				state->origin[i] = MSG_ReadCoord();
+			}
 		}
 
 		for (i = 0; i < 3; i++) 
@@ -1355,10 +1374,16 @@ void CL_ParsePlayerinfo (void)
 		flags = state->flags = MSG_ReadShort ();
 
 		state->messagenum = cl.parsecount;
-		state->origin[0] = MSG_ReadCoord ();
-		state->origin[1] = MSG_ReadCoord ();
-		state->origin[2] = MSG_ReadCoord ();
-
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			state->origin[0] = MSG_ReadFloatCoord();
+			state->origin[1] = MSG_ReadFloatCoord();
+			state->origin[2] = MSG_ReadFloatCoord();
+		}
+		else {
+			state->origin[0] = MSG_ReadCoord();
+			state->origin[1] = MSG_ReadCoord();
+			state->origin[2] = MSG_ReadCoord();
+		}
 		state->frame = MSG_ReadByte ();
 
 		// the other player's last move was likely some time before the packet was sent out,

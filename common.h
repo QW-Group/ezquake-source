@@ -378,6 +378,7 @@ char *MSG_ReadString (void);
 char *MSG_ReadStringLine (void);
 
 float MSG_ReadCoord (void);
+float MSG_ReadFloatCoord (void);
 float MSG_ReadAngle (void);
 float MSG_ReadAngle16 (void);
 void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int protoversion);

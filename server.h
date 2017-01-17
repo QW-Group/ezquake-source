@@ -516,6 +516,10 @@ typedef struct
 	unsigned int fteprotocolextensions2;
 #endif
 
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int mvdprotocolextensions1;
+#endif
+
 	// log messages are used so that fraglog processes can get stats
 	int				logsequence;		// the message currently being filled
 	double			logtime;		// time of last swap
