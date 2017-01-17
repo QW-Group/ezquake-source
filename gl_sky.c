@@ -454,3 +454,9 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 
 	return true;
 }
+
+void R_ClearSkyTextures(void)
+{
+	GL_TextureReferenceInvalidate(solidskytexture);
+	GL_TextureReferenceInvalidate(alphaskytexture);
+}

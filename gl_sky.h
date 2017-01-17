@@ -13,4 +13,6 @@ extern msurface_t **skychain_tail;
 extern float skymins[2][6], skymaxs[2][6];
 extern texture_ref solidskytexture, alphaskytexture;
 
+void R_ClearSkyTextures(void);
+
 #endif

@@ -45,6 +45,7 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "mvd_utils.h"
 #include "input.h"
 #include "qtv.h"
+#include "gl_sky.h"
 
 void R_TranslatePlayerSkin (int playernum);
 
@@ -724,6 +725,7 @@ void Model_NextDownload (void)
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
+	R_ClearSkyTextures();
 
 	for (i = 1; i < MAX_MODELS; i++) {
 		if (!cl.model_name[i][0]) {

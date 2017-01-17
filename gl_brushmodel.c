@@ -30,6 +30,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "fmod.h"
 #include "utils.h"
 #include "glsl/constants.glsl"
+#include "gl_sky.h"
 
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
@@ -329,7 +330,6 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	char solidname[MAX_QPATH], alphaname[MAX_QPATH];
 	char altsolidname[MAX_QPATH], altalphaname[MAX_QPATH];
 	byte alphapixel = 255;
-	extern texture_ref solidskytexture, alphaskytexture;
 
 	if (!GL_ExternalTexturesEnabled(true)) {
 		return false;

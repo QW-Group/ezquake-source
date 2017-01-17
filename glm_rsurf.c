@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "glm_brushmodel.h"
+#include "gl_sky.h"
 
 #define GLM_DRAWCALL_INCREMENT 8
 
@@ -103,13 +104,14 @@ static void Compile_DrawWorldProgram(void)
 	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
 	qbool luma_textures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
+	qbool skydome = !skybox && !r_fastsky.integer && GL_TextureReferenceIsValid(solidskytexture);
 
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
 		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
-		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
+		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
@@ -144,7 +146,7 @@ static void Compile_DrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYBOX_TEXTURE %d\n", TEXTURE_UNIT_SKYBOX), sizeof(included_definitions));
 		}
-		else if (!r_fastsky.integer) {
+		else if (skydome) {
 			TEXTURE_UNIT_SKYDOME_TEXTURE = samplers++;
 			TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE = samplers++;
 
