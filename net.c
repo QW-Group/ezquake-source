@@ -88,10 +88,13 @@ static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, net
 	return true;
 }
 
+float f_rnd(float from, float to);
+
 static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->tail];
 	double time = Sys_DoubleTime();
+	float deviation = f_rnd(-bound(0, cl_delay_packet_dev.value, 12), bound(0, cl_delay_packet_dev.value, 12));
 
 	// If buffer is full, can't prevent packet loss - drop this packet
 	if (next->time && queue->head == queue->tail)
@@ -100,7 +103,7 @@ static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, net
 	memmove(next->data, data, size);
 	next->length = size;
 	next->addr = addr;
-	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.value + deviation, CL_MAX_PACKET_DELAY);
 
 	NET_PacketQueueSetNextIndex(&queue->tail);
 	return true;

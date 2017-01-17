@@ -78,6 +78,7 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
 cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
@@ -1754,6 +1755,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_fix_mvd);
 
 	Cvar_Register (&cl_delay_packet);
+	Cvar_Register (&cl_delay_packet_dev);
 	Cvar_Register (&cl_earlypackets);
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)

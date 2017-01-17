@@ -678,6 +678,12 @@
       "remarks": "Specified in ms.  If delay is 20ms, incoming packets will be delayed by 10ms, outgoing packets too. It's preferred to use the least value that gives the desired ping.",
       "type": "integer"
     },
+    "cl_delay_packet_deviation": {
+      "group-id": "21",
+      "desc": "Allows random deviation to be added to /cl_delay_packet delay.",
+      "remarks": "Specified in ms.  Makes /cl_delay_packet better simulate high-ping connections.",
+      "type": "integer"
+    },
     "cl_democlock": {
       "group-id": "40",
       "desc": "A clock showing how much time has elapsed since the start of the demo.",

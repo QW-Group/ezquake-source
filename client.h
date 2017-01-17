@@ -992,6 +992,7 @@ void CL_MultiviewDemoStopRewind (void);
 // client side min_ping aka delay
 
 extern cvar_t cl_delay_packet;
+extern cvar_t cl_delay_packet_dev;
 
 #define CL_MAX_DELAYED_PACKETS 16 /* 13 * 16 = 208 ms, should be enough */
 #define CL_MAX_PACKET_DELAY 75 /* total delay two times more */

@@ -484,15 +484,26 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 
 	if (cls.state == ca_active) {
 		if ((cl.standby) || (cl.teamfortress)) {
+			char announce[128];
+
+			if (var == &cl_delay_packet) {
+				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", ival, cl_delay_packet_dev.integer);
+			}
+			else {
+				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", cl_delay_packet.integer, ival);
+			}
+
 			// allow in standby or teamfortress. For teamfortress, more often than not
 			// People 1on1 without "match mode" and they may want to sync pings.
-			Cbuf_AddText(va("say delay packet: %d ms\n", ival));
-		} else {
+			Cbuf_AddText(announce);
+		}
+		else {
 			// disallow during the match
 			Com_Printf("%s changes are not allowed during the match\n", var->name);
 			*cancel = true;
 		}
-	} else {
+	}
+	else {
 		// allow in not fully connected state
 	}
 }
