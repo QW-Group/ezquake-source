@@ -606,11 +606,11 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 			if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
 				GLenum target = GL_TextureTargetFromReference(textures[i]);
 
-				if (target == GL_TEXTURE_2D_ARRAY) {
+				if (target == GL_TEXTURE_2D_ARRAY || glTextures[i] == 0) {
 					already_bound &= (bound_arrays[i + first] == glTextures[i]);
 					bound_arrays[i + first] = glTextures[i];
 				}
-				else if (target == GL_TEXTURE_2D) {
+				if (target == GL_TEXTURE_2D || glTextures[i] == 0) {
 					already_bound &= (bound_textures[i + first] == glTextures[i]);
 					bound_textures[i + first] = glTextures[i];
 				}
