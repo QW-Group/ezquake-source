@@ -812,7 +812,23 @@ static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, ent
 	{
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
 	}
+}
 
+static qbool CL_SetAlphaByDistance(entity_t* ent)
+{
+	vec3_t diff;
+	float distance;
+
+	VectorSubtract(ent->origin, cl.simorg, diff);
+	distance = VectorLength(diff);
+
+	// If too close to player, just hide entirely
+	if (distance < KTX_RACING_PLAYER_MIN_DISTANCE)
+		return false;
+
+	ent->alpha = min(distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
+	ent->renderfx |= RF_NORMALENT;
+	return true;
 }
 
 // TODO: OMG SPLIT THIS UP!
@@ -1067,19 +1083,8 @@ void CL_LinkPacketEntities(void)
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
 
-		if (cl.racing && cl.race_pacemaker_ent == state->number) {
-			vec3_t diff;
-			float distance;
-
-			VectorSubtract(ent.origin, cl.simorg, diff);
-			distance = VectorLength(diff);
-
-			// If too close to player, just hide entirely
-			if (distance < 24.0f)
-				continue;
-
-			ent.alpha = min(distance, 256.0f) / 512.0f;
-			ent.renderfx |= RF_NORMALENT;
+		if (cl.racing && cl.race_pacemaker_ent == state->number && !CL_SetAlphaByDistance(&ent)) {
+			continue;
 		}
 
 		CL_AddEntity (&ent);
@@ -1613,6 +1618,10 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 	newent.effects = ent->effects; // Electro - added for shells
 
+	if (cl.racing && !CL_SetAlphaByDistance(&newent)) {
+		return false;
+	}
+
 	CL_AddEntity (&newent);
 	return true;
 }
@@ -1825,6 +1834,11 @@ void CL_LinkPlayers (void)
 			VectorCopy (cl.simorg, ent.origin);
 		}
 
+		// Set alpha after origin determined
+		if (cl.racing && !CL_SetAlphaByDistance(&ent)) {
+			continue;
+		}
+
 		VectorCopy (ent.origin, cent->lerp_origin);
 
 		// VULT MOTION TRAILS
@@ -1868,6 +1882,9 @@ void CL_LinkPlayers (void)
 				{
 					ent.model = cl.vw_model_precache[0];
 					ent.renderfx |= RF_PLAYERMODEL;
+					if (cl.racing) {
+						CL_SetAlphaByDistance(&ent);
+					}
 					CL_AddEntity (&ent);
 				}
 				else 
@@ -1875,11 +1892,13 @@ void CL_LinkPlayers (void)
 					// server said don't add vwep player model
 				}
 			}
-			else
-				CL_AddEntity (&ent);
+			else {
+				CL_AddEntity(&ent);
+			}
 		}
-		else
-			CL_AddEntity (&ent);
+		else {
+			CL_AddEntity(&ent);
+		}
 	}
 }
 
@@ -2024,6 +2043,54 @@ void CL_SetSolidPlayers (int playernum)
 	}
 }
 
+static float VectorDistance(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return VectorLength(diff);
+}
+
+static int AlphaEntityComparer(const void* lhs_, const void* rhs_)
+{
+	const entity_t* lhs = (entity_t*)lhs_;
+	const entity_t* rhs = (entity_t*)rhs_;
+
+	float alpha_lhs = lhs->alpha == 0 ? 0 : 1 - lhs->alpha;
+	float alpha_rhs = rhs->alpha == 0 ? 0 : 1 - rhs->alpha;
+
+	float distance_lhs;
+	float distance_rhs;
+
+	// Try not to bother with distance calculation
+	if (alpha_lhs == alpha_rhs && alpha_lhs == 0) {
+		return 0;
+	}
+	if (alpha_lhs == 0) {
+		return -1;
+	}
+	if (alpha_rhs == 0) {
+		return 1;
+	}
+
+	// Furthest first
+	distance_lhs = VectorDistance(cl.simorg, lhs->origin);
+	distance_rhs = VectorDistance(cl.simorg, rhs->origin);
+	if (distance_lhs > distance_rhs) {
+		return -1;
+	}
+	else if (distance_lhs == distance_rhs) {
+		return 0;
+	}
+	return 1;
+}
+
+static void CL_SortEntities(void)
+{
+	if (cl.racing) {
+		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), AlphaEntityComparer);
+	}
+}
+
 // Builds the visedicts array for cl.time
 // Made up of: clients, packet_entities, nails, and tents
 void CL_EmitEntities (void) 
@@ -2039,16 +2106,18 @@ void CL_EmitEntities (void)
 
 	CL_ClearScene ();
 	
-	if (cls.nqdemoplayback)
-		NQD_LinkEntities ();
-	else 
-	{
+	if (cls.nqdemoplayback) {
+		NQD_LinkEntities();
+	}
+	else {
 		CL_LinkPlayers();
 		CL_LinkPacketEntities();
 		CL_LinkProjectiles();
 	}
 
 	CL_UpdateTEnts();
+
+	CL_SortEntities();
 }
 
 int	mvd_fixangle;

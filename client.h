@@ -1013,3 +1013,8 @@ void S_Voip_Ignore (unsigned int slot, qbool ignore);
 #define S_Voip_Speaking(x) false
 #define S_Voip_Loudness 0
 #endif
+
+// KTX
+#define KTX_RACING_PLAYER_MIN_DISTANCE 24.0f
+#define KTX_RACING_PLAYER_MAX_DISTANCE 256.0f
+#define KTX_RACING_PLAYER_ALPHA_SCALE  512.0f

@@ -1321,6 +1321,7 @@ typedef struct ci_player_s {
 	float		size;
 	byte		texindex;
 	int			flags;
+	float       distance;
 
 	player_info_t *player;
 
@@ -1383,13 +1384,8 @@ int CmpCI_Order(const void *p1, const void *p2)
 {
 	const ci_player_t	*a1 = (ci_player_t *) p1;
 	const ci_player_t	*a2 = (ci_player_t *) p2;
-	int l1, l2;
-	vec3_t v;
-
-	VectorSubtract (r_refdef.vieworg, a1->org, v);
-	l1 = VectorLength (v);
-	VectorSubtract (r_refdef.vieworg, a2->org, v);
-	l2 = VectorLength (v);
+	int l1 = a1->distance;
+	int l2 = a2->distance;
 
 	if (l1 > l2)
 		return -1;
@@ -1443,6 +1439,18 @@ void SCR_SetupCI (void) {
 		id->color[1] = 255; // g
 		id->color[2] = 255; // b
 		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
+		{
+			vec3_t diff;
+
+			VectorSubtract(id->org, r_refdef.vieworg, diff);
+			id->distance = VectorLength(diff);
+		}
+		if (cl.racing) {
+			if (id->distance < KTX_RACING_PLAYER_MIN_DISTANCE) {
+				continue; // too close, hide indicators
+			}
+			id->color[3] *= min(id->distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
+		}
 		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
