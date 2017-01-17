@@ -115,7 +115,7 @@ vec3_t trail_stop;
 qbool qmb_initialized = false;
 
 static cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
-static cvar_t gl_part_cache = { "gl_part_cache", "1" };
+static cvar_t gl_part_cache = { "gl_part_cache", "1", CVAR_LATCH };
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 cvar_t amf_part_fulldetail = { "gl_particle_fulldetail", "0", CVAR_LATCH };
 
