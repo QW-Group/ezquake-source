@@ -5588,7 +5588,7 @@
         { "name": "1", "description": "Text, white" },
         { "name": "2", "description": "Number, white" },
         { "name": "3", "description": "Text, gold" },
-        { "name": "4", "description": "Text, white" },
+        { "name": "4", "description": "Number, gold" },
         { "name": "5", "description": "Text: value of tp_name_X, where X is the name of the current gun held." }
       ]
     },
@@ -5662,8 +5662,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_sg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_sg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_sg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_sg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_sg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_sg inactive" }
       ]
     },
@@ -5732,8 +5732,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_ssg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_ssg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_ssg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_ssg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_ssg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_ssg inactive" }
       ]
     },
@@ -5802,8 +5802,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_ng active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_ng active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_ng inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_ng inactive" },
+        { "name": "7", "description": "Text: value of tp_name_ng active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_ng inactive" }
       ]
     },
@@ -5872,8 +5872,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_sng active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_sng active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_sng inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_sng inactive" },
+        { "name": "7", "description": "Text: value of tp_name_sng active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_sng inactive" }
       ]
     },
@@ -5942,8 +5942,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_gl active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_gl active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_gl inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_gl inactive" },
+        { "name": "7", "description": "Text: value of tp_name_gl active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_gl inactive" }
       ]
     },
@@ -6012,8 +6012,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_rl active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_rl active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_rl inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_rl inactive" },
+        { "name": "7", "description": "Text: value of tp_name_rl active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_rl inactive" }
       ]
     },
@@ -6082,8 +6082,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_lg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_lg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_lg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_lg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_lg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_lg inactive" }
       ]
     },
