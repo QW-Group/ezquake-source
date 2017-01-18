@@ -851,7 +851,7 @@ void CL_Serverinfo_f (void)
 	}
 	#endif // CLIENTONLY
 
-	if (cls.state >= ca_onserver && cl.serverinfo)
+	if (cls.state >= ca_onserver && cl.serverinfo[0])
 		Info_Print (cl.serverinfo);
 	else		
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));

@@ -664,7 +664,7 @@ void R_DrawWaterSurfaces (void) {
 		EmitWaterPolys (s);
 
 		//Tei "eshaders". 
-		if (s &&s->texinfo && s->texinfo->texture && s->texinfo->texture->name )
+		if (s &&s->texinfo && s->texinfo->texture && s->texinfo->texture->name[0] )
 		{
 
 			switch(s->texinfo->texture->name[1])

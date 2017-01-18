@@ -2382,7 +2382,7 @@ int TP_PlayersNumber(int userid, const char* team)
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		cp = &cl.players[i];
-		if (!cp->name || !cp->name[0] || cp->spectator) continue;
+		if (!cp->name[0] || cp->spectator) continue;
 		if (pt)
 			t2 = !strcmp(cp->team, pt);	// is the current one our teammate?
 		else

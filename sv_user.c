@@ -2215,7 +2215,7 @@ static void Cmd_SetInfo_f (void)
 		}
 		//<-
 		//VVD: forcenick ->
-		if ((int)sv_forcenick.value && (int)sv_login.value && sv_client->login)
+		if ((int)sv_forcenick.value && (int)sv_login.value && sv_client->login[0])
 		{
 			SV_ClientPrintf(sv_client, PRINT_CHAT,
 			                "You can't change your name while logged in on this server.\n");
