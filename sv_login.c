@@ -647,7 +647,7 @@ void SV_ParseLogin(client_t *cl)
 		MSG_WriteString (&cl->netchan.message, va("Welcome %s\n", log1));
 
 		//VVD: forcenick ->
-		if ((int)sv_forcenick.value && cl->login)
+		if ((int)sv_forcenick.value && cl->login[0])
 		{
 			Info_Set (&cl->_userinfo_ctx_, "name", cl->login);
 			strlcpy (cl->name, cl->login, CLIENT_NAME_LEN);
