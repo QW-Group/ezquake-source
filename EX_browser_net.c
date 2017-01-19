@@ -632,7 +632,7 @@ void GetServerPingsAndInfos(int full)
 	ping_phase = 1;
 	ping_pos = 0;
 
-	if (Sys_CreateDetachedThread (GetServerPingsAndInfosProc, (void *) full) < 0) {
+	if (Sys_CreateDetachedThread (GetServerPingsAndInfosProc, (void *)(uintptr_t)full) < 0) {
 		Com_Printf("Failed to create GetServerPingsAndInfosProc thread\n");
 	}
 }
