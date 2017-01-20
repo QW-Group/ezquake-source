@@ -3575,8 +3575,6 @@ void SCR_UpdateWholeScreen (void) {
 #define SSHOT_FAILED_QUIET	-2		//failed but don't print an error message
 #define SSHOT_SUCCESS		0
 
-typedef enum image_format_s {IMAGE_PCX, IMAGE_TGA, IMAGE_JPEG, IMAGE_PNG} image_format_t;
-
 static char *SShot_ExtForFormat(int format) {
 	switch (format) {
 		case IMAGE_PCX:		return ".pcx";
@@ -3642,22 +3640,41 @@ static void applyHWGamma(byte *buffer, int size) {
 	}
 }
 
-int SCR_Screenshot(char *name) {
-	int i, temp, buffersize;
-	int success = SSHOT_FAILED;
-	byte *buffer;
-	image_format_t format;
+int SCR_Screenshot(char *name)
+{
+	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
 
 	// name is fullpath now
 	//	name = (*name == '/') ? name + 1 : name;
+	target_params->format = SShot_FormatForName(name);
+	strlcpy(target_params->fileName, name, sizeof(target_params->fileName));
+	COM_ForceExtension(target_params->fileName, SShot_ExtForFormat(target_params->format));
+	target_params->width = glwidth;
+	target_params->height = glheight;
 
-	format = SShot_FormatForName(name);
-	COM_ForceExtension (name, SShot_ExtForFormat(format));
-	buffersize = glwidth * glheight * 3;
-
-	buffer = Q_malloc (buffersize);
+	target_params->buffer = Movie_TempBuffer(glwidth, glheight);
+	if (!target_params->buffer) {
+		target_params->buffer = Q_malloc(glwidth * glheight * 3);
+		target_params->freeMemory = true;
+	}
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, target_params->buffer);
+
+	if (Movie_BackgroundCapture(target_params)) {
+		return SSHOT_SUCCESS;
+	}
+
+	return SCR_ScreenshotWrite(target_params);
+}
+
+int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
+{
+	int i, temp;
+	int success = SSHOT_FAILED;
+	int format = target_params->format;
+	byte* buffer = target_params->buffer;
+	char* name = target_params->fileName;
+	int buffersize = target_params->width * target_params->height * 3;
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
@@ -3665,15 +3682,20 @@ int SCR_Screenshot(char *name) {
 		if (QLib_isModuleLoaded(qlib_libpng)) {
 #endif
 			applyHWGamma(buffer, buffersize);
-			success = Image_WritePNG(name, image_png_compression_level.value,
-					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
-				? SSHOT_SUCCESS : SSHOT_FAILED;
+			success = Image_WritePNG(
+				name, image_png_compression_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_PNG_STATIC
-		} else {
-			Com_Printf("Can't take a PNG screenshot without libpng.");
-			if (SShot_FormatForName("noext") == IMAGE_PNG)
-				Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-			Com_Printf("\n");
+		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a PNG screenshot without libpng.");
+				if (SShot_FormatForName("noext") == IMAGE_PNG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
 			success = SSHOT_FAILED_QUIET;
 		}
 #endif
@@ -3686,15 +3708,20 @@ int SCR_Screenshot(char *name) {
 		if (QLib_isModuleLoaded(qlib_libjpeg)) {
 #endif
 			applyHWGamma(buffer, buffersize);
-			success = Image_WriteJPEG(name, image_jpeg_quality_level.value,
-					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
-				? SSHOT_SUCCESS : SSHOT_FAILED;;
+			success = Image_WriteJPEG(
+				name, image_jpeg_quality_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_JPEG_STATIC
-		} else {
-			Com_Printf("Can't take a JPEG screenshot without libjpeg.");
-			if (SShot_FormatForName("noext") == IMAGE_JPEG)
-				Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-			Com_Printf("\n");
+		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a JPEG screenshot without libjpeg.");
+				if (SShot_FormatForName("noext") == IMAGE_JPEG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
 			success = SSHOT_FAILED_QUIET;
 		}
 #endif
@@ -3709,11 +3736,13 @@ int SCR_Screenshot(char *name) {
 			buffer[i + 2] = temp;
 		}
 		applyHWGamma(buffer, buffersize);
-		success = Image_WriteTGA(name, buffer, glwidth, glheight)
-			? SSHOT_SUCCESS : SSHOT_FAILED;
+		success = Image_WriteTGA(name, buffer, glwidth, glheight) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
-	Q_free(buffer);
+	if (target_params->freeMemory) {
+		Q_free(target_params->buffer);
+	}
+	Q_free(target_params);
 	return success;
 }
 

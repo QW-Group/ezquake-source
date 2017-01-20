@@ -1026,3 +1026,22 @@ void S_Voip_Ignore (unsigned int slot, qbool ignore);
 
 // Player Dead?
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
+
+// Screenshot queue
+typedef enum image_format_s {IMAGE_PCX, IMAGE_TGA, IMAGE_JPEG, IMAGE_PNG} image_format_t;
+
+typedef struct scr_sshot_target_s {
+	char fileName[128];
+	byte* buffer;
+	qbool freeMemory;
+	int width;
+	int height;
+	image_format_t format;
+} scr_sshot_target_t;
+
+int SCR_ScreenshotWrite(scr_sshot_target_t* target_params);
+
+qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
+byte* Movie_TempBuffer(int width, int height);
+qbool Movie_BackgroundInitialise(void);
+void Movie_BackgroundShutdown(void);
