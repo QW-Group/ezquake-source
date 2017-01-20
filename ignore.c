@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	$Id: ignore.c,v 1.7 2007-03-11 06:01:40 disconn3ct Exp $
 */
 
-#include <SDL_version.h>
 #include "quakedef.h"
 #include "ignore.h"
 #include "utils.h"
