@@ -446,9 +446,8 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 #endif
 
 	to->flags = bits;
-
 	if (bits & U_MODEL)
-		to->modelindex = MSG_ReadByte ();
+		to->modelindex = MSG_ReadByte();
 
 	if (bits & U_FRAME)
 		to->frame = MSG_ReadByte ();
@@ -504,21 +503,25 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 
 #ifdef PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_TRANS
-	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS) {
 		to->trans = MSG_ReadByte();
+	}
 #endif
 
 #ifdef FTE_PEXT_ENTITYDBL
-	if (morebits & U_FTE_ENTITYDBL)
+	if (morebits & U_FTE_ENTITYDBL) {
 		to->number += 512;
+	}
 #endif
 #ifdef FTE_PEXT_ENTITYDBL2
-	if (morebits & U_FTE_ENTITYDBL2)
+	if (morebits & U_FTE_ENTITYDBL2) {
 		to->number += 1024;
+	}
 #endif
 #ifdef FTE_PEXT_MODELDBL
-	if (morebits & U_FTE_MODELDBL)
+	if (morebits & U_FTE_MODELDBL) {
 		to->modelindex += 256;
+	}
 #endif
 #endif
 }
@@ -1421,15 +1424,23 @@ void CL_ParsePlayerinfo (void)
 			else
 				state->velocity[i] = 0;
 		}
-		if (flags & PF_MODEL)
-			state->modelindex = MSG_ReadByte ();
-		else
+		if (flags & PF_MODEL) {
+			state->modelindex = MSG_ReadByte();
+		}
+		else {
 			state->modelindex = cl_modelindices[mi_player];
+		}
 
-		if (flags & PF_SKINNUM)
-			state->skinnum = MSG_ReadByte ();
-		else
+		if (flags & PF_SKINNUM) {
+			state->skinnum = MSG_ReadByte();
+			if (state->skinnum & (1<<7) && (flags & PF_MODEL)) {
+				state->modelindex += 256;
+				state->skinnum -= (1<<7);
+			}
+		}
+		else {
 			state->skinnum = 0;
+		}
 
 		if (flags & PF_EFFECTS)
 			state->effects = MSG_ReadByte ();

@@ -253,7 +253,7 @@ typedef struct {
 } lightstyle_t;
 
 #define	MAX_EFRAGS			512
-#define	MAX_STATIC_ENTITIES	128		// torches, etc
+#define	MAX_STATIC_ENTITIES	512		// torches, etc
 #define	MAX_DEMOS			8
 #define	MAX_DEMONAME		16
 

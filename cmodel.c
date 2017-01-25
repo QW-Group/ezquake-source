@@ -794,7 +794,6 @@ static void CM_LoadLeafs29a (lump_t *l)
 	in = (dleaf29a_t *)(cmod_base + l->fileofs);
 
 	if (l->filelen % sizeof(*in)) {
-		int expected = sizeof(*in);
 		Host_Error("CM_LoadMap: funny lump size");
 	}
 
@@ -823,7 +822,6 @@ static void CM_LoadLeafsBSP2 (lump_t *l)
 	in = (dleaf_bsp2_t *)(cmod_base + l->fileofs);
 
 	if (l->filelen % sizeof(*in)) {
-		int expected = sizeof(*in);
 		Host_Error("CM_LoadMap: funny lump size");
 	}
 
@@ -1181,7 +1179,6 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	unsigned int i;
 	dheader_t *header;
 	unsigned int *buf;
-	qbool map_bsp2;
 	BuildPVSFunction cm_load_pvs_func = CM_BuildPVS;
 
 	if (map_name[0]) {
@@ -1207,7 +1204,6 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 		Host_Error ("CM_LoadMap: %s has wrong version number (%i should be %i)", name, i, Q1_BSPVERSION);
 
 	map_halflife = (i == HL_BSPVERSION);
-	map_bsp2 = (i == Q1_BSPVERSION2 || i == Q1_BSPVERSION29a);
 
 	Cvar_ForceSet (&sv_halflifebsp, i == HL_BSPVERSION ? "1" : "0");
 

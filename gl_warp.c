@@ -290,28 +290,28 @@ void EmitWaterPolys (msurface_t *fa) {
 		}
 		glColor3ubv (col);
 
- // START shaman FIX /gl_turbalpha + /r_fastturb {
-	if (wateralpha < 1.0 && wateralpha >= 0) {
-		glEnable (GL_BLEND);
-		col[3] = wateralpha*255;
-		glColor4ubv (col); // 1, 1, 1, wateralpha
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_FALSE);
-	}
- // END shaman FIX /gl_turbalpha + /r_fastturb {
+		// START shaman FIX /gl_turbalpha + /r_fastturb {
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			glEnable (GL_BLEND);
+			col[3] = wateralpha*255;
+			glColor4ubv (col); // 1, 1, 1, wateralpha
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			if (wateralpha < 0.9)
+				glDepthMask (GL_FALSE);
+		}
+		// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		EmitFlatWaterPoly (fa);
 
- // START shaman FIX /gl_turbalpha + /r_fastturb {
-	if (wateralpha < 1.0 && wateralpha >= 0) {
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glColor3ubv (color_white);
-		glDisable (GL_BLEND);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_TRUE);
-	}
- // END shaman FIX /gl_turbalpha + /r_fastturb {
+		// START shaman FIX /gl_turbalpha + /r_fastturb {
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glColor3ubv (color_white);
+			glDisable (GL_BLEND);
+			if (wateralpha < 0.9)
+				glDepthMask (GL_TRUE);
+		}
+		// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
