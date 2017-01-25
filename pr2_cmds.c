@@ -1597,26 +1597,32 @@ PF2_makestatic
 */
 void PF2_makestatic(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
+	entity_state_t* s;
 	edict_t	*ent;
-	int		i;
 
 	ent = EDICT_NUM(stack[0]._int);
-
-	MSG_WriteByte(&sv.signon, svc_spawnstatic);
-
-	MSG_WriteByte(&sv.signon, SV_ModelIndex((char *) VM_POINTER(base,mask,ent->v.model)));
-
-	MSG_WriteByte(&sv.signon, ent->v.frame);
-	MSG_WriteByte(&sv.signon, ent->v.colormap);
-	MSG_WriteByte(&sv.signon, ent->v.skin);
-	for (i = 0; i < 3; i++)
-	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+	if (sv.static_entity_count >= sizeof(sv.static_entities) / sizeof(sv.static_entities[0])) {
+		ED_Free (ent);
+		return;
 	}
 
+	s = &sv.static_entities[sv.static_entity_count];
+	memset(s, 0, sizeof(sv.static_entities[0]));
+	s->number = sv.static_entity_count + 1;
+	s->modelindex = SV_ModelIndex((char *) VM_POINTER(base,mask,ent->v.model));
+	if (!s->modelindex) {
+		ED_Free (ent);
+		return;
+	}
+	s->frame = ent->v.frame;
+	s->colormap = ent->v.colormap;
+	s->skinnum = ent->v.skin;
+	VectorCopy(ent->v.origin, s->origin);
+	VectorCopy(ent->v.origin, s->angles);
+	++sv.static_entity_count;
+
 	// throw the entity away now
-	ED_Free(ent);
+	ED_Free (ent);
 }
 
 //=============================================================================

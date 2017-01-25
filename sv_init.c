@@ -96,9 +96,8 @@ baseline will be transmitted
 */
 static void SV_CreateBaseline (void)
 {
-	int			i;
-	edict_t			*svent;
-	int				entnum;
+	edict_t  *svent;
+	int      entnum;
 
 	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
 	{
@@ -113,6 +112,7 @@ static void SV_CreateBaseline (void)
 		//
 		// create entity baseline
 		//
+		svent->e->baseline.number = entnum;
 		VectorCopy (svent->v.origin, svent->e->baseline.origin);
 		VectorCopy (svent->v.angles, svent->e->baseline.angles);
 		svent->e->baseline.frame = svent->v.frame;
@@ -131,33 +131,11 @@ static void SV_CreateBaseline (void)
 #else
 				PR_GetString(svent->v.model)
 #endif
-			                             );
-		}
-
-		//
-		// flush the signon message out to a separate buffer if
-		// nearly full
-		//
-		SV_FlushSignon ();
-
-		//
-		// add to the message
-		//
-		MSG_WriteByte (&sv.signon,svc_spawnbaseline);
-		MSG_WriteShort (&sv.signon,entnum);
-
-		MSG_WriteByte (&sv.signon, svent->e->baseline.modelindex);
-		MSG_WriteByte (&sv.signon, svent->e->baseline.frame);
-		MSG_WriteByte (&sv.signon, svent->e->baseline.colormap);
-		MSG_WriteByte (&sv.signon, svent->e->baseline.skinnum);
-		for (i=0 ; i<3 ; i++)
-		{
-			MSG_WriteCoord(&sv.signon, svent->e->baseline.origin[i]);
-			MSG_WriteAngle(&sv.signon, svent->e->baseline.angles[i]);
+			);
 		}
 	}
+	sv.num_baseline_edicts = sv.num_edicts;
 }
-
 
 /*
 ================
@@ -434,6 +412,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	}
 	
 	sv.map_checksum2 = Com_TranslateMapChecksum (sv.mapname, sv.map_checksum2);
+	sv.static_entity_count = 0;
 
 	SV_ClearWorld (); // clear physics interaction links
 

@@ -107,11 +107,12 @@ typedef struct
 	char		*lightstyles[MAX_LIGHTSTYLES];
 	cmodel_t	*models[MAX_MODELS];
 
-	int		num_edicts;			// increases towards MAX_EDICTS
-	edict_t		*edicts;			// can NOT be array indexed, because
-							// edict_t is variable sized, but can
-							// be used to reference the world ent
-	sv_edict_t	sv_edicts[MAX_EDICTS]; // part of the edict_t
+	int         num_edicts;                  // increases towards MAX_EDICTS
+	int         num_baseline_edicts;         // number of entities that have baselines
+	edict_t     *edicts;                     // can NOT be array indexed, because
+                                             // edict_t is variable sized, but can
+										     // be used to reference the world ent
+	sv_edict_t  sv_edicts[MAX_EDICTS];       // part of the edict_t
 
 	byte		*pvs, *phs;			// fully expanded and decompressed
 
@@ -137,6 +138,9 @@ typedef struct
 	byte		signon_buffers[MAX_SIGNON_BUFFERS][MAX_DATAGRAM];
 
 	qbool		mvdrecording;
+
+	entity_state_t  static_entities[512];
+	int             static_entity_count;
 } server_t;
 
 #define	NUM_SPAWN_PARMS 16
@@ -966,5 +970,7 @@ void Master_Heartbeat (void);
 void SV_SaveGame_f (void); 
 void SV_LoadGame_f (void); 
 
+// 
+void SV_WriteDelta(entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions);
 
 #endif /* !__SERVER_H__ */
