@@ -487,7 +487,7 @@ static void Cmd_PreSpawn_f (void)
 {
 	unsigned int buf;
 	unsigned int check;
-	int i;
+	int i, j;
 
 	if (sv_client->state != cs_connected)
 	{
@@ -593,9 +593,9 @@ static void Cmd_PreSpawn_f (void)
 				MSG_WriteByte(&sv_client->netchan.message, svent->e->baseline.frame);
 				MSG_WriteByte(&sv_client->netchan.message, svent->e->baseline.colormap);
 				MSG_WriteByte(&sv_client->netchan.message, svent->e->baseline.skinnum);
-				for (i = 0; i < 3; i++) {
-					MSG_WriteCoord(&sv_client->netchan.message, svent->e->baseline.origin[i]);
-					MSG_WriteAngle(&sv_client->netchan.message, svent->e->baseline.angles[i]);
+				for (j = 0; j < 3; j++) {
+					MSG_WriteCoord(&sv_client->netchan.message, svent->e->baseline.origin[j]);
+					MSG_WriteAngle(&sv_client->netchan.message, svent->e->baseline.angles[j]);
 				}
 			}
 			++buf;
