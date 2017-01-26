@@ -1828,6 +1828,7 @@ static qbool CL_DemoShouldWeReadNextMessage(float demotime)
 			cls.td_startframe = cls.framecount;
 		}
 
+		cl.gametime += (demotime - cls.demotime);
 		cls.demotime = demotime; // Warp.
 	}
 	else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // Always grab until fully connected.
