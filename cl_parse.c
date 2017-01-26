@@ -2133,6 +2133,15 @@ void CL_UpdateUserinfo (void)
 	int slot;
 	player_info_t *player;
 
+	if (CL_Demo_SkipMessage()) {
+		// Older demos (kteams?) can send blank userinfo strings to specs, then re-send the old strings again in next packet
+		//   Not sure why this happened, but it breaks our scoreboard, autotrack etc, so ignore
+		MSG_ReadByte();
+		MSG_ReadLong();
+		MSG_ReadString();
+		return;
+	}
+
 	slot = MSG_ReadByte();
 	if (slot >= MAX_CLIENTS)
 		Host_Error ("CL_ParseServerMessage: svc_updateuserinfo > MAX_CLIENTS");
