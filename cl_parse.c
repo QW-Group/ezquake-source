@@ -2862,15 +2862,14 @@ void CL_ProcessPrint (int level, char* s0)
 				}
 			}
 		}
-		if (chat_sound_file == NULL)
-		{
+
+		if (chat_sound_file == NULL) {
 			// assign "other" if not recognized
 			chat_sound_file = con_sound_other_file.string;
 			chat_sound_vol = con_sound_other_volume.value;
 		}
 
-		if (chat_sound_vol > 0) 
-		{
+		if (chat_sound_vol > 0 && !suppress_talksound) {
 			S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
 		}
 
