@@ -724,7 +724,8 @@ void CL_Demo_Stop_Rewinding(void);
 double Demo_GetSpeed(void);
 void Demo_AdjustSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
-qbool CL_Demo_SkipMessage(void);
+qbool CL_Demo_SkipMessage(qbool skip_if_seeking);
+qbool CL_Demo_NotForTrackedPlayer(void);
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);

@@ -259,7 +259,7 @@ void V_ParseDamage (void)
 	for (i = 0; i < 3; i++)
 		from[i] = MSG_ReadCoord ();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	count = blood * 0.5 + armor * 0.5;

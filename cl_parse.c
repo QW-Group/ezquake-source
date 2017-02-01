@@ -1925,7 +1925,7 @@ void CL_ParseStartSoundPacket(void)
 		}
     }
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
@@ -2133,7 +2133,7 @@ void CL_UpdateUserinfo (void)
 	int slot;
 	player_info_t *player;
 
-	if (CL_Demo_SkipMessage()) {
+	if (CL_Demo_SkipMessage(false)) {
 		// Older demos (kteams?) can send blank userinfo strings to specs, then re-send the old strings again in next packet
 		//   Not sure why this happened, but it breaks our scoreboard, autotrack etc, so ignore
 		MSG_ReadByte();
@@ -2529,6 +2529,10 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 	// s0 is same after Stats_ParsePrint like before, but Stats_ParsePrint modify it during it's work
 	// we can change this function a bit, so s0 can be const char*
 	Stats_ParsePrint (s0, level, &cff);
+
+	if (CL_Demo_SkipMessage(true)) {
+		return;
+	}
 
 	// Colorize player names here
 	if (scr_coloredfrags.value && cff.p1len)
@@ -2935,8 +2939,9 @@ void CL_ParsePrint (void)
 	int level = MSG_ReadByte ();
 	char* s0 = MSG_ReadString ();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_NotForTrackedPlayer()) {
 		return;
+	}
 
 	CL_ProcessPrint (level, s0);
 }
@@ -2962,7 +2967,7 @@ void CL_ParseStufftext (void)
 	}
 
 	// Any processing after this point will be ignored if not tracking the target player
-	if (cls.state == ca_active && CL_Demo_SkipMessage())
+	if (cls.state == ca_active && CL_Demo_SkipMessage(true))
 		return;
 
 	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
@@ -3140,7 +3145,7 @@ void CL_MuzzleFlash (void)
 
 	i = MSG_ReadShort();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	if (!cl_muzzleflash.value)
@@ -3421,7 +3426,7 @@ void CL_ParseServerMessage (void)
 					// Centerprint re-triggers
 					s = MSG_ReadString();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					if (!cls.demoseeking)
@@ -3457,7 +3462,7 @@ void CL_ParseServerMessage (void)
 					for (i = 0; i < 3; i++)
 						newangles[i] = MSG_ReadAngle();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					if (cls.mvdplayback) 
@@ -3498,7 +3503,7 @@ void CL_ParseServerMessage (void)
 				{
 					i = MSG_ReadShort();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					S_StopSound(i >> 3, i & 7);
@@ -3647,7 +3652,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_smallkick:
 				{
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					cl.ideal_punchangle = -2;
@@ -3655,7 +3660,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_bigkick:
 				{
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					cl.ideal_punchangle = -4;
@@ -3756,7 +3761,7 @@ void CL_ParseServerMessage (void)
 				{
 					float newspeed = MSG_ReadFloat ();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (false))
 						break;
 
 					cl.maxspeed = newspeed;
@@ -3766,7 +3771,7 @@ void CL_ParseServerMessage (void)
 				{
 					float newgravity = MSG_ReadFloat ();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (false))
 						break;
 
 					cl.entgravity = newgravity;

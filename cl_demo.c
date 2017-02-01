@@ -5136,14 +5136,9 @@ void CL_Demo_Init(void)
 	Cvar_ResetCurrentGroup();
 }
 
-qbool CL_Demo_SkipMessage (void)
+qbool CL_Demo_NotForTrackedPlayer(void)
 {
 	int tracknum = Cam_TrackNum();
-
-	if (cls.demoseeking)
-		return true;
-	if (!cls.mvdplayback)
-		return false;
 
 	if (cls.lasttype == dem_multiple && ((tracknum == -1) || !(cls.lastto & (1 << tracknum))))
 		return true;
@@ -5151,4 +5146,16 @@ qbool CL_Demo_SkipMessage (void)
 		return true;
 
 	return false;
+}
+
+qbool CL_Demo_SkipMessage (qbool skip_if_seeking)
+{
+	if (!cls.demoplayback)
+		return false;
+	if (skip_if_seeking && cls.demoseeking)
+		return true;
+	if (!cls.mvdplayback)
+		return false;
+
+	return CL_Demo_NotForTrackedPlayer();
 }

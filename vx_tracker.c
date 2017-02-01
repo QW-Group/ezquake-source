@@ -180,6 +180,9 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	if (!msg || !msg[0])
 		return;
 
+	if (CL_Demo_SkipMessage(true)) {
+		return;
+	}
 
 	switch (tt) 
 	{

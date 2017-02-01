@@ -155,7 +155,7 @@ static void CL_ParseBeam(int type)
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
     // an experimental protocol extension:
@@ -536,7 +536,7 @@ static void CL_Parse_TE_GUNSHOT(void)
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 	
 	if (amf_part_gunshot.value && !Rulesets_RestrictParticles())
@@ -562,7 +562,7 @@ static void CL_Parse_TE_BLOOD(void)
 		MSG_ReadByte(); // colorStart
 		MSG_ReadByte(); // colorLength
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 
 		dl = CL_AllocDlight(0);
@@ -579,7 +579,7 @@ static void CL_Parse_TE_BLOOD(void)
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	if (amf_part_blood.value)
@@ -605,7 +605,7 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
 	}
@@ -666,7 +666,7 @@ void CL_ParseTEnt (void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 		
 		switch (type) 
