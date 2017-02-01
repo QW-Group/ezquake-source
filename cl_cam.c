@@ -163,17 +163,26 @@ void Cam_Lock(int playernum)
 {
 	char st[32];
 
-	if (Cmd_FindAlias("f_trackspectate"))
-	{
+	if (Cmd_FindAlias("f_trackspectate")) {
 		Cbuf_AddTextEx (&cbuf_main, "f_trackspectate\n");
+	}
+
+	snprintf(st, sizeof (st), "ptrack %i", playernum);
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		// its not setinfo extension, but adding new extension just for this is stupid IMO
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, st);
+	}
+	else {
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, st);
 	}
 
 	if (CL_MultiviewEnabled ()) {
 		CL_MultiviewSetTrackSlot (-1, playernum);
-		return;
+		if (!cls.findtrack) {
+			return;
+		}
 	}
-
-	snprintf(st, sizeof (st), "ptrack %i", playernum);
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
@@ -181,17 +190,6 @@ void Cam_Lock(int playernum)
 		cl.mvd_time_offset = 0;
 	}
 	last_lock = cls.realtime;
-
-	if (cls.mvdplayback == QTV_PLAYBACK)
-	{
-		// its not setinfo extension, but adding new extension just for this is stupid IMO
-		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, st);
-	}
-	else
-	{
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, st);
-	}
 
 	spec_track = playernum;
 	locked = false;
