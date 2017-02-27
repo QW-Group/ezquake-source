@@ -3576,6 +3576,9 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
 			{
 				int _px = px;
+				qbool text_lhs = hud_teamfrags_fliptext->integer == 1;
+				text_lhs |= hud_teamfrags_fliptext->integer == 2 && ((i % a_cols) % 2 == 0);
+				text_lhs |= hud_teamfrags_fliptext->integer == 3 && ((i % a_cols) % 2 == 1);
 
 				// Draw a background if the style tells us to.
 				if(hud_teamfrags_style->value >= 4 && hud_teamfrags_style->value <= 8)
@@ -3587,12 +3590,12 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 
 				// Draw the text on the left or right side of the score?
-				if(hud_teamfrags_fliptext->value)
+				if (text_lhs)
 				{
 					// Draw team.
 					_px = Frags_DrawText(_px, py, cell_width, cell_height,
 							space_x, space_y, 0, max_team_length,
-							hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
+							true, hud_teamfrags_padtext->value,
 							0, hud_teamfrags_shownames->value,
 							"", sorted_teams[num].name);
 
@@ -3609,7 +3612,6 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 
 					// Draw the rl if the current player has it and the style allows it.
 					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
-
 				}
 				else
 				{
@@ -3630,7 +3632,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					// Draw team.
 					_px = Frags_DrawText(_px, py, cell_width, cell_height,
 							space_x, space_y, 0, max_team_length,
-							hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
+							false, hud_teamfrags_padtext->value,
 							0, hud_teamfrags_shownames->value,
 							"", sorted_teams[num].name);
 				}
