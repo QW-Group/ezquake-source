@@ -3243,18 +3243,20 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			{
 				// Relative x coordinate where we draw the subitems.
 				int rel_player_x = player_x;
+				qbool fliptext = hud_frags_fliptext->integer == 1;
+				fliptext |= hud_frags_fliptext->integer == 2 && ((i % a_cols) % 2 == 0);
+				fliptext |= hud_frags_fliptext->integer == 3 && ((i % a_cols) % 2 == 1);
 
 				if(hud_frags_style->value >= 4 && hud_frags_style->value <= 8)
 				{
 					// Draw background based on the style.
-
 					Frags_DrawBackground(player_x, player_y, cell_width, cell_height, space_x, space_y,
 							max_name_length, max_team_length, Sbar_BottomColor(info),
 							hud_frags_shownames->value, hud_frags_teams->value, drawBrackets,
 							hud_frags_style->value);
 				}
 
-				if(hud_frags_fliptext->value)
+				if (fliptext)
 				{
 					//
 					// Flip the text
@@ -3263,24 +3265,27 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 					// Draw name.
 					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							hud_frags_shownames->value, 0,
-							info->name, info->team);
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
+						info->name, info->team
+					);
 
 					// Draw team.
 					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							0, hud_frags_teams->value,
-							info->name, info->team);
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
+						info->name, info->team
+					);
 
 					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
-							Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
-							info->frags,
-							drawBrackets,
-							hud_frags_style->value,
-							hud_frags_bignum->value);
+						Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
+						info->frags,
+						drawBrackets,
+						hud_frags_style->value,
+						hud_frags_bignum->value
+					);
 
 					rel_player_x += cell_width + space_x;
 
@@ -3289,9 +3294,9 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// - How much health.
 					// - If they have RL or not.
 					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y,
-							hud_frags_fliptext->value);
-
+						space_x, space_y,
+						fliptext
+					);
 				}
 				else
 				{
@@ -3299,33 +3304,36 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// Don't flip the text
 					// EXTRA_SPEC_INFO | FRAGS | TEAM | NAME
 					//
-
 					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y,
-							hud_frags_fliptext->value);
+						space_x, space_y,
+						fliptext
+					);
 
 					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
-							Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
-							info->frags,
-							drawBrackets,
-							hud_frags_style->value,
-							hud_frags_bignum->value);
+						Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
+						info->frags,
+						drawBrackets,
+						hud_frags_style->value,
+						hud_frags_bignum->value
+					);
 
 					rel_player_x += cell_width + space_x;
 
 					// Draw team.
 					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							0, hud_frags_teams->value,
-							info->name, info->team);
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
+						info->name, info->team
+					);
 
 					// Draw name.
 					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							hud_frags_shownames->value, 0,
-							info->name, info->team);
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
+						info->name, info->team
+					);
 				}
 
 				if(hud_frags_vertical->value)
