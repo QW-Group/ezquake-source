@@ -43,6 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define STAT_MINUS		10
 #endif
 
+void SCR_HUD_WeaponStats(hud_t *hud);
+void WeaponStats_HUDInit(void);
+
 hud_t *hud_netgraph = NULL;
 
 // ----------------
@@ -6748,15 +6751,14 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 #endif // WITH_PNG
 
+void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale);
+
 //---------------------
 //
 // draw HUD static text
 //
 void SCR_HUD_DrawStaticText(hud_t *hud)
 {
-	int x, y;
-	const char *line_start;
-	char *line_end;
 	const char *in;
 	int lines = 1;
 	int max_length = 0;
@@ -6782,6 +6784,7 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 
 	// Static text valid for demos/qtv only
 	if (!cls.demoplayback) {
+		int x, y;
 		HUD_PrepareDraw(hud, 0, 0, &x, &y);
 		return;
 	}
@@ -6799,13 +6802,27 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	}
 	in = TP_ParseFunChars(in, false);
 
+	SCR_HUD_MultiLineString(hud, in, hud_statictext_big->integer, alignment, hud_statictext_scale->value);
+}
+
+void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale)
+{
 	// find carriage returns
-	line_start = in;
-	max_length = strlen_color_by_terminator(line_start, '\r');
+	int x, y;
+	const char *line_start = in;
+	int max_length = strlen_color_by_terminator(line_start, '\r');
+	char* line_end;
+	int lines = 0;
+	int character_width, character_height;
+
 	while ((line_end = strchr(line_start, '\r'))) {
 		line_start = line_end + 1;
 		max_length = max(max_length, strlen_color_by_terminator(line_start, '\r'));
 
+		++lines;
+	}
+
+	if (*line_start) {
 		++lines;
 	}
 
@@ -6814,11 +6831,11 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 		lines = 0;
 	}
 
-	character_width = 8 * hud_statictext_scale->value;
-	character_height = 8 * hud_statictext_scale->value;
-	if (hud_statictext_style->integer == 1) {
-		character_width = 24 * hud_statictext_scale->value;
-		character_height = 24 * hud_statictext_scale->value;
+	character_width = 8 * scale;
+	character_height = 8 * scale;
+	if (large_font) {
+		character_width = 24 * scale;
+		character_height = 24 * scale;
 	}
 
 	if (HUD_PrepareDraw(hud, max_length * character_width, lines * character_height, &x, &y)) {
@@ -6842,11 +6859,11 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 				line_x += (max_length - strlen_color(line_start)) / 2 * character_width;
 			}
 
-			if (hud_statictext_style->integer == 1) {
-				SCR_DrawWadString(line_x, y, hud_statictext_scale->value, line_start); 
+			if (large_font) {
+				SCR_DrawWadString(line_x, y, scale, line_start); 
 			}
 			else {
-				Draw_SString(line_x, y, line_start, hud_statictext_scale->value);
+				Draw_SString(line_x, y, line_start, scale);
 			}
 
 			y += character_height;
@@ -7636,6 +7653,7 @@ void CommonDraw_Init(void)
 			NULL
 		    );
 
+	WeaponStats_HUDInit();
 	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef _DEBUG
 HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",
@@ -7650,7 +7668,4 @@ HUD_PLUSMINUS | HUD_ON_SCORES, ca_disconnected, 0, SCR_HUD_DrawFrameGraph,
 NULL);
 #endif
 */
-
 }
-
-
