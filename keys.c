@@ -2347,7 +2347,7 @@ char* escape_regex(char* string)
 	char *out = "";
 
 	len = strlen(string);
-	out = (char*) Q_malloc(len * 2 * sizeof(char));
+	out = (char*) Q_malloc((len * 2 + 1) * sizeof(char));
 
 	for(i = 0, j = 0; i < len; i++)
 	{
