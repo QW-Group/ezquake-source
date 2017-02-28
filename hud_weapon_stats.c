@@ -145,7 +145,7 @@ void SCR_HUD_WeaponStats(hud_t *hud)
 	char content[128];
 	int x, y;
 	int i;
-	int alignment;
+	int alignment = 0;
 
 	static cvar_t
 		*hud_weaponstats_format = NULL,
@@ -159,7 +159,6 @@ void SCR_HUD_WeaponStats(hud_t *hud)
 		hud_weaponstats_scale = HUD_FindVar(hud, "scale");
 	}
 
-	alignment = 0;
 	if (!strcmp(hud_weaponstats_textalign->string, "right"))
 		alignment = 1;
 	else if (!strcmp(hud_weaponstats_textalign->string, "center"))
@@ -173,7 +172,7 @@ void SCR_HUD_WeaponStats(hud_t *hud)
 
 	SCR_CreateWeaponStatsPlayerText(&ws_clients[i], hud_weaponstats_format->string, content, sizeof(content));
 
-	SCR_HUD_MultiLineString(hud, content, false, hud_weaponstats_textalign->integer, hud_weaponstats_scale->value);
+	SCR_HUD_MultiLineString(hud, content, false, alignment, hud_weaponstats_scale->value);
 }
 
 void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel)

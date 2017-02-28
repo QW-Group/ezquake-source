@@ -137,6 +137,12 @@ typedef struct player_info_s
 	char	userinfo[MAX_INFO_STRING];
 	char	team[MAX_INFO_STRING];
 	char	_team[MAX_INFO_STRING];
+
+	// 
+	double  max_health_last_set;
+	int     max_health;
+	double  prev_health_last_set;
+	int     prev_health;
 } __attribute__((aligned(64))) player_info_t;
 
 

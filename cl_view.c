@@ -268,6 +268,10 @@ void V_ParseDamage (void)
 	for (i = 0; i < 3; i++)
 		from[i] = MSG_ReadCoord ();
 
+	if (cls.mvdplayback && cls.lastto >= 0 && cls.lastto < MAX_CLIENTS) {
+		cl.players[cls.lastto].max_health_last_set = cls.demotime;
+	}
+
 	if (CL_Demo_SkipMessage(true))
 		return;
 
