@@ -715,7 +715,7 @@ qbool SB_Sources_Dump(void)
 				typestr = "master";
 				loc = NET_AdrToString(sources[i]->address.address);
 			}
-			if (type == type_url) {
+			else if (type == type_url) {
 				typestr = "url";
 				loc = sources[i]->address.url;
 			}
