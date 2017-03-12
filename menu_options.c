@@ -1227,7 +1227,7 @@ setting settsystem_arr[] = {
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 	ADDSET_BASIC_SECTION(),
 
-#if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
+#if !defined(_Soft_X11) && !defined(_Soft_SVGA)
 	ADDSET_SEPARATOR("Screen Settings"),
 	ADDSET_BOOL("Use desktop resolution", vid_usedesktopres),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
@@ -1243,10 +1243,8 @@ setting settsystem_arr[] = {
 	//Font
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Font"),
-#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
-#endif
 	ADDSET_BOOL("Font Smoothing", gl_smoothfont),
 	ADDSET_BASIC_SECTION(),
 
