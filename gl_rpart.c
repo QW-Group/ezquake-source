@@ -1205,6 +1205,10 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 	if (!qmb_initialized)
 		Sys_Error("QMB particle added without initialization");
 
+	if (time == 0) {
+		return;
+	}
+
 	assert(size > 0 && time > 0);
 
 	if (type >= num_particletypes)
