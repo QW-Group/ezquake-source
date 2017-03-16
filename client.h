@@ -1008,6 +1008,7 @@ void CL_UnqueOutputPacket(qbool sendall);
 void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
 qbool S_Voip_ShowMeter(int* x, int* y);
 qbool S_Voip_Speaking (unsigned int player);
+void S_Capture_Shutdown(void);
 int S_Voip_Loudness (void);
 void S_Voip_MapChange (void);
 void S_Voip_Parse (void);

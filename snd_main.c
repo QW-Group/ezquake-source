@@ -373,7 +373,9 @@ void S_Shutdown (void)
 
 	/* FIXME: this one free's sfx->buf's in channels array, is that correct ?? */
 	S_StopAllSounds();
-
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Capture_Shutdown();
+#endif
 	S_SDL_Shutdown();
 
 	if (known_sfx != NULL) {

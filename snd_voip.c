@@ -317,7 +317,7 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 	qbool voipsendenable = (cl_voip_play.integer && (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT));
 
 	if (!voipsendenable) {
-		S_CaptureDriverShutdown (s_speex.driverctx);
+		S_Capture_Shutdown();
 		return;
 	}
 
@@ -517,6 +517,12 @@ qbool S_Voip_Speaking(unsigned int plno)
 	}
 
 	return plno < MAX_CLIENTS && s_speex.lastspoke[plno] > cls.realtime;
+}
+
+void S_Capture_Shutdown(void)
+{
+	S_CaptureDriverShutdown (s_speex.driverctx);
+	memset(&s_speex, 0, sizeof(s_speex));
 }
 
 #endif
