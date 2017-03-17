@@ -589,7 +589,7 @@ void WinCheckOSInfo(void)
 
 	// Use raw resolutions, not scaled
 	{
-		HANDLE lib = LoadLibrary("Shcore.dll");
+		HMODULE lib = LoadLibrary("Shcore.dll");
 		if (lib != NULL) {
 			SetProcessDpiAwarenessFunc SetProcessDpiAwareness;
 
@@ -597,8 +597,8 @@ void WinCheckOSInfo(void)
 			if (SetProcessDpiAwareness != NULL) {
 				SetProcessDpiAwareness(2);
 			}
+			FreeLibrary(lib);
 		}
-		CloseHandle(lib);
 	}
 }
 
