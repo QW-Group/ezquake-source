@@ -1487,15 +1487,25 @@ void MVD_ParseUserCommand (const char* s)
 	float time;
 	int command;
 	int i;
+	int plr;
+
+	if (Cam_TrackNum() == -1) {
+		return;
+	}
 
 	Cmd_TokenizeString( (char*)s );
 
-	if (Cmd_Argc () != 2) {
+	if (Cmd_Argc () < 2) {
 		return;
 	}
 
 	time = atof( Cmd_Argv( 0 ) );
 	command = atoi( Cmd_Argv( 1 ) );
+	plr = Cmd_Argc() >= 3 ? atoi( Cmd_Argv( 2 ) ) : 0;
+
+	if (plr != 0 && spec_track != plr - 1) {
+		return;
+	}
 
 	if (! cl.mvd_time_offset) {
 		cl.mvd_time_offset = time - cls.demotime;

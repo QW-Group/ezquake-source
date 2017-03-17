@@ -178,7 +178,8 @@ void Cam_Lock(int playernum)
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
 		ideal_track = playernum;
-	}	
+		cl.mvd_time_offset = 0;
+	}
 	last_lock = cls.realtime;
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
