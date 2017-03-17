@@ -969,7 +969,7 @@ qbool Cmd_IsLegacyCommand (char *oldname)
 
 static qbool Cmd_LegacyCommand (void)
 {
-	qbool recursive = false;
+	static qbool recursive = false;
 	legacycmd_t *cmd;
 	char text[1024];
 
@@ -984,13 +984,18 @@ static qbool Cmd_LegacyCommand (void)
 		return true;		// just ignore this command
 
 	// build new command string
-	strlcpy (text, cmd->newname, sizeof(text));
-	strlcat (text, " ", sizeof(text));
-	strlcat (text, Cmd_Args(), sizeof(text));
+	strlcpy(text, cmd->newname, sizeof(text));
+	strlcat(text, " ", sizeof(text));
+	strlcat(text, Cmd_Args(), sizeof(text));
 
-	assert (!recursive);
+	if (recursive) {
+		Com_Printf("error: recursive legacy command, aborting");
+		recursive = false;
+		return false;
+	}
+
 	recursive = true;
-	Cmd_ExecuteString (text);
+	Cmd_ExecuteString(text);
 	recursive = false;
 
 	return true;
