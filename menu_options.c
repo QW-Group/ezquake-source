@@ -1227,7 +1227,6 @@ setting settsystem_arr[] = {
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 	ADDSET_BASIC_SECTION(),
 
-#if !defined(_Soft_X11) && !defined(_Soft_SVGA)
 	ADDSET_SEPARATOR("Screen Settings"),
 	ADDSET_BOOL("Use desktop resolution", vid_usedesktopres),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
@@ -1238,7 +1237,6 @@ setting settsystem_arr[] = {
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-#endif
 
 	//Font
 	ADDSET_ADVANCED_SECTION(),
