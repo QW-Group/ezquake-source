@@ -162,7 +162,7 @@ cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CV
 cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
-cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH }; // It's here because it needs to be registered before window creation
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
 //
 // function declaration
@@ -936,11 +936,24 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 	return &modelist[index];
 }
 
+static void VID_SDL_GL_EnableMSAA(void)
+{
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(2, gl_multisamples.integer, 16));
+}
+
+static void VID_SDL_GL_DisableMSAA(void)
+{
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+}
+
 static void VID_SDL_GL_SetupAttributes(void)
 {
 	if (gl_multisamples.integer > 0) {
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(0, gl_multisamples.integer, 16));
+		VID_SDL_GL_EnableMSAA();
+	} else {
+		VID_SDL_GL_DisableMSAA();
 	}
 
 	if (r_24bit_depth.integer == 1) {
@@ -968,6 +981,37 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 
 	return -1;
 #endif
+}
+
+static SDL_Window *VID_SDL_CreateWindow(int flags)
+{
+	if (r_fullscreen.integer == 0) {
+		int displayNumber = VID_DisplayNumber(false);
+		int xpos = vid_xpos.integer;
+		int ypos = vid_ypos.integer;
+
+		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
+
+		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+	} else {
+		int windowWidth = glConfig.vidWidth;
+		int windowHeight = glConfig.vidHeight;
+		int windowX = SDL_WINDOWPOS_CENTERED;
+		int windowY = SDL_WINDOWPOS_CENTERED;
+		int displayNumber = VID_DisplayNumber(true);
+		SDL_Rect bounds;
+
+		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0) {
+			windowX = bounds.x;
+			windowY = bounds.y;
+			windowWidth = bounds.w;
+			windowHeight = bounds.h;
+		} else {
+			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
+		}
+
+		return SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
+	}
 }
 
 static void VID_SDL_Init(void)
@@ -1009,39 +1053,18 @@ static void VID_SDL_Init(void)
 	VID_SetupModeList();
 	VID_SetupResolution();
 
-	if (r_fullscreen.integer == 0) {
-		int displayNumber = VID_DisplayNumber(false);
-		int xpos = vid_xpos.integer;
-		int ypos = vid_ypos.integer;
-
-		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
-
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
-	} else {
-		int windowWidth = glConfig.vidWidth;
-		int windowHeight = glConfig.vidHeight;
-		int windowX = SDL_WINDOWPOS_CENTERED;
-		int windowY = SDL_WINDOWPOS_CENTERED;
-		int displayNumber = VID_DisplayNumber(true);
-		SDL_Rect bounds;
-
-		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0)
-		{
-			windowX = bounds.x;
-			windowY = bounds.y;
-			windowWidth = bounds.w;
-			windowHeight = bounds.h;
-		}
-		else
-		{
-			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
-		}
-
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
-	}
-
+	sdl_window = VID_SDL_CreateWindow(flags);
 	if (!sdl_window) {
-		Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+		if (gl_multisamples.integer > 0) {
+			VID_SDL_GL_DisableMSAA();
+			Cvar_AutoSet(&gl_multisamples, "0");
+			sdl_window = VID_SDL_CreateWindow(flags);
+		}
+		if (sdl_window) {
+			Com_Printf("WARNING: Invalid gl_multisamples value. Disabling MSAA");
+		} else {
+			Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+		}
 	}
 
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
