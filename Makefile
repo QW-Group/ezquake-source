@@ -56,6 +56,7 @@ else
 
     # Resolve all symbols at link time
     ifeq ($(SYS),Linux)
+    	CFLAGS += -DX11_GAMMA_WORKAROUND
         LDFLAGS_c += -Wl,--no-undefined
     endif
 

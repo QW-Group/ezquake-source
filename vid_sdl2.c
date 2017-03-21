@@ -26,7 +26,7 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 #include <X11/extensions/xf86vmode.h>
 #endif
 
@@ -90,8 +90,8 @@ double vid_last_swap_time;
 static SDL_DisplayMode *modelist;
 static int modelist_count;
 
-#ifdef __linux__
-static unsigned short sysramps[768];
+#ifdef X11_GAMMA_WORKAROUND
+static unsigned short sysramps[3*4096];
 static qbool use_linux_gamma_workaround;
 #endif
 
@@ -143,7 +143,7 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH  }; /* Needs vid_restart thus vid_.... */
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
 #endif
 
@@ -369,10 +369,7 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 
 static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 {
-#ifdef __linux__
-	SDL_SysWMinfo info;
-	Display *display;
-	int screen;
+#ifdef X11_GAMMA_WORKAROUND
 	static short once = 1;
 	static short gamma_works = 0;
 
@@ -382,38 +379,14 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 		return;
 	}
 
-	SDL_VERSION(&info.version);
-	screen = SDL_GetWindowDisplayIndex(sdl_window);
-
-	if (screen < 0) {
-		Com_Printf("error: couldn't get screen number to set gamma\n");
-		return;
-	}
-
-	if (SDL_GetWindowWMInfo(sdl_window, &info) != SDL_TRUE) {
-		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
-		return;
-	}
-
-	if (info.subsystem != SDL_SYSWM_X11) {
-		Com_Printf("error: not x11, gamma won't work\n");
-		return;
-	}
-
-	display = info.info.x11.display;
-
 	if (once) {
-		int size;
-		XF86VidModeGetGammaRampSize(display, screen, &size);
-
-		if (size != 256) {
-			Com_Printf("error: gamma size (%d) not supported, gamma wont work!\n", size);
+		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
+			Com_Printf("error: gamma size is broken, gamma won't work\n");
 			once = 0;
 			return;
 		}
-
-		if (!XF86VidModeGetGammaRamp(display, screen, 256, sysramps, sysramps+256, sysramps+512)) {
-			Com_DPrintf("error: cannot get system gamma ramps, gamma won't work\n");
+		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps+4096, sysramps+(2*4096))) {
+			Com_Printf("error: cannot get system gamma ramps, gamma won't work\n");
 			once = 0;
 			return;
 		}
@@ -422,21 +395,30 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	}
 
 	if (gamma_works) {
+		/* Just double check the gamma size... */
+		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
+			Com_Printf("error: gamma size broken but worked initially, wtf?! gamma won't work\n");
+			gamma_works = 0;
+			vid_hwgamma_enabled = false;
+		}
 		/* It returns true unconditionally ... */
-		XF86VidModeSetGammaRamp(display, screen, 256, ramps, ramps+256, ramps+512);
+		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps+4096, ramps+(2*4096));
 		vid_hwgamma_enabled = true;
 	}
 	return;
 #else
+	/* SDL2 uses 256 entries in the API so this is correct */
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-#endif
-
 	vid_hwgamma_enabled = true;
+#endif
 }
 
 #ifdef __linux__
 static void VID_RestoreSystemGamma(void)
 {
+	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
+		return;
+	}
 	VID_SetDeviceGammaRampReal(sysramps);
 }
 #endif
@@ -1014,6 +996,40 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 	}
 }
 
+#ifdef X11_GAMMA_WORKAROUND
+static void VID_X11_GetGammaRampSize(void)
+{
+	glConfig.gammacrap.size = -1;
+
+	SDL_VERSION(&glConfig.gammacrap.info.version);
+	glConfig.gammacrap.screen = SDL_GetWindowDisplayIndex(sdl_window);
+
+	if (glConfig.gammacrap.screen < 0) {
+		Com_Printf("error: couldn't get screen number to set gamma\n");
+		return;
+	}
+
+	if (SDL_GetWindowWMInfo(sdl_window, &glConfig.gammacrap.info) != SDL_TRUE) {
+		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
+		return;
+	}
+
+	if (glConfig.gammacrap.info.subsystem != SDL_SYSWM_X11) {
+		Com_Printf("error: not x11, gamma won't work\n");
+		return;
+	}
+
+	glConfig.gammacrap.display = glConfig.gammacrap.info.info.x11.display;
+	XF86VidModeGetGammaRampSize(glConfig.gammacrap.display, glConfig.gammacrap.screen, &glConfig.gammacrap.size);
+
+	if (glConfig.gammacrap.size <= 0 || glConfig.gammacrap.size > 4096) {
+		Com_Printf("error: gamma size '%d' seems weird, refusing to use it\n", glConfig.gammacrap.size);
+		glConfig.gammacrap.size = -1;
+		return;
+	}
+}
+#endif
+
 static void VID_SDL_Init(void)
 {
 	int flags;
@@ -1134,6 +1150,11 @@ static void VID_SDL_Init(void)
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
+
+#ifdef X11_GAMMA_WORKAROUND
+	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
+	VID_X11_GetGammaRampSize();
+#endif
 
 	glConfig.initialized = true;
 }

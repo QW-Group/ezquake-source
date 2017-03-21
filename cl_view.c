@@ -28,6 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 
+#ifdef X11_GAMMA_WORKAROUND
+#include "tr_types.h"
+#endif
+
 /*
 The view is allowed to move slightly from its true position for bobbing,
 but if it exceeds 8 pixels linear distance (spherical, not box), the list of
@@ -246,7 +250,12 @@ cvar_t		v_contrast = {"gl_contrast", "1.3"};
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
 #endif
+
+#ifdef X11_GAMMA_WORKAROUND
+unsigned short ramps[3][4096];
+#else
 unsigned short	ramps[3][256];
+#endif
 
 void V_ParseDamage (void)
 {
@@ -654,13 +663,17 @@ void V_UpdatePalette (void) {
 	rgb[2] = 255 * v_blend[2] * a;
 
 	a = 1 - a;
-
 	if (vid_gamma != 1.0) {
 		current_contrast = pow (current_contrast, vid_gamma);
 		current_gamma = current_gamma/vid_gamma;
 	}
 
+#ifdef X11_GAMMA_WORKAROUND
+	a *= 256.0/glConfig.gammacrap.size;
+	for (i = 0; i < glConfig.gammacrap.size; i++) {
+#else
 	for (i = 0; i < 256; i++) {
+#endif
 		for (j = 0; j < 3; j++) {
 			// apply blend and contrast
 			c = (i * a + rgb[j]) * current_contrast;
