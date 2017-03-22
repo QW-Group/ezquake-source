@@ -92,7 +92,6 @@ static int modelist_count;
 
 #ifdef X11_GAMMA_WORKAROUND
 static unsigned short sysramps[3*4096];
-static qbool use_linux_gamma_workaround;
 #endif
 
 qbool vid_initialized = false;
@@ -373,8 +372,8 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	static short once = 1;
 	static short gamma_works = 0;
 
-	if (!use_linux_gamma_workaround) {
-		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+	if (!vid_gamma_workaround.integer) {
+		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+4096,ramps+(2*4096));
 		vid_hwgamma_enabled = true;
 		return;
 	}
@@ -413,7 +412,7 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 #endif
 }
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 static void VID_RestoreSystemGamma(void)
 {
 	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
@@ -434,8 +433,8 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
-#ifdef __linux__
-			if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+			if (vid_gamma_workaround.integer) {
 				if (Minimized || vid_hwgammacontrol.integer != 3) {
 					VID_RestoreSystemGamma();
 				}
@@ -453,8 +452,8 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef __linux__
-			if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+			if (vid_gamma_workaround.integer) {
 				v_gamma.modified = true;
 			}
 #endif
@@ -691,8 +690,8 @@ static void HandleEvents(void)
 			Cbuf_AddText("\n");
 			SDL_free(event.drop.file);
 			break;
-		}   
-	} 
+		}
+	}
 }
 
 /*****************************************************************************/
@@ -703,8 +702,8 @@ void VID_Shutdown(void)
 
 	SDL_StopTextInput();
 
-#ifdef __linux__
-	if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+	if (vid_gamma_workaround.integer) {
 		VID_RestoreSystemGamma();
 	}
 #endif
@@ -766,7 +765,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
 #endif
 
@@ -1153,7 +1152,11 @@ static void VID_SDL_Init(void)
 
 #ifdef X11_GAMMA_WORKAROUND
 	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
-	VID_X11_GetGammaRampSize();
+	if (vid_gamma_workaround.integer != 0) {
+		VID_X11_GetGammaRampSize();
+	} else {
+		glConfig.gammacrap.size = 256;
+	}
 #endif
 
 	glConfig.initialized = true;
@@ -1572,10 +1575,6 @@ void VID_Init(unsigned char *palette) {
 	VID_SetPalette(palette);
 
 	VID_RegisterLatchCvars();
-
-#ifdef __linux__
-	use_linux_gamma_workaround = (vid_gamma_workaround.integer != 0);
-#endif
 
 	if (!host_initialized) {
 		VID_RegisterCvars();
