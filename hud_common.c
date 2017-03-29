@@ -3218,24 +3218,18 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			// Bug fix. Before the wrong player would be higlighted
 			// during qwd-playback, since you ARE the player that you're
 			// being spectated (you're not a spectator).
-			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
-			{
+			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback) {
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
-			else if (cls.demoplayback || cl.spectator)
-			{
+			else if (cls.demoplayback || cl.spectator) {
 				drawBrackets = (spec_track == sorted_players[num].playernum && Cam_TrackNum() >= 0);
 			}
-			else
-			{
+			else {
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 
-			// Don't draw any brackets in multiview since we're
-			// tracking several players.
-			if (cl_multiview.value > 1 && cls.mvdplayback)
-			{
-				// TODO: Highlight all players being tracked (See tracking hud-element)
+			// Don't draw any brackets in multiview since we're tracking several players.
+			if (CL_MultiviewEnabled() && !CL_MultiviewInsetEnabled()) {
 				drawBrackets = 0;
 			}
 
