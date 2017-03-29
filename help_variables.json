@@ -1193,6 +1193,15 @@
       "desc": "If set, enable support for FTE's floating point coordinate protocol extension.",
       "type": "boolean"
     },
+    "cl_pext_limits": {
+      "group-id": "21",
+      "desc": "Enable support for FTE's extensions to support enhanced number of entities and models.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "FTE extensions disabled.  Some enemies/projectiles may be invisible." },
+        { "name": "true", "description": "FTE extensions enabled." }
+      ]
+    },
     "cl_pext_other": {
       "group-id": "21",
       "desc": "Allows other protocol extensions other than Chunked downloads",

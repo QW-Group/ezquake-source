@@ -83,6 +83,7 @@ cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
 #endif
@@ -596,14 +597,7 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
 
-	if (cl_pext_other.value)
-	{
-#ifdef FTE_PEXT_ACCURATETIMINGS
-		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
-#endif
-#ifdef FTE_PEXT_HLBSP
-		fteprotextsupported |= FTE_PEXT_HLBSP;
-#endif
+	if (cl_pext_limits.value) {
 #ifdef FTE_PEXT_MODELDBL
 		fteprotextsupported |= FTE_PEXT_MODELDBL;
 #endif
@@ -615,6 +609,16 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 #ifdef FTE_PEXT_SPAWNSTATIC2
 		fteprotextsupported |= FTE_PEXT_SPAWNSTATIC2;
+#endif
+	}
+
+	if (cl_pext_other.value)
+	{
+#ifdef FTE_PEXT_ACCURATETIMINGS
+		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
+#endif
+#ifdef FTE_PEXT_HLBSP
+		fteprotextsupported |= FTE_PEXT_HLBSP;
 #endif
 	}
 
@@ -1942,6 +1946,7 @@ void CL_InitLocal (void)
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register (&cl_pext);
+	Cvar_Register (&cl_pext_limits);
 	Cvar_Register (&cl_pext_other);
 	Cvar_Register (&cl_pext_warndemos);
 #endif // PROTOCOL_VERSION_FTE
