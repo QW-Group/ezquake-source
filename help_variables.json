@@ -12222,7 +12222,8 @@
         { "name": "0", "description": "Compact huds off." },
         { "name": "1", "description": "Will display armour/health/ammo/weapons *very* compactly." },
         { "name": "2", "description": "Will display armour/health/ammo *very* compactly." },
-        { "name": "3", "description": "Displays only health/armour." }
+        { "name": "3", "description": "Displays only health/armour." },
+        { "name": "4", "description": "Will display armour/health/ammo/weapons compactly with icons." }
       ]
     },
     "scr_compactHudAlign": {
