@@ -971,6 +971,48 @@ static void Sbar_DrawNormal (void) {
 		Sbar_DrawNum (248, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 }
 
+static void Sbar_DrawCompact_WithIcons(void) {
+	int i, align, old_sbar_xofs;
+	char str[4];
+
+	if (Sbar_IsStandardBar())
+		Sbar_DrawPic (0, 0, sb_sbar);
+
+	old_sbar_xofs = sbar_xofs;
+	sbar_xofs = scr_centerSbar.value ? (vid.width - 158) >> 1: 0;
+
+	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+		Sbar_DrawNum (2, 0, 666, 3, 1);
+	else
+		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
+
+	if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
+		Sbar_DrawPic (-24, 0, sb_armor[2]);
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
+		Sbar_DrawPic (-24, 0, sb_armor[1]);
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
+		Sbar_DrawPic (-24, 0, sb_armor[0]);
+
+	Sbar_DrawNum (86, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
+
+	align = scr_compactHudAlign.value ? 1 : 0;
+	for (i = 0; i < 4; i++) {
+		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
+		if (cl.stats[STAT_SHELLS + i] < 5)
+			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -12, str);
+		else
+			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -12, str);
+	}
+	for (i = 0; i < 7; i++) {
+		if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
+			if (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i))
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[1][i]);
+			else
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[0][i]);
+		}
+	}
+	sbar_xofs = old_sbar_xofs;
+}
 
 static void Sbar_DrawCompact(void) {
 	int i, align, old_sbar_xofs;
@@ -1892,6 +1934,8 @@ void Sbar_Draw(void) {
 				if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 					Sbar_SoloScoreboard ();
 
+				else if (scr_compactHud.value == 4)
+					Sbar_DrawCompact_WithIcons();
 				else if (scr_compactHud.value == 3)
 					Sbar_DrawCompact_Bare();
 				else if (scr_compactHud.value == 2)
@@ -1905,6 +1949,8 @@ void Sbar_Draw(void) {
 			}
 		} else if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0) {
 			Sbar_SoloScoreboard();
+		} else if (scr_compactHud.value == 4) {
+			Sbar_DrawCompact_WithIcons();
 		} else if (scr_compactHud.value == 3) {
 			Sbar_DrawCompact_Bare();
 		} else if (scr_compactHud.value == 2) {
