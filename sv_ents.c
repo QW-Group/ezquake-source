@@ -169,6 +169,13 @@ void SV_WriteDelta (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qb
 	if (to->flags & U_SOLID)
 		bits |= U_SOLID;
 
+	// Taken from FTE
+	if (msg->cursize + 40 > msg->maxsize)
+	{	//not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+		*to = *from;
+		return;
+	}
+
 	//
 	// write the message
 	//
@@ -840,7 +847,13 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 					if (furthestdist <= distance || best == -1) {
 						continue;
 					}
-					position = best;
+
+					// shuffle other entities down, add to end
+					if (best < pack->num_entities - 1) {
+						memmove(&pack->entities[best], &pack->entities[best + 1], sizeof(pack->entities[0]) * (pack->num_entities - 1 - best));
+						memmove(&distances[best], &distances[best + 1], sizeof(distances[0]) * (pack->num_entities - 1 - best));
+					}
+					position = pack->num_entities - 1;
 				}
 				else {
 					position = pack->num_entities++;
