@@ -1608,30 +1608,37 @@ int Commands_Compare_Func (const void * arg1, const void * arg2)
 {
 	return strcasecmp (*(char**) arg1, *(char**) arg2);
 }
+
 char *msgtrigger_commands[] = {
-                                  "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
-                                  "alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-                                  "easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
-                                  "dns", "addserver", "connect", "join", "observe",
-                                  "tcl_proc", "tcl_exec", "tcl_eval", "exec",
-                                  "set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
-                                  "toggle", "toggle_re", "set_calc", "rcon", "user", "users",
-                                  "unalias", "unalias_re",
-                                  "re_trigger", "re_trigger_options", "re_trigger_delete",
-                                  "re_trigger_enable","re_trigger_disable", "re_trigger_match",
-                                  "hud262_add","hud262_remove","hud262_position","hud262_bg",
-                                  "hud262_move","hud262_width","hud262_alpha","hud262_blink",
-                                  "hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
-                                  "hud_262font","hud262_hover","hud262_button",
-								  "alias_in", "alias_out", "cvar_in", "cvar_out"
-                                  //               ,NULL
-                              };
+	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
+	"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
+	"easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
+	"dns", "addserver", "connect", "join", "observe",
+	"tcl_proc", "tcl_exec", "tcl_eval", "exec",
+	"set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
+	"toggle", "toggle_re", "set_calc", "rcon", "user", "users",
+	"unalias", "unalias_re",
+	"re_trigger", "re_trigger_options", "re_trigger_delete",
+	"re_trigger_enable","re_trigger_disable", "re_trigger_match",
+	"hud262_add","hud262_remove","hud262_position","hud262_bg",
+	"hud262_move","hud262_width","hud262_alpha","hud262_blink",
+	"hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
+	"hud_262font","hud262_hover","hud262_button",
+	"alias_in", "alias_out", "cvar_in", "cvar_out"
+	// ,NULL
+};
 
 char *formatted_comms_commands[] = {
-                                       "if", "wait", "echo", "say", "say_team", "set_tp",
-                                       "tp_point", "tp_pickup", "tp_took",
-                                       NULL
-                                   };
+	"if", "wait", "echo", "say", "say_team", "set_tp",
+	"tp_point", "tp_pickup", "tp_took",
+	"tp_msgreport", "tp_msgcoming", "tp_msglost", "tp_msgenemypwr",
+	"tp_msgquaddead", "tp_msgsafe", "tp_msgkillme", "tp_msghelp",
+	"tp_msggetquad", "tp_msggetpent", "tp_msgpoint", "tp_msgtook",
+	"tp_msgtrick", "tp_msgreplace", "tp_msgneed", "tp_msgyesok",
+	"tp_msgnocancel", "tp_msgutake", "tp_msgitemsoon", "tp_msgwaiting",
+	"tp_msgslipped",
+    NULL
+};
 
 float	impulse_time = -9999;
 int		impulse_counter;
@@ -1671,6 +1678,7 @@ static qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
 	                   sizeof(msgtrigger_commands[0]),Commands_Compare_Func) != NULL;
 }
+
 static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
