@@ -212,33 +212,39 @@ void Check_Gamma (unsigned char *pal) {
 	int i;
 
 	// we do not need this after host initialized
-	if (!host_initialized)
-	{
+	if (!host_initialized) {
 		float old = v_gamma.value;
-		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < COM_Argc())
-			vid_gamma = bound (0.3, Q_atof(COM_Argv(i + 1)), 1);
-		else
+		char string = v_gamma.string[0];
+		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < COM_Argc()) {
+			vid_gamma = bound(0.3, Q_atof(COM_Argv(i + 1)), 1);
+		}
+		else {
 			vid_gamma = 1;
+		}
 
 		Cvar_SetDefault (&v_gamma, vid_gamma);
 		// Cvar_SetDefault set not only default value, but also reset to default, fix that
-		Cvar_SetValue(&v_gamma, old ? old : vid_gamma);
+		Cvar_SetValue(&v_gamma, old || string == '0' ? old : vid_gamma);
 	}
 
-	if (vid_gamma != 1){
-		for (i = 0; i < 256; i++){
+	if (vid_gamma != 1) {
+		for (i = 0; i < 256; i++) {
 			inf = 255 * pow((i + 0.5) / 255.5, vid_gamma) + 0.5;
-			if (inf > 255)
+			if (inf > 255) {
 				inf = 255;
+			}
 			vid_gamma_table[i] = inf;
 		}
-	} else {
-		for (i = 0; i < 256; i++)
+	}
+	else {
+		for (i = 0; i < 256; i++) {
 			vid_gamma_table[i] = i;
+		}
 	}
 
-	for (i = 0; i < 768; i++)
+	for (i = 0; i < 768; i++) {
 		palette[i] = vid_gamma_table[pal[i]];
+	}
 
 	memcpy (pal, palette, sizeof(palette));
 }
