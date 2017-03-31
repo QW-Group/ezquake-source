@@ -1003,12 +1003,13 @@ static void Sbar_DrawCompact_WithIcons(void) {
 		else
 			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -12, str);
 	}
-
 	for (i = 0; i < 7; i++) {
 		if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
-			Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[0][i]);
+			if (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i))
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[1][i]);
+			else
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[0][i]);
 		}
-
 	}
 	sbar_xofs = old_sbar_xofs;
 }
