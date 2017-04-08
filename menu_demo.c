@@ -263,8 +263,7 @@ static void Demo_Playlist_Del(int i)
 	demo_playlist_num--;
 	demo_playlist_num = max(0, demo_playlist_num);
 
-	demo_playlist_cursor--;
-	demo_playlist_cursor = max(0, demo_playlist_cursor);
+	demo_playlist_cursor = bound(0, demo_playlist_cursor, demo_playlist_num - 1);
 }
 
 //
