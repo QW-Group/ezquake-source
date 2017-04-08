@@ -16,27 +16,54 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.13 2007-10-11 05:55:47 dkure Exp $
+	
 */
 
+// sv_save.c
+
+#ifdef SERVERONLY
+#include "qwsvdef.h"
+#else
 #include "quakedef.h"
+#include "vfs.h"
 #include "server.h"
 #include "sv_world.h"
+#endif
 
 extern cvar_t maxclients;
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 #define	SAVEGAME_VERSION	6
 
+static void SV_SaveGameFileName(char* buffer, int buffer_size, char* name)
+{
+#ifdef SERVERONLY
+	snprintf (buffer, buffer_size, "%s/save/%s", fs_gamedir, name);
+#else
+	snprintf (buffer, buffer_size, "%s/save/%s", com_gamedir, name);
+#endif
+}
+
 //Writes a SAVEGAME_COMMENT_LENGTH character comment
 void SV_SavegameComment (char *buffer) {
 	int i;
 	char kills[20];
+#ifdef SERVERONLY
+	char *mapname = sv.mapname;
+	int killed_monsters = (int)PR_GLOBAL(killed_monsters);
+	int total_monsters = (int)PR_GLOBAL(total_monsters);
+#else
+	char *mapname = cl.levelname;
+	int killed_monsters = cl.stats[STAT_MONSTERS];
+	int total_monsters = cl.stats[STAT_TOTALMONSTERS];
+#endif
+	if (!mapname || !*mapname)
+		mapname = "Unnamed_Level";
 
 	for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
 		buffer[i] = ' ';
-	memcpy (buffer, cl.levelname, min(strlen(cl.levelname), 21));
-	snprintf (kills, sizeof (kills), "kills:%3i/%-3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	memcpy (buffer, mapname, min(strlen(mapname), 21));
+	snprintf (kills, sizeof (kills), "kills:%3i/%-3i", killed_monsters, total_monsters);
 	memcpy (buffer + 22, kills, strlen(kills));
 
 	// convert space to _ to make stdio happy
@@ -53,46 +80,48 @@ void SV_SaveGame_f (void) {
 	int i;
 
 	if (Cmd_Argc() != 2) {
-		Com_Printf ("Usage: %s <savefname> : save a game\n", Cmd_Argv(0));
+		Con_Printf ("Usage: %s <savefname> : save a game\n", Cmd_Argv(0));
 		return;
 	} else if (strstr(Cmd_Argv(1), "..")) {
-		Com_Printf ("Relative pathfnames are not allowed.\n");
+		Con_Printf ("Relative pathfnames are not allowed.\n");
 		return;
 	} else if (sv.state != ss_active) {
-		Com_Printf ("Not playing a local game.\n");
+		Con_Printf ("Not playing a local game.\n");
 		return;
+#ifndef SERVERONLY
 	} else if (cl.intermission) {
-		Com_Printf ("Can't save in intermission.\n");
+		Con_Printf ("Can't save in intermission.\n");
 		return;
+#endif
 	} else if (deathmatch.value != 0 || coop.value != 0 || maxclients.value != 1) {
-		Com_Printf ("Can't save multiplayer games.\n");
+		Con_Printf ("Can't save multiplayer games.\n");
 		return;
 	}
 
 	for (i = 1; i < MAX_CLIENTS; i++) {
 		if (svs.clients[i].state == cs_spawned) {
-			Com_Printf ("Can't save multiplayer games.\n");
+			Con_Printf ("Can't save multiplayer games.\n");
 			return;
 		}
 	}	
 
 	if (svs.clients[0].state != cs_spawned) {
-		Com_Printf ("Can't save, client #0 not spawned.\n");
+		Con_Printf ("Can't save, client #0 not spawned.\n");
 		return;
 	} else if (svs.clients[0].edict->v.health <= 0) {
-		Com_Printf ("Can't save game with a dead player\n");
+		Con_Printf ("Can't save game with a dead player\n");
 		// in fact, we can, but does it make sense?
 		return;
 	}
 
-	snprintf (fname, sizeof(fname), "%s/save/%s", com_gamedir, Cmd_Argv(1));
+	SV_SaveGameFileName (fname, sizeof(fname), Cmd_Argv(1));
 	COM_DefaultExtension (fname, ".sav");
 	
-	Com_Printf ("Saving game to %s...\n", fname);
+	Con_Printf ("Saving game to %s...\n", fname);
 	if (!(f = fopen (fname, "w"))) {		
 		FS_CreatePath (fname);
 		if (!(f = fopen (fname, "w"))) {
-			Com_Printf ("ERROR: couldn't open.\n");
+			Con_Printf ("ERROR: couldn't open.\n");
 			return;
 		}
 	}
@@ -120,7 +149,10 @@ void SV_SaveGame_f (void) {
 		fflush (f);
 	}
 	fclose (f);
-	Com_Printf ("done.\n");
+	Con_Printf ("done.\n");
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_LoadGame_f (void) {
@@ -133,40 +165,40 @@ void SV_LoadGame_f (void) {
 	unsigned int i;
 
 	if (Cmd_Argc() != 2) {
-		Com_Printf ("Usage: %s <savename> : load a game\n", Cmd_Argv(0));
+		Con_Printf ("Usage: %s <savename> : load a game\n", Cmd_Argv(0));
 		return;
 	}
 
-	snprintf (name, sizeof (name), "%s/save/%s", com_gamedir, Cmd_Argv(1));
+	SV_SaveGameFileName (name, sizeof(name), Cmd_Argv(1));
 	COM_DefaultExtension (name, ".sav");
 
-	Com_Printf ("Loading game from %s...\n", name);
+	Con_Printf ("Loading game from %s...\n", name);
 	if (!(f = fopen (name, "rb"))) {
-		Com_Printf ("ERROR: couldn't open.\n");
+		Con_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
 
 	if (fscanf (f, "%i\n", &version) != 1) {
 		fclose (f);
-		Com_Printf ("Error reading savegame data\n");
+		Con_Printf ("Error reading savegame data\n");
 		return;
 	}
 
 	if (version != SAVEGAME_VERSION) {
 		fclose (f);
-		Com_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
+		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
 		return;
 	}
 
 	if (fscanf (f, "%s\n", str) != 1) {
 		fclose (f);
-		Com_Printf ("Error reading savegame data\n");
+		Con_Printf ("Error reading savegame data\n");
 		return;
 	}
 	for (i = 0; i < NUM_SPAWN_PARMS; i++) {
 		if (fscanf (f, "%f\n", &spawn_parms[i]) != 1) {
 			fclose (f);
-			Com_Printf ("Error reading savegame data\n");
+			Con_Printf ("Error reading savegame data\n");
 			return;
 		}
 	}
@@ -174,7 +206,7 @@ void SV_LoadGame_f (void) {
 	// this silliness is so we can load 1.06 save files, which have float skill values
 	if (fscanf (f, "%f\n", &tfloat) != 1) {
 		fclose (f);
-		Com_Printf ("Error reading savegame data\n");
+		Con_Printf ("Error reading savegame data\n");
 		return;
 	}
 	current_skill = (int)(tfloat + 0.1);
@@ -192,23 +224,24 @@ void SV_LoadGame_f (void) {
 
 	if (fscanf (f, "%s\n", mapname) != 1) {
 		fclose (f);
-		Com_Printf ("Error reading savegame data\n");
+		Con_Printf ("Error reading savegame data\n");
 		return;
 	}
 	if (fscanf (f, "%f\n", &time) != 1) {
 		fclose (f);
-		Com_Printf ("Error reading savegame data\n");
+		Con_Printf ("Error reading savegame data\n");
 		return;
 	}
 
+#ifndef SERVERONLY
 	Host_EndGame();
-
 	CL_BeginLocalConnection ();
+#endif
 
-	SV_SpawnServer (mapname, false);
+	SV_SpawnServer (mapname, false, NULL);
 
 	if (sv.state != ss_active) {
-		Com_Printf ("Couldn't load map\n");
+		Con_Printf ("Couldn't load map\n");
 		fclose (f);
 		return;
 	}
@@ -217,11 +250,11 @@ void SV_LoadGame_f (void) {
 	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
 		size_t length;
 		if (fscanf (f, "%s\n", str) != 1) {
-			Com_Printf("Couldn't read lightstyles\n");
+			Con_Printf("Couldn't read lightstyles\n");
 			fclose (f);
 			return;
 		}
-		length = strlen (str) + 1;
+		length = strlen(str) + 1;
 		sv.lightstyles[i] = (char *) Hunk_Alloc (length);
 		strlcpy (sv.lightstyles[i], str, length);
 	}
@@ -259,13 +292,13 @@ void SV_LoadGame_f (void) {
 		if (entnum == -1) {	
 			// parse the global vars
 			ED_ParseGlobals (start);
-		} else {	
+		}
+		else {	
 			// parse an edict
 			ent = EDICT_NUM(entnum);
-			memset (&ent->v, 0, progs->entityfields * 4);
-			ent->e->free = false;
+			ED_ClearEdict (ent); // FIXME: we also clear world edict here, is it OK?
 			ED_ParseEdict (start, ent);
-	
+
 			// link it into the bsp tree
 			if (!ent->e->free)
 				SV_LinkEdict (ent, false);

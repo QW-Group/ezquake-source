@@ -208,7 +208,7 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 		MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
-void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
+void MSG_WriteDeltaUsercmd (sizebuf_t *buf, struct usercmd_s *from, struct usercmd_s *cmd)
 {
 	int bits;
 
@@ -575,6 +575,13 @@ float MSG_ReadFloatCoord(void)
 	float f;
 	MSG_ReadData(&f, 4);
 	return LittleFloat(f);
+}
+
+void MSG_WriteLongCoord(sizebuf_t* sb, float f)
+{
+	f = LittleFloat(f);
+
+	MSG_WriteFloat(sb, f);
 }
 
 float MSG_ReadAngle16 (void)

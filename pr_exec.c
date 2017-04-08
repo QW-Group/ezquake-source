@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-   $Id: pr_exec.c 636 2007-07-20 05:07:57Z disconn3ct $
+   
 */
 
 #include "qwsvdef.h"
@@ -205,7 +205,7 @@ void PR_StackTrace (void)
 		if (!f)
 			Con_Printf ("<NO FUNCTION>\n");
 		else
-			Con_Printf ("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
+			Con_Printf ("%12s : %s\n", PR1_GetString(f->s_file), PR1_GetString(f->s_name));
 	}
 }
 
@@ -243,7 +243,7 @@ void PR_Profile_f (void)
 		if (best)
 		{
 			if (num < 10)
-				Con_Printf ("%7i %s\n", best->profile, PR_GetString(best->s_name));
+				Con_Printf ("%7i %s\n", best->profile, PR1_GetString(best->s_name));
 			num++;
 			best->profile = 0;
 		}
@@ -480,7 +480,7 @@ void PR_ExecuteProgram (func_t fnum)
 			c->_float = !a->vector[0] && !a->vector[1] && !a->vector[2];
 			break;
 		case OP_NOT_S:
-			c->_float = !a->string || !*PR_GetString(a->string);
+			c->_float = !a->string || !*PR1_GetString(a->string);
 			break;
 		case OP_NOT_FNC:
 			c->_float = !a->function;
@@ -498,7 +498,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] == b->vector[2]);
 			break;
 		case OP_EQ_S:
-			c->_float = !strcmp(PR_GetString(a->string), PR_GetString(b->string));
+			c->_float = !strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
 			break;
 		case OP_EQ_E:
 			c->_float = a->_int == b->_int;
@@ -517,7 +517,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] != b->vector[2]);
 			break;
 		case OP_NE_S:
-			c->_float = strcmp(PR_GetString(a->string), PR_GetString(b->string));
+			c->_float = strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
 			break;
 		case OP_NE_E:
 			c->_float = a->_int != b->_int;
@@ -667,13 +667,13 @@ void PR_ExecuteProgram (func_t fnum)
 
 }
 
-/*----------------------*/
+//=============================================================================
 
 char *pr_newstrtbl[MAX_PRSTR];
 char *pr_strtbl[MAX_PRSTR];
 int num_prstr;
 
-char *PR_GetString(int num)
+char *PR1_GetString(int num)
 {
 	if (num < 0)
 	{
@@ -681,7 +681,7 @@ char *PR_GetString(int num)
 		num = -num;
 		if (num >= 2 * MAX_PRSTR)
 		{
-			Con_Printf("PR_GetString: num = %d\n", num);// May be will be better to generate PR_RunError?
+			Con_Printf("PR1_GetString: num = %d\n", num);// May be will be better to generate PR_RunError?
 			return NULL;
 		}
 		if (num >= MAX_PRSTR)
@@ -692,25 +692,33 @@ char *PR_GetString(int num)
 	return pr_strings + num;
 }
 
-int PR_SetString(char *s)
+void PR1_SetString(string_t* address, char* s)
 {
 	int i;
 
-	if (s - pr_strings < 0)
-	{
-		for (i = 0; i <= num_prstr; i++)
-			if (pr_strtbl[i] == s)
-				break;
-		if (i < num_prstr)
-			return -i;
-		if (num_prstr == MAX_PRSTR - 1)
-			Sys_Error("MAX_PRSTR");
-		num_prstr++;
-		pr_strtbl[num_prstr] = s;
-		//Con_DPrintf("SET:%d == %s\n", -num_prstr, s);
-		return -num_prstr;
+	if (!address) {
+		return;
 	}
-	return (int)(s - pr_strings);
+
+	if (s - pr_strings < 0) {
+		for (i = 0; i < num_prstr; i++) {
+			if (pr_strtbl[i] == s) {
+				*address = -i;
+				return;
+			}
+		}
+
+		if (num_prstr + 1 >= MAX_PRSTR) {
+			Sys_Error("MAX_PRSTR");
+		}
+
+		pr_strtbl[++num_prstr] = s;
+		//Con_DPrintf("SET:%d == %s\n", -num_prstr, s);
+		*address = -num_prstr;
+	}
+	else {
+		*address = (int)(s - pr_strings);
+	}
 }
 
 /*
@@ -722,7 +730,7 @@ many calls to function could cause strtbl overflow
 ==============
 */
 
-int PR_SetTmpString(char *s)
+void PR_SetTmpString(string_t* target, const char *s)
 {
 	static int index1;
 	static char tmp[8][2048];
@@ -730,5 +738,133 @@ int PR_SetTmpString(char *s)
 	index1 = (index1 + 1) & 7;
 
 	strlcpy(tmp[index1], s, sizeof(tmp[index1]));
-	return PR_SetString(tmp[index1]);
+	PR1_SetString(target, tmp[index1]);
 }
+
+//=============================================================================
+
+void PR1_GameClientDisconnect(int spec)
+{
+	if (spec)
+	{
+		if (mod_SpectatorDisconnect)
+			PR_ExecuteProgram(mod_SpectatorDisconnect);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(ClientDisconnect));
+	}
+}
+
+//=============================================================================
+
+void PR1_GameClientConnect(int spec)
+{
+	if (spec)
+	{
+		if (mod_SpectatorConnect)
+			PR_ExecuteProgram(mod_SpectatorConnect);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(ClientConnect));
+	}
+}
+
+//=============================================================================
+
+void PR1_GamePutClientInServer(int spec)
+{
+	if (spec)
+	{
+		// none...
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PutClientInServer));
+	}
+}
+
+//=============================================================================
+
+void PR1_GameClientPreThink(int spec)
+{
+	if (spec)
+	{
+		// none...
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PlayerPreThink));
+	}
+}
+
+//=============================================================================
+
+void PR1_GameClientPostThink(int spec)
+{
+	if (spec)
+	{
+		if (mod_SpectatorThink)
+			PR_ExecuteProgram(mod_SpectatorThink);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PlayerPostThink));
+	}
+}
+
+//=============================================================================
+
+qbool PR1_ClientSay(int isTeamSay, char *message)
+{
+	qbool ret = false;
+
+	if (mod_ChatMessage)
+	{
+		int j;
+
+		// remove surrounding " if any.
+		if (message[0] == '"' && (j = (int)strlen(message)) > 2 && message[j-1] == '"')
+		{
+			message++;  // skip opening ".
+			message[max(0,(int)strlen(message)-1)] = 0;   // truncate closing ".
+		}
+
+		PR_SetTmpString(&G_INT(OFS_PARM0), message);
+		G_FLOAT(OFS_PARM1) = (float)isTeamSay;
+
+		PR_ExecuteProgram(mod_ChatMessage);
+
+		ret = !!G_FLOAT(OFS_RETURN);
+	}
+
+	return ret;
+}
+
+//=============================================================================
+
+void PR1_PausedTic(float duration)
+{
+	if (GE_PausedTic)
+	{
+		G_FLOAT(OFS_PARM0) = duration;
+		PR_ExecuteProgram (GE_PausedTic);
+	}
+}
+
+//=============================================================================
+
+void PR1_UnLoadProgs(void)
+{
+	if (progs)
+	{
+		// FIXME: There should be done alot of variables reseting...
+
+#ifdef WITH_NQPROGS
+		pr_nqprogs = false;
+#endif
+		progs = NULL;
+	}
+}
+

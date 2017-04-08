@@ -40,9 +40,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _MAX_FNAME 1024
 #define _MAX_EXT 64
 #define _MAX_DIR 1024
+
+typedef void *DL_t;
+#define DLEXT "so"
+#else
+typedef HMODULE DL_t;
+#define DLEXT "dll"
 #endif
 
-
+DL_t Sys_DLOpen(const char *path);
+qbool Sys_DLClose(DL_t dl);
+void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 

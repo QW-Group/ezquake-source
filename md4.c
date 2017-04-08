@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: md4.c,v 1.3 2007-07-29 12:19:42 disconn3ct Exp $
+	
 
 */
 /* GLOBAL.H - RSAREF types and constants */
@@ -36,17 +36,17 @@ typedef unsigned int UINT4;
 typedef unsigned long int UINT4;
 #endif
 
-  
+
 /* MD4.H - header file for MD4C.C */
 
-/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. 
+/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991.
 
 All rights reserved.
-  
+
 License to copy and use this software is granted provided that it is identified as the 'RSA Data Security, Inc. MD4 Message-Digest Algorithm' in all material mentioning or referencing this software or this function.
 License is also granted to make and use derivative works provided that such works are identified as 'derived from the RSA Data Security, Inc. MD4 Message-Digest Algorithm' in all material mentioning or referencing the derived work.
 RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided 'as is' without express or implied warranty of any kind.
-  
+
 These notices must be retained in any copies of any part of this documentation and/or software. */
 
 /* MD4 context. */
@@ -59,21 +59,21 @@ typedef struct {
 void MD4Init (MD4_CTX *);
 void MD4Update (MD4_CTX *, unsigned char *, unsigned int);
 void MD4Final (unsigned char [16], MD4_CTX *);
-  
 
-  
+
+
 /* MD4C.C - RSA Data Security, Inc., MD4 message-digest algorithm */
 /* Copyright (C) 1990-2, RSA Data Security, Inc. All rights reserved.
-  
+
 License to copy and use this software is granted provided that it is identified as the
 RSA Data Security, Inc. MD4 Message-Digest Algorithm
  in all material mentioning or referencing this software or this function.
-License is also granted to make and use derivative works provided that such works are identified as 
+License is also granted to make and use derivative works provided that such works are identified as
 derived from the RSA Data Security, Inc. MD4 Message-Digest Algorithm
 in all material mentioning or referencing the derived work.
 RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided
 as is without express or implied warranty of any kind.
-  
+
 These notices must be retained in any copies of any part of this documentation and/or software. */
 
 /* Constants for MD4Transform routine.  */
@@ -178,7 +178,7 @@ void MD4Final (unsigned char digest[16], MD4_CTX *context)
 
     /* Append length (before padding) */
     MD4Update (context, bits, 8);
-    
+
     /* Store state in digest */
     Encode (digest, context->state, 16);
 
@@ -292,7 +292,7 @@ unsigned Com_BlockChecksum (void *buffer, int length)
     MD4Init (&ctx);
     MD4Update (&ctx, (unsigned char *)buffer, length);
     MD4Final ( (unsigned char *)digest, &ctx);
-    
+
     val = digest[0] ^ digest[1] ^ digest[2] ^ digest[3];
 
     return val;

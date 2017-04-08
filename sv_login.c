@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: sv_login.c 759 2008-02-25 16:16:46Z qqshka $
+	
 */
 
 #include "qwsvdef.h"
@@ -35,17 +35,17 @@ typedef enum {use_log, use_ip} quse_t;
 
 typedef struct
 {
-	char		login[MAX_LOGINNAME];
-	char		pass[MAX_LOGINNAME];
-	int		failures;
-	int		inuse;
-	ipfilter_t	adress;
-	acc_state_t	state;
-	quse_t		use;
+	char        login[MAX_LOGINNAME];
+	char        pass[MAX_LOGINNAME];
+	int         failures;
+	int         inuse;
+	ipfilter_t  adress;
+	acc_state_t state;
+	quse_t      use;
 } account_t;
 
-static account_t	accounts[MAX_ACCOUNTS];
-static int		num_accounts = 0;
+static account_t accounts[MAX_ACCOUNTS];
+static int       num_accounts = 0;
 
 static qbool validAcc(char *acc)
 {
@@ -97,6 +97,9 @@ static void WriteAccounts(void)
 	}
 
 	fclose(f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 /*
@@ -133,7 +136,7 @@ void SV_LoadAccounts(void)
 		memset(acc, 0, sizeof(account_t));
 		// Is realy safe to use 'fscanf(f, "%s", s)'? FIXME!
 		if (fscanf(f, "%s", acc->login) != 1) {
-			Com_Printf("Error reading account data\n");
+			Con_Printf("Error reading account data\n");
 			break;
 		}
 		if (StringToFilter(acc->login, &acc->adress))
@@ -141,13 +144,13 @@ void SV_LoadAccounts(void)
 			strlcpy(acc->pass, acc->login, MAX_LOGINNAME);
 			acc->use = use_ip;
 			if (fscanf(f, "%s %d\n", acc->pass, (int *)&acc->state) != 2) {
-				Com_Printf("Error reading account data\n");
+				Con_Printf("Error reading account data\n");
 				break;
 			}
 		}
 		else {
 			if (fscanf(f, "%s %d %d\n", acc->pass,  (int *)&acc->state, &acc->failures) != 3) {
-				Com_Printf("Error reading account data\n");
+				Con_Printf("Error reading account data\n");
 				break;
 			}
 		}
@@ -649,12 +652,16 @@ void SV_ParseLogin(client_t *cl)
 		//VVD: forcenick ->
 		if ((int)sv_forcenick.value && cl->login[0])
 		{
+			char oldval[MAX_EXT_INFO_STRING];
+			strlcpy (oldval, cl->name, MAX_EXT_INFO_STRING);
+
 			Info_Set (&cl->_userinfo_ctx_, "name", cl->login);
-			strlcpy (cl->name, cl->login, CLIENT_NAME_LEN);
+
+			ProcessUserInfoChange (cl, "name", oldval);
+
+			// Change name cvar in client
 			MSG_WriteByte (&cl->netchan.message, svc_stufftext);
 			MSG_WriteString (&cl->netchan.message, va("name %s\n", cl->login));
-			MSG_WriteByte (&cl->netchan.message, svc_stufftext);
-			MSG_WriteString (&cl->netchan.message, va("setinfo name %s\n", cl->login));
 		}
 		//<-
 

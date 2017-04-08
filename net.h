@@ -16,8 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.15 2007-05-03 12:03:54 johnnycz Exp $
+
 */
+
 // net.h -- quake's interface to the networking layer
 
 #ifndef __NET_H__
@@ -26,10 +27,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 
 #ifdef _WIN32
+
+//
+// OS specific includes.
+//
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+//
+// OS specific types definition.
+//
+
 typedef int socklen_t;
 typedef SOCKET socket_t;
+
+//
+// OS specific definitions.
+//
 
 #ifdef EWOULDBLOCK
 #undef EWOULDBLOCK
@@ -53,16 +68,19 @@ typedef SOCKET socket_t;
 #undef EAFNOSUPPORT
 #endif
 
-#define EWOULDBLOCK	WSAEWOULDBLOCK
-#define EMSGSIZE	WSAEMSGSIZE
-#define ECONNRESET	WSAECONNRESET
-#define ECONNABORTED	WSAECONNABORTED
-#define ECONNREFUSED	WSAECONNREFUSED
-#define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
-#define EAFNOSUPPORT	WSAEAFNOSUPPORT
-#define qerrno WSAGetLastError()
+#define EWOULDBLOCK     WSAEWOULDBLOCK
+#define EMSGSIZE        WSAEMSGSIZE
+#define ECONNRESET      WSAECONNRESET
+#define ECONNABORTED    WSAECONNABORTED
+#define ECONNREFUSED    WSAECONNREFUSED
+#define EADDRNOTAVAIL   WSAEADDRNOTAVAIL
+#define EAFNOSUPPORT    WSAEAFNOSUPPORT
+#define qerrno          WSAGetLastError()
 #else //_WIN32
-#define qerrno errno
+
+//
+// OS specific includes.
+//
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,36 +91,58 @@ typedef SOCKET socket_t;
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
-#include <errno.h>
-
 #include <unistd.h>
 #include <fcntl.h>
 
+#ifdef __sun__
+#include <sys/filio.h>
+#endif //__sun__
+
+#ifdef NeXT
+#include <libc.h>
+#endif //NeXT
+
+//
+// OS specific types definition.
+//
+
+typedef int socket_t;
+
+//
+// OS specific definitions.
+//
+
+#define qerrno 			errno
+
 #define closesocket close
 #define ioctlsocket ioctl
-typedef int socket_t;
+
 #endif //_WIN32
 
+//
+// common definitions.
+//
+
 #ifndef INVALID_SOCKET
-#define INVALID_SOCKET -1
+#define INVALID_SOCKET  -1
 #endif
 
 #ifndef SOCKET_ERROR
-#define SOCKET_ERROR -1
+#define SOCKET_ERROR    -1
 #endif
 
-#define PORT_ANY -1
+#define PORT_ANY ((unsigned short int)0xFFFF)
 
 typedef enum {NA_INVALID, NA_LOOPBACK, NA_IP} netadrtype_t;
 
 typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
 
 typedef struct {
-	netadrtype_t type;
+	netadrtype_t    type;
 
-	byte ip[4];
+	byte            ip[4];
 
-	unsigned short port;
+	unsigned short  port;
 } netadr_t;
 
 extern	netadr_t	net_local_sv_ipadr;
@@ -113,44 +153,67 @@ extern	netadr_t	net_from; // address of who sent the packet
 extern	sizebuf_t	net_message;
 
 #define MAX_UDP_PACKET (MAX_MSGLEN*2) // one more than msg + header
-extern	byte		net_message_buffer[MSG_BUF_SIZE];
 
-extern	cvar_t	hostname;
+// convert netadrt_t to sockaddr_storage.
+void	NetadrToSockadr (const netadr_t *a, struct sockaddr_storage *s);
+// convert sockaddr_storage to netadrt_t.
+void	SockadrToNetadr (const struct sockaddr_storage *s, netadr_t *a);
 
-qbool TCP_Set_KEEPALIVE(int sock);
-
-int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
+// compare netart_t.
+qbool	NET_CompareAdr (const netadr_t a, const netadr_t b);
+// compare netart_t, ignore port.
+qbool	NET_CompareBaseAdr (const netadr_t a, const netadr_t b);
+// print netadr_t as string, xxx.xxx.xxx.xxx:xxxxx notation.
+char	*NET_AdrToString (const netadr_t a);
+// print netadr_t as string, port skipped, xxx.xxx.xxx.xxx notation.
+char	*NET_BaseAdrToString (const netadr_t a);
+// convert/resolve IP/DNS to netadr_t.
+qbool	NET_StringToAdr (const char *s, netadr_t *a);
 
 void	NET_Init (void);
+void	NET_Shutdown (void);
 void	NET_InitClient (void);
 void	NET_InitServer (void);
 void	NET_CloseServer (void);
-void	NET_Shutdown (void);
 qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
+void	NET_GetLocalAddress (int socket, netadr_t *out);
+
 void	NET_ClearLoopback (void);
-qbool	NET_Sleep (int msec);
+qbool	NET_Sleep(int msec, qbool stdinissocket);
 
-qbool	NET_CompareAdr (netadr_t a, netadr_t b);
-qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
-char	*NET_AdrToString (netadr_t a);
-char	*NET_BaseAdrToString (netadr_t a);
-qbool	NET_StringToAdr (char *s, netadr_t *a);
-
+// GETER: return port of UDP server socket.
 int		NET_UDPSVPort (void);
 
+// GETER: return client/server UDP/TCP socket.
+int		NET_GetSocket(netsrc_t netsrc, qbool tcp);
+
+// open server TCP socket.
+void	NET_InitServer_TCP(unsigned short int port);
+
+// UTILITY: set KEEPALIVE option on TCP socket (useful for faster timeout detection).
+qbool 	TCP_Set_KEEPALIVE(int sock);
+// UTILITY: open TCP socket for remove address (useful for client connection).
+int		TCP_OpenStream (netadr_t remoteaddr);
+// UTILITY: open TCP listen socket (useful for server).
+int		TCP_OpenListenSocket (unsigned short int port);
+// UTILITY: open UDP listen socket (useful for server).
+int		UDP_OpenSocket (unsigned short int port);
 //============================================================================
 
-#define OLD_AVG 0.99 // total = oldtotal*OLD_AVG + new*(1-OLD_AVG)
+//
+// netchan related.
+//
 
-#define MAX_LATENT 32
-#define MAX_ADR_SIZE	64
+#define	OLD_AVG		0.99		// total = oldtotal*OLD_AVG + new*(1-OLD_AVG)
+
+#define	MAX_LATENT	32
 
 typedef struct {
-	qbool		fatal_error;
-
 	netsrc_t	sock;
+
+	qbool		fatal_error;
 
 	int			dropped;			// between last packet and previous
 
@@ -199,13 +262,9 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data);
 void Netchan_OutOfBand (netsrc_t sock, netadr_t adr, int length, byte *data);
 void Netchan_OutOfBandPrint (netsrc_t sock, netadr_t adr, char *format, ...);
 qbool Netchan_Process (netchan_t *chan);
-void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
+void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int mtu);
 
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
-int  UDP_OpenSocket (int port);
-void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s);
-void SockadrToNetadr (struct sockaddr_storage *s, netadr_t *a);
-
-#endif /* __NET_H__ */
+#endif /* !__NET_H__ */

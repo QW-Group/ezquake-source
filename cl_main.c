@@ -578,9 +578,9 @@ void CL_CheckForResend (void)
 	#endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_MVD1
-                svs.mvdprotocolextensions1
+                svs.mvdprotocolextension1
 #endif
-				);
+		);
 		
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
@@ -1393,7 +1393,7 @@ void CL_ConnectionlessPacket (void)
 					Com_Printf("Dup connect received.  Ignored.\n");
 				break;
 			}
-			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport);
+			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport, 0);
 			MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
@@ -2282,8 +2282,9 @@ void CL_Frame (double time)
 		CL_CheckAutoPause();
 
 #ifndef CLIENTONLY
-		if (com_serveractive)
+		if (com_serveractive) {
 			SV_Frame(cls.frametime);
+		}
 #endif
 
 		// fetch results from server
@@ -2329,8 +2330,9 @@ void CL_Frame (double time)
 			CL_CheckAutoPause ();
 
 #ifndef CLIENTONLY
-			if (com_serveractive)
-				SV_Frame (physframetime);
+			if (com_serveractive) {
+				SV_Frame(physframetime);
+			}
 #endif
 
 			// Fetch results from server
@@ -2363,8 +2365,7 @@ void CL_Frame (double time)
 		}
 		else
 		{
-			if (!cls.demoplayback && cl_earlypackets.integer)
-			{
+			if (!cls.demoplayback && cl_earlypackets.integer) {
 				CL_ReadPackets(); // read packets ASAP
 			}
 

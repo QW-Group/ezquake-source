@@ -413,8 +413,9 @@ typedef struct entity_state_s {
 	byte	trans;
 } entity_state_t;
 
-#define	MAX_MVD_PACKET_ENTITIES	300		
-#define	MAX_PACKET_ENTITIES	64
+#define	MAX_PACKET_ENTITIES	64          // doesn't include nails
+#define MAX_PEXT256_PACKET_ENTITIES 256 // up to 256 ents, look FTE_PEXT_256PACKETENTITIES
+#define	MAX_MVD_PACKET_ENTITIES	300	    // !!! MUST not be less than any of above values!!!
 
 typedef struct packet_entities_s {
 	int		num_entities;

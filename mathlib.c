@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mathlib.c,v 1.7 2007-10-29 00:13:26 d3urk Exp $
 
 */
+// mathlib.c -- math primitives
 
+#ifdef SERVERONLY
+#include "qwsvdef.h"
+#else
 #include "common.h"
-struct mplane_s;
+#endif
 
-vec3_t vec3_origin = {0, 0, 0};
+vec3_t vec3_origin = { 0, 0, 0 };
 
 int  _mathlib_temp_int1, _mathlib_temp_int2, _mathlib_temp_int3;
 float _mathlib_temp_float1, _mathlib_temp_float2, _mathlib_temp_float3;
@@ -44,11 +47,14 @@ void ProjectPointOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal) {
 void PerpendicularVector(vec3_t dst, const vec3_t src) {
 	if (!src[0]) {
 		VectorSet(dst, 1, 0, 0);
-	} else if (!src[1]) {
+	}
+	else if (!src[1]) {
 		VectorSet(dst, 0, 1, 0);
-	} else if (!src[2]) {
+	}
+	else if (!src[2]) {
 		VectorSet(dst, 0, 0, 1);
-	} else {
+	}
+	else {
 		VectorSet(dst, -src[1], src[0], 0);
 		VectorNormalizeFast(dst);
 	}
@@ -61,18 +67,18 @@ void VectorVectors(vec3_t forward, vec3_t right, vec3_t up) {
 
 void MakeNormalVectors (/* in */ vec3_t forward, /* out */ vec3_t right, vec3_t up)
 {
-        float           d;
+	float d;
 
-        // this rotate and negate guarantees a vector
-        // not colinear with the original
-        right[1] = -forward[0];
-        right[2] = forward[1];
-        right[0] = forward[2];
+	// this rotate and negate guarantees a vector
+	// not colinear with the original
+	right[1] = -forward[0];
+	right[2] = forward[1];
+	right[0] = forward[2];
 
-        d = DotProduct (right, forward);
-        VectorMA (right, -d, forward, right);
-        VectorNormalize (right);
-        CrossProduct (right, forward, up);
+	d = DotProduct (right, forward);
+	VectorMA (right, -d, forward, right);
+	VectorNormalize (right);
+	CrossProduct (right, forward, up);
 }
 
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees) {
@@ -104,8 +110,8 @@ void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, f
 		+ (t0 * vr[2] + t1 * vu[2] + vf[2] * vf[2]) * point[2];
 }
 
-//Split out like this for ASM to call.
-void BOPS_Error (void) {
+void BOPS_Error (void)
+{
 	Sys_Error ("BoxOnPlaneSide:  Bad signbits");
 }
 
@@ -117,33 +123,34 @@ int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *p) {
 	switch(p->signbits) {
 	default:
 	case 0:
-		return	(((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) >= p->dist) |
-				(((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) >= p->dist) |
+		        (((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) < p->dist) << 1));
 	case 1:
-		return	(((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) >= p->dist) |
-				(((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) >= p->dist) |
+		        (((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) < p->dist) << 1));
 	case 2:
-		return	(((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) >= p->dist) |
-				(((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) >= p->dist) |
+		        (((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) < p->dist) << 1));
 	case 3:
-		return	(((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) >= p->dist) |
-				(((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) >= p->dist) |
+		        (((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) < p->dist) << 1));
 	case 4:
-		return	(((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) >= p->dist) |
-				(((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) >= p->dist) |
+		        (((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
 	case 5:
-		return	(((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) >= p->dist) |
-				(((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2]) >= p->dist) |
+		        (((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
 	case 6:
-		return	(((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) >= p->dist) |
-				(((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) >= p->dist) |
+		        (((p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
 	case 7:
-		return	(((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) >= p->dist) |
-				(((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
+		return  (((p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2]) >= p->dist) |
+		        (((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
 	}
 }
 
-void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
+void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
+{
 	float angle, sr, sp, sy, cr, cp, cy, temp;
 
 	if (angles[YAW]) {
@@ -171,7 +178,6 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 	}
 
 	if (right || up) {
-		
 		if (angles[ROLL]) {
 			angle = DEG2RAD(angles[ROLL]);
 			sr = sin(angle);
@@ -190,7 +196,8 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 				up[1] = (temp * sy - sr * cy);
 				up[2] = cr * cp;
 			}
-		} else {
+		}
+		else {
 			if (right) {
 				right[0] = sy;
 				right[1] = -cy;
@@ -250,15 +257,16 @@ vec_t VectorLength (vec3_t v) {
 	return sqrt(length);
 }
 
-
 float VectorNormalize (vec3_t v) {
 	float length;
 
 	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 	length = sqrt (length);
 
-	if (length)
+	if (length) {
 		VectorScale(v, 1 / length, v);
+	}
+
 	return length;
 }
 
@@ -289,23 +297,25 @@ void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4]) {
 	out[2][3] = in1[2][0] * in2[0][3] + in1[2][1] * in2[1][3] +	in1[2][2] * in2[2][3] + in1[2][3];
 }
 
-
 //Returns mathematically correct (floor-based) quotient and remainder for numer and denom, both of
 //which should contain no fractional part. The quotient must fit in 32 bits.
-void FloorDivMod (double numer, double denom, int *quotient, int *rem) {
+void FloorDivMod (double numer, double denom, int *quotient, int *rem)
+{
 	int q, r;
 	double x;
 
 #ifndef PARANOID
-	if (denom <= 0.0)
-		Sys_Error ("FloorDivMod: bad denominator %d", denom);
+	if (denom <= 0.0) {
+		Sys_Error("FloorDivMod: bad denominator %d", denom);
+	}
 #endif
 
 	if (numer >= 0.0) {
 		x = floor(numer / denom);
 		q = (int) x;
 		r = (int) floor(numer - (x * denom));
-	} else {
+	}
+	else {
 		// perform operations with positive values, and fix mod to make floor-based
 		x = floor(-numer / denom);
 		q = -(int)x;
@@ -319,12 +329,14 @@ void FloorDivMod (double numer, double denom, int *quotient, int *rem) {
 	*rem = r;
 }
 
-int GreatestCommonDivisor (int i1, int i2) {
+int GreatestCommonDivisor (int i1, int i2)
+{
 	if (i1 > i2) {
 		if (i2 == 0)
 			return (i1);
 		return GreatestCommonDivisor (i2, i1 % i2);
-	} else {
+	}
+	else {
 		if (i1 == 0)
 			return (i2);
 		return GreatestCommonDivisor (i1, i2 % i1);
@@ -342,8 +354,8 @@ int IsPointInPolygon(int npol, vec3_t *v, float x, float y)
 	for (i = 0, j = npol-1; i < npol; j = i++) 
 	{
 		if ((((v[i][1] <= y) && (y < v[j][1])) ||
-             ((v[j][1]<=y) && (y < v[i][1]))) &&
-            (x < (v[j][0] - v[i][0]) * (y - v[i][1]) / (v[j][1] - v[i][1]) + v[i][0]))
+		    ((v[j][1]<=y) && (y < v[i][1]))) &&
+		    (x < (v[j][0] - v[i][0]) * (y - v[i][1]) / (v[j][1] - v[i][1]) + v[i][0]))
 		{
 			c = !c;
 		}
@@ -367,12 +379,12 @@ int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float 
 {
 	register int i, j;
 	float ai, atmp = 0, xtmp = 0, ytmp = 0;
-	
+
 	if (n < 3)
 	{
 		return 1;
 	}
-	
+
 	for (i = n - 1, j = 0; j < n; i = j, j++)
 	{
 		ai = v[i][0] * v[j][1] - v[j][0] * v[i][1];
@@ -393,15 +405,17 @@ int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float 
 }
 
 //Inverts an 8.24 value to a 16.16 value
-fixed16_t Invert24To16(fixed16_t val) {
-	if (val < 256)
+fixed16_t Invert24To16(fixed16_t val)
+{
+	if (val < 256) {
 		return (0xFFFFFFFF);
+	}
 
 	return (fixed16_t) (((double) 0x10000 * (double) 0x1000000 / (double) val) + 0.5);
 }
 
 /*
-	Init rotation matrix 'out', 'angle' in radians, 'v' should be normilized vector.
+Init rotation matrix 'out', 'angle' in radians, 'v' should be normilized vector.
 */
 void Matrix3x3_CreateRotate (matrix3x3_t out, float angle, const vec3_t v)
 {
@@ -422,7 +436,7 @@ void Matrix3x3_CreateRotate (matrix3x3_t out, float angle, const vec3_t v)
 }
 
 /*
-	Multiply matrix 'in' by vector 'v', note what 'out' is vector.
+Multiply matrix 'in' by vector 'v', note what 'out' is vector.
 */
 void Matrix3x3_MultiplyByVector (vec3_t out, const matrix3x3_t in, const vec3_t v)
 {

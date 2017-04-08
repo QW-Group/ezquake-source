@@ -1712,3 +1712,14 @@ int Com_TranslateMapChecksum (const char *mapname, int checksum)
 	return checksum;
 }
 
+float AdjustAngle(float current, float ideal, float fraction)
+{
+	float move = ideal - current;
+
+	if (move >= 180)
+		move -= 360;
+	else if (move <= -180)
+		move += 360;
+
+	return current + fraction * move;
+}

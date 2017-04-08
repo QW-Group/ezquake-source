@@ -21,6 +21,8 @@
 #ifndef __VFS_H__
 #define __VFS_H__
 
+#include "hash.h"
+
 //=================================
 // Quake filesystem
 //=================================
@@ -148,5 +150,17 @@ vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len);
 #ifdef DOOMWADS
 extern searchpathfuncs_t doomwadfilefuncs;
 #endif //DOOMWADS
+
+// FS_FLocateFile return type.
+typedef enum
+{
+	FSLFRT_IFFOUND,			// return true if file found, false if not found.
+	FSLFRT_LENGTH,			// return file length if found, -1 if not found.
+	FSLFRT_DEPTH_OSONLY,	// return depth (no paks), 0x7fffffff if not found.
+	FSLFRT_DEPTH_ANYPATH	// return depth, 0x7fffffff if not found.
+} FSLF_ReturnType_e;
+
+void FS_FlushFSHash(void);
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc);
 
 #endif /* __VFS_H__ */

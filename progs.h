@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: progs.h 684 2007-09-17 21:16:34Z tonik $
 */
 
 #ifndef __PROGS_H__
@@ -53,6 +52,8 @@ typedef struct sv_edict_s
 	qbool		free;
 	link_t		area;			// linked to a division node or leaf
 
+	int         entnum;
+
 	int			num_leafs;
 	short		leafnums[MAX_ENT_LEAFS];
 
@@ -83,10 +84,11 @@ extern	dstatement_t	*pr_statements;
 extern	globalvars_t	*pr_global_struct;
 extern	float		*pr_globals;	// same as pr_global_struct
 
-extern	int		pr_edict_size;	// in bytes
-extern	int		pr_teamfield;
-extern	cvar_t		sv_progsname; 
-extern	cvar_t		sv_forcenqprogs; 
+extern	int         pr_edict_size;	// in bytes
+extern	cvar_t      sv_progsname; 
+#ifdef WITH_NQPROGS
+extern	cvar_t      sv_forcenqprogs;
+#endif
 
 //============================================================================
 
@@ -117,11 +119,11 @@ void NQP_Reset (void);
 void PR_Init (void);
 
 void PR_ExecuteProgram (func_t fnum);
-void PR_LoadProgs (void);
 void PR_InitPatchTables (void);	// NQ progs support
 
 void PR_Profile_f (void);
 
+void ED_ClearEdict (edict_t *e);
 edict_t *ED_Alloc (void);
 void ED_Free (edict_t *ed);
 
@@ -136,9 +138,6 @@ void ED_WriteGlobals (FILE *f);
 void ED_ParseGlobals (char *data);
 
 void ED_LoadFromFile (char *data);
-
-//define EDICT_NUM(n) ((edict_t *)(sv.edicts+ (n)*pr_edict_size))
-//define NUM_FOR_EDICT(e) (((byte *)(e) - sv.edicts)/pr_edict_size)
 
 edict_t *EDICT_NUM(int n);
 int NUM_FOR_EDICT(edict_t *e);
@@ -155,13 +154,13 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	G_EDICT(o) ((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
 #define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o) (&pr_globals[o])
-#define	G_STRING(o) (PR_GetString(*(string_t *)&pr_globals[o]))
+#define	G_STRING(o) (PR1_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
 #define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
+#define	E_STRING(e,o) (PR1_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
 
 extern	int		type_size[8];
 
@@ -175,7 +174,10 @@ extern	qbool	pr_trace;
 extern	dfunction_t	*pr_xfunction;
 extern	int		pr_xstatement;
 
-extern func_t SpectatorConnect, SpectatorDisconnect, SpectatorThink;
+extern func_t mod_ConsoleCmd, mod_UserCmd;
+extern func_t mod_UserInfo_Changed, mod_localinfoChanged;
+extern func_t mod_ChatMessage;
+extern func_t mod_SpectatorConnect, mod_SpectatorDisconnect, mod_SpectatorThink;
 extern func_t GE_ClientCommand, GE_PausedTic, GE_ShouldPause;
 
 extern int fofs_items2; // ZQ_ITEMS2 extension
@@ -183,6 +185,9 @@ extern int fofs_vw_index;	// ZQ_VWEP
 extern int fofs_movement;
 extern int fofs_gravity, fofs_maxspeed;
 extern int fofs_hideentity;
+extern int fofs_trackent;
+extern int fofs_visibility;
+extern int fofs_hide_players;
 
 #define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->_float
 #define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->vector
@@ -192,12 +197,12 @@ void PR_RunError (char *error, ...);
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);
 
-eval_t *GetEdictFieldValue(edict_t *ed, char *field);
+eval_t *PR1_GetEdictFieldValue(edict_t *ed, char *field);
 
-int ED_FindFieldOffset (char *field);
+int ED1_FindFieldOffset (char *field);
 
 //
-// PR STrings stuff
+// PR Strings stuff
 //
 #define MAX_PRSTR 1024
 
@@ -205,9 +210,72 @@ extern char *pr_strtbl[MAX_PRSTR];
 extern char *pr_newstrtbl[MAX_PRSTR];
 extern int num_prstr;
 
-char *PR_GetString(int num);
-int PR_SetString(char *s);
-int PR_SetTmpString(char *s);
+char *PR1_GetString(int num);
+void PR1_SetString(string_t* address, char* s);
+void PR_SetTmpString(string_t* address, const char *s);
+
+void PR1_LoadProgs (void);
+void PR1_InitProg(void);
+void PR1_Init(void);
+
+#define PR1_GameShutDown()	// PR1 does not really have it.
+void PR1_UnLoadProgs(void);
+
+void PR1_GameClientDisconnect(int spec);
+void PR1_GameClientConnect(int spec);
+void PR1_GamePutClientInServer(int spec);
+void PR1_GameClientPreThink(int spec);
+void PR1_GameClientPostThink(int spec);
+qbool PR1_ClientSay(int isTeamSay, char *message);
+void PR1_PausedTic(float duration);
+qbool PR1_ClientCmd(void);
+
+#define PR1_GameSetChangeParms() PR_ExecuteProgram(PR_GLOBAL(SetChangeParms))
+#define PR1_GameSetNewParms() PR_ExecuteProgram(PR_GLOBAL(SetNewParms))
+#define PR1_GameStartFrame() PR_ExecuteProgram (PR_GLOBAL(StartFrame))
+#define PR1_ClientKill() PR_ExecuteProgram (PR_GLOBAL(ClientKill))
+#define PR1_UserInfoChanged() (0) // PR1 does not really have it,
+                                  // we have mod_UserInfo_Changed but it is slightly different.
+#define PR1_LoadEnts ED_LoadFromFile
+#define PR1_EdictThink PR_ExecuteProgram
+#define PR1_EdictTouch PR_ExecuteProgram
+#define PR1_EdictBlocked PR_ExecuteProgram
+
+#ifndef USE_PR2
+	#define PR_LoadProgs PR1_LoadProgs
+	#define PR_InitProg PR1_InitProg
+	#define PR_GameShutDown PR1_GameShutDown
+	#define PR_UnLoadProgs PR1_UnLoadProgs
+
+	#define PR_Init PR1_Init
+	//#define PR_GetString PR1_GetString
+	//#define PR_SetString PR1_SetString
+	#define PR_SetEntityString(ent, target, value) PR1_SetString(&target, value)
+	#define PR_SetGlobalString(target, value) PR1_SetString(&target, value)
+	#define ED_FindFieldOffset ED1_FindFieldOffset
+	#define PR_GetEdictFieldValue PR1_GetEdictFieldValue
+
+	#define PR_GameClientDisconnect PR1_GameClientDisconnect
+	#define PR_GameClientConnect PR1_GameClientConnect
+	#define PR_GamePutClientInServer PR1_GamePutClientInServer
+	#define PR_GameClientPreThink PR1_GameClientPreThink
+	#define PR_GameClientPostThink PR1_GameClientPostThink
+	#define PR_ClientSay PR1_ClientSay
+	#define PR_PausedTic PR1_PausedTic
+	#define PR_ClientCmd PR1_ClientCmd
+
+	#define PR_GameSetChangeParms PR1_GameSetChangeParms
+	#define PR_GameSetNewParms PR1_GameSetNewParms
+	#define PR_GameStartFrame(isBotFrame) { if (!isBotFrame) { PR1_GameStartFrame(); } }
+	#define PR_ClientKill PR1_ClientKill
+	#define PR_UserInfoChanged PR1_UserInfoChanged
+	#define PR_LoadEnts PR1_LoadEnts
+	#define PR_EdictThink PR1_EdictThink
+	#define PR_EdictTouch PR1_EdictTouch
+	#define PR_EdictBlocked PR1_EdictBlocked
+
+	#define PR_ClearEdict(ent)
+#endif
 
 // pr_cmds.c
 void PR_InitBuiltins (void);

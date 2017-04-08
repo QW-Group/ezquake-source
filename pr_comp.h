@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_comp.h 636 2007-07-20 05:07:57Z disconn3ct $
 */
 
 #ifndef __PR_COMP_H__
@@ -24,8 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // this file is shared by quake and qcc
 
-typedef int	func_t;
-typedef int	string_t;
+typedef int func_t;
+typedef int string_t;
+typedef intptr_t stringptr_t;
 
 typedef enum {ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer} etype_t;
 

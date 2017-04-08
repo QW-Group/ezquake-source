@@ -16,12 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c 761 2008-02-25 20:39:51Z qqshka $
+	
 */
 // sv_edict.c -- entity dictionary
 
 #include "qwsvdef.h"
-//#include "crc.c"
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
@@ -32,7 +31,6 @@ dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
 int				pr_edict_size;	// in bytes
-int				pr_teamfield = 0;	// field for team storage
 
 #define NQ_PROGHEADER_CRC 5927
 
@@ -45,7 +43,17 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int		type_size[8] = {1,1,1,3,1,1,1,1};
+int		type_size[8] =
+{
+	1,					// void
+	sizeof(void *)/4,	// string_t
+	1,					// float
+	3,					// vector
+	1,					// entity
+	1,					// field
+	sizeof(void *)/4, 	// func_t
+	sizeof(void *)/4 	// pointer (its an int index)
+};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qbool ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -62,15 +70,17 @@ gefv_cache;
 
 static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
 
-func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
+func_t mod_SpectatorConnect, mod_SpectatorThink, mod_SpectatorDisconnect;
 func_t GE_ClientCommand, GE_PausedTic, GE_ShouldPause;
 
 func_t mod_ConsoleCmd, mod_UserCmd;
-func_t UserInfo_Changed, localinfoChanged;
-func_t ChatMessage;
+func_t mod_UserInfo_Changed, mod_localinfoChanged;
+func_t mod_ChatMessage;
 
 cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
+#ifdef WITH_NQPROGS
 cvar_t  sv_forcenqprogs = {"sv_forcenqprogs", "0"};
+#endif
 
 /*
 =================
@@ -81,9 +91,10 @@ Sets everything to NULL
 */
 void ED_ClearEdict (edict_t *e)
 {
-	memset (&e->v, 0, progs->entityfields * 4);
+	memset(&e->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
 	e->e->lastruntime = 0;
 	e->e->free = false;
+	PR_ClearEdict(e);
 }
 
 /*
@@ -102,29 +113,32 @@ edict_t *ED_Alloc (void)
 	int			i;
 	edict_t		*e;
 
-	for ( i=MAX_CLIENTS+1 ; i<sv.num_edicts ; i++)
+	for (i = MAX_CLIENTS + 1; i < sv.num_edicts; i++)
 	{
 		e = EDICT_NUM(i);
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (e->e->free && ( e->e->freetime < 2 || sv.time - e->e->freetime > 0.5 ) )
+		if (e->e->free && (e->e->freetime < 2 || sv.time - e->e->freetime > 0.5))
 		{
-			ED_ClearEdict (e);
+			ED_ClearEdict(e);
 			return e;
 		}
 	}
 
-	if (i == MAX_EDICTS)
+	if (i == sv.max_edicts)
 	{
-		Con_Printf ("WARNING: ED_Alloc: no free edicts\n");
-		// step on whatever is the last edict
-		e = EDICT_NUM(--i);
+		Con_Printf ("WARNING: ED_Alloc: no free edicts [%d]\n", sv.max_edicts);
+		i--;	// step on whatever is the last edict
+		e = EDICT_NUM(i);
 		SV_UnlinkEdict(e);
 	}
 	else
+	{
 		sv.num_edicts++;
-	e = EDICT_NUM(i);
-	ED_ClearEdict (e);
+		e = EDICT_NUM(i);
+	}
+
+	ED_ClearEdict(e);
 
 	return e;
 }
@@ -211,7 +225,7 @@ ddef_t *ED_FindField (char *name)
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		def = &pr_fielddefs[i];
-		if (!strcmp(PR_GetString(def->s_name),name) )
+		if (!strcmp(PR1_GetString(def->s_name),name) )
 			return def;
 	}
 	return NULL;
@@ -231,7 +245,7 @@ ddef_t *ED_FindGlobal (char *name)
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
-		if (!strcmp(PR_GetString(def->s_name),name) )
+		if (!strcmp(PR1_GetString(def->s_name),name) )
 			return def;
 	}
 	return NULL;
@@ -239,10 +253,10 @@ ddef_t *ED_FindGlobal (char *name)
 
 /*
 ============
-ED_FindFieldOffset
+ED1_FindFieldOffset
 ============
 */
-int ED_FindFieldOffset (char *field)
+int ED1_FindFieldOffset (char *field)
 {
 	ddef_t *d;
 	d = ED_FindField(field);
@@ -261,10 +275,13 @@ dfunction_t *ED_FindFunction (char *name)
 	register dfunction_t		*func;
 	register int				i;
 
+	if (!progs)
+		return NULL;
+
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
-		if (!strcmp(PR_GetString(func->s_name), name))
+		if (!strcmp(PR1_GetString(func->s_name), name))
 			return func;
 	}
 	return NULL;
@@ -278,7 +295,7 @@ func_t ED_FindFunctionOffset (char *name)
 	return func ? (func_t)(func - pr_functions) : 0;
 }
 
-eval_t *GetEdictFieldValue(edict_t *ed, char *field)
+eval_t *PR1_GetEdictFieldValue(edict_t *ed, char *field)
 {
 	ddef_t			*def = NULL;
 	int				i;
@@ -327,18 +344,18 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
+		snprintf (line, sizeof(line), "%s", PR1_GetString(val->string));
 		break;
 	case ev_entity:
 		snprintf (line, sizeof(line), "entity %i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		snprintf (line, sizeof(line), "%s()", PR_GetString(f->s_name));
+		snprintf (line, sizeof(line), "%s()", PR1_GetString(f->s_name));
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		snprintf (line, sizeof(line), ".%s", PR_GetString(def->s_name));
+		snprintf (line, sizeof(line), ".%s", PR1_GetString(def->s_name));
 		break;
 	case ev_void:
 		snprintf (line, sizeof(line), "void");
@@ -379,18 +396,18 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
+		snprintf (line, sizeof(line), "%s", PR1_GetString(val->string));
 		break;
 	case ev_entity:
 		snprintf (line, sizeof(line), "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		snprintf (line, sizeof(line), "%s", PR_GetString(f->s_name));
+		snprintf (line, sizeof(line), "%s", PR1_GetString(f->s_name));
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		snprintf (line, sizeof(line), "%s", PR_GetString(def->s_name));
+		snprintf (line, sizeof(line), "%s", PR1_GetString(def->s_name));
 		break;
 	case ev_void:
 		snprintf (line, sizeof(line), "void");
@@ -434,7 +451,7 @@ char *PR_GlobalString (int ofs)
 	else
 	{
 		s = PR_ValueString ((etype_t)def->type, (eval_t *) val);
-		snprintf (line, sizeof(line), "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
+		snprintf (line, sizeof(line), "%i(%s)%s", ofs, PR1_GetString(def->s_name), s);
 	}
 
 	i = strlen(line);
@@ -455,7 +472,7 @@ char *PR_GlobalStringNoContents (int ofs)
 	if (!def)
 		snprintf (line, sizeof(line), "%i(?""?""?)", ofs); // separate the ?'s to shut up gcc
 	else
-		snprintf (line, sizeof(line), "%i(%s)", ofs, PR_GetString(def->s_name));
+		snprintf (line, sizeof(line), "%i(%s)", ofs, PR1_GetString(def->s_name));
 
 	i = strlen(line);
 	for ( ; i<20 ; i++)
@@ -491,7 +508,7 @@ void ED_Print (edict_t *ed)
 	for (i=1 ; i<progs->numfielddefs ; i++)
 	{
 		d = &pr_fielddefs[i];
-		name = PR_GetString(d->s_name);
+		name = PR1_GetString(d->s_name);
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 
@@ -541,7 +558,7 @@ void ED_Write (FILE *f, edict_t *ed)
 	for (i=1 ; i<progs->numfielddefs ; i++)
 	{
 		d = &pr_fielddefs[i];
-		name = PR_GetString(d->s_name);
+		name = PR1_GetString(d->s_name);
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 
@@ -596,20 +613,19 @@ For debugging, prints a single edicy
 void ED_PrintEdict_f (void)
 {
 	int		i;
+
 	if (Cmd_Argc () != 2)
 	{
-		Com_Printf ("\nUsage:\nedict [num]\n");
+		Con_Printf ("\nUsage:\nedict [num]\n");
 		return;
 	}
-
 
 	i = Q_atoi (Cmd_Argv(1));
 	if(i < 0 || i >= sv.num_edicts)
 	{
-		Com_Printf ("\nNo such edict: %i\n", i);
+		Con_Printf ("\nNo such edict: %i\n", i);
 		return;
 	}
-
 	
 	Con_Printf ("\n EDICT %i:\n",i);
 	ED_PrintNum (i);
@@ -686,7 +702,7 @@ void ED_WriteGlobals (FILE *f)
 		        && type != ev_entity)
 			continue;
 
-		name = PR_GetString(def->s_name);
+		name = PR1_GetString(def->s_name);
 		fprintf (f,"\"%s\" ", name);
 		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]));
 	}
@@ -791,7 +807,7 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(string_t *)d = PR_SetString(ED_NewString (s));
+		PR1_SetString((string_t *)d, ED_NewString (s));
 		break;
 
 	case ev_float:
@@ -859,10 +875,6 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 	char		keyname[256];
 
 	init = false;
-
-	// clear it
-	if (ent != sv.edicts)	// hack
-		memset (&ent->v, 0, progs->entityfields * 4);
 
 	// go through all the dictionary pairs
 	while (1)
@@ -947,15 +959,10 @@ to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 */
 void ED_LoadFromFile (char *data)
 {
-	extern cvar_t cl_curlybraces;
 	edict_t		*ent;
 	int			inhibit;
 	dfunction_t	*func;
-	float curlybraces_oldvalue = cl_curlybraces.value;
 
-	if (curlybraces_oldvalue) {
-		Cvar_SetValue(&cl_curlybraces, 0);
-	}
 	ent = NULL;
 	inhibit = 0;
 	pr_global_struct->time = sv.time;
@@ -1007,7 +1014,7 @@ void ED_LoadFromFile (char *data)
 		}
 
 		// look for the spawn function
-		func = ED_FindFunction ( PR_GetString(ent->v.classname) );
+		func = ED_FindFunction ( PR1_GetString(ent->v.classname) );
 
 		if (!func)
 		{
@@ -1023,9 +1030,6 @@ void ED_LoadFromFile (char *data)
 	}
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
-	if (curlybraces_oldvalue) {
-		Cvar_SetValue(&cl_curlybraces, curlybraces_oldvalue);
-	}
 }
 extern redirect_t	sv_redirected;
 qbool PR_ConsoleCmd(void)
@@ -1044,31 +1048,16 @@ qbool PR_ConsoleCmd(void)
 	return false;
 }
 
-qbool PR_UserCmd(void)
+qbool PR1_ClientCmd(void)
 {
-	/*if (!strcmp(Cmd_Argv(0), "admin") || !strcmp(Cmd_Argv(0), "judge"))
-	{
-		Con_Printf ("user command %s is banned\n", Cmd_Argv(0));
-		return true;
-	}
-	*/
-	/*int i;
-	if (!strcmp(Cmd_Argv(0), "mmode") || !strcmp(Cmd_Argv(0), "cmd"))
-	{
-		for (i = 0; i < Cmd_Argc(); i++)
-			Con_Printf ("PR_UserCmd: [%d] %s | %d\n", i, Cmd_Argv(i), mod_UserCmd);
-		//return true;
-	}*/
-
 	// ZQ_CLIENTCOMMAND extension
-	if (!is_ktpro && GE_ClientCommand) {
+	if (GE_ClientCommand)
+	{
 		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
-		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
-		((int *)pr_globals)[OFS_PARM1] = PR_SetString (args_copy);
+		PR1_SetString (&((int *)pr_globals)[OFS_PARM0], cmd_copy);
+		PR1_SetString (&((int *)pr_globals)[OFS_PARM1], args_copy);
 		PR_ExecuteProgram (GE_ClientCommand);
 		return G_FLOAT(OFS_RETURN) ? true : false;
 	}
@@ -1076,10 +1065,8 @@ qbool PR_UserCmd(void)
 	if (mod_UserCmd)
 	{
 		static char cmd_copy[128];
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
-		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
+		PR1_SetString (&((int *)pr_globals)[OFS_PARM0], cmd_copy);
 
 		PR_ExecuteProgram (mod_UserCmd);
 		return G_FLOAT(OFS_RETURN) ? true : false;
@@ -1091,51 +1078,21 @@ qbool PR_UserCmd(void)
 
 /*
 ===============
-PR_LoadProgs
+PR1_LoadProgs
 ===============
 */
 void PF_clear_strtbl(void);
-
-qbool is_ktpro;
-static void CheckKTPro (void)
-{
-	extern cvar_t sv_ktpro_mode;
-	int i, len;
-	char *s;
-
-	if (!strcasecmp(sv_ktpro_mode.string, "auto"))
-	{
-		// attempt automatic detection
-		is_ktpro = false;
-		for (i = 0; i < progs->numstrings; i++)
-		{
-			if ((s = PR_GetString(i)))
-				if (*s)
-				{
-					if ((len = strlen(s)) >= 23)
-						if (strstr(s, "http://ktpro.does.it/ for") ||
-							strstr(s, "http://qwex.n3.net/ for"))
-						{
-							is_ktpro = true;
-							Con_DPrintf ("Treat mod as ktpro.\n");
-							break;
-						}
-					i += len;
-				}
-		}
-	}
-	else
-		is_ktpro = sv_ktpro_mode.value ? true : false;
-}
 
 #ifdef WITH_NQPROGS
 void PR_InitPatchTables (void)
 {
 	int i;
 
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		memcpy (pr_globaloffsetpatch, pr_globaloffsetpatch_nq, sizeof(pr_globaloffsetpatch));
-		for (i = 0; i < 106; i++) {
+		for (i = 0; i < 106; i++)
+		{
 			pr_fieldoffsetpatch[i] = (i < 8) ? i : (i < 25) ? i + 1 :
 				(i < 28) ? i + (102 - 25) : (i < 73) ? i - 2 :
 				(i < 74) ? i + (105 - 73) : (i < 105) ? i - 3 : /* (i == 105) */ 8;
@@ -1154,11 +1111,10 @@ void PR_InitPatchTables (void)
 }
 #endif
 
-void PR_LoadProgs (void)
+void PR1_LoadProgs (void)
 {
 	int	i;
 	char num[32];
-	char name[MAX_OSPATH];
 	int filesize;
 
 	// flush the non-C variable lookup cache
@@ -1168,30 +1124,42 @@ void PR_LoadProgs (void)
 	// clear pr_newstrtbl
 	PF_clear_strtbl();
 
-	snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
-	progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	progs = NULL;
+#ifdef WITH_NQPROGS
+	pr_nqprogs = false;
+
+	// forced load of NQ progs.
+	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
+		pr_nqprogs = true;
+#endif
+
+	if (!progs)
+	{
+		char name[MAX_OSPATH];
+		snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
+		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	}
 	if (!progs)
 		progs = (dprograms_t *)FS_LoadHunkFile ("qwprogs.dat", &filesize);
 	if (!progs)
 		progs = (dprograms_t *)FS_LoadHunkFile ("spprogs.dat", &filesize);
 #ifdef WITH_NQPROGS
-	pr_nqprogs = false;
-	if (!progs || Cvar_Value("sv_forcenqprogs")) {
-		progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize);
-		if (progs)
-			pr_nqprogs = true;
-	}
+	// low priority load of NQ progs.
+	if (!progs && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
+		pr_nqprogs = true;
 #endif
+
 	if (!progs)
-		SV_Error ("PR_LoadProgs: couldn't load progs.dat");
+		SV_Error ("PR1_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", filesize/1024);
+
+#ifdef WITH_NQPROGS
+	if (pr_nqprogs)
+		Con_DPrintf ("NQ progs.\n");
+#endif
 
 	// add prog crc to the serverinfo
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
-#ifdef USE_PR2
-	Info_SetStar( &_localinfo_, "*qvm", "DAT" );
-	//	Info_SetValueForStarKey (svs.info, "*qvm", "DAT", MAX_SERVERINFO_STRING);
-#endif
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
 	// byte swap the header
@@ -1246,7 +1214,7 @@ void PR_LoadProgs (void)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
 		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			SV_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+			SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
 	}
@@ -1254,37 +1222,26 @@ void PR_LoadProgs (void)
 	for (i = 0; i < progs->numglobals; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
-#ifdef WITH_NQPROGS
-	PR_InitPatchTables();
-#endif
-
-	// find optional QC-exported functions
-	SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
-	SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");
-	SpectatorDisconnect = ED_FindFunctionOffset ("SpectatorDisconnect");
-	ChatMessage = ED_FindFunctionOffset ("ChatMessage");
-	UserInfo_Changed = ED_FindFunctionOffset ("UserInfo_Changed");
-	mod_ConsoleCmd = ED_FindFunctionOffset ("ConsoleCmd");
-	mod_UserCmd = ED_FindFunctionOffset ("UserCmd");
-	localinfoChanged = ED_FindFunctionOffset ("localinfoChanged");
-	GE_ClientCommand = ED_FindFunctionOffset ("GE_ClientCommand");
-	GE_PausedTic = ED_FindFunctionOffset ("GE_PausedTic");
-	GE_ShouldPause = ED_FindFunctionOffset ("GE_ShouldPause");
-
-	CheckKTPro ();
+	PR_InitBuiltins();
 }
 
+void PR1_InitProg(void)
+{
+	sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
+	sv.max_edicts = MAX_EDICTS;
+}
 
 /*
 ===============
-PR_Init
+PR1_Init
 ===============
 */
-//void PR_CleanLogText_Init();
-void PR_Init (void)
+void PR1_Init (void)
 {
 	Cvar_Register(&sv_progsname);
+#ifdef WITH_NQPROGS
 	Cvar_Register(&sv_forcenqprogs);
+#endif
 
 	Cmd_AddCommand ("edict", ED_PrintEdict_f);
 	Cmd_AddCommand ("edicts", ED_PrintEdicts);
@@ -1292,13 +1249,11 @@ void PR_Init (void)
 	Cmd_AddCommand ("profile", PR_Profile_f);
 
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
-	//	PR_CleanLogText_Init();
 }
-
 
 edict_t *EDICT_NUM(int n)
 {
-	if (n < 0 || n >= MAX_EDICTS)
+	if (n < 0 || n >= sv.max_edicts)
 		SV_Error ("EDICT_NUM: bad number %i", n);
 	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
 }
@@ -1315,4 +1270,3 @@ int NUM_FOR_EDICT(edict_t *e)
 
 	return b;
 }
-

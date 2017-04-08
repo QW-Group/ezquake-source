@@ -49,6 +49,7 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
+cbuf_t cbuf_server;
 
 char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
@@ -114,6 +115,7 @@ void Cbuf_Execute (void)
 	Cbuf_ExecuteEx (&cbuf_main);
 	Cbuf_ExecuteEx (&cbuf_safe);
 	Cbuf_ExecuteEx (&cbuf_formatted_comms);
+	Cbuf_ExecuteEx (&cbuf_server);
 }
 
 //fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
@@ -137,6 +139,7 @@ void Cbuf_Init (void)
 	Cbuf_Register (&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register (&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register (&cbuf_formatted_comms, 1 << 11); // 2kb
+	Cbuf_Register (&cbuf_server, 1 << 18); // 256kb
 }
 
 //Adds command text at the end of the buffer
@@ -459,11 +462,16 @@ void Cmd_Exec_f (void)
 	char *f, name[MAX_OSPATH];
 	char reset_bindphysical[128];
 	int mark;
+	qbool server_command = false;
 
 	if (Cmd_Argc () != 2) {
-		Com_Printf ("exec <filename> : execute a script file\n");
+		Com_Printf ("%s <filename> : execute a script file\n", Cmd_Argv(0));
 		return;
 	}
+
+#if !defined(SERVERONLY) && !defined(CLIENTONLY)
+	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
+#endif
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
@@ -488,14 +496,17 @@ void Cmd_Exec_f (void)
 	//   want different behaviour.
 	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
 	if (cbuf_current == &cbuf_svc) {
-		Cbuf_AddTextEx (&cbuf_main, "con_bindphysical 1\n");
-		Cbuf_AddTextEx (&cbuf_main, f);
-		Cbuf_AddTextEx (&cbuf_main, reset_bindphysical);
+		Cbuf_AddTextEx(&cbuf_main, "con_bindphysical 1\n");
+		Cbuf_AddTextEx(&cbuf_main, f);
+		Cbuf_AddTextEx(&cbuf_main, reset_bindphysical);
+	}
+	else if (server_command) {
+		Cbuf_AddTextEx(&cbuf_server, f);
 	}
 	else {
-		Cbuf_InsertTextEx (&cbuf_main, reset_bindphysical);
-		Cbuf_InsertTextEx (&cbuf_main, f);
-		Cbuf_InsertTextEx (&cbuf_main, "con_bindphysical 1\n");
+		Cbuf_InsertTextEx(&cbuf_main, reset_bindphysical);
+		Cbuf_InsertTextEx(&cbuf_main, f);
+		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
 	}
 	
 	Hunk_FreeToLowMark (mark);
@@ -2337,6 +2348,9 @@ void Cmd_Init (void)
 {
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
+#ifndef SERVERONLY
+	Cmd_AddCommand ("serverexec", Cmd_Exec_f);
+#endif
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
 	Cmd_AddCommand ("aliasedit", Cmd_EditAlias_f);

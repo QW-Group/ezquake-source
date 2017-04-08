@@ -14,13 +14,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: sv_demo_misc.c 718 2007-10-22 19:00:41Z qqshka $
+    
 */
 
 // sv_demo_misc.c - misc demo related stuff, helpers
 
 #include "qwsvdef.h"
+#ifndef SERVERONLY
 #include "pcre.h"
+#endif
 
 static char chartbl[256];
 
@@ -189,6 +191,9 @@ qbool SV_DirSizeCheck (void)
 				//Con_Printf("Remove %d - %s/%s/%s\n", n, fs_gamedir, sv_demoDir.string, list->name);
 				n--;
 			}
+
+			// force cache rebuild.
+			FS_FlushFSHash();
 		}
 	}
 	return true;
@@ -229,30 +234,36 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 		if ((p = strstr(sv_onrecordfinish.string, " ")) != NULL)
 			*p = 0; // strip parameters
 	
-		strlcpy(path, dest_name, MAX_OSPATH);
-		strlcpy(path + strlen(dest_name) - 3, "txt", MAX_OSPATH - strlen(dest_name) + 3);
-	
+		strlcpy(path, dest_name, sizeof(path));
+#ifdef SERVERONLY
+		COM_StripExtension(path);
+#else
+		COM_StripExtension(path, path, sizeof(path));
+#endif
+
 		sv_redirected = RD_NONE; // onrecord script is called always from the console
-		Cmd_TokenizeString(va("script %s \"%s\" \"%s\" \"%s\" %s", sv_onrecordfinish.string, dest_path, dest_name, path, p != NULL ? p+1 : ""));
+		Cmd_TokenizeString(va("script %s \"%s\" \"%s\" %s", sv_onrecordfinish.string, dest_path, path, p != NULL ? p+1 : ""));
 
 		if (p)
-			*p = ' ';
+			*p = ' '; // restore params
 
 		SV_Script_f();
 	
 		sv_redirected = old;
 	}
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 char *SV_PrintTeams (void)
 {
-	char			*teams[MAX_CLIENTS], *p;
+	char			*teams[MAX_CLIENTS];
 	int				i, j, numcl = 0, numt = 0, scores;
 	client_t		*clients[MAX_CLIENTS];
 	char			buf[2048];
 	static char		lastscores[2048];
 	extern cvar_t	teamplay;
-	extern char		chartbl2[];
 	date_t			date;
 	SV_TimeOfDay(&date);
 
@@ -331,8 +342,8 @@ char *SV_PrintTeams (void)
 			sizeof(lastscores) - strlen(lastscores), "@ %s\n", sv.mapname);
 	}
 
-	for (p = buf; *p; p++) *p = chartbl2[(byte)*p];
-	for (p = lastscores; *p; p++) *p = chartbl2[(byte)*p];
+	Q_normalizetext(buf);
+	Q_normalizetext(lastscores);
 	strlcat(lastscores, buf, sizeof(lastscores));
 	return lastscores;
 }
@@ -353,7 +364,7 @@ void SV_DemoList (qbool use_regex)
 
 	memset(files, 0, sizeof(files));
 
-	Con_Printf("content of %s/%s/%s\n", fs_gamedir, sv_demoDir.string, sv_demoRegexp.string);
+	Con_Printf("Listing content of %s/%s/%s\n", fs_gamedir, sv_demoDir.string, sv_demoRegexp.string);
 	dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string), sv_demoRegexp.string, SORT_BY_DATE);
 	list = dir.files;
 	if (!list->name[0])
@@ -367,8 +378,7 @@ void SV_DemoList (qbool use_regex)
 		{
 			if (use_regex)
 			{
-				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)),
-											PCRE_CASELESS, &errbuf, &r, NULL)))
+				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)), PCRE_CASELESS, &errbuf, &r, NULL)))
 				{
 					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
 					           Cmd_Argv(j), errbuf, r);
@@ -407,9 +417,9 @@ void SV_DemoList (qbool use_regex)
 		i = files[j];
 
 		if ((d = DestByName(list[i - 1].name)))
-			Con_Printf("*%d: %s %dk\n", i, list[i - 1].name, d->totalsize / 1024);
+			Con_Printf("*%4d: %s (%dk)\n", i, list[i - 1].name, d->totalsize / 1024);
 		else
-			Con_Printf("%d: %s %dk\n", i, list[i - 1].name, list[i - 1].size / 1024);
+			Con_Printf("%4d: %s (%dk)\n", i, list[i - 1].name, list[i - 1].size / 1024);
 	}
 
 	for (d = demo.dest; d; d = d->nextdest)
@@ -504,7 +514,7 @@ char *SV_MVDNum (int num)
 }
 
 #define OVECCOUNT 3
-static char *SV_MVDName2Txt (char *name)
+char *SV_MVDName2Txt (const char *name)
 {
 	char	s[MAX_OSPATH];
 	int		len;
@@ -614,8 +624,11 @@ void SV_MVDRemove_f (void)
 		}
 		else
 		{
-			Con_Printf("no matching found\n");
+			Con_Printf("no match found\n");
 		}
+
+		// force cache rebuild.
+		FS_FlushFSHash();
 
 		return;
 	}
@@ -648,6 +661,9 @@ void SV_MVDRemove_f (void)
 		Con_Printf("unable to remove demo %s\n", name);
 
 	Sys_remove(SV_MVDName2Txt(path));
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDRemoveNum_f (void)
@@ -696,6 +712,9 @@ void SV_MVDRemoveNum_f (void)
 			Con_Printf("unable to remove demo %s\n", name);
 
 		Sys_remove(SV_MVDName2Txt(path));
+
+		// force cache rebuild.
+		FS_FlushFSHash();
 	}
 	else
 		Con_Printf("invalid demo num\n");
@@ -712,24 +731,20 @@ void SV_MVDInfoAdd_f (void)
 		return;
 	}
 
-	if (!strcmp(Cmd_Argv(1), "*") || !strcmp(Cmd_Argv(1), "**"))
-	{
-		if (!sv.mvdrecording || !demo.dest)
-		{
+	if (!strcmp(Cmd_Argv(1), "*") || !strcmp(Cmd_Argv(1), "**")) {
+		const char* demoname = SV_MVDDemoName();
+
+		if (!sv.mvdrecording || !demoname) {
 			Con_Printf("Not recording demo!\n");
 			return;
 		}
 
-//		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
-// FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
-		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demoname));
 	}
-	else
-	{
+	else {
 		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
 
-		if (!name)
-		{
+		if (!name) {
 			Con_Printf("invalid demo num\n");
 			return;
 		}
@@ -780,6 +795,9 @@ void SV_MVDInfoAdd_f (void)
 
 	fflush(f);
 	fclose(f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDInfoRemove_f (void)
@@ -818,8 +836,12 @@ void SV_MVDInfoRemove_f (void)
 	}
 
 	if (Sys_remove(path))
-		Con_Printf("failed to remove the file\n");
-	else Con_Printf("file removed\n");
+		Con_Printf("failed to remove the file %s\n", path);
+	else
+		Con_Printf("file %s removed\n", path);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDInfo_f (void)

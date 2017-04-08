@@ -45,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // per-level limits
 #define CL_MAX_EDICTS           2048	// FIXME: ouch! ouch! ouch!
 #define MAX_EDICTS              2048    // can't encode more than this, see SV_WriteDelta
+#define MAX_EDICTS_SAFE         512     // lower limit, to make sure no client limits exceeded
 #define MAX_LIGHTSTYLES         64
 #define MAX_MODELS              512	    // can't encode more than this, see SV_WriteDelta
 #define MAX_VWEP_MODELS         32	    // could be increased to 256
@@ -213,7 +214,7 @@ extern char com_homedir[MAX_PATH];
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);
-void FS_SetGamedir (char *dir);
+void FS_SetGamedir (char *dir, qbool force);
 int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
@@ -356,6 +357,7 @@ void MSG_WriteFloat (sizebuf_t *sb, float f);
 void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
+void MSG_WriteLongCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 void MSG_WriteAngle16 (sizebuf_t *sb, float f);
 void MSG_WriteDeltaUsercmd (sizebuf_t *sb, struct usercmd_s *from, struct usercmd_s *cmd);
@@ -426,6 +428,11 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize);
 qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbuf_size);
 
 int Com_TranslateMapChecksum (const char *mapname, int checksum);
+float AdjustAngle(float current, float ideal, float fraction);
+
+char *Q_normalizetext(char *str);
+unsigned char *Q_redtext(unsigned char *str);
+unsigned char *Q_yelltext(unsigned char *str);
 
 #endif /* !__COMMON_H__ */
 

@@ -40,7 +40,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <strings.h>
 #endif
 
-
+static void FS_RebuildFSHash(void);
+#ifdef SERVERONLY
+static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen);
+#endif
 char *com_filesearchpath;
 
 /*
@@ -85,13 +88,6 @@ int fs_hash_dups;
 int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
-
-typedef enum {
-	FSLFRT_IFFOUND,
-	FSLFRT_LENGTH,
-	FSLFRT_DEPTH_OSONLY,
-	FSLFRT_DEPTH_ANYPATH
-} FSLF_ReturnType_e;
 
 void FS_CreatePathRelative(char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
@@ -432,7 +428,7 @@ void FS_SetUserDirectory (char *dir, char *type) {
 
 	strlcpy(tmp, com_gamedirfile, sizeof(tmp)); // save
 	com_gamedirfile[0]='\0'; // force reread
-	FS_SetGamedir(tmp); // restore
+	FS_SetGamedir(tmp, false); // restore
 }
 
 // ==========
@@ -588,7 +584,7 @@ void FS_AddUserDirectory ( char *dir ) {
 void Draw_InitConback(void);
 
 // Sets the gamedir and path to a different directory.
-void FS_SetGamedir (char *dir)
+void FS_SetGamedir (char *dir, qbool force)
 {
 	searchpath_t  *next;
 	if (strstr(dir, "..") || strstr(dir, "/")
@@ -598,7 +594,7 @@ void FS_SetGamedir (char *dir)
 		return;
 	}
 
-	if (!strcmp(com_gamedirfile, dir))
+	if (!force && !strcmp(com_gamedirfile, dir))
 		return;		// Still the same.
 	
 	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
@@ -807,7 +803,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (!(i = COM_CheckParm ("-game")))
 		i = COM_CheckParm ("+gamedir");
 	if (i && i < COM_Argc() - 1)
-		FS_SetGamedir (COM_Argv(i + 1));
+		FS_SetGamedir (COM_Argv(i + 1), true);
 }
 
 void FS_InitFilesystem( void ) {
@@ -2261,96 +2257,95 @@ void FS_RebuildFSHash(void)
 	Com_DPrintf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
 }
 
-/* ===========
- * FS_FLocateFile
- * ===========
- * Finds the file in the search path.
- * Sets com_filesize and one of handle or file
- */
-//if loc is valid, loc->search is always filled in, the others are filled on success.
-//returns -1 if couldn't find.
+/*
+============
+FS_FLocateFile
+
+Finds the file in the search path.
+Look FSLF_ReturnType_e definition so you know that it returns.
+============
+*/
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
 {
-	int depth=0, len;
-	searchpath_t	*search;
+	int             depth = 0;
+	int             len;
+	searchpath_t    *search;
+#ifdef SERVERONLY
+	char            cleanpath[MAX_OSPATH];
+#endif
+	void            *pf = NULL;
 
-	void *pf;
-
- 	if (fs_cache.value)
-	{
-		if (filesystemchanged)
-			FS_RebuildFSHash();
-		pf = Hash_GetInsensitive(filesystemhash, filename);
-		if (!pf)
-			goto fail;
+#ifdef SERVERONLY
+	filename = FS_GetCleanPath(filename, cleanpath, sizeof(cleanpath));
+	if (!filename) {
+		goto fail;
 	}
-	else
-		pf = NULL;
+#endif
 
-	if (fs_purepaths)
-	{
-		for (search = fs_purepaths ; search ; search = search->nextpure)
-		{
-			if (search->funcs->FindFile(search->handle, loc, filename, pf))
-			{
-				if (loc)
-				{
+	if (fs_cache.value) {
+		if (filesystemchanged) {
+			FS_RebuildFSHash();
+		}
+		pf = Hash_GetInsensitive(filesystemhash, filename);
+		if (!pf) {
+			goto fail;
+		}
+	}
+
+#ifndef SERVERONLY
+	if (fs_purepaths) {
+		for (search = fs_purepaths; search; search = search->nextpure) {
+			if (search->funcs->FindFile(search->handle, loc, filename, pf)) {
+				if (loc) {
 					loc->search = search;
 					len = loc->len;
 				}
-				else
+				else {
 					len = 0;
+				}
 				goto out;
 			}
 			depth += (search->funcs != &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
 		}
 	}
+#endif
 
-//
-// search through the path, one element at a time
-//
-	for (search = fs_searchpaths ; search ; search = search->next)
-	{
-		if (search->funcs->FindFile(search->handle, loc, filename, pf))
-		{
-			if (loc)
-			{
+	//
+	// search through the path, one element at a time.
+	//
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search->funcs->FindFile(search->handle, loc, filename, pf)) {
+			if (loc) {
 				loc->search = search;
 				len = loc->len;
 			}
-			else
-				len = 1;
+			else {
+				len = 0;
+			}
+
 			goto out;
 		}
-		depth += (search->funcs != &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
+
+		depth += (search->funcs == &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
 	}
-	
+
 fail:
 	if (loc)
 		loc->search = NULL;
-	depth = 0x7fffffff;
+	depth = 0x7fffffff; // NOTE: weird, we return it on fail in some cases, may cause mistakes by user.
 	len = -1;
+
 out:
-
-/*	Debug printing removed
- *	if (len>=0)
-	{
-		if (loc)
-			Com_Printf("Found %s:%i\n", loc->rawname, loc->len);
-		else
-			Com_Printf("Found %s\n", filename);
-	}
-	else
-		Com_Printf("Failed\n");
-*/
-	if (returntype == FSLFRT_IFFOUND)
+	if (returntype == FSLFRT_IFFOUND) {
 		return len != -1;
-	else if (returntype == FSLFRT_LENGTH)
+	}
+	else if (returntype == FSLFRT_LENGTH) {
 		return len;
-	else
+	}
+	else {
 		return depth;
+	}
 }
-
 
 char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 {
@@ -3228,6 +3223,50 @@ end:
 	VFS_CLOSE(file2);
 }
 
+#ifdef SERVERONLY
+/*
+================
+FS_GetCleanPath
 
+================
+*/
+static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen)
+{
+	char *s;
 
+	if (strchr(pattern, '\\'))
+	{
+		strlcpy(outbuf, pattern, outlen);
+		pattern = outbuf;
 
+		Con_Printf("Warning: \\ characters in filename %s\n", pattern);
+
+		for (s = (char*)pattern; (s = strchr(s, '\\')); s++)
+			*s = '/';
+	}
+
+	if (*pattern == '/' || strstr(pattern, "..") || strstr(pattern, ":"))
+		Con_Printf("Error: absolute path in filename %s\n", pattern);
+	else
+		return pattern;
+
+	return NULL;
+}
+#endif
+
+/*
+===========
+FS_UnsafeFilename
+
+Returns true if user-specified path is unsafe
+===========
+*/
+qbool FS_UnsafeFilename(const char* fileName)
+{
+	return !fileName ||
+		!*fileName || // invalid name.
+		fileName[1] == ':' ||	// dos filename absolute path specified - reject.
+		*fileName == '\\' ||
+		*fileName == '/' ||	// absolute path was given - reject.
+		strstr(fileName, "..");
+}

@@ -24,11 +24,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: sv_mod_frags.c 636 2007-07-20 05:07:57Z disconn3ct $
+	
 */
 
 #include "qwsvdef.h"
+#ifndef SERVERONLY
 #include "pcre.h"
+#endif
 #include "sv_mod_frags.h"
 
 qwmsg_t *qwmsg[MOD_MSG_MAX + 1];
@@ -37,18 +39,20 @@ static qbool qwm_static = true;
 void free_qwmsg_t(qwmsg_t **qwmsg1)
 {
 	int i;
-	if (!qwm_static)
-		for (i = 0; qwmsg1[i]; i++)
-		{
+
+	if (!qwm_static) {
+		for (i = 0; qwmsg1[i]; i++) {
 			Q_free(qwmsg1[i]->str);
 			Q_free(qwmsg1[i]);
 		}
+	}
 }
 
 void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 {
 	FILE *fp = NULL;
 	char *str_tok, buf[128];
+	size_t len;
 	int i;
 
 	free_qwmsg_t(qwmsg);
@@ -59,16 +63,13 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 	if (fp == NULL)
 	{
 		if (value[0])
-			Sys_Printf("WARNING: sv_mod_msg_file_OnChange: can't open file %s.\n", value);
+			Con_Printf("WARNING: sv_mod_msg_file_OnChange: can't open file %s.\n", value);
 
-		for (i = 0; i < MOD_MSG_MAX && qwmsg_def[i].str; i++)
-		{
+		for (i = 0; i < MOD_MSG_MAX && qwmsg_def[i].str; i++) {
 			qwmsg[i] = &qwmsg_def[i];
-			//            Sys_Printf("msg_type = %d, id = %d, pl_count = %d, str = %s, reverse = %d\n",
-			//	qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
 		}
 		qwm_static = true;
-		Sys_Printf("Initialized default mod messages.\nTotal: %d messages.\n", i);
+		Con_DPrintf("Initialized default mod messages.\nTotal: %d messages.\n", i);
 	}
 	else
 	{
@@ -76,8 +77,6 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 		{
 			if (fgets(buf, sizeof(buf), fp))
 			{
-				size_t length;
-
 				qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 				// fill system_id
 				str_tok = (char *)strtok(buf, "#");
@@ -94,9 +93,9 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 				// fill str
 				str_tok = (char *)strtok(NULL, "#");
 
-				length = strlen (str_tok) + 1;
-				qwmsg[i]->str =  (char *) Q_malloc (length);
-				strlcpy(qwmsg[i]->str, str_tok, length);
+				len = strlen (str_tok) + 1;
+				qwmsg[i]->str =  (char *) Q_malloc (len);
+				strlcpy(qwmsg[i]->str, str_tok, len);
 			}
 			else
 				break;
@@ -104,7 +103,7 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 			//	qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
 		}
 		qwm_static = false;
-		Sys_Printf("Initialized mod messages from file %s.\nTotal: %d messages.\n", value, i);
+		Con_DPrintf("Initialized mod messages from file %s.\nTotal: %d messages.\n", value, i);
 		fclose(fp);
 	}
 	qwmsg[i] = NULL;

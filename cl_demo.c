@@ -3464,7 +3464,7 @@ static void CL_DemoPlaybackInit(void)
 	}
 
 	// Setup the netchan and state.
-	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0, 0);
 	cls.state		= ca_demostart;
 	cls.demotime	= 0;
 	demostarttime	= -1.0;
@@ -4151,7 +4151,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	// Setup demo playback for the netchan.
 	cls.state = ca_demostart;
-	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0, 0);
 	cls.demotime = 0;
 	demostarttime = -1.0;
 	olddemotime = nextdemotime = 0;
