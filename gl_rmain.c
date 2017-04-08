@@ -40,7 +40,12 @@ void R_MarkLeaves(void);
 void R_InitBubble(void);
 
 extern msurface_t *alphachain;
+#ifndef CLIENTONLY
 extern cvar_t     maxclients;
+#define IsLocalSinglePlayerGame() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
+#else
+#define IsLocalSinglePlayerGame() (0)
+#endif
 extern vec3_t     lightcolor;
 extern vec3_t     lightspot;
 extern float      bubblecolor[NUM_DLIGHTTYPES][4];
@@ -961,7 +966,7 @@ void R_AliasSetupLighting(entity_t *ent)
 	}
 	else if (
 			!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-			(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
+			(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !IsLocalSinglePlayerGame())
 		) {
 		ambientlight = shadelight = 4096;
 	}

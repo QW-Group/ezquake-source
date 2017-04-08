@@ -162,14 +162,11 @@ COMMON_OBJS := \
     net_chan.o		\
     q_shared.o		\
     version.o		\
-    zone.o
-
-# temporary
-SERVER_OBJS := \
-    pmove.o \
+    zone.o              \
+    pmove.o             \
     pmovetst.o
 
-SERVER_OBJS_REMOVED := \
+SERVER_OBJS := \
     pr_cmds.o \
     pr_edict.o \
     pr_exec.o \
@@ -201,7 +198,6 @@ HELP_OBJS := \
 
 OBJS_c := \
     $(COMMON_OBJS) \
-    $(SERVER_OBJS) \
     $(HELP_OBJS) \
     ioapi.o \
     unzip.o \
@@ -331,6 +327,12 @@ OBJS_c := \
     snd_voip.o
 
 ### Configuration Options ###
+
+ifndef CLIENT_ONLY
+    OBJS_c += $(SERVER_OBJS)
+else
+    CFLAGS += -DCLIENTONLY
+endif
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \

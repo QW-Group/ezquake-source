@@ -286,13 +286,12 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	return go;
 }
 
-
+#ifndef CLIENTONLY
 /*
 ================
 Sys_listdir
 ================
 */
-
 dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 {
 	static file_t	list[MAX_DIRFILES];
@@ -385,7 +384,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	}
 	return dir;
 }
-
+#endif
 
 // ===============================================================================
 // SYSTEM IO

@@ -380,7 +380,9 @@ void Host_Abort (void)
 
 void Host_EndGame (void)
 {
+#ifndef CLIENTONLY
 	SV_Shutdown ("Server was killed");
+#endif
 	CL_Disconnect ();
 	// clear disconnect messages from loopback
 	NET_ClearLoopback ();
@@ -405,7 +407,9 @@ void Host_Error (char *error, ...)
 	Com_Printf ("Host_Error: %s\n",string);
 	Com_Printf ("===========================\n\n");
 
+#ifndef CLIENTONLY
 	SV_Shutdown (va("server crashed: %s\n", string));
+#endif
 	CL_Disconnect ();
 
 	if (!host_initialized)
@@ -629,7 +633,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	CM_Init ();
 	Mod_Init ();
 
+#ifndef CLIENTONLY
 	SV_Init ();
+#endif
 	CL_Init ();
 
 	Cvar_CleanUpTempVars ();
@@ -721,7 +727,9 @@ void Host_Shutdown (void)
 	S_StopAllSounds();
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 
+#ifndef CLIENTONLY
 	SV_Shutdown ("Server quit\n");
+#endif
 
 #if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();

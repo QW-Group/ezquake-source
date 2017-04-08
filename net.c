@@ -176,11 +176,12 @@ static void NET_PacketQueueAdvance(packet_queue_t* queue)
 //
 // Geters.
 //
-
+#ifndef CLIENTONLY
 int NET_UDPSVPort (void)
 {
 	return ntohs(net_local_sv_ipadr.port);
 }
+#endif
 
 int NET_GetSocket(netsrc_t netsrc, qbool tcp)
 {
@@ -421,6 +422,7 @@ void NET_ClearLoopback (void)
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
+#ifndef CLIENTONLY
 //=============================================================================
 //
 // SV TCP connection.
@@ -498,6 +500,7 @@ int sv_tcp_connection_count(void)
 
 	return cnt;
 }
+#endif
 
 //=============================================================================
 
