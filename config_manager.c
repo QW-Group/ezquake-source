@@ -227,7 +227,7 @@ static void DumpVariables(FILE	*f)
 
 
 	for	(col_size = col_size - 2, count = 0, var = cvar_vars; var && count < MAX_DUMPED_CVARS; var = var->next)	{
-		if (var->flags & CVAR_USER_CREATED) {
+		if ((var->flags & CVAR_USER_CREATED) && !(var->flags & CVAR_MOD_CREATED)) {
 			sorted_vars[count++] = var;
 			col_size = max(col_size, strlen(var->name));
 		}
@@ -575,8 +575,9 @@ static void DeleteUserVariables(void)
 	for (var = cvar_vars; var; var = next) {
 		next = var->next;
 
-		if (var->flags & CVAR_USER_CREATED)
+		if ((var->flags & CVAR_USER_CREATED) && !(var->flags & CVAR_MOD_CREATED)) {
 			Cvar_Delete(var->name);
+		}
 	}
 
 }
