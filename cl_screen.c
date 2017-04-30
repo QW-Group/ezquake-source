@@ -1036,8 +1036,6 @@ typedef struct player_autoid_s {
 static autoid_player_t autoids[MAX_CLIENTS];
 static int autoid_count;
 
-#define ISDEAD(i) ((i) >= 41 && (i) <= 102)
-
 void SCR_SetupAutoID (void) {
 	int j, view[4], tracknum = -1;
 	float model[16], project[16], winz, *origin;

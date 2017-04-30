@@ -11231,6 +11231,15 @@
         { "name": "5", "description": "Applies r_enemy/team skincolor hue to skin." }
       ]
     },
+    "r_skincolormodedead": {
+      "group-id": "44",
+      "desc": "Sets r_skincolormode for players upon death.",
+      "remarks": "See r_skincolormode for valid values",
+      "type": "enum",
+      "values": [
+        { "name": "-1", "description": "Do not change r_skincolormode when player dies." }
+	]
+    },
     "r_skycolor": {
       "group-id": "51",
       "desc": "Changes colour of sky when r_fastsky set to 1",

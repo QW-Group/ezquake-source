@@ -131,6 +131,7 @@ cvar_t r_fullbrightSkins                   = {"r_fullbrightSkins", "1", 0, Rules
 cvar_t r_enemyskincolor                    = {"r_enemyskincolor", "", CVAR_COLOR};
 cvar_t r_teamskincolor                     = {"r_teamskincolor",  "", CVAR_COLOR};
 cvar_t r_skincolormode                     = {"r_skincolormode",  "0"};
+cvar_t r_skincolormodedead                 = {"r_skincolormodedead",  "-1"};
 cvar_t r_fastsky                           = {"r_fastsky", "0"};
 cvar_t r_fastturb                          = {"r_fastturb", "0"};
 cvar_t r_skycolor                          = {"r_skycolor", "40 80 150", CVAR_COLOR};
@@ -993,7 +994,7 @@ void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effec
 
 void R_DrawAliasModel(entity_t *ent)
 {
-	int i, anim, skinnum, texture, fb_texture, playernum = -1;
+	int i, anim, skinnum, texture, fb_texture, playernum = -1, local_skincolormode;
 	float scale;
 	vec3_t mins, maxs;
 	aliashdr_t *paliashdr;
@@ -1145,6 +1146,12 @@ void R_DrawAliasModel(entity_t *ent)
 			cv = &r_teamskincolor;
 		else 
 			cv = &r_enemyskincolor;
+
+		local_skincolormode=r_skincolormode.integer;
+
+		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1)
+			local_skincolormode=r_skincolormodedead.integer;
+
 	}
 
 	if (cv && cv->string[0])
@@ -1168,12 +1175,12 @@ void R_DrawAliasModel(entity_t *ent)
 		}
 
 		GL_DisableMultitexture();
-		GL_Bind (r_skincolormode.integer ? texture : particletexture); // particletexture is just solid white texture
+		GL_Bind (local_skincolormode ? texture : particletexture); // particletexture is just solid white texture
 
 		//
 		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
 		//	
-		switch(r_skincolormode.integer) {
+		switch(local_skincolormode) {
 			case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
 			case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
 			case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
@@ -2017,6 +2024,7 @@ void R_Init(void)
 	Cvar_Register (&r_enemyskincolor);
 	Cvar_Register (&r_teamskincolor);
 	Cvar_Register (&r_skincolormode);
+	Cvar_Register (&r_skincolormodedead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
 	Cvar_Register (&r_dynamic);
