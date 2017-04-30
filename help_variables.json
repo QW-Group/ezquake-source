@@ -3109,7 +3109,7 @@
       "group-id": "36",
       "type": "float"
     },
-    "gl_particle_trail_lenght": {
+    "gl_particle_trail_length": {
       "group-id": "36",
       "desc": "X - Multiplies the length of the trail on particle trails.",
       "type": "float"
@@ -10545,7 +10545,7 @@
     "qtv_adjustbuffer": {
       "group-id": "38",
       "desc": "Enables balancing of the buffer length of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
-      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer lenght is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
+      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer length is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not adjust buffer size, always play at 100% speed" },
