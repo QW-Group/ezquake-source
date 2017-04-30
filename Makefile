@@ -332,7 +332,7 @@ ifdef CONFIG_WINDOWS
 	localtime_win.o \
 	sys_win.o \
 	winquake.o
-    LIBS_c += -lopengl32 -lws2_32 -lwinmm
+    LIBS_c += -lopengl32 -lws2_32 -lwinmm -lpthread
 else
     OBJS_c += \
     	localtime_posix.o \
