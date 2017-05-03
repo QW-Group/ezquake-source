@@ -778,7 +778,8 @@ void CL_UpdateBeams(void)
 
 				playerbeam_update = false;
 
-				if (cl_fakeshaft.value == 2 && !cl.spectator) { // try to simulate 13 ms ping
+				if (cl_fakeshaft.value == 2 && !cl.spectator && !cls.nqdemoplayback) {
+					// try to simulate 13 ms ping
 					frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
 					VectorCopy(frame->cmd.angles, target_angles);
 					VectorCopy(frame->playerstate[cl.viewplayernum].origin, target_origin);
