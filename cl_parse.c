@@ -2311,6 +2311,21 @@ void CL_ProcessServerInfo (void)
 
 	cl.racing = !strcmp(Info_ValueForKey(cl.serverinfo, "ktxmode"), "race");
 
+	// Update fakeshaft limits
+	{
+		char* p = Info_ValueForKey(cl.serverinfo, "fakeshaft");
+		if (!p[0]) {
+			p = Info_ValueForKey(cl.serverinfo, "truelightning");
+		}
+
+		if (p[0]) {
+			cl.fakeshaft_policy = bound(0, Q_atof(p), 1);
+		}
+		else {
+			cl.fakeshaft_policy = 1;
+		}
+	}
+
 	// Update skins if needed.
 	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
 	cl.teamplay = new_teamplay;

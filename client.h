@@ -610,6 +610,8 @@ typedef struct {
 
 	qbool       racing;
 	int         race_pacemaker_ent;
+
+	float       fakeshaft_policy;
 } clientState_t;
 
 extern	clientState_t	cl;

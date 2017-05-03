@@ -727,14 +727,12 @@ void vectoangles(vec3_t vec, vec3_t ang);
 
 static float fakeshaft_policy (void)
 {
-	char *p;
-	if (cls.demoplayback || cl.spectator)
+	if (cls.demoplayback || cl.spectator) {
 		return 1;
-	else
-		return *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
-			bound(0, Q_atof(p), 1) :
-			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
-			bound(0, Q_atof(p), 1) : 1;
+	}
+	else {
+		return cl.fakeshaft_policy;
+	}
 }
 
 void CL_UpdateBeams(void) 

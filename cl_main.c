@@ -1127,6 +1127,8 @@ void CL_ClearState (void)
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet.
 
+	cl.fakeshaft_policy = 1;
+
 	CL_ProcessServerInfo(); // Force set some default variables, because server may not sent fullserverinfo.
 }
 
