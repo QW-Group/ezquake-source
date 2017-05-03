@@ -1023,3 +1023,6 @@ void S_Voip_Ignore (unsigned int slot, qbool ignore);
 #define KTX_RACING_PLAYER_MIN_DISTANCE 24.0f
 #define KTX_RACING_PLAYER_MAX_DISTANCE 256.0f
 #define KTX_RACING_PLAYER_ALPHA_SCALE  512.0f
+
+// Player Dead?
+#define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )

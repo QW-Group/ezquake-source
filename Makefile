@@ -39,6 +39,9 @@ RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
 
+#Temporarily disable tree vectorization optimization enabled at O3 due to gcc bug
+CFLAGS += -fno-tree-vectorize
+
 CFLAGS_c :=
 RCFLAGS_c :=
 LDFLAGS_c :=

@@ -999,16 +999,16 @@ static void Sbar_DrawCompact_WithIcons(void) {
 	for (i = 0; i < 4; i++) {
 		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
 		if (cl.stats[STAT_SHELLS + i] < 5)
-			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -12, str);
+			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -16, str);
 		else
-			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -12, str);
+			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -16, str);
 	}
 	for (i = 0; i < 7; i++) {
 		if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
 			if (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i))
-				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[1][i]);
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -32, sb_weapons[1][i]);
 			else
-				Sbar_DrawPic (align * 8 + 18 + 16 * i, -28, sb_weapons[0][i]);
+				Sbar_DrawPic (align * 8 + 18 + 16 * i, -32, sb_weapons[0][i]);
 		}
 	}
 	sbar_xofs = old_sbar_xofs;

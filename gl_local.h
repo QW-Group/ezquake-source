@@ -167,6 +167,7 @@ extern	cvar_t	r_fullbrightSkins;
 extern	cvar_t	r_enemyskincolor;
 extern	cvar_t	r_teamskincolor;
 extern	cvar_t	r_skincolormode;
+extern	cvar_t	r_skincolormodedead;
 extern	cvar_t	r_fastsky;
 extern	cvar_t	r_skycolor;
 extern	cvar_t	r_farclip;

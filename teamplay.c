@@ -986,8 +986,6 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 
 }
 
-#define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
-
 static void CountNearbyPlayers(qbool dead)
 {
 	int i;
