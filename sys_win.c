@@ -1072,7 +1072,7 @@ void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
 //
 // Gets the registry value for the "HKCU\Software\ezQuake\AskForQWProtocol key"
 //
-qwurl_regkey_t WinGetCheckQWURLRegKey()
+qwurl_regkey_t WinGetCheckQWURLRegKey(void)
 {
 	HKEY keyhandle = NULL;
 	DWORD returnval = QWURL_ASK;
@@ -1340,7 +1340,7 @@ void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name)
 
 HANDLE ezquake_server_mailslot;
 
-void Sys_InitIPC()
+void Sys_InitIPC(void)
 {	
 	ezquake_server_mailslot = CreateMailslot( 
 							  EZQUAKE_MAILSLOT,					// Mailslot name
@@ -1349,12 +1349,12 @@ void Sys_InitIPC()
 							  NULL);							// Default security attribute 
 }
 
-void Sys_CloseIPC()
+void Sys_CloseIPC(void)
 {
 	CloseHandle(ezquake_server_mailslot);
 }
 
-void Sys_ReadIPC()
+void Sys_ReadIPC(void)
 {
 	char buf[MAILSLOT_BUFFERSIZE] = {0};
 	DWORD num_bytes_read = 0;
