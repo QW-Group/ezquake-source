@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "EX_qtvlist.h"
 
-cvar_t qtv_api_url = {"qtv_api_url", "http://qtv.atrophied.co.uk/api/qtv/servers"};
+cvar_t qtv_api_url = {"qtv_api_url", "http://metaqtv.duelmania.net/api/v1/servers"};
 
 static json_t *root;
 static SDL_mutex *qtvlist_mutex;
