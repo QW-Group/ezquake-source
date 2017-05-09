@@ -288,38 +288,49 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		*hud_fps_show_min = NULL,
 		*hud_fps_style,
 		*hud_fps_title,
-		*hud_fps_drop;
+		*hud_fps_drop,
+		*hud_fps_scale;
 
-	if (hud_fps_show_min == NULL)   // first time called
-	{
+	if (hud_fps_show_min == NULL) {
+		// first time called
 		hud_fps_show_min = HUD_FindVar(hud, "show_min");
 		hud_fps_style    = HUD_FindVar(hud, "style");
 		hud_fps_title    = HUD_FindVar(hud, "title");
-		hud_fps_drop = HUD_FindVar(hud, "drop");
+		hud_fps_drop     = HUD_FindVar(hud, "drop");
+		hud_fps_scale    = HUD_FindVar(hud, "scale");
 	}
 
-	if (hud_fps_show_min->value)
-		snprintf (st, sizeof (st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int) (cls.fps + 0.25));
-	else
-		snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
+	if (hud_fps_show_min->value) {
+		snprintf(st, sizeof(st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int)(cls.fps + 0.25));
+	}
+	else {
+		snprintf(st, sizeof(st), "%3d", (int)(cls.fps + 0.25));
+	}
 
-	if (hud_fps_title->value)
-		strlcat (st, " fps", sizeof (st));
+	if (hud_fps_title->value) {
+		strlcat(st, " fps", sizeof(st));
+	}
 
-	if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-	{
-		if ((hud_fps_style->value) == 1)
-			Draw_Alt_String(x, y, st);
+	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_fps_scale->value, 8 * hud_fps_scale->value, &x, &y)) {
+		if ((hud_fps_style->value) == 1) {
+			Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+		}
 		else if ((hud_fps_style->value) == 2) {
-			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
-				Draw_String(x, y, st);
+			// if fps is less than a user-set value, then show it
+			if ((hud_fps_drop->value) >= cls.fps) {
+				Draw_SString(x, y, st, hud_fps_scale->value);
+			}
 		}
 		else if ((hud_fps_style->value) == 3) {
-			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
-				Draw_Alt_String(x, y, st);
+			// if fps is less than a user-set value, then show it
+			if ((hud_fps_drop->value) >= cls.fps) {
+				Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+			}
 		}
-		else // hud_fps_style is anything other than 1,2,3
-			Draw_String(x, y, st);
+		else {
+			// hud_fps_style is anything other than 1,2,3
+			Draw_SString(x, y, st, hud_fps_scale->value);
+		}
 	}
 }
 
@@ -328,44 +339,44 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	int x, y;
 	char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
+	static cvar_t *hud_vidlag_scale = NULL;
 
 	extern qbool VID_VSyncIsOn(void);
 	extern double vid_vsync_lag;
 	static double old_lag;
 
-	if (VID_VSyncIsOn() || glConfig.displayFrequency)
-	{
+	if (VID_VSyncIsOn() || glConfig.displayFrequency) {
 		// take the average of last two values, otherwise it
 		// changes very fast and is hard to read
 		double current, avg;
-		if (VID_VSyncIsOn())
+		if (VID_VSyncIsOn()) {
 			current = vid_vsync_lag;
-		else
-			current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
+		}
+		else {
+			current = min(cls.trueframetime, 1.0 / glConfig.displayFrequency) * 0.5;
+		}
 		avg = (current + old_lag) * 0.5;
 		old_lag = current;
 		snprintf (st, sizeof (st), "%2.1f", avg * 1000);
 	}
-	else
-
+	else {
 		strcpy(st, "?");
+	}
 
-	if (hud_vidlag_style == NULL)  // first time called
-	{
+	if (hud_vidlag_style == NULL) {
+		// first time called
 		hud_vidlag_style = HUD_FindVar(hud, "style");
+		hud_vidlag_scale = HUD_FindVar(hud, "scale");
 	}
 
 	strlcat (st, " ms", sizeof (st));
 
-	if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-	{
-		if (hud_vidlag_style->value)
-		{
-			Draw_Alt_String(x, y, st);
+	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_vidlag_scale->value, 8 * hud_vidlag_scale->value, &x, &y)) {
+		if (hud_vidlag_style->value) {
+			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value);
 		}
-		else
-		{
-			Draw_String(x, y, st);
+		else {
+			Draw_SString(x, y, st, hud_vidlag_scale->value);
 		}
 	}
 }
@@ -450,7 +461,8 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		*hud_ping_show_min,
 		*hud_ping_show_max,
 		*hud_ping_style,
-		*hud_ping_blink;
+		*hud_ping_blink,
+		*hud_ping_scale;
 
 	if (hud_ping_period == NULL)    // first time
 	{
@@ -461,6 +473,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		hud_ping_show_max = HUD_FindVar(hud, "show_max");
 		hud_ping_style    = HUD_FindVar(hud, "style");
 		hud_ping_blink    = HUD_FindVar(hud, "blink");
+		hud_ping_scale    = HUD_FindVar(hud, "scale");
 	}
 
 	t = Sys_DoubleTime();
@@ -526,18 +539,15 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
 	// display that on screen
-	width = strlen(buf) * 8;
-	height = 8;
+	width = strlen(buf) * 8 * hud_ping_scale->value;
+	height = 8 * hud_ping_scale->value;
 
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		if (hud_ping_style->value)
-		{
-			Draw_Alt_String(x, y, buf);
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		if (hud_ping_style->value) {
+			Draw_SAlt_String(x, y, buf, hud_ping_scale->value);
 		}
-		else
-		{
-			Draw_String(x, y, buf);
+		else {
+			Draw_SString(x, y, buf, hud_ping_scale->value);
 		}
 	}
 }
@@ -760,56 +770,60 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 	int x, y;
 
 	static cvar_t *hud_speed_xyz = NULL,
-		      *hud_speed_width,
-		      *hud_speed_height,
-		      *hud_speed_tick_spacing,
-		      *hud_speed_opacity,
-		      *hud_speed_color_stopped,
-		      *hud_speed_color_normal,
-		      *hud_speed_color_fast,
-		      *hud_speed_color_fastest,
-		      *hud_speed_color_insane,
-		      *hud_speed_vertical,
-		      *hud_speed_vertical_text,
-		      *hud_speed_text_align,
-		      *hud_speed_style;
+		*hud_speed_width,
+		*hud_speed_height,
+		*hud_speed_tick_spacing,
+		*hud_speed_opacity,
+		*hud_speed_color_stopped,
+		*hud_speed_color_normal,
+		*hud_speed_color_fast,
+		*hud_speed_color_fastest,
+		*hud_speed_color_insane,
+		*hud_speed_vertical,
+		*hud_speed_vertical_text,
+		*hud_speed_text_align,
+		*hud_speed_style,
+		*hud_speed_scale;
 
 	if (hud_speed_xyz == NULL)    // first time
 	{
-		hud_speed_xyz			= HUD_FindVar(hud, "xyz");
-		hud_speed_width			= HUD_FindVar(hud, "width");
-		hud_speed_height		= HUD_FindVar(hud, "height");
-		hud_speed_tick_spacing	= HUD_FindVar(hud, "tick_spacing");
-		hud_speed_opacity		= HUD_FindVar(hud, "opacity");
-		hud_speed_color_stopped	= HUD_FindVar(hud, "color_stopped");
-		hud_speed_color_normal	= HUD_FindVar(hud, "color_normal");
-		hud_speed_color_fast	= HUD_FindVar(hud, "color_fast");
-		hud_speed_color_fastest	= HUD_FindVar(hud, "color_fastest");
-		hud_speed_color_insane	= HUD_FindVar(hud, "color_insane");
-		hud_speed_vertical		= HUD_FindVar(hud, "vertical");
-		hud_speed_vertical_text	= HUD_FindVar(hud, "vertical_text");
-		hud_speed_text_align	= HUD_FindVar(hud, "text_align");
-		hud_speed_style			= HUD_FindVar(hud, "style");
+		hud_speed_xyz           = HUD_FindVar(hud, "xyz");
+		hud_speed_width         = HUD_FindVar(hud, "width");
+		hud_speed_height        = HUD_FindVar(hud, "height");
+		hud_speed_tick_spacing  = HUD_FindVar(hud, "tick_spacing");
+		hud_speed_opacity       = HUD_FindVar(hud, "opacity");
+		hud_speed_color_stopped = HUD_FindVar(hud, "color_stopped");
+		hud_speed_color_normal  = HUD_FindVar(hud, "color_normal");
+		hud_speed_color_fast    = HUD_FindVar(hud, "color_fast");
+		hud_speed_color_fastest = HUD_FindVar(hud, "color_fastest");
+		hud_speed_color_insane  = HUD_FindVar(hud, "color_insane");
+		hud_speed_vertical      = HUD_FindVar(hud, "vertical");
+		hud_speed_vertical_text = HUD_FindVar(hud, "vertical_text");
+		hud_speed_text_align    = HUD_FindVar(hud, "text_align");
+		hud_speed_style         = HUD_FindVar(hud, "style");
+		hud_speed_scale         = HUD_FindVar(hud, "scale");
 	}
 
-	width = max(0, hud_speed_width->value);
-	height = max(0, hud_speed_height->value);
+	width = max(0, hud_speed_width->value) * hud_speed_scale->value;
+	height = max(0, hud_speed_height->value) * hud_speed_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
 		SCR_DrawHUDSpeed(x, y, width, height,
-				hud_speed_xyz->value,
-				hud_speed_tick_spacing->value,
-				hud_speed_opacity->value,
-				hud_speed_vertical->value,
-				hud_speed_vertical_text->value,
-				hud_speed_text_align->value,
-				hud_speed_color_stopped->value,
-				hud_speed_color_normal->value,
-				hud_speed_color_fast->value,
-				hud_speed_color_fastest->value,
-				hud_speed_color_insane->value,
-				hud_speed_style->integer);
+			hud_speed_xyz->value,
+			hud_speed_tick_spacing->value,
+			hud_speed_opacity->value,
+			hud_speed_vertical->value,
+			hud_speed_vertical_text->value,
+			hud_speed_text_align->value,
+			hud_speed_color_stopped->value,
+			hud_speed_color_normal->value,
+			hud_speed_color_fast->value,
+			hud_speed_color_fastest->value,
+			hud_speed_color_insane->value,
+			hud_speed_style->integer,
+			hud_speed_scale->value
+		);
 	}
 }
 
@@ -824,28 +838,30 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 	int x, y;
 
 	static cvar_t *hud_speed2_xyz = NULL,
-		      *hud_speed2_opacity,
-		      *hud_speed2_color_stopped,
-		      *hud_speed2_color_normal,
-		      *hud_speed2_color_fast,
-		      *hud_speed2_color_fastest,
-		      *hud_speed2_color_insane,
-		      *hud_speed2_radius,
-		      *hud_speed2_wrapspeed,
-		      *hud_speed2_orientation;
+		*hud_speed2_opacity,
+		*hud_speed2_color_stopped,
+		*hud_speed2_color_normal,
+		*hud_speed2_color_fast,
+		*hud_speed2_color_fastest,
+		*hud_speed2_color_insane,
+		*hud_speed2_radius,
+		*hud_speed2_wrapspeed,
+		*hud_speed2_orientation,
+		*hud_speed2_scale;
 
 	if (hud_speed2_xyz == NULL)    // first time
 	{
-		hud_speed2_xyz				= HUD_FindVar(hud, "xyz");
-		hud_speed2_opacity			= HUD_FindVar(hud, "opacity");
-		hud_speed2_color_stopped	= HUD_FindVar(hud, "color_stopped");
-		hud_speed2_color_normal		= HUD_FindVar(hud, "color_normal");
-		hud_speed2_color_fast		= HUD_FindVar(hud, "color_fast");
-		hud_speed2_color_fastest	= HUD_FindVar(hud, "color_fastest");
-		hud_speed2_color_insane		= HUD_FindVar(hud, "color_insane");
-		hud_speed2_radius			= HUD_FindVar(hud, "radius");
-		hud_speed2_wrapspeed		= HUD_FindVar(hud, "wrapspeed");
-		hud_speed2_orientation		= HUD_FindVar(hud, "orientation");
+		hud_speed2_xyz              = HUD_FindVar(hud, "xyz");
+		hud_speed2_opacity          = HUD_FindVar(hud, "opacity");
+		hud_speed2_color_stopped    = HUD_FindVar(hud, "color_stopped");
+		hud_speed2_color_normal     = HUD_FindVar(hud, "color_normal");
+		hud_speed2_color_fast       = HUD_FindVar(hud, "color_fast");
+		hud_speed2_color_fastest    = HUD_FindVar(hud, "color_fastest");
+		hud_speed2_color_insane     = HUD_FindVar(hud, "color_insane");
+		hud_speed2_radius           = HUD_FindVar(hud, "radius");
+		hud_speed2_wrapspeed        = HUD_FindVar(hud, "wrapspeed");
+		hud_speed2_orientation      = HUD_FindVar(hud, "orientation");
+		hud_speed2_scale            = HUD_FindVar(hud, "scale");
 	}
 
 	// Calculate the height and width based on the radius.
@@ -865,8 +881,12 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 			break;
 	}
 
+	width *= hud_speed2_scale->value;
+	height *= hud_speed2_scale->value;
+
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
+		float radius;
 		int player_speed;
 		int arc_length;
 		int color1, color2;
@@ -956,8 +976,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_startangle = M_PI / 2.0;
 					circle_endangle	= (3*M_PI) / 2.0;
 
-					text_x = x - 32;
-					text_y = y - 4;
+					text_x = x - 4 * 8 * hud_speed2_scale->value;
+					text_y = y - 8 * hud_speed2_scale->value * 0.5;
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_RIGHT :
@@ -968,7 +988,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
 
 					text_x = x;
-					text_y = y - 4;
+					text_y = y - 8 * hud_speed2_scale->value * 0.5;
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_DOWN :
@@ -978,7 +998,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_endangle = 2*M_PI;
 					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
 
-					text_x = x - 16;
+					text_x = x - 2 * 8 * hud_speed2_scale->value;
 					text_y = y;
 					break;
 				}
@@ -991,8 +1011,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_endangle = M_PI;
 					needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
 
-					text_x = x - 16;
-					text_y = y - 8;
+					text_x = x - 8 * 2 * hud_speed2_scale->value;
+					text_y = y - 8 * hud_speed2_scale->value;
 					break;
 				}
 		}
@@ -1013,56 +1033,61 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 			needle_start_y = y;
 		}
 
-		// Set the needle end point depending on the orientation of the hud item.
+		radius = hud_speed2_radius->value * hud_speed2_scale->value;
 
+		// Set the needle end point depending on the orientation of the hud item.
 		switch((int)hud_speed2_orientation->value)
 		{
 			case HUD_SPEED2_ORIENTATION_LEFT :
 				{
-					needle_end_x = x - hud_speed2_radius->value * sin (needle_angle);
-					needle_end_y = y + hud_speed2_radius->value * cos (needle_angle);
+					needle_end_x = x - radius * sin (needle_angle);
+					needle_end_y = y + radius * cos (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_RIGHT :
 				{
-					needle_end_x = x + hud_speed2_radius->value * sin (needle_angle);
-					needle_end_y = y - hud_speed2_radius->value * cos (needle_angle);
+					needle_end_x = x + radius * sin (needle_angle);
+					needle_end_y = y - radius * cos (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_DOWN :
 				{
-					needle_end_x = x + hud_speed2_radius->value * cos (needle_angle);
-					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
+					needle_end_x = x + radius * cos (needle_angle);
+					needle_end_y = y + radius * sin (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_UP :
 			default :
 				{
-					needle_end_x = x - hud_speed2_radius->value * cos (needle_angle);
-					needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
+					needle_end_x = x - radius * cos (needle_angle);
+					needle_end_y = y - radius * sin (needle_angle);
 					break;
 				}
 		}
 
 		// Draw the speed-o-meter background.
-		Draw_AlphaPieSlice (x, y,				// Position
-				hud_speed2_radius->value,			// Radius
-				circle_startangle,					// Start angle
-				circle_endangle - needle_angle,		// End angle
-				1,									// Thickness
-				true,								// Fill
-				color1,								// Color
-				hud_speed2_opacity->value);			// Opacity
+		Draw_AlphaPieSlice (
+			x, y,                            // Position
+			radius,                          // Radius
+			circle_startangle,               // Start angle
+			circle_endangle - needle_angle,  // End angle
+			1,                               // Thickness
+			true,                            // Fill
+			color1,                          // Color
+			hud_speed2_opacity->value        // Opacity
+		);
 
 		// Draw a pie slice that shows the "color" of the speed.
-		Draw_AlphaPieSlice (x, y,				// Position
-				hud_speed2_radius->value,			// Radius
-				circle_endangle - needle_angle,		// Start angle
-				circle_endangle,					// End angle
-				1,									// Thickness
-				true,								// Fill
-				color2,								// Color
-				hud_speed2_opacity->value);			// Opacity
+		Draw_AlphaPieSlice(
+			x, y,                               // Position
+			radius,                             // Radius
+			circle_endangle - needle_angle,     // Start angle
+			circle_endangle,                    // End angle
+			1,                                  // Thickness
+			true,                               // Fill
+			color2,                             // Color
+			hud_speed2_opacity->value           // Opacity
+		);
 
 		// Draw the "needle attachment" circle.
 		Draw_AlphaCircle (x, y, 2.0, 1, true, 15, hud_speed2_opacity->value);
@@ -1071,7 +1096,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_AlphaLineRGB (needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, RGBA_TO_COLOR(250, 250, 250, 255 * hud_speed2_opacity->value));
 
 		// Draw the speed.
-		Draw_String (text_x, text_y, va("%d", player_speed));
+		Draw_SString (text_x, text_y, va("%d", player_speed), hud_speed2_scale->value);
 	}
 }
 
@@ -3976,17 +4001,20 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	double t;		// current time
 	static double lastframetime;	// last refresh
 
-	static cvar_t *style = NULL, *width_var, *height_var, *scroll, *scroll_delay, *on_scoreboard, *wordwrap;
+	static cvar_t *style = NULL, 
+		*width_var, *height_var, *scroll, *scroll_delay, 
+		*on_scoreboard, *wordwrap, *scale;
 
 	if (style == NULL)  // first time called
 	{
-		style =				HUD_FindVar(hud, "style");
-		width_var =			HUD_FindVar(hud, "width");
-		height_var =		HUD_FindVar(hud, "height");
-		scroll =			HUD_FindVar(hud, "scroll");
-		scroll_delay =		HUD_FindVar(hud, "scroll_delay");
-		on_scoreboard =		HUD_FindVar(hud, "on_scoreboard");
-		wordwrap =			HUD_FindVar(hud, "wordwrap");
+		style = HUD_FindVar(hud, "style");
+		width_var = HUD_FindVar(hud, "width");
+		height_var = HUD_FindVar(hud, "height");
+		scroll = HUD_FindVar(hud, "scroll");
+		scroll_delay = HUD_FindVar(hud, "scroll_delay");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		wordwrap = HUD_FindVar(hud, "wordwrap");
+		scale = HUD_FindVar(hud, "scale");
 	}
 
 	if(on_scoreboard->value)
@@ -3998,8 +4026,8 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 		hud->flags -= HUD_ON_SCORES;
 	}
 
-	width = (int)width_var->value;
-	height = (int)height_var->value;
+	width = (int)width_var->value * scale->value;
+	height = (int)height_var->value * scale->value;
 
 	if(width < 0) width = 0;
 	if(width > vid.width) width = vid.width;
@@ -4038,7 +4066,7 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
-		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
+		SCR_DrawWordWrapString(x, y, 8 * scale->value, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title, scale->value);
 	}
 #else
 	HUD_PrepareDraw(hud, width , height, &x, &y);
@@ -4058,20 +4086,18 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	double t; // current time
 	static double lastframetime; // last refresh
 
-	static cvar_t *style = NULL, *on_scoreboard;
+	static cvar_t *style = NULL, *on_scoreboard, *scale;
 
-	if(style == NULL)
-	{
-		style			= HUD_FindVar(hud, "style");
-		on_scoreboard	= HUD_FindVar(hud, "on_scoreboard");
+	if (style == NULL) {
+		style = HUD_FindVar(hud, "style");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		scale = HUD_FindVar(hud, "scale");
 	}
 
-	if(on_scoreboard->value)
-	{
+	if (on_scoreboard->value) {
 		hud->flags |= HUD_ON_SCORES;
 	}
-	else if((int)on_scoreboard->value & HUD_ON_SCORES)
-	{
+	else if ((int)on_scoreboard->value & HUD_ON_SCORES) {
 		hud->flags -= HUD_ON_SCORES;
 	}
 
@@ -4079,12 +4105,10 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
 		lastframetime = t;
 
-		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
-		{
+		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) {
 			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
 		}
-		else
-		{
+		else {
 			switch((int)style->value)
 			{
 				case 1 :
@@ -4128,14 +4152,16 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	// Don't allow showing the timer if ruleset disallows it
 	// It could be used for timing powerups
 	// Use same check that is used for any external communication
-	if(Rulesets_RestrictPacket())
-		snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
+	if (Rulesets_RestrictPacket()) {
+		snprintf(time_string, sizeof(time_string), "\x10%s\x11", "Not allowed");
+	}
 
-	width = strlen (time_string) * 8;
-	height = 8;
+	width = strlen (time_string) * 8 * scale->value;
+	height = 8 * scale->value;
 
-	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-		Draw_String(x, y, time_string);
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		Draw_SString(x, y, time_string, scale->value);
+	}
 #else
 	HUD_PrepareDraw(hud, width , height, &x, &y);
 #endif
@@ -4418,11 +4444,13 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	Draw_AlphaFill(x, y, team2_width, bar_height, team2_color, opacity);
 }
 
-void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
-		float team1_percent, float team2_percent,
-		int team1_color, int team2_color,
-		int show_text, int vertical,
-		int vertical_text, float opacity)
+static void TeamHold_DrawPercentageBar(
+	int x, int y, int width, int height,
+	float team1_percent, float team2_percent,
+	int team1_color, int team2_color,
+	int show_text, int vertical,
+	int vertical_text, float opacity, float scale
+)
 {
 	int _x, _y;
 	int _width, _height;
@@ -4464,33 +4492,33 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 					int percent10 = 0;
 					int percent100 = 0;
 
-					_x = x + (width / 2) - 4;
-					_y = Q_rint(y + (height * team1_percent)/2 - 12);
+					_x = x + (width / 2) - 4 * scale;
+					_y = Q_rint(y + (height * team1_percent)/2 - 8 * 1.5 * scale);
 
 					percent = Q_rint(100 * team1_percent);
 
-					if((percent100 = percent / 100))
+					if ((percent100 = percent / 100))
 					{
-						Draw_String(_x, _y, va("%d", percent100));
-						_y += 8;
+						Draw_SString(_x, _y, va("%d", percent100), scale);
+						_y += 8 * scale;
 					}
 
-					if((percent10 = percent / 10))
+					if ((percent10 = percent / 10))
 					{
-						Draw_String(_x, _y, va("%d", percent10));
-						_y += 8;
+						Draw_SString(_x, _y, va("%d", percent10), scale);
+						_y += 8 * scale;
 					}
 
-					Draw_String(_x, _y, va("%d", percent % 10));
-					_y += 8;
+					Draw_SString(_x, _y, va("%d", percent % 10), scale);
+					_y += 8 * scale;
 
-					Draw_String(_x, _y, "%");
+					Draw_SString(_x, _y, "%", scale);
 				}
 				else
 				{
-					_x = x + (width / 2) - 12;
-					_y = Q_rint(y + (height * team1_percent)/2 - 4);
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+					_x = x + (width / 2) - 8 * 1.5 * scale;
+					_y = Q_rint(y + (height * team1_percent)/2 - 8 * scale * 0.5);
+					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
 				}
 			}
 
@@ -4564,17 +4592,17 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 			// Team 1.
 			if(team1_percent > 0.05)
 			{
-				_x = Q_rint(x + (width * team1_percent)/2 - 8);
-				_y = y + (height / 2) - 4;
-				Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+				_x = Q_rint(x + (width * team1_percent)/2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
 			}
 
 			// Team 2.
 			if(team2_percent > 0.05)
 			{
-				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent)/2 - 8);
-				_y = y + (height / 2) - 4;
-				Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent)/2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale);
 			}
 		}
 	}
@@ -4596,32 +4624,32 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		*hud_teamholdbar_vertical,
 		*hud_teamholdbar_show_text,
 		*hud_teamholdbar_onlytp,
-		*hud_teamholdbar_vertical_text;
+		*hud_teamholdbar_vertical_text,
+		*hud_teamholdbar_scale;
 
 	if (hud_teamholdbar_style == NULL)    // first time
 	{
-		hud_teamholdbar_style				= HUD_FindVar(hud, "style");
-		hud_teamholdbar_opacity				= HUD_FindVar(hud, "opacity");
-		hud_teamholdbar_width				= HUD_FindVar(hud, "width");
-		hud_teamholdbar_height				= HUD_FindVar(hud, "height");
-		hud_teamholdbar_vertical			= HUD_FindVar(hud, "vertical");
-		hud_teamholdbar_show_text			= HUD_FindVar(hud, "show_text");
-		hud_teamholdbar_onlytp				= HUD_FindVar(hud, "onlytp");
-		hud_teamholdbar_vertical_text		= HUD_FindVar(hud, "vertical_text");
+		hud_teamholdbar_style               = HUD_FindVar(hud, "style");
+		hud_teamholdbar_opacity             = HUD_FindVar(hud, "opacity");
+		hud_teamholdbar_width               = HUD_FindVar(hud, "width");
+		hud_teamholdbar_height              = HUD_FindVar(hud, "height");
+		hud_teamholdbar_vertical            = HUD_FindVar(hud, "vertical");
+		hud_teamholdbar_show_text           = HUD_FindVar(hud, "show_text");
+		hud_teamholdbar_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_teamholdbar_vertical_text       = HUD_FindVar(hud, "vertical_text");
+		hud_teamholdbar_scale               = HUD_FindVar(hud, "scale");
 	}
 
 	height = max(1, hud_teamholdbar_height->value);
 	width = max(0, hud_teamholdbar_width->value);
 
 	// Don't show when not in teamplay/demoplayback.
-	if(!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value))
-	{
+	if (!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value)) {
 		HUD_PrepareDraw(hud, width , height, &x, &y);
 		return;
 	}
 
-	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-	{
+	if (HUD_PrepareDraw(hud, width , height, &x, &y)) {
 		// We need something to work with.
 		if(stats_grid != NULL)
 		{
@@ -4642,14 +4670,17 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			}
 
 			// Draw the percentage bar.
-			TeamHold_DrawPercentageBar(x, y, width, height,
-					team1_percent, team2_percent,
-					stats_grid->teams[STATS_TEAM1].color,
-					stats_grid->teams[STATS_TEAM2].color,
-					hud_teamholdbar_show_text->value,
-					hud_teamholdbar_vertical->value,
-					hud_teamholdbar_vertical_text->value,
-					hud_teamholdbar_opacity->value);
+			TeamHold_DrawPercentageBar(
+				x, y, width, height,
+				team1_percent, team2_percent,
+				stats_grid->teams[STATS_TEAM1].color,
+				stats_grid->teams[STATS_TEAM2].color,
+				hud_teamholdbar_show_text->value,
+				hud_teamholdbar_vertical->value,
+				hud_teamholdbar_vertical_text->value,
+				hud_teamholdbar_opacity->value,
+				hud_teamholdbar_scale->value
+			);
 		}
 		else
 		{
@@ -4744,18 +4775,20 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		*hud_teamholdinfo_width,
 		*hud_teamholdinfo_height,
 		*hud_teamholdinfo_onlytp,
-		*hud_teamholdinfo_itemfilter;
+		*hud_teamholdinfo_itemfilter,
+		*hud_teamholdinfo_scale;
 
 	if (hud_teamholdinfo_style == NULL)    // first time
 	{
 		char val[256];
 
-		hud_teamholdinfo_style				= HUD_FindVar(hud, "style");
-		hud_teamholdinfo_opacity			= HUD_FindVar(hud, "opacity");
-		hud_teamholdinfo_width				= HUD_FindVar(hud, "width");
-		hud_teamholdinfo_height				= HUD_FindVar(hud, "height");
-		hud_teamholdinfo_onlytp				= HUD_FindVar(hud, "onlytp");
-		hud_teamholdinfo_itemfilter			= HUD_FindVar(hud, "itemfilter");
+		hud_teamholdinfo_style      = HUD_FindVar(hud, "style");
+		hud_teamholdinfo_opacity    = HUD_FindVar(hud, "opacity");
+		hud_teamholdinfo_width      = HUD_FindVar(hud, "width");
+		hud_teamholdinfo_height     = HUD_FindVar(hud, "height");
+		hud_teamholdinfo_onlytp     = HUD_FindVar(hud, "onlytp");
+		hud_teamholdinfo_itemfilter = HUD_FindVar(hud, "itemfilter");
+		hud_teamholdinfo_scale      = HUD_FindVar(hud, "scale");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
@@ -4799,7 +4832,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			int names_width = 0;
 
 			// Don't draw outside the specified height.
-			if((_y - y) + 8 > height)
+			if((_y - y) + 8 * hud_teamholdinfo_scale->value > height)
 			{
 				break;
 			}
@@ -4823,7 +4856,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Calculate the width of the longest item name so we can use it for padding.
-			names_width = 8 * (stats_important_ents->longest_name + 1);
+			names_width = 8 * (stats_important_ents->longest_name + 1) * hud_teamholdinfo_scale->value;
 
 			// Calculate the percentages of this item that the two teams holds.
 			team1_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM1];
@@ -4836,38 +4869,41 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			team2_percent = fabs(max(0, team2_percent));
 
 			// Write the name of the item.
-			Draw_ColoredString(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0);
+			Draw_SColoredStringBasic(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0, hud_teamholdinfo_scale->value);
 
-			if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
+			if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
 			{
 				//
 				// Prints the team name that holds the item.
 				//
 				if(team1_percent > team2_percent)
 				{
-					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0, hud_teamholdinfo_scale->value);
 				}
 				else if(team1_percent < team2_percent)
 				{
-					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0, hud_teamholdinfo_scale->value);
 				}
 			}
-			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
 			{
 				//
 				// Show a percenteage bar for the item.
 				//
-				TeamHold_DrawPercentageBar(x + names_width, _y,
-						Q_rint(hud_teamholdinfo_width->value - names_width), 8,
-						team1_percent, team2_percent,
-						stats_important_ents->teams[STATS_TEAM1].color,
-						stats_important_ents->teams[STATS_TEAM2].color,
-						0, // Don't show percentage values, get's too cluttered.
-						false,
-						false,
-						hud_teamholdinfo_opacity->value);
+				TeamHold_DrawPercentageBar(
+					x + names_width, _y,
+					Q_rint(hud_teamholdinfo_width->value - names_width), 8,
+					team1_percent, team2_percent,
+					stats_important_ents->teams[STATS_TEAM1].color,
+					stats_important_ents->teams[STATS_TEAM2].color,
+					0, // Don't show percentage values, get's too cluttered.
+					false,
+					false,
+					hud_teamholdinfo_opacity->value,
+					hud_teamholdinfo_scale->value
+				);
 			}
-			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
 			{
 				TeamHold_DrawBars(x + names_width, _y,
 						Q_rint(hud_teamholdinfo_width->value - names_width), 8,
@@ -4878,7 +4914,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Next line.
-			_y += 8;
+			_y += 8 * hud_teamholdinfo_scale->value;
 		}
 	}
 }
@@ -7128,121 +7164,144 @@ void CommonDraw_Init(void)
 	autohud.active = 0;
 
 	// init gameclock
-	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
-			"1", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-			"big",      "1",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "1",
-			"countdown","0",
-			"offset","0",
-			NULL);
+	HUD_Register(
+		"gameclock", NULL, "Shows current game time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
+		"1", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
+		"big",      "1",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "1",
+		"countdown","0",
+		"offset","0",
+		NULL
+	);
 
-	HUD_Register("notify", NULL, "Shows last console lines",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
-			"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
-			"rows", "4",
-			"cols", "30",
-			"scale", "1",
-			"time", "4",
-			NULL);
+	HUD_Register(
+		"notify", NULL, "Shows last console lines",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
+		"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"rows", "4",
+		"cols", "30",
+		"scale", "1",
+		"time", "4",
+		NULL
+	);
 
 	// fps
-	HUD_Register("fps", NULL,
-			"Shows your current framerate in frames per second (fps)."
-			"This can also show the minimum framerate that occured in the last measured period.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-			"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
-			"show_min", "0",
-			"style",	"0",
-			"title",    "1",
-			"drop", "70",
-			NULL);
+	HUD_Register(
+		"fps", NULL,
+		"Shows your current framerate in frames per second (fps)."
+		"This can also show the minimum framerate that occured in the last measured period.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
+		"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"show_min", "0",
+		"style",    "0",
+		"title",    "1",
+		"scale",    "1",
+		"drop",     "70",
+		NULL
+	);
 
-	HUD_Register("vidlag", NULL,
-			"Shows the delay between the time a frame is rendered and the time it's displayed.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
-			"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
-			"style",	"0",
-			NULL);
+	HUD_Register(
+		"vidlag", NULL,
+		"Shows the delay between the time a frame is rendered and the time it's displayed.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
+		"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// init clock
-	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
-			"0", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-			"big",      "1",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "1",
-			"format",   "0",
-			NULL);
+	HUD_Register(
+		"clock", NULL, "Shows current local time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
+		"0", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
+		"big",      "1",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "1",
+		"format",   "0",
+		NULL
+	);
 
 	// init democlock
-	HUD_Register("democlock", NULL, "Shows current demo time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
-			"1", "top", "right", "console", "0", "8", "0", "0 0 0", NULL,
-			"big",      "0",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "0",
-			NULL);
+	HUD_Register(
+		"democlock", NULL, "Shows current demo time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
+		"1", "top", "right", "console", "0", "8", "0", "0 0 0", NULL,
+		"big",      "0",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "0",
+		NULL
+	);
 
 	// init ping
-	HUD_Register("ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
-			"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"period",       "1",
-			"show_pl",      "1",
-			"show_min",     "0",
-			"show_max",     "0",
-			"show_dev",     "0",
-			"style",		"0",
-			"blink",        "1",
-			NULL);
+	HUD_Register(
+		"ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
+		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"period",   "1",
+		"show_pl",  "1",
+		"show_min", "0",
+		"show_max", "0",
+		"show_dev", "0",
+		"style",    "0",
+		"blink",    "1",
+		"scale",    "1",
+		NULL);
 
 	// init net
-	HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
-			"0", "top", "left", "center", "0", "0", "0.2", "0 0 0", NULL,
-			"period",  "1",
-			NULL);
+	HUD_Register(
+		"net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
+		"0", "top", "left", "center", "0", "0", "0.2", "0 0 0", NULL,
+		"period", "1",
+		"scale", "1",
+		NULL
+	);
 
 	// init speed
 	HUD_Register("speed", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
-			"0", "top", "center", "bottom", "0", "-5", "0", "0 0 0", NULL,
-			"xyz",  "0",
-			"width", "160",
-			"height", "15",
-			"opacity", "1.0",
-			"tick_spacing", "0.2",
-			"color_stopped", SPEED_STOPPED,
-			"color_normal", SPEED_NORMAL,
-			"color_fast", SPEED_FAST,
-			"color_fastest", SPEED_FASTEST,
-			"color_insane", SPEED_INSANE,
-			"vertical", "0",
-			"vertical_text", "1",
-			"text_align", "1",
-			"style", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
+		"0", "top", "center", "bottom", "0", "-5", "0", "0 0 0", NULL,
+		"xyz",  "0",
+		"width", "160",
+		"height", "15",
+		"opacity", "1.0",
+		"tick_spacing", "0.2",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"vertical", "0",
+		"vertical_text", "1",
+		"text_align", "1",
+		"style", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// Init speed2 (half circle thingie).
 	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
-			"0", "top", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"xyz",  "0",
-			"opacity", "1.0",
-			"color_stopped", SPEED_STOPPED,
-			"color_normal", SPEED_NORMAL,
-			"color_fast", SPEED_FAST,
-			"color_fastest", SPEED_FASTEST,
-			"color_insane", SPEED_INSANE,
-			"radius", "50.0",
-			"wrapspeed", "500",
-			"orientation", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
+		"0", "top", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"xyz",  "0",
+		"opacity", "1.0",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"radius", "50.0",
+		"wrapspeed", "500",
+		"orientation", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// init guns
 	HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
@@ -7664,23 +7723,26 @@ void CommonDraw_Init(void)
 			NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
-			HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
-			"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"style",	"2",
-			"width",	"512",
-			"height",	"8",
-			"scroll",	"1",
-			"scroll_delay", "0.5",
-			"on_scoreboard", "0",
-			"wordwrap", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
+		"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style", "2",
+		"width", "512",
+		"height", "8",
+		"scroll", "1",
+		"scroll_delay", "0.5",
+		"on_scoreboard", "0",
+		"wordwrap", "0",
+		"scale", "1",
+		NULL
+	);
 
 	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
-			HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"style",	"0",
-			"on_scoreboard", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style",	"0",
+		"on_scoreboard", "0",
+		"scale", "1",
+		NULL);
 
 #ifdef WITH_PNG
 	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
@@ -7706,28 +7768,34 @@ void CommonDraw_Init(void)
 			NULL);
 #endif // WITH_PNG
 
-	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"opacity", "0.8",
-			"width", "200",
-			"height", "8",
-			"vertical", "0",
-			"vertical_text", "0",
-			"show_text", "1",
-			"onlytp", "0",
-			NULL);
+	HUD_Register(
+		"teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"vertical_text", "0",
+		"show_text", "1",
+		"onlytp", "0",
+		"scale", "1",
+		NULL
+	);
 
-	HUD_Register("teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"opacity", "0.8",
-			"width", "200",
-			"height", "8",
-			"onlytp", "0",
-			"style", "1",
-			"itemfilter", "quad ra ya ga mega pent rl quad",
-			NULL);
+	HUD_Register(
+		"teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"onlytp", "0",
+		"style", "1",
+		"itemfilter", "quad ra ya ga mega pent rl quad",
+		"scale", "1",
+		NULL
+	);
 
 #ifdef WITH_PNG
 	HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",

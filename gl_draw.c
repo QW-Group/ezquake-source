@@ -1199,6 +1199,11 @@ void Draw_ColoredString(int x, int y, const char *text, int red)
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, 1, 1, false, 0);
 }
 
+void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
+{
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, scale, 1, false, 0);
+}
+
 void Draw_Alt_String(int x, int y, const char *text)
 {
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, 1, 1, false, 0);
