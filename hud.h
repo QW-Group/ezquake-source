@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
 
-#define HUD_MAX_PARAMS  24
+#define HUD_MAX_PARAMS  32
 
 #define	HUD_REGEXP_OFFSET_COUNT	20
 
