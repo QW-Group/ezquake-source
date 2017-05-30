@@ -143,8 +143,8 @@ float	FloatSwapPDP2Lit (float f);
 
 #endif
 
-//======================= FreeBSD DEFINES ====================================
-#ifdef __FreeBSD__
+//======================= FreeBSD/OpenBSD DEFINES ====================================
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 
 #include <machine/endian.h>
 #if BYTE_ORDER == BIG_ENDIAN

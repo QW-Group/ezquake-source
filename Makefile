@@ -356,7 +356,9 @@ else
     endif
 
     ifneq ($(SYS),FreeBSD)
-        LIBS_c += -ldl
+        ifneq ($(SYS),OpenBSD)
+            LIBS_c += -ldl
+	endif
     endif
 endif
 
