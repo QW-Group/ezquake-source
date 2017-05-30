@@ -50,27 +50,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #ifdef _WIN32
-#define    DEMO_TIME    FILETIME
+#define DEMO_TIME                 FILETIME
 #else
-#define    DEMO_TIME    time_t
+#define DEMO_TIME                 time_t
 #endif
 
 //unused
-//#define MAX_DEMO_NAME    MAX_OSPATH
-//#define MAX_DEMO_FILES    2048
-#define DEMO_MAXLINES    17
+//#define MAX_DEMO_NAME           MAX_OSPATH
+//#define MAX_DEMO_FILES          2048
+#define DEMO_MAXLINES             17
 
-#define DEMO_PLAYLIST_NAME_MAX		16
-#define DEMO_PLAYLIST_OPTIONS_MAX	5
-#define	DEMO_PLAYLIST_MAX			256
-#define DEMO_PLAYLIST_TAB_MAIN		0
+#define DEMO_PLAYLIST_NAME_MAX    16
+#define DEMO_PLAYLIST_OPTIONS_MAX 5
+#define	DEMO_PLAYLIST_MAX         256
+#define DEMO_PLAYLIST_TAB_MAIN    0
 
-#define DEMO_OPTIONS_MAX 2
+#define DEMO_OPTIONS_MAX          2
 
-#define DEMO_TAB_MAIN 0
-#define DEMO_TAB_PLAYLIST 1
-#define DEMO_TAB_OPTIONS 2
-#define DEMO_TAB_MAX 2
+#define DEMO_TAB_MAIN             0
+#define DEMO_TAB_PLAYLIST         1
+#define DEMO_TAB_OPTIONS          2
+#define DEMO_TAB_MAX              2
 
 typedef enum
 {
@@ -242,14 +242,19 @@ static void Demo_Playlist_Setup_f (void)
 //
 // Delete the current entry from the playlist.
 //
-static void Demo_Playlist_Del (int i)
+static void Demo_Playlist_Del(int i)
 {
 	int y;
+
+	if (i >= DEMO_PLAYLIST_MAX) {
+		Com_Printf("Error: demo playlist item %d out of range (%d)\n", i, DEMO_PLAYLIST_MAX);
+		return;
+	}
 
 	// Remove the playlist item.
 	memset (&demo_playlist[i], 0, sizeof(demo_playlist[i]));
 
-	for (y = i; y <= 256 && demo_playlist[y+1].name[0] != '\0'; y++ )
+	for (y = i; y < (DEMO_PLAYLIST_MAX - 1) && demo_playlist[y+1].name[0] != '\0'; y++ )
 	{
 		memmove (&demo_playlist[y], &demo_playlist[y+1], sizeof(demo_playlist[y]));
 		memset (&demo_playlist[y+1], 0, sizeof(demo_playlist[y+1]));
