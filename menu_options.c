@@ -186,7 +186,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
-void CL_RegisterQWURLProtocol_f(void);
+void Sys_RegisterQWURLProtocol_f(void);
 #endif
 extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
@@ -1202,7 +1202,7 @@ setting settmisc_arr[] = {
 	ADDSET_STRING	("Qizmo Path", qizmo_dir),
 	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
 #ifdef _WIN32
-	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
+	ADDSET_ACTION	("Set qw:// assoc.", Sys_RegisterQWURLProtocol_f,
 		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
 #endif
 

@@ -713,6 +713,214 @@ void ParseCommandLine (char *lpCmdLine)
 	}
 }
 
+#define QW_URL_ROOT_REGKEY         "Software\\Classes\\qw"
+#define QW_URL_OPEN_CMD_REGKEY     QW_URL_ROOT_REGKEY"\\shell\\Open\\Command"
+#define QW_URL_DEFAULTICON_REGKEY  QW_URL_ROOT_REGKEY"\\DefaultIcon"
+
+//
+// Checks if this client is the default qw protocol handler.
+//
+static qbool Sys_CheckIfQWProtocolHandler(void)
+{
+	DWORD type;
+	char reg_path[1024];
+	DWORD len = (DWORD) sizeof(reg_path);
+	HKEY hk;
+
+	if (RegOpenKey(HKEY_CURRENT_USER, QW_URL_OPEN_CMD_REGKEY, &hk) != 0) {
+		return false;
+	}
+
+	// Get the size we need to read.
+	if (RegQueryValueEx(hk, NULL, 0, &type, (BYTE *) reg_path, &len) == ERROR_SUCCESS) {
+		char expanded_reg_path[MAX_PATH];
+
+		// Expand any environment variables in the reg value so that we get a real path to compare with.
+		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_reg_path));
+
+		#if 0
+		// This checks if the current exe is associated with, otherwise it will prompt the user
+		// a bit more "in the face" if the user has more than one ezquake version.
+		{
+			char exe_path[MAX_PATH];
+		
+			// Get the long path of the current process.
+			// C:\Program Files\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				// This exe is associated with the qw:// protocol, return true.
+				CloseHandle(hk);
+				return true;
+			}
+
+			// Get the short path and check if that matches instead.
+			// C:\Program~1\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				CloseHandle(hk);
+				return true;
+			}
+		}
+		#else
+		// Only check if ezquake is in the string that associates with the qw:// protocol
+		// so if you have several ezquake exes it won't bug you if you just switch between those
+		// (Only one will be registered as the protocol handler though ofcourse).
+
+		if (strstri(reg_path, "ezquake"))
+		{
+			CloseHandle(hk);
+			return true;
+		}
+
+		#endif
+	}
+
+	CloseHandle(hk);
+	return false;
+}
+
+void Sys_CheckQWProtocolHandler(void)
+{
+	// Verify that ezQuake is associated with the QW:// protocl handler.
+	//
+	#define INITIAL_CON_WIDTH 35
+	extern cvar_t cl_verify_qwprotocol;
+
+	if (cl_verify_qwprotocol.integer >= 2) {
+		// Always register the qw:// protocol.
+		Cbuf_AddText("register_qwurl_protocol\n");
+	} else if (cl_verify_qwprotocol.integer == 1 && !Sys_CheckIfQWProtocolHandler()) {
+		// Check if the running exe is the one associated with the qw:// protocol.
+		Com_PrintVerticalBar(INITIAL_CON_WIDTH);
+		Com_Printf("\n");
+		Com_Printf("ezQuake is not associated with the ");
+		Com_Printf("\x02QW:// protocol. ");
+		Com_Printf("Register it using"); 
+		Com_Printf("\x02/register_qwurl_protocol\n");
+		Com_Printf("(set");
+		Com_Printf("\x02 cl_verify_qwprotocol 0 ");
+		Com_Printf("to hide this warning)\n");
+		Com_PrintVerticalBar(INITIAL_CON_WIDTH);
+		Com_Printf("\n\n");
+	}
+}
+
+void Sys_RegisterQWURLProtocol_f(void)
+{
+	//
+	// Note!
+	// HKEY_CLASSES_ROOT is a "merged view" of both: HKEY_LOCAL_MACHINE\Software\Classes 
+	// and HKEY_CURRENT_USER\Software\Classes. 
+	// User specific settings has priority over machine settings.
+	//
+	// If you try to write to HKEY_CLASSES_ROOT directly, it will default to
+	// trying to write to the machine specific settings. If the user isn't
+	// admin this will fail. On Vista this requires UAC usage.
+	// Because of this, we always write specifically to "HKEY_CURRENT_USER\Software\Classes"
+	//
+
+	HKEY keyhandle;
+	char exe_path[MAX_PATH];
+
+	Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+	//
+	// HKCU\qw\shell\Open\Command
+	//
+	{
+		char open_cmd[1024];
+		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
+						QW_URL_OPEN_CMD_REGKEY,		// Subkey.
+						0,							// Reserved, must be 0.
+						NULL,						// Class, ignored.
+						REG_OPTION_NON_VOLATILE,	// Save the change to disk.
+						KEY_WRITE,					// Access rights.
+						NULL,						// Security attributes (NULL means default, inherited from direct parent).
+						&keyhandle,					// Handle to the created key.
+						NULL))						// Don't care if the key existed or not.
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) open_cmd,  strlen(open_cmd) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCU\qw\DefaultIcon
+	//
+	{
+		char default_icon[1024];
+		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) default_icon, strlen(default_icon) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCU\qw
+	//
+	{
+		char protocol_name[] = "URL:QW Protocol";
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_ROOT_REGKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\qw\n");
+			return;
+		}
+
+		// Set the protocol name.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) protocol_name, strlen(protocol_name) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, (BYTE *) "", sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\URL Protocol\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+}
+
+//============================================================================
 HHOOK hMsgBoxHook;
 
 LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -913,9 +1121,6 @@ qwurl_regkey_t WinGetCheckQWURLRegKey()
 //
 qbool WinCheckQWURL(void)
 {
-	extern qbool CL_CheckIfQWProtocolHandler();
-	extern void CL_RegisterQWURLProtocol_f();
-
 	int retval;
 
 	// Check the registry if we should ask at all. By relying on this
@@ -936,8 +1141,7 @@ qbool WinCheckQWURL(void)
 			return true;
 	}
 
-	if (CL_CheckIfQWProtocolHandler())
-	{
+	if (Sys_CheckIfQWProtocolHandler()) {
 		return true;
 	}
 	
@@ -952,7 +1156,7 @@ qbool WinCheckQWURL(void)
 	switch (retval)
 	{
 		case IDYES :
-			CL_RegisterQWURLProtocol_f();
+			Sys_RegisterQWURLProtocol_f();
 			WinSetCheckQWURLRegKey(QWURL_ASK);
 			return true;
 

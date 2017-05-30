@@ -683,37 +683,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cmd_StuffCmds_f ();		// process command line arguments
 	Cbuf_AddText ("cl_warncmd 1\n");
 
-	#ifdef WIN32
-	//
-	// Verify that ezQuake is associated with the QW:// protocl handler.
-	//
-	{
-		#define INITIAL_CON_WIDTH 35
-		extern qbool CL_CheckIfQWProtocolHandler();
-		extern cvar_t cl_verify_qwprotocol;
-
-		if (cl_verify_qwprotocol.integer >= 2)
-		{
-			// Always register the qw:// protocol.
-			Cbuf_AddText("register_qwurl_protocol\n");
-		}
-		else if (cl_verify_qwprotocol.integer == 1 && !CL_CheckIfQWProtocolHandler())
-		{
-			// Check if the running exe is the one associated with the qw:// protocol.
-			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
-			Com_Printf("\n");
-			Com_Printf("ezQuake is not associated with the ");
-			Com_Printf("\x02QW:// protocol. ");
-			Com_Printf("Register it using"); 
-			Com_Printf("\x02/register_qwurl_protocol\n");
-			Com_Printf("(set");
-			Com_Printf("\x02 cl_verify_qwprotocol 0 ");
-			Com_Printf("to hide this warning)\n");
-			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
-			Com_Printf("\n\n");
-		}
-	}
-	#endif // WIN32
+	Sys_CheckQWProtocolHandler();
 
 	// Check if a qtv/demo file is specified as the first argument, in that case play that
 	// otherwise, do some more checks of what to show at startup.

@@ -130,6 +130,7 @@ typedef struct timerresolution_session_s {
 } timerresolution_session_t;
 
 #ifdef _WIN32
+
 // for initialization of the session structure
 void Sys_TimerResolution_InitSession(timerresolution_session_t * s);
 
@@ -144,9 +145,15 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 
 // Cancel deadkey combination for keyboards where console toggle is also deadkey
 void Sys_CancelDeadKey (void);
-#else
+
+void Sys_CheckQWProtocolHandler(void);
+void Sys_RegisterQWURLProtocol_f(void);
+
+#else // NOT _WIN32 below
 
 // not implemented on other platforms
+#define Sys_CheckQWProtocolHandler(x)
+#define Sys_RegisterQWURLProtocol_f(x)
 #define Sys_TimerResolution_InitSession(x)
 #define Sys_TimerResolution_RequestMinimum(x)
 #define Sys_TimerResolution_Clear(x)
