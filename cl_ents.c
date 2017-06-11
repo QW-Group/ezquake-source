@@ -1102,7 +1102,7 @@ void CL_LinkPacketEntities(void)
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
 
-		if (cl.racing && cl.race_pacemaker_ent == state->number && !CL_SetAlphaByDistance(&ent)) {
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && cl.race_pacemaker_ent == state->number && !CL_SetAlphaByDistance(&ent)) {
 			continue;
 		}
 
@@ -1652,7 +1652,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 	newent.effects = ent->effects; // Electro - added for shells
 
-	if (cl.racing && !CL_SetAlphaByDistance(&newent)) {
+	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;
 	}
 
@@ -1869,7 +1869,7 @@ void CL_LinkPlayers (void)
 		}
 
 		// Set alpha after origin determined
-		if (cl.racing && !CL_SetAlphaByDistance(&ent)) {
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&ent)) {
 			continue;
 		}
 
@@ -1916,7 +1916,7 @@ void CL_LinkPlayers (void)
 				{
 					ent.model = cl.vw_model_precache[0];
 					ent.renderfx |= RF_PLAYERMODEL;
-					if (cl.racing) {
+					if (Cam_TrackNum() >= 0 && cl.racing) {
 						CL_SetAlphaByDistance(&ent);
 					}
 					CL_AddEntity (&ent);
@@ -2120,7 +2120,7 @@ static int AlphaEntityComparer(const void* lhs_, const void* rhs_)
 
 static void CL_SortEntities(void)
 {
-	if (cl.racing) {
+	if (Cam_TrackNum() >= 0 && cl.racing) {
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), AlphaEntityComparer);
 	}
 }

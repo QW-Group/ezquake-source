@@ -1436,7 +1436,7 @@ void SCR_SetupCI (void) {
 			VectorSubtract(id->org, r_refdef.vieworg, diff);
 			id->distance = VectorLength(diff);
 		}
-		if (cl.racing) {
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing) {
 			if (id->distance < KTX_RACING_PLAYER_MIN_DISTANCE) {
 				continue; // too close, hide indicators
 			}
