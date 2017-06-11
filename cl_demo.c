@@ -305,7 +305,7 @@ void CL_WriteDemoEntities (void)
 
 	// Write all the entity changes since last packet entity message.
 	for (ent_index = 0; ent_index < ent_total; ent_index++, ent++)
-		MSG_WriteDeltaEntity (&cl_entities[ent->number].baseline, ent, &cls.demomessage, true);
+		MSG_WriteDeltaEntity (&cl_entities[ent->number].baseline, ent, &cls.demomessage, true, cls.fteprotocolextensions);
 
 	// End of packetentities.
 	MSG_WriteShort (&cls.demomessage, 0);
@@ -1367,7 +1367,7 @@ void CL_WriteMVDStartupData(void)
 
 		// Write all the entity changes since last packet entity message.
 		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++)
-			MSG_WriteDeltaEntity (&cl_entities[ent_state->number].baseline, ent_state, &buf, true);
+			MSG_WriteDeltaEntity (&cl_entities[ent_state->number].baseline, ent_state, &buf, true, cls.fteprotocolextensions);
 
 		// End of packetentities.
 		MSG_WriteShort (&buf, 0);
