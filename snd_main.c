@@ -910,7 +910,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 		for (i = 0; i < total_channels; i++, ch++)
 			if (ch->sfx && (ch->leftvol || ch->rightvol)) {
-				if (cl.standby && s_show.value == 2)
+				if ((cl.standby || cls.demoplayback) && s_show.value == 2)
 					Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name); // s_show 2
 				total++;
 			}
