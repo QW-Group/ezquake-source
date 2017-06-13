@@ -263,6 +263,7 @@ static int MVD_GetBestPlayer(void)
 {
 	int initial_track, initial_id, i, bp_id;
 	float bp_val;
+	int tracked = CL_MultiviewAutotrackSlot();
 
 	if (last_track < 0 || last_track > mvd_cg_info.pcount)
 		initial_track = 0;
@@ -275,7 +276,7 @@ static int MVD_GetBestPlayer(void)
 	bp_id = mvd_new_info[initial_id].id;
 	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ) {
 		if (bp_val < mvd_new_info[i].value) {
-			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
+			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[tracked].team))
 				continue;
 
 			bp_val = mvd_new_info[i].value;
@@ -315,10 +316,11 @@ int MVD_GetBetterPlayerSimple(int a, int b)
 
 static int MVD_FindBestPlayerSimple(void) {
 	int i, b;
+	int tracked = CL_MultiviewAutotrackSlot();
 
-	b = cl.viewplayernum;
+	b = tracked;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
-		if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
+		if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[tracked].team))
 			continue;
 		b = MVD_GetBetterPlayerSimple(b, mvd_new_info[i].id);
 	}
@@ -328,15 +330,21 @@ static int MVD_FindBestPlayerSimple(void) {
 
 static qbool MVD_TrackedHasNoWeapon(int pov) {
 	int stat = cl.players[pov].stats[STAT_ITEMS];
-	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) return false;
-	else return true;
+	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) {
+		return false;
+	}
+	else {
+		return true;
+	}
 }
 
 static qbool MVD_SomeoneHasWeapon(void) {
 	int i, stats;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
-		if ((stats & IT_ROCKET_LAUNCHER) || (stats & IT_LIGHTNING)) return true;
+		if ((stats & IT_ROCKET_LAUNCHER) || (stats & IT_LIGHTNING)) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -360,17 +368,28 @@ static qbool MVD_SomeoneHasPentWithRL(void) {
 	int i, stats;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
-		if ((stats & IT_ROCKET_LAUNCHER) && (stats & IT_INVULNERABILITY)) return true;
+		if ((stats & IT_ROCKET_LAUNCHER) && (stats & IT_INVULNERABILITY)) {
+			return true;
+		}
 	}
 	return false;
 }
 
 static qbool MVD_SwitchMoment(void) {
 	int pov = CL_MultiviewAutotrackSlot ();
-	if (MVD_TrackedHasNoWeapon(pov) && MVD_SomeoneHasWeapon()) return true;
-	else if (MVD_TrackedHasNoPowerup(pov) && MVD_SomeoneHasPowerup()) return true;
-	else if (MVD_SomeoneHasPentWithRL()) return true;
-	else return false;
+
+	if (MVD_TrackedHasNoWeapon(pov) && MVD_SomeoneHasWeapon()) {
+		return true;
+	}
+	else if (MVD_TrackedHasNoPowerup(pov) && MVD_SomeoneHasPowerup()) {
+		return true;
+	}
+	else if (MVD_SomeoneHasPentWithRL()) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 
@@ -438,7 +457,6 @@ void MVD_AutoTrack(void) {
 			}
 		}
 	}
-
 	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2 or 3
 	{
 		if (mvd_autotrack.integer == 4) 
@@ -446,7 +464,7 @@ void MVD_AutoTrack(void) {
 		else
 			id = MVD_FindBestPlayer();
 
-		if (id != last_track || cl.viewplayernum != id) {
+		if (id != last_track || CL_MultiviewAutotrackSlot() != id) {
 			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
