@@ -3258,7 +3258,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_shownames,
 		*hud_frags_teams,
 		*hud_frags_padtext,
-		*hud_frags_showself,
 		*hud_frags_extra_spec,
 		*hud_frags_fliptext,
 		*hud_frags_style,
@@ -3287,7 +3286,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_shownames		= HUD_FindVar(hud, "shownames");
 		hud_frags_teams			= HUD_FindVar(hud, "showteams");
 		hud_frags_padtext		= HUD_FindVar(hud, "padtext");
-		hud_frags_showself		= HUD_FindVar(hud, "showself_always");
 		hud_frags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
