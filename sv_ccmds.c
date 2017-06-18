@@ -1942,9 +1942,10 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("gamedir", SV_Gamedir_f);
 	Cmd_AddCommand ("sv_gamedir", SV_Gamedir);
 
-// qqshka: alredy registered at host.c
-//	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
-//	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#ifdef CLIENTONLY
+	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#endif
 
 	Cmd_AddCommand ("master_rcon_password", SV_MasterPassword_f);
 /*

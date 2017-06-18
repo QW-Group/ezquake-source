@@ -1205,7 +1205,9 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 
 	map_halflife = (i == HL_BSPVERSION);
 
+#ifndef CLIENTONLY
 	Cvar_ForceSet (&sv_halflifebsp, i == HL_BSPVERSION ? "1" : "0");
+#endif
 
 	// swap all the lumps
 	cmod_base = (byte *)header;

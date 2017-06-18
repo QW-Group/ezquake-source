@@ -143,7 +143,9 @@ setting botmatch_menu_entries[] = {
 
 #define DEMOPLAYBACK() (cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK)
 #define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
+#ifndef CLIENTONLY
 #define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
+#endif
 #define QTVPLAYBACK() (cls.mvdplayback == QTV_PLAYBACK)
 
 static settings_page *M_Ingame_Current(void) {
@@ -153,10 +155,11 @@ static settings_page *M_Ingame_Current(void) {
 	else if (BOTMATCH()) {
 		return &botmatch_menu;
 	}
-	else if (SINGLEPLAYER())
-	{
+#ifndef CLIENTONLY
+	else if (SINGLEPLAYER()) {
 		return &single_menu;
 	}
+#endif
 	else if (QTVPLAYBACK()) {
 		return &qtv_menu;
 	}

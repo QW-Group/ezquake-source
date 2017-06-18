@@ -1111,10 +1111,10 @@ void Sbar_SoloScoreboard (void)
 
 	sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 	Sbar_DrawString (312 - strlen(str)*8, 12, str);
-
+#ifndef CLIENTONLY
 	sprintf (str,"skill %i", (int)(skill.value + 0.5));
 	Sbar_DrawString (160 - strlen(str)*4, 12, str);
-
+#endif
 	strlcpy(str, cl.levelname, sizeof(str));
 	strlcat(str, " (", sizeof(str));
 	strlcat(str, host_mapname.string, sizeof(str));

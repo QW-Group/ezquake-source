@@ -643,9 +643,12 @@ extern	cvar_t	maxclients;
 
 extern	cvar_t	sv_specprint;	//bliP: spectator print
 
+#ifndef CLIENTONLY
 extern	server_static_t	svs;	// persistant server info
 extern	server_t	sv;	// local server
 extern	demo_t		demo;	// server demo struct
+#endif
+
 //extern	entity_state_t	cl_state_entities[MAX_CLIENTS][UPDATE_BACKUP][MAX_PACKET_ENTITIES]; // client entities
 
 extern	client_t	*sv_client;

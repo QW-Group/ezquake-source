@@ -925,7 +925,7 @@ void M_SinglePlayer_Draw (void) {
 	M_PrintWhite (88, 13*8, "Internet play only");
 }
 
-void M_SinglePlayer_Key (key) {
+void M_SinglePlayer_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
@@ -1356,6 +1356,11 @@ void M_Draw (void) {
 #ifndef CLIENTONLY
 		case m_load:			M_Load_Draw (); break;
 		case m_save:			M_Save_Draw (); break;
+#else
+		// keeps gcc happy
+		case m_load:
+		case m_save:
+			break;
 #endif
 		case m_multiplayer:		Menu_MultiPlayer_Draw (); break;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Draw(); break;
@@ -1416,6 +1421,10 @@ void M_Keydown (int key, wchar unichar) {
 #ifndef CLIENTONLY
 		case m_load:			M_Load_Key(key); return;
 		case m_save:			M_Save_Key(key); return;
+#else
+		case m_load:
+		case m_save:
+			break;
 #endif
 		case m_multiplayer:		Menu_MultiPlayer_Key(key, unichar); return;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Key(key); return;
@@ -1445,7 +1454,9 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
     // functions should report if they handled the event or not
     switch (m_state) {
 	case m_main:			return M_Main_Mouse_Event(ms);
+#ifndef CLIENTONLY
 	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
+#endif
 	case m_multiplayer:		return Menu_MultiPlayer_Mouse_Event(ms);
 	case m_multiplayer_submenu: return M_MultiPlayerSub_Mouse_Event(ms);
 #ifndef CLIENTONLY

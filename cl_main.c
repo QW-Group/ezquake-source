@@ -556,6 +556,7 @@ void CL_CheckForResend (void)
 	char data[2048];
 	double t1, t2;
 
+#ifndef CLIENTONLY
 	if (cls.state == ca_disconnected && com_serveractive) 
 	{
 		// if the local server is running and we are not, then connect
@@ -584,6 +585,7 @@ void CL_CheckForResend (void)
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
 	}
+#endif
 
 	if (cls.state != ca_disconnected || !connect_time)
 		return;
@@ -2276,8 +2278,10 @@ void CL_Frame (double time)
 		Cbuf_Execute();
 		CL_CheckAutoPause();
 
+#ifndef CLIENTONLY
 		if (com_serveractive)
 			SV_Frame(cls.frametime);
+#endif
 
 		// fetch results from server
 		CL_ReadPackets();
@@ -2321,8 +2325,10 @@ void CL_Frame (double time)
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
 
+#ifndef CLIENTONLY
 			if (com_serveractive)
 				SV_Frame (physframetime);
+#endif
 
 			// Fetch results from server
 			CL_ReadPackets();

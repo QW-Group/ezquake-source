@@ -513,8 +513,10 @@ extern void LoadConfig_f(void);
 
 
 	//disconnect: fix it if i forgot something
+#ifndef CLIENTONLY
 	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
 	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#endif
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("tp_took", TP_Took_f);

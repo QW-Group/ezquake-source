@@ -451,11 +451,13 @@ static void DumpTeamplay(FILE *f)
 	TP_DumpTriggers(f);
 }
 
+#ifndef CLIENTONLY
 void DumpFloodProtSettings(FILE *f)
 {
 	extern int fp_messages, fp_persecond, fp_secondsdead;
 	fprintf(f, "floodprot %d %d %d\n", fp_messages, fp_persecond, fp_secondsdead);
 }
+#endif
 
 void DumpMisc(FILE *f)
 {
@@ -466,8 +468,10 @@ void DumpMisc(FILE *f)
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
 
+#ifndef CLIENTONLY
 	DumpFloodProtSettings(f);
 	fprintf(f, "\n");
+#endif
 
 	fprintf(f, "hud_recalculate\n\n");
 

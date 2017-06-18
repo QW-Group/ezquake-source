@@ -167,7 +167,9 @@ COMMON_OBJS := \
 # temporary
 SERVER_OBJS := \
     pmove.o \
-    pmovetst.o \
+    pmovetst.o
+
+SERVER_OBJS_REMOVED := \
     pr_cmds.o \
     pr_edict.o \
     pr_exec.o \

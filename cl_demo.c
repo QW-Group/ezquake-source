@@ -2212,11 +2212,13 @@ static void CL_StopRecording (void)
 //
 void CL_Stop_f (void)
 {
+#ifndef CLIENTONLY
 	if (com_serveractive && strcmp(Cmd_Argv(0), "stop") == 0)
 	{
 		SV_MVDStop_f();
 		return;
 	}
+#endif
 
 	if (!cls.demorecording)
 	{
@@ -2260,11 +2262,13 @@ void CL_Record_f (void)
 {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
 
+#ifndef CLIENTONLY
 	if (com_serveractive && strcmp(Cmd_Argv(0), "record") == 0)
 	{
 		SV_MVD_Record_f();
 		return;
 	}
+#endif
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
 	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))
@@ -2469,11 +2473,13 @@ void CL_EasyRecord_f (void)
 {
 	char *name;
 
+#ifndef CLIENTONLY
 	if ( com_serveractive )
 	{
 		SV_MVDEasyRecord_f();
 		return;
 	}
+#endif
 
 	if (cls.state != ca_active)
 	{

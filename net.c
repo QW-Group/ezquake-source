@@ -916,10 +916,12 @@ qbool NET_Sleep (int msec)
 #endif
 
 	i = 0;
+#ifndef CLIENTONLY
 	if (svs.socketip != INVALID_SOCKET) {
 		FD_SET(svs.socketip, &fdset); // network socket
 		i = svs.socketip;
 	}
+#endif
 
 	timeout.tv_sec = msec/1000;
 	timeout.tv_usec = (msec%1000)*1000;

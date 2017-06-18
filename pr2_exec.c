@@ -65,8 +65,6 @@ void PR2_Init(void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR2_Profile_f);
 	Cmd_AddCommand ("mod", PR2_GameConsoleCommand);
-
-	PR_CleanLogText_Init();
 }
 
 //===========================================================================

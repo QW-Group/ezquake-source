@@ -574,4 +574,3 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	SV_MVD_Record(NULL, true);
 	CL_ClearState ();
 }
-

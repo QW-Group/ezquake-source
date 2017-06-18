@@ -318,8 +318,9 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	//
 	// write the message
 	//
-	if (!to->number)
-		SV_Error ("Unset entity number");
+	if (!to->number) {
+		Sys_Error("Unset entity number");
+	}
 
 #ifdef PROTOCOL_VERSION_FTE
 	if (to->number >= 512)
@@ -333,8 +334,9 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 
 			evenmorebits |= U_FTE_ENTITYDBL2;
 			required_extensions |= FTE_PEXT_ENTITYDBL2;
-			if (to->number >= 2048)
-				SV_Error ("Entity number >= 2048");
+			if (to->number >= 2048) {
+				Sys_Error("Entity number >= 2048");
+			}
 		}
 		else {
 			evenmorebits |= U_FTE_ENTITYDBL;
