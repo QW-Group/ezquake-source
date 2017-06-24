@@ -72,7 +72,8 @@ static unsigned char aviSoundBuffer[4096]; // Static buffer for mixing
 
 static double movie_real_start_time;
 static volatile qbool movie_is_capturing = false;
-static double movie_start_time, movie_len;
+static double movie_start_time;
+static double movie_len;
 static int movie_frame_count;
 static char image_ext[4];
 
@@ -83,13 +84,24 @@ static char image_ext[4];
 	struct tm movie_start_date;
 #endif
 
-qbool Movie_IsCapturing(void) {
+qbool Movie_IsCapturing(void)
+{
 	return cls.demoplayback && !cls.timedemo && movie_is_capturing;
 }
 
-float Movie_Frametime(void) {
-	if (movie_steadycam.value)
+double Movie_Frametime(void)
+{
+	double time = (double)(movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0);
+
+	return bound(1.0 / 1000, time, 1.0);;
+}
+
+double Movie_InputFrametime(void)
+{
+	if (movie_steadycam.value) {
 		return movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
+	}
+
 	return cls.trueframetime;
 }
 
@@ -161,7 +173,7 @@ void Movie_Demo_Capture_f(void) {
 	int argc;
 	double time;
 	char *error;
-	
+
 #ifdef _WIN32
 	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\"\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3 && argc != 4) {
@@ -282,23 +294,11 @@ void Movie_Init(void) {
 #endif
 }
 
-double Movie_FrameTime (void)
+void Movie_StartFrame(void) 
 {
-	// Default to 30 fps.
-	return (movie_fps.value > 0) ? (1.0 / movie_fps.value) : (1 / 30.0);
-}
-
-double Movie_StartFrame(void) 
-{
-	double time;
-
-	if (Cmd_FindAlias("f_captureframe"))
-	{
+	if (Cmd_FindAlias("f_captureframe")) {
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
 	}
-
-	time = Movie_FrameTime();
-	return bound(1.0 / 1000, time, 1.0);
 }
 
 void Movie_FinishFrame(void) 
@@ -455,7 +455,7 @@ static void WAVCaptureStop (void)
 
 void Movie_MixFrameSound (void (*mixFunction)(void))
 {
-	int samples_required = (int)(0.5 + Movie_FrameTime() * shw->khz) * shw->numchannels - (captured_audio_samples << 1);
+	int samples_required = (int)(0.5 + Movie_Frametime() * shw->khz) * shw->numchannels - (captured_audio_samples << 1);
 
 	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
 	shw->buffer = (unsigned char*)aviSoundBuffer;
@@ -469,7 +469,7 @@ void Movie_MixFrameSound (void (*mixFunction)(void))
 
 void Movie_TransferSound(void* data, int snd_linear_count)
 {
-	int samples_per_frame = (int)(0.5 + Movie_FrameTime() * shw->khz);
+	int samples_per_frame = (int)(0.5 + Movie_Frametime() * shw->khz);
 
 	// Write some sound
 	memcpy(capture_audio_samples + (captured_audio_samples << 1), data, snd_linear_count * shw->numchannels);

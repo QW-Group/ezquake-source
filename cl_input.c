@@ -643,7 +643,7 @@ void CL_AdjustAngles(void)
 
 	frametime = cls.trueframetime;
 	if (Movie_IsCapturing()) {
-		frametime = Movie_Frametime();
+		frametime = Movie_InputFrametime();
 	}
 
 	basespeed = ((in_speed.state & 1) ? cl_anglespeedkey.value : 1);
@@ -831,7 +831,7 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	frametime = cls.trueframetime;
 	if (Movie_IsCapturing()) {
-		frametime = Movie_Frametime();
+		frametime = Movie_InputFrametime();
 	}
 
 	// figure button bits

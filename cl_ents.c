@@ -2274,7 +2274,7 @@ void MVD_Interpolate(void) {
 	frame_t	*frame, *oldframe;
 	player_state_t *state, *oldstate, *self, *oldself;
 	struct predicted_player *pplayer;
-	static float old;
+	static double old;
 
 	self = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum];
 	oldself = &cl.frames[(cls.netchan.outgoing_sequence - 1) & UPDATE_MASK].playerstate[cl.playernum];

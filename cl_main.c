@@ -2164,11 +2164,9 @@ void CL_Frame (double time)
 	minframetime = CL_MinFrameTime();
 	CL_MultiviewFrameStart ();
 
-	if (extratime < minframetime) 
-	{
+	if (extratime < minframetime) {
 		extern cvar_t sys_yieldcpu;
-		if (sys_yieldcpu.integer || Minimized)
-		{
+		if (sys_yieldcpu.integer || Minimized) {
 			#ifdef _WIN32
 			Sys_MSleep(0);
 			#else
@@ -2176,8 +2174,7 @@ void CL_Frame (double time)
 			#endif
 		}
 
-		if (cl_delay_packet.integer)
-		{
+		if (cl_delay_packet.integer) {
 			CL_QueInputPacket();
 			CL_UnqueOutputPacket(false);
 		}
@@ -2185,14 +2182,14 @@ void CL_Frame (double time)
 		return;
 	}
 
-	if (cl_delay_packet.integer)
-	{
+	if (cl_delay_packet.integer) {
 		CL_QueInputPacket();
 		CL_UnqueOutputPacket(false);
 	}
 
-	if (VID_VSyncLagFix())
+	if (VID_VSyncLagFix()) {
 		return;
+	}
 
 	render_frame_start = Sys_DoubleTime();
 
@@ -2200,48 +2197,55 @@ void CL_Frame (double time)
 	cls.trueframetime = max(cls.trueframetime, minframetime);
 	extratime -= cls.trueframetime;
 
-	if (Movie_IsCapturing())
-		cls.frametime = Movie_StartFrame();
-	else
+	if (Movie_IsCapturing()) {
+		Movie_StartFrame();
+		cls.frametime = Movie_Frametime();
+	}
+	else {
 		cls.frametime = min(0.2, cls.trueframetime);
+	}
 	
 	if (cl_independentPhysics.value != 0)
 	{
 		double minphysframetime = MinPhysFrameTime();
 
 		extraphysframetime += cls.frametime;
-		if (extraphysframetime < minphysframetime)
+		if (extraphysframetime < minphysframetime) {
 			physframe = false;
-		else
-		{
+		}
+		else {
 			physframe = true;
 
-			if (extraphysframetime > minphysframetime*2)// FIXME: this is for the case when
-				physframetime = extraphysframetime;		// actual fps is too low
-			else										// Dunno how to do it right
+			// FIXME: this is for the case when actual fps is too low.  Dunno how to do it right
+			if (extraphysframetime > minphysframetime * 2) {
+				physframetime = extraphysframetime;
+			}
+			else {
 				physframetime = minphysframetime;
+			}
 			extraphysframetime -= physframetime;
 		}
 	} 
-	else 
-	{
+	else {
 		// this vars SHOULD NOT be used in case of cl_independentPhysics == 0, so we just reset it for sanity
 		physframetime = extraphysframetime = 0;
 		// this var actually used
 		physframe = true;
 	}
 
-	if (cls.demoplayback) 
-	{
+	if (cls.demoplayback) {
 		Demo_AdjustSpeed();
 
-		if (cl.paused & PAUSED_DEMO)
+		if (cl.paused & PAUSED_DEMO) {
 			cls.frametime = 0;
-		else if (!cls.timedemo)
+		}
+		else if (!cls.timedemo) {
 			cls.frametime *= Demo_GetSpeed();
+		}
 
-		if (!host_skipframe)
+		if (!host_skipframe) {
 			cls.demotime += cls.frametime;
+		}
 		host_skipframe = false;
 	}
 

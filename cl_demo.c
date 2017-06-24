@@ -67,7 +67,7 @@ typedef struct demo_state_s
 	#endif // _WIN32
 } demo_state_t;
 
-float olddemotime, nextdemotime; // TODO: Put in a demo struct.
+double olddemotime, nextdemotime; // TODO: Put in a demo struct.
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
 
@@ -1645,9 +1645,9 @@ qbool pb_ensure(void)
 //
 // Peeks the demo time.
 //
-static float CL_PeekDemoTime(void)
+static double CL_PeekDemoTime(void)
 {
-	float demotime = 0.0;
+	double demotime = 0.0;
 
 	if (cls.mvdplayback)
 	{
@@ -1663,7 +1663,7 @@ static float CL_PeekDemoTime(void)
 		// so we need to multiply it by 0.001 to get it in seconds like normal quake time).
 		demotime = cls.demopackettime + (mvd_time * 0.001);
 
-		if ((cls.demotime - nextdemotime) > 0.0001 && (nextdemotime != demotime))
+		if ((cls.demotime - nextdemotime) > 0.001 && (nextdemotime != demotime))
 		{
 			olddemotime = nextdemotime;
 			cls.netchan.incoming_sequence++;
@@ -1675,11 +1675,13 @@ static float CL_PeekDemoTime(void)
 	}
 	else 
 	{
+		float floatTime;
+
 		// Peek inside, but don't read.
 		// (Since it might not be time to continue reading in the demo
 		// we want to be able to check this again later if that's the case).
-		CL_Demo_Read(&demotime, sizeof(demotime), true);
-		demotime = LittleFloat(demotime);
+		CL_Demo_Read(&floatTime, sizeof(floatTime), true);
+		demotime = LittleFloat(floatTime);
 
 		if (demotime < cls.demotime)
 		{
@@ -1800,7 +1802,7 @@ static void CL_DemoReadDemSet(void)
 //
 // Returns true if it's time to read the next message, false otherwise.
 //
-static qbool CL_DemoShouldWeReadNextMessage(float demotime)
+static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 {
 	if (cls.timedemo)
 	{
@@ -1891,7 +1893,7 @@ static qbool CL_DemoShouldWeReadNextMessage(float demotime)
 //
 qbool CL_GetDemoMessage (void)
 {
-	float demotime;
+	double demotime;
 	byte c;
 	byte message_type;
 
@@ -1931,12 +1933,14 @@ qbool CL_GetDemoMessage (void)
 	if (cls.mvdplayback)
 	{
 		// Reset the previous time.
-		if (cls.demopackettime < nextdemotime)
+		if (cls.demopackettime < nextdemotime) {
 			cls.demopackettime = nextdemotime;
+		}
 
 		// Always be within one second from the next demo time.
-		if (cls.demotime + 1.0 < nextdemotime)
+		if (cls.demotime + 1.0 < nextdemotime) {
 			cls.demotime = nextdemotime - 1.0;
+		}
 	}
 
 	// Check if we need to get more messages for now and if so read it

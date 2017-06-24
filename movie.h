@@ -23,12 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __MOVIE_H_
 
 void Movie_Init(void);
-double Movie_StartFrame(void);
+void Movie_StartFrame(void);
 void Movie_FinishFrame(void);
 qbool Movie_IsCapturing(void);
 qbool Movie_IsCapturingAVI(void);
 void Movie_Stop(qbool restarting);
-float Movie_Frametime(void);
+double Movie_Frametime(void);
+double Movie_InputFrametime(void);
 qbool Movie_TransferSound(void* data, int snd_linear_count);
 void Movie_MixFrameSound(void (*mixFunction)(void));
 

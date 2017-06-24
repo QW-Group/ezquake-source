@@ -416,9 +416,9 @@ typedef struct
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
-	float		td_lastframe;       ///< To meter out one message a frame.
+	double		td_lastframe;       ///< To meter out one message a frame.
 	int			td_startframe;      ///< cls.framecount at start
-	float		td_starttime;       ///< Realtime at second frame of timedemo.
+	double		td_starttime;       ///< Realtime at second frame of timedemo.
 
 	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
 
@@ -745,7 +745,7 @@ qbool CL_AutoRecord_Status(void);
 void CL_AutoRecord_SaveMatch(void);
 
 extern double demostarttime;
-extern float nextdemotime, olddemotime;
+extern double nextdemotime, olddemotime;
 
 // cl_parse.c
 #define NET_TIMINGS 256
