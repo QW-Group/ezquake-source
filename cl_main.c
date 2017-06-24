@@ -2381,22 +2381,28 @@ void CL_Frame (double time)
 		}
 	}
 
-	{ // chat icons
-		char char_flags[64] = {0};
+	{
+		// chat icons
 		int cif_flags = 0;
 
-		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
-			cif_flags |= CIF_CHAT;
+		// add chat flag if in console, menus, mm1, mm2 etc...
+		cif_flags |= (key_dest != key_game ? CIF_CHAT : 0);
 
 		// add AFK flag if app minimized, or not the focus
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
-		if (!ActiveApp || Minimized)
-			cif_flags |= CIF_AFK;
+		cif_flags |= (!ActiveApp || Minimized ? CIF_AFK : 0);
 
-		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
-			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+		if (cif_flags != cl.cif_flags) {
+			char char_flags[64] = {0};
 
-		CL_UserinfoChanged ("chat", char_flags);
+			if (cif_flags && cls.state >= ca_connected) {
+				// put key in userinfo only then we are connected, remove key if we not connected yet
+				snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+			}
+
+			CL_UserinfoChanged("chat", char_flags);
+			cl.cif_flags = cif_flags;
+		}
 	}
 
 	CL_MultiviewPreUpdateScreen ();

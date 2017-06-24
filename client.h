@@ -612,6 +612,10 @@ typedef struct {
 	int         race_pacemaker_ent;
 
 	float       fakeshaft_policy;
+
+	int         sv_maxclients;
+
+	int         cif_flags;
 } clientState_t;
 
 extern	clientState_t	cl;
