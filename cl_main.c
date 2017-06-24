@@ -1249,8 +1249,7 @@ void CL_Reconnect_f (void)
 
 	S_StopAllSounds();
 
-	if (cls.mvdplayback == QTV_PLAYBACK) 
-	{
+	if (cls.mvdplayback) {
 		return; // Change map during qtv playback.
 	}
 

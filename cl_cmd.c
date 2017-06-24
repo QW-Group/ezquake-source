@@ -972,25 +972,33 @@ changing, fullserverinfo, nextul, stopul
 void CL_Changing_f (void) {
 	cl.intermission = 0;
 
-	if (cls.download)  // don't change when downloading
-	{
-		if (cls.state == ca_active) // we was on server
-		{
+	// don't change when downloading
+	if (cls.download) {
+		// we were on server
+		if (cls.state == ca_active) {
 			// drop to full console
-			cls.state = ca_connected;	// not active anymore, but not disconnected
+			// not active anymore, but not disconnected
+			cls.state = ca_connected;
 
-			if (!com_serveractive)
-				Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
+			if (!com_serveractive) {
+				// notice mapname not valid yet
+				Cvar_ForceSet(&host_mapname, "");
+			}
 		}
 		return;
 	}
 
 	S_StopAllSounds (true);
 
-	cls.state = ca_connected;	// not active anymore, but not disconnected
+	// MVDs starting during map change can have /changing from the previous map
+	if (!(cls.mvdplayback && cls.state == ca_onserver)) {
+		// not active anymore, but not disconnected
+		cls.state = ca_connected;
+	}
 
-	if (!com_serveractive)
-		Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
+	if (!com_serveractive) {
+		Cvar_ForceSet(&host_mapname, ""); // notice mapname not valid yet
+	}
 
 	Com_Printf ("\nChanging map...\n");
 }
