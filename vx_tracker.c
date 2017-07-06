@@ -177,6 +177,8 @@ void VX_TrackerThink(void)
 
 void VX_TrackerAddText(char *msg, tracktype_t tt)
 {
+	int ic;
+
 	if (!msg || !msg[0])
 		return;
 
@@ -192,9 +194,17 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 		default: return;
 	}
 
-	if (amf_tracker_inconsole.integer) {
+	ic = amf_tracker_inconsole.integer;
+	if (ic == 1) {
 		Com_Printf("%s\n", msg);
 		return;
+	} else if (ic == 2) {
+		Com_Printf("%s\n", msg);
+	} else if (ic == 3) {
+		int flags = Print_flags[Print_current];
+		Print_flags[Print_current] |= PR_NONOTIFY;
+		Com_Printf("%s\n", msg);
+		Print_flags[Print_current] = flags;
 	}
 
 	if (active_track >= max_active_tracks) { // free space by removing the oldest one

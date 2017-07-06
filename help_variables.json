@@ -11436,9 +11436,15 @@
     },
     "r_tracker_inconsole": {
       "group-id": "40",
-      "type": "boolean",
-      "desc": "If set, tracker messages will also appear in the console",
-      "remarks": "To see full death messages in the console, use con_fragmessages 2"
+      "type": "enum",
+      "desc": "Controls how tracker messages will appear in the console/notify area",
+      "remarks": "To see full death messages in the console, use con_fragmessages 2",
+      "values": [
+        { "name": "0", "description": "Tracker messages will not be shown in the console" },
+        { "name": "1", "description": "Tracker messages will be shown in console and notify area (disables regular tracker messages)" },
+        { "name": "2", "description": "Tracker messages will be shown in console and notify area (regular tracker messages enabled)" },
+	{ "name": "3", "description": "Tracker messages will be shown in console and regular tracker area but not in notify area" }
+      ]
     },
     "r_tracker_messages": {
       "group-id": "40",
