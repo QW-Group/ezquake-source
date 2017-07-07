@@ -265,3 +265,14 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		glDrawArrays(GL_LINES, 0, 2);
 	}
 }
+
+void GLM_Draw_FadeScreen(float alpha)
+{
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	}
+	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	}
+}

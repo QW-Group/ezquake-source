@@ -693,6 +693,8 @@ void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
+void GLC_Draw_FadeScreen(float alpha);
+void GLC_RenderDlight(dlight_t* light);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
@@ -702,6 +704,8 @@ void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 void GLM_UpdateParticles(int particles_to_draw);
 void GLM_DrawParticles(int number, qbool square);
 void GLM_EmitCausticsPolys(void);
+void GLM_Draw_FadeScreen(float alpha);
+void GLM_RenderDlight(dlight_t* light);
 
 #endif /* !__GL_LOCAL_H__ */
 

@@ -222,3 +222,30 @@ void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 	glColor4ubv (color_white);
 	glEnable (GL_TEXTURE_2D);
 }
+
+void GLC_Draw_FadeScreen(float alpha)
+{
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+		glColor4f(0, 0, 0, alpha);
+	}
+	else {
+		glColor3f(0, 0, 0);
+	}
+
+	glDisable(GL_TEXTURE_2D);
+
+	glBegin(GL_QUADS);
+	glVertex2f(0, 0);
+	glVertex2f(vid.width, 0);
+	glVertex2f(vid.width, vid.height);
+	glVertex2f(0, vid.height);
+	glEnd();
+
+	glColor3ubv(color_white);
+	glEnable(GL_TEXTURE_2D);
+
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	}
+}

@@ -1127,36 +1127,11 @@ void Draw_FadeScreen(float alpha)
 		return;
 	}
 
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	}
-
 	if (GL_ShadersSupported()) {
-		Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
+		GLM_Draw_FadeScreen(alpha);
 	}
 	else {
-		if (alpha < 1) {
-			glColor4f(0, 0, 0, alpha);
-		}
-		else {
-			glColor3f(0, 0, 0);
-		}
-
-		glDisable(GL_TEXTURE_2D);
-
-		glBegin(GL_QUADS);
-		glVertex2f(0, 0);
-		glVertex2f(vid.width, 0);
-		glVertex2f(vid.width, vid.height);
-		glVertex2f(0, vid.height);
-		glEnd();
-
-		glColor3ubv(color_white);
-		glEnable(GL_TEXTURE_2D);
-	}
-
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+		GLC_Draw_FadeScreen(alpha);
 	}
 
 	Sbar_Changed();

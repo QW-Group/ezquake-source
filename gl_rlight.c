@@ -99,62 +99,18 @@ float bubblecolor[NUM_DLIGHTTYPES][4] = {
 };
 
 void R_RenderDlight (dlight_t *light) {
-	int i, j;
-	vec3_t v, v_right, v_up;
-	float length, rad, *bub_sin, *bub_cos;
+	// don't draw our own powerup glow and muzzleflashes
+	// muzzleflash keys are negative
+	if (light->key == (cl.viewplayernum + 1) || light->key == -(cl.viewplayernum + 1)) {
+		return;
+	}
 
 	if (GL_ShadersSupported()) {
-		return;
+		GLM_RenderDlight(light);
 	}
-
-	// don't draw our own powerup glow and muzzleflashes
-	if (light->key == (cl.viewplayernum + 1) ||
-		light->key == -(cl.viewplayernum + 1)) // muzzleflash keys are negative
-		return;
-
-	rad = light->radius * 0.35;
-	VectorSubtract (light->origin, r_origin, v);
-	length = VectorNormalize (v);
-
-	if (length < rad) {
-		// view is inside the dlight
-		V_AddLightBlend (1, 0.5, 0, light->radius * 0.0003);
-		return;
+	else {
+		GLC_RenderDlight(light);
 	}
-
-	glBegin (GL_TRIANGLE_FAN);
-	if (light->type == lt_custom)
-		glColor3ubv (light->color);
-	else
-		glColor3fv (bubblecolor[light->type]);
-
-	VectorVectors(v, v_right, v_up);
-
-	if (length - rad > 8) {
-		VectorScale (v, rad, v);
-	} else {
-		// make sure the light bubble will not be clipped by near z clip plane
-		VectorScale (v, length - 8, v);
-	}
-
-	VectorSubtract (light->origin, v, v);
-
-	glVertex3fv (v);
-	glColor3ubv (color_black);
-
-	bub_sin = bubble_sintable;
-	bub_cos = bubble_costable;
-
-	for (i = 16; i >= 0; i--) {
-		for (j = 0; j < 3; j++)
-			v[j] = light->origin[j] + (v_right[j]*(*bub_cos) +
-				+ v_up[j]*(*bub_sin)) * rad;
-		bub_sin++; 
-		bub_cos++;
-		glVertex3fv (v);
-	}
-
-	glEnd ();
 }
 
 void R_RenderDlights (void) {
