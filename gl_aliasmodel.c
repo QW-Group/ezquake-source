@@ -82,10 +82,8 @@ extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
-static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum);
 
 void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
 void R_AliasSetupLighting(entity_t *ent);
 
 custom_model_color_t custom_model_colors[] = {
@@ -450,63 +448,15 @@ void R_DrawAliasModel(entity_t *ent)
 	R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, is_texture_array);
 
 	if (!GL_ShadersSupported()) {
-		// FIXME: think need put it after caustics
-		if (bound(0, gl_powerupshells.value, 1)) {
-			// always allow powerupshells for specs or demos.
-			// do not allow powerupshells for eyes in other cases
-			if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
-				if ((ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE)) {
-					R_DrawPowerupShell(clmodel, ent->effects, 0, gl_powerupshells_base1level.value,
-						gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
-					R_DrawPowerupShell(clmodel, ent->effects, 1, gl_powerupshells_base2level.value,
-						gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
-				}
+		GLC_AliasModelPowerupShell(ent, clmodel, oldframe, frame, paliashdr);
 
-				memset(r_shellcolor, 0, sizeof(r_shellcolor));
-			}
+		GLC_UnderwaterCaustics(ent, clmodel, oldframe, frame, paliashdr, scaleS, scaleT);
+
+		if (gl_smoothmodels.value) {
+			glShadeModel(GL_FLAT);
 		}
 	}
 
-	// Underwater caustics on alias models of QRACK -->
-#define GL_RGB_SCALE 0x8573
-
-	// MEAG: GLM-FIXME
-	if (!GL_ShadersSupported() && (gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
-	{
-		GL_EnableMultitexture ();
-		glBindTexture (GL_TEXTURE_2D, underwatertexture);
-
-		glMatrixMode (GL_TEXTURE);
-		glLoadIdentity ();
-		glScalef (0.5, 0.5, 1);
-		glRotatef (r_refdef2.time * 10, 1, 0, 0);
-		glRotatef (r_refdef2.time * 10, 0, 1, 0);
-		glMatrixMode (GL_MODELVIEW);
-
-		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-		R_SetupAliasFrame (clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-
-		GL_SelectTexture(GL_TEXTURE1);
-		//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
-		GL_TextureEnvMode(GL_REPLACE);
-		glDisable (GL_TEXTURE_2D);
-
-		glMatrixMode (GL_TEXTURE);
-		glLoadIdentity ();
-		glMatrixMode (GL_MODELVIEW);
-
-		GL_DisableMultitexture ();
-	}
-	// <-- Underwater caustics on alias models of QRACK
-
-	if (gl_smoothmodels.value && !GL_ShadersSupported()) {
-		glShadeModel(GL_FLAT);
-	}
 	if (gl_affinemodels.value) {
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
@@ -556,52 +506,6 @@ void R_SetupAliasFrame(
 	else {
 		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
 	}
-}
-
-static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
-{
-	int *order, count;
-	vec3_t point;
-	float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
-	trivertx_t *verts;
-
-	if (!GL_ShadersSupported()) {
-		return;
-	}
-
-	verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-	verts += posenum * paliashdr->poseverts;
-	order = (int *) ((byte *) paliashdr + paliashdr->commands);
-
-	while ((count = *order++)) {
-		// get the vertex count and primitive type
-		if (count < 0) {
-			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
-		} else {
-			glBegin (GL_TRIANGLE_STRIP);
-		}
-
-		do {
-			//no texture for shadows
-			order += 2;
-
-			// normals and vertexes come from the frame list
-			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
-
-			point[0] -= shadevector[0] * (point[2] +lheight);
-			point[1] -= shadevector[1] * (point[2] + lheight);
-			point[2] = height;
-			//height -= 0.001;
-			glVertex3fv (point);
-
-			verts++;
-		} while (--count);
-
-		glEnd ();
-	}	
 }
 
 void R_AliasSetupLighting(entity_t *ent)
@@ -1121,27 +1025,6 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 	// MEAG: TODO
 	//VULT MOTION TRAILS - No shadows on motion trails
 	if (!GL_ShadersSupported()) {
-		float theta;
-		float oldMatrix[16];
-		static float shadescale = 0;
-
-		if (!shadescale) {
-			shadescale = 1 / sqrt(2);
-		}
-		theta = -ent->angles[1] / 180 * M_PI;
-
-		VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
-
-		GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-		glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
-		glRotatef(ent->angles[1], 0, 0, 1);
-
-		glDisable(GL_TEXTURE_2D);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		glColor4f(0, 0, 0, 0.5);
-		GL_DrawAliasShadow(paliashdr, lastposenum);
-		glEnable(GL_TEXTURE_2D);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+		GLC_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
 	}
 }

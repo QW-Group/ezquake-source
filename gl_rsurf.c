@@ -617,9 +617,7 @@ void R_DrawWorld (void)
 		}
 
 		//draw the world alpha textures
-		if (!GL_ShadersSupported()) {
-			R_DrawAlphaChain(alphachain);
-		}
+		R_DrawAlphaChain(alphachain);
 	}
 }
 

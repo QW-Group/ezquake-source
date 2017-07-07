@@ -625,6 +625,8 @@ void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_light
 void GLM_ExitBatchedPolyRegion(void);
 
 void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);
+void GLC_DrawSimpleItem(int simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
+
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
 void GL_BeginDrawBrushModels(void);
@@ -640,18 +642,28 @@ void GL_BuildCommonTextureArrays(void);
 void R_DrawAliasModel(entity_t* currententity);
 
 // 
-void GLC_MultitextureLightmap(int lightmap_num);
-void GLC_SetLightmapTextureEnvironment(void);
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
 void DrawTextureChains(model_t *model, int contents);
 void R_DrawMapOutline(model_t *model);
-void GLC_ClearTextureChains(void);
 void R_BlendLightmaps(void);
+void R_DrawPowerupShell(
+	model_t* model, int effects, int layer_no, float base_level, float effect_level,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
+);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
+
+void GLM_DrawTexturedWorld(model_t* model);
+
+void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(int lightmap_num);
 void GLC_SetLightmapBlendFunc(void);
-void GLM_DrawTexturedWorld(model_t* model);
+void GLC_MultitextureLightmap(int lightmap_num);
+void GLC_SetLightmapTextureEnvironment(void);
+void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
+void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
+void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT);
 
 #endif /* !__GL_LOCAL_H__ */
 

@@ -352,7 +352,7 @@ static qbool R_DrawTrySimpleItem(void)
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
 	int simpletexture, simpletexture_index;
-	vec3_t point, right, up, org, offset, angles;
+	vec3_t right, up, org, offset, angles;
 	float scale_s = 1.0f, scale_t = 1.0f;
 
 	if (!currententity || !currententity->model) {
@@ -422,38 +422,7 @@ static qbool R_DrawTrySimpleItem(void)
 		GLM_DrawSimpleItem(currententity->model, simpletexture_index, org, angles, sprsize, scale_s, scale_t);
 	}
 	else {
-		glPushAttrib(GL_ENABLE_BIT);
-
-		glDisable(GL_CULL_FACE);
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-		GL_Bind(simpletexture);
-
-		glBegin (GL_QUADS);
-
-		glTexCoord2f (0, 1);
-		VectorMA (org, -sprsize, up, point);
-		VectorMA (point, -sprsize, right, point);
-		glVertex3fv (point);
-
-		glTexCoord2f (0, 0);
-		VectorMA (org, sprsize, up, point);
-		VectorMA (point, -sprsize, right, point);
-		glVertex3fv (point);
-
-		glTexCoord2f (1, 0);
-		VectorMA (org, sprsize, up, point);
-		VectorMA (point, sprsize, right, point);
-		glVertex3fv (point);
-
-		glTexCoord2f (1, 1);
-		VectorMA (org, -sprsize, up, point);
-		VectorMA (point, sprsize, right, point);
-		glVertex3fv (point);
-
-		glEnd ();
-
-		glPopAttrib();
+		GLC_DrawSimpleItem(simpletexture, org, sprsize, up, right);
 	}
 	return true;
 }
@@ -476,7 +445,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
 
-		if (gl_simpleitems.value && R_DrawTrySimpleItem()) {
+		if (gl_simpleitems.integer && R_DrawTrySimpleItem()) {
 			vislist->drawn[i] = true;
 			continue;
 		}

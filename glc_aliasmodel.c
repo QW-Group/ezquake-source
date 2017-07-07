@@ -36,8 +36,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 
 static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir);
-int GLC_GenerateShellTexture(void);
+static int GLC_GenerateShellTexture(void);
 static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
+static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -337,7 +338,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-int GLC_GenerateShellTexture(void)
+static int GLC_GenerateShellTexture(void)
 {
 	int x, y, d;
 	byte data[32][32][4];
@@ -357,4 +358,128 @@ int GLC_GenerateShellTexture(void)
 	}
 
 	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+}
+
+void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
+{
+	// FIXME: think need put it after caustics
+	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && bound(0, gl_powerupshells.value, 1)) {
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
+			R_DrawPowerupShell(clmodel, ent->effects, 0, gl_powerupshells_base1level.value,
+				gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
+			R_DrawPowerupShell(clmodel, ent->effects, 1, gl_powerupshells_base2level.value,
+				gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
+
+			memset(r_shellcolor, 0, sizeof(r_shellcolor));
+		}
+	}
+}
+
+void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT)
+{
+	// Underwater caustics on alias models of QRACK -->
+#define GL_RGB_SCALE 0x8573
+
+	// MEAG: GLM-FIXME
+	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin)))) {
+		GL_EnableMultitexture();
+		glBindTexture(GL_TEXTURE_2D, underwatertexture);
+
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+		glScalef(0.5, 0.5, 1);
+		glRotatef(r_refdef2.time * 10, 1, 0, 0);
+		glRotatef(r_refdef2.time * 10, 0, 1, 0);
+		glMatrixMode(GL_MODELVIEW);
+
+		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+
+		GL_SelectTexture(GL_TEXTURE1);
+		//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
+		GL_TextureEnvMode(GL_REPLACE);
+		glDisable(GL_TEXTURE_2D);
+
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+
+		GL_DisableMultitexture();
+	}
+	// <-- Underwater caustics on alias models of QRACK
+}
+
+void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot)
+{
+	float theta;
+	float oldMatrix[16];
+	static float shadescale = 0;
+
+	if (!shadescale) {
+		shadescale = 1 / sqrt(2);
+	}
+	theta = -ent->angles[1] / 180 * M_PI;
+
+	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
+
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
+	glRotatef(ent->angles[1], 0, 0, 1);
+
+	glDisable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	glColor4f(0, 0, 0, 0.5);
+	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
+	glEnable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+}
+
+static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot)
+{
+	int *order, count;
+	vec3_t point;
+	float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
+	trivertx_t *verts;
+
+	verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts += posenum * paliashdr->poseverts;
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	while ((count = *order++)) {
+		// get the vertex count and primitive type
+		if (count < 0) {
+			count = -count;
+			glBegin (GL_TRIANGLE_FAN);
+		} else {
+			glBegin (GL_TRIANGLE_STRIP);
+		}
+
+		do {
+			//no texture for shadows
+			order += 2;
+
+			// normals and vertexes come from the frame list
+			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+
+			point[0] -= shadevector[0] * (point[2] +lheight);
+			point[1] -= shadevector[1] * (point[2] + lheight);
+			point[2] = height;
+			//height -= 0.001;
+			glVertex3fv (point);
+
+			verts++;
+		} while (--count);
+
+		glEnd ();
+	}	
 }
