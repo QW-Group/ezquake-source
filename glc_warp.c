@@ -146,6 +146,8 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 		vec3_t nv;
 		int i;
 
+		GL_DisableMultitexture();
+		glEnable(GL_TEXTURE_2D);
 		GL_Bind(fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
