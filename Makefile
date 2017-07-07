@@ -34,7 +34,7 @@ RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
 XXD ?= xxd -i
 
-CFLAGS ?= -O2 -Wall -fexcess-precision=standard -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
+CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
