@@ -4686,20 +4686,24 @@ void SCR_Hud_StackBar(hud_t* hud)
 		int stack1 = sorted_teams[0].stack;
 		int stack2 = sorted_teams[1].stack;
 
-		float percent1 = (stack1 * 1.0f) / (stack1 + stack2);
+		if (stack1 + stack2 > 0) {
+			float percent1 = (stack1 * 1.0f) / (stack1 + stack2);
 
-		TeamHold_DrawPercentageBar(
-			x, y, width, height,
-			percent1, 1.0f - percent1,
-			sorted_teams[0].bottom,
-			sorted_teams[1].bottom,
-			hud_stackbar_show_text->value,
-			hud_stackbar_vertical->value,
-			hud_stackbar_vertical_text->value,
-			hud_stackbar_opacity->value,
-			hud_stackbar_scale->value
-		);
-		Draw_AlphaFill(x, y, hud_stackbar_width->value, height, 0, hud_stackbar_opacity->value * 0.5);
+			TeamHold_DrawPercentageBar(
+				x, y, width, height,
+				percent1, 1.0f - percent1,
+				sorted_teams[0].bottom,
+				sorted_teams[1].bottom,
+				hud_stackbar_show_text->value,
+				hud_stackbar_vertical->value,
+				hud_stackbar_vertical_text->value,
+				hud_stackbar_opacity->value,
+				hud_stackbar_scale->value
+			);
+		}
+		else {
+			Draw_AlphaFill(x, y, hud_stackbar_width->value, height, 0, hud_stackbar_opacity->value * 0.5);
+		}
 	}
 }
 
