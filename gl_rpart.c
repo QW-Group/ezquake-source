@@ -2819,10 +2819,19 @@ void ParticleFire (vec3_t org)
 {
 	col_t color={255,100,25, 128};
 	int	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) 
+	if (ISUNDERWATER(contents)) {
 		AddParticle(p_bubble, org, 1, 2.8, 2.5, NULL, zerodir);
-	else
-		AddParticle(p_flame, org, 1, 7, 0.8, amf_part_firecolor.string[0] ? StringToRGB(amf_part_firecolor.string) : color, zerodir);
+	}
+	else {
+		vec3_t end;
+		trace_t trace;
+
+		VectorCopy(org, end);
+		end[2] += 32;
+		trace = PM_TraceLine(org, end);
+
+		AddParticle(p_flame, org, 1, 7, 0.8 * trace.fraction, amf_part_firecolor.string[0] ? StringToRGB(amf_part_firecolor.string) : color, zerodir);
+	}
 }
 
 
