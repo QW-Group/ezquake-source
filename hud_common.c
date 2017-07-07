@@ -86,6 +86,7 @@ typedef struct sort_teams_info_s
 	int  nplayers;
 	int  top, bottom;   // leader colours
 	int  rlcount;		// Number of RL's present in the team. (Cokeman 2006-05-27)
+	int  stack;         // Total damage the team can take
 }
 sort_teams_info_t;
 
@@ -2427,6 +2428,7 @@ static void HUD_Sort_Scoreboard(int flags)
 					sorted_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
 					sorted_teams[team].name = cl.players[i].team;
 					sorted_teams[team].rlcount = 0;
+					sorted_teams[team].stack = 0;
 				}
 
 				sorted_teams[team].nplayers++;
@@ -2434,6 +2436,7 @@ static void HUD_Sort_Scoreboard(int flags)
 				sorted_teams[team].avg_ping += cl.players[i].ping;
 				sorted_teams[team].min_ping = min(sorted_teams[team].min_ping, cl.players[i].ping);
 				sorted_teams[team].max_ping = max(sorted_teams[team].max_ping, cl.players[i].ping);
+				sorted_teams[team].stack += SCR_HUD_TotalStrength(cl.players[i].stats[STAT_HEALTH], cl.players[i].stats[STAT_ARMOR], SCR_HUD_ArmorType(cl.players[i].stats[STAT_ITEMS]));
 
 				// The total RL count for the players team.
 				if (cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
@@ -4593,6 +4596,67 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 	}
 }
 
+void SCR_Hud_StackBar(hud_t* hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+
+	static cvar_t
+		*hud_stackbar_style = NULL,
+		*hud_stackbar_opacity,
+		*hud_stackbar_width,
+		*hud_stackbar_height,
+		*hud_stackbar_vertical,
+		*hud_stackbar_show_text,
+		*hud_stackbar_vertical_text,
+		*hud_stackbar_onlytp,
+		*hud_stackbar_scale;
+
+	if (hud_stackbar_style == NULL)    // first time
+	{
+		hud_stackbar_style               = HUD_FindVar(hud, "style");
+		hud_stackbar_opacity             = HUD_FindVar(hud, "opacity");
+		hud_stackbar_width               = HUD_FindVar(hud, "width");
+		hud_stackbar_height              = HUD_FindVar(hud, "height");
+		hud_stackbar_vertical            = HUD_FindVar(hud, "vertical");
+		hud_stackbar_show_text           = HUD_FindVar(hud, "show_text");
+		hud_stackbar_vertical_text       = HUD_FindVar(hud, "vertical_text");
+		hud_stackbar_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_stackbar_scale               = HUD_FindVar(hud, "scale");
+	}
+
+	height = max(1, hud_stackbar_height->value);
+	width = max(0, hud_stackbar_width->value);
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!HUD_ShowInDemoplayback(hud_stackbar_onlytp->value)) {
+		HUD_PrepareDraw(hud, width , height, &x, &y);
+		return;
+	}
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		// Get stack for each team, convert to %
+		int stack1 = sorted_teams[0].stack;
+		int stack2 = sorted_teams[1].stack;
+
+		float percent1 = (stack1 * 1.0f) / (stack1 + stack2);
+
+		TeamHold_DrawPercentageBar(
+			x, y, width, height,
+			percent1, 1.0f - percent1,
+			sorted_teams[0].bottom,
+			sorted_teams[1].bottom,
+			hud_stackbar_show_text->value,
+			hud_stackbar_vertical->value,
+			hud_stackbar_vertical_text->value,
+			hud_stackbar_opacity->value,
+			hud_stackbar_scale->value
+		);
+		Draw_AlphaFill(x, y, hud_stackbar_width->value, height, 0, hud_stackbar_opacity->value * 0.5);
+	}
+}
+
 void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
 {
 	char *start = s;
@@ -6685,6 +6749,22 @@ void CommonDraw_Init(void)
 			"textalign", "left",
 			NULL
 		    );
+
+	HUD_Register(
+		"teamstackbar", NULL, "Shows relative stacks of each team.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_Hud_StackBar,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"vertical_text", "0",
+		"show_text", "1",
+		"onlytp", "0",
+		"scale", "1",
+		"simpleitems", "1",
+		NULL
+	);
 
 	Radar_HudInit();
 	WeaponStats_HUDInit();
