@@ -249,31 +249,37 @@ int R_SetSky(char *skyname)
 	return 0;
 }
 
-qbool OnChange_r_skyname (cvar_t *v, char *skyname) {
+void OnChange_r_skyname (cvar_t *v, char *skyname, qbool* cancel)
+{
 	if (!skyname[0]) {		
 		r_skyboxloaded = false;
-		return false;
+		return;
 	}
 
-	return R_SetSky(skyname);
+	*cancel = R_SetSky(skyname);
 }
 
 void R_LoadSky_f(void) {
 	switch (Cmd_Argc()) {
 	case 1:
-		if (r_skyboxloaded)
+		if (r_skyboxloaded) {
 			Com_Printf("Current skybox is \"%s\"\n", r_skyname.string);
-		else
+		}
+		else {
 			Com_Printf("No skybox has been set\n");
+		}
 		break;
 	case 2:
-		if (!strcasecmp(Cmd_Argv(1), "none"))
+		if (!strcasecmp(Cmd_Argv(1), "none")) {
 			Cvar_Set(&r_skyname, "");
-		else
+		}
+		else {
 			Cvar_Set(&r_skyname, Cmd_Argv(1));
+		}
 		break;
 	default:
 		Com_Printf("Usage: %s <skybox>\n", Cmd_Argv(0));
+		break;
 	}
 }
 

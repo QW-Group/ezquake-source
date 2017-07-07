@@ -658,6 +658,8 @@ void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
 void GLM_PolyBlend(float v_blend[4]);
 void GLM_BrightenScreen(void);
+void GLM_DrawVelocity3D(void);
+void GLM_RenderSceneBlurDo(float alpha);
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_ClearTextureChains(void);
@@ -671,6 +673,8 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
+void GLC_DrawVelocity3D(void);
+void GLC_RenderSceneBlurDo(float alpha);
 
 #endif /* !__GL_LOCAL_H__ */
 

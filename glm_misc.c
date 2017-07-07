@@ -37,3 +37,13 @@ void GLM_BrightenScreen(void)
 {
 	// MEAG: TODO
 }
+
+void GLM_DrawVelocity3D(void)
+{
+	// MEAG: TODO
+}
+
+void GLM_RenderSceneBlurDo(float alpha)
+{
+	// MEAG: TODO
+}
