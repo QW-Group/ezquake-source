@@ -31,6 +31,8 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+void GLC_DrawTileClear(int texnum, int x, int y, int w, int h);
+
 void Draw_InitCharset(void);
 void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
@@ -811,17 +813,7 @@ void Draw_TileClear (int x, int y, int w, int h)
 		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false);
 	}
 	else {
-		GL_Bind(draw_backtile->texnum);
-		glBegin(GL_QUADS);
-		glTexCoord2f(x / 64.0, y / 64.0);
-		glVertex2f(x, y);
-		glTexCoord2f((x + w) / 64.0, y / 64.0);
-		glVertex2f(x + w, y);
-		glTexCoord2f((x + w) / 64.0, (y + h) / 64.0);
-		glVertex2f(x + w, y + h);
-		glTexCoord2f(x / 64.0, (y + h) / 64.0);
-		glVertex2f(x, y + h);
-		glEnd();
+		GLC_DrawTileClear(draw_backtile->texnum, x, y, w, h);
 	}
 }
 
@@ -963,12 +955,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		GLM_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
 	}
 	else {
-		glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-		glBegin(GL_LINES);
-		glVertex2f(x_start, y_start);
-		glVertex2f(x_end, y_end);
-		glEnd();
-		glColor3ubv (color_white);
+		GLC_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
 	}
 
 	glEnable (GL_TEXTURE_2D);
@@ -983,35 +970,12 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 
 void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
 {
-	byte bytecolor[4];
-	int i = 0;
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-
-	COLOR_TO_RGBA(color, bytecolor);
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-
-	glDisable (GL_TEXTURE_2D);
-
-	if(fill)
-	{
-		glBegin(GL_TRIANGLE_FAN);
+	if (GL_ShadersSupported()) {
+		GLM_Draw_Polygon(x, y, vertices, num_vertices, fill, color);
 	}
-	else
-	{
-		glBegin (GL_LINE_LOOP);
+	else {
+		GLC_Draw_Polygon(x, y, vertices, num_vertices, fill, color);
 	}
-
-	for(i = 0; i < num_vertices; i++)
-	{
-		glVertex2f(x + vertices[i][0], y + vertices[i][1]);
-	}
-
-	glEnd();
-
-	glPopAttrib();
 }
 
 #define CIRCLE_LINE_COUNT	40

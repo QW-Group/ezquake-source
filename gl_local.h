@@ -678,6 +678,16 @@ void GLC_RenderSceneBlurDo(float alpha);
 
 void SCR_SetupCI(void);
 
+void GLC_DrawTileClear(int texnum, int x, int y, int w, int h);
+void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end);
+void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+
+void GLC_DrawParticles(int particles_to_draw, qbool square);
+void GLM_UpdateParticles(int particles_to_draw);
+void GLM_DrawParticles(int number, qbool square);
+
 #endif /* !__GL_LOCAL_H__ */
 
 

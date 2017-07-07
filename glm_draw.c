@@ -169,3 +169,8 @@ void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 		GLM_DrawRectangle(x, y + h, w, thickness, bytecolor);
 	}
 }
+
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
+{
+	// MEAG: TODO
+}

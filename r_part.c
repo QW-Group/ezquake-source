@@ -23,37 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-
-typedef enum {
-	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_rail
-} ptype_t;
-
-typedef struct particle_s {
-	vec3_t      org;
-	float       color;
-	vec3_t      vel;
-	float       ramp;
-	float       die;
-	ptype_t     type;
-	struct particle_s *next;
-} particle_t;
-
-typedef struct glm_particle_s {
-	vec3_t      gl_org;
-	float       gl_scale;
-	float       gl_color[4];
-} glm_particle_t;
-
-//#define DEFAULT_NUM_PARTICLES	2048
-#define ABSOLUTE_MIN_PARTICLES	512
-#define ABSOLUTE_MAX_PARTICLES	8192
+#include "particles_classic.h"
 
 cvar_t r_particles_count = {"r_particles_count", "2048"};
 cvar_t r_drawparticles = { "r_drawparticles", "1" };
 
 // Which particles to draw this frame
-static particle_t particles[ABSOLUTE_MAX_PARTICLES];
-static glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
+particle_t particles[ABSOLUTE_MAX_PARTICLES];
+glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
 
 static int	ramp1[8] = {0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61};
 static int	ramp2[8] = {0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66};
@@ -543,120 +520,6 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 	}
 }
 
-static glm_program_t billboardProgram;
-static int billboard_modelViewMatrix;
-static int billboard_projectionMatrix;
-static int billboard_materialTex;
-static int billboard_apply_texture;
-static int billboard_alpha_texture;
-
-void GLM_CreateParticleProgram(void)
-{
-	if (!billboardProgram.program) {
-		GL_VGFDeclare(particles_classic);
-
-		// Initialise program for drawing image
-		GLM_CreateVGFProgram("Classic particles", GL_VGFParams(particles_classic), &billboardProgram);
-
-		billboard_modelViewMatrix = glGetUniformLocation(billboardProgram.program, "modelViewMatrix");
-		billboard_projectionMatrix = glGetUniformLocation(billboardProgram.program, "projectionMatrix");
-		billboard_materialTex = glGetUniformLocation(billboardProgram.program, "materialTex");
-		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
-		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
-	}
-}
-
-static GLuint particleVBO;
-static GLuint particleVAO;
-
-static GLuint GLM_CreateParticleVAO(void)
-{
-	if (!particleVBO) {
-		glGenBuffers(1, &particleVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_STATIC_DRAW);
-	}
-
-	if (!particleVAO) {
-		glGenVertexArrays(1, &particleVAO);
-		glBindVertexArray(particleVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) 0);
-		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 3));
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 4));
-	}
-
-	return particleVAO;
-}
-
-void GLM_DrawParticles(int number, qbool square)
-{
-	if (!billboardProgram.program) {
-		GLM_CreateParticleProgram();
-	}
-
-	{
-		GLuint vao = GLM_CreateParticleVAO();
-
-		if (billboardProgram.program && vao) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
-
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(billboardProgram.program);
-			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(billboard_materialTex, 0);
-			glUniform1i(billboard_apply_texture, !square);
-			glUniform1i(billboard_alpha_texture, 0);
-
-			glBindVertexArray(vao);
-			glDrawArrays(GL_POINTS, 0, number);
-		}
-	}
-}
-
-void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
-{
-	float oldMatrix[16];
-
-	if (!billboardProgram.program) {
-		GLM_CreateParticleProgram();
-	}
-
-	{
-		GLuint vao = GLM_CreateParticleVAO();
-
-		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
-		GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
-
-		if (billboardProgram.program && vao) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
-
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(billboardProgram.program);
-			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(billboard_materialTex, 0);
-			glUniform1i(billboard_apply_texture, !square);
-			glUniform1i(billboard_alpha_texture, 0);
-
-			glBindVertexArray(vao);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, square ? 4 : 3);
-		}
-
-		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
-	}
-}
-
 static int particles_to_draw = 0;
 
 // Moves particles into new locations this frame
@@ -807,77 +670,40 @@ void Classic_CalculateParticles(void)
 	}
 
 	if (GL_ShadersSupported()) {
-		// Update VBO
-		/*
-		{
-		void* buffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-		memcpy(buffer, particles, sizeof(particles[0]) * particles_to_draw);
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-		}*/
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
+		GLM_UpdateParticles(particles_to_draw);
 	}
 }
 
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
-	int i;
-	vec3_t up, right;
 	extern cvar_t gl_particle_style;
 
 	if (particles_to_draw == 0) {
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE0);
-	}
-	GL_Bind(particletexture);
-
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	if (!gl_solidparticles.value) {
 		glDepthMask(GL_FALSE);
 	}
-
 	GL_TextureEnvMode(GL_MODULATE);
+
 	if (!GL_ShadersSupported()) {
-		if (gl_particle_style.integer) {
-			// for sw style particles
-			glDisable(GL_TEXTURE_2D); // don't use texture
-			glBegin(GL_QUADS);
-		}
-		else {
-			glBegin(GL_TRIANGLES);
-		}
-
-		VectorScale(vup, 1.5, up);
-		VectorScale(vright, 1.5, right);
-
-		for (i = 0; i < particles_to_draw; ++i) {
-			glm_particle_t* glpart = &glparticles[i];
-			float scale = glpart->gl_scale;
-
-			glColor4fv(glpart->gl_color);
-			glTexCoord2f(0, 0); glVertex3fv(glpart->gl_org);
-			glTexCoord2f(1, 0); glVertex3f(glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
-
-			if (gl_particle_style.integer) {
-				//4th point for sw style particle
-				glTexCoord2f(1, 1); glVertex3f(glpart->gl_org[0] + (right[0] + up[0]) * scale, glpart->gl_org[1] + (right[1] + up[1]) * scale, glpart->gl_org[2] + (right[2] + up[2]) * scale);
-			}
-			glTexCoord2f(0, 1); glVertex3f(glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
-		}
-		glEnd();
-		glEnable(GL_TEXTURE_2D);
-		glColor3ubv(color_white);
+		glBindTexture(GL_TEXTURE_2D, particletexture);
+		GLC_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}
 	else {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, particletexture);
 		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glDepthMask(GL_TRUE);
+
 	GL_TextureEnvMode(GL_REPLACE);
+	if (!gl_solidparticles.value) {
+		glDepthMask(GL_TRUE);
+	}
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	particles_to_draw = 0;
 }
