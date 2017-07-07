@@ -851,6 +851,8 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	int killdiff;
 	int taken = 0;
 	int ammotaken[AMMO_TYPES] = {0, 0, 0, 0};
+	qbool had_mega;
+	qbool has_mega;
 
 	for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
 		if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
@@ -861,11 +863,13 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
 				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 				mvd_new_info[i].mvdinfo.itemstats[x].has=1;
+				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
 			}
 
 			if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
 				taken |= (1 << x);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
+				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 		}
@@ -902,14 +906,29 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		}
 	}
 
-	if (!mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH){
+	had_mega = mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has > 0;
+	has_mega = mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH;
+	if (!had_mega && has_mega){
+		// Picked up mega
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
 	}
-	if (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
-		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 0;
-		MVD_ClockStart(MH_INFO);
+	else if (has_mega && mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost < mvd_new_info[i].p_info->stats[STAT_HEALTH]) {
+		// They already had mega health but health increased - must have been another mega
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has++;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
+	}
+	mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost = mvd_new_info[i].p_info->stats[STAT_HEALTH];
+
+	if (had_mega && !has_mega) {
+		// Might have had two megas ticking down, create as many clocks as necessary
+		while (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has--) {
+			MVD_ClockStart(MH_INFO);
+		}
 	}
 
 	for (z=RING_INFO;z<=PENT_INFO;z++){
@@ -1040,6 +1059,7 @@ int MVD_Stats_Gather(void){
 			death_stats=0;
 			mvd_new_info[i].mvdinfo.run++;
 
+			for (x = 0; x < mvd_info_types; x++) {
 				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)) {
 					mvd_new_info[i].mvdinfo.itemstats[x].mention = -1;
 					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
