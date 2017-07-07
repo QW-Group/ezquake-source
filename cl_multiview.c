@@ -1601,6 +1601,9 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 		min_y = gly;
 		width = glwidth;
 		height = glheight;
+
+		min_y += scr_vrect.y * ((float)glheight / vid.height);
+		height -= (vid.height - scr_vrect.height) * ((float)glheight / vid.height);
 	}
 
 	x = min_x + 0.5 * width;
