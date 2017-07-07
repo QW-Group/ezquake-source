@@ -430,7 +430,7 @@ void R_RenderFullbrights(void)
 	}
 
 	glDepthMask(GL_FALSE);	// don't bother writing Z
-	glEnable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	for (i = 1; i < MAX_GLTEXTURES; i++) {
@@ -444,7 +444,7 @@ void R_RenderFullbrights(void)
 		fullbright_polys[i] = NULL;
 	}
 
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	glDepthMask(GL_TRUE);
 
 	drawfullbrights = false;
@@ -459,7 +459,7 @@ void R_RenderLumas(void)
 		return;
 
 	glDepthMask(GL_FALSE);	// don't bother writing Z
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -493,7 +493,7 @@ void EmitDetailPolys(void)
 	GL_Bind(detailtexture);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	for (p = detail_polys; p; p = p->detail_chain) {
 		glBegin(GL_POLYGON);
@@ -507,7 +507,7 @@ void EmitDetailPolys(void)
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	detail_polys = NULL;
 }

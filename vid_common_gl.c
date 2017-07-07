@@ -635,7 +635,7 @@ void GL_TextureEnvMode(GLenum mode)
 
 static int old_alphablend_flags = 0;
 
-void GL_AlphaBlendFlags(int flags)
+int GL_AlphaBlendFlags(int flags)
 {
 	if (!GL_ShadersSupported()) {
 		if ((flags & GL_ALPHATEST_ENABLED) && !(old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
@@ -643,6 +643,9 @@ void GL_AlphaBlendFlags(int flags)
 		}
 		else if ((flags & GL_ALPHATEST_DISABLED) && (old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
 			glDisable(GL_ALPHA_TEST);
+		}
+		else if (!(flags & (GL_ALPHATEST_ENABLED | GL_ALPHATEST_DISABLED))) {
+			flags |= (old_alphablend_flags & GL_ALPHATEST_ENABLED);
 		}
 	}
 
@@ -652,8 +655,12 @@ void GL_AlphaBlendFlags(int flags)
 	else if (flags & GL_BLEND_DISABLED && (old_alphablend_flags & GL_BLEND_ENABLED)) {
 		glDisable(GL_BLEND);
 	}
+	else if (!(flags & (GL_BLEND_ENABLED | GL_BLEND_DISABLED))) {
+		flags |= (old_alphablend_flags & GL_BLEND_ENABLED);
+	}
 
 	old_alphablend_flags = flags;
+	return old_alphablend_flags;
 }
 
 // GLM Utility functions

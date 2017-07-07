@@ -492,7 +492,7 @@ void GL_TextureEnvMode(GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-void GL_AlphaBlendFlags(int modes);
+int GL_AlphaBlendFlags(int modes);
 
 void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
 void GLM_TransformMatrix(float* matrix, float x, float y, float z);
