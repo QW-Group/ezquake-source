@@ -273,3 +273,8 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	*/
 }
+
+void GLM_DrawSpriteModel(entity_t* e)
+{
+	// MEAG: TODO
+}

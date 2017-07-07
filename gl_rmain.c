@@ -242,7 +242,6 @@ void R_RotateForEntity(entity_t *e)
 	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
 }
 
-
 mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
 {
 	mspriteframe_t  *pspriteframe;
@@ -289,62 +288,14 @@ mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
 	return pspriteframe;
 }
 
-void R_DrawSpriteModel (entity_t *e)
+void R_DrawSpriteModel(entity_t *e)
 {
-	vec3_t point, right, up;
-	mspriteframe_t *frame;
-	msprite2_t *psprite;
-
-	// don't even bother culling, because it's just a single
-	// polygon without a surface cache
-	psprite = (msprite2_t*)Mod_Extradata (e->model);	//locate the proper data
-	frame = R_GetSpriteFrame (e, psprite);
-
-	if (!frame)
-		return;
-
-	if (psprite->type == SPR_ORIENTED) {
-		// bullet marks on walls
-		AngleVectors (e->angles, NULL, right, up);
-	} else if (psprite->type == SPR_FACING_UPRIGHT) {
-		VectorSet (up, 0, 0, 1);
-		right[0] = e->origin[1] - r_origin[1];
-		right[1] = -(e->origin[0] - r_origin[0]);
-		right[2] = 0;
-		VectorNormalizeFast (right);
-	} else if (psprite->type == SPR_VP_PARALLEL_UPRIGHT) {
-		VectorSet (up, 0, 0, 1);
-		VectorCopy (vright, right);
-	} else {	// normal sprite
-		VectorCopy (vup, up);
-		VectorCopy (vright, right);
+	if (GL_ShadersSupported()) {
+		GLM_DrawSpriteModel(e);
 	}
-
-	GL_Bind(frame->gl_texturenum);
-
-	glBegin (GL_QUADS);
-
-	glTexCoord2f (0, 1);
-	VectorMA (e->origin, frame->down, up, point);
-	VectorMA (point, frame->left, right, point);
-	glVertex3fv (point);
-
-	glTexCoord2f (0, 0);
-	VectorMA (e->origin, frame->up, up, point);
-	VectorMA (point, frame->left, right, point);
-	glVertex3fv (point);
-
-	glTexCoord2f (1, 0);
-	VectorMA (e->origin, frame->up, up, point);
-	VectorMA (point, frame->right, right, point);
-	glVertex3fv (point);
-
-	glTexCoord2f (1, 1);
-	VectorMA (e->origin, frame->down, up, point);
-	VectorMA (point, frame->right, right, point);
-	glVertex3fv (point);
-
-	glEnd ();
+	else {
+		GLC_DrawSpriteModel(e);
+	}
 }
 
 static qbool R_DrawTrySimpleItem(void)
@@ -535,73 +486,22 @@ void R_PolyBlend(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	if (GL_ShadersSupported()) {
-		color_t v_blend_color = RGBA_TO_COLOR(
-			bound(0, v_blend[0], 1) * 255,
-			bound(0, v_blend[1], 1) * 255,
-			bound(0, v_blend[2], 1) * 255,
-			bound(0, v_blend[3], 1) * 255
-		);
-
-		Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
+		GLM_PolyBlend(v_blend);
 	}
 	else {
-		glDisable(GL_TEXTURE_2D);
-
-		glColor4fv(v_blend);
-
-		glBegin(GL_QUADS);
-		glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
-		glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
-		glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
-		glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
-		glEnd();
-
-		glEnable(GL_TEXTURE_2D);
-		glColor3ubv(color_white);
+		GLC_PolyBlend(v_blend);
 	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 }
 
 void R_BrightenScreen(void)
 {
-	extern float vid_gamma;
-	float f;
-
-	if (vid_hwgamma_enabled)
-		return;
-	if (v_contrast.value <= 1.0)
-		return;
-
-	f = min (v_contrast.value, 3);
-	f = pow (f, vid_gamma);
-
-	glDisable (GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	glBlendFunc (GL_DST_COLOR, GL_ONE);
-	glBegin (GL_QUADS);
-	while (f > 1) 
-	{
-		if (f >= 2)
-		{
-			glColor3ubv (color_white);
-		}
-		else
-		{
-			glColor3f (f - 1, f - 1, f - 1);
-		}
-
-		glVertex2f (0, 0);
-		glVertex2f (vid.width, 0);
-		glVertex2f (vid.width, vid.height);
-		glVertex2f (0, vid.height);
-
-		f *= 0.5;
+	if (GL_ShadersSupported()) {
+		GLM_BrightenScreen();
 	}
-	glEnd ();
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable (GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glColor3ubv (color_white);
+	else {
+		GLC_BrightenScreen();
+	}
 }
 
 int SignbitsForPlane(mplane_t *out)

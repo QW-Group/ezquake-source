@@ -655,6 +655,10 @@ void R_DrawPowerupShell(
 void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
 
 void GLM_DrawTexturedWorld(model_t* model);
+void GLM_DrawSpriteModel(entity_t* e);
+void GLM_PolyBlend(float v_blend[4]);
+void GLM_BrightenScreen(void);
+mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(int lightmap_num);
@@ -664,6 +668,9 @@ void GLC_SetLightmapTextureEnvironment(void);
 void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT);
+void GLC_DrawSpriteModel(entity_t* e);
+void GLC_PolyBlend(float v_blend[4]);
+void GLC_BrightenScreen(void);
 
 #endif /* !__GL_LOCAL_H__ */
 
