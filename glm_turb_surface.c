@@ -74,7 +74,6 @@ void GLM_DrawWaterSurfaces(void)
 		GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
 		count = 0;
 	}
-	waterchain = NULL;
 
 	if (wateralpha < 1.0 && wateralpha >= 0) {
 		GL_TextureEnvMode(GL_REPLACE);

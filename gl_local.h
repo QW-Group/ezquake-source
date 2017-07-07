@@ -739,6 +739,9 @@ void GLC_DrawSky(void);
 void GLC_DrawSkyFace(int axis);
 void GLC_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
 void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange);
+void GLC_DrawWaterSurfaces(void);
+void GLC_DrawBrushModel(entity_t* e, model_t* clmodel);
+void GLC_DrawWorld(void);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
@@ -754,6 +757,7 @@ void GLM_DrawSkyChain(void);
 void GLM_DrawSky(void);
 void GLM_DrawSkyFace(int axis);
 void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
+void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 
 #endif /* !__GL_LOCAL_H__ */
 

@@ -1024,7 +1024,10 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
 	// MEAG: TODO
 	//VULT MOTION TRAILS - No shadows on motion trails
-	if (!GL_ShadersSupported()) {
+	if (GL_ShadersSupported()) {
+		GLM_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
+	}
+	else {
 		GLC_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
 	}
 }

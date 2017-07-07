@@ -348,3 +348,8 @@ void GL_EndDrawAliasModels(void)
 		glEnable(GL_CULL_FACE);
 	}
 }
+
+void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot)
+{
+	// MEAG: TODO
+}
