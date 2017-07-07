@@ -287,9 +287,6 @@ void BuildTris (void)
 			// emit a vertex into the reorder buffer
 			k = bestverts[j];
 			vertexorder[numorder++] = k;
-			if (duplicate) {
-				vertexorder[numorder++] = k;
-			}
 
 			// emit s/t coords into the commands stream
 			s = stverts[k].s;
@@ -303,6 +300,14 @@ void BuildTris (void)
 			if (duplicate) {
 				*(float *)&commands[numcommands++] = s;
 				*(float *)&commands[numcommands++] = t;
+				vertexorder[numorder++] = k;
+
+				if (numorder % 2 == 0) {
+					*(float *)&commands[numcommands++] = s;
+					*(float *)&commands[numcommands++] = t;
+					vertexorder[numorder++] = k;
+					++commands[0];
+				}
 			}
 			previous_s = *(float *)&commands[numcommands++] = s;
 			previous_t = *(float *)&commands[numcommands++] = t;
