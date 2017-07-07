@@ -2001,3 +2001,45 @@ void GL_Set2D (void)
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor3ubv (color_white);
 }
+
+void Draw_2dAlphaTexture(float x, float y, float width, float height, int texture_num, float alpha)
+{
+	mpic_t pic;
+
+	pic.height = height;
+	pic.width = width;
+	pic.th = 1;
+	pic.tl = 0;
+	pic.sh = 1;
+	pic.sl = 0;
+	pic.texnum = texture_num;
+
+	Draw_AlphaPic(x, y, &pic, alpha);
+/*
+	Draw_AlphaPic
+	glPushAttrib(GL_ENABLE_BIT);
+
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+
+	GL_Bind(texture_num);
+
+	glBegin (GL_QUADS);
+
+	glTexCoord2f (0, 0);
+	glVertex2f (x, y);
+
+	glTexCoord2f (1, 0);
+	glVertex2f (x + width, y);
+
+	glTexCoord2f (0, 1);
+	glVertex2f (x, y + height);
+
+	glTexCoord2f (1, 1);
+	glVertex2f (x + width, y + height);
+
+	glEnd ();
+
+	glPopAttrib();*/
+}

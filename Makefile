@@ -248,6 +248,7 @@ OBJS_c := \
     hud.o \
     hud_common.o \
     hud_weapon_stats.o \
+    hud_radar.o \
     hud_editor.o \
     ignore.o \
     image.o \

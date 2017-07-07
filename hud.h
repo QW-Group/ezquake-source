@@ -174,4 +174,19 @@ void HUD_Recalculate(void);
 // when show pre-selected weapon/ammo? 1) player uses this system 2) not dead 3) when playing
 #define ShowPreselectedWeap()  (cl_weaponpreselect.value && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator)
 
+#define HUD_SHOW_ONLY_IN_TEAMPLAY		1
+#define HUD_SHOW_ONLY_IN_DEMOPLAYBACK	2
+
+qbool HUD_ShowInDemoplayback(int val);
+
+// Returns the total damage a player can sustain (stack)
+float SCR_HUD_TotalStrength(float health, float armorValue, float armorType);
+
+// Converts stats[STAT_ITEM] to armor %
+float SCR_HUD_ArmorType(int items);
+
+// Radar functions
+void Radar_HudInit(void);
+void HUD_NewRadarMap(void);
+
 #endif // __hud_h__
