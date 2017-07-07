@@ -31,11 +31,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
-void GLC_DrawTileClear(int texnum, int x, int y, int w, int h);
-
 void Draw_InitCharset(void);
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
-void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t con_shift, hud_faderankings;
@@ -688,17 +684,7 @@ void Draw_Crosshair (void)
 			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false);
 		}
 		else {
-			glBegin(GL_QUADS);
-			glTexCoord2f(sl, tl);
-			glVertex2f(x - ofs1, y - ofs1);
-			glTexCoord2f(sh, tl);
-			glVertex2f(x + ofs2, y - ofs1);
-			glTexCoord2f(sh, th);
-			glVertex2f(x + ofs2, y + ofs2);
-			glTexCoord2f(sl, th);
-			glVertex2f(x - ofs1, y + ofs2);
-			glEnd();
-			glColor3ubv (color_white);
+			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
 		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -833,19 +819,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 		GLM_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
 	}
 	else {
-		glDisable (GL_TEXTURE_2D);
-		glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-		if (fill) {
-			glRectf(x, y, x + w, y + h);
-		}
-		else {
-			glRectf(x, y, x + w, y + thickness);
-			glRectf(x, y + thickness, x + thickness, y + h - thickness);
-			glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
-			glRectf(x, y + h, x + w, y + h - thickness);
-		}
-		glColor4ubv (color_white);
-		glEnable (GL_TEXTURE_2D);
+		GLC_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
 	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -899,45 +873,6 @@ static GLuint GL_CreateLineVAO(void)
 	return vao;
 }
 
-void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
-{
-	static glm_program_t program;
-	static GLint line_matrix;
-	static GLint line_color;
-
-	if (!program.program) {
-		GL_VFDeclare(line_draw);
-
-		// Very simple line-drawing
-		GLM_CreateVFProgram(
-			"LineDrawing",
-			GL_VFParams(line_draw),
-			&program
-		);
-
-		if (program.program) {
-			line_matrix = glGetUniformLocation(program.program, "matrix");
-			line_color = glGetUniformLocation(program.program, "inColor");
-		}
-	}
-
-	if (program.program) {
-		float matrix[16];
-
-		glDisable(GL_DEPTH_TEST);
-		GLM_GetMatrix(GL_PROJECTION, matrix);
-		GLM_TransformMatrix(matrix, x_start, y_start, 0);
-		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
-
-		GL_UseProgram(program.program);
-		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
-		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
-
-		glBindVertexArray(GL_CreateLineVAO());
-		glDrawArrays(GL_LINES, 0, 2);
-	}
-}
-
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];
@@ -978,83 +913,14 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	}
 }
 
-#define CIRCLE_LINE_COUNT	40
-
 void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
-	byte bytecolor[4];
-	double angle;
-	int i;
-	int start;
-	int end;
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-	glDisable (GL_TEXTURE_2D);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	COLOR_TO_RGBA(color, bytecolor);
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-
-	if(thickness > 0.0)
-	{
-		glLineWidth(thickness);
+	if (GL_ShadersSupported()) {
+		GLM_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
 	}
-
-	if(fill)
-	{
-		glBegin(GL_TRIANGLE_STRIP);
+	else {
+		GLC_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
 	}
-	else
-	{
-		glBegin (GL_LINE_LOOP);
-	}
-
-	// Get the vertex index where to start and stop drawing.
-	start	= Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
-	end		= Q_rint((endangle   * CIRCLE_LINE_COUNT) / (2 * M_PI));
-
-	// If the end is less than the start, increase the index so that
-	// we start on a "new" circle.
-	if(end < start)
-	{
-		start = start + CIRCLE_LINE_COUNT;
-	}
-
-	// Create a vertex at the exact position specified by the start angle.
-	glVertex2f (x + radius * cos(startangle), y - radius * sin(startangle));
-
-	// TODO: Use lookup table for sin/cos?
-	for(i = start; i < end; i++)
-	{
-		angle = (i * 2 * M_PI) / CIRCLE_LINE_COUNT;
-		glVertex2f (x + radius * cos(angle), y - radius * sin(angle));
-
-		// When filling we're drawing triangles so we need to
-		// create a vertex in the middle of the vertex to fill
-		// the entire pie slice/circle.
-		if(fill)
-		{
-			glVertex2f (x, y);
-		}
-    }
-
-	glVertex2f (x + radius * cos(endangle), y - radius * sin(endangle));
-
-	// Create a vertex for the middle point if we're not drawing a complete circle.
-	if(endangle - startangle < 2 * M_PI)
-	{
-		glVertex2f (x, y);
-	}
-
-	glEnd ();
-
-	glEnable (GL_TEXTURE_2D);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	glColor4ubv (color_white);
-
-	glPopAttrib();
 }
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha)
@@ -1121,58 +987,10 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	alpha *= overall_alpha;
 
 	if (GL_ShadersSupported()) {
-		byte color[] = { 255, 255, 255, 255 };
-
-		if (alpha < 1.0) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glCullFace(GL_FRONT);
-			color[3] = alpha * 255;
-		}
-
-		glActiveTexture(GL_TEXTURE0);
-		GL_Bind(pic->texnum);
-		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, true);
-
-		if (alpha < 1.0) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		}
+		GLM_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 	}
 	else {
-		if (alpha < 1.0) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glCullFace(GL_FRONT);
-			glColor4f(1, 1, 1, alpha);
-		}
-
-		GL_Bind(pic->texnum);
-
-		glBegin(GL_QUADS);
-		{
-			// Upper left corner.
-			glTexCoord2f(newsl, newtl);
-			glVertex2f(x, y);
-
-			// Upper right corner.
-			glTexCoord2f(newsh, newtl);
-			glVertex2f(x + (scale_x * src_width), y);
-
-			// Bottom right corner.
-			glTexCoord2f(newsh, newth);
-			glVertex2f(x + (scale_x * src_width), y + (scale_y * src_height));
-
-			// Bottom left corner.
-			glTexCoord2f(newsl, newth);
-			glVertex2f(x, y + (scale_y * src_height));
-		}
-		glEnd();
-
-		if (alpha < 1.0) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-			GL_TextureEnvMode(GL_REPLACE);
-			glColor4f(1, 1, 1, 1);
-		}
+		GLC_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 	}
 }
 
@@ -1237,23 +1055,6 @@ void Draw_Pic (int x, int y, mpic_t *pic)
 void Draw_TransPic (int x, int y, mpic_t *pic)
 {
 	Draw_Pic (x, y, pic);
-}
-
-void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
-{
-    glDisable(GL_TEXTURE_2D);
-    glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
-
-    glBegin(GL_QUADS);
-
-    glVertex2f(x, y);
-    glVertex2f(x + (w * scale), y);
-    glVertex2f(x + (w * scale), y + (h * scale));
-    glVertex2f(x, y + (h * scale));
-
-    glEnd();
-    glColor4ubv(color_white);
-    glEnable(GL_TEXTURE_2D);
 }
 
 static char last_mapname[MAX_QPATH] = {0};

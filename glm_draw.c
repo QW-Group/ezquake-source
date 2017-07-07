@@ -174,3 +174,67 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 {
 	// MEAG: TODO
 }
+
+void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+{
+	// MEAG: TODO
+}
+
+void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
+{
+	byte color[] = { 255, 255, 255, 255 };
+
+	if (alpha < 1.0) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glCullFace(GL_FRONT);
+		color[3] = alpha * 255;
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	GL_Bind(pic->texnum);
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, true);
+
+	if (alpha < 1.0) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	}
+}
+
+void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
+{
+	static glm_program_t program;
+	static GLint line_matrix;
+	static GLint line_color;
+
+	if (!program.program) {
+		GL_VFDeclare(line_draw);
+
+		// Very simple line-drawing
+		GLM_CreateVFProgram(
+			"LineDrawing",
+			GL_VFParams(line_draw),
+			&program
+		);
+
+		if (program.program) {
+			line_matrix = glGetUniformLocation(program.program, "matrix");
+			line_color = glGetUniformLocation(program.program, "inColor");
+		}
+	}
+
+	if (program.program) {
+		float matrix[16];
+
+		glDisable(GL_DEPTH_TEST);
+		GLM_GetMatrix(GL_PROJECTION, matrix);
+		GLM_TransformMatrix(matrix, x_start, y_start, 0);
+		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
+
+		GL_UseProgram(program.program);
+		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
+		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
+
+		glBindVertexArray(GL_CreateLineVAO());
+		glDrawArrays(GL_LINES, 0, 2);
+	}
+}

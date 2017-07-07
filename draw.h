@@ -96,7 +96,6 @@ void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // W
 void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic (int x, int y, mpic_t *, float scale);
-void Draw_SFill (int x, int y, int w, int h, byte c, float scale);
 
 void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha);
