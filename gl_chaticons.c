@@ -28,37 +28,8 @@ extern cvar_t r_chaticons_alpha;
 
 // qqshka: code is a mixture of autoid and particle engine
 
-typedef byte col_t[4]; // FIXME: why 4?
-
-typedef struct ci_player_s {
-	vec3_t		org;
-	col_t		color;
-	float		rotangle;
-	float		size;
-	byte		texindex;
-	int			flags;
-	float       distance;
-
-	player_info_t *player;
-
-} ci_player_t;
-
 static ci_player_t ci_clients[MAX_CLIENTS];
 static int ci_count;
-
-typedef enum {
-	citex_chat,
-	citex_afk,
-	citex_chat_afk,
-	num_citextures,
-} ci_tex_t;
-
-#define	MAX_CITEX_COMPONENTS		8
-typedef struct ci_texture_s {
-	int			texnum;
-	int			components;
-	float		coords[MAX_CITEX_COMPONENTS][4];
-} ci_texture_t;
 
 static ci_texture_t ci_textures[num_citextures];
 
@@ -180,29 +151,12 @@ void SCR_SetupCI(void)
 
 void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
-	float matrix[16];
-
-	GL_PushMatrix(GL_MODELVIEW, matrix);
-	GL_Translate(GL_MODELVIEW, _p->org[0], _p->org[1], _p->org[2]);
-	GL_Scale(GL_MODELVIEW, _p->size, _p->size, _p->size);
-	if (_p->rotangle) {
-		GL_Rotate(GL_MODELVIEW, _p->rotangle, vpn[0], vpn[1], vpn[2]);
+	if (GL_ShadersSupported()) {
+		GLM_DrawBillboard(_ptex, _p, _coord);
 	}
-
-	glColor4ubv(_p->color);
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]);
-	glVertex3fv(_coord[0]);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]);
-	glVertex3fv(_coord[1]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]);
-	glVertex3fv(_coord[2]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]);
-	glVertex3fv(_coord[3]);
-	glEnd();
-
-	GL_PopMatrix(GL_MODELVIEW, matrix);
+	else {
+		GLC_DrawBillboard(_ptex, _p, _coord);
+	}
 }
 
 // probably may be made as macros, but i hate macros cos macroses is unsafe

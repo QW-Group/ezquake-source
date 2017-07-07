@@ -621,6 +621,45 @@ void GL_LeaveRegion(void);
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
 
+// Chat icons
+typedef byte col_t[4]; // FIXME: why 4?
+
+typedef struct ci_player_s {
+	vec3_t		org;
+	col_t		color;
+	float		rotangle;
+	float		size;
+	byte		texindex;
+	int			flags;
+	float       distance;
+
+	player_info_t *player;
+
+} ci_player_t;
+
+typedef enum {
+	citex_chat,
+	citex_afk,
+	citex_chat_afk,
+	num_citextures,
+} ci_tex_t;
+
+#define	MAX_CITEX_COMPONENTS		8
+typedef struct ci_texture_s {
+	int			texnum;
+	int			components;
+	float		coords[MAX_CITEX_COMPONENTS][4];
+} ci_texture_t;
+
+// 
+#define CHARSET_CHARS_PER_ROW	16
+#define CHARSET_WIDTH			1.0
+#define CHARSET_HEIGHT			1.0
+#define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
+#define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
+
+// Functions
+
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_ExitBatchedPolyRegion(void);
 
@@ -695,6 +734,11 @@ void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
 void GLC_Draw_FadeScreen(float alpha);
 void GLC_RenderDlight(dlight_t* light);
+void GLC_DrawSkyChain(void);
+void GLC_DrawSky(void);
+void GLC_DrawSkyFace(int axis);
+void GLC_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
+void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
@@ -706,6 +750,10 @@ void GLM_DrawParticles(int number, qbool square);
 void GLM_EmitCausticsPolys(void);
 void GLM_Draw_FadeScreen(float alpha);
 void GLM_RenderDlight(dlight_t* light);
+void GLM_DrawSkyChain(void);
+void GLM_DrawSky(void);
+void GLM_DrawSkyFace(int axis);
+void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
 
 #endif /* !__GL_LOCAL_H__ */
 

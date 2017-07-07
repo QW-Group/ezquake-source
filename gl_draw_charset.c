@@ -38,9 +38,9 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 static void Apply_OnChange_gl_smoothfont(int value);
 
 void OnChange_gl_consolefont (cvar_t *, char *, qbool *);
-static cvar_t gl_alphafont            = {"gl_alphafont", "1"};
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel);
 
+cvar_t gl_alphafont    = {"gl_alphafont", "1"};
 cvar_t gl_consolefont  = {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
 cvar_t gl_smoothfont   = {"gl_smoothfont", "1", 0, OnChange_gl_smoothfont};
 cvar_t scr_coloredText = {"scr_coloredText", "1"};
@@ -298,12 +298,6 @@ qbool R_CharAvailable (wchar num)
 	return (char_range[(num >> 8) & 0xff]);
 }
 
-#define CHARSET_CHARS_PER_ROW	16
-#define CHARSET_WIDTH			1.0
-#define CHARSET_HEIGHT			1.0
-#define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
-#define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
-
 // Modern: just cache as the string is printed, dump out as one.  Still pretty terrible
 #define GLM_STRING_CACHE 4096
 typedef struct gl_text_cache_s {
@@ -491,17 +485,17 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 // gl_statechange		= Change the gl state before drawing?
 void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
 {
-	float frow, fcol;
-	int slot;
 	int char_size = (bigchar ? 64 : 8);
 
 	// Totally off screen.
-	if (y <= (-char_size * scale))
+	if (y <= (-char_size * scale)) {
 		return;
+	}
 
 	// Space.
-	if (num == 32)
+	if (num == 32) {
 		return;
+	}
 
 	if (GL_ShadersSupported()) {
 		if (bigchar) {
@@ -531,103 +525,7 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 		return;
 	}
 
-	// Only apply overall opacity if it's not fully opague.
-	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
-
-	// Only change the GL state if we're told to. We keep track of the need for GL state changes
-	// in the string drawing function instead. For character drawing functions we do this every time.
-	// (For instance, only change color in a string when the actual color changes, instead of doing
-	// it on each character always).
-	if (gl_statechange) {
-		// Turn on alpha transparency.
-		if ((gl_alphafont.value || apply_overall_alpha)) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-		}
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-		if (scr_coloredText.integer) {
-			GL_TextureEnvMode(GL_MODULATE);
-		}
-		else {
-			GL_TextureEnvMode(GL_REPLACE);
-		}
-
-		// Set the overall alpha.
-		glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
-	}
-
-	if (bigchar) {
-		mpic_t *p = Draw_CachePicSafe(MCHARSET_PATH, false, true);
-
-		if (p) {
-			int sx = 0;
-			int sy = 0;
-			int char_width = (p->width / 8);
-			int char_height = (p->height / 8);
-			char c = (char)(num & 0xFF);
-
-			Draw_GetBigfontSourceCoords(c, char_width, char_height, &sx, &sy);
-
-			if (sx >= 0) {
-				// Don't apply alpha here, since we already applied it above.
-				Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, (((float)char_size / char_width) * scale), 1);
-			}
-
-			return;
-		}
-
-		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
-	}
-
-	// Is this is a wchar, find a charset that has the char in it.
-	slot = 0;
-	if ((num & 0xFF00) != 0) {
-		slot = ((num >> 8) & 0xFF);
-		if (!char_range[slot]) {
-			slot = 0;
-			num = '?';
-		}
-	}
-
-	num &= 0xFF;	// Only use the first byte.
-
-					// Find the texture coordinates for the character.
-	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
-	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
-
-	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE0);
-		GL_Bind(char_textures[slot]);
-
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, color, false);
-	}
-	else {
-		GL_Bind(char_textures[slot]);
-
-		// Draw the character polygon.
-		glBegin(GL_QUADS);
-		{
-			float scale8 = scale * 8;
-			float scale8_2 = scale8 * 2;
-
-			// Top left.
-			glTexCoord2f(fcol, frow);
-			glVertex2f(x, y);
-
-			// Top right.
-			glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow);
-			glVertex2f(x + scale8, y);
-
-			// Bottom right.
-			glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
-			glVertex2f(x + scale8, y + scale8_2);
-
-			// Bottom left.
-			glTexCoord2f(fcol, frow + CHARSET_CHAR_WIDTH);
-			glVertex2f(x, y + scale8_2);
-		}
-		glEnd();
-	}
+	GLC_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
 }
 
 static void Draw_ResetCharGLState(void)

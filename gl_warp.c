@@ -192,7 +192,7 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 		GLM_CreateVAOForPoly(poly);
 	}
 }
-
+/*
 void EmitFlatPoly(msurface_t *fa)
 {
 	glpoly_t *p;
@@ -205,7 +205,7 @@ void EmitFlatPoly(msurface_t *fa)
 			GLC_DrawFlatPoly(p);
 		}
 	}
-}
+}*/
 
 byte* SurfaceFlatTurbColor(texture_t* texture)
 {
