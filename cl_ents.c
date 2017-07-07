@@ -1806,6 +1806,7 @@ void CL_LinkPlayers (void)
 				&& cls.mvdplayback) // For non-mvd, let the server decide 
 		{
 			ent.model = cl.vw_model_precache[0];
+			ent.renderfx |= RF_PLAYERMODEL;
 		}
 
 		ent.skinnum = state->skinnum;
