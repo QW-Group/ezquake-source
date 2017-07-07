@@ -195,3 +195,5 @@ void MVD_AutoTrack_Init(void);
 
 // mvd_xmlstats:
 void MVD_XMLStats_Init(void);
+
+mvd_new_info_t* MVD_StatsForPlayer(player_info_t* info);

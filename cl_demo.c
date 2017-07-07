@@ -3485,6 +3485,7 @@ static void CL_DemoPlaybackInit(void)
 	{
 		CL_Stop_f();
 	}
+	MVD_Initialise();
 }
 
 char *CL_Macro_DemoName_f (void)

@@ -350,7 +350,16 @@ typedef enum
 	MOD_TELEPORTDESTINATION,
 	MOD_GIB,
 	MOD_VMODEL,
-	MOD_ROCKET
+	MOD_ROCKET,
+	MOD_ARMOR,
+	MOD_MEGAHEALTH,
+	MOD_ROCKETLAUNCHER,
+	MOD_LIGHTNINGGUN,
+	MOD_QUAD,
+	MOD_PENT,
+	MOD_RING,
+
+	MOD_NUMBER_HINTS
 } modhint_t;
 
 #define	EF_ROCKET	1			// leave a trail
@@ -449,6 +458,8 @@ qbool	Img_HasFullbrights (byte *pixels, int size);
 void	Mod_ReloadModelsTextures (void); // for vid_restart
 
 int		Mod_LoadSimpleTexture(model_t *mod, int skinnum);
+void    Mod_ClearSimpleTextures(void);
+int     Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
 #include "gl_md3.h"
 

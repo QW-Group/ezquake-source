@@ -854,13 +854,15 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 
 	for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
 		if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
-			if (!mvd_new_info[i].mvdinfo.itemstats[x].has){
+
+			if (!mvd_new_info[i].mvdinfo.itemstats[x].has) {
 				taken |= (1 << x);
 				MVD_Set_Armor_Stats(x,i);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
 				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 				mvd_new_info[i].mvdinfo.itemstats[x].has=1;
 			}
+
 			if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
 				taken |= (1 << x);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
@@ -1001,11 +1003,12 @@ int MVD_Stats_Gather(void){
 	int death_stats = 0;
 	int x,i;
 
-	if(cl.countdown == true){
+	if (cl.countdown == true) {
 		return 0;
 	}
-	if(cl.standby == true)
+	if (cl.standby == true) {
 		return 0;
+	}
 
 	for ( i=0; i<mvd_cg_info.pcount ; i++ ){
 		if (quad_time == pent_time && quad_time == 0 && !mvd_new_info[i].mvdinfo.firstrun){
@@ -1037,21 +1040,19 @@ int MVD_Stats_Gather(void){
 			death_stats=0;
 			mvd_new_info[i].mvdinfo.run++;
 
-
-			for(x=0;x<13;x++){ // XXX: x<13? for sure? maybe x<mvd_info_types?
-
-				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)){
-					mvd_new_info[i].mvdinfo.itemstats[x].mention=-1;
+				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)) {
+					mvd_new_info[i].mvdinfo.itemstats[x].mention = -1;
 					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
 				}
 
-				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has){
-					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demotime < 30 )
+				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has) {
+					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demotime < 30) {
 						quad_is_active = 0;
+					}
 					mvd_new_info[i].mvdinfo.itemstats[x].run++;
 					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
 				}
-				mvd_new_info[i].mvdinfo.itemstats[x].has=0;
+				mvd_new_info[i].mvdinfo.itemstats[x].has = 0;
 			}
 			mvd_new_info[i].mvdinfo.lfw = -1;
 		}
@@ -1264,15 +1265,17 @@ qbool MVD_MatchStarted(void) {
 }
 
 void MVD_Mainhook (void){
-	if (MVD_MatchStarted())
+	if (MVD_MatchStarted()) {
 		MVD_Init_Info(MAX_CLIENTS);
+	}
 
 	MVD_Stats_Gather();
 	MVD_Stats_CalcAvgRuns();
 	MVD_AutoTrack();
 	MVD_ClockList_RemoveExpired();
-	if (cls.mvdplayback && mvd_demo_track_run == 0)
-		MVD_Demo_Track ();
+	if (cls.mvdplayback && mvd_demo_track_run == 0) {
+		MVD_Demo_Track();
+	}
 }
 
 void MVD_PC_Get_Coords (void){
@@ -1518,5 +1521,37 @@ void MVD_ParseUserCommand (const char* s)
 			cl.mvd_user_cmd[i] = command;
 			break;
 		}
+	}
+}
+
+mvd_new_info_t* MVD_StatsForPlayer(player_info_t* info)
+{
+	int i;
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		if (mvd_new_info[i].p_info == info) {
+			return &mvd_new_info[i];
+		}
+	}
+	return NULL;
+}
+
+void MVD_Initialise(void)
+{
+	memset(mvd_new_info, 0, sizeof(mvd_new_info));
+	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info));
+}
+
+void MVD_GameStart(void)
+{
+	int i;
+
+	MVD_Initialise();
+
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (!cl.players[i].name[0] || cl.players[i].spectator == 1) {
+			continue;
+		}
+
+		MVD_Init_Info(i);
 	}
 }

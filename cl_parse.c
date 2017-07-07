@@ -2276,6 +2276,10 @@ void CL_ProcessServerInfo (void)
 	{
 		cl.gametime = 0;
 		cl.gamestarttime = Sys_DoubleTime();
+
+		if (cls.mvdplayback) {
+			MVD_GameStart();
+		}
 	}
 
 	cl.standby = standby;

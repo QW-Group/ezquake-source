@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "console.h"
 #include "teamplay.h"
 #include "mvd_utils.h"
+#include "mvd_utils_common.h"
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
@@ -85,8 +86,24 @@ typedef struct sort_teams_info_s
 	int  max_ping;
 	int  nplayers;
 	int  top, bottom;   // leader colours
-	int  rlcount;		// Number of RL's present in the team. (Cokeman 2006-05-27)
+	int  rlcount;       // Number of RLs present in the team. (Cokeman 2006-05-27)
+	int  lgcount;       // number of LGs present in the team
+	int  weapcount;     // number of players with weapons (RLs | LGs) in the team
+	int  ra_taken;      // Total red armors taken
+	int  ya_taken;      // Total yellow armors taken
+	int  ga_taken;      // Total green armors taken
+	int  mh_taken;      // Total megahealths taken
+	int  quads_taken;   // Total quads taken
+	int  pents_taken;   // Total pents taken
+	int  rings_taken;   // Total rings taken
 	int  stack;         // Total damage the team can take
+	float ra_lasttime;  // last time ra taken
+	float ya_lasttime;  // last time ya taken
+	float ga_lasttime;  // last time ga taken
+	float mh_lasttime;  // last time mh taken
+	float q_lasttime;   // last time quad taken
+	float p_lasttime;   // last time pent taken
+	float r_lasttime;   // last time ring taken
 }
 sort_teams_info_t;
 
@@ -2409,8 +2426,10 @@ static void HUD_Sort_Scoreboard(int flags)
 			if (cl.players[i].name[0] && !cl.players[i].spectator) {
 				// Find players team
 				for (team = 0; team < n_teams; team++) {
-					if (!strcmp(cl.players[i].team, sorted_teams[team].name)
-							&& sorted_teams[team].name[0]) {
+					if (cl.teamplay && !strcmp(cl.players[i].team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
+						break;
+					}
+					if (!cl.teamplay && !strcmp(cl.players[i].name, sorted_teams[team].name) && sorted_teams[team].name[0]) {
 						break;
 					}
 				}
@@ -2419,16 +2438,15 @@ static void HUD_Sort_Scoreboard(int flags)
 				// so add a new team.
 				if (team == n_teams) {
 					team = n_teams++;
-					sorted_teams[team].avg_ping = 0;
-					sorted_teams[team].max_ping = 0;
 					sorted_teams[team].min_ping = 999;
-					sorted_teams[team].nplayers = 0;
-					sorted_teams[team].frags = 0;
 					sorted_teams[team].top = Sbar_TopColor(&cl.players[i]);
 					sorted_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
-					sorted_teams[team].name = cl.players[i].team;
-					sorted_teams[team].rlcount = 0;
-					sorted_teams[team].stack = 0;
+					if (cl.teamplay) {
+						sorted_teams[team].name = cl.players[i].team;
+					}
+					else {
+						sorted_teams[team].name = cl.players[i].name;
+					}
 				}
 
 				sorted_teams[team].nplayers++;
@@ -2441,6 +2459,34 @@ static void HUD_Sort_Scoreboard(int flags)
 				// The total RL count for the players team.
 				if (cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
 					sorted_teams[team].rlcount++;
+				}
+				if (cl.players[i].stats[STAT_ITEMS] & IT_LIGHTNING) {
+					sorted_teams[team].lgcount++;
+				}
+				if (cl.players[i].stats[STAT_ITEMS] & (IT_ROCKET_LAUNCHER | IT_LIGHTNING)) {
+					sorted_teams[team].weapcount++;
+				}
+
+				if (cls.mvdplayback) {
+					mvd_new_info_t* stats = MVD_StatsForPlayer(&cl.players[i]);
+					sort_teams_info_t* t = &sorted_teams[team];
+
+					if (stats) {
+						t->quads_taken += stats->mvdinfo.itemstats[QUAD_INFO].count;
+						t->pents_taken += stats->mvdinfo.itemstats[PENT_INFO].count;
+						t->rings_taken += stats->mvdinfo.itemstats[RING_INFO].count;
+						t->ga_taken += stats->mvdinfo.itemstats[GA_INFO].count;
+						t->ya_taken += stats->mvdinfo.itemstats[YA_INFO].count;
+						t->ra_taken += stats->mvdinfo.itemstats[RA_INFO].count;
+						t->mh_taken += stats->mvdinfo.itemstats[MH_INFO].count;
+						t->q_lasttime = max(t->q_lasttime, stats->mvdinfo.itemstats[QUAD_INFO].starttime);
+						t->p_lasttime = max(t->p_lasttime, stats->mvdinfo.itemstats[PENT_INFO].starttime);
+						t->r_lasttime = max(t->r_lasttime, stats->mvdinfo.itemstats[RING_INFO].starttime);
+						t->ga_lasttime = max(t->ga_lasttime, stats->mvdinfo.itemstats[GA_INFO].starttime);
+						t->ya_lasttime = max(t->ya_lasttime, stats->mvdinfo.itemstats[YA_INFO].starttime);
+						t->ra_lasttime = max(t->ra_lasttime, stats->mvdinfo.itemstats[RA_INFO].starttime);
+						t->mh_lasttime = max(t->mh_lasttime, stats->mvdinfo.itemstats[MH_INFO].starttime);
+					}
 				}
 
 				// Set player data.
@@ -5069,13 +5115,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 										char *weap_str = tp_name_rlg.string;
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString (x, y, weap_white_stripped, false);
+										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
 									}
 									else {
 										char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString (x, y, weap_white_stripped, false);
+										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
 									}
 								}
 								x += 3 * FONTWIDTH * scale;
@@ -5976,6 +6022,8 @@ void HUD_AfterDraw(void)
 // and add some common elements to hud (clock etc)
 //
 
+static void SCR_Hud_GameSummary(hud_t* hud);
+
 void CommonDraw_Init(void)
 {
 	int i;
@@ -6766,6 +6814,20 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
+	HUD_Register(
+		"gamesummary", NULL, "Shows total pickups & current weapons.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_Hud_GameSummary,
+		"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"onlytp", "0",
+		"scale", "1",
+		"format", "QYyq",
+		"circles", "0",
+		"ratio", "4",
+		"flash", "1",
+		NULL
+	);
+
 	Radar_HudInit();
 	WeaponStats_HUDInit();
 	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
@@ -6782,4 +6844,176 @@ HUD_PLUSMINUS | HUD_ON_SCORES, ca_disconnected, 0, SCR_HUD_DrawFrameGraph,
 NULL);
 #endif
 */
+}
+static void SCR_Hud_GameSummary(hud_t* hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+	char* format_string;
+	int icon_size = 32;
+
+	static cvar_t
+		*hud_gamesummary_style = NULL,
+		*hud_gamesummary_onlytp,
+		*hud_gamesummary_scale,
+		*hud_gamesummary_format,
+		*hud_gamesummary_circles,
+		*hud_gamesummary_ratio,
+		*hud_gamesummary_flash;
+
+	if (hud_gamesummary_style == NULL)    // first time
+	{
+		hud_gamesummary_style               = HUD_FindVar(hud, "style");
+		hud_gamesummary_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_gamesummary_scale               = HUD_FindVar(hud, "scale");
+		hud_gamesummary_format              = HUD_FindVar(hud, "format");
+		hud_gamesummary_circles             = HUD_FindVar(hud, "circles");
+		hud_gamesummary_ratio               = HUD_FindVar(hud, "ratio");
+		hud_gamesummary_flash               = HUD_FindVar(hud, "flash");
+	}
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!cls.mvdplayback || !HUD_ShowInDemoplayback(hud_gamesummary_onlytp->value)) {
+		HUD_PrepareDraw(hud, 0, 0, &x, &y);
+		return;
+	}
+
+	// Measure for width
+	icon_size = 8 * bound(1, hud_gamesummary_ratio->value, 8);
+	width = strlen(hud_gamesummary_format->string) * icon_size * hud_gamesummary_scale->value;
+	height = (icon_size + (hud_gamesummary_style->integer ? 8 : 0)) * hud_gamesummary_scale->value;
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		int text_offset = hud_gamesummary_scale->value * (icon_size / 2 - 4);
+		int icon_offset = 0;
+
+		if (hud_gamesummary_style->integer == 1) {
+			text_offset = icon_size * hud_gamesummary_scale->value;
+		}
+		else if (hud_gamesummary_style->integer == 2) {
+			text_offset = 0;
+			icon_offset = 8 * hud_gamesummary_scale->value;
+		}
+
+		for (format_string = hud_gamesummary_format->string; *format_string; ++format_string) {
+			int team = isupper(format_string[0]) ? 0 : 1;
+			int background_tex = 0;
+			int value = 0;
+			float alpha = 1.0f;
+			float last_taken = 0.0f;
+			byte* background_color = NULL;
+			byte mega_color[] = { 0x00, 0xAF, 0x00 };
+			byte ra_color[] = { 0xFF, 0x00, 0x00 };
+			byte ya_color[] = { 0xFF, 0xFF, 0x00 };
+			byte ga_color[] = { 0x00, 0xBF, 0x00 };
+			byte rl_color[] = { 0xFF, 0x1F, 0x3F };
+			byte lg_color[] = { 0x2F, 0xAA, 0xAA };
+			byte quad_color[] = { 0x00, 0x5F, 0xFF };
+			byte pent_color[] = { 0xFF, 0x00, 0x00 };
+			byte ring_color[] = { 0xFF, 0xFF, 0x00 };
+
+			switch (tolower(format_string[0])) {
+			case 'm':
+				background_tex = Mod_SimpleTextureForHint(MOD_MEGAHEALTH, 0);
+				value = sorted_teams[team].mh_taken;
+				background_color = mega_color;
+				last_taken = sorted_teams[team].mh_lasttime;
+				break;
+			case 'r':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 2);
+				value = sorted_teams[team].ra_taken;
+				background_color = ra_color;
+				last_taken = sorted_teams[team].ra_lasttime;
+				break;
+			case 'y':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 1);
+				value = sorted_teams[team].ya_taken;
+				background_color = ya_color;
+				last_taken = sorted_teams[team].ya_lasttime;
+				break;
+			case 'g':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 0);
+				value = sorted_teams[team].ga_taken;
+				background_color = ga_color;
+				last_taken = sorted_teams[team].ga_lasttime;
+				break;
+			case 'o':
+				background_tex = Mod_SimpleTextureForHint(MOD_ROCKETLAUNCHER, 0);
+				value = sorted_teams[team].rlcount;
+				background_color = rl_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'l':
+				background_tex = Mod_SimpleTextureForHint(MOD_LIGHTNINGGUN, 0);
+				value = sorted_teams[team].lgcount;
+				background_color = lg_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'w':
+				background_tex = Mod_SimpleTextureForHint(MOD_ROCKETLAUNCHER, 0);
+				value = sorted_teams[team].weapcount;
+				background_color = rl_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'q':
+				background_tex = Mod_SimpleTextureForHint(MOD_QUAD, 0);
+				value = sorted_teams[team].quads_taken;
+				background_color = quad_color;
+				last_taken = sorted_teams[team].q_lasttime;
+				break;
+			case 'p':
+				background_tex = Mod_SimpleTextureForHint(MOD_PENT, 0);
+				value = sorted_teams[team].pents_taken;
+				background_color = pent_color;
+				last_taken = sorted_teams[team].p_lasttime;
+				break;
+			case 'e':
+				background_tex = Mod_SimpleTextureForHint(MOD_RING, 0);
+				value = sorted_teams[team].rings_taken;
+				background_color = ring_color;
+				last_taken = sorted_teams[team].r_lasttime;
+				break;
+			}
+
+			alpha = last_taken == -1 ? 1.0f : 0.3f;
+			if (last_taken > 0 && cls.demotime >= last_taken) {
+				if (hud_gamesummary_flash->integer && cls.demotime - last_taken <= 1.0f) {
+					// Flash for first second
+					alpha = (int)((cls.demotime - last_taken) * 10) % 4 >= 2 ? 0.5f : 1.0f;
+				}
+				else if (cls.demotime - last_taken <= 2.3f) {
+					// Then solid colour
+					alpha = 1.0f;
+				}
+				else if (cls.demotime - last_taken <= 3.0f) {
+					// Then fade back to normal
+					alpha = bound(0.3f, 1.0f - (cls.demotime - last_taken - 2.3f), 1.0f);
+				}
+			}
+
+			{
+				char buffer[10];
+				int length;
+
+				snprintf(buffer, sizeof(buffer), "%d", value);
+				length = strlen(buffer);
+
+				if (hud_gamesummary_circles->integer && background_color) {
+					float half_width = icon_size * 0.5f * hud_gamesummary_scale->value;
+
+					Draw_AlphaCircleFillRGB(x + half_width, y + icon_offset + half_width, half_width, RGBA_TO_COLOR(background_color[0], background_color[1], background_color[2], alpha / 2 * 255));
+				}
+				else if (background_tex) {
+					Draw_2dAlphaTexture(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
+				}
+
+				if (value) {
+					Draw_SString(x + hud_gamesummary_scale->value * (icon_size / 2 - length * 8 / 2), y + text_offset, buffer, hud_gamesummary_scale->value);
+				}
+			}
+
+			x += icon_size * hud_gamesummary_scale->value;
+		}
+	}
 }

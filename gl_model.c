@@ -443,6 +443,7 @@ void R_LoadBrushModelTextures (model_t *m)
 	loadmodel = m;
 
 	// try load simple textures
+	Mod_AddModelFlags(m);
 	memset(loadmodel->simpletexture, 0, sizeof(loadmodel->simpletexture));
 	loadmodel->simpletexture[0] = Mod_LoadSimpleTexture(loadmodel, 0);
 
@@ -2068,28 +2069,12 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 	daliasskintype_t *pskintype;
 	aliasframetype_t frametype;
 
-	// some models are special
-	if(!strcmp(mod->name, "progs/player.mdl"))
-		mod->modhint = MOD_PLAYER;
-	if(!strcmp(mod->name, "fx_tele.mdl"))//Tei, special
-		mod->modhint = MOD_TELEPORTDESTINATION;
-	else if(!strcmp(mod->name, "progs/eyes.mdl"))
-		mod->modhint = MOD_EYES;
-	else if (!strcmp(mod->name, "progs/flame.mdl") ||
-		!strcmp(mod->name, "progs/flame2.mdl"))
-		mod->modhint = MOD_FLAME;
-	else if (!strcmp(mod->name, "progs/bolt.mdl") || !strcmp(mod->name, "progs/bolt2.mdl") || !strcmp(mod->name, "progs/bolt3.mdl"))
-		mod->modhint = MOD_THUNDERBOLT;
-	else if (!strcmp(mod->name, "progs/backpack.mdl"))
-		mod->modhint = MOD_BACKPACK;
-	else
-		mod->modhint = MOD_NORMAL;
-
 	//VULT MODELS
 	Mod_AddModelFlags(mod);
 
-	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
-		mod->crc = CRC_Block (buffer, filesize);
+	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES) {
+		mod->crc = CRC_Block(buffer, filesize);
+	}
 
 	start = Hunk_LowMark ();
 
@@ -2455,21 +2440,26 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 //It was used in one of the older versions when it supported Q2 Models.
 void Mod_AddModelFlags(model_t *mod)
 {
-
 	//modhints
-	if(!strcmp(mod->name, "progs/player.mdl"))
+	if (!strcmp(mod->name, "progs/player.mdl")) {
 		mod->modhint = MOD_PLAYER;
-	else if(!strcmp(mod->name, "progs/eyes.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/eyes.mdl")) {
 		mod->modhint = MOD_EYES;
-	else if (!strcmp(mod->name, "progs/flame.mdl") ||
-		!strcmp(mod->name, "progs/flame2.mdl"))
+	}
+	else if (!strcmp(mod->name, "fx_tele.mdl")) {
+		//Tei, special
+		mod->modhint = MOD_TELEPORTDESTINATION;
+	}
+	else if (!strcmp(mod->name, "progs/flame.mdl") || !strcmp(mod->name, "progs/flame2.mdl")) {
 		mod->modhint = MOD_FLAME;
-	else if (!strcmp(mod->name, "progs/bolt.mdl") ||
-		!strcmp(mod->name, "progs/bolt2.mdl") ||
-		!strcmp(mod->name, "progs/bolt3.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/bolt.mdl") || !strcmp(mod->name, "progs/bolt2.mdl") || !strcmp(mod->name, "progs/bolt3.mdl")) {
 		mod->modhint = MOD_THUNDERBOLT;
-	else if(!strcmp(mod->name, "progs/minimissile.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/minimissile.mdl")) {
 		mod->modhint = MOD_CLUSTER;
+	}
 	else if (!strcmp(mod->name, "progs/flag.mdl") ||
 		!strcmp(mod->name, "progs/tf_flag.mdl") ||
 		!strcmp(mod->name, "progs/kkr.mdl") ||
@@ -2478,12 +2468,14 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/w_s_key.mdl") ||
 		!strcmp(mod->name, "progs/b_g_key.mdl") ||
 		!strcmp(mod->name, "progs/b_s_key.mdl") ||
-		!strcmp(mod->name, "progs/tf_stan.mdl"))
+		!strcmp(mod->name, "progs/tf_stan.mdl")) {
 		mod->modhint = MOD_FLAG;
+	}
 	else if (!strcmp(mod->name, "progs/spike.mdl") ||
 		!strcmp(mod->name, "progs/s_spike.mdl") ||
-		!strcmp(mod->name, "progs/amf_spike.mdl"))
+		!strcmp(mod->name, "progs/amf_spike.mdl")) {
 		mod->modhint = MOD_SPIKE;
+	}
 	else if (!strcmp(mod->name, "progs/caltrop.mdl") ||
 		!strcmp(mod->name, "progs/biggren.mdl") ||
 /*		!strcmp(mod->name, "progs/detpack.mdl") ||
@@ -2505,36 +2497,48 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/tgib1.mdl") ||
 		!strcmp(mod->name, "progs/tgib2.mdl") ||
 		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
-		!strcmp(mod->name, "progs/hgren2.mdl"))
+		!strcmp(mod->name, "progs/hgren2.mdl")) {
 		mod->modhint = MOD_TF_TRAIL;
-	else if (!strcmp(mod->name, "progs/coil.mdl") ||
-		!strcmp(mod->name, "progs/tesla.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/coil.mdl") || !strcmp(mod->name, "progs/tesla.mdl")) {
 		mod->modhint = MOD_TESLA;
-	else if (!strcmp(mod->name, "progs/turrgun.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/turrgun.mdl")) {
 		mod->modhint = MOD_SENTRYGUN;
-	else if (!strcmp(mod->name, "progs/detpack.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/detpack.mdl")) {
 		mod->modhint = MOD_DETPACK;
-	else if (!strcmp(mod->name, "progs/laser.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/laser.mdl")) {
 		mod->modhint = MOD_LASER;
-	else if (!strcmp(mod->name, "progs/demon.mdl")/* ||
-		!strcmp(mod->name, "progs/shambler.mdl") */)
+	}
+	else if (!strcmp(mod->name, "progs/demon.mdl")/* || !strcmp(mod->name, "progs/shambler.mdl") */) {
 		mod->modhint = MOD_DEMON;
-	else if(!strcmp(mod->name, "progs/soldier.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/soldier.mdl")) {
 		mod->modhint = MOD_SOLDIER;
-	else if(!strcmp(mod->name, "progs/enforcer.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/enforcer.mdl")) {
 		mod->modhint = MOD_ENFORCER;
-	else if(!strcmp(mod->name, "progs/ogre.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/ogre.mdl")) {
 		mod->modhint = MOD_OGRE;
-	else if(!strcmp(mod->name, "progs/shambler.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/shambler.mdl")) {
 		mod->modhint = MOD_SHAMBLER;
-	else if(!strcmp(mod->name, "progs/v_spike.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/v_spike.mdl")) {
 		mod->modhint = MOD_VOORSPIKE;
-	else if (!strcmp(mod->name, "progs/e_spike1.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/e_spike1.mdl")) {
 		mod->modhint = MOD_RAIL;
-	else if (!strcmp(mod->name, "progs/e_spike2.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/e_spike2.mdl")) {
 		mod->modhint = MOD_RAIL2;
-	else if (!strcmp(mod->name, "progs/lavaball.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/lavaball.mdl")) {
 		mod->modhint = MOD_LAVABALL;
+	}
 	else if (!strcmp(mod->name, "progs/dgib.mdl") ||
 		!strcmp(mod->name, "progs/dgib2.mdl") ||
 		!strcmp(mod->name, "progs/dgib3.mdl") ||
@@ -2544,24 +2548,54 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/tesgib4.mdl") ||
 		!strcmp(mod->name, "progs/tgib1.mdl") ||
 		!strcmp(mod->name, "progs/tgib2.mdl") ||
-		!strcmp(mod->name, "progs/tgib3.mdl"))
+		!strcmp(mod->name, "progs/tgib3.mdl")) {
 		mod->modhint = MOD_BUILDINGGIBS;
-	else if (!strcmp(mod->name, "progs/backpack.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/backpack.mdl")) {
 		mod->modhint = MOD_BACKPACK;
+	}
 	else if (!strcmp(mod->name, "progs/gib1.mdl") ||
 		!strcmp(mod->name, "progs/gib2.mdl") ||
 		!strcmp(mod->name, "progs/gib3.mdl") ||
-		!strcmp(mod->name, "progs/h_player.mdl"))
+		!strcmp(mod->name, "progs/h_player.mdl")) {
 		mod->modhint = MOD_GIB;
-	else if (!strncasecmp(mod->name, "progs/v_", 8))
+	}
+	else if (!strncasecmp(mod->name, "progs/v_", 8)) {
 		mod->modhint = MOD_VMODEL;
-	else if (!strcmp(mod->name, "progs/missile.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/missile.mdl")) {
 		mod->modhint = MOD_ROCKET;
-	else if (!strcmp(mod->name, "progs/grenade.mdl"))
+	}
+	else if (!strcmp(mod->name, "progs/grenade.mdl")) {
 		mod->modhint = MOD_GRENADE;
-	else
+	}
+	else if (!strcmp(mod->name, "progs/g_rock2.mdl")) {
+		mod->modhint = MOD_ROCKETLAUNCHER;
+	}
+	else if (!strcmp(mod->name, "progs/g_light.mdl")) {
+		mod->modhint = MOD_LIGHTNINGGUN;
+	}
+	else if (!strcmp(mod->name, "progs/quaddama.mdl")) {
+		mod->modhint = MOD_QUAD;
+	}
+	else if (!strcmp(mod->name, "progs/invulner.mdl")) {
+		mod->modhint = MOD_PENT;
+	}
+	else if (!strcmp(mod->name, "progs/invisibl.mdl")) {
+		mod->modhint = MOD_RING;
+	}
+	else if (!strcmp(mod->name, "maps/b_bh100.bsp")) {
+		mod->modhint = MOD_MEGAHEALTH;
+	}
+	else if (!strcmp(mod->name, "progs/armor.mdl")) {
+		mod->modhint = MOD_ARMOR;
+	}
+	else {
 		mod->modhint = MOD_NORMAL;
+	}
 }
+
+static int simpleitem_textures[MOD_NUMBER_HINTS][MAX_SIMPLE_TEXTURES];
 
 int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 {
@@ -2612,6 +2646,23 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	if (developer.value > 1)
 		Com_DPrintf("%s\n", tex ? "OK" : "FAIL");
 
+	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
+		simpleitem_textures[mod->modhint][skinnum] = tex;
+	}
+
 	return tex;
 }
 
+void Mod_ClearSimpleTextures(void)
+{
+	memset(simpleitem_textures, 0, sizeof(simpleitem_textures));
+}
+
+int Mod_SimpleTextureForHint(int model_hint, int skinnum)
+{
+	if (model_hint > 0 && model_hint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
+		return simpleitem_textures[model_hint][skinnum];
+	}
+
+	return 0;
+}

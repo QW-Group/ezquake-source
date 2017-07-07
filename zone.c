@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 #else
 #include "common.h"
+#include "gl_model.h"
 #endif
 
 void Cache_FreeLow(int new_low_hunk);
@@ -519,6 +520,9 @@ void Cache_Flush(void)
 	while (cache_head.next != &cache_head) {
 		Cache_Free(cache_head.next->user); // reclaim the space
 	}
+#ifndef SERVER_ONLY
+	Mod_ClearSimpleTextures();
+#endif
 }
 
 /*
