@@ -846,33 +846,6 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
-static GLuint GL_CreateLineVAO(void)
-{
-	static GLuint vao;
-	static GLuint vbo;
-#define number 10.0f
-	float points[] = {
-		0.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,
-	};
-
-	if (!vbo) {
-		glGenBuffers(1, &vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-	}
-
-	if (!vao) {
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		glEnableVertexAttribArray(0);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	return vao;
-}
-
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];

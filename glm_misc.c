@@ -47,3 +47,9 @@ void GLM_RenderSceneBlurDo(float alpha)
 {
 	// MEAG: TODO
 }
+
+void GLM_EmitCausticsPolys(void)
+{
+	// MEAG: TODO
+	// Is this ever going to be a thing?
+}

@@ -157,6 +157,33 @@ static GLuint GL_CreateRectangleVAO(void)
 	return vao;
 }
 
+static GLuint GL_CreateLineVAO(void)
+{
+	static GLuint vao;
+	static GLuint vbo;
+
+	float points[] = {
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,
+	};
+
+	if (!vbo) {
+		glGenBuffers(1, &vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	}
+
+	if (!vao) {
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glEnableVertexAttribArray(0);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	return vao;
+}
+
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {
 	if (fill) {

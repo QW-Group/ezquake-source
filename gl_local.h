@@ -688,16 +688,20 @@ void GLC_DrawParticles(int particles_to_draw, qbool square);
 void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl, float sh, float th);
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
+void GLC_DrawTileClear(int texnum, int x, int y, int w, int h);
+void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
+void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha);
+void GLC_DrawFlatPoly(glpoly_t* p);
+void GLC_EmitCausticsPolys(void);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
-void GLM_UpdateParticles(int particles_to_draw);
-void GLM_DrawParticles(int number, qbool square);
-
-void GLC_DrawTileClear(int texnum, int x, int y, int w, int h);
+void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
 void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
-void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
+void GLM_UpdateParticles(int particles_to_draw);
+void GLM_DrawParticles(int number, qbool square);
+void GLM_EmitCausticsPolys(void);
 
 #endif /* !__GL_LOCAL_H__ */
 
