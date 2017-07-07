@@ -676,6 +676,8 @@ void GLC_BrightenScreen(void);
 void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
+void SCR_SetupCI(void);
+
 #endif /* !__GL_LOCAL_H__ */
 
 
