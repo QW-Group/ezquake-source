@@ -1541,8 +1541,9 @@ qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
 void CL_Demo_PB_Init(void *buf, int buflen)
 {
 	// The length of the buffer is out of bounds.
-	if (buflen < 0 || buflen > (int)sizeof(pb_buf))
+	if (buflen < 0 || (size_t) buflen > sizeof(pb_buf)) {
 		Sys_Error("CL_Demo_PB_Init: buflen out of bounds.");
+	}
 
 	// Copy the specified init data into the playback buffer.
 	memcpy(pb_buf, buf, buflen);
