@@ -1015,6 +1015,8 @@ void R_DrawAliasModel(entity_t *ent)
 
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
+	local_skincolormode=r_skincolormode.integer;
+
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
 
@@ -1151,8 +1153,6 @@ void R_DrawAliasModel(entity_t *ent)
 			cv = &r_teamskincolor;
 		else 
 			cv = &r_enemyskincolor;
-
-		local_skincolormode=r_skincolormode.integer;
 
 		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1)
 			local_skincolormode=r_skincolormodedead.integer;
