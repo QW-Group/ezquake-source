@@ -45,6 +45,9 @@ c_args = [
 	'-DWITH_NQPROGS',
 	'-DUSE_SDL2',
 	'-DWITH_ZIP',
+	'-Wno-strict-aliasing',
+	'-Wno-int-to-pointer-cast',
+	'-Wno-pointer-to-int-cast',
 ]
 
 png = dependency('libpng', required : false)
@@ -294,6 +297,7 @@ if host_machine.system() == 'windows'
 	deps += meson.get_compiler('c').find_library('ws2_32')
 	deps += meson.get_compiler('c').find_library('comctl32')
 	deps += meson.get_compiler('c').find_library('winmm')
+	c_args += '-DWITH_WINAMP'
 elif host_machine.system() == 'darwin'
 	add_languages('objc')
 	sources += [
