@@ -1,6 +1,34 @@
-== How to create Windows binaries using mingw32 (compiling Windows binaries on Linux system):
+## Compiling for Windows
 
-NOTE: This does not explain how you build Windows binaries on Windows host.
+### Using Ubuntu Bash
+
+You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
+
+To enable Bash for Windows, press the `Start` button and type `Turn Windows f` and select `Turn Windows features on or off`. Scroll down to `Windows Subsystem for Linux (Beta)` and enable it.
+
+Now press WINDOWS+I, go to `Update & security` and then to the `For developers` tab. Enable `Developer mode`.
+
+Now press the `Start` button again and enter `bash`. Click it and install Bash.
+
+Enter the following commands to install all required prerequisites to build ezQuake:
+
+```
+sudo apt-get install -y git mingw-w64 build-essential
+```
+
+Now clone the ezQuake source code:
+
+```
+git clone https://github.com/ezQuake/ezquake-source.git ezquake
+```
+
+Now build the ezQuake executable:
+
+```
+EZ_CONFIG_FILE=.config_windows make
+```
+
+### Using a Linux system
 
 1) Make sure you have mingw32 toolchain installed. On Arch Linux it's mingw-w64 (select complete group)
 
