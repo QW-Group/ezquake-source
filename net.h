@@ -123,6 +123,12 @@ typedef int socket_t;
 // common definitions.
 //
 
+// winsock2.h defines INVALID_SOCKET as (SOCKET)(~0)
+// SOCKET is 64 bits on x86_64 while int may still be 32 bit wide
+#if defined _WIN32 && defined INVALID_SOCKET
+#undef INVALID_SOCKET
+#endif
+
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET  -1
 #endif
