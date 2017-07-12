@@ -206,7 +206,7 @@ char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
 
 // Added by VVD {
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
 #define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
 // vc++ snprintf and vsnprintf are non-standard and not compatible with C99.
