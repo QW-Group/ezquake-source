@@ -155,11 +155,6 @@ void EZ_listview_SortByColumn(ez_listview_t *self);
 void EZ_listview_SetSortColumn(ez_listview_t *self, int column);
 
 //
-// Listview - The text changed in one of the listviews items columns.
-//
-int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info);
-
-//
 // Listview - Set the text of the header.
 //
 void EZ_listview_SetHeaderText(ez_listview_t *self, int column, const char *text);
