@@ -139,7 +139,7 @@ Copy the compiled binary to your Quake folder, on 64bit linux the binary will be
 
 _These instructions were tested on Mac OS X 10.10._
 
-Get [[ Homebrew | http://brew.sh ]]
+Get [Homebrew](http://brew.sh)
 
 Run exactly as it says on the front page:
 
