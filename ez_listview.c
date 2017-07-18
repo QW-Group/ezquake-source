@@ -323,16 +323,6 @@ void EZ_listview_SetSortColumn(ez_listview_t *self, int column)
 	self->sort_column_index = column;
 }
 
-//
-// Listview - The text changed in one of the listviews items columns.
-//
-int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info)
-{
-	ez_listview_changeinfo_t *changeinfo = (ez_listview_changeinfo_t *)ext_event_info;
-
-	return 0;
-}
-
 /*
 //
 // Listview - OnResize event handler.

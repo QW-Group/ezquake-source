@@ -61,7 +61,6 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 							  ez_control_flags_t flags)
 {
 	int i;
-	ez_control_t *self	= (ez_control_t *)listviewitem;
 
 	// Initialize the inherited class first.
 	EZ_control_Init(&listviewitem->super, tree, parent, name, description, x, y, width, height, flags);
