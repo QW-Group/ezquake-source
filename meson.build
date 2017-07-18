@@ -134,7 +134,6 @@ sources = [
 	'ez_label.c',
 	'ez_listview.c',
 	'ez_listviewitem.c',
-	'ezquake-icon.c',
 	'ez_scrollbar.c',
 	'ez_scrollpane.c',
 	'ez_slider.c',
