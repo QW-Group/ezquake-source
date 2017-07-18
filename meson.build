@@ -165,6 +165,7 @@ sources = [
 	'hud.c',
 	'hud_common.c',
 	'hud_editor.c',
+	'hud_radar.c',
 	'hud_weapon_stats.c',
 	'ignore.c',
 	'image.c',
