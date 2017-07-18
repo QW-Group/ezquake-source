@@ -105,23 +105,35 @@ You can add `-jN` as a parameter to `make` to build in parallell. Use number of 
 
 ### Compiling a Linux binary
 
-_These instructions were tested on Xubuntu 15.10._
+_These instructions were tested on Ubuntu_
 
 Make sure you have the dependencies installed:
 
+- For *Ubuntu 15.10-16.04*
 ```
-sudo apt-get install git gitk libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng12-dev libjpeg-dev libspeex-dev libspeexdsp-dev
+sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng12-dev libjpeg-dev libspeex-dev libspeexdsp-dev
+```
+- For *Ubuntu 16.10+*
+```
+sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
 ```
 
-Run the following (replace 5 with the number of cpu cores you have +1)
+Clone the git repository:
+```
+git clone https://github.com/ezQuake/ezquake-source.git
+```
 
+Switch to `ezquake-source` path:
+```
+ cd ~/ezquake-source/
+```
+Run the compilation (replace 5 with the number of cpu cores you have +1):
 ```
 make -j5
 ```
-
 You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
 
-Copy the compiled binary to your quake folder, on 64bit linux the binary will be called `ezquake-linux-x86_64`.
+Copy the compiled binary to your Quake folder, on 64bit linux the binary will be called `ezquake-linux-x86_64`.
 
 ### Compiling an OS X binary
 
