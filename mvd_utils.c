@@ -43,21 +43,21 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-	{AXE_INFO,"axe",IT_AXE,"axe"},
-	{SG_INFO,"sg",IT_SHOTGUN,"sg"},
-	{SSG_INFO,"ssg",IT_SUPER_SHOTGUN,"&cf0fssg&r"},
-	{NG_INFO,"ng",IT_NAILGUN,"&cf0fng&r"},
-	{SNG_INFO,"sng",IT_SUPER_NAILGUN,"&cf0fsng&r"},
-	{GL_INFO,"gl",IT_GRENADE_LAUNCHER,"&cf0fgl&r"},
-	{RL_INFO,"rl",IT_ROCKET_LAUNCHER,"&cf0frl&r"},
-	{LG_INFO,"lg",IT_LIGHTNING,"&cf0flg&r"},
-	{RING_INFO,"ring",IT_INVISIBILITY,"&cff0ring&r"},
-	{QUAD_INFO,"quad",IT_QUAD,"&c00fquad&r"},
-	{PENT_INFO,"pent",IT_INVULNERABILITY,"&cf00pent&r"},
-	{GA_INFO,"ga",IT_ARMOR1,"&c0f0ga&r"},
-	{YA_INFO,"ya",IT_ARMOR2,"&cff0ya&r"},
-	{RA_INFO,"ra",IT_ARMOR3,"&cf00ra&r"},
-	{MH_INFO,"mh",IT_SUPERHEALTH,"&c00fmh&r"},
+	{AXE_INFO,"axe",IT_AXE,"axe", 0, 0},
+	{SG_INFO,"sg",IT_SHOTGUN,"sg", 0, 0},
+	{SSG_INFO,"ssg",IT_SUPER_SHOTGUN,"&cf0fssg&r", 0},
+	{NG_INFO,"ng",IT_NAILGUN,"&cf0fng&r", 0, 0},
+	{SNG_INFO,"sng",IT_SUPER_NAILGUN,"&cf0fsng&r", 0, 0},
+	{GL_INFO,"gl",IT_GRENADE_LAUNCHER,"&cf0fgl&r", 0, 0},
+	{RL_INFO,"rl",IT_ROCKET_LAUNCHER,"&cf0frl&r", MOD_ROCKETLAUNCHER, 0},
+	{LG_INFO,"lg",IT_LIGHTNING,"&cf0flg&r", MOD_LIGHTNINGGUN, 0},
+	{RING_INFO,"ring",IT_INVISIBILITY,"&cff0ring&r", MOD_RING, 0},
+	{QUAD_INFO,"quad",IT_QUAD,"&c00fquad&r", MOD_QUAD, 0},
+	{PENT_INFO,"pent",IT_INVULNERABILITY,"&cf00pent&r", MOD_PENT, 0},
+	{GA_INFO,"ga",IT_ARMOR1,"&c0f0ga&r", MOD_ARMOR, 0},
+	{YA_INFO,"ya",IT_ARMOR2,"&cff0ya&r", MOD_ARMOR, 1},
+	{RA_INFO,"ra",IT_ARMOR3,"&cf00ra&r", MOD_ARMOR, 2},
+	{MH_INFO,"mh",IT_SUPERHEALTH,"&c00fmh&r", MOD_MEGAHEALTH, 0},
 };
 
 typedef struct mvd_clock_t {
@@ -414,40 +414,64 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	}
 
 	// the longest possible string
-	if (style == 1)
-		*width = LETTERWIDTH * (MVD_ClockList_GetLongestName () + sizeof (" spawn") - 1) * scale;
-	else
-		*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1) * scale;
+	if (style == 1) {
+		*width = LETTERWIDTH * (MVD_ClockList_GetLongestName() + sizeof(" spawn") - 1) * scale;
+	}
+	else if (style == 3) {
+		*width = LETTERWIDTH * (2 + sizeof(" spawn") - 1) * scale;
+	}
+	else {
+		*width = LETTERWIDTH * (sizeof("QUAD spawn") - 1) * scale;
+	}
 
-	*height = LETTERHEIGHT * lines * scale;
+	*height = LETTERHEIGHT * lines * scale * (style == 3 ? 2 : 1);
 }
 
 void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale)
 {
 	mvd_clock_t *current = mvd_clocklist;
-	char *clockitem;
+	char clockitem[32];
+	char temp[16];
 
 	while (current && current->clockval - cls.demotime < time_limit) {
 		int time = (int) ((current->clockval - cls.demotime) + 1);
+		int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
-		if(style == 1){	// tp_name_*
-			clockitem = va("%s", TP_ItemName(mvd_wp_info[current->itemtype].it));
-		}else if (style == 2){	// brown + white
-			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
-			CharsToBrown(clockitem, clockitem + strlen(mvd_wp_info[current->itemtype].name));
-		}else{	// built-in color(GL) or simple white (software)
-			clockitem = va("%s", mvd_wp_info[current->itemtype].colored_name);
+		if (style == 1) {
+			// tp_name_*
+			strlcpy(clockitem, TP_ItemName(mvd_wp_info[current->itemtype].it), sizeof(clockitem));
+		}
+		else if (style == 2) {
+			// brown + white
+			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+			CharsToBrown(clockitem, clockitem + strlen(clockitem));
+		}
+		else if (style == 3 && texture) {
+			// simpleitem
+			strlcpy(clockitem, "  ", sizeof(clockitem));
+			Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture, 1.0f);
+			y += LETTERHEIGHT * scale / 2;
+		}
+		else {
+			// built-in color(GL) or simple white (software)
+			strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
 		}
 
-		if(time > 0)
-			clockitem = va("%s %d", clockitem, time);
-		else
-			clockitem = va("%s spawn", clockitem);
+		if (time > 0) {
+			snprintf(temp, sizeof(temp), " %d", time);
+			strlcat(clockitem, temp, sizeof(clockitem));
+		}
+		else {
+			strlcat(clockitem, " spawn", sizeof(clockitem));
+		}
 
 		Draw_SString (x, y, clockitem, scale);
 
 		current = current->next;
 		y += LETTERHEIGHT * scale;
+		if (style == 3) {
+			y += LETTERHEIGHT * scale / 2;
+		}
 	}
 }
 
