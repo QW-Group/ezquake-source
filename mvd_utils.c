@@ -908,14 +908,14 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 
 	had_mega = mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has > 0;
 	has_mega = mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH;
-	if (!had_mega && has_mega){
+	if (!had_mega && has_mega) {
 		// Picked up mega
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
 	}
-	else if (has_mega && mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost < mvd_new_info[i].p_info->stats[STAT_HEALTH]) {
+	else if (has_mega && mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost < mvd_new_info[i].p_info->stats[STAT_HEALTH] && mvd_new_info[i].p_info->stats[STAT_HEALTH] > 100) {
 		// They already had mega health but health increased - must have been another mega
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has++;
