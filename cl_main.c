@@ -2419,7 +2419,7 @@ void CL_Frame (double time)
 
 			CL_LinkEntities ();
 
-			SCR_UpdateScreenPlayerView (true);
+			SCR_UpdateScreenPlayerView (UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
 
 			if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 				CL_SoundFrame ();

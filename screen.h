@@ -30,9 +30,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void SCR_Init (void);
 
+#define UPDATESCREEN_MULTIVIEW 1
+#define UPDATESCREEN_POSTPROCESS 2
+
 qbool SCR_UpdateScreen (void);
 qbool SCR_UpdateScreenPrePlayerView (void);
-void SCR_UpdateScreenPlayerView (qbool multiview);
+void SCR_UpdateScreenPlayerView(int flags);
 void SCR_UpdateScreenPostPlayerView (void);
 
 void SCR_UpdateWholeScreen (void);

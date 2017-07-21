@@ -3211,9 +3211,9 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	return true;
 }
 
-void SCR_UpdateScreenPlayerView (qbool multiview)
+void SCR_UpdateScreenPlayerView (int flags)
 {
-	if (multiview) {
+	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef ();
 	}
 
@@ -3226,6 +3226,10 @@ void SCR_UpdateScreenPlayerView (qbool multiview)
 
 	V_RenderView ();
 
+	if (flags & UPDATESCREEN_POSTPROCESS) {
+		R_RenderPostProcess();
+	}
+
 	GL_Set2D ();
 
 	R_PolyBlend ();
@@ -3233,7 +3237,7 @@ void SCR_UpdateScreenPlayerView (qbool multiview)
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
 
-	if (multiview) {
+	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_DrawMultiviewIndividualElements ();
 	}
 }
@@ -3296,14 +3300,15 @@ void SCR_UpdateScreenPostPlayerView (void)
 
 // This is called every frame, and can also be called explicitly to flush text to the screen.
 // WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
-qbool SCR_UpdateScreen (void)
+qbool SCR_UpdateScreen(void)
 {
-	if (!SCR_UpdateScreenPrePlayerView ())
+	if (!SCR_UpdateScreenPrePlayerView()) {
 		return false;
+	}
 
-	SCR_UpdateScreenPlayerView (false);
+	SCR_UpdateScreenPlayerView(UPDATESCREEN_POSTPROCESS);
 
-	SCR_UpdateScreenPostPlayerView ();
+	SCR_UpdateScreenPostPlayerView();
 
 	return true;
 }
