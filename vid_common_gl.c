@@ -417,6 +417,33 @@ void VID_SetPalette (unsigned char *palette) {
 #define GLM_Enabled GL_ShadersSupported
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 
+static GLfloat projectionMatrix[16];
+static GLfloat modelMatrix[16];
+static GLfloat viewMatrix[16];
+static GLfloat identityMatrix[16] = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+};
+
+static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar);
+
+void GLM_SetMatrix(float* target, const float* source)
+{
+	memcpy(target, source, sizeof(float) * 16);
+}
+
+float* GLM_ModelviewMatrix(void)
+{
+	return modelMatrix;
+}
+
+float* GLM_ProjectionMatrix(void)
+{
+	return projectionMatrix;
+}
+
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	if (GLM_Enabled()) {
@@ -427,6 +454,35 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 		glLoadIdentity();
 		glOrtho(left, right, top, bottom, zNear, zFar);
 	}
+}
+
+void GLM_SetIdentityMatrix(float* matrix)
+{
+	GLM_SetMatrix(matrix, identityMatrix);
+}
+
+void GLM_TransformMatrix(float* matrix, float x, float y, float z)
+{
+	matrix[12] += matrix[0] * x + matrix[4] * y + matrix[8] * z;
+	matrix[13] += matrix[1] * x + matrix[5] * y + matrix[9] * z;
+	matrix[14] += matrix[2] * x + matrix[6] * y + matrix[10] * z;
+	matrix[15] += matrix[3] * x + matrix[7] * y + matrix[11] * z;
+}
+
+void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
+{
+	matrix[0] *= x_scale;
+	matrix[1] *= x_scale;
+	matrix[2] *= x_scale;
+	matrix[3] *= x_scale;
+	matrix[4] *= y_scale;
+	matrix[5] *= y_scale;
+	matrix[6] *= y_scale;
+	matrix[7] *= y_scale;
+	matrix[8] *= z_scale;
+	matrix[9] *= z_scale;
+	matrix[10] *= z_scale;
+	matrix[11] *= z_scale;
 }
 
 void GL_IdentityModelView(void)
@@ -462,6 +518,8 @@ void GL_PopMatrix(GLenum mode)
 void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 {
 	if (GLM_Enabled()) {
+		//if (mode == GL_PROJECTION)
+		// TODO
 		memset(matrix, 0, sizeof(GLfloat) * 16);
 	}
 	else {
@@ -627,6 +685,25 @@ qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shade
 	return false;
 }
 
+void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
+{
+	// Deliberately inverting top & bottom here...
+	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
+}
+
+void GLM_GetMatrix(GLenum type, float* matrix)
+{
+	if (type == GL_PROJECTION) {
+		GLM_SetMatrix(matrix, projectionMatrix);
+	}
+	else if (type == GL_MODELVIEW) {
+		GLM_SetMatrix(matrix, modelMatrix);
+	}
+	else {
+		// TODO
+	}
+}
+
 #undef glColor3f
 #undef glColor4f
 #undef glColor3fv
@@ -637,7 +714,7 @@ qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shade
 void GL_Color3f(float r, float g, float b)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor3f(r, g, b);
@@ -647,7 +724,7 @@ void GL_Color3f(float r, float g, float b)
 void GL_Color4f(float r, float g, float b, float a)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor4f(r, g, b, a);
@@ -657,7 +734,7 @@ void GL_Color4f(float r, float g, float b, float a)
 void GL_Color3fv(const float* rgbVec)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor3fv(rgbVec);
@@ -667,7 +744,7 @@ void GL_Color3fv(const float* rgbVec)
 void GL_Color3ubv(const GLubyte* rgbVec)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor3ubv(rgbVec);
@@ -678,7 +755,7 @@ void GL_Color3ubv(const GLubyte* rgbVec)
 void GL_Color4ubv(const GLubyte* rgbaVec)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor4ubv(rgbaVec);
@@ -689,9 +766,58 @@ void GL_Color4ubv(const GLubyte* rgbaVec)
 void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 {
 	if (GL_ShadersSupported()) {
-
+		// TODO
 	}
 	else {
 		glColor4ub(r, g, b, a);
 	}
 }
+
+void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glRotatef(angle, x, y, z);
+	}
+}
+
+void GL_Translate(GLenum matrix, float x, float y, float z)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glTranslatef(x, y, z);
+	}
+}
+
+void GL_IdentityProjectionView(void)
+{
+	if (GL_ShadersSupported()) {
+		GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
+	}
+	else {
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+	}
+}
+
+// 
+static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
+{
+	static GLfloat matrix[16];
+
+	memset(matrix, 0, sizeof(matrix));
+	matrix[0] = 2 / (right - left);
+	matrix[5] = 2 / (top - bottom);
+	matrix[10] = -2 / (zFar - zNear);
+	matrix[12] = -(right + left) / (right - left);
+	matrix[13] = -(top + bottom) / (top - bottom);
+	matrix[14] = -(zFar + zNear) / (zFar - zNear);
+	matrix[15] = 1;
+
+	return matrix;
+}
+

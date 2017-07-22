@@ -499,4 +499,8 @@ void GL_IdentityModelView(void);
 void GL_GetMatrix(GLenum mode, GLfloat* matrix);
 void GL_GetViewport(GLint* view);
 
+void GL_Rotate(GLenum matrix, float angle, float x, float y, float z);
+void GL_Translate(GLenum matrix, float x, float y, float z);
+void GL_IdentityProjectionView(void);
+
 #endif /* !__GL_LOCAL_H__ */
