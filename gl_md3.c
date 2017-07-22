@@ -73,12 +73,13 @@ void R_DrawAlias3Model (entity_t *ent)
 //	float ang;
 
 	float r_modelalpha;
+	float oldMatrix[16];
 
 	mod = ent->model;
 
 	GL_DisableMultitexture();
 
-	glPushMatrix ();
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
 	R_RotateForEntity (ent);
 
@@ -258,7 +259,7 @@ wtf: where else{ }
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 
 
-	glPopMatrix();
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	glEnable(GL_TEXTURE_2D);
 
 	if (gl_fogenable.value)

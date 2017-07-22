@@ -453,8 +453,6 @@ qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
-void GL_PushMatrix(GLenum mode);
-void GL_PopMatrix(GLenum mode);
 void GL_TextureEnvMode(GLenum mode);
 
 #define GL_ALPHATEST_NOCHANGE 0
@@ -500,7 +498,11 @@ void GL_GetMatrix(GLenum mode, GLfloat* matrix);
 void GL_GetViewport(GLint* view);
 
 void GL_Rotate(GLenum matrix, float angle, float x, float y, float z);
+void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale);
 void GL_Translate(GLenum matrix, float x, float y, float z);
 void GL_IdentityProjectionView(void);
+
+void GL_PopMatrix(GLenum mode, float* matrix);
+void GL_PushMatrix(GLenum mode, float* matrix);
 
 #endif /* !__GL_LOCAL_H__ */

@@ -736,6 +736,7 @@ void QMB_DrawParticles (void) {
 	particle_type_t *pt;
 	particle_texture_t *ptex;
 	int texture = 0, l;
+	float oldMatrix[16];
 
 	if (!qmb_initialized)
 		return;
@@ -907,7 +908,7 @@ void QMB_DrawParticles (void) {
 				if (particle_time < p->start || particle_time >= p->die)
 					continue;
 
-				glPushMatrix();
+				GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 				glTranslatef(p->org[0], p->org[1], p->org[2]);
 				glScalef(p->size, p->size, p->size);
 				glRotatef(p->endorg[0], 0, 1, 0);
@@ -938,7 +939,7 @@ void QMB_DrawParticles (void) {
 				glTexCoord2f (0,1);
 				glVertex3f (-p->size, p->size, 0);
 				glEnd();
-				glPopMatrix();
+				GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 			}
 			break;
 		default:

@@ -1263,6 +1263,7 @@ void R_DrawBrushModel (entity_t *e) {
 	mplane_t *pplane;
 	model_t *clmodel;
 	qbool rotated;
+	float oldMatrix[16];
 
 	currententity = e;
 	currenttexture = -1;
@@ -1331,7 +1332,7 @@ void R_DrawBrushModel (entity_t *e) {
 		}
 	}
 
-	glPushMatrix ();
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
 	glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
 	glRotatef (e->angles[1], 0, 0, 1);
@@ -1390,7 +1391,7 @@ void R_DrawBrushModel (entity_t *e) {
 	R_DrawSkyChain();
 	R_DrawAlphaChain ();
 
-	glPopMatrix ();
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 
 

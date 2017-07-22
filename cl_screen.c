@@ -1455,23 +1455,29 @@ void SCR_SetupCI (void) {
 
 void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
-	glPushMatrix();
-	glTranslatef(_p->org[0], _p->org[1], _p->org[2]);
-	glScalef(_p->size, _p->size, _p->size);
+	float matrix[16];
+
+	GL_PushMatrix(GL_MODELVIEW, matrix);
+	GL_Translate(GL_MODELVIEW, _p->org[0], _p->org[1], _p->org[2]);
+	GL_Scale(GL_MODELVIEW, _p->size, _p->size, _p->size);
 	if (_p->rotangle) {
-		glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);
+		GL_Rotate(GL_MODELVIEW, _p->rotangle, vpn[0], vpn[1], vpn[2]);
 	}
 
 	glColor4ubv(_p->color);
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]);
+	glVertex3fv(_coord[0]);
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]);
+	glVertex3fv(_coord[1]);
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]);
+	glVertex3fv(_coord[2]);
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]);
+	glVertex3fv(_coord[3]);
 	glEnd();
 
-	glPopMatrix();
+	GL_PopMatrix(GL_MODELVIEW, matrix);
 }
 
 // probably may be made as macros, but i hate macros cos macroses is unsafe
@@ -1837,6 +1843,7 @@ static void SCR_Draw_TeamInfo(void)
 	int x, y, w, h;
 	int i, j, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
 	char tmp[1024], *nick;
+	float oldMatrix[16];
 
 	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
 
@@ -1884,8 +1891,8 @@ static void SCR_Draw_TeamInfo(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 
 	if (scale != 1) {
-		glPushMatrix ();
-		glScalef(scale, scale, 1);
+		GL_PushMatrix(GL_PROJECTION, oldMatrix);
+		GL_Scale(GL_PROJECTION, scale, scale, 1);
 	}
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
@@ -1914,8 +1921,9 @@ static void SCR_Draw_TeamInfo(void)
 		y += FONTWIDTH;
 	}
 
-	if (scale != 1)
-		glPopMatrix();
+	if (scale != 1) {
+		GL_PopMatrix(GL_PROJECTION, oldMatrix);
+	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
@@ -2045,6 +2053,7 @@ static void SCR_Draw_ShowNick(void)
 	int		maxname, maxloc;
 	byte	*col;
 	float	scale = bound(0.1, scr_shownick_scale.value, 10);
+	float   oldMatrix[16];
 
 	// check do we have something do draw
 	if (!shownick.time || shownick.time + bound(0.1, scr_shownick_time.value, 3) < r_refdef2.time)
@@ -2063,8 +2072,8 @@ static void SCR_Draw_ShowNick(void)
 
 	if (scale != 1)
 	{
-		glPushMatrix ();
-		glScalef(scale, scale, 1);
+		GL_PushMatrix(GL_PROJECTION, oldMatrix);
+		GL_Scale(GL_PROJECTION, scale, scale, 1);
 	}
 
 	y = vid.height*0.6/scale + scr_shownick_y.value;
@@ -2087,8 +2096,9 @@ static void SCR_Draw_ShowNick(void)
 	// draw shownick
 	SCR_Draw_TeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, true);
 
-	if (scale != 1)
-		glPopMatrix();
+	if (scale != 1) {
+		GL_PopMatrix(GL_PROJECTION, oldMatrix);
+	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);

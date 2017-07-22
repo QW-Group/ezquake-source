@@ -1009,6 +1009,7 @@ void R_DrawAliasModel(entity_t *ent)
 	cvar_t *cv = NULL;
 	byte *color32bit = NULL;
 	qbool outline = false;
+	float oldMatrix[16];
 
 	//	entity_t *self;
 	//static sfx_t *step;//foosteps sounds, commented out
@@ -1093,7 +1094,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	//draw all the triangles
 	c_alias_polys += paliashdr->numtris;
-	glPushMatrix ();
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	R_RotateForEntity (ent);
 
 	if (clmodel->modhint == MOD_EYES) {
@@ -1299,7 +1300,7 @@ void R_DrawAliasModel(entity_t *ent)
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	glPopMatrix ();
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
 	//VULT MOTION TRAILS - No shadows on motion trails
 	if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
@@ -1312,7 +1313,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 		VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
-		glPushMatrix ();
+		GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 		glTranslatef (ent->origin[0],  ent->origin[1],  ent->origin[2]);
 		glRotatef (ent->angles[1],  0, 0, 1);
 
@@ -1322,8 +1323,7 @@ void R_DrawAliasModel(entity_t *ent)
 		GL_DrawAliasShadow (paliashdr, lastposenum);
 		glEnable (GL_TEXTURE_2D);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-
-		glPopMatrix ();
+		GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	}
 
 	glColor3ubv (color_white);
@@ -1841,34 +1841,35 @@ void R_SetupGL(void)
 	int x, x2, y2, y, w, h, farclip;
 
 	// set up viewpoint
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity ();
+	GL_IdentityProjectionView();
 	x = r_refdef.vrect.x * glwidth / vid.width;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth / vid.width;
 	y = (vid.height-r_refdef.vrect.y) * glheight / vid.height;
 	y2 = (vid.height - (r_refdef.vrect.y + r_refdef.vrect.height)) * glheight / vid.height;
 
 	// fudge around because of frac screen scale
-	if (x > 0)
+	if (x > 0) {
 		x--;
-	if (x2 < glwidth)
+	}
+	if (x2 < glwidth) {
 		x2++;
-	if (y2 < 0)
+	}
+	if (y2 < 0) {
 		y2--;
-	if (y < glheight)
-		y++; 
+	}
+	if (y < glheight) {
+		y++;
+	}
 
 	w = x2 - x;
 	h = y - y2;
 
 	// Multiview
-	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled())
-	{
+	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled()) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
 
-	if (! CL_MultiviewEnabled())
-	{
+	if (! CL_MultiviewEnabled()) {
 		glViewport (glx + x, gly + y2, w, h);
 	}
 
@@ -1882,20 +1883,22 @@ void R_SetupGL(void)
 
 	GL_IdentityModelView();
 
-	glRotatef (-90, 1, 0, 0);	    // put Z going up
-	glRotatef (90,  0, 0, 1);	    // put Z going up
-	glRotatef (-r_refdef.viewangles[2], 1, 0, 0);
-	glRotatef (-r_refdef.viewangles[0], 0, 1, 0);
-	glRotatef (-r_refdef.viewangles[1], 0, 0, 1);
-	glTranslatef (-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
+	GL_Rotate(GL_MODELVIEW, 90,  0, 0, 1);	    // put Z going up
+	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[2], 1, 0, 0);
+	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[0], 0, 1, 0);
+	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[1], 0, 0, 1);
+	GL_Translate(GL_MODELVIEW, -r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 
 	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	// set drawing parms
-	if (gl_cull.value)
+	if (gl_cull.value) {
 		glEnable(GL_CULL_FACE);
-	else
+	}
+	else {
 		glDisable(GL_CULL_FACE);
+	}
 
 	if (CL_MultiviewEnabled()) {
 		glClear (GL_DEPTH_BUFFER_BIT);
@@ -1913,12 +1916,10 @@ void R_SetupGL(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	if(gl_gammacorrection.integer)
-	{
+	if (gl_gammacorrection.integer) {
 		glEnable(GL_FRAMEBUFFER_SRGB);
 	}
-	else
-	{
+	else {
 		glDisable(GL_FRAMEBUFFER_SRGB);
 	}
 }
@@ -2251,8 +2252,9 @@ static void draw_velocity_3d(void)
 	const float stipple_line_width = 5.f;
 	const float stipple_line_colour[3] = { 0.5f, 0.5f, 0.5f };
 	const vec3_t v3_zero = {0.f, 0.f, 0.f };
+	float oldMatrix[16];
 
-	glPushMatrix();
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
 	glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
 	glRotatef(yaw_degrees, 0.f, 0.f, 1.f);
@@ -2311,7 +2313,7 @@ static void draw_velocity_3d(void)
 	}
 
 	glPopAttrib();
-	glPopMatrix();
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 
 /*
@@ -2324,6 +2326,8 @@ static void R_RenderSceneBlurDo(float alpha)
 	double current_time = Sys_DoubleTime(), diff_time = current_time - last_time;
 	double fps = gl_motion_blur_fps.value > 0 ? gl_motion_blur_fps.value : 77;
 	qbool draw = (alpha >= 0); // negative alpha mean we don't draw anything but copy screen only.
+	float oldProjectionMatrix[16];
+	float oldModelviewMatrix[16];
 
 	int vwidth = 1, vheight = 1;
 	float vs, vt, cs, ct;
@@ -2352,8 +2356,8 @@ static void R_RenderSceneBlurDo(float alpha)
 	GL_Bind(sceneblur_texture);
 
 	// go 2d
-	GL_PushMatrix(GL_PROJECTION);
-	GL_PushMatrix(GL_MODELVIEW);
+	GL_PushMatrix(GL_PROJECTION, oldProjectionMatrix);
+	GL_PushMatrix(GL_MODELVIEW, oldModelviewMatrix);
 	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 	GL_IdentityModelView();
 
@@ -2386,8 +2390,8 @@ static void R_RenderSceneBlurDo(float alpha)
 	}
 
 	// Restore matrices.
-	GL_PopMatrix(GL_PROJECTION);
-	GL_PopMatrix(GL_MODELVIEW);
+	GL_PopMatrix(GL_PROJECTION, oldProjectionMatrix);
+	GL_PopMatrix(GL_MODELVIEW, oldModelviewMatrix);
 
 	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
 	// so I copy frame not every frame.

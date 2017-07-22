@@ -497,24 +497,6 @@ void GL_IdentityModelView(void)
 }
 
 // TODO: GLM
-void GL_PushMatrix(GLenum mode)
-{
-	if (!GLM_Enabled()) {
-		glMatrixMode(mode);
-		glPushMatrix();
-	}
-}
-
-// TODO: GLM
-void GL_PopMatrix(GLenum mode)
-{
-	if (!GLM_Enabled()) {
-		glMatrixMode(mode);
-		glPopMatrix();
-	}
-}
-
-// TODO: GLM
 void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 {
 	if (GLM_Enabled()) {
@@ -691,17 +673,24 @@ void GLM_OrthographicProjection(float left, float right, float top, float bottom
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 }
 
-void GLM_GetMatrix(GLenum type, float* matrix)
+static float* GL_MatrixForMode(GLenum type)
 {
+	static float junk[16] = { 0 };
+
 	if (type == GL_PROJECTION) {
-		GLM_SetMatrix(matrix, projectionMatrix);
+		return projectionMatrix;
 	}
 	else if (type == GL_MODELVIEW) {
-		GLM_SetMatrix(matrix, modelMatrix);
+		return modelMatrix;
 	}
 	else {
-		// TODO
+		return junk;
 	}
+}
+
+void GLM_GetMatrix(GLenum type, float* matrix)
+{
+	GLM_SetMatrix(matrix, GL_MatrixForMode(type));
 }
 
 #undef glColor3f
@@ -821,3 +810,34 @@ static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float b
 	return matrix;
 }
 
+void GL_PushMatrix(GLenum mode, float* matrix)
+{
+	if (GL_ShadersSupported()) {
+		memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
+	}
+	else {
+		glMatrixMode(mode);
+		glPushMatrix();
+	}
+}
+
+void GL_PopMatrix(GLenum mode, float* matrix)
+{
+	if (GL_ShadersSupported()) {
+		memcpy(GL_MatrixForMode(mode), matrix, sizeof(float) * 16);
+	}
+	else {
+		glMatrixMode(mode);
+		glPopMatrix();
+	}
+}
+
+void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
+{
+	if (GL_ShadersSupported()) {
+		GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
+	}
+	else {
+		glScalef(xScale, yScale, zScale);
+	}
+}
