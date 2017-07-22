@@ -541,7 +541,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (!shelltexture)
 			shelltexture = GL_GenerateShellTexture();
 		GL_Bind (shelltexture);
-		glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 		if (gl_powerupshells_style.integer)
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -598,13 +598,14 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glEnd();
 		}
 		// LordHavoc: reset the state to what the rest of the renderer expects
-		glDisable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else
 	{
-		if (r_modelalpha < 1)
-			glEnable(GL_BLEND);
+		if (r_modelalpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		}
 
 		if (custom_model) {
 			glDisable(GL_TEXTURE_2D);
@@ -683,8 +684,9 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glEnd();
 		}
 
-		if (r_modelalpha < 1)
-			glDisable(GL_BLEND);
+		if (r_modelalpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		}
 
 		if (custom_model) {
 			glEnable(GL_TEXTURE_2D);
@@ -1227,11 +1229,11 @@ void R_DrawAliasModel(entity_t *ent)
 				GL_TextureEnvMode(GL_REPLACE);
 				GL_Bind (fb_texture);
 
-				glEnable (GL_BLEND);
+				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, false);
 
-				glDisable (GL_BLEND);
+				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 			}
 		}
 	}
@@ -1273,12 +1275,12 @@ void R_DrawAliasModel(entity_t *ent)
 
 		GL_TextureEnvMode(GL_DECAL);        
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-		glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_BLEND);            
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 		GL_SelectTexture(GL_TEXTURE1);
 		//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
@@ -1315,11 +1317,11 @@ void R_DrawAliasModel(entity_t *ent)
 		glRotatef (ent->angles[1],  0, 0, 1);
 
 		glDisable (GL_TEXTURE_2D);
-		glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glColor4f (0, 0, 0, 0.5);
 		GL_DrawAliasShadow (paliashdr, lastposenum);
 		glEnable (GL_TEXTURE_2D);
-		glDisable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 		glPopMatrix ();
 	}
@@ -1395,8 +1397,7 @@ static qbool R_DrawTrySimpleItem(void)
 	glPushAttrib(GL_ENABLE_BIT);
 
 	glDisable(GL_CULL_FACE);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	GL_Bind(simpletexture);
 
@@ -1436,8 +1437,9 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	if (!r_drawentities.value || !vislist->count)
 		return;
 
-	if (vislist->alpha)
-		glEnable (GL_ALPHA_TEST);
+	if (vislist->alpha) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
+	}
 
 	// draw sprites separately, because of alpha_test
 	for (i = 0; i < vislist->count; i++) 
@@ -1527,8 +1529,9 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		}
 	}
 
-	if (vislist->alpha)
-		glDisable (GL_ALPHA_TEST);
+	if (vislist->alpha) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+	}
 }
 
 void R_DrawViewModel(void)
@@ -1610,8 +1613,7 @@ void R_PolyBlend(void)
 	if (!v_blend[3])
 		return;
 
-	glDisable (GL_ALPHA_TEST);
-	glEnable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	glDisable (GL_TEXTURE_2D);
 
 	glColor4fv (v_blend);
@@ -1623,9 +1625,8 @@ void R_PolyBlend(void)
 	glVertex2f (r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
 	glEnd ();
 
-	glDisable (GL_BLEND);
 	glEnable (GL_TEXTURE_2D);
-	glEnable (GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	glColor3ubv (color_white);
 }
@@ -1644,7 +1645,7 @@ void R_BrightenScreen(void)
 	f = pow (f, vid_gamma);
 
 	glDisable (GL_TEXTURE_2D);
-	glEnable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc (GL_DST_COLOR, GL_ONE);
 	glBegin (GL_QUADS);
 	while (f > 1) 
@@ -1668,7 +1669,7 @@ void R_BrightenScreen(void)
 	glEnd ();
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable (GL_TEXTURE_2D);
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glColor3ubv (color_white);
 }
 
@@ -1905,8 +1906,7 @@ void R_SetupGL(void)
 
 	glDepthRange (gldepthmin, gldepthmax); 
 
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
 	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glHint (GL_FOG_HINT,GL_NICEST);
@@ -2367,8 +2367,7 @@ static void R_RenderSceneBlurDo(float alpha)
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable (GL_CULL_FACE);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 
 	glColor4f(1, 1, 1, alpha);
 

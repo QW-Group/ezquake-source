@@ -457,6 +457,15 @@ void GL_PushMatrix(GLenum mode);
 void GL_PopMatrix(GLenum mode);
 void GL_TextureEnvMode(GLenum mode);
 
+#define GL_ALPHATEST_NOCHANGE 0
+#define GL_ALPHATEST_ENABLED  1
+#define GL_ALPHATEST_DISABLED 2
+#define GL_BLEND_NOCHANGE 0
+#define GL_BLEND_ENABLED  1
+#define GL_BLEND_DISABLED 2
+
+void GL_AlphaBlendFlags(int modes);
+
 void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
 void GLM_TransformMatrix(float* matrix, float x, float y, float z);
 void GLM_GetMatrix(GLenum type, float* matrix);

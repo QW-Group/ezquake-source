@@ -565,8 +565,7 @@ void Classic_DrawParticles (void) {
 
 	GL_Bind(particletexture);
 
-	glEnable (GL_BLEND);
-
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	if (!gl_solidparticles.value)
 		glDepthMask (GL_FALSE);
 
@@ -692,7 +691,7 @@ void Classic_DrawParticles (void) {
 	}
 
 	glEnd ();
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glDepthMask (GL_TRUE);
 	glEnable (GL_TEXTURE_2D);
 	GL_TextureEnvMode(GL_REPLACE);

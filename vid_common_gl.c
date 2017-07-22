@@ -316,7 +316,7 @@ void GL_Init (void) {
 	glCullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 
-	glEnable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	glAlphaFunc(GL_GREATER, 0.666);
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
@@ -489,6 +489,24 @@ void GL_TextureEnvMode(GLenum mode)
 	}
 }
 
+void GL_AlphaBlendFlags(int flags)
+{
+	if (!GL_ShadersSupported()) {
+		if (flags & GL_ALPHATEST_ENABLED) {
+			glEnable(GL_ALPHA_TEST);
+		}
+		else if (flags & GL_ALPHATEST_DISABLED) {
+			glDisable(GL_ALPHA_TEST);
+		}
+	}
+
+	if (flags & GL_BLEND_ENABLED) {
+		glEnable(GL_BLEND);
+	}
+	else if (flags & GL_BLEND_DISABLED) {
+		glDisable(GL_BLEND);
+	}
+}
 
 // GLM Utility functions
 void GLM_ConPrintShaderLog(GLuint shader)

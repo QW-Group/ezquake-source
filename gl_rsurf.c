@@ -133,8 +133,7 @@ void R_RenderFullbrights (void) {
 		return;
 
 	glDepthMask (GL_FALSE);	// don't bother writing Z
-	glEnable(GL_ALPHA_TEST);
-
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 
 	GL_TextureEnvMode(GL_REPLACE);
 
@@ -147,7 +146,7 @@ void R_RenderFullbrights (void) {
 		fullbright_polys[i] = NULL;		
 	}
 
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	glDepthMask (GL_TRUE);
 
 	drawfullbrights = false;
@@ -161,7 +160,7 @@ void R_RenderLumas (void) {
 		return;
 
 	glDepthMask (GL_FALSE);	// don't bother writing Z
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	GL_TextureEnvMode(GL_REPLACE);
@@ -193,7 +192,7 @@ void EmitDetailPolys (void) {
 	GL_Bind(detailtexture);
 	GL_TextureEnvMode(GL_DECAL);
 	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	for (p = detail_polys; p; p = p->detail_chain) {
 		glBegin(GL_POLYGON);
@@ -207,7 +206,7 @@ void EmitDetailPolys (void) {
 
 	GL_TextureEnvMode(GL_REPLACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	detail_polys = NULL;
 }
@@ -514,8 +513,9 @@ void R_BlendLightmaps (void) {
 	else
 		glBlendFunc (GL_ZERO, GL_SRC_COLOR);
 
-	if (!(r_lightmap.value && r_refdef2.allow_cheats))
-		glEnable (GL_BLEND);
+	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
 
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!(p = lightmap_polys[i]))
@@ -534,7 +534,7 @@ void R_BlendLightmaps (void) {
 		}
 		lightmap_polys[i] = NULL;	
 	}
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask (GL_TRUE);		// back to normal Z buffering
 }
@@ -655,11 +655,12 @@ void R_DrawWaterSurfaces (void) {
 	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	if (wateralpha < 1.0) {
-		glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glColor4f (1, 1, 1, wateralpha);
 		GL_TextureEnvMode(GL_MODULATE);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_FALSE);
+		if (wateralpha < 0.9) {
+			glDepthMask(GL_FALSE);
+		}
 	}
 
 	GL_DisableMultitexture();
@@ -742,9 +743,10 @@ void R_DrawWaterSurfaces (void) {
 		GL_TextureEnvMode(GL_REPLACE);
 
 		glColor3ubv (color_white);
-		glDisable (GL_BLEND);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_TRUE);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		if (wateralpha < 0.9) {
+			glDepthMask(GL_TRUE);
+		}
 	}
 }
 
@@ -758,9 +760,8 @@ void R_DrawAlphaChain (void) {
 	if (!alphachain)
 		return;
 
-	glEnable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	glAlphaFunc(GL_GREATER, 0.333);
-
 	for (s = alphachain; s; s = s->texturechain) {
 		
 		
@@ -798,7 +799,7 @@ void R_DrawAlphaChain (void) {
 
 	alphachain = NULL;
 
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	glAlphaFunc(GL_GREATER, 0.666);
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
@@ -1273,13 +1274,15 @@ void R_DrawBrushModel (entity_t *e) {
 		if (R_CullSphere (e->origin, clmodel->radius))
 			return;
 	   if (e->alpha) {
-		  glEnable (GL_BLEND);
-		  GL_TextureEnvMode(GL_MODULATE);
-		  glColor4f (1, 1, 1, e->alpha);
-	   } else {
-		  glColor3f (1,1,1);
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			GL_TextureEnvMode(GL_MODULATE);
+			glColor4f (1, 1, 1, e->alpha);
+	   }
+	   else {
+			glColor3f (1,1,1);
 	   } 
-	} else {
+	}
+	else {
 		rotated = false;
 		VectorAdd (e->origin, clmodel->mins, mins);
 		VectorAdd (e->origin, clmodel->maxs, maxs);
@@ -1288,11 +1291,12 @@ void R_DrawBrushModel (entity_t *e) {
 			return;
 
 	   if (e->alpha) {
-		  glEnable (GL_BLEND);
-		  GL_TextureEnvMode(GL_MODULATE);
-		  glColor4f (1, 1, 1, e->alpha);
-	   } else {
-		  glColor3f (1,1,1);
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			GL_TextureEnvMode(GL_MODULATE);
+			glColor4f (1, 1, 1, e->alpha);
+	   }
+	   else {
+			glColor3f (1,1,1);
 	   } 
 	}
 

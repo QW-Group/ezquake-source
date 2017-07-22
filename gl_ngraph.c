@@ -224,10 +224,8 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         y += 8;
     }
 
-    if (alpha < 1)
-    {
-        glDisable(GL_ALPHA_TEST);
-        glEnable (GL_BLEND);
+    if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
     }
 
 	GL_TextureEnvMode(GL_MODULATE);
@@ -301,7 +299,6 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     glColor3f(1,1,1);
 	GL_TextureEnvMode(GL_REPLACE );
 
-    glEnable(GL_ALPHA_TEST);
-    glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
     glEnable(GL_TEXTURE_2D);
 }

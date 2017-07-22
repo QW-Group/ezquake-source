@@ -269,8 +269,7 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
     {
       	alpha = min(1, (*vxdmgcnt_t - cl.time));
 		GL_TextureEnvMode(GL_MODULATE);
-      	glDisable(GL_ALPHA_TEST);
-      	glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
       	glColor4f(1, 1, 1, alpha);
 		if (hud) {
 			static cvar_t *scale = NULL, *style, *digits, *align;
@@ -286,8 +285,7 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
 		} else {
       		Sbar_DrawNum (x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
 		}
-      	glEnable(GL_ALPHA_TEST);
-      	glDisable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 		GL_TextureEnvMode(GL_REPLACE);
       	glColor4f(1, 1, 1, 1);
     }

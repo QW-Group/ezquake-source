@@ -279,7 +279,7 @@ void R_Bloom_DrawEffect( void )
 {
 	GL_Bind(r_bloomeffecttexture);
 
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	GL_TextureEnvMode(GL_MODULATE);
@@ -294,7 +294,7 @@ void R_Bloom_DrawEffect( void )
 	glVertex2f(    curView_x + curView_width,  curView_y   );             
 	glEnd();
 
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
 
 #if 0
@@ -413,7 +413,7 @@ void R_Bloom_GeneratexDiamonds( void )
 
 	// Start modifying the small scene corner.
 	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
     // Darkening passes
 	if( r_bloom_darken.value )
@@ -506,7 +506,7 @@ void R_Bloom_GeneratexDiamonds( void )
 // =================
 void R_Bloom_DownsampleView( void )
 {
-	glDisable( GL_BLEND );
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 
 	// Stepped downsample.
@@ -529,13 +529,13 @@ void R_Bloom_DownsampleView( void )
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, sampleText_tcw, sampleText_tch );
 
 		// Now blend the big screen texture into the bloom generation space (hoping it adds some blur).
-		glEnable( GL_BLEND );
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glBlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
 		GL_Bind(r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
-		glDisable( GL_BLEND );
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	} 
 	else
 	{    
@@ -576,7 +576,7 @@ void R_BloomBlend (void)
 	GL_IdentityModelView();
 	glDisable(GL_CULL_FACE);
 
-	glDisable( GL_BLEND );
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glEnable( GL_TEXTURE_2D );
 
 	glColor4f( 1, 1, 1, 1 );
@@ -614,7 +614,7 @@ void R_BloomBlend (void)
 	//R_Bloom_GeneratexCross();
 
 	// Restore the screen-backup to the screen.
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_Bind(r_bloombackuptexture);
 	glColor4f( 1, 1, 1, 1 );
 	R_Bloom_Quad( 0,

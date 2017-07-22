@@ -86,8 +86,9 @@ void R_DrawAlias3Model (entity_t *ent)
 	if (ent->alpha)
 		r_modelalpha = ent->alpha;
 
-	if (r_modelalpha < 1)
-		glEnable(GL_BLEND);
+	if (r_modelalpha < 1) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
 //	glDisable(GL_ALPHA_TEST);
 
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
@@ -95,8 +96,9 @@ void R_DrawAlias3Model (entity_t *ent)
 	glScalef(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(1, 1, 1, r_modelalpha);
 
-	if (gl_fogenable.value)
+	if (gl_fogenable.value) {
 		glEnable(GL_FOG);
+	}
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
@@ -105,11 +107,13 @@ void R_DrawAlias3Model (entity_t *ent)
 		ambientlight = 999999;
 	}
 
-	if (gl_smoothmodels.value)
+	if (gl_smoothmodels.value) {
 		glShadeModel(GL_SMOOTH);
+	}
 
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	if (gl_affinemodels.value) {
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
 
 	GL_TextureEnvMode(GL_MODULATE);
 
@@ -241,8 +245,9 @@ wtf: where else{ }
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);	//NEXT!   Getting cocky!
 	}
 
-	if (r_modelalpha < 1)
-		glDisable (GL_BLEND);
+	if (r_modelalpha < 1) {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	}
 
 	GL_TextureEnvMode(GL_REPLACE);
 //	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

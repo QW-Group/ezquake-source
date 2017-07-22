@@ -953,12 +953,10 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	if (gl_statechange)
 	{
 		// Turn on alpha transparency.
-		if ((gl_alphafont.value || apply_overall_alpha))
-		{
-			glDisable(GL_ALPHA_TEST);
+		if ((gl_alphafont.value || apply_overall_alpha)) {
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 		}
-
-		glEnable(GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 		if (scr_coloredText.integer)
 		{
@@ -1052,8 +1050,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 static void Draw_ResetCharGLState(void)
 {
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
 }
@@ -1106,7 +1103,7 @@ void Draw_SetColor(byte *rgba, float alpha)
 	}
 }
 
-static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
+static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
 {
 	byte rgba[4];
 	qbool color_is_white = true;
@@ -1120,53 +1117,42 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 		return;
 
 	// Turn on alpha transparency.
-	if (gl_alphafont.value || (overall_alpha < 1.0))
-	{
-		glDisable(GL_ALPHA_TEST);
+	if (gl_alphafont.value || (overall_alpha < 1.0)) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	}
-
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
-	if (scr_coloredText.integer)
-	{
-		if (color_count > 0)
-		{
+	if (scr_coloredText.integer) {
+		if (color_count > 0) {
 			COLOR_TO_RGBA(color[color_index].c, rgba);
 		}
 
 		GL_TextureEnvMode(GL_MODULATE);
 	}
-	else
-	{
+	else {
 		GL_TextureEnvMode(GL_REPLACE);
 		memcpy(rgba, color_white, sizeof(byte) * 4);
 	}
 
 	// Draw the string.
-	for (i = 0; text[i]; i++)
-	{
+	for (i = 0; text[i]; i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
-		if (!color)
-		{
-			if (text[i] == '&')
-			{
-				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4])
-				{
+		if (!color) {
+			if (text[i] == '&') {
+				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4]) {
 					r = HexToInt(text[i + 2]);
 					g = HexToInt(text[i + 3]);
 					b = HexToInt(text[i + 4]);
 
-					if (r >= 0 && g >= 0 && b >= 0)
-					{
-						if (scr_coloredText.value)
-						{
+					if (r >= 0 && g >= 0 && b >= 0) {
+						if (scr_coloredText.value) {
 							rgba[0] = (r * 16);
 							rgba[1] = (g * 16);
 							rgba[2] = (b * 16);
 							rgba[3] = 255;
-							color_is_white = false;							
+							color_is_white = false;
 						}
 
 						color_count++; // Keep track on how many colors we're using.
@@ -1177,10 +1163,8 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 						continue;
 					}
 				}
-				else if (text[i + 1] == 'r')
-				{
-					if (!color_is_white)
-					{
+				else if (text[i + 1] == 'r') {
+					if (!color_is_white) {
 						memcpy(rgba, color_white, sizeof(byte) * 4);
 						color_is_white = true;
 						Draw_SetColor(rgba, alpha);
@@ -1191,13 +1175,11 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 				}
 			}
 		}
-		else if (scr_coloredText.value && (color_index < color_count) && (i == color[color_index].i))
-		{
+		else if (scr_coloredText.value && (color_index < color_count) && (i == color[color_index].i)) {
 			// Change color if the color array tells us this index should have a new color.
 
 			// Set the new color if it's not the same as the last.
-			if (color[color_index].c != last_color)
-			{
+			if (color[color_index].c != last_color) {
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
 				rgba[3] = 255;
@@ -1206,12 +1188,12 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 
 			color_index++; // Goto next color.
 		}
-
 		curr_char = text[i];
 
 		// Do not convert the character to red if we're applying color to the text.
-		if (red && color_count <= 0)
+		if (red && color_count <= 0) {
 			curr_char |= 128;
+		}
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
@@ -1325,8 +1307,7 @@ void Draw_Crosshair (void)
 
 		col = crosshaircolor.color;
 
-		glDisable(GL_ALPHA_TEST);
-		glEnable (GL_BLEND);
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		col[3] = bound(0, crosshairalpha.value, 1) * 255;
 		glColor4ubv (col);
 
@@ -1372,8 +1353,7 @@ void Draw_Crosshair (void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		glDisable(GL_BLEND);
-		glEnable (GL_ALPHA_TEST);
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 		GL_TextureEnvMode(GL_REPLACE);
 		glColor3ubv (color_white);
@@ -1500,8 +1480,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 		return;
 
 	glDisable (GL_TEXTURE_2D);
-	glEnable (GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
@@ -1520,8 +1499,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	}
 
 	glEnable (GL_TEXTURE_2D);
-	glEnable (GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	glColor4ubv (color_white);
 }
@@ -1552,8 +1530,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	byte bytecolor[4];
 	glDisable (GL_TEXTURE_2D);
 
-	glEnable (GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
@@ -1568,8 +1545,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	glColor3ubv (color_white);
 }
@@ -1587,8 +1563,7 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-	glEnable (GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
@@ -1628,8 +1603,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glDisable (GL_TEXTURE_2D);
 
-	glEnable (GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
@@ -1688,9 +1662,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glEnable (GL_TEXTURE_2D);
 
-	glEnable (GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
-
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	glColor4ubv (color_white);
 
 	glPopAttrib();
@@ -1829,8 +1801,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 		if (imageProgram.program) {
 			if (alpha < 1.0) {
-				glDisable(GL_ALPHA_TEST);
-				glEnable(GL_BLEND);
+				GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glCullFace(GL_FRONT);
 			}
@@ -1840,15 +1811,13 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 			GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, alpha);
 
 			if (alpha < 1.0) {
-				glEnable(GL_ALPHA_TEST);
-				glDisable(GL_BLEND);
+				GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			}
 		}
 	}
 	else {
 		if (alpha < 1.0) {
-			glDisable(GL_ALPHA_TEST);
-			glEnable(GL_BLEND);
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glCullFace(GL_FRONT);
 			glColor4f(1, 1, 1, alpha);
@@ -1877,8 +1846,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 		glEnd();
 
 		if (alpha < 1.0) {
-			glEnable(GL_ALPHA_TEST);
-			glDisable(GL_BLEND);
+			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			GL_TextureEnvMode(GL_REPLACE);
 			glColor4f(1, 1, 1, 1);
 		}
@@ -2061,14 +2029,11 @@ void Draw_FadeScreen (float alpha)
 	if (!alpha)
 		return;
 
-	if (alpha < 1)
-	{
-		glDisable (GL_ALPHA_TEST);
-		glEnable (GL_BLEND);
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		glColor4f (0, 0, 0, alpha);
 	}
-	else
-	{
+	else {
 		glColor3f (0, 0, 0);
 	}
 
@@ -2081,10 +2046,8 @@ void Draw_FadeScreen (float alpha)
 	glVertex2f (0, vid.height);
 	glEnd ();
 
-	if (alpha < 1)
-	{
-		glDisable (GL_BLEND);
-		glEnable (GL_ALPHA_TEST);
+	if (alpha < 1) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	}
 	glColor3ubv (color_white);
 	glEnable (GL_TEXTURE_2D);
@@ -2140,8 +2103,7 @@ void GL_Set2D (void)
 
 	glDisable (GL_DEPTH_TEST);
 	glDisable (GL_CULL_FACE);
-	glDisable (GL_BLEND);
-	glEnable (GL_ALPHA_TEST);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor3ubv (color_white);
 }
@@ -2159,31 +2121,4 @@ void Draw_2dAlphaTexture(float x, float y, float width, float height, int textur
 	pic.texnum = texture_num;
 
 	Draw_AlphaPic(x, y, &pic, alpha);
-/*
-	Draw_AlphaPic
-	glPushAttrib(GL_ENABLE_BIT);
-
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-
-	GL_Bind(texture_num);
-
-	glBegin (GL_QUADS);
-
-	glTexCoord2f (0, 0);
-	glVertex2f (x, y);
-
-	glTexCoord2f (1, 0);
-	glVertex2f (x + width, y);
-
-	glTexCoord2f (0, 1);
-	glVertex2f (x, y + height);
-
-	glTexCoord2f (1, 1);
-	glVertex2f (x + width, y + height);
-
-	glEnd ();
-
-	glPopAttrib();*/
 }

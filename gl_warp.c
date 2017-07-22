@@ -292,7 +292,7 @@ void EmitWaterPolys (msurface_t *fa) {
 
 		// START shaman FIX /gl_turbalpha + /r_fastturb {
 		if (wateralpha < 1.0 && wateralpha >= 0) {
-			glEnable (GL_BLEND);
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 			col[3] = wateralpha*255;
 			glColor4ubv (col); // 1, 1, 1, wateralpha
 			GL_TextureEnvMode(GL_MODULATE);
@@ -307,7 +307,7 @@ void EmitWaterPolys (msurface_t *fa) {
 		if (wateralpha < 1.0 && wateralpha >= 0) {
 			GL_TextureEnvMode(GL_REPLACE);
 			glColor3ubv (color_white);
-			glDisable (GL_BLEND);
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 			if (wateralpha < 0.9)
 				glDepthMask (GL_TRUE);
 		}
@@ -472,7 +472,7 @@ void R_DrawSkyChain (void) {
 			for (fa = skychain; fa; fa = fa->texturechain)
 				EmitSkyPolys (fa, false);
 
-			glEnable (GL_BLEND);
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 			GL_Bind (alphaskytexture);
 
 			speedscale = r_refdef2.time * 16;
@@ -481,7 +481,7 @@ void R_DrawSkyChain (void) {
 			for (fa = skychain; fa; fa = fa->texturechain)
 				EmitSkyPolys (fa, false);
 
-			glDisable (GL_BLEND);
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
 
@@ -948,7 +948,7 @@ static void R_DrawSkyDome (void)
 		DrawSkyFace (i);
 	}
 
-	glEnable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_Bind (alphaskytexture);
 
 	speedscale = r_refdef2.time*16;
@@ -1047,7 +1047,7 @@ void R_DrawSky (void)
 			glBlendFunc(GL_ZERO, GL_ONE);
 		}
 		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 		for (fa = skychain; fa; fa = fa->texturechain)
 			EmitFlatPoly (fa);
@@ -1059,7 +1059,7 @@ void R_DrawSky (void)
 		}
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	}
 
 	skychain = NULL;
@@ -1088,7 +1088,7 @@ void EmitCausticsPolys (void) {
 	GL_Bind (underwatertexture);
 	GL_TextureEnvMode(GL_DECAL);
 	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-	glEnable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	for (p = caustics_polys; p; p = p->caustics_chain) {
 		glBegin(GL_POLYGON);
@@ -1103,7 +1103,7 @@ void EmitCausticsPolys (void) {
 
 	GL_TextureEnvMode(GL_REPLACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	caustics_polys = NULL;
 }

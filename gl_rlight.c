@@ -163,7 +163,7 @@ void R_RenderDlights (void) {
 	glDepthMask (GL_FALSE);
 	glDisable (GL_TEXTURE_2D);
 	glShadeModel (GL_SMOOTH);
-	glEnable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc (GL_ONE, GL_ONE);
 
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
@@ -194,7 +194,7 @@ void R_RenderDlights (void) {
 	}
 
 	glColor3ubv (color_white);
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask (GL_TRUE);

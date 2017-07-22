@@ -150,7 +150,7 @@ void R_DrawCoronas(void)
 	VectorScale (vright, 1, right);
 
 	GL_Bind(coronatexture);
-	glEnable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glDepthMask (GL_FALSE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glShadeModel (GL_SMOOTH);
@@ -218,7 +218,7 @@ void R_DrawCoronas(void)
 	}
 	glEnable (GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glDepthMask (GL_TRUE);
 	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
