@@ -31,6 +31,68 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+// Temp: very simple program to draw single texture on-screen
+// imageProgram.program()
+static glm_program_t imageProgram;
+
+static GLuint GL_CreateRectangleVAO(void);
+
+static void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, float alpha)
+{
+	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
+	float matrix[16];
+	GLint location;
+
+	glDisable(GL_DEPTH_TEST);
+	GLM_GetMatrix(GL_PROJECTION, matrix);
+	GLM_TransformMatrix(matrix, x, y, 0);
+	GLM_ScaleMatrix(matrix, width, height, 1.0f);
+
+	glUseProgram(imageProgram.program);
+	location = glGetUniformLocation(imageProgram.program, "matrix");
+	if (location >= 0) {
+		glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
+	}
+	location = glGetUniformLocation(imageProgram.program, "alpha");
+	if (location >= 0) {
+		glUniform1f(location, alpha);
+	}
+	location = glGetUniformLocation(imageProgram.program, "tex");
+	if (location >= 0) {
+		glUniform1i(location, texture_unit);
+	}
+	location = glGetUniformLocation(imageProgram.program, "sbase");
+	if (location >= 0) {
+		glUniform1f(location, tex_s);
+	}
+	location = glGetUniformLocation(imageProgram.program, "swidth");
+	if (location >= 0) {
+		glUniform1f(location, tex_width);
+	}
+	location = glGetUniformLocation(imageProgram.program, "tbase");
+	if (location >= 0) {
+		glUniform1f(location, tex_t);
+	}
+	location = glGetUniformLocation(imageProgram.program, "twidth");
+	if (location >= 0) {
+		glUniform1f(location, tex_height);
+	}
+
+	GLenum error = glGetError();
+	while (error != GL_NO_ERROR) {
+		error = glGetError();
+	}
+	glBindVertexArray(GL_CreateRectangleVAO());
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	{
+		GLenum error = glGetError();
+		while (error != GL_NO_ERROR) {
+			Con_Printf("GL error: %x\n", error);
+			error = glGetError();
+		}
+	}
+}
+
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift, hud_faderankings;
 
@@ -1729,8 +1791,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	alpha *= overall_alpha;
 
 	if (GL_ShadersSupported()) {
-		static glm_program_t imageProgram;
-
 		if (!imageProgram.program) {
 			const char* vertexShaderText =
 				"#version 430\n"
@@ -1777,60 +1837,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 			glActiveTexture(GL_TEXTURE0);
 			GL_Bind(pic->texnum);
-
-			{
-				// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
-				float matrix[16];
-				GLint location;
-
-				GLM_GetMatrix(GL_PROJECTION, matrix);
-				GLM_TransformMatrix(matrix, x, y, 0);
-				GLM_ScaleMatrix(matrix, scale_x * src_width, scale_y * src_height, 1.0f);
-
-				glUseProgram(imageProgram.program);
-				location = glGetUniformLocation(imageProgram.program, "matrix");
-				if (location >= 0) {
-					glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
-				}
-				location = glGetUniformLocation(imageProgram.program, "alpha");
-				if (location >= 0) {
-					glUniform1f(location, alpha);
-				}
-				location = glGetUniformLocation(imageProgram.program, "tex");
-				if (location >= 0) {
-					glUniform1i(location, 0);
-				}
-				location = glGetUniformLocation(imageProgram.program, "sbase");
-				if (location >= 0) {
-					glUniform1f(location, newsl);
-				}
-				location = glGetUniformLocation(imageProgram.program, "swidth");
-				if (location >= 0) {
-					glUniform1f(location, newsh - newsl);
-				}
-				location = glGetUniformLocation(imageProgram.program, "tbase");
-				if (location >= 0) {
-					glUniform1f(location, newtl);
-				}
-				location = glGetUniformLocation(imageProgram.program, "twidth");
-				if (location >= 0) {
-					glUniform1f(location, newth - newtl);
-				}
-
-				GLenum error = glGetError();
-				while (error != GL_NO_ERROR) {
-					error = glGetError();
-				}
-				glBindVertexArray(GL_CreateRectangleVAO());
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-				{
-					GLenum error = glGetError();
-					while (error != GL_NO_ERROR) {
-						Con_Printf("GL error: %x\n", error);
-						error = glGetError();
-					}
-				}
-			}
+			GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, alpha);
 
 			if (alpha < 1.0) {
 				glEnable(GL_ALPHA_TEST);
