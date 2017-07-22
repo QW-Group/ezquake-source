@@ -291,7 +291,9 @@ static void BuildBuiltinCrosshairs(void)
 	char str[256] = {0};
 	int crosshair_size = CrosshairPixelSize();
 
-	memset(&crosshairpic, 0, sizeof(crosshairpic));
+	if (!(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
+		memset(&crosshairpic, 0, sizeof(crosshairpic));
+	}
 	for (i = 0; i < NUMCROSSHAIRS; i++) {
 		byte* crosshair_buffer = (byte*)Q_malloc(crosshair_size * crosshair_size);
 
