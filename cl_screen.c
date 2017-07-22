@@ -3216,12 +3216,12 @@ static GLuint GL_CreateVAO(void)
 {
 	static GLuint vao;
 	static GLuint vbo;
-	const float scale = 80;
+	const float scale = 100;
 	const float offset = 100;
 	float points[] = {
-		offset + 0.0f * scale, offset + 0.5f * scale, 0.0f,
-		offset + 0.5f * scale, offset + -0.5f * scale, 0.0f,
-		offset + -0.5f * scale, offset + -0.5f * scale, 0.0f
+		0.5f * scale, 0, 0.0f,
+		0, scale, 0.0f,
+		scale, scale, 0.0f
 	};
 
 	if (!vbo) {
@@ -3271,7 +3271,6 @@ static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float b
 	static GLfloat matrix[16];
 
 	memset(matrix, 0, sizeof(matrix));
-
 	matrix[0] = 2 / (right - left);
 	matrix[5] = 2 / (top - bottom);
 	matrix[10] = -2 / (zFar - zNear);
@@ -3284,6 +3283,14 @@ static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float b
 }
 
 static GLfloat projectionMatrix[16];
+static GLfloat modelMatrix[16];
+static GLfloat viewMatrix[16];
+static GLfloat identityMatrix[16] = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+};
 
 void GLM_SetMatrix(float* target, const float* source)
 {
@@ -3292,7 +3299,8 @@ void GLM_SetMatrix(float* target, const float* source)
 
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
-	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, top, bottom, zNear, zFar));
+	// Deliberately inverting top & bottom here...
+	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 }
 
 void GLM_GetMatrix(GLenum type, float* matrix)
@@ -3300,23 +3308,46 @@ void GLM_GetMatrix(GLenum type, float* matrix)
 	if (type == GL_PROJECTION) {
 		GLM_SetMatrix(matrix, projectionMatrix);
 	}
+	else if (type == GL_MODELVIEW) {
+		GLM_SetMatrix(matrix, modelMatrix);
+	}
 	else {
 		// TODO
 	}
 }
 
+float* GLM_ModelviewMatrix(void)
+{
+	return modelMatrix;
+}
+
+void GLM_SetIdentityMatrix(float* matrix)
+{
+	GLM_SetMatrix(matrix, identityMatrix);
+}
+
 void GLM_TransformMatrix(float* matrix, float x, float y, float z)
 {
-	matrix[12] += x;
-	matrix[13] += y;
-	matrix[14] += z;
+	matrix[12] += matrix[0] * x + matrix[4] * y + matrix[8] * z;
+	matrix[13] += matrix[1] * x + matrix[5] * y + matrix[9] * z;
+	matrix[14] += matrix[2] * x + matrix[6] * y + matrix[10] * z;
+	matrix[15] += matrix[3] * x + matrix[7] * y + matrix[11] * z;
 }
 
 void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
 {
 	matrix[0] *= x_scale;
+	matrix[1] *= x_scale;
+	matrix[2] *= x_scale;
+	matrix[3] *= x_scale;
+	matrix[4] *= y_scale;
 	matrix[5] *= y_scale;
+	matrix[6] *= y_scale;
+	matrix[7] *= y_scale;
+	matrix[8] *= z_scale;
+	matrix[9] *= z_scale;
 	matrix[10] *= z_scale;
+	matrix[11] *= z_scale;
 }
 
 void SCR_UpdateScreenPlayerView (int flags)
@@ -3328,24 +3359,10 @@ void SCR_UpdateScreenPlayerView (int flags)
 		SCR_InitialiseShaders();
 	}
 
-	if (GL_ShadersSupported() && triangleProgram.program) {
-		GLuint location = glGetUniformLocation(triangleProgram.program, "matrix");
-
+	if (GL_ShadersSupported()) {
 		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 		GL_Set2D();
-		//glViewport (glx, gly, glwidth, glheight);
-		//GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-		//GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-
-		glUseProgram(triangleProgram.program);
-		if (location >= 0) {
-			glUniformMatrix4fv(location, 1, GL_FALSE, projectionMatrix);
-		}
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glBindVertexArray(GL_CreateVAO());
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 		SCR_SetUpToDrawConsole();
-		Draw_ConsoleBackground(vid.height);
 		return;
 	}
 
@@ -3416,6 +3433,8 @@ void SCR_DrawNewHudElements(void)
 void SCR_UpdateScreenPostPlayerView (void)
 {
 	if (GL_ShadersSupported()) {
+		SCR_DrawConsole();
+		M_Draw ();
 		GL_EndRendering();
 		return;
 	}

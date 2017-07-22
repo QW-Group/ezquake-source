@@ -37,7 +37,7 @@ static glm_program_t imageProgram;
 
 static GLuint GL_CreateRectangleVAO(void);
 
-static void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, float alpha)
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, float alpha)
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
 	float matrix[16];
@@ -928,7 +928,7 @@ qbool R_CharAvailable (wchar num)
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
+void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
 {
 	float frow, fcol;
 	int i;
@@ -985,8 +985,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 			Draw_GetBigfontSourceCoords(c, char_width, char_height, &sx, &sy);
 
-			if (sx >= 0)
-			{
+			if (sx >= 0) {
 				// Don't apply alpha here, since we already applied it above.
 				Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, (((float)char_size / char_width) * scale), 1);
 			}
@@ -1021,31 +1020,39 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
 	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
 
-	GL_Bind(char_textures[slot]);
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(char_textures[slot]);
 
-	// Draw the character polygon.
-	glBegin(GL_QUADS);
-	{
-		float scale8 = scale * 8;
-		float scale8_2 = scale8 * 2;
-
-		// Top left.
-		glTexCoord2f (fcol, frow);
-		glVertex2f (x, y);
-
-		// Top right.
-		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow);
-		glVertex2f(x + scale8, y);
-
-		// Bottom right.
-		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
-		glVertex2f(x + scale8, y + scale8_2);
-
-		// Bottom left.
-		glTexCoord2f(fcol, frow + CHARSET_CHAR_WIDTH);
-		glVertex2f(x, y + scale8_2);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, 1.0f);
 	}
-	glEnd();
+	else {
+		GL_Bind(char_textures[slot]);
+
+		// Draw the character polygon.
+		glBegin(GL_QUADS);
+		{
+			float scale8 = scale * 8;
+			float scale8_2 = scale8 * 2;
+
+			// Top left.
+			glTexCoord2f(fcol, frow);
+			glVertex2f(x, y);
+
+			// Top right.
+			glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow);
+			glVertex2f(x + scale8, y);
+
+			// Bottom right.
+			glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
+			glVertex2f(x + scale8, y + scale8_2);
+
+			// Bottom left.
+			glTexCoord2f(fcol, frow + CHARSET_CHAR_WIDTH);
+			glVertex2f(x, y + scale8_2);
+		}
+		glEnd();
+	}
 }
 
 static void Draw_ResetCharGLState(void)
@@ -1746,9 +1753,8 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
 
-    if (scrap_dirty)
-	{
-        Scrap_Upload ();
+    if (scrap_dirty) {
+        Scrap_Upload();
 	}
 
     oldglwidth = pic->sh - pic->sl;

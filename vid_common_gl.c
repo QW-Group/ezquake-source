@@ -431,7 +431,10 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 
 void GL_IdentityModelView(void)
 {
-	if (!GLM_Enabled()) {
+	if (GLM_Enabled()) {
+		GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
+	}
+	else {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 	}
