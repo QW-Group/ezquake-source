@@ -1453,23 +1453,26 @@ void SCR_SetupCI (void) {
 		qsort((void *)ci_clients, ci_count, sizeof(ci_clients[0]), CmpCI_Order);
 }
 
-#define DRAW_CI_BILLBOARD(_ptex, _p, _coord)			\
-	glPushMatrix();											\
-glTranslatef(_p->org[0], _p->org[1], _p->org[2]);		\
-glScalef(_p->size, _p->size, _p->size);					\
-if (_p->rotangle)										\
-glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);	\
-\
-glColor4ubv(_p->color);									\
-\
-glBegin(GL_QUADS);										\
-glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);	\
-glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);	\
-glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);	\
-glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);	\
-glEnd();			\
-\
-glPopMatrix();
+void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
+{
+	glPushMatrix();
+	glTranslatef(_p->org[0], _p->org[1], _p->org[2]);
+	glScalef(_p->size, _p->size, _p->size);
+	if (_p->rotangle) {
+		glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);
+	}
+
+	glColor4ubv(_p->color);
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);
+	glEnd();
+
+	glPopMatrix();
+}
 
 // probably may be made as macros, but i hate macros cos macroses is unsafe
 static void CI_Bind(ci_texture_t *citex, int *texture)
@@ -1494,8 +1497,7 @@ void DrawCI (void) {
 	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1)
 		return;
 
-	if (gl_fogenable.value)
-	{
+	if (gl_fogenable.value) {
 		glDisable(GL_FOG);
 	}
 
@@ -1525,21 +1527,20 @@ void DrawCI (void) {
 		p = &ci_clients[i];
 		flags = p->flags;
 
-		if (flags & CIF_CHAT && flags & CIF_AFK)
-		{
+		if (flags & CIF_CHAT && flags & CIF_AFK) {
 			flags = flags & ~(CIF_CHAT|CIF_AFK); // so they will be not showed below again
 			CI_Bind(citex = &ci_textures[citex_chat_afk], &texture);
-			DRAW_CI_BILLBOARD(citex, p, billboard2);
+			CI_DrawBillboard(citex, p, billboard2);
 		}
-		if (flags & CIF_CHAT)
-		{
+
+		if (flags & CIF_CHAT) {
 			CI_Bind(citex = &ci_textures[citex_chat], &texture);
-			DRAW_CI_BILLBOARD(citex, p, billboard);
+			CI_DrawBillboard(citex, p, billboard);
 		}
-		if (flags & CIF_AFK)
-		{
+
+		if (flags & CIF_AFK) {
 			CI_Bind(citex = &ci_textures[citex_afk], &texture);
-			DRAW_CI_BILLBOARD(citex, p, billboard);
+			CI_DrawBillboard(citex, p, billboard);
 		}
 	}
 
@@ -1550,8 +1551,7 @@ void DrawCI (void) {
 	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 
-	if (gl_fogenable.value)
-	{
+	if (gl_fogenable.value) {
 		glEnable(GL_FOG);
 	}
 }
