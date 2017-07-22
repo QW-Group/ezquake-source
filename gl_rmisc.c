@@ -95,8 +95,8 @@ void R_TranslatePlayerSkin (int playernum) {
 	}
 	else
 	{
-		glinternalfmt = 3;
-		glinternalfmt_alpha = 4;
+		glinternalfmt = GL_RGB;
+		glinternalfmt_alpha = GL_RGBA;
 	}
 
 	player = &cl.players[playernum];
@@ -181,7 +181,7 @@ void R_TranslatePlayerSkin (int playernum) {
 			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
 	}
 
-	GL_Bind(playernmtextures[playernum] = playertextures + playernum);
+	GL_Bind(playernmtextures[playernum]);
 
 	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(gl_max_size_default, 512);
 	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, 256) : min(gl_max_size_default, 256);
@@ -216,13 +216,11 @@ void R_TranslatePlayerSkin (int playernum) {
 	}
 
 	glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if (Img_HasFullbrights ((byte *) original, inwidth * inheight)) {
-		playerfbtextures[playernum] = playertextures + playernum + MAX_CLIENTS; // ok, skin have full bright colors
-
 		GL_Bind(playerfbtextures[playernum]);
 
 		out = pixels;
@@ -259,7 +257,7 @@ void R_TranslatePlayerSkin (int playernum) {
 
 		glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}

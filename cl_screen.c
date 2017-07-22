@@ -931,7 +931,7 @@ void SCR_EndLoadingPlaque (void) {
 
 void SCR_SetUpToDrawConsole (void) {
 	Con_CheckResize ();
-
+	
 	// decide on the height of the console
 	if (SCR_NEED_CONSOLE_BACKGROUND) {
 		scr_conlines = vid.height;		// full screen
@@ -1050,9 +1050,9 @@ void SCR_SetupAutoID (void) {
 	if (!cls.demoplayback && !cl.spectator)
 		return;
 
-	glGetFloatv(GL_MODELVIEW_MATRIX, model);
-	glGetFloatv(GL_PROJECTION_MATRIX, project);
-	glGetIntegerv(GL_VIEWPORT, (GLint *)view);
+	GL_GetMatrix(GL_MODELVIEW_MATRIX, model);
+	GL_GetMatrix(GL_PROJECTION_MATRIX, project);
+	GL_GetViewport((GLint *)view);
 
 	if (cl.spectator)
 	{
@@ -1512,7 +1512,7 @@ void DrawCI (void) {
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glShadeModel(GL_SMOOTH);
 
 	// FIXME: i'm not sure which blend mode here better
@@ -1547,7 +1547,7 @@ void DrawCI (void) {
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 
 	if (gl_fogenable.value)
@@ -1879,7 +1879,7 @@ static void SCR_Draw_TeamInfo(void)
 	if ( !slots_num )
 		return;
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
@@ -1920,7 +1920,7 @@ static void SCR_Draw_TeamInfo(void)
 
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 }
 
@@ -2059,7 +2059,7 @@ static void SCR_Draw_ShowNick(void)
 	maxname = 999;
 	maxname = bound(0, maxname, scr_shownick_name_width.integer);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
@@ -2095,7 +2095,7 @@ static void SCR_Draw_ShowNick(void)
 
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 }
 
@@ -3214,47 +3214,13 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 
 #include "gl_local.h"
 
-static GLuint vertexShader;
-static GLuint fragmentShader;
-static GLuint shaderProgram;
-
-static void GL_ConPrintShaderLog(GLuint shader)
-{
-	GLint log_length;
-	char* buffer;
-
-	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
-	if (log_length) {
-		GLsizei written;
-
-		buffer = Q_malloc(log_length);
-		glGetShaderInfoLog(shader, log_length, &written, buffer);
-		Con_Printf(buffer);
-		Q_free(buffer);
-	}
-}
-
-static void GL_ConPrintProgramLog(GLuint program)
-{
-	GLint log_length;
-	char* buffer;
-
-	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
-	if (log_length) {
-		GLsizei written;
-
-		buffer = Q_malloc(log_length);
-		glGetProgramInfoLog(program, log_length, &written, buffer);
-		Con_Printf(buffer);
-		Q_free(buffer);
-	}
-}
+static glm_program_t triangleProgram;
 
 static GLuint GL_CreateVAO(void)
 {
 	static GLuint vao;
 	static GLuint vbo;
-	const float scale = 20;
+	const float scale = 80;
 	const float offset = 100;
 	float points[] = {
 		offset + 0.0f * scale, offset + 0.5f * scale, 0.0f,
@@ -3281,88 +3247,30 @@ static GLuint GL_CreateVAO(void)
 
 static void SCR_InitialiseShaders(void)
 {
-	if (GL_ShadersSupported()) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"in vec3 position;\n"
-			"\n"
-			"uniform mat4 matrix;"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = matrix * vec4(position, 1.0);\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"out vec4 frag_colour;\n"
-			"void main()\n"
-			"{\n"
-			"    frag_colour = vec4(0.5, 0.0, 0.5, 1.0);\n"
-			"}\n";
-		GLint result = 0;
+	const char* vertexShaderText =
+		"#version 430\n"
+		"\n"
+		"in vec3 position;\n"
+		"\n"
+		"uniform mat4 matrix;"
+		"\n"
+		"void main()\n"
+		"{\n"
+		"    gl_Position = matrix * vec4(position, 1.0);\n"
+		"}\n";
+	const char* fragmentShaderText =
+		"#version 430\n"
+		"out vec4 frag_colour;\n"
+		"void main()\n"
+		"{\n"
+		"    frag_colour = vec4(0.5, 0.0, 0.5, 1.0);\n"
+		"}\n";
 
-		vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		if (!vertexShader) {
-			return;
-		}
-		glShaderSource(vertexShader, 1, &vertexShaderText, NULL);
-		glCompileShader(vertexShader);
-		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-		if (!result) {
-			Con_Printf("VertexShader.Compile() failed\n");
-			GL_ConPrintShaderLog(vertexShader);
-			glDeleteShader(vertexShader);
-			return;
-		}
-
-		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		if (!fragmentShader) {
-			glDeleteShader(vertexShader);
-			return;
-		}
-		glShaderSource(fragmentShader, 1, &fragmentShaderText, NULL);
-		glCompileShader(fragmentShader);
-		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
-		if (!result) {
-			Con_Printf("FragmentShader.Compile() failed\n");
-			GL_ConPrintShaderLog(fragmentShader);
-			glDeleteShader(fragmentShader);
-			glDeleteShader(vertexShader);
-			return;
-		}
-
-		Con_Printf("Shader compilation completed successfully\n");
-
-		shaderProgram = glCreateProgram();
-		if (shaderProgram) {
-			glAttachShader(shaderProgram, fragmentShader);
-			glAttachShader(shaderProgram, vertexShader);
-			glLinkProgram(shaderProgram);
-			glGetProgramiv(shaderProgram, GL_LINK_STATUS, &result);
-
-			if (!result) {
-				Con_Printf("ShaderProgram.Link() failed\n");
-				GL_ConPrintProgramLog(shaderProgram);
-				glDeleteProgram(shaderProgram);
-				glDeleteShader(fragmentShader);
-				glDeleteShader(vertexShader);
-				shaderProgram = 0;
-				return;
-			}
-			else {
-				Con_Printf("ShaderProgram.Link() was successful\n");
-			}
-		}
-	}
-	else {
-		Con_Printf("Shaders not supported\n");
-		shaderProgram = 0;
-	}
+	GLM_CreateSimpleProgram("Triangle Test", vertexShaderText, fragmentShaderText, &triangleProgram);
 }
 
 // 
-static GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
+static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	static GLfloat matrix[16];
 
@@ -3381,7 +3289,7 @@ static GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom,
 
 static GLfloat projectionMatrix[16];
 
-void GLM_SetMatrix(float* target, float* source)
+void GLM_SetMatrix(float* target, const float* source)
 {
 	memcpy(target, source, sizeof(float) * 16);
 }
@@ -3389,6 +3297,30 @@ void GLM_SetMatrix(float* target, float* source)
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, top, bottom, zNear, zFar));
+}
+
+void GLM_GetMatrix(GLenum type, float* matrix)
+{
+	if (type == GL_PROJECTION) {
+		GLM_SetMatrix(matrix, projectionMatrix);
+	}
+	else {
+		// TODO
+	}
+}
+
+void GLM_TransformMatrix(float* matrix, float x, float y, float z)
+{
+	matrix[12] += x;
+	matrix[13] += y;
+	matrix[14] += z;
+}
+
+void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
+{
+	matrix[0] *= x_scale;
+	matrix[5] *= y_scale;
+	matrix[10] *= z_scale;
 }
 
 void SCR_UpdateScreenPlayerView (int flags)
@@ -3400,25 +3332,29 @@ void SCR_UpdateScreenPlayerView (int flags)
 		SCR_InitialiseShaders();
 	}
 
-	if (GL_ShadersSupported() && shaderProgram) {
-		GLuint location = glGetUniformLocation(shaderProgram, "matrix");
-		
-		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
-		glViewport (glx, gly, glwidth, glheight);
-		GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
+	if (GL_ShadersSupported() && triangleProgram.program) {
+		GLuint location = glGetUniformLocation(triangleProgram.program, "matrix");
 
+		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+		GL_Set2D();
+		//glViewport (glx, gly, glwidth, glheight);
+		//GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+		//GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
+
+		glUseProgram(triangleProgram.program);
 		if (location >= 0) {
 			glUniformMatrix4fv(location, 1, GL_FALSE, projectionMatrix);
 		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glUseProgram(shaderProgram);
 		glBindVertexArray(GL_CreateVAO());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+		SCR_SetUpToDrawConsole();
+		Draw_ConsoleBackground(vid.height);
 		return;
 	}
 
 	if (flags & UPDATESCREEN_MULTIVIEW) {
-		SCR_CalcRefdef ();
+		SCR_CalcRefdef();
 	}
 
 	// Do 3D refresh drawing, and then update the screen.
@@ -3483,6 +3419,11 @@ void SCR_DrawNewHudElements(void)
 
 void SCR_UpdateScreenPostPlayerView (void)
 {
+	if (GL_ShadersSupported()) {
+		GL_EndRendering();
+		return;
+	}
+
 	if (scr_newHud.value != 1) {
 		SCR_DrawNewHudElements();
 	}

@@ -154,7 +154,7 @@ void R_DrawCoronas(void)
 	glDepthMask (GL_FALSE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glShadeModel (GL_SMOOTH);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glDisable (GL_DEPTH_TEST);
 	for (i = 0; i < MAX_CORONAS; i++)
 	{
@@ -220,7 +220,7 @@ void R_DrawCoronas(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 	glColor3f (1, 1, 1);
 

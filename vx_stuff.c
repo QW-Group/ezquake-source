@@ -268,7 +268,7 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
     if (*vxdmgcnt_t > cl.time)
     {
       	alpha = min(1, (*vxdmgcnt_t - cl.time));
-      	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
       	glDisable(GL_ALPHA_TEST);
       	glEnable (GL_BLEND);
       	glColor4f(1, 1, 1, alpha);
@@ -288,7 +288,7 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
 		}
       	glEnable(GL_ALPHA_TEST);
       	glDisable (GL_BLEND);
-      	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		GL_TextureEnvMode(GL_REPLACE);
       	glColor4f(1, 1, 1, 1);
     }
 }

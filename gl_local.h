@@ -129,16 +129,16 @@ extern	mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 extern	texture_t	*r_notexture_mip;
 extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-extern	int	particletexture;
-extern	int	netgraphtexture;
-extern	int	playertextures;
-extern	int	playernmtextures[MAX_CLIENTS];
-extern	int	playerfbtextures[MAX_CLIENTS];
+extern	GLuint particletexture;
+extern	GLuint netgraphtexture;
+extern	GLuint playertextures;
+extern	GLuint playernmtextures[MAX_CLIENTS];
+extern	GLuint playerfbtextures[MAX_CLIENTS];
 #define MAX_SKYBOXTEXTURES 6
-extern	int	skyboxtextures[MAX_SKYBOXTEXTURES];
-extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
-extern	int underwatertexture, detailtexture;
-extern	int shelltexture;
+extern	GLuint skyboxtextures[MAX_SKYBOXTEXTURES];
+extern	GLuint skytexturenum;		// index in cl.loadmodel, not gl texture object
+extern	GLuint underwatertexture, detailtexture;
+extern	GLuint shelltexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -400,7 +400,10 @@ typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat v0);
 typedef void (APIENTRY *glUniform2f_t)(GLint location, GLfloat v0, GLfloat v1);
 typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+
+typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -440,7 +443,11 @@ extern glUniform1f_t            glUniform1f;
 extern glUniform2f_t            glUniform2f;
 extern glUniform3f_t            glUniform3f;
 extern glUniform4f_t            glUniform4f;
+extern glUniform1i_t            glUniform1i;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
+
+// Textures
+extern glActiveTexture_t        glActiveTexture;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
@@ -448,5 +455,39 @@ qbool GL_VBOsSupported(void);
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GL_PushMatrix(GLenum mode);
 void GL_PopMatrix(GLenum mode);
+void GL_TextureEnvMode(GLenum mode);
+
+void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
+void GLM_TransformMatrix(float* matrix, float x, float y, float z);
+void GLM_GetMatrix(GLenum type, float* matrix);
+
+void GLM_ConPrintShaderLog(GLuint shader);
+void GLM_ConPrintProgramLog(GLuint program);
+
+typedef struct glm_program_s {
+	GLuint vertex_shader;
+	GLuint fragment_shader;
+	GLuint program;
+} glm_program_t;
+
+qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shader_text, const char* fragment_shader_text, glm_program_t* program);
+
+#define glColor3f GL_Color3f
+#define glColor4f GL_Color4f
+#define glColor3fv GL_Color3fv
+#define glColor3ubv GL_Color3ubv
+#define glColor4ubv GL_Color4ubv
+#define glColor4ub GL_Color4ub
+
+void GL_Color3f(float r, float g, float b);
+void GL_Color4f(float r, float g, float b, float a);
+void GL_Color3fv(const float* rgbVec);
+void GL_Color3ubv(const GLubyte* rgbVec);
+void GL_Color4ubv(const GLubyte* rgbaVec);
+void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a);
+
+void GL_IdentityModelView(void);
+void GL_GetMatrix(GLenum mode, GLfloat* matrix);
+void GL_GetViewport(GLint* view);
 
 #endif /* !__GL_LOCAL_H__ */

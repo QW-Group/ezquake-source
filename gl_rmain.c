@@ -95,7 +95,7 @@ float     clearColor[3] = {0, 0, 0};
 qbool     r_cache_thrash;                     // compatability
 qbool     full_light;
 int       lastposenum;
-int       shelltexture = 0;
+GLuint    shelltexture = 0;
 int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
 int       c_brush_polys;
@@ -103,12 +103,11 @@ int       c_alias_polys;
 int       lightmode = 2;
 int       sceneblur_texture;                  // motion blur.
 int       d_lightstylevalue[256];             // 8.8 fraction of base light value
-int       particletexture;                    // little dot for particles
-int       playertextures;                     // up to 16 color translated skins
-int       playernmtextures[MAX_CLIENTS];
-int       playerfbtextures[MAX_CLIENTS];
-int       skyboxtextures[MAX_SKYBOXTEXTURES];
-int       underwatertexture, detailtexture;
+GLuint    particletexture;                    // little dot for particles
+GLuint    playernmtextures[MAX_CLIENTS];
+GLuint    playerfbtextures[MAX_CLIENTS];
+GLuint    skyboxtextures[MAX_SKYBOXTEXTURES];
+GLuint    underwatertexture, detailtexture;
 
 cvar_t cl_multiview                        = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud                     = {"cl_mvdisplayhud", "1"};
@@ -993,7 +992,7 @@ void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effec
 		r_shellcolor[2] += effect_level;
 
 	GL_DisableMultitexture();
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
 }
 
@@ -1186,11 +1185,11 @@ void R_DrawAliasModel(entity_t *ent)
 		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
 		//	
 		switch(local_skincolormode) {
-			case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
-			case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
-			case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
-			case 4:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);		break;
-			default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
+			case 1:		GL_TextureEnvMode(GL_REPLACE);	break;
+			case 2:		GL_TextureEnvMode(GL_BLEND);		break;
+			case 3:		GL_TextureEnvMode(GL_DECAL);		break;
+			case 4:		GL_TextureEnvMode(GL_ADD);		break;
+			default:	GL_TextureEnvMode(GL_MODULATE);	break;
 		}
 
 		R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
@@ -1204,12 +1203,12 @@ void R_DrawAliasModel(entity_t *ent)
 			GL_DisableMultitexture ();
 
 			GL_Bind (texture);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			GL_TextureEnvMode(GL_MODULATE);
 
 			GL_EnableMultitexture ();
 			GL_Bind (fb_texture);
 
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			GL_TextureEnvMode(GL_DECAL);
 
 			R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, outline);
 
@@ -1220,12 +1219,12 @@ void R_DrawAliasModel(entity_t *ent)
 			GL_DisableMultitexture();
 			GL_Bind (texture);
 
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			GL_TextureEnvMode(GL_MODULATE);
 
 			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
 
 			if (fb_texture) {
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+				GL_TextureEnvMode(GL_REPLACE);
 				GL_Bind (fb_texture);
 
 				glEnable (GL_BLEND);
@@ -1271,7 +1270,8 @@ void R_DrawAliasModel(entity_t *ent)
 		glMatrixMode (GL_MODELVIEW);
 
 		GL_Bind (underwatertexture);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);        
+
+		GL_TextureEnvMode(GL_DECAL);        
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		glEnable (GL_BLEND);
 
@@ -1281,8 +1281,8 @@ void R_DrawAliasModel(entity_t *ent)
 		glDisable(GL_BLEND);            
 
 		GL_SelectTexture(GL_TEXTURE1);
-		glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-		glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
+		GL_TextureEnvMode(GL_REPLACE);
 		glDisable (GL_TEXTURE_2D);
 
 		glMatrixMode (GL_TEXTURE);
@@ -1879,8 +1879,7 @@ void R_SetupGL(void)
 
 	glCullFace(GL_FRONT);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity ();
+	GL_IdentityModelView();
 
 	glRotatef (-90, 1, 0, 0);	    // put Z going up
 	glRotatef (90,  0, 0, 1);	    // put Z going up
@@ -1889,7 +1888,7 @@ void R_SetupGL(void)
 	glRotatef (-r_refdef.viewangles[1], 0, 0, 1);
 	glTranslatef (-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 
-	glGetFloatv (GL_MODELVIEW_MATRIX, r_world_matrix);
+	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	// set drawing parms
 	if (gl_cull.value)
@@ -2354,10 +2353,9 @@ static void R_RenderSceneBlurDo(float alpha)
 
 	// go 2d
 	GL_PushMatrix(GL_PROJECTION);
+	GL_PushMatrix(GL_MODELVIEW);
 	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity ();
+	GL_IdentityModelView();
 
 	//blend the last frame onto the scene
 	//the maths is because our texture is over-sized (must be power of two)

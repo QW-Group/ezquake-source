@@ -966,8 +966,10 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	if (COM_CheckParm("-modern")) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	}
 
 	if (r_24bit_depth.integer == 1) {
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);

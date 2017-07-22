@@ -60,7 +60,7 @@ int GL_LoadCharsetImage (char *, char *, int);
 void GL_Texture_Init(void);
 
 
-extern int gl_lightmap_format, gl_solid_format, gl_alpha_format;
+extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;

@@ -900,11 +900,11 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 		if (scr_coloredText.integer)
 		{
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			GL_TextureEnvMode(GL_MODULATE);
 		}
 		else
 		{
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			GL_TextureEnvMode(GL_REPLACE);
 		}
 
 		// Set the overall alpha.
@@ -992,7 +992,7 @@ static void Draw_ResetCharGLState(void)
 {
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
 }
 
@@ -1074,11 +1074,11 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 			COLOR_TO_RGBA(color[color_index].c, rgba);
 		}
 
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 	}
 	else
 	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		GL_TextureEnvMode(GL_REPLACE);
 		memcpy(rgba, color_white, sizeof(byte) * 4);
 	}
 
@@ -1259,7 +1259,7 @@ void Draw_Crosshair (void)
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
 
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 
 		col = crosshaircolor.color;
 
@@ -1313,7 +1313,7 @@ void Draw_Crosshair (void)
 		glDisable(GL_BLEND);
 		glEnable (GL_ALPHA_TEST);
 
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		GL_TextureEnvMode(GL_REPLACE);
 		glColor3ubv (color_white);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
@@ -1674,6 +1674,36 @@ void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha)
 // SCALE versions of some functions
 //
 
+static GLuint GL_CreateRectangleVAO(void)
+{
+	static GLuint vao;
+	static GLuint vbo;
+#define number 10.0f
+	const float scale = 2;
+	float points[] = {
+		1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f
+	};
+
+	if (!vbo) {
+		glGenBuffers(1, &vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	}
+
+	if (!vao) {
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glEnableVertexAttribArray(0);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	return vao;
+}
+
 //=============================================================================
 // Draw picture functions
 //=============================================================================
@@ -1697,42 +1727,154 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
     newth = newtl + (src_height * oldglheight) / (float)pic->height;
 
 	alpha *= overall_alpha;
-	if(alpha < 1.0) {
-		glDisable (GL_ALPHA_TEST);
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glCullFace (GL_FRONT);
-		glColor4f (1, 1, 1, alpha);
+
+	if (GL_ShadersSupported()) {
+		static glm_program_t imageProgram;
+
+		if (!imageProgram.program) {
+			const char* vertexShaderText =
+				"#version 430\n"
+				"\n"
+				"in vec3 position;\n"
+				"\n"
+				"out vec2 TexCoord;\n"
+				"\n"
+				"uniform mat4 matrix;\n"
+				"uniform float sbase, swidth;\n"
+				"uniform float tbase, twidth;\n"
+				"\n"
+				"void main()\n"
+				"{\n"
+				"    gl_Position = matrix * vec4(position, 1.0);\n"
+				"    TexCoord = vec2(sbase + position.x * swidth, tbase + position.y * twidth);\n"
+				"}\n";
+			const char* fragmentShaderText =
+				"#version 430\n"
+				"\n"
+				"uniform float alpha;\n"
+				"uniform sampler2D tex;\n"
+				"\n"
+				"in vec2 TexCoord;\n"
+				"out vec4 frag_colour;\n"
+				"\n"
+				"void main()\n"
+				"{\n"
+				"    vec4 texColor = texture(tex, TexCoord);\n"
+				"    frag_colour = texColor * vec4(1.0, 1.0, 1.0, alpha);\n"
+				"}\n";
+
+			// Initialise program for drawing image
+			GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &imageProgram);
+		}
+
+		if (imageProgram.program) {
+			if (alpha < 1.0) {
+				glDisable(GL_ALPHA_TEST);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glCullFace(GL_FRONT);
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			GL_Bind(pic->texnum);
+
+			{
+				// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
+				float matrix[16];
+				GLint location;
+
+				GLM_GetMatrix(GL_PROJECTION, matrix);
+				GLM_TransformMatrix(matrix, x, y, 0);
+				GLM_ScaleMatrix(matrix, scale_x * src_width, scale_y * src_height, 1.0f);
+
+				glUseProgram(imageProgram.program);
+				location = glGetUniformLocation(imageProgram.program, "matrix");
+				if (location >= 0) {
+					glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
+				}
+				location = glGetUniformLocation(imageProgram.program, "alpha");
+				if (location >= 0) {
+					glUniform1f(location, alpha);
+				}
+				location = glGetUniformLocation(imageProgram.program, "tex");
+				if (location >= 0) {
+					glUniform1i(location, 0);
+				}
+				location = glGetUniformLocation(imageProgram.program, "sbase");
+				if (location >= 0) {
+					glUniform1f(location, newsl);
+				}
+				location = glGetUniformLocation(imageProgram.program, "swidth");
+				if (location >= 0) {
+					glUniform1f(location, newsh - newsl);
+				}
+				location = glGetUniformLocation(imageProgram.program, "tbase");
+				if (location >= 0) {
+					glUniform1f(location, newtl);
+				}
+				location = glGetUniformLocation(imageProgram.program, "twidth");
+				if (location >= 0) {
+					glUniform1f(location, newth - newtl);
+				}
+
+				GLenum error = glGetError();
+				while (error != GL_NO_ERROR) {
+					error = glGetError();
+				}
+				glBindVertexArray(GL_CreateRectangleVAO());
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				{
+					GLenum error = glGetError();
+					while (error != GL_NO_ERROR) {
+						Con_Printf("GL error: %x\n", error);
+						error = glGetError();
+					}
+				}
+			}
+
+			if (alpha < 1.0) {
+				glEnable(GL_ALPHA_TEST);
+				glDisable(GL_BLEND);
+			}
+		}
 	}
+	else {
+		if (alpha < 1.0) {
+			glDisable(GL_ALPHA_TEST);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glCullFace(GL_FRONT);
+			glColor4f(1, 1, 1, alpha);
+		}
 
-    GL_Bind (pic->texnum);
+		GL_Bind(pic->texnum);
 
-    glBegin (GL_QUADS);
-	{
-		// Upper left corner.
-		glTexCoord2f (newsl, newtl);
-		glVertex2f (x, y);
+		glBegin(GL_QUADS);
+		{
+			// Upper left corner.
+			glTexCoord2f(newsl, newtl);
+			glVertex2f(x, y);
 
-		// Upper right corner.
-		glTexCoord2f (newsh, newtl);
-		glVertex2f (x + (scale_x * src_width), y);
+			// Upper right corner.
+			glTexCoord2f(newsh, newtl);
+			glVertex2f(x + (scale_x * src_width), y);
 
-		// Bottom right corner.
-		glTexCoord2f (newsh, newth);
-		glVertex2f (x + (scale_x * src_width), y + (scale_y * src_height));
+			// Bottom right corner.
+			glTexCoord2f(newsh, newth);
+			glVertex2f(x + (scale_x * src_width), y + (scale_y * src_height));
 
-		// Bottom left corner.
-		glTexCoord2f (newsl, newth);
-		glVertex2f (x, y + (scale_y * src_height));
-	}
-	glEnd ();
-	
-	if(alpha < 1.0) {
-		glEnable (GL_ALPHA_TEST);
-		glDisable (GL_BLEND);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glColor4f (1, 1, 1, 1);
+			// Bottom left corner.
+			glTexCoord2f(newsl, newth);
+			glVertex2f(x, y + (scale_y * src_height));
+		}
+		glEnd();
+
+		if (alpha < 1.0) {
+			glEnable(GL_ALPHA_TEST);
+			glDisable(GL_BLEND);
+			GL_TextureEnvMode(GL_REPLACE);
+			glColor4f(1, 1, 1, 1);
+		}
 	}
 }
 
@@ -1901,6 +2043,7 @@ void Draw_ConsoleBackground (int lines)
 
 	if (alpha) {
 		int con_shift_value = cls.state == ca_active ? con_shift.value : 0;
+
 		Draw_AlphaPic(0, (lines - vid.height) + con_shift_value, lvlshot ? lvlshot : &conback, alpha);
 	}
 }
@@ -1986,15 +2129,13 @@ void GL_Set2D (void)
 	glViewport (glx, gly, glwidth, glheight);
 
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-
-	glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity ();
+	GL_IdentityModelView();
 
 	glDisable (GL_DEPTH_TEST);
 	glDisable (GL_CULL_FACE);
 	glDisable (GL_BLEND);
 	glEnable (GL_ALPHA_TEST);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glColor3ubv (color_white);
 }
 

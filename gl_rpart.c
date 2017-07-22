@@ -757,7 +757,7 @@ void QMB_DrawParticles (void) {
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glShadeModel(GL_SMOOTH);
 
 	for (i = 0; i < num_particletypes; i++) {
@@ -951,7 +951,7 @@ void QMB_DrawParticles (void) {
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 
 	if (gl_fogenable.value)

@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 
-int lightmap_textures;
+GLuint lightmap_textures[MAX_LIGHTMAPS];
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct glRect_s {
@@ -136,7 +136,7 @@ void R_RenderFullbrights (void) {
 	glEnable(GL_ALPHA_TEST);
 
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 
 	for (i = 1; i < MAX_GLTEXTURES; i++) {
 		if (!fullbright_polys[i])
@@ -164,7 +164,7 @@ void R_RenderLumas (void) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 
 	for (i = 1; i < MAX_GLTEXTURES; i++) {
 		if (!luma_polys[i])
@@ -191,7 +191,7 @@ void EmitDetailPolys (void) {
 		return;
 
 	GL_Bind(detailtexture);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	GL_TextureEnvMode(GL_DECAL);
 	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	glEnable(GL_BLEND);
 
@@ -205,7 +205,7 @@ void EmitDetailPolys (void) {
 		glEnd();
 	}
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 
@@ -520,7 +520,7 @@ void R_BlendLightmaps (void) {
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!(p = lightmap_polys[i]))
 			continue;
-		GL_Bind(lightmap_textures + i);
+		GL_Bind(lightmap_textures[i]);
 		if (lightmap_modified[i])
 			R_UploadLightMap (i);
 		for ( ; p; p = p->chain) {
@@ -613,7 +613,7 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 			}
 
 			for ( ; s; s = s->texturechain) {
-				GL_Bind(lightmap_textures + s->lightmaptexturenum);
+				GL_Bind(lightmap_textures[s->lightmaptexturenum]);
 				R_RenderDynamicLightmaps(s);
 				k = s->lightmaptexturenum;
 				if (lightmap_modified[k]) {
@@ -657,7 +657,7 @@ void R_DrawWaterSurfaces (void) {
 	if (wateralpha < 1.0) {
 		glEnable (GL_BLEND);
 		glColor4f (1, 1, 1, wateralpha);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 		if (wateralpha < 0.9)
 			glDepthMask (GL_FALSE);
 	}
@@ -739,7 +739,7 @@ void R_DrawWaterSurfaces (void) {
 	waterchain_tail = &waterchain;
 
 	if (wateralpha < 1.0) {
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		GL_TextureEnvMode(GL_REPLACE);
 
 		glColor3ubv (color_white);
 		glDisable (GL_BLEND);
@@ -774,8 +774,8 @@ void R_DrawAlphaChain (void) {
 		if (gl_mtexable) {
 			//bind the lightmap texture
 			GL_EnableMultitexture();
-			GL_Bind (lightmap_textures + s->lightmaptexturenum);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
+			GL_Bind (lightmap_textures[s->lightmaptexturenum]);
+			GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 			//update lightmap if its modified by dynamic lights
 			k = s->lightmaptexturenum;
 			if (lightmap_modified[k])
@@ -801,7 +801,7 @@ void R_DrawAlphaChain (void) {
 	glDisable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.666);
 	GL_DisableMultitexture();
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 }
 
 #define CHAIN_RESET(chain)			\
@@ -879,7 +879,7 @@ void DrawTextureChains (model_t *model, int contents)
 	if (gl_fogenable.value)
 		glEnable(GL_FOG);
 
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++)
 	{
@@ -915,7 +915,7 @@ void DrawTextureChains (model_t *model, int contents)
 					doMtex1 = true;
 					GL_EnableTMU(GL_TEXTURE1);
 					GL_FB_TEXTURE = GL_TEXTURE1;
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+					GL_TextureEnvMode(GL_ADD);
 					GL_Bind (fb_texturenum);
 
 					mtex_lightmaps = can_mtex_lightmaps;
@@ -926,7 +926,7 @@ void DrawTextureChains (model_t *model, int contents)
 						doMtex2 = true;
 						GL_LIGHTMAP_TEXTURE = GL_TEXTURE2;
 						GL_EnableTMU(GL_LIGHTMAP_TEXTURE);
-						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
+						GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 					}
 					else
 					{
@@ -946,7 +946,7 @@ void DrawTextureChains (model_t *model, int contents)
 				doMtex1 = true;
 				GL_EnableTMU(GL_TEXTURE1);
 				GL_LIGHTMAP_TEXTURE = GL_TEXTURE1;
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
+				GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 
 				mtex_lightmaps = true;
 				mtex_fbs = fb_texturenum && draw_mtex_fbs;
@@ -957,7 +957,7 @@ void DrawTextureChains (model_t *model, int contents)
 					GL_FB_TEXTURE = GL_TEXTURE2;
 					GL_EnableTMU(GL_FB_TEXTURE);
 					GL_Bind (fb_texturenum);
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, isLumaTexture ? GL_ADD : GL_DECAL);
+					GL_TextureEnvMode(isLumaTexture ? GL_ADD : GL_DECAL);
 				}
 				else
 				{
@@ -983,7 +983,7 @@ void DrawTextureChains (model_t *model, int contents)
 				{
 					//bind the lightmap texture
 					GL_SelectTexture(GL_LIGHTMAP_TEXTURE);
-					GL_Bind (lightmap_textures + s->lightmaptexturenum);
+					GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 				}
 				else
 				{
@@ -1118,7 +1118,7 @@ void R_DrawFlat (model_t *model) {
 		glEnable(GL_FOG);
 	// } END shaman BUG /fog not working with /r_drawflat
 	
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+	GL_TextureEnvMode(GL_BLEND);
 	
 	GL_SelectTexture(GL_TEXTURE0);
 	
@@ -1131,7 +1131,7 @@ void R_DrawFlat (model_t *model) {
 				continue;
 			
 			for ( ; s; s = s->texturechain) {
-				GL_Bind (lightmap_textures + s->lightmaptexturenum);
+				GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 
 				v = s->polys->verts[0];
 				VectorCopy(s->plane->normal, n);
@@ -1215,7 +1215,7 @@ static void R_DrawMapOutline (model_t *model) {
 				continue;
 
 			for ( ; s; s = s->texturechain) {
-				GL_Bind (lightmap_textures + s->lightmaptexturenum);
+				GL_Bind (lightmap_textures[s->lightmaptexturenum]);
 
 				v = s->polys->verts[0];
 				VectorCopy(s->plane->normal, n);
@@ -1274,7 +1274,7 @@ void R_DrawBrushModel (entity_t *e) {
 			return;
 	   if (e->alpha) {
 		  glEnable (GL_BLEND);
-		  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		  GL_TextureEnvMode(GL_MODULATE);
 		  glColor4f (1, 1, 1, e->alpha);
 	   } else {
 		  glColor3f (1,1,1);
@@ -1289,7 +1289,7 @@ void R_DrawBrushModel (entity_t *e) {
 
 	   if (e->alpha) {
 		  glEnable (GL_BLEND);
-		  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		  GL_TextureEnvMode(GL_MODULATE);
 		  glColor4f (1, 1, 1, e->alpha);
 	   } else {
 		  glColor3f (1,1,1);
@@ -1758,7 +1758,7 @@ void GL_BuildLightmaps (void) {
 		lightmap_rectchange[i].t = BLOCK_HEIGHT;
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
-		GL_Bind(lightmap_textures + i);
+		GL_Bind(lightmap_textures[i]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0,

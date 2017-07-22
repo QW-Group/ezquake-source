@@ -44,7 +44,7 @@ extern float vid_gamma;
 extern int anisotropy_ext;
 int	anisotropy_tap = 1; //  1 - is off
 int	gl_max_size_default;
-int	gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
+GLenum gl_lightmap_format = GL_RGB, gl_solid_format = GL_RGB, gl_alpha_format = GL_RGBA;
 
 cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
 cvar_t	gl_picmip			= {"gl_picmip", "0"};
@@ -75,7 +75,8 @@ typedef struct {
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
 static int			numgltextures = 0;
-	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
+// Always use glGenTextures
+//	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
 
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
 {
@@ -373,16 +374,13 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	if (mode & TEX_BRIGHTEN)
 		brighten32 ((byte *)newdata, width * height * 4);
 
-	if(gl_gammacorrection.integer)
-	{
+	if (gl_gammacorrection.integer) {
 		internal_format = (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
-	else if(mode & TEX_NOCOMPRESS)
-	{
-		internal_format = (mode & TEX_ALPHA) ? 4 : 3;
+	else if (mode & TEX_NOCOMPRESS) {
+		internal_format = (mode & TEX_ALPHA) ? GL_RGBA : GL_RGB;
 	}
-	else
-	{
+	else {
 		internal_format = (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
 	}
 
@@ -539,8 +537,9 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		numgltextures++;
 
 		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
-		glt->texnum = texture_extension_number;
-		texture_extension_number++;
+		glGenTextures(1, &glt->texnum);
+		//glt->texnum = texture_extension_number;
+		//texture_extension_number++;
 	}
 
 	if (!glt)
@@ -563,7 +562,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 	GL_Bind(glt->texnum);
 
 	// Upload the texture to OpenGL based on the bytes per pixel.
-	switch (bpp) 
+	switch (bpp)
 	{
 		case 1:
 			GL_Upload8 (data, width, height, mode); break;
@@ -982,44 +981,49 @@ void GL_Texture_Init(void)
 {
 	cvar_t *cv;
 	int i;
-	extern int translate_texture, lightmap_textures, sceneblur_texture;
+	extern GLuint translate_texture;
+	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
+	extern GLuint sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
 
 	// Reset textures array and linked globals
-	for (i = 0; i < numgltextures; i++)
+	for (i = 0; i < numgltextures; i++) {
+		if (!gltextures[i].texnum) {
+			glDeleteTextures(1, &gltextures[i].texnum);
+		}
 		Q_free(gltextures[i].pathname);
+	}
 
 	memset(gltextures, 0, sizeof(gltextures));
 
-	texture_extension_number = 1;
+	//texture_extension_number = 1;
 	numgltextures  = 0;
 	currenttexture = -1;
 	current_texture = NULL; // nice names
 
 	// Multi texture.
 	oldtarget = GL_TEXTURE0;
-	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++)
+	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++) {
 		cnttextures[i] = -1;
+	}
 	mtexenabled = false;
 
 	// Save a texture slot for translated picture.
-	translate_texture = texture_extension_number++;
+	glGenTextures(1, &translate_texture);
 
 	// Netgraph.
-	netgraphtexture = texture_extension_number++;
+	glGenTextures(1, &netgraphtexture);
 
 	// Player skins.
-	playertextures = texture_extension_number;
-	texture_extension_number += MAX_CLIENTS; // Normal skins.
-	texture_extension_number += MAX_CLIENTS; // Fullbright skins.
+	glGenTextures(MAX_CLIENTS, playernmtextures);
+	glGenTextures(MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
-	lightmap_textures = texture_extension_number;
-	texture_extension_number += MAX_LIGHTMAPS;
+	glGenTextures(MAX_LIGHTMAPS, lightmap_textures);
 
 	// Motion blur.
-	sceneblur_texture = texture_extension_number++;
+	glGenTextures(1, &sceneblur_texture);
 
 	// Powerup shells.
 	shelltexture = 0; // Force reload.

@@ -570,7 +570,7 @@ void Classic_DrawParticles (void) {
 	if (!gl_solidparticles.value)
 		glDepthMask (GL_FALSE);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 
 	if (gl_particle_style.integer)
 	{
@@ -695,7 +695,7 @@ void Classic_DrawParticles (void) {
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);
 	glEnable (GL_TEXTURE_2D);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glColor3ubv (color_white);
 }
 

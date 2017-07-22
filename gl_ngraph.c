@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 
-int	netgraphtexture;	// netgraph texture
+GLuint netgraphtexture;	// netgraph texture
 
 // HUD -> hexum
 
@@ -119,9 +119,9 @@ void R_NetGraph (void) {
 
     GL_Bind(netgraphtexture);
 
-	glTexImage2D (GL_TEXTURE_2D, 0, 4, NET_TIMINGS, NET_GRAPHHEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, ngraph_pixels);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, NET_TIMINGS, NET_GRAPHHEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, ngraph_pixels);
 
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -230,7 +230,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         glEnable (GL_BLEND);
     }
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
     if (par_full->value)
         glDisable(GL_TEXTURE_2D);
     else
@@ -299,7 +299,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     }
 
     glColor3f(1,1,1);
-    glTexEnvf ( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+	GL_TextureEnvMode(GL_REPLACE );
 
     glEnable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);

@@ -98,15 +98,24 @@ glUniform1f_t            glUniform1f;
 glUniform2f_t            glUniform2f;
 glUniform3f_t            glUniform3f;
 glUniform4f_t            glUniform4f;
+glUniform1i_t            glUniform1i;
 glUniformMatrix4fv_t     glUniformMatrix4fv;
+
+// Texture functions 
+glActiveTexture_t        glActiveTexture;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
 static unsigned int vbo_number = 1;
+static int modern_only = -1;
 
 qbool GL_ShadersSupported(void)
 {
-	return shaders_supported;
+	if (modern_only < 0) {
+		modern_only = COM_CheckParm("-modern");
+	}
+
+	return modern_only || shaders_supported;
 }
 
 qbool GL_VBOsSupported(void)
@@ -180,7 +189,7 @@ static void CheckShaderExtensions(void)
 	glBufferDataExt = NULL;
 	glBufferSubDataExt = NULL;
 
-	if (SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_version) == 0) {
+	if (COM_CheckParm("-modern") && SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_version) == 0) {
 		if (gl_version >= 2) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
 			glBufferDataExt = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
@@ -215,7 +224,10 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform2f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform3f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform1i);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
@@ -317,7 +329,7 @@ void GL_Init (void) {
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 
 	GL_CheckExtensions();
 }
@@ -417,16 +429,248 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 	}
 }
 
+void GL_IdentityModelView(void)
+{
+	if (!GLM_Enabled()) {
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+	}
+}
+
 // TODO: GLM
 void GL_PushMatrix(GLenum mode)
 {
-	glMatrixMode(mode);
-	glPushMatrix();
+	if (!GLM_Enabled()) {
+		glMatrixMode(mode);
+		glPushMatrix();
+	}
 }
 
 // TODO: GLM
 void GL_PopMatrix(GLenum mode)
 {
-	glMatrixMode(mode);
-	glPopMatrix();
+	if (!GLM_Enabled()) {
+		glMatrixMode(mode);
+		glPopMatrix();
+	}
+}
+
+// TODO: GLM
+void GL_GetMatrix(GLenum mode, GLfloat* matrix)
+{
+	if (GLM_Enabled()) {
+		memset(matrix, 0, sizeof(GLfloat) * 16);
+	}
+	else {
+		glGetFloatv(mode, matrix);
+	}
+}
+
+void GL_GetViewport(GLint* view)
+{
+	if (GLM_Enabled()) {
+
+	}
+	else {
+		glGetIntegerv(GL_VIEWPORT, (GLint *)view);
+	}
+}
+
+static GLenum lastTextureMode = GL_MODULATE;
+
+void GL_TextureEnvMode(GLenum mode)
+{
+	if (GL_ShadersSupported()) {
+		// Just store for now
+		lastTextureMode = mode;
+	}
+	else {
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
+	}
+}
+
+
+// GLM Utility functions
+void GLM_ConPrintShaderLog(GLuint shader)
+{
+	GLint log_length;
+	char* buffer;
+
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
+	if (log_length) {
+		GLsizei written;
+
+		buffer = Q_malloc(log_length);
+		glGetShaderInfoLog(shader, log_length, &written, buffer);
+		Con_Printf(buffer);
+		Q_free(buffer);
+	}
+}
+
+void GLM_ConPrintProgramLog(GLuint program)
+{
+	GLint log_length;
+	char* buffer;
+
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
+	if (log_length) {
+		GLsizei written;
+
+		buffer = Q_malloc(log_length);
+		glGetProgramInfoLog(program, log_length, &written, buffer);
+		Con_Printf(buffer);
+		Q_free(buffer);
+	}
+}
+
+static qbool GLM_CompileShader(const char* shaderText, GLenum shaderType, GLuint* shaderId)
+{
+	GLuint shader;
+	GLint result;
+
+	*shaderId = 0;
+	shader = glCreateShader(shaderType);
+	if (shader) {
+		glShaderSource(shader, 1, &shaderText, NULL);
+		glCompileShader(shader);
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+		if (result) {
+			*shaderId = shader;
+			return true;
+		}
+
+		Con_Printf("Shader->Compile(%X) failed\n", shaderType);
+		GLM_ConPrintShaderLog(shader);
+		glDeleteShader(shader);
+	}
+	else {
+		Con_Printf("glCreateShader failed\n");
+	}
+	return false;
+}
+
+qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shader_text, const char* fragment_shader_text, glm_program_t* program)
+{
+	GLuint vertex_shader = 0;
+	GLuint fragment_shader = 0;
+	GLuint shader_program = 0;
+
+	Con_Printf("--[ %s ]--\n", friendlyName);
+	if (GL_ShadersSupported()) {
+		GLint result = 0;
+
+		if (GLM_CompileShader(vertex_shader_text, GL_VERTEX_SHADER, &vertex_shader)) {
+			if (GLM_CompileShader(fragment_shader_text, GL_FRAGMENT_SHADER, &fragment_shader)) {
+				Con_Printf("Shader compilation completed successfully\n");
+
+				shader_program = glCreateProgram();
+				if (shader_program) {
+					glAttachShader(shader_program, fragment_shader);
+					glAttachShader(shader_program, vertex_shader);
+					glLinkProgram(shader_program);
+					glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+
+					if (result) {
+						Con_Printf("ShaderProgram.Link() was successful\n");
+						program->fragment_shader = fragment_shader;
+						program->vertex_shader = vertex_shader;
+						program->program = shader_program;
+						return true;
+					}
+					else {
+						Con_Printf("ShaderProgram.Link() failed\n");
+						GLM_ConPrintProgramLog(shader_program);
+					}
+				}
+			}
+			else {
+				Con_Printf("FragmentShader.Compile() failed\n");
+				GLM_ConPrintShaderLog(fragment_shader);
+			}
+		}
+	}
+	else {
+		Con_Printf("Shaders not supported\n");
+		return false;
+	}
+
+	if (shader_program) {
+		glDeleteProgram(shader_program);
+	}
+	if (fragment_shader) {
+		glDeleteShader(fragment_shader);
+	}
+	if (vertex_shader) {
+		glDeleteShader(vertex_shader);
+	}
+	return false;
+}
+
+#undef glColor3f
+#undef glColor4f
+#undef glColor3fv
+#undef glColor3ubv
+#undef glColor4ubv
+#undef glColor4ub
+
+void GL_Color3f(float r, float g, float b)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor3f(r, g, b);
+	}
+}
+
+void GL_Color4f(float r, float g, float b, float a)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor4f(r, g, b, a);
+	}
+}
+
+void GL_Color3fv(const float* rgbVec)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor3fv(rgbVec);
+	}
+}
+
+void GL_Color3ubv(const GLubyte* rgbVec)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor3ubv(rgbVec);
+	}
+
+}
+
+void GL_Color4ubv(const GLubyte* rgbaVec)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor4ubv(rgbaVec);
+	}
+
+}
+
+void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
+{
+	if (GL_ShadersSupported()) {
+
+	}
+	else {
+		glColor4ub(r, g, b, a);
+	}
 }

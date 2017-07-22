@@ -188,7 +188,7 @@ void R_Bloom_InitEffectTexture (void)
 // =================
 // R_Bloom_InitTextures
 // =================
-extern int texture_extension_number;
+//extern int texture_extension_number;
 void R_Bloom_InitTextures( void )
 {
 	unsigned char *data;
@@ -215,8 +215,10 @@ void R_Bloom_InitTextures( void )
 	memset (data, 255, size);
 	//r_bloomscreentexture = GL_LoadTexture ( "***r_screenbackuptexture***", screen_texture_width, screen_texture_height, data, 0, 4); // false, false, 4);
 	
-	if (!r_bloomscreentexture)
-		r_bloomscreentexture = texture_extension_number++;
+	if (!r_bloomscreentexture) {
+		glGenTextures(1, &r_bloomscreentexture);
+		//r_bloomscreentexture = texture_extension_number++;
+	}
 
 	if(gl_gammacorrection.integer)
 	{
@@ -280,7 +282,7 @@ void R_Bloom_DrawEffect( void )
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_TextureEnvMode(GL_MODULATE);
 	glBegin(GL_QUADS);                         
 	glTexCoord2f(  0,                          sampleText_tch  ); 
 	glVertex2f(    curView_x,                  curView_y   );             
@@ -327,7 +329,7 @@ void R_Bloom_GeneratexCross( void )
 	if( r_bloom_darken.value )
 	{
 		glBlendFunc(GL_DST_COLOR, GL_ZERO);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 
 		for(i=0; i<r_bloom_darken.integer ;i++) 
 		{
@@ -402,8 +404,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	glViewport( 0, 0, sample_width, sample_height );
 
 	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity ();
+	GL_IdentityModelView();
 
 	// Copy small scene into r_bloomeffecttexture.
 	GL_Bind(r_bloomeffecttexture);
@@ -418,7 +419,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	if( r_bloom_darken.value )
 	{
 		glBlendFunc(GL_DST_COLOR, GL_ZERO);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_TextureEnvMode(GL_MODULATE);
 
 		for(i=0; i < r_bloom_darken.integer ;i++) 
 		{
@@ -497,8 +498,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	// Restore full screen workspace.
 	glViewport( 0, 0, glwidth, glheight );
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity ();
+	GL_IdentityModelView();
 }                                           
 
 // =================
@@ -573,8 +573,7 @@ void R_BloomBlend (void)
 	glViewport( 0, 0, glwidth, glheight );
 	glDisable( GL_DEPTH_TEST );
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity ();
+	GL_IdentityModelView();
 	glDisable(GL_CULL_FACE);
 
 	glDisable( GL_BLEND );

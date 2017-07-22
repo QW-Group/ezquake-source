@@ -295,7 +295,7 @@ void EmitWaterPolys (msurface_t *fa) {
 			glEnable (GL_BLEND);
 			col[3] = wateralpha*255;
 			glColor4ubv (col); // 1, 1, 1, wateralpha
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			GL_TextureEnvMode(GL_MODULATE);
 			if (wateralpha < 0.9)
 				glDepthMask (GL_FALSE);
 		}
@@ -305,7 +305,7 @@ void EmitWaterPolys (msurface_t *fa) {
 
 		// START shaman FIX /gl_turbalpha + /r_fastturb {
 		if (wateralpha < 1.0 && wateralpha >= 0) {
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			GL_TextureEnvMode(GL_REPLACE);
 			glColor3ubv (color_white);
 			glDisable (GL_BLEND);
 			if (wateralpha < 0.9)
@@ -447,11 +447,11 @@ void R_DrawSkyChain (void) {
 		glColor3ubv (color_white);
 	} else {
 		if (gl_mtexable) {
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			GL_TextureEnvMode(GL_MODULATE);
 			GL_Bind (solidskytexture);
 
 			GL_EnableMultitexture();
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			GL_TextureEnvMode(GL_DECAL);
 			GL_Bind (alphaskytexture);
 
 			speedscale = r_refdef2.time * 8;
@@ -463,7 +463,7 @@ void R_DrawSkyChain (void) {
 				EmitSkyPolys (fa, true);
 
 			GL_DisableMultitexture();
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			GL_TextureEnvMode(GL_REPLACE);
 		} else {
 			GL_Bind(solidskytexture);
 			speedscale = r_refdef2.time * 8;
@@ -1086,7 +1086,7 @@ void EmitCausticsPolys (void) {
 	extern glpoly_t *caustics_polys;
 
 	GL_Bind (underwatertexture);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	GL_TextureEnvMode(GL_DECAL);
 	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	glEnable(GL_BLEND);
 
@@ -1101,7 +1101,7 @@ void EmitCausticsPolys (void) {
 		glEnd();
 	}
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_TextureEnvMode(GL_REPLACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 
