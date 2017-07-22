@@ -310,9 +310,7 @@ void R_Bloom_GeneratexCross( void )
 
 	// Setup sample size workspace.
 	glViewport( 0, 0, sample_width, sample_height );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho(0, sample_width, sample_height, 0, -10, 100);
+	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity ();
 
@@ -386,9 +384,7 @@ void R_Bloom_GeneratexCross( void )
 
 	// Restore full screen workspace.
 	glViewport( 0, 0, glwidth, glheight );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho(0, glwidth, glheight, 0, -10, 100);
+	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity ();
 }
@@ -404,9 +400,8 @@ void R_Bloom_GeneratexDiamonds( void )
 
 	// Setup sample size workspace
 	glViewport( 0, 0, sample_width, sample_height );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho(0, sample_width, sample_height, 0, -10, 100);
+
+	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity ();
 
@@ -501,9 +496,7 @@ void R_Bloom_GeneratexDiamonds( void )
 
 	// Restore full screen workspace.
 	glViewport( 0, 0, glwidth, glheight );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho(0, glwidth, glheight, 0, -10, 100);
+	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity ();
 }                                           
@@ -579,9 +572,7 @@ void R_BloomBlend (void)
 	// Set up full screen workspace.
 	glViewport( 0, 0, glwidth, glheight );
 	glDisable( GL_DEPTH_TEST );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho(0, glwidth, glheight, 0, -10, 100);
+	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity ();
 	glDisable(GL_CULL_FACE);

@@ -1254,9 +1254,7 @@ void Draw_Crosshair (void)
 			return;
 		}
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, glwidth, glheight, 0, -99999, 99999);
+		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
@@ -1318,9 +1316,7 @@ void Draw_Crosshair (void)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glColor3ubv (color_white);
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, vid.width, vid.height, 0, -99999, 99999);
+		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 	else if (crosshair.value) {
 		// Multiview
@@ -1989,9 +1985,7 @@ void GL_Set2D (void)
 {
 	glViewport (glx, gly, glwidth, glheight);
 
-	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity ();
-	glOrtho (0, vid.width, vid.height, 0, -99999, 99999);
+	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 
 	glMatrixMode(GL_MODELVIEW);
     glLoadIdentity ();

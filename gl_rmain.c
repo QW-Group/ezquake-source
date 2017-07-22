@@ -2353,10 +2353,8 @@ static void R_RenderSceneBlurDo(float alpha)
 	GL_Bind(sceneblur_texture);
 
 	// go 2d
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity ();
-	glOrtho(0, glwidth, 0, glheight, -99999, 99999);
+	GL_PushMatrix(GL_PROJECTION);
+	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity ();
@@ -2391,10 +2389,8 @@ static void R_RenderSceneBlurDo(float alpha)
 	}
 
 	// Restore matrices.
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL_PopMatrix(GL_PROJECTION);
+	GL_PopMatrix(GL_MODELVIEW);
 
 	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
 	// so I copy frame not every frame.

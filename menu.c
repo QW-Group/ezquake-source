@@ -221,9 +221,7 @@ void M_Unscale_Menu(void)
 	{
 		menuwidth = vid.width;
 		menuheight = vid.height;
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+		GL_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
 	}
 }
 
@@ -1342,9 +1340,7 @@ void M_Draw (void) {
 			menuheight = (int) ((menuwidth / vid.aspect) + 0.5f);
 		}
 		
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+		GL_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
 	} else {
 		menuwidth = vid.width;
 		menuheight = vid.height;
@@ -1383,9 +1379,7 @@ void M_Draw (void) {
 	}
 
 	if (scr_scaleMenu.value) {
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
+		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 
 	if (m_entersound) {

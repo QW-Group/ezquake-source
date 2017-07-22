@@ -400,6 +400,7 @@ typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat v0);
 typedef void (APIENTRY *glUniform2f_t)(GLint location, GLfloat v0, GLfloat v1);
 typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -439,8 +440,13 @@ extern glUniform1f_t            glUniform1f;
 extern glUniform2f_t            glUniform2f;
 extern glUniform3f_t            glUniform3f;
 extern glUniform4f_t            glUniform4f;
+extern glUniformMatrix4fv_t     glUniformMatrix4fv;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
+
+void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
+void GL_PushMatrix(GLenum mode);
+void GL_PopMatrix(GLenum mode);
 
 #endif /* !__GL_LOCAL_H__ */

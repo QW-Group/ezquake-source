@@ -98,6 +98,7 @@ glUniform1f_t            glUniform1f;
 glUniform2f_t            glUniform2f;
 glUniform3f_t            glUniform3f;
 glUniform4f_t            glUniform4f;
+glUniformMatrix4fv_t     glUniformMatrix4fv;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
@@ -214,6 +215,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform2f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform3f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
@@ -398,4 +400,33 @@ void VID_SetPalette (unsigned char *palette) {
 		*table++ = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 	}
 	d_8to24table2[255] = 0;	// 255 is transparent
+}
+
+#define GLM_Enabled GL_ShadersSupported
+void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
+
+void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
+{
+	if (GLM_Enabled()) {
+		GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
+	}
+	else {
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(left, right, top, bottom, zNear, zFar);
+	}
+}
+
+// TODO: GLM
+void GL_PushMatrix(GLenum mode)
+{
+	glMatrixMode(mode);
+	glPushMatrix();
+}
+
+// TODO: GLM
+void GL_PopMatrix(GLenum mode)
+{
+	glMatrixMode(mode);
+	glPopMatrix();
 }
