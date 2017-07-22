@@ -459,8 +459,8 @@ void GL_TextureEnvMode(GLenum mode);
 #define GL_ALPHATEST_ENABLED  1
 #define GL_ALPHATEST_DISABLED 2
 #define GL_BLEND_NOCHANGE 0
-#define GL_BLEND_ENABLED  1
-#define GL_BLEND_DISABLED 2
+#define GL_BLEND_ENABLED  4
+#define GL_BLEND_DISABLED 8
 
 void GL_AlphaBlendFlags(int modes);
 
