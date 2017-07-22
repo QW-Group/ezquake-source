@@ -50,6 +50,7 @@ typedef struct {
 	const unsigned char                     *vendor_string;
 	const unsigned char                     *version_string;
 	const unsigned char                     *extensions_string;
+	const unsigned char                     *glsl_version;
 
 	int					colorBits, depthBits, stencilBits;
 	int					vidWidth, vidHeight;
@@ -66,6 +67,8 @@ typedef struct {
 		int size;
 	} gammacrap;
 #endif
+
+	int max_texture_size;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

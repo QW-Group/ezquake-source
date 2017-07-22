@@ -62,6 +62,63 @@ cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
+// VBO functions
+glBindBuffer_t     glBindBufferExt = NULL;
+glBufferData_t     glBufferDataExt = NULL;
+glBufferSubData_t  glBufferSubDataExt = NULL;
+glGenBuffers_t     glGenBuffers = NULL;
+
+// VAO functions
+glGenVertexArrays_t         glGenVertexArrays = NULL;
+glBindVertexArray_t         glBindVertexArray = NULL;
+glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
+glVertexAttribPointer_t     glVertexAttribPointer = NULL;
+
+// Shader functions
+glCreateShader_t      glCreateShader = NULL;
+glShaderSource_t      glShaderSource = NULL;
+glCompileShader_t     glCompileShader = NULL;
+glDeleteShader_t      glDeleteShader = NULL;
+glGetShaderInfoLog_t  glGetShaderInfoLog = NULL;
+glGetShaderiv_t       glGetShaderiv = NULL;
+
+// Program functions
+glCreateProgram_t     glCreateProgram = NULL;
+glLinkProgram_t       glLinkProgram = NULL;
+glDeleteProgram_t     glDeleteProgram = NULL;
+glGetProgramiv_t      glGetProgramiv = NULL;
+glGetProgramInfoLog_t glGetProgramInfoLog = NULL;
+glUseProgram_t        glUseProgram = NULL;
+glAttachShader_t      glAttachShader = NULL;
+glDetachShader_t      glDetachShader = NULL;
+
+// Uniforms
+glGetUniformLocation_t   glGetUniformLocation = NULL;
+glUniform1f_t            glUniform1f;
+glUniform2f_t            glUniform2f;
+glUniform3f_t            glUniform3f;
+glUniform4f_t            glUniform4f;
+
+static qbool vbo_supported = false;
+static qbool shaders_supported = false;
+static unsigned int vbo_number = 1;
+
+qbool GL_ShadersSupported(void)
+{
+	return shaders_supported;
+}
+
+qbool GL_VBOsSupported(void)
+{
+	return vbo_supported;
+}
+
+#define OPENGL_LOAD_SHADER_FUNCTION(x) \
+	if (shaders_supported) { \
+		x = (x ## _t)SDL_GL_GetProcAddress(#x); \
+		shaders_supported = (x != NULL); \
+	}
+
 /************************************* EXTENSIONS *************************************/
 
 qbool CheckExtension (const char *extension) {
@@ -83,7 +140,8 @@ qbool CheckExtension (const char *extension) {
 	return false;
 }
 
-void CheckMultiTextureExtensions (void) {
+static void CheckMultiTextureExtensions(void)
+{
 	if (!COM_CheckParm("-nomtex") && CheckExtension("GL_ARB_multitexture")) {
 		if (strstr(gl_renderer, "Savage"))
 			return;
@@ -104,18 +162,76 @@ void CheckMultiTextureExtensions (void) {
 	if (gl_textureunits < 2)
 		gl_mtexable = false;
 
-	if (!gl_mtexable)
+	if (!gl_mtexable) {
 		gl_textureunits = 1;
-	else
+	}
+	else {
 		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
+	}
+}
+
+static void CheckShaderExtensions(void)
+{
+	int gl_version;
+
+	shaders_supported = vbo_supported = false;
+	glBindBufferExt = NULL;
+	glBufferDataExt = NULL;
+	glBufferSubDataExt = NULL;
+
+	if (SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_version) == 0) {
+		if (gl_version >= 2) {
+			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
+			glBufferDataExt = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
+			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
+
+			shaders_supported = true;
+			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
+			OPENGL_LOAD_SHADER_FUNCTION(glShaderSource);
+			OPENGL_LOAD_SHADER_FUNCTION(glCompileShader);
+			OPENGL_LOAD_SHADER_FUNCTION(glDeleteShader);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderInfoLog);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderiv);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glGenBuffers);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glGenVertexArrays);
+			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
+			OPENGL_LOAD_SHADER_FUNCTION(glEnableVertexAttribArray);
+			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribPointer);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glCreateProgram);
+			OPENGL_LOAD_SHADER_FUNCTION(glLinkProgram);
+			OPENGL_LOAD_SHADER_FUNCTION(glDeleteProgram);
+			OPENGL_LOAD_SHADER_FUNCTION(glUseProgram);
+			OPENGL_LOAD_SHADER_FUNCTION(glAttachShader);
+			OPENGL_LOAD_SHADER_FUNCTION(glDetachShader);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetProgramInfoLog);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetProgramiv);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformLocation);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform1f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform2f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform3f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
+		}
+		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
+			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
+			glBufferDataExt = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
+			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
+		}
+
+		vbo_supported = glBindBufferExt && glBufferDataExt && glBufferSubDataExt;
+	}
+	vbo_number = 1;
 }
 
 void GL_CheckExtensions (void) {
 	CheckMultiTextureExtensions ();
+	CheckShaderExtensions();
 
 	gl_combine = CheckExtension("GL_ARB_texture_env_combine");
 	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
-
 
 	if (CheckExtension("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;

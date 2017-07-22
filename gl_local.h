@@ -364,4 +364,83 @@ void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
 
+// VBOs
+typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
+typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
+
+// VAOs
+typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
+typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
+typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
+typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+
+// Shader functions
+typedef GLuint (APIENTRY *glCreateShader_t)(GLenum shaderType);
+typedef void (APIENTRY *glShaderSource_t)(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
+typedef void (APIENTRY *glCompileShader_t)(GLuint shader);
+typedef void (APIENTRY *glDeleteShader_t)(GLuint shader);
+typedef void (APIENTRY *glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
+
+// Program functions
+typedef GLuint(APIENTRY *glCreateProgram_t)(void);
+typedef void (APIENTRY *glLinkProgram_t)(GLuint program);
+typedef void (APIENTRY *glDeleteProgram_t)(GLuint program);
+typedef void (APIENTRY *glGetProgramInfoLog_t)(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY *glUseProgram_t)(GLuint program);
+typedef void (APIENTRY *glAttachShader_t)(GLuint program, GLuint shader);
+typedef void (APIENTRY *glDetachShader_t)(GLuint program, GLuint shader);
+typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* params);
+
+// Uniforms
+typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
+typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat v0);
+typedef void (APIENTRY *glUniform2f_t)(GLint location, GLfloat v0, GLfloat v1);
+typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+
+//typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
+
+// VBO functions
+extern glBindBuffer_t        glBindBufferExt;
+extern glBufferData_t        glBufferDataExt;
+extern glBufferSubData_t     glBufferSubDataExt;
+extern glGenBuffers_t        glGenBuffers;
+
+// VAO functions
+extern glGenVertexArrays_t         glGenVertexArrays;
+extern glBindVertexArray_t         glBindVertexArray;
+extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
+extern glVertexAttribPointer_t     glVertexAttribPointer;
+
+// Shader functions
+extern glCreateShader_t      glCreateShader;
+extern glShaderSource_t      glShaderSource;
+extern glCompileShader_t     glCompileShader;
+extern glDeleteShader_t      glDeleteShader;
+extern glGetShaderInfoLog_t  glGetShaderInfoLog;
+extern glGetShaderiv_t       glGetShaderiv;
+
+// Program functions
+extern glCreateProgram_t     glCreateProgram;
+extern glLinkProgram_t       glLinkProgram;
+extern glDeleteProgram_t     glDeleteProgram;
+extern glGetProgramInfoLog_t glGetProgramInfoLog;
+extern glUseProgram_t        glUseProgram;
+extern glAttachShader_t      glAttachShader;
+extern glDetachShader_t      glDetachShader;
+extern glGetProgramiv_t      glGetProgramiv;
+
+// Uniforms
+extern glGetUniformLocation_t   glGetUniformLocation;
+extern glUniform1f_t            glUniform1f;
+extern glUniform2f_t            glUniform2f;
+extern glUniform3f_t            glUniform3f;
+extern glUniform4f_t            glUniform4f;
+
+qbool GL_ShadersSupported(void);
+qbool GL_VBOsSupported(void);
+
 #endif /* !__GL_LOCAL_H__ */

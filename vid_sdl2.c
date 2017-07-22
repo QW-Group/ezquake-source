@@ -965,6 +965,10 @@ static void VID_SDL_GL_SetupAttributes(void)
 		VID_SDL_GL_DisableMSAA();
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+
 	if (r_24bit_depth.integer == 1) {
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	} /* else, SDL2 defaults to 16 */
@@ -1187,6 +1191,11 @@ static void VID_SDL_Init(void)
 	}
 #endif
 
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.max_texture_size);
+		glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+	}
+
 	glConfig.initialized = true;
 }
 
@@ -1386,6 +1395,7 @@ static void GfxInfo_f(void)
 	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
+	Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
 
 	if (r_showextensions.value) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
@@ -1397,6 +1407,7 @@ static void GfxInfo_f(void)
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
+	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.max_texture_size);
 	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
 	
 	if (r_fullscreen.integer) {
@@ -1408,7 +1419,6 @@ static void GfxInfo_f(void)
 	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
 
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
-
 }
 
 static void VID_ParseCmdLine(void)
