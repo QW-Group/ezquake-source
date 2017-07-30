@@ -53,8 +53,11 @@ typedef struct texture_s {
 	int					gl_texturenum;
 	int					fb_texturenum;				//index of fullbright mask or 0
 	struct msurface_s	*texturechain[2];		
-	struct msurface_s	**texturechain_tail[2];	
-													//Points to the node right after the last non-NULL node in the texturechain.
+	struct msurface_s	**texturechain_tail[2];     //Points to the node right after the last non-NULL node in the texturechain.
+
+	GLint               surfaces_vbo;
+	GLint               surfaces_underwater_vbo;
+
 	int					anim_total;					//total tenths in sequence ( 0 = no)
 	int					anim_min, anim_max;			//time for this frame min <=time< max
 	struct texture_s	*anim_next;					//in the animation sequence

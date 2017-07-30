@@ -1101,6 +1101,88 @@ void DrawTextureChains (model_t *model, int contents)
 	EmitDetailPolys();
 }
 
+void GLM_DrawFlat(model_t* model)
+{
+	byte wallColor[3];
+	byte floorColor[3];
+	int i;
+
+	GL_DisableMultitexture();
+	GL_SelectTexture(GL_TEXTURE0);
+
+	memcpy(wallColor, r_wallcolor.color, 3);
+	memcpy(floorColor, r_floorcolor.color, 3);
+
+	for (i = 0; i < model->numtextures; i++) {
+		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
+			continue;
+		}
+
+		for (waterline = 0; waterline < 2; waterline++) {
+			if (!(s = model->textures[i]->texturechain[waterline])) {
+				continue;
+			}
+
+			for ( ; s; s = s->texturechain) {
+				// FIXME: move lightmap 
+				//GL_Bind (lightmap_textures[s->lightmaptexturenum]);
+
+				v = s->polys->verts[0];
+				VectorCopy(s->plane->normal, n);
+				VectorNormalize(n);
+
+				// r_drawflat 1 == All solid colors
+				// r_drawflat 2 == Solid floor/ceiling only
+				// r_drawflat 3 == Solid walls only
+
+				if (n[2] < -0.5 || n[2] > 0.5) // floor or ceiling
+				{
+					if (r_drawflat.integer == 2 || r_drawflat.integer == 1)
+					{
+						glColor3ubv(f);
+					}
+					else
+					{
+						continue;
+					}
+				}
+				else										// walls
+				{
+					if (r_drawflat.integer == 3 || r_drawflat.integer == 1)
+					{
+						glColor3ubv(w);
+					}
+					else
+					{
+						continue;
+					}
+				}
+
+				glBegin(GL_POLYGON);
+				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+					glTexCoord2f(v[5], v[6]);
+					glVertex3fv (v);
+				}
+				glEnd ();
+
+				// START shaman FIX /r_drawflat + /gl_caustics {
+				if (waterline && draw_caustics) {
+					s->polys->caustics_chain = caustics_polys;
+					caustics_polys = s->polys;
+				}
+				// } END shaman FIX /r_drawflat + /gl_caustics
+			}
+		}		
+	}
+
+	if (gl_fogenable.value) {
+		glDisable(GL_FOG);
+	}
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	// TODO: Caustics
+}
+
 void R_DrawFlat (model_t *model) {
 	msurface_t *s;
 	int waterline, i, k;
