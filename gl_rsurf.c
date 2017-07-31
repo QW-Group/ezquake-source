@@ -647,12 +647,19 @@ void R_DrawWaterSurfaces (void) {
 	ESHADER(ParticleSlimeGlow);
 	ESHADER(ParticleSmallerFirePool);
 	ESHADER(ParticleLavaSmokePool);
-
 	
 	if (!waterchain)
 		return;
 
 	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+
+	if (GL_ShadersSupported()) {
+		for (s = waterchain; s; s = s->texturechain) {
+			GL_Bind(s->texinfo->texture->gl_texturenum);
+			EmitWaterPolys(s);
+		}
+		return;
+	}
 
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);

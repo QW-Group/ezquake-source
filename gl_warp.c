@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "utils.h"
 
+extern void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap);
 
 extern model_t *loadmodel;
 extern msurface_t *skychain;
@@ -245,7 +246,7 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 	int i;
 	vec3_t nv;
 
-	if (!amf_waterripple.value || !(cls.demoplayback || cl.spectator) || strstr(fa->texinfo->texture->name, "tele")) {
+	if (!amf_waterripple.value || !(cls.demoplayback || cl.spectator) || fa->texinfo->texture->turbType == TEXTURE_TURB_TELE) {
 		EmitFlatPoly (fa);
 		return;
 	}
@@ -261,100 +262,124 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 	}
 }
 
+static byte* SurfaceFlatTurbColor(msurface_t* fa)
+{
+	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
+
+	switch (fa->texinfo->texture->turbType)
+	{
+	case TEXTURE_TURB_WATER:
+		return r_watercolor.color;
+	case TEXTURE_TURB_SLIME:
+		return r_slimecolor.color;
+	case TEXTURE_TURB_LAVA:
+		return r_lavacolor.color;
+	case TEXTURE_TURB_TELE:
+		return r_telecolor.color;
+	}
+
+	return (byte *)&fa->texinfo->texture->flatcolor3ub;
+}
+
 //Does a water warp on the pre-fragmented glpoly_t chain
-void EmitWaterPolys (msurface_t *fa) {
+void EmitWaterPolys (msurface_t *fa)
+{
 	glpoly_t *p;
 	float *v, s, t, os, ot;
 	int i;
 	byte *col;
-	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	vec3_t nv;
 
-	GL_DisableMultitexture();
+	col = SurfaceFlatTurbColor(fa);
+	if (GL_ShadersSupported()) {
+		if (r_fastturb.value) {
+			byte old_alpha = col[3];
 
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
-
-	if (r_fastturb.value)
-	{
-		glDisable (GL_TEXTURE_2D);
-
-		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat")) {
-			col = r_watercolor.color;
-		}
-		else if (strstr (fa->texinfo->texture->name, "slime")) {
-			col = r_slimecolor.color;
-		}
-		else if (strstr (fa->texinfo->texture->name, "lava")) {
-			col = r_lavacolor.color;
-		}
-		else if (strstr (fa->texinfo->texture->name, "tele")) {
-			col = r_telecolor.color;
-		}
-		else {
-			col = (byte *) &fa->texinfo->texture->flatcolor3ub;
-		}
-		glColor3ubv (col);
-
-		// START shaman FIX /gl_turbalpha + /r_fastturb {
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			col[3] = wateralpha*255;
-			glColor4ubv (col); // 1, 1, 1, wateralpha
-			GL_TextureEnvMode(GL_MODULATE);
-			if (wateralpha < 0.9)
-				glDepthMask (GL_FALSE);
-		}
-		// END shaman FIX /gl_turbalpha + /r_fastturb {
-
-		EmitFlatWaterPoly (fa);
-
-		// START shaman FIX /gl_turbalpha + /r_fastturb {
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_TextureEnvMode(GL_REPLACE);
-			glColor3ubv (color_white);
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-			if (wateralpha < 0.9)
-				glDepthMask (GL_TRUE);
-		}
-		// END shaman FIX /gl_turbalpha + /r_fastturb {
-
-		glEnable (GL_TEXTURE_2D);
-		glColor3ubv (color_white);
-		// END shaman RFE 1022504
-	} else {
-		GL_Bind (fa->texinfo->texture->gl_texturenum);
-		for (p = fa->polys; p; p = p->next) {
-			glBegin(GL_POLYGON);
-			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-				os = v[3];
-				ot = v[4];
-
-				s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
-				s *= (1.0 / 64);
-
-				t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
-				t *= (1.0 / 64);
-
-				//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
-				//I got this one from the QMB engine though
-				VectorCopy(v, nv);
-				//Over 20 this setting gets pretty cheaty
-				if (amf_waterripple.value && (cls.demoplayback || cl.spectator) && !strstr (fa->texinfo->texture->name, "tele"))
-					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+r_refdef2.time)*sin(v[1]*0.02+r_refdef2.time)*sin(v[2]*0.02+r_refdef2.time);
-
-				glTexCoord2f (s, t);
-				glVertex3fv (nv);
-
+			// FIXME: turbripple effect, transparent water
+			col[3] = 255;
+			for (p = fa->polys; p; p = p->next) {
+				GLM_DrawFlatPoly(col, p, false);
 			}
-			glEnd();
+			col[3] = old_alpha;
 		}
 	}
+	else {
+		GL_DisableMultitexture();
 
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
+		if (gl_fogenable.value)
+			glEnable(GL_FOG);
+
+		if (r_fastturb.value) {
+			byte old_alpha = col[3];
+
+			glDisable(GL_TEXTURE_2D);
+
+			glColor3ubv(col);
+
+			// START shaman FIX /gl_turbalpha + /r_fastturb {
+			if (wateralpha < 1.0 && wateralpha >= 0) {
+				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+				col[3] = wateralpha * 255;
+				glColor4ubv(col); // 1, 1, 1, wateralpha
+				GL_TextureEnvMode(GL_MODULATE);
+				if (wateralpha < 0.9) {
+					glDepthMask(GL_FALSE);
+				}
+			}
+			// END shaman FIX /gl_turbalpha + /r_fastturb {
+
+			EmitFlatWaterPoly(fa);
+
+			// START shaman FIX /gl_turbalpha + /r_fastturb {
+			if (wateralpha < 1.0 && wateralpha >= 0) {
+				GL_TextureEnvMode(GL_REPLACE);
+				glColor3ubv(color_white);
+				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+				if (wateralpha < 0.9) {
+					glDepthMask(GL_TRUE);
+				}
+				col[3] = old_alpha;
+			}
+			// END shaman FIX /gl_turbalpha + /r_fastturb {
+
+			glEnable(GL_TEXTURE_2D);
+			glColor3ubv(color_white);
+			// END shaman RFE 1022504
+		}
+		else {
+			GL_Bind(fa->texinfo->texture->gl_texturenum);
+			for (p = fa->polys; p; p = p->next) {
+				glBegin(GL_POLYGON);
+				for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+					os = v[3];
+					ot = v[4];
+
+					s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
+					s *= (1.0 / 64);
+
+					t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
+					t *= (1.0 / 64);
+
+					//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
+					//I got this one from the QMB engine though
+					VectorCopy(v, nv);
+					//Over 20 this setting gets pretty cheaty
+					if (amf_waterripple.value && (cls.demoplayback || cl.spectator) && !strstr(fa->texinfo->texture->name, "tele"))
+						nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0] * 0.02 + r_refdef2.time)*sin(v[1] * 0.02 + r_refdef2.time)*sin(v[2] * 0.02 + r_refdef2.time);
+
+					glTexCoord2f(s, t);
+					glVertex3fv(nv);
+
+				}
+				glEnd();
+			}
+		}
+
+		if (gl_fogenable.value)
+			glDisable(GL_FOG);
+	}
 }
 
 
@@ -1013,8 +1038,6 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 
 static void GLM_DrawFastSky(void)
 {
-	extern void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap);
-
 	msurface_t* fa;
 	byte color[4] = {
 		r_skycolor.color[0],

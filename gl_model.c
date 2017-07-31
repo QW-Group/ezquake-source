@@ -599,6 +599,19 @@ void Mod_LoadTextures (lump_t *l) {
 			{
 				byte *data = (byte *) &d_8to24table[*((byte *) mt + mt->offsets[0] + ((mt->height * mt->width) >> 1))];
 				tx->flatcolor3ub = (255 << 24) + (data[0] << 0) + (data[1] << 8) + (data[2] << 16);
+
+				if (strstr(tx->name, "water") || strstr(tx->name, "mwat")) {
+					tx->turbType = TEXTURE_TURB_WATER;
+				}
+				else if (strstr(tx->name, "slime")) {
+					tx->turbType = TEXTURE_TURB_SLIME;
+				}
+				else if (strstr(tx->name, "lava")) {
+					tx->turbType = TEXTURE_TURB_LAVA;
+				}
+				else if (strstr(tx->name, "tele")) {
+					tx->turbType = TEXTURE_TURB_TELE;
+				}
 			}
 		}
 	}

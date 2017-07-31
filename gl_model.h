@@ -47,6 +47,11 @@ typedef struct mvertex_s {
 	vec3_t		position;
 } mvertex_t;
 
+#define TEXTURE_TURB_WATER 1
+#define TEXTURE_TURB_SLIME 2
+#define TEXTURE_TURB_LAVA  3
+#define TEXTURE_TURB_TELE  4
+
 typedef struct texture_s {
 	char				name[16];
 	unsigned			width, height;
@@ -66,6 +71,7 @@ typedef struct texture_s {
 	unsigned			flatcolor3ub;				//just for r_fastturb's sake
 	qbool				loaded;						//help speed up vid_restart, actual only for brush models
 	int					isLumaTexture;
+	int                 turbType;
 } texture_t;
 
 

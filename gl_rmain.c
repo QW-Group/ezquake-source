@@ -2159,7 +2159,7 @@ void R_RenderScene(void)
 	R_DrawWorld ();		// adds static entities to the list
 
 	if (GL_ShadersSupported()) {
-
+		R_DrawWaterSurfaces();
 	}
 	else {
 		R_DrawEntitiesOnList(&cl_visents);
