@@ -428,6 +428,7 @@ static GLfloat identityMatrix[16] = {
 };
 
 static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar);
+void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 
 void GLM_SetMatrix(float* target, const float* source)
 {
@@ -461,6 +462,50 @@ void GLM_SetIdentityMatrix(float* matrix)
 	GLM_SetMatrix(matrix, identityMatrix);
 }
 
+void GLM_Rotate(float* matrix, float angle, float x, float y, float z)
+{
+	vec3_t vec = { x, y, z };
+	double s = sin(angle * M_PI / 180);
+	double c = cos(angle * M_PI / 180);
+	float rotation[16];
+	float result[16];
+
+	VectorNormalize(vec);
+
+	// Taken from https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glRotate.xml
+	/*rotation[0] = x * x * (1 - c) + c;
+	rotation[1] = x * y * (1 - c) - z * s;
+	rotation[2] = x * z * (1 - c) + y * s;
+	rotation[3] = 0;
+	rotation[4] = y * x * (1 - c) + z * s;
+	rotation[5] = y * y * (1 - c) + c;
+	rotation[6] = y * z * (1 - c) - x * s;
+	rotation[7] = 0;
+	rotation[8] = x * z * (1 - c) - y * s;
+	rotation[9] = y * z * (1 - c) + x * s;
+	rotation[10] = z * z * (1 - c) + c;
+	rotation[11] = 0;
+	rotation[12] = rotation[13] = rotation[14] = 0;
+	rotation[15] = 1;*/
+	rotation[0] = x * x * (1 - c) + c;
+	rotation[4] = x * y * (1 - c) - z * s;
+	rotation[8] = x * z * (1 - c) + y * s;
+	rotation[12] = 0;
+	rotation[1] = y * x * (1 - c) + z * s;
+	rotation[5] = y * y * (1 - c) + c;
+	rotation[9] = y * z * (1 - c) - x * s;
+	rotation[13] = 0;
+	rotation[2] = x * z * (1 - c) - y * s;
+	rotation[6] = y * z * (1 - c) + x * s;
+	rotation[10] = z * z * (1 - c) + c;
+	rotation[14] = 0;
+	rotation[3] = rotation[7] = rotation[11] = 0;
+	rotation[15] = 1;
+
+	GLM_MultiplyMatrix(rotation, matrix, result);
+	GLM_SetMatrix(matrix, result);
+}
+
 void GLM_TransformMatrix(float* matrix, float x, float y, float z)
 {
 	matrix[12] += matrix[0] * x + matrix[4] * y + matrix[8] * z;
@@ -485,6 +530,29 @@ void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
 	matrix[11] *= z_scale;
 }
 
+void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target)
+{
+	target[0] = lhs[0] * rhs[0] + lhs[1] * rhs[4] + lhs[2] * rhs[8] + lhs[3] * rhs[12];
+	target[1] = lhs[0] * rhs[1] + lhs[1] * rhs[5] + lhs[2] * rhs[9] + lhs[3] * rhs[13];
+	target[2] = lhs[0] * rhs[2] + lhs[1] * rhs[6] + lhs[2] * rhs[10] + lhs[3] * rhs[14];
+	target[3] = lhs[0] * rhs[3] + lhs[1] * rhs[7] + lhs[2] * rhs[11] + lhs[3] * rhs[15];
+
+	target[4] = lhs[4] * rhs[0] + lhs[5] * rhs[4] + lhs[6] * rhs[8] + lhs[7] * rhs[12];
+	target[5] = lhs[4] * rhs[1] + lhs[5] * rhs[5] + lhs[6] * rhs[9] + lhs[7] * rhs[13];
+	target[6] = lhs[4] * rhs[2] + lhs[5] * rhs[6] + lhs[6] * rhs[10] + lhs[7] * rhs[14];
+	target[7] = lhs[4] * rhs[3] + lhs[5] * rhs[7] + lhs[6] * rhs[11] + lhs[7] * rhs[15];
+
+	target[8] = lhs[8] * rhs[0] + lhs[9] * rhs[4] + lhs[10] * rhs[8] + lhs[11] * rhs[12];
+	target[9] = lhs[8] * rhs[1] + lhs[9] * rhs[5] + lhs[10] * rhs[9] + lhs[11] * rhs[13];
+	target[10] = lhs[8] * rhs[2] + lhs[9] * rhs[6] + lhs[10] * rhs[10] + lhs[11] * rhs[14];
+	target[11] = lhs[8] * rhs[3] + lhs[9] * rhs[7] + lhs[10] * rhs[11] + lhs[11] * rhs[15];
+
+	target[12] = lhs[12] * rhs[0] + lhs[13] * rhs[4] + lhs[14] * rhs[8] + lhs[15] * rhs[12];
+	target[13] = lhs[12] * rhs[1] + lhs[13] * rhs[5] + lhs[14] * rhs[9] + lhs[15] * rhs[13];
+	target[14] = lhs[12] * rhs[2] + lhs[13] * rhs[6] + lhs[14] * rhs[10] + lhs[15] * rhs[14];
+	target[15] = lhs[12] * rhs[3] + lhs[13] * rhs[7] + lhs[14] * rhs[11] + lhs[15] * rhs[15];
+}
+
 void GL_IdentityModelView(void)
 {
 	if (GLM_Enabled()) {
@@ -496,13 +564,10 @@ void GL_IdentityModelView(void)
 	}
 }
 
-// TODO: GLM
 void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 {
 	if (GLM_Enabled()) {
-		//if (mode == GL_PROJECTION)
-		// TODO
-		memset(matrix, 0, sizeof(GLfloat) * 16);
+		GLM_GetMatrix(mode, matrix);
 	}
 	else {
 		glGetFloatv(mode, matrix);
@@ -677,10 +742,10 @@ static float* GL_MatrixForMode(GLenum type)
 {
 	static float junk[16] = { 0 };
 
-	if (type == GL_PROJECTION) {
+	if (type == GL_PROJECTION || type == GL_PROJECTION_MATRIX) {
 		return projectionMatrix;
 	}
-	else if (type == GL_MODELVIEW) {
+	else if (type == GL_MODELVIEW || type == GL_MODELVIEW_MATRIX) {
 		return modelMatrix;
 	}
 	else {
@@ -765,9 +830,10 @@ void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 {
 	if (GL_ShadersSupported()) {
-
+		GLM_Rotate(GL_MatrixForMode(matrix), angle, x, y, z);
 	}
 	else {
+		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 	}
 }
@@ -775,7 +841,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 void GL_Translate(GLenum matrix, float x, float y, float z)
 {
 	if (GL_ShadersSupported()) {
-
+		GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
 	}
 	else {
 		glTranslatef(x, y, z);
@@ -839,5 +905,29 @@ void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
 	}
 	else {
 		glScalef(xScale, yScale, zScale);
+	}
+}
+
+void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
+{
+	if (GL_ShadersSupported()) {
+		float perspective[16] = { 0 };
+		float projection[16];
+		float new_projection[16];
+
+		perspective[0] = (2 * zNear) / (right - left);
+		perspective[8] = (right + left) / (right - left);
+		perspective[5] = (2 * zNear) / (top - bottom);
+		perspective[9] = (top + bottom) / (top - bottom);
+		perspective[10] = -(zFar + zNear) / (zFar - zNear);
+		perspective[11] = -1;
+		perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
+
+		GLM_GetMatrix(GL_PROJECTION, projection);
+		GLM_MultiplyMatrix(perspective, projection, new_projection);
+		GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
+	}
+	else {
+		glFrustum(left, right, bottom, top, zNear, zFar);
 	}
 }

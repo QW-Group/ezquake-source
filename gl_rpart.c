@@ -909,11 +909,11 @@ void QMB_DrawParticles (void) {
 					continue;
 
 				GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-				glTranslatef(p->org[0], p->org[1], p->org[2]);
-				glScalef(p->size, p->size, p->size);
-				glRotatef(p->endorg[0], 0, 1, 0);
-				glRotatef(p->endorg[1], 0, 0, 1);
-				glRotatef(p->endorg[2], 1, 0, 0);
+				GL_Translate(GL_MODELVIEW, p->org[0], p->org[1], p->org[2]);
+				GL_Scale(GL_MODELVIEW, p->size, p->size, p->size);
+				GL_Rotate(GL_MODELVIEW, p->endorg[0], 0, 1, 0);
+				GL_Rotate(GL_MODELVIEW, p->endorg[1], 0, 0, 1);
+				GL_Rotate(GL_MODELVIEW, p->endorg[2], 1, 0, 0);
 				glColor4ubv(p->color);
 				glBegin (GL_QUADS);
 				glTexCoord2f (0,0);
@@ -927,7 +927,7 @@ void QMB_DrawParticles (void) {
 				glEnd();
 
 				//And since quads seem to be one sided...
-				glRotatef(180, 1, 0, 0);
+				GL_Rotate(GL_MODELVIEW, 180, 1, 0, 0);
 				glColor4ubv(p->color);
 				glBegin (GL_QUADS);
 				glTexCoord2f (0,0);

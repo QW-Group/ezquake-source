@@ -493,14 +493,15 @@ void GL_Color3ubv(const GLubyte* rgbVec);
 void GL_Color4ubv(const GLubyte* rgbaVec);
 void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a);
 
-void GL_IdentityModelView(void);
 void GL_GetMatrix(GLenum mode, GLfloat* matrix);
 void GL_GetViewport(GLint* view);
 
+void GL_IdentityProjectionView(void);
+void GL_IdentityModelView(void);
 void GL_Rotate(GLenum matrix, float angle, float x, float y, float z);
 void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale);
 void GL_Translate(GLenum matrix, float x, float y, float z);
-void GL_IdentityProjectionView(void);
+void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar);
 
 void GL_PopMatrix(GLenum mode, float* matrix);
 void GL_PushMatrix(GLenum mode, float* matrix);

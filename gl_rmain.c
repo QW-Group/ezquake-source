@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "teamplay.h"
 
-
 void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
@@ -306,11 +305,11 @@ qbool R_CullSphere(vec3_t centre, float radius)
 
 void R_RotateForEntity(entity_t *e)
 {
-	glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
+	GL_Translate(GL_MODELVIEW, e->origin[0], e->origin[1], e->origin[2]);
 
-	glRotatef (e->angles[1], 0, 0, 1);
-	glRotatef (-e->angles[0], 0, 1, 0);
-	glRotatef (e->angles[2], 1, 0, 0);
+	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
+	GL_Rotate(GL_MODELVIEW, -e->angles[0], 0, 1, 0);
+	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
 }
 
 
@@ -1098,16 +1097,18 @@ void R_DrawAliasModel(entity_t *ent)
 	R_RotateForEntity (ent);
 
 	if (clmodel->modhint == MOD_EYES) {
-		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
 		// double size of eyes, since they are really hard to see in gl
-		glScalef (paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
-	} else if (ent->renderfx & RF_WEAPONMODEL) {	
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+	}
+	else if (ent->renderfx & RF_WEAPONMODEL) {
 		scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
-		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
-	} else {
-		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+	}
+	else {
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 
 
@@ -1260,7 +1261,8 @@ void R_DrawAliasModel(entity_t *ent)
 	// Underwater caustics on alias models of QRACK -->
 #define GL_RGB_SCALE 0x8573
 
-	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
+	// MEAG: GLM-FIXME
+	if (!GL_ShadersSupported() && (gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
 	{
 		GL_EnableMultitexture ();
 		glBindTexture (GL_TEXTURE_2D, underwatertexture);
@@ -1764,16 +1766,20 @@ void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble z
 	xmin = ymin * aspect;
 	xmax = ymax * aspect;
 
-	if (cl_multiview.value == 2 && !cl_mvinset.value && cls.mvdplayback)
-		glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
-	else if (CL_MultiviewActiveViews() == 3) {
-		if (CL_MultiviewCurrentView() == 2)
-			glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
-		else
-			glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
+	if (cl_multiview.value == 2 && !cl_mvinset.value && cls.mvdplayback) {
+		GL_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
 	}
-	else
-		glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
+	else if (CL_MultiviewActiveViews() == 3) {
+		if (CL_MultiviewCurrentView() == 2) {
+			GL_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
+		}
+		else {
+			GL_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
+		}
+	}
+	else {
+		GL_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
+	}
 }
 
 void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) 
@@ -1834,6 +1840,8 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	return;
 } 
 
+void Debug_ProjectionMatrix(void);
+
 void R_SetupGL(void)
 {
 	float screenaspect;
@@ -1841,7 +1849,6 @@ void R_SetupGL(void)
 	int x, x2, y2, y, w, h, farclip;
 
 	// set up viewpoint
-	GL_IdentityProjectionView();
 	x = r_refdef.vrect.x * glwidth / vid.width;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth / vid.width;
 	y = (vid.height-r_refdef.vrect.y) * glheight / vid.height;
@@ -1865,31 +1872,26 @@ void R_SetupGL(void)
 	h = y - y2;
 
 	// Multiview
+	GL_IdentityProjectionView();
 	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled()) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
-
 	if (! CL_MultiviewEnabled()) {
 		glViewport (glx + x, gly + y2, w, h);
 	}
 
 	farclip = max((int) r_farclip.value, 4096);
-
 	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
-
 	MYgluPerspective (r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
-
 	glCullFace(GL_FRONT);
 
 	GL_IdentityModelView();
-
 	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
 	GL_Rotate(GL_MODELVIEW, 90,  0, 0, 1);	    // put Z going up
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[2], 1, 0, 0);
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[0], 0, 1, 0);
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[1], 0, 0, 1);
 	GL_Translate(GL_MODELVIEW, -r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
-
 	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	// set drawing parms
@@ -1911,8 +1913,10 @@ void R_SetupGL(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
-	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	glHint (GL_FOG_HINT,GL_NICEST);
+	if (!GL_ShadersSupported()) {
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		glHint(GL_FOG_HINT,GL_NICEST);
+	}
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -2154,28 +2158,32 @@ void R_RenderScene(void)
 
 	R_DrawWorld ();		// adds static entities to the list
 
-	R_DrawEntitiesOnList (&cl_visents);
-	R_DrawEntitiesOnList (&cl_alphaents);	
+	if (GL_ShadersSupported()) {
 
-	R_DrawWaterSurfaces ();
-
-	GL_DisableMultitexture();
-
-	// START shaman BUG fog was out of control when fogstart>fogend {
-	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
-	{
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		colors[0] = gl_fogred.value;
-		colors[1] = gl_foggreen.value;
-		colors[2] = gl_fogblue.value; 
-		glFogfv(GL_FOG_COLOR, colors); 
-		glFogf(GL_FOG_START, gl_fogstart.value); 
-		glFogf(GL_FOG_END, gl_fogend.value); 
-		glEnable(GL_FOG);
 	}
-	else
-	{
-		glDisable(GL_FOG);
+	else {
+		R_DrawEntitiesOnList(&cl_visents);
+		R_DrawEntitiesOnList(&cl_alphaents);
+
+		R_DrawWaterSurfaces();
+
+		GL_DisableMultitexture();
+
+		// START shaman BUG fog was out of control when fogstart>fogend {
+		if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
+		{
+			glFogi(GL_FOG_MODE, GL_LINEAR);
+			colors[0] = gl_fogred.value;
+			colors[1] = gl_foggreen.value;
+			colors[2] = gl_fogblue.value;
+			glFogfv(GL_FOG_COLOR, colors);
+			glFogf(GL_FOG_START, gl_fogstart.value);
+			glFogf(GL_FOG_END, gl_fogend.value);
+			glEnable(GL_FOG);
+		}
+		else {
+			glDisable(GL_FOG);
+		}
 	}
 }
 
@@ -2196,6 +2204,11 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 void R_Clear(void)
 {
 	int clearbits = 0;
+
+	// meag: temp
+	if (GL_ShadersSupported()) {
+		clearbits |= GL_COLOR_BUFFER_BIT;
+	}
 
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
@@ -2256,10 +2269,9 @@ static void draw_velocity_3d(void)
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
-	glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
-	glRotatef(yaw_degrees, 0.f, 0.f, 1.f);
-	glTranslatef(show_velocity_3d_offset_forward.value,
-			0.f, -show_velocity_3d_offset_down.value);
+	GL_Translate(GL_MODELVIEW, (*origin)[0], (*origin)[1], (*origin)[2]);
+	GL_Rotate(GL_MODELVIEW, yaw_degrees, 0.f, 0.f, 1.f);
+	GL_Translate(GL_MODELVIEW, show_velocity_3d_offset_forward.value, 0.f, -show_velocity_3d_offset_down.value);
 
 	glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
 
@@ -2468,33 +2480,39 @@ void R_RenderView(void)
 	if (gl_finish.value)
 		glFinish ();
 
-	R_Clear ();
-
-	// render normal view
-	R_RenderScene ();
-	R_RenderDlights ();
-	R_DrawParticles ();
-
-	DrawCI ();
-
-	//VULT: CORONAS
-	//Even if coronas gets turned off, let active ones fade out
-	if (amf_coronas.value || CoronaCount)
-		R_DrawCoronas();
-
-	R_DrawViewModel ();
-
-	{
-		extern cvar_t show_velocity_3d;
-		if(show_velocity_3d.integer) draw_velocity_3d();
+	if (GL_ShadersSupported()) {
+		R_Clear();
+		R_RenderScene();
 	}
+	else {
+		R_Clear();
 
-	SCR_SetupAutoID ();
+		// render normal view
+		R_RenderScene();
+		R_RenderDlights();
+		R_DrawParticles();
 
-	if (r_speeds.value) {
-		time2 = Sys_DoubleTime ();
-		Print_flags[Print_current] |= PR_TR_SKIP;
-		Com_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys); 
+		DrawCI();
+
+		//VULT: CORONAS
+		//Even if coronas gets turned off, let active ones fade out
+		if (amf_coronas.value || CoronaCount)
+			R_DrawCoronas();
+
+		R_DrawViewModel();
+
+		{
+			extern cvar_t show_velocity_3d;
+			if (show_velocity_3d.integer) draw_velocity_3d();
+		}
+
+		SCR_SetupAutoID();
+
+		if (r_speeds.value) {
+			time2 = Sys_DoubleTime();
+			Print_flags[Print_current] |= PR_TR_SKIP;
+			Com_Printf("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
+		}
 	}
 }
 
