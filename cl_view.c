@@ -491,7 +491,9 @@ void V_AddWaterfog (int contents) {
 	float colors[4];
 
 	if (!gl_waterfog.value || COM_CheckParm ("-nomtex") || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
-		glDisable(GL_FOG);
+		if (!GL_ShadersSupported()) {
+			glDisable(GL_FOG);
+		}
 		return;
 	}
 
@@ -515,17 +517,21 @@ void V_AddWaterfog (int contents) {
 			colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
 			break;
 	}
-	
-	glFogfv(GL_FOG_COLOR, colors);
-	if (( (int) gl_waterfog.value ) == 2) {
-		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
-		glFogi(GL_FOG_MODE, GL_EXP);
-	} else {
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		glFogf(GL_FOG_START, 150.0f);	
-		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound (0, gl_waterfog_density.value, 1));	
+
+	// MEAG: TODO
+	if (!GL_ShadersSupported()) {
+		glFogfv(GL_FOG_COLOR, colors);
+		if (((int)gl_waterfog.value) == 2) {
+			glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
+			glFogi(GL_FOG_MODE, GL_EXP);
+		}
+		else {
+			glFogi(GL_FOG_MODE, GL_LINEAR);
+			glFogf(GL_FOG_START, 150.0f);
+			glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
+		}
+		glEnable(GL_FOG);
 	}
-	glEnable(GL_FOG);
 }
 
 void V_CalcPowerupCshift (void) {
