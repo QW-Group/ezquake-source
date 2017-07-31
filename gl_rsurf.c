@@ -1110,10 +1110,9 @@ void DrawTextureChains (model_t *model, int contents)
 
 static glm_program_t drawFlatPolyProgram;
 
-void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
+// Very simple polygon drawing until we fix
+void GLM_DrawPolygon(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
-	unsigned int vao = poly->vao;
-
 	if (!drawFlatPolyProgram.program) {
 		const char* vertexShaderText =
 			"#version 430\n"
@@ -1123,7 +1122,8 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
 			"layout(location = 2) in vec2 lightmapCoord;\n"
 			"layout(location = 3) in vec2 detailCoord;\n"
 			"\n"
-			"out vec2 TexCoord;\n"
+			"out vec2 TexCoordLightmap;\n"
+			"out vec2 TextureCoord;\n"
 			"\n"
 			"uniform mat4 modelViewMatrix;\n"
 			"uniform mat4 projectionMatrix;\n"
@@ -1131,27 +1131,44 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
 			"void main()\n"
 			"{\n"
 			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
-			"    TexCoord = lightmapCoord;\n"
+			"    TextureCoord = tex;\n"
+			"    TexCoordLightmap = lightmapCoord;\n"
 			"}\n";
 		const char* fragmentShaderText =
 			"#version 430\n"
 			"\n"
 			"uniform vec4 color;\n"
+			"uniform sampler2D materialTex;\n"
 			"uniform sampler2D lightmapTex;\n"
 			"uniform bool apply_lightmap;\n"
+			"uniform bool apply_texture;\n"
+			"uniform bool alpha_texture;\n"
 			"\n"
-			"in vec2 TexCoord;\n"
+			"in vec2 TextureCoord;\n"
+			"in vec2 TexCoordLightmap;\n"
 			"out vec4 frag_colour;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
 			"    vec4 texColor;\n"
-			"    if (apply_lightmap) {\n"
-			"        texColor = texture(lightmapTex, TexCoord);\n"
-			"        frag_colour = vec4(1.0 - texColor.x, 1.0 - texColor.y, 1.0 - texColor.z, 1.0) * color;\n"
+			"    vec4 lmColor;\n"
+			"\n"
+			"    if (apply_texture) {\n"
+			"        texColor = texture(materialTex, TextureCoord);\n"
+			"        if (alpha_texture && texColor.a != 1.0) {\n"
+			"            discard;"
+			"        }\n"
 			"    }\n"
 			"    else {\n"
-			"        frag_colour = color;\n"
+			"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+			"    }\n"
+			"\n"
+			"    if (apply_lightmap) {\n"
+			"        lmColor = texture(lightmapTex, TexCoordLightmap);\n"
+			"        frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;\n"
+			"    }\n"
+			"    else {\n"
+			"        frag_colour = color * texColor;\n"
 			"    }\n"
 			"}\n";
 
@@ -1180,6 +1197,10 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
 		if (location >= 0) {
 			glUniform4f(location, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
 		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
+		if (location >= 0) {
+			glUniform1i(location, 0);
+		}
 		location = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
 		if (location >= 0) {
 			glUniform1i(location, 2);
@@ -1188,10 +1209,28 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
 		if (location >= 0) {
 			glUniform1i(location, apply_lightmap ? 1 : 0);
 		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
+		if (location >= 0) {
+			glUniform1i(location, apply_texture ? 1 : 0);
+		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+		if (location >= 0) {
+			glUniform1i(location, alpha_texture ? 1 : 0);
+		}
 
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, poly->numverts);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, vertices);
 	}
+}
+
+void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap)
+{
+	GLM_DrawPolygon(color, vao, vertices, apply_lightmap, false, false);
+}
+
+void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test)
+{
+	GLM_DrawPolygon(color, vao, vertices, apply_lightmap, true, alpha_test);
 }
 
 void GLM_DrawFlat(model_t* model)
@@ -1202,7 +1241,6 @@ void GLM_DrawFlat(model_t* model)
 	msurface_t* surf;
 
 	GL_DisableMultitexture();
-	glActiveTexture(GL_TEXTURE2);
 
 	memcpy(wallColor, r_wallcolor.color, 3);
 	memcpy(floorColor, r_floorcolor.color, 3);
@@ -1213,6 +1251,10 @@ void GLM_DrawFlat(model_t* model)
 			continue;
 		}
 
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(model->textures[i]->gl_texturenum);
+
+		glActiveTexture(GL_TEXTURE2);
 		for (waterline = 0; waterline < 2; waterline++) {
 			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
 				float *v = surf->polys->verts[0];
@@ -1228,19 +1270,15 @@ void GLM_DrawFlat(model_t* model)
 				// r_drawflat 3 == Solid walls only
 
 				isFloor = normal[2] < -0.5 || normal[2] > 0.5;
-				if (isFloor) {
-					if (r_drawflat.integer != 2 && r_drawflat.integer != 1) {
-						continue;
-					}
+
+				if (r_drawflat.integer == 1 || (r_drawflat.integer == 2 && isFloor) || (r_drawflat.integer == 3 && !isFloor)) {
+					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+					GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys->vao, surf->polys->numverts, true);
 				}
 				else {
-					if (r_drawflat.integer != 3 && r_drawflat.integer != 1) {
-						continue;
-					}
+					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+					GLM_DrawTexturedPoly(color_white, surf->polys->vao, surf->polys->numverts, true, false);
 				}
-
-				GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-				GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys, true);
 
 				// START shaman FIX /r_drawflat + /gl_caustics {
 				/*if (waterline && draw_caustics) {
@@ -1527,24 +1565,22 @@ void R_DrawBrushModel (entity_t *e) {
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
 	R_RenderAllDynamicLightmaps(clmodel);
-	if (r_drawflat.value != 0 && clmodel->isworldmodel)
-		if(r_drawflat.integer==1)
-		{
+	if (r_drawflat.value != 0 && clmodel->isworldmodel) {
+		if (r_drawflat.integer == 1) {
 			R_DrawFlat(clmodel);
 		}
-		else
-		{
-			DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+		else {
+			DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 			R_DrawFlat(clmodel);
 		}
-	else
-	{
-		DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+	}
+	else {
+		DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
 	if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {
-		R_DrawMapOutline (clmodel);
+		R_DrawMapOutline(clmodel);
 	}
 
 	R_DrawSkyChain();

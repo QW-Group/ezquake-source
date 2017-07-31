@@ -1334,101 +1334,165 @@ void R_DrawAliasModel(entity_t *ent)
 		glDisable(GL_FOG);
 }
 
+static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float scale)
+{
+	static GLuint simpleItemVBO;
+	static GLuint simpleItemVAO;
+
+	float oldMatrix[16];
+	byte color[4] = { 255, 255, 255, 255 };
+
+	if (!simpleItemVBO) {
+		float verts[4][VERTEXSIZE] = { 0 };
+
+		VectorSet(verts[0], -1, 0, -1);
+		verts[0][3] = 0;
+		verts[0][4] = 1;
+
+		VectorSet(verts[1], -1, 0, 1);
+		verts[1][3] = 0;
+		verts[1][4] = 0;
+
+		VectorSet(verts[2], 1, 0, 1);
+		verts[2][3] = 1;
+		verts[2][4] = 0;
+
+		VectorSet(verts[3], 1, 0, -1);
+		verts[3][3] = 1;
+		verts[3][4] = 1;
+
+		glGenBuffers(1, &simpleItemVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
+	}
+
+	if (!simpleItemVAO) {
+		glGenVertexArrays(1, &simpleItemVAO);
+		glBindVertexArray(simpleItemVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+	}
+
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+
+	GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
+	GL_Rotate(GL_MODELVIEW, angles[1], 0, 0, 1);
+	GL_Rotate(GL_MODELVIEW, angles[0], 0, 1, 0);
+	GL_Rotate(GL_MODELVIEW, angles[2], 1, 0, 0);
+	GL_Scale(GL_MODELVIEW, scale, scale, scale);
+
+	glActiveTexture(GL_TEXTURE0);
+	GL_Bind(texture);
+	GLM_DrawTexturedPoly(color, simpleItemVAO, 4, false, true);
+
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+}
+
 static qbool R_DrawTrySimpleItem(void)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
 	int simpletexture;
-	vec3_t point, right, up, org, offset;
+	vec3_t point, right, up, org, offset, angles;
 
-	if (!currententity || !currententity->model)
+	if (!currententity || !currententity->model) {
 		return false;
+	}
 
-	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES)
+	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES) {
 		simpletexture = currententity->model->simpletexture[0]; // ah...
-	else
+	}
+	else {
 		simpletexture = currententity->model->simpletexture[currententity->skinnum];
+	}
 
-	if (!simpletexture)
+	if (!simpletexture) {
 		return false;
+	}
 
 	autorotate = anglemod(100 * cl.time);
 
-	if (sprtype == SPR_ORIENTED)
-	{
+	if (sprtype == SPR_ORIENTED) {
 		// bullet marks on walls
-		vec3_t angles;
 		angles[0] = angles[2] = 0;
-		angles[1] = autorotate;
-		AngleVectors (angles, NULL, right, up);
-	} 
-	else if (sprtype == SPR_FACING_UPRIGHT)
-	{
-		VectorSet (up, 0, 0, 1);
+		angles[1] = anglemod(autorotate);
+		AngleVectors(angles, NULL, right, up);
+	}
+	else if (sprtype == SPR_FACING_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
 		right[0] = currententity->origin[1] - r_origin[1];
 		right[1] = -(currententity->origin[0] - r_origin[0]);
 		right[2] = 0;
-		VectorNormalizeFast (right);
-	} 
-	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT)
-	{
-		VectorSet (up, 0, 0, 1);
-		VectorCopy (vright, right);
+		VectorNormalizeFast(right);
+		vectoangles(right, angles);
 	}
-	else
-	{	// normal sprite
-		VectorCopy (vup, up);
-		VectorCopy (vright, right);
+	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
+		VectorCopy(vright, right);
+		vectoangles(right, angles);
+	}
+	else {
+		// normal sprite
+		VectorCopy(vup, up);
+		VectorCopy(vright, right);
+		vectoangles(right, angles);
 	}
 
 	VectorCopy(currententity->origin, org);
 	// brush models require some additional centering
-	if (currententity->model->type == mod_brush)
-	{
+	if (currententity->model->type == mod_brush) {
 		extern cvar_t cl_model_bobbing;
 
 		VectorSubtract(currententity->model->maxs, currententity->model->mins, offset);
 		offset[2] = 0;
 		VectorMA(org, 0.5, offset, org);
 
-		if (cl_model_bobbing.value)
+		if (cl_model_bobbing.value) {
 			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
+		}
 	}
 	org[2] += sprsize;
 
-	glPushAttrib(GL_ENABLE_BIT);
+	if (GL_ShadersSupported()) {
+		GLM_DrawSimpleItem(simpletexture, org, angles, sprsize);
+	}
+	else {
+		glPushAttrib(GL_ENABLE_BIT);
 
-	glDisable(GL_CULL_FACE);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+		glDisable(GL_CULL_FACE);
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
-	GL_Bind(simpletexture);
+		GL_Bind(simpletexture);
 
-	glBegin (GL_QUADS);
+		glBegin (GL_QUADS);
 
-	glTexCoord2f (0, 1);
-	VectorMA (org, -sprsize, up, point);
-	VectorMA (point, -sprsize, right, point);
-	glVertex3fv (point);
+		glTexCoord2f (0, 1);
+		VectorMA (org, -sprsize, up, point);
+		VectorMA (point, -sprsize, right, point);
+		glVertex3fv (point);
 
-	glTexCoord2f (0, 0);
-	VectorMA (org, sprsize, up, point);
-	VectorMA (point, -sprsize, right, point);
-	glVertex3fv (point);
+		glTexCoord2f (0, 0);
+		VectorMA (org, sprsize, up, point);
+		VectorMA (point, -sprsize, right, point);
+		glVertex3fv (point);
 
-	glTexCoord2f (1, 0);
-	VectorMA (org, sprsize, up, point);
-	VectorMA (point, sprsize, right, point);
-	glVertex3fv (point);
+		glTexCoord2f (1, 0);
+		VectorMA (org, sprsize, up, point);
+		VectorMA (point, sprsize, right, point);
+		glVertex3fv (point);
 
-	glTexCoord2f (1, 1);
-	VectorMA (org, -sprsize, up, point);
-	VectorMA (point, sprsize, right, point);
-	glVertex3fv (point);
+		glTexCoord2f (1, 1);
+		VectorMA (org, -sprsize, up, point);
+		VectorMA (point, sprsize, right, point);
+		glVertex3fv (point);
 
-	glEnd ();
+		glEnd ();
 
-	glPopAttrib();
-
+		glPopAttrib();
+	}
 	return true;
 }
 
@@ -2159,6 +2223,9 @@ void R_RenderScene(void)
 	R_DrawWorld ();		// adds static entities to the list
 
 	if (GL_ShadersSupported()) {
+		R_DrawEntitiesOnList(&cl_visents);
+		R_DrawEntitiesOnList(&cl_alphaents);
+
 		R_DrawWaterSurfaces();
 	}
 	else {

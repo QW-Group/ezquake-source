@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "utils.h"
 
-extern void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap);
-
 extern model_t *loadmodel;
 extern msurface_t *skychain;
 extern msurface_t **skychain_tail;
@@ -300,7 +298,7 @@ void EmitWaterPolys (msurface_t *fa)
 			// FIXME: turbripple effect, transparent water
 			col[3] = 255;
 			for (p = fa->polys; p; p = p->next) {
-				GLM_DrawFlatPoly(col, p, false);
+				GLM_DrawFlatPoly(col, p->vao, p->numverts, false);
 			}
 			col[3] = old_alpha;
 		}
@@ -1047,7 +1045,7 @@ static void GLM_DrawFastSky(void)
 	};
 
 	for (fa = skychain; fa; fa = fa->texturechain) {
-		GLM_DrawFlatPoly(color, fa->polys, false);
+		GLM_DrawFlatPoly(color, fa->polys->vao, fa->polys->numverts, false);
 	}
 
 	skychain = NULL;

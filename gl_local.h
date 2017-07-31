@@ -506,4 +506,7 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 void GL_PopMatrix(GLenum mode, float* matrix);
 void GL_PushMatrix(GLenum mode, float* matrix);
 
+void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap);
+void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test);
+
 #endif /* !__GL_LOCAL_H__ */
