@@ -57,6 +57,8 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
 	}
 }
 
+void GLM_CreateVAOForPoly(glpoly_t *poly);
+
 void SubdividePolygon (int numverts, float *verts) {
 	int i, j, k, f, b;
 	vec3_t mins, maxs, front[64], back[64];
@@ -126,6 +128,9 @@ void SubdividePolygon (int numverts, float *verts) {
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 	}
+	if (GL_ShadersSupported()) {
+		GLM_CreateVAOForPoly(poly);
+	}
 }
 
 // Breaks a polygon up along axial 64 unit boundaries so that turbulent and sky warps can be done reasonably.
@@ -186,6 +191,9 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 	vert = verts[0];
 	for (i=0 ; i<numverts ; i++, vert+= 3)
 		VectorCopy (vert, poly->verts[i]);
+	if (GL_ShadersSupported()) {
+		GLM_CreateVAOForPoly(poly);
+	}
 }
 
 
@@ -971,6 +979,66 @@ static void ClearSky (void)
 	}
 }
 
+static qbool R_DetermineSkyLimits(qbool *ignore_z)
+{
+	if (r_viewleaf->contents == CONTENTS_SOLID) {
+		// always draw if we're in a solid leaf (probably outside the level)
+		// FIXME: we don't really want to add all six planes every time!
+		// FIXME: also handle r_fastsky case
+		int i;
+		for (i = 0; i < 6; i++) {
+			skymins[0][i] = skymins[1][i] = -1;
+			skymaxs[0][i] = skymaxs[1][i] = 1;
+		}
+		*ignore_z = true;
+	}
+	else {
+		msurface_t* fa;
+
+		// no sky at all
+		if (!skychain)
+			return false;
+
+		// figure out how much of the sky box we need to draw
+		ClearSky();
+		for (fa = skychain; fa; fa = fa->texturechain) {
+			R_AddSkyBoxSurface(fa);
+		}
+
+		*ignore_z = false;
+	}
+
+	return true;
+}
+
+static void GLM_DrawFastSky(void)
+{
+	extern void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap);
+
+	msurface_t* fa;
+	byte color[4] = {
+		r_skycolor.color[0],
+		r_skycolor.color[1],
+		r_skycolor.color[2],
+		255
+	};
+
+	for (fa = skychain; fa; fa = fa->texturechain) {
+		GLM_DrawFlatPoly(color, fa->polys, false);
+	}
+
+	skychain = NULL;
+}
+
+void GLM_DrawSky(void)
+{
+	if (r_fastsky.value) {
+		GLM_DrawFastSky();
+		return;
+	}
+
+
+}
 
 /*
 ==============
@@ -985,52 +1053,41 @@ void R_DrawSky (void)
 	qbool		ignore_z;
 	extern msurface_t *skychain;
 
-	GL_DisableMultitexture ();
-
-	if (r_fastsky.value) {
-		glDisable (GL_TEXTURE_2D);
-		glColor3ubv (r_skycolor.color);
-
-		for (fa = skychain; fa; fa = fa->texturechain)
-			EmitFlatPoly (fa);
-		skychain = NULL;
-
-		glEnable (GL_TEXTURE_2D);
-		glColor3f (1, 1, 1);
+	if (GL_ShadersSupported()) {
+		GLM_DrawSky();
 		return;
 	}
 
-	if (r_viewleaf->contents == CONTENTS_SOLID) {
-		// always draw if we're in a solid leaf (probably outside the level)
-		// FIXME: we don't really want to add all six planes every time!
-		// FIXME: also handle r_fastsky case
-		int i;
-		for (i = 0; i < 6; i++) {
-			skymins[0][i] = skymins[1][i] = -1;
-			skymaxs[0][i] = skymaxs[1][i] = 1;
+	GL_DisableMultitexture ();
+
+	if (r_fastsky.value) {
+		glDisable(GL_TEXTURE_2D);
+		glColor3ubv(r_skycolor.color);
+
+		for (fa = skychain; fa; fa = fa->texturechain) {
+			EmitFlatPoly(fa);
 		}
-		ignore_z = true;
+		skychain = NULL;
+
+		glEnable(GL_TEXTURE_2D);
+		glColor3f(1, 1, 1);
+		return;
 	}
-	else {
-		if (!skychain)
-			return;		// no sky at all
 
-		// figure out how much of the sky box we need to draw
-		ClearSky ();
-		for (fa = skychain; fa; fa = fa->texturechain)
-			R_AddSkyBoxSurface (fa);
-
-		ignore_z = false;
+	if (!R_DetermineSkyLimits(&ignore_z)) {
+		return;
 	}
 
 	// turn off Z tests & writes to avoid problems on large maps
 	glDisable (GL_DEPTH_TEST);
 
 	// draw a skybox or classic quake clouds
-	if (r_skyboxloaded)
-		R_DrawSkyBox ();
-	else
-		R_DrawSkyDome ();
+	if (r_skyboxloaded) {
+		R_DrawSkyBox();
+	}
+	else {
+		R_DrawSkyDome();
+	}
 
 	glEnable (GL_DEPTH_TEST);
 
@@ -1049,11 +1106,13 @@ void R_DrawSky (void)
 		glDisable(GL_TEXTURE_2D);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		for (fa = skychain; fa; fa = fa->texturechain)
-			EmitFlatPoly (fa);
+		for (fa = skychain; fa; fa = fa->texturechain) {
+			EmitFlatPoly(fa);
+		}
 
-		if (gl_fogenable.value && gl_fogsky.value)
-			glDisable (GL_FOG);
+		if (gl_fogenable.value && gl_fogsky.value) {
+			glDisable(GL_FOG);
+		}
 		else {
 			glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		}

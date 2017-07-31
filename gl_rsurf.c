@@ -1103,7 +1103,7 @@ void DrawTextureChains (model_t *model, int contents)
 
 static glm_program_t drawFlatPolyProgram;
 
-void GLM_DrawFlatPoly(byte* color, glpoly_t* poly)
+void GLM_DrawFlatPoly(byte* color, glpoly_t* poly, qbool apply_lightmap)
 {
 	unsigned int vao = poly->vao;
 
@@ -1131,16 +1131,21 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly)
 			"\n"
 			"uniform vec4 color;\n"
 			"uniform sampler2D lightmapTex;\n"
+			"uniform bool apply_lightmap;\n"
 			"\n"
 			"in vec2 TexCoord;\n"
 			"out vec4 frag_colour;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
-			"    vec4 texColor = texture(lightmapTex, TexCoord);\n"
-			//"    vec4 matColor = texture(materialTex, "
-			"    frag_colour = vec4(1.0 - texColor.x, 1.0 - texColor.y, 1.0 - texColor.z, 1.0) * color;\n"
-			//"    frag_colour = color;\n"
+			"    vec4 texColor;\n"
+			"    if (apply_lightmap) {\n"
+			"        texColor = texture(lightmapTex, TexCoord);\n"
+			"        frag_colour = vec4(1.0 - texColor.x, 1.0 - texColor.y, 1.0 - texColor.z, 1.0) * color;\n"
+			"    }\n"
+			"    else {\n"
+			"        frag_colour = color;\n"
+			"    }\n"
 			"}\n";
 
 		// Initialise program for drawing image
@@ -1171,6 +1176,10 @@ void GLM_DrawFlatPoly(byte* color, glpoly_t* poly)
 		location = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
 		if (location >= 0) {
 			glUniform1i(location, 2);
+		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
+		if (location >= 0) {
+			glUniform1i(location, apply_lightmap ? 1 : 0);
 		}
 
 		glBindVertexArray(vao);
@@ -1224,7 +1233,7 @@ void GLM_DrawFlat(model_t* model)
 				}
 
 				GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-				GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys);
+				GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys, true);
 
 				// START shaman FIX /r_drawflat + /gl_caustics {
 				/*if (waterline && draw_caustics) {
@@ -1647,6 +1656,9 @@ void R_DrawWorld (void)
 	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
 
 	if (GL_ShadersSupported()) {
+		//draw the world sky
+		R_DrawSky ();
+
 		R_RenderAllDynamicLightmaps(cl.worldmodel);
 
 		GLM_DrawFlat(cl.worldmodel);
@@ -1894,12 +1906,14 @@ void GL_BuildLightmaps (void) {
 		r_pcurrentvertbase = m->vertexes;
 		currentmodel = m;
 		for (i = 0; i < m->numsurfaces; i++) {
-			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY))
+			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
 				continue;
-			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL)
+			}
+			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL) {
 				continue;
-			GL_CreateSurfaceLightmap (m->surfaces + i);
-			BuildSurfaceDisplayList (m->surfaces + i);
+			}
+			GL_CreateSurfaceLightmap(m->surfaces + i);
+			BuildSurfaceDisplayList(m->surfaces + i);
 		}
 	}
 
