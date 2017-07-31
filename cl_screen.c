@@ -3286,8 +3286,10 @@ void SCR_UpdateScreenPlayerView (int flags)
 
 	if (GL_ShadersSupported()) {
 		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
-		GL_Set2D();
 		SCR_SetUpToDrawConsole();
+
+		V_RenderView();
+		GL_Set2D();
 		return;
 	}
 

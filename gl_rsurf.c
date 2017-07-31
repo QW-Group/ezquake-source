@@ -1101,17 +1101,96 @@ void DrawTextureChains (model_t *model, int contents)
 	EmitDetailPolys();
 }
 
+static glm_program_t drawFlatPolyProgram;
+
+void GLM_DrawFlatPoly(byte* color, glpoly_t* poly)
+{
+	unsigned int vao = poly->vao;
+
+	if (!drawFlatPolyProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in vec3 position;\n"
+			"layout(location = 1) in vec2 tex;\n"
+			"layout(location = 2) in vec2 lightmapCoord;\n"
+			"layout(location = 3) in vec2 detailCoord;\n"
+			"\n"
+			"out vec2 TexCoord;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
+			"    TexCoord = lightmapCoord;\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform vec4 color;\n"
+			"uniform sampler2D lightmapTex;\n"
+			"\n"
+			"in vec2 TexCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor = texture(lightmapTex, TexCoord);\n"
+			//"    vec4 matColor = texture(materialTex, "
+			"    frag_colour = vec4(1.0 - texColor.x, 1.0 - texColor.y, 1.0 - texColor.z, 1.0) * color;\n"
+			//"    frag_colour = color;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Drawflat poly", vertexShaderText, fragmentShaderText, &drawFlatPolyProgram);
+	}
+
+	if (drawFlatPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+		GLint location;
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		glUseProgram(drawFlatPolyProgram.program);
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
+		if (location >= 0) {
+			glUniformMatrix4fv(location, 1, GL_FALSE, modelViewMatrix);
+		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
+		if (location >= 0) {
+			glUniformMatrix4fv(location, 1, GL_FALSE, projectionMatrix);
+		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "color");
+		if (location >= 0) {
+			glUniform4f(location, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		}
+		location = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
+		if (location >= 0) {
+			glUniform1i(location, 2);
+		}
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, poly->numverts);
+	}
+}
+
 void GLM_DrawFlat(model_t* model)
 {
-	byte wallColor[3];
-	byte floorColor[3];
-	int i;
+	byte wallColor[4];
+	byte floorColor[4];
+	int i, waterline;
+	msurface_t* surf;
 
 	GL_DisableMultitexture();
-	GL_SelectTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE2);
 
 	memcpy(wallColor, r_wallcolor.color, 3);
 	memcpy(floorColor, r_floorcolor.color, 3);
+	wallColor[3] = floorColor[3] = 255;
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
@@ -1119,57 +1198,39 @@ void GLM_DrawFlat(model_t* model)
 		}
 
 		for (waterline = 0; waterline < 2; waterline++) {
-			if (!(s = model->textures[i]->texturechain[waterline])) {
-				continue;
-			}
+			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
+				float *v = surf->polys->verts[0];
+				vec3_t normal;
+				qbool isFloor;
 
-			for ( ; s; s = s->texturechain) {
-				// FIXME: move lightmap 
-				//GL_Bind (lightmap_textures[s->lightmaptexturenum]);
-
-				v = s->polys->verts[0];
-				VectorCopy(s->plane->normal, n);
-				VectorNormalize(n);
+				// FIXME: fix lightmap code
+				VectorCopy(surf->plane->normal, normal);
+				VectorNormalize(normal);
 
 				// r_drawflat 1 == All solid colors
 				// r_drawflat 2 == Solid floor/ceiling only
 				// r_drawflat 3 == Solid walls only
 
-				if (n[2] < -0.5 || n[2] > 0.5) // floor or ceiling
-				{
-					if (r_drawflat.integer == 2 || r_drawflat.integer == 1)
-					{
-						glColor3ubv(f);
-					}
-					else
-					{
+				isFloor = normal[2] < -0.5 || normal[2] > 0.5;
+				if (isFloor) {
+					if (r_drawflat.integer != 2 && r_drawflat.integer != 1) {
 						continue;
 					}
 				}
-				else										// walls
-				{
-					if (r_drawflat.integer == 3 || r_drawflat.integer == 1)
-					{
-						glColor3ubv(w);
-					}
-					else
-					{
+				else {
+					if (r_drawflat.integer != 3 && r_drawflat.integer != 1) {
 						continue;
 					}
 				}
 
-				glBegin(GL_POLYGON);
-				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-					glTexCoord2f(v[5], v[6]);
-					glVertex3fv (v);
-				}
-				glEnd ();
+				GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+				GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys);
 
 				// START shaman FIX /r_drawflat + /gl_caustics {
-				if (waterline && draw_caustics) {
+				/*if (waterline && draw_caustics) {
 					s->polys->caustics_chain = caustics_polys;
 					caustics_polys = s->polys;
-				}
+				}*/
 				// } END shaman FIX /r_drawflat + /gl_caustics
 			}
 		}		
@@ -1584,37 +1645,41 @@ void R_DrawWorld (void)
 
 	//set up texture chains for the world
 	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
-	
-	//draw the world sky
-	R_DrawSky ();
 
-	R_DrawEntitiesOnList (&cl_firstpassents);
+	if (GL_ShadersSupported()) {
+		R_RenderAllDynamicLightmaps(cl.worldmodel);
 
-	//draw the world
-	R_RenderAllDynamicLightmaps(cl.worldmodel);
-	if (r_drawflat.value)
-	{
-		if(r_drawflat.integer==1)
-		{
-			R_DrawFlat(cl.worldmodel);
+		GLM_DrawFlat(cl.worldmodel);
+	}
+	else {
+		//draw the world sky
+		R_DrawSky ();
+
+		R_DrawEntitiesOnList (&cl_firstpassents);
+
+		//draw the world
+		R_RenderAllDynamicLightmaps(cl.worldmodel);
+
+		if (r_drawflat.value) {
+			if (r_drawflat.integer == 1) {
+				R_DrawFlat(cl.worldmodel);
+			}
+			else {
+				DrawTextureChains(cl.worldmodel, 0);
+				R_DrawFlat(cl.worldmodel);
+			}
 		}
-		else
-		{
-			DrawTextureChains (cl.worldmodel,0);
-			R_DrawFlat(cl.worldmodel);
+		else {
+			DrawTextureChains(cl.worldmodel, 0);
 		}
-	}
-	else
-	{
-		DrawTextureChains (cl.worldmodel, 0);
-	}
 
-	if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
-		R_DrawMapOutline (cl.worldmodel);
-	}
+		if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
+			R_DrawMapOutline(cl.worldmodel);
+		}
 
-	//draw the world alpha textures
-	R_DrawAlphaChain ();
+		//draw the world alpha textures
+		R_DrawAlphaChain();
+	}
 }
 
 void R_MarkLeaves (void) {
@@ -1710,6 +1775,8 @@ int AllocBlock (int w, int h, int *x, int *y) {
 mvertex_t	*r_pcurrentvertbase;
 model_t		*currentmodel;
 
+void GLM_CreateVAOForPoly(glpoly_t *poly);
+
 void BuildSurfaceDisplayList (msurface_t *fa) {
 	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
@@ -1781,6 +1848,9 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 	}
 
 	poly->numverts = lnumverts;
+	if (GL_ShadersSupported()) {
+		GLM_CreateVAOForPoly(poly);
+	}
 }
 
 void GL_CreateSurfaceLightmap (msurface_t *surf) {
@@ -1856,6 +1926,59 @@ void GL_BuildLightmaps (void) {
  		GL_DisableMultitexture();
 }
 
+
+
+void GLM_CreateVAOForPoly(glpoly_t *poly)
+{
+	if (!poly->vbo) {
+		glGenBuffers(1, &poly->vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
+
+		glBufferDataExt(GL_ARRAY_BUFFER, poly->numverts * VERTEXSIZE * sizeof(float), poly->verts, GL_STATIC_DRAW);
+	}
+
+	if (!poly->vao) {
+		glGenVertexArrays(1, &poly->vao);
+		glBindVertexArray(poly->vao);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+	}
+}
+
+void GLM_NewMap(void)
+{
+/*	int i, j;
+
+	if (!GL_ShadersSupported()) {
+		return;
+	}
+
+	// Foreach model, create VBO for each texture
+	for (i = 1; i < MAX_MODELS; i++) {
+		model_t* model = cl.model_precache[i];
+		if (!model)
+			break;
+		if (model->name[0] == '*') {
+			continue;
+		}
+
+		for (i = 0; i < m->numsurfaces; i++) {
+			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY))
+				continue;
+			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL)
+				continue;
+			GL_CreateSurfaceLightmap (m->surfaces + i);
+			BuildSurfaceDisplayList (m->surfaces + i);
+		}
+	}*/
+}
 
 
 

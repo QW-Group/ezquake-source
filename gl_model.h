@@ -55,8 +55,8 @@ typedef struct texture_s {
 	struct msurface_s	*texturechain[2];		
 	struct msurface_s	**texturechain_tail[2];     //Points to the node right after the last non-NULL node in the texturechain.
 
-	GLint               surfaces_vbo;
-	GLint               surfaces_underwater_vbo;
+	int                 surfaces_vbo;
+	int                 surfaces_underwater_vbo;
 
 	int					anim_total;					//total tenths in sequence ( 0 = no)
 	int					anim_min, anim_max;			//time for this frame min <=time< max
@@ -100,6 +100,9 @@ typedef struct glpoly_s {
 	struct	glpoly_s	*luma_chain;				//next luma poly in chain
 	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
+
+	unsigned int        vbo;
+	unsigned int        vao;
 	int					numverts;
 	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2)
 } glpoly_t;

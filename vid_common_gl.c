@@ -931,3 +931,16 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 		glFrustum(left, right, bottom, top, zNear, zFar);
 	}
 }
+
+void GLM_DebugMatrix(GLenum mode, const char* label)
+{
+	float matrix[16];
+	int i;
+
+	GL_GetMatrix(mode, matrix);
+
+	Con_Printf("%s\n", label);
+	for (i = 0; i < 16; i += 4) {
+		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 1], matrix[i + 2], matrix[i + 3]);
+	}
+}
