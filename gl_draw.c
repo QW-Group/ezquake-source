@@ -1517,24 +1517,119 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
+static GLuint GL_CreateLineVAO(void)
+{
+	static GLuint vao;
+	static GLuint vbo;
+#define number 10.0f
+	float points[] = {
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,
+	};
+
+	if (!vbo) {
+		glGenBuffers(1, &vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	}
+
+	if (!vao) {
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glEnableVertexAttribArray(0);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	return vao;
+}
+
+void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
+{
+	static glm_program_t program;
+	static GLint line_matrix;
+	static GLint line_color;
+
+	if (!program.program) {
+		// Very simple line-drawing
+		GLM_CreateSimpleProgram(
+			"LineDrawing",
+			// Vertex shader
+			"#version 430\n"
+			"in vec3 position;\n"
+			"uniform mat4 matrix;\n"
+			"void main(void)\n"
+			"{\n"
+			"    gl_Position = matrix * vec4(position, 1);\n"
+			"}\n",
+			// Fragment shader
+			"#version 430\n"
+			"uniform vec4 inColor;\n"
+			"out vec4 color;\n"
+			"void main(void)\n"
+			"{\n"
+			"    color = inColor;\n"
+			"}\n",
+			&program
+		);
+
+		if (program.program) {
+			line_matrix = glGetUniformLocation(program.program, "matrix");
+			line_color = glGetUniformLocation(program.program, "inColor");
+		}
+	}
+
+	if (program.program) {
+		float matrix[16];
+
+		glDisable(GL_DEPTH_TEST);
+		GLM_GetMatrix(GL_PROJECTION, matrix);
+		GLM_TransformMatrix(matrix, x_start, y_start, 0);
+		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
+
+		glUseProgram(program.program);
+		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
+		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
+
+		GLenum error = glGetError();
+		while (error != GL_NO_ERROR) {
+			error = glGetError();
+		}
+		glBindVertexArray(GL_CreateLineVAO());
+		glDrawArrays(GL_LINES, 0, 2);
+		{
+			GLenum error = glGetError();
+			while (error != GL_NO_ERROR) {
+				Con_Printf("GL error: %x\n", error);
+				error = glGetError();
+			}
+		}
+	}
+}
+
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];
+
 	glDisable (GL_TEXTURE_2D);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
-	if(thickness > 0.0)
-	{
+	if(thickness > 0.0) {
 		glLineWidth(thickness);
 	}
 
-	glBegin (GL_LINES);
-	glVertex2f (x_start, y_start);
-	glVertex2f (x_end, y_end);
-	glEnd ();
+	if (GL_ShadersSupported()) {
+		GLM_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
+	}
+	else {
+		glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+		glBegin(GL_LINES);
+		glVertex2f(x_start, y_start);
+		glVertex2f(x_end, y_end);
+		glEnd();
+	}
 
 	glEnable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -1705,7 +1800,6 @@ static GLuint GL_CreateRectangleVAO(void)
 	static GLuint vao;
 	static GLuint vbo;
 #define number 10.0f
-	const float scale = 2;
 	float points[] = {
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f,

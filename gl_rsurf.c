@@ -1196,7 +1196,6 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 	if (drawFlatPolyProgram.program && vao) {
 		float modelViewMatrix[16];
 		float projectionMatrix[16];
-		GLint location;
 
 		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);

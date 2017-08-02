@@ -2937,6 +2937,7 @@ static void SCR_DrawCursor(void)
 		else
 		{
 			color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
+
 			Draw_AlphaLineRGB(x_coord + (10 * scale), y_coord + (10 * scale), x_coord + (40 * scale), y_coord + (40 * scale), 10 * scale, c);
 			Draw_AlphaLineRGB(x_coord, y_coord, x_coord + (20 * scale), y_coord, 10 * scale, c);
 			Draw_AlphaLineRGB(x_coord, y_coord, x_coord, y_coord + 20 * scale, 10 * scale, c);
@@ -3360,8 +3361,24 @@ void SCR_DrawNewHudElements(void)
 void SCR_UpdateScreenPostPlayerView (void)
 {
 	if (GL_ShadersSupported()) {
-		SCR_DrawConsole();
-		M_Draw ();
+		if (scr_newHud.value != 1) {
+			//SCR_DrawNewHudElements();
+		}
+
+		// Innards of SCR_DrawElements(), one bite at a time...
+		{
+			// WHY IS THIS IN RENDERING LOOP FFS
+			SCR_UpdateCursor();
+
+			SCR_DrawConsole();
+			M_Draw();
+			SCR_DrawCursor();
+		}
+
+		if (SCR_TakingAutoScreenshot ()) {
+			SCR_CheckAutoScreenshot ();
+		}
+		SCR_RenderFrameEnd();
 		GL_EndRendering();
 		return;
 	}
