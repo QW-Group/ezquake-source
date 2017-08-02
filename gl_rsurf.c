@@ -1276,6 +1276,7 @@ void GLM_DrawFlat(model_t* model)
 					GLM_DrawTexturedPoly(color_white, surf->polys->vao, surf->polys->numverts, true, false);
 				}
 
+				// TODO: Caustics
 				// START shaman FIX /r_drawflat + /gl_caustics {
 				/*if (waterline && draw_caustics) {
 					s->polys->caustics_chain = caustics_polys;

@@ -765,6 +765,27 @@ void GLM_GetMatrix(GLenum type, float* matrix)
 #undef glColor4ubv
 #undef glColor4ub
 
+#undef glDisable
+#undef glEnable
+
+void GL_Enable(GLenum option)
+{
+	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
+		option = option;
+	}
+
+	glEnable(option);
+}
+
+void GL_Disable(GLenum option)
+{
+	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
+		option = option;
+	}
+
+	glDisable(option);
+}
+
 void GL_Color3f(float r, float g, float b)
 {
 	if (GL_ShadersSupported()) {

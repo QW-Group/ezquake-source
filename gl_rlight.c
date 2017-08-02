@@ -162,10 +162,11 @@ void R_RenderDlights (void) {
 	unsigned int j;
 	dlight_t *l;
 
-
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
 	glDepthMask (GL_FALSE);
-	glDisable (GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glDisable(GL_TEXTURE_2D);
+	}
 	glShadeModel (GL_SMOOTH);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glBlendFunc (GL_ONE, GL_ONE);
@@ -197,9 +198,11 @@ void R_RenderDlights (void) {
 			
 	}
 
-	glColor3ubv (color_white);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glEnable (GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glColor3ubv (color_white);
+		glEnable(GL_TEXTURE_2D);
+	}
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask (GL_TRUE);
 	glShadeModel (GL_FLAT);

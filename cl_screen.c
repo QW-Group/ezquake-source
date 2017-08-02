@@ -568,14 +568,11 @@ void SCR_ZoomOut_f (void) {
 
 /********************************** ELEMENTS **********************************/
 
-void SCR_DrawRam (void) {
-	if (!scr_showram.value)
-		return;
-
-	if (!r_cache_thrash)
-		return;
-
-	Draw_Pic (scr_vrect.x + 32, scr_vrect.y, scr_ram);
+static void SCR_DrawRam (void)
+{
+	if (scr_showram.value && r_cache_thrash) {
+		Draw_Pic(scr_vrect.x + 32, scr_vrect.y, scr_ram);
+	}
 }
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
@@ -647,11 +644,13 @@ void SCR_DrawAccel (void) {
 }
 #endif
 
-void SCR_DrawTurtle (void) {
+void SCR_DrawTurtle(void)
+{
 	static int  count;
 
-	if (!scr_showturtle.value)
+	if (!scr_showturtle.value) {
 		return;
+	}
 
 	if (cls.frametime < 0.1) {
 		count = 0;
@@ -659,19 +658,23 @@ void SCR_DrawTurtle (void) {
 	}
 
 	count++;
-	if (count < 3)
+	if (count < 3) {
 		return;
+	}
 
-	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
+	Draw_Pic(scr_vrect.x, scr_vrect.y, scr_turtle);
 }
 
-void SCR_DrawNet (void) {
-	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1)
+static void SCR_DrawNet(void)
+{
+	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP - 1) {
 		return;
-	if (cls.demoplayback || scr_newHud.value == 1)
+	}
+	if (cls.demoplayback || scr_newHud.value == 1) {
 		return;
+	}
 
-	Draw_Pic (scr_vrect.x + 64, scr_vrect.y, scr_net);
+	Draw_Pic(scr_vrect.x + 64, scr_vrect.y, scr_net);
 }
 
 
@@ -871,7 +874,7 @@ void SCR_DrawQTVBuffer (void)
 	Draw_String (x, y, str);
 }
 
-void SCR_DrawPause (void) {
+static void SCR_DrawPause (void) {
 	mpic_t *pic;
 
 	if (!scr_showpause.value)               // turn off for screenshots
@@ -3286,11 +3289,25 @@ void SCR_UpdateScreenPlayerView (int flags)
 	}
 
 	if (GL_ShadersSupported()) {
+		if (flags & UPDATESCREEN_MULTIVIEW) {
+			//SCR_CalcRefdef();
+		}
 		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 		SCR_SetUpToDrawConsole();
-
+		SCR_SetupCI();
 		V_RenderView();
+		if (flags & UPDATESCREEN_POSTPROCESS) {
+			//R_RenderPostProcess();
+		}
 		GL_Set2D();
+		//R_PolyBlend ();
+
+		// draw any areas not covered by the refresh
+		SCR_TileClear();
+
+		if (flags & UPDATESCREEN_MULTIVIEW) {
+			//SCR_DrawMultiviewIndividualElements ();
+		}
 		return;
 	}
 
@@ -3383,41 +3400,37 @@ void SCR_UpdateScreenPostPlayerView (void)
 					}
 				} 
 				else if (cl.intermission == 2) {
-					//Sbar_FinaleOverlay ();
-					//SCR_CheckDrawCenterString ();
+					Sbar_FinaleOverlay ();
+					SCR_CheckDrawCenterString ();
 					if (!scr_notifyalways.integer) {
 						Con_ClearNotify ();
 					}
 				}
 
-				if (cls.state == ca_active)
-				{
-					//SCR_DrawRam ();
-					//SCR_DrawNet ();
-					//SCR_DrawTurtle ();
+				if (cls.state == ca_active) {
+					SCR_DrawRam();
+					SCR_DrawNet();
+					SCR_DrawTurtle();
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 					//SCR_DrawAccel();
 #endif
 
-					if (!sb_showscores && !sb_showteamscores) 
-					{ 
+					if (!sb_showscores && !sb_showteamscores) {
 						// Do not show if +showscores
-						//SCR_DrawPause ();
+						SCR_DrawPause();
 
-						//SCR_DrawAutoID ();
+						SCR_DrawAutoID ();
 
 						//SCR_VoiceMeter ();
 					}
 
-					if (!cl.intermission) 
-					{
+					if (!cl.intermission) {
 						if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))) {
-							Draw_Crosshair ();
+							Draw_Crosshair();
 						}
 
 						// Do not show if +showscores
-						if (!sb_showscores && !sb_showteamscores)
-						{ 
+						if (!sb_showscores && !sb_showteamscores) {
 							//SCR_Draw_TeamInfo();
 
 							//SCR_Draw_ShowNick();
@@ -3434,32 +3447,31 @@ void SCR_UpdateScreenPostPlayerView (void)
 						// QW262
 						//SCR_DrawHud ();
 
-						//MVD_Screen ();
+						MVD_Screen();
 
 						// VULT STATS
-						//SCR_DrawAMFstats();
+						SCR_DrawAMFstats();
 
 						// VULT DISPLAY KILLS
 						if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value) {
-							//VX_TrackerThink();
+							VX_TrackerThink();
 						}
 
 						if (CL_MultiviewEnabled()) {
 							//SCR_DrawMultiviewOverviewElements();
 						}
 
-						//Sbar_Draw();
-						//HUD_Draw();
-						//HUD_Editor_Draw();
+						Sbar_Draw();
+						HUD_Draw();
+						HUD_Editor_Draw();
 						//DemoControls_Draw();
 					}
 				}
 			}
 
-			if (!SCR_TakingAutoScreenshot())
-			{
-				SCR_DrawConsole ();
-				M_Draw ();
+			if (!SCR_TakingAutoScreenshot()) {
+				SCR_DrawConsole();
+				M_Draw();
 			}
 			SCR_DrawCursor();
 		}

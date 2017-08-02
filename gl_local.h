@@ -485,6 +485,11 @@ qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shade
 #define glColor3ubv GL_Color3ubv
 #define glColor4ubv GL_Color4ubv
 #define glColor4ub GL_Color4ub
+#define glEnable GL_Enable
+#define glDisable GL_Disable
+
+void GL_Enable(GLenum option);
+void GL_Disable(GLenum option);
 
 void GL_Color3f(float r, float g, float b);
 void GL_Color4f(float r, float g, float b, float a);

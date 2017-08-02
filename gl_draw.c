@@ -35,7 +35,6 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 // imageProgram.program()
 static glm_program_t imageProgram;
 static GLint imageProgram_matrix;
-static GLint imageProgram_alpha;
 static GLint imageProgram_tex;
 static GLint imageProgram_sbase;
 static GLint imageProgram_swidth;
@@ -112,6 +111,76 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	glUniform1f(imageProgram_swidth, tex_width);
 	glUniform1f(imageProgram_tbase, tex_t);
 	glUniform1f(imageProgram_twidth, tex_height);
+
+	GLenum error = glGetError();
+	while (error != GL_NO_ERROR) {
+		error = glGetError();
+	}
+	glBindVertexArray(GL_CreateRectangleVAO());
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	{
+		GLenum error = glGetError();
+		while (error != GL_NO_ERROR) {
+			Con_Printf("GL error: %x\n", error);
+			error = glGetError();
+		}
+	}
+}
+
+//
+static glm_program_t rectProgram;
+static GLint rectProgram_matrix;
+static GLint rectProgram_color;
+
+void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
+{
+	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
+	float matrix[16];
+	float inColor[4] = {
+		color[0] * 1.0f / 255,
+		color[1] * 1.0f / 255,
+		color[2] * 1.0f / 255,
+		color[3] * 1.0f / 255
+	};
+
+	if (!rectProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"in vec3 position;\n"
+			"\n"
+			"uniform mat4 matrix;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = matrix * vec4(position, 1.0);\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform vec4 color;\n"
+			"\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    frag_colour = color;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &rectProgram);
+		rectProgram_matrix = glGetUniformLocation(rectProgram.program, "matrix");
+		rectProgram_color = glGetUniformLocation(rectProgram.program, "color");
+	}
+
+	glDisable(GL_DEPTH_TEST);
+	GLM_GetMatrix(GL_PROJECTION, matrix);
+	GLM_TransformMatrix(matrix, x, y, 0);
+	GLM_ScaleMatrix(matrix, width, height, 1.0f);
+
+	glUseProgram(rectProgram.program);
+	glUniformMatrix4fv(rectProgram_matrix, 1, GL_FALSE, matrix);
+	glUniform4f(rectProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 
 	GLenum error = glGetError();
 	while (error != GL_NO_ERROR) {
@@ -1512,17 +1581,24 @@ void Draw_TextBox (int x, int y, int width, int lines)
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
 void Draw_TileClear (int x, int y, int w, int h)
 {
-	GL_Bind (draw_backtile->texnum);
-	glBegin (GL_QUADS);
-	glTexCoord2f (x / 64.0, y / 64.0);
-	glVertex2f (x, y);
-	glTexCoord2f ((x + w) / 64.0, y / 64.0);
-	glVertex2f (x + w, y);
-	glTexCoord2f ((x + w) / 64.0, (y + h) / 64.0);
-	glVertex2f (x + w, y + h);
-	glTexCoord2f (x / 64.0, (y + h) / 64.0 );
-	glVertex2f (x, y + h);
-	glEnd ();
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(draw_backtile->texnum);
+		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white);
+	}
+	else {
+		GL_Bind(draw_backtile->texnum);
+		glBegin(GL_QUADS);
+		glTexCoord2f(x / 64.0, y / 64.0);
+		glVertex2f(x, y);
+		glTexCoord2f((x + w) / 64.0, y / 64.0);
+		glVertex2f(x + w, y);
+		glTexCoord2f((x + w) / 64.0, (y + h) / 64.0);
+		glVertex2f(x + w, y + h);
+		glTexCoord2f(x / 64.0, (y + h) / 64.0);
+		glVertex2f(x, y + h);
+		glEnd();
+	}
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
@@ -1533,29 +1609,38 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	if ((byte)(color >> 24 & 0xFF) == 0)
 		return;
 
-	glDisable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-
 	thickness = max(0, thickness);
 
-	if (fill)
-	{
-		glRectf(x, y, x + w, y + h);
+	if (GL_ShadersSupported()) {
+		if (fill) {
+			GLM_DrawRectangle(x, y, w, h, bytecolor);
+		}
+		else {
+			GLM_DrawRectangle(x, y, w, thickness, bytecolor);
+			GLM_DrawRectangle(x, y + thickness, thickness, h - thickness, bytecolor);
+			GLM_DrawRectangle(x + w - thickness, y + thickness, thickness, h - thickness, bytecolor);
+			GLM_DrawRectangle(x, y + h, w, thickness, bytecolor);
+		}
 	}
-	else
-	{
-		glRectf(x, y, x + w	, y + thickness);
-		glRectf(x, y + thickness, x + thickness, y + h - thickness);
-		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
-		glRectf(x, y + h, x + w, y + h - thickness);
+	else {
+		glDisable (GL_TEXTURE_2D);
+		glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+		if (fill) {
+			glRectf(x, y, x + w, y + h);
+		}
+		else {
+			glRectf(x, y, x + w, y + thickness);
+			glRectf(x, y + thickness, x + thickness, y + h - thickness);
+			glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
+			glRectf(x, y + h, x + w, y + h - thickness);
+		}
+		glColor4ubv (color_white);
+		glEnable (GL_TEXTURE_2D);
 	}
 
-	glEnable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-	glColor4ubv (color_white);
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)
