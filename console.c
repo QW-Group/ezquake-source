@@ -694,8 +694,9 @@ static void Con_DrawInput(void) {
 	wchar	*text;
 	wchar	temp[MAXCMDLINE + 1];       //+ 1 for cursor if stlen(key_lines[edit_line]) == 255
 
-	if (key_dest != key_console && cls.state == ca_active)
+	if (key_dest != key_console && cls.state == ca_active) {
 		return;
+	}
 
 	qwcslcpy (temp, key_lines[edit_line], MAXCMDLINE);
 	len = qwcslen(temp);
@@ -703,18 +704,21 @@ static void Con_DrawInput(void) {
 	text = temp;
 
 	// fill out remainder with spaces
-	for (i = 0; i < MAXCMDLINE - len; i++)
+	for (i = 0; i < MAXCMDLINE - len; i++) {
 		(text + len)[i] = ' ';
+	}
 	
 	text[MAXCMDLINE] = 0;
 
 	// add the cursor frame
-	if ( (int)(curtime*con_cursorspeed) & 1 )
+	if ((int)(curtime*con_cursorspeed) & 1) {
 		text[key_linepos] = con_redchars ? (11 + 128) : 11;
+	}
 
 	//	prestep if horizontally scrolling
-	if (key_linepos >= con_linewidth)
+	if (key_linepos >= con_linewidth) {
 		text += 1 + key_linepos - con_linewidth;
+	}
 
 	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
 }

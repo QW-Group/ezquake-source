@@ -41,13 +41,63 @@ static GLint imageProgram_sbase;
 static GLint imageProgram_swidth;
 static GLint imageProgram_tbase;
 static GLint imageProgram_twidth;
+static GLint imageProgram_color;
 
 static GLuint GL_CreateRectangleVAO(void);
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, float alpha)
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color)
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
 	float matrix[16];
+	float inColor[4] = {
+		color[0] * 1.0f / 255,
+		color[1] * 1.0f / 255,
+		color[2] * 1.0f / 255,
+		color[3] * 1.0f / 255
+	};
+
+	if (!imageProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"in vec3 position;\n"
+			"\n"
+			"out vec2 TexCoord;\n"
+			"\n"
+			"uniform mat4 matrix;\n"
+			"uniform float sbase, swidth;\n"
+			"uniform float tbase, twidth;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = matrix * vec4(position, 1.0);\n"
+			"    TexCoord = vec2(sbase + position.x * swidth, tbase + position.y * twidth);\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform sampler2D tex;\n"
+			"uniform vec4 color;\n"
+			"\n"
+			"in vec2 TexCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor = texture(tex, TexCoord);\n"
+			"    frag_colour = texColor * color;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &imageProgram);
+		imageProgram_matrix = glGetUniformLocation(imageProgram.program, "matrix");
+		imageProgram_tex = glGetUniformLocation(imageProgram.program, "tex");
+		imageProgram_sbase = glGetUniformLocation(imageProgram.program, "sbase");
+		imageProgram_swidth = glGetUniformLocation(imageProgram.program, "swidth");
+		imageProgram_tbase = glGetUniformLocation(imageProgram.program, "tbase");
+		imageProgram_twidth = glGetUniformLocation(imageProgram.program, "twidth");
+		imageProgram_color = glGetUniformLocation(imageProgram.program, "color");
+	}
 
 	glDisable(GL_DEPTH_TEST);
 	GLM_GetMatrix(GL_PROJECTION, matrix);
@@ -56,7 +106,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 
 	glUseProgram(imageProgram.program);
 	glUniformMatrix4fv(imageProgram_matrix, 1, GL_FALSE, matrix);
-	glUniform1f(imageProgram_alpha, alpha);
+	glUniform4f(imageProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 	glUniform1i(imageProgram_tex, texture_unit);
 	glUniform1f(imageProgram_sbase, tex_s);
 	glUniform1f(imageProgram_swidth, tex_width);
@@ -1009,7 +1059,7 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 		glActiveTexture(GL_TEXTURE0);
 		GL_Bind(char_textures[slot]);
 
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, 1.0f);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, color);
 	}
 	else {
 		GL_Bind(char_textures[slot]);
@@ -1116,6 +1166,7 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
+	memcpy(rgba, color_white, sizeof(byte) * 4);
 	if (scr_coloredText.integer) {
 		if (color_count > 0) {
 			COLOR_TO_RGBA(color[color_index].c, rgba);
@@ -1125,7 +1176,6 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	}
 	else {
 		GL_TextureEnvMode(GL_REPLACE);
-		memcpy(rgba, color_white, sizeof(byte) * 4);
 	}
 
 	// Draw the string.
@@ -1267,7 +1317,7 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 void Draw_Crosshair (void)
 {
 	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;
-	byte *col;
+	byte col[4];
 	extern vrect_t scr_vrect;
 	float crosshair_scale = (crosshairscalemethod.integer ? 1 : ((float)glwidth / 320));
 	int crosshair_pixel_size = CrosshairPixelSize();
@@ -1280,6 +1330,7 @@ void Draw_Crosshair (void)
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
+		float oldMatrix[16];
 		qbool half_size = false;
 
 		if (!crosshairalpha.value) {
@@ -1290,18 +1341,24 @@ void Draw_Crosshair (void)
 			return;
 		}
 
+		GL_PushMatrix(GL_PROJECTION_MATRIX, oldMatrix);
 		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
 
 		GL_TextureEnvMode(GL_MODULATE);
-
-		col = crosshaircolor.color;
-
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+
+		memcpy(col, crosshaircolor.color, 3);
 		col[3] = bound(0, crosshairalpha.value, 1) * 255;
-		glColor4ubv (col);
+
+		if (GL_ShadersSupported()) {
+			glActiveTexture(GL_TEXTURE0);
+		}
+		else {
+			glColor4ubv (col);
+		}
 
 		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
 			GL_Bind(crosshairpic.texnum);
@@ -1332,16 +1389,21 @@ void Draw_Crosshair (void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #endif
-		glBegin(GL_QUADS);
-		glTexCoord2f(sl, tl);
-		glVertex2f(x - ofs1, y - ofs1);
-		glTexCoord2f(sh, tl);
-		glVertex2f(x + ofs2, y - ofs1);
-		glTexCoord2f(sh, th);
-		glVertex2f(x + ofs2, y + ofs2);
-		glTexCoord2f(sl, th);
-		glVertex2f(x - ofs1, y + ofs2);
-		glEnd();
+		if (GL_ShadersSupported()) {
+			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col);
+		}
+		else {
+			glBegin(GL_QUADS);
+			glTexCoord2f(sl, tl);
+			glVertex2f(x - ofs1, y - ofs1);
+			glTexCoord2f(sh, tl);
+			glVertex2f(x + ofs2, y - ofs1);
+			glTexCoord2f(sh, th);
+			glVertex2f(x + ofs2, y + ofs2);
+			glTexCoord2f(sl, th);
+			glVertex2f(x - ofs1, y + ofs2);
+			glEnd();
+		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -1831,6 +1893,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
+	byte color[] = { 255, 255, 255, 255 };
 
     if (scrap_dirty) {
         Scrap_Upload();
@@ -1848,63 +1911,19 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	alpha *= overall_alpha;
 
 	if (GL_ShadersSupported()) {
-		if (!imageProgram.program) {
-			const char* vertexShaderText =
-				"#version 430\n"
-				"\n"
-				"in vec3 position;\n"
-				"\n"
-				"out vec2 TexCoord;\n"
-				"\n"
-				"uniform mat4 matrix;\n"
-				"uniform float sbase, swidth;\n"
-				"uniform float tbase, twidth;\n"
-				"\n"
-				"void main()\n"
-				"{\n"
-				"    gl_Position = matrix * vec4(position, 1.0);\n"
-				"    TexCoord = vec2(sbase + position.x * swidth, tbase + position.y * twidth);\n"
-				"}\n";
-			const char* fragmentShaderText =
-				"#version 430\n"
-				"\n"
-				"uniform float alpha;\n"
-				"uniform sampler2D tex;\n"
-				"\n"
-				"in vec2 TexCoord;\n"
-				"out vec4 frag_colour;\n"
-				"\n"
-				"void main()\n"
-				"{\n"
-				"    vec4 texColor = texture(tex, TexCoord);\n"
-				"    frag_colour = texColor * vec4(1.0, 1.0, 1.0, alpha);\n"
-				"}\n";
-
-			// Initialise program for drawing image
-			GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &imageProgram);
-			imageProgram_matrix = glGetUniformLocation(imageProgram.program, "matrix");
-			imageProgram_alpha = glGetUniformLocation(imageProgram.program, "alpha");
-			imageProgram_tex = glGetUniformLocation(imageProgram.program, "tex");
-			imageProgram_sbase = glGetUniformLocation(imageProgram.program, "sbase");
-			imageProgram_swidth = glGetUniformLocation(imageProgram.program, "swidth");
-			imageProgram_tbase = glGetUniformLocation(imageProgram.program, "tbase");
-			imageProgram_twidth = glGetUniformLocation(imageProgram.program, "twidth");
+		if (alpha < 1.0) {
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glCullFace(GL_FRONT);
+			color[3] = alpha * 255;
 		}
 
-		if (imageProgram.program) {
-			if (alpha < 1.0) {
-				GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glCullFace(GL_FRONT);
-			}
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(pic->texnum);
+		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color_white);
 
-			glActiveTexture(GL_TEXTURE0);
-			GL_Bind(pic->texnum);
-			GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, alpha);
-
-			if (alpha < 1.0) {
-				GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-			}
+		if (alpha < 1.0) {
+			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 		}
 	}
 	else {

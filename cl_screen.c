@@ -3360,6 +3360,9 @@ void SCR_DrawNewHudElements(void)
 
 void SCR_UpdateScreenPostPlayerView (void)
 {
+	extern qbool  sb_showscores, sb_showteamscores;
+	extern cvar_t scr_menudrawhud;
+
 	if (GL_ShadersSupported()) {
 		if (scr_newHud.value != 1) {
 			//SCR_DrawNewHudElements();
@@ -3370,8 +3373,94 @@ void SCR_UpdateScreenPostPlayerView (void)
 			// WHY IS THIS IN RENDERING LOOP FFS
 			SCR_UpdateCursor();
 
-			SCR_DrawConsole();
-			M_Draw();
+			if( !(!scr_menudrawhud.integer && (m_state != m_none)) || (!scr_menudrawhud.integer && (m_state == m_proxy)) )
+			{
+				if (cl.intermission == 1)
+				{
+					//Sbar_IntermissionOverlay ();
+					if (!scr_notifyalways.integer) {
+						Con_ClearNotify ();
+					}
+				} 
+				else if (cl.intermission == 2) {
+					//Sbar_FinaleOverlay ();
+					//SCR_CheckDrawCenterString ();
+					if (!scr_notifyalways.integer) {
+						Con_ClearNotify ();
+					}
+				}
+
+				if (cls.state == ca_active)
+				{
+					//SCR_DrawRam ();
+					//SCR_DrawNet ();
+					//SCR_DrawTurtle ();
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+					//SCR_DrawAccel();
+#endif
+
+					if (!sb_showscores && !sb_showteamscores) 
+					{ 
+						// Do not show if +showscores
+						//SCR_DrawPause ();
+
+						//SCR_DrawAutoID ();
+
+						//SCR_VoiceMeter ();
+					}
+
+					if (!cl.intermission) 
+					{
+						if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))) {
+							Draw_Crosshair ();
+						}
+
+						// Do not show if +showscores
+						if (!sb_showscores && !sb_showteamscores)
+						{ 
+							//SCR_Draw_TeamInfo();
+
+							//SCR_Draw_ShowNick();
+
+							//SCR_CheckDrawCenterString ();
+							//SCR_DrawSpeed ();
+							//SCR_DrawClock ();
+							//SCR_DrawGameClock ();
+							//SCR_DrawDemoClock ();
+							//SCR_DrawQTVBuffer ();
+							//SCR_DrawFPS ();
+						}
+
+						// QW262
+						//SCR_DrawHud ();
+
+						//MVD_Screen ();
+
+						// VULT STATS
+						//SCR_DrawAMFstats();
+
+						// VULT DISPLAY KILLS
+						if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value) {
+							//VX_TrackerThink();
+						}
+
+						if (CL_MultiviewEnabled()) {
+							//SCR_DrawMultiviewOverviewElements();
+						}
+
+						//Sbar_Draw();
+						//HUD_Draw();
+						//HUD_Editor_Draw();
+						//DemoControls_Draw();
+					}
+				}
+			}
+
+			if (!SCR_TakingAutoScreenshot())
+			{
+				SCR_DrawConsole ();
+				M_Draw ();
+			}
 			SCR_DrawCursor();
 		}
 
