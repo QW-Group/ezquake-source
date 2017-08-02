@@ -305,6 +305,10 @@ typedef struct aliashdr_s {
 	int					commands;	// gl command list with embedded s/t
 	int					gl_texturenum[MAX_SKINS][4];
 	int					fb_texturenum[MAX_SKINS][4];
+
+	int                 vbo;
+	int                 vao;
+
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
 

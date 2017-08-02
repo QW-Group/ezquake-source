@@ -1111,7 +1111,7 @@ void DrawTextureChains (model_t *model, int contents)
 static glm_program_t drawFlatPolyProgram;
 
 // Very simple polygon drawing until we fix
-void GLM_DrawPolygon(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (!drawFlatPolyProgram.program) {
 		const char* vertexShaderText =
@@ -1168,7 +1168,7 @@ void GLM_DrawPolygon(byte* color, unsigned int vao, int vertices, qbool apply_li
 			"        frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;\n"
 			"    }\n"
 			"    else {\n"
-			"        frag_colour = color * texColor;\n"
+			"        frag_colour = texColor * color;\n"
 			"    }\n"
 			"}\n";
 
@@ -1219,18 +1219,23 @@ void GLM_DrawPolygon(byte* color, unsigned int vao, int vertices, qbool apply_li
 		}
 
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, vertices);
+		glDrawArrays(type, start, vertices);
 	}
+}
+
+void GLM_DrawPolygon(byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	GLM_DrawPolygonByType(GL_TRIANGLE_FAN, color, vao, start, vertices, apply_lightmap, apply_texture, alpha_texture);
 }
 
 void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap)
 {
-	GLM_DrawPolygon(color, vao, vertices, apply_lightmap, false, false);
+	GLM_DrawPolygon(color, vao, 0, vertices, apply_lightmap, false, false);
 }
 
 void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test)
 {
-	GLM_DrawPolygon(color, vao, vertices, apply_lightmap, true, alpha_test);
+	GLM_DrawPolygon(color, vao, 0, vertices, apply_lightmap, true, alpha_test);
 }
 
 void GLM_DrawFlat(model_t* model)
@@ -1270,7 +1275,6 @@ void GLM_DrawFlat(model_t* model)
 				// r_drawflat 3 == Solid walls only
 
 				isFloor = normal[2] < -0.5 || normal[2] > 0.5;
-
 				if (r_drawflat.integer == 1 || (r_drawflat.integer == 2 && isFloor) || (r_drawflat.integer == 3 && !isFloor)) {
 					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
 					GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys->vao, surf->polys->numverts, true);
@@ -1287,13 +1291,8 @@ void GLM_DrawFlat(model_t* model)
 				}*/
 				// } END shaman FIX /r_drawflat + /gl_caustics
 			}
-		}		
+		}
 	}
-
-	if (gl_fogenable.value) {
-		glDisable(GL_FOG);
-	}
-	glColor3f(1.0f, 1.0f, 1.0f);
 
 	// TODO: Caustics
 }
@@ -1469,33 +1468,27 @@ void R_DrawBrushModel (entity_t *e) {
 
 	if (e->angles[0] || e->angles[1] || e->angles[2]) {
 		rotated = true;
-		if (R_CullSphere (e->origin, clmodel->radius))
+		if (R_CullSphere(e->origin, clmodel->radius)) {
 			return;
-	   if (e->alpha) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			GL_TextureEnvMode(GL_MODULATE);
-			glColor4f (1, 1, 1, e->alpha);
-	   }
-	   else {
-			glColor3f (1,1,1);
-	   } 
+		}
 	}
 	else {
 		rotated = false;
 		VectorAdd (e->origin, clmodel->mins, mins);
 		VectorAdd (e->origin, clmodel->maxs, maxs);
 
-		if (R_CullBox (mins, maxs))
+		if (R_CullBox(mins, maxs)) {
 			return;
+		}
+	}
 
-	   if (e->alpha) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			GL_TextureEnvMode(GL_MODULATE);
-			glColor4f (1, 1, 1, e->alpha);
-	   }
-	   else {
-			glColor3f (1,1,1);
-	   } 
+	if (e->alpha) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_TextureEnvMode(GL_MODULATE);
+		glColor4f (1, 1, 1, e->alpha);
+	}
+	else {
+		glColor3f (1,1,1);
 	}
 
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
@@ -1565,17 +1558,23 @@ void R_DrawBrushModel (entity_t *e) {
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
 	R_RenderAllDynamicLightmaps(clmodel);
-	if (r_drawflat.value != 0 && clmodel->isworldmodel) {
-		if (r_drawflat.integer == 1) {
-			R_DrawFlat(clmodel);
+
+	if (GL_ShadersSupported()) {
+		GLM_DrawFlat(clmodel);
+	}
+	else {
+		if (r_drawflat.value != 0 && clmodel->isworldmodel) {
+			if (r_drawflat.integer == 1) {
+				R_DrawFlat(clmodel);
+			}
+			else {
+				DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+				R_DrawFlat(clmodel);
+			}
 		}
 		else {
 			DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
-			R_DrawFlat(clmodel);
 		}
-	}
-	else {
-		DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
@@ -1701,6 +1700,8 @@ void R_DrawWorld (void)
 	if (GL_ShadersSupported()) {
 		//draw the world sky
 		R_DrawSky ();
+
+		R_DrawEntitiesOnList (&cl_firstpassents);
 
 		R_RenderAllDynamicLightmaps(cl.worldmodel);
 

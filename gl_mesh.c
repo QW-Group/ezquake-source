@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-
+#include "gl_local.h"
 
 /*
 =================================================================
@@ -283,34 +283,115 @@ void BuildTris (void)
 GL_MakeAliasModelDisplayLists
 ================
 */
-void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
+void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
-	int		i, j;
-	int			*cmds;
-	trivertx_t	*verts;
+	int         i, j;
+	int         *cmds;
+	trivertx_t  *verts;
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
 
-
 	// Tonik: don't cache anything, because it seems just as fast
 	// (if not faster) to rebuild the tris instead of loading them from disk
-	BuildTris ();		// trifans or lists
+	BuildTris();		// trifans or lists
 
 	// save the data out
-
 	paliashdr->poseverts = numorder;
 
-	cmds = (int *) Hunk_Alloc (numcommands * 4);
+	cmds = (int *)Hunk_Alloc(numcommands * 4);
 	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
-	memcpy (cmds, commands, numcommands * 4);
+	memcpy(cmds, commands, numcommands * 4);
 
-	verts = (trivertx_t *) Hunk_Alloc (paliashdr->numposes * paliashdr->poseverts
-		* sizeof(trivertx_t) );
+	verts = (trivertx_t *)Hunk_Alloc(paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t));
 	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
-	for (i=0 ; i<paliashdr->numposes ; i++)
-		for (j=0 ; j<numorder ; j++)
-	//TODO: corrupted files may cause a crash here, sanity checks?
+	for (i = 0; i < paliashdr->numposes; i++) {
+		for (j = 0; j < numorder; j++) {
+			//TODO: corrupted files may cause a crash here, sanity checks?
 			*verts++ = poseverts[i][vertexorder[j]];
+		}
+	}
+
+	if (GL_ShadersSupported())
+	{
+		trivertx_t* vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
+		int v = 0;
+		int c = 0;
+		int count = 0;
+		int total_vertices = 0;
+		GLuint vbo, vao;
+		size_t vbo_size;
+		float* vbo_buffer;
+
+		total_vertices = 0;
+		while (count = *order++) {
+			if (count < 0) {
+				count = -count;
+			}
+
+			total_vertices += count;
+
+			order += count * 2; // s/t co-ordinates
+		}
+
+		vbo_size = VERTEXSIZE * sizeof(float) * total_vertices;
+		vbo_buffer = (float*) Q_malloc(vbo_size);
+
+		order = (int *) ((byte *) paliashdr + paliashdr->commands);
+		for ( ; ; ) {
+			float x, y, z;
+			float s, t;
+			byte l;
+
+			count = *order++;
+
+			if (!count) {
+				break;
+			}
+			if (count < 0) {
+				count = -count;
+			}
+
+			while (count--) {
+				s = ((float *)order)[0];
+				t = ((float *)order)[1];
+				order += 2;
+
+				l = vertices->lightnormalindex;
+				x = vertices->v[0];
+				y = vertices->v[1];
+				z = vertices->v[2];
+
+				vbo_buffer[v + 0] = x;
+				vbo_buffer[v + 1] = y;
+				vbo_buffer[v + 2] = z;
+				vbo_buffer[v + 3] = s;
+				vbo_buffer[v + 4] = t;
+				// FIXME: This is an index to an array
+				//vbo_buffer[v + 5] = l / 127.0;
+				v += VERTEXSIZE;
+
+				++vertices;
+			}
+		}
+
+		glGenBuffers(1, &vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glBufferDataExt(GL_ARRAY_BUFFER, vbo_size, vbo_buffer, GL_STATIC_DRAW);
+		Q_free(vbo_buffer);
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+		//glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+
+		paliashdr->vbo = vbo;
+		paliashdr->vao = vao;
+	}
 }
 

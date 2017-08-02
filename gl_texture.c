@@ -242,7 +242,10 @@ void GL_SelectTexture (GLenum target)
 
 void GL_DisableMultitexture (void) 
 {
-	if (mtexenabled) 
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE0);
+	}
+	else if (mtexenabled) 
 	{
 		glDisable (GL_TEXTURE_2D);
 		GL_SelectTexture (GL_TEXTURE0);
@@ -252,7 +255,10 @@ void GL_DisableMultitexture (void)
 
 void GL_EnableMultitexture (void) 
 {
-	if (gl_mtexable) 
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE1);
+	}
+	else if (gl_mtexable)
 	{
 		GL_SelectTexture (GL_TEXTURE1);
 		glEnable (GL_TEXTURE_2D);

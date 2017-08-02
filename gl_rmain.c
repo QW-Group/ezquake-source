@@ -472,19 +472,19 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	{
 		count = *order++;
 
-		if (!count)
+		if (!count) {
 			break;
+		}
 
-		if (count < 0)
-		{
+		if (count < 0) {
 			count = -count;
 			glBegin(GL_TRIANGLE_FAN);
 		}
-		else
+		else {
 			glBegin(GL_TRIANGLE_STRIP);
+		}
 
-		do 
-		{
+		do {
 			order += 2;
 
 			if ((currententity->renderfx & RF_LIMITLERP))
@@ -510,6 +510,146 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	GL_PolygonOffset(0, 0);
 }
 
+void GL_DrawPowerupShell(aliashdr_t* paliashdr, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
+{
+	int *order, count;
+	float scroll[2];
+	float v[3];
+	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+
+	// LordHavoc: set the state to what we need for rendering a shell
+	if (!shelltexture)
+		shelltexture = GL_GenerateShellTexture();
+	GL_Bind (shelltexture);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	if (gl_powerupshells_style.integer)
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	else
+		glBlendFunc(GL_ONE, GL_ONE);
+
+	glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
+
+	if (scrolldir) {
+		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
+		scroll[1] = sin(cl.time * -0.5);
+	}
+	else {
+		scroll[0] = cos(cl.time * 1.5);
+		scroll[1] = sin(cl.time * 1.1);
+	}
+
+	// get the vertex count and primitive type
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	for (;;) {
+		count = *order++;
+		if (!count) {
+			break;
+		}
+
+		if (count < 0) {
+			count = -count;
+			glBegin(GL_TRIANGLE_FAN);
+		}
+		else {
+			glBegin(GL_TRIANGLE_STRIP);
+		}
+
+		do {
+			glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
+
+			order += 2;
+
+			v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
+			v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
+			v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
+			v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
+			v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
+			v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
+
+			glVertex3f(v[0], v[1], v[2]);
+
+			verts1++;
+			verts2++;
+		} while (--count);
+
+		glEnd();
+	}
+
+	// LordHavoc: reset the state to what the rest of the renderer expects
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+static glm_program_t aliasFrameProgram;
+
+void GL_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
+{
+	extern void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+
+	int vertIndex = 0;
+	byte color[4];
+	float l;
+	qbool texture = custom_model == NULL;
+
+	if (r_modelcolor[0] < 0) {
+		color[0] = color[1] = color[2] = 255;
+	}
+	else {
+		color[0] = r_modelcolor[0] * 255;
+		color[1] = r_modelcolor[1] * 255;
+		color[2] = r_modelcolor[2] * 255;
+	}
+	color[3] = r_modelalpha * 255;
+
+	if (paliashdr->vao) {
+		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
+		int count;
+
+		while (count = *order++) {
+			GLenum drawMode = GL_TRIANGLE_STRIP;
+
+			if (count < 0) {
+				count = -count;
+				drawMode = GL_TRIANGLE_FAN;
+			}
+
+			// texture coordinates now stored in the VBO
+			order += 2 * count;
+
+			// TODO: model lerping between frames
+			// TODO: Vertex lighting etc
+			// TODO: shadedots[vert.l] ... need to copy shadedots to program somehow
+			// TODO: Coloured lighting per-vertex?
+			l = shadedots[0] / 127.0;
+			l = (l * shadelight + ambientlight) / 256.0;
+			l = min(l, 1);
+
+			if (custom_model == NULL) {
+				if (r_modelcolor[0] < 0) {
+					// normal color
+					color[0] = color[1] = color[2] = l * 255;
+				}
+				else {
+					// forced
+					color[0] *= l;
+					color[1] *= l;
+					color[2] *= l;
+				}
+			}
+			else {
+				color[0] = custom_model->color_cvar.color[0];
+				color[1] = custom_model->color_cvar.color[1];
+				color[2] = custom_model->color_cvar.color[2];
+			}
+
+			GLM_DrawPolygonByType(drawMode, color, paliashdr->vao, vertIndex, count, false, texture, false);
+
+			vertIndex += count;
+		}
+	}
+}
+
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
 {
 	int *order, count;
@@ -520,8 +660,13 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	int i;
 	vec3_t lc;
 
+	if (GL_ShadersSupported()) {
+		GL_DrawSimpleAliasFrame(paliashdr, pose1, scrolldir);
+		return;
+	}
+
 	lerpfrac = r_framelerp;
-	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
+	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
 	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 
@@ -530,78 +675,10 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
-	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
-	{
-		float scroll[2];
-		float v[3];
-		float shell_size = bound(0, gl_powerupshells_size.value, 20);
-
-		// LordHavoc: set the state to what we need for rendering a shell
-		if (!shelltexture)
-			shelltexture = GL_GenerateShellTexture();
-		GL_Bind (shelltexture);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-		if (gl_powerupshells_style.integer)
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		else
-			glBlendFunc(GL_ONE, GL_ONE);
-
-		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
-
-		if (scrolldir)
-		{
-			scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
-			scroll[1] = sin(cl.time * -0.5);
-		}
-		else
-		{
-			scroll[0] = cos(cl.time * 1.5);
-			scroll[1] = sin(cl.time * 1.1);
-		}
-
-		// get the vertex count and primitive type
-		for (;;)
-		{
-			count = *order++;
-			if (!count)
-				break;
-
-			if (count < 0)
-			{
-				count = -count;
-				glBegin(GL_TRIANGLE_FAN);
-			}
-			else
-				glBegin(GL_TRIANGLE_STRIP);
-
-			do
-			{
-				glTexCoord2f (((float *) order)[0] * 2.0f + scroll[0], ((float *) order)[1] * 2.0f + scroll[1]);
-
-				order += 2;
-
-				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
-				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
-				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
-				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
-				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
-				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
-
-				glVertex3f(v[0], v[1], v[2]);
-
-				verts1++;
-				verts2++;
-			} while (--count);
-
-			glEnd();
-		}
-		// LordHavoc: reset the state to what the rest of the renderer expects
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
+		GL_DrawPowerupShell(paliashdr, verts1, verts2, lerpfrac, scrolldir);
 	}
-	else
-	{
+	else {
 		if (r_modelalpha < 1) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		}
@@ -611,70 +688,70 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
 		}
 
-		for ( ;; )
-		{
+		for ( ; ; ) {
 			count = *order++;
-			if (!count)
+			if (!count) {
 				break;
+			}
 
-			if (count < 0)
-			{
+			if (count < 0) {
 				count = -count;
 				glBegin(GL_TRIANGLE_FAN);
 			}
-			else
+			else {
 				glBegin(GL_TRIANGLE_STRIP);
+			}
 
 			do {
 				// texture coordinates come from the draw list
-				if (mtex)
-				{
-					qglMultiTexCoord2f (GL_TEXTURE0, ((float *) order)[0], ((float *) order)[1]);
-					qglMultiTexCoord2f (GL_TEXTURE1, ((float *) order)[0], ((float *) order)[1]);
+				if (mtex) {
+					qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
+					qglMultiTexCoord2f(GL_TEXTURE1, ((float *)order)[0], ((float *)order)[1]);
 				}
-				else
-					glTexCoord2f (((float *) order)[0], ((float *) order)[1]);
+				else {
+					glTexCoord2f(((float *)order)[0], ((float *)order)[1]);
+				}
 
 				order += 2;
 
-				if ((currententity->renderfx & RF_LIMITLERP))
+				if ((currententity->renderfx & RF_LIMITLERP)) {
 					lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+				}
 
 				// VULT VERTEX LIGHTING
-				if (amf_lighting_vertex.value && !full_light)
-				{
+				if (amf_lighting_vertex.value && !full_light) {
 					l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
 				}
-				else
-				{
+				else {
 					l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
 					l = (l * shadelight + ambientlight) / 256.0;
 				}
-				l = min(l , 1);
-				//VULT COLOURED MODEL LIGHTS
-				if (amf_lighting_colour.value && !full_light)
-				{
-					for (i=0;i<3;i++)
-						lc[i] = lightcolor[i] / 256 + l;
+				l = min(l, 1);
 
-					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
-					if (r_modelcolor[0] < 0)
+				//VULT COLOURED MODEL LIGHTS
+				if (amf_lighting_colour.value && !full_light) {
+					for (i = 0;i < 3;i++) {
+						lc[i] = lightcolor[i] / 256 + l;
+					}
+
+					if (r_modelcolor[0] < 0) {
 						glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
-					else
+					}
+					else {
 						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
+					}
 				}
-				else if (custom_model == NULL)
-				{
+				else if (custom_model == NULL) {
 					if (r_modelcolor[0] < 0) {
 						glColor4f(l, l, l, r_modelalpha); // normal color
-					} else {
+					}
+					else {
 						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
 					}
 				}
 
 				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 				glVertex3fv(interpolated_verts);
-
 
 				verts1++;
 				verts2++;
@@ -714,9 +791,9 @@ void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, al
 	}
 
 	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
-
-	if (outline)
-		GL_DrawAliasOutlineFrame (paliashdr, oldpose, pose) ;
+	if (outline) {
+		GL_DrawAliasOutlineFrame(paliashdr, oldpose, pose);
+	}
 }
 
 void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
@@ -1023,18 +1100,16 @@ void R_DrawAliasModel(entity_t *ent)
 
 	//TODO: use modhints here? 
 	//VULT CORONAS	
-	if (		
+	if (
 			(!strcmp (ent->model->name, "progs/flame.mdl") || 
 			 !strcmp (ent->model->name, "progs/flame0.mdl") || 
-			 !strcmp (ent->model->name, "progs/flame3.mdl") ) && amf_coronas.value )
-	{
+			 !strcmp (ent->model->name, "progs/flame3.mdl") ) && amf_coronas.value ) {
 		//FIXME: This is slow and pathetic as hell, really we should just check the entity
 		//alternativley add some kind of permanent client side TE for the torch
 		NewStaticLightCorona (C_FIRE, ent->origin, ent);
 	}
 
-	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
-	{
+	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value) {
 		NewStaticLightCorona (C_LIGHTNING, ent->origin, ent);
 	}
 
@@ -1042,14 +1117,16 @@ void R_DrawAliasModel(entity_t *ent)
 	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
 
 	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
-		if (ent->model->modhint != MOD_EYES)
-			Com_DPrintf ("R_DrawAliasModel: no such frame %d\n", ent->frame);
+		if (ent->model->modhint != MOD_EYES) {
+			Com_DPrintf("R_DrawAliasModel: no such frame %d\n", ent->frame);
+		}
 
 		ent->frame = 0;
 	}
 	if (ent->oldframe >= paliashdr->numframes || ent->oldframe < 0) {
-		if (ent->model->modhint != MOD_EYES)
-			Com_DPrintf ("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+		if (ent->model->modhint != MOD_EYES) {
+			Com_DPrintf("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+		}
 
 		ent->oldframe = 0;
 	}
@@ -1057,29 +1134,34 @@ void R_DrawAliasModel(entity_t *ent)
 	frame = &paliashdr->frames[ent->frame];
 	oldframe = &paliashdr->frames[ent->oldframe];
 
-	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
+	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame) {
 		r_framelerp = 1.0;
-	else
-		r_framelerp = min (ent->framelerp, 1);
-
+	}
+	else {
+		r_framelerp = min(ent->framelerp, 1);
+	}
 
 	//culling
 	if (!(ent->renderfx & RF_WEAPONMODEL)) {
 		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
-			if (R_CullSphere (ent->origin, max(oldframe->radius, frame->radius)))
+			if (R_CullSphere(ent->origin, max(oldframe->radius, frame->radius))) {
 				return;
-		} else {
+			}
+		}
+		else {
 			if (r_framelerp == 1) {	
 				VectorAdd(ent->origin, frame->bboxmin, mins);
 				VectorAdd(ent->origin, frame->bboxmax, maxs);
-			} else {
+			}
+			else {
 				for (i = 0; i < 3; i++) {
 					mins[i] = ent->origin[i] + min (oldframe->bboxmin[i], frame->bboxmin[i]);
 					maxs[i] = ent->origin[i] + max (oldframe->bboxmax[i], frame->bboxmax[i]);
 				}
 			}
-			if (R_CullBox (mins, maxs))
+			if (R_CullBox(mins, maxs)) {
 				return;
+			}
 		}
 	}
 
@@ -1110,8 +1192,6 @@ void R_DrawAliasModel(entity_t *ent)
 		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
 		GL_Scale(GL_MODELVIEW, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
-
-
 
 	anim = (int) (r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
@@ -1203,7 +1283,6 @@ void R_DrawAliasModel(entity_t *ent)
 	else
 	{
 		if (fb_texture && gl_mtexable) {
-
 			GL_DisableMultitexture ();
 
 			GL_Bind (texture);
@@ -1512,8 +1591,9 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	{
 		currententity = &vislist->list[i];
 
-		if (gl_simpleitems.value && R_DrawTrySimpleItem())
+		if (gl_simpleitems.value && R_DrawTrySimpleItem()) {
 			continue;
+		}
 
 		switch (currententity->model->type) 
 		{
