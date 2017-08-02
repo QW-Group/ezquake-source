@@ -103,6 +103,10 @@ void R_RenderDlight (dlight_t *light) {
 	vec3_t v, v_right, v_up;
 	float length, rad, *bub_sin, *bub_cos;
 
+	if (GL_ShadersSupported()) {
+		return;
+	}
+
 	// don't draw our own powerup glow and muzzleflashes
 	if (light->key == (cl.viewplayernum + 1) ||
 		light->key == -(cl.viewplayernum + 1)) // muzzleflash keys are negative

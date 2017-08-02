@@ -2309,18 +2309,12 @@ void R_RenderScene(void)
 
 	R_DrawWorld ();		// adds static entities to the list
 
-	if (GL_ShadersSupported()) {
-		R_DrawEntitiesOnList(&cl_visents);
-		R_DrawEntitiesOnList(&cl_alphaents);
+	R_DrawEntitiesOnList(&cl_visents);
+	R_DrawEntitiesOnList(&cl_alphaents);
 
-		R_DrawWaterSurfaces();
-	}
-	else {
-		R_DrawEntitiesOnList(&cl_visents);
-		R_DrawEntitiesOnList(&cl_alphaents);
+	R_DrawWaterSurfaces();
 
-		R_DrawWaterSurfaces();
-
+	if (!GL_ShadersSupported()) {
 		GL_DisableMultitexture();
 
 		// START shaman BUG fog was out of control when fogstart>fogend {
@@ -2634,35 +2628,30 @@ void R_RenderView(void)
 	if (gl_finish.value)
 		glFinish ();
 
-	if (GL_ShadersSupported()) {
-		R_Clear();
-		R_RenderScene();
-		//R_RenderDlights(); // TODO
-		R_DrawParticles();
+	R_Clear();
 
-		//DrawCI(); // TODO
-		//R_DrawViewModel(); // FIX
-	}
-	else {
-		R_Clear();
+	// render normal view
+	R_RenderScene();
 
-		// render normal view
-		R_RenderScene();
-		R_RenderDlights();
-		R_DrawParticles();
+	R_RenderDlights();
+	R_DrawParticles();
 
+	if (!GL_ShadersSupported()) {
 		DrawCI();
 
 		//VULT: CORONAS
 		//Even if coronas gets turned off, let active ones fade out
-		if (amf_coronas.value || CoronaCount)
+		if (amf_coronas.value || CoronaCount) {
 			R_DrawCoronas();
+		}
 
 		R_DrawViewModel();
 
 		{
 			extern cvar_t show_velocity_3d;
-			if (show_velocity_3d.integer) draw_velocity_3d();
+			if (show_velocity_3d.integer) {
+				draw_velocity_3d();
+			}
 		}
 
 		SCR_SetupAutoID();
