@@ -1776,12 +1776,11 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		glVertex2f(x_start, y_start);
 		glVertex2f(x_end, y_end);
 		glEnd();
+		glColor3ubv (color_white);
 	}
 
 	glEnable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-	glColor3ubv (color_white);
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)

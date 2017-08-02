@@ -150,6 +150,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     int     a, x, i, y;
     char st[80];
     float alpha;
+	qbool texture;
 
     static hud_t *hud = NULL;
     static cvar_t
@@ -229,15 +230,27 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     }
 
 	GL_TextureEnvMode(GL_MODULATE);
-    if (par_full->value)
-        glDisable(GL_TEXTURE_2D);
-    else
-        GL_Bind(netgraphtexture);
+	texture = !par_full->value;
+
+	if (GL_ShadersSupported()) {
+		if (texture) {
+			glActiveTexture(0);
+			GL_Bind(netgraphtexture);
+		}
+	}
+	else {
+		if (par_full->value) {
+			glDisable(GL_TEXTURE_2D);
+		}
+		else {
+			GL_Bind(netgraphtexture);
+		}
+	}
 
     for (a=0; a < width; a++)
     {
         int px, py1, py2;
-        unsigned char *pColor;
+        unsigned char pColor[4];
         int h, color;
 
         i = (outgoing_sequence-a-1) & NET_TIMINGSMASK;
@@ -254,51 +267,59 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         else
             color = 0xfe;   // pink     [ms ping]
 
-        if (h < 9000)
-        {
-            if (!par_inframes->value)
-                h = h*height/par_maxping->value;
+        if (h < 9000) {
+			if (!par_inframes->value) {
+				h = h*height / par_maxping->value;
+			}
         }
-        else
-            h = min(height, height*par_dropheight->value);
+		else {
+			h = min(height, height*par_dropheight->value);
+		}
         clamp(h, 0, height);
 
-        pColor = (unsigned char *) &d_8to24table[(byte) color];
-        if (alpha < 1)
-            glColor4ub (pColor[0], pColor[1], pColor[2], (byte)(alpha*255));
-        else
-            glColor4ubv ( pColor );
+		memcpy(pColor, (unsigned char *)&d_8to24table[(byte)color], 3);
+		if (alpha < 1) {
+			pColor[3] = (byte)(alpha * 255);
+		}
+		else {
+			pColor[3] = 255;
+		}
 
         px = x + (revx ? a : width-a-1);
-
-        if (revy)
-        {
+        if (revy) {
             py1 = y + 0;
             py2 = y + h;
         }
-        else
-        {
+        else {
             py1 = y + height;
             py2 = y + height-h;
         }
 
-        glBegin (GL_QUADS);
+		if (GL_ShadersSupported()) {
+			Draw_AlphaLineRGB(px, py1, px, py2, 1, RGBAVECT_TO_COLOR(pColor));
+		}
+		else {
+			glColor4ubv(pColor);
+			glBegin(GL_QUADS);
 
-        glTexCoord2f (0, 0);
-        glVertex2f (px, py1);
-        glTexCoord2f (1, 0);
-        glVertex2f (px+1, py1);
-        glTexCoord2f (1, h/2.0);
-        glVertex2f (px+1, py2);
-        glTexCoord2f (0, h/2.0);
-        glVertex2f (px, py2);
+			glTexCoord2f(0, 0);
+			glVertex2f(px, py1);
+			glTexCoord2f(1, 0);
+			glVertex2f(px + 1, py1);
+			glTexCoord2f(1, h / 2.0);
+			glVertex2f(px + 1, py2);
+			glTexCoord2f(0, h / 2.0);
+			glVertex2f(px, py2);
 
-        glEnd ();
+			glEnd();
+		}
     }
 
-    glColor3f(1,1,1);
-	GL_TextureEnvMode(GL_REPLACE );
+	GL_TextureEnvMode(GL_REPLACE);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-    glEnable(GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glColor4ubv(color_white);
+		glEnable(GL_TEXTURE_2D);
+	}
 }

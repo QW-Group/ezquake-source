@@ -3382,7 +3382,7 @@ void SCR_UpdateScreenPostPlayerView (void)
 
 	if (GL_ShadersSupported()) {
 		if (scr_newHud.value != 1) {
-			//SCR_DrawNewHudElements();
+			SCR_DrawNewHudElements();
 		}
 
 		// Innards of SCR_DrawElements(), one bite at a time...
