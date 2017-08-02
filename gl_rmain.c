@@ -108,6 +108,13 @@ GLuint    playerfbtextures[MAX_CLIENTS];
 GLuint    skyboxtextures[MAX_SKYBOXTEXTURES];
 GLuint    underwatertexture, detailtexture;
 
+void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
+{
+	extern void Classic_LoadParticleTexures();
+
+	Classic_LoadParticleTexures();
+}
+
 cvar_t cl_multiview                        = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud                     = {"cl_mvdisplayhud", "1"};
 cvar_t cl_mvhudvertical                    = {"cl_mvhudvertical", "0"};
@@ -175,7 +182,7 @@ cvar_t gl_lightmode                        = {"gl_lightmode", "2"};
 cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
 cvar_t gl_solidparticles                   = {"gl_solidparticles", "0"}; // 1
-cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", CVAR_LATCH};
+cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange };
 cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails                      = {"gl_part_trails", "0"}; // 1
 cvar_t gl_part_tracer1_color               = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
@@ -2631,7 +2638,7 @@ void R_RenderView(void)
 		R_Clear();
 		R_RenderScene();
 		//R_RenderDlights(); // TODO
-		//R_DrawParticles();
+		R_DrawParticles();
 
 		//DrawCI(); // TODO
 		//R_DrawViewModel(); // FIX

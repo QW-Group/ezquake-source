@@ -463,89 +463,235 @@ done:
 
 
 // deurk: ported from zquake, thx Tonik
-void Classic_ParticleRailTrail (vec3_t start, vec3_t end, int color) {
-        vec3_t          move, vec, right, up, dir;
-        float           len, dec, d, c, s;
-        int             i, j;
-        particle_t      *p;
+void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
+{
+	vec3_t          move, vec, right, up, dir;
+	float           len, dec, d, c, s;
+	int             i, j;
+	particle_t      *p;
 
-        VectorCopy (start, move);
-        VectorSubtract (end, start, vec);
-        len = VectorNormalize (vec);
+	VectorCopy(start, move);
+	VectorSubtract(end, start, vec);
+	len = VectorNormalize(vec);
 
-        MakeNormalVectors (vec, right, up);
+	MakeNormalVectors(vec, right, up);
 
-        // color spiral
-        for (i=0 ; i<len ; i++)
-        {
-                if (!free_particles)
-                        return;
+	// color spiral
+	for (i = 0; i < len; i++) {
+		if (!free_particles)
+			return;
 
-                p = free_particles;
-                free_particles = p->next;
-                p->next = active_particles;
-                active_particles = p;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
 
-                p->type = pt_rail;
+		p->type = pt_rail;
 
-                p->die = r_refdef2.time + 2;
-                
-				d = i * 0.1;
-                c = cos(d);
-                s = sin(d);
+		p->die = r_refdef2.time + 2;
 
-                VectorScale (right, c, dir);
-                VectorMA (dir, s, up, dir);
+		d = i * 0.1;
+		c = cos(d);
+		s = sin(d);
 
-                //p->alpha = 1.0;
-                //p->alphavel = -1.0 / (1+frand()*0.2);
-                p->color = color + (rand()&7);
-                for (j=0 ; j<3 ; j++)
-                {
-                        p->org[j] = move[j] + dir[j]*3;
-                        p->vel[j] = dir[j]*2; //p->vel[j] = dir[j]*6;
-                }
+		VectorScale(right, c, dir);
+		VectorMA(dir, s, up, dir);
 
-                VectorAdd (move, vec, move);
-        }
+		//p->alpha = 1.0;
+		//p->alphavel = -1.0 / (1+frand()*0.2);
+		p->color = color + (rand() & 7);
+		for (j = 0; j < 3; j++) {
+			p->org[j] = move[j] + dir[j] * 3;
+			p->vel[j] = dir[j] * 2; //p->vel[j] = dir[j]*6;
+		}
 
-        dec = 1.5;
-        VectorScale (vec, dec, vec);
-        VectorCopy (start, move);
+		VectorAdd(move, vec, move);
+	}
 
-        // white core
-        while (len > 0)
-        {
-                len -= dec;
+	dec = 1.5;
+	VectorScale(vec, dec, vec);
+	VectorCopy(start, move);
 
-                if (!free_particles)
-                        return;
-                p = free_particles;
-                free_particles = p->next;
-                p->next = active_particles;
-                active_particles = p;
+	// white core
+	while (len > 0) {
+		len -= dec;
 
-                p->type = pt_rail;
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
 
-                p->die = r_refdef2.time + 2;
+		p->type = pt_rail;
 
-                //p->alpha = 1.0;
-                //p->alphavel = -1.0 / (0.6+frand()*0.2);
-                p->color = 0x0 + (rand()&15);
+		p->die = r_refdef2.time + 2;
 
-                for (j=0 ; j<3 ; j++)
-                {
-                        p->org[j] = move[j] + crand()* 2;
-                        p->vel[j] = crand()*0.5; //p->vel[j] = crand()*3;
-                }
+		//p->alpha = 1.0;
+		//p->alphavel = -1.0 / (0.6+frand()*0.2);
+		p->color = 0x0 + (rand() & 15);
 
-                VectorAdd (move, vec, move);
-        }
+		for (j = 0; j < 3; j++) {
+			p->org[j] = move[j] + crand() * 2;
+			p->vel[j] = crand()*0.5; //p->vel[j] = crand()*3;
+		}
 
+		VectorAdd(move, vec, move);
+	}
 }
 
+static glm_program_t billboardProgram;
+static int billboard_modelViewMatrix;
+static int billboard_projectionMatrix;
+static int billboard_color;
+static int billboard_scale;
+static int billboard_materialTex;
+static int billboard_apply_texture;
+static int billboard_alpha_texture;
 
-void Classic_DrawParticles (void) {
+void GLM_DrawBillboard(byte* color, float scale, qbool apply_texture, qbool alpha_texture, int vao, int length)
+{
+	if (!billboardProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in vec3 position;\n"
+			"layout(location = 1) in vec2 tex;\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform float scale;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    mat4 matrix = modelViewMatrix;"
+			"    matrix[0][0] = 1.5 * scale;"
+			"    matrix[0][1] = 0;"
+			"    matrix[0][2] = 0;"
+			"    matrix[1][0] = 0;"
+			"    matrix[1][1] = 1.5 * scale;"
+			"    matrix[1][2] = 0;"
+			"    matrix[2][0] = 0;"
+			"    matrix[2][1] = 0;"
+			"    matrix[2][2] = 1.5 * scale;"
+			"    gl_Position = projectionMatrix * matrix * vec4(position, 1);\n"
+			"    TextureCoord = tex;\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform vec4 color;\n"
+			"uniform sampler2D materialTex;\n"
+			"uniform bool apply_texture;\n"
+			"uniform bool alpha_texture;\n"
+			"\n"
+			"in vec2 TextureCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor;\n"
+			"    vec4 lmColor;\n"
+			"\n"
+			"    if (apply_texture) {\n"
+			"        texColor = texture(materialTex, TextureCoord);\n"
+			"        if (alpha_texture && texColor.a != 1.0) {\n"
+			"            discard;"
+			"        }\n"
+			"    }\n"
+			"    else {\n"
+			"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+			"    }\n"
+			"    frag_colour = texColor * color;"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Billboards", vertexShaderText, fragmentShaderText, &billboardProgram);
+
+		billboard_modelViewMatrix = glGetUniformLocation(billboardProgram.program, "modelViewMatrix");
+		billboard_projectionMatrix = glGetUniformLocation(billboardProgram.program, "projectionMatrix");
+		billboard_color = glGetUniformLocation(billboardProgram.program, "color");
+		billboard_scale = glGetUniformLocation(billboardProgram.program, "scale");
+		billboard_materialTex = glGetUniformLocation(billboardProgram.program, "materialTex");
+		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
+		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
+	}
+
+	if (billboardProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		glUseProgram(billboardProgram.program);
+		glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform4f(billboard_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1f(billboard_scale, scale);
+		glUniform1i(billboard_materialTex, 0);
+		glUniform1i(billboard_apply_texture, apply_texture ? 1 : 0);
+		glUniform1i(billboard_alpha_texture, alpha_texture ? 1 : 0);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, length);
+	}
+}
+
+void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
+{
+	static GLuint simpleItemVBO;
+	static GLuint simpleItemVAO;
+
+	float oldMatrix[16];
+
+	if (!simpleItemVBO) {
+		float verts[4][VERTEXSIZE] = { 0 };
+
+		VectorSet(verts[0], 0, 0, 0);
+		verts[0][3] = 0;
+		verts[0][4] = 0;
+
+		VectorSet(verts[1], 0, 1.5, 0);
+		verts[1][3] = 0;
+		verts[1][4] = 1;
+
+		VectorSet(verts[2], 1.5, 0, 0);
+		verts[2][3] = 1;
+		verts[2][4] = 0;
+
+		VectorSet(verts[3], 1.5, 1.5, 0);
+		verts[3][3] = 1;
+		verts[3][4] = 1;
+
+		glGenBuffers(1, &simpleItemVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
+	}
+
+	if (!simpleItemVAO) {
+		glGenVertexArrays(1, &simpleItemVAO);
+		glBindVertexArray(simpleItemVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+	}
+
+	{
+		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
+		GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
+
+		GLM_DrawBillboard(color, scale, !square, !square, simpleItemVAO, 4);
+		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
+	}
+}
+
+void Classic_DrawParticles(void)
+{
 	particle_t *p, *kill;
 	int i;
 	float time2, time3, time1, dvel, frametime, grav;
@@ -553,48 +699,58 @@ void Classic_DrawParticles (void) {
 	vec3_t up, right;
 	float dist, scale, r_partscale;
 	extern cvar_t gl_particle_style;
+	float oldModelViewMatrix[16];
 
-	if (!active_particles)
+	if (!active_particles) {
 		return;
+	}
 
-	r_partscale = 0.004 * tan (r_refdef.fov_x * (M_PI / 180) * 0.5f);
+	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 
 	// load texture if not done yet
-	if (!particletexture)
+	if (!particletexture) {
 		Classic_LoadParticleTexures();
+	}
 
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE0);
+	}
 	GL_Bind(particletexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	if (!gl_solidparticles.value)
-		glDepthMask (GL_FALSE);
+	if (!gl_solidparticles.value) {
+		glDepthMask(GL_FALSE);
+	}
 
 	GL_TextureEnvMode(GL_MODULATE);
-
-	if (gl_particle_style.integer)
-	{
-		// for sw style particles
-		glDisable (GL_TEXTURE_2D); // don't use texture
-		glBegin (GL_QUADS);
+	if (!GL_ShadersSupported()) {
+		if (gl_particle_style.integer) {
+			// for sw style particles
+			glDisable(GL_TEXTURE_2D); // don't use texture
+			glBegin(GL_QUADS);
+		}
+		else if (!GL_ShadersSupported()) {
+			glBegin(GL_TRIANGLES);
+		}
 	}
-	else
-	{
-		glBegin (GL_TRIANGLES);
+	else {
+		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
 	}
 
-	VectorScale (vup, 1.5, up);
-	VectorScale (vright, 1.5, right);
+	VectorScale(vup, 1.5, up);
+	VectorScale(vright, 1.5, right);
 
 	frametime = cls.frametime;
-	if (ISPAUSED)
+	if (ISPAUSED) {
 		frametime = 0;
+	}
 	time3 = frametime * 15;
 	time2 = frametime * 10; // 15;
 	time1 = frametime * 5;
 	grav = frametime * 800 * 0.05;
 	dvel = 4 * frametime;
 
-	while(1) {
+	while (1) {
 		kill = active_particles;
 		if (kill && kill->die < r_refdef2.time) {
 			active_particles = kill->next;
@@ -605,7 +761,9 @@ void Classic_DrawParticles (void) {
 		break;
 	}
 
-	for (p = active_particles; p ; p = p->next) {
+	for (p = active_particles; p; p = p->next) {
+		byte color[4];
+
 		while (1) {
 			kill = p->next;
 			if (kill && kill->die < r_refdef2.time) {
@@ -621,64 +779,87 @@ void Classic_DrawParticles (void) {
 		dist = (p->org[0] - r_origin[0]) * vpn[0] + (p->org[1] - r_origin[1]) * vpn[1] + (p->org[2] - r_origin[2]) * vpn[2];
 		scale = 1 + dist * r_partscale;
 
-		at = (byte *) &d_8to24table[(int)p->color];
-		if (p->type == pt_fire)
+		at = (byte *)&d_8to24table[(int)p->color];
+		if (p->type == pt_fire) {
 			theAlpha = 255 * (6 - p->ramp) / 6;
-		else
-			theAlpha = 255;
-		glColor4ub (*at, *(at + 1), *(at + 2), theAlpha);
-		glTexCoord2f (0, 0); glVertex3fv (p->org);
-		glTexCoord2f (1, 0); glVertex3f (p->org[0] + up[0] * scale, p->org[1] + up[1] * scale, p->org[2] + up[2] * scale);
-
-		if(gl_particle_style.integer) //4th point for sw style particle
-		{
-			glTexCoord2f (1, 1); glVertex3f (p->org[0] + (right[0] + up[0]) * scale, p->org[1] + (right[1] + up[1]) * scale, p->org[2] + (right[2] + up[2]) * scale);
 		}
-		glTexCoord2f (0, 1); glVertex3f (p->org[0] + right[0] * scale, p->org[1] + right[1] * scale, p->org[2] + right[2] * scale);
+		else {
+			theAlpha = 255;
+		}
+
+		color[0] = *at;
+		color[1] = *(at + 1);
+		color[2] = *(at + 2);
+		color[3] = theAlpha;
+
+		if (GL_ShadersSupported()) {
+			GLM_DrawParticle(color, p->org, scale, gl_particle_style.integer);
+		}
+		else {
+			glColor4ubv(color);
+			glTexCoord2f(0, 0); glVertex3fv(p->org);
+			glTexCoord2f(1, 0); glVertex3f(p->org[0] + up[0] * scale, p->org[1] + up[1] * scale, p->org[2] + up[2] * scale);
+
+			if (gl_particle_style.integer) {
+				//4th point for sw style particle
+				glTexCoord2f(1, 1); glVertex3f(p->org[0] + (right[0] + up[0]) * scale, p->org[1] + (right[1] + up[1]) * scale, p->org[2] + (right[2] + up[2]) * scale);
+			}
+			glTexCoord2f(0, 1); glVertex3f(p->org[0] + right[0] * scale, p->org[1] + right[1] * scale, p->org[2] + right[2] * scale);
+		}
 
 		p->org[0] += p->vel[0] * frametime;
 		p->org[1] += p->vel[1] * frametime;
 		p->org[2] += p->vel[2] * frametime;
-		
+
 		switch (p->type) {
 		case pt_static:
 			break;
 		case pt_fire:
 			p->ramp += time1;
-			if (p->ramp >= 6)
+			if (p->ramp >= 6) {
 				p->die = -1;
-			else
-				p->color = ramp3[(int) p->ramp];
+			}
+			else {
+				p->color = ramp3[(int)p->ramp];
+			}
 			p->vel[2] += grav;
 			break;
 		case pt_explode:
 			p->ramp += time2;
-			if (p->ramp >=8)
+			if (p->ramp >= 8) {
 				p->die = -1;
-			else
-				p->color = ramp1[(int) p->ramp];
-			for (i = 0; i < 3; i++)
+			}
+			else {
+				p->color = ramp1[(int)p->ramp];
+			}
+			for (i = 0; i < 3; i++) {
 				p->vel[i] += p->vel[i] * dvel;
+			}
 			p->vel[2] -= grav * 30;
 			break;
 		case pt_explode2:
 			p->ramp += time3;
-			if (p->ramp >=8)
+			if (p->ramp >= 8) {
 				p->die = -1;
-			else
-				p->color = ramp2[(int) p->ramp];
-			for (i = 0; i < 3; i++)
+			}
+			else {
+				p->color = ramp2[(int)p->ramp];
+			}
+			for (i = 0; i < 3; i++) {
 				p->vel[i] -= p->vel[i] * frametime;
+			}
 			p->vel[2] -= grav * 30;
 			break;
 		case pt_blob:
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < 3; i++) {
 				p->vel[i] += p->vel[i] * dvel;
+			}
 			p->vel[2] -= grav;
 			break;
 		case pt_blob2:
-			for (i = 0; i < 2; i++)
+			for (i = 0; i < 2; i++) {
 				p->vel[i] -= p->vel[i] * dvel;
+			}
 			p->vel[2] -= grav;
 			break;
 		case pt_slowgrav:
@@ -690,12 +871,17 @@ void Classic_DrawParticles (void) {
 		}
 	}
 
-	glEnd ();
+	if (!GL_ShadersSupported()) {
+		glEnd();
+	}
+	else {
+		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
+	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glDepthMask (GL_TRUE);
-	glEnable (GL_TEXTURE_2D);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_TEXTURE_2D);
 	GL_TextureEnvMode(GL_REPLACE);
-	glColor3ubv (color_white);
+	glColor3ubv(color_white);
 }
 
 
@@ -721,9 +907,16 @@ void R_ClearParticles(void) {
 	QMB_ClearParticles();
 }
 
-void R_DrawParticles(void) {
-	Classic_DrawParticles();
-	QMB_DrawParticles();
+void R_DrawParticles(void)
+{
+	if (GL_ShadersSupported()) {
+		Classic_DrawParticles();
+		//QMB_DrawParticles();
+	}
+	else {
+		Classic_DrawParticles();
+		QMB_DrawParticles();
+	}
 }
 
 #define RunParticleEffect(var, org, dir, color, count)		\
