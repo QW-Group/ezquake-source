@@ -661,7 +661,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	vec3_t lc;
 
 	if (GL_ShadersSupported()) {
-		GL_DrawSimpleAliasFrame(paliashdr, pose1, scrolldir);
+		GL_DrawSimpleAliasFrame(paliashdr, (r_framelerp >= 0.5) ? pose2 : pose1, scrolldir);
 		return;
 	}
 
@@ -2630,6 +2630,11 @@ void R_RenderView(void)
 	if (GL_ShadersSupported()) {
 		R_Clear();
 		R_RenderScene();
+		//R_RenderDlights(); // TODO
+		//R_DrawParticles();
+
+		//DrawCI(); // TODO
+		//R_DrawViewModel(); // FIX
 	}
 	else {
 		R_Clear();

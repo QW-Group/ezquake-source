@@ -34,6 +34,13 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 // Temp: very simple program to draw single texture on-screen
 // imageProgram.program()
 static glm_program_t imageProgram;
+static GLint imageProgram_matrix;
+static GLint imageProgram_alpha;
+static GLint imageProgram_tex;
+static GLint imageProgram_sbase;
+static GLint imageProgram_swidth;
+static GLint imageProgram_tbase;
+static GLint imageProgram_twidth;
 
 static GLuint GL_CreateRectangleVAO(void);
 
@@ -41,7 +48,6 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
 	float matrix[16];
-	GLint location;
 
 	glDisable(GL_DEPTH_TEST);
 	GLM_GetMatrix(GL_PROJECTION, matrix);
@@ -49,34 +55,13 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	GLM_ScaleMatrix(matrix, width, height, 1.0f);
 
 	glUseProgram(imageProgram.program);
-	location = glGetUniformLocation(imageProgram.program, "matrix");
-	if (location >= 0) {
-		glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
-	}
-	location = glGetUniformLocation(imageProgram.program, "alpha");
-	if (location >= 0) {
-		glUniform1f(location, alpha);
-	}
-	location = glGetUniformLocation(imageProgram.program, "tex");
-	if (location >= 0) {
-		glUniform1i(location, texture_unit);
-	}
-	location = glGetUniformLocation(imageProgram.program, "sbase");
-	if (location >= 0) {
-		glUniform1f(location, tex_s);
-	}
-	location = glGetUniformLocation(imageProgram.program, "swidth");
-	if (location >= 0) {
-		glUniform1f(location, tex_width);
-	}
-	location = glGetUniformLocation(imageProgram.program, "tbase");
-	if (location >= 0) {
-		glUniform1f(location, tex_t);
-	}
-	location = glGetUniformLocation(imageProgram.program, "twidth");
-	if (location >= 0) {
-		glUniform1f(location, tex_height);
-	}
+	glUniformMatrix4fv(imageProgram_matrix, 1, GL_FALSE, matrix);
+	glUniform1f(imageProgram_alpha, alpha);
+	glUniform1i(imageProgram_tex, texture_unit);
+	glUniform1f(imageProgram_sbase, tex_s);
+	glUniform1f(imageProgram_swidth, tex_width);
+	glUniform1f(imageProgram_tbase, tex_t);
+	glUniform1f(imageProgram_twidth, tex_height);
 
 	GLenum error = glGetError();
 	while (error != GL_NO_ERROR) {
@@ -1803,6 +1788,13 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 			// Initialise program for drawing image
 			GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &imageProgram);
+			imageProgram_matrix = glGetUniformLocation(imageProgram.program, "matrix");
+			imageProgram_alpha = glGetUniformLocation(imageProgram.program, "alpha");
+			imageProgram_tex = glGetUniformLocation(imageProgram.program, "tex");
+			imageProgram_sbase = glGetUniformLocation(imageProgram.program, "sbase");
+			imageProgram_swidth = glGetUniformLocation(imageProgram.program, "swidth");
+			imageProgram_tbase = glGetUniformLocation(imageProgram.program, "tbase");
+			imageProgram_twidth = glGetUniformLocation(imageProgram.program, "twidth");
 		}
 
 		if (imageProgram.program) {

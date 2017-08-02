@@ -1109,6 +1109,14 @@ void DrawTextureChains (model_t *model, int contents)
 }
 
 static glm_program_t drawFlatPolyProgram;
+static GLint drawFlat_modelViewMatrix;
+static GLint drawFlat_projectionMatrix;
+static GLint drawFlat_color;
+static GLint drawFlat_materialTex;
+static GLint drawFlat_lightmapTex;
+static GLint drawFlat_apply_lightmap;
+static GLint drawFlat_apply_texture;
+static GLint drawFlat_alpha_texture;
 
 // Very simple polygon drawing until we fix
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
@@ -1174,6 +1182,15 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 
 		// Initialise program for drawing image
 		GLM_CreateSimpleProgram("Drawflat poly", vertexShaderText, fragmentShaderText, &drawFlatPolyProgram);
+		
+		drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
+		drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
+		drawFlat_color = glGetUniformLocation(drawFlatPolyProgram.program, "color");
+		drawFlat_materialTex = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
+		drawFlat_lightmapTex = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
+		drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
+		drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
+		drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
 	}
 
 	if (drawFlatPolyProgram.program && vao) {
@@ -1185,38 +1202,14 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 		glUseProgram(drawFlatPolyProgram.program);
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
-		if (location >= 0) {
-			glUniformMatrix4fv(location, 1, GL_FALSE, modelViewMatrix);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
-		if (location >= 0) {
-			glUniformMatrix4fv(location, 1, GL_FALSE, projectionMatrix);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "color");
-		if (location >= 0) {
-			glUniform4f(location, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
-		if (location >= 0) {
-			glUniform1i(location, 0);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
-		if (location >= 0) {
-			glUniform1i(location, 2);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
-		if (location >= 0) {
-			glUniform1i(location, apply_lightmap ? 1 : 0);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
-		if (location >= 0) {
-			glUniform1i(location, apply_texture ? 1 : 0);
-		}
-		location = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
-		if (location >= 0) {
-			glUniform1i(location, alpha_texture ? 1 : 0);
-		}
+		glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1i(drawFlat_materialTex, 0);
+		glUniform1i(drawFlat_lightmapTex, 2);
+		glUniform1i(drawFlat_apply_lightmap, apply_lightmap ? 1 : 0);
+		glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
+		glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
 
 		glBindVertexArray(vao);
 		glDrawArrays(type, start, vertices);
