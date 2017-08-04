@@ -2663,23 +2663,23 @@ void R_RenderView(void)
 		if (amf_coronas.value || CoronaCount) {
 			R_DrawCoronas();
 		}
+	}
 
-		R_DrawViewModel();
+	R_DrawViewModel();
 
-		{
-			extern cvar_t show_velocity_3d;
-			if (show_velocity_3d.integer) {
-				draw_velocity_3d();
-			}
+	if (!GL_ShadersSupported()) {
+		extern cvar_t show_velocity_3d;
+		if (show_velocity_3d.integer) {
+			draw_velocity_3d();
 		}
+	}
 
-		SCR_SetupAutoID();
+	SCR_SetupAutoID();
 
-		if (r_speeds.value) {
-			time2 = Sys_DoubleTime();
-			Print_flags[Print_current] |= PR_TR_SKIP;
-			Com_Printf("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
-		}
+	if (r_speeds.value) {
+		time2 = Sys_DoubleTime();
+		Print_flags[Print_current] |= PR_TR_SKIP;
+		Com_Printf("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
 	}
 }
 
