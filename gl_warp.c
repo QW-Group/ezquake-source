@@ -302,6 +302,31 @@ void EmitWaterPolys (msurface_t *fa)
 			}
 			col[3] = old_alpha;
 		}
+		else {
+			extern void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha);
+
+			wateralpha = bound(0, wateralpha, 1);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, fa->texinfo->texture->gl_texturenum);
+			if (wateralpha < 1.0 && wateralpha >= 0) {
+				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+				GL_TextureEnvMode(GL_MODULATE);
+				if (wateralpha < 0.9) {
+					glDepthMask(GL_FALSE);
+				}
+			}
+			for (p = fa->polys; p; p = p->next) {
+				GLM_DrawTurbPoly(p->vao, p->numverts, wateralpha);
+			}
+			if (wateralpha < 1.0 && wateralpha >= 0) {
+				GL_TextureEnvMode(GL_REPLACE);
+				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+				if (wateralpha < 0.9) {
+					glDepthMask(GL_TRUE);
+				}
+			}
+		}
 	}
 	else {
 		GL_DisableMultitexture();

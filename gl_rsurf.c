@@ -1108,6 +1108,83 @@ void DrawTextureChains (model_t *model, int contents)
 	EmitDetailPolys();
 }
 
+static glm_program_t turbPolyProgram;
+static GLint turb_modelViewMatrix;
+static GLint turb_projectionMatrix;
+static GLint turb_materialTex;
+static GLint turb_apply_lightmap;
+static GLint turb_alpha;
+static GLint turb_time;
+
+// Very similar to GLM_DrawPoly, but with manipulation of texture coordinates
+void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha)
+{
+	if (!turbPolyProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in vec3 position;\n"
+			"layout(location = 1) in vec2 tex;\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform float time;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
+			"    TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;\n"
+			"    TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform sampler2D materialTex;\n"
+			"uniform float alpha;\n"
+			"\n"
+			"in vec2 TextureCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor;\n"
+			"\n"
+			"    texColor = texture(materialTex, TextureCoord);\n"
+			"    texColor.a = alpha;\n"
+			"    frag_colour = texColor;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Turb poly", vertexShaderText, fragmentShaderText, &turbPolyProgram);
+
+		turb_modelViewMatrix = glGetUniformLocation(turbPolyProgram.program, "modelViewMatrix");
+		turb_projectionMatrix = glGetUniformLocation(turbPolyProgram.program, "projectionMatrix");
+		turb_materialTex = glGetUniformLocation(turbPolyProgram.program, "materialTex");
+		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
+		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
+	}
+
+	if (turbPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		glUseProgram(turbPolyProgram.program);
+		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(turb_materialTex, 0);
+		glUniform1f(turb_alpha, alpha);
+		glUniform1f(turb_time, cl.time);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, vertices);
+	}
+}
+
 static glm_program_t drawFlatPolyProgram;
 static GLint drawFlat_modelViewMatrix;
 static GLint drawFlat_projectionMatrix;
