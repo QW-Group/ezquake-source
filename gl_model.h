@@ -308,6 +308,7 @@ typedef struct aliashdr_s {
 
 	int                 vbo;
 	int                 vao;
+	int                 vertsPerPose;
 
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;

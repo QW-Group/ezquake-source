@@ -320,6 +320,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		int c = 0;
 		int count = 0;
 		int total_vertices = 0;
+		int pose = 0;
 		GLuint vbo, vao;
 		size_t vbo_size;
 		float* vbo_buffer;
@@ -335,44 +336,49 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 			order += count * 2; // s/t co-ordinates
 		}
 
-		vbo_size = VERTEXSIZE * sizeof(float) * total_vertices;
+		vbo_size = VERTEXSIZE * sizeof(float) * total_vertices * paliashdr->numposes;
 		vbo_buffer = (float*) Q_malloc(vbo_size);
 
-		order = (int *) ((byte *) paliashdr + paliashdr->commands);
-		for ( ; ; ) {
-			float x, y, z;
-			float s, t;
-			byte l;
+		for (pose = 0; pose < paliashdr->numposes; ++pose) {
+			vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+			vertices += pose * paliashdr->poseverts;
+			v = pose * total_vertices * VERTEXSIZE;
+			order = (int *) ((byte *) paliashdr + paliashdr->commands);
+			for (; ; ) {
+				float x, y, z;
+				float s, t;
+				byte l;
 
-			count = *order++;
+				count = *order++;
 
-			if (!count) {
-				break;
-			}
-			if (count < 0) {
-				count = -count;
-			}
+				if (!count) {
+					break;
+				}
+				if (count < 0) {
+					count = -count;
+				}
 
-			while (count--) {
-				s = ((float *)order)[0];
-				t = ((float *)order)[1];
-				order += 2;
+				while (count--) {
+					s = ((float *)order)[0];
+					t = ((float *)order)[1];
+					order += 2;
 
-				l = vertices->lightnormalindex;
-				x = vertices->v[0];
-				y = vertices->v[1];
-				z = vertices->v[2];
+					l = vertices->lightnormalindex;
+					x = vertices->v[0];
+					y = vertices->v[1];
+					z = vertices->v[2];
 
-				vbo_buffer[v + 0] = x;
-				vbo_buffer[v + 1] = y;
-				vbo_buffer[v + 2] = z;
-				vbo_buffer[v + 3] = s;
-				vbo_buffer[v + 4] = t;
-				// FIXME: This is an index to an array
-				//vbo_buffer[v + 5] = l / 127.0;
-				v += VERTEXSIZE;
+					vbo_buffer[v + 0] = x;
+					vbo_buffer[v + 1] = y;
+					vbo_buffer[v + 2] = z;
+					vbo_buffer[v + 3] = s;
+					vbo_buffer[v + 4] = t;
+					// FIXME: This is an index to an array
+					//vbo_buffer[v + 5] = l / 127.0;
+					v += VERTEXSIZE;
 
-				++vertices;
+					++vertices;
+				}
 			}
 		}
 
@@ -392,6 +398,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 
 		paliashdr->vbo = vbo;
 		paliashdr->vao = vao;
+		paliashdr->vertsPerPose = total_vertices;
 	}
 }
 
