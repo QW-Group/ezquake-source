@@ -1084,12 +1084,10 @@ static void GLM_DrawFastSky(void)
 
 void GLM_DrawSky(void)
 {
-	if (r_fastsky.value) {
+	//if (r_fastsky.value) {
 		GLM_DrawFastSky();
 		return;
-	}
-
-
+	//}
 }
 
 /*

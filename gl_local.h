@@ -518,6 +518,7 @@ void GL_EnableFog(void);
 void GL_DisableFog(void);
 void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
+void GLM_DebugMatrix(GLenum type, const char* value);
 
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64

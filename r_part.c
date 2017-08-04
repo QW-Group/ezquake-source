@@ -654,15 +654,15 @@ void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 		verts[0][3] = 0;
 		verts[0][4] = 0;
 
-		VectorSet(verts[1], 0, 1.5, 0);
+		VectorSet(verts[1], 0, 1, 0);
 		verts[1][3] = 0;
 		verts[1][4] = 1;
 
-		VectorSet(verts[2], 1.5, 0, 0);
+		VectorSet(verts[2], 1, 0, 0);
 		verts[2][3] = 1;
 		verts[2][4] = 0;
 
-		VectorSet(verts[3], 1.5, 1.5, 0);
+		VectorSet(verts[3], 1, 1, 0);
 		verts[3][3] = 1;
 		verts[3][4] = 1;
 
@@ -685,7 +685,7 @@ void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
 		GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
 
-		GLM_DrawBillboard(color, scale, !square, !square, simpleItemVAO, 4);
+		GLM_DrawBillboard(color, scale, !square, false, simpleItemVAO, 4);
 		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
 	}
 }

@@ -1238,7 +1238,7 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 			"\n"
 			"    if (apply_texture) {\n"
 			"        texColor = texture(materialTex, TextureCoord);\n"
-			"        if (alpha_texture && texColor.a != 1.0) {\n"
+			"        if (alpha_texture && texColor.a < 0.6) {\n"
 			"            discard;"
 			"        }\n"
 			"    }\n"
