@@ -283,11 +283,13 @@ void BuildTris (void)
 GL_MakeAliasModelDisplayLists
 ================
 */
+#define ALIASVERTEXSIZE 8 // pos[3] tex[2] normal[3]
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
 	int         i, j;
 	int         *cmds;
 	trivertx_t  *verts;
+	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
@@ -336,13 +338,13 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 			order += count * 2; // s/t co-ordinates
 		}
 
-		vbo_size = VERTEXSIZE * sizeof(float) * total_vertices * paliashdr->numposes;
+		vbo_size = ALIASVERTEXSIZE * sizeof(float) * total_vertices * paliashdr->numposes;
 		vbo_buffer = (float*) Q_malloc(vbo_size);
 
 		for (pose = 0; pose < paliashdr->numposes; ++pose) {
 			vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 			vertices += pose * paliashdr->poseverts;
-			v = pose * total_vertices * VERTEXSIZE;
+			v = pose * total_vertices * ALIASVERTEXSIZE;
 			order = (int *) ((byte *) paliashdr + paliashdr->commands);
 			for (; ; ) {
 				float x, y, z;
@@ -373,9 +375,10 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 					vbo_buffer[v + 2] = z;
 					vbo_buffer[v + 3] = s;
 					vbo_buffer[v + 4] = t;
-					// FIXME: This is an index to an array
-					//vbo_buffer[v + 5] = l / 127.0;
-					v += VERTEXSIZE;
+					vbo_buffer[v + 5] = r_avertexnormals[l][0];
+					vbo_buffer[v + 6] = r_avertexnormals[l][1];
+					vbo_buffer[v + 7] = r_avertexnormals[l][2];
+					v += ALIASVERTEXSIZE;
 
 					++vertices;
 				}
@@ -391,10 +394,11 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		glBindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
-		//glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) (sizeof(float) * 5));
 
 		paliashdr->vbo = vbo;
 		paliashdr->vao = vao;

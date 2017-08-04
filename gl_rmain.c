@@ -49,9 +49,6 @@ extern vec3_t     lightcolor;
 extern vec3_t     lightspot;
 extern float      bubblecolor[NUM_DLIGHTTYPES][4];
 
-#define NUMVERTEXNORMALS 162
-#define SHADEDOT_QUANT   64
-
 // precalculated dot products for quantized angles
 byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
 #include "anorm_dots.h"
@@ -425,7 +422,7 @@ void R_DrawSpriteModel (entity_t *e)
 }
 
 
-int GL_GenerateShellTexture(void)
+static int GL_GenerateShellTexture(void)
 {
 	int x, y, d;
 	byte data[32][32][4];
@@ -460,6 +457,7 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 
 	// limit outline width, since even width == 3 can be considered as cheat.
 	glLineWidth (bound(0.1, gl_outline_width.value, 3.0));
+
 
 	glColor4f (0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable (GL_LINE_SMOOTH);
@@ -517,25 +515,108 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	GL_PolygonOffset(0, 0);
 }
 
-void GL_DrawPowerupShell(aliashdr_t* paliashdr, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
+static glm_program_t drawShellPolyProgram;
+static GLint drawShell_modelViewMatrix;
+static GLint drawShell_projectionMatrix;
+static GLint drawShell_shellSize;
+static GLint drawShell_color;
+static GLint drawShell_materialTex;
+static GLint drawShell_time;
+
+// Shell adds normals
+void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int vao, int start, int vertices)
+{
+	if (!drawShellPolyProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in vec3 position;\n"
+			"layout(location = 1) in vec2 tex;\n"
+			"layout(location = 2) in vec3 normal;\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform float shellSize;\n"
+			"uniform float time;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position + normal * shellSize, 1.0);\n"
+			"    TextureCoord = vec2(tex.x * 2.0 + cos(time * 1.5), tex.y * 2.0 + sin(time * 1.1));\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform vec4 color;\n"
+			"uniform sampler2D materialTex;\n"
+			"\n"
+			"in vec2 TextureCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor;\n"
+			"\n"
+			"    texColor = texture(materialTex, TextureCoord);\n"
+			"\n"
+			"    frag_colour = texColor * color;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("drawShell poly", vertexShaderText, fragmentShaderText, &drawShellPolyProgram);
+
+		drawShell_modelViewMatrix = glGetUniformLocation(drawShellPolyProgram.program, "modelViewMatrix");
+		drawShell_projectionMatrix = glGetUniformLocation(drawShellPolyProgram.program, "projectionMatrix");
+		drawShell_shellSize = glGetUniformLocation(drawShellPolyProgram.program, "shellSize");
+		drawShell_color = glGetUniformLocation(drawShellPolyProgram.program, "color");
+		drawShell_materialTex = glGetUniformLocation(drawShellPolyProgram.program, "materialTex");
+		drawShell_time = glGetUniformLocation(drawShellPolyProgram.program, "time");
+	}
+
+	if (drawShellPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		glUseProgram(drawShellPolyProgram.program);
+		glUniformMatrix4fv(drawShell_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(drawShell_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1f(drawShell_shellSize, shellSize);
+		glUniform4f(drawShell_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1i(drawShell_materialTex, 0);
+		glUniform1f(drawShell_time, cl.time);
+
+		glBindVertexArray(vao);
+		glDrawArrays(type, start, vertices);
+	}
+}
+
+void GL_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
 {
 	int *order, count;
 	float scroll[2];
 	float v[3];
 	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+	byte color[4];
+	int vertIndex = pose * paliashdr->vertsPerPose;
 
 	// LordHavoc: set the state to what we need for rendering a shell
-	if (!shelltexture)
+	if (!shelltexture) {
 		shelltexture = GL_GenerateShellTexture();
-	GL_Bind (shelltexture);
+	}
+	GL_Bind(shelltexture);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-	if (gl_powerupshells_style.integer)
+	if (gl_powerupshells_style.integer) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	else
+	}
+	else {
 		glBlendFunc(GL_ONE, GL_ONE);
-
-	glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
+	}
 
 	if (scrolldir) {
 		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
@@ -546,9 +627,18 @@ void GL_DrawPowerupShell(aliashdr_t* paliashdr, trivertx_t* verts1, trivertx_t* 
 		scroll[1] = sin(cl.time * 1.1);
 	}
 
+	if (GL_ShadersSupported()) {
+		color[0] = r_shellcolor[0] * 255;
+		color[1] = r_shellcolor[1] * 255;
+		color[2] = r_shellcolor[2] * 255;
+		color[3] = bound(0, gl_powerupshells.value, 1) * 255;
+	}
+
 	// get the vertex count and primitive type
-	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	order = (int *)((byte *)paliashdr + paliashdr->commands);
 	for (;;) {
+		GLenum drawMode = GL_TRIANGLE_STRIP;
+
 		count = *order++;
 		if (!count) {
 			break;
@@ -556,31 +646,40 @@ void GL_DrawPowerupShell(aliashdr_t* paliashdr, trivertx_t* verts1, trivertx_t* 
 
 		if (count < 0) {
 			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
+			drawMode = GL_TRIANGLE_FAN;
+		}
+
+		if (GL_ShadersSupported()) {
+			order += 2 * count;
+
+			GLM_DrawShellPoly(drawMode, color, shell_size, paliashdr->vao, vertIndex, count);
+
+			vertIndex += count;
 		}
 		else {
-			glBegin(GL_TRIANGLE_STRIP);
+			// alpha so we can see colour underneath still
+			glColor4f(r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1));
+
+			glBegin(drawMode);
+			do {
+				glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
+
+				order += 2;
+
+				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
+				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
+				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
+				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
+				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
+				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
+
+				glVertex3f(v[0], v[1], v[2]);
+
+				verts1++;
+				verts2++;
+			} while (--count);
+			glEnd();
 		}
-
-		do {
-			glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
-
-			order += 2;
-
-			v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
-			v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
-			v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
-			v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
-			v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
-			v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
-
-			glVertex3f(v[0], v[1], v[2]);
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		glEnd();
 	}
 
 	// LordHavoc: reset the state to what the rest of the renderer expects
@@ -599,7 +698,11 @@ void GL_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 	float l;
 	qbool texture = custom_model == NULL;
 
-	if (r_modelcolor[0] < 0) {
+	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
+		GL_DrawPowerupShell(paliashdr, pose1, NULL, NULL, 0.0f, false);
+		return;
+	}
+	else if (r_modelcolor[0] < 0) {
 		color[0] = color[1] = color[2] = 255;
 	}
 	else {
@@ -683,7 +786,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
 	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
-		GL_DrawPowerupShell(paliashdr, verts1, verts2, lerpfrac, scrolldir);
+		GL_DrawPowerupShell(paliashdr, pose1, verts1, verts2, lerpfrac, scrolldir);
 	}
 	else {
 		if (r_modelalpha < 1) {
@@ -2367,7 +2470,7 @@ void R_Clear(void)
 	int clearbits = 0;
 
 	// meag: temp
-	if (GL_ShadersSupported()) {
+	if (GL_ShadersSupported() && !cl_multiview.value) {
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}
 
