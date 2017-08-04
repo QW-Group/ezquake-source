@@ -1162,7 +1162,7 @@ void R_DrawSky (void)
 			EmitFlatPoly(fa);
 		}
 
-		if (gl_fogsky.value) {
+		if (gl_fogenable.value && gl_fogsky.value) {
 			GL_DisableFog();
 		}
 		else {
