@@ -514,4 +514,9 @@ void GL_PushMatrix(GLenum mode, float* matrix);
 void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap);
 void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test);
 
+void GL_EnableFog(void);
+void GL_DisableFog(void);
+void GL_ConfigureFog(void);
+void GL_EnableWaterFog(int contents);
+
 #endif /* !__GL_LOCAL_H__ */

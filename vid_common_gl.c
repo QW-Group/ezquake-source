@@ -854,7 +854,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 		GLM_Rotate(GL_MatrixForMode(matrix), angle, x, y, z);
 	}
 	else {
-		glMatrixMode(matrix);
+//		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 	}
 }
@@ -897,14 +897,25 @@ static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float b
 	return matrix;
 }
 
+void GL_ProcessErrors(const char* message)
+{
+	GLenum error = glGetError();
+	while (error != GL_NO_ERROR) {
+		Con_Printf("%s> = %X\n", message, error);
+		error = glGetError();
+	}
+}
+
 void GL_PushMatrix(GLenum mode, float* matrix)
 {
 	if (GL_ShadersSupported()) {
 		memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
 	}
 	else {
+		GL_ProcessErrors("Pre-push");
 		glMatrixMode(mode);
 		glPushMatrix();
+		GL_ProcessErrors("Post-push");
 	}
 }
 
@@ -964,4 +975,91 @@ void GLM_DebugMatrix(GLenum mode, const char* label)
 	for (i = 0; i < 4; ++i) {
 		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 4], matrix[i + 8], matrix[i + 12]);
 	}
+}
+
+void GL_EnableFog(void)
+{
+	if (!GLM_Enabled() && gl_fogenable.value) {
+		glEnable(GL_FOG);
+	}
+}
+
+void GL_DisableFog(void)
+{
+	if (!GLM_Enabled() && gl_fogenable.value) {
+		glDisable(GL_FOG);
+	}
+}
+
+void GL_ConfigureFog(void)
+{
+	vec3_t colors;
+
+	if (GLM_Enabled()) {
+		// TODO
+		return;
+	}
+
+	// START shaman BUG fog was out of control when fogstart>fogend {
+	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
+		// } END shaman BUG fog was out of control when fogstart>fogend
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		colors[0] = gl_fogred.value;
+		colors[1] = gl_foggreen.value;
+		colors[2] = gl_fogblue.value;
+		glFogfv(GL_FOG_COLOR, colors);
+		glFogf(GL_FOG_START, gl_fogstart.value);
+		glFogf(GL_FOG_END, gl_fogend.value);
+		glEnable(GL_FOG);
+	}
+	else {
+		glDisable(GL_FOG);
+	}
+}
+
+void GL_EnableWaterFog(int contents)
+{
+	extern cvar_t gl_waterfog_color_water;
+	extern cvar_t gl_waterfog_color_lava;
+	extern cvar_t gl_waterfog_color_slime;
+
+	float colors[4];
+
+	// TODO
+	if (!GL_ShadersSupported()) {
+		return;
+	}
+
+	switch (contents) {
+	case CONTENTS_LAVA:
+		colors[0] = (float) gl_waterfog_color_lava.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_lava.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_lava.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_lava.color[3] / 255.0;
+		break;
+	case CONTENTS_SLIME:
+		colors[0] = (float) gl_waterfog_color_slime.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_slime.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_slime.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_slime.color[3] / 255.0;
+		break;
+	default:
+		colors[0] = (float) gl_waterfog_color_water.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_water.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_water.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
+		break;
+	}
+
+	glFogfv(GL_FOG_COLOR, colors);
+	if (((int)gl_waterfog.value) == 2) {
+		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
+		glFogi(GL_FOG_MODE, GL_EXP);
+	}
+	else {
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		glFogf(GL_FOG_START, 150.0f);
+		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
+	}
+	glEnable(GL_FOG);
 }

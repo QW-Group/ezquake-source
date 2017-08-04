@@ -884,16 +884,15 @@ void DrawTextureChains (model_t *model, int contents)
 	}
 
 	GL_DisableMultitexture();
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
+	GL_EnableFog();
 
 	GL_TextureEnvMode(GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++)
 	{
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
-			continue;	
-	
+			continue;
+
 		t = R_TextureAnimation (model->textures[i]);
 
 		if (t->isLumaTexture)
@@ -1101,8 +1100,7 @@ void DrawTextureChains (model_t *model, int contents)
 			R_RenderFullbrights();
 	}
 
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
+	GL_DisableFog();
 
 	EmitCausticsPolys();
 	EmitDetailPolys();
@@ -1381,8 +1379,7 @@ void R_DrawFlat (model_t *model) {
 	GL_DisableMultitexture();
 
 	// START shaman BUG /fog not working with /r_drawflat {
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
+	GL_EnableFog();
 	// } END shaman BUG /fog not working with /r_drawflat
 	
 	GL_TextureEnvMode(GL_BLEND);
@@ -1448,8 +1445,7 @@ void R_DrawFlat (model_t *model) {
 		}		
 	}
 
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
+	GL_DisableFog();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
  // START shaman FIX /r_drawflat + /gl_caustics {

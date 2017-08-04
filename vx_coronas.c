@@ -138,10 +138,7 @@ void R_DrawCoronas(void)
 	float fdist, scale, alpha;
 	corona_t *c;
 
-	if (gl_fogenable.value)
-	{
-		glDisable(GL_FOG);
-	}
+	GL_DisableFog();
 
 	if (!ISPAUSED)
 		R_UpdateCoronas();
@@ -224,9 +221,7 @@ void R_DrawCoronas(void)
 	glShadeModel(GL_FLAT);
 	glColor3f (1, 1, 1);
 
-	if (gl_fogenable.value)
-			glEnable(GL_FOG);
-
+	GL_EnableFog();
 }
 
 //NewCorona

@@ -331,8 +331,7 @@ void EmitWaterPolys (msurface_t *fa)
 	else {
 		GL_DisableMultitexture();
 
-		if (gl_fogenable.value)
-			glEnable(GL_FOG);
+		GL_EnableFog();
 
 		if (r_fastturb.value) {
 			byte old_alpha = col[3];
@@ -400,8 +399,7 @@ void EmitWaterPolys (msurface_t *fa)
 			}
 		}
 
-		if (gl_fogenable.value)
-			glDisable(GL_FOG);
+		GL_DisableFog();
 	}
 }
 
@@ -489,8 +487,10 @@ void R_DrawSkyChain (void) {
 
 	GL_DisableMultitexture();
 
-	if (gl_fogenable.value && gl_fogsky.value)
-		glEnable(GL_FOG);
+	if (gl_fogsky.value) {
+		GL_EnableFog();
+	}
+
 	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable (GL_TEXTURE_2D);
 
@@ -501,48 +501,54 @@ void R_DrawSkyChain (void) {
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
-	} else {
+	}
+	else {
 		if (gl_mtexable) {
 			GL_TextureEnvMode(GL_MODULATE);
-			GL_Bind (solidskytexture);
+			GL_Bind(solidskytexture);
 
 			GL_EnableMultitexture();
 			GL_TextureEnvMode(GL_DECAL);
-			GL_Bind (alphaskytexture);
+			GL_Bind(alphaskytexture);
 
 			speedscale = r_refdef2.time * 8;
-			speedscale -= (int) speedscale & ~127;
+			speedscale -= (int)speedscale & ~127;
 			speedscale2 = r_refdef2.time * 16;
-			speedscale2 -= (int) speedscale2 & ~127;
+			speedscale2 -= (int)speedscale2 & ~127;
 
-			for (fa = skychain; fa; fa = fa->texturechain)
-				EmitSkyPolys (fa, true);
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				EmitSkyPolys(fa, true);
+			}
 
 			GL_DisableMultitexture();
 			GL_TextureEnvMode(GL_REPLACE);
-		} else {
+		}
+		else {
 			GL_Bind(solidskytexture);
 			speedscale = r_refdef2.time * 8;
-			speedscale -= (int) speedscale & ~127;
+			speedscale -= (int)speedscale & ~127;
 
-			for (fa = skychain; fa; fa = fa->texturechain)
-				EmitSkyPolys (fa, false);
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				EmitSkyPolys(fa, false);
+			}
 
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			GL_Bind (alphaskytexture);
+			GL_Bind(alphaskytexture);
 
 			speedscale = r_refdef2.time * 16;
-			speedscale -= (int) speedscale & ~127;
+			speedscale -= (int)speedscale & ~127;
 
-			for (fa = skychain; fa; fa = fa->texturechain)
-				EmitSkyPolys (fa, false);
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				EmitSkyPolys(fa, false);
+			}
 
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
 
-	if (gl_fogenable.value && gl_fogsky.value)
-		glDisable(GL_FOG);
+	if (gl_fogsky.value) {
+		GL_DisableFog();
+	}
 
 	skychain = NULL;
 	skychain_tail = &skychain;
@@ -1141,7 +1147,7 @@ void R_DrawSky (void)
 	// don't need depth test yet
 	if (!ignore_z) {
 		if (gl_fogenable.value && gl_fogsky.value) {
-			glEnable(GL_FOG);
+			GL_EnableFog();
 			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1); 
 			glBlendFunc(GL_ONE, GL_ZERO);		
 		}
@@ -1156,8 +1162,8 @@ void R_DrawSky (void)
 			EmitFlatPoly(fa);
 		}
 
-		if (gl_fogenable.value && gl_fogsky.value) {
-			glDisable(GL_FOG);
+		if (gl_fogsky.value) {
+			GL_DisableFog();
 		}
 		else {
 			glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

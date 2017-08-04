@@ -1504,9 +1504,7 @@ void DrawCI (void) {
 	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1)
 		return;
 
-	if (gl_fogenable.value) {
-		glDisable(GL_FOG);
-	}
+	GL_DisableFog();
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
@@ -1558,9 +1556,7 @@ void DrawCI (void) {
 	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 
-	if (gl_fogenable.value) {
-		glEnable(GL_FOG);
-	}
+	GL_EnableFog();
 }
 
 // scr_teaminfo 
@@ -3286,29 +3282,6 @@ void SCR_UpdateScreenPlayerView (int flags)
 		SCR_InitialiseShaders();
 	}
 
-	if (GL_ShadersSupported()) {
-		if (flags & UPDATESCREEN_MULTIVIEW) {
-			//SCR_CalcRefdef();
-		}
-		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
-		SCR_SetUpToDrawConsole();
-		SCR_SetupCI();
-		V_RenderView();
-		if (flags & UPDATESCREEN_POSTPROCESS) {
-			//R_RenderPostProcess();
-		}
-		GL_Set2D();
-		R_PolyBlend ();
-
-		// draw any areas not covered by the refresh
-		SCR_TileClear();
-
-		if (flags & UPDATESCREEN_MULTIVIEW) {
-			//SCR_DrawMultiviewIndividualElements ();
-		}
-		return;
-	}
-
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef();
 	}
@@ -3322,7 +3295,7 @@ void SCR_UpdateScreenPlayerView (int flags)
 
 	V_RenderView ();
 
-	if (flags & UPDATESCREEN_POSTPROCESS) {
+	if (!GL_ShadersSupported() && (flags & UPDATESCREEN_POSTPROCESS)) {
 		R_RenderPostProcess();
 	}
 

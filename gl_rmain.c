@@ -1172,12 +1172,10 @@ void R_DrawAliasModel(entity_t *ent)
 		}
 	}
 
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
+	GL_EnableFog();
 
 	//get lighting information
 	R_AliasSetupLighting(ent);
-
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	//draw all the triangles
@@ -1416,8 +1414,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	glColor3ubv (color_white);
 
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
+	GL_DisableFog();
 }
 
 static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float scale)
@@ -2325,8 +2322,6 @@ void R_RenderScene(void)
 {
 	extern void Skins_PreCache(void);
 
-	vec3_t		colors;
-
 	R_SetupFrame ();
 
 	R_SetFrustum ();
@@ -2349,21 +2344,7 @@ void R_RenderScene(void)
 	if (!GL_ShadersSupported()) {
 		GL_DisableMultitexture();
 
-		// START shaman BUG fog was out of control when fogstart>fogend {
-		if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
-		{
-			glFogi(GL_FOG_MODE, GL_LINEAR);
-			colors[0] = gl_fogred.value;
-			colors[1] = gl_foggreen.value;
-			colors[2] = gl_fogblue.value;
-			glFogfv(GL_FOG_COLOR, colors);
-			glFogf(GL_FOG_START, gl_fogstart.value);
-			glFogf(GL_FOG_END, gl_fogend.value);
-			glEnable(GL_FOG);
-		}
-		else {
-			glDisable(GL_FOG);
-		}
+		GL_ConfigureFog();
 	}
 }
 
@@ -2398,12 +2379,13 @@ void R_Clear(void)
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}
 
-	if (gl_clear.value)
-	{
-		if (gl_fogenable.value)
-			glClearColor(gl_fogred.value,gl_foggreen.value,gl_fogblue.value,0.5);//Tei custom clear color
-		else
-			glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
+	if (gl_clear.value) {
+		if (gl_fogenable.value) {
+			glClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 0.5);//Tei custom clear color
+		}
+		else {
+			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
+		}
 	}
 
 	clearbits |= GL_DEPTH_BUFFER_BIT;
