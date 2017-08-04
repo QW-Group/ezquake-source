@@ -566,7 +566,8 @@ void V_CalcPowerupCshift (void) {
 	}
 }
 
-void V_CalcBlend (void) {
+void V_CalcBlend (void)
+{
 	float r, g, b, a, a2;
 	int j;
 
@@ -575,31 +576,38 @@ void V_CalcBlend (void) {
 	if (cls.state != ca_active) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
 		cl.cshifts[CSHIFT_POWERUP].percent = 0;
-	} else {
+	}
+	else {
 		V_CalcPowerupCshift ();
 	}
 
 	// drop the damage value
 	cl.cshifts[CSHIFT_DAMAGE].percent -= cls.frametime * 150;
-	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
+	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
 		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
+	}
 
 	// drop the bonus value
 	cl.cshifts[CSHIFT_BONUS].percent -= cls.frametime * 100;
-	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
+	if (cl.cshifts[CSHIFT_BONUS].percent <= 0) {
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
+	}
 
 	for (j = 0; j < NUM_CSHIFTS; j++)	{
-		if ((!gl_cshiftpercent.value || !gl_polyblend.value) && j != CSHIFT_CONTENTS)
+		if ((!gl_cshiftpercent.value || !gl_polyblend.value) && j != CSHIFT_CONTENTS) {
 			continue;
+		}
 
-		if (j == CSHIFT_CONTENTS)
+		if (j == CSHIFT_CONTENTS) {
 			a2 = cl.cshifts[j].percent / 100.0 / 255.0;
-		else
+		}
+		else {
 			a2 = ((cl.cshifts[j].percent * gl_cshiftpercent.value) / 100.0) / 255.0;
+		}
 
-		if (!a2)
+		if (!a2) {
 			continue;
+		}
 		a = a + a2 * (1-a);
 
 		a2 = a2 / a;
@@ -635,7 +643,8 @@ void V_AddLightBlend (float r, float g, float b, float a2) {
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
 }
 
-void V_UpdatePalette (void) {
+void V_UpdatePalette (void)
+{
 	int i, j, c;
 	qbool new;
 	float current_gamma, current_contrast, a, rgb[3];

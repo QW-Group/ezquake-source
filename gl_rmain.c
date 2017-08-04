@@ -1780,27 +1780,40 @@ void R_PolyBlend(void)
 {
 	extern cvar_t gl_hwblend;
 
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress)
+	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress) {
 		return;
-	if (!v_blend[3])
+	}
+	if (!v_blend[3]) {
 		return;
+	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	glDisable (GL_TEXTURE_2D);
+	if (GL_ShadersSupported()) {
+		color_t v_blend_color = RGBA_TO_COLOR(
+			bound(0, v_blend[0], 1) * 255,
+			bound(0, v_blend[1], 1) * 255,
+			bound(0, v_blend[2], 1) * 255,
+			bound(0, v_blend[3], 1) * 255
+		);
 
-	glColor4fv (v_blend);
+		Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
+	}
+	else {
+		glDisable(GL_TEXTURE_2D);
 
-	glBegin (GL_QUADS);
-	glVertex2f (r_refdef.vrect.x, r_refdef.vrect.y);
-	glVertex2f (r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
-	glVertex2f (r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
-	glVertex2f (r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
-	glEnd ();
+		glColor4fv(v_blend);
 
-	glEnable (GL_TEXTURE_2D);
+		glBegin(GL_QUADS);
+		glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
+		glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
+		glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
+		glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
+		glEnd();
+
+		glEnable(GL_TEXTURE_2D);
+		glColor3ubv(color_white);
+	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-	glColor3ubv (color_white);
 }
 
 void R_BrightenScreen(void)
