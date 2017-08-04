@@ -679,7 +679,8 @@ static void SCR_DrawNet(void)
 
 
 
-void SCR_DrawFPS (void) {
+void SCR_DrawFPS(void)
+{
 	int x, y;
 	char str[80];
 	extern double lastfps;
@@ -688,23 +689,20 @@ void SCR_DrawFPS (void) {
 		return;
 
 	// Multiview
-	if (CL_MultiviewEnabled())
-	{
-		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/CL_MultiviewNumberViews());
+	if (CL_MultiviewEnabled()) {
+		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05) / CL_MultiviewNumberViews());
 	}
-	else
-	{
-		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
+	else {
+		snprintf(str, sizeof(str), "%3.1f", lastfps + 0.05);
 	}
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
-	Draw_String (x, y, str);
+	Draw_String(x, y, str);
 }
 
-
-
-void SCR_DrawSpeed (void) {
+void SCR_DrawSpeed (void)
+{
 	double t;
 	int x, y, mynum;
 	char str[80];
@@ -3343,7 +3341,7 @@ void SCR_UpdateScreenPlayerView (int flags)
 void SCR_HUD_WeaponStats(hud_t* hud);
 
 // Drawing new HUD items in old HUD mode - eventually move everything across
-void SCR_DrawNewHudElements(void)
+static void SCR_DrawNewHudElements(void)
 {
 	static hud_t *hud_netstats = NULL;
 	static hud_t *hud_weaponstats = NULL;
@@ -3431,21 +3429,21 @@ void SCR_UpdateScreenPostPlayerView (void)
 
 						// Do not show if +showscores
 						if (!sb_showscores && !sb_showteamscores) {
-							//SCR_Draw_TeamInfo();
+							SCR_Draw_TeamInfo();
 
-							//SCR_Draw_ShowNick();
+							SCR_Draw_ShowNick();
 
-							//SCR_CheckDrawCenterString ();
-							//SCR_DrawSpeed ();
-							//SCR_DrawClock ();
-							//SCR_DrawGameClock ();
-							//SCR_DrawDemoClock ();
-							//SCR_DrawQTVBuffer ();
-							//SCR_DrawFPS ();
+							SCR_CheckDrawCenterString();
+							SCR_DrawSpeed();
+							SCR_DrawClock();
+							SCR_DrawGameClock();
+							SCR_DrawDemoClock();
+							SCR_DrawQTVBuffer();
+							SCR_DrawFPS();
 						}
 
 						// QW262
-						//SCR_DrawHud ();
+						SCR_DrawHud();
 
 						MVD_Screen();
 
@@ -3464,7 +3462,7 @@ void SCR_UpdateScreenPostPlayerView (void)
 						Sbar_Draw();
 						HUD_Draw();
 						HUD_Editor_Draw();
-						//DemoControls_Draw();
+						DemoControls_Draw();
 					}
 				}
 			}

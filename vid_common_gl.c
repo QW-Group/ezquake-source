@@ -961,7 +961,7 @@ void GLM_DebugMatrix(GLenum mode, const char* label)
 	GL_GetMatrix(mode, matrix);
 
 	Con_Printf("%s\n", label);
-	for (i = 0; i < 16; i += 4) {
-		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 1], matrix[i + 2], matrix[i + 3]);
+	for (i = 0; i < 4; ++i) {
+		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 4], matrix[i + 8], matrix[i + 12]);
 	}
 }

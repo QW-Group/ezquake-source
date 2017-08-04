@@ -1431,20 +1431,20 @@ static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float 
 	if (!simpleItemVBO) {
 		float verts[4][VERTEXSIZE] = { 0 };
 
-		VectorSet(verts[0], -1, 0, -1);
-		verts[0][3] = 0;
+		VectorSet(verts[0], 0, -1, -1);
+		verts[0][3] = 1;
 		verts[0][4] = 1;
 
-		VectorSet(verts[1], -1, 0, 1);
-		verts[1][3] = 0;
+		VectorSet(verts[1], 0, -1, 1);
+		verts[1][3] = 1;
 		verts[1][4] = 0;
 
-		VectorSet(verts[2], 1, 0, 1);
-		verts[2][3] = 1;
+		VectorSet(verts[2], 0, 1, 1);
+		verts[2][3] = 0;
 		verts[2][4] = 0;
 
-		VectorSet(verts[3], 1, 0, -1);
-		verts[3][3] = 1;
+		VectorSet(verts[3], 0, 1, -1);
+		verts[3][3] = 0;
 		verts[3][4] = 1;
 
 		glGenBuffers(1, &simpleItemVBO);
@@ -1464,11 +1464,29 @@ static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float 
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
+	GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
 	GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
-	GL_Rotate(GL_MODELVIEW, angles[1], 0, 0, 1);
-	GL_Rotate(GL_MODELVIEW, angles[0], 0, 1, 0);
-	GL_Rotate(GL_MODELVIEW, angles[2], 1, 0, 0);
-	GL_Scale(GL_MODELVIEW, scale, scale, scale);
+	{
+		float tempMatrix[16];
+
+		GL_PushMatrix(GL_MODELVIEW, tempMatrix);
+		// x = -y
+		tempMatrix[0] = 0;
+		tempMatrix[4] = -scale;
+		tempMatrix[8] = 0;
+
+		// y = z
+		tempMatrix[1] = 0;
+		tempMatrix[5] = 0;
+		tempMatrix[9] = scale;
+
+		// z = -x
+		tempMatrix[2] = -scale;
+		tempMatrix[6] = 0;
+		tempMatrix[10] = 0;
+
+		GL_PopMatrix(GL_MODELVIEW, tempMatrix);
+	}
 
 	glActiveTexture(GL_TEXTURE0);
 	GL_Bind(texture);
@@ -1543,6 +1561,7 @@ static qbool R_DrawTrySimpleItem(void)
 	org[2] += sprsize;
 
 	if (GL_ShadersSupported()) {
+		glDisable(GL_CULL_FACE);
 		GLM_DrawSimpleItem(simpletexture, org, angles, sprsize);
 	}
 	else {
@@ -2002,7 +2021,7 @@ void R_SetupGL(void)
 	// set up viewpoint
 	x = r_refdef.vrect.x * glwidth / vid.width;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth / vid.width;
-	y = (vid.height-r_refdef.vrect.y) * glheight / vid.height;
+	y = (vid.height - r_refdef.vrect.y) * glheight / vid.height;
 	y2 = (vid.height - (r_refdef.vrect.y + r_refdef.vrect.height)) * glheight / vid.height;
 
 	// fudge around because of frac screen scale
@@ -2027,18 +2046,18 @@ void R_SetupGL(void)
 	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled()) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
-	if (! CL_MultiviewEnabled()) {
-		glViewport (glx + x, gly + y2, w, h);
+	if (!CL_MultiviewEnabled()) {
+		glViewport(glx + x, gly + y2, w, h);
 	}
 
-	farclip = max((int) r_farclip.value, 4096);
-	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
-	MYgluPerspective (r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
+	farclip = max((int)r_farclip.value, 4096);
+	screenaspect = (float)r_refdef.vrect.width / r_refdef.vrect.height;
+	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
 	glCullFace(GL_FRONT);
 
 	GL_IdentityModelView();
 	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
-	GL_Rotate(GL_MODELVIEW, 90,  0, 0, 1);	    // put Z going up
+	GL_Rotate(GL_MODELVIEW, 90, 0, 0, 1);	    // put Z going up
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[2], 1, 0, 0);
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[0], 0, 1, 0);
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[1], 0, 0, 1);
@@ -2054,19 +2073,19 @@ void R_SetupGL(void)
 	}
 
 	if (CL_MultiviewEnabled()) {
-		glClear (GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		gldepthmin = 0;
 		gldepthmax = 1;
-		glDepthFunc (GL_LEQUAL);
+		glDepthFunc(GL_LEQUAL);
 	}
 
-	glDepthRange (gldepthmin, gldepthmax); 
+	glDepthRange(gldepthmin, gldepthmax);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
 	if (!GL_ShadersSupported()) {
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		glHint(GL_FOG_HINT,GL_NICEST);
+		glHint(GL_FOG_HINT, GL_NICEST);
 	}
 
 	glEnable(GL_DEPTH_TEST);

@@ -41,10 +41,11 @@ static GLint imageProgram_swidth;
 static GLint imageProgram_tbase;
 static GLint imageProgram_twidth;
 static GLint imageProgram_color;
+static GLint imageProgram_alphatest;
 
 static GLuint GL_CreateRectangleVAO(void);
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color)
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
 	float matrix[16];
@@ -77,6 +78,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 			"\n"
 			"uniform sampler2D tex;\n"
 			"uniform vec4 color;\n"
+			"uniform bool alphatest;\n"
 			"\n"
 			"in vec2 TexCoord;\n"
 			"out vec4 frag_colour;\n"
@@ -84,6 +86,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 			"void main()\n"
 			"{\n"
 			"    vec4 texColor = texture(tex, TexCoord);\n"
+			"    if (alphatest && texColor.a < 1) discard;\n"
 			"    frag_colour = texColor * color;\n"
 			"}\n";
 
@@ -96,6 +99,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 		imageProgram_tbase = glGetUniformLocation(imageProgram.program, "tbase");
 		imageProgram_twidth = glGetUniformLocation(imageProgram.program, "twidth");
 		imageProgram_color = glGetUniformLocation(imageProgram.program, "color");
+		imageProgram_alphatest = glGetUniformLocation(imageProgram.program, "alphatest");
 	}
 
 	glDisable(GL_DEPTH_TEST);
@@ -111,6 +115,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	glUniform1f(imageProgram_swidth, tex_width);
 	glUniform1f(imageProgram_tbase, tex_t);
 	glUniform1f(imageProgram_twidth, tex_height);
+	glUniform1f(imageProgram_alphatest, alpha);
 
 	GLenum error = glGetError();
 	while (error != GL_NO_ERROR) {
@@ -1128,7 +1133,7 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 		glActiveTexture(GL_TEXTURE0);
 		GL_Bind(char_textures[slot]);
 
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, color);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, CHARSET_CHAR_WIDTH, CHARSET_CHAR_HEIGHT, color, false);
 	}
 	else {
 		GL_Bind(char_textures[slot]);
@@ -1459,7 +1464,7 @@ void Draw_Crosshair (void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #endif
 		if (GL_ShadersSupported()) {
-			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col);
+			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false);
 		}
 		else {
 			glBegin(GL_QUADS);
@@ -1472,6 +1477,7 @@ void Draw_Crosshair (void)
 			glTexCoord2f(sl, th);
 			glVertex2f(x - ofs1, y + ofs2);
 			glEnd();
+			glColor3ubv (color_white);
 		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1479,7 +1485,6 @@ void Draw_Crosshair (void)
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 		GL_TextureEnvMode(GL_REPLACE);
-		glColor3ubv (color_white);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
@@ -1584,7 +1589,7 @@ void Draw_TileClear (int x, int y, int w, int h)
 	if (GL_ShadersSupported()) {
 		glActiveTexture(GL_TEXTURE0);
 		GL_Bind(draw_backtile->texnum);
-		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white);
+		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false);
 	}
 	else {
 		GL_Bind(draw_backtile->texnum);
@@ -2004,7 +2009,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 		glActiveTexture(GL_TEXTURE0);
 		GL_Bind(pic->texnum);
-		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color_white);
+		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color_white, true);
 
 		if (alpha < 1.0) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -2218,34 +2223,44 @@ void Draw_ConsoleBackground (int lines)
 	}
 }
 
-void Draw_FadeScreen (float alpha)
+void Draw_FadeScreen(float alpha)
 {
 	alpha = bound(0, alpha, 1) * overall_alpha;
-	if (!alpha)
+	if (!alpha) {
 		return;
+	}
 
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		glColor4f (0, 0, 0, alpha);
+	}
+
+	if (GL_ShadersSupported()) {
+		Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
 	}
 	else {
-		glColor3f (0, 0, 0);
+		if (alpha < 1) {
+			glColor4f(0, 0, 0, alpha);
+		}
+		else {
+			glColor3f(0, 0, 0);
+		}
+
+		glDisable(GL_TEXTURE_2D);
+
+		glBegin(GL_QUADS);
+		glVertex2f(0, 0);
+		glVertex2f(vid.width, 0);
+		glVertex2f(vid.width, vid.height);
+		glVertex2f(0, vid.height);
+		glEnd();
+
+		glColor3ubv(color_white);
+		glEnable(GL_TEXTURE_2D);
 	}
-
-	glDisable (GL_TEXTURE_2D);
-
-	glBegin (GL_QUADS);
-	glVertex2f (0, 0);
-	glVertex2f (vid.width, 0);
-	glVertex2f (vid.width, vid.height);
-	glVertex2f (0, vid.height);
-	glEnd ();
 
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	}
-	glColor3ubv (color_white);
-	glEnable (GL_TEXTURE_2D);
 
 	Sbar_Changed();
 }
