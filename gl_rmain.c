@@ -224,6 +224,7 @@ cvar_t gl_gammacorrection                  = {"gl_gammacorrection", "0", CVAR_LA
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
+cvar_t gl_meshdraw                         = {"gl_meshdraw", "1"};
 
 typedef struct custom_model_color_s {
 	cvar_t color_cvar;
@@ -1360,6 +1361,9 @@ void R_DrawAliasModel(entity_t *ent)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
+	if (gl_meshdraw.integer) {
+		glDisable(GL_CULL_FACE);
+	}
 	if (color32bit) {
 		//
 		// seems we select force some color for such model
@@ -1425,6 +1429,9 @@ void R_DrawAliasModel(entity_t *ent)
 				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 			}
 		}
+	}
+	if (gl_meshdraw.integer) {
+		glEnable(GL_CULL_FACE);
 	}
 
 	// FIXME: think need put it after caustics
@@ -1663,6 +1670,7 @@ static qbool R_DrawTrySimpleItem(void)
 	if (GL_ShadersSupported()) {
 		glDisable(GL_CULL_FACE);
 		GLM_DrawSimpleItem(simpletexture, org, angles, sprsize);
+		glEnable(GL_CULL_FACE);
 	}
 	else {
 		glPushAttrib(GL_ENABLE_BIT);
@@ -2363,6 +2371,7 @@ void R_Init(void)
 
 	Cvar_Register (&gl_outline);
 	Cvar_Register (&gl_outline_width);
+	Cvar_Register (&gl_meshdraw);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);

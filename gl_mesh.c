@@ -206,6 +206,9 @@ void BuildTris (void)
 	int		bestverts[1024];
 	int		besttris[1024];
 	int		type;
+	extern cvar_t gl_meshdraw;
+	qbool duplicate = false;
+	float previous_s, previous_t;
 
 	//
 	// build tristrips
@@ -213,65 +216,104 @@ void BuildTris (void)
 	numorder = 0;
 	numcommands = 0;
 	memset (used, 0, sizeof(used));
-	for (i=0 ; i<pheader->numtris ; i++)
-	{
+	memset(commands, 0, sizeof(commands));
+
+	for (i = 0; i < pheader->numtris; i++) {
 		// pick an unused triangle and start the trifan
-		if (used[i])
+		if (used[i]) {
 			continue;
+		}
 
 		bestlen = 0;
-		for (type = 0 ; type < 2 ; type++)
-//	type = 1;
-		{
-			for (startv =0 ; startv < 3 ; startv++)
-			{
-				if (type == 1)
-					len = StripLength (i, startv);
-				else
-					len = FanLength (i, startv);
-				if (len > bestlen)
-				{
+
+		for (type = gl_meshdraw.integer ? 1 : 0; type < 2; type++) {
+			for (startv = 0; startv < 3; startv++) {
+				if (type == 1) {
+					len = StripLength(i, startv);
+				}
+				else {
+					len = FanLength(i, startv);
+				}
+
+				if (len > bestlen) {
 					besttype = type;
 					bestlen = len;
-					for (j=0 ; j<bestlen+2 ; j++)
+					for (j = 0; j < bestlen + 2; j++) {
 						bestverts[j] = stripverts[j];
-					for (j=0 ; j<bestlen ; j++)
+					}
+					for (j = 0; j < bestlen; j++) {
 						besttris[j] = striptris[j];
+					}
 				}
 			}
 		}
 
 		// mark the tris on the best strip as used
-		for (j=0 ; j<bestlen ; j++)
+		for (j = 0; j < bestlen; j++) {
 			used[besttris[j]] = 1;
+		}
 
-		if (besttype == 1)
-			commands[numcommands++] = (bestlen+2);
-		else
-			commands[numcommands++] = -(bestlen+2);
+		duplicate = false;
+		if (gl_meshdraw.integer) {
+			commands[0] += bestlen + 2;
+			if (numcommands) {
+				// duplicate previous vertex to keep triangle strip running
+				vertexorder[numorder] = vertexorder[numorder - 1];
+				++numorder;
 
-		for (j=0 ; j<bestlen+2 ; j++)
-		{
+				// duplicate s & t coordinates
+				*(float *)&commands[numcommands++] = previous_s;
+				*(float *)&commands[numcommands++] = previous_t;
+				commands[0] += 2;
+
+				// Duplicate the current one too
+				duplicate = true;
+			}
+			else {
+				duplicate = false;
+				++numcommands;
+			}
+		}
+		else {
+			if (besttype == 1) {
+				commands[numcommands++] = (bestlen + 2);
+			}
+			else {
+				commands[numcommands++] = -(bestlen + 2);
+			}
+		}
+
+		for (j = 0; j < bestlen + 2; j++) {
 			// emit a vertex into the reorder buffer
 			k = bestverts[j];
 			vertexorder[numorder++] = k;
+			if (duplicate) {
+				vertexorder[numorder++] = k;
+			}
 
 			// emit s/t coords into the commands stream
 			s = stverts[k].s;
 			t = stverts[k].t;
-			if (!triangles[besttris[0]].facesfront && stverts[k].onseam)
+			if (!triangles[besttris[0]].facesfront && stverts[k].onseam) {
 				s += pheader->skinwidth / 2;	// on back side
+			}
 			s = (s + 0.5) / pheader->skinwidth;
 			t = (t + 0.5) / pheader->skinheight;
 
-			*(float *)&commands[numcommands++] = s;
-			*(float *)&commands[numcommands++] = t;
+			if (duplicate) {
+				*(float *)&commands[numcommands++] = s;
+				*(float *)&commands[numcommands++] = t;
+			}
+			previous_s = *(float *)&commands[numcommands++] = s;
+			previous_t = *(float *)&commands[numcommands++] = t;
+
+			duplicate = false;
 		}
 	}
 
 	commands[numcommands++] = 0;		// end of list marker
 
-	Com_DPrintf ("%3i tri %3i vert %3i cmd\n", pheader->numtris, numorder, numcommands);
+	Com_Printf ("%3i tri %3i vert %3i cmd\n", pheader->numtris, numorder, numcommands);
 
 	allverts += numorder;
 	alltris += pheader->numtris;
