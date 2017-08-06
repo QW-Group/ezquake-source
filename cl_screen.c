@@ -3216,72 +3216,8 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	return true;
 }
 
-#include "gl_local.h"
-
-static glm_program_t triangleProgram;
-
-static GLuint GL_CreateVAO(void)
-{
-	static GLuint vao;
-	static GLuint vbo;
-	const float scale = 100;
-	const float offset = 100;
-	float points[] = {
-		0.5f * scale, 0, 0.0f,
-		0, scale, 0.0f,
-		scale, scale, 0.0f
-	};
-
-	if (!vbo) {
-		glGenBuffers(1, &vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-	}
-
-	if (!vao) {
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		glEnableVertexAttribArray(0);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	return vao;
-}
-
-static void SCR_InitialiseShaders(void)
-{
-	const char* vertexShaderText =
-		"#version 430\n"
-		"\n"
-		"in vec3 position;\n"
-		"\n"
-		"uniform mat4 matrix;"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"    gl_Position = matrix * vec4(position, 1.0);\n"
-		"}\n";
-	const char* fragmentShaderText =
-		"#version 430\n"
-		"out vec4 frag_colour;\n"
-		"void main()\n"
-		"{\n"
-		"    frag_colour = vec4(0.5, 0.0, 0.5, 1.0);\n"
-		"}\n";
-
-	GLM_CreateSimpleProgram("Triangle Test", vertexShaderText, fragmentShaderText, &triangleProgram);
-}
-
 void SCR_UpdateScreenPlayerView (int flags)
 {
-	static qbool shader_initialised = false;
-
-	if (!shader_initialised) {
-		shader_initialised = true;
-		SCR_InitialiseShaders();
-	}
-
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef();
 	}
