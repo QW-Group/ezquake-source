@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "vx_tracker.h"
 #include "server.h"
-//#include "gl_model.h"
-//#include "gl_local.h"
+#include "gl_model.h"
+#include "gl_local.h"
 
 extern cvar_t		cl_useimagesinfraglog;
 
@@ -699,8 +699,7 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 void VXSCR_DrawTrackerString (void)
 {
 	byte	rgba[4];
-	char	*start, image[256], fullpath[MAX_PATH];
-	int		j;
+	char	fullpath[MAX_PATH];
 	int		x, y;
 	int		i, printable_chars;
 	int     line;
@@ -708,17 +707,18 @@ void VXSCR_DrawTrackerString (void)
 	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
 
-	StringToRGB(amf_tracker_frame_color.string);
-
 	if (!active_track)
 		return;
 
-	memset(rgba, 255, sizeof(byte) * 4);
+	GL_EnterRegion(__FUNCTION__);
 
-	y = vid.height * 0.2 / scale + amf_tracker_y.value;
+	StringToRGB(amf_tracker_frame_color.string);
+
+	memset(rgba, 255, sizeof(byte) * 4);
 
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
+	y = vid.height * 0.2 / scale + amf_tracker_y.value;
 	for (i = 0; i < max_active_tracks; i++)
 	{
 		// Time expired for this tracker, don't draw it.
@@ -742,7 +742,27 @@ void VXSCR_DrawTrackerString (void)
 			// Draw the string.
 			Draw_SColoredString(x, y, trackermsg[i].content[line], NULL, 0, 0, scale);
 
-			// Draw the image
+			y += 8 * scale;	// Next line.
+		}
+	}
+
+	// Draw images
+	y = vid.height * 0.2 / scale + amf_tracker_y.value;
+	for (i = 0; i < max_active_tracks; i++) {
+		// Time expired for this tracker, don't draw it.
+		if (trackermsg[i].die < r_refdef2.time)
+			continue;
+
+		for (line = 0; line < 2; ++line) {
+			printable_chars = trackermsg[i].printable_length[line];
+			if (printable_chars <= 0) {
+				break;
+			}
+
+			// Place the tracker.
+			x = scale * (amf_tracker_align_right.value ? (vid.width / scale - printable_chars * 8) - 8 : 8);
+			x += amf_tracker_x.value;
+
 			if (trackermsg[i].imagename[line][0]) {
 				mpic_t *pic;
 
@@ -750,17 +770,18 @@ void VXSCR_DrawTrackerString (void)
 
 				if ((pic = Draw_CachePicSafe(fullpath, false, true))) {
 					Draw_FitPic(
-						(float)x + (trackermsg[i].imagepos[line] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
-						(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
+						(float)x + (trackermsg[i].imagepos[line] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale,
+						(float)y - 0.5 * 8 * (im_scale - 1) * scale,
 						im_scale * 8 * 2 * scale,
 						im_scale * 8 * scale, pic
 					);
 				}
 			}
-
-			y += 8 * scale;	// Next line.
 		}
+		y += 8 * scale;	// Next line.
 	}
+
+	GL_LeaveRegion();
 }
 
 // Tracker used to step through every character twice every draw frame
