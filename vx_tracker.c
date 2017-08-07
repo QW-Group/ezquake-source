@@ -65,7 +65,6 @@ cvar_t		amf_tracker_name_remove_prefixes = {"r_tracker_name_remove_prefixes", ""
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 
-
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
 
@@ -132,13 +131,13 @@ void VX_TrackerClear(void)
 {
 	int i;
 
-	active_track = max_active_tracks = 0; // this block VX_TrackerAddText() untill first VX_TrackerThink() which mean we connected and may start process it right
+	// this block VX_TrackerAddText() untill first VX_TrackerThink()
+	//   which mean we connected and may start process it right
+	active_track = max_active_tracks = 0;
 
-	for (i = 0; i < MAX_TRACKERMESSAGES; i++)
-	{
+	for (i = 0; i < MAX_TRACKERMESSAGES; i++) {
 		trackermsg[i].die = -1;
 		trackermsg[i].msg[0] = 0;
-		//		trackermsg[i].tt = ; // no need
 	}
 	ownfragtext.text[0] = '\0';
 }
@@ -156,28 +155,25 @@ void VX_TrackerThink(void)
 	active_track = 0; // 0 slots active
 	max_active_tracks = bound(0, amf_tracker_messages.value, MAX_TRACKERMESSAGES);
 
-	for (i = 0; i < max_active_tracks; i++) 
-	{
-		if (trackermsg[i].die < r_refdef2.time) // inactive
+	for (i = 0; i < max_active_tracks; i++) {
+		if (trackermsg[i].die < r_refdef2.time) {
+			// inactive
 			continue;
+		}
 
 		active_track = i+1; // i+1 slots active
 
-		if (!i)
+		if (!i) {
 			continue;
+		}
 
-		if (trackermsg[i-1].die < r_refdef2.time && trackermsg[i].die >= r_refdef2.time) // free slot above
-		{
-			trackermsg[i-1].die = trackermsg[i].die;
-			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
-			trackermsg[i-1].tt = trackermsg[i].tt;
-
-			trackermsg[i].msg[0] = 0;
+		if (trackermsg[i-1].die < r_refdef2.time && trackermsg[i].die >= r_refdef2.time) {
+			// free slot above
+			memcpy(&trackermsg[i - 1], &trackermsg[i], sizeof(trackermsg[0]));
+			memset(&trackermsg[i], 0, sizeof(trackermsg[0]));
 			trackermsg[i].die = -1;
-			//			trackermsg[i].tt = ; // no need
 
 			active_track = i; // i slots active
-
 			continue;
 		}
 	}
@@ -219,11 +215,9 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 		int i;
 
 		for (i = 1; i < max_active_tracks; i++) {
-			trackermsg[i-1].die = trackermsg[i].die;
-			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
-			trackermsg[i-1].tt = trackermsg[i].tt;
+			memcpy(&trackermsg[i - 1], &trackermsg[i], sizeof(trackermsg[0]));
 		}
-		active_track--;
+		active_track = max_active_tracks - 1;
 	}
 
 	strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
@@ -684,13 +678,16 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 	killing_streak_t *streak = VX_GetStreak(count);
-	if (!streak)
+	if (!streak) {
 		return;
+	}
 
-	if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
+	if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
 		snprintf(outstring, sizeof(outstring), "&c940Your streak was ended by teammate (%i kills)", count);
-	else
+	}
+	else {
 		snprintf(outstring, sizeof(outstring), "&r%s&c940's streak was ended by teammate (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+	}
 
 	VX_TrackerAddText(outstring, tt_streak);
 }
