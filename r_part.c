@@ -944,7 +944,7 @@ void Classic_DrawParticles(void)
 		VectorScale(vright, 1.5, right);
 
 		for (i = 0; i < particles_to_draw; ++i) {
-			glm_particle_t* glpart = &glparticles[particles_to_draw++];
+			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;
 
 			glColor4fv(glpart->gl_color);
