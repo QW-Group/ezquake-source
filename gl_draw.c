@@ -1404,7 +1404,6 @@ void Draw_Crosshair (void)
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
-		float oldMatrix[16];
 		qbool half_size = false;
 
 		if (!crosshairalpha.value) {
@@ -1415,7 +1414,6 @@ void Draw_Crosshair (void)
 			return;
 		}
 
-		//GL_PushMatrix(GL_PROJECTION_MATRIX, oldMatrix);
 		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
@@ -1486,7 +1484,6 @@ void Draw_Crosshair (void)
 
 		GL_TextureEnvMode(GL_REPLACE);
 
-		//GL_PopMatrix(GL_PROJECTION_MATRIX, oldMatrix);
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 	else if (crosshair.value) {
@@ -1951,7 +1948,7 @@ static GLuint GL_CreateRectangleVAO(void)
 {
 	static GLuint vao;
 	static GLuint vbo;
-#define number 10.0f
+
 	float points[] = {
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f,

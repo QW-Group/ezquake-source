@@ -1597,7 +1597,7 @@ static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float 
 
 	glActiveTexture(GL_TEXTURE0);
 	GL_Bind(texture);
-	GLM_DrawTexturedPoly(color, simpleItemVAO, 4, false, true);
+	GLM_DrawTexturedPoly(color, simpleItemVAO, 0, 4, false, true);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }

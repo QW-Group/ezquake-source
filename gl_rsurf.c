@@ -1300,9 +1300,9 @@ void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_l
 	GLM_DrawPolygon(color, vao, 0, vertices, apply_lightmap, false, false);
 }
 
-void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test)
+void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool alpha_test)
 {
-	GLM_DrawPolygon(color, vao, 0, vertices, apply_lightmap, true, alpha_test);
+	GLM_DrawPolygon(color, vao, start, vertices, apply_lightmap, true, alpha_test);
 }
 
 void GLM_DrawFlat(model_t* model)
@@ -1317,6 +1317,33 @@ void GLM_DrawFlat(model_t* model)
 	memcpy(wallColor, r_wallcolor.color, 3);
 	memcpy(floorColor, r_floorcolor.color, 3);
 	wallColor[3] = floorColor[3] = 255;
+
+	if (model->vao) {
+		int lightmap;
+		for (i = 0; i < model->numtextures; i++) {
+			texture_t* tex = model->textures[i];
+			if (!tex) {
+				continue;
+			}
+			if (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]) {
+				continue;
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			GL_Bind(model->textures[i]->gl_texturenum);
+
+			glActiveTexture(GL_TEXTURE2);
+			lightmap = tex->gl_first_lightmap;
+			glDisable(GL_CULL_FACE);
+			while (lightmap >= 0 && tex->gl_vbo_length[lightmap]) {
+				GL_Bind(lightmap_textures[lightmap]);
+				GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, tex->gl_vbo_start[lightmap], tex->gl_vbo_length[lightmap], true, true, false);
+				lightmap = tex->gl_next_lightmap[lightmap];
+			}
+			glEnable(GL_CULL_FACE);
+		}
+		return;
+	}
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
@@ -1348,7 +1375,7 @@ void GLM_DrawFlat(model_t* model)
 				}
 				else {
 					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-					GLM_DrawTexturedPoly(color_white, surf->polys->vao, surf->polys->numverts, true, false);
+					GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, surf->polys->vbo_start, surf->polys->numverts, true, true, false);
 				}
 
 				// TODO: Caustics
@@ -2025,6 +2052,10 @@ void GL_BuildLightmaps (void) {
 			GL_CreateSurfaceLightmap(m->surfaces + i);
 			BuildSurfaceDisplayList(m->surfaces + i);
 		}
+
+		if (GL_ShadersSupported()) {
+			GLM_CreateVAOForModel(m);
+		}
 	}
 
  	if (gl_mtexable)
@@ -2050,7 +2081,194 @@ void GL_BuildLightmaps (void) {
  		GL_DisableMultitexture();
 }
 
+static int CopyVertToBuffer(float* target, int position, float* source)
+{
+	memcpy(&target[position], source, sizeof(float) * VERTEXSIZE);
 
+	return position + VERTEXSIZE;
+}
+
+static int DuplicateVertex(float* target, int position)
+{
+	memcpy(&target[position], &target[position - VERTEXSIZE], sizeof(float) * VERTEXSIZE);
+
+	return position + VERTEXSIZE;
+}
+
+void GLM_CreateVAOForModel(model_t* m)
+{
+	int total_surf_verts = 0;
+	int total_surfaces = 0;
+	int i, j;
+	int vbo_pos = 0;
+	int pairings = 0;
+	int num_lightmaps = 0;
+	int vbo_buffer_size = 0;
+	float* vbo_buffer;
+
+	if (m->name[0] == '*') {
+		return;
+	}
+
+	for (i = 0; i < m->numtextures; ++i) {
+		if (m->textures[i]) {
+			m->textures[i]->gl_first_lightmap = -1;
+			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
+				m->textures[i]->gl_next_lightmap[j] = -1;
+			}
+		}
+	}
+
+	for (j = 0; j < m->numsurfaces; ++j) {
+		msurface_t* surf = m->surfaces + j;
+		glpoly_t* poly;
+
+		if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
+			continue;
+		}
+		if (surf->texinfo->flags & TEX_SPECIAL) {
+			continue;
+		}
+
+		for (poly = surf->polys; poly; poly = poly->next) {
+			total_surf_verts += poly->numverts;
+			++total_surfaces;
+		}
+	}
+
+	if (total_surf_verts <= 0 || total_surfaces < 1) {
+		return;
+	}
+
+	vbo_buffer_size = VERTEXSIZE * (total_surf_verts + 2 * (total_surfaces - 1));
+	vbo_buffer = Q_malloc(sizeof(float) * vbo_buffer_size);
+
+	// Order vertices in the VBO by texture & lightmap
+	for (i = 0; i < m->numtextures; ++i) {
+		int lightmap = -1;
+		int length = 0;
+
+		// Find first lightmap for this texture
+		for (j = 0; j < m->numsurfaces; ++j) {
+			msurface_t* surf = m->surfaces + j;
+
+			if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
+				continue;
+			}
+			if (surf->texinfo->flags & TEX_SPECIAL) {
+				continue;
+			}
+
+			if (surf->texinfo->miptex != i) {
+				continue;
+			}
+
+			if (surf->lightmaptexturenum >= 0 && (lightmap < 0 || surf->lightmaptexturenum < lightmap)) {
+				lightmap = surf->lightmaptexturenum;
+			}
+		}
+
+		m->textures[i]->gl_first_lightmap = lightmap;
+
+		// Build the VBO in order of lightmaps...
+		while (lightmap >= 0) {
+			int next_lightmap = -1;
+			float* prev_vert = NULL;
+
+			length = 0;
+			m->textures[i]->gl_vbo_start[lightmap] = vbo_pos / VERTEXSIZE;
+			prev_vert = NULL;
+
+			for (j = 0; j < m->numsurfaces; ++j) {
+				msurface_t* surf = m->surfaces + j;
+				glpoly_t* poly;
+
+				if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY | TEX_SPECIAL)) {
+					continue;
+				}
+
+				if (surf->texinfo->miptex != i) {
+					continue;
+				}
+
+				if (surf->lightmaptexturenum > lightmap && (next_lightmap < 0 || surf->lightmaptexturenum < next_lightmap)) {
+					next_lightmap = surf->lightmaptexturenum;
+				}
+
+				if (surf->lightmaptexturenum == lightmap) {
+					// copy verts into buffer (alternate to turn fan into triangle strip)
+					for (poly = surf->polys; poly; poly = poly->next) {
+						int end_vert = 0;
+						int start_vert = 1;
+						int output = 0;
+
+						if (!poly->numverts) {
+							continue;
+						}
+
+						if (length) {
+							vbo_pos = DuplicateVertex(vbo_buffer, vbo_pos);
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0]);
+							length += 2;
+						}
+
+						// Store position for drawing individual polys
+						poly->vbo_start = vbo_pos / VERTEXSIZE;
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0]);
+						++output;
+
+						start_vert = 1;
+						end_vert = poly->numverts - 1;
+
+						while (start_vert <= end_vert) {
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert]);
+							++output;
+
+							if (start_vert < end_vert) {
+								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert]);
+								++output;
+							}
+
+							++start_vert;
+							--end_vert;
+						}
+
+						length += poly->numverts;
+					}
+				}
+			}
+
+			m->textures[i]->gl_vbo_length[lightmap] = length;
+			if (m->isworldmodel) {
+				Con_DPrintf("> Texture %d lightmap %d = start %d len %d\n", i, lightmap, m->textures[i]->gl_vbo_start[lightmap], length);
+			}
+			m->textures[i]->gl_next_lightmap[lightmap] = next_lightmap;
+			lightmap = next_lightmap;
+		}
+	}
+
+	if (!m->vbo) {
+		// Count total number of verts
+		glGenBuffers(1, &m->vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * vbo_pos, vbo_buffer, GL_STATIC_DRAW);
+	}
+	Q_free(vbo_buffer);
+
+	if (!m->vao) {
+		glGenVertexArrays(1, &m->vao);
+		glBindVertexArray(m->vao);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+	}
+}
 
 void GLM_CreateVAOForPoly(glpoly_t *poly)
 {
@@ -2084,20 +2302,34 @@ void GLM_NewMap(void)
 		return;
 	}
 
-	// Foreach model, create VBO for each texture
+	// Create single VBO for the world, with each texture/lightmap combination being a single drawcall
 	for (i = 1; i < MAX_MODELS; i++) {
 		model_t* model = cl.model_precache[i];
-		if (!model)
+		if (!model) {
 			break;
+		}
 		if (model->name[0] == '*') {
 			continue;
 		}
 
-		for (i = 0; i < m->numsurfaces; i++) {
-			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY))
+		// Count number of texture/lightmap combinations
+		for (i = 0; i < model->numtextures; i++) {
+			if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
 				continue;
-			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL)
+			}
+
+			GL_Bind(model->textures[i]->gl_texturenum);
+			glActiveTexture(GL_TEXTURE2);
+			for (waterline = 0; waterline < 2; waterline++) {
+				for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
+		}
+
+		for (i = 0; i < model->numsurfaces; i++) {
+			if (model->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY))
 				continue;
+			if (model->surfaces[i].texinfo->flags & TEX_SPECIAL)
+				continue;
+
 			GL_CreateSurfaceLightmap (m->surfaces + i);
 			BuildSurfaceDisplayList (m->surfaces + i);
 		}

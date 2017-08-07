@@ -285,7 +285,7 @@ void R_NewMap (qbool vid_restart) {
 		// FIXME: is this one short?
 		for (i = 0; i < cl.worldmodel->numleafs; i++)
 			cl.worldmodel->leafs[i].efrags = NULL;
-			 	
+
 		r_viewleaf = NULL;
 		R_ClearParticles ();
 	}
@@ -303,8 +303,9 @@ void R_NewMap (qbool vid_restart) {
 	if (!vid_restart) {
 		// identify sky texture
 		for (i = 0; i < cl.worldmodel->numtextures; i++) {
-			if (!cl.worldmodel->textures[i])
+			if (!cl.worldmodel->textures[i]) {
 				continue;
+			}
 			for (waterline = 0; waterline < 2; waterline++) {
  	 			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
 				cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];

@@ -707,28 +707,32 @@ void Mod_ReloadModelsTextures (void)
 	model_t *m;
 	texture_t *tx;
 
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
 		return; // seems we are not loaded models yet, so no need to reload textures
+	}
 
 	// mark all textures as not loaded, for brush models only, this speed up loading.
 	// seems textures shared between models, so we mark textures from ALL models than actually load textures, that why we use two for()
 	for (i = 1; i < MAX_MODELS; i++)
 	{
-		if (!cl.model_name[i][0])
+		if (!cl.model_name[i][0]) {
 			break;
+		}
 
 		m = cl.model_precache[i];
-		if (m->type != mod_brush)
+		if (m->type != mod_brush) {
 			continue; // actual only for brush models
+		}
 
-		if (!m->textures)
+		if (!m->textures) {
 			continue; // hmm
+		}
 
-		for (j = 0; j < m->numtextures; j++)
-		{
+		for (j = 0; j < m->numtextures; j++) {
 			tx = m->textures[j];
-			if (!tx)
+			if (!tx) {
 				continue;
+			}
 
 			tx->loaded = false; // so texture will be reloaded
 		}
@@ -745,6 +749,9 @@ void Mod_ReloadModelsTextures (void)
 			continue; // actual only for brush models
 
 		R_LoadBrushModelTextures (m);
+		if (GL_ShadersSupported()) {
+			GLM_CreateVAOForModel(m);
+		}
 	}
 }
 
@@ -1074,7 +1081,7 @@ void Mod_LoadEdgesBSP2 (lump_t *l) {
 void Mod_LoadTexinfo (lump_t *l) {
 	texinfo_t *in;
 	mtexinfo_t *out;
-	int i, j, k, count, miptex;
+	int i, j, k, count;
 
 	in = (void *) (mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1090,16 +1097,16 @@ void Mod_LoadTexinfo (lump_t *l) {
 			for (k = 0; k < 4; k++)
 				out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
 
-		miptex = LittleLong (in->miptex);
+		out->miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
 
 		if (!loadmodel->textures) {
 			out->texture = r_notexture_mip;	// checkerboard texture
 			out->flags = 0;
 		} else {
-			if (miptex >= loadmodel->numtextures)
+			if (out->miptex >= loadmodel->numtextures)
 				Host_Error ("Mod_LoadTexinfo: miptex >= loadmodel->numtextures");
-			out->texture = loadmodel->textures[miptex];
+			out->texture = loadmodel->textures[out->miptex];
 			if (!out->texture) {
 				out->texture = r_notexture_mip; // texture not found
 				out->flags = 0;

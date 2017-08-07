@@ -52,6 +52,8 @@ typedef struct mvertex_s {
 #define TEXTURE_TURB_LAVA  3
 #define TEXTURE_TURB_TELE  4
 
+#define	MAX_LIGHTMAPS		192
+
 typedef struct texture_s {
 	char				name[16];
 	unsigned			width, height;
@@ -72,6 +74,11 @@ typedef struct texture_s {
 	qbool				loaded;						//help speed up vid_restart, actual only for brush models
 	int					isLumaTexture;
 	int                 turbType;
+
+	int                 gl_first_lightmap;
+	int                 gl_vbo_start[MAX_LIGHTMAPS];
+	int                 gl_vbo_length[MAX_LIGHTMAPS];
+	int                 gl_next_lightmap[MAX_LIGHTMAPS];
 } texture_t;
 
 
@@ -93,6 +100,7 @@ typedef struct medge_s {
 typedef struct mtexinfo_s {
 	float				vecs[2][4];
 	texture_t			*texture;
+	int                 miptex;
 	int					flags;
 } mtexinfo_t;
 
@@ -108,6 +116,7 @@ typedef struct glpoly_s {
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
 
 	unsigned int        vbo;
+	unsigned int        vbo_start;
 	unsigned int        vao;
 	int					numverts;
 	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2)
@@ -457,6 +466,8 @@ typedef struct model_s {
 	// additional model data
 	cache_user_t		cache; // only access through Mod_Extradata
 
+	unsigned int        vbo;
+	unsigned int        vao;
 } model_t;
 
 //============================================================================

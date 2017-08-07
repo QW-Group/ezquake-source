@@ -285,8 +285,6 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 
 // gl_rsurf.c
 
-#define	MAX_LIGHTMAPS		192
-
 void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
@@ -512,13 +510,15 @@ void GL_PopMatrix(GLenum mode, float* matrix);
 void GL_PushMatrix(GLenum mode, float* matrix);
 
 void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap);
-void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap, qbool alpha_test);
+void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool alpha_test);
 
 void GL_EnableFog(void);
 void GL_DisableFog(void);
 void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 void GLM_DebugMatrix(GLenum type, const char* value);
+
+void GLM_CreateVAOForModel(model_t* m);
 
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
