@@ -150,6 +150,7 @@ typedef enum trail_type_s {
 void R_InitParticles (void);
 void R_ClearParticles (void);
 void R_DrawParticles (void);
+void R_ParticleFrame(void);
 
 void R_ReadPointFile_f (void);
 
@@ -162,7 +163,6 @@ void R_TeleportSplash (vec3_t);
 
 void Classic_InitParticles(void);
 void Classic_ClearParticles(void);
-void Classic_DrawParticles(void);
 void Classic_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
 void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *, trail_type_t type);
 void Classic_ParticleRailTrail (vec3_t start, vec3_t end, int color);
@@ -171,7 +171,7 @@ void Classic_ParticleExplosion (vec3_t org);
 void Classic_LavaSplash (vec3_t org);
 void Classic_TeleportSplash (vec3_t org);
 
-void R_PushDlights (void);
+void R_PushDlights(void);
 
 // surface cache related
 extern qbool	r_cache_thrash;	// set if thrashing the surface cache

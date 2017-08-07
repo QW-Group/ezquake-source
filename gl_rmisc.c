@@ -298,8 +298,6 @@ void R_NewMap (qbool vid_restart) {
 
 	GL_BuildLightmaps ();
 
-	GLM_NewMap();
-
 	if (!vid_restart) {
 		// identify sky texture
 		for (i = 0; i < cl.worldmodel->numtextures; i++) {

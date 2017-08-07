@@ -741,7 +741,10 @@ void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 	}
 }
 
-void Classic_DrawParticles(void)
+static int particles_to_draw = 0;
+
+// Moves particles into new locations this frame
+void Classic_CalculateParticles(void)
 {
 	particle_t *p, *kill;
 	int i;
@@ -750,10 +753,9 @@ void Classic_DrawParticles(void)
 	vec3_t up, right;
 	float dist, scale, r_partscale;
 	extern cvar_t gl_particle_style;
-	float oldModelViewMatrix[16];
-	int particles_to_draw = 0;
 
-	if (!active_particles) {
+	particles_to_draw = 0;
+	if (!active_particles || !r_drawparticles.integer) {
 		return;
 	}
 
@@ -762,28 +764,6 @@ void Classic_DrawParticles(void)
 	// load texture if not done yet
 	if (!particletexture) {
 		Classic_LoadParticleTexures();
-	}
-
-	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE0);
-	}
-	GL_Bind(particletexture);
-
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	if (!gl_solidparticles.value) {
-		glDepthMask(GL_FALSE);
-	}
-
-	GL_TextureEnvMode(GL_MODULATE);
-	if (!GL_ShadersSupported()) {
-		if (gl_particle_style.integer) {
-			// for sw style particles
-			glDisable(GL_TEXTURE_2D); // don't use texture
-			glBegin(GL_QUADS);
-		}
-		else {
-			glBegin(GL_TRIANGLES);
-		}
 	}
 
 	VectorScale(vup, 1.5, up);
@@ -841,7 +821,7 @@ void Classic_DrawParticles(void)
 		color[2] = *(at + 2);
 		color[3] = theAlpha;
 
-		if (GL_ShadersSupported()) {
+		{
 			glm_particle_t* glpart = &glparticles[particles_to_draw++];
 			glpart->gl_color[0] = color[0] * 1.0 / 255;
 			glpart->gl_color[1] = color[1] * 1.0 / 255;
@@ -849,17 +829,6 @@ void Classic_DrawParticles(void)
 			glpart->gl_color[3] = color[3] * 1.0 / 255;
 			glpart->gl_scale = scale;
 			VectorCopy(p->org, glpart->gl_org);
-		}
-		else {
-			glColor4ubv(color);
-			glTexCoord2f(0, 0); glVertex3fv(p->org);
-			glTexCoord2f(1, 0); glVertex3f(p->org[0] + up[0] * scale, p->org[1] + up[1] * scale, p->org[2] + up[2] * scale);
-
-			if (gl_particle_style.integer) {
-				//4th point for sw style particle
-				glTexCoord2f(1, 1); glVertex3f(p->org[0] + (right[0] + up[0]) * scale, p->org[1] + (right[1] + up[1]) * scale, p->org[2] + (right[2] + up[2]) * scale);
-			}
-			glTexCoord2f(0, 1); glVertex3f(p->org[0] + right[0] * scale, p->org[1] + right[1] * scale, p->org[2] + right[2] * scale);
 		}
 
 		p->org[0] += p->vel[0] * frametime;
@@ -926,28 +895,80 @@ void Classic_DrawParticles(void)
 		}
 	}
 
+	if (GL_ShadersSupported()) {
+		// Update VBO
+		/*
+		{
+		void* buffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		memcpy(buffer, particles, sizeof(particles[0]) * particles_to_draw);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		}*/
+		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
+	}
+}
+
+// Performs all drawing of particles
+void Classic_DrawParticles(void)
+{
+	int i;
+	vec3_t up, right;
+	extern cvar_t gl_particle_style;
+
+	if (particles_to_draw == 0) {
+		return;
+	}
+
+	if (GL_ShadersSupported()) {
+		glActiveTexture(GL_TEXTURE0);
+	}
+	GL_Bind(particletexture);
+
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	if (!gl_solidparticles.value) {
+		glDepthMask(GL_FALSE);
+	}
+
+	GL_TextureEnvMode(GL_MODULATE);
 	if (!GL_ShadersSupported()) {
+		if (gl_particle_style.integer) {
+			// for sw style particles
+			glDisable(GL_TEXTURE_2D); // don't use texture
+			glBegin(GL_QUADS);
+		}
+		else {
+			glBegin(GL_TRIANGLES);
+		}
+
+		VectorScale(vup, 1.5, up);
+		VectorScale(vright, 1.5, right);
+
+		for (i = 0; i < particles_to_draw; ++i) {
+			glm_particle_t* glpart = &glparticles[particles_to_draw++];
+			float scale = glpart->gl_scale;
+
+			glColor4fv(glpart->gl_color);
+			glTexCoord2f(0, 0); glVertex3fv(glpart->gl_org);
+			glTexCoord2f(1, 0); glVertex3f(glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
+
+			if (gl_particle_style.integer) {
+				//4th point for sw style particle
+				glTexCoord2f(1, 1); glVertex3f(glpart->gl_org[0] + (right[0] + up[0]) * scale, glpart->gl_org[1] + (right[1] + up[1]) * scale, glpart->gl_org[2] + (right[2] + up[2]) * scale);
+			}
+			glTexCoord2f(0, 1); glVertex3f(glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
+		}
 		glEnd();
 		glEnable(GL_TEXTURE_2D);
 		glColor3ubv(color_white);
 	}
 	else {
-		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
-		/*
-		{
-			void* buffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-			memcpy(buffer, particles, sizeof(particles[0]) * particles_to_draw);
-			glUnmapBuffer(GL_ARRAY_BUFFER);
-		}*/
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
 		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
-
-		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glDepthMask(GL_TRUE);
 	GL_TextureEnvMode(GL_REPLACE);
+
+	particles_to_draw = 0;
 }
 
 
@@ -967,6 +988,12 @@ void R_InitParticles(void) {
 
 	Classic_InitParticles();
 	QMB_InitParticles();
+}
+
+void R_ParticleFrame(void)
+{
+	Classic_CalculateParticles();
+	// QMB_CalculateParticles();
 }
 
 void R_ClearParticles(void) {
