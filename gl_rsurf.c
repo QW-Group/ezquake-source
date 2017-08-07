@@ -55,10 +55,28 @@ msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
 
 msurface_t	*waterchain = NULL;
-msurface_t	**waterchain_tail = &waterchain;
 
 msurface_t	*alphachain = NULL;
 msurface_t	**alphachain_tail = &alphachain;
+
+void CHAIN_SURF_SORTED_BY_TEX(msurface_t** chain_head, msurface_t* surf)
+{
+	msurface_t* current = *chain_head;
+	while (current) {
+		if (current->texinfo->miptex < surf->texinfo->miptex ||
+			(current->texinfo->miptex == surf->texinfo->miptex && current->lightmaptexturenum < surf->lightmaptexturenum)
+		) {
+			chain_head = &(current->texturechain);
+			current = *chain_head;
+			continue;
+		}
+
+		break;
+	}
+
+	surf->texturechain = current;
+	*chain_head = surf;
+}
 
 #define CHAIN_SURF_F2B(surf, chain_tail)		\
 	{											\
@@ -634,7 +652,9 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 	}
 }
 
-void R_DrawWaterSurfaces (void) {
+void GLM_DrawIndexedTurbPoly(GLuint vao, GLushort* indices, int count, texture_t* texture);
+
+void R_DrawWaterSurfaces(void) {
 	msurface_t *s;
 	float wateralpha;
 	
@@ -664,10 +684,65 @@ void R_DrawWaterSurfaces (void) {
 	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	if (GL_ShadersSupported()) {
-		for (s = waterchain; s; s = s->texturechain) {
-			GL_Bind(s->texinfo->texture->gl_texturenum);
-			EmitWaterPolys(s);
+		GLsizei count;
+		GLushort indices[4096];
+		texture_t* current_texture = NULL;
+		int v;
+
+		count = 0;
+		glActiveTexture(GL_TEXTURE0);
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			GL_TextureEnvMode(GL_MODULATE);
+			if (wateralpha < 0.9) {
+				glDepthMask(GL_FALSE);
+			}
 		}
+		for (s = waterchain; s; s = s->texturechain) {
+			glpoly_t* poly;
+			if (current_texture != s->texinfo->texture) {
+				if (count && current_texture) {
+					GL_Bind(current_texture->gl_texturenum);
+					GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+					count = 0;
+				}
+				current_texture = s->texinfo->texture;
+			}
+
+			for (poly = s->polys; poly; poly = poly->next)
+			{
+				int newVerts = poly->numverts;
+
+				if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+					GL_Bind(current_texture->gl_texturenum);
+					GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+					count = 0;
+				}
+
+				if (count) {
+					indices[count++] = indices[count - 1];
+					indices[count++] = poly->vbo_start;
+				}
+				for (v = 0; v < newVerts; ++v) {
+					indices[count++] = poly->vbo_start + v;
+				}
+			}
+		}
+		if (count) {
+			GL_Bind(current_texture->gl_texturenum);
+			GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+			count = 0;
+		}
+		waterchain = NULL;
+
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			GL_TextureEnvMode(GL_REPLACE);
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+			if (wateralpha < 0.9) {
+				glDepthMask(GL_TRUE);
+			}
+		}
+
 		return;
 	}
 
@@ -754,7 +829,6 @@ void R_DrawWaterSurfaces (void) {
 		}
 	}
 	waterchain = NULL;
-	waterchain_tail = &waterchain;
 
 	if (wateralpha < 1.0) {
 		GL_TextureEnvMode(GL_REPLACE);
@@ -850,8 +924,9 @@ static void R_ClearTextureChains(model_t *clmodel) {
 
 
 	CHAIN_RESET(skychain);
-	if (clmodel == cl.worldmodel)
-		CHAIN_RESET(waterchain);
+	if (clmodel == cl.worldmodel) {
+		waterchain = NULL;
+	}
 	CHAIN_RESET(alphachain);
 }
 
@@ -1191,6 +1266,106 @@ void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha)
 	}
 }
 
+static void GLM_CompileTurbPolyProgram(void)
+{
+	if (!turbPolyProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in vec3 position;\n"
+			"layout(location = 1) in vec2 tex;\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform float time;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
+			"    TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;\n"
+			"    TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;\n"
+			"}\n";
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform sampler2D materialTex;\n"
+			"uniform float alpha;\n"
+			"\n"
+			"in vec2 TextureCoord;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor;\n"
+			"\n"
+			"    texColor = texture(materialTex, TextureCoord);\n"
+			"    texColor.a = alpha;\n"
+			"    frag_colour = texColor;\n"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateSimpleProgram("Turb poly", vertexShaderText, fragmentShaderText, &turbPolyProgram);
+
+		turb_modelViewMatrix = glGetUniformLocation(turbPolyProgram.program, "modelViewMatrix");
+		turb_projectionMatrix = glGetUniformLocation(turbPolyProgram.program, "projectionMatrix");
+		turb_materialTex = glGetUniformLocation(turbPolyProgram.program, "materialTex");
+		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
+		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
+	}
+}
+
+void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha)
+{
+	GLM_CompileTurbPolyProgram();
+
+	if (turbPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		GL_UseProgram(turbPolyProgram.program);
+		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(turb_materialTex, 0);
+		glUniform1f(turb_alpha, alpha);
+		glUniform1f(turb_time, cl.time);
+
+		glBindVertexArray(vao);
+		glDisable(GL_CULL_FACE);
+		glDrawElements(GL_TRIANGLE_STRIP, vertices, GL_UNSIGNED_SHORT, indices);
+		glEnable(GL_CULL_FACE);
+	}
+}
+
+void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha)
+{
+	GLM_CompileTurbPolyProgram();
+
+	if (turbPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		GL_UseProgram(turbPolyProgram.program);
+		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(turb_materialTex, 0);
+		glUniform1f(turb_alpha, alpha);
+		glUniform1f(turb_time, cl.time);
+
+		glBindVertexArray(vao);
+		glDisable(GL_CULL_FACE);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices);
+		glEnable(GL_CULL_FACE);
+	}
+}
+
 static glm_program_t drawFlatPolyProgram;
 static GLint drawFlat_modelViewMatrix;
 static GLint drawFlat_projectionMatrix;
@@ -1362,12 +1537,14 @@ void GLM_DrawFlat(model_t* model)
 
 	if (model->vao) {
 		int lightmap;
+
+		glDisable(GL_CULL_FACE);
 		for (i = 0; i < model->numtextures; i++) {
 			texture_t* tex = model->textures[i];
 			if (!tex) {
 				continue;
 			}
-			if (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]) {
+			if (!tex->texturechain[0] && !tex->texturechain[1]) {
 				continue;
 			}
 
@@ -1376,7 +1553,6 @@ void GLM_DrawFlat(model_t* model)
 
 			glActiveTexture(GL_TEXTURE2);
 			lightmap = tex->gl_first_lightmap;
-			glDisable(GL_CULL_FACE);
 			while (lightmap >= 0 && tex->gl_vbo_length[lightmap]) {
 				if (draw_whole_map) {
 					GL_Bind(lightmap_textures[lightmap]);
@@ -1384,20 +1560,20 @@ void GLM_DrawFlat(model_t* model)
 				}
 				else {
 					GLsizei count;
-					GLushort indices[1024];
+					GLushort indices[4096];
 
 					count = 0;
-					GL_Bind(lightmap_textures[lightmap]);
 					for (waterline = 0; waterline < 2; waterline++) {
 						for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
 							int newVerts = surf->polys->numverts;
 
-							// Fixme: change texturechain to go by lightmap...
+							// Fixme: change texturechain to sort by lightmap...
 							if (surf->lightmaptexturenum != lightmap) {
 								continue;
 							}
 
 							if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+								GL_Bind(lightmap_textures[lightmap]);
 								GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 								count = 0;
 							}
@@ -1413,13 +1589,14 @@ void GLM_DrawFlat(model_t* model)
 					}
 
 					if (count) {
+						GL_Bind(lightmap_textures[lightmap]);
 						GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 					}
 				}
 				lightmap = tex->gl_next_lightmap[lightmap];
 			}
-			glEnable(GL_CULL_FACE);
 		}
+		glEnable(GL_CULL_FACE);
 		return;
 	}
 
@@ -1838,12 +2015,14 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 			// add surf to the right chain
 			if (surf->flags & SURF_DRAWSKY) {
 				CHAIN_SURF_F2B(surf, skychain_tail);
-			} else if (surf->flags & SURF_DRAWTURB) {
-				CHAIN_SURF_F2B(surf, waterchain_tail);
-			} else if (surf->flags & SURF_DRAWALPHA) {
-				
+			}
+			else if (surf->flags & SURF_DRAWTURB) {
+				CHAIN_SURF_SORTED_BY_TEX(&waterchain, surf);
+			}
+			else if (surf->flags & SURF_DRAWALPHA) {
 				CHAIN_SURF_B2F(surf, alphachain);
-			} else {
+			}
+			else {
 				underwater = (surf->flags & SURF_UNDERWATER) ? 1 : 0;
 				CHAIN_SURF_F2B(surf, surf->texinfo->texture->texturechain_tail[underwater]);
 			}
@@ -2191,6 +2370,7 @@ void GLM_CreateVAOForModel(model_t* m)
 	int num_lightmaps = 0;
 	int vbo_buffer_size = 0;
 	float* vbo_buffer;
+	int combinations = 0;
 
 	if (m->name[0] == '*') {
 		return;
@@ -2209,10 +2389,15 @@ void GLM_CreateVAOForModel(model_t* m)
 		msurface_t* surf = m->surfaces + j;
 		glpoly_t* poly;
 
-		if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
-			continue;
+		if (!(surf->flags & (SURF_DRAWTURB))) {
+			if (surf->flags & (SURF_DRAWSKY)) {
+				continue;
+			}
+			if (surf->texinfo->flags & TEX_SPECIAL) {
+				continue;
+			}
 		}
-		if (surf->texinfo->flags & TEX_SPECIAL) {
+		if (!m->textures[surf->texinfo->miptex]) {
 			continue;
 		}
 
@@ -2233,6 +2418,7 @@ void GLM_CreateVAOForModel(model_t* m)
 	for (i = 0; i < m->numtextures; ++i) {
 		int lightmap = -1;
 		int length = 0;
+		int surface_count = 0;
 
 		if (!m->textures[i]) {
 			continue;
@@ -2242,15 +2428,17 @@ void GLM_CreateVAOForModel(model_t* m)
 		for (j = 0; j < m->numsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + j;
 
-			if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
-				continue;
-			}
-			if (surf->texinfo->flags & TEX_SPECIAL) {
+			if (surf->texinfo->miptex != i) {
 				continue;
 			}
 
-			if (surf->texinfo->miptex != i) {
-				continue;
+			if (!(surf->flags & (SURF_DRAWTURB))) {
+				if (surf->flags & (SURF_DRAWSKY)) {
+					continue;
+				}
+				if (surf->texinfo->flags & TEX_SPECIAL) {
+					continue;
+				}
 			}
 
 			if (surf->lightmaptexturenum >= 0 && (lightmap < 0 || surf->lightmaptexturenum < lightmap)) {
@@ -2268,19 +2456,15 @@ void GLM_CreateVAOForModel(model_t* m)
 			length = 0;
 			m->textures[i]->gl_vbo_start[lightmap] = vbo_pos / VERTEXSIZE;
 			prev_vert = NULL;
+			++combinations;
 
 			for (j = 0; j < m->numsurfaces; ++j) {
 				msurface_t* surf = m->surfaces + j;
 				glpoly_t* poly;
 
-				if (surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY | TEX_SPECIAL)) {
-					continue;
-				}
-
 				if (surf->texinfo->miptex != i) {
 					continue;
 				}
-
 				if (surf->lightmaptexturenum > lightmap && (next_lightmap < 0 || surf->lightmaptexturenum < next_lightmap)) {
 					next_lightmap = surf->lightmaptexturenum;
 				}
@@ -2324,17 +2508,19 @@ void GLM_CreateVAOForModel(model_t* m)
 						}
 
 						length += poly->numverts;
+						++surface_count;
 					}
 				}
 			}
 
 			m->textures[i]->gl_vbo_length[lightmap] = length;
-			if (m->isworldmodel) {
-				Con_DPrintf("> Texture %d lightmap %d = start %d len %d\n", i, lightmap, m->textures[i]->gl_vbo_start[lightmap], length);
-			}
 			m->textures[i]->gl_next_lightmap[lightmap] = next_lightmap;
 			lightmap = next_lightmap;
 		}
+	}
+	if (vbo_pos / VERTEXSIZE != (total_surf_verts + 2 * (total_surfaces - combinations))) {
+		Con_Printf("WARNING: Model used %d verts, expected %d\n", vbo_pos / VERTEXSIZE, (total_surf_verts + 2 * (total_surfaces - combinations)));
+		Con_Printf("         Difference %d, across %d surfaces [%d combinations]\n", vbo_pos / VERTEXSIZE - (total_surf_verts + 2 * (total_surfaces - combinations)), total_surfaces, combinations);
 	}
 
 	if (!m->vbo) {
@@ -2360,12 +2546,78 @@ void GLM_CreateVAOForModel(model_t* m)
 	}
 }
 
+void GLM_CreateVAOForWarpPoly(msurface_t* surf)
+{
+	if (!surf->polys->vbo) {
+		int totalVerts = 0;
+		int totalPolys = 0;
+		int index = 0;
+		float* verts;
+		glpoly_t* p;
+
+		for (p = surf->polys; p; p = p->next) {
+			totalVerts += p->numverts;
+			++totalPolys;
+		}
+		glGenBuffers(1, &surf->polys->vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo);
+
+		verts = Q_malloc(sizeof(float) * (totalVerts + 2 * (totalPolys - 1)) * VERTEXSIZE);
+		for (p = surf->polys; p; p = p->next) {
+			if (index) {
+				// Duplicate previous and next to create triangle strip
+				memcpy(&verts[index * VERTEXSIZE], &verts[(index - 1) * VERTEXSIZE], sizeof(float) * VERTEXSIZE);
+				++index;
+				memcpy(&verts[index * VERTEXSIZE], p->verts, sizeof(float) * VERTEXSIZE);
+				++index;
+			}
+
+			// Convert triangle fan to strip
+			{
+				int last = p->numverts - 1;
+				int next = 1;
+
+				memcpy(&verts[index * VERTEXSIZE], p->verts, sizeof(float) * VERTEXSIZE);
+				++index;
+				while (next <= last) {
+					memcpy(&verts[index * VERTEXSIZE], &p->verts[next], sizeof(float) * VERTEXSIZE);
+					++index;
+					++next;
+
+					if (last >= next) {
+						memcpy(&verts[index * VERTEXSIZE], &p->verts[last], sizeof(float) * VERTEXSIZE);
+						++index;
+						--last;
+					}
+				}
+			}
+		}
+		Con_Printf("Turb split: index %d, expected %d\n", index, totalVerts + 2 * (totalPolys - 1));
+
+		glBufferDataExt(GL_ARRAY_BUFFER, (totalVerts + 2 * (totalPolys - 1)) * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
+		Q_free(verts);
+	}
+
+	if (!surf->polys->vao) {
+		glGenVertexArrays(1, &surf->polys->vao);
+		glBindVertexArray(surf->polys->vao);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+	}
+}
+
 void GLM_CreateVAOForPoly(glpoly_t *poly)
 {
 	if (!poly->vbo) {
 		glGenBuffers(1, &poly->vbo);
 		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
-
 		glBufferDataExt(GL_ARRAY_BUFFER, poly->numverts * VERTEXSIZE * sizeof(float), poly->verts, GL_STATIC_DRAW);
 	}
 

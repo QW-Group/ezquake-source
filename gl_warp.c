@@ -57,6 +57,7 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
 }
 
 void GLM_CreateVAOForPoly(glpoly_t *poly);
+void GLM_CreateVAOForWarpPoly(msurface_t* surf);
 
 void SubdividePolygon (int numverts, float *verts) {
 	int i, j, k, f, b;
@@ -127,13 +128,11 @@ void SubdividePolygon (int numverts, float *verts) {
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 	}
-	if (GL_ShadersSupported()) {
-		GLM_CreateVAOForPoly(poly);
-	}
 }
 
 // Breaks a polygon up along axial 64 unit boundaries so that turbulent and sky warps can be done reasonably.
-void GL_SubdivideSurface (msurface_t *fa) {
+void GL_SubdivideSurface(msurface_t *fa)
+{
 	vec3_t verts[64];
 	int numverts, i, lindex;
 	float *vec;
@@ -142,18 +141,24 @@ void GL_SubdivideSurface (msurface_t *fa) {
 
 	// convert edges back to a normal polygon
 	numverts = 0;
-	for (i = 0; i < fa->numedges; i++) {
+	for (i = 0; i < fa->numedges && numverts < 64; i++) {
 		lindex = loadmodel->surfedges[fa->firstedge + i];
 
-		if (lindex > 0)
+		if (lindex > 0) {
 			vec = loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position;
-		else
+		}
+		else {
 			vec = loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
-		VectorCopy (vec, verts[numverts]);
+		}
+		VectorCopy(vec, verts[numverts]);
 		numverts++;
 	}
 
-	SubdividePolygon (numverts, verts[0]);
+	SubdividePolygon(numverts, verts[0]);
+
+	if (GL_ShadersSupported()) {
+		GLM_CreateVAOForWarpPoly(fa);
+	}
 }
 
 // Just build the gl polys, don't subdivide
@@ -260,11 +265,11 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 	}
 }
 
-static byte* SurfaceFlatTurbColor(msurface_t* fa)
+static byte* SurfaceFlatTurbColor(texture_t* texture)
 {
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 
-	switch (fa->texinfo->texture->turbType)
+	switch (texture->turbType)
 	{
 	case TEXTURE_TURB_WATER:
 		return r_watercolor.color;
@@ -276,7 +281,26 @@ static byte* SurfaceFlatTurbColor(msurface_t* fa)
 		return r_telecolor.color;
 	}
 
-	return (byte *)&fa->texinfo->texture->flatcolor3ub;
+	return (byte *)&texture->flatcolor3ub;
+}
+
+void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha);
+void GLM_DrawIndexedTurbPoly(GLuint vao, GLushort* indices, int count, texture_t* texture)
+{
+	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+	byte* col = SurfaceFlatTurbColor(texture);
+
+	if (r_fastturb.value) {
+		byte old_alpha = col[3];
+
+		// FIXME: turbripple effect, transparent water
+		col[3] = 255;
+		GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, col, vao, indices, count, false, false, false);
+		col[3] = old_alpha;
+	}
+	else {
+		GLM_DrawIndexedTurbPolys(vao, indices, count, wateralpha);
+	}
 }
 
 //Does a water warp on the pre-fragmented glpoly_t chain
@@ -290,7 +314,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 	vec3_t nv;
 
-	col = SurfaceFlatTurbColor(fa);
+	col = SurfaceFlatTurbColor(fa->texinfo->texture);
 	if (GL_ShadersSupported()) {
 		if (r_fastturb.value) {
 			byte old_alpha = col[3];
@@ -316,8 +340,16 @@ void EmitWaterPolys (msurface_t *fa)
 					glDepthMask(GL_FALSE);
 				}
 			}
-			for (p = fa->polys; p; p = p->next) {
-				GLM_DrawTurbPoly(p->vao, p->numverts, wateralpha);
+
+			{
+				// FIXME: don't calculate number of verts each time
+				int verts = 0;
+				int polys = 0;
+				for (p = fa->polys; p; p = p->next) {
+					verts += p->numverts;
+					++polys;
+				}
+				GLM_DrawTurbPolys(fa->polys->vao, verts + 2 * (polys - 1), wateralpha);
 			}
 			if (wateralpha < 1.0 && wateralpha >= 0) {
 				GL_TextureEnvMode(GL_REPLACE);
