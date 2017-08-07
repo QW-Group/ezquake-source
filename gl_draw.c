@@ -1029,13 +1029,15 @@ qbool R_CharAvailable (wchar num)
 #define GLM_STRING_CACHE 1024
 typedef struct gl_text_cache_s {
 	int character;
-	float position;          // Get rid of this
+	float x, y;
+	float scale;
 	GLubyte color[4];
 } gl_text_cache_t;
 
 static gl_text_cache_t cache[GLM_STRING_CACHE];
 static GLubyte cache_currentColor[4];
 static int cache_pos;
+static float cache_original_x;
 static float cache_x;
 static float cache_y;
 static float cache_scale;
@@ -1044,8 +1046,6 @@ static glm_program_t textStringProgram;
 static GLint textString_modelViewMatrix;
 static GLint textString_projectionMatrix;
 static GLint textString_materialTex;
-static GLint textString_scale;
-static GLint textString_alpha_texture;
 static GLuint textStringVBO;
 static GLuint textStringVAO;
 
@@ -1053,6 +1053,7 @@ qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_t
 
 void Draw_TextCacheInit(float x, float y, float scale)
 {
+	cache_original_x = x;
 	cache_x = x;
 	cache_y = y;
 	cache_scale = scale;
@@ -1073,10 +1074,12 @@ static GLuint Draw_CreateTextStringVAO(void)
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
 		glVertexAttribIPointer(0, 1, GL_INT, sizeof(gl_text_cache_t), (void*) 0);
-		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*) (sizeof(int)));
-		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_text_cache_t), (void*) (sizeof(int) + sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*) (sizeof(int)));
+		glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*) (sizeof(int) + sizeof(float) * 2));
+		glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_text_cache_t), (void*) (sizeof(int) + sizeof(float) * 3));
 	}
 
 	return textStringVAO;
@@ -1089,8 +1092,9 @@ static void Draw_CreateTextStringProgram(void)
 			"#version 430\n"
 			"\n"
 			"layout(location = 0) in int character;\n"
-			"layout(location = 1) in float location;\n"
-			"layout(location = 2) in vec4 colour;\n"
+			"layout(location = 1) in vec2 location;\n"
+			"layout(location = 2) in float scale;\n"
+			"layout(location = 3) in vec4 colour;\n"
 			"\n"
 			"out float pointScale;\n"
 			"out vec4 pointColour;\n"
@@ -1098,11 +1102,10 @@ static void Draw_CreateTextStringProgram(void)
 			"\n"
 			"uniform mat4 modelViewMatrix;\n"
 			"uniform mat4 projectionMatrix;\n"
-			"uniform float scale;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(location, 0, 1, 1);\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(location, 1, 1);\n"
 			"    pointCharacter = character;\n"
 			"    pointColour = colour;\n"
 			"    pointScale = scale;\n"
@@ -1179,12 +1182,10 @@ static void Draw_CreateTextStringProgram(void)
 		textString_modelViewMatrix = glGetUniformLocation(textStringProgram.program, "modelViewMatrix");
 		textString_projectionMatrix = glGetUniformLocation(textStringProgram.program, "projectionMatrix");
 		textString_materialTex = glGetUniformLocation(textStringProgram.program, "materialTex");
-		textString_scale = glGetUniformLocation(textStringProgram.program, "scale");
-		textString_alpha_texture = glGetUniformLocation(textStringProgram.program, "alpha_texture");
 	}
 }
 
-static void Draw_TextCacheFlush(void)
+void Draw_TextCacheFlush(void)
 {
 	static qbool first_flush = true;
 
@@ -1199,9 +1200,6 @@ static void Draw_TextCacheFlush(void)
 			float oldModelView[16];
 			GLuint vao = Draw_CreateTextStringVAO();
 
-			GL_PushMatrix(GL_MODELVIEW, oldModelView);
-			GL_Translate(GL_MODELVIEW, cache_x, cache_y, 0.0f);
-
 			{
 				float modelViewMatrix[16];
 				float projectionMatrix[16];
@@ -1213,13 +1211,23 @@ static void Draw_TextCacheFlush(void)
 				glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
 				glBufferDataExt(GL_ARRAY_BUFFER, sizeof(cache[0]) * cache_pos, cache, GL_STATIC_DRAW);
 
+				if ((gl_alphafont.value/* || apply_overall_alpha*/)) {
+					GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+				}
+				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+				if (scr_coloredText.integer) {
+					GL_TextureEnvMode(GL_MODULATE);
+				}
+				else {
+					GL_TextureEnvMode(GL_REPLACE);
+				}
+
 				// Call the program to draw the text string
 				glUseProgram(textStringProgram.program);
 				glUniformMatrix4fv(textString_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 				glUniformMatrix4fv(textString_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 				glUniform1i(textString_materialTex, 0);
-				glUniform1f(textString_scale, cache_scale * 8);
-				//glUniform1i(textString_alpha_texture, 0);
 
 				glActiveTexture(GL_TEXTURE0);
 				GL_Bind(char_textures[0]);
@@ -1227,10 +1235,7 @@ static void Draw_TextCacheFlush(void)
 				glBindVertexArray(vao);
 				glPointSize(16);
 				glDrawArrays(GL_POINTS, 0, cache_pos);
-
-				cache_x += 8 * cache_scale * cache_pos;
 			}
-			GL_PopMatrix(GL_MODELVIEW, oldModelView);
 		}
 	}
 	cache_pos = 0;
@@ -1253,7 +1258,30 @@ static void Draw_TextCacheAdd(wchar ch)
 	}
 
 	cache[cache_pos].character = ch & 0xFF;
-	cache[cache_pos].position = cache_pos * 8 * cache_scale;
+	cache[cache_pos].x = cache_x;
+	cache[cache_pos].y = cache_y;
+	cache[cache_pos].scale = cache_scale * 8;
+	memcpy(&cache[cache_pos].color, cache_currentColor, sizeof(cache[cache_pos].color));
+	if (ch == 13) {
+		cache_x = cache_original_x;
+		cache_y += 8 * cache_scale;
+	}
+	else {
+		cache_x += 8 * cache_scale;
+	}
+	++cache_pos;
+}
+
+static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
+{
+	if (cache_pos >= GLM_STRING_CACHE) {
+		Draw_TextCacheFlush();
+	}
+
+	cache[cache_pos].character = ch & 0xFF;
+	cache[cache_pos].x = x;
+	cache[cache_pos].y = y;
+	cache[cache_pos].scale = scale * 8;
 	memcpy(&cache[cache_pos].color, cache_currentColor, sizeof(cache[cache_pos].color));
 	++cache_pos;
 }
@@ -1271,6 +1299,11 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 	int i;
 	int slot;
 	int char_size = (bigchar ? 64 : 8);
+
+	if (GL_ShadersSupported()) {
+		Draw_TextCacheAddCharacter(x, y, num, scale);
+		return;
+	}
 
 	// Totally off screen.
 	if (y <= (-char_size * scale))
@@ -1384,6 +1417,7 @@ static void Draw_ResetCharGLState(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
+	Draw_TextCacheSetColor(color_white);
 }
 
 void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
@@ -1541,7 +1575,6 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 
 		x += ((bigchar ? 64 : 8) * scale) + char_gap;
 	}
-	Draw_TextCacheFlush();
 	Draw_ResetCharGLState();
 }
 

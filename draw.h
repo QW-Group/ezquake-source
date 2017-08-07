@@ -128,6 +128,7 @@ void Draw_EnableScissor(int left, int right, int top, int bottom);
 void Draw_DisableScissor(void);
 
 void InitTracker(void);
+void Draw_TextCacheFlush(void);
 
 #endif // __DRAW_H__
 
