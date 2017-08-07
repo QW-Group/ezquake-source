@@ -73,6 +73,7 @@ glGenVertexArrays_t         glGenVertexArrays = NULL;
 glBindVertexArray_t         glBindVertexArray = NULL;
 glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
 glVertexAttribPointer_t     glVertexAttribPointer = NULL;
+glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
 
 // Shader functions
 glCreateShader_t      glCreateShader = NULL;
@@ -209,6 +210,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
 			OPENGL_LOAD_SHADER_FUNCTION(glEnableVertexAttribArray);
 			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribPointer);
+			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribIPointer);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateProgram);
 			OPENGL_LOAD_SHADER_FUNCTION(glLinkProgram);

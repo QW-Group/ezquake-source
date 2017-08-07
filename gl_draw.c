@@ -1012,16 +1012,11 @@ void Draw_Init (void)
 
 qbool R_CharAvailable (wchar num)
 {
-	int i;
-
-	if (num == (num & 0xff))
+	if (num == (num & 0xff)) {
 		return true;
+	}
 
-	for (i = 1; i < MAX_CHARSETS; i++)
-		if (char_range[i] == (num & 0xFF00))
-			return true;
-
-	return false;
+	return (char_range[(num >> 8) & 0xff]);
 }
 
 #define CHARSET_CHARS_PER_ROW	16
@@ -1029,6 +1024,239 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_HEIGHT			1.0
 #define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
+
+// Modern: just cache as the string is printed, dump out as one.  Still pretty terrible
+#define GLM_STRING_CACHE 1024
+typedef struct gl_text_cache_s {
+	int character;
+	float position;          // Get rid of this
+	GLubyte color[4];
+} gl_text_cache_t;
+
+static gl_text_cache_t cache[GLM_STRING_CACHE];
+static GLubyte cache_currentColor[4];
+static int cache_pos;
+static float cache_x;
+static float cache_y;
+static float cache_scale;
+
+static glm_program_t textStringProgram;
+static GLint textString_modelViewMatrix;
+static GLint textString_projectionMatrix;
+static GLint textString_materialTex;
+static GLint textString_scale;
+static GLint textString_alpha_texture;
+static GLuint textStringVBO;
+static GLuint textStringVAO;
+
+qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program);
+
+void Draw_TextCacheInit(float x, float y, float scale)
+{
+	cache_x = x;
+	cache_y = y;
+	cache_scale = scale;
+	memcpy(cache_currentColor, color_white, sizeof(cache_currentColor));
+}
+
+static GLuint Draw_CreateTextStringVAO(void)
+{
+	if (!textStringVBO) {
+		glGenBuffers(1, &textStringVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(cache), cache, GL_STATIC_DRAW);
+	}
+
+	if (!textStringVAO) {
+		glGenVertexArrays(1, &textStringVAO);
+		glBindVertexArray(textStringVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+		glVertexAttribIPointer(0, 1, GL_INT, sizeof(gl_text_cache_t), (void*) 0);
+		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*) (sizeof(int)));
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_text_cache_t), (void*) (sizeof(int) + sizeof(float)));
+	}
+
+	return textStringVAO;
+}
+
+static void Draw_CreateTextStringProgram(void)
+{
+	if (!textStringProgram.program) {
+		const char* vertexShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(location = 0) in int character;\n"
+			"layout(location = 1) in float location;\n"
+			"layout(location = 2) in vec4 colour;\n"
+			"\n"
+			"out float pointScale;\n"
+			"out vec4 pointColour;\n"
+			"out int pointCharacter;\n"
+			"\n"
+			"uniform mat4 modelViewMatrix;\n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform float scale;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(location, 0, 1, 1);\n"
+			"    pointCharacter = character;\n"
+			"    pointColour = colour;\n"
+			"    pointScale = scale;\n"
+			"}\n";
+
+		// Geometry shader converts single points to billboards
+		const char* geometryShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(points) in;\n"
+			"layout(triangle_strip, max_vertices = 4) out;\n"
+			"\n"
+			"uniform mat4 projectionMatrix;\n"
+			"\n"
+			"in float pointScale[1];\n"
+			"in vec4 pointColour[1];\n"
+			"in int pointCharacter[1];\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"out vec4 fragColour;\n"
+			"\n"
+			"void main() {\n"
+			"    if (pointCharacter[0] == 32) {\n"
+			"        return;\n"
+			"    }\n"
+			"\n"
+			"    float size = pointScale[0];\n"
+			"    float ps = pointCharacter[0] % 16;\n"
+			"    float pt = pointCharacter[0] / 16;\n"
+			"    float s = ps / 16.0;"
+			"    float t = pt / 16.0;"
+			"    fragColour = pointColour[0];\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(0, 0.0, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(s, t);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(0, size * 2, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(s, t + 1 / 16.0);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(size, 0, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(s + 1 / 16.0, t);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(size, size * 2, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(s + 1 / 16.0, t + 1 / 16.0);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    EndPrimitive();\n"
+			"}\n";
+
+		const char* fragmentShaderText =
+			"#version 430\n"
+			"\n"
+			"uniform sampler2D materialTex;\n"
+			"\n"
+			"in vec2 TextureCoord;\n"
+			"in vec4 fragColour;\n"
+			"out vec4 frag_colour;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    vec4 texColor;\n"
+			"\n"
+			"    texColor = texture(materialTex, TextureCoord);\n"
+			"    frag_colour = texColor * fragColour;"
+			"}\n";
+
+		// Initialise program for drawing image
+		GLM_CreateVGFProgram("StringDraw", vertexShaderText, geometryShaderText, fragmentShaderText, &textStringProgram);
+		//GLM_CreateSimpleProgram("StringDraw", vertexShaderText, fragmentShaderText, &textStringProgram);
+
+		textString_modelViewMatrix = glGetUniformLocation(textStringProgram.program, "modelViewMatrix");
+		textString_projectionMatrix = glGetUniformLocation(textStringProgram.program, "projectionMatrix");
+		textString_materialTex = glGetUniformLocation(textStringProgram.program, "materialTex");
+		textString_scale = glGetUniformLocation(textStringProgram.program, "scale");
+		textString_alpha_texture = glGetUniformLocation(textStringProgram.program, "alpha_texture");
+	}
+}
+
+static void Draw_TextCacheFlush(void)
+{
+	static qbool first_flush = true;
+
+	if (cache_pos) {
+		// Draw text
+		if (!textStringProgram.program && first_flush) {
+			Draw_CreateTextStringProgram();
+			first_flush = false;
+		}
+
+		if (textStringProgram.program) {
+			float oldModelView[16];
+			GLuint vao = Draw_CreateTextStringVAO();
+
+			GL_PushMatrix(GL_MODELVIEW, oldModelView);
+			GL_Translate(GL_MODELVIEW, cache_x, cache_y, 0.0f);
+
+			{
+				float modelViewMatrix[16];
+				float projectionMatrix[16];
+
+				GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+				GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+				// Update VBO
+				glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+				glBufferDataExt(GL_ARRAY_BUFFER, sizeof(cache[0]) * cache_pos, cache, GL_STATIC_DRAW);
+
+				// Call the program to draw the text string
+				glUseProgram(textStringProgram.program);
+				glUniformMatrix4fv(textString_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+				glUniformMatrix4fv(textString_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+				glUniform1i(textString_materialTex, 0);
+				glUniform1f(textString_scale, cache_scale * 8);
+				//glUniform1i(textString_alpha_texture, 0);
+
+				glActiveTexture(GL_TEXTURE0);
+				GL_Bind(char_textures[0]);
+
+				glBindVertexArray(vao);
+				glPointSize(16);
+				glDrawArrays(GL_POINTS, 0, cache_pos);
+
+				cache_x += 8 * cache_scale * cache_pos;
+			}
+			GL_PopMatrix(GL_MODELVIEW, oldModelView);
+		}
+	}
+	cache_pos = 0;
+}
+
+static void Draw_TextCacheSetColor(GLubyte* color)
+{
+	memcpy(cache_currentColor, color, sizeof(cache_currentColor));
+}
+
+static void Draw_TextCacheAdd(wchar ch)
+{
+	if (cache_pos >= GLM_STRING_CACHE) {
+		Draw_TextCacheFlush();
+	}
+
+	if (ch & 0xFF00) {
+		// FIXME: Russian characters etc, need to store current texture and flush early
+		return;
+	}
+
+	cache[cache_pos].character = ch & 0xFF;
+	cache[cache_pos].position = cache_pos * 8 * cache_scale;
+	memcpy(&cache[cache_pos].color, cache_currentColor, sizeof(cache[cache_pos].color));
+	++cache_pos;
+}
 
 // x, y					= Pixel position of char.
 // num					= The character to draw.
@@ -1059,20 +1287,17 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 	// in the string drawing function instead. For character drawing functions we do this every time.
 	// (For instance, only change color in a string when the actual color changes, instead of doing
 	// it on each character always).
-	if (gl_statechange)
-	{
+	if (gl_statechange) {
 		// Turn on alpha transparency.
 		if ((gl_alphafont.value || apply_overall_alpha)) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 		}
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		if (scr_coloredText.integer)
-		{
+		if (scr_coloredText.integer) {
 			GL_TextureEnvMode(GL_MODULATE);
 		}
-		else
-		{
+		else {
 			GL_TextureEnvMode(GL_REPLACE);
 		}
 
@@ -1080,12 +1305,10 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 		glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
 	}
 
-	if (bigchar)
-	{
+	if (bigchar) {
 		mpic_t *p = Draw_CachePicSafe(MCHARSET_PATH, false, true);
 
-		if (p)
-		{
+		if (p) {
 			int sx = 0;
 			int sy = 0;
 			int char_width = (p->width / 8);
@@ -1105,22 +1328,14 @@ void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overa
 		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
 
-	slot = 0;
-	
 	// Is this is a wchar, find a charset that has the char in it.
-	if ((num & 0xFF00) != 0)
-	{
-		for (i = 1; i < MAX_CHARSETS; i++)
-		{
-			if (char_range[i] == (num & 0xFF00))
-			{
-				slot = i;
-				break;
-			}
-		}
-
-		if (i == MAX_CHARSETS)
+	slot = 0;
+	if ((num & 0xFF00) != 0) {
+		slot = ((num >> 8) & 0xFF);
+		if (!char_range[slot]) {
+			slot = 0;
 			num = '?';
+		}
 	}
 
 	num &= 0xFF;	// Only use the first byte.
@@ -1179,6 +1394,7 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 	Draw_ResetCharGLState();
 }
 
+// Only ever called by the tracker
 void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale)
 {
 	byte rgba[4];
@@ -1213,9 +1429,9 @@ void Draw_Character (int x, int y, int num)
 
 void Draw_SetColor(byte *rgba, float alpha)
 {
-	if (scr_coloredText.integer)
-	{
+	if (scr_coloredText.integer) {
 		glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * alpha * overall_alpha);
+		Draw_TextCacheSetColor(rgba);
 	}
 }
 
@@ -1253,6 +1469,9 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	}
 
 	// Draw the string.
+	if (GL_ShadersSupported()) {
+		Draw_TextCacheInit(x, y, scale);
+	}
 	for (i = 0; text[i]; i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
@@ -1313,11 +1532,16 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
+		if (GL_ShadersSupported()) {
+			Draw_TextCacheAdd(curr_char);
+		}
+		else {
+			Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
+		}
 
 		x += ((bigchar ? 64 : 8) * scale) + char_gap;
 	}
-
+	Draw_TextCacheFlush();
 	Draw_ResetCharGLState();
 }
 
@@ -1346,6 +1570,7 @@ void Draw_SAlt_String (int x, int y, const char *text, float scale)
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, scale, 1, false, 0);
 }
 
+// Only ever called by console, hence scale 1
 void Draw_ColoredString3W(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red)
 {
 	Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);

@@ -373,6 +373,7 @@ typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
 typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
 typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
 typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 
 // Shader functions
 typedef GLuint (APIENTRY *glCreateShader_t)(GLenum shaderType);
@@ -416,6 +417,7 @@ extern glGenVertexArrays_t         glGenVertexArrays;
 extern glBindVertexArray_t         glBindVertexArray;
 extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
 extern glVertexAttribPointer_t     glVertexAttribPointer;
+extern glVertexAttribIPointer_t    glVertexAttribIPointer;
 
 // Shader functions
 extern glCreateShader_t      glCreateShader;

@@ -928,6 +928,8 @@ void Classic_DrawParticles(void)
 
 	if (!GL_ShadersSupported()) {
 		glEnd();
+		glEnable(GL_TEXTURE_2D);
+		glColor3ubv(color_white);
 	}
 	else {
 		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
@@ -945,9 +947,7 @@ void Classic_DrawParticles(void)
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glDepthMask(GL_TRUE);
-	glEnable(GL_TEXTURE_2D);
 	GL_TextureEnvMode(GL_REPLACE);
-	glColor3ubv(color_white);
 }
 
 
