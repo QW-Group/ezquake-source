@@ -1142,3 +1142,14 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
+
+void GL_UseProgram(GLuint program)
+{
+	static GLuint last_program;
+
+	if (program != last_program) {
+		glUseProgram(program);
+
+		last_program = program;
+	}
+}

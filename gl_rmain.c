@@ -583,7 +583,7 @@ void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int v
 		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-		glUseProgram(drawShellPolyProgram.program);
+		GL_UseProgram(drawShellPolyProgram.program);
 		glUniformMatrix4fv(drawShell_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(drawShell_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1f(drawShell_shellSize, shellSize);

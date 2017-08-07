@@ -692,7 +692,7 @@ void GLM_DrawParticles(int number, qbool square)
 			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-			glUseProgram(billboardProgram.program);
+			GL_UseProgram(billboardProgram.program);
 			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform1i(billboard_materialTex, 0);
@@ -726,7 +726,7 @@ void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-			glUseProgram(billboardProgram.program);
+			GL_UseProgram(billboardProgram.program);
 			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform1i(billboard_materialTex, 0);

@@ -107,7 +107,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	GLM_TransformMatrix(matrix, x, y, 0);
 	GLM_ScaleMatrix(matrix, width, height, 1.0f);
 
-	glUseProgram(imageProgram.program);
+	GL_UseProgram(imageProgram.program);
 	glUniformMatrix4fv(imageProgram_matrix, 1, GL_FALSE, matrix);
 	glUniform4f(imageProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 	glUniform1i(imageProgram_tex, texture_unit);
@@ -183,7 +183,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	GLM_TransformMatrix(matrix, x, y, 0);
 	GLM_ScaleMatrix(matrix, width, height, 1.0f);
 
-	glUseProgram(rectProgram.program);
+	GL_UseProgram(rectProgram.program);
 	glUniformMatrix4fv(rectProgram_matrix, 1, GL_FALSE, matrix);
 	glUniform4f(rectProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 
@@ -1224,7 +1224,7 @@ void Draw_TextCacheFlush(void)
 				}
 
 				// Call the program to draw the text string
-				glUseProgram(textStringProgram.program);
+				GL_UseProgram(textStringProgram.program);
 				glUniformMatrix4fv(textString_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 				glUniformMatrix4fv(textString_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 				glUniform1i(textString_materialTex, 0);
@@ -1995,7 +1995,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		GLM_TransformMatrix(matrix, x_start, y_start, 0);
 		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
 
-		glUseProgram(program.program);
+		GL_UseProgram(program.program);
 		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
 		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
 

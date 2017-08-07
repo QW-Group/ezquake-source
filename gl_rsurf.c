@@ -1171,7 +1171,7 @@ void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha)
 		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-		glUseProgram(turbPolyProgram.program);
+		GL_UseProgram(turbPolyProgram.program);
 		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1i(turb_materialTex, 0);
@@ -1279,7 +1279,7 @@ void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GL
 		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-		glUseProgram(drawFlatPolyProgram.program);
+		GL_UseProgram(drawFlatPolyProgram.program);
 		glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
@@ -1308,7 +1308,7 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-		glUseProgram(drawFlatPolyProgram.program);
+		GL_UseProgram(drawFlatPolyProgram.program);
 		glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
