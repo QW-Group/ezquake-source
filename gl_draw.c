@@ -1232,7 +1232,6 @@ void Draw_TextCacheFlush(void)
 				GL_Bind(char_textures[0]);
 
 				glBindVertexArray(vao);
-				glPointSize(16);
 				glDrawArrays(GL_POINTS, 0, cache_pos);
 			}
 		}

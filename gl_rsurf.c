@@ -1449,11 +1449,11 @@ void GLM_DrawFlat(model_t* model)
 				isFloor = normal[2] < -0.5 || normal[2] > 0.5;
 				if (r_drawflat.integer == 1 || (r_drawflat.integer == 2 && isFloor) || (r_drawflat.integer == 3 && !isFloor)) {
 					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-					GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys->vao, surf->polys->numverts, true);
+					GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys->vao, surf->polys->numverts, model->isworldmodel);
 				}
 				else {
 					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-					GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, surf->polys->vbo_start, surf->polys->numverts, true, true, false);
+					GLM_DrawPolygonByType(GL_TRIANGLE_FAN, color_white, surf->polys->vao, 0, surf->polys->numverts, model->isworldmodel, true, false);
 				}
 
 				// TODO: Caustics
