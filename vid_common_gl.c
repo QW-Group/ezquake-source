@@ -675,6 +675,76 @@ static qbool GLM_CompileShader(const char* shaderText, GLenum shaderType, GLuint
 	return false;
 }
 
+qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program)
+{
+	GLuint vertex_shader = 0;
+	GLuint fragment_shader = 0;
+	GLuint geometry_shader = 0;
+	GLuint shader_program = 0;
+
+	Con_Printf("--[ %s ]--\n", friendlyName);
+	if (GL_ShadersSupported()) {
+		GLint result = 0;
+
+		if (GLM_CompileShader(vertex_shader_text, GL_VERTEX_SHADER, &vertex_shader)) {
+			if (GLM_CompileShader(geometry_shader_text, GL_GEOMETRY_SHADER, &geometry_shader)) {
+				if (GLM_CompileShader(fragment_shader_text, GL_FRAGMENT_SHADER, &fragment_shader)) {
+					Con_Printf("Shader compilation completed successfully\n");
+
+					shader_program = glCreateProgram();
+					if (shader_program) {
+						glAttachShader(shader_program, fragment_shader);
+						glAttachShader(shader_program, vertex_shader);
+						glAttachShader(shader_program, geometry_shader);
+						glLinkProgram(shader_program);
+						glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+
+						if (result) {
+							Con_Printf("ShaderProgram.Link() was successful\n");
+							program->geometry_shader = geometry_shader;
+							program->fragment_shader = fragment_shader;
+							program->vertex_shader = vertex_shader;
+							program->program = shader_program;
+							return true;
+						}
+						else {
+							Con_Printf("ShaderProgram.Link() failed\n");
+							GLM_ConPrintProgramLog(shader_program);
+						}
+					}
+				}
+				else {
+					Con_Printf("FragmentShader.Compile() failed\n");
+				}
+			}
+			else {
+				Con_Printf("GeometryShader.Compile() failed\n");
+			}
+		}
+		else {
+			Con_Printf("VertexShader.Compile() failed\n");
+		}
+	}
+	else {
+		Con_Printf("Shaders not supported\n");
+		return false;
+	}
+
+	if (shader_program) {
+		glDeleteProgram(shader_program);
+	}
+	if (fragment_shader) {
+		glDeleteShader(fragment_shader);
+	}
+	if (vertex_shader) {
+		glDeleteShader(vertex_shader);
+	}
+	if (geometry_shader) {
+		glDeleteShader(geometry_shader);
+	}
+	return false;
+}
+
 qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shader_text, const char* fragment_shader_text, glm_program_t* program)
 {
 	GLuint vertex_shader = 0;
@@ -711,7 +781,6 @@ qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shade
 			}
 			else {
 				Con_Printf("FragmentShader.Compile() failed\n");
-				GLM_ConPrintShaderLog(fragment_shader);
 			}
 		}
 	}

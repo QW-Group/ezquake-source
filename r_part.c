@@ -29,27 +29,37 @@ typedef enum {
 } ptype_t;
 
 typedef struct particle_s {
-	vec3_t		org;
-	float		color;
-	vec3_t		vel;
-	float		ramp;
-	float		die;
-	ptype_t		type;
-	struct particle_s	*next;
+	vec3_t      org;
+	float       color;
+	vec3_t      vel;
+	float       ramp;
+	float       die;
+	ptype_t     type;
+	struct particle_s *next;
 } particle_t;
+
+typedef struct glm_particle_s {
+	vec3_t      gl_org;
+	float       gl_scale;
+	float       gl_color[4];
+} glm_particle_t;
 
 //#define DEFAULT_NUM_PARTICLES	2048
 #define ABSOLUTE_MIN_PARTICLES	512
 #define ABSOLUTE_MAX_PARTICLES	8192
 
 cvar_t r_particles_count = {"r_particles_count", "2048"};
+cvar_t r_drawparticles = { "r_drawparticles", "1" };
+
+// Which particles to draw this frame
+static particle_t particles[ABSOLUTE_MAX_PARTICLES];
+static glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
 
 static int	ramp1[8] = {0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61};
 static int	ramp2[8] = {0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66};
 static int	ramp3[8] = {0x6d, 0x6b, 6, 5, 4, 3};
 
-static particle_t	*particles, *active_particles, *free_particles;
-
+static particle_t	*active_particles, *free_particles;
 static int			r_numparticles;
 
 vec3_t				r_pright, r_pup, r_ppn;
@@ -87,19 +97,13 @@ void Classic_LoadParticleTexures (void) {
 		Sys_Error("Classic_LoadParticleTexures: can't load texture");
 }
 
-void Classic_AllocParticles (void) {
-
+void Classic_AllocParticles (void)
+{
 	r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_particles_count.integer, ABSOLUTE_MAX_PARTICLES);
-
-	if (particles || r_numparticles < 1) // seems Classic_AllocParticles() called from wrong place
-		Sys_Error("Classic_AllocParticles: internal error");
-
-	// can't alloc on Hunk, using native memory
-	particles = (particle_t *) Q_malloc (r_numparticles * sizeof(particle_t));
 }
 
 void Classic_InitParticles (void) {
-	if (!particles)
+	if (!r_numparticles)
 		Classic_AllocParticles ();
 	else
 		Classic_ClearParticles (); // also re-alloc particles
@@ -110,10 +114,9 @@ void Classic_InitParticles (void) {
 void Classic_ClearParticles (void) {
 	int		i;
 
-	if (!particles)
+	if (!r_numparticles)
 		return;
 
-	Q_free (particles);			// free
 	Classic_AllocParticles ();	// and alloc again
 		
 	free_particles = &particles[0];
@@ -543,51 +546,80 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 static glm_program_t billboardProgram;
 static int billboard_modelViewMatrix;
 static int billboard_projectionMatrix;
-static int billboard_color;
-static int billboard_scale;
 static int billboard_materialTex;
 static int billboard_apply_texture;
 static int billboard_alpha_texture;
 
-void GLM_DrawBillboard(byte* color, float scale, qbool apply_texture, qbool alpha_texture, int vao, int length)
+qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program);
+
+void GLM_CreateParticleProgram()
 {
 	if (!billboardProgram.program) {
 		const char* vertexShaderText =
 			"#version 430\n"
 			"\n"
 			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in vec2 tex;\n"
+			"layout(location = 1) in float scale;\n"
+			"layout(location = 2) in vec4 colour;\n"
 			"\n"
-			"out vec2 TextureCoord;\n"
+			"out float pointScale;\n"
+			"out vec4 pointColour;\n"
 			"\n"
 			"uniform mat4 modelViewMatrix;\n"
 			"uniform mat4 projectionMatrix;\n"
-			"uniform float scale;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
-			"    mat4 matrix = modelViewMatrix;"
-			"    matrix[0][0] = 1.5 * scale;"
-			"    matrix[0][1] = 0;"
-			"    matrix[0][2] = 0;"
-			"    matrix[1][0] = 0;"
-			"    matrix[1][1] = 1.5 * scale;"
-			"    matrix[1][2] = 0;"
-			"    matrix[2][0] = 0;"
-			"    matrix[2][1] = 0;"
-			"    matrix[2][2] = 1.5 * scale;"
-			"    gl_Position = projectionMatrix * matrix * vec4(position, 1);\n"
-			"    TextureCoord = tex;\n"
+			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);\n"
+			"    pointScale = scale;\n"
+			"    pointColour = colour;\n"
 			"}\n";
+
+		// Geometry shader converts single points to billboards
+		const char* geometryShaderText =
+			"#version 430\n"
+			"\n"
+			"layout(points) in;\n"
+			"layout(triangle_strip, max_vertices = 4) out;\n"
+			"\n"
+			"in float pointScale[1];\n"
+			"in vec4 pointColour[1];\n"
+			"\n"
+			"out vec2 TextureCoord;\n"
+			"out vec4 fragColour;\n"
+			"\n"
+			"void main() {\n"
+			"    float size = pointScale[0];\n"
+			"    fragColour = pointColour[0];\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + vec4(0, 0.0, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(0, 0);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + vec4(0, size, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(0, 1);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + vec4(size, 0, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(1, 0);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    gl_Position = gl_in[0].gl_Position + vec4(size, size, 0.0, 0.0);\n"
+			"    TextureCoord = vec2(1,1);\n"
+			"    EmitVertex();\n"
+			"\n"
+			"    EndPrimitive();\n"
+			"}\n";
+
 		const char* fragmentShaderText =
 			"#version 430\n"
 			"\n"
-			"uniform vec4 color;\n"
 			"uniform sampler2D materialTex;\n"
 			"uniform bool apply_texture;\n"
 			"uniform bool alpha_texture;\n"
 			"\n"
 			"in vec2 TextureCoord;\n"
+			"in vec4 fragColour;\n"
 			"out vec4 frag_colour;\n"
 			"\n"
 			"void main()\n"
@@ -604,88 +636,107 @@ void GLM_DrawBillboard(byte* color, float scale, qbool apply_texture, qbool alph
 			"    else {\n"
 			"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
 			"    }\n"
-			"    frag_colour = texColor * color;"
+			"    frag_colour = texColor * fragColour;"
 			"}\n";
 
 		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Billboards", vertexShaderText, fragmentShaderText, &billboardProgram);
+		GLM_CreateVGFProgram("Billboards", vertexShaderText, geometryShaderText, fragmentShaderText, &billboardProgram);
 
 		billboard_modelViewMatrix = glGetUniformLocation(billboardProgram.program, "modelViewMatrix");
 		billboard_projectionMatrix = glGetUniformLocation(billboardProgram.program, "projectionMatrix");
-		billboard_color = glGetUniformLocation(billboardProgram.program, "color");
-		billboard_scale = glGetUniformLocation(billboardProgram.program, "scale");
 		billboard_materialTex = glGetUniformLocation(billboardProgram.program, "materialTex");
 		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
 		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
 	}
+}
 
-	if (billboardProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
+static GLuint particleVBO;
+static GLuint particleVAO;
 
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+static GLuint GLM_CreateParticleVAO(void)
+{
+	if (!particleVBO) {
+		glGenBuffers(1, &particleVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_STATIC_DRAW);
+	}
 
-		glUseProgram(billboardProgram.program);
-		glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform4f(billboard_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		glUniform1f(billboard_scale, scale);
-		glUniform1i(billboard_materialTex, 0);
-		glUniform1i(billboard_apply_texture, apply_texture ? 1 : 0);
-		glUniform1i(billboard_alpha_texture, alpha_texture ? 1 : 0);
+	if (!particleVAO) {
+		glGenVertexArrays(1, &particleVAO);
+		glBindVertexArray(particleVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) 0);
+		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 4));
+	}
 
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, length);
+	return particleVAO;
+}
+
+void GLM_DrawParticles(int number, qbool square)
+{
+	if (!billboardProgram.program) {
+		GLM_CreateParticleProgram();
+	}
+
+	{
+		GLuint vao = GLM_CreateParticleVAO();
+
+		if (billboardProgram.program && vao) {
+			float modelViewMatrix[16];
+			float projectionMatrix[16];
+
+			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+			glUseProgram(billboardProgram.program);
+			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+			glUniform1i(billboard_materialTex, 0);
+			glUniform1i(billboard_apply_texture, !square);
+			glUniform1i(billboard_alpha_texture, 0);
+
+			glBindVertexArray(vao);
+			glDrawArrays(GL_POINTS, 0, number);
+		}
 	}
 }
 
 void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 {
-	static GLuint simpleItemVBO;
-	static GLuint simpleItemVAO;
-
 	float oldMatrix[16];
 
-	if (!simpleItemVBO) {
-		float verts[4][VERTEXSIZE] = { 0 };
-
-		VectorSet(verts[0], 0, 0, 0);
-		verts[0][3] = 0;
-		verts[0][4] = 0;
-
-		VectorSet(verts[1], 0, 1, 0);
-		verts[1][3] = 0;
-		verts[1][4] = 1;
-
-		VectorSet(verts[2], 1, 0, 0);
-		verts[2][3] = 1;
-		verts[2][4] = 0;
-
-		VectorSet(verts[3], 1, 1, 0);
-		verts[3][3] = 1;
-		verts[3][4] = 1;
-
-		glGenBuffers(1, &simpleItemVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
-		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
-	}
-
-	if (!simpleItemVAO) {
-		glGenVertexArrays(1, &simpleItemVAO);
-		glBindVertexArray(simpleItemVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+	if (!billboardProgram.program) {
+		GLM_CreateParticleProgram();
 	}
 
 	{
+		GLuint vao = GLM_CreateParticleVAO();
+
 		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
 		GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
 
-		GLM_DrawBillboard(color, scale, !square, false, simpleItemVAO, 4);
+		if (billboardProgram.program && vao) {
+			float modelViewMatrix[16];
+			float projectionMatrix[16];
+
+			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+			glUseProgram(billboardProgram.program);
+			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+			glUniform1i(billboard_materialTex, 0);
+			glUniform1i(billboard_apply_texture, !square);
+			glUniform1i(billboard_alpha_texture, 0);
+
+			glBindVertexArray(vao);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, square ? 4 : 3);
+		}
+
 		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
 	}
 }
@@ -700,6 +751,7 @@ void Classic_DrawParticles(void)
 	float dist, scale, r_partscale;
 	extern cvar_t gl_particle_style;
 	float oldModelViewMatrix[16];
+	int particles_to_draw = 0;
 
 	if (!active_particles) {
 		return;
@@ -729,12 +781,9 @@ void Classic_DrawParticles(void)
 			glDisable(GL_TEXTURE_2D); // don't use texture
 			glBegin(GL_QUADS);
 		}
-		else if (!GL_ShadersSupported()) {
+		else {
 			glBegin(GL_TRIANGLES);
 		}
-	}
-	else {
-		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
 	}
 
 	VectorScale(vup, 1.5, up);
@@ -793,7 +842,13 @@ void Classic_DrawParticles(void)
 		color[3] = theAlpha;
 
 		if (GL_ShadersSupported()) {
-			GLM_DrawParticle(color, p->org, scale, gl_particle_style.integer);
+			glm_particle_t* glpart = &glparticles[particles_to_draw++];
+			glpart->gl_color[0] = color[0] * 1.0 / 255;
+			glpart->gl_color[1] = color[1] * 1.0 / 255;
+			glpart->gl_color[2] = color[2] * 1.0 / 255;
+			glpart->gl_color[3] = color[3] * 1.0 / 255;
+			glpart->gl_scale = scale;
+			VectorCopy(p->org, glpart->gl_org);
 		}
 		else {
 			glColor4ubv(color);
@@ -875,6 +930,17 @@ void Classic_DrawParticles(void)
 		glEnd();
 	}
 	else {
+		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
+		/*
+		{
+			void* buffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+			memcpy(buffer, particles, sizeof(particles[0]) * particles_to_draw);
+			glUnmapBuffer(GL_ARRAY_BUFFER);
+		}*/
+		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
+		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
+
 		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldModelViewMatrix);
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -892,6 +958,7 @@ void R_InitParticles(void) {
 
 		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 		Cvar_Register (&r_particles_count);
+		Cvar_Register (&r_drawparticles);
 		Cvar_ResetCurrentGroup();
 
 		if ((i = COM_CheckParm ("-particles")) && i + 1 < COM_Argc())
@@ -909,13 +976,17 @@ void R_ClearParticles(void) {
 
 void R_DrawParticles(void)
 {
+	if (!r_drawparticles.integer) {
+		return;
+	}
+
 	if (GL_ShadersSupported()) {
 		Classic_DrawParticles();
 		//QMB_DrawParticles();
 	}
 	else {
 		Classic_DrawParticles();
-		QMB_DrawParticles();
+		//QMB_DrawParticles();
 	}
 }
 

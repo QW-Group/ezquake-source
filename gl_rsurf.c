@@ -613,10 +613,10 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 			}
 
 			for ( ; s; s = s->texturechain) {
-				GL_Bind(lightmap_textures[s->lightmaptexturenum]);
 				R_RenderDynamicLightmaps(s);
 				k = s->lightmaptexturenum;
 				if (lightmap_modified[k]) {
+					GL_Bind(lightmap_textures[s->lightmaptexturenum]);
 					R_UploadLightMap(k);
 				}
 			}

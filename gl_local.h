@@ -471,6 +471,7 @@ void GLM_ConPrintProgramLog(GLuint program);
 
 typedef struct glm_program_s {
 	GLuint vertex_shader;
+	GLuint geometry_shader;
 	GLuint fragment_shader;
 	GLuint program;
 } glm_program_t;
