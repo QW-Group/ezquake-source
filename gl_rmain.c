@@ -693,8 +693,6 @@ static glm_program_t aliasFrameProgram;
 
 void GL_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 {
-	extern void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
-
 	int vertIndex = pose1 * paliashdr->vertsPerPose;
 	byte color[4];
 	float l;

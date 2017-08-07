@@ -234,11 +234,16 @@ void EmitFlatPoly (msurface_t *fa) {
 	float *v;
 	int i;
 	for (p = fa->polys; p; p = p->next) {
-		glBegin (GL_POLYGON);
-		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-			glVertex3fv (v);
+		if (GL_ShadersSupported()) {
+			GLM_DrawFlatPoly(color_white, p->vao, p->numverts, false);
 		}
-		glEnd ();
+		else {
+			glBegin(GL_POLYGON);
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+				glVertex3fv(v);
+			}
+			glEnd();
+		}
 	}
 }
 
@@ -939,26 +944,80 @@ static void R_DrawSkyBox (void)
 	}
 }
 
-static void EmitSkyVert (vec3_t v)
+#define SUBDIVISIONS	10
+
+#define MAX_SKYPOLYS (SUBDIVISIONS * SUBDIVISIONS * 6)
+#define FLOATS_PER_SKYVERT 5
+static float glm_sky_verts[(MAX_SKYPOLYS * 4 + (MAX_SKYPOLYS - 1) * 2) * FLOATS_PER_SKYVERT];
+static GLuint glm_sky_vao;
+static GLuint glm_sky_vbo;
+static int skyVerts = 0;
+
+static void GLM_DrawSkyVerts(void)
+{
+	if (!glm_sky_vbo) {
+		glGenBuffers(1, &glm_sky_vbo);
+	}
+	glBindBufferExt(GL_ARRAY_BUFFER, glm_sky_vbo);
+	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyVerts, glm_sky_verts, GL_STATIC_DRAW);
+
+	if (!glm_sky_vao) {
+		glGenVertexArrays(1, &glm_sky_vao);
+		glBindVertexArray(glm_sky_vao);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*) (sizeof(float) * 3));
+	}
+
+	GL_EnterRegion(__FUNCTION__);
+	GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, glm_sky_vao, 0, skyVerts / FLOATS_PER_SKYVERT, false, true, false);
+	GL_LeaveRegion();
+	skyVerts = 0;
+}
+
+static void QueueSkyVert(vec3_t v, float s, float t)
+{
+	if (skyVerts + FLOATS_PER_SKYVERT < sizeof(glm_sky_verts) / sizeof(glm_sky_verts[0])) {
+		glm_sky_verts[skyVerts + 0] = v[0];
+		glm_sky_verts[skyVerts + 1] = v[1];
+		glm_sky_verts[skyVerts + 2] = v[2];
+		glm_sky_verts[skyVerts + 3] = s;
+		glm_sky_verts[skyVerts + 4] = t;
+		skyVerts += FLOATS_PER_SKYVERT;
+	}
+}
+
+static void EmitSkyVert(vec3_t v, qbool newPoly)
 {
 	vec3_t dir;
 	float	s, t;
 	float	length;
 
-	VectorSubtract (v, r_origin, dir);
+	VectorSubtract(v, r_origin, dir);
 	dir[2] *= 3;	// flatten the sphere
 
-	length = VectorLength (dir);
-	length = 6*63/length;
+	length = VectorLength(dir);
+	length = 6 * 63 / length;
 
 	dir[0] *= length;
 	dir[1] *= length;
 
-	s = (speedscale + dir[0]) * (1.0/128);
-	t = (speedscale + dir[1]) * (1.0/128);
+	s = (speedscale + dir[0]) * (1.0 / 128);
+	t = (speedscale + dir[1]) * (1.0 / 128);
 
-	glTexCoord2f (s, t);
-	glVertex3fv (v);
+	if (GL_ShadersSupported()) {
+		if (skyVerts && newPoly) {
+			// degenerate strip...
+			QueueSkyVert(&glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT], glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT + 3], glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT + 4]);
+			QueueSkyVert(v, s, t);
+		}
+		QueueSkyVert(v, s, t);
+	}
+	else {
+		glTexCoord2f(s, t);
+		glVertex3fv(v);
+	}
 }
 
 // s and t range from -1 to 1
@@ -985,8 +1044,6 @@ static void MakeSkyVec2 (float s, float t, int axis, vec3_t v)
 
 }
 
-#define SUBDIVISIONS	10
-
 static void DrawSkyFace (int axis)
 {
 	int i, j;
@@ -995,7 +1052,9 @@ static void DrawSkyFace (int axis)
 
 	float fstep = 2.0 / SUBDIVISIONS;
 
-	glBegin (GL_QUADS);
+	if (!GL_ShadersSupported()) {
+		glBegin(GL_QUADS);
+	}
 
 	for (i = 0; i < SUBDIVISIONS; i++)
 	{
@@ -1015,43 +1074,63 @@ static void DrawSkyFace (int axis)
 			MakeSkyVec2 (s + fstep, t + fstep, axis, vecs[2]);
 			MakeSkyVec2 (s + fstep, t, axis, vecs[3]);
 
-			EmitSkyVert (vecs[0]);
-			EmitSkyVert (vecs[1]);
-			EmitSkyVert (vecs[2]);
-			EmitSkyVert (vecs[3]);
+			if (GL_ShadersSupported()) {
+				EmitSkyVert(vecs[0], true);
+				EmitSkyVert(vecs[1], false);
+				EmitSkyVert(vecs[3], false);
+				EmitSkyVert(vecs[2], false);
+			}
+			else {
+				EmitSkyVert(vecs[0], false);
+				EmitSkyVert(vecs[1], false);
+				EmitSkyVert(vecs[2], false);
+				EmitSkyVert(vecs[3], false);
+			}
 		}
 	}
 
-	glEnd ();
+	if (!GL_ShadersSupported()) {
+		glEnd();
+	}
 }
 
-
-static void R_DrawSkyDome (void)
+static void R_DrawSkyDome(void)
 {
 	int i;
 
 	GL_DisableMultitexture();
-	GL_Bind (solidskytexture);
+	GL_Bind(solidskytexture);
 
-	speedscale = r_refdef2.time*8;
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+
+	speedscale = r_refdef2.time * 8;
 	speedscale -= (int)speedscale & ~127;
 
+	skyVerts = 0;
 	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i]	|| skymins[1][i] >= skymaxs[1][i]))
+		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i]))
 			continue;
-		DrawSkyFace (i);
+		DrawSkyFace(i);
+	}
+	if (GL_ShadersSupported()) {
+		GLM_DrawSkyVerts();
 	}
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_Bind (alphaskytexture);
+	GL_Bind(alphaskytexture);
 
-	speedscale = r_refdef2.time*16;
+	speedscale = r_refdef2.time * 16;
 	speedscale -= (int)speedscale & ~127;
 
+	skyVerts = 0;
 	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i]	|| skymins[1][i] >= skymaxs[1][i]))
+		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 			continue;
-		DrawSkyFace (i);
+		}
+		DrawSkyFace(i);
+	}
+	if (GL_ShadersSupported()) {
+		GLM_DrawSkyVerts();
 	}
 }
 
@@ -1116,10 +1195,61 @@ static void GLM_DrawFastSky(void)
 
 void GLM_DrawSky(void)
 {
-	//if (r_fastsky.value) {
+	msurface_t	*fa;
+	qbool		ignore_z;
+
+	if (r_fastsky.value) {
 		GLM_DrawFastSky();
 		return;
-	//}
+	}
+
+	if (!R_DetermineSkyLimits(&ignore_z)) {
+		return;
+	}
+
+	// turn off Z tests & writes to avoid problems on large maps
+	glDisable (GL_DEPTH_TEST);
+
+	// draw a skybox or classic quake clouds
+	/*if (r_skyboxloaded) {
+		R_DrawSkyBox();
+	}
+	else*/ {
+		R_DrawSkyDome();
+	}
+
+	glEnable (GL_DEPTH_TEST);
+
+	// draw the sky polys into the Z buffer
+	// don't need depth test yet
+	if (!ignore_z) {
+		if (gl_fogenable.value && gl_fogsky.value) {
+			GL_EnableFog();
+			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+			glBlendFunc(GL_ONE, GL_ZERO);
+		}
+		else {
+			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+			glBlendFunc(GL_ZERO, GL_ONE);
+		}
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+		for (fa = skychain; fa; fa = fa->texturechain) {
+			EmitFlatPoly(fa);
+		}
+
+		if (gl_fogenable.value && gl_fogsky.value) {
+			GL_DisableFog();
+		}
+		else {
+			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		}
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	}
+
+	skychain = NULL;
+	skychain_tail = &skychain;
 }
 
 /*

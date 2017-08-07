@@ -524,6 +524,8 @@ void GLM_DebugMatrix(GLenum type, const char* value);
 void GLM_CreateVAOForModel(model_t* m);
 void GL_UseProgram(GLuint program);
 
+void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
 void GL_LeaveRegion(void);
