@@ -1193,79 +1193,112 @@ static GLint drawFlat_apply_lightmap;
 static GLint drawFlat_apply_texture;
 static GLint drawFlat_alpha_texture;
 
+static void Compile_DrawFlatPolyProgram(void)
+{
+	const char* vertexShaderText =
+		"#version 430\n"
+		"\n"
+		"layout(location = 0) in vec3 position;\n"
+		"layout(location = 1) in vec2 tex;\n"
+		"layout(location = 2) in vec2 lightmapCoord;\n"
+		"layout(location = 3) in vec2 detailCoord;\n"
+		"\n"
+		"out vec2 TexCoordLightmap;\n"
+		"out vec2 TextureCoord;\n"
+		"\n"
+		"uniform mat4 modelViewMatrix;\n"
+		"uniform mat4 projectionMatrix;\n"
+		"\n"
+		"void main()\n"
+		"{\n"
+		"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
+		"    TextureCoord = tex;\n"
+		"    TexCoordLightmap = lightmapCoord;\n"
+		"}\n";
+	const char* fragmentShaderText =
+		"#version 430\n"
+		"\n"
+		"uniform vec4 color;\n"
+		"uniform sampler2D materialTex;\n"
+		"uniform sampler2D lightmapTex;\n"
+		"uniform bool apply_lightmap;\n"
+		"uniform bool apply_texture;\n"
+		"uniform bool alpha_texture;\n"
+		"\n"
+		"in vec2 TextureCoord;\n"
+		"in vec2 TexCoordLightmap;\n"
+		"out vec4 frag_colour;\n"
+		"\n"
+		"void main()\n"
+		"{\n"
+		"    vec4 texColor;\n"
+		"    vec4 lmColor;\n"
+		"\n"
+		"    if (apply_texture) {\n"
+		"        texColor = texture(materialTex, TextureCoord);\n"
+		"        if (alpha_texture && texColor.a < 0.6) {\n"
+		"            discard;"
+		"        }\n"
+		"    }\n"
+		"    else {\n"
+		"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+		"    }\n"
+		"\n"
+		"    if (apply_lightmap) {\n"
+		"        lmColor = texture(lightmapTex, TexCoordLightmap);\n"
+		"        frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;\n"
+		"    }\n"
+		"    else {\n"
+		"        frag_colour = texColor * color;\n"
+		"    }\n"
+		"}\n";
+
+	// Initialise program for drawing image
+	GLM_CreateSimpleProgram("Drawflat poly", vertexShaderText, fragmentShaderText, &drawFlatPolyProgram);
+
+	drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
+	drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
+	drawFlat_color = glGetUniformLocation(drawFlatPolyProgram.program, "color");
+	drawFlat_materialTex = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
+	drawFlat_lightmapTex = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
+	drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
+	drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
+	drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+}
+
+void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	if (!drawFlatPolyProgram.program) {
+		Compile_DrawFlatPolyProgram();
+	}
+
+	if (drawFlatPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		glUseProgram(drawFlatPolyProgram.program);
+		glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1i(drawFlat_materialTex, 0);
+		glUniform1i(drawFlat_lightmapTex, 2);
+		glUniform1i(drawFlat_apply_lightmap, apply_lightmap ? 1 : 0);
+		glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
+		glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
+
+		glBindVertexArray(vao);
+		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
+	}
+}
+
 // Very simple polygon drawing until we fix
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (!drawFlatPolyProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in vec2 tex;\n"
-			"layout(location = 2) in vec2 lightmapCoord;\n"
-			"layout(location = 3) in vec2 detailCoord;\n"
-			"\n"
-			"out vec2 TexCoordLightmap;\n"
-			"out vec2 TextureCoord;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
-			"    TextureCoord = tex;\n"
-			"    TexCoordLightmap = lightmapCoord;\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform vec4 color;\n"
-			"uniform sampler2D materialTex;\n"
-			"uniform sampler2D lightmapTex;\n"
-			"uniform bool apply_lightmap;\n"
-			"uniform bool apply_texture;\n"
-			"uniform bool alpha_texture;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"in vec2 TexCoordLightmap;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"    vec4 lmColor;\n"
-			"\n"
-			"    if (apply_texture) {\n"
-			"        texColor = texture(materialTex, TextureCoord);\n"
-			"        if (alpha_texture && texColor.a < 0.6) {\n"
-			"            discard;"
-			"        }\n"
-			"    }\n"
-			"    else {\n"
-			"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-			"    }\n"
-			"\n"
-			"    if (apply_lightmap) {\n"
-			"        lmColor = texture(lightmapTex, TexCoordLightmap);\n"
-			"        frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;\n"
-			"    }\n"
-			"    else {\n"
-			"        frag_colour = texColor * color;\n"
-			"    }\n"
-			"}\n";
-
-		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Drawflat poly", vertexShaderText, fragmentShaderText, &drawFlatPolyProgram);
-		
-		drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
-		drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
-		drawFlat_color = glGetUniformLocation(drawFlatPolyProgram.program, "color");
-		drawFlat_materialTex = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
-		drawFlat_lightmapTex = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
-		drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
-		drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
-		drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+		Compile_DrawFlatPolyProgram();
 	}
 
 	if (drawFlatPolyProgram.program && vao) {
@@ -1309,8 +1342,9 @@ void GLM_DrawFlat(model_t* model)
 {
 	byte wallColor[4];
 	byte floorColor[4];
-	int i, waterline;
+	int i, waterline, v;
 	msurface_t* surf;
+	const qbool draw_whole_map = false;
 
 	GL_DisableMultitexture();
 
@@ -1336,8 +1370,44 @@ void GLM_DrawFlat(model_t* model)
 			lightmap = tex->gl_first_lightmap;
 			glDisable(GL_CULL_FACE);
 			while (lightmap >= 0 && tex->gl_vbo_length[lightmap]) {
-				GL_Bind(lightmap_textures[lightmap]);
-				GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, tex->gl_vbo_start[lightmap], tex->gl_vbo_length[lightmap], true, true, false);
+				if (draw_whole_map) {
+					GL_Bind(lightmap_textures[lightmap]);
+					GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, tex->gl_vbo_start[lightmap], tex->gl_vbo_length[lightmap], true, true, false);
+				}
+				else {
+					GLsizei count;
+					GLushort indices[1024];
+
+					count = 0;
+					GL_Bind(lightmap_textures[lightmap]);
+					for (waterline = 0; waterline < 2; waterline++) {
+						for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
+							int newVerts = surf->polys->numverts;
+
+							// Fixme: change texturechain to go by lightmap...
+							if (surf->lightmaptexturenum != lightmap) {
+								continue;
+							}
+
+							if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+								GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+								count = 0;
+							}
+
+							if (count) {
+								indices[count++] = indices[count - 1];
+								indices[count++] = surf->polys->vbo_start;
+							}
+							for (v = 0; v < newVerts; ++v) {
+								indices[count++] = surf->polys->vbo_start + v;
+							}
+						}
+					}
+
+					if (count) {
+						GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+					}
+				}
 				lightmap = tex->gl_next_lightmap[lightmap];
 			}
 			glEnable(GL_CULL_FACE);
@@ -2147,6 +2217,10 @@ void GLM_CreateVAOForModel(model_t* m)
 	for (i = 0; i < m->numtextures; ++i) {
 		int lightmap = -1;
 		int length = 0;
+
+		if (!m->textures[i]) {
+			continue;
+		}
 
 		// Find first lightmap for this texture
 		for (j = 0; j < m->numsurfaces; ++j) {
