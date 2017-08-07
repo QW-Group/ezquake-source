@@ -1026,7 +1026,7 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
 // Modern: just cache as the string is printed, dump out as one.  Still pretty terrible
-#define GLM_STRING_CACHE 1024
+#define GLM_STRING_CACHE 4096
 typedef struct gl_text_cache_s {
 	int character;
 	float x, y;

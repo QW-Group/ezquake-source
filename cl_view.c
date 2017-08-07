@@ -973,14 +973,15 @@ void DropPunchAngle (void) {
 //the entity origin, so any view position inside that will be valid
 extern vrect_t scr_vrect;
 
-void V_RenderView (void) {
+qbool V_PreRenderView(void)
+{
 	char *p;
 
 	cl.simangles[ROLL] = 0;	// FIXME @@@ 
 
 	if (cls.state != ca_active) {
 		V_CalcBlend ();
-		return;
+		return false;
 	}
 
 	view_frame = &cl.frames[cl.validsequence & UPDATE_MASK];
@@ -998,25 +999,26 @@ void V_RenderView (void) {
 	r_refdef2.time = cl.time;
 
 	// restrictions
-	r_refdef2.allow_cheats = (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive)
-		|| cls.demoplayback;
-	if (cls.demoplayback || cl.spectator)
-	{
+	r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);
+	if (cls.demoplayback || cl.spectator) {
 		r_refdef2.allow_lumas = true;
 		r_refdef2.max_fbskins = 1;
 		r_refdef2.max_watervis = 1;
 	}
-	else 
-	{
+	else {
 		r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
 		r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) :
 			cl.teamfortress ? 0 : 1;
 		r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
 	}
 
-//	r_refdef2.viewplayernum = Cam_PlayerNum();
-//	r_refdef2.lightstyles = cl_lightstyle;
+	//	r_refdef2.viewplayernum = Cam_PlayerNum();
+	//	r_refdef2.lightstyles = cl_lightstyle;
+	return true;
+}
 
+void V_RenderView (void)
+{
 	R_RenderView ();
 }
 

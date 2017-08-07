@@ -3228,21 +3228,38 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	return true;
 }
 
+void R_SetupFrame(void);
+void R_CreateWorldTextureChains(void);
+qbool V_PreRenderView(void);
+
 void SCR_UpdateScreenPlayerView (int flags)
 {
+	qbool renderView = false;
+
 	GL_EnterRegion(__FUNCTION__);
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef();
 	}
 
-	// Do 3D refresh drawing, and then update the screen.
-	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
-
 	SCR_SetUpToDrawConsole ();
 
 	SCR_SetupCI ();
 
-	V_RenderView ();
+	renderView = V_PreRenderView();
+
+	if (renderView) {
+		GL_EnterRegion("WorldTextureChains");
+		R_SetupFrame ();
+		R_CreateWorldTextureChains();
+		GL_LeaveRegion();
+	}
+
+	// Do 3D refresh drawing, and then update the screen.
+	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+
+	if (renderView) {
+		V_RenderView();
+	}
 
 	if (!GL_ShadersSupported() && (flags & UPDATESCREEN_POSTPROCESS)) {
 		R_RenderPostProcess();

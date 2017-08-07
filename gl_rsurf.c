@@ -80,6 +80,7 @@ glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
 extern cvar_t gl_textureless; //Qrack
+extern cvar_t gl_deferlightmap;
 
 void DrawGLPoly (glpoly_t *p);
 void R_DrawFlat (model_t *model);
@@ -615,10 +616,19 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 			for ( ; s; s = s->texturechain) {
 				R_RenderDynamicLightmaps(s);
 				k = s->lightmaptexturenum;
-				if (lightmap_modified[k]) {
-					GL_Bind(lightmap_textures[s->lightmaptexturenum]);
+				if (lightmap_modified[k] && !gl_deferlightmap.integer) {
+					GL_Bind(lightmap_textures[k]);
 					R_UploadLightMap(k);
 				}
+			}
+		}
+	}
+
+	if (gl_deferlightmap.integer) {
+		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+			if (lightmap_modified[i]) {
+				GL_Bind(lightmap_textures[i]);
+				R_UploadLightMap(i);
 			}
 		}
 	}
@@ -1843,6 +1853,20 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	R_RecursiveWorldNode (node->children[!side], clipflags);
 }
 
+void R_CreateWorldTextureChains(void)
+{
+	if (cl.worldmodel) {
+		R_ClearTextureChains(cl.worldmodel);
+
+		VectorCopy(r_refdef.vieworg, modelorg);
+
+		//set up texture chains for the world
+		R_RecursiveWorldNode(cl.worldmodel->nodes, 15);
+
+		R_RenderAllDynamicLightmaps(cl.worldmodel);
+	}
+}
+
 void R_DrawWorld (void)
 {
 	entity_t ent;
@@ -1851,14 +1875,11 @@ void R_DrawWorld (void)
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
 
-	R_ClearTextureChains(cl.worldmodel);
-
 	VectorCopy (r_refdef.vieworg, modelorg);
 
 	currententity = &ent;
 	currenttexture = -1;
 
-		R_RenderAllDynamicLightmaps(cl.worldmodel);
 	//draw the world sky
 	GL_EnterRegion("R_DrawSky");
 	R_DrawSky ();
