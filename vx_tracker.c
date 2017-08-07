@@ -37,7 +37,6 @@ extern cvar_t		cl_useimagesinfraglog;
 static int active_track = 0;
 static int max_active_tracks = 0;
 
-
 cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0"};
 cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1"};
 cvar_t		amf_tracker_streaks			= {"r_tracker_streaks", "0"};
@@ -75,9 +74,18 @@ typedef struct
 	char msg[MAX_TRACKER_MSG_LEN];
 	float die;
 	tracktype_t tt;
+
+	// Pre-parse now, don't do this every frame
+	char imagename[2][64];
+	int imagepos[2];
+
+	wchar content[2][MAX_TRACKER_MSG_LEN];
+	int printable_length[2];
 } trackmsg_t;
 
 trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
+
+static void VX_PreProcessMessage(trackmsg_t* msg);
 
 static struct {
 	double time;
@@ -221,6 +229,7 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
 	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	trackermsg[active_track].tt = tt;
+	VX_PreProcessMessage(&trackermsg[active_track]);
 	active_track += 1;
 }
 
@@ -691,10 +700,10 @@ void VXSCR_DrawTrackerString (void)
 {
 	byte	rgba[4];
 	char	*start, image[256], fullpath[MAX_PATH];
-	int		l;
 	int		j;
 	int		x, y;
 	int		i, printable_chars;
+	int     line;
 	float	alpha = 1;
 	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
@@ -716,67 +725,14 @@ void VXSCR_DrawTrackerString (void)
 		if (trackermsg[i].die < r_refdef2.time)
 			continue;
 
-		// Get the start of the tracker message.
-		start = trackermsg[i].msg;
-
 		// Fade the text as it gets older.
 		alpha = min(1, (trackermsg[i].die - r_refdef2.time) / 2);
 
-		// Loop through the tracker message and parse it.
-		while (start[0])
-		{
-			l = printable_chars = 0;
+		for (line = 0; line < 2; ++line) {
+			printable_chars = trackermsg[i].printable_length[line];
 
-			// Find the number of printable characters for the next line.
-			while (start[l] && start[l] != '\n')
-			{
-				// Look for any escape codes for images and color codes.
-
-				// Image escape.
-				if (start[l] == '\\') 
-				{
-					// We found opening slash, get image name now.
-					int from, to;
-
-					from = to = ++l;
-
-					for( ; start[l]; l++) 
-					{
-						if (start[l] == '\n')
-							break; // Something bad, we didn't find a closing slash.
-
-						if (start[l] == '\\')
-							break; // Found a closing slash.
-
-						to = l + 1;
-					}
-
-					if (to > from)
-						printable_chars += 2; // We got potential image name, treat image as two printable characters.
-
-					if (start[l] == '\\')
-						l++; // Advance.
-
-					continue;
-				}
-
-				// Get rid of color codes.
-				if (start[l] == '&')
-				{
-					if (start[l + 1] == 'r') 
-					{
-						l += 2;
-						continue;
-					}
-					else if (start[l + 1] == 'c' && start[l + 2] && start[l + 3] && start[l + 4]) 
-					{
-						l += 5;
-						continue;
-					}
-				}
-
-				printable_chars++;	// Increment count of printable chars.
-				l++;				// Increment count of any chars in string untill end or new line.
+			if (printable_chars <= 0) {
+				break;
 			}
 
 			// Place the tracker.
@@ -784,92 +740,125 @@ void VXSCR_DrawTrackerString (void)
 			x += amf_tracker_x.value;
 
 			// Draw the string.
-			for (j = 0; j < l;)
-			{
-				if (start[j] == '\\') 
-				{ 
-					// We found opening slash, get image name now
-					int from, to;
+			Draw_SColoredString(x, y, trackermsg[i].content[line], NULL, 0, 0, scale);
 
-					from = to = ++j;
+			// Draw the image
+			if (trackermsg[i].imagename[line][0]) {
+				mpic_t *pic;
 
-					for( ; start[j]; j++) 
-					{
-						if (start[j] == '\n')
-							break; // Something bad, we does't found closing slash.
+				snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", trackermsg[i].imagename[line]);
 
-						if (start[j] == '\\')
-							break; // Found closing slash.
-
-						to = j + 1;
-					}
-
-					if (to > from) 
-					{ 
-						// We got potential image name, treat image as two printable characters.
-						mpic_t *pic;
-						int size = to - from;
-
-						size = min(size, (int)sizeof(image) - 1);
-
-						memcpy(image, (start + from), size); // Copy image name to temp buffer.
-						image[size] = 0;
-
-						if (image[0])
-						{
-							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", image);
-
-							if ((pic = Draw_CachePicSafe(fullpath, false, true)))
-							{
-								Draw_FitPic(
-										(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
-										(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
-										im_scale * 8 * 2 * scale,
-										im_scale * 8 * scale, pic);
-							}
-						}
-
-						x += 8 * 2 * scale;
-					}
-
-					if (start[j] == '\\')
-						j++; // Advance.
-
-					continue;
+				if ((pic = Draw_CachePicSafe(fullpath, false, true))) {
+					Draw_FitPic(
+						(float)x + (trackermsg[i].imagepos[line] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
+						(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
+						im_scale * 8 * 2 * scale,
+						im_scale * 8 * scale, pic
+					);
 				}
-
-				if (start[j] == '&') 
-				{
-					if (start[j + 1] == 'r')	
-					{
-						memset(rgba, 255, sizeof(byte) * 4);
-						j += 2;
-						continue;
-					}
-					else if (start[j + 1] == 'c' && start[j + 2] && start[j + 3] && start[j + 4])
-					{
-						rgba[0] = (byte)(255 * ((float)(start[j + 2] - '0') / 9));
-						rgba[1] = (byte)(255 * ((float)(start[j + 3] - '0') / 9));
-						rgba[2] = (byte)(255 * ((float)(start[j + 4] - '0') / 9));
-
-						j += 5;
-						continue;
-					}
-				}
-
-				rgba[3] = 255 * alpha;
-				Draw_SColoredCharacterW (x, y, char2wc(start[j]), RGBAVECT_TO_COLOR(rgba), scale);
-
-				j++;
-				x += 8 * scale;
 			}
 
 			y += 8 * scale;	// Next line.
+		}
+	}
+}
 
-			start += l;
+// Tracker used to step through every character twice every draw frame
+// Now pre-process and throw string at renderer instead
+static void VX_PreProcessMessage(trackmsg_t* msg)
+{
+	const char* start = msg->msg;
+	int l, printable_chars, content_pos;
+	int line = 0;
 
-			if (*start == '\n')
-				start++; // Skip the \n
+	memset(msg->imagename, 0, sizeof(msg->imagename));
+	msg->imagepos[0] = msg->imagepos[1] = -1;
+	msg->content[0][0] = msg->content[1][0] = '\0';
+	msg->printable_length[0] = msg->printable_length[1] = 0;
+
+	// Loop through the tracker message and parse it.
+	while (start[0] && line < 2)
+	{
+		content_pos = l = printable_chars = 0;
+
+		// Find the number of printable characters for the next line.
+		while (start[l] && start[l] != '\n')
+		{
+			// Look for any escape codes for images and color codes.
+
+			// Image escape.
+			if (start[l] == '\\') 
+			{
+				// We found opening slash, get image name now.
+				int from, to;
+
+				from = to = ++l;
+
+				for( ; start[l]; l++) 
+				{
+					if (start[l] == '\n')
+						break; // Something bad, we didn't find a closing slash.
+
+					if (start[l] == '\\')
+						break; // Found a closing slash.
+
+					to = l + 1;
+				}
+
+				if (to > from) {
+					// We got potential image name, treat image as two printable characters.
+					if (to - from < sizeof(msg->imagename[0])) {
+						msg->imagepos[line] = printable_chars;
+						strncpy(msg->imagename[line], start + from, to - from);
+					}
+
+					msg->content[line][content_pos++] = ' ';
+					msg->content[line][content_pos++] = ' ';
+					printable_chars += 2;
+				}
+
+				if (start[l] == '\\') {
+					l++; // Advance.
+				}
+
+				continue;
+			}
+
+			// Get rid of color codes.
+			if (start[l] == '&')
+			{
+				if (start[l + 1] == 'r') 
+				{
+					msg->content[line][content_pos++] = '&';
+					msg->content[line][content_pos++] = 'r';
+					l += 2;
+					continue;
+				}
+				else if (start[l + 1] == 'c' && start[l + 2] && start[l + 3] && start[l + 4]) 
+				{
+					msg->content[line][content_pos++] = start[l];
+					msg->content[line][content_pos++] = start[l+1];
+					msg->content[line][content_pos++] = start[l+2];
+					msg->content[line][content_pos++] = start[l+3];
+					msg->content[line][content_pos++] = start[l+4];
+
+					l += 5;
+					continue;
+				}
+			}
+
+			msg->content[line][content_pos++] = start[l];
+			printable_chars++;	// Increment count of printable chars.
+			l++;				// Increment count of any chars in string untill end or new line.
+		}
+
+		msg->printable_length[line] = printable_chars;
+
+		start += l;
+		line++;
+
+		if (*start == '\n') {
+			start++; // Skip the \n
 		}
 	}
 }
