@@ -770,8 +770,6 @@ void R_DrawAlphaChain (void) {
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	glAlphaFunc(GL_GREATER, 0.333);
 	for (s = alphachain; s; s = s->texturechain) {
-		
-		
 		t = s->texinfo->texture;
 		R_RenderDynamicLightmaps (s);
 
@@ -1738,15 +1736,18 @@ void R_DrawBrushModel (entity_t *e) {
 		else {
 			DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 		}
+
+		if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {
+			R_DrawMapOutline(clmodel);
+		}
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
-	if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {
-		R_DrawMapOutline(clmodel);
-	}
-
 	R_DrawSkyChain();
-	R_DrawAlphaChain ();
+
+	if (!GL_ShadersSupported()) {
+		R_DrawAlphaChain();
+	}
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
@@ -1857,28 +1858,22 @@ void R_DrawWorld (void)
 	currententity = &ent;
 	currenttexture = -1;
 
-	//set up texture chains for the world
-	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
+		R_RenderAllDynamicLightmaps(cl.worldmodel);
+	//draw the world sky
+	GL_EnterRegion("R_DrawSky");
+	R_DrawSky ();
+	GL_LeaveRegion();
+
+	GL_EnterRegion("Entities-1st");
+	R_DrawEntitiesOnList (&cl_firstpassents);
+	GL_LeaveRegion();
 
 	if (GL_ShadersSupported()) {
-		//draw the world sky
-		R_DrawSky ();
-
-		R_DrawEntitiesOnList (&cl_firstpassents);
-
-		R_RenderAllDynamicLightmaps(cl.worldmodel);
-
+		GL_EnterRegion("DrawWorld");
 		GLM_DrawFlat(cl.worldmodel);
+		GL_LeaveRegion();
 	}
 	else {
-		//draw the world sky
-		R_DrawSky ();
-
-		R_DrawEntitiesOnList (&cl_firstpassents);
-
-		//draw the world
-		R_RenderAllDynamicLightmaps(cl.worldmodel);
-
 		if (r_drawflat.value) {
 			if (r_drawflat.integer == 1) {
 				R_DrawFlat(cl.worldmodel);

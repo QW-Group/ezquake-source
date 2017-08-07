@@ -26,6 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
+#ifdef WITH_NVTX
+#include "nvToolsExt.h"
+#endif
+
 const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
@@ -1153,3 +1157,15 @@ void GL_UseProgram(GLuint program)
 		last_program = program;
 	}
 }
+
+#ifdef WITH_NVTX
+void GL_EnterRegion(const char* regionName)
+{
+	nvtxRangePushA(regionName);
+}
+
+void GL_LeaveRegion(void)
+{
+	nvtxRangePop();
+}
+#endif

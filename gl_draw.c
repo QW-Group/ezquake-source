@@ -1197,7 +1197,6 @@ void Draw_TextCacheFlush(void)
 		}
 
 		if (textStringProgram.program) {
-			float oldModelView[16];
 			GLuint vao = Draw_CreateTextStringVAO();
 
 			{
@@ -1296,7 +1295,6 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
 {
 	float frow, fcol;
-	int i;
 	int slot;
 	int char_size = (bigchar ? 64 : 8);
 

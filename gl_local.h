@@ -524,6 +524,14 @@ void GLM_DebugMatrix(GLenum type, const char* value);
 void GLM_CreateVAOForModel(model_t* m);
 void GL_UseProgram(GLuint program);
 
+#ifdef WITH_NVTX
+void GL_EnterRegion(const char* regionName);
+void GL_LeaveRegion(void);
+#else
+#define GL_EnterRegion(x)
+#define GL_LeaveRegion()
+#endif
+
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
 

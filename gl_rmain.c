@@ -2448,10 +2448,14 @@ void R_RenderScene(void)
 
 	R_DrawWorld ();		// adds static entities to the list
 
+	GL_EnterRegion("R_DrawEntities");
 	R_DrawEntitiesOnList(&cl_visents);
 	R_DrawEntitiesOnList(&cl_alphaents);
+	GL_LeaveRegion();
 
+	GL_EnterRegion("R_DrawWaterSurfaces");
 	R_DrawWaterSurfaces();
+	GL_LeaveRegion();
 
 	if (!GL_ShadersSupported()) {
 		GL_DisableMultitexture();

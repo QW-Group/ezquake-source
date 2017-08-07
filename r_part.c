@@ -1007,6 +1007,7 @@ void R_DrawParticles(void)
 		return;
 	}
 
+	GL_EnterRegion("Particles");
 	if (GL_ShadersSupported()) {
 		Classic_DrawParticles();
 		//QMB_DrawParticles();
@@ -1015,6 +1016,7 @@ void R_DrawParticles(void)
 		Classic_DrawParticles();
 		//QMB_DrawParticles();
 	}
+	GL_LeaveRegion();
 }
 
 #define RunParticleEffect(var, org, dir, color, count)		\
