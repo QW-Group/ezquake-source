@@ -402,7 +402,10 @@ typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, G
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
+// Textures
 typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
+typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -448,6 +451,8 @@ extern glUniformMatrix4fv_t     glUniformMatrix4fv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
+extern glTexSubImage3D_t        glTexSubImage3D;
+extern glTexStorage3D_t         glTexStorage3D;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
@@ -584,5 +589,9 @@ void GL_LeaveRegion(void);
 
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
+
+// Lightmap size
+#define	LIGHTMAP_WIDTH  128
+#define	LIGHTMAP_HEIGHT 128
 
 #endif /* !__GL_LOCAL_H__ */

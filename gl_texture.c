@@ -986,10 +986,17 @@ void GL_Texture_Init(void)
 	cvar_t *cv;
 	int i;
 	extern GLuint translate_texture;
+	extern GLuint lightmap_texture_array;
 	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
 	extern GLuint sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
+	{
+		GLenum er = glGetError();
+		while (er) {
+			er = glGetError();
+		}
+	}
 
 	// Reset textures array and linked globals
 	for (i = 0; i < numgltextures; i++) {
@@ -1024,7 +1031,24 @@ void GL_Texture_Init(void)
 	glGenTextures(MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
-	glGenTextures(MAX_LIGHTMAPS, lightmap_textures);
+	if (GL_ShadersSupported() && true) {
+		glGenTextures(1, &lightmap_texture_array);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
+
+		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+			lightmap_textures[i] = lightmap_texture_array;
+		}
+	}
+	else {
+		glGenTextures(MAX_LIGHTMAPS, lightmap_textures);
+	}
 
 	// Motion blur.
 	glGenTextures(1, &sceneblur_texture);

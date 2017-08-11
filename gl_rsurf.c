@@ -25,12 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
-
-#define	BLOCK_WIDTH  128
-#define	BLOCK_HEIGHT 128
-
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 
+GLuint lightmap_texture_array;
 GLuint lightmap_textures[MAX_LIGHTMAPS];
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
@@ -42,12 +39,12 @@ static glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
 static qbool	lightmap_modified[MAX_LIGHTMAPS];
 static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
-static int allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+static int allocated[MAX_LIGHTMAPS][LIGHTMAP_WIDTH];
 static int last_lightmap_updated;
 
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
-byte	lightmaps[4 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+byte	lightmaps[4 * MAX_LIGHTMAPS * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
 
 static qbool	gl_invlightmaps = true;
 
@@ -470,10 +467,17 @@ void R_UploadLightMap (int lightmapnum) {
 
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
-	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, theRect->t, BLOCK_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-		lightmaps + (lightmapnum * BLOCK_HEIGHT + theRect->t) * BLOCK_WIDTH * 4);
-	theRect->l = BLOCK_WIDTH;
-	theRect->t = BLOCK_HEIGHT;
+	if (lightmap_texture_array) {
+		//glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
+	}
+	else {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, theRect->t, LIGHTMAP_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+			lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
+	}
+	theRect->l = LIGHTMAP_WIDTH;
+	theRect->t = LIGHTMAP_HEIGHT;
 	theRect->h = 0;
 	theRect->w = 0;
 }
@@ -609,9 +613,9 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 		theRect->w = fa->light_s - theRect->l + smax;
 	if (theRect->h + theRect->t < fa->light_t + tmax)
 		theRect->h = fa->light_t - theRect->t + tmax;
-	base = lightmaps + fa->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
-	base += (fa->light_t * BLOCK_WIDTH + fa->light_s) * 4;
-	R_BuildLightMap (fa, base, BLOCK_WIDTH * 4);
+	base = lightmaps + fa->lightmaptexturenum * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4;
+	base += (fa->light_t * LIGHTMAP_WIDTH + fa->light_s) * 4;
+	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
 static void R_RenderAllDynamicLightmaps(model_t *model)
@@ -645,7 +649,9 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 	if (gl_deferlightmap.integer) {
 		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 			if (lightmap_modified[i]) {
-				GL_Bind(lightmap_textures[i]);
+				if (!lightmap_texture_array) {
+					GL_Bind(lightmap_textures[i]);
+				}
 				R_UploadLightMap(i);
 			}
 		}
@@ -870,8 +876,9 @@ void R_DrawAlphaChain (void) {
 			GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 			//update lightmap if its modified by dynamic lights
 			k = s->lightmaptexturenum;
-			if (lightmap_modified[k])
+			if (lightmap_modified[k]) {
 				R_UploadLightMap(k);
+			}
 		}
 
 		glBegin(GL_POLYGON);
@@ -1292,6 +1299,61 @@ static void Compile_DrawFlatPolyProgram(void)
 	drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
 }
 
+static glm_program_t lightmapPolyProgram;
+static GLint lightmapPoly_modelViewMatrix;
+static GLint lightmapPoly_projectionMatrix;
+static GLint lightmapPoly_color;
+static GLint lightmapPoly_materialTex;
+static GLint lightmapPoly_lightmapTex;
+static GLint lightmapPoly_apply_lightmap;
+static GLint lightmapPoly_apply_texture;
+static GLint lightmapPoly_alpha_texture;
+
+static void Compile_LightmapPolyProgram(void)
+{
+	GL_VFDeclare(lightmaparray_poly)
+
+	// Initialise program for drawing image
+	GLM_CreateVFProgram("Lightmap poly", GL_VFParams(lightmaparray_poly), &lightmapPolyProgram);
+
+	lightmapPoly_modelViewMatrix = glGetUniformLocation(lightmapPolyProgram.program, "modelViewMatrix");
+	lightmapPoly_projectionMatrix = glGetUniformLocation(lightmapPolyProgram.program, "projectionMatrix");
+	lightmapPoly_color = glGetUniformLocation(lightmapPolyProgram.program, "color");
+	lightmapPoly_materialTex = glGetUniformLocation(lightmapPolyProgram.program, "materialTex");
+	lightmapPoly_lightmapTex = glGetUniformLocation(lightmapPolyProgram.program, "lightmapTex");
+	lightmapPoly_apply_lightmap = glGetUniformLocation(lightmapPolyProgram.program, "apply_lightmap");
+	lightmapPoly_apply_texture = glGetUniformLocation(lightmapPolyProgram.program, "apply_texture");
+	lightmapPoly_alpha_texture = glGetUniformLocation(lightmapPolyProgram.program, "alpha_texture");
+}
+
+void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	if (!lightmapPolyProgram.program) {
+		Compile_LightmapPolyProgram();
+	}
+
+	if (lightmapPolyProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		GL_UseProgram(lightmapPolyProgram.program);
+		glUniformMatrix4fv(lightmapPoly_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(lightmapPoly_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform4f(lightmapPoly_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1i(lightmapPoly_materialTex, 0);
+		glUniform1i(lightmapPoly_lightmapTex, 2);
+		glUniform1i(lightmapPoly_apply_lightmap, apply_lightmap ? 1 : 0);
+		glUniform1i(lightmapPoly_apply_texture, apply_texture ? 1 : 0);
+		glUniform1i(lightmapPoly_alpha_texture, alpha_texture ? 1 : 0);
+
+		glBindVertexArray(vao);
+		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
+	}
+}
+
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (!drawFlatPolyProgram.program) {
@@ -1384,6 +1446,9 @@ void GLM_DrawFlat(model_t* model)
 		glDisable(GL_CULL_FACE);
 		for (i = 0; i < model->numtextures; i++) {
 			texture_t* tex = model->textures[i];
+			GLsizei count;
+			GLushort indices[4096];
+
 			if (!tex) {
 				continue;
 			}
@@ -1395,17 +1460,20 @@ void GLM_DrawFlat(model_t* model)
 			GL_Bind(model->textures[i]->gl_texturenum);
 
 			glActiveTexture(GL_TEXTURE2);
+			if (lightmap_texture_array) {
+				glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+			}
+
 			lightmap = tex->gl_first_lightmap;
+			count = 0;
 			while (lightmap >= 0 && tex->gl_vbo_length[lightmap]) {
 				if (draw_whole_map) {
-					GL_Bind(lightmap_textures[lightmap]);
+					if (!lightmap_texture_array) {
+						GL_Bind(lightmap_textures[lightmap]);
+					}
 					GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, tex->gl_vbo_start[lightmap], tex->gl_vbo_length[lightmap], true, true, false);
 				}
 				else {
-					GLsizei count;
-					GLushort indices[4096];
-
-					count = 0;
 					for (waterline = 0; waterline < 2; waterline++) {
 						for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
 							int newVerts = surf->polys->numverts;
@@ -1416,8 +1484,10 @@ void GLM_DrawFlat(model_t* model)
 							}
 
 							if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-								GL_Bind(lightmap_textures[lightmap]);
-								GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+								if (!lightmap_texture_array) {
+									GL_Bind(lightmap_textures[lightmap]);
+								}
+								GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 								count = 0;
 							}
 
@@ -1433,12 +1503,24 @@ void GLM_DrawFlat(model_t* model)
 						}
 					}
 
-					if (count) {
-						GL_Bind(lightmap_textures[lightmap]);
-						GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+					if (count && !lightmap_texture_array) {
+						if (!lightmap_texture_array) {
+							GL_Bind(lightmap_textures[lightmap]);
+						}
+						GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+						count = 0;
 					}
 				}
 				lightmap = tex->gl_next_lightmap[lightmap];
+			}
+
+			// Moving on to a new texture, always write out what we've got so far
+			if (count) {
+				if (!lightmap_texture_array) {
+					GL_Bind(lightmap_textures[lightmap]);
+				}
+				GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+				count = 0;
 			}
 		}
 		glEnable(GL_CULL_FACE);
@@ -1993,13 +2075,13 @@ void R_MarkLeaves (void) {
 int AllocBlock (int w, int h, int *x, int *y) {
 	int i, j, best, best2, texnum;
 	
-	if (w < 1 || w > BLOCK_WIDTH || h < 1 || h > BLOCK_HEIGHT)
+	if (w < 1 || w > LIGHTMAP_WIDTH || h < 1 || h > LIGHTMAP_HEIGHT)
 		Sys_Error ("AllocBlock: Bad dimensions");
 
 	for (texnum = last_lightmap_updated; texnum < MAX_LIGHTMAPS; texnum++, last_lightmap_updated++) {
-		best = BLOCK_HEIGHT + 1;
+		best = LIGHTMAP_HEIGHT + 1;
 
-		for (i = 0; i < BLOCK_WIDTH - w; i++) {
+		for (i = 0; i < LIGHTMAP_WIDTH - w; i++) {
 			best2 = 0;
 
 			for (j = i; j < i + w; j++) {
@@ -2017,7 +2099,7 @@ int AllocBlock (int w, int h, int *x, int *y) {
 			}
 		}
 
-		if (best + h > BLOCK_HEIGHT)
+		if (best + h > LIGHTMAP_HEIGHT)
 			continue;
 
 		for (i = 0; i < w; i++)
@@ -2081,13 +2163,13 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 		s -= fa->texturemins[0];
 		s += fa->light_s * 16;
 		s += 8;
-		s /= BLOCK_WIDTH*16; //fa->texinfo->texture->width;
+		s /= LIGHTMAP_WIDTH*16; //fa->texinfo->texture->width;
 
 		t = DotProduct (vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
 		t -= fa->texturemins[1];
 		t += fa->light_t * 16;
 		t += 8;
-		t /= BLOCK_HEIGHT * 16; //fa->texinfo->texture->height;
+		t /= LIGHTMAP_HEIGHT * 16; //fa->texinfo->texture->height;
 
 		poly->verts[i][5] = s;
 		poly->verts[i][6] = t;
@@ -2118,18 +2200,18 @@ void GL_CreateSurfaceLightmap (msurface_t *surf) {
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
 
-	if (smax > BLOCK_WIDTH)
-		Host_Error("GL_CreateSurfaceLightmap: smax = %d > BLOCK_WIDTH", smax);
-	if (tmax > BLOCK_HEIGHT)
-		Host_Error("GL_CreateSurfaceLightmap: tmax = %d > BLOCK_HEIGHT", tmax);
+	if (smax > LIGHTMAP_WIDTH)
+		Host_Error("GL_CreateSurfaceLightmap: smax = %d > LIGHTMAP_WIDTH", smax);
+	if (tmax > LIGHTMAP_HEIGHT)
+		Host_Error("GL_CreateSurfaceLightmap: tmax = %d > LIGHTMAP_HEIGHT", tmax);
 	if (smax * tmax > MAX_LIGHTMAP_SIZE)
 		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
 
 	surf->lightmaptexturenum = AllocBlock (smax, tmax, &surf->light_s, &surf->light_t);
-	base = lightmaps + surf->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
-	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
+	base = lightmaps + surf->lightmaptexturenum * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4;
+	base += (surf->light_t * LIGHTMAP_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
-	R_BuildLightMap (surf, base, BLOCK_WIDTH * 4);
+	R_BuildLightMap (surf, base, LIGHTMAP_WIDTH * 4);
 }
 
 //Builds the lightmap texture with all the surfaces from all brush models
@@ -2174,25 +2256,28 @@ void GL_BuildLightmaps (void) {
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!allocated[i][0])
 			break;		// no more used
-		lightmap_modified[i] = false;
-		lightmap_rectchange[i].l = BLOCK_WIDTH;
-		lightmap_rectchange[i].t = BLOCK_HEIGHT;
-		lightmap_rectchange[i].w = 0;
-		lightmap_rectchange[i].h = 0;
-		GL_Bind(lightmap_textures[i]);
+		lightmap_modified[i] = true;
+		lightmap_rectchange[i].l = 0;
+		lightmap_rectchange[i].t = 0;
+		lightmap_rectchange[i].w = LIGHTMAP_WIDTH;
+		lightmap_rectchange[i].h = LIGHTMAP_HEIGHT;
+		R_UploadLightMap(i);
+		//GL_Bind(lightmap_textures[i]);
+		/*
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0,
-			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * 4);
+		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0,
+			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);*/
 	}
 
 	if (gl_mtexable)
  		GL_DisableMultitexture();
 }
 
-static int CopyVertToBuffer(float* target, int position, float* source)
+static int CopyVertToBuffer(float* target, int position, float* source, int lightmap)
 {
 	memcpy(&target[position], source, sizeof(float) * VERTEXSIZE);
+	target[position + 9] = lightmap;
 
 	return position + VERTEXSIZE;
 }
@@ -2322,24 +2407,24 @@ void GLM_CreateVAOForModel(model_t* m)
 
 						if (length) {
 							vbo_pos = DuplicateVertex(vbo_buffer, vbo_pos);
-							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0]);
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum);
 							length += 2;
 						}
 
 						// Store position for drawing individual polys
 						poly->vbo_start = vbo_pos / VERTEXSIZE;
-						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0]);
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum);
 						++output;
 
 						start_vert = 1;
 						end_vert = poly->numverts - 1;
 
 						while (start_vert <= end_vert) {
-							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert]);
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum);
 							++output;
 
 							if (start_vert < end_vert) {
-								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert]);
+								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum);
 								++output;
 							}
 
@@ -2378,11 +2463,13 @@ void GLM_CreateVAOForModel(model_t* m)
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(4);
 		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
 	}
 }
 
@@ -2468,11 +2555,13 @@ void GLM_CreateVAOForPoly(glpoly_t *poly)
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(4);
 		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
 	}
 }
 

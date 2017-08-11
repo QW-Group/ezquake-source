@@ -104,8 +104,8 @@ typedef struct mtexinfo_s {
 	int					flags;
 } mtexinfo_t;
 
-#define VERTEXSIZE 9 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
-					 //s2t2 = lightmap tex coords; s3t2 = detail tex coords
+#define VERTEXSIZE 10 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
+					  //s2t2 = lightmap tex coords; s3t2 = detail tex coords, l1 = lightmap#
 
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
@@ -119,7 +119,7 @@ typedef struct glpoly_s {
 	unsigned int        vbo_start;
 	unsigned int        vao;
 	int					numverts;
-	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2)
+	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2 l)
 } glpoly_t;
 
 typedef struct msurface_s {
