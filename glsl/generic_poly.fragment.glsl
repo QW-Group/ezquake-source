@@ -27,7 +27,7 @@ void main()
 	}
 
 	if (apply_lightmap) {
-		lmColor = vec4(1.0, 1.0, 1.0, 1.0);//texture(lightmapTex, TexCoordLightmap);
+		lmColor = texture(lightmapTex, TexCoordLightmap);
 		frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;
 	}
 	else {

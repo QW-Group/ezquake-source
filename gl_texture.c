@@ -1031,7 +1031,7 @@ void GL_Texture_Init(void)
 	glGenTextures(MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
-	if (GL_ShadersSupported() && true) {
+	if (GL_ShadersSupported() && false) {
 		glGenTextures(1, &lightmap_texture_array);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);

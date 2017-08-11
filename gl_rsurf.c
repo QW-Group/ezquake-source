@@ -468,7 +468,6 @@ void R_UploadLightMap (int lightmapnum) {
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
 	if (lightmap_texture_array) {
-		//glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
 	}
@@ -624,6 +623,8 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 	unsigned int waterline;
 	unsigned int i;
 	unsigned int k;
+	unsigned int min_changed = MAX_LIGHTMAPS;
+	unsigned int max_changed = 0;
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
@@ -642,12 +643,16 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 					GL_Bind(lightmap_textures[k]);
 					R_UploadLightMap(k);
 				}
+				else {
+					min_changed = min(k, min_changed);
+					max_changed = max(k, max_changed);
+				}
 			}
 		}
 	}
 
-	if (gl_deferlightmap.integer) {
-		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+	if (gl_deferlightmap.integer && min_changed < MAX_LIGHTMAPS) {
+		for (i = min_changed; i <= max_changed; ++i) {
 			if (lightmap_modified[i]) {
 				if (!lightmap_texture_array) {
 					GL_Bind(lightmap_textures[i]);
@@ -1486,8 +1491,11 @@ void GLM_DrawFlat(model_t* model)
 							if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 								if (!lightmap_texture_array) {
 									GL_Bind(lightmap_textures[lightmap]);
+									GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 								}
-								GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+								else {
+									GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+								}
 								count = 0;
 							}
 
@@ -1504,10 +1512,8 @@ void GLM_DrawFlat(model_t* model)
 					}
 
 					if (count && !lightmap_texture_array) {
-						if (!lightmap_texture_array) {
-							GL_Bind(lightmap_textures[lightmap]);
-						}
-						GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+						GL_Bind(lightmap_textures[lightmap]);
+						GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 						count = 0;
 					}
 				}
@@ -1518,8 +1524,11 @@ void GLM_DrawFlat(model_t* model)
 			if (count) {
 				if (!lightmap_texture_array) {
 					GL_Bind(lightmap_textures[lightmap]);
+					GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 				}
-				GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+				else {
+					GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+				}
 				count = 0;
 			}
 		}
@@ -2256,18 +2265,29 @@ void GL_BuildLightmaps (void) {
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!allocated[i][0])
 			break;		// no more used
-		lightmap_modified[i] = true;
-		lightmap_rectchange[i].l = 0;
-		lightmap_rectchange[i].t = 0;
-		lightmap_rectchange[i].w = LIGHTMAP_WIDTH;
-		lightmap_rectchange[i].h = LIGHTMAP_HEIGHT;
-		R_UploadLightMap(i);
-		//GL_Bind(lightmap_textures[i]);
-		/*
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0,
-			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);*/
+		if (GL_ShadersSupported() && lightmap_texture_array) {
+			lightmap_modified[i] = true;
+			if (!lightmap_texture_array) {
+				GL_Bind(lightmap_textures[i]);
+			}
+			lightmap_rectchange[i].l = 0;
+			lightmap_rectchange[i].t = 0;
+			lightmap_rectchange[i].w = LIGHTMAP_WIDTH;
+			lightmap_rectchange[i].h = LIGHTMAP_HEIGHT;
+			R_UploadLightMap(i);
+		}
+		else {
+			lightmap_modified[i] = false;
+			GL_Bind(lightmap_textures[i]);
+			lightmap_rectchange[i].l = LIGHTMAP_WIDTH;
+			lightmap_rectchange[i].t = LIGHTMAP_HEIGHT;
+			lightmap_rectchange[i].w = 0;
+			lightmap_rectchange[i].h = 0;
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
+		}
 	}
 
 	if (gl_mtexable)

@@ -1008,10 +1008,8 @@ void GL_PushMatrix(GLenum mode, float* matrix)
 		memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
 	}
 	else {
-		GL_ProcessErrors("Pre-push");
 		glMatrixMode(mode);
 		glPushMatrix();
-		GL_ProcessErrors("Post-push");
 	}
 }
 
