@@ -2397,6 +2397,7 @@ void R_RenderScene(void)
 {
 	extern void Skins_PreCache(void);
 
+	GL_EnterRegion("R_DrawEntities");
 	R_SetFrustum ();
 
 	R_SetupGL ();
@@ -2406,8 +2407,11 @@ void R_RenderScene(void)
 	R_MarkLeaves ();	// done here so we know if we're in water
 
 	Skins_PreCache ();  // preache skins if needed
+	GL_LeaveRegion();
 
+	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld ();		// adds static entities to the list
+	GL_LeaveRegion();
 
 	GL_EnterRegion("R_DrawEntities");
 	R_DrawEntitiesOnList(&cl_visents);
@@ -2724,7 +2728,10 @@ void R_RenderView(void)
 	// render normal view
 	R_RenderScene();
 
+	GL_EnterRegion("R_RenderDlights");
 	R_RenderDlights();
+	GL_LeaveRegion();
+
 	R_DrawParticles();
 
 	if (!GL_ShadersSupported()) {
@@ -2737,7 +2744,9 @@ void R_RenderView(void)
 		}
 	}
 
+	GL_EnterRegion("R_DrawViewModel");
 	R_DrawViewModel();
+	GL_LeaveRegion();
 
 	if (!GL_ShadersSupported()) {
 		extern cvar_t show_velocity_3d;

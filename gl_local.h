@@ -594,4 +594,7 @@ void GL_LeaveRegion(void);
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
 
+void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+void GLM_ExitBatchedPolyRegion(void);
+
 #endif /* !__GL_LOCAL_H__ */

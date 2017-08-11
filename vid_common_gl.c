@@ -702,14 +702,14 @@ qbool GLM_CreateVGFProgram(
 	GLuint geometry_shader = 0;
 	GLuint shader_program = 0;
 
-	Con_Printf("--[ %s ]--\n", friendlyName);
+	Con_DPrintf("--[ %s ]--\n", friendlyName);
 	if (GL_ShadersSupported()) {
 		GLint result = 0;
 
 		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
 			if (GLM_CompileShader(geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
 				if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
-					Con_Printf("Shader compilation completed successfully\n");
+					Con_DPrintf("Shader compilation completed successfully\n");
 
 					shader_program = glCreateProgram();
 					if (shader_program) {
@@ -720,7 +720,7 @@ qbool GLM_CreateVGFProgram(
 						glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
 
 						if (result) {
-							Con_Printf("ShaderProgram.Link() was successful\n");
+							Con_DPrintf("ShaderProgram.Link() was successful\n");
 							program->geometry_shader = geometry_shader;
 							program->fragment_shader = fragment_shader;
 							program->vertex_shader = vertex_shader;
