@@ -1847,6 +1847,7 @@ static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 			// and calculate the framerate when it's done.
 			cls.td_starttime = Sys_DoubleTime();
 			cls.td_startframe = cls.framecount;
+			key_dest = key_game;
 		}
 
 		cl.gametime += (demotime - cls.demotime);

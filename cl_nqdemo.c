@@ -170,8 +170,10 @@ static qbool CL_GetNQDemoMessage (void)
 			cls.td_lastframe = cls.framecount;
 			// if this is the second frame, grab the real td_starttime
 			// so the bogus time on the first frame doesn't count
-			if (cls.framecount == cls.td_startframe + 1)
+			if (cls.framecount == cls.td_startframe + 1) {
 				cls.td_starttime = Sys_DoubleTime();
+				key_dest = key_game;
+			}
 		}
 		else if (cl.time <= nq_mtime[0] && ! cls.demoseeking)
 			return false;		// don't need another message yet
