@@ -361,7 +361,6 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		trivertx_t* vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
 		int v = 0;
-		int c = 0;
 		int count = 0;
 		int total_vertices = 0;
 		int pose = 0;
@@ -370,7 +369,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		float* vbo_buffer;
 
 		total_vertices = 0;
-		while (count = *order++) {
+		while ((count = *order++)) {
 			if (count < 0) {
 				count = -count;
 			}

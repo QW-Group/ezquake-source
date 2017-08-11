@@ -478,7 +478,52 @@ typedef struct glm_program_s {
 	GLuint program;
 } glm_program_t;
 
-qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shader_text, const char* fragment_shader_text, glm_program_t* program);
+qbool GLM_CreateVFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+);
+
+#define GL_VFDeclare(name) \
+	extern unsigned char glsl_##name##_vertex_glsl[];\
+	extern unsigned int glsl_##name##_vertex_glsl_len;\
+	extern unsigned char glsl_##name##_fragment_glsl[];\
+	extern unsigned int glsl_##name##_fragment_glsl_len;
+
+#define GL_VFParams(name) \
+	(const char*)glsl_##name##_vertex_glsl,\
+	glsl_##name##_vertex_glsl_len,\
+	(const char*)glsl_##name##_fragment_glsl,\
+	glsl_##name##_fragment_glsl_len
+
+qbool GLM_CreateVGFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+);
+
+#define GL_VGFDeclare(name) \
+	extern unsigned char glsl_##name##_vertex_glsl[];\
+	extern unsigned int glsl_##name##_vertex_glsl_len;\
+	extern unsigned char glsl_##name##_geometry_glsl[];\
+	extern unsigned int glsl_##name##_geometry_glsl_len;\
+	extern unsigned char glsl_##name##_fragment_glsl[];\
+	extern unsigned int glsl_##name##_fragment_glsl_len;
+#define GL_VGFParams(name) \
+	(const char*)glsl_##name##_vertex_glsl,\
+	glsl_##name##_vertex_glsl_len,\
+	(const char*)glsl_##name##_geometry_glsl,\
+	glsl_##name##_geometry_glsl_len,\
+	(const char*)glsl_##name##_fragment_glsl,\
+	glsl_##name##_fragment_glsl_len
 
 #define glColor3f GL_Color3f
 #define glColor4f GL_Color4f
@@ -525,6 +570,9 @@ void GLM_CreateVAOForModel(model_t* m);
 void GL_UseProgram(GLuint program);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha);
+void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);

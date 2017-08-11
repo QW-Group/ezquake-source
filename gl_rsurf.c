@@ -720,7 +720,9 @@ void R_DrawWaterSurfaces(void) {
 				}
 
 				if (count) {
-					indices[count++] = indices[count - 1];
+					int prev = count - 1;
+
+					indices[count++] = indices[prev];
 					indices[count++] = poly->vbo_start;
 				}
 				for (v = 0; v < newVerts; ++v) {
@@ -1193,120 +1195,17 @@ static glm_program_t turbPolyProgram;
 static GLint turb_modelViewMatrix;
 static GLint turb_projectionMatrix;
 static GLint turb_materialTex;
-static GLint turb_apply_lightmap;
 static GLint turb_alpha;
 static GLint turb_time;
 
 // Very similar to GLM_DrawPoly, but with manipulation of texture coordinates
-void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha)
-{
-	if (!turbPolyProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in vec2 tex;\n"
-			"\n"
-			"out vec2 TextureCoord;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"uniform float time;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
-			"    TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;\n"
-			"    TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform sampler2D materialTex;\n"
-			"uniform float alpha;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"\n"
-			"    texColor = texture(materialTex, TextureCoord);\n"
-			"    texColor.a = alpha;\n"
-			"    frag_colour = texColor;\n"
-			"}\n";
-
-		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Turb poly", vertexShaderText, fragmentShaderText, &turbPolyProgram);
-
-		turb_modelViewMatrix = glGetUniformLocation(turbPolyProgram.program, "modelViewMatrix");
-		turb_projectionMatrix = glGetUniformLocation(turbPolyProgram.program, "projectionMatrix");
-		turb_materialTex = glGetUniformLocation(turbPolyProgram.program, "materialTex");
-		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
-		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
-	}
-
-	if (turbPolyProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(turbPolyProgram.program);
-		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(turb_materialTex, 0);
-		glUniform1f(turb_alpha, alpha);
-		glUniform1f(turb_time, cl.time);
-
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, vertices);
-	}
-}
-
 static void GLM_CompileTurbPolyProgram(void)
 {
 	if (!turbPolyProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in vec2 tex;\n"
-			"\n"
-			"out vec2 TextureCoord;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"uniform float time;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
-			"    TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;\n"
-			"    TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform sampler2D materialTex;\n"
-			"uniform float alpha;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"\n"
-			"    texColor = texture(materialTex, TextureCoord);\n"
-			"    texColor.a = alpha;\n"
-			"    frag_colour = texColor;\n"
-			"}\n";
+		GL_VFDeclare(turb_poly);
 
 		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Turb poly", vertexShaderText, fragmentShaderText, &turbPolyProgram);
+		GLM_CreateVFProgram("Turb poly", GL_VFParams(turb_poly), &turbPolyProgram);
 
 		turb_modelViewMatrix = glGetUniformLocation(turbPolyProgram.program, "modelViewMatrix");
 		turb_projectionMatrix = glGetUniformLocation(turbPolyProgram.program, "projectionMatrix");
@@ -1378,66 +1277,10 @@ static GLint drawFlat_alpha_texture;
 
 static void Compile_DrawFlatPolyProgram(void)
 {
-	const char* vertexShaderText =
-		"#version 430\n"
-		"\n"
-		"layout(location = 0) in vec3 position;\n"
-		"layout(location = 1) in vec2 tex;\n"
-		"layout(location = 2) in vec2 lightmapCoord;\n"
-		"layout(location = 3) in vec2 detailCoord;\n"
-		"\n"
-		"out vec2 TexCoordLightmap;\n"
-		"out vec2 TextureCoord;\n"
-		"\n"
-		"uniform mat4 modelViewMatrix;\n"
-		"uniform mat4 projectionMatrix;\n"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
-		"    TextureCoord = tex;\n"
-		"    TexCoordLightmap = lightmapCoord;\n"
-		"}\n";
-	const char* fragmentShaderText =
-		"#version 430\n"
-		"\n"
-		"uniform vec4 color;\n"
-		"uniform sampler2D materialTex;\n"
-		"uniform sampler2D lightmapTex;\n"
-		"uniform bool apply_lightmap;\n"
-		"uniform bool apply_texture;\n"
-		"uniform bool alpha_texture;\n"
-		"\n"
-		"in vec2 TextureCoord;\n"
-		"in vec2 TexCoordLightmap;\n"
-		"out vec4 frag_colour;\n"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"    vec4 texColor;\n"
-		"    vec4 lmColor;\n"
-		"\n"
-		"    if (apply_texture) {\n"
-		"        texColor = texture(materialTex, TextureCoord);\n"
-		"        if (alpha_texture && texColor.a < 0.6) {\n"
-		"            discard;"
-		"        }\n"
-		"    }\n"
-		"    else {\n"
-		"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-		"    }\n"
-		"\n"
-		"    if (apply_lightmap) {\n"
-		"        lmColor = texture(lightmapTex, TexCoordLightmap);\n"
-		"        frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * color * texColor;\n"
-		"    }\n"
-		"    else {\n"
-		"        frag_colour = texColor * color;\n"
-		"    }\n"
-		"}\n";
+	GL_VFDeclare(generic_poly)
 
 	// Initialise program for drawing image
-	GLM_CreateSimpleProgram("Drawflat poly", vertexShaderText, fragmentShaderText, &drawFlatPolyProgram);
+	GLM_CreateVFProgram("Drawflat poly", GL_VFParams(generic_poly), &drawFlatPolyProgram);
 
 	drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
 	drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
@@ -1579,7 +1422,9 @@ void GLM_DrawFlat(model_t* model)
 							}
 
 							if (count) {
-								indices[count++] = indices[count - 1];
+								int prev = count - 1;
+
+								indices[count++] = indices[prev];
 								indices[count++] = surf->polys->vbo_start;
 							}
 							for (v = 0; v < newVerts; ++v) {
@@ -1611,7 +1456,6 @@ void GLM_DrawFlat(model_t* model)
 		glActiveTexture(GL_TEXTURE2);
 		for (waterline = 0; waterline < 2; waterline++) {
 			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
-				float *v = surf->polys->verts[0];
 				vec3_t normal;
 				qbool isFloor;
 
@@ -2366,8 +2210,6 @@ void GLM_CreateVAOForModel(model_t* m)
 	int total_surfaces = 0;
 	int i, j;
 	int vbo_pos = 0;
-	int pairings = 0;
-	int num_lightmaps = 0;
 	int vbo_buffer_size = 0;
 	float* vbo_buffer;
 	int combinations = 0;
@@ -2451,11 +2293,9 @@ void GLM_CreateVAOForModel(model_t* m)
 		// Build the VBO in order of lightmaps...
 		while (lightmap >= 0) {
 			int next_lightmap = -1;
-			float* prev_vert = NULL;
 
 			length = 0;
 			m->textures[i]->gl_vbo_start[lightmap] = vbo_pos / VERTEXSIZE;
-			prev_vert = NULL;
 			++combinations;
 
 			for (j = 0; j < m->numsurfaces; ++j) {

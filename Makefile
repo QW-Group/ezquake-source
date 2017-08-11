@@ -196,9 +196,13 @@ HELP_OBJS := \
     help_variables.o \
     help_commands.o
 
+GLSL_OBJS := \
+	$(patsubst glsl/%.glsl,%.o,$(wildcard glsl/*.glsl))
+
 OBJS_c := \
     $(COMMON_OBJS) \
     $(HELP_OBJS) \
+	$(GLSL_OBJS) \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
@@ -426,6 +430,11 @@ strip: $(TARG_c)
 	$(Q)$(STRIP) $(TARG_c)
 
 # ------
+
+$(BUILD_c)/%.o: glsl/%.glsl
+	$(E) [GLSL] $@
+	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.json
 	$(E) [JS] $@

@@ -63,7 +63,7 @@ cvar_t  gl_no24bit                  = {"gl_no24bit", "0", CVAR_LATCH};
 cvar_t  gl_wicked_luma_level        = {"gl_luma_level", "1", CVAR_LATCH};
 
 typedef struct {
-	int			texnum;
+	GLuint		texnum;
 	char		identifier[MAX_QPATH];
 	char		*pathname;
 	int			width, height;
@@ -544,8 +544,6 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 
 		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
 		glGenTextures(1, &glt->texnum);
-		//glt->texnum = texture_extension_number;
-		//texture_extension_number++;
 	}
 
 	if (!glt)

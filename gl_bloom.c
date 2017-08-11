@@ -78,10 +78,10 @@ cvar_t      r_bloom_darken = {"r_bloom_darken", "3", true};
 cvar_t      r_bloom_sample_size = {"r_bloom_sample_size", "256", true};
 cvar_t      r_bloom_fast_sample = {"r_bloom_fast_sample", "0", true};
 
-int r_bloomscreentexture;
-int r_bloomeffecttexture;
-int r_bloombackuptexture;
-int r_bloomdownsamplingtexture;
+GLuint r_bloomscreentexture;
+GLuint r_bloomeffecttexture;
+GLuint r_bloombackuptexture;
+GLuint r_bloomdownsamplingtexture;
 
 static int      r_screendownsamplingtexture_size;
 static int      screen_texture_width, screen_texture_height;

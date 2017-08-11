@@ -107,7 +107,7 @@ GLuint    underwatertexture, detailtexture;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {
-	extern void Classic_LoadParticleTexures();
+	extern void Classic_LoadParticleTexures(void);
 
 	Classic_LoadParticleTexures();
 }
@@ -529,45 +529,10 @@ static GLint drawShell_time;
 void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int vao, int start, int vertices)
 {
 	if (!drawShellPolyProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in vec2 tex;\n"
-			"layout(location = 2) in vec3 normal;\n"
-			"\n"
-			"out vec2 TextureCoord;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"uniform float shellSize;\n"
-			"uniform float time;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position + normal * shellSize, 1.0);\n"
-			"    TextureCoord = vec2(tex.x * 2.0 + cos(time * 1.5), tex.y * 2.0 + sin(time * 1.1));\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform vec4 color;\n"
-			"uniform sampler2D materialTex;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"\n"
-			"    texColor = texture(materialTex, TextureCoord);\n"
-			"\n"
-			"    frag_colour = texColor * color;\n"
-			"}\n";
+		GL_VFDeclare(model_shell);
 
 		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("drawShell poly", vertexShaderText, fragmentShaderText, &drawShellPolyProgram);
+		GLM_CreateVFProgram("DrawShell", GL_VFParams(model_shell), &drawShellPolyProgram);
 
 		drawShell_modelViewMatrix = glGetUniformLocation(drawShellPolyProgram.program, "modelViewMatrix");
 		drawShell_projectionMatrix = glGetUniformLocation(drawShellPolyProgram.program, "projectionMatrix");
@@ -689,8 +654,6 @@ void GL_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, tr
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-static glm_program_t aliasFrameProgram;
-
 void GL_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 {
 	int vertIndex = pose1 * paliashdr->vertsPerPose;
@@ -716,7 +679,7 @@ void GL_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
 		int count;
 
-		while (count = *order++) {
+		while ((count = *order++)) {
 			GLenum drawMode = GL_TRIANGLE_STRIP;
 
 			if (count < 0) {
@@ -1535,7 +1498,7 @@ static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float 
 	byte color[4] = { 255, 255, 255, 255 };
 
 	if (!simpleItemVBO) {
-		float verts[4][VERTEXSIZE] = { 0 };
+		float verts[4][VERTEXSIZE] = { { 0 } };
 
 		VectorSet(verts[0], 0, -1, -1);
 		verts[0][3] = 1;

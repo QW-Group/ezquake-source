@@ -57,41 +57,10 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	};
 
 	if (!imageProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"in vec3 position;\n"
-			"\n"
-			"out vec2 TexCoord;\n"
-			"\n"
-			"uniform mat4 matrix;\n"
-			"uniform float sbase, swidth;\n"
-			"uniform float tbase, twidth;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = matrix * vec4(position, 1.0);\n"
-			"    TexCoord = vec2(sbase + position.x * swidth, tbase + position.y * twidth);\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform sampler2D tex;\n"
-			"uniform vec4 color;\n"
-			"uniform bool alphatest;\n"
-			"\n"
-			"in vec2 TexCoord;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor = texture(tex, TexCoord);\n"
-			"    if (alphatest && texColor.a < 1) discard;\n"
-			"    frag_colour = texColor * color;\n"
-			"}\n";
+		GL_VFDeclare(image_draw);
 
 		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &imageProgram);
+		GLM_CreateVFProgram("Image test", GL_VFParams(image_draw), &imageProgram);
 		imageProgram_matrix = glGetUniformLocation(imageProgram.program, "matrix");
 		imageProgram_tex = glGetUniformLocation(imageProgram.program, "tex");
 		imageProgram_sbase = glGetUniformLocation(imageProgram.program, "sbase");
@@ -149,31 +118,10 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	};
 
 	if (!rectProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"in vec3 position;\n"
-			"\n"
-			"uniform mat4 matrix;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = matrix * vec4(position, 1.0);\n"
-			"}\n";
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform vec4 color;\n"
-			"\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    frag_colour = color;\n"
-			"}\n";
+		GL_VFDeclare(rectangle_draw);
 
 		// Initialise program for drawing image
-		GLM_CreateSimpleProgram("Image test", vertexShaderText, fragmentShaderText, &rectProgram);
+		GLM_CreateVFProgram("DrawRectangle", GL_VFParams(rectangle_draw), &rectProgram);
 		rectProgram_matrix = glGetUniformLocation(rectProgram.program, "matrix");
 		rectProgram_color = glGetUniformLocation(rectProgram.program, "color");
 	}
@@ -187,19 +135,8 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	glUniformMatrix4fv(rectProgram_matrix, 1, GL_FALSE, matrix);
 	glUniform4f(rectProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 
-	GLenum error = glGetError();
-	while (error != GL_NO_ERROR) {
-		error = glGetError();
-	}
 	glBindVertexArray(GL_CreateRectangleVAO());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	{
-		GLenum error = glGetError();
-		while (error != GL_NO_ERROR) {
-			Con_Printf("GL error: %x\n", error);
-			error = glGetError();
-		}
-	}
 }
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
@@ -1049,8 +986,6 @@ static GLint textString_materialTex;
 static GLuint textStringVBO;
 static GLuint textStringVAO;
 
-qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program);
-
 void Draw_TextCacheInit(float x, float y, float scale)
 {
 	cache_original_x = x;
@@ -1088,96 +1023,9 @@ static GLuint Draw_CreateTextStringVAO(void)
 static void Draw_CreateTextStringProgram(void)
 {
 	if (!textStringProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in int character;\n"
-			"layout(location = 1) in vec2 location;\n"
-			"layout(location = 2) in float scale;\n"
-			"layout(location = 3) in vec4 colour;\n"
-			"\n"
-			"out float pointScale;\n"
-			"out vec4 pointColour;\n"
-			"out int pointCharacter;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(location, 1, 1);\n"
-			"    pointCharacter = character;\n"
-			"    pointColour = colour;\n"
-			"    pointScale = scale;\n"
-			"}\n";
+		GL_VGFDeclare(text_string)
 
-		// Geometry shader converts single points to billboards
-		const char* geometryShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(points) in;\n"
-			"layout(triangle_strip, max_vertices = 4) out;\n"
-			"\n"
-			"uniform mat4 projectionMatrix;\n"
-			"\n"
-			"in float pointScale[1];\n"
-			"in vec4 pointColour[1];\n"
-			"in int pointCharacter[1];\n"
-			"\n"
-			"out vec2 TextureCoord;\n"
-			"out vec4 fragColour;\n"
-			"\n"
-			"void main() {\n"
-			"    if (pointCharacter[0] == 32) {\n"
-			"        return;\n"
-			"    }\n"
-			"\n"
-			"    float size = pointScale[0];\n"
-			"    float ps = pointCharacter[0] % 16;\n"
-			"    float pt = pointCharacter[0] / 16;\n"
-			"    float s = ps / 16.0;"
-			"    float t = pt / 16.0;"
-			"    fragColour = pointColour[0];\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(0, 0.0, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(s, t);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(0, size * 2, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(s, t + 1 / 16.0);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(size, 0, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(s + 1 / 16.0, t);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + projectionMatrix * vec4(size, size * 2, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(s + 1 / 16.0, t + 1 / 16.0);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    EndPrimitive();\n"
-			"}\n";
-
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform sampler2D materialTex;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"in vec4 fragColour;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"\n"
-			"    texColor = texture(materialTex, TextureCoord);\n"
-			"    frag_colour = texColor * fragColour;"
-			"}\n";
-
-		// Initialise program for drawing image
-		GLM_CreateVGFProgram("StringDraw", vertexShaderText, geometryShaderText, fragmentShaderText, &textStringProgram);
-		//GLM_CreateSimpleProgram("StringDraw", vertexShaderText, fragmentShaderText, &textStringProgram);
+		GLM_CreateVGFProgram("StringDraw", GL_VGFParams(text_string), &textStringProgram);
 
 		textString_modelViewMatrix = glGetUniformLocation(textStringProgram.program, "modelViewMatrix");
 		textString_projectionMatrix = glGetUniformLocation(textStringProgram.program, "projectionMatrix");
@@ -1956,25 +1804,12 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 	static GLint line_color;
 
 	if (!program.program) {
+		GL_VFDeclare(line_draw);
+
 		// Very simple line-drawing
-		GLM_CreateSimpleProgram(
+		GLM_CreateVFProgram(
 			"LineDrawing",
-			// Vertex shader
-			"#version 430\n"
-			"in vec3 position;\n"
-			"uniform mat4 matrix;\n"
-			"void main(void)\n"
-			"{\n"
-			"    gl_Position = matrix * vec4(position, 1);\n"
-			"}\n",
-			// Fragment shader
-			"#version 430\n"
-			"uniform vec4 inColor;\n"
-			"out vec4 color;\n"
-			"void main(void)\n"
-			"{\n"
-			"    color = inColor;\n"
-			"}\n",
+			GL_VFParams(line_draw),
 			&program
 		);
 
@@ -1996,19 +1831,8 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
 		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
 
-		GLenum error = glGetError();
-		while (error != GL_NO_ERROR) {
-			error = glGetError();
-		}
 		glBindVertexArray(GL_CreateLineVAO());
 		glDrawArrays(GL_LINES, 0, 2);
-		{
-			GLenum error = glGetError();
-			while (error != GL_NO_ERROR) {
-				Con_Printf("GL error: %x\n", error);
-				error = glGetError();
-			}
-		}
 	}
 }
 
@@ -2235,7 +2059,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
-	byte color[] = { 255, 255, 255, 255 };
 
     if (scrap_dirty) {
         Scrap_Upload();
@@ -2253,6 +2076,8 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	alpha *= overall_alpha;
 
 	if (GL_ShadersSupported()) {
+		byte color[] = { 255, 255, 255, 255 };
+
 		if (alpha < 1.0) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2262,7 +2087,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 		glActiveTexture(GL_TEXTURE0);
 		GL_Bind(pic->texnum);
-		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color_white, true);
+		GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, true);
 
 		if (alpha < 1.0) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);

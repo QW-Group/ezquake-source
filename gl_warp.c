@@ -289,7 +289,6 @@ static byte* SurfaceFlatTurbColor(texture_t* texture)
 	return (byte *)&texture->flatcolor3ub;
 }
 
-void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha);
 void GLM_DrawIndexedTurbPoly(GLuint vao, GLushort* indices, int count, texture_t* texture)
 {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
@@ -332,8 +331,6 @@ void EmitWaterPolys (msurface_t *fa)
 			col[3] = old_alpha;
 		}
 		else {
-			extern void GLM_DrawTurbPoly(unsigned int vao, int vertices, float alpha);
-
 			wateralpha = bound(0, wateralpha, 1);
 
 			glActiveTexture(GL_TEXTURE0);

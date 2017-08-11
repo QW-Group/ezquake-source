@@ -425,7 +425,7 @@ void GLM_OrthographicProjection(float left, float right, float top, float bottom
 
 static GLfloat projectionMatrix[16];
 static GLfloat modelMatrix[16];
-static GLfloat viewMatrix[16];
+//static GLfloat viewMatrix[16];
 static GLfloat identityMatrix[16] = {
 	1, 0, 0, 0,
 	0, 1, 0, 0,
@@ -655,15 +655,16 @@ void GLM_ConPrintProgramLog(GLuint program)
 	}
 }
 
-static qbool GLM_CompileShader(const char* shaderText, GLenum shaderType, GLuint* shaderId)
+static qbool GLM_CompileShader(const char* shaderText, GLuint shaderTextLength, GLenum shaderType, GLuint* shaderId)
 {
 	GLuint shader;
 	GLint result;
+	GLint length = shaderTextLength;
 
 	*shaderId = 0;
 	shader = glCreateShader(shaderType);
 	if (shader) {
-		glShaderSource(shader, 1, &shaderText, NULL);
+		glShaderSource(shader, 1, &shaderText, &length);
 		glCompileShader(shader);
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 		if (result) {
@@ -681,7 +682,16 @@ static qbool GLM_CompileShader(const char* shaderText, GLenum shaderType, GLuint
 	return false;
 }
 
-qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program)
+qbool GLM_CreateVGFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+)
 {
 	GLuint vertex_shader = 0;
 	GLuint fragment_shader = 0;
@@ -692,9 +702,9 @@ qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_t
 	if (GL_ShadersSupported()) {
 		GLint result = 0;
 
-		if (GLM_CompileShader(vertex_shader_text, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (GLM_CompileShader(geometry_shader_text, GL_GEOMETRY_SHADER, &geometry_shader)) {
-				if (GLM_CompileShader(fragment_shader_text, GL_FRAGMENT_SHADER, &fragment_shader)) {
+		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
+			if (GLM_CompileShader(geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
+				if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
 					Con_Printf("Shader compilation completed successfully\n");
 
 					shader_program = glCreateProgram();
@@ -751,7 +761,14 @@ qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_t
 	return false;
 }
 
-qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shader_text, const char* fragment_shader_text, glm_program_t* program)
+qbool GLM_CreateVFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+)
 {
 	GLuint vertex_shader = 0;
 	GLuint fragment_shader = 0;
@@ -761,8 +778,8 @@ qbool GLM_CreateSimpleProgram(const char* friendlyName, const char* vertex_shade
 	if (GL_ShadersSupported()) {
 		GLint result = 0;
 
-		if (GLM_CompileShader(vertex_shader_text, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (GLM_CompileShader(fragment_shader_text, GL_FRAGMENT_SHADER, &fragment_shader)) {
+		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
+			if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
 				Con_Printf("Shader compilation completed successfully\n");
 
 				shader_program = glCreateProgram();

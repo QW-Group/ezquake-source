@@ -550,97 +550,13 @@ static int billboard_materialTex;
 static int billboard_apply_texture;
 static int billboard_alpha_texture;
 
-qbool GLM_CreateVGFProgram(const char* friendlyName, const char* vertex_shader_text, const char* geometry_shader_text, const char* fragment_shader_text, glm_program_t* program);
-
-void GLM_CreateParticleProgram()
+void GLM_CreateParticleProgram(void)
 {
 	if (!billboardProgram.program) {
-		const char* vertexShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(location = 0) in vec3 position;\n"
-			"layout(location = 1) in float scale;\n"
-			"layout(location = 2) in vec4 colour;\n"
-			"\n"
-			"out float pointScale;\n"
-			"out vec4 pointColour;\n"
-			"\n"
-			"uniform mat4 modelViewMatrix;\n"
-			"uniform mat4 projectionMatrix;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);\n"
-			"    pointScale = scale;\n"
-			"    pointColour = colour;\n"
-			"}\n";
-
-		// Geometry shader converts single points to billboards
-		const char* geometryShaderText =
-			"#version 430\n"
-			"\n"
-			"layout(points) in;\n"
-			"layout(triangle_strip, max_vertices = 4) out;\n"
-			"\n"
-			"in float pointScale[1];\n"
-			"in vec4 pointColour[1];\n"
-			"\n"
-			"out vec2 TextureCoord;\n"
-			"out vec4 fragColour;\n"
-			"\n"
-			"void main() {\n"
-			"    float size = pointScale[0];\n"
-			"    fragColour = pointColour[0];\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + vec4(0, 0.0, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(0, 0);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + vec4(0, size, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(0, 1);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + vec4(size, 0, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(1, 0);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    gl_Position = gl_in[0].gl_Position + vec4(size, size, 0.0, 0.0);\n"
-			"    TextureCoord = vec2(1,1);\n"
-			"    EmitVertex();\n"
-			"\n"
-			"    EndPrimitive();\n"
-			"}\n";
-
-		const char* fragmentShaderText =
-			"#version 430\n"
-			"\n"
-			"uniform sampler2D materialTex;\n"
-			"uniform bool apply_texture;\n"
-			"uniform bool alpha_texture;\n"
-			"\n"
-			"in vec2 TextureCoord;\n"
-			"in vec4 fragColour;\n"
-			"out vec4 frag_colour;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    vec4 texColor;\n"
-			"    vec4 lmColor;\n"
-			"\n"
-			"    if (apply_texture) {\n"
-			"        texColor = texture(materialTex, TextureCoord);\n"
-			"        if (alpha_texture && texColor.a != 1.0) {\n"
-			"            discard;"
-			"        }\n"
-			"    }\n"
-			"    else {\n"
-			"        texColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-			"    }\n"
-			"    frag_colour = texColor * fragColour;"
-			"}\n";
+		GL_VGFDeclare(particles_classic);
 
 		// Initialise program for drawing image
-		GLM_CreateVGFProgram("Billboards", vertexShaderText, geometryShaderText, fragmentShaderText, &billboardProgram);
+		GLM_CreateVGFProgram("Classic particles", GL_VGFParams(particles_classic), &billboardProgram);
 
 		billboard_modelViewMatrix = glGetUniformLocation(billboardProgram.program, "modelViewMatrix");
 		billboard_projectionMatrix = glGetUniformLocation(billboardProgram.program, "projectionMatrix");
@@ -750,9 +666,7 @@ void Classic_CalculateParticles(void)
 	int i;
 	float time2, time3, time1, dvel, frametime, grav;
 	unsigned char *at, theAlpha;
-	vec3_t up, right;
 	float dist, scale, r_partscale;
-	extern cvar_t gl_particle_style;
 
 	particles_to_draw = 0;
 	if (!active_particles || !r_drawparticles.integer) {
@@ -765,9 +679,6 @@ void Classic_CalculateParticles(void)
 	if (!particletexture) {
 		Classic_LoadParticleTexures();
 	}
-
-	VectorScale(vup, 1.5, up);
-	VectorScale(vright, 1.5, right);
 
 	frametime = cls.frametime;
 	if (ISPAUSED) {
