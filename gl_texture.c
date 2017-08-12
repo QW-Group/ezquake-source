@@ -967,9 +967,8 @@ int GL_LoadCharsetImage (char *filename, char *identifier, int flags)
 
 	buf = dest = (byte *) Q_calloc(image_size * 2, 4);
 	src = data;
-	for (i = 0 ; i < 16 ; i++) 
-	{
-		memcpy (dest, src, image_size >> 2);
+	for (i = 0; i < 16; i++) {
+		memcpy(dest, src, image_size >> 2);
 		src += image_size >> 2;
 		dest += image_size >> 1;
 	}
@@ -1031,7 +1030,7 @@ void GL_Texture_Init(void)
 	glGenTextures(MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
-	if (GL_ShadersSupported() && false) {
+	if (GL_ShadersSupported() && true) {
 		glGenTextures(1, &lightmap_texture_array);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
@@ -1083,8 +1082,9 @@ void GL_Texture_Init(void)
 	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
 
 	// This way user can specifie gl_max_size in his cfg.
-	if (i) 
+	if (i) {
 		Cvar_SetValue(&gl_max_size, i);
+	}
 
 	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;

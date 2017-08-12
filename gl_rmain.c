@@ -1753,11 +1753,12 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 				// Get rid of Z-fighting for textures by offsetting the
 				// drawing of entity models compared to normal polygons.
 				// dimman: disabled for qcon
-				if(gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
+				if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
 					GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
 					R_DrawBrushModel(currententity);
 					GL_PolygonOffset(0, 0);
-				} else {
+				}
+				else {
 					R_DrawBrushModel(currententity);
 				}
 
@@ -2397,7 +2398,7 @@ void R_RenderScene(void)
 {
 	extern void Skins_PreCache(void);
 
-	GL_EnterRegion("R_DrawEntities");
+	GL_EnterRegion("R_RenderSceneInit");
 	R_SetFrustum ();
 
 	R_SetupGL ();

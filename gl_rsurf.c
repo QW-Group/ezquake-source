@@ -462,7 +462,8 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	}
 }
 
-void R_UploadLightMap (int lightmapnum) {
+void R_UploadLightMap(int lightmapnum)
+{
 	glRect_t	*theRect;
 
 	lightmap_modified[lightmapnum] = false;
@@ -639,13 +640,17 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 			for ( ; s; s = s->texturechain) {
 				R_RenderDynamicLightmaps(s);
 				k = s->lightmaptexturenum;
-				if (lightmap_modified[k] && !gl_deferlightmap.integer) {
-					GL_Bind(lightmap_textures[k]);
-					R_UploadLightMap(k);
-				}
-				else {
-					min_changed = min(k, min_changed);
-					max_changed = max(k, max_changed);
+				if (lightmap_modified[k]) {
+					if (!gl_deferlightmap.integer) {
+						if (!lightmap_texture_array) {
+							GL_Bind(lightmap_textures[k]);
+						}
+						R_UploadLightMap(k);
+					}
+					else {
+						min_changed = min(k, min_changed);
+						max_changed = max(k, max_changed);
+					}
 				}
 			}
 		}
@@ -1333,7 +1338,7 @@ static void Compile_LightmapPolyProgram(void)
 	lightmapPoly_alpha_texture = glGetUniformLocation(lightmapPolyProgram.program, "alpha_texture");
 }
 
-void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (!lightmapPolyProgram.program) {
 		Compile_LightmapPolyProgram();
@@ -1359,6 +1364,15 @@ void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int
 
 			glBindVertexArray(vao);
 		}
+		return true;
+	}
+
+	return false;
+}
+
+void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
 		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
 	}
 }
@@ -1444,6 +1458,13 @@ void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GL
 		}
 
 		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
+	}
+}
+
+void GLM_DrawLightmapArrayPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
+		glDrawArrays(type, start, vertices);
 	}
 }
 
@@ -1607,6 +1628,9 @@ void GLM_DrawFlat(model_t* model)
 		GL_Bind(model->textures[i]->gl_texturenum);
 
 		glActiveTexture(GL_TEXTURE2);
+		if (lightmap_texture_array) {
+			glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		}
 		for (waterline = 0; waterline < 2; waterline++) {
 			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
 				vec3_t normal;
@@ -1622,12 +1646,19 @@ void GLM_DrawFlat(model_t* model)
 
 				isFloor = normal[2] < -0.5 || normal[2] > 0.5;
 				if (r_drawflat.integer == 1 || (r_drawflat.integer == 2 && isFloor) || (r_drawflat.integer == 3 && !isFloor)) {
-					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+					if (!lightmap_texture_array) {
+						GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+					}
 					GLM_DrawFlatPoly(isFloor ? floorColor : wallColor, surf->polys->vao, surf->polys->numverts, model->isworldmodel);
 				}
 				else {
-					GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
-					GLM_DrawPolygonByType(GL_TRIANGLE_FAN, color_white, surf->polys->vao, 0, surf->polys->numverts, model->isworldmodel, true, false);
+					if (!lightmap_texture_array) {
+						GL_Bind(lightmap_textures[surf->lightmaptexturenum]);
+						GLM_DrawPolygonByType(GL_TRIANGLE_FAN, color_white, surf->polys->vao, 0, surf->polys->numverts, model->isworldmodel, true, false);
+					}
+					else {
+						GLM_DrawLightmapArrayPolygonByType(GL_TRIANGLE_FAN, color_white, surf->polys->vao, 0, surf->polys->numverts, model->isworldmodel, true, false);
+					}
 				}
 
 				// TODO: Caustics
@@ -2255,7 +2286,8 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 		VectorCopy (vec, poly->verts[i]);
 		poly->verts[i][7] = s;
 		poly->verts[i][8] = t;
-		
+
+		poly->verts[i][9] = fa->lightmaptexturenum;
 	}
 
 	poly->numverts = lnumverts;
@@ -2300,8 +2332,9 @@ void GL_BuildLightmaps (void) {
 	for (j = 1; j < MAX_MODELS; j++) {
 		if (!(m = cl.model_precache[j]))
 			break;
-		if (m->name[0] == '*')
+		if (m->name[0] == '*') {
 			continue;
+		}
 		r_pcurrentvertbase = m->vertexes;
 		currentmodel = m;
 		for (i = 0; i < m->numsurfaces; i++) {
@@ -2327,24 +2360,17 @@ void GL_BuildLightmaps (void) {
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!allocated[i][0])
 			break;		// no more used
+		lightmap_modified[i] = false;
+		lightmap_rectchange[i].l = LIGHTMAP_WIDTH;
+		lightmap_rectchange[i].t = LIGHTMAP_HEIGHT;
+		lightmap_rectchange[i].w = 0;
+		lightmap_rectchange[i].h = 0;
 		if (GL_ShadersSupported() && lightmap_texture_array) {
-			lightmap_modified[i] = true;
-			if (!lightmap_texture_array) {
-				GL_Bind(lightmap_textures[i]);
-			}
-			lightmap_rectchange[i].l = 0;
-			lightmap_rectchange[i].t = 0;
-			lightmap_rectchange[i].w = LIGHTMAP_WIDTH;
-			lightmap_rectchange[i].h = LIGHTMAP_HEIGHT;
-			R_UploadLightMap(i);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {
-			lightmap_modified[i] = false;
 			GL_Bind(lightmap_textures[i]);
-			lightmap_rectchange[i].l = LIGHTMAP_WIDTH;
-			lightmap_rectchange[i].t = LIGHTMAP_HEIGHT;
-			lightmap_rectchange[i].w = 0;
-			lightmap_rectchange[i].h = 0;
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0,
@@ -2380,10 +2406,6 @@ void GLM_CreateVAOForModel(model_t* m)
 	int vbo_buffer_size = 0;
 	float* vbo_buffer;
 	int combinations = 0;
-
-	if (m->name[0] == '*') {
-		return;
-	}
 
 	for (i = 0; i < m->numtextures; ++i) {
 		if (m->textures[i]) {
@@ -2525,6 +2547,7 @@ void GLM_CreateVAOForModel(model_t* m)
 			lightmap = next_lightmap;
 		}
 	}
+
 	if (vbo_pos / VERTEXSIZE != (total_surf_verts + 2 * (total_surfaces - combinations))) {
 		Con_Printf("WARNING: Model used %d verts, expected %d\n", vbo_pos / VERTEXSIZE, (total_surf_verts + 2 * (total_surfaces - combinations)));
 		Con_Printf("         Difference %d, across %d surfaces [%d combinations]\n", vbo_pos / VERTEXSIZE - (total_surf_verts + 2 * (total_surfaces - combinations)), total_surfaces, combinations);
@@ -2601,8 +2624,6 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 				}
 			}
 		}
-		Con_Printf("Turb split: index %d, expected %d\n", index, totalVerts + 2 * (totalPolys - 1));
-
 		glBufferDataExt(GL_ARRAY_BUFFER, (totalVerts + 2 * (totalPolys - 1)) * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
 		Q_free(verts);
 	}
