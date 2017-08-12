@@ -718,21 +718,39 @@ static void GLM_DrawSkyFaces(void)
 		float modelView[16];
 		float projection[16];
 		int i;
-		GLint faceStarts[6];
-		GLsizei faceLengths[6];
+		GLint faceStarts[6 * 10];
+		GLsizei faceLengths[6 * 10];
 		int faces = 0;
 
 		GL_GetMatrix(GL_MODELVIEW, modelView);
 		GL_GetMatrix(GL_PROJECTION, projection);
 
 		for (i = 0; i < 6; i++) {
+			int minIndex[2];
+			int maxIndex[2];
+			int strip;
+
 			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 				continue;
 			}
 
-			faceStarts[faces] = skyDome_starts[i];
-			faceLengths[faces] = skyDome_length[i];
-			++faces;
+			if (skymins[0][i] == -1 && skymins[1][i] == -1 && skymaxs[0][i] == 1 && skymaxs[1][i] == 1) {
+				faceStarts[faces] = skyDome_starts[i];
+				faceLengths[faces] = skyDome_length[i];
+			}
+			else {
+				minIndex[0] = (int)floor(bound(0, (skymins[0][i] + 1) / 2.0, 1) * SUBDIVISIONS);
+				minIndex[1] = (int)floor(bound(0, (skymins[1][i] + 1) / 2.0, 1) * SUBDIVISIONS);
+				maxIndex[0] = (int)ceil(bound(0, (skymaxs[0][i] + 1) / 2.0, 1) * SUBDIVISIONS);
+				maxIndex[1] = (int)ceil(bound(0, (skymaxs[1][i] + 1) / 2.0, 1) * SUBDIVISIONS);
+
+				for (strip = minIndex[0]; strip < maxIndex[0]; ++strip) {
+					faceStarts[faces] = skyDome_starts[i] + 4 * (strip * SUBDIVISIONS + minIndex[1]) + 2 * strip;
+					faceLengths[faces] = (maxIndex[1] - minIndex[1]) * 4;
+
+					++faces;
+				}
+			}
 		}
 
 		if (faces) {
