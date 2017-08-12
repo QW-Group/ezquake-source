@@ -2420,10 +2420,7 @@ void GLM_CreateVAOForModel(model_t* m)
 		msurface_t* surf = m->surfaces + j;
 		glpoly_t* poly;
 
-		if (!(surf->flags & (SURF_DRAWTURB))) {
-			if (surf->flags & (SURF_DRAWSKY)) {
-				continue;
-			}
+		if (!(surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			if (surf->texinfo->flags & TEX_SPECIAL) {
 				continue;
 			}
@@ -2463,10 +2460,7 @@ void GLM_CreateVAOForModel(model_t* m)
 				continue;
 			}
 
-			if (!(surf->flags & (SURF_DRAWTURB))) {
-				if (surf->flags & (SURF_DRAWSKY)) {
-					continue;
-				}
+			if (!(surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 				if (surf->texinfo->flags & TEX_SPECIAL) {
 					continue;
 				}
