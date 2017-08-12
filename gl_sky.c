@@ -512,34 +512,60 @@ static void R_DrawSkyBox (void)
 
 #define MAX_SKYPOLYS (SUBDIVISIONS * SUBDIVISIONS * 6)
 #define FLOATS_PER_SKYVERT 5
-static float glm_sky_verts[(MAX_SKYPOLYS * 4 + (MAX_SKYPOLYS - 1) * 2) * FLOATS_PER_SKYVERT];
-static GLuint glm_sky_vao;
-static GLuint glm_sky_vbo;
-static int skyVerts = 0;
+static float skydomeVertData[(MAX_SKYPOLYS * 4 + (MAX_SKYPOLYS - 1) * 2) * FLOATS_PER_SKYVERT];
+static int skyDomeVertices = 0;
 
-#define FLOATS_PER_SKYVERT2 2
-static float glm_sky_verts2[SUBDIVISIONS * SUBDIVISIONS * 3 * 6];
-static int skyVertices = 0;
-
-static glm_program_t skyDome;
-static GLint skyDome_minimums;
-static GLint skyDome_maximums;
-static GLint skyDome_origin;
-static GLint skyDome_farclip;
-static GLint skyDome_axis;
-static GLint skyDome_speedscale;
-static GLuint skyDome_vbo;
-static GLuint skyDome_vao;
-
-static void EmitSkyChunk(int vert)
+int AddSkyDomeVert(int vert, vec3_t pos, float s, float t)
 {
-	int p1 = vert;
-	int p2 = vert + 1;
-	int p3 = vert + 3;
-	int p4 = vert + 2;
+	int index = vert * FLOATS_PER_SKYVERT;
+
+	skydomeVertData[index] = pos[0];
+	skydomeVertData[index+1] = pos[1];
+	skydomeVertData[index+2] = pos[2];
+	skydomeVertData[index+3] = s;
+	skydomeVertData[index+4] = t;
+
+	return vert + 1;
 }
 
-static void FillSkyVerts2(void)
+static glm_program_t skyDome;
+static GLint skyDome_modelView;
+static GLint skyDome_projection;
+static GLint skyDome_farclip;
+static GLint skyDome_speedscale;
+static GLint skyDome_speedscale2;
+static GLint skyDome_skyTex;
+static GLint skyDome_alphaTex;
+static GLint skyDome_origin;
+static GLuint skyDome_vbo;
+static GLuint skyDome_vao;
+static GLint skyDome_starts[6];
+static GLsizei skyDome_length[6];
+
+// s and t range from -1 to 1
+static void MakeSkyVec2(float s, float t, int axis, vec3_t v)
+{
+	vec3_t		b;
+	int			j, k;
+	float skyrange;
+
+	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+	b[0] = s * skyrange;
+	b[1] = t * skyrange;
+	b[2] = 1 * skyrange;
+
+	for (j = 0; j < 3; j++) {
+		k = st_to_vec[axis][j];
+		if (k < 0) {
+			v[j] = -b[-k - 1];
+		}
+		else {
+			v[j] = b[k - 1];
+		}
+	}
+}
+
+static void BuildSkyVertsArray(void)
 {
 	int i, j;
 	float s, t;
@@ -549,61 +575,89 @@ static void FillSkyVerts2(void)
 	int k;
 	vec3_t v;
 
-	if (skyVertices) {
+	if (skyDomeVertices) {
 		return;
 	}
 
 	if (!skyDome.program) {
-		GL_VGFDeclare(skydome)
+		GL_VFDeclare(skydome)
 
-		GLM_CreateVGFProgram("SkyDome", GL_VGFParams(skydome), &skyDome);
+		GLM_CreateVFProgram("SkyDome", GL_VFParams(skydome), &skyDome);
 
-		skyDome_minimums = glGetUniformLocation(skyDome.program, "minimums");
-		skyDome_maximums = glGetUniformLocation(skyDome.program, "maximums");
-		skyDome_origin = glGetUniformLocation(skyDome.program, "origin");
-
+		skyDome_modelView = glGetUniformLocation(skyDome.program, "modelView");
+		skyDome_projection = glGetUniformLocation(skyDome.program, "projection");
 		skyDome_farclip = glGetUniformLocation(skyDome.program, "farclip");
-		skyDome_axis = glGetUniformLocation(skyDome.program, "axis");
 		skyDome_speedscale = glGetUniformLocation(skyDome.program, "speedscale");
+		skyDome_speedscale2 = glGetUniformLocation(skyDome.program, "speedscale2");
+		skyDome_skyTex = glGetUniformLocation(skyDome.program, "skyTex");
+		skyDome_alphaTex = glGetUniformLocation(skyDome.program, "alphaTex");
+		skyDome_origin = glGetUniformLocation(skyDome.program, "origin");
 	}
 
-	float fstep = 2.0 / SUBDIVISIONS;
-	for (i = 0; i < SUBDIVISIONS; i++) {
-		s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
+	for (axis = 0; axis < 6; ++axis) {
+		float fstep = 2.0 / SUBDIVISIONS;
 
-		for (j = 0; j < SUBDIVISIONS; j++) {
-			t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
+		skyDome_starts[axis] = vert;
+		for (i = 0; i < SUBDIVISIONS; i++) {
+			s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-			glm_sky_verts2[vert] = s;
-			glm_sky_verts2[vert + 1] = t;
+			for (j = 0; j < SUBDIVISIONS; j++) {
+				float length;
 
-			vert += 2;
+				t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
+
+				for (k = 0; k < 4; ++k) {
+					float v_s = s + (k % 2 ? fstep : 0);
+					float v_t = t + (k >= 2 ? fstep : 0);
+					vec3_t pos;
+
+					MakeSkyVec2(v_s, v_t, axis, pos);
+
+					// Degenerate?
+					if (j == 0 && (i || axis) && vert && k == 0) {
+						int prevIndex = (vert - 1) * FLOATS_PER_SKYVERT;
+
+						vert = AddSkyDomeVert(vert, &skydomeVertData[prevIndex], skydomeVertData[prevIndex + 3], skydomeVertData[prevIndex + 4]);
+						vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+						if (i == 0) {
+							skyDome_starts[axis] = vert;
+						}
+					}
+
+					vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+				}
+			}
 		}
+		skyDome_length[axis] = vert - skyDome_starts[axis];
+		Con_Printf("Axis %d: verts %d>%d (length %d)\n", axis, skyDome_starts[axis], vert, skyDome_length[axis]);
 	}
 
-	skyVertices = vert;
+	skyDomeVertices = vert;
 	if (!skyDome_vbo) {
 		glGenBuffers(1, &skyDome_vbo);
 		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyVertices, glm_sky_verts2, GL_STATIC_DRAW);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao) {
 		glGenVertexArrays(1, &skyDome_vao);
 		glBindVertexArray(skyDome_vao);
 		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
 		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*)0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*)(3 * sizeof(float)));
 	}
 }
 
 static void GLM_DrawSkyVerts(void)
 {
+	/*
 	if (!glm_sky_vbo) {
 		glGenBuffers(1, &glm_sky_vbo);
 	}
 	glBindBufferExt(GL_ARRAY_BUFFER, glm_sky_vbo);
-	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyVerts, glm_sky_verts, GL_STATIC_DRAW);
+	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyDome, glm_sky_verts, GL_STATIC_DRAW);
 
 	if (!glm_sky_vao) {
 		glGenVertexArrays(1, &glm_sky_vao);
@@ -615,11 +669,12 @@ static void GLM_DrawSkyVerts(void)
 	}
 
 	GL_EnterRegion(__FUNCTION__);
-	GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, glm_sky_vao, 0, skyVerts / FLOATS_PER_SKYVERT, false, true, false);
+	GLM_DrawPolygonByType(GL_TRIANGLE_STRIP, color_white, skyDome, 0, skyVerts / FLOATS_PER_SKYVERT, false, true, false);
 	GL_LeaveRegion();
 	skyVerts = 0;
+	*/
 }
-
+/*
 static void QueueSkyVert(vec3_t v, float s, float t)
 {
 	if (skyVerts + FLOATS_PER_SKYVERT < sizeof(glm_sky_verts) / sizeof(glm_sky_verts[0])) {
@@ -630,15 +685,18 @@ static void QueueSkyVert(vec3_t v, float s, float t)
 		glm_sky_verts[skyVerts + 4] = t;
 		skyVerts += FLOATS_PER_SKYVERT;
 	}
-}
+}*/
 
+// Moving this to vertex shader
 static void EmitSkyVert(vec3_t v, qbool newPoly)
 {
 	vec3_t dir;
 	float	s, t;
 	float	length;
 
-	VectorSubtract(v, r_origin, dir);
+	VectorCopy(v, dir);
+	VectorAdd(v, r_origin, v);
+	//VectorSubtract(v, r_origin, dir);
 	dir[2] *= 3;	// flatten the sphere
 
 	length = VectorLength(dir);
@@ -650,40 +708,51 @@ static void EmitSkyVert(vec3_t v, qbool newPoly)
 	s = (speedscale + dir[0]) * (1.0 / 128);
 	t = (speedscale + dir[1]) * (1.0 / 128);
 
-	if (GL_ShadersSupported()) {
-		if (skyVerts && newPoly) {
-			// degenerate strip...
-			QueueSkyVert(&glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT], glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT + 3], glm_sky_verts[skyVerts - FLOATS_PER_SKYVERT + 4]);
-			QueueSkyVert(v, s, t);
-		}
-		QueueSkyVert(v, s, t);
-	}
-	else {
-		glTexCoord2f(s, t);
-		glVertex3fv(v);
-	}
+	glTexCoord2f(s, t);
+	glVertex3fv(v);
 }
 
-// s and t range from -1 to 1
-static void MakeSkyVec2 (float s, float t, int axis, vec3_t v)
+static void GLM_DrawSkyFaces(void)
 {
-	vec3_t		b;
-	int			j, k;
-	float skyrange;
+	if (GL_ShadersSupported() && skyDome.program && true) {
+		float modelView[16];
+		float projection[16];
+		int i;
+		GLint faceStarts[6];
+		GLsizei faceLengths[6];
+		int faces = 0;
 
-	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
-	b[0] = s*skyrange;
-	b[1] = t*skyrange;
-	b[2] = skyrange;
+		GL_GetMatrix(GL_MODELVIEW, modelView);
+		GL_GetMatrix(GL_PROJECTION, projection);
 
-	for (j=0 ; j<3 ; j++)
-	{
-		k = st_to_vec[axis][j];
-		if (k < 0)
-			v[j] = -b[-k - 1];
-		else
-			v[j] = b[k - 1];
-		v[j] += r_origin[j];
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+				continue;
+			}
+
+			faceStarts[faces] = skyDome_starts[i];
+			faceLengths[faces] = skyDome_length[i];
+			++faces;
+		}
+
+		if (faces) {
+			GL_EnterRegion("SkyDome");
+			GL_UseProgram(skyDome.program);
+			glUniformMatrix4fv(skyDome_modelView, 1, GL_FALSE, modelView);
+			glUniformMatrix4fv(skyDome_projection, 1, GL_FALSE, projection);
+			glUniform1f(skyDome_farclip, max(r_farclip.value, 4096) * 0.577);
+			glUniform1f(skyDome_speedscale, r_refdef2.time * 8 - ((int)speedscale & ~127));
+			glUniform1f(skyDome_speedscale2, r_refdef2.time * 16 - ((int)speedscale & ~127));
+			glUniform1i(skyDome_skyTex, 0);
+			glUniform1i(skyDome_alphaTex, 1);
+			glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
+			glBindVertexArray(skyDome_vao);
+			glDisable(GL_CULL_FACE);
+			glMultiDrawArrays(GL_TRIANGLE_STRIP, faceStarts, faceLengths, faces);
+			glEnable(GL_CULL_FACE);
+			GL_LeaveRegion();
+		}
+		return;
 	}
 }
 
@@ -695,18 +764,24 @@ static void DrawSkyFace (int axis)
 	int v;
 	float fstep = 2.0 / SUBDIVISIONS;
 
-	if (GL_ShadersSupported() && skyDome.program && false) {
+	if (GL_ShadersSupported() && skyDome.program && true) {
+		float modelView[16];
+		float projection[16];
+
+		GL_GetMatrix(GL_MODELVIEW, modelView);
+		GL_GetMatrix(GL_PROJECTION, projection);
+
 		GL_EnterRegion("SkyDome");
 		GL_UseProgram(skyDome.program);
-		glUniform2f(skyDome_minimums, skymins[0][axis], skymins[1][axis]);
-		glUniform2f(skyDome_maximums, skymaxs[0][axis], skymaxs[1][axis]);
-		glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
+		glUniformMatrix4fv(skyDome_modelView, 1, GL_FALSE, modelView);
+		glUniformMatrix4fv(skyDome_projection, 1, GL_FALSE, projection);
 		glUniform1f(skyDome_farclip, max(r_farclip.value, 4096) * 0.577);
-		glUniform1i(skyDome_axis, axis);
 		glUniform1f(skyDome_speedscale, speedscale);
+		glUniform1i(skyDome_skyTex, 0);
+		glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
 		glBindVertexArray(skyDome_vao);
 		glDisable(GL_CULL_FACE);
-		glDrawArrays(GL_POINTS, 0, skyVertices / 2);
+		glDrawArrays(GL_TRIANGLE_STRIP, skyDome_starts[axis], skyDome_length[axis]);
 		glEnable(GL_CULL_FACE);
 		GL_LeaveRegion();
 		return;
@@ -729,27 +804,28 @@ static void DrawSkyFace (int axis)
 			if (t + fstep < skymins[1][axis] || t > skymaxs[1][axis])
 				continue;
 
-			/*if (GL_ShadersSupported()) {
-			EmitSkyChunk(axis * SUBDIVISIONS * SUBDIVISIONS * 2 + v);
-			}
-			else*/ {
+			{
+				float scale_ = max(r_farclip.value, 4096) * 0.577;
+
 				MakeSkyVec2(s, t, axis, vecs[0]);
 				MakeSkyVec2(s, t + fstep, axis, vecs[1]);
 				MakeSkyVec2(s + fstep, t + fstep, axis, vecs[2]);
 				MakeSkyVec2(s + fstep, t, axis, vecs[3]);
 
-				if (GL_ShadersSupported()) {
-					EmitSkyVert(vecs[0], true);
-					EmitSkyVert(vecs[1], false);
-					EmitSkyVert(vecs[3], false);
-					EmitSkyVert(vecs[2], false);
-				}
-				else {
-					EmitSkyVert(vecs[0], false);
-					EmitSkyVert(vecs[1], false);
-					EmitSkyVert(vecs[2], false);
-					EmitSkyVert(vecs[3], false);
-				}
+				/*
+				VectorAdd(vecs[0], r_origin, vecs[0]);
+				VectorAdd(vecs[1], r_origin, vecs[1]);
+				VectorAdd(vecs[2], r_origin, vecs[2]);
+				VectorAdd(vecs[3], r_origin, vecs[3]);
+				VectorScale(vecs[0], scale_, vecs[0]);
+				VectorScale(vecs[1], scale_, vecs[1]);
+				VectorScale(vecs[2], scale_, vecs[2]);
+				VectorScale(vecs[3], scale_, vecs[3]);
+				*/
+				EmitSkyVert(vecs[0], false);
+				EmitSkyVert(vecs[1], false);
+				EmitSkyVert(vecs[2], false);
+				EmitSkyVert(vecs[3], false);
 			}
 		}
 	}
@@ -763,41 +839,46 @@ static void R_DrawSkyDome(void)
 {
 	int i;
 
-	FillSkyVerts2();
-
-	GL_DisableMultitexture();
-	GL_Bind(solidskytexture);
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-
-	speedscale = r_refdef2.time * 8;
-	speedscale -= (int)speedscale & ~127;
-
-	skyVerts = 0;
-	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i]))
-			continue;
-		DrawSkyFace(i);
-	}
 	if (GL_ShadersSupported()) {
-		GLM_DrawSkyVerts();
+		BuildSkyVertsArray();
+
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(solidskytexture);
+		glActiveTexture(GL_TEXTURE1);
+		GL_Bind(alphaskytexture);
+
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+
+		GLM_DrawSkyFaces();
 	}
+	else {
+		GL_DisableMultitexture();
+		GL_Bind(solidskytexture);
 
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_Bind(alphaskytexture);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
-	speedscale = r_refdef2.time * 16;
-	speedscale -= (int)speedscale & ~127;
+		speedscale = r_refdef2.time * 8;
+		speedscale -= (int)speedscale & ~127;
 
-	skyVerts = 0;
-	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
-			continue;
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i]))
+				continue;
+			DrawSkyFace(i);
 		}
-		DrawSkyFace(i);
-	}
-	if (GL_ShadersSupported()) {
-		GLM_DrawSkyVerts();
+
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_Bind(alphaskytexture);
+
+		speedscale = r_refdef2.time * 16;
+		speedscale -= (int)speedscale & ~127;
+
+		//skyVerts = 0;
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+				continue;
+			}
+			DrawSkyFace(i);
+		}
 	}
 }
 

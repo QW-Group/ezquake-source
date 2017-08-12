@@ -1,11 +1,16 @@
 #version 430
 
 uniform sampler2D skyTex;
+uniform sampler2D alphaTex;
+in vec2 TexCoord;
+in vec2 AlphaCoord;
 
-in vec2 texCoord;
-out vec4 color;
+out vec4 frag_colour;
 
 void main(void)
 {
-	color = vec4(1, 1, 1, 1);//texture(skyTex, texCoord);
+	vec4 texColor = texture(skyTex, TexCoord);
+	vec4 alphaColor = texture(alphaTex, AlphaCoord);
+
+	gl_FragColor = mix(texColor, alphaColor, alphaColor.a);
 }

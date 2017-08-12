@@ -112,6 +112,9 @@ glTexSubImage3D_t        glTexSubImage3D;
 glTexStorage3D_t         glTexStorage3D;
 glTexImage3D_t           glTexImage3D;
 
+// Draw functions
+glMultiDrawArrays_t      glMultiDrawArrays;
+
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
 static unsigned int vbo_number = 1;
@@ -240,6 +243,8 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexImage3D);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");

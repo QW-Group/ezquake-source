@@ -408,6 +408,9 @@ typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xof
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
 
+// Draw functions
+typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
+
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
 // VBO functions
@@ -455,6 +458,9 @@ extern glActiveTexture_t        glActiveTexture;
 extern glTexSubImage3D_t        glTexSubImage3D;
 extern glTexStorage3D_t         glTexStorage3D;
 extern glTexImage3D_t           glTexImage3D;
+
+// Draw functions
+extern glMultiDrawArrays_t      glMultiDrawArrays;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
