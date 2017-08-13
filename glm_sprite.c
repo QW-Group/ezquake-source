@@ -90,23 +90,34 @@ void GL_FlushSpriteBatch(void)
 {
 	int i;
 	float oldMatrix[16];
+	float projectionMatrix[16];
+	GLuint vao = 0;
+
+	// hideous but hopefully temporary
+	float mvMatrix[MAX_SPRITE_BATCH][16];
+	float texScaleS[MAX_SPRITE_BATCH];
+	float texScaleT[MAX_SPRITE_BATCH];
+	float texture_indexes[MAX_SPRITE_BATCH];
 
 	glDisable(GL_CULL_FACE);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
 	for (i = 0; i < batch_count; ++i) {
 		glm_sprite_t* sprite = &sprite_batch[i];
-		GLuint vao = sprite->vao;
-
 		if (sprite->texture_array != prev_texture_array) {
 			glBindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array);
 			prev_texture_array = sprite->texture_array;
 		}
 
+		vao = sprite->vao;
+
 		GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
 		GL_Translate(GL_MODELVIEW, sprite->origin[0], sprite->origin[1], sprite->origin[2]);
 		if (true)
 		{
-			float tempMatrix[16];
+			float* tempMatrix = mvMatrix[i];
 
 			GL_PushMatrix(GL_MODELVIEW, tempMatrix);
 			// x = -y
@@ -127,27 +138,23 @@ void GL_FlushSpriteBatch(void)
 			GL_PopMatrix(GL_MODELVIEW, tempMatrix);
 		}
 
-		if (spriteProgram.program && vao) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
+		texScaleS[i] = sprite->texScale[0];
+		texScaleT[i] = sprite->texScale[1];
 
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(spriteProgram.program);
-			glUniformMatrix4fv(sprite_modelViewMatrixUniform, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(sprite_materialTexUniform, 0);
-			glUniform1f(sprite_textureIndex, sprite->texture_index);
-			glUniform1f(sprite_texS, sprite->texScale[0]);
-			glUniform1f(sprite_texT, sprite->texScale[1]);
-			glUniform3f(sprite_origin, -sprite->origin[1], sprite->origin[2], -sprite->origin[0]);
-			glUniform1f(sprite_scale, 1);
-
-			glBindVertexArray(vao);
-			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-		}
+		texture_indexes[i] = sprite->texture_index;
 	}
+
+	GL_UseProgram(spriteProgram.program);
+	glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
+	glUniform1i(sprite_materialTexUniform, 0);
+	glUniformMatrix4fv(sprite_modelViewMatrixUniform, batch_count, GL_FALSE, mvMatrix);
+	glUniform1fv(sprite_textureIndex, batch_count, texture_indexes);
+	glUniform1fv(sprite_texS, batch_count, texScaleS);
+	glUniform1fv(sprite_texT, batch_count, texScaleT);
+
+	glBindVertexArray(vao);
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
+
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	glEnable(GL_CULL_FACE);
 

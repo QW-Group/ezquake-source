@@ -100,8 +100,10 @@ glDetachShader_t      glDetachShader = NULL;
 // Uniforms
 glGetUniformLocation_t   glGetUniformLocation = NULL;
 glUniform1f_t            glUniform1f;
+glUniform1fv_t           glUniform1fv;
 glUniform2f_t            glUniform2f;
 glUniform3f_t            glUniform3f;
+glUniform3fv_t           glUniform3fv;
 glUniform4f_t            glUniform4f;
 glUniform1i_t            glUniform1i;
 glUniformMatrix4fv_t     glUniformMatrix4fv;
@@ -115,6 +117,7 @@ glTexImage3D_t           glTexImage3D;
 // Draw functions
 glMultiDrawArrays_t      glMultiDrawArrays;
 glMultiDrawElements_t    glMultiDrawElements;
+glDrawArraysInstanced_t  glDrawArraysInstanced;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
@@ -234,8 +237,10 @@ static void CheckShaderExtensions(void)
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformLocation);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform1fv);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform2f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform3f);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform3fv);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1i);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
@@ -247,6 +252,7 @@ static void CheckShaderExtensions(void)
 
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);
+			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");

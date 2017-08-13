@@ -395,8 +395,10 @@ typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* p
 // Uniforms
 typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
 typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat v0);
+typedef void (APIENTRY *glUniform1fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform2f_t)(GLint location, GLfloat v0, GLfloat v1);
 typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
@@ -410,6 +412,7 @@ typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint intern
 // Draw functions
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
 typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
+typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -447,8 +450,10 @@ extern glGetProgramiv_t      glGetProgramiv;
 // Uniforms
 extern glGetUniformLocation_t   glGetUniformLocation;
 extern glUniform1f_t            glUniform1f;
+extern glUniform1fv_t           glUniform1fv;
 extern glUniform2f_t            glUniform2f;
 extern glUniform3f_t            glUniform3f;
+extern glUniform3fv_t           glUniform3fv;
 extern glUniform4f_t            glUniform4f;
 extern glUniform1i_t            glUniform1i;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
@@ -462,6 +467,7 @@ extern glTexImage3D_t           glTexImage3D;
 // Draw functions
 extern glMultiDrawArrays_t      glMultiDrawArrays;
 extern glMultiDrawElements_t    glMultiDrawElements;
+extern glDrawArraysInstanced_t  glDrawArraysInstanced;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);

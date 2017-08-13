@@ -419,9 +419,7 @@ static qbool R_DrawTrySimpleItem(void)
 	org[2] += sprsize;
 
 	if (GL_ShadersSupported()) {
-		glDisable(GL_CULL_FACE);
 		GLM_DrawSimpleItem(currententity->model, simpletexture_index, org, angles, sprsize, scale_s, scale_t);
-		glEnable(GL_CULL_FACE);
 	}
 	else {
 		glPushAttrib(GL_ENABLE_BIT);
