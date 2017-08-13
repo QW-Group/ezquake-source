@@ -373,6 +373,7 @@ typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
 typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
 typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+typedef void (APIENTRY *glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
 
 // Shader functions
 typedef GLuint (APIENTRY *glCreateShader_t)(GLenum shaderType);
@@ -402,6 +403,8 @@ typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLf
 typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY *glUniform1iv_t)(GLint location, GLsizei count, const GLint *value);
 
 // Textures
 typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
@@ -413,6 +416,8 @@ typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint intern
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
 typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
 typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
+typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -428,6 +433,7 @@ extern glBindVertexArray_t         glBindVertexArray;
 extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
 extern glVertexAttribPointer_t     glVertexAttribPointer;
 extern glVertexAttribIPointer_t    glVertexAttribIPointer;
+extern glVertexAttribDivisor_t     glVertexAttribDivisor;
 
 // Shader functions
 extern glCreateShader_t      glCreateShader;
@@ -456,6 +462,8 @@ extern glUniform3f_t            glUniform3f;
 extern glUniform3fv_t           glUniform3fv;
 extern glUniform4f_t            glUniform4f;
 extern glUniform1i_t            glUniform1i;
+extern glUniform4fv_t           glUniform4fv;
+extern glUniform1iv_t           glUniform1iv;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
 
 // Textures
@@ -468,6 +476,8 @@ extern glTexImage3D_t           glTexImage3D;
 extern glMultiDrawArrays_t      glMultiDrawArrays;
 extern glMultiDrawElements_t    glMultiDrawElements;
 extern glDrawArraysInstanced_t  glDrawArraysInstanced;
+extern glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
+extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);

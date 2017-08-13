@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 static unsigned int model_vao = 0;
+static unsigned int instance_vbo = 0;
 
 void GL_BuildCommonTextureArrays(void);
 
@@ -832,16 +833,31 @@ void GL_BuildCommonTextureArrays(void)
 		glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
 
+		{
+			unsigned int values[64];
+
+			glGenBuffers(1, &instance_vbo);
+			glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+
+			for (i = 0; i < 64; ++i) {
+				values[i] = i;
+			}
+
+			glBufferDataExt(GL_ARRAY_BUFFER, sizeof(values), values, GL_STATIC_DRAW);
+		}
+
 		glBindVertexArray(model_vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		//glEnableVertexAttribArray(2);
-		//glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 		glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-		//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-		//glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 8));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+		glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+		glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+		glVertexAttribDivisor(3, 1);
 
 		Q_free(new_vbo_buffer);
 	}

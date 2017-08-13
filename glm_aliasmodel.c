@@ -224,18 +224,27 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 }
 
 typedef struct glm_aliasmodel_req_s {
+	GLuint vbo_count;
+	GLuint instanceCount;
+	GLuint vbo_start;
+	GLuint baseInstance;
 	float mvMatrix[16];
-	int vbo_start;
-	int vbo_count;
 	float texScale[2];
-	qbool texture_model;
 	GLuint vao;
 	GLuint texture_array;
-	byte color[4];
 	int texture_index;
+	byte color[4];
+	int texture_model;
 } glm_aliasmodel_req_t;
 
-#define MAX_ALIASMODEL_BATCH 128
+typedef struct DrawArraysIndirectCommand_s {
+	GLuint count;
+	GLuint instanceCount;
+	GLuint first;
+	GLuint baseInstance;
+} DrawArraysIndirectCommand_t;
+
+#define MAX_ALIASMODEL_BATCH 32
 static glm_aliasmodel_req_t aliasmodel_requests[MAX_ALIASMODEL_BATCH];
 static int batch_count = 0;
 static GLuint prev_texture_array = 0;
@@ -244,6 +253,13 @@ static void GLM_FlushAliasModelBatch(void)
 {
 	int i;
 	float projectionMatrix[16];
+
+	float mvMatrix[MAX_ALIASMODEL_BATCH][16];
+	float colors[MAX_ALIASMODEL_BATCH][4];
+	float texScaleS[MAX_ALIASMODEL_BATCH];
+	float texScaleT[MAX_ALIASMODEL_BATCH];
+	float texture_indexes[MAX_ALIASMODEL_BATCH];
+	int texture_models[MAX_ALIASMODEL_BATCH];
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
@@ -254,24 +270,47 @@ static void GLM_FlushAliasModelBatch(void)
 	for (i = 0; i < batch_count; ++i) {
 		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
 
-		if (drawAliasModelProgram.program && req->vao) {
-			if (req->texture_array != prev_texture_array) {
-				glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
-				prev_texture_array = req->texture_array;
-			}
+		if (req->texture_array != prev_texture_array) {
+			glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
+			prev_texture_array = req->texture_array;
+		}
 
-			glUniformMatrix4fv(drawAliasModel_modelViewMatrix, 1, GL_FALSE, req->mvMatrix);
-			glUniform4f(drawAliasModel_color, req->color[0] * 1.0f / 255, req->color[1] * 1.0f / 255, req->color[2] * 1.0f / 255, req->color[3] * 1.0f / 255);
-			glUniform1f(drawAliasModel_textureIndex, req->texture_index);
-			glUniform1i(drawAliasModel_applyTexture, req->texture_model);
-			glUniform1f(drawAliasModel_scaleS, req->texScale[0]);
-			glUniform1f(drawAliasModel_scaleT, req->texScale[1]);
-
+		if (i == 0) {
 			glBindVertexArray(req->vao);
-			glDrawArrays(GL_TRIANGLE_STRIP, req->vbo_start, req->vbo_count);
+		}
+
+		memcpy(&mvMatrix[i], req->mvMatrix, sizeof(mvMatrix[i]));
+		colors[i][0] = req->color[0] * 1.0f / 255;
+		colors[i][1] = req->color[1] * 1.0f / 255;
+		colors[i][2] = req->color[2] * 1.0f / 255;
+		colors[i][3] = req->color[3] * 1.0f / 255;
+		texture_indexes[i] = req->texture_index;
+		texScaleS[i] = req->texScale[0];
+		texScaleT[i] = req->texScale[1];
+		texture_models[i] = req->texture_model;
+
+		aliasmodel_requests[i].baseInstance = i;
+		aliasmodel_requests[i].instanceCount = 1;
+
+		if (req->texture_array != prev_texture_array) {
+			glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
+			prev_texture_array = req->texture_array;
 		}
 	}
-	
+
+	glUniformMatrix4fv(drawAliasModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
+	glUniform4fv(drawAliasModel_color, batch_count, (const GLfloat*) colors);
+	glUniform1fv(drawAliasModel_scaleS, batch_count, texScaleS);
+	glUniform1fv(drawAliasModel_scaleT, batch_count, texScaleT);
+	glUniform1fv(drawAliasModel_textureIndex, batch_count, texture_indexes);
+	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
+
+	for (i = 0; i < batch_count; ++i) {
+		const DrawArraysIndirectCommand_t *cmd = (const DrawArraysIndirectCommand_t *)((byte*)aliasmodel_requests + i * sizeof(aliasmodel_requests[0]));
+
+		glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
+	}
+
 	batch_count = 0;
 }
 
@@ -281,6 +320,10 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 
 	if (batch_count >= MAX_ALIASMODEL_BATCH) {
 		GLM_FlushAliasModelBatch();
+	}
+
+	if (!vao) {
+		return;
 	}
 
 	req = &aliasmodel_requests[batch_count];

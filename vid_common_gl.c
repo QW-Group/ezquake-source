@@ -78,6 +78,7 @@ glBindVertexArray_t         glBindVertexArray = NULL;
 glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
 glVertexAttribPointer_t     glVertexAttribPointer = NULL;
 glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
+glVertexAttribDivisor_t     glVertexAttribDivisor = NULL;
 
 // Shader functions
 glCreateShader_t      glCreateShader = NULL;
@@ -107,6 +108,8 @@ glUniform3fv_t           glUniform3fv;
 glUniform4f_t            glUniform4f;
 glUniform1i_t            glUniform1i;
 glUniformMatrix4fv_t     glUniformMatrix4fv;
+glUniform4fv_t           glUniform4fv;
+glUniform1iv_t           glUniform1iv;
 
 // Texture functions 
 glActiveTexture_t        glActiveTexture;
@@ -118,6 +121,8 @@ glTexImage3D_t           glTexImage3D;
 glMultiDrawArrays_t      glMultiDrawArrays;
 glMultiDrawElements_t    glMultiDrawElements;
 glDrawArraysInstanced_t  glDrawArraysInstanced;
+glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
+glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
@@ -225,6 +230,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glEnableVertexAttribArray);
 			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribPointer);
 			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribIPointer);
+			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribDivisor);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateProgram);
 			OPENGL_LOAD_SHADER_FUNCTION(glLinkProgram);
@@ -243,6 +249,8 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform3fv);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1i);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform4fv);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniform1iv);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
@@ -253,6 +261,8 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
+			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
+			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
