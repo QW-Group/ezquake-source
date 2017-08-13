@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "teamplay.h"
 #include "gl_aliasmodel.h"
+#include "crc.h"
 
 #ifndef CLIENTONLY
 extern cvar_t     maxclients;
@@ -40,6 +41,13 @@ extern cvar_t     maxclients;
 #else
 #define IsLocalSinglePlayerGame() (0)
 #endif
+
+static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
+static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
+void* Mod_LoadAllSkins(int numskins, daliasskintype_t *pskintype);
+void Mod_AddModelFlags(model_t *mod);
+float RadiusFromBounds(vec3_t mins, vec3_t maxs);
+static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 
 static vec3_t    shadevector;
 static qbool     full_light;
@@ -241,11 +249,42 @@ static void R_RenderAliasModel(
 	}
 }
 
+static qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
+{
+	vec3_t mins, maxs;
+
+	//culling
+	if (!(ent->renderfx & RF_WEAPONMODEL)) {
+		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
+			if (R_CullSphere(ent->origin, max(oldframe->radius, frame->radius))) {
+				return true;
+			}
+		}
+		else {
+			if (r_framelerp == 1) {	
+				VectorAdd(ent->origin, frame->bboxmin, mins);
+				VectorAdd(ent->origin, frame->bboxmax, maxs);
+			}
+			else {
+				int i;
+				for (i = 0; i < 3; i++) {
+					mins[i] = ent->origin[i] + min (oldframe->bboxmin[i], frame->bboxmin[i]);
+					maxs[i] = ent->origin[i] + max (oldframe->bboxmax[i], frame->bboxmax[i]);
+				}
+			}
+			if (R_CullBox(mins, maxs)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void R_DrawAliasModel(entity_t *ent)
 {
-	int i, anim, skinnum, texture, fb_texture, playernum = -1, local_skincolormode;
+	int anim, skinnum, texture, fb_texture, playernum = -1, local_skincolormode;
 	float scale;
-	vec3_t mins, maxs;
 	aliashdr_t *paliashdr;
 	model_t *clmodel;
 	maliasframedesc_t *oldframe, *frame;
@@ -271,12 +310,10 @@ void R_DrawAliasModel(entity_t *ent)
 		if (cameratype == C_NORMAL) {
 			return;
 		}
-		else {
-			currententity->alpha = 1;
-		}
+		currententity->alpha = 1;
 	}
-	// VULT MOTION TRAILS
-	if (currententity->alpha < 0) {
+	else if (currententity->alpha < 0) {
+		// VULT MOTION TRAILS
 		return;
 	}
 
@@ -325,7 +362,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	clmodel = ent->model;
-	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
+	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model); // locate the proper data
 
 	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
 		if (ent->model->modhint != MOD_EYES) {
@@ -350,28 +387,8 @@ void R_DrawAliasModel(entity_t *ent)
 		r_framelerp = 1.0;
 	}
 
-	//culling
-	if (!(ent->renderfx & RF_WEAPONMODEL)) {
-		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
-			if (R_CullSphere(ent->origin, max(oldframe->radius, frame->radius))) {
-				return;
-			}
-		}
-		else {
-			if (r_framelerp == 1) {	
-				VectorAdd(ent->origin, frame->bboxmin, mins);
-				VectorAdd(ent->origin, frame->bboxmax, maxs);
-			}
-			else {
-				for (i = 0; i < 3; i++) {
-					mins[i] = ent->origin[i] + min (oldframe->bboxmin[i], frame->bboxmin[i]);
-					maxs[i] = ent->origin[i] + max (oldframe->bboxmax[i], frame->bboxmax[i]);
-				}
-			}
-			if (R_CullBox(mins, maxs)) {
-				return;
-			}
-		}
+	if (R_CullAliasModel(ent, oldframe, frame)) {
+		return;
 	}
 
 	GL_EnableFog();
@@ -382,6 +399,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	//draw all the triangles
 	c_alias_polys += paliashdr->numtris;
+
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	R_RotateForEntity (ent);
 
@@ -434,7 +452,7 @@ void R_DrawAliasModel(entity_t *ent)
 		fb_texture = 0;
 	}
 
-	if (gl_smoothmodels.value) {
+	if (gl_smoothmodels.value && !GL_ShadersSupported()) {
 		glShadeModel(GL_SMOOTH);
 	}
 
@@ -524,39 +542,20 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 	// <-- Underwater caustics on alias models of QRACK
 
-	glShadeModel (GL_FLAT);
+	if (gl_smoothmodels.value && !GL_ShadersSupported()) {
+		glShadeModel(GL_FLAT);
+	}
 	if (gl_affinemodels.value) {
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
-	// MEAG: TODO
-	//VULT MOTION TRAILS - No shadows on motion trails
+	if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
+		GL_AliasModelShadow(ent, paliashdr);
+	}
+
 	if (!GL_ShadersSupported()) {
-		if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
-			float theta;
-			static float shadescale = 0;
-
-			if (!shadescale) {
-				shadescale = 1 / sqrt(2);
-			}
-			theta = -ent->angles[1] / 180 * M_PI;
-
-			VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
-
-			GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-			glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
-			glRotatef(ent->angles[1], 0, 0, 1);
-
-			glDisable(GL_TEXTURE_2D);
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			glColor4f(0, 0, 0, 0.5);
-			GL_DrawAliasShadow(paliashdr, lastposenum);
-			glEnable(GL_TEXTURE_2D);
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-			GL_PopMatrix(GL_MODELVIEW, oldMatrix);
-		}
 		glColor3ubv (color_white);
 	}
 
@@ -1214,4 +1213,247 @@ void R_InitAliasModelCvars(void)
 	Cvar_Register (&gl_powerupshells_effect1level);
 	Cvar_Register (&gl_powerupshells_base2level);
 	Cvar_Register (&gl_powerupshells_effect2level);
+}
+
+void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* loadname)
+{
+	int i, j, version, numframes, size, start, end, total;
+	mdl_t *pinmodel;
+	stvert_t *pinstverts;
+	dtriangle_t *pintriangles;
+	daliasframetype_t *pframetype;
+	daliasskintype_t *pskintype;
+	aliasframetype_t frametype;
+	int posenum;
+
+	//VULT MODELS
+	Mod_AddModelFlags(mod);
+
+	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES) {
+		mod->crc = CRC_Block(buffer, filesize);
+	}
+
+	start = Hunk_LowMark();
+
+	pinmodel = (mdl_t *)buffer;
+
+	version = LittleLong(pinmodel->version);
+
+	if (version != ALIAS_VERSION) {
+		Hunk_FreeToLowMark(start);
+		Host_Error("Mod_LoadAliasModel: %s has wrong version number (%i should be %i)\n", mod->name, version, ALIAS_VERSION);
+		return;
+	}
+
+	// allocate space for a working header, plus all the data except the frames, skin and group info
+	size = sizeof(aliashdr_t) + (LittleLong(pinmodel->numframes) - 1) * sizeof(pheader->frames[0]);
+	pheader = (aliashdr_t *)Hunk_AllocName(size, loadname);
+
+	mod->flags = LittleLong(pinmodel->flags);
+
+	// endian-adjust and copy the data, starting with the alias model header
+	pheader->boundingradius = LittleFloat(pinmodel->boundingradius);
+	pheader->numskins = LittleLong(pinmodel->numskins);
+	pheader->skinwidth = LittleLong(pinmodel->skinwidth);
+	pheader->skinheight = LittleLong(pinmodel->skinheight);
+
+	if (pheader->skinheight > MAX_LBM_HEIGHT)
+		Host_Error("Mod_LoadAliasModel: model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
+
+	pheader->numverts = LittleLong(pinmodel->numverts);
+
+	if (pheader->numverts <= 0)
+		Host_Error("Mod_LoadAliasModel: model %s has no vertices", mod->name);
+
+	if (pheader->numverts > MAXALIASVERTS)
+		Host_Error("Mod_LoadAliasModel: model %s has too many vertices", mod->name);
+
+	pheader->numtris = LittleLong(pinmodel->numtris);
+
+	if (pheader->numtris <= 0)
+		Host_Error("Mod_LoadAliasModel: model %s has no triangles", mod->name);
+
+	pheader->numframes = LittleLong(pinmodel->numframes);
+	numframes = pheader->numframes;
+	if (numframes < 1)
+		Host_Error("Mod_LoadAliasModel: Invalid # of frames: %d\n", numframes);
+
+	pheader->size = LittleFloat(pinmodel->size) * ALIAS_BASE_SIZE_RATIO;
+	mod->synctype = LittleLong(pinmodel->synctype);
+	mod->numframes = pheader->numframes;
+
+	for (i = 0; i < 3; i++) {
+		pheader->scale[i] = LittleFloat(pinmodel->scale[i]);
+		pheader->scale_origin[i] = LittleFloat(pinmodel->scale_origin[i]);
+		pheader->eyeposition[i] = LittleFloat(pinmodel->eyeposition[i]);
+	}
+
+	// load the skins
+	pskintype = (daliasskintype_t *)&pinmodel[1];
+	pskintype = Mod_LoadAllSkins(pheader->numskins, pskintype);
+
+	// load base s and t vertices
+	pinstverts = (stvert_t *)pskintype;
+
+	for (i = 0; i < pheader->numverts; i++) {
+		stverts[i].onseam = LittleLong(pinstverts[i].onseam);
+		stverts[i].s = LittleLong(pinstverts[i].s);
+		stverts[i].t = LittleLong(pinstverts[i].t);
+	}
+
+	// load triangle lists
+	pintriangles = (dtriangle_t *)&pinstverts[pheader->numverts];
+
+	for (i = 0; i < pheader->numtris; i++) {
+		triangles[i].facesfront = LittleLong(pintriangles[i].facesfront);
+
+		for (j = 0; j < 3; j++)
+			triangles[i].vertindex[j] = LittleLong(pintriangles[i].vertindex[j]);
+	}
+
+	// load the frames
+	posenum = 0;
+	pframetype = (daliasframetype_t *)&pintriangles[pheader->numtris];
+
+	mod->mins[0] = mod->mins[1] = mod->mins[2] = 255;
+	mod->maxs[0] = mod->maxs[1] = mod->maxs[2] = 0;
+
+	for (i = 0; i < numframes; i++) {
+		frametype = LittleLong(pframetype->type);
+
+		if (frametype == ALIAS_SINGLE) {
+			pframetype = (daliasframetype_t *)Mod_LoadAliasFrame(pframetype + 1, &pheader->frames[i], &posenum);
+		}
+		else {
+			pframetype = (daliasframetype_t *)Mod_LoadAliasGroup(pframetype + 1, &pheader->frames[i], &posenum);
+		}
+
+		for (j = 0; j < 3; j++) {
+			mod->mins[j] = min(mod->mins[j], pheader->frames[i].bboxmin[j]);
+			mod->maxs[j] = max(mod->maxs[j], pheader->frames[i].bboxmax[j]);
+		}
+	}
+
+	mod->radius = RadiusFromBounds(mod->mins, mod->maxs);
+
+	pheader->numposes = posenum;
+
+	mod->type = mod_alias;
+
+	// build the draw lists
+	GL_MakeAliasModelDisplayLists(mod, pheader);
+
+	// move the complete, relocatable alias model to the cache
+	end = Hunk_LowMark();
+	total = end - start;
+
+	Cache_Alloc(&mod->cache, total, loadname);
+	if (!mod->cache.data)
+		return;
+	memcpy(mod->cache.data, pheader, total);
+
+	// try load simple textures
+	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
+	for (i = 0; i < MAX_SIMPLE_TEXTURES && i < pheader->numskins; i++)
+		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
+
+	Hunk_FreeToLowMark(start);
+}
+
+static void* Mod_LoadAliasFrame(void * pin, maliasframedesc_t *frame, int* posenum)
+{
+	trivertx_t *pinframe;
+	int i;
+	daliasframe_t *pdaliasframe;
+
+	pdaliasframe = (daliasframe_t *)pin;
+
+	strlcpy(frame->name, pdaliasframe->name, sizeof(frame->name));
+	frame->firstpose = *posenum;
+	frame->numposes = 1;
+
+	for (i = 0; i < 3; i++) {
+		// these are byte values, so we don't have to worry about endianness
+		frame->bboxmin[i] = pdaliasframe->bboxmin.v[i] * pheader->scale[i] + pheader->scale_origin[i];
+		frame->bboxmax[i] = pdaliasframe->bboxmax.v[i] * pheader->scale[i] + pheader->scale_origin[i];
+	}
+	frame->radius = RadiusFromBounds(frame->bboxmin, frame->bboxmax);
+
+	pinframe = (trivertx_t *)(pdaliasframe + 1);
+
+	poseverts[*posenum] = pinframe;
+	(*posenum)++;
+
+	pinframe += pheader->numverts;
+
+	return (void *)pinframe;
+}
+
+static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posenum)
+{
+	daliasgroup_t *pingroup;
+	int i, numframes;
+	daliasinterval_t *pin_intervals;
+	void *ptemp;
+
+	pingroup = (daliasgroup_t *)pin;
+
+	numframes = LittleLong(pingroup->numframes);
+
+	frame->firstpose = *posenum;
+	frame->numposes = numframes;
+
+	for (i = 0; i < 3; i++) {
+		// these are byte values, so we don't have to worry about endianness
+		frame->bboxmin[i] = pingroup->bboxmin.v[i] * pheader->scale[i] + pheader->scale_origin[i];
+		frame->bboxmax[i] = pingroup->bboxmax.v[i] * pheader->scale[i] + pheader->scale_origin[i];
+	}
+	frame->radius = RadiusFromBounds(frame->bboxmin, frame->bboxmax);
+
+	pin_intervals = (daliasinterval_t *)(pingroup + 1);
+
+	frame->interval = LittleFloat(pin_intervals->interval);
+
+	pin_intervals += numframes;
+
+	ptemp = (void *)pin_intervals;
+
+	for (i = 0; i < numframes; i++) {
+		poseverts[*posenum] = (trivertx_t *)((daliasframe_t *)ptemp + 1);
+		(*posenum)++;
+
+		ptemp = (trivertx_t *)((daliasframe_t *)ptemp + 1) + pheader->numverts;
+	}
+
+	return ptemp;
+}
+
+static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
+{
+	// MEAG: TODO
+	//VULT MOTION TRAILS - No shadows on motion trails
+	if (!GL_ShadersSupported()) {
+		float theta;
+		float oldMatrix[16];
+		static float shadescale = 0;
+
+		if (!shadescale) {
+			shadescale = 1 / sqrt(2);
+		}
+		theta = -ent->angles[1] / 180 * M_PI;
+
+		VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
+
+		GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+		glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
+		glRotatef(ent->angles[1], 0, 0, 1);
+
+		glDisable(GL_TEXTURE_2D);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		glColor4f(0, 0, 0, 0.5);
+		GL_DrawAliasShadow(paliashdr, lastposenum);
+		glEnable(GL_TEXTURE_2D);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	}
 }

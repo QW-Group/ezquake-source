@@ -32,18 +32,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 
-
-//VULT MODELS
-void Mod_AddModelFlags(model_t *mod);
-
 model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize);
-void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize, const char* loadname);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 void *Mod_BSPX_FindLump(char *lumpname, int *plumpsize);
+void Mod_AddModelFlags(model_t *mod);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
@@ -244,7 +241,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash)
 
 	switch (LittleLong(*((unsigned *)buf))) {
 	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf, filesize);
+		Mod_LoadAliasModel (mod, buf, filesize, loadname);
 		break;
 
 	case MD3_IDENT:
@@ -1735,7 +1732,8 @@ void Mod_LoadPlanes (lump_t *l) {
 	}
 }
 
-float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
+float RadiusFromBounds (vec3_t mins, vec3_t maxs)
+{
 	int i;
 	vec3_t corner;
 
@@ -1936,72 +1934,6 @@ int			posenum;
 //byte player_8bit_texels[320 * 200];
 byte player_8bit_texels[256*256]; // Workaround for new player model, isn't proper for "real" quake skins
 
-void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame) {
-	trivertx_t *pinframe;
-	int i;
-	daliasframe_t *pdaliasframe;
-
-	pdaliasframe = (daliasframe_t *)pin;
-
-	strlcpy (frame->name, pdaliasframe->name, sizeof (frame->name));
-	frame->firstpose = posenum;
-	frame->numposes = 1;
-
-	for (i = 0; i < 3; i++) {
-		// these are byte values, so we don't have to worry about endianness
-		frame->bboxmin[i] = pdaliasframe->bboxmin.v[i] * pheader->scale[i] + pheader->scale_origin[i];
-		frame->bboxmax[i] = pdaliasframe->bboxmax.v[i] * pheader->scale[i] + pheader->scale_origin[i];
-	}
-	frame->radius = RadiusFromBounds (frame->bboxmin, frame->bboxmax);
-
-	pinframe = (trivertx_t *)(pdaliasframe + 1);
-
-	poseverts[posenum] = pinframe;
-	posenum++;
-
-	pinframe += pheader->numverts;
-
-	return (void *)pinframe;
-}
-
-void *Mod_LoadAliasGroup (void * pin,  maliasframedesc_t *frame) {
-	daliasgroup_t *pingroup;
-	int i, numframes;
-	daliasinterval_t *pin_intervals;
-	void *ptemp;
-
-	pingroup = (daliasgroup_t *) pin;
-
-	numframes = LittleLong (pingroup->numframes);
-
-	frame->firstpose = posenum;
-	frame->numposes = numframes;
-
-	for (i = 0; i < 3; i++) {
-		// these are byte values, so we don't have to worry about endianness
-		frame->bboxmin[i] = pingroup->bboxmin.v[i] * pheader->scale[i] + pheader->scale_origin[i];
-		frame->bboxmax[i] = pingroup->bboxmax.v[i] * pheader->scale[i] + pheader->scale_origin[i];
-	}
-	frame->radius = RadiusFromBounds (frame->bboxmin, frame->bboxmax);
-
-	pin_intervals = (daliasinterval_t *)(pingroup + 1);
-
-	frame->interval = LittleFloat (pin_intervals->interval);
-
-	pin_intervals += numframes;
-
-	ptemp = (void *)pin_intervals;
-
-	for (i = 0; i < numframes; i++) {
-		poseverts[posenum] = (trivertx_t *)((daliasframe_t *)ptemp + 1);
-		posenum++;
-
-		ptemp = (trivertx_t *)((daliasframe_t *)ptemp + 1) + pheader->numverts;
-	}
-
-	return ptemp;
-}
-
 //=========================================================
 
 typedef struct {
@@ -2135,7 +2067,8 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 	return 0; // we failed miserable
 }
 
-static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
+void* Mod_LoadAllSkins(int numskins, daliasskintype_t *pskintype)
+{
 	int i, j, k, s, groupskins, gl_texnum, fb_texnum, texmode;
 	char basename[64], identifier[64];
 	byte *skin;
@@ -2224,150 +2157,6 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 	return pskintype;
 }
 
-//=========================================================================
-
-void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
-	int i, j, version, numframes, size, start, end, total;
-	mdl_t *pinmodel;
-	stvert_t *pinstverts;
-	dtriangle_t *pintriangles;
-	daliasframetype_t *pframetype;
-	daliasskintype_t *pskintype;
-	aliasframetype_t frametype;
-
-	//VULT MODELS
-	Mod_AddModelFlags(mod);
-
-	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES) {
-		mod->crc = CRC_Block(buffer, filesize);
-	}
-
-	start = Hunk_LowMark ();
-
-	pinmodel = (mdl_t *)buffer;
-
-	version = LittleLong (pinmodel->version);
-
-	if (version != ALIAS_VERSION) {
-		Hunk_FreeToLowMark (start);
-		Host_Error ("Mod_LoadAliasModel: %s has wrong version number (%i should be %i)\n", mod->name, version, ALIAS_VERSION);
-		return;
-	}
-
-	// allocate space for a working header, plus all the data except the frames, skin and group info
-	size = 	sizeof (aliashdr_t)
-			+ (LittleLong (pinmodel->numframes) - 1) *
-			sizeof (pheader->frames[0]);
-	pheader = (aliashdr_t *) Hunk_AllocName (size, loadname);
-
-	mod->flags = LittleLong (pinmodel->flags);
-
-	// endian-adjust and copy the data, starting with the alias model header
-	pheader->boundingradius = LittleFloat (pinmodel->boundingradius);
-	pheader->numskins = LittleLong (pinmodel->numskins);
-	pheader->skinwidth = LittleLong (pinmodel->skinwidth);
-	pheader->skinheight = LittleLong (pinmodel->skinheight);
-
-	if (pheader->skinheight > MAX_LBM_HEIGHT)
-		Host_Error ("Mod_LoadAliasModel: model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
-
-	pheader->numverts = LittleLong (pinmodel->numverts);
-
-	if (pheader->numverts <= 0)
-		Host_Error ("Mod_LoadAliasModel: model %s has no vertices", mod->name);
-
-	if (pheader->numverts > MAXALIASVERTS)
-		Host_Error ("Mod_LoadAliasModel: model %s has too many vertices", mod->name);
-
-	pheader->numtris = LittleLong (pinmodel->numtris);
-
-	if (pheader->numtris <= 0)
-		Host_Error ("Mod_LoadAliasModel: model %s has no triangles", mod->name);
-
-	pheader->numframes = LittleLong (pinmodel->numframes);
-	numframes = pheader->numframes;
-	if (numframes < 1)
-		Host_Error ("Mod_LoadAliasModel: Invalid # of frames: %d\n", numframes);
-
-	pheader->size = LittleFloat (pinmodel->size) * ALIAS_BASE_SIZE_RATIO;
-	mod->synctype = LittleLong (pinmodel->synctype);
-	mod->numframes = pheader->numframes;
-
-	for (i = 0; i < 3; i++) {
-		pheader->scale[i] = LittleFloat (pinmodel->scale[i]);
-		pheader->scale_origin[i] = LittleFloat (pinmodel->scale_origin[i]);
-		pheader->eyeposition[i] = LittleFloat (pinmodel->eyeposition[i]);
-	}
-
-	// load the skins
-	pskintype = (daliasskintype_t *)&pinmodel[1];
-	pskintype = Mod_LoadAllSkins (pheader->numskins, pskintype);
-
-	// load base s and t vertices
-	pinstverts = (stvert_t *)pskintype;
-
-	for (i = 0; i < pheader->numverts; i++) {
-		stverts[i].onseam = LittleLong (pinstverts[i].onseam);
-		stverts[i].s = LittleLong (pinstverts[i].s);
-		stverts[i].t = LittleLong (pinstverts[i].t);
-	}
-
-	// load triangle lists
-	pintriangles = (dtriangle_t *)&pinstverts[pheader->numverts];
-
-	for (i = 0; i < pheader->numtris; i++) {
-		triangles[i].facesfront = LittleLong (pintriangles[i].facesfront);
-
-		for (j = 0; j < 3; j++)
-			triangles[i].vertindex[j] =	LittleLong (pintriangles[i].vertindex[j]);
-	}
-
-	// load the frames
-	posenum = 0;
-	pframetype = (daliasframetype_t *)&pintriangles[pheader->numtris];
-
-	mod->mins[0] = mod->mins[1] = mod->mins[2] = 255;
-	mod->maxs[0] = mod->maxs[1] = mod->maxs[2] = 0;
-
-	for (i = 0; i < numframes; i++) {
-		frametype = LittleLong (pframetype->type);
-
-		if (frametype == ALIAS_SINGLE)
-			pframetype = (daliasframetype_t *) Mod_LoadAliasFrame (pframetype + 1, &pheader->frames[i]);
-		else
-			pframetype = (daliasframetype_t *) Mod_LoadAliasGroup (pframetype + 1, &pheader->frames[i]);
-
-		for (j = 0; j < 3; j++) {
-			mod->mins[j] = min (mod->mins[j], pheader->frames[i].bboxmin[j]);
-			mod->maxs[j] = max (mod->maxs[j], pheader->frames[i].bboxmax[j]);
-		}
-	}
-
-	mod->radius = RadiusFromBounds (mod->mins, mod->maxs);
-
-	pheader->numposes = posenum;
-
-	mod->type = mod_alias;
-
-	// build the draw lists
-	GL_MakeAliasModelDisplayLists (mod, pheader);
-
-	// move the complete, relocatable alias model to the cache
-	end = Hunk_LowMark ();
-	total = end - start;
-
-	Cache_Alloc (&mod->cache, total, loadname);
-	if (!mod->cache.data)
-		return;
-	memcpy (mod->cache.data, pheader, total);
-
-	// try load simple textures
-	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
-	for (i = 0; i < MAX_SIMPLE_TEXTURES && i < pheader->numskins; i++)
-		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
-
-	Hunk_FreeToLowMark (start);
-}
 
 //=============================================================================
 

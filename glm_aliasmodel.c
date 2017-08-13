@@ -13,7 +13,48 @@ static GLint drawShell_color;
 static GLint drawShell_materialTex;
 static GLint drawShell_time;
 
+static glm_program_t drawAliasModelProgram;
+static GLint drawAliasModel_modelViewMatrix;
+static GLint drawAliasModel_projectionMatrix;
+static GLint drawAliasModel_color;
+static GLint drawAliasModel_materialTex;
+static GLint drawAliasModel_applyTexture;
+
 int GL_GenerateShellTexture(void);
+
+void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool texture)
+{
+	if (!drawAliasModelProgram.program) {
+		GL_VFDeclare(model_alias);
+
+		// Initialise program for drawing image
+		GLM_CreateVFProgram("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram);
+
+		drawAliasModel_modelViewMatrix = glGetUniformLocation(drawAliasModelProgram.program, "modelViewMatrix");
+		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
+		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
+		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
+		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
+	}
+
+	if (drawAliasModelProgram.program && vao) {
+		float modelViewMatrix[16];
+		float projectionMatrix[16];
+
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+		GL_UseProgram(drawAliasModelProgram.program);
+		glUniformMatrix4fv(drawAliasModel_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform4f(drawAliasModel_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
+		glUniform1i(drawAliasModel_materialTex, 0);
+		glUniform1i(drawAliasModel_applyTexture, texture);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, start, count);
+	}
+}
 
 // Shell adds normals
 void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int vao, int start, int vertices)
@@ -179,7 +220,7 @@ void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_DrawPolygonByType(drawMode, color, paliashdr->vao, vertIndex, count, false, texture, false);
+			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture);
 
 			vertIndex += count;
 		}
