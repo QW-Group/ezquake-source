@@ -562,6 +562,172 @@ static void GL_SetModelTextureArray(model_t* mod, GLuint array_num, float widthR
 	mod->texture_arrays_scale_t[0] = heightRatio;
 }
 
+static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, int* required_vbo_length)
+{
+	if (!mod->isworldmodel) {
+		int j;
+
+		if (mod->type == mod_alias) {
+			aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
+			qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
+
+			for (j = 0; j < paliashdr->numskins; ++j) {
+				int anim;
+				for (anim = 0; anim < 4; ++anim) {
+					if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
+						GL_RegisterCommonTextureSize(common, paliashdr->gl_texturenum[j][anim], any_size);
+					}
+					if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
+						GL_RegisterCommonTextureSize(common, paliashdr->fb_texturenum[j][anim], any_size);
+					}
+				}
+			}
+
+			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+				if (mod->simpletexture[j]) {
+					GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
+				}
+			}
+
+			Con_Printf("Registered %s: %d\n", mod->name, count);
+			*required_vbo_length += mod->vertsInVBO;
+		}
+		else if (mod->type == mod_sprite) {
+			msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+			int count = 0;
+
+			for (j = 0; j < psprite->numframes; ++j) {
+				int offset    = psprite->frames[j].offset;
+				int numframes = psprite->frames[j].numframes;
+
+				if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+					continue;
+				}
+
+				GL_RegisterCommonTextureSize(common, ((mspriteframe_t* )((byte*)psprite + offset))->gl_texturenum, true);
+				++count;
+			}
+			Con_Printf("Registered %s: %d\n", mod->name, count);
+		}
+		else if (mod->type == mod_brush && !mod->isworldmodel) {
+			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+				if (mod->simpletexture[j]) {
+					GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
+					++count;
+				}
+			}
+			Con_Printf("Registered %s: %d\n", mod->name, count);
+		}
+		else {
+			//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
+		}
+	}
+	else {
+		//Con_Printf("%d: WorldModel\n", i);
+	}
+}
+
+void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_texture_t* commonTex, int maxWidth, int maxHeight, GLuint model_vbo, float* new_vbo_buffer, int* new_vbo_position)
+{
+	int count = 0;
+	if (!mod->isworldmodel) {
+		int j;
+
+		if (mod->type == mod_alias) {
+			aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
+			qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
+
+			for (j = 0; j < paliashdr->numskins; ++j) {
+				int anim;
+				for (anim = 0; anim < 4; ++anim) {
+					if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
+						paliashdr->gl_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->gl_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
+					}
+					else {
+						paliashdr->gl_arrayindex[j][anim] = paliashdr->gl_arrayindex[j][anim - 1];
+
+					}
+
+					if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
+						paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
+					}
+					else {
+						paliashdr->gl_fb_arrayindex[j][anim] = paliashdr->gl_fb_arrayindex[j][anim - 1];
+					}
+				}
+			}
+
+			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+				if (mod->simpletexture[j]) {
+					mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
+				}
+			}
+
+			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
+
+			// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
+			memcpy(&new_vbo_buffer[(*new_vbo_position) * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+			//Q_free(mod->temp_vbo_buffer);
+
+			if (strstr(mod->name, "player.mdl")) {
+				mod = mod;
+			}
+			mod->vao_simple = mod->vao = model_vao;
+			mod->vbo = model_vbo;
+			mod->vbo_start = *new_vbo_position;
+
+			paliashdr->vbo = model_vbo;
+			paliashdr->vao = model_vao;
+			paliashdr->vertsOffset = *new_vbo_position;
+
+			*new_vbo_position += mod->vertsInVBO;
+		}
+		else if (mod->type == mod_sprite) {
+			msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+
+			for (j = 0; j < psprite->numframes; ++j) {
+				int offset    = psprite->frames[j].offset;
+				int numframes = psprite->frames[j].numframes;
+				mspriteframe_t* frame;
+
+				if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+					continue;
+				}
+
+				frame = ((mspriteframe_t*)((byte*)psprite + offset));
+				GL_CopyToTextureArraySize(common, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT);
+			}
+
+			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			mod->vao_simple = model_vao;
+			// FIXME
+			GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.5f, 0.5f);
+			mod->vbo = model_vbo;
+			mod->vbo_start = 0;
+		}
+		else if (mod->type == mod_brush) {
+			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+				if (mod->simpletexture[j]) {
+					mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
+				}
+			}
+
+			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			mod->vao_simple = model_vao;
+			mod->vbo_start = 0;
+
+			// FIXME
+			GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.25f, 0.25f);
+		}
+		else {
+			//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
+		}
+	}
+	else {
+		//Con_Printf("%d: WorldModel\n", i);
+	}
+}
 
 void GL_BuildCommonTextureArrays(void)
 {
@@ -576,70 +742,16 @@ void GL_BuildCommonTextureArrays(void)
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 
-		if (!mod) {
-			continue;
+		if (mod) {
+			GL_MeasureTexturesForModel(mod, common, &required_vbo_length);
 		}
+	}
 
-		if (!mod->isworldmodel) {
-			int j;
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
 
-			if (mod->type == mod_alias) {
-				aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-				qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
-
-				for (j = 0; j < paliashdr->numskins; ++j) {
-					int anim;
-					for (anim = 0; anim < 4; ++anim) {
-						if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
-							GL_RegisterCommonTextureSize(common, paliashdr->gl_texturenum[j][anim], any_size);
-						}
-						if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-							GL_RegisterCommonTextureSize(common, paliashdr->fb_texturenum[j][anim], any_size);
-						}
-					}
-				}
-
-				for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-					if (mod->simpletexture[j]) {
-						GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
-					}
-				}
-
-				Con_Printf("Registered %s: %d\n", mod->name, count);
-				required_vbo_length += mod->vertsInVBO;
-			}
-			else if (mod->type == mod_sprite) {
-				msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
-				int count = 0;
-
-				for (j = 0; j < psprite->numframes; ++j) {
-					int offset    = psprite->frames[j].offset;
-					int numframes = psprite->frames[j].numframes;
-
-					if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
-						continue;
-					}
-
-					GL_RegisterCommonTextureSize(common, ((mspriteframe_t* )((byte*)psprite + offset))->gl_texturenum, true);
-					++count;
-				}
-				Con_Printf("Registered %s: %d\n", mod->name, count);
-			}
-			else if (mod->type == mod_brush && !mod->isworldmodel) {
-				for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-					if (mod->simpletexture[j]) {
-						GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
-						++count;
-					}
-				}
-				Con_Printf("Registered %s: %d\n", mod->name, count);
-			}
-			else {
-				//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
-			}
-		}
-		else {
-			//Con_Printf("%d: WorldModel\n", i);
+		if (mod) {
+			GL_MeasureTexturesForModel(mod, common, &required_vbo_length);
 		}
 	}
 
@@ -700,105 +812,17 @@ void GL_BuildCommonTextureArrays(void)
 		// Go back through all models, importing textures into arrays and creating new VBO
 		for (i = 1; i < MAX_MODELS; ++i) {
 			model_t* mod = cl.model_precache[i];
-			int count = 0;
 
-			if (!mod) {
-				continue;
+			if (mod) {
+				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
 			}
+		}
 
-			if (!mod->isworldmodel) {
-				int j;
+		for (i = 0; i < MAX_VWEP_MODELS; i++) {
+			model_t* mod = cl.vw_model_precache[i];
 
-				if (mod->type == mod_alias) {
-					aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-					qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
-
-					for (j = 0; j < paliashdr->numskins; ++j) {
-						int anim;
-						for (anim = 0; anim < 4; ++anim) {
-							if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
-								paliashdr->gl_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->gl_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
-							}
-							else {
-								paliashdr->gl_arrayindex[j][anim] = paliashdr->gl_arrayindex[j][anim - 1];
-								
-							}
-
-							if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-								paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
-							}
-							else {
-								paliashdr->gl_fb_arrayindex[j][anim] = paliashdr->gl_fb_arrayindex[j][anim - 1];
-							}
-						}
-					}
-
-					for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-						if (mod->simpletexture[j]) {
-							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
-						}
-					}
-
-					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
-					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
-
-					// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
-					memcpy(&new_vbo_buffer[new_vbo_position * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
-					//Q_free(mod->temp_vbo_buffer);
-
-					mod->vao_simple = mod->vao = model_vao;
-					mod->vbo = model_vbo;
-					mod->vbo_start = new_vbo_position;
-
-					paliashdr->vbo = model_vbo;
-					paliashdr->vao = model_vao;
-					paliashdr->vertsOffset = new_vbo_position;
-
-					new_vbo_position += mod->vertsInVBO;
-				}
-				else if (mod->type == mod_sprite) {
-					msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
-
-					for (j = 0; j < psprite->numframes; ++j) {
-						int offset    = psprite->frames[j].offset;
-						int numframes = psprite->frames[j].numframes;
-						mspriteframe_t* frame;
-
-						if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
-							continue;
-						}
-
-						frame = ((mspriteframe_t*)((byte*)psprite + offset));
-						GL_CopyToTextureArraySize(common, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT);
-					}
-
-					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
-					mod->vao_simple = model_vao;
-					// FIXME
-					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.5f, 0.5f);
-					mod->vbo = model_vbo;
-					mod->vbo_start = 0;
-				}
-				else if (mod->type == mod_brush) {
-					for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-						if (mod->simpletexture[j]) {
-							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
-						}
-					}
-
-					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
-					mod->vao_simple = model_vao;
-					mod->vbo_start = 0;
-
-					// FIXME
-					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.25f, 0.25f);
-				}
-				else {
-					//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
-				}
-			}
-			else {
-				//Con_Printf("%d: WorldModel\n", i);
+			if (mod) {
+				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
 			}
 		}
 
