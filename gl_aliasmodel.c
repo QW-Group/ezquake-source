@@ -50,14 +50,15 @@ float RadiusFromBounds(vec3_t mins, vec3_t maxs);
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 
 static vec3_t    shadevector;
-static qbool     full_light;
-static float     r_framelerp;
-static float     r_lerpdistance;
-static int       lastposenum;
-static float     apitch;
-static float     ayaw;
 static vec3_t    vertexlight;
 static vec3_t    dlight_color;
+
+float     apitch;
+float     ayaw;
+float     r_framelerp;
+float     r_lerpdistance;
+int       lastposenum;
+qbool     full_light;
 
 float     r_shellcolor[3];
 float     r_modelcolor[3];
@@ -68,10 +69,10 @@ custom_model_color_t* custom_model = NULL;
 
 static cvar_t    r_lerpmuzzlehack                    = {"r_lerpmuzzlehack", "1"};
 static cvar_t    gl_shaftlight                       = {"gl_shaftlight", "1"};
-static cvar_t    gl_powerupshells_effect1level       = {"gl_powerupshells_effect1level", "0.75"};
-static cvar_t    gl_powerupshells_base1level         = {"gl_powerupshells_base1level", "0.05"};
-static cvar_t    gl_powerupshells_effect2level       = {"gl_powerupshells_effect2level", "0.4"};
-static cvar_t    gl_powerupshells_base2level         = {"gl_powerupshells_base2level", "0.1"};
+cvar_t    gl_powerupshells_effect1level       = {"gl_powerupshells_effect1level", "0.75"};
+cvar_t    gl_powerupshells_base1level         = {"gl_powerupshells_base1level", "0.05"};
+cvar_t    gl_powerupshells_effect2level       = {"gl_powerupshells_effect2level", "0.4"};
+cvar_t    gl_powerupshells_base2level         = {"gl_powerupshells_base2level", "0.1"};
 
 extern vec3_t    lightcolor;
 extern float     bubblecolor[NUM_DLIGHTTYPES][4];
@@ -80,11 +81,11 @@ extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
 
-static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
+//static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum);
 
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT);
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects);
 void R_AliasSetupLighting(entity_t *ent);
 
 custom_model_color_t custom_model_colors[] = {
@@ -147,28 +148,7 @@ void R_DrawPowerupShell(
 	if (effects & EF_BLUE)
 		r_shellcolor[2] += effect_level;
 
-	R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, layer_no == 1, false, 0, 0, GL_MODULATE, 1.0f, 1.0f);
-}
-
-int GL_GenerateShellTexture(void)
-{
-	int x, y, d;
-	byte data[32][32][4];
-	for (y = 0;y < 32;y++)
-	{
-		for (x = 0;x < 32;x++)
-		{
-			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
-			if (d < 0)
-				d = 0;
-			if (d > 255)
-				d = 255;
-			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
-			data[y][x][3] = 255;
-		}
-	}
-
-	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+	R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, layer_no == 1, false, 0, 0, GL_MODULATE, 1.0f, 1.0f, 0);
 }
 
 static qbool IsFlameModel(model_t* model)
@@ -180,7 +160,8 @@ static qbool IsFlameModel(model_t* model)
 
 static void R_RenderAliasModel(
 	model_t* model, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode, 
-	int texture, int fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame, qbool outline, float scaleS, float scaleT
+	int texture, int fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame, qbool outline, float scaleS, float scaleT,
+	int effects
 )
 {
 	int i;
@@ -200,21 +181,21 @@ static void R_RenderAliasModel(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, textureEnvMode, scaleS, scaleT);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, textureEnvMode, scaleS, scaleT, effects);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (fb_texture > 0 && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects);
 
 		GL_DisableMultitexture();
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, GL_MODULATE, scaleS, scaleT);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, GL_MODULATE, scaleS, scaleT, effects);
 
 		if (fb_texture > 0) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, false, fb_texture, 0, GL_REPLACE, scaleS, scaleT);
+			R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, false, fb_texture, 0, GL_REPLACE, scaleS, scaleT, 0);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -463,7 +444,7 @@ void R_DrawAliasModel(entity_t *ent)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
-	R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT);
+	R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects);
 
 	if (!GL_ShadersSupported()) {
 		// FIXME: think need put it after caustics
@@ -502,7 +483,7 @@ void R_DrawAliasModel(entity_t *ent)
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame (clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT);
+		R_SetupAliasFrame (clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -541,219 +522,13 @@ void R_DrawAliasModel(entity_t *ent)
 	return;
 }
 
-void GL_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
-{
-	int *order, count;
-	float scroll[2];
-	float v[3];
-	float shell_size = bound(0, gl_powerupshells_size.value, 20);
-	byte color[4];
-	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
-
-	// LordHavoc: set the state to what we need for rendering a shell
-	if (!shelltexture) {
-		shelltexture = GL_GenerateShellTexture();
-	}
-	GL_Bind(shelltexture);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	if (gl_powerupshells_style.integer) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	}
-	else {
-		glBlendFunc(GL_ONE, GL_ONE);
-	}
-
-	if (scrolldir) {
-		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
-		scroll[1] = sin(cl.time * -0.5);
-	}
-	else {
-		scroll[0] = cos(cl.time * 1.5);
-		scroll[1] = sin(cl.time * 1.1);
-	}
-
-	if (GL_ShadersSupported()) {
-		color[0] = r_shellcolor[0] * 255;
-		color[1] = r_shellcolor[1] * 255;
-		color[2] = r_shellcolor[2] * 255;
-		color[3] = bound(0, gl_powerupshells.value, 1) * 255;
-	}
-
-	// get the vertex count and primitive type
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
-	for (;;) {
-		GLenum drawMode = GL_TRIANGLE_STRIP;
-
-		count = *order++;
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			count = -count;
-			drawMode = GL_TRIANGLE_FAN;
-		}
-
-		if (GL_ShadersSupported()) {
-			order += 2 * count;
-
-			GLM_DrawShellPoly(drawMode, color, shell_size, paliashdr->vao, vertIndex, count);
-
-			vertIndex += count;
-		}
-		else {
-			// alpha so we can see colour underneath still
-			glColor4f(r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1));
-
-			glBegin(drawMode);
-			do {
-				glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
-
-				order += 2;
-
-				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
-				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
-				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
-				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
-				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
-				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
-
-				glVertex3f(v[0], v[1], v[2]);
-
-				verts1++;
-				verts2++;
-			} while (--count);
-			glEnd();
-		}
-	}
-
-	// LordHavoc: reset the state to what the rest of the renderer expects
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
-{
-	int *order, count;
-	vec3_t interpolated_verts;
-	float l, lerpfrac;
-	trivertx_t *verts1, *verts2;
-	//VULT COLOURED MODEL LIGHTS
-	int i;
-	vec3_t lc;
-
-	lerpfrac = r_framelerp;
-	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
-
-	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
-
-	order = (int *) ((byte *) paliashdr + paliashdr->commands);
-
-	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
-		GL_DrawPowerupShell(paliashdr, pose1, verts1, verts2, lerpfrac, scrolldir);
-	}
-	else {
-		if (r_modelalpha < 1) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		}
-
-		if (custom_model) {
-			glDisable(GL_TEXTURE_2D);
-			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
-		}
-
-		for ( ; ; ) {
-			count = *order++;
-			if (!count) {
-				break;
-			}
-
-			if (count < 0) {
-				count = -count;
-				glBegin(GL_TRIANGLE_FAN);
-			}
-			else {
-				glBegin(GL_TRIANGLE_STRIP);
-			}
-
-			do {
-				// texture coordinates come from the draw list
-				if (mtex) {
-					qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
-					qglMultiTexCoord2f(GL_TEXTURE1, ((float *)order)[0], ((float *)order)[1]);
-				}
-				else {
-					glTexCoord2f(((float *)order)[0], ((float *)order)[1]);
-				}
-
-				order += 2;
-
-				if ((currententity->renderfx & RF_LIMITLERP)) {
-					lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
-				}
-
-				// VULT VERTEX LIGHTING
-				if (amf_lighting_vertex.value && !full_light) {
-					l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
-				}
-				else {
-					l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-					l = (l * shadelight + ambientlight) / 256.0;
-				}
-				l = min(l, 1);
-
-				//VULT COLOURED MODEL LIGHTS
-				if (amf_lighting_colour.value && !full_light) {
-					for (i = 0;i < 3;i++) {
-						lc[i] = lightcolor[i] / 256 + l;
-					}
-
-					if (r_modelcolor[0] < 0) {
-						glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
-					}
-					else {
-						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
-					}
-				}
-				else if (custom_model == NULL) {
-					if (r_modelcolor[0] < 0) {
-						glColor4f(l, l, l, r_modelalpha); // normal color
-					}
-					else {
-						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
-					}
-				}
-
-				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-				glVertex3fv(interpolated_verts);
-
-				verts1++;
-				verts2++;
-			} while (--count);
-
-			glEnd();
-		}
-
-		if (r_modelalpha < 1) {
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		}
-
-		if (custom_model) {
-			glEnable(GL_TEXTURE_2D);
-			custom_model = NULL;
-		}
-	}
-}
-
 void R_SetupAliasFrame(
 	model_t* model,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr,
 	qbool mtex, qbool scrolldir, qbool outline,
-	int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT)
+	int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT,
+	int effects
+)
 {
 	int oldpose, pose, numposes;
 	float interval;
@@ -773,26 +548,10 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT);
+		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects);
 	}
 	else {
-		GL_DisableMultitexture();
-		if (texture) {
-			GL_Bind(texture);
-		}
-		GL_TextureEnvMode(textureEnvMode);
-
-		if (fb_texture && mtex) {
-			GL_EnableMultitexture();
-			GL_Bind(fb_texture);
-			GL_TextureEnvMode(GL_DECAL);
-		}
-
-		GL_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir);
-	}
-
-	if (outline) {
-		GL_DrawAliasOutlineFrame(paliashdr, oldpose, pose);
+		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
 	}
 }
 
@@ -840,75 +599,6 @@ static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
 
 		glEnd ();
 	}	
-}
-
-static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2)
-{
-	int *order, count;
-	vec3_t interpolated_verts;
-	float lerpfrac;
-	trivertx_t *verts1, *verts2;
-
-	GL_PolygonOffset(1, 1);
-
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT, GL_LINE);
-
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glEnable(GL_LINE_SMOOTH);
-	glDisable(GL_TEXTURE_2D);
-
-	lerpfrac = r_framelerp;
-	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
-
-	verts2 = verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
-
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
-
-	for (;;) {
-		count = *order++;
-
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
-		}
-		else {
-			glBegin(GL_TRIANGLE_STRIP);
-		}
-
-		do {
-			order += 2;
-
-			if ((currententity->renderfx & RF_LIMITLERP))
-				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
-
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-			glVertex3fv(interpolated_verts);
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		glEnd();
-	}
-
-	glColor4f(1, 1, 1, 1);
-	glPolygonMode(GL_FRONT, GL_FILL);
-	glDisable(GL_LINE_SMOOTH);
-	glCullFace(GL_FRONT);
-	glEnable(GL_TEXTURE_2D);
-
-	GL_PolygonOffset(0, 0);
 }
 
 void R_AliasSetupLighting(entity_t *ent)

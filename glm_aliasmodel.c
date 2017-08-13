@@ -18,151 +18,52 @@ static GLint drawAliasModel_modelViewMatrix;
 static GLint drawAliasModel_projectionMatrix;
 static GLint drawAliasModel_color;
 static GLint drawAliasModel_materialTex;
+static GLint drawAliasModel_shellSize;
+static GLint drawAliasModel_time;
+static GLint drawAliasModel_shellMode;
+static GLint drawAliasModel_shell_alpha;
 static GLint drawAliasModel_applyTexture;
 static GLint drawAliasModel_textureIndex;
 static GLint drawAliasModel_scaleS;
 static GLint drawAliasModel_scaleT;
 
-int GL_GenerateShellTexture(void);
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects);
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT);
-
-void GLM_DrawAliasModel(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
-{
-	if (drawAliasModelProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(drawAliasModelProgram.program);
-		glUniformMatrix4fv(drawAliasModel_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform4f(drawAliasModel_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		glUniform1i(drawAliasModel_materialTex, 0);
-		glUniform1f(drawAliasModel_textureIndex, texture_index);
-		glUniform1i(drawAliasModel_applyTexture, texture);
-		glUniform1f(drawAliasModel_scaleS, scaleS);
-		glUniform1f(drawAliasModel_scaleT, scaleT);
-
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_STRIP, start, count);
-	}
-}
-
-// Shell adds normals
-void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int vao, int start, int vertices)
-{
-	if (!drawShellPolyProgram.program) {
-		GL_VFDeclare(model_shell);
-
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("DrawShell", GL_VFParams(model_shell), &drawShellPolyProgram);
-
-		drawShell_modelViewMatrix = glGetUniformLocation(drawShellPolyProgram.program, "modelViewMatrix");
-		drawShell_projectionMatrix = glGetUniformLocation(drawShellPolyProgram.program, "projectionMatrix");
-		drawShell_shellSize = glGetUniformLocation(drawShellPolyProgram.program, "shellSize");
-		drawShell_color = glGetUniformLocation(drawShellPolyProgram.program, "color");
-		drawShell_materialTex = glGetUniformLocation(drawShellPolyProgram.program, "materialTex");
-		drawShell_time = glGetUniformLocation(drawShellPolyProgram.program, "time");
-	}
-
-	if (drawShellPolyProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(drawShellPolyProgram.program);
-		glUniformMatrix4fv(drawShell_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(drawShell_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1f(drawShell_shellSize, shellSize);
-		glUniform4f(drawShell_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		glUniform1i(drawShell_materialTex, 0);
-		glUniform1f(drawShell_time, cl.time);
-
-		glBindVertexArray(vao);
-		glDrawArrays(type, start, vertices);
-	}
-}
-
-static void GLM_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
-{
-	int *order, count;
-	float scroll[2];
-	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+typedef struct glm_aliasmodel_req_s {
+	GLuint vbo_count;
+	GLuint instanceCount;
+	GLuint vbo_start;
+	GLuint baseInstance;
+	float mvMatrix[16];
+	float texScale[2];
+	GLuint vao;
+	GLuint texture_array;
+	int texture_index;
 	byte color[4];
-	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
+	int texture_model;
+	int effects;
+} glm_aliasmodel_req_t;
 
-	// LordHavoc: set the state to what we need for rendering a shell
-	if (!shelltexture) {
-		shelltexture = GL_GenerateShellTexture();
-	}
-	GL_Bind(shelltexture);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+typedef struct DrawArraysIndirectCommand_s {
+	GLuint count;
+	GLuint instanceCount;
+	GLuint first;
+	GLuint baseInstance;
+} DrawArraysIndirectCommand_t;
 
-	if (gl_powerupshells_style.integer) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	}
-	else {
-		glBlendFunc(GL_ONE, GL_ONE);
-	}
-
-	if (scrolldir) {
-		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
-		scroll[1] = sin(cl.time * -0.5);
-	}
-	else {
-		scroll[0] = cos(cl.time * 1.5);
-		scroll[1] = sin(cl.time * 1.1);
-	}
-
-	color[0] = r_shellcolor[0] * 255;
-	color[1] = r_shellcolor[1] * 255;
-	color[2] = r_shellcolor[2] * 255;
-	color[3] = bound(0, gl_powerupshells.value, 1) * 255;
-
-	// get the vertex count and primitive type
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
-	for (;;) {
-		GLenum drawMode = GL_TRIANGLE_STRIP;
-
-		count = *order++;
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			count = -count;
-			drawMode = GL_TRIANGLE_FAN;
-		}
-
-		order += 2 * count;
-
-		GLM_DrawShellPoly(drawMode, color, shell_size, paliashdr->vao, vertIndex, count);
-
-		vertIndex += count;
-	}
-
-	// LordHavoc: reset the state to what the rest of the renderer expects
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
+#define MAX_ALIASMODEL_BATCH 32
+static glm_aliasmodel_req_t aliasmodel_requests[MAX_ALIASMODEL_BATCH];
+static int batch_count = 0;
+static GLuint prev_texture_array = 0;
+static qbool in_batch_mode = false;
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT)
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
 	float l;
 	qbool texture_model = (custom_model == NULL);
-
-	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
-		GLM_DrawPowerupShell(paliashdr, pose1, NULL, NULL, 0.0f, false);
-		return;
-	}
 
 	// FIXME: This has been converted from 4 bytes already?
 	if (r_modelcolor[0] < 0) {
@@ -176,7 +77,7 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 	color[3] = r_modelalpha * 255;
 
 	if (paliashdr->vao) {
-		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
+		int* order = (int *)((byte *)paliashdr + paliashdr->commands);
 		int count;
 
 		while ((count = *order++)) {
@@ -216,38 +117,12 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT);
+			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects);
 
 			vertIndex += count;
 		}
 	}
 }
-
-typedef struct glm_aliasmodel_req_s {
-	GLuint vbo_count;
-	GLuint instanceCount;
-	GLuint vbo_start;
-	GLuint baseInstance;
-	float mvMatrix[16];
-	float texScale[2];
-	GLuint vao;
-	GLuint texture_array;
-	int texture_index;
-	byte color[4];
-	int texture_model;
-} glm_aliasmodel_req_t;
-
-typedef struct DrawArraysIndirectCommand_s {
-	GLuint count;
-	GLuint instanceCount;
-	GLuint first;
-	GLuint baseInstance;
-} DrawArraysIndirectCommand_t;
-
-#define MAX_ALIASMODEL_BATCH 32
-static glm_aliasmodel_req_t aliasmodel_requests[MAX_ALIASMODEL_BATCH];
-static int batch_count = 0;
-static GLuint prev_texture_array = 0;
 
 static void GLM_FlushAliasModelBatch(void)
 {
@@ -260,12 +135,16 @@ static void GLM_FlushAliasModelBatch(void)
 	float texScaleT[MAX_ALIASMODEL_BATCH];
 	float texture_indexes[MAX_ALIASMODEL_BATCH];
 	int texture_models[MAX_ALIASMODEL_BATCH];
+	int shellModes[MAX_ALIASMODEL_BATCH];
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 	GL_UseProgram(drawAliasModelProgram.program);
 	glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 	glUniform1i(drawAliasModel_materialTex, 0);
+	glUniform1f(drawAliasModel_shellSize, bound(0, gl_powerupshells_size.value, 20));
+	glUniform1f(drawAliasModel_time, cl.time);
+	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));
 
 	for (i = 0; i < batch_count; ++i) {
 		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
@@ -288,6 +167,7 @@ static void GLM_FlushAliasModelBatch(void)
 		texScaleS[i] = req->texScale[0];
 		texScaleT[i] = req->texScale[1];
 		texture_models[i] = req->texture_model;
+		shellModes[i] = req->effects;
 
 		aliasmodel_requests[i].baseInstance = i;
 		aliasmodel_requests[i].instanceCount = 1;
@@ -304,17 +184,40 @@ static void GLM_FlushAliasModelBatch(void)
 	glUniform1fv(drawAliasModel_scaleT, batch_count, texScaleT);
 	glUniform1fv(drawAliasModel_textureIndex, batch_count, texture_indexes);
 	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
+	glUniform1iv(drawAliasModel_shellMode, batch_count, shellModes);
 
 	for (i = 0; i < batch_count; ++i) {
 		const DrawArraysIndirectCommand_t *cmd = (const DrawArraysIndirectCommand_t *)((byte*)aliasmodel_requests + i * sizeof(aliasmodel_requests[0]));
 
+		if (shellModes[i]) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			glBlendFunc(GL_ONE, GL_ONE);
+		}
+		else {
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		}
 		glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
 	}
 
 	batch_count = 0;
 }
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
+static void GLM_SetPowerupShellColor(float* shell_color, float base_level, float effect_level, int effects)
+{
+	base_level = bound(0, base_level, 1);
+	effect_level = bound(0, effect_level, 1);
+
+	shell_color[0] = shell_color[1] = shell_color[2] = base_level;
+	shell_color[3] = bound(0, gl_powerupshells.value, 1);
+	if (effects & EF_RED)
+		shell_color[0] += effect_level;
+	if (effects & EF_GREEN)
+		shell_color[1] += effect_level;
+	if (effects & EF_BLUE)
+		shell_color[2] += effect_level;
+}
+
+static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects)
 {
 	glm_aliasmodel_req_t* req;
 
@@ -337,16 +240,37 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 	req->vao = vao;
 	req->texture_array = model->texture_arrays[0];
 	req->texture_index = texture_index;
+	req->instanceCount = 1;
+	req->effects = effects;
 	memcpy(req->color, color, 4);
 	++batch_count;
+}
 
-	//GLM_FlushAliasModelBatch();
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects)
+{
+	GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0);
+
+	if (effects) {
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
+			effects &= (EF_RED | EF_GREEN | EF_BLUE);
+		}
+
+		if (effects) {
+			GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects);
+		}
+	}
+
+	if (!in_batch_mode) {
+		glDisable(GL_CULL_FACE);
+		GLM_FlushAliasModelBatch();
+		glEnable(GL_CULL_FACE);
+	}
 }
 
 void GL_BeginDrawAliasModels(void)
 {
-	batch_count = 0;
-
 	if (!drawAliasModelProgram.program) {
 		GL_VFDeclare(model_alias);
 
@@ -358,6 +282,9 @@ void GL_BeginDrawAliasModels(void)
 		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
 		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
 		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
+		drawAliasModel_shellSize = glGetUniformLocation(drawAliasModelProgram.program, "shellSize");
+		drawAliasModel_time = glGetUniformLocation(drawAliasModelProgram.program, "time");
+		drawAliasModel_shellMode = glGetUniformLocation(drawAliasModelProgram.program, "shellMode");
 		drawAliasModel_textureIndex = glGetUniformLocation(drawAliasModelProgram.program, "textureIndex");
 		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
 		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
@@ -366,6 +293,8 @@ void GL_BeginDrawAliasModels(void)
 	glActiveTexture(GL_TEXTURE0);
 	prev_texture_array = 0;
 	glDisable(GL_CULL_FACE);
+	in_batch_mode = true;
+	batch_count = 0;
 }
 
 void GL_EndDrawAliasModels(void)
@@ -373,5 +302,6 @@ void GL_EndDrawAliasModels(void)
 	if (batch_count) {
 		GLM_FlushAliasModelBatch();
 	}
+	in_batch_mode = false;
 	glEnable(GL_CULL_FACE);
 }

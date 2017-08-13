@@ -34,6 +34,7 @@ static unsigned int model_vao = 0;
 static unsigned int instance_vbo = 0;
 
 void GL_BuildCommonTextureArrays(void);
+static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
 
 void R_InitOtherTextures (void) {
 /*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
@@ -436,7 +437,7 @@ GLuint GL_CreateTextureArray(int width, int height, int depth)
 	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
 
-	Con_Printf("Creating texture array %u, %d x %d x %d\n", gl_texturenum, width, height, depth);
+	//Con_Printf("Creating texture array %u, %d x %d x %d\n", gl_texturenum, width, height, depth);
 
 	return gl_texturenum;
 }
@@ -448,7 +449,7 @@ void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
 	
 	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
-	Con_Printf("Adding texture to array %u[%d]\n", arrayTexture, index);
+	//Con_Printf("Adding texture to array %u[%d]\n", arrayTexture, index);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture);
 	for (level = 0; width && height; ++level, width /= 2, height /= 2) {
 		glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -520,7 +521,7 @@ void GL_PrintTextureSizes(common_texture_t* list)
 
 	for (tex = list; tex; tex = tex->next) {
 		if (tex->count) {
-			Con_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
+			//Con_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
 		}
 	}
 }
@@ -538,7 +539,7 @@ void GL_SortTextureSizes(common_texture_t** first)
 			common_texture_t* next = current->next;
 
 			if (next && current->any_size_count < next->any_size_count) {
-				Con_Printf("Swapping %dx%d with %dx%d\n", current->width, current->height, next->width, next->height);
+				//Con_Printf("Swapping %dx%d with %dx%d\n", current->width, current->height, next->width, next->height);
 				*link = next;
 				current->next = next->next;
 				next->next = current;
@@ -590,7 +591,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 				}
 			}
 
-			Con_Printf("Registered %s: %d\n", mod->name, count);
+			//Con_Printf("Registered %s: %d\n", mod->name, count);
 			*required_vbo_length += mod->vertsInVBO;
 		}
 		else if (mod->type == mod_sprite) {
@@ -608,7 +609,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 				GL_RegisterCommonTextureSize(common, ((mspriteframe_t* )((byte*)psprite + offset))->gl_texturenum, true);
 				++count;
 			}
-			Con_Printf("Registered %s: %d\n", mod->name, count);
+			//Con_Printf("Registered %s: %d\n", mod->name, count);
 		}
 		else if (mod->type == mod_brush && !mod->isworldmodel) {
 			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
@@ -617,7 +618,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 					++count;
 				}
 			}
-			Con_Printf("Registered %s: %d\n", mod->name, count);
+			//Con_Printf("Registered %s: %d\n", mod->name, count);
 		}
 		else {
 			//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
@@ -667,7 +668,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 				}
 			}
 
-			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			//Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
 			GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
 
 			// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
@@ -703,7 +704,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 				GL_CopyToTextureArraySize(common, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT);
 			}
 
-			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			//Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
 			mod->vao_simple = model_vao;
 			// FIXME
 			GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.5f, 0.5f);
@@ -717,7 +718,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 				}
 			}
 
-			Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+			//Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
 			mod->vao_simple = model_vao;
 			mod->vbo_start = 0;
 
@@ -782,7 +783,7 @@ void GL_BuildCommonTextureArrays(void)
 		}
 
 		// Create non-specific array to fit everything that doesn't require tiling
-		commonTex->gl_texturenum = GL_CreateTextureArray(maxWidth, maxHeight, anySizeCount);
+		commonTex->gl_texturenum = GL_CreateTextureArray(maxWidth, maxHeight, anySizeCount + 1);
 		commonTex->gl_width = maxWidth;
 		commonTex->gl_height = maxHeight;
 
@@ -812,6 +813,9 @@ void GL_BuildCommonTextureArrays(void)
 
 			new_vbo_position = 4;
 		}
+
+		// First texture is the powerup shell
+		GLM_CreatePowerupShellTexture(commonTex->gl_texturenum, maxWidth, maxHeight, commonTex->allocated++);
 
 		// Go back through all models, importing textures into arrays and creating new VBO
 		for (i = 1; i < MAX_MODELS; ++i) {
@@ -863,4 +867,38 @@ void GL_BuildCommonTextureArrays(void)
 	}
 
 	GL_FreeTextureSizeList(common);
+}
+
+static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice)
+{
+	float x, y, d;
+	int level = 0;
+	int height = maxHeight;
+	int width = maxWidth;
+	int minDimensions = min(maxWidth, maxHeight);
+	byte* data = Q_malloc(4 * maxWidth * maxHeight);
+	extern GLuint shelltexture2;
+
+	while (width && height) {
+		memset(data, 0, 4 * maxWidth * maxHeight);
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				int base = (x * height + y) * 4;
+
+				d = (sin(4 * x * M_PI / minDimensions) + cos(4 * y * M_PI / minDimensions)) * 64 + 64;
+				d = bound(0, d, 255);
+
+				data[base] = data[base + 1] = data[base + 2] = d;
+				data[base + 3] = 255;
+			}
+		}
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		++level;
+		width /= 2;
+		height /= 2;
+	}
+
+	//GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+	Q_free(data);
 }

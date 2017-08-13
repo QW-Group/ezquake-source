@@ -1,0 +1,360 @@
+/*
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+// Alias model (.mdl) rendering, classic (immediate mode) GL only
+// Most code taken from gl_rmain.c
+
+#include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
+#include "vx_stuff.h"
+#include "vx_vertexlights.h"
+#include "utils.h"
+#include "qsound.h"
+#include "hud.h"
+#include "hud_common.h"
+#include "gl_bloom.h"
+#include "rulesets.h"
+#include "teamplay.h"
+#include "gl_aliasmodel.h"
+#include "crc.h"
+
+static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir);
+int GLC_GenerateShellTexture(void);
+static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
+
+extern float r_avertexnormals[NUMVERTEXNORMALS][3];
+
+extern cvar_t    r_lerpframes;
+extern cvar_t    gl_outline;
+extern cvar_t    gl_outline_width;
+
+extern float     r_framelerp;
+extern float     r_lerpdistance;
+extern int       lastposenum;
+extern qbool     full_light;
+extern vec3_t    lightcolor;
+extern float     apitch;
+extern float     ayaw;
+
+void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, GLuint texture, GLuint fb_texture, GLenum textureEnvMode, qbool outline)
+{
+	int *order, count;
+	vec3_t interpolated_verts;
+	float l, lerpfrac;
+	trivertx_t *verts1, *verts2;
+	//VULT COLOURED MODEL LIGHTS
+	int i;
+	vec3_t lc;
+
+	GL_DisableMultitexture();
+	if (texture) {
+		GL_Bind(texture);
+	}
+	GL_TextureEnvMode(textureEnvMode);
+
+	if (fb_texture && mtex) {
+		GL_EnableMultitexture();
+		GL_Bind(fb_texture);
+		GL_TextureEnvMode(GL_DECAL);
+	}
+
+	lerpfrac = r_framelerp;
+	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
+
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
+
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
+		GLC_DrawPowerupShell(paliashdr, pose1, verts1, verts2, lerpfrac, scrolldir);
+	}
+	else {
+		if (r_modelalpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		}
+
+		if (custom_model) {
+			glDisable(GL_TEXTURE_2D);
+			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
+		}
+
+		for ( ; ; ) {
+			count = *order++;
+			if (!count) {
+				break;
+			}
+
+			if (count < 0) {
+				count = -count;
+				glBegin(GL_TRIANGLE_FAN);
+			}
+			else {
+				glBegin(GL_TRIANGLE_STRIP);
+			}
+
+			do {
+				// texture coordinates come from the draw list
+				if (mtex) {
+					qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
+					qglMultiTexCoord2f(GL_TEXTURE1, ((float *)order)[0], ((float *)order)[1]);
+				}
+				else {
+					glTexCoord2f(((float *)order)[0], ((float *)order)[1]);
+				}
+
+				order += 2;
+
+				if ((currententity->renderfx & RF_LIMITLERP)) {
+					lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+				}
+
+				// VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value && !full_light) {
+					l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
+				}
+				else {
+					l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+					l = (l * shadelight + ambientlight) / 256.0;
+				}
+				l = min(l, 1);
+
+				//VULT COLOURED MODEL LIGHTS
+				if (amf_lighting_colour.value && !full_light) {
+					for (i = 0;i < 3;i++) {
+						lc[i] = lightcolor[i] / 256 + l;
+					}
+
+					if (r_modelcolor[0] < 0) {
+						glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
+					}
+					else {
+						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
+					}
+				}
+				else if (custom_model == NULL) {
+					if (r_modelcolor[0] < 0) {
+						glColor4f(l, l, l, r_modelalpha); // normal color
+					}
+					else {
+						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+					}
+				}
+
+				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+				glVertex3fv(interpolated_verts);
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			glEnd();
+		}
+
+		if (r_modelalpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		}
+
+		if (custom_model) {
+			glEnable(GL_TEXTURE_2D);
+			custom_model = NULL;
+		}
+	}
+
+	if (outline) {
+		GLC_DrawAliasOutlineFrame(paliashdr, pose1, pose2);
+	}
+}
+
+static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2)
+{
+	int *order, count;
+	vec3_t interpolated_verts;
+	float lerpfrac;
+	trivertx_t *verts1, *verts2;
+
+	GL_PolygonOffset(1, 1);
+
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_FRONT, GL_LINE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+
+	lerpfrac = r_framelerp;
+	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
+
+	verts2 = verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
+
+	order = (int *)((byte *)paliashdr + paliashdr->commands);
+
+	for (;;) {
+		count = *order++;
+
+		if (!count) {
+			break;
+		}
+
+		if (count < 0) {
+			count = -count;
+			glBegin(GL_TRIANGLE_FAN);
+		}
+		else {
+			glBegin(GL_TRIANGLE_STRIP);
+		}
+
+		do {
+			order += 2;
+
+			if ((currententity->renderfx & RF_LIMITLERP))
+				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+
+			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+			glVertex3fv(interpolated_verts);
+
+			verts1++;
+			verts2++;
+		} while (--count);
+
+		glEnd();
+	}
+
+	glColor4f(1, 1, 1, 1);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glDisable(GL_LINE_SMOOTH);
+	glCullFace(GL_FRONT);
+	glEnable(GL_TEXTURE_2D);
+
+	GL_PolygonOffset(0, 0);
+}
+
+static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
+{
+	int *order, count;
+	float scroll[2];
+	float v[3];
+	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+	byte color[4];
+	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
+
+	// LordHavoc: set the state to what we need for rendering a shell
+	if (!shelltexture) {
+		shelltexture = GLC_GenerateShellTexture();
+	}
+	GL_Bind(shelltexture);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	if (gl_powerupshells_style.integer) {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	}
+	else {
+		glBlendFunc(GL_ONE, GL_ONE);
+	}
+
+	if (scrolldir) {
+		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
+		scroll[1] = sin(cl.time * -0.5);
+	}
+	else {
+		scroll[0] = cos(cl.time * 1.5);
+		scroll[1] = sin(cl.time * 1.1);
+	}
+
+	if (GL_ShadersSupported()) {
+		color[0] = r_shellcolor[0] * 255;
+		color[1] = r_shellcolor[1] * 255;
+		color[2] = r_shellcolor[2] * 255;
+		color[3] = bound(0, gl_powerupshells.value, 1) * 255;
+	}
+
+	// get the vertex count and primitive type
+	order = (int *)((byte *)paliashdr + paliashdr->commands);
+	for (;;) {
+		GLenum drawMode = GL_TRIANGLE_STRIP;
+
+		count = *order++;
+		if (!count) {
+			break;
+		}
+
+		if (count < 0) {
+			count = -count;
+			drawMode = GL_TRIANGLE_FAN;
+		}
+
+		// alpha so we can see colour underneath still
+		glColor4f(r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1));
+
+		glBegin(drawMode);
+		do {
+			glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
+
+			order += 2;
+
+			v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
+			v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
+			v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
+			v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
+			v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
+			v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
+
+			glVertex3f(v[0], v[1], v[2]);
+
+			verts1++;
+			verts2++;
+		} while (--count);
+		glEnd();
+	}
+
+	// LordHavoc: reset the state to what the rest of the renderer expects
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+int GLC_GenerateShellTexture(void)
+{
+	int x, y, d;
+	byte data[32][32][4];
+
+	for (y = 0;y < 32;y++)
+	{
+		for (x = 0;x < 32;x++)
+		{
+			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
+			if (d < 0)
+				d = 0;
+			if (d > 255)
+				d = 255;
+			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
+			data[y][x][3] = 255;
+		}
+	}
+
+	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+}
