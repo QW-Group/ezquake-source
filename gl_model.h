@@ -85,7 +85,10 @@ typedef struct texture_s {
 	int                 next_same_size;
 	qbool               size_start;
 
-	int                 gl_texture_index;
+	unsigned int        gl_texture_array;
+	unsigned int        gl_texture_index;
+	float               gl_texture_scaleS;
+	float               gl_texture_scaleT;
 } texture_t;
 
 
@@ -506,6 +509,7 @@ typedef struct model_s {
 	unsigned int        vbo_start;
 	int                 vertsInVBO;
 
+	unsigned int        simpletexture_array;
 	int                 simpletexture_indexes[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];

@@ -434,49 +434,6 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 	return true;
 }
 
-// Sets tex->next_same_size to link up all textures of common size
-int R_ChainTexturesBySize(model_t* m)
-{
-	texture_t* tx;
-	int i, j;
-	int num_sizes = 0;
-
-	// Initialise chain
-	for (i = 0; i < m->numtextures; ++i) {
-		tx = loadmodel->textures[i];
-		if (!tx || !tx->loaded) {
-			continue;
-		}
-
-		tx->next_same_size = -1;
-		tx->size_start = false;
-	}
-
-	for (i = 0; i < m->numtextures; ++i) {
-		tx = loadmodel->textures[i];
-		if (!tx || !tx->loaded || tx->next_same_size >= 0 || !tx->gl_width || !tx->gl_height || !tx->gl_texturenum) {
-			continue; // not loaded or already processed
-		}
-
-		++num_sizes;
-		tx->size_start = true;
-		for (j = i + 1; j < m->numtextures; ++j) {
-			texture_t* next = loadmodel->textures[j];
-			if (!next || !next->loaded || next->next_same_size >= 0) {
-				continue; // not loaded or already processed
-			}
-
-			if (tx->gl_width == next->gl_width && tx->gl_height == next->gl_height) {
-				tx->next_same_size = j;
-				tx = next;
-				next->next_same_size = m->numtextures;
-			}
-		}
-	}
-
-	return num_sizes;
-}
-
 void R_LoadBrushModelTextures (model_t *m)
 {
 	char		*texname;
@@ -562,104 +519,6 @@ void R_LoadBrushModelTextures (model_t *m)
 			tx->fb_texturenum = GL_LoadTexture (va("@fb_%s", texname), width, height, data, texmode | alpha_flag | TEX_FULLBRIGHT, 1);
 
 		tx->loaded = true; // mark as loaded
-	}
-
-	{
-		int max_width = 0;
-		int max_height = 0;
-		int num_sizes;
-		int array_index;
-
-		// Find textures with common dimensions
-		for (i = 0; i < loadmodel->numtextures; i++) {
-			tx = loadmodel->textures[i];
-			if (!tx || !tx->loaded) {
-				continue;
-			}
-
-			{
-				int w, h, mips;
-				int miplevel = 0;
-
-				glBindTexture(GL_TEXTURE_2D, tx->gl_texturenum);
-				glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_WIDTH, &w);
-				glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_HEIGHT, &h);
-				glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, &mips);
-
-				tx->gl_width = w;
-				tx->gl_height = h;
-
-				max_width = max(max_width, w);
-				max_height = max(max_height, h);
-			}
-		}
-
-		num_sizes = R_ChainTexturesBySize(loadmodel);
-		loadmodel->texture_arrays = Hunk_Alloc(sizeof(GLuint) * num_sizes);
-		loadmodel->texture_array_first = Hunk_Alloc(sizeof(int) * num_sizes);
-		loadmodel->texture_array_count = num_sizes;
-
-		array_index = 0;
-		for (i = 0; i < loadmodel->numtextures; ++i) {
-			int texIndex, sizeCount;
-
-			tx = loadmodel->textures[i];
-			if (!tx || !tx->loaded || !tx->size_start) {
-				continue;
-			}
-
-			// Count textures with this size
-			sizeCount = 0;
-			for (texIndex = i; texIndex >= 0 && texIndex < loadmodel->numtextures; texIndex = loadmodel->textures[texIndex]->next_same_size) {
-				++sizeCount;
-			}
-
-			// Create texture array and copy textures in
-			{
-				int texture_index = 0;
-				GLuint texture_array;
-				int max_miplevels = 0;
-				int min_dimension = min(tx->gl_width, tx->gl_height);
-				GLubyte* buffer = Q_malloc(tx->gl_width * tx->gl_height * 4);
-
-				// 
-				while (min_dimension > 0) {
-					max_miplevels++;
-					min_dimension /= 2;
-				}
-				glGenTextures(1, &texture_array);
-				glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array);
-				glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, tx->gl_width, tx->gl_height, sizeCount);
-
-				loadmodel->texture_arrays[array_index] = texture_array;
-				loadmodel->texture_array_first[array_index] = i;
-
-				// Load textures into the array
-				texture_index = 0;
-				for (texIndex = i; texIndex >= 0 && texIndex < loadmodel->numtextures; texIndex = loadmodel->textures[texIndex]->next_same_size) {
-					int w, h, level;
-					texture_t* thisTex = loadmodel->textures[texIndex];
-
-					glBindTexture(GL_TEXTURE_2D, thisTex->gl_texturenum);
-					w = tx->gl_width;
-					h = tx->gl_height;
-
-					for (level = 0; level < max_miplevels && w && h; ++level, w /= 2, h /= 2) {
-						glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-						glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, texture_index, w, h, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-					}
-
-					// store details
-					thisTex->gl_texture_index = texture_index;
-
-					++texture_index;
-				}
-
-				Q_free(buffer);
-			}
-
-			++array_index;
-		}
 	}
 }
 
@@ -893,9 +752,6 @@ void Mod_ReloadModelsTextures (void)
 			continue; // actual only for brush models
 
 		R_LoadBrushModelTextures (m);
-		if (GL_ShadersSupported()) {
-			GLM_CreateVAOForModel(m);
-		}
 	}
 }
 

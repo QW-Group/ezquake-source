@@ -213,7 +213,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->scale = scale;
 	sprite->texScale[0] = scale_s;
 	sprite->texScale[1] = scale_t;
-	sprite->texture_array = model->texture_arrays[0];
+	sprite->texture_array = model->simpletexture_array;
 	sprite->texture_index = texture;
 	sprite->vao = model->vao_simple;
 	++batch_count;
