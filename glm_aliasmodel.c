@@ -19,11 +19,18 @@ static GLint drawAliasModel_projectionMatrix;
 static GLint drawAliasModel_color;
 static GLint drawAliasModel_materialTex;
 static GLint drawAliasModel_applyTexture;
+static GLint drawAliasModel_textureIndex;
+static GLint drawAliasModel_scaleS;
+static GLint drawAliasModel_scaleT;
 
 int GL_GenerateShellTexture(void);
 
-void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool texture)
+void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
 {
+	if (texture_index >= 600) {
+		texture_index = texture_index;
+	}
+
 	if (!drawAliasModelProgram.program) {
 		GL_VFDeclare(model_alias);
 
@@ -35,6 +42,9 @@ void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool tex
 		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
 		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
 		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
+		drawAliasModel_textureIndex = glGetUniformLocation(drawAliasModelProgram.program, "textureIndex");
+		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
+		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
 	}
 
 	if (drawAliasModelProgram.program && vao) {
@@ -49,7 +59,10 @@ void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool tex
 		glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform4f(drawAliasModel_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
 		glUniform1i(drawAliasModel_materialTex, 0);
+		glUniform1f(drawAliasModel_textureIndex, texture_index);
 		glUniform1i(drawAliasModel_applyTexture, texture);
+		glUniform1f(drawAliasModel_scaleS, scaleS);
+		glUniform1f(drawAliasModel_scaleT, scaleT);
 
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLE_STRIP, start, count);
@@ -157,7 +170,7 @@ static void GLM_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 }
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode)
+void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
@@ -168,9 +181,6 @@ void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir,
 		GLM_DrawPowerupShell(paliashdr, pose1, NULL, NULL, 0.0f, false);
 		return;
 	}
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
 
 	// FIXME: This has been converted from 4 bytes already?
 	if (r_modelcolor[0] < 0) {
@@ -224,7 +234,7 @@ void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir,
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture_model);
+			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT);
 
 			vertIndex += count;
 		}

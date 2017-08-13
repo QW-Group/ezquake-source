@@ -1,10 +1,10 @@
 #version 430
 
 uniform vec4 color;
-uniform sampler2D materialTex;
+uniform sampler2DArray materialTex;
 uniform bool apply_texture;
 
-in vec2 TextureCoord;
+in vec3 TextureCoord;
 out vec4 frag_colour;
 
 void main()

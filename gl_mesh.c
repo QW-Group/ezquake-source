@@ -390,10 +390,6 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	int total_vertices = 0;
 	int pose = 0;
 
-	if (strstr(m->name, "vwplayer.mdl")) {
-		pose = pose;
-	}
-
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
 

@@ -645,11 +645,14 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 					}
 					else {
 						paliashdr->gl_arrayindex[j][anim] = paliashdr->gl_arrayindex[j][anim - 1];
-
+						paliashdr->gl_scalingS[j][anim] = paliashdr->gl_scalingS[j][anim - 1];
+						paliashdr->gl_scalingT[j][anim] = paliashdr->gl_scalingT[j][anim - 1];
 					}
 
 					if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-						paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
+						float fb_s, fb_t;
+
+						paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &fb_s, &fb_t);
 					}
 					else {
 						paliashdr->gl_fb_arrayindex[j][anim] = paliashdr->gl_fb_arrayindex[j][anim - 1];
