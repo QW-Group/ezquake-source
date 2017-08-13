@@ -193,7 +193,8 @@ void Mod_TouchModels (void)
 }
 
 //Loads a model into the cache
-model_t *Mod_LoadModel (model_t *mod, qbool crash) {
+model_t *Mod_LoadModel (model_t *mod, qbool crash)
+{
 	void *d;
 	unsigned *buf;
 	int namelen;
@@ -202,9 +203,11 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	if (!mod->needload)	{
 		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
 			d = Cache_Check (&mod->cache);
-			if (d)
+			if (d) {
 				return mod;
-		} else {
+			}
+		}
+		else {
 			return mod; // not cached at all
 		}
 	}
@@ -221,11 +224,13 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	}
 
 	// load the file
-	if (!buf)
-		buf = (unsigned *) FS_LoadTempFile (mod->name, &filesize);
 	if (!buf) {
-		if (crash)
-			Host_Error ("Mod_LoadModel: %s not found", mod->name);
+		buf = (unsigned *)FS_LoadTempFile(mod->name, &filesize);
+	}
+	if (!buf) {
+		if (crash) {
+			Host_Error("Mod_LoadModel: %s not found", mod->name);
+		}
 		return NULL;
 	}
 
@@ -613,7 +618,6 @@ void R_LoadBrushModelTextures (model_t *m)
 			}
 
 			// Create texture array and copy textures in
-			Con_Printf("> %d x %d = %d textures\n", tx->gl_width, tx->gl_height, sizeCount);
 			{
 				int texture_index = 0;
 				GLuint texture_array;
@@ -632,7 +636,6 @@ void R_LoadBrushModelTextures (model_t *m)
 
 				loadmodel->texture_arrays[array_index] = texture_array;
 				loadmodel->texture_array_first[array_index] = i;
-				Con_Printf("  [%d] = %u\n", array_index, texture_array);
 
 				// Load textures into the array
 				texture_index = 0;
@@ -2616,6 +2619,9 @@ void Mod_AddModelFlags(model_t *mod)
 	}
 	else if (!strcmp(mod->name, "progs/flame.mdl") || !strcmp(mod->name, "progs/flame2.mdl")) {
 		mod->modhint = MOD_FLAME;
+	}
+	else if (!strcmp(mod->name, "progs/flame0.mdl")) {
+		mod->modhint = MOD_FLAME0;
 	}
 	else if (!strcmp(mod->name, "progs/bolt.mdl") || !strcmp(mod->name, "progs/bolt2.mdl") || !strcmp(mod->name, "progs/bolt3.mdl")) {
 		mod->modhint = MOD_THUNDERBOLT;

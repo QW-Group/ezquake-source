@@ -325,13 +325,70 @@ void BuildTris (void)
 GL_MakeAliasModelDisplayLists
 ================
 */
-#define ALIASVERTEXSIZE 8 // pos[3] tex[2] normal[3]
+void GL_MakeAliasModelVBO(model_t *m, float* vbo_buffer)
+{
+	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
+
+	trivertx_t* vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	int v = 0;
+	int count = 0;
+	int total_vertices = paliashdr->vertsPerPose;
+	int pose = 0;
+
+	for (pose = 0; pose < paliashdr->numposes; ++pose) {
+		vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		vertices += pose * paliashdr->poseverts;
+		v = pose * total_vertices * MODELVERTEXSIZE;
+		order = (int *) ((byte *) paliashdr + paliashdr->commands);
+		for (; ; ) {
+			float x, y, z;
+			float s, t;
+			byte l;
+
+			count = *order++;
+
+			if (!count) {
+				break;
+			}
+			if (count < 0) {
+				count = -count;
+			}
+
+			while (count--) {
+				s = ((float *)order)[0];
+				t = ((float *)order)[1];
+				order += 2;
+
+				l = vertices->lightnormalindex;
+				x = vertices->v[0];
+				y = vertices->v[1];
+				z = vertices->v[2];
+
+				vbo_buffer[v + 0] = x;
+				vbo_buffer[v + 1] = y;
+				vbo_buffer[v + 2] = z;
+				vbo_buffer[v + 3] = s;
+				vbo_buffer[v + 4] = t;
+				vbo_buffer[v + 5] = r_avertexnormals[l][0];
+				vbo_buffer[v + 6] = r_avertexnormals[l][1];
+				vbo_buffer[v + 7] = r_avertexnormals[l][2];
+				vbo_buffer[v + 8] = 0;
+				v += MODELVERTEXSIZE;
+
+				++vertices;
+			}
+		}
+	}
+}
+
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
 	int         i, j;
 	int         *cmds;
 	trivertx_t  *verts;
-	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
+	int total_vertices = 0;
+	int pose = 0;
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
@@ -356,94 +413,64 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		}
 	}
 
-	if (GL_ShadersSupported())
+	// Measure vertices required
 	{
-		trivertx_t* vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
-		int v = 0;
 		int count = 0;
-		int total_vertices = 0;
-		int pose = 0;
-		GLuint vbo, vao;
-		size_t vbo_size;
-		float* vbo_buffer;
 
-		total_vertices = 0;
+		m->min_tex[0] = m->min_tex[1] = 9999;
+		m->max_tex[0] = m->max_tex[1] = -9999;
+
 		while ((count = *order++)) {
+			float s, t;
+
 			if (count < 0) {
 				count = -count;
 			}
 
-			total_vertices += count;
-
-			order += count * 2; // s/t co-ordinates
-		}
-
-		vbo_size = ALIASVERTEXSIZE * sizeof(float) * total_vertices * paliashdr->numposes;
-		vbo_buffer = (float*) Q_malloc(vbo_size);
-
-		for (pose = 0; pose < paliashdr->numposes; ++pose) {
-			vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-			vertices += pose * paliashdr->poseverts;
-			v = pose * total_vertices * ALIASVERTEXSIZE;
-			order = (int *) ((byte *) paliashdr + paliashdr->commands);
-			for (; ; ) {
-				float x, y, z;
-				float s, t;
-				byte l;
-
-				count = *order++;
-
-				if (!count) {
-					break;
-				}
-				if (count < 0) {
-					count = -count;
-				}
-
-				while (count--) {
-					s = ((float *)order)[0];
-					t = ((float *)order)[1];
-					order += 2;
-
-					l = vertices->lightnormalindex;
-					x = vertices->v[0];
-					y = vertices->v[1];
-					z = vertices->v[2];
-
-					vbo_buffer[v + 0] = x;
-					vbo_buffer[v + 1] = y;
-					vbo_buffer[v + 2] = z;
-					vbo_buffer[v + 3] = s;
-					vbo_buffer[v + 4] = t;
-					vbo_buffer[v + 5] = r_avertexnormals[l][0];
-					vbo_buffer[v + 6] = r_avertexnormals[l][1];
-					vbo_buffer[v + 7] = r_avertexnormals[l][2];
-					v += ALIASVERTEXSIZE;
-
-					++vertices;
-				}
+			while (count--) {
+				s = ((float *)order)[0];
+				t = ((float *)order)[1];
+				m->min_tex[0] = min(m->min_tex[0], s);
+				m->min_tex[1] = min(m->min_tex[1], t);
+				m->max_tex[0] = max(m->max_tex[0], s);
+				m->max_tex[1] = max(m->max_tex[1], t);
+				order += 2;
+				++total_vertices;
 			}
 		}
 
+		m->vertsInVBO = total_vertices * paliashdr->numposes;
+		paliashdr->vertsPerPose = total_vertices;
+	}
+
+	{
+		float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+
+		GL_MakeAliasModelVBO(m, vbo_buffer);
+
+		/*
+		unsigned int vbo;
+		unsigned int vao;
 		glGenBuffers(1, &vbo);
 		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, vbo_size, vbo_buffer, GL_STATIC_DRAW);
-		Q_free(vbo_buffer);
+		glBufferDataExt(GL_ARRAY_BUFFER, m->vertsInVBO * MODELVERTEXSIZE * sizeof(float), vbo_buffer, GL_STATIC_DRAW);
 
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) (sizeof(float) * 3));
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * ALIASVERTEXSIZE, (void*) (sizeof(float) * 5));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 8));
 
 		paliashdr->vbo = vbo;
-		paliashdr->vao = vao;
-		paliashdr->vertsPerPose = total_vertices;
+		paliashdr->vao = vao;*/
+		m->temp_vbo_buffer = vbo_buffer;
 	}
 }
 

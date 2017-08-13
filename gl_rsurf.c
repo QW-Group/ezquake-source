@@ -1564,7 +1564,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 	GLushort indices[4096];
 	int i, waterline, v;
 	msurface_t* surf;
-	int lightmap;
 
 	glDisable(GL_CULL_FACE);
 	GLM_EnterBatchedWorldRegion(model->vao);
@@ -1603,9 +1602,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 					int newVerts = surf->polys->numverts;
 
 					if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-						GL_EnterRegion(va("TextureArray-Overflow %d", i));
 						glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
-						GL_LeaveRegion();
 						count = 0;
 					}
 
@@ -1625,9 +1622,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 		}
 
 		if (count) {
-			GL_EnterRegion(va("Texture array done: %d", i));
 			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
-			GL_LeaveRegion();
 		}
 	}
 
@@ -1759,9 +1754,7 @@ void GLM_DrawFlat(model_t* model)
 					GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 				}
 				else {
-					GL_EnterRegion(va("Texture done: %d", i));
 					GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
-					GL_LeaveRegion();
 				}
 				count = 0;
 			}

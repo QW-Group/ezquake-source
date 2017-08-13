@@ -114,6 +114,12 @@ typedef struct mtexinfo_s {
 #define VERTEXSIZE 11 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
 					  //s2t2 = lightmap tex coords; s3t2 = detail tex coords, l1 = lightmap#, m1 = material#
 
+// position[3]
+// texture[2]
+// normals[3]
+// materialIndex
+#define MODELVERTEXSIZE 9
+
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;						//next lightmap poly in chain
@@ -325,6 +331,10 @@ typedef struct aliashdr_s {
 	int                 vbo;
 	int                 vao;
 	int                 vertsPerPose;
+	int                 vertsOffset;
+
+	int                 gl_arrayindex[MAX_SKINS][4];
+	int                 gl_fb_arrayindex[MAX_SKINS][4];
 
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
@@ -391,6 +401,7 @@ typedef enum
 	MOD_QUAD,
 	MOD_PENT,
 	MOD_RING,
+	MOD_FLAME0,
 
 	MOD_NUMBER_HINTS
 } modhint_t;
@@ -479,6 +490,15 @@ typedef struct model_s {
 	unsigned int*       texture_arrays;
 	unsigned int        texture_array_count;
 	int*                texture_array_first;
+
+	float*              temp_vbo_buffer;
+	float               min_tex[2];
+	float               max_tex[2];
+
+	unsigned int        vbo_start;
+	int                 vertsInVBO;
+
+	int                 simpletexture_indexes[MAX_SIMPLE_TEXTURES];
 
 	//unsigned int        texture_array;
 	//unsigned int        texture_sizes_texture;

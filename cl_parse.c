@@ -725,22 +725,22 @@ void Model_NextDownload (void)
 	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
-	for (i = 1; i < MAX_MODELS; i++) 
-	{
-		if (!cl.model_name[i][0])
+	for (i = 1; i < MAX_MODELS; i++) {
+		if (!cl.model_name[i][0]) {
 			break;
+		}
 
-		cl.model_precache[i] = Mod_ForName (cl.model_name[i], false);
+		cl.model_precache[i] = Mod_ForName(cl.model_name[i], false);
 
-		if (!cl.model_precache[i]) 
-		{
+		if (!cl.model_precache[i]) {
 			Com_Printf("\n&cf22Couldn't load model:&r %s\n", cl.model_name[i]);
 			Host_EndGame();
 			return;
 		}
 
-		if (cl.model_name[i][0] == '*')
+		if (cl.model_name[i][0] == '*') {
 			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
+		}
 	}
 
 	// Done with normal models, request vwep models if necessary
@@ -1847,28 +1847,6 @@ void CL_ParseStatic (qbool extended)
 
 	VectorCopy (es.origin, ent->origin);
 	VectorCopy (es.angles, ent->angles);
-
-	R_AddEfrags (ent);
-}
-
-// Clientside autogen of entitys,
-// usefull for eyecandy and other stuff
-// somewhat evile
-// unfinished
-void CL_GenStatic (vec3_t origin) 
-{
-	entity_t *ent;
-
-	if (cl.num_statics >= MAX_STATIC_ENTITIES)
-		Host_Error ("Too many static entities");
-	ent = &cl_static_entities[cl.num_statics];
-	cl.num_statics++;
-
-	//TODO: load the correct model
-	//ent->model = cl.model_precache[copy->v.modelindex];
-	ent->model = Mod_ForName("progs/flame2.mdl",false);//cl.model_precache[1];
-
-	VectorCopy (origin, ent->origin);
 
 	R_AddEfrags (ent);
 }
