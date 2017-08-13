@@ -671,8 +671,6 @@ static void R_RenderAllDynamicLightmaps(model_t *model)
 	}
 }
 
-void GLM_DrawIndexedTurbPoly(GLuint vao, GLushort* indices, int count, texture_t* texture);
-
 void R_DrawWaterSurfaces(void) {
 	msurface_t *s;
 	float wateralpha;
@@ -703,67 +701,7 @@ void R_DrawWaterSurfaces(void) {
 	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	if (GL_ShadersSupported()) {
-		GLsizei count;
-		GLushort indices[4096];
-		texture_t* current_texture = NULL;
-		int v;
-
-		count = 0;
-		glActiveTexture(GL_TEXTURE0);
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			GL_TextureEnvMode(GL_MODULATE);
-			if (wateralpha < 0.9) {
-				glDepthMask(GL_FALSE);
-			}
-		}
-		for (s = waterchain; s; s = s->texturechain) {
-			glpoly_t* poly;
-			if (current_texture != s->texinfo->texture) {
-				if (count && current_texture) {
-					GL_Bind(current_texture->gl_texturenum);
-					GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
-					count = 0;
-				}
-				current_texture = s->texinfo->texture;
-			}
-
-			for (poly = s->polys; poly; poly = poly->next)
-			{
-				int newVerts = poly->numverts;
-
-				if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-					GL_Bind(current_texture->gl_texturenum);
-					GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
-					count = 0;
-				}
-
-				if (count) {
-					int prev = count - 1;
-
-					indices[count++] = indices[prev];
-					indices[count++] = poly->vbo_start;
-				}
-				for (v = 0; v < newVerts; ++v) {
-					indices[count++] = poly->vbo_start + v;
-				}
-			}
-		}
-		if (count) {
-			GL_Bind(current_texture->gl_texturenum);
-			GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
-			count = 0;
-		}
-		waterchain = NULL;
-
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_TextureEnvMode(GL_REPLACE);
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-			if (wateralpha < 0.9) {
-				glDepthMask(GL_TRUE);
-			}
-		}
-
+		GLM_DrawWaterSurfaces();
 		return;
 	}
 

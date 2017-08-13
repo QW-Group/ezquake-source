@@ -263,7 +263,7 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 	}
 }
 
-static byte* SurfaceFlatTurbColor(texture_t* texture)
+byte* SurfaceFlatTurbColor(texture_t* texture)
 {
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 
@@ -280,24 +280,6 @@ static byte* SurfaceFlatTurbColor(texture_t* texture)
 	}
 
 	return (byte *)&texture->flatcolor3ub;
-}
-
-void GLM_DrawIndexedTurbPoly(GLuint vao, GLushort* indices, int count, texture_t* texture)
-{
-	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-	byte* col = SurfaceFlatTurbColor(texture);
-
-	if (r_fastturb.value) {
-		byte old_alpha = col[3];
-
-		// FIXME: turbripple effect, transparent water
-		col[3] = 255;
-		GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, col, vao, indices, count, false, false, false);
-		col[3] = old_alpha;
-	}
-	else {
-		GLM_DrawIndexedTurbPolys(vao, indices, count, wateralpha);
-	}
 }
 
 //Does a water warp on the pre-fragmented glpoly_t chain
