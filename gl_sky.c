@@ -571,9 +571,7 @@ static void BuildSkyVertsArray(void)
 	float s, t;
 	int vert = 0;
 	int axis = 0;
-	vec3_t b;
 	int k;
-	vec3_t v;
 
 	if (skyDomeVertices) {
 		return;
@@ -602,8 +600,6 @@ static void BuildSkyVertsArray(void)
 			s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
 			for (j = 0; j < SUBDIVISIONS; j++) {
-				float length;
-
 				t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
 				for (k = 0; k < 4; ++k) {

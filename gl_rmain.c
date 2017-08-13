@@ -798,8 +798,6 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	return;
 } 
 
-void Debug_ProjectionMatrix(void);
-
 void R_SetupGL(void)
 {
 	float screenaspect;

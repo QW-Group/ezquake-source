@@ -621,23 +621,27 @@ void GL_TextureEnvMode(GLenum mode)
 	}
 }
 
+static int old_alphablend_flags = 0;
+
 void GL_AlphaBlendFlags(int flags)
 {
 	if (!GL_ShadersSupported()) {
-		if (flags & GL_ALPHATEST_ENABLED) {
+		if ((flags & GL_ALPHATEST_ENABLED) && !(old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
 			glEnable(GL_ALPHA_TEST);
 		}
-		else if (flags & GL_ALPHATEST_DISABLED) {
+		else if ((flags & GL_ALPHATEST_DISABLED) && (old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
 			glDisable(GL_ALPHA_TEST);
 		}
 	}
 
-	if (flags & GL_BLEND_ENABLED) {
+	if ((flags & GL_BLEND_ENABLED) && !(old_alphablend_flags & GL_BLEND_ENABLED)) {
 		glEnable(GL_BLEND);
 	}
-	else if (flags & GL_BLEND_DISABLED) {
+	else if (flags & GL_BLEND_DISABLED && (old_alphablend_flags & GL_BLEND_ENABLED)) {
 		glDisable(GL_BLEND);
 	}
+
+	old_alphablend_flags = flags;
 }
 
 // GLM Utility functions
