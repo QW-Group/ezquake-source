@@ -69,6 +69,7 @@ typedef struct {
 #endif
 
 	int max_texture_size;
+	int texture_units;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

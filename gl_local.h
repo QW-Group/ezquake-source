@@ -410,6 +410,7 @@ typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint intern
 
 // Draw functions
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
+typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
 
 //typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
 
@@ -461,6 +462,7 @@ extern glTexImage3D_t           glTexImage3D;
 
 // Draw functions
 extern glMultiDrawArrays_t      glMultiDrawArrays;
+extern glMultiDrawElements_t    glMultiDrawElements;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);

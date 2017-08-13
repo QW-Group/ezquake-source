@@ -114,6 +114,7 @@ glTexImage3D_t           glTexImage3D;
 
 // Draw functions
 glMultiDrawArrays_t      glMultiDrawArrays;
+glMultiDrawElements_t    glMultiDrawElements;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
@@ -245,6 +246,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexImage3D);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
+			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");

@@ -1370,6 +1370,13 @@ qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbo
 	return false;
 }
 
+void GLM_DrawMultiLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort** indices, GLsizei* lengths, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+{
+	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
+		glMultiDrawElements(type, lengths, GL_UNSIGNED_SHORT, indices, count);
+	}
+}
+
 void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
@@ -1531,6 +1538,12 @@ void GLM_DrawFlat(model_t* model)
 
 		glDisable(GL_CULL_FACE);
 		GLM_EnterBatchedPolyRegion(color_white, model->vao, true, true, false);
+
+		if (lightmap_texture_array) {
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+			glActiveTexture(GL_TEXTURE0);
+		}
 		for (i = 0; i < model->numtextures; i++) {
 			texture_t* tex = model->textures[i];
 			GLsizei count;
@@ -1543,12 +1556,13 @@ void GLM_DrawFlat(model_t* model)
 				continue;
 			}
 
-			glActiveTexture(GL_TEXTURE0);
+			if (!lightmap_texture_array) {
+				glActiveTexture(GL_TEXTURE0);
+			}
 			GL_Bind(model->textures[i]->gl_texturenum);
 
-			glActiveTexture(GL_TEXTURE2);
-			if (lightmap_texture_array) {
-				glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+			if (!lightmap_texture_array) {
+				glActiveTexture(GL_TEXTURE2);
 			}
 
 			lightmap = tex->gl_first_lightmap;
@@ -1581,12 +1595,14 @@ void GLM_DrawFlat(model_t* model)
 								count = 0;
 							}
 
+							// Degenerate triangle strips (remove)
 							if (count) {
 								int prev = count - 1;
 
 								indices[count++] = indices[prev];
 								indices[count++] = surf->polys->vbo_start;
 							}
+
 							for (v = 0; v < newVerts; ++v) {
 								indices[count++] = surf->polys->vbo_start + v;
 							}

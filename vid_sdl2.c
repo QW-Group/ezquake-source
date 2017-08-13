@@ -1195,6 +1195,7 @@ static void VID_SDL_Init(void)
 
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.max_texture_size);
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
 		glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
 	}
 
@@ -1410,6 +1411,7 @@ static void GfxInfo_f(void)
 	}
 
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.max_texture_size);
+	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
 	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
 	
 	if (r_fullscreen.integer) {
