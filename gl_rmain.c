@@ -347,81 +347,6 @@ void R_DrawSpriteModel (entity_t *e)
 	glEnd ();
 }
 
-static void GLM_DrawSimpleItem(int texture, vec3_t origin, vec3_t angles, float scale)
-{
-	static GLuint simpleItemVBO;
-	static GLuint simpleItemVAO;
-
-	float oldMatrix[16];
-	byte color[4] = { 255, 255, 255, 255 };
-
-	if (!simpleItemVBO) {
-		float verts[4][VERTEXSIZE] = { { 0 } };
-
-		VectorSet(verts[0], 0, -1, -1);
-		verts[0][3] = 1;
-		verts[0][4] = 1;
-
-		VectorSet(verts[1], 0, -1, 1);
-		verts[1][3] = 1;
-		verts[1][4] = 0;
-
-		VectorSet(verts[2], 0, 1, 1);
-		verts[2][3] = 0;
-		verts[2][4] = 0;
-
-		VectorSet(verts[3], 0, 1, -1);
-		verts[3][3] = 0;
-		verts[3][4] = 1;
-
-		glGenBuffers(1, &simpleItemVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
-		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
-	}
-
-	if (!simpleItemVAO) {
-		glGenVertexArrays(1, &simpleItemVAO);
-		glBindVertexArray(simpleItemVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
-	}
-
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-
-	GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
-	GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
-	{
-		float tempMatrix[16];
-
-		GL_PushMatrix(GL_MODELVIEW, tempMatrix);
-		// x = -y
-		tempMatrix[0] = 0;
-		tempMatrix[4] = -scale;
-		tempMatrix[8] = 0;
-
-		// y = z
-		tempMatrix[1] = 0;
-		tempMatrix[5] = 0;
-		tempMatrix[9] = scale;
-
-		// z = -x
-		tempMatrix[2] = -scale;
-		tempMatrix[6] = 0;
-		tempMatrix[10] = 0;
-
-		GL_PopMatrix(GL_MODELVIEW, tempMatrix);
-	}
-
-	glActiveTexture(GL_TEXTURE0);
-	GL_Bind(texture);
-	GLM_DrawTexturedPoly(color, simpleItemVAO, 0, 4, false, true);
-
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
-}
-
 static qbool R_DrawTrySimpleItem(void)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
@@ -488,7 +413,7 @@ static qbool R_DrawTrySimpleItem(void)
 
 	if (GL_ShadersSupported()) {
 		glDisable(GL_CULL_FACE);
-		GLM_DrawSimpleItem(simpletexture, org, angles, sprsize);
+		GLM_DrawSimpleItem(currententity->model->vao_simple, simpletexture, org, angles, sprsize);
 		glEnable(GL_CULL_FACE);
 	}
 	else {
@@ -535,59 +460,88 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	if (!r_drawentities.value || !vislist->count)
 		return;
 
+	// draw sprites separately, because of alpha_test
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	}
 
-	// draw sprites separately, because of alpha_test
-	for (i = 0; i < vislist->count; i++) 
-	{
+	GL_BeginDrawSprites();
+	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
+	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
 
 		if (gl_simpleitems.value && R_DrawTrySimpleItem()) {
+			vislist->drawn[i] = true;
 			continue;
 		}
 
-		switch (currententity->model->type) 
-		{
-			case mod_alias:
-				GL_EnterRegion(currententity->model->name);
-				R_DrawAliasModel(currententity);
-				GL_LeaveRegion();
-				break;
+		if (currententity->model->type == mod_sprite) {
+			R_DrawSpriteModel(currententity);
+			vislist->drawn[i] = true;
+			continue;
+		}
 
-			case mod_alias3:
-				// FIXME
-				if (!GL_ShadersSupported()) {
-					GL_EnterRegion(currententity->model->name);
-					R_DrawAlias3Model(currententity);
-					GL_LeaveRegion();
-				}
-				break;
-
-			case mod_brush:
-				// Get rid of Z-fighting for textures by offsetting the
-				// drawing of entity models compared to normal polygons.
-				// dimman: disabled for qcon
-				GL_EnterRegion(currententity->model->name);
-				if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
-					GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
-					R_DrawBrushModel(currententity);
-					GL_PolygonOffset(0, 0);
-				}
-				else {
-					R_DrawBrushModel(currententity);
-				}
-				GL_LeaveRegion();
-				break;
-			case mod_sprite:
-				R_DrawSpriteModel (currententity);
-				break;
-				// not handled
-			case mod_spr32:
-				break;
+		if (currententity->model->type == mod_spr32) {
+			vislist->drawn[i] = true;
+			continue;
 		}
 	}
+	GL_EndDrawSprites();
+
+	GL_BeginDrawModels();
+	for (i = 0; i < vislist->count; i++) {
+		currententity = &vislist->list[i];
+		if (vislist->drawn[i]) {
+			continue;
+		}
+
+		switch (currententity->model->type) {
+		case mod_alias:
+			GL_EnterRegion(currententity->model->name);
+			R_DrawAliasModel(currententity);
+			GL_LeaveRegion();
+			vislist->drawn[i] = true;
+			break;
+
+		case mod_alias3:
+			// FIXME
+			if (!GL_ShadersSupported()) {
+				GL_EnterRegion(currententity->model->name);
+				R_DrawAlias3Model(currententity);
+				GL_LeaveRegion();
+			}
+			vislist->drawn[i] = true;
+			break;
+		}
+	}
+	GL_EndDrawEntities();
+
+	GL_BeginDrawBrushModels();
+	for (i = 0; i < vislist->count; i++) {
+		currententity = &vislist->list[i];
+		if (vislist->drawn[i]) {
+			continue;
+		}
+
+		switch (currententity->model->type) {
+		case mod_brush:
+			// Get rid of Z-fighting for textures by offsetting the
+			// drawing of entity models compared to normal polygons.
+			// dimman: disabled for qcon
+			GL_EnterRegion(currententity->model->name);
+			if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
+				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
+				R_DrawBrushModel(currententity);
+				GL_PolygonOffset(0, 0);
+			}
+			else {
+				R_DrawBrushModel(currententity);
+			}
+			GL_LeaveRegion();
+			break;
+		}
+	}
+	GL_EndDrawBrushModels();
 
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);

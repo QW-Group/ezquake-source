@@ -705,9 +705,11 @@ void GL_BuildCommonTextureArrays(void)
 					memcpy(&new_vbo_buffer[new_vbo_position * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 					//Q_free(mod->temp_vbo_buffer);
 
+					mod->vao = model_vao;
 					mod->vbo = model_vbo;
 					mod->vbo_start = new_vbo_position;
 
+					mod->vao_simple = model_vao;
 					paliashdr->vbo = model_vbo;
 					paliashdr->vao = model_vao;
 					paliashdr->vertsOffset = new_vbo_position;
@@ -730,11 +732,25 @@ void GL_BuildCommonTextureArrays(void)
 						GL_CopyToTextureArraySize(common, frame->gl_texturenum, true);
 					}
 
+					mod->vao_simple = model_vao;
 					mod->texture_arrays = Q_malloc(sizeof(GLuint));
 					mod->texture_array_count = 1;
 					mod->texture_arrays[0] = commonTex->gl_texturenum;
 					mod->vbo = model_vbo;
 					mod->vbo_start = 0;
+				}
+				else if (mod->type == mod_brush && !mod->isworldmodel) {
+					for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+						if (mod->simpletexture[j]) {
+							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true);
+						}
+					}
+
+					mod->vao_simple = model_vao;
+					mod->vbo_start = 0;
+					mod->texture_arrays = Q_malloc(sizeof(GLuint));
+					mod->texture_array_count = 1;
+					mod->texture_arrays[0] = commonTex->gl_texturenum;
 				}
 				else {
 					Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
@@ -751,13 +767,15 @@ void GL_BuildCommonTextureArrays(void)
 		glBindVertexArray(model_vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
+		//glEnableVertexAttribArray(2);
+		//glEnableVertexAttribArray(3);
 		glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 8));
+		//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+		//glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 8));
+
+		Q_free(new_vbo_buffer);
 	}
 
 	GL_FreeTextureSizeList(common);

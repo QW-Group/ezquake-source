@@ -154,6 +154,10 @@ void CL_InitEnts(void) {
 	cl_firstpassents.list = (entity_t *) memalloc;
 	cl_visents.list = (entity_t *) memalloc + cl_firstpassents.max;
 	cl_alphaents.list = (entity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
+	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(qbool), "visents-drawn");
+	cl_firstpassents.drawn = (qbool*) memalloc;
+	cl_visents.drawn = (qbool*) memalloc + cl_firstpassents.max;
+	cl_alphaents.drawn = (qbool*) memalloc + cl_firstpassents.max + cl_visents.max;
 
 	CL_ClearScene();
 }

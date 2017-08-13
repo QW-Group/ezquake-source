@@ -447,7 +447,6 @@ static GLfloat identityMatrix[16] = {
 };
 
 static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar);
-void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 
 void GLM_SetMatrix(float* target, const float* source)
 {

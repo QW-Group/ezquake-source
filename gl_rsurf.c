@@ -238,7 +238,8 @@ typedef struct dlightinfo_s {
 static dlightinfo_t dlightlist[MAX_DLIGHTS];
 static int numdlights;
 
-void R_BuildDlightList (msurface_t *surf) {
+void R_BuildDlightList (msurface_t *surf)
+{
 	float dist;
 	vec3_t impact;
 	mtexinfo_t *tex;

@@ -445,6 +445,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	}
 
 	{
+		//float* vbo_buffer = Hunk_Alloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 		float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 
 		GL_MakeAliasModelVBO(m, vbo_buffer);

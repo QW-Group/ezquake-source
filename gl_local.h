@@ -606,4 +606,16 @@ void GL_LeaveRegion(void);
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_ExitBatchedPolyRegion(void);
 
+void GLM_DrawSimpleItem(GLuint vao, int texture, vec3_t origin, vec3_t angles, float scale);
+void GL_BeginDrawSprites(void);
+void GL_EndDrawSprites(void);
+void GL_BeginDrawBrushModels(void);
+void GL_BeginDrawModels(void);
+void GL_EndDrawBrushModels(void);
+void GL_EndDrawEntities(void);
+
+void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
+
+void R_DrawAliasModel(entity_t* currententity);
+
 #endif /* !__GL_LOCAL_H__ */

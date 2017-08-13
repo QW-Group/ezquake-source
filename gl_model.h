@@ -486,6 +486,7 @@ typedef struct model_s {
 
 	unsigned int        vbo;
 	unsigned int        vao;
+	unsigned int        vao_simple;
 
 	unsigned int*       texture_arrays;
 	unsigned int        texture_array_count;
