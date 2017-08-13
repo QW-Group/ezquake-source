@@ -6,6 +6,7 @@ const int EF_GREEN = 2;
 const int EF_BLUE = 64;
 
 uniform sampler2DArray materialTex;
+uniform sampler2D skinTex;
 
 // console var data
 uniform float shell_base_level1 = 0.05;
@@ -39,6 +40,9 @@ void main()
 		);
 
 		frag_colour = 1.0 * color1 * texture(materialTex, fsTextureCoord) + 1.0 * color2 * texture(materialTex, fsAltTextureCoord);
+	}
+	else if (fsTextureEnabled == 2) {
+		frag_colour = texture(skinTex, fsTextureCoord.st) * fsBaseColor;
 	}
 	else if (fsTextureEnabled != 0) {
 		// Default

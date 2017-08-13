@@ -117,14 +117,15 @@ void R_TranslatePlayerSkin (int playernum) {
 	player->_topcolor = player->topcolor;
 	player->_bottomcolor = player->bottomcolor;
 
-	if (!player->skin)
+	if (!player->skin) {
 		Skin_Find(player);
+	}
 
 	playerfbtextures[playernum] = 0; // no full bright texture by default
 
-	if (player->skin->texnum && player->skin->bpp == 4) { // do not even bother call Skin_Cache(), we have texture num alredy
-//		Com_Printf("    ###SHORT loaded skin %s %d\n", player->skin->name, player->skin->texnum);
-
+	if (player->skin->texnum && player->skin->bpp == 4) {
+		// do not even bother call Skin_Cache(), we have texture num alredy
+		//Com_Printf("    ###SHORT loaded skin %s %d\n", player->skin->name, player->skin->texnum);
 		playernmtextures[playernum] = player->skin->texnum;
 		return;
 	}
@@ -132,14 +133,11 @@ void R_TranslatePlayerSkin (int playernum) {
 	if ((original = Skin_Cache(player->skin, false)) != NULL) {
 		switch (player->skin->bpp) {
 		case 4: // 32 bit skin
-//			Com_Printf("    ###FULL loaded skin %s %d\n", player->skin->name, player->skin->texnum);
+			//Com_Printf("    ###FULL loaded skin %s %d\n", player->skin->name, player->skin->texnum);
 
 			// FIXME: in ideal, GL_LoadTexture() must be issued in Skin_Cache(), but I fail with that, so move it here
-			playernmtextures[playernum] = player->skin->texnum =
-				GL_LoadTexture (player->skin->name, player->skin->width, player->skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
-
+			playernmtextures[playernum] = player->skin->texnum = GL_LoadTexture(player->skin->name, player->skin->width, player->skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 			return; // we done all we want
-
 		case 1: // 8 bit skin
 			break;
 
@@ -181,14 +179,12 @@ void R_TranslatePlayerSkin (int playernum) {
 			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
 	}
 
-	GL_Bind(playernmtextures[playernum]);
-
 	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(gl_max_size_default, 512);
 	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, 256) : min(gl_max_size_default, 256);
 
 	// allow users to crunch sizes down even more if they want
-	scaled_width >>= (int) gl_playermip.value;
-	scaled_height >>= (int) gl_playermip.value;
+	scaled_width >>= (int)gl_playermip.value;
+	scaled_height >>= (int)gl_playermip.value;
 	if (scaled_width < 1)
 		scaled_width = 1;
 	if (scaled_height < 1)
@@ -215,14 +211,13 @@ void R_TranslatePlayerSkin (int playernum) {
 		}
 	}
 
+	GL_Bind(playernmtextures[playernum]);
 	glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	GL_TextureEnvMode(GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if (Img_HasFullbrights ((byte *) original, inwidth * inheight)) {
-		GL_Bind(playerfbtextures[playernum]);
-
 		out = pixels;
 		memset(pixels, 0, sizeof(pixels));
 		fracstep = tinwidth * 0x10000 / scaled_width;
@@ -255,8 +250,8 @@ void R_TranslatePlayerSkin (int playernum) {
 			}
 		}
 
-		glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
+		GL_Bind(playerfbtextures[playernum]);
+		glTexImage2D(GL_TEXTURE_2D, 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		GL_TextureEnvMode(GL_MODULATE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

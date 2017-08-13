@@ -84,8 +84,8 @@ extern cvar_t    gl_outline_width;
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum);
 
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects);
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
 void R_AliasSetupLighting(entity_t *ent);
 
 custom_model_color_t custom_model_colors[] = {
@@ -148,7 +148,7 @@ void R_DrawPowerupShell(
 	if (effects & EF_BLUE)
 		r_shellcolor[2] += effect_level;
 
-	R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, layer_no == 1, false, 0, 0, GL_MODULATE, 1.0f, 1.0f, 0);
+	R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, layer_no == 1, false, 0, 0, GL_MODULATE, 1.0f, 1.0f, 0, true);
 }
 
 static qbool IsFlameModel(model_t* model)
@@ -161,7 +161,7 @@ static qbool IsFlameModel(model_t* model)
 static void R_RenderAliasModel(
 	model_t* model, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode, 
 	int texture, int fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame, qbool outline, float scaleS, float scaleT,
-	int effects
+	int effects, qbool is_texture_array
 )
 {
 	int i;
@@ -181,21 +181,21 @@ static void R_RenderAliasModel(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, textureEnvMode, scaleS, scaleT, effects);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, textureEnvMode, scaleS, scaleT, effects, is_texture_array);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (fb_texture > 0 && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects, is_texture_array);
 
 		GL_DisableMultitexture();
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, GL_MODULATE, scaleS, scaleT, effects);
+		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, 0, GL_MODULATE, scaleS, scaleT, effects, is_texture_array);
 
 		if (fb_texture > 0) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, false, fb_texture, 0, GL_REPLACE, scaleS, scaleT, 0);
+			R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, false, fb_texture, 0, GL_REPLACE, scaleS, scaleT, 0, is_texture_array);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -248,6 +248,7 @@ void R_DrawAliasModel(entity_t *ent)
 	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
 	float scaleS = 1.0f;
 	float scaleT = 1.0f;
+	qbool is_texture_array = true;
 
 	// VULT NAILTRAIL - Hidenails
 	if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE) {
@@ -408,6 +409,8 @@ void R_DrawAliasModel(entity_t *ent)
 			}
 			texture    = playernmtextures[playernum];
 			fb_texture = playerfbtextures[playernum];
+
+			is_texture_array = false;
 		}
 	}
 	if (full_light || !gl_fb_models.value) {
@@ -444,7 +447,7 @@ void R_DrawAliasModel(entity_t *ent)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
-	R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects);
+	R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, is_texture_array);
 
 	if (!GL_ShadersSupported()) {
 		// FIXME: think need put it after caustics
@@ -483,7 +486,7 @@ void R_DrawAliasModel(entity_t *ent)
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame (clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0);
+		R_SetupAliasFrame (clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -527,7 +530,7 @@ void R_SetupAliasFrame(
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr,
 	qbool mtex, qbool scrolldir, qbool outline,
 	int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT,
-	int effects
+	int effects, qbool is_texture_array
 )
 {
 	int oldpose, pose, numposes;
@@ -548,7 +551,7 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects);
+		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, is_texture_array);
 	}
 	else {
 		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);

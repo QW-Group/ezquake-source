@@ -685,8 +685,8 @@ static void GLM_CreateBrushModelVAO(void)
 		if (mod && mod->type == mod_brush) {
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
 				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
-				mod->vao = brushModel_vao;
 			}
+			mod->vao = brushModel_vao;
 		}
 	}
 

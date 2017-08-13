@@ -16,7 +16,7 @@ uniform float textureIndex[32];
 uniform float scaleS[32];
 uniform float scaleT[32];
 uniform vec4 color[32];
-uniform bool apply_texture[32];
+uniform int apply_texture[32];
 uniform int shellMode[32];
 
 uniform float shellSize;
@@ -30,7 +30,7 @@ void main()
 	if (fsShellMode == 0) {
 		gl_Position = projectionMatrix * modelViewMatrix[_instanceId] * vec4(position, 1);
 		fsTextureCoord = vec3(tex.s * scaleS[_instanceId], tex.t * scaleT[_instanceId], textureIndex[_instanceId]);
-		fsTextureEnabled = apply_texture[_instanceId] ? 1 : 0;
+		fsTextureEnabled = apply_texture[_instanceId];
 		fsBaseColor = color[_instanceId];
 	}
 	else {

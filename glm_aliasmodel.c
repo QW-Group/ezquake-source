@@ -18,6 +18,7 @@ static GLint drawAliasModel_modelViewMatrix;
 static GLint drawAliasModel_projectionMatrix;
 static GLint drawAliasModel_color;
 static GLint drawAliasModel_materialTex;
+static GLint drawAliasModel_skinTex;
 static GLint drawAliasModel_shellSize;
 static GLint drawAliasModel_time;
 static GLint drawAliasModel_shellMode;
@@ -27,7 +28,7 @@ static GLint drawAliasModel_textureIndex;
 static GLint drawAliasModel_scaleS;
 static GLint drawAliasModel_scaleT;
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects);
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array);
 
 typedef struct glm_aliasmodel_req_s {
 	GLuint vbo_count;
@@ -42,6 +43,7 @@ typedef struct glm_aliasmodel_req_s {
 	byte color[4];
 	int texture_model;
 	int effects;
+	qbool is_texture_array;
 } glm_aliasmodel_req_t;
 
 typedef struct DrawArraysIndirectCommand_s {
@@ -58,7 +60,7 @@ static GLuint prev_texture_array = 0;
 static qbool in_batch_mode = false;
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects)
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
@@ -117,7 +119,7 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects);
+			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array);
 
 			vertIndex += count;
 		}
@@ -142,12 +144,19 @@ static void GLM_FlushAliasModelBatch(void)
 	GL_UseProgram(drawAliasModelProgram.program);
 	glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 	glUniform1i(drawAliasModel_materialTex, 0);
+	glUniform1i(drawAliasModel_skinTex, 1);
 	glUniform1f(drawAliasModel_shellSize, bound(0, gl_powerupshells_size.value, 20));
 	glUniform1f(drawAliasModel_time, cl.time);
 	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));
 
 	for (i = 0; i < batch_count; ++i) {
 		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
+
+		if (!req->is_texture_array) {
+			glActiveTexture(GL_TEXTURE0 + 1);
+			glBindTexture(GL_TEXTURE_2D, req->texture_index);
+			glActiveTexture(GL_TEXTURE0);
+		}
 
 		if (req->texture_array != prev_texture_array) {
 			glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
@@ -166,7 +175,7 @@ static void GLM_FlushAliasModelBatch(void)
 		texture_indexes[i] = req->texture_index;
 		texScaleS[i] = req->texScale[0];
 		texScaleT[i] = req->texScale[1];
-		texture_models[i] = req->texture_model;
+		texture_models[i] = req->is_texture_array ? req->texture_model : 2;
 		shellModes[i] = req->effects;
 
 		aliasmodel_requests[i].baseInstance = i;
@@ -218,7 +227,7 @@ static void GLM_SetPowerupShellColor(float* shell_color, float base_level, float
 		shell_color[2] += effect_level;
 }
 
-static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects)
+static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)
 {
 	glm_aliasmodel_req_t* req;
 
@@ -235,21 +244,22 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 	// TODO: angles
 	req->vbo_start = start;
 	req->vbo_count = count;
-	req->texScale[0] = scaleS;
-	req->texScale[1] = scaleT;
+	req->texScale[0] = is_texture_array ? scaleS : 1.0f;
+	req->texScale[1] = is_texture_array ? scaleT : 1.0f;
 	req->texture_model = texture;
 	req->vao = vao;
 	req->texture_array = model->texture_arrays[0];
 	req->texture_index = texture_index;
 	req->instanceCount = 1;
 	req->effects = effects;
+	req->is_texture_array = is_texture_array;
 	memcpy(req->color, color, 4);
 	++batch_count;
 }
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects)
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)
 {
-	GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0);
+	GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0, is_texture_array);
 
 	if (effects) {
 		// always allow powerupshells for specs or demos.
@@ -259,7 +269,7 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 		}
 
 		if (effects) {
-			GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects);
+			GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects, true);
 		}
 	}
 
@@ -282,6 +292,7 @@ void GL_BeginDrawAliasModels(void)
 		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
 		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
 		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
+		drawAliasModel_skinTex = glGetUniformLocation(drawAliasModelProgram.program, "skinTex");
 		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
 		drawAliasModel_shellSize = glGetUniformLocation(drawAliasModelProgram.program, "shellSize");
 		drawAliasModel_time = glGetUniformLocation(drawAliasModelProgram.program, "time");
