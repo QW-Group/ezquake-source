@@ -123,6 +123,7 @@ glMultiDrawElements_t    glMultiDrawElements;
 glDrawArraysInstanced_t  glDrawArraysInstanced;
 glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
 glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
+glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
@@ -263,6 +264,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
+			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");

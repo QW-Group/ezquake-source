@@ -418,8 +418,7 @@ typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * coun
 typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
 typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
-
-//typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
+typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
 
 // VBO functions
 extern glBindBuffer_t        glBindBufferExt;
@@ -478,6 +477,7 @@ extern glMultiDrawElements_t    glMultiDrawElements;
 extern glDrawArraysInstanced_t  glDrawArraysInstanced;
 extern glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
 extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
+extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
@@ -596,7 +596,9 @@ void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 void GLM_DebugMatrix(GLenum type, const char* value);
 
-void GLM_CreateVAOForModel(model_t* m);
+int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos);
+int GLM_MeasureVBOSizeForModel(model_t* m);
+
 void GL_UseProgram(GLuint program);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

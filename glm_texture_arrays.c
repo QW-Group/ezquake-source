@@ -644,21 +644,80 @@ static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, in
 	Q_free(data);
 }
 
+static GLuint brushModel_vbo;
+static GLuint brushModel_vao;
+
 static void GLM_CreateBrushModelVAO(void)
 {
 	int i;
+	int size = 0;
+	int position = 0;
+	float* buffer = NULL;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			GLM_CreateVAOForModel(mod);
+			size += GLM_MeasureVBOSizeForModel(mod);
 		}
 	}
 
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			GLM_CreateVAOForModel(mod);
+			if (mod == cl.worldmodel || !mod->isworldmodel) {
+				size += GLM_MeasureVBOSizeForModel(mod);
+			}
 		}
 	}
+
+	// Create vbo buffer
+	buffer = Q_malloc(size * VERTEXSIZE * sizeof(float));
+	glGenBuffers(1, &brushModel_vbo);
+	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo);
+
+	// Create vao
+	glGenVertexArrays(1, &brushModel_vao);
+	glBindVertexArray(brushModel_vao);
+
+	// Copy data into buffer
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			if (mod == cl.worldmodel || !mod->isworldmodel) {
+				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+				mod->vao = brushModel_vao;
+			}
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+			mod->vao = brushModel_vao;
+		}
+	}
+
+	// Copy VBO buffer across
+	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo);
+	glBufferDataExt(GL_ARRAY_BUFFER, size * VERTEXSIZE * sizeof(float), buffer, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glEnableVertexAttribArray(4);
+	glEnableVertexAttribArray(5);
+	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
+	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	glVertexAttribDivisor(6, 1);
+
+	Q_free(buffer);
 }

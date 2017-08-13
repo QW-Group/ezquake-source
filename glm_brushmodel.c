@@ -343,24 +343,9 @@ static int DuplicateVertex(float* target, int position)
 	return position + VERTEXSIZE;
 }
 
-void GLM_CreateVAOForModel(model_t* m)
+int GLM_MeasureVBOSizeForModel(model_t* m)
 {
-	int total_surf_verts = 0;
-	int total_surfaces = 0;
-	int i, j;
-	int vbo_pos = 0;
-	int vbo_buffer_size = 0;
-	float* vbo_buffer;
-	int combinations = 0;
-
-	for (i = 0; i < m->numtextures; ++i) {
-		if (m->textures[i]) {
-			m->textures[i]->gl_first_lightmap = -1;
-			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
-				m->textures[i]->gl_next_lightmap[j] = -1;
-			}
-		}
-	}
+	int j, total_surf_verts = 0, total_surfaces = 0;
 
 	for (j = 0; j < m->numsurfaces; ++j) {
 		msurface_t* surf = m->surfaces + j;
@@ -382,11 +367,25 @@ void GLM_CreateVAOForModel(model_t* m)
 	}
 
 	if (total_surf_verts <= 0 || total_surfaces < 1) {
-		return;
+		return 0;
 	}
 
-	vbo_buffer_size = VERTEXSIZE * (total_surf_verts + 2 * (total_surfaces - 1));
-	vbo_buffer = Q_malloc(sizeof(float) * vbo_buffer_size);
+	return (total_surf_verts + 2 * (total_surfaces - 1));
+}
+
+int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
+{
+	int i, j;
+	int combinations = 0;
+
+	for (i = 0; i < m->numtextures; ++i) {
+		if (m->textures[i]) {
+			m->textures[i]->gl_first_lightmap = -1;
+			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
+				m->textures[i]->gl_next_lightmap[j] = -1;
+			}
+		}
+	}
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
@@ -492,36 +491,7 @@ void GLM_CreateVAOForModel(model_t* m)
 		}
 	}
 
-	if (vbo_pos / VERTEXSIZE != (total_surf_verts + 2 * (total_surfaces - combinations))) {
-		Con_Printf("WARNING: Model used %d verts, expected %d\n", vbo_pos / VERTEXSIZE, (total_surf_verts + 2 * (total_surfaces - combinations)));
-		Con_Printf("         Difference %d, across %d surfaces [%d combinations]\n", vbo_pos / VERTEXSIZE - (total_surf_verts + 2 * (total_surfaces - combinations)), total_surfaces, combinations);
-	}
-
-	if (!m->vbo) {
-		// Count total number of verts
-		glGenBuffers(1, &m->vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * vbo_pos, vbo_buffer, GL_STATIC_DRAW);
-	}
-	Q_free(vbo_buffer);
-
-	if (!m->vao) {
-		glGenVertexArrays(1, &m->vao);
-		glBindVertexArray(m->vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glEnableVertexAttribArray(4);
-		glEnableVertexAttribArray(5);
-		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
-		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
-		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
-		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
-	}
+	return vbo_pos;
 }
 
 
@@ -623,26 +593,56 @@ static int GL_BatchRequestSorter(const void* lhs_, const void* rhs_)
 
 static void GL_FlushBrushModelBatch(void)
 {
-	int i;
+	int i, j;
 	GLuint last_vao = 0;
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
 
+	float mvMatrix[MAX_BRUSHMODEL_BATCH][16];
+	float colors[MAX_BRUSHMODEL_BATCH][4];
+	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
+	int base = 0;
+
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
+
 	for (i = 0; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
-		glUniformMatrix4fv(drawBrushModel_modelViewMatrix, 1, GL_FALSE, req->mvMatrix);
-		glUniform4f(drawBrushModel_color, req->baseColor[0], req->baseColor[1], req->baseColor[2], req->baseColor[3]);
-		glUniform1i(drawBrushModel_applyLightmap, req->isworldmodel ? 1 : 0);
-		if (req->vao != last_vao) {
-			glBindVertexArray(last_vao = req->vao);
+		if (i == 0) {
+			glBindVertexArray(req->vao);
 		}
 
 		if (req->texture_array != last_array) {
+			if (i - base) {
+				glUniformMatrix4fv(drawBrushModel_modelViewMatrix, i - base, GL_FALSE, (const GLfloat*) mvMatrix);
+				glUniform4fv(drawBrushModel_color, i - base, (const GLfloat*) colors);
+				glUniform1iv(drawBrushModel_applyLightmap, i - base, use_lightmaps);
+
+				for (j = base; j < i; ++j) {
+					glm_brushmodel_req_t* req = &brushmodel_requests[j];
+
+					glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices, 1, j - base);
+				}
+
+				base = j;
+			}
+
 			glBindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array);
 		}
-		glDrawElements(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices);
+
+		memcpy(&mvMatrix[i - base], req->mvMatrix, sizeof(mvMatrix[i]));
+		memcpy(&colors[i - base], req->baseColor, sizeof(req->baseColor));
+		use_lightmaps[i - base] = req->isworldmodel ? 1 : 0;
+	}
+
+	glUniformMatrix4fv(drawBrushModel_modelViewMatrix, batch_count - base, GL_FALSE, (const GLfloat*) mvMatrix);
+	glUniform4fv(drawBrushModel_color, batch_count - base, (const GLfloat*) colors);
+	glUniform1iv(drawBrushModel_applyLightmap, batch_count - base, use_lightmaps);
+
+	for (i = base; i < batch_count; ++i) {
+		glm_brushmodel_req_t* req = &brushmodel_requests[i];
+
+		glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices, 1, i - base);
 	}
 
 	batch_count = 0;

@@ -505,18 +505,14 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 		switch (currententity->model->type) {
 		case mod_alias:
-			GL_EnterRegion(currententity->model->name);
 			R_DrawAliasModel(currententity);
-			GL_LeaveRegion();
 			vislist->drawn[i] = true;
 			break;
 
 		case mod_alias3:
 			// FIXME
 			if (!GL_ShadersSupported()) {
-				GL_EnterRegion(currententity->model->name);
 				R_DrawAlias3Model(currententity);
-				GL_LeaveRegion();
 			}
 			vislist->drawn[i] = true;
 			break;
@@ -538,7 +534,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			// Get rid of Z-fighting for textures by offsetting the
 			// drawing of entity models compared to normal polygons.
 			// dimman: disabled for qcon
-			GL_EnterRegion(currententity->model->name);
 			if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
 				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
 				R_DrawBrushModel(currententity);
@@ -547,7 +542,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			else {
 				R_DrawBrushModel(currententity);
 			}
-			GL_LeaveRegion();
 			break;
 		}
 	}
