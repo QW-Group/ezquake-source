@@ -1384,6 +1384,46 @@ void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int
 	}
 }
 
+static glm_program_t drawworld;
+static GLint drawworld_modelViewMatrix;
+static GLint drawworld_projectionMatrix;
+static GLint drawworld_materialTex;
+static GLint drawworld_lightmapTex;
+
+static void Compile_DrawWorldProgram(void)
+{
+	GL_VFDeclare(drawworld)
+
+	// Initialise program for drawing image
+	GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
+
+	drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
+	drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
+	drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
+	drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
+}
+
+void GLM_EnterBatchedWorldRegion(unsigned int vao)
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+
+	if (!drawworld.program) {
+		Compile_DrawWorldProgram();
+	}
+
+	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GL_UseProgram(drawworld.program);
+	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+	glUniform1i(drawworld_materialTex, 0);
+	glUniform1i(drawworld_lightmapTex, 2);
+
+	glBindVertexArray(vao);
+}
+
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	float modelViewMatrix[16];
@@ -1519,6 +1559,97 @@ void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices
 	GLM_DrawPolygon(color, vao, start, vertices, apply_lightmap, true, alpha_test);
 }
 
+void GLM_DrawTexturedWorld(model_t* model)
+{
+	GLushort indices[4096];
+	int i, waterline, v;
+	msurface_t* surf;
+	int lightmap;
+
+	glDisable(GL_CULL_FACE);
+	GLM_EnterBatchedWorldRegion(model->vao);
+
+	// Bind lightmap array
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+
+	glActiveTexture(GL_TEXTURE0);
+
+	for (i = 0; i < model->texture_array_count; ++i) {
+		texture_t* base_tex = model->textures[model->texture_array_first[i]];
+		qbool first_in_this_array = true;
+		int texIndex;
+		int count = 0;
+
+		if (!base_tex || !base_tex->size_start) {
+			continue;
+		}
+
+		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
+			texture_t* tex = model->textures[texIndex];
+
+			if (!tex->texturechain[0] && !tex->texturechain[1]) {
+				continue;
+			}
+
+			// Going to draw at least one surface, so bind the texture array
+			if (first_in_this_array) {
+				glBindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[i]);
+				first_in_this_array = false;
+			}
+
+			for (waterline = 0; waterline < 2; waterline++) {
+				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
+					int newVerts = surf->polys->numverts;
+
+					if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+						GL_EnterRegion(va("TextureArray-Overflow %d", i));
+						glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
+						GL_LeaveRegion();
+						count = 0;
+					}
+
+					// Degenerate triangle strips
+					if (count) {
+						int prev = count - 1;
+
+						indices[count++] = indices[prev];
+						indices[count++] = surf->polys->vbo_start;
+					}
+
+					for (v = 0; v < newVerts; ++v) {
+						indices[count++] = surf->polys->vbo_start + v;
+					}
+				}
+			}
+		}
+
+		if (count) {
+			GL_EnterRegion(va("Texture array done: %d", i));
+			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
+			GL_LeaveRegion();
+		}
+	}
+
+	glEnable(GL_CULL_FACE);
+	GLM_ExitBatchedPolyRegion();
+	return;
+}
+
+void GLM_DrawFlat(model_t* model);
+
+void GLM_DrawWorld(model_t* model)
+{
+	const qbool use_texture_array = true;
+
+	if (use_texture_array && model->texture_array_count) {
+		GLM_DrawTexturedWorld(model);
+	}
+	else {
+		GLM_DrawFlat(model);
+	}
+}
+
 void GLM_DrawFlat(model_t* model)
 {
 	byte wallColor[4];
@@ -1544,6 +1675,7 @@ void GLM_DrawFlat(model_t* model)
 			glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 			glActiveTexture(GL_TEXTURE0);
 		}
+
 		for (i = 0; i < model->numtextures; i++) {
 			texture_t* tex = model->textures[i];
 			GLsizei count;
@@ -1590,7 +1722,9 @@ void GLM_DrawFlat(model_t* model)
 									GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 								}
 								else {
+									GL_EnterRegion(va("TextureOverflow %d", i));
 									GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+									GL_LeaveRegion();
 								}
 								count = 0;
 							}
@@ -1625,7 +1759,9 @@ void GLM_DrawFlat(model_t* model)
 					GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
 				}
 				else {
+					GL_EnterRegion(va("Texture done: %d", i));
 					GLM_DrawLightmapIndexedPolygonByType(GL_TRIANGLE_STRIP, color_white, model->vao, indices, count, true, true, false);
+					GL_LeaveRegion();
 				}
 				count = 0;
 			}
@@ -2114,7 +2250,8 @@ void R_DrawWorld (void)
 
 	if (GL_ShadersSupported()) {
 		GL_EnterRegion("DrawWorld");
-		GLM_DrawFlat(cl.worldmodel);
+		//GLM_DrawFlat(cl.worldmodel);
+		GLM_DrawTexturedWorld(cl.worldmodel);
 		GL_LeaveRegion();
 	}
 	else {
@@ -2398,16 +2535,23 @@ void GL_BuildLightmaps (void) {
  		GL_DisableMultitexture();
 }
 
-static int CopyVertToBuffer(float* target, int position, float* source, int lightmap)
+static int CopyVertToBuffer(float* target, int position, float* source, int lightmap, int material)
 {
+	if (position == 7930 * VERTEXSIZE || position == 7931 * VERTEXSIZE) {
+		position = position;
+	}
 	memcpy(&target[position], source, sizeof(float) * VERTEXSIZE);
 	target[position + 9] = lightmap;
+	target[position + 10] = material;
 
 	return position + VERTEXSIZE;
 }
 
 static int DuplicateVertex(float* target, int position)
 {
+	if (position == 7930  * VERTEXSIZE || position == 7931 * VERTEXSIZE) {
+		position = position;
+	}
 	memcpy(&target[position], &target[position - VERTEXSIZE], sizeof(float) * VERTEXSIZE);
 
 	return position + VERTEXSIZE;
@@ -2463,6 +2607,7 @@ void GLM_CreateVAOForModel(model_t* m)
 		int lightmap = -1;
 		int length = 0;
 		int surface_count = 0;
+		int tex_vbo_start = vbo_pos;
 
 		if (!m->textures[i]) {
 			continue;
@@ -2514,6 +2659,7 @@ void GLM_CreateVAOForModel(model_t* m)
 						int end_vert = 0;
 						int start_vert = 1;
 						int output = 0;
+						int material = m->textures[i]->gl_texture_index;
 
 						if (!poly->numverts) {
 							continue;
@@ -2521,24 +2667,24 @@ void GLM_CreateVAOForModel(model_t* m)
 
 						if (length) {
 							vbo_pos = DuplicateVertex(vbo_buffer, vbo_pos);
-							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum);
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material);
 							length += 2;
 						}
 
 						// Store position for drawing individual polys
 						poly->vbo_start = vbo_pos / VERTEXSIZE;
-						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum);
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material);
 						++output;
 
 						start_vert = 1;
 						end_vert = poly->numverts - 1;
 
 						while (start_vert <= end_vert) {
-							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum);
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum, material);
 							++output;
 
 							if (start_vert < end_vert) {
-								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum);
+								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum, material);
 								++output;
 							}
 
@@ -2579,12 +2725,14 @@ void GLM_CreateVAOForModel(model_t* m)
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
+		glEnableVertexAttribArray(5);
 		glBindBufferExt(GL_ARRAY_BUFFER, m->vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
 		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
 	}
 }
 
@@ -2645,11 +2793,13 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(5);
 		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
 	}
 }
 
@@ -2669,12 +2819,14 @@ void GLM_CreateVAOForPoly(glpoly_t *poly)
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
+		glEnableVertexAttribArray(5);
 		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
 		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
 	}
 }
 

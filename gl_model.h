@@ -79,6 +79,13 @@ typedef struct texture_s {
 	int                 gl_vbo_start[MAX_LIGHTMAPS];
 	int                 gl_vbo_length[MAX_LIGHTMAPS];
 	int                 gl_next_lightmap[MAX_LIGHTMAPS];
+
+	int                 gl_width;
+	int                 gl_height;
+	int                 next_same_size;
+	qbool               size_start;
+
+	int                 gl_texture_index;
 } texture_t;
 
 
@@ -104,8 +111,8 @@ typedef struct mtexinfo_s {
 	int					flags;
 } mtexinfo_t;
 
-#define VERTEXSIZE 10 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
-					  //s2t2 = lightmap tex coords; s3t2 = detail tex coords, l1 = lightmap#
+#define VERTEXSIZE 11 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
+					  //s2t2 = lightmap tex coords; s3t2 = detail tex coords, l1 = lightmap#, m1 = material#
 
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
@@ -468,6 +475,16 @@ typedef struct model_s {
 
 	unsigned int        vbo;
 	unsigned int        vao;
+
+	unsigned int*       texture_arrays;
+	unsigned int        texture_array_count;
+	int*                texture_array_first;
+
+	//unsigned int        texture_array;
+	//unsigned int        texture_sizes_texture;
+
+	//unsigned int        texture_array_width;
+	//unsigned int        texture_array_height;
 } model_t;
 
 //============================================================================
