@@ -83,8 +83,8 @@ extern cvar_t    gl_outline_width;
 static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 static void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum);
 
-void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir);
-void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline);
+void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode);
+void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, GLuint texture, GLuint fb_texture, GLuint textureEnvMode);
 void R_AliasSetupLighting(entity_t *ent);
 
 custom_model_color_t custom_model_colors[] = {
@@ -147,9 +147,7 @@ void R_DrawPowerupShell(
 	if (effects & EF_BLUE)
 		r_shellcolor[2] += effect_level;
 
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_MODULATE);
-	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
+	R_SetupAliasFrame(oldframe, frame, paliashdr, false, layer_no == 1, false, 0, 0, GL_MODULATE);
 }
 
 int GL_GenerateShellTexture(void)
@@ -187,13 +185,18 @@ static void R_RenderAliasModel(
 {
 	int i;
 
-	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
-
 	if (gl_meshdraw.integer) {
 		glDisable(GL_CULL_FACE);
 	}
+
+	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	if (color32bit) {
+		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
 		static GLenum modes[] = { GL_MODULATE, GL_REPLACE, GL_BLEND, GL_DECAL, GL_ADD, GL_MODULATE };
+		GLenum textureEnvMode = modes[bound(0, local_skincolormode, sizeof(modes) / sizeof(modes[0]) - 1)];
+
+		// particletexture is just solid white texture
+		texture = local_skincolormode ? texture : particletexture;
 
 		// force some color for such model
 		for (i = 0; i < 3; i++) {
@@ -201,46 +204,22 @@ static void R_RenderAliasModel(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		// particletexture is just solid white texture
-		GL_DisableMultitexture();
-		GL_Bind(local_skincolormode ? texture : particletexture);
-
-		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
-		GL_TextureEnvMode(modes[bound(0, local_skincolormode, sizeof(modes) / sizeof(modes[0]) - 1)]);
-
-		R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, outline);
+		R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, outline, texture, 0, textureEnvMode);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
+	else if (fb_texture && gl_mtexable) {
+		R_SetupAliasFrame(oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE);
+
+		GL_DisableMultitexture();
+	}
 	else {
-		if (fb_texture && gl_mtexable) {
-			GL_DisableMultitexture();
-			GL_Bind(texture);
-			GL_TextureEnvMode(GL_MODULATE);
+		R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, outline, texture, 0, GL_MODULATE);
 
-			GL_EnableMultitexture();
-			GL_Bind(fb_texture);
-			GL_TextureEnvMode(GL_DECAL);
-
-			R_SetupAliasFrame(oldframe, frame, paliashdr, true, false, outline);
-
-			GL_DisableMultitexture();
-		}
-		else {
-			GL_DisableMultitexture();
-			GL_Bind(texture);
-			GL_TextureEnvMode(GL_MODULATE);
-
-			R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, outline);
-
-			if (fb_texture) {
-				GL_TextureEnvMode(GL_REPLACE);
-				GL_Bind(fb_texture);
-
-				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-				R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, false);
-				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-			}
+		if (fb_texture) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			R_SetupAliasFrame(oldframe, frame, paliashdr, false, false, false, fb_texture, 0, GL_REPLACE);
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
 
@@ -518,13 +497,10 @@ void R_DrawAliasModel(entity_t *ent)
 		glRotatef (r_refdef2.time * 10, 0, 1, 0);
 		glMatrixMode (GL_MODELVIEW);
 
-		GL_Bind (underwatertexture);
-
-		GL_TextureEnvMode(GL_DECAL);        
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -665,11 +641,6 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	int i;
 	vec3_t lc;
 
-	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleAliasFrame(paliashdr, (r_framelerp >= 0.5) ? pose2 : pose1, scrolldir);
-		return;
-	}
-
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
@@ -776,7 +747,10 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	}
 }
 
-void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline)
+void R_SetupAliasFrame(
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr,
+	qbool mtex, qbool scrolldir, qbool outline,
+	GLuint texture, GLuint fb_texture, GLuint textureEnvMode)
 {
 	int oldpose, pose, numposes;
 	float interval;
@@ -795,7 +769,25 @@ void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, al
 		pose += (int) (r_refdef2.time / interval) % numposes;
 	}
 
-	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
+	if (GL_ShadersSupported()) {
+		GLM_DrawSimpleAliasFrame(paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode);
+	}
+	else {
+		GL_DisableMultitexture();
+		if (texture) {
+			GL_Bind(texture);
+		}
+		GL_TextureEnvMode(textureEnvMode);
+
+		if (fb_texture && mtex) {
+			GL_EnableMultitexture();
+			GL_Bind(fb_texture);
+			GL_TextureEnvMode(GL_DECAL);
+		}
+
+		GL_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir);
+	}
+
 	if (outline) {
 		GL_DrawAliasOutlineFrame(paliashdr, oldpose, pose);
 	}

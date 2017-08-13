@@ -157,18 +157,22 @@ static void GLM_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 }
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
+void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
 	float l;
-	qbool texture = (custom_model == NULL);
+	qbool texture_model = (custom_model == NULL);
 
 	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
 		GLM_DrawPowerupShell(paliashdr, pose1, NULL, NULL, 0.0f, false);
 		return;
 	}
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	// FIXME: This has been converted from 4 bytes already?
 	if (r_modelcolor[0] < 0) {
 		color[0] = color[1] = color[2] = 255;
 	}
@@ -220,7 +224,7 @@ void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir)
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture);
+			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture_model);
 
 			vertIndex += count;
 		}
