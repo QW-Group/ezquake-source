@@ -603,6 +603,7 @@ static void GL_FlushBrushModelBatch(void)
 	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
 	int base = 0;
 
+	glActiveTexture(GL_TEXTURE0);
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
 
 	for (i = 0; i < batch_count; ++i) {
@@ -624,7 +625,7 @@ static void GL_FlushBrushModelBatch(void)
 					glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices, 1, j - base);
 				}
 
-				base = j;
+				base = i;
 			}
 
 			glBindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array);
@@ -669,7 +670,12 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	memcpy(req->baseColor, base_color, sizeof(req->baseColor));
 	req->isworldmodel = model->isworldmodel;
 	req->vao = model->vao;
-	req->count = req->start = 0;
+	if (!req->vao) {
+		req->vao = req->vao;
+		Con_Printf("Model VAO not set [%s]\n", model->name);
+	}
+	req->count = 0;
+	req->start = model->vbo_start;
 	req->texture_array = texture_array;
 
 	++batch_count;
