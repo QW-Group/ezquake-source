@@ -88,7 +88,6 @@ float     ambientlight;
 float     apitch;
 float     ayaw;
 float     clearColor[3] = {0, 0, 0};
-qbool     r_cache_thrash;                     // compatability
 qbool     full_light;
 int       lastposenum;
 GLuint    shelltexture = 0;
@@ -2009,8 +2008,6 @@ void R_SetupFrame(void)
 	V_SetContentsColor (r_viewleaf->contents);
 	V_AddWaterfog (r_viewleaf->contents);	 
 	V_CalcBlend ();
-
-	r_cache_thrash = false;
 
 	c_brush_polys = 0;
 	c_alias_polys = 0;

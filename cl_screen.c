@@ -91,7 +91,6 @@ cvar_t	scr_consize				= {"scr_consize", "0.5"};
 cvar_t	scr_conspeed			= {"scr_conspeed", "9999"};
 cvar_t	scr_centertime			= {"scr_centertime", "2"};
 cvar_t	scr_centershift			= {"scr_centershift", "0"};
-cvar_t	scr_showram				= {"showram", "1"};
 cvar_t	scr_showturtle			= {"showturtle", "0"};
 cvar_t	scr_showpause			= {"showpause", "1"};
 cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
@@ -567,13 +566,6 @@ void SCR_ZoomOut_f (void) {
 }
 
 /********************************** ELEMENTS **********************************/
-
-static void SCR_DrawRam (void)
-{
-	if (scr_showram.value && r_cache_thrash) {
-		Draw_Pic(scr_vrect.x + 32, scr_vrect.y, scr_ram);
-	}
-}
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
@@ -3064,7 +3056,6 @@ static void SCR_DrawElements(void)
 
 			if (cls.state == ca_active)
 			{
-				SCR_DrawRam ();
 				SCR_DrawNet ();
 				SCR_DrawTurtle ();
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
@@ -3883,7 +3874,6 @@ void SCR_Init (void)
 	Cvar_Register (&r_chaticons_alpha);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&scr_showram);
 	Cvar_Register (&scr_showturtle);
 	Cvar_Register (&scr_showpause);
 	Cvar_Register (&scr_centertime);

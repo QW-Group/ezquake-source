@@ -108,7 +108,6 @@ extern qbool qmb_initialized;
 //====================================================
 
 extern	entity_t	r_worldentity;
-extern	qbool	r_cache_thrash;		// compatability
 extern	vec3_t		modelorg, r_entorigin;
 extern	entity_t	*currententity;
 extern	int			r_visframecount;
