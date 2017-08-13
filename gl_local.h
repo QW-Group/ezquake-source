@@ -616,7 +616,8 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
 void GL_BeginDrawBrushModels(void);
-void GL_BeginDrawModels(void);
+void GL_BeginDrawAliasModels(void);
+void GL_EndDrawAliasModels(void);
 void GL_EndDrawBrushModels(void);
 void GL_EndDrawEntities(void);
 

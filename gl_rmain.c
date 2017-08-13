@@ -470,6 +470,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	}
 
+	GL_EnterRegion("Sprites");
 	GL_BeginDrawSprites();
 	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
 	for (i = 0; i < vislist->count; i++) {
@@ -492,8 +493,10 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		}
 	}
 	GL_EndDrawSprites();
+	GL_LeaveRegion();
 
-	GL_BeginDrawModels();
+	GL_EnterRegion("AliasModels");
+	GL_BeginDrawAliasModels();
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
 		if (vislist->drawn[i]) {
@@ -519,8 +522,10 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			break;
 		}
 	}
-	GL_EndDrawEntities();
+	GL_EndDrawAliasModels();
+	GL_LeaveRegion();
 
+	GL_EnterRegion("BrushModels");
 	GL_BeginDrawBrushModels();
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
@@ -547,6 +552,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		}
 	}
 	GL_EndDrawBrushModels();
+	GL_LeaveRegion();
 
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);

@@ -191,10 +191,6 @@ void GL_BeginDrawBrushModels(void)
 {
 }
 
-void GL_BeginDrawModels(void)
-{
-}
-
 void GL_EndDrawBrushModels(void)
 {
 }

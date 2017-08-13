@@ -25,28 +25,10 @@ static GLint drawAliasModel_scaleT;
 
 int GL_GenerateShellTexture(void);
 
-void GLM_DrawAliasModel(GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT);
+
+void GLM_DrawAliasModel(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
 {
-	if (texture_index >= 600) {
-		texture_index = texture_index;
-	}
-
-	if (!drawAliasModelProgram.program) {
-		GL_VFDeclare(model_alias);
-
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram);
-
-		drawAliasModel_modelViewMatrix = glGetUniformLocation(drawAliasModelProgram.program, "modelViewMatrix");
-		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
-		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
-		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
-		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
-		drawAliasModel_textureIndex = glGetUniformLocation(drawAliasModelProgram.program, "textureIndex");
-		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
-		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
-	}
-
 	if (drawAliasModelProgram.program && vao) {
 		float modelViewMatrix[16];
 		float projectionMatrix[16];
@@ -170,7 +152,7 @@ static void GLM_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 }
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT)
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
@@ -234,9 +216,119 @@ void GLM_DrawSimpleAliasFrame(aliashdr_t* paliashdr, int pose1, qbool scrolldir,
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_DrawAliasModel(paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT);
+			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT);
 
 			vertIndex += count;
 		}
 	}
+}
+
+typedef struct glm_aliasmodel_req_s {
+	float mvMatrix[16];
+	int vbo_start;
+	int vbo_count;
+	float texScale[2];
+	qbool texture_model;
+	GLuint vao;
+	GLuint texture_array;
+	byte color[4];
+	int texture_index;
+} glm_aliasmodel_req_t;
+
+#define MAX_ALIASMODEL_BATCH 128
+static glm_aliasmodel_req_t aliasmodel_requests[MAX_ALIASMODEL_BATCH];
+static int batch_count = 0;
+static GLuint prev_texture_array = 0;
+
+static void GLM_FlushAliasModelBatch(void)
+{
+	int i;
+	float projectionMatrix[16];
+
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GL_UseProgram(drawAliasModelProgram.program);
+	glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+	glUniform1i(drawAliasModel_materialTex, 0);
+
+	for (i = 0; i < batch_count; ++i) {
+		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
+
+		if (drawAliasModelProgram.program && req->vao) {
+			if (req->texture_array != prev_texture_array) {
+				glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
+				prev_texture_array = req->texture_array;
+			}
+
+			glUniformMatrix4fv(drawAliasModel_modelViewMatrix, 1, GL_FALSE, req->mvMatrix);
+			glUniform4f(drawAliasModel_color, req->color[0] * 1.0f / 255, req->color[1] * 1.0f / 255, req->color[2] * 1.0f / 255, req->color[3] * 1.0f / 255);
+			glUniform1f(drawAliasModel_textureIndex, req->texture_index);
+			glUniform1i(drawAliasModel_applyTexture, req->texture_model);
+			glUniform1f(drawAliasModel_scaleS, req->texScale[0]);
+			glUniform1f(drawAliasModel_scaleT, req->texScale[1]);
+
+			glBindVertexArray(req->vao);
+			glDrawArrays(GL_TRIANGLE_STRIP, req->vbo_start, req->vbo_count);
+		}
+	}
+	
+	batch_count = 0;
+}
+
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT)
+{
+	glm_aliasmodel_req_t* req;
+
+	if (batch_count >= MAX_ALIASMODEL_BATCH) {
+		GLM_FlushAliasModelBatch();
+	}
+
+	req = &aliasmodel_requests[batch_count];
+	GL_GetMatrix(GL_MODELVIEW, req->mvMatrix);
+	// TODO: angles
+	req->vbo_start = start;
+	req->vbo_count = count;
+	req->texScale[0] = scaleS;
+	req->texScale[1] = scaleT;
+	req->texture_model = texture;
+	req->vao = vao;
+	req->texture_array = model->texture_arrays[0];
+	req->texture_index = texture_index;
+	memcpy(req->color, color, 4);
+	++batch_count;
+
+	//GLM_FlushAliasModelBatch();
+}
+
+void GL_BeginDrawAliasModels(void)
+{
+	batch_count = 0;
+
+	if (!drawAliasModelProgram.program) {
+		GL_VFDeclare(model_alias);
+
+		// Initialise program for drawing image
+		GLM_CreateVFProgram("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram);
+
+		drawAliasModel_modelViewMatrix = glGetUniformLocation(drawAliasModelProgram.program, "modelViewMatrix");
+		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
+		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
+		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
+		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
+		drawAliasModel_textureIndex = glGetUniformLocation(drawAliasModelProgram.program, "textureIndex");
+		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
+		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	prev_texture_array = 0;
+	glDisable(GL_CULL_FACE);
+}
+
+void GL_EndDrawAliasModels(void)
+{
+	if (batch_count) {
+		GLM_FlushAliasModelBatch();
+	}
+	glEnable(GL_CULL_FACE);
 }
