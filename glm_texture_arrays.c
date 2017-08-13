@@ -14,10 +14,29 @@ static unsigned int instance_vbo = 0;
 
 void GL_BuildCommonTextureArrays(void);
 static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
+static void GLM_CreateBrushModelVAO(void);
 
 static qbool BrushModelIsAnySize(model_t* mod)
 {
 	return false;
+}
+
+#define MAX_INSTANCES 64
+
+static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, float* new_vbo_buffer);
+static void GLM_CreateInstanceVBO(void)
+{
+	unsigned int values[MAX_INSTANCES];
+	int i;
+
+	glGenBuffers(1, &instance_vbo);
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+
+	for (i = 0; i < MAX_INSTANCES; ++i) {
+		values[i] = i;
+	}
+
+	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(values), values, GL_STATIC_DRAW);
 }
 
 typedef struct common_texture_s {
@@ -552,10 +571,6 @@ void GL_BuildCommonTextureArrays(void)
 
 			if (mod) {
 				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
-
-				if (mod->type == mod_brush) {
-					GLM_CreateVAOForModel(mod);
-				}
 			}
 		}
 
@@ -564,46 +579,35 @@ void GL_BuildCommonTextureArrays(void)
 
 			if (mod) {
 				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
-
-				if (mod->type == mod_brush) {
-					GLM_CreateVAOForModel(mod);
-				}
 			}
 		}
 
-		glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
-
-		{
-			unsigned int values[64];
-
-			glGenBuffers(1, &instance_vbo);
-			glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
-
-			for (i = 0; i < 64; ++i) {
-				values[i] = i;
-			}
-
-			glBufferDataExt(GL_ARRAY_BUFFER, sizeof(values), values, GL_STATIC_DRAW);
-		}
-
-		glBindVertexArray(model_vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-		glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
-		glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
-		glVertexAttribDivisor(3, 1);
-
-		Q_free(new_vbo_buffer);
+		GLM_CreateInstanceVBO();
+		GLM_CreateModelVAO(model_vbo, required_vbo_length, new_vbo_buffer);
+		GLM_CreateBrushModelVAO();
 	}
 
 	GL_FreeTextureSizeList(common);
+}
+
+static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, float* new_vbo_buffer)
+{
+	glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
+	glBufferDataExt(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
+	Q_free(new_vbo_buffer);
+
+	glBindVertexArray(model_vao);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glBindBufferExt(GL_ARRAY_BUFFER, model_vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	glVertexAttribDivisor(3, 1);
 }
 
 static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice)
@@ -638,4 +642,23 @@ static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, in
 
 	//GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 	Q_free(data);
+}
+
+static void GLM_CreateBrushModelVAO(void)
+{
+	int i;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			GLM_CreateVAOForModel(mod);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			GLM_CreateVAOForModel(mod);
+		}
+	}
 }

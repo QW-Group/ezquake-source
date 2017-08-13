@@ -187,14 +187,6 @@ static void GL_CompileSpriteProgram(void)
 	}
 }
 
-void GL_BeginDrawBrushModels(void)
-{
-}
-
-void GL_EndDrawBrushModels(void)
-{
-}
-
 void GL_EndDrawEntities(void)
 {
 }

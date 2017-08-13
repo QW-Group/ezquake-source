@@ -172,91 +172,6 @@ void GLM_CreateBrushModelProgram(void)
 	}
 }
 
-void GLM_DrawBrushModel(model_t* model)
-{
-	GLushort indices[4096];
-	int i, waterline, v;
-	msurface_t* surf;
-	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-
-	glDisable(GL_CULL_FACE);
-
-	GLM_CreateBrushModelProgram();
-
-	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_UseProgram(drawBrushModelProgram.program);
-	glUniformMatrix4fv(drawBrushModel_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-	glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform4f(drawBrushModel_color, base_color[0], base_color[1], base_color[2], base_color[3]);
-	glUniform1i(drawBrushModel_materialTex, 0);
-	glUniform1i(drawBrushModel_lightmapTex, 2);
-	glUniform1i(drawBrushModel_applyLightmap, model->isworldmodel ? 1 : 0);
-	glUniform1i(drawBrushModel_applyTexture, 1);
-
-	glBindVertexArray(model->vao);
-
-	glActiveTexture(GL_TEXTURE0);
-	for (i = 0; i < model->texture_array_count; ++i) {
-		texture_t* base_tex = model->textures[model->texture_array_first[i]];
-		qbool first_in_this_array = true;
-		int texIndex;
-		int count = 0;
-
-		if (!base_tex || !base_tex->size_start) {
-			continue;
-		}
-
-		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
-			texture_t* tex = model->textures[texIndex];
-
-			if (!tex->texturechain[0] && !tex->texturechain[1]) {
-				continue;
-			}
-
-			// Going to draw at least one surface, so bind the texture array
-			if (first_in_this_array) {
-				glBindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[i]);
-				first_in_this_array = false;
-			}
-
-			for (waterline = 0; waterline < 2; waterline++) {
-				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
-					int newVerts = surf->polys->numverts;
-
-					if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-						glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
-						count = 0;
-					}
-
-					// Degenerate triangle strips
-					if (count) {
-						int prev = count - 1;
-
-						indices[count++] = indices[prev];
-						indices[count++] = surf->polys->vbo_start;
-					}
-
-					for (v = 0; v < newVerts; ++v) {
-						indices[count++] = surf->polys->vbo_start + v;
-					}
-				}
-			}
-		}
-
-		if (count) {
-			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
-		}
-	}
-
-	glEnable(GL_CULL_FACE);
-	return;
-}
-
 // Sets tex->next_same_size to link up all textures of common size
 int R_ChainTexturesBySize(model_t* m)
 {
@@ -582,14 +497,6 @@ void GLM_CreateVAOForModel(model_t* m)
 		Con_Printf("         Difference %d, across %d surfaces [%d combinations]\n", vbo_pos / VERTEXSIZE - (total_surf_verts + 2 * (total_surfaces - combinations)), total_surfaces, combinations);
 	}
 
-	if (strstr(m->name, "/b_nail1.bsp")) {
-		Con_Printf("b_nail1.bsp:\n");
-		for (i = 0; i < vbo_pos / VERTEXSIZE; ++i) {
-			float* vert = &vbo_buffer[i * VERTEXSIZE];
-			Con_Printf("%d: %d %d %d (%f %f) [%d]\n", i, (int)vert[0], (int)vert[1], (int)vert[2], vert[3], vert[4], (int)vert[10]);
-		}
-	}
-
 	if (!m->vbo) {
 		// Count total number of verts
 		glGenBuffers(1, &m->vbo);
@@ -615,4 +522,206 @@ void GLM_CreateVAOForModel(model_t* m)
 		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
 		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
 	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct glm_brushmodel_req_s {
+	GLuint vbo_count;
+	GLuint instanceCount;
+	GLuint vbo_start;
+	GLuint baseInstance;
+	float mvMatrix[16];
+	float baseColor[4];
+	qbool applyLightmap;
+	GLuint count;
+	GLuint start;
+
+	GLuint vao;
+	GLuint texture_array;
+	int texture_index;
+	qbool isworldmodel;
+	GLushort indices[1024];
+
+	int texture_model;
+	int effects;
+} glm_brushmodel_req_t;
+
+typedef struct DrawElementsIndirectCommand_s {
+	GLuint count;
+	GLuint instanceCount;
+	GLuint firstIndex;
+	GLuint baseVertex;
+	GLuint baseInstance;
+} DrawElementsIndirectCommand_t;
+
+#define MAX_BRUSHMODEL_BATCH 32
+static glm_brushmodel_req_t brushmodel_requests[MAX_BRUSHMODEL_BATCH];
+static int batch_count = 0;
+static GLuint prev_texture_array = 0;
+static qbool in_batch_mode = false;
+
+void GL_BeginDrawBrushModels(void)
+{
+	static float projectionMatrix[16];
+
+	GLM_CreateBrushModelProgram();
+
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_UseProgram(drawBrushModelProgram.program);
+	glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+	glUniform1i(drawBrushModel_materialTex, 0);
+	glUniform1i(drawBrushModel_lightmapTex, 2);
+	glUniform1i(drawBrushModel_applyTexture, 1);
+
+	glDisable(GL_CULL_FACE);
+	glActiveTexture(GL_TEXTURE0);
+}
+
+static int GL_BatchRequestSorter(const void* lhs_, const void* rhs_)
+{
+	const glm_brushmodel_req_t* lhs = (glm_brushmodel_req_t*)lhs_;
+	const glm_brushmodel_req_t* rhs = (glm_brushmodel_req_t*)rhs_;
+
+	// Sort by VAO first
+	if (lhs->vao < rhs->vao) {
+		return -1;
+	}
+	else if (lhs->vao > rhs->vao) {
+		return 1;
+	}
+
+	// Then by texture array
+	if (lhs->texture_array < rhs->texture_array) {
+		return -1;
+	}
+	else if (lhs->texture_array > rhs->texture_array) {
+		return 1;
+	}
+	return 0;
+}
+
+static void GL_FlushBrushModelBatch(void)
+{
+	int i;
+	GLuint last_vao = 0;
+	GLuint last_array = 0;
+	qbool was_worldmodel = 0;
+
+	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
+	for (i = 0; i < batch_count; ++i) {
+		glm_brushmodel_req_t* req = &brushmodel_requests[i];
+
+		glUniformMatrix4fv(drawBrushModel_modelViewMatrix, 1, GL_FALSE, req->mvMatrix);
+		glUniform4f(drawBrushModel_color, req->baseColor[0], req->baseColor[1], req->baseColor[2], req->baseColor[3]);
+		glUniform1i(drawBrushModel_applyLightmap, req->isworldmodel ? 1 : 0);
+		if (req->vao != last_vao) {
+			glBindVertexArray(last_vao = req->vao);
+		}
+
+		if (req->texture_array != last_array) {
+			glBindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array);
+		}
+		glDrawElements(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices);
+	}
+
+	batch_count = 0;
+}
+
+void GL_EndDrawBrushModels(void)
+{
+	GL_FlushBrushModelBatch();
+
+	glEnable(GL_CULL_FACE);
+}
+
+static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array)
+{
+	glm_brushmodel_req_t* req;
+
+	if (batch_count >= MAX_BRUSHMODEL_BATCH) {
+		GL_FlushBrushModelBatch();
+	}
+
+	req = &brushmodel_requests[batch_count];
+
+	GLM_GetMatrix(GL_MODELVIEW, req->mvMatrix);
+	memcpy(req->baseColor, base_color, sizeof(req->baseColor));
+	req->isworldmodel = model->isworldmodel;
+	req->vao = model->vao;
+	req->count = req->start = 0;
+	req->texture_array = texture_array;
+
+	++batch_count;
+	return req;
+}
+
+void GLM_DrawBrushModel(model_t* model)
+{
+	int i, waterline, v;
+	msurface_t* surf;
+	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glm_brushmodel_req_t* req;
+
+	for (i = 0; i < model->texture_array_count; ++i) {
+		texture_t* base_tex = model->textures[model->texture_array_first[i]];
+		int texIndex;
+
+		if (!base_tex || !base_tex->size_start) {
+			continue;
+		}
+
+		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
+			texture_t* tex = model->textures[texIndex];
+
+			if (!tex->texturechain[0] && !tex->texturechain[1]) {
+				continue;
+			}
+
+			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
+			for (waterline = 0; waterline < 2; waterline++) {
+				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
+					int newVerts = surf->polys->numverts;
+
+					if (req->count + 2 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
+						req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
+					}
+
+					// Degenerate triangle strips
+					if (req->count) {
+						int prev = req->count - 1;
+
+						req->indices[req->count++] = req->indices[prev];
+						req->indices[req->count++] = surf->polys->vbo_start;
+					}
+
+					for (v = 0; v < newVerts; ++v) {
+						req->indices[req->count++] = surf->polys->vbo_start + v;
+					}
+				}
+			}
+		}
+	}
+
+	return;
 }
