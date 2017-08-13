@@ -1,7 +1,7 @@
 #version 430
 
-uniform sampler2D materialTex;
-in vec2 TextureCoord;
+uniform sampler2DArray materialTex;
+in vec3 TextureCoord;
 
 out vec4 frag_colour;
 

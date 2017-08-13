@@ -606,7 +606,7 @@ void GL_LeaveRegion(void);
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_ExitBatchedPolyRegion(void);
 
-void GLM_DrawSimpleItem(GLuint vao, int texture, vec3_t origin, vec3_t angles, float scale);
+void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
 void GL_BeginDrawBrushModels(void);

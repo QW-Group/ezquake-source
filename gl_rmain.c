@@ -351,8 +351,9 @@ static qbool R_DrawTrySimpleItem(void)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
-	int simpletexture;
+	int simpletexture, simpletexture_index;
 	vec3_t point, right, up, org, offset, angles;
+	float scale_s = 1.0f, scale_t = 1.0f;
 
 	if (!currententity || !currententity->model) {
 		return false;
@@ -360,9 +361,15 @@ static qbool R_DrawTrySimpleItem(void)
 
 	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES) {
 		simpletexture = currententity->model->simpletexture[0]; // ah...
+		simpletexture_index = currententity->model->simpletexture_indexes[0];
+		scale_s = currententity->model->simpletexture_scalingS[0];
+		scale_t = currententity->model->simpletexture_scalingT[0];
 	}
 	else {
 		simpletexture = currententity->model->simpletexture[currententity->skinnum];
+		simpletexture_index = currententity->model->simpletexture_indexes[currententity->skinnum];
+		scale_s = currententity->model->simpletexture_scalingS[currententity->skinnum];
+		scale_t = currententity->model->simpletexture_scalingT[currententity->skinnum];
 	}
 
 	if (!simpletexture) {
@@ -413,7 +420,7 @@ static qbool R_DrawTrySimpleItem(void)
 
 	if (GL_ShadersSupported()) {
 		glDisable(GL_CULL_FACE);
-		GLM_DrawSimpleItem(currententity->model->vao_simple, simpletexture, org, angles, sprsize);
+		GLM_DrawSimpleItem(currententity->model, simpletexture_index, org, angles, sprsize, scale_s, scale_t);
 		glEnable(GL_CULL_FACE);
 	}
 	else {

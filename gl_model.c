@@ -2430,6 +2430,8 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
 
 	pspriteframe->gl_texturenum = texnum;
+	pspriteframe->gl_scalingS = 1.0f;
+	pspriteframe->gl_scalingT = 1.0f;
 
 	return (void *) ((byte *) pinframe + sizeof (dspriteframe_t) + size);
 }

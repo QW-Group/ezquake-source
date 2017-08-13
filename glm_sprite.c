@@ -10,6 +10,9 @@ static glm_program_t spriteProgram;
 static GLint sprite_modelViewMatrixUniform;
 static GLint sprite_projectionMatrixUniform;
 static GLint sprite_materialTexUniform;
+static GLint sprite_textureIndex;
+static GLint sprite_texS;
+static GLint sprite_texT;
 static GLint sprite_scale;
 static GLint sprite_origin;
 
@@ -66,15 +69,18 @@ static void GL_PrepareSprites(void)
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 	}
-
-	glActiveTexture(GL_TEXTURE0);
 }
+
+static GLuint prev_texture_array = -1;
 
 void GL_BeginDrawSprites(void)
 {
 	batch_count = 0;
 
 	GL_PrepareSprites();
+
+	glActiveTexture(GL_TEXTURE0);
+	prev_texture_array = -1;
 }
 
 void GL_EndDrawSprites(void)
@@ -99,6 +105,9 @@ static void GL_CompileSpriteProgram(void)
 		sprite_materialTexUniform = glGetUniformLocation(spriteProgram.program, "materialTex");
 		sprite_scale = glGetUniformLocation(spriteProgram.program, "scale");
 		sprite_origin = glGetUniformLocation(spriteProgram.program, "origin");
+		sprite_textureIndex = glGetUniformLocation(spriteProgram.program, "skinNumber");
+		sprite_texS = glGetUniformLocation(spriteProgram.program, "texS");
+		sprite_texT = glGetUniformLocation(spriteProgram.program, "texT");
 	}
 }
 
@@ -118,14 +127,16 @@ void GL_EndDrawEntities(void)
 {
 }
 
-void GLM_DrawSimpleItem(GLuint vao, int texture, vec3_t origin, vec3_t angles, float scale)
+void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t)
 {
+	GLuint vao = model->vao_simple;
 	float oldMatrix[16];
 	byte color[4] = { 255, 255, 255, 255 };
 
-	//GL_PrepareSprites();
-	glActiveTexture(GL_TEXTURE0);
-	GL_Bind(texture);
+	if (model->texture_arrays[0] != prev_texture_array) {
+		glBindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[0]);
+		prev_texture_array = model->texture_arrays[0];
+	}
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
@@ -164,6 +175,9 @@ void GLM_DrawSimpleItem(GLuint vao, int texture, vec3_t origin, vec3_t angles, f
 		glUniformMatrix4fv(sprite_modelViewMatrixUniform, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
 		glUniform1i(sprite_materialTexUniform, 0);
+		glUniform1f(sprite_textureIndex, texture);
+		glUniform1f(sprite_texS, scale_s);
+		glUniform1f(sprite_texT, scale_t);
 		glUniform3f(sprite_origin, -origin[1], origin[2], -origin[0]);
 		glUniform1f(sprite_scale, 1);
 

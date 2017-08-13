@@ -6,12 +6,15 @@ layout(location = 1) in vec2 texCoord;
 uniform mat4 modelView;
 uniform mat4 projection;
 uniform vec3 origin;
+uniform float skinNumber;
 uniform float scale;
+uniform float texS;
+uniform float texT;
 
-out vec2 TextureCoord;
+out vec3 TextureCoord;
 
 void main()
 {
 	gl_Position = projection * modelView * vec4(scale * position, 1);
-	TextureCoord = texCoord;
+	TextureCoord = vec3(texCoord.s * texS, texCoord.t * texT, skinNumber);
 }

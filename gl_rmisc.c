@@ -376,12 +376,15 @@ typedef struct common_texture_s {
 	int count;
 	int any_size_count;
 	GLuint gl_texturenum;
+	int gl_width;
+	int gl_height;
 
 	int allocated;
 
 	struct common_texture_s* next;
 } common_texture_t;
 
+static int count = 0;
 void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, qbool any_size)
 {
 	GLint width, height;
@@ -406,11 +409,12 @@ void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, qbool a
 			list->next = Q_malloc(sizeof(common_texture_t));
 			list->next->width = width;
 			list->next->height = height;
-			break;
 		}
 
 		list = list->next;
 	}
+
+	++count;
 }
 
 GLuint GL_CreateTextureArray(int width, int height, int depth)
@@ -427,6 +431,8 @@ GLuint GL_CreateTextureArray(int width, int height, int depth)
 
 	glGenTextures(1, &gl_texturenum);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
 
 	Con_Printf("Creating texture array %u, %d x %d x %d\n", gl_texturenum, width, height, depth);
@@ -437,7 +443,9 @@ GLuint GL_CreateTextureArray(int width, int height, int depth)
 void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
 {
 	int level = 0;
-	GLubyte* buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
+	GLubyte* buffer;
+	
+	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
 	Con_Printf("Adding texture to array %u[%d]\n", arrayTexture, index);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture);
@@ -445,6 +453,8 @@ void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
 		glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	}
+
+	Q_free(buffer);
 }
 
 common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int height)
@@ -460,12 +470,13 @@ common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int he
 	return NULL;
 }
 
-int GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture, qbool anySize)
+int GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture, qbool anySize, float* scaleS, float* scaleT)
 {
 	GLint width, height;
 	common_texture_t* tex;
 
 	if (!stdTexture) {
+		*scaleS = *scaleT = 0;
 		return -1;
 	}
 
@@ -480,11 +491,15 @@ int GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture, qbool a
 		tex = GL_FindTextureBySize(list, width, height);
 		if (!tex->gl_texturenum) {
 			GL_CreateTextureArray(width, height, tex->count - tex->any_size_count);
+			tex->gl_width = width;
+			tex->gl_height = height;
 		}
 	}
+	*scaleS = width * 1.0f / tex->gl_width;
+	*scaleT = height * 1.0f / tex->gl_height;
 
-	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->allocated++);
-	return tex->allocated;
+	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->allocated);
+	return tex->allocated++;
 }
 
 void GL_FreeTextureSizeList(common_texture_t* tex)
@@ -536,6 +551,18 @@ void GL_SortTextureSizes(common_texture_t** first)
 	}
 }
 
+static void GL_SetModelTextureArray(model_t* mod, GLuint array_num, float widthRatio, float heightRatio)
+{
+	mod->texture_arrays = Q_malloc(sizeof(GLuint));
+	mod->texture_array_count = 1;
+	mod->texture_arrays[0] = array_num;
+	mod->texture_arrays_scale_s = Q_malloc(sizeof(GLuint));
+	mod->texture_arrays_scale_t = Q_malloc(sizeof(GLuint));
+	mod->texture_arrays_scale_s[0] = widthRatio;
+	mod->texture_arrays_scale_t[0] = heightRatio;
+}
+
+
 void GL_BuildCommonTextureArrays(void)
 {
 	common_texture_t* common = Q_malloc(sizeof(common_texture_t));
@@ -578,10 +605,12 @@ void GL_BuildCommonTextureArrays(void)
 					}
 				}
 
+				Con_Printf("Registered %s: %d\n", mod->name, count);
 				required_vbo_length += mod->vertsInVBO;
 			}
 			else if (mod->type == mod_sprite) {
 				msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+				int count = 0;
 
 				for (j = 0; j < psprite->numframes; ++j) {
 					int offset    = psprite->frames[j].offset;
@@ -592,10 +621,21 @@ void GL_BuildCommonTextureArrays(void)
 					}
 
 					GL_RegisterCommonTextureSize(common, ((mspriteframe_t* )((byte*)psprite + offset))->gl_texturenum, true);
+					++count;
 				}
+				Con_Printf("Registered %s: %d\n", mod->name, count);
+			}
+			else if (mod->type == mod_brush && !mod->isworldmodel) {
+				for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+					if (mod->simpletexture[j]) {
+						GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
+						++count;
+					}
+				}
+				Con_Printf("Registered %s: %d\n", mod->name, count);
 			}
 			else {
-				Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
+				//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
 			}
 		}
 		else {
@@ -621,12 +661,14 @@ void GL_BuildCommonTextureArrays(void)
 			else {
 				maxWidth = max(maxWidth, tex->width);
 				maxHeight = max(maxHeight, tex->height);
-				anySizeCount += tex->any_size_count;
 			}
+			anySizeCount += tex->any_size_count;
 		}
 
 		// Create non-specific array to fit everything that doesn't require tiling
 		commonTex->gl_texturenum = GL_CreateTextureArray(maxWidth, maxHeight, anySizeCount);
+		commonTex->gl_width = maxWidth;
+		commonTex->gl_height = maxHeight;
 
 		// VBO starts with simple-model/sprite vertices
 		{
@@ -658,6 +700,7 @@ void GL_BuildCommonTextureArrays(void)
 		// Go back through all models, importing textures into arrays and creating new VBO
 		for (i = 1; i < MAX_MODELS; ++i) {
 			model_t* mod = cl.model_precache[i];
+			int count = 0;
 
 			if (!mod) {
 				continue;
@@ -666,7 +709,6 @@ void GL_BuildCommonTextureArrays(void)
 			if (!mod->isworldmodel) {
 				int j;
 
-				Con_Printf("%s:\n", mod->name);
 				if (mod->type == mod_alias) {
 					aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 					qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
@@ -675,14 +717,15 @@ void GL_BuildCommonTextureArrays(void)
 						int anim;
 						for (anim = 0; anim < 4; ++anim) {
 							if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
-								paliashdr->gl_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->gl_texturenum[j][anim], any_size);
+								paliashdr->gl_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->gl_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
 							}
 							else {
 								paliashdr->gl_arrayindex[j][anim] = paliashdr->gl_arrayindex[j][anim - 1];
+								
 							}
 
 							if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-								paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size);
+								paliashdr->gl_fb_arrayindex[j][anim] = GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim]);
 							}
 							else {
 								paliashdr->gl_fb_arrayindex[j][anim] = paliashdr->gl_fb_arrayindex[j][anim - 1];
@@ -692,24 +735,21 @@ void GL_BuildCommonTextureArrays(void)
 
 					for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 						if (mod->simpletexture[j]) {
-							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true);
+							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
 						}
 					}
 
-					mod->texture_arrays = Q_malloc(sizeof(GLuint));
-					mod->texture_array_count = 1;
-					mod->texture_arrays[0] = commonTex->gl_texturenum;
+					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
+					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
 
-					// Copy VBO info to buffer
-					Com_Printf("Copying %d verts to position %d (%s)\n", mod->vertsInVBO, new_vbo_position, mod->name);
+					// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
 					memcpy(&new_vbo_buffer[new_vbo_position * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 					//Q_free(mod->temp_vbo_buffer);
 
-					mod->vao = model_vao;
+					mod->vao_simple = mod->vao = model_vao;
 					mod->vbo = model_vbo;
 					mod->vbo_start = new_vbo_position;
 
-					mod->vao_simple = model_vao;
 					paliashdr->vbo = model_vbo;
 					paliashdr->vao = model_vao;
 					paliashdr->vertsOffset = new_vbo_position;
@@ -729,31 +769,32 @@ void GL_BuildCommonTextureArrays(void)
 						}
 
 						frame = ((mspriteframe_t*)((byte*)psprite + offset));
-						GL_CopyToTextureArraySize(common, frame->gl_texturenum, true);
+						GL_CopyToTextureArraySize(common, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT);
 					}
 
+					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
 					mod->vao_simple = model_vao;
-					mod->texture_arrays = Q_malloc(sizeof(GLuint));
-					mod->texture_array_count = 1;
-					mod->texture_arrays[0] = commonTex->gl_texturenum;
+					// FIXME
+					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.5f, 0.5f);
 					mod->vbo = model_vbo;
 					mod->vbo_start = 0;
 				}
-				else if (mod->type == mod_brush && !mod->isworldmodel) {
+				else if (mod->type == mod_brush) {
 					for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 						if (mod->simpletexture[j]) {
-							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true);
+							mod->simpletexture_indexes[j] = GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j]);
 						}
 					}
 
+					Con_Printf("Added %s: %d\n", mod->name, commonTex->allocated);
 					mod->vao_simple = model_vao;
 					mod->vbo_start = 0;
-					mod->texture_arrays = Q_malloc(sizeof(GLuint));
-					mod->texture_array_count = 1;
-					mod->texture_arrays[0] = commonTex->gl_texturenum;
+
+					// FIXME
+					GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.25f, 0.25f);
 				}
 				else {
-					Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
+					//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
 				}
 			}
 			else {

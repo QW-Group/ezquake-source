@@ -215,6 +215,9 @@ typedef struct mspriteframe_s {
 	int					height;
 	float				up, down, left, right;
 	int					gl_texturenum;
+
+	float               gl_scalingS;
+	float               gl_scalingT;
 } mspriteframe_t;
 
 typedef struct mspritegroup_s {
@@ -327,6 +330,8 @@ typedef struct aliashdr_s {
 	int					commands;	// gl command list with embedded s/t
 	int					gl_texturenum[MAX_SKINS][4];
 	int					fb_texturenum[MAX_SKINS][4];
+	float               gl_scalingS[MAX_SKINS][4];
+	float               gl_scalingT[MAX_SKINS][4];
 
 	int                 vbo;
 	int                 vao;
@@ -489,6 +494,8 @@ typedef struct model_s {
 	unsigned int        vao_simple;
 
 	unsigned int*       texture_arrays;
+	float*              texture_arrays_scale_s;
+	float*              texture_arrays_scale_t;
 	unsigned int        texture_array_count;
 	int*                texture_array_first;
 
@@ -500,6 +507,8 @@ typedef struct model_s {
 	int                 vertsInVBO;
 
 	int                 simpletexture_indexes[MAX_SIMPLE_TEXTURES];
+	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
+	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];
 
 	//unsigned int        texture_array;
 	//unsigned int        texture_sizes_texture;
