@@ -461,7 +461,7 @@ void SV_SpawnServer (char *mapname, qbool devmap, char* entityfile)
 	// information about the server
 	PR_SetEntityString(ent, ent->v.netname, VersionStringFull());
 	PR_SetEntityString(ent, ent->v.targetname, SERVER_NAME);
-	ent->v.impulse = VERSION_NUM;
+	ent->v.impulse = g_ezq_version_int_short;
 	ent->v.items = pr_numbuiltins - 1;
 
 	PR_SetGlobalString(PR_GLOBAL(mapname), sv.mapname);

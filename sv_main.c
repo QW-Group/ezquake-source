@@ -3479,7 +3479,7 @@ void SV_InitLocal (void)
 	svs.mvdprotocolextension1 |= MVD_PEXT1_FLOATCOORDS;
 #endif
 
-	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " VERSION_NUMBER, MAX_SERVERINFO_STRING);
+	Info_SetValueForStarKey (svs.info, "*version", va("%s %s", SERVER_NAME, g_ezq_version), MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff

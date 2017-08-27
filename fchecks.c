@@ -263,7 +263,6 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	char *fServer;
 	const char *features;
 	char *emptystring = "";
-	char *brief_version = "ezq" VERSION_NUMBER;
 	const char *ruleset = Rulesets_Ruleset();
 	size_t name_len = strlen(cl.players[cl.playernum].name);
 	size_t pad_len = 15 - min(name_len, 15);
@@ -271,7 +270,10 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_ruleset"))	{
+	if (Util_F_Match(s, "f_ruleset")) {
+		char version[128];
+		snprintf(version, sizeof(version), "ezq%s", g_ezq_version);
+
 		features = FChecks_RulesetAdditionString();
 		fServer = FChecks_FServerResponse_Text();
 		if (!fServer) {
@@ -279,7 +281,7 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 		}
 
 		Cbuf_AddText(va("say \"%*s%21s %16s %s%s\"\n",
-			pad_len, emptystring, fServer, brief_version, ruleset, features));
+			pad_len, emptystring, fServer, version, ruleset, features));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}

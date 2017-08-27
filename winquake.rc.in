@@ -8,9 +8,9 @@
 		BLOCK "040904B0"
 		{
 			VALUE "ProductName", "ezQuake"
-			VALUE "ProductVersion", VERSION_NUMBER " Build " VERSION
-			VALUE "FileDescription", "ezQuake v" VERSION_NUMBER " - QuakeWorld(r) Today"
-			VALUE "FileVersion", VERSION_NUMBER
+			VALUE "ProductVersion", "@ezQuake_VERSION_MAJOR@.@ezQuake_VERSION_MINOR@.@ezQuake_VERSION_MICRO@@ezQuake_VERSION_REV@"
+			VALUE "FileDescription", "ezQuake @ezQuake_VERSION_MAJOR@.@ezQuake_VERSION_MINOR@.@ezQuake_VERSION_MICRO@@ezQuake_VERSION_REV@ - QuakeWorld(R) Today"
+			VALUE "FileVersion", "0"
 			VALUE "CompanyName", "The ezQuake Developers"
 			VALUE "OriginalFileName", "ezquake.exe"
 			VALUE "InternalName", "ezquake"
