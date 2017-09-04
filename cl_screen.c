@@ -170,8 +170,6 @@ cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
 cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
 
-cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
-
 // Tracking text.
 cvar_t	scr_tracking			= {"scr_tracking", "\xD4\xF2\xE1\xE3\xEB\xE9\xEE\xE7\xBA %t %n, \xCA\xD5\xCD\xD0 for next"}; //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
@@ -3127,11 +3125,13 @@ static void SCR_DrawElements(void)
 
 		Draw_TextCacheFlush();
 
-		if (!SCR_TakingAutoScreenshot())
-		{
+		if (!SCR_TakingAutoScreenshot()) {
 			GL_EnterRegion("Console");
-			SCR_DrawConsole ();
-			M_Draw ();
+			SCR_DrawConsole();
+			GL_LeaveRegion();
+
+			GL_EnterRegion("Menu");
+			M_Draw();
 			GL_LeaveRegion();
 		}
 
@@ -3950,8 +3950,6 @@ void SCR_Init (void)
 	Cvar_Register (&scr_shownick_time);
 
 	Cmd_AddCommand("calc_fov", tmp_calc_fov);
-
-	Cvar_Register (&scr_coloredText);
 
 	// QW 262 HUD
 	Cvar_Register (&cl_hud);

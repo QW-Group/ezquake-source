@@ -1405,7 +1405,7 @@ void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *s
 
 qbool Draw_BigFontAvailable(void)
 {
-// mcharset looks ugly in software rendering, therefore don't allow it in there
+	// mcharset looks ugly in software rendering, therefore don't allow it in there
 	return Draw_CachePicSafe(MCHARSET_PATH, false, true) != NULL;
 }
 

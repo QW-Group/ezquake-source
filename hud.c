@@ -1491,11 +1491,16 @@ void HUD_Draw(void)
 
     while (hud)
     {
-        // Draw.
-        HUD_DrawObject(hud);
+		extern void GL_EnterRegion(const char* regionName);
+		extern void GL_LeaveRegion(void);
 
-        // Go to next.
-        hud = hud->next;
+		GL_EnterRegion(hud->name);
+		// Draw.
+		HUD_DrawObject(hud);
+		GL_LeaveRegion();
+
+		// Go to next.
+		hud = hud->next;
     }
 
 	HUD_AfterDraw();
