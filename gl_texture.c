@@ -26,20 +26,16 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_model.h"
 #include "gl_local.h"
 
-
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel);
 
-
 static qbool no24bit, forceTextureReload;
-
 
 extern unsigned d_8to24table2[256];
 extern byte vid_gamma_table[256];
 extern float vid_gamma;
-
 
 extern int anisotropy_ext;
 int	anisotropy_tap = 1; //  1 - is off
@@ -63,7 +59,12 @@ cvar_t  gl_no24bit                  = {"gl_no24bit", "0", CVAR_LATCH};
 cvar_t  gl_wicked_luma_level        = {"gl_luma_level", "1", CVAR_LATCH};
 
 typedef struct {
+	// OpenGL texture number (or array)
 	GLuint		texnum;
+	// OpenGL texture array index (modern only)
+	GLuint      texindex;
+
+	// 
 	char		identifier[MAX_QPATH];
 	char		*pathname;
 	int			width, height;
@@ -519,7 +520,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 				{
 					GL_Bind(gltextures[i].texnum);
 					return gltextures[i].texnum;
-				} 
+				}
 				else 
 				{
 					// Same identifier but different texture, so overwrite
@@ -990,12 +991,6 @@ void GL_Texture_Init(void)
 	extern GLuint sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
-	{
-		GLenum er = glGetError();
-		while (er) {
-			er = glGetError();
-		}
-	}
 
 	// Reset textures array and linked globals
 	for (i = 0; i < numgltextures; i++) {

@@ -19,7 +19,6 @@ extern float     ambientlight;
 
 void GLM_DrawShellPoly(GLenum type, byte* color, float shellSize, unsigned int vao, int start, int vertices);
 void R_AliasSetupLighting(entity_t *ent);
-void R_DrawViewModel(void);
 void R_DrawAliasModel(entity_t *ent);
 
 void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, GLuint texture, GLuint fb_texture, GLenum textureEnvMode, qbool outline);

@@ -536,13 +536,15 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 			pic_24bit->height = dat->height;
 		}
 		return CachePic_Add(path, pic_24bit);
-	} else if (dat) {
+	}
+	else if (dat) {
 		mpic_t tmp = {0};
 		tmp.width = dat->width;
 		tmp.height = dat->height;
 		GL_LoadPicTexture(path, &tmp, dat->data);
 		return CachePic_Add(path, &tmp);
-	} else {
+	}
+	else {
 		if(crash) {
 			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
 		}

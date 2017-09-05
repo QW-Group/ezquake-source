@@ -288,7 +288,7 @@ void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawWaterSurfaces (void);
-void R_DrawAlphaChain (void);
+void R_DrawAlphaChain(msurface_t* alphachain);
 void GL_BuildLightmaps (void);
 
 qbool R_FullBrightAllowed(void);
@@ -639,4 +639,20 @@ void GL_BuildCommonTextureArrays(void);
 
 void R_DrawAliasModel(entity_t* currententity);
 
+// 
+void GLC_MultitextureLightmap(int lightmap_num);
+void GLC_SetLightmapTextureEnvironment(void);
+void R_RenderDynamicLightmaps(msurface_t *fa);
+void R_DrawViewModel(void);
+void R_RenderAllDynamicLightmaps(model_t *model);
+void DrawTextureChains(model_t *model, int contents);
+void R_DrawMapOutline(model_t *model);
+void GLC_ClearTextureChains(void);
+void R_BlendLightmaps(void);
+void GLC_SetTextureLightmap(int lightmap_num);
+void GLC_SetLightmapBlendFunc(void);
+void GLM_DrawTexturedWorld(model_t* model);
+
 #endif /* !__GL_LOCAL_H__ */
+
+
