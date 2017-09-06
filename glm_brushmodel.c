@@ -553,19 +553,21 @@ void GL_BeginDrawBrushModels(void)
 {
 	static float projectionMatrix[16];
 
-	GLM_CreateBrushModelProgram();
+	if (GL_ShadersSupported()) {
+		GLM_CreateBrushModelProgram();
 
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_UseProgram(drawBrushModelProgram.program);
-	glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform1i(drawBrushModel_materialTex, 0);
-	glUniform1i(drawBrushModel_lightmapTex, 2);
-	glUniform1i(drawBrushModel_applyTexture, 1);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		GL_UseProgram(drawBrushModelProgram.program);
+		glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(drawBrushModel_materialTex, 0);
+		glUniform1i(drawBrushModel_lightmapTex, 2);
+		glUniform1i(drawBrushModel_applyTexture, 1);
 
-	glDisable(GL_CULL_FACE);
-	glActiveTexture(GL_TEXTURE0);
+		glDisable(GL_CULL_FACE);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
 static int GL_BatchRequestSorter(const void* lhs_, const void* rhs_)
@@ -651,9 +653,11 @@ static void GL_FlushBrushModelBatch(void)
 
 void GL_EndDrawBrushModels(void)
 {
-	GL_FlushBrushModelBatch();
+	if (GL_ShadersSupported()) {
+		GL_FlushBrushModelBatch();
 
-	glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
+	}
 }
 
 static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array)

@@ -80,10 +80,12 @@ void GL_BeginDrawSprites(void)
 {
 	batch_count = 0;
 
-	GL_PrepareSprites();
+	if (GL_ShadersSupported()) {
+		GL_PrepareSprites();
 
-	glActiveTexture(GL_TEXTURE0);
-	prev_texture_array = -1;
+		glActiveTexture(GL_TEXTURE0);
+		prev_texture_array = -1;
+	}
 }
 
 void GL_FlushSpriteBatch(void)
@@ -163,8 +165,10 @@ void GL_FlushSpriteBatch(void)
 
 void GL_EndDrawSprites(void)
 {
-	if (batch_count) {
-		GL_FlushSpriteBatch();
+	if (GL_ShadersSupported()) {
+		if (batch_count) {
+			GL_FlushSpriteBatch();
+		}
 	}
 }
 

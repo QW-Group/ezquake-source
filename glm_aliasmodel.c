@@ -303,20 +303,24 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 
 void GL_BeginDrawAliasModels(void)
 {
-	GLM_CompileAliasModelProgram();
+	if (GL_ShadersSupported()) {
+		GLM_CompileAliasModelProgram();
 
-	glActiveTexture(GL_TEXTURE0);
-	prev_texture_array = 0;
-	glDisable(GL_CULL_FACE);
-	in_batch_mode = true;
-	batch_count = 0;
+		glActiveTexture(GL_TEXTURE0);
+		prev_texture_array = 0;
+		glDisable(GL_CULL_FACE);
+		in_batch_mode = true;
+		batch_count = 0;
+	}
 }
 
 void GL_EndDrawAliasModels(void)
 {
-	if (batch_count) {
-		GLM_FlushAliasModelBatch();
+	if (GL_ShadersSupported()) {
+		if (batch_count) {
+			GLM_FlushAliasModelBatch();
+		}
+		in_batch_mode = false;
+		glEnable(GL_CULL_FACE);
 	}
-	in_batch_mode = false;
-	glEnable(GL_CULL_FACE);
 }
