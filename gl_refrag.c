@@ -174,6 +174,7 @@ void R_StoreEfrags (efrag_t **ppefrag) {
 			if (pent->visframe != r_framecount) {
 				CL_AddEntity (pent);				
 				pent->visframe = r_framecount;	// mark that we've recorded this entity for this frame
+				pent->oldframe = pent->frame;
 			}
 			break;
 
