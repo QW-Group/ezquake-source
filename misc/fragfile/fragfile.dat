@@ -546,30 +546,30 @@
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP			" got knocked the fuck out!"
 
 //FLAG ALERTS
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ΕΞΕΝΩ flag!"		//2fort5 .br
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ÒΕΔ flag!"		//2fort5 .br
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ ΩΟΥÒ key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ the ΕΞΕΝΩ key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ βμυε§σ ζμαη®"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ ςεδ§σ ζμαη®"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" θασ τθε Òεδ Ζμαη"		//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ‡ΓΓ” the Γ…ΓΓ…ΓΓ™ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ‡ΓΓ” the Γ’Γ…Γ„ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ”ΓΓΓ‹ Γ™ΓΓ•Γ’ key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ”ΓΓΓ‹ the Γ…ΓΓ…ΓΓ™ key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ§Γ―Γ΄ ΓΆΓ¬ΓµΓ¥Β§Γ³ Γ¦Γ¬Γ΅Γ§Β®"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ§Γ―Γ΄ Γ²Γ¥Γ¤Β§Γ³ Γ¦Γ¬Γ΅Γ§Β®"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ¨Γ΅Γ³ Γ΄Γ¨Γ¥ Γ’Γ¥Γ¤ Γ†Γ¬Γ΅Γ§"		//Dissect
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the BLUE flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the RED flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Blue Flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Red Flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ΒΜΥΕ FlaG!"		//Fcast
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ÒΕΔ FlaG!"		//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE Γ‚ΓΓ•Γ… FlaG!"		//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE Γ’Γ…Γ„ FlaG!"		//Fcast
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" TOOK the ENEMY key"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got blue's flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got red's flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got your control key!"	//nmtrees
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy Key."
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΑΪΥÒΕ flag!"	//Excel
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΓÒΙΝΣΟΞ flag"	//Excel
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ÒΕΔ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΓΓΓ•Γ’Γ… flag!"	//Excel
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΓƒΓ’Γ‰ΓΓ“ΓΓ flag"	//Excel
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the Γ’Γ…Γ„ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your Key."
@@ -585,24 +585,24 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took your flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the Blue Ζμαη!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red Ζμαη!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the Blue Γ†Γ¬Γ΅Γ§!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red Γ†Γ¬Γ΅Γ§!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the Red Flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the Blue Flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ΒΜΥΕ flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ÒΕΔ flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ÒΕΔ ΣΝΥÒΖ flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ΒΜΥΕ ΣΝΥÒΖ flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ ΩΟΥÒ flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ the ΕΞΕΝΩ flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΓΑΠΤΥÒΕΔ the ΕΞΕΝΩ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ‡ΓΓ” the Γ‚ΓΓ•Γ… flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ‡ΓΓ” the Γ’Γ…Γ„ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Γ’Γ…Γ„Β Γ“ΓΓ•Γ’Γ† flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Γ‚ΓΓ•Γ…Β Γ“ΓΓ•Γ’Γ† flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ”ΓΓΓ‹ Γ™ΓΓ•Γ’ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Γ”ΓΓΓ‹ the Γ…ΓΓ…ΓΓ™ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ…ΓΓ…ΓΓ™ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the SPAZ-BALL!"		// Spaz4
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" droped the hot potatoe"	// Tater. it's a dropped msg, but putting it here since the map has no taken msg
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ball!"
 
-
-
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped the ball!"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped blue's flag"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" Dropped the"
@@ -610,15 +610,15 @@
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped the"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped your"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" lost the"
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" μοστ the"
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Γ¬Γ―Γ³Γ΄ the"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" was incinerated by the flag's heat"
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΜΟΣΤ the"
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" δςοππεδ"
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΓΓΓ“Γ” the"
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Γ¤Γ²Γ―Γ°Γ°Γ¥Γ¤"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		"Dropped the flag"		//mbasesr.bsp on au servers forget the space
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΜΟΣΤ the ΒΜΥΕ flag!"		//2fort5 .br
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΜΟΣΤ the ÒΕΔ flag!"		//2fort5 .br
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" δςοππεδ τθε Βμυε Ζμαη"	//Dissect
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" δςοππεδ τθε Òεδ Ζμαη"		//Dissect
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΓΓΓ“Γ” the Γ‚ΓΓ•Γ… flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ΓΓΓ“Γ” the Γ’Γ…Γ„ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Γ¤Γ²Γ―Γ°Γ°Γ¥Γ¤ Γ΄Γ¨Γ¥ Γ‚Γ¬ΓµΓ¥ Γ†Γ¬Γ΅Γ§"	//Dissect
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Γ¤Γ²Γ―Γ°Γ°Γ¥Γ¤ Γ΄Γ¨Γ¥ Γ’Γ¥Γ¤ Γ†Γ¬Γ΅Γ§"		//Dissect
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" droped the hot potatoe"	//tater
 
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" has captured"
@@ -628,39 +628,40 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"captured"			//h4rdcore.bsp on au servers forget the space
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Cap's the flag for the Blue team."
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Cap's the flag for the Red team."
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" γαπτυςεδ"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" αγτιφατεδ"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ΕΞΕΝΩ flag!"	//2fort5 .br
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" brought back a Βισγυιτ"	//Biscuit Flag Capture
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ΕΞΕΝΩ flag!"	//2fort5 .br
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Γ£Γ΅Γ°Γ΄ΓµΓ²Γ¥Γ¤"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Γ΅Γ£Γ΄Γ©Γ¶Γ΅Γ΄Γ¥Γ¤"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ…ΓΓ…ΓΓ™ flag!"	//2fort5 .br
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" brought back a Γ‚Γ©Γ³Γ£ΓµΓ©Γ΄"	//Biscuit Flag Capture
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ…ΓΓ…ΓΓ™ flag!"	//2fort5 .br
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Lava CP cap"			//Dissect 1
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Bridge CP” cap"		//Dissect 2
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Water CP• cap"		//Dissect 3
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Circles CP– cap"		//Dissect 4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Rook CP— cap"			//Dissect 5
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Attic CP cap"		//Dissect 6
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βμυε Χαςεθουσε ­ ΓΠ±"		//Canalzon 1 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Αςγθ Òοον ­ ΓΠ²"		//Canalzon 2 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Μιβςαςω ­ ΓΠ³"		//Canalzon 3 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Σναμμ Χαςεθουσε ­ ΓΠ΄"	//Canalzon 4 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Ζουξταιξ ­ ΓΠµ"		//Canalzon 5 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βαμγοξω ­ ΓΠ¶"		//Canalzon 6 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βοατθουσε ­ ΓΠ·"		//Canalzon 7 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Òεδ Χαςεθουσε ­ ΓΠΈ"		//Canalzon 8 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βμυε Χαςεθουσε ­ ΓΠ±"		//Canalzon 1 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Αςγθ Òοον ­ ΓΠ²"		//Canalzon 2 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Μιβςαςω ­ ΓΠ³"			//Canalzon 3 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Σναμμ Χαςεθουσε ­ ΓΠ΄"		//Canalzon 4 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Ζουξταιξ ­ ΓΠµ"		//Canalzon 5 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βαμγοξω ­ ΓΠ¶"			//Canalzon 6 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βοατθουσε ­ ΓΠ·"		//Canalzon 7 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Òεδ Χαςεθουσε ­ ΓΠΈ"		//Canalzon 8 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ ΓΑΠΤΥÒΕΔ the ÒΕΔ flag!"			//kw4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ ΓΑΠΤΥÒΕΔ the ΒΜΥΕ flag!"			//kw4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ΒΜΥΕ flag!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ÒΕΔ flag!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ ΩΟΥÒ flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Bridge CPΒ” cap"		//Dissect 2
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Water CPΒ• cap"		//Dissect 3
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Circles CPΒ– cap"		//Dissect 4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Rook CPΒ— cap"			//Dissect 5
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Attic CPΒ cap"		//Dissect 6
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ¬ΓµΓ¥ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ±"		//Canalzon 1 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the ΓΓ²Γ£Γ¨ Γ’Γ―Γ―Γ­ Β­ ΓƒΓΒ²"		//Canalzon 2 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the ΓΓ©ΓΆΓ²Γ΅Γ²ΓΉ Β­ ΓƒΓΒ³"		//Canalzon 3 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ“Γ­Γ΅Γ¬Γ¬ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ΄"	//Canalzon 4 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ†Γ―ΓµΓ®Γ΄Γ΅Γ©Γ® Β­ ΓƒΓΒµ"		//Canalzon 5 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ΅Γ¬Γ£Γ―Γ®ΓΉ Β­ ΓƒΓΒ¶"		//Canalzon 6 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ―Γ΅Γ΄Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ·"		//Canalzon 7 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ‚Γ¬ΓµΓ¥ Γ΄Γ¥Γ΅Γ­Γ captures the Γ’Γ¥Γ¤ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒΈ"		//Canalzon 8 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ¬ΓµΓ¥ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ±"		//Canalzon 1 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the ΓΓ²Γ£Γ¨ Γ’Γ―Γ―Γ­ Β­ ΓƒΓΒ²"		//Canalzon 2 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the ΓΓ©ΓΆΓ²Γ΅Γ²ΓΉ Β­ ΓƒΓΒ³"			//Canalzon 3 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ“Γ­Γ΅Γ¬Γ¬ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ΄"		//Canalzon 4 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ†Γ―ΓµΓ®Γ΄Γ΅Γ©Γ® Β­ ΓƒΓΒµ"		//Canalzon 5 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ΅Γ¬Γ£Γ―Γ®ΓΉ Β­ ΓƒΓΒ¶"			//Canalzon 6 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ‚Γ―Γ΅Γ΄Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒ·"		//Canalzon 7 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ captures the Γ’Γ¥Γ¤ Γ—Γ΅Γ²Γ¥Γ¨Γ―ΓµΓ³Γ¥ Β­ ΓƒΓΒΈ"		//Canalzon 8 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ’Γ…Γ„ flag!"			//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"Γ›Γ’Γ¥Γ¤ Γ΄Γ¥Γ΅Γ­Γ ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ‚ΓΓ•Γ… flag!"			//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ‚ΓΓ•Γ… flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ the Γ’Γ…Γ„ flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓƒΓΓΓ”Γ•Γ’Γ…Γ„ Γ™ΓΓ•Γ’ flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" slams the Spaz-Ball on BLUE!"		// Spaz4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shows RED How It's Done!"		// Spaz4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Decides YELLOW Must Lose!"		// Spaz4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shoves It Up GREENS Backside!"	// Spaz4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" scores!"
