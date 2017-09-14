@@ -2252,7 +2252,7 @@ void CL_Stop_f (void)
 //
 // Returns the Demo directory. If the user hasn't set the demo_dir var, the gamedir is returned.
 //
-char *CL_DemoDirectory(void)
+extern char *CL_DemoDirectory(void)
 {
 	static char dir[MAX_PATH];
 
@@ -2524,7 +2524,7 @@ static char	auto_matchname[MAX_PATH];	// Demoname when recording auto match demo
 static qbool temp_demo_ready = false;	// Indicates if the autorecorded match demo is done recording.
 static float auto_starttime;
 
-char *MT_TempDirectory(void);
+char *MT_TempDemoDirectory(void);
 
 extern cvar_t match_auto_record, match_auto_minlength;
 
@@ -2621,7 +2621,7 @@ void CL_AutoRecord_StartMatch(char *demoname)
 	strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
 
 	// Try starting to record the demo.
-	if (!CL_MatchRecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true))
+	if (!CL_MatchRecordDemo(MT_TempDemoDirectory(), TEMP_DEMO_NAME, true))
 	{
 		Com_Printf ("Auto demo recording failed to start!\n");
 		return;
@@ -2665,7 +2665,7 @@ void CL_AutoRecord_SaveMatch(void)
 	dir = CL_DemoDirectory();
 
 	// Get the temp name of the file we've recorded.
-	tempname = va("%s/%s", MT_TempDirectory(), TEMP_DEMO_NAME);
+	tempname = va("%s/%s", MT_TempDemoDirectory(), TEMP_DEMO_NAME);
 
 	// Get the final name where we'll save the final product.
 	fullsavedname = va("%s/%s", dir, auto_matchname);
