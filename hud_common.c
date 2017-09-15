@@ -5360,6 +5360,8 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 
 static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
 {
+	qbool swap = false;
+
 	*team = *enemy = 0;
 	*teamName = *enemyName = NULL;
 
@@ -5368,7 +5370,7 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 		*teamName = sorted_teams[0].name;
 
 		if (n_teams > 1) {
-			if (hud_sortrules_includeself.integer == 1 && active_team_position > 1) {
+			if (hud_sortrules_includeself.integer >= 1 && active_team_position > 1) {
 				*enemy = sorted_teams[active_team_position].frags;
 				*enemyName = sorted_teams[active_team_position].name;
 			}
@@ -5376,6 +5378,8 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 				*enemy = sorted_teams[1].frags;
 				*enemyName = sorted_teams[1].name;
 			}
+
+			swap = (hud_sortrules_includeself.integer == 1 && active_team_position > 0);
 		}
 	}
 	else if (cl.deathmatch) {
@@ -5383,7 +5387,7 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 		*teamName = cl.players[sorted_players[0].playernum].name;
 
 		if (n_players > 1) {
-			if (hud_sortrules_includeself.integer == 1 && active_player_position > 1) {
+			if (hud_sortrules_includeself.integer >= 1 && active_player_position > 1) {
 				*enemy = cl.players[sorted_players[active_player_position].playernum].frags;
 				*enemyName = cl.players[sorted_players[active_player_position].playernum].name;
 			}
@@ -5391,6 +5395,8 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 				*enemy = cl.players[sorted_players[1].playernum].frags;
 				*enemyName = cl.players[sorted_players[1].playernum].name;
 			}
+
+			swap = (hud_sortrules_includeself.integer == 1 && active_player_position > 0);
 		}
 	}
 
@@ -5399,6 +5405,16 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 	}
 	if (!*enemyName) {
 		*enemyName = "E";
+	}
+
+	if (swap) {
+		int temp_frags = *team;
+		char* temp_name = *teamName;
+
+		*team = *enemy;
+		*teamName = *enemyName;
+		*enemy = temp_frags;
+		*enemyName = temp_name;
 	}
 }
 
