@@ -46,31 +46,12 @@ typedef struct {
 	byte		data[4];			// variably sized
 } qpic_t;
 
-typedef struct {
-	char		identification[4];		// should be WAD2 or 2DAW
-	int			numlumps;
-	int			infotableofs;
-} wadinfo_t;
+void W_LoadWadFile(const char *filename);
+void* W_GetLumpName(const char *name);
 
-typedef struct {
-	int			filepos;
-	int			disksize;
-	int			size;					// uncompressed
-	char		type;
-	char		compression;
-	char		pad1, pad2;
-	char		name[16];				// must be null terminated
-} lumpinfo_t;
+void SwapPic(qpic_t *pic);
 
-void	W_LoadWadFile (char *filename);
-void	W_CleanupName (char *in, char *out);
-lumpinfo_t	*W_GetLumpinfo (char *name);
-void	*W_GetLumpName (char *name);
-void	*W_GetLumpNum (int num);
-
-void SwapPic (qpic_t *pic);
-
-void WAD3_LoadWadFile (char *filename);
-byte *WAD3_LoadTexture (texture_t *tx);
+void WAD3_LoadWadFile(const char *filename);
+byte* WAD3_LoadTexture(texture_t *tx);
 
 #endif // _WAD_H
