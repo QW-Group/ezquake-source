@@ -1255,11 +1255,11 @@ void Draw_Crosshair (void)
 		}
 
 		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
+		glLoadIdentity();
 		glOrtho(0, glwidth, glheight, 0, -99999, 99999);
 
-		x += crosshair_scale * cl_crossx.value;
-		y += crosshair_scale * cl_crossy.value;
+		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
+		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
