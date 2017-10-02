@@ -65,6 +65,7 @@ void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex,
 	vec3_t lc;
 
 	GL_DisableMultitexture();
+	GL_EnableTMU(GL_TEXTURE0);
 	if (texture) {
 		GL_Bind(texture);
 	}

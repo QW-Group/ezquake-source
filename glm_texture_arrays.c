@@ -657,7 +657,7 @@ static void GLM_CreateBrushModelVAO(void)
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			size += GLM_MeasureVBOSizeForModel(mod);
+			size += GLM_MeasureVBOSizeForBrushModel(mod);
 		}
 	}
 
@@ -665,7 +665,7 @@ static void GLM_CreateBrushModelVAO(void)
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				size += GLM_MeasureVBOSizeForModel(mod);
+				size += GLM_MeasureVBOSizeForBrushModel(mod);
 			}
 		}
 	}

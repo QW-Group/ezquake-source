@@ -231,8 +231,9 @@ static qbool mtexenabled = false;
 
 void GL_SelectTexture (GLenum target) 
 {
-	if (target == oldtarget)
+	if (target == oldtarget) {
 		return;
+	}
 
 	qglActiveTexture (target);
 
@@ -267,7 +268,7 @@ void GL_EnableMultitexture (void)
 	}
 }
 
-void GL_EnableTMU (GLenum target) 
+void GL_EnableTMU(GLenum target) 
 {
 	GL_SelectTexture(target);
 	glEnable(GL_TEXTURE_2D);

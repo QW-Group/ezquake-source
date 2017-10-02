@@ -1678,6 +1678,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	int i;
 	dheader_t *header;
 	dmodel_t *bm;
+	vec3_t normal;
 
 	loadmodel->type = mod_brush;
 
@@ -1767,6 +1768,20 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 			*loadmodel = *mod;
 			strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
 			mod = loadmodel;
+		}
+	}
+
+	// set wall/ceiling drawflat
+	for (i = 0; i < mod->numsurfaces; ++i) {
+		msurface_t* s = &mod->surfaces[i];
+		float* v = s->polys->verts[0];
+
+		VectorCopy(s->plane->normal, normal);
+		VectorNormalize(normal);
+
+		if (normal[2] < -0.5 || normal[2] > 0.5) {
+			// floor or ceiling
+			s->flags |= SURF_DRAWFLAT_FLOOR;
 		}
 	}
 }

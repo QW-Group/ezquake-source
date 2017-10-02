@@ -333,6 +333,9 @@ void GL_BeginDrawAliasModels(void)
 		in_batch_mode = true;
 		batch_count = 0;
 	}
+	else {
+		GL_EnableTMU(GL_TEXTURE0);
+	}
 }
 
 void GL_EndDrawAliasModels(void)

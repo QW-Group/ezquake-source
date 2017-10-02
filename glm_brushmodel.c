@@ -343,7 +343,7 @@ static int DuplicateVertex(float* target, int position)
 	return position + VERTEXSIZE;
 }
 
-int GLM_MeasureVBOSizeForModel(model_t* m)
+int GLM_MeasureVBOSizeForBrushModel(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
@@ -565,8 +565,11 @@ void GL_BeginDrawBrushModels(void)
 		glUniform1i(drawBrushModel_lightmapTex, 2);
 		glUniform1i(drawBrushModel_applyTexture, 1);
 
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
 		glActiveTexture(GL_TEXTURE0);
+	}
+	else {
+		GL_EnableTMU(GL_TEXTURE0);
 	}
 }
 
@@ -656,7 +659,7 @@ void GL_EndDrawBrushModels(void)
 	if (GL_ShadersSupported()) {
 		GL_FlushBrushModelBatch();
 
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 	}
 }
 

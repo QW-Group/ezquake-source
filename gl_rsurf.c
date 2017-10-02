@@ -38,10 +38,33 @@ msurface_t	**alphachain_tail = &alphachain;
 void CHAIN_SURF_SORTED_BY_TEX(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
+	int surf_order = surf->texinfo->miptex * 1000 + surf->lightmaptexturenum;
+
 	while (current) {
-		if (current->texinfo->miptex < surf->texinfo->miptex ||
-			(current->texinfo->miptex == surf->texinfo->miptex && current->lightmaptexturenum < surf->lightmaptexturenum)
-		) {
+		int current_order = current->texinfo->miptex * 1000 + current->lightmaptexturenum;
+
+		if (surf_order > current_order) {
+			chain_head = &(current->texturechain);
+			current = *chain_head;
+			continue;
+		}
+
+		break;
+	}
+
+	surf->texturechain = current;
+	*chain_head = surf;
+}
+
+void CHAIN_SURF_DRAWFLAT(msurface_t** chain_head, msurface_t* surf)
+{
+	msurface_t* current = *chain_head;
+	int surf_order = (surf->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + surf->lightmaptexturenum * 2;
+
+	while (current) {
+		int current_order = (current->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + current->lightmaptexturenum * 2;
+
+		if (surf_order > current_order) {
 			chain_head = &(current->texturechain);
 			current = *chain_head;
 			continue;
@@ -66,6 +89,12 @@ void CHAIN_SURF_SORTED_BY_TEX(msurface_t** chain_head, msurface_t* surf)
 		(surf)->texturechain = (chain);			\
 		(chain) = (surf);						\
 	}
+
+#define CHAIN_RESET(chain)			\
+{								\
+	chain = NULL;				\
+	chain##_tail = &chain;		\
+}
 
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
@@ -153,12 +182,6 @@ void R_DrawWaterSurfaces(void)
 	}
 
 	waterchain = NULL;
-}
-
-#define CHAIN_RESET(chain)			\
-{								\
-	chain = NULL;				\
-	chain##_tail = &chain;		\
 }
 
 static void R_ClearTextureChains(model_t *clmodel) {
@@ -339,6 +362,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	msurface_t *surf, **mark;
 	mleaf_t *pleaf;
 	float dot;
+	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -407,7 +432,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 
 			// add surf to the right chain
 			if (surf->flags & SURF_DRAWSKY) {
-				CHAIN_SURF_F2B(surf, skychain_tail);
+				CHAIN_SURF_SORTED_BY_TEX(&skychain, surf);
 			}
 			else if (surf->flags & SURF_DRAWTURB) {
 				CHAIN_SURF_SORTED_BY_TEX(&waterchain, surf);
@@ -416,8 +441,17 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
-				underwater = (surf->flags & SURF_UNDERWATER) ? 1 : 0;
-				CHAIN_SURF_F2B(surf, surf->texinfo->texture->texturechain_tail[underwater]);
+				underwater = (underwatertexture && gl_caustics.value && surf->flags & SURF_UNDERWATER) ? 1 : 0;
+
+				if (drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
+					CHAIN_SURF_DRAWFLAT(&cl.worldmodel->drawflat_chain[underwater], surf);
+				}
+				else if (drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
+					CHAIN_SURF_DRAWFLAT(&cl.worldmodel->drawflat_chain[underwater], surf);
+				}
+				else {
+					CHAIN_SURF_SORTED_BY_TEX(&surf->texinfo->texture->texturechain[underwater], surf);
+				}
 			}
 		}
 	}
@@ -433,32 +467,33 @@ void R_CreateWorldTextureChains(void)
 		VectorCopy(r_refdef.vieworg, modelorg);
 
 		//set up texture chains for the world
+		cl.worldmodel->drawflat_chain[0] = cl.worldmodel->drawflat_chain[1] = NULL;
 		R_RecursiveWorldNode(cl.worldmodel->nodes, 15);
 
 		R_RenderAllDynamicLightmaps(cl.worldmodel);
 	}
 }
 
-void R_DrawWorld (void)
+void R_DrawWorld(void)
 {
 	entity_t ent;
 	extern cvar_t gl_outline;
 
-	memset (&ent, 0, sizeof(ent));
+	memset(&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
 
-	VectorCopy (r_refdef.vieworg, modelorg);
+	VectorCopy(r_refdef.vieworg, modelorg);
 
 	currententity = &ent;
 	currenttexture = -1;
 
 	//draw the world sky
 	GL_EnterRegion("R_DrawSky");
-	R_DrawSky ();
+	R_DrawSky();
 	GL_LeaveRegion();
 
 	GL_EnterRegion("Entities-1st");
-	R_DrawEntitiesOnList (&cl_firstpassents);
+	R_DrawEntitiesOnList(&cl_firstpassents);
 	GL_LeaveRegion();
 
 	if (GL_ShadersSupported()) {

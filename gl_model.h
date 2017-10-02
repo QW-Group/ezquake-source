@@ -100,6 +100,7 @@ typedef struct texture_s {
 #define SURF_DRAWBACKGROUND	64
 #define SURF_UNDERWATER		128
 #define SURF_DRAWALPHA		256
+#define SURF_DRAWFLAT_FLOOR 512
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct medge_s {
@@ -166,6 +167,8 @@ typedef struct msurface_s {
 	int					cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	qbool				cached_dlight;				// true if dynamic light in cache
 	byte				*samples;					// [numstyles*surfsize]
+
+
 } msurface_t;
 
 typedef struct mnode_s {
@@ -519,6 +522,8 @@ typedef struct model_s {
 
 	//unsigned int        texture_array_width;
 	//unsigned int        texture_array_height;
+
+	msurface_t*         drawflat_chain[2];
 } model_t;
 
 //============================================================================

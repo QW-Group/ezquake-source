@@ -597,7 +597,7 @@ void GL_EnableWaterFog(int contents);
 void GLM_DebugMatrix(GLenum type, const char* value);
 
 int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos);
-int GLM_MeasureVBOSizeForModel(model_t* m);
+int GLM_MeasureVBOSizeForBrushModel(model_t* m);
 
 void GL_UseProgram(GLuint program);
 
@@ -684,7 +684,6 @@ void R_DrawAliasModel(entity_t* currententity);
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
-void DrawTextureChains(model_t *model, int contents);
 void R_DrawMapOutline(model_t *model);
 void R_BlendLightmaps(void);
 void R_DrawPowerupShell(

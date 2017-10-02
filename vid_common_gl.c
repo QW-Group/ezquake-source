@@ -628,8 +628,9 @@ void GL_TextureEnvMode(GLenum mode)
 		// Just store for now
 		lastTextureMode = mode;
 	}
-	else {
+	else if (mode != lastTextureMode) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
+		lastTextureMode = mode;
 	}
 }
 

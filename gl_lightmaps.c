@@ -346,7 +346,8 @@ void R_BlendLightmaps (void) {
 	glDepthMask (GL_TRUE);		// back to normal Z buffering
 }
 
-void R_RenderDynamicLightmaps (msurface_t *fa) {
+void R_RenderDynamicLightmaps(msurface_t *fa)
+{
 	byte *base;
 	int maps, smax, tmax;
 	glRect_t *theRect;
@@ -375,7 +376,8 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 		if (numdlights == 0 && !fa->cached_dlight && !lightstyle_modified) {
 			return;
 		}
-	} else {
+	}
+	else {
 		numdlights = 0;
 	}
 
@@ -402,12 +404,27 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
+static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min_changed, unsigned int* max_changed)
+{
+	int k;
+
+	while (s) {
+		R_RenderDynamicLightmaps(s);
+		k = s->lightmaptexturenum;
+		if (lightmap_modified[k]) {
+			*min_changed = min(k, *min_changed);
+			*max_changed = max(k, *max_changed);
+		}
+
+		s = s->texturechain;
+	}
+}
+
 void R_RenderAllDynamicLightmaps(model_t *model)
 {
 	msurface_t *s;
 	unsigned int waterline;
 	unsigned int i;
-	unsigned int k;
 	unsigned int min_changed = MAX_LIGHTMAPS;
 	unsigned int max_changed = 0;
 
@@ -421,16 +438,12 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 				continue;
 			}
 
-			for ( ; s; s = s->texturechain) {
-				R_RenderDynamicLightmaps(s);
-				k = s->lightmaptexturenum;
-				if (lightmap_modified[k]) {
-					min_changed = min(k, min_changed);
-					max_changed = max(k, max_changed);
-				}
-			}
+			R_RenderAllDynamicLightmapsForChain(s, &min_changed, &max_changed);
 		}
 	}
+
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], &min_changed, &max_changed);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], &min_changed, &max_changed);
 
 	if (min_changed < MAX_LIGHTMAPS) {
 		for (i = min_changed; i <= max_changed; ++i) {
@@ -655,14 +668,21 @@ void GL_BuildLightmaps(void)
 		}
 	}
 
-	if (gl_mtexable)
+	if (gl_mtexable) {
 		GL_DisableMultitexture();
+	}
 }
 
 void GLC_MultitextureLightmap(int lightmap_num)
 {
-	//bind the lightmap texture
 	GL_EnableMultitexture();
+
+	GLC_SetTextureLightmap(lightmap_num);
+}
+
+void GLC_SetTextureLightmap(int lightmap_num)
+{
+	//bind the lightmap texture
 	GL_Bind(lightmap_textures[lightmap_num]);
 	GLC_SetLightmapTextureEnvironment();
 
@@ -672,17 +692,9 @@ void GLC_MultitextureLightmap(int lightmap_num)
 	}
 }
 
-void GLC_SetTextureLightmap(int lightmap_num)
-{
-	GL_Bind(lightmap_textures[lightmap_num]);
-	if (lightmap_modified[lightmap_num]) {
-		R_UploadLightMap(lightmap_num);
-	}
-}
-
 void GLC_SetLightmapTextureEnvironment(void)
 {
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
+	GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 }
 
 void GLC_SetLightmapBlendFunc(void)

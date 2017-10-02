@@ -10,6 +10,7 @@ void GLC_DrawSimpleItem(int simpletexture, vec3_t org, float sprsize, vec3_t up,
 
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_EnableTMU(GL_TEXTURE0);
 	GL_Bind(simpletexture);
 
 	glBegin(GL_QUADS);
