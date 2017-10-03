@@ -312,7 +312,7 @@ elif host_machine.system() == 'darwin'
 		'-Wl,-framework,IOKit',
 		'-Wl,-framework,OpenGL',
 	]
-elif host_machine.system() == 'linux'
+else # Otherwise assume a roughly POSIX compliant OS with X11.
 	deps += dependency('gl')
 	deps += dependency('xxf86vm')
 	sources += [
