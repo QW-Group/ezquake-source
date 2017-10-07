@@ -1380,7 +1380,7 @@ int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 {
 	int retval;
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
 	{
 		return 0;
 	}
@@ -1546,7 +1546,7 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 {
 	int retval;
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
 	{
 		return 0;
 	}
@@ -1602,7 +1602,7 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true)) {
+	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0) {
 		return UNZ_ERRNO;
 	}
 
@@ -1792,7 +1792,7 @@ int FS_ZipUnpackToTemp (unzFile zip_file,
 	int	retval = UNZ_OK;
 
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
 	{
 		return UNZ_ERRNO;
 	}
