@@ -31,6 +31,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+void CachePics_Init(void);
 void Draw_InitCharset(void);
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
@@ -388,7 +389,7 @@ static void Scrap_Upload (void)
 	scrap_dirty = 0;
 }
 
-static void Scap_Init(void)
+static void Scrap_Init(void)
 {
 	memset (scrap_allocated, 0, sizeof(scrap_allocated));
 	memset (scrap_texels,    0, sizeof(scrap_texels));
@@ -401,6 +402,12 @@ static void Scap_Init(void)
 
 //=============================================================================
 // Support Routines
+enum {
+	WADPIC_RAM,
+	WADPIC_NET,
+	WADPIC_TURTLE,
+
+};
 
 mpic_t *Draw_CacheWadPic (char *name)
 {
@@ -475,7 +482,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 //		only24bit - Don't fall back to loading the normal 8-bit texture if
 //					loading the 24-bit version fails.
 //
-mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
+mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 {
 	char stripped_path[MAX_PATH];
 	char lmp_path[MAX_PATH];
@@ -590,7 +597,8 @@ void Draw_Init (void)
 	GL_Texture_Init();  // Probably safe to re-init now.
 
 	// Clear the scrap, should be called ASAP after textures initialization
-	Scap_Init();
+	Scrap_Init();
+	CachePics_Init();
 
 	// Load the console background and the charset by hand, because we need to write the version
 	// string into the background before turning it into a texture.

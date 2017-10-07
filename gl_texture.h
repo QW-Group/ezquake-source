@@ -22,19 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define __GL_TEXTURE_H
 
-#define	TEX_COMPLAIN		(1<<0) // shout if texture missing while loading
-#define TEX_MIPMAP			(1<<1) // use mipmaps generation while loading texture
-#define TEX_ALPHA			(1<<2) // use transparency in texture
-#define TEX_LUMA			(1<<3) // ?? 
-#define TEX_FULLBRIGHT		(1<<4) // ??
-#define	TEX_NOSCALE			(1<<5) // do no use gl_max_size or gl_picmap variables while loading texture
-#define	TEX_BRIGHTEN		(1<<6) // ??
-#define TEX_NOCOMPRESS		(1<<7) // do not use texture compression extension
-#define TEX_NO_PCX			(1<<8) // do not load pcx images
+#define TEX_COMPLAIN        (1<<0) // shout if texture missing while loading
+#define TEX_MIPMAP          (1<<1) // use mipmaps generation while loading texture
+#define TEX_ALPHA           (1<<2) // use transparency in texture
+#define TEX_LUMA            (1<<3) // ??
+#define TEX_FULLBRIGHT      (1<<4) // ??
+#define TEX_NOSCALE         (1<<5) // do no use gl_max_size or gl_picmap variables while loading texture
+#define TEX_BRIGHTEN        (1<<6) // ??
+#define TEX_NOCOMPRESS      (1<<7) // do not use texture compression extension
+#define TEX_NO_PCX          (1<<8) // do not load pcx images
 #define TEX_NO_TEXTUREMODE  (1<<9) // ignore gl_texturemode* changes for texture
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
-
 
 void GL_Bind (int texnum);
 

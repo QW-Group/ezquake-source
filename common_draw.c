@@ -26,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "Ctrl.h"
 
+#include "gl_model.h"
+#include "gl_local.h"
+
 #if 0
 void Draw_CenterString (int y, char *str)
 {
@@ -455,7 +458,16 @@ void SCR_DrawClients(void)
 }
 #endif
 
-cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
+#define ATLAS_COUNT     4
+#define ATLAS_WIDTH  2048
+#define ATLAS_HEIGHT 2048
+
+static cachepic_node_t *cachepics[CACHED_PICS_HDSIZE];
+
+static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
+static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
+static byte atlas_dirty = 0;
+static int  atlas_texnum[ATLAS_COUNT];
 
 /*
  * Removes the pic from the cache if refcount hits zero,
@@ -560,6 +572,195 @@ void CachePics_DeInit(void)
 	}
 
 	memset(cachepics, 0, sizeof(cachepics));
+}
+
+// Returns false if allocation failed.
+static qbool CachePics_AllocBlock(int atlas_num, int w, int h, int *x, int *y)
+{
+	int i, j, best, best2;
+
+	best = ATLAS_HEIGHT;
+
+	for (i = 0; i < ATLAS_WIDTH - w; i++) {
+		best2 = 0;
+
+		for (j = 0; j < w; j++) {
+			if (atlas_allocated[atlas_num][i + j] >= best)
+				break;
+			if (atlas_allocated[atlas_num][i + j] > best2)
+				best2 = atlas_allocated[atlas_num][i + j];
+		}
+
+		if (j == w) {
+			// This is a valid spot.
+			*x = i;
+			*y = best = best2;
+		}
+	}
+
+	if (best + h > ATLAS_HEIGHT) {
+		return false;
+	}
+
+	for (i = 0; i < w; i++) {
+		atlas_allocated[atlas_num][*x + i] = best + h;
+	}
+
+	atlas_dirty |= (1 << atlas_num);
+
+	return true;
+}
+
+int CachePics_AddToAtlas(mpic_t* pic)
+{
+	static char buffer[ATLAS_WIDTH * ATLAS_WIDTH * 4];
+	int width = 0, height = 0;
+	int i;
+
+	// Find size of the source
+	glBindTexture(GL_TEXTURE_2D, pic->texnum);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+
+	if (width >= ATLAS_WIDTH || height >= ATLAS_HEIGHT) {
+		return -1;
+	}
+
+	// Allocate space in an atlas texture
+	for (i = 0; i < ATLAS_COUNT; ++i) {
+		int x_pos, y_pos;
+		int x, y;
+
+		if (CachePics_AllocBlock(i, width + 2, height + 2, &x_pos, &y_pos)) {
+			char* b = buffer;
+
+			// Copy texture image
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+			x_pos++;
+			y_pos++;
+
+			for (y = y_pos; y < y_pos + height; ++y) {
+				for (x = x_pos; x < x_pos + width; ++x) {
+					int base = (x + y * ATLAS_WIDTH) * 4;
+
+					atlas_texels[i][base] = *b++;
+					atlas_texels[i][base + 1] = *b++;
+					atlas_texels[i][base + 2] = *b++;
+					atlas_texels[i][base + 3] = *b++;
+				}
+			}
+
+			width = (pic->sh - pic->sl) * width;
+			height = (pic->th - pic->tl) * height;
+			pic->sl = (x_pos + 0.25) / (float) ATLAS_WIDTH;
+			pic->sh = (x_pos + width - 0.25) / (float) ATLAS_WIDTH;
+			pic->tl = (y_pos + 0.25) / (float) ATLAS_HEIGHT;
+			pic->th = (y_pos + height - 0.25) / (float) ATLAS_HEIGHT;
+			pic->texnum = atlas_texnum[i];
+
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void CachePics_AtlasUpload(void)
+{
+	int i;
+
+	for (i = 0; i < ATLAS_COUNT; ++i) {
+		if (atlas_dirty & (1 << i)) {
+			char id[64];
+			// generate id
+			snprintf(id, sizeof(id), "cachepics:%d", i);
+			// 
+			atlas_texnum[i] = GL_LoadTexture(id, ATLAS_WIDTH, ATLAS_HEIGHT, atlas_texels[i], TEX_ALPHA | TEX_NOSCALE, 4);
+		}
+	}
+	atlas_dirty = 0;
+}
+
+void CachePics_CreateAtlas(void);
+
+void CachePics_Init(void)
+{
+	atlas_dirty = ~0;
+
+	CachePics_AtlasUpload();
+	Cmd_AddCommand("createatlas", CachePics_CreateAtlas);
+}
+
+void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
+{
+	int size_node = node->data.pic->width * node->data.pic->height;
+	cachepic_node_t* current = *sized_list;
+	int size_this;
+
+	while (current) {
+		size_this = current->data.pic->width * current->data.pic->height;
+		if (size_this < size_node) {
+			break;
+		}
+
+		sized_list = &current->size_order;
+		current = *sized_list;
+	}
+
+	node->size_order = current;
+	*sized_list = node;
+}
+
+void CachePics_CreateAtlas(void)
+{
+	cachepic_node_t* sized_list = NULL;
+	cachepic_node_t* cur;
+	int i;
+
+	// Delete old atlas textures
+	memset(atlas_texels, 0, sizeof(atlas_texels));
+	memset(atlas_allocated, 0, sizeof(atlas_allocated));
+
+	// Create atlas textures
+	for (i = 0; i < CACHED_PICS_HDSIZE; ++i) {
+		cachepic_node_t *cur;
+
+		for (cur = cachepics[i]; cur; cur = cur->next) {
+			CachePics_InsertBySize(&sized_list, cur);
+		}
+	}
+
+	for (cur = sized_list; cur; cur = cur->size_order) {
+		int placed = -1, j;
+		for (j = 0; j < ATLAS_COUNT; ++j) {
+			if (atlas_texnum[j] == cur->data.pic->texnum) {
+				placed = j;
+				break;
+			}
+		}
+
+		if (placed == -1) {
+			int old_tex = cur->data.pic->texnum;
+			mpic_t old = *cur->data.pic;
+
+			placed = CachePics_AddToAtlas(cur->data.pic);
+
+			if (placed >= 0) {
+				Con_Printf("Placed %s @ atlas %d [%d, was %d]\n", cur->data.name, placed, atlas_texnum[placed], old_tex);
+				Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
+			}
+			else {
+				Con_Printf("Failed to placed %s\n", cur->data.name);
+			}
+		}
+		else {
+			Con_Printf("%s already on atlas %d [%d]\n", cur->data.name, placed, atlas_texnum[placed]);
+		}
+	}
+
+	// Upload atlas textures
+	CachePics_AtlasUpload();
 }
 
 const int COLOR_WHITE = 0xFFFFFFFF;
