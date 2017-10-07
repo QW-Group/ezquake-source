@@ -300,6 +300,7 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 
 //
 // Get the path of a temporary directory.
+// Returns length of the path or negative value if error.
 //
 int COM_GetTempDir(char *buf, int bufsize)
 {
@@ -332,6 +333,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 
 //
 // Get a unique temp filename.
+// Returns negative value on failure.
 //
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
 {
@@ -345,7 +347,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	// (This is done automatically in unix)
 	if (path == NULL)
 	{
-		if (!COM_GetTempDir(real_path, MAX_PATH))
+		if (COM_GetTempDir(real_path, MAX_PATH) < 0)
 		{
 			return -1;
 		}
