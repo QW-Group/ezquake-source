@@ -122,6 +122,38 @@ char *COM_SkipPathWritable (char *pathname)
 	return last;
 }
 
+int COM_StripFilename(const char *pathname, char *dir, int dir_size)
+{
+	int i = 0;
+	int index_last_sep = -1;
+
+	// Find the last directory separator.
+	while (pathname[i])
+	{
+#ifdef WIN32
+		if (pathname[i] == '/' || pathname[i] == '\\')
+#else
+		if (pathname[i] == '/')
+#endif
+		{
+			index_last_sep = i;
+		}
+
+		i++;
+	}
+
+	if ((index_last_sep == -1) || (index_last_sep >= dir_size))
+	{
+		// No directory separator found or buffer too small.
+		return 0;
+	}
+
+	strncpy(dir, pathname, index_last_sep);
+	dir[index_last_sep] = '\0';
+
+	return 1;
+}
+
 //
 // Makes a path fit in a specified sized string "c:\quake\bla\bla\bla" => "c:\quake...la\bla"
 //

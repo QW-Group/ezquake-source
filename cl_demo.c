@@ -3518,6 +3518,7 @@ void CL_Play_f (void)
 	#ifndef WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZIP
 	char unpacked_path[MAX_OSPATH];
+	qbool extracted_from_archive = false;
 	#endif // WITH_ZIP
 	#endif // WITH_VFS_ARCHIVE_LOADING
 
@@ -3553,6 +3554,7 @@ void CL_Play_f (void)
 	if (CL_GetUnpackedDemoPath (Cmd_Argv(1), unpacked_path, sizeof(unpacked_path)))
 	{
 		real_name = unpacked_path;
+		extracted_from_archive = true;
 	}
 	#endif // WITH_ZIP
 	#endif // WITH_VFS_ARCHIVE_LOADING
@@ -3665,6 +3667,19 @@ void CL_Play_f (void)
 			// Close the file on disk now that we have read the file into memory
 			VFS_CLOSE(playbackfile);
 			playbackfile = mmap_file;
+			#ifdef WITH_ZIP
+			if (extracted_from_archive)
+			{
+				char tmp_dir[MAX_OSPATH];
+				if (COM_StripFilename(name, tmp_dir, sizeof(tmp_dir)))
+				{
+					// Remove the extracted file
+					unlink(name);
+					// Remove the temporary directory as well
+					Sys_rmdir(tmp_dir);
+				}
+			}
+			#endif // WITH_ZIP
 		}
 	}
 
