@@ -402,20 +402,24 @@ static void Scrap_Init(void)
 
 //=============================================================================
 // Support Routines
-enum {
-	WADPIC_RAM,
-	WADPIC_NET,
-	WADPIC_TURTLE,
+wadpic_t wad_pictures[WADPIC_PIC_COUNT];
 
-};
-
-mpic_t *Draw_CacheWadPic (char *name)
+mpic_t *Draw_CacheWadPic(char *name, int code)
 {
-	qpic_t	*p;
-	mpic_t	*pic, *pic_24bit;
+	qpic_t *p;
+	mpic_t *pic, *pic_24bit;
+	wadpic_t* wadpic = NULL;
+
+	if (code >= 0 && code < WADPIC_PIC_COUNT) {
+		wadpic = &wad_pictures[code];
+	}
 
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
+	if (wadpic) {
+		strlcpy(wadpic->name, name, sizeof(wadpic->name));
+		wadpic->pic = pic;
+	}
 
 	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
 		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
@@ -609,8 +613,8 @@ void Draw_Init (void)
 	Draw_InitCrosshairs();
 
 	// Get the other pics we need.
-	draw_disc     = Draw_CacheWadPic("disc");
-	draw_backtile = Draw_CacheWadPic("backtile");
+	draw_disc     = Draw_CacheWadPic("disc", WADPIC_DISC);
+	draw_backtile = Draw_CacheWadPic("backtile", WADPIC_BACKTILE);
 }
 
 qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size);

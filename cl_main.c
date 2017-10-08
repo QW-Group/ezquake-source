@@ -1862,6 +1862,8 @@ void GFX_Init (void)
 	R_Init();
 	Sbar_Init();
 	HUD_Editor_Init();	// Need to reload some textures.
+
+	CachePics_CreateAtlas();
 }
 
 void ReloadPaletteAndColormap(void)

@@ -463,6 +463,7 @@ void SCR_DrawClients(void)
 #define ATLAS_HEIGHT 2048
 
 static cachepic_node_t *cachepics[CACHED_PICS_HDSIZE];
+static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 
 static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
 static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
@@ -721,6 +722,18 @@ void CachePics_CreateAtlas(void)
 	// Delete old atlas textures
 	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
+	memset(wadpics, 0, sizeof(wadpics));
+
+	// Copy wadpic data over
+	for (i = 0; i < WADPIC_PIC_COUNT; ++i) {
+		extern wadpic_t wad_pictures[WADPIC_PIC_COUNT];
+
+		if (wad_pictures[i].pic) {
+			wadpics[i].data.pic = wad_pictures[i].pic;
+
+			CachePics_InsertBySize(&sized_list, &wadpics[i]);
+		}
+	}
 
 	// Create atlas textures
 	for (i = 0; i < CACHED_PICS_HDSIZE; ++i) {

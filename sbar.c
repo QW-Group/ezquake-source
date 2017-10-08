@@ -171,139 +171,139 @@ void Sbar_Changed (void) {
 
 /************************************ INIT ************************************/
 
-void Sbar_Init (void) {
+void Sbar_Init(void)
+{
 	int i;
 
 	for (i = 0; i < 10; i++) {
-		sb_nums[0][i] = Draw_CacheWadPic (va("num_%i",i));
-		sb_nums[1][i] = Draw_CacheWadPic (va("anum_%i",i));
+		sb_nums[0][i] = Draw_CacheWadPic(va("num_%i", i), WADPIC_NUM_0 + i);
+		sb_nums[1][i] = Draw_CacheWadPic(va("anum_%i", i), WADPIC_ANUM_0 + i);
 	}
 
-	sb_nums[0][10] = Draw_CacheWadPic ("num_minus");
-	sb_nums[1][10] = Draw_CacheWadPic ("anum_minus");
+	sb_nums[0][10] = Draw_CacheWadPic("num_minus", WADPIC_NUM_MINUS);
+	sb_nums[1][10] = Draw_CacheWadPic("anum_minus", WADPIC_ANUM_MINUS);
 
-	sb_colon = Draw_CacheWadPic ("num_colon");
-	sb_slash = Draw_CacheWadPic ("num_slash");
+	sb_colon = Draw_CacheWadPic("num_colon", WADPIC_NUM_COLON);
+	sb_slash = Draw_CacheWadPic("num_slash", WADPIC_NUM_SLASH);
 
-	sb_weapons[0][0] = Draw_CacheWadPic ("inv_shotgun");
-	sb_weapons[0][1] = Draw_CacheWadPic ("inv_sshotgun");
-	sb_weapons[0][2] = Draw_CacheWadPic ("inv_nailgun");
-	sb_weapons[0][3] = Draw_CacheWadPic ("inv_snailgun");
-	sb_weapons[0][4] = Draw_CacheWadPic ("inv_rlaunch");
-	sb_weapons[0][5] = Draw_CacheWadPic ("inv_srlaunch");
-	sb_weapons[0][6] = Draw_CacheWadPic ("inv_lightng");
+	sb_weapons[0][0] = Draw_CacheWadPic("inv_shotgun", WADPIC_INV_SHOTGUN);
+	sb_weapons[0][1] = Draw_CacheWadPic("inv_sshotgun", WADPIC_INV_SSHOTGUN);
+	sb_weapons[0][2] = Draw_CacheWadPic("inv_nailgun", WADPIC_INV_NAILGUN);
+	sb_weapons[0][3] = Draw_CacheWadPic("inv_snailgun", WADPIC_INV_SNAILGUN);
+	sb_weapons[0][4] = Draw_CacheWadPic("inv_rlaunch", WADPIC_INV_RLAUNCH);
+	sb_weapons[0][5] = Draw_CacheWadPic("inv_srlaunch", WADPIC_INV_SRLAUNCH);
+	sb_weapons[0][6] = Draw_CacheWadPic("inv_lightng", WADPIC_INV_LIGHTNG);
 
-	sb_weapons[1][0] = Draw_CacheWadPic ("inv2_shotgun");
-	sb_weapons[1][1] = Draw_CacheWadPic ("inv2_sshotgun");
-	sb_weapons[1][2] = Draw_CacheWadPic ("inv2_nailgun");
-	sb_weapons[1][3] = Draw_CacheWadPic ("inv2_snailgun");
-	sb_weapons[1][4] = Draw_CacheWadPic ("inv2_rlaunch");
-	sb_weapons[1][5] = Draw_CacheWadPic ("inv2_srlaunch");
-	sb_weapons[1][6] = Draw_CacheWadPic ("inv2_lightng");
+	sb_weapons[1][0] = Draw_CacheWadPic("inv2_shotgun", WADPIC_INV2_SHOTGUN);
+	sb_weapons[1][1] = Draw_CacheWadPic("inv2_sshotgun", WADPIC_INV2_SSHOTGUN);
+	sb_weapons[1][2] = Draw_CacheWadPic("inv2_nailgun", WADPIC_INV2_NAILGUN);
+	sb_weapons[1][3] = Draw_CacheWadPic("inv2_snailgun", WADPIC_INV2_SNAILGUN);
+	sb_weapons[1][4] = Draw_CacheWadPic("inv2_rlaunch", WADPIC_INV_RLAUNCH);
+	sb_weapons[1][5] = Draw_CacheWadPic("inv2_srlaunch", WADPIC_INV_SRLAUNCH);
+	sb_weapons[1][6] = Draw_CacheWadPic("inv2_lightng", WADPIC_INV_LIGHTNG);
 
 	for (i = 0; i < 5; i++) {
-		sb_weapons[2 + i][0] = Draw_CacheWadPic (va("inva%i_shotgun", i + 1));
-		sb_weapons[2 + i][1] = Draw_CacheWadPic (va("inva%i_sshotgun", i + 1));
-		sb_weapons[2 + i][2] = Draw_CacheWadPic (va("inva%i_nailgun", i + 1));
-		sb_weapons[2 + i][3] = Draw_CacheWadPic (va("inva%i_snailgun", i + 1));
-		sb_weapons[2 + i][4] = Draw_CacheWadPic (va("inva%i_rlaunch", i + 1));
-		sb_weapons[2 + i][5] = Draw_CacheWadPic (va("inva%i_srlaunch", i + 1));
-		sb_weapons[2 + i][6] = Draw_CacheWadPic (va("inva%i_lightng", i + 1));
+		sb_weapons[2 + i][0] = Draw_CacheWadPic(va("inva%i_shotgun", i + 1), WADPIC_INVA1_SHOTGUN + i);
+		sb_weapons[2 + i][1] = Draw_CacheWadPic(va("inva%i_sshotgun", i + 1), WADPIC_INVA1_SSHOTGUN + i);
+		sb_weapons[2 + i][2] = Draw_CacheWadPic(va("inva%i_nailgun", i + 1), WADPIC_INVA1_NAILGUN + i);
+		sb_weapons[2 + i][3] = Draw_CacheWadPic(va("inva%i_snailgun", i + 1), WADPIC_INVA1_SNAILGUN + i);
+		sb_weapons[2 + i][4] = Draw_CacheWadPic(va("inva%i_rlaunch", i + 1), WADPIC_INVA1_RLAUNCH + i);
+		sb_weapons[2 + i][5] = Draw_CacheWadPic(va("inva%i_srlaunch", i + 1), WADPIC_INVA1_SRLAUNCH + i);
+		sb_weapons[2 + i][6] = Draw_CacheWadPic(va("inva%i_lightng", i + 1), WADPIC_INVA1_LIGHTNG + i);
 	}
 
-	sb_ammo[0] = Draw_CacheWadPic ("sb_shells");
-	sb_ammo[1] = Draw_CacheWadPic ("sb_nails");
-	sb_ammo[2] = Draw_CacheWadPic ("sb_rocket");
-	sb_ammo[3] = Draw_CacheWadPic ("sb_cells");
+	sb_ammo[0] = Draw_CacheWadPic("sb_shells", WADPIC_SB_SHELLS);
+	sb_ammo[1] = Draw_CacheWadPic("sb_nails", WADPIC_SB_NAILS);
+	sb_ammo[2] = Draw_CacheWadPic("sb_rocket", WADPIC_SB_ROCKET);
+	sb_ammo[3] = Draw_CacheWadPic("sb_cells", WADPIC_SB_CELLS);
 
-	sb_armor[0] = Draw_CacheWadPic ("sb_armor1");
-	sb_armor[1] = Draw_CacheWadPic ("sb_armor2");
-	sb_armor[2] = Draw_CacheWadPic ("sb_armor3");
+	sb_armor[0] = Draw_CacheWadPic("sb_armor1", WADPIC_SB_ARMOR1);
+	sb_armor[1] = Draw_CacheWadPic("sb_armor2", WADPIC_SB_ARMOR2);
+	sb_armor[2] = Draw_CacheWadPic("sb_armor3", WADPIC_SB_ARMOR3);
 
-	sb_items[0] = Draw_CacheWadPic ("sb_key1");
-	sb_items[1] = Draw_CacheWadPic ("sb_key2");
-	sb_items[2] = Draw_CacheWadPic ("sb_invis");
-	sb_items[3] = Draw_CacheWadPic ("sb_invuln");
-	sb_items[4] = Draw_CacheWadPic ("sb_suit");
-	sb_items[5] = Draw_CacheWadPic ("sb_quad");
+	sb_items[0] = Draw_CacheWadPic("sb_key1", WADPIC_SB_KEY1);
+	sb_items[1] = Draw_CacheWadPic("sb_key2", WADPIC_SB_KEY2);
+	sb_items[2] = Draw_CacheWadPic("sb_invis", WADPIC_SB_INVIS);
+	sb_items[3] = Draw_CacheWadPic("sb_invuln", WADPIC_SB_INVULN);
+	sb_items[4] = Draw_CacheWadPic("sb_suit", WADPIC_SB_SUIT);
+	sb_items[5] = Draw_CacheWadPic("sb_quad", WADPIC_SB_QUAD);
 
-	sb_sigil[0] = Draw_CacheWadPic ("sb_sigil1");
-	sb_sigil[1] = Draw_CacheWadPic ("sb_sigil2");
-	sb_sigil[2] = Draw_CacheWadPic ("sb_sigil3");
-	sb_sigil[3] = Draw_CacheWadPic ("sb_sigil4");
+	sb_sigil[0] = Draw_CacheWadPic("sb_sigil1", WADPIC_SB_SIGIL1);
+	sb_sigil[1] = Draw_CacheWadPic("sb_sigil2", WADPIC_SB_SIGIL2);
+	sb_sigil[2] = Draw_CacheWadPic("sb_sigil3", WADPIC_SB_SIGIL3);
+	sb_sigil[3] = Draw_CacheWadPic("sb_sigil4", WADPIC_SB_SIGIL4);
 
-	sb_faces[4][0] = Draw_CacheWadPic ("face1");
-	sb_faces[4][1] = Draw_CacheWadPic ("face_p1");
-	sb_faces[3][0] = Draw_CacheWadPic ("face2");
-	sb_faces[3][1] = Draw_CacheWadPic ("face_p2");
-	sb_faces[2][0] = Draw_CacheWadPic ("face3");
-	sb_faces[2][1] = Draw_CacheWadPic ("face_p3");
-	sb_faces[1][0] = Draw_CacheWadPic ("face4");
-	sb_faces[1][1] = Draw_CacheWadPic ("face_p4");
-	sb_faces[0][0] = Draw_CacheWadPic ("face5");
-	sb_faces[0][1] = Draw_CacheWadPic ("face_p5");
+	sb_faces[4][0] = Draw_CacheWadPic("face1", WADPIC_SB_FACE1);
+	sb_faces[4][1] = Draw_CacheWadPic("face_p1", WADPIC_SB_FACE_P1);
+	sb_faces[3][0] = Draw_CacheWadPic("face2", WADPIC_SB_FACE2);
+	sb_faces[3][1] = Draw_CacheWadPic("face_p2", WADPIC_SB_FACE_P2);
+	sb_faces[2][0] = Draw_CacheWadPic("face3", WADPIC_SB_FACE3);
+	sb_faces[2][1] = Draw_CacheWadPic("face_p3", WADPIC_SB_FACE_P3);
+	sb_faces[1][0] = Draw_CacheWadPic("face4", WADPIC_SB_FACE4);
+	sb_faces[1][1] = Draw_CacheWadPic("face_p4", WADPIC_SB_FACE_P4);
+	sb_faces[0][0] = Draw_CacheWadPic("face5", WADPIC_SB_FACE5);
+	sb_faces[0][1] = Draw_CacheWadPic("face_p5", WADPIC_SB_FACE_P5);
 
-	sb_face_invis = Draw_CacheWadPic ("face_invis");
-	sb_face_invuln = Draw_CacheWadPic ("face_invul2");
-	sb_face_invis_invuln = Draw_CacheWadPic ("face_inv2");
-	sb_face_quad = Draw_CacheWadPic ("face_quad");
+	sb_face_invis = Draw_CacheWadPic("face_invis", WADPIC_FACE_INVIS);
+	sb_face_invuln = Draw_CacheWadPic("face_invul2", WADPIC_FACE_INVUL2);
+	sb_face_invis_invuln = Draw_CacheWadPic("face_inv2", WADPIC_FACE_INV2);
+	sb_face_quad = Draw_CacheWadPic("face_quad", WADPIC_FACE_QUAD);
 
-	sb_sbar = Draw_CacheWadPic ("sbar");
-	sb_ibar = Draw_CacheWadPic ("ibar");
-	sb_scorebar = Draw_CacheWadPic ("scorebar");
+	sb_sbar = Draw_CacheWadPic("sbar", WADPIC_SB_SBAR);
+	sb_ibar = Draw_CacheWadPic("ibar", WADPIC_SB_IBAR);
+	sb_scorebar = Draw_CacheWadPic("scorebar", WADPIC_SB_SCOREBAR);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-	Cvar_Register (&scr_centerSbar);
+	Cvar_Register(&scr_centerSbar);
 
-	Cvar_Register (&scr_compactHud);
-	Cvar_Register (&scr_compactHudAlign);
+	Cvar_Register(&scr_compactHud);
+	Cvar_Register(&scr_compactHudAlign);
 
 	// --> mqwcl 0.96 oldhud customisation
 	//Cvar_Register (&sbar_teamfrags);
 	//Cvar_Register (&sbar_fraglimit);
-
-	Cvar_Register (&sbar_drawfaceicon);
-	Cvar_Register (&sbar_drawammoicon);
-	Cvar_Register (&sbar_drawarmoricon);
-	Cvar_Register (&sbar_drawguns);
-	Cvar_Register (&sbar_drawammocounts);
-	Cvar_Register (&sbar_drawitems);
-	Cvar_Register (&sbar_drawsigils);
-	Cvar_Register (&sbar_drawhealth);
-	Cvar_Register (&sbar_drawarmor);
-	Cvar_Register (&sbar_drawammo);
-	Cvar_Register (&sbar_lowammo);
-	Cvar_Register (&hud_centerranking);
-	Cvar_Register (&hud_rankingpos_y);
-	Cvar_Register (&hud_rankingpos_x);
-	Cvar_Register (&hud_faderankings);
+	Cvar_Register(&sbar_drawfaceicon);
+	Cvar_Register(&sbar_drawammoicon);
+	Cvar_Register(&sbar_drawarmoricon);
+	Cvar_Register(&sbar_drawguns);
+	Cvar_Register(&sbar_drawammocounts);
+	Cvar_Register(&sbar_drawitems);
+	Cvar_Register(&sbar_drawsigils);
+	Cvar_Register(&sbar_drawhealth);
+	Cvar_Register(&sbar_drawarmor);
+	Cvar_Register(&sbar_drawammo);
+	Cvar_Register(&sbar_lowammo);
+	Cvar_Register(&hud_centerranking);
+	Cvar_Register(&hud_rankingpos_y);
+	Cvar_Register(&hud_rankingpos_x);
+	Cvar_Register(&hud_faderankings);
 	//Cvar_Register (&hud_ranks_separate);
 	// <-- mqwcl 0.96 oldhud customisation
 
 	Cvar_Register(&scr_scoreboard_afk);
 	Cvar_Register(&scr_scoreboard_afk_style);
 
-	Cvar_Register (&scr_drawHFrags);
-	Cvar_Register (&scr_drawVFrags);
-	Cvar_Register (&scr_scoreboard_teamsort);
-	Cvar_Register (&scr_scoreboard_forcecolors);
-	Cvar_Register (&scr_scoreboard_showfrags);
-	Cvar_Register (&scr_scoreboard_drawtitle);
-	Cvar_Register (&scr_scoreboard_borderless);
-	Cvar_Register (&scr_scoreboard_spectator_name);
-	Cvar_Register (&scr_scoreboard_kill_color);
-	Cvar_Register (&scr_scoreboard_death_color);
-	Cvar_Register (&scr_scoreboard_tk_color);
-	Cvar_Register (&scr_scoreboard_fillalpha);
-	Cvar_Register (&scr_scoreboard_fillcolored);
+	Cvar_Register(&scr_drawHFrags);
+	Cvar_Register(&scr_drawVFrags);
+	Cvar_Register(&scr_scoreboard_teamsort);
+	Cvar_Register(&scr_scoreboard_forcecolors);
+	Cvar_Register(&scr_scoreboard_showfrags);
+	Cvar_Register(&scr_scoreboard_drawtitle);
+	Cvar_Register(&scr_scoreboard_borderless);
+	Cvar_Register(&scr_scoreboard_spectator_name);
+	Cvar_Register(&scr_scoreboard_kill_color);
+	Cvar_Register(&scr_scoreboard_death_color);
+	Cvar_Register(&scr_scoreboard_tk_color);
+	Cvar_Register(&scr_scoreboard_fillalpha);
+	Cvar_Register(&scr_scoreboard_fillcolored);
 
 	Cvar_ResetCurrentGroup();
 
-	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
-	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
+	Cmd_AddCommand("+showscores", Sbar_ShowScores);
+	Cmd_AddCommand("-showscores", Sbar_DontShowScores);
 
-	Cmd_AddCommand ("+showteamscores", Sbar_ShowTeamScores);
-	Cmd_AddCommand ("-showteamscores", Sbar_DontShowTeamScores);
+	Cmd_AddCommand("+showteamscores", Sbar_ShowTeamScores);
+	Cmd_AddCommand("-showteamscores", Sbar_DontShowTeamScores);
 }
 
 void Request_Pings (void)
