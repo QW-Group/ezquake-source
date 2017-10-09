@@ -116,7 +116,7 @@ typedef struct menu_window_s {
 //=============================================================================
 /* Support Routines */
 
-cvar_t     scr_scaleMenu = {"scr_scaleMenu","1"};
+cvar_t     scr_scaleMenu = {"scr_scaleMenu","2"};
 int        menuwidth = 320;
 int        menuheight = 240;
 
