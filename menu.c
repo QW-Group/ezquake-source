@@ -1334,8 +1334,14 @@ void M_Draw (void) {
 	}
 
 	if (scr_scaleMenu.value) {
-		menuwidth = 320;
-		menuheight = min (vid.height, 240);
+		if (vid.aspect > 1.0) {
+			menuheight = bound (240, (int)((vid.height / scr_scaleMenu.value) + 0.5f), 960);
+			menuwidth  = (int) ((menuheight * vid.aspect) + 0.5f);
+		} else {
+			menuwidth  = bound (320, (int)((vid.width / scr_scaleMenu.value) + 0.5f), 960);
+			menuheight = (int) ((menuwidth / vid.aspect) + 0.5f);
+		}
+		
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity ();
 		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);

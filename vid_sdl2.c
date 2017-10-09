@@ -1377,6 +1377,8 @@ static void GfxInfo_f(void)
 		Com_Printf_State(PRINT_ALL, "[windowed]\n");
 	}
 
+	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
+
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
 }
@@ -1540,6 +1542,8 @@ static void VID_UpdateConRes(void)
 		Cvar_SetValue(&r_conwidth, vid.conwidth);
 		Cvar_SetValue(&r_conheight, vid.conheight);
 	}
+
+	vid.aspect = (double) glConfig.vidWidth / (double) glConfig.vidHeight;
 
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
