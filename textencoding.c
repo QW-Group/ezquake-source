@@ -520,8 +520,9 @@ wchar *maybe_transliterate (wchar *src)
 
 	dst = buf;
 	while (*src && dst < buf+buflen-1) {
-		if (R_CharAvailable(*src))
+		if (R_CharAvailable(*src)) {
 			*dst++ = *src;
+		}
 		else {
 			trans = transliterate_char (*src);
 			len = min(qwcslen(trans), buf+buflen-1 - dst);
