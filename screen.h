@@ -81,7 +81,7 @@ typedef struct hud_element_s {
 	unsigned				width;
 	float					blink;
 	void*					contents;
-	int					charset;
+	//int					charset;
 	float					alpha;
 	char					*f_hover, *f_button;
 	unsigned				scr_width, scr_height;

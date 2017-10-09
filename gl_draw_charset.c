@@ -47,8 +47,10 @@ cvar_t scr_coloredText = {"scr_coloredText", "1"};
 
 byte *draw_chars; // 8*8 graphic characters
 
-int char_textures[MAX_CHARSETS];
-int char_range[MAX_CHARSETS];
+#define MAX_CHARSETS 256
+
+static int char_textures[MAX_CHARSETS];
+static int char_range[MAX_CHARSETS];
 
 /*
 * Load_LMP_Charset

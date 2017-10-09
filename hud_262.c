@@ -747,17 +747,18 @@ void SCR_DrawHud(void)
 			}
 			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5) {
 				if (!(elem->flags & HUD_IMAGE)) {
+					/*
 					int std_charset = char_textures[0];
 					if (elem->charset) {
 						char_textures[0] = elem->charset;
-					}
+					}*/
 					if (elem->alpha < 1) {
 						Draw_AlphaString(x, y, st, elem->alpha);
 					}
 					else {
 						Draw_String(x, y, st);
 					}
-					char_textures[0] = std_charset;
+					//char_textures[0] = std_charset;
 				}
 				else {
 					if (elem->alpha < 1) {

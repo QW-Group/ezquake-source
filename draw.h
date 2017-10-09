@@ -24,9 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __DRAW_H__
 #define __DRAW_H__
 
-#define MAX_CHARSETS 256
-extern int		char_textures[MAX_CHARSETS];
-
 typedef struct
 {
 	int			width, height;
