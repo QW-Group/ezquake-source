@@ -12593,10 +12593,10 @@
     },
     "scr_scaleMenu": {
       "group-id": "17",
-      "type": "boolean",
+      "type": "float",
+      "desc": "Scales the frontend menu.",
       "values": [
-        { "name": "false", "description": "Disable scaling." },
-        { "name": "true", "description": "Scales the frontend menu to match the resolution you are using." }
+        { "name": "0", "description": "Disable scaling." },
       ]
     },
     "scr_scoreboard_afk": {
