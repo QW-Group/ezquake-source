@@ -45,15 +45,15 @@ void GL_EnableTMU (GLenum target);
 void GL_DisableTMU(GLenum target);
 
 
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp);
-int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data);
+int GL_LoadTexture(char *identifier, int width, int height, byte *data, int mode, int bpp);
+int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 
 
-byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-int GL_LoadTexturePixels (byte *, char *, int, int, int);
-int GL_LoadTextureImage (char * , char *, int, int, int);
-mpic_t *GL_LoadPicImage (const char *, char *, int, int, int);
-int GL_LoadCharsetImage (char *, char *, int);
+byte *GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+int GL_LoadTexturePixels(byte *, char *, int, int, int);
+int GL_LoadTextureImage(char * , char *, int, int, int);
+mpic_t *GL_LoadPicImage(const char *, char *, int, int, int);
+qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
 
 
 void GL_Texture_Init(void);

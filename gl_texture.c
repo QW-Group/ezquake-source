@@ -951,23 +951,26 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 	return &pic;
 }
 
-int GL_LoadCharsetImage (char *filename, char *identifier, int flags) 
+qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic)
 {
 	int i, texnum, image_size, real_width, real_height;
 	byte *data, *buf, *dest, *src;
 
-	if (no24bit)
-		return 0;
+	if (no24bit) {
+		return false;
+	}
 
-	if (!(data = GL_LoadImagePixels (filename, 0, 0, flags, &real_width, &real_height)))
-		return 0;
+	if (!(data = GL_LoadImagePixels(filename, 0, 0, flags, &real_width, &real_height))) {
+		return false;
+	}
 
-	if (!identifier)
+	if (!identifier) {
 		identifier = filename;
+	}
 
 	image_size = real_width * real_height;
 
-	buf = dest = (byte *) Q_calloc(image_size * 2, 4);
+	buf = dest = (byte *)Q_calloc(image_size * 2, 4);
 	src = data;
 	for (i = 0; i < 16; i++) {
 		memcpy(dest, src, image_size >> 2);
@@ -975,11 +978,13 @@ int GL_LoadCharsetImage (char *filename, char *identifier, int flags)
 		dest += image_size >> 1;
 	}
 
-	texnum = GL_LoadTexture (identifier, real_width, real_height * 2, buf, flags, 4);
+	pic->texnum = GL_LoadTexture(identifier, real_width, real_height * 2, buf, flags, 4);
+	pic->sl = pic->tl = 0.0f;
+	pic->sh = pic->th = 1.0f;
 
 	Q_free(buf);
 	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
-	return texnum;
+	return pic->texnum != 0;
 }
 
 void GL_Texture_Init(void) 

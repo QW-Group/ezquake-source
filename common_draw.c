@@ -464,6 +464,7 @@ void SCR_DrawClients(void)
 
 static cachepic_node_t *cachepics[CACHED_PICS_HDSIZE];
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
+static cachepic_node_t charsetpics[MAX_CHARSETS];
 
 static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
 static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
@@ -614,26 +615,34 @@ static qbool CachePics_AllocBlock(int atlas_num, int w, int h, int *x, int *y)
 
 int CachePics_AddToAtlas(mpic_t* pic)
 {
-	static char buffer[ATLAS_WIDTH * ATLAS_WIDTH * 4];
-	int width = 0, height = 0;
+	static char buffer[ATLAS_WIDTH * ATLAS_HEIGHT * 4];
+	int width = pic->width, height = pic->height;
+	int texWidth = 0, texHeight = 0;
 	int i;
 
 	// Find size of the source
 	glBindTexture(GL_TEXTURE_2D, pic->texnum);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texHeight);
 
-	if (width >= ATLAS_WIDTH || height >= ATLAS_HEIGHT) {
+	width = (pic->sh - pic->sl) * texWidth;
+	height = (pic->th - pic->tl) * texHeight;
+
+	if (texWidth > ATLAS_WIDTH || texHeight > ATLAS_HEIGHT) {
 		return -1;
 	}
+	Con_Printf(" > width = %d, height = %d, texWidth = %d, texHeight = %d\n", width, height, texWidth, texHeight);
 
 	// Allocate space in an atlas texture
 	for (i = 0; i < ATLAS_COUNT; ++i) {
 		int x_pos, y_pos;
-		int x, y;
+		int padding = 2;
 
-		if (CachePics_AllocBlock(i, width + 2, height + 2, &x_pos, &y_pos)) {
+		if (CachePics_AllocBlock(i, width + padding, height + padding, &x_pos, &y_pos)) {
 			char* b = buffer;
+			int xOffset, yOffset;
+
+			Con_Printf(" > > alloc %d %d\n", x_pos, y_pos);
 
 			// Copy texture image
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -641,24 +650,34 @@ int CachePics_AddToAtlas(mpic_t* pic)
 			x_pos++;
 			y_pos++;
 
-			for (y = y_pos; y < y_pos + height; ++y) {
-				for (x = x_pos; x < x_pos + width; ++x) {
+			for (yOffset = 0; yOffset < height; ++yOffset) {
+				for (xOffset = 0; xOffset < width; ++xOffset) {
+					int y = y_pos + yOffset;
+					int x = x_pos + xOffset;
 					int base = (x + y * ATLAS_WIDTH) * 4;
+					int srcBase = (xOffset + pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
 
-					atlas_texels[i][base] = *b++;
-					atlas_texels[i][base + 1] = *b++;
-					atlas_texels[i][base + 2] = *b++;
-					atlas_texels[i][base + 3] = *b++;
+					atlas_texels[i][base] = buffer[srcBase];
+					atlas_texels[i][base + 1] = buffer[srcBase + 1];
+					atlas_texels[i][base + 2] = buffer[srcBase + 2];
+					atlas_texels[i][base + 3] = buffer[srcBase + 3];
 				}
 			}
 
-			width = (pic->sh - pic->sl) * width;
-			height = (pic->th - pic->tl) * height;
-			pic->sl = (x_pos + 0.25) / (float) ATLAS_WIDTH;
-			pic->sh = (x_pos + width - 0.25) / (float) ATLAS_WIDTH;
-			pic->tl = (y_pos + 0.25) / (float) ATLAS_HEIGHT;
-			pic->th = (y_pos + height - 0.25) / (float) ATLAS_HEIGHT;
-			pic->texnum = atlas_texnum[i];
+			if (false) {
+				pic->sl = (x_pos + 0.25) / (float)ATLAS_WIDTH;
+				pic->sh = (x_pos + width - 0.25) / (float)ATLAS_WIDTH;
+				pic->tl = (y_pos + 0.25) / (float)ATLAS_HEIGHT;
+				pic->th = (y_pos + height - 0.25) / (float)ATLAS_HEIGHT;
+				pic->texnum = atlas_texnum[i];
+			}
+			else if (true) {
+				pic->sl = (x_pos) / (float)ATLAS_WIDTH;
+				pic->sh = (x_pos + width) / (float)ATLAS_WIDTH;
+				pic->tl = (y_pos) / (float)ATLAS_HEIGHT;
+				pic->th = (y_pos + height) / (float)ATLAS_HEIGHT;
+				pic->texnum = atlas_texnum[i];
+			}
 
 			return i;
 		}
@@ -682,8 +701,6 @@ void CachePics_AtlasUpload(void)
 	}
 	atlas_dirty = 0;
 }
-
-void CachePics_CreateAtlas(void);
 
 void CachePics_Init(void)
 {
@@ -735,6 +752,17 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
+	// Copy text images over
+	for (i = 0; i < MAX_CHARSETS; ++i) {
+		extern mpic_t char_textures[MAX_CHARSETS];
+
+		if (char_textures[i].texnum) {
+			charsetpics[i].data.pic = &char_textures[i];
+
+			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
+		}
+	}
+
 	// Create atlas textures
 	for (i = 0; i < CACHED_PICS_HDSIZE; ++i) {
 		cachepic_node_t *cur;
@@ -745,26 +773,29 @@ void CachePics_CreateAtlas(void)
 	}
 
 	for (cur = sized_list; cur; cur = cur->size_order) {
-		int placed = -1, j;
+		int placed = -1;
+		/*int j;
 		for (j = 0; j < ATLAS_COUNT; ++j) {
 			if (atlas_texnum[j] == cur->data.pic->texnum) {
 				placed = j;
 				break;
 			}
-		}
+		}*/
 
 		if (placed == -1) {
 			int old_tex = cur->data.pic->texnum;
 			mpic_t old = *cur->data.pic;
 
+			Con_Printf("%s\n", cur->data.name);
+
 			placed = CachePics_AddToAtlas(cur->data.pic);
 
 			if (placed >= 0) {
-				Con_Printf("Placed %s @ atlas %d [%d, was %d]\n", cur->data.name, placed, atlas_texnum[placed], old_tex);
-				Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
+				Con_Printf("  placed @ atlas %d [%d, was %d]\n", placed, atlas_texnum[placed], old_tex);
+				Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]\n", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
 			}
 			else {
-				Con_Printf("Failed to placed %s\n", cur->data.name);
+				Con_Printf("  Failed to place\n");
 			}
 		}
 		else {

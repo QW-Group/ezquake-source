@@ -4,7 +4,7 @@
 #include "gl_local.h"
 
 extern cvar_t gl_alphafont;
-extern int char_textures[MAX_CHARSETS];
+extern mpic_t char_textures[MAX_CHARSETS];
 
 // Modern: just cache as the string is printed, dump out as one.  Still pretty terrible
 #define GLM_STRING_CACHE 4096
@@ -30,6 +30,8 @@ static GLint textString_modelViewMatrix;
 static GLint textString_projectionMatrix;
 static GLint textString_materialTex;
 static GLint textString_bigFont;
+static GLint textString_textureBase;
+static GLint textString_fontSize;
 static GLuint textStringVBO;
 static GLuint textStringVAO;
 
@@ -77,12 +79,14 @@ static void Draw_CreateTextStringProgram(void)
 	if (!textStringProgram.program) {
 		GL_VGFDeclare(text_string)
 
-			GLM_CreateVGFProgram("StringDraw", GL_VGFParams(text_string), &textStringProgram);
+		GLM_CreateVGFProgram("StringDraw", GL_VGFParams(text_string), &textStringProgram);
 
 		textString_modelViewMatrix = glGetUniformLocation(textStringProgram.program, "modelViewMatrix");
 		textString_projectionMatrix = glGetUniformLocation(textStringProgram.program, "projectionMatrix");
 		textString_materialTex = glGetUniformLocation(textStringProgram.program, "materialTex");
 		textString_bigFont = glGetUniformLocation(textStringProgram.program, "bigFont");
+		textString_fontSize = glGetUniformLocation(textStringProgram.program, "fontSize");
+		textString_textureBase = glGetUniformLocation(textStringProgram.program, "textureBase");
 	}
 }
 
@@ -102,6 +106,8 @@ void Draw_TextCacheFlush(void)
 			{
 				float modelViewMatrix[16];
 				float projectionMatrix[16];
+				float font_width = (char_textures[cached_charset].sh - char_textures[cached_charset].sl) / 16.0;
+				float font_height = (char_textures[cached_charset].th - char_textures[cached_charset].tl) / 16.0;
 
 				GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 				GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
@@ -122,15 +128,21 @@ void Draw_TextCacheFlush(void)
 					GL_TextureEnvMode(GL_REPLACE);
 				}
 
+				if (developer.value) {
+					Cvar_SetValue(&developer, 0);
+				}
+
 				// Call the program to draw the text string
 				GL_UseProgram(textStringProgram.program);
 				glUniformMatrix4fv(textString_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 				glUniformMatrix4fv(textString_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 				glUniform1i(textString_materialTex, 0);
 				glUniform1i(textString_bigFont, cached_bigchar);
+				glUniform2f(textString_fontSize, font_width, font_height);
+				glUniform2f(textString_textureBase, char_textures[cached_charset].sl, char_textures[cached_charset].tl);
 
 				glActiveTexture(GL_TEXTURE0);
-				GL_Bind(char_textures[cached_charset]);
+				GL_Bind(char_textures[cached_charset].texnum);
 
 				glBindVertexArray(vao);
 				glDrawArrays(GL_POINTS, 0, cache_pos);

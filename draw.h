@@ -250,6 +250,8 @@ typedef struct wadpic_s {
 
 extern wadpic_t wad_pictures[WADPIC_PIC_COUNT];
 
+void CachePics_CreateAtlas(void);
+
 #endif // __DRAW_H__
 
 

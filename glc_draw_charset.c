@@ -4,7 +4,7 @@
 #include "gl_local.h"
 
 extern float overall_alpha;
-extern int char_textures[MAX_CHARSETS];
+extern mpic_t char_textures[MAX_CHARSETS];
 extern int char_range[MAX_CHARSETS];
 
 // x, y					= Pixel position of char.
@@ -23,6 +23,8 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 	float frow, fcol;
 	int slot;
 	int char_size = (bigchar ? 64 : 8);
+	float char_width;
+	float char_height;
 
 	// Only apply overall opacity if it's not fully opague.
 	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
@@ -84,11 +86,13 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 
 	num &= 0xFF;	// Only use the first byte.
 
-					// Find the texture coordinates for the character.
-	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
-	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
+	// Find the texture coordinates for the character.
+	char_height = (char_textures[slot].th - char_textures[slot].tl) * CHARSET_CHAR_HEIGHT;
+	char_width = (char_textures[slot].sh - char_textures[slot].sl) * CHARSET_CHAR_WIDTH;
+	frow = char_textures[slot].tl + (num >> 4) * char_height;	// row = num * (16 chars per row)
+	fcol = char_textures[slot].sl + (num & 0x0F) * char_width;
 
-	GL_Bind(char_textures[slot]);
+	GL_Bind(char_textures[slot].texnum);
 
 	// Draw the character polygon.
 	glBegin(GL_QUADS);
@@ -101,15 +105,15 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 		glVertex2f(x, y);
 
 		// Top right.
-		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow);
+		glTexCoord2f(fcol + char_width, frow);
 		glVertex2f(x + scale8, y);
 
 		// Bottom right.
-		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
+		glTexCoord2f(fcol + char_width, frow + char_height);
 		glVertex2f(x + scale8, y + scale8_2);
 
 		// Bottom left.
-		glTexCoord2f(fcol, frow + CHARSET_CHAR_WIDTH);
+		glTexCoord2f(fcol, frow + char_height);
 		glVertex2f(x, y + scale8_2);
 	}
 	glEnd();
