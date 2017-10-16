@@ -763,6 +763,7 @@ void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
+void GLM_FlushImageDraw(void);
 
 #define MAX_CHARSETS 256
 

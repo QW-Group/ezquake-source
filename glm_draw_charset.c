@@ -5,6 +5,7 @@
 
 extern cvar_t gl_alphafont;
 extern mpic_t char_textures[MAX_CHARSETS];
+extern int char_range[MAX_CHARSETS];
 
 // Modern: just cache as the string is printed, dump out as one.  Still pretty terrible
 #define GLM_STRING_CACHE 4096
@@ -94,6 +95,10 @@ void Draw_TextCacheFlush(void)
 {
 	extern cvar_t scr_coloredText;
 
+	if (!GL_ShadersSupported()) {
+		return;
+	}
+
 	if (cache_pos) {
 		// Draw text
 		if (!textStringProgram.program) {
@@ -182,8 +187,19 @@ static void Draw_TextCacheAdd(wchar ch, qbool bigchar)
 static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 {
 	int new_charset = (ch & 0xFF00) >> 8;
+	int slot = 0;
 
-	if (cache_pos >= GLM_STRING_CACHE || (cache_pos && cached_charset != new_charset)) {
+	if ((ch & 0xFF00) != 0) {
+		slot = ((ch >> 8) & 0xFF);
+		if (!char_range[slot]) {
+			slot = 0;
+			ch = '?';
+		}
+	}
+
+	ch &= 0xFF;	// Only use the first byte.
+
+	/*if (cache_pos >= GLM_STRING_CACHE || (cache_pos && cached_charset != new_charset)) {
 		Draw_TextCacheFlush();
 	}
 
@@ -193,7 +209,18 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 	cache[cache_pos].scale = scale * 8;
 	memcpy(&cache[cache_pos].color, cache_currentColor, sizeof(cache[cache_pos].color));
 	cached_charset = new_charset;
-	++cache_pos;
+	++cache_pos;*/
+
+	{
+		float char_height = (char_textures[slot].th - char_textures[slot].tl) * CHARSET_CHAR_HEIGHT;
+		float char_width = (char_textures[slot].sh - char_textures[slot].sl) * CHARSET_CHAR_WIDTH;
+		float frow = char_textures[slot].tl + (ch >> 4) * char_height;	// row = num * (16 chars per row)
+		float fcol = char_textures[slot].sl + (ch & 0x0F) * char_width;
+
+		glActiveTexture(GL_TEXTURE0);
+		GL_Bind(char_textures[cached_charset].texnum);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, char_width, char_height, cache_currentColor, false);
+	}
 }
 
 // x, y					= Pixel position of char.

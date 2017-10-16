@@ -631,24 +631,21 @@ int CachePics_AddToAtlas(mpic_t* pic)
 	if (texWidth > ATLAS_WIDTH || texHeight > ATLAS_HEIGHT) {
 		return -1;
 	}
-	Con_Printf(" > width = %d, height = %d, texWidth = %d, texHeight = %d\n", width, height, texWidth, texHeight);
+	//Con_Printf(" > size = %d x %d = %d\n", width, height, width * height);
 
 	// Allocate space in an atlas texture
 	for (i = 0; i < ATLAS_COUNT; ++i) {
 		int x_pos, y_pos;
-		int padding = 2;
+		int padding = 1;
 
-		if (CachePics_AllocBlock(i, width + padding, height + padding, &x_pos, &y_pos)) {
+		if (CachePics_AllocBlock(i, width + (width == ATLAS_WIDTH ? 0 : padding), height + (height == ATLAS_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
 			char* b = buffer;
 			int xOffset, yOffset;
 
-			Con_Printf(" > > alloc %d %d\n", x_pos, y_pos);
+			//Con_Printf(" > > alloc %d %d\n", x_pos, y_pos);
 
 			// Copy texture image
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
-			x_pos++;
-			y_pos++;
 
 			for (yOffset = 0; yOffset < height; ++yOffset) {
 				for (xOffset = 0; xOffset < width; ++xOffset) {
@@ -680,6 +677,9 @@ int CachePics_AddToAtlas(mpic_t* pic)
 			}
 
 			return i;
+		}
+		else {
+			Con_Printf("*** FAILED TO PLACE: %d (%d x %d) ***\n", pic->texnum, width, height);
 		}
 	}
 
@@ -718,12 +718,13 @@ void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 
 	while (current) {
 		size_this = current->data.pic->width * current->data.pic->height;
-		if (size_this < size_node) {
-			break;
+		if (size_this > size_node) {
+			sized_list = &current->size_order;
+			current = *sized_list;
+			continue;
 		}
 
-		sized_list = &current->size_order;
-		current = *sized_list;
+		break;
 	}
 
 	node->size_order = current;
@@ -735,6 +736,7 @@ void CachePics_CreateAtlas(void)
 	cachepic_node_t* sized_list = NULL;
 	cachepic_node_t* cur;
 	int i;
+	int expected = 0, found = 0;
 
 	// Delete old atlas textures
 	memset(atlas_texels, 0, sizeof(atlas_texels));
@@ -749,6 +751,7 @@ void CachePics_CreateAtlas(void)
 			wadpics[i].data.pic = wad_pictures[i].pic;
 
 			CachePics_InsertBySize(&sized_list, &wadpics[i]);
+			++expected;
 		}
 	}
 
@@ -760,6 +763,7 @@ void CachePics_CreateAtlas(void)
 			charsetpics[i].data.pic = &char_textures[i];
 
 			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
+			++expected;
 		}
 	}
 
@@ -769,38 +773,38 @@ void CachePics_CreateAtlas(void)
 
 		for (cur = cachepics[i]; cur; cur = cur->next) {
 			CachePics_InsertBySize(&sized_list, cur);
+			++expected;
 		}
 	}
 
 	for (cur = sized_list; cur; cur = cur->size_order) {
-		int placed = -1;
-		/*int j;
-		for (j = 0; j < ATLAS_COUNT; ++j) {
-			if (atlas_texnum[j] == cur->data.pic->texnum) {
-				placed = j;
-				break;
-			}
-		}*/
+		++found;
+	}
 
-		if (placed == -1) {
-			int old_tex = cur->data.pic->texnum;
-			mpic_t old = *cur->data.pic;
+	Con_Printf("Found %d/%d\n", found, expected);
 
-			Con_Printf("%s\n", cur->data.name);
+	for (cur = sized_list; cur; cur = cur->size_order) {
+		int old_tex = cur->data.pic->texnum;
+		mpic_t old = *cur->data.pic;
+		int placed;
 
-			placed = CachePics_AddToAtlas(cur->data.pic);
+		//Con_Printf("%s\n", cur->data.name);
 
-			if (placed >= 0) {
-				Con_Printf("  placed @ atlas %d [%d, was %d]\n", placed, atlas_texnum[placed], old_tex);
-				Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]\n", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
-			}
-			else {
-				Con_Printf("  Failed to place\n");
-			}
+		placed = CachePics_AddToAtlas(cur->data.pic);
+
+		/*if (placed >= 0) {
+			Con_Printf("  placed @ atlas %d [%d, was %d]\n", placed, atlas_texnum[placed], old_tex);
+			Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]\n", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
 		}
 		else {
-			Con_Printf("%s already on atlas %d [%d]\n", cur->data.name, placed, atlas_texnum[placed]);
-		}
+			Con_Printf("  Failed to place\n");
+		}*/
+	}
+
+	{
+		extern mpic_t* sb_ibar;
+
+		Con_Printf("Created atlas, sb_ibar.tex = %d, wadpics[ibar] = %s\n", sb_ibar->texnum, wad_pictures[WADPIC_SB_IBAR].pic ? "yes" : "no");
 	}
 
 	// Upload atlas textures

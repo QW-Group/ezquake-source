@@ -31,8 +31,13 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+#define IMAGEPROG_FLAGS_TEXTURE 1
+#define IMAGEPROG_FLAGS_ALPHATEST 2
+
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
+void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
+
 // Temp: very simple program to draw single texture on-screen
-// imageProgram.program()
 static glm_program_t imageProgram;
 static GLint imageProgram_matrix;
 static GLint imageProgram_tex;
@@ -45,7 +50,7 @@ static GLint imageProgram_alphatest;
 
 static GLuint GL_CreateRectangleVAO(void);
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
+void GLM_DrawImageOld(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
 	float matrix[16];
@@ -90,11 +95,10 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-//
 static glm_program_t rectProgram;
 static GLint rectProgram_matrix;
 static GLint rectProgram_color;
-
+/*
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
 	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
@@ -126,7 +130,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 
 	glBindVertexArray(GL_CreateRectangleVAO());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
+}*/
 
 static GLuint GL_CreateRectangleVAO(void)
 {
@@ -275,4 +279,158 @@ void GLM_Draw_FadeScreen(float alpha)
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	}
+}
+
+#define MAX_MULTI_IMAGE_BATCH 1024
+
+static glm_program_t multiImageProgram;
+static GLint multiImage_modelViewMatrix;
+static GLint multiImage_projectionMatrix;
+static GLint multiImage_tex;
+
+typedef struct glm_image_s {
+	float x1, y1;
+	float x2, y2;
+	float s1, t1;
+	float s2, t2;
+	unsigned char colour[4];
+	int flags;
+	int texNumber;
+} glm_image_t;
+
+static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
+static int imageCount = 0;
+static GLuint imageVAO;
+static GLuint imageVBO;
+
+void GLM_CreateMultiImageProgram(void)
+{
+	if (!multiImageProgram.program) {
+		GL_VGFDeclare(multi_image_draw);
+
+		// Initialise program for drawing image
+		GLM_CreateVGFProgram("Multi-image", GL_VGFParams(multi_image_draw), &multiImageProgram);
+		multiImage_modelViewMatrix = glGetUniformLocation(multiImageProgram.program, "modelViewMatrix");
+		multiImage_projectionMatrix = glGetUniformLocation(multiImageProgram.program, "projectionMatrix");
+		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
+	}
+
+	if (!imageVBO) {
+		glGenBuffers(1, &imageVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images), images, GL_STATIC_DRAW);
+	}
+
+	if (!imageVAO) {
+		glGenVertexArrays(1, &imageVAO);
+		glBindVertexArray(imageVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(4);
+		glEnableVertexAttribArray(5);
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
+		glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
+		glVertexAttribIPointer(5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
+	}
+}
+
+void GLM_FlushImageDraw(void)
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+
+	if (imageCount) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+		glActiveTexture(GL_TEXTURE0);
+
+		if (false) {
+			int i;
+			for (i = 0; i < imageCount; ++i) {
+				GL_Bind(images[i].texNumber);
+				GLM_DrawImageOld(images[i].x1, images[i].y1, images[i].x2 - images[i].x1, images[i].y2 - images[i].y1, 0, images[i].s1, images[i].t1, images[i].s2 - images[i].s1, images[i].t2 - images[i].t1, images[i].colour, images[i].flags & IMAGEPROG_FLAGS_ALPHATEST);
+			}
+		}
+		else {
+			int start = 0;
+			int i;
+			int currentTexture = -1;
+
+			GLM_CreateMultiImageProgram();
+
+			glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+			glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
+
+			glDisable(GL_DEPTH_TEST);
+			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+			GL_UseProgram(multiImageProgram.program);
+			glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+			glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+			glUniform1i(multiImage_tex, 0);
+
+			glBindVertexArray(imageVAO);
+
+			for (i = 0; i < imageCount; ++i) {
+				glm_image_t* img = &images[i];
+
+				if (i && currentTexture != img->texNumber) {
+					GL_Bind(currentTexture);
+					glDrawArrays(GL_POINTS, start, i - start);
+					start = i;
+				}
+
+				currentTexture = img->texNumber;
+			}
+			GL_Bind(currentTexture);
+			glDrawArrays(GL_POINTS, start, imageCount - start);
+			glEnable(GL_DEPTH_TEST);
+		}
+	}
+
+	imageCount = 0;
+}
+
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
+{
+	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+		GLM_FlushImageDraw();
+	}
+
+	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+	images[imageCount].x1 = x;
+	images[imageCount].y1 = y;
+	images[imageCount].x2 = x + width;
+	images[imageCount].y2 = y + height;
+	images[imageCount].flags = (alpha ? IMAGEPROG_FLAGS_ALPHATEST : 0) | IMAGEPROG_FLAGS_TEXTURE;
+	images[imageCount].s1 = tex_s;
+	images[imageCount].s2 = tex_s + tex_width;
+	images[imageCount].t1 = tex_t;
+	images[imageCount].t2 = tex_t + tex_height;
+	images[imageCount].texNumber = currenttexture;
+
+	++imageCount;
+}
+
+void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
+{
+	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+		GLM_FlushImageDraw();
+	}
+
+	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+	images[imageCount].x1 = x;
+	images[imageCount].y1 = y;
+	images[imageCount].x2 = x + width;
+	images[imageCount].y2 = y + height;
+	images[imageCount].flags = 0;
+	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
+
+	++imageCount;
 }

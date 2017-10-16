@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "sbar.h"
 
+extern void GL_EnterRegion(const char* regionName);
+extern void GL_LeaveRegion(void);
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 
@@ -1448,9 +1450,11 @@ void HUD_DrawObject(hud_t *hud)
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
+	GL_EnterRegion(hud->name);
 	Draw_SetOverallAlpha(hud->opacity->value);
 	hud->draw_func(hud);
 	Draw_SetOverallAlpha(1.0);
+	GL_LeaveRegion();
 
 	// last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)
@@ -1491,13 +1495,8 @@ void HUD_Draw(void)
 
     while (hud)
     {
-		extern void GL_EnterRegion(const char* regionName);
-		extern void GL_LeaveRegion(void);
-
-		GL_EnterRegion(hud->name);
 		// Draw.
 		HUD_DrawObject(hud);
-		GL_LeaveRegion();
 
 		// Go to next.
 		hud = hud->next;
