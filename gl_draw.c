@@ -33,6 +33,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);
+void CachePics_LoadAmmoPics(mpic_t* ibar);
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t con_shift, hud_faderankings;
@@ -431,6 +432,10 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		pic->th		= pic_24bit->th;
 		pic->tl		= pic_24bit->tl;
 
+		if (code == WADPIC_SB_IBAR) {
+			CachePics_LoadAmmoPics(pic);
+		}
+
 		return pic;
 	}
 
@@ -474,6 +479,10 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 	else
 	{
 		GL_LoadPicTexture (name, pic, p->data);
+	}
+
+	if (code == WADPIC_SB_IBAR) {
+		CachePics_LoadAmmoPics(pic);
 	}
 
 	return pic;

@@ -37,6 +37,7 @@ typedef struct cachepic_node_s
 	unsigned int refcount;
 	struct cachepic_node_s *next;
 	struct cachepic_node_s *size_order;
+	int width, height;
 } cachepic_node_t;
 
 #define	CACHED_PICS_HDSIZE		64

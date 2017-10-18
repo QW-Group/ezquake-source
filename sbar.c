@@ -67,6 +67,7 @@ mpic_t		*sb_colon, *sb_slash;
 mpic_t		*sb_ibar;
 mpic_t		*sb_sbar;
 mpic_t		*sb_scorebar;
+mpic_t      sb_ib_ammo[4];
 
 mpic_t		*sb_weapons[7][8];	// 0 is active, 1 is owned, 2-5 are flashes
 mpic_t		*sb_ammo[4];

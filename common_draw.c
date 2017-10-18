@@ -639,10 +639,7 @@ int CachePics_AddToAtlas(mpic_t* pic)
 		int padding = 1;
 
 		if (CachePics_AllocBlock(i, width + (width == ATLAS_WIDTH ? 0 : padding), height + (height == ATLAS_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
-			char* b = buffer;
 			int xOffset, yOffset;
-
-			//Con_Printf(" > > alloc %d %d\n", x_pos, y_pos);
 
 			// Copy texture image
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -707,17 +704,24 @@ void CachePics_Init(void)
 	atlas_dirty = ~0;
 
 	CachePics_AtlasUpload();
+
 	Cmd_AddCommand("createatlas", CachePics_CreateAtlas);
 }
 
 void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 {
-	int size_node = node->data.pic->width * node->data.pic->height;
+	int size_node;
 	cachepic_node_t* current = *sized_list;
 	int size_this;
 
+	glBindTexture(GL_TEXTURE_2D, node->data.pic->texnum);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &node->width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &node->height);
+
+	size_node = node->width * node->height;
+
 	while (current) {
-		size_this = current->data.pic->width * current->data.pic->height;
+		size_this = current->width * current->height;
 		if (size_this > size_node) {
 			sized_list = &current->size_order;
 			current = *sized_list;
@@ -729,6 +733,77 @@ void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 
 	node->size_order = current;
 	*sized_list = node;
+}
+
+void CachePics_LoadAmmoPics(mpic_t* ibar)
+{
+	extern mpic_t sb_ib_ammo[4];
+	mpic_t* targPic;
+	int i;
+	GLint texWidth, texHeight;
+	float sRatio = (ibar->sh - ibar->sl) / (float)ibar->width;
+	float tRatio = (ibar->th - ibar->tl) / (float)ibar->height;
+	byte* source;
+	byte* target;
+	int realwidth, realheight;
+	float newsh, newsl;
+	float newth, newtl;
+
+	// Find size of the source
+	glBindTexture(GL_TEXTURE_2D, ibar->texnum);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texHeight);
+
+	source = Q_malloc(texWidth * texHeight * 4);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, source);
+
+	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
+		int num = i - WADPIC_SB_IBAR_AMMO1;
+		int x, y;
+		int x_src, y_src;
+		char name[16];
+		int xcoord = (3 + num * 48);
+		int xwidth = 42;
+		int ycoord = 0;
+		int yheight = 11;
+
+		newsl = ibar->sl + xcoord * sRatio;
+		newsh = newsl + xwidth * sRatio;
+		newtl = ibar->tl + ycoord * tRatio;
+		newth = newtl + yheight * tRatio;
+
+		x_src = texWidth * newsl;
+		y_src = texHeight * newtl;
+
+		realwidth = (newsh - newsl) * texWidth;
+		realheight = (newth - newtl) * texHeight;
+		target = Q_malloc(realwidth * realheight * 4);
+
+		snprintf(name, sizeof(name), "hud_ammo_%d", i - WADPIC_SB_IBAR_AMMO1);
+
+		memset(target, 0, realwidth * realheight * 4);
+		for (x = 0; x < realwidth; ++x) {
+			for (y = 0; y < realheight; ++y) {
+				target[(x + y * realwidth) * 4] = source[((x_src + x) + (y_src + y) * texWidth) * 4];
+				target[(x + y * realwidth) * 4 + 1] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 1];
+				target[(x + y * realwidth) * 4 + 2] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 2];
+				target[(x + y * realwidth) * 4 + 3] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 3];
+			}
+		}
+
+		targPic = wad_pictures[i].pic = &sb_ib_ammo[num];
+		targPic->texnum = GL_LoadTexture(name, realwidth, realheight, target, TEX_NOCOMPRESS | TEX_ALPHA | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+		targPic->sl = 0;
+		targPic->sh = 1;
+		targPic->tl = 0;
+		targPic->th = 1;
+		targPic->width = 42;
+		targPic->height = 11;
+
+		Q_free(target);
+	}
+
+	Q_free(source);
 }
 
 void CachePics_CreateAtlas(void)
@@ -750,8 +825,10 @@ void CachePics_CreateAtlas(void)
 		if (wad_pictures[i].pic) {
 			wadpics[i].data.pic = wad_pictures[i].pic;
 
-			CachePics_InsertBySize(&sized_list, &wadpics[i]);
-			++expected;
+			if (i != WADPIC_SB_IBAR) {
+				CachePics_InsertBySize(&sized_list, &wadpics[i]);
+				++expected;
+			}
 		}
 	}
 
