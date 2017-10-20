@@ -386,7 +386,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	// MEAG: GLM-FIXME
 	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin)))) {
 		GL_EnableMultitexture();
-		glBindTexture(GL_TEXTURE_2D, underwatertexture);
+		GL_Bind(underwatertexture);
 
 		glMatrixMode(GL_TEXTURE);
 		glLoadIdentity();

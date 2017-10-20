@@ -228,7 +228,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 		if (non_array_switch) {
 			GL_SelectTexture(GL_TEXTURE0 + 1);
-			glBindTexture(GL_TEXTURE_2D, req->texture_index);
+			GL_Bind(req->texture_index);
 
 			non_texture_array = req->texture_index;
 		}

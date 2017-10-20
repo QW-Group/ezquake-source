@@ -226,7 +226,7 @@ void Framebuffer_Create (fb_t *fbs)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbs->frame_buffer);
 	
 	// Initializing the texture.
-	glBindTexture(GL_TEXTURE_2D, fbs->texture);
+	GL_Bind(fbs->texture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 //	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, fbs->width, fbs->height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbs->width, fbs->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);

@@ -61,7 +61,7 @@ void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, qbool a
 		return;
 	}
 
-	glBindTexture(GL_TEXTURE_2D, texture);
+	GL_Bind(texture);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 
@@ -151,7 +151,7 @@ void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture, qbool 
 		return;
 	}
 
-	glBindTexture(GL_TEXTURE_2D, stdTexture);
+	GL_Bind(stdTexture);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 

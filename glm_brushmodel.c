@@ -234,7 +234,7 @@ void GLM_LoadBrushModelTextures(model_t* loadmodel)
 			int w, h, mips;
 			int miplevel = 0;
 
-			glBindTexture(GL_TEXTURE_2D, tx->gl_texturenum);
+			GL_Bind(tx->gl_texturenum);
 			glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_WIDTH, &w);
 			glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_HEIGHT, &h);
 			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, &mips);
@@ -294,7 +294,7 @@ void GLM_LoadBrushModelTextures(model_t* loadmodel)
 				int w, h, level;
 				texture_t* thisTex = loadmodel->textures[texIndex];
 
-				glBindTexture(GL_TEXTURE_2D, thisTex->gl_texturenum);
+				GL_Bind(thisTex->gl_texturenum);
 				w = tx->gl_width;
 				h = tx->gl_height;
 

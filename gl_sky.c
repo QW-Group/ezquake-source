@@ -430,16 +430,6 @@ void EmitSkyVert(vec3_t v, qbool newPoly)
 	glVertex3fv(v);
 }
 
-static void DrawSkyFace (int axis)
-{
-	if (GL_ShadersSupported()) {
-		GLM_DrawSkyFace(axis);
-	}
-	else {
-		GLC_DrawSkyFace(axis);
-	}
-}
-
 void ClearSky (void)
 {
 	int i;

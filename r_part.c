@@ -691,12 +691,12 @@ void Classic_DrawParticles(void)
 	GL_TextureEnvMode(GL_MODULATE);
 
 	if (!GL_ShadersSupported()) {
-		glBindTexture(GL_TEXTURE_2D, particletexture);
+		GL_Bind(particletexture);
 		GLC_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}
 	else {
 		GL_SelectTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, particletexture);
+		GL_Bind(particletexture);
 		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}
 

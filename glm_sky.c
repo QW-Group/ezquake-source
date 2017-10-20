@@ -81,7 +81,7 @@ static void BuildSkyVertsArray(void)
 	if (!skyDome.program) {
 		GL_VFDeclare(skydome)
 
-			GLM_CreateVFProgram("SkyDome", GL_VFParams(skydome), &skyDome);
+		GLM_CreateVFProgram("SkyDome", GL_VFParams(skydome), &skyDome);
 
 		skyDome_modelView = glGetUniformLocation(skyDome.program, "modelView");
 		skyDome_projection = glGetUniformLocation(skyDome.program, "projection");
@@ -159,7 +159,6 @@ static void GLM_DrawFastSky(void)
 		255
 	};
 
-	glDisable(GL_CULL_FACE);
 	count = 0;
 	for (fa = skychain; fa; fa = fa->texturechain) {
 		glpoly_t* poly;
@@ -168,7 +167,7 @@ static void GLM_DrawFastSky(void)
 			int newVerts = poly->numverts;
 			int v;
 
-			if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+			if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 				GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color, cl.worldmodel->vao, indices, count, false, false, false);
 				count = 0;
 			}
@@ -176,6 +175,9 @@ static void GLM_DrawFastSky(void)
 			if (count) {
 				int prev = count - 1;
 
+				if (count % 2 == 1) {
+					indices[count++] = indices[prev];
+				}
 				indices[count++] = indices[prev];
 				indices[count++] = poly->vbo_start;
 			}
@@ -189,8 +191,6 @@ static void GLM_DrawFastSky(void)
 		GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color, cl.worldmodel->vao, indices, count, false, false, false);
 		count = 0;
 	}
-
-	glEnable(GL_CULL_FACE);
 }
 
 void GLM_DrawSky(void)
@@ -308,6 +308,7 @@ static void GLM_DrawSkyFaces(void)
 			if (skymins[0][i] == -1 && skymins[1][i] == -1 && skymaxs[0][i] == 1 && skymaxs[1][i] == 1) {
 				faceStarts[faces] = skyDome_starts[i];
 				faceLengths[faces] = skyDome_length[i];
+				++faces;
 			}
 			else {
 				minIndex[0] = (int)floor(bound(0, (skymins[0][i] + 1) / 2.0, 1) * SUBDIVISIONS);
@@ -318,7 +319,6 @@ static void GLM_DrawSkyFaces(void)
 				for (strip = minIndex[0]; strip < maxIndex[0]; ++strip) {
 					faceStarts[faces] = skyDome_starts[i] + 4 * (strip * SUBDIVISIONS + minIndex[1]) + 2 * strip;
 					faceLengths[faces] = (maxIndex[1] - minIndex[1]) * 4;
-
 					++faces;
 				}
 			}
@@ -377,9 +377,9 @@ void GLM_DrawSkyFace(int axis)
 		glUniform1i(skyDome_skyTex, 0);
 		glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
 		GL_BindVertexArray(skyDome_vao);
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, skyDome_starts[axis], skyDome_length[axis]);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		GL_LeaveRegion();
 	}
 }
