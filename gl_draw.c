@@ -62,10 +62,9 @@ int		translate_texture;
 
 static mpic_t	conback;
 
-#define		NUMCROSSHAIRS 6
-int			crosshairtextures[NUMCROSSHAIRS];
-int			crosshairtexture_txt;
-mpic_t		crosshairpic;
+mpic_t      crosshairtexture_txt;
+mpic_t      crosshairpic;
+mpic_t      crosshairs_builtin[NUMCROSSHAIRS];
 
 static byte customcrosshairdata[64];
 
@@ -207,16 +206,15 @@ void customCrosshair_Init(void)
 	int i = 0, c;
 
 	customcrosshair_loaded = CROSSHAIR_NONE;
-	crosshairtexture_txt = 0;
+	crosshairtexture_txt.texnum = 0;
 
-	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY)))
+	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY))) {
 		return;
+	}
 
-	while (i < 64)
-	{
+	while (i < 64) {
 		VFS_READ(f, &ch, sizeof(char), &err);
-		if (err == VFSERR_EOF) 
-		{
+		if (err == VFSERR_EOF) {
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			VFS_CLOSE(f);
 			return;
@@ -226,17 +224,18 @@ void customCrosshair_Init(void)
 		if (isspace(c))
 			continue;
 
-		if (tolower(c) != 'x' && tolower(c) != 'o')
-		{
+		if (tolower(c) != 'x' && tolower(c) != 'o') {
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
 			VFS_CLOSE(f);
 			return;
 		}
-		customcrosshairdata[i++] = (c == 'x' || c  == 'X') ? 0xfe : 0xff;
+		customcrosshairdata[i++] = (c == 'x' || c == 'X') ? 0xfe : 0xff;
 	}
 
 	VFS_CLOSE(f);
-	crosshairtexture_txt = GL_LoadTexture ("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
+	crosshairtexture_txt.texnum = GL_LoadTexture("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
+	crosshairtexture_txt.sl = crosshairtexture_txt.tl = 0;
+	crosshairtexture_txt.sh = crosshairtexture_txt.th = 1;
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
@@ -260,7 +259,10 @@ static void BuildBuiltinCrosshairs(void)
 
 		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		CreateBuiltinCrosshair(crosshair_buffer, crosshair_size, i + 2);
-		crosshairtextures[i] = GL_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
+		crosshairs_builtin[i].texnum = GL_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
+		crosshairs_builtin[i].sl = crosshairs_builtin[i].tl = 0;
+		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
+		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
 		Q_free(crosshair_buffer);
 	}
@@ -642,8 +644,7 @@ void Draw_Crosshair (void)
 
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
-		(customcrosshair_loaded & CROSSHAIR_IMAGE))
-	{
+		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
 		qbool half_size = false;
 		int texnum;
 
@@ -660,34 +661,30 @@ void Draw_Crosshair (void)
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
 
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-
 		memcpy(col, crosshaircolor.color, 3);
 		col[3] = bound(0, crosshairalpha.value, 1) * 255;
-
-		if (GL_ShadersSupported()) {
-			GL_SelectTexture(GL_TEXTURE0);
-		}
-		else {
-			glColor4ubv (col);
-		}
 
 		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
 			texnum = crosshairpic.texnum;
 			ofs1 = (crosshairpic.width * 0.5f - 0.5f) * bound(0, crosshairsize.value, 20);
 			ofs2 = (crosshairpic.height * 0.5f + 0.5f) * bound(0, crosshairsize.value, 20);
+
 			sh = crosshairpic.sh;
 			sl = crosshairpic.sl;
 			th = crosshairpic.th;
 			tl = crosshairpic.tl;
 		}
 		else {
-			texnum = ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
+			mpic_t* pic = ((crosshair.value >= 2) ? &crosshairs_builtin[(int)crosshair.value - 2] : &crosshairtexture_txt);
+
+			texnum = pic->texnum;
 			ofs1 = (crosshair_pixel_size * 0.5f - 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
 			ofs2 = (crosshair_pixel_size * 0.5f + 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
-			tl = sl = 0;
-			sh = th = 1;
+
+			sh = pic->sh;
+			sl = pic->sl;
+			th = pic->th;
+			tl = pic->tl;
 		}
 
 		if (half_size) {
@@ -695,26 +692,34 @@ void Draw_Crosshair (void)
 			ofs2 *= 0.5f;
 		}
 
-#ifdef GL_CLAMP_TO_EDGE
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#else
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-#endif
+		if (GL_ShadersSupported()) {
+			GL_SelectTexture(GL_TEXTURE0);
+		}
+
 		if (GL_ShadersSupported()) {
 			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
+			GLM_FlushImageDraw();
 		}
 		else {
+			GL_TextureEnvMode(GL_MODULATE);
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			GL_Bind(texnum);
+#ifdef GL_CLAMP_TO_EDGE
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#else
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
+
+			glColor4ubv(col);
 			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
+			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+			GL_TextureEnvMode(GL_REPLACE);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-		GL_TextureEnvMode(GL_REPLACE);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
@@ -723,33 +728,33 @@ void Draw_Crosshair (void)
 		if (CL_MultiviewInsetEnabled()) {
 			if (CL_MultiviewInsetView()) {
 				if (cl_sbar.value) {
-					Draw_Character (vid.width - (vid.width / 3) / 2 - 4, ((vid.height / 3) - sb_lines / 3) / 2 - 2, '+');
+					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, ((vid.height / 3) - sb_lines / 3) / 2 - 2, '+');
 				}
 				else {
-					Draw_Character (vid.width - (vid.width / 3) / 2 - 4, (vid.height / 3) / 2 - 2, '+');
+					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, (vid.height / 3) / 2 - 2, '+');
 				}
 			}
 			else {
-				Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
+				Draw_Character(scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
 			}
 		}
 		else if (CL_MultiviewActiveViews() == 2) {
-			Draw_Character (vid.width / 2 - 4, vid.height * 3/4 - 2, '+');
-			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 2 - 4, vid.height * 3 / 4 - 2, '+');
+			Draw_Character(vid.width / 2 - 4, vid.height / 4 - 2, '+');
 		}
 		else if (CL_MultiviewActiveViews() == 3) {
-			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
-			Draw_Character (vid.width / 4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+			Draw_Character(vid.width / 2 - 4, vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 4 - 4, vid.height / 2 + vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 2 + vid.width / 4 - 4, vid.height / 2 + vid.height / 4 - 2, '+');
 		}
 		else if (CL_MultiviewActiveViews() == 4) {
-			Draw_Character (vid.width/4 - 4, vid.height/4 - 2, '+');
-			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/4 - 2, '+');
-			Draw_Character (vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+			Draw_Character(vid.width / 4 - 4, vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 2 + vid.width / 4 - 4, vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 4 - 4, vid.height / 2 + vid.height / 4 - 2, '+');
+			Draw_Character(vid.width / 2 + vid.width / 4 - 4, vid.height / 2 + vid.height / 4 - 2, '+');
 		}
 		else {
-			Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
+			Draw_Character(scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
 		}
 	}
 }

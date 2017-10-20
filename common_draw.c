@@ -465,6 +465,7 @@ void SCR_DrawClients(void)
 static cachepic_node_t *cachepics[CACHED_PICS_HDSIZE];
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS];
+static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
 
 static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
 static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
@@ -841,6 +842,30 @@ void CachePics_CreateAtlas(void)
 
 			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
 			++expected;
+		}
+	}
+
+	// Copy crosshairs
+	{
+		extern mpic_t crosshairtexture_txt;
+		extern mpic_t crosshairpic;
+		extern mpic_t crosshairs_builtin[NUMCROSSHAIRS];
+
+		if (crosshairtexture_txt.texnum) {
+			crosshairpics[0].data.pic = &crosshairtexture_txt;
+			CachePics_InsertBySize(&sized_list, &crosshairpics[0]);
+		}
+
+		if (crosshairpic.texnum) {
+			crosshairpics[1].data.pic = &crosshairpic;
+			CachePics_InsertBySize(&sized_list, &crosshairpics[1]);
+		}
+
+		for (i = 0; i < NUMCROSSHAIRS; ++i) {
+			if (crosshairs_builtin[i + 2].texnum) {
+				crosshairpics[i].data.pic = &crosshairs_builtin[i + 2];
+				CachePics_InsertBySize(&sized_list, &crosshairpics[i]);
+			}
 		}
 	}
 

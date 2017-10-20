@@ -772,6 +772,7 @@ void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_FlushImageDraw(void);
 
 #define MAX_CHARSETS 256
+#define NUMCROSSHAIRS  6
 
 #endif /* !__GL_LOCAL_H__ */
 
