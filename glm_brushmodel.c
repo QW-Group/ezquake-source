@@ -548,8 +548,9 @@ static glm_brushmodel_req_t brushmodel_requests[MAX_BRUSHMODEL_BATCH];
 static int batch_count = 0;
 static GLuint prev_texture_array = 0;
 static qbool in_batch_mode = false;
+static qbool firstBrushModel = true;
 
-void GL_BeginDrawBrushModels(void)
+void GL_BrushModelInitState(void)
 {
 	static float projectionMatrix[16];
 
@@ -571,6 +572,13 @@ void GL_BeginDrawBrushModels(void)
 	else {
 		GL_EnableTMU(GL_TEXTURE0);
 	}
+
+	firstBrushModel = false;
+}
+
+void GL_BeginDrawBrushModels(void)
+{
+	firstBrushModel = true;
 }
 
 static int GL_BatchRequestSorter(const void* lhs_, const void* rhs_)
@@ -608,7 +616,14 @@ static void GL_FlushBrushModelBatch(void)
 	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
 	int base = 0;
 
-	GL_SelectTexture(GL_TEXTURE0);
+	if (!batch_count) {
+		return;
+	}
+
+	if (firstBrushModel) {
+		GL_BrushModelInitState();
+	}
+
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
 
 	for (i = 0; i < batch_count; ++i) {
@@ -658,8 +673,6 @@ void GL_EndDrawBrushModels(void)
 {
 	if (GL_ShadersSupported()) {
 		GL_FlushBrushModelBatch();
-
-		//glEnable(GL_CULL_FACE);
 	}
 }
 

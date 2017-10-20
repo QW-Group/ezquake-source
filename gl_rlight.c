@@ -98,11 +98,25 @@ float bubblecolor[NUM_DLIGHTTYPES][4] = {
 	{ 0.5,  0.5,  0.5  },	// custom
 };
 
+static qbool first_dlight;
+
 void R_RenderDlight (dlight_t *light) {
 	// don't draw our own powerup glow and muzzleflashes
 	// muzzleflash keys are negative
 	if (light->key == (cl.viewplayernum + 1) || light->key == -(cl.viewplayernum + 1)) {
 		return;
+	}
+
+	if (first_dlight) {
+		glDepthMask(GL_FALSE);
+		if (!GL_ShadersSupported()) {
+			glDisable(GL_TEXTURE_2D);
+		}
+		glShadeModel(GL_SMOOTH);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_BlendFunc(GL_ONE, GL_ONE);
+
+		first_dlight = false;
 	}
 
 	if (GL_ShadersSupported()) {
@@ -113,55 +127,52 @@ void R_RenderDlight (dlight_t *light) {
 	}
 }
 
-void R_RenderDlights (void) {
+void R_RenderDlights(void)
+{
 	unsigned int i;
 	unsigned int j;
 	dlight_t *l;
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
-	glDepthMask (GL_FALSE);
-	if (!GL_ShadersSupported()) {
-		glDisable(GL_TEXTURE_2D);
-	}
-	glShadeModel (GL_SMOOTH);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE);
+	first_dlight = true;
 
-	for (i = 0; i < MAX_DLIGHTS/32; i++) {
+	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
 		if (cl_dlight_active[i]) {
 			for (j = 0; j < 32; j++) {
-				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
-					l = cl_dlights + i*32 + j;
+				if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+					l = cl_dlights + i * 32 + j;
 
 					if (l->bubble == 2) { // light from rl
 						if (gl_rl_globe.integer & 1) {
-							R_RenderDlight (l);
+							R_RenderDlight(l);
 						}
 						if (gl_rl_globe.integer & 2) {
-							R_MarkLights (l, 1 << (i*32+j), cl.worldmodel->nodes);
+							R_MarkLights(l, 1 << (i * 32 + j), cl.worldmodel->nodes);
 						}
 						continue;
 					}
 
-					R_MarkLights(l, 1 << (i*32 + j), cl.worldmodel->nodes);
-	
+					R_MarkLights(l, 1 << (i * 32 + j), cl.worldmodel->nodes);
+
 					if (gl_flashblend.integer && !(l->bubble && gl_flashblend.integer != 2)) {
 						R_RenderDlight(l);
 					}
 				}
 			}
 		}
-			
+
 	}
 
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	if (!GL_ShadersSupported()) {
-		glColor3ubv (color_white);
-		glEnable(GL_TEXTURE_2D);
+	if (!first_dlight) {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		if (!GL_ShadersSupported()) {
+			glColor3ubv(color_white);
+			glEnable(GL_TEXTURE_2D);
+		}
+		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDepthMask(GL_TRUE);
+		glShadeModel(GL_FLAT);
 	}
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask (GL_TRUE);
-	glShadeModel (GL_FLAT);
 }
 
 /*
