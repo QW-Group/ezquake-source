@@ -196,7 +196,7 @@ static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose
 
 	GL_PolygonOffset(1, 1);
 
-	glCullFace(GL_BACK);
+	GL_CullFace(GL_BACK);
 	glPolygonMode(GL_FRONT, GL_LINE);
 
 	// limit outline width, since even width == 3 can be considered as cheat.
@@ -250,7 +250,7 @@ static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose
 	glColor4f(1, 1, 1, 1);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glDisable(GL_LINE_SMOOTH);
-	glCullFace(GL_FRONT);
+	GL_CullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 
 	GL_PolygonOffset(0, 0);
@@ -273,10 +273,10 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	if (gl_powerupshells_style.integer) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
 	}
 	else {
-		glBlendFunc(GL_ONE, GL_ONE);
+		GL_BlendFunc(GL_ONE, GL_ONE);
 	}
 
 	if (scrolldir) {
@@ -336,7 +336,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 
 	// LordHavoc: reset the state to what the rest of the renderer expects
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 static int GLC_GenerateShellTexture(void)
@@ -395,12 +395,12 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 		glRotatef(r_refdef2.time * 10, 0, 1, 0);
 		glMatrixMode(GL_MODELVIEW);
 
-		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+		GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false);
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 		GL_SelectTexture(GL_TEXTURE1);

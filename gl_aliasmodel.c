@@ -772,7 +772,7 @@ void R_DrawViewModel(void)
 	}
 
 	// hack the depth range to prevent view model from poking into walls
-	glDepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 
 	switch (currententity->model->type) {
 	case mod_alias:
@@ -786,7 +786,7 @@ void R_DrawViewModel(void)
 		break;
 	}
 
-	glDepthRange(gldepthmin, gldepthmax);
+	GL_DepthRange(gldepthmin, gldepthmax);
 }
 
 void R_InitAliasModelCvars(void)

@@ -55,7 +55,7 @@ mleaf_t   *r_oldviewleaf2;                    // for watervis hack
 vec3_t    modelorg, r_entorigin;
 vec3_t    vup, vpn, vright;                   // view origin
 vec3_t    r_origin; // view origin
-float     gldepthmin, gldepthmax;
+double    gldepthmin, gldepthmax;
 float     r_world_matrix[16];
 float     r_base_world_matrix[16];
 float     clearColor[3] = {0, 0, 0};
@@ -707,7 +707,7 @@ void R_SetupGL(void)
 	farclip = max((int)r_farclip.value, 4096);
 	screenaspect = (float)r_refdef.vrect.width / r_refdef.vrect.height;
 	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
-	glCullFace(GL_FRONT);
+	GL_CullFace(GL_FRONT);
 
 	GL_IdentityModelView();
 	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
@@ -730,10 +730,10 @@ void R_SetupGL(void)
 		glClear(GL_DEPTH_BUFFER_BIT);
 		gldepthmin = 0;
 		gldepthmax = 1;
-		glDepthFunc(GL_LEQUAL);
+		GL_DepthFunc(GL_LEQUAL);
 	}
 
-	glDepthRange(gldepthmin, gldepthmax);
+	GL_DepthRange(gldepthmin, gldepthmax);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
@@ -1033,9 +1033,9 @@ void R_Clear(void)
 	glClear (clearbits);
 	gldepthmin = 0;
 	gldepthmax = 1;
-	glDepthFunc (GL_LEQUAL);
+	GL_DepthFunc(GL_LEQUAL);
 
-	glDepthRange (gldepthmin, gldepthmax);
+	GL_DepthRange(gldepthmin, gldepthmax);
 }
 
 // player velocity is drawn on screen

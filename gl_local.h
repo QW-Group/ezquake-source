@@ -349,7 +349,7 @@ typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
 extern lpMTexFUNC qglMultiTexCoord2f;
 extern lpSelTexFUNC qglActiveTexture;
 
-extern float gldepthmin, gldepthmax;
+extern double gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
@@ -600,6 +600,10 @@ int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos);
 int GLM_MeasureVBOSizeForBrushModel(model_t* m);
 
 void GL_UseProgram(GLuint program);
+void GL_DepthFunc(GLenum func);
+void GL_DepthRange(double nearVal, double farVal);
+void GL_CullFace(GLenum mode);
+void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

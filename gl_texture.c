@@ -226,44 +226,42 @@ void GL_Bind (int texnum)
 }
 
 static GLenum oldtarget = GL_TEXTURE0;
-static int cnttextures[4] = {-1, -1, -1, -1};
+static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static qbool mtexenabled = false;
 
-void GL_SelectTexture (GLenum target) 
+void GL_SelectTexture(GLenum target)
 {
 	if (target == oldtarget) {
 		return;
 	}
 
-	qglActiveTexture (target);
+	qglActiveTexture(target);
 
 	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
 	currenttexture = cnttextures[target - GL_TEXTURE0];
 	oldtarget = target;
 }
 
-void GL_DisableMultitexture (void) 
+void GL_DisableMultitexture(void)
 {
 	if (GL_ShadersSupported()) {
 		glActiveTexture(GL_TEXTURE0);
 	}
-	else if (mtexenabled) 
-	{
-		glDisable (GL_TEXTURE_2D);
-		GL_SelectTexture (GL_TEXTURE0);
+	else if (mtexenabled) {
+		glDisable(GL_TEXTURE_2D);
+		GL_SelectTexture(GL_TEXTURE0);
 		mtexenabled = false;
 	}
 }
 
-void GL_EnableMultitexture (void) 
+void GL_EnableMultitexture(void)
 {
 	if (GL_ShadersSupported()) {
 		glActiveTexture(GL_TEXTURE1);
 	}
-	else if (gl_mtexable)
-	{
-		GL_SelectTexture (GL_TEXTURE1);
-		glEnable (GL_TEXTURE_2D);
+	else if (gl_mtexable) {
+		GL_SelectTexture(GL_TEXTURE1);
+		glEnable(GL_TEXTURE_2D);
 		mtexenabled = true;
 	}
 }

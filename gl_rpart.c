@@ -765,7 +765,7 @@ void QMB_DrawParticles (void) {
 		if (pt->drawtype == pd_hide)
 			continue;
 
-		glBlendFunc(pt->SrcBlend, pt->DstBlend);
+		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
 
 		switch(pt->drawtype) {
 		//VULT PARTICLES
@@ -948,7 +948,7 @@ void QMB_DrawParticles (void) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 

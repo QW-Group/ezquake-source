@@ -280,7 +280,7 @@ void R_Bloom_DrawEffect( void )
 	GL_Bind(r_bloomeffecttexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	glBlendFunc(GL_ONE, GL_ONE);
+	GL_BlendFunc(GL_ONE, GL_ONE);
 	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	GL_TextureEnvMode(GL_MODULATE);
 	glBegin(GL_QUADS);                         
@@ -328,7 +328,7 @@ void R_Bloom_GeneratexCross( void )
 	// Darkening passes.
 	if( r_bloom_darken.value )
 	{
-		glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		GL_BlendFunc(GL_DST_COLOR, GL_ZERO);
 		GL_TextureEnvMode(GL_MODULATE);
 
 		for(i=0; i<r_bloom_darken.integer ;i++) 
@@ -341,7 +341,7 @@ void R_Bloom_GeneratexCross( void )
     // Bluring passes.
 	if( BLOOM_BLUR_RADIUS ) 
 	{
-		glBlendFunc(GL_ONE, GL_ONE);
+		GL_BlendFunc(GL_ONE, GL_ONE);
 
 		range = (float)BLOOM_BLUR_RADIUS;
 
@@ -418,7 +418,7 @@ void R_Bloom_GeneratexDiamonds( void )
     // Darkening passes
 	if( r_bloom_darken.value )
 	{
-		glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		GL_BlendFunc(GL_DST_COLOR, GL_ZERO);
 		GL_TextureEnvMode(GL_MODULATE);
 
 		for(i=0; i < r_bloom_darken.integer ;i++) 
@@ -429,8 +429,8 @@ void R_Bloom_GeneratexDiamonds( void )
 	}
 
     // Bluring passes.
-    //glBlendFunc(GL_ONE, GL_ONE);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+    //GL_BlendFunc(GL_ONE, GL_ONE);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
    
     if( r_bloom_diamond_size.value > 7 || r_bloom_diamond_size.value <= 3)
 	{
@@ -530,7 +530,7 @@ void R_Bloom_DownsampleView( void )
 
 		// Now blend the big screen texture into the bloom generation space (hoping it adds some blur).
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		glBlendFunc(GL_ONE, GL_ONE);
+		GL_BlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
 		GL_Bind(r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
@@ -626,7 +626,7 @@ void R_BloomBlend (void)
 
 	R_Bloom_DrawEffect();
 
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 

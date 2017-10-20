@@ -202,7 +202,7 @@ void GLC_EmitCausticsPolys (void) {
 
 	GL_Bind (underwatertexture);
 	GL_TextureEnvMode(GL_DECAL);
-	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	for (p = caustics_polys; p; p = p->caustics_chain) {
@@ -217,7 +217,7 @@ void GLC_EmitCausticsPolys (void) {
 	}
 
 	GL_TextureEnvMode(GL_REPLACE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	caustics_polys = NULL;

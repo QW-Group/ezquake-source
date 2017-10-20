@@ -201,7 +201,7 @@ void DrawCI(void)
 	glShadeModel(GL_SMOOTH);
 
 	// FIXME: i'm not sure which blend mode here better
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -229,7 +229,7 @@ void DrawCI(void)
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
 	glShadeModel(GL_FLAT);
 

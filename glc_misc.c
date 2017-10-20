@@ -56,7 +56,7 @@ void GLC_BrightenScreen(void)
 
 	glDisable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	glBlendFunc(GL_DST_COLOR, GL_ONE);
+	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
 	glBegin(GL_QUADS);
 	while (f > 1) {
 		if (f >= 2) {
@@ -74,7 +74,7 @@ void GLC_BrightenScreen(void)
 		f *= 0.5;
 	}
 	glEnd();
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glColor3ubv(color_white);

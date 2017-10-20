@@ -199,11 +199,11 @@ void GLC_DrawSky(void)
 		if (gl_fogenable.value && gl_fogsky.value) {
 			GL_EnableFog();
 			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
-			glBlendFunc(GL_ONE, GL_ZERO);
+			GL_BlendFunc(GL_ONE, GL_ZERO);
 		}
 		else {
 			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-			glBlendFunc(GL_ZERO, GL_ONE);
+			GL_BlendFunc(GL_ZERO, GL_ONE);
 		}
 		glDisable(GL_TEXTURE_2D);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -222,7 +222,7 @@ void GLC_DrawSky(void)
 		else {
 			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		}
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	}

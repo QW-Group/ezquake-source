@@ -168,7 +168,7 @@ static void GLM_AliasModelBatchDraw(int start, int end, float mvMatrix[MAX_ALIAS
 		if (shellModes[i]) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 			// FIXME: Should be able to move this to Begin() ... but, could be R_DrawViewModel() and not batched...
-			glBlendFunc(GL_ONE, GL_ONE);
+			GL_BlendFunc(GL_ONE, GL_ONE);
 		}
 		else {
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);

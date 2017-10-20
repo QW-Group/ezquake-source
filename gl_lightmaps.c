@@ -314,11 +314,13 @@ void R_BlendLightmaps (void) {
 	//	if (R_FullBrightAllowed())
 	//		return;
 
-	glDepthMask (GL_FALSE);		// don't bother writing Z
-	if (gl_invlightmaps)
-		glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-	else
-		glBlendFunc (GL_ZERO, GL_SRC_COLOR);
+	glDepthMask(GL_FALSE);		// don't bother writing Z
+	if (gl_invlightmaps) {
+		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+	}
+	else {
+		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+	}
 
 	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -342,8 +344,8 @@ void R_BlendLightmaps (void) {
 		lightmap_polys[i] = NULL;	
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask (GL_TRUE);		// back to normal Z buffering
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_TRUE);		// back to normal Z buffering
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa)
@@ -700,9 +702,9 @@ void GLC_SetLightmapTextureEnvironment(void)
 void GLC_SetLightmapBlendFunc(void)
 {
 	if (gl_invlightmaps) {
-		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 	}
 	else {
-		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
 	}
 }

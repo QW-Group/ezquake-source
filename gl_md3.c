@@ -249,7 +249,7 @@ wtf: where else{ }
 	}
 
 	GL_TextureEnvMode(GL_REPLACE);
-//	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1, 1, 1, 1);
 
 	glShadeModel(GL_FLAT);

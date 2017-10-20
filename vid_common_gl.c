@@ -350,7 +350,7 @@ void GL_Init (void) {
 	glClearColor (0.2,0.2,0.2,1.0);
 #endif
 
-	glCullFace(GL_FRONT);
+	GL_CullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
@@ -364,7 +364,7 @@ void GL_Init (void) {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	GL_TextureEnvMode(GL_REPLACE);
 
@@ -1226,3 +1226,49 @@ void GL_LeaveRegion(void)
 	nvtxRangePop();
 }
 #endif
+
+void GL_DepthFunc(GLenum func)
+{
+	static GLenum current = GL_LESS;
+
+	if (func != current) {
+		glDepthFunc(func);
+		current = func;
+	}
+}
+
+void GL_DepthRange(double nearVal, double farVal)
+{
+	static double currentNearVal = 0;
+	static double currentFarVal = 1;
+
+	if (nearVal != currentNearVal || farVal != currentFarVal) {
+		glDepthRange(nearVal, farVal);
+
+		currentNearVal = nearVal;
+		currentFarVal = farVal;
+	}
+}
+
+void GL_CullFace(GLenum mode)
+{
+	static GLenum current = GL_BACK;
+
+	if (mode != current) {
+		glCullFace(mode);
+		current = mode;
+	}
+}
+
+void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
+{
+	static GLenum currentSFactor = GL_ONE;
+	static GLenum currentDFactor = GL_ZERO;
+
+	if (sfactor != currentSFactor || dfactor != currentDFactor) {
+		glBlendFunc(sfactor, dfactor);
+		currentSFactor = sfactor;
+		currentDFactor = dfactor;
+	}
+}
+

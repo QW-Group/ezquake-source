@@ -137,7 +137,7 @@ void R_RenderLumas(void)
 
 	glDepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	glBlendFunc(GL_ONE, GL_ONE);
+	GL_BlendFunc(GL_ONE, GL_ONE);
 
 	GL_TextureEnvMode(GL_REPLACE);
 
@@ -152,7 +152,7 @@ void R_RenderLumas(void)
 		luma_polys[i] = NULL;
 	}
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask(GL_TRUE);
 }
 
@@ -168,7 +168,7 @@ void EmitDetailPolys(void)
 
 	GL_Bind(detailtexture);
 	GL_TextureEnvMode(GL_DECAL);
-	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	for (p = detail_polys; p; p = p->detail_chain) {
@@ -182,7 +182,7 @@ void EmitDetailPolys(void)
 	}
 
 	GL_TextureEnvMode(GL_REPLACE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	detail_polys = NULL;
