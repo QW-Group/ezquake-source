@@ -953,7 +953,7 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic)
 {
-	int i, texnum, image_size, real_width, real_height;
+	int i, image_size, real_width, real_height;
 	byte *data, *buf, *dest, *src;
 
 	if (no24bit) {

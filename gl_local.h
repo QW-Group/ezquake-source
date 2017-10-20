@@ -743,11 +743,12 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel);
 void GLC_DrawWorld(void);
 void GLC_Draw_ResetCharGLState(void);
 void GLC_Draw_SetColor(byte* rgba, float alpha);
+void GLC_Draw_StringBase_StartString(int x, int y, float scale);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, int texnum, qbool isText);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_UpdateParticles(int particles_to_draw);
 void GLM_DrawParticles(int number, qbool square);

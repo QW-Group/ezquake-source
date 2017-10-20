@@ -345,32 +345,23 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	color_t last_color = COLOR_WHITE;
 
 	// Nothing to draw.
-	if (!*text)
+	if (!*text) {
 		return;
-
-	// Turn on alpha transparency.
-	if (gl_alphafont.value || (overall_alpha < 1.0)) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	}
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
 	memcpy(rgba, color_white, sizeof(byte) * 4);
-	if (scr_coloredText.integer) {
-		if (color_count > 0) {
-			COLOR_TO_RGBA(color[color_index].c, rgba);
-		}
-
-		GL_TextureEnvMode(GL_MODULATE);
-	}
-	else {
-		GL_TextureEnvMode(GL_REPLACE);
+	if (scr_coloredText.integer && color_count > 0) {
+		COLOR_TO_RGBA(color[color_index].c, rgba);
 	}
 
 	// Draw the string.
 	if (GL_ShadersSupported()) {
 		GLM_Draw_StringBase_StartString(x, y, scale);
+	}
+	else {
+		GLC_Draw_StringBase_StartString(x, y, scale);
 	}
 	for (i = 0; text[i]; i++) {
 		// If we didn't get a color array, check for color codes in the text instead.

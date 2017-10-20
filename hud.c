@@ -1450,11 +1450,9 @@ void HUD_DrawObject(hud_t *hud)
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
-	GL_EnterRegion(hud->name);
 	Draw_SetOverallAlpha(hud->opacity->value);
 	hud->draw_func(hud);
 	Draw_SetOverallAlpha(1.0);
-	GL_LeaveRegion();
 
 	// last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)

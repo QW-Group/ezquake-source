@@ -862,20 +862,8 @@ void CachePics_CreateAtlas(void)
 
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		int old_tex = cur->data.pic->texnum;
-		mpic_t old = *cur->data.pic;
-		int placed;
 
-		//Con_Printf("%s\n", cur->data.name);
-
-		placed = CachePics_AddToAtlas(cur->data.pic);
-
-		/*if (placed >= 0) {
-			Con_Printf("  placed @ atlas %d [%d, was %d]\n", placed, atlas_texnum[placed], old_tex);
-			Con_Printf("  [%1.4f %1.4f > %1.4f %1.4f] now [%1.4f %1.4f > %1.4f %1.4f]\n", old.sl, old.sh, old.tl, old.th, cur->data.pic->sl, cur->data.pic->sh, cur->data.pic->tl, cur->data.pic->th);
-		}
-		else {
-			Con_Printf("  Failed to place\n");
-		}*/
+		CachePics_AddToAtlas(cur->data.pic);
 	}
 
 	{

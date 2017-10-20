@@ -645,6 +645,7 @@ void Draw_Crosshair (void)
 		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
 		qbool half_size = false;
+		int texnum;
 
 		if (!crosshairalpha.value) {
 			return;
@@ -673,7 +674,7 @@ void Draw_Crosshair (void)
 		}
 
 		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
-			GL_Bind(crosshairpic.texnum);
+			texnum = crosshairpic.texnum;
 			ofs1 = (crosshairpic.width * 0.5f - 0.5f) * bound(0, crosshairsize.value, 20);
 			ofs2 = (crosshairpic.height * 0.5f + 0.5f) * bound(0, crosshairsize.value, 20);
 			sh = crosshairpic.sh;
@@ -682,7 +683,7 @@ void Draw_Crosshair (void)
 			tl = crosshairpic.tl;
 		}
 		else {
-			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
+			texnum = ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
 			ofs1 = (crosshair_pixel_size * 0.5f - 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
 			ofs2 = (crosshair_pixel_size * 0.5f + 0.5f) * crosshair_scale * bound(0, crosshairsize.value, 20);
 			tl = sl = 0;
@@ -702,9 +703,10 @@ void Draw_Crosshair (void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #endif
 		if (GL_ShadersSupported()) {
-			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false);
+			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 		}
 		else {
+			GL_Bind(texnum);
 			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
 		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -815,9 +817,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 void Draw_TileClear (int x, int y, int w, int h)
 {
 	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE0);
-		GL_Bind(draw_backtile->texnum);
-		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false);
+		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
 	}
 	else {
 		GLC_DrawTileClear(draw_backtile->texnum, x, y, w, h);
@@ -832,7 +832,6 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	if ((byte)(color >> 24 & 0xFF) == 0)
 		return;
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
 	thickness = max(0, thickness);
 
@@ -842,8 +841,6 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	else {
 		GLC_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
 	}
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)

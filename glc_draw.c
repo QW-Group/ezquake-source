@@ -208,6 +208,7 @@ void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 
 void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	glDisable (GL_TEXTURE_2D);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 	if (fill) {
@@ -221,6 +222,7 @@ void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 	}
 	glColor4ubv (color_white);
 	glEnable (GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 }
 
 void GLC_Draw_FadeScreen(float alpha)

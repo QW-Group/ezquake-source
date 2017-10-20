@@ -133,10 +133,6 @@ void Draw_TextCacheFlush(void)
 					GL_TextureEnvMode(GL_REPLACE);
 				}
 
-				if (developer.value) {
-					Cvar_SetValue(&developer, 0);
-				}
-
 				// Call the program to draw the text string
 				GL_UseProgram(textStringProgram.program);
 				glUniformMatrix4fv(textString_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
@@ -217,9 +213,7 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 		float frow = char_textures[slot].tl + (ch >> 4) * char_height;	// row = num * (16 chars per row)
 		float fcol = char_textures[slot].sl + (ch & 0x0F) * char_width;
 
-		glActiveTexture(GL_TEXTURE0);
-		GL_Bind(char_textures[cached_charset].texnum);
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, char_width, char_height, cache_currentColor, false);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, 0, fcol, frow, char_width, char_height, cache_currentColor, false, char_textures[cached_charset].texnum, true);
 	}
 }
 
@@ -262,8 +256,8 @@ void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 
 void GLM_Draw_ResetCharGLState(void)
 {
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
+	//GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	//GL_TextureEnvMode(GL_REPLACE);
 	Draw_TextCacheSetColor(color_white);
 }
 

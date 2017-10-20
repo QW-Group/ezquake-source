@@ -31,10 +31,10 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
-#define IMAGEPROG_FLAGS_TEXTURE 1
-#define IMAGEPROG_FLAGS_ALPHATEST 2
+#define IMAGEPROG_FLAGS_TEXTURE     1
+#define IMAGEPROG_FLAGS_ALPHATEST   2
+#define IMAGEPROG_FLAGS_TEXT        4
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 
 // Temp: very simple program to draw single texture on-screen
@@ -214,21 +214,11 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
 {
 	byte color[] = { 255, 255, 255, 255 };
-
 	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glCullFace(GL_FRONT);
 		color[3] = alpha * 255;
 	}
 
-	glActiveTexture(GL_TEXTURE0);
-	GL_Bind(pic->texnum);
-	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, true);
-
-	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	}
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, alpha < 1.0, pic->texnum, false);
 }
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
@@ -347,6 +337,7 @@ void GLM_FlushImageDraw(void)
 
 	if (imageCount) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glActiveTexture(GL_TEXTURE0);
 
 		if (false) {
@@ -359,7 +350,7 @@ void GLM_FlushImageDraw(void)
 		else {
 			int start = 0;
 			int i;
-			int currentTexture = -1;
+			int currentTexture = 0;
 
 			GLM_CreateMultiImageProgram();
 
@@ -380,15 +371,20 @@ void GLM_FlushImageDraw(void)
 			for (i = 0; i < imageCount; ++i) {
 				glm_image_t* img = &images[i];
 
-				if (i && currentTexture != img->texNumber) {
+				if (currentTexture > 0 && img->texNumber && currentTexture != img->texNumber) {
 					GL_Bind(currentTexture);
 					glDrawArrays(GL_POINTS, start, i - start);
 					start = i;
 				}
 
-				currentTexture = img->texNumber;
+				if (img->texNumber) {
+					currentTexture = img->texNumber;
+				}
 			}
-			GL_Bind(currentTexture);
+
+			if (currentTexture) {
+				GL_Bind(currentTexture);
+			}
 			glDrawArrays(GL_POINTS, start, imageCount - start);
 			glEnable(GL_DEPTH_TEST);
 		}
@@ -397,7 +393,7 @@ void GLM_FlushImageDraw(void)
 	imageCount = 0;
 }
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, int texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		GLM_FlushImageDraw();
@@ -408,12 +404,18 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	images[imageCount].y1 = y;
 	images[imageCount].x2 = x + width;
 	images[imageCount].y2 = y + height;
-	images[imageCount].flags = (alpha ? IMAGEPROG_FLAGS_ALPHATEST : 0) | IMAGEPROG_FLAGS_TEXTURE;
+	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
+	if (alpha) {
+		images[imageCount].flags |= IMAGEPROG_FLAGS_ALPHATEST;
+	}
+	if (isText) {
+		images[imageCount].flags |= IMAGEPROG_FLAGS_TEXT;
+	}
 	images[imageCount].s1 = tex_s;
 	images[imageCount].s2 = tex_s + tex_width;
 	images[imageCount].t1 = tex_t;
 	images[imageCount].t2 = tex_t + tex_height;
-	images[imageCount].texNumber = currenttexture;
+	images[imageCount].texNumber = texnum;
 
 	++imageCount;
 }
@@ -431,6 +433,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	images[imageCount].y2 = y + height;
 	images[imageCount].flags = 0;
 	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
+	images[imageCount].texNumber = 0;
 
 	++imageCount;
 }

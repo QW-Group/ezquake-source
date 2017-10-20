@@ -134,3 +134,22 @@ void GLC_Draw_SetColor(byte* rgba, float alpha)
 		glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * alpha * overall_alpha);
 	}
 }
+
+void GLC_Draw_StringBase_StartString(int x, int y, float scale)
+{
+	extern cvar_t gl_alphafont;
+	extern cvar_t scr_coloredText;
+
+	// Turn on alpha transparency.
+	if (gl_alphafont.value || (overall_alpha < 1.0)) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+	}
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	if (scr_coloredText.integer) {
+		GL_TextureEnvMode(GL_MODULATE);
+	}
+	else {
+		GL_TextureEnvMode(GL_REPLACE);
+	}
+}
