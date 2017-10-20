@@ -138,7 +138,7 @@ static void BuildSkyVertsArray(void)
 
 	if (!skyDome_vao) {
 		glGenVertexArrays(1, &skyDome_vao);
-		glBindVertexArray(skyDome_vao);
+		GL_BindVertexArray(skyDome_vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo);
@@ -257,7 +257,7 @@ static void GLM_DrawSkyVerts(void)
 
 	if (!glm_sky_vao) {
 	glGenVertexArrays(1, &glm_sky_vao);
-	glBindVertexArray(glm_sky_vao);
+	GL_BindVertexArray(glm_sky_vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*) 0);
@@ -335,7 +335,7 @@ static void GLM_DrawSkyFaces(void)
 			glUniform1i(skyDome_skyTex, 0);
 			glUniform1i(skyDome_alphaTex, 1);
 			glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
-			glBindVertexArray(skyDome_vao);
+			GL_BindVertexArray(skyDome_vao);
 			glDisable(GL_CULL_FACE);
 			glMultiDrawArrays(GL_TRIANGLE_STRIP, faceStarts, faceLengths, faces);
 			glEnable(GL_CULL_FACE);
@@ -376,7 +376,7 @@ void GLM_DrawSkyFace(int axis)
 		glUniform1f(skyDome_speedscale, speedscale);
 		glUniform1i(skyDome_skyTex, 0);
 		glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
-		glBindVertexArray(skyDome_vao);
+		GL_BindVertexArray(skyDome_vao);
 		glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, skyDome_starts[axis], skyDome_length[axis]);
 		glEnable(GL_CULL_FACE);

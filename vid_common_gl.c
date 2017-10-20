@@ -902,10 +902,28 @@ void GLM_GetMatrix(GLenum type, float* matrix)
 #undef glDisable
 #undef glEnable
 
+static qbool gl_depthTestEnabled = false;
+static qbool gl_framebuffer_srgb = false;
+
 void GL_Enable(GLenum option)
 {
 	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
 		option = option;
+	}
+
+	if (option == GL_DEPTH_TEST) {
+		if (gl_depthTestEnabled) {
+			return;
+		}
+
+		gl_depthTestEnabled = true;
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (gl_framebuffer_srgb) {
+			return;
+		}
+
+		gl_framebuffer_srgb = true;
 	}
 
 	glEnable(option);
@@ -915,6 +933,21 @@ void GL_Disable(GLenum option)
 {
 	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
 		option = option;
+	}
+
+	if (option == GL_DEPTH_TEST) {
+		if (!gl_depthTestEnabled) {
+			return;
+		}
+
+		gl_depthTestEnabled = false;
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (!gl_framebuffer_srgb) {
+			return;
+		}
+
+		gl_framebuffer_srgb = false;
 	}
 
 	glDisable(option);
@@ -1269,6 +1302,16 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
 		glBlendFunc(sfactor, dfactor);
 		currentSFactor = sfactor;
 		currentDFactor = dfactor;
+	}
+}
+
+void GL_BindVertexArray(GLuint vao)
+{
+	static GLuint currentVAO = 0;
+
+	if (currentVAO != vao) {
+		glBindVertexArray(vao);
+		currentVAO = vao;
 	}
 }
 

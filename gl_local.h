@@ -604,6 +604,7 @@ void GL_DepthFunc(GLenum func);
 void GL_DepthRange(double nearVal, double farVal);
 void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
+void GL_BindVertexArray(GLuint vao);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

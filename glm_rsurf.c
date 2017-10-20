@@ -69,7 +69,7 @@ void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices,
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glDisable(GL_CULL_FACE);
 		glDrawElements(GL_TRIANGLE_STRIP, vertices, GL_UNSIGNED_SHORT, indices);
 		glEnable(GL_CULL_FACE);
@@ -94,7 +94,7 @@ void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha)
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices);
 		glEnable(GL_CULL_FACE);
@@ -181,7 +181,7 @@ qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbo
 			glUniform1i(lightmapPoly_apply_texture, apply_texture ? 1 : 0);
 			glUniform1i(lightmapPoly_alpha_texture, alpha_texture ? 1 : 0);
 
-			glBindVertexArray(vao);
+			GL_BindVertexArray(vao);
 		}
 		return true;
 	}
@@ -240,7 +240,7 @@ void GLM_EnterBatchedWorldRegion(unsigned int vao)
 	glUniform1i(drawworld_materialTex, 0);
 	glUniform1i(drawworld_lightmapTex, 2);
 
-	glBindVertexArray(vao);
+	GL_BindVertexArray(vao);
 }
 
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
@@ -266,7 +266,7 @@ void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_light
 		glUniform1i(lightmapPoly_apply_texture, apply_texture ? 1 : 0);
 		glUniform1i(lightmapPoly_alpha_texture, alpha_texture ? 1 : 0);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 	}
 	else {
 		if (!drawFlatPolyProgram.program) {
@@ -286,7 +286,7 @@ void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_light
 		glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
 		glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 	}
 	uniforms_set = true;
 }
@@ -320,7 +320,7 @@ void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GL
 			glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
 			glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
 
-			glBindVertexArray(vao);
+			GL_BindVertexArray(vao);
 		}
 
 		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
@@ -358,7 +358,7 @@ void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start
 		glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
 		glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glDrawArrays(type, start, vertices);
 	}
 }
@@ -512,7 +512,7 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 
 	if (!surf->polys->vao) {
 		glGenVertexArrays(1, &surf->polys->vao);
-		glBindVertexArray(surf->polys->vao);
+		GL_BindVertexArray(surf->polys->vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
@@ -537,7 +537,7 @@ void GLM_CreateVAOForPoly(glpoly_t *poly)
 
 	if (!poly->vao) {
 		glGenVertexArrays(1, &poly->vao);
-		glBindVertexArray(poly->vao);
+		GL_BindVertexArray(poly->vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);

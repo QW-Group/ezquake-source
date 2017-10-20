@@ -212,7 +212,7 @@ static void GLM_FlushAliasModelBatch(void)
 		qbool texture_mode_switch = (texture_array && array_switch) || (non_texture_array != -1 && non_array_switch);
 
 		if (i == 0) {
-			glBindVertexArray(req->vao);
+			GL_BindVertexArray(req->vao);
 		}
 
 		if (texture_mode_switch) {

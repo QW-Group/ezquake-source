@@ -596,7 +596,7 @@ static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, flo
 	glBufferDataExt(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
 	Q_free(new_vbo_buffer);
 
-	glBindVertexArray(model_vao);
+	GL_BindVertexArray(model_vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -677,7 +677,7 @@ static void GLM_CreateBrushModelVAO(void)
 
 	// Create vao
 	glGenVertexArrays(1, &brushModel_vao);
-	glBindVertexArray(brushModel_vao);
+	GL_BindVertexArray(brushModel_vao);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {

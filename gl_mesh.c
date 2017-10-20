@@ -463,7 +463,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 		glBufferDataExt(GL_ARRAY_BUFFER, m->vertsInVBO * MODELVERTEXSIZE * sizeof(float), vbo_buffer, GL_STATIC_DRAW);
 
 		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);

@@ -64,7 +64,7 @@ static GLuint GLM_CreateParticleVAO(void)
 
 	if (!particleVAO) {
 		glGenVertexArrays(1, &particleVAO);
-		glBindVertexArray(particleVAO);
+		GL_BindVertexArray(particleVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
@@ -100,7 +100,7 @@ void GLM_DrawParticles(int number, qbool square)
 			glUniform1i(billboard_apply_texture, !square);
 			glUniform1i(billboard_alpha_texture, 0);
 
-			glBindVertexArray(vao);
+			GL_BindVertexArray(vao);
 			glDrawArrays(GL_POINTS, 0, number);
 		}
 	}
@@ -134,7 +134,7 @@ void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
 			glUniform1i(billboard_apply_texture, !square);
 			glUniform1i(billboard_alpha_texture, 0);
 
-			glBindVertexArray(vao);
+			GL_BindVertexArray(vao);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, square ? 4 : 3);
 		}
 

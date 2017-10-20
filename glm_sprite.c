@@ -65,7 +65,7 @@ static void GL_PrepareSprites(void)
 
 	if (!simpleItemVAO) {
 		glGenVertexArrays(1, &simpleItemVAO);
-		glBindVertexArray(simpleItemVAO);
+		GL_BindVertexArray(simpleItemVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
@@ -154,7 +154,7 @@ void GL_FlushSpriteBatch(void)
 	glUniform1fv(sprite_texS, batch_count, texScaleS);
 	glUniform1fv(sprite_texT, batch_count, texScaleT);
 
-	glBindVertexArray(vao);
+	GL_BindVertexArray(vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
@@ -266,7 +266,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 		glUniform3f(sprite_origin, -origin[1], origin[2], -origin[0]);
 		glUniform1f(sprite_scale, 1);
 
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	}
 

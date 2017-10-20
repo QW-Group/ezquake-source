@@ -60,7 +60,7 @@ static GLuint Draw_CreateTextStringVAO(void)
 
 	if (!textStringVAO) {
 		glGenVertexArrays(1, &textStringVAO);
-		glBindVertexArray(textStringVAO);
+		GL_BindVertexArray(textStringVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
@@ -145,7 +145,7 @@ void Draw_TextCacheFlush(void)
 				GL_SelectTexture(GL_TEXTURE0);
 				GL_Bind(char_textures[cached_charset].texnum);
 
-				glBindVertexArray(vao);
+				GL_BindVertexArray(vao);
 				glDrawArrays(GL_POINTS, 0, cache_pos);
 			}
 		}

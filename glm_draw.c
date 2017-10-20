@@ -91,7 +91,7 @@ void GLM_DrawImageOld(float x, float y, float width, float height, int texture_u
 	glUniform1f(imageProgram_twidth, tex_height);
 	glUniform1f(imageProgram_alphatest, alpha);
 
-	glBindVertexArray(GL_CreateRectangleVAO());
+	GL_BindVertexArray(GL_CreateRectangleVAO());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
@@ -128,7 +128,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	glUniformMatrix4fv(rectProgram_matrix, 1, GL_FALSE, matrix);
 	glUniform4f(rectProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
 
-	glBindVertexArray(GL_CreateRectangleVAO());
+	GL_BindVertexArray(GL_CreateRectangleVAO());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }*/
 
@@ -152,7 +152,7 @@ static GLuint GL_CreateRectangleVAO(void)
 
 	if (!vao) {
 		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -179,7 +179,7 @@ static GLuint GL_CreateLineVAO(void)
 
 	if (!vao) {
 		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		GL_BindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -255,7 +255,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
 		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
 
-		glBindVertexArray(GL_CreateLineVAO());
+		GL_BindVertexArray(GL_CreateLineVAO());
 		glDrawArrays(GL_LINES, 0, 2);
 	}
 }
@@ -313,7 +313,7 @@ void GLM_CreateMultiImageProgram(void)
 
 	if (!imageVAO) {
 		glGenVertexArrays(1, &imageVAO);
-		glBindVertexArray(imageVAO);
+		GL_BindVertexArray(imageVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
@@ -366,7 +366,7 @@ void GLM_FlushImageDraw(void)
 			glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform1i(multiImage_tex, 0);
 
-			glBindVertexArray(imageVAO);
+			GL_BindVertexArray(imageVAO);
 
 			for (i = 0; i < imageCount; ++i) {
 				glm_image_t* img = &images[i];
