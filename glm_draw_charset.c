@@ -142,7 +142,7 @@ void Draw_TextCacheFlush(void)
 				glUniform2f(textString_fontSize, font_width, font_height);
 				glUniform2f(textString_textureBase, char_textures[cached_charset].sl, char_textures[cached_charset].tl);
 
-				glActiveTexture(GL_TEXTURE0);
+				GL_SelectTexture(GL_TEXTURE0);
 				GL_Bind(char_textures[cached_charset].texnum);
 
 				glBindVertexArray(vao);

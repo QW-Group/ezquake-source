@@ -247,7 +247,7 @@ void EmitWaterPolys(msurface_t *fa)
 		else {
 			wateralpha = bound(0, wateralpha, 1);
 
-			glActiveTexture(GL_TEXTURE0);
+			GL_SelectTexture(GL_TEXTURE0);
 			//glBindTexture(GL_TEXTURE_2D, fa->texinfo->texture->gl_texturenum);
 			if (wateralpha < 1.0 && wateralpha >= 0) {
 				GL_AlphaBlendFlags(GL_BLEND_ENABLED);

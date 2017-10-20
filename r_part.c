@@ -694,7 +694,7 @@ void Classic_DrawParticles(void)
 		GLC_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}
 	else {
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, particletexture);
 		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
 	}

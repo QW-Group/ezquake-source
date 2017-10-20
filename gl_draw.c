@@ -667,7 +667,7 @@ void Draw_Crosshair (void)
 		col[3] = bound(0, crosshairalpha.value, 1) * 255;
 
 		if (GL_ShadersSupported()) {
-			glActiveTexture(GL_TEXTURE0);
+			GL_SelectTexture(GL_TEXTURE0);
 		}
 		else {
 			glColor4ubv (col);

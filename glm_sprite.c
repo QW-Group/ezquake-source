@@ -83,7 +83,7 @@ void GL_BeginDrawSprites(void)
 	if (GL_ShadersSupported()) {
 		GL_PrepareSprites();
 
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		prev_texture_array = -1;
 	}
 }

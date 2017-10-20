@@ -26,7 +26,7 @@ void GLM_DrawFlat(model_t* model)
 		glDisable(GL_CULL_FACE);
 		GLM_EnterBatchedPolyRegion(color_white, model->vao, true, true, false);
 
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		for (i = 0; i < model->numtextures; i++) {
 			texture_t* tex = model->textures[i];
 			GLsizei count;
@@ -98,7 +98,7 @@ void GLM_DrawFlat(model_t* model)
 			continue;
 		}
 
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		GL_Bind(model->textures[i]->gl_texturenum);
 
 		for (waterline = 0; waterline < 2; waterline++) {
@@ -566,7 +566,7 @@ void GL_BeginDrawBrushModels(void)
 		glUniform1i(drawBrushModel_applyTexture, 1);
 
 		//glDisable(GL_CULL_FACE);
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 	}
 	else {
 		GL_EnableTMU(GL_TEXTURE0);
@@ -608,7 +608,7 @@ static void GL_FlushBrushModelBatch(void)
 	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
 	int base = 0;
 
-	glActiveTexture(GL_TEXTURE0);
+	GL_SelectTexture(GL_TEXTURE0);
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
 
 	for (i = 0; i < batch_count; ++i) {

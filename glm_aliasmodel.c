@@ -222,14 +222,14 @@ static void GLM_FlushAliasModelBatch(void)
 		}
 
 		if (non_array_switch) {
-			glActiveTexture(GL_TEXTURE0 + 1);
+			GL_SelectTexture(GL_TEXTURE0 + 1);
 			glBindTexture(GL_TEXTURE_2D, req->texture_index);
 
 			non_texture_array = req->texture_index;
 		}
 
 		if (array_switch) {
-			glActiveTexture(GL_TEXTURE0);
+			GL_SelectTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
 
 			prev_texture_array = req->texture_array;
@@ -328,7 +328,7 @@ void GL_BeginDrawAliasModels(void)
 	if (GL_ShadersSupported()) {
 		GLM_CompileAliasModelProgram();
 
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		prev_texture_array = 0;
 		in_batch_mode = true;
 		batch_count = 0;

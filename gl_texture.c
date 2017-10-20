@@ -235,7 +235,12 @@ void GL_SelectTexture(GLenum target)
 		return;
 	}
 
-	qglActiveTexture(target);
+	if (glActiveTexture) {
+		glActiveTexture(target);
+	}
+	else {
+		qglActiveTexture(target);
+	}
 
 	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
 	currenttexture = cnttextures[target - GL_TEXTURE0];
@@ -245,7 +250,7 @@ void GL_SelectTexture(GLenum target)
 void GL_DisableMultitexture(void)
 {
 	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 	}
 	else if (mtexenabled) {
 		glDisable(GL_TEXTURE_2D);
@@ -257,7 +262,7 @@ void GL_DisableMultitexture(void)
 void GL_EnableMultitexture(void)
 {
 	if (GL_ShadersSupported()) {
-		glActiveTexture(GL_TEXTURE1);
+		GL_SelectTexture(GL_TEXTURE1);
 	}
 	else if (gl_mtexable) {
 		GL_SelectTexture(GL_TEXTURE1);

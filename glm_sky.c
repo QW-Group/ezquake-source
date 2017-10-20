@@ -349,9 +349,9 @@ static void GLM_DrawSkyDome(void)
 {
 	BuildSkyVertsArray();
 
-	glActiveTexture(GL_TEXTURE0);
+	GL_SelectTexture(GL_TEXTURE0);
 	GL_Bind(solidskytexture);
-	glActiveTexture(GL_TEXTURE1);
+	GL_SelectTexture(GL_TEXTURE1);
 	GL_Bind(alphaskytexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);

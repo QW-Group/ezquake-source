@@ -29,7 +29,7 @@ void GLM_DrawWaterSurfaces(void)
 	int v;
 
 	count = 0;
-	glActiveTexture(GL_TEXTURE0);
+	GL_SelectTexture(GL_TEXTURE0);
 	if (wateralpha < 1.0 && wateralpha >= 0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_TextureEnvMode(GL_MODULATE);

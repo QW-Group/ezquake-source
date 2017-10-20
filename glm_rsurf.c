@@ -388,9 +388,9 @@ void GLM_DrawTexturedWorld(model_t* model)
 	GLM_EnterBatchedWorldRegion(model->vao);
 
 	// Bind lightmap array
-	glActiveTexture(GL_TEXTURE2);
+	GL_SelectTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
-	glActiveTexture(GL_TEXTURE0);
+	GL_SelectTexture(GL_TEXTURE0);
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
