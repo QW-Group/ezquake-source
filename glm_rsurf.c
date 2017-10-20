@@ -70,9 +70,9 @@ void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices,
 		glUniform1f(turb_time, cl.time);
 
 		GL_BindVertexArray(vao);
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
 		glDrawElements(GL_TRIANGLE_STRIP, vertices, GL_UNSIGNED_SHORT, indices);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 	}
 }
 
@@ -95,9 +95,9 @@ void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha)
 		glUniform1f(turb_time, cl.time);
 
 		GL_BindVertexArray(vao);
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 	}
 }
 
@@ -384,7 +384,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 	int i, waterline, v;
 	msurface_t* surf;
 
-	glDisable(GL_CULL_FACE);
 	GLM_EnterBatchedWorldRegion(model->vao);
 
 	// Bind lightmap array
@@ -419,7 +418,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					int newVerts = surf->polys->numverts;
 
-					if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+					if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 						glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
 						count = 0;
 					}
@@ -428,6 +427,9 @@ void GLM_DrawTexturedWorld(model_t* model)
 					if (count) {
 						int prev = count - 1;
 
+						if (count % 2 == 1) {
+							indices[count++] = indices[prev];
+						}
 						indices[count++] = indices[prev];
 						indices[count++] = surf->polys->vbo_start;
 					}
@@ -444,7 +446,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 		}
 	}
 
-	glEnable(GL_CULL_FACE);
 	GLM_ExitBatchedPolyRegion();
 	return;
 }

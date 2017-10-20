@@ -55,7 +55,7 @@ void GLM_DrawWaterSurfaces(void)
 		for (poly = s->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
-			if (count + 2 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+			if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 				GL_Bind(current_texture->gl_texturenum);
 				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
 				count = 0;
@@ -64,6 +64,9 @@ void GLM_DrawWaterSurfaces(void)
 			if (count) {
 				int prev = count - 1;
 
+				if (count % 2 == 1) {
+					indices[count++] = indices[prev];
+				}
 				indices[count++] = indices[prev];
 				indices[count++] = poly->vbo_start;
 			}

@@ -902,6 +902,7 @@ void GLM_GetMatrix(GLenum type, float* matrix)
 #undef glDisable
 #undef glEnable
 
+static qbool gl_cullface = false;
 static qbool gl_depthTestEnabled = false;
 static qbool gl_framebuffer_srgb = false;
 
@@ -924,6 +925,13 @@ void GL_Enable(GLenum option)
 		}
 
 		gl_framebuffer_srgb = true;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (gl_cullface) {
+			return;
+		}
+
+		gl_cullface = true;
 	}
 
 	glEnable(option);
@@ -948,6 +956,13 @@ void GL_Disable(GLenum option)
 		}
 
 		gl_framebuffer_srgb = false;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (!gl_cullface) {
+			return;
+		}
+
+		gl_cullface = false;
 	}
 
 	glDisable(option);
