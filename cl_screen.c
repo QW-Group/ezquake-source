@@ -1257,7 +1257,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	}
 }
 
-void SCR_DrawAutoID (void)
+void SCR_DrawAutoID(void)
 {
 	int i, x, y;
 	float scale;
@@ -1265,27 +1265,26 @@ void SCR_DrawAutoID (void)
 	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator) || cl.intermission)
 		return;
 
-	for (i = 0; i < autoid_count; i++)
-	{
-		x =  autoids[i].x * vid.width / glwidth;
-		y =  (glheight - autoids[i].y) * vid.height / glheight;
+	for (i = 0; i < autoid_count; i++) {
+		x = autoids[i].x * vid.width / glwidth;
+		y = (glheight - autoids[i].y) * vid.height / glheight;
 		scale = (scr_autoid_scale.value > 0 ? scr_autoid_scale.value : 1.0);
 
-		if(scr_autoid.integer) {
+		if (scr_autoid.integer) {
 			if (scr_autoid_namelength.integer >= 1 && scr_autoid_namelength.integer < MAX_SCOREBOARDNAME) {
 				char name[MAX_SCOREBOARDNAME];
 
 				strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_namelength.integer] = 0;
 				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
-			} else {
+			}
+			else {
 				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale);
 			}
 		}
 
 		// We only have health/armor info for all players when in demo playback.
-		if(cls.demoplayback && scr_autoid.value >= 2)
-		{
+		if (cls.demoplayback && scr_autoid.value >= 2) {
 			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale);
 		}
 	}
@@ -1963,14 +1962,14 @@ void SCR_DrawMultiviewIndividualElements (void)
 	extern qbool  sb_showscores,  sb_showteamscores;
 
 	// Show autoid in all views
-	if (!sb_showscores && !sb_showteamscores) { 
-		SCR_DrawAutoID ();
+	if (!sb_showscores && !sb_showteamscores) {
+		SCR_DrawAutoID();
 	}
 
 	// Crosshair
 	if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))) {
 		if (!CL_MultiviewInsetView() || cl_mvinsetcrosshair.integer) {
-			Draw_Crosshair ();
+			Draw_Crosshair();
 		}
 	}
 

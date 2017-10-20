@@ -638,6 +638,7 @@ static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, in
 		++level;
 		width /= 2;
 		height /= 2;
+		minDimensions /= 2;
 	}
 
 	//GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);

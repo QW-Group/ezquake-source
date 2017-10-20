@@ -656,6 +656,11 @@ void Draw_Crosshair (void)
 			return;
 		}
 
+		if (GL_ShadersSupported()) {
+			// Flush any queued images (should be autoid, if enabled)
+			GLM_FlushImageDraw();
+		}
+
 		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;

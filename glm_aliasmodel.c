@@ -197,7 +197,6 @@ static void GLM_FlushAliasModelBatch(void)
 	qbool was_texture_array = false;
 	int base = 0;
 	int non_texture_array = -1;
-	GLuint texture_array = 0;
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
@@ -210,11 +209,12 @@ static void GLM_FlushAliasModelBatch(void)
 	glUniform1f(drawAliasModel_time, cl.time);
 	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));
 
+	prev_texture_array = 0;
 	for (i = 0; i < batch_count; ++i) {
 		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
-		qbool array_switch = (req->is_texture_array && texture_array != req->texture_array);
+		qbool array_switch = (req->is_texture_array && prev_texture_array != req->texture_array);
 		qbool non_array_switch = (!req->is_texture_array && non_texture_array != req->texture_index);
-		qbool texture_mode_switch = (texture_array && array_switch) || (non_texture_array != -1 && non_array_switch);
+		qbool texture_mode_switch = (prev_texture_array && array_switch) || (non_texture_array != -1 && non_array_switch);
 
 		if (i == 0) {
 			GL_BindVertexArray(req->vao);

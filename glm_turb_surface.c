@@ -37,6 +37,9 @@ void GLM_DrawWaterSurfaces(void)
 			glDepthMask(GL_FALSE);
 		}
 	}
+	else {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	}
 
 	for (s = waterchain; s; s = s->texturechain) {
 		glpoly_t* poly;
