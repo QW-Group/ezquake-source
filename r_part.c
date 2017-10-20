@@ -684,6 +684,7 @@ void Classic_DrawParticles(void)
 	}
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!gl_solidparticles.value) {
 		glDepthMask(GL_FALSE);
 	}
