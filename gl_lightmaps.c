@@ -319,7 +319,7 @@ void R_BlendLightmaps (void) {
 		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 	}
 	else {
-		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
 	}
 
 	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {

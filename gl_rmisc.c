@@ -30,39 +30,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 
-void R_InitOtherTextures (void) {
-/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
+void R_InitOtherTextures(void)
+{
+	/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
 
-	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );	
-	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);	
-*/
+		underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );
+		detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);
+	*/
 	int flags = TEX_MIPMAP | TEX_ALPHA;
 
-	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));	
-	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
+	underwatertexture = GL_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));
+	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
-	shelltexture = GL_LoadTextureImage ("textures/shellmap", NULL, 0, 0,  flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
+	shelltexture = GL_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
 }
 
-void R_InitTextures (void) {
-	int x,y, m;
+void R_InitTextures(void)
+{
+	int x, y, m;
 	byte *dest;
 
 	if (r_notexture_mip)
 		return; // FIXME: may be do not Hunk_AllocName but made other stuff ???
 
 	// create a simple checkerboard texture for the default
-	r_notexture_mip = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16 + 8 * 8+4 * 4 + 2 * 2, "notexture");
-	
-	strlcpy(r_notexture_mip->name, "notexture", sizeof (r_notexture_mip->name));
+	r_notexture_mip = (texture_t *)Hunk_AllocName(sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture");
+
+	strlcpy(r_notexture_mip->name, "notexture", sizeof(r_notexture_mip->name));
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16 * 16;
 	r_notexture_mip->offsets[2] = r_notexture_mip->offsets[1] + 8 * 8;
 	r_notexture_mip->offsets[3] = r_notexture_mip->offsets[2] + 4 * 4;
-	
+
 	for (m = 0; m < 4; m++) {
-		dest = (byte *) r_notexture_mip + r_notexture_mip->offsets[m];
+		dest = (byte *)r_notexture_mip + r_notexture_mip->offsets[m];
 		for (y = 0; y < (16 >> m); y++) {
 			for (x = 0; x < (16 >> m); x++) {
 				if ((y < (8 >> m)) ^ (x < (8 >> m)))

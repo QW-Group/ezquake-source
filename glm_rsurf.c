@@ -207,22 +207,28 @@ static glm_program_t drawworld;
 static GLint drawworld_modelViewMatrix;
 static GLint drawworld_projectionMatrix;
 static GLint drawworld_materialTex;
+static GLint drawworld_detailTex;
 static GLint drawworld_lightmapTex;
+static GLint drawworld_causticsTex;
+static GLint drawworld_drawDetailTex;
 
 static void Compile_DrawWorldProgram(void)
 {
 	GL_VFDeclare(drawworld)
 
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
+	// Initialise program for drawing image
+	GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
 
 	drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
 	drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
+	drawworld_drawDetailTex = glGetUniformLocation(drawworld.program, "drawDetailTex");
 	drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
+	drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
 	drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
+	drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
 }
 
-void GLM_EnterBatchedWorldRegion(unsigned int vao)
+static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 {
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
@@ -237,12 +243,16 @@ void GLM_EnterBatchedWorldRegion(unsigned int vao)
 	GL_UseProgram(drawworld.program);
 	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+	glUniform1i(drawworld_drawDetailTex, detail_tex ? 1 : 0);
 	glUniform1i(drawworld_materialTex, 0);
+	glUniform1i(drawworld_detailTex, 1);
 	glUniform1i(drawworld_lightmapTex, 2);
+	glUniform1i(drawworld_causticsTex, 3);
 
 	GL_BindVertexArray(vao);
 }
 
+/*
 void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	float modelViewMatrix[16];
@@ -290,6 +300,7 @@ void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_light
 	}
 	uniforms_set = true;
 }
+*/
 
 void GLM_ExitBatchedPolyRegion(void)
 {
@@ -383,12 +394,18 @@ void GLM_DrawTexturedWorld(model_t* model)
 	GLushort indices[4096];
 	int i, waterline, v;
 	msurface_t* surf;
+	qbool draw_detail_texture = gl_detail.integer && detailtexture;
+	qbool draw_caustics = gl_caustics.integer && underwatertexture;
 
-	GLM_EnterBatchedWorldRegion(model->vao);
+	GLM_EnterBatchedWorldRegion(model->vao, draw_detail_texture);
 
 	// Bind lightmap array
 	GL_SelectTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+	if (draw_detail_texture) {
+		GL_SelectTexture(GL_TEXTURE1);
+		GL_Bind(detailtexture);
+	}
 	GL_SelectTexture(GL_TEXTURE0);
 
 	for (i = 0; i < model->texture_array_count; ++i) {

@@ -9,6 +9,7 @@ layout(location = 5) in float materialNumber;
 
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
+out vec2 DetailCoord;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -19,4 +20,5 @@ void main()
 
 	TextureCoord = vec3(tex, materialNumber);
 	TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
+	DetailCoord = detailCoord * 18;
 }

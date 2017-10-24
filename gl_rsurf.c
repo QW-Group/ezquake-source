@@ -441,7 +441,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
-				underwater = (underwatertexture && gl_caustics.value && surf->flags & SURF_UNDERWATER) ? 1 : 0;
+				underwater = (underwatertexture && gl_caustics.value && (surf->flags & SURF_UNDERWATER)) ? 1 : 0;
 
 				if (drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
 					CHAIN_SURF_DRAWFLAT(&cl.worldmodel->drawflat_chain[underwater], surf);
