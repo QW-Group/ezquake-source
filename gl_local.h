@@ -749,6 +749,7 @@ void GLC_DrawWorld(void);
 void GLC_Draw_ResetCharGLState(void);
 void GLC_Draw_SetColor(byte* rgba, float alpha);
 void GLC_Draw_StringBase_StartString(int x, int y, float scale);
+void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
@@ -770,6 +771,7 @@ void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_FlushImageDraw(void);
+void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 
 #define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6

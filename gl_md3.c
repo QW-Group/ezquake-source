@@ -95,7 +95,7 @@ void R_DrawAlias3Model (entity_t *ent)
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	GL_Scale(GL_MODELVIEW, scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
-	glColor4f(1, 1, 1, r_modelalpha);
+	GL_Color4f(1, 1, 1, r_modelalpha);
 
 	GL_EnableFog();
 

@@ -909,7 +909,8 @@ static qbool gl_framebuffer_srgb = false;
 void GL_Enable(GLenum option)
 {
 	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
-		option = option;
+		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
+		return;
 	}
 
 	if (option == GL_DEPTH_TEST) {
@@ -940,7 +941,8 @@ void GL_Enable(GLenum option)
 void GL_Disable(GLenum option)
 {
 	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
-		option = option;
+		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
+		return;
 	}
 
 	if (option == GL_DEPTH_TEST) {

@@ -699,9 +699,6 @@ void Draw_Crosshair (void)
 
 		if (GL_ShadersSupported()) {
 			GL_SelectTexture(GL_TEXTURE0);
-		}
-
-		if (GL_ShadersSupported()) {
 			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 			GLM_FlushImageDraw();
 		}
@@ -717,7 +714,7 @@ void Draw_Crosshair (void)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #endif
 
-			glColor4ubv(col);
+			GL_Color4ubv(col);
 			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			GL_TextureEnvMode(GL_REPLACE);
@@ -1204,18 +1201,18 @@ void Draw_EndDisc (void) {}
 //
 // Changes the projection to orthogonal (2D drawing).
 //
-void GL_Set2D (void)
+void GL_Set2D(void)
 {
-	glViewport (glx, gly, glwidth, glheight);
+	glViewport(glx, gly, glwidth, glheight);
 
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	GL_IdentityModelView();
 
-	glDisable (GL_DEPTH_TEST);
-	glDisable (GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
-	glColor3ubv (color_white);
+	GL_Color3ubv(color_white);
 }
 
 void Draw_2dAlphaTexture(float x, float y, float width, float height, int texture_num, float alpha)

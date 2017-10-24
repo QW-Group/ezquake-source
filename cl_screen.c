@@ -568,41 +568,12 @@ void SCR_ZoomOut_f (void) {
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
 {
-	glPushAttrib(GL_TEXTURE_BIT);
-	glDisable(GL_TEXTURE_2D);
-
-	// draw the coloured indicator strip
-	//Draw_Fill(x, y, length, charsize, 184);
-	glColor3f(1.f, 1.f, 1.f);
-	glBegin(GL_QUADS);
-	glVertex2f (x, y);
-	glVertex2f (x + length, y);
-	glVertex2f (x + length, y + charsize);
-	glVertex2f (x, y + charsize);
-	glEnd();
-
-
-	//Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
-	glColor3f(0.f, 1.f, 0.f);
-	glBegin(GL_QUADS);
-	glVertex2f (x + length/2 - 2, y);
-	glVertex2f (x + length/2 - 2 + 5, y);
-	glVertex2f (x + length/2 - 2 + 5, y + charsize);
-	glVertex2f (x + length/2 - 2, y + charsize);
-	glEnd();
-
-
-	//Draw_Fill(x + pos - 1, y, 3, charsize, 192);
-	glColor3f(0.f, 0.f, 1.f);
-	glBegin(GL_QUADS);
-	glVertex2f (x + pos - 1, y);
-	glVertex2f (x + pos - 1 + 3, y);
-	glVertex2f (x + pos - 1 + 3, y + charsize);
-	glVertex2f (x + pos - 1, y + charsize);
-	glEnd();
-
-
-	glPopAttrib();
+	if (GL_ShadersSupported()) {
+		GLC_DrawAccelBar(x, y, length, charsize, pos);
+	}
+	else {
+		GLM_DrawAccelBar(x, y, length, charsize, pos);
+	}
 }
 
 void SCR_DrawAccel (void) {
@@ -1426,11 +1397,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 										col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 									}
 
-									glDisable (GL_TEXTURE_2D);
-									glColor4ub(col[0], col[1], col[2], col[3]);
-									glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
-									glEnable (GL_TEXTURE_2D);
-									glColor4f(1, 1, 1, 1);
+									Draw_AlphaRectangleRGB(x, y, 3 * FONTWIDTH, FONTWIDTH, 0, true, RGBAVECT_TO_COLOR(col));
 								}
 
 								break;
@@ -1615,7 +1582,7 @@ static void SCR_Draw_TeamInfo(void)
 		return;
 
 	GL_TextureEnvMode(GL_MODULATE);
-	glColor4f(1, 1, 1, 1);
+	GL_Color4f(1, 1, 1, 1);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 
 	if (scale != 1) {
@@ -1637,11 +1604,8 @@ static void SCR_Draw_TeamInfo(void)
 
 		if ( !j ) { // draw frame
 			byte	*col = scr_teaminfo_frame_color.color;
-			glDisable (GL_TEXTURE_2D);
-			glColor4ub(col[0], col[1], col[2], col[3]);
-			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-			glEnable (GL_TEXTURE_2D);
-			glColor4f(1, 1, 1, 1);
+
+			Draw_AlphaRectangleRGB(x, y, w * FONTWIDTH, h * FONTWIDTH, 0, true, RGBAVECT_TO_COLOR(col));
 		}
 
 		SCR_Draw_TeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, false);
@@ -1655,7 +1619,7 @@ static void SCR_Draw_TeamInfo(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
+	GL_Color4f(1, 1, 1, 1);
 }
 
 void Parse_TeamInfo(char *s)
@@ -1795,7 +1759,7 @@ static void SCR_Draw_ShowNick(void)
 	maxname = bound(0, maxname, scr_shownick_name_width.integer);
 
 	GL_TextureEnvMode(GL_MODULATE);
-	glColor4f(1, 1, 1, 1);
+	GL_Color4f(1, 1, 1, 1);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 
 	if (scale != 1)
@@ -1815,11 +1779,8 @@ static void SCR_Draw_ShowNick(void)
 
 	// draw frame
 	col = scr_shownick_frame_color.color;
-	glDisable (GL_TEXTURE_2D);
-	glColor4ub(col[0], col[1], col[2], col[3]);
-	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
-	glColor4f(1, 1, 1, 1);
+
+	Draw_AlphaRectangleRGB(x, y, w * FONTWIDTH, h * FONTWIDTH, 0, true, RGBAVECT_TO_COLOR(col));
 
 	// draw shownick
 	SCR_Draw_TeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, true);
@@ -1830,7 +1791,7 @@ static void SCR_Draw_ShowNick(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
+	GL_Color4f(1, 1, 1, 1);
 }
 
 /********************************* TILE CLEAR *********************************/

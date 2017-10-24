@@ -281,7 +281,7 @@ void R_Bloom_DrawEffect( void )
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
-	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
+	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	GL_TextureEnvMode(GL_MODULATE);
 	glBegin(GL_QUADS);                         
 	glTexCoord2f(  0,                          sampleText_tch  ); 
