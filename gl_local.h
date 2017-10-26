@@ -608,6 +608,8 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
 void GL_BindVertexArray(GLuint vao);
 void GL_ShadeModel(GLenum model);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
+void GL_BindTexture(GLenum targetType, GLuint texnum);
+void GL_BindArray(GLuint texnum);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

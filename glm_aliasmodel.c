@@ -235,7 +235,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 		if (array_switch) {
 			GL_SelectTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array);
 
 			prev_texture_array = req->texture_array;
 		}

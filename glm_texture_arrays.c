@@ -96,7 +96,7 @@ GLuint GL_CreateTextureArray(int width, int height, int depth)
 	}
 
 	glGenTextures(1, &gl_texturenum);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum);
+	GL_BindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum);
 	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
@@ -111,7 +111,7 @@ void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
 
 	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
-	glBindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture);
+	GL_BindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture);
 	for (level = 0; width && height; ++level, width /= 2, height /= 2) {
 		glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);

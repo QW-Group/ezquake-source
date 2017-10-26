@@ -109,7 +109,7 @@ void GL_FlushSpriteBatch(void)
 	for (i = 0; i < batch_count; ++i) {
 		glm_sprite_t* sprite = &sprite_batch[i];
 		if (sprite->texture_array != prev_texture_array) {
-			glBindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array);
 			prev_texture_array = sprite->texture_array;
 		}
 
@@ -219,7 +219,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	float oldMatrix[16];
 
 	if (model->texture_arrays[0] != prev_texture_array) {
-		glBindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[0]);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[0]);
 		prev_texture_array = model->texture_arrays[0];
 	}
 

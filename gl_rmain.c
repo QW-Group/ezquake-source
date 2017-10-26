@@ -608,63 +608,71 @@ void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble z
 	}
 }
 
-void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) 
+void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 {
 	//
 	// Setup Multiview-viewports
 	//
-	if (max == 1) 
-	{
-		glViewport (glx + x, gly + y2, w, h);
+	if (max == 1) {
+		GL_Viewport(glx + x, gly + y2, w, h);
 		return;
 	}
-	else if (max == 2 && cl_mvinset.value) 
-	{
-		if (CL_MultiviewCurrentView() == 2)
-			glViewport (glx + x, gly + y2, w, h);
-		else if (CL_MultiviewCurrentView() == 1 && !cl_sbar.value)
-			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (glheight/3)*2, w/3, h/3);
-		else if (CL_MultiviewCurrentView() == 1 && cl_sbar.value)
-			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (h/3)*2, w/3, h/3);
-		else 
+	else if (max == 2 && cl_mvinset.value) {
+		if (CL_MultiviewCurrentView() == 2) {
+			GL_Viewport(glx + x, gly + y2, w, h);
+		}
+		else if (CL_MultiviewCurrentView() == 1 && !cl_sbar.value) {
+			GL_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (glheight / 3) * 2, w / 3, h / 3);
+		}
+		else if (CL_MultiviewCurrentView() == 1 && cl_sbar.value) {
+			GL_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (h / 3) * 2, w / 3, h / 3);
+		}
+		else {
 			Com_Printf("ERROR!\n");
+		}
 		return;
 	}
-	else if (max == 2 && !cl_mvinset.value) 
-	{
-		if (CL_MultiviewCurrentView() == 2)
-			glViewport (0, h/2, w, h/2);
-		else if (CL_MultiviewCurrentView() == 1)
-			glViewport (0, 0, w, h/2-1);
-		else 
+	else if (max == 2 && !cl_mvinset.value) {
+		if (CL_MultiviewCurrentView() == 2) {
+			GL_Viewport(0, h / 2, w, h / 2);
+		}
+		else if (CL_MultiviewCurrentView() == 1) {
+			GL_Viewport(0, 0, w, h / 2 - 1);
+		}
+		else {
 			Com_Printf("ERROR!\n");
-		return;
-
-	}
-	else if (max == 3) 
-	{
-		if (CL_MultiviewCurrentView() == 2)
-			glViewport (0, h/2, w, h/2);
-		else if (CL_MultiviewCurrentView() == 3)
-			glViewport (0, 0, w/2, h/2-1);
-		else
-			glViewport (w/2, 0, w/2, h/2-1);
+		}
 		return;
 	}
-	else 
-	{
-		if (CL_MultiviewCurrentView() == 2)
-			glViewport (0, h/2, w/2, h/2);
-		else if (CL_MultiviewCurrentView() == 3)
-			glViewport (w/2, h/2, w/2, h/2);
-		else if (CL_MultiviewCurrentView() == 4)
-			glViewport (0, 0, w/2, h/2-1);
-		else if (CL_MultiviewCurrentView() == 1)
-			glViewport (w/2, 0, w/2, h/2-1);
+	else if (max == 3) {
+		if (CL_MultiviewCurrentView() == 2) {
+			GL_Viewport(0, h / 2, w, h / 2);
+		}
+		else if (CL_MultiviewCurrentView() == 3) {
+			GL_Viewport(0, 0, w / 2, h / 2 - 1);
+		}
+		else {
+			GL_Viewport(w / 2, 0, w / 2, h / 2 - 1);
+		}
+		return;
+	}
+	else {
+		if (CL_MultiviewCurrentView() == 2) {
+			GL_Viewport(0, h / 2, w / 2, h / 2);
+		}
+		else if (CL_MultiviewCurrentView() == 3) {
+			GL_Viewport(w / 2, h / 2, w / 2, h / 2);
+		}
+		else if (CL_MultiviewCurrentView() == 4) {
+			GL_Viewport(0, 0, w / 2, h / 2 - 1);
+		}
+		else if (CL_MultiviewCurrentView() == 1) {
+			GL_Viewport(w / 2, 0, w / 2, h / 2 - 1);
+		}
 	}
 
 	return;
-} 
+}
 
 void R_SetupGL(void)
 {
@@ -701,7 +709,7 @@ void R_SetupGL(void)
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
 	if (!CL_MultiviewEnabled()) {
-		glViewport(glx + x, gly + y2, w, h);
+		GL_Viewport(glx + x, gly + y2, w, h);
 	}
 
 	farclip = max((int)r_farclip.value, 4096);

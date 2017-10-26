@@ -215,18 +215,45 @@ void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel)
 }
 
 int currenttexture = -1;
+static GLuint currentTextureArray = -1;
 
-void GL_Bind (int texnum)
+void GL_Bind(int texnum)
 {
-	if (currenttexture == texnum)
+	if (currenttexture == texnum) {
 		return;
+	}
 
 	currenttexture = texnum;
-	glBindTexture (GL_TEXTURE_2D, texnum);
+	glBindTexture(GL_TEXTURE_2D, texnum);
+}
+
+void GL_BindArray(GLuint texnum)
+{
+	if (currentTextureArray == texnum) {
+		return;
+	}
+
+	currentTextureArray = texnum;
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
+}
+
+void GL_BindTexture(GLenum targetType, GLuint texnum)
+{
+	if (targetType == GL_TEXTURE_2D) {
+		GL_Bind(texnum);
+	}
+	else if (targetType == GL_TEXTURE_2D_ARRAY) {
+		GL_BindArray(texnum);
+	}
+	else {
+		// No caching...
+		glBindTexture(targetType, texnum);
+	}
 }
 
 static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+static GLuint cntarrays[] = {0, 0, 0, 0, 0, 0, 0, 0};
 static qbool mtexenabled = false;
 
 void GL_SelectTexture(GLenum target)
@@ -243,7 +270,9 @@ void GL_SelectTexture(GLenum target)
 	}
 
 	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
+	cntarrays[oldtarget - GL_TEXTURE0] = currentTextureArray;
 	currenttexture = cnttextures[target - GL_TEXTURE0];
+	currentTextureArray = cntarrays[target - GL_TEXTURE0];
 	oldtarget = target;
 }
 
@@ -1036,14 +1065,14 @@ void GL_Texture_Init(void)
 	// Lightmap.
 	if (GL_ShadersSupported() && true) {
 		glGenTextures(1, &lightmap_texture_array);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
 
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
 		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 			lightmap_textures[i] = lightmap_texture_array;

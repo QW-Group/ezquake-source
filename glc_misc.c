@@ -202,7 +202,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 			vheight *= 2;
 	}
 
-	glViewport (0, 0, glwidth, glheight);
+	GL_Viewport(0, 0, glwidth, glheight);
 
 	GL_Bind(sceneblur_texture);
 

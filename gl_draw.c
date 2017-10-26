@@ -1203,7 +1203,7 @@ void Draw_EndDisc (void) {}
 //
 void GL_Set2D(void)
 {
-	glViewport(glx, gly, glwidth, glheight);
+	GL_Viewport(glx, gly, glwidth, glheight);
 
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	GL_IdentityModelView();
