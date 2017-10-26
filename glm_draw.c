@@ -37,130 +37,6 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 
-// Temp: very simple program to draw single texture on-screen
-static glm_program_t imageProgram;
-static GLint imageProgram_matrix;
-static GLint imageProgram_tex;
-static GLint imageProgram_sbase;
-static GLint imageProgram_swidth;
-static GLint imageProgram_tbase;
-static GLint imageProgram_twidth;
-static GLint imageProgram_color;
-static GLint imageProgram_alphatest;
-
-static GLuint GL_CreateRectangleVAO(void);
-
-void GLM_DrawImageOld(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha)
-{
-	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
-	float matrix[16];
-	float inColor[4] = {
-		color[0] * 1.0f / 255,
-		color[1] * 1.0f / 255,
-		color[2] * 1.0f / 255,
-		color[3] * 1.0f / 255
-	};
-
-	if (!imageProgram.program) {
-		GL_VFDeclare(image_draw);
-
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("Image test", GL_VFParams(image_draw), &imageProgram);
-		imageProgram_matrix = glGetUniformLocation(imageProgram.program, "matrix");
-		imageProgram_tex = glGetUniformLocation(imageProgram.program, "tex");
-		imageProgram_sbase = glGetUniformLocation(imageProgram.program, "sbase");
-		imageProgram_swidth = glGetUniformLocation(imageProgram.program, "swidth");
-		imageProgram_tbase = glGetUniformLocation(imageProgram.program, "tbase");
-		imageProgram_twidth = glGetUniformLocation(imageProgram.program, "twidth");
-		imageProgram_color = glGetUniformLocation(imageProgram.program, "color");
-		imageProgram_alphatest = glGetUniformLocation(imageProgram.program, "alphatest");
-	}
-
-	glDisable(GL_DEPTH_TEST);
-	GLM_GetMatrix(GL_PROJECTION, matrix);
-	GLM_TransformMatrix(matrix, x, y, 0);
-	GLM_ScaleMatrix(matrix, width, height, 1.0f);
-
-	GL_UseProgram(imageProgram.program);
-	glUniformMatrix4fv(imageProgram_matrix, 1, GL_FALSE, matrix);
-	glUniform4f(imageProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
-	glUniform1i(imageProgram_tex, texture_unit);
-	glUniform1f(imageProgram_sbase, tex_s);
-	glUniform1f(imageProgram_swidth, tex_width);
-	glUniform1f(imageProgram_tbase, tex_t);
-	glUniform1f(imageProgram_twidth, tex_height);
-	glUniform1f(imageProgram_alphatest, alpha);
-
-	GL_BindVertexArray(GL_CreateRectangleVAO());
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-static glm_program_t rectProgram;
-static GLint rectProgram_matrix;
-static GLint rectProgram_color;
-/*
-void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
-{
-	// Matrix is transform > (x, y), stretch > x + (scale_x * src_width), y + (scale_y * src_height)
-	float matrix[16];
-	float inColor[4] = {
-		color[0] * 1.0f / 255,
-		color[1] * 1.0f / 255,
-		color[2] * 1.0f / 255,
-		color[3] * 1.0f / 255
-	};
-
-	if (!rectProgram.program) {
-		GL_VFDeclare(rectangle_draw);
-
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("DrawRectangle", GL_VFParams(rectangle_draw), &rectProgram);
-		rectProgram_matrix = glGetUniformLocation(rectProgram.program, "matrix");
-		rectProgram_color = glGetUniformLocation(rectProgram.program, "color");
-	}
-
-	glDisable(GL_DEPTH_TEST);
-	GLM_GetMatrix(GL_PROJECTION, matrix);
-	GLM_TransformMatrix(matrix, x, y, 0);
-	GLM_ScaleMatrix(matrix, width, height, 1.0f);
-
-	GL_UseProgram(rectProgram.program);
-	glUniformMatrix4fv(rectProgram_matrix, 1, GL_FALSE, matrix);
-	glUniform4f(rectProgram_color, inColor[0], inColor[1], inColor[2], inColor[3]);
-
-	GL_BindVertexArray(GL_CreateRectangleVAO());
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}*/
-
-static GLuint GL_CreateRectangleVAO(void)
-{
-	static GLuint vao;
-	static GLuint vbo;
-
-	float points[] = {
-		1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f
-	};
-
-	if (!vbo) {
-		glGenBuffers(1, &vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-	}
-
-	if (!vao) {
-		glGenVertexArrays(1, &vao);
-		GL_BindVertexArray(vao);
-		glEnableVertexAttribArray(0);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	return vao;
-}
-
 static GLuint GL_CreateLineVAO(void)
 {
 	static GLuint vao;
@@ -223,27 +99,27 @@ void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
 {
-	static glm_program_t program;
+	static glm_program_t line_program;
 	static GLint line_matrix;
 	static GLint line_color;
 
-	if (!program.program) {
+	if (!line_program.program) {
 		GL_VFDeclare(line_draw);
 
 		// Very simple line-drawing
 		GLM_CreateVFProgram(
 			"LineDrawing",
 			GL_VFParams(line_draw),
-			&program
+			&line_program
 		);
 
-		if (program.program) {
-			line_matrix = glGetUniformLocation(program.program, "matrix");
-			line_color = glGetUniformLocation(program.program, "inColor");
+		if (line_program.program) {
+			line_matrix = glGetUniformLocation(line_program.program, "matrix");
+			line_color = glGetUniformLocation(line_program.program, "inColor");
 		}
 	}
 
-	if (program.program) {
+	if (line_program.program) {
 		float matrix[16];
 
 		glDisable(GL_DEPTH_TEST);
@@ -251,7 +127,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		GLM_TransformMatrix(matrix, x_start, y_start, 0);
 		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
 
-		GL_UseProgram(program.program);
+		GL_UseProgram(line_program.program);
 		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
 		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
 
@@ -336,58 +212,49 @@ void GLM_FlushImageDraw(void)
 	float projectionMatrix[16];
 
 	if (imageCount) {
+		int start = 0;
+		int i;
+		int currentTexture = 0;
+
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_SelectTexture(GL_TEXTURE0);
 
-		if (false) {
-			int i;
-			for (i = 0; i < imageCount; ++i) {
-				GL_Bind(images[i].texNumber);
-				GLM_DrawImageOld(images[i].x1, images[i].y1, images[i].x2 - images[i].x1, images[i].y2 - images[i].y1, 0, images[i].s1, images[i].t1, images[i].s2 - images[i].s1, images[i].t2 - images[i].t1, images[i].colour, images[i].flags & IMAGEPROG_FLAGS_ALPHATEST);
-			}
-		}
-		else {
-			int start = 0;
-			int i;
-			int currentTexture = 0;
+		GLM_CreateMultiImageProgram();
 
-			GLM_CreateMultiImageProgram();
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
 
-			glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
-			glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
+		glDisable(GL_DEPTH_TEST);
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-			glDisable(GL_DEPTH_TEST);
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+		GL_UseProgram(multiImageProgram.program);
+		glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(multiImage_tex, 0);
 
-			GL_UseProgram(multiImageProgram.program);
-			glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(multiImage_tex, 0);
+		GL_BindVertexArray(imageVAO);
 
-			GL_BindVertexArray(imageVAO);
+		for (i = 0; i < imageCount; ++i) {
+			glm_image_t* img = &images[i];
 
-			for (i = 0; i < imageCount; ++i) {
-				glm_image_t* img = &images[i];
-
-				if (currentTexture > 0 && img->texNumber && currentTexture != img->texNumber) {
-					GL_Bind(currentTexture);
-					glDrawArrays(GL_POINTS, start, i - start);
-					start = i;
-				}
-
-				if (img->texNumber) {
-					currentTexture = img->texNumber;
-				}
-			}
-
-			if (currentTexture) {
+			if (currentTexture > 0 && img->texNumber && currentTexture != img->texNumber) {
 				GL_Bind(currentTexture);
+				glDrawArrays(GL_POINTS, start, i - start);
+				start = i;
 			}
-			glDrawArrays(GL_POINTS, start, imageCount - start);
-			glEnable(GL_DEPTH_TEST);
+
+			if (img->texNumber) {
+				currentTexture = img->texNumber;
+			}
 		}
+
+		if (currentTexture) {
+			GL_Bind(currentTexture);
+		}
+		glDrawArrays(GL_POINTS, start, imageCount - start);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	imageCount = 0;
