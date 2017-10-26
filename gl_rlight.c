@@ -112,7 +112,7 @@ void R_RenderDlight (dlight_t *light) {
 		if (!GL_ShadersSupported()) {
 			glDisable(GL_TEXTURE_2D);
 		}
-		glShadeModel(GL_SMOOTH);
+		GL_ShadeModel(GL_SMOOTH);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
 
@@ -171,7 +171,7 @@ void R_RenderDlights(void)
 		}
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDepthMask(GL_TRUE);
-		glShadeModel(GL_FLAT);
+		GL_ShadeModel(GL_FLAT);
 	}
 }
 

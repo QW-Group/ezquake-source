@@ -415,8 +415,8 @@ void R_DrawAliasModel(entity_t *ent)
 		fb_texture = 0;
 	}
 
-	if (gl_smoothmodels.value && !GL_ShadersSupported()) {
-		glShadeModel(GL_SMOOTH);
+	if (gl_smoothmodels.value) {
+		GL_ShadeModel(GL_SMOOTH);
 	}
 
 	if (gl_affinemodels.value) {
@@ -453,7 +453,7 @@ void R_DrawAliasModel(entity_t *ent)
 		GLC_UnderwaterCaustics(ent, clmodel, oldframe, frame, paliashdr, scaleS, scaleT);
 
 		if (gl_smoothmodels.value) {
-			glShadeModel(GL_FLAT);
+			GL_ShadeModel(GL_FLAT);
 		}
 	}
 

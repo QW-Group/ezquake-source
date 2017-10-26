@@ -492,9 +492,11 @@ void R_DrawWorld(void)
 	R_DrawSky();
 	GL_LeaveRegion();
 
-	GL_EnterRegion("Entities-1st");
-	R_DrawEntitiesOnList(&cl_firstpassents);
-	GL_LeaveRegion();
+	if (cl_firstpassents.count) {
+		GL_EnterRegion("Entities-1st");
+		R_DrawEntitiesOnList(&cl_firstpassents);
+		GL_LeaveRegion();
+	}
 
 	if (GL_ShadersSupported()) {
 		GL_EnterRegion("DrawWorld");

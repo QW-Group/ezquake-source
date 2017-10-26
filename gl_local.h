@@ -356,7 +356,6 @@ extern int gl_textureunits;
 extern qbool gl_combine, gl_add_ext;
 extern qbool gl_support_arb_texture_non_power_of_two;
 
-qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
@@ -419,6 +418,7 @@ typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsiz
 typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
 typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
 typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
+typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 
 // VBO functions
 extern glBindBuffer_t        glBindBufferExt;
@@ -478,6 +478,7 @@ extern glDrawArraysInstanced_t  glDrawArraysInstanced;
 extern glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
 extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
+extern glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
@@ -605,6 +606,8 @@ void GL_DepthRange(double nearVal, double farVal);
 void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
 void GL_BindVertexArray(GLuint vao);
+void GL_ShadeModel(GLenum model);
+void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
@@ -772,6 +775,8 @@ void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
+
+void GL_ProcessErrors(const char* message);
 
 #define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6

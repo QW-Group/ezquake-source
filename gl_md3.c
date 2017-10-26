@@ -107,7 +107,7 @@ void R_DrawAlias3Model (entity_t *ent)
 	}
 
 	if (gl_smoothmodels.value) {
-		glShadeModel(GL_SMOOTH);
+		GL_ShadeModel(GL_SMOOTH);
 	}
 
 	if (gl_affinemodels.value) {
@@ -252,7 +252,7 @@ wtf: where else{ }
 //	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1, 1, 1, 1);
 
-	glShadeModel(GL_FLAT);
+	GL_ShadeModel(GL_FLAT);
 	
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 

@@ -198,7 +198,7 @@ void DrawCI(void)
 	glDepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_TextureEnvMode(GL_MODULATE);
-	glShadeModel(GL_SMOOTH);
+	GL_ShadeModel(GL_SMOOTH);
 
 	// FIXME: i'm not sure which blend mode here better
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -231,7 +231,7 @@ void DrawCI(void)
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
-	glShadeModel(GL_FLAT);
+	GL_ShadeModel(GL_FLAT);
 
 	GL_EnableFog();
 }
