@@ -46,7 +46,7 @@ void GLM_DrawWaterSurfaces(void)
 		if (current_texture != s->texinfo->texture) {
 			if (count && current_texture) {
 				GL_Bind(current_texture->gl_texturenum);
-				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao.vao, indices, count, current_texture);
 				count = 0;
 			}
 			current_texture = s->texinfo->texture;
@@ -57,7 +57,7 @@ void GLM_DrawWaterSurfaces(void)
 
 			if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 				GL_Bind(current_texture->gl_texturenum);
-				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao.vao, indices, count, current_texture);
 				count = 0;
 			}
 
@@ -77,7 +77,7 @@ void GLM_DrawWaterSurfaces(void)
 	}
 	if (count) {
 		GL_Bind(current_texture->gl_texturenum);
-		GLM_DrawIndexedTurbPoly(cl.worldmodel->vao, indices, count, current_texture);
+		GLM_DrawIndexedTurbPoly(cl.worldmodel->vao.vao, indices, count, current_texture);
 		count = 0;
 	}
 

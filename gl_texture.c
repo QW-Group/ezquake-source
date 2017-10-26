@@ -214,104 +214,6 @@ void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
-int currenttexture = -1;
-static GLuint currentTextureArray = -1;
-
-void GL_Bind(int texnum)
-{
-	if (currenttexture == texnum) {
-		return;
-	}
-
-	currenttexture = texnum;
-	glBindTexture(GL_TEXTURE_2D, texnum);
-}
-
-void GL_BindArray(GLuint texnum)
-{
-	if (currentTextureArray == texnum) {
-		return;
-	}
-
-	currentTextureArray = texnum;
-	glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-}
-
-void GL_BindTexture(GLenum targetType, GLuint texnum)
-{
-	if (targetType == GL_TEXTURE_2D) {
-		GL_Bind(texnum);
-	}
-	else if (targetType == GL_TEXTURE_2D_ARRAY) {
-		GL_BindArray(texnum);
-	}
-	else {
-		// No caching...
-		glBindTexture(targetType, texnum);
-	}
-}
-
-static GLenum oldtarget = GL_TEXTURE0;
-static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-static GLuint cntarrays[] = {0, 0, 0, 0, 0, 0, 0, 0};
-static qbool mtexenabled = false;
-
-void GL_SelectTexture(GLenum target)
-{
-	if (target == oldtarget) {
-		return;
-	}
-
-	if (glActiveTexture) {
-		glActiveTexture(target);
-	}
-	else {
-		qglActiveTexture(target);
-	}
-
-	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
-	cntarrays[oldtarget - GL_TEXTURE0] = currentTextureArray;
-	currenttexture = cnttextures[target - GL_TEXTURE0];
-	currentTextureArray = cntarrays[target - GL_TEXTURE0];
-	oldtarget = target;
-}
-
-void GL_DisableMultitexture(void)
-{
-	if (GL_ShadersSupported()) {
-		GL_SelectTexture(GL_TEXTURE0);
-	}
-	else if (mtexenabled) {
-		glDisable(GL_TEXTURE_2D);
-		GL_SelectTexture(GL_TEXTURE0);
-		mtexenabled = false;
-	}
-}
-
-void GL_EnableMultitexture(void)
-{
-	if (GL_ShadersSupported()) {
-		GL_SelectTexture(GL_TEXTURE1);
-	}
-	else if (gl_mtexable) {
-		GL_SelectTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-		mtexenabled = true;
-	}
-}
-
-void GL_EnableTMU(GLenum target) 
-{
-	GL_SelectTexture(target);
-	glEnable(GL_TEXTURE_2D);
-}
-
-void GL_DisableTMU(GLenum target) 
-{
-	GL_SelectTexture(target);
-	glDisable(GL_TEXTURE_2D);
-}
-
 static void ScaleDimensions(int width, int height, int *scaled_width, int *scaled_height, int mode) 
 {
 	int maxsize, picmip;
@@ -1041,16 +943,10 @@ void GL_Texture_Init(void)
 	memset(gltextures, 0, sizeof(gltextures));
 
 	//texture_extension_number = 1;
-	numgltextures  = 0;
-	currenttexture = -1;
 	current_texture = NULL; // nice names
+	numgltextures  = 0;
 
-	// Multi texture.
-	oldtarget = GL_TEXTURE0;
-	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++) {
-		cnttextures[i] = -1;
-	}
-	mtexenabled = false;
+	GL_InitTextureState();
 
 	// Save a texture slot for translated picture.
 	glGenTextures(1, &translate_texture);

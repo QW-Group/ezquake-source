@@ -71,11 +71,13 @@ glBindBuffer_t     glBindBufferExt = NULL;
 glBufferData_t     glBufferDataExt = NULL;
 glBufferSubData_t  glBufferSubDataExt = NULL;
 glGenBuffers_t     glGenBuffers = NULL;
+glDeleteBuffers_t  glDeleteBuffers = NULL;
 
 // VAO functions
 glGenVertexArrays_t         glGenVertexArrays = NULL;
 glBindVertexArray_t         glBindVertexArray = NULL;
 glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
+glDeleteVertexArrays_t      glDeleteVertexArrays = NULL;
 glVertexAttribPointer_t     glVertexAttribPointer = NULL;
 glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
 glVertexAttribDivisor_t     glVertexAttribDivisor = NULL;
@@ -211,9 +213,11 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderiv);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGenBuffers);
+			OPENGL_LOAD_SHADER_FUNCTION(glDeleteBuffers);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGenVertexArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
+			OPENGL_LOAD_SHADER_FUNCTION(glDeleteVertexArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glEnableVertexAttribArray);
 			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribPointer);
 			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribIPointer);
@@ -661,208 +665,6 @@ int GL_AlphaBlendFlags(int flags)
 	return old_alphablend_flags;
 }
 
-// GLM Utility functions
-void GLM_ConPrintShaderLog(GLuint shader)
-{
-	GLint log_length;
-	char* buffer;
-
-	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
-	if (log_length) {
-		GLsizei written;
-
-		buffer = Q_malloc(log_length);
-		glGetShaderInfoLog(shader, log_length, &written, buffer);
-		Con_Printf(buffer);
-		Q_free(buffer);
-	}
-}
-
-void GLM_ConPrintProgramLog(GLuint program)
-{
-	GLint log_length;
-	char* buffer;
-
-	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
-	if (log_length) {
-		GLsizei written;
-
-		buffer = Q_malloc(log_length);
-		glGetProgramInfoLog(program, log_length, &written, buffer);
-		Con_Printf(buffer);
-		Q_free(buffer);
-	}
-}
-
-static qbool GLM_CompileShader(const char* shaderText, GLuint shaderTextLength, GLenum shaderType, GLuint* shaderId)
-{
-	GLuint shader;
-	GLint result;
-	GLint length = shaderTextLength;
-
-	*shaderId = 0;
-	shader = glCreateShader(shaderType);
-	if (shader) {
-		glShaderSource(shader, 1, &shaderText, &length);
-		glCompileShader(shader);
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
-		if (result) {
-			*shaderId = shader;
-			return true;
-		}
-
-		Con_Printf("Shader->Compile(%X) failed\n", shaderType);
-		GLM_ConPrintShaderLog(shader);
-		glDeleteShader(shader);
-	}
-	else {
-		Con_Printf("glCreateShader failed\n");
-	}
-	return false;
-}
-
-qbool GLM_CreateVGFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program
-)
-{
-	GLuint vertex_shader = 0;
-	GLuint fragment_shader = 0;
-	GLuint geometry_shader = 0;
-	GLuint shader_program = 0;
-
-	Con_DPrintf("--[ %s ]--\n", friendlyName);
-	if (GL_ShadersSupported()) {
-		GLint result = 0;
-
-		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (GLM_CompileShader(geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
-				if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
-					Con_DPrintf("Shader compilation completed successfully\n");
-
-					shader_program = glCreateProgram();
-					if (shader_program) {
-						glAttachShader(shader_program, fragment_shader);
-						glAttachShader(shader_program, vertex_shader);
-						glAttachShader(shader_program, geometry_shader);
-						glLinkProgram(shader_program);
-						glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
-
-						if (result) {
-							Con_DPrintf("ShaderProgram.Link() was successful\n");
-							program->geometry_shader = geometry_shader;
-							program->fragment_shader = fragment_shader;
-							program->vertex_shader = vertex_shader;
-							program->program = shader_program;
-							return true;
-						}
-						else {
-							Con_Printf("ShaderProgram.Link() failed\n");
-							GLM_ConPrintProgramLog(shader_program);
-						}
-					}
-				}
-				else {
-					Con_Printf("FragmentShader.Compile() failed\n");
-				}
-			}
-			else {
-				Con_Printf("GeometryShader.Compile() failed\n");
-			}
-		}
-		else {
-			Con_Printf("VertexShader.Compile() failed\n");
-		}
-	}
-	else {
-		Con_Printf("Shaders not supported\n");
-		return false;
-	}
-
-	if (shader_program) {
-		glDeleteProgram(shader_program);
-	}
-	if (fragment_shader) {
-		glDeleteShader(fragment_shader);
-	}
-	if (vertex_shader) {
-		glDeleteShader(vertex_shader);
-	}
-	if (geometry_shader) {
-		glDeleteShader(geometry_shader);
-	}
-	return false;
-}
-
-qbool GLM_CreateVFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program
-)
-{
-	GLuint vertex_shader = 0;
-	GLuint fragment_shader = 0;
-	GLuint shader_program = 0;
-
-	Con_DPrintf("--[ %s ]--\n", friendlyName);
-	if (GL_ShadersSupported()) {
-		GLint result = 0;
-
-		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
-				Con_DPrintf("Shader compilation completed successfully\n");
-
-				shader_program = glCreateProgram();
-				if (shader_program) {
-					glAttachShader(shader_program, fragment_shader);
-					glAttachShader(shader_program, vertex_shader);
-					glLinkProgram(shader_program);
-					glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
-
-					if (result) {
-						Con_DPrintf("ShaderProgram.Link() was successful\n");
-						program->fragment_shader = fragment_shader;
-						program->vertex_shader = vertex_shader;
-						program->program = shader_program;
-						return true;
-					}
-					else {
-						Con_Printf("ShaderProgram.Link() failed\n");
-						GLM_ConPrintProgramLog(shader_program);
-					}
-				}
-			}
-			else {
-				Con_Printf("FragmentShader.Compile() failed\n");
-			}
-		}
-	}
-	else {
-		Con_Printf("Shaders not supported\n");
-		return false;
-	}
-
-	if (shader_program) {
-		glDeleteProgram(shader_program);
-	}
-	if (fragment_shader) {
-		glDeleteShader(fragment_shader);
-	}
-	if (vertex_shader) {
-		glDeleteShader(vertex_shader);
-	}
-	return false;
-}
-
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	// Deliberately inverting top & bottom here...
@@ -1252,17 +1054,6 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
 
-void GL_UseProgram(GLuint program)
-{
-	static GLuint last_program;
-
-	if (program != last_program) {
-		glUseProgram(program);
-
-		last_program = program;
-	}
-}
-
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName)
 {
@@ -1275,83 +1066,67 @@ void GL_LeaveRegion(void)
 }
 #endif
 
-void GL_DepthFunc(GLenum func)
-{
-	static GLenum current = GL_LESS;
+// Linked list of all vbo buffers
+static glm_vbo_t* vbo_list = NULL;
 
-	if (func != current) {
-		glDepthFunc(func);
-		current = func;
+// Linked list of all vao buffers
+static glm_vao_t* vao_list = NULL;
+
+void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
+{
+	if (vbo->vbo) {
+		glDeleteBuffers(1, &vbo->vbo);
 	}
+	else {
+		vbo->next = vbo_list;
+		vbo_list = vbo;
+	}
+	vbo->name = name;
+	glGenBuffers(1, &vbo->vbo);
 }
 
-void GL_DepthRange(double nearVal, double farVal)
+void GL_GenVertexArray(glm_vao_t* vao)
 {
-	static double currentNearVal = 0;
-	static double currentFarVal = 1;
-
-	if (nearVal != currentNearVal || farVal != currentFarVal) {
-		glDepthRange(nearVal, farVal);
-
-		currentNearVal = nearVal;
-		currentFarVal = farVal;
+	if (vao->vao) {
+		glDeleteVertexArrays(1, &vao->vao);
 	}
+	else {
+		vao->next = vao_list;
+		vao_list = vao;
+	}
+	glGenVertexArrays(1, &vao->vao);
 }
 
-void GL_CullFace(GLenum mode)
+void GL_DeleteBuffers(void)
 {
-	static GLenum current = GL_BACK;
+	glm_vao_t* vao = vao_list;
+	glm_vbo_t* vbo = vbo_list;
 
-	if (mode != current) {
-		glCullFace(mode);
-		current = mode;
+	glBindVertexArray(0);
+	while (vao) {
+		glm_vao_t* prev = vao;
+
+		if (vao->vao) {
+			glDeleteVertexArrays(1, &vao->vao);
+			vao->vao = 0;
+		}
+
+		vao = vao->next;
+		prev->next = NULL;
 	}
-}
 
-void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
-{
-	static GLenum currentSFactor = GL_ONE;
-	static GLenum currentDFactor = GL_ZERO;
+	while (vbo) {
+		glm_vbo_t* prev = vbo;
 
-	if (sfactor != currentSFactor || dfactor != currentDFactor) {
-		glBlendFunc(sfactor, dfactor);
-		currentSFactor = sfactor;
-		currentDFactor = dfactor;
+		if (vbo->vbo) {
+			glDeleteBuffers(1, &vbo->vbo);
+			vbo->vbo = 0;
+		}
+
+		vbo = vbo->next;
+		prev->next = NULL;
 	}
-}
 
-void GL_BindVertexArray(GLuint vao)
-{
-	static GLuint currentVAO = 0;
-
-	if (currentVAO != vao) {
-		glBindVertexArray(vao);
-		currentVAO = vao;
-	}
-}
-
-void GL_ShadeModel(GLenum model)
-{
-	static GLenum currentModel = GL_SMOOTH;
-
-	if (model != currentModel && !GL_ShadersSupported()) {
-		glShadeModel(model);
-		currentModel = model;
-	}
-}
-
-void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
-	static GLint currentX = 0, currentY = 0;
-	static GLsizei currentWidth, currentHeight;
-
-	if (x != currentX || y != currentY || width != currentWidth || height != currentHeight) {
-		glViewport(x, y, width, height);
-
-		currentX = x;
-		currentY = y;
-		currentWidth = width;
-		currentHeight = height;
-	}
+	vbo_list = NULL;
+	vao_list = NULL;
 }

@@ -240,7 +240,7 @@ void EmitWaterPolys(msurface_t *fa)
 			// FIXME: turbripple effect, transparent water
 			col[3] = 255;
 			for (p = fa->polys; p; p = p->next) {
-				GLM_DrawFlatPoly(col, p->vao, p->numverts, false);
+				GLM_DrawFlatPoly(col, p->vao.vao, p->numverts, false);
 			}
 			col[3] = old_alpha;
 		}
@@ -267,7 +267,7 @@ void EmitWaterPolys(msurface_t *fa)
 					verts += p->numverts;
 					++polys;
 				}
-				GLM_DrawTurbPolys(fa->polys->vao, verts + 2 * (polys - 1), wateralpha);
+				GLM_DrawTurbPolys(fa->polys->vao.vao, verts + 2 * (polys - 1), wateralpha);
 			}
 			if (wateralpha < 1.0 && wateralpha >= 0) {
 				GL_TextureEnvMode(GL_REPLACE);

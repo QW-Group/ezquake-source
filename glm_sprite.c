@@ -30,16 +30,15 @@ static glm_sprite_t sprite_batch[MAX_SPRITE_BATCH];
 static int batch_count = 0;
 
 // Temporary
-static GLuint simpleItemVBO, simpleItemVAO;
+static glm_vbo_t simpleItemVBO;
+static glm_vao_t simpleItemVAO;
 static void GL_CompileSpriteProgram(void);
 
 static void GL_PrepareSprites(void)
 {
-	if (!spriteProgram.program) {
-		GL_CompileSpriteProgram();
-	}
+	GL_CompileSpriteProgram();
 
-	if (!simpleItemVBO) {
+	if (!simpleItemVBO.vbo) {
 		float verts[4][VERTEXSIZE] = { { 0 } };
 
 		VectorSet(verts[0], 0, -1, -1);
@@ -58,17 +57,17 @@ static void GL_PrepareSprites(void)
 		verts[3][3] = 0;
 		verts[3][4] = 1;
 
-		glGenBuffers(1, &simpleItemVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		GL_GenBuffer(&simpleItemVBO, __FUNCTION__);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
 	}
 
-	if (!simpleItemVAO) {
-		glGenVertexArrays(1, &simpleItemVAO);
-		GL_BindVertexArray(simpleItemVAO);
+	if (!simpleItemVAO.vao) {
+		GL_GenVertexArray(&simpleItemVAO);
+		GL_BindVertexArray(simpleItemVAO.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 	}
@@ -174,12 +173,14 @@ void GL_EndDrawSprites(void)
 
 static void GL_CompileSpriteProgram(void)
 {
-	GL_VFDeclare(sprite);
+	if (!spriteProgram.program) {
+		GL_VFDeclare(sprite);
 
-	// Initialise program for drawing image
-	GLM_CreateVFProgram("Sprites", GL_VFParams(sprite), &spriteProgram);
+		// Initialise program for drawing image
+		GLM_CreateVFProgram("Sprites", GL_VFParams(sprite), &spriteProgram);
+	}
 
-	if (spriteProgram.program) {
+	if (spriteProgram.program && !spriteProgram.uniforms_found) {
 		sprite_modelViewMatrixUniform = glGetUniformLocation(spriteProgram.program, "modelView");
 		sprite_projectionMatrixUniform = glGetUniformLocation(spriteProgram.program, "projection");
 		sprite_materialTexUniform = glGetUniformLocation(spriteProgram.program, "materialTex");
@@ -188,6 +189,7 @@ static void GL_CompileSpriteProgram(void)
 		sprite_textureIndex = glGetUniformLocation(spriteProgram.program, "skinNumber");
 		sprite_texS = glGetUniformLocation(spriteProgram.program, "texS");
 		sprite_texT = glGetUniformLocation(spriteProgram.program, "texT");
+		spriteProgram.uniforms_found = true;
 	}
 }
 
@@ -211,7 +213,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->texScale[1] = scale_t;
 	sprite->texture_array = model->simpletexture_array;
 	sprite->texture_index = texture;
-	sprite->vao = model->vao_simple;
+	sprite->vao = model->vao_simple.vao;
 	++batch_count;
 
 	/*

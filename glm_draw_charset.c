@@ -33,8 +33,8 @@ static GLint textString_materialTex;
 static GLint textString_bigFont;
 static GLint textString_textureBase;
 static GLint textString_fontSize;
-static GLuint textStringVBO;
-static GLuint textStringVAO;
+static glm_vbo_t textStringVBO;
+static glm_vao_t textStringVAO;
 
 void Draw_TextCacheInit(float x, float y, float scale)
 {
@@ -52,42 +52,45 @@ void Draw_TextCacheInit(float x, float y, float scale)
 
 static GLuint Draw_CreateTextStringVAO(void)
 {
-	if (!textStringVBO) {
-		glGenBuffers(1, &textStringVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+	if (!textStringVBO.vbo) {
+		GL_GenBuffer(&textStringVBO, "textString");
+		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(cache), cache, GL_STATIC_DRAW);
 	}
 
-	if (!textStringVAO) {
-		glGenVertexArrays(1, &textStringVAO);
-		GL_BindVertexArray(textStringVAO);
+	if (!textStringVAO.vao) {
+		GL_GenVertexArray(&textStringVAO);
+		GL_BindVertexArray(textStringVAO.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
-		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO.vbo);
 		glVertexAttribIPointer(0, 1, GL_INT, sizeof(gl_text_cache_t), (void*)0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*)(sizeof(int)));
 		glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(gl_text_cache_t), (void*)(sizeof(int) + sizeof(float) * 2));
 		glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_text_cache_t), (void*)(sizeof(int) + sizeof(float) * 3));
 	}
 
-	return textStringVAO;
+	return textStringVAO.vao;
 }
 
 static void Draw_CreateTextStringProgram(void)
 {
 	if (!textStringProgram.program) {
-		GL_VGFDeclare(text_string)
+		GL_VGFDeclare(text_string);
 
 		GLM_CreateVGFProgram("StringDraw", GL_VGFParams(text_string), &textStringProgram);
+	}
 
+	if (textStringProgram.program && !textStringProgram.uniforms_found) {
 		textString_modelViewMatrix = glGetUniformLocation(textStringProgram.program, "modelViewMatrix");
 		textString_projectionMatrix = glGetUniformLocation(textStringProgram.program, "projectionMatrix");
 		textString_materialTex = glGetUniformLocation(textStringProgram.program, "materialTex");
 		textString_bigFont = glGetUniformLocation(textStringProgram.program, "bigFont");
 		textString_fontSize = glGetUniformLocation(textStringProgram.program, "fontSize");
 		textString_textureBase = glGetUniformLocation(textStringProgram.program, "textureBase");
+		textStringProgram.uniforms_found = true;
 	}
 }
 
@@ -118,7 +121,7 @@ void Draw_TextCacheFlush(void)
 				GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 				// Update VBO
-				glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO);
+				glBindBufferExt(GL_ARRAY_BUFFER, textStringVBO.vbo);
 				glBufferDataExt(GL_ARRAY_BUFFER, sizeof(cache[0]) * cache_pos, cache, GL_STATIC_DRAW);
 
 				if ((gl_alphafont.value/* || apply_overall_alpha*/)) {

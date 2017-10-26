@@ -736,6 +736,12 @@ void VID_Shutdown(void)
 	}
 #endif
 
+	if (GL_ShadersSupported()) {
+		GLM_DeletePrograms();
+	}
+
+	GL_DeleteBuffers();
+
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
 		sdl_context = NULL;
@@ -757,6 +763,8 @@ void VID_Shutdown(void)
 	modelist_count = 0;
 	vid_hwgamma_enabled = false;
 	vid_initialized = false;
+
+	GL_InitialiseState();
 }
 
 static int VID_SDL_InitSubSystem(void)

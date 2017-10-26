@@ -124,6 +124,19 @@ typedef struct mtexinfo_s {
 // materialIndex
 #define MODELVERTEXSIZE 9
 
+typedef struct glm_vbo_s {
+	unsigned int vbo;
+	const char* name;
+
+	struct glm_vbo_s* next;
+} glm_vbo_t;
+
+typedef struct glm_vao_s {
+	unsigned int vao;
+
+	struct glm_vao_s* next;
+} glm_vao_t;
+
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;						//next lightmap poly in chain
@@ -132,9 +145,9 @@ typedef struct glpoly_s {
 	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
 
-	unsigned int        vbo;
+	glm_vbo_t           vbo;
 	unsigned int        vbo_start;
-	unsigned int        vao;
+	glm_vao_t           vao;
 	int					numverts;
 	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2 l)
 } glpoly_t;
@@ -339,8 +352,8 @@ typedef struct aliashdr_s {
 	float               gl_scalingS[MAX_SKINS][4];
 	float               gl_scalingT[MAX_SKINS][4];
 
-	int                 vbo;
-	int                 vao;
+	glm_vbo_t           vbo;
+	glm_vao_t           vao;
 	int                 vertsPerPose;
 	int                 vertsOffset;
 
@@ -495,9 +508,9 @@ typedef struct model_s {
 	// additional model data
 	cache_user_t		cache; // only access through Mod_Extradata
 
-	unsigned int        vbo;
-	unsigned int        vao;
-	unsigned int        vao_simple;
+	glm_vbo_t           vbo;
+	glm_vao_t           vao;
+	glm_vao_t           vao_simple;
 
 	unsigned int*       texture_arrays;
 	float*              texture_arrays_scale_s;

@@ -365,10 +365,12 @@ typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
+typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
 
 // VAOs
 typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
 typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
+typedef void (APIENTRY *glDeleteVertexArrays_t)(GLsizei n, const GLuint* arrays);
 typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
 typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
@@ -425,10 +427,12 @@ extern glBindBuffer_t        glBindBufferExt;
 extern glBufferData_t        glBufferDataExt;
 extern glBufferSubData_t     glBufferSubDataExt;
 extern glGenBuffers_t        glGenBuffers;
+extern glDeleteBuffers_t     glDeleteBuffers;
 
 // VAO functions
 extern glGenVertexArrays_t         glGenVertexArrays;
 extern glBindVertexArray_t         glBindVertexArray;
+extern glDeleteVertexArrays_t      glDeleteVertexArrays;
 extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
 extern glVertexAttribPointer_t     glVertexAttribPointer;
 extern glVertexAttribIPointer_t    glVertexAttribIPointer;
@@ -502,11 +506,22 @@ void GLM_GetMatrix(GLenum type, float* matrix);
 void GLM_ConPrintShaderLog(GLuint shader);
 void GLM_ConPrintProgramLog(GLuint program);
 
+#define GLM_VERTEX_SHADER   0
+#define GLM_FRAGMENT_SHADER 1
+#define GLM_GEOMETRY_SHADER 2
+#define GLM_SHADER_COUNT    3
+
 typedef struct glm_program_s {
 	GLuint vertex_shader;
 	GLuint geometry_shader;
 	GLuint fragment_shader;
 	GLuint program;
+
+	struct glm_program_s* next;
+	const char* friendly_name;
+	const char* shader_text[GLM_SHADER_COUNT];
+	GLuint shader_length[GLM_SHADER_COUNT];
+	qbool uniforms_found;
 } glm_program_t;
 
 qbool GLM_CreateVFProgram(
@@ -591,10 +606,6 @@ void GL_PushMatrix(GLenum mode, float* matrix);
 void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap);
 void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool alpha_test);
 
-void GL_EnableFog(void);
-void GL_DisableFog(void);
-void GL_ConfigureFog(void);
-void GL_EnableWaterFog(int contents);
 void GLM_DebugMatrix(GLenum type, const char* value);
 
 int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos);
@@ -610,6 +621,11 @@ void GL_ShadeModel(GLenum model);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_BindTexture(GLenum targetType, GLuint texnum);
 void GL_BindArray(GLuint texnum);
+void GL_EnableFog(void);
+void GL_DisableFog(void);
+void GL_ConfigureFog(void);
+void GL_EnableWaterFog(int contents);
+void GL_InitTextureState(void);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
@@ -779,9 +795,16 @@ void GLM_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 
 void GL_ProcessErrors(const char* message);
+void GLM_DeletePrograms(void);
+void GLM_InitPrograms(void);
+void GL_DeleteBuffers(void);
 
 #define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6
+
+void GL_InitialiseState(void);
+void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
+void GL_GenVertexArray(glm_vao_t* vao);
 
 #endif /* !__GL_LOCAL_H__ */
 

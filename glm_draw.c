@@ -39,29 +39,29 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 
 static GLuint GL_CreateLineVAO(void)
 {
-	static GLuint vao;
-	static GLuint vbo;
+	static glm_vao_t vao;
+	static glm_vbo_t vbo;
 
 	float points[] = {
 		0.0f, 0.0f, 0.0f,
 		1.0f, 1.0f, 0.0f,
 	};
 
-	if (!vbo) {
-		glGenBuffers(1, &vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+	if (!vbo.vbo) {
+		GL_GenBuffer(&vbo, "line");
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 	}
 
-	if (!vao) {
-		glGenVertexArrays(1, &vao);
-		GL_BindVertexArray(vao);
+	if (!vao.vao) {
+		GL_GenVertexArray(&vao);
+		GL_BindVertexArray(vao.vao);
 		glEnableVertexAttribArray(0);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	return vao;
+	return vao.vao;
 }
 
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
@@ -112,11 +112,12 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 			GL_VFParams(line_draw),
 			&line_program
 		);
+	}
 
-		if (line_program.program) {
-			line_matrix = glGetUniformLocation(line_program.program, "matrix");
-			line_color = glGetUniformLocation(line_program.program, "inColor");
-		}
+	if (line_program.program && !line_program.uniforms_found) {
+		line_matrix = glGetUniformLocation(line_program.program, "matrix");
+		line_color = glGetUniformLocation(line_program.program, "inColor");
+		line_program.uniforms_found = true;
 	}
 
 	if (line_program.program) {
@@ -166,8 +167,8 @@ typedef struct glm_image_s {
 
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
 static int imageCount = 0;
-static GLuint imageVAO;
-static GLuint imageVBO;
+static glm_vao_t imageVAO;
+static glm_vbo_t imageVBO;
 
 void GLM_CreateMultiImageProgram(void)
 {
@@ -176,27 +177,31 @@ void GLM_CreateMultiImageProgram(void)
 
 		// Initialise program for drawing image
 		GLM_CreateVGFProgram("Multi-image", GL_VGFParams(multi_image_draw), &multiImageProgram);
+	}
+
+	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
 		multiImage_modelViewMatrix = glGetUniformLocation(multiImageProgram.program, "modelViewMatrix");
 		multiImage_projectionMatrix = glGetUniformLocation(multiImageProgram.program, "projectionMatrix");
 		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
+		multiImageProgram.uniforms_found = true;
 	}
 
-	if (!imageVBO) {
-		glGenBuffers(1, &imageVBO);
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+	if (!imageVBO.vbo) {
+		GL_GenBuffer(&imageVBO, __FUNCTION__);
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images), images, GL_STATIC_DRAW);
 	}
 
-	if (!imageVAO) {
-		glGenVertexArrays(1, &imageVAO);
-		GL_BindVertexArray(imageVAO);
+	if (!imageVAO.vao) {
+		GL_GenVertexArray(&imageVAO);
+		GL_BindVertexArray(imageVAO.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
 		glEnableVertexAttribArray(5);
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
@@ -222,7 +227,7 @@ void GLM_FlushImageDraw(void)
 
 		GLM_CreateMultiImageProgram();
 
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO);
+		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
 
 		glDisable(GL_DEPTH_TEST);
@@ -234,7 +239,7 @@ void GLM_FlushImageDraw(void)
 		glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1i(multiImage_tex, 0);
 
-		GL_BindVertexArray(imageVAO);
+		GL_BindVertexArray(imageVAO.vao);
 
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];

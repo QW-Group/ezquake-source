@@ -241,7 +241,7 @@ void R_DrawBrushModel (entity_t *e) {
 	float oldMatrix[16];
 
 	currententity = e;
-	currenttexture = -1;
+	//currenttexture = -1;
 
 	clmodel = e->model;
 
@@ -485,7 +485,7 @@ void R_DrawWorld(void)
 	VectorCopy(r_refdef.vieworg, modelorg);
 
 	currententity = &ent;
-	currenttexture = -1;
+	//currenttexture = -1;
 
 	//draw the world sky
 	GL_EnterRegion("R_DrawSky");

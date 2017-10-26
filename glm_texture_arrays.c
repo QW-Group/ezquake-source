@@ -9,8 +9,8 @@
 #include "tr_types.h"
 #endif
 
-static unsigned int model_vao = 0;
-static unsigned int instance_vbo = 0;
+static glm_vao_t model_vao;
+static glm_vbo_t instance_vbo;
 
 void GL_BuildCommonTextureArrays(void);
 static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
@@ -29,8 +29,8 @@ static void GLM_CreateInstanceVBO(void)
 	unsigned int values[MAX_INSTANCES];
 	int i;
 
-	glGenBuffers(1, &instance_vbo);
-	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+	GL_GenBuffer(&instance_vbo, __FUNCTION__);
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 
 	for (i = 0; i < MAX_INSTANCES; ++i) {
 		values[i] = i;
@@ -377,7 +377,7 @@ static void GLM_SetTextureArrays(model_t* mod)
 	}
 }
 
-void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_texture_t* commonTex, int maxWidth, int maxHeight, GLuint model_vbo, float* new_vbo_buffer, int* new_vbo_position)
+void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_texture_t* commonTex, int maxWidth, int maxHeight, glm_vbo_t model_vbo, float* new_vbo_buffer, int* new_vbo_position)
 {
 	int count = 0;
 	int j;
@@ -509,11 +509,11 @@ void GL_BuildCommonTextureArrays(void)
 {
 	common_texture_t* common = Q_malloc(sizeof(common_texture_t));
 	int required_vbo_length = 4;
-	unsigned int model_vbo = 0;
+	static glm_vbo_t model_vbo;
 	int i;
 
-	glGenBuffers(1, &model_vbo);
-	glGenVertexArrays(1, &model_vao);
+	GL_GenBuffer(&model_vbo, __FUNCTION__);
+	GL_GenVertexArray(&model_vao);
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -583,7 +583,7 @@ void GL_BuildCommonTextureArrays(void)
 		}
 
 		GLM_CreateInstanceVBO();
-		GLM_CreateModelVAO(model_vbo, required_vbo_length, new_vbo_buffer);
+		GLM_CreateModelVAO(model_vbo.vbo, required_vbo_length, new_vbo_buffer);
 		GLM_CreateBrushModelVAO();
 	}
 
@@ -596,7 +596,7 @@ static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, flo
 	glBufferDataExt(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
 	Q_free(new_vbo_buffer);
 
-	GL_BindVertexArray(model_vao);
+	GL_BindVertexArray(model_vao.vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -605,7 +605,7 @@ static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, flo
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(3, 1);
 }
@@ -645,8 +645,8 @@ static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, in
 	Q_free(data);
 }
 
-static GLuint brushModel_vbo;
-static GLuint brushModel_vao;
+static glm_vbo_t brushModel_vbo;
+static glm_vao_t brushModel_vao;
 
 static void GLM_CreateBrushModelVAO(void)
 {
@@ -673,12 +673,12 @@ static void GLM_CreateBrushModelVAO(void)
 
 	// Create vbo buffer
 	buffer = Q_malloc(size * VERTEXSIZE * sizeof(float));
-	glGenBuffers(1, &brushModel_vbo);
-	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo);
+	GL_GenBuffer(&brushModel_vbo, __FUNCTION__);
+	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
 
 	// Create vao
-	glGenVertexArrays(1, &brushModel_vao);
-	GL_BindVertexArray(brushModel_vao);
+	GL_GenVertexArray(&brushModel_vao);
+	GL_BindVertexArray(brushModel_vao.vao);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {
@@ -700,7 +700,7 @@ static void GLM_CreateBrushModelVAO(void)
 	}
 
 	// Copy VBO buffer across
-	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo);
+	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
 	glBufferDataExt(GL_ARRAY_BUFFER, size * VERTEXSIZE * sizeof(float), buffer, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
@@ -716,7 +716,7 @@ static void GLM_CreateBrushModelVAO(void)
 	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
 	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
 	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
-	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo);
+	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(6, 1);
 

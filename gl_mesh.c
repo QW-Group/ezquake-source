@@ -450,32 +450,10 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	}
 
 	{
-		//float* vbo_buffer = Hunk_Alloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 		float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 
 		GL_MakeAliasModelVBO(m, vbo_buffer);
 
-		/*
-		unsigned int vbo;
-		unsigned int vao;
-		glGenBuffers(1, &vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, m->vertsInVBO * MODELVERTEXSIZE * sizeof(float), vbo_buffer, GL_STATIC_DRAW);
-
-		glGenVertexArrays(1, &vao);
-		GL_BindVertexArray(vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 8));
-
-		paliashdr->vbo = vbo;
-		paliashdr->vao = vao;*/
 		m->temp_vbo_buffer = vbo_buffer;
 	}
 }

@@ -66,7 +66,9 @@ static void GLM_CompileAliasModelProgram(void)
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgram("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram);
+	}
 
+	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
 		drawAliasModel_modelViewMatrix = glGetUniformLocation(drawAliasModelProgram.program, "modelViewMatrix");
 		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
 		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
@@ -80,6 +82,7 @@ static void GLM_CompileAliasModelProgram(void)
 		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
 		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
 		drawAliasModel_shell_alpha = glGetUniformLocation(drawAliasModelProgram.program, "shell_alpha");
+		drawAliasModelProgram.uniforms_found = true;
 	}
 }
 
@@ -102,7 +105,7 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 	}
 	color[3] = r_modelalpha * 255;
 
-	if (paliashdr->vao) {
+	if (paliashdr->vao.vao) {
 		int* order = (int *)((byte *)paliashdr + paliashdr->commands);
 		int count;
 
@@ -143,7 +146,7 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_QueueAliasModelDraw(model, paliashdr->vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array);
+			GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array);
 
 			vertIndex += count;
 		}

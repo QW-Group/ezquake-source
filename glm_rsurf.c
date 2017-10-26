@@ -42,12 +42,15 @@ static void GLM_CompileTurbPolyProgram(void)
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgram("Turb poly", GL_VFParams(turb_poly), &turbPolyProgram);
+	}
 
+	if (turbPolyProgram.program && !turbPolyProgram.uniforms_found) {
 		turb_modelViewMatrix = glGetUniformLocation(turbPolyProgram.program, "modelViewMatrix");
 		turb_projectionMatrix = glGetUniformLocation(turbPolyProgram.program, "projectionMatrix");
 		turb_materialTex = glGetUniformLocation(turbPolyProgram.program, "materialTex");
 		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
 		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
+		turbPolyProgram.uniforms_found = true;
 	}
 }
 
@@ -113,19 +116,23 @@ static GLint drawFlat_alpha_texture;
 
 static void Compile_DrawFlatPolyProgram(void)
 {
-	GL_VFDeclare(generic_poly)
+	if (!drawFlatPolyProgram.program) {
+		GL_VFDeclare(generic_poly);
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgram("Drawflat poly", GL_VFParams(generic_poly), &drawFlatPolyProgram);
+	}
 
-	drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
-	drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
-	drawFlat_color = glGetUniformLocation(drawFlatPolyProgram.program, "color");
-	drawFlat_materialTex = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
-	drawFlat_lightmapTex = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
-	drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
-	drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
-	drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+	if (drawFlatPolyProgram.program && !drawFlatPolyProgram.uniforms_found) {
+		drawFlat_modelViewMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "modelViewMatrix");
+		drawFlat_projectionMatrix = glGetUniformLocation(drawFlatPolyProgram.program, "projectionMatrix");
+		drawFlat_color = glGetUniformLocation(drawFlatPolyProgram.program, "color");
+		drawFlat_materialTex = glGetUniformLocation(drawFlatPolyProgram.program, "materialTex");
+		drawFlat_lightmapTex = glGetUniformLocation(drawFlatPolyProgram.program, "lightmapTex");
+		drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
+		drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
+		drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+	}
 }
 
 static glm_program_t lightmapPolyProgram;
@@ -142,26 +149,29 @@ static qbool uniforms_set = false;
 
 static void Compile_LightmapPolyProgram(void)
 {
-	GL_VFDeclare(lightmaparray_poly)
+	if (!lightmapPolyProgram.program) {
+		GL_VFDeclare(lightmaparray_poly);
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgram("Lightmap poly", GL_VFParams(lightmaparray_poly), &lightmapPolyProgram);
+	}
 
-	lightmapPoly_modelViewMatrix = glGetUniformLocation(lightmapPolyProgram.program, "modelViewMatrix");
-	lightmapPoly_projectionMatrix = glGetUniformLocation(lightmapPolyProgram.program, "projectionMatrix");
-	lightmapPoly_color = glGetUniformLocation(lightmapPolyProgram.program, "color");
-	lightmapPoly_materialTex = glGetUniformLocation(lightmapPolyProgram.program, "materialTex");
-	lightmapPoly_lightmapTex = glGetUniformLocation(lightmapPolyProgram.program, "lightmapTex");
-	lightmapPoly_apply_lightmap = glGetUniformLocation(lightmapPolyProgram.program, "apply_lightmap");
-	lightmapPoly_apply_texture = glGetUniformLocation(lightmapPolyProgram.program, "apply_texture");
-	lightmapPoly_alpha_texture = glGetUniformLocation(lightmapPolyProgram.program, "alpha_texture");
+	if (lightmapPolyProgram.program && !lightmapPolyProgram.uniforms_found) {
+		lightmapPoly_modelViewMatrix = glGetUniformLocation(lightmapPolyProgram.program, "modelViewMatrix");
+		lightmapPoly_projectionMatrix = glGetUniformLocation(lightmapPolyProgram.program, "projectionMatrix");
+		lightmapPoly_color = glGetUniformLocation(lightmapPolyProgram.program, "color");
+		lightmapPoly_materialTex = glGetUniformLocation(lightmapPolyProgram.program, "materialTex");
+		lightmapPoly_lightmapTex = glGetUniformLocation(lightmapPolyProgram.program, "lightmapTex");
+		lightmapPoly_apply_lightmap = glGetUniformLocation(lightmapPolyProgram.program, "apply_lightmap");
+		lightmapPoly_apply_texture = glGetUniformLocation(lightmapPolyProgram.program, "apply_texture");
+		lightmapPoly_alpha_texture = glGetUniformLocation(lightmapPolyProgram.program, "alpha_texture");
+		lightmapPolyProgram.uniforms_found = true;
+	}
 }
 
 qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
-	if (!lightmapPolyProgram.program) {
-		Compile_LightmapPolyProgram();
-	}
+	Compile_LightmapPolyProgram();
 
 	if (lightmapPolyProgram.program && vao) {
 		if (!uniforms_set) {
@@ -214,18 +224,23 @@ static GLint drawworld_drawDetailTex;
 
 static void Compile_DrawWorldProgram(void)
 {
-	GL_VFDeclare(drawworld)
+	if (!drawworld.program) {
+		GL_VFDeclare(drawworld);
 
-	// Initialise program for drawing image
-	GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
+		// Initialise program for drawing image
+		GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
+	}
 
-	drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
-	drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
-	drawworld_drawDetailTex = glGetUniformLocation(drawworld.program, "drawDetailTex");
-	drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
-	drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
-	drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
-	drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
+	if (drawworld.program && !drawworld.uniforms_found) {
+		drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
+		drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
+		drawworld_drawDetailTex = glGetUniformLocation(drawworld.program, "drawDetailTex");
+		drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
+		drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
+		drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
+		drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
+		drawworld.uniforms_found = true;
+	}
 }
 
 static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
@@ -233,9 +248,7 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
 
-	if (!drawworld.program) {
-		Compile_DrawWorldProgram();
-	}
+	Compile_DrawWorldProgram();
 
 	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
@@ -309,9 +322,7 @@ void GLM_ExitBatchedPolyRegion(void)
 
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
-	if (!drawFlatPolyProgram.program) {
-		Compile_DrawFlatPolyProgram();
-	}
+	Compile_DrawFlatPolyProgram();
 
 	if (drawFlatPolyProgram.program && vao) {
 		if (!uniforms_set) {
@@ -397,7 +408,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 	qbool draw_detail_texture = gl_detail.integer && detailtexture;
 	qbool draw_caustics = gl_caustics.integer && underwatertexture;
 
-	GLM_EnterBatchedWorldRegion(model->vao, draw_detail_texture);
+	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture);
 
 	// Bind lightmap array
 	GL_SelectTexture(GL_TEXTURE2);
@@ -480,7 +491,7 @@ void GLM_DrawWorld(model_t* model)
 
 void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 {
-	if (!surf->polys->vbo) {
+	if (!surf->polys->vbo.vbo) {
 		int totalVerts = 0;
 		int totalPolys = 0;
 		int index = 0;
@@ -491,8 +502,8 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 			totalVerts += p->numverts;
 			++totalPolys;
 		}
-		glGenBuffers(1, &surf->polys->vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo);
+		GL_GenBuffer(&surf->polys->vbo, "surf->polys");
+		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo.vbo);
 
 		verts = Q_malloc(sizeof(float) * (totalVerts + 2 * (totalPolys - 1)) * VERTEXSIZE);
 		for (p = surf->polys; p; p = p->next) {
@@ -528,15 +539,15 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 		Q_free(verts);
 	}
 
-	if (!surf->polys->vao) {
-		glGenVertexArrays(1, &surf->polys->vao);
-		GL_BindVertexArray(surf->polys->vao);
+	if (!surf->polys->vao.vao) {
+		GL_GenVertexArray(&surf->polys->vao);
+		GL_BindVertexArray(surf->polys->vao.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(5);
-		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, surf->polys->vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
@@ -547,22 +558,22 @@ void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 
 void GLM_CreateVAOForPoly(glpoly_t *poly)
 {
-	if (!poly->vbo) {
-		glGenBuffers(1, &poly->vbo);
-		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
+	if (!poly->vbo.vbo) {
+		GL_GenBuffer(&poly->vbo, __FUNCTION__);
+		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, poly->numverts * VERTEXSIZE * sizeof(float), poly->verts, GL_STATIC_DRAW);
 	}
 
-	if (!poly->vao) {
-		glGenVertexArrays(1, &poly->vao);
-		GL_BindVertexArray(poly->vao);
+	if (!poly->vao.vao) {
+		GL_GenVertexArray(&poly->vao);
+		GL_BindVertexArray(poly->vao.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
 		glEnableVertexAttribArray(5);
-		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo);
+		glBindBufferExt(GL_ARRAY_BUFFER, poly->vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));

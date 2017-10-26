@@ -161,7 +161,9 @@ void GLM_CreateBrushModelProgram(void)
 		GL_VFDeclare(model_brush);
 
 		GLM_CreateVFProgram("BrushModel", GL_VFParams(model_brush), &drawBrushModelProgram);
+	}
 
+	if (drawBrushModelProgram.program && !drawBrushModelProgram.uniforms_found) {
 		drawBrushModel_modelViewMatrix = glGetUniformLocation(drawBrushModelProgram.program, "modelViewMatrix");
 		drawBrushModel_projectionMatrix = glGetUniformLocation(drawBrushModelProgram.program, "projectionMatrix");
 		drawBrushModel_color = glGetUniformLocation(drawBrushModelProgram.program, "color");
@@ -169,6 +171,7 @@ void GLM_CreateBrushModelProgram(void)
 		drawBrushModel_lightmapTex = glGetUniformLocation(drawBrushModelProgram.program, "lightmapTex");
 		drawBrushModel_applyTexture = glGetUniformLocation(drawBrushModelProgram.program, "apply_texture");
 		drawBrushModel_applyLightmap = glGetUniformLocation(drawBrushModelProgram.program, "apply_lightmap");
+		drawBrushModelProgram.uniforms_found = true;
 	}
 }
 
@@ -689,7 +692,7 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	GLM_GetMatrix(GL_MODELVIEW, req->mvMatrix);
 	memcpy(req->baseColor, base_color, sizeof(req->baseColor));
 	req->isworldmodel = model->isworldmodel;
-	req->vao = model->vao;
+	req->vao = model->vao.vao;
 	if (!req->vao) {
 		req->vao = req->vao;
 		Con_Printf("Model VAO not set [%s]\n", model->name);
