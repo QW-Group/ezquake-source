@@ -704,6 +704,7 @@ void Draw_Crosshair (void)
 		}
 		else {
 			GL_TextureEnvMode(GL_MODULATE);
+			glEnable(GL_TEXTURE_2D);
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			GL_Bind(texnum);
 #ifdef GL_CLAMP_TO_EDGE

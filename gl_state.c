@@ -18,10 +18,19 @@ static GLenum currentShadeModel = GL_SMOOTH;
 static GLint currentViewportX = 0, currentViewportY = 0;
 static GLsizei currentViewportWidth, currentViewportHeight;
 static GLuint currentProgram = 0;
+static qbool gl_cullface = false;
+static qbool gl_depthTestEnabled = false;
+static qbool gl_framebuffer_srgb = false;
+static qbool gl_texture_2d = false;
+static qbool gl_blend = false;
+static qbool gl_cull_face = false;
+static int currenttexture = -1;
+static GLuint currentTextureArray = -1;
 
 static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static GLuint cntarrays[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static qbool texunitenabled[] = { false, false, false, false, false, false, false, false };
 static qbool mtexenabled = false;
 
 void GL_DepthFunc(GLenum func)
@@ -89,6 +98,8 @@ void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void GL_InitialiseState(void)
 {
+	int i;
+
 	currentDepthFunc = GL_LESS;
 	currentNearRange = 0;
 	currentFarRange = 1;
@@ -104,12 +115,24 @@ void GL_InitialiseState(void)
 	currentViewportHeight = 0;
 
 	currentProgram = 0;
+
+	gl_cullface = false;
+	gl_depthTestEnabled = false;
+	gl_framebuffer_srgb = false;
+	gl_texture_2d = false;
+	gl_blend = false;
+	gl_cull_face = false;
+	currenttexture = -1;
+	currentTextureArray = -1;
+
+	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures); ++i) {
+		cnttextures[i] = -1;
+		cntarrays[i] = 0;
+		texunitenabled[i] = false;
+	}
 }
 
 // These functions taken from gl_texture.c
-static int currenttexture = -1;
-static GLuint currentTextureArray = -1;
-
 void GL_Bind(int texnum)
 {
 	if (currenttexture == texnum) {
@@ -117,7 +140,9 @@ void GL_Bind(int texnum)
 	}
 
 	currenttexture = texnum;
+	//GL_ProcessErrors("Pre-" __FUNCTION__);
 	glBindTexture(GL_TEXTURE_2D, texnum);
+	//GL_ProcessErrors("Post-" __FUNCTION__);
 }
 
 void GL_BindArray(GLuint texnum)
@@ -127,11 +152,17 @@ void GL_BindArray(GLuint texnum)
 	}
 
 	currentTextureArray = texnum;
+	//GL_ProcessErrors("Pre-" __FUNCTION__);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
+	//GL_ProcessErrors("Post-" __FUNCTION__);
 }
 
 void GL_BindTexture(GLenum targetType, GLuint texnum)
 {
+	if (texnum && !glIsTexture(texnum)) {
+		texnum = texnum;
+	}
+
 	if (targetType == GL_TEXTURE_2D) {
 		GL_Bind(texnum);
 	}
@@ -140,7 +171,9 @@ void GL_BindTexture(GLenum targetType, GLuint texnum)
 	}
 	else {
 		// No caching...
+		//GL_ProcessErrors("Pre-" __FUNCTION__);
 		glBindTexture(targetType, texnum);
+		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 }
 
@@ -159,8 +192,10 @@ void GL_SelectTexture(GLenum target)
 
 	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
 	cntarrays[oldtarget - GL_TEXTURE0] = currentTextureArray;
+	texunitenabled[oldtarget - GL_TEXTURE0] = gl_texture_2d;
 	currenttexture = cnttextures[target - GL_TEXTURE0];
 	currentTextureArray = cntarrays[target - GL_TEXTURE0];
+	gl_texture_2d = texunitenabled[target - GL_TEXTURE0];
 	oldtarget = target;
 }
 
@@ -209,6 +244,7 @@ void GL_InitTextureState(void)
 	oldtarget = GL_TEXTURE0;
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++) {
 		cnttextures[i] = -1;
+		cntarrays[i] = 0;
 	}
 	mtexenabled = false;
 }
@@ -220,4 +256,114 @@ void GL_UseProgram(GLuint program)
 
 		currentProgram = program;
 	}
+}
+
+#undef glEnable
+#undef glDisable
+
+void GL_Enable(GLenum option)
+{
+	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
+		return;
+	}
+
+	if (option == GL_DEPTH_TEST) {
+		if (gl_depthTestEnabled) {
+			return;
+		}
+
+		gl_depthTestEnabled = true;
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (gl_framebuffer_srgb) {
+			return;
+		}
+
+		gl_framebuffer_srgb = true;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (gl_cullface) {
+			return;
+		}
+
+		gl_cullface = true;
+	}
+	else if (option == GL_TEXTURE_2D) {
+		if (gl_texture_2d) {
+			return;
+		}
+
+		gl_texture_2d = true;
+	}
+	else if (option == GL_BLEND) {
+		if (gl_blend) {
+			return;
+		}
+
+		gl_blend = true;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (gl_cull_face) {
+			return;
+		}
+
+		gl_cull_face = true;
+	}
+
+	glEnable(option);
+	GL_ProcessErrors("glEnable");
+}
+
+void GL_Disable(GLenum option)
+{
+	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
+		return;
+	}
+
+	if (option == GL_DEPTH_TEST) {
+		if (!gl_depthTestEnabled) {
+			return;
+		}
+
+		gl_depthTestEnabled = false;
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (!gl_framebuffer_srgb) {
+			return;
+		}
+
+		gl_framebuffer_srgb = false;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (!gl_cullface) {
+			return;
+		}
+
+		gl_cullface = false;
+	}
+	else if (option == GL_TEXTURE_2D) {
+		if (!gl_texture_2d) {
+			return;
+		}
+
+		gl_texture_2d = false;
+	}
+	else if (option == GL_BLEND) {
+		if (!gl_blend) {
+			return;
+		}
+
+		gl_blend = false;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (!gl_cull_face) {
+			return;
+		}
+
+		gl_cull_face = false;
+	}
+
+	glDisable(option);
 }

@@ -738,6 +738,7 @@ void Mod_ReloadModelsTextures (void)
 			}
 
 			tx->loaded = false; // so texture will be reloaded
+			tx->gl_texture_array = 0;
 		}
 	}
 

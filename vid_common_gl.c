@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "nvToolsExt.h"
 #endif
 
+void GL_AlphaFunc(GLenum func, GLclampf threshold);
+
 const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
@@ -349,7 +351,7 @@ void GL_Init (void) {
 	glEnable(GL_TEXTURE_2D);
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	glAlphaFunc(GL_GREATER, 0.666);
+	GL_AlphaFunc(GL_GREATER, 0.666);
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	GL_ProcessErrors("PreInit");
@@ -701,75 +703,6 @@ void GLM_GetMatrix(GLenum type, float* matrix)
 #undef glDisable
 #undef glEnable
 
-static qbool gl_cullface = false;
-static qbool gl_depthTestEnabled = false;
-static qbool gl_framebuffer_srgb = false;
-
-void GL_Enable(GLenum option)
-{
-	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-	if (option == GL_DEPTH_TEST) {
-		if (gl_depthTestEnabled) {
-			return;
-		}
-
-		gl_depthTestEnabled = true;
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (gl_framebuffer_srgb) {
-			return;
-		}
-
-		gl_framebuffer_srgb = true;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (gl_cullface) {
-			return;
-		}
-
-		gl_cullface = true;
-	}
-
-	glEnable(option);
-	GL_ProcessErrors("glEnable");
-}
-
-void GL_Disable(GLenum option)
-{
-	if (GLM_Enabled() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-	if (option == GL_DEPTH_TEST) {
-		if (!gl_depthTestEnabled) {
-			return;
-		}
-
-		gl_depthTestEnabled = false;
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (!gl_framebuffer_srgb) {
-			return;
-		}
-
-		gl_framebuffer_srgb = false;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (!gl_cullface) {
-			return;
-		}
-
-		gl_cullface = false;
-	}
-
-	glDisable(option);
-}
-
 void GL_Color3f(float r, float g, float b)
 {
 	if (GL_ShadersSupported()) {
@@ -1102,12 +1035,16 @@ void GL_DeleteBuffers(void)
 	glm_vao_t* vao = vao_list;
 	glm_vbo_t* vbo = vbo_list;
 
-	glBindVertexArray(0);
+	if (glBindVertexArray) {
+		glBindVertexArray(0);
+	}
 	while (vao) {
 		glm_vao_t* prev = vao;
 
 		if (vao->vao) {
-			glDeleteVertexArrays(1, &vao->vao);
+			if (glDeleteVertexArrays) {
+				glDeleteVertexArrays(1, &vao->vao);
+			}
 			vao->vao = 0;
 		}
 
@@ -1119,7 +1056,9 @@ void GL_DeleteBuffers(void)
 		glm_vbo_t* prev = vbo;
 
 		if (vbo->vbo) {
-			glDeleteBuffers(1, &vbo->vbo);
+			if (glDeleteBuffers) {
+				glDeleteBuffers(1, &vbo->vbo);
+			}
 			vbo->vbo = 0;
 		}
 
@@ -1129,4 +1068,11 @@ void GL_DeleteBuffers(void)
 
 	vbo_list = NULL;
 	vao_list = NULL;
+}
+
+void GL_AlphaFunc(GLenum func, GLclampf threshold)
+{
+	if (!GL_ShadersSupported()) {
+		glAlphaFunc(func, threshold);
+	}
 }
