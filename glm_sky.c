@@ -74,10 +74,6 @@ static void BuildSkyVertsArray(void)
 	int axis = 0;
 	int k;
 
-	if (skyDomeVertices) {
-		return;
-	}
-
 	if (!skyDome.program) {
 		GL_VFDeclare(skydome);
 
@@ -96,44 +92,44 @@ static void BuildSkyVertsArray(void)
 		skyDome.uniforms_found = true;
 	}
 
-	for (axis = 0; axis < 6; ++axis) {
-		float fstep = 2.0 / SUBDIVISIONS;
+	if (!skyDome_vbo.vbo) {
+		for (axis = 0; axis < 6; ++axis) {
+			float fstep = 2.0 / SUBDIVISIONS;
 
-		skyDome_starts[axis] = vert;
-		for (i = 0; i < SUBDIVISIONS; i++) {
-			s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
+			skyDome_starts[axis] = vert;
+			for (i = 0; i < SUBDIVISIONS; i++) {
+				s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-			for (j = 0; j < SUBDIVISIONS; j++) {
-				t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
+				for (j = 0; j < SUBDIVISIONS; j++) {
+					t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-				for (k = 0; k < 4; ++k) {
-					float v_s = s + (k % 2 ? fstep : 0);
-					float v_t = t + (k >= 2 ? fstep : 0);
-					vec3_t pos;
+					for (k = 0; k < 4; ++k) {
+						float v_s = s + (k % 2 ? fstep : 0);
+						float v_t = t + (k >= 2 ? fstep : 0);
+						vec3_t pos;
 
-					MakeSkyVec2(v_s, v_t, axis, pos);
+						MakeSkyVec2(v_s, v_t, axis, pos);
 
-					// Degenerate?
-					if (j == 0 && (i || axis) && vert && k == 0) {
-						int prevIndex = (vert - 1) * FLOATS_PER_SKYVERT;
+						// Degenerate?
+						if (j == 0 && (i || axis) && vert && k == 0) {
+							int prevIndex = (vert - 1) * FLOATS_PER_SKYVERT;
 
-						vert = AddSkyDomeVert(vert, &skydomeVertData[prevIndex], skydomeVertData[prevIndex + 3], skydomeVertData[prevIndex + 4]);
-						vert = AddSkyDomeVert(vert, pos, v_s, v_t);
-						if (i == 0) {
-							skyDome_starts[axis] = vert;
+							vert = AddSkyDomeVert(vert, &skydomeVertData[prevIndex], skydomeVertData[prevIndex + 3], skydomeVertData[prevIndex + 4]);
+							vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+							if (i == 0) {
+								skyDome_starts[axis] = vert;
+							}
 						}
-					}
 
-					vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+						vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+					}
 				}
 			}
+			skyDome_length[axis] = vert - skyDome_starts[axis];
+			Con_Printf("Axis %d: verts %d>%d (length %d)\n", axis, skyDome_starts[axis], vert, skyDome_length[axis]);
 		}
-		skyDome_length[axis] = vert - skyDome_starts[axis];
-		Con_Printf("Axis %d: verts %d>%d (length %d)\n", axis, skyDome_starts[axis], vert, skyDome_length[axis]);
-	}
+		skyDomeVertices = vert;
 
-	skyDomeVertices = vert;
-	if (!skyDome_vbo.vbo) {
 		GL_GenBuffer(&skyDome_vbo, __FUNCTION__);
 		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData, GL_STATIC_DRAW);
