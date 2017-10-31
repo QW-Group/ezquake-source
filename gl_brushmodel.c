@@ -1548,7 +1548,7 @@ void R_DrawBrushModel(entity_t *e)
 
 		GLC_DrawBrushModel(e, clmodel, caustics);
 
-		R_DrawSkyChain();
+		GLC_DrawSkyChain();
 
 		R_DrawAlphaChain(alphachain);
 	}

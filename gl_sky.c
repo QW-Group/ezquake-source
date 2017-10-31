@@ -29,21 +29,6 @@ texture_ref solidskytexture, alphaskytexture;
 
 float skymins[2][6], skymaxs[2][6];
 qbool r_skyboxloaded;
-extern msurface_t *skychain;
-extern msurface_t **skychain_tail;
-
-void R_DrawSkyChain(void)
-{
-	if (GL_ShadersSupported()) {
-		GLM_DrawSkyChain();
-	}
-	else {
-		GLC_DrawSkyChain();
-	}
-
-	skychain = NULL;
-	skychain_tail = &skychain;
-}
 
 //A sky texture is 256 * 128, with the right side being a masked overlay
 void R_InitSky (texture_t *mt) {

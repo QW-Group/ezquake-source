@@ -132,6 +132,9 @@ void GLC_DrawSkyChain(void)
 
 		GLC_StateEndSingleTextureSky();
 	}
+
+	skychain = NULL;
+	skychain_tail = &skychain;
 }
 
 void GLC_DrawSky(void)
@@ -360,3 +363,4 @@ qbool GLC_LoadSkyboxTextures(char* skyname)
 {
 	return Sky_LoadSkyboxTextures(skyname);
 }
+

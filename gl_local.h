@@ -272,7 +272,6 @@ void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa, qbool mtex);
 void CalcCausticTexCoords(float *v, float *s, float *t);
 void EmitCausticsPolys (void);
-void R_DrawSkyChain (void);
 void R_DrawSky (void);
 void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
@@ -866,6 +865,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 
 void GLC_DrawParticles(int particles_to_draw, qbool square);
 void GLC_EmitWaterPoly(msurface_t* fa);
+void GLC_DrawSkyChain(void);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
 
