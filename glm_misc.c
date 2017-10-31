@@ -71,12 +71,48 @@ void GLM_PreRenderView(void)
 	extern cvar_t gl_alphafont;
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 	extern cvar_t gl_textureless;
+	int i, active_lights = 0;
 
 	// General constants
 	frameConstants.time = cl.time;
 	frameConstants.gamma2d = v_gamma.value;
 	frameConstants.gamma3d = v_gamma.value;
 	frameConstants.r_alphafont = gl_alphafont.value;
+
+	// Lights
+	for (i = 0; i < MAX_DLIGHTS; ++i) {
+		if (cl_dlight_active[i / 32] & (1 << (i % 32))) {
+			dlight_t* light = &cl_dlights[i];
+			extern cvar_t gl_colorlights;
+			
+			// TODO: if PlaneDist(forward, light) > radius, skip
+			VectorCopy(light->origin, frameConstants.lightPosition[active_lights]);
+			frameConstants.lightPosition[active_lights][3] = light->radius;
+			if (gl_colorlights.value) {
+				if (light->type == lt_custom) {
+					frameConstants.lightColor[active_lights][0] = light->color[0] / 255.0;
+					frameConstants.lightColor[active_lights][1] = light->color[1] / 255.0;
+					frameConstants.lightColor[active_lights][2] = light->color[2] / 255.0;
+				}
+				else {
+					extern float bubblecolor[NUM_DLIGHTTYPES][4];
+
+					frameConstants.lightColor[active_lights][0] = bubblecolor[light->type][0];
+					frameConstants.lightColor[active_lights][1] = bubblecolor[light->type][1];
+					frameConstants.lightColor[active_lights][2] = bubblecolor[light->type][2];
+				}
+			}
+			else {
+				frameConstants.lightColor[active_lights][0] = 0.5;
+				frameConstants.lightColor[active_lights][1] = 0.5;
+				frameConstants.lightColor[active_lights][2] = 0.5;
+			}
+			frameConstants.lightColor[active_lights][3] = light->minlight;
+			++active_lights;
+		}
+	}
+	frameConstants.lightsActive = active_lights;
+	frameConstants.lightScale = ((lightmode == 2 ? 384 : 512) * bound(0.5, gl_modulate.value, 3)) / (65536);
 
 	// Draw-world constants
 	frameConstants.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;

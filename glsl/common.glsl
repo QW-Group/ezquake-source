@@ -1,9 +1,17 @@
 
 // This file included in all .glsl files (inserted at #ezquake-definitions point)
+
+#define MAX_DLIGHTS 32
+
 layout(std140, binding=0) uniform GlobalState {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+
+	vec4 lightPositions[MAX_DLIGHTS];
+	vec4 lightColors[MAX_DLIGHTS];
+
 	vec3 cameraPosition;
+	int lightsActive;
 
 	// drawflat colours
 	vec4 r_wallcolor;
@@ -40,4 +48,7 @@ layout(std140, binding=0) uniform GlobalState {
 	float shell_effect_level1;
 	float shell_effect_level2;
 	float shell_alpha;
+
+	// lighting
+	float lightScale;
 };

@@ -126,6 +126,8 @@ typedef struct vbo_world_vert_s {
 	// Index to material texture array
 	short material_index;
 
+	unsigned int surface_num;
+
 	// Flags (VBO_WORLD_X)
 	byte flags;
 	byte flatcolor[3];

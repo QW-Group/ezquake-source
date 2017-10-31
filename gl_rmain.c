@@ -78,6 +78,15 @@ void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 	Classic_LoadParticleTexures();
 }
 
+static void OnDynamicLightingChange(cvar_t* var, char* value, qbool* cancel)
+{
+	if (!GL_ShadersSupported() && atoi(value) > 1) {
+		Con_Printf("Hardware lighting not supported\n");
+		*cancel = true;
+		return;
+	}
+}
+
 cvar_t cl_multiview                        = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud                     = {"cl_mvdisplayhud", "1"};
 cvar_t cl_mvhudvertical                    = {"cl_mvhudvertical", "0"};
@@ -94,7 +103,7 @@ cvar_t r_fullbright                        = {"r_fullbright", "0"};
 cvar_t r_lightmap                          = {"r_lightmap", "0"};
 cvar_t r_shadows                           = {"r_shadows", "0"};
 cvar_t r_wateralpha                        = {"gl_turbalpha", "1"};
-cvar_t r_dynamic                           = {"r_dynamic", "1"};
+cvar_t r_dynamic                           = {"r_dynamic", "1", 0, OnDynamicLightingChange };
 cvar_t r_novis                             = {"r_novis", "0"};
 cvar_t r_netgraph                          = {"r_netgraph", "0"};
 cvar_t r_netstats                          = {"r_netstats", "0"};

@@ -195,7 +195,7 @@ void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 
 	// add all the dynamic lights
-	if (!fullbright && r_dynamic.integer) {
+	if (!fullbright && r_dynamic.integer == 1) {
 		R_AddDynamicLights(surf);
 	}
 
@@ -266,7 +266,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 
 	++frameStats.classic.brush_polys;
 
-	if (!r_dynamic.integer && !fa->cached_dlight) {
+	if (r_dynamic.integer != 1 && !fa->cached_dlight) {
 		return;
 	}
 
@@ -282,7 +282,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		}
 	}
 
-	if (r_dynamic.integer) {
+	if (r_dynamic.integer == 1) {
 		if (fa->dlightframe != r_framecount && !fa->cached_dlight && !lightstyle_modified) {
 			return;
 		}

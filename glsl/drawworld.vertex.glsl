@@ -11,6 +11,7 @@ layout(location = 5) in int materialNumber;
 layout(location = 6) in int _instanceId;
 layout(location = 7) in int vboFlags;
 layout(location = 8) in vec3 flatColor;
+layout(location = 9) in int surfaceNumber;
 
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
 #define EZQ_SURFACE_DETAIL     64   // surface should have detail texture applied
@@ -27,6 +28,10 @@ out vec3 FlatColor;
 out flat int Flags;
 out flat int SamplerNumber;
 out vec3 Direction;
+out flat vec4 Plane;
+out flat vec3 PlaneMins0;
+out flat vec3 PlaneMins1;
+out vec2 LightingPoint;
 
 struct WorldDrawInfo {
 	float alpha;
@@ -38,6 +43,16 @@ struct WorldDrawInfo {
 layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
+};
+
+struct model_surface {
+	vec4 normal;
+	vec3 vecs0;
+	vec3 vecs1;
+};
+
+layout(std140, binding=GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
+	model_surface surfaces[];
 };
 
 void main()
@@ -55,6 +70,7 @@ void main()
 		TextureCoord.z = materialNumber;
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = position - cameraPosition;
+		LightingPoint = vec2(0, 0);
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif
@@ -76,5 +92,11 @@ void main()
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = detailCoord * 18;
 #endif
+		Plane = surfaces[surfaceNumber].normal;
+		PlaneMins0 = surfaces[surfaceNumber].vecs0;
+		PlaneMins1 = surfaces[surfaceNumber].vecs1;
+
+		LightingPoint.x = dot(PlaneMins0, position);
+		LightingPoint.y = dot(PlaneMins1, position);
 	}
 }

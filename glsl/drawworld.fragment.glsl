@@ -44,6 +44,61 @@ in flat int Flags;
 in flat int SamplerNumber;
 in vec3 Direction;
 
+in flat vec4 Plane;
+in flat vec3 PlaneMins0;
+in flat vec3 PlaneMins1;
+in vec2 LightingPoint;
+
+float PlaneDiff(in vec3 p, in vec4 plane)
+{
+	return dot(p, plane.xyz) - plane.a;
+}
+
+vec3 DynamicLighting(in vec3 lightmapBase)
+{
+	int i;
+	vec3 result;
+	float top;
+
+	for (i = 0; i < lightsActive; ++i) {
+		// Find distance to this plane
+		float light_distance = PlaneDiff(lightPositions[i].xyz, Plane);
+		float rad = lightPositions[i].a - abs(light_distance);
+		float minlight = lightColors[i].a;
+
+		if (rad < minlight) {
+			continue;
+		}
+
+		minlight = rad - minlight;
+
+		// impact point on this surface
+		vec3 impact = lightPositions[i].xyz - Plane.xyz * light_distance; 
+
+		// effect is based on distance from the impact point, not from the light itself...
+		vec2 offset = LightingPoint - vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact));
+
+		float dist = length(offset);
+		if (dist < minlight) {
+			float effect = (rad - dist);
+
+			result.r += effect * lightColors[i].r * 2;
+			result.g += effect * lightColors[i].g * 2;
+			result.b += effect * lightColors[i].b * 2;
+		}
+	}
+
+	result *= lightScale;
+
+	result += lightmapBase;
+	top = (max(max(result.r, result.g), result.b));
+	if (top > 1.5) {
+		result *= 1.5 / top;
+	}
+
+	return result;
+}
+
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
 #define TEXTURE_TURB_SLIME 2
@@ -159,7 +214,11 @@ void main()
 			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
 		}
 #endif
-		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
+#ifdef HARDWARE_LIGHTING
+		frag_colour = vec4(DynamicLighting(1 - lmColor.rgb), 1) * texColor;
+#else
+		frag_colour = vec4(1 - lmColor.rgb, 1) * texColor;
+#endif
 #ifdef DRAW_LUMA_TEXTURES
 		if (r_drawflat == 0 && r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);

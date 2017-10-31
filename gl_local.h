@@ -977,8 +977,12 @@ typedef enum glm_uniform_block_id_s {
 typedef struct uniform_block_frame_constants_s {
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
+
+	float lightPosition[MAX_DLIGHTS][4];
+	float lightColor[MAX_DLIGHTS][4];
+
 	float position[3];
-	float padding1;
+	int lightsActive;
 
 	// Drawflat colors
 	float r_wallcolor[4];
@@ -1017,8 +1021,8 @@ typedef struct uniform_block_frame_constants_s {
 	float shell_effect_level2;
 	float shell_alpha;
 
-	// Total size must be multiple of vec4
-	int padding_end;
+	// hardware lighting scale
+	float lightScale;
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_MATRICES  32
@@ -1069,6 +1073,7 @@ typedef struct uniform_block_spritedata_s {
 enum {
 	// SSBOs
 	GL_BINDINGPOINT_ALIASMODEL_SSBO,
+	GL_BINDINGPOINT_WORLDMODEL_SURFACES
 };
 
 void GL_PreRenderView(void);

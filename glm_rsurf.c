@@ -48,6 +48,7 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_CAUSTIC_TEXTURES    2
 #define DRAW_LUMA_TEXTURES       4
 #define DRAW_SKYBOX              8
+#define DRAW_HARDWARE_LIGHTING  16
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
@@ -71,10 +72,11 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
+		(r_dynamic.integer == 2 ? DRAW_HARDWARE_LIGHTING : 0) |
 		(skybox ? DRAW_SKYBOX : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
-		static char included_definitions[512];
+		static char included_definitions[1024];
 		int samplers = 0;
 		GL_VFDeclare(drawworld);
 
@@ -115,6 +117,10 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_MATRICES %d\n", MAX_WORLDMODEL_MATRICES), sizeof(included_definitions));
+		if (r_dynamic.integer == 2) {
+			strlcat(included_definitions, "#define HARDWARE_LIGHTING\n", sizeof(included_definitions));
+		}
+		strlcat(included_definitions, va("#define GL_BINDINGPOINT_WORLDMODEL_SURFACES %d\n", GL_BINDINGPOINT_WORLDMODEL_SURFACES), sizeof(included_definitions));
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);

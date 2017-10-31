@@ -6,9 +6,16 @@
 #include "utils.h"
 #include "glsl/constants.glsl"
 
+typedef struct vbo_world_surface_s {
+	float normal[4];
+	float tex_vecs0[4];
+	float tex_vecs1[4];
+} vbo_world_surface_t;
+
 GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
 
 buffer_ref brushModel_vbo;
+buffer_ref worldModel_surfaces_ssbo;
 buffer_ref vbo_brushElements;
 glm_vao_t brushModel_vao;
 
@@ -92,6 +99,8 @@ static int CopyVertToBuffer(model_t* mod, vbo_world_vert_t* vbo_buffer, int posi
 		target->flags |= EZQ_SURFACE_DETAIL;
 	}
 	memcpy(target->flatcolor, &surf->texinfo->texture->flatcolor3ub, sizeof(target->flatcolor));
+
+	target->surface_num = mod->isworldmodel ? surf - mod->surfaces : 0;
 
 	return position + 1;
 }
@@ -272,9 +281,25 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	GL_ConfigureVertexAttribIPointer(&brushModel_vao, instance_vbo, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	GL_ConfigureVertexAttribIPointer(&brushModel_vao, brushModel_vbo, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags));
 	GL_ConfigureVertexAttribIPointer(&brushModel_vao, brushModel_vbo, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor));
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, brushModel_vbo, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num));
 
 	glVertexAttribDivisor(6, 1);
 
 	Q_free(buffer);
+
+	// Create surface information SSBO
+	worldModel_surfaces_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), NULL, GL_STATIC_COPY);
+	for (i = 0; i < cl.worldmodel->numsurfaces; ++i) {
+		msurface_t* surf = cl.worldmodel->surfaces + i;
+		vbo_world_surface_t vboSurface;
+
+		VectorCopy(surf->plane->normal, vboSurface.normal);
+		vboSurface.normal[3] = surf->plane->dist;
+		memcpy(vboSurface.tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
+		memcpy(vboSurface.tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
+
+		GL_UpdateVBOSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
+	}
+	GL_BindBufferBase(worldModel_surfaces_ssbo, GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 }
 

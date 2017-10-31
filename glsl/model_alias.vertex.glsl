@@ -15,8 +15,7 @@ struct model_vert {
 	int padding;
 };
 
-layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data
-{
+layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
 	model_vert lerpVertices[];
 };
 
