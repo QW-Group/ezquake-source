@@ -145,7 +145,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_BillboardInitialiseBatch(batch_id, GL_SRC_ALPHA, GL_ONE, corona_textures[tex], GL_TRIANGLE_STRIP, false);
+		GL_BillboardInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, corona_textures[tex], GL_TRIANGLE_STRIP, false);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			if (c->type == C_FREE) {
@@ -158,7 +158,7 @@ void R_DrawCoronas(void)
 					continue; // don't draw it
 				}
 			}
-			// else it will be fading out, so thats 'kay
+			// else it will be fading out, so that's 'kay
 
 			VectorSubtract(r_refdef.vieworg, c->origin, dist);
 			fdist = VectorLength(dist);
@@ -170,10 +170,10 @@ void R_DrawCoronas(void)
 			scale = (1 - 1 / fdist)*c->scale;
 			alpha = c->alpha;
 
-			color[0] = c->color[0] * 255;
-			color[1] = c->color[1] * 255;
-			color[2] = c->color[2] * 255;
-			color[3] = alpha * 255;
+			color[0] = (c->color[0] * alpha) * 255;
+			color[1] = (c->color[1] * alpha) * 255;
+			color[2] = (c->color[2] * alpha) * 255;
+			color[3] = 0;
 
 			GL_BillboardAddEntry(batch_id, 4);
 			GL_BillboardAddVert(batch_id,

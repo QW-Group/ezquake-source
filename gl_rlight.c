@@ -109,7 +109,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, null_texture_reference, GL_TRIANGLE_FAN, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, GL_TRIANGLE_FAN, true);
 
 		first_dlight = false;
 	}
@@ -120,7 +120,8 @@ void R_RenderDlight(dlight_t *light)
 		float length;
 		float rad = light->radius * 0.35;
 		float *bub_sin, *bub_cos;
-		GLubyte center_color[4] = { 255, 255, 255, 255 };
+		GLubyte center_color[4] = { 255, 255, 255, 0 };
+		GLubyte outer_color[4] = { 0, 0, 0, 0 };
 
 		VectorSubtract(light->origin, r_origin, v);
 		length = VectorNormalize(v);
@@ -155,7 +156,7 @@ void R_RenderDlight(dlight_t *light)
 			center_color[0] = bubblecolor[light->type][0] * 255;
 			center_color[1] = bubblecolor[light->type][1] * 255;
 			center_color[2] = bubblecolor[light->type][2] * 255;
-			center_color[3] = 255;
+			center_color[3] = 0;
 		}
 
 		GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 0, 0, center_color);
@@ -170,7 +171,7 @@ void R_RenderDlight(dlight_t *light)
 			bub_sin++;
 			bub_cos++;
 
-			GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 0, 0, color_black);
+			GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 0, 0, outer_color);
 		}
 	}
 }
