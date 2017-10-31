@@ -638,6 +638,13 @@ void GL_TextureEnvMode(GLenum mode)
 	}
 }
 
+void GL_Hint(GLenum target, GLenum mode)
+{
+	if (!GL_ShadersSupported()) {
+		glHint(target, mode);
+	}
+}
+
 static int old_alphablend_flags = 0;
 
 int GL_AlphaBlendFlags(int flags)

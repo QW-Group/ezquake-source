@@ -807,6 +807,7 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
 void GL_GenVertexArray(glm_vao_t* vao);
 
 void GL_DeleteModelData(void);
+void GL_Hint(GLenum target, GLenum mode);
 
 #endif /* !__GL_LOCAL_H__ */
 

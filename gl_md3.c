@@ -111,7 +111,7 @@ void R_DrawAlias3Model (entity_t *ent)
 	}
 
 	if (gl_affinemodels.value) {
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	}
 
 	GL_TextureEnvMode(GL_MODULATE);
@@ -254,8 +254,9 @@ wtf: where else{ }
 
 	GL_ShadeModel(GL_FLAT);
 	
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	glEnable(GL_TEXTURE_2D);

@@ -420,7 +420,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	if (gl_affinemodels.value) {
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	}
 
 	if (is_player_model && playernum >= 0 && playernum < MAX_CLIENTS) {
@@ -458,7 +458,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	if (gl_affinemodels.value) {
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
