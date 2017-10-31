@@ -241,7 +241,12 @@ qbool R_CanDrawSimpleItem(entity_t* e)
 
 	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
 
-	return GL_TextureReferenceIsValid(e->model->simpletexture[skin]);
+	if (GL_ShadersSupported()) {
+		return GL_TextureReferenceIsValid(e->model->simpletexture_array[skin]);
+	}
+	else {
+		return GL_TextureReferenceIsValid(e->model->simpletexture[skin]);
+	}
 }
 
 static qbool R_DrawTrySimpleItem(void)
@@ -257,7 +262,12 @@ static qbool R_DrawTrySimpleItem(void)
 	}
 
 	skin = currententity->skinnum >= 0 && currententity->skinnum < MAX_SIMPLE_TEXTURES ? currententity->skinnum : 0;
-	simpletexture = currententity->model->simpletexture[skin]; // ah...
+	if (GL_ShadersSupported()) {
+		simpletexture = currententity->model->simpletexture_array[skin];
+	}
+	else {
+		simpletexture = currententity->model->simpletexture[skin];
+	}
 	if (!GL_TextureReferenceIsValid(simpletexture)) {
 		return false;
 	}
@@ -308,7 +318,7 @@ static qbool R_DrawTrySimpleItem(void)
 		model_t* m = currententity->model;
 
 		GLM_DrawSimpleItem(
-			m->simpletexture_array,
+			m->simpletexture_array[skin],
 			m->simpletexture_indexes[skin],
 			m->simpletexture_scalingS[skin],
 			m->simpletexture_scalingT[skin],

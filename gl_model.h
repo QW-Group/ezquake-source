@@ -535,7 +535,7 @@ typedef struct model_s {
 	unsigned int        vbo_start;
 	int                 vertsInVBO;
 
-	texture_ref         simpletexture_array;
+	texture_ref         simpletexture_array[MAX_SIMPLE_TEXTURES];
 	int                 simpletexture_indexes[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];

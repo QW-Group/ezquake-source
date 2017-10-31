@@ -1270,6 +1270,13 @@ GLenum GL_TextureTargetFromReference(texture_ref ref)
 	return gltextures[ref.index].target;
 }
 
+const char* GL_TextureIdentifier(texture_ref ref)
+{
+	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
+
+	return gltextures[ref.index].identifier;
+}
+
 qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)
 {
 	assert(tex1.index < sizeof(gltextures) / sizeof(gltextures[0]));
@@ -1398,4 +1405,9 @@ void GL_DeleteTextures(void)
 	memset(gltextures, 0, sizeof(gltextures));
 	numgltextures = 0;
 	next_free_texture = 0;
+}
+
+qbool GL_TextureValid(texture_ref ref)
+{
+	return ref.index && ref.index < numgltextures && gltextures[ref.index].texnum;
 }

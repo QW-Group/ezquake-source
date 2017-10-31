@@ -14,41 +14,6 @@ void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int posi
 #define MAX_ARRAY_DEPTH 64
 #define VBO_ALIASVERT_FOFS(x) (void*)((intptr_t)&(((vbo_model_vert_t*)0)->x))
 
-typedef struct common_texture_registration_s {
-	texture_ref original;   // The original texture to be moved into first reserved element of array
-	texture_ref new_ref;    // Array it was moved to
-
-	texture_ref* array_ref; // Will be set to the array allocated
-	int* array_indices;     // Indices into array
-	float* array_scalingS;  // If moved onto a larger texture, adjust texture coordinates
-	float* array_scalingT;  // "
-
-	int count;              // Number of slices of the array that need to be reserved (only the first is inserted)
-	qbool allocated;
-	qbool any_size;
-} common_texture_registration_t;
-
-typedef struct common_texture_s {
-	int width;
-	int height;
-
-	int count;
-	int any_size_count;
-
-	int gl_width;
-	int gl_height;
-	int gl_depth;
-
-	int allocated;
-
-	struct common_texture_s* next;
-	struct common_texture_s* final;
-
-	struct common_texture_s* overflow;
-
-	common_texture_registration_t registrations[MAX_ARRAY_DEPTH];
-} common_texture_t;
-
 typedef enum {
 	TEXTURETYPES_ALIASMODEL,
 	TEXTURETYPES_BRUSHMODEL,
@@ -58,9 +23,86 @@ typedef enum {
 	TEXTURETYPES_COUNT
 } texture_type;
 
+typedef struct texture_array_ref_s {
+	texture_ref ref;
+	int index;
+	float scale_s;
+	float scale_t;
+} texture_array_ref_t;
+
+typedef struct texture_flag_s {
+	texture_ref ref;
+	int subsequent;
+	int flags;
+
+	texture_array_ref_t array_ref[TEXTURETYPES_COUNT];
+} texture_flag_t;
+
+static texture_flag_t texture_flags[MAX_GLTEXTURES];
+static int flagged_type = 0;
+
+static void GL_ClearTextureFlags(void)
+{
+	int i;
+
+	memset(texture_flags, 0, sizeof(texture_flags));
+	for (i = 0; i < MAX_GLTEXTURES; ++i) {
+		texture_flags[i].ref.index = i;
+	}
+}
+
+static int SortFlaggedTextures(const void* lhs_, const void* rhs_)
+{
+	int width_diff;
+	int height_diff;
+	texture_flag_t* tex1 = (texture_flag_t*)lhs_;
+	texture_flag_t* tex2 = (texture_flag_t*)rhs_;
+
+	qbool included1 = tex1->flags & (1 << flagged_type);
+	qbool included2 = tex2->flags & (1 << flagged_type);
+
+	if (included1 && !included2) {
+		return -1;
+	}
+	else if (!included1 && included2) {
+		return 1;
+	}
+
+	if (!GL_TextureReferenceIsValid(tex1->ref)) {
+		if (!GL_TextureReferenceIsValid(tex2->ref)) {
+			return 0;
+		}
+		return 1;
+	}
+	else if (!GL_TextureReferenceIsValid(tex2->ref)) {
+		return -1;
+	}
+
+	width_diff = GL_TextureWidth(tex1->ref) - GL_TextureWidth(tex2->ref);
+	height_diff = GL_TextureHeight(tex1->ref) - GL_TextureHeight(tex2->ref);
+
+	if (width_diff) {
+		return width_diff;
+	}
+	if (height_diff) {
+		return height_diff;
+	}
+
+	return 0;
+}
+
+static int SortTexturesByReference(const void* lhs_, const void* rhs_)
+{
+	texture_flag_t* tex1 = (texture_flag_t*)lhs_;
+	texture_flag_t* tex2 = (texture_flag_t*)rhs_;
+
+	if (tex1->ref.index < tex2->ref.index) {
+		return -1;
+	}
+	return 1;
+}
+
 static void GLM_CreateAliasModelVAO(void);
-static void GL_PrintTextureSizes(common_texture_t* list);
-static common_texture_t* GL_AppendOverflowTextureAllocation(common_texture_t* tex, int allocation_size);
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
 static GLubyte* tempBuffer;
@@ -71,46 +113,7 @@ glm_vao_t aliasModel_vao;
 buffer_ref aliasModel_vbo;
 buffer_ref aliasModel_ssbo;
 
-static common_texture_t* commonTextures[TEXTURETYPES_COUNT];
-
 void GLM_CreateBrushModelVAO(buffer_ref instance_vbo);
-
-static void GL_DeleteArrayChain(common_texture_t* chain, qbool delete_textures)
-{
-	extern GLuint GL_TextureNameFromReference(texture_ref ref);
-	common_texture_t* tex;
-	common_texture_t* next;
-
-	if (!chain) {
-		return;
-	}
-
-	GL_DeleteArrayChain(chain->overflow, delete_textures);
-
-	for (tex = chain; tex; tex = next) {
-		next = tex->next;
-		if (delete_textures) {
-			int i;
-			for (i = 0; i < sizeof(tex->registrations) / sizeof(tex->registrations[0]); ++i) {
-				if (GL_TextureReferenceIsValid(tex->registrations[i].new_ref)) {
-					GL_DeleteTextureArray(&tex->registrations[i].new_ref);
-				}
-			}
-		}
-		Q_free(tex);
-	}
-}
-
-static void GL_DeleteExistingArrays(qbool delete_textures)
-{
-	int type;
-
-	for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-		GL_DeleteArrayChain(commonTextures[type], delete_textures);
-	}
-
-	memset(commonTextures, 0, sizeof(commonTextures));
-}
 
 static qbool AliasModelIsAnySize(model_t* mod)
 {
@@ -156,7 +159,7 @@ static void GL_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 	memset(mod->simpletexture_scalingS, 0, sizeof(mod->simpletexture_scalingS));
 	memset(mod->simpletexture_scalingT, 0, sizeof(mod->simpletexture_scalingT));
 	memset(mod->simpletexture_indexes, 0, sizeof(mod->simpletexture_indexes));
-	GL_TextureReferenceInvalidate(mod->simpletexture_array);
+	memset(mod->simpletexture_array, 0, sizeof(mod->simpletexture_array));
 
 	if (all_textures) {
 		memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
@@ -235,71 +238,6 @@ void GL_DeleteModelData(void)
 	}
 }
 
-static common_texture_registration_t* GL_AddRegistration(common_texture_t* list, texture_ref texture, qbool any_size, texture_ref* array_ref, int* array_indices, float* scaling_s, float* scaling_t, int number)
-{
-	common_texture_registration_t* reg;
-
-	while (list->overflow) {
-		list = list->overflow;
-	}
-
-	if (list->count >= sizeof(list->registrations) / sizeof(list->registrations[0])) {
-		list = GL_AppendOverflowTextureAllocation(list, 0);
-	}
-
-	reg = &list->registrations[list->count++];
-	reg->any_size = any_size;
-
-	reg->count = number;
-	reg->original = texture;
-	reg->array_ref = array_ref;
-	reg->array_scalingS = scaling_s;
-	reg->array_scalingT = scaling_t;
-	reg->array_indices = array_indices;
-
-	// Keep master list up to date
-	if (any_size) {
-		list->any_size_count += number;
-	}
-	return reg;
-}
-
-static void GL_CopyRegistration(common_texture_t* list, common_texture_registration_t* src)
-{
-	GL_AddRegistration(list, src->original, src->any_size, src->array_ref, src->array_indices, src->array_scalingS, src->array_scalingT, src->count);
-	src->allocated = true;
-}
-
-static void GL_RegisterCommonTextureSize(int type, texture_ref texture, qbool any_size, texture_ref* array_ref, int* array_indices, float* scaling_s, float* scaling_t, int number)
-{
-	common_texture_t* list = commonTextures[type];
-	GLint width, height;
-
-	if (!GL_TextureReferenceIsValid(texture)) {
-		return;
-	}
-
-	width = GL_TextureWidth(texture);
-	height = GL_TextureHeight(texture);
-
-	while (list) {
-		if (list->width == width && list->height == height && list->gl_depth == 0) {
-			GL_AddRegistration(list, texture, any_size, array_ref, array_indices, scaling_s, scaling_t, number);
-			return;
-		}
-
-		list = list->next;
-	}
-
-	list = Q_malloc(sizeof(common_texture_t));
-	list->next = commonTextures[type];
-	commonTextures[type] = list;
-	list->width = width;
-	list->height = height;
-
-	GL_AddRegistration(list, texture, any_size, array_ref, array_indices, scaling_s, scaling_t, number);
-}
-
 static void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2dname, qbool tile)
 {
 	int width = GL_TextureWidth(tex2dname);
@@ -345,67 +283,6 @@ static void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_re
 	}
 }
 
-static common_texture_t* GL_AppendOverflowTextureAllocation(common_texture_t* tex, int allocation_size)
-{
-	// Create a new texture request for the difference
-	common_texture_t* overflow = Q_malloc(sizeof(common_texture_t));
-	overflow->width = tex->width;
-	overflow->height = tex->height;
-	overflow->count = allocation_size;
-	overflow->next = NULL;
-	tex->overflow = overflow;
-	return overflow;
-}
-
-// FIXME: Remove, debugging only
-static void GL_PrintTextureSizes(common_texture_t* list)
-{
-	common_texture_t* tex;
-
-	for (tex = list; tex; tex = tex->next) {
-		if (tex->count) {
-			int i;
-
-			GL_Paranoid_Printf("  %dx%d = %d (%d anysize) array %d\n", tex->width, tex->height, tex->count, tex->any_size_count, tex->gl_texturenum.index);
-			for (i = 0; i < tex->count; ++i) {
-				common_texture_registration_t* reg = &tex->registrations[i];
-
-				GL_Paranoid_Printf("    %2d) %d textures: [%u]\n", i, reg->count, reg->original.index);
-			}
-		}
-
-		if (tex->overflow) {
-			GL_PrintTextureSizes(tex->overflow);
-		}
-	}
-}
-
-static void GL_SortTextureSizes(common_texture_t** first)
-{
-	qbool changed = true;
-
-	while (changed) {
-		common_texture_t** link = first;
-
-		changed = false;
-		while (*link && (*link)->next) {
-			common_texture_t* current = *link;
-			common_texture_t* next = current->next;
-
-			if (next && current->any_size_count < next->any_size_count) {
-				*link = next;
-				current->next = next->next;
-				next->next = current;
-				changed = true;
-				link = &next->next;
-			}
-			else {
-				link = &current->next;
-			}
-		}
-	}
-}
-
 // FIXME: Rename to signify that it is a single array for whole model
 static void GL_SetModelTextureArray(model_t* mod, texture_ref array_num, float widthRatio, float heightRatio)
 {
@@ -415,80 +292,88 @@ static void GL_SetModelTextureArray(model_t* mod, texture_ref array_num, float w
 	mod->texture_arrays_scale_t[0] = heightRatio;
 }
 
-static void GL_MeasureTexturesForModel(model_t* mod, int* required_vbo_length)
+static void GL_FlagTexturesForModel(model_t* mod)
 {
 	int j;
 
 	switch (mod->type) {
 	case mod_alias:
 	case mod_alias3:
-	{
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
-				GL_RegisterCommonTextureSize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_array, &mod->simpletexture_indexes[j], &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], 1);
+				texture_flags[mod->simpletexture[j].index].flags |= (1 << TEXTURETYPES_SPRITES);
 			}
 		}
+		break;
+	case mod_sprite:
+		{
+			msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+			int count = 0;
 
+			for (j = 0; j < psprite->numframes; ++j) {
+				int offset    = psprite->frames[j].offset;
+				int numframes = psprite->frames[j].numframes;
+				mspriteframe_t* frame;
+
+				if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+					continue;
+				}
+
+				frame = ((mspriteframe_t*)((byte*)psprite + offset));
+				if (GL_TextureReferenceIsValid(frame->gl_texturenum)) {
+					texture_flags[frame->gl_texturenum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+				}
+				++count;
+			}
+			break;
+		}
+	case mod_brush:
+		{
+			int i, j;
+
+			// Ammo-boxes etc can be replaced with simple textures
+			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+				if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
+					texture_flags[mod->simpletexture[j].index].flags |= (1 << TEXTURETYPES_SPRITES);
+				}
+			}
+
+			// Brush models can be boxes (ammo, health), static world or moving platforms
+			for (i = 0; i < mod->numtextures; i++) {
+				texture_t* tx = mod->textures[i];
+				texture_type type = mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL;
+
+				if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+					continue;
+				}
+
+				if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !GL_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
+					GL_TextureReferenceInvalidate(tx->fb_texturenum);
+				}
+
+				texture_flags[tx->gl_texturenum.index].flags |= (1 << type);
+				if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
+					texture_flags[tx->gl_texturenum.index].subsequent = 1;
+				}
+			}
+			break;
+		}
+	}
+}
+
+static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
+{
+	switch (mod->type) {
+	case mod_alias:
+	case mod_alias3:
 		*required_vbo_length += mod->vertsInVBO;
 		break;
-	}
 	case mod_sprite:
-	{
-		msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
-		int count = 0;
-
-		for (j = 0; j < psprite->numframes; ++j) {
-			int offset    = psprite->frames[j].offset;
-			int numframes = psprite->frames[j].numframes;
-			mspriteframe_t* frame;
-
-			if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
-				continue;
-			}
-
-			frame = ((mspriteframe_t*)((byte*)psprite + offset));
-			if (GL_TextureReferenceIsValid(frame->gl_texturenum)) {
-				GL_RegisterCommonTextureSize(TEXTURETYPES_SPRITES, frame->gl_texturenum, true, &frame->gl_arraynum, &frame->gl_arrayindex, &frame->gl_scalingS, &frame->gl_scalingT, 1);
-			}
-			++count;
-		}
+		// We allocated 4 points at beginning of VBO, no need to duplicate per-model
 		break;
-	}
 	case mod_brush:
-	{
-		int i, j;
-
-		// Ammo-boxes etc can be replaced with simple textures
-		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
-				GL_RegisterCommonTextureSize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_array, &mod->simpletexture_indexes[j], &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], 1);
-			}
-		}
-
-		// Brush models can be boxes (ammo, health), static world or moving platforms
-		for (i = 0; i < mod->numtextures; i++) {
-			texture_t* tx = mod->textures[i];
-			texture_type type = mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL;
-			qbool skip = true;
-
-			if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
-				continue;
-			}
-
-			if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !GL_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
-				GL_TextureReferenceInvalidate(tx->fb_texturenum);
-			}
-
-			GL_Paranoid_Printf("> Registering texture %d for model %s (tex name %s)\n", tx->gl_texturenum, mod->name, tx->name);
-			if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
-				GL_RegisterCommonTextureSize(type, tx->gl_texturenum, BrushModelIsAnySize(mod), &tx->gl_texture_array, &tx->gl_texture_index, &tx->gl_texture_scaleS, &tx->gl_texture_scaleT, 2);
-			}
-			else {
-				GL_RegisterCommonTextureSize(type, tx->gl_texturenum, BrushModelIsAnySize(mod), &tx->gl_texture_array, &tx->gl_texture_index, &tx->gl_texture_scaleS, &tx->gl_texture_scaleT, 1);
-			}
-		}
+		// These are in different format/vbo at the moment
 		break;
-	}
 	}
 }
 
@@ -580,237 +465,9 @@ static void GLM_SetTextureArrays(model_t* mod)
 	}
 }
 
-static common_texture_t* GL_CreateAnySizeList(common_texture_t* sizes)
-{
-	common_texture_t* any;
-	common_texture_t* size;
-	common_texture_t* arr;
-	int max_width = 0;
-	int max_height = 0;
-	int anysize_count = 0;
-	int i;
-
-	// Get overall totals
-	for (size = sizes; size; size = size->next) {
-		for (arr = size; arr; arr = arr->overflow) {
-			if (arr->any_size_count) {
-				max_width = max(max_width, arr->width);
-				max_height = max(max_height, arr->height);
-				anysize_count += arr->any_size_count;
-			}
-		}
-	}
-
-	// Nothing to be done here
-	if (!anysize_count) {
-		GL_Paranoid_Printf(">> (no any-size textures)\n");
-		return sizes;
-	}
-
-	// Create new size for non-repeating
-	any = Q_malloc(sizeof(common_texture_t));
-	any->width = max_width;
-	any->height = max_height;
-
-	// Move registrations onto the 'any' list
-	for (size = sizes; size; size = size->next) {
-		for (arr = size; arr; arr = arr->overflow) {
-			for (i = 0; i < arr->count; ++i) {
-				if (arr->registrations[i].any_size) {
-					common_texture_t* overflow = arr->overflow;
-
-					GL_CopyRegistration(any, &arr->registrations[i]);
-
-					// If we over-flowed this bucket, take from the next
-					if (overflow && overflow->count) {
-						arr->registrations[arr->count - 1] = overflow->registrations[overflow->count - 1];
-						--overflow->count;
-
-						// Overflow bucket is empty, remove
-						if (!overflow->count) {
-							arr->overflow = overflow->overflow;
-							Q_free(overflow);
-						}
-					}
-					else {
-						// Otherwise take from end of this list
-						if (i < arr->count - 1) {
-							arr->registrations[i] = arr->registrations[arr->count - 1];
-						}
-						--arr->count;
-						--i;
-					}
-				}
-			}
-		}
-	}
-
-	GL_Paranoid_Printf(">> (any-size: %d x %d x %d)\n", any->width, any->height, any->count);
-	any->next = sizes;
-	return any;
-}
-
-static int GL_TextureRegistrationComparison(const void* lhs_, const void* rhs_)
-{
-	const common_texture_registration_t* lhs = (common_texture_registration_t*)lhs_;
-	const common_texture_registration_t* rhs = (common_texture_registration_t*)rhs_;
-
-	return rhs->count - lhs->count;
-}
-
-static void GL_SortTextureRegistrations(common_texture_t* list)
-{
-	common_texture_t* overflow = list->overflow;
-
-	if (overflow) {
-		common_texture_registration_t complete[2 * MAX_ARRAY_DEPTH];
-		int total = list->count + overflow->count;
-
-		GL_SortTextureRegistrations(overflow);
-
-		memcpy(complete, list->registrations, list->count * sizeof(list->registrations[0]));
-		memcpy(complete + list->count, overflow->registrations, overflow->count);
-
-		qsort(complete, total, sizeof(list->registrations[0]), GL_TextureRegistrationComparison);
-
-		list->count = total - overflow->count;
-		overflow->count = total - list->count;
-		memcpy(list->registrations, complete, list->count * sizeof(list->registrations[0]));
-		memcpy(list->registrations, complete, overflow->count * sizeof(list->registrations[0]));
-	}
-	else {
-		qsort(list->registrations, list->count, sizeof(list->registrations[0]), GL_TextureRegistrationComparison);
-	}
-}
-
-static int GL_UnallocatedArrayDepth(common_texture_t* src)
-{
-	int i;
-	int total = 0;
-
-	if (!src) {
-		return 0;
-	}
-
-	for (i = 0; i < src->count; ++i) {
-		if (!src->registrations[i].allocated) {
-			total += src->registrations[i].count;
-		}
-	}
-
-	return total + GL_UnallocatedArrayDepth(src->overflow);
-}
-
-static void GL_AssignTextureArrayToRegistrations(common_texture_t* size, int reg_index, texture_ref array_ref, int array_index)
-{
-	int i;
-	int width = GL_TextureWidth(array_ref);
-	int height = GL_TextureHeight(array_ref);
-	int depth = GL_TextureDepth(array_ref);
-
-	for (i = reg_index; i < size->count; ++i) {
-		common_texture_registration_t* reg = &size->registrations[i];
-
-		if (reg->allocated) {
-			continue;
-		}
-
-		GL_Paranoid_Printf(">>>> Reg %d: %d entries, %d space\n", i, reg->count, depth - array_index);
-
-		if (reg->count <= depth - array_index) {
-			int allocation = array_index;
-			int original_width = GL_TextureWidth(reg->original);
-			int original_height = GL_TextureHeight(reg->original);
-
-			// It fits here
-			reg->allocated = true;
-
-			// FIXME: These can be NULL, but probably shouldn't be...
-			*reg->array_ref = reg->new_ref = array_ref;
-			*reg->array_indices = allocation;
-			*reg->array_scalingS = original_width * 1.0f / width;
-			*reg->array_scalingT = original_height * 1.0f / height;
-
-			GL_AddTextureToArray(array_ref, allocation, reg->original, !reg->any_size);
-			GL_Paranoid_Printf(">>>> Allocating %d into array %d[%d] %s\n", reg->original, array_ref.index, allocation, reg->array_ref ? "(stored)" : "(NULL)");
-
-			array_index += reg->count;
-			if (array_index >= depth) {
-				return;
-			}
-		}
-	}
-
-	if (size->overflow) {
-		GL_AssignTextureArrayToRegistrations(size->overflow, 0, array_ref, array_index);
-	}
-}
-
-static void GL_CreateAnySizeLists(void)
-{
-	int i;
-
-	for (i = 0; i < sizeof(commonTextures) / sizeof(commonTextures[0]); ++i) {
-		if (!commonTextures[i]) {
-			continue;
-		}
-
-		GL_Paranoid_Printf("> Anysize list for Type %d\n", i);
-		commonTextures[i] = GL_CreateAnySizeList(commonTextures[i]);
-	}
-}
-
-static qbool GL_CreateCommonTextureArrays(void)
-{
-	int i;
-	common_texture_t* size;
-	common_texture_t* arr;
-
-	for (i = 0; i < sizeof(commonTextures) / sizeof(commonTextures[0]); ++i) {
-		if (!commonTextures[i]) {
-			continue;
-		}
-
-		// Work through all the sizes 
-		for (size = commonTextures[i]; size; size = size->next) {
-			GL_SortTextureRegistrations(size);
-
-			GL_Paranoid_Printf(">> Processing %d x %d\n", size->width, size->height);
-			for (arr = size; arr; arr = size->overflow) {
-				int j;
-
-				for (j = 0; j < arr->count; ++j) {
-					int depth = GL_UnallocatedArrayDepth(arr);
-					int requested_depth = depth;
-					texture_ref array_ref;
-
-					if (depth == 0) {
-						continue;
-					}
-
-					// Try and allocate full array
-					array_ref = GL_CreateTextureArray("", size->width, size->height, &depth, TEX_MIPMAP | TEX_ALPHA, arr->registrations[j].count);
-					if (!GL_TextureReferenceIsValid(array_ref)) {
-						// Oh dear, couldn't keep those textures in one array...
-						GL_Paranoid_Printf("!!!!! Unrecoverable error, array creation failed\n");
-						return false;
-					}
-
-					// Assign to registrations
-					GL_Paranoid_Printf(">>> Assigning array %d to registrations (depth %d)\n", array_ref.index, depth);
-					GL_AssignTextureArrayToRegistrations(arr, j, array_ref, 0);
-				}
-			}
-		}
-	}
-
-	return true;
-}
-
-static void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
+static void GL_ImportModelToVBO(model_t* mod, int* new_vbo_position)
 {
 	int count = 0;
-	int j;
 
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
@@ -828,19 +485,74 @@ static void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 	}
 	else if (mod->type == mod_brush) {
 		mod->vbo_start = 0;
+	}
+}
 
-		for (j = 0; j < mod->numtextures; ++j) {
-			texture_t* tex = mod->textures[j];
+static void GL_ImportTexturesForModel(model_t* mod)
+{
+	int count = 0;
+	int j;
 
-			if (GL_SkipTexture(mod, tex) || !GL_TextureReferenceIsValid(tex->gl_texturenum)) {
+	for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+		if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
+			texture_array_ref_t* array_ref = &texture_flags[mod->simpletexture[j].index].array_ref[TEXTURETYPES_SPRITES];
+
+			mod->simpletexture_array[j] = array_ref->ref;
+			mod->simpletexture_indexes[j] = array_ref->index;
+			mod->simpletexture_scalingS[j] = array_ref->scale_s;
+			mod->simpletexture_scalingT[j] = array_ref->scale_t;
+		}
+	}
+
+	if (mod->type == mod_sprite) {
+		msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+		int count = 0;
+
+		for (j = 0; j < psprite->numframes; ++j) {
+			int offset    = psprite->frames[j].offset;
+			int numframes = psprite->frames[j].numframes;
+			mspriteframe_t* frame;
+
+			if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
 				continue;
 			}
 
-			if (GL_TextureReferenceIsValid(tex->gl_texture_array) && GL_TextureReferenceIsValid(tex->fb_texturenum) && GL_TexturesAreSameSize(tex->gl_texturenum, tex->fb_texturenum)) {
-				GL_AddTextureToArray(tex->gl_texture_array, tex->gl_texture_index + 1, tex->fb_texturenum, true);
+			frame = ((mspriteframe_t*)((byte*)psprite + offset));
+
+			if (GL_TextureReferenceIsValid(frame->gl_texturenum)) {
+				texture_array_ref_t* array_ref = &texture_flags[frame->gl_texturenum.index].array_ref[TEXTURETYPES_SPRITES];
+
+				frame->gl_arraynum = array_ref->ref;
+				frame->gl_arrayindex = array_ref->index;
+				frame->gl_scalingS = array_ref->scale_s;
+				frame->gl_scalingT = array_ref->scale_t;
 			}
-			else {
-				GL_TextureReferenceInvalidate(tex->fb_texturenum);
+		}
+	}
+	else if (mod->type == mod_brush) {
+		texture_type type = mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL;
+		int i;
+
+		for (i = 0; i < mod->numtextures; i++) {
+			texture_t* tx = mod->textures[i];
+			texture_array_ref_t* array_ref;
+
+			if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+				continue;
+			}
+
+			array_ref = &texture_flags[tx->gl_texturenum.index].array_ref[type];
+			tx->gl_texture_array = array_ref->ref;
+			tx->gl_texture_index = array_ref->index;
+			tx->gl_texture_scaleS = array_ref->scale_s;
+			tx->gl_texture_scaleT = array_ref->scale_t;
+
+			// fb has to be the same size and will be subsequent
+			if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
+				GL_AddTextureToArray(array_ref->ref, array_ref->index + 1, tx->fb_texturenum, false);
+
+				// flag so we delete the 2d version later
+				texture_flags[tx->fb_texturenum.index].flags |= (1 << type);
 			}
 		}
 
@@ -882,56 +594,19 @@ static void GLM_CreateSpriteVBO(void)
 	GL_UpdateVBOSection(aliasModel_vbo, 0, sizeof(verts), verts);
 }
 
-void GL_CompressTextureArrays(common_texture_t* list)
-{
-	common_texture_t* this_tex;
-	common_texture_t* cur;
-
-	for (this_tex = list; this_tex; this_tex = this_tex->next) {
-		int non_any = this_tex->count - this_tex->any_size_count;
-
-		if (this_tex->width == 0 || non_any == 0) {
-			continue;
-		}
-
-		this_tex->final = NULL;
-		for (cur = list; cur; cur = cur->next) {
-			int ratio_x, ratio_y;
-
-			if (cur->width == 0 || cur == this_tex) {
-				continue;
-			}
-
-			ratio_x = cur->width / this_tex->width;
-			ratio_y = cur->height / this_tex->height;
-
-			if (ratio_x * this_tex->width == cur->width && ratio_y * this_tex->height == cur->height) {
-				if (!this_tex->final || cur->width > this_tex->final->width || cur->height > this_tex->final->height) {
-					this_tex->final = cur;
-				}
-			}
-		}
-
-		if (this_tex->final) {
-			this_tex->final->count += non_any;
-			this_tex->count -= non_any;
-		}
-	}
-}
-
 // Called from R_NewMap
 void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
 	extern model_t* Mod_LoadModel(model_t *mod, qbool crash);
 	int required_vbo_length = 4;
 	int i;
-	int type;
 
 	tempBufferSize = 0;
 
-	GL_DeleteExistingArrays(!vid_restart);
+	//GL_DeleteExistingArrays(!vid_restart);
 	GL_DeleteModelData();
 
+	GL_ClearTextureFlags();
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 
@@ -944,7 +619,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			}
 			Mod_LoadModel(mod, true);
 
-			GL_MeasureTexturesForModel(mod, &required_vbo_length);
+			GL_MeasureVBOForModel(mod, &required_vbo_length);
+			GL_FlagTexturesForModel(mod);
 		}
 	}
 
@@ -960,14 +636,9 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			}
 			Mod_LoadModel(mod, true);
 
-			GL_MeasureTexturesForModel(mod, &required_vbo_length);
+			GL_MeasureVBOForModel(mod, &required_vbo_length);
+			GL_FlagTexturesForModel(mod);
 		}
-	}
-
-	GL_Paranoid_Printf("-- Pre-sort --\n");
-	for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-		GL_Paranoid_Printf("- Type %d\n", type);
-		GL_PrintTextureSizes(commonTextures[type]);
 	}
 
 	// Add non-model textures we need (generally sprites)
@@ -975,36 +646,87 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		// TODO
 	}
 
+	for (flagged_type = 0; flagged_type < TEXTURETYPES_COUNT; ++flagged_type) {
+		qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortFlaggedTextures);
+
+		for (i = 0; i < MAX_GLTEXTURES; ++i) {
+			if (!(texture_flags[i].flags & (1 << flagged_type))) {
+				continue;
+			}
+		}
+
+		for (i = 0; i < MAX_GLTEXTURES; ++i) {
+			int base = i;
+			int same_size = 0;
+			int width, height;
+			int j;
+			int depth;
+
+			if (!(texture_flags[i].flags & (1 << flagged_type))) {
+				continue;
+			}
+
+			width = GL_TextureWidth(texture_flags[i].ref);
+			height = GL_TextureHeight(texture_flags[i].ref);
+			same_size = 1 + texture_flags[i].subsequent;
+
+			// Count how many textures of the same size we have
+			for (j = i + 1; j < MAX_GLTEXTURES; ++j) {
+				if (!(texture_flags[j].flags & (1 << flagged_type))) {
+					break;
+				}
+
+				if (flagged_type == TEXTURETYPES_SPRITES) {
+					width = max(width, GL_TextureWidth(texture_flags[j].ref));
+					height = max(height, GL_TextureHeight(texture_flags[j].ref));
+				}
+				else if (GL_TextureWidth(texture_flags[j].ref) != width || GL_TextureHeight(texture_flags[j].ref) != height) {
+					break;
+				}
+
+				same_size += 1 + texture_flags[j].subsequent;
+			}
+
+			// Create an array of that size
+			while (same_size > 0) {
+				texture_ref array_ref;
+				int index = 0;
+				int k;
+
+				depth = same_size;
+				array_ref = GL_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
+
+				// Copy the 2D textures across
+				for (k = i; k < j; ++k) {
+					texture_ref ref_2d = texture_flags[k].ref;
+
+					// TODO: compression: flag as ANYSIZE and set scale_s/scale_t accordingly
+					GL_AddTextureToArray(array_ref, index, ref_2d, false);
+					texture_flags[k].array_ref[flagged_type].ref = array_ref;
+					texture_flags[k].array_ref[flagged_type].index = index++;
+					texture_flags[k].array_ref[flagged_type].scale_s = (GL_TextureWidth(ref_2d) * 1.0f) / width;
+					texture_flags[k].array_ref[flagged_type].scale_t = (GL_TextureHeight(ref_2d) * 1.0f) / height;
+
+					// Skip these and fill them in later
+					index += texture_flags[k].subsequent;
+				}
+
+				//GL_GenerateMipmapsIfNeeded(array_ref);
+				same_size -= depth;
+				i = j;
+			}
+
+			i--;
+		}
+	}
+
+	qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortTexturesByReference);
+
 	{
-		common_texture_t* tex;
 		int new_vbo_position = 0;
 
 		aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
 		aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
-
-		GL_Paranoid_Printf("-- Sorted, pre-allocation --\n");
-		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-			GL_SortTextureSizes(&commonTextures[type]);
-
-			GL_Paranoid_Printf("- Type %d\n", type);
-			GL_PrintTextureSizes(commonTextures[type]);
-		}
-
-		/*for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-			GL_CompressTextureArrays(commonTextures[type]);
-		}*/
-
-		GL_Paranoid_Printf("GL_CreateAnySizeLists\n");
-		GL_CreateAnySizeLists();
-
-		GL_Paranoid_Printf("-- Sorted, with any-size --\n");
-		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-			GL_Paranoid_Printf("- Type %d\n", type);
-			GL_PrintTextureSizes(commonTextures[type]);
-		}
-
-		GL_Paranoid_Printf("GL_CreateCommonTextureArrays\n");
-		GL_CreateCommonTextureArrays();
 
 		// VBO starts with simple-model/sprite vertices
 		GLM_CreateSpriteVBO();
@@ -1015,8 +737,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.model_precache[i];
 
 			if (mod) {
-				GL_Paranoid_Printf("%s\n", mod->name);
-				GL_ImportTexturesForModel(mod, &new_vbo_position);
+				GL_ImportTexturesForModel(mod);
+				GL_ImportModelToVBO(mod, &new_vbo_position);
 			}
 		}
 
@@ -1024,34 +746,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.vw_model_precache[i];
 
 			if (mod) {
-				GL_Paranoid_Printf("%s\n", mod->name);
-				GL_ImportTexturesForModel(mod, &new_vbo_position);
-			}
-		}
-
-		GL_Paranoid_Printf("-- Post-allocation --\n");
-		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-			GL_Paranoid_Printf("- Type %d\n", type);
-			GL_PrintTextureSizes(commonTextures[type]);
-		}
-
-		// Generate mipmaps for every texture array
-		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-			for (tex = commonTextures[type]; tex; tex = tex->next) {
-				common_texture_t* arr;
-
-				for (arr = tex; arr; arr = arr->overflow) {
-					int i;
-
-					for (i = 0; i < arr->count; ++i) {
-						if (arr->registrations[i].array_ref) {
-							texture_ref ref = arr->registrations[i].array_ref[0];
-							if (GL_TextureReferenceIsValid(ref)) {
-								GL_GenerateMipmapsIfNeeded(ref);
-							}
-						}
-					}
-				}
+				GL_ImportTexturesForModel(mod);
+				GL_ImportModelToVBO(mod, &new_vbo_position);
 			}
 		}
 
@@ -1059,6 +755,26 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		GLM_CreateAliasModelVAO();
 		GLM_CreateBrushModelVAO(instance_vbo);
 		GL_BindBufferBase(aliasModel_ssbo, GL_BINDINGPOINT_ALIASMODEL_SSBO);
+	}
+
+	// 2nd pass through the models should have filled the arrays, so can create mipmaps now
+	for (i = 0; i < MAX_GLTEXTURES; ++i) {
+		int j;
+
+		for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
+			qbool any = false;
+
+			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
+				GL_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
+
+				any = true;
+			}
+
+			if (any) {
+				// Delete the original texture
+				GL_DeleteTexture(&texture_flags[i].ref);
+			}
+		}
 	}
 
 	Q_free(tempBuffer);
