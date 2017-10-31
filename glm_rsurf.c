@@ -410,6 +410,8 @@ void GL_FlushWorldModelBatch(void)
 			sizeof(worldmodel_requests[0])
 		);
 		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
+		frameStats.draw_calls += 2;
 	}
 	else {
 		glMultiDrawElementsIndirect(
@@ -419,6 +421,8 @@ void GL_FlushWorldModelBatch(void)
 			batch_count,
 			sizeof(worldmodel_requests[0])
 		);
+
+		frameStats.draw_calls++;
 	}
 
 	batch_count = 0;

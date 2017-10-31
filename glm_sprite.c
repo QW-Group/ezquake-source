@@ -152,6 +152,7 @@ void GL_FlushSpriteBatch(void)
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 	glEnable(GL_CULL_FACE);
 
+	++frameStats.draw_calls;
 	batch_count = 0;
 }
 

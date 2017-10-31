@@ -384,7 +384,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	//draw all the triangles
-	c_alias_polys += paliashdr->numtris;
+	frameStats.classic.alias_polys += paliashdr->numtris;
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	R_RotateForEntity(ent);

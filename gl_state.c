@@ -253,6 +253,8 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 		glBindTexture(targetType, texnum);
 	}
 
+	++frameStats.texture_binds;
+
 #ifdef GL_PARANOIA
 	GL_ProcessErrors("glBindTexture/After");
 #endif
@@ -722,4 +724,17 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo)
 
 	GL_BindVertexArray(vao);
 	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo ? ibo->vbo : 0);
+}
+
+#undef glBegin
+
+void GL_Begin(GLenum primitive)
+{
+	if (GL_ShadersSupported()) {
+		assert(0);
+		return;
+	}
+
+	++frameStats.draw_calls;
+	glBegin(primitive);
 }

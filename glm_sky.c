@@ -321,6 +321,8 @@ static void GLM_DrawSkyDomeFaces(void)
 			commands,
 			0
 		);
+
+		++frameStats.draw_calls;
 	}
 }
 
@@ -383,6 +385,7 @@ static void GLM_DrawSkyBox(void)
 
 		GL_BindVertexArray(&skyBox_vao);
 		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
+		++frameStats.draw_calls;
 	}
 }
 

@@ -116,7 +116,30 @@ extern	entity_t	*currententity;
 extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
-extern	int			c_brush_polys, c_alias_polys;
+
+typedef struct r_frame_stats_classic_s {
+	int brush_polys;
+	int alias_polys;
+} r_frame_stats_classic_t;
+
+typedef struct r_frame_stats_modern_s {
+	int world_batches;
+	int buffer_uploads;
+	int multidraw_calls;
+} r_frame_stats_modern_t;
+
+typedef struct r_frame_stats_s {
+	r_frame_stats_classic_t classic;
+	r_frame_stats_modern_t modern;
+
+	int texture_binds;
+	int lightmap_updates;
+	int draw_calls;
+
+	double start_time;
+} r_frame_stats_t;
+
+extern r_frame_stats_t frameStats;
 
 // view origin
 extern	vec3_t	vup;
@@ -615,7 +638,9 @@ qbool GLM_CreateVGFProgramWithInclude(
 #define glColor4ub GL_Color4ub
 #define glEnable GL_Enable
 #define glDisable GL_Disable
+#define glBegin GL_Begin
 
+void GL_Begin(GLenum primitive);
 void GL_Enable(GLenum option);
 void GL_Disable(GLenum option);
 

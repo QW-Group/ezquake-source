@@ -254,6 +254,7 @@ void GLM_DrawBillboards(void)
 
 		batch->count = 0;
 	}
+	frameStats.draw_calls += batchCount;
 
 	// FIXME: GL_ResetState()
 	GL_DepthMask(GL_TRUE);

@@ -63,8 +63,6 @@ float     r_base_world_matrix[16];
 float     clearColor[3] = {0, 0, 0};
 int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
-int       c_brush_polys;
-int       c_alias_polys;
 int       lightmode = 2;
 int       d_lightstylevalue[256];             // 8.8 fraction of base light value
 texture_ref shelltexture;
@@ -73,6 +71,7 @@ texture_ref playernmtextures[MAX_CLIENTS];
 texture_ref playerfbtextures[MAX_CLIENTS];
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture;
+r_frame_stats_t frameStats;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {
@@ -523,8 +522,7 @@ void R_SetupFrame(void)
 	V_AddWaterfog (r_viewleaf->contents);	 
 	V_CalcBlend ();
 
-	c_brush_polys = 0;
-	c_alias_polys = 0;
+	memset(&frameStats, 0, sizeof(frameStats));
 
 	R_SetFrustum ();
 	R_SetupGL();
@@ -1073,19 +1071,11 @@ void R_RenderView(void)
 {
 	extern void DrawChatIcons(void);
 
-	double time1 = 0, time2;
 	if (!r_worldentity.model || !cl.worldmodel) {
 		Sys_Error("R_RenderView: NULL worldmodel");
 	}
 
-	if (r_speeds.value) {
-		glFinish ();
-		time1 = Sys_DoubleTime ();
-		c_brush_polys = 0;
-		c_alias_polys = 0;
-	}
-
-	if (gl_finish.value) {
+	if (!r_speeds.integer && gl_finish.integer) {
 		glFinish();
 	}
 
@@ -1114,10 +1104,16 @@ void R_RenderView(void)
 
 	SCR_SetupAutoID();
 
-	if (r_speeds.value) {
-		time2 = Sys_DoubleTime();
+	if (r_speeds.integer) {
+		double time = Sys_DoubleTime() - frameStats.start_time;
+
 		Print_flags[Print_current] |= PR_TR_SKIP;
-		Com_Printf("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
+		if (cl.standby || com_serveractive) {
+			Com_Printf("%5.2f ms %4i wpoly, %4i epoly, %4i texbinds\n", (time * 1000), frameStats.classic.brush_polys, frameStats.classic.alias_polys, frameStats.texture_binds);
+		}
+		else {
+			Com_Printf("%5.2f ms %4i wpoly\n", (time * 1000), frameStats.classic.brush_polys);
+		}
 	}
 }
 

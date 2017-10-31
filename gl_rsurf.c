@@ -366,6 +366,14 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 
 void R_CreateWorldTextureChains(void)
 {
+	if (r_speeds.integer) {
+		glFinish ();
+
+		memset(&frameStats, 0, sizeof(frameStats));
+
+		frameStats.start_time = Sys_DoubleTime ();
+	}
+
 	if (cl.worldmodel) {
 		R_ClearTextureChains(cl.worldmodel);
 

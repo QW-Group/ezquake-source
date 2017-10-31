@@ -303,6 +303,7 @@ void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 	theRect->t = LIGHTMAP_HEIGHT;
 	theRect->h = 0;
 	theRect->w = 0;
+	++frameStats.lightmap_updates;
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa)
@@ -312,7 +313,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	glRect_t *theRect;
 	qbool lightstyle_modified = false;
 
-	c_brush_polys++;
+	++frameStats.classic.brush_polys;
 
 	if (!r_dynamic.value && !fa->cached_dlight) {
 		return;
