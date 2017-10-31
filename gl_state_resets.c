@@ -232,11 +232,6 @@ void GLC_StateEndAliasOutlineFrame(void)
 
 void GLC_StateBeginAliasPowerupShell(void)
 {
-	ENTER_STATE;
-
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, shelltexture);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
 	if (gl_powerupshells_style.integer) {
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
 	}
@@ -247,7 +242,6 @@ void GLC_StateBeginAliasPowerupShell(void)
 
 void GLC_StateEndAliasPowerupShell(void)
 {
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginUnderwaterCaustics(void)
@@ -636,6 +630,9 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 		}
 		else if (GL_TextureReferenceIsValid(texture)) {
 			GLC_InitTextureUnits1(texture, textureEnvMode);
+		}
+		else if (shells_only) {
+			GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
 		}
 		else {
 			GLC_DisableAllTexturing();
