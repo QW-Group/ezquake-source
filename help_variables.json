@@ -2783,6 +2783,11 @@
       "desc": "Turns using of luma textures (named *_luma) ON when set to 1 and allowed by server.",
       "type": "float"
     },
+    "gl_oldlitscaling": {
+      "group-id": "15",
+      "desc": "Scales lit files the 'old' way ('makes colored areas too dark')",
+      "type": "boolean"
+    },
     "gl_max_size": {
       "group-id": "50",
       "desc": "This variable determines the detail level for loaded textures. When set to \"1\",\nthe objects and walls will be textured with 1x1 pixel textures.",

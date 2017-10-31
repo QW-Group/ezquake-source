@@ -785,8 +785,9 @@ void CL_BaseMove(usercmd_t *cmd)
 	#ifdef JSS_CAM
 	{
 		static float zoomspeed = 0;
+		extern cvar_t cam_thirdperson, cam_lockpos;
 
-		if ((cls.demoplayback || cl.spectator) && Cvar_Value("cam_thirdperson") && !Cvar_Value("cam_lockpos")) {
+		if ((cls.demoplayback || cl.spectator) && cam_thirdperson.integer && !cam_lockpos.integer) {
 			zoomspeed -= CL_KeyState(&in_forward, false) * cls.trueframetime * cam_zoomaccel.value;
 			zoomspeed += CL_KeyState(&in_back, false) * cls.trueframetime * cam_zoomaccel.value;
 			if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false)) {
@@ -803,12 +804,14 @@ void CL_BaseMove(usercmd_t *cmd)
 			zoomspeed = bound (-cam_zoomspeed.value, zoomspeed, cam_zoomspeed.value);
 
 			if (zoomspeed) {
-				float dist = Cvar_Value("cam_dist");
+				extern cvar_t cam_dist;
+				float dist = cam_dist.value;
 
 				dist += cls.trueframetime * zoomspeed;
-				if (dist < 0)
+				if (dist < 0) {
 					dist = 0;
-				Cvar_SetValue (Cvar_Find("cam_dist"),  dist);
+				}
+				Cvar_SetValue(&cam_dist, dist);
 			}
 		}
 	}

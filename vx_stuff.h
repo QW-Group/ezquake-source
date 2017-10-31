@@ -86,7 +86,7 @@ extern cvar_t amf_lightning_sparks_size;
 extern cvar_t amf_motiontrails;
 extern cvar_t amf_motiontrails_wtf;
 extern cvar_t amf_waterripple;
-extern cvar_t amf_camera_chase;
+extern cvar_t cl_camera_tpp;
 extern cvar_t amf_camera_chase_dist;
 extern cvar_t amf_camera_chase_height;
 extern cvar_t amf_camera_death;

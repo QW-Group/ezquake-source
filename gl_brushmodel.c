@@ -247,13 +247,15 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 		} else if ((lit_ver = LittleLong(((int *)data)[1])) != 1) {
 			Com_Printf("Unknown .lit file version (v%d)\n", lit_ver);
 		} else {
-			if (developer.integer || cl_warncmd.integer)
+			extern cvar_t gl_oldlitscaling;
+			if (developer.integer || cl_warncmd.integer) {
 				Com_Printf("Static coloured lighting loaded\n");
+			}
 			loadmodel->lightdata = data + 8;
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
-			if (Cvar_Value("gl_oldlitscaling")) {
+			if (gl_oldlitscaling.integer) {
 				// old way (makes colored areas too dark)
 				for (i = 0; i < l->filelen; i++, in++, out+=3) {
 					float m, s;
@@ -268,7 +270,8 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 						out[2] = (int) (s * out[2]);
 					}
 				}
-			} else {
+			}
+			else {
 				// new way
 				float threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
 				for (i = 0; i < l->filelen; i++, in++, out+=3) {

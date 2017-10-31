@@ -878,7 +878,7 @@ void CL_UpdateBeams(void)
 			// The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore.
 			if (amf_coronas.value && amf_lightning.value && !ISPAUSED)
 			{
-				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && amf_camera_chase.value))
+				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && cl_camera_tpp.integer))
 					NewCorona (C_SMALLLIGHTNING, org);
 				else
 					NewCorona (C_LIGHTNING, org);

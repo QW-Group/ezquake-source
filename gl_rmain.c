@@ -143,6 +143,7 @@ cvar_t gl_fb_bmodels                       = {"gl_fb_bmodels", "1"};
 cvar_t gl_fb_models                        = {"gl_fb_models", "1"};
 cvar_t gl_lightmode                        = {"gl_lightmode", "2"};
 cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
+cvar_t gl_oldlitscaling                    = {"gl_oldlitscaling", "0"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
 cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange };
 cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
@@ -839,6 +840,7 @@ void R_Init(void)
 	Cvar_Register (&r_fullbright);
 	Cvar_Register (&r_lightmap);
 	Cvar_Register (&gl_loadlitfiles);
+	Cvar_Register (&gl_oldlitscaling);
 	Cvar_Register (&gl_colorlights);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);

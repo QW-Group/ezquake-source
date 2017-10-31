@@ -889,7 +889,9 @@ static void NQD_LerpPlayerinfo (float f)
 
 static int NQD_FirstPersonCamera(void)
 {
-	return !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+	extern cvar_t cam_thirdperson, cl_camera_tpp;
+
+	return !cam_thirdperson.integer && !cl_camera_tpp.integer;
 }
 
 void NQD_LinkEntities (void)

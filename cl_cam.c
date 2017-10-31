@@ -39,6 +39,7 @@ static vec3_t desired_position; // where the camera wants to be.
 static qbool locked = false;	// Is the spectator locked to a players view or free flying.
 static int oldbuttons;
 static qbool cmddown, olddown;
+extern cvar_t cam_thirdperson, cl_camera_tpp;
 
 cvar_t cl_hightrack = {"cl_hightrack", "0" };	// track high fragger 
 cvar_t cl_chasecam = {"cl_chasecam", "1"};		// "through the eyes" view
@@ -110,8 +111,9 @@ qbool Cam_DrawViewModel(void) {
 	return false;
 }
 
-static qbool Cam_FirstPersonMode(void) {
-	return cl_chasecam.value && !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+static qbool Cam_FirstPersonMode(void)
+{
+	return cl_chasecam.value && !cam_thirdperson.integer && !cl_camera_tpp.integer;
 }
 
 // returns true if we should draw this player, we don't if we are chase camming
@@ -453,7 +455,7 @@ void Cam_Track(usercmd_t *cmd)
 		cmd->forwardmove = cmd->sidemove = cmd->upmove = 0;
 
 		#ifdef JSS_CAM
-		if (!Cvar_Value ("cam_thirdperson"))
+		if (!cam_thirdperson.integer)
 		#endif
 		{
 			VectorCopy(player->viewangles, cl.viewangles);

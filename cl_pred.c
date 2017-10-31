@@ -415,10 +415,10 @@ void CL_InitPrediction (void) {
 
 #ifdef JSS_CAM	
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
-	Cvar_Register (&cam_thirdperson);
-	Cvar_Register (&cam_dist);
-	Cvar_Register (&cam_lockdir);
-	Cvar_Register (&cam_lockpos);
+	Cvar_Register(&cam_thirdperson);
+	Cvar_Register(&cam_dist);
+	Cvar_Register(&cam_lockdir);
+	Cvar_Register(&cam_lockpos);
 	Cvar_ResetCurrentGroup();
 #endif
 }

@@ -3515,16 +3515,9 @@ void CL_ParseServerMessage (void)
 						if (j == Cam_TrackNum())
 							VectorCopy(newangles, cl.viewangles);
 					} 
-					else 
-					{
-#ifdef I_WANT_HAX
-						// TODO: detect respawns
-						if (!Cvar_Value("cl_teleports_keep_pitch"))
-							cl.viewangles[0] = newangles[0];
-						cl.viewangles[1] = newangles[1];
-						cl.viewangles[2] = newangles[2];
-#else
+					else {
 						VectorCopy (newangles, cl.viewangles);
+
 						if ((cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) && j) {
 							// Update all subsequent packets with amended directions to try and keep prediction correct
 							frame_t* this_frame = &cl.frames[cl.parsecount & UPDATE_MASK];
@@ -3545,7 +3538,6 @@ void CL_ParseServerMessage (void)
 								}
 							}
 						}
-#endif // I_WANT_HAX
 					}
 					break;
 				}
