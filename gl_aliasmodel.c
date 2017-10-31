@@ -170,7 +170,7 @@ void R_DrawPowerupShell(
 		r_shellcolor[2] += effect_level;
 	}
 
-	R_SetupAliasFrame(model, oldframe, frame, false, layer_no == 1, false, null_texture_reference, null_texture_reference, GL_MODULATE, 1.0f, 1.0f, 0, false, false);
+	R_SetupAliasFrame(model, oldframe, frame, false, layer_no == 1, false, null_texture_reference, null_texture_reference, GL_MODULATE, 1.0f, 1.0f, 0, false, true);
 }
 
 static qbool IsFlameModel(model_t* model)
@@ -515,7 +515,7 @@ void R_SetupAliasFrame(
 		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, effects, shell_only, outline);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, shell_only, outline);
 	}
 }
 

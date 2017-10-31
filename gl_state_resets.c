@@ -79,18 +79,20 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
 		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
 	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
 		GLC_EnableTMU(GL_TEXTURE0);
 	}
+
+	LEAVE_STATE;
 }
 
 void GL_StateEndEntities(visentlist_t* vislist)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
-	if (vislist->alpha) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	}
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
 		if (gl_affinemodels.value) {
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -99,6 +101,8 @@ void GL_StateEndEntities(visentlist_t* vislist)
 			GL_ShadeModel(GL_FLAT);
 		}
 	}
+
+	LEAVE_STATE;
 }
 
 void GL_StateBeginPolyBlend(void)
@@ -106,13 +110,17 @@ void GL_StateBeginPolyBlend(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+
+	LEAVE_STATE;
 }
 
 void GL_StateEndPolyBlend(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginAlphaChain(void)
@@ -120,6 +128,7 @@ void GLC_StateBeginAlphaChain(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void GLC_StateEndAlphaChain(void)
@@ -183,7 +192,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 {
 	ENTER_STATE;
 
-	GL_BindTextureUnit(GL_TEXTURE0, shelltexture);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, shelltexture);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	if (gl_powerupshells_style.integer) {
@@ -197,10 +206,6 @@ void GLC_StateBeginAliasPowerupShell(void)
 void GLC_StateEndAliasPowerupShell(void)
 {
 	LEAVE_STATE;
-
-	// LordHavoc: reset the state to what the rest of the renderer expects
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void GLC_StateBeginUnderwaterCaustics(void)
@@ -542,8 +547,11 @@ void GLM_StateEndDrawWorldOutlines(void)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 }
 
-void GLC_BeginStateDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
+void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model, qbool shells_only)
 {
+	ENTER_STATE;
+
+	glEnable(GL_TEXTURE_2D);
 	GL_DisableMultitexture();
 	GLC_EnableTMU(GL_TEXTURE0);
 	GL_TextureEnvMode(textureEnvMode);
@@ -556,43 +564,62 @@ void GLC_BeginStateDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 		GL_TextureEnvMode(GL_DECAL);
 	}
 
-	if (alpha < 1) {
+	if (shells_only || alpha < 1) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
+	else {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	}
 
 	if (custom_model) {
 		glDisable(GL_TEXTURE_2D);
 		glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
 	}
+
+	LEAVE_STATE;
 }
 
-void GLC_EndStateDrawAliasFrame(void)
+void GLC_StateEndDrawAliasFrame(void)
 {
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glEnable(GL_TEXTURE_2D);
 }
 
-void GLC_BeginStateDrawAliasCustomModel(void)
+void GLC_StateBeginDrawAliasCustomModel(void)
 {
+	ENTER_STATE;
+
 	glDisable(GL_TEXTURE_2D);
+
+	LEAVE_STATE;
 }
 
-void GLC_EndStateDrawAliasCustomModel(void)
+void GLC_StateEndDrawAliasCustomModel(void)
 {
+	ENTER_STATE;
+
 	glEnable(GL_TEXTURE_2D);
+
+	LEAVE_STATE;
 }
 
-void GLC_BeginStateAliasModelShadow(void)
+void GLC_StateBeginAliasModelShadow(void)
 {
+	ENTER_STATE;
+
 	glDisable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glColor4f(0, 0, 0, 0.5);
+
+	LEAVE_STATE;
 }
 
-void GLC_EndStateAliasModelShadow(void)
+void GLC_StateEndAliasModelShadow(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glEnable(GL_TEXTURE_2D);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawFlatModel(void)
@@ -608,17 +635,21 @@ void GLC_StateBeginDrawFlatModel(void)
 		glEnable(GL_FOG);
 	}
 	// } END shaman BUG /fog not working with /r_drawflat
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawFlatModel(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	if (gl_fogenable.value) {
 		glDisable(GL_FOG);
 	}
 
 	glColor3f(1.0f, 1.0f, 1.0f);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)

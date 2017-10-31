@@ -40,6 +40,7 @@ void GL_StateDefault2D(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_Color3ubv(color_white);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
@@ -149,19 +150,27 @@ void GLC_StateEndBrightenScreen(void)
 }
 
 
-void GL_BeginStateAlphaLineRGB(float thickness)
+void GL_StateBeginAlphaLineRGB(float thickness)
 {
+	ENTER_STATE;
+
 	glDisable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
+
+	LEAVE_STATE;
 }
 
-void GL_EndStateAlphaLineRGB(void)
+void GL_StateEndAlphaLineRGB(void)
 {
+	ENTER_STATE;
+
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+
+	LEAVE_STATE;
 }
 
 

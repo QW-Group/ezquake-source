@@ -901,7 +901,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 {
 	byte bytecolor[4];
 
-	GL_BeginStateAlphaLineRGB(thickness);
+	GL_StateBeginAlphaLineRGB(thickness);
 
 	COLOR_TO_RGBA(color, bytecolor);
 
@@ -912,7 +912,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		GLC_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
 	}
 
-	GL_EndStateAlphaLineRGB();
+	GL_StateEndAlphaLineRGB();
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)

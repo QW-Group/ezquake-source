@@ -55,7 +55,7 @@ extern vec3_t    lightcolor;
 extern float     apitch;
 extern float     ayaw;
 
-void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool outline)
+void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool shells_only, qbool outline)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
@@ -66,7 +66,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	vec3_t lc;
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 
-	GLC_BeginStateDrawAliasFrame(textureEnvMode, texture, fb_texture, mtex, r_modelalpha, custom_model);
+	GLC_StateBeginDrawAliasFrame(textureEnvMode, texture, fb_texture, mtex, r_modelalpha, custom_model, shells_only);
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -78,7 +78,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 
 	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
-	if (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
+	if (shells_only || r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) {
 		GLC_DrawPowerupShell(paliashdr, pose1, verts1, verts2, lerpfrac, scrolldir);
 	}
 	else {
@@ -155,7 +155,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		}
 	}
 
-	GLC_EndStateDrawAliasFrame();
+	GLC_StateEndDrawAliasFrame();
 
 	if (outline) {
 		GLC_DrawAliasOutlineFrame(model, pose1, pose2);
@@ -332,9 +332,9 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
 	glRotatef(ent->angles[1], 0, 0, 1);
 
-	GLC_BeginStateAliasModelShadow();
+	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
-	GLC_EndStateAliasModelShadow();
+	GLC_StateEndAliasModelShadow();
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }

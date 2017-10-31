@@ -223,19 +223,15 @@ void GLM_FlushImageDraw(void)
 		int i;
 		texture_ref currentTexture = null_texture_reference;
 
+		GLM_CreateMultiImageProgram();
+		GL_UpdateVBO(imageVBO, sizeof(images[0]) * imageCount, images);
+		GL_UseProgram(multiImageProgram.program);
+		GL_BindVertexArray(&imageVAO);
+
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_SelectTexture(GL_TEXTURE0);
-
-		GLM_CreateMultiImageProgram();
-
-		GL_UpdateVBO(imageVBO, sizeof(images[0]) * imageCount, images);
-
 		glDisable(GL_DEPTH_TEST);
-
-		GL_UseProgram(multiImageProgram.program);
-
-		GL_BindVertexArray(&imageVAO);
 
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];
