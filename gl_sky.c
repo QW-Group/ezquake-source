@@ -363,7 +363,6 @@ qbool R_DetermineSkyLimits(qbool *ignore_z)
 	if (r_viewleaf->contents == CONTENTS_SOLID) {
 		// always draw if we're in a solid leaf (probably outside the level)
 		// FIXME: we don't really want to add all six planes every time!
-		// FIXME: also handle r_fastsky case
 		int i;
 		for (i = 0; i < 6; i++) {
 			skymins[0][i] = skymins[1][i] = -1;

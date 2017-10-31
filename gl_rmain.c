@@ -959,7 +959,7 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 }
 
-void R_Clear(void)
+static void R_Clear(void)
 {
 	int clearbits = 0;
 
@@ -969,6 +969,13 @@ void R_Clear(void)
 	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
 	{
 		clearbits |= GL_COLOR_BUFFER_BIT;
+	}
+
+	// If outside level or in wall, sky is usually visible
+	if (r_viewleaf->contents == CONTENTS_SOLID) {
+		if (GL_ShadersSupported() || r_fastsky.integer) {
+			clearbits |= GL_COLOR_BUFFER_BIT;
+		}
 	}
 
 	if (gl_clear.value) {

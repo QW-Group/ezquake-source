@@ -90,7 +90,7 @@ void GLC_DrawSkyChain(void)
 		GL_EnableFog();
 	}
 
-	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
+	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable(GL_TEXTURE_2D);
 
 		glColor3ubv(r_skycolor.color);

@@ -238,7 +238,7 @@ void GLM_DrawSky(void)
 
 	return;
 
-	if (r_fastsky.value || r_skyboxloaded) {
+	if (r_fastsky.integer || r_skyboxloaded) {
 		return;
 	}
 
