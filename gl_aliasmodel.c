@@ -786,9 +786,11 @@ void R_DrawViewModel(void)
 	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 	if (gl_mtexable) {
 		gun.alpha = bound(0, cl_drawgun.value, 1);
+		if (gun.alpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
 	}
-	GL_AlphaBlendFlags(gun.alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
