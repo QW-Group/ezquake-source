@@ -414,7 +414,6 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	//VULT MOTION TRAILS
 	if (ent->alpha) {
 		r_modelalpha = ent->alpha;
@@ -748,6 +747,7 @@ void R_AliasSetupLighting(entity_t *ent)
 
 void R_DrawViewModel(void)
 {
+	extern cvar_t cl_drawgun;
 	centity_t *cent;
 	static entity_t gun;
 
@@ -756,7 +756,7 @@ void R_DrawViewModel(void)
 		return;
 	}
 
-	if (!r_drawentities.value || !cl.viewent.current.modelindex) {
+	if (!r_drawentities.value || !cl.viewent.current.modelindex || cl_drawgun.value <= 0) {
 		return;
 	}
 
@@ -802,6 +802,11 @@ void R_DrawViewModel(void)
 
 	// hack the depth range to prevent view model from poking into walls
 	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	if (gl_mtexable) {
+		gun.alpha = bound(0, cl_drawgun.value, 1);
+	}
+	GL_AlphaBlendFlags(gun.alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	switch (currententity->model->type) {
 	case mod_alias:
