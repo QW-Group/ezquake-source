@@ -31,8 +31,8 @@ extern glpoly_t *lightmap_polys[MAX_LIGHTMAPS];
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
-extern glpoly_t *caustics_polys;
-extern glpoly_t *detail_polys;
+glpoly_t *caustics_polys = NULL;
+glpoly_t *detail_polys = NULL;
 
 static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, qbool caustics);
@@ -41,8 +41,6 @@ void R_RenderLumas(void);
 
 static void GLC_DrawFlat(model_t *model)
 {
-	extern glpoly_t* caustics_polys;
-
 	msurface_t *s;
 	int waterline, k;
 	float *v;

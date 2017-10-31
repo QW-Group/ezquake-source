@@ -33,8 +33,6 @@ glpoly_t *luma_polys[MAX_GLTEXTURES];
 extern glpoly_t *caustics_polys;
 extern glpoly_t *detail_polys;
 
-extern cvar_t gl_textureless;
-
 void R_RenderFullbrights(void);
 void R_RenderLumas(void);
 

@@ -96,11 +96,6 @@ void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 	chain##_tail = &chain;		\
 }
 
-glpoly_t *caustics_polys = NULL;
-glpoly_t *detail_polys = NULL;
-
-extern cvar_t gl_textureless; //Qrack
-
 // mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()
 static void R_ForceReloadLightMaps(void)
 {
@@ -167,24 +162,6 @@ texture_t *R_TextureAnimation (texture_t *base) {
 	}
 
 	return base;
-}
-
-void R_DrawWaterSurfaces(void)
-{
-	if (!waterchain) {
-		return;
-	}
-
-	GL_EnterRegion("R_DrawWaterSurfaces");
-	if (GL_ShadersSupported()) {
-		GLM_DrawWaterSurfaces();
-	}
-	else {
-		GLC_DrawWaterSurfaces();
-	}
-	GL_LeaveRegion();
-
-	waterchain = NULL;
 }
 
 void R_ClearTextureChains(model_t *clmodel) {

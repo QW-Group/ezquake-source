@@ -936,9 +936,9 @@ static void R_RenderScene(void)
 		GL_LeaveRegion();
 	}
 
-	R_DrawWaterSurfaces();
-
 	if (!GL_ShadersSupported()) {
+		GLC_DrawWaterSurfaces();
+
 		GL_DisableMultitexture();
 
 		GL_ConfigureFog();

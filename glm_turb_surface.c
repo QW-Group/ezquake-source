@@ -13,7 +13,3 @@ Todo list:
 [ ] transparent water with r_fastturb
 
 */
-
-void GLM_DrawWaterSurfaces(void)
-{
-}

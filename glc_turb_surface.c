@@ -63,5 +63,7 @@ void GLC_DrawWaterSurfaces(void)
 			GL_DepthMask(GL_TRUE);
 		}
 	}
+
+	waterchain = NULL;
 }
 
