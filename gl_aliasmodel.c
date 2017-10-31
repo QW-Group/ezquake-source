@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_aliasmodel.h"
 #include "crc.h"
 
+void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
+
 // precalculated dot products for quantized angles
 byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
 #include "anorm_dots.h"
@@ -106,7 +108,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, qbool outline);
+void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -149,7 +151,7 @@ static qbool IsFlameModel(model_t* model)
 }
 
 static void R_RenderAliasModelEntity(
-	entity_t* ent, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode,
+	entity_t* ent, aliashdr_t *paliashdr, byte *color32bit,
 	texture_ref texture, texture_ref fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame,
 	qbool outline, int effects
 )
@@ -159,31 +161,25 @@ static void R_RenderAliasModelEntity(
 
 	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	if (color32bit) {
-		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
-		static GLenum modes[] = { GL_MODULATE, GL_REPLACE, GL_BLEND, GL_DECAL, GL_ADD, GL_MODULATE };
-		GLenum textureEnvMode = modes[bound(0, local_skincolormode, sizeof(modes) / sizeof(modes[0]) - 1)];
-
-		texture = local_skincolormode ? texture : solidtexture;
-
 		// force some color for such model
 		for (i = 0; i < 3; i++) {
 			r_modelcolor[i] = (float)color32bit[i] / 255.0;
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, textureEnvMode, effects);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, GL_MODULATE, effects);
+		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, effects);
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, GL_MODULATE, effects);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects);
 
 		if (GL_TextureReferenceIsValid(fb_texture)) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, GL_REPLACE, 0);
+			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -281,9 +277,32 @@ qbool R_FilterEntity(entity_t* ent)
 	return false;
 }
 
+void R_OverrideModelTextures(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit)
+{
+	int playernum = -1;
+
+	if (ent->scoreboard) {
+		playernum = ent->scoreboard - cl.players;
+	}
+
+	if (playernum >= 0 && playernum < MAX_CLIENTS) {
+		R_SetSkinForPlayerEntity(ent, texture, fb_texture, color32bit);
+	}
+	// TODO: Can we move the custom_model logic to here?  If fullbright, nullify textures and set color?
+
+	if (full_light || !gl_fb_models.integer) {
+		*fb_texture = null_texture_reference;
+	}
+}
+
+static qbool R_CanDrawModelShadow(entity_t* ent)
+{
+	return (r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
+}
+
 void R_DrawAliasModel(entity_t *ent)
 {
-	int anim, skinnum, playernum = -1, local_skincolormode;
+	int anim, skinnum, playernum = -1;
 	texture_ref texture, fb_texture;
 	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	maliasframedesc_t *oldframe, *frame;
@@ -292,7 +311,6 @@ void R_DrawAliasModel(entity_t *ent)
 	qbool outline = false;
 	float oldMatrix[16];
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
-	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
 
 	if (R_FilterEntity(ent)) {
 		return;
@@ -344,54 +362,20 @@ void R_DrawAliasModel(entity_t *ent)
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	if (ent->scoreboard) {
-		playernum = ent->scoreboard - cl.players;
-	}
-
-	// we can't dynamically colormap textures, so they are cached separately for the players.  Heads are just uncolored.
-	if (!gl_nocolors.value) {
-		if (playernum >= 0 && playernum < MAX_CLIENTS) {
-			if (!ent->scoreboard->skin) {
-				CL_NewTranslation(playernum);
-			}
-			texture = playernmtextures[playernum];
-			fb_texture = playerfbtextures[playernum];
-		}
-	}
-	if (full_light || !gl_fb_models.value) {
-		GL_TextureReferenceInvalidate(fb_texture);
-	}
-
-	local_skincolormode = r_skincolormode.integer;
-	if (is_player_model && playernum >= 0 && playernum < MAX_CLIENTS) {
-		if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
-			cv = &r_teamskincolor;
-		}
-		else {
-			cv = &r_enemyskincolor;
-		}
-
-		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1) {
-			local_skincolormode = r_skincolormodedead.integer;
-		}
-	}
-
-	r_modelalpha = (ent->alpha ? ent->alpha : 1);
-	if (cv && cv->string[0]) {
-		color32bit = cv->color;
-	}
+	R_OverrideModelTextures(ent, &texture, &fb_texture, &color32bit);
 
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
+	r_modelalpha = (ent->alpha ? ent->alpha : 1);
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 
-	R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, ent->effects);
+	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
-	if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
+	if (R_CanDrawModelShadow(ent)) {
 		GL_AliasModelShadow(ent, paliashdr);
 	}
 
@@ -419,7 +403,7 @@ void R_SetupAliasFrame(
 	model_t* model,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
 	qbool mtex, qbool scrolldir, qbool outline,
-	texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
+	texture_ref texture, texture_ref fb_texture,
 	int effects
 )
 {
@@ -434,10 +418,10 @@ void R_SetupAliasFrame(
 	pose = R_AliasFramePose(frame);
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, outline);
+		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, outline);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline);
 	}
 }
 

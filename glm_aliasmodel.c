@@ -439,7 +439,7 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 void GLM_DrawAliasModelFrame(
 	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
-	GLuint textureEnvMode, qbool outline
+	qbool outline
 )
 {
 	float lerp_fraction = r_framelerp;
@@ -497,7 +497,7 @@ void GLM_DrawAliasModelFrame(
 
 void GLM_DrawAliasFrame(
 	model_t* model, int pose1, int pose2,
-	qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
+	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
 	qbool outline
 )
 {
@@ -507,7 +507,7 @@ void GLM_DrawAliasFrame(
 
 	GLM_DrawAliasModelFrame(
 		model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
-		scrolldir, texture, fb_texture, textureEnvMode, outline
+		scrolldir, texture, fb_texture, outline
 	);
 }
 

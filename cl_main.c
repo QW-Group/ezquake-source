@@ -1647,7 +1647,6 @@ void CL_Fog_f (void)
 
 void CL_InitLocal (void) 
 {
-	extern cvar_t baseskin, noskins, cl_name_as_skin, enemyforceskins, teamforceskins;
 	char st[256];
 
 	extern void Cl_Messages_Init(void);
@@ -1723,12 +1722,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&r_shaftalpha);
 	Cvar_Register (&r_lightdecayrate);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
-	Cvar_Register (&noskins);
-	Cvar_Register (&baseskin);
-	Cvar_Register (&cl_name_as_skin);
-	Cvar_Register (&enemyforceskins);
-	Cvar_Register (&teamforceskins);
+	Skin_RegisterCvars();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 	Cvar_Register (&cl_demospeed);

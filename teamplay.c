@@ -50,17 +50,17 @@ cvar_t  tp_pointtimeout = {"tp_pointtimeout", "15"};
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
 cvar_t  cl_teambottomcolor = {"teambottomcolor", "-1", 0, OnChangeColorForcing};
 cvar_t  cl_enemytopcolor = {"enemytopcolor", "-1", 0, OnChangeColorForcing};
-cvar_t	cl_enemybottomcolor = {"enemybottomcolor", "-1", 0, OnChangeColorForcing};
-cvar_t	cl_teamskin = {"teamskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_enemyskin = {"enemyskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_teamquadskin = {"teamquadskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_enemyquadskin = {"enemyquadskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_teampentskin = {"teampentskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_teamlock = {"teamlock", "0", 0, OnChangeSkinAndColorForcing};
-
+cvar_t  cl_enemybottomcolor = {"enemybottomcolor", "-1", 0, OnChangeColorForcing};
+cvar_t  cl_teamskin = {"teamskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_enemyskin = {"enemyskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_teamquadskin = {"teamquadskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_enemyquadskin = {"enemyquadskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_teampentskin = {"teampentskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
+cvar_t  cl_teamlock = {"teamlock", "0", 0, OnChangeSkinAndColorForcing};
+cvar_t  r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
 
 cvar_t	tp_name_axe = {"tp_name_axe", "axe"};
 cvar_t	tp_name_sg = {"tp_name_sg", "sg"};
@@ -1739,38 +1739,6 @@ void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel)
 {
 	TP_RefreshSkins();
 	return;
-}
-
-void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
-{
-	extern cvar_t noskins, cl_name_as_skin, enemyforceskins;
-
-	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
-		return;
-
-	if (var == &cl_name_as_skin && (!cls.demoplayback && !cl.spectator))
-		return; // allow in demos or for specs
-
-	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
-		if (Q_atoi(string))
-			Cbuf_AddText("say Forcing enemy skins\n");
-		else
-			Cbuf_AddText("say Not forcing enemy skins\n");
-	}
-
-	if (cls.state == ca_active) {
-		float oldskins;
-
-		Cvar_Set(var, string);
-		oldskins = noskins.value;
-		noskins.value = 2;
-		con_suppress = true;
-		Skin_Skins_f();
-		con_suppress = false;
-		noskins.value = oldskins;
-		*cancel = true;
-		return;
-	}
 }
 
 void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)

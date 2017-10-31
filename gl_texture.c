@@ -1043,10 +1043,6 @@ void GL_Texture_Init(void)
 	// Netgraph.
 	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
 
-	// Player skins.
-	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playernmtextures);
-	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playerfbtextures);
-
 	// Motion blur.
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
 
@@ -1394,6 +1390,8 @@ void GL_DeleteTextures(void)
 	int i;
 
 	GL_InvalidateLightmapTextures();
+	Skin_InvalidateTextures();
+
 	for (i = 0; i < numgltextures; ++i) {
 		texture_ref ref = gltextures[i].reference;
 

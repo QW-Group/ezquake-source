@@ -48,15 +48,24 @@ extern cvar_t cl_demoteamplay;
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK && !cls.timedemo))
 #define	MAX_PROJECTILES	32
 
+typedef enum {
+	skin_base,
+	skin_base_teammate,
+	skin_fb,
+	skin_dead,
+	skin_dead_teammate,
+	skin_textures
+} skin_texture_t;
+
 typedef struct 
 {
-	char			name[16];
-	qbool			failedload;		// the name isn't a valid skin
-	qbool			warned;			// warning about falied to load was alredy printed
-	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
-	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
-	texture_ref     texnum;			// texture num, used for 32bit skins, speed up
-	cache_user_t	cache;
+	char            name[16];
+	qbool           failedload;             // the name isn't a valid skin
+	qbool           warned;                 // warning about falied to load was alredy printed
+	int             width, height;          // this is valid for pcx too, but used for 32bit skins only
+	int             bpp;                    // used in gl, bpp = 1 for pcx and 4 for 32bit skins
+	texture_ref     texnum[skin_textures];  // texture num, used for 32bit skins, speed up
+	cache_user_t    cache;
 } skin_t;
 
 // player_state_t is the information needed by a player entity
@@ -941,14 +950,14 @@ int Cam_TrackNum(void);
 void Cam_Lock(int playernum);
 
 // skin.c
-void Skin_Find(player_info_t *sc);
-char* Skin_FindName(player_info_t *sc);
-byte* Skin_Cache(skin_t *skin, qbool no_baseskin);
 void Skin_Skins_f(void);
 void Skin_AllSkins_f(void);
 void Skin_NextDownload(void);
 void Skin_ShowSkins_f(void);
 void Skins_PreCache(void);
+void Skin_InvalidateTextures(void);
+void Skin_UserInfoChange(int slot, player_info_t* player, const char* key);
+void Skin_RegisterCvars(void);
 
 // match_tools.c
 void MT_Init(void);

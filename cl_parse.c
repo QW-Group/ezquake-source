@@ -2034,10 +2034,6 @@ void CL_NewTranslation (int slot)
 
 void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 {
-	extern cvar_t cl_name_as_skin;
-	qbool update_skin;
-	int mynum;
-
 	strlcpy(player->name, Info_ValueForKey(player->userinfo, "name"), sizeof(player->name));
 
 	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) {
@@ -2052,7 +2048,8 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	if (atoi(Info_ValueForKey(player->userinfo, "*spectator"))) {
 		player->spectator = true;
-	} else {
+	}
+	else {
 		player->spectator = false;
 	}
 
@@ -2065,19 +2062,7 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	Sbar_Changed();
 
-	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1) {
-		mynum = cl.playernum;
-	}
-
-	update_skin = !key || (!player->spectator && (!strcmp(key, "skin") || !strcmp(key, "topcolor") ||
-				!strcmp(key, "bottomcolor") || !strcmp(key, "team") ||
-				(!strcmp(key, "name") && cl_name_as_skin.value)));
-
-	if (slot == mynum && TP_NeedRefreshSkins() && strcmp(player->team, player->_team)) {
-		TP_RefreshSkins();
-	} else if (update_skin) {
-		TP_RefreshSkin(slot);
-	}
+	Skin_UserInfoChange(slot, player, key);
 
 	strlcpy(player->_team, player->team, sizeof (player->_team));
 }

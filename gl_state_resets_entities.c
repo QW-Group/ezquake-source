@@ -117,7 +117,7 @@ void GLC_StateEndMD3Draw(void)
 {
 }
 
-void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
 {
 	ENTER_STATE;
 
@@ -138,16 +138,16 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 			GLC_DisableAllTexturing();
 		}
 		else {
-			GLC_InitTextureUnits1(texture, textureEnvMode);
+			GLC_InitTextureUnits1(texture, GL_MODULATE);
 		}
 	}
 	else {
 		GL_Color3ubv(color_white);
 		if (GL_TextureReferenceIsValid(texture) && GL_TextureReferenceIsValid(fb_texture) && mtex) {
-			GLC_InitTextureUnits2(texture, textureEnvMode, fb_texture, GL_DECAL);
+			GLC_InitTextureUnits2(texture, GL_MODULATE, fb_texture, GL_DECAL);
 		}
 		else if (GL_TextureReferenceIsValid(texture)) {
-			GLC_InitTextureUnits1(texture, textureEnvMode);
+			GLC_InitTextureUnits1(texture, GL_MODULATE);
 		}
 		else {
 			GLC_DisableAllTexturing();

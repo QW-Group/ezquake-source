@@ -289,7 +289,6 @@ void R_TranslatePlayerSkin (int playernum)
 	}
 }
 
-
 void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 

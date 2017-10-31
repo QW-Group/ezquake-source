@@ -438,8 +438,9 @@ static void DumpPlusCommands(FILE *f)
 static void DumpTeamplay(FILE *f)
 {
 
-	if (allskins[0])
+	if (allskins[0]) {
 		fprintf(f, "allskins \"%s\"\n", allskins);
+	}
 
 	fprintf(f, "\n");
 

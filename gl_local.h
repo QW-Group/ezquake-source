@@ -158,9 +158,6 @@ extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 #define MAX_SKYBOXTEXTURES 6
 extern	texture_ref particletexture;
 extern	texture_ref netgraphtexture;
-extern	texture_ref playertextures;
-extern	texture_ref playernmtextures[MAX_CLIENTS];
-extern	texture_ref playerfbtextures[MAX_CLIENTS];
 extern	texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	texture_ref underwatertexture, detailtexture, solidtexture;
@@ -189,10 +186,6 @@ extern	cvar_t	r_novis;
 extern	cvar_t	r_netgraph;
 extern	cvar_t	r_netstats;
 extern	cvar_t	r_fullbrightSkins;
-extern	cvar_t	r_enemyskincolor;
-extern	cvar_t	r_teamskincolor;
-extern	cvar_t	r_skincolormode;
-extern	cvar_t	r_skincolormodedead;
 extern	cvar_t	r_fastsky;
 extern	cvar_t	r_skycolor;
 extern	cvar_t	r_farclip;
@@ -827,7 +820,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
 void GLC_DrawMapOutline(model_t *model);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
 void GLC_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 void GLM_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
@@ -1217,7 +1210,7 @@ void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_StateEndDrawWorldOutlines(void);
 void GL_StateBeginAlphaLineRGB(float thickness);
 void GL_StateEndAlphaLineRGB(void);
-void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model);
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model);
 void GLC_StateEndDrawAliasFrame(void);
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateEndAliasModelShadow(void);

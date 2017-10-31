@@ -67,8 +67,6 @@ int       lightmode = 2;
 int       d_lightstylevalue[256];             // 8.8 fraction of base light value
 texture_ref shelltexture;
 texture_ref particletexture;                    // little dot for particles
-texture_ref playernmtextures[MAX_CLIENTS];
-texture_ref playerfbtextures[MAX_CLIENTS];
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;
 r_frame_stats_t frameStats;
@@ -100,11 +98,6 @@ cvar_t r_dynamic                           = {"r_dynamic", "1"};
 cvar_t r_novis                             = {"r_novis", "0"};
 cvar_t r_netgraph                          = {"r_netgraph", "0"};
 cvar_t r_netstats                          = {"r_netstats", "0"};
-cvar_t r_fullbrightSkins                   = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
-cvar_t r_enemyskincolor                    = {"r_enemyskincolor", "", CVAR_COLOR};
-cvar_t r_teamskincolor                     = {"r_teamskincolor",  "", CVAR_COLOR};
-cvar_t r_skincolormode                     = {"r_skincolormode",  "0"};
-cvar_t r_skincolormodedead                 = {"r_skincolormodedead",  "-1"};
 cvar_t r_fastsky                           = {"r_fastsky", "0"};
 cvar_t r_fastturb                          = {"r_fastturb", "0"};
 cvar_t r_skycolor                          = {"r_skycolor", "40 80 150", CVAR_COLOR};
@@ -819,13 +812,6 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register (&gl_polyblend);
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
-	Cvar_Register (&r_fullbrightSkins);
-	Cvar_Register (&r_enemyskincolor);
-	Cvar_Register (&r_teamskincolor);
-	Cvar_Register (&r_skincolormode);
-	Cvar_Register (&r_skincolormodedead);
 
 	R_InitAliasModelCvars();
 

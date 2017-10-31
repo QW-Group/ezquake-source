@@ -11301,12 +11301,12 @@
       "desc": "Toggles different modes of how colors from r_enemyskincolor and r_teamskincolor are applied to players.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Makes skin solid." },
-        { "name": "1", "description": "?" },
-        { "name": "2", "description": "Makes skin sort of topographic with r_enemy/team skincolor color." },
-        { "name": "3", "description": "?" },
-        { "name": "4", "description": "Same as 5 but fullbright." },
-        { "name": "5", "description": "Applies r_enemy/team skincolor hue to skin." }
+        { "name": "0", "description": "Solid color" },
+        { "name": "1", "description": "Color doesn't affect skin" },
+        { "name": "2", "description": "Blends skin texture and color" },
+        { "name": "3", "description": "Effectively the same as 1" },
+        { "name": "4", "description": "Adds color to skin" },
+        { "name": "5", "description": "Hues skin by color" }
       ]
     },
     "r_skincolormodedead": {
@@ -11316,7 +11316,7 @@
       "type": "enum",
       "values": [
         { "name": "-1", "description": "Do not change r_skincolormode when player dies." }
-	]
+      ]
     },
     "r_skycolor": {
       "group-id": "51",
