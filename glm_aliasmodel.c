@@ -40,7 +40,7 @@ typedef struct glm_aliasmodelbatch_s {
 static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture,
-	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
+	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
 	float lerpFraction, int lerpFrameVertOffset, qbool outline
 );
 
@@ -364,37 +364,41 @@ void GLM_QueueAliasModelDrawImpl(
 	++batch_count;
 }
 
+static void GLM_QueueAliasModelShellDraw(
+	model_t* model, int effects, int start, int count,
+	float yaw_angle_radians, float lerpFraction, int lerpFrameVertOffset
+)
+{
+	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
+	effects &= ~shell_effects;
+
+	if (!GL_TextureReferenceIsValid(shelltexture)) {
+		return;
+	}
+	if (shell_effects) {
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
+			GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, shell_effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, false);
+			if (!in_batch_mode) {
+				GLM_FlushAliasModelBatch();
+			}
+		}
+	}
+}
+
 static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture,
-	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
+	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
 	float lerpFraction, int lerpFrameVertOffset, qbool outline
 )
 {
 	qbool texture_model = GL_TextureReferenceIsValid(texture);
-	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
-	effects &= ~shell_effects;
 
-	if (shell_only) {
-		if (!GL_TextureReferenceIsValid(shelltexture)) {
-			return;
-		}
-		if (shell_effects) {
-			// always allow powerupshells for specs or demos.
-			// do not allow powerupshells for eyes in other cases
-			if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
-				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, shell_effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, false);
-				if (!in_batch_mode) {
-					GLM_FlushAliasModelBatch();
-				}
-			}
-		}
-	}
-	else {
-		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline);
-		if (!in_batch_mode) {
-			GLM_FlushAliasModelBatch();
-		}
+	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline);
+	if (!in_batch_mode) {
+		GLM_FlushAliasModelBatch();
 	}
 }
 
@@ -435,11 +439,12 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 void GLM_DrawAliasModelFrame(
 	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
-	GLuint textureEnvMode, int effects, qbool shell_only, qbool outline
+	GLuint textureEnvMode, qbool outline
 )
 {
 	float lerp_fraction = r_framelerp;
 	byte color[4];
+	int effects = 0;
 
 	if (lerp_fraction == 1) {
 		poseVertIndex = poseVertIndex2;
@@ -485,7 +490,7 @@ void GLM_DrawAliasModelFrame(
 
 	GLM_QueueAliasModelDraw(
 		model, color, poseVertIndex, vertsPerPose,
-		texture, fb_texture, effects, shell_only,
+		texture, fb_texture, effects,
 		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline
 	);
 }
@@ -493,7 +498,7 @@ void GLM_DrawAliasModelFrame(
 void GLM_DrawAliasFrame(
 	model_t* model, int pose1, int pose2,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
-	int effects, qbool shell_only, qbool outline
+	qbool outline
 )
 {
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
@@ -502,6 +507,31 @@ void GLM_DrawAliasFrame(
 
 	GLM_DrawAliasModelFrame(
 		model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
-		scrolldir, texture, fb_texture, textureEnvMode, effects, shell_only, outline
+		scrolldir, texture, fb_texture, textureEnvMode, outline
 	);
+}
+
+void GLM_DrawPowerupShell(
+	model_t* model, int effects, int layer_no,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame
+)
+{
+	qbool scrolldir = (layer_no == 1);
+	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
+	int pose1 = R_AliasFramePose(oldframe);
+	int pose2 = R_AliasFramePose(frame);
+	int poseVertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
+	int poseVertIndex2 = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
+	float lerp_fraction = r_framelerp;
+
+	if (!GL_TextureReferenceIsValid(shelltexture)) {
+		return;
+	}
+
+	if (lerp_fraction == 1) {
+		poseVertIndex = poseVertIndex2;
+		lerp_fraction = 0;
+	}
+
+	GLM_QueueAliasModelShellDraw(model, effects, poseVertIndex, paliashdr->vertsPerPose, currententity->angles[YAW] * M_PI / 180.0, lerp_fraction, poseVertIndex2);
 }

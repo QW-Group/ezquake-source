@@ -98,6 +98,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 {
 	ENTER_STATE;
 
+	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
 	if (gl_powerupshells_style.integer) {
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
 	}
@@ -138,11 +139,11 @@ void GLC_StateEndMD3Draw(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model, qbool shells_only)
+void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
 {
 	ENTER_STATE;
 
-	if (shells_only || alpha < 1) {
+	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	}
 	else {
@@ -159,9 +160,6 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 		}
 		else if (GL_TextureReferenceIsValid(texture)) {
 			GLC_InitTextureUnits1(texture, textureEnvMode);
-		}
-		else if (shells_only) {
-			GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
 		}
 		else {
 			GLC_DisableAllTexturing();

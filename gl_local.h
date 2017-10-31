@@ -815,11 +815,10 @@ void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
 void GLC_DrawMapOutline(model_t *model);
-void R_DrawPowerupShell(
-	model_t* model, int effects, int layer_no,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame
-);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects, qbool shell_only);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects);
+int R_AliasFramePose(maliasframedesc_t* frame);
+void GLC_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
+void GLM_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 
 void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
@@ -1194,7 +1193,7 @@ void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_StateEndDrawWorldOutlines(void);
 void GL_StateBeginAlphaLineRGB(float thickness);
 void GL_StateEndAlphaLineRGB(void);
-void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model, qbool shells_only);
+void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model);
 void GLC_StateEndDrawAliasFrame(void);
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateEndAliasModelShadow(void);

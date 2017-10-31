@@ -35,13 +35,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_aliasmodel.h"
 #include "crc.h"
 
+// precalculated dot products for quantized angles
+byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
+#include "anorm_dots.h"
+;
+float     r_avertexnormals[NUMVERTEXNORMALS][3] = {
+#include "anorms.h"
+};
+byte      *shadedots = r_avertexnormal_dots[0];
+
 /*
 ==============================================================================
 ALIAS MODELS
 ==============================================================================
 */
 
-static void Mod_FloodFillSkin(byte *skin, int skinwidth, int skinheight);
+static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
 aliashdr_t	*pheader;
 
@@ -53,9 +62,6 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-//byte player_8bit_texels[320 * 200];
-byte player_8bit_texels[256*256]; // Workaround for new player model, isn't proper for "real" quake skins
-
 #ifndef CLIENTONLY
 extern cvar_t     maxclients;
 #define IsLocalSinglePlayerGame() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
@@ -65,8 +71,8 @@ extern cvar_t     maxclients;
 
 static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
-static void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
+void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
 static vec3_t    shadevector;
 static vec3_t    vertexlight;
@@ -85,7 +91,6 @@ float     r_framelerp;
 float     r_lerpdistance;
 qbool     full_light;
 
-float     r_shellcolor[3];
 float     r_modelcolor[3];
 float     r_modelalpha;
 float     shadelight;
@@ -101,7 +106,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects, qbool shell_only, qbool outline);
+void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, qbool outline);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -135,43 +140,8 @@ static custom_model_color_t custom_model_colors[] = {
 	}
 };
 
-// precalculated dot products for quantized angles
-byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
-#include "anorm_dots.h"
-;
-float     r_avertexnormals[NUMVERTEXNORMALS][3] = {
-#include "anorms.h"
-};
-byte      *shadedots = r_avertexnormal_dots[0];
-
 extern vec3_t lightspot;
 extern cvar_t gl_meshdraw;
-
-void R_DrawPowerupShell(
-	model_t* model, int effects, int layer_no,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame
-)
-{
-	float base_level = (layer_no == 0 ? gl_powerupshells_base1level.value : gl_powerupshells_base2level.value);
-	float effect_level = (layer_no == 0 ? gl_powerupshells_effect1level.value : gl_powerupshells_effect2level.value);
-
-	base_level = bound(0, base_level, 1);
-	effect_level = bound(0, effect_level, 1);
-
-	r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = base_level;
-
-	if (effects & EF_RED) {
-		r_shellcolor[0] += effect_level;
-	}
-	if (effects & EF_GREEN) {
-		r_shellcolor[1] += effect_level;
-	}
-	if (effects & EF_BLUE) {
-		r_shellcolor[2] += effect_level;
-	}
-
-	R_SetupAliasFrame(model, oldframe, frame, false, layer_no == 1, false, null_texture_reference, null_texture_reference, GL_MODULATE, 0, true);
-}
 
 static qbool IsFlameModel(model_t* model)
 {
@@ -181,7 +151,7 @@ static qbool IsFlameModel(model_t* model)
 static void R_RenderAliasModelEntity(
 	entity_t* ent, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode,
 	texture_ref texture, texture_ref fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame,
-	qbool outline, int effects, qbool shell_only
+	qbool outline, int effects
 )
 {
 	int i;
@@ -202,19 +172,19 @@ static void R_RenderAliasModelEntity(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, textureEnvMode, effects, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, textureEnvMode, effects);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, GL_MODULATE, effects, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, GL_MODULATE, effects);
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, GL_MODULATE, effects, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, GL_MODULATE, effects);
 
-		if (GL_TextureReferenceIsValid(fb_texture) && !shell_only) {
+		if (GL_TextureReferenceIsValid(fb_texture)) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, GL_REPLACE, 0, shell_only);
+			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, GL_REPLACE, 0);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -439,11 +409,11 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
-	if (shell_only && !GL_ShadersSupported()) {
-		GLC_AliasModelPowerupShell(ent, oldframe, frame);
+	if (shell_only) {
+		GL_AliasModelPowerupShell(ent, oldframe, frame);
 	}
 	else {
-		R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, ent->effects, shell_only);
+		R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, ent->effects);
 	}
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
@@ -458,28 +428,10 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	return;
 }
 
-void R_SetupAliasFrame(
-	model_t* model,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
-	qbool mtex, qbool scrolldir, qbool outline,
-	texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
-	int effects, qbool shell_only
-)
+int R_AliasFramePose(maliasframedesc_t* frame)
 {
-	extern cvar_t gl_lumaTextures;
-	int oldpose, pose, numposes;
+	int pose, numposes;
 	float interval;
-
-	if (!gl_lumaTextures.integer) {
-		GL_TextureReferenceInvalidate(fb_texture);
-	}
-
-	oldpose = oldframe->firstpose;
-	numposes = oldframe->numposes;
-	if (numposes > 1) {
-		interval = oldframe->interval;
-		oldpose += (int)(r_refdef2.time / interval) % numposes;
-	}
 
 	pose = frame->firstpose;
 	numposes = frame->numposes;
@@ -488,11 +440,32 @@ void R_SetupAliasFrame(
 		pose += (int)(r_refdef2.time / interval) % numposes;
 	}
 
+	return pose;
+}
+
+void R_SetupAliasFrame(
+	model_t* model,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
+	qbool mtex, qbool scrolldir, qbool outline,
+	texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
+	int effects
+)
+{
+	extern cvar_t gl_lumaTextures;
+	int oldpose, pose;
+
+	if (!gl_lumaTextures.integer) {
+		GL_TextureReferenceInvalidate(fb_texture);
+	}
+
+	oldpose = R_AliasFramePose(oldframe);
+	pose = R_AliasFramePose(frame);
+
 	if (GL_ShadersSupported()) {
-		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, effects, shell_only, outline);
+		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, outline);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, shell_only, outline);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
 	}
 }
 
@@ -1024,211 +997,25 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 	}
 }
 
-static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, texture_ref *fb_texnum)
+static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
-	char loadpath[64] = {0};
-	GLuint texmode;
-	texture_ref texnum;
-	qbool luma_allowed = Ruleset_IsLumaAllowed(loadmodel);
+	// FIXME: think need put it after caustics
+	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && bound(0, gl_powerupshells.value, 1) && GL_TextureReferenceIsValid(shelltexture)) {
+		model_t* clmodel = ent->model;
 
-	GL_TextureReferenceInvalidate(texnum);
-	GL_TextureReferenceInvalidate(*fb_texnum);
-
-	if (RuleSets_DisallowExternalTexture(loadmodel)) {
-		return texnum;
-	}
-
-	texmode = TEX_MIPMAP;
-	if (!gl_scaleModelTextures.value) {
-		texmode |= TEX_NOSCALE;
-	}
-
-	// try "textures/models/..." path
-	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (GL_TextureReferenceIsValid(texnum)) {
-		if (luma_allowed) {
-			// not a luma actually, but which suffix use then? _fb or what?
-			snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-			*fb_texnum = GL_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-		}
-
-		return texnum;
-	}
-
-	// try "textures/..." path
-	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (GL_TextureReferenceIsValid(texnum)) {
-		// not a luma actually, but which suffix use then? _fb or what?
-		if (luma_allowed) {
-			snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
-			*fb_texnum = GL_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-		}
-
-		return texnum;
-	}
-
-	return texnum; // we failed miserable
-}
-
-static void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype)
-{
-	int i, j, k, s, groupskins, texmode;
-	texture_ref gl_texnum, fb_texnum;
-	char basename[64], identifier[64];
-	byte *skin;
-	daliasskingroup_t *pinskingroup;
-	daliasskininterval_t *pinskinintervals;
-
-	skin = (byte *)(pskintype + 1);
-
-	if (numskins < 1 || numskins > MAX_SKINS) {
-		Host_Error("Mod_LoadAllSkins: Invalid # of skins: %d\n", numskins);
-	}
-
-	s = pheader->skinwidth * pheader->skinheight;
-
-	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
-
-	texmode = TEX_MIPMAP;
-	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
-		texmode |= TEX_NOSCALE;
-	}
-
-	for (i = 0; i < numskins; i++) {
-		if (pskintype->type == ALIAS_SKIN_SINGLE) {
-			Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
-
-			// save 8 bit texels for the player model to remap
-			if (loadmodel->modhint == MOD_PLAYER) {
-				if (s > sizeof(player_8bit_texels)) {
-					Host_Error("Mod_LoadAllSkins: Player skin too large");
-				}
-				memcpy(player_8bit_texels, (byte *)(pskintype + 1), s);
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
+			if (GL_ShadersSupported()) {
+				GLM_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame);
+				GLM_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame);
 			}
-
-			snprintf(identifier, sizeof(identifier), "%s_%i", basename, i);
-
-			GL_TextureReferenceInvalidate(gl_texnum);
-			GL_TextureReferenceInvalidate(fb_texnum);
-			
-			gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
-			if (!GL_TextureReferenceIsValid(gl_texnum)) {
-				gl_texnum = GL_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode, 1);
-
-				if (Img_HasFullbrights((byte *)(pskintype + 1), pheader->skinwidth * pheader->skinheight)) {
-					fb_texnum = GL_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode | TEX_FULLBRIGHT, 1);
-				}
-			}
-
-			pheader->gl_texturenum[i][0] = pheader->gl_texturenum[i][1] =
-				pheader->gl_texturenum[i][2] = pheader->gl_texturenum[i][3] = gl_texnum;
-
-			pheader->fb_texturenum[i][0] = pheader->fb_texturenum[i][1] =
-				pheader->fb_texturenum[i][2] = pheader->fb_texturenum[i][3] = fb_texnum;
-
-			pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + s);
-		}
-		else {
-			// animating skin group.  yuck.
-			pskintype++;
-			pinskingroup = (daliasskingroup_t *)pskintype;
-			groupskins = LittleLong(pinskingroup->numskins);
-			pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
-
-			pskintype = (void *)(pinskinintervals + groupskins);
-
-			for (j = 0; j < groupskins; j++) {
-				Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
-
-				snprintf(identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
-
-				GL_TextureReferenceInvalidate(gl_texnum);
-				GL_TextureReferenceInvalidate(fb_texnum);
-
-				gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
-				if (!GL_TextureReferenceIsValid(gl_texnum)) {
-					gl_texnum = GL_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode, 1);
-
-					if (Img_HasFullbrights((byte *)(pskintype), pheader->skinwidth*pheader->skinheight)) {
-						fb_texnum = GL_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode | TEX_FULLBRIGHT, 1);
-					}
-				}
-
-				pheader->gl_texturenum[i][j & 3] = gl_texnum;
-				pheader->fb_texturenum[i][j & 3] = fb_texnum;
-
-				pskintype = (daliasskintype_t *)((byte *)(pskintype)+s);
-			}
-
-			for (k = j; j < 4; j++) {
-				pheader->gl_texturenum[i][j & 3] = pheader->gl_texturenum[i][j - k];
-				pheader->fb_texturenum[i][j & 3] = pheader->fb_texturenum[i][j - k];
+			else {
+				GLC_StateBeginAliasPowerupShell();
+				GLC_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame);
+				GLC_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame);
+				GLC_StateEndAliasPowerupShell();
 			}
 		}
-	}
-	return pskintype;
-}
-
-typedef struct {
-	short x, y;
-} floodfill_t;
-
-extern unsigned d_8to24table[];
-
-// must be a power of 2
-#define FLOODFILL_FIFO_SIZE 0x1000
-#define FLOODFILL_FIFO_MASK (FLOODFILL_FIFO_SIZE - 1)
-
-#define FLOODFILL_STEP( off, dx, dy ) \
-{ \
-	if (pos[off] == fillcolor) \
-	{ \
-		pos[off] = 255; \
-		fifo[inpt].x = x + (dx), fifo[inpt].y = y + (dy); \
-		inpt = (inpt + 1) & FLOODFILL_FIFO_MASK; \
-	} \
-	else if (pos[off] != 255) fdc = pos[off]; \
-}
-
-//Fill background pixels so mipmapping doesn't have haloes - Ed
-static void Mod_FloodFillSkin(byte *skin, int skinwidth, int skinheight)
-{
-	byte fillcolor = *skin; // assume this is the pixel to fill
-	floodfill_t fifo[FLOODFILL_FIFO_SIZE];
-	int inpt = 0, outpt = 0, filledcolor = -1, i;
-
-	if (filledcolor == -1) {
-		filledcolor = 0;
-		// attempt to find opaque black
-		for (i = 0; i < 256; ++i) {
-			if (d_8to24table[i] == (255 << 0)) { // alpha 1.0
-				filledcolor = i;
-				break;
-			}
-		}
-	}
-
-	// can't fill to filled color or to transparent color (used as visited marker)
-	if ((fillcolor == filledcolor) || (fillcolor == 255)) {
-		//printf( "not filling skin from %d to %d\n", fillcolor, filledcolor );
-		return;
-	}
-
-	fifo[inpt].x = 0, fifo[inpt].y = 0;
-	inpt = (inpt + 1) & FLOODFILL_FIFO_MASK;
-
-	while (outpt != inpt) {
-		int x = fifo[outpt].x, y = fifo[outpt].y, fdc = filledcolor;
-		byte *pos = &skin[x + skinwidth * y];
-
-		outpt = (outpt + 1) & FLOODFILL_FIFO_MASK;
-
-		if (x > 0)				FLOODFILL_STEP(-1, -1, 0);
-		if (x < skinwidth - 1)	FLOODFILL_STEP(1, 1, 0);
-		if (y > 0)				FLOODFILL_STEP(-skinwidth, 0, -1);
-		if (y < skinheight - 1)	FLOODFILL_STEP(skinwidth, 0, 1);
-		skin[x + skinwidth * y] = fdc;
 	}
 }
