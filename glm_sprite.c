@@ -8,16 +8,10 @@
 
 extern glm_vao_t aliasModel_vao;
 
-typedef struct glm_spritedata_s {
-	float modelView[32][16];
-	float tex[32][4];
-	int skinNumber[32][4];
-} glm_spritedata_t;
-
 static glm_program_t spriteProgram;
 static GLuint spriteProgram_RefdefCvars_block;
 static GLuint spriteProgram_SpriteData_block;
-static glm_spritedata_t spriteData;
+static uniform_block_spritedata_t spriteData;
 static buffer_ref ubo_spriteData;
 
 typedef struct glm_sprite_s {
@@ -28,7 +22,6 @@ typedef struct glm_sprite_s {
 	int texture_index;
 } glm_sprite_t;
 
-#define MAX_SPRITE_BATCH 32
 static glm_sprite_t sprite_batch[MAX_SPRITE_BATCH];
 static int batch_count = 0;
 
@@ -116,7 +109,7 @@ void GL_FlushSpriteBatch(void)
 		GL_Translate(GL_MODELVIEW, sprite->origin[0], sprite->origin[1], sprite->origin[2]);
 		if (true)
 		{
-			float* tempMatrix = spriteData.modelView[i];
+			float* tempMatrix = spriteData.sprites[i].modelView;
 
 			GL_PushMatrix(GL_MODELVIEW, tempMatrix);
 			// x = -y
@@ -137,10 +130,10 @@ void GL_FlushSpriteBatch(void)
 			GL_PopMatrix(GL_MODELVIEW, tempMatrix);
 		}
 
-		spriteData.tex[i][0] = sprite->texScale[0];
-		spriteData.tex[i][1] = sprite->texScale[1];
+		spriteData.sprites[i].tex[0] = sprite->texScale[0];
+		spriteData.sprites[i].tex[1] = sprite->texScale[1];
 
-		spriteData.skinNumber[i][0] = sprite->texture_index;
+		spriteData.sprites[i].skinNumber = sprite->texture_index;
 	}
 
 	GL_UseProgram(spriteProgram.program);
@@ -169,13 +162,19 @@ void GL_EndDrawSprites(void)
 	}
 }
 
+#define SPRITE_MAX_INSTANCEID_DEFINITION "#define MAX_INSTANCEID " # MAX_SPRITE_BATCH # "\n"
+
 static void GL_CompileSpriteProgram(void)
 {
 	if (GLM_ProgramRecompileNeeded(&spriteProgram, 0)) {
+		char include_text[512];
 		GL_VFDeclare(sprite);
 
+		include_text[0] = '\0';
+		strlcpy(include_text, va("#define MAX_INSTANCEID %d\n", MAX_SPRITE_BATCH), sizeof(include_text));
+
 		// Initialise program for drawing image
-		GLM_CreateVFProgram("Sprites", GL_VFParams(sprite), &spriteProgram);
+		GLM_CreateVFProgramWithInclude("Sprites", GL_VFParams(sprite), &spriteProgram, include_text);
 	}
 
 	if (spriteProgram.program && !spriteProgram.uniforms_found) {

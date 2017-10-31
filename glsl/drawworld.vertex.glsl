@@ -39,11 +39,15 @@ layout(std140) uniform RefdefCvars {
 	int r_textureless;
 };
 
+struct WorldDrawInfo {
+	mat4 modelMatrix;
+	vec4 color;
+	int samplerMapping;
+	int drawFlags;
+};
+
 layout(std140) uniform WorldCvars {
-	mat4 modelMatrix[MAX_INSTANCEID];
-	vec4 color[MAX_INSTANCEID];
-	int samplerMapping[MAX_INSTANCEID];
-	int drawFlags[MAX_INSTANCEID];
+	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 
 	// sky
 	float skySpeedscale;
@@ -74,12 +78,12 @@ layout(std140) uniform WorldCvars {
 
 void main()
 {
-	gl_Position = projectionMatrix * modelMatrix[_instanceId] * vec4(position, 1.0);
+	gl_Position = projectionMatrix * drawInfo[_instanceId].modelMatrix * vec4(position, 1.0);
 
-	FlatColor = flatColor * color[_instanceId].rgb;
-	Flags = vboFlags | drawFlags[_instanceId];
+	FlatColor = flatColor * drawInfo[_instanceId].color.rgb;
+	Flags = vboFlags | drawInfo[_instanceId].drawFlags;
 
-	SamplerNumber = samplerMapping[_instanceId];
+	SamplerNumber = drawInfo[_instanceId].samplerMapping;
 
 	if (lightmapNumber < 0) {
 		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;

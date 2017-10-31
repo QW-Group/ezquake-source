@@ -216,7 +216,6 @@ void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 	int size = 0;
 	int position = 0;
 	vbo_world_vert_t* buffer = NULL;
-	extern glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];

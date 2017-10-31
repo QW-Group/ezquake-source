@@ -6,7 +6,6 @@
 #include "gl_aliasmodel.h"
 #include "tr_types.h"
 
-#define MAX_ALIASMODEL_BATCH 32
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 #define ALIAS_UBO_FOFS(x) (void*)((intptr_t)&(((block_aliasmodels_t*)0)->x))
 
@@ -17,31 +16,6 @@ static qbool first_alias_model = true;
 extern glm_vao_t aliasModel_vao;
 extern float r_framelerp;
 
-typedef struct block_aliasmodels_s {
-	float modelViewMatrix[MAX_ALIASMODEL_BATCH][16];
-	float color[MAX_ALIASMODEL_BATCH][4];
-	float scale[MAX_ALIASMODEL_BATCH][4];              // indexes 2&3 are padding
-	int   apply_texture[MAX_ALIASMODEL_BATCH][4];
-	int   shellMode[MAX_ALIASMODEL_BATCH][4];
-	float yaw_angle_rad[MAX_ALIASMODEL_BATCH][4];
-	float shadelight[MAX_ALIASMODEL_BATCH][4];
-	float ambientlight[MAX_ALIASMODEL_BATCH][4];
-	int   materialSamplerMapping[MAX_ALIASMODEL_BATCH][4];
-	int   lumaSamplerMapping[MAX_ALIASMODEL_BATCH][4];
-	int   lerpBaseIndex[MAX_ALIASMODEL_BATCH][4];
-	float lerpFraction[MAX_ALIASMODEL_BATCH][4];
-
-	float shellSize;
-	// console var data
-	float shell_base_level1;
-	float shell_base_level2;
-	float shell_effect_level1;
-	float shell_effect_level2;
-	float shell_alpha;
-	// Total size must be multiple of vec4
-	int padding[2];
-} block_aliasmodels_t;
-
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
@@ -49,7 +23,7 @@ static glm_program_t drawAliasModelProgram;
 static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
 static GLint drawAliasModel_outlines;
-static block_aliasmodels_t aliasdata;
+static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref ubo_aliasdata;
 static buffer_ref vbo_aliasIndirectDraw;
 
@@ -274,22 +248,22 @@ static void GLM_FlushAliasModelBatch(void)
 
 			batches[batch].any_outlines |= req->outline;
 
-			memcpy(&aliasdata.modelViewMatrix[i][0], req->mvMatrix, sizeof(aliasdata.modelViewMatrix[i]));
-			aliasdata.color[i][0] = req->color[0] * 1.0f / 255;
-			aliasdata.color[i][1] = req->color[1] * 1.0f / 255;
-			aliasdata.color[i][2] = req->color[2] * 1.0f / 255;
-			aliasdata.color[i][3] = req->color[3] * 1.0f / 255;
-			aliasdata.scale[i][0] = req->texScale[0];
-			aliasdata.scale[i][1] = req->texScale[1];
-			aliasdata.apply_texture[i][0] = req->texture_model;
-			aliasdata.shellMode[i][0] = req->effects;
-			aliasdata.ambientlight[i][0] = req->ambientlight;
-			aliasdata.shadelight[i][0] = req->shadelight;
-			aliasdata.yaw_angle_rad[i][0] = req->yaw_angle_radians;
-			aliasdata.materialSamplerMapping[i][0] = req->texture_skin_sampler;
-			aliasdata.lumaSamplerMapping[i][0] = req->texture_fb_sampler;
-			aliasdata.lerpFraction[i][0] = req->lerpFraction;
-			aliasdata.lerpBaseIndex[i][0] = req->lerpFrameVertOffset;
+			memcpy(&aliasdata.models[i].modelViewMatrix[0], req->mvMatrix, sizeof(aliasdata.models[i].modelViewMatrix));
+			aliasdata.models[i].color[0] = req->color[0] * 1.0f / 255;
+			aliasdata.models[i].color[1] = req->color[1] * 1.0f / 255;
+			aliasdata.models[i].color[2] = req->color[2] * 1.0f / 255;
+			aliasdata.models[i].color[3] = req->color[3] * 1.0f / 255;
+			aliasdata.models[i].scale[0] = req->texScale[0];
+			aliasdata.models[i].scale[1] = req->texScale[1];
+			aliasdata.models[i].apply_texture = req->texture_model;
+			aliasdata.models[i].shellMode = req->effects;
+			aliasdata.models[i].ambientlight = req->ambientlight;
+			aliasdata.models[i].shadelight = req->shadelight;
+			aliasdata.models[i].yaw_angle_rad = req->yaw_angle_radians;
+			aliasdata.models[i].materialSamplerMapping = req->texture_skin_sampler;
+			aliasdata.models[i].lumaSamplerMapping = req->texture_fb_sampler;
+			aliasdata.models[i].lerpFraction = req->lerpFraction;
+			aliasdata.models[i].lerpBaseIndex = req->lerpFrameVertOffset;
 			batches[batch].end = i;
 
 			aliasmodel_requests[i].baseInstance = i;

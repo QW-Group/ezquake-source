@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texCoord;
 
@@ -14,16 +16,20 @@ layout(std140) uniform RefdefCvars {
 	int r_textureless;
 };
 
+struct Sprite {
+	mat4 modelView;
+	vec2 tex;
+	int skinNumber;
+};
+
 layout(std140) uniform SpriteData {
-	mat4 modelView[32];
-	vec2 tex[32];
-	int skinNumber[32];
+	Sprite sprites[MAX_INSTANCEID];
 };
 
 out vec3 TextureCoord;
 
 void main()
 {
-	gl_Position = projectionMatrix * modelView[gl_InstanceID] * vec4(position, 1);
-	TextureCoord = vec3(texCoord.s * tex[gl_InstanceID].s, texCoord.t * tex[gl_InstanceID].t, skinNumber[gl_InstanceID]);
+	gl_Position = projectionMatrix * sprites[gl_InstanceID].modelView * vec4(position, 1);
+	TextureCoord = vec3(texCoord.s * sprites[gl_InstanceID].tex.s, texCoord.t * sprites[gl_InstanceID].tex.t, sprites[gl_InstanceID].skinNumber);
 }

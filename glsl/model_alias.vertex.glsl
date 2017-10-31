@@ -30,19 +30,23 @@ flat out int fsTextureLuma;
 flat out int fsMaterialSampler;
 flat out int fsLumaSampler;
 
+struct AliasModel {
+	mat4 modelView;
+	vec4 color;
+	vec2 scale;
+	int apply_texture;
+	int flags;
+	float yaw_angle_rad;
+	float shadelight;
+	float ambientlight;
+	int materialTextureMapping;
+	int lumaTextureMapping;
+	int lerpBaseIndex;
+	float lerpFraction;
+};
+
 layout(std140) uniform AliasModelData {
-	mat4 modelView[MAX_INSTANCEID];
-	vec4 color[MAX_INSTANCEID];
-	vec2 scale[MAX_INSTANCEID];
-	int apply_texture[MAX_INSTANCEID];
-	int flags[MAX_INSTANCEID];
-	float yaw_angle_rad[MAX_INSTANCEID];
-	float shadelight[MAX_INSTANCEID];
-	float ambientlight[MAX_INSTANCEID];
-	int materialTextureMapping[MAX_INSTANCEID];
-	int lumaTextureMapping[MAX_INSTANCEID];
-	int lerpBaseIndex[MAX_INSTANCEID];
-	float lerpFraction[MAX_INSTANCEID];
+	AliasModel models[MAX_INSTANCEID];
 
 	float shellSize;
 	// console var data
@@ -66,8 +70,8 @@ layout(std140) uniform RefdefCvars {
 
 void main()
 {
-	int lerpIndex = lerpBaseIndex[_instanceId];
-	float lerpFrac = lerpFraction[_instanceId];
+	int lerpIndex = models[_instanceId].lerpBaseIndex;
+	float lerpFrac = models[_instanceId].lerpFraction;
 
 	vec3 position = vboPosition;
 	vec2 tex = vboTex;
@@ -83,35 +87,35 @@ void main()
 		normalCoords = mix(normalCoords, normals2, lerpFrac);
 	}
 
-	fsFlags = flags[_instanceId];
-	fsMaterialSampler = materialTextureMapping[_instanceId];
-	fsLumaSampler = lumaTextureMapping[_instanceId];
+	fsFlags = models[_instanceId].flags;
+	fsMaterialSampler = models[_instanceId].materialTextureMapping;
+	fsLumaSampler = models[_instanceId].lumaTextureMapping;
 
 	if ((fsFlags & AMF_SHELLFLAGS) == 0) {
-		gl_Position = projectionMatrix * modelView[_instanceId] * vec4(position, 1);
-		fsAltTextureCoord = fsTextureCoord = vec2(tex.s * scale[_instanceId][0], tex.t * scale[_instanceId][1]);
-		fsTextureEnabled = (apply_texture[_instanceId] & 1);
-		fsTextureLuma = (apply_texture[_instanceId] & 2) == 2 ? 1 : 0;
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
+		fsAltTextureCoord = fsTextureCoord = vec2(tex.s * models[_instanceId].scale.s, tex.t * models[_instanceId].scale.t);
+		fsTextureEnabled = (models[_instanceId].apply_texture & 1);
+		fsTextureLuma = (models[_instanceId].apply_texture & 2) == 2 ? 1 : 0;
 
 		// Lighting: this is rough approximation
 		//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983
-		if (shadelight[_instanceId] < 1000) {
+		if (models[_instanceId].shadelight < 1000) {
 			float l = 1;
-			vec3 angleVector = normalize(vec3(cos(-yaw_angle_rad[_instanceId]), sin(-yaw_angle_rad[_instanceId]), 1));
+			vec3 angleVector = normalize(vec3(cos(-models[_instanceId].yaw_angle_rad), sin(-models[_instanceId].yaw_angle_rad), 1));
 
 			l = floor((dot(normalCoords, angleVector) + 1) * 127) / 127;
-			l = min((l * shadelight[_instanceId] + ambientlight[_instanceId]) / 256.0, 1);
+			l = min((l * models[_instanceId].shadelight + models[_instanceId].ambientlight) / 256.0, 1);
 
-			fsBaseColor = vec4(color[_instanceId].rgb * l, color[_instanceId].a);
+			fsBaseColor = vec4(models[_instanceId].color.rgb * l, models[_instanceId].color.a);
 		}
 		else {
-			fsBaseColor = color[_instanceId];
+			fsBaseColor = models[_instanceId].color;
 		}
 	}
 	else {
-		gl_Position = projectionMatrix * modelView[_instanceId] * vec4(position + normalCoords * shellSize, 1);
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * shellSize, 1);
 		fsTextureCoord = vec2(tex.s * 2 + cos(time * 1.5), tex.t * 2 + sin(time * 1.1));
 		fsAltTextureCoord = vec2(tex.s * 2 + cos(time * -0.5), tex.t * 2 + sin(time * -0.5));
-		fsTextureEnabled = (apply_texture[_instanceId] & 1);
+		fsTextureEnabled = (models[_instanceId].apply_texture & 1);
 	}
 }

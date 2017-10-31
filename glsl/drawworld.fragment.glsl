@@ -32,11 +32,15 @@ layout(std140) uniform RefdefCvars {
 	int r_textureless;
 };
 
+struct WorldDrawInfo {
+	mat4 modelMatrix;
+	vec4 color;
+	int samplerMapping;
+	int drawFlags;
+};
+
 layout(std140) uniform WorldCvars {
-	mat4 modelMatrix[MAX_INSTANCEID];
-	vec4 color[MAX_INSTANCEID];
-	int samplerMapping[MAX_INSTANCEID];
-	int drawFlags[MAX_INSTANCEID];
+	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 
 	// sky
 	float skySpeedscale;

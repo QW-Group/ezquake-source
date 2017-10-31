@@ -43,42 +43,6 @@ static GLint drawWorld_outlines;
 static GLuint drawworld_RefdefCvars_block;
 static GLuint drawworld_WorldCvars_block;
 
-typedef struct block_world_s {
-	float modelMatrix[MAX_WORLDMODEL_BATCH][16];
-	float color[MAX_WORLDMODEL_BATCH][4];
-	GLint samplerMappings[MAX_WORLDMODEL_BATCH][4];
-	GLint flags[MAX_WORLDMODEL_BATCH][4];
-
-	// sky
-	float skySpeedscale;
-	float skySpeedscale2;
-	float r_farclip;
-
-	//
-	float waterAlpha;
-
-	// drawflat for solid surfaces
-	int r_drawflat;
-	int r_fastturb;
-	int r_fastsky;
-
-	// 
-	int padding1;
-
-	float r_wallcolor[4];  // only used if r_drawflat 1 or 3
-	float r_floorcolor[4]; // only used if r_drawflat 1 or 2
-
-	// drawflat for turb surfaces
-	float r_telecolor[4];
-	float r_lavacolor[4];
-	float r_slimecolor[4];
-	float r_watercolor[4];
-
-	// drawflat for sky
-	float r_skycolor[4];
-	int r_texture_luma_fb;
-} block_world_t;
-
 static int batch_count = 0;
 static buffer_ref vbo_worldIndirectDraw;
 
@@ -87,7 +51,7 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_LUMA_TEXTURES       4
 #define DRAW_SKYBOX              8
 static buffer_ref ubo_worldcvars;
-static block_world_t world;
+static uniform_block_world_t world;
 
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 #define MAX_STANDARD_TEXTURES 5 // Update this if adding more.  currently lm+detail+caustics+2*skydome=5
@@ -669,10 +633,10 @@ static void GL_SortDrawCalls(int* split)
 	for (i = 0; i < batch_count; ++i) {
 		glm_worldmodel_req_t* this = &worldmodel_requests[i];
 
-		memcpy(world.color[i], this->color, sizeof(world.color[0]));
-		memcpy(world.modelMatrix[i], this->mvMatrix, sizeof(world.modelMatrix[0]));
-		world.flags[i][0] = this->flags;
-		world.samplerMappings[i][0] = max(this->sampler, 0);
+		memcpy(world.calls[i].color, this->color, sizeof(world.calls[i].color));
+		memcpy(world.calls[i].modelMatrix, this->mvMatrix, sizeof(world.calls[i].modelMatrix));
+		world.calls[i].flags = this->flags;
+		world.calls[i].samplerMapping = max(this->sampler, 0);
 		this->baseInstance = i;
 	}
 }

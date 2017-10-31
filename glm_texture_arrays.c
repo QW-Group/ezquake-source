@@ -112,7 +112,7 @@ static qbool BrushModelIsAnySize(model_t* mod)
 	return false;
 }
 
-#define MAX_INSTANCES 64
+#define MAX_INSTANCES 128
 
 static void GLM_CreateInstanceVBO(void)
 {

@@ -20,19 +20,23 @@ layout(std140) uniform RefdefCvars {
 	int r_textureless;
 };
 
+struct AliasModel {
+	mat4 modelView;
+	vec4 color;
+	vec2 scale;
+	int apply_texture;
+	int flags;
+	float yaw_angle_rad;
+	float shadelight;
+	float ambientlight;
+	int materialTextureMapping;
+	int lumaTextureMapping;
+	int lerpBaseIndex;
+	float lerpFraction;
+};
+
 layout(std140) uniform AliasModelData {
-	mat4 modelView[MAX_INSTANCEID];
-	vec4 color[MAX_INSTANCEID];
-	vec2 scale[MAX_INSTANCEID];
-	int apply_texture[MAX_INSTANCEID];
-	int flags[MAX_INSTANCEID];
-	float yaw_angle_rad[MAX_INSTANCEID];
-	float shadelight[MAX_INSTANCEID];
-	float ambientlight[MAX_INSTANCEID];
-	int materialTextureMapping[MAX_INSTANCEID];
-	int lumaTextureMapping[MAX_INSTANCEID];
-	int lerpBaseIndex[MAX_INSTANCEID];
-	float lerpFraction[MAX_INSTANCEID];
+	AliasModel models[MAX_INSTANCEID];
 
 	float shellSize;
 	// console var data
@@ -69,10 +73,10 @@ void main()
 			vec2(
 				// Using multipler of 3 here - not in other caustics logic but range
 				//   isn't enough otherwise, effect too subtle
-			(fsTextureCoord.s + sin(0.465 * (time + fsTextureCoord.t))) * 3 * -0.1234375,
+				(fsTextureCoord.s + sin(0.465 * (time + fsTextureCoord.t))) * 3 * -0.1234375,
 				(fsTextureCoord.t + sin(0.465 * (time + fsTextureCoord.s))) * 3 * -0.1234375
 			)
-			);
+		);
 #endif
 
 		if ((fsFlags & AMF_SHELLFLAGS) != 0) {

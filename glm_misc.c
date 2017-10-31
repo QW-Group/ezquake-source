@@ -53,33 +53,10 @@ void GLM_RenderSceneBlurDo(float alpha)
 	// MEAG: TODO
 }
 
-// Reference cvars for 3D views...
-typedef struct block_refdef_s {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-	float position[3];
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-
-	int padding[2];
-} block_refdef_t;
-
-// Reference settings for 2D views...
-typedef struct block_common2d_s {
-	float gamma2d;
-
-	int r_alphafont;
-
-	int padding[2];
-} block_common2d;
-
 static buffer_ref ubo_refdef;
 static buffer_ref ubo_common2d;
-static block_refdef_t refdef;
-static block_common2d common2d;
+static uniform_block_refdef_t refdef;
+static uniform_block_common2d_t common2d;
 
 void GLM_PreRenderView(void)
 {
