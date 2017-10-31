@@ -489,11 +489,12 @@ void GLM_DrawAliasModelFrame(
 }
 
 void GLM_DrawAliasFrame(
-	model_t* model, aliashdr_t* paliashdr, int pose1, int pose2,
+	model_t* model, int pose1, int pose2,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
 	float scaleS, float scaleT, int effects, qbool shell_only
 )
 {
+	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	int nextVertIndex = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
 

@@ -101,7 +101,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only);
+void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -149,7 +149,7 @@ extern cvar_t gl_meshdraw;
 
 void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {
 	float base_level = (layer_no == 0 ? gl_powerupshells_base1level.value : gl_powerupshells_base2level.value);
@@ -170,7 +170,7 @@ void R_DrawPowerupShell(
 		r_shellcolor[2] += effect_level;
 	}
 
-	R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, layer_no == 1, false, null_texture_reference, null_texture_reference, GL_MODULATE, 1.0f, 1.0f, 0, false, false);
+	R_SetupAliasFrame(model, oldframe, frame, false, layer_no == 1, false, null_texture_reference, null_texture_reference, GL_MODULATE, 1.0f, 1.0f, 0, false, false);
 }
 
 static qbool IsFlameModel(model_t* model)
@@ -178,13 +178,14 @@ static qbool IsFlameModel(model_t* model)
 	return model->modhint == MOD_FLAME || model->modhint == MOD_FLAME0 || model->modhint == MOD_FLAME3;
 }
 
-static void R_RenderAliasModel(
-	model_t* model, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode,
+static void R_RenderAliasModelEntity(
+	entity_t* ent, aliashdr_t *paliashdr, byte *color32bit, int local_skincolormode,
 	texture_ref texture, texture_ref fb_texture, maliasframedesc_t* oldframe, maliasframedesc_t* frame,
 	qbool outline, float scaleS, float scaleT, int effects, qbool shell_only
 )
 {
 	int i;
+	model_t* model = ent->model;
 
 	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	if (color32bit) {
@@ -201,23 +202,27 @@ static void R_RenderAliasModel(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, null_texture_reference, textureEnvMode, scaleS, scaleT, effects, false, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, textureEnvMode, scaleS, scaleT, effects, false, shell_only);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
 
 		GL_DisableMultitexture();
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, outline, texture, null_texture_reference, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
 
 		if (GL_TextureReferenceIsValid(fb_texture) && !shell_only) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, paliashdr, false, false, false, fb_texture, null_texture_reference, GL_REPLACE, scaleS, scaleT, 0, false, shell_only);
+			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, GL_REPLACE, scaleS, scaleT, 0, false, shell_only);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
+	}
+
+	if (!GL_ShadersSupported()) {
+		GLC_UnderwaterCaustics(ent, model, oldframe, frame, paliashdr, scaleS, scaleT);
 	}
 }
 
@@ -434,14 +439,6 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		GL_TextureReferenceInvalidate(fb_texture);
 	}
 
-	if (gl_smoothmodels.value) {
-		GL_ShadeModel(GL_SMOOTH);
-	}
-
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-	}
-
 	if (is_player_model && playernum >= 0 && playernum < MAX_CLIENTS) {
 		if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
 			cv = &r_teamskincolor;
@@ -464,25 +461,27 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
 	if (shell_only && !GL_ShadersSupported()) {
-		GLC_AliasModelPowerupShell(ent, clmodel, oldframe, frame, paliashdr);
+		GLC_AliasModelPowerupShell(ent, oldframe, frame);
 	}
 	else {
-		R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, shell_only);
+		if (gl_smoothmodels.value) {
+			GL_ShadeModel(GL_SMOOTH);
+		}
 
-		if (!GL_ShadersSupported()) {
-			GLC_UnderwaterCaustics(ent, clmodel, oldframe, frame, paliashdr, scaleS, scaleT);
+		R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, shell_only);
 
-			if (gl_smoothmodels.value) {
-				GL_ShadeModel(GL_FLAT);
-			}
+		if (gl_smoothmodels.value) {
+			GL_ShadeModel(GL_FLAT);
 		}
 	}
 
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
-
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
@@ -498,7 +497,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 
 void R_SetupAliasFrame(
 	model_t* model,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
 	qbool mtex, qbool scrolldir, qbool outline,
 	texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
 	float scaleS, float scaleT,
@@ -528,10 +527,10 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawAliasFrame(model, paliashdr, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only);
+		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only);
 	}
 	else {
-		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);
 	}
 }
 

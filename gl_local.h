@@ -780,9 +780,9 @@ void R_RenderAllDynamicLightmaps(model_t *model);
 void R_DrawMapOutline(model_t *model);
 void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 );
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
@@ -797,7 +797,7 @@ void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
 void GLC_SetLightmapBlendFunc(void);
 void GLC_MultitextureLightmap(int lightmap_num);
 void GLC_SetLightmapTextureEnvironment(void);
-void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
+void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT);
 void GLC_DrawSpriteModel(entity_t* e);

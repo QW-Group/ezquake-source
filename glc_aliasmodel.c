@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 
 static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir);
-static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
+static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 
 // Which pose to use if shadow to be drawn
@@ -55,7 +55,7 @@ extern vec3_t    lightcolor;
 extern float     apitch;
 extern float     ayaw;
 
-void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool outline)
+void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool outline)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
@@ -64,6 +64,7 @@ void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex,
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
+	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 
 	GL_DisableMultitexture();
 	GL_EnableTMU(GL_TEXTURE0);
@@ -184,16 +185,18 @@ void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex,
 	}
 
 	if (outline) {
-		GLC_DrawAliasOutlineFrame(paliashdr, pose1, pose2);
+		GLC_DrawAliasOutlineFrame(model, pose1, pose2);
 	}
 }
 
-static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2)
+static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
 	float lerpfrac;
-	trivertx_t *verts1, *verts2;
+	trivertx_t* verts1;
+	trivertx_t* verts2;
+	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 
@@ -335,15 +338,17 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
+void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
 	// FIXME: think need put it after caustics
 	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && bound(0, gl_powerupshells.value, 1)) {
+		model_t* clmodel = ent->model;
+
 		// always allow powerupshells for specs or demos.
 		// do not allow powerupshells for eyes in other cases
 		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
-			R_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame, paliashdr);
-			R_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame, paliashdr);
+			R_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame);
+			R_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame);
 
 			memset(r_shellcolor, 0, sizeof(r_shellcolor));
 		}
@@ -369,7 +374,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 		GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, scaleS, scaleT, 0, false, false);
+		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, scaleS, scaleT, 0, false, false);
 
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
