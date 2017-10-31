@@ -10,8 +10,7 @@ void GLC_DrawBillboards(void);
 
 #define VBO_BILLBOARDVERT_FOFS(x) (void*)((intptr_t)&(((gl_billboard_vert_t*)0)->x))
 
-#define MAX_VERTS_PER_BILLBOARD        9  // Gunshots... used to limit batches
-#define MAX_BILLBOARDS_PER_BATCH    8192  // Batches limited to this so they can't break other functionality
+#define MAX_BILLBOARDS_PER_BATCH    1024  // Batches limited to this so they can't break other functionality
 
 typedef struct gl_billboard_vert_s {
 	float position[3];
@@ -32,7 +31,9 @@ typedef struct gl_billboard_batch_s {
 	GLuint count;
 } gl_billboard_batch_t;
 
-static gl_billboard_vert_t verts[MAX_BILLBOARD_BATCHES * MAX_BILLBOARDS_PER_BATCH * MAX_VERTS_PER_BILLBOARD];
+#define MAX_VERTS_PER_SCENE (MAX_BILLBOARDS_PER_BATCH * MAX_BILLBOARD_BATCHES * 18)
+
+static gl_billboard_vert_t verts[MAX_VERTS_PER_SCENE];
 static gl_billboard_batch_t batches[MAX_BILLBOARD_BATCHES];
 static unsigned int batchMapping[MAX_BILLBOARD_BATCHES];
 static unsigned int batchCount;
@@ -79,7 +80,7 @@ qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
 	if (!batch || batch->count >= MAX_BILLBOARDS_PER_BATCH) {
 		return false;
 	}
-	if (vertexCount + verts_required >= MAX_BILLBOARDS_PER_BATCH * MAX_VERTS_PER_BILLBOARD) {
+	if (vertexCount + verts_required >= MAX_VERTS_PER_SCENE) {
 		return false;
 	}
 	batch->firstVertices[batch->count] = vertexCount;
@@ -170,7 +171,7 @@ static int indexes_start_sparks;
 static void GLM_CreateBillboardVAO(void)
 {
 	if (!GL_BufferReferenceIsValid(billboardVBO)) {
-		billboardVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, GL_DYNAMIC_DRAW);
+		billboardVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, GL_STREAM_DRAW);
 	}
 
 	if (!billboardVAO.vao) {
@@ -267,16 +268,15 @@ void GLM_DrawBillboards(void)
 {
 	unsigned int i;
 
-	GL_EnterRegion(__FUNCTION__);
-
 	if (!GLM_BillboardsInit()) {
 		return;
 	}
 
+	GL_EnterRegion(__FUNCTION__);
+
 	GL_UpdateVBO(billboardVBO, vertexCount * sizeof(verts[0]), verts);
 
 	GLM_StateBeginDrawBillboards();
-
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];
 
@@ -310,8 +310,6 @@ void GLM_DrawBillboards(void)
 
 		batch->count = 0;
 	}
-	frameStats.draw_calls += batchCount;
-
 	GLM_StateEndDrawBillboards();
 
 	GL_LeaveRegion();
