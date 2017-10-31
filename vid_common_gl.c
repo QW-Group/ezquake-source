@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "image.h"
 
 #ifdef WITH_NVTX
 #include "nvToolsExt.h"
@@ -425,8 +426,8 @@ void GL_CheckExtensions (void)
 void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
-	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA;
-	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB;
+	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8;
+	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB8;
 }
 
 /************************************** GL INIT **************************************/
@@ -854,6 +855,7 @@ void GL_TexSubImage3D(
 	}
 }
 
+/*
 void GL_TexImage2D(
 	GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLint internalformat,
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
@@ -862,6 +864,7 @@ void GL_TexImage2D(
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 }
+*/
 
 void GL_TexSubImage2D(
 	GLenum textureUnit, GLenum target, texture_ref texture, GLint level,
@@ -891,7 +894,17 @@ void GL_TexStorage2D(
 	}
 	else {
 		GL_BindTextureUnit(textureUnit, target, texture);
-		glTexStorage2D(target, levels, internalformat, width, height);
+		if (glTexStorage2D) {
+			glTexStorage2D(target, levels, internalformat, width, height);
+		}
+		else {
+			int level;
+			for (level = 0; level < levels; ++level) {
+				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				width = max(1, width / 2);
+				height = max(1, height / 2);
+			}
+		}
 	}
 }
 
@@ -990,13 +1003,30 @@ void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref texture, GLin
 	}
 }
 
-void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref texture)
+void GL_GenerateMipmapWithData(GLenum textureUnit, GLenum target, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
 {
 	if (glGenerateTextureMipmap) {
 		glGenerateTextureMipmap(GL_TextureNameFromReference(texture));
 	}
 	else {
 		GL_BindTextureUnit(textureUnit, target, texture);
-		glGenerateMipmap(target);
+		if (glGenerateMipmap) {
+			glGenerateMipmap(target);
+		}
+		else if (newdata) {
+			int miplevel = 0;
+
+			// Calculate the mip maps for the images.
+			while (width > 1 || height > 1) {
+				Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
+				miplevel++;
+				GL_TexSubImage2D(GL_TEXTURE0, GL_TEXTURE_2D, texture, miplevel, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+			}
+		}
 	}
+}
+
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref texture)
+{
+	GL_GenerateMipmapWithData(textureUnit, target, texture, NULL, 0, 0, 0);
 }

@@ -621,11 +621,9 @@ void GL_BuildLightmaps(void)
 			GL_TexSubImage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {
-			GL_TexParameterf(GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			GL_TexParameterf(GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			GL_TexImage2D(
-				GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], 0, GL_RGBA,
-				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+			GL_TexSubImage2D(
+				GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], 0, 0, 0,
+				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 				lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4
 			);
 		}

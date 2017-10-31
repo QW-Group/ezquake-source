@@ -115,15 +115,13 @@ void R_TranslatePlayerSkin (int playernum)
 	extern byte player_8bit_texels[256 * 256];
 	extern cvar_t gl_scaleModelTextures;
 
-	if(gl_gammacorrection.integer)
-	{
+	if (gl_gammacorrection.integer) {
 		glinternalfmt = GL_SRGB8;
 		glinternalfmt_alpha = GL_SRGB8_ALPHA8;
 	}
-	else
-	{
-		glinternalfmt = GL_RGB;
-		glinternalfmt_alpha = GL_RGBA;
+	else {
+		glinternalfmt = GL_RGB8;
+		glinternalfmt_alpha = GL_RGBA8;
 	}
 
 	player = &cl.players[playernum];
@@ -239,7 +237,7 @@ void R_TranslatePlayerSkin (int playernum)
 		}
 	}
 
-	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, playernmtextures[playernum], 0, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playernmtextures[playernum], glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, playernmtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, playernmtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -277,7 +275,7 @@ void R_TranslatePlayerSkin (int playernum)
 			}
 		}
 
-		GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, playerfbtextures[playernum], 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerfbtextures[playernum], glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		GL_TextureEnvMode(GL_MODULATE);
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, playerfbtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, playerfbtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);

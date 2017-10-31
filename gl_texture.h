@@ -58,6 +58,12 @@ void GL_DeleteTextureArray(texture_ref* texture);
 void GL_DeleteCubeMap(texture_ref* texture);
 void GL_DeleteTexture(texture_ref* texture);
 
+// Replaces top-level of a texture - if dimensions don't match then texture is reloaded
+void GL_TextureReplace2D(
+	GLenum textureUnit, GLenum target, texture_ref* ref, GLint internalformat,
+	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid *pixels
+);
+
 qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;

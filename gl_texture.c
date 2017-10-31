@@ -49,7 +49,7 @@ extern float vid_gamma;
 extern int anisotropy_ext;
 int	anisotropy_tap = 1; //  1 - is off
 
-GLenum gl_lightmap_format = GL_RGB, gl_solid_format = GL_RGB, gl_alpha_format = GL_RGBA;
+GLenum gl_lightmap_format = GL_RGB8, gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;
 
 cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
 cvar_t	gl_picmip			= {"gl_picmip", "0"};
@@ -80,6 +80,7 @@ typedef struct {
 	int			scaled_width, scaled_height;
 	int         gl_width, gl_height;
 	int			texmode;
+	GLint       internal_format;
 	unsigned	crc;
 	int			bpp;
 
@@ -92,6 +93,7 @@ typedef struct {
 	int         next_free;
 
 	qbool       mipmaps_generated;
+	qbool       storage_allocated;
 } gltexture_t;
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
@@ -288,7 +290,7 @@ static void brighten32 (byte *data, int size)
 static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
 {
 	// Tell OpenGL the texnum of the texture before uploading it.
-	int	internal_format, tempwidth, tempheight, miplevel;
+	int	internal_format, tempwidth, tempheight, levels;
 	unsigned int *newdata;
 
 	if (gl_support_arb_texture_non_power_of_two)
@@ -318,13 +320,11 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 		memcpy (newdata, data, width * height * 4);
 	}
 
-	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0)
-	{
+	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0) {
 		int i, cnt = width * height * 4, level = gl_wicked_luma_level.integer;
 		byte *bdata = (byte*)newdata;
 
-		for (i = 0; i < cnt; i += 4)
-		{
+		for (i = 0; i < cnt; i += 4) {
 			if (bdata[i] < level && bdata[i + 1] < level && bdata[i + 2] < level) {
 				bdata[i + 3] = 0; // make black pixels transparent, well not always black, depends of level...
 			}
@@ -343,6 +343,18 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 	glt->gl_width = width;
 	glt->gl_height = height;
 
+	if (mode & TEX_MIPMAP) {
+		int largest = max(width, height);
+		levels = 0;
+		while (largest) {
+			++levels;
+			largest /= 2;
+		}
+	}
+	else {
+		levels = 1;
+	}
+
 	if (mode & TEX_BRIGHTEN) {
 		brighten32((byte *)newdata, width * height * 4);
 	}
@@ -351,23 +363,22 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 		internal_format = (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
 	else if (mode & TEX_NOCOMPRESS) {
-		internal_format = (mode & TEX_ALPHA) ? GL_RGBA : GL_RGB;
+		internal_format = (mode & TEX_ALPHA) ? GL_RGBA8 : GL_RGB8;
 	}
 	else {
 		internal_format = (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
 	}
 
 	// Upload the main texture to OpenGL.
-	miplevel = 0;
-	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+	glt->internal_format = internal_format;
+	if (!glt->storage_allocated) {
+		GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, levels, internal_format, width, height);
+		glt->storage_allocated = true;
+	}
+	GL_TexSubImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 
 	if (mode & TEX_MIPMAP) {
-		// Calculate the mip maps for the images.
-		while (width > 1 || height > 1) {
-			Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
-			miplevel++;
-			GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
-		}
+		GL_GenerateMipmapWithData(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, (byte*)newdata, width, height, internal_format);
 
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -543,6 +554,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	glt->crc = crc;
 	glt->bpp = bpp;
 	glt->is_array = (depth > 0);
+	glt->internal_format = 0;
 
 	Q_free(glt->pathname);
 	if (bpp == 4 && fs_netpath[0]) {
@@ -554,7 +566,23 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	return glt;
 }
 
-texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
+static void GL_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp)
+{
+	// Upload the texture to OpenGL based on the bytes per pixel.
+	switch (bpp)
+	{
+	case 1:
+		GL_Upload8(glt, data, width, height, mode);
+		break;
+	case 4:
+		GL_Upload32(glt, (void *) data, width, height, mode);
+		break;
+	default:
+		Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
+	}
+}
+
+texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
 {
 	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
@@ -566,18 +594,15 @@ texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *
 		return glt->reference;
 	}
 
-	// Upload the texture to OpenGL based on the bytes per pixel.
-	switch (bpp)
-	{
-		case 1:
-			GL_Upload8(glt, data, width, height, mode);
-			break;
-		case 4:
-			GL_Upload32(glt, (void *) data, width, height, mode);
-			break;
-		default:
-			Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
+	if (glt->storage_allocated && (glt->width != width || glt->height != height || glt->bpp != bpp)) {
+		texture_ref ref = glt->reference;
+
+		GL_DeleteTexture(&ref);
+
+		glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
 	}
+
+	GL_LoadTextureData(glt, width, height, data, mode, bpp);
 
 	return glt->reference;
 }
@@ -1009,20 +1034,28 @@ void GL_Texture_Init(void)
 
 	// Lightmap.
 	if (GL_ShadersSupported()) {
-		GL_CreateTextures(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
+		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
 
-		GL_TexStorage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
-		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 			lightmap_textures[i] = lightmap_texture_array;
 		}
 	}
 	else {
-		GL_CreateTextures(GL_TEXTURE1, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
+		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
+
+		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+			GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i], 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
 	}
 
 	// Motion blur.
@@ -1318,5 +1351,27 @@ void GL_GenerateMipmapsIfNeeded(texture_ref ref)
 	if (!gltextures[ref.index].mipmaps_generated) {
 		GL_GenerateMipmap(GL_TEXTURE0, gltextures[ref.index].target, ref);
 		gltextures[ref.index].mipmaps_generated = true;
+	}
+}
+
+void GL_TextureReplace2D(
+	GLenum textureUnit, GLenum target, texture_ref* ref, GLint internalformat,
+	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid *pixels
+)
+{
+	gltexture_t* tex;
+
+	if (!GL_TextureReferenceIsValid(*ref)) {
+		return;
+	}
+
+	tex = &gltextures[ref->index];
+	if (tex->gl_width != width || tex->gl_height != height || tex->target != target || tex->internal_format != internalformat) {
+		gltexture_t old = *tex;
+		GL_DeleteTexture(ref);
+		*ref = GL_LoadTexturePixels(pixels, old.identifier, width, height, old.texmode);
+	}
+	else {
+		GL_TexSubImage2D(textureUnit, target, *ref, 0, 0, 0, width, height, format, type, pixels);
 	}
 }

@@ -884,23 +884,29 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo);
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
+// --------------
 // Texture functions
+// --------------
 
-void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference);
-void GL_EnsureTextureUnitBound(GLuint unit, GLenum targetType, texture_ref reference);
-void GL_TexSubImage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-void GL_TexImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_TexSubImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
 void GL_TexStorage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 void GL_TexStorage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref reference);
+void GL_GenerateMipmapWithData(GLenum textureUnit, GLenum target, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);
+
 void GL_TexParameterf(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, GLfloat param);
 void GL_TexParameterfv(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, const GLfloat *params);
 void GL_TexParameteri(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, GLint param);
 void GL_TexParameteriv(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, const GLint *params);
 void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLenum pname, GLint* params);
+
+void GL_TexSubImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_TexSubImage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+//void GL_TexImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
-void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref reference);
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
+
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference);
+void GL_EnsureTextureUnitBound(GLuint unit, GLenum targetType, texture_ref reference);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 

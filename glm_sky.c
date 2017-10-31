@@ -391,21 +391,16 @@ static void GLM_DrawSkyBox(void)
 
 static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int height)
 {
+	static int skytexorder[MAX_SKYBOXTEXTURES] = {0,2,1,3,4,5};
 	int i;
-	const GLenum bindings[] = {
-		// "rt", "bk", "lf", "ft", "up", "dn"
-		GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-		GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-		GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-	};
 	GLbyte* data;
 
 	// Copy data from 2d images into cube-map
 	data = Q_malloc(4 * width * height);
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
-		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, 4 * width * height, data);
+		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[skytexorder[i]], 0, GL_RGBA, GL_UNSIGNED_BYTE, 4 * width * height, data);
 
-		GL_TexSubImage2D(GL_TEXTURE0, bindings[i], cubemap, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GL_TexSubImage3D(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, cubemap, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 	Q_free(data);
 
