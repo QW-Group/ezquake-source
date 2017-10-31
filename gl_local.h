@@ -819,12 +819,11 @@ void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 );
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects, qbool shell_only);
 
 void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
 void GLM_PolyBlend(float v_blend[4]);
-void GLM_BrightenScreen(void);
 void GLM_DrawVelocity3D(void);
 void GLM_RenderSceneBlurDo(float alpha);
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
@@ -836,7 +835,7 @@ void GLC_SetLightmapTextureEnvironment(GLenum textureUnit);
 GLenum GLC_LightmapTexEnv(void);
 void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
-void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT);
+void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);

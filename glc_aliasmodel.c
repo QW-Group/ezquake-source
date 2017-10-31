@@ -300,7 +300,7 @@ void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, mali
 	}
 }
 
-void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT)
+void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
 {
 	// Underwater caustics on alias models of QRACK -->
 #define GL_RGB_SCALE 0x8573
@@ -308,7 +308,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, scaleS, scaleT, 0, false, false);
+		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, 0, false);
 
 		GLC_StateEndUnderwaterCaustics();
 	}

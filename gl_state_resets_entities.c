@@ -73,7 +73,7 @@ void GLC_StateBeginAliasOutlineFrame(void)
 	// limit outline width, since even width == 3 can be considered as cheat.
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	GL_Color3ubv(color_black);
 	GL_Enable(GL_LINE_SMOOTH);
 	GLC_DisableAllTexturing();
 
@@ -84,12 +84,11 @@ void GLC_StateEndAliasOutlineFrame(void)
 {
 	ENTER_STATE;
 
-	glColor4f(1, 1, 1, 1);
+	GL_Color3ubv(color_white);
 	glPolygonMode(GL_FRONT, GL_FILL);
-	glDisable(GL_LINE_SMOOTH);
+	GL_Disable(GL_LINE_SMOOTH);
 	GL_CullFace(GL_FRONT);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 
 	LEAVE_STATE;
