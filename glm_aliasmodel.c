@@ -512,11 +512,10 @@ void GLM_DrawAliasFrame(
 }
 
 void GLM_DrawPowerupShell(
-	model_t* model, int effects, int layer_no,
+	model_t* model, int effects, int layer_no /* not used but keeps signature in sync with classic */,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {
-	qbool scrolldir = (layer_no == 1);
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	int pose1 = R_AliasFramePose(oldframe);
 	int pose2 = R_AliasFramePose(frame);

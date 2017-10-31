@@ -985,7 +985,6 @@ static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe
 		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
 			if (GL_ShadersSupported()) {
 				GLM_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame);
-				GLM_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame);
 			}
 			else {
 				GLC_StateBeginAliasPowerupShell();
