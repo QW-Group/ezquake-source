@@ -326,6 +326,7 @@ static void CheckShaderExtensions(void)
 
 				if (glDebugMessageCallback) {
 					glEnable(GL_DEBUG_OUTPUT);
+					glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 					glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
 				}
 			}
