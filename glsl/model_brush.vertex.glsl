@@ -16,6 +16,7 @@ out vec3 TextureCoord;
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+	vec3 cameraPosition;
 	float time;
 	float gamma3d;
 

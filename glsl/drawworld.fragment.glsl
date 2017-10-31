@@ -10,12 +10,16 @@ layout(binding=SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
+#ifdef DRAW_SKYBOX
+layout(binding=SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
+#endif
 layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+	vec3 cameraPosition;
 	float time;
 	float gamma3d;
 
@@ -62,6 +66,9 @@ in vec3 LumaCoord;
 in vec3 FlatColor;
 in flat int Flags;
 in flat int SamplerNumber;
+#ifdef DRAW_SKYBOX
+in vec3 Direction;
+#endif
 
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
@@ -124,6 +131,9 @@ void main()
 			}
 		}
 		else if (turbType == TEXTURE_TURB_SKY) {
+#ifdef DRAW_SKYBOX
+			frag_colour = texture(skyTex, Direction);
+#else
 			if (r_fastsky != 0) {
 				frag_colour = r_skycolor;
 			}
@@ -132,6 +142,7 @@ void main()
 				// early_fragment_tests enabled so z-buffer already updated, our work is done
 				discard;
 			}
+#endif
 		}
 		else {
 			frag_colour = vec4(texColor.rgb, waterAlpha);

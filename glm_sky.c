@@ -74,7 +74,7 @@ static glm_vao_t skyDome_vao;
 static glm_vao_t skyBox_vao;
 static buffer_ref ubo_skydomeData;
 static buffer_ref ubo_skyboxData;
-static texture_ref skybox_cubeMap;
+texture_ref skybox_cubeMap;
 
 void GLM_DrawSkyChain(void)
 {
@@ -236,7 +236,7 @@ void GLM_DrawSky(void)
 {
 	qbool		ignore_z;
 
-	if (r_fastsky.value) {
+	if (r_fastsky.value || r_skyboxloaded) {
 		return;
 	}
 

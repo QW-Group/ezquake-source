@@ -57,13 +57,14 @@ void GLM_RenderSceneBlurDo(float alpha)
 typedef struct block_refdef_s {
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
+	float position[3];
 	float time;
 	float gamma3d;
 
 	// if enabled, texture coordinates are always 0,0
 	int r_textureless;
 
-	int padding;
+	int padding[2];
 } block_refdef_t;
 
 // Reference settings for 2D views...
@@ -101,6 +102,7 @@ void GLM_SetupGL(void)
 
 	GLM_GetMatrix(GL_MODELVIEW, refdef.modelViewMatrix);
 	GLM_GetMatrix(GL_PROJECTION, refdef.projectionMatrix);
+	VectorCopy(r_refdef.vieworg, refdef.position);
 	refdef.time = cl.time;
 	refdef.gamma3d = v_gamma.value;
 	refdef.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;

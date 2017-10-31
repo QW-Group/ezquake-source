@@ -7,6 +7,7 @@ layout(binding=0) uniform sampler2DArray materialTex;
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+	vec3 cameraPosition;
 	float time;
 	float gamma3d;
 

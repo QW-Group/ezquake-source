@@ -74,9 +74,10 @@ typedef struct block_world_s {
 static int batch_count = 0;
 static buffer_ref vbo_worldIndirectDraw;
 
-#define DRAW_DETAIL_TEXTURES 1
-#define DRAW_CAUSTIC_TEXTURES 2
-#define DRAW_LUMA_TEXTURES 4
+#define DRAW_DETAIL_TEXTURES     1
+#define DRAW_CAUSTIC_TEXTURES    2
+#define DRAW_LUMA_TEXTURES       4
+#define DRAW_SKYBOX              8
 static buffer_ref ubo_worldcvars;
 static block_world_t world;
 
@@ -88,14 +89,16 @@ static int TEXTURE_UNIT_MATERIAL;
 static int TEXTURE_UNIT_LIGHTMAPS;
 static int TEXTURE_UNIT_DETAIL;
 static int TEXTURE_UNIT_CAUSTICS;
+static int TEXTURE_UNIT_SKYBOX;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
-static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures)
+static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures, qbool skybox)
 {
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
-		(luma_textures ? DRAW_LUMA_TEXTURES : 0);
+		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
+		(skybox ? DRAW_SKYBOX : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[512];
@@ -108,7 +111,6 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 
 			strlcat(included_definitions, "#define DRAW_DETAIL_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_DETAIL_TEXTURE %d\n", TEXTURE_UNIT_DETAIL), sizeof(included_definitions));
-			++samplers;
 		}
 		if (caustic_textures) {
 			TEXTURE_UNIT_CAUSTICS = samplers++;
@@ -118,6 +120,12 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		}
 		if (luma_textures) {
 			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
+		}
+		if (skybox) {
+			TEXTURE_UNIT_SKYBOX = samplers++;
+
+			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
+			strlcat(included_definitions, va("#define SAMPLER_SKYBOX_TEXTURE %d\n", TEXTURE_UNIT_SKYBOX), sizeof(included_definitions));
 		}
 		TEXTURE_UNIT_LIGHTMAPS = samplers++;
 		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));
@@ -169,9 +177,11 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	extern cvar_t gl_lumaTextures;
 
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
+
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 
-	Compile_DrawWorldProgram(detail_tex, caustics, lumas);
+	Compile_DrawWorldProgram(detail_tex, caustics, lumas, skybox);
 
 	world.waterAlpha = wateralpha;
 
@@ -201,6 +211,11 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	}
 	if (caustics) {
 		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
+	}
+	if (skybox) {
+		extern texture_ref skybox_cubeMap;
+
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYBOX, skybox_cubeMap);
 	}
 
 	material_samplers = 0;

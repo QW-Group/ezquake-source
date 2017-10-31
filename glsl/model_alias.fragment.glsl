@@ -10,6 +10,7 @@ layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2D samplers[SAMPLE
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+	vec3 cameraPosition;
 	float time;
 	float gamma3d;
 

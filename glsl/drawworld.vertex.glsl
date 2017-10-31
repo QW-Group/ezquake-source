@@ -26,10 +26,14 @@ out vec2 DetailCoord;
 out vec3 FlatColor;
 out flat int Flags;
 out flat int SamplerNumber;
+#ifdef DRAW_SKYBOX
+out vec3 Direction;
+#endif
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
+	vec3 cameraPosition;
 	float time;
 	float gamma3d;
 
@@ -84,6 +88,9 @@ void main()
 #endif
 #ifdef DRAW_LUMA_TEXTURES
 		LumaCoord = TextureCoord;
+#endif
+#ifdef DRAW_SKYBOX
+		Direction = position - cameraPosition;
 #endif
 	}
 	else {
