@@ -906,13 +906,15 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
 }
 
-void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
+void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
+	GL_FlushImageDraw();
+
 	if (GL_ShadersSupported()) {
-		GLM_Draw_Polygon(x, y, vertices, num_vertices, fill, color);
+		GLM_Draw_Polygon(x, y, vertices, num_vertices, color);
 	}
 	else {
-		GLC_Draw_Polygon(x, y, vertices, num_vertices, fill, color);
+		GLC_Draw_Polygon(x, y, vertices, num_vertices, color);
 	}
 }
 

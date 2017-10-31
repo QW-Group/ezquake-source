@@ -38,6 +38,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud.h"
 #include "hud_editor.h"
 
+// Returns true if a point is on the same side of a line as a third point
+static qbool PointSameSide(vec3_t test_point, vec3_t a, vec3_t b, vec3_t control_point)
+{
+	vec3_t a_b, a_test, a_control;
+	vec3_t cp1, cp2;
+
+	VectorSubtract(b, a, a_b);
+	VectorSubtract(test_point, a, a_test);
+	VectorSubtract(control_point, a, a_control);
+
+	CrossProduct(a_b, a_test, cp1);
+	CrossProduct(a_b, a_control, cp2);
+
+	return DotProduct(cp1, cp2) >= 0;
+}
+
+// Returns true if point is in a polygon
+// Replaced previous version in mathlib.c as this will cope with being passed a triangle strip
+static qbool IsPointInPolygon(int npol, vec3_t *v, float x, float y)
+{
+	int i;
+	vec3_t test_point = { x, y, 0 };
+
+	for (i = 2; i < npol; ++i) {
+		float* a = v[i - 2];
+		float* b = v[i - 1];
+		float* c = v[i];
+
+		if (PointSameSide(test_point, a, b, c) && PointSameSide(test_point, b, c, a) && PointSameSide(test_point, c, a, b)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 ez_tree_t help_control_tree;
 
 extern mpic_t		*scr_cursor_icon;	// cl_screen.c
@@ -477,11 +513,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 			hud_align_consoleleft_poly[1][2] = 0;
 
 			hud_align_consoleleft_poly[2][0] = mid_x / 2.0;
-			hud_align_consoleleft_poly[2][1] = offset_y;
+			hud_align_consoleleft_poly[2][1] = 0;
 			hud_align_consoleleft_poly[2][2] = 0;
 
 			hud_align_consoleleft_poly[3][0] = mid_x / 2.0;
-			hud_align_consoleleft_poly[3][1] = 0;
+			hud_align_consoleleft_poly[3][1] = offset_y;
 			hud_align_consoleleft_poly[3][2] = 0;
 
 			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_consoleleft_poly, x, y))
@@ -503,11 +539,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 			hud_align_console_poly[1][2] = 0;
 
 			hud_align_console_poly[2][0] = mid_x + (mid_x / 2.0);
-			hud_align_console_poly[2][1] = offset_y;
+			hud_align_console_poly[2][1] = 0;
 			hud_align_console_poly[2][2] = 0;
 
 			hud_align_console_poly[3][0] = mid_x + (mid_x / 2.0);
-			hud_align_console_poly[3][1] = 0;
+			hud_align_console_poly[3][1] = offset_y;
 			hud_align_console_poly[3][2] = 0;
 
 			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_console_poly, x, y))
@@ -529,11 +565,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 			hud_align_consoleright_poly[1][2] = 0;
 
 			hud_align_consoleright_poly[2][0] = 2 * mid_x;
-			hud_align_consoleright_poly[2][1] = offset_y;
+			hud_align_consoleright_poly[2][1] = 0;
 			hud_align_consoleright_poly[2][2] = 0;
 
 			hud_align_consoleright_poly[3][0] = 2 * mid_x;
-			hud_align_consoleright_poly[3][1] = 0;
+			hud_align_consoleright_poly[3][1] = offset_y;
 			hud_align_consoleright_poly[3][2] = 0;
 
 			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_consoleright_poly, x, y))
@@ -547,16 +583,16 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 
 	// Top right.
 	{
-		hud_align_topright_poly[0][0] = mid_x + (mid_x / 2.0);
-		hud_align_topright_poly[0][1] = 0;
+		hud_align_topright_poly[0][0] = mid_x + (mid_x / 4.0);
+		hud_align_topright_poly[0][1] = mid_y - (mid_y / 2.0);
 		hud_align_topright_poly[0][2] = 0;
 
-		hud_align_topright_poly[1][0] = mid_x + (mid_x / 4.0);
-		hud_align_topright_poly[1][1] = mid_y - (mid_y / 2.0);
+		hud_align_topright_poly[1][0] = mid_x + (mid_x / 2.0);
+		hud_align_topright_poly[1][1] = mid_y - (mid_y / 4.0);
 		hud_align_topright_poly[1][2] = 0;
 
 		hud_align_topright_poly[2][0] = mid_x + (mid_x / 2.0);
-		hud_align_topright_poly[2][1] = mid_y - (mid_y / 4.0);
+		hud_align_topright_poly[2][1] = 0;
 		hud_align_topright_poly[2][2] = 0;
 
 		hud_align_topright_poly[3][0] = 2 * mid_x;
@@ -585,12 +621,12 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_top_poly[1][1] = mid_y - (mid_y / 2.0);
 		hud_align_top_poly[1][2] = 0;
 
-		hud_align_top_poly[2][0] = mid_x + (mid_x / 4.0);
-		hud_align_top_poly[2][1] = mid_y - (mid_y / 2.0);
+		hud_align_top_poly[2][0] = mid_x + (mid_x / 2.0);
+		hud_align_top_poly[2][1] = 0;
 		hud_align_top_poly[2][2] = 0;
 
-		hud_align_top_poly[3][0] = mid_x + (mid_x / 2.0);
-		hud_align_top_poly[3][1] = 0;
+		hud_align_top_poly[3][0] = mid_x + (mid_x / 4.0);
+		hud_align_top_poly[3][1] = mid_y - (mid_y / 2.0);
 		hud_align_top_poly[3][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_top_poly, x - offset_x, y - offset_y))
@@ -604,23 +640,23 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 	// Top Left.
 	{
 		hud_align_topleft_poly[0][0] = 0;
-		hud_align_topleft_poly[0][1] = 0;
+		hud_align_topleft_poly[0][1] = mid_y - (mid_y / 2.0);
 		hud_align_topleft_poly[0][2] = 0;
 
 		hud_align_topleft_poly[1][0] = 0;
-		hud_align_topleft_poly[1][1] = mid_y - (mid_y / 2.0);
+		hud_align_topleft_poly[1][1] = 0;
 		hud_align_topleft_poly[1][2] = 0;
 
 		hud_align_topleft_poly[2][0] = mid_x - (mid_x / 2.0);
 		hud_align_topleft_poly[2][1] = mid_y - (mid_y / 4.0);
 		hud_align_topleft_poly[2][2] = 0;
 
-		hud_align_topleft_poly[3][0] = mid_x - (mid_x / 4.0);
-		hud_align_topleft_poly[3][1] = mid_y - (mid_y / 2.0);
+		hud_align_topleft_poly[3][0] = mid_x - (mid_x / 2.0);
+		hud_align_topleft_poly[3][1] = 0;
 		hud_align_topleft_poly[3][2] = 0;
 
-		hud_align_topleft_poly[4][0] = mid_x - (mid_x / 2.0);
-		hud_align_topleft_poly[4][1] = 0;
+		hud_align_topleft_poly[4][0] = mid_x - (mid_x / 4.0);
+		hud_align_topleft_poly[4][1] = mid_y - (mid_y / 2.0);
 		hud_align_topleft_poly[4][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_topleft_poly, x - offset_x, y - offset_y))
@@ -642,11 +678,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_left_poly[1][2] = 0;
 
 		hud_align_left_poly[2][0] = mid_x / 2.0;
-		hud_align_left_poly[2][1] = mid_y + (mid_y / 4.0);
+		hud_align_left_poly[2][1] = mid_y - (mid_y / 4.0);
 		hud_align_left_poly[2][2] = 0;
 
 		hud_align_left_poly[3][0] = mid_x / 2.0;
-		hud_align_left_poly[3][1] = mid_y - (mid_y / 4.0);
+		hud_align_left_poly[3][1] = mid_y + (mid_y / 4.0);
 		hud_align_left_poly[3][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_left_poly, x - offset_x, y - offset_y))
@@ -660,23 +696,23 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 	// Bottom Left.
 	{
 		hud_align_bottomleft_poly[0][0] = 0;
-		hud_align_bottomleft_poly[0][1] = mid_y + (mid_y / 2.0);
+		hud_align_bottomleft_poly[0][1] = 2 * mid_y;
 		hud_align_bottomleft_poly[0][2] = 0;
 
 		hud_align_bottomleft_poly[1][0] = 0;
-		hud_align_bottomleft_poly[1][1] = 2 * mid_y;
+		hud_align_bottomleft_poly[1][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottomleft_poly[1][2] = 0;
 
 		hud_align_bottomleft_poly[2][0] = mid_x / 2.0;
 		hud_align_bottomleft_poly[2][1] = 2 * mid_y;
 		hud_align_bottomleft_poly[2][2] = 0;
 
-		hud_align_bottomleft_poly[3][0] = mid_x - (mid_x / 4.0);
-		hud_align_bottomleft_poly[3][1] = mid_y + (mid_y / 2.0);
+		hud_align_bottomleft_poly[3][0] = mid_x / 2.0;
+		hud_align_bottomleft_poly[3][1] = mid_y + (mid_y / 4.0);
 		hud_align_bottomleft_poly[3][2] = 0;
 
-		hud_align_bottomleft_poly[4][0] = mid_x / 2.0;
-		hud_align_bottomleft_poly[4][1] = mid_y + (mid_y / 4.0);
+		hud_align_bottomleft_poly[4][0] = mid_x - (mid_x / 4.0);
+		hud_align_bottomleft_poly[4][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottomleft_poly[4][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomleft_poly, x - offset_x, y - offset_y))
@@ -689,11 +725,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 
 	// Bottom.
 	{
-		hud_align_bottom_poly[0][0] = mid_x - (mid_x / 2.0);
-		hud_align_bottom_poly[0][1] = 2 * mid_y;
+		hud_align_bottom_poly[0][0] = mid_x - (mid_x / 4.0);
+		hud_align_bottom_poly[0][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottom_poly[0][2] = 0;
 
-		hud_align_bottom_poly[1][0] = mid_x + (mid_x / 2.0);
+		hud_align_bottom_poly[1][0] = mid_x - (mid_x / 2.0);
 		hud_align_bottom_poly[1][1] = 2 * mid_y;
 		hud_align_bottom_poly[1][2] = 0;
 
@@ -701,8 +737,8 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_bottom_poly[2][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottom_poly[2][2] = 0;
 
-		hud_align_bottom_poly[3][0] = mid_x - (mid_x / 4.0);
-		hud_align_bottom_poly[3][1] = mid_y + (mid_y / 2.0);
+		hud_align_bottom_poly[3][0] = mid_x + (mid_x / 2.0);
+		hud_align_bottom_poly[3][1] = 2 * mid_y;
 		hud_align_bottom_poly[3][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_bottom_poly, x - offset_x, y - offset_y))
@@ -715,11 +751,11 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 
 	// Bottom Right.
 	{
-		hud_align_bottomright_poly[0][0] = mid_x + (mid_x / 2.0);
+		hud_align_bottomright_poly[0][0] = 2 * mid_x;
 		hud_align_bottomright_poly[0][1] = 2 * mid_y;
 		hud_align_bottomright_poly[0][2] = 0;
 
-		hud_align_bottomright_poly[1][0] = 2 * mid_x;
+		hud_align_bottomright_poly[1][0] = mid_x + (mid_x / 2.0);
 		hud_align_bottomright_poly[1][1] = 2 * mid_y;
 		hud_align_bottomright_poly[1][2] = 0;
 
@@ -727,12 +763,12 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_bottomright_poly[2][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottomright_poly[2][2] = 0;
 
-		hud_align_bottomright_poly[3][0] = mid_x + (mid_x / 2.0);
-		hud_align_bottomright_poly[3][1] = mid_y + (mid_y / 4.0);
+		hud_align_bottomright_poly[3][0] = mid_x + (mid_x / 4.0);
+		hud_align_bottomright_poly[3][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottomright_poly[3][2] = 0;
 
-		hud_align_bottomright_poly[4][0] = mid_x + (mid_x / 4.0);
-		hud_align_bottomright_poly[4][1] = mid_y + (mid_y / 2.0);
+		hud_align_bottomright_poly[4][0] = mid_x + (mid_x / 2.0);
+		hud_align_bottomright_poly[4][1] = mid_y + (mid_y / 4.0);
 		hud_align_bottomright_poly[4][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomright_poly, x - offset_x, y - offset_y))
@@ -745,20 +781,20 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 
 	// Right.
 	{
-		hud_align_right_poly[0][0] = 2 * mid_x;
-		hud_align_right_poly[0][1] = mid_y + (mid_y / 2.0);
+		hud_align_right_poly[0][0] = mid_x + (mid_x / 2.0);
+		hud_align_right_poly[0][1] = mid_y - (mid_y / 4.0);
 		hud_align_right_poly[0][2] = 0;
 
-		hud_align_right_poly[1][0] = 2 * mid_x;
-		hud_align_right_poly[1][1] = mid_y / 2.0;
+		hud_align_right_poly[1][0] = mid_x + (mid_x / 2.0);
+		hud_align_right_poly[1][1] = mid_y + (mid_y / 4.0);
 		hud_align_right_poly[1][2] = 0;
 
-		hud_align_right_poly[2][0] = mid_x + (mid_x / 2.0);
-		hud_align_right_poly[2][1] = mid_y - (mid_y / 4.0);
+		hud_align_right_poly[2][0] = 2 * mid_x;
+		hud_align_right_poly[2][1] = mid_y / 2.0;
 		hud_align_right_poly[2][2] = 0;
 
-		hud_align_right_poly[3][0] = mid_x + (mid_x / 2.0);
-		hud_align_right_poly[3][1] = mid_y + (mid_y / 4.0);
+		hud_align_right_poly[3][0] = 2 * mid_x;
+		hud_align_right_poly[3][1] = mid_y + (mid_y / 2.0);
 		hud_align_right_poly[3][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_right_poly, x - offset_x, y - offset_y))
@@ -771,36 +807,45 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 
 	// Center.
 	{
-		hud_align_center_poly[0][0] = mid_x - (mid_x / 4.0);
-		hud_align_center_poly[0][1] = mid_y / 2.0;
+		float x0 = mid_x / 2.0;
+		float x1 = mid_x - (mid_x / 4.0);
+		float x2 = mid_x + (mid_x / 4.0);
+		float x3 = mid_x + (mid_x / 2.0);
+		float y0 = mid_y / 2.0;
+		float y1 = mid_y - (mid_y / 4.0);
+		float y2 = mid_y + (mid_y / 4.0);
+		float y3 = mid_y + (mid_y / 2.0);
+
+		hud_align_center_poly[0][0] = x0;
+		hud_align_center_poly[0][1] = y1;
 		hud_align_center_poly[0][2] = 0;
 
-		hud_align_center_poly[1][0] = mid_x / 2.0;
-		hud_align_center_poly[1][1] = mid_y - (mid_y / 4.0);
+		hud_align_center_poly[1][0] = x0;
+		hud_align_center_poly[1][1] = y2;
 		hud_align_center_poly[1][2] = 0;
 
-		hud_align_center_poly[2][0] = mid_x / 2.0;
-		hud_align_center_poly[2][1] = mid_y + (mid_y / 4.0);
+		hud_align_center_poly[2][0] = x1;
+		hud_align_center_poly[2][1] = y0;
 		hud_align_center_poly[2][2] = 0;
 
-		hud_align_center_poly[3][0] = mid_x - (mid_x / 4.0);
-		hud_align_center_poly[3][1] = mid_y + (mid_y / 2.0);
+		hud_align_center_poly[3][0] = x1;
+		hud_align_center_poly[3][1] = y3;
 		hud_align_center_poly[3][2] = 0;
 
-		hud_align_center_poly[4][0] = mid_x + (mid_x / 4.0);
-		hud_align_center_poly[4][1] = mid_y + (mid_y / 2.0);
+		hud_align_center_poly[4][0] = x2;
+		hud_align_center_poly[4][1] = y0;
 		hud_align_center_poly[4][2] = 0;
 
-		hud_align_center_poly[5][0] = mid_x + (mid_x / 2.0);
-		hud_align_center_poly[5][1] = mid_y + (mid_y / 4.0);
+		hud_align_center_poly[5][0] = x2;
+		hud_align_center_poly[5][1] = y3;
 		hud_align_center_poly[5][2] = 0;
 
-		hud_align_center_poly[6][0] = mid_x + (mid_x / 2.0);
-		hud_align_center_poly[6][1] = mid_y - (mid_y / 4.0);
+		hud_align_center_poly[6][0] = x3;
+		hud_align_center_poly[6][1] = y1;
 		hud_align_center_poly[6][2] = 0;
 
-		hud_align_center_poly[7][0] = mid_x + (mid_x / 4.0);
-		hud_align_center_poly[7][1] = mid_y / 2.0;
+		hud_align_center_poly[7][0] = x3;
+		hud_align_center_poly[7][1] = y2;
 		hud_align_center_poly[7][2] = 0;
 
 		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CENTER, hud_align_center_poly, x - offset_x, y - offset_y))
@@ -879,18 +924,14 @@ static void HUD_Editor_Move(float dx, float dy, hud_t *hud_element)
 //
 static void HUD_Editor_DrawAlignment(hud_t *hud_parent)
 {
-	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 	color_t c = RGBA_TO_COLOR(255, 255, 0, 50);
 
-	if(hud_parent)
-	{
-		//Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, RGBA_TO_COLOR(255, 255, 0, 50));
-		Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, c);
+	if (hud_parent) {
+		Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, c);
 	}
-	else
-	{
-		//Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, RGBA_TO_COLOR(255, 255, 0, 50));
-		Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, c);
+	else {
+		Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, c);
 	}
 }
 

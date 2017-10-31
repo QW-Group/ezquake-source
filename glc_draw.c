@@ -112,7 +112,7 @@ void GLC_Draw_FadeScreen(float alpha)
 
 #endif
 
-void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
+void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
 	byte bytecolor[4];
 	int i = 0;
@@ -122,7 +122,7 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-	glBegin(fill ? GL_TRIANGLE_FAN : GL_LINE_LOOP);
+	glBegin(GL_TRIANGLE_STRIP);
 	for (i = 0; i < num_vertices; i++) {
 		glVertex2f(x + vertices[i][0], y + vertices[i][1]);
 	}

@@ -844,9 +844,9 @@ void SCR_SetupCI(void);
 
 void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h);
 void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end);
-void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
-void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
 void GLC_DrawParticles(int particles_to_draw, qbool square);
 void GLC_EmitWaterPoly(msurface_t* fa);

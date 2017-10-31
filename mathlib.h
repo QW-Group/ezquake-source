@@ -184,7 +184,6 @@ void ProjectPointOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal);
 void PerpendicularVector(vec3_t dst, const vec3_t src);
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
 
-int IsPointInPolygon(int npol, vec3_t *v, float x, float y);
 int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float *area);
 
 extern vec3_t vec3_origin;

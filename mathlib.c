@@ -344,27 +344,6 @@ int GreatestCommonDivisor (int i1, int i2)
 }
 
 //
-// Based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#The%20C%20Code
-//
-int IsPointInPolygon(int npol, vec3_t *v, float x, float y)
-{
-	int i, j;
-	qbool c = false;
-
-	for (i = 0, j = npol-1; i < npol; j = i++) 
-	{
-		if ((((v[i][1] <= y) && (y < v[j][1])) ||
-		    ((v[j][1]<=y) && (y < v[i][1]))) &&
-		    (x < (v[j][0] - v[i][0]) * (y - v[i][1]) / (v[j][1] - v[i][1]) + v[i][0]))
-		{
-			c = !c;
-		}
-	}
-
-	return c;
-}
-
-//
 // From: http://www.cse.ucsc.edu/~pang/160/f98/Gems/GemsIV/centroid.c
 // polyCentroid: Calculates the centroid (xCentroid, yCentroid) and area
 // of a polygon, given its vertices (x[0], y[0]) ... (x[n-1], y[n-1]). It
