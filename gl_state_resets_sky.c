@@ -23,10 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
-#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
-#define LEAVE_STATE GL_LeaveRegion()
-
 extern texture_ref solidskytexture, alphaskytexture;
 
 void GLC_StateBeginFastSky(void)

@@ -613,11 +613,8 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 	regions_trace_only &= (trace_only ? 1 : 0);
 }
 
-void GL_LeaveRegion(void)
+void GL_LeaveTracedRegion(qbool trace_only)
 {
-	qbool trace_only = regions_trace_only & 1;
-
-	regions_trace_only >>= 1;
 	if (GL_ShadersSupported()) {
 		if (!trace_only) {
 			nvtxRangePop();

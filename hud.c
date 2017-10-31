@@ -29,9 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "sbar.h"
 
-extern void GL_EnterRegion(const char* regionName);
-extern void GL_LeaveRegion(void);
-
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 
 char *align_strings_x[] = {

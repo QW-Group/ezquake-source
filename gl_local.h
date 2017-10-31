@@ -725,15 +725,23 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
 size_t GL_VBOSize(buffer_ref vbo);
 
 #ifdef WITH_NVTX
+#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
+#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
+#define LEAVE_STATE GL_LeaveTracedRegion(true)
 #define GL_EnterRegion(x) GL_EnterTracedRegion(x, false)
+#define GL_LeaveRegion() GL_LeaveTracedRegion(false)
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
-void GL_LeaveRegion(void);
+void GL_LeaveTracedRegion(qbool trace_only);
 void GL_PrintState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
 #else
+#define ENTER_STATE
+#define MIDDLE_STATE
+#define LEAVE_STATE
 #define GL_EnterTracedRegion(...)
+#define GL_LeaveTracedRegion(...)
 #define GL_EnterRegion(x)
 #define GL_LeaveRegion()
 #define GL_ResetRegion(x)
