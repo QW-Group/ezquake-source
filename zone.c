@@ -102,7 +102,7 @@ void Hunk_Print(qbool all)
 		// skip to the high hunk if done with low hunk
 		if (h == endlow) {
 			Con_Printf("-------------------------\n");
-			Con_Printf("          :%8i REMAINING\n", hunk_size - hunk_low_used - hunk_high_used);
+			Con_Printf("        :%8ikb REMAINING\n", (hunk_size - hunk_low_used - hunk_high_used) / 1024);
 			Con_Printf("-------------------------\n");
 			h = starthigh;
 		}
@@ -134,7 +134,7 @@ void Hunk_Print(qbool all)
 		// print the total
 		if (next == endlow || next == endhigh || strncmp(h->name, next->name, 8)) {
 			if (!all) {
-				Con_Printf("          :%8i %8s (TOTAL)\n", sum, name);
+				Con_Printf("          :%8ikb %8s (TOTAL)\n", sum / 1024, name);
 			}
 			count = 0;
 			sum = 0;
@@ -145,6 +145,7 @@ void Hunk_Print(qbool all)
 
 	Con_Printf("-------------------------\n");
 	Con_Printf("%8i total blocks\n", totalblocks);
+	Con_Printf("High used %i, low used %i\n", hunk_high_used, hunk_low_used);
 }
 
 void Hunk_Print_f(void)

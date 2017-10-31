@@ -27,11 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 extern model_t *loadmodel;
-extern cvar_t r_fastturb;
 
 static msurface_t *warpface;
 
-void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
+static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
+{
 	int i, j;
 	float *v;
 
@@ -48,7 +48,8 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
 	}
 }
 
-void SubdividePolygon (int numverts, float *verts) {
+static void SubdividePolygon (int numverts, float *verts)
+{
 	int i, j, k, f, b;
 	vec3_t mins, maxs, front[64], back[64];
 	float m, *v, dist[64], frac, s, t;
