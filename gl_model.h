@@ -234,6 +234,8 @@ typedef struct mspriteframe_s {
 	int					height;
 	float				up, down, left, right;
 	int					gl_texturenum;
+	int                 gl_arraynum;
+	int                 gl_arrayindex;
 
 	float               gl_scalingS;
 	float               gl_scalingT;

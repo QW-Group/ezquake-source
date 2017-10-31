@@ -140,7 +140,8 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 	return ptemp;
 }
 
-void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
+void Mod_LoadSpriteModel (model_t *mod, void *buffer)
+{
 	int i, j, version, numframes, size, start, offset, sztmp;
 	dsprite_t *pin;
 	msprite_t *psprite;
@@ -260,4 +261,50 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 
 	Q_free(psprite2);
 	Hunk_FreeToLowMark (start);
+}
+
+mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
+{
+	mspriteframe_t  *pspriteframe;
+	mspriteframe2_t *pspriteframe2;
+	int i, numframes, frame, offset;
+	float fullinterval, targettime, time;
+
+	frame = e->frame;
+
+	if (frame >= psprite->numframes || frame < 0) {
+		Com_DPrintf ("R_GetSpriteFrame: no such frame %d (model %s)\n", frame, e->model->name);
+		return NULL;
+	}
+
+	offset    = psprite->frames[frame].offset;
+	numframes = psprite->frames[frame].numframes;
+
+	if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+		Com_Printf ("R_GetSpriteFrame: wrong sprite\n");
+		return NULL;
+	}
+
+	if (psprite->frames[frame].type == SPR_SINGLE) {
+		pspriteframe  = (mspriteframe_t* )((byte*)psprite + offset);
+	}
+	else {
+		pspriteframe2 = (mspriteframe2_t*)((byte*)psprite + offset);
+
+		fullinterval = pspriteframe2[numframes-1].interval;
+
+		time = r_refdef2.time;
+
+		// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
+		// are positive, so we don't have to worry about division by 0
+		targettime = time - ((int) (time / fullinterval)) * fullinterval;
+
+		for (i = 0; i < (numframes - 1); i++)
+			if (pspriteframe2[i].interval > targettime)
+				break;
+
+		pspriteframe = &pspriteframe2[i].frame;
+	}
+
+	return pspriteframe;
 }
