@@ -463,3 +463,227 @@ static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shade
 		glEnd ();
 	}	
 }
+
+/*
+To draw, for each surface, run through the triangles, getting tex coords from s+t, 
+*/
+void GLC_DrawAlias3Model(entity_t *ent)
+{
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
+	extern byte	*shadedots;
+	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
+	extern float shadelight, ambientlight;
+	extern qbool full_light;
+	extern void R_AliasSetupLighting(entity_t *ent);
+
+	float		l, lerpfrac, scale;
+	int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
+	vec3_t		interpolated_verts;
+
+	md3model_t *mhead;
+	md3Header_t *pheader;
+	model_t *mod;
+	int surfnum, numtris, i;
+	md3Surface_t *surf;
+
+	int frame1 = ent->oldframe, frame2 = ent->frame;
+	md3XyzNormal_t *verts, *v1, *v2;
+
+	surfinf_t *sinf;
+
+	unsigned int	*tris;
+	md3St_t *tc;
+
+	//	float ang;
+
+	float r_modelalpha;
+	float oldMatrix[16];
+
+	mod = ent->model;
+
+	GL_DisableMultitexture();
+
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+
+	R_RotateForEntity (ent);
+
+	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	if (ent->alpha)
+		r_modelalpha = ent->alpha;
+
+	if (r_modelalpha < 1) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
+	//	glDisable(GL_ALPHA_TEST);
+
+	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
+	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
+	GL_Scale(GL_MODELVIEW, scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
+	GL_Color4f(1, 1, 1, r_modelalpha);
+
+	GL_EnableFog();
+
+	R_AliasSetupLighting(ent);
+	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+
+	if (gl_fb_models.value == 1) {
+		ambientlight = 999999;
+	}
+
+	if (gl_smoothmodels.value) {
+		GL_ShadeModel(GL_SMOOTH);
+	}
+
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
+
+	GL_TextureEnvMode(GL_MODULATE);
+
+	/*
+	ang = ent->angles[1]/180*M_PI;
+	shadevector[0] = cos(-ang);
+	shadevector[1] = sin(-ang);
+	shadevector[2] = 1;
+	VectorNormalize (shadevector);
+	*/
+
+	mhead = (md3model_t *)Mod_Extradata (mod);
+	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
+	pheader = (md3Header_t *)((char *)mhead + mhead->md3model);
+
+	if (frame1 >= pheader->numFrames)
+		frame1 = pheader->numFrames-1;
+	if (frame2 >= pheader->numFrames)
+		frame2 = pheader->numFrames-1;
+
+	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
+		lerpfrac = 1.0;
+	else
+		lerpfrac = min (ent->framelerp, 1);
+
+	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);
+
+	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++) //loop through the surfaces.
+	{
+		int pose1, pose2;
+
+		pose1 = frame1*surf->numVerts;
+		pose2 = frame2*surf->numVerts;
+
+		tc = (md3St_t *)((char *)surf + surf->ofsSt);	//skin texture coords.
+		verts = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals);
+
+		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
+		numtris = surf->numTriangles * 3;		
+
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, (sinf+pheader->numSurfaces*pheader->numSkins + surfnum)->texnum);
+
+		glBegin (GL_TRIANGLES);
+
+		for (i = 0 ; i < numtris ; i++)
+		{
+			float	s, t;
+
+			v1 = verts + *tris + pose1;
+			v2 = verts + *tris + pose2;
+
+			/*    
+			if (poweruptexture && !surface_transparent)
+			{
+			float	adjustedScrollS, adjustedScrollT, timeScale = cl.time; // some refdef time here
+			float	degs, sinValue, cosValue;
+
+			degs = -30 * timeScale;
+			sinValue = sin(DEG2RAD(degs));
+			cosValue = cos(DEG2RAD(degs));
+
+			s = tc[*tris].s * cosValue + tc[*tris].t * -sinValue + (0.5 - 0.5 * cosValue + 0.5 * sinValue);
+			t = tc[*tris].s * sinValue + tc[*tris].t *  cosValue + (0.5 - 0.5 * sinValue - 0.5 * cosValue);
+
+			s *= 2;
+			t *= 2;
+
+			adjustedScrollS = 0.1 * timeScale;
+			adjustedScrollT = 0.01 * timeScale;
+
+			// clamp so coordinates don't continuously get larger, causing problems
+			// with hardware limits
+			adjustedScrollS = adjustedScrollS - floor(adjustedScrollS);
+			adjustedScrollT = adjustedScrollT - floor(adjustedScrollT);
+
+			s += adjustedScrollS;
+			t += adjustedScrollT;
+			}
+
+			wtf: where else{ }
+
+			*/
+
+			s = tc[*tris].s, t = tc[*tris].t;
+
+			/*    
+			if (gl_mtexable)
+			{
+			qglMultiTexCoord2f (GL_TEXTURE0, s, t);
+			qglMultiTexCoord2f (GL_TEXTURE1, s, t);
+			}
+			else
+			*/
+			{
+				glTexCoord2f (s, t);
+			}
+
+			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
+
+			/*    
+			if (gl_vertexlights.value && !full_light)
+			{
+			l = R_LerpVertexLight (v1->anorm_pitch, v1->anorm_yaw, v2->anorm_pitch, v2->anorm_yaw, lerpfrac, apitch, ayaw);
+			l = min(l, 1);
+
+			for (j=0 ; j<3 ; j++)
+			lightvec[j] = lightcolor[j] / 256 + l;
+			glColor4f (lightvec[0], lightvec[1], lightvec[2], ent->transparency);
+			}
+			else
+			*/
+			{
+				l = FloatInterpolate (shadedots[v1->normal>>8], lerpfrac, shadedots[v2->normal>>8]);
+				l = (l * shadelight + ambientlight) / 256;
+				l = min(l, 1);
+
+				glColor4f (l, l, l, r_modelalpha);
+			}
+
+			VectorInterpolate (v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
+			glVertex3fv (interpolated_verts);
+
+			tris++;
+		}
+
+		glEnd();
+
+
+		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);	//NEXT!   Getting cocky!
+	}
+
+	if (r_modelalpha < 1) {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	}
+
+	GL_TextureEnvMode(GL_REPLACE);
+	//	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1, 1, 1, 1);
+
+	GL_ShadeModel(GL_FLAT);
+
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	glEnable(GL_TEXTURE_2D);
+
+	GL_DisableFog();
+}

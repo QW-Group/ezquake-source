@@ -681,6 +681,8 @@ void GL_LeaveRegion(void);
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
 
+#define	MD3_INTERP_MAXDIST  300
+
 // Lightmap size
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
