@@ -213,20 +213,20 @@ void main()
 	#endif
 #endif
 
-#if defined(DRAW_LUMA_TEXTURES)
-		if (r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+#if defined(DRAW_LUMA_TEXTURES) && !defined(DRAW_LUMA_TEXTURES_FB)
+		if ((Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
 		}
 #endif
-#ifdef DRAW_LIGHTMAPS
+#if defined(DRAW_LIGHTMAPS)
 		frag_colour = vec4(1 - lmColor.rgb, 1);
 #elif defined(HARDWARE_LIGHTING)
 		frag_colour = vec4(DynamicLighting(1 - lmColor.rgb), 1) * texColor;
 #else
 		frag_colour = vec4(1 - lmColor.rgb, 1) * texColor;
 #endif
-#ifdef DRAW_LUMA_TEXTURES
-		if (r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+#if defined(DRAW_LUMA_TEXTURES_FB)
+		if ((Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);
 		}
 #endif

@@ -53,6 +53,7 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_FLATFLOORS         64
 #define DRAW_FLATWALLS         128
 #define DRAW_LIGHTMAPS         256
+#define DRAW_LUMA_TEXTURES_FB  512
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
@@ -76,6 +77,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
+		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(r_dynamic.integer == 2 ? DRAW_HARDWARE_LIGHTING : 0) |
 		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
@@ -102,6 +104,9 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		}
 		if (luma_textures && r_drawflat.integer != 1 && !R_DrawLightmaps()) {
 			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
+			if (gl_fb_bmodels.integer) {
+				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES_FB\n", sizeof(included_definitions));
+			}
 		}
 		if (skybox) {
 			TEXTURE_UNIT_SKYBOX = samplers++;
