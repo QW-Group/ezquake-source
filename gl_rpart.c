@@ -44,7 +44,6 @@ typedef byte col_t[4];
 void RainSplash(vec3_t org);
 void ParticleStats (int change);
 void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t color);
-void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel);
 void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width);
 
 typedef enum {
@@ -85,8 +84,7 @@ typedef enum {
 	//VULT PARTICLES
 	pm_rain,
 	pm_streak,
-	pm_streakwave,
-	pm_inferno,
+	pm_streakwave
 } part_move_t;
 
 typedef enum {
@@ -537,7 +535,6 @@ void QMB_InitParticles (void)
 	ADD_PARTICLE_TYPE(p_lavatrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, 3, 0, pm_normal, 0, 4);
 	ADD_PARTICLE_TYPE(p_vxsmoke, pd_billboard, GL_ZERO, GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0, 4);
 	ADD_PARTICLE_TYPE(p_muzzleflash, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_inferno, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 0, 0, 0, pm_inferno, 0, 4);
 	ADD_PARTICLE_TYPE(p_2dshockwave, pd_normal, GL_SRC_ALPHA, GL_ONE, ptex_shockwave, 255, 0, 0, pm_static, 0, 4);
 	ADD_PARTICLE_TYPE(p_vxrocketsmoke, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_normal, 0, 4);
 	ADD_PARTICLE_TYPE(p_flame, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 200, 10, 0, pm_die, 0, 4);
@@ -1047,17 +1044,6 @@ static void QMB_UpdateParticles(void)
 				p->vel[0] = 19 * p->vel[0] / 20;
 				p->vel[1] = 19 * p->vel[1] / 20;
 				p->vel[2] = 19 * p->vel[2] / 20;
-				break;
-			case pm_inferno:
-				VectorCopy(p->org, oldorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (TraceLineN(oldorg, p->org, stop, normal)) {
-					VectorCopy(stop, p->org);
-					CL_FakeExplosion(p->org);
-					p->die = 0;
-				}
-				VectorCopy(p->org, p->endorg);
-				InfernoTrail(oldorg, p->endorg, p->vel);
 				break;
 			default:
 				assert(!"QMB_UpdateParticles: unexpected pt->move");
@@ -2496,35 +2482,12 @@ void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width)
 }
 
 //VULT PARTICLES
-void AMFDEBUGTRAIL (vec3_t start, vec3_t end, float time)
-{
-	vec3_t start2, end2;
-	col_t color={255,255,255,255};
-	AddParticle(p_streaktrail, start, 1, 3, time, color, end);
-	VectorCopy(end, end2);
-	VectorCopy(start, end2);
-	VectorCopy(start, start2);
-	start2[2] += 50;
-	color[1] = 0;
-	color[2] = 0;
-	AddParticle(p_streaktrail, start2, 1, 3, time, color, end2);
-	VectorCopy(end, end2);
-	VectorCopy(end, start2);
-	start2[2] += 50;
-	color[0] = 0;
-	color[1] = 0;
-	color[2] = 255;
-	AddParticle(p_streaktrail, start2, 1, 3, time, color, end2);
-}
-
-//VULT PARTICLES
 void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life)
 {
 	col_t color;
 	color[0] = col[0];
 	color[1] = col[1];
 	color[2] = col[2];
-
 
 	//head
 	AddParticleTrail (p_trailpart, start, end, size*7, 0.15, color);
@@ -2706,236 +2669,6 @@ void FuelRodExplosion (vec3_t org)
 		org2[1]=org2[1]+(rand()%25)-12;
 		AddParticle(p_fire, org2, 5, 10, 1.15, color, zerodir);
 	}
-
-}
-
-
-//VULT PARTICLES
-void InfernoFire_f (void)
-{
-	vec3_t	forward, right, up;
-	vec3_t	ang, dir;
-	vec3_t	org;
-
-	if (!qmb_initialized) {
-		Com_Printf ("Particle system not initialized\n");
-		return;
-	}
-
-	ang[0] = cl.simangles[0];
-	ang[1] = cl.simangles[1];
-	ang[2] = 0;
-	AngleVectors (ang, forward, right, up);
-	VectorCopy(cl.simorg, org);
-	VectorMA (org, 22, forward, org);
-	VectorMA (org, 10, right, org);
-	VectorMA (org, 12, up, org);
-
-	VectorClear(dir);
-	VectorMA(dir, max(amf_inferno_speed.value, 150), forward, dir);
-
-	AddParticle(p_inferno, org, 1, 1, 10, NULL, dir);
-}
-
-//VULT PARTICLES - For amf_inferno haxxed fake explosions
-void CL_FakeExplosion (vec3_t pos)
-{
-	dlight_t *dl;
-	extern sfx_t *cl_sfx_r_exp3;
-
-	if (amf_inferno_trail.value == 2) 
-	{
-		if (amf_part_blobexplosion.value)
-			VXBlobExplosion(pos);
-		else
-			R_BlobExplosion (pos);									//blob explosion
-		//VULT CORONAS
-		if (amf_coronas.value)
-			NewCorona (C_BLUEFLASH, pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_blue;
-	}
-	else if (amf_inferno_trail.value == 3) 
-	{
-		FuelRodExplosion (pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_green;
-	}
-	else if (amf_inferno_trail.value == 4) 
-	{
-		BurningExplosion(pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_red;
-	}
-	else
-	{	//sprite and particles
-		if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
-			QMB_DetpackExplosion (pos); 							//detpack explosion
-		else if (amf_part_explosion.value)
-			VXExplosion(pos);
-		else
-			R_ParticleExplosion (pos);								//normal explosion
-
-		if (r_explosionlight.value) 
-		{
-			customlight_t cst_lt = {0};
-			dl = CL_AllocDlight (0);
-			VectorCopy (pos, dl->origin);
-			dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-			dl->die = cl.time + 0.5;
-			dl->decay = 300;
-			dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, true, &cst_lt);
-			dl->type = cst_lt.type;
-			if (dl->type == lt_custom)
-				VectorCopy(cst_lt.color, dl->color);
-			//VULT CORONAS
-			if (amf_coronas.value)
-				NewCorona (C_FLASH, pos);
-		}
-
-	}
-	S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
-}
-
-//VULT PARTICLES - Hax for amf_inferno fake trails
-void CL_FakeRocketLight(vec3_t org)
-{
-	float rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
-
-	if (rocketlightsize < 1)
-		return;
-
-	if (amf_inferno_trail.value == 1 || amf_inferno_trail.value == 5)
-	{
-		customlight_t cst_lt = {0};
-		dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, &cst_lt);
-		CL_NewDlightEx (0, org, rocketlightsize, 0.05, &cst_lt, 1);
-		if (!ISPAUSED && amf_coronas.value)
-			NewCorona(C_ROCKETLIGHT, org);
-	}
-	else if (amf_inferno_trail.value == 2)
-	{
-		CL_NewDlight (0, org, rocketlightsize, 0.05, lt_blue, 1);
-	}
-	else if (amf_inferno_trail.value == 3)
-	{
-		CL_NewDlight (0, org, rocketlightsize, 0.05, lt_green, 1);
-	}
-	else if  (amf_inferno_trail.value == 4)
-	{
-		CL_NewDlight (0, org, rocketlightsize, 0.05, lt_default, 1);
-	}
-}
-
-//VULT PARTICLES
-//We need an imaginary trail vector because I don't want to write all the trails again just for the sake of this
-//make-believe missile
-void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel)
-{
-	vec3_t trail, vec, dir;
-	col_t col;
-
-	VectorCopy(end, trail);
-	VectorClear(vec);
-	VectorClear(dir);
-	if (amf_inferno_trail.value == 1)
-	{
-		QMB_ParticleTrail(start, end, &trail, ROCKET_TRAIL);
-	}
-	else if (amf_inferno_trail.value == 2)
-	{
-		col[0] = 0; col[1] = 70; col[2] = 255;
-		FireballTrail (start, end, &trail, col, 2, 0.5);
-	}
-	else if (amf_inferno_trail.value == 3)
-	{
-		VectorSubtract(start, end, vec);
-		vec[0] = -vec[0];
-		vec[1] = -vec[1];
-		//vec[2] = -vec[2];
-		vectoangles(vec, dir);
-		col[0] = 0; col[1] = 255; col[2] = 0;
-		FuelRodGunTrail (start, end, dir, &trail);
-	}
-	else if (amf_inferno_trail.value == 4)
-	{
-		VectorSubtract(start, end, vec);
-		vec[0] = -vec[0]/600;
-		vec[1] = -vec[1]/600;
-		vec[2] = -vec[2]/600;
-		vectoangles(vec, dir);
-		col[0] = 255; col[1] = 70; col[2] = 5;
-		FireballTrailWave (start, end, &trail, col, 2, 0.5, dir);
-	}
-	else if (amf_inferno_trail.value == 5)
-	{
-		QMB_ParticleTrail(start, end, &trail, AMF_ROCKET_TRAIL);
-	}
-
-	CL_FakeRocketLight(end);
-}
-
-//VULT PARTICLES
-//I don't know why i called it a burning explosion. Sprite based explosions are inferior anyway
-//unless they have some style...
-void BurningExplosion (vec3_t org) 
-{
-	col_t color={255,100,25, 128};
-	vec3_t dir;
-	int a, i;
-	int contents;
-	float theta;
-	vec3_t angle;
-
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) 
-		AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
-	
-
-	for (a=0;a<120*amf_part_explosion.value;a++)
-	{
-		for (i=0;i<3;i++)
-			dir[i] = (rand() % 1500) - 750;
-
-		if (amf_part_trailtype.value == 2)
-			AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, NULL, dir);
-		else
-			AddParticle(p_streak, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
-	}
-	if (amf_coronas.value)
-		NewCorona (C_EXPLODE, org);
-	if (amf_part_shockwaves.value)
-	{
-		if (amf_part_2dshockwaves.value)
-		{
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, NULL, vec3_origin);
-		}
-		else
-		{
-			angle[2] = 0;
-			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) 
-			{
-				angle[0] = cos(theta) * 500;
-				angle[1] = sin(theta) * 500;
-				AddParticle(p_shockwave, org, 1, 10, 0.5, NULL, angle);
-			}
-		}
-	}
 }
 
 //VULT PARTICLES
@@ -2959,7 +2692,6 @@ void ParticleFire (vec3_t org)
 	}
 }
 
-
 //TEI PARTICLES
 //Idea: lavapool fire, Result: slighty lame
 void ParticleFirePool (vec3_t org) 
@@ -2968,7 +2700,6 @@ void ParticleFirePool (vec3_t org)
 
 	AddParticle(p_flame, org, 1,lhrandom(1,32), lhrandom(1,1), color, zerodir);
 }
-
 
 //TEI PARTICLES
 //Idea: slimepool fire, Result: slighty lame

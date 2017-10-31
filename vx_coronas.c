@@ -466,7 +466,6 @@ void InitCoronas(void)
 	}
 };
 
-
 //NewStaticLightCorona
 //Throws down a permanent light at origin, and wont put another on top of it
 //This needs fixing so it wont be called so often

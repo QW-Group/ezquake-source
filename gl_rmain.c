@@ -736,9 +736,6 @@ void R_Init(void)
 #ifndef CLIENTONLY
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 #endif
-	Cmd_AddCommand ("gl_checkmodels", CheckModels_f);
-	Cmd_AddCommand ("gl_inferno", InfernoFire_f);
-	Cmd_AddCommand ("gl_setmode", Amf_SetMode_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_bloom);

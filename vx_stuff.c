@@ -113,11 +113,6 @@ void Amf_Reset_DamageStats(void)
 	vxdamagecountarmour_oldhealth = 0;
 }
 
-int QW_strncmp(char *s1, char *s2)
-{
-	return strncmp(s1, s2, strlen(s2));
-}
-
 char *TP_ConvertToWhiteText(char *s)
 {
 	static char	buf[4096];
@@ -181,41 +176,6 @@ checkmodel_t *TP_GetModels(char *s)
 
 	return NULL;
 }
-
-//I was an admin on a server for a while, but about the only real cheats I could do anything about where model hacks
-//So I developed this to save me time going around user'ing everybody
-void CheckModels_f(void)
-{
-	int i;
-	checkmodel_t *mod;
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (!cl.players[i].name[0]) //not in game
-			continue;
-		//check pmodel
-		mod = TP_GetModels(Info_ValueForKey(cl.players[i].userinfo, "pmodel"));
-		if (mod == NULL) {
-			if (!Info_ValueForKey(cl.players[i].userinfo, "pmodel")[0])
-				Com_Printf("Warning: %s has hidden pmodel\n", Info_ValueForKey(cl.players[i].userinfo, "name"));
-			else
-				Com_Printf("Warning: %s has suspicious player model (Unknown Model: %s)\n", Info_ValueForKey(cl.players[i].userinfo, "name"), Info_ValueForKey(cl.players[i].userinfo, "pmodel"));
-		}
-		else if (mod->notify || !QW_strncmp(mod->number, "6967")) //report eyes as being unusual is used as player model
-		{
-			Com_Printf("Warning: %s has suspicious player model (%s)\n", Info_ValueForKey(cl.players[i].userinfo, "name"), mod->name);
-		}
-		mod = TP_GetModels(Info_ValueForKey(cl.players[i].userinfo, "emodel"));
-		if (mod == NULL) {
-			if (!Info_ValueForKey(cl.players[i].userinfo, "emodel")[0])
-				Com_Printf("Warning: %s has hidden emodel\n", Info_ValueForKey(cl.players[i].userinfo, "name"));
-			else
-				Com_Printf("Warning: %s has ILLEGAL eyes model (Unknown Model: %s)\n", Info_ValueForKey(cl.players[i].userinfo, "name"), Info_ValueForKey(cl.players[i].userinfo, "emodel"));
-		}
-		else if (mod->notify || QW_strncmp(mod->number, "6967")) //anything other 6967 is a hack
-		{
-			Com_Printf("Warning: %s has ILLEGAL eyes model (%s)\n", Info_ValueForKey(cl.players[i].userinfo, "name"), mod->name);
-		}
-	}
-};
 
 ////////////////////////////////
 /// test stuff
@@ -331,49 +291,6 @@ void SCR_DrawAMFstats(void)
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
-}
-
-void Amf_SetMode_f(void)
-{
-	char mode[32];
-	if (Cmd_Argc() != 2) {
-		Com_Printf("Usage: %s [modename: newtrails or vultwah]\n", Cmd_Argv(0));
-		return;
-	}
-	if (!qmb_initialized) {
-		Com_Printf("Particle system not initialized\n");
-		return;
-	}
-
-	snprintf(mode, sizeof(mode), "%s", Cmd_Argv(1));
-	if (!strcmp(mode, "newtrails")) {
-		Cvar_SetValue(&amf_buildingsparks, 3);
-		Cvar_SetValue(&amf_weather_rain, 0);
-		Cvar_SetValue(&amf_lightning_sparks, 3);
-		Cvar_SetValue(&amf_part_spikes, 5);
-		Cvar_SetValue(&amf_part_gunshot, 5);
-		Cvar_SetValue(&amf_part_explosion, 5);
-		Cvar_SetValue(&amf_part_traillen, 1);
-		Cvar_SetValue(&amf_part_trailtime, 1.5);
-		Cvar_SetValue(&amf_part_sparks, 1);
-		Cvar_SetValue(&amf_nailtrail_plasma, 0);
-		Cvar_SetValue(&amf_part_traillen, 1);
-		Cvar_SetValue(&amf_part_gunshot_type, 1);
-		Cvar_SetValue(&amf_part_spikes_type, 1);
-		Cvar_SetValue(&amf_part_trailwidth, 3);
-		Cvar_SetValue(&amf_part_traildetail, 1);
-		Cvar_SetValue(&amf_part_trailtype, 2);
-		Cvar_SetValue(&gl_bounceparticles, 1);
-	}
-	else if (!strcmp(mode, "vultwah")) {
-		Cvar_SetValue(&amf_showstats, 1);
-		Cvar_SetValue(&amf_part_spikes, 1);
-		Cvar_SetValue(&amf_part_gunshot, 0.5);
-		Cvar_SetValue(&amf_part_explosion, 1);
-		Cvar_SetValue(&amf_part_blobexplosion, 0.5);
-		Cvar_SetValue(&amf_part_teleport, 0.5);
-		Cvar_SetValue(&gl_bounceparticles, 0);
-	}
 }
 
 void InitVXStuff(void)
