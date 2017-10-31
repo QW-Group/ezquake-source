@@ -367,7 +367,6 @@ void R_CreateWorldTextureChains(void)
 void R_DrawWorld(void)
 {
 	entity_t ent;
-	extern cvar_t gl_outline;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -589,4 +588,11 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
+}
+
+qbool R_DrawWorldOutlines(void)
+{
+	extern cvar_t gl_outline;
+
+	return (gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL);
 }

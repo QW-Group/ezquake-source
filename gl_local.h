@@ -135,6 +135,7 @@ typedef struct r_frame_stats_s {
 	int texture_binds;
 	int lightmap_updates;
 	int draw_calls;
+	int subdraw_calls;
 
 	double start_time;
 } r_frame_stats_t;
@@ -283,6 +284,7 @@ void R_DrawSky (void);
 void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
 void R_InitSky (texture_t *mt);	// called at level load
+qbool R_DrawWorldOutlines(void);
 
 extern qbool	r_skyboxloaded;
 
@@ -1036,6 +1038,7 @@ typedef struct glm_worldmodel_req_s {
 	int sampler;
 	float color[4];
 	qbool polygonOffset;
+	qbool worldmodel;
 } glm_worldmodel_req_t;
 
 #endif /* !__GL_LOCAL_H__ */

@@ -4,6 +4,8 @@
 
 layout(early_fragment_tests) in;
 
+uniform int draw_outlines;
+
 #ifdef DRAW_DETAIL_TEXTURES
 layout(binding=SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
 #endif
@@ -96,6 +98,11 @@ void main()
 	vec4 lmColor;
 	int turbType;
 	bool isFloor;
+
+	if (draw_outlines == 1) {
+		frag_colour = vec4(0.5, 0.5, 0.5, 1);
+		return;
+	}
 
 #ifdef DRAW_DETAIL_TEXTURES
 	vec4 detail = texture(detailTex, DetailCoord);

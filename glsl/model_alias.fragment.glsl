@@ -57,7 +57,7 @@ flat in int fsLumaSampler;
 void main()
 {
 	if (outlines == 1) {
-		frag_colour = vec4(0, 0, 0, 0);
+		frag_colour = vec4(0, 0, 0, 1);
 	}
 	else {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);

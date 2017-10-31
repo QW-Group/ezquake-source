@@ -1549,7 +1549,7 @@ void R_DrawBrushModel(entity_t *e)
 	if (GL_ShadersSupported()) {
 		GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
 
-		// TODO: DrawSkyChain/DrawAlphaChain
+		// TODO: DrawAlphaChain
 	}
 	else {
 		extern cvar_t gl_brush_polygonoffset;
@@ -1583,11 +1583,5 @@ void GL_EndDrawBrushModels(void)
 	if (GL_ShadersSupported()) {
 		GL_FlushWorldModelBatch();
 		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-
-		/*if (!firstBrushModel) {
-
-
-		GL_LeaveRegion();
-		}*/
 	}
 }

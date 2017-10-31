@@ -26,7 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "tr_types.h"
 
-static void GL_SortDrawCalls(int* polygonOffsetStart);
+static void GL_SortDrawCalls(int* split);
+void GL_FlushWorldModelBatch(void);
 
 glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 
@@ -38,8 +39,9 @@ static qbool uniforms_set = false;
 extern texture_ref lightmap_texture_array;
 
 static glm_program_t drawworld;
-static GLint drawworld_RefdefCvars_block;
-static GLint drawworld_WorldCvars_block;
+static GLint drawWorld_outlines;
+static GLuint drawworld_RefdefCvars_block;
+static GLuint drawworld_WorldCvars_block;
 
 typedef struct block_world_s {
 	float modelMatrix[MAX_WORLDMODEL_BATCH][16];
@@ -166,6 +168,8 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
 		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
+		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
+
 		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
 		ubo_worldcvars = GL_GenUniformBuffer("world-cvars", &world, sizeof(world));
 		GL_BindBufferBase(ubo_worldcvars, GL_BINDINGPOINT_DRAWWORLD_CVARS);
@@ -261,13 +265,12 @@ void GLM_ExitBatchedPolyRegion(void)
 	//Cvar_SetValue(&developer, 0);
 }
 
-void GL_FlushWorldModelBatch(void);
-
 // TODO: process polygonOffset
 static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, texture_ref texture_array, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
 	int sampler = -1;
+	qbool worldmodel = model->isworldmodel;
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
@@ -284,7 +287,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 		req = &worldmodel_requests[batch_count - 1];
 		GLM_GetMatrix(GL_MODELVIEW, mvMatrix);
-		if (!memcmp(mvMatrix, req->mvMatrix, sizeof(mvMatrix))) {
+		if (worldmodel == req->worldmodel && !memcmp(mvMatrix, req->mvMatrix, sizeof(mvMatrix))) {
 			if (!GL_TextureReferenceIsValid(texture_array)) {
 				// We don't care about materials, so no problem here...
 				return req;
@@ -350,6 +353,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	req->sampler = sampler;
 	req->flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	req->polygonOffset = polygonOffset;
+	req->worldmodel = worldmodel;
 
 	req->count = 0;
 	req->instanceCount = 1;
@@ -447,6 +451,52 @@ void GLM_DrawTexturedWorld(model_t* model)
 	return;
 }
 
+static void GLM_DrawWorldModelOutlines(void)
+{
+	extern cvar_t gl_outline_width;
+	int begin = -1;
+	int i;
+
+	//
+	glUniform1i(drawWorld_outlines, 1);
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
+	GL_CullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	GL_Disable(GL_DEPTH_TEST);
+	GL_Disable(GL_CULL_FACE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
+	for (i = 0; i <= batch_count; ++i) {
+		if (!worldmodel_requests[i].worldmodel) {
+			if (begin >= 0) {
+				// Draw outline models so far
+				glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), i - begin, sizeof(worldmodel_requests[0]));
+			}
+			begin = -1;
+			continue;
+		}
+		else if (begin < 0) {
+			begin = i;
+		}
+	}
+	if (begin >= 0) {
+		// Draw outline models so far
+		glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), batch_count - begin, sizeof(worldmodel_requests[0]));
+	}
+
+	// Valid to reset the uniforms here as this is the only code that expects it
+	GL_Enable(GL_DEPTH_TEST);
+	GL_Enable(GL_CULL_FACE);
+	glUniform1i(drawWorld_outlines, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_CullFace(GL_FRONT);
+
+	// FIXME: GL_ResetState()
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+}
+
 void GL_FlushWorldModelBatch(void)
 {
 	GLuint last_vao = 0;
@@ -460,9 +510,9 @@ void GL_FlushWorldModelBatch(void)
 		return;
 	}
 
-	GL_SortDrawCalls(&polygonOffsetStart);
-
 	GL_UseProgram(drawworld.program);
+
+	GL_SortDrawCalls(&polygonOffsetStart);
 	GL_UpdateVBO(ubo_worldcvars, sizeof(world), &world);
 	GL_UpdateVBO(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_UpdateVBO(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
@@ -505,6 +555,11 @@ void GL_FlushWorldModelBatch(void)
 		frameStats.draw_calls++;
 	}
 
+	if (R_DrawWorldOutlines()) {
+		GLM_DrawWorldModelOutlines();
+	}
+
+	frameStats.subdraw_calls += batch_count;
 	batch_count = 0;
 	index_count = 0;
 	material_samplers = 0;
@@ -575,7 +630,8 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 	return;
 }
-static void GL_SortDrawCalls(int* polygonOffsetStart)
+
+static void GL_SortDrawCalls(int* split)
 {
 	static GLuint newModelIndexes[MAX_WORLDMODEL_INDEXES];
 	int i;
@@ -583,31 +639,29 @@ static void GL_SortDrawCalls(int* polygonOffsetStart)
 	int index = 0;
 	int overall_index_count = index_count;
 
-	*polygonOffsetStart = batch_count;
+	*split = batch_count;
 	if (batch_count == 0) {
 		return;
 	}
 
-	if (true) {
-		// All polygon offset calls need to be moved to the back
-		back = batch_count - 1;
-		while (back >= 0 && worldmodel_requests[back].polygonOffset) {
-			*polygonOffsetStart = back;
-			--back;
-		}
+	// All 'true' values need to be moved to the back
+	back = batch_count - 1;
+	while (back >= 0 && worldmodel_requests[back].polygonOffset) {
+		*split = back;
+		--back;
+	}
 
-		for (i = 0; i < batch_count; ++i) {
-			glm_worldmodel_req_t* this = &worldmodel_requests[i];
+	for (i = 0; i < batch_count; ++i) {
+		glm_worldmodel_req_t* this = &worldmodel_requests[i];
 
-			if (this->polygonOffset && i < back) {
-				glm_worldmodel_req_t copy = worldmodel_requests[back];
-				worldmodel_requests[back] = *this;
-				*this = copy;
+		if (this->polygonOffset && i < back) {
+			glm_worldmodel_req_t copy = worldmodel_requests[back];
+			worldmodel_requests[back] = *this;
+			*this = copy;
 
-				while (back >= 0 && worldmodel_requests[back].polygonOffset) {
-					*polygonOffsetStart = back;
-					--back;
-				}
+			while (back >= 0 && worldmodel_requests[back].polygonOffset) {
+				*split = back;
+				--back;
 			}
 		}
 	}
@@ -618,6 +672,6 @@ static void GL_SortDrawCalls(int* polygonOffsetStart)
 		memcpy(world.color[i], this->color, sizeof(world.color[0]));
 		memcpy(world.modelMatrix[i], this->mvMatrix, sizeof(world.modelMatrix[0]));
 		world.flags[i][0] = this->flags;
-		world.samplerMappings[i][0] = this->sampler;
+		world.samplerMappings[i][0] = max(this->sampler, 0);
 	}
 }

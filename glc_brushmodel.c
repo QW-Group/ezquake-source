@@ -379,7 +379,7 @@ void GLC_DrawWorld(void)
 		GLC_DrawFlat(cl.worldmodel);
 	}
 
-	if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
+	if (R_DrawWorldOutlines()) {
 		R_DrawMapOutline(cl.worldmodel);
 	}
 
@@ -404,7 +404,7 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 		GLC_DrawTextureChains(clmodel, caustics);
 	}
 
-	if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {
+	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {
 		R_DrawMapOutline(clmodel);
 	}
 }
