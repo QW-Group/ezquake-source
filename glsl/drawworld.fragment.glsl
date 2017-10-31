@@ -178,13 +178,13 @@ void main()
 		}
 
 #ifdef DRAW_LUMA_TEXTURES
-		if (r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+		if (r_drawflat == 0 && r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
 		}
 #endif
 		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
 #ifdef DRAW_LUMA_TEXTURES
-		if (r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+		if (r_drawflat == 0 && r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);
 		}
 #endif
