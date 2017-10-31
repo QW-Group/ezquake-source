@@ -594,23 +594,34 @@ void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 
 #ifdef WITH_NVTX
 static int debug_frame_depth = 0;
+static unsigned long regions_trace_only;
 FILE* debug_frame_out;
 
-void GL_EnterRegion(const char* regionName)
+void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 {
 	if (GL_ShadersSupported()) {
-		nvtxRangePushA(regionName);
+		if (!trace_only) {
+			nvtxRangePushA(regionName);
+		}
 	}
 	else if (debug_frame_out) {
 		++debug_frame_depth;
 		fprintf(debug_frame_out, "Enter: %.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", regionName);
 	}
+
+	regions_trace_only <<= 1;
+	regions_trace_only &= (trace_only ? 1 : 0);
 }
 
 void GL_LeaveRegion(void)
 {
+	qbool trace_only = regions_trace_only & 1;
+
+	regions_trace_only >>= 1;
 	if (GL_ShadersSupported()) {
-		nvtxRangePop();
+		if (!trace_only) {
+			nvtxRangePop();
+		}
 	}
 	else if (debug_frame_out) {
 		fprintf(debug_frame_out, "Leave: %.*s\n", debug_frame_depth, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
@@ -628,7 +639,7 @@ void GL_MarkEvent(const char* format, ...)
 	va_end(argptr);
 
 	if (GL_ShadersSupported()) {
-		nvtxMark(va(msg));
+		//nvtxMark(va(msg));
 	}
 	else if (debug_frame_out) {
 		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
@@ -663,13 +674,13 @@ void GL_ResetRegion(qbool start)
 		t = time(NULL);
 		localtime_r(&t, &date);
 
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%02d-%02d-%04d_%02d-%02d-%02d.txt",
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
 			com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
 #else
 		SYSTEMTIME date;
 		GetLocalTime(&date);
 
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%02d-%02d-%04d_%02d-%02d-%02d.txt",
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
 			com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
 #endif
 

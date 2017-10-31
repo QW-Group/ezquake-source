@@ -287,7 +287,7 @@ static void GLC_FlushImageDraw(void)
 {
 	if (imageCount) {
 		int i, j;
-		extern cvar_t gl_alphafont;
+		extern cvar_t gl_alphafont, scr_coloredText;
 		float modelviewMatrix[16];
 		float projectionMatrix[16];
 
@@ -317,6 +317,16 @@ static void GLC_FlushImageDraw(void)
 
 			if (text) {
 				alpha_test = !gl_alphafont.integer;
+
+				if (scr_coloredText.integer) {
+					GL_TextureEnvMode(GL_MODULATE);
+				}
+				else {
+					GL_TextureEnvMode(GL_REPLACE);
+				}
+			}
+			else {
+				GL_TextureEnvMode(GL_MODULATE);
 			}
 
 			GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
@@ -331,6 +341,9 @@ static void GLC_FlushImageDraw(void)
 
 				if (next_text) {
 					next_alpha_test = !gl_alphafont.integer;
+					if (!text && !scr_coloredText.integer) {
+						break; // will need to toggle TMU
+					}
 				}
 
 				if (next_alpha_test != alpha_test) {

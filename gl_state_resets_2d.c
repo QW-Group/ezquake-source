@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define ENTER_STATE GL_EnterRegion(__FUNCTION__)
+#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, false)
 #define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveRegion()
 
@@ -47,95 +47,6 @@ void GL_StateDefault2D(void)
 	GL_PrintState();
 }
 
-void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
-{
-	ENTER_STATE;
-
-	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
-	GL_Color4ubv(color);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndDrawImage(void)
-{
-	ENTER_STATE;
-
-	GL_Color3ubv(color_white);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateBeginAlphaPic(float alpha)
-{
-	ENTER_STATE;
-
-	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_CullFace(GL_FRONT);
-		glColor4f(1, 1, 1, alpha);
-	}
-}
-
-void GLC_StateEndAlphaPic(float alpha)
-{
-	LEAVE_STATE;
-
-	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		GL_TextureEnvMode(GL_REPLACE);
-		glColor4f(1, 1, 1, 1);
-	}
-}
-
-void GLC_StateBeginAlphaRectangle(void)
-{
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	glDisable (GL_TEXTURE_2D);
-}
-
-void GLC_StateEndAlphaRectangle(void)
-{
-	LEAVE_STATE;
-
-	glColor4ubv (color_white);
-	glEnable (GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-}
-
-void GLC_StateBeginFadeScreen(float alpha)
-{
-	ENTER_STATE;
-
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		glColor4f(0, 0, 0, alpha);
-	}
-	else {
-		glColor3f(0, 0, 0);
-	}
-	glDisable(GL_TEXTURE_2D);
-}
-
-void GLC_StateEndFadeScreen(void)
-{
-	LEAVE_STATE;
-
-	glColor3ubv(color_white);
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-}
-
 void GLC_StateBeginBrightenScreen(void)
 {
 	ENTER_STATE;
@@ -155,7 +66,6 @@ void GLC_StateEndBrightenScreen(void)
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	glColor3ubv(color_white);
 }
-
 
 void GL_StateBeginAlphaLineRGB(float thickness)
 {
@@ -184,7 +94,6 @@ void GL_StateEndAlphaLineRGB(void)
 	LEAVE_STATE;
 }
 
-
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 {
 	ENTER_STATE;
@@ -204,64 +113,6 @@ void GLC_StateEndDrawAlphaPieSliceRGB(float thickness)
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	glColor4ubv(color_white);
-}
-
-void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
-{
-	extern cvar_t gl_alphafont;
-	extern cvar_t scr_coloredText;
-	extern float overall_alpha;
-
-	MIDDLE_STATE;
-
-	// Turn on alpha transparency.
-	if ((gl_alphafont.value || apply_overall_alpha)) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	}
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	if (scr_coloredText.integer) {
-		GL_TextureEnvMode(GL_MODULATE);
-	}
-	else {
-		GL_TextureEnvMode(GL_REPLACE);
-	}
-
-	// Set the overall alpha.
-	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
-}
-
-void GLC_StateResetCharGLState(void)
-{
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	glColor4ubv(color_white);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateBeginStringDraw(void)
-{
-	extern cvar_t gl_alphafont;
-	extern cvar_t scr_coloredText;
-	extern float overall_alpha;
-
-	ENTER_STATE;
-
-	// Turn on alpha transparency.
-	if (gl_alphafont.value || (overall_alpha < 1.0)) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	}
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	if (scr_coloredText.integer) {
-		GL_TextureEnvMode(GL_MODULATE);
-	}
-	else {
-		GL_TextureEnvMode(GL_REPLACE);
-	}
 }
 
 void GLC_StateBeginSceneBlur(void)
@@ -286,42 +137,6 @@ void GLC_StateEndSceneBlur(void)
 
 	// Restore attributes.
 	glPopAttrib();
-}
-
-void GL_StateBeginSCRTeamInfo(void)
-{
-	ENTER_STATE;
-
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_Color4f(1, 1, 1, 1);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-}
-
-void GL_StateEndSCRTeamInfo(void)
-{
-	LEAVE_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color4f(1, 1, 1, 1);
-}
-
-void GL_StateBeginSCRShowNick(void)
-{
-	ENTER_STATE;
-
-	GL_Color4f(1, 1, 1, 1);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-}
-
-void GL_StateEndSCRShowNick(void)
-{
-	LEAVE_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color4f(1, 1, 1, 1);
 }
 
 void GLC_StateBeginDrawPolygon(void)

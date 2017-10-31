@@ -1598,8 +1598,6 @@ static void SCR_Draw_TeamInfo(void)
 		return;
 	}
 
-	GL_StateBeginSCRTeamInfo();
-
 	if (scale != 1) {
 		GL_PushMatrix(GL_PROJECTION, oldMatrix);
 		GL_Scale(GL_PROJECTION, scale, scale, 1);
@@ -1631,8 +1629,6 @@ static void SCR_Draw_TeamInfo(void)
 	if (scale != 1) {
 		GL_PopMatrix(GL_PROJECTION, oldMatrix);
 	}
-
-	GL_StateEndSCRTeamInfo();
 }
 
 void Parse_TeamInfo(char *s)
@@ -1771,8 +1767,6 @@ static void SCR_Draw_ShowNick(void)
 	maxname = 999;
 	maxname = bound(0, maxname, scr_shownick_name_width.integer);
 
-	GL_StateBeginSCRShowNick();
-
 	if (scale != 1) {
 		GL_PushMatrix(GL_PROJECTION, oldMatrix);
 		GL_Scale(GL_PROJECTION, scale, scale, 1);
@@ -1798,8 +1792,6 @@ static void SCR_Draw_ShowNick(void)
 	if (scale != 1) {
 		GL_PopMatrix(GL_PROJECTION, oldMatrix);
 	}
-
-	GL_StateEndSCRShowNick();
 }
 
 /********************************* TILE CLEAR *********************************/

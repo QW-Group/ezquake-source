@@ -724,7 +724,8 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
 size_t GL_VBOSize(buffer_ref vbo);
 
 #ifdef WITH_NVTX
-void GL_EnterRegion(const char* regionName);
+#define GL_EnterRegion(x) GL_EnterTracedRegion(x, false)
+void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
 void GL_LeaveRegion(void);
 void GL_PrintState(void);
 void GL_ResetRegion(qbool start);
@@ -1161,14 +1162,6 @@ void GLC_StateBeginAliasPowerupShell(void);
 void GLC_StateEndAliasPowerupShell(void);
 void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_StateEndUnderwaterCaustics(void);
-void GLC_StateBeginDrawImage(qbool alpha, byte color[4]);
-void GLC_StateEndDrawImage(void);
-void GLC_StateBeginAlphaPic(float alpha);
-void GLC_StateEndAlphaPic(float alpha);
-void GLC_StateBeginAlphaRectangle(void);
-void GLC_StateEndAlphaRectangle(void);
-void GLC_StateBeginFadeScreen(float alpha);
-void GLC_StateEndFadeScreen(void);
 void GLC_StateBeginMD3Draw(float alpha);
 void GLC_StateEndMD3Draw(void);
 void GLC_StateBeginBrightenScreen(void);
@@ -1215,18 +1208,11 @@ void GLC_StateBeginTurbPoly(void);
 void GLC_StateEndTurbPoly(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
-void GLC_StateResetCharGLState(void);
-void GLC_StateBeginStringDraw(void);
 
 void GLC_StateBeginBlendLightmaps(void);
 void GLC_StateEndBlendLightmaps(void);
 void GLC_StateBeginDrawSimpleItem(void);
 void GLC_StateEndDrawSimpleItem(int oldFlags);
-void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
-void GLC_StateEndDrawAlphaPieSliceRGB(float thickness);
-void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4]);
-void GLC_StateResetCharGLState(void);
-void GLC_StateBeginStringDraw(void);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateEndSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
@@ -1238,13 +1224,6 @@ void GL_StateEndDrawBrushModel(void);
 void GL_StateDefault2D(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
-
-void GL_StateBeginSCRTeamInfo(void);
-void GL_StateEndSCRTeamInfo(void);
-void GL_StateBeginSCRShowNick(void);
-void GL_StateEndSCRShowNick(void);
-void GLC_StateBeginDrawPolygon(void);
-void GLC_StateEndDrawPolygon(int oldFlags);
 
 void GLC_StateBeginDrawBillboards(void);
 void GLC_StateEndDrawBillboards(void);
@@ -1261,6 +1240,10 @@ void GLC_StateBeginPolyBlend(void);
 void GLC_StateEndPolyBlend(void);
 void GL_StateBeginNetGraph(qbool texture);
 void GL_StateEndNetGraph(void);
+void GLC_StateBeginDrawPolygon(void);
+void GLC_StateEndDrawPolygon(int oldFlags);
+void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
+void GLC_StateEndDrawAlphaPieSliceRGB(float thickness);
 
 void GLC_DisableAllTexturing(void);
 void GLC_InitTextureUnitsNoBind1(GLenum envMode0);

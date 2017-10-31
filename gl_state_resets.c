@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern texture_ref solidskytexture, alphaskytexture;
 
-#define ENTER_STATE GL_EnterRegion(__FUNCTION__)
+#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, false)
 #define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveRegion()
 

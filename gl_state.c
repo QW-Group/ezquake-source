@@ -919,7 +919,7 @@ void GL_End(void)
 	if (glcVertsPerPrimitive) {
 		primitives = glcVertsSent / glcVertsPerPrimitive;
 	}
-	GL_LogAPICall("glBegin/End(%s: %d primitives)\n", glcPrimitiveName, primitives);
+	GL_LogAPICall("glBegin/End(%s: %d primitives)", glcPrimitiveName, primitives);
 }
 
 #undef glVertex2f
