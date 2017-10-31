@@ -67,6 +67,7 @@ void GL_TextureReplace2D(
 );
 
 qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
+qbool GL_TextureValid(texture_ref ref);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 

@@ -25,12 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
-#define	MAX_LIGHTMAPS 192
-
 #define	BLOCK_WIDTH  128
 #define	BLOCK_HEIGHT 128
 
 #define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
+#define LIGHTMAP_ARRAY_GROWTH 4
 
 typedef struct glRect_s {
 	unsigned char l, t, w, h;
@@ -43,7 +42,6 @@ typedef struct dlightinfo_s {
 	int lnum; // reference to cl_dlights[]
 } dlightinfo_t;
 
-static texture_ref lightmap_texture_array;
 static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct lightmap_data_s {
@@ -56,8 +54,11 @@ typedef struct lightmap_data_s {
 	qbool modified;
 } lightmap_data_t;
 
-static lightmap_data_t lightmaps[MAX_LIGHTMAPS];
-static GLuint last_lightmap_updated;
+static lightmap_data_t* lightmaps;
+static unsigned int last_lightmap_updated;
+static unsigned int lightmap_array_size;
+static texture_ref lightmap_texture_array;
+static unsigned int lightmap_depth;
 
 static qbool gl_invlightmaps = true;
 
@@ -97,21 +98,24 @@ void R_BuildDlightList (msurface_t *surf)
 	dlightbits = surf->dlightbits;
 
 	for (lnum = 0; lnum < MAX_DLIGHTS && dlightbits; lnum++) {
-		if ( !(surf->dlightbits & (1 << lnum) ) )
+		if (!(surf->dlightbits & (1 << lnum))) {
 			continue;		// not lit by this light
+		}
 
 		dlightbits &= ~(1<<lnum);
 
 		dist = PlaneDiff(cl_dlights[lnum].origin, surf->plane);
 		irad = (cl_dlights[lnum].radius - fabs(dist)) * 256;
 		iminlight = cl_dlights[lnum].minlight * 256;
-		if (irad < iminlight)
+		if (irad < iminlight) {
 			continue;
+		}
 
 		iminlight = irad - iminlight;
 
-		for (i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++) {
 			impact[i] = cl_dlights[lnum].origin[i] - surf->plane->normal[i] * dist;
+		}
 
 		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
 		local[1] = DotProduct (impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
@@ -119,9 +123,11 @@ void R_BuildDlightList (msurface_t *surf)
 		// check if this dlight will touch the surface
 		if (local[1] > 0) {
 			tdmin = local[1] - (tmax << 4);
-			if (tdmin < 0)
+			if (tdmin < 0) {
 				tdmin = 0;
-		} else {
+			}
+		}
+		else {
 			tdmin = -local[1];
 		}
 
@@ -152,22 +158,26 @@ void R_BuildDlightList (msurface_t *surf)
 }
 
 //R_BuildDlightList must be called first!
-void R_AddDynamicLights (msurface_t *surf) {
+void R_AddDynamicLights(msurface_t *surf)
+{
 	int i, smax, tmax, s, t, sd, td, _sd, _td, irad, idist, iminlight, color[3], tmp;
 	dlightinfo_t *light;
 	unsigned *dest;
 
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
+	smax = (surf->extents[0] >> 4) + 1;
+	tmax = (surf->extents[1] >> 4) + 1;
 
 	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
 		extern cvar_t gl_colorlights;
 		if (gl_colorlights.value) {
-			if (cl_dlights[light->lnum].type == lt_custom)
+			if (cl_dlights[light->lnum].type == lt_custom) {
 				VectorCopy(cl_dlights[light->lnum].color, color);
-			else
+			}
+			else {
 				VectorCopy(dlightcolor[cl_dlights[light->lnum].type], color);
-		} else {
+			}
+		}
+		else {
 			VectorSet(color, 128, 128, 128);
 		}
 
@@ -185,10 +195,12 @@ void R_AddDynamicLights (msurface_t *surf) {
 			for (s = 0; s < smax; s++) {
 				sd = _sd < 0 ? -_sd : _sd;
 				_sd -= 16;
-				if (sd > td)
+				if (sd > td) {
 					idist = (sd << 8) + (td << 7);
-				else
+				}
+				else {
 					idist = (td << 8) + (sd << 7);
+				}
 
 				if (idist < iminlight) {
 					tmp = (irad - idist) >> 7;
@@ -203,7 +215,8 @@ void R_AddDynamicLights (msurface_t *surf) {
 }
 
 //Combine and scale multiple lightmaps into the 8.8 format in blocklights
-void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
+void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
+{
 	int smax, tmax, i, j, size, blocksize, maps;
 	byte *lightmap;
 	unsigned scale, *bl;
@@ -220,37 +233,33 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	// check for full bright or no light data
 	fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
 
-	if (fullbright)
-	{	// set to full bright
-		for (i = 0; i < blocksize; i++)
+	if (fullbright) {	// set to full bright
+		for (i = 0; i < blocksize; i++) {
 			blocklights[i] = 255 << 8;
+		}
 	}
-	else
-	{
+	else {
 		// clear to no light
-		memset (blocklights, 0, blocksize * sizeof(int));
+		memset(blocklights, 0, blocksize * sizeof(int));
 	}
 
 	// add all the lightmaps
-	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
-	{
+	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 		scale = d_lightstylevalue[surf->styles[maps]];
 		surf->cached_light[maps] = scale;	// 8.8 fraction
 
-		if (!fullbright && lightmap)
-		{
+		if (!fullbright && lightmap) {
 			bl = blocklights;
-			for (i = 0; i < blocksize; i++)
+			for (i = 0; i < blocksize; i++) {
 				*bl++ += lightmap[i] * scale;
+			}
 			lightmap += blocksize;		// skip to next lightmap
 		}
 	}
 
 	// add all the dynamic lights
-	if (!fullbright)
-	{
-		if (numdlights)
-			R_AddDynamicLights (surf);
+	if (!fullbright && numdlights) {
+		R_AddDynamicLights(surf);
 	}
 
 	// bound, invert, and shift
@@ -266,8 +275,8 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 			b = bl[2] * scale;
 			m = max(r, g);
 			m = max(m, b);
-			if (m > ((255<<16) + (1<<15))) {
-				unsigned s = (((255<<16) + (1<<15)) << 8) / m;
+			if (m > ((255 << 16) + (1 << 15))) {
+				unsigned s = (((255 << 16) + (1 << 15)) << 8) / m;
 				r = (r >> 8) * s;
 				g = (g >> 8) * s;
 				b = (b >> 8) * s;
@@ -276,7 +285,8 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 				dest[2] = 255 - (r >> 16);
 				dest[1] = 255 - (g >> 16);
 				dest[0] = 255 - (b >> 16);
-			} else {
+			}
+			else {
 				dest[2] = r >> 16;
 				dest[1] = g >> 16;
 				dest[0] = b >> 16;
@@ -402,7 +412,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	msurface_t *s;
 	unsigned int waterline;
 	unsigned int i;
-	unsigned int min_changed = MAX_LIGHTMAPS;
+	unsigned int min_changed = lightmap_array_size;
 	unsigned int max_changed = 0;
 
 	for (i = 0; i < model->numtextures; i++) {
@@ -422,7 +432,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], &min_changed, &max_changed);
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], &min_changed, &max_changed);
 
-	if (min_changed < MAX_LIGHTMAPS) {
+	if (min_changed < lightmap_array_size) {
 		for (i = min_changed; i <= max_changed; ++i) {
 			if (lightmaps[i].modified) {
 				R_UploadLightMap(GL_TEXTURE0, i);
@@ -441,7 +451,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 		Sys_Error("AllocBlock: Bad dimensions");
 	}
 
-	for (texnum = last_lightmap_updated; texnum < MAX_LIGHTMAPS; texnum++, last_lightmap_updated++) {
+	for (texnum = last_lightmap_updated; texnum < lightmap_array_size; texnum++, last_lightmap_updated++) {
 		best = LIGHTMAP_HEIGHT + 1;
 
 		for (i = 0; i < LIGHTMAP_WIDTH - w; i++) {
@@ -474,14 +484,20 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 		return texnum;
 	}
 
-	Sys_Error("AllocBlock: full");
-	return 0;
+	// Dynamically increase array
+	{
+		GLuint new_size = lightmap_array_size + LIGHTMAP_ARRAY_GROWTH;
+		lightmaps = Q_realloc(lightmaps, sizeof(lightmaps[0]) * new_size);
+		if (!lightmaps) {
+			Sys_Error("AllocBlock: full");
+		}
+		memset(lightmaps + lightmap_array_size, 0, sizeof(lightmaps[0]) * LIGHTMAP_ARRAY_GROWTH);
+		lightmap_array_size = new_size;
+	}
+	return LightmapAllocBlock(w, h, x, y);
 }
 
-mvertex_t	*r_pcurrentvertbase;
-model_t		*currentmodel;
-
-void BuildSurfaceDisplayList(msurface_t *fa)
+void BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 {
 	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
@@ -508,11 +524,11 @@ void BuildSurfaceDisplayList(msurface_t *fa)
 
 		if (lindex > 0) {
 			r_pedge = &pedges[lindex];
-			vec = r_pcurrentvertbase[r_pedge->v[0]].position;
+			vec = currentmodel->vertexes[r_pedge->v[0]].position;
 		}
 		else {
 			r_pedge = &pedges[-lindex];
-			vec = r_pcurrentvertbase[r_pedge->v[1]].position;
+			vec = currentmodel->vertexes[r_pedge->v[1]].position;
 		}
 		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s /= fa->texinfo->texture->width;
@@ -556,7 +572,7 @@ void BuildSurfaceDisplayList(msurface_t *fa)
 	return;
 }
 
-void GL_CreateSurfaceLightmap(msurface_t *surf)
+static void GL_CreateSurfaceLightmap(msurface_t *surf)
 {
 	int smax, tmax;
 	byte *base;
@@ -564,12 +580,15 @@ void GL_CreateSurfaceLightmap(msurface_t *surf)
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
 
-	if (smax > BLOCK_WIDTH)
+	if (smax > BLOCK_WIDTH) {
 		Host_Error("GL_CreateSurfaceLightmap: smax = %d > BLOCK_WIDTH", smax);
-	if (tmax > BLOCK_HEIGHT)
+	}
+	if (tmax > BLOCK_HEIGHT) {
 		Host_Error("GL_CreateSurfaceLightmap: tmax = %d > BLOCK_HEIGHT", tmax);
-	if (smax * tmax > MAX_LIGHTMAP_SIZE)
+	}
+	if (smax * tmax > MAX_LIGHTMAP_SIZE) {
 		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
+	}
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
 	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
@@ -584,15 +603,20 @@ void GL_BuildLightmaps(void)
 	int i, j;
 	model_t	*m;
 
-	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-		memset(lightmaps[i].allocated, 0, sizeof(lightmaps[i].allocated));
+	if (lightmaps) {
+		for (i = 0; i < lightmap_array_size; ++i) {
+			memset(lightmaps[i].allocated, 0, sizeof(lightmaps[i].allocated));
+		}
+	}
+	else {
+		lightmaps = Q_malloc(sizeof(*lightmaps) * LIGHTMAP_ARRAY_GROWTH);
+		lightmap_array_size = LIGHTMAP_ARRAY_GROWTH;
 	}
 	last_lightmap_updated = 0;
 
 	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
 
 	r_framecount = 1;		// no dlightcache
-
 	for (j = 1; j < MAX_MODELS; j++) {
 		if (!(m = cl.model_precache[j])) {
 			break;
@@ -600,8 +624,6 @@ void GL_BuildLightmaps(void)
 		if (m->name[0] == '*') {
 			continue;
 		}
-		r_pcurrentvertbase = m->vertexes;
-		currentmodel = m;
 		for (i = 0; i < m->numsurfaces; i++) {
 			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
 				continue;
@@ -611,21 +633,28 @@ void GL_BuildLightmaps(void)
 			}
 
 			GL_CreateSurfaceLightmap(m->surfaces + i);
-			BuildSurfaceDisplayList(m->surfaces + i);
+			BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}
 
 	// upload all lightmaps that were filled
-	for (i = 0; i < MAX_LIGHTMAPS; i++) {
+	if (GL_ShadersSupported()) {
+		GLM_CreateLightmapTextures();
+	}
+	else {
+		GLC_CreateLightmapTextures();
+	}
+
+	for (i = 0; i < lightmap_array_size; i++) {
 		if (!lightmaps[i].allocated[0]) {
-			break;		// no more used
+			break;		// not used anymore
 		}
 		lightmaps[i].modified = false;
 		lightmaps[i].change_area.l = LIGHTMAP_WIDTH;
 		lightmaps[i].change_area.t = LIGHTMAP_HEIGHT;
 		lightmaps[i].change_area.w = 0;
 		lightmaps[i].change_area.h = 0;
-		if (GL_ShadersSupported() && GL_TextureReferenceIsValid(lightmap_texture_array)) {
+		if (GL_ShadersSupported()) {
 			GL_TexSubImage3D(
 				GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
 				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
@@ -677,14 +706,14 @@ void GLC_ClearLightmapPolys(void)
 {
 	int i;
 
-	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].poly_chain = NULL;
 	}
 }
 
 texture_ref GLC_LightmapTexture(int index)
 {
-	if (index < 0 || index >= MAX_LIGHTMAPS) {
+	if (index < 0 || index >= lightmap_array_size) {
 		return lightmaps[0].gl_texref;
 	}
 	return lightmaps[index].gl_texref;
@@ -694,19 +723,21 @@ void GLC_CreateLightmapTextures(void)
 {
 	int i;
 
-	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &lightmaps[i].gl_texref);
-		GL_TexStorage2D(GL_TEXTURE0, lightmaps[i].gl_texref, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
-		GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	for (i = 0; i < lightmap_array_size; ++i) {
+		if (!GL_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
+			GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &lightmaps[i].gl_texref);
+			GL_TexStorage2D(GL_TEXTURE0, lightmaps[i].gl_texref, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
+			GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
 	}
 }
 
 void GLC_LightmapUpdate(int index)
 {
-	if (index >= 0 && index < MAX_LIGHTMAPS) {
+	if (index >= 0 && index < lightmap_array_size) {
 		if (lightmaps[index].modified) {
 			R_UploadLightMap(GL_TEXTURE0, index);
 		}
@@ -721,7 +752,7 @@ void GLC_AddToLightmapChain(msurface_t* s)
 
 glpoly_t* GLC_LightmapChain(int i)
 {
-	if (i < 0 || i >= MAX_LIGHTMAPS) {
+	if (i < 0 || i >= lightmap_array_size) {
 		return NULL;
 	}
 	return lightmaps[i].poly_chain;
@@ -729,7 +760,7 @@ glpoly_t* GLC_LightmapChain(int i)
 
 int GLC_LightmapCount(void)
 {
-	return MAX_LIGHTMAPS;
+	return lightmap_array_size;
 }
 
 GLenum GLC_LightmapDestBlendFactor(void)
@@ -741,15 +772,23 @@ void GLM_CreateLightmapTextures(void)
 {
 	int i;
 
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
+	if (GL_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
+		return;
+	}
 
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
+	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
+		GL_DeleteTextureArray(&lightmap_texture_array);
+	}
+
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	lightmap_depth = lightmap_array_size;
 
-	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
 }
@@ -757,4 +796,19 @@ void GLM_CreateLightmapTextures(void)
 texture_ref GLM_LightmapArray(void)
 {
 	return lightmap_texture_array;
+}
+
+void GL_InvalidateLightmapTextures(void)
+{
+	int i;
+
+	GL_TextureReferenceInvalidate(lightmap_texture_array);
+	for (i = 0; i < lightmap_array_size; ++i) {
+		GL_TextureReferenceInvalidate(lightmaps[i].gl_texref);
+	}
+
+	Q_free(lightmaps);
+	lightmap_array_size = 0;
+	last_lightmap_updated = 0;
+	lightmap_depth = 0;
 }

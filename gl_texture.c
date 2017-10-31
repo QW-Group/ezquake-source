@@ -1047,14 +1047,6 @@ void GL_Texture_Init(void)
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playernmtextures);
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playerfbtextures);
 
-	// Lightmap.
-	if (GL_ShadersSupported()) {
-		GLM_CreateLightmapTextures();
-	}
-	else {
-		GLC_CreateLightmapTextures();
-	}
-
 	// Motion blur.
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
 
@@ -1398,8 +1390,10 @@ qbool GL_ExternalTexturesEnabled(qbool worldmodel)
 // Called during vid_shutdown
 void GL_DeleteTextures(void)
 {
+	extern void GL_InvalidateLightmapTextures(void);
 	int i;
 
+	GL_InvalidateLightmapTextures();
 	for (i = 0; i < numgltextures; ++i) {
 		texture_ref ref = gltextures[i].reference;
 
