@@ -255,9 +255,7 @@ static qbool R_DrawTrySimpleItem(void)
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
 	texture_ref simpletexture;
-	int simpletexture_index;
 	vec3_t right, up, org, offset, angles;
-	float scale_s = 1.0f, scale_t = 1.0f;
 	int skin;
 
 	if (!currententity || !currententity->model) {
@@ -269,10 +267,6 @@ static qbool R_DrawTrySimpleItem(void)
 	if (!GL_TextureReferenceIsValid(simpletexture)) {
 		return false;
 	}
-
-	simpletexture_index = currententity->model->simpletexture_indexes[skin];
-	scale_s = currententity->model->simpletexture_scalingS[skin];
-	scale_t = currententity->model->simpletexture_scalingT[skin];
 
 	autorotate = anglemod(100 * cl.time);
 	if (sprtype == SPR_ORIENTED) {
@@ -317,7 +311,18 @@ static qbool R_DrawTrySimpleItem(void)
 	org[2] += sprsize;
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleItem(currententity->model, simpletexture_index, org, angles, sprsize, scale_s, scale_t);
+		model_t* m = currententity->model;
+
+		GLM_DrawSimpleItem(
+			m->simpletexture_array,
+			m->simpletexture_indexes[skin],
+			m->simpletexture_scalingS[skin],
+			m->simpletexture_scalingT[skin],
+			org,
+			sprsize,
+			up,
+			right
+		);
 	}
 	else {
 		GLC_DrawSimpleItem(simpletexture, org, sprsize, up, right);

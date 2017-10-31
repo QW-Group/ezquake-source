@@ -800,7 +800,7 @@ typedef struct ci_texture_s {
 
 void GLM_ExitBatchedPolyRegion(void);
 
-void GLM_DrawSimpleItem(model_t* model, int texture_index, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);
+void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale, vec3_t up, vec3_t right);
 void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
 
 void GL_BeginDrawSprites(void);
@@ -809,7 +809,6 @@ void GL_BeginDrawBrushModels(void);
 void GL_BeginDrawAliasModels(void);
 void GL_EndDrawAliasModels(void);
 void GL_EndDrawBrushModels(void);
-void GL_EndDrawEntities(void);
 
 void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
