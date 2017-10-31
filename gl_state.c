@@ -25,11 +25,11 @@ static GLenum currentShadeModel = GL_SMOOTH;
 static GLint currentViewportX = 0, currentViewportY = 0;
 static GLsizei currentViewportWidth, currentViewportHeight;
 static GLuint currentProgram = 0;
-static qbool gl_cullface = false;
 static qbool gl_depthTestEnabled = false;
 static qbool gl_framebuffer_srgb = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
+static qbool gl_line_smooth = false;
 static GLboolean gl_depth_mask = GL_FALSE;
 static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
@@ -200,11 +200,11 @@ void GL_InitialiseState(void)
 
 	currentProgram = 0;
 
-	gl_cullface = false;
 	gl_depthTestEnabled = false;
 	gl_framebuffer_srgb = false;
 	gl_blend = false;
 	gl_cull_face = false;
+	gl_line_smooth = false;
 	gl_depth_mask = GL_FALSE;
 	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
 		unit_texture_mode[i] = GL_MODULATE;
@@ -711,14 +711,6 @@ void GL_Enable(GLenum option)
 		gl_framebuffer_srgb = true;
 		GL_LogAPICall("glEnable(GL_FRAMEBUFFER_SRGB)");
 	}
-	else if (option == GL_CULL_FACE) {
-		if (gl_cullface) {
-			return;
-		}
-
-		gl_cullface = true;
-		GL_LogAPICall("glEnable(GL_CULL_FACE)");
-	}
 	else if (option == GL_TEXTURE_2D) {
 		if (texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
 			return;
@@ -759,6 +751,14 @@ void GL_Enable(GLenum option)
 		gl_polygon_offset_line = true;
 		GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
 	}
+	else if (option == GL_LINE_SMOOTH) {
+		if (gl_line_smooth) {
+			return;
+		}
+
+		gl_line_smooth = true;
+		GL_LogAPICall("glEnable(GL_LINE_SMOOTH)");
+	}
 
 	glEnable(option);
 #ifdef GL_PARANOIA
@@ -792,14 +792,6 @@ void GL_Disable(GLenum option)
 
 		GL_LogAPICall("glDisable(GL_FRAMEBUFFER_SRGB)");
 		gl_framebuffer_srgb = false;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (!gl_cullface) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_CULL_FACE)");
-		gl_cullface = false;
 	}
 	else if (option == GL_TEXTURE_2D) {
 		if (!texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
@@ -840,6 +832,14 @@ void GL_Disable(GLenum option)
 
 		GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
 		gl_polygon_offset_line = false;
+	}
+	else if (option == GL_LINE_SMOOTH) {
+		if (!gl_line_smooth) {
+			return;
+		}
+
+		gl_line_smooth = false;
+		GL_LogAPICall("glDisable(GL_LINE_SMOOTH)");
 	}
 
 	glDisable(option);
@@ -953,7 +953,7 @@ void GL_PrintState(void)
 	if (debug_frame_out) {
 		fprintf(debug_frame_out, "... <state-dump>\n");
 		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange);
-		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cullface ? "enabled" : "disabled", currentCullFace);
+		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cull_face ? "enabled" : "disabled", currentCullFace);
 		fprintf(debug_frame_out, "..... Blending: %s, sfactor %u, dfactor %u\n", gl_blend ? "enabled" : "disabled", currentBlendSFactor, currentBlendDFactor);
 		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", texunitenabled[currentTextureUnit - GL_TEXTURE0] ? "enabled" : "disabled", currentTextureUnit - GL_TEXTURE0);
 		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {

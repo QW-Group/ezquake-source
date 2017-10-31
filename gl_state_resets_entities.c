@@ -74,7 +74,7 @@ void GLC_StateBeginAliasOutlineFrame(void)
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glEnable(GL_LINE_SMOOTH);
+	GL_Enable(GL_LINE_SMOOTH);
 	GLC_DisableAllTexturing();
 
 	LEAVE_STATE;
