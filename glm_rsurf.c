@@ -88,10 +88,11 @@ static buffer_ref ubo_worldcvars;
 static block_world_t world;
 
 #define MAXIMUM_MATERIAL_SAMPLERS 32
+#define MAX_STANDARD_TEXTURES 5 // Update this if adding more.  currently lm+detail+caustics+2*skydome=5
 static int material_samplers_max;
 static int material_samplers;
 static texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
-static int TEXTURE_UNIT_MATERIAL;
+static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
 static int TEXTURE_UNIT_LIGHTMAPS;
 static int TEXTURE_UNIT_DETAIL;
 static int TEXTURE_UNIT_CAUSTICS;
@@ -191,6 +192,9 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	extern buffer_ref vbo_brushElements;
 	extern cvar_t gl_lumaTextures;
 
+	texture_ref std_textures[MAX_STANDARD_TEXTURES];
+	int std_count = 0;
+
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 
@@ -225,25 +229,27 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 
 	GL_BindVertexArray(&brushModel_vao);
 
-	// Bind lightmap array
-	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, lightmap_texture_array);
+	// Bind standard textures (warning: these must be in the same order)
+	std_textures[TEXTURE_UNIT_LIGHTMAPS] = lightmap_texture_array;
 	if (detail_tex) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, detailtexture);
+		std_textures[TEXTURE_UNIT_DETAIL] = detailtexture;
 	}
 	if (caustics) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
+		std_textures[TEXTURE_UNIT_CAUSTICS] = underwatertexture;
 	}
 	if (skybox) {
 		extern texture_ref skybox_cubeMap;
 
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYBOX, skybox_cubeMap);
+		std_textures[TEXTURE_UNIT_SKYBOX] = skybox_cubeMap;
 	}
 	else {
 		extern texture_ref solidskytexture, alphaskytexture;
 
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYDOME_TEXTURE, solidskytexture);
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE, alphaskytexture);
+		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
+		std_textures[TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE] = alphaskytexture;
 	}
+
+	GL_BindTextures(0, TEXTURE_UNIT_MATERIAL, std_textures);
 
 	material_samplers = 0;
 }
