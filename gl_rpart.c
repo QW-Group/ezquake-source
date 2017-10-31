@@ -617,7 +617,7 @@ void QMB_InitParticles (void)
 	ADD_PARTICLE_TYPE(p_flame, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 10, 0, pm_die, 0, 4);
 	ADD_PARTICLE_TYPE(p_trailbleed, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4);
 	ADD_PARTICLE_TYPE(p_bleedspike, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_lightningbeam, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lightning, 128, 0, 0, pm_die, 0, 4);
+	ADD_PARTICLE_TYPE(p_lightningbeam, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lightning, 128, 0, 0, pm_static, 0, 4);
 	ADD_PARTICLE_TYPE(p_bubble2, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 1, 0, pm_float, 0, 4);
 	ADD_PARTICLE_TYPE(p_bloodcloud, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_generic, 255, -3, 0, pm_normal, 0, 4);
 	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475, 4);
@@ -630,7 +630,7 @@ void QMB_InitParticles (void)
 
 	//Allow overkill trails
 	if (amf_part_fulldetail.integer) {
-		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0, 4);
+		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_static, 0, 4);
 	}
 	else {
 		ADD_PARTICLE_TYPE(p_streaktrail, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 128, 0, 0, pm_die, 0, 4);
