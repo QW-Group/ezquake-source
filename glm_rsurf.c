@@ -197,12 +197,12 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	GL_BindVertexArray(&brushModel_vao);
 
 	// Bind lightmap array
-	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, lightmap_texture_array);
 	if (detail_tex) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, GL_TEXTURE_2D, detailtexture);
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, detailtexture);
 	}
 	if (caustics) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
 	}
 
 	Con_DPrintf("Water-alpha offset: %d\n", (intptr_t)&world.waterAlpha - (intptr_t)&world);
@@ -387,7 +387,7 @@ void GL_FlushWorldModelBatch(void)
 
 	// Bind texture units
 	for (i = 0; i < material_samplers; ++i) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D_ARRAY, allocated_samplers[i]);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, allocated_samplers[i]);
 	}
 
 	if (polygonOffsetStart >= 0 && polygonOffsetStart < batch_count) {

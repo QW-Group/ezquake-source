@@ -120,7 +120,7 @@ void R_RenderFullbrights(void)
 		}
 
 		texture.index = i;
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
+		GL_BindTextureUnit(GL_TEXTURE0, texture);
 		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
 			DrawGLPoly(p);
 		}
@@ -150,7 +150,7 @@ void R_RenderLumas(void)
 		}
 
 		texture.index = i;
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
+		GL_BindTextureUnit(GL_TEXTURE0, texture);
 		for (p = luma_polys[i]; p; p = p->luma_chain) {
 			DrawGLPoly(p);
 		}
@@ -172,7 +172,7 @@ void EmitDetailPolys(void)
 		return;
 	}
 
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, detailtexture);
+	GL_BindTextureUnit(GL_TEXTURE0, detailtexture);
 	GL_TextureEnvMode(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);

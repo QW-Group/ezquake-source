@@ -283,13 +283,13 @@ static void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_re
 		tempBuffer = Q_malloc(tempBufferSize);
 	}
 
-	GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBufferSize, tempBuffer);
+	GL_GetTexImage(GL_TEXTURE0, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBufferSize, tempBuffer);
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
 		for (y = 0; y < ratio_y; ++y) {
-			GL_TexSubImage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+			GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
 				int array_width = GL_TextureWidth(arrayTexture);

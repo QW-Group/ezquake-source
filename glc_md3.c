@@ -124,7 +124,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 		if (GL_TextureReferenceIsValid(sinf->texnum)) {
 			GL_Enable(GL_TEXTURE_2D);
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, sinf->texnum);
+			GL_BindTextureUnit(GL_TEXTURE0, sinf->texnum);
 		}
 		else {
 			GL_Disable(GL_TEXTURE_2D);

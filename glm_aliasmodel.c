@@ -201,10 +201,10 @@ static void GLM_FlushAliasModelBatch(void)
 	if (GLM_CompileAliasModelProgram()) {
 		// Bind textures
 		if (drawAlias_compiledOptions & DRAW_CAUSTIC_TEXTURES) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
 		}
 		for (i = 0; i < material_samplers; ++i) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D, allocated_samplers[i]);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, allocated_samplers[i]);
 		}
 
 		// Update indirect buffer

@@ -125,7 +125,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 
 	if (GL_ShadersSupported()) {
 		if (texture) {
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, netgraphtexture);
+			GL_BindTextureUnit(GL_TEXTURE0, netgraphtexture);
 		}
 	}
 	else {
@@ -133,7 +133,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 			glDisable(GL_TEXTURE_2D);
 		}
 		else {
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, netgraphtexture);
+			GL_BindTextureUnit(GL_TEXTURE0, netgraphtexture);
 		}
 	}
 

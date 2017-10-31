@@ -192,7 +192,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		}
 
 		//bind the world texture
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, t->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, t->gl_texturenum);
 
 		draw_fbs = gl_fb_bmodels.value /* || isLumaTexture */;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
@@ -204,7 +204,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 					GL_EnableTMU(GL_TEXTURE1);
 					GL_FB_TEXTURE = GL_TEXTURE1;
 					GL_TextureEnvMode(GL_ADD);
-					GL_BindTextureUnit(GL_FB_TEXTURE, GL_TEXTURE_2D, fb_texturenum);
+					GL_BindTextureUnit(GL_FB_TEXTURE, fb_texturenum);
 
 					mtex_lightmaps = can_mtex_lightmaps;
 					mtex_fbs = true;
@@ -239,7 +239,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 					doMtex2 = true;
 					GL_FB_TEXTURE = GL_TEXTURE2;
 					GL_EnableTMU(GL_FB_TEXTURE);
-					GL_BindTextureUnit(GL_FB_TEXTURE, GL_TEXTURE_2D, fb_texturenum);
+					GL_BindTextureUnit(GL_FB_TEXTURE, fb_texturenum);
 					GL_TextureEnvMode(isLumaTexture ? GL_ADD : GL_DECAL);
 				}
 				else {
@@ -562,7 +562,7 @@ static void GLC_BlendLightmaps(void)
 		if (!(p = lightmap_polys[i])) {
 			continue;
 		}
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i]);
+		GL_BindTextureUnit(GL_TEXTURE0, lightmap_textures[i]);
 		if (lightmap_modified[i]) {
 			R_UploadLightMap(GL_TEXTURE0, i);
 		}

@@ -148,7 +148,7 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 
 		GL_DisableMultitexture();
 		glEnable(GL_TEXTURE_2D);
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, fa->texinfo->texture->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -200,7 +200,7 @@ void GLC_EmitCausticsPolys (void) {
 	float s, t, *v;
 	extern glpoly_t *caustics_polys;
 
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, underwatertexture);
+	GL_BindTextureUnit(GL_TEXTURE0, underwatertexture);
 	GL_TextureEnvMode(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);

@@ -264,8 +264,8 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
-		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
 		Q_free(crosshair_buffer);
 	}

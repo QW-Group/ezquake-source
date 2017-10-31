@@ -204,7 +204,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 	GL_Viewport(0, 0, glwidth, glheight);
 
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, sceneblur_texture);
+	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
 
 	// go 2d
 	GL_PushMatrix(GL_PROJECTION, oldProjectionMatrix);
@@ -252,8 +252,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 		//copy the image into the texture so that we can play with it next frame too!
 		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
-		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, sceneblur_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, sceneblur_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, sceneblur_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, sceneblur_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
 	// Restore attributes.

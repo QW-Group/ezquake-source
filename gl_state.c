@@ -53,12 +53,14 @@ void GL_BindBuffer(GLenum target, GLuint buffer);
 
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
+GLenum GL_TextureTargetFromReference(texture_ref ref);
 
 // FIXME: Add optional support for DSA
-static void GL_BindTextureUnitImpl(GLuint unit, GLenum targetType, texture_ref reference, qbool always_select_unit)
+static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
 {
 	int unit_num = unit - GL_TEXTURE0;
 	GLuint texture = GL_TextureNameFromReference(reference);
+	GLenum targetType = GL_TextureTargetFromReference(reference);
 
 	if (unit_num >= 0 && unit_num < sizeof(cntarrays)) {
 		if (targetType == GL_TEXTURE_2D_ARRAY) {
@@ -90,14 +92,14 @@ static void GL_BindTextureUnitImpl(GLuint unit, GLenum targetType, texture_ref r
 	return;
 }
 
-void GL_EnsureTextureUnitBound(GLuint unit, GLenum targetType, texture_ref reference)
+void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference)
 {
-	GL_BindTextureUnitImpl(unit, targetType, reference, false);
+	GL_BindTextureUnitImpl(unit, reference, false);
 }
 
-void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference)
+void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 {
-	GL_BindTextureUnitImpl(unit, targetType, reference, true);
+	GL_BindTextureUnitImpl(unit, reference, true);
 }
 
 void GL_DepthFunc(GLenum func)

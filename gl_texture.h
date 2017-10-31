@@ -78,5 +78,4 @@ GLint GL_TextureHeight(texture_ref ref);
 GLint GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 
-
 #endif	//__GL_TEXTURE_H

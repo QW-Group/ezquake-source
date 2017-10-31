@@ -72,6 +72,7 @@ typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* us
 // </debug-functions>
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
+GLenum GL_TextureTargetFromReference(texture_ref ref);
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
 void GL_BindBuffer(GLenum target, GLuint buffer);
@@ -476,14 +477,6 @@ void GL_Init(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	GL_ShadeModel(GL_FLAT);
 
-	// ???? WHAT TEXTURE IS THIS?
-	/*
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	*/
-
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	GL_TextureEnvMode(GL_REPLACE);
@@ -842,7 +835,7 @@ void GL_BindBuffer(GLenum target, GLuint buffer)
 }
 
 void GL_TexSubImage3D(
-	GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLenum textureUnit, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
@@ -850,7 +843,8 @@ void GL_TexSubImage3D(
 		glTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 }
@@ -861,39 +855,36 @@ void GL_TexImage2D(
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GL_BindTextureUnit(textureUnit, target, texture);
+	GL_BindTextureUnit(textureUnit, texture);
 	glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 }
 */
 
 void GL_TexSubImage2D(
-	GLenum textureUnit, GLenum target, texture_ref texture, GLint level,
+	GLenum textureUnit, texture_ref texture, GLint level,
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GLenum bindingTarget = target;
-
 	if (glTextureSubImage2D) {
 		glTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	else {
-		if (bindingTarget >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && bindingTarget <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z) {
-			bindingTarget = GL_TEXTURE_CUBE_MAP;
-		}
-		GL_BindTextureUnit(textureUnit, bindingTarget, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 }
 
 void GL_TexStorage2D(
-	GLenum textureUnit, GLenum target, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
 )
 {
 	if (glTextureStorage2D) {
 		glTextureStorage2D(GL_TextureNameFromReference(texture), levels, internalformat, width, height);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		if (glTexStorage2D) {
 			glTexStorage2D(target, levels, internalformat, width, height);
 		}
@@ -909,58 +900,63 @@ void GL_TexStorage2D(
 }
 
 void GL_TexStorage3D(
-	GLenum textureUnit, GLenum target, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
+	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
 )
 {
 	if (glTextureStorage3D) {
 		glTextureStorage3D(GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexStorage3D(target, levels, internalformat, width, height, depth);
 	}
 }
 
-void GL_TexParameterf(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, GLfloat param)
+void GL_TexParameterf(GLenum textureUnit, texture_ref texture, GLenum pname, GLfloat param)
 {
 	if (glTextureParameterf) {
 		glTextureParameterf(GL_TextureNameFromReference(texture), pname, param);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameterf(target, pname, param);
 	}
 }
 
-void GL_TexParameterfv(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, const GLfloat *params)
+void GL_TexParameterfv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLfloat *params)
 {
 	if (glTextureParameterfv) {
 		glTextureParameterfv(GL_TextureNameFromReference(texture), pname, params);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameterfv(target, pname, params);
 	}
 }
 
-void GL_TexParameteri(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, GLint param)
+void GL_TexParameteri(GLenum textureUnit, texture_ref texture, GLenum pname, GLint param)
 {
 	if (glTextureParameteri) {
 		glTextureParameteri(GL_TextureNameFromReference(texture), pname, param);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameteri(target, pname, param);
 	}
 }
 
-void GL_TexParameteriv(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, const GLint *params)
+void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLint *params)
 {
 	if (glTextureParameteriv) {
 		glTextureParameteriv(GL_TextureNameFromReference(texture), pname, params);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameteriv(target, pname, params);
 	}
 }
@@ -971,29 +967,37 @@ void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint*
 		glCreateTextures(target, n, textures);
 	}
 	else {
+		int i;
+
 		glGenTextures(n, textures);
+		for (i = 0; i < n; ++i) {
+			GL_SelectTexture(textureUnit);
+			glBindTexture(target, textures[i]);
+		}
 	}
 }
 
-void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLenum pname, GLint* params)
+void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint level, GLenum pname, GLint* params)
 {
 	if (glGetTextureLevelParameteriv) {
 		glGetTextureLevelParameteriv(GL_TextureNameFromReference(texture), level, pname, params);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		glGetTexLevelParameteriv(target, level, pname, params);
 	}
 }
 
-void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
+void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
 	// TODO: Use glGetnTexImage() if available (4.5)
 	if (glGetTextureImage) {
 		glGetTextureImage(GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		if (glGetnTexImage) {
 			glGetnTexImage(target, level, format, type, bufSize, buffer);
 		}
@@ -1003,13 +1007,14 @@ void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref texture, GLin
 	}
 }
 
-void GL_GenerateMipmapWithData(GLenum textureUnit, GLenum target, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
+void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
 {
 	if (glGenerateTextureMipmap) {
 		glGenerateTextureMipmap(GL_TextureNameFromReference(texture));
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, target, texture);
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GL_BindTextureUnit(textureUnit, texture);
 		if (glGenerateMipmap) {
 			glGenerateMipmap(target);
 		}
@@ -1020,13 +1025,13 @@ void GL_GenerateMipmapWithData(GLenum textureUnit, GLenum target, texture_ref te
 			while (width > 1 || height > 1) {
 				Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
 				miplevel++;
-				GL_TexSubImage2D(GL_TEXTURE0, GL_TEXTURE_2D, texture, miplevel, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+				GL_TexSubImage2D(GL_TEXTURE0, texture, miplevel, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 			}
 		}
 	}
 }
 
-void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref texture)
+void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
 {
-	GL_GenerateMipmapWithData(textureUnit, target, texture, NULL, 0, 0, 0);
+	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
 }

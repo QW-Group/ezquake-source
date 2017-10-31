@@ -103,7 +103,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			int xOffset, yOffset;
 
 			// Copy texture image
-			GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, sizeof(buffer), buffer);
+			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, sizeof(buffer), buffer);
 
 			for (yOffset = 0; yOffset < height; ++yOffset) {
 				for (xOffset = 0; xOffset < width; ++xOffset) {
@@ -225,7 +225,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	texHeight = GL_TextureHeight(ibar->texnum);
 
 	source = Q_malloc(texWidth * texHeight * 4);
-	GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);
+	GL_GetTexImage(GL_TEXTURE0, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);
 
 	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
 		int num = i - WADPIC_SB_IBAR_AMMO1;

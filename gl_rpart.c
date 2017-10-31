@@ -385,7 +385,7 @@ static void QMB_CreateAtlasTexture(texture_ref* textures, int count)
 		vertical_offsets[i] = y_pos;
 		horizontal_widths[i] = width;
 
-		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, textures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, width * height * 4, buffer);
+		GL_GetTexImage(GL_TEXTURE0, textures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, width * height * 4, buffer);
 
 		for (yOffset = 0; yOffset < height; ++yOffset) {
 			for (xOffset = 0; xOffset < width; ++xOffset) {

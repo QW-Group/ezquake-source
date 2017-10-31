@@ -245,7 +245,7 @@ void GLM_FlushImageDraw(void)
 			glm_image_t* img = &images[i];
 
 			if (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber)) {
-				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
+				GL_BindTextureUnit(GL_TEXTURE0, currentTexture);
 				glDrawArrays(GL_POINTS, start, i - start);
 				++frameStats.draw_calls;
 				start = i;
@@ -257,7 +257,7 @@ void GLM_FlushImageDraw(void)
 		}
 
 		if (GL_TextureReferenceIsValid(currentTexture)) {
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
+			GL_BindTextureUnit(GL_TEXTURE0, currentTexture);
 		}
 		glDrawArrays(GL_POINTS, start, imageCount - start);
 		++frameStats.draw_calls;

@@ -132,7 +132,7 @@ void GLC_DrawBillboards(void)
 		gl_billboard_batch_t* batch = &batches[i];
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, GL_TextureReferenceIsValid(batch->texture) ? batch->texture : vx_solidTexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TextureReferenceIsValid(batch->texture) ? batch->texture : vx_solidTexture);
 
 		for (j = 0; j < batch->count; ++j) {
 			gl_billboard_vert_t* v;
@@ -237,7 +237,7 @@ void GLM_DrawBillboards(void)
 		gl_billboard_batch_t* batch = &batches[i];
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, GL_TextureReferenceIsValid(batch->texture) ? batch->texture : vx_solidTexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TextureReferenceIsValid(batch->texture) ? batch->texture : vx_solidTexture);
 		if (batch->depthTest) {
 			GL_Enable(GL_DEPTH_TEST);
 		}

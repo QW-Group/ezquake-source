@@ -227,8 +227,8 @@ static void R_Bloom_InitTextures( void )
 		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &r_bloomscreentexture);
 	}
 	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &r_bloomscreentexture, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GL_TexParameterf(GL_TEXTURE0, r_bloomscreentexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	GL_TexParameterf(GL_TEXTURE0, r_bloomscreentexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	Q_free (data);
 
@@ -279,7 +279,7 @@ void R_InitBloomTextures(void)
 // =================
 void R_Bloom_DrawEffect( void )
 {
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomeffecttexture);
+	GL_BindTextureUnit(GL_TEXTURE0, r_bloomeffecttexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
@@ -408,7 +408,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	GL_IdentityModelView();
 
 	// Copy small scene into r_bloomeffecttexture.
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomeffecttexture);
+	GL_BindTextureUnit(GL_TEXTURE0, r_bloomeffecttexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Start modifying the small scene corner.
@@ -516,12 +516,12 @@ void R_Bloom_DownsampleView( void )
 		int     midsample_height = r_screendownsamplingtexture_size * sampleText_tch;
 
 		// Copy the screen and draw resized.
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0,  glheight - midsample_height, midsample_width, midsample_height, screenText_tcw, screenText_tch  );
 
 		// Now copy into Downsampling (mid-sized) texture.
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomdownsamplingtexture);
+		GL_BindTextureUnit(GL_TEXTURE0, r_bloomdownsamplingtexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, midsample_width, midsample_height);
 
 		// Now draw again in bloom size.
@@ -532,7 +532,7 @@ void R_Bloom_DownsampleView( void )
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -540,7 +540,7 @@ void R_Bloom_DownsampleView( void )
 	else
 	{    
 		// Downsample simple.
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 	}
@@ -598,7 +598,7 @@ void R_BloomBlend(void)
 	sample_height = BLOOM_SIZE * sampleText_tch;
 
 	// Copy the screen space we'll use to work into the backup texture.
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloombackuptexture);
+	GL_BindTextureUnit(GL_TEXTURE0, r_bloombackuptexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, r_screenbackuptexture_size * sampleText_tcw, r_screenbackuptexture_size * sampleText_tch);
 
 	// Create the bloom image.
@@ -608,7 +608,7 @@ void R_BloomBlend(void)
 
 	// Restore the screen-backup to the screen.
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloombackuptexture);
+	GL_BindTextureUnit(GL_TEXTURE0, r_bloombackuptexture);
 	glColor4f(1, 1, 1, 1);
 	R_Bloom_Quad(0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),

@@ -584,7 +584,7 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 
 		//bind the world texture
 		GL_DisableMultitexture();
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, t->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, t->gl_texturenum);
 
 		if (gl_mtexable) {
 			GLC_MultitextureLightmap(s->lightmaptexturenum);
