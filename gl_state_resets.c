@@ -832,27 +832,6 @@ void GLC_StateEndBlendLightmaps(void)
 	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
 }
 
-void GLC_StateBeginDrawSimpleItem(void)
-{
-	ENTER_STATE;
-
-	//glDisable(GL_CULL_FACE);
-	//GL_PrintState();
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndDrawSimpleItem(int oldFlags)
-{
-	ENTER_STATE;
-
-	//glEnable(GL_CULL_FACE);
-	GL_AlphaBlendFlags(oldFlags);
-
-	LEAVE_STATE;
-}
-
 void GLC_StateBeginCausticsPolys(void)
 {
 	ENTER_STATE;

@@ -8,7 +8,6 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 	vec3_t point;
 	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
 
-	GLC_StateBeginDrawSimpleItem();
 	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
 
 	glBegin(GL_QUADS);
@@ -32,8 +31,6 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 	VectorMA(point, sprsize, right, point);
 	glVertex3fv(point);
 	glEnd();
-
-	GLC_StateEndDrawSimpleItem(oldFlags);
 }
 
 void GLC_DrawSpriteModel(entity_t* e)

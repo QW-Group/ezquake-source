@@ -1211,8 +1211,6 @@ void GLC_StateBeginFastTurbPoly(byte color[4]);
 
 void GLC_StateBeginBlendLightmaps(void);
 void GLC_StateEndBlendLightmaps(void);
-void GLC_StateBeginDrawSimpleItem(void);
-void GLC_StateEndDrawSimpleItem(int oldFlags);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateEndSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
