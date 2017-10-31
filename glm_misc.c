@@ -169,8 +169,6 @@ void GLM_PostProcessScene(void)
 
 void GLM_PostProcessScreen(void)
 {
-	GLM_FlushImageDraw();
-
 	if (GL_FramebufferReferenceIsValid(framebuffer)) {
 		GL_FramebufferStopUsing(framebuffer);
 

@@ -39,7 +39,7 @@ float GL_WaterAlpha(void)
 
 void GL_StateDefault3D(void)
 {
-	GL_ResetRegion(true);
+	GL_ResetRegion(false);
 
 	ENTER_STATE;
 

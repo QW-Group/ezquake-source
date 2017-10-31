@@ -90,7 +90,7 @@ void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 		color[3] = alpha * 255;
 	}
 
-	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, alpha < 1.0, pic->texnum, false);
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false);
 }
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
@@ -136,13 +136,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 
 void GLM_Draw_FadeScreen(float alpha)
 {
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	}
 	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	}
 }
 
 #define MAX_MULTI_IMAGE_BATCH 1024
@@ -214,7 +208,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 }
 
-void GLM_FlushImageDraw(void)
+static void GLM_FlushImageDraw(void)
 {
 	extern cvar_t gl_alphafont;
 
@@ -261,7 +255,7 @@ void GLM_FlushImageDraw(void)
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
-		GLM_FlushImageDraw();
+		GL_FlushImageDraw();
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
@@ -285,7 +279,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
-		GLM_FlushImageDraw();
+		GL_FlushImageDraw();
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
@@ -295,4 +289,110 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	GL_TextureReferenceInvalidate(images[imageCount].texNumber);
 
 	++imageCount;
+}
+
+static void GLC_FlushImageDraw(void)
+{
+	if (imageCount) {
+		int i, j;
+		extern cvar_t gl_alphafont;
+		float modelviewMatrix[16];
+		float projectionMatrix[16];
+
+		GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
+		GL_PushMatrix(GL_PROJECTION, projectionMatrix);
+
+		GL_IdentityModelView();
+		GL_IdentityProjectionView();
+
+		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_CULL_FACE);
+
+		for (i = 0; i < imageCount; ++i) {
+			qbool alpha_test = images[i].flags & IMAGEPROG_FLAGS_ALPHATEST;
+			qbool texture = images[i].flags & IMAGEPROG_FLAGS_TEXTURE;
+			qbool text = images[i].flags & IMAGEPROG_FLAGS_TEXT;
+
+			if (texture) {
+				GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				GL_EnsureTextureUnitBound(GL_TEXTURE0, images[i].texNumber);
+			}
+			else {
+				GLC_EnsureTMUDisabled(GL_TEXTURE0);
+			}
+
+			if (text) {
+				alpha_test = !gl_alphafont.integer;
+			}
+
+			GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
+			GL_Color4ubv(images[i].colour);
+
+			glBegin(GL_QUADS);
+			for (j = i; j < imageCount; ++j) {
+				glm_image_t* next = &images[j];
+				qbool next_alpha_test = next->flags & IMAGEPROG_FLAGS_ALPHATEST;
+				qbool next_texture = next->flags & IMAGEPROG_FLAGS_TEXTURE;
+				qbool next_text = next->flags & IMAGEPROG_FLAGS_TEXT;
+
+				if (next_text) {
+					next_alpha_test = !gl_alphafont.integer;
+				}
+
+				if (next_alpha_test != alpha_test) {
+					break;
+				}
+				if (next_texture != texture) {
+					break;
+				}
+				if (next_texture && !GL_TextureReferenceEqual(images[i].texNumber, next->texNumber)) {
+					break;
+				}
+				if (memcmp(images[i].colour, next->colour, sizeof(images[i].colour))) {
+					break;
+				}
+
+				if (texture) {
+					glTexCoord2f(next->s1, next->t2);
+				}
+				glVertex2f(next->x1, next->y2);
+				if (texture) {
+					glTexCoord2f(next->s1, next->t1);
+				}
+				glVertex2f(next->x1, next->y1);
+				if (texture) {
+					glTexCoord2f(next->s2, next->t1);
+				}
+				glVertex2f(next->x2, next->y1);
+				if (texture) {
+					glTexCoord2f(next->s2, next->t2);
+				}
+				glVertex2f(next->x2, next->y2);
+			}
+			glEnd();
+
+			i = j - 1;
+		}
+
+		GL_PopMatrix(GL_PROJECTION, projectionMatrix);
+		GL_PopMatrix(GL_MODELVIEW, modelviewMatrix);
+	}
+}
+
+void GL_FlushImageDraw(void)
+{
+	if (!imageCount) {
+		return;
+	}
+
+	if (GL_ShadersSupported()) {
+		GLM_FlushImageDraw();
+	}
+	else {
+		GLC_FlushImageDraw();
+	}
+
+	imageCount = 0;
 }

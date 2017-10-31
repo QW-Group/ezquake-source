@@ -31,8 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GL_StateDefault2D(void)
 {
-	extern void GL_PrintState(void);
-
 	GL_ResetRegion(false);
 
 	ENTER_STATE;

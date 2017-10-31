@@ -267,22 +267,12 @@ void Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overal
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
-		GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
-	}
-	else {
-		GLC_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
-	}
+	GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
 }
 
 static void Draw_ResetCharGLState(void)
 {
-	if (GL_ShadersSupported()) {
-		GLM_Draw_ResetCharGLState();
-	}
-	else {
-		GLC_StateResetCharGLState();
-	}
+	GLM_Draw_ResetCharGLState();
 }
 
 void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
@@ -328,12 +318,7 @@ void Draw_Character(int x, int y, int num)
 
 void Draw_SetColor(byte *rgba, float alpha)
 {
-	if (GL_ShadersSupported()) {
-		GLM_Draw_SetColor(rgba, alpha);
-	}
-	else {
-		GLC_Draw_SetColor(rgba, alpha);
-	}
+	GLM_Draw_SetColor(rgba, alpha);
 }
 
 static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
@@ -358,12 +343,7 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	}
 
 	// Draw the string.
-	if (GL_ShadersSupported()) {
-		GLM_Draw_StringBase_StartString(x, y, scale);
-	}
-	else {
-		GLC_Draw_StringBase_StartString(x, y, scale);
-	}
+	GLM_Draw_StringBase_StartString(x, y, scale);
 	for (i = 0; text[i]; i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {

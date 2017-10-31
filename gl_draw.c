@@ -742,12 +742,7 @@ void Draw_Crosshair (void)
 			ofs2 *= 0.5f;
 		}
 
-		if (GL_ShadersSupported()) {
-			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
-		}
-		else {
-			GLC_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
-		}
+		GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
@@ -849,12 +844,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
 void Draw_TileClear(int x, int y, int w, int h)
 {
-	if (GL_ShadersSupported()) {
-		GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
-	}
-	else {
-		GLC_DrawTileClear(draw_backtile->texnum, x, y, w, h);
-	}
+	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
@@ -868,12 +858,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	COLOR_TO_RGBA(color, bytecolor);
 	thickness = max(0, thickness);
 
-	if (GL_ShadersSupported()) {
-		GLM_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
-	}
-	else {
-		GLC_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
-	}
+	GLM_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)
@@ -1004,12 +989,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 	alpha *= overall_alpha;
 
-	if (GL_ShadersSupported()) {
-		GLM_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
-	}
-	else {
-		GLC_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
-	}
+	GLM_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 }
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
@@ -1192,12 +1172,7 @@ void Draw_FadeScreen(float alpha)
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
-		GLM_Draw_FadeScreen(alpha);
-	}
-	else {
-		GLC_Draw_FadeScreen(alpha);
-	}
+	GLM_Draw_FadeScreen(alpha);
 
 	Sbar_Changed();
 }

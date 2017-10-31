@@ -44,6 +44,17 @@ void GLM_OrthographicProjection(float left, float right, float top, float bottom
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 }
 
+static const char* NameForMatrix(GLenum mode)
+{
+	if (mode == GL_MODELVIEW || mode == GL_MODELVIEW_MATRIX) {
+		return "modelview";
+	}
+	if (mode == GL_PROJECTION || mode == GL_PROJECTION_MATRIX) {
+		return "projection";
+	}
+	return "(other)";
+}
+
 float* GL_MatrixForMode(GLenum type)
 {
 	static float junk[16] = { 0 };
@@ -237,6 +248,7 @@ void GL_IdentityModelView(void)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+		GL_LogAPICall("GL_IdentityModelView(%s)", NameForMatrix(GL_MODELVIEW));
 	}
 }
 
@@ -252,6 +264,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
+		GL_LogAPICall("GL_RotateMatrix(%s)", NameForMatrix(matrix));
 	}
 }
 
@@ -262,6 +275,7 @@ void GL_Translate(GLenum matrix, float x, float y, float z)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(matrix);
 		glTranslatef(x, y, z);
+		GL_LogAPICall("GL_Translate(%s)", NameForMatrix(matrix));
 	}
 }
 
@@ -272,6 +286,7 @@ void GL_IdentityProjectionView(void)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
+		GL_LogAPICall("GL_Identity(%s)", NameForMatrix(GL_PROJECTION));
 	}
 }
 
@@ -291,6 +306,7 @@ void GL_PushMatrix(GLenum mode, float* matrix)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(mode);
 		glPushMatrix();
+		GL_LogAPICall("GL_PushMatrix(%s)", NameForMatrix(mode));
 	}
 }
 
@@ -301,6 +317,7 @@ void GL_PopMatrix(GLenum mode, float* matrix)
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(mode);
 		glPopMatrix();
+		GL_LogAPICall("GL_PopMatrix(%s)", NameForMatrix(mode));
 	}
 }
 
@@ -309,7 +326,9 @@ void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
 	GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
 
 	if (!GL_ShadersSupported()) {
+		glMatrixMode(matrix);
 		glScalef(xScale, yScale, zScale);
+		GL_LogAPICall("GL_ScaleMatrix(%s)", NameForMatrix(matrix));
 	}
 }
 
@@ -333,6 +352,7 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 	
 	if (!GL_ShadersSupported()) {
 		glFrustum(left, right, bottom, top, zNear, zFar);
+		GL_LogAPICall("glFrustum()");
 	}
 }
 

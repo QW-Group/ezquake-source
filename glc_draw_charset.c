@@ -2,7 +2,7 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-
+/*
 extern float overall_alpha;
 extern mpic_t char_textures[MAX_CHARSETS];
 extern int char_range[MAX_CHARSETS];
@@ -119,3 +119,4 @@ void GLC_Draw_StringBase_StartString(int x, int y, float scale)
 {
 	GLC_StateBeginStringDraw();
 }
+*/

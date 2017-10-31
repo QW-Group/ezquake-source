@@ -28,6 +28,8 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 extern float overall_alpha;
 #define CIRCLE_LINE_COUNT	40
 
+#if 0
+
 void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h)
 {
 	GL_BindTextureUnit(GL_TEXTURE0, texnum);
@@ -42,35 +44,6 @@ void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h)
 	glTexCoord2f(x / 64.0, (y + h) / 64.0);
 	glVertex2f(x, y + h);
 	glEnd();
-}
-
-void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end)
-{
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-	glBegin(GL_LINES);
-	glVertex2f(x_start, y_start);
-	glVertex2f(x_end, y_end);
-	glEnd();
-	glColor3ubv(color_white);
-}
-
-void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
-{
-	byte bytecolor[4];
-	int i = 0;
-	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
-
-	GLC_StateBeginDrawPolygon();
-
-	COLOR_TO_RGBA(color, bytecolor);
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-	glBegin(fill ? GL_TRIANGLE_FAN : GL_LINE_LOOP);
-	for (i = 0; i < num_vertices; i++) {
-		glVertex2f(x + vertices[i][0], y + vertices[i][1]);
-	}
-	glEnd();
-
-	GLC_StateEndDrawPolygon(oldFlags);
 }
 
 void GLC_DrawImage(float x, float y, float width, float height, float sl, float tl, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
@@ -91,6 +64,81 @@ void GLC_DrawImage(float x, float y, float width, float height, float sl, float 
 	glEnd();
 
 	GLC_StateEndDrawImage();
+}
+
+void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
+{
+	GLC_StateBeginAlphaPic(alpha);
+
+	GL_BindTextureUnit(GL_TEXTURE0, pic->texnum);
+
+	glBegin(GL_QUADS);
+	{
+		// Upper left corner.
+		glTexCoord2f(newsl, newtl);
+		glVertex2f(x, y);
+
+		// Upper right corner.
+		glTexCoord2f(newsh, newtl);
+		glVertex2f(x + (scale_x * src_width), y);
+
+		// Bottom right corner.
+		glTexCoord2f(newsh, newth);
+		glVertex2f(x + (scale_x * src_width), y + (scale_y * src_height));
+
+		// Bottom left corner.
+		glTexCoord2f(newsl, newth);
+		glVertex2f(x, y + (scale_y * src_height));
+	}
+	glEnd();
+
+	GLC_StateEndAlphaPic(alpha);
+}
+
+void GLC_Draw_FadeScreen(float alpha)
+{
+	GLC_StateBeginFadeScreen(alpha);
+
+	glBegin(GL_QUADS);
+	glVertex2f(0, 0);
+	glVertex2f(vid.width, 0);
+	glVertex2f(vid.width, vid.height);
+	glVertex2f(0, vid.height);
+	glEnd();
+
+	GLC_StateEndFadeScreen();
+}
+#else
+
+#endif
+
+void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
+{
+	byte bytecolor[4];
+	int i = 0;
+	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
+
+	GLC_StateBeginDrawPolygon();
+
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+	glBegin(fill ? GL_TRIANGLE_FAN : GL_LINE_LOOP);
+	for (i = 0; i < num_vertices; i++) {
+		glVertex2f(x + vertices[i][0], y + vertices[i][1]);
+	}
+	glEnd();
+
+	GLC_StateEndDrawPolygon(oldFlags);
+}
+
+void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end)
+{
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+	glBegin(GL_LINES);
+	glVertex2f(x_start, y_start);
+	glVertex2f(x_end, y_end);
+	glEnd();
+	glColor3ubv(color_white);
 }
 
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
@@ -145,65 +193,3 @@ void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 
 	GLC_StateEndDrawAlphaPieSliceRGB(thickness);
 }
-
-void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
-{
-	GLC_StateBeginAlphaPic(alpha);
-
-	GL_BindTextureUnit(GL_TEXTURE0, pic->texnum);
-
-	glBegin(GL_QUADS);
-	{
-		// Upper left corner.
-		glTexCoord2f(newsl, newtl);
-		glVertex2f(x, y);
-
-		// Upper right corner.
-		glTexCoord2f(newsh, newtl);
-		glVertex2f(x + (scale_x * src_width), y);
-
-		// Bottom right corner.
-		glTexCoord2f(newsh, newth);
-		glVertex2f(x + (scale_x * src_width), y + (scale_y * src_height));
-
-		// Bottom left corner.
-		glTexCoord2f(newsl, newth);
-		glVertex2f(x, y + (scale_y * src_height));
-	}
-	glEnd();
-
-	GLC_StateEndAlphaPic(alpha);
-}
-
-void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
-{
-	GLC_StateBeginAlphaRectangle();
-
-	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
-	if (fill) {
-		glRectf(x, y, x + w, y + h);
-	}
-	else {
-		glRectf(x, y, x + w, y + thickness);
-		glRectf(x, y + thickness, x + thickness, y + h - thickness);
-		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
-		glRectf(x, y + h, x + w, y + h - thickness);
-	}
-
-	GLC_StateEndAlphaRectangle();
-}
-
-void GLC_Draw_FadeScreen(float alpha)
-{
-	GLC_StateBeginFadeScreen(alpha);
-
-	glBegin(GL_QUADS);
-	glVertex2f(0, 0);
-	glVertex2f(vid.width, 0);
-	glVertex2f(vid.width, vid.height);
-	glVertex2f(0, vid.height);
-	glEnd();
-
-	GLC_StateEndFadeScreen();
-}
-

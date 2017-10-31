@@ -656,10 +656,19 @@ qbool GLM_CreateVGFProgramWithInclude(
 #define glEnable GL_Enable
 #define glDisable GL_Disable
 #define glBegin GL_Begin
+#define glEnd GL_End
+#define glVertex2f GL_Vertex2f
+#define glVertex3f GL_Vertex3f
+#define glVertex3fv GL_Vertex3fv
 
 void GL_Begin(GLenum primitive);
+void GL_End(void);
 void GL_Enable(GLenum option);
 void GL_Disable(GLenum option);
+void GL_Vertex2f(GLfloat x, GLfloat y);
+void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
+void GL_Vertex3fv(const GLfloat* v);
+
 
 void GL_Color3f(float r, float g, float b);
 void GL_Color4f(float r, float g, float b, float a);
@@ -715,15 +724,17 @@ void GL_UnBindBuffer(GLenum target);
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
 void GL_LeaveRegion(void);
+void GL_PrintState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
 #else
 #define GL_EnterRegion(x)
 #define GL_LeaveRegion()
-#define GL_ResetRegion()
-#define GL_MarkEvent(x)
-#define GL_LogAPICall(x)
+#define GL_ResetRegion(x)
+#define GL_MarkEvent(...)
+#define GL_LogAPICall(...)
+#define GL_PrintState()
 #endif
 
 #define NUMVERTEXNORMALS 162
@@ -838,24 +849,25 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
 
 void GLC_DrawParticles(int particles_to_draw, qbool square);
-void GLC_DrawImage(float x, float y, float width, float height, float sl, float tl, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText);
-void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
-void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
-void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
+
 void GLC_Draw_FadeScreen(float alpha);
 void GLC_DrawSkyChain(void);
 void GLC_DrawSky(void);
-void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange);
 void GLC_DrawWaterSurfaces(void);
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 void GLC_DrawWorld(void);
+
+/*
+void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
+void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
+void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange);
 void GLC_Draw_SetColor(byte* rgba, float alpha);
 void GLC_Draw_StringBase_StartString(int x, int y, float scale);
 void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos);
-
+*/
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
@@ -872,7 +884,7 @@ void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
-void GLM_FlushImageDraw(void);
+void GL_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 
 void GLM_SetIdentityMatrix(float* matrix);

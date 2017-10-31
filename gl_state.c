@@ -847,6 +847,11 @@ void GL_Disable(GLenum option)
 
 #undef glBegin
 
+static int glcVertsPerPrimitive = 0;
+static int glcBaseVertsPerPrimitive = 0;
+static int glcVertsSent = 0;
+static const char* glcPrimitiveName = "?";
+
 void GL_Begin(GLenum primitive)
 {
 	if (GL_ShadersSupported()) {
@@ -854,9 +859,89 @@ void GL_Begin(GLenum primitive)
 		return;
 	}
 
+	glcVertsSent = 0;
+	glcVertsPerPrimitive = 0;
+	glcBaseVertsPerPrimitive = 0;
+	glcPrimitiveName = "?";
+
+	switch (primitive) {
+	case GL_QUADS:
+		glcVertsPerPrimitive = 4;
+		glcBaseVertsPerPrimitive = 0;
+		glcPrimitiveName = "GL_QUADS";
+		break;
+	case GL_POLYGON:
+		glcVertsPerPrimitive = 0;
+		glcBaseVertsPerPrimitive = 0;
+		glcPrimitiveName = "GL_POLYGON";
+		break;
+	case GL_TRIANGLE_FAN:
+		glcVertsPerPrimitive = 1;
+		glcBaseVertsPerPrimitive = 2;
+		glcPrimitiveName = "GL_TRIANGLE_FAN";
+		break;
+	case GL_TRIANGLE_STRIP:
+		glcVertsPerPrimitive = 1;
+		glcBaseVertsPerPrimitive = 2;
+		glcPrimitiveName = "GL_TRIANGLE_STRIP";
+		break;
+	case GL_LINE_LOOP:
+		glcVertsPerPrimitive = 1;
+		glcBaseVertsPerPrimitive = 1;
+		glcPrimitiveName = "GL_LINE_LOOP";
+		break;
+	case GL_LINES:
+		glcVertsPerPrimitive = 2;
+		glcBaseVertsPerPrimitive = 0;
+		glcPrimitiveName = "GL_LINES";
+		break;
+	}
+
 	++frameStats.draw_calls;
 	glBegin(primitive);
 	//GL_LogAPICall("GL_Begin()...");
+}
+
+#undef glEnd
+
+void GL_End(void)
+{
+	int primitives;
+
+	if (GL_ShadersSupported()) {
+		assert(0);
+		return;
+	}
+
+	glEnd();
+
+	primitives = max(0, glcVertsSent - glcBaseVertsPerPrimitive);
+	if (glcVertsPerPrimitive) {
+		primitives = glcVertsSent / glcVertsPerPrimitive;
+	}
+	GL_LogAPICall("glBegin/End(%s: %d primitives)\n", glcPrimitiveName, primitives);
+}
+
+#undef glVertex2f
+#undef glVertex3f
+#undef glVertex3fv
+
+void GL_Vertex2f(GLfloat x, GLfloat y)
+{
+	glVertex2f(x, y);
+	++glcVertsSent;
+}
+
+void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z)
+{
+	glVertex3f(x, y, z);
+	++glcVertsSent;
+}
+
+void GL_Vertex3fv(const GLfloat* v)
+{
+	glVertex3fv(v);
+	++glcVertsSent;
 }
 
 #ifdef WITH_NVTX
