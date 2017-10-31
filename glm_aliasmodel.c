@@ -203,9 +203,7 @@ static void GLM_FlushAliasModelBatch(void)
 		if (drawAlias_compiledOptions & DRAW_CAUSTIC_TEXTURES) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
 		}
-		for (i = 0; i < material_samplers; ++i) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, allocated_samplers[i]);
-		}
+		GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);
 
 		// Update indirect buffer
 		GL_UpdateVBO(&vbo_aliasIndirectDraw, sizeof(aliasmodel_requests), &aliasmodel_requests);

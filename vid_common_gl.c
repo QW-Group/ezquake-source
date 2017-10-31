@@ -190,6 +190,7 @@ static glTexStorage2D_t         glTexStorage2D;
 static glTexSubImage3D_t        glTexSubImage3D;
 static glTexStorage3D_t         glTexStorage3D;
 static glGenerateMipmap_t       glGenerateMipmap;
+glBindTextures_t                glBindTextures;
 
 // Draw functions
 glMultiDrawArrays_t      glMultiDrawArrays;
@@ -384,6 +385,9 @@ static void CheckShaderExtensions(void)
 			glPrimitiveRestartIndex(~(GLuint)0);
 		}
 	}
+
+	// 4.4 - binds textures to consecutive texture units
+	glBindTextures = SDL_GL_GetProcAddress("glBindTextures");
 }
 
 void GL_CheckExtensions (void)

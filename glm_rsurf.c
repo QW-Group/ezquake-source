@@ -386,9 +386,7 @@ void GL_FlushWorldModelBatch(void)
 	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	// Bind texture units
-	for (i = 0; i < material_samplers; ++i) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, allocated_samplers[i]);
-	}
+	GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);
 
 	if (polygonOffsetStart >= 0 && polygonOffsetStart < batch_count) {
 		if (polygonOffsetStart) {

@@ -452,6 +452,7 @@ typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xof
 typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
+typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 
 // Draw functions
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
@@ -508,6 +509,7 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
+extern glBindTextures_t         glBindTextures;
 
 // Draw functions
 extern glMultiDrawArrays_t      glMultiDrawArrays;
@@ -905,6 +907,7 @@ void GL_GetTexImage(GLenum textureUnit, texture_ref reference, GLint level, GLen
 
 void GL_BindTextureUnit(GLuint unit, texture_ref reference);
 void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference);
+void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 

@@ -6,7 +6,8 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define MAX_LOGGED_TEXTURE_UNITS 8
+// This is how many
+#define MAX_LOGGED_TEXTURE_UNITS 32
 
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
 
@@ -62,7 +63,7 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 	GLuint texture = GL_TextureNameFromReference(reference);
 	GLenum targetType = GL_TextureTargetFromReference(reference);
 
-	if (unit_num >= 0 && unit_num < sizeof(cntarrays)) {
+	if (unit_num >= 0 && unit_num < sizeof(cntarrays) / sizeof(cntarrays[0])) {
 		if (targetType == GL_TEXTURE_2D_ARRAY) {
 			if (unit == oldtarget && currentTextureArray == texture) {
 				return;
@@ -758,3 +759,36 @@ void GL_Hint(GLenum target, GLenum mode)
 	}
 }
 
+void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
+{
+	int i;
+
+	if (glBindTextures) {
+		GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
+
+		count = min(count, MAX_LOGGED_TEXTURE_UNITS);
+		for (i = 0; i < count; ++i) {
+			glTextures[i] = GL_TextureNameFromReference(textures[i]);
+			if (GL_TEXTURE0 + first + i == oldtarget) {
+				currenttexture = glTextures[i];
+			}
+			else if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
+				GLenum target = GL_TextureTargetFromReference(textures[i]);
+
+				if (target == GL_TEXTURE_2D_ARRAY) {
+					cntarrays[i + first] = glTextures[i];
+				}
+				else if (target == GL_TEXTURE_2D) {
+					cnttextures[i + first] = glTextures[i];
+				}
+			}
+		}
+
+		glBindTextures(first, count, glTextures);
+	}
+	else {
+		for (i = 0; i < count; ++i) {
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + first + i, textures[i]);
+		}
+	}
+}
