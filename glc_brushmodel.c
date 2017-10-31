@@ -65,17 +65,20 @@ static void GLC_DrawFlat(model_t *model)
 
 		for (; s; s = s->drawflatchain) {
 			if (s->flags & SURF_DRAWSKY) {
+				GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				if (lastType != 2) {
 					glColor3ubv(sky);
 					lastType = 2;
 				}
 			}
 			else if (s->flags & SURF_DRAWTURB) {
+				GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				glColor3ubv(SurfaceFlatTurbColor(s->texinfo->texture));
 				lastType = -1;
 			}
 			else {
 				GLC_SetTextureLightmap(GL_TEXTURE0, s->lightmaptexturenum);
+				GLC_EnsureTMUEnabled(GL_TEXTURE0);
 				if (s->flags & SURF_DRAWFLAT_FLOOR) {
 					if (lastType != 0) {
 						glColor3ubv(f);

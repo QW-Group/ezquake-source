@@ -80,6 +80,7 @@ void GLC_StateBeginWaterSurfaces(void)
 	float wateralpha = GL_WaterAlpha();
 
 	ENTER_STATE;
+	GL_PrintState();
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glColor4f (1, 1, 1, wateralpha);
@@ -88,14 +89,16 @@ void GLC_StateBeginWaterSurfaces(void)
 			GL_DepthMask(GL_FALSE);
 		}
 	}
-	GL_DisableMultitexture();
+	GL_Color4ubv(color_white);
+	GL_PrintState();
+	LEAVE_STATE;
 }
 
 void GLC_StateEndWaterSurfaces(void)
 {
 	float wateralpha = GL_WaterAlpha();
 
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	if (wateralpha < 1.0) {
 		GL_TextureEnvMode(GL_REPLACE);
@@ -106,6 +109,8 @@ void GLC_StateEndWaterSurfaces(void)
 			GL_DepthMask(GL_TRUE);
 		}
 	}
+
+	LEAVE_STATE;
 }
 
 void GL_StateBeginEntities(visentlist_t* vislist)
@@ -666,9 +671,7 @@ void GLC_StateBeginDrawFlatModel(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_BLEND);
-	GLC_EnableTMU(GL_TEXTURE0);
+	GLC_InitTextureUnitsNoBind1(GL_BLEND);
 
 	// START shaman BUG /fog not working with /r_drawflat {
 	if (gl_fogenable.value) {
@@ -827,18 +830,21 @@ void GLC_StateBeginDrawSimpleItem(void)
 {
 	ENTER_STATE;
 
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+	GL_PrintState();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_DisableMultitexture();
-	GLC_EnableTMU(GL_TEXTURE0);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawSimpleItem(int oldFlags)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(oldFlags);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginCausticsPolys(void)

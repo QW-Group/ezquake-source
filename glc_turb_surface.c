@@ -43,7 +43,7 @@ void GLC_DrawWaterSurfaces(void)
 	GLC_StateBeginWaterSurfaces();
 
 	for (s = waterchain; s; s = s->texturechain) {
-		GL_BindTextureUnit(GL_TEXTURE0, s->texinfo->texture->gl_texturenum);
+		GLC_InitTextureUnits1(s->texinfo->texture->gl_texturenum, GL_REPLACE);
 		EmitWaterPolys(s);
 	}
 

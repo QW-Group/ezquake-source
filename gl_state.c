@@ -28,27 +28,41 @@ static GLuint currentProgram = 0;
 static qbool gl_cullface = false;
 static qbool gl_depthTestEnabled = false;
 static qbool gl_framebuffer_srgb = false;
-static qbool gl_texture_2d = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
 static GLboolean gl_depth_mask = GL_FALSE;
-static GLuint currenttexture = 0;
-static GLuint currentTextureArray = 0;
 static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
 static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
 static GLenum perspectiveCorrectionHint;
 
-static GLenum oldtarget = GL_TEXTURE0;
-static GLuint cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
-static GLuint cntarrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+static GLenum currentTextureUnit = GL_TEXTURE0;
+static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
+static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
 
-static GLenum lastTextureMode[MAX_LOGGED_TEXTURE_UNITS];
 static int old_alphablend_flags = 0;
 
 // vid_common_gl.c
+static const char* TexEnvName(GLenum mode)
+{
+	switch (mode) {
+	case GL_MODULATE:
+		return "GL_MODULATE";
+	case GL_REPLACE:
+		return "GL_REPLACE";
+	case GL_BLEND:
+		return "GL_BLEND";
+	case GL_DECAL:
+		return "GL_DECAL";
+	case GL_ADD:
+		return "GL_ADD";
+	default:
+		return "???";
+	}
+}
 
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -60,12 +74,9 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 	GLuint texture = GL_TextureNameFromReference(reference);
 	GLenum targetType = GL_TextureTargetFromReference(reference);
 
-	if (unit_num >= 0 && unit_num < sizeof(cntarrays) / sizeof(cntarrays[0])) {
+	if (unit_num >= 0 && unit_num < sizeof(bound_arrays) / sizeof(bound_arrays[0])) {
 		if (targetType == GL_TEXTURE_2D_ARRAY) {
-			if (unit == oldtarget && currentTextureArray == texture) {
-				return;
-			}
-			else if (unit != oldtarget && cntarrays[unit_num] == texture) {
+			if (bound_arrays[unit_num] == texture) {
 				if (always_select_unit) {
 					GL_SelectTexture(unit);
 				}
@@ -73,10 +84,7 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 			}
 		}
 		else if (targetType == GL_TEXTURE_2D) {
-			if (unit == oldtarget && currenttexture == texture) {
-				return;
-			}
-			else if (unit != oldtarget && cnttextures[unit_num] == texture) {
+			if (bound_textures[unit_num] == texture) {
 				if (always_select_unit) {
 					GL_SelectTexture(unit);
 				}
@@ -194,14 +202,11 @@ void GL_InitialiseState(void)
 	gl_cullface = false;
 	gl_depthTestEnabled = false;
 	gl_framebuffer_srgb = false;
-	gl_texture_2d = false;
 	gl_blend = false;
 	gl_cull_face = false;
 	gl_depth_mask = GL_FALSE;
-	currenttexture = 0;
-	currentTextureArray = 0;
-	for (i = 0; i < sizeof(lastTextureMode) / sizeof(lastTextureMode[0]); ++i) {
-		lastTextureMode[i] = GL_MODULATE;
+	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
+		unit_texture_mode[i] = GL_MODULATE;
 	}
 	old_alphablend_flags = 0;
 	polygonOffsetFactor = polygonOffsetUnits = 0;
@@ -211,11 +216,9 @@ void GL_InitialiseState(void)
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
-	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures); ++i) {
-		cnttextures[i] = 0;
-		cntarrays[i] = 0;
-		texunitenabled[i] = false;
-	}
+	memset(bound_textures, 0, sizeof(bound_textures));
+	memset(bound_arrays, 0, sizeof(bound_arrays));
+	memset(texunitenabled, 0, sizeof(texunitenabled));
 
 	// Buffers
 	GL_InitialiseBufferState();
@@ -237,27 +240,27 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 #endif
 
 	if (targetType == GL_TEXTURE_2D) {
-		if (currenttexture == texnum) {
+		if (bound_textures[currentTextureUnit - GL_TEXTURE0] == texnum) {
 			return;
 		}
 
-		currenttexture = texnum;
+		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u)", currentTextureUnit - GL_TEXTURE0, texnum);
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
-		if (currentTextureArray == texnum) {
+		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
 			return;
 		}
 
-		currentTextureArray = texnum;
+		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u)", currentTextureUnit - GL_TEXTURE0, texnum);
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u)", currentTextureUnit - GL_TEXTURE0, texnum);
 	}
 
 	++frameStats.texture_binds;
@@ -267,9 +270,9 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 #endif
 }
 
-void GL_SelectTexture(GLenum target)
+void GL_SelectTexture(GLenum textureUnit)
 {
-	if (target == oldtarget) {
+	if (textureUnit == currentTextureUnit) {
 		return;
 	}
 
@@ -277,23 +280,17 @@ void GL_SelectTexture(GLenum target)
 	GL_ProcessErrors("glActiveTexture/Prior");
 #endif
 	if (glActiveTexture) {
-		glActiveTexture(target);
+		glActiveTexture(textureUnit);
 	}
 	else {
-		qglActiveTexture(target);
+		qglActiveTexture(textureUnit);
 	}
 #ifdef GL_PARANOIA
 	GL_ProcessErrors("glActiveTexture/After");
 #endif
 
-	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
-	cntarrays[oldtarget - GL_TEXTURE0] = currentTextureArray;
-	texunitenabled[oldtarget - GL_TEXTURE0] = gl_texture_2d;
-	currenttexture = cnttextures[target - GL_TEXTURE0];
-	currentTextureArray = cntarrays[target - GL_TEXTURE0];
-	gl_texture_2d = texunitenabled[target - GL_TEXTURE0];
-	oldtarget = target;
-	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", target - GL_TEXTURE0);
+	currentTextureUnit = textureUnit;
+	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
 
 void GL_DisableMultitexture(void)
@@ -303,9 +300,6 @@ void GL_DisableMultitexture(void)
 	}
 	else {
 		int i;
-		if (oldtarget > GL_TEXTURE0 && gl_texture_2d) {
-			glDisable(GL_TEXTURE_2D);
-		}
 		for (i = 1; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
 			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
 		}
@@ -340,44 +334,35 @@ void GLC_DisableTMU(GLenum target)
 	}
 }
 
-void GLC_EnsureTMUEnabled(GLenum target)
+void GLC_EnsureTMUEnabled(GLenum textureUnit)
 {
 	if (!GL_ShadersSupported()) {
-		if (oldtarget == target && gl_texture_2d) {
-			return;
-		}
-		if (texunitenabled[target - GL_TEXTURE0]) {
+		if (texunitenabled[textureUnit - GL_TEXTURE0]) {
 			return;
 		}
 
-		GLC_EnableTMU(target);
+		GLC_EnableTMU(textureUnit);
 	}
 }
 
-void GLC_EnsureTMUDisabled(GLenum target)
+void GLC_EnsureTMUDisabled(GLenum textureUnit)
 {
 	if (!GL_ShadersSupported()) {
-		if (oldtarget == target && !gl_texture_2d) {
-			return;
-		}
-		if (!texunitenabled[target - GL_TEXTURE0]) {
+		if (!texunitenabled[textureUnit - GL_TEXTURE0]) {
 			return;
 		}
 
-		GLC_DisableTMU(target);
+		GLC_DisableTMU(textureUnit);
 	}
 }
 
 void GL_InitTextureState(void)
 {
-	int i;
-
 	// Multi texture.
-	currenttexture = 0;
-	oldtarget = GL_TEXTURE0;
+	currentTextureUnit = GL_TEXTURE0;
 
-	memset(cnttextures, 0, sizeof(cnttextures));
-	memset(cntarrays, 0, sizeof(cntarrays));
+	memset(bound_textures, 0, sizeof(bound_textures));
+	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(texunitenabled, 0, sizeof(texunitenabled));
 }
 
@@ -405,7 +390,7 @@ void GL_DepthMask(GLboolean mask)
 
 void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 {
-	if (!GL_ShadersSupported() && mode != lastTextureMode[unit - GL_TEXTURE0]) {
+	if (!GL_ShadersSupported() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
 		GL_SelectTexture(unit);
 		GL_TextureEnvMode(mode);
 	}
@@ -413,9 +398,10 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 
 void GL_TextureEnvMode(GLenum mode)
 {
-	if (!GL_ShadersSupported() && mode != lastTextureMode[oldtarget - GL_TEXTURE0]) {
+	if (!GL_ShadersSupported() && mode != unit_texture_mode[currentTextureUnit - GL_TEXTURE0]) {
+		GL_LogAPICall("GL_TextureEnvMode(mode=%s)", TexEnvName(mode));
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
-		lastTextureMode[oldtarget - GL_TEXTURE0] = mode;
+		unit_texture_mode[currentTextureUnit - GL_TEXTURE0] = mode;
 	}
 }
 
@@ -429,6 +415,12 @@ static void GLC_DisableTextureUnitOnwards(int first)
 			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
 		}
 	}
+}
+
+void GLC_InitTextureUnitsNoBind1(GLenum envMode0)
+{
+	GLC_DisableTextureUnitOnwards(1);
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
 }
 
 void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0)
@@ -574,19 +566,12 @@ void GL_InvalidateTextureReferences(GLuint texture)
 
 	// glDeleteTextures(texture) has been called - same reference might be re-used in future
 	// If a texture that is currently bound is deleted, the binding reverts to 0 (the default texture)
-	if (currenttexture == texture) {
-		currenttexture = 0;
-	}
-	if (currentTextureArray == texture) {
-		currentTextureArray = 0;
-	}
-
-	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); ++i) {
-		if (cnttextures[i] == texture) {
-			cnttextures[i] = 0;
+	for (i = 0; i < sizeof(bound_textures) / sizeof(bound_textures[0]); ++i) {
+		if (bound_textures[i] == texture) {
+			bound_textures[i] = 0;
 		}
-		if (cntarrays[i] == texture) {
-			cntarrays[i] = 0;
+		if (bound_arrays[i] == texture) {
+			bound_arrays[i] = 0;
 		}
 	}
 }
@@ -689,17 +674,14 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 		count = min(count, MAX_LOGGED_TEXTURE_UNITS);
 		for (i = 0; i < count; ++i) {
 			glTextures[i] = GL_TextureNameFromReference(textures[i]);
-			if (GL_TEXTURE0 + first + i == oldtarget) {
-				currenttexture = glTextures[i];
-			}
-			else if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
+			if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
 				GLenum target = GL_TextureTargetFromReference(textures[i]);
 
 				if (target == GL_TEXTURE_2D_ARRAY) {
-					cntarrays[i + first] = glTextures[i];
+					bound_arrays[i + first] = glTextures[i];
 				}
 				else if (target == GL_TEXTURE_2D) {
-					cnttextures[i + first] = glTextures[i];
+					bound_textures[i + first] = glTextures[i];
 				}
 			}
 		}
@@ -757,12 +739,12 @@ void GL_Enable(GLenum option)
 		GL_LogAPICall("glEnable(GL_CULL_FACE)");
 	}
 	else if (option == GL_TEXTURE_2D) {
-		if (gl_texture_2d) {
+		if (texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
 			return;
 		}
 
-		gl_texture_2d = true;
-		GL_LogAPICall("glEnable(GL_TEXTURE%u, GL_TEXTURE_2D)", oldtarget - GL_TEXTURE0);
+		texunitenabled[currentTextureUnit - GL_TEXTURE0] = true;
+		GL_LogAPICall("glEnable(GL_TEXTURE%u, GL_TEXTURE_2D)", currentTextureUnit - GL_TEXTURE0);
 	}
 	else if (option == GL_BLEND) {
 		if (gl_blend) {
@@ -839,12 +821,12 @@ void GL_Disable(GLenum option)
 		gl_cullface = false;
 	}
 	else if (option == GL_TEXTURE_2D) {
-		if (!gl_texture_2d) {
+		if (!texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
 			return;
 		}
 
-		GL_LogAPICall("glDisable(GL_TEXTURE%u, GL_TEXTURE_2D)", oldtarget - GL_TEXTURE0);
-		gl_texture_2d = false;
+		texunitenabled[currentTextureUnit - GL_TEXTURE0] = false;
+		GL_LogAPICall("glDisable(GL_TEXTURE%u, GL_TEXTURE_2D)", currentTextureUnit - GL_TEXTURE0);
 	}
 	else if (option == GL_BLEND) {
 		if (!gl_blend) {
@@ -907,9 +889,9 @@ void GL_PrintState(void)
 		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange);
 		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cullface ? "enabled" : "disabled", currentCullFace);
 		fprintf(debug_frame_out, "..... Blending: %s, sfactor %u, dfactor %u\n", gl_blend ? "enabled" : "disabled", currentBlendSFactor, currentBlendDFactor);
-		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", gl_texture_2d ? "enabled" : "disabled", oldtarget - GL_TEXTURE0);
+		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", texunitenabled[currentTextureUnit - GL_TEXTURE0] ? "enabled" : "disabled", currentTextureUnit - GL_TEXTURE0);
 		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
-			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? "y" : "n");
+			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? TexEnvName(unit_texture_mode[i]) : "n");
 		}
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "... </state-dump>\n");

@@ -9,7 +9,8 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
 
 	GLC_StateBeginDrawSimpleItem();
-	GL_BindTextureUnit(GL_TEXTURE0, simpletexture);
+	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
+	GL_PrintState();
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 1);
