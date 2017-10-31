@@ -84,7 +84,7 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 	glPopAttrib();
 }
 
-void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl, float sh, float th, byte* color, qbool alpha, texture_ref texnum, qbool isText)
+void GLC_DrawImage(float x, float y, float width, float height, float sl, float tl, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
 	GL_TextureEnvMode(GL_MODULATE);
 	glEnable(GL_TEXTURE_2D);
@@ -95,13 +95,13 @@ void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl,
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(sl, tl);
-	glVertex2f(x - ofs1, y - ofs1);
-	glTexCoord2f(sh, tl);
-	glVertex2f(x + ofs2, y - ofs1);
-	glTexCoord2f(sh, th);
-	glVertex2f(x + ofs2, y + ofs2);
-	glTexCoord2f(sl, th);
-	glVertex2f(x - ofs1, y + ofs2);
+	glVertex2f(x, y);
+	glTexCoord2f(sl + tex_width, tl);
+	glVertex2f(x + width, y);
+	glTexCoord2f(sl + tex_width, tl + tex_height);
+	glVertex2f(x + width, y + height);
+	glTexCoord2f(sl, tl + tex_height);
+	glVertex2f(x, y + height);
 	glEnd();
 	glColor3ubv (color_white);
 
