@@ -102,8 +102,8 @@ int GL_MeasureVBOSizeForBrushModel(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
-	for (j = 0; j < m->numsurfaces; ++j) {
-		msurface_t* surf = m->surfaces + j;
+	for (j = 0; j < m->nummodelsurfaces; ++j) {
+		msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
 		glpoly_t* poly;
 
 		if (!(surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
