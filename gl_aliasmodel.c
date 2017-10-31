@@ -282,12 +282,11 @@ qbool R_FilterEntity(entity_t* ent)
 	return false;
 }
 
-void R_DrawAliasModel(entity_t *ent, qbool shell_only)
+void R_DrawAliasModel(entity_t *ent)
 {
 	int anim, skinnum, playernum = -1, local_skincolormode;
 	texture_ref texture, fb_texture;
-	aliashdr_t *paliashdr;
-	model_t *clmodel;
+	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	maliasframedesc_t *oldframe, *frame;
 	cvar_t *cv = NULL;
 	byte *color32bit = NULL;
@@ -300,62 +299,41 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		return;
 	}
 
-	local_skincolormode = r_skincolormode.integer;
-
-	VectorCopy(ent->origin, r_entorigin);
-	VectorSubtract(r_origin, r_entorigin, modelorg);
-
-	//TODO: use modhints here? 
-	//VULT CORONAS	
-	if (amf_coronas.value && IsFlameModel(ent->model)) {
-		//FIXME: This is slow and pathetic as hell, really we should just check the entity
-		//alternativley add some kind of permanent client side TE for the torch
-		NewStaticLightCorona(C_FIRE, ent->origin, ent);
-	}
-
-	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value) {
-		NewStaticLightCorona(C_LIGHTNING, ent->origin, ent);
-	}
-
-	clmodel = ent->model;
-
-	paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
-	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
-		if (ent->model->modhint != MOD_EYES) {
-			Com_DPrintf("R_DrawAliasModel: no such frame %d\n", ent->frame);
+	//VULT CORONAS
+	if (amf_coronas.value) {
+		if (IsFlameModel(ent->model)) {
+			//FIXME: This is slow and pathetic as hell, really we should just check the entity
+			//alternativley add some kind of permanent client side TE for the torch
+			NewStaticLightCorona(C_FIRE, ent->origin, ent);
 		}
-
-		ent->frame = 0;
-	}
-	if (ent->oldframe >= paliashdr->numframes || ent->oldframe < 0) {
-		if (ent->model->modhint != MOD_EYES) {
-			Com_DPrintf("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+		if (ent->model->modhint == MOD_TELEPORTDESTINATION) {
+			NewStaticLightCorona(C_LIGHTNING, ent->origin, ent);
 		}
-
-		ent->oldframe = 0;
 	}
+
+	ent->frame = bound(0, ent->frame, paliashdr->numframes - 1);
+	ent->oldframe = bound(0, ent->oldframe, paliashdr->numframes - 1);
 
 	frame = &paliashdr->frames[ent->frame];
 	oldframe = &paliashdr->frames[ent->oldframe];
 
-	r_framelerp = min(ent->framelerp, 1);
-	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame) {
-		r_framelerp = 1.0;
+	r_framelerp = 1.0;
+	if (r_lerpframes.integer && ent->framelerp >= 0 && ent->oldframe != ent->frame) {
+		r_framelerp = min(ent->framelerp, 1);
 	}
 
 	if (R_CullAliasModel(ent, oldframe, frame)) {
 		return;
 	}
 
-	//get lighting information
-	R_AliasSetupLighting(ent);
-	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
-	//draw all the triangles
 	frameStats.classic.alias_polys += paliashdr->numtris;
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
+
+	//get lighting information
+	R_AliasSetupLighting(ent);
+	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
@@ -387,6 +365,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		GL_TextureReferenceInvalidate(fb_texture);
 	}
 
+	local_skincolormode = r_skincolormode.integer;
 	if (is_player_model && playernum >= 0 && playernum < MAX_CLIENTS) {
 		if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
 			cv = &r_teamskincolor;
@@ -407,14 +386,9 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
+	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 
-	if (shell_only) {
-		GL_AliasModelPowerupShell(ent, oldframe, frame);
-	}
-	else {
-		R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, ent->effects);
-	}
+	R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, ent->effects);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
@@ -739,7 +713,10 @@ void R_DrawViewModel(void)
 
 	switch (currententity->model->type) {
 	case mod_alias:
-		R_DrawAliasModel(currententity, false);
+		R_DrawAliasModel(currententity);
+		if (gun.effects) {
+			R_DrawAliasPowerupShell(currententity);
+		}
 		break;
 	case mod_alias3:
 		R_DrawAlias3Model(currententity);
@@ -1018,4 +995,47 @@ static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe
 			}
 		}
 	}
+}
+
+void R_DrawAliasPowerupShell(entity_t *ent)
+{
+	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
+	model_t *clmodel;
+	maliasframedesc_t *oldframe, *frame;
+	cvar_t *cv = NULL;
+	byte *color32bit = NULL;
+	qbool outline = false;
+	float oldMatrix[16];
+	extern	cvar_t r_viewmodelsize, cl_drawgun;
+	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
+
+	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
+	if (R_FilterEntity(ent)) {
+		return;
+	}
+
+	clmodel = ent->model;
+
+	ent->frame = bound(0, ent->frame, paliashdr->numframes - 1);
+	ent->oldframe = bound(0, ent->oldframe, paliashdr->numframes - 1);
+
+	frame = &paliashdr->frames[ent->frame];
+	oldframe = &paliashdr->frames[ent->oldframe];
+
+	r_framelerp = 1.0;
+	if (r_lerpframes.integer && ent->framelerp >= 0 && ent->oldframe != ent->frame) {
+		r_framelerp = min(ent->framelerp, 1);
+	}
+
+	if (R_CullAliasModel(ent, oldframe, frame)) {
+		return;
+	}
+
+	frameStats.classic.alias_polys += paliashdr->numtris;
+
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_StateBeginDrawAliasModel(ent, paliashdr);
+	GL_AliasModelPowerupShell(ent, oldframe, frame);
+	GL_StateEndDrawAliasModel();
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }

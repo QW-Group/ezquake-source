@@ -54,7 +54,7 @@ mleaf_t   *r_viewleaf;
 mleaf_t   *r_oldviewleaf;
 mleaf_t   *r_viewleaf2;                       // for watervis hack
 mleaf_t   *r_oldviewleaf2;                    // for watervis hack
-vec3_t    modelorg, r_entorigin;
+vec3_t    modelorg;
 vec3_t    vup, vpn, vright;                   // view origin
 vec3_t    r_origin; // view origin
 double    gldepthmin, gldepthmax;
@@ -397,7 +397,12 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 		switch (currententity->model->type) {
 		case mod_alias:
-			R_DrawAliasModel(currententity, vislist->shell[i]);
+			if (vislist->shell[i]) {
+				R_DrawAliasPowerupShell(currententity);
+			}
+			else {
+				R_DrawAliasModel(currententity);
+			}
 			vislist->drawn[i] = true;
 			break;
 

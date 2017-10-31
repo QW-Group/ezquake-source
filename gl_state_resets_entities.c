@@ -98,6 +98,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 {
 	ENTER_STATE;
 
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
 	if (gl_powerupshells_style.integer) {
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -332,5 +333,16 @@ void GLM_StateEndDrawAliasOutlines(void)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 
 	LEAVE_STATE;
+}
+
+void GLC_StateBeginSimpleItem(texture_ref simpletexture)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
+	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
+}
+
+void GLC_StateEndSimpleItem(void)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 }
 

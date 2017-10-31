@@ -111,7 +111,7 @@ extern qbool qmb_initialized;
 //====================================================
 
 extern	entity_t	r_worldentity;
-extern	vec3_t		modelorg, r_entorigin;
+extern	vec3_t		modelorg;
 extern	entity_t	*currententity;
 extern	int			r_visframecount;
 extern	int			r_framecount;
@@ -808,7 +808,8 @@ void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* resu
 void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(qbool vid_restart);
 
-void R_DrawAliasModel(entity_t *ent, qbool shell_only);
+void R_DrawAliasModel(entity_t *ent);
+void R_DrawAliasPowerupShell(entity_t *ent);
 
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa);
@@ -1227,6 +1228,8 @@ void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GL_StateEndDrawAliasModel(void);
 void GLM_StateBeginDrawAliasOutlines(void);
 void GLM_StateEndDrawAliasOutlines(void);
+void GLC_StateBeginSimpleItem(texture_ref simpletexture);
+void GLC_StateEndSimpleItem(void);
 
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);
