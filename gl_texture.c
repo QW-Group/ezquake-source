@@ -610,7 +610,7 @@ static void GL_LoadTextureData(gltexture_t* glt, int width, int height, byte *da
 
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
 {
-	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
+	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
 	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, mode, crc, &new_texture);
 	texture_ref ref = { 0 };
@@ -1199,6 +1199,23 @@ void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref
 		GL_BindTextureUnit(textureUnit, glt->reference);
 
 		textures[i] = glt->reference;
+	}
+}
+
+void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)
+{
+	GLsizei i;
+
+	for (i = 0; i < number; ++i) {
+		qbool new_texture;
+		gltexture_t* slot = GL_AllocateTextureSlot(target, "", width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
+
+		if (slot) {
+			references[i] = slot->reference;
+		}
+		else {
+			references[i] = null_texture_reference;
+		}
 	}
 }
 

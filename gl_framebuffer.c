@@ -16,269 +16,201 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(FRAMEBUFFERS)
-
 // Loads and does all the framebuffer stuff
+
+// Seems the original was for camquake & ported across to draw the hud on, but not used
+//   Re-using file for deferred rendering & post-processing in modern
+
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
 #include "gl_framebuffer.h"
 
-cvar_t	framebuffer		= {"framebuffer", "0"};
-/*
-cvar_t	fb_width		= {"fb_width","0"};
-cvar_t	fb_height		= {"fb_height","0"};
-cvar_t	fb_ratio_w		= {"fb_ratio_w","0"};
-cvar_t	fb_ratio_h		= {"fb_ratio_h","0"};
-cvar_t	fb_x			= {"fb_x","0"};
-cvar_t	fb_y			= {"fb_y","0"};
-*/
+// OpenGL functionality from elsewhere
+GLuint GL_TextureNameFromReference(texture_ref ref);
 
-fb_t	main_fb; // The main framebuffer that can be used generally to draw things offscreen.
+// OpenGL wrapper functions
+static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height);
+static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+static GLenum GL_CheckFramebufferStatus(GLuint fbref);
+static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
+static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers);
+static void GL_GenFramebuffers(GLsizei n, GLuint* buffers);
 
-qbool	use_framebuffer = false;
+#define MAX_FRAMEBUFFERS 16
 
-//
-// EXT_framebuffer_object - http://oss.sgi.com/projects/ogl-sample/registry/EXT/framebuffer_object.txt
-//
-extern PFNGLISRENDERBUFFEREXTPROC						glIsRenderbufferEXT							= NULL; // boolean IsRenderbufferEXT(uint renderbuffer);
-extern PFNGLBINDRENDERBUFFEREXTPROC						glBindRenderbufferEXT						= NULL; // void BindRenderbufferEXT(enum target, uint renderbuffer);
-extern PFNGLDELETERENDERBUFFERSEXTPROC					glDeleteRenderbuffersEXT					= NULL; // void DeleteRenderbuffersEXT(sizei n, const uint *renderbuffers);
-extern PFNGLGENRENDERBUFFERSEXTPROC						glGenRenderbuffersEXT						= NULL; // void GenRenderbuffersEXT(sizei n, uint *renderbuffers);
-extern PFNGLRENDERBUFFERSTORAGEEXTPROC					glRenderbufferStorageEXT					= NULL; // void RenderbufferStorageEXT(enum target, enum internalformat, sizei width, sizei height);
-extern PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC			glGetRenderbufferParameterivEXT				= NULL; // void GetRenderbufferParameterivEXT(enum target, enum pname, int *params);
-extern PFNGLISFRAMEBUFFEREXTPROC						glIsFramebufferEXT							= NULL; // boolean IsFramebufferEXT(uint framebuffer);
-extern PFNGLBINDFRAMEBUFFEREXTPROC						glBindFramebufferEXT						= NULL; // void BindFramebufferEXT(enum target, uint framebuffer);
-extern PFNGLDELETEFRAMEBUFFERSEXTPROC					glDeleteFramebuffersEXT						= NULL; // void DeleteFramebuffersEXT(sizei n, const uint *framebuffers);
-extern PFNGLGENFRAMEBUFFERSEXTPROC						glGenFramebuffersEXT						= NULL; // void GenFramebuffersEXT(sizei n, uint *framebuffers)
-extern PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC				glCheckFramebufferStatusEXT					= NULL; // enum CheckFramebufferStatusEXT(enum target);
-extern PFNGLFRAMEBUFFERTEXTURE1DEXTPROC					glFramebufferTexture1DEXT					= NULL; // void FramebufferTexture1DEXT(enum target, enum attachment, enum textarget, uint texture, int level);
-extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC					glFramebufferTexture2DEXT					= NULL; // void FramebufferTexture2DEXT(enum target, enum attachment, enum textarget, uint texture, int level);
-extern PFNGLFRAMEBUFFERTEXTURE3DEXTPROC					glFramebufferTexture3DEXT					= NULL; // void FramebufferTexture3DEXT(enum target, enum attachment, enum textarget, uint texture, int level, int zoffset);
-extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC				glFramebufferRenderbufferEXT				= NULL; // void FramebufferRenderbufferEXT(enum target, enum attachment, enum renderbuffertarget, uint renderbuffer);
-extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC	glGetFramebufferAttachmentParameterivEXT	= NULL; // void GetFramebufferAttachmentParameterivEXT(enum target, enum attachment, enum pname, int *params);
-extern PFNGLGENERATEMIPMAPEXTPROC						glGenerateMipmapEXT							= NULL; // void GenerateMipmapEXT(enum target);
+typedef struct framebuffer_data_s {
+	GLuint glref;
 
-// GL_ARB_multitexture.
-extern PFNGLACTIVETEXTUREARBPROC       glActiveTextureEXT       = NULL;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureEXT = NULL;
-extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2fEXT     = NULL;
+	texture_ref rgbaTexture;
+	GLuint depthBuffer;
+	GLsizei width;
+	GLsizei height;
+	GLenum status;
+
+	int next_free;
+} framebuffer_data_t;
+
+static framebuffer_data_t framebuffer_data[MAX_FRAMEBUFFERS];
+static int framebuffers;
+const framebuffer_ref null_framebuffer_ref = { 0 };
+
+#define STATIC_FUNCTION_POINTER(x) static x##_t x
+#define OPTIONAL_FUNCTION_LOAD(x) x = (x##_t)SDL_GL_GetProcAddress(#x)
+#define MANDATORY_FUNCTION_LOAD(x) framebuffers_supported &= (x = (x##_t)SDL_GL_GetProcAddress(#x)) != NULL
+
+// 
+typedef void (APIENTRY *glGenFramebuffers_t)(GLsizei n, GLuint* ids);
+typedef void (APIENTRY *glDeleteFramebuffers_t)(GLsizei n, GLuint* ids);
+typedef void (APIENTRY *glBindFramebuffer_t)(GLenum target, GLuint framebuffer);
+
+typedef void (APIENTRY *glGenRenderbuffers_t)(GLsizei n, GLuint* ids);
+typedef void (APIENTRY *glDeleteRenderbuffers_t)(GLsizei n, GLuint* ids);
+typedef void (APIENTRY *glBindRenderbuffer_t)(GLenum target, GLuint renderbuffer);
+typedef void (APIENTRY *glRenderbufferStorage_t)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY *glNamedRenderbufferStorage_t)(GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY *glFramebufferRenderbuffer_t)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+typedef void (APIENTRY *glNamedFramebufferRenderbuffer_t)(GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+
+typedef void (APIENTRY *glFramebufferTexture_t)(GLenum target, GLenum attachment, GLuint texture, GLint level);
+typedef void (APIENTRY *glNamedFramebufferTexture_t)(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
+typedef GLenum (APIENTRY *glCheckFramebufferStatus_t)(GLenum target);
+typedef GLenum (APIENTRY *glCheckNamedFramebufferStatus_t)(GLuint framebuffer, GLenum target);
+
+static glGenFramebuffers_t glGenFramebuffers;
+static glDeleteFramebuffers_t glDeleteFramebuffers;
+static glBindFramebuffer_t glBindFramebuffer;
+
+static glGenRenderbuffers_t glGenRenderbuffers;
+static glDeleteRenderbuffers_t glDeleteRenderbuffers;
+static glBindRenderbuffer_t glBindRenderbuffer;
+static glRenderbufferStorage_t glRenderbufferStorage;
+static glNamedRenderbufferStorage_t glNamedRenderbufferStorage;
+static glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
+static glNamedFramebufferRenderbuffer_t glNamedFramebufferRenderbuffer;
+
+static glFramebufferTexture_t glFramebufferTexture;
+static glNamedFramebufferTexture_t glNamedFramebufferTexture;
+static glCheckFramebufferStatus_t glCheckFramebufferStatus;
+static glCheckNamedFramebufferStatus_t glCheckNamedFramebufferStatus;
+
+static qbool framebuffers_supported;
 
 //
 // Initialize framebuffer stuff, Loads procadresses and such.
 //
-void Framebuffer_Init (void)
+void GL_InitialiseFramebufferHandling(void)
 {
-	char *ext = (char*)qglGetString( GL_EXTENSIONS );
-//	int temp;
+	framebuffers_supported = true;
 
-	// FIXME: alredy initialized, what to do?
-	//        doubt this will work on vid_restart...
-	if (use_framebuffer)
-	{
-		return;
-	}
+	MANDATORY_FUNCTION_LOAD(glGenFramebuffers);
+	MANDATORY_FUNCTION_LOAD(glDeleteFramebuffers);
+	MANDATORY_FUNCTION_LOAD(glBindFramebuffer);
 
-/* wtf, and a bit later set to use_framebuffer = true;
-	if ((temp = COM_CheckParm("-framebuffer")) && temp + 1 < COM_Argc())
-	{
-		use_framebuffer = Q_atoi(COM_Argv(temp+1));
-	}
-*/
-	
-	// Check if the driver supports framebuffers.
-	if( strstr( ext, "EXT_framebuffer_object" ) == NULL || !strstr(ext, "GL_ARB_multitexture"))
-	{
-		Com_Printf("Framebuffer extension is not supported by your driver/graphics card.\n");
-		use_framebuffer = false;
-	}
-	else
-	{
-		//
-		// Get the procedure adresses for the frame buffer functions.
-		// 
-		use_framebuffer = true;
-		Com_Printf("Framebuffer extension do exist \n");
-		glIsRenderbufferEXT				= (PFNGLISRENDERBUFFEREXTPROC)wglGetProcAddress("glIsRenderbufferEXT");
-		glBindRenderbufferEXT			= (PFNGLBINDRENDERBUFFEREXTPROC)wglGetProcAddress("glBindRenderbufferEXT");
-		glDeleteRenderbuffersEXT		= (PFNGLDELETERENDERBUFFERSEXTPROC)wglGetProcAddress("glDeleteRenderbuffersEXT");
-		glGenRenderbuffersEXT			= (PFNGLGENRENDERBUFFERSEXTPROC)wglGetProcAddress("glGenRenderbuffersEXT");
-		glRenderbufferStorageEXT		= (PFNGLRENDERBUFFERSTORAGEEXTPROC)wglGetProcAddress("glRenderbufferStorageEXT");
-		glGetRenderbufferParameterivEXT = (PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC)wglGetProcAddress("glGetRenderbufferParameterivEXT");
-		glIsFramebufferEXT				= (PFNGLISFRAMEBUFFEREXTPROC)wglGetProcAddress("glIsFramebufferEXT");
-		glBindFramebufferEXT			= (PFNGLBINDFRAMEBUFFEREXTPROC)wglGetProcAddress("glBindFramebufferEXT");
-		glDeleteFramebuffersEXT			= (PFNGLDELETEFRAMEBUFFERSEXTPROC)wglGetProcAddress("glDeleteFramebuffersEXT");
-		glGenFramebuffersEXT			= (PFNGLGENFRAMEBUFFERSEXTPROC)wglGetProcAddress("glGenFramebuffersEXT");
-		glCheckFramebufferStatusEXT		= (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)wglGetProcAddress("glCheckFramebufferStatusEXT");
-		glFramebufferTexture1DEXT		= (PFNGLFRAMEBUFFERTEXTURE1DEXTPROC)wglGetProcAddress("glFramebufferTexture1DEXT");
-		glFramebufferTexture2DEXT		= (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)wglGetProcAddress("glFramebufferTexture2DEXT");
-		glFramebufferTexture3DEXT		= (PFNGLFRAMEBUFFERTEXTURE3DEXTPROC)wglGetProcAddress("glFramebufferTexture3DEXT");
-		glFramebufferRenderbufferEXT	= (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)wglGetProcAddress("glFramebufferRenderbufferEXT");
-		glGetFramebufferAttachmentParameterivEXT = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC)wglGetProcAddress("glGetFramebufferAttachmentParameterivEXT");
-		glGenerateMipmapEXT				= (PFNGLGENERATEMIPMAPEXTPROC)wglGetProcAddress("glGenerateMipmapEXT");
-		glActiveTextureEXT				= (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
-		glClientActiveTextureEXT		= (PFNGLCLIENTACTIVETEXTUREARBPROC)wglGetProcAddress("glClientActiveTextureARB");
-		glMultiTexCoord2fEXT			= (PFNGLMULTITEXCOORD2FARBPROC)wglGetProcAddress("glMultiTexCoord2fARB");
-	
-		//
-		// Make sure we find them all.
-		//
-		if( !glIsRenderbufferEXT || !glBindRenderbufferEXT || !glDeleteRenderbuffersEXT || 
-			!glGenRenderbuffersEXT || !glRenderbufferStorageEXT || !glGetRenderbufferParameterivEXT || 
-			!glIsFramebufferEXT || !glBindFramebufferEXT || !glDeleteFramebuffersEXT || 
-			!glGenFramebuffersEXT || !glCheckFramebufferStatusEXT || !glFramebufferTexture1DEXT || 
-			!glFramebufferTexture2DEXT || !glFramebufferTexture3DEXT || !glFramebufferRenderbufferEXT||  
-			!glGetFramebufferAttachmentParameterivEXT || !glGenerateMipmapEXT )
-		{
-			Com_Printf("Couldnt get the function adresses for framebuffer support.\n");
-			use_framebuffer = false;
-			return;
-		}
+	MANDATORY_FUNCTION_LOAD(glGenRenderbuffers);
+	MANDATORY_FUNCTION_LOAD(glDeleteRenderbuffers);
+	MANDATORY_FUNCTION_LOAD(glBindRenderbuffer);
+	MANDATORY_FUNCTION_LOAD(glRenderbufferStorage);
+	OPTIONAL_FUNCTION_LOAD(glNamedRenderbufferStorage);
+	MANDATORY_FUNCTION_LOAD(glFramebufferRenderbuffer);
+	OPTIONAL_FUNCTION_LOAD(glNamedFramebufferRenderbuffer);
 
-		/*
-		Cmd_AddCommand("framebuffer_load", Framebuffer_Main_Init);
+	MANDATORY_FUNCTION_LOAD(glFramebufferTexture);
+	OPTIONAL_FUNCTION_LOAD(glNamedFramebufferTexture);
 
-		Cvar_Register(&fb_width);
-		Cvar_Register(&fb_height);
-		Cvar_Register(&fb_ratio_w);
-		Cvar_Register(&fb_ratio_h);
-		Cvar_Register(&fb_x);
-		Cvar_Register(&fb_y);
-		*/
+	MANDATORY_FUNCTION_LOAD(glCheckFramebufferStatus);
+	OPTIONAL_FUNCTION_LOAD(glCheckNamedFramebufferStatus);
 
-		// FIXME: which group we belong?
-		Cvar_Register(&framebuffer);
-	}
+	framebuffers = 1;
+	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
-//
-// Disable drawing to a framebuffer.
-//
-void Framebuffer_Disable (fb_t *fbs)
+framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthBuffer)
 {
-	if (!framebuffer.value)
-	{
-		return;
+	framebuffer_data_t* fb = NULL;
+	framebuffer_ref ref;
+	int i;
+
+	if (!framebuffers_supported) {
+		return null_framebuffer_ref;
 	}
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-}
-
-//
-// Enable drawing to a framebuffer.
-//
-void Framebuffer_Enable (fb_t *fbs)
-{	
-	if (!framebuffer.value)
-	{
-		return;
-	}
-
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbs->frame_buffer);
-}
-
-//
-// Create a framebuffer object.
-//
-void Framebuffer_Create (fb_t *fbs)
-{
-	GLenum status;
-	extern RECT window_rect;
-	
-	// Frame buffers not supported.
-	if (!use_framebuffer)
-	{
-		return;
-	}
-
-	// Set the texture specs.
-	if (!fbs->texture)
-	{
-		extern int texture_extension_number;
-
-		// Make sure the texture resolution is a power of 2.
-		Q_ROUND_POWER2(window_rect.right - window_rect.left, fbs->width);
-		Q_ROUND_POWER2(window_rect.bottom - window_rect.top, fbs->height);
-		
-		if (fbs->width < main_fb.height)
-		{
-			fbs->width = main_fb.height;
-		}
-		else
-		{
-			main_fb.height = main_fb.width;
-		}
-
-		fbs->texture	= texture_extension_number++;
-		fbs->depthtex	= texture_extension_number++;
-		fbs->realwidth	= (int)(window_rect.right - window_rect.left);
-		fbs->realheight = (int)(window_rect.bottom - window_rect.top);
-		fbs->ratio_h	= (float) fbs->realheight / fbs->height;
-		fbs->ratio_w	= (float) fbs->realwidth  / fbs->width;
-		fbs->x			= 0;
-		fbs->y			= 0;
-	}
-
-	// Generate framebuffer.
-	glGenFramebuffersEXT(1, &fbs->frame_buffer);
-	
-	// Generate depthbuffer.
-	glGenRenderbuffersEXT(1, &fbs->depth_buffer);
-
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbs->frame_buffer);
-	
-	// Initializing the texture.
-	GL_Bind(fbs->texture);
-	GL_TexParameterf(GL_TEXTURE0, fbs->texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, fbs->width, fbs->height, 0, GL_RGB, GL_FLOAT, NULL);
-	GL_TexImage2D(GL_TEXTURE0, fbs->texture, 0, GL_RGBA, fbs->width, fbs->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	GL_TexParameterf(GL_TEXTURE0, fbs->texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GL_TexParameterf(GL_TEXTURE0, fbs->texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL_TexParameterf(GL_TEXTURE0, fbs->texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_TexParameterf(GL_TEXTURE0, fbs->texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fbs->texture, 0);
-	
-	// Initializing the depthbuffer.
-	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, fbs->depth_buffer);
-	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, fbs->width, fbs->height);
-	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbs->depth_buffer);
-
-	status = glCheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
-	switch (status) 
-	{
-		case GL_FRAMEBUFFER_COMPLETE_EXT:
-			Com_Printf("Frame buffer configuration supported\n");
+	for (i = 0; fb == NULL && i < framebuffers; ++i) {
+		if (!framebuffer_data[i].glref) {
+			fb = &framebuffer_data[i];
 			break;
-		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			Com_Printf("Frame buffer configuration unsupported\n");
-			return ;
-		default:
-			Com_Printf("Error\n");
-			return ;
+		}
 	}
 
-	// Unbind the frame buffer so that we dont draw to it accidentally.
-	glBindFramebufferEXT (GL_FRAMEBUFFER_EXT, 0);
+	if (fb == NULL && framebuffers < sizeof(framebuffer_data) / sizeof(framebuffer_data[0])) {
+		fb = &framebuffer_data[framebuffers++];
+	}
+	else if (fb == NULL) {
+		Sys_Error("Too many framebuffers allocated");
+	}
+
+	memset(fb, 0, sizeof(*fb));
+
+	// Render to texture
+	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE, 1, &fb->rgbaTexture);
+	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Depth buffer
+	if (depthBuffer) {
+		GL_GenRenderBuffers(1, &fb->depthBuffer);
+		GL_RenderBufferStorage(fb->depthBuffer, GL_DEPTH_COMPONENT, width, height);
+	}
+
+	// Create frame buffer with texture & depth
+	GL_GenFramebuffers(1, &fb->glref);
+	GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb->rgbaTexture), 0);
+
+	fb->status = GL_CheckFramebufferStatus(fb->glref);
+	assert(fb->status == GL_FRAMEBUFFER_COMPLETE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	ref.index = fb - framebuffer_data;
+	return ref;
 }
 
-//
-// Initializes the main frame buffer object, which can be reused
-// in several places. Use Framebuffer_Create(...) and create a new
-// buffer for specialized use.
-//
-void Framebuffer_Main_Init (void)
+void GL_FramebufferDelete(framebuffer_ref* pref)
 {
-	if (!use_framebuffer)
-	{
-		return;
-	}
+	if (pref && GL_FramebufferReferenceIsValid(*pref)) {
+		framebuffer_data_t* fb = &framebuffer_data[pref->index];
+		if (fb->depthBuffer) {
+			glDeleteRenderbuffers(1, &fb->depthBuffer);
+		}
+		if (GL_TextureReferenceIsValid(fb->rgbaTexture)) {
+			GL_DeleteTexture(&fb->rgbaTexture);
+		}
+		if (fb->glref) {
+			glDeleteFramebuffers(1, &fb->glref);
+		}
 
-	if (main_fb.texture != 0)
-	{
-		return;
+		memset(fb, 0, sizeof(*fb));
+		GL_FramebufferReferenceInvalidate(*pref);
 	}
-
-	Framebuffer_Create(&main_fb);
 }
 
+void GL_FramebufferStartUsing(framebuffer_ref ref)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_data[ref.index].glref);
+}
+
+void GL_FramebufferStopUsing(framebuffer_ref ref)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index)
+{
+	return framebuffer_data[ref.index].rgbaTexture;
+}
+
+/*
 //
 // Draws the specified frame buffer object onto a polygon
 // with the coordinates / bounds specified in it.
@@ -311,6 +243,84 @@ void Framebuffer_Draw (fb_t *fbs)
 	glVertex2f (fbs->x, fbs->y);
 	
 	glEnd();
-}
-#endif // FRAMEBUFFERS
+}*/
 
+// OpenGL wrapper functions
+static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	if (glNamedRenderbufferStorage) {
+		glNamedRenderbufferStorage(renderBuffer, internalformat, width, height);
+	}
+	else if (glBindRenderbuffer && glRenderbufferStorage) {
+		glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+	}
+	else {
+		Sys_Error("ERROR: " __FUNCTION__ " called without driver support");
+	}
+}
+
+static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+{
+	if (glNamedFramebufferRenderbuffer) {
+		glNamedFramebufferRenderbuffer(fbref, attachment, renderbuffertarget, renderbuffer);
+	}
+	else if (glBindFramebuffer && glFramebufferRenderbuffer) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbref);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
+	}
+	else {
+		Sys_Error("ERROR: " __FUNCTION__ " called without driver support");
+	}
+}
+
+static GLenum GL_CheckFramebufferStatus(GLuint fbref)
+{
+	if (glCheckNamedFramebufferStatus) {
+		return glCheckNamedFramebufferStatus(fbref, GL_FRAMEBUFFER);
+	}
+	else if (glBindFramebuffer && glCheckFramebufferStatus) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbref);
+		return glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	}
+	else {
+		Sys_Error("ERROR: " __FUNCTION__ " called without driver support");
+		return 0;
+	}
+}
+
+static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
+{
+	if (glNamedFramebufferTexture) {
+		glNamedFramebufferTexture(framebuffer, attachment, texture, level);
+	}
+	else if (glBindFramebuffer && glFramebufferTexture) {
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture, level);
+	}
+	else {
+		Sys_Error("ERROR: " __FUNCTION__ " called without driver support");
+	}
+}
+
+static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers)
+{
+	int i;
+
+	glGenRenderbuffers(n, buffers);
+
+	for (i = 0; i < n; ++i) {
+		glBindRenderbuffer(GL_RENDERBUFFER, buffers[i]);
+	}
+}
+
+static void GL_GenFramebuffers(GLsizei n, GLuint* buffers)
+{
+	int i;
+
+	glGenFramebuffers(n, buffers);
+
+	for (i = 0; i < n; ++i) {
+		glBindFramebuffer(GL_FRAMEBUFFER, buffers[i]);
+	}
+}

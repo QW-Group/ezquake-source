@@ -275,7 +275,6 @@ void GL_IdentityProjectionView(void)
 	}
 }
 
-#ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message)
 {
 	GLenum error = glGetError();
@@ -284,7 +283,6 @@ void GL_ProcessErrors(const char* message)
 		error = glGetError();
 	}
 }
-#endif
 
 void GL_PushMatrix(GLenum mode, float* matrix)
 {

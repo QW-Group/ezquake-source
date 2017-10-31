@@ -924,7 +924,7 @@ void R_Init(void)
 	R_InitBloomTextures();
 }
 
-void R_RenderScene(void)
+static void R_RenderScene(void)
 {
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
@@ -1067,9 +1067,14 @@ static void R_RenderSceneBlur(void)
 
 void R_RenderPostProcess (void)
 {
+	extern void GLM_RenderPostProcess(void);
+
 	if (!GL_ShadersSupported()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
+	}
+	else {
+		GLM_RenderPostProcess();
 	}
 }
 

@@ -112,4 +112,9 @@ void GLM_SetupGL(void)
 	}
 
 	GL_UpdateVBO(ubo_refdef, sizeof(refdef), &refdef);
+
+}
+
+void GLM_RenderPostProcess(void)
+{
 }

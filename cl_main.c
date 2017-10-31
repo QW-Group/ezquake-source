@@ -1930,10 +1930,6 @@ void CL_Init (void)
 
 	GFX_Init ();
 
-#if defined(FRAMEBUFFERS)
-	Framebuffer_Init();
-#endif
-
 	S_Init ();
 
 	CDAudio_Init ();

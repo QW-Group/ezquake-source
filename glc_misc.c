@@ -74,6 +74,8 @@ void GLC_BrightenScreen(void)
 		f *= 0.5;
 	}
 	glEnd();
+
+	// FIXME: GL_ResetState()
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);

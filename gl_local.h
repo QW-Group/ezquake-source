@@ -845,7 +845,6 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_DrawParticles(int number, qbool square);
-void GLM_EmitCausticsPolys(void);
 void GLM_Draw_FadeScreen(float alpha);
 void GLM_RenderDlight(dlight_t* light);
 void GLM_DrawSkyChain(void);
@@ -864,11 +863,10 @@ float* GLM_ModelviewMatrix(void);
 float* GLM_ProjectionMatrix(void);
 float* GL_MatrixForMode(GLenum type);
 
-#ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message);
+#ifdef GL_PARANOIA
 #define GL_Paranoid_Printf(...) Con_Printf(__VA_ARGS__)
 #else
-#define GL_ProcessErrors(...)
 #define GL_Paranoid_Printf(...)
 #endif
 void GLM_DeletePrograms(void);

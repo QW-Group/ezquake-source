@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "image.h"
+#include "gl_framebuffer.h"
 
 #ifdef WITH_NVTX
 #include "nvToolsExt.h"
@@ -255,6 +256,7 @@ static void CheckShaderExtensions(void)
 	shaders_supported = false;
 
 	GL_InitialiseBufferHandling();
+	GL_InitialiseFramebufferHandling();
 
 	if (COM_CheckParm("-modern")) {
 		if (glConfig.majorVersion >= 2) {
@@ -711,6 +713,28 @@ void GL_TexSubImage2D(
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+	}
+}
+
+void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	if (glTextureStorage2D) {
+		glTextureStorage2D(texture, levels, internalformat, width, height);
+	}
+	else {
+		glBindTexture(textureUnit, target);
+		if (glTexStorage2D) {
+			glTexStorage2D(target, levels, internalformat, width, height);
+		}
+		else {
+			int level;
+			for (level = 0; level < levels; ++level) {
+				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				width = max(1, width / 2);
+				height = max(1, height / 2);
+			}
+		}
+		GL_BindTextureUnit(textureUnit, null_texture_reference);
 	}
 }
 

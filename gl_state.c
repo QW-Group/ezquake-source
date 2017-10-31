@@ -55,7 +55,6 @@ static int old_alphablend_flags = 0;
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
-// FIXME: Add optional support for DSA
 static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
 {
 	int unit_num = unit - GL_TEXTURE0;

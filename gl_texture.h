@@ -48,6 +48,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 
 void GL_Texture_Init(void);
 
+void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references);
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);

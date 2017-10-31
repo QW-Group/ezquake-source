@@ -205,7 +205,6 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
 	}
 
-	Con_DPrintf("Water-alpha offset: %d\n", (intptr_t)&world.waterAlpha - (intptr_t)&world);
 	material_samplers = 0;
 }
 

@@ -18,64 +18,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __GL_FRAMEBUFFER_H__
 #define __GL_FRAMEBUFFER_H__
-#ifdef FRAMEBUFFERS
 
-// Framebuffer struct.
-typedef struct fb_s 
-{
-	GLint	frame_buffer;		// The GL ID of the frame buffer.
-	GLint	depth_buffer;		// The GL ID of the depth buffer.
-	int		texture;			// The texture ID of the texture we're drawing to.
-	int		depthtex;			// The depth texture.
-	int		width;				// Width the frame buffer is drawn at.
-	int		height;				// Height the frame buffer is drawn at.
-	int		realwidth;
-	int		realheight;
-	float	ratio_h;
-	float	ratio_w;
-	int		x;					// X position to draw the frame buffer contents at.
-	int		y;					// Y position to draw the frame buffer contents at.
-} fb_t;
+typedef struct framebuffer_ref_s {
+	int index;
+} framebuffer_ref;
 
-//
-// Initialize framebuffer stuff, Loads procadresses and such.
-//
-void Framebuffer_Init (void);
+void GL_InitialiseFramebufferHandling(void);
+framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthBuffer);
+void GL_FramebufferDelete(framebuffer_ref* pref);
+void GL_FramebufferStartUsing(framebuffer_ref ref);
+void GL_FramebufferStopUsing(framebuffer_ref ref);
+texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index);
 
-//
-// Initializes the main frame buffer object, which can be reused
-// in several places. Use Framebuffer_Create(...) and create a new
-// buffer for specialized use.
-//
-void Framebuffer_Main_Init(void);
+extern const framebuffer_ref null_framebuffer_ref;
 
-//
-// Enable writing to a specified frame buffer object.
-// (Instead of drawing to the back buffer)
-//
-void Framebuffer_Enable (fb_t *fbs);
+#define GL_FramebufferReferenceIsValid(x) ((x).index)
+#define GL_FramebufferReferenceInvalidate(ref) { (ref).index = 0; }
+#define GL_FramebufferReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
+#define GL_FramebufferReferenceCompare(ref1, ref2) ((ref1).index < (ref2).index ? -1 : (ref1).index > (ref2).index ? 1 : 0)
 
-//
-// Disable drawing to a specified frame buffer object.
-// (Go back to drawing to the normal back buffer)
-//
-void Framebuffer_Disable (fb_t *fbs);
-
-//
-// Draws the specified frame buffer object onto a polygon
-// with the coordinates / bounds specified in it.
-//
-void Framebuffer_Draw (fb_t *fbs);
-
-//
-// Creates a new framebuffer object in GL and adds it's specs
-// to the frame buffer struct.
-//
-void Framebuffer_Create (fb_t *fbs);
-
-extern fb_t	main_fb; // The main framebuffer that can be used generally to draw things offscreen.
-
-extern qbool use_framebuffer;
-
-#endif // FRAMEBUFFERS
 #endif // __GL_FRAMEBUFFER_H__
