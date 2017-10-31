@@ -234,84 +234,75 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 	int			i;
 	// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
 	float		l, maxdist;
-	int			j, s, t;
+	int			s, t;
 	vec3_t		impact;
 loc0:
 	// LordHavoc: .lit support end
 	
-	if (node->contents < 0)
+	if (node->contents < 0) {
 		return;
+	}
 
 	splitplane = node->plane;
 	// LordHavoc: .lit support (actually this is just a major lighting speedup, no relation to color :)
-	if (splitplane->type < 3)
+	if (splitplane->type < 3) {
 		dist = light->origin[splitplane->type] - splitplane->dist;
-	else
-		dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist; // LordHavoc: original code
+	}
+	else {
+		dist = DotProduct(light->origin, splitplane->normal) - splitplane->dist; // LordHavoc: original code
+	}
 	// LordHavoc: .lit support end
 	
-	if (dist > light->radius)
-	{
+	if (dist > light->radius) {
 		// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-		//R_MarkLights (light, bit, node->children[0]); // LordHavoc: original code
-		//return; // LordHavoc: original code
 		node = node->children[0];
 		goto loc0;
 		// LordHavoc: .lit support end
 	}
-	if (dist < -light->radius)
-	{
+	if (dist < -light->radius) {
 		// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-		//R_MarkLights (light, bit, node->children[1]); // LordHavoc: original code
-		//return; // LordHavoc: original code
 		node = node->children[1];
 		goto loc0;
 		// LordHavoc: .lit support end
 	}
 
-	maxdist = light->radius*light->radius; // LordHavoc: .lit support (actually this is just a major lighting speedup, no relation to color :)
-// mark the polygons
+	// LordHavoc: .lit support (actually this is just a major lighting speedup, no relation to color :)
+	maxdist = light->radius * light->radius;
+	// mark the polygons
 	surf = cl.worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
 		// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-		/* LordHavoc: original code
-		if (surf->dlightframe != r_dlightframecount)
-		{
-			surf->dlightbits = 0;
-			surf->dlightframe = r_dlightframecount;
-		}
-		surf->dlightbits |= bit;
-		*/
 		// LordHavoc: MAJOR dynamic light speedup here, eliminates marking of surfaces that are too far away from light, thus preventing unnecessary renders and uploads
-		for (j=0 ; j<3 ; j++)
-			impact[j] = light->origin[j] - surf->plane->normal[j]*dist;
+		VectorMA(light->origin, -dist, surf->plane->normal, impact);
 
 		// clamp center of light to corner and check brightness
 		l = DotProduct (impact, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3] - surf->texturemins[0];
-		s = l+0.5;if (s < 0) s = 0;else if (s > surf->extents[0]) s = surf->extents[0];
-		s = l - s;
+		s = l - bound(0, l + 0.5f, surf->extents[0]);
 		l = DotProduct (impact, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3] - surf->texturemins[1];
-		t = l+0.5;if (t < 0) t = 0;else if (t > surf->extents[1]) t = surf->extents[1];
-		t = l - t;
+		t = l - bound(0, l + 0.5f, surf->extents[1]);
+
 		// compare to minimum light
-		if ((s*s+t*t+dist*dist) < maxdist)
-		{
-			if (surf->dlightframe != r_dlightframecount) // not dynamic until now
-			{
+		if ((s*s + t*t + dist*dist) < maxdist) {
+			if (surf->dlightframe != r_dlightframecount) {
+				// not dynamic until now
 				surf->dlightbits = bit;
 				surf->dlightframe = r_dlightframecount;
 			}
-			else // already dynamic
+			else {
+				// already dynamic
 				surf->dlightbits |= bit;
+			}
 		}
 		// LordHavoc: .lit support end
 	}
 	// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-	if (node->children[0]->contents >= 0)
-		R_MarkLights (light, bit, node->children[0]); // LordHavoc: original code
-	if (node->children[1]->contents >= 0)
-		R_MarkLights (light, bit, node->children[1]); // LordHavoc: original code
+	if (node->children[0]->contents >= 0) {
+		R_MarkLights(light, bit, node->children[0]); // LordHavoc: original code
+	}
+	if (node->children[1]->contents >= 0) {
+		R_MarkLights(light, bit, node->children[1]); // LordHavoc: original code
+	}
 	// LordHavoc: .lit support end
 }
 
