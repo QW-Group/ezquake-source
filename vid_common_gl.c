@@ -520,13 +520,6 @@ void VID_SetPalette (unsigned char *palette) {
 	d_8to24table2[255] = 0;	// 255 is transparent
 }
 
-void GL_Hint(GLenum target, GLenum mode)
-{
-	if (!GL_ShadersSupported()) {
-		glHint(target, mode);
-	}
-}
-
 #undef glColor3f
 #undef glColor4f
 #undef glColor3fv

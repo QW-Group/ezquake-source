@@ -461,27 +461,13 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	// and we also check for ruleset, since we don't want outline on eyes.
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-	}
 	if (shell_only && !GL_ShadersSupported()) {
 		GLC_AliasModelPowerupShell(ent, oldframe, frame);
 	}
 	else {
-		if (gl_smoothmodels.value) {
-			GL_ShadeModel(GL_SMOOTH);
-		}
-
 		R_RenderAliasModelEntity(ent, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, shell_only);
-
-		if (gl_smoothmodels.value) {
-			GL_ShadeModel(GL_FLAT);
-		}
 	}
 
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
@@ -804,6 +790,9 @@ void R_DrawViewModel(void)
 	GL_AlphaBlendFlags(gun.alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
 	switch (currententity->model->type) {
 	case mod_alias:
 		R_DrawAliasModel(currententity, false);
@@ -814,6 +803,9 @@ void R_DrawViewModel(void)
 	default:
 		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
 		break;
+	}
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 
 	GL_DepthRange(gldepthmin, gldepthmax);

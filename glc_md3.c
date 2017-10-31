@@ -88,12 +88,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	if (gl_fb_models.integer) {
 		ambientlight = 999999;
 	}
-	if (gl_smoothmodels.integer) {
-		GL_ShadeModel(GL_SMOOTH);
-	}
-	if (gl_affinemodels.integer) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-	}
 
 	GL_TextureEnvMode(GL_MODULATE);
 
@@ -174,7 +168,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 	GL_ShadeModel(GL_FLAT);
-	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_Enable(GL_TEXTURE_2D);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);

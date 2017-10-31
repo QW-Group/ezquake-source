@@ -1146,6 +1146,17 @@ void Config_TroubleShoot_f(void)
 			"so that you can fine-tune your head up display settings",
 			"set hud_planmode to 0", 1);
 	}
+
+	if (!GL_ShadersSupported()) {
+		extern cvar_t gl_affinemodels;
+
+		if (gl_affinemodels.integer) {
+			Config_TroubleShoot_Tip("gl_affinemodels is enabled",
+				"gl_affinemodels is probably ignored and not worth the cost of an API-call",
+				"set gl_affinemodels to 0", 0);
+		}
+	}
+
 	if (!problems) {
 		Com_Printf("No problems detected. For more help, please visit the forum in %s\n\n", CharsToBrownStatic("www.QuakeWorld.nu"));
 	}

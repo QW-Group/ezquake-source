@@ -394,6 +394,12 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			continue;
 		}
 
+		if (gl_affinemodels.value) {
+			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+		}
+		if (gl_smoothmodels.value) {
+			GL_ShadeModel(GL_SMOOTH);
+		}
 		switch (currententity->model->type) {
 		case mod_alias:
 			R_DrawAliasModel(currententity, vislist->shell[i]);
@@ -405,6 +411,12 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			vislist->drawn[i] = true;
 			break;
 		}
+	}
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	if (gl_smoothmodels.value) {
+		GL_ShadeModel(GL_FLAT);
 	}
 	GL_EndDrawAliasModels();
 

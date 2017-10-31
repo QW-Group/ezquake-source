@@ -35,6 +35,7 @@ static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
 static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
+static GLenum perspectiveCorrectionHint;
 GLuint currentArrayBuffer;
 GLuint currentUniformBuffer;
 
@@ -203,6 +204,7 @@ void GL_InitialiseState(void)
 	old_alphablend_flags = 0;
 	polygonOffsetFactor = polygonOffsetUnits = 0;
 	gl_polygon_offset_line = gl_polygon_offset_fill = false;
+	perspectiveCorrectionHint = GL_NICEST;
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -738,3 +740,19 @@ void GL_Begin(GLenum primitive)
 	++frameStats.draw_calls;
 	glBegin(primitive);
 }
+
+void GL_Hint(GLenum target, GLenum mode)
+{
+	if (!GL_ShadersSupported()) {
+		if (target == GL_PERSPECTIVE_CORRECTION_HINT) {
+			if (mode == perspectiveCorrectionHint) {
+				return;
+			}
+
+			perspectiveCorrectionHint = mode;
+		}
+
+		glHint(target, mode);
+	}
+}
+
