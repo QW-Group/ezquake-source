@@ -31,8 +31,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef WITH_JPEG
+#if defined(_MSC_VER)
+#pragma warning(disable: 4005)
+#endif
 #include "jpeglib.h"
 #include "jerror.h"
+#if defined(_MSC_VER)
+#pragma warning(default: 4005)
+#endif
 /*#ifdef _WIN32
 #pragma comment(lib, "libs/libjpeg.lib")
 #endif*/
