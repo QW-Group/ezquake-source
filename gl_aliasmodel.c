@@ -254,6 +254,61 @@ static qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, malias
 }
 
 // FIXME: Move filtering options to cl_ents.c
+qbool R_FilterEntity(entity_t* ent)
+{
+	// VULT NAILTRAIL - Hidenails
+	if (amf_hidenails.value && ent->model->modhint == MOD_SPIKE) {
+		return true;
+	}
+
+	// VULT ROCKETTRAILS - Hide rockets
+	if (amf_hiderockets.value && (ent->model->flags & EF_ROCKET)) {
+		return true;;
+	}
+
+	// VULT CAMERAS - Show/Hide playermodel
+	if (ent->alpha == -1) {
+		if (cameratype == C_NORMAL) {
+			return true;
+		}
+		ent->alpha = 1;
+		return false;
+	}
+	else if (ent->alpha < 0) {
+		// VULT MOTION TRAILS
+		return true;
+	}
+
+	// Handle flame/flame0 model changes
+	if (qmb_initialized) {
+		if (!amf_part_fire.value && ent->model->modhint == MOD_FLAME0) {
+			ent->model = cl.model_precache[cl_modelindices[mi_flame]];
+		}
+		else if (amf_part_fire.value) {
+			if (ent->model->modhint == MOD_FLAME0) {
+				if (!ISPAUSED) {
+					ParticleFire(ent->origin);
+				}
+			}
+			else if (ent->model->modhint == MOD_FLAME && cl_flame0_model) {
+				// do we have progs/flame0.mdl?
+				if (!ISPAUSED) {
+					ParticleFire(ent->origin);
+				}
+				ent->model = cl_flame0_model;
+			}
+			else if (ent->model->modhint == MOD_FLAME2 || ent->model->modhint == MOD_FLAME3) {
+				if (!ISPAUSED) {
+					ParticleFire(ent->origin);
+				}
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 {
 	int anim, skinnum, playernum = -1, local_skincolormode;
@@ -271,53 +326,8 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	float scaleS = 1.0f;
 	float scaleT = 1.0f;
 
-	// VULT NAILTRAIL - Hidenails
-	if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE) {
+	if (R_FilterEntity(ent)) {
 		return;
-	}
-
-	// VULT ROCKETTRAILS - Hide rockets
-	if (amf_hiderockets.value && currententity->model->flags & EF_ROCKET) {
-		return;
-	}
-
-	// VULT CAMERAS - Show/Hide playermodel
-	if (currententity->alpha == -1) {
-		if (cameratype == C_NORMAL) {
-			return;
-		}
-		currententity->alpha = 1;
-	}
-	else if (currententity->alpha < 0) {
-		// VULT MOTION TRAILS
-		return;
-	}
-
-	// Handle flame/flame0 model changes
-	if (qmb_initialized) {
-		if (!amf_part_fire.value && currententity->model->modhint == MOD_FLAME0) {
-			currententity->model = cl.model_precache[cl_modelindices[mi_flame]];
-		}
-		else if (amf_part_fire.value) {
-			if (currententity->model->modhint == MOD_FLAME0) {
-				if (!ISPAUSED) {
-					ParticleFire(currententity->origin);
-				}
-			}
-			else if (currententity->model->modhint == MOD_FLAME && cl_flame0_model) {
-				// do we have progs/flame0.mdl?
-				if (!ISPAUSED) {
-					ParticleFire(currententity->origin);
-				}
-				currententity->model = cl_flame0_model;
-			}
-			else if (currententity->model->modhint == MOD_FLAME2 || currententity->model->modhint == MOD_FLAME3) {
-				if (!ISPAUSED) {
-					ParticleFire(currententity->origin);
-				}
-				return;
-			}
-		}
 	}
 
 	local_skincolormode = r_skincolormode.integer;
@@ -338,8 +348,8 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	}
 
 	clmodel = ent->model;
-	paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 
+	paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
 		if (ent->model->modhint != MOD_EYES) {
 			Com_DPrintf("R_DrawAliasModel: no such frame %d\n", ent->frame);
