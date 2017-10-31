@@ -205,7 +205,7 @@ static void GLM_FlushImageDraw(void)
 {
 	extern cvar_t gl_alphafont;
 
-	if (imageCount) {
+	if (imageCount && glConfig.initialized) {
 		int start = 0;
 		int i;
 		texture_ref currentTexture = null_texture_reference;
