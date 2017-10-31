@@ -133,41 +133,32 @@ void GL_InitialiseState(void)
 }
 
 // These functions taken from gl_texture.c
-void GL_Bind(int texnum)
+void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
-	if (currenttexture == texnum) {
+	if (warning && !glIsTexture(texnum)) {
+		Con_Printf("ERROR: Non-texture %d passed to GL_BindTexture\n", texnum);
 		return;
-	}
-
-	currenttexture = texnum;
-	//GL_ProcessErrors("Pre-" __FUNCTION__);
-	glBindTexture(GL_TEXTURE_2D, texnum);
-	//GL_ProcessErrors("Post-" __FUNCTION__);
-}
-
-void GL_BindArray(GLuint texnum)
-{
-	if (currentTextureArray == texnum) {
-		return;
-	}
-
-	currentTextureArray = texnum;
-	//GL_ProcessErrors("Pre-" __FUNCTION__);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-	//GL_ProcessErrors("Post-" __FUNCTION__);
-}
-
-void GL_BindTexture(GLenum targetType, GLuint texnum)
-{
-	if (texnum && !glIsTexture(texnum)) {
-		texnum = texnum;
 	}
 
 	if (targetType == GL_TEXTURE_2D) {
-		GL_Bind(texnum);
+		if (currenttexture == texnum) {
+			return;
+		}
+
+		currenttexture = texnum;
+		//GL_ProcessErrors("Pre-" __FUNCTION__);
+		glBindTexture(GL_TEXTURE_2D, texnum);
+		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
-		GL_BindArray(texnum);
+		if (currentTextureArray == texnum) {
+			return;
+		}
+
+		currentTextureArray = texnum;
+		//GL_ProcessErrors("Pre-" __FUNCTION__);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
+		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 	else {
 		// No caching...
@@ -175,6 +166,16 @@ void GL_BindTexture(GLenum targetType, GLuint texnum)
 		glBindTexture(targetType, texnum);
 		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
+}
+
+void GL_Bind(int texnum)
+{
+	GL_BindTexture(GL_TEXTURE_2D, texnum, true);
+}
+
+void GL_BindFirstTime(int texnum)
+{
+	GL_BindTexture(GL_TEXTURE_2D, texnum, false);
 }
 
 void GL_SelectTexture(GLenum target)

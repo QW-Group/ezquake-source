@@ -412,7 +412,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 	// Bind lightmap array
 	GL_SelectTexture(GL_TEXTURE2);
-	GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+	GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, true);
 	if (draw_detail_texture) {
 		GL_SelectTexture(GL_TEXTURE1);
 		GL_Bind(detailtexture);
@@ -438,7 +438,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 			// Going to draw at least one surface, so bind the texture array
 			if (first_in_this_array) {
-				GL_BindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[i]);
+				GL_BindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[i], true);
 				first_in_this_array = false;
 			}
 

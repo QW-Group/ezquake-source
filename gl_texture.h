@@ -35,15 +35,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
-void GL_Bind (int texnum);
+void GL_Bind(int texnum);
+void GL_BindFirstTime(int texnum);
 
-
-void GL_SelectTexture (GLenum target);
+void GL_SelectTexture(GLenum target);
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
-void GL_EnableTMU (GLenum target);
+void GL_EnableTMU(GLenum target);
 void GL_DisableTMU(GLenum target);
-
 
 int GL_LoadTexture(char *identifier, int width, int height, byte *data, int mode, int bpp);
 int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);

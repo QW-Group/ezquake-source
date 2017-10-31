@@ -285,7 +285,7 @@ void GLM_LoadBrushModelTextures(model_t* loadmodel)
 				min_dimension /= 2;
 			}
 			glGenTextures(1, &texture_array);
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texture_array);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texture_array, false);
 			glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, tx->gl_width, tx->gl_height, sizeCount);
 
 			loadmodel->texture_arrays[array_index] = texture_array;
@@ -651,7 +651,7 @@ static void GL_FlushBrushModelBatch(void)
 				base = i;
 			}
 
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array, true);
 		}
 
 		memcpy(&mvMatrix[i - base], req->mvMatrix, sizeof(mvMatrix[i]));

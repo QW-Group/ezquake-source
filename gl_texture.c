@@ -499,7 +499,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		glt->pathname = Q_strdup(fs_netpath);
 
 	// Tell OpenGL the texnum of the texture before uploading it.
-	GL_Bind(glt->texnum);
+	GL_BindFirstTime(glt->texnum);
 
 	// Upload the texture to OpenGL based on the bytes per pixel.
 	switch (bpp)
@@ -961,14 +961,14 @@ void GL_Texture_Init(void)
 	// Lightmap.
 	if (GL_ShadersSupported() && true) {
 		glGenTextures(1, &lightmap_texture_array);
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, false);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
 
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, 0);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, 0, false);
 
 		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 			lightmap_textures[i] = lightmap_texture_array;

@@ -293,7 +293,7 @@ void R_UploadLightMap(int lightmapnum)
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
 	if (lightmap_texture_array) {
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, true);
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
 	}
 	else {
@@ -658,7 +658,7 @@ void GL_BuildLightmaps(void)
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
 		if (GL_ShadersSupported() && lightmap_texture_array) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, true);
 			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {
