@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
 
+void GLM_MakeAlias3DisplayLists(model_t* model);
+
 typedef float m3by3_t[3][3];
 
 int Mod_ReadFlagsFromMD1(char *name, int md3version)
@@ -67,7 +69,6 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	extern char loadname[];
 	int					start, end, total;
 	int numsurfs;
-	int numskins;
 	int surfn;
 
 	md3model_t *pheader;
@@ -84,9 +85,8 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	mod->type = mod_alias3;
 
 	numsurfs = LittleLong(((md3Header_t *)buffer)->numSurfaces);
-	numskins = 1;
 
-	pheader = (md3model_t *)Hunk_Alloc(sizeof(md3model_t) + (numsurfs*numskins) * sizeof(surfinf_t));
+	pheader = (md3model_t *)Hunk_Alloc(sizeof(md3model_t) + numsurfs * sizeof(surfinf_t));
 
 	pheader->surfinf = sizeof(md3model_t);
 	mem = (md3Header_t *)Hunk_Alloc(filesize);
@@ -123,7 +123,6 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	}
 
 	sinf = (surfinf_t*)((char *)pheader + pheader->surfinf);
-	//	for (skinn = 0; skinn < numskins; skinn++)
 	{
 		surf = (md3Surface_t *)((char *)mem + mem->ofsSurfaces);
 		for (surfn = 0; surfn < numsurfs; surfn++) {
@@ -177,20 +176,23 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 			*specifiedskinname = *skinfileskinname = *tenebraeskinname = '\0';
 			strlcpy(specifiedskinname, sshad->name, sizeof(specifiedskinname));
 
+			// TODO: Have no idea how armor_0.tga would get picked up under this system,
+			//       or the armor.mdl I found just isn't configured correctly.  Shrug.
 			if (*sshad->name) {
 				strlcpy(tenebraeskinname, mod->name, sizeof(tenebraeskinname)); //backup
 				strcpy(COM_SkipPathWritable(tenebraeskinname), sshad->name);
 			}
 			else {
 				char *sfile, *sfilestart, *nl;
+				char skinfile[128] = { 0 };
 				int len;
 
 				//hmm. Look in skin file.
-				strlcpy(sinf->name, mod->name, sizeof(sinf->name));
-				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
-				strlcat(sinf->name, "_default.skin", sizeof(sinf->name));
+				strlcpy(skinfile, mod->name, sizeof(skinfile));
+				COM_StripExtension(skinfile, skinfile, sizeof(skinfile));
+				strlcat(skinfile, "_default.skin", sizeof(skinfile));
 
-				sfile = sfilestart = (char *)FS_LoadHunkFile(sinf->name, NULL);
+				sfile = sfilestart = (char *)FS_LoadHunkFile(skinfile, NULL);
 
 				strlcpy(sinf->name, mod->name, sizeof(sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
@@ -251,11 +253,20 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	// try load simple textures
 	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
-	mod->simpletexture[0] = Mod_LoadSimpleTexture(mod, 0);
+	for (i = 0; i < sizeof(mod->simpletexture) / sizeof(mod->simpletexture[0]); ++i) {
+		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
+		if (!GL_TextureReferenceIsValid(mod->simpletexture[i])) {
+			break;
+		}
+	}
 
 	Hunk_FreeToLowMark(start);
 
 	mod->flags = Mod_ReadFlagsFromMD1(mod->name, mem->flags);
+
+	if (GL_ShadersSupported()) {
+		GLM_MakeAlias3DisplayLists(mod);
+	}
 }
 
 /*
@@ -296,6 +307,9 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)
 	return false;
 }*/
 
+void GLC_DrawAlias3Model(entity_t *ent);
+void GLM_DrawAlias3Model(entity_t *ent);
+
 void R_DrawAlias3Model(entity_t *ent)
 {
 	if (GL_ShadersSupported()) {
@@ -304,4 +318,40 @@ void R_DrawAlias3Model(entity_t *ent)
 	else {
 		GLC_DrawAlias3Model(ent);
 	}
+}
+
+// Helper functions to simplify logic
+md3Surface_t* MD3_NextSurface(md3Surface_t* surf)
+{
+	return (md3Surface_t *)((uintptr_t)surf + surf->ofsEnd);
+}
+
+md3Surface_t* MD3_FirstSurface(md3Header_t* header)
+{
+	return (md3Surface_t *)((uintptr_t)header + header->ofsSurfaces);
+}
+
+md3St_t* MD3_SurfaceTextureCoords(md3Surface_t* surface)
+{
+	return (md3St_t *)((uintptr_t)surface + surface->ofsSt);
+}
+
+md3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface)
+{
+	return (md3XyzNormal_t *)((uintptr_t)surface + surface->ofsXyzNormals);
+}
+
+md3Triangle_t* MD3_SurfaceTriangles(md3Surface_t* surface)
+{
+	return (md3Triangle_t*)((uintptr_t)surface + surface->ofsTriangles);
+}
+
+surfinf_t* MD3_ExtraSurfaceInfoForModel(md3model_t* model)
+{
+	return (surfinf_t *)((uintptr_t)model + model->surfinf);
+}
+
+md3Header_t* MD3_HeaderForModel(md3model_t* model)
+{
+	return (md3Header_t *)((uintptr_t)model + model->md3model);
 }

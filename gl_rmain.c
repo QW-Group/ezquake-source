@@ -402,10 +402,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			break;
 
 		case mod_alias3:
-			// FIXME
-			if (!GL_ShadersSupported()) {
-				R_DrawAlias3Model(currententity);
-			}
+			R_DrawAlias3Model(currententity);
 			vislist->drawn[i] = true;
 			break;
 		}

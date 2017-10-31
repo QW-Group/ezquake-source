@@ -494,7 +494,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 static void GL_SortDrawCalls(int* polygonOffsetStart)
 {
 	static GLuint newModelIndexes[MAX_WORLDMODEL_INDEXES];
-	int i, j;
+	int i;
 	int back;
 	int index = 0;
 	int overall_index_count = index_count;

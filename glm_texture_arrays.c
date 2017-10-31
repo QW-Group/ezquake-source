@@ -9,6 +9,8 @@
 #include "tr_types.h"
 #endif
 
+void GL_MD3ModelAddToVBO(model_t* mod, glm_vbo_t* vbo, glm_vbo_t* ssbo, int position);
+
 #define MAX_ARRAY_DEPTH 64
 #define VBO_ALIASVERT_FOFS(x) (void*)((intptr_t)&(((vbo_model_vert_t*)0)->x))
 
@@ -378,6 +380,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, int* required_vbo_length)
 
 	switch (mod->type) {
 	case mod_alias:
+	case mod_alias3:
 	{
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
@@ -772,6 +775,11 @@ static void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
 		GL_AliasModelAddToVBO(mod, paliashdr, &aliasModel_vbo, &aliasModel_ssbo, *new_vbo_position);
+		*new_vbo_position += mod->vertsInVBO;
+	}
+	else if (mod->type == mod_alias3) {
+		GL_MD3ModelAddToVBO(mod, &aliasModel_vbo, &aliasModel_ssbo, *new_vbo_position);
+
 		*new_vbo_position += mod->vertsInVBO;
 	}
 	else if (mod->type == mod_sprite) {

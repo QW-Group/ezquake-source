@@ -121,4 +121,16 @@ typedef struct {
 	int numtags;
 	int numframes;
 } md3model_t;
+
+md3Surface_t* MD3_NextSurface(md3Surface_t* surf);
+md3Surface_t* MD3_FirstSurface(md3Header_t* header);
+md3St_t* MD3_SurfaceTextureCoords(md3Surface_t* surface);
+md3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface);
+md3Triangle_t* MD3_SurfaceTriangles(md3Surface_t* surface);
+surfinf_t* MD3_ExtraSurfaceInfoForModel(md3model_t* model);
+md3Header_t* MD3_HeaderForModel(md3model_t* model);
+
+#define MD3_ForEachSurface(header, surface, surfnum) \
+	for ((surfnum) = 0, (surface) = MD3_FirstSurface(header); (surfnum) < (header)->numSurfaces; ++(surfnum), (surface) = MD3_NextSurface(surface))
+
 #endif
