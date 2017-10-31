@@ -176,7 +176,7 @@ void GLM_PostProcessScreen(void)
 			GL_UseProgram(post_process_program.program);
 			GL_BindVertexArray(&post_process_vao);
 
-			GL_BindTextureUnit(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
 	}

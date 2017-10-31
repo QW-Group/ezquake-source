@@ -101,7 +101,7 @@ void GLC_RenderFullbrights(void)
 		}
 
 		texture.index = i;
-		GL_BindTextureUnit(GL_TEXTURE0, texture);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
 			DrawGLPoly(p);
 		}
@@ -125,7 +125,7 @@ void GLC_RenderLumas(void)
 		}
 
 		texture.index = i;
-		GL_BindTextureUnit(GL_TEXTURE0, texture);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 		for (p = luma_polys[i]; p; p = p->luma_chain) {
 			DrawGLPoly(p);
 		}

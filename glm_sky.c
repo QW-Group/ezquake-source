@@ -330,8 +330,9 @@ static void GLM_DrawSkyDome(void)
 {
 	GL_EnterRegion("SkyDome");
 	if (BuildSkyDomeProgram()) {
-		GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
-		GL_BindTextureUnit(GL_TEXTURE1, alphaskytexture);
+		texture_ref textures[2] = { solidskytexture, alphaskytexture };
+
+		GL_BindTextures(GL_TEXTURE0, 2, textures);
 
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
@@ -346,9 +347,8 @@ static void GLM_DrawSkyBox(void)
 		GLushort indices[NUMBER_AXIS * 5];
 		int number_to_draw = 0;
 
-		GL_BindTextureUnit(GL_TEXTURE0, skybox_cubeMap);
-
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, skybox_cubeMap);
 
 		// GLM_DrawSkyBox
 		int axis;

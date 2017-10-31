@@ -392,7 +392,7 @@ void GLC_StateBeginSkyDomeCloudPass(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, alphaskytexture);
 }
 
 void GLC_StateBeginMultiTextureSkyDome(void)

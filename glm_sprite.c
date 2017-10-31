@@ -84,7 +84,6 @@ void GL_FlushSpriteBatch(void)
 
 		GL_PrepareSprites();
 
-		GL_SelectTexture(GL_TEXTURE0);
 		GL_TextureReferenceInvalidate(prev_texture_array);
 
 		first_sprite_draw = false;
@@ -101,7 +100,7 @@ void GL_FlushSpriteBatch(void)
 
 		// FIXME: need to batch the calls?!
 		if (!GL_TextureReferenceEqual(sprite->texture_array, prev_texture_array)) {
-			GL_BindTextureUnit(GL_TEXTURE0, sprite->texture_array);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, sprite->texture_array);
 			prev_texture_array = sprite->texture_array;
 		}
 

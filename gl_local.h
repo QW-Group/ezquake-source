@@ -1253,7 +1253,7 @@ void GL_StateEndDrawAliasModel(void);
 void GLM_StateBeginDrawAliasOutlines(void);
 void GLM_StateEndDrawAliasOutlines(void);
 
-void GLC_StateBeginBloomDraw(void);
+void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);
 void GL_StateEndFrame(void);
 

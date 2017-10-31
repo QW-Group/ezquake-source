@@ -341,14 +341,14 @@ void GLC_StateEndDrawPolygon(int oldFlags)
 	glEnable(GL_TEXTURE_2D);
 }
 
-void GLC_StateBeginBloomDraw(void)
+void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
 	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
-	GL_TextureEnvMode(GL_MODULATE);
+	GLC_InitTextureUnits1(texture, GL_MODULATE);
 }
 
 void GLC_StateEndBloomDraw(void)

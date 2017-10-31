@@ -115,11 +115,10 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		numtris = surf->numTriangles * 3;
 
 		if (GL_TextureReferenceIsValid(sinf->texnum)) {
-			GL_Enable(GL_TEXTURE_2D);
-			GL_BindTextureUnit(GL_TEXTURE0, sinf->texnum);
+			GLC_InitTextureUnits1(sinf->texnum, GL_REPLACE);
 		}
 		else {
-			GL_Disable(GL_TEXTURE_2D);
+			GLC_DisableAllTexturing();
 		}
 
 		glBegin (GL_TRIANGLES);

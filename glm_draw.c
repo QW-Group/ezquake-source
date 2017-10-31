@@ -217,14 +217,13 @@ static void GLM_FlushImageDraw(void)
 
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_SelectTexture(GL_TEXTURE0);
 		glDisable(GL_DEPTH_TEST);
 
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];
 
 			if (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber)) {
-				GL_BindTextureUnit(GL_TEXTURE0, currentTexture);
+				GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
 				glDrawArrays(GL_POINTS, start, i - start);
 				++frameStats.draw_calls;
 				start = i;
@@ -236,7 +235,7 @@ static void GLM_FlushImageDraw(void)
 		}
 
 		if (GL_TextureReferenceIsValid(currentTexture)) {
-			GL_BindTextureUnit(GL_TEXTURE0, currentTexture);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
 		}
 		glDrawArrays(GL_POINTS, start, imageCount - start);
 		++frameStats.draw_calls;

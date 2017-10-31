@@ -71,7 +71,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	GL_BindTextureUnit(GL_TEXTURE0, frame->gl_texturenum);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, frame->gl_texturenum);
 
 	glBegin(GL_QUADS);
 

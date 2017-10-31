@@ -279,8 +279,7 @@ void R_InitBloomTextures(void)
 // =================
 void R_Bloom_DrawEffect( void )
 {
-	GL_BindTextureUnit(GL_TEXTURE0, r_bloomeffecttexture);
-	GLC_StateBeginBloomDraw();
+	GLC_StateBeginBloomDraw(r_bloomeffecttexture);
 
 	glBegin(GL_QUADS);                         
 	glTexCoord2f(  0,                          sampleText_tch  ); 
@@ -529,7 +528,7 @@ void R_Bloom_DownsampleView( void )
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
-		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -605,7 +604,7 @@ void R_BloomBlend(void)
 
 	// Restore the screen-backup to the screen.
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BindTextureUnit(GL_TEXTURE0, r_bloombackuptexture);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloombackuptexture);
 	glColor4f(1, 1, 1, 1);
 	R_Bloom_Quad(0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),

@@ -485,10 +485,10 @@ static void GLC_BlendLightmaps(void)
 		if (!(p = lightmap_polys[i])) {
 			continue;
 		}
-		GL_BindTextureUnit(GL_TEXTURE0, lightmap_textures[i]);
 		if (lightmap_modified[i]) {
 			R_UploadLightMap(GL_TEXTURE0, i);
 		}
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, lightmap_textures[i]);
 		for (; p; p = p->chain) {
 			glBegin(GL_POLYGON);
 			v = p->verts[0];
