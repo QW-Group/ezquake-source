@@ -607,6 +607,8 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		pic->height = 16;
 		pic->sl = pic->tl = 0;
 		pic->sh = pic->th = 1;
+
+		CachePics_MarkAtlasDirty();
 	}
 
 	return tex;
