@@ -30,7 +30,7 @@ static void GL_SortDrawCalls(int* polygonOffsetStart);
 
 glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 
-extern glm_vbo_t brushModel_vbo;
+extern buffer_ref brushModel_vbo;
 extern GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
 
 static GLuint index_count;
@@ -72,7 +72,7 @@ typedef struct block_world_s {
 } block_world_t;
 
 static int batch_count = 0;
-static glm_vbo_t vbo_worldIndirectDraw;
+static buffer_ref vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
@@ -151,8 +151,8 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		drawworld.uniforms_found = true;
 	}
 
-	if (!vbo_worldIndirectDraw.vbo) {
-		GL_GenFixedBuffer(&vbo_worldIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(worldmodel_requests), NULL, GL_STREAM_DRAW);
+	if (!GL_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
+		vbo_worldIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(worldmodel_requests), NULL, GL_STREAM_DRAW);
 	}
 }
 
@@ -167,7 +167,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool lumas)
 {
 	extern glm_vao_t brushModel_vao;
-	extern glm_vbo_t vbo_brushElements;
+	extern buffer_ref vbo_brushElements;
 	extern cvar_t gl_lumaTextures;
 
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
@@ -371,7 +371,7 @@ void GL_FlushWorldModelBatch(void)
 	qbool was_worldmodel = 0;
 	int draw_pos = 0;
 	int polygonOffsetStart = 0;
-	extern glm_vbo_t vbo_brushElements;
+	extern buffer_ref vbo_brushElements;
 
 	if (!batch_count) {
 		return;
@@ -381,8 +381,8 @@ void GL_FlushWorldModelBatch(void)
 
 	GL_UseProgram(drawworld.program);
 	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
-	GL_UpdateVBO(&vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
+	GL_UpdateVBO(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_UpdateVBO(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	// Bind texture units
 	GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);

@@ -314,7 +314,7 @@ void R_StoreEfrags (efrag_t **ppefrag);
 
 // gl_mesh.c
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, glm_vbo_t* ssbo, int position);
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, buffer_ref vbo, buffer_ref ssbo, int position);
 
 // gl_rsurf.c
 
@@ -690,14 +690,16 @@ void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(GLuint texture);
 
 void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data);
-void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data);
-void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+void GL_UpdateVBO(buffer_ref vbo, size_t size, void* data);
+void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 
 // Creates buffer, binds to target and initialises with a particular size
-void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
+buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
+void GL_UnBindBuffer(GLenum target);
+void GL_BindBufferImpl(GLenum target, GLuint buffer);
 
 void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index);
-void GL_BindBufferBase(glm_vbo_t* vbo, GLuint index);
+void GL_BindBufferBase(buffer_ref vbo, GLuint index);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
@@ -881,9 +883,9 @@ void GL_DeleteBuffers(void);
 void GL_InitialiseState(void);
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size);
 void GL_GenVertexArray(glm_vao_t* vao);
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
-void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo);
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);
 
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);

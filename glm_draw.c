@@ -40,21 +40,21 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 static glm_vao_t* GL_CreateLineVAO(void)
 {
 	static glm_vao_t vao;
-	static glm_vbo_t vbo;
+	static buffer_ref vbo;
 
 	float points[] = {
 		0.0f, 0.0f, 0.0f,
 		1.0f, 1.0f, 0.0f,
 	};
 
-	if (!vbo.vbo) {
-		GL_GenFixedBuffer(&vbo, GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_DYNAMIC_DRAW);
+	if (!GL_BufferReferenceIsValid(vbo)) {
+		vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_DYNAMIC_DRAW);
 	}
 
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao);
 
-		GL_ConfigureVertexAttribPointer(&vao, &vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		GL_ConfigureVertexAttribPointer(&vao, vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
 	return &vao;
@@ -163,7 +163,7 @@ typedef struct glm_image_s {
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
 static int imageCount = 0;
 static glm_vao_t imageVAO;
-static glm_vbo_t imageVBO;
+static buffer_ref imageVBO;
 
 static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2)
 {
@@ -202,19 +202,19 @@ void GLM_CreateMultiImageProgram(void)
 		multiImageProgram.uniforms_found = true;
 	}
 
-	if (!imageVBO.vbo) {
-		GL_GenFixedBuffer(&imageVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(images), images, GL_DYNAMIC_DRAW);
+	if (!GL_BufferReferenceIsValid(imageVBO)) {
+		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(images), images, GL_DYNAMIC_DRAW);
 	}
 
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO);
 
-		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
-		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
-		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
-		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
-		GL_ConfigureVertexAttribIPointer(&imageVAO, &imageVBO, 5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
+		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
 	}
 }
 
@@ -233,7 +233,7 @@ void GLM_FlushImageDraw(void)
 
 		GLM_CreateMultiImageProgram();
 
-		GL_UpdateVBO(&imageVBO, sizeof(images[0]) * imageCount, images);
+		GL_UpdateVBO(imageVBO, sizeof(images[0]) * imageCount, images);
 
 		glDisable(GL_DEPTH_TEST);
 

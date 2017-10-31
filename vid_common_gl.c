@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 // <DSA-functions (4.5)>
-// These allow modification of objects without binding (-bind-to-edit)
+// These allow modification of textures without binding (-bind-to-edit)
 typedef void (APIENTRY *glCreateTextures_t)(GLenum target, GLsizei n, GLuint* textures);
 typedef void (APIENTRY *glGetnTexImage_t)(GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
 typedef void (APIENTRY *glGetTextureImage_t)(GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels);
@@ -63,7 +63,7 @@ static glTextureStorage3D_t glTextureStorage3D = NULL;
 static glTextureStorage2D_t glTextureStorage2D = NULL;
 static glTextureSubImage2D_t glTextureSubImage2D = NULL;
 static glTextureSubImage3D_t glTextureSubImage3D = NULL;
- 
+
 #define OPENGL_LOAD_DSA_FUNCTION(x) x = (x ## _t)SDL_GL_GetProcAddress(#x);
 
 // <debug-functions (4.3)>
@@ -71,6 +71,18 @@ static glTextureSubImage3D_t glTextureSubImage3D = NULL;
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
 // </debug-functions>
 
+typedef struct buffer_data_s {
+	GLuint glref;
+	char name[64];
+
+	// These set at creation
+	GLenum target;
+	size_t size;
+	GLuint usage;
+
+
+	struct buffer_data_s* next_free;
+} buffer_data_t;
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 

@@ -6,7 +6,9 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-// This is how many
+void GL_BindBuffer(buffer_ref ref);
+const buffer_ref null_buffer_reference = { 0 };
+
 #define MAX_LOGGED_TEXTURE_UNITS 32
 
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
@@ -50,7 +52,7 @@ static GLenum lastTextureMode = GL_MODULATE;
 static int old_alphablend_flags = 0;
 
 // vid_common_gl.c
-void GL_BindBuffer(GLenum target, GLuint buffer);
+//void GL_BindBuffer(GLenum target, GLuint buffer);
 
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -688,47 +690,57 @@ void GL_PolygonOffset(int option)
 	}
 }
 
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+void GL_UnBindBuffer(GLenum target)
+{
+	GL_BindBufferImpl(target, 0);
+}
+
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
 	assert(vao);
 	assert(vao->vao);
 
 	GL_BindVertexArray(vao);
-	if (vbo && vbo->vbo) {
-		GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
+	if (GL_BufferReferenceIsValid(vbo)) {
+		GL_BindBuffer(vbo);
 	}
 	else {
-		GL_BindBuffer(GL_ARRAY_BUFFER, 0);
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 	}
 
 	glEnableVertexAttribArray(index);
 	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
 {
 	assert(vao);
 	assert(vao->vao);
 
 	GL_BindVertexArray(vao);
-	if (vbo && vbo->vbo) {
-		GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
+	if (GL_BufferReferenceIsValid(vbo)) {
+		GL_BindBuffer(vbo);
 	}
 	else {
-		GL_BindBuffer(GL_ARRAY_BUFFER, 0);
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 	}
 
 	glEnableVertexAttribArray(index);
 	glVertexAttribIPointer(index, size, type, stride, pointer);
 }
 
-void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo)
+void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
 {
 	assert(vao);
 	assert(vao->vao);
 
 	GL_BindVertexArray(vao);
-	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo ? ibo->vbo : 0);
+	if (GL_BufferReferenceIsValid(ibo)) {
+		GL_BindBuffer(ibo);
+	}
+	else {
+		GL_BindBufferImpl(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
 }
 
 #undef glBegin

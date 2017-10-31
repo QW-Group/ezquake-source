@@ -158,26 +158,26 @@ void GLC_DrawBillboards(void)
 	GL_EnableFog();
 }
 
-static glm_vbo_t billboardVBO;
+static buffer_ref billboardVBO;
 static glm_vao_t billboardVAO;
 static glm_program_t billboardProgram;
 static GLint billboard_RefdefCvars_block;
 
 static void GLM_CreateBillboardVAO(void)
 {
-	if (!billboardVBO.vbo) {
-		GL_GenFixedBuffer(&billboardVBO, GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, GL_DYNAMIC_DRAW);
+	if (!GL_BufferReferenceIsValid(billboardVBO)) {
+		billboardVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, GL_DYNAMIC_DRAW);
 	}
 
 	if (!billboardVAO.vao) {
 		GL_GenVertexArray(&billboardVAO);
 
 		// position
-		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(position));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(position));
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
 		// color
-		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
 	}
 }
 
@@ -225,7 +225,7 @@ void GLM_DrawBillboards(void)
 		return;
 	}
 
-	GL_UpdateVBO(&billboardVBO, vertexCount * sizeof(verts[0]), verts);
+	GL_UpdateVBO(billboardVBO, vertexCount * sizeof(verts[0]), verts);
 
 	GL_DisableFog();
 	GL_DepthMask(GL_FALSE);

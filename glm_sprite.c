@@ -33,7 +33,7 @@ static glm_sprite_t sprite_batch[MAX_SPRITE_BATCH];
 static int batch_count = 0;
 
 // Temporary
-static glm_vbo_t simpleItemVBO;
+static buffer_ref simpleItemVBO;
 static glm_vao_t simpleItemVAO;
 static void GL_CompileSpriteProgram(void);
 
@@ -41,7 +41,7 @@ static void GL_PrepareSprites(void)
 {
 	GL_CompileSpriteProgram();
 
-	if (!simpleItemVBO.vbo) {
+	if (!GL_BufferReferenceIsValid(simpleItemVBO)) {
 		float verts[4][5] = { { 0 } };
 
 		VectorSet(verts[0], 0, -1, -1);
@@ -60,14 +60,14 @@ static void GL_PrepareSprites(void)
 		verts[3][3] = 0;
 		verts[3][4] = 1;
 
-		GL_GenFixedBuffer(&simpleItemVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(verts), verts, GL_STATIC_DRAW);
+		simpleItemVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "sprites", sizeof(verts), verts, GL_STATIC_DRAW);
 	}
 
 	if (!simpleItemVAO.vao) {
 		GL_GenVertexArray(&simpleItemVAO);
 
-		GL_ConfigureVertexAttribPointer(&simpleItemVAO, &simpleItemVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
-		GL_ConfigureVertexAttribPointer(&simpleItemVAO, &simpleItemVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
+		GL_ConfigureVertexAttribPointer(&simpleItemVAO, simpleItemVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
+		GL_ConfigureVertexAttribPointer(&simpleItemVAO, simpleItemVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
 	}
 }
 

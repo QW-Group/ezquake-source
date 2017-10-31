@@ -494,7 +494,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	}
 }
 
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, glm_vbo_t* ssbo, int position)
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, buffer_ref vbo, buffer_ref ssbo, int position)
 {
 	GL_UpdateVBOSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
 	GL_UpdateVBOSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);

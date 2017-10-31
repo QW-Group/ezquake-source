@@ -157,21 +157,19 @@ typedef struct vbo_model_vert_s {
 	int padding[3];
 } vbo_model_vert_t;
 
-typedef struct glm_vbo_s {
-	unsigned int vbo;
-	const char* name;
+typedef struct gl_buffer_s {
+	int index;
+} buffer_ref;
 
-	struct glm_vbo_s* next;
-	unsigned int target;
-	size_t size;
-} glm_vbo_t;
+#define GL_BufferReferenceIsValid(x) (x.index)
+extern const buffer_ref null_buffer_reference;
 
 typedef struct glm_vao_s {
 	unsigned int vao;
 
 	struct glm_vao_s* next;
 
-	glm_vbo_t* element_array_buffer;
+	buffer_ref element_array_buffer;
 } glm_vao_t;
 
 typedef struct glm_ubo_s {
@@ -190,9 +188,7 @@ typedef struct glpoly_s {
 	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
 
-	glm_vbo_t           vbo;
 	unsigned int        vbo_start;
-	glm_vao_t           vao;
 	int					numverts;
 	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2 l)
 } glpoly_t;
@@ -555,10 +551,6 @@ typedef struct model_s {
 
 	// additional model data
 	cache_user_t		cache; // only access through Mod_Extradata
-
-	//glm_vbo_t           vbo;
-	//glm_vao_t           vao;
-	//glm_vao_t           vao_simple;
 
 	texture_ref         texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	float               texture_arrays_scale_s[MAX_TEXTURE_ARRAYS_PER_MODEL];

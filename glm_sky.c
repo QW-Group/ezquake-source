@@ -68,8 +68,8 @@ typedef  struct {
 static skydome_vert_t skydomeVertData[VERTS_PER_SKYDOME];
 static GLuint skybox_RefdefCvars_block;
 static GLuint skybox_SkyBoxData_block;
-static glm_vbo_t skyDome_vbo;
-static glm_vbo_t skyDomeCommands_vbo;
+static buffer_ref skyDome_vbo;
+static buffer_ref skyDomeCommands_vbo;
 static glm_vao_t skyDome_vao;
 static glm_vao_t skyBox_vao;
 static glm_ubo_t ubo_skydomeData;
@@ -100,8 +100,8 @@ static qbool BuildSkyDomeProgram(void)
 		GLM_CreateVFProgram("SkyDome", GL_VFParams(skydome), &skyDome);
 	}
 
-	if (!skyDomeCommands_vbo.vbo) {
-		GL_GenFixedBuffer(&skyDomeCommands_vbo, GL_DRAW_INDIRECT_BUFFER, __FUNCTION__, sizeof(DrawElementsIndirectCommand) * NUMBER_AXIS * SUBDIVISIONS, NULL, GL_STREAM_DRAW);
+	if (!GL_BufferReferenceIsValid(skyDomeCommands_vbo)) {
+		skyDomeCommands_vbo = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "skydome-commands", sizeof(DrawElementsIndirectCommand) * NUMBER_AXIS * SUBDIVISIONS, NULL, GL_STREAM_DRAW);
 	}
 
 	if (skyDome.program && !skyDome.uniforms_found) {
@@ -123,7 +123,7 @@ static qbool BuildSkyDomeProgram(void)
 		skyDome.uniforms_found = true;
 	}
 
-	if (skyDome.program && skyDome.uniforms_found && skyDomeCommands_vbo.vbo) {
+	if (skyDome.program && skyDome.uniforms_found && GL_BufferReferenceIsValid(skyDomeCommands_vbo)) {
 		GL_UseProgram(skyDome.program);
 		return true;
 	}
@@ -168,7 +168,7 @@ static qbool BuildSkyBoxProgram(void)
 
 static void BuildSkyVertsArray(void)
 {
-	static glm_vbo_t skyDomeIndexes_vbo;
+	static buffer_ref skyDomeIndexes_vbo;
 	static GLushort skydomeIndexes[INDEXES_PER_AXIS];
 
 	int skyDomeIndexCount = 0;
@@ -178,7 +178,7 @@ static void BuildSkyVertsArray(void)
 	int axis = 0;
 
 	// Skydome VBO
-	if (!skyDome_vbo.vbo) {
+	if (!GL_BufferReferenceIsValid(skyDome_vbo)) {
 		// Generate vertices (for each axis)
 		for (axis = 0; axis < 6; ++axis) {
 			float fstep = 2.0 / SUBDIVISIONS;
@@ -211,24 +211,24 @@ static void BuildSkyVertsArray(void)
 			}
 		}
 
-		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * vert, skydomeVertData, GL_STATIC_DRAW);
-		GL_GenFixedBuffer(&skyDomeIndexes_vbo, GL_ELEMENT_ARRAY_BUFFER, __FUNCTION__, sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
+		skyDome_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "skydome-vbo", sizeof(skydome_vert_t) * vert, skydomeVertData, GL_STATIC_DRAW);
+		skyDomeIndexes_vbo = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "skydome-indexes", sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao.vao) {
 		GL_GenVertexArray(&skyDome_vao);
-		GL_SetVertexArrayElementBuffer(&skyDome_vao, &skyDomeIndexes_vbo);
+		GL_SetVertexArrayElementBuffer(&skyDome_vao, skyDomeIndexes_vbo);
 
-		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
 	}
 
 	if (!skyBox_vao.vao) {
 		GL_GenVertexArray(&skyBox_vao);
-		GL_SetVertexArrayElementBuffer(&skyBox_vao, NULL);
+		GL_SetVertexArrayElementBuffer(&skyBox_vao, null_buffer_reference);
 
-		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
 	}
 }
 
@@ -309,7 +309,7 @@ static void GLM_DrawSkyDomeFaces(void)
 		skyDomeData.speedscale2 -= ((int)skyDomeData.speedscale2 & ~127);
 		VectorCopy(r_origin, skyDomeData.origin);
 
-		GL_UpdateVBO(&skyDomeCommands_vbo, sizeof(commandData[0]) * commands, commandData);
+		GL_UpdateVBO(skyDomeCommands_vbo, sizeof(commandData[0]) * commands, commandData);
 		GL_UpdateUBO(&ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
 
 		GL_BindVertexArray(&skyDome_vao);

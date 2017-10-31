@@ -51,7 +51,7 @@ static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
 static block_aliasmodels_t aliasdata;
 static glm_ubo_t ubo_aliasdata;
-static glm_vbo_t vbo_aliasIndirectDraw;
+static buffer_ref vbo_aliasIndirectDraw;
 
 typedef struct glm_aliasmodelbatch_s {
 	int start;
@@ -166,8 +166,8 @@ static qbool GLM_CompileAliasModelProgram(void)
 		drawAliasModelProgram.uniforms_found = true;
 	}
 
-	if (!vbo_aliasIndirectDraw.vbo) {
-		GL_GenFixedBuffer(&vbo_aliasIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(aliasmodel_requests), aliasmodel_requests, GL_STREAM_DRAW);
+	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
+		vbo_aliasIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(aliasmodel_requests), aliasmodel_requests, GL_STREAM_DRAW);
 	}
 
 	return drawAliasModelProgram.program;
@@ -206,7 +206,7 @@ static void GLM_FlushAliasModelBatch(void)
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);
 
 		// Update indirect buffer
-		GL_UpdateVBO(&vbo_aliasIndirectDraw, sizeof(aliasmodel_requests), &aliasmodel_requests);
+		GL_UpdateVBO(vbo_aliasIndirectDraw, sizeof(aliasmodel_requests), &aliasmodel_requests);
 
 		GL_UseProgram(drawAliasModelProgram.program);
 		GL_BindVertexArray(&aliasModel_vao);
