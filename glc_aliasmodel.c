@@ -264,7 +264,6 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	float scroll[2];
 	float v[3];
 	float shell_size = bound(0, gl_powerupshells_size.value, 20);
-	byte color[4];
 	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
 
 	// LordHavoc: set the state to what we need for rendering a shell
@@ -289,13 +288,6 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	else {
 		scroll[0] = cos(cl.time * 1.5);
 		scroll[1] = sin(cl.time * 1.1);
-	}
-
-	if (GL_ShadersSupported()) {
-		color[0] = r_shellcolor[0] * 255;
-		color[1] = r_shellcolor[1] * 255;
-		color[2] = r_shellcolor[2] * 255;
-		color[3] = bound(0, gl_powerupshells.value, 1) * 255;
 	}
 
 	// get the vertex count and primitive type

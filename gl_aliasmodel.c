@@ -414,10 +414,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	//VULT MOTION TRAILS
-	if (ent->alpha) {
-		r_modelalpha = ent->alpha;
-	}
+	r_modelalpha = (ent->alpha ? ent->alpha : 1);
 
 	if (ent->scoreboard) {
 		playernum = ent->scoreboard - cl.players;
