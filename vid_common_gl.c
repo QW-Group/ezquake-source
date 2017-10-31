@@ -866,6 +866,11 @@ void GL_TexSubImage2D(
 )
 {
 	if (glTextureSubImage2D) {
+		GLint textureWidth, textureHeight;
+
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_WIDTH, &textureWidth);
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_HEIGHT, &textureHeight);
+
 		glTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	else {

@@ -77,7 +77,6 @@ typedef struct {
 	char		identifier[MAX_QPATH];
 	char		*pathname;
 	int			width, height;
-	int			scaled_width, scaled_height;
 	int         gl_width, gl_height;
 	int			texmode;
 	GLint       internal_format;
@@ -284,13 +283,26 @@ static void brighten32 (byte *data, int size)
 	}
 }
 
+static int GL_InternalFormat(int mode)
+{
+	if (gl_gammacorrection.integer) {
+		return (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
+	}
+	else if (mode & TEX_NOCOMPRESS) {
+		return (mode & TEX_ALPHA) ? GL_RGBA8 : GL_RGB8;
+	}
+	else {
+		return (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
+	}
+}
+
 //
 // Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
 //
 static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
 {
 	// Tell OpenGL the texnum of the texture before uploading it.
-	int	internal_format, tempwidth, tempheight, levels;
+	int	tempwidth, tempheight, levels;
 	unsigned int *newdata;
 
 	if (gl_support_arb_texture_non_power_of_two)
@@ -359,26 +371,11 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 		brighten32((byte *)newdata, width * height * 4);
 	}
 
-	if (gl_gammacorrection.integer) {
-		internal_format = (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
-	}
-	else if (mode & TEX_NOCOMPRESS) {
-		internal_format = (mode & TEX_ALPHA) ? GL_RGBA8 : GL_RGB8;
-	}
-	else {
-		internal_format = (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
-	}
-
 	// Upload the main texture to OpenGL.
-	glt->internal_format = internal_format;
-	if (!glt->storage_allocated) {
-		GL_TexStorage2D(GL_TEXTURE0, glt->reference, levels, internal_format, width, height);
-		glt->storage_allocated = true;
-	}
 	GL_TexSubImage2D(GL_TEXTURE0, glt->reference, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 
 	if (mode & TEX_MIPMAP) {
-		GL_GenerateMipmapWithData(GL_TEXTURE0, glt->reference, (byte*)newdata, width, height, internal_format);
+		GL_GenerateMipmapWithData(GL_TEXTURE0, glt->reference, (byte*)newdata, width, height, glt->internal_format);
 
 		GL_TexParameterf(GL_TEXTURE0, glt->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		GL_TexParameterf(GL_TEXTURE0, glt->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -480,10 +477,13 @@ static gltexture_t* GL_NextTextureSlot(GLenum target)
 	return glt;
 }
 
-static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
+static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture)
 {
+	int gl_width, gl_height;
+	int scaled_width, scaled_height;
 	gltexture_t* glt = NULL;
 	qbool load_over_existing = false;
+	int miplevels = 1;
 
 	*new_texture = true;
 
@@ -491,12 +491,30 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 		mode &= ~TEX_BRIGHTEN;
 	}
 
-	ScaleDimensions(width, height, scaled_width, scaled_height, mode);
+	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
 	if (developer.integer >= 3) {
 		Com_DPrintf("Texture: %s %dx%d -> %dx%d %s\n",
 			identifier, width, height, scaled_width, scaled_height,
-			((*scaled_width & (*scaled_width - 1)) || (*scaled_height & (*scaled_height - 1))) ? "non power of two" : "");
+			((scaled_width & (scaled_width - 1)) || (scaled_height & (scaled_height - 1))) ? "non power of two" : "");
+	}
+
+	gl_width = width;
+	gl_height = height;
+	while (gl_width > scaled_width || gl_height > scaled_height) {
+		gl_width = max(1, gl_width / 2);
+		gl_height = max(1, gl_height / 2);
+	}
+
+	{
+		int temp_w = gl_width;
+		int temp_h = gl_height;
+
+		while (temp_w > 1 || temp_h > 1) {
+			temp_w = max(1, temp_w / 2);
+			temp_h = max(1, temp_h / 2);
+			++miplevels;
+		}
 	}
 
 	// If we were given an identifier for the texture, search through
@@ -507,7 +525,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
 			if (!strncmp(identifier, glt->identifier, sizeof(glt->identifier) - 1)) {
 				qbool same_dimensions = (width == glt->width && height == glt->height && depth == glt->depth);
-				qbool same_scaling = (*scaled_width == glt->scaled_width && *scaled_height == glt->scaled_height);
+				qbool same_scaling = (gl_width == glt->gl_width && gl_height == glt->gl_height);
 				qbool same_format = (glt->bpp == bpp && glt->target == target);
 				qbool same_options = (mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE));
 
@@ -540,21 +558,37 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	else if (glt && !glt->texnum) {
 		GL_CreateTextureNames(GL_TEXTURE0, glt->target, 1, &glt->texnum);
 	}
+	else if (glt && glt->storage_allocated) {
+		if (gl_width != glt->gl_width || gl_height != glt->gl_height || glt->bpp != bpp) {
+			texture_ref ref = glt->reference;
+
+			GL_DeleteTexture(&ref);
+
+			return GL_AllocateTextureSlot(target, identifier, width, height, 0, bpp, mode, crc, new_texture);
+		}
+	}
 
 	if (!glt) {
 		Sys_Error("GL_LoadTexture: glt not initialized\n");
 	}
 
+	// Allocate storage
+	if (!glt->storage_allocated && (target == GL_TEXTURE_2D || target == GL_TEXTURE_CUBE_MAP)) {
+		glt->internal_format = GL_InternalFormat(mode);
+
+		GL_TexStorage2D(GL_TEXTURE0, glt->reference, miplevels, glt->internal_format, gl_width, gl_height);
+		glt->storage_allocated = true;
+	}
+
 	glt->width = width;
 	glt->height = height;
 	glt->depth = depth;
-	glt->scaled_width = *scaled_width;
-	glt->scaled_height = *scaled_height;
 	glt->texmode = mode;
 	glt->crc = crc;
 	glt->bpp = bpp;
 	glt->is_array = (depth > 0);
-	glt->internal_format = 0;
+	glt->gl_width = gl_width;
+	glt->gl_height = gl_height;
 
 	Q_free(glt->pathname);
 	if (bpp == 4 && fs_netpath[0]) {
@@ -584,22 +618,13 @@ static void GL_LoadTextureData(gltexture_t* glt, int width, int height, byte *da
 
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
 {
-	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
-	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
+	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, mode, crc, &new_texture);
 	texture_ref ref = { 0 };
 
 	if (glt && !new_texture) {
 		return glt->reference;
-	}
-
-	if (glt->storage_allocated && (glt->width != width || glt->height != height || glt->bpp != bpp)) {
-		texture_ref ref = glt->reference;
-
-		GL_DeleteTexture(&ref);
-
-		glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
 	}
 
 	GL_LoadTextureData(glt, width, height, data, mode, bpp);
@@ -682,8 +707,16 @@ static qbool CheckTextureLoaded(int mode)
 
 	if (!forceTextureReload) {
 		if (current_texture && current_texture->pathname && !strcmp(fs_netpath, current_texture->pathname)) {
+			int width = current_texture->width;
+			int height = current_texture->height;
+
 			ScaleDimensions(current_texture->width, current_texture->height, &scaled_width, &scaled_height, mode);
-			if (current_texture->scaled_width == scaled_width && current_texture->scaled_height == scaled_height) {
+			while (width > scaled_width || height > scaled_height) {
+				width = max(1, width / 2);
+				height = max(1, height / 2);
+			}
+
+			if (current_texture->gl_width == width && current_texture->gl_height == height) {
 				return true;
 			}
 		}
@@ -1101,10 +1134,9 @@ void GL_Texture_Init(void)
 // We could flag the textures as they're created and then move all 2d>3d to this module?
 texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
 {
-	int scaled_width, scaled_height;
 	unsigned short crc = 0;
 	qbool new_texture = false;
-	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	texture_ref gl_texturenum;
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
@@ -1168,9 +1200,6 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 		GL_TexParameterf(GL_TEXTURE0, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
-	slot->gl_width = width;
-	slot->gl_height = height;
-
 	return gl_texturenum;
 }
 
@@ -1224,11 +1253,10 @@ void GL_DeleteTextureArray(texture_ref* texture)
 
 texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 {
-	int scaled_width, scaled_height;
 	qbool new_texture;
-	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_CUBE_MAP, identifier, width, height, 0, 4, &scaled_width, &scaled_height, TEX_NOCOMPRESS | TEX_MIPMAP, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_CUBE_MAP, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	int max_miplevels = 0;
-	int min_dimension = min(width, height);
+	int max_dimension;
 
 	if (!slot) {
 		return invalid_texture_reference;
@@ -1239,12 +1267,12 @@ texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int 
 	}
 
 	// 
-	while (min_dimension > 0) {
+	max_dimension = max(slot->gl_width, slot->gl_height);
+	while (max_dimension > 0) {
 		max_miplevels++;
-		min_dimension /= 2;
+		max_dimension /= 2;
 	}
 
-	GL_TexStorage2D(GL_TEXTURE0, slot->reference, max_miplevels, GL_RGBA8, width, height);
 	if (mode & TEX_MIPMAP) {
 		GL_TexParameterf(GL_TEXTURE0, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		GL_TexParameterf(GL_TEXTURE0, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -1257,9 +1285,6 @@ texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int 
 		GL_TexParameterf(GL_TEXTURE0, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
 		GL_TexParameterf(GL_TEXTURE0, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
-
-	slot->gl_width = width;
-	slot->gl_height = height;
 
 	return slot->reference;
 }
