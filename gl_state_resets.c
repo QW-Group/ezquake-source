@@ -37,6 +37,42 @@ float GL_WaterAlpha(void)
 	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 }
 
+void GL_StateDefault3D(void)
+{
+	GL_ResetRegion(true);
+
+	ENTER_STATE;
+
+	// set drawing parms
+	GL_CullFace(GL_FRONT);
+	if (gl_cull.value) {
+		glEnable(GL_CULL_FACE);
+	}
+	else {
+		glDisable(GL_CULL_FACE);
+	}
+
+	if (CL_MultiviewEnabled()) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+		gldepthmin = 0;
+		gldepthmax = 1;
+		GL_DepthFunc(GL_LEQUAL);
+	}
+
+	GL_DepthRange(gldepthmin, gldepthmax);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_ONE, GL_ZERO);
+
+	glEnable(GL_DEPTH_TEST);
+
+	if (gl_gammacorrection.integer) {
+		glEnable(GL_FRAMEBUFFER_SRGB);
+	}
+	else {
+		glDisable(GL_FRAMEBUFFER_SRGB);
+	}
+}
+
 void GLC_StateBeginWaterSurfaces(void)
 {
 	float wateralpha = GL_WaterAlpha();
@@ -80,9 +116,6 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
 	);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (!GL_ShadersSupported()) {
-		GLC_EnableTMU(GL_TEXTURE0);
-	}
 
 	LEAVE_STATE;
 }
@@ -129,15 +162,19 @@ void GLC_StateBeginAlphaChain(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndAlphaChain(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginAlphaChainSurface(msurface_t* s)
@@ -155,6 +192,8 @@ void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 
 		GLC_SetTextureLightmap(GL_TEXTURE1, s->lightmaptexturenum);
 	}
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginAliasOutlineFrame(void)
@@ -551,7 +590,6 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 {
 	ENTER_STATE;
 
-	glEnable(GL_TEXTURE_2D);
 	GL_DisableMultitexture();
 	GLC_EnableTMU(GL_TEXTURE0);
 	GL_TextureEnvMode(textureEnvMode);
@@ -869,42 +907,6 @@ void GL_StateEndDrawBrushModel(void)
 	LEAVE_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-}
-
-void GL_StateDefault3D(void)
-{
-	GL_ResetRegion(true);
-
-	ENTER_STATE;
-
-	// set drawing parms
-	GL_CullFace(GL_FRONT);
-	if (gl_cull.value) {
-		glEnable(GL_CULL_FACE);
-	}
-	else {
-		glDisable(GL_CULL_FACE);
-	}
-
-	if (CL_MultiviewEnabled()) {
-		glClear(GL_DEPTH_BUFFER_BIT);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		GL_DepthFunc(GL_LEQUAL);
-	}
-
-	GL_DepthRange(gldepthmin, gldepthmax);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-
-	glEnable(GL_DEPTH_TEST);
-
-	if (gl_gammacorrection.integer) {
-		glEnable(GL_FRAMEBUFFER_SRGB);
-	}
-	else {
-		glDisable(GL_FRAMEBUFFER_SRGB);
-	}
 }
 
 void GL_StateDefaultInit(void)

@@ -303,7 +303,16 @@ void GL_DisableMultitexture(void)
 		GL_SelectTexture(GL_TEXTURE0);
 	}
 	else if (mtexenabled) {
-		glDisable(GL_TEXTURE_2D);
+		int i;
+		if (oldtarget > GL_TEXTURE0 && gl_texture_2d) {
+			glDisable(GL_TEXTURE_2D);
+		}
+		for (i = 1; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
+			if (texunitenabled[i]) {
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				glDisable(GL_TEXTURE_2D);
+			}
+		}
 		GL_SelectTexture(GL_TEXTURE0);
 		mtexenabled = false;
 	}
@@ -726,7 +735,7 @@ void GL_Enable(GLenum option)
 		}
 
 		gl_texture_2d = true;
-		GL_LogAPICall("glEnable(GL_TEXTURE_2D)");
+		GL_LogAPICall("glEnable(GL_TEXTURE%u, GL_TEXTURE_2D)", oldtarget - GL_TEXTURE0);
 	}
 	else if (option == GL_BLEND) {
 		if (gl_blend) {
@@ -807,7 +816,7 @@ void GL_Disable(GLenum option)
 			return;
 		}
 
-		GL_LogAPICall("glDisable(GL_TEXTURE_2D)");
+		GL_LogAPICall("glDisable(GL_TEXTURE%u, GL_TEXTURE_2D)", oldtarget - GL_TEXTURE0);
 		gl_texture_2d = false;
 	}
 	else if (option == GL_BLEND) {
@@ -859,3 +868,24 @@ void GL_Begin(GLenum primitive)
 	glBegin(primitive);
 	//GL_LogAPICall("GL_Begin()...");
 }
+
+#ifdef WITH_NVTX
+void GL_PrintState(void)
+{
+	int i;
+	extern FILE* debug_frame_out;
+
+	if (debug_frame_out) {
+		fprintf(debug_frame_out, "... <state-dump>\n");
+		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange);
+		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cullface ? "enabled" : "disabled", currentCullFace);
+		fprintf(debug_frame_out, "..... Blending: %s, sfactor %u, dfactor %u\n", gl_blend ? "enabled" : "disabled", currentBlendSFactor, currentBlendDFactor);
+		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", gl_texture_2d ? "enabled" : "disabled", oldtarget - GL_TEXTURE0);
+		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
+			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? "y" : "n");
+		}
+		fprintf(debug_frame_out, "]\n");
+		fprintf(debug_frame_out, "... </state-dump>\n");
+	}
+}
+#endif

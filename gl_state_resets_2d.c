@@ -31,16 +31,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GL_StateDefault2D(void)
 {
+	extern void GL_PrintState(void);
+
 	GL_ResetRegion(false);
 
 	ENTER_STATE;
 
+	GL_PrintState();
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color3ubv(color_white);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (!GL_ShadersSupported()) {
+		GL_DisableMultitexture();
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_TextureEnvMode(GL_REPLACE);
+		GL_Color3ubv(color_white);
+	}
 }
 
 void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
@@ -222,11 +229,13 @@ void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
 
 void GLC_StateResetCharGLState(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginStringDraw(void)

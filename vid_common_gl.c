@@ -569,7 +569,6 @@ void GL_Color3ubv(const GLubyte* rgbVec)
 	else {
 		glColor3ubv(rgbVec);
 	}
-
 }
 
 void GL_Color4ubv(const GLubyte* rgbaVec)
@@ -595,7 +594,7 @@ void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 
 #ifdef WITH_NVTX
 static int debug_frame_depth = 0;
-static FILE* debug_frame_out;
+FILE* debug_frame_out;
 
 void GL_EnterRegion(const char* regionName)
 {
@@ -683,6 +682,7 @@ void GL_ResetRegion(qbool start)
 		debug_frame_depth = 0;
 	}
 }
+
 #endif
 
 // Linked list of all vao buffers
