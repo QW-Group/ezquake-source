@@ -44,7 +44,8 @@ typedef byte col_t[4];
 void RainSplash(vec3_t org);
 void ParticleStats (int change);
 void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t color);
-void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width);
+void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2);
+void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width);
 
 typedef enum {
 	p_spark, p_smoke, p_fire, p_bubble, p_lavasplash, p_gunblast, p_chunk, p_shockwave,
@@ -675,6 +676,7 @@ static void QMB_FillParticleVertexBuffer(void)
 		case pd_beam:
 			for (p = pt->start; p; p = p->next) {
 				particle_texture_t* ptex = &particle_textures[ptex_lightning];
+				vec3_t right1, right2;
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -683,9 +685,11 @@ static void QMB_FillParticleVertexBuffer(void)
 					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN, true);
 					first = false;
 				}
+
+				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
 					if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
-						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l * amf_part_trailwidth.value));
+						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
 						GL_BillboardAddVert(pt->billboard_type, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
 						GL_BillboardAddVert(pt->billboard_type, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
@@ -2449,9 +2453,9 @@ void VXBlood (vec3_t org, float count)
 
 
 //from darkplaces engine - finds which corner of a particle goes where, so I don't have to :D
-void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width)
+void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2)
 {
-	vec3_t right1, right2, diff, normal;
+	vec3_t diff, normal;
 
 	VectorSubtract (org2, org1, normal);
 	VectorNormalize (normal);
@@ -2466,7 +2470,10 @@ void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width)
 	VectorSubtract (r_origin, org2, diff);
 	VectorNormalize (diff);
 	CrossProduct (normal, diff, right2);
+}
 
+void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width)
+{
 	vert[ 0] = org1[0] + width * right1[0];
 	vert[ 1] = org1[1] + width * right1[1];
 	vert[ 2] = org1[2] + width * right1[2];
