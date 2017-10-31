@@ -601,7 +601,7 @@ void GL_EnableWaterFog(int contents)
 	float colors[4];
 
 	// TODO
-	if (!GL_ShadersSupported()) {
+	if (GL_ShadersSupported()) {
 		return;
 	}
 
