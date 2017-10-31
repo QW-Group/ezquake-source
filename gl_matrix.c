@@ -390,7 +390,9 @@ void GLC_ResumeMatrixUpdate(void)
 
 void GLC_LoadMatrix(GLenum matrix)
 {
-	glMatrixMode(matrix);
-	glLoadMatrixf(GL_MatrixForMode(matrix));
-	GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));
+	if (!GL_ShadersSupported()) {
+		glMatrixMode(matrix);
+		glLoadMatrixf(GL_MatrixForMode(matrix));
+		GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));
+	}
 }

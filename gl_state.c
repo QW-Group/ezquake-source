@@ -36,6 +36,7 @@ static GLfloat polygonOffsetUnits = 0;
 static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
 static GLenum perspectiveCorrectionHint;
+static GLenum polygonMode;
 
 static GLenum currentTextureUnit = GL_TEXTURE0;
 static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
@@ -192,6 +193,7 @@ void GL_InitialiseState(void)
 	currentBlendDFactor = GL_ZERO;
 	currentVAO = NULL;
 	currentShadeModel = GL_SMOOTH;
+	polygonMode = GL_FILL;
 	currentViewportX = 0;
 	currentViewportY = 0;
 	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
@@ -677,7 +679,15 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 	}
 }
 
+void GL_PolygonMode(GLenum mode)
+{
+	if (mode != polygonMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, mode);
+		polygonMode = mode;
 
+		GL_LogAPICall("glPolygonMode(%s)", mode == GL_FILL ? "fill" : (mode == GL_LINE ? "lines" : "???"));
+	}
+}
 
 // ---
 
@@ -959,6 +969,7 @@ void GL_PrintState(void)
 		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
 			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? TexEnvName(unit_texture_mode[i]) : "n");
 		}
+		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", polygonMode == GL_FILL ? "fill" : polygonMode == GL_LINE ? "line" : "???");
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "... </state-dump>\n");
 	}

@@ -336,7 +336,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
 
 	GL_StateBeginEntities(vislist);
-
 	GL_BeginDrawBrushModels();
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];

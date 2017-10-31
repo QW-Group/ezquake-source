@@ -119,7 +119,7 @@ void GL_StateDefaultInit(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_AlphaFunc(GL_GREATER, 0.666);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_PolygonMode(GL_FILL);
 	GL_ShadeModel(GL_FLAT);
 
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -149,7 +149,7 @@ static void GLM_DrawOutlineBatch(int start, int end)
 
 	GL_EnterRegion("GLM_DrawOutlineBatch");
 	glUniform1i(drawAliasModel_outlines, 1);
-	GLM_StateBeginDrawAliasOutlines();
+	GL_StateBeginAliasOutlineFrame();
 
 	for (i = start; i <= end; ++i) {
 		if (!aliasmodel_requests[i].outline) {
@@ -171,7 +171,7 @@ static void GLM_DrawOutlineBatch(int start, int end)
 	}
 
 	glUniform1i(drawAliasModel_outlines, 0);
-	GLM_StateEndDrawAliasOutlines();
+	GL_StateEndAliasOutlineFrame();
 	GL_LeaveRegion();
 }
 

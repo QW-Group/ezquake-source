@@ -440,11 +440,11 @@ void GLM_StateBeginDrawWorldOutlines(void)
 
 	ENTER_STATE;
 
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 	GL_CullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	GL_PolygonMode(GL_LINE);
 	GL_Disable(GL_DEPTH_TEST);
 	GL_Disable(GL_CULL_FACE);
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 
 	// limit outline width, since even width == 3 can be considered as cheat.
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
@@ -458,7 +458,7 @@ void GLM_StateEndDrawWorldOutlines(void)
 
 	GL_Enable(GL_DEPTH_TEST);
 	GL_Enable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_PolygonMode(GL_FILL);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 

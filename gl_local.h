@@ -710,6 +710,7 @@ void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(GLuint texture);
+void GL_PolygonMode(GLenum mode);
 
 // gl_buffers.c
 void GL_InitialiseBufferHandling(void);
@@ -1146,6 +1147,9 @@ typedef struct glm_worldmodel_req_s {
 	qbool worldmodel;
 } glm_worldmodel_req_t;
 
+void GL_StateBeginAliasOutlineFrame(void);
+void GL_StateEndAliasOutlineFrame(void);
+
 void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateEndWaterSurfaces(void);
 void GL_StateBeginEntities(visentlist_t* vislist);
@@ -1155,8 +1159,6 @@ void GL_StateEndPolyBlend(void);
 void GLC_StateBeginAlphaChain(void);
 void GLC_StateEndAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
-void GLC_StateBeginAliasOutlineFrame(void);
-void GLC_StateEndAliasOutlineFrame(void);
 void GLC_StateBeginAliasPowerupShell(void);
 void GLC_StateEndAliasPowerupShell(void);
 void GLC_StateBeginUnderwaterCaustics(void);
@@ -1226,8 +1228,6 @@ void GLC_StateBeginDrawBillboards(void);
 void GLC_StateEndDrawBillboards(void);
 void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GL_StateEndDrawAliasModel(void);
-void GLM_StateBeginDrawAliasOutlines(void);
-void GLM_StateEndDrawAliasOutlines(void);
 void GLC_StateBeginSimpleItem(texture_ref simpletexture);
 void GLC_StateEndSimpleItem(void);
 

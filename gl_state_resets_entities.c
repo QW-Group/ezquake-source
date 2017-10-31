@@ -28,16 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveRegion()
 
+static qbool vislist_alpha;
+static qbool vislist_alphablend;
+
 void GL_StateBeginEntities(visentlist_t* vislist)
 {
 	ENTER_STATE;
 
-	// draw sprites separately, because of alpha_test
-	GL_AlphaBlendFlags(
-		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	vislist_alpha = vislist->alpha;
+	vislist_alphablend = vislist->alphablend;
 
 	LEAVE_STATE;
 }
@@ -46,6 +45,7 @@ void GL_StateEndEntities(visentlist_t* vislist)
 {
 	ENTER_STATE;
 
+	GL_PolygonMode(GL_FILL);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
@@ -60,43 +60,23 @@ void GL_StateEndEntities(visentlist_t* vislist)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginAliasOutlineFrame(void)
-{
-	extern cvar_t gl_outline_width;
-
-	ENTER_STATE;
-
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	glPolygonMode(GL_FRONT, GL_LINE);
-
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
-	GL_Color3ubv(color_black);
-	GL_Enable(GL_LINE_SMOOTH);
-	GLC_DisableAllTexturing();
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndAliasOutlineFrame(void)
-{
-	ENTER_STATE;
-
-	GL_Color3ubv(color_white);
-	glPolygonMode(GL_FRONT, GL_FILL);
-	GL_Disable(GL_LINE_SMOOTH);
-	GL_CullFace(GL_FRONT);
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-
-	LEAVE_STATE;
-}
-
 void GLC_StateBeginAliasPowerupShell(void)
 {
 	ENTER_STATE;
+
+	GL_AlphaBlendFlags((vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DisableFog();
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
@@ -118,9 +98,19 @@ void GLC_StateBeginMD3Draw(float alpha)
 {
 	ENTER_STATE;
 
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_AlphaBlendFlags((vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
+	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 	GL_EnableFog();
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 
@@ -129,33 +119,29 @@ void GLC_StateBeginMD3Draw(float alpha)
 
 void GLC_StateEndMD3Draw(void)
 {
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
-	GL_ShadeModel(GL_FLAT);
-	GL_DisableFog();
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
 {
 	ENTER_STATE;
 
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	}
-	else {
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	}
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	GL_Disable(GL_LINE_SMOOTH);
+	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	GL_DisableFog();
+
+	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
 	if (custom_model) {
 		GLC_DisableAllTexturing();
 		GL_Color4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
 	}
 	else {
+		GL_Color3ubv(color_white);
 		if (GL_TextureReferenceIsValid(texture) && GL_TextureReferenceIsValid(fb_texture) && mtex) {
 			GLC_InitTextureUnits2(texture, textureEnvMode, fb_texture, GL_DECAL);
 		}
@@ -172,16 +158,29 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 
 void GLC_StateEndDrawAliasFrame(void)
 {
-	ENTER_STATE;
-
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginAliasModelShadow(void)
 {
 	ENTER_STATE;
+
+	GL_AlphaBlendFlags(
+		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DisableFog();
 
 	GLC_DisableAllTexturing();
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -192,17 +191,29 @@ void GLC_StateBeginAliasModelShadow(void)
 
 void GLC_StateEndAliasModelShadow(void)
 {
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-
-	LEAVE_STATE;
 }
 
 void GL_StateBeginDrawViewModel(float alpha)
 {
 	ENTER_STATE;
+
+	GL_AlphaBlendFlags(
+		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DisableFog();
 
 	// hack the depth range to prevent view model from poking into walls
 	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
@@ -210,6 +221,9 @@ void GL_StateBeginDrawViewModel(float alpha)
 		if (alpha < 1) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+		else {
+			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
 	if (gl_affinemodels.value) {
@@ -221,14 +235,8 @@ void GL_StateBeginDrawViewModel(float alpha)
 
 void GL_StateEndDrawViewModel(void)
 {
-	ENTER_STATE;
-
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
 	GL_DepthRange(gldepthmin, gldepthmax);
-
-	LEAVE_STATE;
+	GL_PolygonMode(GL_FILL);
 }
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
@@ -243,29 +251,39 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
+	GL_AlphaBlendFlags(
+		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DisableFog();
+
 	if (e->alpha) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_TextureEnvMode(GL_MODULATE);
-		glColor4f (1, 1, 1, e->alpha);
+		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+		glColor4f(1, 1, 1, e->alpha);
 	}
 	else {
-		glColor3f (1,1,1);
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+		GL_Color3ubv(color_white);
 	}
 
-	if (!GL_ShadersSupported() && polygonOffset) {
-		GL_PolygonOffset(POLYGONOFFSET_STANDARD);
-	}
+	GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 
 	LEAVE_STATE;
 }
 
 void GL_StateEndDrawBrushModel(void)
 {
-	ENTER_STATE;
-
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-
-	LEAVE_STATE;
 }
 
 void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
@@ -294,6 +312,22 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
+	GL_AlphaBlendFlags(
+		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
 	GL_EnableFog();
 
 	LEAVE_STATE;
@@ -301,48 +335,61 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 
 void GL_StateEndDrawAliasModel(void)
 {
-	ENTER_STATE;
-
-	glColor3ubv(color_white);
-	GL_DisableFog();
-
-	LEAVE_STATE;
-}
-
-void GLM_StateBeginDrawAliasOutlines(void)
-{
-	extern cvar_t gl_outline_width;
-
-	ENTER_STATE;
-
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
-	LEAVE_STATE;
-}
-
-void GLM_StateEndDrawAliasOutlines(void)
-{
-	ENTER_STATE;
-
-	GL_CullFace(GL_FRONT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 {
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_ShadeModel(GL_FLAT);
+	GL_CullFace(GL_FRONT);
+	GL_PolygonMode(GL_FILL);
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_white);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DisableFog();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
 }
 
 void GLC_StateEndSimpleItem(void)
 {
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 }
 
+void GL_StateBeginAliasOutlineFrame(void)
+{
+	extern cvar_t gl_outline_width;
+
+	ENTER_STATE;
+
+	GL_AlphaBlendFlags(
+		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_ShadeModel(GL_FLAT);
+	GL_DisableFog();
+
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
+	GL_CullFace(GL_BACK);
+	GL_PolygonMode(GL_LINE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
+	if (!GL_ShadersSupported()) {
+		GL_Color3ubv(color_black);
+		GL_Enable(GL_LINE_SMOOTH);
+		GLC_DisableAllTexturing();
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+
+	LEAVE_STATE;
+}
+
+void GL_StateEndAliasOutlineFrame(void)
+{
+}

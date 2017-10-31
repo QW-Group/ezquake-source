@@ -165,7 +165,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	trivertx_t* verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
-	GLC_StateBeginAliasOutlineFrame();
+	GL_StateBeginAliasOutlineFrame();
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -208,7 +208,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 		glEnd();
 	}
 
-	GLC_StateEndAliasOutlineFrame();
+	GL_StateEndAliasOutlineFrame();
 }
 
 void GLC_DrawPowerupShell(
