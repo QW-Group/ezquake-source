@@ -95,50 +95,23 @@ static void EmitFlatWaterPoly(msurface_t *fa)
 	}
 }
 
-void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
+void GLC_EmitWaterPoly(msurface_t* fa)
 {
 	extern cvar_t r_fastturb;
-
-	GL_DisableMultitexture();
-
-	GL_EnableFog();
+	float wateralpha = GL_WaterAlpha();
 
 	if (r_fastturb.value) {
-		byte old_alpha = col[3];
+		byte* col = SurfaceFlatTurbColor(fa->texinfo->texture);
+		byte color[4];
 
-		glDisable(GL_TEXTURE_2D);
+		memcpy(color, col, 3);
+		color[3] = 255;
 
-		glColor3ubv(col);
-
-		// START shaman FIX /gl_turbalpha + /r_fastturb {
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			col[3] = wateralpha * 255;
-			glColor4ubv(col); // 1, 1, 1, wateralpha
-			GL_TextureEnvMode(GL_MODULATE);
-			if (wateralpha < 0.9) {
-				GL_DepthMask(GL_FALSE);
-			}
-		}
-		// END shaman FIX /gl_turbalpha + /r_fastturb {
+		GLC_StateBeginFastTurbPoly(color);
 
 		EmitFlatWaterPoly(fa);
 
-		// START shaman FIX /gl_turbalpha + /r_fastturb {
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			GL_TextureEnvMode(GL_REPLACE);
-			glColor3ubv(color_white);
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-			if (wateralpha < 0.9) {
-				GL_DepthMask(GL_TRUE);
-			}
-			col[3] = old_alpha;
-		}
-		// END shaman FIX /gl_turbalpha + /r_fastturb {
-
-		glEnable(GL_TEXTURE_2D);
-		glColor3ubv(color_white);
-		// END shaman RFE 1022504
+		GLC_StateEndFastTurbPoly();
 	}
 	else {
 		glpoly_t *p;
@@ -146,8 +119,8 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 		vec3_t nv;
 		int i;
 
-		GL_DisableMultitexture();
-		glEnable(GL_TEXTURE_2D);
+		GLC_StateBeginTurbPoly();
+
 		GL_BindTextureUnit(GL_TEXTURE0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
@@ -174,9 +147,9 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 			}
 			glEnd();
 		}
-	}
 
-	GL_DisableFog();
+		GLC_StateEndTurbPoly();
+	}
 }
 
 // Caustics

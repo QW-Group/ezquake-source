@@ -634,18 +634,8 @@ void GL_BuildLightmaps(void)
 	}
 }
 
-void GLC_MultitextureLightmap(int lightmap_num)
-{
-	GL_EnableMultitexture();
-
-	GLC_SetTextureLightmap(GL_TEXTURE1, lightmap_num);
-}
-
 void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
 {
-	//bind the lightmap texture
-	GLC_SetLightmapTextureEnvironment();
-
 	//update lightmap if its modified by dynamic lights
 	if (lightmap_modified[lightmap_num]) {
 		R_UploadLightMap(textureUnit, lightmap_num);

@@ -793,7 +793,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only);
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
-void R_DrawMapOutline(model_t *model);
+void GLC_DrawMapOutline(model_t *model);
 void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
@@ -811,7 +811,6 @@ mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
 void GLC_SetLightmapBlendFunc(void);
-void GLC_MultitextureLightmap(int lightmap_num);
 void GLC_SetLightmapTextureEnvironment(void);
 void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
@@ -835,7 +834,7 @@ void GLC_DrawImage(float x, float y, float width, float height, float sl, float 
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
-void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha);
+void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
 void GLC_Draw_FadeScreen(float alpha);
@@ -1132,6 +1131,77 @@ typedef struct glm_worldmodel_req_s {
 	qbool polygonOffset;
 	qbool worldmodel;
 } glm_worldmodel_req_t;
+
+void GLC_StateBeginWaterSurfaces(void);
+void GLC_StateEndWaterSurfaces(void);
+void GL_StateBeginEntities(visentlist_t* vislist);
+void GL_StateEndEntities(visentlist_t* vislist);
+void GL_StateBeginPolyBlend(void);
+void GL_StateEndPolyBlend(void);
+void GLC_StateBeginAlphaChain(void);
+void GLC_StateEndAlphaChain(void);
+void GLC_StateBeginAlphaChainSurface(msurface_t* s);
+void GLC_StateBeginAliasOutlineFrame(void);
+void GLC_StateEndAliasOutlineFrame(void);
+void GLC_StateBeginAliasPowerupShell(void);
+void GLC_StateEndAliasPowerupShell(void);
+void GLC_StateBeginUnderwaterCaustics(void);
+void GLC_StateEndUnderwaterCaustics(void);
+void GLC_StateBeginDrawImage(void);
+void GLC_StateEndDrawImage(void);
+void GLC_StateBeginAlphaPic(float alpha);
+void GLC_StateEndAlphaPic(float alpha);
+void GLC_StateBeginAlphaRectangle(void);
+void GLC_StateEndAlphaRectangle(void);
+void GLC_StateBeginFadeScreen(float alpha);
+void GLC_StateEndFadeScreen(void);
+void GLC_StateBeginMD3Draw(float alpha);
+void GLC_StateEndMD3Draw(void);
+void GLC_StateBeginBrightenScreen(void);
+void GLC_StateEndBrightenScreen(void);
+void GLC_StateBeginFastSky(void);
+void GLC_StateEndFastSky(void);
+void GLC_StateBeginSky(void);
+void GLC_StateBeginSkyZBufferPass(void);
+void GLC_StateEndSkyZBufferPass(void);
+void GLC_StateEndSkyNoZBufferPass(void);
+void GLC_StateBeginSkyDome(void);
+void GLC_StateBeginSkyDomeCloudPass(void);
+void GLC_StateBeginMultiTextureSkyChain(void);
+void GLC_StateEndMultiTextureSkyChain(void);
+void GLC_StateBeginSingleTextureSkyPass(void);
+void GLC_StateBeginSingleTextureCloudPass(void);
+void GLC_StateEndSingleTextureSky(void);
+void GLC_StateBeginRenderFullbrights(void);
+void GLC_StateEndRenderFullbrights(void);
+void GLC_StateBeginRenderLumas(void);
+void GLC_StateEndRenderLumas(void);
+void GLC_StateBeginEmitDetailPolys(void);
+void GLC_StateEndEmitDetailPolys(void);
+void GLC_StateBeginDrawMapOutline(void);
+void GLC_StateBeginEndMapOutline(void);
+void GLM_StateBeginDrawBillboards(void);
+void GLM_StateEndDrawBillboards(void);
+void GLM_StateBeginDrawWorldOutlines(void);
+void GLM_StateEndDrawWorldOutlines(void);
+void GL_BeginStateAlphaLineRGB(float thickness);
+void GL_EndStateAlphaLineRGB(void);
+void GLC_BeginStateDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model);
+void GLC_EndStateDrawAliasFrame(void);
+void GLC_BeginStateDrawAliasCustomModel(void);
+void GLC_EndStateDrawAliasCustomModel(void);
+void GLC_BeginStateAliasModelShadow(void);
+void GLC_EndStateAliasModelShadow(void);
+void GLC_StateBeginDrawFlatModel(void);
+void GLC_StateEndDrawFlatModel(void);
+void GLC_StateBeginDrawTextureChains(void);
+void GLC_StateEndDrawTextureChains(void);
+void GLC_StateBeginTurbPoly(void);
+void GLC_StateEndTurbPoly(void);
+void GLC_StateEndFastTurbPoly(void);
+void GLC_StateBeginFastTurbPoly(byte color[4]);
+
+float GL_WaterAlpha(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

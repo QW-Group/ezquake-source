@@ -551,21 +551,16 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 	texture_t *t;
 	float *v;
 
-	if (!alphachain)
+	if (!alphachain) {
 		return;
+	}
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
+	GLC_StateBeginAlphaChain();
 	for (s = alphachain; s; s = s->texturechain) {
 		t = s->texinfo->texture;
 		R_RenderDynamicLightmaps(s);
 
-		//bind the world texture
-		GL_DisableMultitexture();
-		GL_BindTextureUnit(GL_TEXTURE0, t->gl_texturenum);
-
-		if (gl_mtexable) {
-			GLC_MultitextureLightmap(s->lightmaptexturenum);
-		}
+		GLC_StateBeginAlphaChainSurface(s);
 
 		glBegin(GL_POLYGON);
 		v = s->polys->verts[0];
@@ -584,10 +579,7 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 
 	alphachain = NULL;
 
-	// FIXME: GL_ResetState()
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_StateEndAlphaChain();
 }
 
 qbool R_DrawWorldOutlines(void)

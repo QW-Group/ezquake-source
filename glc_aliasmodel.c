@@ -40,7 +40,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 
 // Which pose to use if shadow to be drawn
-static int       lastposenum;
+static int lastposenum;
 
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -66,18 +66,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	vec3_t lc;
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 
-	GL_DisableMultitexture();
-	GL_EnableTMU(GL_TEXTURE0);
-	if (GL_TextureReferenceIsValid(texture)) {
-		GL_BindTextureUnit(GL_TEXTURE0, texture);
-	}
-	GL_TextureEnvMode(textureEnvMode);
-
-	if (GL_TextureReferenceIsValid(fb_texture) && mtex) {
-		GL_EnableMultitexture();
-		GL_BindTextureUnit(GL_TEXTURE1, fb_texture);
-		GL_TextureEnvMode(GL_DECAL);
-	}
+	GLC_BeginStateDrawAliasFrame(textureEnvMode, texture, fb_texture, mtex, r_modelalpha, custom_model);
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -93,15 +82,6 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		GLC_DrawPowerupShell(paliashdr, pose1, verts1, verts2, lerpfrac, scrolldir);
 	}
 	else {
-		if (r_modelalpha < 1) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		}
-
-		if (custom_model) {
-			glDisable(GL_TEXTURE_2D);
-			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
-		}
-
 		for ( ; ; ) {
 			count = *order++;
 			if (!count) {
@@ -173,16 +153,9 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 
 			glEnd();
 		}
-
-		if (r_modelalpha < 1) {
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		}
-
-		if (custom_model) {
-			glEnable(GL_TEXTURE_2D);
-			custom_model = NULL;
-		}
 	}
+
+	GLC_EndStateDrawAliasFrame();
 
 	if (outline) {
 		GLC_DrawAliasOutlineFrame(model, pose1, pose2);
@@ -198,16 +171,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	trivertx_t* verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	glPolygonMode(GL_FRONT, GL_LINE);
-
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glEnable(GL_LINE_SMOOTH);
-	glDisable(GL_TEXTURE_2D);
+	GLC_StateBeginAliasOutlineFrame();
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -250,14 +214,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 		glEnd();
 	}
 
-	// FIXME: GL_ResetState()
-	glColor4f(1, 1, 1, 1);
-	glPolygonMode(GL_FRONT, GL_FILL);
-	glDisable(GL_LINE_SMOOTH);
-	GL_CullFace(GL_FRONT);
-	glEnable(GL_TEXTURE_2D);
-
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLC_StateEndAliasOutlineFrame();
 }
 
 static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)
@@ -268,20 +225,12 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	float shell_size = bound(0, gl_powerupshells_size.value, 20);
 	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
 
-	// LordHavoc: set the state to what we need for rendering a shell
 	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		return;
 	}
 
-	GL_BindTextureUnit(GL_TEXTURE0, shelltexture);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	if (gl_powerupshells_style.integer) {
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
-	}
-	else {
-		GL_BlendFunc(GL_ONE, GL_ONE);
-	}
+	// LordHavoc: set the state to what we need for rendering a shell
+	GLC_StateBeginAliasPowerupShell();
 
 	if (scrolldir) {
 		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
@@ -331,10 +280,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 		glEnd();
 	}
 
-	// LordHavoc: reset the state to what the rest of the renderer expects
-	// FIXME: GL_ResetState()
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GLC_StateEndAliasPowerupShell();
 }
 
 void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
@@ -360,34 +306,11 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 #define GL_RGB_SCALE 0x8573
 
 	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
-		GL_EnableMultitexture();
-		GL_BindTextureUnit(GL_TEXTURE1, underwatertexture);
-
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-		glScalef(0.5, 0.5, 1);
-		glRotatef(r_refdef2.time * 10, 1, 0, 0);
-		glRotatef(r_refdef2.time * 10, 0, 1, 0);
-		glMatrixMode(GL_MODELVIEW);
-
-		GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GLC_StateBeginUnderwaterCaustics();
 
 		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, scaleS, scaleT, 0, false, false);
 
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-
-		GL_SelectTexture(GL_TEXTURE1);
-		//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
-		GL_TextureEnvMode(GL_REPLACE);
-		glDisable(GL_TEXTURE_2D);
-
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-
-		GL_DisableMultitexture();
+		GLC_StateEndUnderwaterCaustics();
 	}
 	// <-- Underwater caustics on alias models of QRACK
 }
@@ -409,12 +332,10 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
 	glRotatef(ent->angles[1], 0, 0, 1);
 
-	glDisable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	glColor4f(0, 0, 0, 0.5);
+	GLC_BeginStateAliasModelShadow();
 	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GLC_EndStateAliasModelShadow();
+
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 

@@ -223,11 +223,7 @@ void GLM_DrawBillboards(void)
 
 	GL_UpdateVBO(billboardVBO, vertexCount * sizeof(verts[0]), verts);
 
-	GL_DisableFog();
-	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
+	GLM_StateBeginDrawBillboards();
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];
@@ -252,13 +248,7 @@ void GLM_DrawBillboards(void)
 	}
 	frameStats.draw_calls += batchCount;
 
-	// FIXME: GL_ResetState()
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
+	GLM_StateEndDrawBillboards();
 
-	GL_EnableFog();
 	GL_LeaveRegion();
 }

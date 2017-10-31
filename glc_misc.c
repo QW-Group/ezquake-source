@@ -54,9 +54,8 @@ void GLC_BrightenScreen(void)
 	f = min(v_contrast.value, 3);
 	f = pow(f, vid_gamma);
 
-	glDisable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
+	GLC_StateBeginBrightenScreen();
+
 	glBegin(GL_QUADS);
 	while (f > 1) {
 		if (f >= 2) {
@@ -75,11 +74,7 @@ void GLC_BrightenScreen(void)
 	}
 	glEnd();
 
-	// FIXME: GL_ResetState()
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glColor3ubv(color_white);
+	GLC_StateEndBrightenScreen();
 }
 
 void GLC_DrawVelocity3D(void)

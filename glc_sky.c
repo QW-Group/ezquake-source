@@ -84,16 +84,8 @@ void GLC_DrawSkyChain(void)
 		return;
 	}
 
-	GL_DisableMultitexture();
-
-	if (gl_fogsky.value) {
-		GL_EnableFog();
-	}
-
 	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
-		glDisable(GL_TEXTURE_2D);
-
-		glColor3ubv(r_skycolor.color);
+		GLC_StateBeginFastSky();
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			glpoly_t* p;
@@ -103,16 +95,10 @@ void GLC_DrawSkyChain(void)
 			}
 		}
 
-		glEnable(GL_TEXTURE_2D);
-		glColor3ubv(color_white);
+		GLC_StateEndFastSky();
 	}
 	else if (gl_mtexable) {
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
-
-		GL_EnableMultitexture();
-		GL_TextureEnvMode(GL_DECAL);
-		GL_BindTextureUnit(GL_TEXTURE1, alphaskytexture);
+		GLC_StateBeginMultiTextureSkyChain();
 
 		speedscale = r_refdef2.time * 8;
 		speedscale -= (int)speedscale & ~127;
@@ -123,11 +109,11 @@ void GLC_DrawSkyChain(void)
 			GLC_EmitSkyPolys(fa, true);
 		}
 
-		GL_DisableMultitexture();
-		GL_TextureEnvMode(GL_REPLACE);
+		GLC_StateEndMultiTextureSkyChain();
 	}
 	else {
-		GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
+		GLC_StateBeginSingleTextureSkyPass();
+
 		speedscale = r_refdef2.time * 8;
 		speedscale -= (int)speedscale & ~127;
 
@@ -135,8 +121,7 @@ void GLC_DrawSkyChain(void)
 			GLC_EmitSkyPolys(fa, false);
 		}
 
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
+		GLC_StateBeginSingleTextureCloudPass();
 
 		speedscale = r_refdef2.time * 16;
 		speedscale -= (int)speedscale & ~127;
@@ -145,11 +130,7 @@ void GLC_DrawSkyChain(void)
 			GLC_EmitSkyPolys(fa, false);
 		}
 
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	}
-
-	if (gl_fogsky.value) {
-		GL_DisableFog();
+		GLC_StateEndSingleTextureSky();
 	}
 }
 
@@ -159,11 +140,8 @@ void GLC_DrawSky(void)
 	qbool		ignore_z;
 	extern msurface_t *skychain;
 
-	GL_DisableMultitexture();
-
 	if (r_fastsky.integer) {
-		glDisable(GL_TEXTURE_2D);
-		glColor3ubv(r_skycolor.color);
+		GLC_StateBeginFastSky();
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			glpoly_t *p;
@@ -172,11 +150,10 @@ void GLC_DrawSky(void)
 				GLC_DrawFlatPoly(p);
 			}
 		}
-		skychain = NULL;
 
-		// FIXME: GL_ResetState()
-		glEnable(GL_TEXTURE_2D);
-		glColor3f(1, 1, 1);
+		GLC_StateEndFastSky();
+
+		skychain = NULL;
 		return;
 	}
 
@@ -185,7 +162,7 @@ void GLC_DrawSky(void)
 	}
 
 	// turn off Z tests & writes to avoid problems on large maps
-	glDisable(GL_DEPTH_TEST);
+	GLC_StateBeginSky();
 
 	// draw a skybox or classic quake clouds
 	if (r_skyboxloaded) {
@@ -195,22 +172,10 @@ void GLC_DrawSky(void)
 		GLC_DrawSkyDome();
 	}
 
-	glEnable(GL_DEPTH_TEST);
-
 	// draw the sky polys into the Z buffer
 	// don't need depth test yet
 	if (!ignore_z) {
-		if (gl_fogenable.value && gl_fogsky.value) {
-			GL_EnableFog();
-			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
-			GL_BlendFunc(GL_ONE, GL_ZERO);
-		}
-		else {
-			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-			GL_BlendFunc(GL_ZERO, GL_ONE);
-		}
-		glDisable(GL_TEXTURE_2D);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GLC_StateBeginSkyZBufferPass();
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			glpoly_t *p;
@@ -220,16 +185,10 @@ void GLC_DrawSky(void)
 			}
 		}
 
-		// FIXME: GL_ResetState()
-		if (gl_fogenable.value && gl_fogsky.value) {
-			GL_DisableFog();
-		}
-		else {
-			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		}
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_TEXTURE_2D);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+		GLC_StateEndSkyZBufferPass();
+	}
+	else {
+		GLC_StateEndSkyNoZBufferPass();
 	}
 }
 
@@ -309,10 +268,7 @@ static void GLC_DrawSkyDome(void)
 {
 	int i;
 
-	GL_DisableMultitexture();
-	GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GLC_StateBeginSkyDome();
 
 	speedscale = r_refdef2.time * 8;
 	speedscale -= (int)speedscale & ~127;
@@ -324,8 +280,7 @@ static void GLC_DrawSkyDome(void)
 		GLC_DrawSkyFace(i);
 	}
 
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
+	GLC_StateBeginSkyDomeCloudPass();
 
 	speedscale = r_refdef2.time * 16;
 	speedscale -= (int)speedscale & ~127;

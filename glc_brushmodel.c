@@ -36,8 +36,8 @@ glpoly_t *detail_polys = NULL;
 
 static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, qbool caustics);
-void R_RenderFullbrights(void);
-void R_RenderLumas(void);
+void GLC_RenderFullbrights(void);
+void GLC_RenderLumas(void);
 
 static void GLC_DrawFlat(model_t *model)
 {
@@ -56,15 +56,7 @@ static void GLC_DrawFlat(model_t *model)
 	memcpy(f, r_floorcolor.color, 3);
 	memcpy(sky, r_skycolor.color, 3);
 
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_BLEND);
-	GL_EnableTMU(GL_TEXTURE0);
-
-	// START shaman BUG /fog not working with /r_drawflat {
-	if (gl_fogenable.value) {
-		glEnable(GL_FOG);
-	}
-	// } END shaman BUG /fog not working with /r_drawflat
+	GLC_StateBeginDrawFlatModel();
 
 	for (waterline = 0; waterline < 2; waterline++) {
 		if (!(s = model->drawflat_chain[waterline])) {
@@ -119,11 +111,8 @@ static void GLC_DrawFlat(model_t *model)
 		}
 	}
 
-	if (gl_fogenable.value) {
-		glDisable(GL_FOG);
-	}
+	GLC_StateEndDrawFlatModel();
 
-	glColor3f(1.0f, 1.0f, 1.0f);
 	// START shaman FIX /r_drawflat + /gl_caustics {
 	EmitCausticsPolys();
 	// } END shaman FIX /r_drawflat + /gl_caustics
@@ -380,7 +369,7 @@ void GLC_DrawWorld(void)
 	}
 
 	if (R_DrawWorldOutlines()) {
-		R_DrawMapOutline(cl.worldmodel);
+		GLC_DrawMapOutline(cl.worldmodel);
 	}
 
 	//draw the world alpha textures
@@ -405,7 +394,7 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 	}
 
 	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {
-		R_DrawMapOutline(clmodel);
+		GLC_DrawMapOutline(clmodel);
 	}
 }
 

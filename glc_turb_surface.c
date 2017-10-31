@@ -27,42 +27,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern msurface_t* waterchain;
 
+static float GL_WaterAlpha(void)
+{
+	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+}
+
 void GLC_DrawWaterSurfaces(void)
 {
 	msurface_t *s;
-	float wateralpha;
 
 	if (!waterchain) {
 		return;
 	}
 
-	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+	GLC_StateBeginWaterSurfaces();
 
-	if (wateralpha < 1.0) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		glColor4f (1, 1, 1, wateralpha);
-		GL_TextureEnvMode(GL_MODULATE);
-		if (wateralpha < 0.9) {
-			GL_DepthMask(GL_FALSE);
-		}
-	}
-
-	GL_DisableMultitexture();
 	for (s = waterchain; s; s = s->texturechain) {
 		GL_BindTextureUnit(GL_TEXTURE0, s->texinfo->texture->gl_texturenum);
 		EmitWaterPolys(s);
 	}
 
-	// FIXME: GL_ResetState()
-	if (wateralpha < 1.0) {
-		GL_TextureEnvMode(GL_REPLACE);
-
-		glColor3ubv (color_white);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		if (wateralpha < 0.9) {
-			GL_DepthMask(GL_TRUE);
-		}
-	}
+	GLC_StateEndWaterSurfaces();
 
 	waterchain = NULL;
 }

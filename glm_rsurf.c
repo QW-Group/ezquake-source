@@ -406,14 +406,8 @@ static void GLM_DrawWorldModelOutlines(void)
 
 	//
 	glUniform1i(drawWorld_outlines, 1);
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	GL_Disable(GL_DEPTH_TEST);
-	GL_Disable(GL_CULL_FACE);
 
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+	GLM_StateBeginDrawWorldOutlines();
 
 	for (i = 0; i <= batch_count; ++i) {
 		if (!worldmodel_requests[i].worldmodel) {
@@ -434,14 +428,9 @@ static void GLM_DrawWorldModelOutlines(void)
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
-	GL_Enable(GL_DEPTH_TEST);
-	GL_Enable(GL_CULL_FACE);
 	glUniform1i(drawWorld_outlines, 0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	GL_CullFace(GL_FRONT);
 
-	// FIXME: GL_ResetState()
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GLM_StateEndDrawWorldOutlines();
 }
 
 void GL_FlushWorldModelBatch(void)

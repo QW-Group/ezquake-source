@@ -335,11 +335,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
 
-	// draw sprites separately, because of alpha_test
-	GL_AlphaBlendFlags(
-		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_StateBeginEntities(vislist);
 
 	GL_BeginDrawBrushModels();
 	for (i = 0; i < vislist->count; i++) {
@@ -425,10 +421,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	}
 	GL_EndDrawAliasModels();
 
-	// FIXME: GL_ResetState()
-	if (vislist->alpha) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	}
+	GL_StateEndEntities(vislist);
 }
 
 void R_PolyBlend(void)
@@ -442,15 +435,14 @@ void R_PolyBlend(void)
 		return;
 	}
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_StateBeginPolyBlend();
 	if (GL_ShadersSupported()) {
 		GLM_PolyBlend(v_blend);
 	}
 	else {
 		GLC_PolyBlend(v_blend);
 	}
-	// FIXME: GL_ResetState()
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_StateEndPolyBlend();
 }
 
 int SignbitsForPlane(mplane_t *out)
@@ -465,7 +457,6 @@ int SignbitsForPlane(mplane_t *out)
 	}
 	return bits;
 }
-
 
 void R_SetFrustum(void)
 {

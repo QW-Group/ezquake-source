@@ -208,11 +208,8 @@ byte* SurfaceFlatTurbColor(texture_t* texture)
 //Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys(msurface_t *fa)
 {
-	byte* col = SurfaceFlatTurbColor(fa->texinfo->texture);
-	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-
 	if (!GL_ShadersSupported()) {
-		GLC_EmitWaterPoly(fa, col, wateralpha);
+		GLC_EmitWaterPoly(fa);
 	}
 	else {
 		// MEAG: FIXME: Can still be called when drawing brush model (halflife maps?)

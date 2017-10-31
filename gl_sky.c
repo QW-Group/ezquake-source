@@ -32,7 +32,8 @@ qbool r_skyboxloaded;
 extern msurface_t *skychain;
 extern msurface_t **skychain_tail;
 
-void R_DrawSkyChain (void) {
+void R_DrawSkyChain(void)
+{
 	if (GL_ShadersSupported()) {
 		GLM_DrawSkyChain();
 	}

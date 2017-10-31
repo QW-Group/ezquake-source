@@ -901,14 +901,9 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 {
 	byte bytecolor[4];
 
-	glDisable (GL_TEXTURE_2D);
+	GL_BeginStateAlphaLineRGB(thickness);
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	COLOR_TO_RGBA(color, bytecolor);
-
-	if(thickness > 0.0) {
-		glLineWidth(thickness);
-	}
 
 	if (GL_ShadersSupported()) {
 		GLM_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
@@ -917,8 +912,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		GLC_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
 	}
 
-	glEnable (GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_EndStateAlphaLineRGB();
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)

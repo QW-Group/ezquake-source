@@ -61,7 +61,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	mod = ent->model;
 
-	GL_DisableMultitexture();
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	R_RotateForEntity (ent);
 
@@ -71,25 +70,18 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		r_modelalpha = ent->alpha;
 	}
 
-	if (r_modelalpha < 1) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	}
+	GLC_StateBeginMD3Draw(r_modelalpha);
 
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	GL_Scale(GL_MODELVIEW, scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	GL_Color4f(1, 1, 1, r_modelalpha);
 
-	GL_EnableFog();
-
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
 	if (gl_fb_models.integer) {
 		ambientlight = 999999;
 	}
-
-	GL_TextureEnvMode(GL_MODULATE);
 
 	mhead = (md3model_t *)Mod_Extradata (mod);
 	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
@@ -161,17 +153,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
 	}
 
-	// FIXME: GL_ResetState()
-	if (r_modelalpha < 1) {
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	}
-	GL_TextureEnvMode(GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
-	GL_ShadeModel(GL_FLAT);
-	GL_Enable(GL_TEXTURE_2D);
+	GLC_StateEndMD3Draw();
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
-	glEnable(GL_TEXTURE_2D);
-
-	GL_DisableFog();
 }

@@ -86,11 +86,11 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 
 void GLC_DrawImage(float x, float y, float width, float height, float sl, float tl, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
-	GL_TextureEnvMode(GL_MODULATE);
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) | GL_BLEND_ENABLED);
+	GLC_StateBeginDrawImage();
 
+	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
 	GL_Color4ubv(color);
+
 	GL_BindTextureUnit(GL_TEXTURE0, texnum);
 
 	glBegin(GL_QUADS);
@@ -103,11 +103,8 @@ void GLC_DrawImage(float x, float y, float width, float height, float sl, float 
 	glTexCoord2f(sl, tl + tex_height);
 	glVertex2f(x, y + height);
 	glEnd();
-	glColor3ubv (color_white);
 
-	// FIXME: GL_ResetState
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_StateEndDrawImage();
 }
 
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
@@ -182,13 +179,7 @@ void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 
 void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
 {
-	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_CullFace(GL_FRONT);
-		glColor4f(1, 1, 1, alpha);
-	}
+	GLC_StateBeginAlphaPic(alpha);
 
 	GL_BindTextureUnit(GL_TEXTURE0, pic->texnum);
 
@@ -212,18 +203,13 @@ void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 	}
 	glEnd();
 
-	// FIXME: GL_ResetState
-	if (alpha < 1.0) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		GL_TextureEnvMode(GL_REPLACE);
-		glColor4f(1, 1, 1, 1);
-	}
+	GLC_StateEndAlphaPic(alpha);
 }
 
 void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	glDisable (GL_TEXTURE_2D);
+	GLC_StateBeginAlphaRectangle();
+
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 	if (fill) {
 		glRectf(x, y, x + w, y + h);
@@ -234,20 +220,13 @@ void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
 		glRectf(x, y + h, x + w, y + h - thickness);
 	}
-	glColor4ubv (color_white);
-	glEnable (GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+
+	GLC_StateEndAlphaRectangle();
 }
 
 void GLC_Draw_FadeScreen(float alpha)
 {
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		glColor4f(0, 0, 0, alpha);
-	}
-	else {
-		glColor3f(0, 0, 0);
-	}
+	GLC_StateBeginFadeScreen(alpha);
 
 	glDisable(GL_TEXTURE_2D);
 
@@ -257,11 +236,5 @@ void GLC_Draw_FadeScreen(float alpha)
 	glVertex2f(vid.width, vid.height);
 	glVertex2f(0, vid.height);
 	glEnd();
-
-	glColor3ubv(color_white);
-	glEnable(GL_TEXTURE_2D);
-
-	if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	}
 }
+
