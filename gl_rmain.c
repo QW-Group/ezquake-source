@@ -160,6 +160,7 @@ cvar_t gl_part_telesplash                  = {"gl_part_telesplash", "0"}; // 1
 cvar_t gl_part_blobs                       = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash                  = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno                     = {"gl_part_inferno", "0"}; // 1
+cvar_t gl_part_bubble                      = {"gl_part_bubble", "1"}; // would prefer 0 but default was 1
 cvar_t gl_particle_style                   = {"gl_particle_style", "0"}; // 0 - round, 1 - square (sw style)
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
 cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
@@ -769,6 +770,7 @@ void R_Init(void)
 	Cvar_Register (&gl_part_blobs);
 	Cvar_Register (&gl_part_lavasplash);
 	Cvar_Register (&gl_part_inferno);
+	Cvar_Register (&gl_part_bubble);
 	Cvar_Register (&gl_particle_style);
 
 	Cvar_Register (&gl_part_detpackexplosion_fire_color);

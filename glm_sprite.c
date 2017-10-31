@@ -278,7 +278,58 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 
 void GLM_DrawSpriteModel(entity_t* e)
 {
-	// MEAG: TODO
+	vec3_t point, right, up;
+	mspriteframe_t *frame;
+	msprite2_t *psprite;
+
+	// don't even bother culling, because it's just a single
+	// polygon without a surface cache
+	psprite = (msprite2_t*)Mod_Extradata(e->model);	//locate the proper data
+	frame = R_GetSpriteFrame(e, psprite);
+
+	if (!frame) {
+		return;
+	}
+
+	if (psprite->type == SPR_ORIENTED) {
+		// bullet marks on walls
+		AngleVectors(e->angles, NULL, right, up);
+	}
+	else if (psprite->type == SPR_FACING_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
+		right[0] = e->origin[1] - r_origin[1];
+		right[1] = -(e->origin[0] - r_origin[0]);
+		right[2] = 0;
+		VectorNormalizeFast(right);
+	}
+	else if (psprite->type == SPR_VP_PARALLEL_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
+		VectorCopy(vright, right);
+	}
+	else {	// normal sprite
+		VectorCopy(vup, up);
+		VectorCopy(vright, right);
+	}
+
+	// MEAG: TODO: Angles
+	{
+		glm_sprite_t* sprite;
+
+		if (batch_count >= MAX_SPRITE_BATCH) {
+			GL_FlushSpriteBatch();
+		}
+
+		sprite = &sprite_batch[batch_count];
+		VectorCopy(e->origin, sprite->origin);
+		// TODO: angles
+		sprite->scale = 5;
+		sprite->texScale[0] = frame->gl_scalingS;
+		sprite->texScale[1] = frame->gl_scalingT;
+		sprite->texture_array = frame->gl_arraynum;
+		sprite->texture_index = frame->gl_arrayindex;
+		sprite->vao = e->model->vao_simple.vao;
+		++batch_count;
+	}
 }
 
 void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])

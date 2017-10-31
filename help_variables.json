@@ -2926,6 +2926,14 @@
         { "name": "true", "description": "Determines particles used for blood effects." }
       ]
     },
+    "gl_part_bubble": {
+      "group-id": "36",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Disable." },
+        { "name": "true", "description": "Advanced particles for bubbles (drowning effect)" }
+      ]
+    },
     "gl_part_detpackexplosion_fire_color": {
       "group-id": "36",
       "desc": "Change color of the detpack explosion fire (TF).",
