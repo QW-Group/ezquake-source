@@ -402,55 +402,53 @@ void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
 		GL_EndDrawAliasModels,
 	};
 
-	if (!r_drawentities.value || !vislist->count) {
-		return;
-	}
+	if (r_drawentities.value && vislist->count) {
+		qsort(vislist->list, vislist->count, sizeof(vislist->list[0]), R_DrawEntitiesSorter);
 
-	qsort(vislist->list, vislist->count, sizeof(vislist->list[0]), R_DrawEntitiesSorter);
+		GL_StateBeginEntities(vislist);
 
-	GL_StateBeginEntities(vislist);
+		for (i = 0; i < vislist->count; i++) {
+			visentity_t* todraw = &vislist->list[i];
+			currententity = &todraw->ent;
 
-	for (i = 0; i < vislist->count; i++) {
-		visentity_t* todraw = &vislist->list[i];
-		currententity = &todraw->ent;
-
-		if (current_state != todraw->type) {
-			if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
-				if (endState[current_state]) {
-					endState[current_state]();
+			if (current_state != todraw->type) {
+				if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
+					if (endState[current_state]) {
+						endState[current_state]();
+					}
 				}
-			}
-			if (todraw->type >= 0 && todraw->type < sizeof(beginState) / sizeof(beginState[0])) {
-				if (beginState[todraw->type]) {
-					beginState[todraw->type]();
+				if (todraw->type >= 0 && todraw->type < sizeof(beginState) / sizeof(beginState[0])) {
+					if (beginState[todraw->type]) {
+						beginState[todraw->type]();
+					}
 				}
+				current_state = todraw->type;
 			}
-			current_state = todraw->type;
-		}
 
-		switch (todraw->type) {
-		case mod_brush:
-			R_DrawBrushModel(currententity);
-			break;
-		case mod_sprite:
-			if (currententity->model->type == mod_sprite) {
-				R_DrawSpriteModel(currententity);
+			switch (todraw->type) {
+			case mod_brush:
+				R_DrawBrushModel(currententity);
+				break;
+			case mod_sprite:
+				if (currententity->model->type == mod_sprite) {
+					R_DrawSpriteModel(currententity);
+				}
+				else {
+					R_DrawTrySimpleItem();
+				}
+				break;
+			case mod_alias:
+				if (todraw->shell_only) {
+					R_DrawAliasPowerupShell(currententity);
+				}
+				else {
+					R_DrawAliasModel(currententity);
+				}
+				break;
+			case mod_alias3:
+				R_DrawAlias3Model(currententity);
+				break;
 			}
-			else {
-				R_DrawTrySimpleItem();
-			}
-			break;
-		case mod_alias:
-			if (todraw->shell_only) {
-				R_DrawAliasPowerupShell(currententity);
-			}
-			else {
-				R_DrawAliasModel(currententity);
-			}
-			break;
-		case mod_alias3:
-			R_DrawAlias3Model(currententity);
-			break;
 		}
 	}
 
@@ -458,9 +456,8 @@ void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
 		if (endState[current_state]) {
 			endState[current_state]();
 		}
+		GL_StateEndEntities(vislist);
 	}
-
-	GL_StateEndEntities(vislist);
 }
 
 void R_PolyBlend(void)
