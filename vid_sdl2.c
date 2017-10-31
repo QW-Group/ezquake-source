@@ -1273,7 +1273,8 @@ void GL_EndRendering (void)
 	if (!scr_skipupdate || block_drawing) {
 		if (vid_vsync_lag_fix.integer > 0) {
 			GL_SwapBuffersWithVsyncFix();
-		} else {
+		}
+		else {
 			GL_SwapBuffers(); 
 		}
 	}

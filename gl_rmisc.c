@@ -357,14 +357,14 @@ void R_TimeRefresh_f(void)
 		return;
 
 	if (!Rulesets_AllowTimerefresh()) {
-		Com_Printf("Timerefresh's disabled during match\n");
+		Com_Printf("Timerefresh is disabled during match\n");
 		return;
 	}
 
 #ifndef __APPLE__
 	if (glConfig.hardwareType != GLHW_INTEL) {
 		// Causes the console to flicker on Intel cards.
-		glDrawBuffer  (GL_FRONT);
+		glDrawBuffer(GL_FRONT);
 	}
 #endif
 	
@@ -373,7 +373,8 @@ void R_TimeRefresh_f(void)
 	start = Sys_DoubleTime();
 	for (i = 0; i < 128; i++) {
 		r_refdef.viewangles[1] = i * (360.0 / 128.0);
-		R_RenderView ();
+		R_SetupFrame();
+		R_RenderView();
 	}
 
 	glFinish ();
@@ -383,7 +384,7 @@ void R_TimeRefresh_f(void)
 
 #ifndef __APPLE__
 	if (glConfig.hardwareType != GLHW_INTEL) {
-		glDrawBuffer  (GL_BACK);
+		glDrawBuffer(GL_BACK);
 	}
 #endif
 

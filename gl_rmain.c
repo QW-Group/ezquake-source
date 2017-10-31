@@ -558,7 +558,7 @@ void R_SetupFrame(void)
 
 	memset(&frameStats, 0, sizeof(frameStats));
 
-	R_SetFrustum ();
+	R_SetFrustum();
 	R_SetupGL();
 	R_MarkLeaves();	// done here so we know if we're in water
 	R_CreateWorldTextureChains();
