@@ -56,7 +56,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         par_dropheight = HUD_FindVar(hud, "lostscale");
     }
 
-	GL_FlushImageDraw();
+	GL_FlushImageDraw(true);
 
     CL_CalcNet();
 

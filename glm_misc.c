@@ -29,6 +29,7 @@ static buffer_ref post_process_vbo;
 static glm_vao_t post_process_vao;
 
 static qbool GLM_CompilePostProcessProgram(void);
+void GLM_UploadFrameConstants(void);
 
 #define PASS_COLOR_AS_4F(target, cvar) \
 { \
@@ -115,12 +116,8 @@ void GLM_PreRenderView(void)
 		frameConstants.shell_alpha = bound(0, gl_powerupshells.value, 1);
 	}
 
-	if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
-		ubo_frameConstants = GL_GenUniformBuffer("frameConstants", &ubo_frameConstants, sizeof(frameConstants));
-		GL_BindBufferBase(ubo_frameConstants, GL_BINDINGPOINT_FRAMECONSTANTS);
-	}
-
 	frameConstantsUploaded = false;
+	GLM_UploadFrameConstants();
 }
 
 void GLM_SetupGL(void)
@@ -137,6 +134,11 @@ void GLM_SetupGL(void)
 void GLM_UploadFrameConstants(void)
 {
 	if (!frameConstantsUploaded) {
+		if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
+			ubo_frameConstants = GL_GenUniformBuffer("frameConstants", &ubo_frameConstants, sizeof(frameConstants));
+			GL_BindBufferBase(ubo_frameConstants, GL_BINDINGPOINT_FRAMECONSTANTS);
+		}
+
 		GL_UpdateVBO(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
 		frameConstantsUploaded = true;
 	}

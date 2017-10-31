@@ -27,6 +27,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ATLAS_WIDTH  4096
 #define ATLAS_HEIGHT 4096
 
+static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
+static int atlas_delete_count = 0;
+
+static void AddToDeleteList(mpic_t* src)
+{
+	if (src->sl == 0 && src->tl == 0 && src->th == 1 && src->sh == 1) {
+		if (atlas_delete_count < sizeof(atlas_deletable_textures) / sizeof(atlas_deletable_textures[0])) {
+			atlas_deletable_textures[atlas_delete_count++] = src->texnum;
+		}
+	}
+}
+
+static void DeleteOldTextures(void)
+{
+	int i;
+	for (i = 0; i < atlas_delete_count; ++i) {
+		GL_DeleteTexture(&atlas_deletable_textures[i]);
+	}
+}
+
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
@@ -288,21 +308,25 @@ void CachePics_CreateAtlas(void)
 	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
+	atlas_delete_count = 0;
 
 	// Copy wadpic data over
 	for (i = 0; i < WADPIC_PIC_COUNT; ++i) {
 		extern wadpic_t wad_pictures[WADPIC_PIC_COUNT];
+		mpic_t* src = wad_pictures[i].pic;
 
 		// This tiles, so don't include in atlas
 		if (i == WADPIC_BACKTILE) {
 			continue;
 		}
 
-		if (wad_pictures[i].pic) {
-			wadpics[i].data.pic = wad_pictures[i].pic;
+		if (src) {
+			wadpics[i].data.pic = src;
 
 			if (i != WADPIC_SB_IBAR) {
 				CachePics_InsertBySize(&sized_list, &wadpics[i]);
+
+				AddToDeleteList(src);
 			}
 		}
 	}
@@ -310,11 +334,14 @@ void CachePics_CreateAtlas(void)
 	// Copy text images over
 	for (i = 0; i < MAX_CHARSETS; ++i) {
 		extern mpic_t char_textures[MAX_CHARSETS];
+		mpic_t* src = &char_textures[i];
 
-		if (GL_TextureReferenceIsValid(char_textures[i].texnum)) {
-			charsetpics[i].data.pic = &char_textures[i];
+		if (GL_TextureReferenceIsValid(src->texnum)) {
+			charsetpics[i].data.pic = src;
 
 			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
+
+			AddToDeleteList(src);
 		}
 	}
 
@@ -327,17 +354,23 @@ void CachePics_CreateAtlas(void)
 		if (GL_TextureReferenceIsValid(crosshairtexture_txt.texnum)) {
 			crosshairpics[0].data.pic = &crosshairtexture_txt;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[0]);
+
+			AddToDeleteList(&crosshairtexture_txt);
 		}
 
 		if (GL_TextureReferenceIsValid(crosshairpic.texnum)) {
 			crosshairpics[1].data.pic = &crosshairpic;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[1]);
+
+			AddToDeleteList(&crosshairpic);
 		}
 
 		for (i = 0; i < NUMCROSSHAIRS; ++i) {
 			if (GL_TextureReferenceIsValid(crosshairs_builtin[i].texnum)) {
 				crosshairpics[i + 2].data.pic = &crosshairs_builtin[i];
 				CachePics_InsertBySize(&sized_list, &crosshairpics[i + 2]);
+
+				AddToDeleteList(&crosshairs_builtin[i]);
 			}
 		}
 	}
@@ -352,6 +385,8 @@ void CachePics_CreateAtlas(void)
 
 			if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
 				CachePics_InsertBySize(&sized_list, node);
+
+				// Don't delete these, used for 3d sprites
 			}
 		}
 	}
@@ -364,6 +399,8 @@ void CachePics_CreateAtlas(void)
 		for (cur = cachepics[i]; cur; cur = cur->next) {
 			if (!Draw_IsConsoleBackground(cur->data.pic)) {
 				CachePics_InsertBySize(&sized_list, cur);
+
+				AddToDeleteList(cur->data.pic);
 			}
 		}
 	}
@@ -374,6 +411,11 @@ void CachePics_CreateAtlas(void)
 
 	// Upload atlas textures
 	CachePics_AtlasUpload();
+
+	DeleteOldTextures();
+
+	// Make sure we don't reference any old textures
+	GL_FlushImageDraw(false);
 
 	atlas_refresh = false;
 }
