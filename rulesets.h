@@ -78,3 +78,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel);
+
+qbool Rulesets_ToggleWhenFlashed(void);
+qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game);
+const char* Ruleset_BlockPlayerCountMacros(void);

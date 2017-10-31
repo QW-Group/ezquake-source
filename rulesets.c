@@ -693,3 +693,24 @@ qbool Ruleset_IsLumaAllowed(struct model_s *mod)
 		return true; // luma allowed
 	}
 }
+
+qbool Rulesets_ToggleWhenFlashed(void)
+{
+	return rulesetDef.ruleset == rs_mtfl;
+}
+
+qbool Rulesets_FullbrightModel(model_t* model, qbool local_singleplayer_game)
+{
+	qbool protected_model = (model->modhint == MOD_EYES || model->modhint == MOD_BACKPACK) && rulesetDef.ruleset == rs_default;
+	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !local_singleplayer_game;
+
+	return !protected_model && fb_requested;
+}
+
+const char* Ruleset_BlockPlayerCountMacros(void)
+{
+	if (rulesetDef.ruleset == rs_mtfl) {
+		return BANNED_BY_MTFL;
+	}
+	return NULL;
+}

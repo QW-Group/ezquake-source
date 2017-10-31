@@ -1017,67 +1017,75 @@ static void CountNearbyPlayers(qbool dead)
 	}
 }
 
-static int check_mtfl_ruleset (void)
-{
-	if (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
-		snprintf(macro_buf, sizeof (macro_buf),"\xffz%s\xff", BANNED_BY_MTFL);
-		return 1;
-	}
-	return 0;
-}
-
 char *Macro_CountNearbyEnemyPlayers (void)
 {
-	if (check_mtfl_ruleset())
-		return macro_buf; // there should be more smart way to do it
+	const char* override_text = Ruleset_BlockPlayerCountMacros();
 
-	CountNearbyPlayers(false);
-	snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", vars.numenemies);
-	suppress = true;
+	if (override_text) {
+		strlcpy(macro_buf, "\xff", sizeof(macro_buf));
+		strlcat(macro_buf, override_text, sizeof(macro_buf));
+		strlcat(macro_buf, "\xff", sizeof(macro_buf));
+	}
+	else {
+		CountNearbyPlayers(false);
+		snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.numenemies);
+		suppress = true;
+	}
 	return macro_buf;
 }
-
 
 char *Macro_Count_Last_NearbyEnemyPlayers (void)
 {
-	if (check_mtfl_ruleset())
-		return macro_buf; // there should be more smart way to do it
+	const char* override_text = Ruleset_BlockPlayerCountMacros();
 
-	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numenemies);
-	} else {
-		CountNearbyPlayers(false);
-		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numenemies);
+	if (override_text) {
+		strlcpy(macro_buf, override_text, sizeof(macro_buf));
 	}
-	suppress = true;
+	else {
+		if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
+			snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.last_numenemies);
+		}
+		else {
+			CountNearbyPlayers(false);
+			snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.numenemies);
+		}
+		suppress = true;
+	}
 	return macro_buf;
 }
-
 
 char *Macro_CountNearbyFriendlyPlayers (void)
 {
-	if (check_mtfl_ruleset())
-		return BANNED_BY_MTFL; // there should be more smart way to do it
+	const char* override_text = Ruleset_BlockPlayerCountMacros();
 
-	CountNearbyPlayers(false);
-	snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
-	suppress = true;
+	if (override_text) {
+		strlcpy(macro_buf, override_text, sizeof(macro_buf));
+	}
+	else {
+		CountNearbyPlayers(false);
+		snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.numfriendlies);
+		suppress = true;
+	}
 	return macro_buf;
 }
 
-
-char *Macro_Count_Last_NearbyFriendlyPlayers (void)
+char* Macro_Count_Last_NearbyFriendlyPlayers (void)
 {
-	if (check_mtfl_ruleset())
-		return macro_buf; // there should be more smart way to do it
+	const char* override_text = Ruleset_BlockPlayerCountMacros();
 
-	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numfriendlies);
-	} else {
-		CountNearbyPlayers(false);
-		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
+	if (override_text) {
+		strlcpy(macro_buf, override_text, sizeof(macro_buf));
 	}
-	suppress = true;
+	else {
+		if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
+			snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.last_numfriendlies);
+		}
+		else {
+			CountNearbyPlayers(false);
+			snprintf(macro_buf, sizeof(macro_buf), "\xffz%d\xff", vars.numfriendlies);
+		}
+		suppress = true;
+	}
 	return macro_buf;
 }
 

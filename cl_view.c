@@ -392,7 +392,7 @@ void V_TF_FlashStuff (void)
 
 		if (flashed_for_10seconds || death_while_flashed) {
 			// turn gamma and contrast back
-			if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			if (flashed && Rulesets_ToggleWhenFlashed()) {
 				V_TF_FlashSettings(false);
 			}
 			flashed = false;
@@ -689,7 +689,7 @@ void V_TF_ClearGrenadeEffects (void)
 	Cvar_SetValue (&v_idlescale, 0.0f);
 
 	// Flash effect off
-	if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+	if (flashed && Rulesets_ToggleWhenFlashed()) {
 		V_TF_FlashSettings (false);
 	}
 	flashed = false;
