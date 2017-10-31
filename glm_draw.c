@@ -290,6 +290,7 @@ static void GLC_FlushImageDraw(void)
 		extern cvar_t gl_alphafont, scr_coloredText;
 		float modelviewMatrix[16];
 		float projectionMatrix[16];
+		byte current_color[4];
 
 		GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
 		GL_PushMatrix(GL_PROJECTION, projectionMatrix);
@@ -331,6 +332,7 @@ static void GLC_FlushImageDraw(void)
 
 			GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
 			GL_Color4ubv(images[i].colour);
+			memcpy(current_color, images[i].colour, sizeof(current_color));
 
 			glBegin(GL_QUADS);
 			for (j = i; j < imageCount; ++j) {
@@ -347,16 +349,22 @@ static void GLC_FlushImageDraw(void)
 				}
 
 				if (next_alpha_test != alpha_test) {
+					GL_MarkEvent("(break for alpha-test)");
 					break;
 				}
 				if (next_texture != texture) {
+					GL_MarkEvent("(break for texturing-toggle)");
 					break;
 				}
 				if (next_texture && !GL_TextureReferenceEqual(images[i].texNumber, next->texNumber)) {
+					GL_MarkEvent("(break for texture)");
 					break;
 				}
-				if (memcmp(images[i].colour, next->colour, sizeof(images[i].colour))) {
-					break;
+
+				// Don't need to break for colour
+				if (memcmp(next->colour, current_color, sizeof(current_color))) {
+					memcpy(current_color, next->colour, sizeof(current_color));
+					GL_Color4ubv(next->colour);
 				}
 
 				if (texture) {

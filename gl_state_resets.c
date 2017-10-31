@@ -837,7 +837,7 @@ void GLC_StateBeginDrawSimpleItem(void)
 	ENTER_STATE;
 
 	//glDisable(GL_CULL_FACE);
-	GL_PrintState();
+	//GL_PrintState();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	LEAVE_STATE;

@@ -10,7 +10,6 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 
 	GLC_StateBeginDrawSimpleItem();
 	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
-	GL_PrintState();
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 1);
