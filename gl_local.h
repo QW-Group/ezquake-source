@@ -1279,6 +1279,8 @@ void GL_InitialiseFramebufferHandling(void);
 
 float GL_WaterAlpha(void);
 
+#define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
+
 #endif /* !__GL_LOCAL_H__ */
 
 

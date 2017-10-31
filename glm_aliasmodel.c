@@ -9,7 +9,6 @@
 
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 #define ALIAS_UBO_FOFS(x) (void*)((intptr_t)&(((block_aliasmodels_t*)0)->x))
-#define VBO_ALIASVERT_FOFS(x) (void*)((intptr_t)&(((vbo_model_vert_t*)0)->x))
 
 static qbool first_alias_model = true;
 static glm_vao_t aliasModel_vao;
@@ -540,11 +539,11 @@ void GL_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
 {
 	GL_GenVertexArray(&aliasModel_vao);
 
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(position));
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(texture_coords));
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(normal));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal));
 	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
-	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(vert_index));
+	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, vert_index));
 
 	glVertexAttribDivisor(3, 1);
 }

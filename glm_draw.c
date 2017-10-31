@@ -192,12 +192,12 @@ void GLM_CreateMultiImageProgram(void)
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO);
 
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
-		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x1));
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x2));
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s1));
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s2));
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, colour));
+		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, flags));
 	}
 }
 

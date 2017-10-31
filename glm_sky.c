@@ -56,8 +56,6 @@ typedef  struct {
 	GLuint  baseInstance;
 } DrawElementsIndirectCommand;
 
-#define VBO_SKYDOME_FOFS(x) (void*)((intptr_t)&(((skydome_vert_t*)0)->x))
-
 #define NUMBER_AXIS 6
 #define SUBDIVISIONS 10
 #define VERTS_PER_STRIP (SUBDIVISIONS + 1)
@@ -217,16 +215,16 @@ static void BuildSkyVertsArray(void)
 		GL_GenVertexArray(&skyDome_vao);
 		GL_SetVertexArrayElementBuffer(&skyDome_vao, skyDomeIndexes_vbo);
 
-		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_FIELDOFFSET(skydome_vert_t, pos));
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_FIELDOFFSET(skydome_vert_t, s));
 	}
 
 	if (!skyBox_vao.vao) {
 		GL_GenVertexArray(&skyBox_vao);
 		GL_SetVertexArrayElementBuffer(&skyBox_vao, null_buffer_reference);
 
-		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_FIELDOFFSET(skydome_vert_t, pos));
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_FIELDOFFSET(skydome_vert_t, s));
 	}
 }
 

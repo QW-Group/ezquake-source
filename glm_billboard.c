@@ -8,8 +8,6 @@
 void GLM_DrawBillboards(void);
 void GLC_DrawBillboards(void);
 
-#define VBO_BILLBOARDVERT_FOFS(x) (void*)((intptr_t)&(((gl_billboard_vert_t*)0)->x))
-
 #define MAX_BILLBOARDS_PER_BATCH    1024  // Batches limited to this so they can't break other functionality
 
 typedef struct gl_billboard_vert_s {
@@ -177,11 +175,11 @@ static void GLM_CreateBillboardVAO(void)
 		GL_GenVertexArray(&billboardVAO);
 
 		// position
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(position));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
 		// color
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color));
 	}
 
 	if (!GL_BufferReferenceIsValid(billboardIndexes)) {
