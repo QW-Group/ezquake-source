@@ -969,8 +969,8 @@ void GL_PrintState(void)
 		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
 			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? TexEnvName(unit_texture_mode[i]) : "n");
 		}
-		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", polygonMode == GL_FILL ? "fill" : polygonMode == GL_LINE ? "line" : "???");
 		fprintf(debug_frame_out, "]\n");
+		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", polygonMode == GL_FILL ? "fill" : polygonMode == GL_LINE ? "line" : "???");
 		fprintf(debug_frame_out, "... </state-dump>\n");
 	}
 }

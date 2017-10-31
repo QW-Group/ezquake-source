@@ -733,6 +733,7 @@ void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
 #else
+#define GL_EnterTracedRegion(...)
 #define GL_EnterRegion(x)
 #define GL_LeaveRegion()
 #define GL_ResetRegion(x)
@@ -1254,6 +1255,9 @@ void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref te
 void GLC_PauseMatrixUpdate(void);
 void GLC_ResumeMatrixUpdate(void);
 void GLC_LoadMatrix(GLenum matrix);
+
+void GL_FlushWorldModelBatch(void);
+void GL_InitialiseFramebufferHandling(void);
 
 float GL_WaterAlpha(void);
 

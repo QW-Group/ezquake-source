@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 
 static void GL_SortDrawCalls(int* split);
-void GL_FlushWorldModelBatch(void);
 
 extern buffer_ref brushModel_vbo;
 extern GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
