@@ -1415,7 +1415,6 @@ void R_LoadBrushModelTextures(model_t *m)
 void R_DrawBrushModel(entity_t *e)
 {
 	int i, k, underwater;
-	extern cvar_t gl_outline;
 	unsigned int li;
 	unsigned int lj;
 	vec3_t mins, maxs;

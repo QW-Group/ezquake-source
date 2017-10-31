@@ -268,12 +268,50 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 		caustics &= ((drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
 	}
 
+	// See if previous batch has same texture & matrix, if so just continue
+	if (batch_count) {
+		float mvMatrix[16];
+
+		if (batch_count == 1) {
+			batch_count = batch_count;
+		}
+
+		req = &worldmodel_requests[batch_count - 1];
+		GLM_GetMatrix(GL_MODELVIEW, mvMatrix);
+		if (!memcmp(mvMatrix, req->mvMatrix, sizeof(mvMatrix))) {
+			if (!GL_TextureReferenceIsValid(texture_array)) {
+				// We don't care about materials, so no problem here...
+				return req;
+			}
+
+			// Previous block didn't care about materials, pick now
+			if (req->sampler < 0) {
+				int i;
+
+				for (i = 0; i < material_samplers; ++i) {
+					if (GL_TextureReferenceEqual(texture_array, allocated_samplers[i])) {
+						req->sampler = i;
+						break;
+					}
+				}
+				if (req->sampler < 0 && material_samplers < material_samplers_max) {
+					req->sampler = material_samplers++;
+					allocated_samplers[req->sampler] = texture_array;
+				}
+			}
+
+			if (GL_TextureReferenceEqual(allocated_samplers[req->sampler], texture_array)) {
+				return req;
+			}
+		}
+	}
+
 	if (batch_count >= MAX_WORLDMODEL_BATCH) {
 		GL_FlushWorldModelBatch();
 	}
 
 	if (!GL_TextureReferenceIsValid(texture_array)) {
-		sampler = 0;
+		sampler = -1;
 	}
 	else {
 		int i;
@@ -343,7 +381,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 					req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false, false);
 				}
 
-				if (index_count) {
+				if (req->count) {
 					modelIndexes[index_count++] = ~(GLuint)0;
 					req->count++;
 				}
