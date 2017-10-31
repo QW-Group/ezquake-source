@@ -51,10 +51,10 @@ void Classic_LoadParticleTexures(void)
 
 	// clear to transparent white
 	for (i = 0; i < 32 * 32; i++) {
-		((unsigned *)data)[i] = LittleLong(0x00FFFFFF);
+		((unsigned *)data)[i] = LittleLong(0x00000000);
 	}
 
-	// draw a circle in the top left corner or squire, depends of cvar
+	// draw a circle in the top left corner or square, depends of cvar
 	for (x = 0; x < 16; x++) {
 		for (y = 0; y < 16; y++) {
 			if (gl_squareparticles.integer || ((x - 7.5) * (x - 7.5) + (y - 7.5) * (y - 7.5) <= 8 * 8)) {
@@ -712,15 +712,15 @@ void Classic_DrawParticles(void)
 
 	if (square) {
 		// FIXME: Hideous, should really store the indexes and use restart if we're doing this many squares?
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, GL_TRIANGLE_STRIP, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, GL_TRIANGLE_STRIP, true);
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;
 			GLubyte color[4];
 
-			color[0] = glpart->gl_color[0] * 255;
-			color[1] = glpart->gl_color[1] * 255;
-			color[2] = glpart->gl_color[2] * 255;
+			color[0] = glpart->gl_color[0] * glpart->gl_color[3] * 255;
+			color[1] = glpart->gl_color[1] * glpart->gl_color[3] * 255;
+			color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
 			color[3] = glpart->gl_color[3] * 255;
 
 			if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 4)) {
@@ -732,16 +732,16 @@ void Classic_DrawParticles(void)
 		}
 	}
 	else {
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES, true);
 		if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
 			for (i = 0; i < particles_to_draw; ++i) {
 				glm_particle_t* glpart = &glparticles[i];
 				float scale = glpart->gl_scale;
 				GLubyte color[4];
 
-				color[0] = glpart->gl_color[0] * 255;
-				color[1] = glpart->gl_color[1] * 255;
-				color[2] = glpart->gl_color[2] * 255;
+				color[0] = glpart->gl_color[0] * glpart->gl_color[3] * 255;
+				color[1] = glpart->gl_color[1] * glpart->gl_color[3] * 255;
+				color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
 				color[3] = glpart->gl_color[3] * 255;
 
 				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);

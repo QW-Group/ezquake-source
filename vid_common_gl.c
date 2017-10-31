@@ -663,7 +663,7 @@ void GL_ResetRegion(qbool start)
 		fclose(debug_frame_out);
 		debug_frame_out = NULL;
 	}
-	else if (start && developer.integer) {
+	else if (start && developer.integer == 1) {
 		char fileName[MAX_PATH];
 #ifndef _WIN32
 		time_t t;

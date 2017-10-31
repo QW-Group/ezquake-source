@@ -36,7 +36,7 @@ void GLC_StateBeginFastSky(void)
 		GL_DisableFog();
 	}
 	GLC_DisableAllTexturing();
-	GL_Color3ubv(r_skycolor.integer);
+	GL_Color3ubv(r_skycolor.color);
 
 	LEAVE_STATE;
 }

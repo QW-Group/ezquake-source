@@ -155,7 +155,7 @@ void GLC_StateEndDrawBillboards(void)
 
 void GL_StateEndFrame(void)
 {
-	if (developer.integer) {
+	if (developer.integer == 1) {
 		Cvar_SetValue(&developer, 0);
 	}
 }
