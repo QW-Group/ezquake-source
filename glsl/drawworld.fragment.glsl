@@ -214,9 +214,7 @@ void main()
 #endif
 
 #if defined(DRAW_LUMA_TEXTURES) && !defined(DRAW_LUMA_TEXTURES_FB)
-		if ((Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
-			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
-		}
+		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
 #if defined(DRAW_LIGHTMAPS)
 		frag_colour = vec4(1 - lmColor.rgb, 1);
@@ -226,23 +224,15 @@ void main()
 		frag_colour = vec4(1 - lmColor.rgb, 1) * texColor;
 #endif
 #if defined(DRAW_LUMA_TEXTURES_FB)
-		if ((Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
-			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);
-		}
+		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
 #endif
 
 #ifdef DRAW_CAUSTIC_TEXTURES
-		if ((Flags & EZQ_SURFACE_UNDERWATER) == EZQ_SURFACE_UNDERWATER) {
-			// FIXME: Do proper GL_DECAL etc
-			frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
-		}
+		frag_colour = vec4(mix(frag_colour.rgb, caustic.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_UNDERWATER)), frag_colour.a);
 #endif
 
 #ifdef DRAW_DETAIL_TEXTURES
-		if ((Flags & EZQ_SURFACE_DETAIL) == EZQ_SURFACE_DETAIL) {
-			// FIXME: Do proper GL_DECAL etc
-			frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
-		}
+		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_DETAIL)), frag_colour.a);
 #endif
 	}
 
