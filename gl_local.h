@@ -686,8 +686,10 @@ void GL_PushMatrix(GLenum mode, float* matrix);
 
 void GLM_DebugMatrix(GLenum type, const char* value);
 
-int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos);
-int GLM_MeasureVBOSizeForBrushModel(model_t* m);
+int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos);
+int GL_MeasureVBOSizeForBrushModel(model_t* m);
+void GL_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO);
+void GL_CreateBrushModelVAO(buffer_ref instance_vbo);
 
 void GL_UseProgram(GLuint program);
 void GL_DepthFunc(GLenum func);
@@ -809,7 +811,10 @@ void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
 void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
 void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 void GLM_DrawWaterSurfaces(void);
+
 void GL_BuildCommonTextureArrays(qbool vid_restart);
+void GL_CreateModelVBOs(qbool vid_restart);
+void GLM_CreateBrushModelVAO(buffer_ref instance_vbo);
 
 void R_DrawAliasModel(entity_t *ent);
 void R_DrawAliasPowerupShell(entity_t *ent);

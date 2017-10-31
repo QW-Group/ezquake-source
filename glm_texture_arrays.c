@@ -1,4 +1,8 @@
 
+// glm_texture_arrays.c
+
+// gathers textures of common size into arrays so we can pack more references into fewer samplers
+
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "vx_tracker.h"
@@ -9,10 +13,7 @@
 #include "tr_types.h"
 #endif
 
-void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int position);
-
 #define MAX_ARRAY_DEPTH 64
-#define VBO_ALIASVERT_FOFS(x) (void*)((intptr_t)&(((vbo_model_vert_t*)0)->x))
 
 typedef enum {
 	TEXTURETYPES_ALIASMODEL,
@@ -137,18 +138,10 @@ static void GL_DeleteExistingArrays(qbool delete_textures)
 	}
 }
 
-static void GLM_CreateAliasModelVAO(void);
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
 static GLubyte* tempTextureBuffer;
 static GLuint tempTextureBufferSize;
-
-static buffer_ref instance_vbo;
-glm_vao_t aliasModel_vao;
-buffer_ref aliasModel_vbo;
-buffer_ref aliasModel_ssbo;
-
-void GLM_CreateBrushModelVAO(buffer_ref instance_vbo);
 
 static qbool AliasModelIsAnySize(model_t* mod)
 {
@@ -165,20 +158,6 @@ static qbool BrushModelIsAnySize(model_t* mod)
 	//   able to insert onto a larger texture and then adjust texture coordinates so it doesn't matter
 
 	return false;
-}
-
-#define MAX_INSTANCES 128
-
-static void GLM_CreateInstanceVBO(void)
-{
-	unsigned int values[MAX_INSTANCES];
-	int i;
-
-	for (i = 0; i < MAX_INSTANCES; ++i) {
-		values[i] = i;
-	}
-
-	instance_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, GL_STATIC_DRAW);
 }
 
 static void GL_ClearModelTextureReferences(model_t* mod, qbool all_textures)
@@ -396,22 +375,6 @@ static void GL_FlagTexturesForModel(model_t* mod)
 	}
 }
 
-static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
-{
-	switch (mod->type) {
-	case mod_alias:
-	case mod_alias3:
-		*required_vbo_length += mod->vertsInVBO;
-		break;
-	case mod_sprite:
-		// We allocated 4 points at beginning of VBO, no need to duplicate per-model
-		break;
-	case mod_brush:
-		// These are in different format/vbo at the moment
-		break;
-	}
-}
-
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx)
 {
 	int j;
@@ -500,29 +463,6 @@ static void GLM_SetTextureArrays(model_t* mod)
 	}
 }
 
-static void GL_ImportModelToVBO(model_t* mod, int* new_vbo_position)
-{
-	int count = 0;
-
-	if (mod->type == mod_alias) {
-		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-
-		GL_AliasModelAddToVBO(mod, paliashdr, aliasModel_vbo, aliasModel_ssbo, *new_vbo_position);
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_alias3) {
-		GL_MD3ModelAddToVBO(mod, aliasModel_vbo, aliasModel_ssbo, *new_vbo_position);
-
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_sprite) {
-		mod->vbo_start = 0;
-	}
-	else if (mod->type == mod_brush) {
-		mod->vbo_start = 0;
-	}
-}
-
 static void GL_ImportTexturesForModel(model_t* mod)
 {
 	int count = 0;
@@ -602,33 +542,6 @@ static void GL_ImportTexturesForModel(model_t* mod)
 	}
 }
 
-static void GLM_CreateSpriteVBO(void)
-{
-	vbo_model_vert_t verts[4];
-
-	VectorSet(verts[0].position, 0, -1, -1);
-	verts[0].texture_coords[0] = 1;
-	verts[0].texture_coords[1] = 1;
-	verts[0].vert_index = 0;
-
-	VectorSet(verts[1].position, 0, -1, 1);
-	verts[1].texture_coords[0] = 1;
-	verts[1].texture_coords[1] = 0;
-	verts[1].vert_index = 1;
-
-	VectorSet(verts[2].position, 0, 1, 1);
-	verts[2].texture_coords[0] = 0;
-	verts[2].texture_coords[1] = 0;
-	verts[2].vert_index = 2;
-
-	VectorSet(verts[3].position, 0, 1, -1);
-	verts[3].texture_coords[0] = 0;
-	verts[3].texture_coords[1] = 1;
-	verts[3].vert_index = 3;
-
-	GL_UpdateVBOSection(aliasModel_vbo, 0, sizeof(verts), verts);
-}
-
 // Called from R_NewMap
 void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
@@ -651,7 +564,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			}
 			Mod_LoadModel(mod, true);
 
-			GL_MeasureVBOForModel(mod, &required_vbo_length);
 			GL_FlagTexturesForModel(mod);
 		}
 	}
@@ -668,7 +580,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			}
 			Mod_LoadModel(mod, true);
 
-			GL_MeasureVBOForModel(mod, &required_vbo_length);
 			GL_FlagTexturesForModel(mod);
 		}
 	}
@@ -799,52 +710,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 	Q_free(tempTextureBuffer);
 	tempTextureBufferSize = 0;
-
-	{
-		int new_vbo_position = 0;
-
-		aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
-		aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
-
-		// VBO starts with simple-model/sprite vertices
-		GLM_CreateSpriteVBO();
-		new_vbo_position = 4;
-
-		// Go back through all models, importing textures into arrays and creating new VBO
-		for (i = 1; i < MAX_MODELS; ++i) {
-			model_t* mod = cl.model_precache[i];
-
-			if (mod) {
-				GL_ImportModelToVBO(mod, &new_vbo_position);
-			}
-		}
-
-		for (i = 0; i < MAX_VWEP_MODELS; i++) {
-			model_t* mod = cl.vw_model_precache[i];
-
-			if (mod) {
-				GL_ImportModelToVBO(mod, &new_vbo_position);
-			}
-		}
-
-		GLM_CreateInstanceVBO();
-		GLM_CreateAliasModelVAO();
-		GLM_CreateBrushModelVAO(instance_vbo);
-		GL_BindBufferBase(aliasModel_ssbo, GL_BINDINGPOINT_ALIASMODEL_SSBO);
-	}
-}
-
-static void GLM_CreateAliasModelVAO(void)
-{
-	GL_GenVertexArray(&aliasModel_vao);
-
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(position));
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(texture_coords));
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModel_vbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(normal));
-	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, instance_vbo, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
-	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, aliasModel_vbo, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(vert_index));
-
-	glVertexAttribDivisor(3, 1);
 }
 
 void GL_InvalidateAllTextureReferences(void)

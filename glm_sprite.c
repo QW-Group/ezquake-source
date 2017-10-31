@@ -10,8 +10,6 @@
 #define VBO_OFFSET(type, field) (void*)((intptr_t)&(((type*)0)->field))
 #define MAX_SAMPLERS 32
 
-extern glm_vao_t aliasModel_vao;
-
 static glm_program_t spriteProgram;
 static GLuint spriteProgram_RefdefCvars_block;
 static GLuint spriteProgram_SpriteData_block;

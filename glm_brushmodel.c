@@ -98,7 +98,7 @@ static int CopyVertToBuffer(model_t* mod, vbo_world_vert_t* vbo_buffer, int posi
 	return position + 1;
 }
 
-int GLM_MeasureVBOSizeForBrushModel(model_t* m)
+int GL_MeasureVBOSizeForBrushModel(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
@@ -129,7 +129,7 @@ int GLM_MeasureVBOSizeForBrushModel(model_t* m)
 }
 
 // Create VBO, ordering by texture array
-int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos)
+int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos)
 {
 	int i, j;
 	int combinations = 0;
@@ -213,7 +213,7 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 	return vbo_pos;
 }
 
-void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
+void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 {
 	int i;
 	int size = 0;
@@ -223,7 +223,7 @@ void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			size += GLM_MeasureVBOSizeForBrushModel(mod);
+			size += GL_MeasureVBOSizeForBrushModel(mod);
 		}
 	}
 
@@ -231,7 +231,7 @@ void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				size += GLM_MeasureVBOSizeForBrushModel(mod);
+				size += GL_MeasureVBOSizeForBrushModel(mod);
 			}
 		}
 	}
@@ -249,7 +249,7 @@ void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+				position = GL_PopulateVBOForBrushModel(mod, buffer, position);
 			}
 		}
 	}
@@ -257,7 +257,7 @@ void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+			position = GL_PopulateVBOForBrushModel(mod, buffer, position);
 		}
 	}
 
