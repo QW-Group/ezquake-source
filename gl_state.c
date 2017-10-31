@@ -242,6 +242,7 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		currenttexture = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (currentTextureArray == texnum) {
@@ -250,10 +251,12 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		currentTextureArray = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u)", oldtarget - GL_TEXTURE0, texnum);
 	}
 
 	++frameStats.texture_binds;
@@ -289,6 +292,7 @@ void GL_SelectTexture(GLenum target)
 	currentTextureArray = cntarrays[target - GL_TEXTURE0];
 	gl_texture_2d = texunitenabled[target - GL_TEXTURE0];
 	oldtarget = target;
+	GL_MarkEvent(va("glActiveTexture(GL_TEXTURE%d)", target - GL_TEXTURE0));
 }
 
 void GL_DisableMultitexture(void)
@@ -365,154 +369,6 @@ void GL_DepthMask(GLboolean mask)
 
 		gl_depth_mask = mask;
 	}
-}
-
-#undef glEnable
-#undef glDisable
-
-void GL_Enable(GLenum option)
-{
-	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glEnable/Prior");
-#endif
-
-	if (option == GL_DEPTH_TEST) {
-		if (gl_depthTestEnabled) {
-			return;
-		}
-
-		gl_depthTestEnabled = true;
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (gl_framebuffer_srgb) {
-			return;
-		}
-
-		gl_framebuffer_srgb = true;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (gl_cullface) {
-			return;
-		}
-
-		gl_cullface = true;
-	}
-	else if (option == GL_TEXTURE_2D) {
-		if (gl_texture_2d) {
-			return;
-		}
-
-		gl_texture_2d = true;
-	}
-	else if (option == GL_BLEND) {
-		if (gl_blend) {
-			return;
-		}
-
-		gl_blend = true;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (gl_cull_face) {
-			return;
-		}
-
-		gl_cull_face = true;
-	}
-	else if (option == GL_POLYGON_OFFSET_FILL) {
-		if (gl_polygon_offset_fill) {
-			return;
-		}
-
-		gl_polygon_offset_fill = true;
-	}
-	else if (option == GL_POLYGON_OFFSET_LINE) {
-		if (gl_polygon_offset_line) {
-			return;
-		}
-
-		gl_polygon_offset_line = true;
-	}
-
-	glEnable(option);
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glEnable");
-#endif
-}
-
-void GL_Disable(GLenum option)
-{
-	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glDisable/Prior");
-#endif
-
-	if (option == GL_DEPTH_TEST) {
-		if (!gl_depthTestEnabled) {
-			return;
-		}
-
-		gl_depthTestEnabled = false;
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (!gl_framebuffer_srgb) {
-			return;
-		}
-
-		gl_framebuffer_srgb = false;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (!gl_cullface) {
-			return;
-		}
-
-		gl_cullface = false;
-	}
-	else if (option == GL_TEXTURE_2D) {
-		if (!gl_texture_2d) {
-			return;
-		}
-
-		gl_texture_2d = false;
-	}
-	else if (option == GL_BLEND) {
-		if (!gl_blend) {
-			return;
-		}
-
-		gl_blend = false;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (!gl_cull_face) {
-			return;
-		}
-
-		gl_cull_face = false;
-	}
-	else if (option == GL_POLYGON_OFFSET_FILL) {
-		if (!gl_polygon_offset_fill) {
-			return;
-		}
-
-		gl_polygon_offset_fill = false;
-	}
-	else if (option == GL_POLYGON_OFFSET_LINE) {
-		if (!gl_polygon_offset_line) {
-			return;
-		}
-
-		gl_polygon_offset_line = false;
-	}
-
-	glDisable(option);
 }
 
 void GL_TextureEnvMode(GLenum mode)
@@ -738,19 +594,6 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
 	}
 }
 
-#undef glBegin
-
-void GL_Begin(GLenum primitive)
-{
-	if (GL_ShadersSupported()) {
-		assert(0);
-		return;
-	}
-
-	++frameStats.draw_calls;
-	glBegin(primitive);
-}
-
 void GL_Hint(GLenum target, GLenum mode)
 {
 	if (!GL_ShadersSupported()) {
@@ -792,10 +635,193 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 		}
 
 		glBindTextures(first, count, glTextures);
+		GL_LogAPICall("glBindTextures(first=%d, count=%d)", first, count);
 	}
 	else {
 		for (i = 0; i < count; ++i) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0 + first + i, textures[i]);
 		}
 	}
+}
+
+
+
+// ---
+
+#undef glEnable
+#undef glDisable
+
+void GL_Enable(GLenum option)
+{
+	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
+		return;
+	}
+
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glEnable/Prior");
+#endif
+
+	if (option == GL_DEPTH_TEST) {
+		if (gl_depthTestEnabled) {
+			return;
+		}
+
+		gl_depthTestEnabled = true;
+		GL_LogAPICall("glEnable(GL_DEPTH_TEST)");
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (gl_framebuffer_srgb) {
+			return;
+		}
+
+		gl_framebuffer_srgb = true;
+		GL_LogAPICall("glEnable(GL_FRAMEBUFFER_SRGB)");
+	}
+	else if (option == GL_CULL_FACE) {
+		if (gl_cullface) {
+			return;
+		}
+
+		gl_cullface = true;
+		GL_LogAPICall("glEnable(GL_CULL_FACE)");
+	}
+	else if (option == GL_TEXTURE_2D) {
+		if (gl_texture_2d) {
+			return;
+		}
+
+		gl_texture_2d = true;
+		GL_LogAPICall("glEnable(GL_TEXTURE_2D)");
+	}
+	else if (option == GL_BLEND) {
+		if (gl_blend) {
+			return;
+		}
+
+		gl_blend = true;
+		GL_LogAPICall("glEnable(GL_BLEND)");
+	}
+	else if (option == GL_CULL_FACE) {
+		if (gl_cull_face) {
+			return;
+		}
+
+		gl_cull_face = true;
+		GL_LogAPICall("glEnable(GL_CULL_FACE)");
+	}
+	else if (option == GL_POLYGON_OFFSET_FILL) {
+		if (gl_polygon_offset_fill) {
+			return;
+		}
+
+		gl_polygon_offset_fill = true;
+		GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
+	}
+	else if (option == GL_POLYGON_OFFSET_LINE) {
+		if (gl_polygon_offset_line) {
+			return;
+		}
+
+		gl_polygon_offset_line = true;
+		GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
+	}
+
+	glEnable(option);
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glEnable");
+#endif
+}
+
+void GL_Disable(GLenum option)
+{
+	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
+		return;
+	}
+
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glDisable/Prior");
+#endif
+
+	if (option == GL_DEPTH_TEST) {
+		if (!gl_depthTestEnabled) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_DEPTH_TEST)");
+		gl_depthTestEnabled = false;
+	}
+	else if (option == GL_FRAMEBUFFER_SRGB) {
+		if (!gl_framebuffer_srgb) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_FRAMEBUFFER_SRGB)");
+		gl_framebuffer_srgb = false;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (!gl_cullface) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_CULL_FACE)");
+		gl_cullface = false;
+	}
+	else if (option == GL_TEXTURE_2D) {
+		if (!gl_texture_2d) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_TEXTURE_2D)");
+		gl_texture_2d = false;
+	}
+	else if (option == GL_BLEND) {
+		if (!gl_blend) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_BLEND)");
+		gl_blend = false;
+	}
+	else if (option == GL_CULL_FACE) {
+		if (!gl_cull_face) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_CULL_FACE)");
+		gl_cull_face = false;
+	}
+	else if (option == GL_POLYGON_OFFSET_FILL) {
+		if (!gl_polygon_offset_fill) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
+		gl_polygon_offset_fill = false;
+	}
+	else if (option == GL_POLYGON_OFFSET_LINE) {
+		if (!gl_polygon_offset_line) {
+			return;
+		}
+
+		GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
+		gl_polygon_offset_line = false;
+	}
+
+	glDisable(option);
+}
+
+#undef glBegin
+
+void GL_Begin(GLenum primitive)
+{
+	if (GL_ShadersSupported()) {
+		assert(0);
+		return;
+	}
+
+	++frameStats.draw_calls;
+	glBegin(primitive);
+	//GL_MarkEvent("GL_Begin() call");
 }

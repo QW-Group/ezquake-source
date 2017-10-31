@@ -714,9 +714,15 @@ void GL_UnBindBuffer(GLenum target);
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
 void GL_LeaveRegion(void);
+void GL_ResetRegion(qbool start);
+void GL_LogAPICall(const char* message, ...);
+void GL_MarkEvent(const char* message, ...);
 #else
 #define GL_EnterRegion(x)
 #define GL_LeaveRegion()
+#define GL_ResetRegion()
+#define GL_MarkEvent(x)
+#define GL_LogAPICall(x)
 #endif
 
 #define NUMVERTEXNORMALS 162

@@ -594,14 +594,94 @@ void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 }
 
 #ifdef WITH_NVTX
+static int debug_frame_depth = 0;
+static FILE* debug_frame_out;
+
 void GL_EnterRegion(const char* regionName)
 {
-	nvtxRangePushA(regionName);
+	if (GL_ShadersSupported()) {
+		nvtxRangePushA(regionName);
+	}
+	else if (debug_frame_out) {
+		++debug_frame_depth;
+		fprintf(debug_frame_out, "Enter: %.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", regionName);
+	}
 }
 
 void GL_LeaveRegion(void)
 {
-	nvtxRangePop();
+	if (GL_ShadersSupported()) {
+		nvtxRangePop();
+	}
+	else if (debug_frame_out) {
+		fprintf(debug_frame_out, "Leave: %.*s\n", debug_frame_depth, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		debug_frame_depth = max(debug_frame_depth - 1, 0);
+	}
+}
+
+void GL_MarkEvent(const char* format, ...)
+{
+	va_list argptr;
+	char msg[4096];
+
+	va_start(argptr, format);
+	vsnprintf(msg, sizeof(msg), format, argptr);
+	va_end(argptr);
+
+	if (GL_ShadersSupported()) {
+		nvtxMark(va(msg));
+	}
+	else if (debug_frame_out) {
+		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
+	}
+}
+
+void GL_LogAPICall(const char* format, ...)
+{
+	if (!GL_ShadersSupported() && debug_frame_out) {
+		va_list argptr;
+		char msg[4096];
+
+		va_start(argptr, format);
+		vsnprintf(msg, sizeof(msg), format, argptr);
+		va_end(argptr);
+
+		fprintf(debug_frame_out, "API:   %.*s %s\n", debug_frame_depth, "                                                          ", msg);
+	}
+}
+
+void GL_ResetRegion(qbool start)
+{
+	if (start && debug_frame_out) {
+		fclose(debug_frame_out);
+		debug_frame_out = NULL;
+	}
+	else if (start && developer.integer) {
+		char fileName[MAX_PATH];
+#ifndef _WIN32
+		time_t t;
+		struct tm date;
+		t = time(NULL);
+		localtime_r(&t, &date);
+
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%02d-%02d-%04d_%02d-%02d-%02d.txt",
+			com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
+#else
+		SYSTEMTIME date;
+		GetLocalTime(&date);
+
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%02d-%02d-%04d_%02d-%02d-%02d.txt",
+			com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
+#endif
+
+		debug_frame_out = fopen(fileName, "wt");
+		Cvar_SetValue(&developer, 0);
+	}
+
+	if (!GL_ShadersSupported() && debug_frame_out) {
+		fprintf(debug_frame_out, "---Reset---\n");
+		debug_frame_depth = 0;
+	}
 }
 #endif
 
@@ -663,6 +743,7 @@ void GL_TexSubImage3D(
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
+	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
 }
 
 /*
@@ -694,6 +775,7 @@ void GL_TexSubImage2D(
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
+	GL_LogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
 }
 
 void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)

@@ -25,19 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
-extern int debug_frame_depth;
-#define ENTER_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__); \
-	++debug_frame_depth;
-#define MIDDLE_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__);
-#define LEAVE_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__); \
-	--debug_frame_depth;
+#define ENTER_STATE GL_EnterRegion(__FUNCTION__)
+#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
+#define LEAVE_STATE GL_LeaveRegion()
 
 void GL_StateDefault2D(void)
 {
-	debug_frame_depth = 0;
+	GL_ResetRegion(false);
 
 	ENTER_STATE;
 
@@ -219,9 +213,9 @@ void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
 
 void GLC_StateResetCharGLState(void)
 {
-	LEAVE_STATE
+	LEAVE_STATE;
 
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
 }

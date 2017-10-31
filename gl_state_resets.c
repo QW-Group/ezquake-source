@@ -28,15 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern texture_ref solidskytexture, alphaskytexture;
 
-int debug_frame_depth = 0;
-#define ENTER_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__); \
-	++debug_frame_depth;
-#define MIDDLE_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__);
-#define LEAVE_STATE \
-	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__); \
-	--debug_frame_depth;
+#define ENTER_STATE GL_EnterRegion(__FUNCTION__)
+#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
+#define LEAVE_STATE GL_LeaveRegion()
 
 float GL_WaterAlpha(void)
 {
@@ -854,7 +848,7 @@ void GL_StateEndDrawBrushModel(void)
 
 void GL_StateDefault3D(void)
 {
-	debug_frame_depth = 0;
+	GL_ResetRegion(true);
 
 	ENTER_STATE;
 
