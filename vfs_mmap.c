@@ -37,13 +37,14 @@ typedef struct {
 	vfsfile_t funcs; // <= must be at top/begining of struct
 
 	byte *handle;
-	unsigned long position;
+	size_t position;
 	size_t len;
 } vfsmmapfile_t;
 
-static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
+static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread_, vfserrno_t *err) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
+	size_t bytestoread = bytestoread_;
 
 	if (bytestoread < 0)
 		Sys_Error("VFSMMAP_ReadBytes: bytestoread < 0");
@@ -59,8 +60,9 @@ static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfs
 	// Advance in the file.
 	intfile->position += bytestoread;
 
-	if (err)
+	if (err) {
 		*err = (bytestoread == 0) ? VFSERR_EOF : VFSERR_NONE;
+	}
 
 	return bytestoread;
 }

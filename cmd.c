@@ -145,7 +145,7 @@ void Cbuf_Init (void)
 //Adds command text at the end of the buffer
 void Cbuf_AddTextEx (cbuf_t *cbuf, const char *text)
 {
-	int new_start, new_bufsize;
+	size_t new_start, new_bufsize;
 	size_t len;
 
 	len = strlen (text);
@@ -174,7 +174,7 @@ void Cbuf_AddTextEx (cbuf_t *cbuf, const char *text)
 //Adds command text at the beginning of the buffer
 void Cbuf_InsertTextEx (cbuf_t *cbuf, const char *text)
 {
-	int new_start, new_bufsize;
+	size_t new_start, new_bufsize;
 	size_t len;
 
 	len = strlen (text);
@@ -204,7 +204,8 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, const char *text)
 
 void Cbuf_ExecuteEx (cbuf_t *cbuf)
 {
-	int i, j, cursize, nextsize;
+	size_t i, j;
+	size_t cursize, nextsize;
 	char *text, line[1024], *src, *dest;
 	qbool comment;
 	int quotes;

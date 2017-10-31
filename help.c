@@ -74,8 +74,8 @@ static void Help_DescribeCmd(const json_command_t *cmd)
     // arguments
     if (cmd->arguments)
     {
-		int i = 0;
-		int argCount = json_array_size(cmd->arguments);
+		size_t i = 0;
+		size_t argCount = json_array_size(cmd->arguments);
 
         Com_Printf("\n");
         con_ormask = 128;
@@ -124,8 +124,8 @@ static void Help_DescribeVar(const json_variable_t *var)
     // value
 	if (var->values)
 	{
-		int valueCount = json_array_size(var->values);
-		int i = 0;
+		size_t valueCount = json_array_size(var->values);
+		size_t i = 0;
 
 		Com_Printf("\n");
 		con_ormask = 128;
@@ -137,14 +137,17 @@ static void Help_DescribeVar(const json_variable_t *var)
 			const char*   name        = json_string_value(json_object_get(value, "name"));
 			const char*   description = json_string_value(json_object_get(value, "description"));
 			// if value is *, just show basic description
-			if (strcmp (name, "*")) {
+			if (strcmp(name, "*")) {
 				con_ormask = 128;
-				if (var->value_type == t_boolean && !strcmp(name, "false"))
+				if (var->value_type == t_boolean && !strcmp(name, "false")) {
 					Com_Printf("0");
-				else if (var->value_type == t_boolean && !strcmp(name, "true"))
+				}
+				else if (var->value_type == t_boolean && !strcmp(name, "true")) {
 					Com_Printf("1");
-				else
+				}
+				else {
 					Com_Printf("%s", name);
+				}
 				con_ormask = 0;
 				con_margin += CONSOLE_HELP_MARGIN;
 				Com_Printf(" - %s\n", description);
@@ -277,8 +280,8 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 
 	if (var->values)
 	{
-		int valueCount = json_array_size(var->values);
-		int i = 0;
+		size_t valueCount = json_array_size(var->values);
+		size_t i = 0;
 
 		strlcat (buf, "\n", bufsize);
 		strlcat (buf, "value\n", bufsize);
@@ -663,10 +666,10 @@ static void Help_VerifyConfig_f(void)
 
 	json_object_foreach(varsObj, name, variable)
 	{
-		cvar_t* cvar     = Cvar_Find(name);
-		const char* type = json_string_value(json_object_get(variable, "type"));
-		json_t* examples = json_object_get(variable, "values");
-		int num_examples = examples && json_is_array(examples) ? json_array_size(examples) : 0;
+		cvar_t* cvar        = Cvar_Find(name);
+		const char* type    = json_string_value(json_object_get(variable, "type"));
+		json_t* examples    = json_object_get(variable, "values");
+		size_t num_examples = examples && json_is_array(examples) ? json_array_size(examples) : 0;
 
 		// obsolete cvars might be in documentation so people can see notes using /describe
 		if (cvar == NULL) {

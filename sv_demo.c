@@ -197,7 +197,7 @@ void DestFlush (qbool compleate)
 		case DEST_BUFFEREDFILE:
 			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || compleate)
 			{
-				len = fwrite(d->cache, 1, d->cacheused, d->file);
+				len = (int)fwrite(d->cache, 1, d->cacheused, d->file);
 				if (len != d->cacheused)
 				{
 					Sys_Printf("DestFlush: fwrite() error\n");
@@ -321,7 +321,7 @@ int DemoWriteDest (void *data, int len, mvddest_t *d)
 	switch(d->desttype)
 	{
 		case DEST_FILE:
-			ret = fwrite(data, 1, len, d->file);
+			ret = (int)fwrite(data, 1, len, d->file);
 			if (ret != len)
 			{
 				Sys_Printf("DemoWriteDest: fwrite() error\n");
@@ -1102,7 +1102,7 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 
     	// and here we memset() not whole demo_t struct, but part,
     	// so demo.dest and demo.pendingdest is not overwriten
-		memset(&demo, 0, ((int)&(((demo_t *)0)->mem_set_point)));
+		memset(&demo, 0, (int)((uintptr_t)&(((demo_t *)0)->mem_set_point)));
 
 		for (i = 0; i < UPDATE_BACKUP; i++)
 		{

@@ -983,7 +983,7 @@ static void QMB_UpdateParticles(void)
 		pt = &particle_types[i];
 
 #ifdef _WIN32
-		if (pt && ((int)pt->start == 1)) {
+		if (pt && ((uintptr_t)pt->start == 1)) {
 			/* hack! fixme!
 			 * for some reason in some occasions - MS VS 2005 compiler
 			 * this address doesn't point to 0 as other unitialized do, but to 0x00000001 */

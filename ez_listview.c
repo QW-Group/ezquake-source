@@ -63,7 +63,7 @@ static void EZ_listview_Layout(ez_listview_t *self)
 //
 static int EZ_listview_OnHeaderMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
 {
-	int column = (int)payload;
+	int column = (int)(uintptr_t)payload;
 	ez_listview_t *listview = (ez_listview_t *)self;
 
 	// Change the sorting.
@@ -147,7 +147,7 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 			curlabel = listview->header->items[i];
 
 			// Pass the column index as payload (so we know what column to sort by when a header is clicked).
-			EZ_control_AddOnMouseClick((ez_control_t *)curlabel, (void *)i, EZ_listview_OnHeaderMouseClick);
+			EZ_control_AddOnMouseClick((ez_control_t *)curlabel, (void *)(uintptr_t)i, EZ_listview_OnHeaderMouseClick);
 			
 			EZ_control_SetAnchor((ez_control_t *)curlabel, anchor_left | anchor_top);
 			EZ_label_SetReadOnly(curlabel, true);
@@ -417,7 +417,7 @@ void EZ_listview_SetColumnWidth(ez_listview_t *self, int column, int width)
 
 	self->col_widths[column] = width;
 
-	CONTROL_RAISE_EVENT(NULL, listview, ez_listview_t, OnColumnWidthChanged, (void *)column);
+	CONTROL_RAISE_EVENT(NULL, listview, ez_listview_t, OnColumnWidthChanged, (void *)(uintptr_t)column);
 }
 
 //
@@ -428,7 +428,7 @@ int EZ_listview_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info)
 	ez_listview_t *listview = (ez_listview_t *)self;
 	ez_dllist_node_t *it = listview->items.head;
 	ez_listviewitem_t *lvi = NULL;
-	int column = (int)ext_event_info;
+	int column = (int)(uintptr_t)ext_event_info;
 
 	if (listview->items.count > 0)
 	{

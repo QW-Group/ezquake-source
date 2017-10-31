@@ -40,6 +40,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "protocol.h"
 #include "cmodel.h"
 
+#ifdef _WIN64
+int Q_strlen(const char* s);
+#define strlen Q_strlen
+#endif
+
 typedef struct texture_ref_s { unsigned int index; } texture_ref;
 extern const texture_ref null_texture_reference;
 qbool GL_TextureValid(texture_ref ref);

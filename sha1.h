@@ -26,7 +26,7 @@ typedef struct {
 #define DIGEST_SIZE 20
 void SHA1Transform(unsigned int state[5], unsigned char buffer[64]);
 void SHA1Init(SHA1_CTX* context);
-void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len);
+void SHA1Update(SHA1_CTX* context, unsigned char* data, size_t len);
 void SHA1Final(unsigned char digest[DIGEST_SIZE], SHA1_CTX* context);
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))

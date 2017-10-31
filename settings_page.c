@@ -959,7 +959,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	return false;
 }
 
-void Settings_Init(settings_page *page, setting *arr, size_t size)
+void Settings_Init(settings_page *page, setting *arr, int size)
 {
 	int i;
 	qbool onlyseparators = true;

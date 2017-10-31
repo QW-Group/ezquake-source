@@ -931,3 +931,10 @@ char *Q_strdup(const char *src)
 	return NULL;
 }
 
+#ifdef _WIN64
+#undef strlen
+int Q_strlen(const char* s)
+{
+	return (int)strlen(s);
+}
+#endif

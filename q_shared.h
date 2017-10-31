@@ -246,11 +246,19 @@ char *wcs2str (const wchar *ws);
 char *wcs2str_malloc (const wchar *ws); // you must freed returned string after it no longer need!!!
 
 #ifdef _WIN32
+#ifdef _WIN64
+#define qwcscpy wcscpy
+#define qwcschr wcschr
+#define qwcsrchr wcsrchr
+#define qwcslen (int)wcslen
+#define qwcsstr wcsstr
+#else
 #define qwcscpy wcscpy
 #define qwcschr wcschr
 #define qwcsrchr wcsrchr
 #define qwcslen wcslen
 #define qwcsstr wcsstr
+#endif
 #else
 wchar *qwcscpy (wchar *dest, const wchar *src);
 wchar *qwcschr (const wchar *ws, wchar wc);

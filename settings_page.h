@@ -28,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "keys.h"
 
-#define Settings_Page_Init(set_page, settings) Settings_Init(&set_page, settings, sizeof(settings) / sizeof(setting))
+#define Settings_Page_Init(set_page, settings) Settings_Init(&set_page, settings, (int)(sizeof(settings) / sizeof(setting)))
 #define Settings_Page_SetMinit(set_page) { set_page.mini = true; }
 
 // initializes the page structure
-void Settings_Init(settings_page *page, setting *settings, size_t size); 
+void Settings_Init(settings_page *page, setting *settings, int size); 
 
 // initilalize settings pages structures
 void Settings_MainInit(void);

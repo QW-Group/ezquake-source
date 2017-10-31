@@ -29,7 +29,7 @@
 //==================================
 static int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
-	int r;
+	size_t r;
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 
 	if (bytestoread < 0)
@@ -40,19 +40,19 @@ static int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestorea
 	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
 		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
 
-	return r;
+	return (int)r;
 }
 
 static int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	return fwrite(buffer, 1, bytestowrite, intfile->handle);
+	return (int)fwrite(buffer, 1, bytestowrite, intfile->handle);
 }
 
 static int VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	return fseek(intfile->handle, pos, whence);
+	return (int)fseek(intfile->handle, pos, whence);
 }
 
 static unsigned long VFSOS_Tell (struct vfsfile_s *file)
@@ -245,7 +245,7 @@ void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer)
 	if (!f)	//err...
 		return;
 	fseek(f, loc->offset, SEEK_SET);
-	read = fread(buffer, 1, loc->len, f);
+	read = (int)fread(buffer, 1, loc->len, f);
 	if (read != loc->len) {
 		Com_Printf ("Can't read file \"%s\" (%d bytes, expected %d)\n", loc->rawname, read, loc->len);
 	}

@@ -33,13 +33,13 @@ The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
 */
 
 typedef struct cbuf_s {
-	char	*text_buf;
-	int		maxsize;
-	int		text_start;
-	int		text_end;
-	qbool	wait;
+	char*   text_buf;
+	size_t  maxsize;
+	size_t  text_start;
+	size_t  text_end;
+	qbool   wait;
 	int     waitCount;
-	int		runAwayLoop;
+	int     runAwayLoop;
 } cbuf_t;
 
 extern cbuf_t cbuf_main;

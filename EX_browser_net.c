@@ -559,7 +559,7 @@ int GetServerPingsAndInfosProc(void * lpParameter)
 	extern cvar_t sb_listcache;
 	extern void SB_Serverlist_Serialize_f(void);
 
-	int full = (int) lpParameter;
+	int full = (int)(uintptr_t)lpParameter;
     abort_ping = 0;
 
 	if (full || serversn_passed == 0) {

@@ -456,8 +456,8 @@ LOCAL expr_val operator_substr(EParser p, const expr_val arg1, const expr_val ar
 	if (arg1.type == ET_STR && arg2.type == ET_INT && arg3.type == ET_INT) {
 		const char *str = arg1.s_val;
 		size_t arglen = strlen(str);
-		int pos = arg2.i_val;
-		int len = arg3.i_val;
+		size_t pos = arg2.i_val;
+		size_t len = arg3.i_val;
 
 		if (pos >= 0 && len >= 0) {
 			if (len == 0 || pos >= arglen) {

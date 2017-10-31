@@ -92,12 +92,14 @@ void SHA1Init(SHA1_CTX* context)
 
 /* Run your data through this. */
 
-void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len)
+void SHA1Update(SHA1_CTX* context, unsigned char* data, size_t len)
 {
-unsigned int i, j;
+	unsigned int i, j;
 
     j = (context->count[0] >> 3) & 63;
-    if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
+	if ((context->count[0] += len << 3) < (len << 3)) {
+		context->count[1]++;
+	}
     context->count[1] += (len >> 29);
     if ((j + len) > 63) {
         memcpy(&context->buffer[j], data, (i = 64-j));
@@ -107,7 +109,9 @@ unsigned int i, j;
         }
         j = 0;
     }
-    else i = 0;
+	else {
+		i = 0;
+	}
     memcpy(&context->buffer[j], &data[i], len - i);
 }
 

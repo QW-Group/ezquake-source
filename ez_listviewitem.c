@@ -133,7 +133,7 @@ void EZ_listviewitem_AddColumn(ez_listviewitem_t *self, ez_listview_subitem_t da
 	column = self->item_count;
 	self->item_count++;
 
-	CONTROL_RAISE_EVENT(NULL, ctrl, ez_listviewitem_t, OnColumnAdded, (void *)column);
+	CONTROL_RAISE_EVENT(NULL, ctrl, ez_listviewitem_t, OnColumnAdded, (void *)(uintptr_t)column);
 }
 
 //
@@ -195,7 +195,7 @@ void EZ_listviewitem_SetColumnVisible(ez_listviewitem_t *self, int column, qbool
 	self->item_visibile[column] = visible;
 	EZ_control_SetVisible((ez_control_t *)self->items[column], visible);
 
-	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnVisibilityChanged, (void *)column);
+	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnVisibilityChanged, (void *)(uintptr_t)column);
 }
 
 //
@@ -239,7 +239,7 @@ void EZ_listviewitem_SetColumnWidth(ez_listviewitem_t *self, int column, int wid
 
 	self->item_widths[column] = width;
 
-	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnWidthChanged, (void *)column);
+	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnWidthChanged, (void *)(uintptr_t)column);
 }
 
 //
@@ -248,7 +248,7 @@ void EZ_listviewitem_SetColumnWidth(ez_listviewitem_t *self, int column, int wid
 int EZ_listviewitem_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_listviewitem_t *lvi = (ez_listviewitem_t *)self;
-	int column = (int)ext_event_info;
+	int column = (int)(uintptr_t)ext_event_info;
 
 	EZ_control_SetSize(self, lvi->item_widths[column], self->height);
 

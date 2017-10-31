@@ -403,15 +403,6 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 // SYSTEM IO
 // ===============================================================================
 
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) 
-{
-	DWORD  flOldProtect;
-
-	//@@@ copy on write or just read-write?
-	if (!VirtualProtect((LPVOID)startaddr, length, PAGE_EXECUTE_READWRITE, &flOldProtect))
-   		Sys_Error("Protection change failed");
-}
-
 /// turn back on screen saver and monitor power off
 static void Sys_RestoreScreenSaving(void)
 {
@@ -1389,7 +1380,7 @@ void Sys_ReadIPC(void)
 unsigned int Sys_SendIPC(const char *buf)
 {
 	HANDLE hMailslot;
-	unsigned long num_bytes_written;
+	DWORD num_bytes_written;
 	qbool result = false;
 
 	// Connect to the server mailslot using CreateFile()

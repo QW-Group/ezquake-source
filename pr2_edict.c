@@ -51,7 +51,7 @@ int ED2_FindFieldOffset (char *field)
 
 	for (f = fields; (s = PR2_GetString(f->name)) && *s; f++)
 		if (!strcasecmp(PR2_GetString(f->name), field))
-			return f->ofs-((int)&(((edict_t *)0)->v));
+			return f->ofs-((int)(uintptr_t)&(((edict_t *)0)->v));
 
 	return 0;
 }

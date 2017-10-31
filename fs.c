@@ -1310,7 +1310,7 @@ int FS_GZipPack (char *source_path,
 		unsigned char inbuf[CHUNK];
 		int bytes_read = 0;
 
-		while ((bytes_read = fread (inbuf, 1, sizeof(inbuf), source)) > 0)
+		while ((bytes_read = (int)fread (inbuf, 1, (int)sizeof(inbuf), source)) > 0)
 		{
 			gzwrite (gzip_destination, inbuf, bytes_read);
 		}
@@ -1437,7 +1437,7 @@ int FS_ZlibInflate(FILE *source, FILE *dest)
 	// Decompress until deflate stream ends or end of file.
 	do
 	{
-		strm.avail_in = fread(in, 1, CHUNK, source);
+		strm.avail_in = (int)fread(in, 1, CHUNK, source);
 
 		if (ferror(source))
 		{
