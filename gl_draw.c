@@ -918,7 +918,7 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t colo
 	}
 }
 
-void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+static void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
 	if (GL_ShadersSupported()) {
 		GLM_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);

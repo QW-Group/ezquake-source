@@ -7003,7 +7003,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 			float alpha = 1.0f;
 			float last_taken = 0.0f;
 			byte* background_color = NULL;
-			byte mega_color[] = { 0x00, 0xAF, 0x00 };
+			byte mega_color[] = { 0xFF, 0x8C, 0x00 };
 			byte ra_color[] = { 0xFF, 0x00, 0x00 };
 			byte ya_color[] = { 0xFF, 0xFF, 0x00 };
 			byte ga_color[] = { 0x00, 0xBF, 0x00 };

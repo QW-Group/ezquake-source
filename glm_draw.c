@@ -31,6 +31,9 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+#define CIRCLE_LINE_COUNT	40
+extern float overall_alpha;
+
 #define IMAGEPROG_FLAGS_TEXTURE     1
 #define IMAGEPROG_FLAGS_ALPHATEST   2
 #define IMAGEPROG_FLAGS_TEXT        4
@@ -71,11 +74,6 @@ void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 		GLM_DrawRectangle(x + w - thickness, y + thickness, thickness, h - thickness, bytecolor);
 		GLM_DrawRectangle(x, y + h, w, thickness, bytecolor);
 	}
-}
-
-void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
-{
-	// MEAG: TODO
 }
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
@@ -449,4 +447,105 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
 		++frameStats.draw_calls;
 	}
+}
+
+static glm_program_t circleProgram;
+static glm_vao_t circleVAO;
+static buffer_ref circleVBO;
+static GLint drawCircleUniforms_matrix;
+static GLint drawCircleUniforms_color;
+
+void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+{
+	float projectionMatrix[16];
+	float pointData[(3 + 2 * CIRCLE_LINE_COUNT) * 2];
+	byte bytecolor[4];
+	double angle;
+	int i;
+	int start;
+	int end;
+	int points;
+
+	GL_FlushImageDraw();
+
+	if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
+		GL_VFDeclare(draw_circle);
+
+		if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(draw_circle), &circleProgram)) {
+			return;
+		}
+	}
+
+	if (!circleProgram.uniforms_found) {
+		drawCircleUniforms_matrix = glGetUniformLocation(circleProgram.program, "matrix");
+		drawCircleUniforms_color = glGetUniformLocation(circleProgram.program, "color");
+
+		circleProgram.uniforms_found = false;
+	}
+
+	// Build VBO
+	if (!GL_BufferReferenceIsValid(circleVBO)) {
+		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(pointData), NULL, GL_STREAM_DRAW);
+	}
+
+	// Build VAO
+	if (!circleVAO.vao) {
+		GL_GenVertexArray(&circleVAO);
+
+		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	// Get the vertex index where to start and stop drawing.
+	start = Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
+	end = Q_rint((endangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
+
+	// If the end is less than the start, increase the index so that
+	// we start on a "new" circle.
+	if (end < start) {
+		end = end + CIRCLE_LINE_COUNT;
+	}
+
+	// Create a vertex at the exact position specified by the start angle.
+	points = 0;
+	pointData[points * 2 + 0] = x + radius * cos(startangle);
+	pointData[points * 2 + 1] = y - radius * sin(startangle);
+	++points;
+
+	// TODO: Use lookup table for sin/cos?
+	for (i = start; i < end; i++) {
+		angle = (i * 2 * M_PI) / CIRCLE_LINE_COUNT;
+		pointData[points * 2 + 0] = x + radius * cos(angle);
+		pointData[points * 2 + 1] = y - radius * sin(angle);
+		++points;
+
+		// When filling we're drawing triangles so we need to
+		// create a vertex in the middle of the vertex to fill
+		// the entire pie slice/circle.
+		if (fill) {
+			pointData[points * 2 + 0] = x;
+			pointData[points * 2 + 1] = y;
+			++points;
+		}
+	}
+
+	pointData[points * 2 + 0] = x + radius * cos(endangle);
+	pointData[points * 2 + 1] = y - radius * sin(endangle);
+	++points;
+
+	// Create a vertex for the middle point if we're not drawing a complete circle.
+	if (endangle - startangle < 2 * M_PI) {
+		pointData[points * 2 + 0] = x;
+		pointData[points * 2 + 1] = y;
+		++points;
+	}
+
+	GL_UpdateVBO(circleVBO, sizeof(pointData[0]) * points * 2, pointData);
+	GL_UseProgram(circleProgram.program);
+	GL_BindVertexArray(&circleVAO);
+	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
+	COLOR_TO_RGBA(color, bytecolor);
+	glUniform4f(drawCircleUniforms_color, bytecolor[0] / 255.0f, bytecolor[1] / 255.0f, bytecolor[2] / 255.0f, (bytecolor[3] / 255.0f) * overall_alpha);
+	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
+	glDrawArrays(fill ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, 0, points);
+	++frameStats.draw_calls;
 }
