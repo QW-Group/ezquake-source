@@ -28,6 +28,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern texture_ref solidskytexture, alphaskytexture;
 
+static int debug_frame_depth = 0;
+#define ENTER_STATE \
+	++debug_frame_depth; \
+	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__);
+#define MIDDLE_STATE \
+	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__);
+#define LEAVE_STATE \
+	Com_DPrintf("%.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", __FUNCTION__); \
+	--debug_frame_depth;
+
 float GL_WaterAlpha(void)
 {
 	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
@@ -37,6 +47,7 @@ void GLC_StateBeginWaterSurfaces(void)
 {
 	float wateralpha = GL_WaterAlpha();
 
+	ENTER_STATE;
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glColor4f (1, 1, 1, wateralpha);
@@ -52,6 +63,8 @@ void GLC_StateEndWaterSurfaces(void)
 {
 	float wateralpha = GL_WaterAlpha();
 
+	LEAVE_STATE;
+
 	if (wateralpha < 1.0) {
 		GL_TextureEnvMode(GL_REPLACE);
 
@@ -65,6 +78,8 @@ void GLC_StateEndWaterSurfaces(void)
 
 void GL_StateBeginEntities(visentlist_t* vislist)
 {
+	ENTER_STATE;
+
 	// draw sprites separately, because of alpha_test
 	GL_AlphaBlendFlags(
 		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
@@ -77,6 +92,8 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 
 void GL_StateEndEntities(visentlist_t* vislist)
 {
+	LEAVE_STATE;
+
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	}
@@ -92,21 +109,29 @@ void GL_StateEndEntities(visentlist_t* vislist)
 
 void GL_StateBeginPolyBlend(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 }
 
 void GL_StateEndPolyBlend(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 }
 
 void GLC_StateBeginAlphaChain(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 }
 
 void GLC_StateEndAlphaChain(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
@@ -115,6 +140,8 @@ void GLC_StateEndAlphaChain(void)
 void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 {
 	texture_t* t = s->texinfo->texture;
+
+	ENTER_STATE;
 
 	//bind the world texture
 	GL_DisableMultitexture();
@@ -131,6 +158,8 @@ void GLC_StateBeginAliasOutlineFrame(void)
 {
 	extern cvar_t gl_outline_width;
 
+	ENTER_STATE;
+
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 	GL_CullFace(GL_BACK);
 	glPolygonMode(GL_FRONT, GL_LINE);
@@ -145,6 +174,8 @@ void GLC_StateBeginAliasOutlineFrame(void)
 
 void GLC_StateEndAliasOutlineFrame(void)
 {
+	LEAVE_STATE;
+
 	glColor4f(1, 1, 1, 1);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glDisable(GL_LINE_SMOOTH);
@@ -156,6 +187,8 @@ void GLC_StateEndAliasOutlineFrame(void)
 
 void GLC_StateBeginAliasPowerupShell(void)
 {
+	ENTER_STATE;
+
 	GL_BindTextureUnit(GL_TEXTURE0, shelltexture);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
@@ -169,6 +202,8 @@ void GLC_StateBeginAliasPowerupShell(void)
 
 void GLC_StateEndAliasPowerupShell(void)
 {
+	LEAVE_STATE;
+
 	// LordHavoc: reset the state to what the rest of the renderer expects
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -176,6 +211,8 @@ void GLC_StateEndAliasPowerupShell(void)
 
 void GLC_StateBeginUnderwaterCaustics(void)
 {
+	ENTER_STATE;
+
 	GL_EnableMultitexture();
 	GL_BindTextureUnit(GL_TEXTURE1, underwatertexture);
 
@@ -192,6 +229,8 @@ void GLC_StateBeginUnderwaterCaustics(void)
 
 void GLC_StateEndUnderwaterCaustics(void)
 {
+	LEAVE_STATE;
+
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
@@ -209,6 +248,8 @@ void GLC_StateEndUnderwaterCaustics(void)
 
 void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
 {
+	ENTER_STATE;
+
 	GL_TextureEnvMode(GL_MODULATE);
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -219,6 +260,8 @@ void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
 
 void GLC_StateEndDrawImage(void)
 {
+	LEAVE_STATE;
+
 	// FIXME: GL_ResetState
 	glColor3ubv (color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -227,6 +270,8 @@ void GLC_StateEndDrawImage(void)
 
 void GLC_StateBeginAlphaPic(float alpha)
 {
+	ENTER_STATE;
+
 	if (alpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -238,6 +283,8 @@ void GLC_StateBeginAlphaPic(float alpha)
 
 void GLC_StateEndAlphaPic(float alpha)
 {
+	LEAVE_STATE;
+
 	if (alpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 		GL_TextureEnvMode(GL_REPLACE);
@@ -247,12 +294,16 @@ void GLC_StateEndAlphaPic(float alpha)
 
 void GLC_StateBeginAlphaRectangle(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	glDisable (GL_TEXTURE_2D);
 }
 
 void GLC_StateEndAlphaRectangle(void)
 {
+	LEAVE_STATE;
+
 	glColor4ubv (color_white);
 	glEnable (GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -260,6 +311,8 @@ void GLC_StateEndAlphaRectangle(void)
 
 void GLC_StateBeginFadeScreen(float alpha)
 {
+	ENTER_STATE;
+
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		glColor4f(0, 0, 0, alpha);
@@ -272,6 +325,8 @@ void GLC_StateBeginFadeScreen(float alpha)
 
 void GLC_StateEndFadeScreen(void)
 {
+	LEAVE_STATE;
+
 	glColor3ubv(color_white);
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -279,6 +334,8 @@ void GLC_StateEndFadeScreen(void)
 
 void GLC_StateBeginMD3Draw(float alpha)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -289,6 +346,8 @@ void GLC_StateBeginMD3Draw(float alpha)
 
 void GLC_StateEndMD3Draw(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
@@ -299,6 +358,8 @@ void GLC_StateEndMD3Draw(void)
 
 void GLC_StateBeginBrightenScreen(void)
 {
+	ENTER_STATE;
+
 	glDisable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
@@ -306,6 +367,8 @@ void GLC_StateBeginBrightenScreen(void)
 
 void GLC_StateEndBrightenScreen(void)
 {
+	LEAVE_STATE;
+
 	// FIXME: GL_ResetState()
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
@@ -315,6 +378,8 @@ void GLC_StateEndBrightenScreen(void)
 
 void GLC_StateBeginFastSky(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
@@ -325,6 +390,8 @@ void GLC_StateBeginFastSky(void)
 
 void GLC_StateEndFastSky(void)
 {
+	LEAVE_STATE;
+
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(1, 1, 1);
 	if (gl_fogsky.value) {
@@ -334,12 +401,16 @@ void GLC_StateEndFastSky(void)
 
 void GLC_StateBeginSky(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	glDisable(GL_DEPTH_TEST);
 }
 
 void GLC_StateBeginSkyZBufferPass(void)
 {
+	ENTER_STATE;
+
 	if (gl_fogenable.value && gl_fogsky.value) {
 		glEnable(GL_DEPTH_TEST);
 		GL_EnableFog();
@@ -357,6 +428,8 @@ void GLC_StateBeginSkyZBufferPass(void)
 
 void GLC_StateEndSkyZBufferPass(void)
 {
+	LEAVE_STATE;
+
 	// FIXME: GL_ResetState()
 	if (gl_fogenable.value && gl_fogsky.value) {
 		GL_DisableFog();
@@ -371,11 +444,15 @@ void GLC_StateEndSkyZBufferPass(void)
 
 void GLC_StateEndSkyNoZBufferPass(void)
 {
+	LEAVE_STATE;
+
 	glEnable(GL_DEPTH_TEST);
 }
 
 void GLC_StateBeginSkyDome(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -383,12 +460,16 @@ void GLC_StateBeginSkyDome(void)
 
 void GLC_StateBeginSkyDomeCloudPass(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
 }
 
 void GLC_StateBeginMultiTextureSkyChain(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
@@ -403,6 +484,8 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 
 void GLC_StateEndMultiTextureSkyChain(void)
 {
+	LEAVE_STATE;
+
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
 	if (gl_fogsky.value) {
@@ -412,6 +495,8 @@ void GLC_StateEndMultiTextureSkyChain(void)
 
 void GLC_StateBeginSingleTextureSkyPass(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
@@ -421,12 +506,16 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 
 void GLC_StateBeginSingleTextureCloudPass(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
 }
 
 void GLC_StateEndSingleTextureSky(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	if (gl_fogsky.value) {
 		GL_DisableFog();
@@ -435,6 +524,8 @@ void GLC_StateEndSingleTextureSky(void)
 
 void GLC_StateBeginRenderFullbrights(void)
 {
+	ENTER_STATE;
+
 	// don't bother writing Z
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
@@ -443,12 +534,16 @@ void GLC_StateBeginRenderFullbrights(void)
 
 void GLC_StateEndRenderFullbrights(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DepthMask(GL_TRUE);
 }
 
 void GLC_StateBeginRenderLumas(void)
 {
+	ENTER_STATE;
+
 	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
@@ -457,6 +552,8 @@ void GLC_StateBeginRenderLumas(void)
 
 void GLC_StateEndRenderLumas(void)
 {
+	LEAVE_STATE;
+
 	// FIXME: GL_ResetState()
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);
@@ -464,6 +561,8 @@ void GLC_StateEndRenderLumas(void)
 
 void GLC_StateBeginEmitDetailPolys(void)
 {
+	ENTER_STATE;
+
 	GL_BindTextureUnit(GL_TEXTURE0, detailtexture);
 	GL_TextureEnvMode(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
@@ -472,6 +571,8 @@ void GLC_StateBeginEmitDetailPolys(void)
 
 void GLC_StateEndEmitDetailPolys(void)
 {
+	LEAVE_STATE;
+
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -480,6 +581,8 @@ void GLC_StateEndEmitDetailPolys(void)
 void GLC_StateBeginDrawMapOutline(void)
 {
 	extern cvar_t gl_outline_width;
+
+	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -493,6 +596,8 @@ void GLC_StateBeginDrawMapOutline(void)
 
 void GLC_StateBeginEndMapOutline(void)
 {
+	ENTER_STATE;
+
 	glPopAttrib();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -501,6 +606,8 @@ void GLC_StateBeginEndMapOutline(void)
 
 void GLM_StateBeginDrawBillboards(void)
 {
+	ENTER_STATE;
+
 	GL_DisableFog();
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
@@ -510,6 +617,8 @@ void GLM_StateBeginDrawBillboards(void)
 
 void GLM_StateEndDrawBillboards(void)
 {
+	LEAVE_STATE;
+
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -521,6 +630,8 @@ void GLM_StateEndDrawBillboards(void)
 void GLM_StateBeginDrawWorldOutlines(void)
 {
 	extern cvar_t gl_outline_width;
+
+	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 	GL_CullFace(GL_BACK);
@@ -534,6 +645,8 @@ void GLM_StateBeginDrawWorldOutlines(void)
 
 void GLM_StateEndDrawWorldOutlines(void)
 {
+	LEAVE_STATE;
+
 	GL_Enable(GL_DEPTH_TEST);
 	GL_Enable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -611,6 +724,8 @@ void GLC_EndStateAliasModelShadow(void)
 
 void GLC_StateBeginDrawFlatModel(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_BLEND);
 	GL_EnableTMU(GL_TEXTURE0);
@@ -624,6 +739,8 @@ void GLC_StateBeginDrawFlatModel(void)
 
 void GLC_StateEndDrawFlatModel(void)
 {
+	LEAVE_STATE;
+
 	if (gl_fogenable.value) {
 		glDisable(GL_FOG);
 	}
@@ -633,6 +750,8 @@ void GLC_StateEndDrawFlatModel(void)
 
 void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
 {
+	ENTER_STATE;
+
 	if (gl_fogenable.value) {
 		glEnable(GL_FOG);
 	}
@@ -658,6 +777,8 @@ void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrig
 
 void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
 {
+	MIDDLE_STATE;
+
 	if (fullbrightTextureUnit) {
 		GL_DisableTMU(fullbrightTextureUnit);
 	}
@@ -671,6 +792,8 @@ void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum f
 
 void GLC_StateEndDrawTextureChains(void)
 {
+	LEAVE_STATE;
+
 	if (gl_fogenable.value) {
 		glDisable(GL_FOG);
 	}
@@ -679,6 +802,8 @@ void GLC_StateEndDrawTextureChains(void)
 void GLC_StateBeginFastTurbPoly(byte color[4])
 {
 	float wateralpha = GL_WaterAlpha();
+
+	ENTER_STATE;
 
 	GL_DisableMultitexture();
 	GL_EnableFog();
@@ -702,6 +827,8 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 
 void GLC_StateEndFastTurbPoly(void)
 {
+	LEAVE_STATE;
+
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -716,6 +843,8 @@ void GLC_StateEndFastTurbPoly(void)
 
 void GLC_StateBeginTurbPoly(void)
 {
+	ENTER_STATE;
+
 	GL_DisableMultitexture();
 	GL_EnableFog();
 	glEnable(GL_TEXTURE_2D);
@@ -723,12 +852,16 @@ void GLC_StateBeginTurbPoly(void)
 
 void GLC_StateEndTurbPoly(void)
 {
+	LEAVE_STATE;
+
 	GL_DisableFog();
 }
 
 void GLC_StateBeginBlendLightmaps(void)
 {
 	extern qbool gl_invlightmaps;
+
+	ENTER_STATE;
 
 	GL_DepthMask(GL_FALSE);		// don't bother writing Z
 	if (gl_invlightmaps) {
@@ -745,6 +878,8 @@ void GLC_StateBeginBlendLightmaps(void)
 
 void GLC_StateEndBlendLightmaps(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
@@ -752,19 +887,26 @@ void GLC_StateEndBlendLightmaps(void)
 
 void GLC_StateBeginDrawSimpleItem(void)
 {
+	ENTER_STATE;
+
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_DisableMultitexture();
 	GL_EnableTMU(GL_TEXTURE0);
 }
 
 void GLC_StateEndDrawSimpleItem(int oldFlags)
 {
+	LEAVE_STATE;
+
 	glEnable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(oldFlags);
 }
 
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 {
+	ENTER_STATE;
+
 	glDisable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	if (thickness > 0.0) {
@@ -774,6 +916,8 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 
 void GLC_StateEndDrawAlphaPieSliceRGB(float thickness)
 {
+	LEAVE_STATE;
+
 	// FIXME: thickness is not reset
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -785,6 +929,8 @@ void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
 	extern cvar_t gl_alphafont;
 	extern cvar_t scr_coloredText;
 	extern float overall_alpha;
+
+	MIDDLE_STATE;
 
 	// Turn on alpha transparency.
 	if ((gl_alphafont.value || apply_overall_alpha)) {
@@ -805,6 +951,8 @@ void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
 
 void GLC_StateResetCharGLState(void)
 {
+	LEAVE_STATE
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	glColor4ubv(color_white);
@@ -815,6 +963,8 @@ void GLC_StateBeginStringDraw(void)
 	extern cvar_t gl_alphafont;
 	extern cvar_t scr_coloredText;
 	extern float overall_alpha;
+
+	ENTER_STATE;
 
 	// Turn on alpha transparency.
 	if (gl_alphafont.value || (overall_alpha < 1.0)) {
@@ -832,6 +982,8 @@ void GLC_StateBeginStringDraw(void)
 
 void GLC_StateBeginSceneBlur(void)
 {
+	ENTER_STATE;
+
 	// Remember all attributes.
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	GL_Viewport(0, 0, glwidth, glheight);
@@ -844,6 +996,8 @@ void GLC_StateBeginSceneBlur(void)
 
 void GLC_StateEndSceneBlur(void)
 {
+	LEAVE_STATE;
+
 	// FIXME: Yup, this is the same
 
 	// Restore attributes.
@@ -852,6 +1006,8 @@ void GLC_StateEndSceneBlur(void)
 
 void GLC_StateBeginCausticsPolys(void)
 {
+	ENTER_STATE;
+
 	GL_TextureEnvMode(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -859,6 +1015,8 @@ void GLC_StateBeginCausticsPolys(void)
 
 void GLC_StateEndCausticsPolys(void)
 {
+	LEAVE_STATE;
+
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -866,6 +1024,8 @@ void GLC_StateEndCausticsPolys(void)
 
 void GL_StateBeginDrawViewModel(float alpha)
 {
+	ENTER_STATE;
+
 	// hack the depth range to prevent view model from poking into walls
 	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 	if (gl_mtexable) {
@@ -881,6 +1041,8 @@ void GL_StateBeginDrawViewModel(float alpha)
 
 void GL_StateEndDrawViewModel(void)
 {
+	LEAVE_STATE;
+
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
@@ -889,6 +1051,8 @@ void GL_StateEndDrawViewModel(void)
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 {
+	ENTER_STATE;
+
 	if (e->alpha) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_TextureEnvMode(GL_MODULATE);
@@ -905,11 +1069,17 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 
 void GL_StateEndDrawBrushModel(void)
 {
+	LEAVE_STATE;
+
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 }
 
 void GL_StateDefault2D(void)
 {
+	debug_frame_depth = 0;
+
+	ENTER_STATE;
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -919,6 +1089,10 @@ void GL_StateDefault2D(void)
 
 void GL_StateDefault3D(void)
 {
+	debug_frame_depth = 0;
+
+	ENTER_STATE;
+
 	// set drawing parms
 	GL_CullFace(GL_FRONT);
 	if (gl_cull.value) {
@@ -975,6 +1149,8 @@ void GL_StateDefaultInit(void)
 
 void GL_StateBeginSCRTeamInfo(void)
 {
+	ENTER_STATE;
+
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_Color4f(1, 1, 1, 1);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
@@ -982,6 +1158,8 @@ void GL_StateBeginSCRTeamInfo(void)
 
 void GL_StateEndSCRTeamInfo(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_Color4f(1, 1, 1, 1);
@@ -989,6 +1167,8 @@ void GL_StateEndSCRTeamInfo(void)
 
 void GL_StateBeginSCRShowNick(void)
 {
+	ENTER_STATE;
+
 	GL_Color4f(1, 1, 1, 1);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
@@ -996,6 +1176,8 @@ void GL_StateBeginSCRShowNick(void)
 
 void GL_StateEndSCRShowNick(void)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_Color4f(1, 1, 1, 1);
@@ -1003,6 +1185,8 @@ void GL_StateEndSCRShowNick(void)
 
 void GLC_StateBeginDrawPolygon(void)
 {
+	ENTER_STATE;
+
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	glDisable(GL_TEXTURE_2D);
 	// (color also set)
@@ -1010,7 +1194,92 @@ void GLC_StateBeginDrawPolygon(void)
 
 void GLC_StateEndDrawPolygon(int oldFlags)
 {
+	LEAVE_STATE;
+
 	GL_AlphaBlendFlags(oldFlags);
 	glEnable(GL_TEXTURE_2D);
 }
 
+void GLC_StateBeginDrawBillboards(void)
+{
+	ENTER_STATE;
+
+	GL_DisableFog();
+	GL_DepthMask(GL_FALSE);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
+	GL_TextureEnvMode(GL_MODULATE);
+	GL_ShadeModel(GL_SMOOTH);
+}
+
+void GLC_StateEndDrawBillboards(void)
+{
+	LEAVE_STATE;
+
+	GL_DepthMask(GL_TRUE);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+	GL_EnableFog();
+}
+
+void GL_StateBeginDrawAliasModel(void)
+{
+	ENTER_STATE;
+
+	GL_EnableFog();
+}
+
+void GL_StateEndDrawAliasModel(void)
+{
+	LEAVE_STATE;
+
+	glColor3ubv(color_white);
+	GL_DisableFog();
+}
+
+void GLM_StateBeginDrawAliasOutlines(void)
+{
+	extern cvar_t gl_outline_width;
+
+	ENTER_STATE;
+
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
+	GL_CullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+}
+
+void GLM_StateEndDrawAliasOutlines(void)
+{
+	LEAVE_STATE;
+
+	GL_CullFace(GL_FRONT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+}
+
+void GLC_StateBeginBloomDraw(void)
+{
+	ENTER_STATE;
+
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_ONE, GL_ONE);
+	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
+	GL_TextureEnvMode(GL_MODULATE);
+}
+
+void GLC_StateEndBloomDraw(void)
+{
+	LEAVE_STATE;
+
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+}
+
+void GL_StateEndFrame(void)
+{
+	if (developer.integer) {
+		Cvar_SetValue(&developer, 0);
+	}
+}

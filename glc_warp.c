@@ -120,7 +120,6 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		int i;
 
 		GLC_StateBeginTurbPoly();
-
 		GL_BindTextureUnit(GL_TEXTURE0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
@@ -173,6 +172,10 @@ void GLC_EmitCausticsPolys (void) {
 	float s, t, *v;
 	extern glpoly_t *caustics_polys;
 
+	if (!caustics_polys) {
+		return;
+	}
+
 	GLC_StateBeginCausticsPolys();
 
 	GL_BindTextureUnit(GL_TEXTURE0, underwatertexture);
@@ -186,6 +189,8 @@ void GLC_EmitCausticsPolys (void) {
 		}
 		glEnd();
 	}
+
+	GLC_StateEndCausticsPolys();
 
 	caustics_polys = NULL;
 }

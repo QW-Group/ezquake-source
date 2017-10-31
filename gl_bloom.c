@@ -280,11 +280,8 @@ void R_InitBloomTextures(void)
 void R_Bloom_DrawEffect( void )
 {
 	GL_BindTextureUnit(GL_TEXTURE0, r_bloomeffecttexture);
+	GLC_StateBeginBloomDraw();
 
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE);
-	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
-	GL_TextureEnvMode(GL_MODULATE);
 	glBegin(GL_QUADS);                         
 	glTexCoord2f(  0,                          sampleText_tch  ); 
 	glVertex2f(    curView_x,                  curView_y   );             
@@ -296,7 +293,7 @@ void R_Bloom_DrawEffect( void )
 	glVertex2f(    curView_x + curView_width,  curView_y   );             
 	glEnd();
 
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GLC_StateEndBloomDraw();
 }
 
 #if 0

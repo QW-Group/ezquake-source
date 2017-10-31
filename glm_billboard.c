@@ -38,6 +38,11 @@ static unsigned int batchCount;
 static unsigned int vertexCount;
 extern texture_ref vx_solidTexture;
 
+static buffer_ref billboardVBO;
+static glm_vao_t billboardVAO;
+static glm_program_t billboardProgram;
+static GLint billboard_RefdefCvars_block;
+
 static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
 {
 	unsigned int index = batchMapping[type];
@@ -122,11 +127,7 @@ void GLC_DrawBillboards(void)
 {
 	unsigned int i, j, k;
 
-	GL_DisableFog();
-	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
+	GLC_StateBeginDrawBillboards();
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];
@@ -150,18 +151,8 @@ void GLC_DrawBillboards(void)
 		batch->count = 0;
 	}
 
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
-	GL_EnableFog();
+	GLC_StateEndDrawBillboards();
 }
-
-static buffer_ref billboardVBO;
-static glm_vao_t billboardVAO;
-static glm_program_t billboardProgram;
-static GLint billboard_RefdefCvars_block;
 
 static void GLM_CreateBillboardVAO(void)
 {
@@ -244,6 +235,7 @@ void GLM_DrawBillboards(void)
 			glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
 		}
 
+		frameStats.subdraw_calls += batch->count;
 		batch->count = 0;
 	}
 	frameStats.draw_calls += batchCount;

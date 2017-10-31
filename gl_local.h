@@ -1232,6 +1232,17 @@ void GL_StateEndSCRShowNick(void);
 void GLC_StateBeginDrawPolygon(void);
 void GLC_StateEndDrawPolygon(int oldFlags);
 
+void GLC_StateBeginDrawBillboards(void);
+void GLC_StateEndDrawBillboards(void);
+void GL_StateBeginDrawAliasModel(void);
+void GL_StateEndDrawAliasModel(void);
+void GLM_StateBeginDrawAliasOutlines(void);
+void GLM_StateEndDrawAliasOutlines(void);
+
+void GLC_StateBeginBloomDraw(void);
+void GLC_StateEndBloomDraw(void);
+void GL_StateEndFrame(void);
+
 float GL_WaterAlpha(void);
 
 #endif /* !__GL_LOCAL_H__ */

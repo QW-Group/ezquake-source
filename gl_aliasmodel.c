@@ -101,7 +101,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only, qbool outline);
+void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, int effects, qbool shell_only, qbool outline);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -382,14 +382,14 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		return;
 	}
 
-	GL_EnableFog();
-
 	//get lighting information
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	//draw all the triangles
 	frameStats.classic.alias_polys += paliashdr->numtris;
+
+	GL_StateBeginDrawAliasModel();
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	R_RotateForEntity(ent);
@@ -475,9 +475,8 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		GL_AliasModelShadow(ent, paliashdr);
 	}
 
-	// FIXME: Reset state
-	glColor3ubv(color_white);
-	GL_DisableFog();
+	GL_StateEndDrawAliasModel();
+
 	return;
 }
 
@@ -513,7 +512,7 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only, outline);
+		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, effects, shell_only, outline);
 	}
 	else {
 		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);

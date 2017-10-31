@@ -134,10 +134,9 @@ void R_TranslatePlayerSkin (int playernum)
 	if (player->skin && strcasecmp(s, player->skin->name))
 		player->skin = NULL;
 
-	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin)
+	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin) {
 		return;
-
-	GL_DisableMultitexture();
+	}
 
 	player->_topcolor = player->topcolor;
 	player->_bottomcolor = player->bottomcolor;
@@ -194,15 +193,20 @@ void R_TranslatePlayerSkin (int playernum)
 		translate[i] = i;
 
 	for (i = 0; i < 16; i++) {
-		if (top < 128)	// the artists made some backwards ranges.  sigh.
+		if (top < 128) {
+			// the artists made some backwards ranges.  sigh.
 			translate[TOP_RANGE + i] = top + i;
-		else
+		}
+		else {
 			translate[TOP_RANGE + i] = top + 15 - i;
+		}
 
-		if (bottom < 128)
+		if (bottom < 128) {
 			translate[BOTTOM_RANGE + i] = bottom + i;
-		else
+		}
+		else {
 			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
+		}
 	}
 
 	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(glConfig.gl_max_size_default, 512);
@@ -237,6 +241,7 @@ void R_TranslatePlayerSkin (int playernum)
 		}
 	}
 
+	GL_DisableMultitexture();
 	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playernmtextures[playernum], glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_TexParameterf(GL_TEXTURE0, playernmtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);

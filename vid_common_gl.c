@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "image.h"
-#include "gl_framebuffer.h"
 
 #ifdef WITH_NVTX
 #include "nvToolsExt.h"
