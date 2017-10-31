@@ -848,6 +848,7 @@ void GLC_ClearLightmapPolys(void);
 void GLC_AddToLightmapChain(msurface_t* s);
 void GLC_LightmapUpdate(int index);
 void GLC_SetLightmapTextureEnvironment(GLenum textureUnit);
+GLenum GLC_LightmapDestBlendFactor(void);
 glpoly_t* GLC_LightmapChain(int i);
 GLenum GLC_LightmapTexEnv(void);
 int GLC_LightmapCount(void);

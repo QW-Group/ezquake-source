@@ -468,7 +468,6 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 static void GLC_BlendLightmaps(void)
 {
-	extern qbool gl_invlightmaps;
 	extern void R_UploadLightMap(GLenum textureUnit, int lightmapnum);
 
 	int i, j;

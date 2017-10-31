@@ -32,26 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
 
-static texture_ref lightmap_texture_array;
-static texture_ref lightmap_textures[MAX_LIGHTMAPS];
-static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
-
 typedef struct glRect_s {
 	unsigned char l, t, w, h;
 } glRect_t;
-
-glpoly_t* lightmap_polys[MAX_LIGHTMAPS];
-static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
-static qbool lightmap_modified[MAX_LIGHTMAPS];
-
-static int allocated[MAX_LIGHTMAPS][LIGHTMAP_WIDTH];
-static GLuint last_lightmap_updated;
-
-// the lightmap texture data needs to be kept in
-// main memory so texsubimage can update properly
-static byte lightmaps[4 * MAX_LIGHTMAPS * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
-
-qbool gl_invlightmaps = true;
 
 typedef struct dlightinfo_s {
 	int local[2];
@@ -60,8 +43,42 @@ typedef struct dlightinfo_s {
 	int lnum; // reference to cl_dlights[]
 } dlightinfo_t;
 
+static texture_ref lightmap_texture_array;
+static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
+
+typedef struct lightmap_data_s {
+	byte rawdata[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
+	int allocated[LIGHTMAP_WIDTH];
+
+	texture_ref gl_texref;
+	glpoly_t* poly_chain;
+	glRect_t change_area;
+	qbool modified;
+} lightmap_data_t;
+
+static lightmap_data_t lightmaps[MAX_LIGHTMAPS];
+static GLuint last_lightmap_updated;
+
+static qbool gl_invlightmaps = true;
+
 static dlightinfo_t dlightlist[MAX_DLIGHTS];
 static int numdlights;
+
+// funny, but this colors differ from bubblecolor[NUM_DLIGHTTYPES][4]
+static int dlightcolor[NUM_DLIGHTTYPES][3] = {
+	{ 100,  90,  80 },	// dimlight or brightlight
+	{ 100,  50,  10 },	// muzzleflash
+	{ 100,  50,  10 },	// explosion
+	{  90,  60,   7 },	// rocket
+	{ 128,   0,   0 },	// red
+	{   0,   0, 128 },	// blue
+	{ 128,   0, 128 },	// red + blue
+	{   0, 128,   0 },	// green
+	{ 128, 128,   0 }, 	// red + green
+	{   0, 128, 128 }, 	// blue + green
+	{ 128, 128, 128 },	// white
+	{ 128, 128, 128 },	// custom
+};
 
 void R_BuildDlightList (msurface_t *surf)
 {
@@ -133,23 +150,6 @@ void R_BuildDlightList (msurface_t *surf)
 		}
 	}
 }
-
-// funny, but this colors differ from bubblecolor[NUM_DLIGHTTYPES][4]
-int dlightcolor[NUM_DLIGHTTYPES][3] = {
-	{ 100,  90,  80 },	// dimlight or brightlight
-	{ 100,  50,  10 },	// muzzleflash
-	{ 100,  50,  10 },	// explosion
-	{  90,  60,   7 },	// rocket
-	{ 128,   0,   0 },	// red
-	{   0,   0, 128 },	// blue
-	{ 128,   0, 128 },	// red + blue
-	{   0, 128,   0 },	// green
-	{ 128, 128,   0 }, 	// red + green
-	{   0, 128, 128 }, 	// blue + green
-	{ 128, 128, 128 },	// white
-	{ 128, 128, 128 },	// custom
-};
-
 
 //R_BuildDlightList must be called first!
 void R_AddDynamicLights (msurface_t *surf) {
@@ -290,21 +290,22 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 
 void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 {
-	glRect_t	*theRect;
+	const void* data_source;
+	lightmap_data_t* lm = &lightmaps[lightmapnum];
 
-	lightmap_modified[lightmapnum] = false;
-	theRect = &lightmap_rectchange[lightmapnum];
+	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
+
+	lm->modified = false;
 	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
+		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 	}
 	else {
-		GL_TexSubImage2D(textureUnit, lightmap_textures[lightmapnum], 0, 0, theRect->t, LIGHTMAP_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-			lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
+		GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 	}
-	theRect->l = LIGHTMAP_WIDTH;
-	theRect->t = LIGHTMAP_HEIGHT;
-	theRect->h = 0;
-	theRect->w = 0;
+	lm->change_area.l = LIGHTMAP_WIDTH;
+	lm->change_area.t = LIGHTMAP_HEIGHT;
+	lm->change_area.h = 0;
+	lm->change_area.w = 0;
 	++frameStats.lightmap_updates;
 }
 
@@ -314,6 +315,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	int maps, smax, tmax;
 	glRect_t *theRect;
 	qbool lightstyle_modified = false;
+	lightmap_data_t* lm;
 
 	++frameStats.classic.brush_polys;
 
@@ -348,26 +350,30 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		numdlights = 0;
 	}
 
-	lightmap_modified[fa->lightmaptexturenum] = true;
-	theRect = &lightmap_rectchange[fa->lightmaptexturenum];
+	lm = &lightmaps[fa->lightmaptexturenum];
+	lm->modified = true;
+	theRect = &lm->change_area;
 	if (fa->light_t < theRect->t) {
-		if (theRect->h)
+		if (theRect->h) {
 			theRect->h += theRect->t - fa->light_t;
+		}
 		theRect->t = fa->light_t;
 	}
 	if (fa->light_s < theRect->l) {
-		if (theRect->w)
+		if (theRect->w) {
 			theRect->w += theRect->l - fa->light_s;
+		}
 		theRect->l = fa->light_s;
 	}
 	smax = (fa->extents[0] >> 4) + 1;
 	tmax = (fa->extents[1] >> 4) + 1;
-	if (theRect->w + theRect->l < fa->light_s + smax)
+	if (theRect->w + theRect->l < fa->light_s + smax) {
 		theRect->w = fa->light_s - theRect->l + smax;
-	if (theRect->h + theRect->t < fa->light_t + tmax)
+	}
+	if (theRect->h + theRect->t < fa->light_t + tmax) {
 		theRect->h = fa->light_t - theRect->t + tmax;
-	base = lightmaps + fa->lightmaptexturenum * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4;
-	base += (fa->light_t * LIGHTMAP_WIDTH + fa->light_s) * 4;
+	}
+	base = lm->rawdata + (fa->light_t * LIGHTMAP_WIDTH + fa->light_s) * 4;
 	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
@@ -381,7 +387,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
-			if (lightmap_modified[k]) {
+			if (lightmaps[k].modified) {
 				*min_changed = min(k, *min_changed);
 				*max_changed = max(k, *max_changed);
 			}
@@ -418,7 +424,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 
 	if (min_changed < MAX_LIGHTMAPS) {
 		for (i = min_changed; i <= max_changed; ++i) {
-			if (lightmap_modified[i]) {
+			if (lightmaps[i].modified) {
 				R_UploadLightMap(GL_TEXTURE0, i);
 			}
 		}
@@ -442,12 +448,13 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 			best2 = 0;
 
 			for (j = i; j < i + w; j++) {
-				if (allocated[texnum][j] >= best) {
+				if (lightmaps[texnum].allocated[j] >= best) {
 					i = j;
 					break;
 				}
-				if (allocated[texnum][j] > best2)
-					best2 = allocated[texnum][j];
+				if (lightmaps[texnum].allocated[j] > best2) {
+					best2 = lightmaps[texnum].allocated[j];
+				}
 			}
 			if (j == i + w) {
 				// this is a valid spot
@@ -461,7 +468,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 		}
 
 		for (i = 0; i < w; i++) {
-			allocated[texnum][*x + i] = best + h;
+			lightmaps[texnum].allocated[*x + i] = best + h;
 		}
 
 		return texnum;
@@ -565,8 +572,7 @@ void GL_CreateSurfaceLightmap(msurface_t *surf)
 		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
-	base = lightmaps + surf->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
-	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
+	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
 	R_BuildLightMap(surf, base, BLOCK_WIDTH * 4);
 }
@@ -578,7 +584,9 @@ void GL_BuildLightmaps(void)
 	int i, j;
 	model_t	*m;
 
-	memset(allocated, 0, sizeof(allocated));
+	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+		memset(lightmaps[i].allocated, 0, sizeof(lightmaps[i].allocated));
+	}
 	last_lightmap_updated = 0;
 
 	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
@@ -609,22 +617,26 @@ void GL_BuildLightmaps(void)
 
 	// upload all lightmaps that were filled
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
-		if (!allocated[i][0]) {
+		if (!lightmaps[i].allocated[0]) {
 			break;		// no more used
 		}
-		lightmap_modified[i] = false;
-		lightmap_rectchange[i].l = LIGHTMAP_WIDTH;
-		lightmap_rectchange[i].t = LIGHTMAP_HEIGHT;
-		lightmap_rectchange[i].w = 0;
-		lightmap_rectchange[i].h = 0;
+		lightmaps[i].modified = false;
+		lightmaps[i].change_area.l = LIGHTMAP_WIDTH;
+		lightmaps[i].change_area.t = LIGHTMAP_HEIGHT;
+		lightmaps[i].change_area.w = 0;
+		lightmaps[i].change_area.h = 0;
 		if (GL_ShadersSupported() && GL_TextureReferenceIsValid(lightmap_texture_array)) {
-			GL_TexSubImage3D(GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
+			GL_TexSubImage3D(
+				GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
+				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+				lightmaps[i].rawdata
+			);
 		}
 		else {
 			GL_TexSubImage2D(
-				GL_TEXTURE0, lightmap_textures[i], 0, 0, 0,
+				GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
 				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-				lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4
+				lightmaps[i].rawdata
 			);
 		}
 	}
@@ -632,12 +644,12 @@ void GL_BuildLightmaps(void)
 
 void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
 {
-	//update lightmap if its modified by dynamic lights
-	if (lightmap_modified[lightmap_num]) {
+	//update lightmap if it has been modified by dynamic lights
+	if (lightmaps[lightmap_num].modified) {
 		R_UploadLightMap(textureUnit, lightmap_num);
 	}
 	else {
-		GL_EnsureTextureUnitBound(textureUnit, lightmap_textures[lightmap_num]);
+		GL_EnsureTextureUnitBound(textureUnit, lightmaps[lightmap_num].gl_texref);
 	}
 }
 
@@ -663,36 +675,39 @@ void GLC_SetLightmapBlendFunc(void)
 
 void GLC_ClearLightmapPolys(void)
 {
-	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	int i;
+
+	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+		lightmaps[i].poly_chain = NULL;
+	}
 }
 
 texture_ref GLC_LightmapTexture(int index)
 {
 	if (index < 0 || index >= MAX_LIGHTMAPS) {
-		return lightmap_textures[0];
+		return lightmaps[0].gl_texref;
 	}
-	return lightmap_textures[index];
+	return lightmaps[index].gl_texref;
 }
 
 void GLC_CreateLightmapTextures(void)
 {
 	int i;
 
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
-
 	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-		GL_TexStorage2D(GL_TEXTURE0, lightmap_textures[i], 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
-		GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &lightmaps[i].gl_texref);
+		GL_TexStorage2D(GL_TEXTURE0, lightmaps[i].gl_texref, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
+		GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameterf(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 }
 
 void GLC_LightmapUpdate(int index)
 {
 	if (index >= 0 && index < MAX_LIGHTMAPS) {
-		if (lightmap_modified[index]) {
+		if (lightmaps[index].modified) {
 			R_UploadLightMap(GL_TEXTURE0, index);
 		}
 	}
@@ -700,8 +715,8 @@ void GLC_LightmapUpdate(int index)
 
 void GLC_AddToLightmapChain(msurface_t* s)
 {
-	s->polys->chain = lightmap_polys[s->lightmaptexturenum];
-	lightmap_polys[s->lightmaptexturenum] = s->polys;
+	s->polys->chain = lightmaps[s->lightmaptexturenum].poly_chain;
+	lightmaps[s->lightmaptexturenum].poly_chain = s->polys;
 }
 
 glpoly_t* GLC_LightmapChain(int i)
@@ -709,12 +724,17 @@ glpoly_t* GLC_LightmapChain(int i)
 	if (i < 0 || i >= MAX_LIGHTMAPS) {
 		return NULL;
 	}
-	return lightmap_polys[i];
+	return lightmaps[i].poly_chain;
 }
 
 int GLC_LightmapCount(void)
 {
 	return MAX_LIGHTMAPS;
+}
+
+GLenum GLC_LightmapDestBlendFactor(void)
+{
+	return gl_invlightmaps ? GL_ONE_MINUS_SRC_COLOR : GL_SRC_COLOR;
 }
 
 void GLM_CreateLightmapTextures(void)
@@ -730,7 +750,7 @@ void GLM_CreateLightmapTextures(void)
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-		lightmap_textures[i] = lightmap_texture_array;
+		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
 }
 

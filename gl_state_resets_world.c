@@ -162,17 +162,10 @@ void GLC_StateEndTurbPoly(void)
 
 void GLC_StateBeginBlendLightmaps(void)
 {
-	extern qbool gl_invlightmaps;
-
 	ENTER_STATE;
 
 	GL_DepthMask(GL_FALSE);		// don't bother writing Z
-	if (gl_invlightmaps) {
-		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-	}
-	else {
-		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
-	}
+	GL_BlendFunc(GL_ZERO, GLC_LightmapDestBlendFactor());
 
 	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
