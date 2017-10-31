@@ -41,16 +41,6 @@ typedef struct texture_flag_s {
 static texture_flag_t texture_flags[MAX_GLTEXTURES];
 static int flagged_type = 0;
 
-static void GL_ClearTextureFlags(void)
-{
-	int i;
-
-	memset(texture_flags, 0, sizeof(texture_flags));
-	for (i = 0; i < MAX_GLTEXTURES; ++i) {
-		texture_flags[i].ref.index = i;
-	}
-}
-
 static int SortFlaggedTextures(const void* lhs_, const void* rhs_)
 {
 	int width_diff;
@@ -102,11 +92,56 @@ static int SortTexturesByReference(const void* lhs_, const void* rhs_)
 	return 1;
 }
 
+static int SortTexturesByArrayReference(const void* lhs_, const void* rhs_)
+{
+	static texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT] = { { 0 } };
+	texture_flag_t* tex1 = (texture_flag_t*)lhs_;
+	texture_flag_t* tex2 = (texture_flag_t*)rhs_;
+
+	int zero1 = !memcmp(tex1->array_ref, zero_array_ref, sizeof(zero_array_ref));
+	int zero2 = !memcmp(tex2->array_ref, zero_array_ref, sizeof(zero_array_ref));
+
+	if (zero1 && !zero2) {
+		return 1;
+	}
+	else if (!zero1 && zero2) {
+		return -1;
+	}
+	return 0;
+}
+
+static void GL_DeleteExistingArrays(qbool delete_textures)
+{
+	int i;
+
+	if (delete_textures) {
+		static texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT] = { { 0 } };
+		int j;
+
+		for (i = 0; i < MAX_GLTEXTURES; ++i) {
+			if (!memcmp(zero_array_ref, texture_flags[i].array_ref, sizeof(zero_array_ref))) {
+				break;
+			}
+
+			for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
+				if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
+					GL_DeleteTextureArray(&texture_flags[i].array_ref[j].ref);
+				}
+			}
+		}
+	}
+
+	memset(texture_flags, 0, sizeof(texture_flags));
+	for (i = 0; i < MAX_GLTEXTURES; ++i) {
+		texture_flags[i].ref.index = i;
+	}
+}
+
 static void GLM_CreateAliasModelVAO(void);
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
-static GLubyte* tempBuffer;
-static GLuint tempBufferSize;
+static GLubyte* tempTextureBuffer;
+static GLuint tempTextureBufferSize;
 
 static buffer_ref instance_vbo;
 glm_vao_t aliasModel_vao;
@@ -256,19 +291,19 @@ static void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_re
 		ratio_y = 1;
 	}
 
-	if (tempBufferSize < width * height * 4 * sizeof(GLubyte)) {
-		Q_free(tempBuffer);
-		tempBufferSize = width * height * 4 * sizeof(GLubyte);
-		tempBuffer = Q_malloc(tempBufferSize);
+	if (tempTextureBufferSize < width * height * 4 * sizeof(GLubyte)) {
+		Q_free(tempTextureBuffer);
+		tempTextureBufferSize = width * height * 4 * sizeof(GLubyte);
+		tempTextureBuffer = Q_malloc(tempTextureBufferSize);
 	}
 
-	GL_GetTexImage(GL_TEXTURE0, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBufferSize, tempBuffer);
+	GL_GetTexImage(GL_TEXTURE0, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBufferSize, tempTextureBuffer);
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
 		for (y = 0; y < ratio_y; ++y) {
-			GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+			GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
 				int array_width = GL_TextureWidth(arrayTexture);
@@ -601,12 +636,9 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	int required_vbo_length = 4;
 	int i;
 
-	tempBufferSize = 0;
-
-	//GL_DeleteExistingArrays(!vid_restart);
+	GL_DeleteExistingArrays(!vid_restart);
 	GL_DeleteModelData();
 
-	GL_ClearTextureFlags();
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 
@@ -723,6 +755,52 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortTexturesByReference);
 
 	{
+		// Go back through all models, importing textures into arrays and creating new VBO
+		for (i = 1; i < MAX_MODELS; ++i) {
+			model_t* mod = cl.model_precache[i];
+
+			if (mod) {
+				GL_ImportTexturesForModel(mod);
+			}
+		}
+
+		for (i = 0; i < MAX_VWEP_MODELS; i++) {
+			model_t* mod = cl.vw_model_precache[i];
+
+			if (mod) {
+				GL_ImportTexturesForModel(mod);
+			}
+		}
+	}
+
+	// 2nd pass through the models should have filled the arrays, so can create mipmaps now
+	qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortTexturesByArrayReference);
+
+	for (i = 0; i < MAX_GLTEXTURES; ++i) {
+		int j;
+		qbool any = false;
+
+		for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
+			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
+				GL_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
+
+				any = true;
+			}
+		}
+
+		if (any) {
+			// Delete the original texture
+			GL_DeleteTexture(&texture_flags[i].ref);
+		}
+		else {
+			break;
+		}
+	}
+
+	Q_free(tempTextureBuffer);
+	tempTextureBufferSize = 0;
+
+	{
 		int new_vbo_position = 0;
 
 		aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
@@ -737,7 +815,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.model_precache[i];
 
 			if (mod) {
-				GL_ImportTexturesForModel(mod);
 				GL_ImportModelToVBO(mod, &new_vbo_position);
 			}
 		}
@@ -746,7 +823,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.vw_model_precache[i];
 
 			if (mod) {
-				GL_ImportTexturesForModel(mod);
 				GL_ImportModelToVBO(mod, &new_vbo_position);
 			}
 		}
@@ -756,29 +832,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		GLM_CreateBrushModelVAO(instance_vbo);
 		GL_BindBufferBase(aliasModel_ssbo, GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
-
-	// 2nd pass through the models should have filled the arrays, so can create mipmaps now
-	for (i = 0; i < MAX_GLTEXTURES; ++i) {
-		int j;
-
-		for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
-			qbool any = false;
-
-			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
-				GL_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
-
-				any = true;
-			}
-
-			if (any) {
-				// Delete the original texture
-				GL_DeleteTexture(&texture_flags[i].ref);
-			}
-		}
-	}
-
-	Q_free(tempBuffer);
-	tempBufferSize = 0;
 }
 
 static void GLM_CreateAliasModelVAO(void)
