@@ -91,7 +91,9 @@ static qbool RegisterKeyHook (void)
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
-	if (Q_atof(string)) 
+	extern cvar_t r_fullscreen;
+
+	if (Q_atof(string) == 1 || (Q_atof(string) == 2 && r_fullscreen.value))
 	{
 		if (!WinKeyHook_isActive) 
 		{
@@ -141,7 +143,7 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(NULL, Code, wParam, lParam);
 }
 
-void Sys_ActiveAppChanged (void)
+void Sys_ActiveAppChanged(void)
 {
 	static qbool appWasActive = true;
 	static qbool hookWasActive = false;
@@ -151,12 +153,12 @@ void Sys_ActiveAppChanged (void)
 
 	appWasActive = ActiveApp;
 	if (ActiveApp && hookWasActive) {
-		RegisterKeyHook ();
+		RegisterKeyHook();
 	}
 	else if (!ActiveApp) {
 		hookWasActive = WinKeyHook_isActive;
 
-		ReleaseKeyHook ();
+		ReleaseKeyHook();
 	}
 }
 

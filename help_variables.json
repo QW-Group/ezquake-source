@@ -13627,11 +13627,12 @@
     },
     "sys_disableWinKeys": {
       "group-id": "48",
-      "remarks": "Note: Windows keys are now bindable (LWINKEY, RWINKEY, WINKEY, POPUPMENU). Obviously only useful on NT/2K/XP with sys_disableWinKeys 1 (and possibely useful in Linux too!).",
-      "type": "boolean",
+      "remarks": "Note: Windows keys are now bindable (LWINKEY, RWINKEY, WINKEY, POPUPMENU). Obviously only useful on NT/2K/XP with sys_disableWinKeys 1 (and possibly useful in Linux too!).",
+      "type": "integer",
       "values": [
-        { "name": "false", "description": "Enable." },
-        { "name": "true", "description": "Disable winkeys from alt-tabbing you (only works in NT/2K/XP, and only when the client is in focus)." }
+        { "name": "0", "description": "Winkeys are processed by operating system" },
+        { "name": "1", "description": "Disable winkeys from alt-tabbing you (only works in NT/2K/XP, and only when the client is in focus)." },
+        { "name": "2", "description": "Disable winkeys from alt-tabbing you, when fullscreen." }
       ]
     },
     "sys_highpriority": {
