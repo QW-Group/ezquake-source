@@ -1040,9 +1040,6 @@ void GL_Texture_Init(void)
 
 	GL_InitTextureState();
 
-	// Netgraph.
-	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
-
 	// Motion blur.
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
 

@@ -887,7 +887,6 @@ void R_Init(void)
 				"width",        "256",
 				"height",       "32",
 				"lostscale",    "1",
-				"full",         "0",
 				"alpha",        "1",
 				NULL);
 

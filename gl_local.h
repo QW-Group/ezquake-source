@@ -1253,7 +1253,7 @@ void GLC_StateBeginImageDraw(void);
 void GLC_StateEndImageDraw(void);
 void GLC_StateBeginPolyBlend(void);
 void GLC_StateEndPolyBlend(void);
-void GL_StateBeginNetGraph(qbool texture);
+void GL_StateBeginNetGraph(void);
 void GL_StateEndNetGraph(void);
 void GLC_StateBeginDrawPolygon(void);
 void GLC_StateEndDrawPolygon(int oldFlags);

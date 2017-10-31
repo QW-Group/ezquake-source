@@ -164,20 +164,14 @@ void GLC_StateEndPolyBlend(void)
 {
 }
 
-void GL_StateBeginNetGraph(qbool texture)
+void GL_StateBeginNetGraph(void)
 {
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_Color3ubv(color_white);
 	if (!GL_ShadersSupported()) {
-		if (!texture || !GL_TextureReferenceIsValid(netgraphtexture)) {
-			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-			GLC_EnsureTMUDisabled(GL_TEXTURE0);
-		}
-		else {
-			GLC_InitTextureUnits1(netgraphtexture, GL_MODULATE);
-			GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		}
+		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+		GLC_EnsureTMUDisabled(GL_TEXTURE0);
 	}
 }
 

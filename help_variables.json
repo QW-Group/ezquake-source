@@ -7245,11 +7245,6 @@
       "desc": "Defines the color of the background of the netgraph HUD element. See HUD manual for more info.",
       "type": "string"
     },
-    "hud_netgraph_full": {
-      "group-id": "19",
-      "desc": "When turned on, netgraph is more detailed this way, but looks ugly; in GL this can be fixed with a lower alpha value like \"0.4\"",
-      "type": "float"
-    },
     "hud_netgraph_height": {
       "group-id": "19",
       "desc": "Sets vertical size of everything about net",

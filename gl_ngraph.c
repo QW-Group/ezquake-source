@@ -117,7 +117,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         y += 8;
     }
 
-	GL_StateBeginNetGraph(par_full->integer);
+	GL_StateBeginNetGraph();
 
     for (a=0; a < width; a++)
     {
