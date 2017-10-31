@@ -2,8 +2,6 @@
 
 #ezquake-definitions
 
-layout(early_fragment_tests) in;
-
 uniform int draw_outlines;
 
 #ifdef DRAW_DETAIL_TEXTURES
@@ -90,6 +88,10 @@ void main()
 
 	lmColor = texture(lightmapTex, TexCoordLightmap);
 	texColor = texture(materialTex[SamplerNumber], TextureCoord);
+
+	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.666) {
+		discard;
+	}
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 #include "tr_types.h"
+#include "glsl/constants.glsl"
 
 static void GL_SortDrawCalls(int* split);
 
@@ -350,7 +351,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
-		qbool first_in_this_array = true;
 		int texIndex;
 
 		if (!base_tex || !base_tex->size_start || !GL_TextureReferenceIsValid(base_tex->gl_texture_array)) {
@@ -523,7 +523,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
 		int texIndex;
 
-		if (!base_tex || !base_tex->size_start) {
+		if (!base_tex || !base_tex->size_start || !GL_TextureReferenceIsValid(base_tex->gl_texture_array)) {
 			continue;
 		}
 

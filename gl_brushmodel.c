@@ -29,6 +29,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "crc.h"
 #include "fmod.h"
 #include "utils.h"
+#include "glsl/constants.glsl"
 
 #define CHAIN_SURF_B2F(surf, chain) 			\
 	{											\
@@ -1507,7 +1508,7 @@ void R_DrawBrushModel(entity_t *e)
 			else if (psurf->flags & SURF_DRAWTURB) {
 				EmitWaterPolys (psurf);
 			}
-			else if (psurf->flags & SURF_DRAWALPHA) {
+			else if (!GL_ShadersSupported() && psurf->flags & SURF_DRAWALPHA) {
 				CHAIN_SURF_B2F(psurf, alphachain);
 			}
 			else {
