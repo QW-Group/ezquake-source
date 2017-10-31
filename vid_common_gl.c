@@ -193,6 +193,7 @@ glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
 glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
+glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 static qbool shaders_supported = false;
 static int modern_only = -1;
@@ -315,6 +316,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
+			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsBaseVertex);
 
 #ifdef _WIN32
 			// During init, enable debug output

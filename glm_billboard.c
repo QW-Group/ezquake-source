@@ -25,6 +25,7 @@ typedef struct gl_billboard_batch_s {
 	GLenum primitive;
 	texture_ref texture;
 	qbool depthTest;
+	qbool allSameNumber;
 
 	GLint firstVertices[MAX_BILLBOARDS_PER_BATCH];
 	GLsizei numVertices[MAX_BILLBOARDS_PER_BATCH];
@@ -40,6 +41,7 @@ extern texture_ref vx_solidTexture;
 
 static buffer_ref billboardVBO;
 static glm_vao_t billboardVAO;
+static buffer_ref billboardIndexes;
 static glm_program_t billboardProgram;
 static GLint billboard_RefdefCvars_block;
 
@@ -67,6 +69,7 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->count = 0;
 	batch->primitive = primitive_type;
 	batch->depthTest = depthTest;
+	batch->allSameNumber = true;
 }
 
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
@@ -81,6 +84,9 @@ qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
 	}
 	batch->firstVertices[batch->count] = vertexCount;
 	batch->numVertices[batch->count] = 0;
+	if (batch->count) {
+		batch->allSameNumber &= verts_required == batch->numVertices[0];
+	}
 	++batch->count;
 	vertexCount += verts_required;
 	return true;
@@ -154,6 +160,13 @@ void GLC_DrawBillboards(void)
 	GLC_StateEndDrawBillboards();
 }
 
+#define INDEXES_MAX_QUADS        512
+#define INDEXES_MAX_FLASHBLEND     8
+#define INDEXES_MAX_SPARKS        16
+static int indexes_start_quads;
+static int indexes_start_flashblend;
+static int indexes_start_sparks;
+
 static void GLM_CreateBillboardVAO(void)
 {
 	if (!GL_BufferReferenceIsValid(billboardVBO)) {
@@ -169,6 +182,41 @@ static void GLM_CreateBillboardVAO(void)
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
 		// color
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
+	}
+
+	if (!GL_BufferReferenceIsValid(billboardIndexes)) {
+		static GLushort indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
+		int i, j;
+		int pos = 0;
+		int vbo_pos;
+
+		indexes_start_quads = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
+			for (j = 0; j < 4; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLushort)0;
+		}
+
+		indexes_start_sparks = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
+			for (j = 0; j < 9; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLushort)0;
+		}
+
+		indexes_start_flashblend = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
+			for (j = 0; j < 18; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLushort)0;
+		}
+
+		billboardIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "billboard-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
+		GL_BindVertexArray(&billboardVAO);
+		GL_BindBuffer(billboardIndexes);
 	}
 }
 
@@ -202,6 +250,19 @@ static qbool GLM_BillboardsInit(void)
 	return false;
 }
 
+static void GL_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
+{
+	int vertOffset = batch->firstVertices[0];
+	while (batch->count > maximum_batch_size) {
+		glDrawElementsBaseVertex(batch->primitive, maximum_batch_size * batch->numVertices[0] + (maximum_batch_size - 1), GL_UNSIGNED_SHORT, (void*)(index_offset * sizeof(GLushort)), vertOffset);
+		batch->count -= maximum_batch_size;
+		vertOffset += maximum_batch_size * batch->numVertices[0];
+		frameStats.draw_calls += 1;
+	}
+	glDrawElementsBaseVertex(batch->primitive, batch->count * batch->numVertices[0] + (batch->count - 1), GL_UNSIGNED_SHORT, (void*)(index_offset * sizeof(GLushort)), vertOffset);
+	frameStats.draw_calls += 1;
+}
+
 void GLM_DrawBillboards(void)
 {
 	unsigned int i;
@@ -230,12 +291,23 @@ void GLM_DrawBillboards(void)
 
 		if (batch->count == 1) {
 			glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
+			frameStats.draw_calls += 1;
+		}
+		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
+			GL_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
+		}
+		else if (batch->allSameNumber &&batch->numVertices[0] == 9) {
+			GL_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
+		}
+		else if (batch->allSameNumber && batch->numVertices[0] == 18) {
+			GL_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 		}
 		else {
 			glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
+			frameStats.draw_calls += 1;
+			frameStats.subdraw_calls += batch->count;
 		}
 
-		frameStats.subdraw_calls += batch->count;
 		batch->count = 0;
 	}
 	frameStats.draw_calls += batchCount;

@@ -469,6 +469,7 @@ typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint 
 typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
 typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
+typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
 
 // VAO functions
 extern glBindVertexArray_t         glBindVertexArray;
@@ -526,6 +527,7 @@ extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 extern glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 extern glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
+extern glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
