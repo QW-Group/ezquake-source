@@ -297,7 +297,7 @@ void R_NewMap (qbool vid_restart) {
 
 	R_SetSky (r_skyname.string);
 
-	lightmode = gl_lightmode.value ? 2 : 0;
+	lightmode = gl_lightmode.integer ? 2 : 0;
 
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++)
