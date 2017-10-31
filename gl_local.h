@@ -1259,6 +1259,8 @@ void GL_StateEndFrame(void);
 
 void GLC_StateBeginPolyBlend(void);
 void GLC_StateEndPolyBlend(void);
+void GL_StateBeginNetGraph(qbool texture);
+void GL_StateEndNetGraph(void);
 
 void GLC_DisableAllTexturing(void);
 void GLC_InitTextureUnitsNoBind1(GLenum envMode0);

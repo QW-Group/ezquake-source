@@ -41,7 +41,6 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     int     a, x, i, y;
     char st[80];
     float alpha;
-	qbool texture;
 
     static hud_t *hud = NULL;
     static cvar_t
@@ -56,7 +55,9 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         par_maxping    = HUD_FindVar(hud, "scale");
         par_dropheight = HUD_FindVar(hud, "lostscale");
     }
-        
+
+	GL_FlushImageDraw();
+
     CL_CalcNet();
 
     alpha = par_alpha->value;
@@ -116,26 +117,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         y += 8;
     }
 
-    if (alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-    }
-	GL_TextureEnvMode(GL_MODULATE);
-
-	texture = !par_full->value;
-
-	if (GL_ShadersSupported()) {
-		if (texture) {
-			GL_BindTextureUnit(GL_TEXTURE0, netgraphtexture);
-		}
-	}
-	else {
-		if (par_full->value) {
-			glDisable(GL_TEXTURE_2D);
-		}
-		else {
-			GL_BindTextureUnit(GL_TEXTURE0, netgraphtexture);
-		}
-	}
+	GL_StateBeginNetGraph(par_full->integer);
 
     for (a=0; a < width; a++)
     {
@@ -210,11 +192,5 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 		}
     }
 
-	GL_TextureEnvMode(GL_REPLACE);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	if (!GL_ShadersSupported()) {
-		glColor4ubv(color_white);
-		glEnable(GL_TEXTURE_2D);
-	}
+	GL_StateEndNetGraph();
 }
