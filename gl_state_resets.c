@@ -405,6 +405,24 @@ void GLC_StateBeginSkyDomeCloudPass(void)
 	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
 }
 
+void GLC_StateBeginMultiTextureSkyDome(void)
+{
+	ENTER_STATE;
+
+	GLC_InitTextureUnits2(solidskytexture, GL_REPLACE, alphaskytexture, GL_DECAL);
+
+	LEAVE_STATE;
+}
+
+void GLC_StateEndMultiTextureSkyDome(void)
+{
+	ENTER_STATE;
+
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+
+	LEAVE_STATE;
+}
+
 void GLC_StateBeginMultiTextureSkyChain(void)
 {
 	ENTER_STATE;

@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void GLC_DrawSkyBox(void);
 static void GLC_DrawSkyDome(void);
-static void GLC_DrawSkyFace(int axis);
+static void GLC_DrawSkyFace(int axis, qbool multitexture);
 static void GLC_MakeSkyVec(float s, float t, int axis);
 
 static float speedscale, speedscale2;		// for top sky and bottom sky
@@ -192,10 +192,9 @@ void GLC_DrawSky(void)
 	}
 }
 
-static void EmitSkyVert(vec3_t v)
+static void EmitSkyVert(vec3_t v, qbool multitexture)
 {
 	vec3_t dir;
-	float s, t;
 	float length;
 
 	VectorCopy(v, dir);
@@ -209,10 +208,14 @@ static void EmitSkyVert(vec3_t v)
 	dir[0] *= length;
 	dir[1] *= length;
 
-	s = (speedscale + dir[0]) * (1.0 / 128);
-	t = (speedscale + dir[1]) * (1.0 / 128);
+	if (multitexture) {
+		qglMultiTexCoord2f(GL_TEXTURE0, (speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));
 
-	glTexCoord2f(s, t);
+		qglMultiTexCoord2f(GL_TEXTURE1, (speedscale2 + dir[0]) * (1.0 / 128), (speedscale2 + dir[1]) * (1.0 / 128));
+	}
+	else {
+		glTexCoord2f((speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));
+	}
 	glVertex3fv(v);
 }
 
@@ -225,7 +228,7 @@ static void GLC_MakeSkyVec2(float s, float t, int axis, float range, vec3_t v)
 	v[2] *= range;
 }
 
-static void GLC_DrawSkyFace(int axis)
+static void GLC_DrawSkyFace(int axis, qbool multitexture)
 {
 	int i, j;
 	vec3_t	vecs[4];
@@ -255,10 +258,10 @@ static void GLC_DrawSkyFace(int axis)
 			GLC_MakeSkyVec2(s + fstep, t + fstep, axis, skyrange, vecs[2]);
 			GLC_MakeSkyVec2(s + fstep, t, axis, skyrange, vecs[3]);
 
-			EmitSkyVert(vecs[0]);
-			EmitSkyVert(vecs[1]);
-			EmitSkyVert(vecs[2]);
-			EmitSkyVert(vecs[3]);
+			EmitSkyVert(vecs[0], multitexture);
+			EmitSkyVert(vecs[1], multitexture);
+			EmitSkyVert(vecs[2], multitexture);
+			EmitSkyVert(vecs[3], multitexture);
 		}
 	}
 	glEnd();
@@ -268,29 +271,47 @@ static void GLC_DrawSkyDome(void)
 {
 	int i;
 
-	GLC_StateBeginSkyDome();
+	if (gl_mtexable) {
+		GLC_StateBeginMultiTextureSkyDome();
 
-	speedscale = r_refdef2.time * 8;
-	speedscale -= (int)speedscale & ~127;
+		speedscale = r_refdef2.time * 8;
+		speedscale -= (int)speedscale & ~127;
 
-	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
-			continue;
+		speedscale2 = r_refdef2.time * 16;
+		speedscale2 -= (int)speedscale2 & ~127;
+
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+				continue;
+			}
+			GLC_DrawSkyFace(i, true);
 		}
-		GLC_DrawSkyFace(i);
 	}
+	else {
+		GLC_StateBeginSkyDome();
 
-	GLC_StateBeginSkyDomeCloudPass();
+		speedscale = r_refdef2.time * 8;
+		speedscale -= (int)speedscale & ~127;
 
-	speedscale = r_refdef2.time * 16;
-	speedscale -= (int)speedscale & ~127;
-
-	//skyVerts = 0;
-	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
-			continue;
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+				continue;
+			}
+			GLC_DrawSkyFace(i, false);
 		}
-		GLC_DrawSkyFace(i);
+
+		GLC_StateBeginSkyDomeCloudPass();
+
+		speedscale = r_refdef2.time * 16;
+		speedscale -= (int)speedscale & ~127;
+
+		//skyVerts = 0;
+		for (i = 0; i < 6; i++) {
+			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+				continue;
+			}
+			GLC_DrawSkyFace(i, false);
+		}
 	}
 }
 
