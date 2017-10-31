@@ -618,15 +618,42 @@ void GLC_StateEndDrawFlatModel(void)
 	glColor3f(1.0f, 1.0f, 1.0f);
 }
 
-void GLC_StateBeginDrawTextureChains(void)
+void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
 {
-	GL_DisableMultitexture();
 	if (gl_fogenable.value) {
 		glEnable(GL_FOG);
 	}
 
 	GL_EnableTMU(GL_TEXTURE0);
 	GL_TextureEnvMode(GL_REPLACE);
+
+	if (lightmapTextureUnit) {
+		GL_EnableTMU(lightmapTextureUnit);
+		GLC_SetLightmapTextureEnvironment();
+	}
+	if (fullbrightTextureUnit) {
+		GL_EnableTMU(fullbrightTextureUnit);
+		GL_TextureEnvMode(fullbrightMode);
+	}
+	if (lightmapTextureUnit || fullbrightTextureUnit) {
+		GL_EnableMultitexture();
+	}
+	else {
+		GL_DisableMultitexture();
+	}
+}
+
+void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
+{
+	if (fullbrightTextureUnit) {
+		GL_DisableTMU(fullbrightTextureUnit);
+	}
+	if (lightmapTextureUnit) {
+		GL_DisableTMU(lightmapTextureUnit);
+	}
+	if (fullbrightTextureUnit || lightmapTextureUnit) {
+		GL_SelectTexture(GL_TEXTURE0);
+	}
 }
 
 void GLC_StateEndDrawTextureChains(void)

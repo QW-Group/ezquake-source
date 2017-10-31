@@ -569,6 +569,7 @@ void GL_CreateSurfaceLightmap(msurface_t *surf)
 }
 
 //Builds the lightmap texture with all the surfaces from all brush models
+//Only called when map is initially loaded
 void GL_BuildLightmaps(void)
 {
 	int i, j;
@@ -603,10 +604,6 @@ void GL_BuildLightmaps(void)
 		}
 	}
 
-	if (gl_mtexable) {
-		GL_EnableMultitexture();
-	}
-
 	// upload all lightmaps that were filled
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!allocated[i][0]) {
@@ -618,19 +615,15 @@ void GL_BuildLightmaps(void)
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
 		if (GL_ShadersSupported() && GL_TextureReferenceIsValid(lightmap_texture_array)) {
-			GL_TexSubImage3D(GL_TEXTURE1, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
+			GL_TexSubImage3D(GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {
 			GL_TexSubImage2D(
-				GL_TEXTURE1, lightmap_textures[i], 0, 0, 0,
+				GL_TEXTURE0, lightmap_textures[i], 0, 0, 0,
 				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 				lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4
 			);
 		}
-	}
-
-	if (gl_mtexable) {
-		GL_DisableMultitexture();
 	}
 }
 
