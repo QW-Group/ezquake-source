@@ -40,7 +40,6 @@ void GL_StateDefault3D(void)
 
 	ENTER_STATE;
 
-	GL_PrintState();
 	// set drawing parms
 	GL_CullFace(GL_FRONT);
 	if (gl_cull.value) {
@@ -61,7 +60,7 @@ void GL_StateDefault3D(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ZERO);
 
-	glEnable(GL_DEPTH_TEST);
+	GL_Enable(GL_DEPTH_TEST);
 
 	if (gl_gammacorrection.integer) {
 		glEnable(GL_FRAMEBUFFER_SRGB);
@@ -69,6 +68,7 @@ void GL_StateDefault3D(void)
 	else {
 		glDisable(GL_FRAMEBUFFER_SRGB);
 	}
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
 	GL_PrintState();
 
 	LEAVE_STATE;

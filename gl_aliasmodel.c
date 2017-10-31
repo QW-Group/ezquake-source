@@ -316,7 +316,6 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 {
 	int anim, skinnum, playernum = -1, local_skincolormode;
 	texture_ref texture, fb_texture;
-	float scale;
 	aliashdr_t *paliashdr;
 	model_t *clmodel;
 	maliasframedesc_t *oldframe, *frame;
@@ -387,25 +386,8 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	//draw all the triangles
 	frameStats.classic.alias_polys += paliashdr->numtris;
 
-	GL_StateBeginDrawAliasModel();
-
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-	R_RotateForEntity(ent);
-
-	if (clmodel->modhint == MOD_EYES) {
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
-		// double size of eyes, since they are really hard to see in gl
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
-	}
-	else if (ent->renderfx & RF_WEAPONMODEL) {
-		scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
-	}
-	else {
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
-	}
+	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;

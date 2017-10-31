@@ -237,6 +237,14 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 {
 	GL_EnterTracedRegion(va("GL_StateBeginDrawBrushModel(%s)", e->model->name), true);
 
+	GLC_PauseMatrixUpdate();
+	GL_Translate(GL_MODELVIEW, e->origin[0],  e->origin[1],  e->origin[2]);
+	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
+	GL_Rotate(GL_MODELVIEW, e->angles[0], 0, 1, 0);
+	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
+	GLC_LoadMatrix(GL_MODELVIEW);
+	GLC_ResumeMatrixUpdate();
+
 	if (e->alpha) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_TextureEnvMode(GL_MODULATE);
@@ -262,9 +270,31 @@ void GL_StateEndDrawBrushModel(void)
 	LEAVE_STATE;
 }
 
-void GL_StateBeginDrawAliasModel(void)
+void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 {
-	ENTER_STATE;
+	extern cvar_t r_viewmodelsize;
+
+	GL_EnterTracedRegion(va("GL_StateBeginDrawAliasModel(%s)", ent->model->name), true);
+
+	GLC_PauseMatrixUpdate();
+	R_RotateForEntity(ent);
+	if (ent->model->modhint == MOD_EYES) {
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		// double size of eyes, since they are really hard to see in gl
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+	}
+	else if (ent->renderfx & RF_WEAPONMODEL) {
+		float scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
+
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+	}
+	else {
+		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_Scale(GL_MODELVIEW, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+	}
+	GLC_LoadMatrix(GL_MODELVIEW);
+	GLC_ResumeMatrixUpdate();
 
 	GL_EnableFog();
 

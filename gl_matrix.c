@@ -6,6 +6,7 @@
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GLM_SetMatrix(float* target, const float* source);
 
+static qbool glc_pause_updates;
 static GLfloat projectionMatrix[16];
 static GLfloat modelMatrix[16];
 //static GLfloat viewMatrix[16];
@@ -245,7 +246,7 @@ void GL_IdentityModelView(void)
 {
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
-	if (!GL_ShadersSupported()) {
+	if (!GL_ShadersSupported() && !glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		GL_LogAPICall("GL_IdentityModelView(%s)", NameForMatrix(GL_MODELVIEW));
@@ -261,7 +262,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 {
 	GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
 
-	if (!GL_ShadersSupported()) {
+	if (!GL_ShadersSupported() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 		GL_LogAPICall("GL_RotateMatrix(%s)", NameForMatrix(matrix));
@@ -272,7 +273,7 @@ void GL_Translate(GLenum matrix, float x, float y, float z)
 {
 	GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
 
-	if (!GL_ShadersSupported()) {
+	if (!GL_ShadersSupported() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glTranslatef(x, y, z);
 		GL_LogAPICall("GL_Translate(%s)", NameForMatrix(matrix));
@@ -325,7 +326,7 @@ void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
 {
 	GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
 
-	if (!GL_ShadersSupported()) {
+	if (!GL_ShadersSupported() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glScalef(xScale, yScale, zScale);
 		GL_LogAPICall("GL_ScaleMatrix(%s)", NameForMatrix(matrix));
@@ -375,4 +376,21 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
 	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
+}
+
+void GLC_PauseMatrixUpdate(void)
+{
+	glc_pause_updates = true;
+}
+
+void GLC_ResumeMatrixUpdate(void)
+{
+	glc_pause_updates = false;
+}
+
+void GLC_LoadMatrix(GLenum matrix)
+{
+	glMatrixMode(matrix);
+	glLoadMatrixf(GL_MatrixForMode(matrix));
+	GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));
 }

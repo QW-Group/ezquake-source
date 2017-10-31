@@ -1485,11 +1485,6 @@ void R_DrawBrushModel(entity_t *e)
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
-	GL_Translate(GL_MODELVIEW, e->origin[0],  e->origin[1],  e->origin[2]);
-	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
-	GL_Rotate(GL_MODELVIEW, e->angles[0], 0, 1, 0);
-	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
-
 	GL_StateBeginDrawBrushModel(e, polygonOffset);
 
 	R_ClearTextureChains(clmodel);

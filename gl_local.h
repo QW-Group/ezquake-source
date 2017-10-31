@@ -1225,7 +1225,7 @@ void GL_StateDefaultInit(void);
 
 void GLC_StateBeginDrawBillboards(void);
 void GLC_StateEndDrawBillboards(void);
-void GL_StateBeginDrawAliasModel(void);
+void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GL_StateEndDrawAliasModel(void);
 void GLM_StateBeginDrawAliasOutlines(void);
 void GLM_StateEndDrawAliasOutlines(void);
@@ -1249,6 +1249,10 @@ void GLC_DisableAllTexturing(void);
 void GLC_InitTextureUnitsNoBind1(GLenum envMode0);
 void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0);
 void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1);
+
+void GLC_PauseMatrixUpdate(void);
+void GLC_ResumeMatrixUpdate(void);
+void GLC_LoadMatrix(GLenum matrix);
 
 float GL_WaterAlpha(void);
 
