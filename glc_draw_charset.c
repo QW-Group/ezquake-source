@@ -79,7 +79,7 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 	fcol = char_textures[slot].sl + (num & 0x0F) * char_width;
 
 	GL_BindTextureUnit(GL_TEXTURE0, char_textures[slot].texnum);
-	glEnable(GL_TEXTURE_2D);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
 	// Draw the character polygon.
 	glBegin(GL_QUADS);

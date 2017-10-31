@@ -43,6 +43,7 @@ void GL_StateDefault3D(void)
 
 	ENTER_STATE;
 
+	GL_PrintState();
 	// set drawing parms
 	GL_CullFace(GL_FRONT);
 	if (gl_cull.value) {
@@ -71,6 +72,7 @@ void GL_StateDefault3D(void)
 	else {
 		glDisable(GL_FRAMEBUFFER_SRGB);
 	}
+	GL_PrintState();
 }
 
 void GLC_StateBeginWaterSurfaces(void)
@@ -590,18 +592,6 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
-	GLC_EnableTMU(GL_TEXTURE0);
-	GL_TextureEnvMode(textureEnvMode);
-	if (GL_TextureReferenceIsValid(texture)) {
-		GL_BindTextureUnit(GL_TEXTURE0, texture);
-	}
-	if (GL_TextureReferenceIsValid(fb_texture) && mtex) {
-		GL_EnableMultitexture();
-		GL_BindTextureUnit(GL_TEXTURE1, fb_texture);
-		GL_TextureEnvMode(GL_DECAL);
-	}
-
 	if (shells_only || alpha < 1) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	}
@@ -610,8 +600,20 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 	}
 
 	if (custom_model) {
-		glDisable(GL_TEXTURE_2D);
-		glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
+		GL_Disable(GL_TEXTURE_2D);
+		GL_Color4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
+	}
+	else {
+		if (GL_TextureReferenceIsValid(texture) && GL_TextureReferenceIsValid(fb_texture) && mtex) {
+			GLC_InitTextureUnits2(texture, textureEnvMode, fb_texture, GL_DECAL);
+		}
+		else if (GL_TextureReferenceIsValid(texture)) {
+			GLC_InitTextureUnits1(texture, textureEnvMode);
+		}
+		else {
+			GL_DisableMultitexture();
+			GL_Disable(GL_TEXTURE_2D);
+		}
 	}
 
 	LEAVE_STATE;
@@ -872,16 +874,20 @@ void GL_StateBeginDrawViewModel(float alpha)
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	}
+
+	LEAVE_STATE;
 }
 
 void GL_StateEndDrawViewModel(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 	GL_DepthRange(gldepthmin, gldepthmax);
+
+	LEAVE_STATE;
 }
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)

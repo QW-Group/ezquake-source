@@ -1250,6 +1250,12 @@ void GLC_StateBeginBloomDraw(void);
 void GLC_StateEndBloomDraw(void);
 void GL_StateEndFrame(void);
 
+void GLC_StateBeginPolyBlend(void);
+void GLC_StateEndPolyBlend(void);
+
+void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0);
+void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1);
+
 float GL_WaterAlpha(void);
 
 #endif /* !__GL_LOCAL_H__ */

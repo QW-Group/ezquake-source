@@ -634,7 +634,7 @@ void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
 		R_UploadLightMap(textureUnit, lightmap_num);
 	}
 	else {
-		GL_BindTextureUnit(textureUnit, lightmap_textures[lightmap_num]);
+		GL_EnsureTextureUnitBound(textureUnit, lightmap_textures[lightmap_num]);
 	}
 }
 

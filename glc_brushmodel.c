@@ -326,7 +326,7 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 {
 	extern cvar_t gl_outline;
 
-	if (r_drawflat.value != 0 && clmodel->isworldmodel) {
+	if (r_drawflat.integer && clmodel->isworldmodel) {
 		if (r_drawflat.integer == 1) {
 			GLC_DrawFlat(clmodel);
 		}

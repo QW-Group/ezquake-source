@@ -48,28 +48,33 @@ void GL_StateDefault2D(void)
 		GL_TextureEnvMode(GL_REPLACE);
 		GL_Color3ubv(color_white);
 	}
+	GL_PrintState();
 }
 
 void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
 {
 	ENTER_STATE;
 
-	GL_TextureEnvMode(GL_MODULATE);
-	glEnable(GL_TEXTURE_2D);
+	GL_DisableMultitexture();
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
 	GL_Color4ubv(color);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawImage(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
-	// FIXME: GL_ResetState
 	glColor3ubv (color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginAlphaPic(float alpha)
@@ -354,3 +359,22 @@ void GLC_StateEndBloomDraw(void)
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
 
+void GLC_StateBeginPolyBlend(void)
+{
+	ENTER_STATE;
+
+	glDisable(GL_TEXTURE_2D);
+	glColor4fv(v_blend);
+
+	LEAVE_STATE;
+}
+
+void GLC_StateEndPolyBlend(void)
+{
+	ENTER_STATE;
+
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+
+	LEAVE_STATE;
+}

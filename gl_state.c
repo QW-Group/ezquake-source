@@ -44,7 +44,6 @@ static GLenum oldtarget = GL_TEXTURE0;
 static GLuint cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static GLuint cntarrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
-static qbool mtexenabled = false;
 
 static GLenum lastTextureMode[MAX_LOGGED_TEXTURE_UNITS];
 static int old_alphablend_flags = 0;
@@ -302,19 +301,15 @@ void GL_DisableMultitexture(void)
 	if (GL_ShadersSupported()) {
 		GL_SelectTexture(GL_TEXTURE0);
 	}
-	else if (mtexenabled) {
+	else {
 		int i;
 		if (oldtarget > GL_TEXTURE0 && gl_texture_2d) {
 			glDisable(GL_TEXTURE_2D);
 		}
 		for (i = 1; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
-			if (texunitenabled[i]) {
-				GL_SelectTexture(GL_TEXTURE0 + i);
-				glDisable(GL_TEXTURE_2D);
-			}
+			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
 		}
 		GL_SelectTexture(GL_TEXTURE0);
-		mtexenabled = false;
 	}
 }
 
@@ -326,7 +321,6 @@ void GL_EnableMultitexture(void)
 	else if (gl_mtexable) {
 		GL_SelectTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
-		mtexenabled = true;
 	}
 }
 
@@ -381,11 +375,10 @@ void GL_InitTextureState(void)
 	// Multi texture.
 	currenttexture = 0;
 	oldtarget = GL_TEXTURE0;
-	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++) {
-		cnttextures[i] = 0;
-		cntarrays[i] = 0;
-	}
-	mtexenabled = false;
+
+	memset(cnttextures, 0, sizeof(cnttextures));
+	memset(cntarrays, 0, sizeof(cntarrays));
+	memset(texunitenabled, 0, sizeof(texunitenabled));
 }
 
 void GL_UseProgram(GLuint program)
@@ -424,6 +417,40 @@ void GL_TextureEnvMode(GLenum mode)
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
 		lastTextureMode[oldtarget - GL_TEXTURE0] = mode;
 	}
+}
+
+static void GLC_DisableTextureUnitOnwards(int first)
+{
+	int i;
+
+	GL_SelectTexture(GL_TEXTURE0);
+	for (i = first; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
+		if (texunitenabled[i]) {
+			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
+		}
+	}
+}
+
+void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0)
+{
+	GLC_DisableTextureUnitOnwards(1);
+
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, texture0);
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
+}
+
+void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1)
+{
+	GLC_DisableTextureUnitOnwards(2);
+
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, texture0);
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
+
+	GLC_EnsureTMUEnabled(GL_TEXTURE1);
+	GL_EnsureTextureUnitBound(GL_TEXTURE1, texture1);
+	GL_TextureEnvModeForUnit(GL_TEXTURE1, envMode1);
 }
 
 int GL_AlphaBlendFlags(int flags)

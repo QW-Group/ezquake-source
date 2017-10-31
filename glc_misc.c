@@ -26,9 +26,7 @@ texture_ref sceneblur_texture;
 
 void GLC_PolyBlend(float v_blend[4])
 {
-	glDisable(GL_TEXTURE_2D);
-
-	glColor4fv(v_blend);
+	GLC_StateBeginPolyBlend();
 
 	glBegin(GL_QUADS);
 	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
@@ -37,8 +35,7 @@ void GLC_PolyBlend(float v_blend[4])
 	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
 	glEnd();
 
-	glEnable(GL_TEXTURE_2D);
-	glColor3ubv(color_white);
+	GLC_StateEndPolyBlend();
 }
 
 void GLC_BrightenScreen(void)
