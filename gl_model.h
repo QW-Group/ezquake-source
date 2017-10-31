@@ -47,8 +47,6 @@ typedef struct mvertex_s {
 	vec3_t		position;
 } mvertex_t;
 
-#define	MAX_LIGHTMAPS		192
-
 typedef struct texture_s {
 	char                name[16];
 	unsigned int        width, height;
@@ -67,10 +65,10 @@ typedef struct texture_s {
 	int	                isLumaTexture;
 	int                 turbType;
 
-	int                 gl_first_lightmap;
-	int                 gl_vbo_start[MAX_LIGHTMAPS];
-	int                 gl_vbo_length[MAX_LIGHTMAPS];
-	int                 gl_next_lightmap[MAX_LIGHTMAPS];
+	//int                 gl_first_lightmap;
+	//int                 gl_vbo_start[MAX_LIGHTMAPS];
+	//int                 gl_vbo_length[MAX_LIGHTMAPS];
+	//int                 gl_next_lightmap[MAX_LIGHTMAPS];
 
 	int                 gl_width;
 	int                 gl_height;

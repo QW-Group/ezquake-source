@@ -134,6 +134,7 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 	int original_pos = vbo_pos;
 
 	// Clear lightmap data, we don't use it
+	/*
 	for (i = 0; i < m->numtextures; ++i) {
 		if (m->textures[i]) {
 			memset(m->textures[i]->gl_vbo_length, 0, sizeof(m->textures[i]->gl_vbo_length));
@@ -143,7 +144,7 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 				m->textures[i]->gl_next_lightmap[j] = -1;
 			}
 		}
-	}
+	}*/
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {

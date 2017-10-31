@@ -1019,7 +1019,6 @@ void GL_Texture_Init(void)
 {
 	cvar_t *cv;
 	int i;
-	extern texture_ref lightmap_texture_array;
 	extern texture_ref sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...

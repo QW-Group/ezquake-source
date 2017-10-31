@@ -31,8 +31,6 @@ static void GL_SortDrawCalls(int* split);
 extern buffer_ref brushModel_vbo;
 extern GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
 
-extern texture_ref lightmap_texture_array;
-
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 static GLuint index_count;
 static qbool uniforms_set = false;
@@ -161,7 +159,7 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	GL_BindVertexArray(&brushModel_vao);
 
 	// Bind standard textures (warning: these must be in the same order)
-	std_textures[TEXTURE_UNIT_LIGHTMAPS] = lightmap_texture_array;
+	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();
 	if (detail_tex) {
 		std_textures[TEXTURE_UNIT_DETAIL] = detailtexture;
 	}

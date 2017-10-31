@@ -25,12 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
+#define	MAX_LIGHTMAPS 192
+
 #define	BLOCK_WIDTH  128
 #define	BLOCK_HEIGHT 128
 
-#define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
+#define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
 
-texture_ref lightmap_texture_array;
+static texture_ref lightmap_texture_array;
 static texture_ref lightmap_textures[MAX_LIGHTMAPS];
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
@@ -710,6 +712,11 @@ glpoly_t* GLC_LightmapChain(int i)
 	return lightmap_polys[i];
 }
 
+int GLC_LightmapCount(void)
+{
+	return MAX_LIGHTMAPS;
+}
+
 void GLM_CreateLightmapTextures(void)
 {
 	int i;
@@ -725,4 +732,9 @@ void GLM_CreateLightmapTextures(void)
 	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 		lightmap_textures[i] = lightmap_texture_array;
 	}
+}
+
+texture_ref GLM_LightmapArray(void)
+{
+	return lightmap_texture_array;
 }

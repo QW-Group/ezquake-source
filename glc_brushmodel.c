@@ -477,7 +477,7 @@ static void GLC_BlendLightmaps(void)
 
 	GLC_StateBeginBlendLightmaps();
 
-	for (i = 0; i < MAX_LIGHTMAPS; i++) {
+	for (i = 0; i < GLC_LightmapCount(); i++) {
 		if (!(p = GLC_LightmapChain(i))) {
 			continue;
 		}
