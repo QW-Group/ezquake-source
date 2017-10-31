@@ -251,7 +251,6 @@ extern cvar_t gl_gammacorrection;
 extern cvar_t gl_modulate;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
-extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 
 extern	int		lightmode;		// set to gl_lightmode on mapchange
 
@@ -1003,6 +1002,8 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
 void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
 void GL_DrawBillboards(void);
+
+qbool GL_ExternalTexturesEnabled(qbool worldmodel);
 
 #define MAX_WORLDMODEL_BATCH 32
 #define MAX_WORLDMODEL_INDEXES (16 * 1024)

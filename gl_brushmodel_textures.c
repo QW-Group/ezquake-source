@@ -72,11 +72,7 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 {
 	char *name, *altname, *mapname, *groupname;
 
-	if (loadmodel->isworldmodel && !gl_externalTextures_world.value) {
-		return false;
-	}
-
-	if (!loadmodel->isworldmodel && !gl_externalTextures_bmodels.value) {
+	if (!GL_ExternalTexturesEnabled(loadmodel->isworldmodel)) {
 		return false;
 	}
 

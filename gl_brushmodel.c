@@ -324,7 +324,7 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	byte alphapixel = 255;
 	extern texture_ref solidskytexture, alphaskytexture;
 
-	if (!gl_externalTextures_world.value) {
+	if (!GL_ExternalTexturesEnabled(true)) {
 		return false;
 	}
 
