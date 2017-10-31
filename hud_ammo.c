@@ -79,32 +79,11 @@ static int TP_IsAmmoLow(int weapon)
 	}
 }
 
-static qbool HUD_AmmoLow(void)
-{
-	if (hud_tp_need.value) {
-		if (HUD_Stats(STAT_ITEMS) & IT_SHELLS) {
-			return TP_IsAmmoLow(2);
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_NAILS) {
-			return TP_IsAmmoLow(4);
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS) {
-			return TP_IsAmmoLow(6);
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_CELLS) {
-			return TP_IsAmmoLow(8);
-		}
-		return false;
-	}
-	else {
-		return (HUD_Stats(STAT_AMMO) <= 10);
-	}
-}
-
 int HUD_AmmoLowByWeapon(int weapon)
 {
-	if (hud_tp_need.value)
+	if (hud_tp_need.value) {
 		return TP_IsAmmoLow(weapon);
+	}
 	else {
 		int a;
 		switch (weapon) {

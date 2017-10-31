@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __VX_STUFF__H__
 #define __VX_STUFF__H__
 
+#include "hud.h"
+
 // For coronas
 typedef enum
 {
@@ -178,7 +180,7 @@ void VX_DetpackExplosion(vec3_t org);
 void VX_LightningTrail(vec3_t start, vec3_t end);
 
 void Amf_Reset_DamageStats(void);
-void Draw_AMFStatLoss(int stat, struct hud_s* hud);
+void Draw_AMFStatLoss(int stat, hud_t* hud);
 
 int VX_OwnFragTextLen(float scale, qbool proportional);
 double VX_OwnFragTime(void);

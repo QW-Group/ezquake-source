@@ -330,7 +330,7 @@ static void SCR_DrawHUDSpeed(
 	}
 }
 
-void SCR_HUD_DrawSpeed(hud_t *hud)
+static void SCR_HUD_DrawSpeed(hud_t *hud)
 {
 	int width, height;
 	int x, y;
@@ -397,7 +397,7 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 }
 
 // speed2
-void SCR_HUD_DrawSpeed2(hud_t *hud)
+static void SCR_HUD_DrawSpeed2(hud_t *hud)
 {
 	int width, height;
 	int x, y;

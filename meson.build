@@ -364,7 +364,10 @@ sources += [
 	'hud_gamesummary.o',
 	'hud_face.o',
 	'hud_frags.o',
-	'hud_tracking.o'
+	'hud_tracking.o',
+	'hud_scores.o',
+	'hud_performance.o',
+	'fonts.o'
 ]
 
 awk = find_program('awk')

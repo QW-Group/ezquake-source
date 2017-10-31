@@ -170,35 +170,6 @@ static struct {
 	char text[MAX_SCOREBOARDNAME+20];
 } ownfragtext;
 
-static char ToHex(int v)
-{
-	if (v >= 0 && v < 10) {
-		return '0' + v;
-	}
-	else if (v >= 0 && v < 16) {
-		return 'a' + v - 10;
-	}
-	else {
-		return 'f';
-	}
-}
-
-static int VX_TrackerColourToStandard(const char* input, char* output, int position)
-{
-	// The tracker's strings use 9 as maximum, standard drawing functions expect f
-	// Can't just change elsewhere as everyone's configs will have these set...
-	if (isdigit(input[0]) && isdigit(input[1]) && isdigit(input[2])) {
-		output[position++] = '&';
-		output[position++] = 'c';
-		output[position++] = ToHex(((input[0] - '0') / 9.0f) * 15);
-		output[position++] = ToHex(((input[1] - '0') / 9.0f) * 15);
-		output[position++] = ToHex(((input[2] - '0') / 9.0f) * 15);
-		return position;
-	}
-
-	return position;
-}
-
 void InitTracker(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -586,12 +557,6 @@ static qbool its_you(int player)
 	return (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator));
 }
 
-// some bright guy may set variable to "", thats bad, work around...
-static char *empty_is_000(char *str)
-{
-	return (*str ? str : "000");
-}
-
 static byte* SuicideColor(int player)
 {
 	if (its_you(player)) {
@@ -613,27 +578,6 @@ static byte* SuicideColor(int player)
 	}
 }
 
-static char *SuiColor(int player)
-{
-	if (its_you(player)) {
-		return empty_is_000(amf_tracker_color_suicide.string);
-	}
-
-	// with images color_bad == enemy color
-	// without images color bad == bad frag for us
-	if (cl_useimagesinfraglog.integer) {
-		if (amf_tracker_positive_enemy_suicide.integer) {
-			return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
-		}
-		else {
-			return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_bad.string) : empty_is_000(amf_tracker_color_good.string));
-		}
-	}
-	else {
-		return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
-	}
-}
-
 static byte* XvsYFullColor(int player, int killer)
 {
 	if (its_you(player)) {
@@ -647,17 +591,6 @@ static byte* XvsYFullColor(int player, int killer)
 	return (VX_TrackerIsEnemy(player) ? amf_tracker_color_good.color : amf_tracker_color_bad.color);
 }
 
-static char *XvsYColor(int player, int killer)
-{
-	if (its_you(player))
-		return empty_is_000(amf_tracker_color_fragonme.string);
-
-	if (its_you(killer))
-		return empty_is_000(amf_tracker_color_myfrag.string);
-
-	return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
-}
-
 static byte* OddFragFullColor(int killer)
 {
 	if (its_you(killer)) {
@@ -667,33 +600,14 @@ static byte* OddFragFullColor(int killer)
 	return (!VX_TrackerIsEnemy(killer) ? amf_tracker_color_good.color : amf_tracker_color_bad.color);
 }
 
-static char *OddFragColor(int killer)
-{
-	if (its_you(killer))
-		return empty_is_000(amf_tracker_color_myfrag.string);
-
-	return (!VX_TrackerIsEnemy(killer) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
-}
-
 static byte* EnemyFullColor(void)
 {
 	return amf_tracker_color_bad.color;
 }
 
-static char *EnemyColor(void)
-{
-	return empty_is_000(amf_tracker_color_bad.string);
-}
-
 static byte* TeamKillColor(int player)
 {
 	return (VX_TrackerIsEnemy(player) ? amf_tracker_color_tkgood.color : amf_tracker_color_tkbad.color);
-}
-
-// well, I'm too lazy making different functions for each type of TK
-static char *TKColor(int player)
-{
-	return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_tkgood.string) : empty_is_000(amf_tracker_color_tkbad.string));
 }
 
 void VX_TrackerDeath(int player, int weapon, int count)
@@ -1241,8 +1155,6 @@ void VXSCR_DrawTrackerString (void)
 
 static void VX_PreProcessMessage(trackmsg_t* msg)
 {
-	int line = 0;
-	int img = 0;
 	int s;
 	int padded_chars = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
 

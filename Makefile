@@ -407,7 +407,10 @@ OBJS_c := \
     hud_gamesummary.o \
     hud_face.o \
     hud_frags.o \
-    hud_tracking.o
+    hud_tracking.o \
+    hud_scores.o \
+    fonts.o \
+    hud_performance.o
 
 ### Configuration Options ###
 

@@ -808,14 +808,6 @@ const char* SCR_GetTimeString(int timetype, const char *format)
 	}
 }
 
-static qbool SCR_BlinkNow(void)
-{
-	SYSTEMTIME tm;
-
-	GetLocalTime(&tm);
-	return tm.wMilliseconds < 500;
-}
-
 //
 // Finds the coordinates in the bigfont texture of a given character.
 //

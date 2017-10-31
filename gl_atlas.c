@@ -49,7 +49,9 @@ static qbool atlas_dirty;
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS * 256];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
+#ifdef EZ_FREETYPE_SUPPORT
 static cachepic_node_t fontpics[MAX_CHARSETS * 256];
+#endif
 
 static float solid_s;
 static float solid_t;

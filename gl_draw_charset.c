@@ -129,7 +129,6 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned int num, int flags)
 {
 	char texture[1024], id[256], lmp[256], basename[MAX_QPATH];
-	int range = num << 8;
 
 	if (num >= MAX_CHARSETS) {
 		return 0;
@@ -443,9 +442,7 @@ void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proport
 
 float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale, qbool proportional)
 {
-	float alpha = 1;
-	qbool bigchar = false;
-	int char_gap = 0;
+	const qbool bigchar = false;
 	byte rgba[4];
 	qbool color_is_white = true;
 	int i, r, g, b;
@@ -489,7 +486,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 
 						color_count++; // Keep track on how many colors we're using.
 
-						rgba[3] = 255 * alpha;
+						rgba[3] = 255;
 						Draw_SetColor(rgba);
 
 						i += 4;
@@ -499,7 +496,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 				else if ((text_length == 0 || i + 1 < text_length) && text[i + 1] == 'r') {
 					if (!color_is_white) {
 						rgba[0] = rgba[1] = rgba[2] = 255;
-						rgba[3] = 255 * alpha;
+						rgba[3] = 255;
 						color_is_white = true;
 						Draw_SetColor(rgba);
 					}

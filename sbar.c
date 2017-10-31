@@ -929,10 +929,8 @@ static void Sbar_DrawFace (void) {
 	Sbar_DrawPic (112, 0, sb_faces[f][anim]);
 }
 
-
-void Draw_AMFStatLoss (int stat, hud_t* hud);
-
-static void Sbar_DrawNormal (void) {
+static void Sbar_DrawNormal (void)
+{
 	if (Sbar_IsStandardBar())
 		Sbar_DrawPic (0, 0, sb_sbar);
 
@@ -1871,7 +1869,7 @@ void Sbar_FinaleOverlay (void) {
 /********************************* INTERFACE *********************************/
 void Sbar_Draw(void) {
 	qbool headsup;
-	extern cvar_t scr_tracking, scr_spectatorMessage, scr_newHud;
+	extern cvar_t scr_newHud;
 
 	headsup = !Sbar_IsStandardBar();
 	if (sb_updates >= vid.numpages && !headsup)
