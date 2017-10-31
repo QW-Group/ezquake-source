@@ -333,6 +333,8 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		return;
 	}
 
+	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
+
 	// draw sprites separately, because of alpha_test
 	GL_AlphaBlendFlags(
 		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
@@ -354,15 +356,18 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		switch (currententity->model->type) {
 		case mod_brush:
 			R_DrawBrushModel(currententity);
+			vislist->drawn[i] = true;
 			break;
 		}
 	}
 	GL_EndDrawBrushModels();
 
 	GL_BeginDrawSprites();
-	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
+		if (vislist->drawn[i]) {
+			continue;
+		}
 
 		if (gl_simpleitems.integer && R_DrawTrySimpleItem()) {
 			vislist->drawn[i] = true;
@@ -420,7 +425,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	}
 	GL_EndDrawAliasModels();
 
-	// FIXME: Remove
+	// FIXME: GL_ResetState()
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	}

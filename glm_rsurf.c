@@ -673,5 +673,6 @@ static void GL_SortDrawCalls(int* split)
 		memcpy(world.modelMatrix[i], this->mvMatrix, sizeof(world.modelMatrix[0]));
 		world.flags[i][0] = this->flags;
 		world.samplerMappings[i][0] = max(this->sampler, 0);
+		this->baseInstance = i;
 	}
 }
