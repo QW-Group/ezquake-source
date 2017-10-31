@@ -84,8 +84,15 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fi
 	glPopAttrib();
 }
 
-void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl, float sh, float th)
+void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl, float sh, float th, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
+	GL_TextureEnvMode(GL_MODULATE);
+	glEnable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) | GL_BLEND_ENABLED);
+
+	GL_Color4ubv(color);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
+
 	glBegin(GL_QUADS);
 	glTexCoord2f(sl, tl);
 	glVertex2f(x - ofs1, y - ofs1);
@@ -97,6 +104,10 @@ void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl,
 	glVertex2f(x - ofs1, y + ofs2);
 	glEnd();
 	glColor3ubv (color_white);
+
+	// FIXME: GL_ResetState
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_TextureEnvMode(GL_REPLACE);
 }
 
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)

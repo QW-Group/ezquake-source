@@ -743,20 +743,10 @@ void Draw_Crosshair (void)
 		}
 
 		if (GL_ShadersSupported()) {
-			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
+			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 		}
 		else {
-			GL_TextureEnvMode(GL_MODULATE);
-			glEnable(GL_TEXTURE_2D);
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-
-			GL_Color4ubv(col);
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
-			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
-
-			// FIXME: GL_ResetState
-			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-			GL_TextureEnvMode(GL_REPLACE);
+			GLC_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 		}
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
@@ -857,10 +847,10 @@ void Draw_TextBox (int x, int y, int width, int lines)
 }
 
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
-void Draw_TileClear (int x, int y, int w, int h)
+void Draw_TileClear(int x, int y, int w, int h)
 {
 	if (GL_ShadersSupported()) {
-		GLM_DrawImage(x, y, w, h, 0, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
+		GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
 	}
 	else {
 		GLC_DrawTileClear(draw_backtile->texnum, x, y, w, h);

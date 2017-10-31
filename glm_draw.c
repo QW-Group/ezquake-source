@@ -90,7 +90,7 @@ void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 		color[3] = alpha * 255;
 	}
 
-	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, 0, newsl, newtl, newsh - newsl, newth - newtl, color, alpha < 1.0, pic->texnum, false);
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, alpha < 1.0, pic->texnum, false);
 }
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
@@ -263,7 +263,7 @@ void GLM_FlushImageDraw(void)
 	imageCount = 0;
 }
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
+void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		GLM_FlushImageDraw();
