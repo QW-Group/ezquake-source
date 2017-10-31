@@ -50,7 +50,7 @@ static glm_program_t drawAliasModelProgram;
 static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
 static block_aliasmodels_t aliasdata;
-static glm_ubo_t ubo_aliasdata;
+static buffer_ref ubo_aliasdata;
 static buffer_ref vbo_aliasIndirectDraw;
 
 typedef struct glm_aliasmodelbatch_s {
@@ -160,8 +160,8 @@ static qbool GLM_CompileAliasModelProgram(void)
 		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
-		GL_GenUniformBuffer(&ubo_aliasdata, "alias-data", &aliasdata, sizeof(aliasdata));
-		GL_BindUniformBufferBase(&ubo_aliasdata, GL_BINDINGPOINT_ALIASMODEL_CVARS);
+		ubo_aliasdata = GL_GenUniformBuffer("alias-data", &aliasdata, sizeof(aliasdata));
+		GL_BindBufferBase(ubo_aliasdata, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
 		drawAliasModelProgram.uniforms_found = true;
 	}
@@ -248,7 +248,7 @@ static void GLM_FlushAliasModelBatch(void)
 		}
 
 		// Update data
-		GL_UpdateUBO(&ubo_aliasdata, sizeof(aliasdata), &aliasdata);
+		GL_UpdateVBO(ubo_aliasdata, sizeof(aliasdata), &aliasdata);
 
 		for (i = 0; i <= batch; ++i) {
 			if (batches[i].shells) {

@@ -71,23 +71,12 @@ static glTextureSubImage3D_t glTextureSubImage3D = NULL;
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
 // </debug-functions>
 
-typedef struct buffer_data_s {
-	GLuint glref;
-	char name[64];
-
-	// These set at creation
-	GLenum target;
-	size_t size;
-	GLuint usage;
-
-
-	struct buffer_data_s* next_free;
-} buffer_data_t;
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
+void GL_BindBuffer(buffer_ref ref);
+
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
-void GL_BindBuffer(GLenum target, GLuint buffer);
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -143,14 +132,6 @@ void APIENTRY MessageCallback( GLenum source,
 
 	OutputDebugString(buffer);
 }
-
-// VBO functions
-static glBindBuffer_t     glBindBuffer = NULL;
-static glBufferData_t     glBufferData = NULL;
-static glBufferSubData_t  glBufferSubData = NULL;
-static glGenBuffers_t     glGenBuffers = NULL;
-static glDeleteBuffers_t  glDeleteBuffers = NULL;
-static glBindBufferBase_t glBindBufferBase = NULL;
 
 // VAO functions
 glGenVertexArrays_t         glGenVertexArrays = NULL;
@@ -215,7 +196,6 @@ glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
 glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 
-static qbool vbo_supported = false;
 static qbool shaders_supported = false;
 static int modern_only = -1;
 
@@ -226,11 +206,6 @@ qbool GL_ShadersSupported(void)
 	}
 
 	return modern_only || shaders_supported;
-}
-
-qbool GL_VBOsSupported(void)
-{
-	return vbo_supported;
 }
 
 #define OPENGL_LOAD_SHADER_FUNCTION(x) \
@@ -277,17 +252,12 @@ static void CheckMultiTextureExtensions(void)
 
 static void CheckShaderExtensions(void)
 {
-	shaders_supported = vbo_supported = false;
-	glBindBuffer = NULL;
-	glBufferData = NULL;
-	glBufferSubData = NULL;
+	shaders_supported = false;
+
+	GL_InitialiseBufferHandling();
 
 	if (COM_CheckParm("-modern")) {
 		if (glConfig.majorVersion >= 2) {
-			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
-			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
-			glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
-
 			shaders_supported = true;
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
 			OPENGL_LOAD_SHADER_FUNCTION(glShaderSource);
@@ -295,10 +265,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDeleteShader);
 			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderInfoLog);
 			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderiv);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glGenBuffers);
-			OPENGL_LOAD_SHADER_FUNCTION(glDeleteBuffers);
-			OPENGL_LOAD_SHADER_FUNCTION(glBindBufferBase);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGenVertexArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
@@ -379,13 +345,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_DSA_FUNCTION(glTextureSubImage2D);
 			OPENGL_LOAD_DSA_FUNCTION(glTextureSubImage3D);
 		}
-		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
-			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
-			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
-			glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
-		}
-
-		vbo_supported = glBindBuffer && glBufferData && glBufferSubData;
 	}
 
 	if (glPrimitiveRestartIndex) {
@@ -664,84 +623,8 @@ void GL_LeaveRegion(void)
 }
 #endif
 
-// Linked list of all vbo buffers
-static glm_vbo_t* vbo_list = NULL;
-
 // Linked list of all vao buffers
 static glm_vao_t* vao_list = NULL;
-
-// Linked list of all uniform buffers
-static glm_ubo_t* ubo_list = NULL;
-
-void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
-{
-	if (vbo->vbo) {
-		glDeleteBuffers(1, &vbo->vbo);
-	}
-	else {
-		vbo->next = vbo_list;
-		vbo_list = vbo;
-	}
-	vbo->name = name;
-	vbo->target = target;
-	vbo->size = size;
-	glGenBuffers(1, &vbo->vbo);
-
-	GL_BindBuffer(target, vbo->vbo);
-	glBufferData(target, size, data, usage);
-}
-
-void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data)
-{
-	assert(ubo);
-	assert(ubo->ubo);
-	assert(data);
-	assert(size == ubo->size);
-
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
-}
-
-void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data)
-{
-	assert(vbo);
-	assert(vbo->vbo);
-	assert(data);
-	assert(size <= vbo->size);
-
-	GL_BindBuffer(vbo->target, vbo->vbo);
-	glBufferSubData(vbo->target, 0, size, data);
-}
-
-void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
-{
-	assert(vbo);
-	assert(vbo->vbo);
-	assert(data);
-	assert(offset >= 0);
-	assert(offset < vbo->size);
-	assert(offset + size <= vbo->size);
-
-	GL_BindBuffer(vbo->target, vbo->vbo);
-	glBufferSubData(vbo->target, offset, size, data);
-}
-
-void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
-{
-	if (ubo->ubo) {
-		glDeleteBuffers(1, &ubo->ubo);
-	}
-	else {
-		ubo->next = ubo_list;
-		ubo_list = ubo;
-	}
-	ubo->name = name;
-	ubo->size = size;
-	glGenBuffers(1, &ubo->ubo);
-
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
-	glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
-}
 
 void GL_GenVertexArray(glm_vao_t* vao)
 {
@@ -756,12 +639,9 @@ void GL_GenVertexArray(glm_vao_t* vao)
 	GL_BindVertexArray(vao);
 }
 
-void GL_DeleteBuffers(void)
+void GL_DeleteVAOs(void)
 {
 	glm_vao_t* vao = vao_list;
-	glm_vbo_t* vbo = vbo_list;
-	glm_ubo_t* ubo = ubo_list;
-
 	if (glBindVertexArray) {
 		glBindVertexArray(0);
 	}
@@ -778,38 +658,7 @@ void GL_DeleteBuffers(void)
 		vao = vao->next;
 		prev->next = NULL;
 	}
-
-	while (vbo) {
-		glm_vbo_t* prev = vbo;
-
-		if (vbo->vbo) {
-			if (glDeleteBuffers) {
-				glDeleteBuffers(1, &vbo->vbo);
-			}
-			vbo->vbo = 0;
-		}
-
-		vbo = vbo->next;
-		prev->next = NULL;
-	}
-
-	while (ubo) {
-		glm_ubo_t* prev = ubo;
-
-		if (ubo->ubo) {
-			if (glDeleteBuffers) {
-				glDeleteBuffers(1, &ubo->ubo);
-			}
-			ubo->ubo = 0;
-		}
-
-		ubo = ubo->next;
-		prev->next = NULL;
-	}
-
-	vbo_list = NULL;
 	vao_list = NULL;
-	ubo_list = NULL;
 }
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold)
@@ -817,37 +666,6 @@ void GL_AlphaFunc(GLenum func, GLclampf threshold)
 	if (!GL_ShadersSupported()) {
 		glAlphaFunc(func, threshold);
 	}
-}
-
-void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index)
-{
-	glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo->ubo);
-}
-
-void GL_BindBufferBase(glm_vbo_t* vbo, GLuint index)
-{
-	glBindBufferBase(vbo->target, index, vbo->vbo);
-}
-
-void GL_BindBuffer(GLenum target, GLuint buffer)
-{
-	extern GLuint currentArrayBuffer;
-	extern GLuint currentUniformBuffer;
-
-	if (target == GL_ARRAY_BUFFER) {
-		if (buffer == currentArrayBuffer) {
-			return;
-		}
-		currentArrayBuffer = buffer;
-	}
-	else if (target == GL_UNIFORM_BUFFER) {
-		if (buffer == currentUniformBuffer) {
-			return;
-		}
-		currentUniformBuffer = buffer;
-	}
-
-	glBindBuffer(target, buffer);
 }
 
 void GL_TexSubImage3D(

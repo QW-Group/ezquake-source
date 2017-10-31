@@ -172,14 +172,6 @@ typedef struct glm_vao_s {
 	buffer_ref element_array_buffer;
 } glm_vao_t;
 
-typedef struct glm_ubo_s {
-	unsigned int ubo;
-	const char* name;
-
-	struct glm_ubo_s* next;
-	size_t size;
-} glm_ubo_t;
-
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;						//next lightmap poly in chain

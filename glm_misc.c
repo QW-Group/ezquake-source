@@ -76,8 +76,8 @@ typedef struct block_common2d_s {
 	int padding[2];
 } block_common2d;
 
-static glm_ubo_t ubo_refdef;
-static glm_ubo_t ubo_common2d;
+static buffer_ref ubo_refdef;
+static buffer_ref ubo_common2d;
 static block_refdef_t refdef;
 static block_common2d common2d;
 
@@ -88,12 +88,12 @@ void GLM_PreRenderView(void)
 	common2d.gamma2d = v_gamma.value;
 	common2d.r_alphafont = gl_alphafont.value;
 
-	if (!ubo_common2d.ubo) {
-		GL_GenUniformBuffer(&ubo_common2d, "common2d", &common2d, sizeof(common2d));
-		GL_BindUniformBufferBase(&ubo_common2d, GL_BINDINGPOINT_COMMON2D_CVARS);
+	if (!GL_BufferReferenceIsValid(ubo_common2d)) {
+		ubo_common2d = GL_GenUniformBuffer("common2d", &common2d, sizeof(common2d));
+		GL_BindBufferBase(ubo_common2d, GL_BINDINGPOINT_COMMON2D_CVARS);
 	}
 
-	GL_UpdateUBO(&ubo_common2d, sizeof(common2d), &common2d);
+	GL_UpdateVBO(ubo_common2d, sizeof(common2d), &common2d);
 }
 
 void GLM_SetupGL(void)
@@ -106,10 +106,10 @@ void GLM_SetupGL(void)
 	refdef.gamma3d = v_gamma.value;
 	refdef.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
 
-	if (!ubo_refdef.ubo) {
-		GL_GenUniformBuffer(&ubo_refdef, "refdef", &refdef, sizeof(refdef));
-		GL_BindUniformBufferBase(&ubo_refdef, GL_BINDINGPOINT_REFDEF_CVARS);
+	if (!GL_BufferReferenceIsValid(ubo_refdef)) {
+		ubo_refdef = GL_GenUniformBuffer("refdef", &refdef, sizeof(refdef));
+		GL_BindBufferBase(ubo_refdef, GL_BINDINGPOINT_REFDEF_CVARS);
 	}
 
-	GL_UpdateUBO(&ubo_refdef, sizeof(refdef), &refdef);
+	GL_UpdateVBO(ubo_refdef, sizeof(refdef), &refdef);
 }

@@ -78,7 +78,7 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
 static int drawworld_compiledOptions;
-static glm_ubo_t ubo_worldcvars;
+static buffer_ref ubo_worldcvars;
 static block_world_t world;
 
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -145,8 +145,8 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
 		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
-		GL_GenUniformBuffer(&ubo_worldcvars, "world-cvars", &world, sizeof(world));
-		GL_BindUniformBufferBase(&ubo_worldcvars, GL_BINDINGPOINT_DRAWWORLD_CVARS);
+		ubo_worldcvars = GL_GenUniformBuffer("world-cvars", &world, sizeof(world));
+		GL_BindBufferBase(ubo_worldcvars, GL_BINDINGPOINT_DRAWWORLD_CVARS);
 
 		drawworld.uniforms_found = true;
 	}
@@ -380,7 +380,7 @@ void GL_FlushWorldModelBatch(void)
 	GL_SortDrawCalls(&polygonOffsetStart);
 
 	GL_UseProgram(drawworld.program);
-	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
+	GL_UpdateVBO(ubo_worldcvars, sizeof(world), &world);
 	GL_UpdateVBO(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_UpdateVBO(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 

@@ -39,8 +39,6 @@ static GLfloat polygonOffsetUnits = 0;
 static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
 static GLenum perspectiveCorrectionHint;
-GLuint currentArrayBuffer;
-GLuint currentUniformBuffer;
 
 static GLenum oldtarget = GL_TEXTURE0;
 static GLuint cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
@@ -52,7 +50,6 @@ static GLenum lastTextureMode = GL_MODULATE;
 static int old_alphablend_flags = 0;
 
 // vid_common_gl.c
-//void GL_BindBuffer(GLenum target, GLuint buffer);
 
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -221,7 +218,7 @@ void GL_InitialiseState(void)
 	}
 
 	// Buffers
-	currentArrayBuffer = currentUniformBuffer = 0;
+	GL_InitialiseBufferState();
 }
 
 // These functions taken from gl_texture.c
@@ -690,11 +687,6 @@ void GL_PolygonOffset(int option)
 	}
 }
 
-void GL_UnBindBuffer(GLenum target)
-{
-	GL_BindBufferImpl(target, 0);
-}
-
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
 	assert(vao);
@@ -739,7 +731,7 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
 		GL_BindBuffer(ibo);
 	}
 	else {
-		GL_BindBufferImpl(GL_ELEMENT_ARRAY_BUFFER, 0);
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	}
 }
 

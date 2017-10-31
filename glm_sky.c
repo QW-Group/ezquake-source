@@ -72,8 +72,8 @@ static buffer_ref skyDome_vbo;
 static buffer_ref skyDomeCommands_vbo;
 static glm_vao_t skyDome_vao;
 static glm_vao_t skyBox_vao;
-static glm_ubo_t ubo_skydomeData;
-static glm_ubo_t ubo_skyboxData;
+static buffer_ref ubo_skydomeData;
+static buffer_ref ubo_skyboxData;
 static texture_ref skybox_cubeMap;
 
 void GLM_DrawSkyChain(void)
@@ -117,8 +117,8 @@ static qbool BuildSkyDomeProgram(void)
 		glUniformBlockBinding(skyDome.program, skydome_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(skyDome.program, skydome_SkyDomeData_block, GL_BINDINGPOINT_SKYDOME_CVARS);
 
-		GL_GenUniformBuffer(&ubo_skydomeData, "skydome-data", NULL, sizeof(SkydomeCvars_t));
-		GL_BindUniformBufferBase(&ubo_skydomeData, GL_BINDINGPOINT_SKYDOME_CVARS);
+		ubo_skydomeData = GL_GenUniformBuffer("skydome-data", NULL, sizeof(SkydomeCvars_t));
+		GL_BindBufferBase(ubo_skydomeData, GL_BINDINGPOINT_SKYDOME_CVARS);
 
 		skyDome.uniforms_found = true;
 	}
@@ -152,8 +152,8 @@ static qbool BuildSkyBoxProgram(void)
 		glUniformBlockBinding(skyBox.program, skybox_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(skyBox.program, skybox_SkyBoxData_block, GL_BINDINGPOINT_SKYBOX_CVARS);
 
-		GL_GenUniformBuffer(&ubo_skyboxData, "skybox-data", NULL, sizeof(SkyboxCvars_t));
-		GL_BindUniformBufferBase(&ubo_skyboxData, GL_BINDINGPOINT_SKYBOX_CVARS);
+		ubo_skyboxData = GL_GenUniformBuffer("skybox-data", NULL, sizeof(SkyboxCvars_t));
+		GL_BindBufferBase(ubo_skyboxData, GL_BINDINGPOINT_SKYBOX_CVARS);
 
 		skyBox.uniforms_found = true;
 	}
@@ -310,7 +310,7 @@ static void GLM_DrawSkyDomeFaces(void)
 		VectorCopy(r_origin, skyDomeData.origin);
 
 		GL_UpdateVBO(skyDomeCommands_vbo, sizeof(commandData[0]) * commands, commandData);
-		GL_UpdateUBO(&ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
+		GL_UpdateVBO(ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
 
 		GL_BindVertexArray(&skyDome_vao);
 
@@ -381,7 +381,7 @@ static void GLM_DrawSkyBox(void)
 		cvars.farclip = max(r_farclip.value, 4096) * 0.577;
 		VectorCopy(r_origin, cvars.origin);
 
-		GL_UpdateUBO(&ubo_skyboxData, sizeof(cvars), &cvars);
+		GL_UpdateVBO(ubo_skyboxData, sizeof(cvars), &cvars);
 
 		GL_BindVertexArray(&skyBox_vao);
 		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);

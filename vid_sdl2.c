@@ -740,6 +740,7 @@ void VID_Shutdown(void)
 		GLM_DeletePrograms();
 	}
 
+	GL_DeleteVAOs();
 	GL_DeleteBuffers();
 
 	if (sdl_context) {

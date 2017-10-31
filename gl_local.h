@@ -689,17 +689,15 @@ void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(GLuint texture);
 
-void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data);
+// gl_buffers.c
+void GL_InitialiseBufferHandling(void);
+void GL_InitialiseBufferState(void);
+buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
 void GL_UpdateVBO(buffer_ref vbo, size_t size, void* data);
 void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
-
-// Creates buffer, binds to target and initialises with a particular size
-buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
+void GL_BindBuffer(buffer_ref ref);
+void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_UnBindBuffer(GLenum target);
-void GL_BindBufferImpl(GLenum target, GLuint buffer);
-
-void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index);
-void GL_BindBufferBase(buffer_ref vbo, GLuint index);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
@@ -876,12 +874,13 @@ void GL_ProcessErrors(const char* message);
 void GLM_DeletePrograms(void);
 void GLM_InitPrograms(void);
 void GL_DeleteBuffers(void);
+void GL_DeleteVAOs(void);
 
 #define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
-void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size);
+buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size);
 void GL_GenVertexArray(glm_vao_t* vao);
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);

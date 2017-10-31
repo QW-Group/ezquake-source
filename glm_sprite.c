@@ -18,7 +18,7 @@ static glm_program_t spriteProgram;
 static GLuint spriteProgram_RefdefCvars_block;
 static GLuint spriteProgram_SpriteData_block;
 static glm_spritedata_t spriteData;
-static glm_ubo_t ubo_spriteData;
+static buffer_ref ubo_spriteData;
 
 typedef struct glm_sprite_s {
 	vec3_t origin;
@@ -144,7 +144,7 @@ void GL_FlushSpriteBatch(void)
 	}
 
 	GL_UseProgram(spriteProgram.program);
-	GL_UpdateUBO(&ubo_spriteData, sizeof(spriteData), &spriteData);
+	GL_UpdateVBO(ubo_spriteData, sizeof(spriteData), &spriteData);
 
 	GL_BindVertexArray(&aliasModel_vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
@@ -189,8 +189,8 @@ static void GL_CompileSpriteProgram(void)
 		glUniformBlockBinding(spriteProgram.program, spriteProgram_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(spriteProgram.program, spriteProgram_SpriteData_block, GL_BINDINGPOINT_SPRITEDATA_CVARS);
 
-		GL_GenUniformBuffer(&ubo_spriteData, "sprite-data", &spriteData, sizeof(spriteData));
-		GL_BindUniformBufferBase(&ubo_spriteData, GL_BINDINGPOINT_SPRITEDATA_CVARS);
+		ubo_spriteData = GL_GenUniformBuffer("sprite-data", &spriteData, sizeof(spriteData));
+		GL_BindBufferBase(ubo_spriteData, GL_BINDINGPOINT_SPRITEDATA_CVARS);
 
 		spriteProgram.uniforms_found = true;
 	}
