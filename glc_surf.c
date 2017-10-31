@@ -26,16 +26,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
-glpoly_t *lightmap_polys[MAX_LIGHTMAPS];
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 glpoly_t *luma_polys[MAX_GLTEXTURES];
 
 extern glpoly_t *caustics_polys;
 extern glpoly_t *detail_polys;
 
+void GLC_ClearLightmapPolys(void);
+
 void GLC_ClearTextureChains(void)
 {
-	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	GLC_ClearLightmapPolys();
 	memset(fullbright_polys, 0, sizeof(fullbright_polys));
 	memset(luma_polys, 0, sizeof(luma_polys));
 }

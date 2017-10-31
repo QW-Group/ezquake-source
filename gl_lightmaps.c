@@ -31,23 +31,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 
 texture_ref lightmap_texture_array;
-texture_ref lightmap_textures[MAX_LIGHTMAPS];
+static texture_ref lightmap_textures[MAX_LIGHTMAPS];
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct glRect_s {
 	unsigned char l, t, w, h;
 } glRect_t;
 
-static glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
+glpoly_t* lightmap_polys[MAX_LIGHTMAPS];
 static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
-qbool lightmap_modified[MAX_LIGHTMAPS];
+static qbool lightmap_modified[MAX_LIGHTMAPS];
 
 static int allocated[MAX_LIGHTMAPS][LIGHTMAP_WIDTH];
 static GLuint last_lightmap_updated;
 
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
-byte	lightmaps[4 * MAX_LIGHTMAPS * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
+static byte lightmaps[4 * MAX_LIGHTMAPS * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
 
 qbool gl_invlightmaps = true;
 
@@ -424,7 +424,8 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 }
 
 // returns a lightmap number and the position inside it
-int AllocBlock (int w, int h, int *x, int *y) {
+static int LightmapAllocBlock(int w, int h, int *x, int *y)
+{
 	int i, j, best, best2;
 	int texnum;
 
@@ -464,7 +465,7 @@ int AllocBlock (int w, int h, int *x, int *y) {
 		return texnum;
 	}
 
-	Sys_Error ("AllocBlock: full");
+	Sys_Error("AllocBlock: full");
 	return 0;
 }
 
@@ -561,7 +562,7 @@ void GL_CreateSurfaceLightmap(msurface_t *surf)
 	if (smax * tmax > MAX_LIGHTMAP_SIZE)
 		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
 
-	surf->lightmaptexturenum = AllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
+	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
 	base = lightmaps + surf->lightmaptexturenum * BLOCK_WIDTH * BLOCK_HEIGHT * 4;
 	base += (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
@@ -655,5 +656,73 @@ void GLC_SetLightmapBlendFunc(void)
 	}
 	else {
 		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
+	}
+}
+
+void GLC_ClearLightmapPolys(void)
+{
+	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+}
+
+texture_ref GLC_LightmapTexture(int index)
+{
+	if (index < 0 || index >= MAX_LIGHTMAPS) {
+		return lightmap_textures[0];
+	}
+	return lightmap_textures[index];
+}
+
+void GLC_CreateLightmapTextures(void)
+{
+	int i;
+
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
+
+	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+		GL_TexStorage2D(GL_TEXTURE0, lightmap_textures[i], 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
+		GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+}
+
+void GLC_LightmapUpdate(int index)
+{
+	if (index >= 0 && index < MAX_LIGHTMAPS) {
+		if (lightmap_modified[index]) {
+			R_UploadLightMap(GL_TEXTURE0, index);
+		}
+	}
+}
+
+void GLC_AddToLightmapChain(msurface_t* s)
+{
+	s->polys->chain = lightmap_polys[s->lightmaptexturenum];
+	lightmap_polys[s->lightmaptexturenum] = s->polys;
+}
+
+glpoly_t* GLC_LightmapChain(int i)
+{
+	if (i < 0 || i >= MAX_LIGHTMAPS) {
+		return NULL;
+	}
+	return lightmap_polys[i];
+}
+
+void GLM_CreateLightmapTextures(void)
+{
+	int i;
+
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
+
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
+	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	for (i = 0; i < MAX_LIGHTMAPS; ++i) {
+		lightmap_textures[i] = lightmap_texture_array;
 	}
 }

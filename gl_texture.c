@@ -1020,7 +1020,6 @@ void GL_Texture_Init(void)
 	cvar_t *cv;
 	int i;
 	extern texture_ref lightmap_texture_array;
-	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
 	extern texture_ref sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
@@ -1051,28 +1050,10 @@ void GL_Texture_Init(void)
 
 	// Lightmap.
 	if (GL_ShadersSupported()) {
-		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
-
-		GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-			lightmap_textures[i] = lightmap_texture_array;
-		}
+		GLM_CreateLightmapTextures();
 	}
 	else {
-		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
-
-		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
-			GL_TexStorage2D(GL_TEXTURE0, lightmap_textures[i], 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
-			GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			GL_TexParameterf(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			GL_TexParameteri(GL_TEXTURE0, lightmap_textures[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
+		GLC_CreateLightmapTextures();
 	}
 
 	// Motion blur.

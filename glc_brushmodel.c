@@ -27,7 +27,6 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "gl_local.h"
 #include "rulesets.h"
 
-extern glpoly_t *lightmap_polys[MAX_LIGHTMAPS];
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
@@ -213,8 +212,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 					GLC_SetTextureLightmap(lightmapTextureUnit, s->lightmaptexturenum);
 				}
 				else {
-					s->polys->chain = lightmap_polys[s->lightmaptexturenum];
-					lightmap_polys[s->lightmaptexturenum] = s->polys;
+					GLC_AddToLightmapChain(s);
 				}
 
 				glBegin(GL_POLYGON);
@@ -470,8 +468,6 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 static void GLC_BlendLightmaps(void)
 {
-	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
-	extern qbool lightmap_modified[MAX_LIGHTMAPS];
 	extern qbool gl_invlightmaps;
 	extern void R_UploadLightMap(GLenum textureUnit, int lightmapnum);
 
@@ -482,13 +478,11 @@ static void GLC_BlendLightmaps(void)
 	GLC_StateBeginBlendLightmaps();
 
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
-		if (!(p = lightmap_polys[i])) {
+		if (!(p = GLC_LightmapChain(i))) {
 			continue;
 		}
-		if (lightmap_modified[i]) {
-			R_UploadLightMap(GL_TEXTURE0, i);
-		}
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, lightmap_textures[i]);
+		GLC_LightmapUpdate(i);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, GLC_LightmapTexture(i));
 		for (; p; p = p->chain) {
 			glBegin(GL_POLYGON);
 			v = p->verts[0];
@@ -498,8 +492,8 @@ static void GLC_BlendLightmaps(void)
 			}
 			glEnd();
 		}
-		lightmap_polys[i] = NULL;
 	}
+	GLC_ClearLightmapPolys();
 
 	GLC_StateEndBlendLightmaps();
 }

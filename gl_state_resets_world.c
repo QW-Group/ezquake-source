@@ -318,13 +318,12 @@ void GLC_StateEndAlphaChain(void)
 void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 {
 	texture_t* t = s->texinfo->texture;
-	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
 
 	ENTER_STATE;
 
 	//bind the world texture
 	if (gl_mtexable) {
-		GLC_InitTextureUnits2(t->gl_texturenum, GL_REPLACE, lightmap_textures[s->lightmaptexturenum], GLC_LightmapTexEnv());
+		GLC_InitTextureUnits2(t->gl_texturenum, GL_REPLACE, GLC_LightmapTexture(s->lightmaptexturenum), GLC_LightmapTexEnv());
 	}
 	else {
 		GLC_InitTextureUnits1(t->gl_texturenum, GL_REPLACE);
