@@ -720,6 +720,8 @@ void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const
 void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_UnBindBuffer(GLenum target);
+void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
+size_t GL_VBOSize(buffer_ref vbo);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);

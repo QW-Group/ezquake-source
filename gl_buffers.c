@@ -118,6 +118,25 @@ void GL_UpdateVBO(buffer_ref vbo, size_t size, void* data)
 	glBufferSubData(buffers[vbo.index].target, 0, size, data);
 }
 
+size_t GL_VBOSize(buffer_ref vbo)
+{
+	if (!vbo.index) {
+		return 0;
+	}
+
+	return buffers[vbo.index].size;
+}
+
+void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
+{
+	assert(vbo.index);
+	assert(buffers[vbo.index].glref);
+	assert(data);
+
+	GL_BindBuffer(vbo);
+	glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
+}
+
 void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
 {
 	assert(vbo.index);

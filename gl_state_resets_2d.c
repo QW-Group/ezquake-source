@@ -161,7 +161,9 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 {
 	ENTER_STATE;
 
-	glDisable (GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glDisable(GL_TEXTURE_2D);
+	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
@@ -174,7 +176,9 @@ void GL_StateEndAlphaLineRGB(void)
 {
 	ENTER_STATE;
 
-	glEnable(GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glEnable(GL_TEXTURE_2D);
+	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	LEAVE_STATE;

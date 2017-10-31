@@ -73,11 +73,6 @@ void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool
 	}
 }
 
-void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
-{
-	// MEAG: TODO
-}
-
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
 	// MEAG: TODO
@@ -395,4 +390,63 @@ void GL_FlushImageDraw(void)
 	}
 
 	imageCount = 0;
+}
+
+static glm_program_t polygonProgram;
+static glm_vao_t polygonVAO;
+static buffer_ref polygonVBO;
+static GLint polygonUniforms_matrix;
+static GLint polygonUniforms_color;
+
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
+{
+	GL_FlushImageDraw();
+
+	if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
+		GL_VFDeclare(draw_polygon);
+
+		if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(draw_polygon), &polygonProgram)) {
+			return;
+		}
+	}
+
+	if (!polygonProgram.uniforms_found) {
+		polygonUniforms_matrix = glGetUniformLocation(polygonProgram.program, "matrix");
+		polygonUniforms_color = glGetUniformLocation(polygonProgram.program, "color");
+		polygonProgram.uniforms_found = true;
+	}
+
+	if (!GL_BufferReferenceIsValid(polygonVBO)) {
+		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(vertices[0]) * max(num_vertices, 32), vertices, GL_DYNAMIC_DRAW);
+	}
+	else if (num_vertices * sizeof(vertices[0]) > GL_VBOSize(polygonVBO)) {
+		GL_ResizeBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
+	}
+	else {
+		GL_UpdateVBO(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
+	}
+
+	if (!polygonVAO.vao) {
+		GL_GenVertexArray(&polygonVAO);
+		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	{
+		float matrix[16];
+		byte glColor[4];
+
+		COLOR_TO_RGBA(color, glColor);
+
+		GL_Disable(GL_DEPTH_TEST);
+		GLM_GetMatrix(GL_PROJECTION, matrix);
+		GLM_TransformMatrix(matrix, x, y, 0);
+
+		GL_BindVertexArray(&polygonVAO);
+		GL_UseProgram(polygonProgram.program);
+		glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+		glUniform4f(polygonUniforms_color, glColor[0] / 255.0f, glColor[1] / 255.0f, glColor[2] / 255.0f, glColor[3] / 255.0f);
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
+		++frameStats.draw_calls;
+	}
 }
