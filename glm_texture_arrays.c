@@ -16,6 +16,7 @@ void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int posi
 
 typedef struct common_texture_registration_s {
 	texture_ref original;   // The original texture to be moved into first reserved element of array
+	texture_ref new_ref;    // Array it was moved to
 
 	texture_ref* array_ref; // Will be set to the array allocated
 	int* array_indices;     // Indices into array
@@ -34,7 +35,6 @@ typedef struct common_texture_s {
 	int count;
 	int any_size_count;
 
-	texture_ref gl_texturenum;
 	int gl_width;
 	int gl_height;
 	int gl_depth;
@@ -75,21 +75,38 @@ static common_texture_t* commonTextures[TEXTURETYPES_COUNT];
 
 void GLM_CreateBrushModelVAO(buffer_ref instance_vbo);
 
+static void GL_DeleteArrayChain(common_texture_t* chain, qbool delete_textures)
+{
+	extern GLuint GL_TextureNameFromReference(texture_ref ref);
+	common_texture_t* tex;
+	common_texture_t* next;
+
+	if (!chain) {
+		return;
+	}
+
+	GL_DeleteArrayChain(chain->overflow, delete_textures);
+
+	for (tex = chain; tex; tex = next) {
+		next = tex->next;
+		if (delete_textures) {
+			int i;
+			for (i = 0; i < sizeof(tex->registrations) / sizeof(tex->registrations[0]); ++i) {
+				if (GL_TextureReferenceIsValid(tex->registrations[i].new_ref)) {
+					GL_DeleteTextureArray(&tex->registrations[i].new_ref);
+				}
+			}
+		}
+		Q_free(tex);
+	}
+}
+
 static void GL_DeleteExistingArrays(qbool delete_textures)
 {
 	int type;
 
 	for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
-		common_texture_t* tex;
-		common_texture_t* next;
-
-		for (tex = commonTextures[type]; tex; tex = next) {
-			next = tex->next;
-			if (delete_textures && GL_TextureReferenceIsValid(tex->gl_texturenum)) {
-				GL_DeleteTextureArray(&tex->gl_texturenum);
-			}
-			Q_free(tex);
-		}
+		GL_DeleteArrayChain(commonTextures[type], delete_textures);
 	}
 
 	memset(commonTextures, 0, sizeof(commonTextures));
@@ -126,7 +143,7 @@ static void GLM_CreateInstanceVBO(void)
 	instance_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, GL_STATIC_DRAW);
 }
 
-static void GL_ClearModelTextureReferences(model_t* mod)
+static void GL_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 {
 	int j;
 
@@ -140,13 +157,20 @@ static void GL_ClearModelTextureReferences(model_t* mod)
 	memset(mod->simpletexture_scalingT, 0, sizeof(mod->simpletexture_scalingT));
 	memset(mod->simpletexture_indexes, 0, sizeof(mod->simpletexture_indexes));
 	GL_TextureReferenceInvalidate(mod->simpletexture_array);
-	//memset(mod->simpletexture_arrays, 0, sizeof(mod->simpletexture_arrays));
+
+	if (all_textures) {
+		memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
+	}
 
 	// clear brush model data
 	if (mod->type == mod_brush) {
 		for (j = 0; j < mod->numtextures; ++j) {
 			texture_t* tex = mod->textures[j];
 			if (tex) {
+				if (all_textures) {
+					GL_TextureReferenceInvalidate(tex->fb_texturenum);
+					GL_TextureReferenceInvalidate(tex->gl_texturenum);
+				}
 				tex->gl_texture_scaleS = tex->gl_texture_scaleT = 0;
 				GL_TextureReferenceInvalidate(tex->gl_texture_array);
 				tex->gl_texture_index = 0;
@@ -170,10 +194,27 @@ static void GL_ClearModelTextureReferences(model_t* mod)
 
 			frame = ((mspriteframe_t*)((byte*)psprite + offset));
 
+			if (all_textures) {
+				GL_TextureReferenceInvalidate(frame->gl_texturenum);
+			}
 			frame->gl_scalingS = frame->gl_scalingT = 0;
 			GL_TextureReferenceInvalidate(frame->gl_arraynum);
 			frame->gl_arrayindex = 0;
 		}
+	}
+
+	if (mod->type == mod_alias && all_textures) {
+		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
+
+		memset(paliashdr->gl_texturenum, 0, sizeof(paliashdr->gl_texturenum));
+		memset(paliashdr->fb_texturenum, 0, sizeof(paliashdr->fb_texturenum));
+	}
+	else if (mod->type == mod_alias3 && all_textures) {
+		md3model_t* md3Model = (md3model_t *)Mod_Extradata(mod);
+		surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
+
+		// One day there will be more than one of these...
+		GL_TextureReferenceInvalidate(surfaceInfo->texnum);
 	}
 }
 
@@ -183,13 +224,13 @@ void GL_DeleteModelData(void)
 	int i;
 	for (i = 0; i < MAX_MODELS; ++i) {
 		if (cl.model_precache[i]) {
-			GL_ClearModelTextureReferences(cl.model_precache[i]);
+			GL_ClearModelTextureReferences(cl.model_precache[i], false);
 		}
 	}
 
 	for (i = 0; i < MAX_VWEP_MODELS; ++i) {
 		if (cl.vw_model_precache[i]) {
-			GL_ClearModelTextureReferences(cl.vw_model_precache[i]);
+			GL_ClearModelTextureReferences(cl.vw_model_precache[i], false);
 		}
 	}
 }
@@ -685,7 +726,7 @@ static void GL_AssignTextureArrayToRegistrations(common_texture_t* size, int reg
 			reg->allocated = true;
 
 			// FIXME: These can be NULL, but probably shouldn't be...
-			*reg->array_ref = array_ref;
+			*reg->array_ref = reg->new_ref = array_ref;
 			*reg->array_indices = allocation;
 			*reg->array_scalingS = original_width * 1.0f / width;
 			*reg->array_scalingT = original_height * 1.0f / height;
@@ -1035,4 +1076,25 @@ static void GLM_CreateAliasModelVAO(void)
 	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, aliasModel_vbo, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(vert_index));
 
 	glVertexAttribDivisor(3, 1);
+}
+
+void GL_InvalidateAllTextureReferences(void)
+{
+	int i;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod) {
+			GL_ClearModelTextureReferences(mod, true);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			GL_ClearModelTextureReferences(mod, true);
+		}
+	}
 }

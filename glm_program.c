@@ -349,6 +349,7 @@ void GLM_DeletePrograms(qbool restarting)
 {
 	glm_program_t* program = program_list;
 
+	GL_UseProgram(0);
 	while (program) {
 		if (program->program) {
 			glDeleteProgram(program->program);

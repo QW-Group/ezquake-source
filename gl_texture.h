@@ -58,6 +58,7 @@ texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int 
 void GL_DeleteTextureArray(texture_ref* texture);
 void GL_DeleteCubeMap(texture_ref* texture);
 void GL_DeleteTexture(texture_ref* texture);
+void GL_DeleteTextures(void);
 
 // Replaces top-level of a texture - if dimensions don't match then texture is reloaded
 void GL_TextureReplace2D(

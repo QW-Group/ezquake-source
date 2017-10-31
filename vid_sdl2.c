@@ -742,6 +742,8 @@ void VID_Shutdown(qbool restart)
 
 	GL_DeleteVAOs();
 	GL_DeleteBuffers();
+	GL_DeleteTextures();
+	GL_InvalidateAllTextureReferences();
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);

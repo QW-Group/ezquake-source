@@ -1246,7 +1246,6 @@ void GL_DeleteCubeMap(texture_ref* texture)
 	GL_DeleteTexture(texture);
 }
 
-// Identical to GL_DeleteTexture but for type correctness...
 void GL_DeleteTextureArray(texture_ref* texture)
 {
 	GL_DeleteTexture(texture);
@@ -1414,4 +1413,20 @@ void GL_TextureReplace2D(
 qbool GL_ExternalTexturesEnabled(qbool worldmodel)
 {
 	return worldmodel ? gl_externalTextures_world.integer : gl_externalTextures_bmodels.integer;
+}
+
+// Called during vid_shutdown
+void GL_DeleteTextures(void)
+{
+	int i;
+
+	for (i = 0; i < numgltextures; ++i) {
+		texture_ref ref = gltextures[i].reference;
+
+		GL_DeleteTexture(&ref);
+	}
+
+	memset(gltextures, 0, sizeof(gltextures));
+	numgltextures = 0;
+	next_free_texture = 0;
 }
