@@ -498,7 +498,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 
 	GL_ImageDimensionsToTexture(width, height, &gl_width, &gl_height, mode);
 
-	{
+	if (mode & TEX_MIPMAP) {
 		int temp_w = gl_width;
 		int temp_h = gl_height;
 
