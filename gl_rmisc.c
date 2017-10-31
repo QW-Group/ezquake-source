@@ -342,7 +342,8 @@ void R_NewMap (qbool vid_restart) {
 	}
 }
 
-void R_TimeRefresh_f (void) {
+void R_TimeRefresh_f(void)
+{
 	int i;
 	float start, stop, time;
 
@@ -355,8 +356,7 @@ void R_TimeRefresh_f (void) {
 	}
 
 #ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
+	if (glConfig.hardwareType != GLHW_INTEL) {
 		// Causes the console to flicker on Intel cards.
 		glDrawBuffer  (GL_FRONT);
 	}
@@ -364,9 +364,8 @@ void R_TimeRefresh_f (void) {
 	
 	glFinish ();
 
-	start = Sys_DoubleTime ();
-	for (i = 0; i < 128; i++) 
-	{
+	start = Sys_DoubleTime();
+	for (i = 0; i < 128; i++) {
 		r_refdef.viewangles[1] = i * (360.0 / 128.0);
 		R_RenderView ();
 	}
@@ -377,8 +376,7 @@ void R_TimeRefresh_f (void) {
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
 #ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
+	if (glConfig.hardwareType != GLHW_INTEL) {
 		glDrawBuffer  (GL_BACK);
 	}
 #endif

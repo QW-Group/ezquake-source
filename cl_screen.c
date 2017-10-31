@@ -2152,34 +2152,33 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 
 void SCR_UpdateScreenPlayerView(int flags)
 {
-	qbool renderView = false;
-
 	GL_EnterRegion(__FUNCTION__);
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef();
 	}
 
+	// check for changes in r_fullbright
+	R_Check_R_FullBright();
+
+	// preache skins if needed
+	Skins_PreCache();
+
 	SCR_SetUpToDrawConsole();
 
 	SCR_SetupCI();
 
-	renderView = V_PreRenderView();
-
-	if (renderView) {
+	if (V_PreRenderView()) {
 		GL_EnterRegion("R_SetupFrame");
 		R_SetupFrame();
 		GL_LeaveRegion();
-	}
 
-	// Do 3D refresh drawing, and then update the screen.
-	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
-	if (renderView) {
-		V_RenderView();
-	}
+		R_RenderView();
 
-	if (!GL_ShadersSupported() && (flags & UPDATESCREEN_POSTPROCESS)) {
-		R_RenderPostProcess();
+		if (flags & UPDATESCREEN_POSTPROCESS) {
+			R_RenderPostProcess();
+		}
 	}
 
 	GL_Set2D();

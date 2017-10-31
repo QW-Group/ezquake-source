@@ -366,7 +366,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 void GL_FlushWorldModelBatch(void)
 {
-	int i;
 	GLuint last_vao = 0;
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;

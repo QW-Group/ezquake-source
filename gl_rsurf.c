@@ -134,8 +134,9 @@ void R_Check_R_FullBright(void)
 	static qbool allowed;
 
 	// not changed, nothing to do
-	if( allowed == R_FullBrightAllowed() )
+	if (allowed == R_FullBrightAllowed()) {
 		return;
+	}
 
 	// ok, it changed, lets update all our light maps...
 	allowed = R_FullBrightAllowed();

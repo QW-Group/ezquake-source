@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qtv.h"
 #include "utils.h"
 
+static qbool skins_need_preache = true;
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 
@@ -42,22 +43,26 @@ char	allskins[MAX_OSPATH];
 #define	MAX_CACHED_SKINS	128
 skin_t	skins[MAX_CACHED_SKINS];
 
-int		numskins;
+static int numskins;
 
 // return type of skin forcing if it's allowed for the player in the POV
 static int Skin_ForcingType(const char *team)
 {
-	if (teamforceskins.integer && TP_ThisPOV_IsHisTeam(team))
+	if (teamforceskins.integer && TP_ThisPOV_IsHisTeam(team)) {
 		return teamforceskins.integer;	// allow for teammates
+	}
 
 	if (enemyforceskins.integer && !TP_ThisPOV_IsHisTeam(team)) {
 		if (cls.demoplayback || cl.spectator) { // allow for demos
 			return enemyforceskins.integer;
-		} else {  // for gameplay respect the FPD
-			if (!(cl.fpd & FPD_NO_FORCE_SKIN) && !(cl.fpd & FPD_NO_FORCE_COLOR))
+		}
+		else {  // for gameplay respect the FPD
+			if (!(cl.fpd & FPD_NO_FORCE_SKIN) && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
 				return enemyforceskins.integer;
-			else
+			}
+			else {
 				return 0;
+			}
 		}
 	}
 
@@ -231,21 +236,20 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 	return NULL;
 }
 
-qbool skins_need_preache = true;
-
 // HACK
 void Skins_PreCache(void)
 {
 	int i;
 	byte *tex;
 
-	if (!skins_need_preache) // no need, we alredy done this
+	if (!skins_need_preache) {
+		// no need, we have all skins we need
 		return;
+	}
 
 	skins_need_preache = false;
 
 	// this must register skins with such names in skins[] array
-
 	Skin_Find_Ex(NULL, cl_teamskin.string);
 	Skin_Find_Ex(NULL, cl_enemyskin.string);
 	Skin_Find_Ex(NULL, cl_teamquadskin.string);
@@ -258,17 +262,15 @@ void Skins_PreCache(void)
 	Skin_Find_Ex(NULL, "base");
 
 	// now load all 24 bit skins in skins[] array
-
-	for (i = 0; i < numskins; i++)
-	{
-		tex = Skin_Cache (&skins[i], false); // this precache skin file in mem
+	for (i = 0; i < numskins; i++) {
+		tex = Skin_Cache(&skins[i], false); // this precache skin file in mem
 
 		if (!tex) {
 			continue; // nothing more we can do
 		}
 
 		if (skins[i].bpp != 4) {
-			// we interesting in 24 bit skins only
+			// we interested in 24 bit skins only
 			continue;
 		}
 
@@ -277,7 +279,7 @@ void Skins_PreCache(void)
 			continue;
 		}
 
-		skins[i].texnum = GL_LoadTexture (skins[i].name, skins[i].width, skins[i].height, tex, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+		skins[i].texnum = GL_LoadTexture(skins[i].name, skins[i].width, skins[i].height, tex, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 
 		Com_DPrintf("skin precache: %s, texnum %d\n", skins[i].name, skins[i].texnum);
 	}
@@ -410,8 +412,9 @@ void Skin_Skins_f (void) {
 	int i;
 
 	for (i = 0; i < numskins; i++) {
-		if (skins[i].cache.data)
-			Cache_Free (&skins[i].cache);
+		if (skins[i].cache.data) {
+			Cache_Free(&skins[i].cache);
+		}
 	}
 	numskins = 0;
 
@@ -421,8 +424,7 @@ void Skin_Skins_f (void) {
 	cls.downloadtype = dl_skin;
 	Skin_NextDownload ();
 
-	if (cls.mvdplayback == QTV_PLAYBACK && cbuf_current != &cbuf_main)
-	{
+	if (cls.mvdplayback == QTV_PLAYBACK && cbuf_current != &cbuf_main) {
 		cls.qtv_donotbuffer = false;
 	}
 }

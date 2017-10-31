@@ -444,6 +444,7 @@ void R_PolyBlend(void)
 	else {
 		GLC_PolyBlend(v_blend);
 	}
+	// FIXME: GL_ResetState()
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 }
 
@@ -925,12 +926,6 @@ void R_Init(void)
 
 void R_RenderScene(void)
 {
-	extern void Skins_PreCache(void);
-
-	R_Check_R_FullBright(); // check for changes in r_fullbright
-
-	Skins_PreCache();  // preache skins if needed
-
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
@@ -1072,46 +1067,62 @@ static void R_RenderSceneBlur(void)
 
 void R_RenderPostProcess (void)
 {
-	R_RenderSceneBlur();
-	R_BloomBlend();
+	if (!GL_ShadersSupported()) {
+		R_RenderSceneBlur();
+		R_BloomBlend();
+	}
+}
+
+static void R_Render3DEffects(void)
+{
+	// Adds particles (all types)
+	R_DrawParticles();
+
+	// Adds chat icons over player's heads (afk etc)
+	DrawChatIcons();
+
+	// Run corona logic
+	R_DrawCoronas();
+
+	// Actually render
+	GL_DrawBillboards();
+}
+
+static void R_Render3DHud(void)
+{
+	// Adds 'globes' around lights and also marks affected surfaces for the next frame
+	R_RenderDlights();
+
+	// Draw the player's view model (gun)
+	R_DrawViewModel();
+
+	GL_DrawVelocity3D();
+
+	// While still in 3D mode, calculate the location of labels to be printed in 2D
+	SCR_SetupAutoID();
 }
 
 void R_RenderView(void)
 {
-	extern void DrawChatIcons(void);
-
 	if (!r_worldentity.model || !cl.worldmodel) {
 		Sys_Error("R_RenderView: NULL worldmodel");
 	}
 
+	// Wait for previous commands to 'complete'
 	if (!r_speeds.integer && gl_finish.integer) {
 		glFinish();
 	}
 
 	R_Clear();
 
-	// render normal view
+	// render normal view (world & entities)
 	R_RenderScene();
 
-	R_RenderDlights();
+	// Adds 3d effects (particles, lights, chat icons etc)
+	R_Render3DEffects();
 
-	R_DrawParticles();
-
-	DrawChatIcons();
-
-	//VULT: CORONAS
-	//Even if coronas gets turned off, let active ones fade out
-	if (amf_coronas.value || CoronaCount) {
-		R_DrawCoronas();
-	}
-
-	GL_DrawBillboards();
-
-	R_DrawViewModel();
-
-	GL_DrawVelocity3D();
-
-	SCR_SetupAutoID();
+	// Draw 3D hud elements
+	R_Render3DHud();
 
 	if (r_speeds.integer) {
 		double time = Sys_DoubleTime() - frameStats.start_time;

@@ -126,6 +126,10 @@ void R_DrawCoronas(void)
 	corona_t *c;
 	corona_texture_id tex;
 
+	if (!amf_coronas.integer && !CoronaCount) {
+		return;
+	}
+
 	if (!ISPAUSED) {
 		R_UpdateCoronas();
 	}

@@ -267,6 +267,9 @@ extern	const char *gl_extensions;
 
 qbool R_PointIsUnderwater(vec3_t point);
 
+// gl_chaticons.c
+void DrawChatIcons(void);
+
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
 void GL_BuildSkySurfacePolys (msurface_t *fa);

@@ -936,13 +936,14 @@ int Cam_TrackNum(void);
 void Cam_Lock(int playernum);
 
 // skin.c
-void	Skin_Find (player_info_t *sc);
-char	*Skin_FindName (player_info_t *sc);
-byte	*Skin_Cache (skin_t *skin, qbool no_baseskin);
-void	Skin_Skins_f (void);
-void	Skin_AllSkins_f (void);
-void	Skin_NextDownload (void);
-void	Skin_ShowSkins_f (void);
+void Skin_Find(player_info_t *sc);
+char* Skin_FindName(player_info_t *sc);
+byte* Skin_Cache(skin_t *skin, qbool no_baseskin);
+void Skin_Skins_f(void);
+void Skin_AllSkins_f(void);
+void Skin_NextDownload(void);
+void Skin_ShowSkins_f(void);
+void Skins_PreCache(void);
 
 // match_tools.c
 void MT_Init(void);

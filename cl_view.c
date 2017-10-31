@@ -1027,11 +1027,6 @@ qbool V_PreRenderView(void)
 	return true;
 }
 
-void V_RenderView (void)
-{
-	R_RenderView ();
-}
-
 //============================================================================
 
 void V_Init (void) {
