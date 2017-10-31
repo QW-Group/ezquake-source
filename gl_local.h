@@ -563,7 +563,7 @@ typedef struct glm_program_s {
 	struct glm_program_s* next;
 	const char* friendly_name;
 	const char* shader_text[GLM_SHADER_COUNT];
-	const char* included_definitions;
+	char* included_definitions;
 	GLuint shader_length[GLM_SHADER_COUNT];
 	qbool uniforms_found;
 
@@ -893,7 +893,7 @@ void GL_ProcessErrors(const char* message);
 #else
 #define GL_Paranoid_Printf(...)
 #endif
-void GLM_DeletePrograms(void);
+void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
 void GL_DeleteBuffers(void);
 void GL_DeleteVAOs(void);

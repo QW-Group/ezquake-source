@@ -724,7 +724,7 @@ static void HandleEvents(void)
 
 /*****************************************************************************/
 
-void VID_Shutdown(void)
+void VID_Shutdown(qbool restart)
 {
 	IN_DeactivateMouse();
 
@@ -737,7 +737,7 @@ void VID_Shutdown(void)
 #endif
 
 	if (GL_ShadersSupported()) {
-		GLM_DeletePrograms();
+		GLM_DeletePrograms(restart);
 	}
 
 	GL_DeleteVAOs();
@@ -1517,7 +1517,7 @@ static void VID_Restart_f(void)
 		return;
 	}
 
-	VID_Shutdown();
+	VID_Shutdown(true);
 
 	ReloadPaletteAndColormap();
 

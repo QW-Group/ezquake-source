@@ -242,3 +242,8 @@ qbool GL_VBOsSupported(void)
 {
 	return buffers_supported;
 }
+
+qbool GL_BufferValid(buffer_ref buffer)
+{
+	return buffer.index && buffer.index < sizeof(buffers) / sizeof(buffers[0]) && buffers[buffer.index].glref != 0;
+}

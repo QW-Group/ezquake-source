@@ -65,7 +65,7 @@ void VID_Init (unsigned char *palette);
 // the palette data will go away after the call, so it must be copied off if
 // the video driver will need it again
 
-void VID_Shutdown (void);
+void VID_Shutdown (qbool restart);
 // Called at shutdown
 
 void VID_Update (vrect_t *rects);

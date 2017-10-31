@@ -910,7 +910,7 @@ void *Q_calloc (size_t n, size_t size)
 	return p;
 }
 
-void *Q_realloc (void *p, size_t newsize)
+void *Q_realloc(void *p, size_t newsize)
 {
 	if(!(p = realloc(p, newsize)))
 		Sys_Error ("Q_realloc: Not enough memory free; check disk space\n");
@@ -918,12 +918,16 @@ void *Q_realloc (void *p, size_t newsize)
 	return p;
 }
 
-char *Q_strdup (const char *src)
+char *Q_strdup(const char *src)
 {
-	char *p = strdup(src);
+	if (src) {
+		char *p = strdup(src);
 
-	if (!p)
-		Sys_Error ("Q_strdup: Not enough memory free; check disk space\n");
-	return p;
+		if (!p) {
+			Sys_Error("Q_strdup: Not enough memory free; check disk space\n");
+		}
+		return p;
+	}
+	return NULL;
 }
 

@@ -2523,8 +2523,9 @@ void CL_Shutdown (void)
 	MP3_Shutdown();
 	IN_Shutdown ();
 	Log_Shutdown();
-	if (host_basepal)
-		VID_Shutdown();
+	if (host_basepal) {
+		VID_Shutdown(false);
+	}
 	History_Shutdown();
 	Sys_CloseIPC();
 	SB_Shutdown();

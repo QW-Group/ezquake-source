@@ -161,7 +161,8 @@ typedef struct gl_buffer_s {
 	int index;
 } buffer_ref;
 
-#define GL_BufferReferenceIsValid(x) (x.index)
+qbool GL_BufferValid(buffer_ref buffer);
+#define GL_BufferReferenceIsValid(x) (x.index && GL_BufferValid(x))
 extern const buffer_ref null_buffer_reference;
 
 typedef struct glm_vao_s {
