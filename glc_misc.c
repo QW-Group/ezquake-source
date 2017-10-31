@@ -180,9 +180,6 @@ void GLC_RenderSceneBlurDo(float alpha)
 	int vwidth = 1, vheight = 1;
 	float vs, vt, cs, ct;
 
-	// Remember all attributes.
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-
 	// alpha more than 0.5 are wrong.
 	alpha = bound(0.1, alpha, 0.5);
 
@@ -199,15 +196,11 @@ void GLC_RenderSceneBlurDo(float alpha)
 			vheight *= 2;
 	}
 
-	GL_Viewport(0, 0, glwidth, glheight);
-
-	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
-
 	// go 2d
 	GL_PushMatrix(GL_PROJECTION, oldProjectionMatrix);
 	GL_PushMatrix(GL_MODELVIEW, oldModelviewMatrix);
-	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-	GL_IdentityModelView();
+
+	GLC_StateBeginSceneBlur();
 
 	//blend the last frame onto the scene
 	//the maths is because our texture is over-sized (must be power of two)
@@ -217,12 +210,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vs *= 1;//gl_motionblurscale.value;
 	vt *= 1;//gl_motionblurscale.value;
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable (GL_CULL_FACE);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-
+	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
 	glColor4f(1, 1, 1, alpha);
-
 	if (draw)
 	{
 		glBegin(GL_QUADS);
@@ -253,8 +242,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 		GL_TexParameteri(GL_TEXTURE0, sceneblur_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-	// Restore attributes.
-	glPopAttrib();
+	GLC_StateEndSceneBlur();
 }
 
 void GLC_PreRenderView(void)

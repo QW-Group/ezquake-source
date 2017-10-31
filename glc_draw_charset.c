@@ -34,21 +34,7 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 	// (For instance, only change color in a string when the actual color changes, instead of doing
 	// it on each character always).
 	if (gl_statechange) {
-		// Turn on alpha transparency.
-		if ((gl_alphafont.value || apply_overall_alpha)) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-		}
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-		if (scr_coloredText.integer) {
-			GL_TextureEnvMode(GL_MODULATE);
-		}
-		else {
-			GL_TextureEnvMode(GL_REPLACE);
-		}
-
-		// Set the overall alpha.
-		glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
+		GLC_StateBeginDrawCharacterBase(apply_overall_alpha, color);
 	}
 
 	if (bigchar) {
@@ -120,13 +106,6 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 	glEnd();
 }
 
-void GLC_Draw_ResetCharGLState(void)
-{
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	glColor4ubv(color_white);
-}
-
 void GLC_Draw_SetColor(byte* rgba, float alpha)
 {
 	extern cvar_t scr_coloredText;
@@ -138,19 +117,5 @@ void GLC_Draw_SetColor(byte* rgba, float alpha)
 
 void GLC_Draw_StringBase_StartString(int x, int y, float scale)
 {
-	extern cvar_t gl_alphafont;
-	extern cvar_t scr_coloredText;
-
-	// Turn on alpha transparency.
-	if (gl_alphafont.value || (overall_alpha < 1.0)) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	}
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-	if (scr_coloredText.integer) {
-		GL_TextureEnvMode(GL_MODULATE);
-	}
-	else {
-		GL_TextureEnvMode(GL_REPLACE);
-	}
+	GLC_StateBeginStringDraw();
 }

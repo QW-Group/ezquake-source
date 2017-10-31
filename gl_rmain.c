@@ -395,12 +395,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			continue;
 		}
 
-		if (gl_affinemodels.value) {
-			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-		}
-		if (gl_smoothmodels.value) {
-			GL_ShadeModel(GL_SMOOTH);
-		}
 		switch (currententity->model->type) {
 		case mod_alias:
 			R_DrawAliasModel(currententity, vislist->shell[i]);
@@ -412,12 +406,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 			vislist->drawn[i] = true;
 			break;
 		}
-	}
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
-	if (gl_smoothmodels.value) {
-		GL_ShadeModel(GL_FLAT);
 	}
 	GL_EndDrawAliasModels();
 
@@ -669,8 +657,6 @@ static void R_SetupGL(void)
 {
 	R_SetupViewport();
 
-	GL_CullFace(GL_FRONT);
-
 	GL_IdentityModelView();
 	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
 	GL_Rotate(GL_MODELVIEW, 90, 0, 0, 1);	    // put Z going up
@@ -680,33 +666,7 @@ static void R_SetupGL(void)
 	GL_Translate(GL_MODELVIEW, -r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
 
-	// set drawing parms
-	if (gl_cull.value) {
-		glEnable(GL_CULL_FACE);
-	}
-	else {
-		glDisable(GL_CULL_FACE);
-	}
-
-	if (CL_MultiviewEnabled()) {
-		glClear(GL_DEPTH_BUFFER_BIT);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		GL_DepthFunc(GL_LEQUAL);
-	}
-
-	GL_DepthRange(gldepthmin, gldepthmax);
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-
-	glEnable(GL_DEPTH_TEST);
-
-	if (gl_gammacorrection.integer) {
-		glEnable(GL_FRAMEBUFFER_SRGB);
-	}
-	else {
-		glDisable(GL_FRAMEBUFFER_SRGB);
-	}
+	GL_StateDefault3D();
 
 	if (GL_ShadersSupported()) {
 		GLM_SetupGL();

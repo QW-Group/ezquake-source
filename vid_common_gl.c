@@ -77,8 +77,6 @@ GLenum GL_TextureTargetFromReference(texture_ref ref);
 
 void GL_BindBuffer(buffer_ref ref);
 
-void GL_AlphaFunc(GLenum func, GLclampf threshold);
-
 const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
@@ -438,26 +436,8 @@ void GL_Init(void)
 	Cvar_ForceSet(&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
 	Cvar_Register(&gl_maxtmu2);
-#ifndef __APPLE__
-	glClearColor(1, 0, 0, 0);
-#else
-	glClearColor(0.2, 0.2, 0.2, 1.0);
-#endif
 
-	GL_CullFace(GL_FRONT);
-	if (!GL_ShadersSupported()) {
-		glEnable(GL_TEXTURE_2D);
-	}
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	GL_AlphaFunc(GL_GREATER, 0.666);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	GL_ShadeModel(GL_FLAT);
-
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	GL_TextureEnvMode(GL_REPLACE);
+	GL_StateDefaultInit();
 
 	GL_CheckExtensions();
 }

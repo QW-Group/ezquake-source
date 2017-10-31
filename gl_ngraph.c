@@ -119,8 +119,8 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
     }
-
 	GL_TextureEnvMode(GL_MODULATE);
+
 	texture = !par_full->value;
 
 	if (GL_ShadersSupported()) {

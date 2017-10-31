@@ -131,6 +131,8 @@ void GLC_RenderLumas(void)
 		}
 		luma_polys[i] = NULL;
 	}
+
+	GLC_StateEndRenderLumas();
 }
 
 void EmitDetailPolys(void)

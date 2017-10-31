@@ -1452,15 +1452,6 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	if (e->alpha) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_TextureEnvMode(GL_MODULATE);
-		glColor4f (1, 1, 1, e->alpha);
-	}
-	else {
-		glColor3f (1,1,1);
-	}
-
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
 	if (rotated) {
 		vec3_t	temp;
@@ -1498,6 +1489,8 @@ void R_DrawBrushModel(entity_t *e)
 	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
 	GL_Rotate(GL_MODELVIEW, e->angles[0], 0, 1, 0);
 	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
+
+	GL_StateBeginDrawBrushModel(e, polygonOffset);
 
 	R_ClearTextureChains(clmodel);
 
@@ -1554,22 +1547,15 @@ void R_DrawBrushModel(entity_t *e)
 	else {
 		extern cvar_t gl_brush_polygonoffset;
 
-		if (polygonOffset) {
-			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
-		}
-
 		GLC_DrawBrushModel(e, clmodel, caustics);
 
 		R_DrawSkyChain();
 
 		R_DrawAlphaChain(alphachain);
-
-		if (polygonOffset) {
-			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-		}
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
+	GL_StateEndDrawBrushModel();
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 

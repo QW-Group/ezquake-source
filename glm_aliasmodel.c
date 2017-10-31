@@ -413,9 +413,11 @@ void GL_BeginDrawAliasModels(void)
 	in_batch_mode = true;
 	material_samplers = 0;
 
-	if (!GL_ShadersSupported()) {
-		// FIXME: Why is classic code in here?
-		GL_EnableTMU(GL_TEXTURE0);
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
+	if (gl_smoothmodels.value) {
+		GL_ShadeModel(GL_SMOOTH);
 	}
 }
 

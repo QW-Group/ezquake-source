@@ -70,12 +70,23 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
 		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
 	);
+	if (!GL_ShadersSupported()) {
+		GL_EnableTMU(GL_TEXTURE0);
+	}
 }
 
 void GL_StateEndEntities(visentlist_t* vislist)
 {
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+	}
+	if (!GL_ShadersSupported()) {
+		if (gl_affinemodels.value) {
+			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		}
+		if (gl_smoothmodels.value) {
+			GL_ShadeModel(GL_FLAT);
+		}
 	}
 }
 
@@ -196,13 +207,14 @@ void GLC_StateEndUnderwaterCaustics(void)
 	GL_DisableMultitexture();
 }
 
-void GLC_StateBeginDrawImage(void)
+void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
 {
 	GL_TextureEnvMode(GL_MODULATE);
 	glEnable(GL_TEXTURE_2D);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-	// alpha-test & color setting left in function
+	GL_AlphaBlendFlags((alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
+	GL_Color4ubv(color);
 }
 
 void GLC_StateEndDrawImage(void)
@@ -255,6 +267,7 @@ void GLC_StateBeginFadeScreen(float alpha)
 	else {
 		glColor3f(0, 0, 0);
 	}
+	glDisable(GL_TEXTURE_2D);
 }
 
 void GLC_StateEndFadeScreen(void)
@@ -712,3 +725,292 @@ void GLC_StateEndTurbPoly(void)
 {
 	GL_DisableFog();
 }
+
+void GLC_StateBeginBlendLightmaps(void)
+{
+	extern qbool gl_invlightmaps;
+
+	GL_DepthMask(GL_FALSE);		// don't bother writing Z
+	if (gl_invlightmaps) {
+		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+	}
+	else {
+		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
+	}
+
+	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
+}
+
+void GLC_StateEndBlendLightmaps(void)
+{
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
+}
+
+void GLC_StateBeginDrawSimpleItem(void)
+{
+	glDisable(GL_CULL_FACE);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_EnableTMU(GL_TEXTURE0);
+}
+
+void GLC_StateEndDrawSimpleItem(int oldFlags)
+{
+	glEnable(GL_CULL_FACE);
+	GL_AlphaBlendFlags(oldFlags);
+}
+
+void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
+{
+	glDisable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	if (thickness > 0.0) {
+		glLineWidth(thickness);
+	}
+}
+
+void GLC_StateEndDrawAlphaPieSliceRGB(float thickness)
+{
+	// FIXME: thickness is not reset
+	glEnable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	glColor4ubv(color_white);
+}
+
+void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4])
+{
+	extern cvar_t gl_alphafont;
+	extern cvar_t scr_coloredText;
+	extern float overall_alpha;
+
+	// Turn on alpha transparency.
+	if ((gl_alphafont.value || apply_overall_alpha)) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+	}
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	if (scr_coloredText.integer) {
+		GL_TextureEnvMode(GL_MODULATE);
+	}
+	else {
+		GL_TextureEnvMode(GL_REPLACE);
+	}
+
+	// Set the overall alpha.
+	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
+}
+
+void GLC_StateResetCharGLState(void)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_TextureEnvMode(GL_REPLACE);
+	glColor4ubv(color_white);
+}
+
+void GLC_StateBeginStringDraw(void)
+{
+	extern cvar_t gl_alphafont;
+	extern cvar_t scr_coloredText;
+	extern float overall_alpha;
+
+	// Turn on alpha transparency.
+	if (gl_alphafont.value || (overall_alpha < 1.0)) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
+	}
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	if (scr_coloredText.integer) {
+		GL_TextureEnvMode(GL_MODULATE);
+	}
+	else {
+		GL_TextureEnvMode(GL_REPLACE);
+	}
+}
+
+void GLC_StateBeginSceneBlur(void)
+{
+	// Remember all attributes.
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	GL_Viewport(0, 0, glwidth, glheight);
+	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
+	GL_IdentityModelView();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+}
+
+void GLC_StateEndSceneBlur(void)
+{
+	// FIXME: Yup, this is the same
+
+	// Restore attributes.
+	glPopAttrib();
+}
+
+void GLC_StateBeginCausticsPolys(void)
+{
+	GL_TextureEnvMode(GL_DECAL);
+	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+}
+
+void GLC_StateEndCausticsPolys(void)
+{
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+}
+
+void GL_StateBeginDrawViewModel(float alpha)
+{
+	// hack the depth range to prevent view model from poking into walls
+	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	if (gl_mtexable) {
+		if (alpha < 1) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+	}
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
+}
+
+void GL_StateEndDrawViewModel(void)
+{
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	}
+	GL_DepthRange(gldepthmin, gldepthmax);
+}
+
+void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
+{
+	if (e->alpha) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_TextureEnvMode(GL_MODULATE);
+		glColor4f (1, 1, 1, e->alpha);
+	}
+	else {
+		glColor3f (1,1,1);
+	}
+
+	if (!GL_ShadersSupported() && polygonOffset) {
+		GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+	}
+}
+
+void GL_StateEndDrawBrushModel(void)
+{
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+}
+
+void GL_StateDefault2D(void)
+{
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_Color3ubv(color_white);
+}
+
+void GL_StateDefault3D(void)
+{
+	// set drawing parms
+	GL_CullFace(GL_FRONT);
+	if (gl_cull.value) {
+		glEnable(GL_CULL_FACE);
+	}
+	else {
+		glDisable(GL_CULL_FACE);
+	}
+
+	if (CL_MultiviewEnabled()) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+		gldepthmin = 0;
+		gldepthmax = 1;
+		GL_DepthFunc(GL_LEQUAL);
+	}
+
+	GL_DepthRange(gldepthmin, gldepthmax);
+
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+
+	glEnable(GL_DEPTH_TEST);
+
+	if (gl_gammacorrection.integer) {
+		glEnable(GL_FRAMEBUFFER_SRGB);
+	}
+	else {
+		glDisable(GL_FRAMEBUFFER_SRGB);
+	}
+}
+
+void GL_StateDefaultInit(void)
+{
+#ifndef __APPLE__
+	glClearColor(1, 0, 0, 0);
+#else
+	glClearColor(0.2, 0.2, 0.2, 1.0);
+#endif
+
+	GL_CullFace(GL_FRONT);
+	if (!GL_ShadersSupported()) {
+		glEnable(GL_TEXTURE_2D);
+	}
+
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
+	GL_AlphaFunc(GL_GREATER, 0.666);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_ShadeModel(GL_FLAT);
+
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	GL_TextureEnvMode(GL_REPLACE);
+}
+
+void GL_StateBeginSCRTeamInfo(void)
+{
+	GL_TextureEnvMode(GL_MODULATE);
+	GL_Color4f(1, 1, 1, 1);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+}
+
+void GL_StateEndSCRTeamInfo(void)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_Color4f(1, 1, 1, 1);
+}
+
+void GL_StateBeginSCRShowNick(void)
+{
+	GL_Color4f(1, 1, 1, 1);
+	GL_TextureEnvMode(GL_MODULATE);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+}
+
+void GL_StateEndSCRShowNick(void)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_Color4f(1, 1, 1, 1);
+}
+
+void GLC_StateBeginDrawPolygon(void)
+{
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	glDisable(GL_TEXTURE_2D);
+	// (color also set)
+}
+
+void GLC_StateEndDrawPolygon(int oldFlags)
+{
+	GL_AlphaBlendFlags(oldFlags);
+	glEnable(GL_TEXTURE_2D);
+}
+

@@ -1594,12 +1594,11 @@ static void SCR_Draw_TeamInfo(void)
 	// limit name length
 	maxname = bound(0, maxname, scr_teaminfo_name_width.integer);
 
-	if ( !slots_num )
+	if (!slots_num) {
 		return;
+	}
 
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_Color4f(1, 1, 1, 1);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_StateBeginSCRTeamInfo();
 
 	if (scale != 1) {
 		GL_PushMatrix(GL_PROJECTION, oldMatrix);
@@ -1633,9 +1632,7 @@ static void SCR_Draw_TeamInfo(void)
 		GL_PopMatrix(GL_PROJECTION, oldMatrix);
 	}
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color4f(1, 1, 1, 1);
+	GL_StateEndSCRTeamInfo();
 }
 
 void Parse_TeamInfo(char *s)
@@ -1774,12 +1771,9 @@ static void SCR_Draw_ShowNick(void)
 	maxname = 999;
 	maxname = bound(0, maxname, scr_shownick_name_width.integer);
 
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_Color4f(1, 1, 1, 1);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_StateBeginSCRShowNick();
 
-	if (scale != 1)
-	{
+	if (scale != 1) {
 		GL_PushMatrix(GL_PROJECTION, oldMatrix);
 		GL_Scale(GL_PROJECTION, scale, scale, 1);
 	}
@@ -1805,9 +1799,7 @@ static void SCR_Draw_ShowNick(void)
 		GL_PopMatrix(GL_PROJECTION, oldMatrix);
 	}
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color4f(1, 1, 1, 1);
+	GL_StateEndSCRShowNick();
 }
 
 /********************************* TILE CLEAR *********************************/

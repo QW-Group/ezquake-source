@@ -281,7 +281,7 @@ static void Draw_ResetCharGLState(void)
 		GLM_Draw_ResetCharGLState();
 	}
 	else {
-		GLC_Draw_ResetCharGLState();
+		GLC_StateResetCharGLState();
 	}
 }
 

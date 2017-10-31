@@ -476,20 +476,7 @@ static void GLC_BlendLightmaps(void)
 	glpoly_t *p;
 	float *v;
 
-	//	if (R_FullBrightAllowed())
-	//		return;
-
-	GL_DepthMask(GL_FALSE);		// don't bother writing Z
-	if (gl_invlightmaps) {
-		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-	}
-	else {
-		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
-	}
-
-	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	}
+	GLC_StateBeginBlendLightmaps();
 
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
 		if (!(p = lightmap_polys[i])) {
@@ -510,7 +497,6 @@ static void GLC_BlendLightmaps(void)
 		}
 		lightmap_polys[i] = NULL;
 	}
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
+
+	GLC_StateEndBlendLightmaps();
 }

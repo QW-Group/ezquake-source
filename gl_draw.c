@@ -1248,11 +1248,7 @@ void GL_Set2D(void)
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	GL_IdentityModelView();
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_Color3ubv(color_white);
+	GL_StateDefault2D();
 }
 
 void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha)

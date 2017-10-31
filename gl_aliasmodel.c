@@ -782,19 +782,12 @@ void R_DrawViewModel(void)
 		gun.framelerp = -1;
 	}
 
-	// hack the depth range to prevent view model from poking into walls
-	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 	if (gl_mtexable) {
 		gun.alpha = bound(0, cl_drawgun.value, 1);
-		if (gun.alpha < 1) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
 	}
 
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-	}
+	GL_StateBeginDrawViewModel(gun.alpha);
+
 	switch (currententity->model->type) {
 	case mod_alias:
 		R_DrawAliasModel(currententity, false);
@@ -806,11 +799,9 @@ void R_DrawViewModel(void)
 		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
 		break;
 	}
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
 
-	GL_DepthRange(gldepthmin, gldepthmax);
+	GL_StateEndDrawViewModel();
+
 	GL_LeaveRegion();
 }
 

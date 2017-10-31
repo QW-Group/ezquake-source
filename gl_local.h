@@ -845,7 +845,6 @@ void GLC_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 void GLC_DrawWaterSurfaces(void);
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 void GLC_DrawWorld(void);
-void GLC_Draw_ResetCharGLState(void);
 void GLC_Draw_SetColor(byte* rgba, float alpha);
 void GLC_Draw_StringBase_StartString(int x, int y, float scale);
 void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos);
@@ -894,6 +893,7 @@ void GL_GenVertexArray(glm_vao_t* vao);
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);
+void GL_AlphaFunc(GLenum func, GLclampf threshold);
 
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
@@ -1147,7 +1147,7 @@ void GLC_StateBeginAliasPowerupShell(void);
 void GLC_StateEndAliasPowerupShell(void);
 void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_StateEndUnderwaterCaustics(void);
-void GLC_StateBeginDrawImage(void);
+void GLC_StateBeginDrawImage(qbool alpha, byte color[4]);
 void GLC_StateEndDrawImage(void);
 void GLC_StateBeginAlphaPic(float alpha);
 void GLC_StateEndAlphaPic(float alpha);
@@ -1201,6 +1201,36 @@ void GLC_StateBeginTurbPoly(void);
 void GLC_StateEndTurbPoly(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
+void GLC_StateResetCharGLState(void);
+void GLC_StateBeginStringDraw(void);
+
+void GLC_StateBeginBlendLightmaps(void);
+void GLC_StateEndBlendLightmaps(void);
+void GLC_StateBeginDrawSimpleItem(void);
+void GLC_StateEndDrawSimpleItem(int oldFlags);
+void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
+void GLC_StateEndDrawAlphaPieSliceRGB(float thickness);
+void GLC_StateBeginDrawCharacterBase(qbool apply_overall_alpha, byte color[4]);
+void GLC_StateResetCharGLState(void);
+void GLC_StateBeginStringDraw(void);
+void GLC_StateBeginSceneBlur(void);
+void GLC_StateEndSceneBlur(void);
+void GLC_StateBeginCausticsPolys(void);
+void GLC_StateEndCausticsPolys(void);
+void GL_StateBeginDrawViewModel(float alpha);
+void GL_StateEndDrawViewModel(void);
+void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
+void GL_StateEndDrawBrushModel(void);
+void GL_StateDefault2D(void);
+void GL_StateDefault3D(void);
+void GL_StateDefaultInit(void);
+
+void GL_StateBeginSCRTeamInfo(void);
+void GL_StateEndSCRTeamInfo(void);
+void GL_StateBeginSCRShowNick(void);
+void GL_StateEndSCRShowNick(void);
+void GLC_StateBeginDrawPolygon(void);
+void GLC_StateEndDrawPolygon(int oldFlags);
 
 float GL_WaterAlpha(void);
 
