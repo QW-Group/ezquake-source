@@ -30,6 +30,7 @@ static qbool gl_framebuffer_srgb = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
 static qbool gl_line_smooth = false;
+static qbool gl_fog = false;
 static GLboolean gl_depth_mask = GL_FALSE;
 static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
@@ -207,6 +208,7 @@ void GL_InitialiseState(void)
 	gl_blend = false;
 	gl_cull_face = false;
 	gl_line_smooth = false;
+	gl_fog = false;
 	gl_depth_mask = GL_FALSE;
 	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
 		unit_texture_mode[i] = GL_MODULATE;
@@ -458,14 +460,14 @@ int GL_AlphaBlendFlags(int flags)
 
 void GL_EnableFog(void)
 {
-	if (!GLM_Enabled() && gl_fogenable.value) {
+	if (!GLM_Enabled() && gl_fogenable.integer) {
 		glEnable(GL_FOG);
 	}
 }
 
 void GL_DisableFog(void)
 {
-	if (!GLM_Enabled() && gl_fogenable.value) {
+	if (!GLM_Enabled() && gl_fogenable.integer) {
 		glDisable(GL_FOG);
 	}
 }
@@ -480,7 +482,7 @@ void GL_ConfigureFog(void)
 	}
 
 	// START shaman BUG fog was out of control when fogstart>fogend {
-	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
+	if (gl_fogenable.integer && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
 		// } END shaman BUG fog was out of control when fogstart>fogend
 		glFogi(GL_FOG_MODE, GL_LINEAR);
 		colors[0] = gl_fogred.value;
@@ -769,6 +771,14 @@ void GL_Enable(GLenum option)
 		gl_line_smooth = true;
 		GL_LogAPICall("glEnable(GL_LINE_SMOOTH)");
 	}
+	else if (option == GL_FOG) {
+		if (gl_fog) {
+			return;
+		}
+
+		gl_fog = true;
+		GL_LogAPICall("glEnable(GL_FOG)");
+	}
 
 	glEnable(option);
 #ifdef GL_PARANOIA
@@ -850,6 +860,14 @@ void GL_Disable(GLenum option)
 
 		gl_line_smooth = false;
 		GL_LogAPICall("glDisable(GL_LINE_SMOOTH)");
+	}
+	else if (option == GL_FOG) {
+		if (!gl_fog) {
+			return;
+		}
+
+		gl_fog = false;
+		GL_LogAPICall("glDisable(GL_FOG)");
 	}
 
 	glDisable(option);

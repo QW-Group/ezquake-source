@@ -2474,11 +2474,11 @@ void CL_Frame (double time)
 		}
 	}
 	else {
-		CL_LinkEntities ();
+		CL_LinkEntities();
 
-		SCR_UpdateScreen ();
+		SCR_UpdateScreen();
 
-		CL_SoundFrame ();
+		CL_SoundFrame();
 	}
 
 	CL_DecayLights();

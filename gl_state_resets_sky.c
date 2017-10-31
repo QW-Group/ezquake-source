@@ -29,11 +29,14 @@ void GLC_StateBeginFastSky(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogsky.value) {
+	if (gl_fogsky.integer) {
 		GL_EnableFog();
 	}
+	else {
+		GL_DisableFog();
+	}
 	GLC_DisableAllTexturing();
-	glColor3ubv(r_skycolor.color);
+	GL_Color3ubv(r_skycolor.integer);
 
 	LEAVE_STATE;
 }
@@ -43,10 +46,6 @@ void GLC_StateEndFastSky(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_Color4ubv(color_white);
-	if (gl_fogsky.value) {
-		GL_DisableFog();
-	}
 
 	LEAVE_STATE;
 }
@@ -56,7 +55,7 @@ void GLC_StateBeginSky(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	glDisable(GL_DEPTH_TEST);
+	GL_Disable(GL_DEPTH_TEST);
 
 	LEAVE_STATE;
 }
@@ -65,14 +64,14 @@ void GLC_StateBeginSkyZBufferPass(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogenable.value && gl_fogsky.value) {
-		glEnable(GL_DEPTH_TEST);
+	GL_Enable(GL_DEPTH_TEST);
+	if (gl_fogenable.integer && gl_fogsky.integer) {
 		GL_EnableFog();
-		glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+		GL_Color4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
 		GL_BlendFunc(GL_ONE, GL_ZERO);
 	}
 	else {
-		glEnable(GL_DEPTH_TEST);
+		GL_DisableFog();
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		GL_BlendFunc(GL_ZERO, GL_ONE);
 	}
@@ -87,7 +86,7 @@ void GLC_StateEndSkyZBufferPass(void)
 	ENTER_STATE;
 
 	// FIXME: GL_ResetState()
-	if (gl_fogenable.value && gl_fogsky.value) {
+	if (gl_fogenable.integer && gl_fogsky.integer) {
 		GL_DisableFog();
 	}
 	else {
@@ -104,7 +103,7 @@ void GLC_StateEndSkyNoZBufferPass(void)
 {
 	ENTER_STATE;
 
-	glEnable(GL_DEPTH_TEST);
+	GL_Enable(GL_DEPTH_TEST);
 
 	LEAVE_STATE;
 }
@@ -151,7 +150,7 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogsky.value) {
+	if (gl_fogsky.integer) {
 		GL_EnableFog();
 	}
 
@@ -165,7 +164,7 @@ void GLC_StateEndMultiTextureSkyChain(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	if (gl_fogsky.value) {
+	if (gl_fogsky.integer) {
 		GL_DisableFog();
 	}
 
@@ -176,7 +175,7 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogsky.value) {
+	if (gl_fogsky.integer) {
 		GL_EnableFog();
 	}
 	GLC_InitTextureUnits1(solidskytexture, GL_REPLACE);
@@ -199,7 +198,7 @@ void GLC_StateEndSingleTextureSky(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	if (gl_fogsky.value) {
+	if (gl_fogsky.integer) {
 		GL_DisableFog();
 	}
 

@@ -980,7 +980,7 @@ static void R_Clear(void)
 	}
 
 	if (gl_clear.value) {
-		if (gl_fogenable.value) {
+		if (gl_fogenable.integer) {
 			glClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 0.5);//Tei custom clear color
 		}
 		else {

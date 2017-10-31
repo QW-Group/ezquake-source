@@ -30,7 +30,7 @@ void GLC_StateBeginDrawFlatModel(void)
 	GLC_InitTextureUnitsNoBind1(GL_BLEND);
 
 	// START shaman BUG /fog not working with /r_drawflat {
-	if (gl_fogenable.value) {
+	if (gl_fogenable.integer) {
 		glEnable(GL_FOG);
 	}
 	// } END shaman BUG /fog not working with /r_drawflat
@@ -42,8 +42,8 @@ void GLC_StateEndDrawFlatModel(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogenable.value) {
-		glDisable(GL_FOG);
+	if (gl_fogenable.integer) {
+		GL_Disable(GL_FOG);
 	}
 
 	GL_Color4ubv(color_white);
@@ -55,8 +55,8 @@ void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrig
 {
 	ENTER_STATE;
 
-	if (gl_fogenable.value) {
-		glEnable(GL_FOG);
+	if (gl_fogenable.integer) {
+		GL_Enable(GL_FOG);
 	}
 
 	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
@@ -89,7 +89,7 @@ void GLC_StateEndDrawTextureChains(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogenable.value) {
+	if (gl_fogenable.integer) {
 		glDisable(GL_FOG);
 	}
 
