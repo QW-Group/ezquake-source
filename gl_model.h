@@ -442,6 +442,7 @@ typedef enum
 #define	EF_TRACER3	128			// purple trail
 
 #define MAX_SIMPLE_TEXTURES 5
+#define MAX_TEXTURE_ARRAYS_PER_MODEL 64
 
 typedef struct model_s {
 	char				name[MAX_QPATH];
@@ -514,11 +515,11 @@ typedef struct model_s {
 	glm_vao_t           vao;
 	glm_vao_t           vao_simple;
 
-	unsigned int*       texture_arrays;
-	float*              texture_arrays_scale_s;
-	float*              texture_arrays_scale_t;
+	unsigned int        texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
+	float               texture_arrays_scale_s[MAX_TEXTURE_ARRAYS_PER_MODEL];
+	float               texture_arrays_scale_t[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	unsigned int        texture_array_count;
-	int*                texture_array_first;
+	int                 texture_array_first[MAX_TEXTURE_ARRAYS_PER_MODEL];
 
 	float*              temp_vbo_buffer;
 	float               min_tex[2];

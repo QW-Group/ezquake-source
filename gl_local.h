@@ -784,6 +784,7 @@ void GLM_RenderDlight(dlight_t* light);
 void GLM_DrawSkyChain(void);
 void GLM_DrawSky(void);
 void GLM_DrawSkyFace(int axis);
+void GLM_DrawBrushModel(model_t* model);
 void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange);
@@ -804,6 +805,8 @@ void GL_DeleteBuffers(void);
 void GL_InitialiseState(void);
 void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
 void GL_GenVertexArray(glm_vao_t* vao);
+
+void GL_DeleteModelData(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

@@ -292,6 +292,12 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 		return;
 	}
 
+	if (is_texture_array && !model->texture_arrays[0]) {
+		// Texture array set but no value
+		Con_Printf("Model %s has no texture array\n", model->name);
+		return;
+	}
+
 	req = &aliasmodel_requests[batch_count];
 	GL_GetMatrix(GL_MODELVIEW, req->mvMatrix);
 	// TODO: angles

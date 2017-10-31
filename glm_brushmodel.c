@@ -218,6 +218,7 @@ int R_ChainTexturesBySize(model_t* m)
 	return num_sizes;
 }
 
+/*
 void GLM_LoadBrushModelTextures(model_t* loadmodel)
 {
 	int max_width = 0;
@@ -318,7 +319,7 @@ void GLM_LoadBrushModelTextures(model_t* loadmodel)
 		++array_index;
 	}
 }
-
+*/
 
 
 

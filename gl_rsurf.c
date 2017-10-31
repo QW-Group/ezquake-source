@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
-void GLM_DrawBrushModel(model_t* model);
-
 msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
 

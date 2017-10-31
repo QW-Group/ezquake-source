@@ -946,8 +946,9 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 
 	// try load simple textures
 	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
-	for (i = 0; i < MAX_SIMPLE_TEXTURES && i < pheader->numskins; i++)
+	for (i = 0; i < MAX_SIMPLE_TEXTURES && i < pheader->numskins; i++) {
 		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
+	}
 
 	Hunk_FreeToLowMark(start);
 }
