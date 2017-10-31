@@ -26,9 +26,7 @@ out vec2 DetailCoord;
 out vec3 FlatColor;
 out flat int Flags;
 out flat int SamplerNumber;
-#ifdef DRAW_SKYBOX
 out vec3 Direction;
-#endif
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
@@ -46,6 +44,11 @@ layout(std140) uniform WorldCvars {
 	vec4 color[MAX_INSTANCEID];
 	int samplerMapping[MAX_INSTANCEID];
 	int drawFlags[MAX_INSTANCEID];
+
+	// sky
+	float skySpeedscale;
+	float skySpeedscale2;
+	float r_farclip;
 
 	//
 	float waterAlpha;
@@ -83,14 +86,12 @@ void main()
 		TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;
 		TextureCoord.z = materialNumber;
 		TexCoordLightmap = vec3(0, 0, 0);
+		Direction = position - cameraPosition;
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif
 #ifdef DRAW_LUMA_TEXTURES
 		LumaCoord = TextureCoord;
-#endif
-#ifdef DRAW_SKYBOX
-		Direction = position - cameraPosition;
 #endif
 	}
 	else {

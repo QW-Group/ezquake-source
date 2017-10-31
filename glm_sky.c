@@ -236,6 +236,8 @@ void GLM_DrawSky(void)
 {
 	qbool		ignore_z;
 
+	return;
+
 	if (r_fastsky.value || r_skyboxloaded) {
 		return;
 	}

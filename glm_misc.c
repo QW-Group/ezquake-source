@@ -105,6 +105,7 @@ void GLM_SetupGL(void)
 	VectorCopy(r_refdef.vieworg, refdef.position);
 	refdef.time = cl.time;
 	refdef.gamma3d = v_gamma.value;
+
 	refdef.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
 
 	if (!GL_BufferReferenceIsValid(ubo_refdef)) {

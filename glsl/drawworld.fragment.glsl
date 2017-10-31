@@ -12,6 +12,9 @@ layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
 #ifdef DRAW_SKYBOX
 layout(binding=SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
+#else
+layout(binding=SAMPLER_SKYDOME_TEXTURE) uniform sampler2D skyDomeTex;
+layout(binding=SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
 #endif
 layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
@@ -33,7 +36,12 @@ layout(std140) uniform WorldCvars {
 	int samplerMapping[MAX_INSTANCEID];
 	int drawFlags[MAX_INSTANCEID];
 
-	//
+	// sky
+	float skySpeedscale;
+	float skySpeedscale2;
+	float r_farclip;
+
+	// turb surfaces (water/lava/slime/teleporters)
 	float waterAlpha;
 
 	// drawflat for solid surfaces
@@ -66,9 +74,7 @@ in vec3 LumaCoord;
 in vec3 FlatColor;
 in flat int Flags;
 in flat int SamplerNumber;
-#ifdef DRAW_SKYBOX
 in vec3 Direction;
-#endif
 
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
@@ -137,10 +143,20 @@ void main()
 			if (r_fastsky != 0) {
 				frag_colour = r_skycolor;
 			}
-			// TODO: skydome
 			else {
-				// early_fragment_tests enabled so z-buffer already updated, our work is done
-				discard;
+				vec3 dir = normalize(Direction) * r_farclip;
+				float len;
+
+				// Flatten it out
+				dir.z *= 3;
+				len = 198 / length(dir);
+				dir.x *= len;
+				dir.y *= len;
+
+				vec4 skyColor = texture(skyDomeTex, vec2((skySpeedscale + dir.x) / 128.0, (skySpeedscale + dir.y) / 128.0));
+				vec4 cloudColor = texture(skyDomeCloudTex, vec2((skySpeedscale2 + dir.x) / 128.0, (skySpeedscale2 + dir.y) / 128.0));
+
+				frag_colour = mix(skyColor, cloudColor, cloudColor.a);
 			}
 #endif
 		}

@@ -47,6 +47,11 @@ typedef struct block_world_s {
 	GLint samplerMappings[MAX_WORLDMODEL_BATCH][4];
 	GLint flags[MAX_WORLDMODEL_BATCH][4];
 
+	// sky
+	float skySpeedscale;
+	float skySpeedscale2;
+	float r_farclip;
+
 	//
 	float waterAlpha;
 
@@ -55,7 +60,8 @@ typedef struct block_world_s {
 	int r_fastturb;
 	int r_fastsky;
 
-	// ! No padding required as above is 16 bytes...
+	// 
+	int padding1;
 
 	float r_wallcolor[4];  // only used if r_drawflat 1 or 3
 	float r_floorcolor[4]; // only used if r_drawflat 1 or 2
@@ -90,6 +96,8 @@ static int TEXTURE_UNIT_LIGHTMAPS;
 static int TEXTURE_UNIT_DETAIL;
 static int TEXTURE_UNIT_CAUSTICS;
 static int TEXTURE_UNIT_SKYBOX;
+static int TEXTURE_UNIT_SKYDOME_TEXTURE;
+static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures, qbool skybox)
@@ -126,6 +134,13 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYBOX_TEXTURE %d\n", TEXTURE_UNIT_SKYBOX), sizeof(included_definitions));
+		}
+		else {
+			TEXTURE_UNIT_SKYDOME_TEXTURE = samplers++;
+			TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE = samplers++;
+
+			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_TEXTURE %d\n", TEXTURE_UNIT_SKYDOME_TEXTURE), sizeof(included_definitions));
+			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_CLOUDTEXTURE %d\n", TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE), sizeof(included_definitions));
 		}
 		TEXTURE_UNIT_LIGHTMAPS = samplers++;
 		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));
@@ -183,6 +198,12 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 
 	Compile_DrawWorldProgram(detail_tex, caustics, lumas, skybox);
 
+	world.r_farclip = max(r_farclip.value, 4096) * 0.577;
+	world.skySpeedscale = r_refdef2.time * 8;
+	world.skySpeedscale -= (int)world.skySpeedscale & ~127;
+	world.skySpeedscale2 = r_refdef2.time * 16;
+	world.skySpeedscale2 -= (int)world.skySpeedscale2 & ~127;
+
 	world.waterAlpha = wateralpha;
 
 	world.r_drawflat = r_drawflat.integer;
@@ -216,6 +237,12 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 		extern texture_ref skybox_cubeMap;
 
 		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYBOX, skybox_cubeMap);
+	}
+	else {
+		extern texture_ref solidskytexture, alphaskytexture;
+
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYDOME_TEXTURE, solidskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE, alphaskytexture);
 	}
 
 	material_samplers = 0;
