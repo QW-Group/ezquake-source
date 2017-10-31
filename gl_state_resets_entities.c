@@ -133,8 +133,13 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
 	if (custom_model) {
-		GLC_DisableAllTexturing();
 		GL_Color4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
+		if (custom_model->fullbright_cvar.integer || !GL_TextureReferenceIsValid(texture)) {
+			GLC_DisableAllTexturing();
+		}
+		else {
+			GLC_InitTextureUnits1(texture, textureEnvMode);
+		}
 	}
 	else {
 		GL_Color3ubv(color_white);
