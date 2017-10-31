@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform sampler2D tex;
 
 layout(std140) uniform Common2d {
@@ -29,5 +31,7 @@ void main()
 		frag_colour = Colour;
 	}
 
+#ifndef EZ_POSTPROCESS_GAMMA
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma2d)), frag_colour.a);
+#endif
 }

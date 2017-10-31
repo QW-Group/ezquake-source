@@ -99,7 +99,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 	static GLint line_matrix;
 	static GLint line_color;
 
-	if (!line_program.program) {
+	if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
 		GL_VFDeclare(line_draw);
 
 		// Very simple line-drawing
@@ -188,7 +188,7 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 
 void GLM_CreateMultiImageProgram(void)
 {
-	if (!multiImageProgram.program) {
+	if (GLM_ProgramRecompileNeeded(&multiImageProgram, 0)) {
 		GL_VGFDeclare(multi_image_draw);
 
 		// Initialise program for drawing image

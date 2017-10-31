@@ -563,7 +563,17 @@ typedef struct glm_program_s {
 	const char* included_definitions;
 	GLuint shader_length[GLM_SHADER_COUNT];
 	qbool uniforms_found;
+
+	unsigned int custom_options;
+	qbool force_recompile;
 } glm_program_t;
+
+// Check if a program needs to be recompiled
+qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options);
+
+// Flags all programs to be recompiled
+// Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
+void GLM_ForceRecompile(void);
 
 qbool GLM_CreateVFProgram(
 	const char* friendlyName,

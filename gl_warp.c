@@ -252,10 +252,7 @@ void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 //Tei, add fire to lava
 void EmitCausticsPolys (void)
 {
-	if (GL_ShadersSupported()) {
-		GLM_EmitCausticsPolys();
-	}
-	else {
+	if (!GL_ShadersSupported()) {
 		GLC_EmitCausticsPolys();
 	}
 }

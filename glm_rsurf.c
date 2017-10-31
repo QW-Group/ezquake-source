@@ -77,7 +77,6 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
-static int drawworld_compiledOptions;
 static buffer_ref ubo_worldcvars;
 static block_world_t world;
 
@@ -98,10 +97,11 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0);
 
-	if (!drawworld.program || drawworld_compiledOptions != drawworld_desiredOptions) {
+	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[512];
 		int samplers = 0;
-		
+		GL_VFDeclare(drawworld);
+
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (detail_textures) {
 			TEXTURE_UNIT_DETAIL = samplers++;
@@ -127,12 +127,10 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
 
-		GL_VFDeclare(drawworld);
-
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);
 
-		drawworld_compiledOptions = drawworld_desiredOptions;
+		drawworld.custom_options = drawworld_desiredOptions;
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
@@ -225,7 +223,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
-		caustics &= ((drawworld_compiledOptions & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
+		caustics &= ((drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
 	}
 
 	if (batch_count >= MAX_WORLDMODEL_BATCH) {

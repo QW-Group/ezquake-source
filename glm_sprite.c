@@ -171,7 +171,7 @@ void GL_EndDrawSprites(void)
 
 static void GL_CompileSpriteProgram(void)
 {
-	if (!spriteProgram.program) {
+	if (GLM_ProgramRecompileNeeded(&spriteProgram, 0)) {
 		GL_VFDeclare(sprite);
 
 		// Initialise program for drawing image

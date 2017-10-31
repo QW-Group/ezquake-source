@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform samplerCube skyTex;
 
 layout(std140) uniform RefdefCvars {
@@ -18,7 +20,9 @@ out vec4 frag_colour;
 
 void main(void)
 {
-	vec4 texColor = texture(skyTex, TexCoord);
+	frag_colour = texture(skyTex, TexCoord);
 
-	frag_colour = vec4(pow(texColor.rgb, vec3(gamma3d)), 1.0);
+#ifndef EZ_POSTPROCESS_GAMMA
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), 1.0);
+#endif
 }

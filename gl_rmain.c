@@ -188,7 +188,7 @@ cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 cvar_t gl_meshdraw                         = {"gl_meshdraw", "1"};
-cvar_t gl_deferlightmap                    = {"gl_deferlightmap", "1"};
+cvar_t gl_postprocess_gamma                = {"gl_postprocess_gamma", "0", CVAR_RECOMPILE_PROGS};
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
@@ -446,16 +446,6 @@ void R_PolyBlend(void)
 	}
 	// FIXME: GL_ResetState()
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-}
-
-void R_BrightenScreen(void)
-{
-	if (GL_ShadersSupported()) {
-		GLM_BrightenScreen();
-	}
-	else {
-		GLC_BrightenScreen();
-	}
 }
 
 int SignbitsForPlane(mplane_t *out)
@@ -869,7 +859,7 @@ void R_Init(void)
 	Cvar_Register (&gl_outline);
 	Cvar_Register (&gl_outline_width);
 	Cvar_Register (&gl_meshdraw);
-	Cvar_Register (&gl_deferlightmap);
+	Cvar_Register (&gl_postprocess_gamma);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);
@@ -1065,16 +1055,41 @@ static void R_RenderSceneBlur(void)
 	}
 }
 
-void R_RenderPostProcess (void)
+void R_PostProcessScene(void)
 {
-	extern void GLM_RenderPostProcess(void);
+	extern void GLM_PostProcessScene(void);
 
 	if (!GL_ShadersSupported()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
 	}
 	else {
-		GLM_RenderPostProcess();
+		GLM_PostProcessScene();
+	}
+}
+
+void R_PostProcessScreen(void)
+{
+	extern void GLM_PostProcessScreen(void);
+
+	if (GL_ShadersSupported()) {
+		GLM_PostProcessScreen();
+	}
+	else {
+		GLC_BrightenScreen();
+		V_UpdatePalette();
+	}
+}
+
+void R_ScreenDrawStart(void)
+{
+	extern void GLM_ScreenDrawStart(void);
+
+	if (GL_ShadersSupported()) {
+		GLM_ScreenDrawStart();
+	}
+	else {
+
 	}
 }
 

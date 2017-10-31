@@ -10,6 +10,7 @@
 
 // Linked list of all compiled programs
 static glm_program_t* program_list;
+static char core_definitions[512];
 
 static void GLM_AddToProgramList(glm_program_t* program)
 {
@@ -84,6 +85,36 @@ static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[
 	return false;
 }
 
+// Couldn't find standard library call to do this (!?)
+// Search for <search_string> in non-nul-terminated <source>
+const char* safe_strstr(const char* source, size_t max_length, const char* search_string)
+{
+	size_t search_length = strlen(search_string);
+	const char* position;
+
+	position = (const char*)memchr(source, search_string[0], max_length);
+	while (position) {
+		// Move along
+		if (max_length < (position - source)) {
+			break;
+		}
+		max_length -= (position - source);
+
+		if (max_length < search_length) {
+			break;
+		}
+		if (!memcmp(position, search_string, search_length)) {
+			return position;
+		}
+
+		// Try again
+		source = position;
+		position = (const char*)memchr(source + 1, search_string[0], max_length);
+	}
+
+	return NULL;
+}
+
 static int GLM_InsertDefinitions(
 	const char* strings[],
 	GLint lengths[],
@@ -96,18 +127,21 @@ static int GLM_InsertDefinitions(
 		return 0;
 	}
 
-	break_point = strstr(strings[0], EZQUAKE_DEFINITIONS_STRING);
-
+	break_point = safe_strstr(strings[0], lengths[0], EZQUAKE_DEFINITIONS_STRING);
+	
 	if (break_point) {
 		int position = break_point - strings[0];
+		int rest_of_code_pos = definitions ? 3 : 2;
 
-		lengths[2] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
-		lengths[1] = strlen(definitions);
+		lengths[3] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[2] = definitions ? strlen(definitions) : 0;
+		lengths[1] = strlen(core_definitions);
 		lengths[0] = position;
-		strings[2] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
-		strings[1] = definitions;
+		strings[3] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[2] = definitions ? definitions : "";
+		strings[1] = core_definitions;
 
-		return 3;
+		return 4;
 	}
 
 	return 1;
@@ -125,14 +159,14 @@ static qbool GLM_CompileProgram(
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[] = { program->shader_text[GLM_VERTEX_SHADER], "", "" };
-	GLint vertex_shader_text_length[] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0 };
+	const char* vertex_shader_text[] = { program->shader_text[GLM_VERTEX_SHADER], "", "", "" };
+	GLint vertex_shader_text_length[] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "" };
-	GLint geometry_shader_text_length[] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0 };
+	const char* geometry_shader_text[] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "", "" };
+	GLint geometry_shader_text_length[] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "" };
-	GLint fragment_shader_text_length[] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0 };
+	const char* fragment_shader_text[] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "", "" };
+	GLint fragment_shader_text_length[] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
 	if (GL_ShadersSupported()) {
@@ -164,6 +198,7 @@ static qbool GLM_CompileProgram(
 							program->vertex_shader = vertex_shader;
 							program->program = shader_program;
 							program->uniforms_found = false;
+							program->force_recompile = false;
 							return true;
 						}
 						else {
@@ -282,7 +317,6 @@ qbool GLM_CreateVFProgramWithInclude(
 	const char* included_definitions
 )
 {
-	memset(program, 0, sizeof(glm_program_t));
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
 	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
@@ -341,5 +375,28 @@ void GLM_InitPrograms(void)
 		}
 
 		program = program->next;
+	}
+}
+
+qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options)
+{
+	//
+	return (!program->program) || program->force_recompile || program->custom_options != options;
+}
+
+void GLM_ForceRecompile(void)
+{
+	glm_program_t* program = program_list;
+	extern cvar_t gl_postprocess_gamma;
+
+	while (program) {
+		program->force_recompile = true;
+
+		program = program->next;
+	}
+
+	memset(core_definitions, 0, sizeof(core_definitions));
+	if (gl_postprocess_gamma.integer) {
+		strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
 	}
 }

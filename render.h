@@ -116,21 +116,23 @@ typedef struct {
 // refresh
 
 extern refdef_t	r_refdef;
-extern refdef2_t	r_refdef2;
-extern vec3_t		r_origin, vpn, vright, vup;
+extern refdef2_t r_refdef2;
+extern vec3_t r_origin, vpn, vright, vup;
 
 extern struct texture_s	*r_notexture_mip;
 
-extern	entity_t	r_worldentity;
+extern entity_t r_worldentity;
 
-void R_Init (void);
-void R_InitTextures (void);
-void R_RenderPostProcess (void);
-void R_RenderView (void);		// must set r_refdef first
+void R_Init(void);
+void R_InitTextures(void);
+void R_ScreenDrawStart(void);
+void R_PostProcessScreen(void);
+void R_PostProcessScene(void);
+void R_RenderView(void);		// must set r_refdef first
 
-void R_AddEfrags (entity_t *ent);
-void R_RemoveEfrags (entity_t *ent);
-void R_NewMap (qbool vid_restart);
+void R_AddEfrags(entity_t *ent);
+void R_RemoveEfrags(entity_t *ent);
+void R_NewMap(qbool vid_restart);
 
 // particles
 

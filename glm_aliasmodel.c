@@ -45,7 +45,6 @@ typedef struct block_aliasmodels_s {
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
-static int drawAlias_compiledOptions;
 static glm_program_t drawAliasModelProgram;
 static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
@@ -110,10 +109,11 @@ static qbool in_batch_mode = false;
 static qbool GLM_CompileAliasModelProgram(void)
 {
 	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
-	int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
+	unsigned int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
 
-	if (!drawAliasModelProgram.program || drawAlias_compiledOptions != drawAlias_desiredOptions) {
+	if (GLM_ProgramRecompileNeeded(&drawAliasModelProgram, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
+		GL_VFDeclare(model_alias);
 
 		strlcpy(included_definitions, va("#define GL_BINDINGPOINT_ALIASMODEL_SSBO %d\n", GL_BINDINGPOINT_ALIASMODEL_SSBO), sizeof(included_definitions));
 		if (caustic_textures) {
@@ -141,12 +141,10 @@ static qbool GLM_CompileAliasModelProgram(void)
 		strlcat(included_definitions, va("#define AMF_SHELLFLAGS %d\n", (EF_RED | EF_BLUE | EF_GREEN)), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define AMF_CAUSTICS %d\n", AMF_CAUSTICS), sizeof(included_definitions));
 
-		GL_VFDeclare(model_alias);
-
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram, included_definitions);
 
-		drawAlias_compiledOptions = drawAlias_desiredOptions;
+		drawAliasModelProgram.custom_options = drawAlias_desiredOptions;
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
@@ -200,7 +198,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 	if (GLM_CompileAliasModelProgram()) {
 		// Bind textures
-		if (drawAlias_compiledOptions & DRAW_CAUSTIC_TEXTURES) {
+		if (drawAliasModelProgram.custom_options & DRAW_CAUSTIC_TEXTURES) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, underwatertexture);
 		}
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);

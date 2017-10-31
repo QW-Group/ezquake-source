@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform sampler2D materialTex;
 
 layout(std140) uniform RefdefCvars {
@@ -22,5 +24,9 @@ void main()
 
 	texColor = texture(materialTex, TextureCoord) * fragColour;
 
+#ifdef EZ_POSTPROCESS_GAMMA
+	frag_colour = texColor;
+#else
 	frag_colour = vec4(pow(texColor.rgb, vec3(gamma3d)), texColor.a);
+#endif
 }

@@ -177,5 +177,7 @@ void main()
 #endif
 	}
 
+#ifndef EZ_POSTPROCESS_GAMMA
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
+#endif
 }

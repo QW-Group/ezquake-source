@@ -27,24 +27,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 // cvar flags
-#define CVAR_NONE			(0)
-#define CVAR_ARCHIVE        (1<<0)  // !!!obsolete!!!
-#define CVAR_USERINFO       (1<<1)  // mirrored to userinfo
-#define CVAR_SERVERINFO     (1<<2)  // mirrored to serverinfo
-#define CVAR_ROM            (1<<3)  // read only
-#define CVAR_INIT           (1<<4)  // can only be set during initialization
-#define	CVAR_USER_CREATED   (1<<5)  // created by a set command
-#define	CVAR_USER_ARCHIVE   (1<<6)  // created by a seta command !!!obsolete!!!
-#define CVAR_RULESET_MAX    (1<<7)  // limited by ruleset
-#define CVAR_RULESET_MIN    (1<<8)  // limited by ruleset
-#define CVAR_NO_RESET       (1<<9)  // do not perform reset to default in /cfg_load command, but /cvar_reset will still work
-#define CVAR_TEMP           (1<<10) // created during config.cfg execution, before subsystems are initialized
-#define CVAR_LATCH          (1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
-                                    // without proper initialization.  modified will be set, even though the value hasn't changed yet
-#define CVAR_SILENT         (1<<12) // skip warning when trying Cvar_Register() second time
-#define CVAR_COLOR          (1<<13) // on change convert the string to internal RGBA type
-#define CVAR_AUTO           (1<<14) // Cvar can possibly have an automatically calculated value that shouldn't be saved, but still presentable
-#define CVAR_MOD_CREATED    (1<<15) // Cvar created by the mod issuing 'set' command
+#define CVAR_NONE			 (0)
+#define CVAR_ARCHIVE         (1<<0)  // !!!obsolete!!!
+#define CVAR_USERINFO        (1<<1)  // mirrored to userinfo
+#define CVAR_SERVERINFO      (1<<2)  // mirrored to serverinfo
+#define CVAR_ROM             (1<<3)  // read only
+#define CVAR_INIT            (1<<4)  // can only be set during initialization
+#define	CVAR_USER_CREATED    (1<<5)  // created by a set command
+#define	CVAR_USER_ARCHIVE    (1<<6)  // created by a seta command !!!obsolete!!!
+#define CVAR_RULESET_MAX     (1<<7)  // limited by ruleset
+#define CVAR_RULESET_MIN     (1<<8)  // limited by ruleset
+#define CVAR_NO_RESET        (1<<9)  // do not perform reset to default in /cfg_load command, but /cvar_reset will still work
+#define CVAR_TEMP            (1<<10) // created during config.cfg execution, before subsystems are initialized
+#define CVAR_LATCH           (1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
+                                     // without proper initialization.  modified will be set, even though the value hasn't changed yet
+#define CVAR_SILENT          (1<<12) // skip warning when trying Cvar_Register() second time
+#define CVAR_COLOR           (1<<13) // on change convert the string to internal RGBA type
+#define CVAR_AUTO            (1<<14) // Cvar can possibly have an automatically calculated value that shouldn't be saved, but still presentable
+#define CVAR_MOD_CREATED     (1<<15) // Cvar created by the mod issuing 'set' command
+#define CVAR_RECOMPILE_PROGS (1<<16) // Flag all programs to be recompiled if the value changes
 
 typedef struct cvar_s {
 	char    *name;

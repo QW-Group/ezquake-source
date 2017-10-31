@@ -235,6 +235,11 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	if (var->flags & CVAR_USERINFO) {
 		CL_UserinfoChanged(var->name, var->string);
 	}
+	if (var->flags & CVAR_RECOMPILE_PROGS) {
+		extern void GLM_ForceRecompile(void);
+
+		GLM_ForceRecompile();
+	}
 #endif
 }
 

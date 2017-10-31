@@ -2452,24 +2452,26 @@ void CL_Frame (double time)
 	{
 		qbool draw_next_view = true;
 
-		SCR_UpdateScreenPrePlayerView ();
+		if (SCR_UpdateScreenPrePlayerView()) {
+			R_ScreenDrawStart();
 
-		while (draw_next_view) {
-			draw_next_view = CL_MultiviewAdvanceView();
+			while (draw_next_view) {
+				draw_next_view = CL_MultiviewAdvanceView();
 
-			CL_LinkEntities();
+				CL_LinkEntities();
 
-			SCR_UpdateScreenPlayerView(UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
+				SCR_UpdateScreenPlayerView(UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
 
-			if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
-				CL_SoundFrame();
+				if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
+					CL_SoundFrame();
+				}
+
+				// Multiview: advance to next player
+				CL_MultiviewFrameFinish();
 			}
 
-			// Multiview: advance to next player
-			CL_MultiviewFrameFinish();
+			SCR_UpdateScreenPostPlayerView();
 		}
-
-		SCR_UpdateScreenPostPlayerView ();
 	}
 	else {
 		CL_LinkEntities ();

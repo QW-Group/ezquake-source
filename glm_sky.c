@@ -94,7 +94,7 @@ static qbool BuildSkyDomeProgram(void)
 {
 	static glm_program_t skyDome;
 
-	if (!skyDome.program) {
+	if (GLM_ProgramRecompileNeeded(&skyDome, 0)) {
 		GL_VFDeclare(skydome);
 
 		GLM_CreateVFProgram("SkyDome", GL_VFParams(skydome), &skyDome);
@@ -135,7 +135,7 @@ static qbool BuildSkyBoxProgram(void)
 {
 	static glm_program_t skyBox;
 
-	if (!skyBox.program) {
+	if (GLM_ProgramRecompileNeeded(&skyBox, 0)) {
 		GL_VFDeclare(skybox);
 
 		GLM_CreateVFProgram("SkyBox", GL_VFParams(skybox), &skyBox);

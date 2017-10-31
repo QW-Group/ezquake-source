@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform sampler2D skyTex;
 layout(binding=1) uniform sampler2D alphaTex;
 
@@ -24,5 +26,7 @@ void main(void)
 	vec4 alphaColor = texture(alphaTex, AlphaCoord);
 
 	frag_colour = mix(texColor, alphaColor, alphaColor.a);
+#ifndef EZ_POSTPROCESS_GAMMA
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), 1.0);
+#endif
 }

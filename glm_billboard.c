@@ -183,7 +183,7 @@ static void GLM_CreateBillboardVAO(void)
 
 static void GLM_CompileBillboardProgram(void)
 {
-	if (!billboardProgram.program) {
+	if (GLM_ProgramRecompileNeeded(&billboardProgram, 0)) {
 		GL_VFDeclare(billboard);
 
 		// Initialise program for drawing image

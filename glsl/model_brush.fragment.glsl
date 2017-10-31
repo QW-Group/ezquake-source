@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform sampler2DArray materialTex;
 layout(binding=1) uniform sampler2DArray lightmapTex;
 
@@ -30,5 +32,8 @@ void main()
 	}
 
 	frag_colour = vec4(1.0 - lmColor.x, 1.0 - lmColor.y, 1.0 - lmColor.z, 1.0) * fsColor * texColor;
+
+#ifndef EZ_POSTPROCESS_GAMMA
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
+#endif
 }

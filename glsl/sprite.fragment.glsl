@@ -1,5 +1,7 @@
 #version 430
 
+#ezquake-definitions
+
 layout(binding=0) uniform sampler2DArray materialTex;
 
 layout(std140) uniform RefdefCvars {
@@ -18,11 +20,13 @@ out vec4 frag_colour;
 
 void main()
 {
-	vec4 texColor = texture(materialTex, TextureCoord);
+	frag_colour = texture(materialTex, TextureCoord);
 
-	if (texColor.a < 0.666) {
+	if (frag_colour.a < 0.666) {
 		discard;
 	}
 
-	frag_colour = vec4(pow(texColor.rgb, vec3(gamma3d)), texColor.a);
+#ifndef EZ_POSTPROCESS_GAMMA
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
+#endif
 }
