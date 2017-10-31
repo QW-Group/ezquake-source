@@ -70,7 +70,7 @@ texture_ref particletexture;                    // little dot for particles
 texture_ref playernmtextures[MAX_CLIENTS];
 texture_ref playerfbtextures[MAX_CLIENTS];
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
-texture_ref underwatertexture, detailtexture;
+texture_ref underwatertexture, detailtexture, solidtexture;
 r_frame_stats_t frameStats;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)

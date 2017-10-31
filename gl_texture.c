@@ -1041,11 +1041,11 @@ void GL_Texture_Init(void)
 	GL_InitTextureState();
 
 	// Netgraph.
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
+	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
 
 	// Player skins.
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playernmtextures);
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playerfbtextures);
+	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playernmtextures);
+	//GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playerfbtextures);
 
 	// Motion blur.
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
@@ -1368,7 +1368,7 @@ void GL_TextureReplace2D(
 	gltexture_t* tex;
 
 	if (!GL_TextureReferenceIsValid(*ref)) {
-		return;
+		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, ref);
 	}
 
 	tex = &gltextures[ref->index];

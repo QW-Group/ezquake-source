@@ -59,6 +59,7 @@ void R_InitOtherTextures(void)
 		underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );
 		detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);
 	*/
+	unsigned char solidtexels[] = { 255, 255, 255, 255 };
 	int flags = TEX_MIPMAP | TEX_ALPHA;
 
 	underwatertexture = GL_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));
@@ -68,6 +69,8 @@ void R_InitOtherTextures(void)
 	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		shelltexture = GL_GenerateShellTexture();
 	}
+
+	solidtexture = GL_LoadTexture("billboard:solid", 1, 1, solidtexels, TEX_ALPHA | TEX_NOSCALE, 4);
 }
 
 void R_InitTextures(void)

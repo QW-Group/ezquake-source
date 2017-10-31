@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sbar.h"
 
 texture_ref corona_textures[CORONATEX_COUNT];
-texture_ref vx_solidTexture;
 
 extern cvar_t gl_bounceparticles;
 
@@ -295,7 +294,6 @@ void SCR_DrawAMFstats(void)
 
 void InitVXStuff(void)
 {
-	unsigned char solidtexels[] = { 255, 255, 255, 255 };
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
 
 	corona_textures[CORONATEX_STANDARD] = GL_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
@@ -307,8 +305,6 @@ void InitVXStuff(void)
 	corona_textures[CORONATEX_EXPLOSIONFLASH5] = GL_LoadTextureImage("textures/explosionflash5", NULL, 0, 0, flags);
 	corona_textures[CORONATEX_EXPLOSIONFLASH6] = GL_LoadTextureImage("textures/explosionflash6", NULL, 0, 0, flags);
 	corona_textures[CORONATEX_EXPLOSIONFLASH7] = GL_LoadTextureImage("textures/explosionflash7", NULL, 0, 0, flags);
-
-	vx_solidTexture = GL_LoadTexture("billboard:solid", 1, 1, solidtexels, TEX_ALPHA | TEX_NOSCALE, 4);
 
 	InitCoronas(); // safe re-init
 

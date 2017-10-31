@@ -163,7 +163,7 @@ extern	texture_ref playernmtextures[MAX_CLIENTS];
 extern	texture_ref playerfbtextures[MAX_CLIENTS];
 extern	texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
-extern	texture_ref underwatertexture, detailtexture;
+extern	texture_ref underwatertexture, detailtexture, solidtexture;
 extern	texture_ref shelltexture;
 
 // Tomaz - Fog Begin

@@ -163,8 +163,7 @@ static void R_RenderAliasModelEntity(
 		static GLenum modes[] = { GL_MODULATE, GL_REPLACE, GL_BLEND, GL_DECAL, GL_ADD, GL_MODULATE };
 		GLenum textureEnvMode = modes[bound(0, local_skincolormode, sizeof(modes) / sizeof(modes[0]) - 1)];
 
-		// particletexture is just solid white texture
-		texture = local_skincolormode ? texture : particletexture;
+		texture = local_skincolormode ? texture : solidtexture;
 
 		// force some color for such model
 		for (i = 0; i < 3; i++) {
@@ -345,8 +344,6 @@ void R_DrawAliasModel(entity_t *ent)
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	r_modelalpha = (ent->alpha ? ent->alpha : 1);
-
 	if (ent->scoreboard) {
 		playernum = ent->scoreboard - cl.players;
 	}
@@ -379,6 +376,7 @@ void R_DrawAliasModel(entity_t *ent)
 		}
 	}
 
+	r_modelalpha = (ent->alpha ? ent->alpha : 1);
 	if (cv && cv->string[0]) {
 		color32bit = cv->color;
 	}
