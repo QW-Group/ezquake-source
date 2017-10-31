@@ -142,18 +142,23 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 }
 
-static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool lumas)
+static void GLM_EnterBatchedWorldRegion(void)
 {
 	extern glm_vao_t brushModel_vao;
 	extern buffer_ref vbo_brushElements;
 	extern cvar_t gl_lumaTextures;
+	extern cvar_t gl_lumaTextures;
+
+	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
+	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 	int std_count = 0;
 
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 
-	Compile_DrawWorldProgram(detail_tex, caustics, lumas, skybox);
+	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
 
 	GL_UseProgram(drawworld.program);
 
@@ -161,10 +166,10 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 
 	// Bind standard textures (warning: these must be in the same order)
 	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();
-	if (detail_tex) {
+	if (draw_detail_texture) {
 		std_textures[TEXTURE_UNIT_DETAIL] = detailtexture;
 	}
-	if (caustics) {
+	if (draw_caustics) {
 		std_textures[TEXTURE_UNIT_CAUSTICS] = underwatertexture;
 	}
 	if (skybox) {
@@ -213,11 +218,10 @@ static int FindMatrix(void)
 	return -1;
 }
 
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, texture_ref texture_array, qbool polygonOffset, qbool caustics)
+static glm_worldmodel_req_t* GLM_NextBatchRequest(qbool worldmodel, float alpha, texture_ref texture_array, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
 	int sampler = -1;
-	qbool worldmodel = model->isworldmodel;
 	int matrixMapping = FindMatrix();
 
 	// If user has switched off caustics (or no texture), ignore
@@ -310,30 +314,64 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, t
 	return req;
 }
 
+void GLM_DrawWaterSurfaces(void)
+{
+	extern msurface_t* waterchain;
+	msurface_t* surf;
+	glm_worldmodel_req_t* req = NULL;
+	qbool alpha = GL_WaterAlpha();
+	int v;
+
+	// Waterchain has list of alpha-blended surfaces
+	GLM_EnterBatchedWorldRegion();
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	for (surf = waterchain; surf; surf = surf->texturechain) {
+		glpoly_t* poly;
+		texture_t* tex = surf->texinfo->texture;
+
+		req = GLM_NextBatchRequest(true, alpha, tex->gl_texture_array, false, false);
+		for (poly = surf->polys; poly; poly = poly->next) {
+			int newVerts = poly->numverts;
+
+			if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+				GL_FlushWorldModelBatch();
+				req = GLM_NextBatchRequest(true, alpha, tex->gl_texture_array, false, false);
+			}
+
+			if (req->count) {
+				modelIndexes[index_count++] = ~(GLuint)0;
+				req->count++;
+			}
+
+			for (v = 0; v < newVerts; ++v) {
+				modelIndexes[index_count++] = poly->vbo_start + v;
+				req->count++;
+			}
+		}
+	}
+
+	GL_FlushWorldModelBatch();
+}
+
 void GLM_DrawTexturedWorld(model_t* model)
 {
-	extern cvar_t gl_lumaTextures;
-
 	int i, waterline, v;
 	msurface_t* surf;
-	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
-	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
-	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 	glm_worldmodel_req_t* req = NULL;
 
-	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics, draw_lumas);
+	GLM_EnterBatchedWorldRegion();
 
 	for (waterline = 0; waterline < 2; waterline++) {
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
 			glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model, 1.0f, null_texture_reference, false, false);
+			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, null_texture_reference, false, false);
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
 				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 					GL_FlushWorldModelBatch();
-					req = GLM_NextBatchRequest(model, 1.0f, null_texture_reference, false, false);
+					req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, null_texture_reference, false, false);
 				}
 
 				if (req->count) {
@@ -364,7 +402,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, false, false);
+			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, tex->gl_texture_array, false, false);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -374,7 +412,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, false, false);
+							req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, tex->gl_texture_array, false, false);
 						}
 
 						if (req->count) {
@@ -534,7 +572,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
+			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -544,7 +582,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
+							req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
 						}
 
 						if (req->count) {

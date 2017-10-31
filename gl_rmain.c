@@ -943,6 +943,9 @@ static void R_RenderScene(void)
 
 		GLC_StateEndRenderScene();
 	}
+	else {
+		GLM_DrawWaterSurfaces();
+	}
 }
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
