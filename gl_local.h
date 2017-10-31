@@ -297,7 +297,7 @@ qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
 void R_PolyBlend (void);
 void R_BrightenScreen (void);
-void R_DrawEntitiesOnList (visentlist_t *vislist);
+void R_DrawEntitiesOnList (visentlist_t *vislist, modtype_t current_state);
 
 #define POLYGONOFFSET_DISABLED 0
 #define POLYGONOFFSET_STANDARD 1

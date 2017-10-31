@@ -409,15 +409,6 @@ extern	stvert_t		stverts[MAXALIASVERTS];
 extern	mtriangle_t		triangles[MAXALIASTRIS];
 extern	trivertx_t		*poseverts[MAXALIASFRAMES];
 
-typedef enum 
-{
-	mod_brush, 
-	mod_sprite, 
-	mod_spr32,
-	mod_alias, 
-	mod_alias3
-} modtype_t;
-
 // some models are special
 typedef enum 
 {

@@ -47,6 +47,16 @@ extern const texture_ref null_texture_reference;
 #define GL_TextureReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
 #define GL_TextureReferenceCompare(ref1, ref2) (ref1.index < ref2.index ? -1 : ref1.index > ref2.index ? 1 : 0)
 
+typedef enum
+{
+	mod_brush,
+	mod_sprite,
+	mod_alias,
+	mod_alias3,
+
+	mod_unknown
+} modtype_t;
+
 //============================================================================
 
 // per-level limits

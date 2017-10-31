@@ -626,10 +626,15 @@ typedef struct {
 
 extern	clientState_t	cl;
 
+typedef struct visentity_s {
+	entity_t    ent;
+	modtype_t   type;
+	qbool       shell_only;
+	float       distance;
+} visentity_t;
+
 typedef struct visentlist_s {
-	entity_t    *list;
-	qbool       *drawn;
-	qbool       *shell;
+	visentity_t *list;
 	int         count;
 	int         max;
 	int         alpha;

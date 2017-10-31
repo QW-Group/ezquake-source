@@ -325,93 +325,140 @@ static qbool R_DrawTrySimpleItem(void)
 	return true;
 }
 
-void R_DrawEntitiesOnList(visentlist_t *vislist)
+static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
+{
+	const visentity_t* lhs = (const visentity_t*) lhs_;
+	const visentity_t* rhs = (const visentity_t*) rhs_;
+
+	float alpha_lhs = lhs->ent.alpha == 0 ? 1 : lhs->ent.alpha;
+	float alpha_rhs = rhs->ent.alpha == 0 ? 1 : rhs->ent.alpha;
+
+	// Draw opaque entities first
+	if (alpha_lhs == 1 && alpha_rhs != 1) {
+		return -1;
+	}
+	else if (alpha_lhs != 1 && alpha_rhs == 1) {
+		return 1;
+	}
+
+	if (alpha_lhs != 1) {
+		// Furthest first
+		if (lhs->distance > rhs->distance) {
+			return -1;
+		}
+		else if (lhs->distance < rhs->distance) {
+			return 1;
+		}
+	}
+
+	// order by brush/alias/etc for batching
+	if (lhs->type != rhs->type) {
+		return lhs->type < rhs->type ? -1 : 1;
+	}
+
+	// Then by model
+	if ((uintptr_t)lhs->ent.model < (uintptr_t)rhs->ent.model) {
+		return -1;
+	}
+	if ((uintptr_t)lhs->ent.model > (uintptr_t)rhs->ent.model) {
+		return 1;
+	}
+
+	if (alpha_lhs == 1) {
+		// Closest first
+		if (lhs->distance < rhs->distance) {
+			return -1;
+		}
+		else if (lhs->distance > rhs->distance) {
+			return 1;
+		}
+	}
+
+	// Then by position
+	if ((uintptr_t)lhs < (uintptr_t)rhs) {
+		return -1;
+	}
+	if ((uintptr_t)lhs > (uintptr_t)rhs) {
+		return 1;
+	}
+	return 0;
+}
+
+typedef void(*GL_StateChangeFunction)(void);
+
+void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
 {
 	int i;
+	GL_StateChangeFunction beginState[] = {
+		GL_BeginDrawBrushModels,
+		GL_BeginDrawSprites,
+		GL_BeginDrawAliasModels,
+		GL_BeginDrawAliasModels,
+	};
+	GL_StateChangeFunction endState[] = {
+		GL_EndDrawBrushModels,
+		GL_EndDrawSprites,
+		GL_EndDrawAliasModels,
+		GL_EndDrawAliasModels,
+	};
 
 	if (!r_drawentities.value || !vislist->count) {
 		return;
 	}
 
-	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
+	qsort(vislist->list, vislist->count, sizeof(vislist->list[0]), R_DrawEntitiesSorter);
 
 	GL_StateBeginEntities(vislist);
-	GL_BeginDrawBrushModels();
+
 	for (i = 0; i < vislist->count; i++) {
-		currententity = &vislist->list[i];
-		if (vislist->drawn[i]) {
-			continue;
+		visentity_t* todraw = &vislist->list[i];
+		currententity = &todraw->ent;
+
+		if (current_state != todraw->type) {
+			if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
+				if (endState[current_state]) {
+					endState[current_state]();
+				}
+			}
+			if (todraw->type >= 0 && todraw->type < sizeof(beginState) / sizeof(beginState[0])) {
+				if (beginState[todraw->type]) {
+					beginState[todraw->type]();
+				}
+			}
+			current_state = todraw->type;
 		}
 
-		if (gl_simpleitems.integer && R_CanDrawSimpleItem(currententity)) {
-			// will be drawn as sprite
-			continue;
-		}
-
-		switch (currententity->model->type) {
+		switch (todraw->type) {
 		case mod_brush:
 			R_DrawBrushModel(currententity);
-			vislist->drawn[i] = true;
 			break;
-		}
-	}
-	GL_EndDrawBrushModels();
-
-	GL_BeginDrawSprites();
-	for (i = 0; i < vislist->count; i++) {
-		currententity = &vislist->list[i];
-		if (vislist->drawn[i]) {
-			continue;
-		}
-
-		if (gl_simpleitems.integer && R_DrawTrySimpleItem()) {
-			vislist->drawn[i] = true;
-			continue;
-		}
-
-		if (currententity->model->type == mod_sprite) {
-			R_DrawSpriteModel(currententity);
-			vislist->drawn[i] = true;
-			continue;
-		}
-
-		if (currententity->model->type == mod_spr32) {
-			vislist->drawn[i] = true;
-			continue;
-		}
-	}
-	GL_EndDrawSprites();
-
-	GL_BeginDrawAliasModels();
-	for (i = 0; i < vislist->count; i++) {
-		currententity = &vislist->list[i];
-		if (vislist->drawn[i]) {
-			continue;
-		}
-
-		if (gl_simpleitems.integer && R_CanDrawSimpleItem(currententity)) {
-			// will be drawn as sprite
-			continue;
-		}
-
-		switch (currententity->model->type) {
+		case mod_sprite:
+			if (currententity->model->type == mod_sprite) {
+				R_DrawSpriteModel(currententity);
+			}
+			else {
+				R_DrawTrySimpleItem();
+			}
+			break;
 		case mod_alias:
-			if (vislist->shell[i]) {
+			if (todraw->shell_only) {
 				R_DrawAliasPowerupShell(currententity);
 			}
 			else {
 				R_DrawAliasModel(currententity);
 			}
-			vislist->drawn[i] = true;
 			break;
-
 		case mod_alias3:
 			R_DrawAlias3Model(currententity);
-			vislist->drawn[i] = true;
 			break;
 		}
 	}
-	GL_EndDrawAliasModels();
+
+	if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
+		if (endState[current_state]) {
+			endState[current_state]();
+		}
+	}
 
 	GL_StateEndEntities(vislist);
 }
@@ -880,19 +927,15 @@ static void R_RenderScene(void)
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
 
-	if (r_drawentities.integer && cl_visents.count) {
+	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
-		R_DrawEntitiesOnList(&cl_visents);
+		R_DrawEntitiesOnList(&cl_visents, mod_brush);
 		GL_LeaveRegion();
-	}
-	else {
-		// Finish drawing the world instead
-		GL_EndDrawBrushModels();
 	}
 
 	if (r_drawentities.integer && cl_alphaents.count) {
 		GL_EnterRegion("R_DrawEntities (Alpha)");
-		R_DrawEntitiesOnList(&cl_alphaents);
+		R_DrawEntitiesOnList(&cl_alphaents, mod_unknown);
 		GL_LeaveRegion();
 	}
 

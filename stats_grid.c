@@ -241,54 +241,54 @@ void StatsGrid_InitHoldItems(void)
 	// and save their name and location.
 	for (i = 0; i < cl_visents.count && (ents_count < STATS_MAX_IMPORTANT_ENTS); i++)
 	{
-		if(cl_visents.list[i].model->modhint == MOD_PENT)
+		if(cl_visents.list[i].ent.model->modhint == MOD_PENT)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "PENT", ++pent_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_QUAD)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_QUAD)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "QUAD", ++quad_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_RING)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_RING)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RING", ++ring_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_SUIT)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_SUIT)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SUIT", ++suit_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_ROCKETLAUNCHER)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_ROCKETLAUNCHER)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RL", ++rl_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_LIGHTNINGGUN)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_LIGHTNINGGUN)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "LG", ++lg_count);
 		}
-		else if(cl_visents.list[i].model->modhint == MOD_GRENADELAUNCHER)
+		else if(cl_visents.list[i].ent.model->modhint == MOD_GRENADELAUNCHER)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GL", ++gl_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
+		else if(!strcmp(cl_visents.list[i].ent.model->name, "progs/g_nail2.mdl"))
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SNG", ++sng_count);
 		}
-		else if (cl_visents.list[i].model->modhint == MOD_MEGAHEALTH)
+		else if (cl_visents.list[i].ent.model->modhint == MOD_MEGAHEALTH)
 		{
 			// Megahealth.
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "MH", ++mega_count);
 		}
-		else if (cl_visents.list[i].model->modhint == MOD_ARMOR)
+		else if (cl_visents.list[i].ent.model->modhint == MOD_ARMOR)
 		{
-			if(cl_visents.list[i].skinnum == 0)
+			if(cl_visents.list[i].ent.skinnum == 0)
 			{
 				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GA", ++ga_count);
 			}
-			else if(cl_visents.list[i].skinnum == 1)
+			else if(cl_visents.list[i].ent.skinnum == 1)
 			{
 				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "YA", ++ya_count);
 			}
-			else if(cl_visents.list[i].skinnum == 2)
+			else if(cl_visents.list[i].ent.skinnum == 2)
 			{
 				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RA", ++ra_count);
 			}
@@ -304,7 +304,7 @@ void StatsGrid_InitHoldItems(void)
 		}
 
 		// Copy the position of the entity into the buffer.
-		VectorCopy(cl_visents.list[i].origin, temp_ents[ents_count].origin);
+		VectorCopy(cl_visents.list[i].ent.origin, temp_ents[ents_count].origin);
 
 		// Reset the team values.
 		temp_ents[ents_count].teams_hold_count[STATS_TEAM1] = 0;

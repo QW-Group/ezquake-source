@@ -35,6 +35,13 @@ extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 extern cvar_t r_drawvweps;		
 extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
 
+static float VectorDistance(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return VectorLength(diff);
+}
+
 static struct predicted_player {
 	int flags;
 	qbool active;
@@ -135,10 +142,10 @@ void CL_InitEnts(void) {
 	// FIXME, delay until map load time?
 	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
 
-	for (i = 0; i < cl_num_modelindices; i++) 
-	{
-		if (!cl_modelnames[i])
+	for (i = 0; i < cl_num_modelindices; i++) {
+		if (!cl_modelnames[i]) {
 			Sys_Error("cl_modelnames[%d] not initialized", i);
+		}
 	}
 
 	cl_firstpassents.max = MAX_FIRSTPASS_ENTITIES;
@@ -150,18 +157,10 @@ void CL_InitEnts(void) {
 	cl_alphaents.max = MAX_ALPHA_ENTITIES;
 	cl_alphaents.alpha = 1;
 
-	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(entity_t), "visents");
-	cl_firstpassents.list = (entity_t *) memalloc;
-	cl_visents.list = (entity_t *) memalloc + cl_firstpassents.max;
-	cl_alphaents.list = (entity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
-	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(qbool), "visents-drawn");
-	cl_firstpassents.drawn = (qbool*) memalloc;
-	cl_visents.drawn = (qbool*) memalloc + cl_firstpassents.max;
-	cl_alphaents.drawn = (qbool*) memalloc + cl_firstpassents.max + cl_visents.max;
-	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(qbool), "visents-shellonly");
-	cl_firstpassents.shell = (qbool*) memalloc;
-	cl_visents.shell = (qbool*) memalloc + cl_firstpassents.max;
-	cl_alphaents.shell = (qbool*) memalloc + cl_firstpassents.max + cl_visents.max;
+	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(visentity_t), "visents");
+	cl_firstpassents.list = (visentity_t *) memalloc;
+	cl_visents.list = (visentity_t *) memalloc + cl_firstpassents.max;
+	cl_alphaents.list = (visentity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
 
 	CL_ClearScene();
 }
@@ -186,7 +185,9 @@ void CL_ClearScene(void)
 void CL_AddEntity(entity_t *ent)
 {
 	extern qbool R_CanDrawSimpleItem(entity_t* ent);
+	extern cvar_t gl_simpleitems;
 	visentlist_t *vislist;
+	modtype_t type = ent->model->type;
 	qbool shell = false;
 	qbool needs_alphablend = (ent->alpha != 0 && ent->alpha != 1);
 
@@ -199,6 +200,7 @@ void CL_AddEntity(entity_t *ent)
 	}
 	else if (ent->model->type == mod_sprite || R_CanDrawSimpleItem(ent)) {
 		vislist = &cl_alphaents;
+		type = mod_sprite;
 		needs_alphablend = true;
 	}
 	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
@@ -210,14 +212,18 @@ void CL_AddEntity(entity_t *ent)
 	}
 
 	if (vislist->count < vislist->max) {
-		vislist->list[vislist->count] = *ent;
-		vislist->shell[vislist->count] = false;
+		vislist->list[vislist->count].ent = *ent;
+		vislist->list[vislist->count].type = type;
+		vislist->list[vislist->count].shell_only = false;
+		vislist->list[vislist->count].distance = VectorDistance(cl.simorg, ent->origin);
 		vislist->alphablend |= needs_alphablend;
 		++vislist->count;
 	}
 	if (shell && cl_alphaents.count < cl_alphaents.max) {
-		cl_alphaents.list[cl_alphaents.count] = *ent;
-		cl_alphaents.shell[cl_alphaents.count] = true;
+		cl_alphaents.list[cl_alphaents.count].ent = *ent;
+		cl_alphaents.list[cl_alphaents.count].type = ent->model->type;
+		cl_alphaents.list[cl_alphaents.count].shell_only = true;
+		cl_alphaents.list[cl_alphaents.count].distance = VectorDistance(cl.simorg, ent->origin);
 		cl_alphaents.alphablend = true;
 		++cl_alphaents.count;
 	}
@@ -2113,54 +2119,6 @@ void CL_SetSolidPlayers (int playernum)
 	}
 }
 
-static float VectorDistance(const vec3_t x, const vec3_t y)
-{
-	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
-
-	return VectorLength(diff);
-}
-
-static int AlphaEntityComparer(const void* lhs_, const void* rhs_)
-{
-	const entity_t* lhs = (entity_t*)lhs_;
-	const entity_t* rhs = (entity_t*)rhs_;
-
-	float alpha_lhs = lhs->alpha == 0 ? 0 : 1 - lhs->alpha;
-	float alpha_rhs = rhs->alpha == 0 ? 0 : 1 - rhs->alpha;
-
-	float distance_lhs;
-	float distance_rhs;
-
-	// Try not to bother with distance calculation
-	if (alpha_lhs == alpha_rhs && alpha_lhs == 0) {
-		return 0;
-	}
-	if (alpha_lhs == 0) {
-		return -1;
-	}
-	if (alpha_rhs == 0) {
-		return 1;
-	}
-
-	// Furthest first
-	distance_lhs = VectorDistance(cl.simorg, lhs->origin);
-	distance_rhs = VectorDistance(cl.simorg, rhs->origin);
-	if (distance_lhs > distance_rhs) {
-		return -1;
-	}
-	else if (distance_lhs == distance_rhs) {
-		return 0;
-	}
-	return 1;
-}
-
-static void CL_SortEntities(void)
-{
-	if (Cam_TrackNum() >= 0 && cl.racing) {
-		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), AlphaEntityComparer);
-	}
-}
-
 // Builds the visedicts array for cl.time
 // Made up of: clients, packet_entities, nails, and tents
 void CL_EmitEntities (void) 
@@ -2186,8 +2144,6 @@ void CL_EmitEntities (void)
 	}
 
 	CL_UpdateTEnts();
-
-	CL_SortEntities();
 }
 
 int	mvd_fixangle;

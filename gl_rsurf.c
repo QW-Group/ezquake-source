@@ -380,7 +380,7 @@ void R_DrawWorld(void)
 
 	if (cl_firstpassents.count) {
 		GL_EnterRegion("Entities-1st");
-		R_DrawEntitiesOnList(&cl_firstpassents);
+		R_DrawEntitiesOnList(&cl_firstpassents, mod_unknown);
 		GL_LeaveRegion();
 	}
 
