@@ -48,6 +48,7 @@ typedef struct block_aliasmodels_s {
 static glm_program_t drawAliasModelProgram;
 static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
+static GLint drawAliasModel_outlines;
 static block_aliasmodels_t aliasdata;
 static buffer_ref ubo_aliasdata;
 static buffer_ref vbo_aliasIndirectDraw;
@@ -57,6 +58,8 @@ typedef struct glm_aliasmodelbatch_s {
 	int end;
 
 	qbool shells;
+	qbool any_outlines;
+
 	texture_ref skin_texture;
 	texture_ref skin_texture_fb;
 	texture_ref array_texture;
@@ -66,7 +69,7 @@ static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture, float scaleS, float scaleT,
 	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
-	float lerpFraction, int lerpFrameVertOffset
+	float lerpFraction, int lerpFrameVertOffset, qbool outline
 );
 
 typedef struct glm_aliasmodel_req_s {
@@ -84,6 +87,7 @@ typedef struct glm_aliasmodel_req_s {
 	float yaw_angle_radians;
 	float shadelight;
 	float ambientlight;
+	qbool outline;
 
 	float lerpFraction;
 	int lerpFrameVertOffset;
@@ -161,6 +165,8 @@ static qbool GLM_CompileAliasModelProgram(void)
 		ubo_aliasdata = GL_GenUniformBuffer("alias-data", &aliasdata, sizeof(aliasdata));
 		GL_BindBufferBase(ubo_aliasdata, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
+		drawAliasModel_outlines = glGetUniformLocation(drawAliasModelProgram.program, "outlines");
+
 		drawAliasModelProgram.uniforms_found = true;
 	}
 
@@ -171,15 +177,58 @@ static qbool GLM_CompileAliasModelProgram(void)
 	return drawAliasModelProgram.program;
 }
 
+static void GLM_DrawOutlineBatch(int start, int end)
+{
+	int i;
+	int begin = -1;
+	extern cvar_t gl_outline_width;
+
+	GL_EnterRegion("GLM_DrawOutlineBatch");
+	glUniform1i(drawAliasModel_outlines, 1);
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
+	GL_CullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
+	for (i = start; i <= end; ++i) {
+		if (!aliasmodel_requests[i].outline) {
+			if (begin >= 0) {
+				// Draw outline models so far
+				glMultiDrawArraysIndirect(GL_TRIANGLES, (void*)(begin * sizeof(aliasmodel_requests[0])), i - begin, sizeof(aliasmodel_requests[0]));
+			}
+			begin = -1;
+			continue;
+		}
+		else if (begin < 0) {
+			begin = i;
+		}
+	}
+
+	if (begin >= 0) {
+		// Draw outline models to end
+		glMultiDrawArraysIndirect(GL_TRIANGLES, (void*)(begin * sizeof(aliasmodel_requests[0])), end - begin + 1, sizeof(aliasmodel_requests[0]));
+	}
+
+	GL_CullFace(GL_FRONT);
+	glUniform1i(drawAliasModel_outlines, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_LeaveRegion();
+}
+
 static void GLM_FlushAliasModelBatch(void)
 {
 	glm_aliasmodelbatch_t batches[MAX_ALIASMODEL_BATCH] = { 0 };
 	qbool was_texture_array = false;
 	qbool was_shells = false;
+	qbool was_outline = false;
 	int batch = 0;
 	int i;
 
 	memset(&aliasdata, 0, sizeof(aliasdata));
+	memset(batches, 0, sizeof(batches));
 
 	if (in_batch_mode && first_alias_model) {
 		if (GL_ShadersSupported()) {
@@ -223,6 +272,8 @@ static void GLM_FlushAliasModelBatch(void)
 				was_shells = batches[batch].shells = is_shells;
 			}
 
+			batches[batch].any_outlines |= req->outline;
+
 			memcpy(&aliasdata.modelViewMatrix[i][0], req->mvMatrix, sizeof(aliasdata.modelViewMatrix[i]));
 			aliasdata.color[i][0] = req->color[0] * 1.0f / 255;
 			aliasdata.color[i][1] = req->color[1] * 1.0f / 255;
@@ -264,6 +315,10 @@ static void GLM_FlushAliasModelBatch(void)
 			}
 
 			glMultiDrawArraysIndirect(GL_TRIANGLES, (void*)(batches[i].start * sizeof(aliasmodel_requests[0])), batches[i].end - batches[i].start + 1, sizeof(aliasmodel_requests[0]));
+
+			if (batches[i].any_outlines) {
+				GLM_DrawOutlineBatch(batches[i].start, batches[i].end);
+			}
 		}
 	}
 
@@ -314,7 +369,7 @@ static int AssignSampler(texture_ref texture)
 void GLM_QueueAliasModelDrawImpl(
 	model_t* model, byte* color, int start, int count, texture_ref texture, texture_ref fb_texture,
 	float scaleS, float scaleT, int effects, float yaw_angle_radians, float shadelight, float ambientlight,
-	float lerpFraction, int lerpFrameVertOffset
+	float lerpFraction, int lerpFrameVertOffset, qbool outline
 )
 {
 	glm_aliasmodel_req_t* req;
@@ -355,6 +410,7 @@ void GLM_QueueAliasModelDrawImpl(
 	req->ambientlight = ambientlight;
 	req->lerpFraction = lerpFraction;
 	req->lerpFrameVertOffset = lerpFrameVertOffset;
+	req->outline = outline;
 	memcpy(req->color, color, 4);
 	++batch_count;
 }
@@ -363,7 +419,7 @@ static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture, float scaleS, float scaleT,
 	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
-	float lerpFraction, int lerpFrameVertOffset
+	float lerpFraction, int lerpFrameVertOffset, qbool outline
 )
 {
 	qbool texture_model = GL_TextureReferenceIsValid(texture);
@@ -378,7 +434,7 @@ static void GLM_QueueAliasModelDraw(
 			// always allow powerupshells for specs or demos.
 			// do not allow powerupshells for eyes in other cases
 			if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
-				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, shell_effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset);
+				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, shell_effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, false);
 				if (!in_batch_mode) {
 					GLM_FlushAliasModelBatch();
 				}
@@ -386,7 +442,7 @@ static void GLM_QueueAliasModelDraw(
 		}
 	}
 	else {
-		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset);
+		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline);
 		if (!in_batch_mode) {
 			GLM_FlushAliasModelBatch();
 		}
@@ -428,7 +484,7 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 void GLM_DrawAliasModelFrame(
 	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
-	GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only
+	GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only, qbool outline
 )
 {
 	float lerp_fraction = r_framelerp;
@@ -480,14 +536,14 @@ void GLM_DrawAliasModelFrame(
 	GLM_QueueAliasModelDraw(
 		model, color, poseVertIndex, vertsPerPose,
 		texture, fb_texture, scaleS, scaleT, effects, shell_only,
-		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2
+		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline
 	);
 }
 
 void GLM_DrawAliasFrame(
 	model_t* model, int pose1, int pose2,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
-	float scaleS, float scaleT, int effects, qbool shell_only
+	float scaleS, float scaleT, int effects, qbool shell_only, qbool outline
 )
 {
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
@@ -496,6 +552,6 @@ void GLM_DrawAliasFrame(
 
 	GLM_DrawAliasModelFrame(
 		model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
-		scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only
+		scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only, outline
 	);
 }

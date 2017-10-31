@@ -199,7 +199,6 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-
 	GL_CullFace(GL_BACK);
 	glPolygonMode(GL_FRONT, GL_LINE);
 

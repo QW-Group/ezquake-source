@@ -2,6 +2,8 @@
 
 #ezquake-definitions
 
+uniform int outlines;
+
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
@@ -54,58 +56,63 @@ flat in int fsLumaSampler;
 
 void main()
 {
-	vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
-	vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
-	vec4 luma = texture(samplers[fsLumaSampler], fsTextureCoord.st);
-#ifdef DRAW_CAUSTIC_TEXTURES
-	vec4 caustic = texture(
-		causticsTex,
-		vec2(
-			// Using multipler of 3 here - not in other caustics logic but range
-			//   isn't enough otherwise, effect too subtle
-			(fsTextureCoord.s + sin(0.465 * (time + fsTextureCoord.t))) * 3 * -0.1234375,
-			(fsTextureCoord.t + sin(0.465 * (time + fsTextureCoord.s))) * 3 * -0.1234375
-		)
-	);
-#endif
-
-	if ((fsFlags & AMF_SHELLFLAGS) != 0) {
-		vec4 color1 = vec4(
-			shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level1 : 0),
-			shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level1 : 0),
-			shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level1 : 0),
-			shell_alpha
-		);
-		vec4 color2 = vec4(
-			shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level2 : 0),
-			shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level2 : 0),
-			shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level2 : 0),
-			shell_alpha
-		);
-
-		frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
+	if (outlines == 1) {
+		frag_colour = vec4(0, 0, 0, 0);
 	}
 	else {
-		if (fsTextureEnabled != 0) {
-			frag_colour = tex * fsBaseColor;
-			if (fsTextureLuma != 0) {
-				frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), frag_colour.a);
-			}
+		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
+		vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
+		vec4 luma = texture(samplers[fsLumaSampler], fsTextureCoord.st);
+#ifdef DRAW_CAUSTIC_TEXTURES
+		vec4 caustic = texture(
+			causticsTex,
+			vec2(
+				// Using multipler of 3 here - not in other caustics logic but range
+				//   isn't enough otherwise, effect too subtle
+			(fsTextureCoord.s + sin(0.465 * (time + fsTextureCoord.t))) * 3 * -0.1234375,
+				(fsTextureCoord.t + sin(0.465 * (time + fsTextureCoord.s))) * 3 * -0.1234375
+			)
+			);
+#endif
+
+		if ((fsFlags & AMF_SHELLFLAGS) != 0) {
+			vec4 color1 = vec4(
+				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level1 : 0),
+				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level1 : 0),
+				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level1 : 0),
+				shell_alpha
+			);
+			vec4 color2 = vec4(
+				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level2 : 0),
+				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level2 : 0),
+				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level2 : 0),
+				shell_alpha
+			);
+
+			frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
 		}
 		else {
-			// Solid
-			frag_colour = fsBaseColor;
-		}
+			if (fsTextureEnabled != 0) {
+				frag_colour = tex * fsBaseColor;
+				if (fsTextureLuma != 0) {
+					frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), frag_colour.a);
+				}
+			}
+			else {
+				// Solid
+				frag_colour = fsBaseColor;
+			}
 
 #ifdef DRAW_CAUSTIC_TEXTURES
-		if ((fsFlags & AMF_CAUSTICS) == AMF_CAUSTICS) {
-			// FIXME: Do proper GL_DECAL etc
-			frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
-		}
+			if ((fsFlags & AMF_CAUSTICS) == AMF_CAUSTICS) {
+				// FIXME: Do proper GL_DECAL etc
+				frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+			}
 #endif
-	}
+		}
 
 #ifndef EZ_POSTPROCESS_GAMMA
-	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
+		frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
 #endif
+	}
 }

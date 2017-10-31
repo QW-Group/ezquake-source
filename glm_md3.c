@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void GLM_DrawAliasModelFrame(
 	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
-	GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only
+	GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only, qbool outline
 );
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
@@ -156,7 +156,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	GLM_DrawAliasModelFrame(
 		mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
-		0, surfaceInfo[0].texnum, null_texture_reference, GL_MODULATE, 1, 1, ent->effects, false
+		0, surfaceInfo[0].texnum, null_texture_reference, GL_MODULATE, 1, 1, ent->effects, false, false
 	);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
