@@ -380,7 +380,7 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 void GL_TextureEnvMode(GLenum mode)
 {
 	if (!GL_ShadersSupported() && mode != unit_texture_mode[currentTextureUnit - GL_TEXTURE0]) {
-		GL_LogAPICall("GL_TextureEnvMode(mode=%s)", TexEnvName(mode));
+		GL_LogAPICall("GL_TextureEnvMode(GL_TEXTURE%d, mode=%s)", currentTextureUnit - GL_TEXTURE0, TexEnvName(mode));
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
 		unit_texture_mode[currentTextureUnit - GL_TEXTURE0] = mode;
 	}

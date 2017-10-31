@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, false)
+#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
 #define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveRegion()
 
@@ -35,36 +35,26 @@ void GL_StateDefault2D(void)
 
 	ENTER_STATE;
 
-	GL_PrintState();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (!GL_ShadersSupported()) {
-		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-		GL_Color3ubv(color_white);
-	}
-	GL_PrintState();
+	GL_Disable(GL_DEPTH_TEST);
+	GL_Disable(GL_CULL_FACE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginBrightenScreen(void)
 {
 	ENTER_STATE;
 
-	glDisable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_Color3ubv(color_white);
+	GLC_DisableAllTexturing();
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndBrightenScreen(void)
 {
-	LEAVE_STATE;
-
-	// FIXME: GL_ResetState()
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glColor3ubv(color_white);
 }
 
 void GL_StateBeginAlphaLineRGB(float thickness)
@@ -72,9 +62,11 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 	ENTER_STATE;
 
 	if (!GL_ShadersSupported()) {
-		glDisable(GL_TEXTURE_2D);
+		GL_Color3ubv(color_white);
+		GLC_DisableAllTexturing();
 	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
@@ -84,59 +76,47 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 
 void GL_StateEndAlphaLineRGB(void)
 {
-	ENTER_STATE;
-
-	if (!GL_ShadersSupported()) {
-		glEnable(GL_TEXTURE_2D);
-	}
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 {
 	ENTER_STATE;
 
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
+	GL_Color3ubv(color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawAlphaPieSliceRGB(float thickness)
 {
-	LEAVE_STATE;
-
-	// FIXME: thickness is not reset
-	glEnable(GL_TEXTURE_2D);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	glColor4ubv(color_white);
 }
 
 void GLC_StateBeginSceneBlur(void)
 {
 	ENTER_STATE;
 
+	if (!GL_ShadersSupported()) {
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+		GL_Color3ubv(color_white);
+	}
 	// Remember all attributes.
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	GL_Viewport(0, 0, glwidth, glheight);
 	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 	GL_IdentityModelView();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndSceneBlur(void)
 {
-	LEAVE_STATE;
-
-	// FIXME: Yup, this is the same
-
-	// Restore attributes.
-	glPopAttrib();
 }
 
 void GLC_StateBeginDrawPolygon(void)
@@ -144,40 +124,41 @@ void GLC_StateBeginDrawPolygon(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	glDisable(GL_TEXTURE_2D);
-	// (color also set)
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GLC_DisableAllTexturing();
+	// (color set during call)
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawPolygon(int oldFlags)
 {
-	LEAVE_STATE;
-
-	GL_AlphaBlendFlags(oldFlags);
-	glEnable(GL_TEXTURE_2D);
 }
 
 void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_Color3ubv(color_white);
+	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
 	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	GLC_InitTextureUnits1(texture, GL_MODULATE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndBloomDraw(void)
 {
-	LEAVE_STATE;
-
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
 
 void GLC_StateBeginPolyBlend(void)
 {
 	ENTER_STATE;
 
-	glDisable(GL_TEXTURE_2D);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GLC_DisableAllTexturing();
 	glColor4fv(v_blend);
 
 	LEAVE_STATE;
@@ -185,16 +166,13 @@ void GLC_StateBeginPolyBlend(void)
 
 void GLC_StateEndPolyBlend(void)
 {
-	ENTER_STATE;
-
-	glEnable(GL_TEXTURE_2D);
-	glColor3ubv(color_white);
-
-	LEAVE_STATE;
 }
 
 void GL_StateBeginNetGraph(qbool texture)
 {
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_Color3ubv(color_white);
 	if (!GL_ShadersSupported()) {
 		if (!texture || !GL_TextureReferenceIsValid(netgraphtexture)) {
 			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
@@ -209,10 +187,29 @@ void GL_StateBeginNetGraph(qbool texture)
 
 void GL_StateEndNetGraph(void)
 {
-	if (!GL_ShadersSupported()) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		GL_TextureEnvMode(GL_REPLACE);
-		glColor4ubv(color_white);
-		glEnable(GL_TEXTURE_2D);
-	}
+}
+
+void GLC_StateBeginImageDraw(void)
+{
+	GL_Color3ubv(color_white);
+	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED); // alphatest depends on image type
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void GLC_StateEndImageDraw(void)
+{
+}
+
+void GL_StateBeginPolyBlend(void)
+{
+	ENTER_STATE;
+
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+
+	LEAVE_STATE;
+}
+
+void GL_StateEndPolyBlend(void)
+{
 }

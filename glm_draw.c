@@ -298,10 +298,7 @@ static void GLC_FlushImageDraw(void)
 		GL_IdentityModelView();
 		GL_IdentityProjectionView();
 
-		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_CULL_FACE);
+		GLC_StateBeginImageDraw();
 
 		for (i = 0; i < imageCount; ++i) {
 			qbool alpha_test = images[i].flags & IMAGEPROG_FLAGS_ALPHATEST;

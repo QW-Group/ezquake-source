@@ -1234,6 +1234,8 @@ void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);
 void GL_StateEndFrame(void);
 
+void GLC_StateBeginImageDraw(void);
+void GLC_StateEndImageDraw(void);
 void GLC_StateBeginPolyBlend(void);
 void GLC_StateEndPolyBlend(void);
 void GL_StateBeginNetGraph(qbool texture);

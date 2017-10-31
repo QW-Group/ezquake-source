@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern texture_ref solidskytexture, alphaskytexture;
 
-#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, false)
+#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
 #define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveRegion()
 
@@ -80,15 +80,20 @@ void GLC_StateBeginWaterSurfaces(void)
 	float wateralpha = GL_WaterAlpha();
 
 	ENTER_STATE;
+
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		glColor4f (1, 1, 1, wateralpha);
-		GL_TextureEnvMode(GL_MODULATE);
+		GL_Color4f(1, 1, 1, wateralpha);
+		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		if (wateralpha < 0.9) {
 			GL_DepthMask(GL_FALSE);
 		}
 	}
-	GL_Color4ubv(color_white);
+	else {
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+		GL_Color3ubv(color_white);
+	}
 	LEAVE_STATE;
 }
 
@@ -101,7 +106,7 @@ void GLC_StateEndWaterSurfaces(void)
 	if (wateralpha < 1.0) {
 		GL_TextureEnvMode(GL_REPLACE);
 
-		glColor3ubv (color_white);
+		GL_Color3ubv(color_white);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		if (wateralpha < 0.9) {
 			GL_DepthMask(GL_TRUE);
@@ -139,24 +144,6 @@ void GL_StateEndEntities(visentlist_t* vislist)
 			GL_ShadeModel(GL_FLAT);
 		}
 	}
-
-	LEAVE_STATE;
-}
-
-void GL_StateBeginPolyBlend(void)
-{
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-
-	LEAVE_STATE;
-}
-
-void GL_StateEndPolyBlend(void)
-{
-	ENTER_STATE;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 
 	LEAVE_STATE;
 }
@@ -880,7 +867,7 @@ void GL_StateEndDrawViewModel(void)
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 {
-	ENTER_STATE;
+	GL_EnterTracedRegion(va("GL_StateBeginDrawBrushModel(%s)", e->model->name), true);
 
 	if (e->alpha) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
