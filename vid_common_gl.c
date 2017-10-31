@@ -316,10 +316,11 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 
 /************************************** GL INIT **************************************/
 
-void GL_Init (void) {
-	gl_vendor     = (const char*) glGetString (GL_VENDOR);
-	gl_renderer   = (const char*) glGetString (GL_RENDERER);
-	gl_version    = (const char*) glGetString (GL_VERSION);
+void GL_Init(void)
+{
+	gl_vendor = (const char*)glGetString(GL_VENDOR);
+	gl_renderer = (const char*)glGetString(GL_RENDERER);
+	gl_version = (const char*)glGetString(GL_VERSION);
 	if (GL_ShadersSupported()) {
 		gl_extensions = "(using modern OpenGL)\n";
 	}
@@ -328,23 +329,23 @@ void GL_Init (void) {
 	}
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
-/* FIXME/TODO: FreeBSD too? */
-	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
+	/* FIXME/TODO: FreeBSD too? */
+	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n", gl_vendor);
 	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
-	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n",  gl_version);
+	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
 #endif
 
 	if (COM_CheckParm("-gl_ext"))
 		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
 
-	Cvar_Register (&gl_strings);
-	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
+	Cvar_Register(&gl_strings);
+	Cvar_ForceSet(&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
-    Cvar_Register (&gl_maxtmu2);
+	Cvar_Register(&gl_maxtmu2);
 #ifndef __APPLE__
-	glClearColor (1,0,0,0);
+	glClearColor(1, 0, 0, 0);
 #else
-	glClearColor (0.2,0.2,0.2,1.0);
+	glClearColor(0.2, 0.2, 0.2, 1.0);
 #endif
 
 	GL_CullFace(GL_FRONT);
@@ -353,7 +354,7 @@ void GL_Init (void) {
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_AlphaFunc(GL_GREATER, 0.666);
 
-	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	GL_ProcessErrors("PreInit");
 	GL_ShadeModel(GL_FLAT);
 	GL_ProcessErrors("PreInit2");
