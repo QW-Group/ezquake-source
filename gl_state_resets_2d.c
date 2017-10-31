@@ -43,9 +43,7 @@ void GL_StateDefault2D(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
-		GL_DisableMultitexture();
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_TextureEnvMode(GL_REPLACE);
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		GL_Color3ubv(color_white);
 	}
 	GL_PrintState();
@@ -55,8 +53,7 @@ void GLC_StateBeginDrawImage(qbool alpha, byte color[4])
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
+	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
@@ -70,7 +67,7 @@ void GLC_StateEndDrawImage(void)
 {
 	ENTER_STATE;
 
-	glColor3ubv (color_white);
+	GL_Color3ubv(color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 

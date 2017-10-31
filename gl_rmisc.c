@@ -241,9 +241,8 @@ void R_TranslatePlayerSkin (int playernum)
 		}
 	}
 
-	GL_DisableMultitexture();
 	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playernmtextures[playernum], glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	GL_TextureEnvMode(GL_MODULATE);
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 	GL_TexParameterf(GL_TEXTURE0, playernmtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameterf(GL_TEXTURE0, playernmtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -281,7 +280,7 @@ void R_TranslatePlayerSkin (int playernum)
 		}
 
 		GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerfbtextures[playernum], glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		GL_TextureEnvMode(GL_MODULATE);
+		GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 		GL_TexParameterf(GL_TEXTURE0, playerfbtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		GL_TexParameterf(GL_TEXTURE0, playerfbtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}

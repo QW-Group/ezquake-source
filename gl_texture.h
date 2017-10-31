@@ -37,8 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
 void GL_SelectTexture(GLenum target);
-void GL_DisableMultitexture(void);
-void GL_EnableMultitexture(void);
 void GLC_EnableTMU(GLenum target);
 void GLC_DisableTMU(GLenum target);
 void GLC_EnsureTMUEnabled(GLenum target);
@@ -80,5 +78,6 @@ GLint GL_TextureWidth(texture_ref ref);
 GLint GL_TextureHeight(texture_ref ref);
 GLint GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
+void GLC_StateEndRenderScene(void);
 
 #endif	//__GL_TEXTURE_H

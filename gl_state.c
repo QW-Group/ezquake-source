@@ -44,6 +44,7 @@ static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
 static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
 
 static int old_alphablend_flags = 0;
+static void GLC_DisableTextureUnitOnwards(int first);
 
 // vid_common_gl.c
 static const char* TexEnvName(GLenum mode)
@@ -293,29 +294,9 @@ void GL_SelectTexture(GLenum textureUnit)
 	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
 
-void GL_DisableMultitexture(void)
+void GLC_DisableAllTexturing(void)
 {
-	if (GL_ShadersSupported()) {
-		GL_SelectTexture(GL_TEXTURE0);
-	}
-	else {
-		int i;
-		for (i = 1; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
-			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
-		}
-		GL_SelectTexture(GL_TEXTURE0);
-	}
-}
-
-void GL_EnableMultitexture(void)
-{
-	if (GL_ShadersSupported()) {
-		GL_SelectTexture(GL_TEXTURE1);
-	}
-	else if (gl_mtexable) {
-		GL_SelectTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-	}
+	GLC_DisableTextureUnitOnwards(0);
 }
 
 void GLC_EnableTMU(GLenum target)
@@ -409,12 +390,12 @@ static void GLC_DisableTextureUnitOnwards(int first)
 {
 	int i;
 
-	GL_SelectTexture(GL_TEXTURE0);
 	for (i = first; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
 		if (texunitenabled[i]) {
 			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
 		}
 	}
+	GL_SelectTexture(GL_TEXTURE0);
 }
 
 void GLC_InitTextureUnitsNoBind1(GLenum envMode0)

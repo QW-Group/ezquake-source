@@ -80,7 +80,6 @@ void GLC_StateBeginWaterSurfaces(void)
 	float wateralpha = GL_WaterAlpha();
 
 	ENTER_STATE;
-	GL_PrintState();
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		glColor4f (1, 1, 1, wateralpha);
@@ -90,7 +89,6 @@ void GLC_StateBeginWaterSurfaces(void)
 		}
 	}
 	GL_Color4ubv(color_white);
-	GL_PrintState();
 	LEAVE_STATE;
 }
 
@@ -178,8 +176,7 @@ void GLC_StateEndAlphaChain(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 
 	LEAVE_STATE;
 }
@@ -187,17 +184,16 @@ void GLC_StateEndAlphaChain(void)
 void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 {
 	texture_t* t = s->texinfo->texture;
+	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
 
 	ENTER_STATE;
 
 	//bind the world texture
-	GL_DisableMultitexture();
-	GL_BindTextureUnit(GL_TEXTURE0, t->gl_texturenum);
-
 	if (gl_mtexable) {
-		GL_EnableMultitexture();
-
-		GLC_SetTextureLightmap(GL_TEXTURE1, s->lightmaptexturenum);
+		GLC_InitTextureUnits2(t->gl_texturenum, GL_REPLACE, lightmap_textures[s->lightmaptexturenum], GLC_LightmapTexEnv());
+	}
+	else {
+		GLC_InitTextureUnits1(t->gl_texturenum, GL_REPLACE);
 	}
 
 	LEAVE_STATE;
@@ -218,7 +214,7 @@ void GLC_StateBeginAliasOutlineFrame(void)
 
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_LINE_SMOOTH);
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
 }
 
 void GLC_StateEndAliasOutlineFrame(void)
@@ -229,7 +225,7 @@ void GLC_StateEndAliasOutlineFrame(void)
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glDisable(GL_LINE_SMOOTH);
 	GL_CullFace(GL_FRONT);
-	glEnable(GL_TEXTURE_2D);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 }
@@ -258,8 +254,8 @@ void GLC_StateBeginUnderwaterCaustics(void)
 {
 	ENTER_STATE;
 
-	GL_EnableMultitexture();
-	GL_BindTextureUnit(GL_TEXTURE1, underwatertexture);
+	GLC_EnsureTMUEnabled(GL_TEXTURE1);
+	GL_EnsureTextureUnitBound(GL_TEXTURE1, underwatertexture);
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -279,28 +275,25 @@ void GLC_StateEndUnderwaterCaustics(void)
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
-	GL_SelectTexture(GL_TEXTURE1);
-	//glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1); FIXME
-	GL_TextureEnvMode(GL_REPLACE);
-	glDisable(GL_TEXTURE_2D);
-
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 
-	GL_DisableMultitexture();
+	GL_TextureEnvModeForUnit(GL_TEXTURE1, GL_REPLACE);
+	GLC_EnsureTMUDisabled(GL_TEXTURE1);
+
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 }
 
 void GLC_StateBeginMD3Draw(float alpha)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
 	if (alpha < 1) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	}
 	GL_EnableFog();
-	GL_TextureEnvMode(GL_MODULATE);
+	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 }
 
 void GLC_StateEndMD3Draw(void)
@@ -308,10 +301,9 @@ void GLC_StateEndMD3Draw(void)
 	LEAVE_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 	GL_ShadeModel(GL_FLAT);
-	GL_Enable(GL_TEXTURE_2D);
 	GL_DisableFog();
 }
 
@@ -319,11 +311,10 @@ void GLC_StateBeginFastSky(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
 	}
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
 	glColor3ubv(r_skycolor.color);
 }
 
@@ -331,8 +322,8 @@ void GLC_StateEndFastSky(void)
 {
 	LEAVE_STATE;
 
-	glEnable(GL_TEXTURE_2D);
-	glColor3f(1, 1, 1);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_Color4ubv(color_white);
 	if (gl_fogsky.value) {
 		GL_DisableFog();
 	}
@@ -342,7 +333,7 @@ void GLC_StateBeginSky(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	glDisable(GL_DEPTH_TEST);
 }
 
@@ -361,7 +352,7 @@ void GLC_StateBeginSkyZBufferPass(void)
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		GL_BlendFunc(GL_ZERO, GL_ONE);
 	}
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 }
 
@@ -377,7 +368,7 @@ void GLC_StateEndSkyZBufferPass(void)
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
 
@@ -392,8 +383,7 @@ void GLC_StateBeginSkyDome(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
-	GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
+	GLC_InitTextureUnits1(solidskytexture, GL_REPLACE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
 
@@ -427,24 +417,18 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
 	}
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
 
-	GL_EnableMultitexture();
-	GL_TextureEnvMode(GL_DECAL);
-	GL_BindTextureUnit(GL_TEXTURE1, alphaskytexture);
+	GLC_InitTextureUnits2(solidskytexture, GL_MODULATE, alphaskytexture, GL_DECAL);
 }
 
 void GLC_StateEndMultiTextureSkyChain(void)
 {
 	LEAVE_STATE;
 
-	GL_DisableMultitexture();
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	if (gl_fogsky.value) {
 		GL_DisableFog();
 	}
@@ -454,11 +438,10 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
 	if (gl_fogsky.value) {
 		GL_EnableFog();
 	}
-	GL_BindTextureUnit(GL_TEXTURE0, solidskytexture);
+	GLC_InitTextureUnits1(solidskytexture, GL_REPLACE);
 }
 
 void GLC_StateBeginSingleTextureCloudPass(void)
@@ -466,7 +449,7 @@ void GLC_StateBeginSingleTextureCloudPass(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BindTextureUnit(GL_TEXTURE0, alphaskytexture);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, alphaskytexture);
 }
 
 void GLC_StateEndSingleTextureSky(void)
@@ -486,15 +469,19 @@ void GLC_StateBeginRenderFullbrights(void)
 	// don't bother writing Z
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndRenderFullbrights(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DepthMask(GL_TRUE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginRenderLumas(void)
@@ -504,35 +491,41 @@ void GLC_StateBeginRenderLumas(void)
 	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndRenderLumas(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
-	// FIXME: GL_ResetState()
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginEmitDetailPolys(void)
 {
 	ENTER_STATE;
 
-	GL_BindTextureUnit(GL_TEXTURE0, detailtexture);
-	GL_TextureEnvMode(GL_DECAL);
+	GLC_InitTextureUnits1(detailtexture, GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndEmitDetailPolys(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawMapOutline(void)
@@ -542,23 +535,28 @@ void GLC_StateBeginDrawMapOutline(void)
 	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	GL_Color4ubv(color_white);
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_TEXTURE_2D);
+	GL_Disable(GL_DEPTH_TEST);
+	GL_Disable(GL_CULL_FACE);
+	GLC_DisableAllTexturing();
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginEndMapOutline(void)
 {
 	ENTER_STATE;
 
-	glPopAttrib();
-
-	glColor3f(1.0f, 1.0f, 1.0f);
+	GL_Color4ubv(color_white);
+	GL_Enable(GL_DEPTH_TEST);
+	if (gl_cull.integer) {
+		GL_Enable(GL_CULL_FACE);
+	}
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
+	LEAVE_STATE;
 }
 
 void GLM_StateBeginDrawBillboards(void)
@@ -568,20 +566,22 @@ void GLM_StateBeginDrawBillboards(void)
 	GL_DisableFog();
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GL_TextureEnvMode(GL_MODULATE);
+	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GL_ShadeModel(GL_SMOOTH);
 }
 
 void GLM_StateEndDrawBillboards(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_ShadeModel(GL_FLAT);
 	GL_EnableFog();
+
+	LEAVE_STATE;
 }
 
 void GLM_StateBeginDrawWorldOutlines(void)
@@ -598,17 +598,21 @@ void GLM_StateBeginDrawWorldOutlines(void)
 
 	// limit outline width, since even width == 3 can be considered as cheat.
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
+	LEAVE_STATE;
 }
 
 void GLM_StateEndDrawWorldOutlines(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	GL_Enable(GL_DEPTH_TEST);
 	GL_Enable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model, qbool shells_only)
@@ -623,7 +627,7 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 	}
 
 	if (custom_model) {
-		GL_Disable(GL_TEXTURE_2D);
+		GLC_DisableAllTexturing();
 		GL_Color4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], alpha * 255);
 	}
 	else {
@@ -634,8 +638,7 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 			GLC_InitTextureUnits1(texture, textureEnvMode);
 		}
 		else {
-			GL_DisableMultitexture();
-			GL_Disable(GL_TEXTURE_2D);
+			GLC_DisableAllTexturing();
 		}
 	}
 
@@ -644,22 +647,9 @@ void GLC_StateBeginDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, te
 
 void GLC_StateEndDrawAliasFrame(void)
 {
-}
-
-void GLC_StateBeginDrawAliasCustomModel(void)
-{
 	ENTER_STATE;
 
-	glDisable(GL_TEXTURE_2D);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndDrawAliasCustomModel(void)
-{
-	ENTER_STATE;
-
-	glEnable(GL_TEXTURE_2D);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 
 	LEAVE_STATE;
 }
@@ -668,7 +658,7 @@ void GLC_StateBeginAliasModelShadow(void)
 {
 	ENTER_STATE;
 
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	glColor4f(0, 0, 0, 0.5);
 
@@ -680,7 +670,7 @@ void GLC_StateEndAliasModelShadow(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glEnable(GL_TEXTURE_2D);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 
 	LEAVE_STATE;
 }
@@ -708,7 +698,7 @@ void GLC_StateEndDrawFlatModel(void)
 		glDisable(GL_FOG);
 	}
 
-	glColor3f(1.0f, 1.0f, 1.0f);
+	GL_Color4ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -764,22 +754,21 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
 	GL_EnableFog();
-	glDisable(GL_TEXTURE_2D);
+	GLC_DisableAllTexturing();
 
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
 	if (wateralpha < 1.0 && wateralpha >= 0) {
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		color[3] = wateralpha * 255;
-		glColor4ubv(color); // 1, 1, 1, wateralpha
-		GL_TextureEnvMode(GL_MODULATE);
+		GL_Color4ubv(color); // 1, 1, 1, wateralpha
+		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 		if (wateralpha < 0.9) {
 			GL_DepthMask(GL_FALSE);
 		}
 	}
 	else {
-		glColor3ubv(color);
+		GL_Color3ubv(color);
 	}
 	// END shaman FIX /gl_turbalpha + /r_fastturb {
 }
@@ -789,14 +778,13 @@ void GLC_StateEndFastTurbPoly(void)
 	LEAVE_STATE;
 
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
-	GL_TextureEnvMode(GL_REPLACE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_DepthMask(GL_TRUE);
 	// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 	GL_DisableFog();
-	glEnable(GL_TEXTURE_2D);
-	glColor3ubv(color_white);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_Color4ubv(color_white);
 	// END shaman RFE 1022504
 }
 
@@ -804,9 +792,9 @@ void GLC_StateBeginTurbPoly(void)
 {
 	ENTER_STATE;
 
-	GL_DisableMultitexture();
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_Enable(GL_TEXTURE_2D);
 	GL_EnableFog();
-	glEnable(GL_TEXTURE_2D);
 }
 
 void GLC_StateEndTurbPoly(void)
@@ -869,7 +857,7 @@ void GLC_StateBeginCausticsPolys(void)
 {
 	ENTER_STATE;
 
-	GL_TextureEnvMode(GL_DECAL);
+	GLC_InitTextureUnitsNoBind1(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 }
@@ -878,7 +866,7 @@ void GLC_StateEndCausticsPolys(void)
 {
 	LEAVE_STATE;
 
-	GL_TextureEnvMode(GL_REPLACE);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 }
@@ -1028,4 +1016,11 @@ void GL_StateEndFrame(void)
 	if (developer.integer) {
 		Cvar_SetValue(&developer, 0);
 	}
+}
+
+void GLC_StateEndRenderScene(void)
+{
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+
+	GL_ConfigureFog();
 }

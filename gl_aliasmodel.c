@@ -208,8 +208,6 @@ static void R_RenderAliasModelEntity(
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
 		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
-
-		GL_DisableMultitexture();
 	}
 	else {
 		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, GL_MODULATE, scaleS, scaleT, effects, false, shell_only);
