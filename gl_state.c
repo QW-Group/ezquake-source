@@ -46,7 +46,7 @@ static GLuint cntarrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
 static qbool mtexenabled = false;
 
-static GLenum lastTextureMode = GL_MODULATE;
+static GLenum lastTextureMode[MAX_LOGGED_TEXTURE_UNITS];
 static int old_alphablend_flags = 0;
 
 // vid_common_gl.c
@@ -201,7 +201,9 @@ void GL_InitialiseState(void)
 	gl_depth_mask = GL_FALSE;
 	currenttexture = 0;
 	currentTextureArray = 0;
-	lastTextureMode = GL_MODULATE;
+	for (i = 0; i < sizeof(lastTextureMode) / sizeof(lastTextureMode[0]); ++i) {
+		lastTextureMode[i] = GL_MODULATE;
+	}
 	old_alphablend_flags = 0;
 	polygonOffsetFactor = polygonOffsetUnits = 0;
 	gl_polygon_offset_line = gl_polygon_offset_fill = false;
@@ -292,7 +294,7 @@ void GL_SelectTexture(GLenum target)
 	currentTextureArray = cntarrays[target - GL_TEXTURE0];
 	gl_texture_2d = texunitenabled[target - GL_TEXTURE0];
 	oldtarget = target;
-	GL_MarkEvent(va("glActiveTexture(GL_TEXTURE%d)", target - GL_TEXTURE0));
+	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", target - GL_TEXTURE0);
 }
 
 void GL_DisableMultitexture(void)
@@ -319,7 +321,7 @@ void GL_EnableMultitexture(void)
 	}
 }
 
-void GL_EnableTMU(GLenum target) 
+void GLC_EnableTMU(GLenum target)
 {
 	if (!GL_ShadersSupported()) {
 		GL_SelectTexture(target);
@@ -327,11 +329,39 @@ void GL_EnableTMU(GLenum target)
 	}
 }
 
-void GL_DisableTMU(GLenum target) 
+void GLC_DisableTMU(GLenum target)
 {
 	if (!GL_ShadersSupported()) {
 		GL_SelectTexture(target);
 		glDisable(GL_TEXTURE_2D);
+	}
+}
+
+void GLC_EnsureTMUEnabled(GLenum target)
+{
+	if (!GL_ShadersSupported()) {
+		if (oldtarget == target && gl_texture_2d) {
+			return;
+		}
+		if (texunitenabled[target - GL_TEXTURE0]) {
+			return;
+		}
+
+		GLC_EnableTMU(target);
+	}
+}
+
+void GLC_EnsureTMUDisabled(GLenum target)
+{
+	if (!GL_ShadersSupported()) {
+		if (oldtarget == target && !gl_texture_2d) {
+			return;
+		}
+		if (!texunitenabled[target - GL_TEXTURE0]) {
+			return;
+		}
+
+		GLC_DisableTMU(target);
 	}
 }
 
@@ -371,15 +401,19 @@ void GL_DepthMask(GLboolean mask)
 	}
 }
 
+void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
+{
+	if (!GL_ShadersSupported() && mode != lastTextureMode[unit - GL_TEXTURE0]) {
+		GL_SelectTexture(unit);
+		GL_TextureEnvMode(mode);
+	}
+}
+
 void GL_TextureEnvMode(GLenum mode)
 {
-	if (GL_ShadersSupported()) {
-		// Just store for now
-		lastTextureMode = mode;
-	}
-	else if (mode != lastTextureMode) {
+	if (!GL_ShadersSupported() && mode != lastTextureMode[oldtarget - GL_TEXTURE0]) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
-		lastTextureMode = mode;
+		lastTextureMode[oldtarget - GL_TEXTURE0] = mode;
 	}
 }
 
@@ -823,5 +857,5 @@ void GL_Begin(GLenum primitive)
 
 	++frameStats.draw_calls;
 	glBegin(primitive);
-	//GL_MarkEvent("GL_Begin() call");
+	//GL_LogAPICall("GL_Begin()...");
 }

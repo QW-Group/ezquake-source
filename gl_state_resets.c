@@ -80,7 +80,7 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
 	);
 	if (!GL_ShadersSupported()) {
-		GL_EnableTMU(GL_TEXTURE0);
+		GLC_EnableTMU(GL_TEXTURE0);
 	}
 }
 
@@ -545,7 +545,7 @@ void GLM_StateEndDrawWorldOutlines(void)
 void GLC_BeginStateDrawAliasFrame(GLenum textureEnvMode, texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
 {
 	GL_DisableMultitexture();
-	GL_EnableTMU(GL_TEXTURE0);
+	GLC_EnableTMU(GL_TEXTURE0);
 	GL_TextureEnvMode(textureEnvMode);
 	if (GL_TextureReferenceIsValid(texture)) {
 		GL_BindTextureUnit(GL_TEXTURE0, texture);
@@ -601,7 +601,7 @@ void GLC_StateBeginDrawFlatModel(void)
 
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_BLEND);
-	GL_EnableTMU(GL_TEXTURE0);
+	GLC_EnableTMU(GL_TEXTURE0);
 
 	// START shaman BUG /fog not working with /r_drawflat {
 	if (gl_fogenable.value) {
@@ -629,23 +629,18 @@ void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrig
 		glEnable(GL_FOG);
 	}
 
-	GL_EnableTMU(GL_TEXTURE0);
-	GL_TextureEnvMode(GL_REPLACE);
+	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
 	if (lightmapTextureUnit) {
-		GL_EnableTMU(lightmapTextureUnit);
-		GLC_SetLightmapTextureEnvironment();
+		GLC_EnsureTMUEnabled(lightmapTextureUnit);
+		GLC_SetLightmapTextureEnvironment(lightmapTextureUnit);
 	}
 	if (fullbrightTextureUnit) {
-		GL_EnableTMU(fullbrightTextureUnit);
-		GL_TextureEnvMode(fullbrightMode);
+		GL_TextureEnvModeForUnit(fullbrightTextureUnit, fullbrightMode);
 	}
-	if (lightmapTextureUnit || fullbrightTextureUnit) {
-		GL_EnableMultitexture();
-	}
-	else {
-		GL_DisableMultitexture();
-	}
+
+	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
@@ -653,23 +648,22 @@ void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum f
 	MIDDLE_STATE;
 
 	if (fullbrightTextureUnit) {
-		GL_DisableTMU(fullbrightTextureUnit);
+		GLC_EnsureTMUDisabled(fullbrightTextureUnit);
 	}
 	if (lightmapTextureUnit) {
-		GL_DisableTMU(lightmapTextureUnit);
-	}
-	if (fullbrightTextureUnit || lightmapTextureUnit) {
-		GL_SelectTexture(GL_TEXTURE0);
+		GLC_EnsureTMUDisabled(lightmapTextureUnit);
 	}
 }
 
 void GLC_StateEndDrawTextureChains(void)
 {
-	LEAVE_STATE;
+	ENTER_STATE;
 
 	if (gl_fogenable.value) {
 		glDisable(GL_FOG);
 	}
+
+	LEAVE_STATE;
 }
 
 void GLC_StateBeginFastTurbPoly(byte color[4])
@@ -765,7 +759,7 @@ void GLC_StateBeginDrawSimpleItem(void)
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_DisableMultitexture();
-	GL_EnableTMU(GL_TEXTURE0);
+	GLC_EnableTMU(GL_TEXTURE0);
 }
 
 void GLC_StateEndDrawSimpleItem(int oldFlags)

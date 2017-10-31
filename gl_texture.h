@@ -39,8 +39,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void GL_SelectTexture(GLenum target);
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
-void GL_EnableTMU(GLenum target);
-void GL_DisableTMU(GLenum target);
+void GLC_EnableTMU(GLenum target);
+void GLC_DisableTMU(GLenum target);
+void GLC_EnsureTMUEnabled(GLenum target);
+void GLC_EnsureTMUDisabled(GLenum target);
 
 byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);

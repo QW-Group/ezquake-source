@@ -638,9 +638,9 @@ void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
 	}
 }
 
-void GLC_SetLightmapTextureEnvironment(void)
+void GLC_SetLightmapTextureEnvironment(GLenum textureUnit)
 {
-	GL_TextureEnvMode(gl_invlightmaps ? GL_BLEND : GL_MODULATE);
+	GL_TextureEnvModeForUnit(textureUnit, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 }
 
 void GLC_SetLightmapBlendFunc(void)

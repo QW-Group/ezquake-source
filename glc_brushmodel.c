@@ -190,14 +190,14 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		}
 
 		//bind the world texture
-		GL_BindTextureUnit(materialTextureUnit, t->gl_texturenum);
+		GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
 
 		if (GL_TextureReferenceIsValid(fb_texturenum)) {
-			GL_EnableTMU(fullbrightTextureUnit);
-			GL_BindTextureUnit(fullbrightTextureUnit, fb_texturenum);
+			GLC_EnsureTMUEnabled(fullbrightTextureUnit);
+			GL_EnsureTextureUnitBound(fullbrightTextureUnit, fb_texturenum);
 		}
 		else {
-			GL_DisableTMU(fullbrightTextureUnit);
+			GLC_EnsureTMUDisabled(fullbrightTextureUnit);
 		}
 
 		for (waterline = 0; waterline < 2; waterline++) {

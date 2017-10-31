@@ -532,6 +532,7 @@ qbool GL_VBOsSupported(void);
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GL_TextureEnvMode(GLenum mode);
+void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 
 #define GL_ALPHATEST_NOCHANGE 0
 #define GL_ALPHATEST_ENABLED  1
@@ -817,7 +818,7 @@ mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
 void GLC_SetLightmapBlendFunc(void);
-void GLC_SetLightmapTextureEnvironment(void);
+void GLC_SetLightmapTextureEnvironment(GLenum textureUnit);
 void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr, float scaleS, float scaleT);
