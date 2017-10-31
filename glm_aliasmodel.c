@@ -430,7 +430,7 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 }
 
 void GLM_DrawAliasModelFrame(
-	model_t* model, int pose1, int pose2, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
+	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	qbool scrolldir, texture_ref texture, texture_ref fb_texture,
 	GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only
 )
@@ -438,9 +438,9 @@ void GLM_DrawAliasModelFrame(
 	float lerp_fraction = r_framelerp;
 	byte color[4];
 
-	if (pose1 == pose2 || lerp_fraction == 1) {
+	if (lerp_fraction == 1) {
+		poseVertIndex = poseVertIndex2;
 		lerp_fraction = 0;
-		pose1 = pose2;
 	}
 
 	// FIXME: Need to take into account the RF_LIMITLERP flag which is used on Team Fortress viewmodels
@@ -499,7 +499,7 @@ void GLM_DrawAliasFrame(
 	int nextVertIndex = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
 
 	GLM_DrawAliasModelFrame(
-		model, pose1, pose2, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
+		model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
 		scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only
 	);
 }
