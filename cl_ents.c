@@ -881,10 +881,6 @@ void CL_LinkPacketEntities(void)
 		state = &pack->entities[pnum];
 		cent = &cl_entities[state->number];
 
-		if (developer.integer) {
-			Con_Printf("%d: %s\n", pnum, cl.model_name[state->modelindex]);
-		}
-
 		// Control powerup glow for bots.
 		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) 
 		{
