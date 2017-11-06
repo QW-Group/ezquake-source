@@ -417,6 +417,30 @@ static int GLM_CountTextureArrays(model_t* mod)
 	return num_arrays;
 }
 
+static void GLM_PrintTextureArrays(model_t* mod)
+{
+	int i, j;
+
+	Con_Printf("%s\n", mod->name);
+	for (i = 0; i < mod->numtextures; ++i) {
+		texture_t* tex = mod->textures[i];
+
+		if (!tex) {
+			continue;
+		}
+
+		if (!tex->loaded || tex->gl_texture_array == 0) {
+			continue;
+		}
+
+		Con_Printf("  %2d: %s, %d [%2d] %s\n", i, tex->name, tex->gl_texture_array, tex->next_same_size, tex->size_start ? "start" : "cont");
+	}
+
+	for (i = 0; i < mod->texture_array_count; ++i) {
+		Con_Printf("A %2d: %d first %d, %.3f x %.3f\n", i, mod->texture_arrays[i], mod->texture_array_first[i], mod->texture_arrays_scale_s[i], mod->texture_arrays_scale_t[i]);
+	}
+}
+
 static void GLM_SetTextureArrays(model_t* mod)
 {
 	int i, j;
@@ -426,11 +450,15 @@ static void GLM_SetTextureArrays(model_t* mod)
 		texture_t* tex = mod->textures[i];
 		qbool seen_prev = false;
 
-		if (!tex || !tex->loaded || tex->gl_texture_array == 0) {
+		if (!tex) {
 			continue;
 		}
 
 		tex->next_same_size = -1;
+		if (!tex->loaded || tex->gl_texture_array == 0) {
+			continue;
+		}
+
 		for (j = i - 1; j >= 0; --j) {
 			texture_t* prev_tex = mod->textures[j];
 			if (prev_tex && prev_tex->gl_texture_array == tex->gl_texture_array) {
@@ -548,6 +576,9 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 		}
 
 		GLM_SetTextureArrays(mod);
+		if (mod == cl.worldmodel) {
+			GLM_PrintTextureArrays(mod);
+		}
 	}
 	else {
 		//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);

@@ -425,7 +425,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 		int texIndex;
 		int count = 0;
 
-		if (!base_tex || !base_tex->size_start) {
+		if (!base_tex || !base_tex->size_start || !base_tex->gl_texture_array) {
 			continue;
 		}
 
@@ -444,26 +444,30 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
-					int newVerts = surf->polys->numverts;
+					glpoly_t* poly;
 
-					if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-						glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
-						count = 0;
-					}
+					for (poly = surf->polys; poly; poly = poly->next) {
+						int newVerts = poly->numverts;
 
-					// Degenerate triangle strips
-					if (count) {
-						int prev = count - 1;
-
-						if (count % 2 == 1) {
-							indices[count++] = indices[prev];
+						if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+							glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
+							count = 0;
 						}
-						indices[count++] = indices[prev];
-						indices[count++] = surf->polys->vbo_start;
-					}
 
-					for (v = 0; v < newVerts; ++v) {
-						indices[count++] = surf->polys->vbo_start + v;
+						// Degenerate triangle strips
+						if (count) {
+							int prev = count - 1;
+
+							if (count % 2 == 1) {
+								indices[count++] = indices[prev];
+							}
+							indices[count++] = indices[prev];
+							indices[count++] = poly->vbo_start;
+						}
+
+						for (v = 0; v < newVerts; ++v) {
+							indices[count++] = poly->vbo_start + v;
+						}
 					}
 				}
 			}
@@ -473,7 +477,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
 		}
 	}
-
 	GLM_ExitBatchedPolyRegion();
 	return;
 }

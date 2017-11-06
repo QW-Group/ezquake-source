@@ -481,6 +481,9 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
 		glGenTextures(1, &glt->texnum);
 	}
+	else if (glt && !glt->texnum) {
+		glGenTextures(1, &glt->texnum);
+	}
 
 	if (!glt)
 		Sys_Error("GL_LoadTexture: glt not initialized\n");

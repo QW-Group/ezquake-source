@@ -1083,6 +1083,10 @@ void Draw_InitConback (void)
 	last_lvlshot = NULL;
 	last_mapname[0] = 0;
 
+	if (!glConfig.initialized) {
+		return;
+	}
+
 	start = Hunk_LowMark ();
 
 	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp", NULL)))

@@ -374,7 +374,8 @@ int GLM_MeasureVBOSizeForBrushModel(model_t* m)
 		return 0;
 	}
 
-	return (total_surf_verts + 2 * (total_surfaces - 1));
+	Con_Printf("%s = %d verts\n", m->name, (total_surf_verts + 2 * (total_surfaces - 1)));
+	return (total_surf_verts + 3 * (total_surfaces - 1));
 }
 
 int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
@@ -454,12 +455,6 @@ int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 						if (!poly->numverts) {
 							continue;
-						}
-
-						if (length) {
-							vbo_pos = DuplicateVertex(vbo_buffer, vbo_pos);
-							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material, scaleS, scaleT);
-							length += 2;
 						}
 
 						// Store position for drawing individual polys
@@ -711,7 +706,7 @@ void GLM_DrawBrushModel(model_t* model)
 	int i, waterline, v;
 	msurface_t* surf;
 	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glm_brushmodel_req_t* req;
+	glm_brushmodel_req_t* req = NULL;
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
@@ -733,7 +728,7 @@ void GLM_DrawBrushModel(model_t* model)
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					int newVerts = surf->polys->numverts;
 
-					if (req->count + 2 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
+					if (req->count + 3 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
 						req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
 					}
 
@@ -741,6 +736,9 @@ void GLM_DrawBrushModel(model_t* model)
 					if (req->count) {
 						int prev = req->count - 1;
 
+						if (req->count % 2 == 1) {
+							req->indices[req->count++] = req->indices[prev];
+						}
 						req->indices[req->count++] = req->indices[prev];
 						req->indices[req->count++] = surf->polys->vbo_start;
 					}
@@ -751,6 +749,10 @@ void GLM_DrawBrushModel(model_t* model)
 				}
 			}
 		}
+	}
+
+	if (req && req->count) {
+		GLM_FlushImageDraw();
 	}
 
 	return;
