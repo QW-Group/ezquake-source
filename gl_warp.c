@@ -26,9 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "utils.h"
 
-void GLM_CreateVAOForPoly(glpoly_t *poly);
-void GLM_CreateVAOForWarpPoly(msurface_t* surf);
-
 extern model_t *loadmodel;
 //ISUNDERWATER(TruePointContents(start)
 extern cvar_t r_fastturb;
@@ -148,10 +145,6 @@ void GL_SubdivideSurface(msurface_t *fa)
 	}
 
 	SubdividePolygon(numverts, verts[0]);
-
-	if (GL_ShadersSupported()) {
-		GLM_CreateVAOForWarpPoly(fa);
-	}
 }
 
 // Just build the gl polys, don't subdivide
@@ -188,9 +181,6 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 	vert = verts[0];
 	for (i = 0; i < numverts; i++, vert += 3) {
 		VectorCopy(vert, poly->verts[i]);
-	}
-	if (GL_ShadersSupported()) {
-		GLM_CreateVAOForPoly(poly);
 	}
 }
 /*

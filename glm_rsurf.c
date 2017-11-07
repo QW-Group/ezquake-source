@@ -491,7 +491,7 @@ void GLM_DrawWorld(model_t* model)
 		GLM_DrawTexturedWorld(model);
 	}
 }
-
+/*
 void GLM_CreateVAOForWarpPoly(msurface_t* surf)
 {
 	if (!surf->polys->vbo.vbo) {
@@ -585,7 +585,7 @@ void GLM_CreateVAOForPoly(glpoly_t *poly)
 		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
 	}
 }
-
+*/
 void GLM_NewMap(void)
 {
 }

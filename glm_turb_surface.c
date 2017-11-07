@@ -28,36 +28,6 @@ void GLM_DrawWaterSurfaces(void)
 	texture_t* current_texture = NULL;
 	int v;
 
-	if (developer.integer) {
-		int surfaces = 0;
-		for (s = waterchain; s; s = s->texturechain) {
-			if (current_texture != s->texinfo->texture) {
-				if (current_texture) {
-					Con_Printf("%s = %d surfaces\n", current_texture->name, surfaces);
-				}
-				current_texture = s->texinfo->texture;
-				surfaces = 0;
-			}
-			++surfaces;
-
-			if (current_texture->turbType & TEXTURE_TURB_LAVA)
-			{
-				glpoly_t* poly;
-				int maxlen = 0;
-
-				for (poly = s->polys; poly; poly = poly->next) {
-					maxlen = max(maxlen, poly->numverts);
-				}
-				Con_Printf("Lava, len: %d\n", maxlen);
-			}
-		}
-		if (current_texture) {
-			Con_Printf("%s = %d surfaces\n", current_texture->name, surfaces);
-		}
-		current_texture = NULL;
-		Cvar_SetValue(&developer, 0);
-	}
-
 	count = 0;
 	GL_SelectTexture(GL_TEXTURE0);
 	if (wateralpha < 1.0 && wateralpha >= 0) {
@@ -90,7 +60,7 @@ void GLM_DrawWaterSurfaces(void)
 				GLM_DrawIndexedTurbPoly(cl.worldmodel->vao.vao, indices, count, current_texture);
 				count = 0;
 			}
-			/*
+
 			if (count) {
 				int prev = count - 1;
 
@@ -99,14 +69,10 @@ void GLM_DrawWaterSurfaces(void)
 				}
 				indices[count++] = indices[prev];
 				indices[count++] = poly->vbo_start;
-			}*/
-			count = 0;
+			}
 			for (v = 0; v < newVerts; ++v) {
 				indices[count++] = poly->vbo_start + v;
 			}
-			GL_Bind(current_texture->gl_texturenum);
-			GLM_DrawIndexedTurbPoly(cl.worldmodel->vao.vao, indices, count, current_texture);
-			count = 0;
 		}
 	}
 	if (count) {
