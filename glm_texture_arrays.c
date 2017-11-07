@@ -419,7 +419,7 @@ static int GLM_CountTextureArrays(model_t* mod)
 
 static void GLM_PrintTextureArrays(model_t* mod)
 {
-	int i, j;
+	int i;
 
 	Con_Printf("%s\n", mod->name);
 	for (i = 0; i < mod->numtextures; ++i) {

@@ -149,7 +149,7 @@ static void BuildSkyVertsArray(void)
 static void GLM_DrawFastSky(void)
 {
 	GLsizei count;
-	GLushort indices[4096];
+	GLuint indices[4096];
 	msurface_t* fa;
 	byte color[4] = {
 		r_skycolor.color[0],

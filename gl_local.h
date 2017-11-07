@@ -628,8 +628,8 @@ void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
-void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
-void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha);
+void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
+void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, float alpha);
 void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha);
 
 #ifdef WITH_NVTX

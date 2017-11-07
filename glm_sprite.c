@@ -278,7 +278,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 
 void GLM_DrawSpriteModel(entity_t* e)
 {
-	vec3_t point, right, up;
+	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
 

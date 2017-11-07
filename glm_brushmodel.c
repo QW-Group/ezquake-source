@@ -374,14 +374,16 @@ int GLM_MeasureVBOSizeForBrushModel(model_t* m)
 		return 0;
 	}
 
-	Con_Printf("%s = %d verts\n", m->name, (total_surf_verts + 2 * (total_surfaces - 1)));
-	return (total_surf_verts + 3 * (total_surfaces - 1));
+	return (total_surf_verts);// +2 * (total_surfaces - 1));
 }
 
-int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
+// This populates VBO, splitting up by lightmap for efficient
+//   rendering when not using texture arrays
+int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 {
 	int i, j;
 	int combinations = 0;
+	int original_pos = vbo_pos;
 
 	for (i = 0; i < m->numtextures; ++i) {
 		if (m->textures[i]) {
@@ -490,6 +492,88 @@ int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 		}
 	}
 
+	Con_Printf("%s = %d verts, reserved %d\n", m->name, (vbo_pos - original_pos) / VERTEXSIZE, GLM_MeasureVBOSizeForBrushModel(m));
+	return vbo_pos;
+}
+
+int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
+{
+	int i, j;
+	int combinations = 0;
+	int original_pos = vbo_pos;
+
+	// Clear lightmap data, we don't use it
+	for (i = 0; i < m->numtextures; ++i) {
+		if (m->textures[i]) {
+			memset(m->textures[i]->gl_vbo_length, 0, sizeof(m->textures[i]->gl_vbo_length));
+			memset(m->textures[i]->gl_next_lightmap, 0, sizeof(m->textures[i]->gl_next_lightmap));
+			m->textures[i]->gl_first_lightmap = -1;
+			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
+				m->textures[i]->gl_next_lightmap[j] = -1;
+			}
+		}
+	}
+
+	// Order vertices in the VBO by texture & lightmap
+	for (i = 0; i < m->numtextures; ++i) {
+		int lightmap = -1;
+		int length = 0;
+		int surface_count = 0;
+		int tex_vbo_start = vbo_pos;
+
+		if (!m->textures[i]) {
+			continue;
+		}
+
+		for (j = 0; j < m->numsurfaces; ++j) {
+			msurface_t* surf = m->surfaces + j;
+			glpoly_t* poly;
+
+			if (surf->texinfo->miptex != i) {
+				continue;
+			}
+
+			// copy verts into buffer (alternate to turn fan into triangle strip)
+			for (poly = surf->polys; poly; poly = poly->next) {
+				int end_vert = 0;
+				int start_vert = 1;
+				int output = 0;
+				int material = m->textures[i]->gl_texture_index;
+				float scaleS = m->textures[i]->gl_texture_scaleS;
+				float scaleT = m->textures[i]->gl_texture_scaleT;
+
+				if (!poly->numverts) {
+					continue;
+				}
+
+				// Store position for drawing individual polys
+				poly->vbo_start = vbo_pos / VERTEXSIZE;
+				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material, scaleS, scaleT);
+				++output;
+
+				start_vert = 1;
+				end_vert = poly->numverts - 1;
+
+				while (start_vert <= end_vert) {
+					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+					++output;
+
+					if (start_vert < end_vert) {
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+						++output;
+					}
+
+					++start_vert;
+					--end_vert;
+				}
+
+				length += poly->numverts;
+				++surface_count;
+			}
+		}
+	}
+
+	Con_Printf("%s = %d verts, reserved %d\n", m->name, (vbo_pos - original_pos) / VERTEXSIZE, GLM_MeasureVBOSizeForBrushModel(m));
 	return vbo_pos;
 }
 
@@ -528,7 +612,7 @@ typedef struct glm_brushmodel_req_s {
 	GLuint texture_array;
 	int texture_index;
 	qbool isworldmodel;
-	GLushort indices[1024];
+	GLuint indices[1024];
 
 	int texture_model;
 	int effects;
@@ -641,7 +725,7 @@ static void GL_FlushBrushModelBatch(void)
 				for (j = base; j < i; ++j) {
 					glm_brushmodel_req_t* req = &brushmodel_requests[j];
 
-					glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices, 1, j - base);
+					glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, j - base);
 				}
 
 				base = i;
@@ -662,7 +746,7 @@ static void GL_FlushBrushModelBatch(void)
 	for (i = base; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
-		glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_SHORT, req->indices, 1, i - base);
+		glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, i - base);
 	}
 
 	batch_count = 0;

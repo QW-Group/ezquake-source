@@ -116,7 +116,7 @@ typedef struct mtexinfo_s {
 } mtexinfo_t;
 
 #define VERTEXSIZE 11 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
-					  //s2t2 = lightmap tex coords; s3t2 = detail tex coords, l1 = lightmap#, m1 = material#
+					  //s2t2 = lightmap tex coords; s3t3 = detail tex coords, l1 = lightmap#, m1 = material#
 
 // position[3]
 // texture[2]

@@ -54,7 +54,7 @@ static void GLM_CompileTurbPolyProgram(void)
 	}
 }
 
-void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices, float alpha)
+void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, float alpha)
 {
 	GLM_CompileTurbPolyProgram();
 
@@ -74,7 +74,7 @@ void GLM_DrawIndexedTurbPolys(unsigned int vao, GLushort* indices, int vertices,
 
 		GL_BindVertexArray(vao);
 		//glDisable(GL_CULL_FACE);
-		glDrawElements(GL_TRIANGLE_STRIP, vertices, GL_UNSIGNED_SHORT, indices);
+		glDrawElements(GL_TRIANGLE_STRIP, vertices, GL_UNSIGNED_INT, indices);
 		//glEnable(GL_CULL_FACE);
 	}
 }
@@ -199,17 +199,17 @@ qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbo
 	return false;
 }
 
-void GLM_DrawMultiLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort** indices, GLsizei* lengths, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+void GLM_DrawMultiLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint** indices, GLsizei* lengths, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
-		glMultiDrawElements(type, lengths, GL_UNSIGNED_SHORT, indices, count);
+		glMultiDrawElements(type, lengths, GL_UNSIGNED_INT, indices, count);
 	}
 }
 
-void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	if (GLM_PrepareLightmapProgram(type, color, vao, apply_lightmap, apply_texture, alpha_texture)) {
-		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
+		glDrawElements(type, count, GL_UNSIGNED_INT, indices);
 	}
 }
 
@@ -320,7 +320,7 @@ void GLM_ExitBatchedPolyRegion(void)
 	uniforms_set = false;
 }
 
-void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLushort* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
+void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	Compile_DrawFlatPolyProgram();
 
@@ -345,7 +345,7 @@ void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GL
 			GL_BindVertexArray(vao);
 		}
 
-		glDrawElements(type, count, GL_UNSIGNED_SHORT, indices);
+		glDrawElements(type, count, GL_UNSIGNED_INT, indices);
 	}
 }
 
@@ -402,7 +402,7 @@ void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices
 
 void GLM_DrawTexturedWorld(model_t* model)
 {
-	GLushort indices[4096];
+	GLuint indices[4096];
 	int i, waterline, v;
 	msurface_t* surf;
 	qbool draw_detail_texture = gl_detail.integer && detailtexture;
@@ -450,7 +450,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 						int newVerts = poly->numverts;
 
 						if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-							glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
+							glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
 							count = 0;
 						}
 
@@ -474,7 +474,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 		}
 
 		if (count) {
-			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, indices);
+			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
 		}
 	}
 	GLM_ExitBatchedPolyRegion();

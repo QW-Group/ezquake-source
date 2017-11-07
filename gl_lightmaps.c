@@ -503,8 +503,6 @@ int AllocBlock (int w, int h, int *x, int *y) {
 mvertex_t	*r_pcurrentvertbase;
 model_t		*currentmodel;
 
-void GLM_CreateVAOForPoly(glpoly_t *poly);
-
 glpoly_t* BuildSurfaceDisplayList(msurface_t *fa)
 {
 	int i, lindex, lnumverts;
@@ -637,9 +635,6 @@ void GL_BuildLightmaps(void)
 
 			GL_CreateSurfaceLightmap(m->surfaces + i);
 			poly = BuildSurfaceDisplayList(m->surfaces + i);
-			if (GL_ShadersSupported()) {
-				GLM_CreateVAOForPoly(poly);
-			}
 		}
 	}
 
