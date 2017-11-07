@@ -174,10 +174,15 @@ qbool GLM_CreateVGFProgram(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
-	program->next = program_list;
-	program_list = program;
 
-	return GLM_CompileProgram(program);
+	if (GLM_CompileProgram(program)) {
+		program->next = program_list;
+		program_list = program;
+
+		return true;
+	}
+
+	return false;
 }
 
 qbool GLM_CreateVFProgram(
@@ -201,10 +206,15 @@ qbool GLM_CreateVFProgram(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
-	program->next = program_list;
-	program_list = program;
 
-	return GLM_CompileProgram(program);
+	if (GLM_CompileProgram(program)) {
+		program->next = program_list;
+		program_list = program;
+
+		return true;
+	}
+
+	return false;
 }
 
 // Called during vid_shutdown
