@@ -108,6 +108,7 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	if (first_dlight) {
+		GL_EnterRegion("R_RenderDlights");
 		glDepthMask(GL_FALSE);
 		if (!GL_ShadersSupported()) {
 			glDisable(GL_TEXTURE_2D);
@@ -160,7 +161,6 @@ void R_RenderDlights(void)
 				}
 			}
 		}
-
 	}
 
 	if (!first_dlight) {
@@ -172,6 +172,7 @@ void R_RenderDlights(void)
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDepthMask(GL_TRUE);
 		GL_ShadeModel(GL_FLAT);
+		GL_LeaveRegion();
 	}
 }
 

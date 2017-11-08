@@ -732,6 +732,7 @@ void R_DrawViewModel(void)
 		return;
 	}
 
+	GL_EnterRegion("R_DrawViewModel");
 	memset(&gun, 0, sizeof(gun));
 	cent = &cl.viewent;
 	currententity = &gun;
@@ -787,6 +788,7 @@ void R_DrawViewModel(void)
 	}
 
 	GL_DepthRange(gldepthmin, gldepthmax);
+	GL_LeaveRegion();
 }
 
 void R_InitAliasModelCvars(void)

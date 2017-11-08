@@ -6,6 +6,8 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
+// #define GL_PARANOIA
+
 static GLenum currentDepthFunc = GL_LESS;
 static double currentNearRange = 0;
 static double currentFarRange = 1;
@@ -135,10 +137,12 @@ void GL_InitialiseState(void)
 // These functions taken from gl_texture.c
 void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
+#ifdef GL_PARANOIA
 	if (warning && !glIsTexture(texnum)) {
 		Con_Printf("ERROR: Non-texture %d passed to GL_BindTexture\n", texnum);
 		return;
 	}
+#endif
 
 	if (targetType == GL_TEXTURE_2D) {
 		if (currenttexture == texnum) {
@@ -146,9 +150,7 @@ void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 		}
 
 		currenttexture = texnum;
-		//GL_ProcessErrors("Pre-" __FUNCTION__);
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (currentTextureArray == texnum) {
@@ -156,15 +158,11 @@ void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 		}
 
 		currentTextureArray = texnum;
-		//GL_ProcessErrors("Pre-" __FUNCTION__);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 	else {
 		// No caching...
-		//GL_ProcessErrors("Pre-" __FUNCTION__);
 		glBindTexture(targetType, texnum);
-		//GL_ProcessErrors("Post-" __FUNCTION__);
 	}
 }
 
@@ -313,7 +311,9 @@ void GL_Enable(GLenum option)
 	}
 
 	glEnable(option);
+#ifdef GL_PARANOIA
 	GL_ProcessErrors("glEnable");
+#endif
 }
 
 void GL_Disable(GLenum option)

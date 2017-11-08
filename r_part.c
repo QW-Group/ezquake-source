@@ -683,6 +683,7 @@ void Classic_DrawParticles(void)
 		return;
 	}
 
+	GL_EnterRegion("Particles");
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!gl_solidparticles.value) {
@@ -705,6 +706,7 @@ void Classic_DrawParticles(void)
 		glDepthMask(GL_TRUE);
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_LeaveRegion();
 
 	particles_to_draw = 0;
 }
@@ -745,7 +747,6 @@ void R_DrawParticles(void)
 		return;
 	}
 
-	GL_EnterRegion("Particles");
 	if (GL_ShadersSupported()) {
 		Classic_DrawParticles();
 		//QMB_DrawParticles();
@@ -754,7 +755,6 @@ void R_DrawParticles(void)
 		Classic_DrawParticles();
 		//QMB_DrawParticles();
 	}
-	GL_LeaveRegion();
 }
 
 #define RunParticleEffect(var, org, dir, color, count)		\

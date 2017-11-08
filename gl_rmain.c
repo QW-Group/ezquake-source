@@ -942,9 +942,7 @@ void R_RenderScene(void)
 	R_DrawEntitiesOnList(&cl_alphaents);
 	GL_LeaveRegion();
 
-	GL_EnterRegion("R_DrawWaterSurfaces");
 	R_DrawWaterSurfaces();
-	GL_LeaveRegion();
 
 	if (!GL_ShadersSupported()) {
 		GL_DisableMultitexture();
@@ -1097,9 +1095,7 @@ void R_RenderView(void)
 	// render normal view
 	R_RenderScene();
 
-	GL_EnterRegion("R_RenderDlights");
 	R_RenderDlights();
-	GL_LeaveRegion();
 
 	R_DrawParticles();
 
@@ -1113,9 +1109,7 @@ void R_RenderView(void)
 		}
 	}
 
-	GL_EnterRegion("R_DrawViewModel");
 	R_DrawViewModel();
-	GL_LeaveRegion();
 
 	GL_DrawVelocity3D();
 

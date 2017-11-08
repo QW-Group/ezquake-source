@@ -355,24 +355,18 @@ void GL_Init(void)
 	GL_AlphaFunc(GL_GREATER, 0.666);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	GL_ProcessErrors("PreInit");
 	GL_ShadeModel(GL_FLAT);
-	GL_ProcessErrors("PreInit2");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	GL_ProcessErrors("PreInit3");
 
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_ProcessErrors("PreInit4");
 
 	GL_TextureEnvMode(GL_REPLACE);
-	GL_ProcessErrors("PreInit5");
 
 	GL_CheckExtensions();
-	GL_ProcessErrors("PostInit");
 }
 
 /************************************* VID GAMMA *************************************/

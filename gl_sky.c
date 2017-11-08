@@ -480,12 +480,18 @@ Draw either the classic cloudy quake sky or a skybox
 */
 void R_DrawSky (void)
 {
+	if (!skychain) {
+		return;
+	}
+
+	GL_EnterRegion("R_DrawSky");
 	if (GL_ShadersSupported()) {
 		GLM_DrawSky();
 	}
 	else {
 		GLC_DrawSky();
 	}
+	GL_LeaveRegion();
 
 	skychain = NULL;
 	skychain_tail = &skychain;

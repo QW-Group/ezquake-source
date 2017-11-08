@@ -172,12 +172,14 @@ void R_DrawWaterSurfaces(void)
 		return;
 	}
 
+	GL_EnterRegion("R_DrawWaterSurfaces");
 	if (GL_ShadersSupported()) {
 		GLM_DrawWaterSurfaces();
 	}
 	else {
 		GLC_DrawWaterSurfaces();
 	}
+	GL_LeaveRegion();
 
 	waterchain = NULL;
 }
@@ -486,9 +488,7 @@ void R_DrawWorld(void)
 	//currenttexture = -1;
 
 	//draw the world sky
-	GL_EnterRegion("R_DrawSky");
 	R_DrawSky();
-	GL_LeaveRegion();
 
 	if (cl_firstpassents.count) {
 		GL_EnterRegion("Entities-1st");
