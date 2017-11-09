@@ -117,6 +117,7 @@ void SubdividePolygon (int numverts, float *verts) {
 		t = DotProduct (verts, warpface->texinfo->vecs[1]);
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
+		poly->verts[i][9] = -1;
 	}
 }
 

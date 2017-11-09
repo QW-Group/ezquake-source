@@ -5,6 +5,7 @@ uniform sampler2D causticsTex;
 uniform sampler2DArray materialTex;
 uniform sampler2DArray lightmapTex;
 uniform bool drawDetailTex;
+uniform float waterAlpha;
 
 in vec3 TextureCoord;
 in vec3 TexCoordLightmap;
@@ -18,16 +19,24 @@ void main()
 	vec4 lmColor;
 
 	texColor = texture(materialTex, TextureCoord);
-	lmColor = texture(lightmapTex, TexCoordLightmap);
 
-	frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
+	if (TexCoordLightmap.z < 0) {
+		// Turb surface
+		frag_colour = vec4(texColor.rgb, waterAlpha);
+	}
+	else {
+		// Opaque material
+		lmColor = texture(lightmapTex, TexCoordLightmap);
 
-	if (drawDetailTex) {
-		vec4 detail = texture(detailTex, DetailCoord);
+		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
 
-		// FIXME: This is not really correct...
-		vec3 newColor = mix(frag_colour.rgb, vec3(1,1,1), 1 - detail.r);
+		if (drawDetailTex) {
+			vec4 detail = texture(detailTex, DetailCoord);
 
-		frag_colour *= vec4(newColor, frag_colour.a);
+			// FIXME: This is not really correct...
+			vec3 newColor = mix(frag_colour.rgb, vec3(1,1,1), 1 - detail.r);
+
+			frag_colour *= vec4(newColor, frag_colour.a);
+		}
 	}
 }

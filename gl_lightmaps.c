@@ -357,8 +357,13 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 
 	c_brush_polys++;
 
-	if (!r_dynamic.value && !fa->cached_dlight)
+	if (!r_dynamic.value && !fa->cached_dlight) {
 		return;
+	}
+
+	if (fa->lightmaptexturenum < 0) {
+		return;
+	}
 
 	// check for lightmap modification
 	for (maps = 0; maps < MAXLIGHTMAPS && fa->styles[maps] != 255; maps++) {
@@ -409,13 +414,17 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min_changed, unsigned int* max_changed)
 {
 	int k;
+	extern cvar_t r_turbalpha;
 
 	while (s) {
-		R_RenderDynamicLightmaps(s);
 		k = s->lightmaptexturenum;
-		if (lightmap_modified[k]) {
-			*min_changed = min(k, *min_changed);
-			*max_changed = max(k, *max_changed);
+
+		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
+			R_RenderDynamicLightmaps(s);
+			if (lightmap_modified[k]) {
+				*min_changed = min(k, *min_changed);
+				*max_changed = max(k, *max_changed);
+			}
 		}
 
 		s = s->texturechain;

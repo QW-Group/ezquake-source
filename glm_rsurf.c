@@ -221,6 +221,8 @@ static GLint drawworld_detailTex;
 static GLint drawworld_lightmapTex;
 static GLint drawworld_causticsTex;
 static GLint drawworld_drawDetailTex;
+static GLint drawworld_time;
+static GLint drawworld_waterAlpha;
 
 static void Compile_DrawWorldProgram(void)
 {
@@ -239,12 +241,15 @@ static void Compile_DrawWorldProgram(void)
 		drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
 		drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
 		drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
+		drawworld_waterAlpha = glGetUniformLocation(drawworld.program, "waterAlpha");
+		drawworld_time = glGetUniformLocation(drawworld.program, "time");
 		drawworld.uniforms_found = true;
 	}
 }
 
 static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 {
+	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
 
@@ -261,6 +266,8 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	glUniform1i(drawworld_detailTex, 1);
 	glUniform1i(drawworld_lightmapTex, 2);
 	glUniform1i(drawworld_causticsTex, 3);
+	glUniform1f(drawworld_waterAlpha, wateralpha);
+	glUniform1f(drawworld_time, cl.time);
 
 	GL_BindVertexArray(vao);
 }

@@ -496,6 +496,7 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 	return vbo_pos;
 }
 
+// Create VBO, ordering by texture array
 int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 {
 	int i, j;
@@ -527,6 +528,7 @@ int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 		for (j = 0; j < m->numsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + j;
+			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;
 			glpoly_t* poly;
 
 			if (surf->texinfo->miptex != i) {
@@ -548,18 +550,18 @@ int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 				// Store position for drawing individual polys
 				poly->vbo_start = vbo_pos / VERTEXSIZE;
-				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material, scaleS, scaleT);
+				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT);
 				++output;
 
 				start_vert = 1;
 				end_vert = poly->numverts - 1;
 
 				while (start_vert <= end_vert) {
-					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT);
 					++output;
 
 					if (start_vert < end_vert) {
-						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT);
 						++output;
 					}
 

@@ -215,65 +215,6 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->texture_index = texture;
 	sprite->vao = model->vao_simple.vao;
 	++batch_count;
-
-	/*
-	GLuint vao = model->vao_simple;
-	float oldMatrix[16];
-
-	if (model->texture_arrays[0] != prev_texture_array) {
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[0], true);
-		prev_texture_array = model->texture_arrays[0];
-	}
-
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-	GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
-	GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
-	if (true)
-	{
-		float tempMatrix[16];
-	
-		GL_PushMatrix(GL_MODELVIEW, tempMatrix);
-		// x = -y
-		tempMatrix[0] = 0;
-		tempMatrix[4] = -scale;
-		tempMatrix[8] = 0;
-	
-		// y = z
-		tempMatrix[1] = 0;
-		tempMatrix[5] = 0;
-		tempMatrix[9] = scale;
-	
-		// z = -x
-		tempMatrix[2] = -scale;
-		tempMatrix[6] = 0;
-		tempMatrix[10] = 0;
-	
-		GL_PopMatrix(GL_MODELVIEW, tempMatrix);
-	}
-
-	if (spriteProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(spriteProgram.program);
-		glUniformMatrix4fv(sprite_modelViewMatrixUniform, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(sprite_materialTexUniform, 0);
-		glUniform1f(sprite_textureIndex, texture);
-		glUniform1f(sprite_texS, scale_s);
-		glUniform1f(sprite_texT, scale_t);
-		glUniform3f(sprite_origin, -origin[1], origin[2], -origin[0]);
-		glUniform1f(sprite_scale, 1);
-
-		GL_BindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	}
-
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
-	*/
 }
 
 void GLM_DrawSpriteModel(entity_t* e)

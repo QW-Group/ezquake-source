@@ -13,12 +13,22 @@ out vec2 DetailCoord;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform float time;
 
 void main()
 {
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 
-	TextureCoord = vec3(tex, materialNumber);
-	TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
-	DetailCoord = detailCoord * 18;
+	if (lightmapNumber < 0) {
+		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;
+		TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;
+		TextureCoord.z = materialNumber;
+		TexCoordLightmap = vec3(0, 0, lightmapNumber);
+		DetailCoord = vec2(0, 0);
+	}
+	else {
+		TextureCoord = vec3(tex, materialNumber);
+		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
+		DetailCoord = detailCoord * 18;
+	}
 }

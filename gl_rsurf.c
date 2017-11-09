@@ -33,15 +33,14 @@ msurface_t	*waterchain = NULL;
 msurface_t	*alphachain = NULL;
 msurface_t	**alphachain_tail = &alphachain;
 
-void CHAIN_SURF_SORTED_BY_TEX(msurface_t** chain_head, msurface_t* surf)
+typedef void(*chain_surf_func)(msurface_t** chain_head, msurface_t* surf);
+
+void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
-	int surf_order = surf->texinfo->miptex * 1000 + surf->lightmaptexturenum;
 
 	while (current) {
-		int current_order = current->texinfo->miptex * 1000 + current->lightmaptexturenum;
-
-		if (surf_order > current_order) {
+		if (surf->lightmaptexturenum > current->lightmaptexturenum) {
 			chain_head = &(current->texturechain);
 			current = *chain_head;
 			continue;
@@ -54,13 +53,14 @@ void CHAIN_SURF_SORTED_BY_TEX(msurface_t** chain_head, msurface_t* surf)
 	*chain_head = surf;
 }
 
-void CHAIN_SURF_DRAWFLAT(msurface_t** chain_head, msurface_t* surf)
+// Order by lightmap# then by floor/ceiling... seems faster to switch colour than GL_Bind(lightmap tex)
+void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
-	int surf_order = (surf->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + surf->lightmaptexturenum * 2;
+	int surf_order = (surf->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + max(surf->lightmaptexturenum, 0) * 2;
 
 	while (current) {
-		int current_order = (current->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + current->lightmaptexturenum * 2;
+		int current_order = (current->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + max(current->lightmaptexturenum, 0) * 2;
 
 		if (surf_order > current_order) {
 			chain_head = &(current->texturechain);
@@ -191,8 +191,8 @@ static void R_ClearTextureChains(model_t *clmodel) {
 	GLC_ClearTextureChains();
 
 	for (i = 0; i < clmodel->numtextures; i++) {
-		for (waterline = 0; waterline < 2; waterline++) {
-			if ((texture = clmodel->textures[i])) {
+		if ((texture = clmodel->textures[i])) {
+			for (waterline = 0; waterline < 2; waterline++) {
 				texture->texturechain[waterline] = NULL;
 				texture->texturechain_tail[waterline] = &texture->texturechain[waterline];
 			}
@@ -355,8 +355,10 @@ void R_DrawBrushModel (entity_t *e) {
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 
-
 void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
+	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+	extern cvar_t r_fastturb;
+
 	int c, side, clipped, underwater;
 	mplane_t *plane, *clipplane;
 	msurface_t *surf, **mark;
@@ -364,6 +366,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	float dot;
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	qbool solidTexTurb = (!r_fastturb.integer && wateralpha == 1);
+	chain_surf_func chain_surf_f2b = chain_surfaces_by_lightmap;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -416,6 +420,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	c = node->numsurfaces;
 
 	if (c)	{
+		qbool turbSurface;
+
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 
 		if (dot < -BACKFACE_EPSILON)
@@ -431,26 +437,35 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 				continue;		// wrong side
 
 			// add surf to the right chain
+			turbSurface = (surf->flags & SURF_DRAWTURB);
 			if (surf->flags & SURF_DRAWSKY) {
-				CHAIN_SURF_SORTED_BY_TEX(&skychain, surf);
+				chain_surf_f2b(&skychain, surf);
 			}
-			else if (surf->flags & SURF_DRAWTURB) {
-				CHAIN_SURF_SORTED_BY_TEX(&waterchain, surf);
+			else if (turbSurface) {
+				if (solidTexTurb) {
+					chain_surf_f2b(&surf->texinfo->texture->texturechain[0], surf);
+				}
+				else {
+					chain_surf_f2b(&waterchain, surf);
+				}
 			}
-			else if (surf->flags & SURF_DRAWALPHA) {
+			else if (!turbSurface && (surf->flags & SURF_DRAWALPHA)) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
-				underwater = (underwatertexture && gl_caustics.value && (surf->flags & SURF_UNDERWATER)) ? 1 : 0;
+				underwater = 0;
+				if (underwatertexture && gl_caustics.value && (surf->flags & SURF_UNDERWATER)) {
+					underwater = 1;
+				}
 
 				if (drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					CHAIN_SURF_DRAWFLAT(&cl.worldmodel->drawflat_chain[underwater], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
 				else if (drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					CHAIN_SURF_DRAWFLAT(&cl.worldmodel->drawflat_chain[underwater], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
 				else {
-					CHAIN_SURF_SORTED_BY_TEX(&surf->texinfo->texture->texturechain[underwater], surf);
+					chain_surf_f2b(&surf->texinfo->texture->texturechain[underwater], surf);
 				}
 			}
 		}
