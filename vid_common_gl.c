@@ -610,16 +610,6 @@ void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 	}
 }
 
-void GL_GetViewport(GLint* view)
-{
-	if (GLM_Enabled()) {
-		glGetIntegerv(GL_VIEWPORT, (GLint *)view);
-	}
-	else {
-		glGetIntegerv(GL_VIEWPORT, (GLint *)view);
-	}
-}
-
 static GLenum lastTextureMode = GL_MODULATE;
 
 void GL_TextureEnvMode(GLenum mode)

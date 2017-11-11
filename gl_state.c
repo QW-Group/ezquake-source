@@ -98,6 +98,14 @@ void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 	}
 }
 
+void GL_GetViewport(GLint* view)
+{
+	view[0] = currentViewportX;
+	view[1] = currentViewportY;
+	view[2] = currentViewportWidth;
+	view[3] = currentViewportHeight;
+}
+
 void GL_InitialiseState(void)
 {
 	int i;
