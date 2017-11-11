@@ -259,27 +259,21 @@ static qbool R_DrawTrySimpleItem(void)
 	int simpletexture, simpletexture_index;
 	vec3_t right, up, org, offset, angles;
 	float scale_s = 1.0f, scale_t = 1.0f;
+	int skin;
 
 	if (!currententity || !currententity->model) {
 		return false;
 	}
 
-	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES) {
-		simpletexture = currententity->model->simpletexture[0]; // ah...
-		simpletexture_index = currententity->model->simpletexture_indexes[0];
-		scale_s = currententity->model->simpletexture_scalingS[0];
-		scale_t = currententity->model->simpletexture_scalingT[0];
-	}
-	else {
-		simpletexture = currententity->model->simpletexture[currententity->skinnum];
-		simpletexture_index = currententity->model->simpletexture_indexes[currententity->skinnum];
-		scale_s = currententity->model->simpletexture_scalingS[currententity->skinnum];
-		scale_t = currententity->model->simpletexture_scalingT[currententity->skinnum];
-	}
-
+	skin = currententity->skinnum >= 0 && currententity->skinnum < MAX_SIMPLE_TEXTURES ? currententity->skinnum : 0;
+	simpletexture = currententity->model->simpletexture[skin]; // ah...
 	if (!simpletexture) {
 		return false;
 	}
+
+	simpletexture_index = currententity->model->simpletexture_indexes[skin];
+	scale_s = currententity->model->simpletexture_scalingS[skin];
+	scale_t = currententity->model->simpletexture_scalingT[skin];
 
 	autorotate = anglemod(100 * cl.time);
 	if (sprtype == SPR_ORIENTED) {
@@ -336,13 +330,12 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 {
 	int i;
 
-	if (!r_drawentities.value || !vislist->count)
+	if (!r_drawentities.value || !vislist->count) {
 		return;
+	}
 
 	// draw sprites separately, because of alpha_test
-	if (vislist->alpha) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	}
+	GL_AlphaBlendFlags(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
 
 	GL_EnterRegion("Sprites");
 	GL_BeginDrawSprites();
@@ -379,7 +372,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 		switch (currententity->model->type) {
 		case mod_alias:
-			R_DrawAliasModel(currententity);
+			R_DrawAliasModel(currententity, vislist->shell[i]);
 			vislist->drawn[i] = true;
 			break;
 
@@ -422,6 +415,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	GL_EndDrawBrushModels();
 	GL_LeaveRegion();
 
+	// FIXME: Remove
 	if (vislist->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	}

@@ -398,7 +398,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 		GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false);
+		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false, false);
 
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);

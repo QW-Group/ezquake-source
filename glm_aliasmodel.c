@@ -5,14 +5,6 @@
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
 
-static glm_program_t drawShellPolyProgram;
-static GLint drawShell_modelViewMatrix;
-static GLint drawShell_projectionMatrix;
-static GLint drawShell_shellSize;
-static GLint drawShell_color;
-static GLint drawShell_materialTex;
-static GLint drawShell_time;
-
 static glm_program_t drawAliasModelProgram;
 static GLint drawAliasModel_modelViewMatrix;
 static GLint drawAliasModel_projectionMatrix;
@@ -28,7 +20,7 @@ static GLint drawAliasModel_textureIndex;
 static GLint drawAliasModel_scaleS;
 static GLint drawAliasModel_scaleT;
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array);
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 typedef struct glm_aliasmodel_req_s {
 	GLuint vbo_count;
@@ -87,7 +79,7 @@ static void GLM_CompileAliasModelProgram(void)
 }
 
 // Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array)
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, GLuint texture, GLuint fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only)
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
 	byte color[4];
@@ -146,7 +138,7 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 				color[2] = custom_model->color_cvar.color[2];
 			}
 
-			GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array);
+			GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array, shell_only);
 
 			vertIndex += count;
 		}
@@ -165,6 +157,7 @@ static void GLM_AliasModelBatchDraw(int start, int end, float mvMatrix[MAX_ALIAS
 	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
 	glUniform1iv(drawAliasModel_shellMode, batch_count, shellModes);
 
+	// FIXME: Should be glDrawArraysIndirect
 	for (i = start; i < end; ++i) {
 		const DrawArraysIndirectCommand_t *cmd = (const DrawArraysIndirectCommand_t *)((byte*)aliasmodel_requests + i * sizeof(aliasmodel_requests[0]));
 
@@ -316,24 +309,29 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 	++batch_count;
 }
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)
+static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only)
 {
-	GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0, is_texture_array);
-
-	if (effects) {
-		// always allow powerupshells for specs or demos.
-		// do not allow powerupshells for eyes in other cases
-		if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
-			effects &= (EF_RED | EF_GREEN | EF_BLUE);
-		}
-
+	if (shell_only) {
 		if (effects) {
-			GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects, true);
+			// always allow powerupshells for specs or demos.
+			// do not allow powerupshells for eyes in other cases
+			if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
+				effects &= (EF_RED | EF_GREEN | EF_BLUE);
+
+				if (effects) {
+					GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects, true);
+					if (!in_batch_mode) {
+						GLM_FlushAliasModelBatch();
+					}
+				}
+			}
 		}
 	}
-
-	if (!in_batch_mode) {
-		GLM_FlushAliasModelBatch();
+	else {
+		GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0, is_texture_array);
+		if (!in_batch_mode) {
+			GLM_FlushAliasModelBatch();
+		}
 	}
 }
 
@@ -365,4 +363,8 @@ void GL_EndDrawAliasModels(void)
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot)
 {
 	// MEAG: TODO
+}
+
+void GLM_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
+{
 }

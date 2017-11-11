@@ -54,4 +54,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+#define MAX_FIRSTPASS_ENTITIES 64      // Presume this is 32 players + 32 viewmodels
+#define MAX_STANDARD_ENTITIES  256
+#define MAX_ALPHA_ENTITIES     (64 + MAX_STANDARD_ENTITIES + MAX_FIRSTPASS_ENTITIES) // Meag: old value was 64, now includes powerupshells
+#define MAX_ENTITIES_DRAWABLE  MAX_ALPHA_ENTITIES
+
 #endif /* !__QUAKEDEF_H__ */

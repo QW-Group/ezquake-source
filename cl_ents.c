@@ -141,13 +141,13 @@ void CL_InitEnts(void) {
 			Sys_Error("cl_modelnames[%d] not initialized", i);
 	}
 
-	cl_firstpassents.max = 64;
+	cl_firstpassents.max = MAX_FIRSTPASS_ENTITIES;
 	cl_firstpassents.alpha = 0;
 
-	cl_visents.max = 256;
+	cl_visents.max = MAX_STANDARD_ENTITIES;
 	cl_visents.alpha = 0;
 
-	cl_alphaents.max = 64;
+	cl_alphaents.max = MAX_ALPHA_ENTITIES;
 	cl_alphaents.alpha = 1;
 
 	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(entity_t), "visents");
@@ -158,6 +158,10 @@ void CL_InitEnts(void) {
 	cl_firstpassents.drawn = (qbool*) memalloc;
 	cl_visents.drawn = (qbool*) memalloc + cl_firstpassents.max;
 	cl_alphaents.drawn = (qbool*) memalloc + cl_firstpassents.max + cl_visents.max;
+	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(qbool), "visents-shellonly");
+	cl_firstpassents.shell = (qbool*) memalloc;
+	cl_visents.shell = (qbool*) memalloc + cl_firstpassents.max;
+	cl_alphaents.shell = (qbool*) memalloc + cl_firstpassents.max + cl_visents.max;
 
 	CL_ClearScene();
 }
@@ -179,9 +183,11 @@ void CL_ClearScene (void) {
 
 void CL_AddEntity (entity_t *ent) {
 	visentlist_t *vislist;
+	qbool shell = false;
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		vislist = &cl_visents;
+		shell = true;
 	}
 	else if (ent->renderfx & RF_NORMALENT) {
 		vislist = &cl_visents;
@@ -198,7 +204,14 @@ void CL_AddEntity (entity_t *ent) {
 	}
 
 	if (vislist->count < vislist->max) {
-		vislist->list[vislist->count++] = *ent;
+		vislist->list[vislist->count] = *ent;
+		vislist->shell[vislist->count] = false;
+		++vislist->count;
+	}
+	if (shell && cl_alphaents.count < cl_alphaents.max) {
+		cl_alphaents.list[cl_alphaents.count] = *ent;
+		cl_alphaents.shell[cl_alphaents.count] = true;
+		++cl_alphaents.count;
 	}
 }
 

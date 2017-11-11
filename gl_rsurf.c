@@ -367,7 +367,6 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 	qbool solidTexTurb = (!r_fastturb.integer && wateralpha == 1);
-	chain_surf_func chain_surf_f2b = chain_surfaces_by_lightmap;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -439,14 +438,14 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 			// add surf to the right chain
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			if (surf->flags & SURF_DRAWSKY) {
-				chain_surf_f2b(&skychain, surf);
+				chain_surfaces_by_lightmap(&skychain, surf);
 			}
 			else if (turbSurface) {
 				if (solidTexTurb) {
-					chain_surf_f2b(&surf->texinfo->texture->texturechain[0], surf);
+					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[0], surf);
 				}
 				else {
-					chain_surf_f2b(&waterchain, surf);
+					chain_surfaces_by_lightmap(&waterchain, surf);
 				}
 			}
 			else if (!turbSurface && (surf->flags & SURF_DRAWALPHA)) {
@@ -465,7 +464,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
 				else {
-					chain_surf_f2b(&surf->texinfo->texture->texturechain[underwater], surf);
+					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[underwater], surf);
 				}
 			}
 		}

@@ -704,7 +704,7 @@ void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(void);
 
-void R_DrawAliasModel(entity_t* currententity);
+void R_DrawAliasModel(entity_t *ent, qbool shell_only);
 
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa);
@@ -716,7 +716,7 @@ void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no, float base_level, float effect_level,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
 );
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
@@ -794,6 +794,7 @@ void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
+void GLM_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
 void GL_ProcessErrors(const char* message);
 void GLM_DeletePrograms(void);
