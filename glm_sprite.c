@@ -147,7 +147,6 @@ void GL_FlushSpriteBatch(void)
 
 	GL_UseProgram(spriteProgram.program);
 	glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
-	glUniform1i(sprite_materialTexUniform, 0);
 	glUniformMatrix4fv(sprite_modelViewMatrixUniform, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
 	glUniform1fv(sprite_textureIndex, batch_count, texture_indexes);
 	glUniform1fv(sprite_texS, batch_count, texScaleS);
@@ -190,6 +189,8 @@ static void GL_CompileSpriteProgram(void)
 		sprite_texS = glGetUniformLocation(spriteProgram.program, "texS");
 		sprite_texT = glGetUniformLocation(spriteProgram.program, "texT");
 		spriteProgram.uniforms_found = true;
+
+		glProgramUniform1i(spriteProgram.program, sprite_materialTexUniform, 0);
 	}
 }
 

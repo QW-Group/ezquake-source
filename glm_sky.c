@@ -90,6 +90,9 @@ static void BuildSkyVertsArray(void)
 		skyDome_alphaTex = glGetUniformLocation(skyDome.program, "alphaTex");
 		skyDome_origin = glGetUniformLocation(skyDome.program, "origin");
 		skyDome.uniforms_found = true;
+
+		glProgramUniform1i(skyDome.program, skyDome_skyTex, 0);
+		glProgramUniform1i(skyDome.program, skyDome_alphaTex, 1);
 	}
 
 	if (!skyDome_vbo.vbo) {
@@ -331,8 +334,6 @@ static void GLM_DrawSkyFaces(void)
 			glUniform1f(skyDome_farclip, max(r_farclip.value, 4096) * 0.577);
 			glUniform1f(skyDome_speedscale, r_refdef2.time * 8 - ((int)speedscale & ~127));
 			glUniform1f(skyDome_speedscale2, r_refdef2.time * 16 - ((int)speedscale & ~127));
-			glUniform1i(skyDome_skyTex, 0);
-			glUniform1i(skyDome_alphaTex, 1);
 			glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
 			GL_BindVertexArray(skyDome_vao.vao);
 			glDisable(GL_CULL_FACE);
@@ -373,7 +374,6 @@ void GLM_DrawSkyFace(int axis)
 		glUniformMatrix4fv(skyDome_projection, 1, GL_FALSE, projection);
 		glUniform1f(skyDome_farclip, max(r_farclip.value, 4096) * 0.577);
 		glUniform1f(skyDome_speedscale, speedscale);
-		glUniform1i(skyDome_skyTex, 0);
 		glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
 		GL_BindVertexArray(skyDome_vao.vao);
 		//glDisable(GL_CULL_FACE);

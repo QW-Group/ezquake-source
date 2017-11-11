@@ -184,6 +184,8 @@ void GLM_CreateMultiImageProgram(void)
 		multiImage_projectionMatrix = glGetUniformLocation(multiImageProgram.program, "projectionMatrix");
 		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
 		multiImageProgram.uniforms_found = true;
+
+		glProgramUniform1i(multiImageProgram.program, multiImage_tex, 0);
 	}
 
 	if (!imageVBO.vbo) {
@@ -237,7 +239,6 @@ void GLM_FlushImageDraw(void)
 		GL_UseProgram(multiImageProgram.program);
 		glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(multiImage_tex, 0);
 
 		GL_BindVertexArray(imageVAO.vao);
 

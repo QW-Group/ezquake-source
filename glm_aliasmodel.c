@@ -75,6 +75,10 @@ static void GLM_CompileAliasModelProgram(void)
 		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
 		drawAliasModel_shell_alpha = glGetUniformLocation(drawAliasModelProgram.program, "shell_alpha");
 		drawAliasModelProgram.uniforms_found = true;
+
+		// Constants
+		glProgramUniform1i(drawAliasModelProgram.program, drawAliasModel_materialTex, 0);
+		glProgramUniform1i(drawAliasModelProgram.program, drawAliasModel_skinTex, 1);
 	}
 }
 
@@ -199,8 +203,6 @@ static void GLM_FlushAliasModelBatch(void)
 	GLM_CompileAliasModelProgram();
 	GL_UseProgram(drawAliasModelProgram.program);
 	glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform1i(drawAliasModel_materialTex, 0);
-	glUniform1i(drawAliasModel_skinTex, 1);
 	glUniform1f(drawAliasModel_shellSize, bound(0, gl_powerupshells_size.value, 20));
 	glUniform1f(drawAliasModel_time, cl.time);
 	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));

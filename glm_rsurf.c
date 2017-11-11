@@ -51,6 +51,8 @@ static void GLM_CompileTurbPolyProgram(void)
 		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
 		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
 		turbPolyProgram.uniforms_found = true;
+
+		glProgramUniform1i(turbPolyProgram.program, turb_materialTex, 0);
 	}
 }
 
@@ -68,7 +70,6 @@ void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, f
 		GL_UseProgram(turbPolyProgram.program);
 		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(turb_materialTex, 0);
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
 
@@ -93,7 +94,6 @@ void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha)
 		GL_UseProgram(turbPolyProgram.program);
 		glUniformMatrix4fv(turb_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(turb_materialTex, 0);
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
 
@@ -132,6 +132,11 @@ static void Compile_DrawFlatPolyProgram(void)
 		drawFlat_apply_lightmap = glGetUniformLocation(drawFlatPolyProgram.program, "apply_lightmap");
 		drawFlat_apply_texture = glGetUniformLocation(drawFlatPolyProgram.program, "apply_texture");
 		drawFlat_alpha_texture = glGetUniformLocation(drawFlatPolyProgram.program, "alpha_texture");
+
+		drawFlatPolyProgram.uniforms_found = true;
+
+		glProgramUniform1i(drawFlatPolyProgram.program, drawFlat_materialTex, 0);
+		glProgramUniform1i(drawFlatPolyProgram.program, drawFlat_lightmapTex, 2);
 	}
 }
 
@@ -166,6 +171,9 @@ static void Compile_LightmapPolyProgram(void)
 		lightmapPoly_apply_texture = glGetUniformLocation(lightmapPolyProgram.program, "apply_texture");
 		lightmapPoly_alpha_texture = glGetUniformLocation(lightmapPolyProgram.program, "alpha_texture");
 		lightmapPolyProgram.uniforms_found = true;
+
+		glProgramUniform1i(lightmapPolyProgram.program, lightmapPoly_materialTex, 0);
+		glProgramUniform1i(lightmapPolyProgram.program, lightmapPoly_lightmapTex, 2);
 	}
 }
 
@@ -185,8 +193,6 @@ qbool GLM_PrepareLightmapProgram(GLenum type, byte* color, unsigned int vao, qbo
 			glUniformMatrix4fv(lightmapPoly_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(lightmapPoly_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform4f(lightmapPoly_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-			glUniform1i(lightmapPoly_materialTex, 0);
-			glUniform1i(lightmapPoly_lightmapTex, 2);
 			glUniform1i(lightmapPoly_apply_lightmap, apply_lightmap ? 1 : 0);
 			glUniform1i(lightmapPoly_apply_texture, apply_texture ? 1 : 0);
 			glUniform1i(lightmapPoly_alpha_texture, alpha_texture ? 1 : 0);
@@ -244,6 +250,12 @@ static void Compile_DrawWorldProgram(void)
 		drawworld_waterAlpha = glGetUniformLocation(drawworld.program, "waterAlpha");
 		drawworld_time = glGetUniformLocation(drawworld.program, "time");
 		drawworld.uniforms_found = true;
+
+		// Constants
+		glProgramUniform1i(drawworld.program, drawworld_materialTex, 0);
+		glProgramUniform1i(drawworld.program, drawworld_detailTex, 1);
+		glProgramUniform1i(drawworld.program, drawworld_lightmapTex, 2);
+		glProgramUniform1i(drawworld.program, drawworld_causticsTex, 3);
 	}
 }
 
@@ -262,71 +274,18 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 	glUniform1i(drawworld_drawDetailTex, detail_tex ? 1 : 0);
-	glUniform1i(drawworld_materialTex, 0);
-	glUniform1i(drawworld_detailTex, 1);
-	glUniform1i(drawworld_lightmapTex, 2);
-	glUniform1i(drawworld_causticsTex, 3);
 	glUniform1f(drawworld_waterAlpha, wateralpha);
 	glUniform1f(drawworld_time, cl.time);
 
 	GL_BindVertexArray(vao);
 }
 
-/*
-void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
-{
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-
-	if (lightmap_texture_array) {
-		if (!lightmapPolyProgram.program) {
-			Compile_LightmapPolyProgram();
-		}
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(lightmapPolyProgram.program);
-		glUniformMatrix4fv(lightmapPoly_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(lightmapPoly_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform4f(lightmapPoly_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		glUniform1i(lightmapPoly_materialTex, 0);
-		glUniform1i(lightmapPoly_lightmapTex, 2);
-		glUniform1i(lightmapPoly_apply_lightmap, apply_lightmap ? 1 : 0);
-		glUniform1i(lightmapPoly_apply_texture, apply_texture ? 1 : 0);
-		glUniform1i(lightmapPoly_alpha_texture, alpha_texture ? 1 : 0);
-
-		GL_BindVertexArray(vao);
-	}
-	else {
-		if (!drawFlatPolyProgram.program) {
-			Compile_DrawFlatPolyProgram();
-		}
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_UseProgram(drawFlatPolyProgram.program);
-		glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-		glUniform1i(drawFlat_materialTex, 0);
-		glUniform1i(drawFlat_lightmapTex, 2);
-		glUniform1i(drawFlat_apply_lightmap, apply_lightmap ? 1 : 0);
-		glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
-		glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
-
-		GL_BindVertexArray(vao);
-	}
-	uniforms_set = true;
-}
-*/
-
 void GLM_ExitBatchedPolyRegion(void)
 {
 	uniforms_set = false;
 }
 
+// Still used by fastturb...
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
 {
 	Compile_DrawFlatPolyProgram();
@@ -343,8 +302,6 @@ void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GL
 			glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-			glUniform1i(drawFlat_materialTex, 0);
-			glUniform1i(drawFlat_lightmapTex, 2);
 			glUniform1i(drawFlat_apply_lightmap, apply_lightmap ? 1 : 0);
 			glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
 			glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);

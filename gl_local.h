@@ -404,6 +404,7 @@ typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, G
 typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
+typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLint location, GLint v0);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform1iv_t)(GLint location, GLsizei count, const GLint *value);
@@ -466,6 +467,7 @@ extern glUniform3f_t            glUniform3f;
 extern glUniform3fv_t           glUniform3fv;
 extern glUniform4f_t            glUniform4f;
 extern glUniform1i_t            glUniform1i;
+extern glProgramUniform1i_t     glProgramUniform1i;
 extern glUniform4fv_t           glUniform4fv;
 extern glUniform1iv_t           glUniform1iv;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
@@ -686,7 +688,6 @@ typedef struct ci_texture_s {
 
 // Functions
 
-void GLM_EnterBatchedPolyRegion(byte* color, unsigned int vao, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_ExitBatchedPolyRegion(void);
 
 void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);

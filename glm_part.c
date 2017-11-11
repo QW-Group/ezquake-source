@@ -54,6 +54,9 @@ void GLM_CreateParticleProgram(void)
 		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
 		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
 		billboardProgram.uniforms_found = true;
+
+		glProgramUniform1i(billboardProgram.program, billboard_materialTex, 0);
+		glProgramUniform1i(billboardProgram.program, billboard_alpha_texture, 0);
 	}
 }
 
@@ -99,9 +102,7 @@ void GLM_DrawParticles(int number, qbool square)
 			GL_UseProgram(billboardProgram.program);
 			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(billboard_materialTex, 0);
 			glUniform1i(billboard_apply_texture, !square);
-			glUniform1i(billboard_alpha_texture, 0);
 
 			GL_BindVertexArray(vao);
 			glDrawArrays(GL_POINTS, 0, number);

@@ -111,6 +111,7 @@ glUniform3f_t            glUniform3f;
 glUniform3fv_t           glUniform3fv;
 glUniform4f_t            glUniform4f;
 glUniform1i_t            glUniform1i;
+glProgramUniform1i_t     glProgramUniform1i;
 glUniformMatrix4fv_t     glUniformMatrix4fv;
 glUniform4fv_t           glUniform4fv;
 glUniform1iv_t           glUniform1iv;
@@ -244,6 +245,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1i);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform4fv);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1iv);
+			OPENGL_LOAD_SHADER_FUNCTION(glProgramUniform1i);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
