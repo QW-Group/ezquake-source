@@ -66,6 +66,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _DEBUG
 #include "parser.h"
 #endif
+#include "pmove.h"
 extern qbool ActiveApp, Minimized;
 
 static void Cl_Reset_Min_fps_f(void);
@@ -2283,7 +2284,12 @@ void CL_Frame (double time)
 
 #ifndef CLIENTONLY
 		if (com_serveractive) {
+			playermove_t oldmove;
+			memcpy(&oldmove, &pmove, sizeof(playermove_t));
+
 			SV_Frame(cls.frametime);
+
+			memcpy(&pmove, &oldmove, sizeof(playermove_t));
 		}
 #endif
 
@@ -2331,7 +2337,12 @@ void CL_Frame (double time)
 
 #ifndef CLIENTONLY
 			if (com_serveractive) {
+				playermove_t oldmove;
+				memcpy(&oldmove, &pmove, sizeof(playermove_t));
+
 				SV_Frame(physframetime);
+
+				memcpy(&pmove, &oldmove, sizeof(playermove_t));
 			}
 #endif
 
