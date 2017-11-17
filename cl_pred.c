@@ -73,7 +73,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	movevars.maxspeed = cl.maxspeed;
 	movevars.bunnyspeedcap = cl.bunnyspeedcap;
 
-	PM_PlayerMove ();
+	PM_PlayerMove();
 
 	to->waterjumptime = pmove.waterjumptime;
 	to->pm_type = pmove.pm_type;
@@ -153,8 +153,6 @@ void CL_CalcCrouch (void) {
 	}
 }
 
-
-extern qbool physframe; // for fps-independent physics
 
 static void CL_LerpMove (qbool angles_lerp)
 {	
@@ -293,7 +291,7 @@ static void check_standing_on_entity(void)
         cl_independentPhysics.value);
 }
 
-void CL_PredictMove (void) {
+void CL_PredictMove (qbool physframe) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
 	qbool angles_lerp = false;
@@ -347,8 +345,7 @@ void CL_PredictMove (void) {
 		VectorCopy (to->playerstate[cl.playernum].command.angles, cl.simangles);
 		cl.onground = false;
 	}
-	else
-	if ((cl_nopred.value && !cls.mvdplayback) || cl.validsequence + 1 >= cls.netchan.outgoing_sequence) {	
+	else if ((cl_nopred.value && !cls.mvdplayback) || cl.validsequence + 1 >= cls.netchan.outgoing_sequence) {
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		CL_CategorizePosition ();
@@ -393,29 +390,17 @@ void CL_PredictMove (void) {
 		vectoangles (v, cl.simangles);
 		cl.simangles[PITCH] = -cl.simangles[PITCH];
 	}
-	else
-	if (cam_thirdperson.value && cl.viewplayernum != cl.playernum) {
+	else if (cam_thirdperson.value && cl.viewplayernum != cl.playernum) {
 		int i;
 		player_state_t *pstate;
 		vec3_t fw, rt, up;
 
-/*
-		for (i = 0; i < MAX_CLIENTS; i++)
-		{
-			if (!cl.players[i].name || cl.players[i].spectator)
-				continue;
-			goto foundsomeone;
-		}
-		return;
-foundsomeone:
-*/
 		i = cl.viewplayernum;
 
 		pstate = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
 
 		AngleVectors (cl.simangles, fw, rt, up);
 		VectorMA (pstate->origin, -cam_dist.value, fw, cl.simorg);
-
 	}
 #endif	// JSS_CAM
 	

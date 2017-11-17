@@ -2114,12 +2114,12 @@ void CL_LinkEntities (void)
 		if (setup_player_prediction) {
 			// Set up prediction for other players
 			CL_SetUpPlayerPrediction(false);
-			CL_PredictMove();
+			CL_PredictMove(true);
 			CL_SetUpPlayerPrediction(true);
 		}
 		else {
 			// Do client side motion prediction
-			CL_PredictMove();
+			CL_PredictMove(false);
 		}
 
 		// build a refresh entity list
