@@ -182,6 +182,8 @@ static int Draw_LoadCharset(const char *name)
 	// apply gl_smoothfont
 	Apply_OnChange_gl_smoothfont(gl_smoothfont.integer);
 
+	CachePics_MarkAtlasDirty();
+
 	return 0;
 }
 
