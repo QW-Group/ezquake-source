@@ -245,7 +245,7 @@ void EmitWaterPolys(msurface_t *fa)
 				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 				GL_TextureEnvMode(GL_MODULATE);
 				if (wateralpha < 0.9) {
-					glDepthMask(GL_FALSE);
+					GL_DepthMask(GL_FALSE);
 				}
 			}
 
@@ -265,7 +265,7 @@ void EmitWaterPolys(msurface_t *fa)
 				GL_TextureEnvMode(GL_REPLACE);
 				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 				if (wateralpha < 0.9) {
-					glDepthMask(GL_TRUE);
+					GL_DepthMask(GL_TRUE);
 				}
 			}
 		}

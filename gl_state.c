@@ -26,6 +26,7 @@ static qbool gl_framebuffer_srgb = false;
 static qbool gl_texture_2d = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
+static GLboolean gl_depth_mask = GL_FALSE;
 static int currenttexture = -1;
 static GLuint currentTextureArray = -1;
 
@@ -132,6 +133,7 @@ void GL_InitialiseState(void)
 	gl_texture_2d = false;
 	gl_blend = false;
 	gl_cull_face = false;
+	gl_depth_mask = GL_FALSE;
 	currenttexture = -1;
 	currentTextureArray = -1;
 
@@ -265,6 +267,15 @@ void GL_UseProgram(GLuint program)
 	}
 }
 
+void GL_DepthMask(GLboolean mask)
+{
+	if (mask != gl_depth_mask) {
+		glDepthMask(mask);
+
+		gl_depth_mask = mask;
+	}
+}
+
 #undef glEnable
 #undef glDisable
 
@@ -376,3 +387,4 @@ void GL_Disable(GLenum option)
 
 	glDisable(option);
 }
+

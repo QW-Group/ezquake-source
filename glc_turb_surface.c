@@ -64,7 +64,7 @@ void GLC_DrawWaterSurfaces(void)
 		glColor4f (1, 1, 1, wateralpha);
 		GL_TextureEnvMode(GL_MODULATE);
 		if (wateralpha < 0.9) {
-			glDepthMask(GL_FALSE);
+			GL_DepthMask(GL_FALSE);
 		}
 	}
 
@@ -148,7 +148,7 @@ void GLC_DrawWaterSurfaces(void)
 		glColor3ubv (color_white);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		if (wateralpha < 0.9) {
-			glDepthMask(GL_TRUE);
+			GL_DepthMask(GL_TRUE);
 		}
 	}
 }

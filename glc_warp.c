@@ -117,7 +117,7 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 			glColor4ubv(col); // 1, 1, 1, wateralpha
 			GL_TextureEnvMode(GL_MODULATE);
 			if (wateralpha < 0.9) {
-				glDepthMask(GL_FALSE);
+				GL_DepthMask(GL_FALSE);
 			}
 		}
 		// END shaman FIX /gl_turbalpha + /r_fastturb {
@@ -130,7 +130,7 @@ void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha)
 			glColor3ubv(color_white);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 			if (wateralpha < 0.9) {
-				glDepthMask(GL_TRUE);
+				GL_DepthMask(GL_TRUE);
 			}
 			col[3] = old_alpha;
 		}

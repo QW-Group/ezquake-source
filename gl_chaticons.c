@@ -195,7 +195,7 @@ void DrawCI(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	glDepthMask(GL_FALSE);
+	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_ShadeModel(GL_SMOOTH);
@@ -227,7 +227,7 @@ void DrawCI(void)
 	}
 
 	glEnable(GL_TEXTURE_2D);
-	glDepthMask(GL_TRUE);
+	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);

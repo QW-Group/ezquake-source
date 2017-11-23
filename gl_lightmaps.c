@@ -314,7 +314,7 @@ void R_BlendLightmaps (void) {
 	//	if (R_FullBrightAllowed())
 	//		return;
 
-	glDepthMask(GL_FALSE);		// don't bother writing Z
+	GL_DepthMask(GL_FALSE);		// don't bother writing Z
 	if (gl_invlightmaps) {
 		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 	}
@@ -345,7 +345,7 @@ void R_BlendLightmaps (void) {
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask(GL_TRUE);		// back to normal Z buffering
+	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa)

@@ -628,6 +628,7 @@ void GL_DisableFog(void);
 void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
+void GL_DepthMask(GLboolean mask);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

@@ -687,7 +687,7 @@ void Classic_DrawParticles(void)
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (!gl_solidparticles.value) {
-		glDepthMask(GL_FALSE);
+		GL_DepthMask(GL_FALSE);
 	}
 	GL_TextureEnvMode(GL_MODULATE);
 
@@ -703,7 +703,7 @@ void Classic_DrawParticles(void)
 
 	GL_TextureEnvMode(GL_REPLACE);
 	if (!gl_solidparticles.value) {
-		glDepthMask(GL_TRUE);
+		GL_DepthMask(GL_TRUE);
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_LeaveRegion();

@@ -111,7 +111,7 @@ void R_RenderFullbrights(void)
 	int i;
 	glpoly_t *p;
 
-	glDepthMask(GL_FALSE);	// don't bother writing Z
+	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_TextureEnvMode(GL_REPLACE);
 
@@ -127,7 +127,7 @@ void R_RenderFullbrights(void)
 	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	glDepthMask(GL_TRUE);
+	GL_DepthMask(GL_TRUE);
 }
 
 void R_RenderLumas(void)
@@ -135,7 +135,7 @@ void R_RenderLumas(void)
 	int i;
 	glpoly_t *p;
 
-	glDepthMask(GL_FALSE);	// don't bother writing Z
+	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
 
@@ -153,7 +153,7 @@ void R_RenderLumas(void)
 	}
 
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask(GL_TRUE);
+	GL_DepthMask(GL_TRUE);
 }
 
 void EmitDetailPolys(void)
