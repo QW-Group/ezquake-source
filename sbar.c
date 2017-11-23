@@ -1249,7 +1249,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 	if (!start) {
 		if (scr_scoreboard_drawtitle.value) {
-			pic = Draw_CachePic ("gfx/ranking.lmp");
+			pic = Draw_CachePic (CACHEPIC_RANKING);
 			Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
 			start = 36 + hud_rankingpos_y.value;
 		} else {
@@ -1562,7 +1562,7 @@ static void Sbar_TeamOverlay (void) {
 		xofs = hud_rankingpos_x.value;
 
 	if (scr_scoreboard_drawtitle.value) {
-		pic = Draw_CachePic ("gfx/ranking.lmp");
+		pic = Draw_CachePic (CACHEPIC_RANKING);
 		Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
 		y = 26 + hud_rankingpos_y.value;
 	} else {
@@ -1823,10 +1823,10 @@ void Sbar_IntermissionOverlay (void) {
 
 	xofs = (vid.width - 320 ) >> 1;
 
-	pic = Draw_CachePic ("gfx/complete.lmp");
+	pic = Draw_CachePic(CACHEPIC_COMPLETE);
 	Draw_Pic (xofs + 64, 24, pic);
 
-	pic = Draw_CachePic ("gfx/inter.lmp");
+	pic = Draw_CachePic(CACHEPIC_INTER);
 	Draw_TransPic (xofs, 56, pic);
 
 	if (cl.servertime_works)
@@ -1859,7 +1859,7 @@ void Sbar_FinaleOverlay (void) {
 
 	scr_copyeverything = 1;
 
-	pic = Draw_CachePic ("gfx/finale.lmp");
+	pic = Draw_CachePic (CACHEPIC_FINALE);
 	Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);
 }
 

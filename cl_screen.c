@@ -847,7 +847,7 @@ static void SCR_DrawPause (void) {
 		return; // auto-paused in single player
 #endif
 
-	pic = Draw_CachePic ("gfx/pause.lmp");
+	pic = Draw_CachePic (CACHEPIC_PAUSE);
 	Draw_Pic ((vid.width - pic->width) / 2, (vid.height - 48 - pic->height) / 2, pic);
 }
 
@@ -857,7 +857,7 @@ void SCR_DrawLoading (void) {
 	if (!scr_drawloading)
 		return;
 
-	pic = Draw_CachePic ("gfx/loading.lmp");
+	pic = Draw_CachePic (CACHEPIC_LOADING);
 	Draw_Pic ( (vid.width - pic->width )/ 2, (vid.height - 48 - pic->height) / 2, pic);
 }
 

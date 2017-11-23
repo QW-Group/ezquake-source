@@ -31,6 +31,41 @@ typedef struct
 	float		sl, tl, sh, th;
 } mpic_t;
 
+typedef enum {
+	CACHEPIC_PAUSE,
+	CACHEPIC_LOADING,
+	CACHEPIC_BOX_TL,
+	CACHEPIC_BOX_ML,
+	CACHEPIC_BOX_BL,
+	CACHEPIC_BOX_TM,
+	CACHEPIC_BOX_MM,
+	CACHEPIC_BOX_MM2,
+	CACHEPIC_BOX_BM,
+	CACHEPIC_BOX_TR,
+	CACHEPIC_BOX_MR,
+	CACHEPIC_BOX_BR,
+	CACHEPIC_TTL_MAIN,
+	CACHEPIC_MAINMENU,
+	CACHEPIC_MENUDOT1,
+	CACHEPIC_MENUDOT2,
+	CACHEPIC_MENUDOT3,
+	CACHEPIC_MENUDOT4,
+	CACHEPIC_MENUDOT5,
+	CACHEPIC_MENUDOT6,
+	CACHEPIC_TTL_SGL,
+	CACHEPIC_QPLAQUE,
+	CACHEPIC_SP_MENU,
+	CACHEPIC_P_LOAD,
+	CACHEPIC_P_SAVE,
+	CACHEPIC_P_MULTI,
+	CACHEPIC_RANKING,
+	CACHEPIC_COMPLETE,
+	CACHEPIC_INTER,
+	CACHEPIC_FINALE,
+
+	CACHEPIC_NUM_OF_PICS
+} cache_pic_id_t;
+
 void Draw_AdjustConback (void);
 
 extern	mpic_t		*draw_disc;	// also used on sbar
@@ -78,7 +113,7 @@ void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int 
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
-mpic_t *Draw_CachePic (char *path);
+mpic_t *Draw_CachePic (cache_pic_id_t id);
 mpic_t *Draw_CacheWadPic (char *name, int code);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);

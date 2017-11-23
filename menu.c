@@ -95,8 +95,6 @@ void M_Main_Key (int key);
 
 void M_Menu_Help_f (void);
 
-#define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
-
 m_state_t m_state;
 
 qbool    m_entersound;          // play after drawing a frame, so caching
@@ -431,10 +429,10 @@ void M_Main_Draw (void) {
 	mpic_t *p;
 	int itemheight;
 
-	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
+	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (CACHEPIC_QPLAQUE) );
 
 	// the Main Manu heading
-	p = Draw_CachePic ("gfx/ttl_main.lmp");
+	p = Draw_CachePic (CACHEPIC_TTL_MAIN);
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	// Main Menu items
@@ -448,7 +446,7 @@ void M_Main_Draw (void) {
 	}
 	else {
 		newmainmenu = false;
-		p = Draw_CachePic ("gfx/mainmenu.lmp");
+		p = Draw_CachePic (CACHEPIC_MAINMENU);
 		m_main_window.w = p->width;
 		m_main_window.h = p->height;
 		M_DrawTransPic_GetPoint (72, 32, &m_main_window.x, &m_main_window.y, p);
@@ -461,7 +459,8 @@ void M_Main_Draw (void) {
 	}	
 
 	M_DrawTransPic (54, BIGMENU_TOP + m_main_cursor * itemheight,
-		Draw_CachePic(va("gfx/menudot%i.lmp", f+1)) );
+		Draw_CachePic(CACHEPIC_MENUDOT1 + f)
+	);
 }
 
 static void M_Main_Enter(const unsigned int entry)
@@ -736,8 +735,8 @@ void M_SinglePlayer_Draw (void) {
 		return;
 	}
 
-	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
-	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
+	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (CACHEPIC_QPLAQUE) );
+	p = Draw_CachePic (CACHEPIC_TTL_SGL);
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	if (Draw_BigFontAvailable()) {
@@ -751,7 +750,7 @@ void M_SinglePlayer_Draw (void) {
 	}
 	else {
 		m_singleplayer_big = false;
-		p = Draw_CachePic ("gfx/sp_menu.lmp");
+		p = Draw_CachePic (CACHEPIC_SP_MENU);
 		m_singleplayer_window.w = p->width;
 		m_singleplayer_window.h = p->height;
 		M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
@@ -759,8 +758,8 @@ void M_SinglePlayer_Draw (void) {
 	}
 
 	M_DrawTransPic (54, BIGMENU_TOP + m_singleplayer_cursor * itemheight,
-		Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
-
+		Draw_CachePic(CACHEPIC_MENUDOT1 + f)
+	);
 }
 
 #ifndef WITH_NQPROGS
@@ -913,10 +912,10 @@ void M_Menu_SinglePlayer_f (void) {
 void M_SinglePlayer_Draw (void) {
 	mpic_t *p;
 
-	M_DrawTransPic (16, 4, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
+	M_DrawTransPic (16, 4, Draw_CachePic (CACHEPIC_QPLAQUE) );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	//    M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
+	//    M_DrawTransPic (72, 32, Draw_CachePic (CACHEPIC_SP_MENU) );
 
 	M_DrawTextBox (60, 10*8, 23, 4);
 	M_PrintWhite (88, 12*8, "This client is for");
@@ -1005,7 +1004,7 @@ void M_Load_Draw (void) {
 	mpic_t *p;
 	int lx = 0, ly = 0;	// lower bounds of the window
 
-	p = Draw_CachePic ("gfx/p_load.lmp");
+	p = Draw_CachePic (CACHEPIC_P_LOAD);
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);
 
 	for (i = 0; i < MAX_SAVEGAMES; i++)
@@ -1028,7 +1027,7 @@ void M_Save_Draw (void) {
 	mpic_t *p;
 	int lx = 0, ly = 0;	// lower bounds of the window
 
-	p = Draw_CachePic ("gfx/p_save.lmp");
+	p = Draw_CachePic (CACHEPIC_P_SAVE);
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);
 
 	for (i = 0; i < MAX_SAVEGAMES; i++)
@@ -1172,8 +1171,8 @@ void M_MultiPlayerSub_Draw (void) {
 	mpic_t    *p;
 	int lx, ly;
 
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-	p = Draw_CachePic ("gfx/p_multi.lmp");
+	M_DrawTransPic (16, 4, Draw_CachePic (CACHEPIC_QPLAQUE) );
+	p = Draw_CachePic (CACHEPIC_P_MULTI);
 	M_DrawPic ( (320-p->width)/2, 4, p);
 	M_Print_GetPoint (80, 40, &m_multiplayer_window.x, &m_multiplayer_window.y, "Join Game", m_multiplayer_cursor == 0);
 	m_multiplayer_window.h = 8;

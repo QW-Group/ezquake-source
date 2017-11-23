@@ -575,9 +575,54 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 	}
 }
 
-mpic_t *Draw_CachePic (char *path)
+static const char* cache_pic_paths[] = {
+	"gfx/pause.lmp",
+	"gfx/loading.lmp",
+	"gfx/box_tl.lmp",
+	"gfx/box_ml.lmp",
+	"gfx/box_bl.lmp",
+	"gfx/box_tm.lmp",
+	"gfx/box_mm.lmp",
+	"gfx/box_mm2.lmp",
+	"gfx/box_bm.lmp",
+	"gfx/box_tr.lmp",
+	"gfx/box_mr.lmp",
+	"gfx/box_br.lmp",
+	"gfx/ttl_main.lmp",
+	"gfx/mainmenu.lmp",
+	"gfx/menudot1.lmp",
+	"gfx/menudot2.lmp",
+	"gfx/menudot3.lmp",
+	"gfx/menudot4.lmp",
+	"gfx/menudot5.lmp",
+	"gfx/menudot6.lmp",
+	"gfx/ttl_sgl.lmp",
+	"gfx/qplaque.lmp",
+	"gfx/sp_menu.lmp",
+	"gfx/p_load.lmp",
+	"gfx/p_save.lmp",
+	"gfx/p_multi.lmp",
+	"gfx/ranking.lmp",
+	"gfx/complete.lmp",
+	"gfx/inter.lmp",
+	"gfx/finale.lmp"
+};
+
+mpic_t *Draw_CachePic(cache_pic_id_t id)
 {
-	return Draw_CachePicSafe (path, true, false);
+	if (id < 0 || id >= CACHEPIC_NUM_OF_PICS) {
+		Sys_Error("Draw_CachePic(%d) - out of range", id);
+	}
+
+	return Draw_CachePicSafe(cache_pic_paths[id], true, false);
+}
+
+static void Draw_Precache(void)
+{
+	int i;
+	for (i = 0; i < CACHEPIC_NUM_OF_PICS; ++i) {
+		Draw_CachePic(i);
+	}
 }
 
 void Draw_InitConback (void);
@@ -629,6 +674,8 @@ void Draw_Init (void)
 	// Get the other pics we need.
 	draw_disc     = Draw_CacheWadPic("disc", WADPIC_DISC);
 	draw_backtile = Draw_CacheWadPic("backtile", WADPIC_BACKTILE);
+
+	Draw_Precache();
 }
 
 qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size);
@@ -767,16 +814,16 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	// draw left side
 	cx = x;
 	cy = y;
-	p = Draw_CachePic ("gfx/box_tl.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_TL);
 	Draw_TransPic (cx, cy, p);
-	p = Draw_CachePic ("gfx/box_ml.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_ML);
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
 	}
 
-	p = Draw_CachePic ("gfx/box_bl.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_BL);
 	Draw_TransPic (cx, cy+8, p);
 
 	// Draw middle.
@@ -784,19 +831,19 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	while (width > 0)
 	{
 		cy = y;
-		p = Draw_CachePic ("gfx/box_tm.lmp");
+		p = Draw_CachePic (CACHEPIC_BOX_TM);
 		Draw_TransPic (cx, cy, p);
-		p = Draw_CachePic ("gfx/box_mm.lmp");
+		p = Draw_CachePic (CACHEPIC_BOX_MM);
 
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
 			if (n == 1)
-				p = Draw_CachePic ("gfx/box_mm2.lmp");
+				p = Draw_CachePic (CACHEPIC_BOX_MM2);
 			Draw_TransPic (cx, cy, p);
 		}
 
-		p = Draw_CachePic ("gfx/box_bm.lmp");
+		p = Draw_CachePic (CACHEPIC_BOX_BM);
 		Draw_TransPic (cx, cy+8, p);
 		width -= 2;
 		cx += 16;
@@ -804,9 +851,9 @@ void Draw_TextBox (int x, int y, int width, int lines)
 
 	// Draw right side.
 	cy = y;
-	p = Draw_CachePic ("gfx/box_tr.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_TR);
 	Draw_TransPic (cx, cy, p);
-	p = Draw_CachePic ("gfx/box_mr.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_MR);
 
 	for (n = 0; n < lines; n++)
 	{
@@ -814,7 +861,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 		Draw_TransPic (cx, cy, p);
 	}
 
-	p = Draw_CachePic ("gfx/box_br.lmp");
+	p = Draw_CachePic (CACHEPIC_BOX_BR);
 	Draw_TransPic (cx, cy+8, p);
 }
 

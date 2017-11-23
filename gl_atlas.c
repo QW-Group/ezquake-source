@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define ATLAS_COUNT     4
-#define ATLAS_WIDTH  2048
-#define ATLAS_HEIGHT 2048
+#define ATLAS_COUNT     2
+#define ATLAS_WIDTH  4096
+#define ATLAS_HEIGHT 4096
 
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS];
