@@ -1235,3 +1235,7 @@ void Draw_2dAlphaTexture(float x, float y, float width, float height, int textur
 	Draw_AlphaPic(x, y, &pic, alpha);
 }
 
+qbool Draw_IsConsoleBackground(mpic_t* pic)
+{
+	return pic == &conback || pic == last_lvlshot;
+}
