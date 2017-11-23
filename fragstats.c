@@ -32,10 +32,6 @@ cvar_t cl_useimagesinfraglog = {"cl_useimagesinfraglog", "0"};
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
 
-#define MAX_WEAPON_CLASSES		64
-#define MAX_FRAG_DEFINITIONS	512
-#define MAX_FRAGMSG_LENGTH		256
-
 typedef enum msgtype_s {
 	mt_fragged,
 	mt_frags,
@@ -166,6 +162,7 @@ static void InitFragDefs(void)
 
 	wclasses[0].name = Q_strdup("Unknown");
 	num_wclasses = 1;
+	VX_TrackerInit();
 }
 
 #define _checkargs(x)		if (c != x) {																			\
@@ -189,7 +186,8 @@ static void InitFragDefs(void)
 									goto end;																					\
 								}
 
-static void LoadFragFile(char *filename, qbool quiet) {
+static void LoadFragFile(char *filename, qbool quiet)
+{
 	int lowmark, c, line, i;
 	msgtype_t msgtype;
 	char save, *buffer = NULL, *start, *end, *token, fragfilename[MAX_OSPATH];
@@ -446,6 +444,7 @@ nextline:
 
 end:
 	Hunk_FreeToLowMark(lowmark);
+	VX_TrackerInit();
 }
 
 void Load_FragFile_f(void) {
@@ -748,7 +747,6 @@ void Stats_Reset(void) {
 void Stats_NewMap(void) {
 	static char last_gamedir[MAX_OSPATH] = {0};
 
-
 	if (!last_gamedir[0] || strcasecmp(last_gamedir, cls.gamedirfile)) {
 		if (cl_loadFragfiles.value) {
 			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
@@ -836,4 +834,13 @@ char *GetWeaponName (int num)
 		return wclasses[num].name;
 
 	return "Unknown";
+}
+
+const char* GetWeaponImageName(int num)
+{
+	if (wclasses[num].imagename && wclasses[num].imagename[0]) {
+		return wclasses[num].imagename;
+	}
+
+	return NULL;
 }

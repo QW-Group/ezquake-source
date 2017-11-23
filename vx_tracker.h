@@ -57,14 +57,18 @@ typedef enum tracktype_s
 	tt_flag,		// Flag msgs
 } tracktype_t;
 
-void VX_TrackerAddText(char *msg, tracktype_t tt);
-
-char *GetWeaponName (int num);
-void VXSCR_DrawTrackerString(void);
+char* GetWeaponName(int num);
+const char* GetWeaponImageName(int num);
 void VX_TrackerThink(void);
+void VX_TrackerInit(void);
 void VX_TrackerClear(void);
 void VX_TrackerStreak(int player, int count);
 void VX_TrackerStreakEnd(int player, int killer, int count);
 void VX_TrackerStreakEndOddTeamkilled(int player, int count);
+
+#define MAX_WEAPON_CLASSES		64
+#define MAX_FRAG_DEFINITIONS	512
+#define MAX_FRAGMSG_LENGTH		256
+#define MAX_TRACKER_IMAGES      128
 
 #endif // __VX_TRACKER_H__

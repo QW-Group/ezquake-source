@@ -67,6 +67,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "parser.h"
 #endif
 #include "pmove.h"
+#include "vx_tracker.h"
+
 extern qbool ActiveApp, Minimized;
 
 static void Cl_Reset_Min_fps_f(void);
@@ -1865,6 +1867,7 @@ void GFX_Init (void)
 	R_Init();
 	Sbar_Init();
 	HUD_Editor_Init();	// Need to reload some textures.
+	VX_TrackerInit();
 
 	CachePics_CreateAtlas();
 }

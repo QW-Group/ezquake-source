@@ -76,7 +76,7 @@ static qbool CachePics_AllocBlock(int atlas_num, int w, int h, int *x, int *y)
 	return true;
 }
 
-int CachePics_AddToAtlas(mpic_t* pic)
+static int CachePics_AddToAtlas(mpic_t* pic)
 {
 	static char buffer[ATLAS_WIDTH * ATLAS_HEIGHT * 4];
 	int width = pic->width, height = pic->height;
@@ -94,7 +94,6 @@ int CachePics_AddToAtlas(mpic_t* pic)
 	if (texWidth > ATLAS_WIDTH || texHeight > ATLAS_HEIGHT) {
 		return -1;
 	}
-	Con_Printf(" > size = %d x %d = %d\n", width, height, width * height);
 
 	// Allocate space in an atlas texture
 	for (i = 0; i < ATLAS_COUNT; ++i) {
@@ -139,7 +138,7 @@ int CachePics_AddToAtlas(mpic_t* pic)
 			return i;
 		}
 		else {
-			Con_Printf("*** FAILED TO PLACE: %d (%d x %d) ***\n", pic->texnum, width, height);
+			Con_DPrintf("&cf00atlas&r FAILED TO PLACE: %d (%d x %d)\n", pic->texnum, width, height);
 		}
 	}
 
@@ -191,10 +190,6 @@ void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 
 	node->width *= (node->data.pic->sh - node->data.pic->sl);
 	node->height *= (node->data.pic->th - node->data.pic->tl);
-
-	if (node->width == 0) {
-		node = node;
-	}
 
 	size_node = node->width * node->height;
 
@@ -368,6 +363,5 @@ void CachePics_CreateAtlas(void)
 
 void CachePics_MarkAtlasDirty(void)
 {
-	Con_Printf("CachePics_MarkAtlasDirty\n");
 	atlas_refresh = true;
 }

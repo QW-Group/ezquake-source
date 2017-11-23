@@ -32,10 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 
+static void VX_TrackerAddText(char *msg, tracktype_t tt);
+
 extern cvar_t		cl_useimagesinfraglog;
 
 static int active_track = 0;
 static int max_active_tracks = 0;
+
+static void VXSCR_DrawTrackerString(void);
 
 cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0"};
 cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1"};
@@ -82,7 +86,7 @@ typedef struct
 	int printable_length[2];
 } trackmsg_t;
 
-trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
+static trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
 
 static void VX_PreProcessMessage(trackmsg_t* msg);
 
@@ -179,7 +183,7 @@ void VX_TrackerThink(void)
 	}
 }
 
-void VX_TrackerAddText(char *msg, tracktype_t tt)
+static void VX_TrackerAddText(char *msg, tracktype_t tt)
 {
 	int ic;
 
@@ -224,7 +228,7 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	trackermsg[active_track].tt = tt;
 	VX_PreProcessMessage(&trackermsg[active_track]);
-	active_track += 1;
+	++active_track;
 }
 
 static char *VX_RemovePrefix(int player)
@@ -879,4 +883,66 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 			start++; // Skip the \n
 		}
 	}
+}
+
+void VX_TrackerInit(void)
+{
+	int i;
+	char fullpath[MAX_PATH];
+
+	// Pre-cache weapon-class images
+	for (i = 0; i < MAX_WEAPON_CLASSES; ++i) {
+		const char* image = GetWeaponImageName(i);
+
+		// FIXME: This is largely duplicated from VX_PreProcessMessage
+		if (image && image[0]) {
+			const char* start = image;
+			int l = 0;
+
+			while (start[l] && start[l] != '\n') {
+				// Image escape.
+				if (start[l] == '\\') {
+					// We found opening slash, get image name now.
+					int from, to;
+
+					from = to = ++l;
+
+					for (; start[l]; l++) {
+						if (start[l] == '\n')
+							break; // Something bad, we didn't find a closing slash.
+
+						if (start[l] == '\\')
+							break; // Found a closing slash.
+
+						to = l + 1;
+					}
+
+					if (to > from) {
+						char imagename[128];
+
+						// We got potential image name, treat image as two printable characters.
+						if (to - from < sizeof(imagename)) {
+							mpic_t* pic;
+
+							strncpy(imagename, start + from, to - from);
+							imagename[to - from] = '\0';
+
+							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", imagename);
+							pic = Draw_CachePicSafe(fullpath, false, true);
+						}
+					}
+
+					if (start[l] == '\\') {
+						l++; // Advance.
+					}
+
+					continue;
+				}
+
+				l++; // Increment count of any chars in string untill end or new line.
+			}
+		}
+	}
+
+	CachePics_MarkAtlasDirty();
 }
