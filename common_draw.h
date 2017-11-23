@@ -45,6 +45,7 @@ typedef struct cachepic_node_s
 mpic_t *CachePic_Find(const char *path, qbool inc_refcount);
 mpic_t* CachePic_Add(const char *path, mpic_t *pic);
 qbool CachePic_Remove(const char *path);
+qbool CachePic_RemoveByPic(mpic_t* pic);
 void CachePics_DeInit(void);
 
 int SCR_GetClockStringWidth(const char *s, qbool big, float scale);

@@ -1133,6 +1133,7 @@ void Draw_ConsoleBackground (int lines)
 		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname)))
 		{
 			char name[MAX_QPATH];
+			mpic_t* old_levelshot = last_lvlshot;
 
 			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
 			if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
@@ -1140,6 +1141,12 @@ void Draw_ConsoleBackground (int lines)
 				// Resize.
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
+
+				if (old_levelshot) {
+					glDeleteTextures(1, &old_levelshot->texnum);
+					old_levelshot->texnum = 0;
+					CachePic_RemoveByPic(old_levelshot);
+				}
 			}
 
 			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.

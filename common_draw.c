@@ -498,6 +498,45 @@ qbool CachePic_Remove(const char *path)
 	return false;
 }
 
+// Same as CachePic_Remove, but without specifying the name
+qbool CachePic_RemoveByPic(mpic_t* pic)
+{
+	int key;
+
+	for (key = 0; key < CACHED_PICS_HDSIZE; ++key) {
+		cachepic_node_t *searchpos = cachepics[key];
+		cachepic_node_t *old = NULL;
+
+		while (searchpos) {
+			if (searchpos->data.pic == pic) {
+				searchpos->refcount--;
+
+				if (searchpos->refcount == 0) {
+					if (old == NULL) {
+						/* It's the first entry in list.
+						* Set new start to next item in list
+						* or NULL if we're the only entry.*/
+						cachepics[key] = searchpos->next;
+					}
+					else {
+						/* It's in the middle or end of the list.
+						* Need to make sure the prev entry points
+						* to the next one and skips us. */
+						old->next = searchpos->next;
+					}
+					/* Free both data and our entry itself */
+					Q_free(searchpos->data.pic);
+					Q_free(searchpos);
+				}
+				return true;
+			}
+			old = searchpos;
+			searchpos = searchpos->next;
+		}
+	}
+	return false;
+}
+
 mpic_t *CachePic_Find(const char *path, qbool inc_refcount) 
 {
 	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
