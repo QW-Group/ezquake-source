@@ -711,8 +711,6 @@ void VXSCR_DrawTrackerString (void)
 	if (!active_track)
 		return;
 
-	GL_EnterRegion(__FUNCTION__);
-
 	StringToRGB(amf_tracker_frame_color.string);
 
 	memset(rgba, 255, sizeof(byte) * 4);
@@ -781,8 +779,6 @@ void VXSCR_DrawTrackerString (void)
 		}
 		y += 8 * scale;	// Next line.
 	}
-
-	GL_LeaveRegion();
 }
 
 // Tracker used to step through every character twice every draw frame
