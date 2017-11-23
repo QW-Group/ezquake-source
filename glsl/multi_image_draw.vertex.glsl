@@ -20,8 +20,8 @@ out float gUseTexture;
 
 void main()
 {
-	gl_Position = gPositionTL = projectionMatrix * modelViewMatrix * vec4(inPositionTL, 0, 1);
-	gPositionBR = projectionMatrix * modelViewMatrix * vec4(inPositionBR, 0, 1);
+	gl_Position = gPositionTL = vec4(inPositionTL, 0, 1);
+	gPositionBR = vec4(inPositionBR, 0, 1);
 	gTexCoordTL = inTexCoordTL;
 	gTexCoordBR = inTexCoordBR;
 	gColour = inColour;

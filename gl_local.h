@@ -702,6 +702,7 @@ void GL_EndDrawBrushModels(void);
 void GL_EndDrawEntities(void);
 
 void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
+void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
 void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(void);
 

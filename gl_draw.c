@@ -196,6 +196,7 @@ void OnChange_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 
 	crosshairpic = *pic;
 	customcrosshair_loaded |= CROSSHAIR_IMAGE;
+	CachePics_MarkAtlasDirty();
 }
 
 void customCrosshair_Init(void)
@@ -237,6 +238,7 @@ void customCrosshair_Init(void)
 	crosshairtexture_txt.sl = crosshairtexture_txt.tl = 0;
 	crosshairtexture_txt.sh = crosshairtexture_txt.th = 1;
 	customcrosshair_loaded |= CROSSHAIR_TXT;
+	CachePics_MarkAtlasDirty();
 }
 
 static int CrosshairPixelSize(void)
@@ -267,6 +269,7 @@ static void BuildBuiltinCrosshairs(void)
 		Q_free(crosshair_buffer);
 	}
 	current_crosshair_pixel_size = crosshair_size;
+	CachePics_MarkAtlasDirty();
 }
 
 void Draw_InitCrosshairs(void)
@@ -656,11 +659,6 @@ void Draw_Crosshair (void)
 			return;
 		}
 
-		if (GL_ShadersSupported()) {
-			// Flush any queued images (should be autoid, if enabled)
-			GLM_FlushImageDraw();
-		}
-
 		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
@@ -700,7 +698,6 @@ void Draw_Crosshair (void)
 		if (GL_ShadersSupported()) {
 			GL_SelectTexture(GL_TEXTURE0);
 			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
-			GLM_FlushImageDraw();
 		}
 		else {
 			GL_TextureEnvMode(GL_MODULATE);

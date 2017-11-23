@@ -199,9 +199,9 @@ void Sbar_Init(void)
 	sb_weapons[1][1] = Draw_CacheWadPic("inv2_sshotgun", WADPIC_INV2_SSHOTGUN);
 	sb_weapons[1][2] = Draw_CacheWadPic("inv2_nailgun", WADPIC_INV2_NAILGUN);
 	sb_weapons[1][3] = Draw_CacheWadPic("inv2_snailgun", WADPIC_INV2_SNAILGUN);
-	sb_weapons[1][4] = Draw_CacheWadPic("inv2_rlaunch", WADPIC_INV_RLAUNCH);
-	sb_weapons[1][5] = Draw_CacheWadPic("inv2_srlaunch", WADPIC_INV_SRLAUNCH);
-	sb_weapons[1][6] = Draw_CacheWadPic("inv2_lightng", WADPIC_INV_LIGHTNG);
+	sb_weapons[1][4] = Draw_CacheWadPic("inv2_rlaunch", WADPIC_INV2_RLAUNCH);
+	sb_weapons[1][5] = Draw_CacheWadPic("inv2_srlaunch", WADPIC_INV2_SRLAUNCH);
+	sb_weapons[1][6] = Draw_CacheWadPic("inv2_lightng", WADPIC_INV2_LIGHTNG);
 
 	for (i = 0; i < 5; i++) {
 		sb_weapons[2 + i][0] = Draw_CacheWadPic(va("inva%i_shotgun", i + 1), WADPIC_INVA1_SHOTGUN + i);

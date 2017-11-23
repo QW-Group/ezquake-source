@@ -170,6 +170,27 @@ static int imageCount = 0;
 static glm_vao_t imageVAO;
 static glm_vbo_t imageVBO;
 
+static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2)
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+	float matrix[16];
+	float v1[4] = { x1, y1, 0, 1 };
+	float v2[4] = { x2, y2, 0, 1 };
+
+	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, matrix);
+	GLM_MultiplyVector(matrix, v1, v1);
+	GLM_MultiplyVector(matrix, v2, v2);
+
+	targ->x1 = v1[0];
+	targ->y1 = v1[1];
+	targ->x2 = v2[0];
+	targ->y2 = v2[1];
+}
+
 void GLM_CreateMultiImageProgram(void)
 {
 	if (!multiImageProgram.program) {
@@ -273,10 +294,7 @@ void GLM_DrawImage(float x, float y, float width, float height, int texture_unit
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
-	images[imageCount].x1 = x;
-	images[imageCount].y1 = y;
-	images[imageCount].x2 = x + width;
-	images[imageCount].y2 = y + height;
+	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
 	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 	if (alpha) {
 		images[imageCount].flags |= IMAGEPROG_FLAGS_ALPHATEST;
@@ -300,10 +318,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
-	images[imageCount].x1 = x;
-	images[imageCount].y1 = y;
-	images[imageCount].x2 = x + width;
-	images[imageCount].y2 = y + height;
+	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
 	images[imageCount].flags = 0;
 	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
 	images[imageCount].texNumber = 0;
