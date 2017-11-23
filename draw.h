@@ -90,6 +90,7 @@ void Draw_SString (int x, int y, const char *str, float scale);
 void Draw_SAlt_String (int x, int y, const char *text, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
+void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, float alpha);
 void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic (int x, int y, mpic_t *, float scale);
@@ -259,6 +260,7 @@ void CachePics_CreateAtlas(void);
 void CachePics_AtlasFrame(void);
 void CachePics_MarkAtlasDirty(void);
 qbool Draw_IsConsoleBackground(mpic_t* pic);
+mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
 extern cvar_t gfx_atlasautoupload;
 

@@ -6986,7 +6986,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 		for (format_string = hud_gamesummary_format->string; *format_string; ++format_string) {
 			int team = isupper(format_string[0]) ? 0 : 1;
-			int background_tex = 0;
+			mpic_t* background_tex = NULL;
 			int value = 0;
 			float alpha = 1.0f;
 			float last_taken = 0.0f;
@@ -7092,8 +7092,8 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 					Draw_AlphaCircleFillRGB(x + half_width, y + icon_offset + half_width, half_width, RGBA_TO_COLOR(background_color[0], background_color[1], background_color[2], alpha / 2 * 255));
 				}
-				else if (background_tex) {
-					Draw_2dAlphaTexture(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
+				else if (background_tex && background_tex->texnum) {
+					Draw_FitPicAlpha(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
 				}
 
 				if (value) {

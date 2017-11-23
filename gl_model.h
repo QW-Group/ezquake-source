@@ -559,7 +559,6 @@ void	Mod_ReloadModelsTextures (void); // for vid_restart
 
 int		Mod_LoadSimpleTexture(model_t *mod, int skinnum);
 void    Mod_ClearSimpleTextures(void);
-int     Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
 #include "gl_md3.h"
 

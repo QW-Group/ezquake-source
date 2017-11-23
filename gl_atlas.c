@@ -283,7 +283,8 @@ void CachePics_CreateAtlas(void)
 {
 	cachepic_node_t* sized_list = NULL;
 	cachepic_node_t* cur;
-	int i;
+	cachepic_node_t simple_items[MOD_NUMBER_HINTS * MAX_SIMPLE_TEXTURES];
+	int i, j;
 	int expected = 0, found = 0;
 
 	// Delete old atlas textures
@@ -339,7 +340,21 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
-	// Create atlas textures
+	// Add simple item textures
+	for (i = 0; i < MOD_NUMBER_HINTS; ++i) {
+		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
+			mpic_t* pic = Mod_SimpleTextureForHint(i, j);
+			cachepic_node_t* node = &simple_items[i * MAX_SIMPLE_TEXTURES + j];
+
+			node->data.pic = pic;
+
+			if (pic) {
+				CachePics_InsertBySize(&sized_list, node);
+			}
+		}
+	}
+
+	// Add cached picture images
 	for (i = 0; i < CACHED_PICS_HDSIZE; ++i) {
 		extern cachepic_node_t *cachepics[CACHED_PICS_HDSIZE];
 		cachepic_node_t *cur;

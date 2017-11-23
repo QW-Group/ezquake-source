@@ -2194,7 +2194,7 @@ void Mod_AddModelFlags(model_t *mod)
 	}
 }
 
-static int simpleitem_textures[MOD_NUMBER_HINTS][MAX_SIMPLE_TEXTURES];
+static mpic_t simpleitem_textures[MOD_NUMBER_HINTS][MAX_SIMPLE_TEXTURES];
 
 int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 {
@@ -2246,7 +2246,12 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		Com_DPrintf("%s\n", tex ? "OK" : "FAIL");
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
-		simpleitem_textures[mod->modhint][skinnum] = tex;
+		mpic_t* pic = &simpleitem_textures[mod->modhint][skinnum];
+		pic->texnum = tex;
+		pic->width = 16;
+		pic->height = 16;
+		pic->sl = pic->tl = 0;
+		pic->sh = pic->th = 1;
 	}
 
 	return tex;
@@ -2257,10 +2262,10 @@ void Mod_ClearSimpleTextures(void)
 	memset(simpleitem_textures, 0, sizeof(simpleitem_textures));
 }
 
-int Mod_SimpleTextureForHint(int model_hint, int skinnum)
+mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum)
 {
 	if (model_hint > 0 && model_hint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
-		return simpleitem_textures[model_hint][skinnum];
+		return &simpleitem_textures[model_hint][skinnum];
 	}
 
 	return 0;
