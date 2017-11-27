@@ -445,7 +445,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
 	progress = (strstr (p, "left")) ? true : false;
-	val = Q_atoi(value);;
+	val = Q_atoi(value);
 
 	if (cls.state >= ca_connected && progress && !cl.spectator) {
 		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
@@ -468,16 +468,21 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 {
-	int ival = Q_atoi(value);	// this is used in the code
-	float fval = Q_atof(value); // this is used to check value validity
+	int ival = Q_atoi(value);
 
-	if (ival == var->integer && fval == var->value) {
+	if (ival == var->integer) {
 		// no change
 		return;
 	}
 
-	if (fval < 0) {
-		Com_Printf("%s doesn't allow negative values\n", var->name);
+	if (var == &cl_delay_packet && (ival < 0 || ival > CL_MAX_PACKET_DELAY * 2)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY * 2);
+		*cancel = true;
+		return;
+	}
+
+	if (var == &cl_delay_packet_dev && (ival < 0 || ival > CL_MAX_PACKET_DELAY_DEVIATION)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY_DEVIATION);
 		*cancel = true;
 		return;
 	}
