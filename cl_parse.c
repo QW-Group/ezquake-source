@@ -3001,13 +3001,12 @@ void CL_ParseStufftext (void)
 	if (cls.state == ca_active && CL_Demo_SkipMessage(true))
 		return;
 
-	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
-	{
-		if (developer.integer > 1)
-			Com_DPrintf ("stufftext: %s\n", s);	
+	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1) || !strncmp(s, "alias ", 6) || !strncmp(s, "cmd mapslist_dl ", sizeof("cmd mapslist_dl ") - 1) || !strncmp(s, "cmd cmdslist_dl ", sizeof("cmd cmdslist_dl ") - 1)) {
+		if (developer.integer > 1) {
+			Com_DPrintf("stufftext: %s\n", s);
+		}
 	}
-	else
-	{
+	else {
 		Com_DPrintf ("stufftext: %s\n", s);	
 	}
 

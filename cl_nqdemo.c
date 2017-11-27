@@ -439,7 +439,9 @@ static void NQD_ParseStufftext (void)
 	}
 
 	s = MSG_ReadString ();
-	Com_DPrintf ("stufftext: %s\n", s);
+	if (developer.integer > 1) {
+		Com_DPrintf("stufftext: %s\n", s);
+	}
 
 	for (p = (byte *)s; *p; p++) {
 		if (*p > 32 && *p < 128)
