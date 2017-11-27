@@ -713,7 +713,7 @@ typedef struct {
 } usermainbuttons_t;
 void CL_PrintQStatReply (char *s);
 // returns last button user pressed
-usermainbuttons_t CL_GetLastCmd (void);
+usermainbuttons_t CL_GetLastCmd (int player_slot);
 
 // cl_nqdemo.c
 void NQD_StartPlayback (void);

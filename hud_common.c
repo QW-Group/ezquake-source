@@ -5897,14 +5897,23 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 {
 	char line1[4], line2[4];
 	int width, height, x, y;
-	usermainbuttons_t b = CL_GetLastCmd();
+	usermainbuttons_t b;
 	int i;
 	static cvar_t* vscale = NULL;
+	static cvar_t* player = NULL;
 	float scale;
+	int player_slot = -1;
 
 	if (!vscale) {
 		vscale = HUD_FindVar(hud, "scale");
+		player = HUD_FindVar(hud, "player");
 	}
+
+	if (cls.demoplayback && !cls.nqdemoplayback && !cls.mvdplayback && player->string[0]) {
+		player_slot = Player_GetSlot(player->string);
+	}
+
+	b = CL_GetLastCmd(player_slot);
 
 	scale = vscale->value;
 	scale = max(0, scale);
@@ -6737,7 +6746,7 @@ void CommonDraw_Init(void)
 	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
 			0, ca_active, 1, SCR_HUD_DrawKeys,
 			"0", "screen", "right", "center", "0", "0", "0.5", "20 20 20", NULL,
-			"scale", "2",
+			"scale", "2", "player", "",
 			NULL
 		    );
 #endif

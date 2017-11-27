@@ -1059,8 +1059,9 @@ qbool CL_CheckServerCommand (void) {
 	return false;
 }
 
-usermainbuttons_t CL_GetLastCmd (void) { 
-	usercmd_t cmd;
+usermainbuttons_t CL_GetLastCmd(int player_slot)
+{
+	usercmd_t cmd = { 0 };
 	usermainbuttons_t ret;
 	static int last_impulse;
 	static double impulse_time;
@@ -1084,7 +1085,15 @@ usermainbuttons_t CL_GetLastCmd (void) {
 		return ret;
 	}
 
-	cmd = cl.frames[(cls.netchan.outgoing_sequence - 1) & UPDATE_MASK].cmd;
+	if (player_slot >= 0 && player_slot < MAX_CLIENTS) {
+		frame_t* frame = &cl.frames[cl.validsequence & UPDATE_MASK];
+		if (frame->playerstate[player_slot].messagenum == cl.parsecount) {
+			cmd = frame->playerstate[player_slot].command;
+		}
+	}
+	else {
+		cmd = cl.frames[(cls.netchan.outgoing_sequence - 1) & UPDATE_MASK].cmd;
+	}
 
 	ret.attack = cmd.buttons & BUTTON_ATTACK;
 	ret.jump = cmd.buttons & BUTTON_JUMP;
