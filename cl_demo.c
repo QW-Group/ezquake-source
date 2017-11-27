@@ -437,6 +437,17 @@ void CL_WriteServerdata (sizebuf_t *msg)
 	}
 	#endif // PROTOCOL_VERSION_FTE2
 
+	// Maintain demo pseudo-compatibility,
+	ignore_extensions = 0;
+
+#ifdef PROTOCOL_VERSION_MVD1
+	if (cls.mvdprotocolextensions1 & ~ignore_extensions)
+	{
+		MSG_WriteLong (msg, PROTOCOL_VERSION_MVD1);
+		MSG_WriteLong (msg, cls.mvdprotocolextensions1);
+	}
+#endif // PROTOCOL_VERSION_MVD1
+
 	MSG_WriteLong (msg, PROTOCOL_VERSION);
 	MSG_WriteLong (msg, cl.servercount);
 	MSG_WriteString (msg, cls.gamedirfile);
