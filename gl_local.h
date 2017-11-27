@@ -814,6 +814,8 @@ void GL_GenVertexArray(glm_vao_t* vao);
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
+byte* SurfaceFlatTurbColor(texture_t* texture);
+
 #endif /* !__GL_LOCAL_H__ */
 
 

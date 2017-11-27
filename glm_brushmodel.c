@@ -81,113 +81,6 @@ int R_ChainTexturesBySize(model_t* m)
 	return num_sizes;
 }
 
-/*
-void GLM_LoadBrushModelTextures(model_t* loadmodel)
-{
-	int max_width = 0;
-	int max_height = 0;
-	int num_sizes;
-	int array_index;
-	int i;
-
-	// Find textures with common dimensions
-	for (i = 0; i < loadmodel->numtextures; i++) {
-		texture_t* tx = loadmodel->textures[i];
-		if (!tx || !tx->loaded) {
-			continue;
-		}
-
-		{
-			int w, h, mips;
-			int miplevel = 0;
-
-			GL_Bind(tx->gl_texturenum);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_WIDTH, &w);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_HEIGHT, &h);
-			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, &mips);
-
-			tx->gl_width = w;
-			tx->gl_height = h;
-
-			max_width = max(max_width, w);
-			max_height = max(max_height, h);
-		}
-	}
-
-	num_sizes = R_ChainTexturesBySize(loadmodel);
-	loadmodel->texture_arrays = Hunk_Alloc(sizeof(GLuint) * num_sizes);
-	loadmodel->texture_array_first = Hunk_Alloc(sizeof(int) * num_sizes);
-	loadmodel->texture_array_count = num_sizes;
-
-	array_index = 0;
-	for (i = 0; i < loadmodel->numtextures; ++i) {
-		int texIndex, sizeCount;
-		texture_t* tx;
-
-		tx = loadmodel->textures[i];
-		if (!tx || !tx->loaded || !tx->size_start) {
-			continue;
-		}
-
-		// Count textures with this size
-		sizeCount = 0;
-		for (texIndex = i; texIndex >= 0 && texIndex < loadmodel->numtextures; texIndex = loadmodel->textures[texIndex]->next_same_size) {
-			++sizeCount;
-		}
-
-		// Create texture array and copy textures in
-		{
-			int texture_index = 0;
-			GLuint texture_array;
-			int max_miplevels = 0;
-			int min_dimension = min(tx->gl_width, tx->gl_height);
-			GLubyte* buffer = Q_malloc(tx->gl_width * tx->gl_height * 4);
-
-			// 
-			while (min_dimension > 0) {
-				max_miplevels++;
-				min_dimension /= 2;
-			}
-			glGenTextures(1, &texture_array);
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texture_array, false);
-			glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, tx->gl_width, tx->gl_height, sizeCount);
-
-			loadmodel->texture_arrays[array_index] = texture_array;
-			loadmodel->texture_array_first[array_index] = i;
-
-			// Load textures into the array
-			texture_index = 0;
-			for (texIndex = i; texIndex >= 0 && texIndex < loadmodel->numtextures; texIndex = loadmodel->textures[texIndex]->next_same_size) {
-				int w, h, level;
-				texture_t* thisTex = loadmodel->textures[texIndex];
-
-				GL_Bind(thisTex->gl_texturenum);
-				w = tx->gl_width;
-				h = tx->gl_height;
-
-				for (level = 0; level < max_miplevels && w && h; ++level, w /= 2, h /= 2) {
-					glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-					glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, texture_index, w, h, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-				}
-
-				// store details
-				thisTex->gl_texture_index = texture_index;
-
-				++texture_index;
-			}
-
-			Q_free(buffer);
-		}
-
-		++array_index;
-	}
-}
-*/
-
-
-
-
-
 static int CopyVertToBuffer(float* target, int position, float* source, int lightmap, int material, float scaleS, float scaleT)
 {
 	memcpy(&target[position], source, sizeof(float) * VERTEXSIZE);
@@ -698,7 +591,7 @@ void GLM_DrawBrushModel(model_t* model)
 	}
 
 	if (req && req->count) {
-		GLM_FlushImageDraw();
+		GL_FlushBrushModelBatch();
 	}
 
 	return;

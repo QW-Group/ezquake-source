@@ -15,7 +15,6 @@ Todo list:
 */
 
 void GLM_DrawIndexedTurbPoly(GLuint vao, GLuint* indices, int count, byte* colour, GLuint texture_array);
-byte* SurfaceFlatTurbColor(texture_t* texture);
 
 void GLM_DrawWaterSurfaces(void)
 {

@@ -438,10 +438,18 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 			// add surf to the right chain
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			if (surf->flags & SURF_DRAWSKY) {
-				chain_surfaces_by_lightmap(&skychain, surf);
+				if (r_fastsky.integer) {
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
+				}
+				else {
+					chain_surfaces_by_lightmap(&skychain, surf);
+				}
 			}
 			else if (turbSurface) {
-				if (solidTexTurb) {
+				if (r_fastturb.integer) {
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
+				}
+				else if (solidTexTurb && GL_ShadersSupported()) {
 					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[0], surf);
 				}
 				else {

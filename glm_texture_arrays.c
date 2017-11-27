@@ -18,6 +18,10 @@ static void GLM_CreateBrushModelVAO(void);
 
 static qbool BrushModelIsAnySize(model_t* mod)
 {
+	//int i;
+
+	//Con_Printf("BrushModelIsAnySize(%s) = [%f %f => %f %f]\n", mod->name, mod->min_tex[0], mod->min_tex[1], mod->max_tex[0], mod->max_tex[1]);
+
 	return false;
 }
 
@@ -274,7 +278,7 @@ static void GL_PrintTextureSizes(common_texture_t* list)
 
 	for (tex = list; tex; tex = tex->next) {
 		if (tex->count) {
-			Con_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
+			//Con_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
 		}
 	}
 }
@@ -421,7 +425,7 @@ static void GLM_PrintTextureArrays(model_t* mod)
 {
 	int i;
 
-	Con_Printf("%s\n", mod->name);
+	//Con_Printf("%s\n", mod->name);
 	for (i = 0; i < mod->numtextures; ++i) {
 		texture_t* tex = mod->textures[i];
 
@@ -433,11 +437,11 @@ static void GLM_PrintTextureArrays(model_t* mod)
 			continue;
 		}
 
-		Con_Printf("  %2d: %s, %d [%2d] %s\n", i, tex->name, tex->gl_texture_array, tex->next_same_size, tex->size_start ? "start" : "cont");
+		//Con_Printf("  %2d: %s, %d [%2d] %s\n", i, tex->name, tex->gl_texture_array, tex->next_same_size, tex->size_start ? "start" : "cont");
 	}
 
 	for (i = 0; i < mod->texture_array_count; ++i) {
-		Con_Printf("A %2d: %d first %d, %.3f x %.3f\n", i, mod->texture_arrays[i], mod->texture_array_first[i], mod->texture_arrays_scale_s[i], mod->texture_arrays_scale_t[i]);
+		//Con_Printf("A %2d: %d first %d, %.3f x %.3f\n", i, mod->texture_arrays[i], mod->texture_array_first[i], mod->texture_arrays_scale_s[i], mod->texture_arrays_scale_t[i]);
 	}
 }
 
@@ -473,6 +477,49 @@ static void GLM_SetTextureArrays(model_t* mod)
 			mod->texture_arrays[num_arrays] = tex->gl_texture_array;
 			mod->textures[i]->size_start = true;
 			++num_arrays;
+		}
+	}
+}
+
+void GLM_FindBrushModelTextureExtents(model_t* mod)
+{
+	int i;
+
+	// Clear dimensions for model
+	mod->min_tex[0] = mod->min_tex[1] = 9999;
+	mod->max_tex[0] = mod->max_tex[1] = -9999;
+
+	// Clear dimensions for 
+	for (i = 0; i < mod->numsurfaces; ++i) {
+		msurface_t* s = &mod->surfaces[i];
+		glpoly_t* poly;
+
+		//Con_Printf("  Surface %d (tex %d)\n", i, s->texinfo->texture->);
+		for (poly = s->polys; poly; poly = poly->next) {
+			int j;
+
+			float surfmin[2] = { +9999.9f, +9999.9f };
+			float surfmax[2] = { -9999.9f, -9999.9f };
+			float repeats[2];
+			qbool simple;
+
+			for (j = 0; j < poly->numverts; ++j) {
+				float s = poly->verts[j][3];
+				float t = poly->verts[j][4];
+
+				surfmin[0] = min(surfmin[0], s);
+				surfmax[0] = max(surfmax[0], s);
+				surfmin[1] = min(surfmin[1], t);
+				surfmax[1] = max(surfmax[1], t);
+			}
+
+			repeats[0] = fabs(surfmax[0] - surfmin[0]);
+			repeats[1] = fabs(surfmax[1] - surfmin[1]);
+			simple = repeats[0] <= 1 && repeats[1] <= 1;
+
+			if (repeats[0] > 1 || repeats[1] > 1) {
+				Con_Printf("    Poly range: %f,%f\n", repeats[0], repeats[1]);
+			}
 		}
 	}
 }
@@ -554,6 +601,8 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 		mod->vbo_start = 0;
 	}
 	else if (mod->type == mod_brush) {
+		GLM_FindBrushModelTextureExtents(mod);
+
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (mod->simpletexture[j]) {
 				GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j]);

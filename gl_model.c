@@ -1675,7 +1675,8 @@ void *Mod_BSPX_FindLump(char *lumpname, int *plumpsize)
 
 //============================================================
 
-void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
+void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
+{
 	int i;
 	dheader_t *header;
 	dmodel_t *bm;
@@ -1685,10 +1686,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 
 	header = (dheader_t *)buffer;
 
-	mod->bspversion = LittleLong (header->version);
+	mod->bspversion = LittleLong(header->version);
 
 	if (mod->bspversion != Q1_BSPVERSION && mod->bspversion != HL_BSPVERSION && mod->bspversion != Q1_BSPVERSION2 && mod->bspversion != Q1_BSPVERSION29a)
-		Host_Error ("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake), %i (HalfLife), %i (BSP2) or %i (2PSB))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION, Q1_BSPVERSION2, Q1_BSPVERSION29a);
+		Host_Error("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake), %i (HalfLife), %i (BSP2) or %i (2PSB))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION, Q1_BSPVERSION2, Q1_BSPVERSION29a);
 
 	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", host_mapname.string));
 
@@ -1696,27 +1697,27 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	mod_base = (byte *)header;
 
 	for (i = 0; i < sizeof(dheader_t) / 4; i++)
-		((int *) header)[i] = LittleLong (((int *) header)[i]);
+		((int *)header)[i] = LittleLong(((int *)header)[i]);
 
 	// check for BSPX extensions
-	Mod_LoadBSPX (filesize);
-	
+	Mod_LoadBSPX(filesize);
+
 	// load into heap
 
-	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
+	Mod_LoadVertexes(&header->lumps[LUMP_VERTEXES]);
 	if (mod->bspversion == Q1_BSPVERSION2 || mod->bspversion == Q1_BSPVERSION29a) {
 		Mod_LoadEdgesBSP2(&header->lumps[LUMP_EDGES]);
 	}
 	else {
 		Mod_LoadEdges(&header->lumps[LUMP_EDGES]);
 	}
-	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
+	Mod_LoadSurfedges(&header->lumps[LUMP_SURFEDGES]);
 	if (loadmodel->bspversion == HL_BSPVERSION)
-		Mod_ParseWadsFromEntityLump (&header->lumps[LUMP_ENTITIES]);
-	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
-	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
-	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
-	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
+		Mod_ParseWadsFromEntityLump(&header->lumps[LUMP_ENTITIES]);
+	Mod_LoadTextures(&header->lumps[LUMP_TEXTURES]);
+	Mod_LoadLighting(&header->lumps[LUMP_LIGHTING]);
+	Mod_LoadPlanes(&header->lumps[LUMP_PLANES]);
+	Mod_LoadTexinfo(&header->lumps[LUMP_TEXINFO]);
 	if (mod->bspversion == Q1_BSPVERSION2 || mod->bspversion == Q1_BSPVERSION29a) {
 		Mod_LoadFacesBSP2(&header->lumps[LUMP_FACES]);
 		Mod_LoadMarksurfacesBSP2(&header->lumps[LUMP_MARKSURFACES]);
@@ -1725,7 +1726,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 		Mod_LoadFaces(&header->lumps[LUMP_FACES]);
 		Mod_LoadMarksurfaces(&header->lumps[LUMP_MARKSURFACES]);
 	}
-	Mod_LoadVisibility (&header->lumps[LUMP_VISIBILITY]);
+	Mod_LoadVisibility(&header->lumps[LUMP_VISIBILITY]);
 	if (mod->bspversion == Q1_BSPVERSION29a) {
 		Mod_LoadLeafs29a(&header->lumps[LUMP_LEAFS]);
 		Mod_LoadNodes29a(&header->lumps[LUMP_NODES]);
@@ -1738,9 +1739,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 		Mod_LoadLeafs(&header->lumps[LUMP_LEAFS]);
 		Mod_LoadNodes(&header->lumps[LUMP_NODES]);
 	}
-	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
+	Mod_LoadSubmodels(&header->lumps[LUMP_MODELS]);
 
-	mod->numframes = 2;		// regular and alternate animation
+	// regular and alternate animation
+	mod->numframes = 2;
 
 	// set up the submodels (FIXME: this is confusing)
 	for (i = 0; i < mod->numsubmodels; i++) {
@@ -1751,12 +1753,12 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 
 		mod->firstnode = bm->headnode[0];
 		if ((unsigned)mod->firstnode > loadmodel->numnodes)
-			Host_Error ("Inline model %i has bad firstnode", i);
+			Host_Error("Inline model %i has bad firstnode", i);
 
-		VectorCopy (bm->maxs, mod->maxs);
-		VectorCopy (bm->mins, mod->mins);
+		VectorCopy(bm->maxs, mod->maxs);
+		VectorCopy(bm->mins, mod->mins);
 
-		mod->radius = RadiusFromBounds (mod->mins, mod->maxs);
+		mod->radius = RadiusFromBounds(mod->mins, mod->maxs);
 
 		mod->numleafs = bm->visleafs;
 
@@ -1764,10 +1766,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 			// duplicate the basic information
 			char name[16];
 
-			snprintf (name, sizeof (name), "*%i", i+1);
-			loadmodel = Mod_FindName (name);
+			snprintf(name, sizeof(name), "*%i", i + 1);
+			loadmodel = Mod_FindName(name);
 			*loadmodel = *mod;
-			strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
+			strlcpy(loadmodel->name, name, sizeof(loadmodel->name));
 			mod = loadmodel;
 		}
 	}
@@ -1775,7 +1777,6 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	// set wall/ceiling drawflat
 	for (i = 0; i < mod->numsurfaces; ++i) {
 		msurface_t* s = &mod->surfaces[i];
-		float* v = s->polys->verts[0];
 
 		VectorCopy(s->plane->normal, normal);
 		VectorNormalize(normal);

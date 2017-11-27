@@ -45,12 +45,13 @@ static void GLC_DrawFlat(model_t *model)
 	msurface_t *s;
 	int waterline, k;
 	float *v;
-	byte w[3], f[3];
+	byte w[3], f[3], sky[3];
 	int lastType = -1;
 	qbool draw_caustics = underwatertexture && gl_caustics.value;
 
 	memcpy(w, r_wallcolor.color, 3);
 	memcpy(f, r_floorcolor.color, 3);
+	memcpy(sky, r_skycolor.color, 3);
 
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_BLEND);
@@ -68,27 +69,43 @@ static void GLC_DrawFlat(model_t *model)
 		}
 
 		for (; s; s = s->texturechain) {
-			GLC_SetTextureLightmap(s->lightmaptexturenum);
-
-			v = s->polys->verts[0];
-
-			if (s->flags & SURF_DRAWFLAT_FLOOR) {
-				if (lastType != 0) {
-					glColor3ubv(f);
-					lastType = 0;
+			if (s->flags & SURF_DRAWSKY) {
+				if (lastType != 2) {
+					glColor3ubv(sky);
+					lastType = 2;
 				}
 			}
-			else if (lastType != 1) {
-				glColor3ubv(w);
-				lastType = 1;
+			else if (s->flags & SURF_DRAWTURB) {
+				glColor3ubv(SurfaceFlatTurbColor(s->texinfo->texture));
+				lastType = -1;
+			}
+			else {
+				GLC_SetTextureLightmap(s->lightmaptexturenum);
+				if (s->flags & SURF_DRAWFLAT_FLOOR) {
+					if (lastType != 0) {
+						glColor3ubv(f);
+						lastType = 0;
+					}
+				}
+				else if (lastType != 1) {
+					glColor3ubv(w);
+					lastType = 1;
+				}
 			}
 
-			glBegin(GL_POLYGON);
-			for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-				glTexCoord2f(v[5], v[6]);
-				glVertex3fv(v);
+			{
+				glpoly_t *p;
+				for (p = s->polys; p; p = p->next) {
+					v = p->verts[0];
+
+					glBegin(GL_POLYGON);
+					for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
+						glTexCoord2f(v[5], v[6]);
+						glVertex3fv(v);
+					}
+					glEnd();
+				}
 			}
-			glEnd();
 
 			// START shaman FIX /r_drawflat + /gl_caustics {
 			if (waterline && draw_caustics) {
@@ -348,17 +365,12 @@ void GLC_DrawWorld(void)
 	extern msurface_t* alphachain;
 	extern cvar_t gl_outline;
 
-	if (r_drawflat.integer) {
-		if (r_drawflat.integer == 1) {
-			GLC_DrawFlat(cl.worldmodel);
-		}
-		else {
-			GLC_DrawTextureChains(cl.worldmodel, 0);
-			GLC_DrawFlat(cl.worldmodel);
-		}
+	if (r_drawflat.integer == 1) {
+		GLC_DrawFlat(cl.worldmodel);
 	}
 	else {
 		GLC_DrawTextureChains(cl.worldmodel, 0);
+		GLC_DrawFlat(cl.worldmodel);
 	}
 
 	if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
