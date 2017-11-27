@@ -125,6 +125,13 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam)
 		case VK_SNAPSHOT:
 			Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP));
 			return 1;
+		case VK_CAPITAL:
+			if (key_dest != key_console && key_dest != key_message) {
+				// Don't toggle capslock when in game
+				Key_Event (K_CAPSLOCK, !(p->flags & LLKHF_UP));
+				return 1;
+			}
+			break;
 	}
 
 	return CallNextHookEx(NULL, Code, wParam, lParam);

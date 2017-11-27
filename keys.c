@@ -2265,6 +2265,11 @@ void Key_Event (int key, qbool down)
 			return;
 	}
 
+	// Caps lock shouldn't trigger bind in chat/console
+	if (key == K_CAPSLOCK && processTextInput) {
+		return;
+	}
+
 	lastKeyGeneratedCharacter = false;
 	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
 	if (unichar < 32 || unichar > 127)
