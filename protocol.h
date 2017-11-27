@@ -65,6 +65,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef PROTOCOL_VERSION_MVD1
 
 #define MVD_PEXT1_FLOATCOORDS       0x00000001 // FTE_PEXT_FLOATCOORDS but for entity/player coords only
+#define MVD_PEXT1_HIGHLAGTELEPORT   0x00000002 // Adjust movement direction for frames following teleport
 
 #endif
 

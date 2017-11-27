@@ -188,6 +188,7 @@ extern int fofs_hideentity;
 extern int fofs_trackent;
 extern int fofs_visibility;
 extern int fofs_hide_players;
+extern int fofs_teleported;
 
 #define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->_float
 #define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->vector

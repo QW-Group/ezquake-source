@@ -3340,6 +3340,20 @@ void CL_ParseQizmoVoice (void)
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
 
+// SV_RotateCmd
+// Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
+static void CL_RotateCmd(usercmd_t* cmd, float yaw_delta)
+{
+	static vec3_t up = { 0, 0, 1 };
+	vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
+	vec3_t result;
+
+	RotatePointAroundVector(result, up, direction, yaw_delta);
+
+	cmd->sidemove = result[0];
+	cmd->forwardmove = result[1];
+}
+
 void CL_ParseServerMessage (void) 
 {
 	int cmd, i, j = 0;
@@ -3497,11 +3511,13 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_setangle:
 				{
-					if (cls.mvdplayback)
+					if (cls.mvdplayback || (cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
 						j = MSG_ReadByte();
+					}
 
-					for (i = 0; i < 3; i++)
+					for (i = 0; i < 3; i++) {
 						newangles[i] = MSG_ReadAngle();
+					}
 
 					if (CL_Demo_SkipMessage (true))
 						break;
@@ -3522,6 +3538,26 @@ void CL_ParseServerMessage (void)
 						cl.viewangles[2] = newangles[2];
 #else
 						VectorCopy (newangles, cl.viewangles);
+						if ((cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) && j) {
+							// Update all subsequent packets with amended directions to try and keep prediction correct
+							frame_t* this_frame = &cl.frames[cl.parsecount & UPDATE_MASK];
+							float yaw_delta = newangles[YAW] - this_frame->cmd.angles[YAW];
+
+							for (i = 2; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
+								frame_t* f = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
+
+								if (j == 1) {
+									// Teleport
+									CL_RotateCmd(&f->cmd, yaw_delta);
+
+									cl.viewangles[YAW] = f->cmd.angles[YAW] + yaw_delta;
+								}
+								else if (j == 2) {
+									// Respawn, angle sent from client was over-ruled
+									f->cmd.angles[YAW] = newangles[YAW];
+								}
+							}
+						}
 #endif // I_WANT_HAX
 					}
 					break;

@@ -342,6 +342,12 @@ typedef struct client_s
 	double			delay;
 	double			disable_updates_stop;		//Vladis
 	packet_t		*packets, *last_packet;
+
+	// lagged-teleport extension
+	qbool           lastteleport_teleport;    // true if teleport, otherwise it was spawn
+	int             lastteleport_outgoingseq; // outgoing sequence# when the player teleported (0 if no action)
+	int             lastteleport_incomingseq; // incoming sequence# when the player teleported
+	float           lastteleport_teleportyaw; // new yaw angle, post-teleport
 } client_t;
 
 // a client can leave the server in one of four ways:

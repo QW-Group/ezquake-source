@@ -520,7 +520,7 @@ void Cache_Flush(void)
 	while (cache_head.next != &cache_head) {
 		Cache_Free(cache_head.next->user); // reclaim the space
 	}
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 	Mod_ClearSimpleTextures();
 #endif
 }

@@ -744,6 +744,27 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 		demo.fixangle[clnum] = true;
 
 		MSG_WriteByte (msg, svc_setangle);
+
+		if (client->mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) {
+			if (fofs_teleported) {
+				client->lastteleport_teleport = ((eval_t *)((byte *)&(client->edict)->v + fofs_teleported))->_int;
+				if (client->lastteleport_teleport) {
+					MSG_WriteByte(msg, 1); // signal a teleport
+				}
+				else {
+					MSG_WriteByte(msg, 2); // respawn
+				}
+				client->lastteleport_outgoingseq = client->netchan.outgoing_sequence;
+				client->lastteleport_incomingseq = client->netchan.incoming_sequence;
+				client->lastteleport_teleportyaw = (client->edict)->v.angles[YAW] - client->lastcmd.angles[YAW];
+
+				((eval_t *)((byte *)&(client->edict)->v + fofs_teleported))->_int = 0;
+			}
+			else {
+				MSG_WriteByte(msg, 0); // we don't know, so no changes made...
+			}
+		}
+
 		for (i=0 ; i < 3 ; i++)
 			MSG_WriteAngle (msg, ent->v.angles[i] );
 

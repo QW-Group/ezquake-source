@@ -3037,7 +3037,7 @@ void Cmd_PEXT_f(void)
 	MSG_WriteString (&sv_client->netchan.message, "cmd new\n");
 }
 
-#ifdef SERVERONLY
+#if defined(SERVERONLY) && defined(WWW_INTEGRATION)
 // { Central login
 void Cmd_Login_f(void)
 {
@@ -3115,7 +3115,7 @@ void SV_Noclip_f (void);
 void SV_Fly_f (void);
 // }
 
-#ifdef SERVERONLY
+#if defined(SERVERONLY) && defined(WWW_INTEGRATION)
 // { central login
 void Cmd_Login_f(void);
 void Cmd_Logout_f(void);
@@ -3205,7 +3205,7 @@ static ucmd_t ucmds[] =
 
 	{"pext", Cmd_PEXT_f, false}, // user reply with supported protocol extensions.
 
-#ifdef SERVERONLY
+#if defined(SERVERONLY) && defined(WWW_INTEGRATION)
 	{"login", Cmd_Login_f, false},
 	{"login-response", Cmd_ChallengeResponse_f, false},
 	{"logout", Cmd_Logout_f, false},
@@ -3667,6 +3667,20 @@ void SV_PostRunCmd(void)
 	}
 }
 
+// SV_RotateCmd
+// Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
+static void SV_RotateCmd(client_t* cl, usercmd_t* cmd)
+{
+	static vec3_t up = { 0, 0, 1 };
+	vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
+	vec3_t result;
+
+	RotatePointAroundVector(result, up, direction, cl->lastteleport_teleportyaw);
+
+	cmd->sidemove = result[0];
+	cmd->forwardmove = result[1];
+}
+
 /*
 ===================
 SV_ExecuteClientMove
@@ -3678,7 +3692,7 @@ packets were dropped)
 static void SV_ExecuteClientMove (client_t *cl, usercmd_t oldest, usercmd_t oldcmd, usercmd_t newcmd)
 {
 	int net_drop;
-	
+
 	if (sv.paused)
 		return;
 
@@ -3921,6 +3935,32 @@ void SV_ExecuteClientMessage (client_t *cl)
 				Con_DPrintf ("Failed command checksum for %s(%d) (%d != %d)\n",
 					cl->name, cl->netchan.incoming_sequence, checksum, calculatedChecksum);
 				return;
+			}
+
+			if (cl->mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) {
+				if (cl->lastteleport_outgoingseq && cl->netchan.incoming_acknowledged < cl->lastteleport_outgoingseq) {
+					if (cl->lastteleport_teleport) {
+						if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
+							SV_RotateCmd(cl, &oldest);
+						}
+						if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
+							SV_RotateCmd(cl, &oldcmd);
+						}
+						SV_RotateCmd(cl, &newcmd);
+					}
+					else {
+						if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
+							oldest.angles[YAW] = cl->lastteleport_teleportyaw;
+						}
+						if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
+							oldcmd.angles[YAW] = cl->lastteleport_teleportyaw;
+						}
+						newcmd.angles[YAW] = cl->lastteleport_teleportyaw;
+					}
+				}
+				else {
+					cl->lastteleport_outgoingseq = 0;
+				}
 			}
 
 			SV_ExecuteClientMove (cl, oldest, oldcmd, newcmd);
