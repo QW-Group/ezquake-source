@@ -296,6 +296,11 @@ void CachePics_CreateAtlas(void)
 	for (i = 0; i < WADPIC_PIC_COUNT; ++i) {
 		extern wadpic_t wad_pictures[WADPIC_PIC_COUNT];
 
+		// This tiles, so don't include in atlas
+		if (i == WADPIC_BACKTILE) {
+			continue;
+		}
+
 		if (wad_pictures[i].pic) {
 			wadpics[i].data.pic = wad_pictures[i].pic;
 
