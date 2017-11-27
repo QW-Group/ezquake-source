@@ -256,7 +256,7 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, struct usercmd_s *from, struct userc
 
 //Writes part of a packetentities message.
 //Can delta from either a baseline or a previous packet_entity
-void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions)
+void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions, unsigned int mvdsv_extensions)
 {
 	int bits, i;
 #ifdef PROTOCOL_VERSION_FTE
@@ -392,16 +392,34 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 		MSG_WriteByte (msg, to->skinnum);
 	if (bits & U_EFFECTS)
 		MSG_WriteByte (msg, to->effects);
-	if (bits & U_ORIGIN1)
-		MSG_WriteCoord (msg, to->origin[0]);
+	if (bits & U_ORIGIN1) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[0]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[0]);
+		}
+	}
 	if (bits & U_ANGLE1)
 		MSG_WriteAngle(msg, to->angles[0]);
-	if (bits & U_ORIGIN2)
-		MSG_WriteCoord (msg, to->origin[1]);
+	if (bits & U_ORIGIN2) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[1]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[1]);
+		}
+	}
 	if (bits & U_ANGLE2)
 		MSG_WriteAngle(msg, to->angles[1]);
-	if (bits & U_ORIGIN3)
-		MSG_WriteCoord (msg, to->origin[2]);
+	if (bits & U_ORIGIN3) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[2]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[2]);
+		}
+	}
 	if (bits & U_ANGLE3)
 		MSG_WriteAngle(msg, to->angles[2]);
 }

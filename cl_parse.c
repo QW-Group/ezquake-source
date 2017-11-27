@@ -3879,17 +3879,12 @@ void CL_ParseServerMessage (void)
 
 		if (cls.demorecording)
 		{
-			// Only modify full packet entities if we're not using full float coordinates
-			qbool modify_packet_entities =
-				(cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) &
-				!(cls.fteprotocolextensions & FTE_PEXT_FLOATCOORDS);
-
 			// Init the demo message buffer if it hasn't been done.
 			CL_InitialiseDemoMessageIfRequired();
 
 			// Write the change in entities to the demo being recorded
 			// or the net message we just received.
-			if (cmd == svc_deltapacketentities || (cmd == svc_packetentities && modify_packet_entities)) {
+			if (cmd == svc_deltapacketentities) {
 				CL_WriteDemoEntities();
 			}
 			else if (cmd == svc_download) {

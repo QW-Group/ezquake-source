@@ -304,8 +304,9 @@ void CL_WriteDemoEntities (void)
 	ent_total = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.num_entities;
 
 	// Write all the entity changes since last packet entity message.
-	for (ent_index = 0; ent_index < ent_total; ent_index++, ent++)
-		MSG_WriteDeltaEntity (&cl_entities[ent->number].baseline, ent, &cls.demomessage, true, cls.fteprotocolextensions);
+	for (ent_index = 0; ent_index < ent_total; ent_index++, ent++) {
+		MSG_WriteDeltaEntity(&cl_entities[ent->number].baseline, ent, &cls.demomessage, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+	}
 
 	// End of packetentities.
 	MSG_WriteShort (&cls.demomessage, 0);
@@ -1377,8 +1378,9 @@ void CL_WriteMVDStartupData(void)
 		ent_total = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.num_entities;
 
 		// Write all the entity changes since last packet entity message.
-		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++)
-			MSG_WriteDeltaEntity (&cl_entities[ent_state->number].baseline, ent_state, &buf, true, cls.fteprotocolextensions);
+		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++) {
+			MSG_WriteDeltaEntity(&cl_entities[ent_state->number].baseline, ent_state, &buf, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+		}
 
 		// End of packetentities.
 		MSG_WriteShort (&buf, 0);

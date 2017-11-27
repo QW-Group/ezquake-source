@@ -1522,9 +1522,16 @@ guess_pm_type:
 			//   in protocol 27 - we always write out in new format
 			MSG_WriteByte(&cls.demomessage, num);
 			MSG_WriteShort(&cls.demomessage, flags);
-			MSG_WriteCoord(&cls.demomessage, state->origin[0]);
-			MSG_WriteCoord(&cls.demomessage, state->origin[1]);
-			MSG_WriteCoord(&cls.demomessage, state->origin[2]);
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[0]);
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[1]);
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[2]);
+			}
+			else {
+				MSG_WriteCoord(&cls.demomessage, state->origin[0]);
+				MSG_WriteCoord(&cls.demomessage, state->origin[1]);
+				MSG_WriteCoord(&cls.demomessage, state->origin[2]);
+			}
 			MSG_WriteByte(&cls.demomessage, state->frame);
 			if (flags & PF_MSEC)
 				MSG_WriteByte(&cls.demomessage, msec);
