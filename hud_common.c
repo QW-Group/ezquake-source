@@ -5358,7 +5358,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value);
 }
 
-static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
+static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
 {
 	qbool swap = false;
 
@@ -5416,6 +5416,8 @@ static void SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** en
 		*enemy = temp_frags;
 		*enemyName = temp_name;
 	}
+
+	return swap;
 }
 
 //
@@ -5548,16 +5550,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 
 	frag_digits = max(1, min(frag_length->value, 4));
 
-	SCR_Hud_GetScores(&s_team, &s_enemy, &n_team, &n_enemy);
-
-	if (cl.teamplay) {
-		swappedOrder = active_team_position > 0;
-		s_difference = swappedOrder ? s_enemy - s_team : s_team - s_enemy;
-	}
-	else {
-		swappedOrder = active_player_position > 0;
-		s_difference = swappedOrder ? s_enemy - s_team : s_team - s_enemy;
-	}
+	swappedOrder = SCR_Hud_GetScores(&s_team, &s_enemy, &n_team, &n_enemy);
+	s_difference = s_team - s_enemy;
 
 	// two pots of delicious customized copypasta from math_tools.c
 	switch (style->integer)
