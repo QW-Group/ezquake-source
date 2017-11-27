@@ -3669,16 +3669,21 @@ void SV_PostRunCmd(void)
 
 // SV_RotateCmd
 // Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
-static void SV_RotateCmd(client_t* cl, usercmd_t* cmd)
+void SV_RotateCmd(client_t* cl, usercmd_t* cmd)
 {
-	static vec3_t up = { 0, 0, 1 };
-	vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
-	vec3_t result;
+	if (cl->lastteleport_teleport) {
+		static vec3_t up = { 0, 0, 1 };
+		vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
+		vec3_t result;
 
-	RotatePointAroundVector(result, up, direction, cl->lastteleport_teleportyaw);
+		RotatePointAroundVector(result, up, direction, cl->lastteleport_teleportyaw);
 
-	cmd->sidemove = result[0];
-	cmd->forwardmove = result[1];
+		cmd->sidemove = result[0];
+		cmd->forwardmove = result[1];
+	}
+	else {
+		cmd->angles[YAW] = (cl->edict)->v.angles[YAW];
+	}
 }
 
 /*
@@ -3939,24 +3944,13 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			if (cl->mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) {
 				if (cl->lastteleport_outgoingseq && cl->netchan.incoming_acknowledged < cl->lastteleport_outgoingseq) {
-					if (cl->lastteleport_teleport) {
-						if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
-							SV_RotateCmd(cl, &oldest);
-						}
-						if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
-							SV_RotateCmd(cl, &oldcmd);
-						}
-						SV_RotateCmd(cl, &newcmd);
+					if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
+						SV_RotateCmd(cl, &oldest);
 					}
-					else {
-						if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
-							oldest.angles[YAW] = (cl->edict)->v.angles[YAW];
-						}
-						if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
-							oldcmd.angles[YAW] = (cl->edict)->v.angles[YAW];
-						}
-						newcmd.angles[YAW] = (cl->edict)->v.angles[YAW];
+					if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
+						SV_RotateCmd(cl, &oldcmd);
 					}
+					SV_RotateCmd(cl, &newcmd);
 				}
 				else {
 					cl->lastteleport_outgoingseq = 0;

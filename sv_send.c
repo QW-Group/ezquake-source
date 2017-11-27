@@ -759,6 +759,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 				client->lastteleport_teleportyaw = (client->edict)->v.angles[YAW] - client->lastcmd.angles[YAW];
 
 				((eval_t *)((byte *)&(client->edict)->v + fofs_teleported))->_int = 0;
+				SV_RotateCmd(client, &client->lastcmd);
 			}
 			else {
 				MSG_WriteByte(msg, 0); // we don't know, so no changes made...

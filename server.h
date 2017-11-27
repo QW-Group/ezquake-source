@@ -857,6 +857,7 @@ void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);
 void ProcessUserInfoChange (client_t* sv_client, const char* key, const char* old_value);
+void SV_RotateCmd(client_t* cl, usercmd_t* cmd);
 
 #ifdef FTE_PEXT2_VOICECHAT
 void SV_VoiceInitClient(client_t *client);
