@@ -3950,12 +3950,12 @@ void SV_ExecuteClientMessage (client_t *cl)
 					}
 					else {
 						if (cl->netchan.incoming_sequence - 2 > cl->lastteleport_incomingseq) {
-							oldest.angles[YAW] = cl->lastteleport_teleportyaw;
+							oldest.angles[YAW] = (cl->edict)->v.angles[YAW];
 						}
 						if (cl->netchan.incoming_sequence - 1 > cl->lastteleport_incomingseq) {
-							oldcmd.angles[YAW] = cl->lastteleport_teleportyaw;
+							oldcmd.angles[YAW] = (cl->edict)->v.angles[YAW];
 						}
-						newcmd.angles[YAW] = cl->lastteleport_teleportyaw;
+						newcmd.angles[YAW] = (cl->edict)->v.angles[YAW];
 					}
 				}
 				else {
