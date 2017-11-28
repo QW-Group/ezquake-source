@@ -172,16 +172,22 @@ void GL_TexSubImage3D(
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
+	GLenum target = GL_TextureTargetFromReference(texture);
+
 	GL_ProcessErrors("pre-" __FUNCTION__);
-	if (qglTextureSubImage3D) {
+	if (target != GL_TEXTURE_CUBE_MAP && qglTextureSubImage3D) {
 		qglTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	else {
 		GLenum textureUnit = GL_TEXTURE0 + unit;
-		GLenum target = GL_TextureTargetFromReference(texture);
 
 		renderer.TextureUnitBind(textureUnit, texture);
-		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+		if (target == GL_TEXTURE_CUBE_MAP) {
+			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + zoffset, level, xoffset, yoffset, width, height, format, type, pixels);
+		}
+		else {
+			qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+		}
 	}
 	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
 	GL_ProcessErrors("post-" __FUNCTION__);
