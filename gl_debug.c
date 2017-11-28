@@ -279,8 +279,7 @@ void Dev_VidTextureDump(void)
 				continue;
 			}
 
-			if (size && R_TextureType(ref) == texture_type_2d) {
-				scr_sshot_target_t* sshot_params = Q_malloc(sizeof(scr_sshot_target_t));
+			if (size) {
 				char reftext[10];
 				char filename[MAX_OSPATH];
 
@@ -288,19 +287,48 @@ void Dev_VidTextureDump(void)
 				strlcpy(filename, reftext, sizeof(filename));
 				strlcat(filename, "-", sizeof(filename));
 				strlcat(filename, R_TextureIdentifier(ref), sizeof(filename));
-				COM_ForceExtension(filename, ".jpg");
 				Util_ToValidFileName(filename, filename, sizeof(filename));
 
-				renderer.TextureGet(ref, buffer_size, buffer, 3);
+				if (R_TextureType(ref) == texture_type_2d) {
+					scr_sshot_target_t* sshot_params = Q_malloc(sizeof(scr_sshot_target_t));
 
-				sshot_params->buffer = buffer;
-				sshot_params->freeMemory = false;
-				sshot_params->format = IMAGE_JPEG;
-				strlcpy(sshot_params->fileName, folder, sizeof(sshot_params->fileName));
-				strlcat(sshot_params->fileName, filename, sizeof(sshot_params->fileName));
-				sshot_params->width = R_TextureWidth(ref);
-				sshot_params->height = R_TextureHeight(ref);
-				SCR_ScreenshotWrite(sshot_params);
+					renderer.TextureGet(ref, buffer_size, buffer, 3);
+
+					COM_ForceExtension(filename, ".jpg");
+					sshot_params->buffer = buffer;
+					sshot_params->freeMemory = false;
+					sshot_params->format = IMAGE_JPEG;
+					strlcpy(sshot_params->fileName, folder, sizeof(sshot_params->fileName));
+					strlcat(sshot_params->fileName, filename, sizeof(sshot_params->fileName));
+					sshot_params->width = R_TextureWidth(ref);
+					sshot_params->height = R_TextureHeight(ref);
+					SCR_ScreenshotWrite(sshot_params);
+				}
+				else if (R_TextureType(ref) == texture_type_cubemap) {
+					char side_filename[MAX_OSPATH];
+					const char* side_labels[] = { "-pos-x", "-neg-x", "-pos-y", "-neg-y", "-pos-z", "-neg-z" };
+					int j;
+
+					GL_BindTextureUnit(GL_TEXTURE0, ref);
+					for (j = 0; j < 6; ++j) {
+						scr_sshot_target_t* sshot_params = Q_malloc(sizeof(scr_sshot_target_t));
+
+						strlcpy(side_filename, filename, sizeof(side_filename));
+						strlcat(side_filename, side_labels[j], sizeof(side_filename));
+						COM_ForceExtension(side_filename, ".jpg");
+
+						glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + j, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+
+						sshot_params->buffer = buffer;
+						sshot_params->freeMemory = false;
+						sshot_params->format = IMAGE_JPEG;
+						strlcpy(sshot_params->fileName, folder, sizeof(sshot_params->fileName));
+						strlcat(sshot_params->fileName, side_filename, sizeof(sshot_params->fileName));
+						sshot_params->width = R_TextureWidth(ref);
+						sshot_params->height = R_TextureHeight(ref);
+						SCR_ScreenshotWrite(sshot_params);
+					}
+				}
 			}
 		}
 	}
