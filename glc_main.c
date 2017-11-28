@@ -77,6 +77,7 @@ static void GLC_Begin2DRendering(void)
 #define GLC_TextureReplaceSubImageRGBA     GL_TextureReplaceSubImageRGBA
 #define GLC_TextureSetAnisotropy           GL_TextureSetAnisotropy
 #define GLC_TextureSetFiltering            GL_TextureSetFiltering
+#define GLC_TextureLoadCubemapFace         GL_TextureLoadCubemapFace
 #define GLC_CvarForceRecompile             GL_CvarForceRecompile
 #define GLC_ProgramsInitialise             GL_ProgramsInitialise
 #define GLC_ProgramsShutdown               GL_ProgramsShutdown

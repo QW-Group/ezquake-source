@@ -233,7 +233,6 @@ MODERN_OPENGL_OBJS := \
     glm_rmain.o \
     glm_rsurf.o \
     glm_sdl.o \
-    glm_sky.o \
     glm_sprite.o \
     glm_sprite3d.o \
     glm_state.o \

@@ -28,8 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_renderer.h"
 
+static qbool Sky_LoadSkyboxTextures(const char* skyname);
+
 texture_ref solidskytexture, alphaskytexture;
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
+texture_ref skybox_cubeMap;
 
 qbool r_skyboxloaded;
 
@@ -88,7 +91,7 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	if (!renderer.LoadSkyboxTextures(skyname)) {
+	if (!Sky_LoadSkyboxTextures(skyname)) {
 		return 1;
 	}
 
@@ -153,24 +156,13 @@ void R_DrawSky (void)
 	skychain_tail = &skychain;
 }
 
-typedef enum {
-	r_skybox_right,
-	r_skybox_back,
-	r_skybox_left,
-	r_skybox_front,
-	r_skybox_up,
-	r_skybox_down,
-
-	r_skybox_direction_count
-} r_skybox_direction_id;
-
-qbool R_LoadSkyTexturePixels(r_skybox_direction_id dir, const char* skyname, byte** data, int* width, int* height)
+static qbool R_LoadSkyTexturePixels(r_cubemap_direction_id dir, const char* skyname, byte** data, int* width, int* height)
 {
-	static const char *skybox_ext[r_skybox_direction_count] = { "rt", "bk", "lf", "ft", "up", "dn" };
+	static const char *skybox_ext[r_cubemap_direction_count] = { "rt", "bk", "lf", "ft", "up", "dn" };
 	static const char* search_paths[][2] = { { "env/", "" }, { "gfx/env/", "" }, { "env/", "_" }, { "gfx/env/", "_" } };
 	int j, flags = TEX_NOCOMPRESS | TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
 
-	if (dir < 0 || dir >= r_skybox_direction_count) {
+	if (dir < 0 || dir >= r_cubemap_direction_count) {
 		return false;
 	}
 
@@ -191,39 +183,70 @@ qbool R_LoadSkyTexturePixels(r_skybox_direction_id dir, const char* skyname, byt
 	return false;
 }
 
-qbool Sky_LoadSkyboxTextures(const char* skyname)
+static qbool Sky_LoadSkyboxTextures(const char* skyname)
 {
-	r_skybox_direction_id i;
+	static int skydirection[] = { 4, 1, 5, 0, 2, 3 };
+
+	r_cubemap_direction_id i;
 	byte* data;
 	int fixed_size = 0;
 	int width, height;
 
+	R_DeleteTexture(&skybox_cubeMap);
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
-		// FIXME: Delete old textures?
-		R_TextureReferenceInvalidate(skyboxtextures[i]);
+		R_DeleteTexture(&skyboxtextures[i]);
+	}
 
+	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		if (R_LoadSkyTexturePixels(i, skyname, &data, &width, &height)) {
-			char id[16];
-
 			if (R_UseCubeMapForSkyBox()) {
 				int size = (i != 0 ? fixed_size : min(width, height));
 
 				R_TextureRescaleOverlay(&data, &width, &height, size, size);
 
 				fixed_size = size;
-			}
 
-			snprintf(id, sizeof(id) - 1, "skybox[%d]", i);
-			skyboxtextures[i] = R_LoadTexture(id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE, 4);
+				if (i == 0) {
+					skybox_cubeMap = R_CreateCubeMap("***skybox***", size, size, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE);
+					if (!R_TextureReferenceIsValid(skybox_cubeMap)) {
+						Q_free(data);
+						Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
+						return false;
+					}
+				}
+
+				renderer.TextureLoadCubemapFace(skybox_cubeMap, skydirection[i], data, size, size);
+			}
+			else {
+				char id[16];
+
+				snprintf(id, sizeof(id) - 1, "***skybox%d***", i);
+
+				skyboxtextures[i] = R_LoadTexture(id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE, 4);
+			}
 
 			// we should free data from R_LoadImagePixels()
 			Q_free(data);
 		}
+		else {
+			int j;
 
-		if (!R_TextureReferenceIsValid(skyboxtextures[i])) {
 			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
+			if (R_UseCubeMapForSkyBox()) {
+				R_DeleteCubeMap(&skybox_cubeMap);
+			}
+			else {
+				for (j = 0; j < i; ++j) {
+					R_DeleteTexture(&skyboxtextures[j]);
+				}
+			}
+
 			return false;
 		}
+	}
+
+	if (R_TextureReferenceIsValid(skybox_cubeMap)) {
+		renderer.TextureMipmapGenerate(skybox_cubeMap);
 	}
 
 	return true;

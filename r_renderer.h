@@ -7,6 +7,17 @@
 #include "r_vao.h"
 #include "gl_framebuffer.h"
 
+typedef enum {
+	r_cubemap_right,
+	r_cubemap_back,
+	r_cubemap_left,
+	r_cubemap_front,
+	r_cubemap_up,
+	r_cubemap_down,
+
+	r_cubemap_direction_count
+} r_cubemap_direction_id;
+
 #ifdef RENDERER_METHOD
 #undef RENDERER_METHOD
 #endif

@@ -298,3 +298,8 @@ void GL_TextureGet(texture_ref texture, int buffer_size, byte* buffer, int bpp)
 {
 	GL_GetTexImage(GL_TEXTURE0, texture, 0, bpp == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, buffer_size, buffer);
 }
+
+void GL_TextureLoadCubemapFace(texture_ref cubemap, r_cubemap_direction_id direction, const byte* data, int width, int height)
+{
+	GL_TexSubImage3D(0, cubemap, 0, 0, 0, direction, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}

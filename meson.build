@@ -334,7 +334,6 @@ sources += [
 	'glm_program.o',
 	'glm_rsurf.o',
 	'glm_screen.o',
-	'glm_sky.o',
 	'glm_sprite.o',
 	'glm_texture_arrays.o',
 	'glm_draw.o',

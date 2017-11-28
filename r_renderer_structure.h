@@ -14,7 +14,6 @@ RENDERER_METHOD(void, PrepareModelRendering, qbool vid_restart)
 RENDERER_METHOD(void, PrepareAliasModel, model_t* model, aliashdr_t* hdr)
 
 // Sky surfaces
-RENDERER_METHOD(qbool, LoadSkyboxTextures, const char* name)
 RENDERER_METHOD(void, DrawSky, void)
 RENDERER_METHOD(void, DrawWorld, void)
 
@@ -91,6 +90,7 @@ RENDERER_METHOD(void, TexturesCreate, r_texture_type_id type, int count, texture
 RENDERER_METHOD(void, TextureReplaceSubImageRGBA, texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
 RENDERER_METHOD(void, TextureSetFiltering, texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter)
 RENDERER_METHOD(void, TextureSetAnisotropy, texture_ref texture, int anisotropy)
+RENDERER_METHOD(void, TextureLoadCubemapFace, texture_ref cubemap, r_cubemap_direction_id direction, const byte* data, int width, int height)
 
 // VAOs
 RENDERER_METHOD(void, DeleteVAOs, void)
