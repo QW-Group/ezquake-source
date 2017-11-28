@@ -50,8 +50,6 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 
 	// foreach frame
 	for (framenum = 0, v = 0; framenum < pheader->numFrames; ++framenum) {
-		int base = v;
-
 		// loop through the surfaces.
 		MD3_ForEachSurface(pheader, surf, surfnum)
 		{

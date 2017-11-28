@@ -2270,8 +2270,8 @@ void CL_ProcessServerInfo (void)
 	movevars.airstep = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
 	movevars.pground = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
 		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
-	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
-		Q_atof(p) : cl.teamfortress ? 0 : 1;
+	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ? Q_atof(p) : cl.teamfortress ? 0 : 1;
+	movevars.rampjump = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_rampjump")) != 0);
 
 	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));

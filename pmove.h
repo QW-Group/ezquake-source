@@ -65,6 +65,8 @@ typedef struct {
 	int			groundent; // index in physents array, only valid when onground is true
 	int			waterlevel;
 	int			watertype;
+
+	int         maxgroundspeed;
 } playermove_t;
 
 typedef struct {
@@ -83,6 +85,7 @@ typedef struct {
 	qbool	slidefix; // NQ-style movement down ramps
 	qbool	airstep;
 	qbool	pground; // NQ-style "onground" flag handling.
+	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
 } movevars_t;
 
 extern movevars_t movevars;
@@ -96,5 +99,7 @@ void PM_CategorizePosition (void);
 qbool PM_TestPlayerPosition (vec3_t point);
 trace_t PM_PlayerTrace (vec3_t start, vec3_t end);
 trace_t PM_TraceLine (vec3_t start, vec3_t end);
+
+#define MIN_STEP_NORMAL 0.7 // roughly 45 degrees
 
 #endif /* !__PMOVE_H__ */

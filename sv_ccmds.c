@@ -1367,14 +1367,9 @@ void SV_SendServerInfoChange(char *key, char *value)
 //Cvar system calls this when a CVAR_SERVERINFO cvar changes
 void SV_ServerinfoChanged (char *key, char *string)
 {
-	// force serverinfo "0" vars to be "".
-	// meag: deathmatch is a special case as clients default 'not in serverinfo' to non-coop
-	if (!strcmp(string, "0") && strcmp(key, "deathmatch")) {
-		string = "";
-	}
+	string = Cvar_ServerInfoValue(key, string);
 
-	if (strcmp(string, Info_ValueForKey (svs.info, key)))
-	{
+	if (strcmp(string, Info_ValueForKey (svs.info, key))) {
 		Info_SetValueForKey (svs.info, key, string, MAX_SERVERINFO_STRING);
 		SV_SendServerInfoChange (key, string);
 	}

@@ -173,4 +173,6 @@ void Cvar_CleanUpTempVars (void);	// clean up afterwards
 #define ReSearchDone(...)
 #endif
 
+char* Cvar_ServerInfoValue(char* key, char* value);
+
 #endif /* !__CVAR_H__ */

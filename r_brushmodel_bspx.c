@@ -21,13 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // BSPX loading
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "teamplay.h"
-#include "rulesets.h"
-#include "wad.h"
-#include "crc.h"
-#include "fmod.h"
-#include "utils.h"
 
 // lumps immediately follow:
 typedef struct {

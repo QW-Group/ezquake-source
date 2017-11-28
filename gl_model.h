@@ -579,11 +579,6 @@ void R_BrushModelPolygonToTriangleStrip(glpoly_t* poly);
 
 #include "r_aliasmodel_md3.h"
 
-typedef struct bspx_header_s {
-	char id[4];  // 'BSPX'
-	int numlumps;
-} bspx_header_t;
-
 typedef enum {
 	custom_model_explosion,
 	custom_model_bolt,

@@ -33,13 +33,12 @@ static float    pm_frametime;
 
 static vec3_t   pm_forward, pm_right;
 
-static plane_t groundplane;
+static vec3_t   groundnormal;
 
 vec3_t	player_mins = {-16, -16, -24};
 vec3_t	player_maxs = {16, 16, 32};
 
 #define STEPSIZE        18
-#define MIN_STEP_NORMAL 0.7 // roughly 45 degrees
 
 #define pm_flyfriction  4
 
@@ -47,6 +46,8 @@ vec3_t	player_maxs = {16, 16, 32};
 #define BLOCKED_STEP    2
 #define BLOCKED_OTHER   4
 #define BLOCKED_ANY		7
+
+#define MAX_JUMPFIX_DOTPRODUCT -0.1
 
 // Add an entity to touch list, discarding duplicates
 static void PM_AddTouchedEnt (int num)
@@ -550,30 +551,89 @@ static int PM_AirMove(void)
 	}
 }
 
-void PM_CategorizePosition (void)
+#define MAXGROUNDSPEED_DEFAULT 180
+#define MAXGROUNDSPEED_MAXIMUM 240
+
+static void PM_RampEdgeAdjustNormal(vec3_t normal, int flags)
+{
+	int i;
+
+	for (i = 0; i < 3; ++i) {
+		if (flags & (PHYSICSNORMAL_FLIPX << i)) {
+			if (pmove.velocity[i] < 0) {
+				normal[i] = -normal[i];
+			}
+			else if (pmove.velocity[0] == 0) {
+				normal[i] = 0;
+			}
+		}
+	}
+}
+
+#define PM_FarFromGround(trace) (((trace).fraction == 1 || (trace).plane.normal[2] < MIN_STEP_NORMAL))
+
+static trace_t PM_CategorizePositionRunTrace(vec3_t point)
+{
+	trace_t trace = { 0 };
+
+	trace = PM_PlayerTrace(pmove.origin, point);
+	if (!PM_FarFromGround(trace)) {
+		VectorCopy(trace.plane.normal, groundnormal);
+	}
+
+	return trace;
+}
+
+void PM_CategorizePosition(void)
 {
 	trace_t trace = { 0 };
 	vec3_t point;
 	int cont;
+	mphysicsnormal_t ground;
+
+	pmove.maxgroundspeed = MAXGROUNDSPEED_DEFAULT;
 
 	// if the player hull point one unit down is solid, the player is on ground
-
 	// see if standing on something solid
 	point[0] = pmove.origin[0];
 	point[1] = pmove.origin[1];
 	point[2] = pmove.origin[2] - 1;
-	if (pmove.velocity[2] > 180) {
+
+	if (movevars.rampjump) {
+		// Increase speed limit for player as steepness of the floor increases
+		trace = PM_CategorizePositionRunTrace(point);
+		ground = CM_PhysicsNormal(trace.physicsnormal);
+
+		if (ground.flags & PHYSICSNORMAL_SET) {
+			VectorCopy(ground.normal, groundnormal);
+			PM_RampEdgeAdjustNormal(groundnormal, ground.flags);
+			VectorNormalize(groundnormal);
+
+			if (movevars.rampjump && !PM_FarFromGround(trace) && trace.e.entnum == 0 && groundnormal[2] > MIN_STEP_NORMAL && groundnormal[2] < 1 && DotProduct(groundnormal, pmove.velocity) < MAX_JUMPFIX_DOTPRODUCT) {
+				// They are moving up a ramp, increase maxspeed to check if we keep them on it
+				float range = 1.0 - asin(groundnormal[2]) * 2 / M_PI; // asin() returns 0...PI/2, so range is [1...0]
+
+				// Max out at 45 degree ramps...
+				range = min(range, 0.5f) * 2;
+
+				pmove.maxgroundspeed += (MAXGROUNDSPEED_MAXIMUM - MAXGROUNDSPEED_DEFAULT) * range;
+			}
+		}
+	}
+
+	if (pmove.velocity[2] > pmove.maxgroundspeed) {
 		pmove.onground = false;
 	}
 	else if (!movevars.pground || pmove.onground) {
-		trace = PM_PlayerTrace (pmove.origin, point);
-		if (trace.fraction == 1 || trace.plane.normal[2] < MIN_STEP_NORMAL) {
+		if (!movevars.rampjump) {
+			trace = PM_CategorizePositionRunTrace(point);
+		}
+		if (PM_FarFromGround(trace)) {
 			pmove.onground = false;
 		}
 		else {
 			pmove.onground = true;
 			pmove.groundent = trace.e.entnum;
-			groundplane = trace.plane;
 			pmove.waterjumptime = 0;
 		}
 
@@ -655,16 +715,21 @@ static void PM_CheckJump (void)
 	if (!movevars.pground) {
 		// check for jump bug
 		// groundplane normal was set in the call to PM_CategorizePosition
-		if (pmove.velocity[2] < 0 && DotProduct(pmove.velocity, groundplane.normal) < -0.1) {
+		if ((movevars.rampjump || pmove.velocity[2] < 0) && DotProduct(pmove.velocity, groundnormal) < MAX_JUMPFIX_DOTPRODUCT) {
 			// pmove.velocity is pointing into the ground, clip it
-			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
+			PM_ClipVelocity(pmove.velocity, groundnormal, pmove.velocity, 1);
 		}
 	}
 
 	pmove.onground = false;
+	if (pmove.maxgroundspeed > MAXGROUNDSPEED_DEFAULT && pmove.velocity[2] > MAXGROUNDSPEED_DEFAULT) {
+		// we adjusted maxspeed to keep them on ground, need to reduce velocity here so they can't jump too high
+		pmove.velocity[2] = MAXGROUNDSPEED_DEFAULT;
+	}
 	pmove.velocity[2] += 270;
 
 	if (movevars.ktjump > 0) {
+		// meag: pmove.velocity[2] = max(pmove.velocity[2], 270); (?)
 		if (movevars.ktjump > 1)
 			movevars.ktjump = 1;
 		if (pmove.velocity[2] < 270)
@@ -887,8 +952,8 @@ int PM_PlayerMove(void)
 		// this is to make sure landing sound is not played twice
 		// and falling damage is calculated correctly
 		if (pmove.onground && pmove.velocity[2] < -300) {
-			if (DotProduct(pmove.velocity, groundplane.normal) < -0.1) {
-				PM_ClipVelocity(pmove.velocity, groundplane.normal, pmove.velocity, 1);
+			if (DotProduct(pmove.velocity, groundnormal) < MAX_JUMPFIX_DOTPRODUCT) {
+				PM_ClipVelocity(pmove.velocity, groundnormal, pmove.velocity, 1);
 			}
 		}
 	}

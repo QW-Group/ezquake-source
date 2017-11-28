@@ -48,8 +48,6 @@ extern msurface_t* skychain;
 extern msurface_t* alphachain;
 char* TranslateTextureName(texture_t *tx);
 qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int brighten_flag);
-void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char *lumpname, int *plumpsize, byte* mod_base);
-bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
 
 model_t* Mod_FindName(const char *name);
 

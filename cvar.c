@@ -103,6 +103,16 @@ char *Cvar_String (const char *var_name)
 
 void SV_SendServerInfoChange(char *key, char *value);
 
+char* Cvar_ServerInfoValue(char* key, char* value)
+{
+	// force serverinfo "0" vars to be "".
+	// meag: deathmatch is a special case as clients default 'not in serverinfo' to non-coop
+	if (!strcmp(value, "0") && strcmp(key, "deathmatch")) {
+		return "";
+	}
+	return value;
+}
+
 void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 {
 	static qbool changing = false;
@@ -118,8 +128,8 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 		return;
 
 	// force serverinfo "0" vars to be "".
-	if ((var->flags & CVAR_SERVERINFO) && !strcmp(value, "0") && strcmp(var->name, "deathmatch")) {
-		value = "";
+	if (var->flags & CVAR_SERVERINFO) {
+		value = Cvar_ServerInfoValue(var->name, value);
 	}
 
 #ifndef SERVERONLY

@@ -14751,7 +14751,7 @@
     },
     "pm_ktjump": {
       "default": "1",
-      "desc": "You can change value of ktjump.",
+      "desc": "If enabled (the standard), when the player jumps, velocity will always be at least 270 (standard jump).  Without this set, jumping when moving down a slope would result in lower velocity.",
       "group-id": "34",
       "type": "float"
     },
