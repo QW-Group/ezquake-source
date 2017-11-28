@@ -853,7 +853,7 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode)
 
 		float factor = (mode == r_polygonoffset_standard ? 0.05 : 1);
 		float units = (mode == r_polygonoffset_standard ? -bound(0, gl_brush_polygonoffset.value, 2.0) : 1);
-		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units > 0;
+		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units != 0;
 
 		if (enabled) {
 			if (!current->polygonOffset.fillEnabled) {
