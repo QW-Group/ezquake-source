@@ -153,46 +153,71 @@ void R_DrawSky (void)
 	skychain_tail = &skychain;
 }
 
+typedef enum {
+	r_skybox_right,
+	r_skybox_back,
+	r_skybox_left,
+	r_skybox_front,
+	r_skybox_up,
+	r_skybox_down,
+
+	r_skybox_direction_count
+} r_skybox_direction_id;
+
+qbool R_LoadSkyTexturePixels(r_skybox_direction_id dir, const char* skyname, byte** data, int* width, int* height)
+{
+	static const char *skybox_ext[r_skybox_direction_count] = { "rt", "bk", "lf", "ft", "up", "dn" };
+	static const char* search_paths[][2] = { { "env/", "" }, { "gfx/env/", "" }, { "env/", "_" }, { "gfx/env/", "_" } };
+	int j, flags = TEX_NOCOMPRESS | TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
+
+	if (dir < 0 || dir >= r_skybox_direction_count) {
+		return false;
+	}
+
+	for (j = 0; j < sizeof(search_paths) / sizeof(search_paths[0]); ++j) {
+		char path[MAX_PATH];
+
+		strlcpy(path, search_paths[j][0], sizeof(path));
+		strlcat(path, skyname, sizeof(path));
+		strlcat(path, search_paths[j][1], sizeof(path));
+		strlcat(path, skybox_ext[dir], sizeof(path));
+
+		*data = R_LoadImagePixels(path, 0, 0, flags, width, height);
+		if (*data) {
+			return *data != NULL;
+		}
+	}
+
+	return false;
+}
+
 qbool Sky_LoadSkyboxTextures(const char* skyname)
 {
-	static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
-	static char* search_paths[][2] = {
-		{ "env/", "" },
-		{ "gfx/env/", "" },
-		{ "env/", "_" },
-		{ "gfx/env/", "_" }
-	};
-	int i, j, flags = TEX_NOCOMPRESS | TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
+	r_skybox_direction_id i;
+	byte* data;
+	int fixed_size = 0;
+	int width, height;
 
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		// FIXME: Delete old textures?
 		R_TextureReferenceInvalidate(skyboxtextures[i]);
-		for (j = 0; j < sizeof(search_paths) / sizeof(search_paths[0]); ++j) {
-			char path[MAX_PATH];
-			byte* data;
-			int width, height;
 
-			strlcpy(path, search_paths[j][0], sizeof(path));
-			strlcat(path, skyname, sizeof(path));
-			strlcat(path, search_paths[j][1], sizeof(path));
-			strlcat(path, skybox_ext[i], sizeof(path));
+		if (R_LoadSkyTexturePixels(i, skyname, &data, &width, &height)) {
+			char id[16];
 
-			data = R_LoadImagePixels(path, 0, 0, 0, &width, &height);
-			if (data) {
-				char id[16];
+			if (R_UseCubeMapForSkyBox()) {
+				int size = (i != 0 ? fixed_size : min(width, height));
 
-				strlcpy(id, "skybox:", sizeof(id));
-				strlcat(id, skybox_ext[i], sizeof(id));
+				R_TextureRescaleOverlay(&data, &width, &height, size, size);
 
-				skyboxtextures[i] = R_LoadTexture(id, width, height, data, flags, 4);
-
-				// we should free data from R_LoadImagePixels()
-				Q_free(data);
-
-				if (R_TextureReferenceIsValid(skyboxtextures[i])) {
-					break;
-				}
+				fixed_size = size;
 			}
+
+			snprintf(id, sizeof(id) - 1, "skybox[%d]", i);
+			skyboxtextures[i] = R_LoadTexture(id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE, 4);
+
+			// we should free data from R_LoadImagePixels()
+			Q_free(data);
 		}
 
 		if (!R_TextureReferenceIsValid(skyboxtextures[i])) {
