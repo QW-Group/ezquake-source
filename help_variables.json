@@ -4419,17 +4419,17 @@
     },
     "gl_colorlights": {
       "default": "1",
-      "desc": "Switch on/off colour of lighting from glowing items (quad, pent, flags in TF, etc)",
+      "desc": "Switch on/off color of lighting from glowing items (quad, pent, flags in TF, etc)",
       "group-id": "15",
       "remarks": "This implementation does not give a speed increase when gl_colorlights is set to 0, but it does not require a map restart for changes to take effect",
       "type": "boolean",
       "values": [
         {
-          "description": "Coloured lighting are off",
+          "description": "Colored lighting are off",
           "name": "false"
         },
         {
-          "description": "Coloured lighting are on",
+          "description": "Colored lighting are on",
           "name": "true"
         }
       ]
@@ -4774,15 +4774,15 @@
         }
       ]
     },
-    "gl_lighting_colour": {
+    "gl_lighting_color": {
       "default": "0",
-      "desc": "Alias models are effected by coloured lights around them.",
+      "desc": "Alias models are effected by colored lights around them.",
       "group-id": "15",
       "type": "float"
     },
     "gl_lighting_vertex": {
       "default": "0",
-      "desc": "Alias models no longer have the same level of light on all sides. This may not work correctly if coloured lighting is disabled.",
+      "desc": "Alias models no longer have the same level of light on all sides. This may not work correctly if colored lighting is disabled.",
       "group-id": "15",
       "type": "float"
     },
@@ -5329,7 +5329,7 @@
     },
     "gl_particle_blood_color": {
       "default": "1",
-      "desc": "Changes colour of blood.",
+      "desc": "Changes color of blood.",
       "group-id": "36",
       "type": "float"
     },
@@ -13493,7 +13493,7 @@
           "name": "false"
         },
         {
-          "description": "Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in the client (and because of weird symbols - ocrana led's etc) are converted into printable characters.",
+          "description": "Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different colored text in the client (and because of weird symbols - ocrana led's etc) are converted into printable characters.",
           "name": "true"
         }
       ]
@@ -15382,7 +15382,7 @@
           "name": "false"
         },
         {
-          "description": "All turbulences will be replaced by single-coloured surfaces.",
+          "description": "All turbulences will be replaced by single-colored surfaces.",
           "name": "true"
         }
       ]
@@ -15598,7 +15598,7 @@
     },
     "r_lavacolor": {
       "default": "80 0 0",
-      "desc": "Changes colour of lava when r_fastturb set to 1",
+      "desc": "Changes color of lava when r_fastturb set to 1",
       "group-id": "51",
       "type": "string"
     },
@@ -15914,7 +15914,7 @@
     },
     "r_rocketLightColor": {
       "default": "0",
-      "desc": "Determines the colour of the rocket light.",
+      "desc": "Determines the color of the rocket light.",
       "group-id": "8",
       "type": "enum",
       "values": [
@@ -16094,7 +16094,7 @@
     },
     "r_skycolor": {
       "default": "40 80 150",
-      "desc": "Changes colour of sky when r_fastsky set to 1",
+      "desc": "Changes color of sky when r_fastsky set to 1",
       "group-id": "51",
       "type": "string"
     },
@@ -16106,7 +16106,7 @@
     },
     "r_slimecolor": {
       "default": "10 60 10",
-      "desc": "Changes colour of slime when r_fastturb set to 1",
+      "desc": "Changes color of slime when r_fastturb set to 1",
       "group-id": "51",
       "type": "string"
     },
@@ -16140,7 +16140,7 @@
     },
     "r_telecolor": {
       "default": "255 60 60",
-      "desc": "Changes colour of teleport when r_fastturb set to 1",
+      "desc": "Changes color of teleport when r_fastturb set to 1",
       "group-id": "51",
       "type": "string"
     },
@@ -18361,7 +18361,7 @@
     },
     "scr_scoreboard_fillcolored": {
       "default": "2",
-      "desc": "Modify scoreboard fillcolour.",
+      "desc": "Modify scoreboard fillcolor.",
       "group-id": "47",
       "type": "float"
     },
@@ -18651,7 +18651,7 @@
           "name": "2"
         },
         {
-          "description": "Coloured text",
+          "description": "Colored text",
           "name": "3"
         }
       ]

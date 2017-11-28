@@ -55,7 +55,7 @@ cvar_t		amf_lightning_sparks = { "gl_lightning_sparks", "0" }; // 0.4
 cvar_t		amf_lightning_sparks_size = { "gl_lightning_sparks_size", "300", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 300, 300, 1 };
 cvar_t		amf_lightning_color = { "gl_lightning_color", "120 140 255", CVAR_COLOR };
 cvar_t		amf_lighting_vertex = { "gl_lighting_vertex", "0" }; // 1
-cvar_t		amf_lighting_colour = { "gl_lighting_colour", "0" }; // 1
+cvar_t		amf_lighting_colour = { "gl_lighting_color", "0" }; // 1
 
 cvar_t		amf_inferno_trail = { "gl_inferno_trail", "2" };
 cvar_t		amf_inferno_speed = { "gl_inferno_speed", "1000" };
@@ -343,6 +343,7 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_coronas_tele);
 	Cvar_Register(&amf_lighting_vertex);
 	Cvar_Register(&amf_lighting_colour);
+	Cmd_AddLegacyCommand("gl_lighting_colour", "gl_lighting_color");
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
