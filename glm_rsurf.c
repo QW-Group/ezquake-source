@@ -383,6 +383,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 				if (drawcall->sampler_mappings < MAX_SAMPLER_MAPPINGS) {
 					req->samplerMappingBase = drawcall->sampler_mappings - first_texture;
 					req->samplerMappingCount = min(num_textures, MAX_SAMPLER_MAPPINGS - drawcall->sampler_mappings);
+					req->firstTexture = first_texture;
 					drawcall->sampler_mappings += req->samplerMappingCount;
 					return req;
 				}
@@ -408,6 +409,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	req->polygonOffset = polygonOffset;
 	req->worldmodel = worldmodel;
 	req->model = model;
+	req->firstTexture = first_texture;
 
 	req->count = 0;
 	req->instanceCount = 1;
@@ -651,15 +653,19 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 	else {
 		int i;
 		for (i = begin; i < begin + count; ++i) {
-			R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, drawcall->mappings[i].samplerIndex);
+			glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
+			int mappingIndex = bound(0, drawcall->calls[i].samplerBase + req->firstTexture, drawcall->sampler_mappings - 1);
+			int sampler = drawcall->mappings[mappingIndex].samplerIndex;
+
+			R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, sampler);
 			GL_DrawElementsInstancedBaseVertexBaseInstance(
 				GL_TRIANGLE_STRIP,
-				drawcall->worldmodel_requests[i].count,
+				req->count,
 				GL_UNSIGNED_INT,
-				(void*)(drawcall->worldmodel_requests[i].firstIndex * sizeof(GLuint)),
-				drawcall->worldmodel_requests[i].instanceCount,
-				drawcall->worldmodel_requests[i].baseVertex,
-				drawcall->worldmodel_requests[i].baseInstance
+				(void*)(req->firstIndex * sizeof(GLuint)),
+				req->instanceCount,
+				req->baseVertex,
+				req->baseInstance
 			);
 		}
 	}
