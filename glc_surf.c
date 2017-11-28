@@ -50,8 +50,7 @@ void GLC_ClearTextureChains(void)
 void GLC_DrawMapOutline(model_t *model)
 {
 	msurface_t *s;
-	int waterline, i, k;
-	float *v;
+	int waterline, i;
 
 	GLC_StateBeginDrawMapOutline();
 
@@ -64,11 +63,16 @@ void GLC_DrawMapOutline(model_t *model)
 				continue;
 
 			for (; s; s = s->texturechain) {
-				v = s->polys->verts[0];
+				int front = 0, back = s->polys->numverts - 1;
 
 				GLC_Begin(GL_LINE_LOOP);
-				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-					GLC_Vertex3fv(v);
+				while (front < back) {
+					GLC_Vertex3fv(s->polys->verts[front]);
+					front += 2;
+				}
+				while (back > 0) {
+					GLC_Vertex3fv(s->polys->verts[back]);
+					back -= 2;
 				}
 				GLC_End();
 			}
