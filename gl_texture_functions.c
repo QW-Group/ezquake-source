@@ -179,9 +179,7 @@ void GL_TexSubImage3D(
 		qglTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	else {
-		GLenum textureUnit = GL_TEXTURE0 + unit;
-
-		renderer.TextureUnitBind(textureUnit, texture);
+		renderer.TextureUnitBind(unit, texture);
 		if (target == GL_TEXTURE_CUBE_MAP) {
 			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + zoffset, level, xoffset, yoffset, width, height, format, type, pixels);
 		}
