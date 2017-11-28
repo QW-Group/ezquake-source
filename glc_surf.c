@@ -52,7 +52,6 @@ void GLC_DrawMapOutline(model_t *model)
 	msurface_t *s;
 	int waterline, i, k;
 	float *v;
-	vec3_t n;
 
 	GLC_StateBeginDrawMapOutline();
 
@@ -66,8 +65,6 @@ void GLC_DrawMapOutline(model_t *model)
 
 			for (; s; s = s->texturechain) {
 				v = s->polys->verts[0];
-				VectorCopy(s->plane->normal, n);
-				VectorNormalize(n);
 
 				GLC_Begin(GL_LINE_LOOP);
 				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {

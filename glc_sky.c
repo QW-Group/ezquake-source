@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_local.h"
 #include "r_brushmodel_sky.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 #define SUBDIVISIONS 10
 
@@ -95,13 +96,21 @@ static void Sky_MakeSkyVec2(float s, float t, int axis, vec3_t v)
 	}
 }
 
-static void GLC_DrawFlatPoly(glpoly_t* p)
+static void GLC_DrawFlatPoly(glpoly_t* p, qbool texture)
 {
 	int i;
 
 	GLC_Begin(GL_TRIANGLE_STRIP);
 	for (i = 0; i < p->numverts; ++i) {
-		GLC_Vertex3fv(p->verts[i]);
+		float* v = p->verts[i];
+		if (texture) {
+			vec3_t direction;
+			
+			VectorSubtract(v, r_refdef.vieworg, direction);
+
+			glTexCoord3f(direction[0], direction[2], direction[1]);
+		}
+		GLC_Vertex3fv(v);
 	}
 	GLC_End();
 }
@@ -165,7 +174,7 @@ void GLC_SkyDrawChainedSurfaces(void)
 			glpoly_t* p;
 
 			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p);
+				GLC_DrawFlatPoly(p, false);
 			}
 		}
 	}
@@ -250,9 +259,30 @@ void GLC_DrawSky(void)
 			glpoly_t *p;
 
 			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p);
+				GLC_DrawFlatPoly(p, false);
 			}
 		}
+
+		skychain = NULL;
+		return;
+	}
+	
+	if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
+		extern texture_ref skybox_cubeMap;
+
+		R_ApplyRenderingState(r_state_skybox);
+		renderer.TextureUnitBind(0, skybox_cubeMap);
+		glEnable(GL_TEXTURE_CUBE_MAP);
+
+		for (fa = skychain; fa; fa = fa->texturechain) {
+			glpoly_t *p;
+
+			for (p = fa->polys; p; p = p->next) {
+				GLC_DrawFlatPoly(p, true);
+			}
+		}
+
+		glDisable(GL_TEXTURE_CUBE_MAP);
 
 		skychain = NULL;
 		return;
@@ -279,7 +309,7 @@ void GLC_DrawSky(void)
 			glpoly_t *p;
 
 			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p);
+				GLC_DrawFlatPoly(p, false);
 			}
 		}
 	}
@@ -405,12 +435,21 @@ static void GLC_DrawSkyBox(void)
 
 	R_ApplyRenderingState(r_state_skybox);
 
+	if (R_UseCubeMapForSkyBox()) {
+		extern texture_ref skybox_cubeMap;
+
+		renderer.TextureUnitBind(0, skybox_cubeMap);
+		glEnable(GL_TEXTURE_CUBE_MAP);
+	}
+
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 			continue;
 		}
 
-		renderer.TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
+		if (!R_UseCubeMapForSkyBox()) {
+			renderer.TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
+		}
 
 		GLC_Begin(GL_QUADS);
 		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);
@@ -418,6 +457,13 @@ static void GLC_DrawSkyBox(void)
 		GLC_MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
 		GLC_MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
 		GLC_End();
+	}
+
+	if (R_UseCubeMapForSkyBox()) {
+		extern texture_ref skybox_cubeMap;
+
+		renderer.TextureUnitBind(0, skybox_cubeMap);
+		glDisable(GL_TEXTURE_CUBE_MAP);
 	}
 }
 
@@ -429,15 +475,21 @@ static void GLC_MakeSkyVec(float s, float t, int axis)
 	Sky_MakeSkyVec2(s, t, axis, b);
 	VectorMA(r_origin, skyrange, b, v);
 
-	// avoid bilerp seam
-	s = (s + 1) * 0.5;
-	t = (t + 1) * 0.5;
+	if (R_UseCubeMapForSkyBox()) {
+		glTexCoord3f(v[0], v[2], v[1]);
+	}
+	else {
+		// avoid bilerp seam
+		s = (s + 1) * 0.5;
+		t = (t + 1) * 0.5;
 
-	s = bound(1.0 / 512, s, 511.0 / 512);
-	t = bound(1.0 / 512, t, 511.0 / 512);
+		s = bound(1.0 / 512, s, 511.0 / 512);
+		t = bound(1.0 / 512, t, 511.0 / 512);
 
-	t = 1.0 - t;
-	glTexCoord2f(s, t);
+		t = 1.0 - t;
+
+		glTexCoord2f(s, t);
+	}
 	GLC_Vertex3fv(v);
 }
 

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_trace.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 static qbool Sky_LoadSkyboxTextures(const char* skyname);
 
