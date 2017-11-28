@@ -71,10 +71,15 @@ static void SCR_DrawHUDSpeed(
 	byte color1, color2;
 	int player_speed;
 	vec_t *velocity;
+	qbool split;
+	char speed_text[20];
 
 	if (scr_con_current == vid.height) {
 		return;     // console is full screen
 	}
+
+	split = (style == 2 || style == 3);
+	style = style & 1;
 
 	// Get the velocity.
 	if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0) {
@@ -271,6 +276,13 @@ static void SCR_DrawHUDSpeed(
 		}
 	}
 
+	if (split) {
+		snprintf(speed_text, sizeof(speed_text), "%4d %4d %4d", (int)velocity[0], (int)velocity[1], (int)velocity[2]);
+	}
+	else {
+		snprintf(speed_text, sizeof(speed_text), "%4d", player_speed);
+	}
+
 	// Draw the speed text.
 	if (vertical && vertical_text) {
 		int i = 1;
@@ -308,10 +320,6 @@ static void SCR_DrawHUDSpeed(
 		}
 	}
 	else {
-		char speed_text[20];
-
-		snprintf(speed_text, sizeof(speed_text), "%4d", player_speed);
-
 		// Align the text accordingly.
 		switch (text_align) {
 			case SPEED_TEXT_ALIGN_FAR:
