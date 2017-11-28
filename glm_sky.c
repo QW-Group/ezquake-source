@@ -84,7 +84,8 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 		return false;
 	}
 
-	skybox_cubeMap = R_CreateCubeMap("skybox:cubemap", widths[0], heights[0], TEX_NOCOMPRESS | TEX_MIPMAP);
+	// Never any scaling here as Sky_LoadSkyTextures() will have already applied that
+	skybox_cubeMap = R_CreateCubeMap("skybox:cubemap", widths[0], heights[0], TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE);
 
 	GLM_CopySkyboxTexturesToCubeMap(skybox_cubeMap, widths[0], heights[0]);
 

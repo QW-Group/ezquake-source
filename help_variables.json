@@ -4915,7 +4915,7 @@
     },
     "gl_miptexLevel": {
       "default": "0",
-      "desc": "It is essentially a GL 'equivalent'\nto d_mipcap in software.  It has no affect when loading external 24bit textures.",
+      "desc": "It is essentially a GL 'equivalent' to d_mipcap in software.  It has no affect when loading external 24bit textures.",
       "group-id": "50",
       "type": "float"
     },
@@ -5612,6 +5612,21 @@
         },
         {
           "description": "gl_max_size affects simple item sprites",
+          "name": "true"
+        }
+      ]
+    },
+    "gl_scaleskytextures": {
+      "default": "0",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable gl_picmip/gl_max_size/gl_miptexlevel affecting sky textures (skydome and skybox).",
+          "name": "false"
+        },
+        {
+          "description": "Enable.",
           "name": "true"
         }
       ]

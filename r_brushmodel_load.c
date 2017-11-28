@@ -335,6 +335,7 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	char solidname[MAX_QPATH], alphaname[MAX_QPATH];
 	char altsolidname[MAX_QPATH], altalphaname[MAX_QPATH];
 	byte alphapixel = 255;
+	int flags = (gl_scaleskytextures.integer ? TEX_NOSCALE : 0);
 
 	if (!R_ExternalTexturesEnabled(true)) {
 		return false;
@@ -357,17 +358,17 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 		return false;
 	}
 
-	alphaskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA);
+	alphaskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA | flags);
 	if (!R_TextureReferenceIsValid(alphaskytexture) && altname) {
 		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
-		alphaskytexture = R_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA);
+		alphaskytexture = R_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA | flags);
 	}
 	if (!R_TextureReferenceIsValid(alphaskytexture)) {
-		alphaskytexture = R_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA);
+		alphaskytexture = R_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA | flags);
 	}
 	if (!R_TextureReferenceIsValid(alphaskytexture)) {
 		// Load a texture consisting of a single transparent pixel
-		alphaskytexture = R_LoadTexture(alphaname, 1, 1, &alphapixel, TEX_ALPHA | TEX_PREMUL_ALPHA, 1);
+		alphaskytexture = R_LoadTexture(alphaname, 1, 1, &alphapixel, TEX_ALPHA | TEX_PREMUL_ALPHA | flags, 1);
 	}
 	return true;
 }

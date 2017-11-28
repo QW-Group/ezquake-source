@@ -49,6 +49,7 @@ cvar_t gl_anisotropy = { "gl_anisotropy","1", 0, OnChange_gl_anisotropy };
 cvar_t gl_scaleModelTextures = { "gl_scaleModelTextures", "0" };
 cvar_t gl_scaleModelSimpleTextures = { "gl_scaleModelSimpleTextures", "0" };
 cvar_t gl_scaleTurbTextures = { "gl_scaleTurbTextures", "1" };
+cvar_t gl_scaleskytextures = { "gl_scaleskytextures", "0" };
 cvar_t gl_mipmap_viewmodels = { "gl_mipmap_viewmodels", "0" };
 cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_LATCH };
 
@@ -171,6 +172,7 @@ void R_TextureRegisterCvars(void)
 	Cvar_Register(&gl_scaleModelSimpleTextures);
 	Cvar_Register(&gl_mipmap_viewmodels);
 	Cvar_Register(&gl_scaleTurbTextures);
+	Cvar_Register(&gl_scaleskytextures);
 	Cvar_Register(&gl_miptexLevel);
 	Cvar_Register(&gl_no24bit);
 	Cvar_Register(&gl_picmip);

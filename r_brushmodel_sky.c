@@ -38,6 +38,7 @@ void R_InitSky (texture_t *mt) {
 	int i, j, p, r, g, b;
 	byte *src;
 	unsigned trans[128 * 128], transpix, *rgba;
+	int flags = TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
 
 	src = (byte *) mt + mt->offsets[0];
 
@@ -59,7 +60,7 @@ void R_InitSky (texture_t *mt) {
 	((byte *) &transpix)[2] = b / (128 * 128);
 	((byte *) &transpix)[3] = 0;
 
-	solidskytexture = R_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, TEX_MIPMAP, 4);
+	solidskytexture = R_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, flags, 4);
 
 	for (i = 0; i < 128; i++) {
 		for (j = 0; j < 128; j++) {
@@ -68,7 +69,7 @@ void R_InitSky (texture_t *mt) {
 		}
 	}
 
-	alphaskytexture = R_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
+	alphaskytexture = R_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | flags, 4);
 }
 
 int R_SetSky(char *skyname)
@@ -161,8 +162,7 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 		{ "env/", "_" },
 		{ "gfx/env/", "_" }
 	};
-	int i;
-	int j;
+	int i, j, flags = TEX_NOCOMPRESS | TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
 
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		// FIXME: Delete old textures?
@@ -184,9 +184,7 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 				strlcpy(id, "skybox:", sizeof(id));
 				strlcat(id, skybox_ext[i], sizeof(id));
 
-				skyboxtextures[i] = R_LoadTexture(
-					id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4
-				);
+				skyboxtextures[i] = R_LoadTexture(id, width, height, data, flags, 4);
 
 				// we should free data from R_LoadImagePixels()
 				Q_free(data);
