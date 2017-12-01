@@ -4174,6 +4174,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 		CL_Stop_f();
 	}
 
+	MVD_Initialise();
 	TP_ExecTrigger ("f_demostart");
 
 	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", (double)(QTVBUFFERTIME));
