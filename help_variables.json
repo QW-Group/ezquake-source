@@ -12495,6 +12495,12 @@
         { "name": "true", "description": "Draw ammo." }
       ]
     },
+    "scr_sbar_lowammo": {
+      "group-id": "47",
+      "desc": "The ammo limit at which ammo numbers will start using the alternate text.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
+      "type": "integer"
+    },
     "scr_sbar_drawammocounts": {
       "group-id": "47",
       "desc": "Turns drawing amounts of ammo on/off.",
