@@ -43,20 +43,21 @@ extern cvar_t show_fps2;
 //cvar_t  sbar_teamfrags = {"scr_sbar_teamfrags", "1"};
 //cvar_t  sbar_fraglimit = {"scr_sbar_fraglimit", "1"};
 
-cvar_t  sbar_drawfaceicon   = {"scr_sbar_drawfaceicon", "1"};
-cvar_t  sbar_drawammoicon   = {"scr_sbar_drawammoicon", "1"};
-cvar_t  sbar_drawarmoricon  = {"scr_sbar_drawarmoricon", "1"};
-cvar_t  sbar_drawguns       = {"scr_sbar_drawguns", "1"};
-cvar_t  sbar_drawammocounts = {"scr_sbar_drawammocounts", "1"};
-cvar_t  sbar_drawitems      = {"scr_sbar_drawitems", "1"};
-cvar_t  sbar_drawsigils     = {"scr_sbar_drawsigils", "1"};
-cvar_t  sbar_drawhealth     = {"scr_sbar_drawhealth", "1"};;
-cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",  "1"};;
-cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",   "1"};;
+cvar_t  sbar_drawfaceicon   = {"scr_sbar_drawfaceicon",     "1"};
+cvar_t  sbar_drawammoicon   = {"scr_sbar_drawammoicon",     "1"};
+cvar_t  sbar_drawarmoricon  = {"scr_sbar_drawarmoricon",    "1"};
+cvar_t  sbar_drawguns       = {"scr_sbar_drawguns",         "1"};
+cvar_t  sbar_drawammocounts = {"scr_sbar_drawammocounts",   "1"};
+cvar_t  sbar_drawitems      = {"scr_sbar_drawitems",        "1"};
+cvar_t  sbar_drawsigils     = {"scr_sbar_drawsigils",       "1"};
+cvar_t  sbar_drawhealth     = {"scr_sbar_drawhealth",       "1"};
+cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",        "1"};
+cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",         "1"};
+cvar_t  sbar_lowammo        = {"scr_sbar_lowammo",          "5"};
 
 cvar_t  hud_centerranking   = {"scr_scoreboard_centered",   "1"};
-cvar_t  hud_rankingpos_y      = {"scr_scoreboard_posy",       "0"};
-cvar_t  hud_rankingpos_x      = {"scr_scoreboard_posx",       "0"};
+cvar_t  hud_rankingpos_y    = {"scr_scoreboard_posy",       "0"};
+cvar_t  hud_rankingpos_x    = {"scr_scoreboard_posx",       "0"};
 cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
 //cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
@@ -90,28 +91,28 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 
 static int	sbar_xofs;
 
-cvar_t	scr_centerSbar = {"scr_centerSbar", "1"};
+cvar_t	scr_centerSbar                = {"scr_centerSbar",                "1"};
 
-cvar_t	scr_compactHud = {"scr_compactHud", "0"};
-cvar_t	scr_compactHudAlign = {"scr_compactHudAlign", "0"};
+cvar_t	scr_compactHud                = {"scr_compactHud",                "0"};
+cvar_t	scr_compactHudAlign           = {"scr_compactHudAlign",           "0"};
 
-cvar_t	scr_drawHFrags = {"scr_drawHFrags", "1"};
-cvar_t	scr_drawVFrags = {"scr_drawVFrags", "1"};
+cvar_t	scr_drawHFrags                = {"scr_drawHFrags",                "1"};
+cvar_t	scr_drawVFrags                = {"scr_drawVFrags",                "1"};
 
-cvar_t scr_scoreboard_afk = {"scr_scoreboard_afk", "1"};
-cvar_t scr_scoreboard_afk_style = {"scr_scoreboard_afk_style", "1"};
+cvar_t scr_scoreboard_afk             = {"scr_scoreboard_afk",            "1"};
+cvar_t scr_scoreboard_afk_style       = {"scr_scoreboard_afk_style",      "1"};
 
-cvar_t	scr_scoreboard_teamsort = {"scr_scoreboard_teamsort", "1"};
-cvar_t	scr_scoreboard_forcecolors = {"scr_scoreboard_forcecolors", "1"};
-cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
-cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
-cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "1"};
+cvar_t	scr_scoreboard_teamsort       = {"scr_scoreboard_teamsort",       "1"};
+cvar_t	scr_scoreboard_forcecolors    = {"scr_scoreboard_forcecolors",    "1"};
+cvar_t	scr_scoreboard_showfrags      = {"scr_scoreboard_showfrags",      "1"};
+cvar_t	scr_scoreboard_drawtitle      = {"scr_scoreboard_drawtitle",      "1"};
+cvar_t	scr_scoreboard_borderless     = {"scr_scoreboard_borderless",     "1"};
 cvar_t	scr_scoreboard_spectator_name = {"scr_scoreboard_spectator_name", "\xF3\xF0\xE5\xE3\xF4\xE1\xF4\xEF\xF2"}; // brown "spectator". old: &cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr
-cvar_t	scr_scoreboard_kill_color = {"scr_scoreboard_kill_color", "0B4"};
-cvar_t	scr_scoreboard_death_color = {"scr_scoreboard_death_color", "F00"};
-cvar_t	scr_scoreboard_tk_color = {"scr_scoreboard_tk_color", "FF0"};
-cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
-cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
+cvar_t	scr_scoreboard_kill_color     = {"scr_scoreboard_kill_color",     "0B4"};
+cvar_t	scr_scoreboard_death_color    = {"scr_scoreboard_death_color",    "F00"};
+cvar_t	scr_scoreboard_tk_color       = {"scr_scoreboard_tk_color",       "FF0"};
+cvar_t	scr_scoreboard_fillalpha      = {"scr_scoreboard_fillalpha",      "0.7"};
+cvar_t	scr_scoreboard_fillcolored    = {"scr_scoreboard_fillcolored",    "2"};
 
 
 // VFrags: only draw the frags for the first player when using mvinset
@@ -272,6 +273,7 @@ void Sbar_Init (void) {
 	Cvar_Register (&sbar_drawhealth);
 	Cvar_Register (&sbar_drawarmor);
 	Cvar_Register (&sbar_drawammo);
+	Cvar_Register (&sbar_lowammo);
 	Cvar_Register (&hud_centerranking);
 	Cvar_Register (&hud_rankingpos_y);
 	Cvar_Register (&hud_rankingpos_x);
@@ -998,7 +1000,7 @@ static void Sbar_DrawCompact_WithIcons(void) {
 	align = scr_compactHudAlign.value ? 1 : 0;
 	for (i = 0; i < 4; i++) {
 		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
-		if (cl.stats[STAT_SHELLS + i] < 5)
+		if (cl.stats[STAT_SHELLS + i] <= sbar_lowammo.integer)
 			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -16, str);
 		else
 			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 24 + 32 * i, -16, str);
@@ -1035,7 +1037,7 @@ static void Sbar_DrawCompact(void) {
 	align = scr_compactHudAlign.value ? 1 : 0;
 	for (i = 0; i < 4; i++) {
 		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
-		if (cl.stats[STAT_SHELLS + i] < 5)
+		if (cl.stats[STAT_SHELLS + i] <= sbar_lowammo.integer)
 			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 174 + 32 * i, 3, str);
 		else
 			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 174 + 32 * i, 3, str);
@@ -1069,7 +1071,7 @@ static void Sbar_DrawCompact_TF(void) {
 	Sbar_DrawNum (86, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 	for (i = 0; i < 4; i++) {
 		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
-		if (cl.stats[STAT_SHELLS + i] < 5)
+		if (cl.stats[STAT_SHELLS + i] <= sbar_lowammo.integer)
 			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 166 + 32 * (i % 2), i >= 2 ? 14 : 3, str);
 		else
 			Sbar_DrawString(align * 8 * (3 - strlen(str)) + 166 + 32 * (i % 2), i >= 2 ? 14 : 3, str);
