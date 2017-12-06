@@ -427,7 +427,7 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	*height = LETTERHEIGHT * lines * scale * (style == 3 ? 2 : 1);
 }
 
-void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale)
+void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter)
 {
 	mvd_clock_t *current = mvd_clocklist;
 	char clockitem[32];
@@ -436,6 +436,11 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 	while (current && current->clockval - cls.demotime < time_limit) {
 		int time = (int) ((current->clockval - cls.demotime) + 1);
 		int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
+
+		if (filter & mvd_wp_info[current->itemtype].it) {
+			current = current->next;
+			continue;
+		}
 
 		if (style == 1) {
 			// tp_name_*

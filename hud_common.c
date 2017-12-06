@@ -54,6 +54,9 @@ void WeaponStats_HUDInit(void);
 
 hud_t *hud_netgraph = NULL;
 
+// Items to be filtered out
+static int itemsclock_filter = 0;
+
 // ----------------
 // HUD planning
 //
@@ -4707,6 +4710,26 @@ void SCR_Hud_StackBar(hud_t* hud)
 	}
 }
 
+void ItemsClock_OnChangeItemFilter(cvar_t* var, char *s, qbool *cancel)
+{
+	int new_filter = 0;
+
+	new_filter |= Utils_RegExpMatch("RL", s) ? IT_ROCKET_LAUNCHER : 0;
+	new_filter |= Utils_RegExpMatch("QUAD",	s) ? IT_QUAD : 0;
+	new_filter |= Utils_RegExpMatch("RING",	s) ? IT_INVISIBILITY : 0;
+	new_filter |= Utils_RegExpMatch("PENT",	s) ? IT_INVULNERABILITY : 0;
+	new_filter |= Utils_RegExpMatch("SUIT", s) ? IT_SUIT : 0;
+	new_filter |= Utils_RegExpMatch("LG", s) ? IT_LIGHTNING : 0;
+	new_filter |= Utils_RegExpMatch("GL", s) ? IT_GRENADE_LAUNCHER : 0;
+	new_filter |= Utils_RegExpMatch("SNG", s) ? IT_SUPER_NAILGUN : 0;
+	new_filter |= Utils_RegExpMatch("MH", s) ? IT_SUPERHEALTH : 0;
+	new_filter |= Utils_RegExpMatch("RA", s) ? IT_ARMOR3 : 0;
+	new_filter |= Utils_RegExpMatch("YA", s) ? IT_ARMOR2 : 0;
+	new_filter |= Utils_RegExpMatch("GA", s) ? IT_ARMOR1 : 0;
+
+	itemsclock_filter = new_filter;
+}
+
 void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
 {
 	char *start = s;
@@ -5334,14 +5357,26 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	extern qbool hud_editor;
 	int width, height;
 	int x, y;
-	static cvar_t *hud_itemsclock_timelimit = NULL,
-		      *hud_itemsclock_style = NULL,
-		      *hud_itemsclock_scale = NULL;
+	static cvar_t
+		*hud_itemsclock_timelimit = NULL,
+		*hud_itemsclock_style = NULL,
+		*hud_itemsclock_scale = NULL,
+		*hud_itemsclock_filter = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
+		char val[256];
+
 		hud_itemsclock_timelimit = HUD_FindVar(hud, "timelimit");
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
+		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
+
+		// Unecessary to parse the item filter string on each frame.
+		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
+
+		// Parse the item filter the first time (trigger the OnChange function above).
+		strlcpy(val, hud_itemsclock_filter->string, sizeof(val));
+		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
 	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value);
@@ -5355,7 +5390,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter);
 }
 
 static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
@@ -6707,14 +6742,16 @@ void CommonDraw_Init(void)
 		    );
 #endif
 
-	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
-			0, ca_active, 1, SCR_HUD_DrawItemsClock,
-			"0", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,
-			"timelimit", "5",
-			"style", "0",
-			"scale", "1",
-			NULL
-		    );
+	HUD_Register(
+		"itemsclock", NULL, "Displays upcoming item respawns",
+		0, ca_active, 1, SCR_HUD_DrawItemsClock,
+		"0", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,
+		"timelimit", "5",
+		"style", "0",
+		"scale", "1",
+		"filter", "",
+		NULL
+	);
 
 	HUD_Register("score_team", NULL, "Own scores or team scores.",
 			0, ca_active, 0, SCR_HUD_DrawScoresTeam,

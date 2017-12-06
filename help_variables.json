@@ -6681,6 +6681,15 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_itemsclock_filter": {
+      "group-id": "19",
+      "type": "integer",
+      "desc": "Space-separated list of items to NOT be shown",
+      "remarks": "Options are: gl, rl, lg, quad, pent, ring, suit, mh, ga, ya, ra",
+      "values": [
+        { "name": "gl ga suit", "description": "hide grenade launcher, green armor & suit from items list" }
+      ]
+    },
     "hud_itemsclock_frame": {
       "group-id": "19",
       "type": ""
@@ -12596,7 +12605,7 @@
       "type": "float",
       "desc": "Scales the frontend menu.",
       "values": [
-        { "name": "0", "description": "Disable scaling." },
+        { "name": "0", "description": "Disable scaling." }
       ]
     },
     "scr_scoreboard_afk": {
