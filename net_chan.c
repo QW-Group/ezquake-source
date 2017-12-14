@@ -77,11 +77,51 @@ to the new value before sending out any replies.
 
 */
 
-cvar_t	showpackets	= {"showpackets", "0"};
-cvar_t	showdrop	= {"showdrop", "0"};
+cvar_t  showpackets    = {"showpackets", "0"};
+cvar_t  showdrop       = {"showdrop", "0"};
 #ifndef SERVERONLY
-cvar_t	qport		= {"qport", "0"};
+cvar_t  qport          = {"qport", "0"};
+#ifndef CLIENTONLY
+cvar_t  sv_showpackets = {"sv_showpackets", "0"};
+cvar_t  sv_showdrop    = {"sv_showdrop", "0"};
 #endif
+#endif
+
+#ifdef SERVERONLY
+#define CHAN_IDENTIFIER(sockType) " [s]"
+#define ShowPacket(src,packet_type) (showpackets.integer == 1 || showpackets.integer == packet_type)
+#define ShowDrop(src) (showdrop.integer)
+#elif CLIENTONLY
+#define CHAN_IDENTIFIER(sockType) " [c]"
+#define ShowPacket(src,packet_type) (showpackets.integer == 1 || showpackets.integer == packet_type)
+#define ShowDrop(src) (showdrop.integer)
+#else
+#define CHAN_IDENTIFIER(sockType) (sockType == NS_SERVER ? " [s]" : " [c]")
+
+// Use the sv_ options for internal server
+static qbool ShowPacket(netsrc_t src, int packet_type)
+{
+	if (src == NS_SERVER) {
+		return sv_showpackets.integer == 1 || sv_showpackets.integer == packet_type;
+	}
+	else {
+		return showpackets.integer == 1 || showpackets.integer == packet_type;
+	}
+}
+
+static qbool ShowDrop(netsrc_t src)
+{
+	if (src == NS_SERVER) {
+		return sv_showdrop.integer;
+	}
+	else {
+		return showdrop.integer;
+	}
+}
+#endif
+
+#define PACKET_SENDING 2
+#define PACKET_RECEIVING 3
 
 /*
 ===============
@@ -89,7 +129,7 @@ Netchan_Init
 
 ===============
 */
-void Netchan_Init (void)
+void Netchan_Init(void)
 {
 #ifndef SERVERONLY
 	int		port = 0xffff;
@@ -100,13 +140,18 @@ void Netchan_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 
-	Cvar_Register (&showpackets);
-	Cvar_Register (&showdrop);
+	Cvar_Register(&showpackets);
+	Cvar_Register(&showdrop);
 
 #ifndef SERVERONLY
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
-	Cvar_Register (&qport);
-	Cvar_SetValue (&qport, port);
+	Cvar_Register(&qport);
+	Cvar_SetValue(&qport, port);
+
+#ifndef CLIENTONLY
+	Cvar_Register(&sv_showpackets);
+	Cvar_Register(&sv_showdrop);
+#endif
 #endif
 
 	Cvar_ResetCurrentGroup();
@@ -314,16 +359,17 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 		chan->cleartime = curtime;
 #endif
 
-	if (showpackets.value) {
+	if (ShowPacket(chan->sock, PACKET_SENDING)) {
 #ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
-		Con_Printf ("--> s=%i(%i) a=%i(%i) %i\n"
+		Con_Printf ("--> s=%i(%i) a=%i(%i) %i%s\n"
 		            , chan->outgoing_sequence
 		            , send_reliable
 		            , chan->incoming_sequence
 		            , chan->incoming_reliable_sequence
-		            , send.cursize);
+		            , send.cursize, CHAN_IDENTIFIER(chan->sock)
+		);
 	}
 
 }
@@ -361,21 +407,22 @@ qbool Netchan_Process (netchan_t *chan)
 	sequence &= ~(1 << 31);
 	sequence_ack &= ~(1 << 31);
 
-	if (showpackets.value) {
+	if (ShowPacket(chan->sock, PACKET_RECEIVING)) {
 #ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
-		Con_Printf ("<-- s=%i(%i) a=%i(%i) %i\n"
+		Con_Printf ("<-- s=%i(%i) a=%i(%i) %i%s\n"
 		            , sequence
 		            , reliable_message
 		            , sequence_ack
 		            , reliable_ack
-		            , net_message.cursize);
+		            , net_message.cursize, CHAN_IDENTIFIER(chan->sock)
+		);
 	}
 
 	// discard stale or duplicated packets
 	if (sequence <= (unsigned)chan->incoming_sequence) {
-		if (showdrop.value) {
+		if (ShowDrop(chan->sock)) {
 #ifndef SERVERONLY
 			Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
@@ -392,7 +439,7 @@ qbool Netchan_Process (netchan_t *chan)
 	if (chan->dropped > 0) {
 		chan->drop_count += 1;
 
-		if (showdrop.value) {
+		if (ShowDrop(chan->sock)) {
 #ifndef SERVERONLY
 			Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
