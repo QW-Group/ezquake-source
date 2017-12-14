@@ -1510,7 +1510,7 @@ qbool CL_GetMessage (void)
 	return true;
 }
 
-void CL_ReadPackets (void) 
+static void CL_ReadPackets(void)
 {
 	if (cls.nqdemoplayback) 
 	{
@@ -2152,11 +2152,25 @@ void CL_SoundFrame (void)
 	}
 }
 
+static void CL_ServerFrame(double frametime)
+{
+	if (com_serveractive) {
+		playermove_t oldmove;
+		extern cvar_t showpackets;
+		memcpy(&oldmove, &pmove, sizeof(playermove_t));
+
+		SV_Frame(frametime);
+
+		memcpy(&pmove, &oldmove, sizeof(playermove_t));
+	}
+}
+
 void CL_Frame (double time) 
 {
 	static double extratime = 0.001;
 	double minframetime;
 	static double	extraphysframetime;	//#fps
+	qbool need_server_frame = false;
 
 	extern double render_frame_start;
 
@@ -2176,7 +2190,11 @@ void CL_Frame (double time)
 
 		if (cl_delay_packet.integer) {
 			CL_QueInputPacket();
-			CL_UnqueOutputPacket(false);
+			need_server_frame = CL_UnqueOutputPacket(false);
+		}
+
+		if (need_server_frame && com_serveractive) {
+			CL_ServerFrame(0);
 		}
 
 		return;
@@ -2184,10 +2202,13 @@ void CL_Frame (double time)
 
 	if (cl_delay_packet.integer) {
 		CL_QueInputPacket();
-		CL_UnqueOutputPacket(false);
+		need_server_frame = CL_UnqueOutputPacket(false);
 	}
 
 	if (VID_VSyncLagFix()) {
+		if (need_server_frame && com_serveractive) {
+			CL_ServerFrame(0);
+		}
 		return;
 	}
 
@@ -2283,14 +2304,7 @@ void CL_Frame (double time)
 		CL_CheckAutoPause();
 
 #ifndef CLIENTONLY
-		if (com_serveractive) {
-			playermove_t oldmove;
-			memcpy(&oldmove, &pmove, sizeof(playermove_t));
-
-			SV_Frame(cls.frametime);
-
-			memcpy(&pmove, &oldmove, sizeof(playermove_t));
-		}
+		CL_ServerFrame(cls.frametime);
 #endif
 
 		// fetch results from server
@@ -2336,14 +2350,7 @@ void CL_Frame (double time)
 			CL_CheckAutoPause ();
 
 #ifndef CLIENTONLY
-			if (com_serveractive) {
-				playermove_t oldmove;
-				memcpy(&oldmove, &pmove, sizeof(playermove_t));
-
-				SV_Frame(physframetime);
-
-				memcpy(&pmove, &oldmove, sizeof(playermove_t));
-			}
+			CL_ServerFrame(physframetime);
 #endif
 
 			// Fetch results from server
@@ -2376,6 +2383,10 @@ void CL_Frame (double time)
 		}
 		else
 		{
+			if (need_server_frame && com_serveractive) {
+				CL_ServerFrame(0);
+			}
+
 			if (!cls.demoplayback && cl_earlypackets.integer) {
 				CL_ReadPackets(); // read packets ASAP
 			}

@@ -1045,10 +1045,15 @@ void SV_RunBots(void)
 	else {
 		sv_frametime = 1.0f / max_physfps; // initialization frame
 	}
-	sv.old_bot_time = sv.time;
 #else
-	// On internal server, we'll be matching the user's framerate
+	// On internal server, try and match the user's framerate
+	// ... don't run if no time passed, that is a user packet only
+	if (sv.old_bot_time && sv.old_bot_time == sv.time) {
+		return;
+	}
 #endif
+
+	sv.old_bot_time = sv.time;
 
 	savesvpl = sv_player;
 	savehc = sv_client;

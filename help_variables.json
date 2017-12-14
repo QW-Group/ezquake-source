@@ -13045,10 +13045,13 @@
     },
     "showpackets": {
       "group-id": "40",
-      "type": "boolean",
+      "description": "Dumps log of network activity to the console (from client's point of view)",
+      "type": "enum",
       "values": [
-        { "name": "false", "description": "Do not display information about all network packets." },
-        { "name": "true", "description": "Display information about all network packets." }
+        { "name": "0", "description": "Do not display information about all network packets." },
+        { "name": "1", "description": "Display information about all network packets." },
+        { "name": "2", "description": "Display information about incoming network packets only." },
+        { "name": "3", "description": "Display information about outgoing network packets only." }
       ]
     },
     "showpause": {
@@ -13568,6 +13571,17 @@
     "sv_speedcheck": {
       "group-id": "43",
       "type": ""
+    },
+    "sv_showpackets": {
+      "group-id": "40",
+      "description": "Dumps log of network activity to the console (from internal server's point of view)",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Do not display information about all network packets." },
+        { "name": "1", "description": "Display information about all network packets." },
+        { "name": "2", "description": "Display information about incoming network packets only." },
+        { "name": "3", "description": "Display information about outgoing network packets only." }
+      ]
     },
     "sv_stopspeed": {
       "group-id": "43",

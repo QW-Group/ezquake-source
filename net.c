@@ -940,10 +940,11 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 }
 
 #ifndef SERVERONLY
-void CL_UnqueOutputPacket(qbool sendall)
+qbool CL_UnqueOutputPacket(qbool sendall)
 {
 	double time = Sys_DoubleTime();
 	cl_delayed_packet_t* packet = NULL;
+	qbool released = false;
 
 	while ((packet = NET_PacketQueuePeek(&delay_queue_send)))
 	{
@@ -956,7 +957,11 @@ void CL_UnqueOutputPacket(qbool sendall)
 
 		// mark as unused slot
 		NET_PacketQueueAdvance(&delay_queue_send);
+
+		released = true;
 	}
+
+	return released;
 }
 #endif
 

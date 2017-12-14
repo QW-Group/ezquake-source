@@ -698,7 +698,6 @@ extern byte		*host_colormap;
 
 void CL_Init (void);
 void CL_ClearState (void);
-void CL_ReadPackets (void);
 void CL_BeginServerConnect(void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
@@ -1012,7 +1011,7 @@ typedef struct cl_delayed_packet_s
 } cl_delayed_packet_t;
 
 qbool CL_QueInputPacket(void);
-void CL_UnqueOutputPacket(qbool sendall);
+qbool CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================
 
