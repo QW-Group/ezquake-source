@@ -19,6 +19,7 @@ static GLint drawAliasModel_applyTexture;
 static GLint drawAliasModel_textureIndex;
 static GLint drawAliasModel_scaleS;
 static GLint drawAliasModel_scaleT;
+static GLint drawAliasModel_gamma3d;
 
 static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
@@ -74,6 +75,7 @@ static void GLM_CompileAliasModelProgram(void)
 		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
 		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
 		drawAliasModel_shell_alpha = glGetUniformLocation(drawAliasModelProgram.program, "shell_alpha");
+		drawAliasModel_gamma3d = glGetUniformLocation(drawAliasModelProgram.program, "gamma3d");
 		drawAliasModelProgram.uniforms_found = true;
 
 		// Constants
@@ -206,6 +208,7 @@ static void GLM_FlushAliasModelBatch(void)
 	glUniform1f(drawAliasModel_shellSize, bound(0, gl_powerupshells_size.value, 20));
 	glUniform1f(drawAliasModel_time, cl.time);
 	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));
+	glUniform1f(drawAliasModel_gamma3d, v_gamma.value);
 
 	prev_texture_array = 0;
 	for (i = 0; i < batch_count; ++i) {

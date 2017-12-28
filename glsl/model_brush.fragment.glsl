@@ -3,6 +3,7 @@
 uniform sampler2DArray materialTex;
 uniform sampler2DArray lightmapTex;
 uniform bool apply_texture;
+uniform float gamma3d;
 
 in vec4 fsColor;
 in vec3 TextureCoord;
@@ -30,4 +31,6 @@ void main()
 	else {
 		frag_colour = texColor * fsColor;
 	}
+
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
 }

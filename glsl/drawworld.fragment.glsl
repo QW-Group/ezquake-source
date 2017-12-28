@@ -6,6 +6,7 @@ uniform sampler2DArray materialTex;
 uniform sampler2DArray lightmapTex;
 uniform bool drawDetailTex;
 uniform float waterAlpha;
+uniform float gamma3d;
 
 in vec3 TextureCoord;
 in vec3 TexCoordLightmap;
@@ -39,4 +40,6 @@ void main()
 			frag_colour *= vec4(newColor, frag_colour.a);
 		}
 	}
+
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
 }

@@ -33,6 +33,7 @@ static GLint turb_projectionMatrix;
 static GLint turb_materialTex;
 static GLint turb_alpha;
 static GLint turb_time;
+static GLint turb_gamma3d;
 
 // Very similar to GLM_DrawPoly, but with manipulation of texture coordinates
 static void GLM_CompileTurbPolyProgram(void)
@@ -50,6 +51,7 @@ static void GLM_CompileTurbPolyProgram(void)
 		turb_materialTex = glGetUniformLocation(turbPolyProgram.program, "materialTex");
 		turb_alpha = glGetUniformLocation(turbPolyProgram.program, "alpha");
 		turb_time = glGetUniformLocation(turbPolyProgram.program, "time");
+		turb_gamma3d = glGetUniformLocation(turbPolyProgram.program, "gamma3d");
 		turbPolyProgram.uniforms_found = true;
 
 		glProgramUniform1i(turbPolyProgram.program, turb_materialTex, 0);
@@ -72,6 +74,7 @@ void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, f
 		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
+		glUniform1f(turb_gamma3d, v_gamma.value);
 
 		GL_BindVertexArray(vao);
 		//glDisable(GL_CULL_FACE);
@@ -96,6 +99,7 @@ void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha)
 		glUniformMatrix4fv(turb_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1f(turb_alpha, alpha);
 		glUniform1f(turb_time, cl.time);
+		glUniform1f(turb_gamma3d, v_gamma.value);
 
 		GL_BindVertexArray(vao);
 		//glDisable(GL_CULL_FACE);
@@ -229,6 +233,7 @@ static GLint drawworld_causticsTex;
 static GLint drawworld_drawDetailTex;
 static GLint drawworld_time;
 static GLint drawworld_waterAlpha;
+static GLint drawworld_gamma3d;
 
 static void Compile_DrawWorldProgram(void)
 {
@@ -249,6 +254,7 @@ static void Compile_DrawWorldProgram(void)
 		drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
 		drawworld_waterAlpha = glGetUniformLocation(drawworld.program, "waterAlpha");
 		drawworld_time = glGetUniformLocation(drawworld.program, "time");
+		drawworld_gamma3d = glGetUniformLocation(drawworld.program, "gamma3d");
 		drawworld.uniforms_found = true;
 
 		// Constants
@@ -276,6 +282,7 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	glUniform1i(drawworld_drawDetailTex, detail_tex ? 1 : 0);
 	glUniform1f(drawworld_waterAlpha, wateralpha);
 	glUniform1f(drawworld_time, cl.time);
+	glUniform1f(drawworld_gamma3d, v_gamma.value);
 
 	GL_BindVertexArray(vao);
 }

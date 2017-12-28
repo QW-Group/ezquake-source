@@ -15,6 +15,8 @@ uniform float shell_effect_level1 = 0.75;
 uniform float shell_effect_level2 = 0.4;
 uniform float shell_alpha = 1.0;
 
+uniform float gamma3d;
+
 in vec3 fsTextureCoord;
 in vec3 fsAltTextureCoord;
 in vec4 fsBaseColor;
@@ -52,4 +54,6 @@ void main()
 		// Solid
 		frag_colour = fsBaseColor;
 	}
+
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
 }

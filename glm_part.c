@@ -37,6 +37,7 @@ static int billboard_projectionMatrix;
 static int billboard_materialTex;
 static int billboard_apply_texture;
 static int billboard_alpha_texture;
+static int billboard_gamma3d;
 
 void GLM_CreateParticleProgram(void)
 {
@@ -53,6 +54,7 @@ void GLM_CreateParticleProgram(void)
 		billboard_materialTex = glGetUniformLocation(billboardProgram.program, "materialTex");
 		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
 		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
+		billboard_gamma3d = glGetUniformLocation(billboardProgram.program, "gamma3d");
 		billboardProgram.uniforms_found = true;
 
 		glProgramUniform1i(billboardProgram.program, billboard_materialTex, 0);
@@ -103,6 +105,7 @@ void GLM_DrawParticles(int number, qbool square)
 			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 			glUniform1i(billboard_apply_texture, !square);
+			glUniform1f(billboard_gamma3d, v_gamma.value);
 
 			GL_BindVertexArray(vao);
 			glDrawArrays(GL_POINTS, 0, number);

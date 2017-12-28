@@ -15,6 +15,7 @@ static GLint sprite_texS;
 static GLint sprite_texT;
 static GLint sprite_scale;
 static GLint sprite_origin;
+static GLint sprite_gamma3d;
 
 typedef struct glm_sprite_s {
 	vec3_t origin;
@@ -151,6 +152,7 @@ void GL_FlushSpriteBatch(void)
 	glUniform1fv(sprite_textureIndex, batch_count, texture_indexes);
 	glUniform1fv(sprite_texS, batch_count, texScaleS);
 	glUniform1fv(sprite_texT, batch_count, texScaleT);
+	glUniform1f(sprite_gamma3d, v_gamma.value);
 
 	GL_BindVertexArray(vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
@@ -188,6 +190,7 @@ static void GL_CompileSpriteProgram(void)
 		sprite_textureIndex = glGetUniformLocation(spriteProgram.program, "skinNumber");
 		sprite_texS = glGetUniformLocation(spriteProgram.program, "texS");
 		sprite_texT = glGetUniformLocation(spriteProgram.program, "texT");
+		sprite_gamma3d = glGetUniformLocation(spriteProgram.program, "gamma3d");
 		spriteProgram.uniforms_found = true;
 
 		glProgramUniform1i(spriteProgram.program, sprite_materialTexUniform, 0);

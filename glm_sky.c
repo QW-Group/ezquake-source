@@ -41,6 +41,7 @@ static GLint skyDome_speedscale2;
 static GLint skyDome_skyTex;
 static GLint skyDome_alphaTex;
 static GLint skyDome_origin;
+static GLint skyDome_gamma3d;
 static glm_vbo_t skyDome_vbo;
 static glm_vao_t skyDome_vao;
 static GLint skyDome_starts[6];
@@ -89,6 +90,7 @@ static void BuildSkyVertsArray(void)
 		skyDome_skyTex = glGetUniformLocation(skyDome.program, "skyTex");
 		skyDome_alphaTex = glGetUniformLocation(skyDome.program, "alphaTex");
 		skyDome_origin = glGetUniformLocation(skyDome.program, "origin");
+		skyDome_gamma3d = glGetUniformLocation(skyDome.program, "gamma3d");
 		skyDome.uniforms_found = true;
 
 		glProgramUniform1i(skyDome.program, skyDome_skyTex, 0);
@@ -335,6 +337,7 @@ static void GLM_DrawSkyFaces(void)
 			glUniform1f(skyDome_speedscale, r_refdef2.time * 8 - ((int)speedscale & ~127));
 			glUniform1f(skyDome_speedscale2, r_refdef2.time * 16 - ((int)speedscale & ~127));
 			glUniform3f(skyDome_origin, r_origin[0], r_origin[1], r_origin[2]);
+			glUniform1f(skyDome_gamma3d, v_gamma.value);
 			GL_BindVertexArray(skyDome_vao.vao);
 			glDisable(GL_CULL_FACE);
 			glMultiDrawArrays(GL_TRIANGLE_STRIP, faceStarts, faceLengths, faces);

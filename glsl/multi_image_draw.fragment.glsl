@@ -1,6 +1,7 @@
 #version 430
 
 uniform sampler2D tex;
+uniform float gamma2d;
 
 in vec2 TextureCoord;
 in vec4 Colour;
@@ -23,4 +24,6 @@ void main()
 	else {
 		frag_colour = Colour;
 	}
+
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma2d)), frag_colour.a);
 }

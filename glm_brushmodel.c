@@ -13,6 +13,7 @@ static GLint drawBrushModel_materialTex;
 static GLint drawBrushModel_lightmapTex;
 static GLint drawBrushModel_applyLightmap;
 static GLint drawBrushModel_applyTexture;
+static GLint drawBrushModel_gamma3d;
 
 void GLM_CreateBrushModelProgram(void)
 {
@@ -30,6 +31,7 @@ void GLM_CreateBrushModelProgram(void)
 		drawBrushModel_lightmapTex = glGetUniformLocation(drawBrushModelProgram.program, "lightmapTex");
 		drawBrushModel_applyTexture = glGetUniformLocation(drawBrushModelProgram.program, "apply_texture");
 		drawBrushModel_applyLightmap = glGetUniformLocation(drawBrushModelProgram.program, "apply_lightmap");
+		drawBrushModel_gamma3d = glGetUniformLocation(drawBrushModelProgram.program, "gamma3d");
 		drawBrushModelProgram.uniforms_found = true;
 
 		glProgramUniform1i(drawBrushModelProgram.program, drawBrushModel_materialTex, 0);
@@ -403,6 +405,7 @@ void GL_BrushModelInitState(void)
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		GL_UseProgram(drawBrushModelProgram.program);
 		glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1f(drawBrushModel_gamma3d, v_gamma.value);
 
 		//glDisable(GL_CULL_FACE);
 		GL_SelectTexture(GL_TEXTURE0);
