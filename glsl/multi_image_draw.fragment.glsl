@@ -16,7 +16,7 @@ void main()
 
 	if (UseTexture != 0) {
 		texColor = texture(tex, TextureCoord);
-		if (AlphaTest != 0 && texColor.a < 1) {
+		if (AlphaTest != 0 && texColor.a < 0.666) {
 			discard;
 		}
 		frag_colour = texColor * Colour;

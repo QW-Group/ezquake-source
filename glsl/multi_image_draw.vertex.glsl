@@ -9,6 +9,7 @@ layout(location = 5) in int inFlags;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform bool alphafont;
 
 out vec4 gPositionTL;
 out vec4 gPositionBR;
@@ -26,5 +27,10 @@ void main()
 	gTexCoordBR = inTexCoordBR;
 	gColour = inColour;
 	gUseTexture = (inFlags & 1);
-	gAlphaTest = (inFlags & 2);
+	if ((inFlags & 4) != 0) {
+		gAlphaTest = alphafont ? 0 : 1;
+	}
+	else {
+		gAlphaTest = (inFlags & 2);
+	}
 }

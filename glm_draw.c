@@ -155,6 +155,7 @@ static GLint multiImage_modelViewMatrix;
 static GLint multiImage_projectionMatrix;
 static GLint multiImage_tex;
 static GLint multiImage_gamma2d;
+static GLint multiImage_alphaFont;
 
 typedef struct glm_image_s {
 	float x1, y1;
@@ -206,6 +207,7 @@ void GLM_CreateMultiImageProgram(void)
 		multiImage_projectionMatrix = glGetUniformLocation(multiImageProgram.program, "projectionMatrix");
 		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
 		multiImage_gamma2d = glGetUniformLocation(multiImageProgram.program, "gamma2d");
+		multiImage_alphaFont = glGetUniformLocation(multiImageProgram.program, "alphafont");
 		multiImageProgram.uniforms_found = true;
 
 		glProgramUniform1i(multiImageProgram.program, multiImage_tex, 0);
@@ -240,6 +242,7 @@ void GLM_FlushImageDraw(void)
 {
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
+	extern cvar_t gl_alphafont;
 
 	if (imageCount) {
 		int start = 0;
@@ -263,6 +266,7 @@ void GLM_FlushImageDraw(void)
 		glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 		glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1f(multiImage_gamma2d, v_gamma.value);
+		glUniform1i(multiImage_alphaFont, gl_alphafont.integer);
 
 		GL_BindVertexArray(imageVAO.vao);
 
