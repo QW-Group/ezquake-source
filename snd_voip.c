@@ -517,6 +517,10 @@ qbool S_Voip_ShowMeter (int* x, int* y)
 
 qbool S_Voip_Speaking(unsigned int plno)
 {
+	if (!snd_initialized) {
+		return false;
+	}
+
 	if (plno == cl.playernum) {
 		return s_speex.voiplevel >= cl_voip_vad_threshhold.integer || (cl_voip_send.integer & 2);
 	}
