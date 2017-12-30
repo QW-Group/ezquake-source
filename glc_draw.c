@@ -173,6 +173,7 @@ void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 	if (alpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_TextureEnvMode(GL_MODULATE);
 		GL_CullFace(GL_FRONT);
 		glColor4f(1, 1, 1, alpha);
 	}
