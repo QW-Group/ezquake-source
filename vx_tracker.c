@@ -71,6 +71,8 @@ cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide"
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
+#define MAX_IMAGES_PER_LINE 2
+#define MAX_LINES_PER_MESSAGE 2
 
 typedef struct 
 {
@@ -79,11 +81,11 @@ typedef struct
 	tracktype_t tt;
 
 	// Pre-parse now, don't do this every frame
-	char imagename[2][64];
-	int imagepos[2];
+	char imagename[MAX_LINES_PER_MESSAGE][MAX_IMAGES_PER_LINE][64];
+	int imagepos[MAX_LINES_PER_MESSAGE][MAX_IMAGES_PER_LINE];
 
-	wchar content[2][MAX_TRACKER_MSG_LEN];
-	int printable_length[2];
+	wchar content[MAX_LINES_PER_MESSAGE][MAX_TRACKER_MSG_LEN];
+	int printable_length[MAX_LINES_PER_MESSAGE];
 } trackmsg_t;
 
 static trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
@@ -752,7 +754,9 @@ void VXSCR_DrawTrackerString (void)
 		if (trackermsg[i].die < r_refdef2.time)
 			continue;
 
-		for (line = 0; line < 2; ++line) {
+		for (line = 0; line < MAX_LINES_PER_MESSAGE; ++line) {
+			int img;
+
 			printable_chars = trackermsg[i].printable_length[line];
 			if (printable_chars <= 0) {
 				break;
@@ -762,14 +766,18 @@ void VXSCR_DrawTrackerString (void)
 			x = scale * (amf_tracker_align_right.value ? (vid.width / scale - printable_chars * 8) - 8 : 8);
 			x += amf_tracker_x.value;
 
-			if (trackermsg[i].imagename[line][0]) {
+			for (img = 0; img < MAX_IMAGES_PER_LINE; ++img) {
 				mpic_t *pic;
 
-				snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", trackermsg[i].imagename[line]);
+				if (!trackermsg[i].imagename[line][img][0]) {
+					break;
+				}
+
+				snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", trackermsg[i].imagename[line][img]);
 
 				if ((pic = Draw_CachePicSafe(fullpath, false, true))) {
 					Draw_FitPic(
-						(float)x + (trackermsg[i].imagepos[line] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale,
+						(float)x + (trackermsg[i].imagepos[line][img] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale,
 						(float)y - 0.5 * 8 * (im_scale - 1) * scale,
 						im_scale * 8 * 2 * scale,
 						im_scale * 8 * scale, pic
@@ -788,16 +796,17 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 	const char* start = msg->msg;
 	int l, printable_chars, content_pos;
 	int line = 0;
+	int img = 0;
 
 	memset(msg->imagename, 0, sizeof(msg->imagename));
-	msg->imagepos[0] = msg->imagepos[1] = -1;
-	msg->content[0][0] = msg->content[1][0] = '\0';
-	msg->printable_length[0] = msg->printable_length[1] = 0;
+	memset(msg->imagepos, -1, sizeof(msg->imagepos));
+	memset(msg->content, 0, sizeof(msg->content));
+	memset(msg->printable_length, 0, sizeof(msg->printable_length));
 
 	// Loop through the tracker message and parse it.
-	while (start[0] && line < 2)
+	while (start[0] && line < MAX_LINES_PER_MESSAGE)
 	{
-		content_pos = l = printable_chars = 0;
+		img = content_pos = l = printable_chars = 0;
 
 		// Find the number of printable characters for the next line.
 		while (start[l] && start[l] != '\n')
@@ -825,9 +834,10 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 
 				if (to > from) {
 					// We got potential image name, treat image as two printable characters.
-					if (to - from < sizeof(msg->imagename[0])) {
-						msg->imagepos[line] = printable_chars;
-						strncpy(msg->imagename[line], start + from, to - from);
+					if (to - from < sizeof(msg->imagename[0][0]) && img < MAX_IMAGES_PER_LINE) {
+						msg->imagepos[line][img] = printable_chars;
+						strncpy(msg->imagename[line][img], start + from, to - from);
+						++img;
 					}
 
 					msg->content[line][content_pos++] = ' ';
