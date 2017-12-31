@@ -916,13 +916,8 @@ void R_RenderScene(void)
 	extern void Skins_PreCache(void);
 
 	GL_EnterRegion("R_RenderSceneInit");
-	R_SetFrustum ();
-
-	R_SetupGL ();
 
 	R_Check_R_FullBright(); // check for changes in r_fullbright
-
-	R_MarkLeaves ();	// done here so we know if we're in water
 
 	Skins_PreCache ();  // preache skins if needed
 	GL_LeaveRegion();

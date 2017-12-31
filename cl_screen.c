@@ -2160,7 +2160,10 @@ void SCR_UpdateScreenPlayerView (int flags)
 
 	if (renderView) {
 		GL_EnterRegion("WorldTextureChains");
-		R_SetupFrame ();
+		R_SetupFrame();
+		R_SetFrustum ();
+		R_SetupGL();
+		R_MarkLeaves();	// done here so we know if we're in water
 		R_CreateWorldTextureChains();
 		GL_LeaveRegion();
 	}
