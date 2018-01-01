@@ -1,5 +1,7 @@
 #version 430
 
+// 'scale' could be calculated here instead, currently done CPU-side at
+// cost of vbo-update per view
 layout(location = 0) in vec3 position;
 layout(location = 1) in float scale;
 layout(location = 2) in vec4 colour;

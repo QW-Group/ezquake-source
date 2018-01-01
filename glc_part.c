@@ -61,6 +61,8 @@ void GLC_DrawParticles(int particles_to_draw, qbool square)
 		glTexCoord2f(0, 1); glVertex3f(glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
 	}
 	glEnd();
+
+	// FIXME: State reset
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 }

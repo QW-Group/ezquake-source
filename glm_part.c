@@ -87,65 +87,28 @@ static GLuint GLM_CreateParticleVAO(void)
 
 void GLM_DrawParticles(int number, qbool square)
 {
-	if (!billboardProgram.program) {
-		GLM_CreateParticleProgram();
-	}
-
-	{
-		GLuint vao = GLM_CreateParticleVAO();
-
-		if (billboardProgram.program && vao) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
-
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(billboardProgram.program);
-			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(billboard_apply_texture, !square);
-			glUniform1f(billboard_gamma3d, v_gamma.value);
-
-			GL_BindVertexArray(vao);
-			glDrawArrays(GL_POINTS, 0, number);
-		}
-	}
-}
-
-void GLM_DrawParticle(byte* color, vec3_t origin, float scale, qbool square)
-{
-	float oldMatrix[16];
+	GLuint vao;
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
 
 	if (!billboardProgram.program) {
 		GLM_CreateParticleProgram();
 	}
 
-	{
-		GLuint vao = GLM_CreateParticleVAO();
+	vao = GLM_CreateParticleVAO();
 
-		GL_PushMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
-		GL_Translate(GL_MODELVIEW, origin[0], origin[1], origin[2]);
+	if (billboardProgram.program && vao) {
+		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
-		if (billboardProgram.program && vao) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
+		GL_UseProgram(billboardProgram.program);
+		glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
+		glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
+		glUniform1i(billboard_apply_texture, !square);
+		glUniform1f(billboard_gamma3d, v_gamma.value);
 
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(billboardProgram.program);
-			glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform1i(billboard_materialTex, 0);
-			glUniform1i(billboard_apply_texture, !square);
-			glUniform1i(billboard_alpha_texture, 0);
-
-			GL_BindVertexArray(vao);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, square ? 4 : 3);
-		}
-
-		GL_PopMatrix(GL_MODELVIEW_MATRIX, oldMatrix);
+		GL_BindVertexArray(vao);
+		glDrawArrays(GL_POINTS, 0, number);
 	}
 }
 

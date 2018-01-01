@@ -531,6 +531,25 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 
 static int particles_to_draw = 0;
 
+// Particles are scaled according to distance from player's POV,
+//   so in multi-view we need to recalculate each time
+void Classic_ReScaleParticles(void)
+{
+	float r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
+	int i;
+
+	for (i = 0; i < particles_to_draw; ++i) {
+		glm_particle_t* glpart = &glparticles[i];
+		float dist = (glpart->gl_org[0] - r_origin[0]) * vpn[0] + (glpart->gl_org[1] - r_origin[1]) * vpn[1] + (glpart->gl_org[2] - r_origin[2]) * vpn[2];
+
+		glpart->gl_scale = 1 + dist * r_partscale;
+	}
+
+	if (GL_ShadersSupported()) {
+		GLM_UpdateParticles(particles_to_draw);
+	}
+}
+
 // Moves particles into new locations this frame
 void Classic_CalculateParticles(void)
 {
@@ -716,8 +735,6 @@ void Classic_DrawParticles(void)
 	}
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_LeaveRegion();
-
-	particles_to_draw = 0;
 }
 
 
@@ -756,6 +773,10 @@ void R_DrawParticles(void)
 {
 	if (!r_drawparticles.integer) {
 		return;
+	}
+
+	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
+		Classic_ReScaleParticles();
 	}
 
 	if (GL_ShadersSupported()) {

@@ -775,7 +775,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 		GLM_Rotate(GL_MatrixForMode(matrix), angle, x, y, z);
 	}
 	else {
-//		glMatrixMode(matrix);
+		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 	}
 }
@@ -786,6 +786,7 @@ void GL_Translate(GLenum matrix, float x, float y, float z)
 		GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
 	}
 	else {
+		glMatrixMode(matrix);
 		glTranslatef(x, y, z);
 	}
 }
