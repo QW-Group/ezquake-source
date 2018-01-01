@@ -754,7 +754,7 @@ void QMB_DrawParticles (void) {
 	VectorNegate(billboard[3], billboard[1]);
 
 	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_ShadeModel(GL_SMOOTH);
 
