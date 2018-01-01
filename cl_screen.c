@@ -455,11 +455,11 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 
 //Must be called whenever vid changes
 static void SCR_CalcRefdef (void) {
-	float size        = 0;
-	qbool full        = false;
+	float size = 0;
+	qbool full = false;
 	int h;
 	float aspectratio = vid.height ? (float)vid.width / vid.height : 1;
-	qbool letterbox = scr_fovmode.integer == 1;
+	qbool letterbox = (scr_fovmode.integer == 1);
 	qbool height_reduced = false;
 
 	scr_fullupdate = 0;             // force a background redraw
@@ -469,25 +469,31 @@ static void SCR_CalcRefdef (void) {
 	Sbar_Changed ();
 
 	// bound viewsize
-	if (scr_viewsize.value < 30)
-		Cvar_Set (&scr_viewsize, "30");
-	if (scr_viewsize.value > 120)
-		Cvar_Set (&scr_viewsize, "120");
+	if (scr_viewsize.value < 30) {
+		Cvar_Set(&scr_viewsize, "30");
+	}
+	if (scr_viewsize.value > 120) {
+		Cvar_Set(&scr_viewsize, "120");
+	}
 
 	// intermission is always full screen
 	size = cl.intermission ? 120 : scr_viewsize.value;
 
-	if (size >= 120)
+	if (size >= 120) {
 		sb_lines = 0;           // no status bar at all
-	else if (size >= 110)
+	}
+	else if (size >= 110) {
 		sb_lines = 24;          // no inventory
-	else
+	}
+	else {
 		sb_lines = 24 + 16 + 8;
+	}
 
 	if (scr_viewsize.value >= 100.0) {
 		full = true;
 		size = 100.0;
-	} else {
+	}
+	else {
 		size = scr_viewsize.value;
 	}
 	if (cl.intermission) {
@@ -536,28 +542,36 @@ static void SCR_CalcRefdef (void) {
 }
 
 //Keybinding command
-void SCR_SizeUp_f (void) {
-	Cvar_SetValue (&scr_viewsize, scr_viewsize.value + 10);
+void SCR_SizeUp_f(void)
+{
+	Cvar_SetValue(&scr_viewsize, scr_viewsize.value + 10);
 	vid.recalc_refdef = 1;
 }
 
 //Keybinding command
-void SCR_SizeDown_f (void) {
-	Cvar_SetValue (&scr_viewsize,scr_viewsize.value - 10);
+void SCR_SizeDown_f(void)
+{
+	Cvar_SetValue(&scr_viewsize, scr_viewsize.value - 10);
 	vid.recalc_refdef = 1;
 }
 
-void SCR_ZoomIn_f (void) {
-	if (zoomedin) return;
+void SCR_ZoomIn_f(void)
+{
+	if (zoomedin) {
+		return;
+	}
 	zoomedin = true;
 	unzoomedfov = scr_fov.value;
 	unzoomedsensitivity = sensitivity.value;
 	Cvar_SetValue(&scr_fov, ZOOMEDFOV);
-	Cvar_SetValue(&sensitivity, unzoomedsensitivity * ((double) ZOOMEDFOV / unzoomedfov));
+	Cvar_SetValue(&sensitivity, unzoomedsensitivity * ((double)ZOOMEDFOV / unzoomedfov));
 }
 
-void SCR_ZoomOut_f (void) {
-	if (!zoomedin) return;
+void SCR_ZoomOut_f(void)
+{
+	if (!zoomedin) {
+		return;
+	}
 	zoomedin = false;
 	Cvar_SetValue(&scr_fov, unzoomedfov);
 	Cvar_SetValue(&sensitivity, unzoomedsensitivity);
@@ -2106,7 +2120,7 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 
 	host_screenupdatecount++;  // For HUD.
 
-							   // Check for vid changes.
+	// Check for vid changes.
 	if (oldfov != scr_fov.value) 
 	{
 		oldfov = scr_fov.value;
@@ -2143,7 +2157,7 @@ void R_SetupFrame(void);
 void R_CreateWorldTextureChains(void);
 qbool V_PreRenderView(void);
 
-void SCR_UpdateScreenPlayerView (int flags)
+void SCR_UpdateScreenPlayerView(int flags)
 {
 	qbool renderView = false;
 
@@ -2152,9 +2166,9 @@ void SCR_UpdateScreenPlayerView (int flags)
 		SCR_CalcRefdef();
 	}
 
-	SCR_SetUpToDrawConsole ();
+	SCR_SetUpToDrawConsole();
 
-	SCR_SetupCI ();
+	SCR_SetupCI();
 
 	renderView = V_PreRenderView();
 
@@ -2179,15 +2193,15 @@ void SCR_UpdateScreenPlayerView (int flags)
 		R_RenderPostProcess();
 	}
 
-	GL_Set2D ();
+	GL_Set2D();
 
-	R_PolyBlend ();
+	R_PolyBlend();
 
 	// draw any areas not covered by the refresh
-	SCR_TileClear ();
+	SCR_TileClear();
 
 	if (flags & UPDATESCREEN_MULTIVIEW) {
-		SCR_DrawMultiviewIndividualElements ();
+		SCR_DrawMultiviewIndividualElements();
 	}
 	GL_LeaveRegion();
 }

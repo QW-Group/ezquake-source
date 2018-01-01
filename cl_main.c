@@ -2454,22 +2454,23 @@ void CL_Frame (double time)
 	// update video
 	if (CL_MultiviewEnabled())
 	{
+		qbool draw_next_view = true;
+
 		SCR_UpdateScreenPrePlayerView ();
 
-		qbool draw_next_view = true;
 		while (draw_next_view) {
-			draw_next_view = CL_MultiviewAdvanceView ();
+			draw_next_view = CL_MultiviewAdvanceView();
 
-			CL_LinkEntities ();
+			CL_LinkEntities();
 
-			SCR_UpdateScreenPlayerView (UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
+			SCR_UpdateScreenPlayerView(UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
 
 			if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
-				CL_SoundFrame ();
+				CL_SoundFrame();
 			}
 
 			// Multiview: advance to next player
-			CL_MultiviewFrameFinish ();
+			CL_MultiviewFrameFinish();
 		}
 
 		SCR_UpdateScreenPostPlayerView ();

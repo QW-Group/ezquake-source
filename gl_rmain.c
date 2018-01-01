@@ -623,7 +623,7 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	return;
 }
 
-void R_SetupGL(void)
+void R_SetupViewport(void)
 {
 	float screenaspect;
 	extern int glwidth, glheight;
@@ -663,7 +663,14 @@ void R_SetupGL(void)
 
 	farclip = max((int)r_farclip.value, 4096);
 	screenaspect = (float)r_refdef.vrect.width / r_refdef.vrect.height;
+
 	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
+}
+
+void R_SetupGL(void)
+{
+	R_SetupViewport();
+
 	GL_CullFace(GL_FRONT);
 
 	GL_IdentityModelView();
@@ -957,11 +964,6 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 void R_Clear(void)
 {
 	int clearbits = 0;
-
-	// meag: temp
-	if (GL_ShadersSupported() && !cl_multiview.value) {
-		clearbits |= GL_COLOR_BUFFER_BIT;
-	}
 
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last

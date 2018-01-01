@@ -198,12 +198,12 @@ static void R_ClearTextureChains(model_t *clmodel) {
 			}
 		}
 	}
+	clmodel->drawflat_chain[0] = clmodel->drawflat_chain[1] = NULL;
 
 	r_notexture_mip->texturechain[0] = NULL;
 	r_notexture_mip->texturechain_tail[0] = &r_notexture_mip->texturechain[0];
 	r_notexture_mip->texturechain[1] = NULL;
 	r_notexture_mip->texturechain_tail[1] = &r_notexture_mip->texturechain[1];
-
 
 	CHAIN_RESET(skychain);
 	if (clmodel == cl.worldmodel) {
@@ -489,7 +489,6 @@ void R_CreateWorldTextureChains(void)
 		VectorCopy(r_refdef.vieworg, modelorg);
 
 		//set up texture chains for the world
-		cl.worldmodel->drawflat_chain[0] = cl.worldmodel->drawflat_chain[1] = NULL;
 		R_RecursiveWorldNode(cl.worldmodel->nodes, 15);
 
 		R_RenderAllDynamicLightmaps(cl.worldmodel);

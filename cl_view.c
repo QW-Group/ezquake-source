@@ -888,34 +888,37 @@ void V_CalcIntermissionRefdef (void) {
 	v_idlescale.value = old;
 }
 
-void V_CalcRefdef (void) {
+void V_CalcRefdef(void)
+{
 	vec3_t forward;
 	float bob;
 	float height_adjustment;
 
-	V_DriftPitch ();
+	V_DriftPitch();
 
-	bob = V_CalcBob ();
-	
-	height_adjustment = v_viewheight.value ? bound (-7, v_viewheight.value, 4) : V_CalcBob ();
-	
+	bob = V_CalcBob();
+
+	height_adjustment = v_viewheight.value ? bound(-7, v_viewheight.value, 4) : V_CalcBob();
+
 
 	// set up the refresh position
-	VectorCopy (cl.simorg, r_refdef.vieworg);
+	VectorCopy(cl.simorg, r_refdef.vieworg);
 
 	// never let it sit exactly on a node line, because a water plane can
 	// dissapear when viewed with the eye exactly on it.
 	// the server protocol only specifies to 1/8 pixel, so add 1/16 in each axis
-	r_refdef.vieworg[0] += 1.0/16;
-	r_refdef.vieworg[1] += 1.0/16;
-	r_refdef.vieworg[2] += 1.0/16;
+	r_refdef.vieworg[0] += 1.0 / 16;
+	r_refdef.vieworg[1] += 1.0 / 16;
+	r_refdef.vieworg[2] += 1.0 / 16;
 
 	// add view height
 	if (view_message.flags & PF_GIB) {
 		r_refdef.vieworg[2] += 8;	// gib view height
-	} else if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {	
+	}
+	else if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {
 		r_refdef.vieworg[2] -= 16;	// corpse view height
-	} else {
+	}
+	else {
 		// normal view height
 		// Use STAT_VIEWHEIGHT in case of server support it or NQ demoplayback, if not then use default viewheight.
 		r_refdef.vieworg[2] += ((cl.z_ext & Z_EXT_VIEWHEIGHT) || cls.nqdemoplayback) ? cl.stats[STAT_VIEWHEIGHT] : DEFAULT_VIEWHEIGHT;
@@ -923,32 +926,31 @@ void V_CalcRefdef (void) {
 		r_refdef.vieworg[2] += height_adjustment;
 
 		r_refdef.vieworg[2] += bob;
-		
+
 		// smooth out stair step ups
 		r_refdef.vieworg[2] += cl.crouch;
 	}
 
 	// set up refresh view angles
-	VectorCopy (cl.simangles, r_refdef.viewangles);
-	V_CalcViewRoll ();
-	V_AddIdle ();
+	VectorCopy(cl.simangles, r_refdef.viewangles);
+	V_CalcViewRoll();
+	V_AddIdle();
 
 	if (v_gunkick.value) {
 		// add weapon kick offset
-		AngleVectors (r_refdef.viewangles, forward, NULL, NULL);
-		VectorMA (r_refdef.vieworg, cl.punchangle, forward, r_refdef.vieworg);
+		AngleVectors(r_refdef.viewangles, forward, NULL, NULL);
+		VectorMA(r_refdef.vieworg, cl.punchangle, forward, r_refdef.vieworg);
 
 		// add weapon kick angle
 		r_refdef.viewangles[PITCH] += cl.punchangle * 0.5;
 	}
-	
+
 	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
-	V_AddViewWeapon (height_adjustment);
-	
+	V_AddViewWeapon(height_adjustment);
 }
 
 void DropPunchAngle (void) {
