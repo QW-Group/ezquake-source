@@ -55,6 +55,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 void WeaponStats_CommandInit(void);
 void SCR_DrawHud(void);
+void R_SetupFrame(void);
+qbool V_PreRenderView(void);
 
 int				glx, gly, glwidth, glheight;
 
@@ -2153,10 +2155,6 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	return true;
 }
 
-void R_SetupFrame(void);
-void R_CreateWorldTextureChains(void);
-qbool V_PreRenderView(void);
-
 void SCR_UpdateScreenPlayerView(int flags)
 {
 	qbool renderView = false;
@@ -2175,10 +2173,6 @@ void SCR_UpdateScreenPlayerView(int flags)
 	if (renderView) {
 		GL_EnterRegion("WorldTextureChains");
 		R_SetupFrame();
-		R_SetFrustum ();
-		R_SetupGL();
-		R_MarkLeaves();	// done here so we know if we're in water
-		R_CreateWorldTextureChains();
 		GL_LeaveRegion();
 	}
 

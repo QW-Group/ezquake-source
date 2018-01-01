@@ -38,6 +38,8 @@ void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
 void R_MarkLeaves(void);
 void R_InitBubble(void);
 void R_InitAliasModelCvars(void);
+void R_CreateWorldTextureChains(void);
+static void R_SetupGL(void);
 
 extern msurface_t *alphachain;
 extern vec3_t     lightspot;
@@ -529,6 +531,11 @@ void R_SetupFrame(void)
 
 	c_brush_polys = 0;
 	c_alias_polys = 0;
+
+	R_SetFrustum ();
+	R_SetupGL();
+	R_MarkLeaves();	// done here so we know if we're in water
+	R_CreateWorldTextureChains();
 }
 
 void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
@@ -667,7 +674,7 @@ void R_SetupViewport(void)
 	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
 }
 
-void R_SetupGL(void)
+static void R_SetupGL(void)
 {
 	R_SetupViewport();
 
