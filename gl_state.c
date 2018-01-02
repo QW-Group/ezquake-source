@@ -36,6 +36,9 @@ static GLuint cntarrays[] = {0, 0, 0, 0, 0, 0, 0, 0};
 static qbool texunitenabled[] = { false, false, false, false, false, false, false, false };
 static qbool mtexenabled = false;
 
+static GLenum lastTextureMode = GL_MODULATE;
+static int old_alphablend_flags = 0;
+
 void GL_DepthFunc(GLenum func)
 {
 	if (func != currentDepthFunc) {
@@ -136,6 +139,11 @@ void GL_InitialiseState(void)
 	gl_depth_mask = GL_FALSE;
 	currenttexture = -1;
 	currentTextureArray = -1;
+	lastTextureMode = GL_MODULATE;
+	old_alphablend_flags = 0;
+
+	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
+	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures); ++i) {
 		cnttextures[i] = -1;
@@ -388,3 +396,129 @@ void GL_Disable(GLenum option)
 	glDisable(option);
 }
 
+void GL_TextureEnvMode(GLenum mode)
+{
+	if (GL_ShadersSupported()) {
+		// Just store for now
+		lastTextureMode = mode;
+	}
+	else if (mode != lastTextureMode) {
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
+		lastTextureMode = mode;
+	}
+}
+
+int GL_AlphaBlendFlags(int flags)
+{
+	if (!GL_ShadersSupported()) {
+		if ((flags & GL_ALPHATEST_ENABLED) && !(old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
+			glEnable(GL_ALPHA_TEST);
+		}
+		else if ((flags & GL_ALPHATEST_DISABLED) && (old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
+			glDisable(GL_ALPHA_TEST);
+		}
+		else if (!(flags & (GL_ALPHATEST_ENABLED | GL_ALPHATEST_DISABLED))) {
+			flags |= (old_alphablend_flags & GL_ALPHATEST_ENABLED);
+		}
+	}
+
+	if ((flags & GL_BLEND_ENABLED) && !(old_alphablend_flags & GL_BLEND_ENABLED)) {
+		glEnable(GL_BLEND);
+	}
+	else if (flags & GL_BLEND_DISABLED && (old_alphablend_flags & GL_BLEND_ENABLED)) {
+		glDisable(GL_BLEND);
+	}
+	else if (!(flags & (GL_BLEND_ENABLED | GL_BLEND_DISABLED))) {
+		flags |= (old_alphablend_flags & GL_BLEND_ENABLED);
+	}
+
+	old_alphablend_flags = flags;
+	return old_alphablend_flags;
+}
+
+void GL_EnableFog(void)
+{
+	if (!GLM_Enabled() && gl_fogenable.value) {
+		glEnable(GL_FOG);
+	}
+}
+
+void GL_DisableFog(void)
+{
+	if (!GLM_Enabled() && gl_fogenable.value) {
+		glDisable(GL_FOG);
+	}
+}
+
+void GL_ConfigureFog(void)
+{
+	vec3_t colors;
+
+	if (GLM_Enabled()) {
+		// TODO
+		return;
+	}
+
+	// START shaman BUG fog was out of control when fogstart>fogend {
+	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
+		// } END shaman BUG fog was out of control when fogstart>fogend
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		colors[0] = gl_fogred.value;
+		colors[1] = gl_foggreen.value;
+		colors[2] = gl_fogblue.value;
+		glFogfv(GL_FOG_COLOR, colors);
+		glFogf(GL_FOG_START, gl_fogstart.value);
+		glFogf(GL_FOG_END, gl_fogend.value);
+		glEnable(GL_FOG);
+	}
+	else {
+		glDisable(GL_FOG);
+	}
+}
+
+void GL_EnableWaterFog(int contents)
+{
+	extern cvar_t gl_waterfog_color_water;
+	extern cvar_t gl_waterfog_color_lava;
+	extern cvar_t gl_waterfog_color_slime;
+
+	float colors[4];
+
+	// TODO
+	if (!GL_ShadersSupported()) {
+		return;
+	}
+
+	switch (contents) {
+	case CONTENTS_LAVA:
+		colors[0] = (float) gl_waterfog_color_lava.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_lava.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_lava.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_lava.color[3] / 255.0;
+		break;
+	case CONTENTS_SLIME:
+		colors[0] = (float) gl_waterfog_color_slime.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_slime.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_slime.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_slime.color[3] / 255.0;
+		break;
+	default:
+		colors[0] = (float) gl_waterfog_color_water.color[0] / 255.0;
+		colors[1] = (float) gl_waterfog_color_water.color[1] / 255.0;
+		colors[2] = (float) gl_waterfog_color_water.color[2] / 255.0;
+		colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
+		break;
+	}
+
+	glFogfv(GL_FOG_COLOR, colors);
+	if (((int)gl_waterfog.value) == 2) {
+		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
+		glFogi(GL_FOG_MODE, GL_EXP);
+	}
+	else {
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		glFogf(GL_FOG_START, 150.0f);
+		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
+	}
+	glEnable(GL_FOG);
+}

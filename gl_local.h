@@ -799,6 +799,11 @@ void GLM_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
+void GLM_SetIdentityMatrix(float* matrix);
+float* GLM_ModelviewMatrix(void);
+float* GLM_ProjectionMatrix(void);
+float* GL_MatrixForMode(GLenum type);
+
 void GL_ProcessErrors(const char* message);
 void GLM_DeletePrograms(void);
 void GLM_InitPrograms(void);
@@ -815,6 +820,8 @@ void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
+
+#define GLM_Enabled GL_ShadersSupported
 
 #endif /* !__GL_LOCAL_H__ */
 
