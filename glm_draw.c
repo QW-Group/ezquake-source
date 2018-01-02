@@ -151,8 +151,6 @@ void GLM_Draw_FadeScreen(float alpha)
 #define MAX_MULTI_IMAGE_BATCH 1024
 
 static glm_program_t multiImageProgram;
-static GLint multiImage_modelViewMatrix;
-static GLint multiImage_projectionMatrix;
 static GLint multiImage_tex;
 static GLint multiImage_gamma2d;
 static GLint multiImage_alphaFont;
@@ -203,8 +201,6 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
-		multiImage_modelViewMatrix = glGetUniformLocation(multiImageProgram.program, "modelViewMatrix");
-		multiImage_projectionMatrix = glGetUniformLocation(multiImageProgram.program, "projectionMatrix");
 		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
 		multiImage_gamma2d = glGetUniformLocation(multiImageProgram.program, "gamma2d");
 		multiImage_alphaFont = glGetUniformLocation(multiImageProgram.program, "alphafont");
@@ -240,8 +236,6 @@ void GLM_CreateMultiImageProgram(void)
 
 void GLM_FlushImageDraw(void)
 {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
 	extern cvar_t gl_alphafont;
 
 	if (imageCount) {
@@ -259,12 +253,8 @@ void GLM_FlushImageDraw(void)
 		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
 
 		glDisable(GL_DEPTH_TEST);
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 		GL_UseProgram(multiImageProgram.program);
-		glUniformMatrix4fv(multiImage_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(multiImage_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 		glUniform1f(multiImage_gamma2d, v_gamma.value);
 		glUniform1i(multiImage_alphaFont, gl_alphafont.integer);
 
@@ -288,7 +278,6 @@ void GLM_FlushImageDraw(void)
 			GL_Bind(currentTexture);
 		}
 		glDrawArrays(GL_POINTS, start, imageCount - start);
-		glEnable(GL_DEPTH_TEST);
 	}
 
 	imageCount = 0;

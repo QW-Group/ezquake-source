@@ -351,23 +351,23 @@ void Amf_SetMode_f(void)
 	snprintf(mode, sizeof (mode), "%s", Cmd_Argv(1));
 	if (!strcmp(mode, "newtrails"))
 	{
-			Cvar_SetValue (&amf_buildingsparks, 3);
-			Cvar_SetValue (&amf_weather_rain, 0);
-			Cvar_SetValue (&amf_lightning_sparks, 3);
-			Cvar_SetValue (&amf_part_spikes, 5);
-			Cvar_SetValue (&amf_part_gunshot, 5);
-			Cvar_SetValue (&amf_part_explosion, 5);
-			Cvar_SetValue (&amf_part_traillen, 1);
-			Cvar_SetValue (&amf_part_trailtime, 1.5);
-			Cvar_SetValue (&amf_part_sparks, 1);
-			Cvar_SetValue (&amf_nailtrail_plasma, 0);
-			Cvar_SetValue (&amf_part_traillen, 1);
-			Cvar_SetValue (&amf_part_gunshot_type, 1);
-			Cvar_SetValue (&amf_part_spikes_type, 1);
-			Cvar_SetValue (&amf_part_trailwidth, 3);
-			Cvar_SetValue (&amf_part_traildetail, 1);
-			Cvar_SetValue (&amf_part_trailtype, 2);
-			Cvar_SetValue (&gl_bounceparticles, 1);
+		Cvar_SetValue (&amf_buildingsparks, 3);
+		Cvar_SetValue (&amf_weather_rain, 0);
+		Cvar_SetValue (&amf_lightning_sparks, 3);
+		Cvar_SetValue (&amf_part_spikes, 5);
+		Cvar_SetValue (&amf_part_gunshot, 5);
+		Cvar_SetValue (&amf_part_explosion, 5);
+		Cvar_SetValue (&amf_part_traillen, 1);
+		Cvar_SetValue (&amf_part_trailtime, 1.5);
+		Cvar_SetValue (&amf_part_sparks, 1);
+		Cvar_SetValue (&amf_nailtrail_plasma, 0);
+		Cvar_SetValue (&amf_part_traillen, 1);
+		Cvar_SetValue (&amf_part_gunshot_type, 1);
+		Cvar_SetValue (&amf_part_spikes_type, 1);
+		Cvar_SetValue (&amf_part_trailwidth, 3);
+		Cvar_SetValue (&amf_part_traildetail, 1);
+		Cvar_SetValue (&amf_part_trailtype, 2);
+		Cvar_SetValue (&gl_bounceparticles, 1);
 	}
 	else if (!strcmp(mode, "vultwah"))
 	{

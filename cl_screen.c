@@ -2246,7 +2246,6 @@ void SCR_UpdateScreenPostPlayerView (void)
 
 	SCR_DrawElements();
 
-	//Draw_TextCacheFlush();
 	if (GL_ShadersSupported()) {
 		GLM_FlushImageDraw();
 	}
