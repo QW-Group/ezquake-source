@@ -91,7 +91,7 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 	}
 }
 
-void GLM_Rotate(float* matrix, float angle, float x, float y, float z)
+void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 {
 	vec3_t vec = { x, y, z };
 	double s = sin(angle * M_PI / 180);
@@ -182,10 +182,18 @@ void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target)
 	target[15] = lhs[12] * rhs[3] + lhs[13] * rhs[7] + lhs[14] * rhs[11] + lhs[15] * rhs[15];
 }
 
+void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result)
+{
+	const float vector[4] = { x, y, z, 1 };
+
+	result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
+	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
+	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
+	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
+}
+
 void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
 {
-	const float input[4] = { vector[0], vector[1], vector[2], vector[3] };
-
 	result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
 	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
@@ -216,7 +224,7 @@ void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 {
 	if (GL_ShadersSupported()) {
-		GLM_Rotate(GL_MatrixForMode(matrix), angle, x, y, z);
+		GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
 	}
 	else {
 		glMatrixMode(matrix);

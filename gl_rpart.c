@@ -32,21 +32,11 @@ static float alphatrail_s;
 static float alphatrail_l;
 static float varray_vertex[16];
 
-//#define DEFAULT_NUM_PARTICLES				2048 // 4096
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				32768
-/*
-//VULT - Welcome to the 21st century
-#define DEFAULT_NUM_PARTICLES				16384
-#define ABSOLUTE_MIN_PARTICLES				256
-#define ABSOLUTE_MAX_PARTICLES				65536
-*/
-
-
 
 //Better rand nums
 #define lhrandom(MIN,MAX) ((rand() & 32767) * (((MAX)-(MIN)) * (1.0f / 32767.0f)) + (MIN))
-
 
 typedef byte col_t[4];
 
@@ -144,9 +134,22 @@ typedef struct particle_tree_s {
 	float		grav;
 	float		accel;
 	part_move_t	move;
-	float		custom;		
+	float		custom;
+	int         vbo_start;
+	int         vbo_count;
 } particle_type_t;
 
+typedef struct qmb_particle_vertex_s {
+	float position[3];
+	float tex[2];
+	GLubyte color[4];
+} qmb_particle_vertex_t;
+
+#define MAX_BEAM_TRAIL 10
+#define MAX_VERTICES_PER_PARTICLE (MAX_BEAM_TRAIL * 8)
+#define MAX_VERTICES_IN_BATCH (ABSOLUTE_MAX_PARTICLES * MAX_VERTICES_PER_PARTICLE)
+static qmb_particle_vertex_t vertices[MAX_VERTICES_IN_BATCH];
+static int particleVertexCount = 0;
 
 #define	MAX_PTEX_COMPONENTS		8
 typedef struct particle_texture_s {
@@ -154,7 +157,6 @@ typedef struct particle_texture_s {
 	int			components;
 	float		coords[MAX_PTEX_COMPONENTS][4];		
 } particle_texture_t;
-
 
 static float sint[7] = {0.000000, 0.781832, 0.974928, 0.433884, -0.433884, -0.974928, -0.781832};
 static float cost[7] = {1.000000, 0.623490, -0.222521, -0.900969, -0.900969, -0.222521, 0.623490};
@@ -173,9 +175,9 @@ static vec3_t trail_stop;
 
 qbool qmb_initialized = false;
 
-cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
+static cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
+static cvar_t amf_part_fulldetail = {"gl_particle_fulldetail", "0", CVAR_LATCH};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
-cvar_t amf_part_fulldetail = {"gl_particle_fulldetail", "0", CVAR_LATCH};
 
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
@@ -413,7 +415,8 @@ void QMB_InitParticles (void) {
 	qmb_initialized = true;
 }
 
-void QMB_ClearParticles (void) {
+void QMB_ClearParticles (void)
+{
 	int	i;
 
 	if (!qmb_initialized)
@@ -437,257 +440,25 @@ void QMB_ClearParticles (void) {
 	ParticleCount = 0;
 	ParticleCountHigh = 0;
 
+	particleVertexCount = 0;
 }
 
-// TODO: Split up
-static void QMB_UpdateParticles(void) 
+static void QMB_SetParticleVertex(int pos, float x, float y, float z, float s, float t, col_t colour)
 {
-	int i, contents;
-	float grav, bounce;
-	vec3_t oldorg, stop, normal;
-	particle_type_t *pt;
-	particle_t *p, *kill;
-
-	if (!qmb_initialized)
-		return;
-
-	particle_count = 0;
-	grav = movevars.gravity / 800.0;
-
-	//VULT PARTICLES
-	WeatherEffect();
-
-	for (i = 0; i < num_particletypes; i++) 
-	{
-		pt = &particle_types[i];
-
-		#ifdef _WIN32
-		if (pt && ((int) pt->start == 1)) 
-		{
-			/* hack! fixme!
-			 * for some reason in some occasions - MS VS 2005 compiler
-			 * this address doesn't point to 0 as other unitialized do, but to 0x00000001 */	
-			pt->start = NULL; 
-			Com_DPrintf("ERROR: particle_type[%i].start == 1\n", i);
-		}
-		#endif // _WIN32
-
-		if (pt->start) 
-		{
-			for (p = pt->start; p && p->next; )
-			{
-				kill = p->next;
-				if (kill->die <= particle_time)
-				{
-					p->next = kill->next;
-					kill->next = free_particles;
-					free_particles = kill;
-					//VULT STATS
-					ParticleStats(-1);
-				}
-				else 
-				{
-					p = p->next;
-				}
-			}
-
-			if (pt->start->die <= particle_time) 
-			{
-				kill = pt->start;
-				pt->start = kill->next;
-				kill->next = free_particles;
-				free_particles = kill;
-				//VULT STATS
-				ParticleStats(-1);
-			}
-		}
-
-		for (p = pt->start; p; p = p->next) 
-		{
-			if (particle_time < p->start)
-				continue;
-			
-			particle_count++;
-			
-			p->size += p->growth * cls.frametime;
-			
-			if (p->size <= 0)
-			{
-				p->die = 0;
-				continue;
-			}
-
-			//VULT PARTICLE
-			if (pt->id == p_streaktrail || pt->id == p_lightningbeam)
-				p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
-			else
-				p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
-			
-			p->rotangle += p->rotspeed * cls.frametime;
-			
-			if (p->hit)
-				continue;
-
-			//VULT - switched these around so velocity is scaled before gravity is applied
-			VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel)
-			p->vel[2] += pt->grav * grav * cls.frametime;
-			
-			//VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel)
-			
-			switch (pt->move) 
-			{
-				case pm_static:
-					break;
-				case pm_normal:
-					VectorCopy(p->org, oldorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents (p->org)) {
-						p->hit = 1;
-						VectorCopy(oldorg, p->org);
-						VectorClear(p->vel);
-					}
-					break;
-				case pm_float:
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					p->org[2] += p->size + 1;		
-					contents = TruePointContents(p->org);
-					if (!ISUNDERWATER(contents))
-						p->die = 0;
-					p->org[2] -= p->size + 1;
-					break;
-				case pm_nophysics:
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					break;
-				case pm_die:
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents (p->org))
-						p->die = 0;
-					break;
-				case pm_bounce:
-					if (!gl_bounceparticles.value || p->bounces) 
-					{
-						if (pt->id == p_smallspark)
-							VectorCopy(p->org, p->endorg);
-
-						VectorMA(p->org, cls.frametime, p->vel, p->org);
-						if (CONTENTS_SOLID == TruePointContents (p->org))
-							p->die = 0;
-					}
-					else 
-					{
-						VectorCopy(p->org, oldorg);
-						if (pt->id == p_smallspark)
-							VectorCopy(oldorg, p->endorg);
-						VectorMA(p->org, cls.frametime, p->vel, p->org);
-						if (CONTENTS_SOLID == TruePointContents (p->org)) 
-						{
-							if (TraceLineN(oldorg, p->org, stop, normal)) 
-							{
-								VectorCopy(stop, p->org);
-								bounce = -pt->custom * DotProduct(p->vel, normal);
-								VectorMA(p->vel, bounce, normal, p->vel);
-								p->bounces++;
-								if (pt->id == p_smallspark)
-									VectorCopy(stop, p->endorg);
-							}
-						}
-					}
-					break;
-				//VULT PARTICLES
-				case pm_rain:
-					VectorCopy(p->org, oldorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					contents = TruePointContents(p->org);
-					if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID)
-					{
-						if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2)
-						{
-							vec3_t rorg;
-							VectorCopy(oldorg, rorg);
-							//Find out where the rain should actually hit
-							//This is a slow way of doing it, I'll fix it later maybe...
-							while (1)
-							{
-								rorg[2] = rorg[2] - 0.5f;
-								contents = TruePointContents(rorg);
-								if (contents == CONTENTS_WATER)
-								{
-									if (amf_weather_rain_fast.value == 2)
-										break;
-									RainSplash(rorg);
-									break;
-								}
-								else if (contents == CONTENTS_SOLID)
-								{
-									byte col[3] = {128,128,128};
-									SparkGen (rorg, col, 3, 50, 0.15);
-									break;
-								}
-							}
-							VectorCopy(rorg, p->org);
-							VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
-						}
-						p->die = 0;
-					}
-					else
-						VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
-					break;
-				//VULT PARTICLES
-				case pm_streak:
-					VectorCopy(p->org, oldorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents (p->org)) 
-					{
-						if (TraceLineN(oldorg, p->org, stop, normal)) 
-						{
-							VectorCopy(stop, p->org);
-							bounce = -pt->custom * DotProduct(p->vel, normal);
-							VectorMA(p->vel, bounce, normal, p->vel);
-							//VULT - Prevent crazy sliding
-	/*						p->vel[0] = 2 * p->vel[0] / 3;
-							p->vel[1] = 2 * p->vel[1] / 3;
-							p->vel[2] = 2 * p->vel[2] / 3;*/
-						}
-					}
-					VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
-					if (VectorLength(p->vel) == 0)
-						p->die = 0;
-					break;
-				case pm_streakwave:
-					VectorCopy(p->org, oldorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					VX_ParticleTrail (oldorg, p->org, p->size, 0.5, p->color);
-					p->vel[0] = 19 * p->vel[0] / 20;
-					p->vel[1] = 19 * p->vel[1] / 20;
-					p->vel[2] = 19 * p->vel[2] / 20;
-					break;
-				case pm_inferno:
-					VectorCopy(p->org, oldorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-	/*				if (CONTENTS_SOLID == TruePointContents (p->org)) 
-					{*/
-						if (TraceLineN(oldorg, p->org, stop, normal)) 
-						{
-							VectorCopy(stop, p->org);
-							CL_FakeExplosion(p->org);
-							p->die = 0;
-						}
-					//}
-					VectorCopy(p->org, p->endorg);
-					InfernoTrail(oldorg, p->endorg, p->vel);
-					break;
-				default:
-					assert(!"QMB_UpdateParticles: unexpected pt->move");
-					break;
-			}
-		}
-	}
+	VectorSet(vertices[pos].position, x, y, z);
+	vertices[pos].tex[0] = s;
+	vertices[pos].tex[1] = t;
+	memcpy(vertices[pos].color, colour, sizeof(vertices[pos].color));
 }
 
-__inline static void DRAW_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_t * p, vec3_t coord[4])
+__inline static int CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_t * p, vec3_t coord[4], int pos)
 {
 	vec3_t verts[4];
 	float scale = p->size;
+
+	if (pos + 4 >= MAX_VERTICES_IN_BATCH) {
+		return pos;
+	}
 
 	if (p->rotspeed)
 	{
@@ -713,45 +484,443 @@ __inline static void DRAW_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle
 		VectorMA(p->org, scale, coord[3], verts[3]);
 	}
 
-	glColor4ubv(p->color);
+	QMB_SetParticleVertex(pos++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
+	QMB_SetParticleVertex(pos++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
+	QMB_SetParticleVertex(pos++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
+	QMB_SetParticleVertex(pos++, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
 
-	glBegin(GL_QUADS);
-
-	glTexCoord2f(ptex->coords[p->texindex][0], ptex->coords[p->texindex][3]);
-	glVertex3fv(verts[0]);
-	glTexCoord2f(ptex->coords[p->texindex][0], ptex->coords[p->texindex][1]);
-	glVertex3fv(verts[1]);
-	glTexCoord2f(ptex->coords[p->texindex][2], ptex->coords[p->texindex][1]);
-	glVertex3fv(verts[2]);
-	glTexCoord2f(ptex->coords[p->texindex][2], ptex->coords[p->texindex][3]);
-	glVertex3fv(verts[3]);
-
-	glEnd();
+	return pos;
 }
 
-void QMB_DrawParticles (void) {
-	int	i, j, k, drawncount;
-	vec3_t v, up, right, billboard[4], velcoord[4], neworg;
-	particle_t *p;
-	particle_type_t *pt;
-	particle_texture_t *ptex;
-	int texture = 0, l;
+static void QMB_FillParticleVertexBuffer(void)
+{
+	vec3_t billboard[4], velcoord[4];
+	particle_type_t* pt;
+	particle_t* p;
 	float oldMatrix[16];
+	int i, j, k;
+	int l;
+	int pos = 0;
 
-	if (!qmb_initialized)
-		return;
-
-	particle_time = r_refdef2.time;
-
-	if (!ISPAUSED)
-		QMB_UpdateParticles();
-
-	GL_DisableFog();
+	GL_GetMatrix(GL_MODELVIEW, oldMatrix);
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
 	VectorNegate(billboard[2], billboard[0]);
 	VectorNegate(billboard[3], billboard[1]);
+
+	for (i = 0; i < num_particletypes; i++) {
+		pt = &particle_types[i];
+
+		pt->vbo_start = pos;
+		pt->vbo_count = 0;
+
+		if (!pt->start) {
+			continue;
+		}
+		if (pt->drawtype == pd_hide) {
+			continue;
+		}
+
+		//VULT PARTICLES
+		switch (pt->drawtype) {
+		case pd_beam:
+			for (p = pt->start; p; p = p->next) {
+				if (particle_time < p->start || particle_time >= p->die) {
+					continue;
+				}
+				for (l = min(amf_part_traildetail.integer, 10); l > 0; l--) {
+					if (pos + 4 >= MAX_VERTICES_IN_BATCH) {
+						break;
+					}
+
+					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l*amf_part_trailwidth.value));
+
+					QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], 1, 0, p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], 1, 1, p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], 0, 1, p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], 0, 0, p->color);
+				}
+			}
+			break;
+		case pd_spark:
+		case pd_sparkray:
+			for (p = pt->start; p; p = p->next) {
+				vec3_t neworg;
+				float* point;
+				GLubyte farColor[4];
+
+				if (particle_time < p->start || particle_time >= p->die) {
+					continue;
+				}
+
+				if (pos + 8 >= MAX_VERTICES_IN_BATCH) {
+					break;
+				}
+
+				if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
+					VectorCopy(p->org, neworg);
+				}
+
+				point = (pt->drawtype == pd_spark ? p->org : p->endorg);
+				farColor[0] = p->color[0] >> 1;
+				farColor[1] = p->color[1] >> 1;
+				farColor[2] = p->color[2] >> 1;
+				farColor[3] = 0;
+
+				QMB_SetParticleVertex(pos++, point[0], point[1], point[2], 0, 0, p->color);
+				for (j = 7; j >= 0; j--) {
+					vec3_t v;
+					for (k = 0; k < 3; k++) {
+						if (pt->drawtype == pd_spark) {
+							v[k] = p->org[k] - p->vel[k] / 8 + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
+						}
+						else {
+							v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
+						}
+					}
+					QMB_SetParticleVertex(pos++, v[0], v[1], v[2], 1, 0, farColor);
+				}
+			}
+			break;
+		case pd_billboard:
+		case pd_billboard_vel:
+			{
+				int drawncount = 0;
+				particle_texture_t* ptex = &particle_textures[pt->texture];
+
+				for (p = pt->start; p; p = p->next) {
+					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					if (pt->drawtype == pd_billboard) {
+						if (gl_clipparticles.value) {
+							if (drawncount >= 3 && VectorSupCompare(p->org, r_origin, 30)) {
+								continue;
+							}
+							drawncount++;
+						}
+						pos = CALCULATE_PARTICLE_BILLBOARD(ptex, p, billboard, pos);
+					}
+					else if (pt->drawtype == pd_billboard_vel) {
+						vec3_t up, right;
+
+						VectorCopy(p->vel, up);
+						CrossProduct(vpn, up, right);
+						VectorNormalizeFast(right);
+						VectorScale(up, pt->custom, up);
+
+						VectorAdd(up, right, velcoord[2]);
+						VectorSubtract(right, up, velcoord[3]);
+						VectorNegate(velcoord[2], velcoord[0]);
+						VectorNegate(velcoord[3], velcoord[1]);
+						pos = CALCULATE_PARTICLE_BILLBOARD(ptex, p, velcoord, pos);
+					}
+				}
+			}
+			break;
+
+			//VULT PARTICLES - This produces the shockwave effect
+			//Mind you it can be used for more than that... Decals come to mind first
+		case pd_normal:
+			{
+				particle_texture_t* ptex = &particle_textures[pt->texture];
+
+				for (p = pt->start; p; p = p->next) {
+					float vector[4];
+
+					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
+					GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
+					GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
+					GLM_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
+					GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
+					
+					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 0, p->color);
+					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 0, p->color);
+					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 1, p->color);
+					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 1, p->color);
+
+					GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
+
+					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 0, p->color);
+					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 0, p->color);
+					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 1, p->color);
+					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 1, p->color);
+				}
+			}
+			break;
+		default:
+			assert(!"QMB_DrawParticles: unexpected drawtype");
+			break;
+		}
+
+		pt->vbo_count = pos - pt->vbo_start;
+	}
+
+	particleVertexCount = pos;
+}
+
+// TODO: Split up
+static void QMB_UpdateParticles(void)
+{
+	int i, contents;
+	float grav, bounce;
+	vec3_t oldorg, stop, normal;
+	particle_type_t *pt;
+	particle_t *p, *kill;
+
+	if (!qmb_initialized)
+		return;
+
+	particle_count = 0;
+	grav = movevars.gravity / 800.0;
+	particleVertexCount = 0;
+
+	//VULT PARTICLES
+	WeatherEffect();
+
+	for (i = 0; i < num_particletypes; i++) {
+		pt = &particle_types[i];
+
+#ifdef _WIN32
+		if (pt && ((int)pt->start == 1)) {
+			/* hack! fixme!
+			 * for some reason in some occasions - MS VS 2005 compiler
+			 * this address doesn't point to 0 as other unitialized do, but to 0x00000001 */
+			pt->start = NULL;
+			Com_DPrintf("ERROR: particle_type[%i].start == 1\n", i);
+		}
+#endif // _WIN32
+
+		if (pt->start) {
+			for (p = pt->start; p && p->next; ) {
+				kill = p->next;
+				if (kill->die <= particle_time) {
+					p->next = kill->next;
+					kill->next = free_particles;
+					free_particles = kill;
+					//VULT STATS
+					ParticleStats(-1);
+				}
+				else {
+					p = p->next;
+				}
+			}
+
+			if (pt->start->die <= particle_time) {
+				kill = pt->start;
+				pt->start = kill->next;
+				kill->next = free_particles;
+				free_particles = kill;
+				//VULT STATS
+				ParticleStats(-1);
+			}
+		}
+
+		for (p = pt->start; p; p = p->next) {
+			if (particle_time < p->start)
+				continue;
+
+			particle_count++;
+
+			p->size += p->growth * cls.frametime;
+
+			if (p->size <= 0) {
+				p->die = 0;
+				continue;
+			}
+
+			//VULT PARTICLE
+			if (pt->id == p_streaktrail || pt->id == p_lightningbeam) {
+				p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
+			}
+			else {
+				p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
+			}
+
+			p->rotangle += p->rotspeed * cls.frametime;
+
+			if (p->hit) {
+				continue;
+			}
+
+			//VULT - switched these around so velocity is scaled before gravity is applied
+			VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel);
+			p->vel[2] += pt->grav * grav * cls.frametime;
+
+			switch (pt->move) {
+			case pm_static:
+				break;
+			case pm_normal:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents(p->org)) {
+					p->hit = 1;
+					VectorCopy(oldorg, p->org);
+					VectorClear(p->vel);
+				}
+				break;
+			case pm_float:
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				p->org[2] += p->size + 1;
+				contents = TruePointContents(p->org);
+				if (!ISUNDERWATER(contents)) {
+					p->die = 0;
+				}
+				p->org[2] -= p->size + 1;
+				break;
+			case pm_nophysics:
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				break;
+			case pm_die:
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents(p->org)) {
+					p->die = 0;
+				}
+				break;
+			case pm_bounce:
+				if (!gl_bounceparticles.value || p->bounces) {
+					if (pt->id == p_smallspark)
+						VectorCopy(p->org, p->endorg);
+
+					VectorMA(p->org, cls.frametime, p->vel, p->org);
+					if (CONTENTS_SOLID == TruePointContents(p->org))
+						p->die = 0;
+				}
+				else {
+					VectorCopy(p->org, oldorg);
+					if (pt->id == p_smallspark)
+						VectorCopy(oldorg, p->endorg);
+					VectorMA(p->org, cls.frametime, p->vel, p->org);
+					if (CONTENTS_SOLID == TruePointContents(p->org)) {
+						if (TraceLineN(oldorg, p->org, stop, normal)) {
+							VectorCopy(stop, p->org);
+							bounce = -pt->custom * DotProduct(p->vel, normal);
+							VectorMA(p->vel, bounce, normal, p->vel);
+							p->bounces++;
+							if (pt->id == p_smallspark) {
+								VectorCopy(stop, p->endorg);
+							}
+						}
+					}
+				}
+				break;
+				//VULT PARTICLES
+			case pm_rain:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				contents = TruePointContents(p->org);
+				if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID) {
+					if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2) {
+						vec3_t rorg;
+						VectorCopy(oldorg, rorg);
+						//Find out where the rain should actually hit
+						//This is a slow way of doing it, I'll fix it later maybe...
+						while (1) {
+							rorg[2] = rorg[2] - 0.5f;
+							contents = TruePointContents(rorg);
+							if (contents == CONTENTS_WATER) {
+								if (amf_weather_rain_fast.value == 2) {
+									break;
+								}
+								RainSplash(rorg);
+								break;
+							}
+							else if (contents == CONTENTS_SOLID) {
+								byte col[3] = { 128,128,128 };
+								SparkGen(rorg, col, 3, 50, 0.15);
+								break;
+							}
+						}
+						VectorCopy(rorg, p->org);
+						VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+					}
+					p->die = 0;
+				}
+				else {
+					VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+				}
+				break;
+				//VULT PARTICLES
+			case pm_streak:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents(p->org)) {
+					if (TraceLineN(oldorg, p->org, stop, normal)) {
+						VectorCopy(stop, p->org);
+						bounce = -pt->custom * DotProduct(p->vel, normal);
+						VectorMA(p->vel, bounce, normal, p->vel);
+					}
+				}
+				VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+				if (VectorLength(p->vel) == 0) {
+					p->die = 0;
+				}
+				break;
+			case pm_streakwave:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				VX_ParticleTrail(oldorg, p->org, p->size, 0.5, p->color);
+				p->vel[0] = 19 * p->vel[0] / 20;
+				p->vel[1] = 19 * p->vel[1] / 20;
+				p->vel[2] = 19 * p->vel[2] / 20;
+				break;
+			case pm_inferno:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (TraceLineN(oldorg, p->org, stop, normal)) {
+					VectorCopy(stop, p->org);
+					CL_FakeExplosion(p->org);
+					p->die = 0;
+				}
+				VectorCopy(p->org, p->endorg);
+				InfernoTrail(oldorg, p->endorg, p->vel);
+				break;
+			default:
+				assert(!"QMB_UpdateParticles: unexpected pt->move");
+				break;
+			}
+		}
+	}
+
+	QMB_FillParticleVertexBuffer();
+}
+
+void QMB_DrawParticles(void)
+{
+	particle_type_t *pt;
+	particle_texture_t *ptex;
+	int	i, j;
+	int pos = 0;
+
+	if (!qmb_initialized) {
+		return;
+	}
+
+	particle_time = r_refdef2.time;
+
+	if (!ISPAUSED) {
+		QMB_UpdateParticles();
+	}
+
+	if (!particleVertexCount) {
+		return;
+	}
+
+	GL_DisableFog();
 
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
@@ -760,191 +929,71 @@ void QMB_DrawParticles (void) {
 
 	for (i = 0; i < num_particletypes; i++) {
 		pt = &particle_types[i];
-		if (!pt->start)
+		if (!pt->vbo_count) {
 			continue;
-		if (pt->drawtype == pd_hide)
+		}
+
+		if (!pt->start) {
 			continue;
+		}
+		if (pt->drawtype == pd_hide) {
+			continue;
+		}
 
 		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
 
-		switch(pt->drawtype) {
 		//VULT PARTICLES
+		switch (pt->drawtype) {
 		case pd_beam:
-			ptex = &particle_textures[pt->texture];
-			glEnable(GL_TEXTURE_2D);
-			//VULT PARTICLES
-			if (texture != ptex->texnum)
-			{
-				GL_Bind(ptex->texnum);
-				texture = ptex->texnum;
-			}
-
-			for (p = pt->start; p; p = p->next) 
-			{
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
-				glColor4ubv(p->color);
-				for (l=amf_part_traildetail.value; l>0 ;l--)
-				{
-					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size/(l*amf_part_trailwidth.value));
-					glBegin (GL_QUADS);
-					glTexCoord2f (1,0);
-					glVertex3f(varray_vertex[ 0], varray_vertex[ 1], varray_vertex[ 2]);
-					glTexCoord2f (1,1);
-					glVertex3f(varray_vertex[ 4], varray_vertex[ 5], varray_vertex[ 6]);
-					glTexCoord2f (0,1);
-					glVertex3f(varray_vertex[ 8], varray_vertex[ 9], varray_vertex[10]);
-					glTexCoord2f (0,0);
-					glVertex3f(varray_vertex[12], varray_vertex[13], varray_vertex[14]);
-					glEnd();
-				}
-			}
-			break;
-		case pd_spark:
-			glDisable(GL_TEXTURE_2D);
-			for (p = pt->start; p; p = p->next) {
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
-
-				if (!TraceLineN(p->endorg, p->org, neworg, NULL)) 
-					VectorCopy(p->org, neworg);
-
-				glBegin(GL_TRIANGLE_FAN);
-				glColor4ubv(p->color);
-				glVertex3fv(p->org);
-				glColor4ub(p->color[0] >> 1, p->color[1] >> 1, p->color[2] >> 1, 0);
-				for (j = 7; j >= 0; j--) {
-					for (k = 0; k < 3; k++)
-						v[k] = p->org[k] - p->vel[k] / 8 + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
-					glVertex3fv(v);
-				}
-				glEnd();
-			}
-			break;
-		case pd_sparkray:
-			glDisable(GL_TEXTURE_2D);
-			for (p = pt->start; p; p = p->next) {
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
-
-				if (!TraceLineN(p->endorg, p->org, neworg, NULL)) 
-					VectorCopy(p->org, neworg);
-
-				glBegin (GL_TRIANGLE_FAN);
-				glColor4ubv(p->color);
-				glVertex3fv(p->endorg);
-				glColor4ub(p->color[0] >> 1, p->color[1] >> 1, p->color[2] >> 1, 0);
-				for (j = 7; j >= 0; j--) {
-					for (k = 0; k < 3; k++)
-						v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
-					glVertex3fv (v);
-				}
-				glEnd();
-			}
-			break;
 		case pd_billboard:
-			ptex = &particle_textures[pt->texture];
-			glEnable(GL_TEXTURE_2D);
-			//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
-			if (texture != ptex->texnum)
-			{
-				GL_Bind(ptex->texnum);
-				texture = ptex->texnum;
-			}
-			drawncount = 0;
-			for (p = pt->start; p; p = p->next) {
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
-
-				if (gl_clipparticles.value) {
-					if (drawncount >= 3 && VectorSupCompare(p->org, r_origin, 30))
-						continue;
-					drawncount++;
-				}
-				DRAW_PARTICLE_BILLBOARD(ptex, p, billboard);
-			}
-			break;
 		case pd_billboard_vel:
-			ptex = &particle_textures[pt->texture];
-			glEnable(GL_TEXTURE_2D);
-			//VULT PARTICLES
-			if (texture != ptex->texnum)
-			{
-				GL_Bind(ptex->texnum);
-				texture = ptex->texnum;
-			}
-			for (p = pt->start; p; p = p->next) {
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
-
-				VectorCopy (p->vel, up);
-				CrossProduct(vpn, up, right);
-				VectorNormalizeFast(right);
-				VectorScale(up, pt->custom, up);
-
-				VectorAdd(up, right, velcoord[2]);
-				VectorSubtract(right, up, velcoord[3]);
-				VectorNegate(velcoord[2], velcoord[0]);
-				VectorNegate(velcoord[3], velcoord[1]);
-				DRAW_PARTICLE_BILLBOARD(ptex, p, velcoord);
-			}
-			break;
-		//VULT PARTICLES - This produces the shockwave effect
-		//Mind you it can be used for more than that... Decals come to mind first
 		case pd_normal:
 			ptex = &particle_textures[pt->texture];
 			glEnable(GL_TEXTURE_2D);
-			//VULT PARTICLES
-			if (texture != ptex->texnum)
-			{
-				GL_Bind(ptex->texnum);
-				texture = ptex->texnum;
+			GL_Bind(ptex->texnum);
+
+			glBegin(GL_QUADS);
+			for (j = 0; j < pt->vbo_count; j += 4) {
+				glColor4ubv(vertices[pt->vbo_start + j].color);
+				glTexCoord2fv(vertices[pt->vbo_start + j].tex);
+				glVertex3fv(vertices[pt->vbo_start + j].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 1].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 2].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 3].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
 			}
-			for (p = pt->start; p; p = p->next) 
-			{
-				if (particle_time < p->start || particle_time >= p->die)
-					continue;
+			glEnd();
+			break;
+		case pd_spark:
+		case pd_sparkray:
+			glDisable(GL_TEXTURE_2D);
+			for (j = 0; j < pt->vbo_count; j += 8) {
+				byte* color = vertices[pt->vbo_start + j].color;
 
-				GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-				GL_Translate(GL_MODELVIEW, p->org[0], p->org[1], p->org[2]);
-				GL_Scale(GL_MODELVIEW, p->size, p->size, p->size);
-				GL_Rotate(GL_MODELVIEW, p->endorg[0], 0, 1, 0);
-				GL_Rotate(GL_MODELVIEW, p->endorg[1], 0, 0, 1);
-				GL_Rotate(GL_MODELVIEW, p->endorg[2], 1, 0, 0);
-				glColor4ubv(p->color);
-				glBegin (GL_QUADS);
-				glTexCoord2f (0,0);
-				glVertex3f (-p->size, -p->size, 0);
-				glTexCoord2f (1,0);
-				glVertex3f (p->size, -p->size, 0);
-				glTexCoord2f (1,1);
-				glVertex3f (p->size, p->size, 0);
-				glTexCoord2f (0,1);
-				glVertex3f (-p->size, p->size, 0);
+				glBegin(GL_TRIANGLE_FAN);
+				glColor4ubv(color);
+				glVertex3fv(vertices[pt->vbo_start + j].position);
+				glColor4ub(color[0] >> 1, color[1] >> 1, color[2] >> 1, 0);
+				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 4].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 5].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 6].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 7].position);
 				glEnd();
-
-				//And since quads seem to be one sided...
-				GL_Rotate(GL_MODELVIEW, 180, 1, 0, 0);
-				glColor4ubv(p->color);
-				glBegin (GL_QUADS);
-				glTexCoord2f (0,0);
-				glVertex3f (-p->size, -p->size, 0);
-				glTexCoord2f (1,0);
-				glVertex3f (p->size, -p->size, 0);
-				glTexCoord2f (1,1);
-				glVertex3f (p->size, p->size, 0);
-				glTexCoord2f (0,1);
-				glVertex3f (-p->size, p->size, 0);
-				glEnd();
-				GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 			}
 			break;
+
 		default:
 			assert(!"QMB_DrawParticles: unexpected drawtype");
 			break;
 		}
 	}
 
+	// FIXME: GL_ResetState()
 	glEnable(GL_TEXTURE_2D);
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
