@@ -760,7 +760,7 @@ void R_InitParticles(void)
 void R_ParticleFrame(void)
 {
 	Classic_CalculateParticles();
-	// QMB_CalculateParticles();
+	QMB_CalculateParticles();
 }
 
 void R_ClearParticles(void)

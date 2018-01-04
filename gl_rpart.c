@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qsound.h"
 
+static void GLM_QMB_DrawParticles(void);
+static void GLC_QMB_DrawParticles(void);
 
 //VULT
 static float alphatrail_s;
@@ -287,16 +289,45 @@ do {																													\
 	count++;																											\
 } while(0);
 
-void QMB_AllocParticles (void) {
+static int QMB_CompareParticleType(const void* lhs_, const void* rhs_)
+{
+	const particle_type_t* lhs = (const particle_type_t*)lhs_;
+	const particle_type_t* rhs = (const particle_type_t*)rhs_;
+	int comparison;
+
+	comparison = lhs->SrcBlend - rhs->SrcBlend;
+	comparison = comparison ? comparison : lhs->DstBlend - rhs->DstBlend;
+	comparison = comparison ? comparison : lhs->texture - rhs->texture;
+
+	return comparison;
+}
+
+static void QMB_SortParticleTypes(void)
+{
+	int i;
+
+	// To reduce state changes: Sort by blend mode, then texture
+	qsort(particle_types, num_particletypes, sizeof(particle_types[0]), QMB_CompareParticleType);
+
+	// Fix up references
+	for (i = 0; i < num_particletypes; ++i) {
+		particle_type_index[particle_types[i].id] = i;
+	}
+}
+
+void QMB_AllocParticles(void)
+{
 	extern cvar_t r_particles_count;
 
 	r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_particles_count.integer, ABSOLUTE_MAX_PARTICLES);
 
-	if (particles || r_numparticles < 1) // seems QMB_AllocParticles() called from wrong place
+	if (particles || r_numparticles < 1) {
+		// seems QMB_AllocParticles() called from wrong place
 		Sys_Error("QMB_AllocParticles: internal error");
+	}
 
 	// can't alloc on Hunk, using native memory
-	particles = (particle_t *) Q_malloc (r_numparticles * sizeof(particle_t));
+	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
 void QMB_InitParticles (void) {
@@ -403,14 +434,14 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_blacklavasmoke, pd_billboard, GL_ZERO, GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0);
 
 	//Allow overkill trails
-	if (amf_part_fulldetail.integer)
-	{
+	if (amf_part_fulldetail.integer) {
 		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0);
 	}
-	else
-	{
+	else {
 		ADD_PARTICLE_TYPE(p_streaktrail, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_none, 128, 0, 0, pm_die, 0);
 	}
+
+	QMB_SortParticleTypes();
 
 	qmb_initialized = true;
 }
@@ -899,13 +930,8 @@ static void QMB_UpdateParticles(void)
 	QMB_FillParticleVertexBuffer();
 }
 
-void QMB_DrawParticles(void)
+void QMB_CalculateParticles(void)
 {
-	particle_type_t *pt;
-	particle_texture_t *ptex;
-	int	i, j;
-	int pos = 0;
-
 	if (!qmb_initialized) {
 		return;
 	}
@@ -915,93 +941,20 @@ void QMB_DrawParticles(void)
 	if (!ISPAUSED) {
 		QMB_UpdateParticles();
 	}
+}
 
-	if (!particleVertexCount) {
+void QMB_DrawParticles(void)
+{
+	if (!qmb_initialized || !particleVertexCount) {
 		return;
 	}
 
-	GL_DisableFog();
-
-	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
-
-	for (i = 0; i < num_particletypes; i++) {
-		pt = &particle_types[i];
-		if (!pt->vbo_count) {
-			continue;
-		}
-
-		if (!pt->start) {
-			continue;
-		}
-		if (pt->drawtype == pd_hide) {
-			continue;
-		}
-
-		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
-
-		//VULT PARTICLES
-		switch (pt->drawtype) {
-		case pd_beam:
-		case pd_billboard:
-		case pd_billboard_vel:
-		case pd_normal:
-			ptex = &particle_textures[pt->texture];
-			glEnable(GL_TEXTURE_2D);
-			GL_Bind(ptex->texnum);
-
-			glBegin(GL_QUADS);
-			for (j = 0; j < pt->vbo_count; j += 4) {
-				glColor4ubv(vertices[pt->vbo_start + j].color);
-				glTexCoord2fv(vertices[pt->vbo_start + j].tex);
-				glVertex3fv(vertices[pt->vbo_start + j].position);
-				glTexCoord2fv(vertices[pt->vbo_start + j + 1].tex);
-				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
-				glTexCoord2fv(vertices[pt->vbo_start + j + 2].tex);
-				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
-				glTexCoord2fv(vertices[pt->vbo_start + j + 3].tex);
-				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
-			}
-			glEnd();
-			break;
-		case pd_spark:
-		case pd_sparkray:
-			glDisable(GL_TEXTURE_2D);
-			for (j = 0; j < pt->vbo_count; j += 8) {
-				byte* color = vertices[pt->vbo_start + j].color;
-
-				glBegin(GL_TRIANGLE_FAN);
-				glColor4ubv(color);
-				glVertex3fv(vertices[pt->vbo_start + j].position);
-				glColor4ub(color[0] >> 1, color[1] >> 1, color[2] >> 1, 0);
-				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 4].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 5].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 6].position);
-				glVertex3fv(vertices[pt->vbo_start + j + 7].position);
-				glEnd();
-			}
-			break;
-
-		default:
-			assert(!"QMB_DrawParticles: unexpected drawtype");
-			break;
-		}
+	if (GL_ShadersSupported()) {
+		GLM_QMB_DrawParticles();
 	}
-
-	// FIXME: GL_ResetState()
-	glEnable(GL_TEXTURE_2D);
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
-
-	GL_EnableFog();
+	else {
+		GLC_QMB_DrawParticles();
+	}
 }
 
 #define	INIT_NEW_PARTICLE(_pt, _p, _color, _size, _time)	\
@@ -3075,4 +3028,97 @@ void VX_LightningTrail (vec3_t start, vec3_t end)
 {
 	col_t color={255,77,0,255};
 	AddParticle(p_lightningbeam, start, 1, 50, 0.75, color, end);
+}
+
+
+static void GLC_QMB_DrawParticles(void)
+{
+	particle_type_t *pt;
+	particle_texture_t *ptex;
+	int	i, j;
+	int pos = 0;
+
+	GL_DisableFog();
+	GL_DepthMask(GL_FALSE);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
+	GL_TextureEnvMode(GL_MODULATE);
+	GL_ShadeModel(GL_SMOOTH);
+
+	for (i = 0; i < num_particletypes; i++) {
+		pt = &particle_types[i];
+		if (!pt->vbo_count || !pt->start) {
+			continue;
+		}
+
+		if (pt->drawtype == pd_hide) {
+			continue;
+		}
+
+		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
+
+		//VULT PARTICLES
+		switch (pt->drawtype) {
+		case pd_beam:
+		case pd_billboard:
+		case pd_billboard_vel:
+		case pd_normal:
+			ptex = &particle_textures[pt->texture];
+			glEnable(GL_TEXTURE_2D);
+			GL_Bind(ptex->texnum);
+
+			glBegin(GL_QUADS);
+			for (j = 0; j < pt->vbo_count; j += 4) {
+				glColor4ubv(vertices[pt->vbo_start + j].color);
+				glTexCoord2fv(vertices[pt->vbo_start + j].tex);
+				glVertex3fv(vertices[pt->vbo_start + j].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 1].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 2].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
+				glTexCoord2fv(vertices[pt->vbo_start + j + 3].tex);
+				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
+			}
+			glEnd();
+			break;
+		case pd_spark:
+		case pd_sparkray:
+			glDisable(GL_TEXTURE_2D);
+			for (j = 0; j < pt->vbo_count; j += 8) {
+				byte* color = vertices[pt->vbo_start + j].color;
+
+				glBegin(GL_TRIANGLE_FAN);
+				glColor4ubv(color);
+				glVertex3fv(vertices[pt->vbo_start + j].position);
+				glColor4ub(color[0] >> 1, color[1] >> 1, color[2] >> 1, 0);
+				glVertex3fv(vertices[pt->vbo_start + j + 1].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 2].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 3].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 4].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 5].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 6].position);
+				glVertex3fv(vertices[pt->vbo_start + j + 7].position);
+				glEnd();
+			}
+			break;
+
+		default:
+			assert(!"QMB_DrawParticles: unexpected drawtype");
+			break;
+		}
+	}
+
+	// FIXME: GL_ResetState()
+	glEnable(GL_TEXTURE_2D);
+	GL_DepthMask(GL_TRUE);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_TextureEnvMode(GL_REPLACE);
+	GL_ShadeModel(GL_FLAT);
+
+	GL_EnableFog();
+}
+
+static void GLM_QMB_DrawParticles(void)
+{
+	// TODO
 }
