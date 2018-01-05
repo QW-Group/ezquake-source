@@ -768,9 +768,9 @@ static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, in
 		memset(data, 0, 4 * maxWidth * maxHeight);
 		for (y = 0; y < height; y++) {
 			for (x = 0; x < width; x++) {
-				int base = (x * height + y) * 4;
+				int base = (x + y * width) * 4;
 
-				d = (sin(4 * x * M_PI / minDimensions) + cos(4 * y * M_PI / minDimensions)) * 64 + 64;
+				d = (sin(4 * x * M_PI / width) + cos(4 * y * M_PI / height)) * 64 + 64;
 				d = bound(0, d, 255);
 
 				data[base] = data[base + 1] = data[base + 2] = d;
