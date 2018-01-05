@@ -1,6 +1,7 @@
 #version 430
 
-uniform sampler2D tex;
+layout(binding=0) uniform sampler2D tex;
+
 uniform float gamma2d;
 
 in vec2 TextureCoord;
@@ -12,10 +13,9 @@ out vec4 frag_colour;
 
 void main()
 {
-	vec4 texColor;
+	vec4 texColor = texture(tex, TextureCoord);
 
 	if (UseTexture != 0) {
-		texColor = texture(tex, TextureCoord);
 		if (AlphaTest != 0 && texColor.a < 0.666) {
 			discard;
 		}

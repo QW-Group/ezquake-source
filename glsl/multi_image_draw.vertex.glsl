@@ -7,8 +7,6 @@ layout(location = 3) in vec2 inTexCoordBR;
 layout(location = 4) in vec4 inColour;
 layout(location = 5) in int inFlags;
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
 uniform bool alphafont;
 
 out vec4 gPositionTL;

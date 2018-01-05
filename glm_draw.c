@@ -201,12 +201,10 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
-		multiImage_tex = glGetUniformLocation(multiImageProgram.program, "tex");
 		multiImage_gamma2d = glGetUniformLocation(multiImageProgram.program, "gamma2d");
 		multiImage_alphaFont = glGetUniformLocation(multiImageProgram.program, "alphafont");
-		multiImageProgram.uniforms_found = true;
 
-		glProgramUniform1i(multiImageProgram.program, multiImage_tex, 0);
+		multiImageProgram.uniforms_found = true;
 	}
 
 	if (!imageVBO.vbo) {
