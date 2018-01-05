@@ -46,7 +46,7 @@ void GL_DisableTMU(GLenum target);
 
 int GL_LoadTexture(char *identifier, int width, int height, byte *data, int mode, int bpp);
 int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
-
+void GL_DeleteTexture(int* texture);
 
 byte *GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 int GL_LoadTexturePixels(byte *, char *, int, int, int);

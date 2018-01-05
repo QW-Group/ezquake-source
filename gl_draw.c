@@ -1190,9 +1190,10 @@ void Draw_ConsoleBackground (int lines)
 				last_lvlshot->height = conback.height;
 
 				if (old_levelshot) {
-					glDeleteTextures(1, &old_levelshot->texnum);
-					old_levelshot->texnum = 0;
-					CachePic_RemoveByPic(old_levelshot);
+					GL_DeleteTexture(&old_levelshot->texnum);
+					if (!CachePic_RemoveByPic(old_levelshot)) {
+						old_levelshot->texnum = 0;
+					}
 				}
 			}
 

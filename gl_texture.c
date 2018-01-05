@@ -1084,3 +1084,25 @@ GLuint GL_CreateTextureArray(char* identifier, int width, int height, int depth,
 	return gl_texturenum;
 }
 
+void GL_DeleteTexture(int* texture)
+{
+	int i;
+	GLuint gl_texture;
+
+	if (!texture || !*texture) {
+		return;
+	}
+
+	// Find reference and delete
+	for (i = 0; i < numgltextures; i++) {
+		if (gltextures[i].texnum == *texture) {
+			Q_free(gltextures[i].pathname);
+			memmove(gltextures + i, gltextures + i + 1, (numgltextures - i - 1) * sizeof(gltextures[0]));
+			--numgltextures;
+		}
+	}
+
+	gl_texture = *texture;
+	glDeleteTextures(1, &gl_texture);
+	*texture = 0;
+}
