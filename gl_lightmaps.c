@@ -581,8 +581,6 @@ glpoly_t* BuildSurfaceDisplayList(msurface_t *fa)
 		VectorCopy(vec, poly->verts[i]);
 		poly->verts[i][7] = s;
 		poly->verts[i][8] = t;
-
-		poly->verts[i][9] = fa->lightmaptexturenum;
 	}
 
 	poly->numverts = lnumverts;
