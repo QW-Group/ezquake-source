@@ -15,6 +15,15 @@ static GLint drawBrushModel_applyLightmap;
 static GLint drawBrushModel_applyTexture;
 static GLint drawBrushModel_gamma3d;
 
+typedef struct glm_brushmodelbatch_s {
+	int start;
+	int end;
+
+	qbool texture2d;
+	int skin_texture;
+	GLuint array_texture;
+} glm_brushmodelbatch_t;
+
 void GLM_CreateBrushModelProgram(void)
 {
 	if (!drawBrushModelProgram.program) {
@@ -343,7 +352,7 @@ static int GL_BatchRequestSorter(const void* lhs_, const void* rhs_)
 
 static void GL_FlushBrushModelBatch(void)
 {
-	int i, j;
+	int i;
 	GLuint last_vao = 0;
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
@@ -351,7 +360,8 @@ static void GL_FlushBrushModelBatch(void)
 	float mvMatrix[MAX_BRUSHMODEL_BATCH][16];
 	float colors[MAX_BRUSHMODEL_BATCH][4];
 	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
-	int base = 0;
+	glm_brushmodelbatch_t batches[MAX_BRUSHMODEL_BATCH];
+	int batch = 0;
 
 	if (!batch_count) {
 		return;
@@ -363,42 +373,42 @@ static void GL_FlushBrushModelBatch(void)
 
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
 
+	batches[0].start = 0;
 	for (i = 0; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
-		GL_BindVertexArray(req->vao);
-
 		if (req->texture_array != last_array) {
-			if (i - base) {
-				glUniformMatrix4fv(drawBrushModel_modelViewMatrix, i - base, GL_FALSE, (const GLfloat*) mvMatrix);
-				glUniform4fv(drawBrushModel_color, i - base, (const GLfloat*) colors);
-				glUniform1iv(drawBrushModel_applyLightmap, i - base, use_lightmaps);
-
-				for (j = base; j < i; ++j) {
-					glm_brushmodel_req_t* req = &brushmodel_requests[j];
-
-					glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, j - base);
-				}
-
-				base = i;
+			if (i) {
+				++batch;
 			}
 
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, last_array = req->texture_array, true);
+			batches[batch].start = i;
+			batches[batch].texture2d = false;
+			batches[batch].array_texture = req->texture_array;
 		}
 
-		memcpy(&mvMatrix[i - base], req->mvMatrix, sizeof(mvMatrix[i]));
-		memcpy(&colors[i - base], req->baseColor, sizeof(req->baseColor));
-		use_lightmaps[i - base] = req->isworldmodel ? 1 : 0;
+		batches[batch].end = i;
+		memcpy(&mvMatrix[i], req->mvMatrix, sizeof(mvMatrix[i]));
+		memcpy(&colors[i], req->baseColor, sizeof(req->baseColor));
+		use_lightmaps[i] = req->isworldmodel ? 1 : 0;
 	}
 
-	glUniformMatrix4fv(drawBrushModel_modelViewMatrix, batch_count - base, GL_FALSE, (const GLfloat*) mvMatrix);
-	glUniform4fv(drawBrushModel_color, batch_count - base, (const GLfloat*) colors);
-	glUniform1iv(drawBrushModel_applyLightmap, batch_count - base, use_lightmaps);
+	glUniformMatrix4fv(drawBrushModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
+	glUniform4fv(drawBrushModel_color, batch_count, (const GLfloat*) colors);
+	glUniform1iv(drawBrushModel_applyLightmap, batch_count, use_lightmaps);
 
-	for (i = base; i < batch_count; ++i) {
-		glm_brushmodel_req_t* req = &brushmodel_requests[i];
+	for (i = 0; i <= batch; ++i) {
+		int x;
 
-		glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, i - base);
+		GL_BindTexture(GL_TEXTURE_2D_ARRAY, batches[i].array_texture, true);
+
+		for (x = batches[i].start; x <= batches[i].end; ++x) {
+			glm_brushmodel_req_t* req = &brushmodel_requests[x];
+
+			GL_BindVertexArray(req->vao);
+
+			glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, x);
+		}
 	}
 
 	batch_count = 0;
