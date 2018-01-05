@@ -1,7 +1,6 @@
 #version 430
 
 uniform sampler2D materialTex;
-uniform bool apply_texture;
 uniform float gamma3d;
 
 in vec2 TextureCoord;
@@ -12,10 +11,7 @@ void main()
 {
 	vec4 texColor;
 
-	texColor = fragColour;
-	if (apply_texture) {
-		texColor = texture(materialTex, TextureCoord) * fragColour;
-	}
+	texColor = texture(materialTex, TextureCoord) * fragColour;
 
 	frag_colour = vec4(pow(texColor.rgb, vec3(gamma3d)), texColor.a);
 }

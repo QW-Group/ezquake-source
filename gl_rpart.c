@@ -370,9 +370,20 @@ static void QMB_CreateAtlasTexture(int tex1, int tex2, int tex3, int tex4)
 		return;
 	}
 
+	// Allocate 3 lines of solid colour for non-textured particles
+	total_height += 3;
+
 	// Create texture in memory
 	atlas_texels = Q_malloc(sizeof(byte) * 4 * total_height * max_width);
 	y_pos = 0;
+
+	// Solid white for non-textured particles
+	memset(atlas_texels + (total_height - 3) * max_width * 4, 0xFF, 3 * 4 * max_width);
+	particle_textures[ptex_none].components = 1;
+	particle_textures[ptex_none].coords[0][0] = particle_textures[ptex_none].coords[0][2] = 1.0f / max_width;
+	particle_textures[ptex_none].coords[0][1] = particle_textures[ptex_none].coords[0][3] = (total_height - 1.0f) / total_height;
+
+	// Copy each texture into the atlas
 	for (i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
 		int yOffset, xOffset;
 		int width = widths[i];
@@ -697,6 +708,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				vec3_t neworg;
 				float* point;
 				GLubyte farColor[4];
+				particle_texture_t* ptex = &particle_textures[ptex_none];
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -716,7 +728,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				farColor[2] = p->color[2] >> 1;
 				farColor[3] = 0;
 
-				QMB_SetParticleVertex(pos++, point[0], point[1], point[2], 0, 0, p->color);
+				QMB_SetParticleVertex(pos++, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 				for (j = 7; j >= 0; j--) {
 					vec3_t v;
 					for (k = 0; k < 3; k++) {
@@ -727,7 +739,7 @@ static void QMB_FillParticleVertexBuffer(void)
 							v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
 						}
 					}
-					QMB_SetParticleVertex(pos++, v[0], v[1], v[2], 0, 0, farColor);
+					QMB_SetParticleVertex(pos++, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor);
 				}
 			}
 			break;
@@ -789,24 +801,24 @@ static void QMB_FillParticleVertexBuffer(void)
 					GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
 					
 					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 0, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 0, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 1, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
 					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 1, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
 
 					GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
 					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 0, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 0, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 1, 1, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
 					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], 0, 1, p->color);
+					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
 				}
 			}
 			break;
@@ -3160,10 +3172,9 @@ static void GLC_QMB_DrawParticles(void)
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GL_TextureEnvMode(GL_MODULATE);
 	GL_ShadeModel(GL_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
 
 	for (i = 0; i < num_particletypes; i++) {
-		qbool texture;
-
 		pt = &particle_types[i];
 		if (!pt->vbo_count || pt->drawtype == pd_hide) {
 			continue;
@@ -3171,15 +3182,8 @@ static void GLC_QMB_DrawParticles(void)
 
 		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
 
-		texture = pt->drawtype != pd_spark && pt->drawtype != pd_sparkray;
-		if (!texture) {
-			glDisable(GL_TEXTURE_2D);
-		}
-		else {
-			ptex = &particle_textures[pt->texture];
-			glEnable(GL_TEXTURE_2D);
-			GL_Bind(ptex->texnum);
-		}
+		ptex = &particle_textures[pt->texture];
+		GL_Bind(ptex->texnum);
 
 		for (j = 0; j < pt->vbo_count; j += pt->verts_per_primitive) {
 			int k;
@@ -3187,9 +3191,7 @@ static void GLC_QMB_DrawParticles(void)
 			glBegin(GL_TRIANGLE_FAN);
 			for (k = 0; k < pt->verts_per_primitive; ++k) {
 				glColor4ubv(vertices[pt->vbo_start + j + k].color);
-				if (texture) {
-					glTexCoord2fv(vertices[pt->vbo_start + j + k].tex);
-				}
+				glTexCoord2fv(vertices[pt->vbo_start + j + k].tex);
 				glVertex3fv(vertices[pt->vbo_start + j + k].position);
 			}
 			glEnd();
@@ -3213,7 +3215,6 @@ static glm_program_t qmbParticleProgram;
 static GLint qmbParticleProgram_modelViewMatrix;
 static GLint qmbParticleProgram_projectionMatrix;
 static GLint qmbParticleProgram_materialTex;
-static GLint qmbParticleProgram_apply_texture;
 static GLint qmbParticleProgram_gamma3d;
 
 static GLuint GLM_QMB_CreateParticleVAO(void)
@@ -3255,7 +3256,6 @@ static void GLM_QMB_CompileParticleProgram(void)
 		qmbParticleProgram_modelViewMatrix = glGetUniformLocation(qmbParticleProgram.program, "modelViewMatrix");
 		qmbParticleProgram_projectionMatrix = glGetUniformLocation(qmbParticleProgram.program, "projectionMatrix");
 		qmbParticleProgram_materialTex = glGetUniformLocation(qmbParticleProgram.program, "materialTex");
-		qmbParticleProgram_apply_texture = glGetUniformLocation(qmbParticleProgram.program, "apply_texture");
 		qmbParticleProgram_gamma3d = glGetUniformLocation(qmbParticleProgram.program, "gamma3d");
 		qmbParticleProgram.uniforms_found = true;
 
@@ -3266,7 +3266,6 @@ static void GLM_QMB_CompileParticleProgram(void)
 static void GLM_QMB_DrawParticles(void)
 {
 	particle_type_t *pt;
-	particle_texture_t *ptex;
 	int	i, j;
 	int pos = 0;
 	GLuint vao;
@@ -3300,59 +3299,13 @@ static void GLM_QMB_DrawParticles(void)
 		GL_ShadeModel(GL_SMOOTH);
 
 		for (i = 0; i < num_particletypes; i++) {
-			qbool texture;
-
-			const char* typeNames[] = {
-				"p_spark", "p_smoke", "p_fire", "p_bubble", "p_lavasplash", "p_gunblast", "p_chunk", "p_shockwave",
-				"p_inferno_flame", "p_inferno_trail", "p_sparkray", "p_staticbubble", "p_trailpart",
-				"p_dpsmoke", "p_dpfire", "p_teleflare", "p_blood1", "p_blood2", "p_blood3",
-				//VULT PARTICLES
-				"p_rain",
-				"p_alphatrail",
-				"p_railtrail",
-				"p_streak",
-				"p_streaktrail",
-				"p_streakwave",
-				"p_lightningbeam",
-				"p_vxblood",
-				"p_lavatrail",
-				"p_vxsmoke",
-				"p_muzzleflash",
-				"p_inferno", //VULT - NOT TO BE CONFUSED WITH THE 0.36 FIREBALL
-				"p_2dshockwave",
-				"p_vxrocketsmoke",
-				"p_trailbleed", 
-				"p_bleedspike", 
-				"p_flame",
-				"p_bubble2",
-				"p_bloodcloud",
-				"p_chunkdir",
-				"p_smallspark",
-				//[HyperNewbie] - particles!
-				"p_slimeglow", //slime glow
-				"p_slimebubble", //slime yellowish growing popping bubble
-				"p_blacklavasmoke",
-				"num_particletypes",
-			};
-
 			pt = &particle_types[i];
 			if (!pt->vbo_count || pt->drawtype == pd_hide) {
 				continue;
 			}
 
-			GL_EnterRegion(typeNames[pt->id]);
 			GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
-
-			texture = pt->drawtype != pd_spark && pt->drawtype != pd_sparkray;
-			if (!texture) {
-				glUniform1i(qmbParticleProgram_apply_texture, 0);
-			}
-			else {
-				ptex = &particle_textures[pt->texture];
-				GL_Bind(ptex->texnum);
-
-				glUniform1i(qmbParticleProgram_apply_texture, 1);
-			}
+			GL_Bind(particle_textures[pt->texture].texnum);
 
 			for (j = 0; j < pt->vbo_count; j += pt->verts_per_primitive) {
 				glDrawArrays(GL_TRIANGLE_FAN, pt->vbo_start + j, pt->verts_per_primitive);
