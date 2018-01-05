@@ -74,6 +74,7 @@ glBufferData_t     glBufferDataExt = NULL;
 glBufferSubData_t  glBufferSubDataExt = NULL;
 glGenBuffers_t     glGenBuffers = NULL;
 glDeleteBuffers_t  glDeleteBuffers = NULL;
+glBindBufferBase_t glBindBufferBase = NULL;
 
 // VAO functions
 glGenVertexArrays_t         glGenVertexArrays = NULL;
@@ -115,6 +116,8 @@ glProgramUniform1i_t     glProgramUniform1i;
 glUniformMatrix4fv_t     glUniformMatrix4fv;
 glUniform4fv_t           glUniform4fv;
 glUniform1iv_t           glUniform1iv;
+glGetUniformBlockIndex_t glGetUniformBlockIndex;
+glUniformBlockBinding_t  glUniformBlockBinding;
 
 // Texture functions 
 glActiveTexture_t        glActiveTexture;
@@ -218,6 +221,7 @@ static void CheckShaderExtensions(void)
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGenBuffers);
 			OPENGL_LOAD_SHADER_FUNCTION(glDeleteBuffers);
+			OPENGL_LOAD_SHADER_FUNCTION(glBindBufferBase);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glGenVertexArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
@@ -248,6 +252,10 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniform1iv);
 			OPENGL_LOAD_SHADER_FUNCTION(glProgramUniform1i);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformBlockIndex);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformBlockIndex);
+			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
@@ -550,6 +558,9 @@ static glm_vbo_t* vbo_list = NULL;
 // Linked list of all vao buffers
 static glm_vao_t* vao_list = NULL;
 
+// Linked list of all uniform buffers
+static glm_ubo_t* ubo_list = NULL;
+
 void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
 {
 	if (vbo->vbo) {
@@ -561,6 +572,28 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
 	}
 	vbo->name = name;
 	glGenBuffers(1, &vbo->vbo);
+}
+
+void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
+{
+	if (ubo->ubo) {
+		glDeleteBuffers(1, &ubo->ubo);
+	}
+	else {
+		ubo->next = ubo_list;
+		ubo_list = ubo;
+	}
+	ubo->name = name;
+	glGenBuffers(1, &ubo->ubo);
+
+	if (data && size) {
+		glBindBufferExt(GL_UNIFORM_BUFFER, ubo->ubo);
+		glBufferDataExt(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
+	}
+}
+
+void GL_UpdateUniformBuffer(glm_ubo_t* ubo, void* data, int size, GLuint bindingPoint)
+{
 }
 
 void GL_GenVertexArray(glm_vao_t* vao)
@@ -579,6 +612,7 @@ void GL_DeleteBuffers(void)
 {
 	glm_vao_t* vao = vao_list;
 	glm_vbo_t* vbo = vbo_list;
+	glm_ubo_t* ubo = ubo_list;
 
 	if (glBindVertexArray) {
 		glBindVertexArray(0);
@@ -608,6 +642,20 @@ void GL_DeleteBuffers(void)
 		}
 
 		vbo = vbo->next;
+		prev->next = NULL;
+	}
+
+	while (ubo) {
+		glm_ubo_t* prev = ubo;
+
+		if (ubo->ubo) {
+			if (glDeleteBuffers) {
+				glDeleteBuffers(1, &ubo->ubo);
+			}
+			ubo->ubo = 0;
+		}
+
+		ubo = ubo->next;
 		prev->next = NULL;
 	}
 

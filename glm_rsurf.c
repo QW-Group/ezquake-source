@@ -229,35 +229,50 @@ void GLM_DrawLightmapIndexedPolygonByType(GLenum type, byte* color, unsigned int
 }
 
 static glm_program_t drawworld;
-static GLint drawworld_modelViewMatrix;
-static GLint drawworld_projectionMatrix;
-static GLint drawworld_materialTex;
-static GLint drawworld_detailTex;
-static GLint drawworld_lightmapTex;
-static GLint drawworld_drawDetailTex;
-static GLint drawworld_drawCaustics;
-static GLint drawworld_time;
-static GLint drawworld_gamma3d;
+static GLint drawworld_RefdefCvars_block;
+static GLint drawworld_WorldCvars_block;
 
-static GLint drawworld_drawflat;
-static GLint drawworld_textureless;
-static GLint drawworld_wallcolor;
-static GLint drawworld_floorcolor;
+typedef struct block_refdef_s {
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+	float time;
+	float gamma3d;
 
-static GLint drawworld_waterAlpha;
-static GLint drawworld_fastturb;
-static GLint drawworld_telecolor;
-static GLint drawworld_lavacolor;
-static GLint drawworld_slimecolor;
-static GLint drawworld_watercolor;
-static GLint drawworld_causticsTex;
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+} block_refdef_t;
 
-static GLint drawworld_fastsky;
-static GLint drawworld_skycolor;
+typedef struct block_world_s {
+	//
+	float waterAlpha;
+
+	// drawflat for solid surfaces
+	int r_drawflat;
+	int r_fastturb;
+	int r_fastsky;
+
+	// ! No padding required as above is 16 bytes...
+
+	float r_wallcolor[4];  // only used if r_drawflat 1 or 3
+	float r_floorcolor[4]; // only used if r_drawflat 1 or 2
+
+	// drawflat for turb surfaces
+	float r_telecolor[4];
+	float r_lavacolor[4];
+	float r_slimecolor[4];
+	float r_watercolor[4];
+
+	// drawflat for sky
+	float r_skycolor[4];
+} block_world_t;
 
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 static int drawworld_compiledOptions;
+static glm_ubo_t ubo_refdef;
+static glm_ubo_t ubo_worldcvars;
+static block_refdef_t refdef;
+static block_world_t world;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures)
@@ -282,76 +297,63 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
-		drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
-		drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
-		drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
-		drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
-		drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
-		drawworld_causticsTex = glGetUniformLocation(drawworld.program, "causticsTex");
-		drawworld_waterAlpha = glGetUniformLocation(drawworld.program, "waterAlpha");
-		drawworld_time = glGetUniformLocation(drawworld.program, "time");
-		drawworld_gamma3d = glGetUniformLocation(drawworld.program, "gamma3d");
+		drawworld_RefdefCvars_block = glGetUniformBlockIndex(drawworld.program, "RefdefCvars");
+		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
 
-		drawworld_drawflat = glGetUniformLocation(drawworld.program, "r_drawflat");
-		drawworld_textureless = glGetUniformLocation(drawworld.program, "r_textureless");
-		drawworld_wallcolor = glGetUniformLocation(drawworld.program, "r_wallcolor");
-		drawworld_floorcolor = glGetUniformLocation(drawworld.program, "r_floorcolor");
+		glUniformBlockBinding(drawworld.program, drawworld_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
 
-		drawworld_fastturb = glGetUniformLocation(drawworld.program, "r_fastturb");
-		drawworld_telecolor = glGetUniformLocation(drawworld.program, "r_telecolor");
-		drawworld_lavacolor = glGetUniformLocation(drawworld.program, "r_lavacolor");
-		drawworld_slimecolor = glGetUniformLocation(drawworld.program, "r_slimecolor");
-		drawworld_watercolor = glGetUniformLocation(drawworld.program, "r_watercolor");
-
-		drawworld_fastsky = glGetUniformLocation(drawworld.program, "r_fastsky");
-		drawworld_skycolor = glGetUniformLocation(drawworld.program, "r_skycolor");
+		GL_GenUniformBuffer(&ubo_refdef, "refdef", &refdef, sizeof(refdef));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_REFDEF_CVARS, ubo_refdef.ubo);
+		GL_GenUniformBuffer(&ubo_worldcvars, "world-cvars", &world, sizeof(world));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_DRAWWORLD_CVARS, ubo_worldcvars.ubo);
 
 		drawworld.uniforms_found = true;
-
-		// Constants: texture arrays
-		glProgramUniform1i(drawworld.program, drawworld_materialTex, TEXTURE_UNIT_MATERIAL);
-		glProgramUniform1i(drawworld.program, drawworld_lightmapTex, TEXTURE_UNIT_LIGHTMAPS);
-
-		// Detail textures
-		glProgramUniform1i(drawworld.program, drawworld_detailTex, TEXTURE_UNIT_DETAIL);
-		glProgramUniform1i(drawworld.program, drawworld_causticsTex, TEXTURE_UNIT_CAUSTICS);
 	}
 }
 
-#define PASS_COLOR_AS_4F(x) (x.color[0]*1.0f/255),(x.color[1]*1.0f/255),(x.color[2]*1.0f/255),255
+#define PASS_COLOR_AS_4F(target, cvar) \
+{ \
+	target[0] = (cvar.color[0] * 1.0f / 255); \
+	target[1] = (cvar.color[1] * 1.0f / 255); \
+	target[2] = (cvar.color[2] * 1.0f / 255); \
+	target[3] = 1.0f; \
+}
 
 static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qbool caustics)
 {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, gl_textureless, r_skycolor;
 
 	Compile_DrawWorldProgram(detail_tex, caustics);
 
-	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+	GLM_GetMatrix(GL_MODELVIEW, refdef.modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, refdef.projectionMatrix);
+	refdef.time = cl.time;
+	refdef.gamma3d = v_gamma.value;
+	refdef.r_textureless = gl_textureless.integer;
+
+	world.waterAlpha = wateralpha;
+
+	world.r_drawflat = r_drawflat.integer;
+	PASS_COLOR_AS_4F(world.r_wallcolor, r_wallcolor);
+	PASS_COLOR_AS_4F(world.r_floorcolor, r_floorcolor);
+
+	world.r_fastturb = r_fastturb.integer;
+	PASS_COLOR_AS_4F(world.r_telecolor, r_telecolor);
+	PASS_COLOR_AS_4F(world.r_lavacolor, r_lavacolor);
+	PASS_COLOR_AS_4F(world.r_slimecolor, r_slimecolor);
+	PASS_COLOR_AS_4F(world.r_watercolor, r_watercolor);
+
+	world.r_fastsky = r_fastsky.integer;
+	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
+
+	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
+	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
+	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
+	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(world), &world, GL_DYNAMIC_DRAW);
 
 	GL_UseProgram(drawworld.program);
-	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform1f(drawworld_waterAlpha, wateralpha);
-	glUniform1f(drawworld_time, cl.time);
-	glUniform1f(drawworld_gamma3d, v_gamma.value);
-
-	glUniform1i(drawworld_drawflat, r_drawflat.integer);
-	glUniform1i(drawworld_textureless, gl_textureless.integer);
-	glUniform4f(drawworld_wallcolor, PASS_COLOR_AS_4F(r_wallcolor));
-	glUniform4f(drawworld_floorcolor, PASS_COLOR_AS_4F(r_floorcolor));
-
-	glUniform1i(drawworld_fastturb, r_fastturb.integer);
-	glUniform4f(drawworld_telecolor, PASS_COLOR_AS_4F(r_telecolor));
-	glUniform4f(drawworld_lavacolor, PASS_COLOR_AS_4F(r_lavacolor));
-	glUniform4f(drawworld_slimecolor, PASS_COLOR_AS_4F(r_slimecolor));
-	glUniform4f(drawworld_watercolor, PASS_COLOR_AS_4F(r_watercolor));
-
-	glUniform1i(drawworld_fastsky, r_fastsky.integer);
-	glUniform4f(drawworld_skycolor, PASS_COLOR_AS_4F(r_skycolor));
 
 	GL_BindVertexArray(vao);
 }

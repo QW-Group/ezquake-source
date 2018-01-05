@@ -2,29 +2,46 @@
 
 #ezquake-definitions
 
-uniform sampler2D detailTex;
-uniform sampler2D causticsTex;
-uniform sampler2DArray materialTex;
-uniform sampler2DArray lightmapTex;
-uniform float waterAlpha;
-uniform float gamma3d;
-uniform float time;
+layout(binding=0) uniform sampler2DArray materialTex;
+layout(binding=1) uniform sampler2DArray lightmapTex;
+#ifdef DRAW_DETAIL_TEXTURES
+layout(binding=2) uniform sampler2D detailTex;
+#endif
+#ifdef DRAW_CAUSTIC_TEXTURES
+layout(binding=3) uniform sampler2D causticsTex;
+#endif
 
-// drawflat for solid surfaces
-uniform int r_drawflat;
-uniform vec4 r_wallcolor;      // only used if r_drawflat 1 or 3
-uniform vec4 r_floorcolor;     // only used if r_drawflat 1 or 2
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
 
-// drawflat for turb surfaces
-uniform bool r_fastturb;
-uniform vec4 r_telecolor;
-uniform vec4 r_lavacolor;
-uniform vec4 r_slimecolor;
-uniform vec4 r_watercolor;
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
 
-// drawflat for sky
-uniform bool r_fastsky;
-uniform vec4 r_skycolor;
+layout(std140) uniform WorldCvars {
+	//
+	float waterAlpha;
+
+	// drawflat for solid surfaces
+	int r_drawflat;
+	int r_fastturb;
+	int r_fastsky;
+
+	vec4 r_wallcolor;      // only used if r_drawflat 1 or 3
+	vec4 r_floorcolor;     // only used if r_drawflat 1 or 2
+
+	// drawflat for turb surfaces
+	vec4 r_telecolor;
+	vec4 r_lavacolor;
+	vec4 r_slimecolor;
+	vec4 r_watercolor;
+
+	// drawflat for sky
+	vec4 r_skycolor;
+};
 
 in vec3 TextureCoord;
 in vec3 TexCoordLightmap;
@@ -70,7 +87,7 @@ void main()
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
 		// Turb surface
-		if (r_fastturb) {
+		if (r_fastturb != 0) {
 			if (turbType == TEXTURE_TURB_WATER) {
 				frag_colour = vec4(r_watercolor.rgb, waterAlpha);
 			}
@@ -87,7 +104,7 @@ void main()
 				frag_colour = vec4(FlatColor, waterAlpha);
 			}
 		}
-		else if (r_fastsky && turbType == TEXTURE_TURB_SKY) {
+		else if (r_fastsky != 0 && turbType == TEXTURE_TURB_SKY) {
 			frag_colour = r_skycolor;
 		}
 		else {

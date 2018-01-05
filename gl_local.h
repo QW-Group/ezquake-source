@@ -367,6 +367,7 @@ typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GL
 typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
 typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
+typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
 
 // VAOs
 typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
@@ -408,6 +409,8 @@ typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLint location, GL
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform1iv_t)(GLint location, GLsizei count, const GLint *value);
+typedef GLuint (APIENTRY *glGetUniformBlockIndex_t)(GLuint program, const GLchar * uniformBlockName);
+typedef void (APIENTRY *glUniformBlockBinding_t)(GLuint program, GLuint uBlockIndex, GLuint uBlockBinding);
 
 // Textures
 typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
@@ -431,6 +434,7 @@ extern glBufferData_t        glBufferDataExt;
 extern glBufferSubData_t     glBufferSubDataExt;
 extern glGenBuffers_t        glGenBuffers;
 extern glDeleteBuffers_t     glDeleteBuffers;
+extern glBindBufferBase_t    glBindBufferBase;
 
 // VAO functions
 extern glGenVertexArrays_t         glGenVertexArrays;
@@ -472,6 +476,8 @@ extern glProgramUniform1i_t     glProgramUniform1i;
 extern glUniform4fv_t           glUniform4fv;
 extern glUniform1iv_t           glUniform1iv;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
+extern glGetUniformBlockIndex_t glGetUniformBlockIndex;
+extern glUniformBlockBinding_t  glUniformBlockBinding;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
@@ -837,6 +843,7 @@ void GL_DeleteBuffers(void);
 
 void GL_InitialiseState(void);
 void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
+void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size);
 void GL_GenVertexArray(glm_vao_t* vao);
 
 void GL_DeleteModelData(void);
@@ -845,6 +852,11 @@ void GL_Hint(GLenum target, GLenum mode);
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
 #define GLM_Enabled GL_ShadersSupported
+
+enum {
+	GL_BINDINGPOINT_REFDEF_CVARS,
+	GL_BINDINGPOINT_DRAWWORLD_CVARS
+};
 
 #endif /* !__GL_LOCAL_H__ */
 

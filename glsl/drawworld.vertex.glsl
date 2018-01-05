@@ -15,10 +15,15 @@ out vec2 DetailCoord;
 out vec3 FlatColor;
 out flat int Flags;
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform float time;
-uniform bool r_textureless;   // if enabled, texture coordinates are always 0,0
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
 
 void main()
 {
@@ -35,7 +40,7 @@ void main()
 		DetailCoord = vec2(0, 0);
 	}
 	else {
-		if (r_textureless) {
+		if (r_textureless != 0) {
 			TextureCoord = vec3(0, 0, materialNumber);
 		}
 		else {
