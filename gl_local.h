@@ -661,6 +661,7 @@ void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
+void GL_InvalidateTextureReferences(int texture);
 
 void GL_BindBuffer(GLenum target, GLuint buffer);
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
@@ -741,7 +742,7 @@ void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
 void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
 void GLM_DrawWaterSurfaces(void);
-void GL_BuildCommonTextureArrays(void);
+void GL_BuildCommonTextureArrays(qbool vid_restart);
 
 void R_DrawAliasModel(entity_t *ent, qbool shell_only);
 

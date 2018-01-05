@@ -7,6 +7,7 @@
 #include "gl_local.h"
 
 // #define GL_PARANOIA
+#define MAX_LOGGED_TEXTURE_UNITS 8
 
 static GLenum currentDepthFunc = GL_LESS;
 static double currentNearRange = 0;
@@ -27,15 +28,15 @@ static qbool gl_texture_2d = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
 static GLboolean gl_depth_mask = GL_FALSE;
-static int currenttexture = -1;
-static GLuint currentTextureArray = -1;
+static int currenttexture = 0;
+static GLuint currentTextureArray = 0;
 static GLuint currentArrayBuffer;
 static GLuint currentUniformBuffer;
 
 static GLenum oldtarget = GL_TEXTURE0;
-static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-static GLuint cntarrays[] = {0, 0, 0, 0, 0, 0, 0, 0};
-static qbool texunitenabled[] = { false, false, false, false, false, false, false, false };
+static int cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+static GLuint cntarrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
 static qbool mtexenabled = false;
 
 static GLenum lastTextureMode = GL_MODULATE;
@@ -173,8 +174,8 @@ void GL_InitialiseState(void)
 	gl_blend = false;
 	gl_cull_face = false;
 	gl_depth_mask = GL_FALSE;
-	currenttexture = -1;
-	currentTextureArray = -1;
+	currenttexture = 0;
+	currentTextureArray = 0;
 	lastTextureMode = GL_MODULATE;
 	old_alphablend_flags = 0;
 
@@ -182,7 +183,7 @@ void GL_InitialiseState(void)
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures); ++i) {
-		cnttextures[i] = -1;
+		cnttextures[i] = 0;
 		cntarrays[i] = 0;
 		texunitenabled[i] = false;
 	}
@@ -296,10 +297,10 @@ void GL_InitTextureState(void)
 	int i;
 
 	// Multi texture.
-	currenttexture = -1;
+	currenttexture = 0;
 	oldtarget = GL_TEXTURE0;
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++) {
-		cnttextures[i] = -1;
+		cnttextures[i] = 0;
 		cntarrays[i] = 0;
 	}
 	mtexenabled = false;
@@ -583,4 +584,27 @@ void GL_BindBuffer(GLenum target, GLuint buffer)
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
 {
 	glBufferData(target, size, data, usage);
+}
+
+void GL_InvalidateTextureReferences(int texture)
+{
+	int i;
+
+	// glDeleteTextures(texture) has been called - same reference might be re-used in future
+	// If a texture that is currently bound is deleted, the binding reverts to 0 (the default texture)
+	if (currenttexture == texture) {
+		currenttexture = 0;
+	}
+	if (currentTextureArray == texture) {
+		currentTextureArray = 0;
+	}
+
+	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); ++i) {
+		if (cnttextures[i] == texture) {
+			cnttextures[i] = 0;
+		}
+		if (cntarrays[i] == texture) {
+			cntarrays[i] = 0;
+		}
+	}
 }

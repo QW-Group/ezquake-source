@@ -11,6 +11,7 @@
 
 #define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
 
+static GLuint common_array;
 static glm_vao_t model_vao;
 static glm_vbo_t instance_vbo;
 
@@ -29,7 +30,6 @@ typedef struct common_texture_s {
 	struct common_texture_s* final;
 } common_texture_t;
 
-void GL_BuildCommonTextureArrays(void);
 static void GLM_CreateBrushModelVAO(void);
 
 static qbool AliasModelIsAnySize(model_t* mod)
@@ -78,10 +78,10 @@ static void GL_DeleteModelTextures(model_t* mod)
 	memset(mod->texture_array_first, 0, sizeof(mod->texture_array_first));
 	mod->texture_array_count = 0;
 
-	for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-		mod->simpletexture_scalingS[j] = mod->simpletexture_scalingT[j] = 0;
-		mod->simpletexture_array = mod->simpletexture_indexes[j] = 0;
-	}
+	memset(mod->simpletexture_scalingS, 0, sizeof(mod->simpletexture_scalingS));
+	memset(mod->simpletexture_scalingT, 0, sizeof(mod->simpletexture_scalingT));
+	memset(mod->simpletexture_indexes, 0, sizeof(mod->simpletexture_indexes));
+	mod->simpletexture_array = 0;
 
 	// clear brush model data
 	if (mod->type == mod_brush) {
@@ -178,8 +178,6 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 	}
 	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
-	GL_BindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture, true);
-
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
 	// Might need to tile multiple times
@@ -219,17 +217,17 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 		*scaleS = *scaleT = 0;
 	}
 	if (texture_array_index) {
-		*texture_array_index = -1;
+		*texture_array_index = 0;
 	}
 	if (texture_array) {
-		*texture_array = -1;
+		*texture_array = 0;
 	}
 
 	if (!stdTexture) {
 		return;
 	}
 
-	GL_Bind(stdTexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 
@@ -249,7 +247,7 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 		*scaleT = height * 1.0f / tex->gl_height;
 	}
 
-	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->width, tex->height, tex->allocated);
+	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->gl_width, tex->gl_height, tex->allocated);
 	if (texture_array) {
 		*texture_array = tex->gl_texturenum;
 	}
@@ -522,7 +520,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 			}
 		}
 
-		GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
+		//GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
 
 		// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
 		memcpy(&new_vbo_buffer[(*new_vbo_position) * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
@@ -555,8 +553,6 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 		}
 
 		mod->vao_simple = model_vao;
-		// FIXME: scaling factors
-		GL_SetModelTextureArray(mod, commonTex->gl_texturenum, 0.5f, 0.5f);
 		mod->vbo = model_vbo;
 		mod->vbo_start = 0;
 	}
@@ -573,7 +569,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 
 		for (j = 0; j < mod->numtextures; ++j) {
 			texture_t* tex = mod->textures[j];
-			if (tex && tex->loaded && !tex->gl_texture_array) {
+			if (tex && tex->loaded && !tex->gl_texture_array && tex->gl_texturenum) {
 				GL_CopyToTextureArraySize(common, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index);
 			}
 		}
@@ -657,14 +653,19 @@ void GL_CompressTextureArrays(common_texture_t* list)
 }
 
 // Called from R_NewMap
-void GL_BuildCommonTextureArrays(void)
+void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
 	common_texture_t* common = Q_malloc(sizeof(common_texture_t));
 	int required_vbo_length = 4;
 	static glm_vbo_t model_vbo;
 	int i;
 
-	GL_DeleteModelData();
+	if (!vid_restart) {
+		if (common_array) {
+			GL_DeleteTextureArray(&common_array);
+		}
+		GL_DeleteModelData();
+	}
 
 	GL_GenBuffer(&model_vbo, __FUNCTION__);
 	GL_GenVertexArray(&model_vao);
@@ -710,7 +711,7 @@ void GL_BuildCommonTextureArrays(void)
 		GL_CompressTextureArrays(common);
 
 		// Create non-specific array to fit everything that doesn't require tiling
-		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount, TEX_MIPMAP);
+		commonTex->gl_texturenum = common_array = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount, TEX_MIPMAP);
 		commonTex->gl_width = maxWidth;
 		commonTex->gl_height = maxHeight;
 
@@ -738,7 +739,7 @@ void GL_BuildCommonTextureArrays(void)
 		// Generate mipmaps for every texture array
 		for (tex = common; tex; tex = tex->next) {
 			if (tex->gl_texturenum) {
-				glBindTexture(GL_TEXTURE_2D_ARRAY, tex->gl_texturenum);
+				GL_BindTexture(GL_TEXTURE_2D_ARRAY, tex->gl_texturenum, true);
 				glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 			}
 		}

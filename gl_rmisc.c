@@ -321,7 +321,7 @@ void R_NewMap (qbool vid_restart) {
 
 	GL_BuildLightmaps();
 	if (GL_ShadersSupported()) {
-		GL_BuildCommonTextureArrays();
+		GL_BuildCommonTextureArrays(vid_restart);
 		GLM_InitPrograms();
 	}
 

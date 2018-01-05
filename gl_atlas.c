@@ -353,7 +353,7 @@ void CachePics_CreateAtlas(void)
 
 			node->data.pic = pic;
 
-			if (pic) {
+			if (pic && pic->texnum) {
 				CachePics_InsertBySize(&sized_list, node);
 			}
 		}

@@ -1105,6 +1105,7 @@ void GL_DeleteTexture(int* texture)
 
 	gl_texture = *texture;
 	glDeleteTextures(1, &gl_texture);
+	GL_InvalidateTextureReferences(*texture);
 	*texture = 0;
 }
 
@@ -1127,5 +1128,6 @@ void GL_DeleteTextureArray(GLuint* texture)
 	}
 
 	glDeleteTextures(1, texture);
+	GL_InvalidateTextureReferences(*texture);
 	*texture = 0;
 }
