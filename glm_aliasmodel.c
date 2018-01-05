@@ -23,6 +23,16 @@ static GLint drawAliasModel_scaleS;
 static GLint drawAliasModel_scaleT;
 static GLint drawAliasModel_gamma3d;
 
+typedef struct glm_aliasmodelbatch_s {
+	int start;
+	int end;
+
+	qbool texture2d;
+	qbool shells;
+	int skin_texture;
+	GLuint array_texture;
+} glm_aliasmodelbatch_t;
+
 static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 typedef struct glm_aliasmodel_req_s {
@@ -138,35 +148,14 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 	}
 }
 
-static void GLM_AliasModelBatchDraw(int start, int end, float mvMatrix[MAX_ALIASMODEL_BATCH][16], float colors[MAX_ALIASMODEL_BATCH][4], float* texScaleS, float* texScaleT, float* texture_indexes, int* texture_models, int* shellModes)
+static void GLM_AliasModelBatchDraw(int start, int end)
 {
 	int i;
 
-	glUniformMatrix4fv(drawAliasModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
-	glUniform4fv(drawAliasModel_color, batch_count, (const GLfloat*) colors);
-	glUniform1fv(drawAliasModel_scaleS, batch_count, texScaleS);
-	glUniform1fv(drawAliasModel_scaleT, batch_count, texScaleT);
-	glUniform1fv(drawAliasModel_textureIndex, batch_count, texture_indexes);
-	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
-	glUniform1iv(drawAliasModel_shellMode, batch_count, shellModes);
-
 	// FIXME: Should be glDrawArraysIndirect
-	for (i = start; i < end; ++i) {
+	for (i = start; i <= end; ++i) {
 		const DrawArraysIndirectCommand_t *cmd = (const DrawArraysIndirectCommand_t *)((byte*)aliasmodel_requests + i * sizeof(aliasmodel_requests[0]));
 
-		if (shellModes[i]) {
-			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			// FIXME: Should be able to move this to Begin() ... but, could be R_DrawViewModel() and not batched...
-			if (gl_powerupshells_style.integer) {
-				GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
-			}
-			else {
-				GL_BlendFunc(GL_ONE, GL_ONE);
-			}
-		}
-		else {
-			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
 		glDrawArraysInstancedBaseInstance(GL_TRIANGLES, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
 	}
 }
@@ -175,7 +164,7 @@ static void GLM_FlushAliasModelBatch(void)
 {
 	int i;
 	float projectionMatrix[16];
-
+	glm_aliasmodelbatch_t batches[MAX_ALIASMODEL_BATCH];
 	float mvMatrix[MAX_ALIASMODEL_BATCH][16];
 	float colors[MAX_ALIASMODEL_BATCH][4];
 	float texScaleS[MAX_ALIASMODEL_BATCH];
@@ -184,8 +173,9 @@ static void GLM_FlushAliasModelBatch(void)
 	int texture_models[MAX_ALIASMODEL_BATCH];
 	int shellModes[MAX_ALIASMODEL_BATCH];
 	qbool was_texture_array = false;
-	int base = 0;
+	qbool was_shells = false;
 	int non_texture_array = -1;
+	int batch = 0;
 
 	if (in_batch_mode && first_alias_model) {
 		if (GL_ShadersSupported()) {
@@ -210,34 +200,31 @@ static void GLM_FlushAliasModelBatch(void)
 	glUniform1f(drawAliasModel_gamma3d, v_gamma.value);
 
 	prev_texture_array = 0;
+	batches[batch].start = 0;
 	for (i = 0; i < batch_count; ++i) {
 		glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
 		qbool array_switch = (req->is_texture_array && prev_texture_array != req->texture_array);
+		qbool is_shells = req->effects != 0;
 		qbool non_array_switch = (!req->is_texture_array && non_texture_array != req->texture_index);
 		qbool texture_mode_switch = (prev_texture_array && array_switch) || (non_texture_array != -1 && non_array_switch);
+		qbool shell_mode_switch = (was_shells != is_shells);
 
-		if (i == 0) {
-			GL_BindVertexArray(req->vao);
-		}
+		GL_BindVertexArray(req->vao);
 
-		if (texture_mode_switch) {
-			GLM_AliasModelBatchDraw(base, i, mvMatrix, colors, texScaleS, texScaleT, texture_indexes, texture_models, shellModes);
+		if (texture_mode_switch || non_array_switch || array_switch || shell_mode_switch) {
+			if (i != 0) {
+				++batch;
+			}
 
-			base = i;
-		}
-
-		if (non_array_switch) {
-			GL_SelectTexture(GL_TEXTURE0 + 1);
-			GL_Bind(req->texture_index);
-
-			non_texture_array = req->texture_index;
-		}
-
-		if (array_switch) {
-			GL_SelectTexture(GL_TEXTURE0);
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, req->texture_array, true);
-
-			prev_texture_array = req->texture_array;
+			batches[batch].start = i;
+			batches[batch].texture2d = !req->is_texture_array;
+			was_shells = batches[batch].shells = is_shells;
+			if (batches[batch].texture2d) {
+				non_texture_array = batches[batch].skin_texture = req->texture_index;
+			}
+			else {
+				prev_texture_array = batches[batch].array_texture = req->texture_array;
+			}
 		}
 
 		memcpy(&mvMatrix[i], req->mvMatrix, sizeof(mvMatrix[i]));
@@ -250,16 +237,47 @@ static void GLM_FlushAliasModelBatch(void)
 		texScaleT[i] = req->texScale[1];
 		texture_models[i] = req->is_texture_array ? req->texture_model : (req->texture_model ? 2 : 0);
 		shellModes[i] = req->effects;
+		batches[batch].end = i;
 
 		aliasmodel_requests[i].baseInstance = i;
 		aliasmodel_requests[i].instanceCount = 1;
 	}
 
-	if (batch_count) {
-		GLM_AliasModelBatchDraw(base, batch_count, mvMatrix, colors, texScaleS, texScaleT, texture_indexes, texture_models, shellModes);
+	glUniformMatrix4fv(drawAliasModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
+	glUniform4fv(drawAliasModel_color, batch_count, (const GLfloat*) colors);
+	glUniform1fv(drawAliasModel_scaleS, batch_count, texScaleS);
+	glUniform1fv(drawAliasModel_scaleT, batch_count, texScaleT);
+	glUniform1fv(drawAliasModel_textureIndex, batch_count, texture_indexes);
+	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
+	glUniform1iv(drawAliasModel_shellMode, batch_count, shellModes);
 
-		batch_count = 0;
+	for (i = 0; i <= batch; ++i) {
+		if (batches[i].texture2d) {
+			GL_SelectTexture(GL_TEXTURE0 + 1);
+			GL_Bind(batches[i].skin_texture);
+		}
+		else {
+			GL_SelectTexture(GL_TEXTURE0);
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, batches[i].array_texture, true);
+		}
+
+		if (batches[i].shells) {
+			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+			// FIXME: Should be able to move this to Begin() ... but, could be R_DrawViewModel() and not batched...
+			if (gl_powerupshells_style.integer) {
+				GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
+			}
+			else {
+				GL_BlendFunc(GL_ONE, GL_ONE);
+			}
+		}
+		else {
+			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		GLM_AliasModelBatchDraw(batches[i].start, batches[i].end);
 	}
+	batch_count = 0;
 }
 
 static void GLM_SetPowerupShellColor(float* shell_color, float base_level, float effect_level, int effects)
