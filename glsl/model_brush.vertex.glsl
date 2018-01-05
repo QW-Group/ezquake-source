@@ -13,17 +13,33 @@ out vec4 fsColor;
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
 
-uniform mat4 projectionMatrix;
-uniform vec4 color[32];
-uniform mat4 modelViewMatrix[32];
-uniform int apply_lightmap[32];
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
+
+layout(std140) uniform ModelData {
+	int apply_lightmap[32];
+	vec4 color[32];
+	mat4 modelMatrix[32];
+};
 
 void main()
 {
-	gl_Position = projectionMatrix * modelViewMatrix[_instanceId] * vec4(position, 1.0);
+	gl_Position = projectionMatrix * modelMatrix[_instanceId] * vec4(position, 1.0);
 
 	fsApplyLightmap = apply_lightmap[_instanceId];
 	fsColor = color[_instanceId];
 	TextureCoord = vec3(tex, materialNumber);
-	TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
+	if (apply_lightmap[_instanceId] != 0) {
+		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
+	}
+	else {
+		TexCoordLightmap = vec3(0, 0, 0);
+	}
 }

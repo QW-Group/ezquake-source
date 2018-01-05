@@ -5,15 +5,17 @@
 #include "rulesets.h"
 #include "utils.h"
 
+typedef struct block_brushmodels_s {
+	int apply_lightmap[32][4];
+	float color[32][4];
+	float modelMatrix[32][16];
+} block_brushmodels_t;
+
 static glm_program_t drawBrushModelProgram;
-static GLint drawBrushModel_modelViewMatrix;
-static GLint drawBrushModel_projectionMatrix;
-static GLint drawBrushModel_color;
-static GLint drawBrushModel_materialTex;
-static GLint drawBrushModel_lightmapTex;
-static GLint drawBrushModel_applyLightmap;
-static GLint drawBrushModel_applyTexture;
-static GLint drawBrushModel_gamma3d;
+static GLuint drawbrushmodel_RefdefCvars_block;
+static GLuint drawbrushmodel_BrushData_block;
+static glm_ubo_t ubo_brushdata;
+static block_brushmodels_t brushmodels;
 
 typedef struct glm_brushmodelbatch_s {
 	int start;
@@ -33,19 +35,21 @@ void GLM_CreateBrushModelProgram(void)
 	}
 
 	if (drawBrushModelProgram.program && !drawBrushModelProgram.uniforms_found) {
-		drawBrushModel_modelViewMatrix = glGetUniformLocation(drawBrushModelProgram.program, "modelViewMatrix");
-		drawBrushModel_projectionMatrix = glGetUniformLocation(drawBrushModelProgram.program, "projectionMatrix");
-		drawBrushModel_color = glGetUniformLocation(drawBrushModelProgram.program, "color");
-		drawBrushModel_materialTex = glGetUniformLocation(drawBrushModelProgram.program, "materialTex");
-		drawBrushModel_lightmapTex = glGetUniformLocation(drawBrushModelProgram.program, "lightmapTex");
-		drawBrushModel_applyTexture = glGetUniformLocation(drawBrushModelProgram.program, "apply_texture");
-		drawBrushModel_applyLightmap = glGetUniformLocation(drawBrushModelProgram.program, "apply_lightmap");
-		drawBrushModel_gamma3d = glGetUniformLocation(drawBrushModelProgram.program, "gamma3d");
-		drawBrushModelProgram.uniforms_found = true;
+		GLint size;
 
-		glProgramUniform1i(drawBrushModelProgram.program, drawBrushModel_materialTex, 0);
-		glProgramUniform1i(drawBrushModelProgram.program, drawBrushModel_lightmapTex, 2);
-		glProgramUniform1i(drawBrushModelProgram.program, drawBrushModel_applyTexture, 1);
+		drawbrushmodel_RefdefCvars_block = glGetUniformBlockIndex(drawBrushModelProgram.program, "RefdefCvars");
+		drawbrushmodel_BrushData_block = glGetUniformBlockIndex(drawBrushModelProgram.program, "ModelData");
+
+		glGetActiveUniformBlockiv(drawBrushModelProgram.program, drawbrushmodel_BrushData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+		Con_Printf("sizeof(brush) = %d, expected = %d\n", sizeof(brushmodels), size);
+
+		glUniformBlockBinding(drawBrushModelProgram.program, drawbrushmodel_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+		glUniformBlockBinding(drawBrushModelProgram.program, drawbrushmodel_BrushData_block, GL_BINDINGPOINT_BRUSHMODEL_CVARS);
+
+		GL_GenUniformBuffer(&ubo_brushdata, "brush-data", &brushmodels, sizeof(brushmodels));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_BRUSHMODEL_CVARS, ubo_brushdata.ubo);
+
+		drawBrushModelProgram.uniforms_found = true;
 	}
 }
 
@@ -298,18 +302,12 @@ static qbool firstBrushModel = true;
 
 void GL_BrushModelInitState(void)
 {
-	static float projectionMatrix[16];
-
 	if (GL_ShadersSupported()) {
 		GL_EnterRegion("BrushModels");
 		GLM_CreateBrushModelProgram();
 
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		GL_UseProgram(drawBrushModelProgram.program);
-		glUniformMatrix4fv(drawBrushModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1f(drawBrushModel_gamma3d, v_gamma.value);
 
 		//glDisable(GL_CULL_FACE);
 		GL_SelectTexture(GL_TEXTURE0);
@@ -356,10 +354,6 @@ static void GL_FlushBrushModelBatch(void)
 	GLuint last_vao = 0;
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
-
-	float mvMatrix[MAX_BRUSHMODEL_BATCH][16];
-	float colors[MAX_BRUSHMODEL_BATCH][4];
-	int use_lightmaps[MAX_BRUSHMODEL_BATCH];
 	glm_brushmodelbatch_t batches[MAX_BRUSHMODEL_BATCH];
 	int batch = 0;
 
@@ -367,6 +361,7 @@ static void GL_FlushBrushModelBatch(void)
 		return;
 	}
 
+	memset(&brushmodels, 0, sizeof(brushmodels));
 	if (firstBrushModel) {
 		GL_BrushModelInitState();
 	}
@@ -388,14 +383,14 @@ static void GL_FlushBrushModelBatch(void)
 		}
 
 		batches[batch].end = i;
-		memcpy(&mvMatrix[i], req->mvMatrix, sizeof(mvMatrix[i]));
-		memcpy(&colors[i], req->baseColor, sizeof(req->baseColor));
-		use_lightmaps[i] = req->isworldmodel ? 1 : 0;
+		memcpy(&brushmodels.modelMatrix[i][0], req->mvMatrix, sizeof(brushmodels.modelMatrix[i]));
+		memcpy(&brushmodels.color[i][0], req->baseColor, sizeof(brushmodels.color[i]));
+		brushmodels.apply_lightmap[i][0] = req->isworldmodel ? 1 : 0;
 	}
 
-	glUniformMatrix4fv(drawBrushModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
-	glUniform4fv(drawBrushModel_color, batch_count, (const GLfloat*) colors);
-	glUniform1iv(drawBrushModel_applyLightmap, batch_count, use_lightmaps);
+	// Update data
+	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
+	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
 
 	for (i = 0; i <= batch; ++i) {
 		int x;
