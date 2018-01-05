@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "utils.h"
 #include "qsound.h"
+#include "tr_types.h"
 
 static void GLM_QMB_DrawParticles(void);
 static void GLC_QMB_DrawParticles(void);
@@ -335,33 +336,143 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
+static void QMB_CreateAtlasTexture(int tex1, int tex2, int tex3, int tex4)
+{
+	int textures[4] = { tex1, tex2, tex3, tex4 };
+	int horizontal_widths[4], vertical_offsets[4];
+	int widths[4], heights[4];
+	int total_height = 0;
+	int max_width = 0;
+	int i, j;
+	int atlas_tex;
+	int y_pos;
+	int offsets[4];
+	byte* atlas_texels;
+
+	memset(horizontal_widths, 0, sizeof(int) * 4);
+	memset(vertical_offsets, 0, sizeof(int) * 4);
+	for (i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+		int texWidth, texHeight;
+
+		GL_Bind(textures[i]);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texHeight);
+
+		offsets[i] = total_height;
+		heights[i] = texHeight;
+		widths[i] = texWidth;
+
+		total_height += texHeight;
+		max_width = max(max_width, texWidth);
+	}
+
+	if (max_width == 0 || total_height == 0 || max_width > glConfig.max_texture_size || total_height > glConfig.max_texture_size) {
+		return;
+	}
+
+	// Create texture in memory
+	atlas_texels = Q_malloc(sizeof(byte) * 4 * total_height * max_width);
+	y_pos = 0;
+	for (i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+		int yOffset, xOffset;
+		int width = widths[i];
+		int height = heights[i];
+		byte* buffer = Q_malloc(width * height * 4);
+
+		vertical_offsets[i] = y_pos;
+		horizontal_widths[i] = width;
+
+		GL_Bind(textures[i]);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+		for (yOffset = 0; yOffset < height; ++yOffset) {
+			for (xOffset = 0; xOffset < width; ++xOffset) {
+				int y = y_pos + yOffset;
+				int x = xOffset;
+				int base = (x + y * max_width) * 4;
+				int srcBase = (xOffset + yOffset * width) * 4;
+
+				atlas_texels[base] = buffer[srcBase];
+				atlas_texels[base + 1] = buffer[srcBase + 1];
+				atlas_texels[base + 2] = buffer[srcBase + 2];
+				atlas_texels[base + 3] = buffer[srcBase + 3];
+			}
+		}
+
+		Q_free(buffer);
+
+		// Fix-up texture coordinates
+		for (j = 0; j < num_particletextures; ++j) {
+			if (particle_textures[j].texnum == textures[i]) {
+				int c;
+
+				for (c = 0; c < particle_textures[j].components; ++c) {
+					int old_x = particle_textures[j].coords[c][0] * width;
+					int old_y = particle_textures[j].coords[c][1] * height;
+					int old_x2 = particle_textures[j].coords[c][2] * width;
+					int old_y2 = particle_textures[j].coords[c][3] * height;
+
+					particle_textures[j].coords[c][0] = old_x / (float)max_width;
+					particle_textures[j].coords[c][1] = (y_pos + old_y) / (float)total_height;
+					particle_textures[j].coords[c][2] = old_x2 / (float)max_width;
+					particle_textures[j].coords[c][3] = (y_pos + old_y2) / (float)total_height;
+				}
+			}
+		}
+
+		y_pos += height;
+	}
+
+	// Upload
+	atlas_tex = GL_LoadTexture("qmb:particle_atlas", max_width, total_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+
+	// Tidy up
+	Q_free(atlas_texels);
+
+	for (j = 0; j < num_particletextures; ++j) {
+		particle_textures[j].texnum = atlas_tex;
+	}
+
+	return;
+}
+
 void QMB_InitParticles (void) {
 	int	i, count = 0, particlefont;
-	int shockwave_texture, lightning_texture, spark_texture; // VULT
+	int shockwave_texture, lightning_texture, spark_texture;
 
     Cvar_Register (&amf_part_fulldetail);
 	if (!host_initialized)
 		if (COM_CheckParm ("-detailtrails"))
 			Cvar_LatchedSetValue (&amf_part_fulldetail, 1);
 
-    if (!qmb_initialized) {
+	if (!qmb_initialized) {
 		if (!host_initialized) {
 			Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-			Cvar_Register (&gl_clipparticles);
-			Cvar_Register (&gl_bounceparticles);
+			Cvar_Register(&gl_clipparticles);
+			Cvar_Register(&gl_bounceparticles);
 			Cvar_ResetCurrentGroup();
 		}
 
-		Q_free (particles); // yeah, shit happens, work around
-		QMB_AllocParticles ();
+		Q_free(particles); // yeah, shit happens, work around
+		QMB_AllocParticles();
 	}
 	else {
 		QMB_ClearParticles (); // also re-allocc particles
 		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 	}
 
-	if (!(particlefont = GL_LoadTextureImage ("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) 
-		return;		
+	if (!(particlefont = GL_LoadTextureImage("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+		return;
+	}
+	if (!(shockwave_texture = GL_LoadTextureImage("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+		return;
+	}
+	if (!(lightning_texture = GL_LoadTextureImage("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+		return;
+	}
+	if (!(spark_texture = GL_LoadTextureImage("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+		return;
+	}
 
 	ADD_PARTICLE_TEXTURE(ptex_none, 0, 0, 1, 0, 0, 0, 0);	
 	ADD_PARTICLE_TEXTURE(ptex_blood1, particlefont, 0, 1, 0, 0, 64, 64);
@@ -372,19 +483,17 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TEXTURE(ptex_smoke, particlefont, 0, 1, 96, 96, 192, 192);
 	ADD_PARTICLE_TEXTURE(ptex_blood3, particlefont, 0, 1, 192, 96, 256, 160);
 	ADD_PARTICLE_TEXTURE(ptex_bubble, particlefont, 0, 1, 192, 160, 224, 192);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++) {
 		ADD_PARTICLE_TEXTURE(ptex_dpsmoke, particlefont, i, 8, i * 32, 64, (i + 1) * 32, 96);
+	}
 
 	//VULT PARTICLES
-	if (!(shockwave_texture = GL_LoadTextureImage ("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP)))
-		return;
 	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 128, 128);
-	if (!(lightning_texture = GL_LoadTextureImage ("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP)))
-		return;
-	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 32, 32);
-	if (!(spark_texture = GL_LoadTextureImage ("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP)))
-		return;
+	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 256, 256);
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
+
+	// Move all textures onto the same
+	QMB_CreateAtlasTexture(particlefont, shockwave_texture, lightning_texture, spark_texture);
 
 	ADD_PARTICLE_TYPE(p_spark, pd_spark, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9);
 	ADD_PARTICLE_TYPE(p_sparkray, pd_sparkray, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9);
@@ -562,20 +671,23 @@ static void QMB_FillParticleVertexBuffer(void)
 		switch (pt->drawtype) {
 		case pd_beam:
 			for (p = pt->start; p; p = p->next) {
+
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
 				}
 				for (l = min(amf_part_traildetail.integer, 10); l > 0; l--) {
+					particle_texture_t* ptex = &particle_textures[ptex_lightning];
+
 					if (pos + 4 >= MAX_VERTICES_IN_BATCH) {
 						break;
 					}
 
-					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l*amf_part_trailwidth.value));
+					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l * amf_part_trailwidth.value));
 
-					QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], 1, 0, p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], 1, 1, p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], 0, 1, p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], 0, 0, p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
+					QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
 				}
 			}
 			break;
