@@ -613,7 +613,7 @@ void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices
 
 void GLM_DebugMatrix(GLenum type, const char* value);
 
-int GLM_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos);
+int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos);
 int GLM_MeasureVBOSizeForBrushModel(model_t* m);
 
 void GL_UseProgram(GLuint program);

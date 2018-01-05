@@ -120,8 +120,30 @@ typedef struct mtexinfo_s {
 	int					flags;
 } mtexinfo_t;
 
-#define VERTEXSIZE 11 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
-					  //s2t2 = lightmap tex coords; s3t3 = detail tex coords, l1 = lightmap#, m1 = material#
+#define VBO_WORLD_FLOOR 1  // should be drawn as floor when drawflat enabled
+
+// Any changes to definition must be mirrored in GLM_CreateBrushModelVAO
+// Filled in CopyVertToBuffer in glm_brushmodel
+typedef struct vbo_world_vert_s {
+	vec3_t position;
+
+	float material_coords[2];
+	float lightmap_coords[2];
+	float detail_coords[2];
+
+	// Index to lightmap texture array.  -1 for turb surfaces (no lightmap)
+	short lightmap_index;
+	// Index to material texture array
+	short material_index;
+
+	// Flags (VBO_WORLD_X)
+	byte flags;
+	byte flatcolour[4];
+} vbo_world_vert_t;
+
+// GLC only...
+#define VERTEXSIZE 9  //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
+					  //s2t2 = lightmap tex coords; s3t3 = detail tex coords
 
 // position[3]
 // texture[2]

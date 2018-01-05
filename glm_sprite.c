@@ -40,7 +40,7 @@ static void GL_PrepareSprites(void)
 	GL_CompileSpriteProgram();
 
 	if (!simpleItemVBO.vbo) {
-		float verts[4][VERTEXSIZE] = { { 0 } };
+		float verts[4][5] = { { 0 } };
 
 		VectorSet(verts[0], 0, -1, -1);
 		verts[0][3] = 1;
@@ -60,7 +60,7 @@ static void GL_PrepareSprites(void)
 
 		GL_GenBuffer(&simpleItemVBO, __FUNCTION__);
 		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, 4 * VERTEXSIZE * sizeof(float), verts, GL_STATIC_DRAW);
+		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 	}
 
 	if (!simpleItemVAO.vao) {
@@ -69,8 +69,8 @@ static void GL_PrepareSprites(void)
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
 	}
 }
 

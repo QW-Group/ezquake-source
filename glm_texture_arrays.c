@@ -9,6 +9,8 @@
 #include "tr_types.h"
 #endif
 
+#define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
+
 static glm_vao_t model_vao;
 static glm_vbo_t instance_vbo;
 
@@ -518,7 +520,7 @@ void GLM_FindBrushModelTextureExtents(model_t* mod)
 			simple = repeats[0] <= 1 && repeats[1] <= 1;
 
 			if (repeats[0] > 1 || repeats[1] > 1) {
-				Con_Printf("    Poly range: %f,%f\n", repeats[0], repeats[1]);
+				//Con_Printf("    Poly range: %f,%f\n", repeats[0], repeats[1]);
 			}
 		}
 	}
@@ -810,7 +812,7 @@ static void GLM_CreateBrushModelVAO(void)
 	int i;
 	int size = 0;
 	int position = 0;
-	float* buffer = NULL;
+	vbo_world_vert_t* buffer = NULL;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -829,7 +831,7 @@ static void GLM_CreateBrushModelVAO(void)
 	}
 
 	// Create vbo buffer
-	buffer = Q_malloc(size * VERTEXSIZE * sizeof(float));
+	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
 	GL_GenBuffer(&brushModel_vbo, __FUNCTION__);
 	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
 
@@ -858,7 +860,7 @@ static void GLM_CreateBrushModelVAO(void)
 
 	// Copy VBO buffer across
 	glBindBufferExt(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
-	glBufferDataExt(GL_ARRAY_BUFFER, size * VERTEXSIZE * sizeof(float), buffer, GL_STATIC_DRAW);
+	glBufferDataExt(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -867,12 +869,12 @@ static void GLM_CreateBrushModelVAO(void)
 	glEnableVertexAttribArray(4);
 	glEnableVertexAttribArray(5);
 	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 3));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 5));
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 7));
-	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 9));
-	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(float) * VERTEXSIZE, (void*) (sizeof(float) * 10));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
+	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
+	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
 	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(6, 1);

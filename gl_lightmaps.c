@@ -335,7 +335,7 @@ void R_BlendLightmaps (void) {
 		for ( ; p; p = p->chain) {
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
-			for (j = 0; j < p->numverts; j++, v+= VERTEXSIZE) {
+			for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
 				glTexCoord2f (v[5], v[6]);
 				glVertex3fv (v);
 			}

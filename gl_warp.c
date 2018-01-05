@@ -184,20 +184,6 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 		VectorCopy(vert, poly->verts[i]);
 	}
 }
-/*
-void EmitFlatPoly(msurface_t *fa)
-{
-	glpoly_t *p;
-
-	for (p = fa->polys; p; p = p->next) {
-		if (GL_ShadersSupported()) {
-			GLM_DrawFlatPoly(color_white, p->vao, p->numverts, false);
-		}
-		else {
-			GLC_DrawFlatPoly(p);
-		}
-	}
-}*/
 
 byte* SurfaceFlatTurbColor(texture_t* texture)
 {

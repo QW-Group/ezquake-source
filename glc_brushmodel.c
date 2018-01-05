@@ -49,6 +49,10 @@ static void GLC_DrawFlat(model_t *model)
 	int lastType = -1;
 	qbool draw_caustics = underwatertexture && gl_caustics.value;
 
+	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
+		return;
+	}
+
 	memcpy(w, r_wallcolor.color, 3);
 	memcpy(f, r_floorcolor.color, 3);
 	memcpy(sky, r_skycolor.color, 3);
@@ -365,11 +369,10 @@ void GLC_DrawWorld(void)
 	extern msurface_t* alphachain;
 	extern cvar_t gl_outline;
 
-	if (r_drawflat.integer == 1) {
-		GLC_DrawFlat(cl.worldmodel);
-	}
-	else {
+	if (r_drawflat.integer != 1) {
 		GLC_DrawTextureChains(cl.worldmodel, 0);
+	}
+	if (cl.worldmodel->drawflat_chain[0] || cl.worldmodel->drawflat_chain[1]) {
 		GLC_DrawFlat(cl.worldmodel);
 	}
 
@@ -402,3 +405,124 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel)
 		R_DrawMapOutline(clmodel);
 	}
 }
+
+/*
+// This populates VBO, splitting up by lightmap for efficient
+//   rendering when not using texture arrays
+int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
+{
+	int i, j;
+	int combinations = 0;
+	int original_pos = vbo_pos;
+
+	for (i = 0; i < m->numtextures; ++i) {
+		if (m->textures[i]) {
+			m->textures[i]->gl_first_lightmap = -1;
+			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
+				m->textures[i]->gl_next_lightmap[j] = -1;
+			}
+		}
+	}
+
+	// Order vertices in the VBO by texture & lightmap
+	for (i = 0; i < m->numtextures; ++i) {
+		int lightmap = -1;
+		int length = 0;
+		int surface_count = 0;
+		int tex_vbo_start = vbo_pos;
+
+		if (!m->textures[i]) {
+			continue;
+		}
+
+		// Find first lightmap for this texture
+		for (j = 0; j < m->numsurfaces; ++j) {
+			msurface_t* surf = m->surfaces + j;
+
+			if (surf->texinfo->miptex != i) {
+				continue;
+			}
+
+			if (!(surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
+				if (surf->texinfo->flags & TEX_SPECIAL) {
+					continue;
+				}
+			}
+
+			if (surf->lightmaptexturenum >= 0 && (lightmap < 0 || surf->lightmaptexturenum < lightmap)) {
+				lightmap = surf->lightmaptexturenum;
+			}
+		}
+
+		m->textures[i]->gl_first_lightmap = lightmap;
+
+		// Build the VBO in order of lightmaps...
+		while (lightmap >= 0) {
+			int next_lightmap = -1;
+
+			length = 0;
+			m->textures[i]->gl_vbo_start[lightmap] = vbo_pos / VERTEXSIZE;
+			++combinations;
+
+			for (j = 0; j < m->numsurfaces; ++j) {
+				msurface_t* surf = m->surfaces + j;
+				glpoly_t* poly;
+
+				if (surf->texinfo->miptex != i) {
+					continue;
+				}
+				if (surf->lightmaptexturenum > lightmap && (next_lightmap < 0 || surf->lightmaptexturenum < next_lightmap)) {
+					next_lightmap = surf->lightmaptexturenum;
+				}
+
+				if (surf->lightmaptexturenum == lightmap) {
+					// copy verts into buffer (alternate to turn fan into triangle strip)
+					for (poly = surf->polys; poly; poly = poly->next) {
+						int end_vert = 0;
+						int start_vert = 1;
+						int output = 0;
+						int material = m->textures[i]->gl_texture_index;
+						float scaleS = m->textures[i]->gl_texture_scaleS;
+						float scaleT = m->textures[i]->gl_texture_scaleT;
+
+						if (!poly->numverts) {
+							continue;
+						}
+
+						// Store position for drawing individual polys
+						poly->vbo_start = vbo_pos / VERTEXSIZE;
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], surf->lightmaptexturenum, material, scaleS, scaleT);
+						++output;
+
+						start_vert = 1;
+						end_vert = poly->numverts - 1;
+
+						while (start_vert <= end_vert) {
+							vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+							++output;
+
+							if (start_vert < end_vert) {
+								vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], surf->lightmaptexturenum, material, scaleS, scaleT);
+								++output;
+							}
+
+							++start_vert;
+							--end_vert;
+						}
+
+						length += poly->numverts;
+						++surface_count;
+					}
+				}
+			}
+
+			m->textures[i]->gl_vbo_length[lightmap] = length;
+			m->textures[i]->gl_next_lightmap[lightmap] = next_lightmap;
+			lightmap = next_lightmap;
+		}
+	}
+
+	Con_Printf("%s = %d verts, reserved %d\n", m->name, (vbo_pos - original_pos) / VERTEXSIZE, GLM_MeasureVBOSizeForBrushModel(m));
+	return vbo_pos;
+}
+*/
