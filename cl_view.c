@@ -982,7 +982,8 @@ qbool V_PreRenderView(void)
 	cl.simangles[ROLL] = 0;	// FIXME @@@ 
 
 	if (cls.state != ca_active) {
-		V_CalcBlend ();
+		V_CalcBlend();
+		GL_PreRenderView();
 		return false;
 	}
 

@@ -232,18 +232,6 @@ static glm_program_t drawworld;
 static GLint drawworld_RefdefCvars_block;
 static GLint drawworld_WorldCvars_block;
 
-typedef struct block_refdef_s {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-	// Total size must be multiple of vec4
-	int padding;
-} block_refdef_t;
-
 typedef struct block_world_s {
 	//
 	float waterAlpha;
@@ -271,9 +259,7 @@ typedef struct block_world_s {
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 static int drawworld_compiledOptions;
-static glm_ubo_t ubo_refdef;
 static glm_ubo_t ubo_worldcvars;
-static block_refdef_t refdef;
 static block_world_t world;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
@@ -302,19 +288,12 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		GLint size;
 
 		drawworld_RefdefCvars_block = glGetUniformBlockIndex(drawworld.program, "RefdefCvars");
+		glUniformBlockBinding(drawworld.program, drawworld_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+
 		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
-
-		glGetActiveUniformBlockiv(drawworld.program, drawworld_RefdefCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
-		Con_Printf("sizeof(refdef) = %d, expected = %d\n", sizeof(refdef), size);
-
 		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 		Con_Printf("sizeof(world) = %d, expected = %d\n", sizeof(world), size);
-
-		glUniformBlockBinding(drawworld.program, drawworld_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
-
-		GL_GenUniformBuffer(&ubo_refdef, "refdef", &refdef, sizeof(refdef));
-		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_REFDEF_CVARS, ubo_refdef.ubo);
 		GL_GenUniformBuffer(&ubo_worldcvars, "world-cvars", &world, sizeof(world));
 		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_DRAWWORLD_CVARS, ubo_worldcvars.ubo);
 
@@ -333,15 +312,9 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qbool caustics)
 {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, gl_textureless, r_skycolor;
+	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 
 	Compile_DrawWorldProgram(detail_tex, caustics);
-
-	GLM_GetMatrix(GL_MODELVIEW, refdef.modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, refdef.projectionMatrix);
-	refdef.time = cl.time;
-	refdef.gamma3d = v_gamma.value;
-	refdef.r_textureless = gl_textureless.integer;
 
 	world.waterAlpha = wateralpha;
 
@@ -358,8 +331,6 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	world.r_fastsky = r_fastsky.integer;
 	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
 
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
 	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(world), &world, GL_DYNAMIC_DRAW);
 

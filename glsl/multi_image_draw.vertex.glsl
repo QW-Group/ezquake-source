@@ -7,7 +7,11 @@ layout(location = 3) in vec2 inTexCoordBR;
 layout(location = 4) in vec4 inColour;
 layout(location = 5) in int inFlags;
 
-uniform bool alphafont;
+layout(std140) uniform Common2d {
+	float gamma2d;
+
+	int r_alphafont;
+};
 
 out vec4 gPositionTL;
 out vec4 gPositionBR;
@@ -26,7 +30,7 @@ void main()
 	gColour = inColour;
 	gUseTexture = (inFlags & 1);
 	if ((inFlags & 4) != 0) {
-		gAlphaTest = alphafont ? 0 : 1;
+		gAlphaTest = r_alphafont != 0 ? 0 : 1;
 	}
 	else {
 		gAlphaTest = (inFlags & 2);

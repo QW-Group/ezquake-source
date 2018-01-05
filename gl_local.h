@@ -861,6 +861,8 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 
 enum {
 	GL_BINDINGPOINT_REFDEF_CVARS,
+	GL_BINDINGPOINT_COMMON2D_CVARS,
+
 	GL_BINDINGPOINT_DRAWWORLD_CVARS,
 	GL_BINDINGPOINT_BRUSHMODEL_CVARS,
 	GL_BINDINGPOINT_ALIASMODEL_CVARS,
@@ -872,6 +874,9 @@ enum {
 void GL_PreRenderView(void);
 void GLC_PreRenderView(void);
 void GLM_PreRenderView(void);
+
+void GLC_SetupGL(void);
+void GLM_SetupGL(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

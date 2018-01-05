@@ -2,7 +2,11 @@
 
 layout(binding=0) uniform sampler2D tex;
 
-uniform float gamma2d;
+layout(std140) uniform Common2d {
+	float gamma2d;
+
+	int r_alphafont;
+};
 
 in vec2 TextureCoord;
 in vec4 Colour;

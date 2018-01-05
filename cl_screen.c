@@ -2170,7 +2170,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 	renderView = V_PreRenderView();
 
 	if (renderView) {
-		GL_EnterRegion("WorldTextureChains");
+		GL_EnterRegion("R_SetupFrame");
 		R_SetupFrame();
 		GL_LeaveRegion();
 	}

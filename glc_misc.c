@@ -264,3 +264,9 @@ void GLC_PreRenderView(void)
 {
 	// TODO
 }
+
+void GLC_SetupGL(void)
+{
+	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	GL_Hint(GL_FOG_HINT, GL_NICEST);
+}

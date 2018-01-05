@@ -533,15 +533,17 @@ void R_SetupFrame(void)
 		VectorCopy (r_origin, testorigin);
 		testorigin[2] += 10;
 		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents == CONTENTS_EMPTY)
+		if (leaf->contents == CONTENTS_EMPTY) {
 			r_viewleaf2 = leaf;
+		}
 	} else if (r_viewleaf->contents == CONTENTS_EMPTY) {
 		// look down a bit
 		VectorCopy (r_origin, testorigin);
 		testorigin[2] -= 10;
 		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents <= CONTENTS_WATER &&	leaf->contents >= CONTENTS_LAVA)
+		if (leaf->contents <= CONTENTS_WATER &&	leaf->contents >= CONTENTS_LAVA) {
 			r_viewleaf2 = leaf;
+		}
 	}
 
 	V_SetContentsColor (r_viewleaf->contents);
@@ -727,11 +729,6 @@ static void R_SetupGL(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
-	if (!GL_ShadersSupported()) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		GL_Hint(GL_FOG_HINT, GL_NICEST);
-	}
-
 	glEnable(GL_DEPTH_TEST);
 
 	if (gl_gammacorrection.integer) {
@@ -739,6 +736,13 @@ static void R_SetupGL(void)
 	}
 	else {
 		glDisable(GL_FRAMEBUFFER_SRGB);
+	}
+
+	if (GL_ShadersSupported()) {
+		GLM_SetupGL();
+	}
+	else {
+		GLC_SetupGL();
 	}
 }
 

@@ -54,7 +54,64 @@ void GLM_EmitCausticsPolys(void)
 	// Is this ever going to be a thing?
 }
 
+// Reference cvars for 3D views...
+typedef struct block_refdef_s {
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+
+	int padding;
+} block_refdef_t;
+
+// Reference settings for 2D views...
+typedef struct block_common2d_s {
+	float gamma2d;
+
+	int r_alphafont;
+
+	int padding[2];
+} block_common2d;
+
+static glm_ubo_t ubo_refdef;
+static glm_ubo_t ubo_common2d;
+static block_refdef_t refdef;
+static block_common2d common2d;
+
 void GLM_PreRenderView(void)
 {
-	// TODO
+	extern cvar_t gl_alphafont;
+
+	common2d.gamma2d = v_gamma.value;
+	common2d.r_alphafont = gl_alphafont.value;
+
+	if (!ubo_common2d.ubo) {
+		GL_GenUniformBuffer(&ubo_common2d, "common2d", &common2d, sizeof(common2d));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_COMMON2D_CVARS, ubo_common2d.ubo);
+	}
+
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_common2d.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(common2d), &common2d, GL_DYNAMIC_DRAW);
+}
+
+void GLM_SetupGL(void)
+{
+	extern cvar_t gl_textureless;
+
+	GLM_GetMatrix(GL_MODELVIEW, refdef.modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, refdef.projectionMatrix);
+	refdef.time = cl.time;
+	refdef.gamma3d = v_gamma.value;
+	refdef.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
+
+	if (!ubo_refdef.ubo) {
+		GL_GenUniformBuffer(&ubo_refdef, "refdef", &refdef, sizeof(refdef));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_REFDEF_CVARS, ubo_refdef.ubo);
+	}
+
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
 }
