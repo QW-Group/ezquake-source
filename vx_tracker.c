@@ -97,6 +97,35 @@ static struct {
 	char text[MAX_SCOREBOARDNAME+20];
 } ownfragtext;
 
+static char ToHex(int v)
+{
+	if (v >= 0 && v < 10) {
+		return '0' + v;
+	}
+	else if (v >= 0 && v < 16) {
+		return 'a' + v - 10;
+	}
+	else {
+		return 'f';
+	}
+}
+
+static int VX_TrackerColourToStandard(const char* input, wchar* output, int position)
+{
+	// The tracker's strings use 9 as maximum, standard drawing functions expect f
+	// Can't just change elsewhere as everyone's configs will have these set...
+	if (isdigit(input[0]) && isdigit(input[1]) && isdigit(input[2])) {
+		output[position++] = '&';
+		output[position++] = 'c';
+		output[position++] = ToHex(((input[0] - '0') / 9.0f) * 15);
+		output[position++] = ToHex(((input[1] - '0') / 9.0f) * 15);
+		output[position++] = ToHex(((input[2] - '0') / 9.0f) * 15);
+		return position;
+	}
+
+	return position;
+}
+
 void InitTracker(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -153,10 +182,15 @@ void VX_TrackerThink(void)
 {
 	int i;
 
+	if (!(amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value)) {
+		return;
+	}
+
 	VXSCR_DrawTrackerString();
 
-	if (ISPAUSED)
+	if (ISPAUSED) {
 		return;
+	}
 
 	active_track = 0; // 0 slots active
 	max_active_tracks = bound(0, amf_tracker_messages.value, MAX_TRACKERMESSAGES);
@@ -701,7 +735,6 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 // We need a seperate function, since our messages are in colour... and transparent
 void VXSCR_DrawTrackerString (void)
 {
-	byte	rgba[4];
 	char	fullpath[MAX_PATH];
 	int		x, y;
 	int		i, printable_chars;
@@ -714,8 +747,6 @@ void VXSCR_DrawTrackerString (void)
 		return;
 
 	StringToRGB(amf_tracker_frame_color.string);
-
-	memset(rgba, 255, sizeof(byte) * 4);
 
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
@@ -864,11 +895,7 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 				}
 				else if (start[l + 1] == 'c' && start[l + 2] && start[l + 3] && start[l + 4]) 
 				{
-					msg->content[line][content_pos++] = start[l];
-					msg->content[line][content_pos++] = start[l+1];
-					msg->content[line][content_pos++] = start[l+2];
-					msg->content[line][content_pos++] = start[l+3];
-					msg->content[line][content_pos++] = start[l+4];
+					content_pos = VX_TrackerColourToStandard(start + l + 2, msg->content[line], content_pos);
 
 					l += 5;
 					continue;

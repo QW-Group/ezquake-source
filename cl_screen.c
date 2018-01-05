@@ -2050,8 +2050,7 @@ static void SCR_DrawElements(void)
 					SCR_DrawAMFstats();
 
 					// VULT DISPLAY KILLS
-					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
-						VX_TrackerThink();
+					VX_TrackerThink();
 
 					if (CL_MultiviewEnabled())
 						SCR_DrawMultiviewOverviewElements ();
