@@ -32,12 +32,7 @@ static glm_vbo_t particleVBO;
 static glm_vao_t particleVAO;
 
 static glm_program_t billboardProgram;
-static int billboard_modelViewMatrix;
-static int billboard_projectionMatrix;
-static int billboard_materialTex;
-static int billboard_apply_texture;
-static int billboard_alpha_texture;
-static int billboard_gamma3d;
+static GLint billboard_RefdefCvars_block;
 
 void GLM_CreateParticleProgram(void)
 {
@@ -49,16 +44,11 @@ void GLM_CreateParticleProgram(void)
 	}
 
 	if (billboardProgram.program && !billboardProgram.uniforms_found) {
-		billboard_modelViewMatrix = glGetUniformLocation(billboardProgram.program, "modelViewMatrix");
-		billboard_projectionMatrix = glGetUniformLocation(billboardProgram.program, "projectionMatrix");
-		billboard_materialTex = glGetUniformLocation(billboardProgram.program, "materialTex");
-		billboard_apply_texture = glGetUniformLocation(billboardProgram.program, "apply_texture");
-		billboard_alpha_texture = glGetUniformLocation(billboardProgram.program, "alpha_texture");
-		billboard_gamma3d = glGetUniformLocation(billboardProgram.program, "gamma3d");
-		billboardProgram.uniforms_found = true;
+		billboard_RefdefCvars_block = glGetUniformBlockIndex(billboardProgram.program, "RefdefCvars");
 
-		glProgramUniform1i(billboardProgram.program, billboard_materialTex, 0);
-		glProgramUniform1i(billboardProgram.program, billboard_alpha_texture, 0);
+		glUniformBlockBinding(billboardProgram.program, billboard_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+
+		billboardProgram.uniforms_found = true;
 	}
 }
 
@@ -102,10 +92,6 @@ void GLM_DrawParticles(int number, qbool square)
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 		GL_UseProgram(billboardProgram.program);
-		glUniformMatrix4fv(billboard_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(billboard_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1i(billboard_apply_texture, !square);
-		glUniform1f(billboard_gamma3d, v_gamma.value);
 
 		GL_BindVertexArray(vao);
 		glDrawArrays(GL_POINTS, 0, number);

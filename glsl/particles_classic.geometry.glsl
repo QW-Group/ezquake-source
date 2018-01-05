@@ -9,7 +9,15 @@ in vec4 pointColour[1];
 out vec2 TextureCoord;
 out vec4 fragColour;
 
-uniform mat4 projectionMatrix;
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
 
 void main()
 {
