@@ -163,8 +163,9 @@ void R_StoreEfrags (efrag_t **ppefrag) {
 		pent = pefrag->entity;
 		model = pent->model;
 
-		if (model->modhint == MOD_FLAME && !r_drawflame.value)
+		if ((model->modhint == MOD_FLAME || model->modhint == MOD_FLAME2) && !r_drawflame.value) {
 			continue;
+		}
 
 		switch (model->type) {
 		case mod_alias:

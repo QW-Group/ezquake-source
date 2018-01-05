@@ -175,9 +175,7 @@ void R_DrawPowerupShell(
 
 static qbool IsFlameModel(model_t* model)
 {
-	return (!strcmp(model->name, "progs/flame.mdl") ||
-		!strcmp(model->name, "progs/flame0.mdl") ||
-		!strcmp(model->name, "progs/flame3.mdl"));
+	return model->modhint == MOD_FLAME || model->modhint == MOD_FLAME0 || model->modhint == MOD_FLAME3;
 }
 
 static void R_RenderAliasModel(
@@ -305,14 +303,14 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 					ParticleFire(currententity->origin);
 				}
 			}
-			else if (!strcmp(currententity->model->name, "progs/flame.mdl") && cl_flame0_model) {
+			else if (currententity->model->modhint == MOD_FLAME && cl_flame0_model) {
 				// do we have progs/flame0.mdl?
 				if (!ISPAUSED) {
 					ParticleFire(currententity->origin);
 				}
 				currententity->model = cl_flame0_model;
 			}
-			else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl")) {
+			else if (currententity->model->modhint == MOD_FLAME2 || currententity->model->modhint == MOD_FLAME3) {
 				if (!ISPAUSED) {
 					ParticleFire(currententity->origin);
 				}
@@ -574,7 +572,7 @@ void R_AliasSetupLighting(entity_t *ent)
 		full_light = true;
 		return;
 	}
-	else if (clmodel->modhint == MOD_FLAME) {
+	else if (clmodel->modhint == MOD_FLAME || clmodel->modhint == MOD_FLAME2) {
 		ambientlight = 255;
 		shadelight = 0;
 		full_light = true;

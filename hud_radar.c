@@ -383,7 +383,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		// Powerups.
 		//
 
-		if(radar_show_pent && !strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
+		if (radar_show_pent && cl_visents.list[i].model->modhint == MOD_PENT)
 		{
 			// Pentagram.
 			if (simpletexture && simple_items) {
@@ -393,7 +393,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cf00P", 0, text_scale);
 			}
 		}
-		else if(radar_show_quad && !strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))
+		else if (radar_show_quad && cl_visents.list[i].model->modhint == MOD_QUAD)
 		{
 			// Quad.
 			if (simpletexture && simple_items) {
@@ -403,7 +403,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0ffQ", 0, text_scale);
 			}
 		}
-		else if(radar_show_ring && !strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
+		else if(radar_show_ring && cl_visents.list[i].model->modhint == MOD_RING)
 		{
 			// Ring.
 			if (simpletexture && simple_items) {
@@ -413,7 +413,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cff0R", 0, text_scale);
 			}
 		}
-		else if(radar_show_suit && !strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
+		else if(radar_show_suit && cl_visents.list[i].model->modhint == MOD_SUIT)
 		{
 			// Suit.
 			if (simpletexture && simple_items) {
@@ -427,7 +427,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		//
 		// Show RL, LG and backpacks.
 		//
-		if(radar_show_rl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
+		if(radar_show_rl && cl_visents.list[i].model->modhint == MOD_ROCKETLAUNCHER)
 		{
 			// RL.
 			if (simpletexture && simple_items) {
@@ -437,7 +437,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale);
 			}
 		}
-		else if(radar_show_lg && !strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
+		else if(radar_show_lg && cl_visents.list[i].model->modhint == MOD_LIGHTNINGGUN)
 		{
 			// LG.
 			if (simpletexture && simple_items) {
@@ -458,7 +458,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
 		}
 
-		if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl"))
+		if(cl_visents.list[i].model->modhint == MOD_ARMOR)
 		{
 			//
 			// Show armors.
@@ -495,7 +495,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_mega && !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
+		if(radar_show_mega && cl_visents.list[i].model->modhint == MOD_MEGAHEALTH)
 		{
 			//
 			// Show megahealth.
@@ -537,7 +537,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_String(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "NG");
 			}
 		}
-		else if(radar_show_sng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
+		else if (radar_show_sng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
 		{
 			// SNG.
 			if (simpletexture && simple_items) {
@@ -547,7 +547,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_String(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SNG");
 			}
 		}
-		else if(radar_show_gl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
+		else if (radar_show_gl && cl_visents.list[i].model->modhint == MOD_GRENADELAUNCHER)
 		{
 			// GL.
 			if (simpletexture && simple_items) {
@@ -558,10 +558,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_gibs
-			&&(!strcmp(cl_visents.list[i].model->name, "progs/gib1.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/gib2.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/gib3.mdl")))
+		if (radar_show_gibs && cl_visents.list[i].model->modhint == MOD_GIB)
 		{
 			//
 			// Gibs.
@@ -570,7 +567,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);
 		}
 
-		if(radar_show_health
+		if (radar_show_health
 			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_bh25.bsp")
 				|| !strcmp(cl_visents.list[i].model->name, "maps/b_bh10.bsp")))
 		{
@@ -696,9 +693,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		// Show projectiles (rockets, grenades, nails, shaft).
 		//
 
-		if(radar_show_nails_p
-			&& (!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl")))
+		if (radar_show_nails_p && cl_visents.list[i].model->modhint == MOD_SPIKE)
 		{
 			//
 			// Spikes from SNG and NG.
@@ -706,9 +701,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 
 			Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
 		}
-		else if(radar_show_rockets_p
-			&& (!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl")))
+		else if (radar_show_rockets_p && 
+		         (cl_visents.list[i].model->modhint == MOD_ROCKET || cl_visents.list[i].model->modhint == MOD_GRENADE)
+			)
 		{
 			//
 			// Rockets and grenades.
@@ -727,10 +722,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Draw the rocket/grenade showing it's angle also.
 			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
 		}
-		else if(radar_show_shaft_p
-			&& (!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl")))
+		else if (radar_show_shaft_p && cl_visents.list[i].model->modhint == MOD_THUNDERBOLT)
 		{
 			//
 			// Shaft beam.

@@ -241,31 +241,31 @@ void StatsGrid_InitHoldItems(void)
 	// and save their name and location.
 	for (i = 0; i < cl_visents.count && (ents_count < STATS_MAX_IMPORTANT_ENTS); i++)
 	{
-		if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
+		if(cl_visents.list[i].model->modhint == MOD_PENT)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "PENT", ++pent_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_QUAD)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "QUAD", ++quad_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_RING)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RING", ++ring_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_SUIT)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SUIT", ++suit_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_ROCKETLAUNCHER)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RL", ++rl_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_LIGHTNINGGUN)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "LG", ++lg_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
+		else if(cl_visents.list[i].model->modhint == MOD_GRENADELAUNCHER)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GL", ++gl_count);
 		}
@@ -273,12 +273,12 @@ void StatsGrid_InitHoldItems(void)
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SNG", ++sng_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
+		else if (cl_visents.list[i].model->modhint == MOD_MEGAHEALTH)
 		{
 			// Megahealth.
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "MH", ++mega_count);
 		}
-		else if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl"))
+		else if (cl_visents.list[i].model->modhint == MOD_ARMOR)
 		{
 			if(cl_visents.list[i].skinnum == 0)
 			{

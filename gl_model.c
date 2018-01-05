@@ -1814,11 +1814,17 @@ void Mod_AddModelFlags(model_t *mod)
 		//Tei, special
 		mod->modhint = MOD_TELEPORTDESTINATION;
 	}
-	else if (!strcmp(mod->name, "progs/flame.mdl") || !strcmp(mod->name, "progs/flame2.mdl")) {
+	else if (!strcmp(mod->name, "progs/flame.mdl")) {
 		mod->modhint = MOD_FLAME;
+	}
+	else if (!strcmp(mod->name, "progs/flame2.mdl")) {
+		mod->modhint = MOD_FLAME2;
 	}
 	else if (!strcmp(mod->name, "progs/flame0.mdl")) {
 		mod->modhint = MOD_FLAME0;
+	}
+	else if (!strcmp(mod->name, "progs/flame3.mdl")) {
+		mod->modhint = MOD_FLAME3;
 	}
 	else if (!strcmp(mod->name, "progs/bolt.mdl") || !strcmp(mod->name, "progs/bolt2.mdl") || !strcmp(mod->name, "progs/bolt3.mdl")) {
 		mod->modhint = MOD_THUNDERBOLT;
@@ -1955,6 +1961,12 @@ void Mod_AddModelFlags(model_t *mod)
 	}
 	else if (!strcmp(mod->name, "progs/armor.mdl")) {
 		mod->modhint = MOD_ARMOR;
+	}
+	else if (!strcmp(mod->name, "progs/suit.mdl")) {
+		mod->modhint = MOD_SUIT;
+	}
+	else if (!strcmp(mod->name, "progs/g_rock.mdl")) {
+		mod->modhint = MOD_GRENADELAUNCHER;
 	}
 	else {
 		mod->modhint = MOD_NORMAL;
