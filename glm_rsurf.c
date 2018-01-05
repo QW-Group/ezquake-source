@@ -240,6 +240,8 @@ typedef struct block_refdef_s {
 
 	// if enabled, texture coordinates are always 0,0
 	int r_textureless;
+	// Total size must be multiple of vec4
+	int padding;
 } block_refdef_t;
 
 typedef struct block_world_s {
@@ -297,8 +299,16 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
+		GLint size;
+
 		drawworld_RefdefCvars_block = glGetUniformBlockIndex(drawworld.program, "RefdefCvars");
 		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
+
+		glGetActiveUniformBlockiv(drawworld.program, drawworld_RefdefCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+		Con_Printf("sizeof(refdef) = %d, expected = %d\n", sizeof(refdef), size);
+
+		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+		Con_Printf("sizeof(world) = %d, expected = %d\n", sizeof(world), size);
 
 		glUniformBlockBinding(drawworld.program, drawworld_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);

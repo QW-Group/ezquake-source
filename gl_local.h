@@ -411,6 +411,7 @@ typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLf
 typedef void (APIENTRY *glUniform1iv_t)(GLint location, GLsizei count, const GLint *value);
 typedef GLuint (APIENTRY *glGetUniformBlockIndex_t)(GLuint program, const GLchar * uniformBlockName);
 typedef void (APIENTRY *glUniformBlockBinding_t)(GLuint program, GLuint uBlockIndex, GLuint uBlockBinding);
+typedef void (APIENTRY *glGetActiveUniformBlockiv_t)(GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params);
 
 // Textures
 typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
@@ -478,6 +479,7 @@ extern glUniform1iv_t           glUniform1iv;
 extern glUniformMatrix4fv_t     glUniformMatrix4fv;
 extern glGetUniformBlockIndex_t glGetUniformBlockIndex;
 extern glUniformBlockBinding_t  glUniformBlockBinding;
+extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
@@ -857,6 +859,7 @@ enum {
 	GL_BINDINGPOINT_REFDEF_CVARS,
 	GL_BINDINGPOINT_DRAWWORLD_CVARS,
 	GL_BINDINGPOINT_BRUSHMODEL_CVARS,
+	GL_BINDINGPOINT_ALIASMODEL_CVARS,
 
 	GL_BINDINGPOINT_COUNT
 };

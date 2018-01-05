@@ -104,20 +104,21 @@ glAttachShader_t      glAttachShader = NULL;
 glDetachShader_t      glDetachShader = NULL;
 
 // Uniforms
-glGetUniformLocation_t   glGetUniformLocation = NULL;
-glUniform1f_t            glUniform1f;
-glUniform1fv_t           glUniform1fv;
-glUniform2f_t            glUniform2f;
-glUniform3f_t            glUniform3f;
-glUniform3fv_t           glUniform3fv;
-glUniform4f_t            glUniform4f;
-glUniform1i_t            glUniform1i;
-glProgramUniform1i_t     glProgramUniform1i;
-glUniformMatrix4fv_t     glUniformMatrix4fv;
-glUniform4fv_t           glUniform4fv;
-glUniform1iv_t           glUniform1iv;
-glGetUniformBlockIndex_t glGetUniformBlockIndex;
-glUniformBlockBinding_t  glUniformBlockBinding;
+glGetUniformLocation_t      glGetUniformLocation = NULL;
+glUniform1f_t               glUniform1f;
+glUniform1fv_t              glUniform1fv;
+glUniform2f_t               glUniform2f;
+glUniform3f_t               glUniform3f;
+glUniform3fv_t              glUniform3fv;
+glUniform4f_t               glUniform4f;
+glUniform1i_t               glUniform1i;
+glProgramUniform1i_t        glProgramUniform1i;
+glUniformMatrix4fv_t        glUniformMatrix4fv;
+glUniform4fv_t              glUniform4fv;
+glUniform1iv_t              glUniform1iv;
+glGetUniformBlockIndex_t    glGetUniformBlockIndex;
+glUniformBlockBinding_t     glUniformBlockBinding;
+glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Texture functions 
 glActiveTexture_t        glActiveTexture;
@@ -256,6 +257,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
 			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformBlockIndex);
 			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
+			OPENGL_LOAD_SHADER_FUNCTION(glGetActiveUniformBlockiv);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
