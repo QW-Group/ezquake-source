@@ -759,6 +759,10 @@ void R_InitParticles(void)
 
 void R_ParticleFrame(void)
 {
+	if (!r_worldentity.model || !cl.worldmodel) {
+		return;
+	}
+
 	Classic_CalculateParticles();
 	QMB_CalculateParticles();
 }

@@ -3311,7 +3311,7 @@ static void GLM_QMB_DrawParticles(void)
 		GL_TextureEnvMode(GL_MODULATE);
 		GL_ShadeModel(GL_SMOOTH);
 
-		glActiveTexture(GL_TEXTURE0);
+		GL_SelectTexture(GL_TEXTURE0);
 		for (i = 0; i < num_particletypes; i++) {
 			pt = &particle_types[i];
 			if (!pt->vbo_count || pt->drawtype == pd_hide) {
