@@ -76,10 +76,10 @@ static vec3_t    dlight_color;
 
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
-static cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.75" };
-static cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" };
-static cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
-static cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
+cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.75" };
+cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" };
+cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
+cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
 
 float     apitch;
 float     ayaw;

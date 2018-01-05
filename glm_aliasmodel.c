@@ -7,21 +7,30 @@
 
 static qbool first_alias_model = true;
 
+typedef struct block_aliasmodels_s {
+	float modelViewMatrix[32][16];
+	float color[32][4];
+	float scale[32][4];
+	int textureIndex[32][4];
+	int apply_texture[32][4];
+	int shellMode[32][4];
+
+	float shellSize;
+	// console var data
+	float shell_base_level1;
+	float shell_base_level2;
+	float shell_effect_level1;
+	float shell_effect_level2;
+	float shell_alpha;
+	// Total size must be multiple of vec4
+	int padding[2];
+} block_aliasmodels_t;
+
 static glm_program_t drawAliasModelProgram;
-static GLint drawAliasModel_modelViewMatrix;
-static GLint drawAliasModel_projectionMatrix;
-static GLint drawAliasModel_color;
-static GLint drawAliasModel_materialTex;
-static GLint drawAliasModel_skinTex;
-static GLint drawAliasModel_shellSize;
-static GLint drawAliasModel_time;
-static GLint drawAliasModel_shellMode;
-static GLint drawAliasModel_shell_alpha;
-static GLint drawAliasModel_applyTexture;
-static GLint drawAliasModel_textureIndex;
-static GLint drawAliasModel_scaleS;
-static GLint drawAliasModel_scaleT;
-static GLint drawAliasModel_gamma3d;
+static GLuint drawAliasModel_RefdefCvars_block;
+static GLuint drawAliasModel_AliasData_block;
+static block_aliasmodels_t aliasdata;
+static glm_ubo_t ubo_aliasdata;
 
 typedef struct glm_aliasmodelbatch_s {
 	int start;
@@ -74,25 +83,21 @@ static void GLM_CompileAliasModelProgram(void)
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
-		drawAliasModel_modelViewMatrix = glGetUniformLocation(drawAliasModelProgram.program, "modelViewMatrix");
-		drawAliasModel_projectionMatrix = glGetUniformLocation(drawAliasModelProgram.program, "projectionMatrix");
-		drawAliasModel_color = glGetUniformLocation(drawAliasModelProgram.program, "color");
-		drawAliasModel_materialTex = glGetUniformLocation(drawAliasModelProgram.program, "materialTex");
-		drawAliasModel_skinTex = glGetUniformLocation(drawAliasModelProgram.program, "skinTex");
-		drawAliasModel_applyTexture = glGetUniformLocation(drawAliasModelProgram.program, "apply_texture");
-		drawAliasModel_shellSize = glGetUniformLocation(drawAliasModelProgram.program, "shellSize");
-		drawAliasModel_time = glGetUniformLocation(drawAliasModelProgram.program, "time");
-		drawAliasModel_shellMode = glGetUniformLocation(drawAliasModelProgram.program, "shellMode");
-		drawAliasModel_textureIndex = glGetUniformLocation(drawAliasModelProgram.program, "textureIndex");
-		drawAliasModel_scaleS = glGetUniformLocation(drawAliasModelProgram.program, "scaleS");
-		drawAliasModel_scaleT = glGetUniformLocation(drawAliasModelProgram.program, "scaleT");
-		drawAliasModel_shell_alpha = glGetUniformLocation(drawAliasModelProgram.program, "shell_alpha");
-		drawAliasModel_gamma3d = glGetUniformLocation(drawAliasModelProgram.program, "gamma3d");
-		drawAliasModelProgram.uniforms_found = true;
+		GLint size;
 
-		// Constants
-		glProgramUniform1i(drawAliasModelProgram.program, drawAliasModel_materialTex, 0);
-		glProgramUniform1i(drawAliasModelProgram.program, drawAliasModel_skinTex, 1);
+		drawAliasModel_RefdefCvars_block = glGetUniformBlockIndex(drawAliasModelProgram.program, "RefdefCvars");
+		drawAliasModel_AliasData_block = glGetUniformBlockIndex(drawAliasModelProgram.program, "AliasModelData");
+
+		glGetActiveUniformBlockiv(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+		Con_Printf("sizeof(alias) = %d, expected = %d\n", sizeof(aliasdata), size);
+
+		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_BINDINGPOINT_ALIASMODEL_CVARS);
+
+		GL_GenUniformBuffer(&ubo_aliasdata, "alias-data", &aliasdata, sizeof(aliasdata));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_ALIASMODEL_CVARS, ubo_aliasdata.ubo);
+
+		drawAliasModelProgram.uniforms_found = true;
 	}
 }
 
@@ -163,19 +168,13 @@ static void GLM_AliasModelBatchDraw(int start, int end)
 static void GLM_FlushAliasModelBatch(void)
 {
 	int i;
-	float projectionMatrix[16];
 	glm_aliasmodelbatch_t batches[MAX_ALIASMODEL_BATCH];
-	float mvMatrix[MAX_ALIASMODEL_BATCH][16];
-	float colors[MAX_ALIASMODEL_BATCH][4];
-	float texScaleS[MAX_ALIASMODEL_BATCH];
-	float texScaleT[MAX_ALIASMODEL_BATCH];
-	float texture_indexes[MAX_ALIASMODEL_BATCH];
-	int texture_models[MAX_ALIASMODEL_BATCH];
-	int shellModes[MAX_ALIASMODEL_BATCH];
 	qbool was_texture_array = false;
 	qbool was_shells = false;
 	int non_texture_array = -1;
 	int batch = 0;
+
+	memset(&aliasdata, 0, sizeof(aliasdata));
 
 	if (in_batch_mode && first_alias_model) {
 		if (GL_ShadersSupported()) {
@@ -189,15 +188,8 @@ static void GLM_FlushAliasModelBatch(void)
 		}
 	}
 
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
 	GLM_CompileAliasModelProgram();
 	GL_UseProgram(drawAliasModelProgram.program);
-	glUniformMatrix4fv(drawAliasModel_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform1f(drawAliasModel_shellSize, bound(0, gl_powerupshells_size.value, 20));
-	glUniform1f(drawAliasModel_time, cl.time);
-	glUniform1f(drawAliasModel_shell_alpha, bound(0, gl_powerupshells.value, 1));
-	glUniform1f(drawAliasModel_gamma3d, v_gamma.value);
 
 	prev_texture_array = 0;
 	batches[batch].start = 0;
@@ -227,29 +219,32 @@ static void GLM_FlushAliasModelBatch(void)
 			}
 		}
 
-		memcpy(&mvMatrix[i], req->mvMatrix, sizeof(mvMatrix[i]));
-		colors[i][0] = req->color[0] * 1.0f / 255;
-		colors[i][1] = req->color[1] * 1.0f / 255;
-		colors[i][2] = req->color[2] * 1.0f / 255;
-		colors[i][3] = req->color[3] * 1.0f / 255;
-		texture_indexes[i] = req->texture_index;
-		texScaleS[i] = req->texScale[0];
-		texScaleT[i] = req->texScale[1];
-		texture_models[i] = req->is_texture_array ? req->texture_model : (req->texture_model ? 2 : 0);
-		shellModes[i] = req->effects;
+		memcpy(&aliasdata.modelViewMatrix[i][0], req->mvMatrix, sizeof(aliasdata.modelViewMatrix[i]));
+		aliasdata.color[i][0] = req->color[0] * 1.0f / 255;
+		aliasdata.color[i][1] = req->color[1] * 1.0f / 255;
+		aliasdata.color[i][2] = req->color[2] * 1.0f / 255;
+		aliasdata.color[i][3] = req->color[3] * 1.0f / 255;
+		aliasdata.scale[i][0] = req->texScale[0];
+		aliasdata.scale[i][1] = req->texScale[1];
+		aliasdata.textureIndex[i][0] = req->texture_index;
+		aliasdata.apply_texture[i][0] = req->is_texture_array ? req->texture_model : (req->texture_model ? 2 : 0);
+		aliasdata.shellMode[i][0] = req->effects;
 		batches[batch].end = i;
 
 		aliasmodel_requests[i].baseInstance = i;
 		aliasmodel_requests[i].instanceCount = 1;
 	}
 
-	glUniformMatrix4fv(drawAliasModel_modelViewMatrix, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
-	glUniform4fv(drawAliasModel_color, batch_count, (const GLfloat*) colors);
-	glUniform1fv(drawAliasModel_scaleS, batch_count, texScaleS);
-	glUniform1fv(drawAliasModel_scaleT, batch_count, texScaleT);
-	glUniform1fv(drawAliasModel_textureIndex, batch_count, texture_indexes);
-	glUniform1iv(drawAliasModel_applyTexture, batch_count, texture_models);
-	glUniform1iv(drawAliasModel_shellMode, batch_count, shellModes);
+	aliasdata.shellSize = bound(0, gl_powerupshells_size.value, 20);
+	aliasdata.shell_base_level1 = gl_powerupshells_base1level.value;
+	aliasdata.shell_base_level2 = gl_powerupshells_base2level.value;
+	aliasdata.shell_effect_level1 = gl_powerupshells_effect1level.value;
+	aliasdata.shell_effect_level2 = gl_powerupshells_effect2level.value;
+	aliasdata.shell_alpha = bound(0, gl_powerupshells.value, 1);
+
+	// Update data
+	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_aliasdata.ubo);
+	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(aliasdata), &aliasdata, GL_DYNAMIC_DRAW);
 
 	for (i = 0; i <= batch; ++i) {
 		if (batches[i].texture2d) {

@@ -5,17 +5,35 @@ const int EF_RED = 128;
 const int EF_GREEN = 2;
 const int EF_BLUE = 64;
 
-uniform sampler2DArray materialTex;
-uniform sampler2D skinTex;
+layout(binding=0) uniform sampler2DArray materialTex;
+layout(binding=1) uniform sampler2D skinTex;
 
-// console var data
-uniform float shell_base_level1 = 0.05;
-uniform float shell_base_level2 = 0.1;
-uniform float shell_effect_level1 = 0.75;
-uniform float shell_effect_level2 = 0.4;
-uniform float shell_alpha = 1.0;
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
 
-uniform float gamma3d;
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
+
+layout(std140) uniform AliasModelData {
+	mat4 modelView[32];
+	vec4 color[32];
+	vec2 scale[32];
+	int textureIndex[32];
+	int apply_texture[32];
+	int shellMode[32];
+
+	float shellSize;
+	// console var data
+	float shell_base_level1;
+	float shell_base_level2;
+	float shell_effect_level1;
+	float shell_effect_level2;
+	float shell_alpha;
+};
 
 in vec3 fsTextureCoord;
 in vec3 fsAltTextureCoord;
@@ -26,6 +44,9 @@ out vec4 frag_colour;
 
 void main()
 {
+	vec4 tex = texture(skinTex, fsTextureCoord.st);
+	vec4 altTex = texture(skinTex, fsAltTextureCoord.st);
+
 	if (fsShellMode != 0) {
 		// Powerup-shells - fsShellMode should be same flags as entity->effects, EF_RED | EF_GREEN | EF_BLUE
 		vec4 color1 = vec4(
@@ -41,14 +62,15 @@ void main()
 			shell_alpha
 		);
 
-		frag_colour = 1.0 * color1 * texture(skinTex, fsTextureCoord.st) + 1.0 * color2 * texture(skinTex, fsAltTextureCoord.st);
+		frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
 	}
 	else if (fsTextureEnabled == 2) {
-		frag_colour = texture(skinTex, fsTextureCoord.st) * fsBaseColor;
+		frag_colour = tex * fsBaseColor;
 	}
 	else if (fsTextureEnabled != 0) {
 		// Default
-		frag_colour = texture(materialTex, fsTextureCoord) * fsBaseColor;
+		//frag_colour = texture(materialTex, fsTextureCoord) * fsBaseColor;
+		frag_colour = vec4(0, 0, 0, 255);
 	}
 	else {
 		// Solid
