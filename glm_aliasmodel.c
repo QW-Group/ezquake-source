@@ -270,12 +270,15 @@ static void GLM_SetPowerupShellColor(float* shell_color, float base_level, float
 
 	shell_color[0] = shell_color[1] = shell_color[2] = base_level;
 	shell_color[3] = bound(0, gl_powerupshells.value, 1);
-	if (effects & EF_RED)
+	if (effects & EF_RED) {
 		shell_color[0] += effect_level;
-	if (effects & EF_GREEN)
+	}
+	if (effects & EF_GREEN) {
 		shell_color[1] += effect_level;
-	if (effects & EF_BLUE)
+	}
+	if (effects & EF_BLUE) {
 		shell_color[2] += effect_level;
+	}
 }
 
 static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)

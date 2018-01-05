@@ -39,7 +39,7 @@ static rulesetDef_t rulesetDef = {
 
 cvar_t ruleset = {"ruleset", "default", 0, Rulesets_OnChange_ruleset};
 
-qbool RuleSets_DisallowExternalTexture(model_t *mod)
+qbool RuleSets_DisallowExternalTexture(struct model_s *mod)
 {
 	switch (mod->modhint) {
 		case MOD_EYES:
@@ -671,5 +671,25 @@ qbool Ruleset_AllowPolygonOffset(entity_t* ent)
 		return true;
 	default:
 		return ent->model && ent->model->isworldmodel;
+	}
+}
+
+// Not technically ruleset-based but limits functionaly for similar reasons...
+qbool Ruleset_IsLumaAllowed(struct model_s *mod)
+{
+	switch (mod->modhint)
+	{
+	case MOD_EYES:
+	case MOD_BACKPACK:
+	case MOD_PLAYER:
+
+	case MOD_SENTRYGUN: // tf
+	case MOD_DETPACK:   // tf
+
+		return false; // no luma for such models
+
+	default:
+
+		return true; // luma allowed
 	}
 }

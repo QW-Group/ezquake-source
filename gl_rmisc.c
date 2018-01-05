@@ -77,7 +77,8 @@ void R_InitTextures(void)
 }
 
 //Translates a skin texture by the per-player color lookup
-void R_TranslatePlayerSkin (int playernum) {
+void R_TranslatePlayerSkin (int playernum)
+{
 	byte translate[256], *inrow, *original;
 	char s[512];
 	int	top, bottom, i, j, scaled_width, scaled_height, inwidth, inheight, tinwidth, tinheight, glinternalfmt, glinternalfmt_alpha;

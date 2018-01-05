@@ -719,7 +719,7 @@ void R_RenderAllDynamicLightmaps(model_t *model);
 void R_DrawMapOutline(model_t *model);
 void R_BlendLightmaps(void);
 void R_DrawPowerupShell(
-	model_t* model, int effects, int layer_no, float base_level, float effect_level,
+	model_t* model, int effects, int layer_no,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
 );
 void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);

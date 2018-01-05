@@ -368,10 +368,8 @@ void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc
 		// always allow powerupshells for specs or demos.
 		// do not allow powerupshells for eyes in other cases
 		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
-			R_DrawPowerupShell(clmodel, ent->effects, 0, gl_powerupshells_base1level.value,
-				gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
-			R_DrawPowerupShell(clmodel, ent->effects, 1, gl_powerupshells_base2level.value,
-				gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
+			R_DrawPowerupShell(clmodel, ent->effects, 0, oldframe, frame, paliashdr);
+			R_DrawPowerupShell(clmodel, ent->effects, 1, oldframe, frame, paliashdr);
 
 			memset(r_shellcolor, 0, sizeof(r_shellcolor));
 		}

@@ -130,9 +130,11 @@ void Mod_ClearAll (void) {
 	int i;
 	model_t	*mod;
 
-	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
-		if (mod->type != mod_alias && mod->type != mod_alias3 && mod->type != mod_sprite)
+	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++) {
+		if (mod->type != mod_alias && mod->type != mod_alias3 && mod->type != mod_sprite) {
 			mod->needload = true;
+		}
+	}
 }
 
 model_t *Mod_FindName (char *name) {
@@ -163,29 +165,32 @@ void Mod_TouchModel (char *name) {
 	mod = Mod_FindName (name);
 
 	if (!mod->needload)	{
-		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite)
-			Cache_Check (&mod->cache);
+		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
+			Cache_Check(&mod->cache);
+		}
 	}
 }
 
 // this is callback from VID after a vid_restart
-void Mod_TouchModels (void)
+void Mod_TouchModels(void)
 {
 	int i;
 	model_t *mod;
 
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
 		return; // seems we are not loaded models yet, so no need to do anything
+	}
 
-	for (i = 1; i < MAX_MODELS; i++)
-	{
-		if (!cl.model_name[i][0])
+	for (i = 1; i < MAX_MODELS; i++) {
+		if (!cl.model_name[i][0]) {
 			break;
+		}
 
 		mod = cl.model_precache[i];
 
-		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite)
-			Mod_Extradata (mod);
+		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
+			Mod_Extradata(mod);
+		}
 	}
 }
 
@@ -261,21 +266,24 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash)
 }
 
 //Loads in a model for the given name
-model_t *Mod_ForName (char *name, qbool crash) {
-	model_t	*mod;
+model_t *Mod_ForName(char *name, qbool crash)
+{
+	model_t	*mod = Mod_FindName(name);
 
-	mod = Mod_FindName (name);
-	return Mod_LoadModel (mod, crash);
+	return Mod_LoadModel(mod, crash);
 }
 
-qbool Img_HasFullbrights (byte *pixels, int size) {
-    int i;
+qbool Img_HasFullbrights(byte *pixels, int size)
+{
+	int i;
 
-    for (i = 0; i < size; i++)
-        if (pixels[i] >= 224)
-            return true;
+	for (i = 0; i < size; i++) {
+		if (pixels[i] >= 224) {
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 /*
@@ -1788,249 +1796,7 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	}
 }
 
-/*
-==============================================================================
-ALIAS MODELS
-==============================================================================
-*/
-
-aliashdr_t	*pheader;
-
-stvert_t	stverts[MAXALIASVERTS];
-mtriangle_t	triangles[MAXALIASTRIS];
-
-// a pose is a single set of vertexes.  a frame may be
-// an animating sequence of poses
-trivertx_t	*poseverts[MAXALIASFRAMES];
-int			posenum;
-
-//byte player_8bit_texels[320 * 200];
-byte player_8bit_texels[256*256]; // Workaround for new player model, isn't proper for "real" quake skins
-
 //=========================================================
-
-typedef struct {
-	short		x, y;
-} floodfill_t;
-
-extern unsigned d_8to24table[];
-
-// must be a power of 2
-#define FLOODFILL_FIFO_SIZE 0x1000
-#define FLOODFILL_FIFO_MASK (FLOODFILL_FIFO_SIZE - 1)
-
-#define FLOODFILL_STEP( off, dx, dy ) \
-{ \
-	if (pos[off] == fillcolor) \
-	{ \
-		pos[off] = 255; \
-		fifo[inpt].x = x + (dx), fifo[inpt].y = y + (dy); \
-		inpt = (inpt + 1) & FLOODFILL_FIFO_MASK; \
-	} \
-	else if (pos[off] != 255) fdc = pos[off]; \
-}
-
-//Fill background pixels so mipmapping doesn't have haloes - Ed
-void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
-	byte fillcolor = *skin; // assume this is the pixel to fill
-	floodfill_t fifo[FLOODFILL_FIFO_SIZE];
-	int inpt = 0, outpt = 0, filledcolor = -1, i;
-
-	if (filledcolor == -1) {
-		filledcolor = 0;
-		// attempt to find opaque black
-		for (i = 0; i < 256; ++i)
-			if (d_8to24table[i] == (255 << 0)) { // alpha 1.0
-				filledcolor = i;
-				break;
-			}
-	}
-
-	// can't fill to filled color or to transparent color (used as visited marker)
-	if ((fillcolor == filledcolor) || (fillcolor == 255)) {
-		//printf( "not filling skin from %d to %d\n", fillcolor, filledcolor );
-		return;
-	}
-
-	fifo[inpt].x = 0, fifo[inpt].y = 0;
-	inpt = (inpt + 1) & FLOODFILL_FIFO_MASK;
-
-	while (outpt != inpt) {
-		int x = fifo[outpt].x, y = fifo[outpt].y, fdc = filledcolor;
-		byte *pos = &skin[x + skinwidth * y];
-
-		outpt = (outpt + 1) & FLOODFILL_FIFO_MASK;
-
-		if (x > 0)				FLOODFILL_STEP( -1, -1, 0 );
-		if (x < skinwidth - 1)	FLOODFILL_STEP( 1, 1, 0 );
-		if (y > 0)				FLOODFILL_STEP( -skinwidth, 0, -1 );
-		if (y < skinheight - 1)	FLOODFILL_STEP( skinwidth, 0, 1 );
-		skin[x + skinwidth * y] = fdc;
-	}
-}
-
-extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
-
-static qbool Mod_IsLumaAllowed(model_t *mod)
-{
-	switch (mod->modhint)
-	{
-	case MOD_EYES:
-	case MOD_BACKPACK:
-	case MOD_PLAYER:
-
-	case MOD_SENTRYGUN: // tf
-	case MOD_DETPACK:   // tf
-
-		return false; // no luma for such models
-
-	default:
-
-		return true; // luma allowed
-	}
-}
-
-static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
-{
-	char loadpath[64] = {0};
-	int texmode, texnum;
-	qbool luma_allowed = Mod_IsLumaAllowed(loadmodel);
-
-	texnum     = 0;
-	*fb_texnum = 0;
-
-	if (RuleSets_DisallowExternalTexture(loadmodel))
-		return 0;
-
-	texmode = TEX_MIPMAP;
-	if (!gl_scaleModelTextures.value)
-		texmode |= TEX_NOSCALE;
-
-	if (texnum)
-		return texnum; // wow, we alredy have texnum?
-
-	// try "textures/models/..." path
-
-	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (texnum)
-	{
-		// not a luma actually, but which suffix use then? _fb or what?
-		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-		if (luma_allowed)
-			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-
-		return texnum;
-	}
-
-	// try "textures/..." path
-
-	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (texnum)
-	{
-		// not a luma actually, but which suffix use then? _fb or what?
-		snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
-		if (luma_allowed)
-			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-
-		return texnum;
-	}
-
-	return 0; // we failed miserable
-}
-
-void* Mod_LoadAllSkins(int numskins, daliasskintype_t *pskintype)
-{
-	int i, j, k, s, groupskins, gl_texnum, fb_texnum, texmode;
-	char basename[64], identifier[64];
-	byte *skin;
-	daliasskingroup_t *pinskingroup;
-	daliasskininterval_t *pinskinintervals;
-
-	skin = (byte *) (pskintype + 1);
-
-	if (numskins < 1 || numskins > MAX_SKINS)
-		Host_Error ("Mod_LoadAllSkins: Invalid # of skins: %d\n", numskins);
-
-	s = pheader->skinwidth * pheader->skinheight;
-
-	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
-
-	texmode = TEX_MIPMAP;
-	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
-		texmode |= TEX_NOSCALE;
-
-	for (i = 0; i < numskins; i++) {
-		if (pskintype->type == ALIAS_SKIN_SINGLE) {
-			Mod_FloodFillSkin (skin, pheader->skinwidth, pheader->skinheight);
-
-			// save 8 bit texels for the player model to remap
-			if (loadmodel->modhint == MOD_PLAYER) {
-				if (s > sizeof(player_8bit_texels))
-					Host_Error ("Mod_LoadAllSkins: Player skin too large");
-				memcpy (player_8bit_texels, (byte *) (pskintype + 1), s);
-			}
-
-			snprintf (identifier, sizeof(identifier), "%s_%i", basename, i);
-
-			gl_texnum = fb_texnum = 0;
-			if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
-				gl_texnum = GL_LoadTexture (identifier, pheader->skinwidth, pheader->skinheight,
-					(byte *) (pskintype + 1), texmode, 1);
-
-				if (Img_HasFullbrights((byte *)(pskintype + 1),	pheader->skinwidth * pheader->skinheight))
-					fb_texnum = GL_LoadTexture (va("@fb_%s", identifier), pheader->skinwidth,
-					pheader->skinheight, (byte *) (pskintype + 1), texmode | TEX_FULLBRIGHT, 1);
-			}
-
-			pheader->gl_texturenum[i][0] = pheader->gl_texturenum[i][1] =
-				pheader->gl_texturenum[i][2] = pheader->gl_texturenum[i][3] = gl_texnum;
-
-			pheader->fb_texturenum[i][0] = pheader->fb_texturenum[i][1] =
-				pheader->fb_texturenum[i][2] = pheader->fb_texturenum[i][3] = fb_texnum;
-
-			pskintype = (daliasskintype_t *)((byte *) (pskintype + 1) + s);
-		}
-		else {
-			// animating skin group.  yuck.
-			pskintype++;
-			pinskingroup = (daliasskingroup_t *)pskintype;
-			groupskins = LittleLong (pinskingroup->numskins);
-			pinskinintervals = (daliasskininterval_t *) (pinskingroup + 1);
-
-			pskintype = (void *) (pinskinintervals + groupskins);
-
-			for (j = 0; j < groupskins; j++) {
-				Mod_FloodFillSkin (skin, pheader->skinwidth, pheader->skinheight);
-
-				snprintf (identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
-
-				gl_texnum = fb_texnum = 0;
-				if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
-					gl_texnum = GL_LoadTexture (identifier, pheader->skinwidth,
-						pheader->skinheight, (byte *) (pskintype), texmode, 1);
-
-					if (Img_HasFullbrights((byte *) (pskintype), pheader->skinwidth*pheader->skinheight))
-						fb_texnum = GL_LoadTexture (va("@fb_%s", identifier),
-						pheader->skinwidth,  pheader->skinheight, (byte *) (pskintype), texmode | TEX_FULLBRIGHT, 1);
-				}
-
-				pheader->gl_texturenum[i][j & 3] = gl_texnum;
-				pheader->fb_texturenum[i][j & 3] = fb_texnum;
-
-				pskintype = (daliasskintype_t *) ((byte *) (pskintype) + s);
-			}
-
-			for (k = j; j < 4; j++) {
-				pheader->gl_texturenum[i][j & 3] = pheader->gl_texturenum[i][j - k];
-				pheader->fb_texturenum[i][j & 3] = pheader->fb_texturenum[i][j - k];
-			}
-		}
-	}
-	return pskintype;
-}
-
 
 //VULT MODELS
 //This is incase we want to use a function other than Mod_LoadAliasModel
@@ -2202,49 +1968,51 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	int tex = 0, texmode = 0;
 	char basename[64], indentifier[64];
 
-	if (!mod)
+	if (!mod) {
 		return 0;
+	}
 
-	if (RuleSets_DisallowExternalTexture(mod))
+	if (RuleSets_DisallowExternalTexture(mod)) {
 		return 0;
+	}
 
 	// well, it have nothing with luma, but quite same restrictions...
-	if ( (mod->modhint != MOD_BACKPACK) && !Mod_IsLumaAllowed(mod) )
+	if ((mod->modhint != MOD_BACKPACK) && !Ruleset_IsLumaAllowed(mod)) {
 		return 0;
+	}
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
-	if (!gl_scaleModelTextures.value)
+	if (!gl_scaleModelTextures.value) {
 		texmode |= TEX_NOSCALE;
+	}
 
 	snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
 
-	if (developer.value > 1)
+	if (developer.value > 1) {
 		Com_DPrintf("Mod_LoadSimpleTexture: %s ", indentifier);
-
-	if (mod->type == mod_brush)
-	{
-		tex = GL_LoadTextureImage (va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 	}
-	else if (mod->type == mod_alias || mod->type == mod_alias3)
-	{
+
+	if (mod->type == mod_brush) {
+		tex = GL_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+	}
+	else if (mod->type == mod_alias || mod->type == mod_alias3) {
 		// hack for loading models saved as .bsp under /maps directory
-		if (Utils_RegExpMatch("^(?i)maps\\/b_(.*)\\.bsp", mod->name))
-		{
-			tex = GL_LoadTextureImage (va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+		if (Utils_RegExpMatch("^(?i)maps\\/b_(.*)\\.bsp", mod->name)) {
+			tex = GL_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 		}
-		else
-		{
-			tex = GL_LoadTextureImage (va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
+		else {
+			tex = GL_LoadTextureImage(va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
 		}
 	}
 
 	if (!tex)
-		tex = GL_LoadTextureImage (va("textures/%s", indentifier), indentifier, 0, 0, texmode);
+		tex = GL_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
 
-	if (developer.value > 1)
+	if (developer.value > 1) {
 		Com_DPrintf("%s\n", tex ? "OK" : "FAIL");
+	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
 		mpic_t* pic = &simpleitem_textures[mod->modhint][skinnum];
