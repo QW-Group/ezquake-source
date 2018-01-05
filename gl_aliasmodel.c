@@ -268,7 +268,6 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
 	float scaleS = 1.0f;
 	float scaleT = 1.0f;
-	qbool is_texture_array = false;
 
 	// VULT NAILTRAIL - Hidenails
 	if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE) {
@@ -400,16 +399,8 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		skinnum = 0;
 	}
 
-	if (GL_ShadersSupported() && is_texture_array) {
-		texture = paliashdr->gl_arrayindex[skinnum][anim];
-		fb_texture = paliashdr->gl_fb_arrayindex[skinnum][anim];
-		scaleS = paliashdr->gl_scalingS[skinnum][anim];
-		scaleT = paliashdr->gl_scalingT[skinnum][anim];
-	}
-	else {
-		texture = paliashdr->gl_texturenum[skinnum][anim];
-		fb_texture = paliashdr->fb_texturenum[skinnum][anim];
-	}
+	texture = paliashdr->gl_texturenum[skinnum][anim];
+	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
 	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	//VULT MOTION TRAILS
@@ -429,8 +420,6 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 			}
 			texture = playernmtextures[playernum];
 			fb_texture = playerfbtextures[playernum];
-
-			is_texture_array = false;
 		}
 	}
 	if (full_light || !gl_fb_models.value) {
@@ -471,7 +460,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		GLC_AliasModelPowerupShell(ent, clmodel, oldframe, frame, paliashdr);
 	}
 	else {
-		R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, is_texture_array, shell_only);
+		R_RenderAliasModel(clmodel, paliashdr, color32bit, local_skincolormode, texture, fb_texture, oldframe, frame, outline, scaleS, scaleT, ent->effects, false, shell_only);
 
 		if (!GL_ShadersSupported()) {
 			GLC_UnderwaterCaustics(ent, clmodel, oldframe, frame, paliashdr, scaleS, scaleT);
@@ -922,8 +911,9 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	for (i = 0; i < pheader->numtris; i++) {
 		triangles[i].facesfront = LittleLong(pintriangles[i].facesfront);
 
-		for (j = 0; j < 3; j++)
+		for (j = 0; j < 3; j++) {
 			triangles[i].vertindex[j] = LittleLong(pintriangles[i].vertindex[j]);
+		}
 	}
 
 	// load the frames

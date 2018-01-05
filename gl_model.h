@@ -381,16 +381,11 @@ typedef struct aliashdr_s {
 	int					commands;	// gl command list with embedded s/t
 	int					gl_texturenum[MAX_SKINS][4];
 	int					fb_texturenum[MAX_SKINS][4];
-	float               gl_scalingS[MAX_SKINS][4];
-	float               gl_scalingT[MAX_SKINS][4];
 
 	glm_vbo_t           vbo;
 	glm_vao_t           vao;
 	int                 vertsPerPose;
 	int                 vertsOffset;
-
-	int                 gl_arrayindex[MAX_SKINS][4];
-	int                 gl_fb_arrayindex[MAX_SKINS][4];
 
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;

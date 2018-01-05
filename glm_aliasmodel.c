@@ -104,50 +104,35 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 	color[3] = r_modelalpha * 255;
 
 	if (paliashdr->vao.vao) {
-		int* order = (int *)((byte *)paliashdr + paliashdr->commands);
-		int count;
+		// TODO: model lerping between frames
+		// TODO: Vertex lighting etc
+		// TODO: shadedots[vert.l] ... need to copy shadedots to program somehow
+		// TODO: Coloured lighting per-vertex?
+		l = shadedots[0] / 127.0;
+		l = (l * shadelight + ambientlight) / 256.0;
+		l = min(l, 1);
 
-		while ((count = *order++)) {
-			GLenum drawMode = GL_TRIANGLE_STRIP;
-
-			if (count < 0) {
-				count = -count;
-				drawMode = GL_TRIANGLE_FAN;
-			}
-
-			// texture coordinates now stored in the VBO
-			order += 2 * count;
-
-			// TODO: model lerping between frames
-			// TODO: Vertex lighting etc
-			// TODO: shadedots[vert.l] ... need to copy shadedots to program somehow
-			// TODO: Coloured lighting per-vertex?
-			l = shadedots[0] / 127.0;
-			l = (l * shadelight + ambientlight) / 256.0;
-			l = min(l, 1);
-
-			if (custom_model == NULL) {
-				if (r_modelcolor[0] < 0) {
-					// normal color
-					color[0] = color[1] = color[2] = l * 255;
-				}
-				else {
-					// forced
-					color[0] *= l;
-					color[1] *= l;
-					color[2] *= l;
-				}
+		if (custom_model == NULL) {
+			if (r_modelcolor[0] < 0) {
+				// normal color
+				color[0] = color[1] = color[2] = l * 255;
 			}
 			else {
-				color[0] = custom_model->color_cvar.color[0];
-				color[1] = custom_model->color_cvar.color[1];
-				color[2] = custom_model->color_cvar.color[2];
+				// forced
+				color[0] *= l;
+				color[1] *= l;
+				color[2] *= l;
 			}
-
-			GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, count, texture_model, texture, scaleS, scaleT, effects, is_texture_array, shell_only);
-
-			vertIndex += count;
 		}
+		else {
+			color[0] = custom_model->color_cvar.color[0];
+			color[1] = custom_model->color_cvar.color[1];
+			color[2] = custom_model->color_cvar.color[2];
+
+			texture_model = (custom_model->fullbright_cvar.integer == 0);
+		}
+
+		GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, paliashdr->vertsPerPose, texture_model, texture, scaleS, scaleT, effects, is_texture_array, shell_only);
 	}
 }
 
@@ -180,7 +165,7 @@ static void GLM_AliasModelBatchDraw(int start, int end, float mvMatrix[MAX_ALIAS
 		else {
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
-		glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
+		glDrawArraysInstancedBaseInstance(GL_TRIANGLES, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
 	}
 }
 
@@ -249,7 +234,7 @@ static void GLM_FlushAliasModelBatch(void)
 		texture_indexes[i] = req->texture_index;
 		texScaleS[i] = req->texScale[0];
 		texScaleT[i] = req->texScale[1];
-		texture_models[i] = req->is_texture_array ? req->texture_model : 2;
+		texture_models[i] = req->is_texture_array ? req->texture_model : (req->texture_model ? 2 : 0);
 		shellModes[i] = req->effects;
 
 		aliasmodel_requests[i].baseInstance = i;

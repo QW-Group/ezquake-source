@@ -20,8 +20,7 @@ static void GLM_CreateBrushModelVAO(void);
 
 static qbool AliasModelIsAnySize(model_t* mod)
 {
-	// mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0
-	return false;
+	return false; //mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
 }
 
 static qbool BrushModelIsAnySize(model_t* mod)
@@ -64,16 +63,6 @@ static void GL_DeleteModelTextures(model_t* mod)
 	for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 		mod->simpletexture_scalingS[j] = mod->simpletexture_scalingT[j] = 0;
 		mod->simpletexture_array = mod->simpletexture_indexes[j] = 0;
-	}
-
-	// clear alias model data
-	if (mod->type == mod_alias) {
-		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-
-		memset(paliashdr->gl_scalingS, 0, sizeof(paliashdr->gl_scalingS));
-		memset(paliashdr->gl_scalingT, 0, sizeof(paliashdr->gl_scalingT));
-		memset(paliashdr->gl_arrayindex, 0, sizeof(paliashdr->gl_arrayindex));
-		memset(paliashdr->gl_fb_arrayindex, 0, sizeof(paliashdr->gl_fb_arrayindex));
 	}
 
 	// clear brush model data
@@ -204,16 +193,17 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 	GLint width, height;
 	common_texture_t* tex;
 
+	if (scaleS && scaleT) {
+		*scaleS = *scaleT = 0;
+	}
+	if (texture_array_index) {
+		*texture_array_index = -1;
+	}
+	if (texture_array) {
+		*texture_array = -1;
+	}
+
 	if (!stdTexture) {
-		if (scaleS && scaleT) {
-			*scaleS = *scaleT = 0;
-		}
-		if (texture_array_index) {
-			*texture_array_index = -1;
-		}
-		if (texture_array) {
-			*texture_array = -1;
-		}
 		return;
 	}
 
@@ -312,21 +302,6 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 	switch (mod->type) {
 	case mod_alias:
 	{
-		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-		qbool any_size = AliasModelIsAnySize(mod);
-
-		for (j = 0; j < paliashdr->numskins; ++j) {
-			int anim;
-			for (anim = 0; anim < 4; ++anim) {
-				if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
-					GL_RegisterCommonTextureSize(common, paliashdr->gl_texturenum[j][anim], any_size);
-				}
-				if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-					GL_RegisterCommonTextureSize(common, paliashdr->fb_texturenum[j][anim], any_size);
-				}
-			}
-		}
-
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (mod->simpletexture[j]) {
 				GL_RegisterCommonTextureSize(common, mod->simpletexture[j], true);
@@ -518,30 +493,6 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-		qbool any_size = AliasModelIsAnySize(mod);
-
-		for (j = 0; j < paliashdr->numskins; ++j) {
-			int anim;
-			for (anim = 0; anim < 4; ++anim) {
-				if (anim == 0 || paliashdr->gl_texturenum[j][anim] != paliashdr->gl_texturenum[j][anim - 1]) {
-					GL_CopyToTextureArraySize(common, paliashdr->gl_texturenum[j][anim], any_size, &paliashdr->gl_scalingS[j][anim], &paliashdr->gl_scalingT[j][anim], NULL, &paliashdr->gl_arrayindex[j][anim]);
-				}
-				else {
-					paliashdr->gl_arrayindex[j][anim] = paliashdr->gl_arrayindex[j][anim - 1];
-					paliashdr->gl_scalingS[j][anim] = paliashdr->gl_scalingS[j][anim - 1];
-					paliashdr->gl_scalingT[j][anim] = paliashdr->gl_scalingT[j][anim - 1];
-				}
-
-				if (anim == 0 || paliashdr->fb_texturenum[j][anim] != paliashdr->fb_texturenum[j][anim - 1]) {
-					float fb_s, fb_t;
-
-					GL_CopyToTextureArraySize(common, paliashdr->fb_texturenum[j][anim], any_size, &fb_s, &fb_t, NULL, &paliashdr->gl_fb_arrayindex[j][anim]);
-				}
-				else {
-					paliashdr->gl_fb_arrayindex[j][anim] = paliashdr->gl_fb_arrayindex[j][anim - 1];
-				}
-			}
-		}
 
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (mod->simpletexture[j]) {
@@ -678,8 +629,8 @@ void GL_BuildCommonTextureArrays(void)
 	{
 		// Find highest dimensions, stick everything in there for the moment unless texture is tiling
 		// FIXME: this is a memory vs texture-switch tradeoff
-		int maxWidth = 0;
-		int maxHeight = 0;
+		int maxWidth = 128;
+		int maxHeight = 128;
 		common_texture_t* tex;
 		common_texture_t* commonTex = NULL;
 		int anySizeCount = 0;
@@ -690,12 +641,14 @@ void GL_BuildCommonTextureArrays(void)
 			if (tex->width == 0 && tex->height == 0) {
 				commonTex = tex;
 			}
-			else {
+			else if (tex->any_size_count) {
 				maxWidth = max(maxWidth, tex->width);
 				maxHeight = max(maxHeight, tex->height);
 			}
 			anySizeCount += tex->any_size_count;
 		}
+
+		Con_Printf("Sizes: %d x %d\n", maxWidth, maxHeight);
 
 		// Create non-specific array to fit everything that doesn't require tiling
 		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount + 1, TEX_MIPMAP);

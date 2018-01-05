@@ -34,12 +34,14 @@ ALIAS MODEL DISPLAY LIST GENERATION
 model_t		*aliasmodel;
 aliashdr_t	*paliashdr;
 
-byte	used[8192];
+
+
+static byte	used[8192];
 
 // the command list holds counts and s/t values that are valid for
 // every frame
-int		commands[8192];
-int		numcommands;
+static int		commands[8192];
+static int		numcommands;
 
 // all frames will have their vertexes rearranged and expanded
 // so they are in the order expected by the command list
@@ -387,6 +389,68 @@ void GL_MakeAliasModelVBO(model_t *m, float* vbo_buffer)
 	}
 }
 
+void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
+{
+	// 
+	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
+	int pose, j, k, v;
+	float* vbo_buffer;
+	trivertx_t *verts;
+	
+	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
+	m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
+	vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+	v = 0;
+
+	verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
+	hdr->posedata = (byte *)verts - (byte *)paliashdr;
+
+	// 
+	for (pose = 0; pose < hdr->numposes; ++pose) {
+		trivertx_t* vertices = (trivertx_t *)((byte *)hdr + hdr->posedata) + pose * hdr->poseverts;
+
+		v = pose * hdr->vertsPerPose * MODELVERTEXSIZE;
+		for (j = 0; j < hdr->numtris; ++j) {
+			for (k = 0; k < 3; ++k) {
+				trivertx_t* src;
+				float x, y, z, s, t;
+				int l;
+				int vert = triangles[j].vertindex[k];
+
+				src = &poseverts[pose][vert];
+
+				l = src->lightnormalindex;
+				x = src->v[0];
+				y = src->v[1];
+				z = src->v[2];
+				s = stverts[vert].s;
+				t = stverts[vert].t;
+
+				if (!triangles[j].facesfront && stverts[vert].onseam) {
+					s += pheader->skinwidth / 2;	// on back side
+				}
+				s = (s + 0.5) / pheader->skinwidth;
+				t = (t + 0.5) / pheader->skinheight;
+
+				vbo_buffer[v + 0] = x;
+				vbo_buffer[v + 1] = y;
+				vbo_buffer[v + 2] = z;
+				vbo_buffer[v + 3] = s;
+				vbo_buffer[v + 4] = t;
+				vbo_buffer[v + 5] = r_avertexnormals[l][0];
+				vbo_buffer[v + 6] = r_avertexnormals[l][1];
+				vbo_buffer[v + 7] = r_avertexnormals[l][2];
+				vbo_buffer[v + 8] = 0;
+				v += MODELVERTEXSIZE;
+
+				++vertices;
+			}
+		}
+	}
+
+	m->temp_vbo_buffer = vbo_buffer;
+}
+
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
 	int         i, j;
@@ -395,66 +459,71 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	int total_vertices = 0;
 	int pose = 0;
 
-	aliasmodel = m;
-	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
-
-	// Tonik: don't cache anything, because it seems just as fast
-	// (if not faster) to rebuild the tris instead of loading them from disk
-	BuildTris();		// trifans or lists
-
-	// save the data out
-	paliashdr->poseverts = numorder;
-
-	cmds = (int *)Hunk_Alloc(numcommands * 4);
-	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
-	memcpy(cmds, commands, numcommands * 4);
-
-	verts = (trivertx_t *)Hunk_Alloc(paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t));
-	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
-	for (i = 0; i < paliashdr->numposes; i++) {
-		for (j = 0; j < numorder; j++) {
-			//TODO: corrupted files may cause a crash here, sanity checks?
-			*verts++ = poseverts[i][vertexorder[j]];
-		}
+	if (GL_ShadersSupported()) {
+		GLM_MakeAliasModelDisplayLists(m, hdr);
 	}
+	else {
+		aliasmodel = m;
+		paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
 
-	// Measure vertices required
-	{
-		int* order = (int *) ((byte *) paliashdr + paliashdr->commands);
-		int count = 0;
+		// Tonik: don't cache anything, because it seems just as fast
+		// (if not faster) to rebuild the tris instead of loading them from disk
+		BuildTris();		// trifans or lists
 
-		m->min_tex[0] = m->min_tex[1] = 9999;
-		m->max_tex[0] = m->max_tex[1] = -9999;
+		// save the data out
+		paliashdr->poseverts = numorder;
 
-		while ((count = *order++)) {
-			float s, t;
+		cmds = (int *)Hunk_Alloc(numcommands * 4);
+		paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
+		memcpy(cmds, commands, numcommands * 4);
 
-			if (count < 0) {
-				count = -count;
-			}
-
-			while (count--) {
-				s = ((float *)order)[0];
-				t = ((float *)order)[1];
-				m->min_tex[0] = min(m->min_tex[0], s);
-				m->min_tex[1] = min(m->min_tex[1], t);
-				m->max_tex[0] = max(m->max_tex[0], s);
-				m->max_tex[1] = max(m->max_tex[1], t);
-				order += 2;
-				++total_vertices;
+		verts = (trivertx_t *)Hunk_Alloc(paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t));
+		paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
+		for (i = 0; i < paliashdr->numposes; i++) {
+			for (j = 0; j < numorder; j++) {
+				//TODO: corrupted files may cause a crash here, sanity checks?
+				*verts++ = poseverts[i][vertexorder[j]];
 			}
 		}
 
-		m->vertsInVBO = total_vertices * paliashdr->numposes;
-		paliashdr->vertsPerPose = total_vertices;
-	}
+		// Measure vertices required
+		{
+			int* order = (int *)((byte *)paliashdr + paliashdr->commands);
+			int count = 0;
 
-	{
-		float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+			m->min_tex[0] = m->min_tex[1] = 9999;
+			m->max_tex[0] = m->max_tex[1] = -9999;
 
-		GL_MakeAliasModelVBO(m, vbo_buffer);
+			while ((count = *order++)) {
+				float s, t;
 
-		m->temp_vbo_buffer = vbo_buffer;
+				if (count < 0) {
+					count = -count;
+				}
+
+				while (count--) {
+					s = ((float *)order)[0];
+					t = ((float *)order)[1];
+					m->min_tex[0] = min(m->min_tex[0], s);
+					m->min_tex[1] = min(m->min_tex[1], t);
+					m->max_tex[0] = max(m->max_tex[0], s);
+					m->max_tex[1] = max(m->max_tex[1], t);
+					order += 2;
+					++total_vertices;
+				}
+			}
+
+			m->vertsInVBO = total_vertices * paliashdr->numposes;
+			paliashdr->vertsPerPose = total_vertices;
+		}
+
+		{
+			float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+
+			GL_MakeAliasModelVBO(m, vbo_buffer);
+
+			m->temp_vbo_buffer = vbo_buffer;
+		}
 	}
 }
 
