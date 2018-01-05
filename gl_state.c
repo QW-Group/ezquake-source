@@ -6,7 +6,8 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-// #define GL_PARANOIA
+//#define GL_PARANOIA
+
 #define MAX_LOGGED_TEXTURE_UNITS 8
 
 static GLenum currentDepthFunc = GL_LESS;
@@ -200,6 +201,8 @@ void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 		Con_Printf("ERROR: Non-texture %d passed to GL_BindTexture\n", texnum);
 		return;
 	}
+
+	GL_ProcessErrors("glBindTexture/Prior");
 #endif
 
 	if (targetType == GL_TEXTURE_2D) {
@@ -222,6 +225,10 @@ void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 		// No caching...
 		glBindTexture(targetType, texnum);
 	}
+
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glBindTexture/After");
+#endif
 }
 
 void GL_Bind(int texnum)
@@ -240,12 +247,18 @@ void GL_SelectTexture(GLenum target)
 		return;
 	}
 
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glActiveTexture/Prior");
+#endif
 	if (glActiveTexture) {
 		glActiveTexture(target);
 	}
 	else {
 		qglActiveTexture(target);
 	}
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glActiveTexture/After");
+#endif
 
 	cnttextures[oldtarget - GL_TEXTURE0] = currenttexture;
 	cntarrays[oldtarget - GL_TEXTURE0] = currentTextureArray;
@@ -334,6 +347,10 @@ void GL_Enable(GLenum option)
 		return;
 	}
 
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glEnable/Prior");
+#endif
+
 	if (option == GL_DEPTH_TEST) {
 		if (gl_depthTestEnabled) {
 			return;
@@ -389,6 +406,10 @@ void GL_Disable(GLenum option)
 		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
 		return;
 	}
+
+#ifdef GL_PARANOIA
+	GL_ProcessErrors("glDisable/Prior");
+#endif
 
 	if (option == GL_DEPTH_TEST) {
 		if (!gl_depthTestEnabled) {

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
 #ifdef WITH_NVTX
 #include "nvToolsExt.h"
@@ -199,15 +200,13 @@ static void CheckMultiTextureExtensions(void)
 
 static void CheckShaderExtensions(void)
 {
-	int gl_version;
-
 	shaders_supported = vbo_supported = false;
 	glBindBuffer = NULL;
 	glBufferData = NULL;
 	glBufferSubDataExt = NULL;
 
-	if (COM_CheckParm("-modern") && SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_version) == 0) {
-		if (gl_version >= 2) {
+	if (COM_CheckParm("-modern")) {
+		if (glConfig.majorVersion >= 2) {
 			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
 			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
 			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");

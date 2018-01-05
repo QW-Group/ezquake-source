@@ -1190,7 +1190,9 @@ static void VID_SDL_Init(void)
 	glConfig.vendor_string         = glGetString(GL_VENDOR);
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
-	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
+
+	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &glConfig.majorVersion);
+	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glConfig.minorVersion);
 
 #ifdef X11_GAMMA_WORKAROUND
 	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
@@ -1402,6 +1404,8 @@ qbool VID_VSyncLagFix(void)
 static void GfxInfo_f(void)
 {
 	SDL_DisplayMode current;
+	GLint num_extensions;
+	int i;
 
 	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
@@ -1409,7 +1413,23 @@ static void GfxInfo_f(void)
 	Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
 
 	if (r_showextensions.value) {
-		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
+		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
+		if (glConfig.majorVersion >= 3) {
+			glGetStringi_t glGetStringi = (glGetStringi_t)SDL_GL_GetProcAddress("glGetStringi");
+			if (glGetStringi) {
+				glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
+				for (i = 0; i < num_extensions; ++i) {
+					Com_Printf_State(PRINT_ALL, "%s%s", i ? " " : "", glGetStringi(GL_EXTENSIONS, i));
+				}
+				Com_Printf_State(PRINT_ALL, "\n");
+			}
+			else {
+				Com_Printf_State(PRINT_ALL, "(list unavailable)\n");
+			}
+		}
+		else {
+			Com_Printf_State(PRINT_ALL, "%s\n", (const char*)glGetString(GL_EXTENSIONS));
+		}
 	}
 
 	Com_Printf_State(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);

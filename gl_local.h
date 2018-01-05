@@ -361,6 +361,9 @@ void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
 
+// General
+typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
+
 // VBOs
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);

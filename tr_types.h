@@ -49,12 +49,13 @@ typedef struct {
 	const unsigned char                     *renderer_string;
 	const unsigned char                     *vendor_string;
 	const unsigned char                     *version_string;
-	const unsigned char                     *extensions_string;
 	const unsigned char                     *glsl_version;
 
-	int					colorBits, depthBits, stencilBits;
-	int					vidWidth, vidHeight;
-	int					displayFrequency;
+	int		colorBits, depthBits, stencilBits;
+	int		vidWidth, vidHeight;
+	int		displayFrequency;
+	int     majorVersion;
+	int     minorVersion;
 
 	glHardwareType_t			hardwareType;
 
