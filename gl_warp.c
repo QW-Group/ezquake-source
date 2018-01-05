@@ -187,7 +187,7 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 
 byte* SurfaceFlatTurbColor(texture_t* texture)
 {
-	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
+	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor, r_skycolor;
 
 	switch (texture->turbType)
 	{
@@ -199,6 +199,8 @@ byte* SurfaceFlatTurbColor(texture_t* texture)
 		return r_lavacolor.color;
 	case TEXTURE_TURB_TELE:
 		return r_telecolor.color;
+	case TEXTURE_TURB_SKY:
+		return r_skycolor.color;
 	}
 
 	return (byte *)&texture->flatcolor3ub;

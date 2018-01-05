@@ -84,7 +84,7 @@ int R_ChainTexturesBySize(model_t* m)
 }
 
 // 'source' is from GLC's float[VERTEXSIZE]
-static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* source, int lightmap, int material, float scaleS, float scaleT)
+static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf)
 {
 	vbo_world_vert_t* target = vbo_buffer + position;
 
@@ -103,6 +103,18 @@ static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* s
 	}
 	target->lightmap_index = lightmap;
 	target->material_index = material;
+
+	if (surf->flags & SURF_DRAWSKY) {
+		target->flags = TEXTURE_TURB_SKY;
+	}
+	else {
+		target->flags = surf->texinfo->texture->turbType & EZQ_SURFACE_TYPE;
+	}
+
+	target->flags |=
+		(surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0) +
+		(surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR : 0);
+	memcpy(target->flatcolor, &surf->texinfo->texture->flatcolor3ub, sizeof(target->flatcolor));
 
 	return position + 1;
 }
@@ -191,18 +203,18 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 
 				// Store position for drawing individual polys
 				poly->vbo_start = vbo_pos;
-				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT);
+				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf);
 				++output;
 
 				start_vert = 1;
 				end_vert = poly->numverts - 1;
 
 				while (start_vert <= end_vert) {
-					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT);
+					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf);
 					++output;
 
 					if (start_vert < end_vert) {
-						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT);
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf);
 						++output;
 					}
 

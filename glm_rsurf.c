@@ -229,11 +229,25 @@ static GLint drawworld_projectionMatrix;
 static GLint drawworld_materialTex;
 static GLint drawworld_detailTex;
 static GLint drawworld_lightmapTex;
-static GLint drawworld_causticsTex;
 static GLint drawworld_drawDetailTex;
 static GLint drawworld_time;
-static GLint drawworld_waterAlpha;
 static GLint drawworld_gamma3d;
+
+static GLint drawworld_drawflat;
+static GLint drawworld_textureless;
+static GLint drawworld_wallcolor;
+static GLint drawworld_floorcolor;
+
+static GLint drawworld_waterAlpha;
+static GLint drawworld_fastturb;
+static GLint drawworld_telecolor;
+static GLint drawworld_lavacolor;
+static GLint drawworld_slimecolor;
+static GLint drawworld_watercolor;
+static GLint drawworld_causticsTex;
+
+static GLint drawworld_fastsky;
+static GLint drawworld_skycolor;
 
 static void Compile_DrawWorldProgram(void)
 {
@@ -255,6 +269,21 @@ static void Compile_DrawWorldProgram(void)
 		drawworld_waterAlpha = glGetUniformLocation(drawworld.program, "waterAlpha");
 		drawworld_time = glGetUniformLocation(drawworld.program, "time");
 		drawworld_gamma3d = glGetUniformLocation(drawworld.program, "gamma3d");
+
+		drawworld_drawflat = glGetUniformLocation(drawworld.program, "r_drawflat");
+		drawworld_textureless = glGetUniformLocation(drawworld.program, "r_textureless");
+		drawworld_wallcolor = glGetUniformLocation(drawworld.program, "r_wallcolor");
+		drawworld_floorcolor = glGetUniformLocation(drawworld.program, "r_floorcolor");
+
+		drawworld_fastturb = glGetUniformLocation(drawworld.program, "r_fastturb");
+		drawworld_telecolor = glGetUniformLocation(drawworld.program, "r_telecolor");
+		drawworld_lavacolor = glGetUniformLocation(drawworld.program, "r_lavacolor");
+		drawworld_slimecolor = glGetUniformLocation(drawworld.program, "r_slimecolor");
+		drawworld_watercolor = glGetUniformLocation(drawworld.program, "r_watercolor");
+
+		drawworld_fastsky = glGetUniformLocation(drawworld.program, "r_fastsky");
+		drawworld_skycolor = glGetUniformLocation(drawworld.program, "r_skycolor");
+
 		drawworld.uniforms_found = true;
 
 		// Constants
@@ -265,11 +294,14 @@ static void Compile_DrawWorldProgram(void)
 	}
 }
 
+#define PASS_COLOR_AS_4F(x) (x.color[0]*1.0f/255),(x.color[1]*1.0f/255),(x.color[2]*1.0f/255),255
+
 static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
+	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, gl_textureless, r_skycolor;
 
 	Compile_DrawWorldProgram();
 
@@ -283,6 +315,20 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	glUniform1f(drawworld_waterAlpha, wateralpha);
 	glUniform1f(drawworld_time, cl.time);
 	glUniform1f(drawworld_gamma3d, v_gamma.value);
+
+	glUniform1i(drawworld_drawflat, r_drawflat.integer);
+	glUniform1i(drawworld_textureless, gl_textureless.integer);
+	glUniform4f(drawworld_wallcolor, PASS_COLOR_AS_4F(r_wallcolor));
+	glUniform4f(drawworld_floorcolor, PASS_COLOR_AS_4F(r_floorcolor));
+
+	glUniform1i(drawworld_fastturb, r_fastturb.integer);
+	glUniform4f(drawworld_telecolor, PASS_COLOR_AS_4F(r_telecolor));
+	glUniform4f(drawworld_lavacolor, PASS_COLOR_AS_4F(r_lavacolor));
+	glUniform4f(drawworld_slimecolor, PASS_COLOR_AS_4F(r_slimecolor));
+	glUniform4f(drawworld_watercolor, PASS_COLOR_AS_4F(r_watercolor));
+
+	glUniform1i(drawworld_fastsky, r_fastsky.integer);
+	glUniform4f(drawworld_skycolor, PASS_COLOR_AS_4F(r_skycolor));
 
 	GL_BindVertexArray(vao);
 }
@@ -378,6 +424,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 	msurface_t* surf;
 	qbool draw_detail_texture = gl_detail.integer && detailtexture;
 	qbool draw_caustics = gl_caustics.integer && underwatertexture;
+	int count = 0;
 
 	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture);
 
@@ -394,12 +441,12 @@ void GLM_DrawTexturedWorld(model_t* model)
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
 		qbool first_in_this_array = true;
 		int texIndex;
-		int count = 0;
 
 		if (!base_tex || !base_tex->size_start || !base_tex->gl_texture_array) {
 			continue;
 		}
 
+		count = 0;
 		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
 			texture_t* tex = model->textures[texIndex];
 
@@ -448,6 +495,41 @@ void GLM_DrawTexturedWorld(model_t* model)
 			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
 		}
 	}
+
+	count = 0;
+	for (waterline = 0; waterline < 2; waterline++) {
+		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->texturechain) {
+			glpoly_t* poly;
+
+			for (poly = surf->polys; poly; poly = poly->next) {
+				int newVerts = poly->numverts;
+
+				if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+					glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
+					count = 0;
+				}
+
+				// Degenerate triangle strips
+				if (count) {
+					int prev = count - 1;
+
+					if (count % 2 == 1) {
+						indices[count++] = indices[prev];
+					}
+					indices[count++] = indices[prev];
+					indices[count++] = poly->vbo_start;
+				}
+
+				for (v = 0; v < newVerts; ++v) {
+					indices[count++] = poly->vbo_start + v;
+				}
+			}
+		}
+	}
+	if (count) {
+		glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
+	}
+
 	GLM_ExitBatchedPolyRegion();
 	return;
 }

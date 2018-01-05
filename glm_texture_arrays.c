@@ -859,6 +859,11 @@ static void GLM_CreateBrushModelVAO(void)
 	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
 	glEnableVertexAttribArray(5);
 	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
+	glEnableVertexAttribArray(7);
+	glVertexAttribIPointer(7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flags));
+	glEnableVertexAttribArray(8);
+	glVertexAttribPointer(8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flatcolor));
+
 	glEnableVertexAttribArray(6);
 	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);

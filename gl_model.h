@@ -47,11 +47,6 @@ typedef struct mvertex_s {
 	vec3_t		position;
 } mvertex_t;
 
-#define TEXTURE_TURB_WATER 1
-#define TEXTURE_TURB_SLIME 2
-#define TEXTURE_TURB_LAVA  3
-#define TEXTURE_TURB_TELE  4
-
 #define	MAX_LIGHTMAPS		192
 
 typedef struct texture_s {
@@ -120,7 +115,15 @@ typedef struct mtexinfo_s {
 	int					flags;
 } mtexinfo_t;
 
-#define VBO_WORLD_FLOOR 1  // should be drawn as floor when drawflat enabled
+#define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
+#define TEXTURE_TURB_WATER 1
+#define TEXTURE_TURB_SLIME 2
+#define TEXTURE_TURB_LAVA  3
+#define TEXTURE_TURB_TELE  4
+#define TEXTURE_TURB_SKY   5
+
+#define EZQ_SURFACE_IS_FLOOR   8    // should be drawn as floor for r_drawflat
+#define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
 
 // Any changes to definition must be mirrored in GLM_CreateBrushModelVAO
 // Filled in CopyVertToBuffer in glm_brushmodel
@@ -138,7 +141,7 @@ typedef struct vbo_world_vert_s {
 
 	// Flags (VBO_WORLD_X)
 	byte flags;
-	byte flatcolour[4];
+	byte flatcolor[3];
 } vbo_world_vert_t;
 
 // GLC only...

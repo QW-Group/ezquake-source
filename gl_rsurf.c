@@ -355,7 +355,8 @@ void R_DrawBrushModel (entity_t *e) {
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 
-void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
+void R_RecursiveWorldNode(mnode_t *node, int clipflags)
+{
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	extern cvar_t r_fastturb;
 
@@ -368,24 +369,26 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 	qbool solidTexTurb = (!r_fastturb.integer && wateralpha == 1);
 
-	if (node->contents == CONTENTS_SOLID)
-		return;		// solid
-	if (node->visframe != r_visframecount)
+	if (node->contents == CONTENTS_SOLID || node->visframe != r_visframecount) {
 		return;
+	}
 	for (c = 0, clipplane = frustum; c < 4; c++, clipplane++) {
-		if (!(clipflags & (1 << c)))
+		if (!(clipflags & (1 << c))) {
 			continue;	// don't need to clip against it
+		}
 
-		clipped = BOX_ON_PLANE_SIDE (node->minmaxs, node->minmaxs + 3, clipplane);
-		if (clipped == 2)
+		clipped = BOX_ON_PLANE_SIDE(node->minmaxs, node->minmaxs + 3, clipplane);
+		if (clipped == 2) {
 			return;
-		else if (clipped == 1)
-			clipflags &= ~(1<<c);	// node is entirely on screen
+		}
+		else if (clipped == 1) {
+			clipflags &= ~(1 << c);	// node is entirely on screen
+		}
 	}
 
 	// if a leaf node, draw stuff
-	if (node->contents < 0)	{
-		pleaf = (mleaf_t *) node;
+	if (node->contents < 0) {
+		pleaf = (mleaf_t *)node;
 
 		mark = pleaf->firstmarksurface;
 		c = pleaf->nummarksurfaces;
@@ -397,9 +400,10 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 			} while (--c);
 		}
 
-	// deal with model fragments in this leaf
-		if (pleaf->efrags)
-			R_StoreEfrags (&pleaf->efrags);
+		// deal with model fragments in this leaf
+		if (pleaf->efrags) {
+			R_StoreEfrags(&pleaf->efrags);
+		}
 
 		return;
 	}
@@ -413,27 +417,31 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	side = (dot >= 0) ? 0 : 1;
 
 	// recurse down the children, front side first
-	R_RecursiveWorldNode (node->children[side], clipflags);
+	R_RecursiveWorldNode(node->children[side], clipflags);
 
 	// draw stuff
 	c = node->numsurfaces;
 
-	if (c)	{
+	if (c) {
 		qbool turbSurface;
 
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 
-		if (dot < -BACKFACE_EPSILON)
+		if (dot < -BACKFACE_EPSILON) {
 			side = SURF_PLANEBACK;
-		else if (dot > BACKFACE_EPSILON)
+		}
+		else if (dot > BACKFACE_EPSILON) {
 			side = 0;
+		}
 
-		for ( ; c; c--, surf++) {
-			if (surf->visframe != r_framecount)
+		for (; c; c--, surf++) {
+			if (surf->visframe != r_framecount) {
 				continue;
+			}
 
-			if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK))
+			if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK)) {
 				continue;		// wrong side
+			}
 
 			// add surf to the right chain
 			turbSurface = (surf->flags & SURF_DRAWTURB);
@@ -478,7 +486,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 		}
 	}
 	// recurse down the back side
-	R_RecursiveWorldNode (node->children[!side], clipflags);
+	R_RecursiveWorldNode(node->children[!side], clipflags);
 }
 
 void R_CreateWorldTextureChains(void)
