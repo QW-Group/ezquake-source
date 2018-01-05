@@ -48,17 +48,25 @@ void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture)
 
 	if (unit_num >= 0 && unit_num < sizeof(cntarrays)) {
 		if (targetType == GL_TEXTURE_2D_ARRAY) {
-			if (cntarrays[unit_num] != texture) {
-				GL_SelectTexture(unit);
-				GL_BindTexture(targetType, texture, true);
+			if (unit == oldtarget && currentTextureArray == texture) {
+				return;
 			}
+			else if (unit != oldtarget && cntarrays[unit_num] == texture) {
+				return;
+			}
+			GL_SelectTexture(unit);
+			GL_BindTexture(targetType, texture, true);
 			return;
 		}
 		else if (targetType == GL_TEXTURE_2D) {
-			if (cnttextures[unit_num] != texture) {
-				GL_SelectTexture(unit);
-				GL_BindTexture(targetType, texture, true);
+			if (unit == oldtarget && currenttexture == texture) {
+				return;
 			}
+			else if (unit != oldtarget && cnttextures[unit_num] == texture) {
+				return;
+			}
+			GL_SelectTexture(unit);
+			GL_BindTexture(targetType, texture, true);
 			return;
 		}
 	}
