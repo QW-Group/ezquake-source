@@ -464,15 +464,12 @@ void GLM_DrawTexturedWorld(model_t* model)
 	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture, draw_caustics);
 
 	// Bind lightmap array
-	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS);
-	GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, true);
+	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
 	if (draw_detail_texture) {
-		GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL);
-		GL_Bind(detailtexture);
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, GL_TEXTURE_2D, detailtexture);
 	}
 	if (draw_caustics) {
-		GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS);
-		GL_Bind(underwatertexture);
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
 	}
 	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL);
 

@@ -39,6 +39,32 @@ static qbool mtexenabled = false;
 static GLenum lastTextureMode = GL_MODULATE;
 static int old_alphablend_flags = 0;
 
+// FIXME: Add optional support for DSA
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture)
+{
+	int unit_num = unit - GL_TEXTURE0;
+
+	if (unit_num >= 0 && unit_num < sizeof(cntarrays)) {
+		if (targetType == GL_TEXTURE_2D_ARRAY) {
+			if (cntarrays[unit_num] != texture) {
+				GL_SelectTexture(unit);
+				GL_BindTexture(targetType, texture, true);
+			}
+			return;
+		}
+		else if (targetType == GL_TEXTURE_2D) {
+			if (cnttextures[unit_num] != texture) {
+				GL_SelectTexture(unit);
+				GL_BindTexture(targetType, texture, true);
+			}
+			return;
+		}
+	}
+
+	GL_SelectTexture(unit);
+	GL_BindTexture(targetType, texture, true);
+}
+
 void GL_DepthFunc(GLenum func)
 {
 	if (func != currentDepthFunc) {

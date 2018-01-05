@@ -654,6 +654,7 @@ void GL_BindVertexArray(GLuint vao);
 void GL_ShadeModel(GLenum model);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture);
 void GL_EnableFog(void);
 void GL_DisableFog(void);
 void GL_ConfigureFog(void);
