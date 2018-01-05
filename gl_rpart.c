@@ -3233,10 +3233,7 @@ static void GLC_QMB_DrawParticles(void)
 static glm_vbo_t qmbParticleVBO;
 static glm_vao_t qmbParticleVAO;
 static glm_program_t qmbParticleProgram;
-static GLint qmbParticleProgram_modelViewMatrix;
-static GLint qmbParticleProgram_projectionMatrix;
-static GLint qmbParticleProgram_materialTex;
-static GLint qmbParticleProgram_gamma3d;
+static GLint qmbParticles_RefdefCvars_block;
 
 static GLuint GLM_QMB_CreateParticleVAO(void)
 {
@@ -3274,14 +3271,12 @@ static void GLM_QMB_CompileParticleProgram(void)
 	}
 
 	if (qmbParticleProgram.program && !qmbParticleProgram.uniforms_found) {
-		qmbParticleProgram_modelViewMatrix = glGetUniformLocation(qmbParticleProgram.program, "modelViewMatrix");
-		qmbParticleProgram_projectionMatrix = glGetUniformLocation(qmbParticleProgram.program, "projectionMatrix");
-		qmbParticleProgram_materialTex = glGetUniformLocation(qmbParticleProgram.program, "materialTex");
-		qmbParticleProgram_gamma3d = glGetUniformLocation(qmbParticleProgram.program, "gamma3d");
-		qmbParticleProgram.uniforms_found = true;
+		qmbParticles_RefdefCvars_block = glGetUniformBlockIndex(qmbParticleProgram.program, "RefdefCvars");
 
-		glProgramUniform1i(qmbParticleProgram.program, qmbParticleProgram_materialTex, 0);
-	}	
+		glUniformBlockBinding(qmbParticleProgram.program, qmbParticles_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+
+		qmbParticleProgram.uniforms_found = true;
+	}
 }
 
 static void GLM_QMB_DrawParticles(void)
@@ -3307,9 +3302,6 @@ static void GLM_QMB_DrawParticles(void)
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 		GL_UseProgram(qmbParticleProgram.program);
-		glUniformMatrix4fv(qmbParticleProgram_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-		glUniformMatrix4fv(qmbParticleProgram_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-		glUniform1f(qmbParticleProgram_gamma3d, v_gamma.value);
 
 		GL_BindVertexArray(vao);
 
@@ -3319,6 +3311,7 @@ static void GLM_QMB_DrawParticles(void)
 		GL_TextureEnvMode(GL_MODULATE);
 		GL_ShadeModel(GL_SMOOTH);
 
+		glActiveTexture(GL_TEXTURE0);
 		for (i = 0; i < num_particletypes; i++) {
 			pt = &particle_types[i];
 			if (!pt->vbo_count || pt->drawtype == pd_hide) {

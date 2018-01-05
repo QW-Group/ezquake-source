@@ -1,7 +1,16 @@
 #version 430
 
-uniform sampler2D materialTex;
-uniform float gamma3d;
+layout(binding=0) uniform sampler2D materialTex;
+
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
 
 in vec2 TextureCoord;
 in vec4 fragColour;
