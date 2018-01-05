@@ -57,7 +57,7 @@ static GLuint GLM_CreateParticleVAO(void)
 	if (!particleVBO.vbo) {
 		GL_GenBuffer(&particleVBO, "particle");
 		GL_BindBuffer(GL_ARRAY_BUFFER, particleVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_STATIC_DRAW);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_DYNAMIC_DRAW);
 	}
 
 	if (!particleVAO.vao) {
@@ -108,5 +108,5 @@ void GLM_UpdateParticles(int particles_to_draw)
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 	}*/
 	GL_BindBuffer(GL_ARRAY_BUFFER, particleVBO.vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
+	GL_BufferData(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_DYNAMIC_DRAW);
 }

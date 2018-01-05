@@ -3240,7 +3240,7 @@ static GLuint GLM_QMB_CreateParticleVAO(void)
 	if (!qmbParticleVBO.vbo) {
 		GL_GenBuffer(&qmbParticleVBO, "qmbparticle");
 		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 	}
 
 	if (!qmbParticleVAO.vao) {
@@ -3292,7 +3292,7 @@ static void GLM_QMB_DrawParticles(void)
 
 	// Update VBO
 	GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices, GL_STATIC_DRAW);
+	GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices, GL_DYNAMIC_DRAW);
 
 	if (qmbParticleProgram.program && vao) {
 		float modelViewMatrix[16];
