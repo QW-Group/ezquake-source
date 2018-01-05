@@ -41,7 +41,7 @@ void main()
 			shell_alpha
 		);
 
-		frag_colour = 1.0 * color1 * texture(materialTex, fsTextureCoord) + 1.0 * color2 * texture(materialTex, fsAltTextureCoord);
+		frag_colour = 1.0 * color1 * texture(skinTex, fsTextureCoord.st) + 1.0 * color2 * texture(skinTex, fsAltTextureCoord.st);
 	}
 	else if (fsTextureEnabled == 2) {
 		frag_colour = texture(skinTex, fsTextureCoord.st) * fsBaseColor;

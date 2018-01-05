@@ -305,6 +305,9 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only)
 {
 	if (shell_only) {
+		if (!shelltexture) {
+			return;
+		}
 		if (effects) {
 			// always allow powerupshells for specs or demos.
 			// do not allow powerupshells for eyes in other cases
@@ -312,7 +315,7 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 				effects &= (EF_RED | EF_GREEN | EF_BLUE);
 
 				if (effects) {
-					GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, 0, 1, 1, effects, true);
+					GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, shelltexture, 1, 1, effects, false);
 					if (!in_batch_mode) {
 						GLM_FlushAliasModelBatch();
 					}

@@ -512,7 +512,7 @@ int AllocBlock (int w, int h, int *x, int *y) {
 mvertex_t	*r_pcurrentvertbase;
 model_t		*currentmodel;
 
-glpoly_t* BuildSurfaceDisplayList(msurface_t *fa)
+void BuildSurfaceDisplayList(msurface_t *fa)
 {
 	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
@@ -584,7 +584,7 @@ glpoly_t* BuildSurfaceDisplayList(msurface_t *fa)
 	}
 
 	poly->numverts = lnumverts;
-	return poly;
+	return;
 }
 
 void GL_CreateSurfaceLightmap(msurface_t *surf)
@@ -614,7 +614,6 @@ void GL_BuildLightmaps(void)
 {
 	int i, j;
 	model_t	*m;
-	glpoly_t* poly;
 
 	memset(allocated, 0, sizeof(allocated));
 	last_lightmap_updated = 0;
@@ -641,7 +640,7 @@ void GL_BuildLightmaps(void)
 			}
 
 			GL_CreateSurfaceLightmap(m->surfaces + i);
-			poly = BuildSurfaceDisplayList(m->surfaces + i);
+			BuildSurfaceDisplayList(m->surfaces + i);
 		}
 	}
 

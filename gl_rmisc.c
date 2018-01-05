@@ -30,6 +30,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 
+static int GL_GenerateShellTexture(void)
+{
+	int x, y, d;
+	byte data[32][32][4];
+
+	for (y = 0;y < 32;y++)
+	{
+		for (x = 0;x < 32;x++)
+		{
+			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
+			if (d < 0)
+				d = 0;
+			if (d > 255)
+				d = 255;
+			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
+			data[y][x][3] = 255;
+		}
+	}
+
+	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+}
+
 void R_InitOtherTextures(void)
 {
 	/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
@@ -43,6 +65,9 @@ void R_InitOtherTextures(void)
 	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = GL_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
+	if (!shelltexture) {
+		shelltexture = GL_GenerateShellTexture();
+	}
 }
 
 void R_InitTextures(void)

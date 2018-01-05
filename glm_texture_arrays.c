@@ -14,6 +14,20 @@
 static glm_vao_t model_vao;
 static glm_vbo_t instance_vbo;
 
+typedef struct common_texture_s {
+	int width;
+	int height;
+	int count;
+	int any_size_count;
+	GLuint gl_texturenum;
+	int gl_width;
+	int gl_height;
+
+	int allocated;
+
+	struct common_texture_s* next;
+} common_texture_t;
+
 void GL_BuildCommonTextureArrays(void);
 static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
 static void GLM_CreateBrushModelVAO(void);
@@ -114,20 +128,6 @@ void GL_DeleteModelData(void)
 		}
 	}
 }
-
-typedef struct common_texture_s {
-	int width;
-	int height;
-	int count;
-	int any_size_count;
-	GLuint gl_texturenum;
-	int gl_width;
-	int gl_height;
-
-	int allocated;
-
-	struct common_texture_s* next;
-} common_texture_t;
 
 static void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, qbool any_size)
 {
@@ -648,19 +648,15 @@ void GL_BuildCommonTextureArrays(void)
 			anySizeCount += tex->any_size_count;
 		}
 
-		Con_Printf("Sizes: %d x %d\n", maxWidth, maxHeight);
 
 		// Create non-specific array to fit everything that doesn't require tiling
-		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount + 1, TEX_MIPMAP);
+		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount, TEX_MIPMAP);
 		commonTex->gl_width = maxWidth;
 		commonTex->gl_height = maxHeight;
 
 		// VBO starts with simple-model/sprite vertices
 		GLM_CreateSpriteVBO(new_vbo_buffer);
 		new_vbo_position = 4;
-
-		// First texture is the powerup shell
-		GLM_CreatePowerupShellTexture(commonTex->gl_texturenum, maxWidth, maxHeight, commonTex->allocated++);
 
 		// Go back through all models, importing textures into arrays and creating new VBO
 		for (i = 1; i < MAX_MODELS; ++i) {
@@ -705,41 +701,6 @@ static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, flo
 	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(3, 1);
-}
-
-static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice)
-{
-	float x, y, d;
-	int level = 0;
-	int height = maxHeight;
-	int width = maxWidth;
-	int minDimensions = min(maxWidth, maxHeight);
-	byte* data = Q_malloc(4 * maxWidth * maxHeight);
-	extern GLuint shelltexture2;
-
-	while (width && height) {
-		memset(data, 0, 4 * maxWidth * maxHeight);
-		for (y = 0; y < height; y++) {
-			for (x = 0; x < width; x++) {
-				int base = (x + y * width) * 4;
-
-				d = (sin(4 * x * M_PI / width) + cos(4 * y * M_PI / height)) * 64 + 64;
-				d = bound(0, d, 255);
-
-				data[base] = data[base + 1] = data[base + 2] = d;
-				data[base + 3] = 255;
-			}
-		}
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-		++level;
-		width /= 2;
-		height /= 2;
-		minDimensions /= 2;
-	}
-
-	//GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
-	Q_free(data);
 }
 
 static glm_vbo_t brushModel_vbo;

@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 
 static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir);
-static int GLC_GenerateShellTexture(void);
 static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 
@@ -267,7 +266,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 
 	// LordHavoc: set the state to what we need for rendering a shell
 	if (!shelltexture) {
-		shelltexture = GLC_GenerateShellTexture();
+		return;
 	}
 	GL_Bind(shelltexture);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -337,28 +336,6 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	// LordHavoc: reset the state to what the rest of the renderer expects
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-static int GLC_GenerateShellTexture(void)
-{
-	int x, y, d;
-	byte data[32][32][4];
-
-	for (y = 0;y < 32;y++)
-	{
-		for (x = 0;x < 32;x++)
-		{
-			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
-			if (d < 0)
-				d = 0;
-			if (d > 255)
-				d = 255;
-			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
-			data[y][x][3] = 255;
-		}
-	}
-
-	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 }
 
 void GLC_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
