@@ -389,8 +389,8 @@ static void GL_FlushBrushModelBatch(void)
 	}
 
 	// Update data
-	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
-	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
 
 	for (i = 0; i <= batch; ++i) {
 		int x;

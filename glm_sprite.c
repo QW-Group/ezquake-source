@@ -59,8 +59,8 @@ static void GL_PrepareSprites(void)
 		verts[3][4] = 1;
 
 		GL_GenBuffer(&simpleItemVBO, __FUNCTION__);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 	}
 
 	if (!simpleItemVAO.vao) {
@@ -68,7 +68,7 @@ static void GL_PrepareSprites(void)
 		GL_BindVertexArray(simpleItemVAO.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glBindBufferExt(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
 	}

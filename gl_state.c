@@ -29,6 +29,8 @@ static qbool gl_cull_face = false;
 static GLboolean gl_depth_mask = GL_FALSE;
 static int currenttexture = -1;
 static GLuint currentTextureArray = -1;
+static GLuint currentArrayBuffer;
+static GLuint currentUniformBuffer;
 
 static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[] = {-1, -1, -1, -1, -1, -1, -1, -1};
@@ -176,6 +178,9 @@ void GL_InitialiseState(void)
 		cntarrays[i] = 0;
 		texunitenabled[i] = false;
 	}
+
+	// Buffers
+	currentArrayBuffer = currentUniformBuffer = 0;
 }
 
 // These functions taken from gl_texture.c
@@ -547,4 +552,27 @@ void GL_EnableWaterFog(int contents)
 		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
 	}
 	glEnable(GL_FOG);
+}
+
+void GL_BindBuffer(GLenum target, GLuint buffer)
+{
+	if (target == GL_ARRAY_BUFFER) {
+		if (buffer == currentArrayBuffer) {
+			return;
+		}
+		currentArrayBuffer = buffer;
+	}
+	else if (target == GL_UNIFORM_BUFFER) {
+		if (buffer == currentUniformBuffer) {
+			return;
+		}
+		currentUniformBuffer = buffer;
+	}
+
+	glBindBuffer(target, buffer);
+}
+
+void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
+{
+	glBufferData(target, size, data, usage);
 }

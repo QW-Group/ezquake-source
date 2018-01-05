@@ -430,8 +430,8 @@ typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsi
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 
 // VBO functions
-extern glBindBuffer_t        glBindBufferExt;
-extern glBufferData_t        glBufferDataExt;
+extern glBindBuffer_t        glBindBuffer;
+extern glBufferData_t        glBufferData;
 extern glBufferSubData_t     glBufferSubDataExt;
 extern glGenBuffers_t        glGenBuffers;
 extern glDeleteBuffers_t     glDeleteBuffers;
@@ -661,6 +661,9 @@ void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
+
+void GL_BindBuffer(GLenum target, GLuint buffer);
+void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);

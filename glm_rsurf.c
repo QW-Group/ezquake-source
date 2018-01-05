@@ -358,10 +358,10 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	world.r_fastsky = r_fastsky.integer;
 	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
 
-	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
-	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
-	glBindBufferExt(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
-	glBufferDataExt(GL_UNIFORM_BUFFER, sizeof(world), &world, GL_DYNAMIC_DRAW);
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(world), &world, GL_DYNAMIC_DRAW);
 
 	GL_UseProgram(drawworld.program);
 

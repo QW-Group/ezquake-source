@@ -56,8 +56,8 @@ static GLuint GLM_CreateParticleVAO(void)
 {
 	if (!particleVBO.vbo) {
 		GL_GenBuffer(&particleVBO, "particle");
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, particleVBO.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(particles), glparticles, GL_STATIC_DRAW);
 	}
 
 	if (!particleVAO.vao) {
@@ -66,7 +66,7 @@ static GLuint GLM_CreateParticleVAO(void)
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
-		glBindBufferExt(GL_ARRAY_BUFFER, particleVBO.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, particleVBO.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) 0);
 		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 3));
 		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm_particle_t), (void*) (sizeof(float) * 4));
@@ -107,6 +107,6 @@ void GLM_UpdateParticles(int particles_to_draw)
 	memcpy(buffer, particles, sizeof(particles[0]) * particles_to_draw);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 	}*/
-	glBindBufferExt(GL_ARRAY_BUFFER, particleVBO.vbo);
-	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
+	GL_BindBuffer(GL_ARRAY_BUFFER, particleVBO.vbo);
+	GL_BufferData(GL_ARRAY_BUFFER, sizeof(glparticles[0]) * particles_to_draw, glparticles, GL_STATIC_DRAW);
 }

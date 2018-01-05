@@ -49,15 +49,15 @@ static GLuint GL_CreateLineVAO(void)
 
 	if (!vbo.vbo) {
 		GL_GenBuffer(&vbo, "line");
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 	}
 
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao);
 		GL_BindVertexArray(vao.vao);
 		glEnableVertexAttribArray(0);
-		glBindBufferExt(GL_ARRAY_BUFFER, vbo.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
@@ -209,8 +209,8 @@ void GLM_CreateMultiImageProgram(void)
 
 	if (!imageVBO.vbo) {
 		GL_GenBuffer(&imageVBO, __FUNCTION__);
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images), images, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(images), images, GL_STATIC_DRAW);
 	}
 
 	if (!imageVAO.vao) {
@@ -222,7 +222,7 @@ void GLM_CreateMultiImageProgram(void)
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
 		glEnableVertexAttribArray(5);
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
@@ -247,8 +247,8 @@ void GLM_FlushImageDraw(void)
 
 		GLM_CreateMultiImageProgram();
 
-		glBindBufferExt(GL_ARRAY_BUFFER, imageVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_STATIC_DRAW);
 
 		glDisable(GL_DEPTH_TEST);
 

@@ -69,8 +69,8 @@ qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 // VBO functions
-glBindBuffer_t     glBindBufferExt = NULL;
-glBufferData_t     glBufferDataExt = NULL;
+glBindBuffer_t     glBindBuffer = NULL;
+glBufferData_t     glBufferData = NULL;
 glBufferSubData_t  glBufferSubDataExt = NULL;
 glGenBuffers_t     glGenBuffers = NULL;
 glDeleteBuffers_t  glDeleteBuffers = NULL;
@@ -202,14 +202,14 @@ static void CheckShaderExtensions(void)
 	int gl_version;
 
 	shaders_supported = vbo_supported = false;
-	glBindBufferExt = NULL;
-	glBufferDataExt = NULL;
+	glBindBuffer = NULL;
+	glBufferData = NULL;
 	glBufferSubDataExt = NULL;
 
 	if (COM_CheckParm("-modern") && SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_version) == 0) {
 		if (gl_version >= 2) {
-			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
-			glBufferDataExt = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
+			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
+			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
 			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
 
 			shaders_supported = true;
@@ -274,12 +274,12 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
-			glBindBufferExt = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
-			glBufferDataExt = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
+			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
+			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
 			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
 		}
 
-		vbo_supported = glBindBufferExt && glBufferDataExt && glBufferSubDataExt;
+		vbo_supported = glBindBuffer && glBufferData && glBufferSubDataExt;
 	}
 	vbo_number = 1;
 }
@@ -589,8 +589,8 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 	glGenBuffers(1, &ubo->ubo);
 
 	if (data && size) {
-		glBindBufferExt(GL_UNIFORM_BUFFER, ubo->ubo);
-		glBufferDataExt(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
+		GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
+		GL_BufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
 	}
 }
 

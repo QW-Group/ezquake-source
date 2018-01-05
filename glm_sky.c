@@ -136,8 +136,8 @@ static void BuildSkyVertsArray(void)
 		skyDomeVertices = vert;
 
 		GL_GenBuffer(&skyDome_vbo, __FUNCTION__);
-		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao.vao) {
@@ -145,7 +145,7 @@ static void BuildSkyVertsArray(void)
 		GL_BindVertexArray(skyDome_vao.vao);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glBindBufferExt(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*)0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_SKYVERT, (void*)(3 * sizeof(float)));
 	}
@@ -256,8 +256,8 @@ static void GLM_DrawSkyVerts(void)
 	if (!glm_sky_vbo) {
 	GL_GenBuffer(&glm_sky_vbo);
 	}
-	glBindBufferExt(GL_ARRAY_BUFFER, glm_sky_vbo);
-	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(float) * skyDome, glm_sky_verts, GL_STATIC_DRAW);
+	GL_BindBuffer(GL_ARRAY_BUFFER, glm_sky_vbo);
+	GL_BufferData(GL_ARRAY_BUFFER, sizeof(float) * skyDome, glm_sky_verts, GL_STATIC_DRAW);
 
 	if (!glm_sky_vao) {
 	GL_GenVertexArray(&glm_sky_vao);

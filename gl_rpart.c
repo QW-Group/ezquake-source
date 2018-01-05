@@ -3239,8 +3239,8 @@ static GLuint GLM_QMB_CreateParticleVAO(void)
 {
 	if (!qmbParticleVBO.vbo) {
 		GL_GenBuffer(&qmbParticleVBO, "qmbparticle");
-		glBindBufferExt(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-		glBufferDataExt(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
+		GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	}
 
 	if (!qmbParticleVAO.vao) {
@@ -3249,7 +3249,7 @@ static GLuint GLM_QMB_CreateParticleVAO(void)
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
-		glBindBufferExt(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
+		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
 		// position
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(qmb_particle_vertex_t), (void*) 0);
 		// texture coordinates
@@ -3291,8 +3291,8 @@ static void GLM_QMB_DrawParticles(void)
 	vao = GLM_QMB_CreateParticleVAO();
 
 	// Update VBO
-	glBindBufferExt(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-	glBufferDataExt(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices, GL_STATIC_DRAW);
+	GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
+	GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices, GL_STATIC_DRAW);
 
 	if (qmbParticleProgram.program && vao) {
 		float modelViewMatrix[16];
