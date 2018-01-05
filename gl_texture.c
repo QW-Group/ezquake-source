@@ -72,6 +72,10 @@ typedef struct {
 	int			texmode;
 	unsigned	crc;
 	int			bpp;
+
+	// Arrays
+	qbool       is_array;
+	int         depth;
 } gltexture_t;
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
@@ -416,48 +420,43 @@ static void GL_Upload8 (byte *data, int width, int height, int mode)
 	GL_Upload32 (trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) 
+static gltexture_t* GL_AllocateTextureSlot(char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
 {
-	int	i, scaled_width, scaled_height;
-	unsigned short crc = 0;
+	gltexture_t* glt = NULL;
 	qbool load_over_existing = false;
-	gltexture_t *glt = NULL;
 
-	if (lightmode != 2)
+	*new_texture = true;
+
+	if (lightmode != 2) {
 		mode &= ~TEX_BRIGHTEN;
+	}
 
-	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
+	ScaleDimensions(width, height, scaled_width, scaled_height, mode);
 
-	if (developer.integer >= 3)
-	{
+	if (developer.integer >= 3) {
 		Com_DPrintf("Texture: %s %dx%d -> %dx%d %s\n",
-				identifier, width, height, scaled_width, scaled_height,
-				((scaled_width & (scaled_width-1)) || (scaled_height & (scaled_height-1))) ? "non power of two" : "");
+			identifier, width, height, scaled_width, scaled_height,
+			((*scaled_width & (*scaled_width - 1)) || (*scaled_height & (*scaled_height - 1))) ? "non power of two" : "");
 	}
 
 	// If we were given an identifier for the texture, search through
 	// the list of loaded texture and see if we find a match, if so
 	// return the texnum for the already loaded texture.
-	if (identifier[0]) 
-	{
-		crc = CRC_Block (data, width * height * bpp);
-
-		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) 
-		{
-			if (!strncmp (identifier, glt->identifier, sizeof(glt->identifier) - 1)) 
-			{
+	if (identifier[0]) {
+		int i;
+		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
+			if (!strncmp(identifier, glt->identifier, sizeof(glt->identifier) - 1)) {
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
-				if (width == glt->width && height == glt->height &&
-					scaled_width == glt->scaled_width && scaled_height == glt->scaled_height &&
+				if (width == glt->width && height == glt->height && depth == glt->depth &&
+					*scaled_width == glt->scaled_width && *scaled_height == glt->scaled_height &&
 					crc == glt->crc && glt->bpp == bpp &&
-					(mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE)))
-				{
-					GL_Bind(gltextures[i].texnum);
-					return gltextures[i].texnum;
+					(mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE))) {
+					GL_BindTexture(depth ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, gltextures[i].texnum, true);
+					*new_texture = false;
+					return glt;
 				}
-				else 
-				{
+				else {
 					// Same identifier but different texture, so overwrite
 					// the already loaded texture.
 					load_over_existing = true;
@@ -465,41 +464,59 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 				}
 			}
 		}
-	} 
+	}
 
-	if (numgltextures >= MAX_GLTEXTURES)
-		Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+	if (numgltextures >= MAX_GLTEXTURES) {
+		Sys_Error("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+	}
 
 	// If the identifier was the same as another textures, we won't bother
 	// with taking up a new texture slot, just load the new texture
 	// over the old one.
-	if (!load_over_existing)
-	{
+	if (!load_over_existing) {
 		glt = &gltextures[numgltextures];
 		numgltextures++;
 
-		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
+		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
 		glGenTextures(1, &glt->texnum);
 	}
 	else if (glt && !glt->texnum) {
 		glGenTextures(1, &glt->texnum);
 	}
 
-	if (!glt)
+	if (!glt) {
 		Sys_Error("GL_LoadTexture: glt not initialized\n");
+	}
 
-	glt->width			= width;
-	glt->height			= height;
-	glt->scaled_width	= scaled_width;
-	glt->scaled_height	= scaled_height;
-	glt->texmode		= mode;
-	glt->crc			= crc;
-	glt->bpp			= bpp;
-	
+	glt->width = width;
+	glt->height = height;
+	glt->depth = depth;
+	glt->scaled_width = *scaled_width;
+	glt->scaled_height = *scaled_height;
+	glt->texmode = mode;
+	glt->crc = crc;
+	glt->bpp = bpp;
+	glt->is_array = (depth > 0);
+
 	Q_free(glt->pathname);
-	
-	if (bpp == 4 && fs_netpath[0])
+
+	if (bpp == 4 && fs_netpath[0]) {
 		glt->pathname = Q_strdup(fs_netpath);
+	}
+
+	return glt;
+}
+
+int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) 
+{
+	int	scaled_width, scaled_height;
+	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
+	qbool new_texture = false;
+	gltexture_t *glt = GL_AllocateTextureSlot(identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
+
+	if (glt && !new_texture) {
+		return glt->texnum;
+	}
 
 	// Tell OpenGL the texnum of the texture before uploading it.
 	GL_BindFirstTime(glt->texnum);
@@ -962,7 +979,7 @@ void GL_Texture_Init(void)
 	glGenTextures(MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
-	if (GL_ShadersSupported() && true) {
+	if (GL_ShadersSupported()) {
 		glGenTextures(1, &lightmap_texture_array);
 		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, false);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
@@ -1020,5 +1037,50 @@ void GL_Texture_Init(void)
 
 	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
+}
+
+// We could flag the textures as they're created and then move all 2d>3d to this module?
+GLuint GL_CreateTextureArray(char* identifier, int width, int height, int depth, int mode)
+{
+	int scaled_width, scaled_height;
+	unsigned short crc = 0;
+	qbool new_texture = false;
+	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
+	GLuint gl_texturenum;
+	int max_miplevels = 0;
+	int min_dimension = min(width, height);
+
+	if (!slot) {
+		return 0;
+	}
+
+	if (slot && !new_texture) {
+		return slot->texnum;
+	}
+
+	gl_texturenum = slot->texnum;
+
+	// 
+	while (min_dimension > 0) {
+		max_miplevels++;
+		min_dimension /= 2;
+	}
+
+	GL_BindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum, false);
+	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
+	if (mode & TEX_MIPMAP) {
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+
+		if (anisotropy_ext) {
+			glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+		}
+	}
+	else {
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+	}
+
+	return gl_texturenum;
 }
 

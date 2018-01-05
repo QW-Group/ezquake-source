@@ -170,27 +170,6 @@ static void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, 
 	}
 }
 
-static GLuint GL_CreateTextureArray(int width, int height, int depth)
-{
-	GLuint gl_texturenum;
-	int max_miplevels = 0;
-	int min_dimension = min(width, height);
-
-	// 
-	while (min_dimension > 0) {
-		max_miplevels++;
-		min_dimension /= 2;
-	}
-
-	glGenTextures(1, &gl_texturenum);
-	GL_BindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum, false);
-	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
-
-	return gl_texturenum;
-}
-
 static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
 {
 	int level = 0;
@@ -248,7 +227,7 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 	else {
 		tex = GL_FindTextureBySize(list, width, height);
 		if (!tex->gl_texturenum) {
-			tex->gl_texturenum = GL_CreateTextureArray(width, height, tex->count - tex->any_size_count);
+			tex->gl_texturenum = GL_CreateTextureArray("", width, height, tex->count - tex->any_size_count, TEX_MIPMAP);
 			tex->gl_width = width;
 			tex->gl_height = height;
 		}
@@ -719,7 +698,7 @@ void GL_BuildCommonTextureArrays(void)
 		}
 
 		// Create non-specific array to fit everything that doesn't require tiling
-		commonTex->gl_texturenum = GL_CreateTextureArray(maxWidth, maxHeight, anySizeCount + 1);
+		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount + 1, TEX_MIPMAP);
 		commonTex->gl_width = maxWidth;
 		commonTex->gl_height = maxHeight;
 
