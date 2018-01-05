@@ -6,16 +6,17 @@
 // For drawing sprites in 3D space
 // Always facing camera, send as point
 
+typedef struct glm_spritedata_s {
+	float modelView[32][16];
+	float tex[32][4];
+	int skinNumber[32][4];
+} glm_spritedata_t;
+
 static glm_program_t spriteProgram;
-static GLint sprite_modelViewMatrixUniform;
-static GLint sprite_projectionMatrixUniform;
-static GLint sprite_materialTexUniform;
-static GLint sprite_textureIndex;
-static GLint sprite_texS;
-static GLint sprite_texT;
-static GLint sprite_scale;
-static GLint sprite_origin;
-static GLint sprite_gamma3d;
+static GLuint spriteProgram_RefdefCvars_block;
+static GLuint spriteProgram_SpriteData_block;
+static glm_spritedata_t spriteData;
+static glm_ubo_t ubo_spriteData;
 
 typedef struct glm_sprite_s {
 	vec3_t origin;
@@ -90,12 +91,6 @@ void GL_FlushSpriteBatch(void)
 	float projectionMatrix[16];
 	GLuint vao = 0;
 
-	// hideous but hopefully temporary
-	float mvMatrix[MAX_SPRITE_BATCH][16];
-	float texScaleS[MAX_SPRITE_BATCH];
-	float texScaleT[MAX_SPRITE_BATCH];
-	float texture_indexes[MAX_SPRITE_BATCH];
-
 	if (batch_count && first_sprite_draw) {
 		GL_EnterRegion("Sprites");
 
@@ -108,12 +103,15 @@ void GL_FlushSpriteBatch(void)
 	}
 
 	glDisable(GL_CULL_FACE);
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
+	memset(&spriteData, 0, sizeof(spriteData));
 	for (i = 0; i < batch_count; ++i) {
 		glm_sprite_t* sprite = &sprite_batch[i];
+
+		// FIXME: need to batch the calls?!
 		if (sprite->texture_array != prev_texture_array) {
 			GL_BindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array, true);
 			prev_texture_array = sprite->texture_array;
@@ -125,7 +123,7 @@ void GL_FlushSpriteBatch(void)
 		GL_Translate(GL_MODELVIEW, sprite->origin[0], sprite->origin[1], sprite->origin[2]);
 		if (true)
 		{
-			float* tempMatrix = mvMatrix[i];
+			float* tempMatrix = spriteData.modelView[i];
 
 			GL_PushMatrix(GL_MODELVIEW, tempMatrix);
 			// x = -y
@@ -146,19 +144,15 @@ void GL_FlushSpriteBatch(void)
 			GL_PopMatrix(GL_MODELVIEW, tempMatrix);
 		}
 
-		texScaleS[i] = sprite->texScale[0];
-		texScaleT[i] = sprite->texScale[1];
+		spriteData.tex[i][0] = sprite->texScale[0];
+		spriteData.tex[i][1] = sprite->texScale[1];
 
-		texture_indexes[i] = sprite->texture_index;
+		spriteData.skinNumber[i][0] = sprite->texture_index;
 	}
 
 	GL_UseProgram(spriteProgram.program);
-	glUniformMatrix4fv(sprite_projectionMatrixUniform, 1, GL_FALSE, projectionMatrix);
-	glUniformMatrix4fv(sprite_modelViewMatrixUniform, batch_count, GL_FALSE, (const GLfloat*) mvMatrix);
-	glUniform1fv(sprite_textureIndex, batch_count, texture_indexes);
-	glUniform1fv(sprite_texS, batch_count, texScaleS);
-	glUniform1fv(sprite_texT, batch_count, texScaleT);
-	glUniform1f(sprite_gamma3d, v_gamma.value);
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_spriteData.ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(spriteData), &spriteData, GL_DYNAMIC_DRAW);
 
 	GL_BindVertexArray(vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
@@ -192,18 +186,21 @@ static void GL_CompileSpriteProgram(void)
 	}
 
 	if (spriteProgram.program && !spriteProgram.uniforms_found) {
-		sprite_modelViewMatrixUniform = glGetUniformLocation(spriteProgram.program, "modelView");
-		sprite_projectionMatrixUniform = glGetUniformLocation(spriteProgram.program, "projection");
-		sprite_materialTexUniform = glGetUniformLocation(spriteProgram.program, "materialTex");
-		sprite_scale = glGetUniformLocation(spriteProgram.program, "scale");
-		sprite_origin = glGetUniformLocation(spriteProgram.program, "origin");
-		sprite_textureIndex = glGetUniformLocation(spriteProgram.program, "skinNumber");
-		sprite_texS = glGetUniformLocation(spriteProgram.program, "texS");
-		sprite_texT = glGetUniformLocation(spriteProgram.program, "texT");
-		sprite_gamma3d = glGetUniformLocation(spriteProgram.program, "gamma3d");
-		spriteProgram.uniforms_found = true;
+		GLint size;
 
-		glProgramUniform1i(spriteProgram.program, sprite_materialTexUniform, 0);
+		spriteProgram_RefdefCvars_block = glGetUniformBlockIndex(spriteProgram.program, "RefdefCvars");
+		spriteProgram_SpriteData_block = glGetUniformBlockIndex(spriteProgram.program, "SpriteData");
+
+		glGetActiveUniformBlockiv(spriteProgram.program, spriteProgram_SpriteData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+		Con_Printf("sizeof(sprite) = %d, expected = %d\n", sizeof(spriteData), size);
+
+		glUniformBlockBinding(spriteProgram.program, spriteProgram_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
+		glUniformBlockBinding(spriteProgram.program, spriteProgram_SpriteData_block, GL_BINDINGPOINT_SPRITEDATA_CVARS);
+
+		GL_GenUniformBuffer(&ubo_spriteData, "sprite-data", &spriteData, sizeof(spriteData));
+		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_SPRITEDATA_CVARS, ubo_spriteData.ubo);
+
+		spriteProgram.uniforms_found = true;
 	}
 }
 
