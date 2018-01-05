@@ -781,7 +781,7 @@ void R_DrawParticles(void)
 
 	if (GL_ShadersSupported()) {
 		Classic_DrawParticles();
-		//QMB_DrawParticles();
+		QMB_DrawParticles();
 	}
 	else {
 		Classic_DrawParticles();
