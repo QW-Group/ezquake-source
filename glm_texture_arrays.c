@@ -68,6 +68,10 @@ static void GL_DeleteModelTextures(model_t* mod)
 {
 	int j;
 
+	for (j = 0; j < MAX_TEXTURE_ARRAYS_PER_MODEL; ++j) {
+		GL_DeleteTextureArray(&mod->texture_arrays[j]);
+	}
+
 	memset(mod->texture_arrays, 0, sizeof(mod->texture_arrays));
 	memset(mod->texture_arrays_scale_s, 0, sizeof(mod->texture_arrays_scale_s));
 	memset(mod->texture_arrays_scale_t, 0, sizeof(mod->texture_arrays_scale_t));

@@ -259,3 +259,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	// Restore attributes.
 	glPopAttrib();
 }
+
+void GLC_PreRenderView(void)
+{
+	// TODO
+}

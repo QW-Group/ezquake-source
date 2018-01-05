@@ -1145,3 +1145,12 @@ void R_RenderView(void)
 	}
 }
 
+void GL_PreRenderView(void)
+{
+	if (GL_ShadersSupported()) {
+		GLM_PreRenderView();
+	}
+	else {
+		GLC_PreRenderView();
+	}
+}

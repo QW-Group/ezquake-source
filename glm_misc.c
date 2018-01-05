@@ -53,3 +53,8 @@ void GLM_EmitCausticsPolys(void)
 	// MEAG: TODO
 	// Is this ever going to be a thing?
 }
+
+void GLM_PreRenderView(void)
+{
+	// TODO
+}

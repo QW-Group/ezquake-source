@@ -57,6 +57,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 
 void GL_Texture_Init(void);
 GLuint GL_CreateTextureArray(char* identifier, int width, int height, int depth, int mode);
+void GL_DeleteTextureArray(GLuint* texture);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 

@@ -987,14 +987,18 @@ qbool V_PreRenderView(void)
 	}
 
 	view_frame = &cl.frames[cl.validsequence & UPDATE_MASK];
-	if (!cls.nqdemoplayback)
+	if (!cls.nqdemoplayback) {
 		view_message = view_frame->playerstate[cl.viewplayernum];
+	}
 
 	DropPunchAngle ();
-	if (cl.intermission) // intermission / finale rendering		
-		V_CalcIntermissionRefdef ();	
-	else
-		V_CalcRefdef ();
+	if (cl.intermission) {
+		// intermission / finale rendering
+		V_CalcIntermissionRefdef();
+	}
+	else {
+		V_CalcRefdef();
+	}
 
 	R_PushDlights ();
 
@@ -1016,6 +1020,9 @@ qbool V_PreRenderView(void)
 
 	//	r_refdef2.viewplayernum = Cam_PlayerNum();
 	//	r_refdef2.lightstyles = cl_lightstyle;
+
+	GL_PreRenderView();
+
 	return true;
 }
 

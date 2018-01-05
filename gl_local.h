@@ -864,6 +864,10 @@ enum {
 	GL_BINDINGPOINT_COUNT
 };
 
+void GL_PreRenderView(void);
+void GLC_PreRenderView(void);
+void GLM_PreRenderView(void);
+
 #endif /* !__GL_LOCAL_H__ */
 
 
