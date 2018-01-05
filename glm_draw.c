@@ -262,7 +262,7 @@ void GLM_FlushImageDraw(void)
 			glm_image_t* img = &images[i];
 
 			if (currentTexture > 0 && img->texNumber && currentTexture != img->texNumber) {
-				GL_Bind(currentTexture);
+				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
 				glDrawArrays(GL_POINTS, start, i - start);
 				start = i;
 			}
@@ -273,7 +273,7 @@ void GLM_FlushImageDraw(void)
 		}
 
 		if (currentTexture) {
-			GL_Bind(currentTexture);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
 		}
 		glDrawArrays(GL_POINTS, start, imageCount - start);
 	}

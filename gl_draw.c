@@ -743,7 +743,6 @@ void Draw_Crosshair (void)
 		}
 
 		if (GL_ShadersSupported()) {
-			GL_SelectTexture(GL_TEXTURE0);
 			GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, 0, sl, tl, sh - sl, th - tl, col, false, texnum, false);
 		}
 		else {
