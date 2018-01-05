@@ -5,6 +5,8 @@
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
 
+static qbool first_alias_model = true;
+
 static glm_program_t drawAliasModelProgram;
 static GLint drawAliasModel_modelViewMatrix;
 static GLint drawAliasModel_projectionMatrix;
@@ -163,7 +165,7 @@ static void GLM_AliasModelBatchDraw(int start, int end, float mvMatrix[MAX_ALIAS
 			}
 		}
 		else {
-			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 		glDrawArraysInstancedBaseInstance(GL_TRIANGLES, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
 	}
@@ -184,6 +186,18 @@ static void GLM_FlushAliasModelBatch(void)
 	qbool was_texture_array = false;
 	int base = 0;
 	int non_texture_array = -1;
+
+	if (in_batch_mode && first_alias_model) {
+		if (GL_ShadersSupported()) {
+			GL_EnterRegion("AliasModels");
+
+			GLM_CompileAliasModelProgram();
+
+			GL_SelectTexture(GL_TEXTURE0);
+			prev_texture_array = 0;
+			first_alias_model = false;
+		}
+	}
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
@@ -333,15 +347,12 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 
 void GL_BeginDrawAliasModels(void)
 {
-	if (GL_ShadersSupported()) {
-		GLM_CompileAliasModelProgram();
+	first_alias_model = true;
+	batch_count = 0;
+	in_batch_mode = true;
 
-		GL_SelectTexture(GL_TEXTURE0);
-		prev_texture_array = 0;
-		in_batch_mode = true;
-		batch_count = 0;
-	}
-	else {
+	if (!GL_ShadersSupported()) {
+		// FIXME: Why is classic code in here?
 		GL_EnableTMU(GL_TEXTURE0);
 	}
 }
@@ -351,6 +362,10 @@ void GL_EndDrawAliasModels(void)
 	if (GL_ShadersSupported()) {
 		if (batch_count) {
 			GLM_FlushAliasModelBatch();
+		}
+
+		if (in_batch_mode && !first_alias_model) {
+			GL_LeaveRegion();
 		}
 		in_batch_mode = false;
 	}

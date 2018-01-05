@@ -75,17 +75,12 @@ static void GL_PrepareSprites(void)
 }
 
 static GLuint prev_texture_array = -1;
+static qbool first_sprite_draw = true;
 
 void GL_BeginDrawSprites(void)
 {
 	batch_count = 0;
-
-	if (GL_ShadersSupported()) {
-		GL_PrepareSprites();
-
-		GL_SelectTexture(GL_TEXTURE0);
-		prev_texture_array = -1;
-	}
+	first_sprite_draw = true;
 }
 
 void GL_FlushSpriteBatch(void)
@@ -100,6 +95,17 @@ void GL_FlushSpriteBatch(void)
 	float texScaleS[MAX_SPRITE_BATCH];
 	float texScaleT[MAX_SPRITE_BATCH];
 	float texture_indexes[MAX_SPRITE_BATCH];
+
+	if (batch_count && first_sprite_draw) {
+		GL_EnterRegion("Sprites");
+
+		GL_PrepareSprites();
+
+		GL_SelectTexture(GL_TEXTURE0);
+		prev_texture_array = -1;
+
+		first_sprite_draw = false;
+	}
 
 	glDisable(GL_CULL_FACE);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
@@ -168,6 +174,10 @@ void GL_EndDrawSprites(void)
 	if (GL_ShadersSupported()) {
 		if (batch_count) {
 			GL_FlushSpriteBatch();
+		}
+
+		if (!first_sprite_draw) {
+			GL_LeaveRegion();
 		}
 	}
 }

@@ -177,13 +177,18 @@ static qbool is_monster (int modelindex)
 	return false;
 }
 
-void CL_ClearScene (void) {
+void CL_ClearScene(void)
+{
 	cl_firstpassents.count = cl_visents.count = cl_alphaents.count = 0;
+	cl_firstpassents.alphablend = cl_visents.alphablend = cl_alphaents.alphablend = false;
 }
 
-void CL_AddEntity (entity_t *ent) {
+void CL_AddEntity(entity_t *ent)
+{
+	extern qbool R_CanDrawSimpleItem(entity_t* ent);
 	visentlist_t *vislist;
 	qbool shell = false;
+	qbool needs_alphablend = (ent->alpha != 0 && ent->alpha != 1);
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		vislist = &cl_visents;
@@ -192,8 +197,9 @@ void CL_AddEntity (entity_t *ent) {
 	else if (ent->renderfx & RF_NORMALENT) {
 		vislist = &cl_visents;
 	}
-	else if (ent->model->type == mod_sprite) {
+	else if (ent->model->type == mod_sprite || R_CanDrawSimpleItem(ent)) {
 		vislist = &cl_alphaents;
+		needs_alphablend = true;
 	}
 	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
 		vislist = &cl_firstpassents;
@@ -206,11 +212,13 @@ void CL_AddEntity (entity_t *ent) {
 	if (vislist->count < vislist->max) {
 		vislist->list[vislist->count] = *ent;
 		vislist->shell[vislist->count] = false;
+		vislist->alphablend |= needs_alphablend;
 		++vislist->count;
 	}
 	if (shell && cl_alphaents.count < cl_alphaents.max) {
 		cl_alphaents.list[cl_alphaents.count] = *ent;
 		cl_alphaents.shell[cl_alphaents.count] = true;
+		cl_alphaents.alphablend = true;
 		++cl_alphaents.count;
 	}
 }

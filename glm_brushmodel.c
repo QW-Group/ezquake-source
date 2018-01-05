@@ -228,7 +228,6 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 		}
 	}
 
-	Con_Printf("%s = %d verts, reserved %d\n", m->name, (vbo_pos - original_pos), GLM_MeasureVBOSizeForBrushModel(m));
 	return vbo_pos;
 }
 
@@ -293,6 +292,7 @@ void GL_BrushModelInitState(void)
 	static float projectionMatrix[16];
 
 	if (GL_ShadersSupported()) {
+		GL_EnterRegion("BrushModels");
 		GLM_CreateBrushModelProgram();
 
 		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
@@ -306,6 +306,7 @@ void GL_BrushModelInitState(void)
 		GL_SelectTexture(GL_TEXTURE0);
 	}
 	else {
+		// FIXME: Why is classic code in GLM-only module?
 		GL_EnableTMU(GL_TEXTURE0);
 	}
 
@@ -407,6 +408,10 @@ void GL_EndDrawBrushModels(void)
 {
 	if (GL_ShadersSupported()) {
 		GL_FlushBrushModelBatch();
+
+		if (!firstBrushModel) {
+			GL_LeaveRegion();
+		}
 	}
 }
 

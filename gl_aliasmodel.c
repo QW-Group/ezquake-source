@@ -253,6 +253,7 @@ static qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, malias
 	return false;
 }
 
+// FIXME: Move filtering options to cl_ents.c
 void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 {
 	int anim, skinnum, texture, fb_texture, playernum = -1, local_skincolormode;

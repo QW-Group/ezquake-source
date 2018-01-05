@@ -254,6 +254,18 @@ void R_DrawSpriteModel(entity_t *e)
 	}
 }
 
+qbool R_CanDrawSimpleItem(entity_t* e)
+{
+	int skin;
+
+	if (!gl_simpleitems.integer || !e || !e->model) {
+		return false;
+	}
+
+	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
+	return e->model->simpletexture[skin] != 0;
+}
+
 static qbool R_DrawTrySimpleItem(void)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
@@ -337,9 +349,41 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 	}
 
 	// draw sprites separately, because of alpha_test
-	GL_AlphaBlendFlags(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
+	GL_AlphaBlendFlags(
+		(vislist->alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
+		(vislist->alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
+	);
 
-	GL_EnterRegion("Sprites");
+	GL_BeginDrawBrushModels();
+	for (i = 0; i < vislist->count; i++) {
+		currententity = &vislist->list[i];
+		if (vislist->drawn[i]) {
+			continue;
+		}
+
+		if (gl_simpleitems.integer && R_CanDrawSimpleItem(currententity)) {
+			// will be drawn as sprite
+			continue;
+		}
+
+		switch (currententity->model->type) {
+		case mod_brush:
+			// Get rid of Z-fighting for textures by offsetting the
+			// drawing of entity models compared to normal polygons.
+			// dimman: disabled for qcon
+			if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
+				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
+				R_DrawBrushModel(currententity);
+				GL_PolygonOffset(0, 0);
+			}
+			else {
+				R_DrawBrushModel(currententity);
+			}
+			break;
+		}
+	}
+	GL_EndDrawBrushModels();
+
 	GL_BeginDrawSprites();
 	memset(vislist->drawn, 0, sizeof(qbool) * vislist->max);
 	for (i = 0; i < vislist->count; i++) {
@@ -362,13 +406,16 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		}
 	}
 	GL_EndDrawSprites();
-	GL_LeaveRegion();
 
-	GL_EnterRegion("AliasModels");
 	GL_BeginDrawAliasModels();
 	for (i = 0; i < vislist->count; i++) {
 		currententity = &vislist->list[i];
 		if (vislist->drawn[i]) {
+			continue;
+		}
+
+		if (gl_simpleitems.integer && R_CanDrawSimpleItem(currententity)) {
+			// will be drawn as sprite
 			continue;
 		}
 
@@ -388,34 +435,6 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 		}
 	}
 	GL_EndDrawAliasModels();
-	GL_LeaveRegion();
-
-	GL_EnterRegion("BrushModels");
-	GL_BeginDrawBrushModels();
-	for (i = 0; i < vislist->count; i++) {
-		currententity = &vislist->list[i];
-		if (vislist->drawn[i]) {
-			continue;
-		}
-
-		switch (currententity->model->type) {
-		case mod_brush:
-			// Get rid of Z-fighting for textures by offsetting the
-			// drawing of entity models compared to normal polygons.
-			// dimman: disabled for qcon
-			if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
-				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
-				R_DrawBrushModel(currententity);
-				GL_PolygonOffset(0, 0);
-			}
-			else {
-				R_DrawBrushModel(currententity);
-			}
-			break;
-		}
-	}
-	GL_EndDrawBrushModels();
-	GL_LeaveRegion();
 
 	// FIXME: Remove
 	if (vislist->alpha) {
@@ -940,10 +959,16 @@ void R_RenderScene(void)
 	R_DrawWorld ();		// adds static entities to the list
 	GL_LeaveRegion();
 
-	GL_EnterRegion("R_DrawEntities");
-	R_DrawEntitiesOnList(&cl_visents);
-	R_DrawEntitiesOnList(&cl_alphaents);
-	GL_LeaveRegion();
+	if (cl_visents.count) {
+		GL_EnterRegion("R_DrawEntities");
+		R_DrawEntitiesOnList(&cl_visents);
+		GL_LeaveRegion();
+	}
+	if (cl_alphaents.count) {
+		GL_EnterRegion("R_DrawEntities (Alpha)");
+		R_DrawEntitiesOnList(&cl_alphaents);
+		GL_LeaveRegion();
+	}
 
 	R_DrawWaterSurfaces();
 

@@ -627,12 +627,13 @@ typedef struct {
 extern	clientState_t	cl;
 
 typedef struct visentlist_s {
-	entity_t	*list;
+	entity_t    *list;
 	qbool       *drawn;
 	qbool       *shell;
-	int			count;
-	int			max;
-	int			alpha;
+	int         count;
+	int         max;
+	int         alpha;
+	qbool       alphablend;
 } visentlist_t;
 
 extern visentlist_t cl_firstpassents, cl_visents, cl_alphaents;
