@@ -25,6 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
+#define TEXTURE_UNIT_MATERIAL 0
+#define TEXTURE_UNIT_LIGHTMAPS 1
+#define TEXTURE_UNIT_DETAIL 2
+#define TEXTURE_UNIT_CAUSTICS 3
+
 extern GLuint lightmap_texture_array;
 
 static glm_program_t turbPolyProgram;
@@ -230,6 +235,7 @@ static GLint drawworld_materialTex;
 static GLint drawworld_detailTex;
 static GLint drawworld_lightmapTex;
 static GLint drawworld_drawDetailTex;
+static GLint drawworld_drawCaustics;
 static GLint drawworld_time;
 static GLint drawworld_gamma3d;
 
@@ -262,6 +268,7 @@ static void Compile_DrawWorldProgram(void)
 		drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
 		drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
 		drawworld_drawDetailTex = glGetUniformLocation(drawworld.program, "drawDetailTex");
+		drawworld_drawCaustics = glGetUniformLocation(drawworld.program, "drawCaustics");
 		drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
 		drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
 		drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
@@ -286,17 +293,19 @@ static void Compile_DrawWorldProgram(void)
 
 		drawworld.uniforms_found = true;
 
-		// Constants
-		glProgramUniform1i(drawworld.program, drawworld_materialTex, 0);
-		glProgramUniform1i(drawworld.program, drawworld_detailTex, 1);
-		glProgramUniform1i(drawworld.program, drawworld_lightmapTex, 2);
-		glProgramUniform1i(drawworld.program, drawworld_causticsTex, 3);
+		// Constants: texture arrays
+		glProgramUniform1i(drawworld.program, drawworld_materialTex, TEXTURE_UNIT_MATERIAL);
+		glProgramUniform1i(drawworld.program, drawworld_lightmapTex, TEXTURE_UNIT_LIGHTMAPS);
+
+		// Detail textures
+		glProgramUniform1i(drawworld.program, drawworld_detailTex, TEXTURE_UNIT_DETAIL);
+		glProgramUniform1i(drawworld.program, drawworld_causticsTex, TEXTURE_UNIT_CAUSTICS);
 	}
 }
 
 #define PASS_COLOR_AS_4F(x) (x.color[0]*1.0f/255),(x.color[1]*1.0f/255),(x.color[2]*1.0f/255),255
 
-static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
+static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qbool caustics)
 {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	float modelViewMatrix[16];
@@ -312,6 +321,7 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex)
 	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
 	glUniform1i(drawworld_drawDetailTex, detail_tex ? 1 : 0);
+	glUniform1i(drawworld_drawCaustics, caustics ? 1 : 0);
 	glUniform1f(drawworld_waterAlpha, wateralpha);
 	glUniform1f(drawworld_time, cl.time);
 	glUniform1f(drawworld_gamma3d, v_gamma.value);
@@ -426,16 +436,20 @@ void GLM_DrawTexturedWorld(model_t* model)
 	qbool draw_caustics = gl_caustics.integer && underwatertexture;
 	int count = 0;
 
-	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture);
+	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture, draw_caustics);
 
 	// Bind lightmap array
-	GL_SelectTexture(GL_TEXTURE2);
+	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS);
 	GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, true);
 	if (draw_detail_texture) {
-		GL_SelectTexture(GL_TEXTURE1);
+		GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL);
 		GL_Bind(detailtexture);
 	}
-	GL_SelectTexture(GL_TEXTURE0);
+	if (draw_caustics) {
+		GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS);
+		GL_Bind(underwatertexture);
+	}
+	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL);
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];

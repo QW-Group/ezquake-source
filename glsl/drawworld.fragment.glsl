@@ -5,8 +5,10 @@ uniform sampler2D causticsTex;
 uniform sampler2DArray materialTex;
 uniform sampler2DArray lightmapTex;
 uniform bool drawDetailTex;
+uniform bool drawCaustics;
 uniform float waterAlpha;
 uniform float gamma3d;
+uniform float time;
 
 // drawflat for solid surfaces
 uniform int r_drawflat;
@@ -37,7 +39,7 @@ in flat int Flags;
 #define TEXTURE_TURB_TELE  4
 #define TEXTURE_TURB_SKY   5
 
-#define EZQ_SURFACE_IS_FLOOR   8    // should be drawn as floor for r_drawflat
+#define EZQ_SURFACE_IS_FLOOR    8   // should be drawn as floor for r_drawflat
 #define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
 
 out vec4 frag_colour;
@@ -97,13 +99,24 @@ void main()
 		}
 		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
 
+		if (drawCaustics && (Flags & EZQ_SURFACE_UNDERWATER) == EZQ_SURFACE_UNDERWATER) {
+			vec4 caustic = texture(
+				causticsTex,
+				vec2(
+					(TextureCoord.s + sin(0.465 * (time + TextureCoord.t))) * -0.1234375,
+					(TextureCoord.t + sin(0.465 * (time + TextureCoord.s))) * -0.1234375
+				)
+			);
+
+			// FIXME: Do proper GL_DECAL etc
+			frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+		}
+
 		if (drawDetailTex) {
 			vec4 detail = texture(detailTex, DetailCoord);
 
-			// FIXME: This is not really correct...
-			vec3 newColor = mix(frag_colour.rgb, vec3(1,1,1), 1 - detail.r);
-
-			frag_colour *= vec4(newColor, frag_colour.a);
+			// FIXME: Do proper GL_DECAL etc
+			frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
 		}
 	}
 
