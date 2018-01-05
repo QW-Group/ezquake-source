@@ -948,12 +948,9 @@ void R_RenderScene(void)
 {
 	extern void Skins_PreCache(void);
 
-	GL_EnterRegion("R_RenderSceneInit");
-
 	R_Check_R_FullBright(); // check for changes in r_fullbright
 
-	Skins_PreCache ();  // preache skins if needed
-	GL_LeaveRegion();
+	Skins_PreCache();  // preache skins if needed
 
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld ();		// adds static entities to the list
