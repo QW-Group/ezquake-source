@@ -3329,8 +3329,6 @@ static void GLM_QMB_DrawParticles(void)
 			GL_Bind(particle_textures[pt->texture].texnum);
 
 			glMultiDrawArrays(GL_TRIANGLE_FAN, firstVertices + pt->draw_start, countVertices + pt->draw_start, pt->draw_count);
-
-			GL_LeaveRegion();
 		}
 
 		// FIXME: GL_ResetState()
