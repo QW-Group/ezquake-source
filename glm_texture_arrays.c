@@ -863,18 +863,18 @@ static void GLM_CreateBrushModelVAO(void)
 	glBufferDataExt(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glEnableVertexAttribArray(3);
-	glEnableVertexAttribArray(4);
-	glEnableVertexAttribArray(5);
-	glEnableVertexAttribArray(6);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
+	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
+	glEnableVertexAttribArray(3);
 	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
+	glEnableVertexAttribArray(4);
 	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
+	glEnableVertexAttribArray(5);
 	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
+	glEnableVertexAttribArray(6);
 	glBindBufferExt(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(6, 1);

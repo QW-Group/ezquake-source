@@ -4,8 +4,8 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex;
 layout(location = 2) in vec2 lightmapCoord;
 layout(location = 3) in vec2 detailCoord;
-layout(location = 4) in float lightmapNumber;
-layout(location = 5) in float materialNumber;
+layout(location = 4) in int lightmapNumber;
+layout(location = 5) in int materialNumber;
 layout(location = 6) in int _instanceId;
 
 out flat int fsApplyLightmap;

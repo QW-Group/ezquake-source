@@ -91,8 +91,8 @@ static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* s
 	VectorCopy(source, target->position);
 	target->material_coords[0] = source[3];
 	target->material_coords[1] = source[4];
-	target->lightmap_coords[0] = source[5];
-	target->lightmap_coords[1] = source[6];
+	target->lightmap_coords[0] = source[5] * 65535;
+	target->lightmap_coords[1] = source[6] * 65535;
 	target->detail_coords[0] = source[7];
 	target->detail_coords[1] = source[8];
 	if (scaleS) {

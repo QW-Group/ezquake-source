@@ -128,7 +128,7 @@ typedef struct vbo_world_vert_s {
 	vec3_t position;
 
 	float material_coords[2];
-	float lightmap_coords[2];
+	unsigned short lightmap_coords[2];
 	float detail_coords[2];
 
 	// Index to lightmap texture array.  -1 for turb surfaces (no lightmap)
