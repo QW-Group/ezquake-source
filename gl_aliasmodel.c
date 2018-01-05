@@ -246,7 +246,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
 	float scaleS = 1.0f;
 	float scaleT = 1.0f;
-	qbool is_texture_array = true;
+	qbool is_texture_array = false;
 
 	// VULT NAILTRAIL - Hidenails
 	if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE) {
@@ -378,7 +378,7 @@ void R_DrawAliasModel(entity_t *ent, qbool shell_only)
 		skinnum = 0;
 	}
 
-	if (GL_ShadersSupported()) {
+	if (GL_ShadersSupported() && is_texture_array) {
 		texture = paliashdr->gl_arrayindex[skinnum][anim];
 		fb_texture = paliashdr->gl_fb_arrayindex[skinnum][anim];
 		scaleS = paliashdr->gl_scalingS[skinnum][anim];

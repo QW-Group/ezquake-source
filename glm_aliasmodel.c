@@ -370,6 +370,3 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	// MEAG: TODO
 }
 
-void GLM_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
-{
-}

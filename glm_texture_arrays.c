@@ -18,6 +18,12 @@ void GL_BuildCommonTextureArrays(void);
 static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
 static void GLM_CreateBrushModelVAO(void);
 
+static qbool AliasModelIsAnySize(model_t* mod)
+{
+	// mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0
+	return false;
+}
+
 static qbool BrushModelIsAnySize(model_t* mod)
 {
 	//int i;
@@ -328,7 +334,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 	case mod_alias:
 	{
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-		qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
+		qbool any_size = AliasModelIsAnySize(mod);
 
 		for (j = 0; j < paliashdr->numskins; ++j) {
 			int anim;
@@ -533,7 +539,7 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-		qbool any_size = mod->max_tex[0] <= 1.0 && mod->max_tex[1] <= 1.0 && mod->min_tex[0] >= 0 && mod->min_tex[1] >= 0;
+		qbool any_size = AliasModelIsAnySize(mod);
 
 		for (j = 0; j < paliashdr->numskins; ++j) {
 			int anim;

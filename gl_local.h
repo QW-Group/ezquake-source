@@ -800,7 +800,6 @@ void GLM_Draw_SetColor(byte* rgba, float alpha);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_FlushImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
-void GLM_AliasModelPowerupShell(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
 void GLM_SetIdentityMatrix(float* matrix);
 float* GLM_ModelviewMatrix(void);
