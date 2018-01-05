@@ -138,8 +138,11 @@ typedef struct particle_tree_s {
 	float		accel;
 	part_move_t	move;
 	float		custom;
+
 	int         vbo_start;
 	int         vbo_count;
+	int         draw_start;
+	int         draw_count;
 	int         verts_per_primitive;
 } particle_type_t;
 
@@ -152,9 +155,10 @@ typedef struct qmb_particle_vertex_s {
 #define MAX_BEAM_TRAIL 10
 #define MAX_VERTICES_PER_PARTICLE (MAX_BEAM_TRAIL * 9)
 #define MAX_VERTICES_IN_BATCH (ABSOLUTE_MAX_PARTICLES * MAX_VERTICES_PER_PARTICLE)
+#define MAX_DRAW_CALLS (ABSOLUTE_MAX_PARTICLES * MAX_BEAM_TRAIL)
 static qmb_particle_vertex_t vertices[MAX_VERTICES_IN_BATCH];
-static GLint firstVertices[ABSOLUTE_MAX_PARTICLES];
-static GLsizei countVertices[ABSOLUTE_MAX_PARTICLES];
+static GLint firstVertices[MAX_DRAW_CALLS];
+static GLsizei countVertices[MAX_DRAW_CALLS];
 static int particleVertexCount = 0;
 static int particleRenderCount = 0;
 
@@ -597,6 +601,7 @@ void QMB_ClearParticles (void)
 	ParticleCountHigh = 0;
 
 	particleVertexCount = 0;
+	particleRenderCount = 0;
 }
 
 static void QMB_SetParticleVertex(int pos, float x, float y, float z, float s, float t, col_t colour)
@@ -612,7 +617,7 @@ __inline static int CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, part
 	vec3_t verts[4];
 	float scale = p->size;
 
-	if (pos + 4 >= MAX_VERTICES_IN_BATCH) {
+	if (pos + 4 >= MAX_VERTICES_IN_BATCH || particleRenderCount >= MAX_DRAW_CALLS) {
 		return pos;
 	}
 
@@ -640,6 +645,8 @@ __inline static int CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, part
 		VectorMA(p->org, scale, coord[3], verts[3]);
 	}
 
+	firstVertices[particleRenderCount] = pos;
+	countVertices[particleRenderCount++] = 4;
 	QMB_SetParticleVertex(pos++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
 	QMB_SetParticleVertex(pos++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
 	QMB_SetParticleVertex(pos++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
@@ -670,6 +677,8 @@ static void QMB_FillParticleVertexBuffer(void)
 
 		pt->vbo_start = pos;
 		pt->vbo_count = 0;
+		pt->draw_start = particleRenderCount;
+		pt->draw_count = 0;
 
 		if (!pt->start) {
 			continue;
@@ -682,23 +691,23 @@ static void QMB_FillParticleVertexBuffer(void)
 		switch (pt->drawtype) {
 		case pd_beam:
 			for (p = pt->start; p; p = p->next) {
+				particle_texture_t* ptex = &particle_textures[ptex_lightning];
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
 				}
 				for (l = min(amf_part_traildetail.integer, 10); l > 0; l--) {
-					particle_texture_t* ptex = &particle_textures[ptex_lightning];
+					if (particleRenderCount < MAX_DRAW_CALLS && pos + 4 < MAX_VERTICES_IN_BATCH) {
+						firstVertices[particleRenderCount] = pos;
+						countVertices[particleRenderCount++] = 4;
 
-					if (pos + 4 >= MAX_VERTICES_IN_BATCH) {
-						break;
+						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l * amf_part_trailwidth.value));
+
+						QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
+						QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
+						QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
+						QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
 					}
-
-					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l * amf_part_trailwidth.value));
-
-					QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
-					QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
 				}
 			}
 			break;
@@ -714,7 +723,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					continue;
 				}
 
-				if (pos + 8 >= MAX_VERTICES_IN_BATCH) {
+				if (particleRenderCount >= MAX_DRAW_CALLS || pos + 8 >= MAX_VERTICES_IN_BATCH) {
 					break;
 				}
 
@@ -728,6 +737,8 @@ static void QMB_FillParticleVertexBuffer(void)
 				farColor[2] = p->color[2] >> 1;
 				farColor[3] = 0;
 
+				firstVertices[particleRenderCount] = pos;
+				countVertices[particleRenderCount++] = 9;
 				QMB_SetParticleVertex(pos++, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 				for (j = 7; j >= 0; j--) {
 					vec3_t v;
@@ -794,12 +805,18 @@ static void QMB_FillParticleVertexBuffer(void)
 						continue;
 					}
 
+					if (particleRenderCount + 1 >= MAX_DRAW_CALLS || pos + 8 >= MAX_VERTICES_IN_BATCH) {
+						break;
+					}
+
 					GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
 					GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
 					GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
 					GLM_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
 					GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
-					
+
+					firstVertices[particleRenderCount] = pos;
+					countVertices[particleRenderCount++] = 4;
 					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
 					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
@@ -811,6 +828,8 @@ static void QMB_FillParticleVertexBuffer(void)
 
 					GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
+					firstVertices[particleRenderCount] = pos;
+					countVertices[particleRenderCount++] = 4;
 					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
 					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
 					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
@@ -828,6 +847,7 @@ static void QMB_FillParticleVertexBuffer(void)
 		}
 
 		pt->vbo_count = pos - pt->vbo_start;
+		pt->draw_count = particleRenderCount - pt->draw_start;
 	}
 
 	particleVertexCount = pos;
@@ -848,6 +868,7 @@ static void QMB_UpdateParticles(void)
 	particle_count = 0;
 	grav = movevars.gravity / 800.0;
 	particleVertexCount = 0;
+	particleRenderCount = 0;
 
 	//VULT PARTICLES
 	WeatherEffect();
@@ -3266,7 +3287,7 @@ static void GLM_QMB_CompileParticleProgram(void)
 static void GLM_QMB_DrawParticles(void)
 {
 	particle_type_t *pt;
-	int	i, j;
+	int	i;
 	int pos = 0;
 	GLuint vao;
 
@@ -3307,9 +3328,7 @@ static void GLM_QMB_DrawParticles(void)
 			GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
 			GL_Bind(particle_textures[pt->texture].texnum);
 
-			for (j = 0; j < pt->vbo_count; j += pt->verts_per_primitive) {
-				glDrawArrays(GL_TRIANGLE_FAN, pt->vbo_start + j, pt->verts_per_primitive);
-			}
+			glMultiDrawArrays(GL_TRIANGLE_FAN, firstVertices + pt->draw_start, countVertices + pt->draw_start, pt->draw_count);
 
 			GL_LeaveRegion();
 		}
