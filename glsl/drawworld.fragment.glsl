@@ -1,11 +1,11 @@
 #version 430
 
+#ezquake-definitions
+
 uniform sampler2D detailTex;
 uniform sampler2D causticsTex;
 uniform sampler2DArray materialTex;
 uniform sampler2DArray lightmapTex;
-uniform bool drawDetailTex;
-uniform bool drawCaustics;
 uniform float waterAlpha;
 uniform float gamma3d;
 uniform float time;
@@ -51,9 +51,24 @@ void main()
 	int turbType;
 	bool isFloor;
 
-	if (TexCoordLightmap.z < 0) {
-		turbType = Flags & EZQ_SURFACE_TYPE;
+#ifdef DRAW_DETAIL_TEXTURES
+	vec4 detail = texture(detailTex, DetailCoord);
+#endif
+#ifdef DRAW_CAUSTIC_TEXTURES
+	vec4 caustic = texture(
+		causticsTex,
+		vec2(
+			(TextureCoord.s + sin(0.465 * (time + TextureCoord.t))) * -0.1234375,
+			(TextureCoord.t + sin(0.465 * (time + TextureCoord.s))) * -0.1234375
+		)
+	);
+#endif
 
+	lmColor = texture(lightmapTex, TexCoordLightmap);
+	texColor = texture(materialTex, TextureCoord);
+
+	turbType = Flags & EZQ_SURFACE_TYPE;
+	if (turbType != 0) {
 		// Turb surface
 		if (r_fastturb) {
 			if (turbType == TEXTURE_TURB_WATER) {
@@ -76,48 +91,35 @@ void main()
 			frag_colour = r_skycolor;
 		}
 		else {
-			texColor = texture(materialTex, TextureCoord);
-
 			frag_colour = vec4(texColor.rgb, waterAlpha);
 		}
 	}
 	else {
 		// Opaque material
-		lmColor = texture(lightmapTex, TexCoordLightmap);
-		isFloor = (Flags & EZQ_SURFACE_IS_FLOOR) == EZQ_SURFACE_IS_FLOOR;
+		if (r_drawflat != 0) {
+			isFloor = (Flags & EZQ_SURFACE_IS_FLOOR) == EZQ_SURFACE_IS_FLOOR;
 
-		if (r_drawflat == 1 || (r_drawflat == 2 && isFloor) || (r_drawflat == 3 && !isFloor)) {
-			if (isFloor) {
+			if (isFloor && r_drawflat == 1 || r_drawflat == 2) {
 				texColor = r_floorcolor;
 			}
-			else {
+			else if (!isFloor && r_drawflat == 1 || r_drawflat == 3) {
 				texColor = r_wallcolor;
 			}
 		}
-		else {
-			texColor = texture(materialTex, TextureCoord);
-		}
+
 		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
 
-		if (drawCaustics && (Flags & EZQ_SURFACE_UNDERWATER) == EZQ_SURFACE_UNDERWATER) {
-			vec4 caustic = texture(
-				causticsTex,
-				vec2(
-					(TextureCoord.s + sin(0.465 * (time + TextureCoord.t))) * -0.1234375,
-					(TextureCoord.t + sin(0.465 * (time + TextureCoord.s))) * -0.1234375
-				)
-			);
-
+#ifdef DRAW_CAUSTIC_TEXTURES
+		if ((Flags & EZQ_SURFACE_UNDERWATER) == EZQ_SURFACE_UNDERWATER) {
 			// FIXME: Do proper GL_DECAL etc
 			frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
 		}
+#endif
 
-		if (drawDetailTex) {
-			vec4 detail = texture(detailTex, DetailCoord);
-
-			// FIXME: Do proper GL_DECAL etc
-			frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
-		}
+#ifdef DRAW_DETAIL_TEXTURES
+		// FIXME: Do proper GL_DECAL etc
+		frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+#endif
 	}
 
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);

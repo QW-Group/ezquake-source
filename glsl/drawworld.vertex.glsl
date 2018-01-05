@@ -31,7 +31,7 @@ void main()
 		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;
 		TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;
 		TextureCoord.z = materialNumber;
-		TexCoordLightmap = vec3(0, 0, lightmapNumber);
+		TexCoordLightmap = vec3(0, 0, 0);
 		DetailCoord = vec2(0, 0);
 	}
 	else {

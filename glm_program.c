@@ -215,6 +215,31 @@ qbool GLM_CreateVGFProgram(
 	glm_program_t* program
 )
 {
+	return GLM_CreateVGFProgramWithInclude(
+		friendlyName,
+		vertex_shader_text,
+		vertex_shader_text_length,
+		geometry_shader_text,
+		geometry_shader_text_length,
+		fragment_shader_text,
+		fragment_shader_text_length,
+		program,
+		NULL
+	);
+}
+
+qbool GLM_CreateVGFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
+)
+{
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
 	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
@@ -224,7 +249,7 @@ qbool GLM_CreateVGFProgram(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
-	program->included_definitions = NULL;
+	program->included_definitions = included_definitions;
 
 	if (GLM_CompileProgram(program)) {
 		GLM_AddToProgramList(program);

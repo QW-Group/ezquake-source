@@ -255,20 +255,35 @@ static GLint drawworld_causticsTex;
 static GLint drawworld_fastsky;
 static GLint drawworld_skycolor;
 
-static void Compile_DrawWorldProgram(void)
+#define DRAW_DETAIL_TEXTURES 1
+#define DRAW_CAUSTIC_TEXTURES 2
+static int drawworld_compiledOptions;
+
+// We re-compile whenever certain options change, to save texture bindings/lookups
+static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures)
 {
-	if (!drawworld.program) {
+	int drawworld_desiredOptions =
+		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
+		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
+
+	if (!drawworld.program || drawworld_compiledOptions != drawworld_desiredOptions) {
+		const char* included_definitions =
+			detail_textures && caustic_textures ? "#define DRAW_DETAIL_TEXTURES\n#define DRAW_CAUSTIC_TEXTURES\n" :
+			detail_textures ? "#define DRAW_DETAIL_TEXTURES\n" :
+			caustic_textures ? "#define DRAW_CAUSTIC_TEXTURES\n" :
+			"";
+
 		GL_VFDeclare(drawworld);
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgram("DrawWorld", GL_VFParams(drawworld), &drawworld);
+		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);
+
+		drawworld_compiledOptions = drawworld_desiredOptions;
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawworld_modelViewMatrix = glGetUniformLocation(drawworld.program, "modelViewMatrix");
 		drawworld_projectionMatrix = glGetUniformLocation(drawworld.program, "projectionMatrix");
-		drawworld_drawDetailTex = glGetUniformLocation(drawworld.program, "drawDetailTex");
-		drawworld_drawCaustics = glGetUniformLocation(drawworld.program, "drawCaustics");
 		drawworld_materialTex = glGetUniformLocation(drawworld.program, "materialTex");
 		drawworld_detailTex = glGetUniformLocation(drawworld.program, "detailTex");
 		drawworld_lightmapTex = glGetUniformLocation(drawworld.program, "lightmapTex");
@@ -312,7 +327,7 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	float projectionMatrix[16];
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, gl_textureless, r_skycolor;
 
-	Compile_DrawWorldProgram();
+	Compile_DrawWorldProgram(detail_tex, caustics);
 
 	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
@@ -320,8 +335,6 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	GL_UseProgram(drawworld.program);
 	glUniformMatrix4fv(drawworld_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
 	glUniformMatrix4fv(drawworld_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-	glUniform1i(drawworld_drawDetailTex, detail_tex ? 1 : 0);
-	glUniform1i(drawworld_drawCaustics, caustics ? 1 : 0);
 	glUniform1f(drawworld_waterAlpha, wateralpha);
 	glUniform1f(drawworld_time, cl.time);
 	glUniform1f(drawworld_gamma3d, v_gamma.value);

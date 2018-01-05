@@ -570,6 +570,18 @@ qbool GLM_CreateVGFProgram(
 	glm_program_t* program
 );
 
+qbool GLM_CreateVGFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
+);
+
 #define GL_VGFDeclare(name) \
 	extern unsigned char glsl_##name##_vertex_glsl[];\
 	extern unsigned int glsl_##name##_vertex_glsl_len;\
