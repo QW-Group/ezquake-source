@@ -121,6 +121,7 @@ glActiveTexture_t        glActiveTexture;
 glTexSubImage3D_t        glTexSubImage3D;
 glTexStorage3D_t         glTexStorage3D;
 glTexImage3D_t           glTexImage3D;
+glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
 glMultiDrawArrays_t      glMultiDrawArrays;
@@ -252,6 +253,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexImage3D);
+			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);

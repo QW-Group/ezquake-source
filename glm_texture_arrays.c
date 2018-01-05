@@ -26,10 +26,10 @@ typedef struct common_texture_s {
 	int allocated;
 
 	struct common_texture_s* next;
+	struct common_texture_s* final;
 } common_texture_t;
 
 void GL_BuildCommonTextureArrays(void);
-static void GLM_CreatePowerupShellTexture(GLuint texture_array, int maxWidth, int maxHeight, int slice);
 static void GLM_CreateBrushModelVAO(void);
 
 static qbool AliasModelIsAnySize(model_t* mod)
@@ -159,17 +159,30 @@ static void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, 
 	}
 }
 
-static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int index)
+static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int final_width, int final_height, int index)
 {
-	int level = 0;
+	int ratio_x = final_width / width;
+	int ratio_y = final_height / height;
 	GLubyte* buffer;
+	int x, y;
 
+	if (ratio_x == 0) {
+		ratio_x = 1;
+	}
+	if (ratio_y == 0) {
+		ratio_y = 1;
+	}
 	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
 	GL_BindTexture(GL_TEXTURE_2D_ARRAY, arrayTexture, true);
-	for (level = 0; width && height; ++level, width /= 2, height /= 2) {
-		glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, 0, 0, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+	// Might need to tile multiple times
+	for (x = 0; x < ratio_x; ++x) {
+		for (y = 0; y < ratio_y; ++y) {
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		}
 	}
 
 	Q_free(buffer);
@@ -177,8 +190,13 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 
 static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int height)
 {
+	common_texture_t* start = list;
+
 	while (list) {
 		if (list->width == width && list->height == height) {
+			if (list->final) {
+				return list->final;
+			}
 			return list;
 		}
 
@@ -217,9 +235,9 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 	else {
 		tex = GL_FindTextureBySize(list, width, height);
 		if (!tex->gl_texturenum) {
-			tex->gl_texturenum = GL_CreateTextureArray("", width, height, tex->count - tex->any_size_count, TEX_MIPMAP);
-			tex->gl_width = width;
-			tex->gl_height = height;
+			tex->gl_texturenum = GL_CreateTextureArray("", tex->width, tex->height, tex->count - tex->any_size_count, TEX_MIPMAP);
+			tex->gl_width = tex->width;
+			tex->gl_height = tex->height;
 		}
 	}
 	if (scaleS && scaleT) {
@@ -227,7 +245,7 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 		*scaleT = height * 1.0f / tex->gl_height;
 	}
 
-	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->allocated);
+	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->width, tex->height, tex->allocated);
 	if (texture_array) {
 		*texture_array = tex->gl_texturenum;
 	}
@@ -563,9 +581,9 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 		}
 
 		GLM_SetTextureArrays(mod);
-		if (mod == cl.worldmodel) {
-			GLM_PrintTextureArrays(mod);
-		}
+		//if (mod == cl.worldmodel) {
+		//	GLM_PrintTextureArrays(mod);
+		//}
 	}
 	else {
 		//Con_Printf("***: type %d (%s)\n", mod->type, mod->name);
@@ -595,6 +613,43 @@ static void GLM_CreateSpriteVBO(float* new_vbo_buffer)
 	VectorSet(vert, 0, 1, -1);
 	vert[3] = 0;
 	vert[4] = 1;
+}
+
+void GL_CompressTextureArrays(common_texture_t* list)
+{
+	common_texture_t* this_tex;
+	common_texture_t* cur;
+
+	for (this_tex = list; this_tex; this_tex = this_tex->next) {
+		int non_any = this_tex->count - this_tex->any_size_count;
+
+		if (this_tex->width == 0 || non_any == 0) {
+			continue;
+		}
+
+		this_tex->final = NULL;
+		for (cur = list; cur; cur = cur->next) {
+			int ratio_x, ratio_y;
+
+			if (cur->width == 0 || cur == this_tex) {
+				continue;
+			}
+
+			ratio_x = cur->width / this_tex->width;
+			ratio_y = cur->height / this_tex->height;
+
+			if (ratio_x * this_tex->width == cur->width && ratio_y * this_tex->height == cur->height) {
+				if (!this_tex->final || cur->width > this_tex->final->width || cur->height > this_tex->final->height) {
+					this_tex->final = cur;
+				}
+			}
+		}
+
+		if (this_tex->final) {
+			this_tex->final->count += non_any;
+			this_tex->count -= non_any;
+		}
+	}
 }
 
 // Called from R_NewMap
@@ -648,6 +703,7 @@ void GL_BuildCommonTextureArrays(void)
 			anySizeCount += tex->any_size_count;
 		}
 
+		GL_CompressTextureArrays(common);
 
 		// Create non-specific array to fit everything that doesn't require tiling
 		commonTex->gl_texturenum = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount, TEX_MIPMAP);
@@ -672,6 +728,14 @@ void GL_BuildCommonTextureArrays(void)
 
 			if (mod) {
 				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
+			}
+		}
+
+		// Generate mipmaps for every texture array
+		for (tex = common; tex; tex = tex->next) {
+			if (tex->gl_texturenum) {
+				glBindTexture(GL_TEXTURE_2D_ARRAY, tex->gl_texturenum);
+				glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 			}
 		}
 

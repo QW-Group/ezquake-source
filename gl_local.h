@@ -415,6 +415,7 @@ typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
 typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
+typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 
 // Draw functions
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
@@ -478,6 +479,7 @@ extern glActiveTexture_t        glActiveTexture;
 extern glTexSubImage3D_t        glTexSubImage3D;
 extern glTexStorage3D_t         glTexStorage3D;
 extern glTexImage3D_t           glTexImage3D;
+extern glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
 extern glMultiDrawArrays_t      glMultiDrawArrays;

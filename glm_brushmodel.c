@@ -365,9 +365,7 @@ static void GL_FlushBrushModelBatch(void)
 	for (i = 0; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
-		if (i == 0) {
-			GL_BindVertexArray(req->vao);
-		}
+		GL_BindVertexArray(req->vao);
 
 		if (req->texture_array != last_array) {
 			if (i - base) {
@@ -486,10 +484,6 @@ void GLM_DrawBrushModel(model_t* model)
 				}
 			}
 		}
-	}
-
-	if (req && req->count) {
-		GL_FlushBrushModelBatch();
 	}
 
 	return;
