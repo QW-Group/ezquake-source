@@ -6,11 +6,27 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
+#define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
+
 // Linked list of all compiled programs
 static glm_program_t* program_list;
 
+static void GLM_AddToProgramList(glm_program_t* program)
+{
+	glm_program_t* pos;
+
+	for (pos = program_list; pos; pos = pos->next) {
+		if (pos == program) {
+			return;
+		}
+	}
+
+	program->next = program_list;
+	program_list = program;
+}
+
 // GLM Utility functions
-void GLM_ConPrintShaderLog(GLuint shader)
+static void GLM_ConPrintShaderLog(GLuint shader)
 {
 	GLint log_length;
 	char* buffer;
@@ -26,7 +42,7 @@ void GLM_ConPrintShaderLog(GLuint shader)
 	}
 }
 
-void GLM_ConPrintProgramLog(GLuint program)
+static void GLM_ConPrintProgramLog(GLuint program)
 {
 	GLint log_length;
 	char* buffer;
@@ -42,16 +58,15 @@ void GLM_ConPrintProgramLog(GLuint program)
 	}
 }
 
-static qbool GLM_CompileShader(const char* shaderText, GLuint shaderTextLength, GLenum shaderType, GLuint* shaderId)
+static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[], GLint shaderTextLength[], GLenum shaderType, GLuint* shaderId)
 {
 	GLuint shader;
 	GLint result;
-	GLint length = shaderTextLength;
 
 	*shaderId = 0;
 	shader = glCreateShader(shaderType);
 	if (shader) {
-		glShaderSource(shader, 1, &shaderText, &length);
+		glShaderSource(shader, shaderComponents, shaderText, shaderTextLength);
 		glCompileShader(shader);
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 		if (result) {
@@ -69,6 +84,35 @@ static qbool GLM_CompileShader(const char* shaderText, GLuint shaderTextLength, 
 	return false;
 }
 
+static int GLM_InsertDefinitions(
+	const char* strings[],
+	GLint lengths[],
+	const char* definitions
+)
+{
+	const char* break_point;
+
+	if (!strings[0] || !strings[0][0]) {
+		return 0;
+	}
+
+	break_point = strstr(strings[0], EZQUAKE_DEFINITIONS_STRING);
+
+	if (break_point) {
+		int position = break_point - strings[0];
+
+		lengths[2] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[1] = strlen(definitions);
+		lengths[0] = position;
+		strings[2] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[1] = definitions;
+
+		return 3;
+	}
+
+	return 1;
+}
+
 static qbool GLM_CompileProgram(
 	glm_program_t* program
 )
@@ -77,22 +121,30 @@ static qbool GLM_CompileProgram(
 	GLuint fragment_shader = 0;
 	GLuint geometry_shader = 0;
 	GLuint shader_program = 0;
+	qbool custom_strings = false;
 
 	const char* friendlyName = program->friendly_name;
-	const char* vertex_shader_text = program->shader_text[GLM_VERTEX_SHADER];
-	GLuint vertex_shader_text_length = program->shader_length[GLM_VERTEX_SHADER];
-	const char* geometry_shader_text = program->shader_text[GLM_GEOMETRY_SHADER];
-	GLuint geometry_shader_text_length = program->shader_length[GLM_GEOMETRY_SHADER];
-	const char* fragment_shader_text = program->shader_text[GLM_FRAGMENT_SHADER];
-	GLuint fragment_shader_text_length = program->shader_length[GLM_FRAGMENT_SHADER];
+	GLsizei vertex_components = 1;
+	const char* vertex_shader_text[] = { program->shader_text[GLM_VERTEX_SHADER], "", "" };
+	GLint vertex_shader_text_length[] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0 };
+	GLsizei geometry_components = 1;
+	const char* geometry_shader_text[] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "" };
+	GLint geometry_shader_text_length[] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0 };
+	GLsizei fragment_components = 1;
+	const char* fragment_shader_text[] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "" };
+	GLint fragment_shader_text_length[] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0 };
 
-	Con_DPrintf("--[ %s ]--\n", friendlyName);
+	Con_Printf("Compiling: %s\n", friendlyName);
 	if (GL_ShadersSupported()) {
 		GLint result = 0;
 
-		if (GLM_CompileShader(vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (geometry_shader_text == NULL || GLM_CompileShader(geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
-				if (GLM_CompileShader(fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
+		vertex_components = GLM_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
+		geometry_components = GLM_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
+		fragment_components = GLM_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
+
+		if (GLM_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
+			if (geometry_shader_text[0] == NULL || GLM_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
+				if (GLM_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
 					Con_DPrintf("Shader compilation completed successfully\n");
 
 					shader_program = glCreateProgram();
@@ -163,8 +215,6 @@ qbool GLM_CreateVGFProgram(
 	glm_program_t* program
 )
 {
-	Con_Printf("Compiling: %s\n", friendlyName);
-
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
 	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
@@ -174,10 +224,10 @@ qbool GLM_CreateVGFProgram(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
+	program->included_definitions = NULL;
 
 	if (GLM_CompileProgram(program)) {
-		program->next = program_list;
-		program_list = program;
+		GLM_AddToProgramList(program);
 
 		return true;
 	}
@@ -194,8 +244,19 @@ qbool GLM_CreateVFProgram(
 	glm_program_t* program
 )
 {
-	Con_Printf("Compiling: %s\n", friendlyName);
+	return GLM_CreateVFProgramWithInclude(friendlyName, vertex_shader_text, vertex_shader_text_length, fragment_shader_text, fragment_shader_text_length, program, NULL);
+}
 
+qbool GLM_CreateVFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
+)
+{
 	memset(program, 0, sizeof(glm_program_t));
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
@@ -206,10 +267,10 @@ qbool GLM_CreateVFProgram(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
+	program->included_definitions = included_definitions;
 
 	if (GLM_CompileProgram(program)) {
-		program->next = program_list;
-		program_list = program;
+		GLM_AddToProgramList(program);
 
 		return true;
 	}

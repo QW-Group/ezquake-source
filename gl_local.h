@@ -151,7 +151,6 @@ extern  cvar_t  gl_fogsky;
 // Tomaz - Fog End
 
 extern	cvar_t	r_drawentities;
-extern	cvar_t	r_drawworld;
 extern	cvar_t	r_drawflame;
 extern	cvar_t	r_speeds;
 extern	cvar_t	r_fullbright;
@@ -510,9 +509,6 @@ void GLM_TransformMatrix(float* matrix, float x, float y, float z);
 void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
 void GLM_GetMatrix(GLenum type, float* matrix);
 
-void GLM_ConPrintShaderLog(GLuint shader);
-void GLM_ConPrintProgramLog(GLuint program);
-
 #define GLM_VERTEX_SHADER   0
 #define GLM_FRAGMENT_SHADER 1
 #define GLM_GEOMETRY_SHADER 2
@@ -527,6 +523,7 @@ typedef struct glm_program_s {
 	struct glm_program_s* next;
 	const char* friendly_name;
 	const char* shader_text[GLM_SHADER_COUNT];
+	const char* included_definitions;
 	GLuint shader_length[GLM_SHADER_COUNT];
 	qbool uniforms_found;
 } glm_program_t;
@@ -538,6 +535,16 @@ qbool GLM_CreateVFProgram(
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
 	glm_program_t* program
+);
+
+qbool GLM_CreateVFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
 );
 
 #define GL_VFDeclare(name) \
