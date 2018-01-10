@@ -655,7 +655,10 @@ void CL_AdjustAngles(void)
 		speed *= frametime;
 		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right, true);
 		cl.viewangles[YAW] += speed * CL_KeyState(&in_left, true);
-		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
+		if (cl.viewangles[YAW] < 0)
+			cl.viewangles[YAW] += 360.0;
+		else if (cl.viewangles[YAW] > 360)
+			cl.viewangles[YAW] -= 360.0;
 	}
 
 	speed = basespeed * cl_pitchspeed.value;
