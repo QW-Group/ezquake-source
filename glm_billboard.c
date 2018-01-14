@@ -8,16 +8,16 @@
 void GLM_DrawBillboards(void);
 void GLC_DrawBillboards(void);
 
-#define MAX_VERTS_PER_BILLBOARD       9  // Gunshots... used to limit batches
-#define MAX_BILLBOARDS_PER_BATCH   1024  // Batches limited to this so they can't break other functionality
+#define VBO_BILLBOARDVERT_FOFS(x) (void*)((intptr_t)&(((gl_billboard_vert_t*)0)->x))
+
+#define MAX_VERTS_PER_BILLBOARD        9  // Gunshots... used to limit batches
+#define MAX_BILLBOARDS_PER_BATCH    8192  // Batches limited to this so they can't break other functionality
 
 typedef struct gl_billboard_vert_s {
 	float position[3];
 	float tex[2];
 	GLubyte color[4];
 } gl_billboard_vert_t;
-
-#define VBO_BILLBOARDVERT_FOFS(x) (void*)((intptr_t)&(((gl_billboard_vert_t*)0)->x))
 
 typedef struct gl_billboard_batch_s {
 	GLenum blendSource;
@@ -35,14 +35,7 @@ static gl_billboard_batch_t batches[MAX_BILLBOARD_BATCHES];
 static unsigned int batchMapping[MAX_BILLBOARD_BATCHES];
 static unsigned int batchCount;
 static unsigned int vertexCount;
-static int solidTexture;
-
-static void GL_BillboardCreateSolidTexture(void)
-{
-	unsigned char texels[] = { 255, 255, 255, 255 };
-
-	solidTexture = GL_LoadTexture("billboard:solid", 1, 1, texels, TEX_ALPHA | TEX_NOSCALE, 4);
-}
+extern int vx_solidTexture;
 
 static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
 {
@@ -112,10 +105,6 @@ void GL_DrawBillboards(void)
 		return;
 	}
 
-	if (!solidTexture) {
-		GL_BillboardCreateSolidTexture();
-	}
-
 	if (GL_ShadersSupported()) {
 		GLM_DrawBillboards();
 	}
@@ -141,7 +130,7 @@ void GLC_DrawBillboards(void)
 		gl_billboard_batch_t* batch = &batches[i];
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : solidTexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : vx_solidTexture);
 
 		for (j = 0; j < batch->count; ++j) {
 			gl_billboard_vert_t* v;
@@ -250,7 +239,7 @@ void GLM_DrawBillboards(void)
 		gl_billboard_batch_t* batch = &batches[i];
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : solidTexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : vx_solidTexture);
 
 		if (batch->count == 1) {
 			glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);

@@ -3309,14 +3309,6 @@
         { "name": "true", "description": "Smooth the textures on models." }
       ]
     },
-    "gl_solidparticles": {
-      "group-id": "36",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "Disable." },
-        { "name": "true", "description": "Might make tele particles faster for 3dfx wicked gl drivers." }
-      ]
-    },
     "gl_squareparticles": {
       "group-id": "36",
       "desc": "Toggles between circle and square particles",

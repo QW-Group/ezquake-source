@@ -544,10 +544,6 @@ void Classic_ReScaleParticles(void)
 
 		glpart->gl_scale = 1 + dist * r_partscale;
 	}
-
-	if (GL_ShadersSupported()) {
-		GLM_UpdateParticles(particles_to_draw);
-	}
 }
 
 // Moves particles into new locations this frame
@@ -696,48 +692,66 @@ void Classic_CalculateParticles(void)
 			break;
 		}
 	}
-
-	if (GL_ShadersSupported()) {
-		GLM_UpdateParticles(particles_to_draw);
-	}
 }
 
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
 	extern cvar_t gl_particle_style;
+	int i;
+	vec3_t up, right;
+	qbool square = gl_particle_style.integer;
 
 	if (particles_to_draw == 0) {
 		return;
 	}
 
-	GL_EnterRegion("Particles");
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (!gl_solidparticles.value) {
-		GL_DepthMask(GL_FALSE);
-	}
-	GL_TextureEnvMode(GL_MODULATE);
+	VectorScale(vup, 1.5, up);
+	VectorScale(vright, 1.5, right);
 
-	if (!GL_ShadersSupported()) {
-		GL_Bind(particletexture);
-		GLC_DrawParticles(particles_to_draw, gl_particle_style.integer);
+	if (square) {
+		// FIXME: Hideous, should really store the indexes and use restart if we're doing this many squares?
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0, GL_TRIANGLE_STRIP);
+		for (i = 0; i < particles_to_draw; ++i) {
+			glm_particle_t* glpart = &glparticles[i];
+			float scale = glpart->gl_scale;
+			GLubyte color[4];
+
+			color[0] = glpart->gl_color[0] * 255;
+			color[1] = glpart->gl_color[1] * 255;
+			color[2] = glpart->gl_color[2] * 255;
+			color[3] = glpart->gl_color[3] * 255;
+
+			if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 4)) {
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + (right[0] + up[0]) * scale, glpart->gl_org[1] + (right[1] + up[1]) * scale, glpart->gl_org[2] + (right[2] + up[2]) * scale, 1, 1, color);
+			}
+		}
 	}
 	else {
-		GL_SelectTexture(GL_TEXTURE0);
-		GL_Bind(particletexture);
-		GLM_DrawParticles(particles_to_draw, gl_particle_style.integer);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES);
+		if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
+			for (i = 0; i < particles_to_draw; ++i) {
+				glm_particle_t* glpart = &glparticles[i];
+				float scale = glpart->gl_scale;
+				GLubyte color[4];
+
+				color[0] = glpart->gl_color[0] * 255;
+				color[1] = glpart->gl_color[1] * 255;
+				color[2] = glpart->gl_color[2] * 255;
+				color[3] = glpart->gl_color[3] * 255;
+
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
+				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
+			}
+		}
 	}
 
-	GL_TextureEnvMode(GL_REPLACE);
-	if (!gl_solidparticles.value) {
-		GL_DepthMask(GL_TRUE);
-	}
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_LeaveRegion();
+	return;
 }
-
-
 
 void R_InitParticles(void)
 {

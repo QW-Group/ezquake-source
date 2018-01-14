@@ -145,7 +145,6 @@ cvar_t gl_fb_models                        = {"gl_fb_models", "1"};
 cvar_t gl_lightmode                        = {"gl_lightmode", "2"};
 cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
-cvar_t gl_solidparticles                   = {"gl_solidparticles", "0"}; // 1
 cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange };
 cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails                      = {"gl_part_trails", "0"}; // 1
@@ -758,7 +757,6 @@ void R_Init(void)
 	Cvar_Register (&gl_motion_blur_dead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-	Cvar_Register (&gl_solidparticles);
 	Cvar_Register (&gl_squareparticles);
 	Cvar_Register (&gl_part_explosions);
 	Cvar_Register (&gl_part_trails);
@@ -897,10 +895,6 @@ void R_Init(void)
 				"full",         "0",
 				"alpha",        "1",
 				NULL);
-
-	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits 
-	if (gl_vendor && !strcmp(gl_vendor, "METABYTE/WICKED3D")) 
-		Cvar_SetDefault(&gl_solidparticles, 1); 
 
 	R_InitTextures ();	// FIXME: not sure is this safe re-init
 	R_InitBubble ();	// safe re-init
