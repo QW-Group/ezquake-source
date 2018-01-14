@@ -31,6 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "nvToolsExt.h"
 #endif
 
+// <debug-functions (4.3)>
+//typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
+typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
+// </debug-functions>
+
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
 void GL_BindBuffer(GLenum target, GLuint buffer);
 
@@ -69,6 +74,25 @@ cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 // GL_ARB_texture_non_power_of_two
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
+
+// Debugging
+void APIENTRY MessageCallback( GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam
+)
+{
+	char buffer[1024] = { 0 };
+
+	snprintf(buffer, sizeof(buffer) - 1,
+		"GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+
+	OutputDebugString(buffer);
+}
 
 // VBO functions
 static glBindBuffer_t     glBindBuffer = NULL;
@@ -275,6 +299,18 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
+
+#ifdef _WIN32
+			// During init, enable debug output
+			if (IsDebuggerPresent()) {
+				glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
+
+				if (glDebugMessageCallback) {
+					glEnable(GL_DEBUG_OUTPUT);
+					glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
+				}
+			}
+#endif
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
