@@ -269,8 +269,6 @@ static void brighten32 (byte *data, int size)
 static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
 {
 	// Tell OpenGL the texnum of the texture before uploading it.
-	GL_BindFirstTime(glt->texnum);
-
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
 
@@ -369,9 +367,6 @@ static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int 
 	static unsigned trans[640 * 480];
 	int	i, image_size, p;
 	unsigned *table;
-
-	// Tell OpenGL the texnum of the texture before uploading it.
-	GL_BindFirstTime(glt->texnum);
 
 	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
 	image_size = width * height;

@@ -30,7 +30,7 @@ extern float overall_alpha;
 
 void GLC_DrawTileClear(GLuint texnum, int x, int y, int w, int h)
 {
-	GL_Bind(texnum);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
 	glBegin(GL_QUADS);
 	glTexCoord2f(x / 64.0, y / 64.0);
 	glVertex2f(x, y);
@@ -178,7 +178,7 @@ void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 		glColor4f(1, 1, 1, alpha);
 	}
 
-	GL_Bind(pic->texnum);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, pic->texnum);
 
 	glBegin(GL_QUADS);
 	{
@@ -200,6 +200,7 @@ void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 	}
 	glEnd();
 
+	// FIXME: GL_ResetState
 	if (alpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 		GL_TextureEnvMode(GL_REPLACE);

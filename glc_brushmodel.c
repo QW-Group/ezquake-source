@@ -85,7 +85,7 @@ static void GLC_DrawFlat(model_t *model)
 				lastType = -1;
 			}
 			else {
-				GLC_SetTextureLightmap(s->lightmaptexturenum);
+				GLC_SetTextureLightmap(GL_TEXTURE0, s->lightmaptexturenum);
 				if (s->flags & SURF_DRAWFLAT_FLOOR) {
 					if (lastType != 0) {
 						glColor3ubv(f);
@@ -188,8 +188,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 		}
 
 		//bind the world texture
-		GL_SelectTexture(GL_TEXTURE0);
-		GL_Bind(t->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, t->gl_texturenum);
 
 		draw_fbs = gl_fb_bmodels.value /* || isLumaTexture */;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
@@ -201,7 +200,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 					GL_EnableTMU(GL_TEXTURE1);
 					GL_FB_TEXTURE = GL_TEXTURE1;
 					GL_TextureEnvMode(GL_ADD);
-					GL_Bind(fb_texturenum);
+					GL_BindTextureUnit(GL_FB_TEXTURE, GL_TEXTURE_2D, fb_texturenum);
 
 					mtex_lightmaps = can_mtex_lightmaps;
 					mtex_fbs = true;
@@ -236,7 +235,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 					doMtex2 = true;
 					GL_FB_TEXTURE = GL_TEXTURE2;
 					GL_EnableTMU(GL_FB_TEXTURE);
-					GL_Bind(fb_texturenum);
+					GL_BindTextureUnit(GL_FB_TEXTURE, GL_TEXTURE_2D, fb_texturenum);
 					GL_TextureEnvMode(isLumaTexture ? GL_ADD : GL_DECAL);
 				}
 				else {
@@ -533,7 +532,7 @@ static void GLC_BlendLightmaps(void)
 	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
 	extern qbool lightmap_modified[MAX_LIGHTMAPS];
 	extern qbool gl_invlightmaps;
-	extern void R_UploadLightMap(int lightmapnum);
+	extern void R_UploadLightMap(GLenum textureUnit, int lightmapnum);
 
 	int i, j;
 	glpoly_t *p;
@@ -558,9 +557,9 @@ static void GLC_BlendLightmaps(void)
 		if (!(p = lightmap_polys[i])) {
 			continue;
 		}
-		GL_Bind(lightmap_textures[i]);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, lightmap_textures[i]);
 		if (lightmap_modified[i]) {
-			R_UploadLightMap(i);
+			R_UploadLightMap(GL_TEXTURE0, i);
 		}
 		for (; p; p = p->chain) {
 			glBegin(GL_POLYGON);

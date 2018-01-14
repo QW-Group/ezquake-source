@@ -375,7 +375,7 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 
 		//bind the world texture
 		GL_DisableMultitexture();
-		GL_Bind(t->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, t->gl_texturenum);
 
 		if (gl_mtexable) {
 			GLC_MultitextureLightmap(s->lightmaptexturenum);
@@ -398,6 +398,7 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 
 	alphachain = NULL;
 
+	// FIXME: GL_ResetState()
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);

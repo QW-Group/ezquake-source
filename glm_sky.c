@@ -328,10 +328,8 @@ static void GLM_DrawSkyDome(void)
 {
 	GL_EnterRegion("SkyDome");
 	if (BuildSkyDomeProgram()) {
-		GL_SelectTexture(GL_TEXTURE0);
-		GL_Bind(solidskytexture);
-		GL_SelectTexture(GL_TEXTURE1);
-		GL_Bind(alphaskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, solidskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, alphaskytexture);
 
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 

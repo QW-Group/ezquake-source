@@ -71,8 +71,6 @@ void R_DrawMapOutline(model_t *model)
 				continue;
 
 			for (; s; s = s->texturechain) {
-				GLC_SetTextureLightmap(s->lightmaptexturenum);
-
 				v = s->polys->verts[0];
 				VectorCopy(s->plane->normal, n);
 				VectorNormalize(n);
@@ -119,13 +117,14 @@ void R_RenderFullbrights(void)
 		if (!fullbright_polys[i]) {
 			continue;
 		}
-		GL_Bind(i);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, i);
 		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
 			DrawGLPoly(p);
 		}
 		fullbright_polys[i] = NULL;
 	}
 
+	// FIXME: GL_ResetState()
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_DepthMask(GL_TRUE);
 }
@@ -145,13 +144,14 @@ void R_RenderLumas(void)
 		if (!luma_polys[i]) {
 			continue;
 		}
-		GL_Bind(i);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, i);
 		for (p = luma_polys[i]; p; p = p->luma_chain) {
 			DrawGLPoly(p);
 		}
 		luma_polys[i] = NULL;
 	}
 
+	// FIXME: GL_ResetState()
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);
 }
@@ -166,7 +166,7 @@ void EmitDetailPolys(void)
 		return;
 	}
 
-	GL_Bind(detailtexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, detailtexture);
 	GL_TextureEnvMode(GL_DECAL);
 	GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -181,6 +181,7 @@ void EmitDetailPolys(void)
 		glEnd();
 	}
 
+	// FIXME: GL_ResetState()
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);

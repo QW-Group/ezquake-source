@@ -49,7 +49,7 @@ void GLC_DrawWaterSurfaces(void)
 
 	GL_DisableMultitexture();
 	for (s = waterchain; s; s = s->texturechain) {
-		GL_Bind(s->texinfo->texture->gl_texturenum);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, s->texinfo->texture->gl_texturenum);
 		EmitWaterPolys(s);
 	}
 

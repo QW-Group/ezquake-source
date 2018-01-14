@@ -441,9 +441,7 @@ typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum 
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 
 // VAO functions
-extern glGenVertexArrays_t         glGenVertexArrays;
 extern glBindVertexArray_t         glBindVertexArray;
-extern glDeleteVertexArrays_t      glDeleteVertexArrays;
 extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
 extern glVertexAttribPointer_t     glVertexAttribPointer;
 extern glVertexAttribIPointer_t    glVertexAttribIPointer;
@@ -765,7 +763,7 @@ void GLM_RenderSceneBlurDo(float alpha);
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_ClearTextureChains(void);
-void GLC_SetTextureLightmap(int lightmap_num);
+void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
 void GLC_SetLightmapBlendFunc(void);
 void GLC_MultitextureLightmap(int lightmap_num);
 void GLC_SetLightmapTextureEnvironment(void);

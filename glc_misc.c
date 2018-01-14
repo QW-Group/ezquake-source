@@ -204,7 +204,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 	GL_Viewport(0, 0, glwidth, glheight);
 
-	GL_Bind(sceneblur_texture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, sceneblur_texture);
 
 	// go 2d
 	GL_PushMatrix(GL_PROJECTION, oldProjectionMatrix);

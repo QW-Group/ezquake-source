@@ -240,16 +240,6 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 #endif
 }
 
-void GL_Bind(GLuint texnum)
-{
-	GL_BindTexture(GL_TEXTURE_2D, texnum, true);
-}
-
-void GL_BindFirstTime(GLuint texnum)
-{
-	GL_BindTexture(GL_TEXTURE_2D, texnum, false);
-}
-
 void GL_SelectTexture(GLenum target)
 {
 	if (target == oldtarget) {
@@ -304,14 +294,18 @@ void GL_EnableMultitexture(void)
 
 void GL_EnableTMU(GLenum target) 
 {
-	GL_SelectTexture(target);
-	glEnable(GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		GL_SelectTexture(target);
+		glEnable(GL_TEXTURE_2D);
+	}
 }
 
 void GL_DisableTMU(GLenum target) 
 {
-	GL_SelectTexture(target);
-	glDisable(GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		GL_SelectTexture(target);
+		glDisable(GL_TEXTURE_2D);
+	}
 }
 
 void GL_InitTextureState(void)

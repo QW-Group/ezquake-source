@@ -66,13 +66,13 @@ void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex,
 	GL_DisableMultitexture();
 	GL_EnableTMU(GL_TEXTURE0);
 	if (texture) {
-		GL_Bind(texture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
 	}
 	GL_TextureEnvMode(textureEnvMode);
 
 	if (fb_texture && mtex) {
 		GL_EnableMultitexture();
-		GL_Bind(fb_texture);
+		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, fb_texture);
 		GL_TextureEnvMode(GL_DECAL);
 	}
 
@@ -269,7 +269,8 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	if (!shelltexture) {
 		return;
 	}
-	GL_Bind(shelltexture);
+
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, shelltexture);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	if (gl_powerupshells_style.integer) {
@@ -363,7 +364,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	// MEAG: GLM-FIXME
 	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin)))) {
 		GL_EnableMultitexture();
-		GL_Bind(underwatertexture);
+		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, underwatertexture);
 
 		glMatrixMode(GL_TEXTURE);
 		glLoadIdentity();

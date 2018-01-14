@@ -275,7 +275,7 @@ void R_InitBloomTextures( void )
 // =================
 void R_Bloom_DrawEffect( void )
 {
-	GL_Bind(r_bloomeffecttexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomeffecttexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
@@ -316,7 +316,6 @@ void R_Bloom_GeneratexCross( void )
 
 	// Copy small scene into r_bloomeffecttexture.
 	GL_Bind(r_bloomeffecttexture);
-	//glBindTexture(GL_TEXTURE_2D, r_bloomeffecttexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Start modifying the small scene corner.
@@ -405,8 +404,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	GL_IdentityModelView();
 
 	// Copy small scene into r_bloomeffecttexture.
-	GL_Bind(r_bloomeffecttexture);
-	//glBindTexture(GL_TEXTURE_2D, r_bloomeffecttexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomeffecttexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Start modifying the small scene corner.
@@ -514,12 +512,12 @@ void R_Bloom_DownsampleView( void )
 		int     midsample_height = r_screendownsamplingtexture_size * sampleText_tch;
 
 		// Copy the screen and draw resized.
-		GL_Bind(r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0,  glheight - midsample_height, midsample_width, midsample_height, screenText_tcw, screenText_tch  );
 
 		// Now copy into Downsampling (mid-sized) texture.
-		GL_Bind(r_bloomdownsamplingtexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomdownsamplingtexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, midsample_width, midsample_height);
 
 		// Now draw again in bloom size.
@@ -530,7 +528,7 @@ void R_Bloom_DownsampleView( void )
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
-		GL_Bind(r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -538,7 +536,7 @@ void R_Bloom_DownsampleView( void )
 	else
 	{    
 		// Downsample simple.
-		GL_Bind(r_bloomscreentexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 	}
@@ -547,37 +545,33 @@ void R_Bloom_DownsampleView( void )
 // =================
 // R_BloomBlend
 // =================
-void R_BloomBlend (void)
+void R_BloomBlend(void)
 {
 	extern vrect_t	scr_vrect;
 
-	if( !r_bloom.value )
-	{
+	if (!r_bloom.value) {
 		return;
 	}
 
-	if( !BLOOM_SIZE || screen_texture_width < glwidth || screen_texture_height < glheight)
-	{
+	if (!BLOOM_SIZE || screen_texture_width < glwidth || screen_texture_height < glheight) {
 		R_Bloom_InitTextures();
 	}
 
-	if( screen_texture_width < BLOOM_SIZE ||
-		screen_texture_height < BLOOM_SIZE )
-	{
+	if (screen_texture_width < BLOOM_SIZE || screen_texture_height < BLOOM_SIZE) {
 		return;
 	}
 
 	// Set up full screen workspace.
-	GL_Viewport( 0, 0, glwidth, glheight );
-	glDisable( GL_DEPTH_TEST );
+	GL_Viewport(0, 0, glwidth, glheight);
+	glDisable(GL_DEPTH_TEST);
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	GL_IdentityModelView();
 	glDisable(GL_CULL_FACE);
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glEnable( GL_TEXTURE_2D );
+	glEnable(GL_TEXTURE_2D);
 
-	glColor4f( 1, 1, 1, 1 );
+	glColor4f(1, 1, 1, 1);
 
 	// Setup current sizes
 	curView_x = scr_vrect.x * ((float)glwidth / vid.width);
@@ -586,14 +580,12 @@ void R_BloomBlend (void)
 	curView_height = scr_vrect.height * ((float)glheight / vid.height);
 	screenText_tcw = ((float)curView_width / (float)screen_texture_width);
 	screenText_tch = ((float)curView_height / (float)screen_texture_height);
-	
-	if( scr_vrect.height > scr_vrect.width ) 
-	{
+
+	if (scr_vrect.height > scr_vrect.width) {
 		sampleText_tcw = ((float)scr_vrect.width / (float)scr_vrect.height);
 		sampleText_tch = 1.0f;
-	} 
-	else 
-	{
+	}
+	else {
 		sampleText_tcw = 1.0f;
 		sampleText_tch = ((float)scr_vrect.height / (float)scr_vrect.width);
 	}
@@ -602,8 +594,7 @@ void R_BloomBlend (void)
 	sample_height = BLOOM_SIZE * sampleText_tch;
 
 	// Copy the screen space we'll use to work into the backup texture.
-	GL_Bind(r_bloombackuptexture);
-	//glBindTexture(GL_TEXTURE_2D, r_bloombackuptexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloombackuptexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, r_screenbackuptexture_size * sampleText_tcw, r_screenbackuptexture_size * sampleText_tch);
 
 	// Create the bloom image.
@@ -613,14 +604,15 @@ void R_BloomBlend (void)
 
 	// Restore the screen-backup to the screen.
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_Bind(r_bloombackuptexture);
-	glColor4f( 1, 1, 1, 1 );
-	R_Bloom_Quad( 0,
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, r_bloombackuptexture);
+	glColor4f(1, 1, 1, 1);
+	R_Bloom_Quad(0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),
 		r_screenbackuptexture_size * sampleText_tcw,
 		r_screenbackuptexture_size * sampleText_tch,
 		sampleText_tcw,
-		sampleText_tch );
+		sampleText_tch
+	);
 
 	R_Bloom_DrawEffect();
 

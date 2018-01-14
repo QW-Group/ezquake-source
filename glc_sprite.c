@@ -11,7 +11,7 @@ void GLC_DrawSimpleItem(int simpletexture, vec3_t org, float sprsize, vec3_t up,
 	glDisable(GL_CULL_FACE);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 	GL_EnableTMU(GL_TEXTURE0);
-	GL_Bind(simpletexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, simpletexture);
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 1);
@@ -73,7 +73,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	GL_Bind(frame->gl_texturenum);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, frame->gl_texturenum);
 
 	glBegin(GL_QUADS);
 

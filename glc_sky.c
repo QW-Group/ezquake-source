@@ -108,11 +108,11 @@ void GLC_DrawSkyChain(void)
 	}
 	else if (gl_mtexable) {
 		GL_TextureEnvMode(GL_MODULATE);
-		GL_Bind(solidskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, solidskytexture);
 
 		GL_EnableMultitexture();
 		GL_TextureEnvMode(GL_DECAL);
-		GL_Bind(alphaskytexture);
+		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, alphaskytexture);
 
 		speedscale = r_refdef2.time * 8;
 		speedscale -= (int)speedscale & ~127;
@@ -127,7 +127,7 @@ void GLC_DrawSkyChain(void)
 		GL_TextureEnvMode(GL_REPLACE);
 	}
 	else {
-		GL_Bind(solidskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, solidskytexture);
 		speedscale = r_refdef2.time * 8;
 		speedscale -= (int)speedscale & ~127;
 
@@ -136,7 +136,7 @@ void GLC_DrawSkyChain(void)
 		}
 
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_Bind(alphaskytexture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, alphaskytexture);
 
 		speedscale = r_refdef2.time * 16;
 		speedscale -= (int)speedscale & ~127;
@@ -310,7 +310,7 @@ static void GLC_DrawSkyDome(void)
 	int i;
 
 	GL_DisableMultitexture();
-	GL_Bind(solidskytexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, solidskytexture);
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
@@ -325,7 +325,7 @@ static void GLC_DrawSkyDome(void)
 	}
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_Bind(alphaskytexture);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, alphaskytexture);
 
 	speedscale = r_refdef2.time * 16;
 	speedscale -= (int)speedscale & ~127;
@@ -349,7 +349,7 @@ static void GLC_DrawSkyBox(void)
 			continue;
 		}
 
-		GL_Bind(skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
 
 		glBegin(GL_QUADS);
 		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);
