@@ -108,7 +108,7 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	if (first_dlight) {
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0, GL_TRIANGLE_FAN);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0, GL_TRIANGLE_FAN, true);
 
 		first_dlight = false;
 	}
@@ -207,18 +207,6 @@ void R_RenderDlights(void)
 				}
 			}
 		}
-	}
-
-	if (!first_dlight) {
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		if (!GL_ShadersSupported()) {
-			glColor3ubv(color_white);
-			glEnable(GL_TEXTURE_2D);
-		}
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_DepthMask(GL_TRUE);
-		GL_ShadeModel(GL_FLAT);
-		GL_LeaveRegion();
 	}
 }
 

@@ -942,13 +942,21 @@ typedef enum {
 	BILLBOARD_PARTICLES_NEW_p_slimebubble,
 	BILLBOARD_PARTICLES_NEW_p_blacklavasmoke,
 	BILLBOARD_FLASHBLEND_LIGHTS,
-	BILLBOARD_CORONAS,
+	BILLBOARD_CORONATEX_STANDARD,
+	BILLBOARD_CORONATEX_GUNFLASH,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH1,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH2,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH3,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH4,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH5,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH6,
+	BILLBOARD_CORONATEX_EXPLOSIONFLASH7,
 	BILLBOARD_CHATICONS,
 
 	MAX_BILLBOARD_BATCHES
 } billboard_batch_id;
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture, GLenum primitive_type);
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture, GLenum primitive_type, qbool depthTest);
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
 void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
 void GL_DrawBillboards(void);

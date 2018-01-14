@@ -1080,8 +1080,9 @@ void R_RenderView(void)
 		c_alias_polys = 0;
 	}
 
-	if (gl_finish.value)
-		glFinish ();
+	if (gl_finish.value) {
+		glFinish();
+	}
 
 	R_Clear();
 
@@ -1094,15 +1095,13 @@ void R_RenderView(void)
 
 	DrawChatIcons();
 
-	GL_DrawBillboards();
-
-	if (!GL_ShadersSupported()) {
-		//VULT: CORONAS
-		//Even if coronas gets turned off, let active ones fade out
-		if (amf_coronas.value || CoronaCount) {
-			R_DrawCoronas();
-		}
+	//VULT: CORONAS
+	//Even if coronas gets turned off, let active ones fade out
+	if (amf_coronas.value || CoronaCount) {
+		R_DrawCoronas();
 	}
+
+	GL_DrawBillboards();
 
 	R_DrawViewModel();
 

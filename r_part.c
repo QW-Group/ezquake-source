@@ -711,7 +711,7 @@ void Classic_DrawParticles(void)
 
 	if (square) {
 		// FIXME: Hideous, should really store the indexes and use restart if we're doing this many squares?
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0, GL_TRIANGLE_STRIP);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0, GL_TRIANGLE_STRIP, true);
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;
@@ -731,7 +731,7 @@ void Classic_DrawParticles(void)
 		}
 	}
 	else {
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES, true);
 		if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
 			for (i = 0; i < particles_to_draw; ++i) {
 				glm_particle_t* glpart = &glparticles[i];

@@ -196,7 +196,7 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum, GL_TRIANGLE_FAN);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum, GL_TRIANGLE_FAN, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

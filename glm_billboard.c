@@ -24,6 +24,7 @@ typedef struct gl_billboard_batch_s {
 	GLenum blendDestination;
 	GLenum primitive;
 	GLuint texture;
+	qbool depthTest;
 
 	GLint firstVertices[MAX_BILLBOARDS_PER_BATCH];
 	GLsizei numVertices[MAX_BILLBOARDS_PER_BATCH];
@@ -51,7 +52,7 @@ static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocat
 	return &batches[index - 1];
 }
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture, GLenum primitive_type)
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture, GLenum primitive_type, qbool depthTest)
 {
 	gl_billboard_batch_t* batch = BatchForType(type, true);
 
@@ -60,6 +61,7 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->texture = texture;
 	batch->count = 0;
 	batch->primitive = primitive_type;
+	batch->depthTest = depthTest;
 }
 
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
@@ -240,6 +242,12 @@ void GLM_DrawBillboards(void)
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
 		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : vx_solidTexture);
+		if (batch->depthTest) {
+			GL_Enable(GL_DEPTH_TEST);
+		}
+		else {
+			GL_Disable(GL_DEPTH_TEST);
+		}
 
 		if (batch->count == 1) {
 			glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);

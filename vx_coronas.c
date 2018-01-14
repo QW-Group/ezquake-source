@@ -25,12 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
 static void CoronaStats(int change);
 
-typedef struct
+typedef struct corona_s
 {
-	vec3_t	origin;
+	vec3_t origin;
 	float scale;
 	float growth;
-	float	die;
+	float die;
 	vec3_t color;
 	float alpha;
 	float fade;
@@ -39,12 +39,14 @@ typedef struct
 	qbool los; //to prevent having to trace a line twice
 	entity_t *serialhint;//is a serial to avoid recreating stuff
 	int texture;
+	struct corona_s* next;
 } corona_t;
 
 //Tei: original whas 256, upped so whas low (?!) for some games
 #define MAX_CORONAS 300
 
 static corona_t r_corona[MAX_CORONAS];
+static corona_t* r_corona_by_tex[CORONATEX_COUNT];
 
 #define CORONA_SCALE 130
 #define CORONA_ALPHA 1
@@ -55,6 +57,8 @@ void R_UpdateCoronas(void)
 	corona_t *c;
 	vec3_t impact = { 0,0,0 }, normal;
 	float frametime = cls.frametime;
+
+	memset(r_corona_by_tex, 0, sizeof(r_corona_by_tex));
 
 	CoronaStats(-CoronaCount);
 	for (i = 0; i < MAX_CORONAS; i++) {
@@ -69,18 +73,24 @@ void R_UpdateCoronas(void)
 				c->die = cl.time + 0.03;
 			}
 		}
-		//First, check to see if its time to die.
+
+		// First, check to see if it's time to die.
 		if (c->die < cl.time || c->scale <= 0 || c->alpha <= 0) {
-			//Free this corona up.
+			// Free this corona up.
 			c->scale = 0;
 			c->alpha = 0;
 			c->type = C_FREE;
 			c->sighted = false;
-			c->serialhint = 0;//so can be reused
+			c->serialhint = 0; // so can be reused
+			continue;
 		}
+
 		CoronaStats(1);
 		c->scale += c->growth * frametime;
 		c->alpha += c->fade * frametime;
+
+		c->next = r_corona_by_tex[c->texture];
+		r_corona_by_tex[c->texture] = c;
 
 		CL_TraceLine(r_refdef.vieworg, c->origin, impact, normal);
 		if (!VectorCompare(impact, c->origin)) {
@@ -106,17 +116,16 @@ void R_UpdateCoronas(void)
 			c->sighted = true;
 		}
 	}
-
 }
 
 //R_DrawCoronas
 void R_DrawCoronas(void)
 {
-	int i;
 	int texture = corona_textures[CORONATEX_STANDARD];
 	vec3_t dist, up, right;
 	float fdist, scale, alpha;
 	corona_t *c;
+	corona_texture_id tex;
 
 	if (!ISPAUSED) {
 		R_UpdateCoronas();
@@ -125,83 +134,112 @@ void R_DrawCoronas(void)
 	VectorScale(vup, 1, up);//1.5
 	VectorScale(vright, 1, right);
 
-	glEnable(GL_TEXTURE_2D);
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, corona_textures[CORONATEX_STANDARD]);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_DepthMask(GL_FALSE);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
-	GL_ShadeModel(GL_SMOOTH);
-	GL_TextureEnvMode(GL_MODULATE);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	for (i = 0; i < MAX_CORONAS; i++) {
-		c = &r_corona[i];
-		if (c->type == C_FREE) {
+	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
+		billboard_batch_id batch_id = BILLBOARD_CORONATEX_STANDARD + (tex - CORONATEX_STANDARD);
+		GLubyte color[4];
+
+		if (!r_corona_by_tex[tex]) {
 			continue;
 		}
-		if (!c->los) {
-			//can't see it and
-			if (!c->sighted) {
-				//haven't seen it before
-				continue; //dont draw it
+
+		GL_BillboardInitialiseBatch(batch_id, GL_SRC_ALPHA, GL_ONE, corona_textures[tex], GL_TRIANGLE_STRIP, false);
+
+		for (c = r_corona_by_tex[tex]; c; c = c->next) {
+			if (c->type == C_FREE) {
+				continue;
 			}
-		}
-		//else it will be fading out, so thats 'kay
+			if (!c->los) {
+				// can't see it and
+				if (!c->sighted) {
+					// haven't seen it before
+					continue; // don't draw it
+				}
+			}
+			// else it will be fading out, so thats 'kay
 
-		VectorSubtract(r_refdef.vieworg, c->origin, dist);
-		fdist = VectorLength(dist);
-		if (fdist <= 24) {
-			//its like being fired into the sun
-			continue;
-		}
+			VectorSubtract(r_refdef.vieworg, c->origin, dist);
+			fdist = VectorLength(dist);
+			if (fdist <= 24) {
+				// It's like being fired into the sun
+				continue;
+			}
 
-		if (c->texture != texture) {
-			GL_Bind(corona_textures[c->texture]);
-			texture = c->texture;
-		}
-		scale = (1 - 1 / fdist)*c->scale;
-		alpha = c->alpha;
-		glBegin(GL_QUADS);
-		glColor4f(c->color[0], c->color[1], c->color[2], alpha);
+			scale = (1 - 1 / fdist)*c->scale;
+			alpha = c->alpha;
 
-		glTexCoord2f(0, 0);
-		glVertex3f(c->origin[0] + up[0] * (scale / 2) + (right[0] * (scale / 2)*-1), c->origin[1] + up[1] * (scale / 2) + (right[1] * (scale / 2)*-1), c->origin[2] + up[2] * (scale / 2) + (right[2] * (scale / 2)*-1));
-		glTexCoord2f(1, 0);
-		glVertex3f(c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2), c->origin[1] + right[1] * (scale / 2) + up[1] * (scale / 2), c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2));
-		glTexCoord2f(1, 1);
-		glVertex3f(c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1), c->origin[1] + right[1] * (scale / 2) + (up[1] * (scale / 2)*-1), c->origin[2] + right[2] * (scale / 2) + (up[2] * (scale / 2)*-1));
-		glTexCoord2f(0, 1);
-		glVertex3f(c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1), c->origin[1] + (right[1] * (scale / 2)*-1) + (up[1] * (scale / 2)*-1), c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1));
-		glEnd();
-		//Its sort of cheap, but lets draw a few more here to make the effect more obvious
-		if (c->type == C_FLASH || c->type == C_BLUEFLASH) {
-			int a;
-			for (a = 0; a < 5; a++) {
-				glBegin(GL_QUADS);
-				glColor4f(c->color[0], c->color[1], c->color[2], alpha);
-				glTexCoord2f(0, 0);
-				glVertex3f(c->origin[0] + up[0] * (scale / 30) + (right[0] * (scale)*-1), c->origin[1] + up[1] * (scale / 30) + (right[1] * (scale)*-1), c->origin[2] + up[2] * (scale / 30) + (right[2] * (scale)*-1));
-				glTexCoord2f(1, 0);
-				glVertex3f(c->origin[0] + right[0] * (scale)+up[0] * (scale / 30), c->origin[1] + right[1] * (scale)+up[1] * (scale / 30), c->origin[2] + right[2] * (scale)+up[2] * (scale / 30));
-				glTexCoord2f(1, 1);
-				glVertex3f(c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1), c->origin[1] + right[1] * (scale)+(up[1] * (scale / 30)*-1), c->origin[2] + right[2] * (scale)+(up[2] * (scale / 30)*-1));
-				glTexCoord2f(0, 1);
-				glVertex3f(c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1), c->origin[1] + (right[1] * (scale)*-1) + (up[1] * (scale / 30)*-1), c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1));
-				glEnd();
+			color[0] = c->color[0] * 255;
+			color[1] = c->color[1] * 255;
+			color[2] = c->color[2] * 255;
+			color[3] = alpha * 255;
+
+			GL_BillboardAddEntry(batch_id, 4);
+			GL_BillboardAddVert(batch_id,
+				// Left/Up
+				c->origin[0] + up[0] * (scale / 2) + (right[0] * (scale / 2)*-1),
+				c->origin[1] + up[1] * (scale / 2) + (right[1] * (scale / 2)*-1),
+				c->origin[2] + up[2] * (scale / 2) + (right[2] * (scale / 2)*-1),
+				0, 0, color
+			);
+			GL_BillboardAddVert(batch_id,
+				// Right/Up
+				c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2),
+				c->origin[1] + right[1] * (scale / 2) + up[1] * (scale / 2),
+				c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2),
+				1, 0, color
+			);
+			GL_BillboardAddVert(batch_id,
+				// Left/Down
+				c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1),
+				c->origin[1] + (right[1] * (scale / 2)*-1) + (up[1] * (scale / 2)*-1),
+				c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1),
+				0, 1, color
+			);
+			GL_BillboardAddVert(batch_id,
+				// Right/Down
+				c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1),
+				c->origin[1] + right[1] * (scale / 2) + (up[1] * (scale / 2)*-1),
+				c->origin[2] + right[2] * (scale / 2) + (up[2] * (scale / 2)*-1),
+				1, 1, color
+			);
+
+			// It's sort of cheap, but lets draw a few more here to make the effect more obvious
+			if (c->type == C_FLASH || c->type == C_BLUEFLASH) {
+				int a;
+
+				for (a = 0; a < 5; a++) {
+					GL_BillboardAddEntry(batch_id, 4);
+					GL_BillboardAddVert(batch_id,
+						// Left/Up
+						c->origin[0] + up[0] * (scale / 30) + (right[0] * (scale)*-1),
+						c->origin[1] + up[1] * (scale / 30) + (right[1] * (scale)*-1),
+						c->origin[2] + up[2] * (scale / 30) + (right[2] * (scale)*-1),
+						0, 0, color
+					);
+					GL_BillboardAddVert(batch_id,
+						// Right/Up
+						c->origin[0] + right[0] * (scale)+up[0] * (scale / 30),
+						c->origin[1] + right[1] * (scale)+up[1] * (scale / 30),
+						c->origin[2] + right[2] * (scale)+up[2] * (scale / 30),
+						1, 0, color
+					);
+					GL_BillboardAddVert(batch_id,
+						// Left/Down
+						c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1),
+						c->origin[1] + (right[1] * (scale)*-1) + (up[1] * (scale / 30)*-1),
+						c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1),
+						0, 1, color
+					);
+					GL_BillboardAddVert(batch_id,
+						// Right/Down
+						c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1),
+						c->origin[1] + right[1] * (scale)+(up[1] * (scale / 30)*-1),
+						c->origin[2] + right[2] * (scale)+(up[2] * (scale / 30)*-1),
+						1, 1, color
+					);
+				}
 			}
 		}
 	}
-
-	// FIXME: GL_ResetState()
-	glEnable(GL_DEPTH_TEST);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_DepthMask(GL_TRUE);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
-	glColor3f(1, 1, 1);
-
-	GL_EnableFog();
 }
 
 //NewCorona

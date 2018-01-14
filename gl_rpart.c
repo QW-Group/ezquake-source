@@ -678,7 +678,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					continue;
 				}
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN, true);
 					first = false;
 				}
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
@@ -706,7 +706,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN, true);
 					first = false;
 				}
 
@@ -749,7 +749,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN, true);
 						first = false;
 					}
 
@@ -796,7 +796,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN, true);
 						first = false;
 					}
 
