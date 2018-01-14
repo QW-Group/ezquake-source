@@ -1921,8 +1921,8 @@ void SCR_HUD_DrawHealth(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align;
 	static int value;
-	if (scale == NULL)  // first time called
-	{
+	if (scale == NULL) {
+		// first time called
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
@@ -1971,12 +1971,13 @@ void SCR_HUD_DrawArmor(hud_t *hud)
 }
 
 void Draw_AMFStatLoss (int stat, hud_t* hud);
+
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
 	// TODO: This is very naughty, HUD_PrepareDraw(hud, width, height, &x, &y); MUST be called.
-	Draw_AMFStatLoss (STAT_HEALTH, hud);
-	if (HUD_Stats(STAT_HEALTH) <= 0)
-	{
+
+	Draw_AMFStatLoss(STAT_HEALTH, hud);
+	if (HUD_Stats(STAT_HEALTH) <= 0) {
 		Amf_Reset_DamageStats();
 	}
 }
@@ -1984,11 +1985,12 @@ void SCR_HUD_DrawHealthDamage(hud_t *hud)
 void SCR_HUD_DrawArmorDamage(hud_t *hud)
 {
 	// TODO: NAUGHTY!! HUD_PrepareDraw(hud, width, height, &x, &y); plz
-	Draw_AMFStatLoss (STAT_ARMOR, hud);
+	Draw_AMFStatLoss(STAT_ARMOR, hud);
 }
 
-void SCR_HUD_DrawAmmo(hud_t *hud, int num,
-		float scale, int style, int digits, char *s_align)
+void SCR_HUD_DrawAmmo(
+	hud_t *hud, int num, float scale, int style, int digits, char *s_align
+)
 {
 	extern mpic_t *sb_ibar;
 	extern mpic_t sb_ib_ammo[4];
@@ -2001,22 +2003,30 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 
 		if (ShowPreselectedWeap()) {
 			// using weapon pre-selection so show info for current best pre-selected weapon ammo
-			if (!(num = State_AmmoNumForWeapon(IN_BestWeapon())))
+			if (!(num = State_AmmoNumForWeapon(IN_BestWeapon()))) {
 				return;
-		} else {
+			}
+		}
+		else {
 			// not using weapon pre-selection or player is dead so show current selected ammo
-			if (HUD_Stats(STAT_ITEMS) & IT_SHELLS)
+			if (HUD_Stats(STAT_ITEMS) & IT_SHELLS) {
 				num = 1;
-			else if (HUD_Stats(STAT_ITEMS) & IT_NAILS)
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_NAILS) {
 				num = 2;
-			else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS) {
 				num = 3;
-			else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_CELLS) {
 				num = 4;
-			else if (TP_TeamFortressEngineerSpanner())
+			}
+			else if (TP_TeamFortressEngineerSpanner()) {
 				num = 4;
-			else
+			}
+			else {
 				return;
+			}
 		}
 	}
 
@@ -2026,25 +2036,25 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 		// also we make sure this applies only to 'ammo' element
 		// weapon preselection must always use HUD_Stats()
 		value = cl.stats[STAT_AMMO];
-	} else {
+	}
+	else {
 		value = HUD_Stats(STAT_SHELLS + num - 1);
 	}
 
-	if (style < 2)
-	{
+	if (style < 2) {
 		// simply draw number
 		SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align);
 	}
-	else
-	{
+	else {
 		// else - draw classic ammo-count box with background
 		char buf[8];
 		int  x, y;
 
 		scale = max(scale, 0.01);
 
-		if (!HUD_PrepareDraw(hud, 42*scale, 11*scale, &x, &y))
+		if (!HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x, &y)) {
 			return;
+		}
 
 		snprintf (buf, sizeof (buf), "%3i", value);
 		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && sb_ib_ammo[num - 1].texnum) {
@@ -2069,6 +2079,7 @@ void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 	}
 	SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string);
 }
+
 void SCR_HUD_DrawAmmo1(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align;
@@ -2126,8 +2137,9 @@ void SCR_HUD_NetProblem (hud_t *hud) {
 	int x, y;
 	extern qbool hud_editor;
 
-	if(scale == NULL)
+	if (scale == NULL) {
 		scale = HUD_FindVar(hud, "scale");
+	}
 
 	if ((cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1) || cls.demoplayback)
 	{

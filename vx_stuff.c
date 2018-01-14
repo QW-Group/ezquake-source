@@ -238,7 +238,18 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 {
 	static int * vxdmgcnt, *vxdmgcnt_t, *vxdmgcnt_o;
 	static int x;
+	static cvar_t *scale = NULL, *style, *digits, *align, *duration;
+	float effect_duration = hud && duration ? duration->value : amf_stat_loss.value;
 	float alpha;
+
+	if (scale == NULL) {
+		// first time called
+		scale = HUD_FindVar(hud, "scale");
+		style = HUD_FindVar(hud, "style");
+		digits = HUD_FindVar(hud, "digits");
+		align = HUD_FindVar(hud, "align");
+		duration = HUD_FindVar(hud, "duration");
+	}
 
 	if (stat == STAT_HEALTH) {
 		vxdmgcnt = &vxdamagecount;
@@ -264,31 +275,18 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		else {
 			*vxdmgcnt = *vxdmgcnt_o - cl.stats[stat];
 		}
-		*vxdmgcnt_t = cl.time + 2 * (hud ? HUD_FindVar(hud, "duration")->value : amf_stat_loss.value);
+		*vxdmgcnt_t = cl.time + 2 * effect_duration;
 	}
 	*vxdmgcnt_o = cl.stats[stat];
+
 	if (*vxdmgcnt_t > cl.time) {
 		alpha = min(1, (*vxdmgcnt_t - cl.time));
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		glColor4f(1, 1, 1, alpha);
 		if (hud) {
-			static cvar_t *scale = NULL, *style, *digits, *align;
-			if (scale == NULL) {
-				// first time called
-				scale = HUD_FindVar(hud, "scale");
-				style = HUD_FindVar(hud, "style");
-				digits = HUD_FindVar(hud, "digits");
-				align = HUD_FindVar(hud, "align");
-			}
 			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string);
 		}
 		else {
 			Sbar_DrawNum(x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
 		}
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		GL_TextureEnvMode(GL_REPLACE);
-		glColor4f(1, 1, 1, 1);
 	}
 }
 
