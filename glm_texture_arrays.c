@@ -178,6 +178,7 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 	}
 	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
 
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
 	// Might need to tile multiple times
