@@ -81,10 +81,9 @@ void GLM_SetMatrix(float* target, const float* source)
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
-	if (GLM_Enabled()) {
-		GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
-	}
-	else {
+	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(left, right, top, bottom, zNear, zFar);
@@ -233,10 +232,9 @@ void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* resu
 
 void GL_IdentityModelView(void)
 {
-	if (GLM_Enabled()) {
-		GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
-	}
-	else {
+	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 	}
@@ -244,20 +242,14 @@ void GL_IdentityModelView(void)
 
 void GL_GetMatrix(GLenum mode, GLfloat* matrix)
 {
-	if (GLM_Enabled()) {
-		GLM_GetMatrix(mode, matrix);
-	}
-	else {
-		glGetFloatv(mode, matrix);
-	}
+	GLM_GetMatrix(mode, matrix);
 }
 
 void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 {
-	if (GL_ShadersSupported()) {
-		GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
-	}
-	else {
+	GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 	}
@@ -265,10 +257,9 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 
 void GL_Translate(GLenum matrix, float x, float y, float z)
 {
-	if (GL_ShadersSupported()) {
-		GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
-	}
-	else {
+	GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(matrix);
 		glTranslatef(x, y, z);
 	}
@@ -276,10 +267,9 @@ void GL_Translate(GLenum matrix, float x, float y, float z)
 
 void GL_IdentityProjectionView(void)
 {
-	if (GL_ShadersSupported()) {
-		GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
-	}
-	else {
+	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 	}
@@ -298,10 +288,9 @@ void GL_ProcessErrors(const char* message)
 
 void GL_PushMatrix(GLenum mode, float* matrix)
 {
-	if (GL_ShadersSupported()) {
-		memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
-	}
-	else {
+	memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(mode);
 		glPushMatrix();
 	}
@@ -309,10 +298,9 @@ void GL_PushMatrix(GLenum mode, float* matrix)
 
 void GL_PopMatrix(GLenum mode, float* matrix)
 {
-	if (GL_ShadersSupported()) {
-		memcpy(GL_MatrixForMode(mode), matrix, sizeof(float) * 16);
-	}
-	else {
+	memcpy(GL_MatrixForMode(mode), matrix, sizeof(float) * 16);
+
+	if (!GL_ShadersSupported()) {
 		glMatrixMode(mode);
 		glPopMatrix();
 	}
@@ -320,34 +308,32 @@ void GL_PopMatrix(GLenum mode, float* matrix)
 
 void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
 {
-	if (GL_ShadersSupported()) {
-		GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
-	}
-	else {
+	GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
+
+	if (!GL_ShadersSupported()) {
 		glScalef(xScale, yScale, zScale);
 	}
 }
 
 void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
-	if (GL_ShadersSupported()) {
-		float perspective[16] = { 0 };
-		float projection[16];
-		float new_projection[16];
+	float perspective[16] = { 0 };
+	float projection[16];
+	float new_projection[16];
 
-		perspective[0] = (2 * zNear) / (right - left);
-		perspective[8] = (right + left) / (right - left);
-		perspective[5] = (2 * zNear) / (top - bottom);
-		perspective[9] = (top + bottom) / (top - bottom);
-		perspective[10] = -(zFar + zNear) / (zFar - zNear);
-		perspective[11] = -1;
-		perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
+	perspective[0] = (2 * zNear) / (right - left);
+	perspective[8] = (right + left) / (right - left);
+	perspective[5] = (2 * zNear) / (top - bottom);
+	perspective[9] = (top + bottom) / (top - bottom);
+	perspective[10] = -(zFar + zNear) / (zFar - zNear);
+	perspective[11] = -1;
+	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
 
-		GLM_GetMatrix(GL_PROJECTION, projection);
-		GLM_MultiplyMatrix(perspective, projection, new_projection);
-		GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
-	}
-	else {
+	GLM_GetMatrix(GL_PROJECTION, projection);
+	GLM_MultiplyMatrix(perspective, projection, new_projection);
+	GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
+	
+	if (!GL_ShadersSupported()) {
 		glFrustum(left, right, bottom, top, zNear, zFar);
 	}
 }
