@@ -835,7 +835,6 @@ void GLM_Draw_FadeScreen(float alpha);
 void GLM_RenderDlight(dlight_t* light);
 void GLM_DrawSkyChain(void);
 void GLM_DrawSky(void);
-void GLM_DrawSkyFace(int axis);
 void GLM_DrawBrushModel(model_t* model);
 void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4]);
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
@@ -878,6 +877,8 @@ enum {
 	GL_BINDINGPOINT_BRUSHMODEL_CVARS,
 	GL_BINDINGPOINT_ALIASMODEL_CVARS,
 	GL_BINDINGPOINT_SPRITEDATA_CVARS,
+
+	GL_BINDINGPOINT_SKYDOME_CVARS,
 
 	GL_BINDINGPOINT_COUNT
 };

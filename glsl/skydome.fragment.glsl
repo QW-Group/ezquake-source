@@ -1,8 +1,18 @@
 #version 430
 
-uniform sampler2D skyTex;
-uniform sampler2D alphaTex;
-uniform float gamma3d;
+layout(binding=0) uniform sampler2D skyTex;
+layout(binding=1) uniform sampler2D alphaTex;
+
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
+
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
+
 in vec2 TexCoord;
 in vec2 AlphaCoord;
 
@@ -13,6 +23,6 @@ void main(void)
 	vec4 texColor = texture(skyTex, TexCoord);
 	vec4 alphaColor = texture(alphaTex, AlphaCoord);
 
-	gl_FragColor = mix(texColor, alphaColor, alphaColor.a);
-	gl_FragColor = vec4(pow(gl_FragColor.rgb, vec3(gamma3d)), gl_FragColor.a);
+	frag_colour = mix(texColor, alphaColor, alphaColor.a);
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), 1.0);
 }

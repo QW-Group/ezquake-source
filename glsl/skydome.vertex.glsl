@@ -3,20 +3,29 @@
 layout(location = 0) in vec3 direction;
 layout(location = 1) in vec2 texCoords;
 
-uniform mat4 modelView;
-uniform mat4 projection;
+layout(std140) uniform RefdefCvars {
+	mat4 modelViewMatrix;
+	mat4 projectionMatrix;
+	float time;
+	float gamma3d;
 
-uniform vec3 origin;
-uniform float farclip;
-uniform float speedscale;
-uniform float speedscale2;
+	// if enabled, texture coordinates are always 0,0
+	int r_textureless;
+};
+
+layout(std140) uniform SkydomeData {
+	float farclip;
+	float speedscale;
+	float speedscale2;
+	vec3 origin;
+};
 
 out vec2 TexCoord;
 out vec2 AlphaCoord;
 
 void main(void)
 {
-	mat4 mvp = projection * modelView; // move
+	mat4 mvp = projectionMatrix * modelViewMatrix; // move
 	vec3 dir = direction * farclip;
 	float len;
 
