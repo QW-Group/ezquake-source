@@ -588,6 +588,13 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
 	glGenBuffers(1, &vbo->vbo);
 }
 
+void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, GLenum usage)
+{
+	glGenBuffers(1, &vbo->vbo);
+	GL_BindBuffer(target, vbo->vbo);
+	glBufferData(target, size, NULL, usage);
+}
+
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 {
 	if (ubo->ubo) {
@@ -604,10 +611,6 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 		GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
 		GL_BufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
 	}
-}
-
-void GL_UpdateUniformBuffer(glm_ubo_t* ubo, void* data, int size, GLuint bindingPoint)
-{
 }
 
 void GL_GenVertexArray(glm_vao_t* vao)

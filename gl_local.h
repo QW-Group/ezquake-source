@@ -671,7 +671,12 @@ void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(int texture);
 
 void GL_BindBuffer(GLenum target, GLuint buffer);
+void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
+
+// Creates buffer, binds to target and initialises with a particular size
+void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, GLenum usage);
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
@@ -856,7 +861,6 @@ void GL_DeleteBuffers(void);
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
-void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size);
 void GL_GenVertexArray(glm_vao_t* vao);
 

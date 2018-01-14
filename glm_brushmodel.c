@@ -373,8 +373,8 @@ static void GL_FlushBrushModelBatch(void)
 	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
 
 	GL_BindVertexArray(brushModel_vao.vao);
-	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
-	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests, GL_STREAM_DRAW);
+	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);
 
 	for (i = 0; i < batch_count; ++i) {
 		int last;
@@ -527,10 +527,8 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	GL_GenVertexArray(&brushModel_vao);
 	GL_BindVertexArray(brushModel_vao.vao);
 
-	GL_GenBuffer(&vbo_elements, "brushmodel-elements");
-	GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
-	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
+	GL_GenFixedBuffer(&vbo_elements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_indirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), GL_STREAM_DRAW);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {

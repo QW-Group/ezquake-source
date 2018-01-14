@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEXTURE_UNIT_DETAIL 2
 #define TEXTURE_UNIT_CAUSTICS 3
 
-static GLuint modelIndexes[4096];
+static GLuint modelIndexes[16 * 1024];
 static GLuint index_count;
 
 // Remove?
@@ -585,8 +585,8 @@ static void GL_FlushWorldModelBatch(void)
 
 	// Much simpler for world model - already in texture order and one call per texture array
 	GL_BindVertexArray(worldmodel_requests[0].vao);
-	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
-	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests, GL_STREAM_DRAW);
+	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests);
 
 	draw_pos = 0;
 	for (i = 0; i < batch_count; ++i) {

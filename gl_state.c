@@ -607,6 +607,11 @@ void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum us
 	glBufferData(target, size, data, usage);
 }
 
+void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data)
+{
+	glBufferSubData(target, 0, size, data);
+}
+
 void GL_InvalidateTextureReferences(int texture)
 {
 	int i;
