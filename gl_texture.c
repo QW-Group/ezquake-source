@@ -306,8 +306,9 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 
 		for (i = 0; i < cnt; i += 4)
 		{
-			if (bdata[i] < level && bdata[i+1] < level && bdata[i+2] < level)
-				bdata[i+3] = 0; // make black pixels transparent, well not always black, depends of level...
+			if (bdata[i] < level && bdata[i + 1] < level && bdata[i + 2] < level) {
+				bdata[i + 3] = 0; // make black pixels transparent, well not always black, depends of level...
+			}
 		}
 	}
 
@@ -320,8 +321,9 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 		Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
 	}
 
-	if (mode & TEX_BRIGHTEN)
-		brighten32 ((byte *)newdata, width * height * 4);
+	if (mode & TEX_BRIGHTEN) {
+		brighten32((byte *)newdata, width * height * 4);
+	}
 
 	if (gl_gammacorrection.integer) {
 		internal_format = (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
@@ -337,11 +339,9 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 	miplevel = 0;
 	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 
-	if (mode & TEX_MIPMAP)
-	{
+	if (mode & TEX_MIPMAP) {
 		// Calculate the mip maps for the images.
-		while (width > 1 || height > 1)
-		{
+		while (width > 1 || height > 1) {
 			Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
 			miplevel++;
 			GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
@@ -457,7 +457,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
 				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
-					GL_BindTextureUnit(GL_TEXTURE0, depth ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, gltextures[i].texnum);
+					GL_BindTextureUnit(GL_TEXTURE0, glt->target, gltextures[i].texnum);
 					*new_texture = false;
 					return glt;
 				}
