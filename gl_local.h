@@ -753,7 +753,6 @@ void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
 void R_DrawMapOutline(model_t *model);
-void R_BlendLightmaps(void);
 void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr

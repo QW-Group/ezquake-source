@@ -34,6 +34,7 @@ extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 extern glpoly_t *caustics_polys;
 extern glpoly_t *detail_polys;
 
+static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, int contents);
 void R_RenderFullbrights(void);
 void R_RenderLumas(void);
@@ -329,7 +330,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 
 	if (gl_fb_bmodels.value) {
 		if (render_lightmaps) {
-			R_BlendLightmaps();
+			GLC_BlendLightmaps();
 			render_lightmaps = false;
 		}
 		if (drawfullbrights) {
@@ -347,7 +348,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 			drawlumas = false;
 		}
 		if (render_lightmaps) {
-			R_BlendLightmaps();
+			GLC_BlendLightmaps();
 			render_lightmaps = false;
 		}
 		if (drawfullbrights) {
@@ -526,3 +527,53 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 	return vbo_pos;
 }
 */
+
+static void GLC_BlendLightmaps(void)
+{
+	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
+	extern qbool lightmap_modified[MAX_LIGHTMAPS];
+	extern qbool gl_invlightmaps;
+	extern void R_UploadLightMap(int lightmapnum);
+
+	int i, j;
+	glpoly_t *p;
+	float *v;
+
+	//	if (R_FullBrightAllowed())
+	//		return;
+
+	GL_DepthMask(GL_FALSE);		// don't bother writing Z
+	if (gl_invlightmaps) {
+		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+	}
+	else {
+		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
+	}
+
+	if (!(r_lightmap.value && r_refdef2.allow_cheats)) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	}
+
+	for (i = 0; i < MAX_LIGHTMAPS; i++) {
+		if (!(p = lightmap_polys[i])) {
+			continue;
+		}
+		GL_Bind(lightmap_textures[i]);
+		if (lightmap_modified[i]) {
+			R_UploadLightMap(i);
+		}
+		for (; p; p = p->chain) {
+			glBegin(GL_POLYGON);
+			v = p->verts[0];
+			for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
+				glTexCoord2f(v[5], v[6]);
+				glVertex3fv(v);
+			}
+			glEnd();
+		}
+		lightmap_polys[i] = NULL;
+	}
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
+}
