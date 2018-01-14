@@ -6,8 +6,6 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-//#define GL_PARANOIA
-
 #define MAX_LOGGED_TEXTURE_UNITS 8
 
 static GLenum currentDepthFunc = GL_LESS;

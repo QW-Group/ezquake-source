@@ -55,6 +55,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APIENTRY
 #endif
 
+//#define GL_PARANOIA
+
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
@@ -846,7 +848,13 @@ float* GLM_ModelviewMatrix(void);
 float* GLM_ProjectionMatrix(void);
 float* GL_MatrixForMode(GLenum type);
 
+#ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message);
+#define GL_Paranoid_Printf(...) Con_Printf(...)
+#else
+#define GL_ProcessErrors(...)
+#define GL_Paranoid_Printf(...)
+#endif
 void GLM_DeletePrograms(void);
 void GLM_InitPrograms(void);
 void GL_DeleteBuffers(void);

@@ -10,6 +10,10 @@
 #endif
 
 static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer);
+static void GL_PrintTextureSizes(struct common_texture_s* list);
+
+static GLubyte* tempBuffer;
+static GLuint tempBufferSize;
 
 static GLuint common_array;
 static glm_vbo_t instance_vbo;
@@ -24,6 +28,7 @@ typedef struct common_texture_s {
 	GLuint gl_texturenum;
 	int gl_width;
 	int gl_height;
+	int gl_depth;
 
 	int allocated;
 
@@ -143,7 +148,7 @@ static void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, 
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 
 	while (list) {
-		if (list->width == width && list->height == height) {
+		if (list->width == width && list->height == height && list->gl_depth == 0) {
 			list->count++;
 			if (any_size) {
 				list->any_size_count++;
@@ -160,12 +165,12 @@ static void GL_RegisterCommonTextureSize(common_texture_t* list, GLint texture, 
 	}
 }
 
-static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int final_width, int final_height, int index)
+static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int final_width, int final_height, int index, GLuint tex2dname)
 {
 	int ratio_x = final_width / width;
 	int ratio_y = final_height / height;
-	GLubyte* buffer;
 	int x, y;
+	int array_width, array_height, array_depth;
 
 	if (ratio_x == 0) {
 		ratio_x = 1;
@@ -173,19 +178,35 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 	if (ratio_y == 0) {
 		ratio_y = 1;
 	}
-	buffer = Q_malloc(width * height * 4 * sizeof(GLubyte));
+
+	if (tempBufferSize < width * height * 4 * sizeof(GLubyte)) {
+		Q_free(tempBuffer);
+		tempBufferSize = width * height * 4 * sizeof(GLubyte);
+		tempBuffer = Q_malloc(tempBufferSize);
+	}
+
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 
 	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/GL_BindTextureUnit", tex2dname, arrayTexture));
+
+	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
 		for (y = 0; y < ratio_y; ++y) {
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+#ifdef GL_PARANOIA
+			if (index == 0 && glGetError() != GL_NO_ERROR) {
+				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
+				GL_Paranoid_Printf(">  Parameters: %d %d %d, %d %d 1, tempBuffer = %X\n", x * width, y * height, index, width, height, tempBuffer);
+			}
+#endif
 		}
 	}
-
-	Q_free(buffer);
 }
 
 static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int height)
@@ -194,10 +215,16 @@ static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width,
 
 	while (list) {
 		if (list->width == width && list->height == height) {
-			if (list->final) {
-				return list->final;
+			common_texture_t* candidate = list;
+			if (candidate->final) {
+				candidate = candidate->final;
+				while (candidate->gl_texturenum != 0 && candidate->allocated >= candidate->gl_depth) {
+					candidate = candidate->next;
+				}
 			}
-			return list;
+			if (candidate->gl_texturenum == 0 || candidate->allocated < candidate->gl_depth) {
+				return candidate;
+			}
 		}
 
 		list = list->next;
@@ -234,10 +261,27 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 	}
 	else {
 		tex = GL_FindTextureBySize(list, width, height);
+		if (tex == NULL || (tex->gl_texturenum && tex->allocated >= tex->gl_depth)) {
+			tex = GL_FindTextureBySize(list, width, height);
+		}
 		if (!tex->gl_texturenum) {
-			tex->gl_texturenum = GL_CreateTextureArray("", tex->width, tex->height, tex->count - tex->any_size_count, TEX_MIPMAP);
+			int depth = tex->count - tex->any_size_count;
+			int requested = depth;
+
+			tex->gl_texturenum = GL_CreateTextureArray("", tex->width, tex->height, &depth, TEX_MIPMAP);
+			GL_Paranoid_Printf("Array %d created (%d/%d) slices @ %d x %d\n", tex->gl_texturenum, depth, requested, width, height);
 			tex->gl_width = tex->width;
 			tex->gl_height = tex->height;
+			tex->gl_depth = depth;
+			if (depth < requested) {
+				// Create a new texture request for the difference
+				common_texture_t* overflow = Q_malloc(sizeof(common_texture_t));
+				overflow->width = tex->width;
+				overflow->height = tex->height;
+				overflow->count = requested - depth;
+				overflow->next = tex->next;
+				tex->next = overflow;
+			}
 		}
 	}
 	if (scaleS && scaleT) {
@@ -245,7 +289,7 @@ static void GL_CopyToTextureArraySize(common_texture_t* list, GLuint stdTexture,
 		*scaleT = height * 1.0f / tex->gl_height;
 	}
 
-	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->gl_width, tex->gl_height, tex->allocated);
+	GL_AddTextureToArray(tex->gl_texturenum, width, height, tex->gl_width, tex->gl_height, tex->allocated, stdTexture);
 	if (texture_array) {
 		*texture_array = tex->gl_texturenum;
 	}
@@ -273,7 +317,7 @@ static void GL_PrintTextureSizes(common_texture_t* list)
 
 	for (tex = list; tex; tex = tex->next) {
 		if (tex->count) {
-			//Con_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
+			GL_Paranoid_Printf("%dx%d = %d (%d anysize)\n", tex->width, tex->height, tex->count, tex->any_size_count);
 		}
 	}
 }
@@ -405,7 +449,7 @@ static void GLM_PrintTextureArrays(model_t* mod)
 {
 	int i;
 
-	//Con_Printf("%s\n", mod->name);
+	GL_Paranoid_Printf("%s\n", mod->name);
 	for (i = 0; i < mod->numtextures; ++i) {
 		texture_t* tex = mod->textures[i];
 
@@ -417,11 +461,11 @@ static void GLM_PrintTextureArrays(model_t* mod)
 			continue;
 		}
 
-		//Con_Printf("  %2d: %s, %d [%2d] %s\n", i, tex->name, tex->gl_texture_array, tex->next_same_size, tex->size_start ? "start" : "cont");
+		GL_Paranoid_Printf("  %2d: %s, %d [%2d] %s\n", i, tex->name, tex->gl_texture_array, tex->next_same_size, tex->size_start ? "start" : "cont");
 	}
 
 	for (i = 0; i < mod->texture_array_count; ++i) {
-		//Con_Printf("A %2d: %d first %d, %.3f x %.3f\n", i, mod->texture_arrays[i], mod->texture_array_first[i], mod->texture_arrays_scale_s[i], mod->texture_arrays_scale_t[i]);
+		GL_Paranoid_Printf("A %2d: %d first %d, %.3f x %.3f\n", i, mod->texture_arrays[i], mod->texture_array_first[i], mod->texture_arrays_scale_s[i], mod->texture_arrays_scale_t[i]);
 	}
 }
 
@@ -474,7 +518,7 @@ void GLM_FindBrushModelTextureExtents(model_t* mod)
 		msurface_t* s = &mod->surfaces[i];
 		glpoly_t* poly;
 
-		//Con_Printf("  Surface %d (tex %d)\n", i, s->texinfo->texture->);
+		GL_Paranoid_Printf("  Surface %d (tex %d)\n", i, s->texinfo->texture->);
 		for (poly = s->polys; poly; poly = poly->next) {
 			int j;
 
@@ -652,6 +696,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	int required_vbo_length = 4;
 	int i;
 
+	tempBufferSize = 0;
+
 	if (!vid_restart) {
 		if (common_array) {
 			GL_DeleteTextureArray(&common_array);
@@ -700,7 +746,26 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		GL_CompressTextureArrays(common);
 
 		// Create non-specific array to fit everything that doesn't require tiling
-		commonTex->gl_texturenum = common_array = GL_CreateTextureArray("", maxWidth, maxHeight, anySizeCount, TEX_MIPMAP);
+		// FIXME
+		{
+			/*
+			int allocated = 0;
+
+			while (allocated < anySizeCount) {
+				int requested = anySizeCount - allocated;
+				int depth = requested;
+				common_texture_t* t = Find
+
+				commonTex->gl_texturenum = GL_CreateTextureArray("", tex->width, tex->height, &depth, TEX_MIPMAP);
+				commonTex->gl_depth = depth;
+				if (depth < requested) {
+					GL_RegisterCommonTextureSizeCopy(list, tex, requested - depth);
+				}
+			}*/
+
+			commonTex->gl_texturenum = common_array = GL_CreateTextureArray("", maxWidth, maxHeight, &anySizeCount, TEX_MIPMAP);
+			commonTex->gl_depth = anySizeCount;
+		}
 		commonTex->gl_width = maxWidth;
 		commonTex->gl_height = maxHeight;
 
@@ -736,9 +801,13 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		GLM_CreateInstanceVBO();
 		GLM_CreateAliasModelVAO(required_vbo_length, new_vbo_buffer);
 		GLM_CreateBrushModelVAO(&instance_vbo);
+
+		Q_free(new_vbo_buffer);
 	}
 
 	GL_FreeTextureSizeList(common);
+	Q_free(tempBuffer);
+	tempBufferSize = 0;
 }
 
 static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer)
@@ -747,7 +816,6 @@ static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_b
 	GL_BindVertexArray(aliasModel_vao.vao);
 
 	GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
-	Q_free(new_vbo_buffer);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);

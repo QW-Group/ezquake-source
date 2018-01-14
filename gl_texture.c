@@ -1040,12 +1040,12 @@ void GL_Texture_Init(void)
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
-GLuint GL_CreateTextureArray(char* identifier, int width, int height, int depth, int mode)
+GLuint GL_CreateTextureArray(char* identifier, int width, int height, int* depth, int mode)
 {
 	int scaled_width, scaled_height;
 	unsigned short crc = 0;
 	qbool new_texture = false;
-	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, *depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
 	GLuint gl_texturenum;
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
@@ -1067,7 +1067,35 @@ GLuint GL_CreateTextureArray(char* identifier, int width, int height, int depth,
 	}
 
 	GL_BindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum, false);
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, depth);
+	GL_ProcessErrors("Prior-texture-array-creation");
+	while (*depth >= 1) {
+		GLenum error;
+		int array_width, array_height, array_depth;
+
+		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
+		glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, *depth);
+
+		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+
+		error = glGetError();
+		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
+			*depth /= 2;
+			GL_Paranoid_Printf("Array allocation failed (memory), reducing size...\n");
+			continue;
+		}
+		else if (error != GL_NO_ERROR) {
+			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
+			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+			gl_texturenum = 0;
+		}
+		else {
+			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+		}
+		break;
+	}
+
 	if (mode & TEX_MIPMAP) {
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max);
