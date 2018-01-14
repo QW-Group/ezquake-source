@@ -1204,7 +1204,7 @@ static void VID_SDL_Init(void)
 #endif
 
 	{
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.max_texture_size);
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
 		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
 		glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
@@ -1440,7 +1440,7 @@ static void GfxInfo_f(void)
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
-	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.max_texture_size);
+	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.gl_max_size_default);
 	Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
 	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);

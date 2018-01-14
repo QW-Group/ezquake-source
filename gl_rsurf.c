@@ -249,7 +249,6 @@ void R_DrawBrushModel (entity_t *e) {
 	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
 	currententity = e;
-	//currenttexture = -1;
 
 	clmodel = e->model;
 
@@ -534,7 +533,6 @@ void R_DrawWorld(void)
 	VectorCopy(r_refdef.vieworg, modelorg);
 
 	currententity = &ent;
-	//currenttexture = -1;
 
 	//draw the world sky
 	R_DrawSky();

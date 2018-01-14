@@ -25,6 +25,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "image.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel);
@@ -39,7 +40,7 @@ extern float vid_gamma;
 
 extern int anisotropy_ext;
 int	anisotropy_tap = 1; //  1 - is off
-int	gl_max_size_default;
+
 GLenum gl_lightmap_format = GL_RGB, gl_solid_format = GL_RGB, gl_alpha_format = GL_RGBA;
 
 cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
@@ -88,9 +89,9 @@ void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel)
 	int i;
 	float newvalue = Q_atof(string);
 
-	if (newvalue > gl_max_size_default) 
+	if (newvalue > glConfig.gl_max_size_default) 
 	{
-		Com_Printf("Your hardware doesn't support texture sizes bigger than %dx%d\n", gl_max_size_default, gl_max_size_default);
+		Com_Printf("Your hardware doesn't support texture sizes bigger than %dx%d\n", glConfig.gl_max_size_default, glConfig.gl_max_size_default);
 		*cancel = true;
 		return;
 	}
@@ -241,7 +242,7 @@ static void ScaleDimensions(int width, int height, int *scaled_width, int *scale
 		*scaled_height >>= picmip;
 	}
 
-	maxsize = scale ? gl_max_size.value : gl_max_size_default;
+	maxsize = scale ? gl_max_size.value : glConfig.gl_max_size_default;
 
 	*scaled_width = bound(1, *scaled_width, maxsize);
 	*scaled_height = bound(1, *scaled_height, maxsize);
@@ -1027,8 +1028,7 @@ void GL_Texture_Init(void)
     Cvar_Register(&gl_no24bit);
 	Cvar_Register(&gl_wicked_luma_level);
 
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
-	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
+	Cvar_SetDefault(&gl_max_size, glConfig.gl_max_size_default);
 
 	// This way user can specifie gl_max_size in his cfg.
 	if (i) {

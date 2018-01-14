@@ -48,12 +48,11 @@ int GL_LoadTexture(const char *identifier, int width, int height, byte *data, in
 int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 void GL_DeleteTexture(int* texture);
 
-byte *GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-int GL_LoadTexturePixels(byte *, char *, int, int, int);
-int GL_LoadTextureImage(char * , char *, int, int, int);
-mpic_t *GL_LoadPicImage(const char *, char *, int, int, int);
+byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+int GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
+int GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
+mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
-
 
 void GL_Texture_Init(void);
 
@@ -68,9 +67,5 @@ extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_mipte
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 extern cvar_t gl_no24bit;
 extern cvar_t gl_wicked_luma_level;
-
-extern int currenttexture;
-
-extern int gl_max_size_default;
 
 #endif	//__GL_TEXTURE_H

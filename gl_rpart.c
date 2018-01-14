@@ -359,7 +359,7 @@ static void QMB_CreateAtlasTexture(int* textures, int count)
 		max_width = max(max_width, texWidth);
 	}
 
-	if (max_width == 0 || total_height == 0 || max_width > glConfig.max_texture_size || total_height > glConfig.max_texture_size) {
+	if (max_width == 0 || total_height == 0 || max_width > glConfig.gl_max_size_default || total_height > glConfig.gl_max_size_default) {
 		return;
 	}
 
