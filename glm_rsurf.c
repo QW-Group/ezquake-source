@@ -30,6 +30,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEXTURE_UNIT_DETAIL 2
 #define TEXTURE_UNIT_CAUSTICS 3
 
+static GLuint modelIndexes[4096];
+static GLuint index_count;
+
+// Remove?
+
 extern GLuint lightmap_texture_array;
 
 static glm_program_t turbPolyProgram;
@@ -337,6 +342,16 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	GL_UseProgram(drawworld.program);
 
 	GL_BindVertexArray(vao);
+
+	// Bind lightmap array
+	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
+	if (detail_tex) {
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, GL_TEXTURE_2D, detailtexture);
+	}
+	if (caustics) {
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
+	}
+	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL);
 }
 
 void GLM_ExitBatchedPolyRegion(void)
@@ -423,26 +438,57 @@ void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices
 	GLM_DrawPolygon(color, vao, start, vertices, apply_lightmap, true, alpha_test);
 }
 
+typedef struct glm_brushmodel_req_s {
+	// This is DrawElementsIndirectCmd, from OpenGL spec
+	GLuint count;           // Number of indexes to pull
+	GLuint instanceCount;   // Always 1... ?
+	GLuint firstIndex;      // Position of first index in array
+	GLuint baseVertex;      // Offset of vertices in VBO
+	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+
+	GLuint vao;
+	GLuint texture_array;
+} glm_worldmodel_req_t;
+
+#define MAX_WORLDMODEL_BATCH 32
+static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
+static GLuint batch_count = 0;
+static glm_vbo_t vbo_elements;
+static glm_vbo_t vbo_indirectDraw;
+
+static void GL_FlushWorldModelBatch(void);
+
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array)
+{
+	glm_worldmodel_req_t* req;
+
+	if (batch_count >= MAX_WORLDMODEL_BATCH) {
+		GL_FlushWorldModelBatch();
+	}
+
+	req = &worldmodel_requests[batch_count];
+
+	req->vao = model->vao.vao;
+	req->count = 0;
+	req->texture_array = texture_array;
+	req->instanceCount = 1;
+	req->firstIndex = index_count;
+	req->baseVertex = 0;
+	req->baseInstance = batch_count;
+
+	++batch_count;
+	return req;
+}
+
 void GLM_DrawTexturedWorld(model_t* model)
 {
-	GLuint indices[4096];
 	int i, waterline, v;
 	msurface_t* surf;
 	qbool draw_detail_texture = gl_detail.integer && detailtexture;
 	qbool draw_caustics = gl_caustics.integer && underwatertexture;
-	int count = 0;
+	glm_worldmodel_req_t* req = NULL;
 
 	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture, draw_caustics);
-
-	// Bind lightmap array
-	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
-	if (draw_detail_texture) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_DETAIL, GL_TEXTURE_2D, detailtexture);
-	}
-	if (draw_caustics) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
-	}
-	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL);
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
@@ -453,7 +499,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 			continue;
 		}
 
-		count = 0;
 		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
 			texture_t* tex = model->textures[texIndex];
 
@@ -461,12 +506,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				continue;
 			}
 
-			// Going to draw at least one surface, so bind the texture array
-			if (first_in_this_array) {
-				GL_BindTexture(GL_TEXTURE_2D_ARRAY, model->texture_arrays[i], true);
-				first_in_this_array = false;
-			}
-
+			req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -474,60 +514,132 @@ void GLM_DrawTexturedWorld(model_t* model)
 					for (poly = surf->polys; poly; poly = poly->next) {
 						int newVerts = poly->numverts;
 
-						if (count + 1 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-							glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
-							count = 0;
+						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+							GL_FlushWorldModelBatch();
+							req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array);
 						}
 
-						if (count) {
-							indices[count++] = ~(GLuint)0;
+						if (req->count && index_count) {
+							modelIndexes[index_count++] = ~(GLuint)0;
+							req->count++;
 						}
 
 						for (v = 0; v < newVerts; ++v) {
-							indices[count++] = poly->vbo_start + v;
+							modelIndexes[index_count++] = poly->vbo_start + v;
+							req->count++;
 						}
 					}
 				}
 			}
 		}
-
-		if (count) {
-			glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
-		}
 	}
 
-	count = 0;
+	req = NULL;
 	for (waterline = 0; waterline < 2; waterline++) {
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->texturechain) {
 			glpoly_t* poly;
 
+			if (!req) {
+				req = GLM_NextBatchRequest(model, NULL, 0);
+			}
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
-				if (count + 1 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-					glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
-					count = 0;
+				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+					GL_FlushWorldModelBatch();
+					req = GLM_NextBatchRequest(model, NULL, 0);
 				}
 
-				if (count) {
-					indices[count++] = ~(GLuint)0;
+				if (index_count) {
+					modelIndexes[index_count++] = ~(GLuint)0;
+					req->count++;
 				}
 
 				for (v = 0; v < newVerts; ++v) {
-					indices[count++] = poly->vbo_start + v;
+					modelIndexes[index_count++] = poly->vbo_start + v;
+					req->count++;
 				}
 			}
 		}
 	}
-	if (count) {
-		glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
+
+	if (index_count) {
+		GL_FlushWorldModelBatch();
 	}
 
 	GLM_ExitBatchedPolyRegion();
 	return;
 }
 
-void GLM_DrawFlat(model_t* model);
+static void GL_FlushWorldModelBatch(void)
+{
+	int i;
+	GLuint last_vao = 0;
+	GLuint last_array = 0;
+	qbool was_worldmodel = 0;
+	int draw_pos = 0;
+	GLuint prevVAO = 0;
+
+	if (!batch_count) {
+		return;
+	}
+
+	// Much simpler for world model - already in texture order and one call per texture array
+	if (!vbo_elements.vbo) {
+		GL_GenBuffer(&vbo_elements, "brushmodel-elements");
+	}
+	if (!vbo_indirectDraw.vbo) {
+		GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
+	}
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
+	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests, GL_STREAM_DRAW);
+
+	draw_pos = 0;
+	for (i = 0; i < batch_count; ++i) {
+		int last = i;
+		for (last = i; last < batch_count - 1; ++last) {
+			int next = worldmodel_requests[last + 1].texture_array;
+			if (next != 0 && next != worldmodel_requests[i].texture_array) {
+				break;
+			}
+		}
+
+		if (worldmodel_requests[i].texture_array) {
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, worldmodel_requests[i].texture_array, true);
+		}
+
+		// FIXME: All brush models are in the same VAO, sort this out
+		if (prevVAO != worldmodel_requests[i].vao) {
+			if (prevVAO) {
+				GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+				GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			}
+			GL_BindVertexArray(prevVAO = worldmodel_requests[i].vao);
+			GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+			GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
+		}
+
+		glMultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)(i * sizeof(worldmodel_requests[0])),
+			last - i + 1,
+			sizeof(worldmodel_requests[0])
+		);
+
+		i = last;
+	}
+
+	if (prevVAO) {
+		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+	}
+
+	batch_count = 0;
+	index_count = 0;
+}
 
 void GLM_DrawWorld(model_t* model)
 {

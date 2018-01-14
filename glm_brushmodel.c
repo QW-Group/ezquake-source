@@ -290,14 +290,6 @@ typedef struct glm_brushmodel_req_s {
 	int effects;
 } glm_brushmodel_req_t;
 
-typedef struct DrawElementsIndirectCommand_s {
-	GLuint count;
-	GLuint instanceCount;
-	GLuint firstIndex;
-	GLuint baseVertex;
-	GLuint baseInstance;
-} DrawElementsIndirectCommand_t;
-
 #define MAX_BRUSHMODEL_BATCH 32
 static glm_brushmodel_req_t brushmodel_requests[MAX_BRUSHMODEL_BATCH];
 static int batch_count = 0;
@@ -314,7 +306,6 @@ void GL_BrushModelInitState(void)
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		GL_UseProgram(drawBrushModelProgram.program);
 
-		//glDisable(GL_CULL_FACE);
 		GL_SelectTexture(GL_TEXTURE0);
 	}
 	else {
@@ -508,22 +499,26 @@ void GLM_DrawBrushModel(model_t* model)
 			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
-					int newVerts = surf->polys->numverts;
+					glpoly_t* poly;
 
-					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
-						GL_FlushBrushModelBatch();
-						req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
-					}
+					for (poly = surf->polys; poly; poly = poly->next) {
+						int newVerts = poly->numverts;
 
-					// Degenerate triangle strips
-					if (req->count && index_count) {
-						modelIndexes[index_count++] = ~(GLuint)0;
-						req->count++;
-					}
+						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+							GL_FlushBrushModelBatch();
+							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
+						}
 
-					for (v = 0; v < newVerts; ++v) {
-						modelIndexes[index_count++] = surf->polys->vbo_start + v;
-						req->count++;
+						// Degenerate triangle strips
+						if (req->count && index_count) {
+							modelIndexes[index_count++] = ~(GLuint)0;
+							req->count++;
+						}
+
+						for (v = 0; v < newVerts; ++v) {
+							modelIndexes[index_count++] = poly->vbo_start + v;
+							req->count++;
+						}
 					}
 				}
 			}
