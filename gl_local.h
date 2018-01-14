@@ -494,7 +494,6 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 extern glActiveTexture_t        glActiveTexture;
 extern glTexSubImage3D_t        glTexSubImage3D;
 extern glTexStorage3D_t         glTexStorage3D;
-extern glTexImage3D_t           glTexImage3D;
 extern glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
