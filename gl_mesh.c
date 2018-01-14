@@ -31,11 +31,6 @@ ALIAS MODEL DISPLAY LIST GENERATION
 =================================================================
 */
 
-model_t		*aliasmodel;
-aliashdr_t	*paliashdr;
-
-
-
 static byte	used[8192];
 
 // the command list holds counts and s/t values that are valid for
@@ -326,13 +321,7 @@ void BuildTris (void)
 	alltris += pheader->numtris;
 }
 
-
-/*
-================
-GL_MakeAliasModelDisplayLists
-================
-*/
-void GL_MakeAliasModelVBO(model_t *m, float* vbo_buffer)
+void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, float* vbo_buffer)
 {
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -393,22 +382,14 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
-	int pose, j, k, v;
 	float* vbo_buffer;
-	trivertx_t *verts;
+	int pose, j, k, v;
 	
-	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
-	m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
-	vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 	v = 0;
-
-	verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
-	hdr->posedata = (byte *)verts - (byte *)paliashdr;
+	m->temp_vbo_buffer = vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 
 	// 
 	for (pose = 0; pose < hdr->numposes; ++pose) {
-		trivertx_t* vertices = (trivertx_t *)((byte *)hdr + hdr->posedata) + pose * hdr->poseverts;
-
 		v = pose * hdr->vertsPerPose * MODELVERTEXSIZE;
 		for (j = 0; j < hdr->numtris; ++j) {
 			for (k = 0; k < 3; ++k) {
@@ -442,15 +423,16 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 				vbo_buffer[v + 7] = r_avertexnormals[l][2];
 				vbo_buffer[v + 8] = 0;
 				v += MODELVERTEXSIZE;
-
-				++vertices;
 			}
 		}
 	}
-
-	m->temp_vbo_buffer = vbo_buffer;
 }
 
+/*
+================
+GL_MakeAliasModelDisplayLists
+================
+*/
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
 	int         i, j;
@@ -460,26 +442,25 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	int pose = 0;
 
 	if (GL_ShadersSupported()) {
+		hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
+		m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
 		GLM_MakeAliasModelDisplayLists(m, hdr);
 	}
 	else {
-		aliasmodel = m;
-		paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
-
 		// Tonik: don't cache anything, because it seems just as fast
 		// (if not faster) to rebuild the tris instead of loading them from disk
 		BuildTris();		// trifans or lists
 
 		// save the data out
-		paliashdr->poseverts = numorder;
+		hdr->poseverts = numorder;
 
 		cmds = (int *)Hunk_Alloc(numcommands * 4);
-		paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
+		hdr->commands = (byte *)cmds - (byte *)hdr;
 		memcpy(cmds, commands, numcommands * 4);
 
-		verts = (trivertx_t *)Hunk_Alloc(paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t));
-		paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
-		for (i = 0; i < paliashdr->numposes; i++) {
+		verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
+		hdr->posedata = (byte *)verts - (byte *)hdr;
+		for (i = 0; i < hdr->numposes; i++) {
 			for (j = 0; j < numorder; j++) {
 				//TODO: corrupted files may cause a crash here, sanity checks?
 				*verts++ = poseverts[i][vertexorder[j]];
@@ -488,7 +469,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 
 		// Measure vertices required
 		{
-			int* order = (int *)((byte *)paliashdr + paliashdr->commands);
+			int* order = (int *)((byte *)hdr + hdr->commands);
 			int count = 0;
 
 			m->min_tex[0] = m->min_tex[1] = 9999;
@@ -513,17 +494,23 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 				}
 			}
 
-			m->vertsInVBO = total_vertices * paliashdr->numposes;
-			paliashdr->vertsPerPose = total_vertices;
+			m->vertsInVBO = total_vertices * hdr->numposes;
+			hdr->vertsPerPose = total_vertices;
 		}
 
-		{
-			float* vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
-
-			GL_MakeAliasModelVBO(m, vbo_buffer);
-
-			m->temp_vbo_buffer = vbo_buffer;
-		}
+		m->temp_vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(float) * MODELVERTEXSIZE);
+		GLC_MakeAliasModelVBO(m, hdr, m->temp_vbo_buffer);
 	}
 }
 
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int position)
+{
+	size_t size_of_vert = MODELVERTEXSIZE * sizeof(float);
+
+	// Copy VBO info to buffer
+	GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
+	GL_BufferSubDataUpdate(GL_ARRAY_BUFFER, position * size_of_vert, mod->vertsInVBO * size_of_vert, mod->temp_vbo_buffer);
+
+	hdr->vertsOffset = mod->vbo_start = position;
+	Q_free(mod->temp_vbo_buffer);
+}

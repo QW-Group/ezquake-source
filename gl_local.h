@@ -287,6 +287,7 @@ void R_StoreEfrags (efrag_t **ppefrag);
 
 // gl_mesh.c
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int position);
 
 // gl_rsurf.c
 
@@ -682,6 +683,7 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
+void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);

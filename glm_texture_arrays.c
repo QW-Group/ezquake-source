@@ -9,7 +9,7 @@
 #include "tr_types.h"
 #endif
 
-static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer);
+static void GLM_CreateAliasModelVAO(void);
 static void GL_PrintTextureSizes(struct common_texture_s* list);
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
@@ -632,7 +632,7 @@ void GLM_FindBrushModelTextureExtents(model_t* mod)
 	}
 }
 
-void GL_ImportTexturesForModel(model_t* mod, float* new_vbo_buffer, int* new_vbo_position)
+void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 {
 	int count = 0;
 	int j;
@@ -648,14 +648,7 @@ void GL_ImportTexturesForModel(model_t* mod, float* new_vbo_buffer, int* new_vbo
 
 		//GL_SetModelTextureArray(mod, commonTex->gl_texturenum, commonTex->width * 1.0f / maxWidth, commonTex->height * 1.0f / maxHeight);
 
-		// Copy VBO info to buffer (FIXME: Free the memory?  but is cached.  But CacheAlloc() fails... argh)
-		memcpy(&new_vbo_buffer[(*new_vbo_position) * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
-		//Q_free(mod->temp_vbo_buffer);
-
-		mod->vbo_start = *new_vbo_position;
-
-		paliashdr->vertsOffset = *new_vbo_position;
-
+		GL_AliasModelAddToVBO(mod, paliashdr, &aliasModel_vbo, *new_vbo_position);
 		*new_vbo_position += mod->vertsInVBO;
 	}
 	else if (mod->type == mod_sprite) {
@@ -710,8 +703,9 @@ void GL_ImportTexturesForModel(model_t* mod, float* new_vbo_buffer, int* new_vbo
 	}
 }
 
-static void GLM_CreateSpriteVBO(float* new_vbo_buffer)
+static void GLM_CreateSpriteVBO(void)
 {
+	float new_vbo_buffer[4 * MODELVERTEXSIZE];
 	float* vert;
 
 	vert = new_vbo_buffer;
@@ -733,6 +727,8 @@ static void GLM_CreateSpriteVBO(float* new_vbo_buffer)
 	VectorSet(vert, 0, 1, -1);
 	vert[3] = 0;
 	vert[4] = 1;
+
+	GL_BufferSubDataUpdate(GL_ARRAY_BUFFER, 0, sizeof(new_vbo_buffer), new_vbo_buffer);
 }
 
 void GL_CompressTextureArrays(common_texture_t* list)
@@ -789,7 +785,13 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		model_t* mod = cl.model_precache[i];
 
 		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
-			Mod_LoadModel(mod, false);
+			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
+					// Invalidate cache so VBO buffer gets refilled
+					Cache_Free(&mod->cache);
+				}
+			}
+			Mod_LoadModel(mod, true);
 
 			GL_MeasureTexturesForModel(mod, &required_vbo_length);
 		}
@@ -813,8 +815,10 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	{
 		// Find highest dimensions, stick everything in there for the moment unless texture is tiling
 		common_texture_t* tex;
-		float* new_vbo_buffer = Q_malloc(required_vbo_length * MODELVERTEXSIZE * sizeof(float));
 		int new_vbo_position = 0;
+
+		GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), NULL, GL_STATIC_DRAW);
+		Con_Printf("Created alias model VBO: %d, size %d/%d\n", aliasModel_vbo.vbo, required_vbo_length, required_vbo_length * MODELVERTEXSIZE * sizeof(float));
 
 		GL_Paranoid_Printf("-- Pre-allocation --\n");
 		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
@@ -829,7 +833,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		}
 
 		// VBO starts with simple-model/sprite vertices
-		GLM_CreateSpriteVBO(new_vbo_buffer);
+		GLM_CreateSpriteVBO();
 		new_vbo_position = 4;
 
 		// Go back through all models, importing textures into arrays and creating new VBO
@@ -838,7 +842,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 			if (mod) {
 				GL_Paranoid_Printf("%s\n", mod->name);
-				GL_ImportTexturesForModel(mod, new_vbo_buffer, &new_vbo_position);
+				GL_ImportTexturesForModel(mod, &new_vbo_position);
 			}
 		}
 
@@ -847,7 +851,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 			if (mod) {
 				GL_Paranoid_Printf("%s\n", mod->name);
-				GL_ImportTexturesForModel(mod, new_vbo_buffer, &new_vbo_position);
+				GL_ImportTexturesForModel(mod, &new_vbo_position);
 			}
 		}
 
@@ -868,31 +872,28 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		}
 
 		GLM_CreateInstanceVBO();
-		GLM_CreateAliasModelVAO(required_vbo_length, new_vbo_buffer);
+		GLM_CreateAliasModelVAO();
 		GLM_CreateBrushModelVAO(&instance_vbo);
-
-		Q_free(new_vbo_buffer);
 	}
 
 	Q_free(tempBuffer);
 	tempBufferSize = 0;
 }
 
-static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer)
+static void GLM_CreateAliasModelVAO(void)
 {
 	GL_GenVertexArray(&aliasModel_vao);
 	GL_BindVertexArray(aliasModel_vao.vao);
 
-	GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
-
+	GL_BindBuffer(GL_ARRAY_BUFFER, aliasModel_vbo.vbo);
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glEnableVertexAttribArray(3);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
+	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
+	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
 	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo.vbo);
+	glEnableVertexAttribArray(3);
 	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(3, 1);
 }
