@@ -192,22 +192,6 @@ cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 cvar_t gl_meshdraw                         = {"gl_meshdraw", "1"};
 cvar_t gl_deferlightmap                    = {"gl_deferlightmap", "1"};
 
-void GL_PolygonOffset(float factor, float units)
-{
-	if (factor || units)
-	{
-		glEnable (GL_POLYGON_OFFSET_FILL);
-		glEnable (GL_POLYGON_OFFSET_LINE);
-
-		glPolygonOffset(factor, units);
-	}
-	else
-	{
-		glDisable (GL_POLYGON_OFFSET_FILL);
-		glDisable (GL_POLYGON_OFFSET_LINE);
-	}
-}
-
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
 {
@@ -368,17 +352,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 		switch (currententity->model->type) {
 		case mod_brush:
-			// Get rid of Z-fighting for textures by offsetting the
-			// drawing of entity models compared to normal polygons.
-			// dimman: disabled for qcon
-			if (gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(currententity)) {
-				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
-				R_DrawBrushModel(currententity);
-				GL_PolygonOffset(0, 0);
-			}
-			else {
-				R_DrawBrushModel(currententity);
-			}
+			R_DrawBrushModel(currententity);
 			break;
 		}
 	}

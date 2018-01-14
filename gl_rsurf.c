@@ -239,6 +239,12 @@ void R_DrawBrushModel (entity_t *e) {
 	model_t *clmodel;
 	qbool rotated;
 	float oldMatrix[16];
+	extern cvar_t gl_brush_polygonoffset;
+
+	// Get rid of Z-fighting for textures by offsetting the
+	// drawing of entity models compared to normal polygons.
+	// dimman: disabled for qcon
+	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
 	currententity = e;
 	//currenttexture = -1;
@@ -321,13 +327,14 @@ void R_DrawBrushModel (entity_t *e) {
 		{
 			if (psurf->flags & SURF_DRAWSKY) {	
 				CHAIN_SURF_B2F(psurf, skychain);
-			} else if (psurf->flags & SURF_DRAWTURB) {	
+			}
+			else if (psurf->flags & SURF_DRAWTURB) {
 				EmitWaterPolys (psurf);
-			} else if (psurf->flags & SURF_DRAWALPHA) {
-				
+			}
+			else if (psurf->flags & SURF_DRAWALPHA) {
 				CHAIN_SURF_B2F(psurf, alphachain);
-			} else {
-				
+			}
+			else {
 				underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
 				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 			}
@@ -339,16 +346,26 @@ void R_DrawBrushModel (entity_t *e) {
 	R_RenderAllDynamicLightmaps(clmodel);
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawBrushModel(clmodel);
+		GLM_DrawBrushModel(clmodel, polygonOffset);
 
 		// TODO: DrawSkyChain/DrawAlphaChain
 	}
 	else {
+		extern cvar_t gl_brush_polygonoffset;
+
+		if (polygonOffset) {
+			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+		}
+
 		GLC_DrawBrushModel(e, clmodel);
 
 		R_DrawSkyChain();
 
 		R_DrawAlphaChain(alphachain);
+
+		if (polygonOffset) {
+			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+		}
 	}
 	// } END shaman FIX for no simple textures on world brush models
 

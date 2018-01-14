@@ -275,6 +275,7 @@ typedef struct glm_brushmodel_req_s {
 	float mvMatrix[16];
 	float baseColor[4];
 	qbool applyLightmap;
+	qbool polygonOffset;    // whether or not to apply polygon offset before rendering
 	GLuint vbo_count;       // Number of verts to draw
 
 	GLuint vao;
@@ -347,6 +348,8 @@ static void GL_FlushBrushModelBatch(void)
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
 	GLuint prevVAO = 0;
+	qbool polygonOffset;
+	extern cvar_t gl_brush_polygonoffset;
 
 	if (!batch_count) {
 		return;
@@ -376,13 +379,18 @@ static void GL_FlushBrushModelBatch(void)
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);
 
+	polygonOffset = brushmodel_requests[0].polygonOffset;
+	GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 	for (i = 0; i < batch_count; ++i) {
 		int last;
 		GLuint texArray = brushmodel_requests[i].texture_array;
+		polygonOffset = brushmodel_requests[i].polygonOffset;
 
 		for (last = i; last < batch_count - 1; ++last) {
 			int next = brushmodel_requests[last + 1].texture_array;
-			if (next != 0 && texArray != 0 && next != texArray) {
+			qbool next_polygonOffset = brushmodel_requests[last + 1].polygonOffset;
+
+			if (polygonOffset != next_polygonOffset || (next != 0 && texArray != 0 && next != texArray)) {
 				break;
 			}
 			texArray = next;
@@ -391,6 +399,7 @@ static void GL_FlushBrushModelBatch(void)
 		if (texArray) {
 			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texArray, true);
 		}
+		GL_PolygonOffset(brushmodel_requests[i].polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 
 		glMultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
@@ -413,12 +422,14 @@ void GL_EndDrawBrushModels(void)
 		GL_FlushBrushModelBatch();
 
 		if (!firstBrushModel) {
+			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
 			GL_LeaveRegion();
 		}
 	}
 }
 
-static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array)
+static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array, qbool polygonOffset)
 {
 	glm_brushmodel_req_t* req;
 
@@ -438,12 +449,13 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	req->firstIndex = index_count;
 	req->baseVertex = 0;
 	req->baseInstance = batch_count;
+	req->polygonOffset = polygonOffset;
 
 	++batch_count;
 	return req;
 }
 
-void GLM_DrawBrushModel(model_t* model)
+void GLM_DrawBrushModel(model_t* model, qbool polygonOffset)
 {
 	int i, waterline, v;
 	msurface_t* surf;
@@ -465,7 +477,7 @@ void GLM_DrawBrushModel(model_t* model)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
+			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -475,7 +487,7 @@ void GLM_DrawBrushModel(model_t* model)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushBrushModelBatch();
-							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
+							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
 						}
 
 						if (req->count) {

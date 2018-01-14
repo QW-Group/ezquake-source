@@ -53,7 +53,7 @@ void R_DrawMapOutline(model_t *model)
 	float *v;
 	vec3_t n;
 
-	GL_PolygonOffset(1, 1);
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
@@ -89,7 +89,7 @@ void R_DrawMapOutline(model_t *model)
 	glPopAttrib();
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-	GL_PolygonOffset(0, 0);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 }
 
 void DrawGLPoly(glpoly_t *p)

@@ -193,7 +193,7 @@ static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose
 	float lerpfrac;
 	trivertx_t *verts1, *verts2;
 
-	GL_PolygonOffset(1, 1);
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
 
 	GL_CullFace(GL_BACK);
 	glPolygonMode(GL_FRONT, GL_LINE);
@@ -252,7 +252,7 @@ static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose
 	GL_CullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 
-	GL_PolygonOffset(0, 0);
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 }
 
 static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* verts1, trivertx_t* verts2, float lerpfrac, qbool scrolldir)

@@ -33,6 +33,11 @@ static int currenttexture = 0;
 static GLuint currentTextureArray = 0;
 static GLuint currentArrayBuffer;
 static GLuint currentUniformBuffer;
+static GLfloat polygonOffsetFactor = 0;
+static GLfloat polygonOffsetUnits = 0;
+static qbool gl_polygon_offset_line;
+static qbool gl_polygon_offset_fill;
+
 
 static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
@@ -179,6 +184,8 @@ void GL_InitialiseState(void)
 	currentTextureArray = 0;
 	lastTextureMode = GL_MODULATE;
 	old_alphablend_flags = 0;
+	polygonOffsetFactor = polygonOffsetUnits = 0;
+	gl_polygon_offset_line = gl_polygon_offset_fill = false;
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -393,6 +400,20 @@ void GL_Enable(GLenum option)
 
 		gl_cull_face = true;
 	}
+	else if (option == GL_POLYGON_OFFSET_FILL) {
+		if (gl_polygon_offset_fill) {
+			return;
+		}
+
+		gl_polygon_offset_fill = true;
+	}
+	else if (option == GL_POLYGON_OFFSET_LINE) {
+		if (gl_polygon_offset_line) {
+			return;
+		}
+
+		gl_polygon_offset_line = true;
+	}
 
 	glEnable(option);
 #ifdef GL_PARANOIA
@@ -452,6 +473,20 @@ void GL_Disable(GLenum option)
 		}
 
 		gl_cull_face = false;
+	}
+	else if (option == GL_POLYGON_OFFSET_FILL) {
+		if (!gl_polygon_offset_fill) {
+			return;
+		}
+
+		gl_polygon_offset_fill = false;
+	}
+	else if (option == GL_POLYGON_OFFSET_LINE) {
+		if (!gl_polygon_offset_line) {
+			return;
+		}
+
+		gl_polygon_offset_line = false;
 	}
 
 	glDisable(option);
@@ -632,5 +667,30 @@ void GL_InvalidateTextureReferences(int texture)
 		if (cntarrays[i] == texture) {
 			cntarrays[i] = 0;
 		}
+	}
+}
+
+void GL_PolygonOffset(int option)
+{
+	extern cvar_t gl_brush_polygonoffset;
+	qbool enabled = (option == POLYGONOFFSET_STANDARD || option == POLYGONOFFSET_OUTLINES);
+
+	if (enabled) {
+		float factor = (option == POLYGONOFFSET_STANDARD ? 0.05 : 1);
+		float units = (option == POLYGONOFFSET_STANDARD ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
+
+		GL_Enable(GL_POLYGON_OFFSET_FILL);
+		GL_Enable(GL_POLYGON_OFFSET_LINE);
+
+		if (polygonOffsetFactor != factor || polygonOffsetUnits != units) {
+			glPolygonOffset(factor, units);
+
+			polygonOffsetFactor = factor;
+			polygonOffsetUnits = units;
+		}
+	}
+	else {
+		GL_Disable(GL_POLYGON_OFFSET_FILL);
+		GL_Disable(GL_POLYGON_OFFSET_LINE);
 	}
 }
