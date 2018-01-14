@@ -78,10 +78,10 @@ cvar_t      r_bloom_darken = {"r_bloom_darken", "3", true};
 cvar_t      r_bloom_sample_size = {"r_bloom_sample_size", "256", true};
 cvar_t      r_bloom_fast_sample = {"r_bloom_fast_sample", "0", true};
 
-GLuint r_bloomscreentexture;
-GLuint r_bloomeffecttexture;
-GLuint r_bloombackuptexture;
-GLuint r_bloomdownsamplingtexture;
+texture_ref r_bloomscreentexture;
+texture_ref r_bloomeffecttexture;
+texture_ref r_bloombackuptexture;
+texture_ref r_bloomdownsamplingtexture;
 
 static int      r_screendownsamplingtexture_size;
 static int      screen_texture_width, screen_texture_height;
@@ -153,30 +153,34 @@ void R_Bloom_InitEffectTexture (void)
 	unsigned char *data;
 	float bloomsizecheck;
 
-	if (r_bloom_sample_size.value < 32)
-		Cvar_SetValue (&r_bloom_sample_size, 32);
+	if (r_bloom_sample_size.value < 32) {
+		Cvar_SetValue(&r_bloom_sample_size, 32);
+	}
 
 	// Make sure bloom size is a power of 2.
 	BLOOM_SIZE = r_bloom_sample_size.value;
 	bloomsizecheck = (float) BLOOM_SIZE;
 
-	while (bloomsizecheck > 1.0f)
+	while (bloomsizecheck > 1.0f) {
 		bloomsizecheck /= 2.0f;
+	}
 
-	if (bloomsizecheck != 1.0f)
-	{
+	if (bloomsizecheck != 1.0f) {
 		BLOOM_SIZE = 32;
 
-		while (BLOOM_SIZE < r_bloom_sample_size.value)
+		while (BLOOM_SIZE < r_bloom_sample_size.value) {
 			BLOOM_SIZE *= 2;
+		}
 	}
 
 	// Make sure bloom size doesn't have stupid values.
-	if (BLOOM_SIZE > screen_texture_width || BLOOM_SIZE > screen_texture_height)
-		BLOOM_SIZE = min( screen_texture_width, screen_texture_height );
+	if (BLOOM_SIZE > screen_texture_width || BLOOM_SIZE > screen_texture_height) {
+		BLOOM_SIZE = min(screen_texture_width, screen_texture_height);
+	}
 
-	if (BLOOM_SIZE != r_bloom_sample_size.value)
-		Cvar_SetValue (&r_bloom_sample_size, BLOOM_SIZE);
+	if (BLOOM_SIZE != r_bloom_sample_size.value) {
+		Cvar_SetValue(&r_bloom_sample_size, BLOOM_SIZE);
+	}
 
 	data = (unsigned char *) Q_calloc (BLOOM_SIZE * BLOOM_SIZE, sizeof (int));
 
@@ -188,8 +192,7 @@ void R_Bloom_InitEffectTexture (void)
 // =================
 // R_Bloom_InitTextures
 // =================
-//extern int texture_extension_number;
-void R_Bloom_InitTextures( void )
+static void R_Bloom_InitTextures( void )
 {
 	unsigned char *data;
 	int maxtexsize, glinternalfmt;
@@ -201,8 +204,7 @@ void R_Bloom_InitTextures( void )
 
     // Disable blooms if we can't handle a texture of that size.
 	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxtexsize);
-	if (screen_texture_width > maxtexsize || screen_texture_height > maxtexsize)
-	{
+	if (screen_texture_width > maxtexsize || screen_texture_height > maxtexsize) {
 		screen_texture_width = screen_texture_height = 0;
 		Cvar_SetValue (&r_bloom, 0);
 		Com_Printf ("WARNING: 'R_InitBloomScreenTexture' too high resolution for Light Bloom. Effect disabled\n");
@@ -213,11 +215,9 @@ void R_Bloom_InitTextures( void )
 	size = screen_texture_width * screen_texture_height * sizeof (int);
 	data = Q_malloc (size);
 	memset (data, 255, size);
-	//r_bloomscreentexture = GL_LoadTexture ( "***r_screenbackuptexture***", screen_texture_width, screen_texture_height, data, 0, 4); // false, false, 4);
-	
-	if (!r_bloomscreentexture) {
+
+	if (!GL_TextureReferenceIsValid(r_bloomscreentexture)) {
 		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &r_bloomscreentexture);
-		//r_bloomscreentexture = texture_extension_number++;
 	}
 
 	if (gl_gammacorrection.integer) {
@@ -238,7 +238,7 @@ void R_Bloom_InitTextures( void )
 	R_Bloom_InitEffectTexture();
 
 	// If screensize is more than 2x the bloom effect texture, set up for stepped downsampling.
-	r_bloomdownsamplingtexture = 0;
+	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
 	r_screendownsamplingtexture_size = 0;
 	if( glwidth > (BLOOM_SIZE * 2) && !r_bloom_fast_sample.value )
 	{
@@ -249,25 +249,31 @@ void R_Bloom_InitTextures( void )
 	}
 
 	// Init the screen backup texture.
-	if (r_screendownsamplingtexture_size)
-		R_Bloom_InitBackUpTexture (r_screendownsamplingtexture_size, r_screendownsamplingtexture_size);
-	else
-		R_Bloom_InitBackUpTexture (BLOOM_SIZE, BLOOM_SIZE);
+	if (r_screendownsamplingtexture_size) {
+		R_Bloom_InitBackUpTexture(r_screendownsamplingtexture_size, r_screendownsamplingtexture_size);
+	}
+	else {
+		R_Bloom_InitBackUpTexture(BLOOM_SIZE, BLOOM_SIZE);
+	}
 }
 
 // =================
 // R_InitBloomTextures
 // =================
-void R_InitBloomTextures( void )
+void R_InitBloomTextures(void)
 {
 	BLOOM_SIZE = 0;
-	if( !r_bloom.value )
-	{
+	if (!r_bloom.value) {
 		return;
 	}
 
-	r_bloomscreentexture = 0;	// This came from a vid_restart, where none of the textures are valid any more.
-	R_Bloom_InitTextures ();
+	// This came from a vid_restart, where none of the textures are valid any more.
+	GL_TextureReferenceInvalidate(r_bloomscreentexture);
+	GL_TextureReferenceInvalidate(r_bloomeffecttexture);
+	GL_TextureReferenceInvalidate(r_bloombackuptexture);
+	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
+
+	R_Bloom_InitTextures();
 }
 
 // =================

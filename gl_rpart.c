@@ -150,7 +150,7 @@ typedef struct qmb_particle_vertex_s {
 
 #define	MAX_PTEX_COMPONENTS		8
 typedef struct particle_texture_s {
-	GLuint		texnum;
+	texture_ref texnum;
 	int			components;
 	float		coords[MAX_PTEX_COMPONENTS][4];		
 } particle_texture_t;
@@ -326,14 +326,14 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
-static void QMB_CreateAtlasTexture(GLuint* textures, int count)
+static void QMB_CreateAtlasTexture(texture_ref* textures, int count)
 {
 	int horizontal_widths[32], vertical_offsets[32];
 	int widths[32], heights[32];
 	int total_height = 0;
 	int max_width = 0;
 	int i, j;
-	GLuint atlas_tex;
+	texture_ref atlas_tex;
 	int y_pos;
 	int offsets[4];
 	byte* atlas_texels;
@@ -405,7 +405,7 @@ static void QMB_CreateAtlasTexture(GLuint* textures, int count)
 
 		// Fix-up texture coordinates
 		for (j = 0; j < num_particletextures; ++j) {
-			if (particle_textures[j].texnum == textures[i]) {
+			if (GL_TextureReferenceEqual(particle_textures[j].texnum, textures[i])) {
 				int c;
 
 				for (c = 0; c < particle_textures[j].components; ++c) {
@@ -438,14 +438,15 @@ static void QMB_CreateAtlasTexture(GLuint* textures, int count)
 	return;
 }
 
-void QMB_InitParticles (void) {
-	int	i, count = 0, particlefont;
-	int shockwave_texture, lightning_texture, spark_texture;
+void QMB_InitParticles (void)
+{
+	int	i, count = 0;
+	texture_ref particlefont, shockwave_texture, lightning_texture, spark_texture;
 
     Cvar_Register (&amf_part_fulldetail);
-	if (!host_initialized)
-		if (COM_CheckParm ("-detailtrails"))
-			Cvar_LatchedSetValue (&amf_part_fulldetail, 1);
+	if (!host_initialized && COM_CheckParm("-detailtrails")) {
+		Cvar_LatchedSetValue(&amf_part_fulldetail, 1);
+	}
 
 	if (!qmb_initialized) {
 		if (!host_initialized) {
@@ -463,20 +464,24 @@ void QMB_InitParticles (void) {
 		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 	}
 
-	if (!(particlefont = GL_LoadTextureImage("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+	particlefont = GL_LoadTextureImage("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP);
+	if (!GL_TextureReferenceIsValid(particlefont)) {
 		return;
 	}
-	if (!(shockwave_texture = GL_LoadTextureImage("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+	shockwave_texture = GL_LoadTextureImage("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP);
+	if (!GL_TextureReferenceIsValid(shockwave_texture)) {
 		return;
 	}
-	if (!(lightning_texture = GL_LoadTextureImage("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+	lightning_texture = GL_LoadTextureImage("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP);
+	if (!GL_TextureReferenceIsValid(lightning_texture)) {
 		return;
 	}
-	if (!(spark_texture = GL_LoadTextureImage("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP))) {
+	spark_texture = GL_LoadTextureImage("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP);
+	if (!GL_TextureReferenceIsValid(spark_texture)) {
 		return;
 	}
 
-	ADD_PARTICLE_TEXTURE(ptex_none, 0, 0, 1, 0, 0, 0, 0);	
+	ADD_PARTICLE_TEXTURE(ptex_none, null_texture_reference, 0, 1, 0, 0, 0, 0);	
 	ADD_PARTICLE_TEXTURE(ptex_blood1, particlefont, 0, 1, 0, 0, 64, 64);
 	ADD_PARTICLE_TEXTURE(ptex_blood2, particlefont, 0, 1, 64, 0, 128, 64);
 	ADD_PARTICLE_TEXTURE(ptex_lava, particlefont, 0, 1, 128, 0, 192, 64);
@@ -566,8 +571,9 @@ void QMB_ClearParticles (void)
 {
 	int	i;
 
-	if (!qmb_initialized)
+	if (!qmb_initialized) {
 		return;
+	}
 
 	Q_free (particles);		// free
 	QMB_AllocParticles ();	// and alloc again
@@ -576,8 +582,9 @@ void QMB_ClearParticles (void)
 	memset(particles, 0, r_numparticles * sizeof(particle_t));
 	free_particles = &particles[0];
 
-	for (i = 0; i + 1 < r_numparticles; i++)
+	for (i = 0; i + 1 < r_numparticles; i++) {
 		particles[i].next = &particles[i + 1];
+	}
 	particles[r_numparticles - 1].next = NULL;
 
 	for (i = 0; i < num_particletypes; i++)

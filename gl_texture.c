@@ -27,11 +27,17 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_local.h"
 #include "tr_types.h"
 
+const texture_ref null_texture_reference = { 0 };
+
+// Private GL function to allocate names
+void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
+
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel);
 void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel);
 
+static const texture_ref invalid_texture_reference = { 0 };
 static qbool no24bit, forceTextureReload;
 
 extern unsigned d_8to24table2[256];
@@ -79,10 +85,13 @@ typedef struct {
 	int         depth;
 
 	GLenum      target;
+	texture_ref reference;
+	int         next_free;
 } gltexture_t;
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
-static int			numgltextures = 0;
+static int			numgltextures = 1;
+static int          next_free_texture = 0;
 //	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
 
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
@@ -165,11 +174,16 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 	}
 
 	// Make sure we set the proper texture filters for textures.
-	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
+	for (i = 1, glt = gltextures + 1; i < numgltextures; i++, glt++)
 	{
-		if (glt->texmode & TEX_NO_TEXTUREMODE)
+		if (!GL_TextureReferenceIsValid(glt->reference)) {
+			continue;
+		}
+
+		if (glt->texmode & TEX_NO_TEXTUREMODE) {
 			continue;	// This texture must NOT be affected by texture mode changes,
 						// for example charset which rather controlled by gl_smoothfont.
+		}
 
 		// true == true or false == false
 		if ( mipmap == !!(glt->texmode & TEX_MIPMAP) )
@@ -178,8 +192,8 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 				Com_DPrintf("texturemode: %s\n", glt->identifier);
 			}
 
-			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->texnum, GL_TEXTURE_MIN_FILTER, filter_min);
-			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->texnum, GL_TEXTURE_MAG_FILTER, filter_max);
+			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->reference, GL_TEXTURE_MIN_FILTER, filter_min);
+			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->reference, GL_TEXTURE_MAG_FILTER, filter_max);
 		}
 	}
 }
@@ -204,7 +218,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 		}
 
 		if (glt->texmode & TEX_MIPMAP) {
-			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+			GL_TexParameterf(GL_TEXTURE0, glt->target, glt->reference, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 		}
 	}
 }
@@ -337,26 +351,26 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 
 	// Upload the main texture to OpenGL.
 	miplevel = 0;
-	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 
 	if (mode & TEX_MIPMAP) {
 		// Calculate the mip maps for the images.
 		while (width > 1 || height > 1) {
 			Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
 			miplevel++;
-			GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+			GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 		}
 
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
 		if (anisotropy_ext) {
-			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 		}
 	} 
 	else {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, glt->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
 	Q_free(newdata);
@@ -423,6 +437,30 @@ static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int 
 	GL_Upload32(glt, trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
+static gltexture_t* GL_NextTextureSlot(GLenum target)
+{
+	int slot;
+	gltexture_t* glt;
+
+	// Re-use a deleted slot if possible
+	if (next_free_texture) {
+		slot = next_free_texture;
+		next_free_texture = gltextures[slot].next_free;
+		gltextures[slot].next_free = 0;
+	}
+	else if (numgltextures >= MAX_GLTEXTURES) {
+		Sys_Error("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+	}
+	else {
+		slot = numgltextures++;
+	}
+
+	glt = &gltextures[slot];
+	glt->reference.index = slot;
+	glt->target = target;
+	return glt;
+}
+
 static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
 {
 	gltexture_t* glt = NULL;
@@ -457,7 +495,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
 				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
-					GL_BindTextureUnit(GL_TEXTURE0, glt->target, gltextures[i].texnum);
+					GL_BindTextureUnit(GL_TEXTURE0, glt->target, glt->reference);
 					*new_texture = false;
 					return glt;
 				}
@@ -471,23 +509,17 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 		}
 	}
 
-	if (numgltextures >= MAX_GLTEXTURES) {
-		Sys_Error("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
-	}
-
 	// If the identifier was the same as another textures, we won't bother
 	// with taking up a new texture slot, just load the new texture
 	// over the old one.
 	if (!load_over_existing) {
-		glt = &gltextures[numgltextures];
-		numgltextures++;
-		glt->target = target;
+		glt = GL_NextTextureSlot(target);
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
-		GL_CreateTextures(GL_TEXTURE0, glt->target, 1, &glt->texnum);
+		GL_CreateTextureNames(GL_TEXTURE0, glt->target, 1, &glt->texnum);
 	}
 	else if (glt && !glt->texnum) {
-		GL_CreateTextures(GL_TEXTURE0, glt->target, 1, &glt->texnum);
+		GL_CreateTextureNames(GL_TEXTURE0, glt->target, 1, &glt->texnum);
 	}
 
 	if (!glt) {
@@ -505,24 +537,25 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	glt->is_array = (depth > 0);
 
 	Q_free(glt->pathname);
-
 	if (bpp == 4 && fs_netpath[0]) {
 		glt->pathname = Q_strdup(fs_netpath);
 	}
 
-	assert(glt->target);
+	GL_BindTextureUnit(GL_TEXTURE0, glt->target, glt->reference);
+
 	return glt;
 }
 
-GLuint GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
+texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
 {
 	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
 	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
+	texture_ref ref = { 0 };
 
 	if (glt && !new_texture) {
-		return glt->texnum;
+		return glt->reference;
 	}
 
 	// Upload the texture to OpenGL based on the bytes per pixel.
@@ -538,10 +571,10 @@ GLuint GL_LoadTexture(const char *identifier, int width, int height, byte *data,
 			Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
 	}
 
-	return glt->texnum;
+	return glt->reference;
 }
 
-GLuint GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data) 
+texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data) 
 {
 	int glwidth, glheight, i;
 	char fullname[MAX_QPATH] = "pic:";
@@ -753,7 +786,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	return NULL;
 }
 
-GLuint GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode)
+texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode)
 {
 	int i, j, image_size;
 	qbool gamma;
@@ -786,15 +819,15 @@ GLuint GL_LoadTexturePixels(byte *data, char *identifier, int width, int height,
 	return GL_LoadTexture(identifier, width, height, data, mode, 4);
 }
 
-GLuint GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode)
+texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode)
 {
-	GLuint texnum;
+	texture_ref reference;
 	byte *data;
 	int image_width = -1, image_height = -1;
 	gltexture_t *gltexture;
 
 	if (no24bit) {
-		return 0;
+		return invalid_texture_reference;
 	}
 
 	if (!identifier) {
@@ -804,15 +837,15 @@ GLuint GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int
 	gltexture = current_texture = GL_FindTexture(identifier);
 
 	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, mode, &image_width, &image_height))) {
-		texnum = (gltexture && !current_texture) ? gltexture->texnum : 0;
+		reference = (gltexture && !current_texture) ? gltexture->reference : invalid_texture_reference;
 	}
 	else {
-		texnum = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
+		reference = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
 		Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels.
 	}
 
 	current_texture = NULL;
-	return texnum;
+	return reference;
 }
 
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
@@ -930,17 +963,16 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 
 	Q_free(buf);
 	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
-	return pic->texnum != 0;
+	return GL_TextureReferenceIsValid(pic->texnum);
 }
 
 void GL_Texture_Init(void) 
 {
 	cvar_t *cv;
 	int i;
-	extern GLuint translate_texture;
-	extern GLuint lightmap_texture_array;
-	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
-	extern GLuint sceneblur_texture;
+	extern texture_ref lightmap_texture_array;
+	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
+	extern texture_ref sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
 
@@ -956,12 +988,10 @@ void GL_Texture_Init(void)
 
 	//texture_extension_number = 1;
 	current_texture = NULL; // nice names
-	numgltextures  = 0;
+	numgltextures = 1;
+	next_free_texture = 0;
 
 	GL_InitTextureState();
-
-	// Save a texture slot for translated picture.
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &translate_texture);
 
 	// Netgraph.
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
@@ -992,10 +1022,10 @@ void GL_Texture_Init(void)
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
 
 	// Powerup shells.
-	shelltexture = 0; // Force reload.
+	GL_TextureReferenceInvalidate(shelltexture); // Force reload.
 
 	// Particles.
-	particletexture = 0; // Force reload.
+	GL_TextureReferenceInvalidate(particletexture); // Force reload.
 
 	// Sky.
 	memset(skyboxtextures, 0, sizeof(skyboxtextures)); // Force reload.
@@ -1029,25 +1059,25 @@ void GL_Texture_Init(void)
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
-GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode)
+texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode)
 {
 	int scaled_width, scaled_height;
 	unsigned short crc = 0;
 	qbool new_texture = false;
 	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
-	GLuint gl_texturenum;
+	texture_ref gl_texturenum;
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
 
 	if (!slot) {
-		return 0;
+		return invalid_texture_reference;
 	}
 
 	if (slot && !new_texture) {
-		return slot->texnum;
+		return slot->reference;
 	}
 
-	gl_texturenum = slot->texnum;
+	gl_texturenum = slot->reference;
 
 	// 
 	while (min_dimension > 0) {
@@ -1062,7 +1092,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 		int array_width, array_height, array_depth;
 
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, max_miplevels, GL_RGBA8, width, height, *depth);
+		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, max_miplevels, GL_RGBA8, width, height, *depth);
 
 		error = glGetError();
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
@@ -1071,13 +1101,13 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_WIDTH, &array_width);
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_HEIGHT, &array_height);
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_DEPTH, &array_depth);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_WIDTH, &array_width);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_HEIGHT, &array_height);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_DEPTH, &array_depth);
 
 			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
-			gl_texturenum = 0;
+			gl_texturenum = invalid_texture_reference;
 		}
 		else {
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
@@ -1086,75 +1116,69 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 	}
 
 	if (mode & TEX_MIPMAP) {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum,GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference,GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
 		if (anisotropy_ext) {
-			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 		}
 	}
 	else {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
 	return gl_texturenum;
 }
 
-// FIXME: Texture references should be GLuint...
-void GL_DeleteTexture(GLuint* texture)
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
 {
-	int i;
-	GLuint gl_texture;
+	GLsizei i;
 
-	if (!texture || !*texture) {
+	for (i = 0; i < n; ++i) {
+		gltexture_t* glt = GL_NextTextureSlot(target);
+
+		GL_CreateTextureNames(textureUnit, target, 1, &glt->texnum);
+		GL_BindTextureUnit(textureUnit, target, glt->reference);
+
+		textures[i] = glt->reference;
+	}
+}
+
+void GL_DeleteTexture(texture_ref* texture)
+{
+	if (!texture || !GL_TextureReferenceIsValid(*texture)) {
 		return;
 	}
 
-	// Find reference and delete
-	for (i = 0; i < numgltextures; i++) {
-		if (gltextures[i].texnum == *texture) {
-			Q_free(gltextures[i].pathname);
-			memmove(gltextures + i, gltextures + i + 1, (numgltextures - i - 1) * sizeof(gltextures[0]));
-			--numgltextures;
-		}
-	}
+	// Delete OpenGL
+	glDeleteTextures(1, &gltextures[texture->index].texnum);
 
-	gl_texture = *texture;
-	glDeleteTextures(1, &gl_texture);
-	GL_InvalidateTextureReferences(*texture);
-	*texture = 0;
+	// Might have been bound when deleted, update state
+	GL_InvalidateTextureReferences(gltextures[texture->index].texnum);
+
+	// Free structure, updated linked list so we can re-use this slot
+	Q_free(gltextures[texture->index].pathname);
+	memset(&gltextures[texture->index], 0, sizeof(gltextures[0]));
+	gltextures[texture->index].next_free = next_free_texture;
+	next_free_texture = texture->index;
+
+	// Invalidate the reference
+	texture->index = 0;
 }
 
-void GL_DeleteCubeMap(GLuint* texture)
+void GL_DeleteCubeMap(texture_ref* texture)
 {
 	GL_DeleteTexture(texture);
 }
 
 // Identical to GL_DeleteTexture but for type correctness...
-void GL_DeleteTextureArray(GLuint* texture)
+void GL_DeleteTextureArray(texture_ref* texture)
 {
-	int i;
-
-	if (!texture || !*texture) {
-		return;
-	}
-
-	// Find reference and delete
-	for (i = 0; i < numgltextures; i++) {
-		if (gltextures[i].texnum == *texture) {
-			Q_free(gltextures[i].pathname);
-			memmove(gltextures + i, gltextures + i + 1, (numgltextures - i - 1) * sizeof(gltextures[0]));
-			--numgltextures;
-		}
-	}
-
-	glDeleteTextures(1, texture);
-	GL_InvalidateTextureReferences(*texture);
-	*texture = 0;
+	GL_DeleteTexture(texture);
 }
 
-GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
+texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 {
 	int scaled_width, scaled_height;
 	qbool new_texture;
@@ -1163,11 +1187,11 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 	int min_dimension = min(width, height);
 
 	if (!slot) {
-		return 0;
+		return invalid_texture_reference;
 	}
 
 	if (slot && !new_texture) {
-		return slot->texnum;
+		return slot->reference;
 	}
 
 	// 
@@ -1176,19 +1200,25 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 		min_dimension /= 2;
 	}
 
-	GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, max_miplevels, GL_RGBA8, width, height);
+	GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, max_miplevels, GL_RGBA8, width, height);
 	if (mode & TEX_MIPMAP) {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
 		if (anisotropy_ext) {
-			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 		}
 	}
 	else {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
-	return slot->texnum;
+	return slot->reference;
+}
+
+// For OpenGL wrapper functions
+GLuint GL_TextureNameFromReference(texture_ref ref)
+{
+	return gltextures[ref.index].texnum;
 }

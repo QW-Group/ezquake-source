@@ -28,9 +28,10 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 extern float overall_alpha;
 #define CIRCLE_LINE_COUNT	40
 
-void GLC_DrawTileClear(GLuint texnum, int x, int y, int w, int h)
+void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h)
 {
 	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
+
 	glBegin(GL_QUADS);
 	glTexCoord2f(x / 64.0, y / 64.0);
 	glVertex2f(x, y);

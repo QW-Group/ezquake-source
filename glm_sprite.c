@@ -24,7 +24,7 @@ typedef struct glm_sprite_s {
 	vec3_t origin;
 	float scale;
 	float texScale[2];
-	GLuint texture_array;
+	texture_ref texture_array;
 	int texture_index;
 } glm_sprite_t;
 
@@ -71,7 +71,7 @@ static void GL_PrepareSprites(void)
 	}
 }
 
-static GLuint prev_texture_array = -1;
+static texture_ref prev_texture_array;
 static qbool first_sprite_draw = true;
 
 void GL_BeginDrawSprites(void)
@@ -92,7 +92,7 @@ void GL_FlushSpriteBatch(void)
 		GL_PrepareSprites();
 
 		GL_SelectTexture(GL_TEXTURE0);
-		prev_texture_array = -1;
+		GL_TextureReferenceInvalidate(prev_texture_array);
 
 		first_sprite_draw = false;
 	}
@@ -107,7 +107,7 @@ void GL_FlushSpriteBatch(void)
 		glm_sprite_t* sprite = &sprite_batch[i];
 
 		// FIXME: need to batch the calls?!
-		if (sprite->texture_array != prev_texture_array) {
+		if (!GL_TextureReferenceEqual(sprite->texture_array, prev_texture_array)) {
 			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, sprite->texture_array);
 			prev_texture_array = sprite->texture_array;
 		}
@@ -199,7 +199,7 @@ void GL_EndDrawEntities(void)
 {
 }
 
-void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t)
+void GLM_DrawSimpleItem(model_t* model, int texture_index, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t)
 {
 	glm_sprite_t* sprite;
 
@@ -214,7 +214,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->texScale[0] = scale_s;
 	sprite->texScale[1] = scale_t;
 	sprite->texture_array = model->simpletexture_array;
-	sprite->texture_index = texture;
+	sprite->texture_index = texture_index;
 	++batch_count;
 }
 

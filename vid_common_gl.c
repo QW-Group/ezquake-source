@@ -31,6 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "nvToolsExt.h"
 #endif
 
+GLuint GL_TextureNameFromReference(texture_ref ref);
+
 // <debug-functions (4.3)>
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
@@ -792,7 +794,7 @@ void GL_BindBuffer(GLenum target, GLuint buffer)
 }
 
 void GL_TexSubImage3D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
@@ -801,7 +803,7 @@ void GL_TexSubImage3D(
 }
 
 void GL_TexImage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint internalformat,
+	GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLint internalformat,
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
@@ -810,7 +812,7 @@ void GL_TexImage2D(
 }
 
 void GL_TexSubImage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level,
+	GLenum textureUnit, GLenum target, texture_ref texture, GLint level,
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
@@ -824,7 +826,7 @@ void GL_TexSubImage2D(
 }
 
 void GL_TexStorage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+	GLenum textureUnit, GLenum target, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
 )
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
@@ -832,61 +834,56 @@ void GL_TexStorage2D(
 }
 
 void GL_TexStorage3D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
+	GLenum textureUnit, GLenum target, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
 )
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexStorage3D(target, levels, internalformat, width, height, depth);
 }
 
-void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param)
+void GL_TexParameterf(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, GLfloat param)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameterf(target, pname, param);
 }
 
-void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params)
+void GL_TexParameterfv(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, const GLfloat *params)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameterfv(target, pname, params);
 }
 
-void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param)
+void GL_TexParameteri(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, GLint param)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameteri(target, pname, param);
 }
 
-void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params)
+void GL_TexParameteriv(GLenum textureUnit, GLenum target, texture_ref texture, GLenum pname, const GLint *params)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameteriv(target, pname, params);
 }
 
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
+void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
 {
-	GLsizei i;
-
 	glGenTextures(n, textures);
-	for (i = 0; i < n; ++i) {
-		GL_BindTextureUnit(textureUnit, target, textures[i]);
-	}
 }
 
-void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum pname, GLint* params)
+void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLenum pname, GLint* params)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glGetTexLevelParameteriv(target, level, pname, params);
 }
 
-void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
+void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
 	// TODO: Use glGetnTexImage() if available (4.5)
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glGetTexImage(target, level, format, type, buffer);
 }
 
-void GL_GenerateMipmap(GLenum textureUnit, GLenum target, GLuint texture)
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref texture)
 {
 	GL_BindTextureUnit(textureUnit, target, texture);
 	glGenerateMipmap(target);

@@ -50,10 +50,14 @@ static int old_alphablend_flags = 0;
 // vid_common_gl.c
 void GL_BindBuffer(GLenum target, GLuint buffer);
 
+// gl_texture.c
+GLuint GL_TextureNameFromReference(texture_ref ref);
+
 // FIXME: Add optional support for DSA
-void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture)
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference)
 {
 	int unit_num = unit - GL_TEXTURE0;
+	GLuint texture = GL_TextureNameFromReference(reference);
 
 	if (unit_num >= 0 && unit_num < sizeof(cntarrays)) {
 		if (targetType == GL_TEXTURE_2D_ARRAY) {

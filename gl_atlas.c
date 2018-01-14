@@ -34,7 +34,7 @@ static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
 static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
 static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
 static byte atlas_dirty = 0;
-static GLuint atlas_texnum[ATLAS_COUNT];
+static texture_ref atlas_texnum[ATLAS_COUNT];
 static qbool atlas_refresh = false;
 
 cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };
@@ -311,7 +311,7 @@ void CachePics_CreateAtlas(void)
 	for (i = 0; i < MAX_CHARSETS; ++i) {
 		extern mpic_t char_textures[MAX_CHARSETS];
 
-		if (char_textures[i].texnum) {
+		if (GL_TextureReferenceIsValid(char_textures[i].texnum)) {
 			charsetpics[i].data.pic = &char_textures[i];
 
 			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
@@ -324,18 +324,18 @@ void CachePics_CreateAtlas(void)
 		extern mpic_t crosshairpic;
 		extern mpic_t crosshairs_builtin[NUMCROSSHAIRS];
 
-		if (crosshairtexture_txt.texnum) {
+		if (GL_TextureReferenceIsValid(crosshairtexture_txt.texnum)) {
 			crosshairpics[0].data.pic = &crosshairtexture_txt;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[0]);
 		}
 
-		if (crosshairpic.texnum) {
+		if (GL_TextureReferenceIsValid(crosshairpic.texnum)) {
 			crosshairpics[1].data.pic = &crosshairpic;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[1]);
 		}
 
 		for (i = 0; i < NUMCROSSHAIRS; ++i) {
-			if (crosshairs_builtin[i].texnum) {
+			if (GL_TextureReferenceIsValid(crosshairs_builtin[i].texnum)) {
 				crosshairpics[i + 2].data.pic = &crosshairs_builtin[i];
 				CachePics_InsertBySize(&sized_list, &crosshairpics[i + 2]);
 			}
@@ -350,7 +350,7 @@ void CachePics_CreateAtlas(void)
 
 			node->data.pic = pic;
 
-			if (pic && pic->texnum) {
+			if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
 				CachePics_InsertBySize(&sized_list, node);
 			}
 		}
@@ -369,8 +369,6 @@ void CachePics_CreateAtlas(void)
 	}
 
 	for (cur = sized_list; cur; cur = cur->size_order) {
-		int old_tex = cur->data.pic->texnum;
-
 		CachePics_AddToAtlas(cur->data.pic);
 	}
 

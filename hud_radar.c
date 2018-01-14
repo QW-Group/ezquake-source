@@ -354,7 +354,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 	for (i = 0; i < cl_visents.count; i++)
 	{
 		entity_t* currententity = &cl_visents.list[i];
-		int simpletexture;
+		texture_ref simpletexture;
+		qbool simple_valid;
 
 		int entity_q_x = 0;
 		int entity_q_y = 0;
@@ -368,6 +369,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else {
 			simpletexture = currententity->model->simpletexture[currententity->skinnum];
 		}
+		simple_valid = GL_TextureReferenceIsValid(simpletexture);
 
 		// Get quake coordinates (times 8 to get them in the same format as .locs).
 		entity_q_x = cl_visents.list[i].origin[0]*8;
@@ -386,7 +388,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		if (radar_show_pent && cl_visents.list[i].model->modhint == MOD_PENT)
 		{
 			// Pentagram.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -396,7 +398,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if (radar_show_quad && cl_visents.list[i].model->modhint == MOD_QUAD)
 		{
 			// Quad.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -406,7 +408,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if(radar_show_ring && cl_visents.list[i].model->modhint == MOD_RING)
 		{
 			// Ring.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -416,7 +418,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if(radar_show_suit && cl_visents.list[i].model->modhint == MOD_SUIT)
 		{
 			// Suit.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -430,7 +432,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		if(radar_show_rl && cl_visents.list[i].model->modhint == MOD_ROCKETLAUNCHER)
 		{
 			// RL.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -440,7 +442,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if(radar_show_lg && cl_visents.list[i].model->modhint == MOD_LIGHTNINGGUN)
 		{
 			// LG.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -465,7 +467,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 			if (radar_show_ga && cl_visents.list[i].skinnum == HUD_RADAR_GA) {
 				// GA.
-				if (simpletexture && simple_items) {
+				if (simple_valid && simple_items) {
 					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 				}
 				else {
@@ -475,7 +477,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 			else if (radar_show_ya && cl_visents.list[i].skinnum == HUD_RADAR_YA) {
 				// YA.
-				if (simpletexture && simple_items) {
+				if (simple_valid && simple_items) {
 					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 				}
 				else {
@@ -485,7 +487,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 			else if (radar_show_ra && cl_visents.list[i].skinnum == HUD_RADAR_RA) {
 				// RA.
-				if (simpletexture && simple_items) {
+				if (simple_valid && simple_items) {
 					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 				}
 				else {
@@ -500,7 +502,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 			// Show megahealth.
 			//
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -520,7 +522,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		if(radar_show_ssg && !strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
 		{
 			// SSG.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -530,7 +532,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if(radar_show_ng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
 		{
 			// NG.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -540,7 +542,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if (radar_show_sng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
 		{
 			// SNG.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -550,7 +552,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		else if (radar_show_gl && cl_visents.list[i].model->modhint == MOD_GRENADELAUNCHER)
 		{
 			// GL.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -575,7 +577,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Health.
 			//
 
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -600,7 +602,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Rockets.
 			//
 
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -623,7 +625,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Cells.
 			//
 
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -648,7 +650,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			// Draw a black outline.
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {
@@ -673,7 +675,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Shells.
 			//
 
-			if (simpletexture && simple_items) {
+			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
 			}
 			else {

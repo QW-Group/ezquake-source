@@ -3,7 +3,7 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-void GLC_DrawSimpleItem(int simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right)
+void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
 	vec3_t point;
 	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);

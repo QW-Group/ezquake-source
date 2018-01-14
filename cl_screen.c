@@ -1854,22 +1854,18 @@ static void SCR_DrawCursor(void)
 	double scale = SCR_GetCursorScale();
 
 	// Always draw the cursor if fullscreen
-	if (IN_QuakeMouseCursorRequired())
-	{
+	if (IN_QuakeMouseCursorRequired()) {
 		int x_coord = (int)scr_pointer_state.x;
 		int y_coord = (int)scr_pointer_state.y;
 
-		if (scr_cursor && scr_cursor->texnum)
-		{
+		if (scr_cursor && GL_TextureReferenceIsValid(scr_cursor->texnum)) {
 			Draw_SAlphaPic(x_coord, y_coord, scr_cursor, scr_cursor_alpha.value, scale);
 
-			if (scr_cursor_icon && scr_cursor_icon->texnum)
-			{
+			if (scr_cursor_icon && GL_TextureReferenceIsValid(scr_cursor_icon->texnum)) {
 				Draw_SAlphaPic(x_coord + scr_cursor_iconoffset_x.value, y_coord + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
 			}
 		}
-		else
-		{
+		else {
 			color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
 
 			Draw_AlphaLineRGB(x_coord + (10 * scale), y_coord + (10 * scale), x_coord + (40 * scale), y_coord + (40 * scale), 10 * scale, c);

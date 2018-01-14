@@ -31,11 +31,11 @@ extern model_t* loadmodel;
 extern char     loadname[32];   // for hunk tags
 
 //=============================================================================
-static GLuint Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
+static texture_ref Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
 {
 	char loadpath[64];
 	int texmode;
-	GLuint texnum;
+	texture_ref texnum;
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
@@ -45,7 +45,7 @@ static GLuint Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
 	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
-	if (!texnum) {
+	if (!GL_TextureReferenceIsValid(texnum)) {
 		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
@@ -59,7 +59,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	mspriteframe_t *pspriteframe;
 	char basename[64], identifier[64];
 	int width, height, size, origin[2], texmode;
-	GLuint texnum;
+	texture_ref texnum;
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
@@ -91,7 +91,8 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->right = width + origin[0];
 
 	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
-	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum))) {
+	texnum = Mod_LoadExternalSpriteSkin(identifier, framenum);
+	if (!GL_TextureReferenceIsValid(texnum)) {
 		texnum = GL_LoadTexture(identifier, width, height, (byte *)(pinframe + 1), texmode, 1);
 	}
 

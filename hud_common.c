@@ -2057,7 +2057,7 @@ void SCR_HUD_DrawAmmo(
 		}
 
 		snprintf (buf, sizeof (buf), "%3i", value);
-		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && sb_ib_ammo[num - 1].texnum) {
+		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && GL_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
 			Draw_SPic(x, y, &sb_ib_ammo[num - 1], scale);
 			//Draw_SSubPic(x, y, sb_ibar, 3 + ((num - 1) * 48), 0, 42, 11, scale);
 		}
@@ -7104,7 +7104,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 					Draw_AlphaCircleFillRGB(x + half_width, y + icon_offset + half_width, half_width, RGBA_TO_COLOR(background_color[0], background_color[1], background_color[2], alpha / 2 * 255));
 				}
-				else if (background_tex && background_tex->texnum) {
+				else if (background_tex && GL_TextureReferenceIsValid(background_tex->texnum)) {
 					Draw_FitPicAlpha(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
 				}
 

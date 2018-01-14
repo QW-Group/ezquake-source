@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static GLuint modelIndexes[16 * 1024];
 static GLuint index_count;
 static qbool uniforms_set = false;
-extern GLuint lightmap_texture_array;
+extern texture_ref lightmap_texture_array;
 
 static glm_program_t drawworld;
 static GLint drawworld_RefdefCvars_block;
@@ -71,7 +71,7 @@ typedef struct glm_brushmodel_req_s {
 	GLuint baseVertex;      // Offset of vertices in VBO
 	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
 
-	GLuint texture_array;
+	texture_ref texture_array;
 } glm_worldmodel_req_t;
 
 #define MAX_WORLDMODEL_BATCH 32
@@ -185,7 +185,7 @@ void GLM_ExitBatchedPolyRegion(void)
 
 static void GL_FlushWorldModelBatch(void);
 
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, GLuint texture_array)
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, texture_ref texture_array)
 {
 	glm_worldmodel_req_t* req;
 
@@ -210,8 +210,8 @@ void GLM_DrawTexturedWorld(model_t* model)
 {
 	int i, waterline, v;
 	msurface_t* surf;
-	qbool draw_detail_texture = gl_detail.integer && detailtexture;
-	qbool draw_caustics = gl_caustics.integer && underwatertexture;
+	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
+	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
 	glm_worldmodel_req_t* req = NULL;
 
 	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics);
@@ -220,13 +220,13 @@ void GLM_DrawTexturedWorld(model_t* model)
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
 			glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model, NULL, 0);
+			req = GLM_NextBatchRequest(model, NULL, null_texture_reference);
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
 				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 					GL_FlushWorldModelBatch();
-					req = GLM_NextBatchRequest(model, NULL, 0);
+					req = GLM_NextBatchRequest(model, NULL, null_texture_reference);
 				}
 
 				if (index_count) {
@@ -247,7 +247,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 		qbool first_in_this_array = true;
 		int texIndex;
 
-		if (!base_tex || !base_tex->size_start || !base_tex->gl_texture_array) {
+		if (!base_tex || !base_tex->size_start || !GL_TextureReferenceIsValid(base_tex->gl_texture_array)) {
 			continue;
 		}
 
@@ -313,17 +313,17 @@ static void GL_FlushWorldModelBatch(void)
 	draw_pos = 0;
 	for (i = 0; i < batch_count; ++i) {
 		int last = i;
-		GLuint texArray = worldmodel_requests[i].texture_array;
+		texture_ref texArray = worldmodel_requests[i].texture_array;
 
 		for (last = i; last < batch_count - 1; ++last) {
-			int next = worldmodel_requests[last + 1].texture_array;
-			if (next != 0 && texArray != 0 && next != texArray) {
+			texture_ref next = worldmodel_requests[last + 1].texture_array;
+			if (GL_TextureReferenceIsValid(next) && GL_TextureReferenceIsValid(texArray) != 0 && !GL_TextureReferenceEqual(next, texArray)) {
 				break;
 			}
 			texArray = next;
 		}
 
-		if (texArray) {
+		if (GL_TextureReferenceIsValid(texArray)) {
 			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, texArray);
 		}
 

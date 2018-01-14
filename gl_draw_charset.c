@@ -109,7 +109,7 @@ static qbool Load_LMP_Charset(char *name, int flags, mpic_t* pic)
 	pic->height = 256;
 	pic->sl = pic->tl = 0.0f;
 	pic->sh = pic->th = 1.0f;
-	return pic->texnum;
+	return GL_TextureReferenceIsValid(pic->texnum);
 }
 
 /*
@@ -139,7 +139,7 @@ static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned 
 		char_range[num] = range;
 	}
 
-	return char_textures[num].texnum;
+	return GL_TextureReferenceIsValid(char_textures[num].texnum);
 }
 
 static int Draw_LoadCharset(const char *name)
@@ -211,12 +211,12 @@ static void Apply_OnChange_gl_smoothfont(int value)
 {
 	int i;
 
-	if (!char_textures[0].texnum) {
+	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
 		return;
 	}
 
 	for (i = 0; i < MAX_CHARSETS; i++) {
-		if (!char_textures[i].texnum) {
+		if (!GL_TextureReferenceIsValid(char_textures[i].texnum)) {
 			break;
 		}
 
@@ -529,11 +529,11 @@ void Draw_InitCharset(void)
 
 	Draw_LoadCharset(gl_consolefont.string);
 
-	if (!char_textures[0].texnum) {
+	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
 		Cvar_Set(&gl_consolefont, "original");
 	}
 
-	if (!char_textures[0].texnum) {
+	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 	}
 }

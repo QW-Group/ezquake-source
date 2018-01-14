@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 
-static unsigned int GL_GenerateShellTexture(void)
+static texture_ref GL_GenerateShellTexture(void)
 {
 	int x, y, d;
 	byte data[32][32][4];
@@ -65,7 +65,7 @@ void R_InitOtherTextures(void)
 	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = GL_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
-	if (!shelltexture) {
+	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		shelltexture = GL_GenerateShellTexture();
 	}
 }
@@ -148,9 +148,10 @@ void R_TranslatePlayerSkin (int playernum)
 		Skin_Find(player);
 	}
 
-	playerfbtextures[playernum] = 0; // no full bright texture by default
+	// no full bright texture by default
+	GL_TextureReferenceInvalidate(playerfbtextures[playernum]);
 
-	if (player->skin->texnum && player->skin->bpp == 4) {
+	if (GL_TextureReferenceIsValid(player->skin->texnum) && player->skin->bpp == 4) {
 		// do not even bother call Skin_Cache(), we have texture num alredy
 		//Com_Printf("    ###SHORT loaded skin %s %d\n", player->skin->name, player->skin->texnum);
 		playernmtextures[playernum] = player->skin->texnum;

@@ -48,7 +48,7 @@ static void GLC_DrawFlat(model_t *model)
 	float *v;
 	byte w[3], f[3], sky[3];
 	int lastType = -1;
-	qbool draw_caustics = underwatertexture && gl_caustics.value;
+	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;
@@ -136,7 +136,8 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
 
-	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0, fb_texturenum;
+	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
+	texture_ref fb_texturenum = null_texture_reference;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
@@ -152,8 +153,8 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
 
-	draw_caustics = underwatertexture && gl_caustics.value;
-	draw_details = detailtexture && gl_detail.value;
+	draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
+	draw_details = GL_TextureReferenceIsValid(detailtexture) && gl_detail.value;
 
 	if (gl_fb_bmodels.value) {
 		can_mtex_lightmaps = gl_mtexable;
@@ -180,7 +181,9 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 
 		if (t->isLumaTexture) {
 			isLumaTexture = gl_lumaTextures.value && r_refdef2.allow_lumas;
-			fb_texturenum = isLumaTexture ? t->fb_texturenum : 0;
+			if (isLumaTexture) {
+				fb_texturenum = t->fb_texturenum;
+			}
 		}
 		else {
 			isLumaTexture = false;
@@ -229,7 +232,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 				GLC_SetLightmapTextureEnvironment();
 
 				mtex_lightmaps = true;
-				mtex_fbs = fb_texturenum && draw_mtex_fbs;
+				mtex_fbs = GL_TextureReferenceIsValid(fb_texturenum) && draw_mtex_fbs;
 
 				if (mtex_fbs) {
 					doMtex2 = true;
@@ -300,15 +303,16 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 					detail_polys = s->polys;
 				}
 
-				if (fb_texturenum && draw_fbs && !mtex_fbs) {
+				if (GL_TextureReferenceIsValid(fb_texturenum) && draw_fbs && !mtex_fbs) {
 					if (isLumaTexture) {
-						s->polys->luma_chain = luma_polys[fb_texturenum];
-						luma_polys[fb_texturenum] = s->polys;
+						// FIXME: AddToChain, make sure luma_polys/fullbright_polys matches limits of references
+						s->polys->luma_chain = luma_polys[fb_texturenum.index];
+						luma_polys[fb_texturenum.index] = s->polys;
 						drawlumas = true;
 					}
 					else {
-						s->polys->fb_chain = fullbright_polys[fb_texturenum];
-						fullbright_polys[fb_texturenum] = s->polys;
+						s->polys->fb_chain = fullbright_polys[fb_texturenum.index];
+						fullbright_polys[fb_texturenum.index] = s->polys;
 						drawfullbrights = true;
 					}
 				}
@@ -529,7 +533,7 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 static void GLC_BlendLightmaps(void)
 {
-	extern GLuint lightmap_textures[MAX_LIGHTMAPS];
+	extern texture_ref lightmap_textures[MAX_LIGHTMAPS];
 	extern qbool lightmap_modified[MAX_LIGHTMAPS];
 	extern qbool gl_invlightmaps;
 	extern void R_UploadLightMap(GLenum textureUnit, int lightmapnum);

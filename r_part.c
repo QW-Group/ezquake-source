@@ -67,8 +67,9 @@ void Classic_LoadParticleTexures(void)
 	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
 	particletexture = GL_LoadTexture("particles:classic", 32, 32, (byte*)data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
 
-	if (!particletexture)
+	if (!GL_TextureReferenceIsValid(particletexture)) {
 		Sys_Error("Classic_LoadParticleTexures: can't load texture");
+	}
 }
 
 void Classic_AllocParticles(void)
@@ -563,7 +564,7 @@ void Classic_CalculateParticles(void)
 	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 
 	// load texture if not done yet
-	if (!particletexture) {
+	if (!GL_TextureReferenceIsValid(particletexture)) {
 		Classic_LoadParticleTexures();
 	}
 
@@ -711,7 +712,7 @@ void Classic_DrawParticles(void)
 
 	if (square) {
 		// FIXME: Hideous, should really store the indexes and use restart if we're doing this many squares?
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0, GL_TRIANGLE_STRIP, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, GL_TRIANGLE_STRIP, true);
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;

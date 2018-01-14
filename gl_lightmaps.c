@@ -30,8 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 
-GLuint lightmap_texture_array;
-GLuint lightmap_textures[MAX_LIGHTMAPS];
+texture_ref lightmap_texture_array;
+texture_ref lightmap_textures[MAX_LIGHTMAPS];
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct glRect_s {
@@ -292,7 +292,7 @@ void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
-	if (lightmap_texture_array) {
+	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
 		GL_TexSubImage3D(textureUnit, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
 	}
 	else {
@@ -616,7 +616,7 @@ void GL_BuildLightmaps(void)
 		lightmap_rectchange[i].t = LIGHTMAP_HEIGHT;
 		lightmap_rectchange[i].w = 0;
 		lightmap_rectchange[i].h = 0;
-		if (GL_ShadersSupported() && lightmap_texture_array) {
+		if (GL_ShadersSupported() && GL_TextureReferenceIsValid(lightmap_texture_array)) {
 			GL_TexSubImage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {

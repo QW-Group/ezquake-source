@@ -100,7 +100,8 @@ float bubblecolor[NUM_DLIGHTTYPES][4] = {
 
 static qbool first_dlight;
 
-void R_RenderDlight (dlight_t *light) {
+void R_RenderDlight(dlight_t *light)
+{
 	// don't draw our own powerup glow and muzzleflashes
 	// muzzleflash keys are negative
 	if (light->key == (cl.viewplayernum + 1) || light->key == -(cl.viewplayernum + 1)) {
@@ -108,7 +109,7 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	if (first_dlight) {
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0, GL_TRIANGLE_FAN, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, null_texture_reference, GL_TRIANGLE_FAN, true);
 
 		first_dlight = false;
 	}

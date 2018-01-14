@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 
-GLuint netgraphtexture;	// netgraph texture
+texture_ref netgraphtexture;	// netgraph texture
 
 // HUD -> hexum
 

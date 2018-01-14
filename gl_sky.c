@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "gl_sky.h"
 
-GLuint solidskytexture, alphaskytexture;
+texture_ref solidskytexture, alphaskytexture;
 
 float skymins[2][6], skymaxs[2][6];
 qbool r_skyboxloaded;
@@ -429,7 +429,8 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 	int j;
 
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
-		skyboxtextures[i] = 0;
+		// FIXME: Delete old textures?
+		GL_TextureReferenceInvalidate(skyboxtextures[i]);
 		for (j = 0; j < sizeof(search_paths) / sizeof(search_paths[0]); ++j) {
 			char path[MAX_PATH];
 			byte* data;
@@ -454,13 +455,13 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 				// we should free data from GL_LoadImagePixels()
 				Q_free(data);
 
-				if (skyboxtextures[i]) {
+				if (GL_TextureReferenceIsValid(skyboxtextures[i])) {
 					break;
 				}
 			}
 		}
 
-		if (!skyboxtextures[i]) {
+		if (!GL_TextureReferenceIsValid(skyboxtextures[i])) {
 			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
 			return false;
 		}

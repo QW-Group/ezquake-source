@@ -58,8 +58,6 @@ static int    current_crosshair_pixel_size = 0;
 mpic_t			*draw_disc;
 static mpic_t	*draw_backtile;
 
-int		translate_texture;
-
 static mpic_t	conback;
 
 mpic_t      crosshairtexture_txt;
@@ -207,7 +205,7 @@ void customCrosshair_Init(void)
 	int i = 0, c;
 
 	customcrosshair_loaded = CROSSHAIR_NONE;
-	crosshairtexture_txt.texnum = 0;
+	GL_TextureReferenceInvalidate(crosshairtexture_txt.texnum);
 
 	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY))) {
 		return;
@@ -334,7 +332,7 @@ void Draw_DisableScissor(void)
 static int          scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 static byte         scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
 static int          scrap_dirty; // Bit mask.
-static GLuint       scrap_texnum[MAX_SCRAPS];
+static texture_ref  scrap_texnum[MAX_SCRAPS];
 
 // Returns false if allocation failed.
 static qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
@@ -474,8 +472,7 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
 		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
 
-		if (!scrap_texnum[texnum])
-		{
+		if (!GL_TextureReferenceIsValid(scrap_texnum[texnum])) {
 			Com_Printf("Scrap_Upload: texture[%d] still not set, HUD will be broken\n", texnum);
 		}
 
@@ -696,7 +693,7 @@ void Draw_Crosshair (void)
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
 		qbool half_size = false;
-		GLuint texnum;
+		texture_ref texnum;
 
 		if (!crosshairalpha.value) {
 			return;
@@ -1191,7 +1188,7 @@ void Draw_ConsoleBackground (int lines)
 				if (old_levelshot) {
 					GL_DeleteTexture(&old_levelshot->texnum);
 					if (!CachePic_RemoveByPic(old_levelshot)) {
-						old_levelshot->texnum = 0;
+						GL_TextureReferenceInvalidate(old_levelshot->texnum);
 					}
 				}
 			}
@@ -1279,7 +1276,7 @@ void GL_Set2D(void)
 	GL_Color3ubv(color_white);
 }
 
-void Draw_2dAlphaTexture(float x, float y, float width, float height, int texture_num, float alpha)
+void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha)
 {
 	mpic_t pic;
 

@@ -110,7 +110,7 @@ typedef struct {
 //extra surfinfo
 typedef struct {
 	char name[MAX_QPATH];	//FIXME: pointer to shader. Requires model recaching when shader info is wiped though.
-	unsigned int texnum;
+	texture_ref texnum;
 } surfinf_t;
 
 typedef struct {

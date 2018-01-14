@@ -53,7 +53,7 @@ extern vec3_t    lightcolor;
 extern float     apitch;
 extern float     ayaw;
 
-void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, GLuint texture, GLuint fb_texture, GLenum textureEnvMode, qbool outline)
+void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool outline)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
@@ -65,12 +65,12 @@ void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex,
 
 	GL_DisableMultitexture();
 	GL_EnableTMU(GL_TEXTURE0);
-	if (texture) {
+	if (GL_TextureReferenceIsValid(texture)) {
 		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
 	}
 	GL_TextureEnvMode(textureEnvMode);
 
-	if (fb_texture && mtex) {
+	if (GL_TextureReferenceIsValid(fb_texture) && mtex) {
 		GL_EnableMultitexture();
 		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, fb_texture);
 		GL_TextureEnvMode(GL_DECAL);
@@ -266,7 +266,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	int vertIndex = paliashdr->vertsOffset + pose * paliashdr->vertsPerPose;
 
 	// LordHavoc: set the state to what we need for rendering a shell
-	if (!shelltexture) {
+	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		return;
 	}
 
@@ -362,7 +362,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 #define GL_RGB_SCALE 0x8573
 
 	// MEAG: GLM-FIXME
-	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin)))) {
+	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin)))) {
 		GL_EnableMultitexture();
 		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, underwatertexture);
 
@@ -376,7 +376,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 		GL_BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, 0, GL_DECAL, scaleS, scaleT, 0, false, false);
+		R_SetupAliasFrame(clmodel, oldframe, frame, paliashdr, true, false, false, underwatertexture, null_texture_reference, GL_DECAL, scaleS, scaleT, 0, false, false);
 
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);

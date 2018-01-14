@@ -108,6 +108,7 @@ void R_RenderFullbrights(void)
 {
 	int i;
 	glpoly_t *p;
+	texture_ref texture;
 
 	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
@@ -117,7 +118,9 @@ void R_RenderFullbrights(void)
 		if (!fullbright_polys[i]) {
 			continue;
 		}
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, i);
+
+		texture.index = i;
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
 		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
 			DrawGLPoly(p);
 		}
@@ -133,6 +136,7 @@ void R_RenderLumas(void)
 {
 	int i;
 	glpoly_t *p;
+	texture_ref texture;
 
 	GL_DepthMask(GL_FALSE);	// don't bother writing Z
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -144,7 +148,9 @@ void R_RenderLumas(void)
 		if (!luma_polys[i]) {
 			continue;
 		}
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, i);
+
+		texture.index = i;
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texture);
 		for (p = luma_polys[i]; p; p = p->luma_chain) {
 			DrawGLPoly(p);
 		}

@@ -21,7 +21,7 @@ extern float     ambientlight;
 void R_AliasSetupLighting(entity_t *ent);
 void R_DrawAliasModel(entity_t *ent, qbool shell_only);
 
-void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, GLuint texture, GLuint fb_texture, GLenum textureEnvMode, qbool outline);
+void GLC_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLenum textureEnvMode, qbool outline);
 void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
 extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;

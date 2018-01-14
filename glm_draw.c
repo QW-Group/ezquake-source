@@ -156,7 +156,7 @@ typedef struct glm_image_s {
 	float s2, t2;
 	unsigned char colour[4];
 	int flags;
-	int texNumber;
+	texture_ref texNumber;
 } glm_image_t;
 
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
@@ -224,7 +224,7 @@ void GLM_FlushImageDraw(void)
 	if (imageCount) {
 		int start = 0;
 		int i;
-		int currentTexture = 0;
+		texture_ref currentTexture = null_texture_reference;
 
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -243,18 +243,18 @@ void GLM_FlushImageDraw(void)
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];
 
-			if (currentTexture > 0 && img->texNumber && currentTexture != img->texNumber) {
+			if (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber)) {
 				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
 				glDrawArrays(GL_POINTS, start, i - start);
 				start = i;
 			}
 
-			if (img->texNumber) {
+			if (GL_TextureReferenceIsValid(img->texNumber)) {
 				currentTexture = img->texNumber;
 			}
 		}
 
-		if (currentTexture) {
+		if (GL_TextureReferenceIsValid(currentTexture)) {
 			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, currentTexture);
 		}
 		glDrawArrays(GL_POINTS, start, imageCount - start);
@@ -263,7 +263,7 @@ void GLM_FlushImageDraw(void)
 	imageCount = 0;
 }
 
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, GLuint texnum, qbool isText)
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		GLM_FlushImageDraw();
@@ -297,7 +297,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
 	images[imageCount].flags = 0;
 	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
-	images[imageCount].texNumber = 0;
+	GL_TextureReferenceInvalidate(images[imageCount].texNumber);
 
 	++imageCount;
 }

@@ -351,15 +351,16 @@ static char *TranslateTextureName (texture_t *tx)
 	return NULL;
 }
 
-int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
+static qbool Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag)
+{
 	char *name, *altname, *mapname, *groupname;
 
-	if (loadmodel->isworldmodel) {
-		if (!gl_externalTextures_world.value)
-			return 0;
-	} else {
-		if (!gl_externalTextures_bmodels.value)
-			return 0;
+	if (loadmodel->isworldmodel && !gl_externalTextures_world.value) {
+		return false;
+	}
+
+	if (!loadmodel->isworldmodel && !gl_externalTextures_bmodels.value) {
+		return false;
 	}
 
 	name = tx->name;
@@ -368,54 +369,54 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
 	groupname = TP_GetMapGroupName(mapname, NULL);
 
 	if (loadmodel->isworldmodel) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag))) {
-			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
-		} else {
-			if (groupname) {
-				if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag))) {
-					if (!ISTURBTEX(name))
-						tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
-				}
+		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag);
+		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !ISTURBTEX(name)) {
+			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
+		}
+		else if (groupname) {
+			tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag);
+			if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !ISTURBTEX(name)) {
+				tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 			}
 		}
-	} else {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag))) {
-			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
+	}
+	else {
+		tx->gl_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag);
+		if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && !ISTURBTEX(name)) {
+			tx->fb_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
-	if (!tx->gl_texturenum && altname) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode | brighten_flag))) {
-			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | TEX_LUMA);
+	if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && altname) {
+		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", altname), altname, 0, 0, mode | brighten_flag);
+		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !ISTURBTEX(name)) {
+			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
-	if (!tx->gl_texturenum) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", name), name, 0, 0, mode | brighten_flag))) {
-			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
+	if (!GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", name), name, 0, 0, mode | brighten_flag);
+		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !ISTURBTEX(name)) {
+			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
-	if (tx->fb_texturenum)
-		tx->isLumaTexture = true;
+	tx->isLumaTexture = GL_TextureReferenceIsValid(tx->fb_texturenum);
 
-	return tx->gl_texturenum;
+	return GL_TextureReferenceIsValid(tx->gl_texturenum);
 }
 
-static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
+static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 {
 	char *altname, *mapname;
 	char solidname[MAX_QPATH], alphaname[MAX_QPATH];
 	char altsolidname[MAX_QPATH], altalphaname[MAX_QPATH];
 	byte alphapixel = 255;
-	extern int solidskytexture, alphaskytexture;
+	extern texture_ref solidskytexture, alphaskytexture;
 
-	if (!gl_externalTextures_world.value)
+	if (!gl_externalTextures_world.value) {
 		return false;
+	}
 
 	altname = TranslateTextureName (tx);
 	mapname = Cvar_String("mapname");
@@ -423,23 +424,26 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
 
 	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
-	if (!solidskytexture && altname) {
-		snprintf (altsolidname, sizeof(altsolidname), "%s_solid", altname);
+	if (!GL_TextureReferenceIsValid(solidskytexture) && altname) {
+		snprintf(altsolidname, sizeof(altsolidname), "%s_solid", altname);
 		solidskytexture = GL_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
 	}
-	if (!solidskytexture)
-		solidskytexture = GL_LoadTextureImage (va("textures/%s", solidname), solidname, 0, 0, 0);
-	if (!solidskytexture)
+	if (!GL_TextureReferenceIsValid(solidskytexture)) {
+		solidskytexture = GL_LoadTextureImage(va("textures/%s", solidname), solidname, 0, 0, 0);
+	}
+	if (!GL_TextureReferenceIsValid(solidskytexture)) {
 		return false;
+	}
 
 	alphaskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
-	if (!alphaskytexture && altname) {
+	if (!GL_TextureReferenceIsValid(alphaskytexture) && altname) {
 		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
 		alphaskytexture = GL_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
 	}
-	if (!alphaskytexture)
-		alphaskytexture = GL_LoadTextureImage (va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
-	if (!alphaskytexture) {
+	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
+		alphaskytexture = GL_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
+	}
+	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
 		// Load a texture consisting of a single transparent pixel
 		alphaskytexture = GL_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
 	}
@@ -475,7 +479,8 @@ void R_LoadBrushModelTextures (model_t *m)
 		if (tx->loaded)
 			continue; // seems already loaded
 
-		tx->gl_texturenum = tx->fb_texturenum = 0;
+		GL_TextureReferenceInvalidate(tx->gl_texturenum);
+		GL_TextureReferenceInvalidate(tx->fb_texturenum);
 
 //		Com_Printf("tx %s\n", tx->name);
 
@@ -751,19 +756,21 @@ void Mod_ReloadModelsTextures (void)
 			}
 
 			tx->loaded = false; // so texture will be reloaded
-			tx->gl_texture_array = 0;
+			GL_TextureReferenceInvalidate(tx->gl_texture_array);
 		}
 	}
 
 	// now actually load textures for brush models
 	for (i = 1; i < MAX_MODELS; i++)
 	{
-		if (!cl.model_name[i][0])
+		if (!cl.model_name[i][0]) {
 			break;
+		}
 
 		m = cl.model_precache[i];
-		if (m->type != mod_brush)
+		if (m->type != mod_brush) {
 			continue; // actual only for brush models
+		}
 
 		R_LoadBrushModelTextures (m);
 	}
@@ -1994,23 +2001,23 @@ void Mod_AddModelFlags(model_t *mod)
 
 static mpic_t simpleitem_textures[MOD_NUMBER_HINTS][MAX_SIMPLE_TEXTURES];
 
-int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
+texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 {
-	GLuint tex = 0;
+	texture_ref tex = null_texture_reference;
 	int texmode = 0;
 	char basename[64], indentifier[64];
 
 	if (!mod) {
-		return 0;
+		return null_texture_reference;
 	}
 
 	if (RuleSets_DisallowExternalTexture(mod)) {
-		return 0;
+		return null_texture_reference;
 	}
 
 	// well, it have nothing with luma, but quite same restrictions...
 	if ((mod->modhint != MOD_BACKPACK) && !Ruleset_IsLumaAllowed(mod)) {
-		return 0;
+		return null_texture_reference;
 	}
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
@@ -2039,11 +2046,12 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		}
 	}
 
-	if (!tex)
+	if (!GL_TextureReferenceIsValid(tex)) {
 		tex = GL_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
+	}
 
 	if (developer.value > 1) {
-		Com_DPrintf("%s\n", tex ? "OK" : "FAIL");
+		Com_DPrintf("%s\n", GL_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {

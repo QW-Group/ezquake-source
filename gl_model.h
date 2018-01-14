@@ -52,8 +52,8 @@ typedef struct mvertex_s {
 typedef struct texture_s {
 	char                name[16];
 	unsigned int        width, height;
-	unsigned int        gl_texturenum;
-	unsigned int        fb_texturenum;				//index of fullbright mask or 0
+	texture_ref         gl_texturenum;
+	texture_ref         fb_texturenum;				//index of fullbright mask or 0
 	struct msurface_s*  texturechain[2];		
 	struct msurface_s** texturechain_tail[2];       //Points to the node right after the last non-NULL node in the texturechain.
 
@@ -77,7 +77,7 @@ typedef struct texture_s {
 	int                 next_same_size;
 	qbool               size_start;
 
-	unsigned int        gl_texture_array;
+	texture_ref         gl_texture_array;
 	unsigned int        gl_texture_index;
 	float               gl_texture_scaleS;
 	float               gl_texture_scaleT;
@@ -277,8 +277,8 @@ typedef struct mspriteframe_s {
 	int                 width;
 	int                 height;
 	float               up, down, left, right;
-	unsigned int        gl_texturenum;
-	int                 gl_arraynum;
+	texture_ref         gl_texturenum;
+	texture_ref         gl_arraynum;
 	int                 gl_arrayindex;
 
 	float               gl_scalingS;
@@ -393,8 +393,8 @@ typedef struct aliashdr_s {
 	int          poseverts;
 	int          posedata;	// numposes*poseverts trivert_t
 	int          commands;	// gl command list with embedded s/t
-	unsigned int gl_texturenum[MAX_SKINS][4];
-	unsigned int fb_texturenum[MAX_SKINS][4];
+	texture_ref  gl_texturenum[MAX_SKINS][4];
+	texture_ref  fb_texturenum[MAX_SKINS][4];
 
 	int          vertsPerPose;
 	int          vertsOffset;
@@ -491,7 +491,7 @@ typedef struct model_s {
 
 	unsigned short		crc;
 
-	unsigned int        simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
+	texture_ref         simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
 
 	modhint_t			modhint;
 
@@ -556,7 +556,7 @@ typedef struct model_s {
 	//glm_vao_t           vao;
 	//glm_vao_t           vao_simple;
 
-	unsigned int        texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
+	texture_ref         texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	float               texture_arrays_scale_s[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	float               texture_arrays_scale_t[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	unsigned int        texture_array_count;
@@ -569,7 +569,7 @@ typedef struct model_s {
 	unsigned int        vbo_start;
 	int                 vertsInVBO;
 
-	unsigned int        simpletexture_array;
+	texture_ref         simpletexture_array;
 	int                 simpletexture_indexes[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];
@@ -598,7 +598,7 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 qbool	Img_HasFullbrights (byte *pixels, int size);
 void	Mod_ReloadModelsTextures (void); // for vid_restart
 
-int		Mod_LoadSimpleTexture(model_t *mod, int skinnum);
+texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum);
 void    Mod_ClearSimpleTextures(void);
 
 #include "gl_md3.h"

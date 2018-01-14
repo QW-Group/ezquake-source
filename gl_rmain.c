@@ -61,18 +61,18 @@ double    gldepthmin, gldepthmax;
 float     r_world_matrix[16];
 float     r_base_world_matrix[16];
 float     clearColor[3] = {0, 0, 0};
-GLuint    shelltexture = 0;
 int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
 int       c_brush_polys;
 int       c_alias_polys;
 int       lightmode = 2;
 int       d_lightstylevalue[256];             // 8.8 fraction of base light value
-GLuint    particletexture;                    // little dot for particles
-GLuint    playernmtextures[MAX_CLIENTS];
-GLuint    playerfbtextures[MAX_CLIENTS];
-GLuint    skyboxtextures[MAX_SKYBOXTEXTURES];
-GLuint    underwatertexture, detailtexture;
+texture_ref shelltexture;
+texture_ref particletexture;                    // little dot for particles
+texture_ref playernmtextures[MAX_CLIENTS];
+texture_ref playerfbtextures[MAX_CLIENTS];
+texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
+texture_ref underwatertexture, detailtexture;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {
@@ -246,14 +246,16 @@ qbool R_CanDrawSimpleItem(entity_t* e)
 	}
 
 	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
-	return e->model->simpletexture[skin] != 0;
+
+	return GL_TextureReferenceIsValid(e->model->simpletexture[skin]);
 }
 
 static qbool R_DrawTrySimpleItem(void)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
-	int simpletexture, simpletexture_index;
+	texture_ref simpletexture;
+	int simpletexture_index;
 	vec3_t right, up, org, offset, angles;
 	float scale_s = 1.0f, scale_t = 1.0f;
 	int skin;
@@ -264,7 +266,7 @@ static qbool R_DrawTrySimpleItem(void)
 
 	skin = currententity->skinnum >= 0 && currententity->skinnum < MAX_SIMPLE_TEXTURES ? currententity->skinnum : 0;
 	simpletexture = currententity->model->simpletexture[skin]; // ah...
-	if (!simpletexture) {
+	if (!GL_TextureReferenceIsValid(simpletexture)) {
 		return false;
 	}
 

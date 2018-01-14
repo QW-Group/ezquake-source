@@ -121,7 +121,6 @@ void R_UpdateCoronas(void)
 //R_DrawCoronas
 void R_DrawCoronas(void)
 {
-	GLuint texture = corona_textures[CORONATEX_STANDARD];
 	vec3_t dist, up, right;
 	float fdist, scale, alpha;
 	corona_t *c;

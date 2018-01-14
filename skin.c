@@ -263,14 +263,19 @@ void Skins_PreCache(void)
 	{
 		tex = Skin_Cache (&skins[i], false); // this precache skin file in mem
 
-		if (!tex)
+		if (!tex) {
 			continue; // nothing more we can do
+		}
 
-		if (skins[i].bpp != 4) // we interesting in 24 bit skins only
-			continue; 
+		if (skins[i].bpp != 4) {
+			// we interesting in 24 bit skins only
+			continue;
+		}
 
-		if (skins[i].texnum) // seems skin alredy loaded, at least we have some texture
-			continue; 
+		if (GL_TextureReferenceIsValid(skins[i].texnum)) {
+			// seems skin alredy loaded, at least we have some texture
+			continue;
+		}
 
 		skins[i].texnum = GL_LoadTexture (skins[i].name, skins[i].width, skins[i].height, tex, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 
@@ -346,7 +351,7 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 	//	skin->texnum = (bpp != 1) ? GL_LoadTexture (skin->name, skin->width, skin->height, pix, TEX_MIPMAP | TEX_NOSCALE, bpp) : 0;
 	// FIXME: Above line does't work, texture loaded wrong, seems I need set some global gl states, but I dunno which,
 	// so moved it to R_TranslatePlayerSkin() and here set texture to 0
-	skin->texnum = 0;
+	GL_TextureReferenceInvalidate(skin->texnum);
 	skin->failedload = false;
 
 	return out;

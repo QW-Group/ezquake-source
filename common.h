@@ -40,6 +40,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "protocol.h"
 #include "cmodel.h"
 
+typedef struct texture_ref_s { unsigned int index; } texture_ref;
+extern const texture_ref null_texture_reference;
+#define GL_TextureReferenceIsValid(ref) ((ref).index)
+#define GL_TextureReferenceInvalidate(ref) { (ref).index = 0; }
+#define GL_TextureReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
+#define GL_TextureReferenceCompare(ref1, ref2) (ref1.index < ref2.index ? -1 : ref1.index > ref2.index ? 1 : 0)
+
 //============================================================================
 
 // per-level limits

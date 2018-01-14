@@ -41,22 +41,21 @@ void GL_EnableMultitexture(void);
 void GL_EnableTMU(GLenum target);
 void GL_DisableTMU(GLenum target);
 
-GLuint GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
-GLuint GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
-void GL_DeleteTexture(GLuint* texture);
-
 byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-GLuint GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
-GLuint GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
 
 void GL_Texture_Init(void);
 
-GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode);
-GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
-void GL_DeleteTextureArray(GLuint* texture);
-void GL_DeleteCubeMap(GLuint* texture);
+texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
+texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
+texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
+texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
+texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode);
+texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
+void GL_DeleteTextureArray(texture_ref* texture);
+void GL_DeleteCubeMap(texture_ref* texture);
+void GL_DeleteTexture(texture_ref* texture);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 

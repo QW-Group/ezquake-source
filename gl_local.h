@@ -131,16 +131,16 @@ extern	mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 extern	texture_t	*r_notexture_mip;
 extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-extern	GLuint particletexture;
-extern	GLuint netgraphtexture;
-extern	GLuint playertextures;
-extern	GLuint playernmtextures[MAX_CLIENTS];
-extern	GLuint playerfbtextures[MAX_CLIENTS];
 #define MAX_SKYBOXTEXTURES 6
-extern	GLuint skyboxtextures[MAX_SKYBOXTEXTURES];
-extern	GLuint skytexturenum;		// index in cl.loadmodel, not gl texture object
-extern	GLuint underwatertexture, detailtexture;
-extern	GLuint shelltexture;
+extern	texture_ref particletexture;
+extern	texture_ref netgraphtexture;
+extern	texture_ref playertextures;
+extern	texture_ref playernmtextures[MAX_CLIENTS];
+extern	texture_ref playerfbtextures[MAX_CLIENTS];
+extern	texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
+extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
+extern	texture_ref underwatertexture, detailtexture;
+extern	texture_ref shelltexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -707,7 +707,7 @@ typedef enum {
 
 #define	MAX_CITEX_COMPONENTS		8
 typedef struct ci_texture_s {
-	unsigned int texnum;
+	texture_ref  texnum;
 	int          components;
 	float        coords[MAX_CITEX_COMPONENTS][4];
 } ci_texture_t;
@@ -723,8 +723,8 @@ typedef struct ci_texture_s {
 
 void GLM_ExitBatchedPolyRegion(void);
 
-void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);
-void GLC_DrawSimpleItem(int simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
+void GLM_DrawSimpleItem(model_t* model, int texture_index, vec3_t origin, vec3_t angles, float scale, float scale_s, float scale_t);
+void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
 
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
@@ -752,7 +752,7 @@ void R_DrawPowerupShell(
 	model_t* model, int effects, int layer_no,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr
 );
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, int texture, int fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 void GLM_DrawTexturedWorld(model_t* model);
 void GLM_DrawSpriteModel(entity_t* e);
@@ -778,7 +778,7 @@ void GLC_RenderSceneBlurDo(float alpha);
 
 void SCR_SetupCI(void);
 
-void GLC_DrawTileClear(GLuint texnum, int x, int y, int w, int h);
+void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h);
 void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end);
 void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
 
@@ -788,7 +788,6 @@ void GLC_DrawParticles(int particles_to_draw, qbool square);
 void GLC_DrawImage(float x, float y, float ofs1, float ofs2, float sl, float tl, float sh, float th);
 void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLC_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
-void GLC_DrawTileClear(GLuint texnum, int x, int y, int w, int h);
 void GLC_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLC_EmitWaterPoly(msurface_t* fa, byte* col, float wateralpha);
 void GLC_DrawFlatPoly(glpoly_t* p);
@@ -809,7 +808,7 @@ void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
-void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, GLuint texnum, qbool isText);
+void GLM_DrawImage(float x, float y, float width, float height, int texture_unit, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_DrawParticles(int number, qbool square);
 void GLM_EmitCausticsPolys(void);
@@ -856,20 +855,20 @@ void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
 // Texture functions
-void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture);
-void GL_TexSubImage3D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-void GL_TexImage2D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_TexSubImage2D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_TexStorage2D(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-void GL_TexStorage3D(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param);
-void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params);
-void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param);
-void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params);
-void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum pname, GLint* params);
-void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
-void GL_GenerateMipmap(GLenum textureUnit, GLenum target, GLuint texture);
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference);
+void GL_TexSubImage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+void GL_TexImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_TexSubImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_TexStorage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+void GL_TexStorage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+void GL_TexParameterf(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, GLfloat param);
+void GL_TexParameterfv(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, const GLfloat *params);
+void GL_TexParameteri(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, GLint param);
+void GL_TexParameteriv(GLenum textureUnit, GLenum target, texture_ref reference, GLenum pname, const GLint *params);
+void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLenum pname, GLint* params);
+void GL_GetTexImage(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, texture_ref reference);
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
@@ -959,7 +958,7 @@ typedef enum {
 	MAX_BILLBOARD_BATCHES
 } billboard_batch_id;
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture, GLenum primitive_type, qbool depthTest);
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, GLenum primitive_type, qbool depthTest);
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
 void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
 void GL_DrawBillboards(void);

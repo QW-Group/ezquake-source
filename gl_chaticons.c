@@ -48,12 +48,13 @@ qbool ci_initialized = false;
 
 void CI_Init(void)
 {
-	GLuint ci_font;
+	texture_ref ci_font;
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;
 
 	ci_initialized = false;
 
-	if (!(ci_font = GL_LoadTextureImage("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode))) {
+	ci_font = GL_LoadTextureImage("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode);
+	if (!GL_TextureReferenceIsValid(ci_font)) {
 		return;
 	}
 

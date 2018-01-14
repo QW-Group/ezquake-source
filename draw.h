@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
 	int          width, height;
-	unsigned int texnum;
+	texture_ref  texnum;
 	float        sl, tl, sh, th;
 } mpic_t;
 
@@ -151,7 +151,7 @@ void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha);
 void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
-void Draw_2dAlphaTexture(float x, float y, float width, float height, int texture_num, float alpha);
+void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha);
 
 qbool R_CharAvailable (wchar num);
 

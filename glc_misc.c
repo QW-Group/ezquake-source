@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 
 // motion blur.
-int sceneblur_texture;
+texture_ref sceneblur_texture;
 
 void GLC_PolyBlend(float v_blend[4])
 {

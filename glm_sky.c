@@ -74,7 +74,7 @@ static glm_vao_t skyDome_vao;
 static glm_vao_t skyBox_vao;
 static glm_ubo_t ubo_skydomeData;
 static glm_ubo_t ubo_skyboxData;
-static GLuint skybox_cubeMap;
+static texture_ref skybox_cubeMap;
 
 void GLM_DrawSkyChain(void)
 {
@@ -339,7 +339,7 @@ static void GLM_DrawSkyDome(void)
 
 static void GLM_DrawSkyBox(void)
 {
-	if (skybox_cubeMap && BuildSkyBoxProgram()) {
+	if (GL_TextureReferenceIsValid(skybox_cubeMap) && BuildSkyBoxProgram()) {
 		GLsizei count[NUMBER_AXIS];
 		GLushort indices[NUMBER_AXIS * 5];
 		int number_to_draw = 0;
@@ -386,7 +386,7 @@ static void GLM_DrawSkyBox(void)
 	}
 }
 
-static void GLM_CopySkyboxTexturesToCubeMap(GLuint cubemap, int width, int height)
+static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int height)
 {
 	int i;
 	const GLenum bindings[] = {
@@ -415,7 +415,8 @@ qbool GLM_LoadSkyboxTextures(char* skyname)
 	qbool all_same = true;
 	int i;
 
-	skybox_cubeMap = 0;
+	// FIXME: Delete previous?
+	GL_TextureReferenceInvalidate(skybox_cubeMap);
 
 	if (!Sky_LoadSkyboxTextures(skyname)) {
 		return false;
