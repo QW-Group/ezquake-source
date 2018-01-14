@@ -429,7 +429,7 @@ static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int 
 	GL_Upload32(glt, trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
-static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
+static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
 {
 	gltexture_t* glt = NULL;
 	qbool load_over_existing = false;
@@ -459,7 +459,7 @@ static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, in
 				// so that we can be really sure this is the correct texture.
 				if (width == glt->width && height == glt->height && depth == glt->depth &&
 					*scaled_width == glt->scaled_width && *scaled_height == glt->scaled_height &&
-					crc == glt->crc && glt->bpp == bpp &&
+					crc == glt->crc && glt->bpp == bpp && glt->target == target &&
 					(mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE))) {
 					GL_BindTexture(depth ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, gltextures[i].texnum, true);
 					*new_texture = false;
@@ -485,12 +485,13 @@ static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, in
 	if (!load_over_existing) {
 		glt = &gltextures[numgltextures];
 		numgltextures++;
+		glt->target = target;
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
-		glGenTextures(1, &glt->texnum);
+		GL_CreateTextures(GL_TEXTURE0, glt->target, 1, &glt->texnum);
 	}
 	else if (glt && !glt->texnum) {
-		glGenTextures(1, &glt->texnum);
+		GL_CreateTextures(GL_TEXTURE0, glt->target, 1, &glt->texnum);
 	}
 
 	if (!glt) {
@@ -513,6 +514,7 @@ static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, in
 		glt->pathname = Q_strdup(fs_netpath);
 	}
 
+	assert(glt->target);
 	return glt;
 }
 
@@ -521,14 +523,13 @@ int GL_LoadTexture(const char *identifier, int width, int height, byte *data, in
 	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
-	gltexture_t *glt = GL_AllocateTextureSlot(identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
+	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, &scaled_width, &scaled_height, mode, crc, &new_texture);
 
 	if (glt && !new_texture) {
 		return glt->texnum;
 	}
 
 	// Upload the texture to OpenGL based on the bytes per pixel.
-	glt->target = GL_TEXTURE_2D;
 	switch (bpp)
 	{
 		case 1:
@@ -978,36 +979,35 @@ void GL_Texture_Init(void)
 	GL_InitTextureState();
 
 	// Save a texture slot for translated picture.
-	glGenTextures(1, &translate_texture);
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &translate_texture);
 
 	// Netgraph.
-	glGenTextures(1, &netgraphtexture);
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &netgraphtexture);
 
 	// Player skins.
-	glGenTextures(MAX_CLIENTS, playernmtextures);
-	glGenTextures(MAX_CLIENTS, playerfbtextures);
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playernmtextures);
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, MAX_CLIENTS, playerfbtextures);
 
 	// Lightmap.
 	if (GL_ShadersSupported()) {
-		glGenTextures(1, &lightmap_texture_array);
+		GL_CreateTextures(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
 
 		GL_TexStorage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
 		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		GL_TexParameteri(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, 0, false);
 
 		for (i = 0; i < MAX_LIGHTMAPS; ++i) {
 			lightmap_textures[i] = lightmap_texture_array;
 		}
 	}
 	else {
-		glGenTextures(MAX_LIGHTMAPS, lightmap_textures);
+		GL_CreateTextures(GL_TEXTURE1, GL_TEXTURE_2D, MAX_LIGHTMAPS, lightmap_textures);
 	}
 
 	// Motion blur.
-	glGenTextures(1, &sceneblur_texture);
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
 
 	// Powerup shells.
 	shelltexture = 0; // Force reload.
@@ -1052,7 +1052,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 	int scaled_width, scaled_height;
 	unsigned short crc = 0;
 	qbool new_texture = false;
-	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, *depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, &scaled_width, &scaled_height, mode, 0, &new_texture);
 	GLuint gl_texturenum;
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
@@ -1061,7 +1061,6 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 		return 0;
 	}
 
-	slot->target = GL_TEXTURE_2D_ARRAY;
 	if (slot && !new_texture) {
 		return slot->texnum;
 	}
@@ -1081,11 +1080,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 		int array_width, array_height, array_depth;
 
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, gl_texturenum, max_miplevels, GL_RGBA8, width, height, *depth);
-
-		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, max_miplevels, GL_RGBA8, width, height, *depth);
 
 		error = glGetError();
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
@@ -1094,6 +1089,10 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
+			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+
 			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 			gl_texturenum = 0;
@@ -1177,7 +1176,7 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 {
 	int scaled_width, scaled_height;
 	qbool new_texture;
-	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, 0, 4, &scaled_width, &scaled_height, TEX_NOCOMPRESS | TEX_MIPMAP, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_CUBE_MAP, identifier, width, height, 0, 4, &scaled_width, &scaled_height, TEX_NOCOMPRESS | TEX_MIPMAP, 0, &new_texture);
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
 
@@ -1185,7 +1184,6 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 		return 0;
 	}
 
-	slot->target = GL_TEXTURE_CUBE_MAP;
 	if (slot && !new_texture) {
 		return slot->texnum;
 	}
@@ -1198,16 +1196,16 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 
 	GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, max_miplevels, GL_RGBA8, width, height);
 	if (mode & TEX_MIPMAP) {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
 		if (anisotropy_ext) {
-			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 		}
 	}
 	else {
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
-		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
 	return slot->texnum;

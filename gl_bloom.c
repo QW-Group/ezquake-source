@@ -216,20 +216,18 @@ void R_Bloom_InitTextures( void )
 	//r_bloomscreentexture = GL_LoadTexture ( "***r_screenbackuptexture***", screen_texture_width, screen_texture_height, data, 0, 4); // false, false, 4);
 	
 	if (!r_bloomscreentexture) {
-		glGenTextures(1, &r_bloomscreentexture);
+		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &r_bloomscreentexture);
 		//r_bloomscreentexture = texture_extension_number++;
 	}
 
-	if(gl_gammacorrection.integer)
-	{
+	if (gl_gammacorrection.integer) {
 		glinternalfmt = GL_SRGB8;
 	}
-	else
-	{
+	else {
 		glinternalfmt = gl_solid_format;
 	}
 
-	GL_Bind(r_bloomscreentexture);
+	GL_BindTexture(GL_TEXTURE_2D, r_bloomscreentexture, false);
 	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, 0, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

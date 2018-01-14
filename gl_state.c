@@ -203,6 +203,9 @@ void GL_InitialiseState(void)
 // These functions taken from gl_texture.c
 void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
+	assert(targetType);
+	assert(texnum);
+
 #ifdef GL_PARANOIA
 	if (warning && !glIsTexture(texnum)) {
 		Con_Printf("ERROR: Non-texture %d passed to GL_BindTexture\n", texnum);

@@ -830,3 +830,14 @@ void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum
 	GL_BindTexture(target, texture, true);
 	glTexParameteriv(target, pname, params);
 }
+
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
+{
+	GLsizei i;
+
+	glGenTextures(n, textures);
+	for (i = 0; i < n; ++i) {
+		GL_SelectTexture(textureUnit);
+		GL_BindTexture(target, textures[i], false);
+	}
+}

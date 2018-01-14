@@ -883,6 +883,8 @@ void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum
 void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param);
 void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params);
 
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
+
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
 #define GLM_Enabled GL_ShadersSupported
