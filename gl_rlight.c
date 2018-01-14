@@ -108,23 +108,69 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	if (first_dlight) {
-		GL_EnterRegion("R_RenderDlights");
-		GL_DepthMask(GL_FALSE);
-		if (!GL_ShadersSupported()) {
-			glDisable(GL_TEXTURE_2D);
-		}
-		GL_ShadeModel(GL_SMOOTH);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_ONE, GL_ONE);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0);
 
 		first_dlight = false;
 	}
 
-	if (GL_ShadersSupported()) {
-		GLM_RenderDlight(light);
-	}
-	else {
-		GLC_RenderDlight(light);
+	{
+		int i, j;
+		vec3_t v, v_right, v_up;
+		float length;
+		float rad = light->radius * 0.35;
+		float *bub_sin, *bub_cos;
+		GLubyte center_color[4] = { 255, 255, 255, 255 };
+
+		VectorSubtract(light->origin, r_origin, v);
+		length = VectorNormalize(v);
+
+		if (length < rad) {
+			// view is inside the dlight
+			V_AddLightBlend(1, 0.5, 0, light->radius * 0.0003);
+			return;
+		}
+
+		VectorVectors(v, v_right, v_up);
+
+		if (length - rad > 8) {
+			VectorScale(v, rad, v);
+		}
+		else {
+			// make sure the light bubble will not be clipped by near z clip plane
+			VectorScale(v, length - 8, v);
+		}
+
+		VectorSubtract(light->origin, v, v);
+
+		if (!GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18)) {
+			return;
+		}
+
+		if (light->type == lt_custom) {
+			memcpy(center_color, light->color, 3);
+		}
+		else {
+			// FIXME: bubblecolor has 4 elements, but inline spec is only 3... ?
+			center_color[0] = bubblecolor[light->type][0] * 255;
+			center_color[1] = bubblecolor[light->type][1] * 255;
+			center_color[2] = bubblecolor[light->type][2] * 255;
+			center_color[3] = 255;
+		}
+
+		GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 0, 0, center_color);
+
+		bub_sin = bubble_sintable;
+		bub_cos = bubble_costable;
+
+		for (i = 16; i >= 0; i--) {
+			for (j = 0; j < 3; j++) {
+				v[j] = light->origin[j] + (v_right[j] * (*bub_cos) + +v_up[j] * (*bub_sin)) * rad;
+			}
+			bub_sin++;
+			bub_cos++;
+
+			GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 0, 0, color_black);
+		}
 	}
 }
 

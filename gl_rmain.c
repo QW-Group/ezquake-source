@@ -1097,6 +1097,8 @@ void R_RenderView(void)
 
 	R_DrawParticles();
 
+	GL_DrawBillboards();
+
 	if (!GL_ShadersSupported()) {
 		DrawChatIcons();
 

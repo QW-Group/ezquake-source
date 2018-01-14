@@ -889,6 +889,21 @@ void GLM_PreRenderView(void);
 void GLC_SetupGL(void);
 void GLM_SetupGL(void);
 
+// Billboards
+typedef enum {
+	BILLBOARD_PARTICLES_CLASSIC,
+	BILLBOARD_FLASHBLEND_LIGHTS,
+	BILLBOARD_CORONAS,
+	BILLBOARD_CHATICONS,
+
+	MAX_BILLBOARD_BATCHES
+} billboard_batch_id;
+
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, GLuint texture);
+qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
+void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
+void GL_DrawBillboards(void);
+
 #endif /* !__GL_LOCAL_H__ */
 
 

@@ -3295,12 +3295,6 @@ static void GLM_QMB_DrawParticles(void)
 	vao = GLM_QMB_CreateParticleVAO();
 
 	if (qmbParticleProgram.program && vao) {
-		float modelViewMatrix[16];
-		float projectionMatrix[16];
-
-		GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-		GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
 		GL_UseProgram(qmbParticleProgram.program);
 
 		GL_BindVertexArray(vao);
