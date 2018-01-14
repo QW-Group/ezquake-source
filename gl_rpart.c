@@ -1947,6 +1947,7 @@ void QMB_StaticBubble (entity_t *ent) {
 //writing anything else for it.
 void ParticleFirePool (vec3_t);
 extern cvar_t tei_lavafire;
+
 void WeatherEffect (void)
 {
 	vec3_t org, start, impact, normal;

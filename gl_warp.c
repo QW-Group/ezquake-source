@@ -216,7 +216,7 @@ void EmitWaterPolys(msurface_t *fa)
 		GLC_EmitWaterPoly(fa, col, wateralpha);
 	}
 	else {
-		// FIXME: Can still be called when drawing brush model (halflife maps?)
+		// MEAG: FIXME: Can still be called when drawing brush model (halflife maps?)
 	}
 }
 
@@ -249,8 +249,8 @@ void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 		}
 	}
 }
-//Tei, add fire to lava
 
+//Tei, add fire to lava
 void EmitCausticsPolys (void)
 {
 	if (GL_ShadersSupported()) {

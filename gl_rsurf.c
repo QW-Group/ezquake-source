@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 
+static void GL_EmitSurfaceParticleEffects(msurface_t* s);
+
 msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
 
@@ -478,6 +480,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				else {
 					chain_surfaces_by_lightmap(&waterchain, surf);
 				}
+				GL_EmitSurfaceParticleEffects(surf);
 			}
 			else if (!turbSurface && (surf->flags & SURF_DRAWALPHA)) {
 				CHAIN_SURF_B2F(surf, alphachain);
@@ -594,6 +597,106 @@ void R_MarkLeaves (void) {
 				node->visframe = r_visframecount;
 				node = node->parent;
 			} while (node);
+		}
+	}
+}
+
+static void GL_EmitSurfaceParticleEffects(msurface_t* s)
+{
+#define ESHADER(eshadername)  extern void eshadername (vec3_t org)
+	extern void EmitParticleEffect(msurface_t *fa, void (*fun)(vec3_t nv));
+	extern cvar_t tei_lavafire, tei_slime;
+
+	ESHADER(FuelRodExplosion);//green mushroom explosion
+	ESHADER(ParticleFire);//torch fire
+	ESHADER(ParticleFirePool);//lavapool alike fire
+	ESHADER(VX_DeathEffect);//big white spark explosion
+	ESHADER(VX_GibEffect);//huge red blood cloud
+	ESHADER(VX_DetpackExplosion);//cool huge explosion
+	ESHADER(VX_Implosion);//TODO
+	ESHADER(VX_TeslaCharge);
+	ESHADER(ParticleSlime);
+	ESHADER(ParticleSlimeHarcore);
+	ESHADER(ParticleBloodPool);
+	ESHADER(ParticleSlimeBubbles); //HyperNewbie particles init
+	ESHADER(ParticleSlimeGlow);
+	ESHADER(ParticleSmallerFirePool);
+	ESHADER(ParticleLavaSmokePool);
+
+	if (!tei_lavafire.integer && !tei_slime.integer) {
+		return;
+	}
+
+	//Tei "eshaders".
+	if (s->texinfo && s->texinfo->texture && s->texinfo->texture->name[0]) {
+		switch (s->texinfo->texture->name[1]) {
+			//Lava
+		case 'l':
+		case 'L':
+		{
+			switch (tei_lavafire.integer) {
+			case 1:
+				//Tei lavafire, normal
+				EmitParticleEffect(s, ParticleFire);
+				break;
+			case 2:
+				//Tei lavafire HARDCORE
+				EmitParticleEffect(s, ParticleFirePool);
+				//Tei redblood smoke
+				EmitParticleEffect(s, ParticleBloodPool);
+				break;
+			case 3:
+				//HyperNewbie's smokefire
+				EmitParticleEffect(s, ParticleSmallerFirePool);
+				EmitParticleEffect(s, ParticleLavaSmokePool);
+				break;
+			case 4:
+				EmitParticleEffect(s, ParticleSmallerFirePool);
+				EmitParticleEffect(s, ParticleLavaSmokePool);
+				EmitParticleEffect(s, ParticleLavaSmokePool);
+				EmitParticleEffect(s, ParticleLavaSmokePool);
+				break;
+			}
+			break;
+		}
+		case 't':
+			//Teleport
+			//TODO: a cool implosion subtel fx
+			//		EmitParticleEffect(s,VX_Implosion);
+			break;
+		case 's':
+		{
+			switch (tei_slime.integer) {
+			case 1:
+				EmitParticleEffect(s, ParticleSlime);
+				break;
+			case 2:
+				EmitParticleEffect(s, ParticleSlimeHarcore);
+				break;
+			case 3:
+				if (!(rand() % 40)) {
+					EmitParticleEffect(s, ParticleSlimeGlow);
+				}
+				if (!(rand() % 40)) {
+					EmitParticleEffect(s, ParticleSlimeBubbles);
+				}
+				break;
+			case 4:
+				if (!(rand() % 10)) {
+					EmitParticleEffect(s, ParticleSlimeGlow);
+				}
+				if (!(rand() % 10)) {
+					EmitParticleEffect(s, ParticleSlimeBubbles);
+				}
+				break;
+			}
+			break;
+		}
+		case 'w':
+			//	EmitParticleEffect(s,VX_TeslaCharge);
+			break;
+		default:
+			break;
 		}
 	}
 }
