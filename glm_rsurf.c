@@ -324,7 +324,7 @@ static void GL_FlushWorldModelBatch(void)
 		}
 
 		if (texArray) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texArray, true);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, texArray);
 		}
 
 		// FIXME: All brush models are in the same VAO, sort this out

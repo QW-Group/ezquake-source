@@ -652,8 +652,6 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
 void GL_BindVertexArray(glm_vao_t* vao);
 void GL_ShadeModel(GLenum model);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
-void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
-void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture);
 void GL_EnableFog(void);
 void GL_DisableFog(void);
 void GL_ConfigureFog(void);
@@ -859,24 +857,13 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo);
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
-// Texture updates
-void GL_TexSubImage3D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
-	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
-);
-void GL_TexImage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
-);
-void GL_TexSubImage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
-);
-void GL_TexStorage2D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
-);
-void GL_TexStorage3D(
-	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
-);
-
+// Texture functions
+void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture);
+void GL_TexSubImage3D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+void GL_TexImage2D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_TexSubImage2D(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void GL_TexStorage2D(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+void GL_TexStorage3D(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param);
 void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params);
 void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param);

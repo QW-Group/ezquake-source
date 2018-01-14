@@ -108,7 +108,7 @@ void GL_FlushSpriteBatch(void)
 
 		// FIXME: need to batch the calls?!
 		if (sprite->texture_array != prev_texture_array) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array, true);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, sprite->texture_array);
 			prev_texture_array = sprite->texture_array;
 		}
 

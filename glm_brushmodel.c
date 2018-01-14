@@ -395,7 +395,7 @@ static void GL_FlushBrushModelBatch(void)
 		}
 
 		if (texArray) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texArray, true);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, texArray);
 		}
 		GL_PolygonOffset(brushmodel_requests[i].polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 

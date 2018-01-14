@@ -125,8 +125,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 
 	if (GL_ShadersSupported()) {
 		if (texture) {
-			GL_SelectTexture(0);
-			GL_Bind(netgraphtexture);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, netgraphtexture);
 		}
 	}
 	else {
@@ -134,7 +133,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 			glDisable(GL_TEXTURE_2D);
 		}
 		else {
-			GL_Bind(netgraphtexture);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, netgraphtexture);
 		}
 	}
 
@@ -147,16 +146,21 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         i = (outgoing_sequence-a-1) & NET_TIMINGSMASK;
         h = packet_latency[i];
 
-        if (h == 10000)
-            color = 0x6f;   // yellow   [rate]
-        else if (h == 9999)
-            color = 0x4f;   // red      [lost]
-        else if (h == 9998)
-            color = 0xd0;   // blue     [delta]
-        else if (h == 10001)
-            color = 4;      // gray     [netlimit]
-        else
-            color = 0xfe;   // pink     [ms ping]
+		if (h == 10000) {
+			color = 0x6f;   // yellow   [rate]
+		}
+		else if (h == 9999) {
+			color = 0x4f;   // red      [lost]
+		}
+		else if (h == 9998) {
+			color = 0xd0;   // blue     [delta]
+		}
+		else if (h == 10001) {
+			color = 4;      // gray     [netlimit]
+		}
+		else {
+			color = 0xfe;   // pink     [ms ping]
+		}
 
         if (h < 9000) {
 			if (!par_inframes->value) {

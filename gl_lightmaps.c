@@ -286,17 +286,17 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	}
 }
 
-void R_UploadLightMap(int lightmapnum)
+void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 {
 	glRect_t	*theRect;
 
 	lightmap_modified[lightmapnum] = false;
 	theRect = &lightmap_rectchange[lightmapnum];
 	if (lightmap_texture_array) {
-		GL_TexSubImage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
+		GL_TexSubImage3D(textureUnit, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, theRect->t, lightmapnum, LIGHTMAP_WIDTH, theRect->h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
 	}
 	else {
-		GL_TexSubImage2D(GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[lightmapnum], 0, 0, theRect->t, LIGHTMAP_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+		GL_TexSubImage2D(textureUnit, GL_TEXTURE_2D, lightmap_textures[lightmapnum], 0, 0, theRect->t, LIGHTMAP_WIDTH, theRect->h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 			lightmaps + (lightmapnum * LIGHTMAP_HEIGHT + theRect->t) * LIGHTMAP_WIDTH * 4);
 	}
 	theRect->l = LIGHTMAP_WIDTH;
@@ -416,10 +416,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	if (min_changed < MAX_LIGHTMAPS) {
 		for (i = min_changed; i <= max_changed; ++i) {
 			if (lightmap_modified[i]) {
-				if (!lightmap_texture_array) {
-					GL_Bind(lightmap_textures[i]);
-				}
-				R_UploadLightMap(i);
+				R_UploadLightMap(GL_TEXTURE0, i);
 			}
 		}
 	}
@@ -623,7 +620,6 @@ void GL_BuildLightmaps(void)
 			GL_TexSubImage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, lightmaps + i * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 4);
 		}
 		else {
-			GL_BindFirstTime(lightmap_textures[i]);
 			GL_TexParameterf(GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			GL_TexParameterf(GL_TEXTURE1, GL_TEXTURE_2D, lightmap_textures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			GL_TexImage2D(
@@ -643,18 +639,20 @@ void GLC_MultitextureLightmap(int lightmap_num)
 {
 	GL_EnableMultitexture();
 
-	GLC_SetTextureLightmap(lightmap_num);
+	GLC_SetTextureLightmap(GL_TEXTURE1, lightmap_num);
 }
 
-void GLC_SetTextureLightmap(int lightmap_num)
+void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
 {
 	//bind the lightmap texture
-	GL_Bind(lightmap_textures[lightmap_num]);
 	GLC_SetLightmapTextureEnvironment();
 
 	//update lightmap if its modified by dynamic lights
 	if (lightmap_modified[lightmap_num]) {
-		R_UploadLightMap(lightmap_num);
+		R_UploadLightMap(textureUnit, lightmap_num);
+	}
+	else {
+		GL_BindTextureUnit(textureUnit, GL_TEXTURE_2D, lightmap_textures[lightmap_num]);
 	}
 }
 

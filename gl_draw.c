@@ -749,7 +749,6 @@ void Draw_Crosshair (void)
 			GL_TextureEnvMode(GL_MODULATE);
 			glEnable(GL_TEXTURE_2D);
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-			GL_Bind(texnum);
 #ifdef GL_CLAMP_TO_EDGE
 			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -759,6 +758,7 @@ void Draw_Crosshair (void)
 #endif
 
 			GL_Color4ubv(col);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
 			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			GL_TextureEnvMode(GL_REPLACE);

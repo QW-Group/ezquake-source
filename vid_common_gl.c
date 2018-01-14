@@ -760,8 +760,7 @@ void GL_TexSubImage3D(
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 }
 
@@ -770,8 +769,7 @@ void GL_TexImage2D(
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 }
 
@@ -780,8 +778,7 @@ void GL_TexSubImage2D(
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 }
 
@@ -789,8 +786,7 @@ void GL_TexStorage2D(
 	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
 )
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexStorage2D(target, levels, internalformat, width, height);
 }
 
@@ -798,36 +794,31 @@ void GL_TexStorage3D(
 	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
 )
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexStorage3D(target, levels, internalformat, width, height, depth);
 }
 
 void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameterf(target, pname, param);
 }
 
 void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameterfv(target, pname, params);
 }
 
 void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameteri(target, pname, param);
 }
 
 void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, true);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glTexParameteriv(target, pname, params);
 }
 
@@ -837,29 +828,25 @@ void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* tex
 
 	glGenTextures(n, textures);
 	for (i = 0; i < n; ++i) {
-		GL_SelectTexture(textureUnit);
-		GL_BindTexture(target, textures[i], false);
+		GL_BindTextureUnit(textureUnit, target, textures[i]);
 	}
 }
 
 void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum pname, GLint* params)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glGetTexLevelParameteriv(target, level, pname, params);
 }
 
 void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
 	// TODO: Use glGetnTexImage() if available (4.5)
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glGetTexImage(target, level, format, type, buffer);
 }
 
 void GL_GenerateMipmap(GLenum textureUnit, GLenum target, GLuint texture)
 {
-	GL_SelectTexture(textureUnit);
-	GL_BindTexture(target, texture, false);
+	GL_BindTextureUnit(textureUnit, target, texture);
 	glGenerateMipmap(target);
 }

@@ -8,6 +8,8 @@
 
 #define MAX_LOGGED_TEXTURE_UNITS 8
 
+static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
+
 static GLenum currentDepthFunc = GL_LESS;
 static double currentNearRange = 0;
 static double currentFarRange = 1;
@@ -59,27 +61,24 @@ void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture)
 				return;
 			}
 			else if (unit != oldtarget && cntarrays[unit_num] == texture) {
+				GL_SelectTexture(unit);
 				return;
 			}
-			GL_SelectTexture(unit);
-			GL_BindTexture(targetType, texture, true);
-			return;
 		}
 		else if (targetType == GL_TEXTURE_2D) {
 			if (unit == oldtarget && currenttexture == texture) {
 				return;
 			}
 			else if (unit != oldtarget && cnttextures[unit_num] == texture) {
+				GL_SelectTexture(unit);
 				return;
 			}
-			GL_SelectTexture(unit);
-			GL_BindTexture(targetType, texture, true);
-			return;
 		}
 	}
 
 	GL_SelectTexture(unit);
 	GL_BindTexture(targetType, texture, true);
+	return;
 }
 
 void GL_DepthFunc(GLenum func)
@@ -201,7 +200,7 @@ void GL_InitialiseState(void)
 }
 
 // These functions taken from gl_texture.c
-void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
+static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
 	assert(targetType);
 	assert(texnum);

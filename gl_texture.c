@@ -454,13 +454,15 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 		int i;
 		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
 			if (!strncmp(identifier, glt->identifier, sizeof(glt->identifier) - 1)) {
+				qbool same_dimensions = (width == glt->width && height == glt->height && depth == glt->depth);
+				qbool same_scaling = (*scaled_width == glt->scaled_width && *scaled_height == glt->scaled_height);
+				qbool same_format = (glt->bpp == bpp && glt->target == target);
+				qbool same_options = (mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE));
+
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
-				if (width == glt->width && height == glt->height && depth == glt->depth &&
-					*scaled_width == glt->scaled_width && *scaled_height == glt->scaled_height &&
-					crc == glt->crc && glt->bpp == bpp && glt->target == target &&
-					(mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE))) {
-					GL_BindTexture(depth ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, gltextures[i].texnum, true);
+				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
+					GL_BindTextureUnit(GL_TEXTURE0, depth ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, gltextures[i].texnum);
 					*new_texture = false;
 					return glt;
 				}
@@ -1058,7 +1060,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 		min_dimension /= 2;
 	}
 
-	GL_BindTexture(GL_TEXTURE_2D_ARRAY, gl_texturenum, false);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, gl_texturenum);
 	GL_ProcessErrors("Prior-texture-array-creation");
 	while (*depth >= 1) {
 		GLenum error;

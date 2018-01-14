@@ -153,7 +153,7 @@ void R_DrawAlias3Model (entity_t *ent)
 		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
 		numtris = surf->numTriangles * 3;		
 
-		GL_Bind((sinf+pheader->numSurfaces*pheader->numSkins + surfnum)->texnum);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, (sinf+pheader->numSurfaces*pheader->numSkins + surfnum)->texnum);
 
 		glBegin (GL_TRIANGLES);
 
