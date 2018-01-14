@@ -474,20 +474,13 @@ void GLM_DrawTexturedWorld(model_t* model)
 					for (poly = surf->polys; poly; poly = poly->next) {
 						int newVerts = poly->numverts;
 
-						if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+						if (count + 1 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 							glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
 							count = 0;
 						}
 
-						// Degenerate triangle strips
 						if (count) {
-							int prev = count - 1;
-
-							if (count % 2 == 1) {
-								indices[count++] = indices[prev];
-							}
-							indices[count++] = indices[prev];
-							indices[count++] = poly->vbo_start;
+							indices[count++] = ~(GLuint)0;
 						}
 
 						for (v = 0; v < newVerts; ++v) {
@@ -511,20 +504,13 @@ void GLM_DrawTexturedWorld(model_t* model)
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
-				if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
+				if (count + 1 + newVerts > sizeof(indices) / sizeof(indices[0])) {
 					glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, indices);
 					count = 0;
 				}
 
-				// Degenerate triangle strips
 				if (count) {
-					int prev = count - 1;
-
-					if (count % 2 == 1) {
-						indices[count++] = indices[prev];
-					}
-					indices[count++] = indices[prev];
-					indices[count++] = poly->vbo_start;
+					indices[count++] = ~(GLuint)0;
 				}
 
 				for (v = 0; v < newVerts; ++v) {

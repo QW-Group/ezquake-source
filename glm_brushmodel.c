@@ -473,19 +473,13 @@ void GLM_DrawBrushModel(model_t* model)
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					int newVerts = surf->polys->numverts;
 
-					if (req->count + 3 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
+					if (req->count + 1 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
 						req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
 					}
 
 					// Degenerate triangle strips
 					if (req->count) {
-						int prev = req->count - 1;
-
-						if (req->count % 2 == 1) {
-							req->indices[req->count++] = req->indices[prev];
-						}
-						req->indices[req->count++] = req->indices[prev];
-						req->indices[req->count++] = surf->polys->vbo_start;
+						req->indices[req->count++] = ~(GLuint)0;
 					}
 
 					for (v = 0; v < newVerts; ++v) {

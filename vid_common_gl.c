@@ -139,7 +139,6 @@ glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 
 static qbool vbo_supported = false;
 static qbool shaders_supported = false;
-static unsigned int vbo_number = 1;
 static int modern_only = -1;
 
 qbool GL_ShadersSupported(void)
@@ -280,7 +279,16 @@ static void CheckShaderExtensions(void)
 
 		vbo_supported = glBindBuffer && glBufferData && glBufferSubDataExt;
 	}
-	vbo_number = 1;
+
+	if (glPrimitiveRestartIndex) {
+		glEnable(GL_PRIMITIVE_RESTART);
+		if (glConfig.majorVersion > 4 || (glConfig.majorVersion == 4 && glConfig.minorVersion >= 3)) {
+			glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+		}
+		else {
+			glPrimitiveRestartIndex(~(GLuint)0);
+		}
+	}
 }
 
 void GL_CheckExtensions (void) {
