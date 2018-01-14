@@ -382,33 +382,5 @@ static void GLC_MakeSkyVec(float s, float t, int axis)
 
 qbool GLC_LoadSkyboxTextures(char* skyname)
 {
-	static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
-	int i, real_width, real_height;
-
-	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
-		byte *data;
-
-		if (
-			(data = GL_LoadImagePixels(va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels(va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels(va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels(va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			) {
-			skyboxtextures[i] = GL_LoadTexture(
-				va("skybox:%s", skybox_ext[i]),
-				real_width, real_height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4);
-			// we shold free data from GL_LoadImagePixels()
-			Q_free(data);
-		}
-		else {
-			skyboxtextures[i] = 0; // GL_LoadImagePixels() fail to load anything
-		}
-
-		if (!skyboxtextures[i]) {
-			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
-			return false;
-		}
-	}
-
-	return true;
+	return Sky_LoadSkyboxTextures(skyname);
 }

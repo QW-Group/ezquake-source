@@ -420,7 +420,7 @@ static void GL_Upload8 (byte *data, int width, int height, int mode)
 	GL_Upload32 (trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
-static gltexture_t* GL_AllocateTextureSlot(char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
+static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
 {
 	gltexture_t* glt = NULL;
 	qbool load_over_existing = false;
@@ -507,7 +507,7 @@ static gltexture_t* GL_AllocateTextureSlot(char* identifier, int width, int heig
 	return glt;
 }
 
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) 
+int GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
 {
 	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
@@ -1040,7 +1040,7 @@ void GL_Texture_Init(void)
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
-GLuint GL_CreateTextureArray(char* identifier, int width, int height, int* depth, int mode)
+GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode)
 {
 	int scaled_width, scaled_height;
 	unsigned short crc = 0;
@@ -1137,6 +1137,11 @@ void GL_DeleteTexture(int* texture)
 	*texture = 0;
 }
 
+void GL_DeleteCubeMap(GLuint* texture)
+{
+	GL_DeleteTexture(texture);
+}
+
 // Identical to GL_DeleteTexture but for type correctness...
 void GL_DeleteTextureArray(GLuint* texture)
 {
@@ -1158,4 +1163,44 @@ void GL_DeleteTextureArray(GLuint* texture)
 	glDeleteTextures(1, texture);
 	GL_InvalidateTextureReferences(*texture);
 	*texture = 0;
+}
+
+GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
+{
+	int scaled_width, scaled_height;
+	qbool new_texture;
+	gltexture_t* slot = GL_AllocateTextureSlot(identifier, width, height, 0, 4, &scaled_width, &scaled_height, TEX_NOCOMPRESS | TEX_MIPMAP, 0, &new_texture);
+	int max_miplevels = 0;
+	int min_dimension = min(width, height);
+
+	if (!slot) {
+		return 0;
+	}
+
+	if (slot && !new_texture) {
+		return slot->texnum;
+	}
+
+	// 
+	while (min_dimension > 0) {
+		max_miplevels++;
+		min_dimension /= 2;
+	}
+
+	GL_BindTexture(GL_TEXTURE_CUBE_MAP, slot->texnum, false);
+	glTexStorage2D(GL_TEXTURE_CUBE_MAP, max_miplevels, GL_RGBA8, width, height);
+	if (mode & TEX_MIPMAP) {
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+
+		if (anisotropy_ext) {
+			glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+		}
+	}
+	else {
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
+	}
+
+	return slot->texnum;
 }

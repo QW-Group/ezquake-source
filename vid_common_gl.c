@@ -123,6 +123,7 @@ glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Texture functions 
 glActiveTexture_t        glActiveTexture;
+glTexStorage2D_t         glTexStorage2D;
 glTexSubImage3D_t        glTexSubImage3D;
 glTexStorage3D_t         glTexStorage3D;
 glGenerateMipmap_t       glGenerateMipmap;
@@ -260,6 +261,7 @@ static void CheckShaderExtensions(void)
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
+			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage2D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
 
@@ -373,7 +375,9 @@ void GL_Init(void)
 #endif
 
 	GL_CullFace(GL_FRONT);
-	glEnable(GL_TEXTURE_2D);
+	if (!GL_ShadersSupported()) {
+		glEnable(GL_TEXTURE_2D);
+	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_AlphaFunc(GL_GREATER, 0.666);

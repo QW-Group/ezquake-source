@@ -44,7 +44,7 @@ void GL_EnableMultitexture(void);
 void GL_EnableTMU(GLenum target);
 void GL_DisableTMU(GLenum target);
 
-int GL_LoadTexture(char *identifier, int width, int height, byte *data, int mode, int bpp);
+int GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 void GL_DeleteTexture(int* texture);
 
@@ -56,8 +56,11 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 
 
 void GL_Texture_Init(void);
-GLuint GL_CreateTextureArray(char* identifier, int width, int height, int* depth, int mode);
+
+GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode);
+GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
 void GL_DeleteTextureArray(GLuint* texture);
+void GL_DeleteCubeMap(GLuint* texture);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 

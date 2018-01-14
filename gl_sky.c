@@ -98,8 +98,15 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	if (!GLC_LoadSkyboxTextures(skyname)) {
-		return 1;
+	if (GL_ShadersSupported()) {
+		if (!GLM_LoadSkyboxTextures(skyname)) {
+			return 1;
+		}
+	}
+	else {
+		if (!GLC_LoadSkyboxTextures(skyname)) {
+			return 1;
+		}
 	}
 
 	// everything was OK
@@ -407,4 +414,57 @@ void R_DrawSky (void)
 
 	skychain = NULL;
 	skychain_tail = &skychain;
+}
+
+qbool Sky_LoadSkyboxTextures(const char* skyname)
+{
+	static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
+	static char* search_paths[][2] = {
+		{ "env/", "" },
+		{ "gfx/env/", "" },
+		{ "env/", "_" },
+		{ "gfx/env/", "_" }
+	};
+	int i;
+	int j;
+
+	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
+		skyboxtextures[i] = 0;
+		for (j = 0; j < sizeof(search_paths) / sizeof(search_paths[0]); ++j) {
+			char path[MAX_PATH];
+			byte* data;
+			int width, height;
+
+			strlcpy(path, search_paths[j][0], sizeof(path));
+			strlcat(path, skyname, sizeof(path));
+			strlcat(path, search_paths[j][1], sizeof(path));
+			strlcat(path, skybox_ext[i], sizeof(path));
+
+			data = GL_LoadImagePixels(path, 0, 0, 0, &width, &height);
+			if (data) {
+				char id[16];
+
+				strlcpy(id, "skybox:", sizeof(id));
+				strlcat(id, skybox_ext[i], sizeof(id));
+
+				skyboxtextures[i] = GL_LoadTexture(
+					id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4
+				);
+
+				// we should free data from GL_LoadImagePixels()
+				Q_free(data);
+
+				if (skyboxtextures[i]) {
+					break;
+				}
+			}
+		}
+
+		if (!skyboxtextures[i]) {
+			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
+			return false;
+		}
+	}
+
+	return true;
 }

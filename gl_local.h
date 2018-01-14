@@ -55,7 +55,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APIENTRY
 #endif
 
-// #define GL_PARANOIA
+//#define GL_PARANOIA
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
@@ -425,6 +425,7 @@ typedef void (APIENTRY *glGetActiveUniformBlockiv_t)(GLuint program, GLuint unif
 // Textures
 typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
 typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
@@ -495,6 +496,7 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 // Textures
 extern glActiveTexture_t        glActiveTexture;
 extern glTexSubImage3D_t        glTexSubImage3D;
+extern glTexStorage2D_t         glTexStorage2D;
 extern glTexStorage3D_t         glTexStorage3D;
 extern glGenerateMipmap_t       glGenerateMipmap;
 
@@ -885,6 +887,7 @@ enum {
 	GL_BINDINGPOINT_SPRITEDATA_CVARS,
 
 	GL_BINDINGPOINT_SKYDOME_CVARS,
+	GL_BINDINGPOINT_SKYBOX_CVARS,
 
 	GL_BINDINGPOINT_COUNT
 };

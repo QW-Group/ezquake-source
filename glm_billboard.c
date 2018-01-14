@@ -259,6 +259,7 @@ void GLM_DrawBillboards(void)
 		batch->count = 0;
 	}
 
+	// FIXME: GL_ResetState()
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
