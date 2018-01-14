@@ -751,11 +751,11 @@ void Draw_Crosshair (void)
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			GL_Bind(texnum);
 #ifdef GL_CLAMP_TO_EDGE
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #else
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #endif
 
 			GL_Color4ubv(col);
@@ -763,8 +763,8 @@ void Draw_Crosshair (void)
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			GL_TextureEnvMode(GL_REPLACE);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		}
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);

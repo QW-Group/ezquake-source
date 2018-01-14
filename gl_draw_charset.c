@@ -220,14 +220,13 @@ static void Apply_OnChange_gl_smoothfont(int value)
 			break;
 		}
 
-		GL_Bind(char_textures[i].texnum);
 		if (value) {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, char_textures[i].texnum, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, char_textures[i].texnum, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 		else {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, char_textures[i].texnum, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, char_textures[i].texnum, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 	}
 }

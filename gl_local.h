@@ -879,6 +879,11 @@ void GL_TexStorage3D(
 	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
 );
 
+void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param);
+void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params);
+void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param);
+void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params);
+
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
 #define GLM_Enabled GL_ShadersSupported

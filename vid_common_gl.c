@@ -362,8 +362,9 @@ void GL_Init(void)
 	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
 #endif
 
-	if (COM_CheckParm("-gl_ext"))
+	if (COM_CheckParm("-gl_ext")) {
 		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
+	}
 
 	Cvar_Register(&gl_strings);
 	Cvar_ForceSet(&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
@@ -386,10 +387,13 @@ void GL_Init(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	GL_ShadeModel(GL_FLAT);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// ???? WHAT TEXTURE IS THIS?
+	/*
+	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	*/
 
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -797,4 +801,32 @@ void GL_TexStorage3D(
 	GL_SelectTexture(textureUnit);
 	GL_BindTexture(target, texture, false);
 	glTexStorage3D(target, levels, internalformat, width, height, depth);
+}
+
+void GL_TexParameterf(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLfloat param)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexParameterf(target, pname, param);
+}
+
+void GL_TexParameterfv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLfloat *params)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexParameterfv(target, pname, params);
+}
+
+void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, GLint param)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexParameteri(target, pname, param);
+}
+
+void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexParameteriv(target, pname, params);
 }
