@@ -27,14 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "tr_types.h"
 
-static void GLM_QMB_DrawParticles(void);
-static void GLC_QMB_DrawParticles(void);
-
-static glm_vbo_t qmbParticleVBO;
-static glm_vao_t qmbParticleVAO;
-static glm_program_t qmbParticleProgram;
-static GLint qmbParticles_RefdefCvars_block;
-
 //VULT
 static float alphatrail_s;
 static float alphatrail_l;
@@ -144,11 +136,8 @@ typedef struct particle_tree_s {
 	part_move_t	move;
 	float		custom;
 
-	int         vbo_start;
-	int         vbo_count;
-	int         draw_start;
-	int         draw_count;
 	int         verts_per_primitive;
+	billboard_batch_id billboard_type;
 } particle_type_t;
 
 typedef struct qmb_particle_vertex_s {
@@ -158,14 +147,6 @@ typedef struct qmb_particle_vertex_s {
 } qmb_particle_vertex_t;
 
 #define MAX_BEAM_TRAIL 10
-#define MAX_VERTICES_PER_PARTICLE (MAX_BEAM_TRAIL * 9)
-#define MAX_VERTICES_IN_BATCH (ABSOLUTE_MAX_PARTICLES * MAX_VERTICES_PER_PARTICLE)
-#define MAX_DRAW_CALLS (ABSOLUTE_MAX_PARTICLES * MAX_BEAM_TRAIL)
-static qmb_particle_vertex_t vertices[MAX_VERTICES_IN_BATCH];
-static GLint firstVertices[MAX_DRAW_CALLS];
-static GLsizei countVertices[MAX_DRAW_CALLS];
-static int particleVertexCount = 0;
-static int particleRenderCount = 0;
 
 #define	MAX_PTEX_COMPONENTS		8
 typedef struct particle_texture_s {
@@ -187,7 +168,6 @@ static vec3_t zerodir = {22, 22, 22};
 static int particle_count = 0;
 static float particle_time;		
 static vec3_t trail_stop;
-
 
 qbool qmb_initialized = false;
 
@@ -300,6 +280,7 @@ do { \
 	particle_types[count].move = (_move);                                          \
 	particle_types[count].custom = (_custom);                                      \
 	particle_types[count].verts_per_primitive = (_verts_per_primitive);            \
+	particle_types[count].billboard_type = (BILLBOARD_PARTICLES_NEW_ ## _id);      \
 	particle_type_index[_id] = count;                                              \
 	count++;                                                                       \
 } while(0);
@@ -607,26 +588,23 @@ void QMB_ClearParticles (void)
 	//VULT STATS
 	ParticleCount = 0;
 	ParticleCountHigh = 0;
-
-	particleVertexCount = 0;
-	particleRenderCount = 0;
 }
-
+/*
 static void QMB_SetParticleVertex(int pos, float x, float y, float z, float s, float t, col_t colour)
 {
 	VectorSet(vertices[pos].position, x, y, z);
 	vertices[pos].tex[0] = s;
 	vertices[pos].tex[1] = t;
 	memcpy(vertices[pos].color, colour, sizeof(vertices[pos].color));
-}
+}*/
 
-__inline static int CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_t * p, vec3_t coord[4], int pos)
+__inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
 {
 	vec3_t verts[4];
 	float scale = p->size;
 
-	if (pos + 4 >= MAX_VERTICES_IN_BATCH || particleRenderCount >= MAX_DRAW_CALLS) {
-		return pos;
+	if (!GL_BillboardAddEntry(type->billboard_type, 4)) {
+		return;
 	}
 
 	if (p->rotspeed)
@@ -653,14 +631,12 @@ __inline static int CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, part
 		VectorMA(p->org, scale, coord[3], verts[3]);
 	}
 
-	firstVertices[particleRenderCount] = pos;
-	countVertices[particleRenderCount++] = 4;
-	QMB_SetParticleVertex(pos++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
-	QMB_SetParticleVertex(pos++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
-	QMB_SetParticleVertex(pos++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
-	QMB_SetParticleVertex(pos++, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
+	GL_BillboardAddVert(type->billboard_type, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
+	GL_BillboardAddVert(type->billboard_type, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
+	GL_BillboardAddVert(type->billboard_type, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
+	GL_BillboardAddVert(type->billboard_type, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
 
-	return pos;
+	return;
 }
 
 static void QMB_FillParticleVertexBuffer(void)
@@ -681,12 +657,9 @@ static void QMB_FillParticleVertexBuffer(void)
 	VectorNegate(billboard[3], billboard[1]);
 
 	for (i = 0; i < num_particletypes; i++) {
-		pt = &particle_types[i];
+		qbool first = true;
 
-		pt->vbo_start = pos;
-		pt->vbo_count = 0;
-		pt->draw_start = particleRenderCount;
-		pt->draw_count = 0;
+		pt = &particle_types[i];
 
 		if (!pt->start) {
 			continue;
@@ -704,17 +677,18 @@ static void QMB_FillParticleVertexBuffer(void)
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
 				}
-				for (l = min(amf_part_traildetail.integer, 10); l > 0; l--) {
-					if (particleRenderCount < MAX_DRAW_CALLS && pos + 4 < MAX_VERTICES_IN_BATCH) {
-						firstVertices[particleRenderCount] = pos;
-						countVertices[particleRenderCount++] = 4;
-
+				if (first) {
+					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+					first = false;
+				}
+				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
+					if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size / (l * amf_part_trailwidth.value));
 
-						QMB_SetParticleVertex(pos++, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
-						QMB_SetParticleVertex(pos++, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
-						QMB_SetParticleVertex(pos++, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
-						QMB_SetParticleVertex(pos++, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
+						GL_BillboardAddVert(pt->billboard_type, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
+						GL_BillboardAddVert(pt->billboard_type, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
+						GL_BillboardAddVert(pt->billboard_type, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
+						GL_BillboardAddVert(pt->billboard_type, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
 					}
 				}
 			}
@@ -731,34 +705,35 @@ static void QMB_FillParticleVertexBuffer(void)
 					continue;
 				}
 
-				if (particleRenderCount >= MAX_DRAW_CALLS || pos + 8 >= MAX_VERTICES_IN_BATCH) {
-					break;
+				if (first) {
+					GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+					first = false;
 				}
 
-				if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
-					VectorCopy(p->org, neworg);
-				}
-
-				point = (pt->drawtype == pd_spark ? p->org : p->endorg);
-				farColor[0] = p->color[0] >> 1;
-				farColor[1] = p->color[1] >> 1;
-				farColor[2] = p->color[2] >> 1;
-				farColor[3] = 0;
-
-				firstVertices[particleRenderCount] = pos;
-				countVertices[particleRenderCount++] = 9;
-				QMB_SetParticleVertex(pos++, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
-				for (j = 7; j >= 0; j--) {
-					vec3_t v;
-					for (k = 0; k < 3; k++) {
-						if (pt->drawtype == pd_spark) {
-							v[k] = p->org[k] - p->vel[k] / 8 + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
-						}
-						else {
-							v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
-						}
+				if (GL_BillboardAddEntry(pt->billboard_type, pt->verts_per_primitive)) {
+					if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
+						VectorCopy(p->org, neworg);
 					}
-					QMB_SetParticleVertex(pos++, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor);
+
+					point = (pt->drawtype == pd_spark ? p->org : p->endorg);
+					farColor[0] = p->color[0] >> 1;
+					farColor[1] = p->color[1] >> 1;
+					farColor[2] = p->color[2] >> 1;
+					farColor[3] = 0;
+
+					GL_BillboardAddVert(pt->billboard_type, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+					for (j = 7; j >= 0; j--) {
+						vec3_t v;
+						for (k = 0; k < 3; k++) {
+							if (pt->drawtype == pd_spark) {
+								v[k] = p->org[k] - p->vel[k] / 8 + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
+							}
+							else {
+								v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
+							}
+						}
+						GL_BillboardAddVert(pt->billboard_type, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor);
+					}
 				}
 			}
 			break;
@@ -773,6 +748,11 @@ static void QMB_FillParticleVertexBuffer(void)
 						continue;
 					}
 
+					if (first) {
+						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+						first = false;
+					}
+
 					if (pt->drawtype == pd_billboard) {
 						if (gl_clipparticles.value) {
 							if (drawncount >= 3 && VectorSupCompare(p->org, r_origin, 30)) {
@@ -780,7 +760,8 @@ static void QMB_FillParticleVertexBuffer(void)
 							}
 							drawncount++;
 						}
-						pos = CALCULATE_PARTICLE_BILLBOARD(ptex, p, billboard, pos);
+
+						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, billboard, pos);
 					}
 					else if (pt->drawtype == pd_billboard_vel) {
 						vec3_t up, right;
@@ -794,7 +775,8 @@ static void QMB_FillParticleVertexBuffer(void)
 						VectorSubtract(right, up, velcoord[3]);
 						VectorNegate(velcoord[2], velcoord[0]);
 						VectorNegate(velcoord[3], velcoord[1]);
-						pos = CALCULATE_PARTICLE_BILLBOARD(ptex, p, velcoord, pos);
+
+						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, velcoord, pos);
 					}
 				}
 			}
@@ -813,39 +795,40 @@ static void QMB_FillParticleVertexBuffer(void)
 						continue;
 					}
 
-					if (particleRenderCount + 1 >= MAX_DRAW_CALLS || pos + 8 >= MAX_VERTICES_IN_BATCH) {
-						break;
+					if (first) {
+						GL_BillboardInitialiseBatch(pt->billboard_type, pt->SrcBlend, pt->DstBlend, ptex->texnum, GL_TRIANGLE_FAN);
+						first = false;
 					}
 
-					GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
-					GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
-					GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
-					GLM_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
-					GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
+					if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
+						GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
+						GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
+						GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
+						GLM_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
+						GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
 
-					firstVertices[particleRenderCount] = pos;
-					countVertices[particleRenderCount++] = 4;
-					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
-					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
-					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
-					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
+						GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+						GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+						GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+						GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
+						GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+						GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
+						GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+						GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
 
-					GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
+						if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
+							GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
-					firstVertices[particleRenderCount] = pos;
-					countVertices[particleRenderCount++] = 4;
-					GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
-					GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
-					GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
-					GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-					QMB_SetParticleVertex(pos++, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
+							GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+							GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+							GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+							GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
+							GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+							GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
+							GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+							GL_BillboardAddVert(pt->billboard_type, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
+						}
+					}
 				}
 			}
 			break;
@@ -853,17 +836,6 @@ static void QMB_FillParticleVertexBuffer(void)
 			assert(!"QMB_DrawParticles: unexpected drawtype");
 			break;
 		}
-
-		pt->vbo_count = pos - pt->vbo_start;
-		pt->draw_count = particleRenderCount - pt->draw_start;
-	}
-
-	particleVertexCount = pos;
-
-	// Update VBO
-	if (qmbParticleVBO.vbo) {
-		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices);
 	}
 }
 
@@ -881,8 +853,6 @@ static void QMB_UpdateParticles(void)
 
 	particle_count = 0;
 	grav = movevars.gravity / 800.0;
-	particleVertexCount = 0;
-	particleRenderCount = 0;
 
 	//VULT PARTICLES
 	WeatherEffect();
@@ -1090,8 +1060,6 @@ static void QMB_UpdateParticles(void)
 			}
 		}
 	}
-
-	QMB_FillParticleVertexBuffer();
 }
 
 void QMB_CalculateParticles(void)
@@ -1106,19 +1074,13 @@ void QMB_CalculateParticles(void)
 		QMB_UpdateParticles();
 	}
 }
-
 void QMB_DrawParticles(void)
 {
-	if (!qmb_initialized || !particleVertexCount) {
+	if (!qmb_initialized) {
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
-		GLM_QMB_DrawParticles();
-	}
-	else {
-		GLC_QMB_DrawParticles();
-	}
+	QMB_FillParticleVertexBuffer();
 }
 
 #define	INIT_NEW_PARTICLE(_pt, _p, _color, _size, _time)	\
@@ -3191,141 +3153,4 @@ void VX_LightningTrail (vec3_t start, vec3_t end)
 {
 	col_t color={255,77,0,255};
 	AddParticle(p_lightningbeam, start, 1, 50, 0.75, color, end);
-}
-
-
-static void GLC_QMB_DrawParticles(void)
-{
-	particle_type_t *pt;
-	particle_texture_t *ptex;
-	int	i, j;
-	int pos = 0;
-
-	GL_DisableFog();
-	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
-	glEnable(GL_TEXTURE_2D);
-
-	for (i = 0; i < num_particletypes; i++) {
-		pt = &particle_types[i];
-		if (!pt->vbo_count || pt->drawtype == pd_hide) {
-			continue;
-		}
-
-		GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
-
-		ptex = &particle_textures[pt->texture];
-		GL_Bind(ptex->texnum);
-
-		for (j = 0; j < pt->vbo_count; j += pt->verts_per_primitive) {
-			int k;
-
-			glBegin(GL_TRIANGLE_FAN);
-			for (k = 0; k < pt->verts_per_primitive; ++k) {
-				glColor4ubv(vertices[pt->vbo_start + j + k].color);
-				glTexCoord2fv(vertices[pt->vbo_start + j + k].tex);
-				glVertex3fv(vertices[pt->vbo_start + j + k].position);
-			}
-			glEnd();
-		}
-	}
-
-	// FIXME: GL_ResetState()
-	glEnable(GL_TEXTURE_2D);
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
-
-	GL_EnableFog();
-}
-
-static GLuint GLM_QMB_CreateParticleVAO(void)
-{
-	if (!qmbParticleVBO.vbo) {
-		GL_GenFixedBuffer(&qmbParticleVBO, GL_ARRAY_BUFFER, "qmbparticle", sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-	}
-
-	if (!qmbParticleVAO.vao) {
-		GL_GenVertexArray(&qmbParticleVAO);
-		GL_BindVertexArray(qmbParticleVAO.vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-		// position
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(qmb_particle_vertex_t), (void*) 0);
-		// texture coordinates
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(qmb_particle_vertex_t), (void*) (sizeof(float) * 3));
-		// color
-		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(qmb_particle_vertex_t), (void*) (sizeof(float) * 5));
-	}
-
-	return qmbParticleVAO.vao;
-}
-
-static void GLM_QMB_CompileParticleProgram(void)
-{
-	if (!qmbParticleProgram.program) {
-		GL_VFDeclare(particles_qmb);
-
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("QMB particles", GL_VFParams(particles_qmb), &qmbParticleProgram);
-	}
-
-	if (qmbParticleProgram.program && !qmbParticleProgram.uniforms_found) {
-		qmbParticles_RefdefCvars_block = glGetUniformBlockIndex(qmbParticleProgram.program, "RefdefCvars");
-
-		glUniformBlockBinding(qmbParticleProgram.program, qmbParticles_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
-
-		qmbParticleProgram.uniforms_found = true;
-	}
-}
-
-static void GLM_QMB_DrawParticles(void)
-{
-	particle_type_t *pt;
-	int	i;
-	int pos = 0;
-	GLuint vao;
-
-	GLM_QMB_CompileParticleProgram();
-
-	vao = GLM_QMB_CreateParticleVAO();
-
-	if (qmbParticleProgram.program && vao) {
-		GL_UseProgram(qmbParticleProgram.program);
-
-		GL_BindVertexArray(vao);
-
-		GL_DisableFog();
-		GL_DepthMask(GL_FALSE);
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-		GL_TextureEnvMode(GL_MODULATE);
-		GL_ShadeModel(GL_SMOOTH);
-
-		for (i = 0; i < num_particletypes; i++) {
-			pt = &particle_types[i];
-			if (!pt->vbo_count || pt->drawtype == pd_hide) {
-				continue;
-			}
-
-			GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, particle_textures[pt->texture].texnum);
-
-			glMultiDrawArrays(GL_TRIANGLE_FAN, firstVertices + pt->draw_start, countVertices + pt->draw_start, pt->draw_count);
-		}
-
-		// FIXME: GL_ResetState()
-		GL_DepthMask(GL_TRUE);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_TextureEnvMode(GL_REPLACE);
-		GL_ShadeModel(GL_FLAT);
-
-		GL_EnableFog();
-	}
 }

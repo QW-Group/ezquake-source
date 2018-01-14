@@ -186,10 +186,10 @@ static void GLM_CreateBillboardVAO(void)
 static void GLM_CompileBillboardProgram(void)
 {
 	if (!billboardProgram.program) {
-		GL_VFDeclare(particles_qmb);
+		GL_VFDeclare(billboard);
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgram("Billboard", GL_VFParams(particles_qmb), &billboardProgram);
+		GLM_CreateVFProgram("Billboard", GL_VFParams(billboard), &billboardProgram);
 	}
 
 	if (billboardProgram.program && !billboardProgram.uniforms_found) {
