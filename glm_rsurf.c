@@ -578,22 +578,14 @@ static void GL_FlushWorldModelBatch(void)
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
 	int draw_pos = 0;
-	GLuint prevVAO = 0;
 
 	if (!batch_count) {
 		return;
 	}
 
 	// Much simpler for world model - already in texture order and one call per texture array
-	if (!vbo_elements.vbo) {
-		GL_GenBuffer(&vbo_elements, "brushmodel-elements");
-	}
-	if (!vbo_indirectDraw.vbo) {
-		GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
-	}
-	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+	GL_BindVertexArray(worldmodel_requests[0].vao);
 	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
 	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests, GL_STREAM_DRAW);
 
 	draw_pos = 0;
@@ -611,16 +603,6 @@ static void GL_FlushWorldModelBatch(void)
 		}
 
 		// FIXME: All brush models are in the same VAO, sort this out
-		if (prevVAO != worldmodel_requests[i].vao) {
-			if (prevVAO) {
-				GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-				GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			}
-			GL_BindVertexArray(prevVAO = worldmodel_requests[i].vao);
-			GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
-			GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
-		}
-
 		glMultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_INT,
@@ -630,11 +612,6 @@ static void GL_FlushWorldModelBatch(void)
 		);
 
 		i = last;
-	}
-
-	if (prevVAO) {
-		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 	}
 
 	batch_count = 0;

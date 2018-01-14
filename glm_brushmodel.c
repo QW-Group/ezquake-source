@@ -5,6 +5,13 @@
 #include "rulesets.h"
 #include "utils.h"
 
+#define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
+
+static glm_vbo_t brushModel_vbo;
+static glm_vao_t brushModel_vao;
+static GLuint modelIndexes[4096];
+static GLuint index_count;
+
 typedef struct block_brushmodels_s {
 	int apply_lightmap[32][4];
 	float color[32][4];
@@ -18,17 +25,6 @@ static glm_ubo_t ubo_brushdata;
 static glm_vbo_t vbo_elements;
 static glm_vbo_t vbo_indirectDraw;
 static block_brushmodels_t brushmodels;
-static GLuint modelIndexes[4096];
-static GLuint index_count;
-
-typedef struct glm_brushmodelbatch_s {
-	int start;
-	int end;
-
-	qbool texture2d;
-	int skin_texture;
-	GLuint array_texture;
-} glm_brushmodelbatch_t;
 
 void GLM_CreateBrushModelProgram(void)
 {
@@ -350,10 +346,6 @@ static void GL_FlushBrushModelBatch(void)
 	GLuint last_vao = 0;
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
-	glm_brushmodelbatch_t batches[MAX_BRUSHMODEL_BATCH];
-	int batch = 0;
-	int draw_pos = 0;
-	int draw_count = 0;
 	GLuint prevVAO = 0;
 
 	if (!batch_count) {
@@ -367,23 +359,10 @@ static void GL_FlushBrushModelBatch(void)
 
 	qsort(brushmodel_requests, batch_count, sizeof(brushmodel_requests[0]), GL_BatchRequestSorter);
 
-	batches[0].start = 0;
 	for (i = 0; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
 		req->baseInstance = i;
-		if (req->texture_array != last_array) {
-			if (i) {
-				++batch;
-			}
-
-			batches[batch].start = i;
-			batches[batch].texture2d = false;
-			batches[batch].array_texture = req->texture_array;
-			last_array = req->texture_array;
-		}
-
-		batches[batch].end = i;
 		memcpy(&brushmodels.modelMatrix[i][0], req->mvMatrix, sizeof(brushmodels.modelMatrix[i]));
 		memcpy(&brushmodels.color[i][0], req->baseColor, sizeof(brushmodels.color[i]));
 		brushmodels.apply_lightmap[i][0] = req->isworldmodel ? 1 : 0;
@@ -393,46 +372,34 @@ static void GL_FlushBrushModelBatch(void)
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
 	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
 
-	if (!vbo_elements.vbo) {
-		GL_GenBuffer(&vbo_elements, "brushmodel-elements");
-	}
-	if (!vbo_indirectDraw.vbo) {
-		GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
-	}
-	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+	GL_BindVertexArray(brushModel_vao.vao);
 	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
 	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests, GL_STREAM_DRAW);
 
-	draw_pos = 0;
-	for (i = 0; i <= batch; ++i) {
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, batches[i].array_texture, true);
+	for (i = 0; i < batch_count; ++i) {
+		int last;
 
-		// FIXME: All brush models are in the same VAO, sort this out
-		if (prevVAO != brushmodel_requests[batches[i].start].vao) {
-			if (prevVAO) {
-				GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-				GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+		for (last = i; last < batch_count - 1; ++last) {
+			int next = brushmodel_requests[last + 1].texture_array;
+			if (next != 0 && next != brushmodel_requests[i].texture_array) {
+				break;
 			}
-			GL_BindVertexArray(prevVAO = brushmodel_requests[batches[i].start].vao);
-			GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
-			GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
 		}
 
-		draw_pos = batches[i].start;
-		draw_count = batches[i].end - batches[i].start + 1;
+		if (brushmodel_requests[i].texture_array) {
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, brushmodel_requests[i].texture_array, true);
+		}
 
 		glMultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_INT,
-			(void*)(draw_pos * sizeof(brushmodel_requests[0])),
-			draw_count,
+			(void*)(i * sizeof(brushmodel_requests[0])),
+			last - i + 1,
 			sizeof(brushmodel_requests[0])
 		);
-	}
 
-	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+		i = last;
+	}
 
 	batch_count = 0;
 	index_count = 0;
@@ -526,4 +493,89 @@ void GLM_DrawBrushModel(model_t* model)
 	}
 
 	return;
+}
+
+void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
+{
+	int i;
+	int size = 0;
+	int position = 0;
+	vbo_world_vert_t* buffer = NULL;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			size += GLM_MeasureVBOSizeForBrushModel(mod);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			if (mod == cl.worldmodel || !mod->isworldmodel) {
+				size += GLM_MeasureVBOSizeForBrushModel(mod);
+			}
+		}
+	}
+
+	// Create vbo buffer
+	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
+	GL_GenBuffer(&brushModel_vbo, __FUNCTION__);
+	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
+
+	// Create vao
+	GL_GenVertexArray(&brushModel_vao);
+	GL_BindVertexArray(brushModel_vao.vao);
+
+	GL_GenBuffer(&vbo_elements, "brushmodel-elements");
+	GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
+
+	// Copy data into buffer
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			if (mod == cl.worldmodel || !mod->isworldmodel) {
+				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+			}
+			mod->vao = brushModel_vao;
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+		if (mod && mod->type == mod_brush) {
+			position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
+			mod->vao = brushModel_vao;
+		}
+	}
+
+	// Copy VBO buffer across
+	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
+	GL_BufferData(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
+	glEnableVertexAttribArray(4);
+	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
+	glEnableVertexAttribArray(5);
+	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
+	glEnableVertexAttribArray(7);
+	glVertexAttribIPointer(7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flags));
+	glEnableVertexAttribArray(8);
+	glVertexAttribPointer(8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flatcolor));
+
+	glEnableVertexAttribArray(6);
+	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo->vbo);
+	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	glVertexAttribDivisor(6, 1);
+
+	Q_free(buffer);
 }

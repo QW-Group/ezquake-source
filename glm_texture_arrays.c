@@ -9,8 +9,6 @@
 #include "tr_types.h"
 #endif
 
-#define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
-
 static GLuint common_array;
 static glm_vao_t model_vao;
 static glm_vbo_t instance_vbo;
@@ -30,7 +28,7 @@ typedef struct common_texture_s {
 	struct common_texture_s* final;
 } common_texture_t;
 
-static void GLM_CreateBrushModelVAO(void);
+void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo);
 
 static qbool AliasModelIsAnySize(model_t* mod)
 {
@@ -747,7 +745,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 		GLM_CreateInstanceVBO();
 		GLM_CreateModelVAO(model_vbo.vbo, required_vbo_length, new_vbo_buffer);
-		GLM_CreateBrushModelVAO();
+		GLM_CreateBrushModelVAO(&instance_vbo);
 	}
 
 	GL_FreeTextureSizeList(common);
@@ -771,87 +769,4 @@ static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, flo
 	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo.vbo);
 	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(3, 1);
-}
-
-static glm_vbo_t brushModel_vbo;
-static glm_vao_t brushModel_vao;
-
-static void GLM_CreateBrushModelVAO(void)
-{
-	int i;
-	int size = 0;
-	int position = 0;
-	vbo_world_vert_t* buffer = NULL;
-
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-		if (mod && mod->type == mod_brush) {
-			size += GLM_MeasureVBOSizeForBrushModel(mod);
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-		if (mod && mod->type == mod_brush) {
-			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				size += GLM_MeasureVBOSizeForBrushModel(mod);
-			}
-		}
-	}
-
-	// Create vbo buffer
-	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
-	GL_GenBuffer(&brushModel_vbo, __FUNCTION__);
-	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
-
-	// Create vao
-	GL_GenVertexArray(&brushModel_vao);
-	GL_BindVertexArray(brushModel_vao.vao);
-
-	// Copy data into buffer
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-		if (mod && mod->type == mod_brush) {
-			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
-			}
-			mod->vao = brushModel_vao;
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-		if (mod && mod->type == mod_brush) {
-			position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
-			mod->vao = brushModel_vao;
-		}
-	}
-
-	// Copy VBO buffer across
-	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
-	glEnableVertexAttribArray(4);
-	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
-	glEnableVertexAttribArray(5);
-	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
-	glEnableVertexAttribArray(7);
-	glVertexAttribIPointer(7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flags));
-	glEnableVertexAttribArray(8);
-	glVertexAttribPointer(8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flatcolor));
-
-	glEnableVertexAttribArray(6);
-	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo.vbo);
-	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
-	glVertexAttribDivisor(6, 1);
-
-	Q_free(buffer);
 }
