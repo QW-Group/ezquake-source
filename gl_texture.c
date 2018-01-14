@@ -982,8 +982,7 @@ void GL_Texture_Init(void)
 	// Lightmap.
 	if (GL_ShadersSupported()) {
 		glGenTextures(1, &lightmap_texture_array);
-		GL_BindTexture(GL_TEXTURE_2D_ARRAY, lightmap_texture_array, false);
-		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
+		GL_TexStorage3D(GL_TEXTURE1, GL_TEXTURE_2D_ARRAY, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, MAX_LIGHTMAPS);
 
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -1073,7 +1072,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 		int array_width, array_height, array_depth;
 
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
-		glTexStorage3D(GL_TEXTURE_2D_ARRAY, max_miplevels, GL_RGBA8, width, height, *depth);
+		GL_TexStorage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, gl_texturenum, max_miplevels, GL_RGBA8, width, height, *depth);
 
 		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
 		glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
@@ -1187,8 +1186,7 @@ GLuint GL_CreateCubeMap(const char* identifier, int width, int height, int mode)
 		min_dimension /= 2;
 	}
 
-	GL_BindTexture(GL_TEXTURE_CUBE_MAP, slot->texnum, false);
-	glTexStorage2D(GL_TEXTURE_CUBE_MAP, max_miplevels, GL_RGBA8, width, height);
+	GL_TexStorage2D(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->texnum, max_miplevels, GL_RGBA8, width, height);
 	if (mode & TEX_MIPMAP) {
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, gl_filter_max);

@@ -203,7 +203,6 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 	int ratio_x = tile ? final_width / width : 0;
 	int ratio_y = tile ? final_height / height : 0;
 	int x, y;
-	int array_width, array_height, array_depth;
 
 	if (ratio_x == 0) {
 		ratio_x = 1;
@@ -221,19 +220,19 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
-	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/GL_BindTextureUnit", tex2dname, arrayTexture));
-
-	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
-
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
 		for (y = 0; y < ratio_y; ++y) {
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+			GL_TexSubImage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
+				int array_width, array_height, array_depth;
+
+				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
+				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
+				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
+				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+
 				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
 				GL_Paranoid_Printf(">  Parameters: %d %d %d, %d %d 1, tempBuffer = %X\n", x * width, y * height, index, width, height, tempBuffer);
 			}

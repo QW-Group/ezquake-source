@@ -487,9 +487,6 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
-extern glTexSubImage3D_t        glTexSubImage3D;
-extern glTexStorage2D_t         glTexStorage2D;
-extern glTexStorage3D_t         glTexStorage3D;
 extern glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
@@ -864,6 +861,21 @@ void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo);
 
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
+
+// Texture updates
+void GL_TexSubImage3D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
+);
+void GL_TexSubImage2D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
+);
+void GL_TexStorage2D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+);
+void GL_TexStorage3D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
+);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 

@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
+void GL_BindBuffer(GLenum target, GLuint buffer);
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -123,9 +124,9 @@ glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Texture functions 
 glActiveTexture_t        glActiveTexture;
-glTexStorage2D_t         glTexStorage2D;
-glTexSubImage3D_t        glTexSubImage3D;
-glTexStorage3D_t         glTexStorage3D;
+static glTexStorage2D_t         glTexStorage2D;
+static glTexSubImage3D_t        glTexSubImage3D;
+static glTexStorage3D_t         glTexStorage3D;
 glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
@@ -750,3 +751,40 @@ void GL_BindBuffer(GLenum target, GLuint buffer)
 	glBindBuffer(target, buffer);
 }
 
+void GL_TexSubImage3D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
+)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+}
+
+void GL_TexSubImage2D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLint level,
+	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
+)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, true);
+	glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+void GL_TexStorage2D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glTexStorage2D(target, levels, internalformat, width, height);
+}
+
+void GL_TexStorage3D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
+)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glTexStorage3D(target, levels, internalformat, width, height, depth);
+}
