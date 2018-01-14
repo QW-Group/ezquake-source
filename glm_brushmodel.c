@@ -15,7 +15,11 @@ static glm_program_t drawBrushModelProgram;
 static GLuint drawbrushmodel_RefdefCvars_block;
 static GLuint drawbrushmodel_BrushData_block;
 static glm_ubo_t ubo_brushdata;
+static glm_vbo_t vbo_elements;
+static glm_vbo_t vbo_indirectDraw;
 static block_brushmodels_t brushmodels;
+static GLuint modelIndexes[4096];
+static GLuint index_count;
 
 typedef struct glm_brushmodelbatch_s {
 	int start;
@@ -265,21 +269,22 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 
 
 typedef struct glm_brushmodel_req_s {
-	GLuint vbo_count;
-	GLuint instanceCount;
-	GLuint vbo_start;
-	GLuint baseInstance;
+	// This is DrawElementsIndirectCmd, from OpenGL spec
+	GLuint count;           // Number of indexes to pull
+	GLuint instanceCount;   // Always 1... ?
+	GLuint firstIndex;      // Position of first index in array
+	GLuint baseVertex;      // Offset of vertices in VBO
+	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+
 	float mvMatrix[16];
 	float baseColor[4];
 	qbool applyLightmap;
-	GLuint count;
-	GLuint start;
+	GLuint vbo_count;       // Number of verts to draw
 
 	GLuint vao;
 	GLuint texture_array;
 	int texture_index;
 	qbool isworldmodel;
-	GLuint indices[1024];
 
 	int texture_model;
 	int effects;
@@ -356,6 +361,9 @@ static void GL_FlushBrushModelBatch(void)
 	qbool was_worldmodel = 0;
 	glm_brushmodelbatch_t batches[MAX_BRUSHMODEL_BATCH];
 	int batch = 0;
+	int draw_pos = 0;
+	int draw_count = 0;
+	GLuint prevVAO = 0;
 
 	if (!batch_count) {
 		return;
@@ -372,6 +380,7 @@ static void GL_FlushBrushModelBatch(void)
 	for (i = 0; i < batch_count; ++i) {
 		glm_brushmodel_req_t* req = &brushmodel_requests[i];
 
+		req->baseInstance = i;
 		if (req->texture_array != last_array) {
 			if (i) {
 				++batch;
@@ -380,6 +389,7 @@ static void GL_FlushBrushModelBatch(void)
 			batches[batch].start = i;
 			batches[batch].texture2d = false;
 			batches[batch].array_texture = req->texture_array;
+			last_array = req->texture_array;
 		}
 
 		batches[batch].end = i;
@@ -392,21 +402,49 @@ static void GL_FlushBrushModelBatch(void)
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
 	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
 
-	for (i = 0; i <= batch; ++i) {
-		int x;
+	if (!vbo_elements.vbo) {
+		GL_GenBuffer(&vbo_elements, "brushmodel-elements");
+	}
+	if (!vbo_indirectDraw.vbo) {
+		GL_GenBuffer(&vbo_indirectDraw, "indirect-draw");
+	}
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+	GL_BufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes, GL_STREAM_DRAW);
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
+	GL_BufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests, GL_STREAM_DRAW);
 
+	draw_pos = 0;
+	for (i = 0; i <= batch; ++i) {
 		GL_BindTexture(GL_TEXTURE_2D_ARRAY, batches[i].array_texture, true);
 
-		for (x = batches[i].start; x <= batches[i].end; ++x) {
-			glm_brushmodel_req_t* req = &brushmodel_requests[x];
-
-			GL_BindVertexArray(req->vao);
-
-			glDrawElementsInstancedBaseInstance(GL_TRIANGLE_STRIP, req->count, GL_UNSIGNED_INT, req->indices, 1, x);
+		// FIXME: All brush models are in the same VAO, sort this out
+		if (prevVAO != brushmodel_requests[batches[i].start].vao) {
+			if (prevVAO) {
+				GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+				GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			}
+			GL_BindVertexArray(prevVAO = brushmodel_requests[batches[i].start].vao);
+			GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_elements.vbo);
+			GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_indirectDraw.vbo);
 		}
+
+		draw_pos = batches[i].start;
+		draw_count = batches[i].end - batches[i].start + 1;
+
+		glMultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)(draw_pos * sizeof(brushmodel_requests[0])),
+			draw_count,
+			sizeof(brushmodel_requests[0])
+		);
 	}
 
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
 	batch_count = 0;
+	index_count = 0;
 }
 
 void GL_EndDrawBrushModels(void)
@@ -434,13 +472,12 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	memcpy(req->baseColor, base_color, sizeof(req->baseColor));
 	req->isworldmodel = model->isworldmodel;
 	req->vao = model->vao.vao;
-	if (!req->vao) {
-		req->vao = req->vao;
-		Con_Printf("Model VAO not set [%s]\n", model->name);
-	}
 	req->count = 0;
-	req->start = model->vbo_start;
 	req->texture_array = texture_array;
+	req->instanceCount = 1;
+	req->firstIndex = index_count;
+	req->baseVertex = 0;
+	req->baseInstance = batch_count;
 
 	++batch_count;
 	return req;
@@ -473,17 +510,20 @@ void GLM_DrawBrushModel(model_t* model)
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					int newVerts = surf->polys->numverts;
 
-					if (req->count + 1 + newVerts > sizeof(req->indices) / sizeof(req->indices[0])) {
+					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+						GL_FlushBrushModelBatch();
 						req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
 					}
 
 					// Degenerate triangle strips
-					if (req->count) {
-						req->indices[req->count++] = ~(GLuint)0;
+					if (req->count && index_count) {
+						modelIndexes[index_count++] = ~(GLuint)0;
+						req->count++;
 					}
 
 					for (v = 0; v < newVerts; ++v) {
-						req->indices[req->count++] = surf->polys->vbo_start + v;
+						modelIndexes[index_count++] = surf->polys->vbo_start + v;
+						req->count++;
 					}
 				}
 			}

@@ -428,14 +428,16 @@ typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, c
 typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
 typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
+typedef void (APIENTRY *glMultiDrawElementsIndirect_t)(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
 typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
 typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
+typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 
 // VBO functions
 extern glBindBuffer_t        glBindBuffer;
 extern glBufferData_t        glBufferData;
-extern glBufferSubData_t     glBufferSubDataExt;
+extern glBufferSubData_t     glBufferSubData;
 extern glGenBuffers_t        glGenBuffers;
 extern glDeleteBuffers_t     glDeleteBuffers;
 extern glBindBufferBase_t    glBindBufferBase;
@@ -496,9 +498,11 @@ extern glMultiDrawArrays_t      glMultiDrawArrays;
 extern glMultiDrawElements_t    glMultiDrawElements;
 extern glDrawArraysInstanced_t  glDrawArraysInstanced;
 extern glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
+extern glMultiDrawElementsIndirect_t glMultiDrawElementsIndirect;
 extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
 extern glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
+extern glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);

@@ -72,7 +72,7 @@ cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_t
 // VBO functions
 glBindBuffer_t     glBindBuffer = NULL;
 glBufferData_t     glBufferData = NULL;
-glBufferSubData_t  glBufferSubDataExt = NULL;
+glBufferSubData_t  glBufferSubData = NULL;
 glGenBuffers_t     glGenBuffers = NULL;
 glDeleteBuffers_t  glDeleteBuffers = NULL;
 glBindBufferBase_t glBindBufferBase = NULL;
@@ -133,8 +133,10 @@ glMultiDrawArrays_t      glMultiDrawArrays;
 glMultiDrawElements_t    glMultiDrawElements;
 glDrawArraysInstanced_t  glDrawArraysInstanced;
 glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
+glMultiDrawElementsIndirect_t glMultiDrawElementsIndirect;
 glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
 glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
+glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
 glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 
 static qbool vbo_supported = false;
@@ -202,13 +204,13 @@ static void CheckShaderExtensions(void)
 	shaders_supported = vbo_supported = false;
 	glBindBuffer = NULL;
 	glBufferData = NULL;
-	glBufferSubDataExt = NULL;
+	glBufferSubData = NULL;
 
 	if (COM_CheckParm("-modern")) {
 		if (glConfig.majorVersion >= 2) {
 			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
 			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
-			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
+			glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
 
 			shaders_supported = true;
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
@@ -267,17 +269,19 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
+			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElementsIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
+			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
 		}
 		else if (SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
 			glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
 			glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
-			glBufferSubDataExt = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
+			glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
 		}
 
-		vbo_supported = glBindBuffer && glBufferData && glBufferSubDataExt;
+		vbo_supported = glBindBuffer && glBufferData && glBufferSubData;
 	}
 
 	if (glPrimitiveRestartIndex) {
@@ -291,7 +295,8 @@ static void CheckShaderExtensions(void)
 	}
 }
 
-void GL_CheckExtensions (void) {
+void GL_CheckExtensions (void)
+{
 	CheckMultiTextureExtensions ();
 	CheckShaderExtensions();
 
