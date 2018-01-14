@@ -2,6 +2,8 @@
 
 #ezquake-definitions
 
+layout(early_fragment_tests) in;
+
 layout(binding=0) uniform sampler2DArray materialTex;
 layout(binding=1) uniform sampler2DArray lightmapTex;
 #ifdef DRAW_DETAIL_TEXTURES
@@ -104,8 +106,15 @@ void main()
 				frag_colour = vec4(FlatColor, waterAlpha);
 			}
 		}
-		else if (r_fastsky != 0 && turbType == TEXTURE_TURB_SKY) {
-			frag_colour = r_skycolor;
+		else if (turbType == TEXTURE_TURB_SKY) {
+			if (r_fastsky != 0) {
+				frag_colour = r_skycolor;
+			}
+			// TODO: skydome
+			else {
+				// early_fragment_tests enabled so z-buffer already updated, our work is done
+				discard;
+			}
 		}
 		else {
 			frag_colour = vec4(texColor.rgb, waterAlpha);

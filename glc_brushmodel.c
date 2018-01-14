@@ -72,7 +72,7 @@ static void GLC_DrawFlat(model_t *model)
 			continue;
 		}
 
-		for (; s; s = s->texturechain) {
+		for (; s; s = s->drawflatchain) {
 			if (s->flags & SURF_DRAWSKY) {
 				if (lastType != 2) {
 					glColor3ubv(sky);

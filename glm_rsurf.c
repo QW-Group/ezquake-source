@@ -461,6 +461,32 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics);
 
+	for (waterline = 0; waterline < 2; waterline++) {
+		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
+			glpoly_t* poly;
+
+			req = GLM_NextBatchRequest(model, NULL, 0);
+			for (poly = surf->polys; poly; poly = poly->next) {
+				int newVerts = poly->numverts;
+
+				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+					GL_FlushWorldModelBatch();
+					req = GLM_NextBatchRequest(model, NULL, 0);
+				}
+
+				if (index_count) {
+					modelIndexes[index_count++] = ~(GLuint)0;
+					req->count++;
+				}
+
+				for (v = 0; v < newVerts; ++v) {
+					modelIndexes[index_count++] = poly->vbo_start + v;
+					req->count++;
+				}
+			}
+		}
+	}
+
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
 		qbool first_in_this_array = true;
@@ -490,7 +516,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 							req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array);
 						}
 
-						if (req->count && index_count) {
+						if (req->count) {
 							modelIndexes[index_count++] = ~(GLuint)0;
 							req->count++;
 						}
@@ -500,35 +526,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 							req->count++;
 						}
 					}
-				}
-			}
-		}
-	}
-
-	req = NULL;
-	for (waterline = 0; waterline < 2; waterline++) {
-		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->texturechain) {
-			glpoly_t* poly;
-
-			if (!req) {
-				req = GLM_NextBatchRequest(model, NULL, 0);
-			}
-			for (poly = surf->polys; poly; poly = poly->next) {
-				int newVerts = poly->numverts;
-
-				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
-					GL_FlushWorldModelBatch();
-					req = GLM_NextBatchRequest(model, NULL, 0);
-				}
-
-				if (index_count) {
-					modelIndexes[index_count++] = ~(GLuint)0;
-					req->count++;
-				}
-
-				for (v = 0; v < newVerts; ++v) {
-					modelIndexes[index_count++] = poly->vbo_start + v;
-					req->count++;
 				}
 			}
 		}
@@ -560,15 +557,18 @@ static void GL_FlushWorldModelBatch(void)
 	draw_pos = 0;
 	for (i = 0; i < batch_count; ++i) {
 		int last = i;
+		GLuint texArray = worldmodel_requests[i].texture_array;
+
 		for (last = i; last < batch_count - 1; ++last) {
 			int next = worldmodel_requests[last + 1].texture_array;
-			if (next != 0 && next != worldmodel_requests[i].texture_array) {
+			if (next != 0 && texArray != 0 && next != texArray) {
 				break;
 			}
+			texArray = next;
 		}
 
-		if (worldmodel_requests[i].texture_array) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, worldmodel_requests[i].texture_array, true);
+		if (texArray) {
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texArray, true);
 		}
 
 		// FIXME: All brush models are in the same VAO, sort this out
@@ -600,6 +600,7 @@ void GLM_NewMap(void)
 {
 }
 
+// FIXME: This a) doesn't work in modern, b) shouldn't be in this module
 //draws transparent textures for HL world and nonworld models
 void R_DrawAlphaChain(msurface_t* alphachain)
 {

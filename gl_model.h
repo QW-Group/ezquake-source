@@ -205,6 +205,7 @@ typedef struct msurface_s {
 
 	glpoly_t			*polys;						// multiple if warped
 	struct	msurface_s	*texturechain;
+	struct	msurface_s	*drawflatchain;
 
 	mtexinfo_t			*texinfo;
 	

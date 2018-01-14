@@ -9,7 +9,7 @@
 
 static glm_vbo_t brushModel_vbo;
 glm_vao_t brushModel_vao;
-static GLuint modelIndexes[4096];
+static GLuint modelIndexes[16 * 1024];
 static GLuint index_count;
 
 typedef struct block_brushmodels_s {
@@ -378,16 +378,18 @@ static void GL_FlushBrushModelBatch(void)
 
 	for (i = 0; i < batch_count; ++i) {
 		int last;
+		GLuint texArray = brushmodel_requests[i].texture_array;
 
 		for (last = i; last < batch_count - 1; ++last) {
 			int next = brushmodel_requests[last + 1].texture_array;
-			if (next != 0 && next != brushmodel_requests[i].texture_array) {
+			if (next != 0 && texArray != 0 && next != texArray) {
 				break;
 			}
+			texArray = next;
 		}
 
-		if (brushmodel_requests[i].texture_array) {
-			GL_BindTexture(GL_TEXTURE_2D_ARRAY, brushmodel_requests[i].texture_array, true);
+		if (texArray) {
+			GL_BindTexture(GL_TEXTURE_2D_ARRAY, texArray, true);
 		}
 
 		glMultiDrawElementsIndirect(
@@ -476,8 +478,7 @@ void GLM_DrawBrushModel(model_t* model)
 							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array);
 						}
 
-						// Degenerate triangle strips
-						if (req->count && index_count) {
+						if (req->count) {
 							modelIndexes[index_count++] = ~(GLuint)0;
 							req->count++;
 						}

@@ -174,32 +174,6 @@ void GLM_DrawSky(void)
 	}
 
 	glEnable (GL_DEPTH_TEST);
-
-	// draw the sky polys into the Z buffer
-	// don't need depth test yet
-	if (!ignore_z) {
-		if (gl_fogenable.value && gl_fogsky.value) {
-			GL_EnableFog();
-			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
-			GL_BlendFunc(GL_ONE, GL_ZERO);
-		}
-		else {
-			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-			GL_BlendFunc(GL_ZERO, GL_ONE);
-		}
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-
-		//GLM_DrawFastSky();
-
-		if (gl_fogenable.value && gl_fogsky.value) {
-			GL_DisableFog();
-		}
-		else {
-			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		}
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	}
 }
 
 static void GLM_DrawSkyVerts(void)

@@ -63,7 +63,7 @@ void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 		int current_order = (current->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + max(current->lightmaptexturenum, 0) * 2;
 
 		if (surf_order > current_order) {
-			chain_head = &(current->texturechain);
+			chain_head = &(current->drawflatchain);
 			current = *chain_head;
 			continue;
 		}
@@ -71,7 +71,7 @@ void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 		break;
 	}
 
-	surf->texturechain = current;
+	surf->drawflatchain = current;
 	*chain_head = surf;
 }
 
@@ -446,10 +446,8 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			// add surf to the right chain
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			if (surf->flags & SURF_DRAWSKY) {
-				if (r_fastsky.integer) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
-				}
-				else {
+				chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
+				if (!r_fastsky.integer) {
 					chain_surfaces_by_lightmap(&skychain, surf);
 				}
 			}
