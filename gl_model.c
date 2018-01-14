@@ -48,22 +48,26 @@ byte	mod_novis[MAX_MAP_LEAFS/8];
 model_t	mod_known[MAX_MOD_KNOWN];
 int		mod_numknown;
 
-void Mod_Init (void) {
-	memset (mod_novis, 0xff, sizeof(mod_novis));
+void Mod_Init(void)
+{
+	memset(mod_novis, 0xff, sizeof(mod_novis));
 }
 
 //Caches the data if needed
-void *Mod_Extradata (model_t *mod) {
+void *Mod_Extradata(model_t *mod)
+{
 	void *r;
 
-	r = Cache_Check (&mod->cache);
-	if (r)
+	r = Cache_Check(&mod->cache);
+	if (r) {
 		return r;
+	}
 
-	Mod_LoadModel (mod, true);
+	Mod_LoadModel(mod, true);
 
-	if (!mod->cache.data)
-		Sys_Error ("Mod_Extradata: caching failed");
+	if (!mod->cache.data) {
+		Sys_Error("Mod_Extradata: caching failed");
+	}
 	return mod->cache.data;
 }
 

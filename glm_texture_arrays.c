@@ -16,7 +16,6 @@ static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 static GLubyte* tempBuffer;
 static GLuint tempBufferSize;
 
-static GLuint common_array;
 static glm_vbo_t instance_vbo;
 glm_vao_t aliasModel_vao;
 glm_vbo_t aliasModel_vbo;
@@ -333,7 +332,7 @@ static void GL_CopyToTextureArraySize(int type, GLuint stdTexture, qbool anySize
 		desired_height = tex->height;
 	}
 
-	GL_Paranoid_Printf("..... Texture found is %d x %d [#%d]\n", tex->width, tex->height, tex->gl_texturenum);
+	GL_Paranoid_Printf("..... Texture found is %d x %d [#%d] (%dx%d)\n", tex->width, tex->height, tex->gl_texturenum, tex->gl_width, tex->gl_height);
 
 	if (!tex->gl_texturenum) {
 		int depth = tex->count - tex->any_size_count;
@@ -776,8 +775,10 @@ void GL_CompressTextureArrays(common_texture_t* list)
 // Called from R_NewMap
 void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
+	extern model_t* Mod_LoadModel(model_t *mod, qbool crash);
 	int required_vbo_length = 4;
 	int i;
+	int type;
 
 	tempBufferSize = 0;
 
@@ -788,6 +789,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		model_t* mod = cl.model_precache[i];
 
 		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
+			Mod_LoadModel(mod, false);
+
 			GL_MeasureTexturesForModel(mod, &required_vbo_length);
 		}
 	}
@@ -796,6 +799,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		model_t* mod = cl.vw_model_precache[i];
 
 		if (mod) {
+			Mod_LoadModel(mod, false);
+
 			GL_MeasureTexturesForModel(mod, &required_vbo_length);
 		}
 	}
@@ -810,7 +815,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		common_texture_t* tex;
 		float* new_vbo_buffer = Q_malloc(required_vbo_length * MODELVERTEXSIZE * sizeof(float));
 		int new_vbo_position = 0;
-		int type;
 
 		GL_Paranoid_Printf("-- Pre-allocation --\n");
 		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {

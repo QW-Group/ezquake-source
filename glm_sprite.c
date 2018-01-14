@@ -188,7 +188,6 @@ static void GL_CompileSpriteProgram(void)
 		spriteProgram_SpriteData_block = glGetUniformBlockIndex(spriteProgram.program, "SpriteData");
 
 		glGetActiveUniformBlockiv(spriteProgram.program, spriteProgram_SpriteData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
-		Con_Printf("sizeof(sprite) = %d, expected = %d\n", sizeof(spriteData), size);
 
 		glUniformBlockBinding(spriteProgram.program, spriteProgram_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(spriteProgram.program, spriteProgram_SpriteData_block, GL_BINDINGPOINT_SPRITEDATA_CVARS);
