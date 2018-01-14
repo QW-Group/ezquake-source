@@ -65,7 +65,6 @@ static void GL_PrepareSprites(void)
 
 	if (!simpleItemVAO.vao) {
 		GL_GenVertexArray(&simpleItemVAO);
-		GL_BindVertexArray(&simpleItemVAO);
 		GL_BindBuffer(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);

@@ -657,6 +657,7 @@ void GL_GenVertexArray(glm_vao_t* vao)
 		vao_list = vao;
 	}
 	glGenVertexArrays(1, &vao->vao);
+	GL_BindVertexArray(vao);
 }
 
 void GL_DeleteBuffers(void)

@@ -883,7 +883,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 static void GLM_CreateAliasModelVAO(void)
 {
 	GL_GenVertexArray(&aliasModel_vao);
-	GL_BindVertexArray(&aliasModel_vao);
 
 	GL_BindBuffer(GL_ARRAY_BUFFER, aliasModel_vbo.vbo);
 	glEnableVertexAttribArray(0);

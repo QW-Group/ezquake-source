@@ -54,7 +54,6 @@ static glm_vao_t* GL_CreateLineVAO(void)
 
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao);
-		GL_BindVertexArray(&vao);
 		glEnableVertexAttribArray(0);
 		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -210,7 +209,6 @@ void GLM_CreateMultiImageProgram(void)
 
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO);
-		GL_BindVertexArray(&imageVAO);
 		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);

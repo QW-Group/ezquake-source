@@ -171,7 +171,6 @@ static void GLM_CreateBillboardVAO(void)
 
 	if (!billboardVAO.vao) {
 		GL_GenVertexArray(&billboardVAO);
-		GL_BindVertexArray(&billboardVAO);
 		GL_BindBuffer(GL_ARRAY_BUFFER, billboardVBO.vbo);
 		// position
 		glEnableVertexAttribArray(0);
