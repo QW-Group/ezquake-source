@@ -44,16 +44,26 @@ typedef struct SkydomeCvars_s {
 
 #define VBO_SKYDOME_FOFS(x) (void*)((intptr_t)&(((skydome_vert_t*)0)->x))
 
-#define SUBDIVISIONS	10
-#define MAX_SKYPOLYS (SUBDIVISIONS * SUBDIVISIONS * 6)
-static skydome_vert_t skydomeVertData[(MAX_SKYPOLYS * 4 + (MAX_SKYPOLYS - 1) * 2)];
+#define NUMBER_AXIS 6
+#define SUBDIVISIONS 10
+#define VERTS_PER_STRIP ((SUBDIVISIONS + 1) * 2)
+#define VERTS_PER_AXIS (VERTS_PER_STRIP * SUBDIVISIONS)
+#define VERTS_PER_SKYDOME (VERTS_PER_AXIS * NUMBER_AXIS)
+#define INDEXES_PER_STRIP (VERTS_PER_STRIP)
+#define INDEXES_PER_AXIS (INDEXES_PER_STRIP * SUBDIVISIONS + (SUBDIVISIONS - 1))
+#define INDEXES_PER_SKYDOME (INDEXES_PER_AXIS * NUMBER_AXIS + (NUMBER_AXIS - 1))
+//#define MAX_SKYPOLYS (SUBDIVISIONS * SUBDIVISIONS * 6)
+static skydome_vert_t skydomeVertData[VERTS_PER_SKYDOME];
+static GLuint skydomeIndexes[INDEXES_PER_SKYDOME];
 static int skyDomeVertices = 0;
+static int skyDomeIndexCount = 0;
 static GLuint skydome_RefdefCvars_block;
 static GLuint skydome_SkyDomeData_block;
 static SkydomeCvars_t skyDomeData;
 
 static glm_program_t skyDome;
 static glm_vbo_t skyDome_vbo;
+static glm_vbo_t skyDomeIndexes_vbo;
 static glm_vao_t skyDome_vao;
 static glm_ubo_t ubo_skydomeData;
 static GLint skyDome_starts[6];
@@ -66,15 +76,11 @@ void GLM_DrawSkyChain(void)
 	return;
 }
 
-static int AddSkyDomeVert(int vert, vec3_t pos, float s, float t)
+static void AddSkyDomeVert(int vert, vec3_t pos, float s, float t)
 {
-	int index = vert;
-
-	VectorCopy(pos, skydomeVertData[index].pos);
-	skydomeVertData[index+3].s = s;
-	skydomeVertData[index+4].t = t;
-
-	return vert + 1;
+	VectorCopy(pos, skydomeVertData[vert].pos);
+	skydomeVertData[vert].s = s;
+	skydomeVertData[vert].t = t;
 }
 
 static void BuildSkyVertsArray(void)
@@ -109,52 +115,59 @@ static void BuildSkyVertsArray(void)
 	}
 
 	if (!skyDome_vbo.vbo) {
+		skyDomeIndexCount = 0;
 		for (axis = 0; axis < 6; ++axis) {
 			float fstep = 2.0 / SUBDIVISIONS;
 
-			skyDome_starts[axis] = vert;
+			skyDome_starts[axis] = vert; //skyDomeIndexCount;
 			for (i = 0; i < SUBDIVISIONS; i++) {
 				s = (float)(i * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
 				for (j = 0; j < SUBDIVISIONS; j++) {
 					t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-					for (k = 0; k < 4; ++k) {
-						float v_s = s + (k % 2 ? fstep : 0);
-						float v_t = t + (k >= 2 ? fstep : 0);
+					for (k = j ? 2 : 0; k < 4; ++k) {
+						// We want to wind the other direction to save CULL_FACE toggles
+						int winding_k = k % 2 == 0 ? k + 1 : k - 1;
+						float v_s = s + (winding_k % 2 ? fstep : 0);
+						float v_t = t + (winding_k >= 2 ? fstep : 0);
 						vec3_t pos;
 
 						MakeSkyVec2(v_s, v_t, axis, pos);
 
 						// Degenerate?
 						if (j == 0 && (i || axis) && vert && k == 0) {
-							int prevIndex = (vert - 1);
-
-							vert = AddSkyDomeVert(vert, skydomeVertData[prevIndex].pos, skydomeVertData[prevIndex].s, skydomeVertData[prevIndex].t);
-							vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+							skydomeIndexes[skyDomeIndexCount++] = ~(GLuint)0;
 							if (i == 0) {
-								skyDome_starts[axis] = vert;
+								skyDome_starts[axis] = vert; //skyDomeIndexCount;
 							}
 						}
 
-						vert = AddSkyDomeVert(vert, pos, v_s, v_t);
+						skydomeIndexes[skyDomeIndexCount++] = vert;
+						AddSkyDomeVert(vert++, pos, v_s, v_t);
 					}
 				}
 			}
+			//skyDome_length[axis] = skyDomeIndexCount - skyDome_starts[axis];
 			skyDome_length[axis] = vert - skyDome_starts[axis];
+			//Con_Printf("Skydome: axis %d is %d, length %d\n", axis, skyDome_starts[axis], skyDome_length[axis]);
 		}
 		skyDomeVertices = vert;
 
+		//Con_Printf("Skydome: %d/%d verts, %d/%d indexes\n", vert, sizeof(skydomeVertData) / sizeof(skydomeVertData[0]), skyDomeIndexCount, sizeof(skydomeIndexes) / sizeof(skydomeIndexes[0]));
+
 		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * skyDomeVertices, skydomeVertData, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&skyDomeIndexes_vbo, GL_ELEMENT_ARRAY_BUFFER, __FUNCTION__, sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao.vao) {
 		GL_GenVertexArray(&skyDome_vao);
 		GL_BindVertexArray(skyDome_vao.vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
 		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
+		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyDomeIndexes_vbo.vbo);
+		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
+		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
 	}
 }
@@ -203,9 +216,12 @@ static void GLM_DrawSkyFaces(void)
 			}
 
 			if (skymins[0][i] == -1 && skymins[1][i] == -1 && skymaxs[0][i] == 1 && skymaxs[1][i] == 1) {
-				faceStarts[faces] = skyDome_starts[i];
-				faceLengths[faces] = skyDome_length[i];
-				++faces;
+				for (strip = 0; strip < SUBDIVISIONS; ++strip) {
+					faceStarts[faces] = skyDome_starts[i] + strip * VERTS_PER_STRIP;
+					faceLengths[faces] = VERTS_PER_STRIP;
+
+					++faces;
+				}
 			}
 			else {
 				minIndex[0] = (int)floor(bound(0, (skymins[0][i] + 1) / 2.0, 1) * SUBDIVISIONS);
@@ -214,8 +230,9 @@ static void GLM_DrawSkyFaces(void)
 				maxIndex[1] = (int)ceil(bound(0, (skymaxs[1][i] + 1) / 2.0, 1) * SUBDIVISIONS);
 
 				for (strip = minIndex[0]; strip < maxIndex[0]; ++strip) {
-					faceStarts[faces] = skyDome_starts[i] + 4 * (strip * SUBDIVISIONS + minIndex[1]) + 2 * strip;
-					faceLengths[faces] = (maxIndex[1] - minIndex[1]) * 4;
+					faceStarts[faces] = skyDome_starts[i] + strip * VERTS_PER_STRIP + minIndex[1] * 2;
+					faceLengths[faces] = (maxIndex[1] - minIndex[1] + 1) * 2;
+
 					++faces;
 				}
 			}
@@ -233,9 +250,7 @@ static void GLM_DrawSkyFaces(void)
 			GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_skydomeData.ubo);
 			GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(skyDomeData), &skyDomeData);
 
-			glDisable(GL_CULL_FACE);
 			glMultiDrawArrays(GL_TRIANGLE_STRIP, faceStarts, faceLengths, faces);
-			glEnable(GL_CULL_FACE);
 
 			GL_LeaveRegion();
 		}

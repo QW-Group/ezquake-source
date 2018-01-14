@@ -258,16 +258,6 @@ static void GLC_DrawSkyFace(int axis)
 				MakeSkyVec2(s + fstep, t + fstep, axis, vecs[2]);
 				MakeSkyVec2(s + fstep, t, axis, vecs[3]);
 
-				/*
-				VectorAdd(vecs[0], r_origin, vecs[0]);
-				VectorAdd(vecs[1], r_origin, vecs[1]);
-				VectorAdd(vecs[2], r_origin, vecs[2]);
-				VectorAdd(vecs[3], r_origin, vecs[3]);
-				VectorScale(vecs[0], scale_, vecs[0]);
-				VectorScale(vecs[1], scale_, vecs[1]);
-				VectorScale(vecs[2], scale_, vecs[2]);
-				VectorScale(vecs[3], scale_, vecs[3]);
-				*/
 				EmitSkyVert(vecs[0], false);
 				EmitSkyVert(vecs[1], false);
 				EmitSkyVert(vecs[2], false);
@@ -291,8 +281,9 @@ static void GLC_DrawSkyDome(void)
 	speedscale -= (int)speedscale & ~127;
 
 	for (i = 0; i < 6; i++) {
-		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i]))
+		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 			continue;
+		}
 		GLC_DrawSkyFace(i);
 	}
 
