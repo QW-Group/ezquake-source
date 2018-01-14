@@ -374,7 +374,7 @@ static void GL_FlushBrushModelBatch(void)
 	GL_UpdateUBO(&ubo_brushdata, sizeof(brushmodels), &brushmodels);
 	GL_UpdateVBO(&vbo_brushIndirectDraw, sizeof(brushmodel_requests), &brushmodel_requests);
 
-	GL_BindVertexArray(brushModel_vao.vao);
+	GL_BindVertexArray(&brushModel_vao);
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 
 	polygonOffset = brushmodel_requests[0].polygonOffset;
@@ -534,7 +534,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 
 	// Create vao
 	GL_GenVertexArray(&brushModel_vao);
-	GL_BindVertexArray(brushModel_vao.vao);
+	GL_BindVertexArray(&brushModel_vao);
 
 	GL_GenFixedBuffer(&vbo_elements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
 	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);

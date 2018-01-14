@@ -214,7 +214,7 @@ static void BuildSkyVertsArray(void)
 
 	if (!skyDome_vao.vao) {
 		GL_GenVertexArray(&skyDome_vao);
-		GL_BindVertexArray(skyDome_vao.vao);
+		GL_BindVertexArray(&skyDome_vao);
 		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * vert, skydomeVertData, GL_STATIC_DRAW);
 		GL_GenFixedBuffer(&skyDomeIndexes_vbo, GL_ELEMENT_ARRAY_BUFFER, __FUNCTION__, sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
@@ -225,7 +225,7 @@ static void BuildSkyVertsArray(void)
 
 	if (!skyBox_vao.vao) {
 		GL_GenVertexArray(&skyBox_vao);
-		GL_BindVertexArray(skyBox_vao.vao);
+		GL_BindVertexArray(&skyBox_vao);
 		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
 		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glEnableVertexAttribArray(0);
@@ -315,7 +315,7 @@ static void GLM_DrawSkyDomeFaces(void)
 		GL_UpdateVBO(&skyDomeCommands_vbo, sizeof(commandData[0]) * commands, commandData);
 		GL_UpdateUBO(&ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
 
-		GL_BindVertexArray(skyDome_vao.vao);
+		GL_BindVertexArray(&skyDome_vao);
 
 		glMultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
@@ -386,7 +386,7 @@ static void GLM_DrawSkyBox(void)
 
 		GL_UpdateUBO(&ubo_skyboxData, sizeof(cvars), &cvars);
 
-		GL_BindVertexArray(skyBox_vao.vao);
+		GL_BindVertexArray(&skyBox_vao);
 		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
 	}
 }

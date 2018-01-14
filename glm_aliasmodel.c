@@ -184,7 +184,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 	GLM_CompileAliasModelProgram();
 	GL_UseProgram(drawAliasModelProgram.program);
-	GL_BindVertexArray(aliasModel_vao.vao);
+	GL_BindVertexArray(&aliasModel_vao);
 
 	prev_texture_array = 0;
 	batches[batch].start = 0;

@@ -246,6 +246,7 @@ static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose
 		glEnd();
 	}
 
+	// FIXME: GL_ResetState()
 	glColor4f(1, 1, 1, 1);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glDisable(GL_LINE_SMOOTH);
@@ -334,6 +335,7 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 	}
 
 	// LordHavoc: reset the state to what the rest of the renderer expects
+	// FIXME: GL_ResetState()
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

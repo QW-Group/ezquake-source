@@ -37,7 +37,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 
-static GLuint GL_CreateLineVAO(void)
+static glm_vao_t* GL_CreateLineVAO(void)
 {
 	static glm_vao_t vao;
 	static glm_vbo_t vbo;
@@ -54,13 +54,13 @@ static GLuint GL_CreateLineVAO(void)
 
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao);
-		GL_BindVertexArray(vao.vao);
+		GL_BindVertexArray(&vao);
 		glEnableVertexAttribArray(0);
 		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	return vao.vao;
+	return &vao;
 }
 
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
@@ -210,19 +210,19 @@ void GLM_CreateMultiImageProgram(void)
 
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO);
-		GL_BindVertexArray(imageVAO.vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glEnableVertexAttribArray(4);
-		glEnableVertexAttribArray(5);
+		GL_BindVertexArray(&imageVAO);
 		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
+		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
+		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
+		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
+		glEnableVertexAttribArray(3);
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
+		glEnableVertexAttribArray(4);
 		glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
+		glEnableVertexAttribArray(5);
 		glVertexAttribIPointer(5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
 	}
 }
@@ -248,7 +248,7 @@ void GLM_FlushImageDraw(void)
 
 		GL_UseProgram(multiImageProgram.program);
 
-		GL_BindVertexArray(imageVAO.vao);
+		GL_BindVertexArray(&imageVAO);
 
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];

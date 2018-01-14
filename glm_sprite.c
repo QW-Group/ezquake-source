@@ -65,11 +65,11 @@ static void GL_PrepareSprites(void)
 
 	if (!simpleItemVAO.vao) {
 		GL_GenVertexArray(&simpleItemVAO);
-		GL_BindVertexArray(simpleItemVAO.vao);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
+		GL_BindVertexArray(&simpleItemVAO);
 		GL_BindBuffer(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
+		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
+		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
 	}
 }
@@ -149,7 +149,7 @@ void GL_FlushSpriteBatch(void)
 	GL_UseProgram(spriteProgram.program);
 	GL_UpdateUBO(&ubo_spriteData, sizeof(spriteData), &spriteData);
 
-	GL_BindVertexArray(aliasModel_vao.vao);
+	GL_BindVertexArray(&aliasModel_vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);

@@ -14,7 +14,7 @@ static double currentFarRange = 1;
 static GLenum currentCullFace = GL_BACK;
 static GLenum currentBlendSFactor = GL_ONE;
 static GLenum currentBlendDFactor = GL_ZERO;
-static GLuint currentVAO = 0;
+static glm_vao_t* currentVAO = NULL;
 static GLenum currentShadeModel = GL_SMOOTH;
 // FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 static GLint currentViewportX = 0, currentViewportY = 0;
@@ -115,10 +115,10 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
 	}
 }
 
-void GL_BindVertexArray(GLuint vao)
+void GL_BindVertexArray(glm_vao_t* vao)
 {
 	if (currentVAO != vao) {
-		glBindVertexArray(vao);
+		glBindVertexArray(vao ? vao->vao : 0);
 		currentVAO = vao;
 	}
 }
@@ -161,7 +161,7 @@ void GL_InitialiseState(void)
 	currentCullFace = GL_BACK;
 	currentBlendSFactor = GL_ONE;
 	currentBlendDFactor = GL_ZERO;
-	currentVAO = 0;
+	currentVAO = NULL;
 	currentShadeModel = GL_SMOOTH;
 	currentViewportX = 0;
 	currentViewportY = 0;

@@ -166,6 +166,8 @@ typedef struct glm_vao_s {
 	unsigned int vao;
 
 	struct glm_vao_s* next;
+
+	glm_vbo_t* element_array_buffer;
 } glm_vao_t;
 
 typedef struct glm_ubo_s {

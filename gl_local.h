@@ -665,7 +665,7 @@ void GL_DepthFunc(GLenum func);
 void GL_DepthRange(double nearVal, double farVal);
 void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
-void GL_BindVertexArray(GLuint vao);
+void GL_BindVertexArray(glm_vao_t* vao);
 void GL_ShadeModel(GLenum model);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);

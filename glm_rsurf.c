@@ -163,7 +163,7 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
 
 	GL_UseProgram(drawworld.program);
 
-	GL_BindVertexArray(brushModel_vao.vao);
+	GL_BindVertexArray(&brushModel_vao);
 
 	// Bind lightmap array
 	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
