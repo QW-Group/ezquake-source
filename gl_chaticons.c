@@ -163,11 +163,12 @@ static void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	GL_BillboardAddEntry(BILLBOARD_CHATICONS, 4);
-	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
-	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
-	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
-	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
+	if (GL_BillboardAddEntry(BILLBOARD_CHATICONS, 4)) {
+		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
+		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
+		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
+		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
+	}
 }
 
 void DrawChatIcons(void)
@@ -195,7 +196,7 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum, GL_TRIANGLE_FAN);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

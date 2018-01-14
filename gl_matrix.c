@@ -130,7 +130,6 @@ void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z)
 	double s = sin(angle * M_PI / 180);
 	double c = cos(angle * M_PI / 180);
 	float rotation[16];
-	float result[16];
 	float input[4] = { vector[0], vector[1], vector[2], 1 };
 	float output[4];
 

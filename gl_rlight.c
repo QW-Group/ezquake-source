@@ -108,7 +108,7 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	if (first_dlight) {
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE, 0, GL_TRIANGLE_FAN);
 
 		first_dlight = false;
 	}
@@ -130,6 +130,10 @@ void R_RenderDlight (dlight_t *light) {
 			return;
 		}
 
+		if (!GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18)) {
+			return;
+		}
+
 		VectorVectors(v, v_right, v_up);
 
 		if (length - rad > 8) {
@@ -141,10 +145,6 @@ void R_RenderDlight (dlight_t *light) {
 		}
 
 		VectorSubtract(light->origin, v, v);
-
-		if (!GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18)) {
-			return;
-		}
 
 		if (light->type == lt_custom) {
 			memcpy(center_color, light->color, 3);
