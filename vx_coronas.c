@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
-void CoronaStats(int change);
+static void CoronaStats(int change);
 
 typedef struct
 {
@@ -44,7 +44,7 @@ typedef struct
 //Tei: original whas 256, upped so whas low (?!) for some games
 #define MAX_CORONAS 300
 
-corona_t r_corona[MAX_CORONAS];
+static corona_t r_corona[MAX_CORONAS];
 
 #define CORONA_SCALE 130
 #define CORONA_ALPHA 1
@@ -64,7 +64,7 @@ void R_UpdateCoronas(void)
 			continue;
 		}
 		if (c->type == C_EXPLODE) {
-			if (c->die < cl.time && c->texture != explosionflashtexture7) {
+			if (c->die < cl.time && c->texture != CORONATEX_EXPLOSIONFLASH7) {
 				c->texture++;
 				c->die = cl.time + 0.03;
 			}
@@ -113,12 +113,10 @@ void R_UpdateCoronas(void)
 void R_DrawCoronas(void)
 {
 	int i;
-	int texture = 0;
+	int texture = corona_textures[CORONATEX_STANDARD];
 	vec3_t dist, up, right;
 	float fdist, scale, alpha;
 	corona_t *c;
-
-	GL_DisableFog();
 
 	if (!ISPAUSED) {
 		R_UpdateCoronas();
@@ -127,13 +125,15 @@ void R_DrawCoronas(void)
 	VectorScale(vup, 1, up);//1.5
 	VectorScale(vright, 1, right);
 
-	GL_Bind(coronatexture);
+	glEnable(GL_TEXTURE_2D);
+	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, corona_textures[CORONATEX_STANDARD]);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_DepthMask(GL_FALSE);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
 	GL_ShadeModel(GL_SMOOTH);
 	GL_TextureEnvMode(GL_MODULATE);
 	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 	for (i = 0; i < MAX_CORONAS; i++) {
 		c = &r_corona[i];
 		if (c->type == C_FREE) {
@@ -154,8 +154,9 @@ void R_DrawCoronas(void)
 			//its like being fired into the sun
 			continue;
 		}
+
 		if (c->texture != texture) {
-			GL_Bind(c->texture);
+			GL_Bind(corona_textures[c->texture]);
 			texture = c->texture;
 		}
 		scale = (1 - 1 / fdist)*c->scale;
@@ -175,7 +176,7 @@ void R_DrawCoronas(void)
 		//Its sort of cheap, but lets draw a few more here to make the effect more obvious
 		if (c->type == C_FLASH || c->type == C_BLUEFLASH) {
 			int a;
-			for (a = 0;a < 5;a++) {
+			for (a = 0; a < 5; a++) {
 				glBegin(GL_QUADS);
 				glColor4f(c->color[0], c->color[1], c->color[2], alpha);
 				glTexCoord2f(0, 0);
@@ -189,7 +190,6 @@ void R_DrawCoronas(void)
 				glEnd();
 			}
 		}
-		continue;
 	}
 
 	// FIXME: GL_ResetState()
@@ -227,7 +227,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	}
 
 	if (!corona_found) {
-		//Tei: last attemp to get a valid corona to "canivalize"
+		//Tei: last attemp to get a valid corona to "canibalize"
 		c = r_corona;
 		for (i = 0; i < MAX_CORONAS; i++, c++) {
 			//Search a fire corona that is about to die soon
@@ -236,11 +236,11 @@ void NewCorona(coronatype_t type, vec3_t origin)
 				) {
 				memset(c, 0, sizeof(*c));
 				corona_found = true;
-				//sucesfully canivalize a fire corona that whas about to die.
+				// succesfully canibalize a fire corona that whas about to die.
 				break;
 			}
 		}
-		//If can't canivalize a corona, It exit silently
+		//If can't canibalize a corona, It exit silently
 		//This is the worst case scenario, and will never happend
 		return;
 	}
@@ -249,7 +249,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	VectorCopy(origin, c->origin);
 	c->type = type;
 	c->los = false;
-	c->texture = coronatexture;
+	c->texture = CORONATEX_STANDARD;
 	if (type == C_FLASH || type == C_BLUEFLASH) {
 		if (type == C_BLUEFLASH) {
 			VectorCopy(bubblecolor[lt_blue], c->color);
@@ -344,7 +344,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	else if (type == C_GUNFLASH) {
 		vec3_t normal, impact, vec;
 		c->color[0] = c->color[1] = c->color[2] = 1;
-		c->texture = gunflashtexture;
+		c->texture = CORONATEX_GUNFLASH;
 		c->scale = 50;
 		c->die = cl.time + 0.1;
 		c->alpha = 0.66;
@@ -368,7 +368,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 		c->alpha = 1;
 		c->growth = 0;
 		c->fade = 0;
-		c->texture = explosionflashtexture1;
+		c->texture = CORONATEX_EXPLOSIONFLASH1;
 	}
 	else if (type == C_WHITELIGHT) {
 		c->color[0] = 1;
@@ -466,7 +466,7 @@ void NewStaticLightCorona(coronatype_t type, vec3_t origin, entity_t *hint)
 	VectorCopy(origin, e->origin);
 	e->type = type;
 	e->los = false;
-	e->texture = coronatexture;
+	e->texture = CORONATEX_STANDARD;
 	e->serialhint = hint;
 
 	if (type == C_FIRE) {
@@ -481,7 +481,7 @@ void NewStaticLightCorona(coronatype_t type, vec3_t origin, entity_t *hint)
 	}
 }
 
-void CoronaStats(int change)
+static void CoronaStats(int change)
 {
 	if (CoronaCount > CoronaCountHigh) {
 		CoronaCountHigh = CoronaCount;

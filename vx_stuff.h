@@ -49,15 +49,21 @@ void InitCoronas(void);
 void InitVXStuff(void);
 void NewStaticLightCorona (coronatype_t type, vec3_t origin, entity_t *serialhint);
 
-int	coronatexture;
-int	gunflashtexture;
-int	explosionflashtexture1;
-int	explosionflashtexture2;
-int	explosionflashtexture3;
-int	explosionflashtexture4;
-int	explosionflashtexture5;
-int	explosionflashtexture6;
-int	explosionflashtexture7;
+typedef enum {
+	CORONATEX_STANDARD,
+	CORONATEX_GUNFLASH,
+	CORONATEX_EXPLOSIONFLASH1,
+	CORONATEX_EXPLOSIONFLASH2,
+	CORONATEX_EXPLOSIONFLASH3,
+	CORONATEX_EXPLOSIONFLASH4,
+	CORONATEX_EXPLOSIONFLASH5,
+	CORONATEX_EXPLOSIONFLASH6,
+	CORONATEX_EXPLOSIONFLASH7,
+
+	CORONATEX_COUNT
+} corona_texture_id;
+
+extern int corona_textures[CORONATEX_COUNT];
 
 float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 void WeatherEffect(void);

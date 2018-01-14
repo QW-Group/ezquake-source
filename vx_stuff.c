@@ -24,9 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "sbar.h"
 
-
-int GL_LoadTextureImage (char * , char *, int, int, int);
-int coronatexture;
+int corona_textures[CORONATEX_COUNT];
 
 extern cvar_t gl_bounceparticles;
 
@@ -388,48 +386,40 @@ void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
 
-	coronatexture          = GL_LoadTextureImage ("textures/flash",           NULL, 0, 0, flags);
-	gunflashtexture        = GL_LoadTextureImage ("textures/gunflash",        NULL, 0, 0, flags);
-	explosionflashtexture1 = GL_LoadTextureImage ("textures/explosionflash1", NULL, 0, 0, flags);
-	explosionflashtexture2 = GL_LoadTextureImage ("textures/explosionflash2", NULL, 0, 0, flags);
-	explosionflashtexture3 = GL_LoadTextureImage ("textures/explosionflash3", NULL, 0, 0, flags);
-	explosionflashtexture4 = GL_LoadTextureImage ("textures/explosionflash4", NULL, 0, 0, flags);
-	explosionflashtexture5 = GL_LoadTextureImage ("textures/explosionflash5", NULL, 0, 0, flags);
-	explosionflashtexture6 = GL_LoadTextureImage ("textures/explosionflash6", NULL, 0, 0, flags);
-	explosionflashtexture7 = GL_LoadTextureImage ("textures/explosionflash7", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_STANDARD] = GL_LoadTextureImage ("textures/flash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_GUNFLASH] = GL_LoadTextureImage ("textures/gunflash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH1] = GL_LoadTextureImage ("textures/explosionflash1", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH2] = GL_LoadTextureImage ("textures/explosionflash2", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH3] = GL_LoadTextureImage ("textures/explosionflash3", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH4] = GL_LoadTextureImage ("textures/explosionflash4", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH5] = GL_LoadTextureImage ("textures/explosionflash5", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH6] = GL_LoadTextureImage ("textures/explosionflash6", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH7] = GL_LoadTextureImage ("textures/explosionflash7", NULL, 0, 0, flags);
 	InitCoronas(); // safe re-init
 
 	Init_VLights(); // safe re-init imo
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-
 	Cvar_Register (&amf_stat_loss);
-
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
-
 	Cvar_Register (&amf_camera_chase);
 	Cvar_Register (&amf_camera_chase_dist);
 	Cvar_Register (&amf_camera_chase_height);
-
 	Cvar_Register (&amf_camera_death);
-
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-
 	Cvar_Register (&amf_showstats);
-
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-
 	Cvar_Register (&amf_hiderockets);
 	Cvar_Register (&amf_hidenails);
-
 	Cvar_ResetCurrentGroup();
-	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
 	Cvar_Register (&amf_coronas);
 	Cvar_Register (&amf_coronas_tele);
 	Cvar_Register (&amf_lighting_vertex);
@@ -437,7 +427,6 @@ void InitVXStuff(void)
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-
 	Cvar_Register (&amf_part_blood);
 	Cvar_Register (&amf_part_blood_color);
 	Cvar_Register (&amf_part_blood_type);
@@ -464,7 +453,6 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_part_traildetail);
 	Cvar_Register (&amf_part_trailwidth);
 	Cvar_Register (&amf_part_trailtype);
-
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
@@ -474,7 +462,6 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_weather_rain_fast);
 	Cvar_Register (&amf_waterripple);
 	Cvar_Register (&amf_underwater_trails);
-
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);

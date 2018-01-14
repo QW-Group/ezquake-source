@@ -2435,11 +2435,10 @@ void VXTeleport (vec3_t org)
 
 	color[0]=color[1]=color[2] = 255;
 	color[3]=128;
-	for (a=0;a<200*amf_part_teleport.value;a++)
-	{
-		for (i=0;i<3;i++)
+	for (a = 0; a < 200 * amf_part_teleport.value; a++) {
+		for (i = 0;i < 3;i++)
 			dir[i] = (rand() % 1500) - 750;
-		AddParticle(p_streakwave, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+		AddParticle(p_streakwave, org, 1, 1, 1 * amf_part_trailtime.value, color, dir);
 	}
 }
 
