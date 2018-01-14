@@ -27,6 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void GLC_DrawSkyBox(void);
 static void GLC_DrawSkyDome(void);
 static void GLC_DrawSkyFace(int axis);
+static void GLC_MakeSkyVec(float s, float t, int axis);
+
+static float speedscale, speedscale2;		// for top sky and bottom sky
 
 void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
 {
@@ -158,7 +161,7 @@ void GLC_DrawSky(void)
 
 	GL_DisableMultitexture();
 
-	if (r_fastsky.value) {
+	if (r_fastsky.integer) {
 		glDisable(GL_TEXTURE_2D);
 		glColor3ubv(r_skycolor.color);
 
@@ -171,6 +174,7 @@ void GLC_DrawSky(void)
 		}
 		skychain = NULL;
 
+		// FIXME: GL_ResetState()
 		glEnable(GL_TEXTURE_2D);
 		glColor3f(1, 1, 1);
 		return;
@@ -216,6 +220,7 @@ void GLC_DrawSky(void)
 			}
 		}
 
+		// FIXME: GL_ResetState()
 		if (gl_fogenable.value && gl_fogsky.value) {
 			GL_DisableFog();
 		}
@@ -228,6 +233,39 @@ void GLC_DrawSky(void)
 	}
 }
 
+static void EmitSkyVert(vec3_t v)
+{
+	vec3_t dir;
+	float s, t;
+	float length;
+
+	VectorCopy(v, dir);
+	VectorAdd(v, r_origin, v);
+	//VectorSubtract(v, r_origin, dir);
+	dir[2] *= 3;	// flatten the sphere
+
+	length = VectorLength(dir);
+	length = 6 * 63 / length;
+
+	dir[0] *= length;
+	dir[1] *= length;
+
+	s = (speedscale + dir[0]) * (1.0 / 128);
+	t = (speedscale + dir[1]) * (1.0 / 128);
+
+	glTexCoord2f(s, t);
+	glVertex3fv(v);
+}
+
+static void GLC_MakeSkyVec2(float s, float t, int axis, float range, vec3_t v)
+{
+	Sky_MakeSkyVec2(s, t, axis, v);
+
+	v[0] *= range;
+	v[1] *= range;
+	v[2] *= range;
+}
+
 static void GLC_DrawSkyFace(int axis)
 {
 	int i, j;
@@ -235,34 +273,33 @@ static void GLC_DrawSkyFace(int axis)
 	float s, t;
 	int v;
 	float fstep = 2.0 / SUBDIVISIONS;
+	float skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
 
 	glBegin(GL_QUADS);
 	for (v = 0, i = 0; i < SUBDIVISIONS; i++, v++)
 	{
 		s = (float)(i*2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-		if (s + fstep < skymins[0][axis] || s > skymaxs[0][axis])
+		if (s + fstep < skymins[0][axis] || s > skymaxs[0][axis]) {
 			continue;
+		}
 
 		for (j = 0; j < SUBDIVISIONS; j++, v++) {
-			t = (float)(j*2 - SUBDIVISIONS) / SUBDIVISIONS;
+			t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-			if (t + fstep < skymins[1][axis] || t > skymaxs[1][axis])
+			if (t + fstep < skymins[1][axis] || t > skymaxs[1][axis]) {
 				continue;
-
-			{
-				float scale_ = max(r_farclip.value, 4096) * 0.577;
-
-				MakeSkyVec2(s, t, axis, vecs[0]);
-				MakeSkyVec2(s, t + fstep, axis, vecs[1]);
-				MakeSkyVec2(s + fstep, t + fstep, axis, vecs[2]);
-				MakeSkyVec2(s + fstep, t, axis, vecs[3]);
-
-				EmitSkyVert(vecs[0], false);
-				EmitSkyVert(vecs[1], false);
-				EmitSkyVert(vecs[2], false);
-				EmitSkyVert(vecs[3], false);
 			}
+
+			GLC_MakeSkyVec2(s, t, axis, skyrange, vecs[0]);
+			GLC_MakeSkyVec2(s, t + fstep, axis, skyrange, vecs[1]);
+			GLC_MakeSkyVec2(s + fstep, t + fstep, axis, skyrange, vecs[2]);
+			GLC_MakeSkyVec2(s + fstep, t, axis, skyrange, vecs[3]);
+
+			EmitSkyVert(vecs[0]);
+			EmitSkyVert(vecs[1]);
+			EmitSkyVert(vecs[2]);
+			EmitSkyVert(vecs[3]);
 		}
 	}
 	glEnd();
@@ -315,10 +352,63 @@ static void GLC_DrawSkyBox(void)
 		GL_Bind(skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
 
 		glBegin(GL_QUADS);
-		MakeSkyVec(skymins[0][i], skymins[1][i], i);
-		MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
-		MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
-		MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
+		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);
+		GLC_MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
+		GLC_MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
+		GLC_MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
 		glEnd();
 	}
+}
+
+static void GLC_MakeSkyVec(float s, float t, int axis)
+{
+	vec3_t v, b;
+	float skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+
+	Sky_MakeSkyVec2(s, t, axis, b);
+	VectorMA(r_origin, skyrange, b, v);
+
+	// avoid bilerp seam
+	s = (s + 1) * 0.5;
+	t = (t + 1) * 0.5;
+
+	s = bound(1.0 / 512, s, 511.0 / 512);
+	t = bound(1.0 / 512, t, 511.0 / 512);
+
+	t = 1.0 - t;
+	glTexCoord2f(s, t);
+	glVertex3fv(v);
+}
+
+qbool GLC_LoadSkyboxTextures(char* skyname)
+{
+	static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
+	int i, real_width, real_height;
+
+	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
+		byte *data;
+
+		if (
+			(data = GL_LoadImagePixels(va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels(va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels(va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels(va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			) {
+			skyboxtextures[i] = GL_LoadTexture(
+				va("skybox:%s", skybox_ext[i]),
+				real_width, real_height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4);
+			// we shold free data from GL_LoadImagePixels()
+			Q_free(data);
+		}
+		else {
+			skyboxtextures[i] = 0; // GL_LoadImagePixels() fail to load anything
+		}
+
+		if (!skyboxtextures[i]) {
+			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
+			return false;
+		}
+	}
+
+	return true;
 }

@@ -29,8 +29,9 @@ void main(void)
 	vec3 dir = direction * farclip;
 	float len;
 
-	gl_Position = mvp * vec4(direction + origin, 1);
+	gl_Position = mvp * vec4(dir + origin, 1);
 
+	// Flatten it out
 	dir.z *= 3;
 	len = 198 / length(dir);
 	dir.x *= len;

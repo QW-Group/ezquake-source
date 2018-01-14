@@ -131,7 +131,7 @@ static void BuildSkyVertsArray(void)
 				for (j = 0; j <= SUBDIVISIONS; j++) {
 					t = (float)(j * 2 - SUBDIVISIONS) / SUBDIVISIONS;
 
-					MakeSkyVec2(s, t, axis, pos);
+					Sky_MakeSkyVec2(s, t, axis, pos);
 
 					AddSkyDomeVert(vert++, pos, s, t);
 				}
@@ -239,8 +239,10 @@ static void GLM_DrawSkyFaces(void)
 
 		if (commands) {
 			skyDomeData.farclip = max(r_farclip.value, 4096) * 0.577;
-			skyDomeData.speedscale = r_refdef2.time * 8 - ((int)speedscale & ~127);
-			skyDomeData.speedscale2 = r_refdef2.time * 16 - ((int)speedscale & ~127);
+			skyDomeData.speedscale = r_refdef2.time * 8;
+			skyDomeData.speedscale -= ((int)skyDomeData.speedscale & ~127);
+			skyDomeData.speedscale2 = r_refdef2.time * 16;
+			skyDomeData.speedscale2 -= ((int)skyDomeData.speedscale2 & ~127);
 			VectorCopy(r_origin, skyDomeData.origin);
 
 			GL_EnterRegion("SkyDome");

@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int solidskytexture, alphaskytexture;
 
-float speedscale, speedscale2;		// for top sky and bottom sky
 float skymins[2][6], skymaxs[2][6];
 qbool r_skyboxloaded;
 extern msurface_t *skychain;
@@ -83,14 +82,8 @@ void R_InitSky (texture_t *mt) {
 	alphaskytexture = GL_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
 }
 
-
-static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
-
-
 int R_SetSky(char *skyname)
 {
-	int i;
-	int real_width, real_height;
 	char *groupname;
 
 	r_skyboxloaded = false;
@@ -105,33 +98,8 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	for (i = 0; i < MAX_SKYBOXTEXTURES; i++)
-	{
-		byte *data;
-
-		if (
-			(data = GL_LoadImagePixels (va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels (va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels (va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			|| (data = GL_LoadImagePixels (va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			)
-		{
-			skyboxtextures[i] = GL_LoadTexture(
-				va("skybox:%s", skybox_ext[i]),
-				real_width, real_height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4);
-			// we shold free data from GL_LoadImagePixels()
-			Q_free(data);
-		}
-		else
-		{
-			skyboxtextures[i] = 0; // GL_LoadImagePixels() fail to load anything
-		}
-
-		if (!skyboxtextures[i])
-		{
-			Com_Printf ("Couldn't load skybox \"%s\"\n", skyname);
-			return 1;
-		}
+	if (!GLC_LoadSkyboxTextures(skyname)) {
+		return 1;
 	}
 
 	// everything was OK
@@ -347,35 +315,6 @@ void R_AddSkyBoxSurface (msurface_t *fa) {
 	}
 }
 
-void MakeSkyVec(float s, float t, int axis)
-{
-	vec3_t v, b;
-	int j, k;
-	float skyrange;
-
-	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
-	b[0] = s*skyrange;
-	b[1] = t*skyrange;
-	b[2] = skyrange;
-
-	for (j = 0; j < 3; j++) {
-		k = st_to_vec[axis][j];
-		v[j] = (k < 0) ? -b[-k - 1] : b[k - 1];
-		v[j] += r_origin[j];
-	}
-
-	// avoid bilerp seam
-	s = (s + 1) * 0.5;
-	t = (t + 1) * 0.5;
-
-	s = bound(1.0 / 512, s, 511.0 / 512);
-	t = bound(1.0 / 512, t, 511.0 / 512);
-
-	t = 1.0 - t;
-	glTexCoord2f(s, t);
-	glVertex3fv(v);
-}
-
 /*
 ==============
 R_DrawSkyBox
@@ -384,16 +323,13 @@ R_DrawSkyBox
 #define SUBDIVISIONS	10
 
 // s and t range from -1 to 1
-void MakeSkyVec2(float s, float t, int axis, vec3_t v)
+void Sky_MakeSkyVec2(float s, float t, int axis, vec3_t v)
 {
 	vec3_t		b;
 	int			j, k;
-	float skyrange;
-
-	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
-	b[0] = s * skyrange;
-	b[1] = t * skyrange;
-	b[2] = 1 * skyrange;
+	b[0] = s;
+	b[1] = t;
+	b[2] = 1;
 
 	for (j = 0; j < 3; j++) {
 		k = st_to_vec[axis][j];
@@ -406,31 +342,7 @@ void MakeSkyVec2(float s, float t, int axis, vec3_t v)
 	}
 }
 
-void EmitSkyVert(vec3_t v, qbool newPoly)
-{
-	vec3_t dir;
-	float s, t;
-	float length;
-
-	VectorCopy(v, dir);
-	VectorAdd(v, r_origin, v);
-	//VectorSubtract(v, r_origin, dir);
-	dir[2] *= 3;	// flatten the sphere
-
-	length = VectorLength(dir);
-	length = 6 * 63 / length;
-
-	dir[0] *= length;
-	dir[1] *= length;
-
-	s = (speedscale + dir[0]) * (1.0 / 128);
-	t = (speedscale + dir[1]) * (1.0 / 128);
-
-	glTexCoord2f(s, t);
-	glVertex3fv(v);
-}
-
-void ClearSky (void)
+static void Sky_ClearSky(void)
 {
 	int i;
 	for (i = 0; i < 6; i++) {
@@ -460,7 +372,7 @@ qbool R_DetermineSkyLimits(qbool *ignore_z)
 			return false;
 
 		// figure out how much of the sky box we need to draw
-		ClearSky();
+		Sky_ClearSky();
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			R_AddSkyBoxSurface(fa);
 		}
