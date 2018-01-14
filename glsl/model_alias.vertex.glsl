@@ -10,6 +10,7 @@ out vec3 fsAltTextureCoord;
 out vec4 fsBaseColor;
 flat out int fsShellMode;
 flat out int fsTextureEnabled;
+flat out int fsTextureLuma;
 
 layout(std140) uniform AliasModelData {
 	mat4 modelView[32];
@@ -17,6 +18,7 @@ layout(std140) uniform AliasModelData {
 	vec2 scale[32];
 	int textureIndex[32];
 	int apply_texture[32];
+	int apply_luma[32];
 	int shellMode[32];
 	float yaw_angle_rad[32];
 	float shadelight[32];
@@ -49,6 +51,7 @@ void main()
 		gl_Position = projectionMatrix * modelView[_instanceId] * vec4(position, 1);
 		fsAltTextureCoord = fsTextureCoord = vec3(tex.s * scale[_instanceId][0], tex.t * scale[_instanceId][1], textureIndex[_instanceId]);
 		fsTextureEnabled = apply_texture[_instanceId];
+		fsTextureLuma = apply_luma[_instanceId];
 
 		// Lighting: this is rough approximation
 		//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983

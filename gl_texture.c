@@ -1220,5 +1220,7 @@ texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int 
 // For OpenGL wrapper functions
 GLuint GL_TextureNameFromReference(texture_ref ref)
 {
+	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
+
 	return gltextures[ref.index].texnum;
 }

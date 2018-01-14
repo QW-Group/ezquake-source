@@ -66,8 +66,6 @@ extern cvar_t     maxclients;
 static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
-void Mod_AddModelFlags(model_t *mod);
-float RadiusFromBounds(vec3_t mins, vec3_t maxs);
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 
 static vec3_t    shadevector;
@@ -104,7 +102,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
+void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -520,7 +518,7 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, is_texture_array, shell_only);
+		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only);
 	}
 	else {
 		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);

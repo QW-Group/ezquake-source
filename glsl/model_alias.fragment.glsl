@@ -7,6 +7,7 @@ const int EF_BLUE = 64;
 
 layout(binding=0) uniform sampler2DArray materialTex;
 layout(binding=1) uniform sampler2D skinTex;
+layout(binding=2) uniform sampler2D lumaTex;
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
@@ -24,6 +25,7 @@ layout(std140) uniform AliasModelData {
 	vec2 scale[32];
 	int textureIndex[32];
 	int apply_texture[32];
+	int apply_luma[32];
 	int shellMode[32];
 	float yaw_angle_rad[32];
 	float shadelight[32];
@@ -43,12 +45,14 @@ in vec3 fsAltTextureCoord;
 in vec4 fsBaseColor;
 flat in int fsShellMode;
 flat in int fsTextureEnabled;
+flat in int fsTextureLuma;
 out vec4 frag_colour;
 
 void main()
 {
 	vec4 tex = texture(skinTex, fsTextureCoord.st);
 	vec4 altTex = texture(skinTex, fsAltTextureCoord.st);
+	vec4 luma = texture(lumaTex, fsTextureCoord.st);
 
 	if (fsShellMode != 0) {
 		// Powerup-shells - fsShellMode should be same flags as entity->effects, EF_RED | EF_GREEN | EF_BLUE
@@ -68,7 +72,12 @@ void main()
 		frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
 	}
 	else if (fsTextureEnabled == 2) {
-		frag_colour = tex * fsBaseColor;
+		if (fsTextureLuma != 0) {
+			frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), tex.a) * fsBaseColor;
+		}
+		else {
+			frag_colour = tex * fsBaseColor;
+		}
 	}
 	else if (fsTextureEnabled != 0) {
 		// Default
