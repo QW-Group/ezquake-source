@@ -3238,9 +3238,7 @@ static GLint qmbParticles_RefdefCvars_block;
 static GLuint GLM_QMB_CreateParticleVAO(void)
 {
 	if (!qmbParticleVBO.vbo) {
-		GL_GenBuffer(&qmbParticleVBO, "qmbparticle");
-		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&qmbParticleVBO, GL_ARRAY_BUFFER, "qmbparticle", sizeof(vertices), GL_DYNAMIC_DRAW);
 	}
 
 	if (!qmbParticleVAO.vao) {
@@ -3290,10 +3288,6 @@ static void GLM_QMB_DrawParticles(void)
 
 	vao = GLM_QMB_CreateParticleVAO();
 
-	// Update VBO
-	GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices, GL_DYNAMIC_DRAW);
-
 	if (qmbParticleProgram.program && vao) {
 		float modelViewMatrix[16];
 		float projectionMatrix[16];
@@ -3304,6 +3298,9 @@ static void GLM_QMB_DrawParticles(void)
 		GL_UseProgram(qmbParticleProgram.program);
 
 		GL_BindVertexArray(vao);
+
+		// Update VBO
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices);
 
 		GL_DisableFog();
 		GL_DepthMask(GL_FALSE);

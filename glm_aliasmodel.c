@@ -6,6 +6,7 @@
 #include "gl_aliasmodel.h"
 
 static qbool first_alias_model = true;
+extern glm_vao_t aliasModel_vao;
 
 typedef struct block_aliasmodels_s {
 	float modelViewMatrix[32][16];
@@ -42,7 +43,7 @@ typedef struct glm_aliasmodelbatch_s {
 	GLuint array_texture;
 } glm_aliasmodelbatch_t;
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
+static void GLM_QueueAliasModelDraw(model_t* model, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only);
 
 typedef struct glm_aliasmodel_req_s {
 	GLuint vbo_count;
@@ -51,7 +52,6 @@ typedef struct glm_aliasmodel_req_s {
 	GLuint baseInstance;
 	float mvMatrix[16];
 	float texScale[2];
-	GLuint vao;
 	GLuint texture_array;
 	int texture_index;
 	byte color[4];
@@ -120,37 +120,35 @@ void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, 
 	}
 	color[3] = r_modelalpha * 255;
 
-	if (paliashdr->vao.vao) {
-		// TODO: model lerping between frames
-		// TODO: Vertex lighting etc
-		// TODO: shadedots[vert.l] ... need to copy shadedots to program somehow
-		// TODO: Coloured lighting per-vertex?
-		l = shadedots[0] / 127.0;
-		l = (l * shadelight + ambientlight) / 256.0;
-		l = min(l, 1);
+	// TODO: model lerping between frames
+	// TODO: Vertex lighting etc
+	// TODO: shadedots[vert.l] ... need to copy shadedots to program somehow
+	// TODO: Coloured lighting per-vertex?
+	l = shadedots[0] / 127.0;
+	l = (l * shadelight + ambientlight) / 256.0;
+	l = min(l, 1);
 
-		if (custom_model == NULL) {
-			if (r_modelcolor[0] < 0) {
-				// normal color
-				color[0] = color[1] = color[2] = l * 255;
-			}
-			else {
-				// forced
-				color[0] *= l;
-				color[1] *= l;
-				color[2] *= l;
-			}
+	if (custom_model == NULL) {
+		if (r_modelcolor[0] < 0) {
+			// normal color
+			color[0] = color[1] = color[2] = l * 255;
 		}
 		else {
-			color[0] = custom_model->color_cvar.color[0];
-			color[1] = custom_model->color_cvar.color[1];
-			color[2] = custom_model->color_cvar.color[2];
-
-			texture_model = (custom_model->fullbright_cvar.integer == 0);
+			// forced
+			color[0] *= l;
+			color[1] *= l;
+			color[2] *= l;
 		}
-
-		GLM_QueueAliasModelDraw(model, paliashdr->vao.vao, color, vertIndex, paliashdr->vertsPerPose, texture_model, texture, scaleS, scaleT, effects, is_texture_array, shell_only);
 	}
+	else {
+		color[0] = custom_model->color_cvar.color[0];
+		color[1] = custom_model->color_cvar.color[1];
+		color[2] = custom_model->color_cvar.color[2];
+
+		texture_model = (custom_model->fullbright_cvar.integer == 0);
+	}
+
+	GLM_QueueAliasModelDraw(model, color, vertIndex, paliashdr->vertsPerPose, texture_model, texture, scaleS, scaleT, effects, is_texture_array, shell_only);
 }
 
 static void GLM_AliasModelBatchDraw(int start, int end)
@@ -190,6 +188,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 	GLM_CompileAliasModelProgram();
 	GL_UseProgram(drawAliasModelProgram.program);
+	GL_BindVertexArray(aliasModel_vao.vao);
 
 	prev_texture_array = 0;
 	batches[batch].start = 0;
@@ -200,8 +199,6 @@ static void GLM_FlushAliasModelBatch(void)
 		qbool non_array_switch = (!req->is_texture_array && non_texture_array != req->texture_index);
 		qbool texture_mode_switch = (prev_texture_array && array_switch) || (non_texture_array != -1 && non_array_switch);
 		qbool shell_mode_switch = (was_shells != is_shells);
-
-		GL_BindVertexArray(req->vao);
 
 		if (texture_mode_switch || non_array_switch || array_switch || shell_mode_switch) {
 			if (i != 0) {
@@ -244,7 +241,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 	// Update data
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_aliasdata.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(aliasdata), &aliasdata, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(aliasdata), &aliasdata);
 
 	for (i = 0; i <= batch; ++i) {
 		if (batches[i].texture2d) {
@@ -293,16 +290,12 @@ static void GLM_SetPowerupShellColor(float* shell_color, float base_level, float
 	}
 }
 
-static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)
+static void GLM_QueueAliasModelDrawImpl(model_t* model, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array)
 {
 	glm_aliasmodel_req_t* req;
 
 	if (batch_count >= MAX_ALIASMODEL_BATCH) {
 		GLM_FlushAliasModelBatch();
-	}
-
-	if (!vao) {
-		return;
 	}
 
 	if (is_texture_array && !model->texture_arrays[0]) {
@@ -319,7 +312,6 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 	req->texScale[0] = is_texture_array ? scaleS : 1.0f;
 	req->texScale[1] = is_texture_array ? scaleT : 1.0f;
 	req->texture_model = texture;
-	req->vao = vao;
 	req->texture_array = model->texture_arrays[0];
 	req->texture_index = texture_index;
 	req->instanceCount = 1;
@@ -329,7 +321,7 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, GLuint vao, byte* color,
 	++batch_count;
 }
 
-static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only)
+static void GLM_QueueAliasModelDraw(model_t* model, byte* color, int start, int count, qbool texture, GLuint texture_index, float scaleS, float scaleT, int effects, qbool is_texture_array, qbool shell_only)
 {
 	if (shell_only) {
 		if (!shelltexture) {
@@ -342,7 +334,7 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 				effects &= (EF_RED | EF_GREEN | EF_BLUE);
 
 				if (effects) {
-					GLM_QueueAliasModelDrawImpl(model, vao, color_white, start, count, true, shelltexture, 1, 1, effects, false);
+					GLM_QueueAliasModelDrawImpl(model, color_white, start, count, true, shelltexture, 1, 1, effects, false);
 					if (!in_batch_mode) {
 						GLM_FlushAliasModelBatch();
 					}
@@ -351,7 +343,7 @@ static void GLM_QueueAliasModelDraw(model_t* model, GLuint vao, byte* color, int
 		}
 	}
 	else {
-		GLM_QueueAliasModelDrawImpl(model, vao, color, start, count, texture, texture_index, scaleS, scaleT, 0, is_texture_array);
+		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, texture_index, scaleS, scaleT, 0, is_texture_array);
 		if (!in_batch_mode) {
 			GLM_FlushAliasModelBatch();
 		}

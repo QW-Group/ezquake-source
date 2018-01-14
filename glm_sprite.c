@@ -6,6 +6,8 @@
 // For drawing sprites in 3D space
 // Always facing camera, send as point
 
+extern glm_vao_t aliasModel_vao;
+
 typedef struct glm_spritedata_s {
 	float modelView[32][16];
 	float tex[32][4];
@@ -59,9 +61,8 @@ static void GL_PrepareSprites(void)
 		verts[3][3] = 0;
 		verts[3][4] = 1;
 
-		GL_GenBuffer(&simpleItemVBO, __FUNCTION__);
-		GL_BindBuffer(GL_ARRAY_BUFFER, simpleItemVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&simpleItemVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(verts), GL_STATIC_DRAW);
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(verts), verts);
 	}
 
 	if (!simpleItemVAO.vao) {
@@ -152,7 +153,7 @@ void GL_FlushSpriteBatch(void)
 
 	GL_UseProgram(spriteProgram.program);
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_spriteData.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(spriteData), &spriteData, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(spriteData), &spriteData);
 
 	GL_BindVertexArray(vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
@@ -224,7 +225,7 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->texScale[1] = scale_t;
 	sprite->texture_array = model->simpletexture_array;
 	sprite->texture_index = texture;
-	sprite->vao = model->vao_simple.vao;
+	sprite->vao = aliasModel_vao.vao;
 	++batch_count;
 }
 
@@ -279,7 +280,7 @@ void GLM_DrawSpriteModel(entity_t* e)
 		sprite->texScale[1] = frame->gl_scalingT;
 		sprite->texture_array = frame->gl_arraynum;
 		sprite->texture_index = frame->gl_arrayindex;
-		sprite->vao = e->model->vao_simple.vao;
+		sprite->vao = aliasModel_vao.vao;
 		++batch_count;
 	}
 }

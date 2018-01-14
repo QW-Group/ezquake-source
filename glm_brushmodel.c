@@ -8,7 +8,7 @@
 #define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
 
 static glm_vbo_t brushModel_vbo;
-static glm_vao_t brushModel_vao;
+glm_vao_t brushModel_vao;
 static GLuint modelIndexes[4096];
 static GLuint index_count;
 
@@ -370,7 +370,7 @@ static void GL_FlushBrushModelBatch(void)
 
 	// Update data
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels);
 
 	GL_BindVertexArray(brushModel_vao.vao);
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
@@ -429,7 +429,7 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	GLM_GetMatrix(GL_MODELVIEW, req->mvMatrix);
 	memcpy(req->baseColor, base_color, sizeof(req->baseColor));
 	req->isworldmodel = model->isworldmodel;
-	req->vao = model->vao.vao;
+	req->vao = brushModel_vao.vao;
 	req->count = 0;
 	req->texture_array = texture_array;
 	req->instanceCount = 1;
@@ -520,8 +520,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 
 	// Create vbo buffer
 	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
-	GL_GenBuffer(&brushModel_vbo, __FUNCTION__);
-	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
+	GL_GenFixedBuffer(&brushModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, size * sizeof(vbo_world_vert_t), GL_STATIC_DRAW);
 
 	// Create vao
 	GL_GenVertexArray(&brushModel_vao);
@@ -537,7 +536,6 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
 				position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
 			}
-			mod->vao = brushModel_vao;
 		}
 	}
 
@@ -545,13 +543,12 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
 			position = GLM_PopulateVBOForBrushModel(mod, buffer, position);
-			mod->vao = brushModel_vao;
 		}
 	}
 
 	// Copy VBO buffer across
 	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
+	GL_BufferDataUpdate(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));

@@ -94,7 +94,7 @@ void GLM_PreRenderView(void)
 	}
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_common2d.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(common2d), &common2d, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(common2d), &common2d);
 }
 
 void GLM_SetupGL(void)
@@ -113,5 +113,5 @@ void GLM_SetupGL(void)
 	}
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef);
 }

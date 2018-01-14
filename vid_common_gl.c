@@ -607,10 +607,8 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 	ubo->name = name;
 	glGenBuffers(1, &ubo->ubo);
 
-	if (data && size) {
-		GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
-		GL_BufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
-	}
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
+	GL_BufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
 }
 
 void GL_GenVertexArray(glm_vao_t* vao)

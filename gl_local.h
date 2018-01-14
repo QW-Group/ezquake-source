@@ -679,7 +679,6 @@ void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum us
 void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
 
 void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
-void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
 void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, float alpha);
 void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha);
 

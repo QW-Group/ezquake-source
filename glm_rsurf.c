@@ -314,8 +314,9 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	target[3] = 1.0f; \
 }
 
-static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qbool caustics)
+static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
 {
+	extern glm_vao_t brushModel_vao;
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 
@@ -337,11 +338,11 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, sizeof(world), &world, GL_DYNAMIC_DRAW);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(world), &world);
 
 	GL_UseProgram(drawworld.program);
 
-	GL_BindVertexArray(vao);
+	GL_BindVertexArray(brushModel_vao.vao);
 
 	// Bind lightmap array
 	GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_LIGHTMAPS, GL_TEXTURE_2D_ARRAY, lightmap_texture_array);
@@ -357,34 +358,6 @@ static void GLM_EnterBatchedWorldRegion(unsigned int vao, qbool detail_tex, qboo
 void GLM_ExitBatchedPolyRegion(void)
 {
 	uniforms_set = false;
-}
-
-// Still used by fastturb...
-void GLM_DrawIndexedPolygonByType(GLenum type, byte* color, unsigned int vao, GLuint* indices, int count, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
-{
-	Compile_DrawFlatPolyProgram();
-
-	if (drawFlatPolyProgram.program && vao) {
-		if (!uniforms_set) {
-			float modelViewMatrix[16];
-			float projectionMatrix[16];
-
-			GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-			GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-			GL_UseProgram(drawFlatPolyProgram.program);
-			glUniformMatrix4fv(drawFlat_modelViewMatrix, 1, GL_FALSE, modelViewMatrix);
-			glUniformMatrix4fv(drawFlat_projectionMatrix, 1, GL_FALSE, projectionMatrix);
-			glUniform4f(drawFlat_color, color[0] * 1.0f / 255, color[1] * 1.0f / 255, color[2] * 1.0f / 255, color[3] * 1.0f / 255);
-			glUniform1i(drawFlat_apply_lightmap, apply_lightmap ? 1 : 0);
-			glUniform1i(drawFlat_apply_texture, apply_texture ? 1 : 0);
-			glUniform1i(drawFlat_alpha_texture, alpha_texture ? 1 : 0);
-
-			GL_BindVertexArray(vao);
-		}
-
-		glDrawElements(type, count, GL_UNSIGNED_INT, indices);
-	}
 }
 
 void GLM_DrawLightmapArrayPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture)
@@ -446,7 +419,6 @@ typedef struct glm_brushmodel_req_s {
 	GLuint baseVertex;      // Offset of vertices in VBO
 	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
 
-	GLuint vao;
 	GLuint texture_array;
 } glm_worldmodel_req_t;
 
@@ -468,7 +440,6 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 	req = &worldmodel_requests[batch_count];
 
-	req->vao = model->vao.vao;
 	req->count = 0;
 	req->texture_array = texture_array;
 	req->instanceCount = 1;
@@ -488,7 +459,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 	qbool draw_caustics = gl_caustics.integer && underwatertexture;
 	glm_worldmodel_req_t* req = NULL;
 
-	GLM_EnterBatchedWorldRegion(model->vao.vao, draw_detail_texture, draw_caustics);
+	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics);
 
 	for (i = 0; i < model->texture_array_count; ++i) {
 		texture_t* base_tex = model->textures[model->texture_array_first[i]];
@@ -583,8 +554,6 @@ static void GL_FlushWorldModelBatch(void)
 		return;
 	}
 
-	// Much simpler for world model - already in texture order and one call per texture array
-	GL_BindVertexArray(worldmodel_requests[0].vao);
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests);
 

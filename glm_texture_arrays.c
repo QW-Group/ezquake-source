@@ -9,9 +9,12 @@
 #include "tr_types.h"
 #endif
 
+static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer);
+
 static GLuint common_array;
-static glm_vao_t model_vao;
 static glm_vbo_t instance_vbo;
+glm_vao_t aliasModel_vao;
+glm_vbo_t aliasModel_vbo;
 
 typedef struct common_texture_s {
 	int width;
@@ -46,14 +49,12 @@ static qbool BrushModelIsAnySize(model_t* mod)
 
 #define MAX_INSTANCES 64
 
-static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, float* new_vbo_buffer);
 static void GLM_CreateInstanceVBO(void)
 {
 	unsigned int values[MAX_INSTANCES];
 	int i;
 
-	GL_GenBuffer(&instance_vbo, __FUNCTION__);
-	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo.vbo);
+	GL_GenFixedBuffer(&instance_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(values), GL_STATIC_DRAW);
 
 	for (i = 0; i < MAX_INSTANCES; ++i) {
 		values[i] = i;
@@ -505,7 +506,7 @@ void GLM_FindBrushModelTextureExtents(model_t* mod)
 	}
 }
 
-void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_texture_t* commonTex, int maxWidth, int maxHeight, glm_vbo_t model_vbo, float* new_vbo_buffer, int* new_vbo_position)
+void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_texture_t* commonTex, int maxWidth, int maxHeight, float* new_vbo_buffer, int* new_vbo_position)
 {
 	int count = 0;
 	int j;
@@ -525,12 +526,10 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 		memcpy(&new_vbo_buffer[(*new_vbo_position) * MODELVERTEXSIZE], mod->temp_vbo_buffer, mod->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
 		//Q_free(mod->temp_vbo_buffer);
 
-		mod->vao_simple = mod->vao = model_vao;
-		mod->vbo = model_vbo;
 		mod->vbo_start = *new_vbo_position;
 
-		paliashdr->vbo = model_vbo;
-		paliashdr->vao = model_vao;
+		//paliashdr->vbo = model_vbo;
+		//paliashdr->vao = model_vao;
 		paliashdr->vertsOffset = *new_vbo_position;
 
 		*new_vbo_position += mod->vertsInVBO;
@@ -551,8 +550,6 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 			GL_CopyToTextureArraySize(common, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT, &frame->gl_arraynum, &frame->gl_arrayindex);
 		}
 
-		mod->vao_simple = model_vao;
-		mod->vbo = model_vbo;
 		mod->vbo_start = 0;
 	}
 	else if (mod->type == mod_brush) {
@@ -563,7 +560,6 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 				GL_CopyToTextureArraySize(common, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j]);
 			}
 		}
-		mod->vao_simple = model_vao;
 		mod->vbo_start = 0;
 
 		for (j = 0; j < mod->numtextures; ++j) {
@@ -656,7 +652,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
 	common_texture_t* common = Q_malloc(sizeof(common_texture_t));
 	int required_vbo_length = 4;
-	static glm_vbo_t model_vbo;
 	int i;
 
 	if (!vid_restart) {
@@ -665,9 +660,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		}
 		GL_DeleteModelData();
 	}
-
-	GL_GenBuffer(&model_vbo, __FUNCTION__);
-	GL_GenVertexArray(&model_vao);
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -723,7 +715,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.model_precache[i];
 
 			if (mod) {
-				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
+				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, new_vbo_buffer, &new_vbo_position);
 			}
 		}
 
@@ -731,7 +723,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			model_t* mod = cl.vw_model_precache[i];
 
 			if (mod) {
-				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, model_vbo, new_vbo_buffer, &new_vbo_position);
+				GL_ImportTexturesForModel(mod, common, commonTex, maxWidth, maxHeight, new_vbo_buffer, &new_vbo_position);
 			}
 		}
 
@@ -744,25 +736,26 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		}
 
 		GLM_CreateInstanceVBO();
-		GLM_CreateModelVAO(model_vbo.vbo, required_vbo_length, new_vbo_buffer);
+		GLM_CreateAliasModelVAO(required_vbo_length, new_vbo_buffer);
 		GLM_CreateBrushModelVAO(&instance_vbo);
 	}
 
 	GL_FreeTextureSizeList(common);
 }
 
-static void GLM_CreateModelVAO(GLuint model_vbo, GLuint required_vbo_length, float* new_vbo_buffer)
+static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer)
 {
-	GL_BindBuffer(GL_ARRAY_BUFFER, model_vbo);
-	GL_BufferData(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
+	GL_GenVertexArray(&aliasModel_vao);
+	GL_BindVertexArray(aliasModel_vao.vao);
+
+	GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), GL_STATIC_DRAW);
+	GL_BufferDataUpdate(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer);
 	Q_free(new_vbo_buffer);
 
-	GL_BindVertexArray(model_vao.vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
-	GL_BindBuffer(GL_ARRAY_BUFFER, model_vbo);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));

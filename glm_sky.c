@@ -135,9 +135,8 @@ static void BuildSkyVertsArray(void)
 		}
 		skyDomeVertices = vert;
 
-		GL_GenBuffer(&skyDome_vbo, __FUNCTION__);
-		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, GL_STATIC_DRAW);
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(float) * skyDomeVertices * FLOATS_PER_SKYVERT, skydomeVertData);
 	}
 
 	if (!skyDome_vao.vao) {
@@ -151,58 +150,11 @@ static void BuildSkyVertsArray(void)
 	}
 }
 
-static void GLM_DrawFastSky(void)
-{
-	GLsizei count;
-	GLuint indices[4096];
-	msurface_t* fa;
-	byte color[4] = {
-		r_skycolor.color[0],
-		r_skycolor.color[1],
-		r_skycolor.color[2],
-		255
-	};
-
-	count = 0;
-	for (fa = skychain; fa; fa = fa->texturechain) {
-		glpoly_t* poly;
-
-		for (poly = fa->polys; poly; poly = poly->next) {
-			int newVerts = poly->numverts;
-			int v;
-
-			if (count + 3 + newVerts > sizeof(indices) / sizeof(indices[0])) {
-				GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color, cl.worldmodel->vao.vao, indices, count, false, false, false);
-				count = 0;
-			}
-
-			if (count) {
-				int prev = count - 1;
-
-				if (count % 2 == 1) {
-					indices[count++] = indices[prev];
-				}
-				indices[count++] = indices[prev];
-				indices[count++] = poly->vbo_start;
-			}
-			for (v = 0; v < newVerts; ++v) {
-				indices[count++] = poly->vbo_start + v;
-			}
-		}
-	}
-
-	if (count) {
-		GLM_DrawIndexedPolygonByType(GL_TRIANGLE_STRIP, color, cl.worldmodel->vao.vao, indices, count, false, false, false);
-		count = 0;
-	}
-}
-
 void GLM_DrawSky(void)
 {
 	qbool		ignore_z;
 
 	if (r_fastsky.value) {
-		GLM_DrawFastSky();
 		return;
 	}
 
@@ -237,7 +189,7 @@ void GLM_DrawSky(void)
 		}
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-		GLM_DrawFastSky();
+		//GLM_DrawFastSky();
 
 		if (gl_fogenable.value && gl_fogsky.value) {
 			GL_DisableFog();

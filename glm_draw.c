@@ -48,9 +48,8 @@ static GLuint GL_CreateLineVAO(void)
 	};
 
 	if (!vbo.vbo) {
-		GL_GenBuffer(&vbo, "line");
-		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&vbo, GL_ARRAY_BUFFER, "line", sizeof(points), GL_DYNAMIC_DRAW);
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(points), points);
 	}
 
 	if (!vao.vao) {
@@ -206,9 +205,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!imageVBO.vbo) {
-		GL_GenBuffer(&imageVBO, __FUNCTION__);
-		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(images), images, GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&imageVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(images), GL_DYNAMIC_DRAW);
 	}
 
 	if (!imageVAO.vao) {
@@ -246,7 +243,7 @@ void GLM_FlushImageDraw(void)
 		GLM_CreateMultiImageProgram();
 
 		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
-		GL_BufferData(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images, GL_DYNAMIC_DRAW);
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images);
 
 		glDisable(GL_DEPTH_TEST);
 

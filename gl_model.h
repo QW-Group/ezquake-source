@@ -389,8 +389,8 @@ typedef struct aliashdr_s {
 	int					gl_texturenum[MAX_SKINS][4];
 	int					fb_texturenum[MAX_SKINS][4];
 
-	glm_vbo_t           vbo;
-	glm_vao_t           vao;
+	//glm_vbo_t           vbo;
+	//glm_vao_t           vao;
 	int                 vertsPerPose;
 	int                 vertsOffset;
 
@@ -547,9 +547,9 @@ typedef struct model_s {
 	// additional model data
 	cache_user_t		cache; // only access through Mod_Extradata
 
-	glm_vbo_t           vbo;
-	glm_vao_t           vao;
-	glm_vao_t           vao_simple;
+	//glm_vbo_t           vbo;
+	//glm_vao_t           vao;
+	//glm_vao_t           vao_simple;
 
 	unsigned int        texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	float               texture_arrays_scale_s[MAX_TEXTURE_ARRAYS_PER_MODEL];
