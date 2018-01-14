@@ -314,8 +314,7 @@ static void GLM_DrawSkyDomeFaces(void)
 
 		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, skyDomeCommands_vbo.vbo);
 		GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(commandData[0]) * commands, commandData);
-		GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_skydomeData.ubo);
-		GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(skyDomeData), &skyDomeData);
+		GL_UpdateUBO(&ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
 
 		GL_BindVertexArray(skyDome_vao.vao);
 
@@ -386,8 +385,7 @@ static void GLM_DrawSkyBox(void)
 		cvars.farclip = max(r_farclip.value, 4096) * 0.577;
 		VectorCopy(r_origin, cvars.origin);
 
-		GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_skyboxData.ubo);
-		GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(cvars), &cvars);
+		GL_UpdateUBO(&ubo_skyboxData, sizeof(cvars), &cvars);
 
 		GL_BindVertexArray(skyBox_vao.vao);
 		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);

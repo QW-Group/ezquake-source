@@ -159,8 +159,7 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
 	world.r_fastsky = r_fastsky.integer;
 	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
 
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_worldcvars.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(world), &world);
+	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
 
 	GL_UseProgram(drawworld.program);
 

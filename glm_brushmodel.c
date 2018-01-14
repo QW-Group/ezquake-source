@@ -371,8 +371,7 @@ static void GL_FlushBrushModelBatch(void)
 	}
 
 	// Update data
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels);
+	GL_UpdateUBO(&ubo_brushdata, sizeof(brushmodels), &brushmodels);
 
 	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_brushIndirectDraw.vbo);
 	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);

@@ -577,7 +577,7 @@ static glm_vao_t* vao_list = NULL;
 // Linked list of all uniform buffers
 static glm_ubo_t* ubo_list = NULL;
 
-void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
+void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
 {
 	if (vbo->vbo) {
 		glDeleteBuffers(1, &vbo->vbo);
@@ -587,14 +587,22 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
 		vbo_list = vbo;
 	}
 	vbo->name = name;
+	vbo->target = target;
 	glGenBuffers(1, &vbo->vbo);
-}
 
-void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
-{
-	GL_GenBuffer(vbo, name);
 	GL_BindBuffer(target, vbo->vbo);
 	glBufferData(target, size, data, usage);
+}
+
+void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data)
+{
+	assert(ubo);
+	assert(ubo->ubo);
+	assert(data);
+	assert(size == ubo->size);
+
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
+	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, size, data);
 }
 
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
@@ -607,6 +615,7 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 		ubo_list = ubo;
 	}
 	ubo->name = name;
+	ubo->size = size;
 	glGenBuffers(1, &ubo->ubo);
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);

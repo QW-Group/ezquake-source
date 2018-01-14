@@ -239,8 +239,7 @@ static void GLM_FlushAliasModelBatch(void)
 	aliasdata.shell_alpha = bound(0, gl_powerupshells.value, 1);
 
 	// Update data
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_aliasdata.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(aliasdata), &aliasdata);
+	GL_UpdateUBO(&ubo_aliasdata, sizeof(aliasdata), &aliasdata);
 
 	for (i = 0; i <= batch; ++i) {
 		if (batches[i].texture2d) {

@@ -93,8 +93,7 @@ void GLM_PreRenderView(void)
 		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_COMMON2D_CVARS, ubo_common2d.ubo);
 	}
 
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_common2d.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(common2d), &common2d);
+	GL_UpdateUBO(&ubo_common2d, sizeof(common2d), &common2d);
 }
 
 void GLM_SetupGL(void)
@@ -112,6 +111,5 @@ void GLM_SetupGL(void)
 		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_REFDEF_CVARS, ubo_refdef.ubo);
 	}
 
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_refdef.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(refdef), &refdef);
+	GL_UpdateUBO(&ubo_refdef, sizeof(refdef), &refdef);
 }

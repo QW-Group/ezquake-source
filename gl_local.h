@@ -679,7 +679,7 @@ void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(int texture);
 
 void GL_BindBuffer(GLenum target, GLuint buffer);
-void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
+void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data);
 
 // Creates buffer, binds to target and initialises with a particular size
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);

@@ -158,6 +158,7 @@ typedef struct glm_vbo_s {
 	const char* name;
 
 	struct glm_vbo_s* next;
+	unsigned int target;
 } glm_vbo_t;
 
 typedef struct glm_vao_s {
@@ -171,6 +172,7 @@ typedef struct glm_ubo_s {
 	const char* name;
 
 	struct glm_ubo_s* next;
+	size_t size;
 } glm_ubo_t;
 
 typedef struct glpoly_s {

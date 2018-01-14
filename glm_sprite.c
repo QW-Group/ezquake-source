@@ -147,8 +147,7 @@ void GL_FlushSpriteBatch(void)
 	}
 
 	GL_UseProgram(spriteProgram.program);
-	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_spriteData.ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(spriteData), &spriteData);
+	GL_UpdateUBO(&ubo_spriteData, sizeof(spriteData), &spriteData);
 
 	GL_BindVertexArray(aliasModel_vao.vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
