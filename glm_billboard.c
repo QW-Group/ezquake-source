@@ -139,7 +139,7 @@ void GLC_DrawBillboards(void)
 		gl_billboard_batch_t* batch = &batches[i];
 
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_Bind(batch->texture);
+		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : solidTexture);
 
 		for (j = 0; j < batch->count; ++j) {
 			gl_billboard_vert_t* v;
@@ -234,6 +234,7 @@ void GLM_DrawBillboards(void)
 		return;
 	}
 
+	GL_EnterRegion(__FUNCTION__);
 	GL_BindBuffer(GL_ARRAY_BUFFER, billboardVBO.vbo);
 	GL_BufferDataUpdate(GL_ARRAY_BUFFER, vertexCount * sizeof(verts[0]), verts);
 
@@ -249,7 +250,12 @@ void GLM_DrawBillboards(void)
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
 		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, batch->texture ? batch->texture : solidTexture);
 
-		glMultiDrawArrays(GL_TRIANGLE_FAN, batch->firstVertices, batch->numVertices, batch->count);
+		if (batch->count == 1) {
+			glDrawArrays(GL_TRIANGLE_FAN, batch->firstVertices[0], batch->numVertices[0]);
+		}
+		else {
+			glMultiDrawArrays(GL_TRIANGLE_FAN, batch->firstVertices, batch->numVertices, batch->count);
+		}
 
 		batch->count = 0;
 	}
@@ -261,4 +267,5 @@ void GLM_DrawBillboards(void)
 	GL_ShadeModel(GL_FLAT);
 
 	GL_EnableFog();
+	GL_LeaveRegion();
 }

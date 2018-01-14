@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern cvar_t r_chaticons_alpha;
 
 /**************************************** chat icon *****************************/
-
 // qqshka: code is a mixture of autoid and particle engine
 
 static ci_player_t ci_clients[MAX_CLIENTS];
@@ -50,15 +49,13 @@ qbool ci_initialized = false;
 void CI_Init(void)
 {
 	int ci_font;
-	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_MIPMAP;
+	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;
 
 	ci_initialized = false;
 
-	if (!gl_scaleModelTextures.value)
-		texmode |= TEX_NOSCALE;
-
-	if (!(ci_font = GL_LoadTextureImage("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode)))
+	if (!(ci_font = GL_LoadTextureImage("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode))) {
 		return;
+	}
 
 	ADD_CICON_TEXTURE(citex_chat, ci_font, 0, 1, 0, 0, 64, 64); // get chat part from font
 	ADD_CICON_TEXTURE(citex_afk, ci_font, 0, 1, 64, 0, 128, 64); // get afk part
@@ -121,7 +118,7 @@ void SCR_SetupCI(void)
 
 		id->org[0] = cent->lerp_origin[0];
 		id->org[1] = cent->lerp_origin[1];
-		id->org[2] = cent->lerp_origin[2] + 33; // move baloon up a bit
+		id->org[2] = cent->lerp_origin[2] + 33; // move balloon up a bit
 
 		id->size = 8; // scale baloon
 		id->rotangle = 5 * sin(2 * r_refdef2.time); // may be set to 0, if u dislike rolling
@@ -155,22 +152,22 @@ void SCR_SetupCI(void)
 
 static void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
-	if (GL_ShadersSupported()) {
-		GLM_DrawBillboard(_ptex, _p, _coord);
-	}
-	else {
-		GLC_DrawBillboard(_ptex, _p, _coord);
-	}
-}
+	float coordinates[4][4];
+	int i;
 
-// probably may be made as macros, but i hate macros cos macroses is unsafe
-static void CI_Bind(ci_texture_t *citex, int *texture)
-{
-	//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
-	if (*texture != citex->texnum) {
-		GL_Bind(citex->texnum);
-		*texture = citex->texnum;
+	for (i = 0; i < 4; ++i) {
+		VectorScale(_coord[i], _p->size, coordinates[i]);
+		if (_p->rotangle) {
+			GLM_RotateVector(coordinates[i], _p->rotangle, vpn[0], vpn[1], vpn[2]);
+		}
+		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
+
+	GL_BillboardAddEntry(BILLBOARD_CHATICONS, 4);
+	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
+	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
+	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
+	GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
 }
 
 void DrawChatIcons(void)
@@ -178,7 +175,6 @@ void DrawChatIcons(void)
 	int	i, texture = 0, flags;
 	vec3_t billboard[4], billboard2[4], vright_tmp;
 	ci_player_t *p;
-	ci_texture_t *citex;
 
 	if (!ci_initialized) {
 		return;
@@ -187,8 +183,6 @@ void DrawChatIcons(void)
 	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1) {
 		return;
 	}
-
-	GL_DisableFog();
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
@@ -201,15 +195,7 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_DepthMask(GL_FALSE);
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_TextureEnvMode(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
-
-	// FIXME: i'm not sure which blend mode here better
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glEnable(GL_TEXTURE_2D);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];
@@ -217,27 +203,15 @@ void DrawChatIcons(void)
 
 		if (flags & CIF_CHAT && flags & CIF_AFK) {
 			flags = flags & ~(CIF_CHAT | CIF_AFK); // so they will be not showed below again
-			CI_Bind(citex = &ci_textures[citex_chat_afk], &texture);
-			CI_DrawBillboard(citex, p, billboard2);
+			CI_DrawBillboard(&ci_textures[citex_chat_afk], p, billboard2);
 		}
 
 		if (flags & CIF_CHAT) {
-			CI_Bind(citex = &ci_textures[citex_chat], &texture);
-			CI_DrawBillboard(citex, p, billboard);
+			CI_DrawBillboard(&ci_textures[citex_chat], p, billboard);
 		}
 
 		if (flags & CIF_AFK) {
-			CI_Bind(citex = &ci_textures[citex_afk], &texture);
-			CI_DrawBillboard(citex, p, billboard);
+			CI_DrawBillboard(&ci_textures[citex_afk], p, billboard);
 		}
 	}
-
-	glEnable(GL_TEXTURE_2D);
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
-
-	GL_EnableFog();
 }

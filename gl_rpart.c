@@ -345,11 +345,10 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
-static void QMB_CreateAtlasTexture(int tex1, int tex2, int tex3, int tex4)
+static void QMB_CreateAtlasTexture(int* textures, int count)
 {
-	int textures[4] = { tex1, tex2, tex3, tex4 };
-	int horizontal_widths[4], vertical_offsets[4];
-	int widths[4], heights[4];
+	int horizontal_widths[32], vertical_offsets[32];
+	int widths[32], heights[32];
 	int total_height = 0;
 	int max_width = 0;
 	int i, j;
@@ -358,9 +357,13 @@ static void QMB_CreateAtlasTexture(int tex1, int tex2, int tex3, int tex4)
 	int offsets[4];
 	byte* atlas_texels;
 
-	memset(horizontal_widths, 0, sizeof(int) * 4);
-	memset(vertical_offsets, 0, sizeof(int) * 4);
-	for (i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+	if (count > sizeof(widths) / sizeof(widths[0])) {
+		Sys_Error("Internal error, too many textures to be put on atlas");
+	}
+
+	memset(horizontal_widths, 0, sizeof(horizontal_widths));
+	memset(vertical_offsets, 0, sizeof(vertical_offsets));
+	for (i = 0; i < count; ++i) {
 		int texWidth, texHeight;
 
 		GL_Bind(textures[i]);
@@ -393,7 +396,7 @@ static void QMB_CreateAtlasTexture(int tex1, int tex2, int tex3, int tex4)
 	particle_textures[ptex_none].coords[0][1] = particle_textures[ptex_none].coords[0][3] = (total_height - 1.0f) / total_height;
 
 	// Copy each texture into the atlas
-	for (i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+	for (i = 0; i < count; ++i) {
 		int yOffset, xOffset;
 		int width = widths[i];
 		int height = heights[i];
@@ -513,7 +516,7 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
 
 	// Move all textures onto the same
-	QMB_CreateAtlasTexture(particlefont, shockwave_texture, lightning_texture, spark_texture);
+	// QMB_CreateAtlasTexture(particlefont, shockwave_texture, lightning_texture, spark_texture);
 
 	ADD_PARTICLE_TYPE(p_spark, pd_spark, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9);
 	ADD_PARTICLE_TYPE(p_sparkray, pd_sparkray, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9);
@@ -3305,7 +3308,6 @@ static void GLM_QMB_DrawParticles(void)
 		GL_TextureEnvMode(GL_MODULATE);
 		GL_ShadeModel(GL_SMOOTH);
 
-		GL_SelectTexture(GL_TEXTURE0);
 		for (i = 0; i < num_particletypes; i++) {
 			pt = &particle_types[i];
 			if (!pt->vbo_count || pt->drawtype == pd_hide) {
@@ -3313,7 +3315,7 @@ static void GLM_QMB_DrawParticles(void)
 			}
 
 			GL_BlendFunc(pt->SrcBlend, pt->DstBlend);
-			GL_Bind(particle_textures[pt->texture].texnum);
+			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, particle_textures[pt->texture].texnum);
 
 			glMultiDrawArrays(GL_TRIANGLE_FAN, firstVertices + pt->draw_start, countVertices + pt->draw_start, pt->draw_count);
 		}

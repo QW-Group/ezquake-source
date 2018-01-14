@@ -525,6 +525,7 @@ int GL_AlphaBlendFlags(int modes);
 void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
 void GLM_TransformMatrix(float* matrix, float x, float y, float z);
 void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
+void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z);
 void GLM_GetMatrix(GLenum type, float* matrix);
 
 #define GLM_VERTEX_SHADER   0
@@ -751,6 +752,7 @@ void GL_EndDrawEntities(void);
 void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
 void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
+void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(qbool vid_restart);
 

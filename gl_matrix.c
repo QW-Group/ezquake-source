@@ -100,22 +100,11 @@ void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 	float result[16];
 
 	VectorNormalize(vec);
+	x = vec[0];
+	y = vec[1];
+	z = vec[2];
 
 	// Taken from https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glRotate.xml
-	/*rotation[0] = x * x * (1 - c) + c;
-	rotation[1] = x * y * (1 - c) - z * s;
-	rotation[2] = x * z * (1 - c) + y * s;
-	rotation[3] = 0;
-	rotation[4] = y * x * (1 - c) + z * s;
-	rotation[5] = y * y * (1 - c) + c;
-	rotation[6] = y * z * (1 - c) - x * s;
-	rotation[7] = 0;
-	rotation[8] = x * z * (1 - c) - y * s;
-	rotation[9] = y * z * (1 - c) + x * s;
-	rotation[10] = z * z * (1 - c) + c;
-	rotation[11] = 0;
-	rotation[12] = rotation[13] = rotation[14] = 0;
-	rotation[15] = 1;*/
 	rotation[0] = x * x * (1 - c) + c;
 	rotation[4] = x * y * (1 - c) - z * s;
 	rotation[8] = x * z * (1 - c) + y * s;
@@ -133,6 +122,41 @@ void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 
 	GLM_MultiplyMatrix(rotation, matrix, result);
 	GLM_SetMatrix(matrix, result);
+}
+
+void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z)
+{
+	vec3_t vec = { x, y, z };
+	double s = sin(angle * M_PI / 180);
+	double c = cos(angle * M_PI / 180);
+	float rotation[16];
+	float result[16];
+	float input[4] = { vector[0], vector[1], vector[2], 1 };
+	float output[4];
+
+	VectorNormalize(vec);
+	x = vec[0];
+	y = vec[1];
+	z = vec[2];
+
+	// Taken from https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glRotate.xml
+	rotation[0] = x * x * (1 - c) + c;
+	rotation[4] = x * y * (1 - c) - z * s;
+	rotation[8] = x * z * (1 - c) + y * s;
+	rotation[12] = 0;
+	rotation[1] = y * x * (1 - c) + z * s;
+	rotation[5] = y * y * (1 - c) + c;
+	rotation[9] = y * z * (1 - c) - x * s;
+	rotation[13] = 0;
+	rotation[2] = x * z * (1 - c) - y * s;
+	rotation[6] = y * z * (1 - c) + x * s;
+	rotation[10] = z * z * (1 - c) + c;
+	rotation[14] = 0;
+	rotation[3] = rotation[7] = rotation[11] = 0;
+	rotation[15] = 1;
+
+	GLM_MultiplyVector(rotation, input, output);
+	VectorCopy(output, vector);
 }
 
 void GLM_TransformMatrix(float* matrix, float x, float y, float z)
@@ -198,6 +222,14 @@ void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
 	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
+}
+
+void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result)
+{
+	result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12];
+	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13];
+	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14];
+	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15];
 }
 
 void GL_IdentityModelView(void)

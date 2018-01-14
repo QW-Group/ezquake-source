@@ -1075,8 +1075,9 @@ void R_RenderView(void)
 	extern void DrawChatIcons(void);
 
 	double time1 = 0, time2;
-	if (!r_worldentity.model || !cl.worldmodel)
-		Sys_Error ("R_RenderView: NULL worldmodel");
+	if (!r_worldentity.model || !cl.worldmodel) {
+		Sys_Error("R_RenderView: NULL worldmodel");
+	}
 
 	if (r_speeds.value) {
 		glFinish ();
@@ -1097,11 +1098,11 @@ void R_RenderView(void)
 
 	R_DrawParticles();
 
+	DrawChatIcons();
+
 	GL_DrawBillboards();
 
 	if (!GL_ShadersSupported()) {
-		DrawChatIcons();
-
 		//VULT: CORONAS
 		//Even if coronas gets turned off, let active ones fade out
 		if (amf_coronas.value || CoronaCount) {

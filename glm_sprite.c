@@ -277,8 +277,3 @@ void GLM_DrawSpriteModel(entity_t* e)
 		++batch_count;
 	}
 }
-
-void GLM_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
-{
-	// MEAG: TODO
-}

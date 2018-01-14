@@ -99,30 +99,3 @@ void GLC_DrawSpriteModel(entity_t* e)
 
 	glEnd();
 }
-
-void GLC_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
-{
-	float matrix[16];
-
-	GL_PushMatrix(GL_MODELVIEW, matrix);
-	GL_Translate(GL_MODELVIEW, _p->org[0], _p->org[1], _p->org[2]);
-	GL_Scale(GL_MODELVIEW, _p->size, _p->size, _p->size);
-	if (_p->rotangle) {
-		GL_Rotate(GL_MODELVIEW, _p->rotangle, vpn[0], vpn[1], vpn[2]);
-	}
-
-	glColor4ubv(_p->color);
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]);
-	glVertex3fv(_coord[0]);
-	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]);
-	glVertex3fv(_coord[1]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]);
-	glVertex3fv(_coord[2]);
-	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]);
-	glVertex3fv(_coord[3]);
-	glEnd();
-
-	GL_PopMatrix(GL_MODELVIEW, matrix);
-}
