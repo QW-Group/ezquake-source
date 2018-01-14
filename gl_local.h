@@ -871,6 +871,8 @@ void GL_DeleteBuffers(void);
 void GL_InitialiseState(void);
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size);
 void GL_GenVertexArray(glm_vao_t* vao);
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);

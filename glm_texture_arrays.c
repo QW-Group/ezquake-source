@@ -880,19 +880,17 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	tempBufferSize = 0;
 }
 
+#define VAO_FLOAT_ATTRIBUTE    1
+#define VAO_INTEGER_ATTRIBUTE  2
+
 static void GLM_CreateAliasModelVAO(void)
 {
 	GL_GenVertexArray(&aliasModel_vao);
 
-	GL_BindBuffer(GL_ARRAY_BUFFER, aliasModel_vbo.vbo);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
-	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo.vbo);
-	glEnableVertexAttribArray(3);
-	glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, &instance_vbo, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+
 	glVertexAttribDivisor(3, 1);
 }

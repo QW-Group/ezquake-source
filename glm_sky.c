@@ -210,26 +210,25 @@ static void BuildSkyVertsArray(void)
 				skydomeIndexes[skyDomeIndexCount++] = i * VERTS_PER_STRIP + j;
 			}
 		}
+
+		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * vert, skydomeVertData, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&skyDomeIndexes_vbo, GL_ELEMENT_ARRAY_BUFFER, __FUNCTION__, sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao.vao) {
 		GL_GenVertexArray(&skyDome_vao);
-		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * vert, skydomeVertData, GL_STATIC_DRAW);
-		GL_GenFixedBuffer(&skyDomeIndexes_vbo, GL_ELEMENT_ARRAY_BUFFER, __FUNCTION__, sizeof(skydomeIndexes[0]) * skyDomeIndexCount, skydomeIndexes, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyDomeIndexes_vbo.vbo);
+
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
+		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
 	}
 
 	if (!skyBox_vao.vao) {
 		GL_GenVertexArray(&skyBox_vao);
-		GL_BindBuffer(GL_ARRAY_BUFFER, skyDome_vbo.vbo);
 		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
+
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
+		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
 	}
 }
 

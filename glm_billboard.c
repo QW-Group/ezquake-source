@@ -171,16 +171,13 @@ static void GLM_CreateBillboardVAO(void)
 
 	if (!billboardVAO.vao) {
 		GL_GenVertexArray(&billboardVAO);
-		GL_BindBuffer(GL_ARRAY_BUFFER, billboardVBO.vbo);
+
 		// position
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(position));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(position));
 		// texture coordinates
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(tex));
 		// color
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, &billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_BILLBOARDVERT_FOFS(color));
 	}
 }
 

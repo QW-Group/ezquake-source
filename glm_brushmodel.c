@@ -558,26 +558,17 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	// Copy VBO buffer across
 	GL_GenFixedBuffer(&brushModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
-	glEnableVertexAttribArray(4);
-	glVertexAttribIPointer(4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
-	glEnableVertexAttribArray(5);
-	glVertexAttribIPointer(5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
-	glEnableVertexAttribArray(7);
-	glVertexAttribIPointer(7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flags));
-	glEnableVertexAttribArray(8);
-	glVertexAttribPointer(8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flatcolor));
+	GL_ConfigureVertexAttribPointer(&brushModel_vao, &brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));
+	GL_ConfigureVertexAttribPointer(&brushModel_vao, &brushModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_coords));
+	GL_ConfigureVertexAttribPointer(&brushModel_vao, &brushModel_vbo, 2, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_coords));
+	GL_ConfigureVertexAttribPointer(&brushModel_vao, &brushModel_vbo, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(detail_coords));
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, &brushModel_vbo, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(lightmap_index));
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, &brushModel_vbo, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(material_index));
+	// 
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, instance_vbo, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, &brushModel_vbo, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flags));
+	GL_ConfigureVertexAttribIPointer(&brushModel_vao, &brushModel_vbo, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(flatcolor));
 
-	glEnableVertexAttribArray(6);
-	GL_BindBuffer(GL_ARRAY_BUFFER, instance_vbo->vbo);
-	glVertexAttribIPointer(6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 	glVertexAttribDivisor(6, 1);
 
 	Q_free(buffer);

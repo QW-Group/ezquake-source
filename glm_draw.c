@@ -54,9 +54,8 @@ static glm_vao_t* GL_CreateLineVAO(void)
 
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao);
-		glEnableVertexAttribArray(0);
-		GL_BindBuffer(GL_ARRAY_BUFFER, vbo.vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+		GL_ConfigureVertexAttribPointer(&vao, &vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
 	return &vao;
@@ -209,19 +208,13 @@ void GLM_CreateMultiImageProgram(void)
 
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO);
-		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
-		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
-		glEnableVertexAttribArray(5);
-		glVertexAttribIPointer(5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
+
+		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 8);
+		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 16);
+		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), (GLvoid*) 24);
+		GL_ConfigureVertexAttribPointer(&imageVAO, &imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), (GLvoid*) 32);
+		GL_ConfigureVertexAttribIPointer(&imageVAO, &imageVBO, 5, 1, GL_INT, sizeof(images[0]), (GLvoid*)36);
 	}
 }
 

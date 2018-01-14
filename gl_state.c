@@ -697,3 +697,38 @@ void GL_PolygonOffset(int option)
 		GL_Disable(GL_POLYGON_OFFSET_LINE);
 	}
 }
+
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	if (vbo && vbo->vbo) {
+		GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
+	}
+	else {
+		GL_BindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	glEnableVertexAttribArray(index);
+	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+}
+
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	if (vbo && vbo->vbo) {
+		GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
+	}
+	else {
+		GL_BindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	glEnableVertexAttribArray(index);
+	glVertexAttribIPointer(index, size, type, stride, pointer);
+}
+
