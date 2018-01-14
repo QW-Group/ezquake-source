@@ -387,7 +387,6 @@ static void GLM_DrawSkyBox(void)
 		GL_UpdateUBO(&ubo_skyboxData, sizeof(cvars), &cvars);
 
 		GL_BindVertexArray(skyBox_vao.vao);
-		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
 	}
 }
@@ -450,8 +449,6 @@ qbool GLM_LoadSkyboxTextures(char* skyname)
 	skybox_cubeMap = GL_CreateCubeMap("skybox:cubemap", widths[0], heights[0], TEX_NOCOMPRESS | TEX_MIPMAP);
 
 	GLM_CopySkyboxTexturesToCubeMap(skybox_cubeMap, widths[0], heights[0]);
-
-	Con_Printf("Cubemap created: %u, %d x %d\n", skybox_cubeMap, widths[0], heights[0]);
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
