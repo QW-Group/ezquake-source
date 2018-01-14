@@ -239,7 +239,7 @@ void R_TranslatePlayerSkin (int playernum)
 	}
 
 	GL_Bind(playernmtextures[playernum]);
-	glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, playernmtextures[playernum], 0, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	GL_TextureEnvMode(GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -278,7 +278,7 @@ void R_TranslatePlayerSkin (int playernum)
 		}
 
 		GL_Bind(playerfbtextures[playernum]);
-		glTexImage2D(GL_TEXTURE_2D, 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, playerfbtextures[playernum], 0, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		GL_TextureEnvMode(GL_MODULATE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

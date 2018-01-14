@@ -761,6 +761,16 @@ void GL_TexSubImage3D(
 	glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 }
 
+void GL_TexImage2D(
+	GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLint internalformat,
+	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
+)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
+}
+
 void GL_TexSubImage2D(
 	GLenum textureUnit, GLenum target, GLuint texture, GLint level,
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels

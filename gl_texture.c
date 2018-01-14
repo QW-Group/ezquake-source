@@ -266,8 +266,11 @@ static void brighten32 (byte *data, int size)
 //
 // Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
 //
-static void GL_Upload32 (unsigned *data, int width, int height, int mode) 
+static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
 {
+	// Tell OpenGL the texnum of the texture before uploading it.
+	GL_BindFirstTime(glt->texnum);
+
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
 
@@ -315,8 +318,9 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 
 	// If the image size is bigger than the max allowed size or 
 	// set picmip value we calculate it's next closest mip map.
-	while (width > tempwidth || height > tempheight)
-		Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
+	while (width > tempwidth || height > tempheight) {
+		Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
+	}
 
 	if (mode & TEX_BRIGHTEN)
 		brighten32 ((byte *)newdata, width * height * 4);
@@ -333,7 +337,7 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 
 	// Upload the main texture to OpenGL.
 	miplevel = 0;
-	glTexImage2D (GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 
 	if (mode & TEX_MIPMAP)
 	{
@@ -342,7 +346,7 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 		{
 			Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
 			miplevel++;
-			glTexImage2D (GL_TEXTURE_2D, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
+			GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, glt->texnum, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 		}
 
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
@@ -360,11 +364,14 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	Q_free(newdata);
 }
 
-static void GL_Upload8 (byte *data, int width, int height, int mode) 
+static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int mode)
 {
 	static unsigned trans[640 * 480];
 	int	i, image_size, p;
 	unsigned *table;
+
+	// Tell OpenGL the texnum of the texture before uploading it.
+	GL_BindFirstTime(glt->texnum);
 
 	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
 	image_size = width * height;
@@ -418,7 +425,7 @@ static void GL_Upload8 (byte *data, int width, int height, int mode)
 		}
 	}
 
-	GL_Upload32 (trans, width, height, mode & ~TEX_BRIGHTEN);
+	GL_Upload32(glt, trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
 static gltexture_t* GL_AllocateTextureSlot(const char* identifier, int width, int height, int depth, int bpp, int* scaled_width, int* scaled_height, int mode, unsigned short crc, qbool* new_texture)
@@ -519,16 +526,15 @@ int GL_LoadTexture(const char *identifier, int width, int height, byte *data, in
 		return glt->texnum;
 	}
 
-	// Tell OpenGL the texnum of the texture before uploading it.
-	GL_BindFirstTime(glt->texnum);
-
 	// Upload the texture to OpenGL based on the bytes per pixel.
 	switch (bpp)
 	{
 		case 1:
-			GL_Upload8 (data, width, height, mode); break;
+			GL_Upload8(glt, data, width, height, mode);
+			break;
 		case 4:
-			GL_Upload32 ((void *) data, width, height, mode); break;
+			GL_Upload32(glt, (void *) data, width, height, mode);
+			break;
 		default:
 			Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
 	}

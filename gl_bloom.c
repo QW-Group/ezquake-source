@@ -229,10 +229,10 @@ void R_Bloom_InitTextures( void )
 		glinternalfmt = gl_solid_format;
 	}
 
-	GL_Bind (r_bloomscreentexture);
-	glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GL_Bind(r_bloomscreentexture);
+	GL_TexImage2D(GL_TEXTURE0, GL_TEXTURE_2D, r_bloomscreentexture, 0, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	Q_free (data);
 
