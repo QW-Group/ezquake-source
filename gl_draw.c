@@ -331,10 +331,10 @@ void Draw_DisableScissor(void)
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 
-static int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
-static byte			scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
-static int			scrap_dirty;	// Bit mask.
-static int			scrap_texnum[MAX_SCRAPS];
+static int          scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
+static byte         scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
+static int          scrap_dirty; // Bit mask.
+static GLuint       scrap_texnum[MAX_SCRAPS];
 
 // Returns false if allocation failed.
 static qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
@@ -455,7 +455,7 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 
 		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y))
 		{
-			GL_LoadPicTexture (name, pic, p->data);
+			GL_LoadPicTexture(name, pic, p->data);
 			return pic;
 		}
 
@@ -483,7 +483,7 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 	}
 	else
 	{
-		GL_LoadPicTexture (name, pic, p->data);
+		GL_LoadPicTexture(name, pic, p->data);
 	}
 
 	if (code == WADPIC_SB_IBAR) {
@@ -696,7 +696,7 @@ void Draw_Crosshair (void)
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
 		qbool half_size = false;
-		int texnum;
+		GLuint texnum;
 
 		if (!crosshairalpha.value) {
 			return;
@@ -1155,7 +1155,7 @@ void Draw_InitConback (void)
 	{
 		conback.width = cb->width;
 		conback.height = cb->height;
-		GL_LoadPicTexture ("conback", &conback, cb->data);
+		GL_LoadPicTexture("conback", &conback, cb->data);
 	}
 
 	Draw_AdjustConback();

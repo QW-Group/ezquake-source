@@ -11,6 +11,6 @@ qbool Sky_LoadSkyboxTextures(const char* skyname);
 extern msurface_t *skychain;
 extern msurface_t **skychain_tail;
 extern float skymins[2][6], skymaxs[2][6];
-extern int solidskytexture, alphaskytexture;
+extern unsigned int solidskytexture, alphaskytexture;
 
 #endif

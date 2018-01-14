@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "gl_sky.h"
 
-int solidskytexture, alphaskytexture;
+GLuint solidskytexture, alphaskytexture;
 
 float skymins[2][6], skymaxs[2][6];
 qbool r_skyboxloaded;

@@ -55,7 +55,7 @@ typedef struct
 	qbool			warned;			// warning about falied to load was alredy printed
 	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
 	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
-	int				texnum;			// texture num, used for 32bit skins, speed up
+	unsigned int    texnum;			// texture num, used for 32bit skins, speed up
 	cache_user_t	cache;
 } skin_t;
 

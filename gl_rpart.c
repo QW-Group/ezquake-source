@@ -150,7 +150,7 @@ typedef struct qmb_particle_vertex_s {
 
 #define	MAX_PTEX_COMPONENTS		8
 typedef struct particle_texture_s {
-	int			texnum;
+	GLuint		texnum;
 	int			components;
 	float		coords[MAX_PTEX_COMPONENTS][4];		
 } particle_texture_t;
@@ -326,14 +326,14 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
-static void QMB_CreateAtlasTexture(int* textures, int count)
+static void QMB_CreateAtlasTexture(GLuint* textures, int count)
 {
 	int horizontal_widths[32], vertical_offsets[32];
 	int widths[32], heights[32];
 	int total_height = 0;
 	int max_width = 0;
 	int i, j;
-	int atlas_tex;
+	GLuint atlas_tex;
 	int y_pos;
 	int offsets[4];
 	byte* atlas_texels;

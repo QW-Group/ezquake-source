@@ -50,21 +50,21 @@ typedef struct mvertex_s {
 #define	MAX_LIGHTMAPS		192
 
 typedef struct texture_s {
-	char				name[16];
-	unsigned			width, height;
-	int					gl_texturenum;
-	int					fb_texturenum;				//index of fullbright mask or 0
-	struct msurface_s	*texturechain[2];		
-	struct msurface_s	**texturechain_tail[2];     //Points to the node right after the last non-NULL node in the texturechain.
+	char                name[16];
+	unsigned int        width, height;
+	unsigned int        gl_texturenum;
+	unsigned int        fb_texturenum;				//index of fullbright mask or 0
+	struct msurface_s*  texturechain[2];		
+	struct msurface_s** texturechain_tail[2];       //Points to the node right after the last non-NULL node in the texturechain.
 
-	int					anim_total;					//total tenths in sequence ( 0 = no)
-	int					anim_min, anim_max;			//time for this frame min <=time< max
-	struct texture_s	*anim_next;					//in the animation sequence
-	struct texture_s	*alternate_anims;			//bmodels in frame 1 use these
-	unsigned			offsets[MIPLEVELS];			//four mip maps stored
-	unsigned			flatcolor3ub;				//just for r_fastturb's sake
-	qbool				loaded;						//help speed up vid_restart, actual only for brush models
-	int					isLumaTexture;
+	int                 anim_total;                 //total tenths in sequence ( 0 = no)
+	int                 anim_min, anim_max;         //time for this frame min <=time< max
+	struct texture_s*   anim_next;                  //in the animation sequence
+	struct texture_s*   alternate_anims;            //bmodels in frame 1 use these
+	unsigned int        offsets[MIPLEVELS];         //four mip maps stored
+	unsigned int        flatcolor3ub;               //just for r_fastturb's sake
+	qbool               loaded;                     //help speed up vid_restart, actual only for brush models
+	int	                isLumaTexture;
 	int                 turbType;
 
 	int                 gl_first_lightmap;
@@ -217,7 +217,9 @@ typedef struct msurface_s {
 	int					dlightframe;
 	int					dlightbits;
 
+	// This is not an OpenGL texture name, it's the lightmap index
 	int					lightmaptexturenum;
+
 	byte				styles[MAXLIGHTMAPS];
 	int					cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	qbool				cached_dlight;				// true if dynamic light in cache
@@ -272,10 +274,10 @@ SPRITE MODELS
 
 // FIXME: shorten these?
 typedef struct mspriteframe_s {
-	int					width;
-	int					height;
-	float				up, down, left, right;
-	int					gl_texturenum;
+	int                 width;
+	int                 height;
+	float               up, down, left, right;
+	unsigned int        gl_texturenum;
 	int                 gl_arraynum;
 	int                 gl_arrayindex;
 
@@ -371,31 +373,31 @@ typedef struct mtriangle_s {
 
 #define MAX_SKINS 32
 typedef struct aliashdr_s {
-	int					ident;
-	int					version;
-	vec3_t				scale;
-	vec3_t				scale_origin;
-	float				boundingradius;
-	vec3_t				eyeposition;
-	int					numskins;
-	int					skinwidth;
-	int					skinheight;
-	int					numverts;
-	int					numtris;
-	int					numframes;
-	synctype_t			synctype;
-	int					flags;
-	float				size;
+	int          ident;
+	int          version;
+	vec3_t       scale;
+	vec3_t       scale_origin;
+	float        boundingradius;
+	vec3_t       eyeposition;
+	int          numskins;
+	int          skinwidth;
+	int          skinheight;
+	int          numverts;
+	int          numtris;
+	int          numframes;
+	synctype_t   synctype;
+	int          flags;
+	float        size;
 
-	int					numposes;
-	int					poseverts;
-	int					posedata;	// numposes*poseverts trivert_t
-	int					commands;	// gl command list with embedded s/t
-	int					gl_texturenum[MAX_SKINS][4];
-	int					fb_texturenum[MAX_SKINS][4];
+	int          numposes;
+	int          poseverts;
+	int          posedata;	// numposes*poseverts trivert_t
+	int          commands;	// gl command list with embedded s/t
+	unsigned int gl_texturenum[MAX_SKINS][4];
+	unsigned int fb_texturenum[MAX_SKINS][4];
 
-	int                 vertsPerPose;
-	int                 vertsOffset;
+	int          vertsPerPose;
+	int          vertsOffset;
 
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;

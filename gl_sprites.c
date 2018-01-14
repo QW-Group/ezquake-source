@@ -31,13 +31,16 @@ extern model_t* loadmodel;
 extern char     loadname[32];   // for hunk tags
 
 //=============================================================================
-int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
+static GLuint Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
+{
 	char loadpath[64];
-	int texmode, texnum;
+	int texmode;
+	GLuint texnum;
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
-	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
+	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
 		texmode |= TEX_NOSCALE;
+	}
 
 	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
@@ -50,15 +53,18 @@ int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
 	return texnum;
 }
 
-void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
+void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
+{
 	dspriteframe_t *pinframe;
 	mspriteframe_t *pspriteframe;
 	char basename[64], identifier[64];
-	int width, height, size, origin[2], texnum, texmode;
+	int width, height, size, origin[2], texmode;
+	GLuint texnum;
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
-	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
+	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
 		texmode |= TEX_NOSCALE;
+	}
 
 	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
@@ -85,8 +91,9 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	pspriteframe->right = width + origin[0];
 
 	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
-	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum)))
-		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
+	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum))) {
+		texnum = GL_LoadTexture(identifier, width, height, (byte *)(pinframe + 1), texmode, 1);
+	}
 
 	pspriteframe->gl_texturenum = texnum;
 	pspriteframe->gl_scalingS = 1.0f;

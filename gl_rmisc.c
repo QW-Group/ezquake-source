@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 
-static int GL_GenerateShellTexture(void)
+static unsigned int GL_GenerateShellTexture(void)
 {
 	int x, y, d;
 	byte data[32][32][4];

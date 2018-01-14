@@ -527,8 +527,9 @@ void R_LoadBrushModelTextures (model_t *m)
 		}
 
 		tx->gl_texturenum = GL_LoadTexture (texname, width, height, data, texmode | alpha_flag | brighten_flag, 1);
-		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, width * height))
-			tx->fb_texturenum = GL_LoadTexture (va("@fb_%s", texname), width, height, data, texmode | alpha_flag | TEX_FULLBRIGHT, 1);
+		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, width * height)) {
+			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | alpha_flag | TEX_FULLBRIGHT, 1);
+		}
 
 		tx->loaded = true; // mark as loaded
 	}

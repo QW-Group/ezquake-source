@@ -1045,35 +1045,33 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 	}
 }
 
-static int Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, int *fb_texnum)
+static GLuint Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, GLuint *fb_texnum)
 {
 	char loadpath[64] = {0};
-	int texmode, texnum;
+	GLuint texmode, texnum;
 	qbool luma_allowed = Ruleset_IsLumaAllowed(loadmodel);
 
 	texnum     = 0;
 	*fb_texnum = 0;
 
-	if (RuleSets_DisallowExternalTexture(loadmodel))
+	if (RuleSets_DisallowExternalTexture(loadmodel)) {
 		return 0;
+	}
 
 	texmode = TEX_MIPMAP;
-	if (!gl_scaleModelTextures.value)
+	if (!gl_scaleModelTextures.value) {
 		texmode |= TEX_NOSCALE;
+	}
 
-	if (texnum)
-		return texnum; // wow, we alredy have texnum?
-
-					   // try "textures/models/..." path
-
+	// try "textures/models/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (texnum)
-	{
+	if (texnum) {
 		// not a luma actually, but which suffix use then? _fb or what?
 		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-		if (luma_allowed)
-			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
+		if (luma_allowed) {
+			*fb_texnum = GL_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
+		}
 
 		return texnum;
 	}
@@ -1097,7 +1095,8 @@ static int Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, int *fb_te
 
 static void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype)
 {
-	int i, j, k, s, groupskins, gl_texnum, fb_texnum, texmode;
+	int i, j, k, s, groupskins, texmode;
+	GLuint gl_texnum, fb_texnum;
 	char basename[64], identifier[64];
 	byte *skin;
 	daliasskingroup_t *pinskingroup;

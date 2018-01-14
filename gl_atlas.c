@@ -34,7 +34,7 @@ static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
 static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
 static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
 static byte atlas_dirty = 0;
-static int  atlas_texnum[ATLAS_COUNT];
+static GLuint atlas_texnum[ATLAS_COUNT];
 static qbool atlas_refresh = false;
 
 cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };

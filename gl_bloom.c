@@ -140,7 +140,7 @@ void R_Bloom_InitBackUpTexture( int width, int height )
 
 	r_screenbackuptexture_size = width;
 
-	r_bloombackuptexture = GL_LoadTexture ("***r_bloombackuptexture***", width, height, data, 0, 4);
+	r_bloombackuptexture = GL_LoadTexture("***r_bloombackuptexture***", width, height, data, 0, 4);
 
 	Q_free (data);
 }

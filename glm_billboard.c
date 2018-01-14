@@ -36,7 +36,7 @@ static gl_billboard_batch_t batches[MAX_BILLBOARD_BATCHES];
 static unsigned int batchMapping[MAX_BILLBOARD_BATCHES];
 static unsigned int batchCount;
 static unsigned int vertexCount;
-extern int vx_solidTexture;
+extern GLuint vx_solidTexture;
 
 static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
 {

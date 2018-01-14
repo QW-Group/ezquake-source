@@ -27,7 +27,7 @@ static qbool gl_texture_2d = false;
 static qbool gl_blend = false;
 static qbool gl_cull_face = false;
 static GLboolean gl_depth_mask = GL_FALSE;
-static int currenttexture = 0;
+static GLuint currenttexture = 0;
 static GLuint currentTextureArray = 0;
 static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
@@ -37,7 +37,7 @@ GLuint currentArrayBuffer;
 GLuint currentUniformBuffer;
 
 static GLenum oldtarget = GL_TEXTURE0;
-static int cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+static GLuint cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static GLuint cntarrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
 static qbool mtexenabled = false;
@@ -241,12 +241,12 @@ void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 #endif
 }
 
-void GL_Bind(int texnum)
+void GL_Bind(GLuint texnum)
 {
 	GL_BindTexture(GL_TEXTURE_2D, texnum, true);
 }
 
-void GL_BindFirstTime(int texnum)
+void GL_BindFirstTime(GLuint texnum)
 {
 	GL_BindTexture(GL_TEXTURE_2D, texnum, false);
 }
@@ -622,7 +622,7 @@ void GL_EnableWaterFog(int contents)
 	glEnable(GL_FOG);
 }
 
-void GL_InvalidateTextureReferences(int texture)
+void GL_InvalidateTextureReferences(GLuint texture)
 {
 	int i;
 

@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "sbar.h"
 
-int corona_textures[CORONATEX_COUNT];
-int vx_solidTexture;
+GLuint corona_textures[CORONATEX_COUNT];
+GLuint vx_solidTexture;
 
 extern cvar_t gl_bounceparticles;
 

@@ -35,8 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
-void GL_Bind(int texnum);
-void GL_BindFirstTime(int texnum);
+void GL_Bind(GLuint texnum);
+void GL_BindFirstTime(GLuint texnum);
 
 void GL_SelectTexture(GLenum target);
 void GL_DisableMultitexture(void);
@@ -44,13 +44,13 @@ void GL_EnableMultitexture(void);
 void GL_EnableTMU(GLenum target);
 void GL_DisableTMU(GLenum target);
 
-int GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
-int GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
-void GL_DeleteTexture(int* texture);
+GLuint GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
+GLuint GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
+void GL_DeleteTexture(GLuint* texture);
 
 byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-int GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
-int GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
+GLuint GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
+GLuint GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
 

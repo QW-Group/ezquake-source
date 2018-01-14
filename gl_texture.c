@@ -517,7 +517,7 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	return glt;
 }
 
-int GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
+GLuint GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp) 
 {
 	int	scaled_width, scaled_height;
 	unsigned short crc = identifier[0] ? CRC_Block(data, width * height * bpp) : 0;
@@ -544,7 +544,7 @@ int GL_LoadTexture(const char *identifier, int width, int height, byte *data, in
 	return glt->texnum;
 }
 
-int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data) 
+GLuint GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data) 
 {
 	int glwidth, glheight, i;
 	char fullname[MAX_QPATH] = "pic:";
@@ -562,16 +562,14 @@ int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data)
 	}
 
 	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
-	if (glwidth == pic->width && glheight == pic->height)
-	{
-		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, data, TEX_ALPHA, 1);
+	if (glwidth == pic->width && glheight == pic->height) {
+		pic->texnum = GL_LoadTexture(fullname, glwidth, glheight, data, TEX_ALPHA, 1);
 		pic->sl = 0;
 		pic->sh = 1;
 		pic->tl = 0;
 		pic->th = 1;
 	} 
-	else 
-	{
+	else {
 		buf = Q_calloc(glwidth * glheight, 1);
 
 		src = data;
@@ -758,7 +756,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	return NULL;
 }
 
-int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, int mode) 
+GLuint GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode)
 {
 	int i, j, image_size;
 	qbool gamma;
@@ -766,58 +764,52 @@ int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, i
 	image_size = width * height;
 	gamma = (vid_gamma != 1);
 
-	if (mode & TEX_LUMA)
-	{
+	if (mode & TEX_LUMA) {
 		gamma = false;
 	}
-	else if (mode & TEX_ALPHA)
-	{
+	else if (mode & TEX_ALPHA) {
 		mode &= ~TEX_ALPHA;
 
-		for (j = 0; j < image_size; j++) 
-		{
-			if ( ( (((unsigned *) data)[j] >> 24 ) & 0xFF ) < 255 )
-			{
+		for (j = 0; j < image_size; j++) {
+			if (((((unsigned *)data)[j] >> 24) & 0xFF) < 255) {
 				mode |= TEX_ALPHA;
 				break;
 			}
 		}
 	}
 
-	if (gamma) 
-	{
-		for (i = 0; i < image_size; i++)
-		{
+	if (gamma) {
+		for (i = 0; i < image_size; i++) {
 			data[4 * i] = vid_gamma_table[data[4 * i]];
 			data[4 * i + 1] = vid_gamma_table[data[4 * i + 1]];
 			data[4 * i + 2] = vid_gamma_table[data[4 * i + 2]];
 		}
 	}
 
-	return GL_LoadTexture (identifier, width, height, data, mode, 4);
+	return GL_LoadTexture(identifier, width, height, data, mode, 4);
 }
 
-int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int matchheight, int mode) 
+GLuint GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode)
 {
-	int texnum;
+	GLuint texnum;
 	byte *data;
 	int image_width = -1, image_height = -1;
 	gltexture_t *gltexture;
 
-	if (no24bit)
+	if (no24bit) {
 		return 0;
+	}
 
-	if (!identifier)
+	if (!identifier) {
 		identifier = filename;
+	}
 
 	gltexture = current_texture = GL_FindTexture(identifier);
 
-	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, mode, &image_width, &image_height))) 
-	{
-		texnum =  (gltexture && !current_texture) ? gltexture->texnum : 0;
-	} 
-	else 
-	{
+	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, mode, &image_width, &image_height))) {
+		texnum = (gltexture && !current_texture) ? gltexture->texnum : 0;
+	}
+	else {
 		texnum = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
 		Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels.
 	}
@@ -826,7 +818,7 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 	return texnum;
 }
 
-mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int matchheight, int mode) 
+mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
 {
 	int width, height, i, real_width, real_height;
 	char identifier[MAX_QPATH] = "pic:";
@@ -836,78 +828,72 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode = mode & ~TEX_MIPMAP;
 
-	if (no24bit)
+	if (no24bit) {
 		return NULL;
+	}
 
 	// Load the image data from file.
-	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, 0, &real_width, &real_height)))
+	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, 0, &real_width, &real_height))) {
 		return NULL;
+	}
 
-	pic.width = real_width; 
+	pic.width = real_width;
 	pic.height = real_height;
 
 	// Check if there's any actual alpha transparency in the image.
-	if (mode & TEX_ALPHA) 
-	{
+	if (mode & TEX_ALPHA) {
 		mode &= ~TEX_ALPHA;
-		for (i = 0; i < real_width * real_height; i++) 
-		{
-			if ( ( (((unsigned *) data)[i] >> 24 ) & 0xFF ) < 255) 
-			{
+		for (i = 0; i < real_width * real_height; i++) {
+			if (((((unsigned *)data)[i] >> 24) & 0xFF) < 255) {
 				mode |= TEX_ALPHA;
 				break;
 			}
 		}
 	}
 
-	if (gl_support_arb_texture_non_power_of_two)
-	{
+	if (gl_support_arb_texture_non_power_of_two) {
 		width = pic.width;
 		height = pic.height;
 	}
-	else
-	{
+	else {
 		Q_ROUND_POWER2(pic.width, width);
 		Q_ROUND_POWER2(pic.height, height);
 	}
 
-	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	strlcpy(identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 
 	// Upload the texture to OpenGL.
-	if (width == pic.width && height == pic.height) 
-	{
+	if (width == pic.width && height == pic.height) {
 		// Size of the image is scaled by the power of 2 so we can just
 		// load the texture as it is.
-		pic.texnum = GL_LoadTexture (identifier, pic.width, pic.height, data, mode, 4);
+		pic.texnum = GL_LoadTexture(identifier, pic.width, pic.height, data, mode, 4);
 		pic.sl = 0;
 		pic.sh = 1;
 		pic.tl = 0;
 		pic.th = 1;
-	} 
-	else 
-	{
+	}
+	else {
 		// The size of the image data is not a power of 2, so we
 		// need to load it into a bigger texture and then set the
 		// texture coordinates so that only the relevant part of it is used.
 
-		buf = (byte *) Q_calloc (width * height, 4);
+		buf = (byte *)Q_calloc(width * height, 4);
 
 		src = data;
 		dest = buf;
 
-		for (i = 0; i < pic.height; i++) 
-		{
-			memcpy (dest, src, pic.width * 4);
+		for (i = 0; i < pic.height; i++) {
+			memcpy(dest, src, pic.width * 4);
 			src += pic.width * 4;	// Next line in the source.
 			dest += width * 4;		// Next line in the target.
 		}
 
-		pic.texnum = GL_LoadTexture (identifier, width, height, buf, mode, 4);
+		pic.texnum = GL_LoadTexture(identifier, width, height, buf, mode, 4);
 		pic.sl = 0;
-		pic.sh = (float) pic.width / width;
+		pic.sh = (float)pic.width / width;
 		pic.tl = 0;
-		pic.th = (float) pic.height / height;
-		Q_free (buf);
+		pic.th = (float)pic.height / height;
+		Q_free(buf);
 	}
 
 	Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels
@@ -1119,7 +1105,7 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 }
 
 // FIXME: Texture references should be GLuint...
-void GL_DeleteTexture(int* texture)
+void GL_DeleteTexture(GLuint* texture)
 {
 	int i;
 	GLuint gl_texture;

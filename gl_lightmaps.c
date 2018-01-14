@@ -43,7 +43,7 @@ static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 qbool lightmap_modified[MAX_LIGHTMAPS];
 
 static int allocated[MAX_LIGHTMAPS][LIGHTMAP_WIDTH];
-static int last_lightmap_updated;
+static GLuint last_lightmap_updated;
 
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
@@ -425,12 +425,14 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	}
 }
 
-// returns a texture number and the position inside it
+// returns a lightmap number and the position inside it
 int AllocBlock (int w, int h, int *x, int *y) {
-	int i, j, best, best2, texnum;
+	int i, j, best, best2;
+	int texnum;
 
-	if (w < 1 || w > LIGHTMAP_WIDTH || h < 1 || h > LIGHTMAP_HEIGHT)
-		Sys_Error ("AllocBlock: Bad dimensions");
+	if (w < 1 || w > LIGHTMAP_WIDTH || h < 1 || h > LIGHTMAP_HEIGHT) {
+		Sys_Error("AllocBlock: Bad dimensions");
+	}
 
 	for (texnum = last_lightmap_updated; texnum < MAX_LIGHTMAPS; texnum++, last_lightmap_updated++) {
 		best = LIGHTMAP_HEIGHT + 1;
@@ -453,11 +455,13 @@ int AllocBlock (int w, int h, int *x, int *y) {
 			}
 		}
 
-		if (best + h > LIGHTMAP_HEIGHT)
+		if (best + h > LIGHTMAP_HEIGHT) {
 			continue;
+		}
 
-		for (i = 0; i < w; i++)
+		for (i = 0; i < w; i++) {
 			allocated[texnum][*x + i] = best + h;
+		}
 
 		return texnum;
 	}

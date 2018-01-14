@@ -26,9 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct
 {
-	int			width, height;
-	int			texnum;
-	float		sl, tl, sh, th;
+	int          width, height;
+	unsigned int texnum;
+	float        sl, tl, sh, th;
 } mpic_t;
 
 typedef enum {

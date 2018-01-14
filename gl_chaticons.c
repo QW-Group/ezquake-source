@@ -48,7 +48,7 @@ qbool ci_initialized = false;
 
 void CI_Init(void)
 {
-	int ci_font;
+	GLuint ci_font;
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;
 
 	ci_initialized = false;
