@@ -800,7 +800,13 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		model_t* mod = cl.vw_model_precache[i];
 
 		if (mod) {
-			Mod_LoadModel(mod, false);
+			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
+					// Invalidate cache so VBO buffer gets refilled
+					Cache_Free(&mod->cache);
+				}
+			}
+			Mod_LoadModel(mod, true);
 
 			GL_MeasureTexturesForModel(mod, &required_vbo_length);
 		}
