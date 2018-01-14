@@ -13,7 +13,6 @@ static GLuint modelIndexes[16 * 1024];
 static GLuint index_count;
 
 typedef struct block_brushmodels_s {
-	int apply_lightmap[32][4];
 	float color[32][4];
 	float modelMatrix[32][16];
 } block_brushmodels_t;
@@ -367,7 +366,6 @@ static void GL_FlushBrushModelBatch(void)
 		req->baseInstance = i;
 		memcpy(&brushmodels.modelMatrix[i][0], req->mvMatrix, sizeof(brushmodels.modelMatrix[i]));
 		memcpy(&brushmodels.color[i][0], req->baseColor, sizeof(brushmodels.color[i]));
-		brushmodels.apply_lightmap[i][0] = req->isworldmodel ? 1 : 0;
 	}
 
 	// Update data

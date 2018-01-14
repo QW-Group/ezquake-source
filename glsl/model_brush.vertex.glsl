@@ -24,7 +24,6 @@ layout(std140) uniform RefdefCvars {
 };
 
 layout(std140) uniform ModelData {
-	int apply_lightmap[32];
 	vec4 color[32];
 	mat4 modelMatrix[32];
 };
@@ -33,13 +32,7 @@ void main()
 {
 	gl_Position = projectionMatrix * modelMatrix[_instanceId] * vec4(position, 1.0);
 
-	fsApplyLightmap = apply_lightmap[_instanceId];
 	fsColor = color[_instanceId];
 	TextureCoord = vec3(tex, materialNumber);
-	if (apply_lightmap[_instanceId] != 0) {
-		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
-	}
-	else {
-		TexCoordLightmap = vec3(0, 0, 0);
-	}
+	TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
 }
