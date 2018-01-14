@@ -491,7 +491,7 @@ typedef struct model_s {
 
 	unsigned short		crc;
 
-	int					simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
+	unsigned int        simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
 
 	modhint_t			modhint;
 

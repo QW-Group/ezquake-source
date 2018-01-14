@@ -1996,7 +1996,8 @@ static mpic_t simpleitem_textures[MOD_NUMBER_HINTS][MAX_SIMPLE_TEXTURES];
 
 int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 {
-	int tex = 0, texmode = 0;
+	GLuint tex = 0;
+	int texmode = 0;
 	char basename[64], indentifier[64];
 
 	if (!mod) {
