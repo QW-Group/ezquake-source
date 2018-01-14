@@ -107,11 +107,13 @@ void SCR_SetupCI(void)
 	cent = &cl_entities[1];
 
 	for (j = 0; j < MAX_CLIENTS; j++, info++, state++, cent++) {
-		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
+		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator) {
 			continue;
+		}
 
-		if (!*(s = Info_ValueForKey(info->userinfo, "chat")))
+		if (!*(s = Info_ValueForKey(info->userinfo, "chat"))) {
 			continue; // user not chatting, so ignore
+		}
 
 		id = &ci_clients[ci_count];
 		id->texindex = 0;
@@ -145,11 +147,13 @@ void SCR_SetupCI(void)
 		ci_count++;
 	}
 
-	if (ci_count) // sort icons so we draw most far to you first
+	if (ci_count) {
+		// sort icons so we draw most far to you first
 		qsort((void *)ci_clients, ci_count, sizeof(ci_clients[0]), CmpCI_Order);
+	}
 }
 
-void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
+static void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
 	if (GL_ShadersSupported()) {
 		GLM_DrawBillboard(_ptex, _p, _coord);
@@ -169,18 +173,20 @@ static void CI_Bind(ci_texture_t *citex, int *texture)
 	}
 }
 
-void DrawCI(void)
+void DrawChatIcons(void)
 {
 	int	i, texture = 0, flags;
 	vec3_t billboard[4], billboard2[4], vright_tmp;
 	ci_player_t *p;
 	ci_texture_t *citex;
 
-	if (!ci_initialized)
+	if (!ci_initialized) {
 		return;
+	}
 
-	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1)
+	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1) {
 		return;
+	}
 
 	GL_DisableFog();
 

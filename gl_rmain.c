@@ -1072,7 +1072,7 @@ void R_RenderPostProcess (void)
 
 void R_RenderView(void)
 {
-	extern void DrawCI (void);
+	extern void DrawChatIcons(void);
 
 	double time1 = 0, time2;
 	if (!r_worldentity.model || !cl.worldmodel)
@@ -1098,7 +1098,7 @@ void R_RenderView(void)
 	R_DrawParticles();
 
 	if (!GL_ShadersSupported()) {
-		DrawCI();
+		DrawChatIcons();
 
 		//VULT: CORONAS
 		//Even if coronas gets turned off, let active ones fade out
