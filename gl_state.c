@@ -29,13 +29,12 @@ static qbool gl_cull_face = false;
 static GLboolean gl_depth_mask = GL_FALSE;
 static int currenttexture = 0;
 static GLuint currentTextureArray = 0;
-static GLuint currentArrayBuffer;
-static GLuint currentUniformBuffer;
 static GLfloat polygonOffsetFactor = 0;
 static GLfloat polygonOffsetUnits = 0;
 static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
-
+GLuint currentArrayBuffer;
+GLuint currentUniformBuffer;
 
 static GLenum oldtarget = GL_TEXTURE0;
 static int cnttextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
@@ -615,39 +614,6 @@ void GL_EnableWaterFog(int contents)
 		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
 	}
 	glEnable(GL_FOG);
-}
-
-void GL_BindBuffer(GLenum target, GLuint buffer)
-{
-	if (target == GL_ARRAY_BUFFER) {
-		if (buffer == currentArrayBuffer) {
-			return;
-		}
-		currentArrayBuffer = buffer;
-	}
-	else if (target == GL_UNIFORM_BUFFER) {
-		if (buffer == currentUniformBuffer) {
-			return;
-		}
-		currentUniformBuffer = buffer;
-	}
-
-	glBindBuffer(target, buffer);
-}
-
-void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
-{
-	glBufferData(target, size, data, usage);
-}
-
-void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data)
-{
-	glBufferSubData(target, 0, size, data);
-}
-
-void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
-{
-	glBufferSubData(target, offset, size, data);
 }
 
 void GL_InvalidateTextureReferences(int texture)

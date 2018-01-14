@@ -46,7 +46,7 @@ void GLM_CreateBrushModelProgram(void)
 		glUniformBlockBinding(drawBrushModelProgram.program, drawbrushmodel_BrushData_block, GL_BINDINGPOINT_BRUSHMODEL_CVARS);
 
 		GL_GenUniformBuffer(&ubo_brushdata, "brush-data", &brushmodels, sizeof(brushmodels));
-		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_BRUSHMODEL_CVARS, ubo_brushdata.ubo);
+		GL_BindUniformBufferBase(&ubo_brushdata, GL_BINDINGPOINT_BRUSHMODEL_CVARS, ubo_brushdata.ubo);
 
 		drawBrushModelProgram.uniforms_found = true;
 	}

@@ -70,12 +70,12 @@ qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 // VBO functions
-glBindBuffer_t     glBindBuffer = NULL;
-glBufferData_t     glBufferData = NULL;
-glBufferSubData_t  glBufferSubData = NULL;
-glGenBuffers_t     glGenBuffers = NULL;
-glDeleteBuffers_t  glDeleteBuffers = NULL;
-glBindBufferBase_t glBindBufferBase = NULL;
+static glBindBuffer_t     glBindBuffer = NULL;
+static glBufferData_t     glBufferData = NULL;
+static glBufferSubData_t  glBufferSubData = NULL;
+static glGenBuffers_t     glGenBuffers = NULL;
+static glDeleteBuffers_t  glDeleteBuffers = NULL;
+static glBindBufferBase_t glBindBufferBase = NULL;
 
 // VAO functions
 glGenVertexArrays_t         glGenVertexArrays = NULL;
@@ -722,3 +722,46 @@ void GL_AlphaFunc(GLenum func, GLclampf threshold)
 		glAlphaFunc(func, threshold);
 	}
 }
+
+void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer)
+{
+	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
+	glBindBufferBase(GL_UNIFORM_BUFFER, index, buffer);
+}
+
+void GL_BindBuffer(GLenum target, GLuint buffer)
+{
+	extern GLuint currentArrayBuffer;
+	extern GLuint currentUniformBuffer;
+
+	if (target == GL_ARRAY_BUFFER) {
+		if (buffer == currentArrayBuffer) {
+			return;
+		}
+		currentArrayBuffer = buffer;
+	}
+	else if (target == GL_UNIFORM_BUFFER) {
+		if (buffer == currentUniformBuffer) {
+			return;
+		}
+		currentUniformBuffer = buffer;
+	}
+
+	glBindBuffer(target, buffer);
+}
+
+void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
+{
+	glBufferData(target, size, data, usage);
+}
+
+void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data)
+{
+	glBufferSubData(target, 0, size, data);
+}
+
+void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+{
+	glBufferSubData(target, offset, size, data);
+}
+

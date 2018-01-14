@@ -441,14 +441,6 @@ typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsi
 typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 
-// VBO functions
-extern glBindBuffer_t        glBindBuffer;
-extern glBufferData_t        glBufferData;
-extern glBufferSubData_t     glBufferSubData;
-extern glGenBuffers_t        glGenBuffers;
-extern glDeleteBuffers_t     glDeleteBuffers;
-extern glBindBufferBase_t    glBindBufferBase;
-
 // VAO functions
 extern glGenVertexArrays_t         glGenVertexArrays;
 extern glBindVertexArray_t         glBindVertexArray;
@@ -688,6 +680,8 @@ void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei 
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
 void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+
+void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);

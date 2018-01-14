@@ -118,7 +118,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 
 		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
 		GL_GenUniformBuffer(&ubo_worldcvars, "world-cvars", &world, sizeof(world));
-		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_DRAWWORLD_CVARS, ubo_worldcvars.ubo);
+		GL_BindUniformBufferBase(&ubo_worldcvars, GL_BINDINGPOINT_DRAWWORLD_CVARS, ubo_worldcvars.ubo);
 
 		drawworld.uniforms_found = true;
 	}

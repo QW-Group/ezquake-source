@@ -189,7 +189,7 @@ static void GL_CompileSpriteProgram(void)
 		glUniformBlockBinding(spriteProgram.program, spriteProgram_SpriteData_block, GL_BINDINGPOINT_SPRITEDATA_CVARS);
 
 		GL_GenUniformBuffer(&ubo_spriteData, "sprite-data", &spriteData, sizeof(spriteData));
-		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_SPRITEDATA_CVARS, ubo_spriteData.ubo);
+		GL_BindUniformBufferBase(&ubo_spriteData, GL_BINDINGPOINT_SPRITEDATA_CVARS, ubo_spriteData.ubo);
 
 		spriteProgram.uniforms_found = true;
 	}
