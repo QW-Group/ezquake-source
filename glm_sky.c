@@ -402,7 +402,6 @@ static void GLM_CopySkyboxTexturesToCubeMap(GLuint cubemap, int width, int heigh
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
 		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, 4 * width * height, data);
 
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, cubemap);
 		GL_TexSubImage2D(GL_TEXTURE0, bindings[i], cubemap, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 	Q_free(data);

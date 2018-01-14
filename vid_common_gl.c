@@ -814,7 +814,12 @@ void GL_TexSubImage2D(
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GL_BindTextureUnit(textureUnit, target, texture);
+	GLenum bindingTarget = target;
+
+	if (bindingTarget >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && bindingTarget <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z) {
+		bindingTarget = GL_TEXTURE_CUBE_MAP;
+	}
+	GL_BindTextureUnit(textureUnit, bindingTarget, texture);
 	glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 }
 
