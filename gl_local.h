@@ -667,7 +667,6 @@ void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(int texture);
 
-void GL_BindBuffer(GLenum target, GLuint buffer);
 void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data);
 void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data);
 void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
@@ -861,6 +860,7 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 void GL_GenVertexArray(glm_vao_t* vao);
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo);
 
 void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);

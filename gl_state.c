@@ -45,6 +45,9 @@ static qbool mtexenabled = false;
 static GLenum lastTextureMode = GL_MODULATE;
 static int old_alphablend_flags = 0;
 
+// vid_common_gl.c
+void GL_BindBuffer(GLenum target, GLuint buffer);
+
 // FIXME: Add optional support for DSA
 void GL_BindTextureUnit(GLuint unit, GLenum targetType, GLuint texture)
 {
@@ -698,3 +701,11 @@ void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, glm_vbo_t* vbo, GLuint ind
 	glVertexAttribIPointer(index, size, type, stride, pointer);
 }
 
+void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, glm_vbo_t* ibo)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo ? ibo->vbo : 0);
+}

@@ -217,7 +217,7 @@ static void BuildSkyVertsArray(void)
 
 	if (!skyDome_vao.vao) {
 		GL_GenVertexArray(&skyDome_vao);
-		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyDomeIndexes_vbo.vbo);
+		GL_SetVertexArrayElementBuffer(&skyDome_vao, &skyDomeIndexes_vbo);
 
 		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
 		GL_ConfigureVertexAttribPointer(&skyDome_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
@@ -225,7 +225,7 @@ static void BuildSkyVertsArray(void)
 
 	if (!skyBox_vao.vao) {
 		GL_GenVertexArray(&skyBox_vao);
-		GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		GL_SetVertexArrayElementBuffer(&skyBox_vao, NULL);
 
 		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(pos));
 		GL_ConfigureVertexAttribPointer(&skyBox_vao, &skyDome_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(skydome_vert_t), VBO_SKYDOME_FOFS(s));
