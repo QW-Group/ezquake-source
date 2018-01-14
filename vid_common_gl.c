@@ -603,7 +603,7 @@ void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data)
 	assert(size == ubo->size);
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
-	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, size, data);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
 }
 
 void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data)
@@ -614,7 +614,7 @@ void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data)
 	assert(size <= vbo->size);
 
 	GL_BindBuffer(vbo->target, vbo->vbo);
-	GL_BufferDataUpdate(vbo->target, size, data);
+	glBufferSubData(vbo->target, 0, size, data);
 }
 
 void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
@@ -627,7 +627,7 @@ void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const
 	assert(offset + size <= vbo->size);
 
 	GL_BindBuffer(vbo->target, vbo->vbo);
-	GL_BufferSubDataUpdate(vbo->target, offset, size, data);
+	glBufferSubData(vbo->target, offset, size, data);
 }
 
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
@@ -644,7 +644,7 @@ void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
 	glGenBuffers(1, &ubo->ubo);
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
-	GL_BufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
 }
 
 void GL_GenVertexArray(glm_vao_t* vao)
@@ -748,20 +748,5 @@ void GL_BindBuffer(GLenum target, GLuint buffer)
 	}
 
 	glBindBuffer(target, buffer);
-}
-
-void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
-{
-	glBufferData(target, size, data, usage);
-}
-
-void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data)
-{
-	glBufferSubData(target, 0, size, data);
-}
-
-void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
-{
-	glBufferSubData(target, offset, size, data);
 }
 

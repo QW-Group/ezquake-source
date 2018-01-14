@@ -49,7 +49,6 @@ static glm_vao_t* GL_CreateLineVAO(void)
 
 	if (!vbo.vbo) {
 		GL_GenFixedBuffer(&vbo, GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_DYNAMIC_DRAW);
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(points), points);
 	}
 
 	if (!vao.vao) {

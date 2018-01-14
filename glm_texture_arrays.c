@@ -728,7 +728,7 @@ static void GLM_CreateSpriteVBO(void)
 	vert[3] = 0;
 	vert[4] = 1;
 
-	GL_BufferSubDataUpdate(GL_ARRAY_BUFFER, 0, sizeof(new_vbo_buffer), new_vbo_buffer);
+	GL_UpdateVBOSection(&aliasModel_vbo, 0, sizeof(new_vbo_buffer), new_vbo_buffer);
 }
 
 void GL_CompressTextureArrays(common_texture_t* list)

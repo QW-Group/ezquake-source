@@ -139,6 +139,8 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
 {
 	extern glm_vao_t brushModel_vao;
+	extern glm_vbo_t vbo_brushElements;
+
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 
@@ -299,12 +301,13 @@ static void GL_FlushWorldModelBatch(void)
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
 	int draw_pos = 0;
+	extern glm_vbo_t vbo_brushElements;
 
 	if (!batch_count) {
 		return;
 	}
 
-	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_UpdateVBO(&vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	draw_pos = 0;

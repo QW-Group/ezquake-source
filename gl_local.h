@@ -644,9 +644,6 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 void GL_PopMatrix(GLenum mode, float* matrix);
 void GL_PushMatrix(GLenum mode, float* matrix);
 
-void GLM_DrawFlatPoly(byte* color, unsigned int vao, int vertices, qbool apply_lightmap);
-void GLM_DrawTexturedPoly(byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool alpha_test);
-
 void GLM_DebugMatrix(GLenum type, const char* value);
 
 int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos);
@@ -677,9 +674,6 @@ void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const
 
 // Creates buffer, binds to target and initialises with a particular size
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
-void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
-void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
-void GL_BufferSubDataUpdate(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 
 void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer);
 
