@@ -592,8 +592,8 @@ void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart
 
-mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
-byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
+mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model);
+byte	*Mod_LeafPVS(mleaf_t *leaf, model_t *model);
 
 qbool	Img_HasFullbrights (byte *pixels, int size);
 void	Mod_ReloadModelsTextures (void); // for vid_restart
@@ -601,6 +601,19 @@ void	Mod_ReloadModelsTextures (void); // for vid_restart
 texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum);
 void    Mod_ClearSimpleTextures(void);
 
+qbool Mod_IsAlphaTextureName(model_t* model, const char* name);
+qbool Mod_IsSkyTextureName(model_t* model, const char* name);
+qbool Mod_IsTurbTextureName(model_t* model, const char* name);
+
+float RadiusFromBounds(vec3_t mins, vec3_t maxs);
+void Mod_AddModelFlags(model_t *mod);
+void R_LoadBrushModelTextures(model_t *m);
+
 #include "gl_md3.h"
+
+typedef struct bspx_header_s {
+	char id[4];  // 'BSPX'
+	int numlumps;
+} bspx_header_t;
 
 #endif	// __MODEL__

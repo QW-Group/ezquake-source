@@ -927,7 +927,7 @@ void R_RenderScene(void)
 	Skins_PreCache();  // preache skins if needed
 
 	GL_EnterRegion("R_DrawWorld");
-	R_DrawWorld ();		// adds static entities to the list
+	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
 
 	if (cl_visents.count) {
