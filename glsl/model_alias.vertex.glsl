@@ -18,6 +18,9 @@ layout(std140) uniform AliasModelData {
 	int textureIndex[32];
 	int apply_texture[32];
 	int shellMode[32];
+	float yaw_angle_rad[32];
+	float shadelight[32];
+	float ambientlight[32];
 
 	float shellSize;
 	// console var data
@@ -46,7 +49,21 @@ void main()
 		gl_Position = projectionMatrix * modelView[_instanceId] * vec4(position, 1);
 		fsAltTextureCoord = fsTextureCoord = vec3(tex.s * scale[_instanceId][0], tex.t * scale[_instanceId][1], textureIndex[_instanceId]);
 		fsTextureEnabled = apply_texture[_instanceId];
-		fsBaseColor = color[_instanceId];
+
+		// Lighting: this is rough approximation
+		//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983
+		if (shadelight[_instanceId] < 1000) {
+			float l = 1;
+			vec3 angleVector = normalize(vec3(cos(-yaw_angle_rad[_instanceId]), sin(-yaw_angle_rad[_instanceId]), 1));
+
+			l = floor((dot(normalCoords, angleVector) + 1) * 127) / 127;
+			l = min((l * shadelight[_instanceId] + ambientlight[_instanceId]) / 256.0, 1);
+
+			fsBaseColor = vec4(color[_instanceId].rgb * l, color[_instanceId].a);
+		}
+		else {
+			fsBaseColor = color[_instanceId];
+		}
 	}
 	else {
 		gl_Position = projectionMatrix * modelView[_instanceId] * vec4(position + normalCoords * shellSize, 1);

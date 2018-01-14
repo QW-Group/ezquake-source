@@ -25,6 +25,9 @@ layout(std140) uniform AliasModelData {
 	int textureIndex[32];
 	int apply_texture[32];
 	int shellMode[32];
+	float yaw_angle_rad[32];
+	float shadelight[32];
+	float ambientlight[32];
 
 	float shellSize;
 	// console var data

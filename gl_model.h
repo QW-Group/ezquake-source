@@ -389,8 +389,6 @@ typedef struct aliashdr_s {
 	int					gl_texturenum[MAX_SKINS][4];
 	int					fb_texturenum[MAX_SKINS][4];
 
-	//glm_vbo_t           vbo;
-	//glm_vao_t           vao;
 	int                 vertsPerPose;
 	int                 vertsOffset;
 
