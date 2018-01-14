@@ -347,9 +347,8 @@ static void QMB_CreateAtlasTexture(int* textures, int count)
 	for (i = 0; i < count; ++i) {
 		int texWidth, texHeight;
 
-		GL_Bind(textures[i]);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texHeight);
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, textures[i], 0, GL_TEXTURE_WIDTH, &texWidth);
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, textures[i], 0, GL_TEXTURE_HEIGHT, &texHeight);
 
 		offsets[i] = total_height;
 		heights[i] = texHeight;
@@ -386,8 +385,7 @@ static void QMB_CreateAtlasTexture(int* textures, int count)
 		vertical_offsets[i] = y_pos;
 		horizontal_widths[i] = width;
 
-		GL_Bind(textures[i]);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, textures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, width * height * 4, buffer);
 
 		for (yOffset = 0; yOffset < height; ++yOffset) {
 			for (xOffset = 0; xOffset < width; ++xOffset) {

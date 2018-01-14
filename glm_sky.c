@@ -402,8 +402,7 @@ static void GLM_CopySkyboxTexturesToCubeMap(GLuint cubemap, int width, int heigh
 	// Copy data from 2d images into cube-map
 	data = Q_malloc(4 * width * height);
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i]);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, 4 * width * height, data);
 
 		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, cubemap);
 		GL_TexSubImage2D(GL_TEXTURE0, bindings[i], cubemap, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -427,9 +426,8 @@ qbool GLM_LoadSkyboxTextures(char* skyname)
 
 	// Get the actual sizes (may have been rescaled)
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
-		GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i]);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &widths[i]);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &heights[i]);
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_TEXTURE_WIDTH, &widths[i]);
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_TEXTURE_HEIGHT, &heights[i]);
 	}
 
 	// Check if they're all the same

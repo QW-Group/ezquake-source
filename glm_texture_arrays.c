@@ -171,9 +171,8 @@ static void GL_RegisterCommonTextureSize(int type, GLint texture, qbool any_size
 		return;
 	}
 
-	GL_Bind(texture);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, texture, 0, GL_TEXTURE_WIDTH, &width);
+	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, texture, 0, GL_TEXTURE_HEIGHT, &height);
 
 	while (list) {
 		if (list->width == width && list->height == height && list->gl_depth == 0) {
@@ -217,7 +216,7 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 		tempBuffer = Q_malloc(tempBufferSize);
 	}
 
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
+	GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempBufferSize, tempBuffer);
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 
 	// Might need to tile multiple times
@@ -229,9 +228,9 @@ static void GL_AddTextureToArray(GLuint arrayTexture, int width, int height, int
 				int array_width, array_height, array_depth;
 
 				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
-				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
-				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
-				glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_WIDTH, &array_width);
+				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_HEIGHT, &array_height);
+				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_DEPTH, &array_depth);
 
 				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
 				GL_Paranoid_Printf(">  Parameters: %d %d %d, %d %d 1, tempBuffer = %X\n", x * width, y * height, index, width, height, tempBuffer);
@@ -286,9 +285,8 @@ static void GL_CopyToTextureArraySize(int type, GLuint stdTexture, qbool anySize
 		return;
 	}
 
-	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture, 0, GL_TEXTURE_WIDTH, &width);
+	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture, 0, GL_TEXTURE_HEIGHT, &height);
 
 	desired_width = width;
 	desired_height = height;

@@ -83,7 +83,6 @@ typedef struct {
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
 static int			numgltextures = 0;
-// Always use glGenTextures
 //	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
 
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
@@ -1089,9 +1088,9 @@ GLuint GL_CreateTextureArray(const char* identifier, int width, int height, int*
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
-			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &array_width);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &array_height);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &array_depth);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_WIDTH, &array_width);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_HEIGHT, &array_height);
+			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->texnum, 0, GL_TEXTURE_DEPTH, &array_depth);
 
 			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);

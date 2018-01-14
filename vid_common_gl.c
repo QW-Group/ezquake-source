@@ -841,3 +841,18 @@ void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* tex
 		GL_BindTexture(target, textures[i], false);
 	}
 }
+
+void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum pname, GLint* params)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glGetTexLevelParameteriv(target, level, pname, params);
+}
+
+void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
+{
+	// TODO: Use glGetnTexImage() if available (4.5)
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glGetTexImage(target, level, format, type, buffer);
+}
