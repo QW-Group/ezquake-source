@@ -57,9 +57,6 @@ typedef struct texture_s {
 	struct msurface_s	*texturechain[2];		
 	struct msurface_s	**texturechain_tail[2];     //Points to the node right after the last non-NULL node in the texturechain.
 
-	int                 surfaces_vbo;
-	int                 surfaces_underwater_vbo;
-
 	int					anim_total;					//total tenths in sequence ( 0 = no)
 	int					anim_min, anim_max;			//time for this frame min <=time< max
 	struct texture_s	*anim_next;					//in the animation sequence
@@ -109,10 +106,12 @@ typedef struct medge_s {
 } medge_t;
 
 typedef struct mtexinfo_s {
-	float				vecs[2][4];
-	texture_t			*texture;
-	int                 miptex;
-	int					flags;
+	float         vecs[2][4];
+	texture_t     *texture;
+	int           miptex;
+	int           flags;
+	qbool         skippable;
+	int           surfaces;
 } mtexinfo_t;
 
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*

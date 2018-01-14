@@ -11,6 +11,7 @@
 
 static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_buffer);
 static void GL_PrintTextureSizes(struct common_texture_s* list);
+static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
 static GLubyte* tempBuffer;
 static GLuint tempBufferSize;
@@ -393,7 +394,7 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 	}
 	case mod_brush:
 	{
-		int i;
+		int i, j;
 
 		// Ammo-boxes etc can be replaced with simple textures
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
@@ -405,7 +406,9 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 		// Brush models can be boxes (ammo, health), static world or moving platforms
 		for (i = 0; i < mod->numtextures; i++) {
 			texture_t* tx = mod->textures[i];
-			if (!tx || !tx->loaded) {
+			qbool skip = true;
+
+			if (GL_SkipTexture(mod, tx)) {
 				continue;
 			}
 
@@ -414,6 +417,29 @@ static void GL_MeasureTexturesForModel(model_t* mod, common_texture_t* common, i
 		break;
 	}
 	}
+}
+
+static qbool GL_SkipTexture(model_t* mod, texture_t* tx)
+{
+	int j;
+
+	if (!tx || !tx->loaded) {
+		return true;
+	}
+
+	if (tx->anim_next) {
+		return false;
+	}
+
+	for (j = 0; j < mod->numtexinfo; ++j) {
+		if (mod->texinfo[j].texture == tx) {
+			if (mod->texinfo[j].surfaces && !mod->texinfo[j].skippable) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 static int GLM_CountTextureArrays(model_t* mod)
@@ -606,9 +632,12 @@ void GL_ImportTexturesForModel(model_t* mod, common_texture_t* common, common_te
 
 		for (j = 0; j < mod->numtextures; ++j) {
 			texture_t* tex = mod->textures[j];
-			if (tex && tex->loaded && !tex->gl_texture_array && tex->gl_texturenum) {
-				GL_CopyToTextureArraySize(common, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index);
+
+			if (GL_SkipTexture(mod, tex) || tex->gl_texture_array || !tex->gl_texturenum) {
+				continue;
 			}
+
+			GL_CopyToTextureArraySize(common, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index);
 		}
 
 		mod->texture_array_count = GLM_CountTextureArrays(mod);

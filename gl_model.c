@@ -1087,7 +1087,8 @@ void Mod_LoadEdgesBSP2 (lump_t *l) {
 	}
 }
 
-void Mod_LoadTexinfo (lump_t *l) {
+void Mod_LoadTexinfo(lump_t *l)
+{
 	texinfo_t *in;
 	mtexinfo_t *out;
 	int i, j, k, count;
@@ -1102,19 +1103,26 @@ void Mod_LoadTexinfo (lump_t *l) {
 	loadmodel->numtexinfo = count;
 
 	for (i = 0; i < count; i++, in++, out++) {
-		for (j = 0; j < 2; j++)
-			for (k = 0; k < 4; k++)
-				out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
+		for (j = 0; j < 2; j++) {
+			for (k = 0; k < 4; k++) {
+				out->vecs[j][k] = LittleFloat(in->vecs[j][k]);
+			}
+		}
 
 		out->miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
 
+		// Skip texture unless surface flags say otherwise
+		out->skippable = out->flags & TEX_SPECIAL;
+
 		if (!loadmodel->textures) {
 			out->texture = r_notexture_mip;	// checkerboard texture
 			out->flags = 0;
-		} else {
-			if (out->miptex >= loadmodel->numtextures)
-				Host_Error ("Mod_LoadTexinfo: miptex >= loadmodel->numtextures");
+		}
+		else {
+			if (out->miptex >= loadmodel->numtextures) {
+				Host_Error("Mod_LoadTexinfo: miptex >= loadmodel->numtextures");
+			}
 			out->texture = loadmodel->textures[out->miptex];
 			if (!out->texture) {
 				out->texture = r_notexture_mip; // texture not found
@@ -1182,11 +1190,14 @@ static void SetTextureFlags(msurface_t* out)
 {
 	int i;
 
+	out->texinfo->surfaces++;
+
 	// set the drawing flags flag
 	// sky, turb and alpha should be mutually exclusive
 	if (ISSKYTEX(out->texinfo->texture->name)) {	// sky
 		out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
 		GL_BuildSkySurfacePolys (out);	// build gl polys
+		out->texinfo->skippable = false;
 		return;
 	}
 
@@ -1197,11 +1208,14 @@ static void SetTextureFlags(msurface_t* out)
 			out->texturemins[i] = -8192;
 		}
 		GL_SubdivideSurface (out);	// cut up polygon for warps
+		out->texinfo->skippable = false;
 		return;
 	}
 
-	if (ISALPHATEX(out->texinfo->texture->name))
+	if (ISALPHATEX(out->texinfo->texture->name)) {
 		out->flags |= SURF_DRAWALPHA;
+		out->texinfo->skippable = false;
+	}
 }
 
 void Mod_LoadFaces (lump_t *l) {
