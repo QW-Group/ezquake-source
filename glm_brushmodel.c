@@ -372,9 +372,7 @@ static void GL_FlushBrushModelBatch(void)
 
 	// Update data
 	GL_UpdateUBO(&ubo_brushdata, sizeof(brushmodels), &brushmodels);
-
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_brushIndirectDraw.vbo);
-	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);
+	GL_UpdateVBO(&vbo_brushIndirectDraw, sizeof(brushmodel_requests), &brushmodel_requests);
 
 	GL_BindVertexArray(brushModel_vao.vao);
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);

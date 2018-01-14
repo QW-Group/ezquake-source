@@ -680,6 +680,8 @@ void GL_InvalidateTextureReferences(int texture);
 
 void GL_BindBuffer(GLenum target, GLuint buffer);
 void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data);
+void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data);
+void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 
 // Creates buffer, binds to target and initialises with a particular size
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);

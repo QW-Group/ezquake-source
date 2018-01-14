@@ -588,6 +588,7 @@ void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei 
 	}
 	vbo->name = name;
 	vbo->target = target;
+	vbo->size = size;
 	glGenBuffers(1, &vbo->vbo);
 
 	GL_BindBuffer(target, vbo->vbo);
@@ -603,6 +604,30 @@ void GL_UpdateUBO(glm_ubo_t* ubo, size_t size, void* data)
 
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
 	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, size, data);
+}
+
+void GL_UpdateVBO(glm_vbo_t* vbo, size_t size, void* data)
+{
+	assert(vbo);
+	assert(vbo->vbo);
+	assert(data);
+	assert(size <= vbo->size);
+
+	GL_BindBuffer(vbo->target, vbo->vbo);
+	GL_BufferDataUpdate(vbo->target, size, data);
+}
+
+void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+{
+	assert(vbo);
+	assert(vbo->vbo);
+	assert(data);
+	assert(offset >= 0);
+	assert(offset < vbo->size);
+	assert(offset + size <= vbo->size);
+
+	GL_BindBuffer(vbo->target, vbo->vbo);
+	GL_BufferSubDataUpdate(vbo->target, offset, size, data);
 }
 
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)

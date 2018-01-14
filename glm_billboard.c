@@ -223,13 +223,13 @@ void GLM_DrawBillboards(void)
 {
 	unsigned int i;
 
+	GL_EnterRegion(__FUNCTION__);
+
 	if (!GLM_BillboardsInit()) {
 		return;
 	}
 
-	GL_EnterRegion(__FUNCTION__);
-	GL_BindBuffer(GL_ARRAY_BUFFER, billboardVBO.vbo);
-	GL_BufferDataUpdate(GL_ARRAY_BUFFER, vertexCount * sizeof(verts[0]), verts);
+	GL_UpdateVBO(&billboardVBO, vertexCount * sizeof(verts[0]), verts);
 
 	GL_DisableFog();
 	GL_DepthMask(GL_FALSE);

@@ -242,8 +242,7 @@ void GLM_FlushImageDraw(void)
 
 		GLM_CreateMultiImageProgram();
 
-		GL_BindBuffer(GL_ARRAY_BUFFER, imageVBO.vbo);
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(images[0]) * imageCount, images);
+		GL_UpdateVBO(&imageVBO, sizeof(images[0]) * imageCount, images);
 
 		glDisable(GL_DEPTH_TEST);
 

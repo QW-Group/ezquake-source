@@ -507,9 +507,7 @@ void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int po
 {
 	size_t size_of_vert = MODELVERTEXSIZE * sizeof(float);
 
-	// Copy VBO info to buffer
-	GL_BindBuffer(GL_ARRAY_BUFFER, vbo->vbo);
-	GL_BufferSubDataUpdate(GL_ARRAY_BUFFER, position * size_of_vert, mod->vertsInVBO * size_of_vert, mod->temp_vbo_buffer);
+	GL_UpdateVBOSection(vbo, position * size_of_vert, mod->vertsInVBO * size_of_vert, mod->temp_vbo_buffer);
 
 	hdr->vertsOffset = mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);

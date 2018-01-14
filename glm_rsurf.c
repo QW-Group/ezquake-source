@@ -305,8 +305,7 @@ static void GL_FlushWorldModelBatch(void)
 	}
 
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_worldIndirectDraw.vbo);
-	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
+	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	draw_pos = 0;
 	for (i = 0; i < batch_count; ++i) {

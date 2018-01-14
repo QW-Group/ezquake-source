@@ -159,6 +159,7 @@ typedef struct glm_vbo_s {
 
 	struct glm_vbo_s* next;
 	unsigned int target;
+	size_t size;
 } glm_vbo_t;
 
 typedef struct glm_vao_s {

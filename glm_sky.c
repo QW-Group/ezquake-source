@@ -312,8 +312,7 @@ static void GLM_DrawSkyDomeFaces(void)
 		skyDomeData.speedscale2 -= ((int)skyDomeData.speedscale2 & ~127);
 		VectorCopy(r_origin, skyDomeData.origin);
 
-		GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, skyDomeCommands_vbo.vbo);
-		GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(commandData[0]) * commands, commandData);
+		GL_UpdateVBO(&skyDomeCommands_vbo, sizeof(commandData[0]) * commands, commandData);
 		GL_UpdateUBO(&ubo_skydomeData, sizeof(skyDomeData), &skyDomeData);
 
 		GL_BindVertexArray(skyDome_vao.vao);
