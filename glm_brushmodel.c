@@ -23,8 +23,8 @@ static GLuint drawbrushmodel_RefdefCvars_block;
 static GLuint drawbrushmodel_BrushData_block;
 static glm_ubo_t ubo_brushdata;
 static glm_vbo_t vbo_elements;
-static glm_vbo_t vbo_indirectDraw;
 static block_brushmodels_t brushmodels;
+glm_vbo_t vbo_brushIndirectDraw;
 
 void GLM_CreateBrushModelProgram(void)
 {
@@ -374,9 +374,11 @@ static void GL_FlushBrushModelBatch(void)
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_brushdata.ubo);
 	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(brushmodels), &brushmodels);
 
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_brushIndirectDraw.vbo);
+	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);
+
 	GL_BindVertexArray(brushModel_vao.vao);
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(brushmodel_requests), &brushmodel_requests);
 
 	polygonOffset = brushmodel_requests[0].polygonOffset;
 	GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
@@ -538,7 +540,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	GL_BindVertexArray(brushModel_vao.vao);
 
 	GL_GenFixedBuffer(&vbo_elements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
-	GL_GenFixedBuffer(&vbo_indirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {

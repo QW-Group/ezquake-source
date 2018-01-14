@@ -63,6 +63,22 @@ typedef struct block_world_s {
 	float r_skycolor[4];
 } block_world_t;
 
+typedef struct glm_brushmodel_req_s {
+	// This is DrawElementsIndirectCmd, from OpenGL spec
+	GLuint count;           // Number of indexes to pull
+	GLuint instanceCount;   // Always 1... ?
+	GLuint firstIndex;      // Position of first index in array
+	GLuint baseVertex;      // Offset of vertices in VBO
+	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+
+	GLuint texture_array;
+} glm_worldmodel_req_t;
+
+#define MAX_WORLDMODEL_BATCH 32
+static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
+static GLuint batch_count = 0;
+static glm_vbo_t vbo_worldIndirectDraw;
+
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 static int drawworld_compiledOptions;
@@ -105,6 +121,10 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		glBindBufferBase(GL_UNIFORM_BUFFER, GL_BINDINGPOINT_DRAWWORLD_CVARS, ubo_worldcvars.ubo);
 
 		drawworld.uniforms_found = true;
+	}
+
+	if (!vbo_worldIndirectDraw.vbo) {
+		GL_GenFixedBuffer(&vbo_worldIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(worldmodel_requests), NULL, GL_STREAM_DRAW);
 	}
 }
 
@@ -161,23 +181,6 @@ void GLM_ExitBatchedPolyRegion(void)
 {
 	uniforms_set = false;
 }
-
-typedef struct glm_brushmodel_req_s {
-	// This is DrawElementsIndirectCmd, from OpenGL spec
-	GLuint count;           // Number of indexes to pull
-	GLuint instanceCount;   // Always 1... ?
-	GLuint firstIndex;      // Position of first index in array
-	GLuint baseVertex;      // Offset of vertices in VBO
-	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
-
-	GLuint texture_array;
-} glm_worldmodel_req_t;
-
-#define MAX_WORLDMODEL_BATCH 32
-static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
-static GLuint batch_count = 0;
-static glm_vbo_t vbo_elements;
-static glm_vbo_t vbo_indirectDraw;
 
 static void GL_FlushWorldModelBatch(void);
 
@@ -303,7 +306,8 @@ static void GL_FlushWorldModelBatch(void)
 	}
 
 	GL_BufferDataUpdate(GL_ELEMENT_ARRAY_BUFFER, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests), &worldmodel_requests);
+	GL_BindBuffer(GL_DRAW_INDIRECT_BUFFER, vbo_worldIndirectDraw.vbo);
+	GL_BufferDataUpdate(GL_DRAW_INDIRECT_BUFFER, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	draw_pos = 0;
 	for (i = 0; i < batch_count; ++i) {
