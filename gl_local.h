@@ -486,7 +486,6 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
-extern glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
 extern glMultiDrawArrays_t      glMultiDrawArrays;
@@ -884,7 +883,7 @@ void GL_TexParameteri(GLenum textureUnit, GLenum target, GLuint texture, GLenum 
 void GL_TexParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLenum pname, const GLint *params);
 void GL_GetTexLevelParameteriv(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum pname, GLint* params);
 void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
-
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, GLuint texture);
 void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);

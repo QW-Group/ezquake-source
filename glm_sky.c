@@ -409,7 +409,7 @@ static void GLM_CopySkyboxTexturesToCubeMap(GLuint cubemap, int width, int heigh
 	}
 	Q_free(data);
 
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	GL_GenerateMipmap(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, cubemap);
 }
 
 qbool GLM_LoadSkyboxTextures(char* skyname)

@@ -869,7 +869,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			for (tex = commonTextures[type]; tex; tex = tex->next) {
 				if (tex->gl_texturenum) {
 					GL_BindTexture(GL_TEXTURE_2D_ARRAY, tex->gl_texturenum, true);
-					glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+					GL_GenerateMipmap(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, tex->gl_texturenum);
 				}
 			}
 		}

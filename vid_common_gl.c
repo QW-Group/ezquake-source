@@ -127,7 +127,7 @@ glActiveTexture_t        glActiveTexture;
 static glTexStorage2D_t         glTexStorage2D;
 static glTexSubImage3D_t        glTexSubImage3D;
 static glTexStorage3D_t         glTexStorage3D;
-glGenerateMipmap_t       glGenerateMipmap;
+static glGenerateMipmap_t       glGenerateMipmap;
 
 // Draw functions
 glMultiDrawArrays_t      glMultiDrawArrays;
@@ -855,4 +855,11 @@ void GL_GetTexImage(GLenum textureUnit, GLenum target, GLuint texture, GLint lev
 	GL_SelectTexture(textureUnit);
 	GL_BindTexture(target, texture, false);
 	glGetTexImage(target, level, format, type, buffer);
+}
+
+void GL_GenerateMipmap(GLenum textureUnit, GLenum target, GLuint texture)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(target, texture, false);
+	glGenerateMipmap(target);
 }
