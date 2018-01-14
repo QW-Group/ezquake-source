@@ -24,7 +24,6 @@ typedef struct glm_sprite_s {
 	vec3_t origin;
 	float scale;
 	float texScale[2];
-	GLuint vao;
 	GLuint texture_array;
 	int texture_index;
 } glm_sprite_t;
@@ -90,7 +89,6 @@ void GL_FlushSpriteBatch(void)
 	int i;
 	float oldMatrix[16];
 	float projectionMatrix[16];
-	GLuint vao = 0;
 
 	if (batch_count && first_sprite_draw) {
 		GL_EnterRegion("Sprites");
@@ -117,8 +115,6 @@ void GL_FlushSpriteBatch(void)
 			GL_BindTexture(GL_TEXTURE_2D_ARRAY, sprite->texture_array, true);
 			prev_texture_array = sprite->texture_array;
 		}
-
-		vao = sprite->vao;
 
 		GL_PopMatrix(GL_MODELVIEW, r_world_matrix);
 		GL_Translate(GL_MODELVIEW, sprite->origin[0], sprite->origin[1], sprite->origin[2]);
@@ -155,7 +151,7 @@ void GL_FlushSpriteBatch(void)
 	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo_spriteData.ubo);
 	GL_BufferDataUpdate(GL_UNIFORM_BUFFER, sizeof(spriteData), &spriteData);
 
-	GL_BindVertexArray(vao);
+	GL_BindVertexArray(aliasModel_vao.vao);
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, batch_count);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
@@ -225,7 +221,6 @@ void GLM_DrawSimpleItem(model_t* model, int texture, vec3_t origin, vec3_t angle
 	sprite->texScale[1] = scale_t;
 	sprite->texture_array = model->simpletexture_array;
 	sprite->texture_index = texture;
-	sprite->vao = aliasModel_vao.vao;
 	++batch_count;
 }
 
@@ -280,7 +275,6 @@ void GLM_DrawSpriteModel(entity_t* e)
 		sprite->texScale[1] = frame->gl_scalingT;
 		sprite->texture_array = frame->gl_arraynum;
 		sprite->texture_index = frame->gl_arrayindex;
-		sprite->vao = aliasModel_vao.vao;
 		++batch_count;
 	}
 }

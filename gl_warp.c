@@ -212,54 +212,11 @@ void EmitWaterPolys(msurface_t *fa)
 	byte* col = SurfaceFlatTurbColor(fa->texinfo->texture);
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
-	if (GL_ShadersSupported()) {
-		if (r_fastturb.value) {
-			byte old_alpha = col[3];
-			glpoly_t *p;
-
-			// FIXME: turbripple effect, transparent water
-			col[3] = 255;
-			for (p = fa->polys; p; p = p->next) {
-				GLM_DrawFlatPoly(col, p->vao.vao, p->numverts, false);
-			}
-			col[3] = old_alpha;
-		}
-		else {
-			wateralpha = bound(0, wateralpha, 1);
-
-			GL_SelectTexture(GL_TEXTURE0);
-			//glBindTexture(GL_TEXTURE_2D, fa->texinfo->texture->gl_texturenum);
-			if (wateralpha < 1.0 && wateralpha >= 0) {
-				GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-				GL_TextureEnvMode(GL_MODULATE);
-				if (wateralpha < 0.9) {
-					GL_DepthMask(GL_FALSE);
-				}
-			}
-
-			{
-				// FIXME: don't calculate number of verts each time
-				int verts = 0;
-				int polys = 0;
-				glpoly_t *p;
-
-				for (p = fa->polys; p; p = p->next) {
-					verts += p->numverts;
-					++polys;
-				}
-				GLM_DrawTurbPolys(fa->polys->vao.vao, verts + 2 * (polys - 1), wateralpha);
-			}
-			if (wateralpha < 1.0 && wateralpha >= 0) {
-				GL_TextureEnvMode(GL_REPLACE);
-				GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-				if (wateralpha < 0.9) {
-					GL_DepthMask(GL_TRUE);
-				}
-			}
-		}
+	if (!GL_ShadersSupported()) {
+		GLC_EmitWaterPoly(fa, col, wateralpha);
 	}
 	else {
-		GLC_EmitWaterPoly(fa, col, wateralpha);
+		// FIXME: Can still be called when drawing brush model (halflife maps?)
 	}
 }
 
