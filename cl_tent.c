@@ -402,89 +402,84 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 {
 	dlight_t *dl;
 
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
 		return;
+	}
 
-	if (r_explosiontype.value == 2) 
-	{
-		if (amf_part_teleport.value)
+	if (r_explosiontype.value == 2) {
+		if (amf_part_teleport.value) {
 			VXTeleport(pos);
-		else
-		{
-			R_TeleportSplash(pos); // Teleport splash
 		}
-		
-		if (amf_coronas_tele.value)
+		else {
+			// Teleport splash
+			R_TeleportSplash(pos);
+		}
+
+		if (amf_coronas_tele.value) {
 			NewCorona(C_BLUEFLASH, pos);
+		}
 	}
-	else if (r_explosiontype.value == 3) 
-	{	
-		R_RunParticleEffect(pos, vec3_origin, 225, 50);		//lightning blood
+	else if (r_explosiontype.value == 3) {
+		// lightning blood
+		R_RunParticleEffect(pos, vec3_origin, 225, 50);
 	}
-	else if (r_explosiontype.value == 4) 
-	{	
-		R_RunParticleEffect(pos, vec3_origin, 73, 20 * 32); // Big blood
+	else if (r_explosiontype.value == 4) {
+		// Big blood
+		R_RunParticleEffect(pos, vec3_origin, 73, 20 * 32);
 	}
-	else if (r_explosiontype.value == 5) 
-	{
-		R_RunParticleEffect(pos, vec3_origin, 0, 20 * 14);	// Double gunshot
+	else if (r_explosiontype.value == 5) {
+		// Double gunshot
+		R_RunParticleEffect(pos, vec3_origin, 0, 20 * 14);
 	}
-	else if (r_explosiontype.value == 6) 
-	{
-		if (amf_part_blobexplosion.value)
-		{
+	else if (r_explosiontype.value == 6) {
+		if (amf_part_blobexplosion.value) {
 			VXBlobExplosion(pos);
 		}
-		else
-		{
+		else {
 			R_BlobExplosion(pos); // Blob explosion
 		}
 		if (amf_coronas.value)
 			NewCorona(C_BLUEFLASH, pos);
 	}
-	else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
-	{
+	else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) {
 		QMB_DetpackExplosion(pos);	// Detpack explosion
 	}
-	else if (r_explosiontype.value == 8 && qmb_initialized)
-	{
+	else if (r_explosiontype.value == 8 && qmb_initialized) {
 		FuelRodExplosion(pos);
 	}
-	else if (r_explosiontype.value == 10)
-	{ /* Explosions turned off */ }
-	else
-	{	
+	else if (r_explosiontype.value == 10) {
+		/* Explosions turned off */
+	}
+	else {
 		// sprite and particles
 		if (amf_part_explosion.value)
 			VXExplosion(pos);
-		else
-		{
+		else {
 			R_ParticleExplosion(pos); // Normal explosion
 		}
 	}
 
-	if (r_explosionlight.value)	
-	{
+	if (r_explosionlight.value) {
 		dl = CL_AllocDlight(0);
 		VectorCopy(pos, dl->origin);
 		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
 		dl->die = cl.time + 0.5;
 		dl->decay = 300;
-		if (r_explosiontype.value == 8)
-		{
+		if (r_explosiontype.value == 8) {
 			dl->type = lt_green;
 		}
-		else
-		{
-			customlight_t cst_lt = {0};
+		else {
+			customlight_t cst_lt = { 0 };
 			dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, true, &cst_lt);
 			dl->type = cst_lt.type;
-			
-			if (dl->type == lt_custom)
+
+			if (dl->type == lt_custom) {
 				VectorCopy(cst_lt.color, dl->color);
+			}
 		}
-		if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8)
+		if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8) {
 			NewCorona(C_FLASH, pos);
+		}
 	}
 
 	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
@@ -511,14 +506,15 @@ static void CL_Parse_TE_TELEPORT(vec3_t pos)
 {
 	if (r_telesplash.value)
 	{
-		if (amf_part_teleport.value)
+		if (amf_part_teleport.value) {
 			VXTeleport(pos);
-		else
-		{
+		}
+		else {
 			R_TeleportSplash(pos); // Teleport splash
 		}
-		if (amf_coronas_tele.value)
+		if (amf_coronas_tele.value) {
 			NewCorona(C_BLUEFLASH, pos);
+		}
 	}
 }
 

@@ -374,9 +374,7 @@ void Amf_SetMode_f(void)
 		Cvar_SetValue (&amf_part_gunshot, 0.5);
 		Cvar_SetValue (&amf_part_explosion, 1);
 		Cvar_SetValue (&amf_part_blobexplosion, 0.5);
-#ifdef DEBUG
 		Cvar_SetValue (&amf_part_teleport, 0.5);
-#endif
 		Cvar_SetValue (&gl_bounceparticles, 0);
 	}
 
@@ -440,9 +438,7 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_part_spikes_type);
 	Cvar_Register (&amf_part_explosion);
 	Cvar_Register (&amf_part_blobexplosion);
-#ifdef DEBUG
 	Cvar_Register (&amf_part_teleport);
-#endif
 	Cvar_Register (&amf_part_sparks);
 	Cvar_Register (&amf_part_2dshockwaves);
 	Cvar_Register (&amf_part_shockwaves);
