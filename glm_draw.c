@@ -48,7 +48,7 @@ static GLuint GL_CreateLineVAO(void)
 	};
 
 	if (!vbo.vbo) {
-		GL_GenFixedBuffer(&vbo, GL_ARRAY_BUFFER, "line", sizeof(points), GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&vbo, GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_DYNAMIC_DRAW);
 		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(points), points);
 	}
 
@@ -205,7 +205,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!imageVBO.vbo) {
-		GL_GenFixedBuffer(&imageVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(images), GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&imageVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(images), images, GL_DYNAMIC_DRAW);
 	}
 
 	if (!imageVAO.vao) {

@@ -60,8 +60,7 @@ static void GL_PrepareSprites(void)
 		verts[3][3] = 0;
 		verts[3][4] = 1;
 
-		GL_GenFixedBuffer(&simpleItemVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(verts), GL_STATIC_DRAW);
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(verts), verts);
+		GL_GenFixedBuffer(&simpleItemVBO, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(verts), verts, GL_STATIC_DRAW);
 	}
 
 	if (!simpleItemVAO.vao) {

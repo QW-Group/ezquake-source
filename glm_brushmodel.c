@@ -533,14 +533,13 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 
 	// Create vbo buffer
 	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
-	GL_GenFixedBuffer(&brushModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, size * sizeof(vbo_world_vert_t), GL_STATIC_DRAW);
 
 	// Create vao
 	GL_GenVertexArray(&brushModel_vao);
 	GL_BindVertexArray(brushModel_vao.vao);
 
-	GL_GenFixedBuffer(&vbo_elements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), GL_STREAM_DRAW);
-	GL_GenFixedBuffer(&vbo_indirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_elements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_indirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {
@@ -560,8 +559,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	}
 
 	// Copy VBO buffer across
-	GL_BindBuffer(GL_ARRAY_BUFFER, brushModel_vbo.vbo);
-	GL_BufferDataUpdate(GL_ARRAY_BUFFER, size * sizeof(vbo_world_vert_t), buffer);
+	GL_GenFixedBuffer(&brushModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, size * sizeof(vbo_world_vert_t), buffer, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_VERT_FOFS(position));

@@ -54,13 +54,11 @@ static void GLM_CreateInstanceVBO(void)
 	unsigned int values[MAX_INSTANCES];
 	int i;
 
-	GL_GenFixedBuffer(&instance_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(values), GL_STATIC_DRAW);
-
 	for (i = 0; i < MAX_INSTANCES; ++i) {
 		values[i] = i;
 	}
 
-	GL_BufferData(GL_ARRAY_BUFFER, sizeof(values), values, GL_STATIC_DRAW);
+	GL_GenFixedBuffer(&instance_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(values), values, GL_STATIC_DRAW);
 }
 
 static void GL_DeleteModelTextures(model_t* mod)
@@ -748,8 +746,7 @@ static void GLM_CreateAliasModelVAO(GLuint required_vbo_length, float* new_vbo_b
 	GL_GenVertexArray(&aliasModel_vao);
 	GL_BindVertexArray(aliasModel_vao.vao);
 
-	GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), GL_STATIC_DRAW);
-	GL_BufferDataUpdate(GL_ARRAY_BUFFER, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer);
+	GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), new_vbo_buffer, GL_STATIC_DRAW);
 	Q_free(new_vbo_buffer);
 
 	glEnableVertexAttribArray(0);

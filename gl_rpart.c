@@ -30,6 +30,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void GLM_QMB_DrawParticles(void);
 static void GLC_QMB_DrawParticles(void);
 
+static glm_vbo_t qmbParticleVBO;
+static glm_vao_t qmbParticleVAO;
+static glm_program_t qmbParticleProgram;
+static GLint qmbParticles_RefdefCvars_block;
+
 //VULT
 static float alphatrail_s;
 static float alphatrail_l;
@@ -851,6 +856,12 @@ static void QMB_FillParticleVertexBuffer(void)
 	}
 
 	particleVertexCount = pos;
+
+	// Update VBO
+	if (qmbParticleVBO.vbo) {
+		GL_BindBuffer(GL_ARRAY_BUFFER, qmbParticleVBO.vbo);
+		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices);
+	}
 }
 
 // TODO: Split up
@@ -3230,15 +3241,10 @@ static void GLC_QMB_DrawParticles(void)
 	GL_EnableFog();
 }
 
-static glm_vbo_t qmbParticleVBO;
-static glm_vao_t qmbParticleVAO;
-static glm_program_t qmbParticleProgram;
-static GLint qmbParticles_RefdefCvars_block;
-
 static GLuint GLM_QMB_CreateParticleVAO(void)
 {
 	if (!qmbParticleVBO.vbo) {
-		GL_GenFixedBuffer(&qmbParticleVBO, GL_ARRAY_BUFFER, "qmbparticle", sizeof(vertices), GL_DYNAMIC_DRAW);
+		GL_GenFixedBuffer(&qmbParticleVBO, GL_ARRAY_BUFFER, "qmbparticle", sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 	}
 
 	if (!qmbParticleVAO.vao) {
@@ -3298,9 +3304,6 @@ static void GLM_QMB_DrawParticles(void)
 		GL_UseProgram(qmbParticleProgram.program);
 
 		GL_BindVertexArray(vao);
-
-		// Update VBO
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(vertices[0]) * particleVertexCount, vertices);
 
 		GL_DisableFog();
 		GL_DepthMask(GL_FALSE);

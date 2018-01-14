@@ -145,8 +145,7 @@ static void BuildSkyVertsArray(void)
 		}
 		skyDomeVertices = vert;
 
-		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * skyDomeVertices, GL_STATIC_DRAW);
-		GL_BufferDataUpdate(GL_ARRAY_BUFFER, sizeof(skydome_vert_t) * skyDomeVertices, skydomeVertData);
+		GL_GenFixedBuffer(&skyDome_vbo, GL_ARRAY_BUFFER, __FUNCTION__, sizeof(skydome_vert_t) * skyDomeVertices, skydomeVertData, GL_STATIC_DRAW);
 	}
 
 	if (!skyDome_vao.vao) {

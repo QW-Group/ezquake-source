@@ -678,13 +678,9 @@ void GL_BindBuffer(GLenum target, GLuint buffer);
 void GL_GenBuffer(glm_vbo_t* vbo, const char* name);
 
 // Creates buffer, binds to target and initialises with a particular size
-void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, GLenum usage);
+void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
 void GL_BufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 void GL_BufferDataUpdate(GLenum target, GLsizeiptr size, const GLvoid* data);
-
-void GLM_DrawPolygonByType(GLenum type, byte* color, unsigned int vao, int start, int vertices, qbool apply_lightmap, qbool apply_texture, qbool alpha_texture);
-void GLM_DrawIndexedTurbPolys(unsigned int vao, GLuint* indices, int vertices, float alpha);
-void GLM_DrawTurbPolys(unsigned int vao, int vertices, float alpha);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);

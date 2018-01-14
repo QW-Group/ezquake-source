@@ -588,11 +588,11 @@ void GL_GenBuffer(glm_vbo_t* vbo, const char* name)
 	glGenBuffers(1, &vbo->vbo);
 }
 
-void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, GLenum usage)
+void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
 {
 	glGenBuffers(1, &vbo->vbo);
 	GL_BindBuffer(target, vbo->vbo);
-	glBufferData(target, size, NULL, usage);
+	glBufferData(target, size, data, usage);
 }
 
 void GL_GenUniformBuffer(glm_ubo_t* ubo, const char* name, void* data, int size)
