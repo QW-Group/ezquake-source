@@ -24,11 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
+#include "tr_types.h"
 
-#define TEXTURE_UNIT_MATERIAL 0
-#define TEXTURE_UNIT_LIGHTMAPS 1
-#define TEXTURE_UNIT_DETAIL 2
-#define TEXTURE_UNIT_CAUSTICS 3
+#define MAX_WORLDMODEL_BATCH 32
 
 static GLuint modelIndexes[16 * 1024];
 static GLuint index_count;
@@ -40,6 +38,8 @@ static GLint drawworld_RefdefCvars_block;
 static GLint drawworld_WorldCvars_block;
 
 typedef struct block_world_s {
+	GLint samplerMappings[MAX_WORLDMODEL_BATCH][4];
+
 	//
 	float waterAlpha;
 
@@ -75,7 +75,6 @@ typedef struct glm_brushmodel_req_s {
 	texture_ref texture_array;
 } glm_worldmodel_req_t;
 
-#define MAX_WORLDMODEL_BATCH 32
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 static GLuint batch_count = 0;
 static glm_vbo_t vbo_worldIndirectDraw;
@@ -87,6 +86,15 @@ static int drawworld_compiledOptions;
 static glm_ubo_t ubo_worldcvars;
 static block_world_t world;
 
+#define MAXIMUM_MATERIAL_SAMPLERS 32
+static int material_samplers_max;
+static int material_samplers;
+static texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
+static int TEXTURE_UNIT_MATERIAL;
+static int TEXTURE_UNIT_LIGHTMAPS;
+static int TEXTURE_UNIT_DETAIL;
+static int TEXTURE_UNIT_CAUSTICS;
+
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures)
 {
@@ -97,17 +105,32 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 
 	if (!drawworld.program || drawworld_compiledOptions != drawworld_desiredOptions) {
 		static char included_definitions[512];
+		int samplers = 0;
 		
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (detail_textures) {
+			TEXTURE_UNIT_DETAIL = samplers++;
+
 			strlcat(included_definitions, "#define DRAW_DETAIL_TEXTURES\n", sizeof(included_definitions));
+			strlcat(included_definitions, va("#define SAMPLER_DETAIL_TEXTURE %d\n", TEXTURE_UNIT_MATERIAL), sizeof(included_definitions));
+			++samplers;
 		}
 		if (caustic_textures) {
+			TEXTURE_UNIT_CAUSTICS = samplers++;
+
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
 		if (luma_textures) {
 			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
 		}
+		TEXTURE_UNIT_LIGHTMAPS = samplers++;
+		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));
+		TEXTURE_UNIT_MATERIAL = samplers++;
+		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_START %d\n", TEXTURE_UNIT_MATERIAL), sizeof(included_definitions));
+		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
+		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
 
 		GL_VFDeclare(drawworld);
 
@@ -174,8 +197,6 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 
 	world.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;
 
-	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
-
 	GL_UseProgram(drawworld.program);
 
 	GL_BindVertexArray(&brushModel_vao);
@@ -188,12 +209,16 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	if (caustics) {
 		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
 	}
-	GL_SelectTexture(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL);
+
+	Con_DPrintf("Water-alpha offset: %d\n", (intptr_t)&world.waterAlpha - (intptr_t)&world);
+	material_samplers = 0;
 }
 
 void GLM_ExitBatchedPolyRegion(void)
 {
 	uniforms_set = false;
+
+	Cvar_SetValue(&developer, 0);
 }
 
 static void GL_FlushWorldModelBatch(void);
@@ -214,6 +239,19 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	req->firstIndex = index_count;
 	req->baseVertex = 0;
 	req->baseInstance = batch_count;
+	if (!GL_TextureReferenceIsValid(texture_array)) {
+		world.samplerMappings[batch_count][0] = 0;
+	}
+	else if (material_samplers && GL_TextureReferenceEqual(texture_array, allocated_samplers[material_samplers - 1])) {
+		Con_DPrintf("  %2d: sampler %d (array %d)\n", batch_count, material_samplers - 1, texture_array);
+		world.samplerMappings[batch_count][0] = material_samplers - 1;
+	}
+	else {
+		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + material_samplers, GL_TEXTURE_2D_ARRAY, texture_array);
+		world.samplerMappings[batch_count][0] = material_samplers;
+		Con_DPrintf("  %2d: sampler %d (array %d) - new\n", batch_count, material_samplers, texture_array);
+		allocated_samplers[material_samplers++] = texture_array;
+	}
 
 	++batch_count;
 	return req;
@@ -323,40 +361,53 @@ static void GL_FlushWorldModelBatch(void)
 		return;
 	}
 
+	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
 	GL_UpdateVBO(&vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
-	draw_pos = 0;
-	for (i = 0; i < batch_count; ++i) {
-		int last = i;
-		texture_ref texArray = worldmodel_requests[i].texture_array;
-
-		for (last = i; last < batch_count - 1; ++last) {
-			texture_ref next = worldmodel_requests[last + 1].texture_array;
-			if (GL_TextureReferenceIsValid(next) && GL_TextureReferenceIsValid(texArray) != 0 && !GL_TextureReferenceEqual(next, texArray)) {
-				break;
-			}
-			texArray = next;
-		}
-
-		if (GL_TextureReferenceIsValid(texArray)) {
-			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, texArray);
-		}
-
-		// FIXME: All brush models are in the same VAO, sort this out
+	if (true) {
 		glMultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_INT,
-			(void*)(i * sizeof(worldmodel_requests[0])),
-			last - i + 1,
+			(void*)0,
+			batch_count,
 			sizeof(worldmodel_requests[0])
 		);
+	}
+	else {
+		draw_pos = 0;
+		for (i = 0; i < batch_count; ++i) {
+			int last = i;
+			texture_ref texArray = worldmodel_requests[i].texture_array;
 
-		i = last;
+			for (last = i; last < batch_count - 1; ++last) {
+				texture_ref next = worldmodel_requests[last + 1].texture_array;
+				if (GL_TextureReferenceIsValid(next) && GL_TextureReferenceIsValid(texArray) && !GL_TextureReferenceEqual(next, texArray)) {
+					break;
+				}
+				texArray = next;
+			}
+
+			if (GL_TextureReferenceIsValid(texArray)) {
+				GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL, GL_TEXTURE_2D_ARRAY, texArray);
+			}
+
+			// FIXME: All brush models are in the same VAO, sort this out
+			glMultiDrawElementsIndirect(
+				GL_TRIANGLE_STRIP,
+				GL_UNSIGNED_INT,
+				(void*)(i * sizeof(worldmodel_requests[0])),
+				last - i + 1,
+				sizeof(worldmodel_requests[0])
+			);
+
+			i = last;
+		}
 	}
 
 	batch_count = 0;
 	index_count = 0;
+	material_samplers = 0;
 }
 
 void GLM_DrawWorld(model_t* model)
@@ -419,6 +470,3 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 	GL_DisableMultitexture();
 	GL_TextureEnvMode(GL_REPLACE);
 }
-
-
-

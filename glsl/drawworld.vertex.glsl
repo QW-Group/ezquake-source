@@ -8,6 +8,7 @@ layout(location = 2) in vec2 lightmapCoord;
 layout(location = 3) in vec2 detailCoord;
 layout(location = 4) in int lightmapNumber;
 layout(location = 5) in int materialNumber;
+layout(location = 6) in int _instanceId;
 layout(location = 7) in int flags;
 layout(location = 8) in vec3 flatColor;
 
@@ -23,6 +24,7 @@ out vec2 DetailCoord;
 #endif
 out vec3 FlatColor;
 out flat int Flags;
+out flat int SamplerNumber;
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
@@ -34,12 +36,39 @@ layout(std140) uniform RefdefCvars {
 	int r_textureless;
 };
 
+layout(std140) uniform WorldCvars {
+	int samplerMapping[MAX_INSTANCEID];
+
+	//
+	float waterAlpha;
+
+	// drawflat for solid surfaces
+	int r_drawflat;
+	int r_fastturb;
+	int r_fastsky;
+
+	vec4 r_wallcolor;      // only used if r_drawflat 1 or 3
+	vec4 r_floorcolor;     // only used if r_drawflat 1 or 2
+
+	// drawflat for turb surfaces
+	vec4 r_telecolor;
+	vec4 r_lavacolor;
+	vec4 r_slimecolor;
+	vec4 r_watercolor;
+
+	// drawflat for sky
+	vec4 r_skycolor;
+	int r_texture_luma_fb;
+};
+
 void main()
 {
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 
 	FlatColor = flatColor;
 	Flags = flags;
+
+	SamplerNumber = samplerMapping[_instanceId];
 
 	if (lightmapNumber < 0) {
 		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;

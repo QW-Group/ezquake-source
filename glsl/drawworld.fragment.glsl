@@ -4,14 +4,14 @@
 
 layout(early_fragment_tests) in;
 
-layout(binding=0) uniform sampler2DArray materialTex;
-layout(binding=1) uniform sampler2DArray lightmapTex;
 #ifdef DRAW_DETAIL_TEXTURES
-layout(binding=2) uniform sampler2D detailTex;
+layout(binding=SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
 #endif
 #ifdef DRAW_CAUSTIC_TEXTURES
-layout(binding=3) uniform sampler2D causticsTex;
+layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
+layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
+layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
@@ -24,6 +24,8 @@ layout(std140) uniform RefdefCvars {
 };
 
 layout(std140) uniform WorldCvars {
+	int samplerMapping[MAX_INSTANCEID];
+
 	//
 	float waterAlpha;
 
@@ -56,6 +58,7 @@ in vec3 LumaCoord;
 #endif
 in vec3 FlatColor;
 in flat int Flags;
+in flat int SamplerNumber;
 
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
@@ -90,11 +93,11 @@ void main()
 	);
 #endif
 #ifdef DRAW_LUMA_TEXTURES
-	vec4 lumaColor = texture(materialTex, LumaCoord);
+	vec4 lumaColor = texture(materialTex[SamplerNumber], LumaCoord);
 #endif
 
 	lmColor = texture(lightmapTex, TexCoordLightmap);
-	texColor = texture(materialTex, TextureCoord);
+	texColor = texture(materialTex[SamplerNumber], TextureCoord);
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
