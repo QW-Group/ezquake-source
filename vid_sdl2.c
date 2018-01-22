@@ -976,7 +976,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 	if (COM_CheckParm("-modern")) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	}
 
 	if (r_24bit_depth.integer == 1) {
