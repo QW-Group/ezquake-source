@@ -27,6 +27,8 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_local.h"
 #include "tr_types.h"
 
+// #define USE_OPENGL_DIMENSIONS
+
 const texture_ref null_texture_reference = { 0 };
 
 // Private GL function to allocate names
@@ -76,6 +78,7 @@ typedef struct {
 	char		*pathname;
 	int			width, height;
 	int			scaled_width, scaled_height;
+	int         gl_width, gl_height;
 	int			texmode;
 	unsigned	crc;
 	int			bpp;
@@ -334,6 +337,9 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 	while (width > tempwidth || height > tempheight) {
 		Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
 	}
+
+	glt->gl_width = width;
+	glt->gl_height = height;
 
 	if (mode & TEX_BRIGHTEN) {
 		brighten32((byte *)newdata, width * height * 4);
@@ -643,17 +649,16 @@ static gltexture_t *current_texture = NULL;
 	}
 
 
-static qbool CheckTextureLoaded(int mode) 
+static qbool CheckTextureLoaded(int mode)
 {
 	int scaled_width, scaled_height;
 
-	if (!forceTextureReload) 
-	{
-		if (current_texture && current_texture->pathname && !strcmp(fs_netpath, current_texture->pathname)) 
-		{
+	if (!forceTextureReload) {
+		if (current_texture && current_texture->pathname && !strcmp(fs_netpath, current_texture->pathname)) {
 			ScaleDimensions(current_texture->width, current_texture->height, &scaled_width, &scaled_height, mode);
-			if (current_texture->scaled_width == scaled_width && current_texture->scaled_height == scaled_height)
+			if (current_texture->scaled_width == scaled_width && current_texture->scaled_height == scaled_height) {
 				return true;
+			}
 		}
 	}
 	return false;
@@ -1101,9 +1106,9 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_WIDTH, &array_width);
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_HEIGHT, &array_height);
-			GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, 0, GL_TEXTURE_DEPTH, &array_depth);
+			array_width = GL_TextureWidth(slot->reference);
+			array_height = GL_TextureHeight(slot->reference);
+			array_depth = GL_TextureDepth(slot->reference);
 
 			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
@@ -1230,6 +1235,67 @@ qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)
 	assert(tex1.index < sizeof(gltextures) / sizeof(gltextures[0]));
 	assert(tex2.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	return (gltextures[tex1.index].width == gltextures[tex2.index].width) &&
-	       (gltextures[tex1.index].height == gltextures[tex2.index].height);
+	return (gltextures[tex1.index].gl_width == gltextures[tex2.index].gl_width) &&
+	       (gltextures[tex1.index].gl_height == gltextures[tex2.index].gl_height);
+}
+
+GLint GL_TextureWidth(texture_ref ref)
+{
+	assert(ref.index && ref.index < numgltextures);
+	if (ref.index >= numgltextures) {
+		return 0;
+	}
+
+#ifdef USE_OPENGL_DIMENSIONS
+	{
+		GLint result;
+
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, gltextures[ref.index].target, ref, 0, GL_TEXTURE_WIDTH, &result);
+
+		return result;
+	}
+#else
+	return gltextures[ref.index].gl_width;
+#endif
+}
+
+GLint GL_TextureHeight(texture_ref ref)
+{
+	assert(ref.index && ref.index < numgltextures);
+	if (ref.index >= numgltextures) {
+		return 0;
+	}
+
+#ifdef USE_OPENGL_DIMENSIONS
+	{
+		GLint result;
+
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, gltextures[ref.index].target, ref, 0, GL_TEXTURE_HEIGHT, &result);
+
+		return result;
+	}
+#else
+	return gltextures[ref.index].gl_height;
+#endif
+}
+
+GLint GL_TextureDepth(texture_ref ref)
+{
+	assert(ref.index && ref.index < numgltextures);
+	assert(gltextures[ref.index].target == GL_TEXTURE_2D);
+	if (ref.index >= numgltextures || gltextures[ref.index].target != GL_TEXTURE_2D_ARRAY) {
+		return 0;
+	}
+
+#ifdef USE_OPENGL_DIMENSIONS
+	{
+		GLint result;
+
+		GL_GetTexLevelParameteriv(GL_TEXTURE0, gltextures[ref.index].target, ref, 0, GL_TEXTURE_DEPTH, &result);
+
+		return result;
+	}
+#else
+	return gltextures[ref.index].depth;
+#endif
 }

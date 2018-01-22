@@ -424,8 +424,8 @@ qbool GLM_LoadSkyboxTextures(char* skyname)
 
 	// Get the actual sizes (may have been rescaled)
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_TEXTURE_WIDTH, &widths[i]);
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, skyboxtextures[i], 0, GL_TEXTURE_HEIGHT, &heights[i]);
+		widths[i] = GL_TextureWidth(skyboxtextures[i]);
+		heights[i] = GL_TextureHeight(skyboxtextures[i]);
 	}
 
 	// Check if they're all the same

@@ -84,8 +84,8 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	int i;
 
 	// Find size of the source
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, pic->texnum, 0, GL_TEXTURE_WIDTH, &texWidth);
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, pic->texnum, 0, GL_TEXTURE_HEIGHT, &texHeight);
+	texWidth = GL_TextureWidth(pic->texnum);
+	texHeight = GL_TextureHeight(pic->texnum);
 
 	width = (pic->sh - pic->sl) * texWidth;
 	height = (pic->th - pic->tl) * texHeight;
@@ -183,8 +183,8 @@ void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 	cachepic_node_t* current = *sized_list;
 	int size_this;
 
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, node->data.pic->texnum, 0, GL_TEXTURE_WIDTH, &node->width);
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, node->data.pic->texnum, 0, GL_TEXTURE_HEIGHT, &node->height);
+	node->width = GL_TextureWidth(node->data.pic->texnum);
+	node->height = GL_TextureHeight(node->data.pic->texnum);
 
 	node->width *= (node->data.pic->sh - node->data.pic->sl);
 	node->height *= (node->data.pic->th - node->data.pic->tl);
@@ -221,8 +221,8 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	float newth, newtl;
 
 	// Find size of the source
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, ibar->texnum, 0, GL_TEXTURE_WIDTH, &texWidth);
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, ibar->texnum, 0, GL_TEXTURE_HEIGHT, &texHeight);
+	texWidth = GL_TextureWidth(ibar->texnum);
+	texHeight = GL_TextureHeight(ibar->texnum);
 
 	source = Q_malloc(texWidth * texHeight * 4);
 	GL_GetTexImage(GL_TEXTURE0, GL_TEXTURE_2D, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);

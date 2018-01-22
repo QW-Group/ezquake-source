@@ -173,8 +173,8 @@ static void GL_RegisterCommonTextureSize(int type, texture_ref texture, qbool an
 		return;
 	}
 
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, texture, 0, GL_TEXTURE_WIDTH, &width);
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, texture, 0, GL_TEXTURE_HEIGHT, &height);
+	width = GL_TextureWidth(texture);
+	height = GL_TextureHeight(texture);
 
 	while (list) {
 		if (list->width == width && list->height == height && list->gl_depth == 0) {
@@ -227,12 +227,9 @@ static void GL_AddTextureToArray(texture_ref arrayTexture, int width, int height
 			GL_TexSubImage3D(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
-				int array_width, array_height, array_depth;
-
-				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture);
-				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_WIDTH, &array_width);
-				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_HEIGHT, &array_height);
-				GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, arrayTexture, 0, GL_TEXTURE_DEPTH, &array_depth);
+				int array_width = GL_TextureWidth(arrayTexture);
+				int array_height = GL_TextureHeight(arrayTexture);
+				int array_depth = GL_TextureDepth(arrayTexture);
 
 				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
 				GL_Paranoid_Printf(">  Parameters: %d %d %d, %d %d 1, tempBuffer = %X\n", x * width, y * height, index, width, height, tempBuffer);
@@ -332,8 +329,8 @@ static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool an
 		return;
 	}
 
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture, 0, GL_TEXTURE_WIDTH, &width);
-	GL_GetTexLevelParameteriv(GL_TEXTURE0, GL_TEXTURE_2D, stdTexture, 0, GL_TEXTURE_HEIGHT, &height);
+	width = GL_TextureWidth(stdTexture);
+	height = GL_TextureHeight(stdTexture);
 
 	desired_width = width;
 	desired_height = height;

@@ -67,4 +67,8 @@ extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 extern cvar_t gl_no24bit;
 extern cvar_t gl_wicked_luma_level;
 
+GLint GL_TextureWidth(texture_ref ref);
+GLint GL_TextureHeight(texture_ref ref);
+GLint GL_TextureDepth(texture_ref ref);
+
 #endif	//__GL_TEXTURE_H
