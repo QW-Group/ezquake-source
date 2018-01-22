@@ -1,13 +1,14 @@
 #version 430
 
+#ezquake-definitions
+
+
 // Flags from entity effects
 const int EF_RED = 128;
 const int EF_GREEN = 2;
 const int EF_BLUE = 64;
 
-layout(binding=0) uniform sampler2DArray materialTex;
-layout(binding=1) uniform sampler2D skinTex;
-layout(binding=2) uniform sampler2D lumaTex;
+layout(binding=0) uniform sampler2D samplers[SAMPLER_COUNT];
 
 layout(std140) uniform RefdefCvars {
 	mat4 modelViewMatrix;
@@ -20,16 +21,16 @@ layout(std140) uniform RefdefCvars {
 };
 
 layout(std140) uniform AliasModelData {
-	mat4 modelView[32];
-	vec4 color[32];
-	vec2 scale[32];
-	int textureIndex[32];
-	int apply_texture[32];
-	int apply_luma[32];
-	int shellMode[32];
-	float yaw_angle_rad[32];
-	float shadelight[32];
-	float ambientlight[32];
+	mat4 modelView[MAX_INSTANCEID];
+	vec4 color[MAX_INSTANCEID];
+	vec2 scale[MAX_INSTANCEID];
+	int apply_texture[MAX_INSTANCEID];
+	int shellMode[MAX_INSTANCEID];
+	float yaw_angle_rad[MAX_INSTANCEID];
+	float shadelight[MAX_INSTANCEID];
+	float ambientlight[MAX_INSTANCEID];
+	int materialTextureMapping[MAX_INSTANCEID];
+	int lumaTextureMapping[MAX_INSTANCEID];
 
 	float shellSize;
 	// console var data
@@ -40,19 +41,22 @@ layout(std140) uniform AliasModelData {
 	float shell_alpha;
 };
 
-in vec3 fsTextureCoord;
-in vec3 fsAltTextureCoord;
+in vec2 fsTextureCoord;
+in vec2 fsAltTextureCoord;
 in vec4 fsBaseColor;
 flat in int fsShellMode;
 flat in int fsTextureEnabled;
 flat in int fsTextureLuma;
 out vec4 frag_colour;
 
+flat in int fsMaterialSampler;
+flat in int fsLumaSampler;
+
 void main()
 {
-	vec4 tex = texture(skinTex, fsTextureCoord.st);
-	vec4 altTex = texture(skinTex, fsAltTextureCoord.st);
-	vec4 luma = texture(lumaTex, fsTextureCoord.st);
+	vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
+	vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
+	vec4 luma = texture(samplers[fsLumaSampler], fsTextureCoord.st);
 
 	if (fsShellMode != 0) {
 		// Powerup-shells - fsShellMode should be same flags as entity->effects, EF_RED | EF_GREEN | EF_BLUE
@@ -71,16 +75,11 @@ void main()
 
 		frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
 	}
-	else if (fsTextureEnabled == 2) {
+	else if (fsTextureEnabled != 0) {
 		frag_colour = tex * fsBaseColor;
 		if (fsTextureLuma != 0) {
 			frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), tex.a);
 		}
-	}
-	else if (fsTextureEnabled != 0) {
-		// Default
-		//frag_colour = texture(materialTex, fsTextureCoord) * fsBaseColor;
-		frag_colour = vec4(0, 0, 0, 255);
 	}
 	else {
 		// Solid
