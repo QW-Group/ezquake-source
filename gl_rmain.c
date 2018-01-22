@@ -930,12 +930,17 @@ void R_RenderScene(void)
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
 
-	if (cl_visents.count) {
+	if (r_drawentities.integer && cl_visents.count) {
 		GL_EnterRegion("R_DrawEntities");
 		R_DrawEntitiesOnList(&cl_visents);
 		GL_LeaveRegion();
 	}
-	if (cl_alphaents.count) {
+	else {
+		// Finish drawing the world instead
+		GL_EndDrawBrushModels();
+	}
+
+	if (r_drawentities.integer && cl_alphaents.count) {
 		GL_EnterRegion("R_DrawEntities (Alpha)");
 		R_DrawEntitiesOnList(&cl_alphaents);
 		GL_LeaveRegion();

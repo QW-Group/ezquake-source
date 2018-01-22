@@ -372,6 +372,7 @@ void GL_FlushWorldModelBatch(void)
 		return;
 	}
 
+	GL_UseProgram(drawworld.program);
 	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
 	GL_UpdateVBO(&vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_UpdateVBO(&vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
