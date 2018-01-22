@@ -977,6 +977,12 @@ typedef struct glm_worldmodel_req_s {
 	GLuint firstIndex;      // Position of first index in array
 	GLuint baseVertex;      // Offset of vertices in VBO
 	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+
+	float mvMatrix[16];
+	int flags;
+	int sampler;
+	float color[4];
+	qbool polygonOffset;
 } glm_worldmodel_req_t;
 
 #endif /* !__GL_LOCAL_H__ */

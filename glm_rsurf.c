@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "tr_types.h"
 
+static void GL_SortDrawCalls(int* polygonOffsetStart);
+
 glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 
 extern glm_vbo_t brushModel_vbo;
@@ -69,7 +71,7 @@ typedef struct block_world_s {
 	int r_texture_luma_fb;
 } block_world_t;
 
-static GLuint batch_count = 0;
+static int batch_count = 0;
 static glm_vbo_t vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES 1
@@ -255,22 +257,22 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 	req = &worldmodel_requests[batch_count];
 
-	GLM_GetMatrix(GL_MODELVIEW, world.modelMatrix[batch_count]);
+	GLM_GetMatrix(GL_MODELVIEW, req->mvMatrix);
 	if (base_color) {
-		memcpy(&world.color[batch_count], base_color, sizeof(world.color[0]));
+		memcpy(&req->color, base_color, sizeof(req->color));
 	}
 	else {
-		world.color[batch_count][0] = world.color[batch_count][1] = world.color[batch_count][2] = world.color[batch_count][3] = 1.0f;
+		req->color[0] = req->color[1] = req->color[2] = req->color[3] = 1.0f;
 	}
-	world.samplerMappings[batch_count][0] = sampler;
-	world.flags[batch_count][0] = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
+	req->sampler = sampler;
+	req->flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
+	req->polygonOffset = polygonOffset;
 
 	req->count = 0;
 	req->instanceCount = 1;
 	req->firstIndex = index_count;
 	req->baseVertex = 0;
 	req->baseInstance = batch_count;
-	//req->flags = caustics ? EZQ_SURFACE_UNDERWATER : 0;
 
 	++batch_count;
 	return req;
@@ -359,11 +361,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 		}
 	}
 
-//	if (index_count) {
-//		GL_FlushWorldModelBatch();
-//	}
-
-	//GLM_ExitBatchedPolyRegion();
 	return;
 }
 
@@ -374,11 +371,14 @@ void GL_FlushWorldModelBatch(void)
 	GLuint last_array = 0;
 	qbool was_worldmodel = 0;
 	int draw_pos = 0;
+	int polygonOffsetStart = 0;
 	extern glm_vbo_t vbo_brushElements;
 
 	if (!batch_count) {
 		return;
 	}
+
+	GL_SortDrawCalls(&polygonOffsetStart);
 
 	GL_UseProgram(drawworld.program);
 	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
@@ -390,13 +390,36 @@ void GL_FlushWorldModelBatch(void)
 		GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D_ARRAY, allocated_samplers[i]);
 	}
 
-	glMultiDrawElementsIndirect(
-		GL_TRIANGLE_STRIP,
-		GL_UNSIGNED_INT,
-		(void*)0,
-		batch_count,
-		sizeof(worldmodel_requests[0])
-	);
+	if (polygonOffsetStart >= 0 && polygonOffsetStart < batch_count) {
+		if (polygonOffsetStart) {
+			glMultiDrawElementsIndirect(
+				GL_TRIANGLE_STRIP,
+				GL_UNSIGNED_INT,
+				(void*)0,
+				polygonOffsetStart,
+				sizeof(worldmodel_requests[0])
+			);
+		}
+
+		GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+		glMultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)(sizeof(worldmodel_requests[0]) * polygonOffsetStart),
+			batch_count - polygonOffsetStart,
+			sizeof(worldmodel_requests[0])
+		);
+		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	}
+	else {
+		glMultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)0,
+			batch_count,
+			sizeof(worldmodel_requests[0])
+		);
+	}
 
 	batch_count = 0;
 	index_count = 0;
@@ -467,4 +490,50 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	}
 
 	return;
+}
+static void GL_SortDrawCalls(int* polygonOffsetStart)
+{
+	static GLuint newModelIndexes[MAX_WORLDMODEL_INDEXES];
+	int i, j;
+	int back;
+	int index = 0;
+	int overall_index_count = index_count;
+
+	*polygonOffsetStart = batch_count;
+	if (batch_count == 0) {
+		return;
+	}
+
+	if (true) {
+		// All polygon offset calls need to be moved to the back
+		back = batch_count - 1;
+		while (back >= 0 && worldmodel_requests[back].polygonOffset) {
+			*polygonOffsetStart = back;
+			--back;
+		}
+
+		for (i = 0; i < batch_count; ++i) {
+			glm_worldmodel_req_t* this = &worldmodel_requests[i];
+
+			if (this->polygonOffset && i < back) {
+				glm_worldmodel_req_t copy = worldmodel_requests[back];
+				worldmodel_requests[back] = *this;
+				*this = copy;
+
+				while (back >= 0 && worldmodel_requests[back].polygonOffset) {
+					*polygonOffsetStart = back;
+					--back;
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < batch_count; ++i) {
+		glm_worldmodel_req_t* this = &worldmodel_requests[i];
+
+		memcpy(world.color[i], this->color, sizeof(world.color[0]));
+		memcpy(world.modelMatrix[i], this->mvMatrix, sizeof(world.modelMatrix[0]));
+		world.flags[i][0] = this->flags;
+		world.samplerMappings[i][0] = this->sampler;
+	}
 }
