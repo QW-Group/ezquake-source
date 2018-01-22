@@ -43,6 +43,7 @@ typedef struct block_world_s {
 	float modelMatrix[MAX_WORLDMODEL_BATCH][16];
 	float color[MAX_WORLDMODEL_BATCH][4];
 	GLint samplerMappings[MAX_WORLDMODEL_BATCH][4];
+	GLint flags[MAX_WORLDMODEL_BATCH][4];
 
 	//
 	float waterAlpha;
@@ -216,10 +217,15 @@ void GLM_ExitBatchedPolyRegion(void)
 void GL_FlushWorldModelBatch(void);
 
 // TODO: process polygonOffset
-glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, texture_ref texture_array, qbool polygonOffset)
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, texture_ref texture_array, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
 	int sampler = -1;
+
+	// If user has switched off caustics (or no texture), ignore
+	if (caustics) {
+		caustics &= ((drawworld_compiledOptions & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
+	}
 
 	if (batch_count >= MAX_WORLDMODEL_BATCH) {
 		GL_FlushWorldModelBatch();
@@ -257,12 +263,14 @@ glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, te
 		world.color[batch_count][0] = world.color[batch_count][1] = world.color[batch_count][2] = world.color[batch_count][3] = 1.0f;
 	}
 	world.samplerMappings[batch_count][0] = sampler;
+	world.flags[batch_count][0] = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 
 	req->count = 0;
 	req->instanceCount = 1;
 	req->firstIndex = index_count;
 	req->baseVertex = 0;
 	req->baseInstance = batch_count;
+	//req->flags = caustics ? EZQ_SURFACE_UNDERWATER : 0;
 
 	++batch_count;
 	return req;
@@ -285,13 +293,13 @@ void GLM_DrawTexturedWorld(model_t* model)
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
 			glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false);
+			req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false, false);
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
 				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 					GL_FlushWorldModelBatch();
-					req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false);
+					req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false, false);
 				}
 
 				if (index_count) {
@@ -323,7 +331,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false);
+			req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false, false);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -333,7 +341,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false);
+							req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false, false);
 						}
 
 						if (req->count) {
@@ -408,7 +416,7 @@ void GLM_NewMap(void)
 {
 }
 
-void GLM_DrawBrushModel(model_t* model, qbool polygonOffset)
+void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 {
 	int i, waterline, v;
 	msurface_t* surf;
@@ -430,7 +438,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
+			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset, caustics);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -440,7 +448,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
+							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset, caustics);
 						}
 
 						if (req->count) {

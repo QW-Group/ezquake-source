@@ -9,7 +9,7 @@ layout(location = 3) in vec2 detailCoord;
 layout(location = 4) in int lightmapNumber;
 layout(location = 5) in int materialNumber;
 layout(location = 6) in int _instanceId;
-layout(location = 7) in int flags;
+layout(location = 7) in int vboFlags;
 layout(location = 8) in vec3 flatColor;
 
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
@@ -41,6 +41,7 @@ layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_INSTANCEID];
 	vec4 color[MAX_INSTANCEID];
 	int samplerMapping[MAX_INSTANCEID];
+	int drawFlags[MAX_INSTANCEID];
 
 	//
 	float waterAlpha;
@@ -69,7 +70,7 @@ void main()
 	gl_Position = projectionMatrix * modelMatrix[_instanceId] * vec4(position, 1.0);
 
 	FlatColor = flatColor * color[_instanceId].rgb;
-	Flags = flags;
+	Flags = vboFlags | drawFlags[_instanceId];
 
 	SamplerNumber = samplerMapping[_instanceId];
 
@@ -93,7 +94,7 @@ void main()
 			TextureCoord = vec3(tex, materialNumber);
 		}
 #ifdef DRAW_LUMA_TEXTURES
-		LumaCoord = (flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
+		LumaCoord = (vboFlags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
 #endif
 		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
 #ifdef DRAW_DETAIL_TEXTURES

@@ -27,6 +27,7 @@ layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_INSTANCEID];
 	vec4 color[MAX_INSTANCEID];
 	int samplerMapping[MAX_INSTANCEID];
+	int drawFlags[MAX_INSTANCEID];
 
 	//
 	float waterAlpha;

@@ -35,7 +35,7 @@ extern glpoly_t *caustics_polys;
 extern glpoly_t *detail_polys;
 
 static void GLC_BlendLightmaps(void);
-static void GLC_DrawTextureChains(model_t *model, int contents);
+static void GLC_DrawTextureChains(model_t *model, qbool caustics);
 void R_RenderFullbrights(void);
 void R_RenderLumas(void);
 
@@ -131,7 +131,7 @@ static void GLC_DrawFlat(model_t *model)
 	// } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-static void GLC_DrawTextureChains(model_t *model, int contents)
+static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 {
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
@@ -294,7 +294,7 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 				}
 				glEnd();
 
-				if (draw_caustics && (waterline || ISUNDERWATER(contents))) {
+				if (draw_caustics && (waterline || caustics)) {
 					s->polys->caustics_chain = caustics_polys;
 					caustics_polys = s->polys;
 				}
@@ -375,7 +375,7 @@ void GLC_DrawWorld(void)
 	extern cvar_t gl_outline;
 
 	if (r_drawflat.integer != 1) {
-		GLC_DrawTextureChains(cl.worldmodel, 0);
+		GLC_DrawTextureChains(cl.worldmodel, false);
 	}
 	if (cl.worldmodel->drawflat_chain[0] || cl.worldmodel->drawflat_chain[1]) {
 		GLC_DrawFlat(cl.worldmodel);
@@ -389,7 +389,7 @@ void GLC_DrawWorld(void)
 	R_DrawAlphaChain(alphachain);
 }
 
-void GLC_DrawBrushModel(entity_t* e, model_t* clmodel)
+void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 {
 	extern cvar_t gl_outline;
 
@@ -398,12 +398,12 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel)
 			GLC_DrawFlat(clmodel);
 		}
 		else {
-			GLC_DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+			GLC_DrawTextureChains(clmodel, caustics);
 			GLC_DrawFlat(clmodel);
 		}
 	}
 	else {
-		GLC_DrawTextureChains(clmodel, (TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+		GLC_DrawTextureChains(clmodel, caustics);
 	}
 
 	if ((gl_outline.integer & 2) && clmodel->isworldmodel && !RuleSets_DisallowModelOutline(NULL)) {

@@ -1426,6 +1426,7 @@ void R_DrawBrushModel(entity_t *e)
 	qbool rotated;
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
+	qbool caustics = false;
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
@@ -1530,8 +1531,24 @@ void R_DrawBrushModel(entity_t *e)
 	//draw the textures chains for the model
 	R_RenderAllDynamicLightmaps(clmodel);
 
+	//R00k added contents point for underwater bmodels
+	if (gl_caustics.integer) {
+		if (clmodel->isworldmodel) {
+			vec3_t midpoint;
+
+			VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
+			VectorScale(midpoint, 0.5f, midpoint);
+			VectorAdd(midpoint, e->origin, midpoint);
+
+			caustics = R_PointIsUnderwater(midpoint);
+		}
+		else {
+			caustics = R_PointIsUnderwater(e->origin);
+		}
+	}
+
 	if (GL_ShadersSupported()) {
-		GLM_DrawBrushModel(clmodel, polygonOffset);
+		GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
 
 		// TODO: DrawSkyChain/DrawAlphaChain
 	}
@@ -1542,7 +1559,7 @@ void R_DrawBrushModel(entity_t *e)
 			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
 		}
 
-		GLC_DrawBrushModel(e, clmodel);
+		GLC_DrawBrushModel(e, clmodel, caustics);
 
 		R_DrawSkyChain();
 
