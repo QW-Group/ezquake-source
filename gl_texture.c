@@ -1059,7 +1059,7 @@ void GL_Texture_Init(void)
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
-texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode)
+texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
 {
 	int scaled_width, scaled_height;
 	unsigned short crc = 0;
@@ -1087,7 +1087,7 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 
 	GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, gl_texturenum);
 	GL_ProcessErrors("Prior-texture-array-creation");
-	while (*depth >= 1) {
+	while (*depth >= minimum_depth) {
 		GLenum error;
 		int array_width, array_height, array_depth;
 
@@ -1223,4 +1223,13 @@ GLuint GL_TextureNameFromReference(texture_ref ref)
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
 	return gltextures[ref.index].texnum;
+}
+
+qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)
+{
+	assert(tex1.index < sizeof(gltextures) / sizeof(gltextures[0]));
+	assert(tex2.index < sizeof(gltextures) / sizeof(gltextures[0]));
+
+	return (gltextures[tex1.index].width == gltextures[tex2.index].width) &&
+	       (gltextures[tex1.index].height == gltextures[tex2.index].height);
 }

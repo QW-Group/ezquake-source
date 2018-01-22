@@ -52,11 +52,13 @@ texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
 texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
-texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode);
+texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
 texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
 void GL_DeleteTextureArray(texture_ref* texture);
 void GL_DeleteCubeMap(texture_ref* texture);
 void GL_DeleteTexture(texture_ref* texture);
+
+qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
 
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 

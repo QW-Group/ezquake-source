@@ -242,20 +242,65 @@ static void GL_AddTextureToArray(texture_ref arrayTexture, int width, int height
 	}
 }
 
-static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int height)
+static common_texture_t* GL_AppendOverflowTextureAllocation(common_texture_t* tex, int allocation_size)
+{
+	// Create a new texture request for the difference
+	common_texture_t* overflow = Q_malloc(sizeof(common_texture_t));
+	overflow->width = tex->width;
+	overflow->height = tex->height;
+	overflow->count = allocation_size;
+	overflow->next = tex->next;
+	tex->next = overflow;
+	return overflow;
+}
+
+static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width, int height, int minimum_depth)
 {
 	common_texture_t* start = list;
+
+	assert(width > 0 || width == height);
+	assert(height > 0 || width == height);
+	assert(minimum_depth);
 
 	while (list) {
 		if (list->width == width && list->height == height) {
 			common_texture_t* candidate = list;
+			common_texture_t* prev = list;
+			common_texture_t* target = list;
 			if (candidate->final) {
-				candidate = candidate->final;
-				while (GL_TextureReferenceIsValid(candidate->gl_texturenum) && candidate->allocated >= candidate->gl_depth) {
-					candidate = candidate->next;
+				candidate = target = candidate->final;
+			}
+
+			// Keep moving forward until we find one we can allocate space on
+			prev = candidate;
+			while (candidate && GL_TextureReferenceIsValid(candidate->gl_texturenum) && candidate->allocated + minimum_depth > candidate->gl_depth && candidate->height == target->height && candidate->width == target->width) {
+				prev = candidate;
+				if (!candidate->next) {
+					prev = prev;
+				}
+
+				candidate = candidate->next;
+			}
+
+			// If we strayed outwith 'correct size'
+			if (prev && (!candidate || candidate->width != target->width || candidate->height != target->height)) {
+				candidate = NULL;
+
+				// If we failed because we needed more space, create new allocation...
+				if (prev && prev->width == target->width && prev->height == target->height && prev->allocated + minimum_depth > prev->gl_depth) {
+					if (GL_TextureReferenceIsValid(prev->gl_texturenum)) {
+						// Insert new allocation
+						candidate = GL_AppendOverflowTextureAllocation(prev, max(prev->gl_depth, minimum_depth));
+					}
+					else {
+						// This hasn't been allocated yet, increase requirement to make sure it will fit
+						prev->count = max(prev->count, minimum_depth);
+						candidate = prev;
+					}
 				}
 			}
-			if (!GL_TextureReferenceIsValid(candidate->gl_texturenum) || candidate->allocated < candidate->gl_depth) {
+
+			if (candidate && (!GL_TextureReferenceIsValid(candidate->gl_texturenum) || candidate->allocated + minimum_depth <= candidate->gl_depth)) {
 				return candidate;
 			}
 		}
@@ -266,7 +311,7 @@ static common_texture_t* GL_FindTextureBySize(common_texture_t* list, int width,
 	return NULL;
 }
 
-static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool anySize, float* scaleS, float* scaleT, texture_ref* texture_array, GLuint* texture_array_index)
+static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool anySize, float* scaleS, float* scaleT, texture_ref* texture_array, GLuint* texture_array_index, int minimum_depth)
 {
 	GLint width, height;
 	common_texture_t* tex;
@@ -296,7 +341,7 @@ static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool an
 	GL_Paranoid_Printf("  ... texture is %d x %d (%s)\n", width, height, anySize ? "anysize" : "fixed");
 
 	if (anySize) {
-		tex = GL_FindTextureBySize(list, 0, 0);
+		tex = GL_FindTextureBySize(list, 0, 0, minimum_depth);
 		if (tex == NULL) {
 			common_texture_t* t;
 
@@ -323,7 +368,7 @@ static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool an
 		}
 	}
 	else {
-		tex = GL_FindTextureBySize(list, width, height);
+		tex = GL_FindTextureBySize(list, width, height, minimum_depth);
 
 		assert(tex);
 
@@ -337,19 +382,13 @@ static void GL_CopyToTextureArraySize(int type, texture_ref stdTexture, qbool an
 		int depth = tex->count - tex->any_size_count;
 		int requested = depth;
 
-		tex->gl_texturenum = GL_CreateTextureArray("", desired_width, desired_height, &depth, TEX_MIPMAP);
+		tex->gl_texturenum = GL_CreateTextureArray("", desired_width, desired_height, &depth, TEX_MIPMAP, minimum_depth);
 		GL_Paranoid_Printf("> Array %d created (%d/%d) slices @ %d x %d\n", tex->gl_texturenum, depth, requested, desired_width, desired_height);
 		tex->gl_width = desired_width;
 		tex->gl_height = desired_height;
 		tex->gl_depth = depth;
 		if (depth < requested) {
-			// Create a new texture request for the difference
-			common_texture_t* overflow = Q_malloc(sizeof(common_texture_t));
-			overflow->width = tex->width;
-			overflow->height = tex->height;
-			overflow->count = requested - depth;
-			overflow->next = tex->next;
-			tex->next = overflow;
+			GL_AppendOverflowTextureAllocation(tex, requested - depth);
 		}
 	}
 
@@ -465,11 +504,18 @@ static void GL_MeasureTexturesForModel(model_t* mod, int* required_vbo_length)
 			texture_t* tx = mod->textures[i];
 			qbool skip = true;
 
-			//if (GL_SkipTexture(mod, tx)) {
-			//	continue;
-			//}
+			if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+				continue;
+			}
 
 			GL_RegisterCommonTextureSize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tx->gl_texturenum, BrushModelIsAnySize(mod));
+			if (GL_TextureReferenceIsValid(tx->fb_texturenum) && GL_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
+				GL_RegisterCommonTextureSize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tx->fb_texturenum, BrushModelIsAnySize(mod));
+			}
+			else if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
+				Con_Printf("Warning: %s has luma of different size, ignoring\n", tx->name);
+				GL_TextureReferenceInvalidate(tx->fb_texturenum);
+			}
 		}
 		break;
 	}
@@ -641,7 +687,7 @@ void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
-				GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j]);
+				GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j], 1);
 			}
 		}
 
@@ -663,7 +709,7 @@ void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 			}
 
 			frame = ((mspriteframe_t*)((byte*)psprite + offset));
-			GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT, &frame->gl_arraynum, &frame->gl_arrayindex);
+			GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, frame->gl_texturenum, true, &frame->gl_scalingS, &frame->gl_scalingT, &frame->gl_arraynum, &frame->gl_arrayindex, 1);
 		}
 
 		mod->vbo_start = 0;
@@ -673,7 +719,7 @@ void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
-				GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j]);
+				GL_CopyToTextureArraySize(TEXTURETYPES_SPRITES, mod->simpletexture[j], true, &mod->simpletexture_scalingS[j], &mod->simpletexture_scalingT[j], &mod->simpletexture_array, &mod->simpletexture_indexes[j], 1);
 			}
 		}
 		mod->vbo_start = 0;
@@ -688,7 +734,23 @@ void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 			if (mod->isworldmodel) {
 				GL_Paranoid_Printf("... adding %s\n", tex->name);
 			}
-			GL_CopyToTextureArraySize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index);
+
+			if (GL_TextureReferenceIsValid(tex->fb_texturenum) && GL_TexturesAreSameSize(tex->gl_texturenum, tex->fb_texturenum)) {
+				texture_ref fb_array;
+				GLuint fb_index;
+
+				GL_CopyToTextureArraySize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index, 2);
+				GL_CopyToTextureArraySize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tex->fb_texturenum, BrushModelIsAnySize(mod), NULL, NULL, &fb_array, &fb_index, 1);
+
+				// Should never happen...
+				if (!GL_TextureReferenceEqual(fb_array, tex->gl_texture_array) || fb_index != tex->gl_texture_index + 1) {
+					GL_TextureReferenceInvalidate(tex->fb_texturenum);
+					Con_Printf("WARNING: Unable to add luma for %s to same texture array, ignoring\n", tex->name);
+				}
+			}
+			else {
+				GL_CopyToTextureArraySize(mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL, tex->gl_texturenum, BrushModelIsAnySize(mod), &tex->gl_texture_scaleS, &tex->gl_texture_scaleT, &tex->gl_texture_array, &tex->gl_texture_index, 1);
+			}
 		}
 
 		mod->texture_array_count = GLM_CountTextureArrays(mod);

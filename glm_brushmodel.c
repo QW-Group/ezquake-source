@@ -95,7 +95,7 @@ int R_ChainTexturesBySize(model_t* m)
 }
 
 // 'source' is from GLC's float[VERTEXSIZE]
-static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf)
+static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture)
 {
 	vbo_world_vert_t* target = vbo_buffer + position;
 
@@ -123,8 +123,9 @@ static int CopyVertToBuffer(vbo_world_vert_t* vbo_buffer, int position, float* s
 	}
 
 	target->flags |=
-		(surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0) +
-		(surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR : 0);
+		(surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0) |
+		(surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR : 0) |
+		(has_luma_texture ? EZQ_SURFACE_HAS_LUMA : 0);
 	memcpy(target->flatcolor, &surf->texinfo->texture->flatcolor3ub, sizeof(target->flatcolor));
 
 	return position + 1;
@@ -185,11 +186,16 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 		int length = 0;
 		int surface_count = 0;
 		int tex_vbo_start = vbo_pos;
+		qbool has_luma = false;
 
 		if (!m->textures[i]) {
 			continue;
 		}
 
+		has_luma = GL_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
+		if (has_luma) {
+			Con_Printf("%s has a luma texture\n", m->textures[i]->name);
+		}
 		for (j = 0; j < m->numsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + j;
 			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;
@@ -214,18 +220,18 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 
 				// Store position for drawing individual polys
 				poly->vbo_start = vbo_pos;
-				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf);
+				vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf, has_luma);
 				++output;
 
 				start_vert = 1;
 				end_vert = poly->numverts - 1;
 
 				while (start_vert <= end_vert) {
-					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf);
+					vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
 					++output;
 
 					if (start_vert < end_vert) {
-						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf);
+						vbo_pos = CopyVertToBuffer(vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
 						++output;
 					}
 

@@ -174,13 +174,14 @@ static void GLC_DrawTextureChains(model_t *model, int contents)
 	GL_TextureEnvMode(GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++) {
-		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
+		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
 			continue;
+		}
 
 		t = R_TextureAnimation(model->textures[i]);
 
 		if (t->isLumaTexture) {
-			isLumaTexture = gl_lumaTextures.value && r_refdef2.allow_lumas;
+			isLumaTexture = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 			if (isLumaTexture) {
 				fb_texturenum = t->fb_texturenum;
 			}

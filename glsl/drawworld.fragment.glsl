@@ -43,11 +43,17 @@ layout(std140) uniform WorldCvars {
 
 	// drawflat for sky
 	vec4 r_skycolor;
+	int r_texture_luma_fb;
 };
 
 in vec3 TextureCoord;
 in vec3 TexCoordLightmap;
+#ifdef DRAW_DETAIL_TEXTURES
 in vec2 DetailCoord;
+#endif
+#ifdef DRAW_LUMA_TEXTURES
+in vec3 LumaCoord;
+#endif
 in vec3 FlatColor;
 in flat int Flags;
 
@@ -60,6 +66,7 @@ in flat int Flags;
 
 #define EZQ_SURFACE_IS_FLOOR    8   // should be drawn as floor for r_drawflat
 #define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
+#define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
 
 out vec4 frag_colour;
 
@@ -81,6 +88,9 @@ void main()
 			(TextureCoord.t + sin(0.465 * (time + TextureCoord.s))) * -0.1234375
 		)
 	);
+#endif
+#ifdef DRAW_LUMA_TEXTURES
+	vec4 lumaColor = texture(materialTex, LumaCoord);
 #endif
 
 	lmColor = texture(lightmapTex, TexCoordLightmap);
@@ -125,15 +135,25 @@ void main()
 		if (r_drawflat != 0) {
 			isFloor = (Flags & EZQ_SURFACE_IS_FLOOR) == EZQ_SURFACE_IS_FLOOR;
 
-			if (isFloor && r_drawflat == 1 || r_drawflat == 2) {
+			if (isFloor && (r_drawflat == 1 || r_drawflat == 2)) {
 				texColor = r_floorcolor;
 			}
-			else if (!isFloor && r_drawflat == 1 || r_drawflat == 3) {
+			else if (!isFloor && (r_drawflat == 1 || r_drawflat == 3)) {
 				texColor = r_wallcolor;
 			}
 		}
 
+#ifdef DRAW_LUMA_TEXTURES
+		if (r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
+		}
+#endif
 		frag_colour = vec4(1 - lmColor.rgb, 1.0) * texColor;
+#ifdef DRAW_LUMA_TEXTURES
+		if (r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);
+		}
+#endif
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 		if ((Flags & EZQ_SURFACE_UNDERWATER) == EZQ_SURFACE_UNDERWATER) {

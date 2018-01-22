@@ -61,6 +61,7 @@ typedef struct block_world_s {
 
 	// drawflat for sky
 	float r_skycolor[4];
+	int r_texture_luma_fb;
 } block_world_t;
 
 typedef struct glm_brushmodel_req_s {
@@ -81,23 +82,32 @@ static glm_vbo_t vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
+#define DRAW_LUMA_TEXTURES 4
 static int drawworld_compiledOptions;
 static glm_ubo_t ubo_worldcvars;
 static block_world_t world;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
-static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures)
+static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures)
 {
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
-		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
+		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
+		(luma_textures ? DRAW_LUMA_TEXTURES : 0);
 
 	if (!drawworld.program || drawworld_compiledOptions != drawworld_desiredOptions) {
-		const char* included_definitions =
-			detail_textures && caustic_textures ? "#define DRAW_DETAIL_TEXTURES\n#define DRAW_CAUSTIC_TEXTURES\n" :
-			detail_textures ? "#define DRAW_DETAIL_TEXTURES\n" :
-			caustic_textures ? "#define DRAW_CAUSTIC_TEXTURES\n" :
-			"";
+		static char included_definitions[512];
+		
+		memset(included_definitions, 0, sizeof(included_definitions));
+		if (detail_textures) {
+			strlcat(included_definitions, "#define DRAW_DETAIL_TEXTURES\n", sizeof(included_definitions));
+		}
+		if (caustic_textures) {
+			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+		}
+		if (luma_textures) {
+			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
+		}
 
 		GL_VFDeclare(drawworld);
 
@@ -136,15 +146,16 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	target[3] = 1.0f; \
 }
 
-static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
+static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool lumas)
 {
 	extern glm_vao_t brushModel_vao;
 	extern glm_vbo_t vbo_brushElements;
+	extern cvar_t gl_lumaTextures;
 
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 
-	Compile_DrawWorldProgram(detail_tex, caustics);
+	Compile_DrawWorldProgram(detail_tex, caustics, lumas);
 
 	world.waterAlpha = wateralpha;
 
@@ -160,6 +171,8 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics)
 
 	world.r_fastsky = r_fastsky.integer;
 	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
+
+	world.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;
 
 	GL_UpdateUBO(&ubo_worldcvars, sizeof(world), &world);
 
@@ -208,13 +221,16 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 void GLM_DrawTexturedWorld(model_t* model)
 {
+	extern cvar_t gl_lumaTextures;
+
 	int i, waterline, v;
 	msurface_t* surf;
 	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
 	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 	glm_worldmodel_req_t* req = NULL;
 
-	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics);
+	GLM_EnterBatchedWorldRegion(draw_detail_texture, draw_caustics, draw_lumas);
 
 	for (waterline = 0; waterline < 2; waterline++) {
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
