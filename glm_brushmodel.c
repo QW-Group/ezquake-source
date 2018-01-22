@@ -7,11 +7,14 @@
 
 #define VBO_VERT_FOFS(x) (void*)((intptr_t)&(((vbo_world_vert_t*)0)->x))
 
-static glm_vbo_t brushModel_vbo;
-glm_vao_t brushModel_vao;
-static GLuint modelIndexes[16 * 1024];
-static GLuint index_count;
+GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
 
+glm_vbo_t brushModel_vbo;
+glm_vbo_t vbo_brushIndirectDraw;
+glm_vbo_t vbo_brushElements;
+glm_vao_t brushModel_vao;
+
+/*
 typedef struct block_brushmodels_s {
 	float color[32][4];
 	float modelMatrix[32][16];
@@ -22,8 +25,6 @@ static GLuint drawbrushmodel_RefdefCvars_block;
 static GLuint drawbrushmodel_BrushData_block;
 static glm_ubo_t ubo_brushdata;
 static block_brushmodels_t brushmodels;
-glm_vbo_t vbo_brushIndirectDraw;
-glm_vbo_t vbo_brushElements;
 
 void GLM_CreateBrushModelProgram(void)
 {
@@ -232,61 +233,7 @@ static glm_brushmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	++batch_count;
 	return req;
 }
-
-void GLM_DrawBrushModel(model_t* model, qbool polygonOffset)
-{
-	int i, waterline, v;
-	msurface_t* surf;
-	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glm_brushmodel_req_t* req = NULL;
-
-	for (i = 0; i < model->texture_array_count; ++i) {
-		texture_t* base_tex = model->textures[model->texture_array_first[i]];
-		int texIndex;
-
-		if (!base_tex || !base_tex->size_start) {
-			continue;
-		}
-
-		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
-			texture_t* tex = model->textures[texIndex];
-
-			if (!tex->texturechain[0] && !tex->texturechain[1]) {
-				continue;
-			}
-
-			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
-			for (waterline = 0; waterline < 2; waterline++) {
-				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
-					glpoly_t* poly;
-
-					for (poly = surf->polys; poly; poly = poly->next) {
-						int newVerts = poly->numverts;
-
-						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
-							GL_FlushBrushModelBatch();
-							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset);
-						}
-
-						if (req->count) {
-							modelIndexes[index_count++] = ~(GLuint)0;
-							req->count++;
-						}
-
-						for (v = 0; v < newVerts; ++v) {
-							modelIndexes[index_count++] = poly->vbo_start + v;
-							req->count++;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return;
-}
-
-
+*/
 
 
 
@@ -509,6 +456,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	int size = 0;
 	int position = 0;
 	vbo_world_vert_t* buffer = NULL;
+	extern glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -533,7 +481,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	GL_GenVertexArray(&brushModel_vao);
 
 	GL_GenFixedBuffer(&vbo_brushElements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
-	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "brushmodel-indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "brushmodel-indirect-draw", sizeof(worldmodel_requests), worldmodel_requests, GL_STREAM_DRAW);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {
@@ -570,3 +518,4 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 
 	Q_free(buffer);
 }
+

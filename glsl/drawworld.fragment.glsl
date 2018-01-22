@@ -24,6 +24,8 @@ layout(std140) uniform RefdefCvars {
 };
 
 layout(std140) uniform WorldCvars {
+	mat4 modelMatrix[MAX_INSTANCEID];
+	vec4 color[MAX_INSTANCEID];
 	int samplerMapping[MAX_INSTANCEID];
 
 	//
@@ -70,6 +72,7 @@ in flat int SamplerNumber;
 #define EZQ_SURFACE_IS_FLOOR    8   // should be drawn as floor for r_drawflat
 #define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
+#define EZQ_SURFACE_DETAIL     64   // surface should have detail texture applied
 
 out vec4 frag_colour;
 
@@ -166,8 +169,10 @@ void main()
 #endif
 
 #ifdef DRAW_DETAIL_TEXTURES
-		// FIXME: Do proper GL_DECAL etc
-		frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+		if ((Flags & EZQ_SURFACE_DETAIL) == EZQ_SURFACE_DETAIL) {
+			// FIXME: Do proper GL_DECAL etc
+			frag_colour = vec4(detail.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+		}
 #endif
 	}
 

@@ -30,6 +30,15 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "fmod.h"
 #include "utils.h"
 
+#define CHAIN_SURF_B2F(surf, chain) 			\
+	{											\
+		(surf)->texturechain = (chain);			\
+		(chain) = (surf);						\
+	}
+
+extern msurface_t* skychain;
+extern msurface_t* alphachain;
+void R_ClearTextureChains(model_t *clmodel);
 char* TranslateTextureName(texture_t *tx);
 qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int brighten_flag);
 void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char *lumpname, int *plumpsize, byte* mod_base);
@@ -1400,5 +1409,169 @@ void R_LoadBrushModelTextures(model_t *m)
 			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT, 1);
 		}
 		tx->loaded = true; // mark as loaded
+	}
+}
+
+void R_DrawBrushModel(entity_t *e)
+{
+	int i, k, underwater;
+	extern cvar_t gl_outline;
+	unsigned int li;
+	unsigned int lj;
+	vec3_t mins, maxs;
+	msurface_t *psurf;
+	float dot;
+	mplane_t *pplane;
+	model_t *clmodel;
+	qbool rotated;
+	float oldMatrix[16];
+	extern cvar_t gl_brush_polygonoffset;
+
+	// Get rid of Z-fighting for textures by offsetting the
+	// drawing of entity models compared to normal polygons.
+	// dimman: disabled for qcon
+	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
+
+	currententity = e;
+
+	clmodel = e->model;
+
+	if (e->angles[0] || e->angles[1] || e->angles[2]) {
+		rotated = true;
+		if (R_CullSphere(e->origin, clmodel->radius)) {
+			return;
+		}
+	}
+	else {
+		rotated = false;
+		VectorAdd (e->origin, clmodel->mins, mins);
+		VectorAdd (e->origin, clmodel->maxs, maxs);
+
+		if (R_CullBox(mins, maxs)) {
+			return;
+		}
+	}
+
+	if (e->alpha) {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_TextureEnvMode(GL_MODULATE);
+		glColor4f (1, 1, 1, e->alpha);
+	}
+	else {
+		glColor3f (1,1,1);
+	}
+
+	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
+	if (rotated) {
+		vec3_t	temp;
+		vec3_t	forward, right, up;
+
+		VectorCopy (modelorg, temp);
+		AngleVectors (e->angles, forward, right, up);
+		modelorg[0] = DotProduct (temp, forward);
+		modelorg[1] = -DotProduct (temp, right);
+		modelorg[2] = DotProduct (temp, up);
+	}
+
+	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
+
+	// calculate dynamic lighting for bmodel if it's not an instanced model
+	if (clmodel->firstmodelsurface) {
+		for (li = 0; li < MAX_DLIGHTS/32; li++) {
+			if (cl_dlight_active[li]) {
+				for (lj = 0; lj < 32; lj++) {
+					if ((cl_dlight_active[li]&(1 << lj)) && li*32 + lj < MAX_DLIGHTS) {
+						k = li*32 + lj;
+
+						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
+							R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+
+	GL_Translate(GL_MODELVIEW, e->origin[0],  e->origin[1],  e->origin[2]);
+	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
+	GL_Rotate(GL_MODELVIEW, e->angles[0], 0, 1, 0);
+	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
+
+	R_ClearTextureChains(clmodel);
+
+	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
+		// find which side of the node we are on
+		pplane = psurf->plane;
+		dot = PlaneDiff(modelorg, pplane);
+
+		//draw the water surfaces now, and setup sky/normal chains
+		if (	((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) || 
+			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
+		{
+			if (psurf->flags & SURF_DRAWSKY) {	
+				CHAIN_SURF_B2F(psurf, skychain);
+			}
+			else if (psurf->flags & SURF_DRAWTURB) {
+				EmitWaterPolys (psurf);
+			}
+			else if (psurf->flags & SURF_DRAWALPHA) {
+				CHAIN_SURF_B2F(psurf, alphachain);
+			}
+			else {
+				underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
+				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
+			}
+		}
+	}
+
+	// START shaman FIX for no simple textures on world brush models {
+	//draw the textures chains for the model
+	R_RenderAllDynamicLightmaps(clmodel);
+
+	if (GL_ShadersSupported()) {
+		GLM_DrawBrushModel(clmodel, polygonOffset);
+
+		// TODO: DrawSkyChain/DrawAlphaChain
+	}
+	else {
+		extern cvar_t gl_brush_polygonoffset;
+
+		if (polygonOffset) {
+			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+		}
+
+		GLC_DrawBrushModel(e, clmodel);
+
+		R_DrawSkyChain();
+
+		R_DrawAlphaChain(alphachain);
+
+		if (polygonOffset) {
+			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+		}
+	}
+	// } END shaman FIX for no simple textures on world brush models
+
+	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+}
+
+void GL_BeginDrawBrushModels(void)
+{
+	//firstBrushModel = true;
+}
+
+void GL_EndDrawBrushModels(void)
+{
+	if (GL_ShadersSupported()) {
+		GL_FlushWorldModelBatch();
+		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
+		/*if (!firstBrushModel) {
+
+
+		GL_LeaveRegion();
+		}*/
 	}
 }

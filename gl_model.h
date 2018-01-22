@@ -124,6 +124,7 @@ typedef struct mtexinfo_s {
 #define EZQ_SURFACE_IS_FLOOR   8    // should be drawn as floor for r_drawflat
 #define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
+#define EZQ_SURFACE_DETAIL     64   // surface should have detail textures applied
 
 // Any changes to definition must be mirrored in GLM_CreateBrushModelVAO
 // Filled in CopyVertToBuffer in glm_brushmodel

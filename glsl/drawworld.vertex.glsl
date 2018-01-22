@@ -13,6 +13,7 @@ layout(location = 7) in int flags;
 layout(location = 8) in vec3 flatColor;
 
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
+#define EZQ_SURFACE_DETAIL     64   // surface should have detail texture applied
 
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
@@ -37,6 +38,8 @@ layout(std140) uniform RefdefCvars {
 };
 
 layout(std140) uniform WorldCvars {
+	mat4 modelMatrix[MAX_INSTANCEID];
+	vec4 color[MAX_INSTANCEID];
 	int samplerMapping[MAX_INSTANCEID];
 
 	//
@@ -63,9 +66,9 @@ layout(std140) uniform WorldCvars {
 
 void main()
 {
-	gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	gl_Position = projectionMatrix * modelMatrix[_instanceId] * vec4(position, 1.0);
 
-	FlatColor = flatColor;
+	FlatColor = flatColor * color[_instanceId].rgb;
 	Flags = flags;
 
 	SamplerNumber = samplerMapping[_instanceId];

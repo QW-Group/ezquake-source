@@ -963,6 +963,18 @@ qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
 void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
 void GL_DrawBillboards(void);
 
+#define MAX_WORLDMODEL_BATCH 32
+#define MAX_WORLDMODEL_INDEXES (16 * 1024)
+
+typedef struct glm_worldmodel_req_s {
+	// This is DrawElementsIndirectCmd, from OpenGL spec
+	GLuint count;           // Number of indexes to pull
+	GLuint instanceCount;   // Always 1... ?
+	GLuint firstIndex;      // Position of first index in array
+	GLuint baseVertex;      // Offset of vertices in VBO
+	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+} glm_worldmodel_req_t;
+
 #endif /* !__GL_LOCAL_H__ */
 
 
