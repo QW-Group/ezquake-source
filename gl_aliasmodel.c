@@ -500,8 +500,13 @@ void R_SetupAliasFrame(
 	int effects, qbool is_texture_array, qbool shell_only
 )
 {
+	extern cvar_t gl_lumaTextures;
 	int oldpose, pose, numposes;
 	float interval;
+
+	if (!gl_lumaTextures.integer) {
+		GL_TextureReferenceInvalidate(fb_texture);
+	}
 
 	oldpose = oldframe->firstpose;
 	numposes = oldframe->numposes;
@@ -1083,8 +1088,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	// try "textures/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (GL_TextureReferenceIsValid(texnum))
-	{
+	if (GL_TextureReferenceIsValid(texnum)) {
 		// not a luma actually, but which suffix use then? _fb or what?
 		if (luma_allowed) {
 			snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);

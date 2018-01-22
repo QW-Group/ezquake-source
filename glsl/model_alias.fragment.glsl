@@ -72,11 +72,9 @@ void main()
 		frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
 	}
 	else if (fsTextureEnabled == 2) {
+		frag_colour = tex * fsBaseColor;
 		if (fsTextureLuma != 0) {
-			frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), tex.a) * fsBaseColor;
-		}
-		else {
-			frag_colour = tex * fsBaseColor;
+			frag_colour = vec4(mix(tex.rgb, luma.rgb, luma.a), tex.a);
 		}
 	}
 	else if (fsTextureEnabled != 0) {

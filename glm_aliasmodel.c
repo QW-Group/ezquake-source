@@ -264,7 +264,9 @@ static void GLM_FlushAliasModelBatch(void)
 		for (i = 0; i <= batch; ++i) {
 			if (batches[i].texture2d) {
 				GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, batches[i].skin_texture);
-				GL_BindTextureUnit(GL_TEXTURE2, GL_TEXTURE_2D, batches[i].skin_texture_fb);
+				if (GL_TextureReferenceIsValid(batches[i].skin_texture_fb)) {
+					GL_BindTextureUnit(GL_TEXTURE2, GL_TEXTURE_2D, batches[i].skin_texture_fb);
+				}
 			}
 			else {
 				GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, batches[i].array_texture);

@@ -25,8 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_COMPLAIN        (1<<0) // shout if texture missing while loading
 #define TEX_MIPMAP          (1<<1) // use mipmaps generation while loading texture
 #define TEX_ALPHA           (1<<2) // use transparency in texture
-#define TEX_LUMA            (1<<3) // ??
-#define TEX_FULLBRIGHT      (1<<4) // ??
+// Note: if (TEX_LUMA & TEX_FULLBRIGHT) specified, colours close to black (determined by gl_luma_level) will be turned transparent
+#define TEX_LUMA            (1<<3) // do not apply gamma adjustment to texture when loading
+#define TEX_FULLBRIGHT      (1<<4) // make all non-fullbright colours transparent (8-bit only).
 #define TEX_NOSCALE         (1<<5) // do no use gl_max_size or gl_picmap variables while loading texture
 #define TEX_BRIGHTEN        (1<<6) // ??
 #define TEX_NOCOMPRESS      (1<<7) // do not use texture compression extension
