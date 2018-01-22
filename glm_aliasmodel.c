@@ -41,6 +41,7 @@ static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
 static block_aliasmodels_t aliasdata;
 static glm_ubo_t ubo_aliasdata;
+static glm_vbo_t vbo_aliasIndirectDraw;
 
 typedef struct glm_aliasmodelbatch_s {
 	int start;
@@ -95,6 +96,8 @@ static qbool GLM_CompileAliasModelProgram(void)
 	if (!drawAliasModelProgram.program) {
 		static char included_definitions[512];
 
+		material_samplers_max = glConfig.texture_units;
+
 		strlcpy(included_definitions, va("#define SAMPLER_COUNT %d\n", glConfig.texture_units), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_ALIASMODEL_BATCH), sizeof(included_definitions));
 
@@ -102,8 +105,6 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram, included_definitions);
-
-		material_samplers_max = glConfig.texture_units;
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
@@ -123,16 +124,20 @@ static qbool GLM_CompileAliasModelProgram(void)
 		drawAliasModelProgram.uniforms_found = true;
 	}
 
+	if (!vbo_aliasIndirectDraw.vbo) {
+		GL_GenFixedBuffer(&vbo_aliasIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(aliasmodel_requests), aliasmodel_requests, GL_STREAM_DRAW);
+	}
+
 	return drawAliasModelProgram.program;
 }
 
 static void GLM_FlushAliasModelBatch(void)
 {
-	glm_aliasmodelbatch_t batches[MAX_ALIASMODEL_BATCH];
+	glm_aliasmodelbatch_t batches[MAX_ALIASMODEL_BATCH] = { 0 };
 	qbool was_texture_array = false;
 	qbool was_shells = false;
 	int batch = 0;
-	int i, j;
+	int i;
 
 	memset(&aliasdata, 0, sizeof(aliasdata));
 
@@ -151,17 +156,18 @@ static void GLM_FlushAliasModelBatch(void)
 	aliasdata.shell_effect_level2 = gl_powerupshells_effect2level.value;
 	aliasdata.shell_alpha = bound(0, gl_powerupshells.value, 1);
 
-	// Bind textures
-	for (i = 0; i < material_samplers; ++i) {
-		GL_BindTextureUnit(GL_TEXTURE0 + i, GL_TEXTURE_2D, allocated_samplers[i]);
-	}
-
 	if (GLM_CompileAliasModelProgram()) {
+		// Bind textures
+		for (i = 0; i < material_samplers; ++i) {
+			GL_BindTextureUnit(GL_TEXTURE0 + i, GL_TEXTURE_2D, allocated_samplers[i]);
+		}
+
+		// Update indirect buffer
+		GL_UpdateVBO(&vbo_aliasIndirectDraw, sizeof(aliasmodel_requests), &aliasmodel_requests);
+
 		GL_UseProgram(drawAliasModelProgram.program);
 		GL_BindVertexArray(&aliasModel_vao);
 
-		batches[batch].start = 0;
-		batches[batch].shells = false;
 		for (i = 0; i < batch_count; ++i) {
 			glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
 			qbool is_shells = req->effects != 0;
@@ -214,12 +220,7 @@ static void GLM_FlushAliasModelBatch(void)
 				GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
 
-			// FIXME: Should be glDrawArraysIndirect
-			for (j = batches[i].start; j <= batches[i].end; ++j) {
-				const DrawArraysIndirectCommand_t *cmd = (const DrawArraysIndirectCommand_t *)((byte*)aliasmodel_requests + j * sizeof(aliasmodel_requests[0]));
-
-				glDrawArraysInstancedBaseInstance(GL_TRIANGLES, cmd->first, cmd->count, cmd->instanceCount, cmd->baseInstance);
-			}
+			glMultiDrawArraysIndirect(GL_TRIANGLES, (void*)(batches[i].start * sizeof(aliasmodel_requests[0])), batches[i].end - batches[i].start + 1, sizeof(aliasmodel_requests[0]));
 		}
 	}
 
@@ -274,6 +275,11 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, byte* color, int start, 
 
 	if (batch_count >= MAX_ALIASMODEL_BATCH) {
 		GLM_FlushAliasModelBatch();
+	}
+
+	// Compile here so we can work out how many samplers we have free to allocate per draw-call
+	if (!GLM_CompileAliasModelProgram()) {
+		return;
 	}
 
 	// Assign samplers - if we're over limit, need to flush and try again

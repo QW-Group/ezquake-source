@@ -534,7 +534,7 @@ void GLM_CreateBrushModelVAO(glm_vbo_t* instance_vbo)
 	GL_GenVertexArray(&brushModel_vao);
 
 	GL_GenFixedBuffer(&vbo_brushElements, GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
-	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
+	GL_GenFixedBuffer(&vbo_brushIndirectDraw, GL_DRAW_INDIRECT_BUFFER, "brushmodel-indirect-draw", sizeof(brushmodel_requests), brushmodel_requests, GL_STREAM_DRAW);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {
