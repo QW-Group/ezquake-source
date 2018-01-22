@@ -67,6 +67,7 @@ static GLuint tempBufferSize;
 static glm_vbo_t instance_vbo;
 glm_vao_t aliasModel_vao;
 glm_vbo_t aliasModel_vbo;
+glm_vbo_t aliasModel_ssbo;
 
 static common_texture_t* commonTextures[TEXTURETYPES_COUNT];
 
@@ -770,7 +771,7 @@ static void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
-		GL_AliasModelAddToVBO(mod, paliashdr, &aliasModel_vbo, *new_vbo_position);
+		GL_AliasModelAddToVBO(mod, paliashdr, &aliasModel_vbo, &aliasModel_ssbo, *new_vbo_position);
 		*new_vbo_position += mod->vertsInVBO;
 	}
 	else if (mod->type == mod_sprite) {
@@ -812,18 +813,22 @@ static void GLM_CreateSpriteVBO(void)
 	VectorSet(verts[0].position, 0, -1, -1);
 	verts[0].texture_coords[0] = 1;
 	verts[0].texture_coords[1] = 1;
+	verts[0].vert_index = 0;
 
 	VectorSet(verts[1].position, 0, -1, 1);
 	verts[1].texture_coords[0] = 1;
 	verts[1].texture_coords[1] = 0;
+	verts[1].vert_index = 1;
 
 	VectorSet(verts[2].position, 0, 1, 1);
 	verts[2].texture_coords[0] = 0;
 	verts[2].texture_coords[1] = 0;
+	verts[2].vert_index = 2;
 
 	VectorSet(verts[3].position, 0, 1, -1);
 	verts[3].texture_coords[0] = 0;
 	verts[3].texture_coords[1] = 1;
+	verts[3].vert_index = 3;
 
 	GL_UpdateVBOSection(&aliasModel_vbo, 0, sizeof(verts), verts);
 }
@@ -925,7 +930,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		common_texture_t* tex;
 		int new_vbo_position = 0;
 
-		GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&aliasModel_ssbo, GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
 
 		GL_Paranoid_Printf("-- Sorted, pre-allocation --\n");
 		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
@@ -1003,6 +1009,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		GLM_CreateInstanceVBO();
 		GLM_CreateAliasModelVAO();
 		GLM_CreateBrushModelVAO(&instance_vbo);
+		GL_BindBufferBase(&aliasModel_ssbo, GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
 
 	Q_free(tempBuffer);
@@ -1017,6 +1024,7 @@ static void GLM_CreateAliasModelVAO(void)
 	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(texture_coords));
 	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(normal));
 	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, &instance_vbo, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
+	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, &aliasModel_vbo, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(vert_index));
 
 	glVertexAttribDivisor(3, 1);
 }

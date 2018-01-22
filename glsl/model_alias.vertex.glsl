@@ -2,10 +2,23 @@
 
 #ezquake-definitions
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 tex;
-layout(location = 2) in vec3 normalCoords;
+layout(location = 0) in vec3 vboPosition;
+layout(location = 1) in vec2 vboTex;
+layout(location = 2) in vec3 vboNormalCoords;
 layout(location = 3) in int _instanceId;
+layout(location = 4) in int vertexIndex;
+
+struct model_vert {
+	float x, y, z;
+	float nx, ny, nz;
+	float s, t;
+	int padding;
+};
+
+layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data
+{
+	model_vert lerpVertices[];
+};
 
 out vec2 fsTextureCoord;
 out vec2 fsAltTextureCoord;
@@ -28,6 +41,8 @@ layout(std140) uniform AliasModelData {
 	float ambientlight[MAX_INSTANCEID];
 	int materialTextureMapping[MAX_INSTANCEID];
 	int lumaTextureMapping[MAX_INSTANCEID];
+	int lerpBaseIndex[MAX_INSTANCEID];
+	float lerpFraction[MAX_INSTANCEID];
 
 	float shellSize;
 	// console var data
@@ -50,6 +65,23 @@ layout(std140) uniform RefdefCvars {
 
 void main()
 {
+	int lerpIndex = lerpBaseIndex[_instanceId];
+	float lerpFrac = lerpFraction[_instanceId];
+
+	vec3 position = vboPosition;
+	vec2 tex = vboTex;
+	vec3 normalCoords = vboNormalCoords;
+
+	if (lerpFrac > 0 && lerpFrac <= 1) {
+		vec3 position2 = vec3(lerpVertices[lerpIndex + vertexIndex].x, lerpVertices[lerpIndex + vertexIndex].y, lerpVertices[lerpIndex + vertexIndex].z);
+		vec2 tex2 = vec2(lerpVertices[lerpIndex + vertexIndex].s, lerpVertices[lerpIndex + vertexIndex].t);
+		vec3 normals2 = vec3(lerpVertices[lerpIndex + vertexIndex].nx, lerpVertices[lerpIndex + vertexIndex].ny, lerpVertices[lerpIndex + vertexIndex].nz);
+
+		position = mix(position, position2, lerpFrac);
+		tex = mix(tex, tex2, lerpFrac);
+		normalCoords = mix(normalCoords, normals2, lerpFrac);
+	}
+
 	fsFlags = flags[_instanceId];
 	fsMaterialSampler = materialTextureMapping[_instanceId];
 	fsLumaSampler = lumaTextureMapping[_instanceId];

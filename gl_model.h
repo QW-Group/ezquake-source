@@ -153,6 +153,8 @@ typedef struct vbo_model_vert_s {
 	vec3_t position;
 	vec3_t normal;
 	float texture_coords[2];
+	int vert_index;
+	int padding[3];
 } vbo_model_vert_t;
 
 typedef struct glm_vbo_s {

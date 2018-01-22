@@ -365,6 +365,7 @@ void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, vbo_model_vert_t* 
 				vbo_buffer[v].texture_coords[0] = s;
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
+				vbo_buffer[v].vert_index = 0;
 
 				++v;
 				++vertices;
@@ -412,6 +413,7 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 				vbo_buffer[v].texture_coords[0] = s;
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
+				vbo_buffer[v].vert_index = v - pose * hdr->vertsPerPose;
 			}
 		}
 	}
@@ -492,9 +494,10 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	}
 }
 
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int position)
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, glm_vbo_t* ssbo, int position)
 {
 	GL_UpdateVBOSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
+	GL_UpdateVBOSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
 
 	hdr->vertsOffset = mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);

@@ -83,7 +83,6 @@ float     apitch;
 float     ayaw;
 float     r_framelerp;
 float     r_lerpdistance;
-int       lastposenum;
 qbool     full_light;
 
 float     r_shellcolor[3];
@@ -102,7 +101,7 @@ extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 
-void GLM_DrawSimpleAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only);
+void GLM_DrawAliasFrame(model_t* model, aliashdr_t* paliashdr, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode, float scaleS, float scaleT, int effects, qbool shell_only);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -523,7 +522,7 @@ void R_SetupAliasFrame(
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawSimpleAliasFrame(model, paliashdr, (r_framelerp >= 0.5) ? pose : oldpose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only);
+		GLM_DrawAliasFrame(model, paliashdr, oldpose, pose, scrolldir, texture, fb_texture, textureEnvMode, scaleS, scaleT, effects, shell_only);
 	}
 	else {
 		GLC_DrawAliasFrame(paliashdr, oldpose, pose, mtex, scrolldir, texture, fb_texture, textureEnvMode, outline);

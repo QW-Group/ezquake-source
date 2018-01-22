@@ -15,6 +15,7 @@
 
 static qbool first_alias_model = true;
 extern glm_vao_t aliasModel_vao;
+extern float r_framelerp;
 
 typedef struct block_aliasmodels_s {
 	float modelViewMatrix[MAX_ALIASMODEL_BATCH][16];
@@ -27,6 +28,8 @@ typedef struct block_aliasmodels_s {
 	float ambientlight[MAX_ALIASMODEL_BATCH][4];
 	int   materialSamplerMapping[MAX_ALIASMODEL_BATCH][4];
 	int   lumaSamplerMapping[MAX_ALIASMODEL_BATCH][4];
+	int   lerpBaseIndex[MAX_ALIASMODEL_BATCH][4];
+	float lerpFraction[MAX_ALIASMODEL_BATCH][4];
 
 	float shellSize;
 	// console var data
@@ -63,7 +66,8 @@ typedef struct glm_aliasmodelbatch_s {
 static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture, float scaleS, float scaleT,
-	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight
+	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
+	float lerpFraction, int lerpFrameVertOffset
 );
 
 typedef struct glm_aliasmodel_req_s {
@@ -81,6 +85,9 @@ typedef struct glm_aliasmodel_req_s {
 	float yaw_angle_radians;
 	float shadelight;
 	float ambientlight;
+
+	float lerpFraction;
+	int lerpFrameVertOffset;
 } glm_aliasmodel_req_t;
 
 typedef struct DrawArraysIndirectCommand_s {
@@ -108,12 +115,13 @@ static qbool GLM_CompileAliasModelProgram(void)
 	if (!drawAliasModelProgram.program || drawAlias_compiledOptions != drawAlias_desiredOptions) {
 		static char included_definitions[1024];
 
+		strlcpy(included_definitions, va("#define GL_BINDINGPOINT_ALIASMODEL_SSBO %d\n", GL_BINDINGPOINT_ALIASMODEL_SSBO), sizeof(included_definitions));
 		if (caustic_textures) {
 			material_samplers_max = glConfig.texture_units - 1;
 			TEXTURE_UNIT_CAUSTICS = 0;
 			TEXTURE_UNIT_MATERIAL = 1;
 
-			strlcpy(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, "#define SAMPLER_CAUSTIC_TEXTURE 0\n", sizeof(included_definitions));
 			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 1\n", sizeof(included_definitions));
 		}
@@ -121,7 +129,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 			material_samplers_max = glConfig.texture_units;
 			TEXTURE_UNIT_MATERIAL = 0;
 
-			strlcpy(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 0\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 0\n", sizeof(included_definitions));
 		}
 
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
@@ -233,6 +241,8 @@ static void GLM_FlushAliasModelBatch(void)
 			aliasdata.yaw_angle_rad[i][0] = req->yaw_angle_radians;
 			aliasdata.materialSamplerMapping[i][0] = req->texture_skin_sampler;
 			aliasdata.lumaSamplerMapping[i][0] = req->texture_fb_sampler;
+			aliasdata.lerpFraction[i][0] = req->lerpFraction;
+			aliasdata.lerpBaseIndex[i][0] = req->lerpFrameVertOffset;
 			batches[batch].end = i;
 
 			aliasmodel_requests[i].baseInstance = i;
@@ -305,7 +315,11 @@ static int AssignSampler(texture_ref texture)
 	return -1;
 }
 
-static void GLM_QueueAliasModelDrawImpl(model_t* model, byte* color, int start, int count, texture_ref texture, texture_ref fb_texture, float scaleS, float scaleT, int effects, float yaw_angle_radians, float shadelight, float ambientlight)
+static void GLM_QueueAliasModelDrawImpl(
+	model_t* model, byte* color, int start, int count, texture_ref texture, texture_ref fb_texture,
+	float scaleS, float scaleT, int effects, float yaw_angle_radians, float shadelight, float ambientlight,
+	float lerpFraction, int lerpFrameVertOffset
+)
 {
 	glm_aliasmodel_req_t* req;
 	int textureSampler = -1, lumaSampler = -1;
@@ -343,6 +357,8 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, byte* color, int start, 
 	req->yaw_angle_radians = yaw_angle_radians;
 	req->shadelight = shadelight;
 	req->ambientlight = ambientlight;
+	req->lerpFraction = lerpFraction;
+	req->lerpFrameVertOffset = lerpFrameVertOffset;
 	memcpy(req->color, color, 4);
 	++batch_count;
 }
@@ -350,7 +366,8 @@ static void GLM_QueueAliasModelDrawImpl(model_t* model, byte* color, int start, 
 static void GLM_QueueAliasModelDraw(
 	model_t* model, byte* color, int start, int count,
 	texture_ref texture, texture_ref fb_texture, float scaleS, float scaleT,
-	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight
+	int effects, qbool shell_only, float yaw_angle_radians, float shadelight, float ambientlight,
+	float lerpFraction, int lerpFrameVertOffset
 )
 {
 	qbool texture_model = GL_TextureReferenceIsValid(texture);
@@ -365,7 +382,7 @@ static void GLM_QueueAliasModelDraw(
 			// always allow powerupshells for specs or demos.
 			// do not allow powerupshells for eyes in other cases
 			if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
-				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, shell_effects, yaw_angle_radians, shadelight, ambientlight);
+				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, shell_effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset);
 				if (!in_batch_mode) {
 					GLM_FlushAliasModelBatch();
 				}
@@ -373,7 +390,7 @@ static void GLM_QueueAliasModelDraw(
 		}
 	}
 	else {
-		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, effects, yaw_angle_radians, shadelight, ambientlight);
+		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset);
 		if (!in_batch_mode) {
 			GLM_FlushAliasModelBatch();
 		}
@@ -412,15 +429,22 @@ void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	// MEAG: TODO
 }
 
-// Drawing single frame from an alias model (no lerping)
-void GLM_DrawSimpleAliasFrame(
-	model_t* model, aliashdr_t* paliashdr, int pose1, qbool scrolldir,
-	texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
+void GLM_DrawAliasFrame(
+	model_t* model, aliashdr_t* paliashdr, int pose1, int pose2,
+	qbool scrolldir, texture_ref texture, texture_ref fb_texture, GLuint textureEnvMode,
 	float scaleS, float scaleT, int effects, qbool shell_only
 )
 {
 	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
+	int nextVertIndex = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
+	float lerp_fraction = r_framelerp;
 	byte color[4];
+
+	if (pose1 == pose2) {
+		lerp_fraction = 0;
+	}
+
+	// FIXME: Need to take into account the RF_LIMITLERP flag which is used on Team Fortress viewmodels
 
 	// FIXME: This has been converted from 4 bytes already?
 	if (r_modelcolor[0] < 0) {
@@ -461,6 +485,6 @@ void GLM_DrawSimpleAliasFrame(
 	GLM_QueueAliasModelDraw(
 		model, color, vertIndex, paliashdr->vertsPerPose,
 		texture, fb_texture, scaleS, scaleT, effects, shell_only,
-		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight
+		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, nextVertIndex
 	);
 }

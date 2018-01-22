@@ -39,6 +39,9 @@ static void GLC_DrawPowerupShell(aliashdr_t* paliashdr, int pose, trivertx_t* ve
 static void GLC_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 
+// Which pose to use if shadow to be drawn
+static int       lastposenum;
+
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
 extern cvar_t    r_lerpframes;
@@ -47,7 +50,6 @@ extern cvar_t    gl_outline_width;
 
 extern float     r_framelerp;
 extern float     r_lerpdistance;
-extern int       lastposenum;
 extern qbool     full_light;
 extern vec3_t    lightcolor;
 extern float     apitch;

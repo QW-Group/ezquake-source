@@ -28,6 +28,8 @@ layout(std140) uniform AliasModelData {
 	float ambientlight[MAX_INSTANCEID];
 	int materialTextureMapping[MAX_INSTANCEID];
 	int lumaTextureMapping[MAX_INSTANCEID];
+	int lerpBaseIndex[MAX_INSTANCEID];
+	float lerpFraction[MAX_INSTANCEID];
 
 	float shellSize;
 	// console var data

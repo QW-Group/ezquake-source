@@ -289,7 +289,7 @@ void R_StoreEfrags (efrag_t **ppefrag);
 
 // gl_mesh.c
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int position);
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, glm_vbo_t* ssbo, int position);
 
 // gl_rsurf.c
 
@@ -668,6 +668,7 @@ void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
 
 void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer);
+void GL_BindBufferBase(glm_vbo_t* vbo, GLuint index);
 
 #ifdef WITH_NVTX
 void GL_EnterRegion(const char* regionName);
@@ -879,6 +880,7 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 #define GLM_Enabled GL_ShadersSupported
 
 enum {
+	// Uniforms
 	GL_BINDINGPOINT_REFDEF_CVARS,
 	GL_BINDINGPOINT_COMMON2D_CVARS,
 
@@ -889,6 +891,9 @@ enum {
 
 	GL_BINDINGPOINT_SKYDOME_CVARS,
 	GL_BINDINGPOINT_SKYBOX_CVARS,
+
+	// SSBOs
+	GL_BINDINGPOINT_ALIASMODEL_SSBO,
 
 	GL_BINDINGPOINT_COUNT
 };
