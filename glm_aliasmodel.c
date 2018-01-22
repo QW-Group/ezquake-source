@@ -10,6 +10,9 @@
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 #define ALIAS_UBO_FOFS(x) (void*)((intptr_t)&(((block_aliasmodels_t*)0)->x))
 
+#define AMF_SHELLMODELS (EF_RED | EF_BLUE | EF_GREEN)
+#define AMF_CAUSTICS (EF_CAUSTICS)
+
 static qbool first_alias_model = true;
 extern glm_vao_t aliasModel_vao;
 
@@ -36,6 +39,10 @@ typedef struct block_aliasmodels_s {
 	int padding[2];
 } block_aliasmodels_t;
 
+#define DRAW_DETAIL_TEXTURES 1
+#define DRAW_CAUSTIC_TEXTURES 2
+#define DRAW_LUMA_TEXTURES 4
+static int drawAlias_compiledOptions;
 static glm_program_t drawAliasModelProgram;
 static GLuint drawAliasModel_RefdefCvars_block;
 static GLuint drawAliasModel_AliasData_block;
@@ -86,6 +93,8 @@ typedef struct DrawArraysIndirectCommand_s {
 static int material_samplers_max;
 static int material_samplers;
 static texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
+static int TEXTURE_UNIT_MATERIAL;
+static int TEXTURE_UNIT_CAUSTICS;
 
 static glm_aliasmodel_req_t aliasmodel_requests[MAX_ALIASMODEL_BATCH];
 static int batch_count = 0;
@@ -93,18 +102,43 @@ static qbool in_batch_mode = false;
 
 static qbool GLM_CompileAliasModelProgram(void)
 {
-	if (!drawAliasModelProgram.program) {
-		static char included_definitions[512];
+	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
 
-		material_samplers_max = glConfig.texture_units;
+	if (!drawAliasModelProgram.program || drawAlias_compiledOptions != drawAlias_desiredOptions) {
+		static char included_definitions[1024];
 
-		strlcpy(included_definitions, va("#define SAMPLER_COUNT %d\n", glConfig.texture_units), sizeof(included_definitions));
+		if (caustic_textures) {
+			material_samplers_max = glConfig.texture_units - 1;
+			TEXTURE_UNIT_CAUSTICS = 0;
+			TEXTURE_UNIT_MATERIAL = 1;
+
+			strlcpy(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_CAUSTIC_TEXTURE 0\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 1\n", sizeof(included_definitions));
+		}
+		else {
+			material_samplers_max = glConfig.texture_units;
+			TEXTURE_UNIT_MATERIAL = 0;
+
+			strlcpy(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 0\n", sizeof(included_definitions));
+		}
+
+		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_ALIASMODEL_BATCH), sizeof(included_definitions));
+
+		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_RED %d\n", EF_RED), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_BLUE %d\n", EF_BLUE), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_GREEN %d\n", EF_GREEN), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define AMF_SHELLFLAGS %d\n", (EF_RED | EF_BLUE | EF_GREEN)), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define AMF_CAUSTICS %d\n", AMF_CAUSTICS), sizeof(included_definitions));
 
 		GL_VFDeclare(model_alias);
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram, included_definitions);
+
+		drawAlias_compiledOptions = drawAlias_desiredOptions;
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
@@ -158,8 +192,11 @@ static void GLM_FlushAliasModelBatch(void)
 
 	if (GLM_CompileAliasModelProgram()) {
 		// Bind textures
+		if (drawAlias_compiledOptions & DRAW_CAUSTIC_TEXTURES) {
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_CAUSTICS, GL_TEXTURE_2D, underwatertexture);
+		}
 		for (i = 0; i < material_samplers; ++i) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0 + i, GL_TEXTURE_2D, allocated_samplers[i]);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D, allocated_samplers[i]);
 		}
 
 		// Update indirect buffer
@@ -170,7 +207,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 		for (i = 0; i < batch_count; ++i) {
 			glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
-			qbool is_shells = req->effects != 0;
+			qbool is_shells = (req->effects & AMF_SHELLMODELS);
 			qbool shell_mode_switch = (was_shells != is_shells);
 
 			if (shell_mode_switch) {
@@ -317,28 +354,26 @@ static void GLM_QueueAliasModelDraw(
 )
 {
 	qbool texture_model = GL_TextureReferenceIsValid(texture);
+	int shell_effects = effects & AMF_SHELLMODELS;
+	effects &= ~shell_effects;
 
 	if (shell_only) {
 		if (!GL_TextureReferenceIsValid(shelltexture)) {
 			return;
 		}
-		if (effects) {
+		if (shell_effects) {
 			// always allow powerupshells for specs or demos.
 			// do not allow powerupshells for eyes in other cases
 			if (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES)) {
-				effects &= (EF_RED | EF_GREEN | EF_BLUE);
-
-				if (effects) {
-					GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, effects, yaw_angle_radians, shadelight, ambientlight);
-					if (!in_batch_mode) {
-						GLM_FlushAliasModelBatch();
-					}
+				GLM_QueueAliasModelDrawImpl(model, color_white, start, count, shelltexture, null_texture_reference, 1, 1, shell_effects, yaw_angle_radians, shadelight, ambientlight);
+				if (!in_batch_mode) {
+					GLM_FlushAliasModelBatch();
 				}
 			}
 		}
 	}
 	else {
-		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, 0, yaw_angle_radians, shadelight, ambientlight);
+		GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, scaleS, scaleT, effects, yaw_angle_radians, shadelight, ambientlight);
 		if (!in_batch_mode) {
 			GLM_FlushAliasModelBatch();
 		}
@@ -414,6 +449,12 @@ void GLM_DrawSimpleAliasFrame(
 
 		if (custom_model->fullbright_cvar.integer) {
 			GL_TextureReferenceInvalidate(texture);
+		}
+	}
+
+	if (gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture)) {
+		if (R_PointIsUnderwater(currententity->origin)) {
+			effects |= AMF_CAUSTICS;
 		}
 	}
 

@@ -118,15 +118,16 @@ extern const texture_ref null_texture_reference;
 //
 // entity effects
 //
-#define	EF_BRIGHTFIELD		1
-#define	EF_MUZZLEFLASH 		2
-#define EF_GREEN			2		// D-Kure: EF_GREEN will replace 
-#define	EF_BRIGHTLIGHT 		4		// EF_MUZZLEFLASH and provide RGB colours
-#define	EF_DIMLIGHT 		8       // Both are needed as NQ uses EF_MUZZLE..
-#define	EF_FLAG1	 		16
-#define	EF_FLAG2	 		32
-#define EF_BLUE				64
-#define EF_RED				128
+#define EF_BRIGHTFIELD        1
+#define EF_MUZZLEFLASH        2
+#define EF_GREEN              2     // D-Kure: EF_GREEN will replace
+#define EF_BRIGHTLIGHT        4     // EF_MUZZLEFLASH and provide RGB colours
+#define EF_DIMLIGHT           8     // Both are needed as NQ uses EF_MUZZLE..
+#define EF_FLAG1             16
+#define EF_FLAG2             32
+#define EF_BLUE              64
+#define EF_RED              128
+#define EF_CAUSTICS         256
 
 // print flags
 #define	PRINT_LOW			0		// pickup messages

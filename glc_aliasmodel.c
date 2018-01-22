@@ -361,7 +361,6 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	// Underwater caustics on alias models of QRACK -->
 #define GL_RGB_SCALE 0x8573
 
-	// MEAG: GLM-FIXME
 	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GL_EnableMultitexture();
 		GL_BindTextureUnit(GL_TEXTURE1, GL_TEXTURE_2D, underwatertexture);
