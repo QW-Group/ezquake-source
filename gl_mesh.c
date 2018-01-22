@@ -321,7 +321,7 @@ void BuildTris (void)
 	alltris += pheader->numtris;
 }
 
-void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, float* vbo_buffer)
+void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, vbo_model_vert_t* vbo_buffer)
 {
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -335,7 +335,7 @@ void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, float* vbo_buffer)
 	for (pose = 0; pose < paliashdr->numposes; ++pose) {
 		vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		vertices += pose * paliashdr->poseverts;
-		v = pose * total_vertices * MODELVERTEXSIZE;
+		v = pose * total_vertices;
 		order = (int *) ((byte *) paliashdr + paliashdr->commands);
 		for (; ; ) {
 			float x, y, z;
@@ -361,17 +361,12 @@ void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, float* vbo_buffer)
 				y = vertices->v[1];
 				z = vertices->v[2];
 
-				vbo_buffer[v + 0] = x;
-				vbo_buffer[v + 1] = y;
-				vbo_buffer[v + 2] = z;
-				vbo_buffer[v + 3] = s;
-				vbo_buffer[v + 4] = t;
-				vbo_buffer[v + 5] = r_avertexnormals[l][0];
-				vbo_buffer[v + 6] = r_avertexnormals[l][1];
-				vbo_buffer[v + 7] = r_avertexnormals[l][2];
-				vbo_buffer[v + 8] = 0;
-				v += MODELVERTEXSIZE;
+				VectorSet(vbo_buffer[v].position, x, y, z);
+				vbo_buffer[v].texture_coords[0] = s;
+				vbo_buffer[v].texture_coords[1] = t;
+				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
 
+				++v;
 				++vertices;
 			}
 		}
@@ -382,17 +377,17 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
-	float* vbo_buffer;
+	vbo_model_vert_t* vbo_buffer;
 	int pose, j, k, v;
 	
 	v = 0;
-	m->temp_vbo_buffer = vbo_buffer = Q_malloc(m->vertsInVBO * MODELVERTEXSIZE * sizeof(float));
+	m->temp_vbo_buffer = vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(vbo_model_vert_t));
 
 	// 
 	for (pose = 0; pose < hdr->numposes; ++pose) {
-		v = pose * hdr->vertsPerPose * MODELVERTEXSIZE;
+		v = pose * hdr->vertsPerPose;
 		for (j = 0; j < hdr->numtris; ++j) {
-			for (k = 0; k < 3; ++k) {
+			for (k = 0; k < 3; ++k, ++v) {
 				trivertx_t* src;
 				float x, y, z, s, t;
 				int l;
@@ -413,16 +408,10 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 				s = (s + 0.5) / pheader->skinwidth;
 				t = (t + 0.5) / pheader->skinheight;
 
-				vbo_buffer[v + 0] = x;
-				vbo_buffer[v + 1] = y;
-				vbo_buffer[v + 2] = z;
-				vbo_buffer[v + 3] = s;
-				vbo_buffer[v + 4] = t;
-				vbo_buffer[v + 5] = r_avertexnormals[l][0];
-				vbo_buffer[v + 6] = r_avertexnormals[l][1];
-				vbo_buffer[v + 7] = r_avertexnormals[l][2];
-				vbo_buffer[v + 8] = 0;
-				v += MODELVERTEXSIZE;
+				VectorSet(vbo_buffer[v].position, x, y, z);
+				vbo_buffer[v].texture_coords[0] = s;
+				vbo_buffer[v].texture_coords[1] = t;
+				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
 			}
 		}
 	}
@@ -498,16 +487,14 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 			hdr->vertsPerPose = total_vertices;
 		}
 
-		m->temp_vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(float) * MODELVERTEXSIZE);
-		GLC_MakeAliasModelVBO(m, hdr, m->temp_vbo_buffer);
+		m->temp_vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(vbo_model_vert_t));
+		GLC_MakeAliasModelVBO(m, hdr, (vbo_model_vert_t*)m->temp_vbo_buffer);
 	}
 }
 
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, glm_vbo_t* vbo, int position)
 {
-	size_t size_of_vert = MODELVERTEXSIZE * sizeof(float);
-
-	GL_UpdateVBOSection(vbo, position * size_of_vert, mod->vertsInVBO * size_of_vert, mod->temp_vbo_buffer);
+	GL_UpdateVBOSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
 
 	hdr->vertsOffset = mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);

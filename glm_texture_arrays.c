@@ -10,6 +10,7 @@
 #endif
 
 #define MAX_ARRAY_DEPTH 64
+#define VBO_ALIASVERT_FOFS(x) (void*)((intptr_t)&(((vbo_model_vert_t*)0)->x))
 
 typedef struct common_texture_registration_s {
 	texture_ref original;   // The original texture to be moved into first reserved element of array
@@ -806,30 +807,25 @@ static void GL_ImportTexturesForModel(model_t* mod, int* new_vbo_position)
 
 static void GLM_CreateSpriteVBO(void)
 {
-	float new_vbo_buffer[4 * MODELVERTEXSIZE];
-	float* vert;
+	vbo_model_vert_t verts[4];
 
-	vert = new_vbo_buffer;
-	VectorSet(vert, 0, -1, -1);
-	vert[3] = 1;
-	vert[4] = 1;
+	VectorSet(verts[0].position, 0, -1, -1);
+	verts[0].texture_coords[0] = 1;
+	verts[0].texture_coords[1] = 1;
 
-	vert = new_vbo_buffer + MODELVERTEXSIZE;
-	VectorSet(vert, 0, -1, 1);
-	vert[3] = 1;
-	vert[4] = 0;
+	VectorSet(verts[1].position, 0, -1, 1);
+	verts[1].texture_coords[0] = 1;
+	verts[1].texture_coords[1] = 0;
 
-	vert = new_vbo_buffer + MODELVERTEXSIZE * 2;
-	VectorSet(vert, 0, 1, 1);
-	vert[3] = 0;
-	vert[4] = 0;
+	VectorSet(verts[2].position, 0, 1, 1);
+	verts[2].texture_coords[0] = 0;
+	verts[2].texture_coords[1] = 0;
 
-	vert = new_vbo_buffer + MODELVERTEXSIZE * 3;
-	VectorSet(vert, 0, 1, -1);
-	vert[3] = 0;
-	vert[4] = 1;
+	VectorSet(verts[3].position, 0, 1, -1);
+	verts[3].texture_coords[0] = 0;
+	verts[3].texture_coords[1] = 1;
 
-	GL_UpdateVBOSection(&aliasModel_vbo, 0, sizeof(new_vbo_buffer), new_vbo_buffer);
+	GL_UpdateVBOSection(&aliasModel_vbo, 0, sizeof(verts), verts);
 }
 
 void GL_CompressTextureArrays(common_texture_t* list)
@@ -929,7 +925,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		common_texture_t* tex;
 		int new_vbo_position = 0;
 
-		GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * MODELVERTEXSIZE * sizeof(float), NULL, GL_STATIC_DRAW);
+		GL_GenFixedBuffer(&aliasModel_vbo, GL_ARRAY_BUFFER, __FUNCTION__, required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
 
 		GL_Paranoid_Printf("-- Sorted, pre-allocation --\n");
 		for (type = 0; type < TEXTURETYPES_COUNT; ++type) {
@@ -1013,16 +1009,13 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	tempBufferSize = 0;
 }
 
-#define VAO_FLOAT_ATTRIBUTE    1
-#define VAO_INTEGER_ATTRIBUTE  2
-
 static void GLM_CreateAliasModelVAO(void)
 {
 	GL_GenVertexArray(&aliasModel_vao);
 
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)0);
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 3));
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * MODELVERTEXSIZE, (void*)(sizeof(float) * 5));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(position));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(texture_coords));
+	GL_ConfigureVertexAttribPointer(&aliasModel_vao, &aliasModel_vbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_ALIASVERT_FOFS(normal));
 	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, &instance_vbo, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0);
 
 	glVertexAttribDivisor(3, 1);

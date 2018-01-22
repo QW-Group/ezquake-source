@@ -149,11 +149,11 @@ typedef struct vbo_world_vert_s {
 #define VERTEXSIZE 9  //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
 					  //s2t2 = lightmap tex coords; s3t3 = detail tex coords
 
-// position[3]
-// texture[2]
-// normals[3]
-// materialIndex
-#define MODELVERTEXSIZE 9
+typedef struct vbo_model_vert_s {
+	vec3_t position;
+	vec3_t normal;
+	float texture_coords[2];
+} vbo_model_vert_t;
 
 typedef struct glm_vbo_s {
 	unsigned int vbo;
@@ -564,7 +564,7 @@ typedef struct model_s {
 	unsigned int        texture_array_count;
 	int                 texture_array_first[MAX_TEXTURE_ARRAYS_PER_MODEL];
 
-	float*              temp_vbo_buffer;
+	void*               temp_vbo_buffer;
 	float               min_tex[2];
 	float               max_tex[2];
 
