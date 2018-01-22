@@ -855,7 +855,9 @@ void GL_DeleteModelData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
 // Texture functions
+
 void GL_BindTextureUnit(GLuint unit, GLenum targetType, texture_ref reference);
+void GL_EnsureTextureUnitBound(GLuint unit, GLenum targetType, texture_ref reference);
 void GL_TexSubImage3D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
 void GL_TexImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void GL_TexSubImage2D(GLenum textureUnit, GLenum target, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);

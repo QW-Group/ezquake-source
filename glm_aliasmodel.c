@@ -159,7 +159,7 @@ static void GLM_FlushAliasModelBatch(void)
 	if (GLM_CompileAliasModelProgram()) {
 		// Bind textures
 		for (i = 0; i < material_samplers; ++i) {
-			GL_BindTextureUnit(GL_TEXTURE0 + i, GL_TEXTURE_2D, allocated_samplers[i]);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + i, GL_TEXTURE_2D, allocated_samplers[i]);
 		}
 
 		// Update indirect buffer

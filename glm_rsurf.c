@@ -378,7 +378,7 @@ void GL_FlushWorldModelBatch(void)
 
 	// Bind texture units
 	for (i = 0; i < material_samplers; ++i) {
-		GL_BindTextureUnit(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D_ARRAY, allocated_samplers[i]);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL + i, GL_TEXTURE_2D_ARRAY, allocated_samplers[i]);
 	}
 
 	glMultiDrawElementsIndirect(
