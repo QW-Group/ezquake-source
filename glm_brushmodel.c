@@ -158,9 +158,6 @@ int GLM_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int v
 		}
 
 		has_luma = GL_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
-		if (has_luma) {
-			Con_Printf("%s has a luma texture\n", m->textures[i]->name);
-		}
 		for (j = 0; j < m->numsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + j;
 			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;

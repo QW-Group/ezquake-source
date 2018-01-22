@@ -1503,7 +1503,8 @@ void QMB_ParticleExplosion (vec3_t org) {
 			AddParticle(p_spark, org, 50, 100, 0.75, NULL, zerodir);
 			AddParticle(p_spark, org, 25, 60, 0.75, NULL, zerodir);
 		}
-	} else {
+	}
+	else {
 		if (r_explosiontype.value != 9) { 	
 			AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
 		}
@@ -1610,10 +1611,12 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 	switch (type) {
 		case GRENADE_TRAIL:
 			//VULT PARTICLES
-			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
-			else
+			}
+			else {
 				AddParticleTrail(p_smoke, start, end, 1.45, 0.825, NULL);
+			}
 			break;
 		case BLOOD_TRAIL:
 		case BIG_BLOOD_TRAIL:
@@ -1630,8 +1633,9 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			AddParticleTrail (p_trailpart, start, end, 3.75, 0.5, color);
 			break;
 		case ALT_ROCKET_TRAIL:
-			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
+			}
 			else {
 				AddParticleTrail(p_dpfire, start, end, 3, 0.26, NULL);
 				AddParticleTrail(p_dpsmoke, start, end, 3, 0.825, NULL);
@@ -1659,14 +1663,13 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			break;
 		//VULT TRAILS
 		case TF_TRAIL:
-			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
-			{
-				if (amf_nailtrail_water.value)
-				{
+			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+				if (amf_nailtrail_water.value) {
 					AddParticleTrail(p_bubble2, start, end, 1.5, 0.825, NULL);
 				}
-				else
+				else {
 					AddParticleTrail(p_bubble, start, end, 1.5, 0.825, NULL);
+				}
 				break;
 			}
 			color[0] = 10; color[1] = 10; color[2] = 10;
@@ -1674,16 +1677,14 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			break;
 		//VULT TRAILS
 		case LAVA_TRAIL:
-			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
-			{
+			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 				color[0] = 25;
 				color[1] = 102;
 				color[2] = 255;
 				color[3] = 255;
 			}
-			else
-			{
+			else {
 				color[0] = 255;
 				color[1] = 102;
 				color[2] = 25;
@@ -1693,10 +1694,10 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			break;
 		//VULT TRAILS
 		case AMF_ROCKET_TRAIL:
-			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
-			else
-			{
+			}
+			else {
 				color[0] = 128; color[1] = 128; color[2] = 128;
 				AddParticleTrail (p_alphatrail, start, end, 2, 0.6, color);
 				AddParticleTrail (p_vxrocketsmoke, start, end, 3, 0.5, color);
@@ -1708,18 +1709,15 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 		//VULT PARTICLES
 		case BLEEDING_TRAIL:
 		case BLEEDING_TRAIL2:
-			if (amf_part_blood_color.value == 2)
-			{
+			if (amf_part_blood_color.value == 2) {
 				color[0]=55;color[1]=102;color[2]=255;
 			}
 			//green
-			else if (amf_part_blood_color.value == 3)
-			{
+			else if (amf_part_blood_color.value == 3) {
 				color[0]=80;color[1]=255;color[2]=80;
 			}
 			//red
-			else
-			{
+			else {
 				color[0]=128;color[1]=0;color[2]=0;
 			}
 			AddParticleTrail(type == BLEEDING_TRAIL ? p_trailbleed : p_bleedspike, start, end, 4, type == BLEEDING_TRAIL ? 0.5 : 0.2 , color);

@@ -197,8 +197,9 @@ qbool R_CullBox(vec3_t mins, vec3_t maxs)
 	int i;
 
 	for (i = 0; i < 4; i++) {
-		if (BOX_ON_PLANE_SIDE (mins, maxs, &frustum[i]) == 2)
+		if (BOX_ON_PLANE_SIDE(mins, maxs, &frustum[i]) == 2) {
 			return true;
+		}
 	}
 	return false;
 }
@@ -1131,4 +1132,11 @@ void GL_PreRenderView(void)
 	else {
 		GLC_PreRenderView();
 	}
+}
+
+qbool R_PointIsUnderwater(vec3_t point)
+{
+	int contents = TruePointContents(point);
+
+	return ISUNDERWATER(contents);
 }

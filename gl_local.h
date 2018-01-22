@@ -239,9 +239,11 @@ extern	const char *gl_renderer;
 extern	const char *gl_version;
 extern	const char *gl_extensions;
 
-#define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
+#define ISUNDERWATER(contents) (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
 //#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 #define TruePointContents(p) CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p) // ?TONIK?
+
+qbool R_PointIsUnderwater(vec3_t point);
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
