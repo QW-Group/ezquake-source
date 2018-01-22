@@ -766,15 +766,13 @@ void GL_AlphaFunc(GLenum func, GLclampf threshold)
 	}
 }
 
-void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer)
+void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index)
 {
-//	GL_BindBuffer(GL_UNIFORM_BUFFER, ubo->ubo);
 	glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo->ubo);
 }
 
 void GL_BindBufferBase(glm_vbo_t* vbo, GLuint index)
 {
-//	GL_BindBuffer(vbo->target, vbo->vbo);
 	glBindBufferBase(vbo->target, index, vbo->vbo);
 }
 

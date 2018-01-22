@@ -667,7 +667,7 @@ void GL_UpdateVBOSection(glm_vbo_t* vbo, GLintptr offset, GLsizeiptr size, const
 // Creates buffer, binds to target and initialises with a particular size
 void GL_GenFixedBuffer(glm_vbo_t* vbo, GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
 
-void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index, GLuint buffer);
+void GL_BindUniformBufferBase(glm_ubo_t* ubo, GLuint index);
 void GL_BindBufferBase(glm_vbo_t* vbo, GLuint index);
 
 #ifdef WITH_NVTX

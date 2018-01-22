@@ -161,7 +161,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
 		GL_GenUniformBuffer(&ubo_aliasdata, "alias-data", &aliasdata, sizeof(aliasdata));
-		GL_BindUniformBufferBase(&ubo_aliasdata, GL_BINDINGPOINT_ALIASMODEL_CVARS, ubo_aliasdata.ubo);
+		GL_BindUniformBufferBase(&ubo_aliasdata, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
 		drawAliasModelProgram.uniforms_found = true;
 	}
