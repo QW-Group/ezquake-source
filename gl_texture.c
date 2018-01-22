@@ -90,6 +90,8 @@ typedef struct {
 	GLenum      target;
 	texture_ref reference;
 	int         next_free;
+
+	qbool       mipmaps_generated;
 } gltexture_t;
 
 static gltexture_t	gltextures[MAX_GLTEXTURES];
@@ -1133,6 +1135,9 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
+	slot->gl_width = width;
+	slot->gl_height = height;
+
 	return gl_texturenum;
 }
 
@@ -1219,6 +1224,9 @@ texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int 
 		GL_TexParameterf(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, slot->reference, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
+	slot->gl_width = width;
+	slot->gl_height = height;
+
 	return slot->reference;
 }
 
@@ -1282,7 +1290,7 @@ GLint GL_TextureHeight(texture_ref ref)
 GLint GL_TextureDepth(texture_ref ref)
 {
 	assert(ref.index && ref.index < numgltextures);
-	assert(gltextures[ref.index].target == GL_TEXTURE_2D);
+	assert(gltextures[ref.index].target == GL_TEXTURE_2D_ARRAY);
 	if (ref.index >= numgltextures || gltextures[ref.index].target != GL_TEXTURE_2D_ARRAY) {
 		return 0;
 	}
@@ -1298,4 +1306,17 @@ GLint GL_TextureDepth(texture_ref ref)
 #else
 	return gltextures[ref.index].depth;
 #endif
+}
+
+void GL_GenerateMipmapsIfNeeded(texture_ref ref)
+{
+	assert(ref.index && ref.index < numgltextures);
+	if (!ref.index || ref.index >= numgltextures) {
+		return;
+	}
+
+	if (!gltextures[ref.index].mipmaps_generated) {
+		GL_GenerateMipmap(GL_TEXTURE0, gltextures[ref.index].target, ref);
+		gltextures[ref.index].mipmaps_generated = true;
+	}
 }
