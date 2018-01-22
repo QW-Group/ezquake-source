@@ -264,6 +264,9 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
 		Q_free(crosshair_buffer);
 	}
 	current_crosshair_pixel_size = crosshair_size;
@@ -746,22 +749,14 @@ void Draw_Crosshair (void)
 			GL_TextureEnvMode(GL_MODULATE);
 			glEnable(GL_TEXTURE_2D);
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-#ifdef GL_CLAMP_TO_EDGE
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#else
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
-#endif
 
 			GL_Color4ubv(col);
 			GL_BindTextureUnit(GL_TEXTURE0, GL_TEXTURE_2D, texnum);
 			GLC_DrawImage(x, y, ofs1, ofs2, sl, tl, sh, th);
+
+			// FIXME: GL_ResetState
 			GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 			GL_TextureEnvMode(GL_REPLACE);
-
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			GL_TexParameteri(GL_TEXTURE0, GL_TEXTURE_2D, texnum, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		}
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
