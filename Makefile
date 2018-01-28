@@ -32,7 +32,7 @@ STRIP ?= strip
 RM ?= rm -f
 RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
-XXD ?= xxd -i
+JSON2C ?= ./json2c.sh
 
 CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
 RCFLAGS ?=
@@ -421,7 +421,7 @@ strip: $(TARG_c)
 
 $(BUILD_c)/%.o: %.json
 	$(E) [JS] $@
-	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
+	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.c

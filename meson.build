@@ -273,9 +273,9 @@ sources = [
 	'zone.c',
 ]
 
-xxd = find_program('xxd')
-sed = find_program('sed')
-gen = generator(find_program(meson.source_root() + '/xxd.sh'),
+awk = find_program('awk')
+od = find_program('od')
+gen = generator(find_program(meson.source_root() + '/json2c.sh'),
 	output : '@BASENAME@.c',
 	arguments : ['@INPUT@', '@OUTPUT@']
 )
