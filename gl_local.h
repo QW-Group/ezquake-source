@@ -929,8 +929,7 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 
 typedef enum glm_uniform_block_id_s {
 	// Uniforms
-	GL_BINDINGPOINT_REFDEF_CVARS,
-	GL_BINDINGPOINT_COMMON2D_CVARS,
+	GL_BINDINGPOINT_FRAMECONSTANTS,
 
 	GL_BINDINGPOINT_DRAWWORLD_CVARS,
 	GL_BINDINGPOINT_ALIASMODEL_CVARS,
@@ -943,27 +942,52 @@ typedef enum glm_uniform_block_id_s {
 } glm_uniform_block_id_t;
 
 // Reference cvars for 3D views...
-typedef struct uniform_block_refdef_s {
+typedef struct uniform_block_frame_constants_s {
 	float modelViewMatrix[16];
 	float projectionMatrix[16];
 	float position[3];
+	float padding1;
+
+	// Drawflat colors
+	float r_wallcolor[4];
+	float r_floorcolor[4];
+	float r_telecolor[4];
+	float r_lavacolor[4];
+	float r_slimecolor[4];
+	float r_watercolor[4];
+	float r_skycolor[4];
+
+	//
 	float time;
 	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-
-	int padding[2];
-} uniform_block_refdef_t;
-
-// Reference settings for 2D views...
-typedef struct uniform_block_common2d_s {
 	float gamma2d;
-
 	int r_alphafont;
 
-	int padding[2];
-} uniform_block_common2d_t;
+	// turb settings
+	float skySpeedscale;
+	float skySpeedscale2;
+	float r_farclip;
+	float waterAlpha;
+
+	// drawflat toggles (combine into bitfield?)
+	int r_drawflat;
+	int r_fastturb;
+	int r_fastsky;
+	int r_textureless;
+
+	int r_texture_luma_fb;
+
+	// powerup shells round alias models
+	float shellSize;
+	float shell_base_level1;
+	float shell_base_level2;
+	float shell_effect_level1;
+	float shell_effect_level2;
+	float shell_alpha;
+
+	// Total size must be multiple of vec4
+	int padding_end;
+} uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_MATRICES  32
 #define MAX_WORLDMODEL_BATCH     64
@@ -980,35 +1004,6 @@ typedef struct uniform_block_world_calldata_s {
 typedef struct uniform_block_world_s {
 	float modelMatrix[MAX_WORLDMODEL_MATRICES][16];
 	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
-
-	// sky
-	float skySpeedscale;
-	float skySpeedscale2;
-	float r_farclip;
-
-	//
-	float waterAlpha;
-
-	// drawflat for solid surfaces
-	int r_drawflat;
-	int r_fastturb;
-	int r_fastsky;
-
-	// 
-	int padding1;
-
-	float r_wallcolor[4];  // only used if r_drawflat 1 or 3
-	float r_floorcolor[4]; // only used if r_drawflat 1 or 2
-
-	// drawflat for turb surfaces
-	float r_telecolor[4];
-	float r_lavacolor[4];
-	float r_slimecolor[4];
-	float r_watercolor[4];
-
-	// drawflat for sky
-	float r_skycolor[4];
-	int r_texture_luma_fb;
 } uniform_block_world_t;
 
 typedef struct uniform_block_aliasmodel_s {
@@ -1026,16 +1021,6 @@ typedef struct uniform_block_aliasmodel_s {
 
 typedef struct block_aliasmodels_s {
 	uniform_block_aliasmodel_t models[MAX_ALIASMODEL_BATCH];
-
-	float shellSize;
-	// console var data
-	float shell_base_level1;
-	float shell_base_level2;
-	float shell_effect_level1;
-	float shell_effect_level2;
-	float shell_alpha;
-	// Total size must be multiple of vec4
-	int padding[2];
 } uniform_block_aliasmodels_t;
 
 typedef struct uniform_block_sprite_s {

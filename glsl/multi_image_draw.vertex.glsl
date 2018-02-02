@@ -1,17 +1,13 @@
 #version 430
 
+#ezquake-definitions
+
 layout(location = 0) in vec2 inPositionTL;
 layout(location = 1) in vec2 inPositionBR;
 layout(location = 2) in vec2 inTexCoordTL;
 layout(location = 3) in vec2 inTexCoordBR;
 layout(location = 4) in vec4 inColour;
 layout(location = 5) in int inFlags;
-
-layout(std140) uniform Common2d {
-	float gamma2d;
-
-	int r_alphafont;
-};
 
 out vec4 gPositionTL;
 out vec4 gPositionBR;

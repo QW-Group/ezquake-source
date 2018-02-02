@@ -44,25 +44,6 @@ struct AliasModel {
 
 layout(std140) uniform AliasModelData {
 	AliasModel models[MAX_INSTANCEID];
-
-	float shellSize;
-	// console var data
-	float shell_base_level1;
-	float shell_base_level2;
-	float shell_effect_level1;
-	float shell_effect_level2;
-	float shell_alpha;
-};
-
-layout(std140) uniform RefdefCvars {
-	mat4 modelViewMatrix;
-	mat4 projectionMatrix;
-	vec3 cameraPosition;
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
 };
 
 void main()

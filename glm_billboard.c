@@ -191,10 +191,6 @@ static void GLM_CompileBillboardProgram(void)
 	}
 
 	if (billboardProgram.program && !billboardProgram.uniforms_found) {
-		billboard_RefdefCvars_block = glGetUniformBlockIndex(billboardProgram.program, "RefdefCvars");
-
-		glUniformBlockBinding(billboardProgram.program, billboard_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
-
 		billboardProgram.uniforms_found = true;
 	}
 }

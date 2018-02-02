@@ -127,9 +127,6 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	if (drawworld.program && !drawworld.uniforms_found) {
 		GLint size;
 
-		drawworld_RefdefCvars_block = glGetUniformBlockIndex(drawworld.program, "RefdefCvars");
-		glUniformBlockBinding(drawworld.program, drawworld_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
-
 		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
 		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
@@ -147,14 +144,6 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 }
 
-#define PASS_COLOR_AS_4F(target, cvar) \
-{ \
-	target[0] = (cvar.color[0] * 1.0f / 255); \
-	target[1] = (cvar.color[1] * 1.0f / 255); \
-	target[2] = (cvar.color[2] * 1.0f / 255); \
-	target[3] = 1.0f; \
-}
-
 static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool lumas)
 {
 	extern glm_vao_t brushModel_vao;
@@ -164,35 +153,9 @@ static void GLM_EnterBatchedWorldRegion(qbool detail_tex, qbool caustics, qbool 
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 	int std_count = 0;
 
-	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 
-	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
-
 	Compile_DrawWorldProgram(detail_tex, caustics, lumas, skybox);
-
-	world.r_farclip = max(r_farclip.value, 4096) * 0.577;
-	world.skySpeedscale = r_refdef2.time * 8;
-	world.skySpeedscale -= (int)world.skySpeedscale & ~127;
-	world.skySpeedscale2 = r_refdef2.time * 16;
-	world.skySpeedscale2 -= (int)world.skySpeedscale2 & ~127;
-
-	world.waterAlpha = wateralpha;
-
-	world.r_drawflat = r_drawflat.integer;
-	PASS_COLOR_AS_4F(world.r_wallcolor, r_wallcolor);
-	PASS_COLOR_AS_4F(world.r_floorcolor, r_floorcolor);
-
-	world.r_fastturb = r_fastturb.integer;
-	PASS_COLOR_AS_4F(world.r_telecolor, r_telecolor);
-	PASS_COLOR_AS_4F(world.r_lavacolor, r_lavacolor);
-	PASS_COLOR_AS_4F(world.r_slimecolor, r_slimecolor);
-	PASS_COLOR_AS_4F(world.r_watercolor, r_watercolor);
-
-	world.r_fastsky = r_fastsky.integer;
-	PASS_COLOR_AS_4F(world.r_skycolor, r_skycolor);
-
-	world.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;
 
 	GL_UseProgram(drawworld.program);
 

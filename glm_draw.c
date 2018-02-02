@@ -148,7 +148,6 @@ void GLM_Draw_FadeScreen(float alpha)
 #define MAX_MULTI_IMAGE_BATCH 1024
 
 static glm_program_t multiImageProgram;
-static GLuint multiImageProgram_common2d_block;
 
 typedef struct glm_image_s {
 	float x1, y1;
@@ -196,9 +195,6 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
-		multiImageProgram_common2d_block = glGetUniformBlockIndex(multiImageProgram.program, "Common2d");
-		glUniformBlockBinding(multiImageProgram.program, multiImageProgram_common2d_block, GL_BINDINGPOINT_COMMON2D_CVARS);
-
 		multiImageProgram.uniforms_found = true;
 	}
 

@@ -114,7 +114,6 @@ static qbool BuildSkyDomeProgram(void)
 
 		glGetActiveUniformBlockiv(skyDome.program, skydome_SkyDomeData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
-		glUniformBlockBinding(skyDome.program, skydome_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(skyDome.program, skydome_SkyDomeData_block, GL_BINDINGPOINT_SKYDOME_CVARS);
 
 		ubo_skydomeData = GL_GenUniformBuffer("skydome-data", NULL, sizeof(SkydomeCvars_t));
@@ -149,7 +148,6 @@ static qbool BuildSkyBoxProgram(void)
 
 		glGetActiveUniformBlockiv(skyBox.program, skybox_SkyBoxData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
-		glUniformBlockBinding(skyBox.program, skybox_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(skyBox.program, skybox_SkyBoxData_block, GL_BINDINGPOINT_SKYBOX_CVARS);
 
 		ubo_skyboxData = GL_GenUniformBuffer("skybox-data", NULL, sizeof(SkyboxCvars_t));

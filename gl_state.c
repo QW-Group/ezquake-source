@@ -347,11 +347,15 @@ void GL_InitTextureState(void)
 
 void GL_UseProgram(GLuint program)
 {
+	void GLM_UploadFrameConstants(void);
+
 	if (program != currentProgram) {
 		glUseProgram(program);
 
 		currentProgram = program;
 	}
+
+	GLM_UploadFrameConstants();
 }
 
 void GL_DepthMask(GLboolean mask)

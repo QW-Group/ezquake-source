@@ -28,17 +28,6 @@ out flat int Flags;
 out flat int SamplerNumber;
 out vec3 Direction;
 
-layout(std140) uniform RefdefCvars {
-	mat4 modelViewMatrix;
-	mat4 projectionMatrix;
-	vec3 cameraPosition;
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-};
-
 struct WorldDrawInfo {
 	float alpha;
 	int samplerMapping;
@@ -49,32 +38,6 @@ struct WorldDrawInfo {
 layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
-
-	// sky
-	float skySpeedscale;
-	float skySpeedscale2;
-	float r_farclip;
-
-	//
-	float waterAlpha;
-
-	// drawflat for solid surfaces
-	int r_drawflat;
-	int r_fastturb;
-	int r_fastsky;
-
-	vec4 r_wallcolor;      // only used if r_drawflat 1 or 3
-	vec4 r_floorcolor;     // only used if r_drawflat 1 or 2
-
-	// drawflat for turb surfaces
-	vec4 r_telecolor;
-	vec4 r_lavacolor;
-	vec4 r_slimecolor;
-	vec4 r_watercolor;
-
-	// drawflat for sky
-	vec4 r_skycolor;
-	int r_texture_luma_fb;
 };
 
 void main()

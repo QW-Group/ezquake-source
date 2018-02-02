@@ -13,17 +13,6 @@ out vec4 fsColor;
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
 
-layout(std140) uniform RefdefCvars {
-	mat4 modelViewMatrix;
-	mat4 projectionMatrix;
-	vec3 cameraPosition;
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-};
-
 layout(std140) uniform ModelData {
 	vec4 color[32];
 	mat4 modelMatrix[32];

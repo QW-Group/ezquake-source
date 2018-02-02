@@ -30,6 +30,14 @@ static glm_vao_t post_process_vao;
 
 static qbool GLM_CompilePostProcessProgram(void);
 
+#define PASS_COLOR_AS_4F(target, cvar) \
+{ \
+	target[0] = (cvar.color[0] * 1.0f / 255); \
+	target[1] = (cvar.color[1] * 1.0f / 255); \
+	target[2] = (cvar.color[2] * 1.0f / 255); \
+	target[3] = 1.0f; \
+}
+
 // TODO: !?  Called as first step in 2D.  Include in frame-buffer at end of 3D scene rendering?
 void GLM_PolyBlend(float v_blend[4])
 {
@@ -53,44 +61,85 @@ void GLM_RenderSceneBlurDo(float alpha)
 	// MEAG: TODO
 }
 
-static buffer_ref ubo_refdef;
-static buffer_ref ubo_common2d;
-static uniform_block_refdef_t refdef;
-static uniform_block_common2d_t common2d;
+static buffer_ref ubo_frameConstants;
+static uniform_block_frame_constants_t frameConstants;
+static qbool frameConstantsUploaded = false;
 
 void GLM_PreRenderView(void)
 {
 	extern cvar_t gl_alphafont;
+	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
+	extern cvar_t gl_textureless;
 
-	common2d.gamma2d = v_gamma.value;
-	common2d.r_alphafont = gl_alphafont.value;
+	// General constants
+	frameConstants.time = cl.time;
+	frameConstants.gamma2d = v_gamma.value;
+	frameConstants.gamma3d = v_gamma.value;
+	frameConstants.r_alphafont = gl_alphafont.value;
 
-	if (!GL_BufferReferenceIsValid(ubo_common2d)) {
-		ubo_common2d = GL_GenUniformBuffer("common2d", &common2d, sizeof(common2d));
-		GL_BindBufferBase(ubo_common2d, GL_BINDINGPOINT_COMMON2D_CVARS);
+	// Draw-world constants
+	frameConstants.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
+	frameConstants.r_farclip = max(r_farclip.value, 4096) * 0.577;
+	frameConstants.skySpeedscale = r_refdef2.time * 8;
+	frameConstants.skySpeedscale -= (int)frameConstants.skySpeedscale & ~127;
+	frameConstants.skySpeedscale2 = r_refdef2.time * 16;
+	frameConstants.skySpeedscale2 -= (int)frameConstants.skySpeedscale2 & ~127;
+
+	frameConstants.waterAlpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+
+	frameConstants.r_drawflat = r_drawflat.integer;
+	PASS_COLOR_AS_4F(frameConstants.r_wallcolor, r_wallcolor);
+	PASS_COLOR_AS_4F(frameConstants.r_floorcolor, r_floorcolor);
+
+	frameConstants.r_fastturb = r_fastturb.integer;
+	PASS_COLOR_AS_4F(frameConstants.r_telecolor, r_telecolor);
+	PASS_COLOR_AS_4F(frameConstants.r_lavacolor, r_lavacolor);
+	PASS_COLOR_AS_4F(frameConstants.r_slimecolor, r_slimecolor);
+	PASS_COLOR_AS_4F(frameConstants.r_watercolor, r_watercolor);
+
+	frameConstants.r_fastsky = r_fastsky.integer;
+	PASS_COLOR_AS_4F(frameConstants.r_skycolor, r_skycolor);
+
+	frameConstants.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;
+
+	// Alias models
+	{
+		extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;
+		extern cvar_t gl_powerupshells_effect1level, gl_powerupshells_effect2level;
+
+		frameConstants.shellSize = bound(0, gl_powerupshells_size.value, 20);
+		frameConstants.shell_base_level1 = gl_powerupshells_base1level.value;
+		frameConstants.shell_base_level2 = gl_powerupshells_base2level.value;
+		frameConstants.shell_effect_level1 = gl_powerupshells_effect1level.value;
+		frameConstants.shell_effect_level2 = gl_powerupshells_effect2level.value;
+		frameConstants.shell_alpha = bound(0, gl_powerupshells.value, 1);
 	}
 
-	GL_UpdateVBO(ubo_common2d, sizeof(common2d), &common2d);
+	if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
+		ubo_frameConstants = GL_GenUniformBuffer("frameConstants", &ubo_frameConstants, sizeof(frameConstants));
+		GL_BindBufferBase(ubo_frameConstants, GL_BINDINGPOINT_FRAMECONSTANTS);
+	}
+
+	frameConstantsUploaded = false;
 }
 
 void GLM_SetupGL(void)
 {
 	extern cvar_t gl_textureless;
 
-	GLM_GetMatrix(GL_MODELVIEW, refdef.modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, refdef.projectionMatrix);
-	VectorCopy(r_refdef.vieworg, refdef.position);
-	refdef.time = cl.time;
-	refdef.gamma3d = v_gamma.value;
+	GLM_GetMatrix(GL_MODELVIEW, frameConstants.modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, frameConstants.projectionMatrix);
+	VectorCopy(r_refdef.vieworg, frameConstants.position);
 
-	refdef.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
+	frameConstantsUploaded = false;
+}
 
-	if (!GL_BufferReferenceIsValid(ubo_refdef)) {
-		ubo_refdef = GL_GenUniformBuffer("refdef", &refdef, sizeof(refdef));
-		GL_BindBufferBase(ubo_refdef, GL_BINDINGPOINT_REFDEF_CVARS);
+void GLM_UploadFrameConstants(void)
+{
+	if (!frameConstantsUploaded) {
+		GL_UpdateVBO(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
+		frameConstantsUploaded = true;
 	}
-
-	GL_UpdateVBO(ubo_refdef, sizeof(refdef), &refdef);
 }
 
 void GLM_ScreenDrawStart(void)
@@ -158,8 +207,6 @@ static qbool GLM_CompilePostProcessProgram(void)
 
 	if (post_process_program.program && !post_process_program.uniforms_found) {
 		GLint common2d_block = glGetUniformBlockIndex(post_process_program.program, "Common2d");
-
-		glUniformBlockBinding(post_process_program.program, common2d_block, GL_BINDINGPOINT_COMMON2D_CVARS);
 
 		post_process_program.uniforms_found = true;
 	}

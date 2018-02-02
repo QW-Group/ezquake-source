@@ -5,17 +5,6 @@
 layout(binding=0) uniform sampler2DArray materialTex;
 layout(binding=1) uniform sampler2DArray lightmapTex;
 
-layout(std140) uniform RefdefCvars {
-	mat4 modelViewMatrix;
-	mat4 projectionMatrix;
-	vec3 cameraPosition;
-	float time;
-	float gamma3d;
-
-	// if enabled, texture coordinates are always 0,0
-	int r_textureless;
-};
-
 in vec4 fsColor;
 in vec3 TextureCoord;
 in vec3 TexCoordLightmap;

@@ -4,12 +4,6 @@
 
 layout(binding = 0) uniform sampler2D materialTex;
 
-layout(std140) uniform Common2d {
-	float gamma;
-
-	int r_alphafont;
-};
-
 in vec2 TextureCoord;
 out vec4 frag_colour;
 

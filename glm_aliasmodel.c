@@ -125,7 +125,6 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 		glGetActiveUniformBlockiv(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
 
-		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_RefdefCvars_block, GL_BINDINGPOINT_REFDEF_CVARS);
 		glUniformBlockBinding(drawAliasModelProgram.program, drawAliasModel_AliasData_block, GL_BINDINGPOINT_ALIASMODEL_CVARS);
 
 		ubo_aliasdata = GL_GenUniformBuffer("alias-data", &aliasdata, sizeof(aliasdata));
@@ -203,13 +202,6 @@ static void GLM_FlushAliasModelBatch(void)
 			first_alias_model = false;
 		}
 	}
-
-	aliasdata.shellSize = bound(0, gl_powerupshells_size.value, 20);
-	aliasdata.shell_base_level1 = gl_powerupshells_base1level.value;
-	aliasdata.shell_base_level2 = gl_powerupshells_base2level.value;
-	aliasdata.shell_effect_level1 = gl_powerupshells_effect1level.value;
-	aliasdata.shell_effect_level2 = gl_powerupshells_effect2level.value;
-	aliasdata.shell_alpha = bound(0, gl_powerupshells.value, 1);
 
 	if (GLM_CompileAliasModelProgram()) {
 		// Bind textures
