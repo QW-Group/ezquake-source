@@ -23,8 +23,6 @@ layout(std140) uniform RefdefCvars {
 struct AliasModel {
 	mat4 modelView;
 	vec4 color;
-	vec2 scale;
-	int apply_texture;
 	int flags;
 	float yaw_angle_rad;
 	float shadelight;
@@ -53,10 +51,10 @@ in vec4 fsBaseColor;
 flat in int fsFlags;
 flat in int fsTextureEnabled;
 flat in int fsTextureLuma;
-out vec4 frag_colour;
-
 flat in int fsMaterialSampler;
 flat in int fsLumaSampler;
+
+out vec4 frag_colour;
 
 void main()
 {
@@ -81,15 +79,15 @@ void main()
 
 		if ((fsFlags & AMF_SHELLFLAGS) != 0) {
 			vec4 color1 = vec4(
-				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level1 : 0),
-				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level1 : 0),
-				shell_base_level1 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level1 : 0),
+				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_RED) != 0 ? shell_effect_level1 : 0),
+				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_GREEN) != 0 ? shell_effect_level1 : 0),
+				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_BLUE) != 0 ? shell_effect_level1 : 0),
 				shell_alpha
 			);
 			vec4 color2 = vec4(
-				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_RED) != 0 ? shell_effect_level2 : 0),
-				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_GREEN) != 0 ? shell_effect_level2 : 0),
-				shell_base_level2 + ((fsFlags & AMF_SHELLCOLOR_BLUE) != 0 ? shell_effect_level2 : 0),
+				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_RED) != 0 ? shell_effect_level2 : 0),
+				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_GREEN) != 0 ? shell_effect_level2 : 0),
+				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_BLUE) != 0 ? shell_effect_level2 : 0),
 				shell_alpha
 			);
 

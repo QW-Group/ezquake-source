@@ -5,12 +5,10 @@
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
 #include "tr_types.h"
+#include "glsl/constants.glsl"
 
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 #define ALIAS_UBO_FOFS(x) (void*)((intptr_t)&(((block_aliasmodels_t*)0)->x))
-
-#define AMF_SHELLMODELS (EF_RED | EF_BLUE | EF_GREEN)
-#define AMF_CAUSTICS (EF_CAUSTICS)
 
 static qbool first_alias_model = true;
 extern glm_vao_t aliasModel_vao;
@@ -52,12 +50,12 @@ typedef struct glm_aliasmodel_req_s {
 	GLuint vbo_start;
 	GLuint baseInstance;
 	float mvMatrix[16];
-	float texScale[2];
+	//float texScale[2];
 	int texture_skin_sampler;
 	int texture_fb_sampler;
 	byte color[4];
-	int texture_model;
-	int effects;
+	//int texture_model;
+	int amFlags;
 	float yaw_angle_radians;
 	float shadelight;
 	float ambientlight;
@@ -112,12 +110,6 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_ALIASMODEL_BATCH), sizeof(included_definitions));
-
-		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_RED %d\n", EF_RED), sizeof(included_definitions));
-		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_BLUE %d\n", EF_BLUE), sizeof(included_definitions));
-		strlcat(included_definitions, va("#define AMF_SHELLCOLOR_GREEN %d\n", EF_GREEN), sizeof(included_definitions));
-		strlcat(included_definitions, va("#define AMF_SHELLFLAGS %d\n", (EF_RED | EF_BLUE | EF_GREEN)), sizeof(included_definitions));
-		strlcat(included_definitions, va("#define AMF_CAUSTICS %d\n", AMF_CAUSTICS), sizeof(included_definitions));
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram, included_definitions);
@@ -234,7 +226,7 @@ static void GLM_FlushAliasModelBatch(void)
 
 		for (i = 0; i < batch_count; ++i) {
 			glm_aliasmodel_req_t* req = &aliasmodel_requests[i];
-			qbool is_shells = (req->effects & AMF_SHELLMODELS);
+			qbool is_shells = (req->amFlags & AMF_SHELLFLAGS);
 			qbool shell_mode_switch = (was_shells != is_shells);
 
 			if (shell_mode_switch) {
@@ -253,10 +245,7 @@ static void GLM_FlushAliasModelBatch(void)
 			aliasdata.models[i].color[1] = req->color[1] * 1.0f / 255;
 			aliasdata.models[i].color[2] = req->color[2] * 1.0f / 255;
 			aliasdata.models[i].color[3] = req->color[3] * 1.0f / 255;
-			aliasdata.models[i].scale[0] = req->texScale[0];
-			aliasdata.models[i].scale[1] = req->texScale[1];
-			aliasdata.models[i].apply_texture = req->texture_model;
-			aliasdata.models[i].shellMode = req->effects;
+			aliasdata.models[i].amFlags = req->amFlags;
 			aliasdata.models[i].ambientlight = req->ambientlight;
 			aliasdata.models[i].shadelight = req->shadelight;
 			aliasdata.models[i].yaw_angle_rad = req->yaw_angle_radians;
@@ -372,13 +361,15 @@ void GLM_QueueAliasModelDrawImpl(
 	GL_GetMatrix(GL_MODELVIEW, req->mvMatrix);
 	req->vbo_start = start;
 	req->vbo_count = count;
-	req->texScale[0] = 1.0f;
-	req->texScale[1] = 1.0f;
-	req->texture_model = (GL_TextureReferenceIsValid(texture) ? 1 : 0) + (GL_TextureReferenceIsValid(fb_texture) ? 2 : 0);
 	req->texture_skin_sampler = textureSampler;
 	req->texture_fb_sampler = lumaSampler;
 	req->instanceCount = 1;
-	req->effects = effects;
+	req->amFlags =
+		(effects & EF_RED ? AMF_SHELLMODEL_RED : 0) |
+		(effects & EF_GREEN ? AMF_SHELLMODEL_GREEN : 0) |
+		(effects & EF_BLUE ? AMF_SHELLMODEL_BLUE : 0) |
+		(GL_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
+		(GL_TextureReferenceIsValid(fb_texture) ? AMF_TEXTURE_LUMA : 0);
 	req->yaw_angle_radians = yaw_angle_radians;
 	req->shadelight = shadelight;
 	req->ambientlight = ambientlight;
@@ -397,7 +388,7 @@ static void GLM_QueueAliasModelDraw(
 )
 {
 	qbool texture_model = GL_TextureReferenceIsValid(texture);
-	int shell_effects = effects & AMF_SHELLMODELS;
+	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
 	effects &= ~shell_effects;
 
 	if (shell_only) {
@@ -482,7 +473,6 @@ void GLM_DrawAliasModelFrame(
 	}
 	color[3] = r_modelalpha * 255;
 
-	// TODO: model lerping between frames
 	// TODO: Vertex lighting etc
 	// TODO: Coloured lighting per-vertex?
 	if (custom_model == NULL) {
@@ -503,7 +493,7 @@ void GLM_DrawAliasModelFrame(
 
 	if (gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture)) {
 		if (R_PointIsUnderwater(currententity->origin)) {
-			effects |= AMF_CAUSTICS;
+			effects |= EF_CAUSTICS;
 		}
 	}
 

@@ -26,15 +26,12 @@ out vec4 fsBaseColor;
 flat out int fsFlags;
 flat out int fsTextureEnabled;
 flat out int fsTextureLuma;
-
 flat out int fsMaterialSampler;
 flat out int fsLumaSampler;
 
 struct AliasModel {
 	mat4 modelView;
 	vec4 color;
-	vec2 scale;
-	int apply_texture;
 	int flags;
 	float yaw_angle_rad;
 	float shadelight;
@@ -93,9 +90,9 @@ void main()
 
 	if ((fsFlags & AMF_SHELLFLAGS) == 0) {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
-		fsAltTextureCoord = fsTextureCoord = vec2(tex.s * models[_instanceId].scale.s, tex.t * models[_instanceId].scale.t);
-		fsTextureEnabled = (models[_instanceId].apply_texture & 1);
-		fsTextureLuma = (models[_instanceId].apply_texture & 2) == 2 ? 1 : 0;
+		fsAltTextureCoord = fsTextureCoord = vec2(tex.s, tex.t);
+		fsTextureEnabled = (models[_instanceId].flags & AMF_TEXTURE_MATERIAL);
+		fsTextureLuma = (models[_instanceId].flags & AMF_TEXTURE_LUMA);
 
 		// Lighting: this is rough approximation
 		//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983
@@ -116,6 +113,6 @@ void main()
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * shellSize, 1);
 		fsTextureCoord = vec2(tex.s * 2 + cos(time * 1.5), tex.t * 2 + sin(time * 1.1));
 		fsAltTextureCoord = vec2(tex.s * 2 + cos(time * -0.5), tex.t * 2 + sin(time * -0.5));
-		fsTextureEnabled = (models[_instanceId].apply_texture & 1);
+		fsTextureEnabled = (models[_instanceId].flags & AMF_TEXTURE_MATERIAL);
 	}
 }

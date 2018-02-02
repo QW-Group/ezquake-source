@@ -121,6 +121,8 @@ static int GLM_InsertDefinitions(
 	const char* definitions
 )
 {
+	extern unsigned char glsl_constants_glsl[];
+	extern unsigned int glsl_constants_glsl_len;
 	const char* break_point;
 
 	if (!strings[0] || !strings[0][0]) {
@@ -133,15 +135,17 @@ static int GLM_InsertDefinitions(
 		int position = break_point - strings[0];
 		int rest_of_code_pos = definitions ? 3 : 2;
 
-		lengths[3] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
-		lengths[2] = definitions ? strlen(definitions) : 0;
-		lengths[1] = strlen(core_definitions);
+		lengths[4] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[3] = definitions ? strlen(definitions) : 0;
+		lengths[2] = strlen(core_definitions);
+		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
-		strings[3] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
-		strings[2] = definitions ? definitions : "";
-		strings[1] = core_definitions;
+		strings[4] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[3] = definitions ? definitions : "";
+		strings[2] = core_definitions;
+		strings[1] = glsl_constants_glsl;
 
-		return 4;
+		return 5;
 	}
 
 	return 1;
@@ -159,14 +163,14 @@ static qbool GLM_CompileProgram(
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[] = { program->shader_text[GLM_VERTEX_SHADER], "", "", "" };
-	GLint vertex_shader_text_length[] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0, 0 };
+	const char* vertex_shader_text[] = { program->shader_text[GLM_VERTEX_SHADER], "", "", "", "" };
+	GLint vertex_shader_text_length[] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "", "" };
-	GLint geometry_shader_text_length[] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0, 0 };
+	const char* geometry_shader_text[] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "", "", "" };
+	GLint geometry_shader_text_length[] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "", "" };
-	GLint fragment_shader_text_length[] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0 };
+	const char* fragment_shader_text[] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "", "", "" };
+	GLint fragment_shader_text_length[] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
 	if (GL_ShadersSupported()) {

@@ -1014,9 +1014,7 @@ typedef struct uniform_block_world_s {
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
 	float color[4];
-	float scale[2];
-	int apply_texture;
-	int shellMode;
+	int amFlags;
 	float yaw_angle_rad;
 	float shadelight;
 	float ambientlight;
@@ -1024,7 +1022,6 @@ typedef struct uniform_block_aliasmodel_s {
 	int lumaSamplerMapping;
 	int lerpBaseIndex;
 	float lerpFraction;
-	float padding;
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {

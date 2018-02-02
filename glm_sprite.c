@@ -162,8 +162,6 @@ void GL_EndDrawSprites(void)
 	}
 }
 
-#define SPRITE_MAX_INSTANCEID_DEFINITION "#define MAX_INSTANCEID " # MAX_SPRITE_BATCH # "\n"
-
 static void GL_CompileSpriteProgram(void)
 {
 	if (GLM_ProgramRecompileNeeded(&spriteProgram, 0)) {
