@@ -965,19 +965,20 @@ typedef struct uniform_block_common2d_s {
 	int padding[2];
 } uniform_block_common2d_t;
 
-#define MAX_WORLDMODEL_BATCH 64
-#define MAX_ALIASMODEL_BATCH 64
-#define MAX_SPRITE_BATCH     64
+#define MAX_WORLDMODEL_MATRICES  32
+#define MAX_WORLDMODEL_BATCH     64
+#define MAX_ALIASMODEL_BATCH     64
+#define MAX_SPRITE_BATCH         64
 
 typedef struct uniform_block_world_calldata_s {
-	float modelMatrix[16];
-	float color[4];
+	float alpha;
 	GLint samplerMapping;
 	GLint flags;
-	GLint padding[2];
+	GLint matrixMapping;
 } uniform_block_world_calldata_t;
 
 typedef struct uniform_block_world_s {
+	float modelMatrix[MAX_WORLDMODEL_MATRICES][16];
 	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
 
 	// sky
@@ -1142,10 +1143,10 @@ typedef struct glm_worldmodel_req_s {
 	GLuint baseVertex;      // Offset of vertices in VBO
 	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
 
-	float mvMatrix[16];
+	int mvMatrixMapping;
 	int flags;
 	int sampler;
-	float color[4];
+	float alpha;
 	qbool polygonOffset;
 	qbool worldmodel;
 } glm_worldmodel_req_t;

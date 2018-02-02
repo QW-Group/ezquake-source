@@ -40,13 +40,14 @@ layout(std140) uniform RefdefCvars {
 };
 
 struct WorldDrawInfo {
-	mat4 modelMatrix;
-	vec4 color;
+	float alpha;
 	int samplerMapping;
 	int drawFlags;
+	int matrixMapping;
 };
 
 layout(std140) uniform WorldCvars {
+	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 
 	// sky
@@ -78,9 +79,9 @@ layout(std140) uniform WorldCvars {
 
 void main()
 {
-	gl_Position = projectionMatrix * drawInfo[_instanceId].modelMatrix * vec4(position, 1.0);
+	gl_Position = projectionMatrix * modelMatrix[drawInfo[_instanceId].matrixMapping] * vec4(position, 1.0);
 
-	FlatColor = flatColor * drawInfo[_instanceId].color.rgb;
+	FlatColor = flatColor;
 	Flags = vboFlags | drawInfo[_instanceId].drawFlags;
 
 	SamplerNumber = drawInfo[_instanceId].samplerMapping;

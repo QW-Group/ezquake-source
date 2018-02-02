@@ -29,21 +29,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void GL_SortDrawCalls(int* split);
 void GL_FlushWorldModelBatch(void);
 
-glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
-
 extern buffer_ref brushModel_vbo;
 extern GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
 
-static GLuint index_count;
-static qbool uniforms_set = false;
 extern texture_ref lightmap_texture_array;
 
+static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
+static GLuint index_count;
+static qbool uniforms_set = false;
 static glm_program_t drawworld;
 static GLint drawWorld_outlines;
 static GLuint drawworld_RefdefCvars_block;
 static GLuint drawworld_WorldCvars_block;
 
 static int batch_count = 0;
+static int matrix_count = 0;
 static buffer_ref vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES     1
@@ -116,6 +116,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
+		strlcat(included_definitions, va("#define MAX_MATRICES %d\n", MAX_WORLDMODEL_MATRICES), sizeof(included_definitions));
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);
@@ -229,12 +230,34 @@ void GLM_ExitBatchedPolyRegion(void)
 	//Cvar_SetValue(&developer, 0);
 }
 
-// TODO: process polygonOffset
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_color, texture_ref texture_array, qbool polygonOffset, qbool caustics)
+// Matrices often duplicated (camera position, entity position) so shared over draw calls
+// Finds matrix in the common list, adds if missing or returns -1 if list is full
+static int FindMatrix(void)
+{
+	float mvMatrix[16];
+	int i;
+
+	GLM_GetMatrix(GL_MODELVIEW, mvMatrix);
+	for (i = 0; i < matrix_count; ++i) {
+		if (!memcmp(world.modelMatrix[i], mvMatrix, sizeof(mvMatrix))) {
+			return i;
+		}
+	}
+
+	if (matrix_count < MAX_WORLDMODEL_MATRICES) {
+		memcpy(world.modelMatrix[matrix_count], mvMatrix, sizeof(mvMatrix));
+		return matrix_count++;
+	}
+
+	return -1;
+}
+
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, texture_ref texture_array, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
 	int sampler = -1;
 	qbool worldmodel = model->isworldmodel;
+	int matrixMapping = FindMatrix();
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
@@ -242,16 +265,14 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 	}
 
 	// See if previous batch has same texture & matrix, if so just continue
-	if (batch_count) {
-		float mvMatrix[16];
-
+	if (batch_count && matrixMapping >= 0) {
 		if (batch_count == 1) {
 			batch_count = batch_count;
 		}
 
 		req = &worldmodel_requests[batch_count - 1];
-		GLM_GetMatrix(GL_MODELVIEW, mvMatrix);
-		if (worldmodel == req->worldmodel && !memcmp(mvMatrix, req->mvMatrix, sizeof(mvMatrix))) {
+
+		if (worldmodel == req->worldmodel && matrixMapping == req->mvMatrixMapping) {
 			if (!GL_TextureReferenceIsValid(texture_array)) {
 				// We don't care about materials, so no problem here...
 				return req;
@@ -307,13 +328,12 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float* base_co
 
 	req = &worldmodel_requests[batch_count];
 
-	GLM_GetMatrix(GL_MODELVIEW, req->mvMatrix);
-	if (base_color) {
-		memcpy(&req->color, base_color, sizeof(req->color));
+	// If matrix list was full previously, will be okay now
+	if (matrixMapping < 0) {
+		matrixMapping = FindMatrix();
 	}
-	else {
-		req->color[0] = req->color[1] = req->color[2] = req->color[3] = 1.0f;
-	}
+	req->mvMatrixMapping = matrixMapping;
+	req->alpha = alpha;
 	req->sampler = sampler;
 	req->flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	req->polygonOffset = polygonOffset;
@@ -346,13 +366,13 @@ void GLM_DrawTexturedWorld(model_t* model)
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
 			glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false, false);
+			req = GLM_NextBatchRequest(model, 1.0f, null_texture_reference, false, false);
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
 				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 					GL_FlushWorldModelBatch();
-					req = GLM_NextBatchRequest(model, NULL, null_texture_reference, false, false);
+					req = GLM_NextBatchRequest(model, 1.0f, null_texture_reference, false, false);
 				}
 
 				if (req->count) {
@@ -384,7 +404,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false, false);
+			req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, false, false);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -394,7 +414,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, NULL, tex->gl_texture_array, false, false);
+							req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, false, false);
 						}
 
 						if (req->count) {
@@ -526,6 +546,7 @@ void GL_FlushWorldModelBatch(void)
 	frameStats.subdraw_calls += batch_count;
 	batch_count = 0;
 	index_count = 0;
+	matrix_count = 0;
 	material_samplers = 0;
 }
 
@@ -564,7 +585,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 				continue;
 			}
 
-			req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset, caustics);
+			req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
 			for (waterline = 0; waterline < 2; waterline++) {
 				for (surf = tex->texturechain[waterline]; surf; surf = surf->texturechain) {
 					glpoly_t* poly;
@@ -574,7 +595,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
 							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model, base_color, tex->gl_texture_array, polygonOffset, caustics);
+							req = GLM_NextBatchRequest(model, 1.0f, tex->gl_texture_array, polygonOffset, caustics);
 						}
 
 						if (req->count) {
@@ -633,9 +654,9 @@ static void GL_SortDrawCalls(int* split)
 	for (i = 0; i < batch_count; ++i) {
 		glm_worldmodel_req_t* this = &worldmodel_requests[i];
 
-		memcpy(world.calls[i].color, this->color, sizeof(world.calls[i].color));
-		memcpy(world.calls[i].modelMatrix, this->mvMatrix, sizeof(world.calls[i].modelMatrix));
+		world.calls[i].alpha = this->alpha;
 		world.calls[i].flags = this->flags;
+		world.calls[i].matrixMapping = this->mvMatrixMapping;
 		world.calls[i].samplerMapping = max(this->sampler, 0);
 		this->baseInstance = i;
 	}

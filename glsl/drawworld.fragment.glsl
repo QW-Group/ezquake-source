@@ -33,13 +33,14 @@ layout(std140) uniform RefdefCvars {
 };
 
 struct WorldDrawInfo {
-	mat4 modelMatrix;
-	vec4 color;
+	float alpha;
 	int samplerMapping;
 	int drawFlags;
+	int matrixMapping;
 };
 
 layout(std140) uniform WorldCvars {
+	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 
 	// sky
