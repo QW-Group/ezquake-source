@@ -324,7 +324,7 @@ else # Otherwise assume a roughly POSIX compliant OS with X11.
 	c_args += '-DX11_GAMMA_WORKAROUND'
 endif
 
-executable('ezquake', sources,
+executable('ezquake-' + host_machine.system() + '-' + host_machine.cpu(), sources,
 	dependencies : deps,
 	c_args : c_args,
 	link_args : link_args,
