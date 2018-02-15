@@ -28,10 +28,13 @@ out vec3 FlatColor;
 out flat int Flags;
 out flat int SamplerNumber;
 out vec3 Direction;
+
+#ifdef HARDWARE_LIGHTING
 out flat vec4 Plane;
 out flat vec3 PlaneMins0;
 out flat vec3 PlaneMins1;
 out vec2 LightingPoint;
+#endif
 
 struct WorldDrawInfo {
 	float alpha;
@@ -45,6 +48,7 @@ layout(std140) uniform WorldCvars {
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 };
 
+#ifdef HARDWARE_LIGHTING
 struct model_surface {
 	vec4 normal;
 	vec3 vecs0;
@@ -54,6 +58,7 @@ struct model_surface {
 layout(std140, binding=GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
 	model_surface surfaces[];
 };
+#endif
 
 void main()
 {
@@ -70,7 +75,9 @@ void main()
 		TextureCoord.z = materialNumber;
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = position - cameraPosition;
+#ifdef HARDWARE_LIGHTING
 		LightingPoint = vec2(0, 0);
+#endif
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif
@@ -92,11 +99,13 @@ void main()
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = detailCoord * 18;
 #endif
+#ifdef HARDWARE_LIGHTING
 		Plane = surfaces[surfaceNumber].normal;
 		PlaneMins0 = surfaces[surfaceNumber].vecs0;
 		PlaneMins1 = surfaces[surfaceNumber].vecs1;
 
 		LightingPoint.x = dot(PlaneMins0, position);
 		LightingPoint.y = dot(PlaneMins1, position);
+#endif
 	}
 }

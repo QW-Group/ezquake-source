@@ -44,6 +44,7 @@ in flat int Flags;
 in flat int SamplerNumber;
 in vec3 Direction;
 
+#ifdef HARDWARE_LIGHTING
 in flat vec4 Plane;
 in flat vec3 PlaneMins0;
 in flat vec3 PlaneMins1;
@@ -98,6 +99,7 @@ vec3 DynamicLighting(in vec3 lightmapBase)
 
 	return result;
 }
+#endif
 
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
