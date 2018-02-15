@@ -50,6 +50,9 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_SKYBOX              8
 #define DRAW_HARDWARE_LIGHTING  16
 #define DRAW_SKYDOME            32
+#define DRAW_FLATFLOORS         64
+#define DRAW_FLATWALLS         128
+#define DRAW_LIGHTMAPS         256
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
@@ -74,7 +77,10 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
 		(r_dynamic.integer == 2 ? DRAW_HARDWARE_LIGHTING : 0) |
-		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME));
+		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
+		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
+		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
+		(R_DrawLightmaps() ? DRAW_LIGHTMAPS : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
@@ -94,7 +100,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
-		if (luma_textures) {
+		if (luma_textures && r_drawflat.integer != 1 && !R_DrawLightmaps()) {
 			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
 		}
 		if (skybox) {
@@ -121,6 +127,15 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		strlcat(included_definitions, va("#define MAX_MATRICES %d\n", MAX_WORLDMODEL_MATRICES), sizeof(included_definitions));
 		if (r_dynamic.integer == 2) {
 			strlcat(included_definitions, "#define HARDWARE_LIGHTING\n", sizeof(included_definitions));
+		}
+		if (r_drawflat.integer == 1 || r_drawflat.integer == 2) {
+			strlcat(included_definitions, "#define DRAW_FLATFLOORS\n", sizeof(included_definitions));
+		}
+		if (r_drawflat.integer == 1 || r_drawflat.integer == 3) {
+			strlcat(included_definitions, "#define DRAW_FLATWALLS\n", sizeof(included_definitions));
+		}
+		if (R_DrawLightmaps()) {
+			strlcat(included_definitions, "#define DRAW_LIGHTMAPS\n", sizeof(included_definitions));
 		}
 		strlcat(included_definitions, va("#define GL_BINDINGPOINT_WORLDMODEL_SURFACES %d\n", GL_BINDINGPOINT_WORLDMODEL_SURFACES), sizeof(included_definitions));
 
@@ -394,6 +409,10 @@ void GLM_DrawTexturedWorld(model_t* model)
 				}
 			}
 		}
+	}
+
+	if (r_drawflat.integer == 1) {
+		return;
 	}
 
 	for (i = 0; i < model->texture_array_count; ++i) {

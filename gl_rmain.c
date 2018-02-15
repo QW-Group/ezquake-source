@@ -100,7 +100,6 @@ cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
 cvar_t r_drawflame                         = {"r_drawflame", "1"};
 cvar_t r_speeds                            = {"r_speeds", "0"};
 cvar_t r_fullbright                        = {"r_fullbright", "0"};
-cvar_t r_lightmap                          = {"r_lightmap", "0"};
 cvar_t r_shadows                           = {"r_shadows", "0"};
 cvar_t r_wateralpha                        = {"gl_turbalpha", "1"};
 cvar_t r_dynamic                           = {"r_dynamic", "1", 0, OnDynamicLightingChange };
@@ -192,6 +191,8 @@ cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 cvar_t gl_meshdraw                         = {"gl_meshdraw", "1"};
 cvar_t gl_postprocess_gamma                = {"gl_postprocess_gamma", "0", CVAR_RECOMPILE_PROGS};
+
+static cvar_t r_lightmap                   = {"r_lightmap", "0"};
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
@@ -1193,4 +1194,9 @@ qbool R_PointIsUnderwater(vec3_t point)
 	int contents = TruePointContents(point);
 
 	return ISUNDERWATER(contents);
+}
+
+qbool R_DrawLightmaps(void)
+{
+	return (r_lightmap.value && r_refdef2.allow_cheats);
 }

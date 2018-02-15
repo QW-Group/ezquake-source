@@ -177,7 +177,6 @@ extern	cvar_t	r_drawentities;
 extern	cvar_t	r_drawflame;
 extern	cvar_t	r_speeds;
 extern	cvar_t	r_fullbright;
-extern	cvar_t	r_lightmap;
 extern	cvar_t	r_shadows;
 extern	cvar_t	r_mirroralpha;
 extern	cvar_t	r_wateralpha;
@@ -1283,6 +1282,7 @@ void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
 
 float GL_WaterAlpha(void);
+qbool R_DrawLightmaps(void);
 
 #define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
 

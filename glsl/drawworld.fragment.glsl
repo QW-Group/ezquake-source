@@ -120,7 +120,6 @@ void main()
 	vec4 texColor;
 	vec4 lmColor;
 	int turbType;
-	bool isFloor;
 
 	if (draw_outlines == 1) {
 		frag_colour = vec4(0.5, 0.5, 0.5, 1);
@@ -196,30 +195,38 @@ void main()
 		}
 	}
 	else {
-		// Opaque material
-		if (r_drawflat != 0) {
-			isFloor = (Flags & EZQ_SURFACE_IS_FLOOR) == EZQ_SURFACE_IS_FLOOR;
+		// Typical material
+#if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
+		texColor = vec4(mix(r_wallcolor.rgb, r_floorcolor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+	#ifdef DRAW_LUMA_TEXTURES
+		lumaColor = vec4(0, 0, 0, 0);
+	#endif
+#elif defined(DRAW_FLATFLOORS)
+		texColor = vec4(mix(texColor.rgb, r_floorcolor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+	#ifdef DRAW_LUMA_TEXTURES
+		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), min(1, (Flags & EZQ_SURFACE_IS_FLOOR)));
+	#endif
+#elif defined(DRAW_FLATWALLS)
+		texColor = vec4(mix(r_wallcolor.rgb, texColor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+	#ifdef DRAW_LUMA_TEXTURES
+		lumaColor = mix(vec4(0, 0, 0, 0), lumaColor, min(1, (Flags & EZQ_SURFACE_IS_FLOOR)));
+	#endif
+#endif
 
-			if (isFloor && (r_drawflat == 1 || r_drawflat == 2)) {
-				texColor = r_floorcolor;
-			}
-			else if (!isFloor && (r_drawflat == 1 || r_drawflat == 3)) {
-				texColor = r_wallcolor;
-			}
-		}
-
-#ifdef DRAW_LUMA_TEXTURES
-		if (r_drawflat == 0 && r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+#if defined(DRAW_LUMA_TEXTURES)
+		if (r_texture_luma_fb == 0 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			texColor = vec4(texColor.rgb + lumaColor.rgb, texColor.a);
 		}
 #endif
-#ifdef HARDWARE_LIGHTING
+#ifdef DRAW_LIGHTMAPS
+		frag_colour = vec4(1 - lmColor.rgb, 1);
+#elif defined(HARDWARE_LIGHTING)
 		frag_colour = vec4(DynamicLighting(1 - lmColor.rgb), 1) * texColor;
 #else
 		frag_colour = vec4(1 - lmColor.rgb, 1) * texColor;
 #endif
 #ifdef DRAW_LUMA_TEXTURES
-		if (r_drawflat == 0 && r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
+		if (r_texture_luma_fb == 1 && (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA) {
 			frag_colour = vec4(frag_colour.rgb + lumaColor.rgb, frag_colour.a);
 		}
 #endif
