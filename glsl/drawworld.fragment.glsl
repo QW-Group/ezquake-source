@@ -153,7 +153,7 @@ void main()
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
 		// Turb surface
-		if (r_fastturb != 0) {
+		if (turbType != TEXTURE_TURB_SKY && r_fastturb != 0) {
 			if (turbType == TEXTURE_TURB_WATER) {
 				frag_colour = vec4(r_watercolor.rgb, waterAlpha);
 			}
