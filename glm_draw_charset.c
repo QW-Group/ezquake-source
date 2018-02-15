@@ -39,7 +39,12 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 		float frow = char_textures[slot].tl + (ch >> 4) * char_height;	// row = num * (16 chars per row)
 		float fcol = char_textures[slot].sl + (ch & 0x0F) * char_width;
 
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, fcol, frow, char_width, char_height, cache_currentColor, false, char_textures[new_charset].texnum, true);
+		float s = fcol + 0.5f * (char_textures[slot].th - char_textures[slot].tl) / GL_TextureWidth(char_textures[slot].texnum);
+		float t = frow + 0.5f * (char_textures[slot].th - char_textures[slot].tl) / GL_TextureHeight(char_textures[slot].texnum);
+		float tex_width = char_width - 0.5f / GL_TextureWidth(char_textures[slot].texnum);
+		float tex_height = char_height - 0.5f / GL_TextureHeight(char_textures[slot].texnum);
+
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, s, t, tex_width, tex_height, cache_currentColor, false, char_textures[new_charset].texnum, true);
 	}
 }
 
