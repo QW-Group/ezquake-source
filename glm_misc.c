@@ -134,7 +134,6 @@ void GLM_PreRenderView(void)
 	PASS_COLOR_AS_4F(frameConstants.r_slimecolor, r_slimecolor);
 	PASS_COLOR_AS_4F(frameConstants.r_watercolor, r_watercolor);
 
-	frameConstants.r_fastsky = r_fastsky.integer;
 	PASS_COLOR_AS_4F(frameConstants.r_skycolor, r_skycolor);
 
 	frameConstants.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;

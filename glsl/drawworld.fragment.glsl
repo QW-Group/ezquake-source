@@ -12,7 +12,7 @@ layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
 #ifdef DRAW_SKYBOX
 layout(binding=SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
-#else
+#elif defined(DRAW_SKYDOME)
 layout(binding=SAMPLER_SKYDOME_TEXTURE) uniform sampler2D skyDomeTex;
 layout(binding=SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
 #endif
@@ -173,25 +173,22 @@ void main()
 		else if (turbType == TEXTURE_TURB_SKY) {
 #ifdef DRAW_SKYBOX
 			frag_colour = texture(skyTex, Direction);
+#elif defined(DRAW_SKYDOME)
+			vec3 dir = normalize(Direction) * r_farclip;
+			float len;
+
+			// Flatten it out
+			dir.z *= 3;
+			len = 198 / length(dir);
+			dir.x *= len;
+			dir.y *= len;
+
+			vec4 skyColor = texture(skyDomeTex, vec2((skySpeedscale + dir.x) / 128.0, (skySpeedscale + dir.y) / 128.0));
+			vec4 cloudColor = texture(skyDomeCloudTex, vec2((skySpeedscale2 + dir.x) / 128.0, (skySpeedscale2 + dir.y) / 128.0));
+
+			frag_colour = mix(skyColor, cloudColor, cloudColor.a);
 #else
-			if (r_fastsky != 0) {
-				frag_colour = r_skycolor;
-			}
-			else {
-				vec3 dir = normalize(Direction) * r_farclip;
-				float len;
-
-				// Flatten it out
-				dir.z *= 3;
-				len = 198 / length(dir);
-				dir.x *= len;
-				dir.y *= len;
-
-				vec4 skyColor = texture(skyDomeTex, vec2((skySpeedscale + dir.x) / 128.0, (skySpeedscale + dir.y) / 128.0));
-				vec4 cloudColor = texture(skyDomeCloudTex, vec2((skySpeedscale2 + dir.x) / 128.0, (skySpeedscale2 + dir.y) / 128.0));
-
-				frag_colour = mix(skyColor, cloudColor, cloudColor.a);
-			}
+			frag_colour = r_skycolor;
 #endif
 		}
 		else {

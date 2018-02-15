@@ -49,6 +49,7 @@ static buffer_ref vbo_worldIndirectDraw;
 #define DRAW_LUMA_TEXTURES       4
 #define DRAW_SKYBOX              8
 #define DRAW_HARDWARE_LIGHTING  16
+#define DRAW_SKYDOME            32
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
@@ -73,7 +74,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
 		(r_dynamic.integer == 2 ? DRAW_HARDWARE_LIGHTING : 0) |
-		(skybox ? DRAW_SKYBOX : 0);
+		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME));
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
@@ -102,10 +103,11 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYBOX_TEXTURE %d\n", TEXTURE_UNIT_SKYBOX), sizeof(included_definitions));
 		}
-		else {
+		else if (!r_fastsky.integer) {
 			TEXTURE_UNIT_SKYDOME_TEXTURE = samplers++;
 			TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE = samplers++;
 
+			strlcat(included_definitions, "#define DRAW_SKYDOME\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_TEXTURE %d\n", TEXTURE_UNIT_SKYDOME_TEXTURE), sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_CLOUDTEXTURE %d\n", TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE), sizeof(included_definitions));
 		}
@@ -163,6 +165,7 @@ static void GLM_EnterBatchedWorldRegion(void)
 	int std_count = 0;
 
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
+	qbool skydome = !(r_skyboxloaded || r_fastsky.integer);
 
 	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
 
@@ -183,7 +186,7 @@ static void GLM_EnterBatchedWorldRegion(void)
 
 		std_textures[TEXTURE_UNIT_SKYBOX] = skybox_cubeMap;
 	}
-	else {
+	else if (skydome) {
 		extern texture_ref solidskytexture, alphaskytexture;
 
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
