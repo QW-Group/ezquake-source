@@ -695,15 +695,14 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
 				GL_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
 
+				if (j == TEXTURETYPES_BRUSHMODEL) {
+					GL_DeleteTexture(&texture_flags[i].ref);
+				}
 				any = true;
 			}
 		}
 
-		if (any) {
-			// Delete the original texture
-			GL_DeleteTexture(&texture_flags[i].ref);
-		}
-		else {
+		if (!any) {
 			break;
 		}
 	}
