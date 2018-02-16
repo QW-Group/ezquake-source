@@ -19,16 +19,10 @@ layout(binding=SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
 layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
-struct WorldDrawInfo {
-	float alpha;
-	int samplerMapping;
-	int drawFlags;
-	int matrixMapping;
-};
-
 layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
+	SamplerMapping samplerMapping[MAX_SAMPLER_MAPPINGS];
 };
 
 in vec3 TextureCoord;

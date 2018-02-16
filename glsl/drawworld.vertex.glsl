@@ -36,16 +36,10 @@ out flat vec3 PlaneMins1;
 out vec2 LightingPoint;
 #endif
 
-struct WorldDrawInfo {
-	float alpha;
-	int samplerMapping;
-	int drawFlags;
-	int matrixMapping;
-};
-
 layout(std140) uniform WorldCvars {
 	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
+	SamplerMapping samplerMapping[MAX_SAMPLER_MAPPINGS];
 };
 
 #ifdef HARDWARE_LIGHTING
@@ -62,17 +56,22 @@ layout(std140, binding=GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data 
 
 void main()
 {
+	int materialSampler = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].sampler;
+	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
+	int drawCallFlags = drawInfo[_instanceId].drawFlags;
+	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
+
 	gl_Position = projectionMatrix * modelMatrix[drawInfo[_instanceId].matrixMapping] * vec4(position, 1.0);
 
 	FlatColor = flatColor;
-	Flags = vboFlags | drawInfo[_instanceId].drawFlags;
+	Flags = vboFlags | drawCallFlags | textureFlags;
 
-	SamplerNumber = drawInfo[_instanceId].samplerMapping;
+	SamplerNumber = materialSampler;
 
 	if (lightmapNumber < 0) {
 		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;
 		TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;
-		TextureCoord.z = materialNumber;
+		TextureCoord.z = materialArrayIndex;
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = position - cameraPosition;
 #ifdef HARDWARE_LIGHTING
@@ -87,13 +86,13 @@ void main()
 	}
 	else {
 		if (r_textureless != 0) {
-			TextureCoord = vec3(0, 0, materialNumber);
+			TextureCoord = vec3(0, 0, materialArrayIndex);
 		}
 		else {
-			TextureCoord = vec3(tex, materialNumber);
+			TextureCoord = vec3(tex, materialArrayIndex);
 		}
 #ifdef DRAW_LUMA_TEXTURES
-		LumaCoord = (vboFlags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
+		LumaCoord = (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
 #endif
 		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
 #ifdef DRAW_DETAIL_TEXTURES

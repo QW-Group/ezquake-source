@@ -93,7 +93,7 @@ static int CopyVertToBuffer(model_t* mod, vbo_world_vert_t* vbo_buffer, int posi
 	target->flags |=
 		(surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0) |
 		(surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR : 0) |
-		(has_luma_texture ? EZQ_SURFACE_HAS_LUMA : 0) |
+		//(has_luma_texture ? EZQ_SURFACE_HAS_LUMA : 0) |
 		(surf->flags & SURF_DRAWALPHA ? EZQ_SURFACE_ALPHATEST : 0);
 	if (mod->isworldmodel) {
 		target->flags |= EZQ_SURFACE_DETAIL;
@@ -182,7 +182,7 @@ int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vb
 				int end_vert = 0;
 				int start_vert = 1;
 				int output = 0;
-				int material = m->textures[i]->gl_texture_index;
+				int material = i;
 				float scaleS = m->textures[i]->gl_texture_scaleS;
 				float scaleT = m->textures[i]->gl_texture_scaleT;
 

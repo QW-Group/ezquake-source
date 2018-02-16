@@ -1028,10 +1028,18 @@ typedef struct uniform_block_frame_constants_s {
 #define MAX_WORLDMODEL_BATCH     64
 #define MAX_ALIASMODEL_BATCH     64
 #define MAX_SPRITE_BATCH         64
+#define MAX_SAMPLER_MAPPINGS    256
+
+typedef struct sampler_mapping_s {
+	int samplerIndex;
+	float arrayIndex;
+	int flags;
+	int padding;
+} sampler_mapping_t;
 
 typedef struct uniform_block_world_calldata_s {
 	float alpha;
-	GLint samplerMapping;
+	GLint samplerBase;
 	GLint flags;
 	GLint matrixMapping;
 } uniform_block_world_calldata_t;
@@ -1039,6 +1047,7 @@ typedef struct uniform_block_world_calldata_s {
 typedef struct uniform_block_world_s {
 	float modelMatrix[MAX_WORLDMODEL_MATRICES][16];
 	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
+	sampler_mapping_t mappings[MAX_SAMPLER_MAPPINGS];
 } uniform_block_world_t;
 
 typedef struct uniform_block_aliasmodel_s {
@@ -1164,7 +1173,8 @@ typedef struct glm_worldmodel_req_s {
 
 	int mvMatrixMapping;
 	int flags;
-	int sampler;
+	int samplerMappingBase;
+	int samplerMappingCount;
 	float alpha;
 	qbool polygonOffset;
 	qbool worldmodel;

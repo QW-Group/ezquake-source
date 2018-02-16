@@ -139,26 +139,31 @@ void R_Check_R_FullBright(void)
 }
 
 //Returns the proper texture for a given time and base texture
-texture_t *R_TextureAnimation (texture_t *base) {
+texture_t *R_TextureAnimation(texture_t *base)
+{
 	int relative, count;
 
 	if (currententity->frame) {
-		if (base->alternate_anims)
+		if (base->alternate_anims) {
 			base = base->alternate_anims;
+		}
 	}
 
-	if (!base->anim_total)
+	if (!base->anim_total) {
 		return base;
+	}
 
 	relative = (int) (r_refdef2.time * 10) % base->anim_total;
 
-	count = 0;	
+	count = 0;
 	while (base->anim_min > relative || base->anim_max <= relative) {
 		base = base->anim_next;
-		if (!base)
-			Host_Error ("R_TextureAnimation: broken cycle");
-		if (++count > 100)
-			Host_Error ("R_TextureAnimation: infinite cycle");
+		if (!base) {
+			Host_Error("R_TextureAnimation: broken cycle");
+		}
+		if (++count > 100) {
+			Host_Error("R_TextureAnimation: infinite cycle");
+		}
 	}
 
 	return base;

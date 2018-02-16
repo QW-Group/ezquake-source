@@ -456,6 +456,7 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 
 		tx->width  = mt->width;
 		tx->height = mt->height;
+		tx->index = i;
 		tx->loaded = false; // so texture will be reloaded
 
 		if (mod->bspversion == HL_BSPVERSION) {

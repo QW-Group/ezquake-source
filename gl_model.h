@@ -80,10 +80,13 @@ typedef struct texture_s {
 	float               gl_texture_scaleS;
 	float               gl_texture_scaleT;
 
+	// FIXME: Get rid
 	float               min_s;
 	float               min_t;
 	float               max_s;
 	float               max_t;
+
+	int                 index;
 } texture_t;
 
 

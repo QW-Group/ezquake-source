@@ -52,3 +52,16 @@ layout(std140, binding=0) uniform GlobalState {
 	// lighting
 	float lightScale;
 };
+
+struct WorldDrawInfo {
+	float alpha;
+	int samplerBase;
+	int drawFlags;
+	int matrixMapping;
+};
+
+struct SamplerMapping {
+	int sampler;
+	float layer;
+	int flags;
+};
