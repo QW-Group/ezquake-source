@@ -128,6 +128,7 @@ static qbool BuildSkyDomeProgram(void)
 	return false;
 }
 
+#if 0
 static qbool BuildSkyBoxProgram(void)
 {
 	static glm_program_t skyBox;
@@ -385,6 +386,12 @@ static void GLM_DrawSkyBox(void)
 		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
 		++frameStats.draw_calls;
 	}
+}
+#endif
+
+void GLM_DrawSky(void)
+{
+	return;
 }
 
 static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int height)
