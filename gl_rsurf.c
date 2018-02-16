@@ -184,6 +184,8 @@ void R_ClearTextureChains(model_t *clmodel) {
 		}
 	}
 	clmodel->drawflat_chain[0] = clmodel->drawflat_chain[1] = NULL;
+	clmodel->first_texture_chained = clmodel->numtextures;
+	clmodel->last_texture_chained = -1;
 
 	r_notexture_mip->texturechain[0] = NULL;
 	r_notexture_mip->texturechain_tail[0] = &r_notexture_mip->texturechain[0];
@@ -301,6 +303,9 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			}
 
 			// add surf to the right chain
+			cl.worldmodel->first_texture_chained = min(cl.worldmodel->first_texture_chained, surf->texinfo->miptex);
+			cl.worldmodel->last_texture_chained = max(cl.worldmodel->last_texture_chained, surf->texinfo->miptex);
+
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			if (surf->flags & SURF_DRAWSKY) {
 				if (r_fastsky.integer || GL_ShadersSupported()) {

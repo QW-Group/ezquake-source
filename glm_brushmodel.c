@@ -142,19 +142,6 @@ int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vb
 	int combinations = 0;
 	int original_pos = vbo_pos;
 
-	// Clear lightmap data, we don't use it
-	/*
-	for (i = 0; i < m->numtextures; ++i) {
-		if (m->textures[i]) {
-			memset(m->textures[i]->gl_vbo_length, 0, sizeof(m->textures[i]->gl_vbo_length));
-			memset(m->textures[i]->gl_next_lightmap, 0, sizeof(m->textures[i]->gl_next_lightmap));
-			m->textures[i]->gl_first_lightmap = -1;
-			for (j = 0; j < MAX_LIGHTMAPS; ++j) {
-				m->textures[i]->gl_next_lightmap[j] = -1;
-			}
-		}
-	}*/
-
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
 		int lightmap = -1;

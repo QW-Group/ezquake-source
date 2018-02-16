@@ -250,11 +250,15 @@ static int FindMatrix(void)
 	return -1;
 }
 
-static void GLM_AssignTexture(glm_worldmodel_req_t* req, int texture_num, texture_t* texture)
+static qbool GLM_AssignTexture(glm_worldmodel_req_t* req, int texture_num, texture_t* texture)
 {
 	int index = req->samplerMappingBase + texture_num;
 	int i;
 	int sampler = -1;
+
+	if (index >= sizeof(world.mappings) / sizeof(world.mappings[0])) {
+		return false;
+	}
 
 	for (i = 0; i < material_samplers; ++i) {
 		if (GL_TextureReferenceEqual(texture->gl_texture_array, allocated_samplers[i])) {
@@ -275,6 +279,7 @@ static void GLM_AssignTexture(glm_worldmodel_req_t* req, int texture_num, textur
 	world.mappings[index].samplerIndex = sampler;
 	world.mappings[index].arrayIndex = texture->gl_texture_index;
 	world.mappings[index].flags = GL_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	return true;
 }
 
 static glm_worldmodel_req_t* GLM_NextBatchRequest(qbool worldmodel, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics)
@@ -291,10 +296,6 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(qbool worldmodel, float alpha,
 	/*
 	// See if previous batch has same texture & matrix, if so just continue
 	if (batch_count && matrixMapping >= 0) {
-		if (batch_count == 1) {
-			batch_count = batch_count;
-		}
-
 		req = &worldmodel_requests[batch_count - 1];
 
 		if (worldmodel == req->worldmodel && matrixMapping == req->mvMatrixMapping) {
@@ -328,29 +329,6 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(qbool worldmodel, float alpha,
 	if (sampler_mappings >= MAX_SAMPLER_MAPPINGS || batch_count >= MAX_WORLDMODEL_BATCH) {
 		GL_FlushWorldModelBatch();
 	}
-
-	/*
-	if (num_textures == 0) {
-		sampler = -1;
-	}
-	else {
-		int i;
-		for (i = 0; i < material_samplers; ++i) {
-			if (GL_TextureReferenceEqual(texture_array, allocated_samplers[i])) {
-				sampler = i;
-				break;
-			}
-		}
-
-		if (sampler < 0) {
-			if (material_samplers >= material_samplers_max) {
-				GL_FlushWorldModelBatch();
-			}
-
-			sampler = material_samplers++;
-			allocated_samplers[sampler] = texture_array;
-		}
-	}*/
 
 	req = &worldmodel_requests[batch_count];
 
@@ -431,7 +409,10 @@ void GLM_DrawTexturedWorld(model_t* model)
 		for (surf = model->drawflat_chain[waterline]; surf; surf = surf->drawflatchain) {
 			glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 0, 0, false, false);
+			if (!req) {
+				req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 0, 0, false, false);
+			}
+
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
@@ -453,46 +434,41 @@ void GLM_DrawTexturedWorld(model_t* model)
 		}
 	}
 
-	for (i = 0; i < model->texture_array_count; ++i) {
-		texture_t* base_tex = model->textures[model->texture_array_first[i]];
-		int texIndex;
+	req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, false, false);
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		texture_t* tex = model->textures[i];
 
-		if (!base_tex || !base_tex->size_start || !GL_TextureReferenceIsValid(base_tex->gl_texture_array)) {
+		if (!tex->texturechain[0] && !tex->texturechain[1]) {
 			continue;
 		}
 
-		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
-			texture_t* tex = model->textures[texIndex];
+		tex = R_TextureAnimation(tex);
+		if (!GLM_AssignTexture(req, i, tex)) {
+			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, model->last_texture_chained - i + 1, i, false, false);
+			GLM_AssignTexture(req, i, tex);
+		}
 
-			if (!tex->texturechain[0] && !tex->texturechain[1]) {
-				continue;
-			}
+		for (waterline = 0; waterline < 2; waterline++) {
+			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
+				glpoly_t* poly;
 
-			tex = R_TextureAnimation(tex);
-			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 1, texIndex, false, false);
-			GLM_AssignTexture(req, texIndex, tex);
-			for (waterline = 0; waterline < 2; waterline++) {
-				for (surf = model->textures[texIndex]->texturechain[waterline]; surf; surf = surf->texturechain) {
-					glpoly_t* poly;
+				for (poly = surf->polys; poly; poly = poly->next) {
+					int newVerts = poly->numverts;
 
-					for (poly = surf->polys; poly; poly = poly->next) {
-						int newVerts = poly->numverts;
+					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+						GL_FlushWorldModelBatch();
+						req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, model->last_texture_chained - i + 1, i, false, false);
+						GLM_AssignTexture(req, i, tex);
+					}
 
-						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
-							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 1, texIndex, false, false);
-							GLM_AssignTexture(req, texIndex, tex);
-						}
+					if (req->count) {
+						modelIndexes[index_count++] = ~(GLuint)0;
+						req->count++;
+					}
 
-						if (req->count) {
-							modelIndexes[index_count++] = ~(GLuint)0;
-							req->count++;
-						}
-
-						for (v = 0; v < newVerts; ++v) {
-							modelIndexes[index_count++] = poly->vbo_start + v;
-							req->count++;
-						}
+					for (v = 0; v < newVerts; ++v) {
+						modelIndexes[index_count++] = poly->vbo_start + v;
+						req->count++;
 					}
 				}
 			}
@@ -629,47 +605,42 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glm_worldmodel_req_t* req = NULL;
 
-	for (i = 0; i < model->texture_array_count; ++i) {
-		texture_t* base_tex = model->textures[model->texture_array_first[i]];
-		int texIndex;
+	req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics);
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		texture_t* tex = model->textures[i];
 
-		if (!base_tex || !base_tex->size_start || !GL_TextureReferenceIsValid(base_tex->gl_texture_array)) {
+		if (!tex || !GL_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 
-		for (texIndex = model->texture_array_first[i]; texIndex >= 0 && texIndex < model->numtextures; texIndex = model->textures[texIndex]->next_same_size) {
-			texture_t* tex = model->textures[texIndex];
+		if (!tex->texturechain[0] && !tex->texturechain[1]) {
+			continue;
+		}
 
-			if (!tex->texturechain[0] && !tex->texturechain[1]) {
-				continue;
-			}
+		tex = R_TextureAnimation(tex);
 
-			tex = R_TextureAnimation(tex);
+		GLM_AssignTexture(req, i, tex);
+		for (waterline = 0; waterline < 2; ++waterline) {
+			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
+				glpoly_t* poly;
 
-			req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 1, texIndex, polygonOffset, caustics);
-			GLM_AssignTexture(req, texIndex, tex);
-			for (waterline = 0; waterline < 2; waterline++) {
-				for (surf = model->textures[texIndex]->texturechain[waterline]; surf; surf = surf->texturechain) {
-					glpoly_t* poly;
+				for (poly = surf->polys; poly; poly = poly->next) {
+					int newVerts = poly->numverts;
 
-					for (poly = surf->polys; poly; poly = poly->next) {
-						int newVerts = poly->numverts;
+					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+						GL_FlushWorldModelBatch();
+						req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics);
+						GLM_AssignTexture(req, i, tex);
+					}
 
-						if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
-							GL_FlushWorldModelBatch();
-							req = GLM_NextBatchRequest(model->isworldmodel, 1.0f, 1, texIndex, polygonOffset, caustics);
-							GLM_AssignTexture(req, texIndex, tex);
-						}
+					if (req->count) {
+						modelIndexes[index_count++] = ~(GLuint)0;
+						req->count++;
+					}
 
-						if (req->count) {
-							modelIndexes[index_count++] = ~(GLuint)0;
-							req->count++;
-						}
-
-						for (v = 0; v < newVerts; ++v) {
-							modelIndexes[index_count++] = poly->vbo_start + v;
-							req->count++;
-						}
+					for (v = 0; v < newVerts; ++v) {
+						modelIndexes[index_count++] = poly->vbo_start + v;
+						req->count++;
 					}
 				}
 			}

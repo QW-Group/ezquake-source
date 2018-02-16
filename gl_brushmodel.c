@@ -1514,6 +1514,8 @@ void R_DrawBrushModel(entity_t *e)
 			}
 			else {
 				underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
+				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
 				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 			}
 		}

@@ -65,11 +65,6 @@ typedef struct texture_s {
 	int	                isLumaTexture;
 	int                 turbType;
 
-	//int                 gl_first_lightmap;
-	//int                 gl_vbo_start[MAX_LIGHTMAPS];
-	//int                 gl_vbo_length[MAX_LIGHTMAPS];
-	//int                 gl_next_lightmap[MAX_LIGHTMAPS];
-
 	int                 gl_width;
 	int                 gl_height;
 	int                 next_same_size;
@@ -545,13 +540,9 @@ typedef struct model_s {
 	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];
 
-	//unsigned int        texture_array;
-	//unsigned int        texture_sizes_texture;
-
-	//unsigned int        texture_array_width;
-	//unsigned int        texture_array_height;
-
 	msurface_t*         drawflat_chain[2];
+	int                 first_texture_chained;
+	int                 last_texture_chained;
 } model_t;
 
 //============================================================================
