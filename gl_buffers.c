@@ -54,6 +54,7 @@ static glBindBufferBase_t glBindBufferBase = NULL;
 // Cache OpenGL state
 static GLuint currentArrayBuffer;
 static GLuint currentUniformBuffer;
+static GLuint currentDrawIndirectBuffer;
 
 buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
 {
@@ -190,6 +191,13 @@ static void GL_BindBufferImpl(GLenum target, GLuint buffer)
 		}
 		currentUniformBuffer = buffer;
 	}
+	else if (target == GL_DRAW_INDIRECT_BUFFER) {
+		if (buffer == currentDrawIndirectBuffer) {
+			return;
+		}
+
+		currentDrawIndirectBuffer = buffer;
+	}
 
 	glBindBuffer(target, buffer);
 }
@@ -233,7 +241,7 @@ buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size)
 
 void GL_InitialiseBufferState(void)
 {
-	currentArrayBuffer = currentUniformBuffer = 0;
+	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
 }
 
 void GL_UnBindBuffer(GLenum target)
