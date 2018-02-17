@@ -46,16 +46,17 @@ static int batch_count = 0;
 static int matrix_count = 0;
 static buffer_ref vbo_worldIndirectDraw;
 
-#define DRAW_DETAIL_TEXTURES     1
-#define DRAW_CAUSTIC_TEXTURES    2
-#define DRAW_LUMA_TEXTURES       4
-#define DRAW_SKYBOX              8
-#define DRAW_HARDWARE_LIGHTING  16
-#define DRAW_SKYDOME            32
-#define DRAW_FLATFLOORS         64
-#define DRAW_FLATWALLS         128
-#define DRAW_LIGHTMAPS         256
-#define DRAW_LUMA_TEXTURES_FB  512
+#define DRAW_DETAIL_TEXTURES       1
+#define DRAW_CAUSTIC_TEXTURES      2
+#define DRAW_LUMA_TEXTURES         4
+#define DRAW_SKYBOX                8
+#define DRAW_HARDWARE_LIGHTING    16
+#define DRAW_SKYDOME              32
+#define DRAW_FLATFLOORS           64
+#define DRAW_FLATWALLS           128
+#define DRAW_LIGHTMAPS           256
+#define DRAW_LUMA_TEXTURES_FB    512
+#define DRAW_TEXTURELESS        1024
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
@@ -75,6 +76,7 @@ static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures, qbool skybox)
 {
+	extern cvar_t gl_textureless;
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
@@ -84,7 +86,8 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
-		(R_DrawLightmaps() ? DRAW_LIGHTMAPS : 0);
+		(R_DrawLightmaps() ? DRAW_LIGHTMAPS : 0) |
+		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
@@ -143,6 +146,9 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		}
 		if (R_DrawLightmaps()) {
 			strlcat(included_definitions, "#define DRAW_LIGHTMAPS\n", sizeof(included_definitions));
+		}
+		if (gl_textureless.integer) {
+			strlcat(included_definitions, "#define DRAW_TEXTURELESS\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image

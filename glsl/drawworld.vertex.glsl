@@ -85,12 +85,12 @@ void main()
 #endif
 	}
 	else {
-		if (r_textureless != 0) {
-			TextureCoord = vec3(0, 0, materialArrayIndex);
-		}
-		else {
-			TextureCoord = vec3(tex, materialArrayIndex);
-		}
+#ifdef DRAW_TEXTURELESS
+		TextureCoord = vec3(0, 0, materialArrayIndex);
+#else
+		TextureCoord = vec3(tex, materialArrayIndex);
+#endif
+
 #ifdef DRAW_LUMA_TEXTURES
 		LumaCoord = (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
 #endif
