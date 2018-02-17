@@ -357,129 +357,57 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
-static void QMB_CreateAtlasTexture(texture_ref* textures, int count)
+static void QMB_DuplicateForPreMultipliedAlpha(byte* data, int width, int height)
 {
-	int horizontal_widths[32], vertical_offsets[32];
-	int widths[32], heights[32];
-	int total_height = 0;
-	int max_width = 0;
-	int i, j;
-	texture_ref atlas_tex;
-	int y_pos;
-	int offsets[4];
-	byte* atlas_texels;
+	int x, y;
 
-	if (count > sizeof(widths) / sizeof(widths[0])) {
-		Sys_Error("Internal error, too many textures to be put on atlas");
-	}
+	memcpy(data + width * height * 4, data, width * height * 4);
 
-	memset(horizontal_widths, 0, sizeof(horizontal_widths));
-	memset(vertical_offsets, 0, sizeof(vertical_offsets));
-	for (i = 0; i < count; ++i) {
-		int texWidth, texHeight;
+	// Adjust particle font as we simplified the blending rules...
+	for (x = 0; x < width; ++x) {
+		for (y = height; y < height * 2; ++y) {
+			byte* base = data + (x + y * width) * 4;
 
-		texWidth = GL_TextureWidth(textures[i]);
-		texHeight = GL_TextureHeight(textures[i]);
-
-		offsets[i] = total_height;
-		heights[i] = texHeight;
-		widths[i] = texWidth;
-
-		total_height += texHeight;
-		max_width = max(max_width, texWidth);
-	}
-
-	if (max_width == 0 || total_height == 0 || max_width > glConfig.gl_max_size_default || total_height > glConfig.gl_max_size_default) {
-		return;
-	}
-
-	// Allocate 3 lines of solid colour for non-textured particles
-	total_height += 3;
-
-	// Create texture in memory
-	atlas_texels = Q_malloc(sizeof(byte) * 4 * total_height * max_width);
-	y_pos = 0;
-
-	// Solid white for non-textured particles
-	memset(atlas_texels + (total_height - 3) * max_width * 4, 0xFF, 3 * 4 * max_width);
-	particle_textures[ptex_none].components = 1;
-	particle_textures[ptex_none].coords[0][0] = particle_textures[ptex_none].coords[0][2] = 1.0f / max_width;
-	particle_textures[ptex_none].coords[0][1] = particle_textures[ptex_none].coords[0][3] = (total_height - 1.0f) / total_height;
-
-	// Copy each texture into the atlas
-	for (i = 0; i < count; ++i) {
-		int yOffset, xOffset;
-		int width = widths[i];
-		int height = heights[i];
-		byte* buffer = Q_malloc(width * height * 4);
-
-		vertical_offsets[i] = y_pos;
-		horizontal_widths[i] = width;
-
-		GL_GetTexImage(GL_TEXTURE0, textures[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, width * height * 4, buffer);
-
-		for (yOffset = 0; yOffset < height; ++yOffset) {
-			for (xOffset = 0; xOffset < width; ++xOffset) {
-				int y = y_pos + yOffset;
-				int x = xOffset;
-				int base = (x + y * max_width) * 4;
-				int srcBase = (xOffset + yOffset * width) * 4;
-
-				atlas_texels[base] = buffer[srcBase];
-				atlas_texels[base + 1] = buffer[srcBase + 1];
-				atlas_texels[base + 2] = buffer[srcBase + 2];
-				atlas_texels[base + 3] = buffer[srcBase + 3];
-			}
+			// Pre-multiply alpha
+			base[0] = (byte)(((int)base[0] * (int)base[3]) / 255.0);
+			base[1] = (byte)(((int)base[1] * (int)base[3]) / 255.0);
+			base[2] = (byte)(((int)base[2] * (int)base[3]) / 255.0);
 		}
-
-		Q_free(buffer);
-
-		// Fix-up texture coordinates
-		for (j = 0; j < num_particletextures; ++j) {
-			if (GL_TextureReferenceEqual(particle_textures[j].texnum, textures[i])) {
-				int c;
-
-				for (c = 0; c < particle_textures[j].components; ++c) {
-					int old_x = particle_textures[j].coords[c][0] * width;
-					int old_y = particle_textures[j].coords[c][1] * height;
-					int old_x2 = particle_textures[j].coords[c][2] * width;
-					int old_y2 = particle_textures[j].coords[c][3] * height;
-
-					particle_textures[j].coords[c][0] = old_x / (float)max_width;
-					particle_textures[j].coords[c][1] = (y_pos + old_y) / (float)total_height;
-					particle_textures[j].coords[c][2] = old_x2 / (float)max_width;
-					particle_textures[j].coords[c][3] = (y_pos + old_y2) / (float)total_height;
-				}
-			}
-		}
-
-		y_pos += height;
 	}
-
-	// Upload
-	atlas_tex = GL_LoadTexture("qmb:particle_atlas", max_width, total_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
-
-	// Tidy up
-	Q_free(atlas_texels);
-
-	for (j = 0; j < num_particletextures; ++j) {
-		particle_textures[j].texnum = atlas_tex;
-	}
-
-	return;
 }
 
-static texture_ref QMB_LoadTextureImage(const char* path, const char* id, int matchwidth, int matchheight, int mode, qbool invert_regions)
+static void QMB_LoadTextureSubImage(part_tex_t tex, const char* id, const byte* pixels, byte* temp_buffer, int full_width, int full_height, int texIndex, int components, int sub_x, int sub_y, int sub_x2, int sub_y2)
 {
+	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
+	texture_ref tex_ref;
+	int y;
+	int width = sub_x2 - sub_x;
+	int height = sub_y2 - sub_y;
+
+	width = (width * full_width) / 256;
+	height = (height * full_height) / 256;
+	sub_x = (sub_x * full_width) / 256;
+	sub_y = (sub_y * full_height) / 256;
+
+	for (y = 0; y < height; ++y) {
+		memcpy(temp_buffer + y * width * 4, pixels + ((sub_y + y) * full_width + sub_x) * 4, width * 4);
+	}
+
+	QMB_DuplicateForPreMultipliedAlpha(temp_buffer, width, height);
+
+	tex_ref = GL_LoadTexture(id, width, height * 2, temp_buffer, mode, 4);
+
+	ADD_PARTICLE_TEXTURE(tex, tex_ref, texIndex, components, 0, 0, 256, 256);
+}
+
+static texture_ref QMB_LoadTextureImage(const char* path)
+{
+	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
+
 	int real_width, real_height;
-	int x, y;
-	byte* original = GL_LoadImagePixels(path, matchwidth, matchheight, mode, &real_width, &real_height);
+	byte* original = GL_LoadImagePixels(path, 0, 0, mode, &real_width, &real_height);
 	byte* data;
 	texture_ref tex;
-
-	if (!id) {
-		id = path;
-	}
 
 	if (original == NULL) {
 		return null_texture_reference;
@@ -493,22 +421,11 @@ static texture_ref QMB_LoadTextureImage(const char* path, const char* id, int ma
 
 	// Copy the data twice, once for pre-multiplied and one without
 	memcpy(data, original, real_width * real_height * 4);
-	memcpy(data + real_width * real_height * 4, original, real_width * real_height * 4);
+
+	QMB_DuplicateForPreMultipliedAlpha(data, real_width, real_height);
 	Q_free(original);
 
-	// Adjust particle font as we simplified the blending rules...
-	for (x = 0; x < real_width; ++x) {
-		for (y = real_height; y < real_height * 2; ++y) {
-			byte* base = data + (x + y * real_width) * 4;
-
-			// Pre-multiply alpha
-			base[0] = (byte)(((int)base[0] * (int)base[3]) / 255.0);
-			base[1] = (byte)(((int)base[1] * (int)base[3]) / 255.0);
-			base[2] = (byte)(((int)base[2] * (int)base[3]) / 255.0);
-		}
-	}
-
-	tex = GL_LoadTexture(id, real_width, real_height * 2, data, mode, 4);
+	tex = GL_LoadTexture(path, real_width, real_height * 2, data, mode, 4);
 	Q_free(data);
 	return tex;
 }
@@ -516,7 +433,7 @@ static texture_ref QMB_LoadTextureImage(const char* path, const char* id, int ma
 void QMB_InitParticles (void)
 {
 	int	i, count = 0;
-	texture_ref particlefont, shockwave_texture, lightning_texture, spark_texture;
+	texture_ref shockwave_texture, lightning_texture, spark_texture;
 
     Cvar_Register (&amf_part_fulldetail);
 	if (!host_initialized && COM_CheckParm("-detailtrails")) {
@@ -539,43 +456,49 @@ void QMB_InitParticles (void)
 		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 	}
 
-	particlefont = QMB_LoadTextureImage("textures/particles/particlefont", "qmb:particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, true);
-	if (!GL_TextureReferenceIsValid(particlefont)) {
-		return;
-	}
-	shockwave_texture = QMB_LoadTextureImage("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, false);
-	if (!GL_TextureReferenceIsValid(shockwave_texture)) {
-		return;
-	}
-	lightning_texture = QMB_LoadTextureImage("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, false);
-	if (!GL_TextureReferenceIsValid(lightning_texture)) {
-		return;
-	}
-	spark_texture = QMB_LoadTextureImage("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, false);
-	if (!GL_TextureReferenceIsValid(spark_texture)) {
-		return;
-	}
+	ADD_PARTICLE_TEXTURE(ptex_none, null_texture_reference, 0, 1, 0, 0, 0, 0);
 
-	ADD_PARTICLE_TEXTURE(ptex_none, null_texture_reference, 0, 1, 0, 0, 0, 0);	
-	ADD_PARTICLE_TEXTURE(ptex_blood1, particlefont, 0, 1, 0, 0, 64, 64);
-	ADD_PARTICLE_TEXTURE(ptex_blood2, particlefont, 0, 1, 64, 0, 128, 64);
-	ADD_PARTICLE_TEXTURE(ptex_lava, particlefont, 0, 1, 128, 0, 192, 64);
-	ADD_PARTICLE_TEXTURE(ptex_blueflare, particlefont, 0, 1, 192, 0, 256, 64);
-	ADD_PARTICLE_TEXTURE(ptex_generic, particlefont, 0, 1, 0, 96, 96, 192);
-	ADD_PARTICLE_TEXTURE(ptex_smoke, particlefont, 0, 1, 96, 96, 192, 192);
-	ADD_PARTICLE_TEXTURE(ptex_blood3, particlefont, 0, 1, 192, 96, 256, 160);
-	ADD_PARTICLE_TEXTURE(ptex_bubble, particlefont, 0, 1, 192, 160, 224, 192);
-	for (i = 0; i < 8; i++) {
-		ADD_PARTICLE_TEXTURE(ptex_dpsmoke, particlefont, i, 8, i * 32, 64, (i + 1) * 32, 96);
+	// Move particle fonts off atlas and into their own textures...
+	{
+		int real_width, real_height;
+		byte* original = GL_LoadImagePixels("textures/particles/particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, &real_width, &real_height);
+		byte* temp_buffer;
+		if (!original) {
+			return;
+		}
+
+		temp_buffer = Q_malloc(real_width * real_height * 2 * 4);  // double height for pre-multiplied alpha version
+		QMB_LoadTextureSubImage(ptex_blood1, "qmb:blood1", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
+		QMB_LoadTextureSubImage(ptex_blood2, "qmb:blood2", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
+		QMB_LoadTextureSubImage(ptex_lava, "qmb:lava", original, temp_buffer, real_width, real_height, 0, 1, 128, 0, 192, 64);
+		QMB_LoadTextureSubImage(ptex_blueflare, "qmb:blueflare", original, temp_buffer, real_width, real_height, 0, 1, 192, 0, 256, 64);
+		QMB_LoadTextureSubImage(ptex_generic, "qmb:generic", original, temp_buffer, real_width, real_height, 0, 1, 0, 96, 96, 192);
+		QMB_LoadTextureSubImage(ptex_smoke, "qmb:smoke", original, temp_buffer, real_width, real_height, 0, 1, 96, 96, 192, 192);
+		QMB_LoadTextureSubImage(ptex_blood3, "qmb:blood3", original, temp_buffer, real_width, real_height, 0, 1, 192, 96, 256, 160);
+		QMB_LoadTextureSubImage(ptex_bubble, "qmb:bubble", original, temp_buffer, real_width, real_height, 0, 1, 192, 160, 224, 192);
+		for (i = 0; i < 8; i++) {
+			QMB_LoadTextureSubImage(ptex_dpsmoke, va("qmb:smoke%d", i), original, temp_buffer, real_width, real_height, i, 8, i * 32, 64, (i + 1) * 32, 96);
+		}
+		Q_free(temp_buffer);
+		Q_free(original);
 	}
 
 	//VULT PARTICLES
+	shockwave_texture = QMB_LoadTextureImage("textures/shockwavetex");
+	if (!GL_TextureReferenceIsValid(shockwave_texture)) {
+		return;
+	}
+	lightning_texture = QMB_LoadTextureImage("textures/zing1");
+	if (!GL_TextureReferenceIsValid(lightning_texture)) {
+		return;
+	}
+	spark_texture = QMB_LoadTextureImage("textures/sparktex");
+	if (!GL_TextureReferenceIsValid(spark_texture)) {
+		return;
+	}
 	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 128, 128);
 	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 256, 256);
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
-
-	// Move all textures onto the same
-	// QMB_CreateAtlasTexture(particlefont, shockwave_texture, lightning_texture, spark_texture);
 
 	ADD_PARTICLE_TYPE(p_spark, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9);
 	ADD_PARTICLE_TYPE(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9);
