@@ -405,7 +405,7 @@ static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
 
 typedef void(*GL_StateChangeFunction)(void);
 
-void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
+static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
 {
 	int i;
 	GL_StateChangeFunction beginState[] = {
@@ -421,14 +421,16 @@ void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
 		GL_EndDrawAliasModels,
 	};
 
-	if (r_drawentities.value && vislist->count) {
-		qsort(vislist->list, vislist->count, sizeof(vislist->list[0]), R_DrawEntitiesSorter);
-
+	if (r_drawentities.value && vislist->typecount[type] >= 0) {
 		GL_StateBeginEntities(vislist);
 
 		for (i = 0; i < vislist->count; i++) {
 			visentity_t* todraw = &vislist->list[i];
 			currententity = &todraw->ent;
+
+			if (!todraw->draw[type]) {
+				continue;
+			}
 
 			if (current_state != todraw->type) {
 				if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
@@ -457,7 +459,7 @@ void R_DrawEntitiesOnList(visentlist_t *vislist, modtype_t current_state)
 				}
 				break;
 			case mod_alias:
-				if (todraw->shell_only) {
+				if (type == visent_shells) {
 					R_DrawAliasPowerupShell(currententity);
 				}
 				else {
@@ -932,19 +934,19 @@ void R_Init(void)
 
 static void R_RenderScene(void)
 {
+	visentlist_entrytype_t ent_type;
+
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
 
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
-		R_DrawEntitiesOnList(&cl_visents, mod_brush);
-		GL_LeaveRegion();
-	}
+		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 
-	if (r_drawentities.integer && cl_alphaents.count) {
-		GL_EnterRegion("R_DrawEntities (Alpha)");
-		R_DrawEntitiesOnList(&cl_alphaents, mod_unknown);
+		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
+			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);
+		}
 		GL_LeaveRegion();
 	}
 

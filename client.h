@@ -624,22 +624,32 @@ typedef struct {
 
 extern	clientState_t	cl;
 
+typedef enum visentlist_entrytype_s {
+	visent_firstpass,
+	visent_normal,
+	visent_alpha,
+	visent_shells,
+
+	visent_max
+} visentlist_entrytype_t;
+
 typedef struct visentity_s {
 	entity_t    ent;
 	modtype_t   type;
-	qbool       shell_only;
 	float       distance;
+
+	qbool       draw[visent_max];
 } visentity_t;
 
 typedef struct visentlist_s {
 	visentity_t *list;
 	int         count;
 	int         max;
-	int         alpha;
-	qbool       alphablend;
+
+	int         typecount[visent_max];
 } visentlist_t;
 
-extern visentlist_t cl_firstpassents, cl_visents, cl_alphaents;
+extern visentlist_t cl_visents;
 
 // ezQuake cvars
 extern cvar_t cl_floodprot;

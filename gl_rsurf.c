@@ -388,12 +388,6 @@ void R_DrawWorld(void)
 	//draw the world sky
 	R_DrawSky();
 
-	if (cl_firstpassents.count) {
-		GL_EnterRegion("Entities-1st");
-		R_DrawEntitiesOnList(&cl_firstpassents, mod_unknown);
-		GL_LeaveRegion();
-	}
-
 	if (GL_ShadersSupported()) {
 		GL_EnterRegion("DrawWorld");
 		GLM_DrawTexturedWorld(cl.worldmodel);

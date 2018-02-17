@@ -61,7 +61,6 @@ model_t *cl_flame0_model;
 
 void CL_InitEnts(void) {
 	int i;
-	byte *memalloc;
 
 	memset(cl_modelnames, 0, sizeof(cl_modelnames));
 
@@ -148,19 +147,8 @@ void CL_InitEnts(void) {
 		}
 	}
 
-	cl_firstpassents.max = MAX_FIRSTPASS_ENTITIES;
-	cl_firstpassents.alpha = 0;
-
 	cl_visents.max = MAX_STANDARD_ENTITIES;
-	cl_visents.alpha = 0;
-
-	cl_alphaents.max = MAX_ALPHA_ENTITIES;
-	cl_alphaents.alpha = 1;
-
-	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(visentity_t), "visents");
-	cl_firstpassents.list = (visentity_t *) memalloc;
-	cl_visents.list = (visentity_t *) memalloc + cl_firstpassents.max;
-	cl_alphaents.list = (visentity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
+	cl_visents.list = (visentity_t *)Hunk_AllocName(cl_visents.max * sizeof(visentity_t), "visents");
 
 	CL_ClearScene();
 }
@@ -178,55 +166,59 @@ static qbool is_monster (int modelindex)
 
 void CL_ClearScene(void)
 {
-	cl_firstpassents.count = cl_visents.count = cl_alphaents.count = 0;
-	cl_firstpassents.alphablend = cl_visents.alphablend = cl_alphaents.alphablend = false;
+	memset(cl_visents.list, 0, cl_visents.max * sizeof(visentity_t));
+	memset(cl_visents.typecount, 0, sizeof(cl_visents.typecount));
+	cl_visents.count = 0;
+}
+
+void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, entity_t* ent, modtype_t type, qbool shell)
+{
+	if (list->count < list->max) {
+		list->list[cl_visents.count].ent = *ent;
+		list->list[cl_visents.count].type = type;
+		list->list[cl_visents.count].distance = VectorDistance(cl.simorg, ent->origin);
+		list->list[cl_visents.count].draw[vistype] = true;
+
+		++list->typecount[vistype];
+		if (shell) {
+			list->list[cl_visents.count].draw[visent_shells] = true;
+			++list->typecount[visent_shells];
+		}
+
+		++list->count;
+	}
 }
 
 void CL_AddEntity(entity_t *ent)
 {
 	extern qbool R_CanDrawSimpleItem(entity_t* ent);
 	extern cvar_t gl_simpleitems;
-	visentlist_t *vislist;
+	visentlist_entrytype_t vistype;
 	modtype_t type = ent->model->type;
 	qbool shell = false;
 	qbool needs_alphablend = (ent->alpha != 0 && ent->alpha != 1);
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
-		vislist = &cl_visents;
+		vistype = visent_normal;
 		shell = true;
 	}
 	else if (ent->renderfx & RF_NORMALENT) {
-		vislist = &cl_visents;
+		vistype = visent_normal;
 	}
 	else if (ent->model->type == mod_sprite || R_CanDrawSimpleItem(ent)) {
-		vislist = &cl_alphaents;
+		vistype = visent_alpha;
 		type = mod_sprite;
 		needs_alphablend = true;
 	}
 	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
-		vislist = &cl_firstpassents;
+		vistype = visent_firstpass;
 		ent->renderfx |= RF_NOSHADOW;
 	}
 	else {
-		vislist = &cl_visents;
+		vistype = visent_normal;
 	}
 
-	if (vislist->count < vislist->max) {
-		vislist->list[vislist->count].ent = *ent;
-		vislist->list[vislist->count].type = type;
-		vislist->list[vislist->count].shell_only = false;
-		vislist->list[vislist->count].distance = VectorDistance(cl.simorg, ent->origin);
-		vislist->alphablend |= needs_alphablend;
-		++vislist->count;
-	}
-	if (shell && cl_alphaents.count < cl_alphaents.max) {
-		cl_alphaents.list[cl_alphaents.count].ent = *ent;
-		cl_alphaents.list[cl_alphaents.count].type = ent->model->type;
-		cl_alphaents.list[cl_alphaents.count].shell_only = true;
-		cl_alphaents.list[cl_alphaents.count].distance = VectorDistance(cl.simorg, ent->origin);
-		cl_alphaents.alphablend = true;
-		++cl_alphaents.count;
-	}
+	CL_AddEntityToList(&cl_visents, vistype, ent, type, shell);
 }
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something

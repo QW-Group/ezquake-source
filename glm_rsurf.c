@@ -172,7 +172,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 }
 
-static void GLM_EnterBatchedWorldRegion(void)
+void GLM_EnterBatchedWorldRegion(void)
 {
 	extern glm_vao_t brushModel_vao;
 	extern buffer_ref vbo_brushElements;
@@ -369,6 +369,10 @@ void GLM_DrawWaterSurfaces(void)
 	qbool alpha = GL_WaterAlpha();
 	int v;
 
+	if (!waterchain) {
+		return;
+	}
+
 	// Waterchain has list of alpha-blended surfaces
 	GLM_EnterBatchedWorldRegion();
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
@@ -522,10 +526,6 @@ static void GLM_DrawWorldModelOutlines(void)
 
 void GL_FlushWorldModelBatch(void)
 {
-	GLuint last_vao = 0;
-	GLuint last_array = 0;
-	qbool was_worldmodel = 0;
-	int draw_pos = 0;
 	int polygonOffsetStart = 0;
 	extern buffer_ref vbo_brushElements;
 

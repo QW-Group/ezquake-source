@@ -1598,7 +1598,11 @@ void R_DrawBrushModel(entity_t *e)
 
 void GL_BeginDrawBrushModels(void)
 {
-	//firstBrushModel = true;
+	if (GL_ShadersSupported()) {
+		extern void GLM_EnterBatchedWorldRegion(void);
+
+		GLM_EnterBatchedWorldRegion();
+	}
 }
 
 void GL_EndDrawBrushModels(void)

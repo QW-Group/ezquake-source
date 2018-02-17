@@ -24,17 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
 
-static qbool vislist_alpha;
-static qbool vislist_alphablend;
-
 void GL_StateBeginEntities(visentlist_t* vislist)
 {
-	ENTER_STATE;
-
-	vislist_alpha = vislist->alpha;
-	vislist_alphablend = vislist->alphablend;
-
-	LEAVE_STATE;
 }
 
 void GL_StateEndEntities(visentlist_t* vislist)
@@ -60,7 +51,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags((vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_ShadeModel(GL_FLAT);
@@ -94,7 +85,7 @@ void GLC_StateBeginMD3Draw(float alpha)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags((vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED));
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_ShadeModel(GL_FLAT);
@@ -165,10 +156,7 @@ void GLC_StateBeginAliasModelShadow(void)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(
-		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
@@ -198,10 +186,7 @@ void GL_StateBeginDrawViewModel(float alpha)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(
-		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
@@ -252,10 +237,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
-	GL_AlphaBlendFlags(
-		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
@@ -313,10 +295,7 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
-	GL_AlphaBlendFlags(
-		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
@@ -366,10 +345,7 @@ void GL_StateBeginAliasOutlineFrame(void)
 
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(
-		(vislist_alpha ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED) |
-		(vislist_alphablend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED)
-	);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GL_ShadeModel(GL_FLAT);
 	GL_DisableFog();
