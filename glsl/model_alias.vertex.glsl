@@ -2,38 +2,18 @@
 
 #ezquake-definitions
 
+uniform int mode;
+
 layout(location = 0) in vec3 vboPosition;
 layout(location = 1) in vec2 vboTex;
 layout(location = 2) in vec3 vboNormalCoords;
 layout(location = 3) in int _instanceId;
 layout(location = 4) in int vertexIndex;
 
-struct model_vert {
-	float x, y, z;
-	float nx, ny, nz;
-	float s, t;
-	int padding;
-};
-
 layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
-	model_vert lerpVertices[];
+	AliasModelVert lerpVertices[];
 };
-
-struct AliasModel {
-	mat4 modelView;
-	vec4 color;
-	int flags;
-	float yaw_angle_rad;
-	float shadelight;
-	float ambientlight;
-	int materialTextureMapping;
-	int lumaTextureMapping;
-	int lerpBaseIndex;
-	float lerpFraction;
-};
-
-layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData
-{
+layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
 	AliasModel models[];
 };
 
@@ -98,6 +78,11 @@ void main()
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * shellSize, 1);
 		fsTextureCoord = vec2(tex.s * 2 + cos(time * 1.5), tex.t * 2 + sin(time * 1.1));
 		fsAltTextureCoord = vec2(tex.s * 2 + cos(time * -0.5), tex.t * 2 + sin(time * -0.5));
-		fsTextureEnabled = (models[_instanceId].flags & AMF_TEXTURE_MATERIAL);
+		fsTextureEnabled = 1;
+		fsMaterialSampler = 0;
+	}
+
+	if ((fsFlags & AMF_WEAPONMODEL) != 0) {
+		gl_Position.z *= 0.3;
 	}
 }

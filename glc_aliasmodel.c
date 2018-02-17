@@ -54,7 +54,7 @@ extern vec3_t    lightcolor;
 extern float     apitch;
 extern float     ayaw;
 
-void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline)
+void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
@@ -306,7 +306,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0);
+		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0, 0);
 
 		GLC_StateEndUnderwaterCaustics();
 	}

@@ -65,3 +65,23 @@ struct SamplerMapping {
 	float layer;
 	int flags;
 };
+
+struct AliasModelVert {
+	float x, y, z;
+	float nx, ny, nz;
+	float s, t;
+	int padding;
+};
+
+struct AliasModel {
+	mat4 modelView;
+	vec4 color;
+	int flags;
+	float yaw_angle_rad;
+	float shadelight;
+	float ambientlight;
+	int materialTextureMapping;
+	int lumaTextureMapping;
+	int lerpBaseIndex;
+	float lerpFraction;
+};

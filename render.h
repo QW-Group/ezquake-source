@@ -37,6 +37,7 @@ typedef struct efrag_s {
 #define RF_LIMITLERP    4
 #define RF_PLAYERMODEL  8
 #define RF_NORMALENT    16
+#define RF_CAUSTICS     32
 
 typedef struct entity_s {
 	vec3_t					origin;

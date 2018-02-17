@@ -942,11 +942,21 @@ static void R_RenderScene(void)
 
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
+		GLM_InitialiseAliasModelBatches();
+
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);
 		}
+
+		if (GL_ShadersSupported()) {
+			R_DrawViewModel();
+
+			GLM_PrepareAliasModelBatches();
+			GLM_DrawAliasModelBatches();
+		}
+
 		GL_LeaveRegion();
 	}
 
@@ -1138,7 +1148,9 @@ static void R_Render3DHud(void)
 	R_RenderDlights();
 
 	// Draw the player's view model (gun)
-	R_DrawViewModel();
+	if (!GL_ShadersSupported()) {
+		R_DrawViewModel();
+	}
 
 	GL_DrawVelocity3D();
 

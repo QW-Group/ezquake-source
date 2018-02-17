@@ -828,7 +828,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
 void GLC_DrawMapOutline(model_t *model);
-void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects);
+void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
 void GLC_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 void GLM_DrawPowerupShell(model_t* model, int effects, int layer_no, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
@@ -1295,6 +1295,15 @@ float GL_WaterAlpha(void);
 qbool R_DrawLightmaps(void);
 
 #define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
+
+typedef enum aliasmodel_draw_batch_s {
+	aliasmodel_batch_std_entities,
+	aliasmodel_batch_viewmodel
+} aliasmodel_draw_batch_t;
+
+void GLM_InitialiseAliasModelBatches(void);
+void GLM_PrepareAliasModelBatches(void);
+void GLM_DrawAliasModelBatches(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

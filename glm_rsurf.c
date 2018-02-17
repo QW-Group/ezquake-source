@@ -144,7 +144,6 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 		if (R_DrawLightmaps()) {
 			strlcat(included_definitions, "#define DRAW_LIGHTMAPS\n", sizeof(included_definitions));
 		}
-		strlcat(included_definitions, va("#define GL_BINDINGPOINT_WORLDMODEL_SURFACES %d\n", GL_BINDINGPOINT_WORLDMODEL_SURFACES), sizeof(included_definitions));
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);

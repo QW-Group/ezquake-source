@@ -107,8 +107,6 @@ extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
 
 //static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
-
-void GLM_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
@@ -167,19 +165,19 @@ static void R_RenderAliasModelEntity(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, effects);
+		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, effects, ent->renderfx);
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects);
+		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		if (GL_TextureReferenceIsValid(fb_texture)) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0);
+			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -404,7 +402,7 @@ void R_SetupAliasFrame(
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
 	qbool mtex, qbool scrolldir, qbool outline,
 	texture_ref texture, texture_ref fb_texture,
-	int effects
+	int effects, int render_effects
 )
 {
 	extern cvar_t gl_lumaTextures;
@@ -418,10 +416,10 @@ void R_SetupAliasFrame(
 	pose = R_AliasFramePose(frame);
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawAliasFrame(model, oldpose, pose, scrolldir, texture, fb_texture, outline);
+		GLM_DrawAliasFrame(model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects);
 	}
 }
 
@@ -644,7 +642,6 @@ void R_DrawViewModel(void)
 		return;
 	}
 
-	GL_EnterRegion("R_DrawViewModel");
 	memset(&gun, 0, sizeof(gun));
 	cent = &cl.viewent;
 	currententity = &gun;
@@ -688,7 +685,10 @@ void R_DrawViewModel(void)
 		gun.alpha = bound(0, cl_drawgun.value, 1);
 	}
 
-	GL_StateBeginDrawViewModel(gun.alpha);
+	if (!GL_ShadersSupported()) {
+		GL_EnterRegion("R_DrawViewModel");
+		GL_StateBeginDrawViewModel(gun.alpha);
+	}
 
 	switch (currententity->model->type) {
 	case mod_alias:
@@ -705,9 +705,11 @@ void R_DrawViewModel(void)
 		break;
 	}
 
-	GL_StateEndDrawViewModel();
+	if (!GL_ShadersSupported()) {
+		GL_StateEndDrawViewModel();
 
-	GL_LeaveRegion();
+		GL_LeaveRegion();
+	}
 }
 
 void R_InitAliasModelCvars(void)

@@ -9,23 +9,6 @@ layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2D samplers[SAMPLER_COUNT];
 
-struct AliasModel {
-	mat4 modelView;
-	vec4 color;
-	int flags;
-	float yaw_angle_rad;
-	float shadelight;
-	float ambientlight;
-	int materialTextureMapping;
-	int lumaTextureMapping;
-	int lerpBaseIndex;
-	float lerpFraction;
-};
-
-layout(std140, binding=GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
-	AliasModel models[];
-};
-
 in vec2 fsTextureCoord;
 in vec2 fsAltTextureCoord;
 in vec4 fsBaseColor;
@@ -39,10 +22,9 @@ out vec4 frag_colour;
 
 void main()
 {
-	if (outlines == 1) {
-		frag_colour = vec4(0, 0, 0, 1);
-	}
-	else {
+	frag_colour = vec4(0, 0, 0, 1);
+
+	if (mode != EZQ_ALIAS_MODE_OUTLINES) {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
 		vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
 		vec4 luma = texture(samplers[fsLumaSampler], fsTextureCoord.st);
@@ -58,7 +40,7 @@ void main()
 		);
 #endif
 
-		if ((fsFlags & AMF_SHELLFLAGS) != 0) {
+		if (mode == EZQ_ALIAS_MODE_SHELLS) {
 			vec4 color1 = vec4(
 				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_RED) != 0 ? shell_effect_level1 : 0),
 				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_GREEN) != 0 ? shell_effect_level1 : 0),
@@ -94,6 +76,7 @@ void main()
 #endif
 		}
 
+		// Move this outside the else {} block when outlines can be colored
 #ifndef EZ_POSTPROCESS_GAMMA
 		frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
 #endif

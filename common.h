@@ -143,7 +143,6 @@ typedef enum
 #define EF_FLAG2             32
 #define EF_BLUE              64
 #define EF_RED              128
-#define EF_CAUSTICS         256
 
 // print flags
 #define	PRINT_LOW			0		// pickup messages

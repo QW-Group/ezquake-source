@@ -11,8 +11,6 @@
 #endif
 #include "glsl/constants.glsl"
 
-#define MAX_INSTANCES 128
-
 void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int position);
 
 static buffer_ref aliasModel_vbo;
@@ -20,10 +18,10 @@ static buffer_ref aliasModel_ssbo;
 
 static buffer_ref GL_CreateInstanceVBO(void)
 {
-	unsigned int values[MAX_INSTANCES];
+	unsigned int values[MAX_STANDARD_ENTITIES];
 	int i;
 
-	for (i = 0; i < MAX_INSTANCES; ++i) {
+	for (i = 0; i < MAX_STANDARD_ENTITIES; ++i) {
 		values[i] = i;
 	}
 

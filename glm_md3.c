@@ -22,12 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_md3.h"
+#include "gl_aliasmodel.h"
 #include "vx_vertexlights.h" 
-
-void GLM_DrawAliasModelFrame(
-	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
-	texture_ref texture, texture_ref fb_texture, qbool outline
-);
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
 {
@@ -155,7 +151,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	GLM_DrawAliasModelFrame(
 		mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
-		surfaceInfo[0].texnum, null_texture_reference, false
+		surfaceInfo[0].texnum, null_texture_reference, false, ent->effects, ent->renderfx
 	);
 
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
