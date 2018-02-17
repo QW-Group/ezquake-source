@@ -22,17 +22,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define __GL_TEXTURE_H
 
-#define TEX_COMPLAIN        (1<<0) // shout if texture missing while loading
-#define TEX_MIPMAP          (1<<1) // use mipmaps generation while loading texture
-#define TEX_ALPHA           (1<<2) // use transparency in texture
+#define TEX_COMPLAIN        (1<<0)  // shout if texture missing while loading
+#define TEX_MIPMAP          (1<<1)  // use mipmaps generation while loading texture
+#define TEX_ALPHA           (1<<2)  // use transparency in texture
 // Note: if (TEX_LUMA & TEX_FULLBRIGHT) specified, colours close to black (determined by gl_luma_level) will be turned transparent
-#define TEX_LUMA            (1<<3) // do not apply gamma adjustment to texture when loading
-#define TEX_FULLBRIGHT      (1<<4) // make all non-fullbright colours transparent (8-bit only).
-#define TEX_NOSCALE         (1<<5) // do no use gl_max_size or gl_picmap variables while loading texture
-#define TEX_BRIGHTEN        (1<<6) // ??
-#define TEX_NOCOMPRESS      (1<<7) // do not use texture compression extension
-#define TEX_NO_PCX          (1<<8) // do not load pcx images
-#define TEX_NO_TEXTUREMODE  (1<<9) // ignore gl_texturemode* changes for texture
+#define TEX_LUMA            (1<<3)  // do not apply gamma adjustment to texture when loading
+#define TEX_FULLBRIGHT      (1<<4)  // make all non-fullbright colours transparent (8-bit only).
+#define TEX_NOSCALE         (1<<5)  // do no use gl_max_size or gl_picmap variables while loading texture
+#define TEX_BRIGHTEN        (1<<6)  // ??
+#define TEX_NOCOMPRESS      (1<<7)  // do not use texture compression extension
+#define TEX_NO_PCX          (1<<8)  // do not load pcx images
+#define TEX_NO_TEXTUREMODE  (1<<9)  // ignore gl_texturemode* changes for texture
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
@@ -43,6 +43,7 @@ void GLC_EnsureTMUEnabled(GLenum target);
 void GLC_EnsureTMUDisabled(GLenum target);
 
 byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+void GL_ImagePreMultiplyAlpha(byte* image, int width, int height);
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
 
@@ -81,5 +82,7 @@ GLint GL_TextureHeight(texture_ref ref);
 GLint GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 void GLC_StateEndRenderScene(void);
+
+void GL_InvalidateAllTextureReferences(void);
 
 #endif	//__GL_TEXTURE_H

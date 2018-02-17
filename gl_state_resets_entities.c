@@ -34,7 +34,7 @@ void GL_StateEndEntities(visentlist_t* vislist)
 
 	GL_PolygonMode(GL_FILL);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
 		if (gl_affinemodels.value) {
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);

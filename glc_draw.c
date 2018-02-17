@@ -36,7 +36,7 @@ void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 
 	GLC_StateBeginDrawPolygon();
 
-	COLOR_TO_RGBA(color, bytecolor);
+	COLOR_TO_RGBA_PREMULT(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 	glBegin(GL_TRIANGLE_STRIP);
 	for (i = 0; i < num_vertices; i++) {
@@ -70,6 +70,10 @@ void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	GLC_StateBeginDrawAlphaPieSliceRGB(thickness);
 
 	COLOR_TO_RGBA(color, bytecolor);
+
+	bytecolor[0] *= (bytecolor[3] / 255.0f);
+	bytecolor[1] *= (bytecolor[3] / 255.0f);
+	bytecolor[2] *= (bytecolor[3] / 255.0f);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
 	glBegin(fill ? GL_TRIANGLE_STRIP : GL_LINE_LOOP);

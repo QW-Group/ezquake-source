@@ -156,6 +156,9 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 
 		memcpy(pColor, (unsigned char *)&d_8to24table[(byte)color], 3);
 		if (alpha < 1) {
+			pColor[0] *= alpha;
+			pColor[1] *= alpha;
+			pColor[2] *= alpha;
 			pColor[3] = (byte)(alpha * 255);
 		}
 		else {

@@ -139,20 +139,11 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 				}
 			}
 
-			if (false) {
-				pic->sl = (x_pos + 0.25) / (float)ATLAS_WIDTH;
-				pic->sh = (x_pos + width - 0.25) / (float)ATLAS_WIDTH;
-				pic->tl = (y_pos + 0.25) / (float)ATLAS_HEIGHT;
-				pic->th = (y_pos + height - 0.25) / (float)ATLAS_HEIGHT;
-				pic->texnum = atlas_texnum[i];
-			}
-			else if (true) {
-				pic->sl = (x_pos) / (float)ATLAS_WIDTH;
-				pic->sh = (x_pos + width) / (float)ATLAS_WIDTH;
-				pic->tl = (y_pos) / (float)ATLAS_HEIGHT;
-				pic->th = (y_pos + height) / (float)ATLAS_HEIGHT;
-				pic->texnum = atlas_texnum[i];
-			}
+			pic->sl = (x_pos) / (float)ATLAS_WIDTH;
+			pic->sh = (x_pos + width) / (float)ATLAS_WIDTH;
+			pic->tl = (y_pos) / (float)ATLAS_HEIGHT;
+			pic->th = (y_pos + height) / (float)ATLAS_HEIGHT;
+			pic->texnum = atlas_texnum[i];
 
 			return i;
 		}

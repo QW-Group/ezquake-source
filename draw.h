@@ -78,7 +78,9 @@ extern const color_t COLOR_WHITE;
 
 color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a);
 color_t RGBAVECT_TO_COLOR(byte rgba[4]);
+color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4]);
 byte* COLOR_TO_RGBA(int i, byte rgba[4]);
+byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4]);
 void Draw_SetOverallAlpha(float opacity);
 
 void Draw_Init (void);

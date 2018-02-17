@@ -616,12 +616,42 @@ color_t RGBAVECT_TO_COLOR(byte rgba[4])
 	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
 }
 
+color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4])
+{
+	byte premult[4];
+	float alpha = rgba[3] / 255.0f;
+
+	premult[0] = rgba[0] * alpha;
+	premult[1] = rgba[1] * alpha;
+	premult[2] = rgba[2] * alpha;
+	premult[3] = rgba[3];
+
+	return ((premult[0] << 0) | (premult[1] << 8) | (premult[2] << 16) | (premult[3] << 24)) & 0xFFFFFFFF;
+}
+
 byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
 {
 	rgba[0] = (i >> 0  & 0xFF);
 	rgba[1] = (i >> 8  & 0xFF);
 	rgba[2] = (i >> 16 & 0xFF);
 	rgba[3] = (i >> 24 & 0xFF);
+
+	return rgba;
+}
+
+byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4])
+{
+	float alpha;
+
+	rgba[0] = (i >> 0 & 0xFF);
+	rgba[1] = (i >> 8 & 0xFF);
+	rgba[2] = (i >> 16 & 0xFF);
+	rgba[3] = (i >> 24 & 0xFF);
+
+	alpha = rgba[3] / 255.0f;
+	rgba[0] *= alpha;
+	rgba[1] *= alpha;
+	rgba[2] *= alpha;
 
 	return rgba;
 }

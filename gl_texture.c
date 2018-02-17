@@ -903,6 +903,20 @@ texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth
 	return reference;
 }
 
+void GL_ImagePreMultiplyAlpha(byte* image, int width, int height)
+{
+	// Pre-multiply alpha component
+	int pos;
+
+	for (pos = 0; pos < width * height * 4; pos += 4) {
+		float alpha = image[pos + 3] / 255.0f;
+
+		image[pos] *= alpha;
+		image[pos + 1] *= alpha;
+		image[pos + 2] *= alpha;
+	}
+}
+
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
 {
 	int width, height, i, real_width, real_height;
@@ -911,7 +925,11 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	static mpic_t pic;
 
 	// this is 2D texture loading so it must not have MIP MAPS
-	mode = mode & ~TEX_MIPMAP;
+	mode &= ~TEX_MIPMAP;
+
+	if (id && !strcmp(id, "ibar")) {
+		mode = mode;
+	}
 
 	if (no24bit) {
 		return NULL;
@@ -934,6 +952,10 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 				break;
 			}
 		}
+	}
+
+	if (mode & TEX_ALPHA) {
+		GL_ImagePreMultiplyAlpha(data, real_width, real_height);
 	}
 
 	if (gl_support_arb_texture_non_power_of_two) {
@@ -997,6 +1019,8 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 	if (!(data = GL_LoadImagePixels(filename, 0, 0, flags, &real_width, &real_height))) {
 		return false;
 	}
+
+	GL_ImagePreMultiplyAlpha(data, real_width, real_height);
 
 	if (!identifier) {
 		identifier = filename;
@@ -1413,4 +1437,117 @@ void GL_DeleteTextures(void)
 qbool GL_TextureValid(texture_ref ref)
 {
 	return ref.index && ref.index < numgltextures && gltextures[ref.index].texnum;
+}
+
+static void GL_ClearModelTextureReferences(model_t* mod, qbool all_textures)
+{
+	int j;
+
+	memset(mod->texture_arrays, 0, sizeof(mod->texture_arrays));
+	memset(mod->texture_arrays_scale_s, 0, sizeof(mod->texture_arrays_scale_s));
+	memset(mod->texture_arrays_scale_t, 0, sizeof(mod->texture_arrays_scale_t));
+	memset(mod->texture_array_first, 0, sizeof(mod->texture_array_first));
+	mod->texture_array_count = 0;
+
+	memset(mod->simpletexture_scalingS, 0, sizeof(mod->simpletexture_scalingS));
+	memset(mod->simpletexture_scalingT, 0, sizeof(mod->simpletexture_scalingT));
+	memset(mod->simpletexture_indexes, 0, sizeof(mod->simpletexture_indexes));
+	memset(mod->simpletexture_array, 0, sizeof(mod->simpletexture_array));
+
+	if (all_textures) {
+		memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
+	}
+
+	// clear brush model data
+	if (mod->type == mod_brush) {
+		for (j = 0; j < mod->numtextures; ++j) {
+			texture_t* tex = mod->textures[j];
+			if (tex) {
+				if (all_textures) {
+					GL_TextureReferenceInvalidate(tex->fb_texturenum);
+					GL_TextureReferenceInvalidate(tex->gl_texturenum);
+				}
+				tex->gl_texture_scaleS = tex->gl_texture_scaleT = 0;
+				GL_TextureReferenceInvalidate(tex->gl_texture_array);
+				tex->gl_texture_index = 0;
+			}
+		}
+	}
+
+	// clear sprite model data
+	if (mod->type == mod_sprite) {
+		msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
+		int j;
+
+		for (j = 0; j < psprite->numframes; ++j) {
+			int offset = psprite->frames[j].offset;
+			int numframes = psprite->frames[j].numframes;
+			mspriteframe_t* frame;
+
+			if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+				continue;
+			}
+
+			frame = ((mspriteframe_t*)((byte*)psprite + offset));
+
+			if (all_textures) {
+				GL_TextureReferenceInvalidate(frame->gl_texturenum);
+			}
+			frame->gl_scalingS = frame->gl_scalingT = 0;
+			GL_TextureReferenceInvalidate(frame->gl_arraynum);
+			frame->gl_arrayindex = 0;
+		}
+	}
+
+	if (mod->type == mod_alias && all_textures) {
+		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
+
+		memset(paliashdr->gl_texturenum, 0, sizeof(paliashdr->gl_texturenum));
+		memset(paliashdr->fb_texturenum, 0, sizeof(paliashdr->fb_texturenum));
+	}
+	else if (mod->type == mod_alias3 && all_textures) {
+		md3model_t* md3Model = (md3model_t *)Mod_Extradata(mod);
+		surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
+
+		// One day there will be more than one of these...
+		GL_TextureReferenceInvalidate(surfaceInfo->texnum);
+	}
+}
+
+void GL_InvalidateAllTextureReferences(void)
+{
+	int i;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod) {
+			GL_ClearModelTextureReferences(mod, true);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			GL_ClearModelTextureReferences(mod, true);
+		}
+	}
+}
+
+// Called during disconnect
+void GL_DeleteModelData(void)
+{
+	int i;
+	for (i = 0; i < MAX_MODELS; ++i) {
+		if (cl.model_precache[i]) {
+			GL_ClearModelTextureReferences(cl.model_precache[i], false);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; ++i) {
+		if (cl.vw_model_precache[i]) {
+			GL_ClearModelTextureReferences(cl.vw_model_precache[i], false);
+		}
+	}
 }

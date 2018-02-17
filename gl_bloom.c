@@ -616,7 +616,7 @@ void R_BloomBlend(void)
 
 	R_Bloom_DrawEffect();
 
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 

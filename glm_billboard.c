@@ -383,8 +383,6 @@ static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_ba
 
 static void GL_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
-	int i;
-
 	if (GL_TextureReferenceIsValid(batch->texture)) {
 		// All batches are the same texture, so no issues
 		GL_DrawSequentialBatchImpl(batch, 0, batch->count, index_offset, maximum_batch_size);

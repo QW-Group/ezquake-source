@@ -26,7 +26,7 @@ texture_ref sceneblur_texture;
 
 void GLC_PolyBlend(float v_blend[4])
 {
-	GLC_StateBeginPolyBlend();
+	GLC_StateBeginPolyBlend(v_blend);
 
 	glBegin(GL_QUADS);
 	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
@@ -208,7 +208,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vt *= 1;//gl_motionblurscale.value;
 
 	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
-	glColor4f(1, 1, 1, alpha);
+	glColor4f(alpha, alpha, alpha, alpha);
 	if (draw)
 	{
 		glBegin(GL_QUADS);

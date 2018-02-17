@@ -88,7 +88,7 @@ void GLM_StateEndDrawBillboards(void)
 
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_EnableFog();
 	GL_Enable(GL_CULL_FACE);
 
@@ -116,7 +116,7 @@ void GL_StateDefaultInit(void)
 	GL_PolygonMode(GL_FILL);
 	GL_ShadeModel(GL_FLAT);
 
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	GL_TextureEnvMode(GL_REPLACE);
 
@@ -143,7 +143,7 @@ void GLC_StateEndDrawBillboards(void)
 
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_ShadeModel(GL_FLAT);
 	GL_EnableFog();

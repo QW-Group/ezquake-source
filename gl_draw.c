@@ -888,7 +888,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 
 	GL_StateBeginAlphaLineRGB(thickness);
 
-	COLOR_TO_RGBA(color, bytecolor);
+	COLOR_TO_RGBA_PREMULT(color, bytecolor);
 
 	if (GL_ShadersSupported()) {
 		GLM_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);

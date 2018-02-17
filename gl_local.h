@@ -1167,7 +1167,7 @@ void GL_StateEndFrame(void);
 
 void GLC_StateBeginImageDraw(void);
 void GLC_StateEndImageDraw(void);
-void GLC_StateBeginPolyBlend(void);
+void GLC_StateBeginPolyBlend(float v_blend[4]);
 void GLC_StateEndPolyBlend(void);
 void GL_StateBeginNetGraph(void);
 void GL_StateEndNetGraph(void);

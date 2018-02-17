@@ -216,7 +216,7 @@ static void GLM_FlushImageDraw(void)
 		GL_BindVertexArray(&imageVAO);
 
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
 
 		for (i = 0; i < imageCount; ++i) {

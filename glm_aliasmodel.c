@@ -448,7 +448,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 	else {
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	GL_BindVertexArray(&aliasModel_vao);
