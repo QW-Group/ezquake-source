@@ -174,7 +174,7 @@ void GLM_UploadFrameConstants(void)
 			GL_BindBufferBase(ubo_frameConstants, GL_BINDINGPOINT_FRAMECONSTANTS);
 		}
 
-		GL_UpdateVBO(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
+		GL_UpdateBuffer(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
 		frameConstantsUploaded = true;
 	}
 }

@@ -91,7 +91,7 @@ static void GL_ImportSpriteCoordsToVBO(int* position)
 	verts[3].texture_coords[1] = 1;
 	verts[3].vert_index = 3;
 
-	GL_UpdateVBOSection(aliasModel_vbo, *position, sizeof(verts), verts);
+	GL_UpdateBufferSection(aliasModel_vbo, *position, sizeof(verts), verts);
 	*position += sizeof(verts) / sizeof(verts[0]);
 }
 

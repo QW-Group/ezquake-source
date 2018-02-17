@@ -285,7 +285,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 		memcpy(vboSurface.tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
 		memcpy(vboSurface.tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
 
-		GL_UpdateVBOSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
+		GL_UpdateBufferSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
 	}
 	GL_BindBufferBase(worldModel_surfaces_ssbo, GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 }

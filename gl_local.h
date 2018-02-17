@@ -389,14 +389,6 @@ void GL_Init (void);
 // General
 typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
 
-// VBOs
-typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
-typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
-typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
-typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
-typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
-typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
-
 // VAOs
 typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
 typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
@@ -716,8 +708,10 @@ void GL_PolygonMode(GLenum mode);
 void GL_InitialiseBufferHandling(void);
 void GL_InitialiseBufferState(void);
 buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
-void GL_UpdateVBO(buffer_ref vbo, size_t size, void* data);
-void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data);
+void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data);
+void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_UnBindBuffer(GLenum target);

@@ -211,7 +211,7 @@ static void GLM_FlushImageDraw(void)
 		texture_ref currentTexture = null_texture_reference;
 
 		GLM_CreateMultiImageProgram();
-		GL_UpdateVBO(imageVBO, sizeof(images[0]) * imageCount, images);
+		GL_UpdateBuffer(imageVBO, sizeof(images[0]) * imageCount, images);
 		GL_UseProgram(multiImageProgram.program);
 		GL_BindVertexArray(&imageVAO);
 
@@ -439,7 +439,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 		GL_ResizeBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
 	}
 	else {
-		GL_UpdateVBO(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
+		GL_UpdateBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
 	}
 
 	if (!polygonVAO.vao) {
@@ -557,7 +557,7 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 		++points;
 	}
 
-	GL_UpdateVBO(circleVBO, sizeof(pointData[0]) * points * 2, pointData);
+	GL_UpdateBuffer(circleVBO, sizeof(pointData[0]) * points * 2, pointData);
 	GL_UseProgram(circleProgram.program);
 	GL_BindVertexArray(&circleVAO);
 	GL_GetMatrix(GL_PROJECTION, projectionMatrix);

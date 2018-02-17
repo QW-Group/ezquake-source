@@ -159,8 +159,8 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int position)
 {
-	GL_UpdateVBOSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
-	GL_UpdateVBOSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
+	GL_UpdateBufferSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
+	GL_UpdateBufferSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
 
 	mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);

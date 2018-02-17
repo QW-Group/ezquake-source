@@ -43,6 +43,15 @@ static int buffer_count;
 static buffer_data_t* next_free_buffer = NULL;
 static qbool buffers_supported = false;
 
+typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
+typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
+typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
+typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
+typedef void (APIENTRY *glNamedBufferSubData_t)(GLuint buffer, GLintptr offset, GLsizei size, const void* data);
+typedef void (APIENTRY *glNamedBufferData_t)(GLuint buffer, GLsizei size, const void* data, GLenum usage);
+
 // Buffer functions
 static glBindBuffer_t     glBindBuffer = NULL;
 static glBufferData_t     glBufferData = NULL;
@@ -50,6 +59,10 @@ static glBufferSubData_t  glBufferSubData = NULL;
 static glGenBuffers_t     glGenBuffers = NULL;
 static glDeleteBuffers_t  glDeleteBuffers = NULL;
 static glBindBufferBase_t glBindBufferBase = NULL;
+
+// DSA
+static glNamedBufferSubData_t glNamedBufferSubData = NULL;
+static glNamedBufferData_t    glNamedBufferData = NULL;
 
 // Cache OpenGL state
 static GLuint currentArrayBuffer;
@@ -68,6 +81,15 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 				buffer = &buffers[i];
 				result.index = i;
 				if (buffer->glref) {
+					if (currentArrayBuffer == buffer->glref) {
+						currentArrayBuffer = 0;
+					}
+					else if (currentUniformBuffer == buffer->glref) {
+						currentUniformBuffer = 0;
+					}
+					else if (currentDrawIndirectBuffer == buffer->glref) {
+						currentDrawIndirectBuffer = 0;
+					}
 					glDeleteBuffers(1, &buffer->glref);
 				}
 				break;
@@ -93,7 +115,6 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	}
 
 	memset(buffer, 0, sizeof(buffers[0]));
-
 	if (name) {
 		strlcpy(buffer->name, name, sizeof(buffer->name));
 	}
@@ -111,15 +132,26 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	return result;
 }
 
-void GL_UpdateVBO(buffer_ref vbo, size_t size, void* data)
+void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
 	assert(data);
 	assert(size <= buffers[vbo.index].size);
 
+	if (glNamedBufferSubData) {
+		glNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
+	}
+	else {
+		GL_BindBuffer(vbo);
+		glBufferSubData(buffers[vbo.index].target, 0, size, data);
+	}
+}
+
+void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data)
+{
 	GL_BindBuffer(vbo);
-	glBufferSubData(buffers[vbo.index].target, 0, size, data);
+	GL_UpdateBuffer(vbo, size, data);
 }
 
 size_t GL_VBOSize(buffer_ref vbo)
@@ -137,11 +169,16 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 	assert(buffers[vbo.index].glref);
 	assert(data);
 
-	GL_BindBuffer(vbo);
-	glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
+	if (glNamedBufferData) {
+		glNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);
+	}
+	else {
+		GL_BindBuffer(vbo);
+		glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
+	}
 }
 
-void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
@@ -150,8 +187,19 @@ void GL_UpdateVBOSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const
 	assert(offset < buffers[vbo.index].size);
 	assert(offset + size <= buffers[vbo.index].size);
 
+	if (glNamedBufferSubData) {
+		glNamedBufferSubData(buffers[vbo.index].glref, offset, size, data);
+	}
+	else {
+		GL_BindBuffer(vbo);
+		glBufferSubData(buffers[vbo.index].target, offset, size, data);
+	}
+}
+
+void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+{
 	GL_BindBuffer(vbo);
-	glBufferSubData(buffers[vbo.index].target, offset, size, data);
+	GL_UpdateBufferSection(vbo, offset, size, data);
 }
 
 void GL_DeleteBuffers(void)
@@ -230,6 +278,10 @@ void GL_InitialiseBufferHandling(void)
 
 	// OpenGL 3.0 onwards, more for shaders
 	glBindBufferBase = (glBindBufferBase_t)SDL_GL_GetProcAddress("glBindBufferBase");
+
+	// OpenGL 4.5 onwards, update directly
+	glNamedBufferSubData = (glNamedBufferSubData_t)SDL_GL_GetProcAddress("glNamedBufferSubData");
+	glNamedBufferData = (glNamedBufferData_t)SDL_GL_GetProcAddress("glNamedBufferData");
 
 	buffers_supported = (glBindBuffer && glBufferData && glBufferSubData && glGenBuffers && glDeleteBuffers);
 }

@@ -133,7 +133,7 @@ void GL_FlushSpriteBatch(void)
 	}
 
 	GL_UseProgram(spriteProgram.program);
-	GL_UpdateVBO(spriteVBO, sizeof(sprite_vbo_data[0]) * batch_count * 4, sprite_vbo_data);
+	GL_UpdateBuffer(spriteVBO, sizeof(sprite_vbo_data[0]) * batch_count * 4, sprite_vbo_data);
 	GL_BindTextures(0, allocated_samplers, sampler_textures);
 
 	GL_BindVertexArray(&spriteVAO);

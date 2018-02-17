@@ -419,7 +419,7 @@ void GLM_PrepareAliasModelBatches(void)
 	}
 
 	// Update VBO with data about each entity
-	GL_UpdateVBO(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
+	GL_BindAndUpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
 
 	// Build & update list of indirect calls
 	{
@@ -441,7 +441,7 @@ void GLM_PrepareAliasModelBatches(void)
 			}
 
 			size = sizeof(instr->indirect_buffer[0]) * total_cmds;
-			GL_UpdateVBOSection(vbo_aliasIndirectDraw, offset, size, instr->indirect_buffer);
+			GL_UpdateBufferSection(vbo_aliasIndirectDraw, offset, size, instr->indirect_buffer);
 			offset += size;
 		}
 	}

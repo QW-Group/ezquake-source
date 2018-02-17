@@ -191,7 +191,6 @@ void GLM_EnterBatchedWorldRegion(void)
 	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
 
 	GL_UseProgram(drawworld.program);
-
 	GL_BindVertexArray(&brushModel_vao);
 
 	// Bind standard textures (warning: these must be in the same order)
@@ -527,17 +526,19 @@ void GL_FlushWorldModelBatch(void)
 {
 	int polygonOffsetStart = 0;
 	extern buffer_ref vbo_brushElements;
+	extern glm_vao_t brushModel_vao;
 
 	if (!batch_count) {
 		return;
 	}
 
-	GL_UseProgram(drawworld.program);
-
 	GL_SortDrawCalls(&polygonOffsetStart);
-	GL_UpdateVBO(ubo_worldcvars, sizeof(world), &world);
-	GL_UpdateVBO(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	GL_UpdateVBO(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
+
+	GL_UseProgram(drawworld.program);
+	GL_BindVertexArray(&brushModel_vao);
+	GL_UpdateBuffer(ubo_worldcvars, sizeof(world), &world);
+	GL_BindAndUpdateBuffer(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_BindAndUpdateBuffer(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
 
 	// Bind texture units
 	GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);

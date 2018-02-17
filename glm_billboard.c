@@ -271,7 +271,7 @@ void GLM_DrawBillboards(void)
 
 	GL_EnterRegion(__FUNCTION__);
 
-	GL_UpdateVBO(billboardVBO, vertexCount * sizeof(verts[0]), verts);
+	GL_BindAndUpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
 
 	GLM_StateBeginDrawBillboards();
 	for (i = 0; i < batchCount; ++i) {
