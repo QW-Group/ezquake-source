@@ -46,21 +46,56 @@ qbool ci_initialized = false;
 		ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
 	} while(0);
 
+// FIXME: Almost duplicate of QMB_LoadTextureSubImage, extracting sprites from an atlas
+//        This version works on different enumeration, and doesn't double-up for pre-multiplied alpha
+static void CI_LoadTextureSubImage(ci_tex_t tex, const char* id, const byte* pixels, byte* temp_buffer, int full_width, int full_height, int texIndex, int components, int sub_x, int sub_y, int sub_x2, int sub_y2)
+{
+	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;// | TEX_MIPMAP;
+	texture_ref tex_ref;
+	int y, x;
+	int width = sub_x2 - sub_x;
+	int height = sub_y2 - sub_y;
+
+	width = (width * full_width) / 256;
+	height = (height * full_height) / 256;
+	sub_x = (sub_x * full_width) / 256;
+	sub_y = (sub_y * full_height) / 256;
+
+	for (y = 0; y < height; ++y) {
+		const byte* source = pixels + ((sub_y + y) * full_width + sub_x) * 4;
+		byte* target = temp_buffer + y * width * 4;
+
+		for (x = 0; x < width; ++x, source += 4, target += 4) {
+			target[0] = (byte)(((int)source[0] * (int)source[3]) / 255.0);
+			target[1] = (byte)(((int)source[1] * (int)source[3]) / 255.0);
+			target[2] = (byte)(((int)source[2] * (int)source[3]) / 255.0);
+		}
+	}
+
+	tex_ref = GL_LoadTexture(id, width, height, temp_buffer, mode, 4);
+
+	ADD_CICON_TEXTURE(tex, tex_ref, 0, 1, 0, 0, FONT_SIZE, FONT_SIZE);
+}
+
 void CI_Init(void)
 {
-	texture_ref ci_font;
-	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;
+	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
 
 	ci_initialized = false;
 
-	ci_font = GL_LoadTextureImage("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode);
-	if (!GL_TextureReferenceIsValid(ci_font)) {
-		return;
-	}
+	{
+		int real_width, real_height;
+		byte* original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
+		byte* temp_buffer;
+		if (!original) {
+			return;
+		}
 
-	ADD_CICON_TEXTURE(citex_chat, ci_font, 0, 1, 0, 0, 64, 64); // get chat part from font
-	ADD_CICON_TEXTURE(citex_afk, ci_font, 0, 1, 64, 0, 128, 64); // get afk part
-	ADD_CICON_TEXTURE(citex_chat_afk, ci_font, 0, 1, 0, 0, 128, 64); // get chat+afk part
+		temp_buffer = Q_malloc(real_width * real_height * 4);
+		CI_LoadTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
+		CI_LoadTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
+		CI_LoadTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 128, 64);
+	}
 
 	ci_initialized = true;
 }
@@ -151,7 +186,7 @@ void SCR_SetupCI(void)
 	}
 }
 
-static void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
+static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
 	float coordinates[4][4];
 	int i;
@@ -164,11 +199,11 @@ static void CI_DrawBillboard(ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	if (GL_BillboardAddEntry(BILLBOARD_CHATICONS, 4)) {
-		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
-		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
-		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
-		GL_BillboardAddVert(BILLBOARD_CHATICONS, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
+	if (GL_BillboardAddEntry(batch, 4)) {
+		GL_BillboardAddVert(batch, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
+		GL_BillboardAddVert(batch, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
+		GL_BillboardAddVert(batch, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
+		GL_BillboardAddVert(batch, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
 	}
 }
 
@@ -197,23 +232,25 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICONS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ci_textures[0].texnum, GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_chat_afk].texnum, GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_afk].texnum, GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_chat].texnum, GL_TRIANGLE_FAN, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];
 		flags = p->flags;
 
-		if (flags & CIF_CHAT && flags & CIF_AFK) {
+		if ((flags & CIF_CHAT) && (flags & CIF_AFK)) {
 			flags = flags & ~(CIF_CHAT | CIF_AFK); // so they will be not showed below again
-			CI_DrawBillboard(&ci_textures[citex_chat_afk], p, billboard2);
+			CI_DrawBillboard(BILLBOARD_CHATICON_AFK_CHAT, &ci_textures[citex_chat_afk], p, billboard2);
 		}
 
 		if (flags & CIF_CHAT) {
-			CI_DrawBillboard(&ci_textures[citex_chat], p, billboard);
+			CI_DrawBillboard(BILLBOARD_CHATICON_CHAT, &ci_textures[citex_chat], p, billboard);
 		}
 
 		if (flags & CIF_AFK) {
-			CI_DrawBillboard(&ci_textures[citex_afk], p, billboard);
+			CI_DrawBillboard(BILLBOARD_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
 		}
 	}
 }
