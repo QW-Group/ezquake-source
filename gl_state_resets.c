@@ -77,8 +77,6 @@ void GLM_StateBeginDrawBillboards(void)
 	GL_DisableFog();
 	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
-	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-	GL_ShadeModel(GL_SMOOTH);
 	GL_Disable(GL_CULL_FACE);
 
 	LEAVE_STATE;
@@ -91,8 +89,6 @@ void GLM_StateEndDrawBillboards(void)
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
 	GL_EnableFog();
 	GL_Enable(GL_CULL_FACE);
 

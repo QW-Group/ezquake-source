@@ -637,7 +637,7 @@ static void QMB_BillboardAddVert(particle_type_t* type, float x, float y, float 
 	col_t new_color;
 
 	if (blend->premultiply_alpha) {
-		t += 0.5;
+		t += particle_textures[type->texture].coords[0][3];
 	}
 
 	QMB_AdjustColor(color, blend, new_color);
