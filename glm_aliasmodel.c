@@ -78,6 +78,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		static char included_definitions[1024];
 		GL_VFDeclare(model_alias);
 
+		included_definitions[0] = '\0';
 		if (caustic_textures) {
 			material_samplers_max = glConfig.texture_units - 1;
 			TEXTURE_UNIT_CAUSTICS = 0;
@@ -458,10 +459,10 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	for (i = 0; i < instr->num_calls; ++i) {
 		if (type == aliasmodel_draw_shells) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, shelltexture);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL, shelltexture);
 		}
 		else if (instr->num_textures[i]) {
-			GL_BindTextures(0, instr->num_textures[i], instr->bound_textures[i]);
+			GL_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
 		glMultiDrawArraysIndirect(
