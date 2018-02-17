@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_bloom.h"
 #include "rulesets.h"
 #include "teamplay.h"
+#include "gl_billboards.h"
 
 void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
@@ -734,6 +735,7 @@ static void R_SetupGL(void)
 	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	GL_StateDefault3D();
+	GL_DepthMask(GL_TRUE);
 
 	if (GL_ShadersSupported()) {
 		GLM_SetupGL();
@@ -940,10 +942,12 @@ static void R_RenderScene(void)
 
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
-		GLM_InitialiseAliasModelBatches();
+		if (GL_ShadersSupported()) {
+			GLM_InitialiseAliasModelBatches();
+		}
 
+		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
-
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);
 		}

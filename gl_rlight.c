@@ -108,10 +108,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		extern texture_ref particletexture_array;
-		extern int particletexture_array_index;
-
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, particletexture_array, particletexture_array_index, GL_TRIANGLE_FAN, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_FAN, true);
 
 		first_dlight = false;
 	}

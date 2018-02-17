@@ -3,12 +3,12 @@
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "gl_billboards.h"
 
 // For drawing sprites in 3D space
-// Always facing camera, send as point
 
 #define VBO_OFFSET(type, field) (void*)((intptr_t)&(((type*)0)->field))
-#define MAX_SAMPLERS 32
+/*#define MAX_SAMPLERS 32
 
 static glm_program_t spriteProgram;
 static GLuint spriteProgram_RefdefCvars_block;
@@ -195,9 +195,30 @@ glm_sprite_t* NextSprite(texture_ref texture)
 
 	return &sprite_batch[batch_count++];
 }
+*/
+
+static void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t)
+{
+	vec3_t points[4];
+
+	VectorMA(origin, +scale, up, points[0]);
+	VectorMA(points[0], -scale, right, points[0]);
+	VectorMA(origin, -scale, up, points[1]);
+	VectorMA(points[1], -scale, right, points[1]);
+	VectorMA(origin, +scale, up, points[2]);
+	VectorMA(points[2], +scale, right, points[2]);
+	VectorMA(origin, -scale, up, points[3]);
+	VectorMA(points[3], +scale, right, points[3]);
+
+	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[0][0], points[0][1], points[0][2], 0, 0, color_white);
+	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[1][0], points[1][1], points[1][2], 0, t, color_white);
+	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[2][0], points[2][1], points[2][2], s, 0, color_white);
+	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[3][0], points[3][1], points[3][2], s, t, color_white);
+}
 
 void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale_, vec3_t up, vec3_t right)
 {
+	/*
 	glm_sprite_t* sprite;
 
 	sprite = NextSprite(texture_array);
@@ -208,6 +229,10 @@ void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scal
 		VectorCopy(origin, sprite->origin);
 		VectorScale(up, scale_, sprite->up);
 		VectorScale(right, scale_, sprite->right);
+	}*/
+
+	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, texture_array, texture_index)) {
+		GLM_SpriteToBillboard(origin, up, right, scale_, scale_s, scale_t);
 	}
 }
 
@@ -246,17 +271,29 @@ void GLM_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	{
-		glm_sprite_t* sprite = NextSprite(frame->gl_arraynum);
+	/*	{
+			glm_sprite_t* sprite = NextSprite(frame->gl_arraynum);
 
-		if (sprite) {
-			sprite = &sprite_batch[batch_count];
-			sprite->texture_index = frame->gl_arrayindex;
-			sprite->texScale[0] = frame->gl_scalingS;
-			sprite->texScale[1] = frame->gl_scalingT;
-			VectorCopy(e->origin, sprite->origin);
-			VectorScale(up, 5, sprite->up);
-			VectorScale(right, 5, sprite->right);
-		}
+			if (sprite) {
+				sprite = &sprite_batch[batch_count];
+				sprite->texture_index = frame->gl_arrayindex;
+				sprite->texScale[0] = frame->gl_scalingS;
+				sprite->texScale[1] = frame->gl_scalingT;
+				VectorCopy(e->origin, sprite->origin);
+				VectorScale(up, 5, sprite->up);
+				VectorScale(right, 5, sprite->right);
+			}
+		}*/
+
+	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex)) {
+		GLM_SpriteToBillboard(e->origin, up, right, 5, frame->gl_scalingS, frame->gl_scalingT);
 	}
+}
+
+void GL_BeginDrawSprites(void)
+{
+}
+
+void GL_EndDrawSprites(void)
+{
 }

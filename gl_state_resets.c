@@ -79,6 +79,7 @@ void GLM_StateBeginDrawBillboards(void)
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GL_ShadeModel(GL_SMOOTH);
+	GL_Disable(GL_CULL_FACE);
 
 	LEAVE_STATE;
 }
@@ -93,6 +94,7 @@ void GLM_StateEndDrawBillboards(void)
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_ShadeModel(GL_FLAT);
 	GL_EnableFog();
+	GL_Enable(GL_CULL_FACE);
 
 	LEAVE_STATE;
 }
