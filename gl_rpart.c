@@ -890,12 +890,166 @@ static void QMB_FillParticleVertexBuffer(void)
 	}
 }
 
+static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
+{
+	float grav = movevars.gravity / 800.0;
+	vec3_t oldorg, stop, normal;
+	int contents;
+	float bounce;
+
+	p->size += p->growth * cls.frametime;
+
+	if (p->size <= 0) {
+		p->die = 0;
+		return;
+	}
+
+	//VULT PARTICLE
+	if (pt->id == p_streaktrail || pt->id == p_lightningbeam) {
+		p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
+	}
+	else {
+		p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
+	}
+
+	p->rotangle += p->rotspeed * cls.frametime;
+
+	if (p->hit) {
+		return;
+	}
+
+	//VULT - switched these around so velocity is scaled before gravity is applied
+	VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel);
+	p->vel[2] += pt->grav * grav * cls.frametime;
+
+	switch (pt->move) {
+		case pm_static:
+			break;
+		case pm_normal:
+			VectorCopy(p->org, oldorg);
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+				p->hit = 1;
+				VectorCopy(oldorg, p->org);
+				VectorClear(p->vel);
+			}
+			break;
+		case pm_float:
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			p->org[2] += p->size + 1;
+			contents = TruePointContents(p->org);
+			if (!ISUNDERWATER(contents)) {
+				p->die = 0;
+			}
+			p->org[2] -= p->size + 1;
+			break;
+		case pm_nophysics:
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			break;
+		case pm_die:
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+				p->die = 0;
+			}
+			break;
+		case pm_bounce:
+			if (!gl_bounceparticles.value || p->bounces) {
+				if (pt->id == p_smallspark)
+					VectorCopy(p->org, p->endorg);
+
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents(p->org))
+					p->die = 0;
+			}
+			else {
+				VectorCopy(p->org, oldorg);
+				if (pt->id == p_smallspark)
+					VectorCopy(oldorg, p->endorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents(p->org)) {
+					if (TraceLineN(oldorg, p->org, stop, normal)) {
+						VectorCopy(stop, p->org);
+						bounce = -pt->custom * DotProduct(p->vel, normal);
+						VectorMA(p->vel, bounce, normal, p->vel);
+						p->bounces++;
+						if (pt->id == p_smallspark) {
+							VectorCopy(stop, p->endorg);
+						}
+					}
+				}
+			}
+			break;
+			//VULT PARTICLES
+		case pm_rain:
+			VectorCopy(p->org, oldorg);
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			contents = TruePointContents(p->org);
+			if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID) {
+				if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2) {
+					vec3_t rorg;
+					VectorCopy(oldorg, rorg);
+					//Find out where the rain should actually hit
+					//This is a slow way of doing it, I'll fix it later maybe...
+					while (1) {
+						rorg[2] = rorg[2] - 0.5f;
+						contents = TruePointContents(rorg);
+						if (contents == CONTENTS_WATER) {
+							if (amf_weather_rain_fast.value == 2) {
+								break;
+							}
+							RainSplash(rorg);
+							break;
+						}
+						else if (contents == CONTENTS_SOLID) {
+							byte col[3] = { 128,128,128 };
+							SparkGen(rorg, col, 3, 50, 0.15);
+							break;
+						}
+					}
+					VectorCopy(rorg, p->org);
+					VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+				}
+				p->die = 0;
+			}
+			else {
+				VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+			}
+			break;
+			//VULT PARTICLES
+		case pm_streak:
+			VectorCopy(p->org, oldorg);
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+				if (TraceLineN(oldorg, p->org, stop, normal)) {
+					VectorCopy(stop, p->org);
+					bounce = -pt->custom * DotProduct(p->vel, normal);
+					VectorMA(p->vel, bounce, normal, p->vel);
+				}
+			}
+			VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+			if (VectorLength(p->vel) == 0) {
+				p->die = 0;
+			}
+			break;
+		case pm_streakwave:
+			VectorCopy(p->org, oldorg);
+			VectorMA(p->org, cls.frametime, p->vel, p->org);
+			VX_ParticleTrail(oldorg, p->org, p->size, 0.5, p->color);
+			p->vel[0] = 19 * p->vel[0] / 20;
+			p->vel[1] = 19 * p->vel[1] / 20;
+			p->vel[2] = 19 * p->vel[2] / 20;
+			break;
+		default:
+			assert(!"QMB_UpdateParticles: unexpected pt->move");
+			break;
+	}
+}
+
 // TODO: Split up
 static void QMB_UpdateParticles(void)
 {
-	int i, contents;
-	float grav, bounce;
-	vec3_t oldorg, stop, normal;
+	int i;
+	float grav;
 	particle_type_t *pt;
 	particle_t *p, *kill;
 
@@ -947,157 +1101,13 @@ static void QMB_UpdateParticles(void)
 		}
 
 		for (p = pt->start; p; p = p->next) {
-			if (particle_time < p->start)
+			if (particle_time < p->start) {
 				continue;
+			}
 
 			particle_count++;
 
-			p->size += p->growth * cls.frametime;
-
-			if (p->size <= 0) {
-				p->die = 0;
-				continue;
-			}
-
-			//VULT PARTICLE
-			if (pt->id == p_streaktrail || pt->id == p_lightningbeam) {
-				p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
-			}
-			else {
-				p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
-			}
-
-			p->rotangle += p->rotspeed * cls.frametime;
-
-			if (p->hit) {
-				continue;
-			}
-
-			//VULT - switched these around so velocity is scaled before gravity is applied
-			VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel);
-			p->vel[2] += pt->grav * grav * cls.frametime;
-
-			switch (pt->move) {
-			case pm_static:
-				break;
-			case pm_normal:
-				VectorCopy(p->org, oldorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (CONTENTS_SOLID == TruePointContents(p->org)) {
-					p->hit = 1;
-					VectorCopy(oldorg, p->org);
-					VectorClear(p->vel);
-				}
-				break;
-			case pm_float:
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				p->org[2] += p->size + 1;
-				contents = TruePointContents(p->org);
-				if (!ISUNDERWATER(contents)) {
-					p->die = 0;
-				}
-				p->org[2] -= p->size + 1;
-				break;
-			case pm_nophysics:
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				break;
-			case pm_die:
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (CONTENTS_SOLID == TruePointContents(p->org)) {
-					p->die = 0;
-				}
-				break;
-			case pm_bounce:
-				if (!gl_bounceparticles.value || p->bounces) {
-					if (pt->id == p_smallspark)
-						VectorCopy(p->org, p->endorg);
-
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents(p->org))
-						p->die = 0;
-				}
-				else {
-					VectorCopy(p->org, oldorg);
-					if (pt->id == p_smallspark)
-						VectorCopy(oldorg, p->endorg);
-					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents(p->org)) {
-						if (TraceLineN(oldorg, p->org, stop, normal)) {
-							VectorCopy(stop, p->org);
-							bounce = -pt->custom * DotProduct(p->vel, normal);
-							VectorMA(p->vel, bounce, normal, p->vel);
-							p->bounces++;
-							if (pt->id == p_smallspark) {
-								VectorCopy(stop, p->endorg);
-							}
-						}
-					}
-				}
-				break;
-				//VULT PARTICLES
-			case pm_rain:
-				VectorCopy(p->org, oldorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				contents = TruePointContents(p->org);
-				if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID) {
-					if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2) {
-						vec3_t rorg;
-						VectorCopy(oldorg, rorg);
-						//Find out where the rain should actually hit
-						//This is a slow way of doing it, I'll fix it later maybe...
-						while (1) {
-							rorg[2] = rorg[2] - 0.5f;
-							contents = TruePointContents(rorg);
-							if (contents == CONTENTS_WATER) {
-								if (amf_weather_rain_fast.value == 2) {
-									break;
-								}
-								RainSplash(rorg);
-								break;
-							}
-							else if (contents == CONTENTS_SOLID) {
-								byte col[3] = { 128,128,128 };
-								SparkGen(rorg, col, 3, 50, 0.15);
-								break;
-							}
-						}
-						VectorCopy(rorg, p->org);
-						VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
-					}
-					p->die = 0;
-				}
-				else {
-					VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
-				}
-				break;
-				//VULT PARTICLES
-			case pm_streak:
-				VectorCopy(p->org, oldorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (CONTENTS_SOLID == TruePointContents(p->org)) {
-					if (TraceLineN(oldorg, p->org, stop, normal)) {
-						VectorCopy(stop, p->org);
-						bounce = -pt->custom * DotProduct(p->vel, normal);
-						VectorMA(p->vel, bounce, normal, p->vel);
-					}
-				}
-				VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
-				if (VectorLength(p->vel) == 0) {
-					p->die = 0;
-				}
-				break;
-			case pm_streakwave:
-				VectorCopy(p->org, oldorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				VX_ParticleTrail(oldorg, p->org, p->size, 0.5, p->color);
-				p->vel[0] = 19 * p->vel[0] / 20;
-				p->vel[1] = 19 * p->vel[1] / 20;
-				p->vel[2] = 19 * p->vel[2] / 20;
-				break;
-			default:
-				assert(!"QMB_UpdateParticles: unexpected pt->move");
-				break;
-			}
+			QMB_ProcessParticle(pt, p);
 		}
 	}
 }
@@ -1351,6 +1361,8 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 			assert(!"AddParticle: unexpected type");
 			break;
 		}
+
+		QMB_ProcessParticle(pt, p);
 	}
 }
 
