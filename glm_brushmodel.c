@@ -234,7 +234,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	buffer = Q_malloc(size * sizeof(vbo_world_vert_t));
 
 	// Create vao
-	GL_GenVertexArray(&brushModel_vao);
+	GL_GenVertexArray(&brushModel_vao, "brushmodel-vao");
 
 	vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
 

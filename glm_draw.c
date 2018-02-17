@@ -55,7 +55,7 @@ static glm_vao_t* GL_CreateLineVAO(void)
 	}
 
 	if (!vao.vao) {
-		GL_GenVertexArray(&vao);
+		GL_GenVertexArray(&vao, "line-vao");
 
 		GL_ConfigureVertexAttribPointer(&vao, vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
@@ -190,7 +190,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!imageVAO.vao) {
-		GL_GenVertexArray(&imageVAO);
+		GL_GenVertexArray(&imageVAO, "image-vao");
 
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x1));
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x2));
@@ -443,7 +443,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	}
 
 	if (!polygonVAO.vao) {
-		GL_GenVertexArray(&polygonVAO);
+		GL_GenVertexArray(&polygonVAO, "polygon-vao");
 		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
@@ -508,7 +508,7 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 
 	// Build VAO
 	if (!circleVAO.vao) {
-		GL_GenVertexArray(&circleVAO);
+		GL_GenVertexArray(&circleVAO, "circle-vao");
 
 		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	}

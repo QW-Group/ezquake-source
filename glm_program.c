@@ -206,6 +206,10 @@ static qbool GLM_CompileProgram(
 							program->program = shader_program;
 							program->uniforms_found = false;
 							program->force_recompile = false;
+
+							if (glObjectLabel) {
+								glObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
+							}
 							return true;
 						}
 						else {

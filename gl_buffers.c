@@ -102,6 +102,9 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	glGenBuffers(1, &buffer->glref);
 
 	GL_BindBufferImpl(target, buffer->glref);
+	if (glObjectLabel && name) {
+		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
+	}
 	glBufferData(target, size, data, usage);
 	result.index = buffer - buffers;
 	return result;

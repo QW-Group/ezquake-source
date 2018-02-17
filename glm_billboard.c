@@ -172,7 +172,7 @@ static void GLM_CreateBillboardVAO(void)
 	}
 
 	if (!billboardVAO.vao) {
-		GL_GenVertexArray(&billboardVAO);
+		GL_GenVertexArray(&billboardVAO, "billboard-vao");
 
 		// position
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));

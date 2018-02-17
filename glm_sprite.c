@@ -71,7 +71,7 @@ static void GL_PrepareSprites(void)
 	}
 
 	if (!spriteVAO.vao) {
-		GL_GenVertexArray(&spriteVAO);
+		GL_GenVertexArray(&spriteVAO, "sprite-vao");
 		GL_SetVertexArrayElementBuffer(&spriteVAO, spriteIndexBuffer);
 
 		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(glm_sprite_vert_t), VBO_OFFSET(glm_sprite_vert_t, position));

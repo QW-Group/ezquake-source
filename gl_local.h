@@ -461,6 +461,9 @@ typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum 
 typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
 typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
 
+// Debug functions
+typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
+
 // VAO functions
 extern glBindVertexArray_t         glBindVertexArray;
 extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
@@ -518,6 +521,9 @@ extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance
 extern glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 extern glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
 extern glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
+
+// Debug functions
+extern glObjectLabel_t glObjectLabel;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
@@ -920,7 +926,7 @@ void GL_DeleteVAOs(void);
 
 void GL_InitialiseState(void);
 buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size);
-void GL_GenVertexArray(glm_vao_t* vao);
+void GL_GenVertexArray(glm_vao_t* vao, const char* name);
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);

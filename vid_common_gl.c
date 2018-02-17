@@ -197,6 +197,8 @@ glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVerte
 glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
+glObjectLabel_t glObjectLabel;
+
 static qbool shaders_supported = false;
 static int modern_only = -1;
 
@@ -332,6 +334,7 @@ static void CheckShaderExtensions(void)
 				}
 			}
 #endif
+			glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
@@ -700,7 +703,7 @@ void GL_ResetRegion(qbool start)
 // Linked list of all vao buffers
 static glm_vao_t* vao_list = NULL;
 
-void GL_GenVertexArray(glm_vao_t* vao)
+void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 {
 	if (vao->vao) {
 		glDeleteVertexArrays(1, &vao->vao);
@@ -711,6 +714,9 @@ void GL_GenVertexArray(glm_vao_t* vao)
 	}
 	glGenVertexArrays(1, &vao->vao);
 	GL_BindVertexArray(vao);
+	if (glObjectLabel) {
+		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
+	}
 }
 
 void GL_DeleteVAOs(void)
