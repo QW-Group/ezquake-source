@@ -12,32 +12,7 @@
 #ifndef  __APPLE__
 #include "tr_types.h"
 #endif
-
-#define MAX_ARRAY_DEPTH 64
-
-typedef enum {
-	TEXTURETYPES_ALIASMODEL,
-	TEXTURETYPES_BRUSHMODEL,
-	TEXTURETYPES_WORLDMODEL,
-	TEXTURETYPES_SPRITES,
-
-	TEXTURETYPES_COUNT
-} texture_type;
-
-typedef struct texture_array_ref_s {
-	texture_ref ref;
-	int index;
-	float scale_s;
-	float scale_t;
-} texture_array_ref_t;
-
-typedef struct texture_flag_s {
-	texture_ref ref;
-	int subsequent;
-	int flags;
-
-	texture_array_ref_t array_ref[TEXTURETYPES_COUNT];
-} texture_flag_t;
+#include "glm_texture_arrays.h"
 
 static texture_flag_t texture_flags[MAX_GLTEXTURES];
 static int flagged_type = 0;
@@ -252,7 +227,7 @@ void GL_DeleteModelData(void)
 	}
 }
 
-static void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2dname, qbool tile)
+void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2dname, qbool tile)
 {
 	int width = GL_TextureWidth(tex2dname);
 	int height = GL_TextureHeight(tex2dname);
@@ -586,17 +561,14 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 	// Add non-model textures we need (generally sprites)
 	{
-		// TODO
+		QMB_FlagTexturesForArray(texture_flags);
+		CI_FlagTexturesForArray(texture_flags);
+		VX_FlagTexturesForArray(texture_flags);
+		Part_FlagTexturesForArray(texture_flags);
 	}
 
 	for (flagged_type = 0; flagged_type < TEXTURETYPES_COUNT; ++flagged_type) {
 		qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortFlaggedTextures);
-
-		for (i = 0; i < MAX_GLTEXTURES; ++i) {
-			if (!(texture_flags[i].flags & (1 << flagged_type))) {
-				continue;
-			}
-		}
 
 		for (i = 0; i < MAX_GLTEXTURES; ++i) {
 			int base = i;
@@ -666,6 +638,11 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortTexturesByReference);
 
 	{
+		QMB_ImportTextureArrayReferences(texture_flags);
+		CI_ImportTextureArrayReferences(texture_flags);
+		VX_ImportTextureArrayReferences(texture_flags);
+		Part_ImportTexturesForArrayReferences(texture_flags);
+
 		// Go back through all models, importing textures into arrays and creating new VBO
 		for (i = 1; i < MAX_MODELS; ++i) {
 			model_t* mod = cl.model_precache[i];

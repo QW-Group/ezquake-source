@@ -4,6 +4,7 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "gl_billboards.h"
 
 void GLM_DrawBillboards(void);
 void GLC_DrawBillboards(void);
@@ -12,7 +13,7 @@ void GLC_DrawBillboards(void);
 
 typedef struct gl_billboard_vert_s {
 	float position[3];
-	float tex[2];
+	float tex[3];
 	GLubyte color[4];
 } gl_billboard_vert_t;
 
@@ -21,6 +22,7 @@ typedef struct gl_billboard_batch_s {
 	GLenum blendDestination;
 	GLenum primitive;
 	texture_ref texture;
+	int texture_index;
 	qbool depthTest;
 	qbool allSameNumber;
 
@@ -57,7 +59,7 @@ static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocat
 	return &batches[index - 1];
 }
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, GLenum primitive_type, qbool depthTest)
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest)
 {
 	gl_billboard_batch_t* batch = BatchForType(type, true);
 
@@ -68,6 +70,7 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->primitive = primitive_type;
 	batch->depthTest = depthTest;
 	batch->allSameNumber = true;
+	batch->texture_index = index;
 }
 
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
@@ -107,6 +110,7 @@ void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, flo
 	VectorSet(verts[v].position, x, y, z);
 	verts[v].tex[0] = s;
 	verts[v].tex[1] = t;
+	verts[v].tex[2] = batch->texture_index;
 	++batch->numVertices[batch->count - 1];
 }
 
@@ -177,7 +181,7 @@ static void GLM_CreateBillboardVAO(void)
 		// position
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
 		// color
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color));
 	}

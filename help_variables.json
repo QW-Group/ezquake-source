@@ -3146,15 +3146,6 @@
       "group-id": "36",
       "type": "float"
     },
-    "gl_particle_style": {
-      "group-id": "36",
-      "type": "boolean",
-      "description": "Style of particles.",
-      "values": [
-        { "name": "false", "description": "Round particles" },
-        { "name": "true", "description": "Square particles (software style)" }
-      ]
-    },
     "gl_particle_trail_detail": {
       "group-id": "36",
       "type": "float"

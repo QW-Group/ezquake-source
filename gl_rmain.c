@@ -66,16 +66,15 @@ int       r_framecount;                       // used for dlight push checking
 int       lightmode = 2;
 int       d_lightstylevalue[256];             // 8.8 fraction of base light value
 texture_ref shelltexture;
-texture_ref particletexture;                    // little dot for particles
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;
 r_frame_stats_t frameStats;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {
-	extern void Classic_LoadParticleTexures(void);
+	Cvar_SetIgnoreCallback(var, value);
 
-	Classic_LoadParticleTexures();
+	Classic_InitParticles();
 }
 
 static void OnDynamicLightingChange(cvar_t* var, char* value, qbool* cancel)
@@ -146,7 +145,7 @@ cvar_t gl_lightmode                        = {"gl_lightmode", "1"};
 cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
 cvar_t gl_oldlitscaling                    = {"gl_oldlitscaling", "0"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
-cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange };
+cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange};
 cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails                      = {"gl_part_trails", "0"}; // 1
 cvar_t gl_part_tracer1_color               = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
@@ -163,7 +162,6 @@ cvar_t gl_part_blobs                       = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash                  = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno                     = {"gl_part_inferno", "0"}; // 1
 cvar_t gl_part_bubble                      = {"gl_part_bubble", "1"}; // would prefer 0 but default was 1
-cvar_t gl_particle_style                   = {"gl_particle_style", "0"}; // 0 - round, 1 - square (sw style)
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
 cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
 cvar_t gl_powerupshells                    = {"gl_powerupshells", "1"};
@@ -747,143 +745,142 @@ static void R_SetupGL(void)
 
 void R_Init(void)
 {
-	Cmd_AddCommand ("loadsky", R_LoadSky_f);
-	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
+	Cmd_AddCommand("loadsky", R_LoadSky_f);
+	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
-	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
+	Cmd_AddCommand("pointfile", R_ReadPointFile_f);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register (&r_bloom);
-	Cvar_Register (&r_bloom_darken);
-	Cvar_Register (&r_bloom_alpha);
-	Cvar_Register (&r_bloom_diamond_size);
-	Cvar_Register (&r_bloom_intensity);
-	Cvar_Register (&r_bloom_sample_size);
-	Cvar_Register (&r_bloom_fast_sample);
-	Cvar_Register (&r_drawentities);
-	Cvar_Register (&r_lerpframes);
-	Cvar_Register (&r_drawflame);
-	Cvar_Register (&gl_detail);
-	Cvar_Register (&gl_powerupshells);
-	Cvar_Register (&gl_powerupshells_style);
-	Cvar_Register (&gl_powerupshells_size);
+	Cvar_Register(&r_bloom);
+	Cvar_Register(&r_bloom_darken);
+	Cvar_Register(&r_bloom_alpha);
+	Cvar_Register(&r_bloom_diamond_size);
+	Cvar_Register(&r_bloom_intensity);
+	Cvar_Register(&r_bloom_sample_size);
+	Cvar_Register(&r_bloom_fast_sample);
+	Cvar_Register(&r_drawentities);
+	Cvar_Register(&r_lerpframes);
+	Cvar_Register(&r_drawflame);
+	Cvar_Register(&gl_detail);
+	Cvar_Register(&gl_powerupshells);
+	Cvar_Register(&gl_powerupshells_style);
+	Cvar_Register(&gl_powerupshells_size);
 
-	Cvar_Register (&gl_simpleitems);
-	Cvar_Register (&gl_simpleitems_size);
-	Cvar_Register (&gl_simpleitems_orientation);
+	Cvar_Register(&gl_simpleitems);
+	Cvar_Register(&gl_simpleitems_size);
+	Cvar_Register(&gl_simpleitems_orientation);
 
-	Cvar_Register (&gl_motion_blur);
-	Cvar_Register (&gl_motion_blur_fps);
-	Cvar_Register (&gl_motion_blur_norm);
-	Cvar_Register (&gl_motion_blur_hurt);
-	Cvar_Register (&gl_motion_blur_dead);
+	Cvar_Register(&gl_motion_blur);
+	Cvar_Register(&gl_motion_blur_fps);
+	Cvar_Register(&gl_motion_blur_norm);
+	Cvar_Register(&gl_motion_blur_hurt);
+	Cvar_Register(&gl_motion_blur_dead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-	Cvar_Register (&gl_squareparticles);
-	Cvar_Register (&gl_part_explosions);
-	Cvar_Register (&gl_part_trails);
-	Cvar_Register (&gl_part_tracer1_color);
-	Cvar_Register (&gl_part_tracer1_size);
-	Cvar_Register (&gl_part_tracer1_time);
-	Cvar_Register (&gl_part_tracer2_color);
-	Cvar_Register (&gl_part_tracer2_size);
-	Cvar_Register (&gl_part_tracer2_time);
-	Cvar_Register (&gl_part_spikes);
-	Cvar_Register (&gl_part_gunshots);
-	Cvar_Register (&gl_part_blood);
-	Cvar_Register (&gl_part_telesplash);
-	Cvar_Register (&gl_part_blobs);
-	Cvar_Register (&gl_part_lavasplash);
-	Cvar_Register (&gl_part_inferno);
-	Cvar_Register (&gl_part_bubble);
-	Cvar_Register (&gl_particle_style);
+	Cvar_Register(&gl_part_explosions);
+	Cvar_Register(&gl_part_trails);
+	Cvar_Register(&gl_part_tracer1_color);
+	Cvar_Register(&gl_part_tracer1_size);
+	Cvar_Register(&gl_part_tracer1_time);
+	Cvar_Register(&gl_part_tracer2_color);
+	Cvar_Register(&gl_part_tracer2_size);
+	Cvar_Register(&gl_part_tracer2_time);
+	Cvar_Register(&gl_part_spikes);
+	Cvar_Register(&gl_part_gunshots);
+	Cvar_Register(&gl_part_blood);
+	Cvar_Register(&gl_part_telesplash);
+	Cvar_Register(&gl_part_blobs);
+	Cvar_Register(&gl_part_lavasplash);
+	Cvar_Register(&gl_part_inferno);
+	Cvar_Register(&gl_part_bubble);
+	Cvar_Register(&gl_squareparticles);
 
-	Cvar_Register (&gl_part_detpackexplosion_fire_color);
-	Cvar_Register (&gl_part_detpackexplosion_ray_color);
+	Cvar_Register(&gl_part_detpackexplosion_fire_color);
+	Cvar_Register(&gl_part_detpackexplosion_ray_color);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
-	Cvar_Register (&r_skyname);
-	Cvar_Register (&r_fastsky);
-	Cvar_Register (&r_skycolor);
-	Cvar_Register (&r_fastturb);
+	Cvar_Register(&r_skyname);
+	Cvar_Register(&r_fastsky);
+	Cvar_Register(&r_skycolor);
+	Cvar_Register(&r_fastturb);
 
-	Cvar_Register (&r_telecolor);
-	Cvar_Register (&r_lavacolor);
-	Cvar_Register (&r_slimecolor);
-	Cvar_Register (&r_watercolor);
+	Cvar_Register(&r_telecolor);
+	Cvar_Register(&r_lavacolor);
+	Cvar_Register(&r_slimecolor);
+	Cvar_Register(&r_watercolor);
 
-	Cvar_Register (&r_novis);
-	Cvar_Register (&r_wateralpha);
-	Cvar_Register (&gl_caustics);
-	if (!COM_CheckParm ("-nomtex")) {
-		Cvar_Register (&gl_waterfog);
-		Cvar_Register (&gl_waterfog_density);
-		Cvar_Register (&gl_waterfog_color_water);
-		Cvar_Register (&gl_waterfog_color_lava);
-		Cvar_Register (&gl_waterfog_color_slime);
+	Cvar_Register(&r_novis);
+	Cvar_Register(&r_wateralpha);
+	Cvar_Register(&gl_caustics);
+	if (!COM_CheckParm("-nomtex")) {
+		Cvar_Register(&gl_waterfog);
+		Cvar_Register(&gl_waterfog_density);
+		Cvar_Register(&gl_waterfog_color_water);
+		Cvar_Register(&gl_waterfog_color_lava);
+		Cvar_Register(&gl_waterfog_color_slime);
 	}
 
-	Cvar_Register (&gl_fogenable); 
-	Cvar_Register (&gl_fogstart); 
-	Cvar_Register (&gl_fogend); 
-	Cvar_Register (&gl_fogsky);
-	Cvar_Register (&gl_fogred); 
-	Cvar_Register (&gl_fogblue);
-	Cvar_Register (&gl_foggreen);
+	Cvar_Register(&gl_fogenable);
+	Cvar_Register(&gl_fogstart);
+	Cvar_Register(&gl_fogend);
+	Cvar_Register(&gl_fogsky);
+	Cvar_Register(&gl_fogred);
+	Cvar_Register(&gl_fogblue);
+	Cvar_Register(&gl_foggreen);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
-	Cvar_Register (&gl_polyblend);
+	Cvar_Register(&gl_polyblend);
 
 	R_InitAliasModelCvars();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
-	Cvar_Register (&r_dynamic);
-	Cvar_Register (&gl_fb_bmodels);
-	Cvar_Register (&gl_fb_models);
-	Cvar_Register (&gl_lightmode);
-	Cvar_Register (&gl_flashblend);
-	Cvar_Register (&gl_rl_globe);
-	Cvar_Register (&r_shadows);
-	Cvar_Register (&r_fullbright);
-	Cvar_Register (&r_lightmap);
-	Cvar_Register (&gl_loadlitfiles);
-	Cvar_Register (&gl_oldlitscaling);
-	Cvar_Register (&gl_colorlights);
+	Cvar_Register(&r_dynamic);
+	Cvar_Register(&gl_fb_bmodels);
+	Cvar_Register(&gl_fb_models);
+	Cvar_Register(&gl_lightmode);
+	Cvar_Register(&gl_flashblend);
+	Cvar_Register(&gl_rl_globe);
+	Cvar_Register(&r_shadows);
+	Cvar_Register(&r_fullbright);
+	Cvar_Register(&r_lightmap);
+	Cvar_Register(&gl_loadlitfiles);
+	Cvar_Register(&gl_oldlitscaling);
+	Cvar_Register(&gl_colorlights);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register (&gl_playermip);
-	Cvar_Register (&gl_subdivide_size);
-	Cvar_Register (&gl_lumaTextures);
-	Cvar_Register (&r_drawflat);
-	Cvar_Register (&r_wallcolor);
-	Cvar_Register (&r_floorcolor);
-	Cvar_Register (&gl_textureless); //Qrack
+	Cvar_Register(&gl_playermip);
+	Cvar_Register(&gl_subdivide_size);
+	Cvar_Register(&gl_lumaTextures);
+	Cvar_Register(&r_drawflat);
+	Cvar_Register(&r_wallcolor);
+	Cvar_Register(&r_floorcolor);
+	Cvar_Register(&gl_textureless); //Qrack
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
-	Cvar_Register (&r_farclip);
-	Cvar_Register (&gl_smoothmodels);
-	Cvar_Register (&gl_affinemodels);
-	Cvar_Register (&gl_clear);
-	Cvar_Register (&gl_clearColor);
-	Cvar_Register (&gl_cull);
+	Cvar_Register(&r_farclip);
+	Cvar_Register(&gl_smoothmodels);
+	Cvar_Register(&gl_affinemodels);
+	Cvar_Register(&gl_clear);
+	Cvar_Register(&gl_clearColor);
+	Cvar_Register(&gl_cull);
 
 	Cvar_Register(&gl_brush_polygonoffset);
 
-	Cvar_Register (&gl_nocolors);
-	Cvar_Register (&gl_finish);
-	Cvar_Register (&gl_gammacorrection);
-	Cvar_Register (&gl_modulate);
+	Cvar_Register(&gl_nocolors);
+	Cvar_Register(&gl_finish);
+	Cvar_Register(&gl_gammacorrection);
+	Cvar_Register(&gl_modulate);
 
-	Cvar_Register (&gl_outline);
-	Cvar_Register (&gl_outline_width);
-	Cvar_Register (&gl_meshdraw);
-	Cvar_Register (&gl_postprocess_gamma);
+	Cvar_Register(&gl_outline);
+	Cvar_Register(&gl_outline_width);
+	Cvar_Register(&gl_meshdraw);
+	Cvar_Register(&gl_postprocess_gamma);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&r_speeds);
-	Cvar_Register (&r_netgraph);
-	Cvar_Register (&r_netstats);
+	Cvar_Register(&r_speeds);
+	Cvar_Register(&r_netgraph);
+	Cvar_Register(&r_netstats);
 
 	Cvar_Register(&cl_multiview);
 	Cvar_Register(&cl_mvdisplayhud);
@@ -897,38 +894,39 @@ void R_Init(void)
 
 	Cvar_ResetCurrentGroup();
 
-	if (!hud_netgraph)
-		hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
-				HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
-				"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-				"swap_x",       "0",
-				"swap_y",       "0",
-				"inframes",     "0",
-				"scale",        "256",
-				"ploss",        "1",
-				"width",        "256",
-				"height",       "32",
-				"lostscale",    "1",
-				"alpha",        "1",
-				NULL);
+	if (!hud_netgraph) {
+		hud_netgraph = HUD_Register(
+			"netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
+			HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
+			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+			"swap_x", "0",
+			"swap_y", "0",
+			"inframes", "0",
+			"scale", "256",
+			"ploss", "1",
+			"width", "256",
+			"height", "32",
+			"lostscale", "1",
+			"alpha", "1",
+			NULL
+		);
+	}
 
-	R_InitTextures ();	// FIXME: not sure is this safe re-init
-	R_InitBubble ();	// safe re-init
-	R_InitParticles (); // safe re-init imo
-	CI_Init ();			// safe re-init
+	R_InitTextures();	   // FIXME: not sure is this safe re-init
+	R_InitBubble();	       // safe re-init
+	R_InitParticles();     // safe re-init imo
+	CI_Init();			   // safe re-init
 
 	//VULT STUFF
-	if (qmb_initialized)
-	{
+	if (qmb_initialized) {
 		InitVXStuff(); // safe re-init imo
 	}
-	else
+	else {
 		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
+	}
 
 	InitTracker();
-
-	R_InitOtherTextures (); // safe re-init
-
+	R_InitOtherTextures(); // safe re-init
 	R_InitBloomTextures();
 }
 

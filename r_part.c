@@ -24,9 +24,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "particles_classic.h"
+#include "glm_texture_arrays.h"
+#include "gl_billboards.h"
+
+static texture_ref particletexture;
+texture_ref particletexture_array;
+int particletexture_array_index;
+static float particletexture_scale_s;
+static float particletexture_scale_t;
+const int default_size = 32;
 
 cvar_t r_particles_count = { "r_particles_count", "2048" };
-cvar_t r_drawparticles = { "r_drawparticles", "1" };
+static cvar_t r_drawparticles = { "r_drawparticles", "1" };
 
 // Which particles to draw this frame
 particle_t particles[ABSOLUTE_MAX_PARTICLES];
@@ -41,34 +50,94 @@ static int			r_numparticles;
 
 float crand(void)
 {
-	return (rand() & 32767)* (2.0 / 32767) - 1;
+	return (rand() & 32767) * (2.0 / 32767) - 1;
 }
 
-void Classic_LoadParticleTexures(void)
+static byte* Classic_CreateParticleTexture(int width, int height)
 {
-	int	i, x, y;
-	unsigned int data[32][32];
-
-	// clear to transparent white
-	for (i = 0; i < 32 * 32; i++) {
-		((unsigned *)data)[i] = LittleLong(0x00000000);
-	}
+	byte* data = Q_malloc(sizeof(byte) * width * height * 4);
+	int x, y;
+	int size = min(width, height);
+	float quarter = size / 4 - 0.5f;
+	extern cvar_t gl_squareparticles;
 
 	// draw a circle in the top left corner or square, depends of cvar
-	for (x = 0; x < 16; x++) {
-		for (y = 0; y < 16; y++) {
-			if (gl_squareparticles.integer || ((x - 7.5) * (x - 7.5) + (y - 7.5) * (y - 7.5) <= 8 * 8)) {
-				data[y][x] = LittleLong(0xFFFFFFFF);	// solid white
+	if (gl_squareparticles.integer) {
+		for (x = 0; x < size / 2; x++) {
+			for (y = 0; y < size / 2; y++) {
+				data[(x + y * width) * 4 + 0] = 255;
+				data[(x + y * width) * 4 + 1] = 255;
+				data[(x + y * width) * 4 + 2] = 255;
+				data[(x + y * width) * 4 + 3] = 255;
+			}
+		}
+	}
+	else {
+		for (x = 0; x < size / 2; x++) {
+			for (y = 0; y < size / 2; y++) {
+				float edge0 = size / 4.0f;
+				float dist = sqrt((x - quarter) * (x - quarter) + (y - quarter) * (y - quarter));
+
+				if (dist < edge0) {
+					float edge1 = edge0 - size / 16;
+
+					if (dist < edge1) {
+						data[(x + y * width) * 4 + 0] = 255;
+						data[(x + y * width) * 4 + 1] = 255;
+						data[(x + y * width) * 4 + 2] = 255;
+						data[(x + y * width) * 4 + 3] = 255;
+					}
+					else {
+						// smoothstep
+						float t = bound((dist - edge1) / (edge0 - edge1), 0, 1);
+						float f = 1 - t * t * (3.0 - 2.0 * t);
+
+						data[(x + y * width) * 4 + 0] = 255 * f;
+						data[(x + y * width) * 4 + 1] = 255 * f;
+						data[(x + y * width) * 4 + 2] = 255 * f;
+						data[(x + y * width) * 4 + 3] = 255 * f;
+					}
+				}
 			}
 		}
 	}
 
+	// draw a square in top-right
+	for (x = size - 4; x < size; ++x) {
+		for (y = size - 4; y < size; ++y) {
+			data[(x + y * width) * 4 + 0] = 255;
+			data[(x + y * width) * 4 + 1] = 255;
+			data[(x + y * width) * 4 + 2] = 255;
+			data[(x + y * width) * 4 + 3] = 255;
+		}
+	}
+
+	return data;
+}
+
+void Classic_LoadParticleTexures(int width, int height)
+{
+	byte* data = Classic_CreateParticleTexture(width, height);
 
 	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
-	particletexture = GL_LoadTexture("particles:classic", 32, 32, (byte*)data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
+	particletexture = GL_LoadTexture("particles:classic", width, height, data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
+
+	Q_free(data);
 
 	if (!GL_TextureReferenceIsValid(particletexture)) {
 		Sys_Error("Classic_LoadParticleTexures: can't load texture");
+		return;
+	}
+
+	if (GL_ShadersSupported() && GL_TextureReferenceIsValid(particletexture_array)) {
+		int width = GL_TextureWidth(particletexture_array);
+		int height = GL_TextureHeight(particletexture_array);
+		byte* data = Classic_CreateParticleTexture(width, height);
+
+		GL_TexSubImage3D(GL_TEXTURE0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GL_GenerateMipmap(GL_TEXTURE0, particletexture_array);
+
+		Q_free(data);
 	}
 }
 
@@ -79,12 +148,14 @@ void Classic_AllocParticles(void)
 
 void Classic_InitParticles(void)
 {
-	if (!r_numparticles)
+	if (!r_numparticles) {
 		Classic_AllocParticles();
-	else
+	}
+	else {
 		Classic_ClearParticles(); // also re-alloc particles
+	}
 
-	Classic_LoadParticleTexures();
+	Classic_LoadParticleTexures(default_size, default_size);
 }
 
 void Classic_ClearParticles(void)
@@ -565,7 +636,7 @@ void Classic_CalculateParticles(void)
 
 	// load texture if not done yet
 	if (!GL_TextureReferenceIsValid(particletexture)) {
-		Classic_LoadParticleTexures();
+		Classic_LoadParticleTexures(default_size, default_size);
 	}
 
 	frametime = cls.frametime;
@@ -698,10 +769,8 @@ void Classic_CalculateParticles(void)
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
-	extern cvar_t gl_particle_style;
 	int i;
 	vec3_t up, right;
-	qbool square = gl_particle_style.integer;
 
 	if (particles_to_draw == 0) {
 		return;
@@ -710,9 +779,8 @@ void Classic_DrawParticles(void)
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
 
-	if (square) {
-		// FIXME: Hideous, should really store the indexes and use restart if we're doing this many squares?
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, GL_TRIANGLE_STRIP, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true);
+	if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;
@@ -723,31 +791,9 @@ void Classic_DrawParticles(void)
 			color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
 			color[3] = glpart->gl_color[3] * 255;
 
-			if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 4)) {
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + (right[0] + up[0]) * scale, glpart->gl_org[1] + (right[1] + up[1]) * scale, glpart->gl_org[2] + (right[2] + up[2]) * scale, 1, 1, color);
-			}
-		}
-	}
-	else {
-		GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, particletexture, GL_TRIANGLES, true);
-		if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
-			for (i = 0; i < particles_to_draw; ++i) {
-				glm_particle_t* glpart = &glparticles[i];
-				float scale = glpart->gl_scale;
-				GLubyte color[4];
-
-				color[0] = glpart->gl_color[0] * glpart->gl_color[3] * 255;
-				color[1] = glpart->gl_color[1] * glpart->gl_color[3] * 255;
-				color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
-				color[3] = glpart->gl_color[3] * 255;
-
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
-				GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
-			}
+			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
+			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
+			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
 		}
 	}
 
@@ -764,8 +810,9 @@ void R_InitParticles(void)
 		Cvar_Register(&r_drawparticles);
 		Cvar_ResetCurrentGroup();
 
-		if ((i = COM_CheckParm("-particles")) && i + 1 < COM_Argc())
+		if ((i = COM_CheckParm("-particles")) && i + 1 < COM_Argc()) {
 			Cvar_SetValue(&r_particles_count, Q_atoi(COM_Argv(i + 1)));
+		}
 	}
 
 	Classic_InitParticles();
@@ -860,3 +907,30 @@ ParticleFunction(explosions, ParticleExplosion);
 ParticleFunction(blobs, BlobExplosion);
 ParticleFunction(lavasplash, LavaSplash);
 ParticleFunction(telesplash, TeleportSplash);
+
+void Part_FlagTexturesForArray(texture_flag_t* texture_flags)
+{
+	texture_flags[particletexture.index].flags |= (1 << TEXTURETYPES_SPRITES);
+}
+
+void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
+{
+	texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
+
+	if (GL_TextureWidth(array_ref->ref) != GL_TextureWidth(particletexture) ||
+		GL_TextureHeight(array_ref->ref) != GL_TextureHeight(particletexture)
+	) {
+		int width = GL_TextureWidth(array_ref->ref);
+		int height = GL_TextureHeight(array_ref->ref);
+		byte* data = Classic_CreateParticleTexture(width, height);
+
+		GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		Q_free(data);
+	}
+
+	particletexture_array = array_ref->ref;
+	particletexture_array_index = array_ref->index;
+	particletexture_scale_s = array_ref->scale_s;
+	particletexture_scale_t = array_ref->scale_t;
+}

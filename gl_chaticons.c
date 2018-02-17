@@ -21,6 +21,42 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "glm_texture_arrays.h"
+#include "gl_billboards.h"
+
+// Chat icons
+typedef byte col_t[4]; // FIXME: why 4?
+
+typedef struct ci_player_s {
+	vec3_t		org;
+	col_t		color;
+	float		rotangle;
+	float		size;
+	byte		texindex;
+	int			flags;
+	float       distance;
+
+	player_info_t *player;
+
+} ci_player_t;
+
+typedef enum {
+	citex_chat,
+	citex_afk,
+	citex_chat_afk,
+	num_citextures,
+} ci_tex_t;
+
+#define	MAX_CITEX_COMPONENTS		8
+typedef struct ci_texture_s {
+	texture_ref  texnum;
+	texture_ref  tex_array;
+	int          tex_index;
+	int          components;
+	float        coords[MAX_CITEX_COMPONENTS][4];
+} ci_texture_t;
+
+#define TEXTURE_DETAILS(x) (GL_ShadersSupported() ? x.tex_array : x.texnum),(x.tex_index)
 
 extern cvar_t r_chaticons_alpha;
 
@@ -232,9 +268,9 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_chat_afk].texnum, GL_TRIANGLE_FAN, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_afk].texnum, GL_TRIANGLE_FAN, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, ci_textures[citex_chat].texnum, GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];
@@ -252,5 +288,33 @@ void DrawChatIcons(void)
 		if (flags & CIF_AFK) {
 			CI_DrawBillboard(BILLBOARD_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
 		}
+	}
+}
+
+void CI_ImportTextureArrayReferences(texture_flag_t* texture_flags)
+{
+	ci_tex_t tex;
+	int i;
+
+	for (tex = 0; tex < num_citextures; ++tex) {
+		texture_array_ref_t* array_ref = &texture_flags[ci_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+
+		ci_textures[tex].tex_array = array_ref->ref;
+		ci_textures[tex].tex_index = array_ref->index;
+		for (i = 0; i < ci_textures[tex].components; ++i) {
+			ci_textures[tex].coords[i][0] *= array_ref->scale_s;
+			ci_textures[tex].coords[i][2] *= array_ref->scale_s;
+			ci_textures[tex].coords[i][1] *= array_ref->scale_t;
+			ci_textures[tex].coords[i][3] *= array_ref->scale_t;
+		}
+	}
+}
+
+void CI_FlagTexturesForArray(texture_flag_t* texture_flags)
+{
+	ci_tex_t tex;
+
+	for (tex = 0; tex < num_citextures; ++tex) {
+		texture_flags[ci_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
 	}
 }

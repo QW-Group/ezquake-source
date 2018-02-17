@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "vx_stuff.h"
+#include "glm_texture_arrays.h"
+#include "gl_billboards.h"
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
@@ -139,13 +141,14 @@ void R_DrawCoronas(void)
 
 	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
 		billboard_batch_id batch_id = BILLBOARD_CORONATEX_STANDARD + (tex - CORONATEX_STANDARD);
+		corona_texture_t* texture = &corona_textures[tex];
 		GLubyte color[4];
 
 		if (!r_corona_by_tex[tex]) {
 			continue;
 		}
 
-		GL_BillboardInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, corona_textures[tex], GL_TRIANGLE_STRIP, false);
+		GL_BillboardInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			if (c->type == C_FREE) {
@@ -188,21 +191,21 @@ void R_DrawCoronas(void)
 				c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2),
 				c->origin[1] + right[1] * (scale / 2) + up[1] * (scale / 2),
 				c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2),
-				1, 0, color
+				texture->array_scale_s, 0, color
 			);
 			GL_BillboardAddVert(batch_id,
 				// Left/Down
 				c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1),
 				c->origin[1] + (right[1] * (scale / 2)*-1) + (up[1] * (scale / 2)*-1),
 				c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1),
-				0, 1, color
+				0, texture->array_scale_t, color
 			);
 			GL_BillboardAddVert(batch_id,
 				// Right/Down
 				c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1),
 				c->origin[1] + right[1] * (scale / 2) + (up[1] * (scale / 2)*-1),
 				c->origin[2] + right[2] * (scale / 2) + (up[2] * (scale / 2)*-1),
-				1, 1, color
+				texture->array_scale_s, texture->array_scale_t, color
 			);
 
 			// It's sort of cheap, but lets draw a few more here to make the effect more obvious
@@ -223,21 +226,21 @@ void R_DrawCoronas(void)
 						c->origin[0] + right[0] * (scale)+up[0] * (scale / 30),
 						c->origin[1] + right[1] * (scale)+up[1] * (scale / 30),
 						c->origin[2] + right[2] * (scale)+up[2] * (scale / 30),
-						1, 0, color
+						texture->array_scale_s, 0, color
 					);
 					GL_BillboardAddVert(batch_id,
 						// Left/Down
 						c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1),
 						c->origin[1] + (right[1] * (scale)*-1) + (up[1] * (scale / 30)*-1),
 						c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1),
-						0, 1, color
+						0, texture->array_scale_t, color
 					);
 					GL_BillboardAddVert(batch_id,
 						// Right/Down
 						c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1),
 						c->origin[1] + right[1] * (scale)+(up[1] * (scale / 30)*-1),
 						c->origin[2] + right[2] * (scale)+(up[2] * (scale / 30)*-1),
-						1, 1, color
+						texture->array_scale_s, texture->array_scale_t, color
 					);
 				}
 			}
@@ -527,4 +530,27 @@ static void CoronaStats(int change)
 		CoronaCountHigh = CoronaCount;
 	}
 	CoronaCount += change;
+}
+
+void VX_FlagTexturesForArray(texture_flag_t* texture_flags)
+{
+	corona_texture_id tex;
+
+	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
+		texture_flags[corona_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+	}
+}
+
+void VX_ImportTextureArrayReferences(texture_flag_t* texture_flags)
+{
+	corona_texture_id tex;
+
+	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
+		texture_array_ref_t* array_ref = &texture_flags[corona_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+
+		corona_textures[tex].array_tex = array_ref->ref;
+		corona_textures[tex].array_index = array_ref->index;
+		corona_textures[tex].array_scale_s = array_ref->scale_s;
+		corona_textures[tex].array_scale_t = array_ref->scale_t;
+	}
 }

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "sbar.h"
 
-texture_ref corona_textures[CORONATEX_COUNT];
+corona_texture_t corona_textures[CORONATEX_COUNT];
 
 extern cvar_t gl_bounceparticles;
 
@@ -296,15 +296,15 @@ void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
 
-	corona_textures[CORONATEX_STANDARD] = GL_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_GUNFLASH] = GL_LoadTextureImage("textures/gunflash", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH1] = GL_LoadTextureImage("textures/explosionflash1", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH2] = GL_LoadTextureImage("textures/explosionflash2", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH3] = GL_LoadTextureImage("textures/explosionflash3", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH4] = GL_LoadTextureImage("textures/explosionflash4", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH5] = GL_LoadTextureImage("textures/explosionflash5", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH6] = GL_LoadTextureImage("textures/explosionflash6", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH7] = GL_LoadTextureImage("textures/explosionflash7", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_STANDARD].texnum = GL_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_GUNFLASH].texnum = GL_LoadTextureImage("textures/gunflash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH1].texnum = GL_LoadTextureImage("textures/explosionflash1", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH2].texnum = GL_LoadTextureImage("textures/explosionflash2", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH3].texnum = GL_LoadTextureImage("textures/explosionflash3", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH4].texnum = GL_LoadTextureImage("textures/explosionflash4", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH5].texnum = GL_LoadTextureImage("textures/explosionflash5", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH6].texnum = GL_LoadTextureImage("textures/explosionflash6", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH7].texnum = GL_LoadTextureImage("textures/explosionflash7", NULL, 0, 0, flags);
 
 	InitCoronas(); // safe re-init
 

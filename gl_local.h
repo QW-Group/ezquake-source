@@ -156,7 +156,6 @@ extern	texture_t	*r_notexture_mip;
 extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 #define MAX_SKYBOXTEXTURES 6
-extern	texture_ref particletexture;
 extern	texture_ref netgraphtexture;
 extern	texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
@@ -219,7 +218,6 @@ extern	cvar_t	gl_finish;
 extern	cvar_t	gl_fb_bmodels;
 extern	cvar_t	gl_fb_models;
 extern	cvar_t	gl_lightmode;
-extern  cvar_t  gl_squareparticles;
 extern	cvar_t	gl_playermip;
 
 
@@ -753,36 +751,6 @@ void GL_MarkEvent(const char* message, ...);
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
 
-// Chat icons
-typedef byte col_t[4]; // FIXME: why 4?
-
-typedef struct ci_player_s {
-	vec3_t		org;
-	col_t		color;
-	float		rotangle;
-	float		size;
-	byte		texindex;
-	int			flags;
-	float       distance;
-
-	player_info_t *player;
-
-} ci_player_t;
-
-typedef enum {
-	citex_chat,
-	citex_afk,
-	citex_chat_afk,
-	num_citextures,
-} ci_tex_t;
-
-#define	MAX_CITEX_COMPONENTS		8
-typedef struct ci_texture_s {
-	texture_ref  texnum;
-	int          components;
-	float        coords[MAX_CITEX_COMPONENTS][4];
-} ci_texture_t;
-
 // 
 #define CHARSET_CHARS_PER_ROW	16
 #define CHARSET_WIDTH			1.0
@@ -1082,76 +1050,6 @@ void GLM_PreRenderView(void);
 
 void GLC_SetupGL(void);
 void GLM_SetupGL(void);
-
-// Billboards
-typedef enum {
-	BILLBOARD_PARTICLES_CLASSIC,
-	BILLBOARD_PARTICLES_NEW_p_spark,
-	BILLBOARD_PARTICLES_NEW_p_smoke,
-	BILLBOARD_PARTICLES_NEW_p_fire,
-	BILLBOARD_PARTICLES_NEW_p_bubble,
-	BILLBOARD_PARTICLES_NEW_p_lavasplash,
-	BILLBOARD_PARTICLES_NEW_p_gunblast,
-	BILLBOARD_PARTICLES_NEW_p_chunk,
-	BILLBOARD_PARTICLES_NEW_p_shockwave,
-	BILLBOARD_PARTICLES_NEW_p_inferno_flame,
-	BILLBOARD_PARTICLES_NEW_p_inferno_trail,
-	BILLBOARD_PARTICLES_NEW_p_sparkray,
-	BILLBOARD_PARTICLES_NEW_p_staticbubble,
-	BILLBOARD_PARTICLES_NEW_p_trailpart,
-	BILLBOARD_PARTICLES_NEW_p_dpsmoke,
-	BILLBOARD_PARTICLES_NEW_p_dpfire,
-	BILLBOARD_PARTICLES_NEW_p_teleflare,
-	BILLBOARD_PARTICLES_NEW_p_blood1,
-	BILLBOARD_PARTICLES_NEW_p_blood2,
-	BILLBOARD_PARTICLES_NEW_p_blood3,
-	//VULT PARTICLES
-	BILLBOARD_PARTICLES_NEW_p_rain,
-	BILLBOARD_PARTICLES_NEW_p_alphatrail,
-	BILLBOARD_PARTICLES_NEW_p_railtrail,
-	BILLBOARD_PARTICLES_NEW_p_streak,
-	BILLBOARD_PARTICLES_NEW_p_streaktrail,
-	BILLBOARD_PARTICLES_NEW_p_streakwave,
-	BILLBOARD_PARTICLES_NEW_p_lightningbeam,
-	BILLBOARD_PARTICLES_NEW_p_vxblood,
-	BILLBOARD_PARTICLES_NEW_p_lavatrail,
-	BILLBOARD_PARTICLES_NEW_p_vxsmoke,
-	BILLBOARD_PARTICLES_NEW_p_vxsmoke_red,
-	BILLBOARD_PARTICLES_NEW_p_muzzleflash,
-	BILLBOARD_PARTICLES_NEW_p_inferno,
-	BILLBOARD_PARTICLES_NEW_p_2dshockwave,
-	BILLBOARD_PARTICLES_NEW_p_vxrocketsmoke,
-	BILLBOARD_PARTICLES_NEW_p_trailbleed,
-	BILLBOARD_PARTICLES_NEW_p_bleedspike,
-	BILLBOARD_PARTICLES_NEW_p_flame,
-	BILLBOARD_PARTICLES_NEW_p_bubble2,
-	BILLBOARD_PARTICLES_NEW_p_bloodcloud,
-	BILLBOARD_PARTICLES_NEW_p_chunkdir,
-	BILLBOARD_PARTICLES_NEW_p_smallspark,
-	BILLBOARD_PARTICLES_NEW_p_slimeglow,
-	BILLBOARD_PARTICLES_NEW_p_slimebubble,
-	BILLBOARD_PARTICLES_NEW_p_blacklavasmoke,
-	BILLBOARD_FLASHBLEND_LIGHTS,
-	BILLBOARD_CORONATEX_STANDARD,
-	BILLBOARD_CORONATEX_GUNFLASH,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH1,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH2,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH3,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH4,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH5,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH6,
-	BILLBOARD_CORONATEX_EXPLOSIONFLASH7,
-	BILLBOARD_CHATICON_AFK_CHAT,
-	BILLBOARD_CHATICON_CHAT,
-	BILLBOARD_CHATICON_AFK,
-
-	MAX_BILLBOARD_BATCHES
-} billboard_batch_id;
-
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, GLenum primitive_type, qbool depthTest);
-qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
-void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
-void GL_DrawBillboards(void);
 
 qbool GL_ExternalTexturesEnabled(qbool worldmodel);
 

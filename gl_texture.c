@@ -1052,9 +1052,6 @@ void GL_Texture_Init(void)
 	// Powerup shells.
 	GL_TextureReferenceInvalidate(shelltexture); // Force reload.
 
-	// Particles.
-	GL_TextureReferenceInvalidate(particletexture); // Force reload.
-
 	// Sky.
 	memset(skyboxtextures, 0, sizeof(skyboxtextures)); // Force reload.
 

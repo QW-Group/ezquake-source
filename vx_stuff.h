@@ -61,7 +61,17 @@ typedef enum {
 	CORONATEX_COUNT
 } corona_texture_id;
 
-extern texture_ref corona_textures[CORONATEX_COUNT];
+typedef struct corona_texture_s {
+	texture_ref texnum;
+
+	texture_ref array_tex;
+	int         array_index;
+	float       array_scale_s;
+	float       array_scale_t;
+} corona_texture_t;
+
+extern corona_texture_t corona_textures[CORONATEX_COUNT];
+
 
 float CL_TraceLine(vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 void WeatherEffect(void);

@@ -2,9 +2,9 @@
 
 #ezquake-definitions
 
-layout(binding=0) uniform sampler2D materialTex;
+layout(binding=0) uniform sampler2DArray materialTex;
 
-in vec2 TextureCoord;
+in vec3 TextureCoord;
 in vec4 fragColour;
 out vec4 frag_colour;
 

@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qsound.h"
 #include "tr_types.h"
+#include "glm_texture_arrays.h"
+#include "gl_billboards.h"
 
 //VULT
 static float alphatrail_s;
@@ -185,9 +187,13 @@ typedef struct qmb_particle_vertex_s {
 #define	MAX_PTEX_COMPONENTS		8
 typedef struct particle_texture_s {
 	texture_ref texnum;
+	texture_ref tex_array;
+	int         tex_index;
 	int			components;
 	float		coords[MAX_PTEX_COMPONENTS][4];		
 } particle_texture_t;
+
+#define TEXTURE_DETAILS(x) (GL_ShadersSupported() ? x->tex_array : x->texnum),(x->tex_index)
 
 static float sint[7] = {0.000000, 0.781832, 0.974928, 0.433884, -0.433884, -0.974928, -0.781832};
 static float cost[7] = {1.000000, 0.623490, -0.222521, -0.900969, -0.900969, -0.222521, 0.623490};
@@ -721,7 +727,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, ptex->texnum, GL_TRIANGLE_FAN, true);
+					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
 					first = false;
 				}
 
@@ -751,7 +757,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, ptex->texnum, GL_TRIANGLE_FAN, true);
+					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
 					first = false;
 				}
 
@@ -794,7 +800,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, ptex->texnum, GL_TRIANGLE_FAN, true);
+						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
 						first = false;
 					}
 
@@ -841,7 +847,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, ptex->texnum, GL_TRIANGLE_FAN, true);
+						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
 						first = false;
 					}
 
@@ -2915,4 +2921,39 @@ void VX_LightningTrail(vec3_t start, vec3_t end)
 {
 	col_t color = { 255,77,0,255 };
 	AddParticle(p_lightningbeam, start, 1, 50, 0.75, color, end);
+}
+
+int QMB_ParticleTextureCount(void)
+{
+	return num_particletextures;
+}
+
+void QMB_ImportTextureArrayReferences(texture_flag_t* texture_flags)
+{
+	part_tex_t tex;
+	int i;
+
+	for (tex = 0; tex < num_particletextures; ++tex) {
+		texture_array_ref_t* array_ref = &texture_flags[particle_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+
+		particle_textures[tex].tex_array = array_ref->ref;
+		particle_textures[tex].tex_index = array_ref->index;
+		for (i = 0; i < particle_textures[tex].components; ++i) {
+			particle_textures[tex].coords[i][0] *= array_ref->scale_s;
+			particle_textures[tex].coords[i][2] *= array_ref->scale_s;
+			particle_textures[tex].coords[i][1] *= array_ref->scale_t;
+			particle_textures[tex].coords[i][3] *= array_ref->scale_t;
+		}
+	}
+}
+
+void QMB_FlagTexturesForArray(texture_flag_t* texture_flags)
+{
+	part_tex_t tex;
+
+	for (tex = 0; tex < num_particletextures; ++tex) {
+		if (GL_TextureReferenceIsValid(particle_textures[tex].texnum)) {
+			texture_flags[particle_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+		}
+	}
 }
