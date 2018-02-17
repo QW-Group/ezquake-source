@@ -275,18 +275,20 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	Q_free(buffer);
 
 	// Create surface information SSBO
-	worldModel_surfaces_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), NULL, GL_STATIC_COPY);
-	for (i = 0; i < cl.worldmodel->numsurfaces; ++i) {
-		msurface_t* surf = cl.worldmodel->surfaces + i;
-		vbo_world_surface_t vboSurface;
+	if (cl.worldmodel) {
+		worldModel_surfaces_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), NULL, GL_STATIC_COPY);
+		for (i = 0; i < cl.worldmodel->numsurfaces; ++i) {
+			msurface_t* surf = cl.worldmodel->surfaces + i;
+			vbo_world_surface_t vboSurface;
 
-		VectorCopy(surf->plane->normal, vboSurface.normal);
-		vboSurface.normal[3] = surf->plane->dist;
-		memcpy(vboSurface.tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
-		memcpy(vboSurface.tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
+			VectorCopy(surf->plane->normal, vboSurface.normal);
+			vboSurface.normal[3] = surf->plane->dist;
+			memcpy(vboSurface.tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
+			memcpy(vboSurface.tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
 
-		GL_UpdateBufferSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
+			GL_UpdateBufferSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
+		}
+		GL_BindBufferBase(worldModel_surfaces_ssbo, GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 	}
-	GL_BindBufferBase(worldModel_surfaces_ssbo, GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 }
 
