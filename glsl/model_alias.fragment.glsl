@@ -2,7 +2,7 @@
 
 #ezquake-definitions
 
-uniform int outlines;
+uniform int mode;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
@@ -22,8 +22,8 @@ struct AliasModel {
 	float lerpFraction;
 };
 
-layout(std140) uniform AliasModelData {
-	AliasModel models[MAX_INSTANCEID];
+layout(std140, binding=GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
+	AliasModel models[];
 };
 
 in vec2 fsTextureCoord;

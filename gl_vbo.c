@@ -9,6 +9,7 @@
 #ifndef  __APPLE__
 #include "tr_types.h"
 #endif
+#include "glsl/constants.glsl"
 
 #define MAX_INSTANCES 128
 

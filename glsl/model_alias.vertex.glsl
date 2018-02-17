@@ -19,15 +19,6 @@ layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
 	model_vert lerpVertices[];
 };
 
-out vec2 fsTextureCoord;
-out vec2 fsAltTextureCoord;
-out vec4 fsBaseColor;
-flat out int fsFlags;
-flat out int fsTextureEnabled;
-flat out int fsTextureLuma;
-flat out int fsMaterialSampler;
-flat out int fsLumaSampler;
-
 struct AliasModel {
 	mat4 modelView;
 	vec4 color;
@@ -41,9 +32,19 @@ struct AliasModel {
 	float lerpFraction;
 };
 
-layout(std140) uniform AliasModelData {
-	AliasModel models[MAX_INSTANCEID];
+layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData
+{
+	AliasModel models[];
 };
+
+out vec2 fsTextureCoord;
+out vec2 fsAltTextureCoord;
+out vec4 fsBaseColor;
+flat out int fsFlags;
+flat out int fsTextureEnabled;
+flat out int fsTextureLuma;
+flat out int fsMaterialSampler;
+flat out int fsLumaSampler;
 
 void main()
 {
@@ -68,8 +69,9 @@ void main()
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
 	fsLumaSampler = models[_instanceId].lumaTextureMapping;
 
-	if ((fsFlags & AMF_SHELLFLAGS) == 0) {
+	if (mode == EZQ_ALIAS_MODE_NORMAL) {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
+
 		fsAltTextureCoord = fsTextureCoord = vec2(tex.s, tex.t);
 		fsTextureEnabled = (models[_instanceId].flags & AMF_TEXTURE_MATERIAL);
 		fsTextureLuma = (models[_instanceId].flags & AMF_TEXTURE_LUMA);
@@ -88,6 +90,9 @@ void main()
 		else {
 			fsBaseColor = models[_instanceId].color;
 		}
+	}
+	else if (mode == EZQ_ALIAS_MODE_OUTLINES) {
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
 	}
 	else {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * shellSize, 1);

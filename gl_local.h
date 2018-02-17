@@ -1025,7 +1025,6 @@ typedef struct uniform_block_frame_constants_s {
 
 #define MAX_WORLDMODEL_MATRICES  32
 #define MAX_WORLDMODEL_BATCH     64
-#define MAX_ALIASMODEL_BATCH     64
 #define MAX_SPRITE_BATCH         64
 #define MAX_SAMPLER_MAPPINGS    256
 
@@ -1063,7 +1062,7 @@ typedef struct uniform_block_aliasmodel_s {
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
-	uniform_block_aliasmodel_t models[MAX_ALIASMODEL_BATCH];
+	uniform_block_aliasmodel_t models[MAX_STANDARD_ENTITIES];
 } uniform_block_aliasmodels_t;
 
 typedef struct uniform_block_sprite_s {
@@ -1076,12 +1075,6 @@ typedef struct uniform_block_sprite_s {
 typedef struct uniform_block_spritedata_s {
 	uniform_block_sprite_t sprites[MAX_SPRITE_BATCH];
 } uniform_block_spritedata_t;
-
-enum {
-	// SSBOs
-	GL_BINDINGPOINT_ALIASMODEL_SSBO,
-	GL_BINDINGPOINT_WORLDMODEL_SURFACES
-};
 
 void GL_PreRenderView(void);
 void GLC_PreRenderView(void);
