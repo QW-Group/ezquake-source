@@ -1175,9 +1175,11 @@ typedef struct glm_worldmodel_req_s {
 	int flags;
 	int samplerMappingBase;
 	int samplerMappingCount;
+	int firstTexture;
 	float alpha;
 	qbool polygonOffset;
 	qbool worldmodel;
+	model_t* model;
 } glm_worldmodel_req_t;
 
 void GL_StateBeginAliasOutlineFrame(void);

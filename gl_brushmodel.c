@@ -1495,27 +1495,62 @@ void R_DrawBrushModel(entity_t *e)
 	R_ClearTextureChains(clmodel);
 
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
-		// find which side of the node we are on
-		pplane = psurf->plane;
-		dot = PlaneDiff(modelorg, pplane);
+		if (!GL_ShadersSupported()) {
+			// find which side of the node we are on
+			pplane = psurf->plane;
+			dot = PlaneDiff(modelorg, pplane);
 
-		//draw the water surfaces now, and setup sky/normal chains
-		if (	((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) || 
-			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
-		{
-			if (psurf->flags & SURF_DRAWSKY) {	
-				CHAIN_SURF_B2F(psurf, skychain);
+			//draw the water surfaces now, and setup sky/normal chains
+			if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+				(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON))) {
+				if (psurf->flags & SURF_DRAWSKY) {
+					CHAIN_SURF_B2F(psurf, skychain);
+				}
+				else if (psurf->flags & SURF_DRAWTURB) {
+					EmitWaterPolys(psurf);
+				}
+				else if (!GL_ShadersSupported() && psurf->flags & SURF_DRAWALPHA) {
+					CHAIN_SURF_B2F(psurf, alphachain);
+				}
+				else {
+					underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
+					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+					CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
+				}
 			}
-			else if (psurf->flags & SURF_DRAWTURB) {
-				EmitWaterPolys (psurf);
-			}
-			else if (!GL_ShadersSupported() && psurf->flags & SURF_DRAWALPHA) {
-				CHAIN_SURF_B2F(psurf, alphachain);
-			}
-			else {
-				underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
+		}
+		else {
+			if (psurf->flags & SURF_DRAWSKY) {
+				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+
 				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+			}
+			else if (psurf->flags & SURF_DRAWTURB) {
+				extern cvar_t r_fastturb;
+				if (r_fastturb.integer) {
+					CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+				}
+				else {
+					CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[0]);
+				}
+
+				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+			}
+			else if (psurf->flags & SURF_DRAWALPHA) {
+				CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
+			}
+			else {
+				underwater = 0;
+				if (GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (psurf->flags & SURF_UNDERWATER)) {
+					underwater = 1;
+				}
+
+				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+
 				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 			}
 		}
