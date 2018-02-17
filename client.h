@@ -641,10 +641,11 @@ typedef struct visentity_s {
 	qbool       draw[visent_max];
 } visentity_t;
 
+#define MAX_STANDARD_ENTITIES 512
+
 typedef struct visentlist_s {
-	visentity_t *list;
+	visentity_t list[MAX_STANDARD_ENTITIES];
 	int         count;
-	int         max;
 
 	int         typecount[visent_max];
 } visentlist_t;

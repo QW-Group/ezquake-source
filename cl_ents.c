@@ -147,9 +147,6 @@ void CL_InitEnts(void) {
 		}
 	}
 
-	cl_visents.max = MAX_STANDARD_ENTITIES;
-	cl_visents.list = (visentity_t *)Hunk_AllocName(cl_visents.max * sizeof(visentity_t), "visents");
-
 	CL_ClearScene();
 }
 
@@ -166,14 +163,14 @@ static qbool is_monster (int modelindex)
 
 void CL_ClearScene(void)
 {
-	memset(cl_visents.list, 0, cl_visents.max * sizeof(visentity_t));
+	memset(cl_visents.list, 0, sizeof(cl_visents.list));
 	memset(cl_visents.typecount, 0, sizeof(cl_visents.typecount));
 	cl_visents.count = 0;
 }
 
 void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, entity_t* ent, modtype_t type, qbool shell)
 {
-	if (list->count < list->max) {
+	if (list->count < sizeof(list->list) / sizeof(list->list[0])) {
 		list->list[cl_visents.count].ent = *ent;
 		list->list[cl_visents.count].type = type;
 		list->list[cl_visents.count].distance = VectorDistance(cl.simorg, ent->origin);
