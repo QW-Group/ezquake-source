@@ -206,7 +206,7 @@ static void GLM_QueueAliasModelDrawImpl(
 )
 {
 	uniform_block_aliasmodel_t* uniform;
-	aliasmodel_draw_type_t type = color[4] == 255 ? aliasmodel_draw_std : aliasmodel_draw_alpha;
+	aliasmodel_draw_type_t type = (color[3] == 1 ? aliasmodel_draw_std : aliasmodel_draw_alpha);
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
 	int textureSampler = -1, lumaSampler = -1;
 
@@ -261,7 +261,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->lumaSamplerMapping = lumaSampler;
 
 	// Add to queues
-	if (color[4] == 1.0) {
+	if (color[3] == 1.0) {
 		GLM_QueueDrawCall(aliasmodel_draw_std, vbo_start, vbo_count, alias_draw_count);
 		if (outline) {
 			GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
@@ -275,14 +275,6 @@ static void GLM_QueueAliasModelDrawImpl(
 	}
 
 	alias_draw_count++;
-}
-
-static void GLM_QueueAliasModelShellDraw(
-	model_t* model, int effects, int start, int count,
-	float yaw_angle_radians, float lerpFraction, int lerpFrameVertOffset
-)
-{
-	return;
 }
 
 static void GLM_QueueAliasModelDraw(
@@ -393,23 +385,7 @@ void GLM_DrawPowerupShell(
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {
-	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
-	int pose1 = R_AliasFramePose(oldframe);
-	int pose2 = R_AliasFramePose(frame);
-	int poseVertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
-	int poseVertIndex2 = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
-	float lerp_fraction = r_framelerp;
-
-	if (!GL_TextureReferenceIsValid(shelltexture)) {
-		return;
-	}
-
-	if (lerp_fraction == 1) {
-		poseVertIndex = poseVertIndex2;
-		lerp_fraction = 0;
-	}
-
-	GLM_QueueAliasModelShellDraw(model, effects, poseVertIndex, paliashdr->vertsPerPose, currententity->angles[YAW] * M_PI / 180.0, lerp_fraction, poseVertIndex2);
+	return;
 }
 
 void GLM_PrepareAliasModelBatches(void)
@@ -496,12 +472,12 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		);
 	}
 
-	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_std].num_calls) {
+	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines].num_calls) {
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
 
 		GL_EnterRegion("GLM_DrawOutlineBatch");
-		glUniform1i(drawAliasModel_mode, EZQ_ALIAS_MODE_OUTLINES);
-		GL_StateBeginAliasOutlineFrame();
+		SetAliasModelMode(EZQ_ALIAS_MODE_OUTLINES);
+		GLM_StateBeginAliasOutlineBatch();
 
 		for (i = 0; i < instr->num_calls; ++i) {
 			glMultiDrawArraysIndirect(
@@ -512,15 +488,13 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			);
 		}
 
-		GL_StateEndAliasOutlineFrame();
+		GLM_StateEndAliasOutlineBatch();
 		GL_LeaveRegion();
 	}
 }
 
 void GLM_DrawAliasModelBatches(void)
 {
-	extern cvar_t cl_drawgun;
-
 	GLM_RenderPreparedEntities(aliasmodel_draw_std);
 	GLM_RenderPreparedEntities(aliasmodel_draw_alpha);
 	GLM_RenderPreparedEntities(aliasmodel_draw_shells);

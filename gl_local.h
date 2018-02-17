@@ -1177,6 +1177,9 @@ typedef struct glm_worldmodel_req_s {
 void GL_StateBeginAliasOutlineFrame(void);
 void GL_StateEndAliasOutlineFrame(void);
 
+void GLM_StateBeginAliasOutlineBatch(void);
+void GLM_StateEndAliasOutlineBatch(void);
+
 void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateEndWaterSurfaces(void);
 void GL_StateBeginEntities(visentlist_t* vislist);

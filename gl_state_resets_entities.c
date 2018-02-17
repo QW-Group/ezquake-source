@@ -370,3 +370,27 @@ void GL_StateBeginAliasOutlineFrame(void)
 void GL_StateEndAliasOutlineFrame(void)
 {
 }
+
+void GLM_StateBeginAliasOutlineBatch(void)
+{
+	extern cvar_t gl_outline_width;
+
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_ShadeModel(GL_FLAT);
+	GL_DisableFog();
+
+	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
+	GL_CullFace(GL_BACK);
+	GL_PolygonMode(GL_LINE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+}
+
+void GLM_StateEndAliasOutlineBatch(void)
+{
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_PolygonMode(GL_FILL);
+	GL_CullFace(GL_BACK);
+}
