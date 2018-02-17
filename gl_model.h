@@ -140,7 +140,9 @@ typedef struct vbo_model_vert_s {
 	vec3_t normal;
 	float texture_coords[2];
 	int vert_index;
-	int padding[3];
+	int sprite_sampler;  // temporary
+	float sprite_index;  // temporary
+	int padding;
 } vbo_model_vert_t;
 
 typedef struct gl_buffer_s {

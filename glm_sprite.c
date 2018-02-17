@@ -23,16 +23,8 @@ typedef struct glm_sprite_s {
 	int texture_index;
 } glm_sprite_t;
 
-typedef struct glm_sprite_vert_s {
-	vec3_t position;
-	float tex[2];
-	int sampler;
-	float array_index;
-	int padding;
-} glm_sprite_vert_t;
-
 static glm_sprite_t sprite_batch[MAX_SPRITE_BATCH];
-static glm_sprite_vert_t sprite_vbo_data[MAX_SPRITE_BATCH * 4];
+static vbo_model_vert_t sprite_vbo_data[MAX_SPRITE_BATCH * 4];
 static texture_ref sampler_textures[MAX_SAMPLERS];
 static int allocated_samplers = 0;
 static int max_allocated_samplers;
@@ -74,10 +66,10 @@ static void GL_PrepareSprites(void)
 		GL_GenVertexArray(&spriteVAO, "sprite-vao");
 		GL_SetVertexArrayElementBuffer(&spriteVAO, spriteIndexBuffer);
 
-		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(glm_sprite_vert_t), VBO_OFFSET(glm_sprite_vert_t, position));
-		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(glm_sprite_vert_t), VBO_OFFSET(glm_sprite_vert_t, tex));
-		GL_ConfigureVertexAttribIPointer(&spriteVAO, spriteVBO, 2, 1, GL_INT, sizeof(glm_sprite_vert_t), VBO_OFFSET(glm_sprite_vert_t, sampler));
-		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 3, 1, GL_FLOAT, GL_FALSE, sizeof(glm_sprite_vert_t), VBO_OFFSET(glm_sprite_vert_t, array_index));
+		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_OFFSET(vbo_model_vert_t, position));
+		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_OFFSET(vbo_model_vert_t, texture_coords));
+		GL_ConfigureVertexAttribIPointer(&spriteVAO, spriteVBO, 2, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_OFFSET(vbo_model_vert_t, sprite_sampler));
+		GL_ConfigureVertexAttribPointer(&spriteVAO, spriteVBO, 3, 1, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_OFFSET(vbo_model_vert_t, sprite_index));
 	}
 }
 
@@ -89,18 +81,18 @@ void GL_BeginDrawSprites(void)
 	max_allocated_samplers = min(MAX_SAMPLERS, glConfig.texture_units);
 }
 
-static void GLM_SpriteVertSet(glm_sprite_vert_t* vert, vec3_t position, float s, float t, int sampler, float index)
+static void GLM_SpriteVertSet(vbo_model_vert_t* vert, vec3_t position, float s, float t, int sampler, float index)
 {
-	vert->sampler = sampler;
-	vert->tex[0] = s;
-	vert->tex[1] = t;
 	VectorCopy(position, vert->position);
-	vert->array_index = index;
+	vert->texture_coords[0] = s;
+	vert->texture_coords[1] = t;
+	vert->sprite_sampler = sampler;
+	vert->sprite_index = index;
 }
 
 void GL_FlushSpriteBatch(void)
 {
-	glm_sprite_vert_t* vert = sprite_vbo_data;
+	vbo_model_vert_t* vert = sprite_vbo_data;
 	int i;
 
 	if (batch_count && first_sprite_draw) {
@@ -184,7 +176,7 @@ glm_sprite_t* NextSprite(texture_ref texture)
 	int i;
 
 	if (batch_count >= sizeof(sprite_batch) / sizeof(sprite_batch[0])) {
-		GL_FlushSpriteBatch();
+		return NULL;
 	}
 
 	for (i = 0; i < allocated_samplers; ++i) {
@@ -209,12 +201,14 @@ void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scal
 	glm_sprite_t* sprite;
 
 	sprite = NextSprite(texture_array);
-	sprite->texture_index = texture_index;
-	sprite->texScale[0] = scale_s;
-	sprite->texScale[1] = scale_t;
-	VectorCopy(origin, sprite->origin);
-	VectorScale(up, scale_, sprite->up);
-	VectorScale(right, scale_, sprite->right);
+	if (sprite) {
+		sprite->texture_index = texture_index;
+		sprite->texScale[0] = scale_s;
+		sprite->texScale[1] = scale_t;
+		VectorCopy(origin, sprite->origin);
+		VectorScale(up, scale_, sprite->up);
+		VectorScale(right, scale_, sprite->right);
+	}
 }
 
 void GLM_DrawSpriteModel(entity_t* e)
@@ -255,12 +249,14 @@ void GLM_DrawSpriteModel(entity_t* e)
 	{
 		glm_sprite_t* sprite = NextSprite(frame->gl_arraynum);
 
-		sprite = &sprite_batch[batch_count];
-		sprite->texture_index = frame->gl_arrayindex;
-		sprite->texScale[0] = frame->gl_scalingS;
-		sprite->texScale[1] = frame->gl_scalingT;
-		VectorCopy(e->origin, sprite->origin);
-		VectorScale(up, 5, sprite->up);
-		VectorScale(right, 5, sprite->right);
+		if (sprite) {
+			sprite = &sprite_batch[batch_count];
+			sprite->texture_index = frame->gl_arrayindex;
+			sprite->texScale[0] = frame->gl_scalingS;
+			sprite->texScale[1] = frame->gl_scalingT;
+			VectorCopy(e->origin, sprite->origin);
+			VectorScale(up, 5, sprite->up);
+			VectorScale(right, 5, sprite->right);
+		}
 	}
 }

@@ -1025,7 +1025,7 @@ typedef struct uniform_block_frame_constants_s {
 
 #define MAX_WORLDMODEL_MATRICES  32
 #define MAX_WORLDMODEL_BATCH     64
-#define MAX_SPRITE_BATCH         64
+#define MAX_SPRITE_BATCH         MAX_STANDARD_ENTITIES
 #define MAX_SAMPLER_MAPPINGS    256
 
 typedef struct sampler_mapping_s {
