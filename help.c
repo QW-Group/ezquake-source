@@ -715,9 +715,11 @@ static void Help_Issues_f(void)
 void Help_Init(void)
 {
 	Cmd_AddCommand("describe", Help_Describe_f);
-	Cmd_AddCommand("help_missing", Help_Missing_f);
-	Cmd_AddCommand("help_issues", Help_Issues_f);
-	Cmd_AddCommand("help_verify_config", Help_VerifyConfig_f);
+	if (COM_CheckParm("-dev")) {
+		Cmd_AddCommand("dev_help_missing", Help_Missing_f);
+		Cmd_AddCommand("dev_help_issues", Help_Issues_f);
+		Cmd_AddCommand("dev_help_verify_config", Help_VerifyConfig_f);
+	}
 
 	Help_LoadDocs();
 }

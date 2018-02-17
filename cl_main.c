@@ -1852,6 +1852,12 @@ void CL_InitLocal (void)
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
 	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
 	Cmd_AddMacro("conheight", CL_Macro_Conheight);
+
+	if (COM_CheckParm("-dev")) {
+		extern void Dev_VidFrameTrace(void);
+
+		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);
+	}
 }
 
 void GFX_Init (void) 

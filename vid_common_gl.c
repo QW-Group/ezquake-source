@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "nvToolsExt.h"
 #endif
 
+static qbool dev_frame_debug_queued;
+
 // <DSA-functions (4.5)>
 // These allow modification of textures without binding (-bind-to-edit)
 typedef void (APIENTRY *glCreateTextures_t)(GLenum target, GLsizei n, GLuint* textures);
@@ -665,7 +667,7 @@ void GL_ResetRegion(qbool start)
 		fclose(debug_frame_out);
 		debug_frame_out = NULL;
 	}
-	else if (start && developer.integer == 1) {
+	else if (start && dev_frame_debug_queued) {
 		char fileName[MAX_PATH];
 #ifndef _WIN32
 		time_t t;
@@ -684,7 +686,7 @@ void GL_ResetRegion(qbool start)
 #endif
 
 		debug_frame_out = fopen(fileName, "wt");
-		Cvar_SetValue(&developer, 0);
+		dev_frame_debug_queued = false;
 	}
 
 	if (!GL_ShadersSupported() && debug_frame_out) {
@@ -969,4 +971,9 @@ void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* ne
 void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
 {
 	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
+}
+
+void Dev_VidFrameTrace(void)
+{
+	dev_frame_debug_queued = true;
 }
