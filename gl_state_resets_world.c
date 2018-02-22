@@ -179,7 +179,7 @@ void GLC_StateEndBlendLightmaps(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
 
 	LEAVE_STATE;
@@ -201,7 +201,7 @@ void GLC_StateEndCausticsPolys(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	LEAVE_STATE;
@@ -231,7 +231,7 @@ void GLC_StateEndUnderwaterCaustics(void)
 {
 	ENTER_STATE;
 
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	glMatrixMode(GL_TEXTURE);
@@ -293,7 +293,7 @@ void GLC_StateBeginAlphaChain(void)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	LEAVE_STATE;
 }
@@ -363,7 +363,7 @@ void GLC_StateEndRenderLumas(void)
 {
 	ENTER_STATE;
 
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_DepthMask(GL_TRUE);
 
 	LEAVE_STATE;
@@ -385,7 +385,7 @@ void GLC_StateEndEmitDetailPolys(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
 	LEAVE_STATE;

@@ -92,7 +92,7 @@ void GLC_StateEndSkyZBufferPass(void)
 	else {
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 

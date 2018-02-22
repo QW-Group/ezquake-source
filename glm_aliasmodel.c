@@ -436,14 +436,16 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		return;
 	}
 
-	GL_AlphaBlendFlags(type == aliasmodel_draw_std ? GL_BLEND_DISABLED : GL_BLEND_ENABLED);
+	if (type == aliasmodel_draw_std) {
+		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	}
+	else {
+		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	if (type == aliasmodel_draw_shells) {
 		mode = EZQ_ALIAS_MODE_SHELLS;
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	}
-	else {
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	GL_BindVertexArray(&aliasModel_vao);

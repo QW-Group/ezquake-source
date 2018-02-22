@@ -687,7 +687,7 @@ void R_DrawViewModel(void)
 
 	if (!GL_ShadersSupported()) {
 		GL_EnterRegion("R_DrawViewModel");
-		GL_StateBeginDrawViewModel(gun.alpha);
+		GLC_StateBeginDrawViewModel(gun.alpha);
 	}
 
 	switch (currententity->model->type) {
@@ -706,7 +706,7 @@ void R_DrawViewModel(void)
 	}
 
 	if (!GL_ShadersSupported()) {
-		GL_StateEndDrawViewModel();
+		GLC_StateEndDrawViewModel();
 
 		GL_LeaveRegion();
 	}
