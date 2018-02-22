@@ -67,12 +67,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
-	if (gl_powerupshells_style.integer) {
-		GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
-	}
-	else {
-		GL_BlendFunc(GL_ONE, GL_ONE);
-	}
+	GL_BlendFunc(GL_ONE, GL_ONE);
 
 	LEAVE_STATE;
 }
@@ -86,7 +81,7 @@ void GLC_StateBeginMD3Draw(float alpha)
 	ENTER_STATE;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);

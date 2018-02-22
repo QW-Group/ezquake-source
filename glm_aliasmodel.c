@@ -439,13 +439,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	GL_AlphaBlendFlags(type == aliasmodel_draw_std ? GL_BLEND_DISABLED : GL_BLEND_ENABLED);
 
 	if (type == aliasmodel_draw_shells) {
-		if (gl_powerupshells_style.integer) {
-			GL_BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		}
-		else {
-			GL_BlendFunc(GL_ONE, GL_ONE);
-		}
 		mode = EZQ_ALIAS_MODE_SHELLS;
+		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else {
 		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

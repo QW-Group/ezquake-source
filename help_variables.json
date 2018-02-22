@@ -3230,11 +3230,6 @@
       "desc": "Size of the powerupshells effect layer",
       "type": "integer"
     },
-    "gl_powerupshells_style": {
-      "group-id": "8",
-      "desc": "Style of the powerupshells effect layer",
-      "type": "integer"
-    },
     "gl_rl_globe": {
       "group-id": "15",
       "desc": "Helps customize rocket light independant of gl_flashblend.\n0 - treated as feature off.\n1 - rocket light looks like with gl_flashblend 2, but no dynamic lighting.\n2 - rocket light looks like with gl_flashblend 0 or 1.\n3 - rocket light looks like with gl_flashblend 2, with dynamic lighting, exactly the same.",

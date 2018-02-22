@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_NOCOMPRESS      (1<<7)  // do not use texture compression extension
 #define TEX_NO_PCX          (1<<8)  // do not load pcx images
 #define TEX_NO_TEXTUREMODE  (1<<9)  // ignore gl_texturemode* changes for texture
+#define TEX_PREMUL_ALPHA    (1<<10) // pre-multiply alpha
+#define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
@@ -42,10 +44,10 @@ void GLC_DisableTMU(GLenum target);
 void GLC_EnsureTMUEnabled(GLenum target);
 void GLC_EnsureTMUDisabled(GLenum target);
 
-byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-void GL_ImagePreMultiplyAlpha(byte* image, int width, int height);
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
+byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
+void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
 void GL_Texture_Init(void);
 

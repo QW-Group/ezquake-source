@@ -863,6 +863,10 @@ texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int he
 		}
 	}
 
+	if ((mode & TEX_ALPHA) && (mode & TEX_PREMUL_ALPHA)) {
+		GL_ImagePreMultiplyAlpha(data, width, height, mode & TEX_ZERO_ALPHA);
+	}
+
 	if (gamma) {
 		for (i = 0; i < image_size; i++) {
 			data[4 * i] = vid_gamma_table[data[4 * i]];
@@ -903,7 +907,7 @@ texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth
 	return reference;
 }
 
-void GL_ImagePreMultiplyAlpha(byte* image, int width, int height)
+void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
 {
 	// Pre-multiply alpha component
 	int pos;
@@ -914,6 +918,9 @@ void GL_ImagePreMultiplyAlpha(byte* image, int width, int height)
 		image[pos] *= alpha;
 		image[pos + 1] *= alpha;
 		image[pos + 2] *= alpha;
+		if (zero) {
+			image[pos + 3] = 0;
+		}
 	}
 }
 
@@ -955,7 +962,7 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	}
 
 	if (mode & TEX_ALPHA) {
-		GL_ImagePreMultiplyAlpha(data, real_width, real_height);
+		GL_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 	}
 
 	if (gl_support_arb_texture_non_power_of_two) {
@@ -1020,7 +1027,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 		return false;
 	}
 
-	GL_ImagePreMultiplyAlpha(data, real_width, real_height);
+	GL_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 
 	if (!identifier) {
 		identifier = filename;

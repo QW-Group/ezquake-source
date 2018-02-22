@@ -45,16 +45,16 @@ void main()
 				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_RED) != 0 ? shell_effect_level1 : 0),
 				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_GREEN) != 0 ? shell_effect_level1 : 0),
 				shell_base_level1 + ((fsFlags & AMF_SHELLMODEL_BLUE) != 0 ? shell_effect_level1 : 0),
-				shell_alpha
+				0
 			);
 			vec4 color2 = vec4(
 				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_RED) != 0 ? shell_effect_level2 : 0),
 				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_GREEN) != 0 ? shell_effect_level2 : 0),
 				shell_base_level2 + ((fsFlags & AMF_SHELLMODEL_BLUE) != 0 ? shell_effect_level2 : 0),
-				shell_alpha
+				0
 			);
 
-			frag_colour = 1.0 * color1 * tex + 1.0 * color2 * altTex;
+			frag_colour = shell_alpha * color1 * tex + shell_alpha * color2 * altTex;
 		}
 		else {
 			if (fsTextureEnabled != 0) {

@@ -166,7 +166,6 @@ cvar_t gl_part_bubble                      = {"gl_part_bubble", "1"}; // would p
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
 cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
 cvar_t gl_powerupshells                    = {"gl_powerupshells", "1"};
-cvar_t gl_powerupshells_style              = {"gl_powerupshells_style", "0"};
 cvar_t gl_powerupshells_size               = {"gl_powerupshells_size", "5"};
 cvar_t gl_fogenable                        = {"gl_fog", "0"};
 cvar_t gl_fogstart                         = {"gl_fogstart", "50.0"};
@@ -766,7 +765,6 @@ void R_Init(void)
 	Cvar_Register(&r_drawflame);
 	Cvar_Register(&gl_detail);
 	Cvar_Register(&gl_powerupshells);
-	Cvar_Register(&gl_powerupshells_style);
 	Cvar_Register(&gl_powerupshells_size);
 
 	Cvar_Register(&gl_simpleitems);

@@ -235,7 +235,6 @@ extern	cvar_t gl_part_detpackexplosion_fire_color;
 extern	cvar_t gl_part_detpackexplosion_ray_color;
 
 extern	cvar_t gl_powerupshells;
-extern	cvar_t gl_powerupshells_style;
 extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_gammacorrection;
