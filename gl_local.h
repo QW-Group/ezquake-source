@@ -659,6 +659,7 @@ void GL_Vertex3fv(const GLfloat* v);
 
 void GL_Color3f(float r, float g, float b);
 void GL_Color4f(float r, float g, float b, float a);
+void GL_Color4fv(const float* rgbaVec);
 void GL_Color3fv(const float* rgbVec);
 void GL_Color3ubv(const GLubyte* rgbVec);
 void GL_Color4ubv(const GLubyte* rgbaVec);

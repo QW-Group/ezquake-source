@@ -336,7 +336,8 @@ static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height,
 
 		for (i = 0; i < cnt; i += 4) {
 			if (bdata[i] < level && bdata[i + 1] < level && bdata[i + 2] < level) {
-				bdata[i + 3] = 0; // make black pixels transparent, well not always black, depends of level...
+				// make black pixels transparent, well not always black, depends of level...
+				bdata[i] = bdata[i + 1] = bdata[i + 2] = bdata[i + 3] = 0;
 			}
 		}
 	}
@@ -411,7 +412,7 @@ static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int 
 			p = data[i];
 
 			if (p < 224) {
-				trans[i] = table[p] & LittleLong(0x00FFFFFF); // Transparent.
+				trans[i] = 0; // Transparent.
 			}
 			else {
 				trans[i] = (p == 255) ? LittleLong(0xff535b9f) : table[p]; // Fullbright. Disable transparancy on fullbright colors (255).
@@ -494,6 +495,9 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 
 	if (lightmode != 2) {
 		mode &= ~TEX_BRIGHTEN;
+	}
+	if (bpp == 1 && (mode & TEX_FULLBRIGHT)) {
+		mode |= TEX_ALPHA;
 	}
 
 	GL_ImageDimensionsToTexture(width, height, &gl_width, &gl_height, mode);
@@ -676,14 +680,14 @@ texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 	return pic->texnum;
 }
 
-gltexture_t *GL_FindTexture (char *identifier) 
+gltexture_t *GL_FindTexture(const char *identifier)
 {
 	int i;
 
-	for (i = 0; i < numgltextures; i++) 
-	{
-		if (!strcmp (identifier, gltextures[i].identifier))
+	for (i = 0; i < numgltextures; i++) {
+		if (!strcmp(identifier, gltextures[i].identifier)) {
 			return &gltextures[i];
+		}
 	}
 
 	return NULL;
@@ -841,7 +845,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	return NULL;
 }
 
-texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode)
+texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode)
 {
 	int i, j, image_size;
 	qbool gamma;
@@ -878,7 +882,7 @@ texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int he
 	return GL_LoadTexture(identifier, width, height, data, mode, 4);
 }
 
-texture_ref GL_LoadTextureImage(const char *filename, char *identifier, int matchwidth, int matchheight, int mode)
+texture_ref GL_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode)
 {
 	texture_ref reference;
 	byte *data;

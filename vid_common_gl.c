@@ -568,6 +568,16 @@ void GL_Color3fv(const float* rgbVec)
 	}
 }
 
+void GL_Color4fv(const float* rgbaVec)
+{
+	if (GL_ShadersSupported()) {
+		// TODO
+	}
+	else {
+		glColor4fv(rgbaVec);
+	}
+}
+
 void GL_Color3ubv(const GLubyte* rgbVec)
 {
 	if (GL_ShadersSupported()) {

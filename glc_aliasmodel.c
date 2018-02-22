@@ -92,6 +92,8 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		}
 
 		do {
+			float color[4];
+
 			// texture coordinates come from the draw list
 			if (mtex) {
 				qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
@@ -124,20 +126,37 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 				}
 
 				if (r_modelcolor[0] < 0) {
-					glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
+					// normal color
+					VectorCopy(lc, color);
 				}
 				else {
-					glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
+					color[0] = r_modelcolor[0] * lc[0];
+					color[1] = r_modelcolor[1] * lc[1];
+					color[2] = r_modelcolor[2] * lc[2];
 				}
 			}
 			else if (custom_model == NULL) {
 				if (r_modelcolor[0] < 0) {
-					glColor4f(l, l, l, r_modelalpha); // normal color
+					color[0] = color[1] = color[2] = l;
 				}
 				else {
-					glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+					color[0] = r_modelcolor[0] * l;
+					color[1] = r_modelcolor[1] * l;
+					color[2] = r_modelcolor[2] * l;
 				}
 			}
+			else {
+				color[0] = custom_model->color_cvar.color[0] / 255.0f;
+				color[1] = custom_model->color_cvar.color[1] / 255.0f;
+				color[2] = custom_model->color_cvar.color[2] / 255.0f;
+			}
+
+			color[0] *= r_modelalpha;
+			color[1] *= r_modelalpha;
+			color[2] *= r_modelalpha;
+			color[3] = r_modelalpha;
+
+			GL_Color4fv(color);
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv(interpolated_verts);
@@ -273,7 +292,7 @@ void GLC_DrawPowerupShell(
 			}
 
 			// alpha so we can see colour underneath still
-			glColor4f(r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1));
+			GL_Color4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
 
 			glBegin(drawMode);
 			do {

@@ -350,6 +350,9 @@ void GLM_DrawAliasModelFrame(
 			GL_TextureReferenceInvalidate(texture);
 		}
 	}
+	color[0] *= r_modelalpha;
+	color[1] *= r_modelalpha;
+	color[2] *= r_modelalpha;
 	color[3] = r_modelalpha;
 
 	if (gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture)) {

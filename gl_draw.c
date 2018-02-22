@@ -869,7 +869,7 @@ void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, q
 
 void Draw_AlphaFillRGB (int x, int y, int w, int h, color_t color)
 {
-	Draw_AlphaRectangleRGB (x, y, w, h, 1, true, color);
+	Draw_AlphaRectangleRGB(x, y, w, h, 1, true, color);
 }
 
 void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)

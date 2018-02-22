@@ -65,6 +65,16 @@ static glm_vao_t* GL_CreateLineVAO(void)
 
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {
+	byte color[4] = { bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] };
+
+	if (color[3] != 255) {
+		float alpha = color[3] / 255.0f;
+
+		color[0] *= alpha;
+		color[1] *= alpha;
+		color[2] *= alpha;
+	}
+
 	if (fill) {
 		GLM_DrawRectangle(x, y, w, h, bytecolor);
 	}
@@ -251,6 +261,13 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+	if (color[3] != 255) {
+		float alpha = color[3] / 255.0f;
+
+		images[imageCount].colour[0] *= alpha;
+		images[imageCount].colour[1] *= alpha;
+		images[imageCount].colour[2] *= alpha;
+	}
 	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
 	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 	if (alpha) {
@@ -275,6 +292,13 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	}
 
 	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+	if (color[3] != 255) {
+		float alpha = color[3] / 255.0f;
+
+		images[imageCount].colour[0] *= alpha;
+		images[imageCount].colour[1] *= alpha;
+		images[imageCount].colour[2] *= alpha;
+	}
 	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
 	images[imageCount].flags = 0;
 	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
