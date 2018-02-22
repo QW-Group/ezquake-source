@@ -55,7 +55,7 @@ void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int height, int mode);
-texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode);
+texture_ref GL_LoadTextureImage(const char *filename, char *identifier, int matchwidth, int matchheight, int mode);
 texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
 texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
 void GL_DeleteTextureArray(texture_ref* texture);

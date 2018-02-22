@@ -113,8 +113,8 @@ typedef enum {
 	BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA,
 	BLEND_GL_SRC_ALPHA_GL_ONE,
 	BLEND_GL_ONE_GL_ONE,
-	BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT,
-	BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR,
+	BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT,   // ONE_MINUS_SRC_COLOR but r=g=b, so reduce by constant
+	BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR,            // ONE_MINUS_SRC_COLOR but different levels for each
 
 	NUMBER_OF_BLEND_TYPES
 } part_blend_id;
@@ -126,22 +126,21 @@ typedef struct part_blend_info_s {
 	GLenum glSourceFactor;
 	GLenum glDestFactor;
 
-	qbool premultiply_alpha;
 	int fixed_alpha; // -1 = no adjustment
 	qbool zero_color;
 } part_blend_info_t;
 
 static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 	// BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, true, -1, false },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, -1, false },
 	// BLEND_GL_SRC_ALPHA_GL_ONE (additive)
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, true, 0, false },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, 0, false },
 	// BLEND_GL_ONE_GL_ONE,
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, false, 0, false },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, 0, false },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, false, -1, true },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, -1, true },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, (this is now for varying color only, can't convert?)
-	{ GL_ZERO, GL_ONE_MINUS_SRC_COLOR, false, -1, true }
+	{ GL_ZERO, GL_ONE_MINUS_SRC_COLOR, -1, false }
 };
 
 typedef struct particle_s {
@@ -301,9 +300,9 @@ do {																						\
 	particle_textures[_ptex].texnum = _texnum;												\
 	particle_textures[_ptex].components = _components;										\
 	particle_textures[_ptex].coords[_texindex][0] = (_s1 + 1) / 256.0;						\
-	particle_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / 512.0;						\
+	particle_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / 256.0;						\
 	particle_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / 256.0;						\
-	particle_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / 512.0;						\
+	particle_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / 256.0;						\
 } while(0);
 
 #define ADD_PARTICLE_TYPE(_id, _drawtype, _blend_type, _texture, _startalpha, _grav, _accel, _move, _custom, _verts_per_primitive) \
@@ -363,15 +362,13 @@ void QMB_AllocParticles(void)
 	particles = (particle_t *)Q_malloc(r_numparticles * sizeof(particle_t));
 }
 
-static void QMB_DuplicateForPreMultipliedAlpha(byte* data, int width, int height)
+static void QMB_PreMultiplyAlpha(byte* data, int width, int height)
 {
 	int x, y;
 
-	memcpy(data + width * height * 4, data, width * height * 4);
-
 	// Adjust particle font as we simplified the blending rules...
 	for (x = 0; x < width; ++x) {
-		for (y = height; y < height * 2; ++y) {
+		for (y = 0; y < height; ++y) {
 			byte* base = data + (x + y * width) * 4;
 
 			// Pre-multiply alpha
@@ -399,41 +396,18 @@ static void QMB_LoadTextureSubImage(part_tex_t tex, const char* id, const byte* 
 		memcpy(temp_buffer + y * width * 4, pixels + ((sub_y + y) * full_width + sub_x) * 4, width * 4);
 	}
 
-	QMB_DuplicateForPreMultipliedAlpha(temp_buffer, width, height);
+	QMB_PreMultiplyAlpha(temp_buffer, width, height);
 
-	tex_ref = GL_LoadTexture(id, width, height * 2, temp_buffer, mode, 4);
+	tex_ref = GL_LoadTexture(id, width, height, temp_buffer, mode, 4);
 
 	ADD_PARTICLE_TEXTURE(tex, tex_ref, texIndex, components, 0, 0, 256, 256);
 }
 
 static texture_ref QMB_LoadTextureImage(const char* path)
 {
-	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
+	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP | TEX_PREMUL_ALPHA;
 
-	int real_width, real_height;
-	byte* original = GL_LoadImagePixels(path, 0, 0, mode, &real_width, &real_height);
-	byte* data;
-	texture_ref tex;
-
-	if (original == NULL) {
-		return null_texture_reference;
-	}
-
-	data = Q_malloc(4 * real_width * real_height * 2);
-	if (data == NULL) {
-		Q_free(original);
-		return null_texture_reference;
-	}
-
-	// Copy the data twice, once for pre-multiplied and one without
-	memcpy(data, original, real_width * real_height * 4);
-
-	QMB_DuplicateForPreMultipliedAlpha(data, real_width, real_height);
-	Q_free(original);
-
-	tex = GL_LoadTexture(path, real_width, real_height * 2, data, mode, 4);
-	Q_free(data);
-	return tex;
+	return GL_LoadTextureImage(path, NULL, 0, 0, mode);
 }
 
 void QMB_InitParticles (void)
@@ -473,7 +447,7 @@ void QMB_InitParticles (void)
 			return;
 		}
 
-		temp_buffer = Q_malloc(real_width * real_height * 2 * 4);  // double height for pre-multiplied alpha version
+		temp_buffer = Q_malloc(real_width * real_height * 4);
 		QMB_LoadTextureSubImage(ptex_blood1, "qmb:blood1", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
 		QMB_LoadTextureSubImage(ptex_blood2, "qmb:blood2", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
 		QMB_LoadTextureSubImage(ptex_lava, "qmb:lava", original, temp_buffer, real_width, real_height, 0, 1, 128, 0, 192, 64);
@@ -609,18 +583,13 @@ static void QMB_SetParticleVertex(int pos, float x, float y, float z, float s, f
 static void QMB_AdjustColor(col_t input, part_blend_info_t* blending, col_t output)
 {
 	if (blending->zero_color) {
-		//output[0] = output[1] = output[2] = 0;
 		output[0] = output[1] = output[2] = 0;
-		output[3] = input[3];
 	}
-	else if (blending->premultiply_alpha) {
+	else {
 		output[0] = (byte)(((int)input[0] * (int)input[3]) / 255.0f);
 		output[1] = (byte)(((int)input[1] * (int)input[3]) / 255.0f);
 		output[2] = (byte)(((int)input[2] * (int)input[3]) / 255.0f);
 		output[3] = input[3];
-	}
-	else {
-		memcpy(output, input, sizeof(output));
 	}
 
 	if (blending->fixed_alpha == 0) {
@@ -635,10 +604,6 @@ static void QMB_BillboardAddVert(particle_type_t* type, float x, float y, float 
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
-
-	if (blend->premultiply_alpha) {
-		t += particle_textures[type->texture].coords[0][3];
-	}
 
 	QMB_AdjustColor(color, blend, new_color);
 

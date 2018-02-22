@@ -878,7 +878,7 @@ texture_ref GL_LoadTexturePixels(byte *data, char *identifier, int width, int he
 	return GL_LoadTexture(identifier, width, height, data, mode, 4);
 }
 
-texture_ref GL_LoadTextureImage(char *filename, char *identifier, int matchwidth, int matchheight, int mode)
+texture_ref GL_LoadTextureImage(const char *filename, char *identifier, int matchwidth, int matchheight, int mode)
 {
 	texture_ref reference;
 	byte *data;
