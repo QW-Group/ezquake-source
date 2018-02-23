@@ -240,8 +240,6 @@ extern	cvar_t gl_powerupshells_size;
 extern cvar_t gl_gammacorrection;
 extern cvar_t gl_modulate;
 
-extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
-
 extern	int		lightmode;		// set to gl_lightmode on mapchange
 
 extern	float	r_world_matrix[16];

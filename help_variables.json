@@ -2802,6 +2802,16 @@
         { "name": "true", "description": "" }
       ]
     },
+    "gl_mipmap_viewmodels": {
+      "group-id": "54",
+      "desc": "Toggles mipmapping of viewmodel (weapon) textures.",
+      "type": "boolean",
+      "remarks": "The color of muzzle flash can bleed onto the edges of weapon textures if this option is enabled.",
+      "values": [
+        { "name": "false", "description": "Don't mipmap weapon textures" },
+        { "name": "true", "description": "Mipmap weapon textures" }
+      ]
+    },
     "gl_miptexLevel": {
       "group-id": "50",
       "desc": "It is essentially a GL 'equivalent'\nto d_mipcap in software.  It has no affect when loading external 24bit textures.",

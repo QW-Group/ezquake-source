@@ -95,6 +95,7 @@ cvar_t gl_miptexLevel        = {"gl_miptexLevel", "0", 0, OnChange_gl_miptexLeve
 cvar_t gl_texturemode        = {"gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", 0, OnChange_gl_texturemode};
 cvar_t gl_anisotropy         = {"gl_anisotropy","1", 0, OnChange_gl_anisotropy};
 cvar_t gl_scaleModelTextures = {"gl_scaleModelTextures", "0"};
+cvar_t gl_mipmap_viewmodels  = {"gl_mipmap_viewmodels", "0"};
 cvar_t gl_scaleTurbTextures  = {"gl_scaleTurbTextures", "1"};
 cvar_t gl_no24bit            = {"gl_no24bit", "0", CVAR_LATCH};
 
@@ -1100,6 +1101,7 @@ void GL_Texture_Init(void)
 	Cvar_Register(&gl_texturemode2d);
 	Cvar_Register(&gl_anisotropy);
 	Cvar_Register(&gl_scaleModelTextures);
+	Cvar_Register(&gl_mipmap_viewmodels);
 	Cvar_Register(&gl_scaleTurbTextures);
 	Cvar_Register(&gl_miptexLevel);
 	Cvar_Register(&gl_externalTextures_world);
