@@ -40,7 +40,7 @@ void GL_StateEndEntities(visentlist_t* vislist)
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		}
 		if (gl_smoothmodels.value) {
-			GL_ShadeModel(GL_FLAT);
+			GLC_ShadeModel(GL_FLAT);
 		}
 	}
 
@@ -54,10 +54,10 @@ void GLC_StateBeginAliasPowerupShell(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
+		GLC_ShadeModel(GL_FLAT);
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -83,10 +83,10 @@ void GLC_StateBeginMD3Draw(float alpha)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
+		GLC_ShadeModel(GL_FLAT);
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -109,7 +109,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_ShadeModel(GL_FLAT);
+	GLC_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	GL_Disable(GL_LINE_SMOOTH);
@@ -150,7 +150,7 @@ void GLC_StateBeginAliasModelShadow(void)
 	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_ShadeModel(GL_FLAT);
+	GLC_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
@@ -177,15 +177,12 @@ void GLC_StateBeginDrawViewModel(float alpha)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	if (!GL_ShadersSupported()) {
-		GL_Disable(GL_LINE_SMOOTH);
-		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
+	GL_Disable(GL_LINE_SMOOTH);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_DisableFog();
 
 	// hack the depth range to prevent view model from poking into walls
@@ -197,8 +194,17 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	else {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	}
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+	if (!GL_ShadersSupported()) {
+		if (gl_affinemodels.value) {
+			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+		}
+		if (gl_smoothmodels.value) {
+			GLC_ShadeModel(GL_SMOOTH);
+		}
+		else {
+			GLC_ShadeModel(GL_FLAT);
+		}
 	}
 
 	LEAVE_STATE;
@@ -222,10 +228,10 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
-	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
+		GLC_ShadeModel(GL_FLAT);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -235,7 +241,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	if (e->alpha) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		glColor4f(e->alpha, e->alpha, e->alpha, e->alpha);
+		GL_Color4f(e->alpha, e->alpha, e->alpha, e->alpha);
 	}
 	else {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
@@ -281,11 +287,10 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -305,13 +310,11 @@ void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	if (!GL_ShadersSupported()) {
-		GL_ShadeModel(GL_FLAT);
-		GL_Color3ubv(color_white);
-		GL_Disable(GL_LINE_SMOOTH);
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	}
+	GLC_ShadeModel(GL_FLAT);
+	GL_Color3ubv(color_white);
+	GL_Disable(GL_LINE_SMOOTH);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_DisableFog();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -330,7 +333,9 @@ void GL_StateBeginAliasOutlineFrame(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
-	GL_ShadeModel(GL_FLAT);
+	if (!GL_ShadersSupported()) {
+		GLC_ShadeModel(GL_FLAT);
+	}
 	GL_DisableFog();
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
@@ -359,7 +364,6 @@ void GLM_StateBeginAliasOutlineBatch(void)
 	extern cvar_t gl_outline_width;
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-	GL_ShadeModel(GL_FLAT);
 	GL_DisableFog();
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);

@@ -166,11 +166,13 @@ void GL_BindVertexArrayElementBuffer(buffer_ref ref)
 	}
 }
 
-void GL_ShadeModel(GLenum model)
+void GLC_ShadeModel(GLenum model)
 {
 	if (model != currentShadeModel && !GL_ShadersSupported()) {
 		glShadeModel(model);
 		currentShadeModel = model;
+
+		GL_LogAPICall("GLC_ShadeModel(%s)", model == GL_FLAT ? "GL_FLAT" : "GL_SMOOTH");
 	}
 }
 

@@ -108,13 +108,13 @@ void GL_StateDefaultInit(void)
 	GL_CullFace(GL_FRONT);
 	if (!GL_ShadersSupported()) {
 		glEnable(GL_TEXTURE_2D);
+		GLC_ShadeModel(GL_FLAT);
 	}
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_AlphaFunc(GL_GREATER, 0.666);
 
 	GL_PolygonMode(GL_FILL);
-	GL_ShadeModel(GL_FLAT);
 
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -132,7 +132,7 @@ void GLC_StateBeginDrawBillboards(void)
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_ShadeModel(GL_SMOOTH);
+	GLC_ShadeModel(GL_SMOOTH);
 
 	LEAVE_STATE;
 }
@@ -145,7 +145,7 @@ void GLC_StateEndDrawBillboards(void)
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
-	GL_ShadeModel(GL_FLAT);
+	GLC_ShadeModel(GL_FLAT);
 	GL_EnableFog();
 
 	LEAVE_STATE;

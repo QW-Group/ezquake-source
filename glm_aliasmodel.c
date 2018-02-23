@@ -301,11 +301,13 @@ static void GLM_QueueAliasModelDraw(
 
 void GL_BeginDrawAliasModels(void)
 {
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-	}
-	if (gl_smoothmodels.value) {
-		GL_ShadeModel(GL_SMOOTH);
+	if (!GL_ShadersSupported()) {
+		if (gl_affinemodels.value) {
+			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+		}
+		if (gl_smoothmodels.value) {
+			GLC_ShadeModel(GL_SMOOTH);
+		}
 	}
 }
 
@@ -326,8 +328,6 @@ void GLM_DrawAliasModelFrame(
 		poseVertIndex = poseVertIndex2;
 		lerp_fraction = 0;
 	}
-
-	// FIXME: Need to take into account the RF_LIMITLERP flag which is used on Team Fortress viewmodels
 
 	// TODO: Vertex lighting etc
 	// TODO: Coloured lighting per-vertex?

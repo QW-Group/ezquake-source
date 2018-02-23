@@ -949,15 +949,16 @@ static void R_RenderScene(void)
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);
 		}
+		GL_LeaveRegion();
 
 		if (GL_ShadersSupported()) {
+			GL_EnterRegion("GLM_DrawEntities");
 			R_DrawViewModel();
 
 			GLM_PrepareAliasModelBatches();
 			GLM_DrawAliasModelBatches();
+			GL_LeaveRegion();
 		}
-
-		GL_LeaveRegion();
 	}
 
 	if (!GL_ShadersSupported()) {
