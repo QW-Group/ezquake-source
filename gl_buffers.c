@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer);
+void GL_BindVertexArrayElementBuffer(buffer_ref ref);
 
 typedef struct buffer_data_s {
 	GLuint glref;
@@ -68,6 +69,7 @@ static glNamedBufferData_t    glNamedBufferData = NULL;
 static GLuint currentArrayBuffer;
 static GLuint currentUniformBuffer;
 static GLuint currentDrawIndirectBuffer;
+static GLuint currentElementArrayBuffer;
 
 buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
 {
@@ -129,6 +131,9 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	}
 	glBufferData(target, size, data, usage);
 	result.index = buffer - buffers;
+	if (target == GL_ELEMENT_ARRAY_BUFFER) {
+		GL_BindVertexArrayElementBuffer(result);
+	}
 	return result;
 }
 
@@ -246,6 +251,13 @@ static void GL_BindBufferImpl(GLenum target, GLuint buffer)
 
 		currentDrawIndirectBuffer = buffer;
 	}
+	else if (target == GL_ELEMENT_ARRAY_BUFFER) {
+		if (buffer == currentElementArrayBuffer) {
+			return;
+		}
+
+		currentElementArrayBuffer = buffer;
+	}
 
 	glBindBuffer(target, buffer);
 }
@@ -257,6 +269,10 @@ void GL_BindBuffer(buffer_ref ref)
 	}
 
 	GL_BindBufferImpl(buffers[ref.index].target, buffers[ref.index].glref);
+
+	if (buffers[ref.index].target == GL_ELEMENT_ARRAY_BUFFER) {
+		GL_BindVertexArrayElementBuffer(ref);
+	}
 }
 
 void GL_InitialiseBufferHandling(void)
@@ -294,6 +310,7 @@ buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size)
 void GL_InitialiseBufferState(void)
 {
 	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
+	GL_BindVertexArrayElementBuffer(null_buffer_reference);
 }
 
 void GL_UnBindBuffer(GLenum target)
@@ -309,4 +326,15 @@ qbool GL_VBOsSupported(void)
 qbool GL_BufferValid(buffer_ref buffer)
 {
 	return buffer.index && buffer.index < sizeof(buffers) / sizeof(buffers[0]) && buffers[buffer.index].glref != 0;
+}
+
+// Called when the VAO is bound
+void GL_SetElementArrayBuffer(buffer_ref buffer)
+{
+	if (GL_BufferValid(buffer)) {
+		currentElementArrayBuffer = buffers[buffer.index].glref;
+	}
+	else {
+		currentElementArrayBuffer = 0;
+	}
 }

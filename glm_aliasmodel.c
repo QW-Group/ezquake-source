@@ -400,7 +400,7 @@ void GLM_PrepareAliasModelBatches(void)
 	}
 
 	// Update VBO with data about each entity
-	GL_BindAndUpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
+	GL_UpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
 
 	// Build & update list of indirect calls
 	{

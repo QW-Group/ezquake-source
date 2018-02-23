@@ -7,6 +7,7 @@
 #include "gl_local.h"
 
 void GL_BindBuffer(buffer_ref ref);
+void GL_SetElementArrayBuffer(buffer_ref buffer);
 const buffer_ref null_buffer_reference = { 0 };
 
 #define MAX_LOGGED_TEXTURE_UNITS 32
@@ -151,6 +152,17 @@ void GL_BindVertexArray(glm_vao_t* vao)
 	if (currentVAO != vao) {
 		glBindVertexArray(vao ? vao->vao : 0);
 		currentVAO = vao;
+
+		if (vao) {
+			GL_SetElementArrayBuffer(vao->element_array_buffer);
+		}
+	}
+}
+
+void GL_BindVertexArrayElementBuffer(buffer_ref ref)
+{
+	if (currentVAO && currentVAO->vao) {
+		currentVAO->element_array_buffer = ref;
 	}
 }
 
