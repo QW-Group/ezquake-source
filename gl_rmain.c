@@ -347,8 +347,8 @@ static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
 	const visentity_t* lhs = (const visentity_t*) lhs_;
 	const visentity_t* rhs = (const visentity_t*) rhs_;
 
-	float alpha_lhs = lhs->ent.alpha == 0 ? 1 : lhs->ent.alpha;
-	float alpha_rhs = rhs->ent.alpha == 0 ? 1 : rhs->ent.alpha;
+	float alpha_lhs = lhs->type == mod_sprite ? 0.5 : lhs->ent.alpha == 0 ? 1 : lhs->ent.alpha;
+	float alpha_rhs = rhs->type == mod_sprite ? 0.5 : rhs->ent.alpha == 0 ? 1 : rhs->ent.alpha;
 
 	// Draw opaque entities first
 	if (alpha_lhs == 1 && alpha_rhs != 1) {
