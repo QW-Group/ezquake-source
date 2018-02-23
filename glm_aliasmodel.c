@@ -248,7 +248,8 @@ static void GLM_QueueAliasModelDrawImpl(
 		(GL_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
 		(GL_TextureReferenceIsValid(fb_texture) ? AMF_TEXTURE_LUMA : 0) |
 		(render_effects & RF_CAUSTICS ? AMF_CAUSTICS : 0) |
-		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0);
+		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
+		(render_effects & RF_LIMITLERP ? AMF_LIMITLERP : 0);
 	uniform->yaw_angle_rad = yaw_angle_radians;
 	uniform->shadelight = shadelight;
 	uniform->ambientlight = ambientlight;

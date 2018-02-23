@@ -35,8 +35,13 @@ void main()
 	vec2 tex = vboTex;
 	vec3 normalCoords = vboNormalCoords;
 
+	fsFlags = models[_instanceId].flags;
+
 	if (lerpFrac > 0 && lerpFrac <= 1) {
 		vec3 position2 = vec3(lerpVertices[lerpIndex + vertexIndex].x, lerpVertices[lerpIndex + vertexIndex].y, lerpVertices[lerpIndex + vertexIndex].z);
+		if ((fsFlags & AMF_LIMITLERP) != 0 && distance(position, position2) >= 135) {
+			lerpFrac = 1;
+		}
 		vec2 tex2 = vec2(lerpVertices[lerpIndex + vertexIndex].s, lerpVertices[lerpIndex + vertexIndex].t);
 		vec3 normals2 = vec3(lerpVertices[lerpIndex + vertexIndex].nx, lerpVertices[lerpIndex + vertexIndex].ny, lerpVertices[lerpIndex + vertexIndex].nz);
 
@@ -45,7 +50,6 @@ void main()
 		normalCoords = mix(normalCoords, normals2, lerpFrac);
 	}
 
-	fsFlags = models[_instanceId].flags;
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
 	fsLumaSampler = models[_instanceId].lumaTextureMapping;
 
