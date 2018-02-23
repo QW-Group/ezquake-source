@@ -105,7 +105,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
 		vbo_aliasDataBuffer = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(vbo_aliasDataBuffer, GL_BINDINGPOINT_ALIASMODEL_DRAWDATA);
+		GL_BindBufferBase(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA);
 
 		drawAliasModel_mode = glGetUniformLocation(drawAliasModelProgram.program, "mode");
 		cached_mode = 0;

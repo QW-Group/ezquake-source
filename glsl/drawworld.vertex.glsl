@@ -49,7 +49,7 @@ struct model_surface {
 	vec3 vecs1;
 };
 
-layout(std140, binding=GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
+layout(std140, binding=EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
 	model_surface surfaces[];
 };
 #endif

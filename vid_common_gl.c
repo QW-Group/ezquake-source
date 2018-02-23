@@ -234,8 +234,7 @@ static void CheckMultiTextureExtensions(void)
 		gl_mtexable = true;
 	}
 
-	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&gl_textureunits);
-	gl_textureunits = min(gl_textureunits, 4);
+	gl_textureunits = min(glConfig.texture_units, 4);
 
 	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
 		gl_textureunits = min(gl_textureunits, 2);

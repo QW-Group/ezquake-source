@@ -327,7 +327,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 
 			GL_UpdateBufferSection(worldModel_surfaces_ssbo, i * sizeof(vbo_world_surface_t), sizeof(vbo_world_surface_t), &vboSurface);
 		}
-		GL_BindBufferBase(worldModel_surfaces_ssbo, GL_BINDINGPOINT_WORLDMODEL_SURFACES);
+		GL_BindBufferBase(worldModel_surfaces_ssbo, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 	}
 }
 

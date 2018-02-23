@@ -10,10 +10,10 @@ layout(location = 2) in vec3 vboNormalCoords;
 layout(location = 3) in int _instanceId;
 layout(location = 4) in int vertexIndex;
 
-layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
+layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
 	AliasModelVert lerpVertices[];
 };
-layout(std140, binding = GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
+layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
 	AliasModel models[];
 };
 

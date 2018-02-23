@@ -1209,7 +1209,12 @@ static void VID_SDL_Init(void)
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
 		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
-		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
+		if (glConfig.majorVersion >= 2) {
+			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
+		}
+		else {
+			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
+		}
 		glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
 		glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
 	}
