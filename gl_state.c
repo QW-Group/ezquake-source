@@ -655,6 +655,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 
 	if (glBindTextures) {
 		GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
+		qbool already_bound = true;
 
 		count = min(count, MAX_LOGGED_TEXTURE_UNITS);
 		for (i = 0; i < count; ++i) {
@@ -663,16 +664,20 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 				GLenum target = GL_TextureTargetFromReference(textures[i]);
 
 				if (target == GL_TEXTURE_2D_ARRAY) {
+					already_bound &= (bound_arrays[i + first] == glTextures[i]);
 					bound_arrays[i + first] = glTextures[i];
 				}
 				else if (target == GL_TEXTURE_2D) {
+					already_bound &= (bound_textures[i + first] == glTextures[i]);
 					bound_textures[i + first] = glTextures[i];
 				}
 			}
 		}
 
-		glBindTextures(first, count, glTextures);
-		GL_LogAPICall("glBindTextures(first=%d, count=%d)", first, count);
+		if (!already_bound) {
+			glBindTextures(first, count, glTextures);
+			GL_LogAPICall("glBindTextures(first=%d, count=%d)", first, count);
+		}
 	}
 	else {
 		for (i = 0; i < count; ++i) {
