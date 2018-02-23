@@ -35,6 +35,13 @@ typedef struct glRect_s {
 	unsigned char l, t, w, h;
 } glRect_t;
 
+typedef struct dlightinfo_s {
+	int local[2];
+	int rad;
+	int minlight;	// rad - minlight
+	int lnum; // reference to cl_dlights[]
+} dlightinfo_t;
+
 static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct lightmap_data_s {
@@ -55,6 +62,9 @@ static unsigned int lightmap_depth;
 
 static qbool gl_invlightmaps = true;
 
+static dlightinfo_t dlightlist[MAX_DLIGHTS];
+static int numdlights;
+
 // funny, but this colors differ from bubblecolor[NUM_DLIGHTTYPES][4]
 static int dlightcolor[NUM_DLIGHTTYPES][3] = {
 	{ 100,  90,  80 },	// dimlight or brightlight
@@ -71,19 +81,16 @@ static int dlightcolor[NUM_DLIGHTTYPES][3] = {
 	{ 128, 128, 128 },	// custom
 };
 
-void R_AddDynamicLights(msurface_t *surf)
+void R_BuildDlightList (msurface_t *surf)
 {
-	extern cvar_t gl_colorlights;
-
-	float dist, rad, minlight;
-	vec3_t impact, local;
+	float dist;
+	vec3_t impact;
 	mtexinfo_t *tex;
-	int lnum, smax, tmax;
+	int lnum, i, smax, tmax, irad, iminlight, local[2], tdmin, sdmin, distmin;
 	unsigned int dlightbits;
-	byte color[3];
-	int sd, td, _sd, _td;
-	int s, t;
-	unsigned int* dest;
+	dlightinfo_t *light;
+
+	numdlights = 0;
 
 	smax = (surf->extents[0]>>4)+1;
 	tmax = (surf->extents[1]>>4)+1;
@@ -98,52 +105,108 @@ void R_AddDynamicLights(msurface_t *surf)
 		dlightbits &= ~(1<<lnum);
 
 		dist = PlaneDiff(cl_dlights[lnum].origin, surf->plane);
-		rad = (cl_dlights[lnum].radius - fabs(dist));
-		minlight = cl_dlights[lnum].minlight;
-		if (rad < minlight) {
+		irad = (cl_dlights[lnum].radius - fabs(dist)) * 256;
+		iminlight = cl_dlights[lnum].minlight * 256;
+		if (irad < iminlight) {
 			continue;
 		}
 
-		minlight = rad - minlight;
+		iminlight = irad - iminlight;
 
-		VectorMA(cl_dlights[lnum].origin, -dist, surf->plane->normal, impact);
+		for (i = 0; i < 3; i++) {
+			impact[i] = cl_dlights[lnum].origin[i] - surf->plane->normal[i] * dist;
+		}
 
-		local[0] = DotProduct(impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
-		local[1] = DotProduct(impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
+		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
+		local[1] = DotProduct (impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
 
-		// save dlight info
+		// check if this dlight will touch the surface
+		if (local[1] > 0) {
+			tdmin = local[1] - (tmax << 4);
+			if (tdmin < 0) {
+				tdmin = 0;
+			}
+		}
+		else {
+			tdmin = -local[1];
+		}
+
+		if (local[0] > 0) {
+			sdmin = local[0] - (smax << 4);
+			if (sdmin < 0)
+				sdmin = 0;
+		} else {
+			sdmin = -local[0];
+		}
+
+		if (sdmin > tdmin)
+			distmin = (sdmin << 8) + (tdmin << 7);
+		else
+			distmin = (tdmin << 8) + (sdmin << 7);
+
+		if (distmin < iminlight) {
+			// save dlight info
+			light = &dlightlist[numdlights];
+			light->minlight = iminlight;
+			light->rad = irad;
+			light->local[0] = local[0];
+			light->local[1] = local[1];
+			light->lnum = lnum;
+			numdlights++;
+		}
+	}
+}
+
+//R_BuildDlightList must be called first!
+void R_AddDynamicLights(msurface_t *surf)
+{
+	int i, smax, tmax, s, t, sd, td, _sd, _td, irad, idist, iminlight, color[3], tmp;
+	dlightinfo_t *light;
+	unsigned *dest;
+
+	smax = (surf->extents[0] >> 4) + 1;
+	tmax = (surf->extents[1] >> 4) + 1;
+
+	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
+		extern cvar_t gl_colorlights;
 		if (gl_colorlights.value) {
-			if (cl_dlights[lnum].type == lt_custom) {
-				VectorCopy(cl_dlights[lnum].color, color);
+			if (cl_dlights[light->lnum].type == lt_custom) {
+				VectorCopy(cl_dlights[light->lnum].color, color);
 			}
 			else {
-				VectorCopy(dlightcolor[cl_dlights[lnum].type], color);
+				VectorCopy(dlightcolor[cl_dlights[light->lnum].type], color);
 			}
 		}
 		else {
 			VectorSet(color, 128, 128, 128);
 		}
 
+		irad = light->rad;
+		iminlight = light->minlight;
+
+		_td = light->local[1];
 		dest = blocklights;
-		for (t = 0, _td = local[1]; t < tmax; t++) {
-			td = abs(_td);
+		for (t = 0; t < tmax; t++) {
+			td = _td;
+			if (td < 0)	td = -td;
 			_td -= 16;
+			_sd = light->local[0];
 
-			for (s = 0, _sd = local[0]; s < smax; s++) {
-				sd = abs(_sd);
+			for (s = 0; s < smax; s++) {
+				sd = _sd < 0 ? -_sd : _sd;
 				_sd -= 16;
-
 				if (sd > td) {
-					dist = sd + (td >> 1);
+					idist = (sd << 8) + (td << 7);
 				}
 				else {
-					dist = td + (sd >> 1);
+					idist = (td << 8) + (sd << 7);
 				}
 
-				if (dist < minlight) {
-					dest[0] += (int)((rad - dist) * 2 * color[0]);
-					dest[1] += (int)((rad - dist) * 2 * color[1]);
-					dest[2] += (int)((rad - dist) * 2 * color[2]);
+				if (idist < iminlight) {
+					tmp = (irad - idist) >> 7;
+					dest[0] += tmp * color[0];
+					dest[1] += tmp * color[1];
+					dest[2] += tmp * color[2];
 				}
 				dest += 3;
 			}
@@ -159,7 +222,7 @@ void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	unsigned scale, *bl;
 	qbool fullbright = false;
 
-	surf->cached_dlight = (surf->dlightframe == r_framecount);
+	surf->cached_dlight = !!numdlights;
 
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
@@ -195,7 +258,7 @@ void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 
 	// add all the dynamic lights
-	if (!fullbright && r_dynamic.integer == 1) {
+	if (!fullbright && numdlights) {
 		R_AddDynamicLights(surf);
 	}
 
@@ -266,7 +329,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 
 	++frameStats.classic.brush_polys;
 
-	if (r_dynamic.integer != 1 && !fa->cached_dlight) {
+	if (r_dynamic.integer == 0 && !fa->cached_dlight) {
 		return;
 	}
 
@@ -282,13 +345,19 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		}
 	}
 
-	if (r_dynamic.integer == 1) {
-		if (fa->dlightframe != r_framecount && !fa->cached_dlight && !lightstyle_modified) {
+	if (r_dynamic.integer) {
+		if (fa->dlightframe == r_framecount) {
+			R_BuildDlightList (fa);
+		} else {
+			numdlights = 0;
+		}
+
+		if (numdlights == 0 && !fa->cached_dlight && !lightstyle_modified) {
 			return;
 		}
 	}
-	else if (!fa->cached_dlight) {
-		return;
+	else {
+		numdlights = 0;
 	}
 
 	lm = &lightmaps[fa->lightmaptexturenum];
@@ -315,7 +384,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		theRect->h = fa->light_t - theRect->t + tmax;
 	}
 	base = lm->rawdata + (fa->light_t * LIGHTMAP_WIDTH + fa->light_s) * 4;
-	R_BuildLightMap(fa, base, LIGHTMAP_WIDTH * 4);
+	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
 static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min_changed, unsigned int* max_changed)
@@ -523,6 +592,7 @@ static void GL_CreateSurfaceLightmap(msurface_t *surf)
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
 	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
+	numdlights = 0;
 	R_BuildLightMap(surf, base, BLOCK_WIDTH * 4);
 }
 
