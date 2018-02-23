@@ -1051,8 +1051,6 @@ void GLM_SetupGL(void);
 
 qbool GL_ExternalTexturesEnabled(qbool worldmodel);
 
-#define MAX_WORLDMODEL_INDEXES (16 * 1024)
-
 typedef struct glm_worldmodel_req_s {
 	// This is DrawElementsIndirectCmd, from OpenGL spec
 	GLuint count;           // Number of indexes to pull

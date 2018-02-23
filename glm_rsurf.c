@@ -32,7 +32,8 @@ static void GL_SortDrawCalls(int* split);
 static int sampler_mappings;
 
 extern buffer_ref brushModel_vbo;
-extern GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
+extern GLuint* modelIndexes;
+extern GLuint modelIndexMaximum;
 
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 static GLuint index_count;
@@ -389,7 +390,7 @@ void GLM_DrawWaterSurfaces(void)
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
-			if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+			if (index_count + 1 + newVerts > modelIndexMaximum) {
 				GL_FlushWorldModelBatch();
 				req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, false);
 				GLM_AssignTexture(req, surf->texinfo->miptex, tex);
@@ -406,8 +407,6 @@ void GLM_DrawWaterSurfaces(void)
 			}
 		}
 	}
-
-	GL_FlushWorldModelBatch();
 }
 
 void GLM_DrawTexturedWorld(model_t* model)
@@ -429,7 +428,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
-				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+				if (index_count + 1 + newVerts > modelIndexMaximum) {
 					GL_FlushWorldModelBatch();
 					req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false);
 				}
@@ -468,7 +467,7 @@ void GLM_DrawTexturedWorld(model_t* model)
 				for (poly = surf->polys; poly; poly = poly->next) {
 					int newVerts = poly->numverts;
 
-					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+					if (index_count + 1 + newVerts > modelIndexMaximum) {
 						GL_FlushWorldModelBatch();
 						req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, false, false, false);
 						GLM_AssignTexture(req, i, tex);
@@ -632,7 +631,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 			for (poly = surf->polys; poly; poly = poly->next) {
 				int newVerts = poly->numverts;
 
-				if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+				if (index_count + 1 + newVerts > modelIndexMaximum) {
 					GL_FlushWorldModelBatch();
 					req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false);
 				}
@@ -671,7 +670,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 				for (poly = surf->polys; poly; poly = poly->next) {
 					int newVerts = poly->numverts;
 
-					if (index_count + 1 + newVerts > sizeof(modelIndexes) / sizeof(modelIndexes[0])) {
+					if (index_count + 1 + newVerts > modelIndexMaximum) {
 						GL_FlushWorldModelBatch();
 						req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
 						GLM_AssignTexture(req, i, tex);
@@ -696,7 +695,6 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 static void GL_SortDrawCalls(int* split)
 {
-	static GLuint newModelIndexes[MAX_WORLDMODEL_INDEXES];
 	int i;
 	int back;
 	int index = 0;

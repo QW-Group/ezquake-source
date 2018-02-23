@@ -715,6 +715,8 @@ static glm_vao_t* vao_list = NULL;
 
 void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 {
+	extern void GL_SetElementArrayBuffer(buffer_ref buffer);
+
 	if (vao->vao) {
 		glDeleteVertexArrays(1, &vao->vao);
 	}
@@ -727,6 +729,7 @@ void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 	if (glObjectLabel) {
 		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
 	}
+	GL_SetElementArrayBuffer(null_buffer_reference);
 }
 
 void GL_DeleteVAOs(void)

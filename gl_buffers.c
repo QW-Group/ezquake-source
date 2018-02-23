@@ -172,7 +172,6 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
-	assert(data);
 
 	if (glNamedBufferData) {
 		glNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);

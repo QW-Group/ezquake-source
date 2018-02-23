@@ -12,7 +12,8 @@ typedef struct vbo_world_surface_s {
 	float tex_vecs1[4];
 } vbo_world_surface_t;
 
-GLuint modelIndexes[MAX_WORLDMODEL_INDEXES];
+GLuint* modelIndexes;
+GLuint modelIndexMaximum;
 
 buffer_ref brushModel_vbo;
 buffer_ref worldModel_surfaces_ssbo;
@@ -135,6 +136,28 @@ int GL_MeasureVBOSizeForBrushModel(model_t* m)
 	return (total_surf_verts);// +2 * (total_surfaces - 1));
 }
 
+int GL_MeasureIndexSizeForBrushModel(model_t* m)
+{
+	int j, total_surf_verts = 0, total_surfaces = 0;
+
+	for (j = 0; j < m->nummodelsurfaces; ++j) {
+		msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
+		glpoly_t* poly;
+
+		for (poly = surf->polys; poly; poly = poly->next) {
+			total_surf_verts += poly->numverts;
+			++total_surfaces;
+		}
+	}
+
+	if (total_surf_verts <= 0 || total_surfaces < 1) {
+		return 0;
+	}
+
+	// Every vert in every surface, + surface terminator
+	return (total_surf_verts) + (total_surfaces - 1);
+}
+
 // Create VBO, ordering by texture array
 int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos)
 {
@@ -212,12 +235,14 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	int i;
 	int size = 0;
 	int position = 0;
+	int indexes = 0;
 	vbo_world_vert_t* buffer = NULL;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
 			size += GL_MeasureVBOSizeForBrushModel(mod);
+			indexes += GL_MeasureIndexSizeForBrushModel(mod);
 		}
 	}
 
@@ -226,6 +251,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 		if (mod && mod->type == mod_brush) {
 			if (mod == cl.worldmodel || !mod->isworldmodel) {
 				size += GL_MeasureVBOSizeForBrushModel(mod);
+				indexes += GL_MeasureIndexSizeForBrushModel(mod);
 			}
 		}
 	}
@@ -236,7 +262,20 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	// Create vao
 	GL_GenVertexArray(&brushModel_vao, "brushmodel-vao");
 
-	vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", sizeof(modelIndexes), modelIndexes, GL_STREAM_DRAW);
+	if (indexes > modelIndexMaximum) {
+		Q_free(modelIndexes);
+		modelIndexMaximum = indexes;
+		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
+
+		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
+			GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
+		}
+	}
+
+	if (!GL_BufferReferenceIsValid(vbo_brushElements)) {
+		vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, GL_STREAM_DRAW);
+	}
+	GL_BindBuffer(vbo_brushElements);
 
 	// Copy data into buffer
 	for (i = 1; i < MAX_MODELS; ++i) {

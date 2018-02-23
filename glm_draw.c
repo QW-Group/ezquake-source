@@ -51,7 +51,7 @@ static glm_vao_t* GL_CreateLineVAO(void)
 	};
 
 	if (!GL_BufferReferenceIsValid(vbo)) {
-		vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_DYNAMIC_DRAW);
+		vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_STATIC_DRAW);
 	}
 
 	if (!vao.vao) {
@@ -196,7 +196,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(images), images, GL_DYNAMIC_DRAW);
+		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(images), images, GL_STREAM_DRAW);
 	}
 
 	if (!imageVAO.vao) {
@@ -457,7 +457,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	}
 
 	if (!GL_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(vertices[0]) * max(num_vertices, 32), vertices, GL_DYNAMIC_DRAW);
+		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(vertices[0]) * max(num_vertices, 32), vertices, GL_STREAM_DRAW);
 	}
 	else if (num_vertices * sizeof(vertices[0]) > GL_VBOSize(polygonVBO)) {
 		GL_ResizeBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
