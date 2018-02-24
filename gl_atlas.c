@@ -23,10 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 
-#define ATLAS_COUNT     2
-#define ATLAS_WIDTH  4096
-#define ATLAS_HEIGHT 4096
+#define ATLAS_TEXTURE_WIDTH  4096
+#define ATLAS_TEXTURE_HEIGHT 4096
+#define ATLAS_CHUNK 64
+#define ATLAS_WIDTH (ATLAS_TEXTURE_WIDTH / ATLAS_CHUNK)
+#define ATLAS_HEIGHT (ATLAS_TEXTURE_HEIGHT / ATLAS_CHUNK)
 
+static char buffer[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
 static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
 static int atlas_delete_count = 0;
 
@@ -51,29 +54,34 @@ static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
 
-static int  atlas_allocated[ATLAS_COUNT][ATLAS_WIDTH];
-static byte atlas_texels[ATLAS_COUNT][ATLAS_WIDTH * ATLAS_HEIGHT * 4];
-static byte atlas_dirty = 0;
-static texture_ref atlas_texnum[ATLAS_COUNT];
+static int  atlas_allocated[ATLAS_WIDTH];
+static byte atlas_texels[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
+static byte prev_atlas_texels[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
+static qbool atlas_dirty;
+static texture_ref atlas_texnum;
 static qbool atlas_refresh = false;
 
-cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };
+static cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };
 
 // Returns false if allocation failed.
-static qbool CachePics_AllocBlock(int atlas_num, int w, int h, int *x, int *y)
+static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
 
+	w = (w + (ATLAS_CHUNK - 1)) / ATLAS_CHUNK;
+	h = (h + (ATLAS_CHUNK - 1)) / ATLAS_CHUNK;
 	best = ATLAS_HEIGHT;
 
 	for (i = 0; i < ATLAS_WIDTH - w; i++) {
 		best2 = 0;
 
 		for (j = 0; j < w; j++) {
-			if (atlas_allocated[atlas_num][i + j] >= best)
+			if (atlas_allocated[i + j] >= best) {
 				break;
-			if (atlas_allocated[atlas_num][i + j] > best2)
-				best2 = atlas_allocated[atlas_num][i + j];
+			}
+			if (atlas_allocated[i + j] > best2) {
+				best2 = atlas_allocated[i + j];
+			}
 		}
 
 		if (j == w) {
@@ -88,20 +96,22 @@ static qbool CachePics_AllocBlock(int atlas_num, int w, int h, int *x, int *y)
 	}
 
 	for (i = 0; i < w; i++) {
-		atlas_allocated[atlas_num][*x + i] = best + h;
+		atlas_allocated[*x + i] = best + h;
 	}
 
-	atlas_dirty |= (1 << atlas_num);
+	atlas_dirty = true;
+	*x *= ATLAS_CHUNK;
+	*y *= ATLAS_CHUNK;
 
 	return true;
 }
 
 static int CachePics_AddToAtlas(mpic_t* pic)
 {
-	static char buffer[ATLAS_WIDTH * ATLAS_HEIGHT * 4];
 	int width = pic->width, height = pic->height;
 	int texWidth = 0, texHeight = 0;
-	int i;
+	int x_pos, y_pos;
+	int padding = 1;
 
 	// Find size of the source
 	texWidth = GL_TextureWidth(pic->texnum);
@@ -110,46 +120,43 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	width = (pic->sh - pic->sl) * texWidth;
 	height = (pic->th - pic->tl) * texHeight;
 
-	if (texWidth > ATLAS_WIDTH || texHeight > ATLAS_HEIGHT) {
+	if (width > ATLAS_TEXTURE_WIDTH || height > ATLAS_TEXTURE_HEIGHT) {
 		return -1;
 	}
 
 	// Allocate space in an atlas texture
-	for (i = 0; i < ATLAS_COUNT; ++i) {
-		int x_pos, y_pos;
-		int padding = 1;
+	if (CachePics_AllocBlock(width + (width == ATLAS_TEXTURE_WIDTH ? 0 : padding), height + (height == ATLAS_TEXTURE_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
+		int yOffset;
+		char* input_image = NULL;
 
-		if (CachePics_AllocBlock(i, width + (width == ATLAS_WIDTH ? 0 : padding), height + (height == ATLAS_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
-			int xOffset, yOffset;
-
-			// Copy texture image
-			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, sizeof(buffer), buffer);
-
-			for (yOffset = 0; yOffset < height; ++yOffset) {
-				for (xOffset = 0; xOffset < width; ++xOffset) {
-					int y = y_pos + yOffset;
-					int x = x_pos + xOffset;
-					int base = (x + y * ATLAS_WIDTH) * 4;
-					int srcBase = (xOffset + pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
-
-					atlas_texels[i][base] = buffer[srcBase];
-					atlas_texels[i][base + 1] = buffer[srcBase + 1];
-					atlas_texels[i][base + 2] = buffer[srcBase + 2];
-					atlas_texels[i][base + 3] = buffer[srcBase + 3];
-				}
-			}
-
-			pic->sl = (x_pos) / (float)ATLAS_WIDTH;
-			pic->sh = (x_pos + width) / (float)ATLAS_WIDTH;
-			pic->tl = (y_pos) / (float)ATLAS_HEIGHT;
-			pic->th = (y_pos + height) / (float)ATLAS_HEIGHT;
-			pic->texnum = atlas_texnum[i];
-
-			return i;
+		// Copy texture image
+		if (GL_TextureReferenceEqual(pic->texnum, atlas_texnum)) {
+			input_image = prev_atlas_texels;
 		}
 		else {
-			Con_DPrintf("&cf00atlas&r FAILED TO PLACE: %d (%d x %d)\n", pic->texnum, width, height);
+			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, sizeof(buffer), buffer);
+
+			input_image = buffer;
 		}
+
+		for (yOffset = 0; yOffset < height; ++yOffset) {
+			int y = y_pos + yOffset;
+			int base = (x_pos + y * ATLAS_TEXTURE_WIDTH) * 4;
+			int srcBase = (pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
+
+			memcpy(atlas_texels + base, input_image + srcBase, 4 * width);
+		}
+
+		pic->sl = (x_pos) / (float)ATLAS_TEXTURE_WIDTH;
+		pic->sh = (x_pos + width) / (float)ATLAS_TEXTURE_WIDTH;
+		pic->tl = (y_pos) / (float)ATLAS_TEXTURE_HEIGHT;
+		pic->th = (y_pos + height) / (float)ATLAS_TEXTURE_HEIGHT;
+		pic->texnum = atlas_texnum;
+
+		return 0;
+	}
+	else {
+		Con_DPrintf("&cf00atlas&r FAILED TO PLACE: %d (%d x %d)\n", pic->texnum, width, height);
 	}
 
 	return -1;
@@ -157,23 +164,17 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 void CachePics_AtlasFrame(void)
 {
-	if (atlas_refresh) {
-		CachePics_CreateAtlas();
+	if (gfx_atlasautoupload.integer) {
+		if (atlas_refresh) {
+			CachePics_CreateAtlas();
+		}
 	}
 }
 
 void CachePics_AtlasUpload(void)
 {
-	int i;
-
-	for (i = 0; i < ATLAS_COUNT; ++i) {
-		if (atlas_dirty & (1 << i)) {
-			char id[64];
-			// generate id
-			snprintf(id, sizeof(id), "cachepics:%d", i);
-			// 
-			atlas_texnum[i] = GL_LoadTexture(id, ATLAS_WIDTH, ATLAS_HEIGHT, atlas_texels[i], TEX_ALPHA | TEX_NOSCALE, 4);
-		}
+	if (atlas_dirty) {
+		atlas_texnum = GL_LoadTexture("cachepics:atlas", ATLAS_TEXTURE_WIDTH, ATLAS_TEXTURE_HEIGHT, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 	}
 	atlas_dirty = 0;
 }
@@ -236,11 +237,12 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	texHeight = GL_TextureHeight(ibar->texnum);
 
 	source = Q_malloc(texWidth * texHeight * 4);
-	GL_GetTexImage(GL_TEXTURE0, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);
+	target = Q_malloc(texWidth * texHeight * 4);
 
+	GL_GetTexImage(GL_TEXTURE0, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);
 	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
 		int num = i - WADPIC_SB_IBAR_AMMO1;
-		int x, y;
+		int y;
 		int x_src, y_src;
 		char name[16];
 		int xcoord = (3 + num * 48);
@@ -258,18 +260,11 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 
 		realwidth = (newsh - newsl) * texWidth;
 		realheight = (newth - newtl) * texHeight;
-		target = Q_malloc(realwidth * realheight * 4);
 
 		snprintf(name, sizeof(name), "hud_ammo_%d", i - WADPIC_SB_IBAR_AMMO1);
 
-		memset(target, 0, realwidth * realheight * 4);
-		for (x = 0; x < realwidth; ++x) {
-			for (y = 0; y < realheight; ++y) {
-				target[(x + y * realwidth) * 4] = source[((x_src + x) + (y_src + y) * texWidth) * 4];
-				target[(x + y * realwidth) * 4 + 1] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 1];
-				target[(x + y * realwidth) * 4 + 2] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 2];
-				target[(x + y * realwidth) * 4 + 3] = source[((x_src + x) + (y_src + y) * texWidth) * 4 + 3];
-			}
+		for (y = 0; y < realheight; ++y) {
+			memset(target + (y * realwidth) * 4, source[(x_src + (y_src + y) * texWidth) * 4], realwidth * 4);
 		}
 
 		targPic = wad_pictures[i].pic = &sb_ib_ammo[num];
@@ -280,10 +275,9 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 		targPic->th = 1;
 		targPic->width = 42;
 		targPic->height = 11;
-
-		Q_free(target);
 	}
 
+	Q_free(target);
 	Q_free(source);
 }
 
@@ -294,8 +288,10 @@ void CachePics_CreateAtlas(void)
 	cachepic_node_t simple_items[MOD_NUMBER_HINTS * MAX_SIMPLE_TEXTURES];
 	int i, j;
 	int expected = 0, found = 0;
+	double start_time = Sys_DoubleTime();
 
 	// Delete old atlas textures
+	memcpy(prev_atlas_texels, atlas_texels, sizeof(prev_atlas_texels));
 	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
@@ -404,6 +400,8 @@ void CachePics_CreateAtlas(void)
 	CachePics_AtlasUpload();
 
 	DeleteOldTextures();
+
+	Con_Printf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
 
 	// Make sure we don't reference any old textures
 	GL_FlushImageDraw(false);

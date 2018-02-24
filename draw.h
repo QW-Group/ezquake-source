@@ -298,8 +298,6 @@ void CachePics_MarkAtlasDirty(void);
 qbool Draw_IsConsoleBackground(mpic_t* pic);
 mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
-extern cvar_t gfx_atlasautoupload;
-
 #endif // __DRAW_H__
 
 
