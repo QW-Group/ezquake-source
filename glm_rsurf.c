@@ -690,6 +690,10 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	int i;
 	glm_worldmodel_req_t* req = NULL;
 
+	if (model->last_texture_chained < 0) {
+		return;
+	}
+
 	if (GLM_DuplicatePreviousRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics)) {
 		return;
 	}
