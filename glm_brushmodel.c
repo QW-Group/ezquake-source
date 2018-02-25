@@ -299,7 +299,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
 
 		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
-			GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
+			vbo_brushElements = GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {
 			vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, GL_STREAM_DRAW);

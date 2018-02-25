@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 void GL_BindVertexArrayElementBuffer(buffer_ref ref);
@@ -36,6 +37,8 @@ typedef struct buffer_data_s {
 	size_t size;
 	GLuint usage;
 
+	void* persistent_mapped_ptr;
+
 	struct buffer_data_s* next_free;
 } buffer_data_t;
 
@@ -43,6 +46,8 @@ static buffer_data_t buffers[256];
 static int buffer_count;
 static buffer_data_t* next_free_buffer = NULL;
 static qbool buffers_supported = false;
+static qbool tripleBuffer_supported = false;
+static GLsync tripleBufferSyncObjects[3];
 
 // Linked list of all vao buffers
 static glm_vao_t* vao_list = NULL;
@@ -56,6 +61,14 @@ typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
 typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
 typedef void (APIENTRY *glNamedBufferSubData_t)(GLuint buffer, GLintptr offset, GLsizei size, const void* data);
 typedef void (APIENTRY *glNamedBufferData_t)(GLuint buffer, GLsizei size, const void* data, GLenum usage);
+typedef void (APIENTRY *glUnmapNamedBuffer_t)(GLuint buffer);
+typedef void (APIENTRY *glUnmapBuffer_t)(GLenum target);
+
+// AZDO-buffer-streaming (4.4)
+typedef void* (APIENTRY *glMapBufferRange_t)(GLenum mtarget, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void (APIENTRY *glBufferStorage_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLbitfield flags);
+typedef GLsync (APIENTRY *glFenceSync_t)(GLenum condition, GLbitfield flags);
+typedef void (APIENTRY *glWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
 
 // VAO functions
 static glGenVertexArrays_t         glGenVertexArrays = NULL;
@@ -73,10 +86,18 @@ static glBufferSubData_t  glBufferSubData = NULL;
 static glGenBuffers_t     glGenBuffers = NULL;
 static glDeleteBuffers_t  glDeleteBuffers = NULL;
 static glBindBufferBase_t glBindBufferBase = NULL;
+static glUnmapBuffer_t glUnmapBuffer = NULL;
 
 // DSA
 static glNamedBufferSubData_t glNamedBufferSubData = NULL;
 static glNamedBufferData_t    glNamedBufferData = NULL;
+static glUnmapNamedBuffer_t   glUnmapNamedBuffer = NULL;
+
+// Persistent mapped buffers
+static glMapBufferRange_t glMapBufferRange = NULL;
+static glBufferStorage_t  glBufferStorage = NULL;
+static glFenceSync_t      glFenceSync = NULL;
+static glWaitSync_t       glWaitSync = NULL;
 
 // Cache OpenGL state
 static GLuint currentArrayBuffer;
@@ -84,27 +105,16 @@ static GLuint currentUniformBuffer;
 static GLuint currentDrawIndirectBuffer;
 static GLuint currentElementArrayBuffer;
 
-buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
+static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLsizei size, GLenum usage)
 {
 	buffer_data_t* buffer = NULL;
-	buffer_ref result;
 	int i;
 
 	if (name && name[0]) {
 		for (i = 0; i < buffer_count; ++i) {
 			if (!strcmp(name, buffers[i].name)) {
 				buffer = &buffers[i];
-				result.index = i;
 				if (buffer->glref) {
-					if (currentArrayBuffer == buffer->glref) {
-						currentArrayBuffer = 0;
-					}
-					else if (currentUniformBuffer == buffer->glref) {
-						currentUniformBuffer = 0;
-					}
-					else if (currentDrawIndirectBuffer == buffer->glref) {
-						currentDrawIndirectBuffer = 0;
-					}
 					glDeleteBuffers(1, &buffer->glref);
 				}
 				break;
@@ -127,16 +137,23 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 		else {
 			Sys_Error("Too many graphics buffers allocated");
 		}
+		memset(buffer, 0, sizeof(buffers[0]));
+		if (name) {
+			strlcpy(buffer->name, name, sizeof(buffer->name));
+		}
 	}
 
-	memset(buffer, 0, sizeof(buffers[0]));
-	if (name) {
-		strlcpy(buffer->name, name, sizeof(buffer->name));
-	}
 	buffer->target = target;
 	buffer->size = size;
 	buffer->usage = usage;
 	glGenBuffers(1, &buffer->glref);
+	return buffer;
+}
+
+buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
+{
+	buffer_data_t* buffer = GL_BufferAllocateSlot(target, name, size, usage);
+	buffer_ref result;
 
 	GL_BindBufferImpl(target, buffer->glref);
 	if (glObjectLabel && name) {
@@ -150,6 +167,58 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	return result;
 }
 
+buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage)
+{
+	GLenum glUsage;
+	qbool tripleBuffer = false;
+
+	if (usage == write_once_use_once) {
+		glUsage = GL_STREAM_DRAW;
+		
+		tripleBuffer = tripleBuffer_supported;
+	}
+	else if (usage == write_once_use_once_safe) {
+		glUsage = GL_STREAM_DRAW;
+	}
+	else if (usage == write_once_use_many) {
+		glUsage = GL_STATIC_DRAW;
+	}
+	else if (usage == write_once_read_many) {
+		glUsage = GL_STATIC_COPY;
+	}
+	else {
+		Sys_Error("Unknown usage flag passed to GL_CreateFixedBuffer");
+	}
+
+	if (!tripleBuffer) {
+		return GL_GenFixedBuffer(target, name, size, data, glUsage);
+	}
+	else {
+		GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+		buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
+		buffer_ref ref;
+
+		GL_BindBufferImpl(target, buffer->glref);
+		glBufferStorage(target, size * 3, NULL, flags);
+		buffer->persistent_mapped_ptr = glMapBufferRange(target, 0, size * 3, flags);
+
+		if (buffer->persistent_mapped_ptr) {
+			if (data) {
+				void* base = (void*)((uintptr_t)buffer->persistent_mapped_ptr + size * glConfig.tripleBufferIndex);
+
+				memcpy(base, data, size);
+			}
+		}
+		else {
+			Con_Printf("\20opengl\21 triple-buffered allocation failed (%dKB)\n", (size * 3) / 1024);
+			return GL_GenFixedBuffer(target, name, size, data, glUsage);
+		}
+
+		ref.index = buffer - buffers;
+		return ref;
+	}
+}
+
 void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 {
 	assert(vbo.index);
@@ -157,15 +226,24 @@ void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 	assert(data);
 	assert(size <= buffers[vbo.index].size);
 
-	if (glNamedBufferSubData) {
-		glNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
+	if (buffers[vbo.index].persistent_mapped_ptr) {
+		void* start = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + buffers[vbo.index].size * glConfig.tripleBufferIndex);
+
+		memcpy(start, data, size);
+
+		GL_LogAPICall("GL_UpdateBuffer[memcpy](%s)", buffers[vbo.index].name);
 	}
 	else {
-		GL_BindBuffer(vbo);
-		glBufferSubData(buffers[vbo.index].target, 0, size, data);
-	}
+		if (glNamedBufferSubData) {
+			glNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
+		}
+		else {
+			GL_BindBuffer(vbo);
+			glBufferSubData(buffers[vbo.index].target, 0, size, data);
+		}
 
-	GL_LogAPICall("GL_UpdateBuffer(%s)", buffers[vbo.index].name);
+		GL_LogAPICall("GL_UpdateBuffer(%s)", buffers[vbo.index].name);
+	}
 }
 
 void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data)
@@ -183,21 +261,39 @@ size_t GL_VBOSize(buffer_ref vbo)
 	return buffers[vbo.index].size;
 }
 
-void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
 
-	if (glNamedBufferData) {
-		glNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);
+	if (buffers[vbo.index].persistent_mapped_ptr) {
+		if (glUnmapNamedBuffer) {
+			glUnmapNamedBuffer(buffers[vbo.index].glref);
+		}
+		else {
+			GL_BindBuffer(vbo);
+			glUnmapBuffer(buffers[vbo.index].target);
+		}
+		glDeleteBuffers(1, &buffers[vbo.index].glref);
+
+		buffers[vbo.index].next_free = next_free_buffer;
+		next_free_buffer = &buffers[vbo.index];
+
+		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, buffers[vbo.index].size, data, write_once_use_once);
 	}
 	else {
-		GL_BindBuffer(vbo);
-		glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
-	}
+		if (glNamedBufferData) {
+			glNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);
+		}
+		else {
+			GL_BindBuffer(vbo);
+			glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
+		}
 
-	buffers[vbo.index].size = size;
-	GL_LogAPICall("GL_ResizeBuffer(%s)", buffers[vbo.index].name);
+		buffers[vbo.index].size = size;
+		GL_LogAPICall("GL_ResizeBuffer(%s)", buffers[vbo.index].name);
+		return vbo;
+	}
 }
 
 void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
@@ -209,12 +305,19 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 	assert(offset < buffers[vbo.index].size);
 	assert(offset + size <= buffers[vbo.index].size);
 
-	if (glNamedBufferSubData) {
-		glNamedBufferSubData(buffers[vbo.index].glref, offset, size, data);
+	if (buffers[vbo.index].persistent_mapped_ptr) {
+		void* base = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + buffers[vbo.index].size * glConfig.tripleBufferIndex + offset);
+
+		memcpy(base, data, size);
 	}
 	else {
-		GL_BindBuffer(vbo);
-		glBufferSubData(buffers[vbo.index].target, offset, size, data);
+		if (glNamedBufferSubData) {
+			glNamedBufferSubData(buffers[vbo.index].glref, offset, size, data);
+		}
+		else {
+			GL_BindBuffer(vbo);
+			glBufferSubData(buffers[vbo.index].target, offset, size, data);
+		}
 	}
 	GL_LogAPICall("GL_UpdateBufferSection(%s)", buffers[vbo.index].name);
 }
@@ -302,6 +405,7 @@ void GL_InitialiseBufferHandling(void)
 	glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
 	glGenBuffers = (glGenBuffers_t)SDL_GL_GetProcAddress("glGenBuffers");
 	glDeleteBuffers = (glDeleteBuffers_t)SDL_GL_GetProcAddress("glDeleteBuffers");
+	glUnmapBuffer = (glUnmapBuffer_t)SDL_GL_GetProcAddress("glUnmapBuffer");
 
 	// Keeping this because it was in earlier versions of ezquake, I think we're past the days of OpenGL 1.x support tho?
 	if (!glBindBuffer && SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
@@ -310,16 +414,24 @@ void GL_InitialiseBufferHandling(void)
 		glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
 		glGenBuffers = (glGenBuffers_t)SDL_GL_GetProcAddress("glGenBuffersARB");
 		glDeleteBuffers = (glDeleteBuffers_t)SDL_GL_GetProcAddress("glDeleteBuffersARB");
+		glUnmapBuffer = (glUnmapBuffer_t)SDL_GL_GetProcAddress("glUnmapBufferARB");
 	}
 
-	// OpenGL 3.0 onwards, more for shaders
+	buffers_supported = (glBindBuffer && glBufferData && glBufferSubData && glGenBuffers && glDeleteBuffers && glUnmapBuffer);
+
+	// OpenGL 3.0 onwards, for 4.3+ support only
 	glBindBufferBase = (glBindBufferBase_t)SDL_GL_GetProcAddress("glBindBufferBase");
+
+	// OpenGL 4.4, persistent mapping of buffers
+	glFenceSync = (glFenceSync_t)SDL_GL_GetProcAddress("glFenceSync");
+	glWaitSync = (glWaitSync_t)SDL_GL_GetProcAddress("glWaitSync");
+	glBufferStorage = (glBufferStorage_t)SDL_GL_GetProcAddress("glBufferStorage");
+	glMapBufferRange = (glMapBufferRange_t)SDL_GL_GetProcAddress("glMapBufferRange");
 
 	// OpenGL 4.5 onwards, update directly
 	glNamedBufferSubData = (glNamedBufferSubData_t)SDL_GL_GetProcAddress("glNamedBufferSubData");
 	glNamedBufferData = (glNamedBufferData_t)SDL_GL_GetProcAddress("glNamedBufferData");
-
-	buffers_supported = (glBindBuffer && glBufferData && glBufferSubData && glGenBuffers && glDeleteBuffers);
+	glUnmapNamedBuffer = (glUnmapNamedBuffer_t)SDL_GL_GetProcAddress("glUnmapNamedBuffer");
 
 	// VAOs
 	glGenVertexArrays = (glGenVertexArrays_t)SDL_GL_GetProcAddress("glGenVertexArrays");
@@ -332,6 +444,8 @@ void GL_InitialiseBufferHandling(void)
 
 	buffers_supported &= (glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glEnableVertexAttribArray);
 	buffers_supported &= (glVertexAttribPointer && glVertexAttribIPointer && glVertexAttribDivisor);
+
+	tripleBuffer_supported = buffers_supported && glFenceSync && glWaitSync && glBufferStorage && glMapBufferRange && !COM_CheckParm("-no-triple-gl-buffer");
 }
 
 buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size)
@@ -493,4 +607,21 @@ void GL_EnsureBufferSize(buffer_ref ref, size_t size)
 	if (buffers[ref.index].size < size) {
 		GL_ResizeBuffer(ref, size, NULL);
 	}
+}
+
+void GL_BufferStartFrame(void)
+{
+	// 
+	if (tripleBuffer_supported) {
+		if (tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
+			glWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, GL_TIMEOUT_IGNORED);
+		}
+		tripleBufferSyncObjects[glConfig.tripleBufferIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		glConfig.tripleBufferIndex = (glConfig.tripleBufferIndex + 1) % 3;
+	}
+}
+
+uintptr_t GL_BufferOffset(buffer_ref ref)
+{
+	return buffers[ref.index].persistent_mapped_ptr ? buffers[ref.index].size * glConfig.tripleBufferIndex : 0;
 }

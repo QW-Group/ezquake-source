@@ -680,7 +680,7 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_UnBindBuffer(GLenum target);
-void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
 void GL_EnsureBufferSize(buffer_ref ref, size_t size);
 size_t GL_VBOSize(buffer_ref vbo);
 
@@ -1162,6 +1162,19 @@ void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indi
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride);
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
 qbool GL_DrawElementsBaseVertexAvailable(void);
+
+// Buffers
+typedef enum {
+	unknown,
+	write_once_use_once,
+	write_once_use_once_safe,
+	write_once_use_many,
+	write_once_read_many
+} buffertype_t;
+
+buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage);
+void GL_BufferStartFrame(void);
+uintptr_t GL_BufferOffset(buffer_ref ref);
 
 #endif /* !__GL_LOCAL_H__ */
 

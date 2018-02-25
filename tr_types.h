@@ -73,6 +73,8 @@ typedef struct {
 	int max_3d_texture_size;
 	int max_texture_depth;
 	int texture_units;
+
+	int tripleBufferIndex;
 } glconfig_t;
 
 extern glconfig_t	glConfig;
