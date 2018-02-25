@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 float GL_WaterAlpha(void)
 {
+	extern cvar_t r_wateralpha;
+
 	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 }
 

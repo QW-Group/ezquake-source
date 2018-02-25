@@ -999,7 +999,7 @@ void GL_PrintState(void)
 
 	if (debug_frame_out) {
 		fprintf(debug_frame_out, "... <state-dump>\n");
-		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange);
+		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f [mask %s]\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange, gl_depth_mask ? "on" : "off");
 		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cull_face ? "enabled" : "disabled", currentCullFace);
 		fprintf(debug_frame_out, "..... Blending: %s, sfactor %u, dfactor %u\n", gl_blend ? "enabled" : "disabled", currentBlendSFactor, currentBlendDFactor);
 		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", texunitenabled[currentTextureUnit - GL_TEXTURE0] ? "enabled" : "disabled", currentTextureUnit - GL_TEXTURE0);

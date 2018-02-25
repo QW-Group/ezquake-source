@@ -148,19 +148,19 @@ void main()
 		// Turb surface
 		if (turbType != TEXTURE_TURB_SKY && r_fastturb != 0) {
 			if (turbType == TEXTURE_TURB_WATER) {
-				frag_colour = vec4(r_watercolor.rgb, waterAlpha);
+				frag_colour = r_watercolor * waterAlpha;
 			}
 			else if (turbType == TEXTURE_TURB_SLIME) {
-				frag_colour = vec4(r_slimecolor.rgb, waterAlpha);
+				frag_colour = r_slimecolor * waterAlpha;
 			}
 			else if (turbType == TEXTURE_TURB_LAVA) {
-				frag_colour = vec4(r_lavacolor.rgb, waterAlpha);
+				frag_colour = r_lavacolor * waterAlpha;
 			}
 			else if (turbType == TEXTURE_TURB_TELE) {
-				frag_colour = vec4(r_telecolor.rgb, waterAlpha);
+				frag_colour = r_telecolor * waterAlpha;
 			}
 			else {
-				frag_colour = vec4(FlatColor, waterAlpha);
+				frag_colour = vec4(FlatColor * waterAlpha, waterAlpha);
 			}
 		}
 		else if (turbType == TEXTURE_TURB_SKY) {
@@ -185,7 +185,7 @@ void main()
 #endif
 		}
 		else {
-			frag_colour = vec4(texColor.rgb, waterAlpha);
+			frag_colour = texColor * waterAlpha;
 		}
 	}
 	else {

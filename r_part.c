@@ -845,14 +845,8 @@ void R_DrawParticles(void)
 		Classic_ReScaleParticles();
 	}
 
-	if (GL_ShadersSupported()) {
-		Classic_DrawParticles();
-		QMB_DrawParticles();
-	}
-	else {
-		Classic_DrawParticles();
-		QMB_DrawParticles();
-	}
+	Classic_DrawParticles();
+	QMB_DrawParticles();
 }
 
 #define RunParticleEffect(var, org, dir, color, count)		\

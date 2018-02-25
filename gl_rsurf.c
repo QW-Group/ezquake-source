@@ -216,7 +216,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
-	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+	float wateralpha = GL_WaterAlpha();
 	extern cvar_t r_fastturb;
 
 	int c, side, clipped, underwater;

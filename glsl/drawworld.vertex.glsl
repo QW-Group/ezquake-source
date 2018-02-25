@@ -69,8 +69,8 @@ void main()
 	SamplerNumber = materialSampler;
 
 	if (lightmapNumber < 0) {
-		TextureCoord.s = (tex.s + sin(tex.t + time) * 8) / 64.0;
-		TextureCoord.t = (tex.t + sin(tex.s + time) * 8) / 64.0;
+		TextureCoord.s = (tex.s + (-4 + 8 * sin(tex.t * 2 + time))) * 0.015625;
+		TextureCoord.t = (tex.t + (-4 + 8 * sin(tex.s * 2 + time))) * 0.015625;
 		TextureCoord.z = materialArrayIndex;
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = position - cameraPosition;

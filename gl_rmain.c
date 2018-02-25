@@ -962,9 +962,14 @@ static void R_RenderScene(void)
 	}
 
 	if (!GL_ShadersSupported()) {
-		GLC_DrawWaterSurfaces();
-
 		GLC_StateEndRenderScene();
+	}
+}
+
+static void R_RenderTransparentWorld(void)
+{
+	if (!GL_ShadersSupported()) {
+		GLC_DrawWaterSurfaces();
 	}
 	else {
 		GLM_DrawWaterSurfaces();
@@ -1175,6 +1180,9 @@ void R_RenderView(void)
 
 	// Adds 3d effects (particles, lights, chat icons etc)
 	R_Render3DEffects();
+
+	// Draws transparent world surfaces
+	R_RenderTransparentWorld();
 
 	// Draw 3D hud elements
 	R_Render3DHud();

@@ -144,8 +144,6 @@ void GLC_StateBeginTurbPoly(void)
 {
 	ENTER_STATE;
 
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_Enable(GL_TEXTURE_2D);
 	GL_EnableFog();
 
 	LEAVE_STATE;
@@ -253,8 +251,8 @@ void GLC_StateBeginWaterSurfaces(void)
 	ENTER_STATE;
 
 	if (wateralpha < 1.0) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_Color4f(1, 1, 1, wateralpha);
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+		GL_Color4f(wateralpha, wateralpha, wateralpha, wateralpha);
 		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		if (wateralpha < 0.9) {

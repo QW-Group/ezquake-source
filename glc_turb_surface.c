@@ -27,11 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern msurface_t* waterchain;
 
-static float GL_WaterAlpha(void)
-{
-	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-}
-
 void GLC_DrawWaterSurfaces(void)
 {
 	msurface_t *s;
@@ -43,7 +38,7 @@ void GLC_DrawWaterSurfaces(void)
 	GLC_StateBeginWaterSurfaces();
 
 	for (s = waterchain; s; s = s->texturechain) {
-		GLC_InitTextureUnits1(s->texinfo->texture->gl_texturenum, GL_REPLACE);
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, s->texinfo->texture->gl_texturenum);
 		EmitWaterPolys(s);
 	}
 

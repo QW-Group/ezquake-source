@@ -379,6 +379,7 @@ void GLM_DrawWaterSurfaces(void)
 	}
 
 	// Waterchain has list of alpha-blended surfaces
+	GL_EnterRegion(__FUNCTION__);
 	GLM_EnterBatchedWorldRegion();
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	for (surf = waterchain; surf; surf = surf->texturechain) {
@@ -407,6 +408,10 @@ void GLM_DrawWaterSurfaces(void)
 			}
 		}
 	}
+
+	GL_FlushWorldModelBatch();
+
+	GL_LeaveRegion();
 }
 
 void GLM_DrawTexturedWorld(model_t* model)
