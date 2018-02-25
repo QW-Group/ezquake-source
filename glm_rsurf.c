@@ -447,6 +447,8 @@ void GLM_DrawWaterSurfaces(void)
 	}
 
 	GL_LeaveRegion();
+
+	waterchain = NULL;
 }
 
 static glm_worldmodel_req_t* GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurface_t* surf)
@@ -606,18 +608,24 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	extern buffer_ref vbo_brushElements;
 	extern glm_vao_t brushModel_vao;
 	int draw;
-
-	GL_StartWorldBatch();
-	GL_BindBuffer(vbo_brushElements);
-	GL_BindBuffer(vbo_worldIndirectDraw);
-
-	GL_AlphaBlendFlags(type == alpha_surfaces ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
+	qbool first = true;
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
 
 		if (!drawcall->batch_count || drawcall->type != type) {
 			continue;
+		}
+
+		if (first) {
+			GL_EnterRegion(__FUNCTION__);
+			GL_StartWorldBatch();
+			GL_BindBuffer(vbo_brushElements);
+			GL_BindBuffer(vbo_worldIndirectDraw);
+
+			GL_AlphaBlendFlags(type == alpha_surfaces ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
+
+			first = false;
 		}
 
 		// Bind texture units
@@ -666,6 +674,10 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		drawcall->batch_count = 0;
 		drawcall->material_samplers = 0;
 		drawcall->sampler_mappings = 0;
+	}
+
+	if (!first) {
+		GL_LeaveRegion();
 	}
 }
 

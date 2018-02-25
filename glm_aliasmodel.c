@@ -390,6 +390,8 @@ void GLM_PrepareAliasModelBatches(void)
 		return;
 	}
 
+	GL_EnterRegion(__FUNCTION__);
+
 	// Update VBO with data about each entity
 	GL_UpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
 
@@ -417,6 +419,8 @@ void GLM_PrepareAliasModelBatches(void)
 			offset += size;
 		}
 	}
+
+	GL_LeaveRegion();
 }
 
 static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)

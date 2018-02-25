@@ -311,14 +311,7 @@ static qbool GLM_BillboardsInit(void)
 	GLM_CompileBillboardProgram();
 	GLM_CreateBillboardVAO();
 
-	if (billboardProgram.program && billboardVAO.vao) {
-		GL_UseProgram(billboardProgram.program);
-		GL_BindVertexArray(&billboardVAO);
-
-		return true;
-	}
-
-	return false;
+	return (billboardProgram.program && billboardVAO.vao);
 }
 
 static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
@@ -422,6 +415,10 @@ void GLM_DrawBillboards(void)
 {
 	unsigned int i;
 
+	if (!batchCount || (batchCount == 1 && !batches[0].count)) {
+		return;
+	}
+
 	GL_EnterRegion(__FUNCTION__);
 
 	if (!GLM_BillboardsInit()) {
@@ -430,6 +427,8 @@ void GLM_DrawBillboards(void)
 	}
 
 	GLM_StateBeginDrawBillboards();
+	GL_UseProgram(billboardProgram.program);
+	GL_BindVertexArray(&billboardVAO);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];

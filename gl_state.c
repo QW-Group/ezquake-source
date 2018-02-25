@@ -234,7 +234,7 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
@@ -243,12 +243,12 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 
 	++frameStats.texture_binds;

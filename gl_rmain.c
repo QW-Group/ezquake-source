@@ -1162,9 +1162,7 @@ void R_RenderView(void)
 		GL_PrepareWorldModelBatch();
 		GLM_PrepareAliasModelBatches();
 
-		GL_EnterRegion("GLM_DrawBrushModels");
 		GL_DrawWorldModelBatch(opaque_world);
-		GL_LeaveRegion();
 
 		GL_EnterRegion("GLM_DrawEntities");
 		GLM_DrawAliasModelBatches();
@@ -1172,9 +1170,7 @@ void R_RenderView(void)
 
 		GLM_DrawBillboards();
 
-		GL_EnterRegion("GLM_DrawWaterSurfaces");
 		GL_DrawWorldModelBatch(alpha_surfaces);
-		GL_LeaveRegion();
 	}
 
 	if (r_speeds.integer) {
