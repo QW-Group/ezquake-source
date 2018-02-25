@@ -1112,16 +1112,10 @@ static void R_Render3DEffects(void)
 
 	// Run corona logic
 	R_DrawCoronas();
-
-	// Render billboards
-	GL_DrawBillboards();
 }
 
 static void R_Render3DHud(void)
 {
-	// Adds 'globes' around lights and also marks affected surfaces for the next frame
-	R_RenderDlights();
-
 	// Draw the player's view model (gun)
 	if (!GL_ShadersSupported()) {
 		R_DrawViewModel();
@@ -1146,6 +1140,9 @@ void R_RenderView(void)
 
 	R_Clear();
 
+	// these are rendered later now, so we can process earlier
+	R_RenderDlights();
+
 	// render normal view (world & entities)
 	R_RenderScene();
 
@@ -1154,6 +1151,12 @@ void R_RenderView(void)
 
 	// Draws transparent world surfaces
 	R_RenderTransparentWorld();
+
+	// Draw 3D hud elements
+	R_Render3DHud();
+
+	// Render billboards
+	GL_DrawBillboards();
 
 	if (GL_ShadersSupported()) {
 		GL_PrepareWorldModelBatch();
@@ -1173,9 +1176,6 @@ void R_RenderView(void)
 		GL_DrawWorldModelBatch(alpha_surfaces);
 		GL_LeaveRegion();
 	}
-
-	// Draw 3D hud elements
-	R_Render3DHud();
 
 	if (r_speeds.integer) {
 		double time = Sys_DoubleTime() - frameStats.start_time;
