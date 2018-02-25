@@ -116,8 +116,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
-		vbo_aliasDataBuffer = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA);
+		vbo_aliasDataBuffer = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, write_once_use_once);
 	}
 
 	return drawAliasModelProgram.program;
@@ -388,7 +387,7 @@ void GLM_DrawPowerupShell(
 
 void GLM_PrepareAliasModelBatches(void)
 {
-	if (!GLM_CompileAliasModelProgram()) {
+	if (!GLM_CompileAliasModelProgram() || !alias_draw_count) {
 		return;
 	}
 
@@ -396,6 +395,7 @@ void GLM_PrepareAliasModelBatches(void)
 
 	// Update VBO with data about each entity
 	GL_UpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
+	GL_BindBufferRange(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, GL_BufferOffset(vbo_aliasDataBuffer), sizeof(aliasdata.models[0]) * alias_draw_count);
 
 	// Build & update list of indirect calls
 	{

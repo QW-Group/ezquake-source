@@ -75,6 +75,8 @@ typedef struct {
 	int texture_units;
 
 	int tripleBufferIndex;
+	int uniformBufferOffsetAlignment;
+	int shaderStorageBufferOffsetAlignment;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

@@ -201,6 +201,14 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 		buffer_ref ref;
 
 		GL_BindBufferImpl(target, buffer->glref);
+		if (target == GL_UNIFORM_BUFFER || target == GL_SHADER_STORAGE_BUFFER) {
+			GLsizei alignment = (target == GL_UNIFORM_BUFFER ? glConfig.uniformBufferOffsetAlignment : glConfig.shaderStorageBufferOffsetAlignment);
+			GLsizei requested = size;
+
+			size = ((size + (alignment - 1)) / alignment) * alignment;
+
+			buffer->size = size;
+		}
 		glBufferStorage(target, size * 3, NULL, flags);
 		buffer->persistent_mapped_ptr = glMapBufferRange(target, 0, size * 3, flags);
 
@@ -359,6 +367,8 @@ void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeipt
 
 	assert(ref.index);
 	assert(buffers[ref.index].glref);
+	assert(size >= 0);
+	assert(offset >= 0);
 	assert(offset + size <= true_size);
 
 	glBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
