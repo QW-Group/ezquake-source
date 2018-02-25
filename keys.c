@@ -1548,7 +1548,7 @@ void Key_Message (int key, wchar unichar) {
 //Single ascii characters return themselves, while the K_* names are matched up.
 #define UNKNOWN_S "UNKNOWN"
 
-int Key_CharacterToQuakeCode(char ch);
+byte Key_CharacterToQuakeCode(char ch);
 
 int Key_StringToKeynum (const char *str)
 {
