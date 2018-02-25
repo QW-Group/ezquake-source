@@ -80,7 +80,7 @@ static GLuint drawworld_WorldCvars_block;
 #define DRAW_LIGHTMAPS           256
 #define DRAW_LUMA_TEXTURES_FB    512
 #define DRAW_TEXTURELESS        1024
-static buffer_ref ubo_worldcvars;
+static buffer_ref ssbo_worldcvars;
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -185,14 +185,14 @@ static void Compile_DrawWorldProgram(void)
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
 
-		ubo_worldcvars = GL_GenUniformBuffer("world-cvars", NULL, sizeof(drawcalls[current_drawcall].world));
-		GL_BindBufferBase(ubo_worldcvars, EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS);
+		ssbo_worldcvars = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].world), NULL, GL_STREAM_DRAW);
+		GL_BindBufferBase(ssbo_worldcvars, EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS);
 
 		drawworld.uniforms_found = true;
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
-		vbo_worldIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(drawcalls[current_drawcall].worldmodel_requests), NULL, GL_STREAM_DRAW);
+		vbo_worldIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(drawcalls[0].worldmodel_requests), NULL, GL_STREAM_DRAW);
 	}
 }
 
@@ -608,7 +608,7 @@ void GL_DrawWorldModelBatch(void)
 			return;
 		}
 
-		GL_UpdateBuffer(ubo_worldcvars, sizeof(drawcall->world), &drawcall->world);
+		GL_UpdateBuffer(ssbo_worldcvars, sizeof(drawcall->world), &drawcall->world);
 
 		// Bind texture units
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
