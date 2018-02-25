@@ -303,12 +303,6 @@ void GL_ProcessErrors(const char* message)
 void GL_PushMatrix(GLenum mode, float* matrix)
 {
 	memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
-
-	if (!GL_ShadersSupported()) {
-		glMatrixMode(mode);
-		glPushMatrix();
-		GL_LogAPICall("GL_PushMatrix(%s)", NameForMatrix(mode));
-	}
 }
 
 void GL_PopMatrix(GLenum mode, float* matrix)
@@ -317,7 +311,7 @@ void GL_PopMatrix(GLenum mode, float* matrix)
 
 	if (!GL_ShadersSupported()) {
 		glMatrixMode(mode);
-		glPopMatrix();
+		glLoadMatrixf(matrix);
 		GL_LogAPICall("GL_PopMatrix(%s)", NameForMatrix(mode));
 	}
 }

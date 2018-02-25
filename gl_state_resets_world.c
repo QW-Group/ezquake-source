@@ -73,18 +73,6 @@ void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrig
 	LEAVE_STATE;
 }
 
-void GLC_StateEndDrawTextureChainsFirstPass(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
-{
-	MIDDLE_STATE;
-
-	if (fullbrightTextureUnit) {
-		GLC_EnsureTMUDisabled(fullbrightTextureUnit);
-	}
-	if (lightmapTextureUnit) {
-		GLC_EnsureTMUDisabled(lightmapTextureUnit);
-	}
-}
-
 void GLC_StateEndDrawTextureChains(void)
 {
 	ENTER_STATE;

@@ -269,8 +269,6 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		}
 	}
 
-	GLC_StateEndDrawTextureChainsFirstPass(lightmapTextureUnit, fullbrightTextureUnit);
-
 	if (gl_fb_bmodels.value) {
 		if (!lightmapTextureUnit) {
 			GLC_BlendLightmaps();

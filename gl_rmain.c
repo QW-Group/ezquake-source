@@ -724,6 +724,7 @@ static void R_SetupGL(void)
 {
 	R_SetupViewport();
 
+	GLC_PauseMatrixUpdate();
 	GL_IdentityModelView();
 	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
 	GL_Rotate(GL_MODELVIEW, 90, 0, 0, 1);	    // put Z going up
@@ -732,6 +733,8 @@ static void R_SetupGL(void)
 	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[1], 0, 0, 1);
 	GL_Translate(GL_MODELVIEW, -r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
+	GLC_ResumeMatrixUpdate();
+	GLC_LoadMatrix(GL_MODELVIEW);
 
 	GL_StateDefault3D();
 	GL_DepthMask(GL_TRUE);
