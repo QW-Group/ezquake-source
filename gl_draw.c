@@ -917,8 +917,6 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 
 void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
-	GL_FlushImageDraw();
-
 	if (GL_ShadersSupported()) {
 		GLM_Draw_Polygon(x, y, vertices, num_vertices, color);
 	}

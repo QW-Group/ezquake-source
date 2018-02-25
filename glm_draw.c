@@ -31,6 +31,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
+#define MAX_MULTI_IMAGE_BATCH 4096
 #define CIRCLE_LINE_COUNT	40
 extern float overall_alpha;
 
@@ -161,8 +162,6 @@ void GLM_Draw_FadeScreen(float alpha)
 {
 	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
 }
-
-#define MAX_MULTI_IMAGE_BATCH 1024
 
 static glm_program_t multiImageProgram;
 
@@ -651,8 +650,16 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	if (num_vertices > sizeof(polygonVertices) / sizeof(polygonVertices[0])) {
 		return;
 	}
+	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+		return;
+	}
+
+	imageTypes[imageCount] = imagetype_polygon;
+	images[imageCount].flags = 0;
+	imageCount++;
 
 	polygonVerts = num_vertices;
+	polygonColor = color;
 	polygonX = x;
 	polygonY = y;
 	memcpy(polygonVertices, vertices, sizeof(polygonVertices[0]) * num_vertices);
