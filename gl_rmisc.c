@@ -104,192 +104,8 @@ void R_InitTextures(void)
 	}
 }
 
-//Translates a skin texture by the per-player color lookup
-void R_TranslatePlayerSkin (int playernum)
+void R_NewMap(qbool vid_restart)
 {
-	byte translate[256], *inrow, *original;
-	char s[512];
-	int	top, bottom, i, j, scaled_width, scaled_height, inwidth, inheight, tinwidth, tinheight, glinternalfmt, glinternalfmt_alpha;
-	unsigned translate32[256], *out, frac, fracstep;
-
-	unsigned pixels[512 * 256];
-
-	player_info_t *player;
-	extern byte player_8bit_texels[256 * 256];
-	extern cvar_t gl_scaleModelTextures;
-
-	if (gl_gammacorrection.integer) {
-		glinternalfmt = GL_SRGB8;
-		glinternalfmt_alpha = GL_SRGB8_ALPHA8;
-	}
-	else {
-		glinternalfmt = GL_RGB8;
-		glinternalfmt_alpha = GL_RGBA8;
-	}
-
-	player = &cl.players[playernum];
-	if (!player->name[0])
-		return;
-
-	strlcpy(s, Skin_FindName(player), sizeof(s));
-	COM_StripExtension(s, s, sizeof(s));
-
-	if (player->skin && strcasecmp(s, player->skin->name))
-		player->skin = NULL;
-
-	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin) {
-		return;
-	}
-
-	player->_topcolor = player->topcolor;
-	player->_bottomcolor = player->bottomcolor;
-
-	if (!player->skin) {
-		Skin_Find(player);
-	}
-
-	// no full bright texture by default
-	GL_TextureReferenceInvalidate(playerfbtextures[playernum]);
-
-	if (GL_TextureReferenceIsValid(player->skin->texnum) && player->skin->bpp == 4) {
-		// do not even bother call Skin_Cache(), we have texture num alredy
-		//Com_Printf("    ###SHORT loaded skin %s %d\n", player->skin->name, player->skin->texnum);
-		playernmtextures[playernum] = player->skin->texnum;
-		return;
-	}
-
-	if ((original = Skin_Cache(player->skin, false)) != NULL) {
-		switch (player->skin->bpp) {
-		case 4: // 32 bit skin
-			//Com_Printf("    ###FULL loaded skin %s %d\n", player->skin->name, player->skin->texnum);
-
-			// FIXME: in ideal, GL_LoadTexture() must be issued in Skin_Cache(), but I fail with that, so move it here
-			playernmtextures[playernum] = player->skin->texnum = GL_LoadTexture(player->skin->name, player->skin->width, player->skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
-			return; // we done all we want
-		case 1: // 8 bit skin
-			break;
-
-		default:
-			Sys_Error("R_TranslatePlayerSkin: wrong bpp %d", player->skin->bpp);
-		}
-
-		//skin data width
-		inwidth = 320;
-		inheight = 200;
-	} else {
-		original = player_8bit_texels;
-		inwidth = 296;
-		inheight = 194;
-	}
-
-//	Com_Printf("    ###8 bit loaded skin %s %d\n", player->skin->name, player->skin->texnum);
-
-	// locate the original skin pixels
-	// real model width
-	tinwidth = 296;
-	tinheight = 194;
-
-	top = bound(0, player->topcolor, 13) * 16;
-	bottom = bound(0, player->bottomcolor, 13) * 16;
-
-	for (i = 0; i < 256; i++)
-		translate[i] = i;
-
-	for (i = 0; i < 16; i++) {
-		if (top < 128) {
-			// the artists made some backwards ranges.  sigh.
-			translate[TOP_RANGE + i] = top + i;
-		}
-		else {
-			translate[TOP_RANGE + i] = top + 15 - i;
-		}
-
-		if (bottom < 128) {
-			translate[BOTTOM_RANGE + i] = bottom + i;
-		}
-		else {
-			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
-		}
-	}
-
-	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(glConfig.gl_max_size_default, 512);
-	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, 256) : min(glConfig.gl_max_size_default, 256);
-
-	// allow users to crunch sizes down even more if they want
-	scaled_width >>= (int)gl_playermip.value;
-	scaled_height >>= (int)gl_playermip.value;
-	if (scaled_width < 1)
-		scaled_width = 1;
-	if (scaled_height < 1)
-		scaled_height = 1;
-
-	for	(i = 0; i < 256; i++)
-		translate32[i] = d_8to24table[translate[i]];
-
-	out	= pixels;
-	memset(pixels, 0, sizeof(pixels));
-	fracstep = tinwidth * 0x10000 / scaled_width;
-	for	(i = 0; i < scaled_height; i++, out += scaled_width) {
-		inrow =	original + inwidth*(i * tinheight / scaled_height);
-		frac = fracstep	>> 1;
-		for	(j = 0; j < scaled_width; j += 4) {
-			out[j] = translate32[inrow[frac >> 16]];
-			frac += fracstep;
-			out[j + 1] = translate32[inrow[frac >> 16]];
-			frac += fracstep;
-			out[j + 2] = translate32[inrow[frac >> 16]];
-			frac += fracstep;
-			out[j + 3] = translate32[inrow[frac >> 16]];
-			frac += fracstep;
-		}
-	}
-
-	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playernmtextures[playernum], glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
-	GL_TexParameterf(GL_TEXTURE0, playernmtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	GL_TexParameterf(GL_TEXTURE0, playernmtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	if (Img_HasFullbrights ((byte *) original, inwidth * inheight)) {
-		out = pixels;
-		memset(pixels, 0, sizeof(pixels));
-		fracstep = tinwidth * 0x10000 / scaled_width;
-
-		// make all non-fullbright colors transparent
-		for (i = 0; i < scaled_height; i++, out += scaled_width) {
-			inrow = original + inwidth * (i * tinheight / scaled_height);
-			frac = fracstep >> 1;
-			for (j = 0; j < scaled_width; j += 4) {
-				if (inrow[frac >> 16] < 224)
-					out[j] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF); // transparent
-				else
-					out[j] = translate32[inrow[frac >> 16]]; // fullbright
-				frac += fracstep;
-				if (inrow[frac >> 16] < 224)
-					out[j + 1] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
-				else
-					out[j + 1] = translate32[inrow[frac >> 16]];
-				frac += fracstep;
-				if (inrow[frac >> 16] < 224)
-					out[j + 2] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
-				else
-					out[j + 2] = translate32[inrow[frac >> 16]];
-				frac += fracstep;
-				if (inrow[frac >> 16] < 224)
-					out[j + 3] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
-				else
-					out[j + 3] = translate32[inrow[frac >> 16]];
-				frac += fracstep;
-			}
-		}
-
-		GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerfbtextures[playernum], glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
-		GL_TexParameterf(GL_TEXTURE0, playerfbtextures[playernum], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, playerfbtextures[playernum], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	}
-}
-
-void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 
 	extern int R_SetSky(char *skyname);
@@ -300,16 +116,19 @@ void R_NewMap (qbool vid_restart) {
 	lightmode = gl_lightmode.integer ? 2 : 0;
 
 	if (!vid_restart) {
-		for (i = 0; i < 256; i++)
-			d_lightstylevalue[i] = 264;		// normal light value
+		for (i = 0; i < 256; i++) {
+			// normal light value
+			d_lightstylevalue[i] = 264;
+		}
     
 		memset (&r_worldentity, 0, sizeof(r_worldentity));
 		r_worldentity.model = cl.worldmodel;
     
 		// clear out efrags in case the level hasn't been reloaded
 		// FIXME: is this one short?
-		for (i = 0; i < cl.worldmodel->numleafs; i++)
+		for (i = 0; i < cl.worldmodel->numleafs; i++) {
 			cl.worldmodel->leafs[i].efrags = NULL;
+		}
 
 		r_viewleaf = NULL;
 		R_ClearParticles ();

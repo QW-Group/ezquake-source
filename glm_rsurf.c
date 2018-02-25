@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
+#include "glm_brushmodel.h"
 
 static void GL_SortDrawCalls(int* split);
 
@@ -35,7 +36,14 @@ extern buffer_ref brushModel_vbo;
 extern GLuint* modelIndexes;
 extern GLuint modelIndexMaximum;
 
+typedef struct glm_worldmodel_batch_s {
+	glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
+	int matrix_count;
+} glm_worldmodel_batch_t;
+
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
+static int matrix_count;
+
 static GLuint index_count;
 
 static glm_program_t drawworld;
@@ -43,7 +51,6 @@ static GLint drawWorld_outlines;
 static GLuint drawworld_WorldCvars_block;
 
 static int batch_count;
-static int matrix_count;
 static buffer_ref vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES       1
@@ -60,8 +67,6 @@ static buffer_ref vbo_worldIndirectDraw;
 static buffer_ref ubo_worldcvars;
 static uniform_block_world_t world;
 
-#define MAXIMUM_MATERIAL_SAMPLERS 32  // Can be fewer in practise, based on drive limit
-#define MAX_STANDARD_TEXTURES 5 // Update this if adding more.  currently lm+detail+caustics+2*skydome=5
 static int material_samplers_max;
 static int material_samplers;
 static texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
@@ -74,9 +79,16 @@ static int TEXTURE_UNIT_SKYDOME_TEXTURE;
 static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
-static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textures, qbool luma_textures, qbool skybox)
+static void Compile_DrawWorldProgram(void)
 {
+	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
+
+	qbool detail_textures = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
+	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool luma_textures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
+	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
+
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
@@ -174,35 +186,25 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 static void GL_StartWorldBatch(void)
 {
 	extern glm_vao_t brushModel_vao;
-	extern cvar_t gl_lumaTextures;
-	extern cvar_t gl_lumaTextures;
-
-	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
-	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
-	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
-
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
-
-	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
-	qbool skydome = !(r_skyboxloaded || r_fastsky.integer);
 
 	GL_UseProgram(drawworld.program);
 	GL_BindVertexArray(&brushModel_vao);
 
-	// Bind standard textures (warning: these must be in the same order)
+	// Bind standard textures
 	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();
-	if (draw_detail_texture) {
+	if (drawworld.custom_options & DRAW_DETAIL_TEXTURES) {
 		std_textures[TEXTURE_UNIT_DETAIL] = detailtexture;
 	}
-	if (draw_caustics) {
+	if (drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) {
 		std_textures[TEXTURE_UNIT_CAUSTICS] = underwatertexture;
 	}
-	if (skybox) {
+	if (drawworld.custom_options & DRAW_SKYBOX) {
 		extern texture_ref skybox_cubeMap;
 
 		std_textures[TEXTURE_UNIT_SKYBOX] = skybox_cubeMap;
 	}
-	else if (skydome) {
+	else if (drawworld.custom_options & DRAW_SKYDOME) {
 		extern texture_ref solidskytexture, alphaskytexture;
 
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
@@ -213,27 +215,11 @@ static void GL_StartWorldBatch(void)
 
 void GLM_EnterBatchedWorldRegion(void)
 {
-	extern glm_vao_t brushModel_vao;
-	extern cvar_t gl_lumaTextures;
-	extern cvar_t gl_lumaTextures;
-
-	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
-	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
-	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
-
-	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
-
-	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
+	Compile_DrawWorldProgram();
 
 	material_samplers = 0;
 	sampler_mappings = 0;
-}
-
-void GLM_ExitBatchedPolyRegion(void)
-{
-	//uniforms_set = false;
-
-	//Cvar_SetValue(&developer, 0);
+	matrix_count = 0;
 }
 
 // Matrices often duplicated (camera position, entity position) so shared over draw calls
@@ -588,8 +574,74 @@ void GL_FlushWorldModelBatch(void)
 	sampler_mappings = 0;
 }
 
-void GLM_NewMap(void)
+void GL_DrawWorldModelBatches(void)
 {
+	extern buffer_ref vbo_brushElements;
+	extern glm_vao_t brushModel_vao;
+
+	int polygonOffsetStart = 0;
+
+	if (!batch_count) {
+		return;
+	}
+
+	GL_SortDrawCalls(&polygonOffsetStart);
+
+	GL_StartWorldBatch();
+	GL_UseProgram(drawworld.program);
+	GL_BindVertexArray(&brushModel_vao);
+	GL_UpdateBuffer(ubo_worldcvars, sizeof(world), &world);
+	GL_BindAndUpdateBuffer(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_BindAndUpdateBuffer(vbo_worldIndirectDraw, sizeof(worldmodel_requests[0]) * batch_count, &worldmodel_requests);
+
+	// Bind texture units
+	GL_BindTextures(TEXTURE_UNIT_MATERIAL, material_samplers, allocated_samplers);
+
+	if (polygonOffsetStart >= 0 && polygonOffsetStart < batch_count) {
+		if (polygonOffsetStart) {
+			GL_MultiDrawElementsIndirect(
+				GL_TRIANGLE_STRIP,
+				GL_UNSIGNED_INT,
+				(void*)0,
+				polygonOffsetStart,
+				sizeof(worldmodel_requests[0])
+			);
+		}
+
+		GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+		GL_MultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)(sizeof(worldmodel_requests[0]) * polygonOffsetStart),
+			batch_count - polygonOffsetStart,
+			sizeof(worldmodel_requests[0])
+		);
+		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+
+		frameStats.draw_calls += 2;
+	}
+	else {
+		GL_MultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)0,
+			batch_count,
+			sizeof(worldmodel_requests[0])
+		);
+
+		frameStats.draw_calls++;
+	}
+
+	if (R_DrawWorldOutlines()) {
+		GLM_DrawWorldModelOutlines();
+	}
+
+	frameStats.subdraw_calls += batch_count;
+	batch_count = 0;
+	index_count = 0;
+	matrix_count = 0;
+	material_samplers = 0;
+	sampler_mappings = 0;
 }
 
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
