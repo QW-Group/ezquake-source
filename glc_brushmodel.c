@@ -40,12 +40,17 @@ void GLC_RenderLumas(void);
 
 static void GLC_DrawFlat(model_t *model)
 {
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+	int index_count = 0;
+
 	msurface_t *s;
 	int waterline, k;
 	float *v;
 	byte w[3], f[3], sky[3];
 	int lastType = -1;
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
+	int last_lightmap = -1;
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;
@@ -64,27 +69,53 @@ static void GLC_DrawFlat(model_t *model)
 
 		for (; s; s = s->drawflatchain) {
 			if (s->flags & SURF_DRAWSKY) {
-				GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				if (lastType != 2) {
+					if (index_count) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						GL_LogAPICall("glDrawElements(switch to sky surfaces)");
+					}
+					index_count = 0;
 					glColor3ubv(sky);
 					lastType = 2;
 				}
+				GLC_EnsureTMUDisabled(GL_TEXTURE0);
 			}
 			else if (s->flags & SURF_DRAWTURB) {
+				if (index_count) {
+					glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					GL_LogAPICall("glDrawElements(turb surfaces)");
+				}
+				index_count = 0;
 				GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				glColor3ubv(SurfaceFlatTurbColor(s->texinfo->texture));
 				lastType = -1;
 			}
 			else {
-				GLC_SetTextureLightmap(GL_TEXTURE0, s->lightmaptexturenum);
+				if (last_lightmap != s->lightmaptexturenum) {
+					if (index_count) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						GL_LogAPICall("glDrawElements(lightmap switch)");
+					}
+					index_count = 0;
+				}
+				GLC_SetTextureLightmap(GL_TEXTURE0, last_lightmap = s->lightmaptexturenum);
 				GLC_EnsureTMUEnabled(GL_TEXTURE0);
 				if (s->flags & SURF_DRAWFLAT_FLOOR) {
 					if (lastType != 0) {
+						if (index_count) {
+							glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+							GL_LogAPICall("glDrawElements(switch to floor)");
+						}
+						index_count = 0;
 						glColor3ubv(f);
 						lastType = 0;
 					}
 				}
 				else if (lastType != 1) {
+					if (index_count) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					}
+					index_count = 0;
 					glColor3ubv(w);
 					lastType = 1;
 				}
@@ -95,12 +126,29 @@ static void GLC_DrawFlat(model_t *model)
 				for (p = s->polys; p; p = p->next) {
 					v = p->verts[0];
 
-					glBegin(GL_POLYGON);
-					for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
-						glTexCoord2f(v[5], v[6]);
-						glVertex3fv(v);
+					if (GL_BuffersSupported()) {
+						if (index_count + 1 + p->numverts > modelIndexMaximum) {
+							glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+							GL_LogAPICall("glDrawElements(index buffer full)");
+							index_count = 0;
+						}
+
+						if (index_count) {
+							modelIndexes[index_count++] = ~(GLuint)0;
+						}
+
+						for (k = 0; k < p->numverts; ++k) {
+							modelIndexes[index_count++] = p->vbo_start + k;
+						}
 					}
-					glEnd();
+					else {
+						glBegin(GL_POLYGON);
+						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
+							glTexCoord2f(v[5], v[6]);
+							glVertex3fv(v);
+						}
+						glEnd();
+					}
 				}
 			}
 
@@ -111,6 +159,11 @@ static void GLC_DrawFlat(model_t *model)
 			}
 			// } END shaman FIX /r_drawflat + /gl_caustics
 		}
+	}
+
+	if (index_count) {
+		glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		GL_LogAPICall("glDrawElements(flush)");
 	}
 
 	GLC_StateEndDrawFlatModel();
@@ -124,6 +177,10 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 {
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
+	extern buffer_ref brushModel_vbo;
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+	int index_count = 0;
 
 	texture_ref fb_texturenum = null_texture_reference;
 	int waterline, i, k;
@@ -133,6 +190,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool draw_details = GL_TextureReferenceIsValid(detailtexture) && gl_detail.value;
 	qbool isLumaTexture;
+	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
@@ -142,6 +200,11 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	GLenum lightmapTextureUnit = 0;
 	GLenum fullbrightTextureUnit = 0;
 	GLenum fullbrightMode;
+
+	qbool texture_change;
+	texture_ref current_material = null_texture_reference;
+	texture_ref current_material_fb = null_texture_reference;
+	int current_lightmap = -1;
 
 	// if (!gl_fb_bmodels)
 	//   (material + fullbright) * lightmap
@@ -170,7 +233,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		}
 	}
 
-	GLC_StateBeginDrawTextureChains(lightmapTextureUnit, fullbrightTextureUnit, fullbrightMode);
+	GLC_StateBeginDrawTextureChains(model, lightmapTextureUnit, fullbrightTextureUnit, fullbrightMode);
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
@@ -192,8 +255,15 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		}
 
 		//bind the world texture
-		GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
+		texture_change = !GL_TextureReferenceEqual(t->gl_texturenum, current_material);
+		texture_change |= !GL_TextureReferenceEqual(t->fb_texturenum, current_material_fb);
+		if (index_count && texture_change) {
+			glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			GL_LogAPICall("glDrawElements(lightmap switch)");
+			index_count = 0;
+		}
 
+		GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
 		if (GL_TextureReferenceIsValid(fb_texturenum)) {
 			GLC_EnsureTMUEnabled(fullbrightTextureUnit);
 			GL_EnsureTextureUnitBound(fullbrightTextureUnit, fb_texturenum);
@@ -202,6 +272,9 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			GLC_EnsureTMUDisabled(fullbrightTextureUnit);
 		}
 
+		current_material = t->gl_texturenum;
+		current_material_fb = t->fb_texturenum;
+
 		for (waterline = 0; waterline < 2; waterline++) {
 			if (!(s = model->textures[i]->texturechain[waterline])) {
 				continue;
@@ -209,39 +282,61 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 
 			for (; s; s = s->texturechain) {
 				if (lightmapTextureUnit) {
-					GLC_SetTextureLightmap(lightmapTextureUnit, s->lightmaptexturenum);
+					if (index_count && s->lightmaptexturenum != current_lightmap) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						GL_LogAPICall("glDrawElements(lightmap switch)");
+						index_count = 0;
+					}
+					GLC_SetTextureLightmap(lightmapTextureUnit, current_lightmap = s->lightmaptexturenum);
 				}
 				else {
 					GLC_AddToLightmapChain(s);
 				}
 
-				glBegin(GL_POLYGON);
-				v = s->polys->verts[0];
+				if (use_vbo) {
+					if (index_count + 1 + s->polys->numverts > modelIndexMaximum) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						GL_LogAPICall("glDrawElements(index buffer full)");
+						index_count = 0;
+					}
 
-				if (!s->texinfo->flags & TEX_SPECIAL) {
-					for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-						//Tei: textureless for the world brush models (Qrack)
-						float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
-						float tex_t = gl_textureless.value && model->isworldmodel ? 0 : v[4];
+					if (index_count) {
+						modelIndexes[index_count++] = ~(GLuint)0;
+					}
 
-						if (lightmapTextureUnit || fullbrightTextureUnit) {
-							qglMultiTexCoord2f(materialTextureUnit, tex_s, tex_t);
-
-							if (lightmapTextureUnit) {
-								qglMultiTexCoord2f(lightmapTextureUnit, v[5], v[6]);
-							}
-
-							if (fullbrightTextureUnit) {
-								qglMultiTexCoord2f(fullbrightTextureUnit, tex_s, tex_t);
-							}
-						}
-						else {
-							glTexCoord2f(tex_s, tex_t);
-						}
-						glVertex3fv(v);
+					for (k = 0; k < s->polys->numverts; ++k) {
+						modelIndexes[index_count++] = s->polys->vbo_start + k;
 					}
 				}
-				glEnd();
+				else {
+					glBegin(GL_POLYGON);
+					v = s->polys->verts[0];
+
+					if (!s->texinfo->flags & TEX_SPECIAL) {
+						for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+							//Tei: textureless for the world brush models (Qrack)
+							float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
+							float tex_t = gl_textureless.value && model->isworldmodel ? 0 : v[4];
+
+							if (lightmapTextureUnit || fullbrightTextureUnit) {
+								qglMultiTexCoord2f(materialTextureUnit, tex_s, tex_t);
+
+								if (lightmapTextureUnit) {
+									qglMultiTexCoord2f(lightmapTextureUnit, v[5], v[6]);
+								}
+
+								if (fullbrightTextureUnit) {
+									qglMultiTexCoord2f(fullbrightTextureUnit, tex_s, tex_t);
+								}
+							}
+							else {
+								glTexCoord2f(tex_s, tex_t);
+							}
+							glVertex3fv(v);
+						}
+					}
+					glEnd();
+				}
 
 				if (draw_caustics && (waterline || caustics)) {
 					s->polys->caustics_chain = caustics_polys;
@@ -267,6 +362,11 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 				}
 			}
 		}
+	}
+
+	if (index_count) {
+		glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		GL_LogAPICall("glDrawElements(flush)");
 	}
 
 	if (gl_fb_bmodels.value) {

@@ -35,6 +35,18 @@ void GLC_StateBeginDrawFlatModel(void)
 	}
 	// } END shaman BUG /fog not working with /r_drawflat
 
+	if (GL_BuffersSupported()) {
+		extern buffer_ref brushModel_vbo;
+
+		GL_BindBuffer(brushModel_vbo);
+		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
 	LEAVE_STATE;
 }
 
@@ -51,8 +63,10 @@ void GLC_StateEndDrawFlatModel(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
+void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
 {
+	extern glm_vao_t brushModel_vao;
+
 	ENTER_STATE;
 
 	if (gl_fogenable.integer) {
@@ -70,6 +84,30 @@ void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrig
 		GL_TextureEnvModeForUnit(fullbrightTextureUnit, fullbrightMode);
 	}
 
+	if (GL_BuffersSupported()) {
+		extern buffer_ref brushModel_vbo;
+
+		GL_BindBuffer(brushModel_vbo);
+		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		if (lightmapTextureUnit) {
+			qglClientActiveTexture(lightmapTextureUnit);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+
+		if (fullbrightTextureUnit) {
+			qglClientActiveTexture(fullbrightTextureUnit);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+	}
+
 	LEAVE_STATE;
 }
 
@@ -80,6 +118,7 @@ void GLC_StateEndDrawTextureChains(void)
 	if (gl_fogenable.integer) {
 		glDisable(GL_FOG);
 	}
+	GL_BindVertexArray(NULL);
 
 	LEAVE_STATE;
 }

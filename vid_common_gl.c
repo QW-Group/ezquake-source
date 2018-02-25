@@ -89,6 +89,7 @@ qbool gl_mtexable = false;
 int gl_textureunits = 1;
 lpMTexFUNC qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
+PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture = NULL;
 
 qbool gl_combine = false;
 
@@ -219,7 +220,8 @@ static void CheckMultiTextureExtensions(void)
 		}
 		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
 		qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
-		if (!qglMultiTexCoord2f || !qglActiveTexture) {
+		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
+		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
 			return;
 		}
 		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
@@ -302,7 +304,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
-			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsBaseVertex);
 
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
@@ -335,6 +336,7 @@ static void CheckShaderExtensions(void)
 		}
 	}
 #endif
+	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
 	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
 

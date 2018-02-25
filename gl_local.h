@@ -366,6 +366,7 @@ typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
 
 extern lpMTexFUNC qglMultiTexCoord2f;
 extern lpSelTexFUNC qglActiveTexture;
+extern PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture;
 
 extern double gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
@@ -670,7 +671,7 @@ void GL_PushMatrix(GLenum mode, float* matrix);
 
 void GLM_DebugMatrix(GLenum type, const char* value);
 
-int GL_PopulateVBOForBrushModel(model_t* m, vbo_world_vert_t* vbo_buffer, int vbo_pos);
+int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos);
 int GL_MeasureVBOSizeForBrushModel(model_t* m);
 void GL_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO);
 void GL_CreateBrushModelVAO(buffer_ref instance_vbo);

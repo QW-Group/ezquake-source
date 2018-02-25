@@ -116,7 +116,7 @@ typedef struct vbo_world_vert_s {
 	vec3_t position;
 
 	float material_coords[2];
-	unsigned short lightmap_coords[2];
+	short lightmap_coords[2];
 	float detail_coords[2];
 
 	// Index to lightmap texture array.  -1 for turb surfaces (no lightmap)
@@ -130,6 +130,16 @@ typedef struct vbo_world_vert_s {
 	byte flags;
 	byte flatcolor[3];
 } vbo_world_vert_t;
+
+typedef struct glc_vbo_world_vert_s {
+	vec3_t position;
+
+	float material_coords[2];
+	float lightmap_coords[2];
+	float detail_coords[2];
+
+	float padding[2];
+} glc_vbo_world_vert_t;
 
 // GLC only...
 #define VERTEXSIZE 9  //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 

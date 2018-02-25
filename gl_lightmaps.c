@@ -387,12 +387,17 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
-static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min_changed, unsigned int* max_changed)
+static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, unsigned int* min_changed, unsigned int* max_changed)
 {
 	int k;
 	extern cvar_t r_turbalpha;
+	msurface_t* s;
 
-	while (s) {
+	if (!surface) {
+		return;
+	}
+
+	for (s = surface; s; s = s->texturechain) {
 		k = s->lightmaptexturenum;
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
@@ -402,31 +407,34 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t *s, unsigned int* min
 				*max_changed = max(k, *max_changed);
 			}
 		}
+	}
 
-		s = s->texturechain;
+	for (s = surface->drawflatchain; s; s = s->drawflatchain) {
+		k = s->lightmaptexturenum;
+
+		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
+			R_RenderDynamicLightmaps(s);
+			if (lightmaps[k].modified) {
+				*min_changed = min(k, *min_changed);
+				*max_changed = max(k, *max_changed);
+			}
+		}
 	}
 }
 
 void R_RenderAllDynamicLightmaps(model_t *model)
 {
-	msurface_t *s;
-	unsigned int waterline;
 	unsigned int i;
 	unsigned int min_changed = lightmap_array_size;
 	unsigned int max_changed = 0;
 
 	for (i = 0; i < model->numtextures; i++) {
-		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
+		if (!model->textures[i]) {
 			continue;
 		}
 
-		for (waterline = 0; waterline < 2; waterline++) {
-			if (!(s = model->textures[i]->texturechain[waterline])) {
-				continue;
-			}
-
-			R_RenderAllDynamicLightmapsForChain(s, &min_changed, &max_changed);
-		}
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0], &min_changed, &max_changed);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1], &min_changed, &max_changed);
 	}
 
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], &min_changed, &max_changed);
