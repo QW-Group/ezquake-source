@@ -187,6 +187,7 @@ cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 cvar_t gl_meshdraw                         = {"gl_meshdraw", "1"};
+cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0"};
 cvar_t gl_postprocess_gamma                = {"gl_postprocess_gamma", "0", CVAR_RECOMPILE_PROGS};
 
 static cvar_t r_lightmap                   = {"r_lightmap", "0"};
@@ -877,6 +878,8 @@ void R_Init(void)
 	Cvar_Register(&gl_outline_width);
 	Cvar_Register(&gl_meshdraw);
 	Cvar_Register(&gl_postprocess_gamma);
+
+	Cvar_Register(&gl_vbo_clientmemory);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&r_speeds);

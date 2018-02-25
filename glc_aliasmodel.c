@@ -63,9 +63,9 @@ typedef struct glc_aliasmodel_vert_s {
 	float position[3];
 	float texture_coords[2];
 	byte color[4];
-	float padding[2];
 } glc_aliasmodel_vert_t;
 static glc_aliasmodel_vert_t* temp_aliasmodel_buffer;
+static buffer_ref aliasmodel_pose_vbo;
 static int temp_aliasmodel_buffer_size;
 
 void GLC_AllocateAliasPoseBuffer(void)
@@ -101,6 +101,8 @@ void GLC_AllocateAliasPoseBuffer(void)
 		Q_free(temp_aliasmodel_buffer);
 		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
 		temp_aliasmodel_buffer_size = max_verts;
+
+		aliasmodel_pose_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, GL_STREAM_DRAW);
 	}
 }
 
@@ -134,6 +136,40 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	verts2 += pose2 * paliashdr->poseverts;
 
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
+
+	if (cache) {
+		extern cvar_t gl_vbo_clientmemory;
+
+		if (gl_vbo_clientmemory.integer) {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
+			qglClientActiveTexture(GL_TEXTURE0);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
+			if (mtex) {
+				qglClientActiveTexture(GL_TEXTURE1);
+				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
+			}
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color);
+		}
+		else {
+			GL_BindBuffer(aliasmodel_pose_vbo);
+			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
+			qglClientActiveTexture(GL_TEXTURE0);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
+			if (mtex) {
+				qglClientActiveTexture(GL_TEXTURE1);
+				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
+			}
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, color));
+		}
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		qglClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+	}
 
 	for (; ; ) {
 		count = *order++;
@@ -242,21 +278,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		} while (--count);
 
 		if (cache) {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
-
-			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
-			glEnableClientState(GL_VERTEX_ARRAY);
-			qglClientActiveTexture(GL_TEXTURE0);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			if (mtex) {
-				qglClientActiveTexture(GL_TEXTURE1);
-				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			}
-			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color);
-			glEnableClientState(GL_COLOR_ARRAY);
-
+			GL_UpdateBuffer(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
 			GL_DrawArrays(primitive, 0, position);
 		}
 		else {

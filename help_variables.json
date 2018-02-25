@@ -3450,6 +3450,12 @@
       "remarks": "Enabled only for viewing demos and observing games.",
       "type": "float"
     },
+    "gl_vbo_clientmemory": {
+      "group-id": "35",
+      "desc": "Use client memory when rendering dynamic geometry.",
+      "remarks": "No effect unless using compatibility mode.",
+      "type": "boolean"
+    },
     "gl_weather_rain": {
       "group-id": "51",
       "desc": "Turns on rain out of doors, the density of rain is equal to whatever gl_weather_rain is set to.\nIf you set gl_weather_rain_fast to 1, you can turn off all splashes, if you set it to 2, you will turn off only the water splashes.\nWorks on all non-iD maps except death32c, dakyne and some others.",
