@@ -6,6 +6,7 @@
 #include "gl_aliasmodel.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
+#include "rulesets.h"
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -284,14 +285,13 @@ static void GLM_QueueAliasModelDraw(
 	float lerpFraction, int lerpFrameVertOffset, qbool outline, int render_effects
 )
 {
-	qbool texture_model = GL_TextureReferenceIsValid(texture);
 	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
 	qbool shell = false;
 
 	if (shell_effects && GL_TextureReferenceIsValid(shelltexture)) {
 		// always allow powerupshells for specs or demos.
 		// do not allow powerupshells for eyes in other cases
-		shell = (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES));
+		shell = Ruleset_AllowPowerupShell(model);
 	}
 
 	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
@@ -424,7 +424,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
 	GLint mode = EZQ_ALIAS_MODE_NORMAL;
 	unsigned int extra_offset = 0;
-	int batch = 0;
 	int i;
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {

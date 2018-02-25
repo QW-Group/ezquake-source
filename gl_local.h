@@ -261,7 +261,6 @@ void GL_BuildSkySurfacePolys (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa, qbool mtex);
-void CalcCausticTexCoords(float *v, float *s, float *t);
 void EmitCausticsPolys (void);
 void R_DrawSky (void);
 void R_LoadSky_f(void);
@@ -1041,6 +1040,8 @@ typedef struct glm_worldmodel_req_s {
 	model_t* model;
 } glm_worldmodel_req_t;
 
+struct custom_model_color_s;
+
 void GL_StateBeginAliasOutlineFrame(void);
 void GL_StateEndAliasOutlineFrame(void);
 
@@ -1148,6 +1149,8 @@ void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref te
 void GLC_PauseMatrixUpdate(void);
 void GLC_ResumeMatrixUpdate(void);
 void GLC_LoadMatrix(GLenum matrix);
+void GLC_AllocateAliasPoseBuffer(void);
+void R_SetupFrame(void);
 
 void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);

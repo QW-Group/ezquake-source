@@ -624,7 +624,6 @@ texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *
 	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
 	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, mode, crc, &new_texture);
-	texture_ref ref = { 0 };
 
 	if (glt && !new_texture) {
 		return glt->reference;
@@ -1123,7 +1122,6 @@ void GL_Texture_Init(void)
 // We could flag the textures as they're created and then move all 2d>3d to this module?
 texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
 {
-	unsigned short crc = 0;
 	qbool new_texture = false;
 	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	texture_ref gl_texturenum;
@@ -1150,7 +1148,6 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	GL_ProcessErrors("Prior-texture-array-creation");
 	while (*depth >= minimum_depth) {
 		GLenum error;
-		int array_width, array_height, array_depth;
 
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
 		GL_TexStorage3D(GL_TEXTURE0, slot->reference, max_miplevels, GL_RGBA8, width, height, *depth);
@@ -1162,12 +1159,15 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
+#ifdef GL_PARANOIA
+			int array_width, array_height, array_depth;
 			array_width = GL_TextureWidth(slot->reference);
 			array_height = GL_TextureHeight(slot->reference);
 			array_depth = GL_TextureDepth(slot->reference);
 
 			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+#endif
 			gl_texturenum = invalid_texture_reference;
 		}
 		else {

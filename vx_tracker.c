@@ -955,13 +955,11 @@ void VX_TrackerInit(void)
 
 						// We got potential image name, treat image as two printable characters.
 						if (to - from < sizeof(imagename)) {
-							mpic_t* pic;
-
 							strncpy(imagename, start + from, to - from);
 							imagename[to - from] = '\0';
 
 							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", imagename);
-							pic = Draw_CachePicSafe(fullpath, false, true);
+							Draw_CachePicSafe(fullpath, false, true);
 						}
 					}
 

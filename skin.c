@@ -620,7 +620,6 @@ void R_TranslatePlayerSkin(int playernum)
 	unsigned pixels[512 * 256];
 	extern byte player_8bit_texels[256 * 256];
 	extern cvar_t gl_scaleModelTextures;
-	skin_texture_t skin_type = skin_base;
 	player_info_t *player;
 	qbool teammate = false;
 

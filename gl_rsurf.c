@@ -552,7 +552,6 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 {
 	int k;
 	msurface_t *s;
-	texture_t *t;
 	float *v;
 
 	if (!alphachain) {
@@ -561,7 +560,6 @@ void R_DrawAlphaChain(msurface_t* alphachain)
 
 	GLC_StateBeginAlphaChain();
 	for (s = alphachain; s; s = s->texturechain) {
-		t = s->texinfo->texture;
 		R_RenderDynamicLightmaps(s);
 
 		GLC_StateBeginAlphaChainSurface(s);

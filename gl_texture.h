@@ -75,9 +75,7 @@ qbool GL_TextureValid(texture_ref ref);
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel, gl_mipmap_viewmodels;
-extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 extern cvar_t gl_no24bit;
-extern cvar_t gl_wicked_luma_level;
 
 GLint GL_TextureWidth(texture_ref ref);
 GLint GL_TextureHeight(texture_ref ref);

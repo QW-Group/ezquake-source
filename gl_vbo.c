@@ -41,13 +41,14 @@ static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
 	case mod_brush:
 		// These are in different format/vbo at the moment
 		break;
+	case mod_unknown:
+		// Keep compiler happy
+		break;
 	}
 }
 
 static void GL_ImportModelToVBO(model_t* mod, int* new_vbo_position)
 {
-	int count = 0;
-
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
@@ -136,7 +137,9 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	}
 
 	aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
-	aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
+	if (GL_ShadersSupported()) {
+		aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
+	}
 
 	// VBO starts with simple-model/sprite vertices
 	GL_ImportSpriteCoordsToVBO(&new_vbo_position);
@@ -161,6 +164,10 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	instance_vbo = GL_CreateInstanceVBO();
 	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
 	GL_CreateBrushModelVAO(instance_vbo);
-	GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
-	GLC_AllocateAliasPoseBuffer();
+	if (GL_ShadersSupported()) {
+		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+	}
+	else {
+		GLC_AllocateAliasPoseBuffer();
+	}
 }

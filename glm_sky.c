@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_sky.h"
 
+texture_ref skybox_cubeMap;
+
+#if 0
 static void GLM_DrawSkyDome(void);
 static void GLM_DrawSkyBox(void);
 
@@ -72,7 +75,6 @@ static glm_vao_t skyDome_vao;
 static glm_vao_t skyBox_vao;
 static buffer_ref ubo_skydomeData;
 static buffer_ref ubo_skyboxData;
-texture_ref skybox_cubeMap;
 
 void GLM_DrawSkyChain(void)
 {
@@ -128,7 +130,6 @@ static qbool BuildSkyDomeProgram(void)
 	return false;
 }
 
-#if 0
 static qbool BuildSkyBoxProgram(void)
 {
 	static glm_program_t skyBox;

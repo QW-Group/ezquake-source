@@ -37,10 +37,8 @@ extern GLuint modelIndexMaximum;
 
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 static GLuint index_count;
-static qbool uniforms_set = false;
 static glm_program_t drawworld;
 static GLint drawWorld_outlines;
-static GLuint drawworld_RefdefCvars_block;
 static GLuint drawworld_WorldCvars_block;
 
 static int batch_count = 0;
@@ -181,7 +179,6 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 void GLM_EnterBatchedWorldRegion(void)
 {
 	extern glm_vao_t brushModel_vao;
-	extern buffer_ref vbo_brushElements;
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_lumaTextures;
 
@@ -190,7 +187,6 @@ void GLM_EnterBatchedWorldRegion(void)
 	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
-	int std_count = 0;
 
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !(r_skyboxloaded || r_fastsky.integer);
@@ -290,7 +286,6 @@ static qbool GLM_AssignTexture(glm_worldmodel_req_t* req, int texture_num, textu
 static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool allow_duplicate)
 {
 	glm_worldmodel_req_t* req;
-	int sampler = -1;
 	int matrixMapping = FindMatrix();
 	qbool worldmodel = model ? model->isworldmodel : false;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
@@ -499,7 +494,6 @@ void GLM_DrawTexturedWorld(model_t* model)
 
 static void GLM_DrawWorldModelOutlines(void)
 {
-	extern cvar_t gl_outline_width;
 	int begin = -1;
 	int i;
 
@@ -608,7 +602,6 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 {
 	int i, waterline, v;
 	msurface_t* surf;
-	float base_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glm_worldmodel_req_t* req = NULL;
 
 	req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics, true);
@@ -693,8 +686,6 @@ static void GL_SortDrawCalls(int* split)
 {
 	int i;
 	int back;
-	int index = 0;
-	int overall_index_count = index_count;
 
 	*split = batch_count;
 	if (batch_count == 0) {

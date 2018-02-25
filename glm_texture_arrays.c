@@ -14,6 +14,7 @@
 #endif
 #include "glm_texture_arrays.h"
 
+static const texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT];
 static texture_flag_t texture_flags[MAX_GLTEXTURES];
 static int flagged_type = 0;
 
@@ -70,7 +71,6 @@ static int SortTexturesByReference(const void* lhs_, const void* rhs_)
 
 static int SortTexturesByArrayReference(const void* lhs_, const void* rhs_)
 {
-	static texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT] = { { 0 } };
 	texture_flag_t* tex1 = (texture_flag_t*)lhs_;
 	texture_flag_t* tex2 = (texture_flag_t*)rhs_;
 
@@ -91,7 +91,6 @@ static void GL_DeleteExistingTextureArrays(qbool delete_textures)
 	int i;
 
 	if (delete_textures) {
-		static texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT] = { { 0 } };
 		int j;
 
 		for (i = 0; i < MAX_GLTEXTURES; ++i) {
@@ -118,6 +117,7 @@ static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 static GLubyte* tempTextureBuffer;
 static GLuint tempTextureBufferSize;
 
+/*
 static qbool AliasModelIsAnySize(model_t* mod)
 {
 	// Technically every alias model is any size?
@@ -134,6 +134,7 @@ static qbool BrushModelIsAnySize(model_t* mod)
 
 	return false;
 }
+*/
 
 void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2dname, qbool tile)
 {
@@ -178,15 +179,6 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 #endif
 		}
 	}
-}
-
-// FIXME: Rename to signify that it is a single array for whole model
-static void GL_SetModelTextureArray(model_t* mod, texture_ref array_num, float widthRatio, float heightRatio)
-{
-	mod->texture_array_count = 1;
-	mod->texture_arrays[0] = array_num;
-	mod->texture_arrays_scale_s[0] = widthRatio;
-	mod->texture_arrays_scale_t[0] = heightRatio;
 }
 
 static void GL_FlagTexturesForModel(model_t* mod)
@@ -255,6 +247,9 @@ static void GL_FlagTexturesForModel(model_t* mod)
 			}
 			break;
 		}
+	case mod_unknown:
+		// Keep compiler happy
+		break;
 	}
 }
 
@@ -348,7 +343,6 @@ static void GLM_SetTextureArrays(model_t* mod)
 
 static void GL_ImportTexturesForModel(model_t* mod)
 {
-	int count = 0;
 	int j;
 
 	for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
@@ -364,7 +358,6 @@ static void GL_ImportTexturesForModel(model_t* mod)
 
 	if (mod->type == mod_sprite) {
 		msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
-		int count = 0;
 
 		for (j = 0; j < psprite->numframes; ++j) {
 			int offset    = psprite->frames[j].offset;
@@ -461,7 +454,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortFlaggedTextures);
 
 		for (i = 0; i < MAX_GLTEXTURES; ++i) {
-			int base = i;
 			int same_size = 0;
 			int width, height;
 			int j;

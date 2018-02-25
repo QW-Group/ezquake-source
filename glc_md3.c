@@ -33,7 +33,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	extern byte	*shadedots;
 	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
 	extern float shadelight, ambientlight;
-	extern qbool full_light;
 	extern void R_AliasSetupLighting(entity_t *ent);
 
 	float lerpfrac, scale;

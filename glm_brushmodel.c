@@ -185,16 +185,12 @@ int GL_MeasureIndexSizeForBrushModel(model_t* m)
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 {
 	int i, j;
-	int combinations = 0;
-	int original_pos = vbo_pos;
 	CopyVertToBufferFunc_t addVertFunc = GL_ShadersSupported() ? CopyVertToBuffer : CopyVertToBufferClassic;
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
-		int lightmap = -1;
 		int length = 0;
 		int surface_count = 0;
-		int tex_vbo_start = vbo_pos;
 		qbool has_luma = false;
 
 		if (!m->textures[i]) {
@@ -238,79 +234,6 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 
 					if (start_vert < end_vert) {
 						vbo_pos = addVertFunc(m, vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
-						++output;
-					}
-
-					++start_vert;
-					--end_vert;
-				}
-
-				length += poly->numverts;
-				++surface_count;
-			}
-		}
-	}
-
-	return vbo_pos;
-}
-
-// Create VBO, ordering by texture array
-int GL_PopulateVBOForBrushModelClassic(model_t* m, void* vbo_buffer_, int vbo_pos)
-{
-	int i, j;
-	int combinations = 0;
-	int original_pos = vbo_pos;
-	glc_vbo_world_vert_t* vbo_buffer = (glc_vbo_world_vert_t*)vbo_buffer_;
-
-	// Order vertices in the VBO by texture & lightmap
-	for (i = 0; i < m->numtextures; ++i) {
-		int lightmap = -1;
-		int length = 0;
-		int surface_count = 0;
-		int tex_vbo_start = vbo_pos;
-		qbool has_luma = false;
-
-		if (!m->textures[i]) {
-			continue;
-		}
-
-		has_luma = GL_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
-		for (j = 0; j < m->numsurfaces; ++j) {
-			msurface_t* surf = m->surfaces + j;
-			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;
-			glpoly_t* poly;
-
-			if (surf->texinfo->miptex != i) {
-				continue;
-			}
-
-			// copy verts into buffer (alternate to turn fan into triangle strip)
-			for (poly = surf->polys; poly; poly = poly->next) {
-				int end_vert = 0;
-				int start_vert = 1;
-				int output = 0;
-				int material = i;
-				float scaleS = m->textures[i]->gl_texture_scaleS;
-				float scaleT = m->textures[i]->gl_texture_scaleT;
-
-				if (!poly->numverts) {
-					continue;
-				}
-
-				// Store position for drawing individual polys
-				poly->vbo_start = vbo_pos;
-				vbo_pos = CopyVertToBufferClassic(m, vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf, has_luma);
-				++output;
-
-				start_vert = 1;
-				end_vert = poly->numverts - 1;
-
-				while (start_vert <= end_vert) {
-					vbo_pos = CopyVertToBufferClassic(m, vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
-					++output;
-
-					if (start_vert < end_vert) {
-						vbo_pos = CopyVertToBufferClassic(m, vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
 						++output;
 					}
 

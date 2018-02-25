@@ -312,7 +312,6 @@ void CachePics_CreateAtlas(void)
 	cachepic_node_t* cur;
 	cachepic_node_t simple_items[MOD_NUMBER_HINTS * MAX_SIMPLE_TEXTURES];
 	int i, j;
-	int expected = 0, found = 0;
 	double start_time = Sys_DoubleTime();
 
 	// Delete old atlas textures
@@ -427,7 +426,7 @@ void CachePics_CreateAtlas(void)
 
 	DeleteOldTextures();
 
-	Con_Printf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
+	Con_DPrintf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
 
 	// Make sure we don't reference any old textures
 	GL_FlushImageDraw(false);

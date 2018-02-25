@@ -1014,15 +1014,14 @@ static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 static void QMB_UpdateParticles(void)
 {
 	int i;
-	float grav;
 	particle_type_t *pt;
 	particle_t *p, *kill;
 
-	if (!qmb_initialized)
+	if (!qmb_initialized) {
 		return;
+	}
 
 	particle_count = 0;
-	grav = movevars.gravity / 800.0;
 
 	//VULT PARTICLES
 	WeatherEffect();

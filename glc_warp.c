@@ -99,14 +99,10 @@ static void EmitFlatWaterPoly(msurface_t *fa)
 void GLC_EmitWaterPoly(msurface_t* fa)
 {
 	extern cvar_t r_fastturb;
-	float wateralpha = GL_WaterAlpha();
 
 	if (r_fastturb.integer) {
 		byte* col = SurfaceFlatTurbColor(fa->texinfo->texture);
-		byte color[4];
-
-		memcpy(color, col, 3);
-		color[3] = 255;
+		byte color[4] = { col[0], col[1], col[2], 255 };
 
 		GLC_StateBeginFastTurbPoly(color);
 

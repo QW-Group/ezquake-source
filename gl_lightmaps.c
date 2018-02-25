@@ -390,7 +390,6 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, unsigned int* min_changed, unsigned int* max_changed)
 {
 	int k;
-	extern cvar_t r_turbalpha;
 	msurface_t* s;
 
 	if (!surface) {

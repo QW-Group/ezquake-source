@@ -134,7 +134,6 @@ static int GLM_InsertDefinitions(
 	
 	if (break_point) {
 		int position = break_point - strings[0];
-		int rest_of_code_pos = definitions ? 3 : 2;
 
 		lengths[5] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
 		lengths[4] = definitions ? strlen(definitions) : 0;
@@ -162,7 +161,6 @@ static qbool GLM_CompileProgram(
 	GLuint fragment_shader = 0;
 	GLuint geometry_shader = 0;
 	GLuint shader_program = 0;
-	qbool custom_strings = false;
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;

@@ -44,13 +44,12 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
 
     static hud_t *hud = NULL;
     static cvar_t
-        *par_alpha, *par_full, *par_inframes, *par_maxping, *par_dropheight;
+        *par_alpha, *par_inframes, *par_maxping, *par_dropheight;
 
     if (hud == NULL)  // first time
     {
         hud = HUD_Find("netgraph");
         par_alpha      = HUD_FindVar(hud, "alpha");
-        par_full       = HUD_FindVar(hud, "full");
         par_inframes   = HUD_FindVar(hud, "inframes");
         par_maxping    = HUD_FindVar(hud, "scale");
         par_dropheight = HUD_FindVar(hud, "lostscale");

@@ -1992,7 +1992,6 @@ void SCR_HUD_DrawAmmo(
 	hud_t *hud, int num, float scale, int style, int digits, char *s_align
 )
 {
-	extern mpic_t *sb_ibar;
 	extern mpic_t sb_ib_ammo[4];
 	int value, num_old;
 	qbool low;
@@ -2059,7 +2058,6 @@ void SCR_HUD_DrawAmmo(
 		snprintf (buf, sizeof (buf), "%3i", value);
 		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && GL_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
 			Draw_SPic(x, y, &sb_ib_ammo[num - 1], scale);
-			//Draw_SSubPic(x, y, sb_ibar, 3 + ((num - 1) * 48), 0, 42, 11, scale);
 		}
 		if (buf[0] != ' ')  Draw_SCharacter (x +  7*scale, y, 18+buf[0]-'0', scale);
 		if (buf[1] != ' ')  Draw_SCharacter (x + 15*scale, y, 18+buf[1]-'0', scale);

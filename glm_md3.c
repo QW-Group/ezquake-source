@@ -38,7 +38,6 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 	md3model_t* md3Model = (md3model_t *)Mod_Extradata(model);
 	md3Header_t* pheader = MD3_HeaderForModel(md3Model);
-	surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
 	int vertsPerFrame = 0;
 
 	// Work out how many verts we are going to need to store in VBO
@@ -55,14 +54,12 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 
 		// loop through the surfaces.
 		MD3_ForEachSurface(pheader, surf, surfnum) {
-			int numVertices = surf->numTriangles * 3;
 			int i, triangle;
 
 			texCoords = MD3_SurfaceTextureCoords(surf);
 			vertices = MD3_SurfaceVertices(surf);
 
 			triangles = MD3_SurfaceTriangles(surf);
-			numVertices = surf->numTriangles * 3;
 
 			for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
 				for (i = 0; i < 3; ++i, ++v) {
@@ -89,12 +86,9 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models;
 	extern byte	*shadedots;
 	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
-	extern float shadelight, ambientlight;
-	extern qbool full_light;
 	extern void R_AliasSetupLighting(entity_t* ent);
 
 	float lerpfrac = 1;
-	float r_modelalpha;
 	float oldMatrix[16];
 
 	int frame1 = ent->oldframe, frame2 = ent->frame;

@@ -300,15 +300,13 @@ static qbool R_CanDrawModelShadow(entity_t* ent)
 
 void R_DrawAliasModel(entity_t *ent)
 {
-	int anim, skinnum, playernum = -1;
+	int anim, skinnum;
 	texture_ref texture, fb_texture;
 	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	maliasframedesc_t *oldframe, *frame;
-	cvar_t *cv = NULL;
 	byte *color32bit = NULL;
 	qbool outline = false;
 	float oldMatrix[16];
-	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
 	if (R_FilterEntity(ent)) {
 		return;
@@ -959,21 +957,21 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 
 static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
+	if (!Ruleset_AllowPowerupShell(ent->model)) {
+		return;
+	}
+
 	// FIXME: think need put it after caustics
-	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && bound(0, gl_powerupshells.value, 1) && GL_TextureReferenceIsValid(shelltexture)) {
+	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
 		model_t* clmodel = ent->model;
 
-		// always allow powerupshells for specs or demos.
-		// do not allow powerupshells for eyes in other cases
-		if ((cls.demoplayback || cl.spectator) || ent->model->modhint != MOD_EYES) {
-			if (GL_ShadersSupported()) {
-				GLM_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-			}
-			else {
-				GLC_StateBeginAliasPowerupShell();
-				GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-				GLC_StateEndAliasPowerupShell();
-			}
+		if (GL_ShadersSupported()) {
+			GLM_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
+		}
+		else {
+			GLC_StateBeginAliasPowerupShell();
+			GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
+			GLC_StateEndAliasPowerupShell();
 		}
 	}
 }
@@ -981,21 +979,13 @@ static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe
 void R_DrawAliasPowerupShell(entity_t *ent)
 {
 	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
-	model_t *clmodel;
 	maliasframedesc_t *oldframe, *frame;
-	cvar_t *cv = NULL;
-	byte *color32bit = NULL;
-	qbool outline = false;
 	float oldMatrix[16];
-	extern	cvar_t r_viewmodelsize, cl_drawgun;
-	qbool is_player_model = (ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
 
 	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
 	if (R_FilterEntity(ent)) {
 		return;
 	}
-
-	clmodel = ent->model;
 
 	ent->frame = bound(0, ent->frame, paliashdr->numframes - 1);
 	ent->oldframe = bound(0, ent->oldframe, paliashdr->numframes - 1);

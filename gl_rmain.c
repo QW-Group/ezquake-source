@@ -468,6 +468,9 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 			case mod_alias3:
 				R_DrawAlias3Model(currententity);
 				break;
+			case mod_unknown:
+				// keeps compiler happy
+				break;
 			}
 		}
 	}

@@ -240,11 +240,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		post_process_program.custom_options = options;
 	}
 
-	if (post_process_program.program && !post_process_program.uniforms_found) {
-		GLint common2d_block = glGetUniformBlockIndex(post_process_program.program, "Common2d");
-
-		post_process_program.uniforms_found = true;
-	}
+	post_process_program.uniforms_found = true;
 
 	if (!GL_BufferReferenceIsValid(post_process_vbo)) {
 		float verts[4][5] = { { 0 } };

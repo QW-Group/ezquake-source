@@ -189,11 +189,9 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 void CL_AddEntity(entity_t *ent)
 {
 	extern qbool R_CanDrawSimpleItem(entity_t* ent);
-	extern cvar_t gl_simpleitems;
 	visentlist_entrytype_t vistype;
 	modtype_t type = ent->model->type;
 	qbool shell = false;
-	qbool needs_alphablend = (ent->alpha != 0 && ent->alpha != 1);
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		vistype = visent_normal;
@@ -205,7 +203,6 @@ void CL_AddEntity(entity_t *ent)
 	else if (ent->model->type == mod_sprite || R_CanDrawSimpleItem(ent)) {
 		vistype = visent_alpha;
 		type = mod_sprite;
-		needs_alphablend = true;
 	}
 	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
 		vistype = visent_firstpass;

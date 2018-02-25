@@ -67,8 +67,6 @@ void GLC_StateEndDrawFlatModel(void)
 
 void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
 {
-	extern glm_vao_t brushModel_vao;
-
 	ENTER_STATE;
 
 	GL_BindVertexArray(NULL);

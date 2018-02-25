@@ -245,7 +245,7 @@ static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_p
 
 void DrawChatIcons(void)
 {
-	int	i, texture = 0, flags;
+	int	i, flags;
 	vec3_t billboard[4], billboard2[4], vright_tmp;
 	ci_player_t *p;
 

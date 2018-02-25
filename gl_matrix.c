@@ -45,6 +45,7 @@ void GLM_OrthographicProjection(float left, float right, float top, float bottom
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 }
 
+#ifdef WITH_NVTX
 static const char* NameForMatrix(GLenum mode)
 {
 	if (mode == GL_MODELVIEW || mode == GL_MODELVIEW_MATRIX) {
@@ -55,6 +56,7 @@ static const char* NameForMatrix(GLenum mode)
 	}
 	return "(other)";
 }
+#endif
 
 float* GL_MatrixForMode(GLenum type)
 {

@@ -78,7 +78,6 @@ void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
 void GLC_DrawSkyChain(void)
 {
 	msurface_t *fa;
-	extern cvar_t gl_fogsky;
 
 	if (!skychain) {
 		return;

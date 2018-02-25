@@ -195,11 +195,10 @@ void Draw_AlphaWindow(int x1, int y1, int x2, int y2, int col, float alpha)
 
 void Draw_AMFStatLoss(int stat, hud_t* hud)
 {
-	static int * vxdmgcnt, *vxdmgcnt_t, *vxdmgcnt_o;
+	static int *vxdmgcnt, *vxdmgcnt_t, *vxdmgcnt_o;
 	static int x;
 	static cvar_t *scale = NULL, *style, *digits, *align, *duration;
 	float effect_duration = hud && duration ? duration->value : amf_stat_loss.value;
-	float alpha;
 
 	if (scale == NULL) {
 		// first time called
@@ -239,7 +238,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 	*vxdmgcnt_o = cl.stats[stat];
 
 	if (*vxdmgcnt_t > cl.time) {
-		alpha = min(1, (*vxdmgcnt_t - cl.time));
+		float alpha = min(1, (*vxdmgcnt_t - cl.time));
 		if (hud) {
 			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string);
 		}

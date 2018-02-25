@@ -714,3 +714,10 @@ const char* Ruleset_BlockPlayerCountMacros(void)
 	}
 	return NULL;
 }
+
+qbool Ruleset_AllowPowerupShell(model_t* model)
+{
+	// always allow powerupshells for specs or demos.
+	// do not allow powerupshells for eyes in other cases
+	return (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES));
+}

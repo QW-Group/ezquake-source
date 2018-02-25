@@ -120,15 +120,6 @@ static buffer_ref billboardVBO;
 static glm_vao_t billboardVAO;
 static buffer_ref billboardIndexes;
 static glm_program_t billboardProgram;
-static GLint billboard_RefdefCvars_block;
-
-static texture_ref TexForSubBatch(texture_ref batch, texture_ref sub_batch)
-{
-	if (GL_TextureReferenceIsValid(sub_batch)) {
-		return sub_batch;
-	}
-	return batch;
-}
 
 static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
 {

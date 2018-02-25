@@ -264,8 +264,6 @@ void GLM_CreateMultiImageProgram(void)
 
 static void GLM_FlushImageDraw(void)
 {
-	extern cvar_t gl_alphafont;
-
 	if (imageCount && glConfig.initialized) {
 		int start = 0;
 		int i;

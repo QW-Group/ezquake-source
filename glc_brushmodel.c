@@ -166,7 +166,6 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 {
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
-	extern buffer_ref brushModel_vbo;
 	extern GLuint* modelIndexes;
 	extern GLuint modelIndexMaximum;
 	int index_count = 0;
@@ -414,7 +413,6 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 void GLC_DrawWorld(void)
 {
 	extern msurface_t* alphachain;
-	extern cvar_t gl_outline;
 
 	if (r_drawflat.integer != 1) {
 		GLC_DrawTextureChains(cl.worldmodel, false);
@@ -433,8 +431,6 @@ void GLC_DrawWorld(void)
 
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 {
-	extern cvar_t gl_outline;
-
 	if (r_drawflat.integer && clmodel->isworldmodel) {
 		if (r_drawflat.integer == 1) {
 			GLC_DrawFlat(clmodel);

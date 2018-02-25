@@ -43,7 +43,6 @@ void GLC_ClearTextureChains(void)
 
 void GLC_DrawMapOutline(model_t *model)
 {
-	extern cvar_t gl_outline_width;
 	msurface_t *s;
 	int waterline, i, k;
 	float *v;

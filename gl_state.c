@@ -48,6 +48,7 @@ static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
 
 // vid_common_gl.c
+#ifdef WITH_NVTX
 static const char* TexEnvName(GLenum mode)
 {
 	switch (mode) {
@@ -65,6 +66,7 @@ static const char* TexEnvName(GLenum mode)
 		return "???";
 	}
 }
+#endif
 
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -888,8 +890,10 @@ void GL_Begin(GLenum primitive)
 
 void GL_End(void)
 {
+#ifdef WITH_NVTX
 	int primitives;
 	const char* count_name = "vertices";
+#endif
 
 	if (GL_ShadersSupported()) {
 		assert(0);
@@ -898,12 +902,14 @@ void GL_End(void)
 
 	glEnd();
 
+#ifdef WITH_NVTX
 	primitives = max(0, glcVertsSent - glcBaseVertsPerPrimitive);
 	if (glcVertsPerPrimitive) {
 		primitives = glcVertsSent / glcVertsPerPrimitive;
 		count_name = "primitives";
 	}
 	GL_LogAPICall("glBegin/End(%s: %d %s)", glcPrimitiveName, primitives, count_name);
+#endif
 }
 
 #undef glVertex2f
