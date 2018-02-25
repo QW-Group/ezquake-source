@@ -164,6 +164,8 @@ void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 		GL_BindBuffer(vbo);
 		glBufferSubData(buffers[vbo.index].target, 0, size, data);
 	}
+
+	GL_LogAPICall("GL_UpdateBuffer(%s)", buffers[vbo.index].name);
 }
 
 void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data)
@@ -193,6 +195,8 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 		GL_BindBuffer(vbo);
 		glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
 	}
+
+	GL_LogAPICall("GL_ResizeBuffer(%s)", buffers[vbo.index].name);
 }
 
 void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
@@ -211,6 +215,7 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 		GL_BindBuffer(vbo);
 		glBufferSubData(buffers[vbo.index].target, offset, size, data);
 	}
+	GL_LogAPICall("GL_UpdateBufferSection(%s)", buffers[vbo.index].name);
 }
 
 void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
@@ -285,6 +290,8 @@ void GL_BindBuffer(buffer_ref ref)
 	if (buffers[ref.index].target == GL_ELEMENT_ARRAY_BUFFER) {
 		GL_BindVertexArrayElementBuffer(ref);
 	}
+
+	GL_LogAPICall("GL_BindBuffer(%s)", buffers[ref.index].name);
 }
 
 void GL_InitialiseBufferHandling(void)
@@ -341,6 +348,7 @@ void GL_InitialiseBufferState(void)
 void GL_UnBindBuffer(GLenum target)
 {
 	GL_BindBufferImpl(target, 0);
+	GL_LogAPICall("GL_UnBindBuffer(%s)", target == GL_ARRAY_BUFFER ? "array-buffer" : (target == GL_ELEMENT_ARRAY_BUFFER ? "element-array" : "?"));
 }
 
 qbool GL_BuffersSupported(void)
@@ -373,6 +381,8 @@ void GL_BindVertexArray(glm_vao_t* vao)
 		if (vao) {
 			GL_SetElementArrayBuffer(vao->element_array_buffer);
 		}
+
+		GL_LogAPICall("GL_BindVertexArray()");
 	}
 }
 

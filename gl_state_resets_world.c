@@ -264,10 +264,11 @@ void GLC_StateBeginWaterSurfaces(void)
 		}
 	}
 	else {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+		GL_Color3ubv(color_white);
 		if (!r_fastturb.integer) {
 			GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		}
-		GL_Color3ubv(color_white);
 	}
 
 	GL_Enable(GL_DEPTH_TEST);
