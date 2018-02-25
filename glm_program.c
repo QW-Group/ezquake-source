@@ -144,8 +144,8 @@ static int GLM_InsertDefinitions(
 		strings[5] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
 		strings[4] = definitions ? definitions : "";
 		strings[3] = core_definitions;
-		strings[2] = glsl_common_glsl;
-		strings[1] = glsl_constants_glsl;
+		strings[2] = (const char*)glsl_common_glsl;
+		strings[1] = (const char*)glsl_constants_glsl;
 
 		return 6;
 	}

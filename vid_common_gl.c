@@ -30,10 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_OPENGL_TRACE
 #define DEBUG_FRAME_DEPTH_CHARS 2
-#include "nvToolsExt.h"
-#endif
 
 static qbool dev_frame_debug_queued;
+#endif
 
 // <DSA-functions (4.5)>
 // These allow modification of textures without binding (-bind-to-edit)

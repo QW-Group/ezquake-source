@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ATLAS_WIDTH (ATLAS_TEXTURE_WIDTH / ATLAS_CHUNK)
 #define ATLAS_HEIGHT (ATLAS_TEXTURE_HEIGHT / ATLAS_CHUNK)
 
-static char buffer[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
+static byte buffer[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
 static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
 static int atlas_delete_count = 0;
 static float solid_s;
@@ -152,7 +152,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	// Allocate space in an atlas texture
 	if (CachePics_AllocBlock(width + (width == ATLAS_TEXTURE_WIDTH ? 0 : padding), height + (height == ATLAS_TEXTURE_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
 		int yOffset;
-		char* input_image = NULL;
+		byte* input_image = NULL;
 
 		// Copy texture image
 		if (GL_TextureReferenceEqual(pic->texnum, atlas_texnum)) {
