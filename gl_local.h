@@ -855,7 +855,6 @@ void GL_DeleteVAOs(void);
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
-buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size);
 void GL_GenVertexArray(glm_vao_t* vao, const char* name);
 void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);

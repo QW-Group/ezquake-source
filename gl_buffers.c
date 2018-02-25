@@ -157,6 +157,7 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	buffer_data_t* buffer = GL_BufferAllocateSlot(target, name, size, usage);
 	buffer_ref result;
 
+	buffer->persistent_mapped_ptr = NULL;
 	GL_BindBufferImpl(target, buffer->glref);
 	if (glObjectLabel && name) {
 		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
@@ -365,6 +366,10 @@ void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeipt
 {
 	size_t true_size = buffers[ref.index].size * (buffers[ref.index].persistent_mapped_ptr ? 3 : 1);
 
+	if (size == 0) {
+		return;
+	}
+
 	assert(ref.index);
 	assert(buffers[ref.index].glref);
 	assert(size >= 0);
@@ -470,11 +475,7 @@ void GL_InitialiseBufferHandling(void)
 	buffers_supported &= (glVertexAttribPointer && glVertexAttribIPointer && glVertexAttribDivisor);
 
 	tripleBuffer_supported = buffers_supported && glFenceSync && glWaitSync && glBufferStorage && glMapBufferRange && !COM_CheckParm("-no-triple-gl-buffer");
-}
-
-buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size)
-{
-	return GL_GenFixedBuffer(GL_UNIFORM_BUFFER, name, size, data, GL_STREAM_DRAW);
+	Con_Printf("Triple-buffering of GL buffers: %s\n", tripleBuffer_supported ? "enabled" : "disabled");
 }
 
 void GL_InitialiseBufferState(void)
