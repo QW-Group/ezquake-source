@@ -548,11 +548,6 @@ void R_SetupFrame(void)
 	V_CalcBlend ();
 
 	memset(&frameStats, 0, sizeof(frameStats));
-
-	R_SetFrustum();
-	R_SetupGL();
-	R_MarkLeaves();	// done here so we know if we're in water
-	R_CreateWorldTextureChains();
 }
 
 void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
@@ -1140,7 +1135,12 @@ void R_RenderView(void)
 		glFinish();
 	}
 
+	R_SetFrustum();
+
+	R_SetupGL();
 	R_Clear();
+	R_MarkLeaves();	// done here so we know if we're in water
+	R_CreateWorldTextureChains();
 
 	// these are rendered later now, so we can process earlier
 	R_RenderDlights();

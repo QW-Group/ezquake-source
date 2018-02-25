@@ -54,7 +54,6 @@ void GLM_PrepareImages(void);
 
 void GLM_PrepareCircleDraw(void);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
-void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {

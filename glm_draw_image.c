@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "glm_draw.h"
 
+void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
+
 #define IMAGEPROG_FLAGS_TEXTURE     1
 #define IMAGEPROG_FLAGS_ALPHATEST   2
 #define IMAGEPROG_FLAGS_TEXT        4

@@ -2150,9 +2150,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 	SCR_SetupCI();
 
 	if (V_PreRenderView()) {
-		GL_EnterRegion("R_SetupFrame");
 		R_SetupFrame();
-		GL_LeaveRegion();
 
 		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
