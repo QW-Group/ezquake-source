@@ -147,8 +147,8 @@ void R_BuildDlightList (msurface_t *surf)
 		if (distmin < iminlight) {
 			// save dlight info
 			light = &dlightlist[numdlights];
-			light->minlight = iminlight;
-			light->rad = irad;
+			light->minlight = iminlight >> 7;
+			light->rad = irad >> 7;
 			light->local[0] = local[0];
 			light->local[1] = local[1];
 			light->lnum = lnum;
@@ -169,6 +169,7 @@ void R_AddDynamicLights(msurface_t *surf)
 
 	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
 		extern cvar_t gl_colorlights;
+
 		if (gl_colorlights.value) {
 			if (cl_dlights[light->lnum].type == lt_custom) {
 				VectorCopy(cl_dlights[light->lnum].color, color);
@@ -184,31 +185,38 @@ void R_AddDynamicLights(msurface_t *surf)
 		irad = light->rad;
 		iminlight = light->minlight;
 
-		_td = light->local[1];
-		dest = blocklights;
-		for (t = 0; t < tmax; t++) {
-			td = _td;
-			if (td < 0)	td = -td;
-			_td -= 16;
-			_sd = light->local[0];
+		for (t = 0, _td = light->local[1]; t < tmax; t++, _td -= 16) {
+			td = _td < 0 ? -_td : _td;
 
-			for (s = 0; s < smax; s++) {
-				sd = _sd < 0 ? -_sd : _sd;
-				_sd -= 16;
-				if (sd > td) {
-					idist = (sd << 8) + (td << 7);
-				}
-				else {
-					idist = (td << 8) + (sd << 7);
-				}
+			if (td < irad) {
+				dest = blocklights + t * smax * 3;
+				for (s = 0, _sd = light->local[0]; s < smax; s++, _sd -= 16, dest += 3) {
+					sd = _sd < 0 ? -_sd : _sd;
 
-				if (idist < iminlight) {
-					tmp = (irad - idist) >> 7;
-					dest[0] += tmp * color[0];
-					dest[1] += tmp * color[1];
-					dest[2] += tmp * color[2];
+					if (sd + td < irad) {
+						idist = sd + td;
+						if (sd > td) {
+							idist += sd;
+						}
+						else {
+							idist += td;
+						}
+
+						if (idist < iminlight) {
+							tmp = irad - idist;
+							dest[0] += tmp * color[0];
+							dest[1] += tmp * color[1];
+							dest[2] += tmp * color[2];
+						}
+					}
+					else if (_sd < 0) {
+						dest += 3 * (smax - s);
+						s = smax;
+					}
 				}
-				dest += 3;
+			}
+			else if (_td < 0) {
+				t = tmax;
 			}
 		}
 	}
@@ -306,11 +314,13 @@ void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
 	lm->modified = false;
-	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
-	}
-	else {
-		GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	if (r_dynamic.integer == 1) {
+		if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
+			GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+		}
+		else {
+			GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+		}
 	}
 	lm->change_area.l = LIGHTMAP_WIDTH;
 	lm->change_area.t = LIGHTMAP_HEIGHT;
