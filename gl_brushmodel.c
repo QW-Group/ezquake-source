@@ -1431,6 +1431,7 @@ void R_DrawBrushModel(entity_t *e)
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
+	qbool glc_first_water_poly = true;
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
@@ -1507,6 +1508,10 @@ void R_DrawBrushModel(entity_t *e)
 					CHAIN_SURF_B2F(psurf, skychain);
 				}
 				else if (psurf->flags & SURF_DRAWTURB) {
+					if (glc_first_water_poly) {
+						GLC_StateBeginWaterSurfaces();
+						glc_first_water_poly = false;
+					}
 					EmitWaterPolys(psurf);
 				}
 				else if (!GL_ShadersSupported() && psurf->flags & SURF_DRAWALPHA) {
@@ -1554,6 +1559,10 @@ void R_DrawBrushModel(entity_t *e)
 				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 			}
 		}
+	}
+
+	if (!glc_first_water_poly) {
+		GLC_StateEndWaterSurfaces();
 	}
 
 	// START shaman FIX for no simple textures on world brush models {

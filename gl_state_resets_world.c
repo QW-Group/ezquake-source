@@ -102,18 +102,9 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 
 	ENTER_STATE;
 
-	GL_EnableFog();
-	GLC_DisableAllTexturing();
-
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
 	if (wateralpha < 1.0 && wateralpha >= 0) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		color[3] = wateralpha * 255;
-		GL_Color4ubv(color); // 1, 1, 1, wateralpha
-		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		if (wateralpha < 0.9) {
-			GL_DepthMask(GL_FALSE);
-		}
+		GL_Color4ub(color[0] * wateralpha, color[1] * wateralpha, color[2] * wateralpha, 255 * wateralpha);
 	}
 	else {
 		GL_Color3ubv(color);
@@ -127,33 +118,7 @@ void GLC_StateEndFastTurbPoly(void)
 {
 	ENTER_STATE;
 
-	// START shaman FIX /gl_turbalpha + /r_fastturb {
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_DepthMask(GL_TRUE);
-	// END shaman FIX /gl_turbalpha + /r_fastturb {
-
-	GL_DisableFog();
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GL_Color4ubv(color_white);
-	// END shaman RFE 1022504
-
-	LEAVE_STATE;
-}
-
-void GLC_StateBeginTurbPoly(void)
-{
-	ENTER_STATE;
-
-	GL_EnableFog();
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndTurbPoly(void)
-{
-	ENTER_STATE;
-
-	GL_DisableFog();
 
 	LEAVE_STATE;
 }
@@ -246,42 +211,47 @@ void GLC_StateEndUnderwaterCaustics(void)
 
 void GLC_StateBeginWaterSurfaces(void)
 {
+	extern cvar_t r_fastturb;
 	float wateralpha = GL_WaterAlpha();
 
 	ENTER_STATE;
 
+	if (r_fastturb.integer) {
+		GLC_DisableAllTexturing();
+	}
+
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_Color4f(wateralpha, wateralpha, wateralpha, wateralpha);
-		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		if (!r_fastturb.integer) {
+			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+			GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		}
 		if (wateralpha < 0.9) {
 			GL_DepthMask(GL_FALSE);
 		}
 	}
 	else {
-		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+		if (!r_fastturb.integer) {
+			GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+		}
 		GL_Color3ubv(color_white);
 	}
+
+	GL_EnableFog();
 
 	LEAVE_STATE;
 }
 
 void GLC_StateEndWaterSurfaces(void)
 {
-	float wateralpha = GL_WaterAlpha();
-
 	ENTER_STATE;
 
-	if (wateralpha < 1.0) {
-		GL_TextureEnvMode(GL_REPLACE);
-
-		GL_Color3ubv(color_white);
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-		if (wateralpha < 0.9) {
-			GL_DepthMask(GL_TRUE);
-		}
-	}
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_Color3ubv(color_white);
+	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
+	GL_DepthMask(GL_TRUE);
+	GL_DisableFog();
 
 	LEAVE_STATE;
 }

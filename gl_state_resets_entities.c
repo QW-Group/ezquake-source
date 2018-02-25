@@ -196,16 +196,14 @@ void GLC_StateBeginDrawViewModel(float alpha)
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	}
 
-	if (!GL_ShadersSupported()) {
-		if (gl_affinemodels.value) {
-			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-		}
-		if (gl_smoothmodels.value) {
-			GLC_ShadeModel(GL_SMOOTH);
-		}
-		else {
-			GLC_ShadeModel(GL_FLAT);
-		}
+	if (gl_affinemodels.value) {
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	}
+	if (gl_smoothmodels.value) {
+		GLC_ShadeModel(GL_SMOOTH);
+	}
+	else {
+		GLC_ShadeModel(GL_FLAT);
 	}
 
 	LEAVE_STATE;
@@ -236,18 +234,23 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		GL_DisableFog();
 	}
-	GL_DisableFog();
 
-	if (e->alpha) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		GL_Color4f(e->alpha, e->alpha, e->alpha, e->alpha);
+	if (GL_ShadersSupported()) {
+		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (e->alpha ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	}
 	else {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-		GL_Color3ubv(color_white);
+		if (e->alpha) {
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+			GL_Color4f(e->alpha, e->alpha, e->alpha, e->alpha);
+		}
+		else {
+			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+			GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+			GL_Color3ubv(color_white);
+		}
 	}
 
 	GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
@@ -379,5 +382,5 @@ void GLM_StateEndAliasOutlineBatch(void)
 {
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_PolygonMode(GL_FILL);
-	GL_CullFace(GL_BACK);
+	GL_CullFace(GL_FRONT);
 }

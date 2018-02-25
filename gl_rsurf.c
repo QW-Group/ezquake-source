@@ -316,7 +316,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 			}
 			else if (turbSurface) {
-				if (r_fastturb.integer) {
+				if (r_fastturb.integer && wateralpha == 1) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
 				}
 				else if (solidTexTurb && GL_ShadersSupported()) {

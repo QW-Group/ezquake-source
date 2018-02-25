@@ -120,7 +120,6 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		vec3_t nv;
 		int i;
 
-		GLC_StateBeginTurbPoly();
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
@@ -147,8 +146,6 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 			}
 			glEnd();
 		}
-
-		GLC_StateEndTurbPoly();
 	}
 }
 
