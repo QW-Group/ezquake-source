@@ -435,7 +435,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 
 	while (current && current->clockval - cls.demotime < time_limit) {
 		int time = (int) ((current->clockval - cls.demotime) + 1);
-		int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
+		mpic_t* texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
 		if (filter & mvd_wp_info[current->itemtype].it) {
 			current = current->next;
@@ -454,7 +454,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 		else if (style == 3 && texture) {
 			// simpleitem
 			strlcpy(clockitem, "  ", sizeof(clockitem));
-			Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture, 1.0f);
+			Draw_FitPic(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture);
 			y += LETTERHEIGHT * scale / 2;
 		}
 		else {
