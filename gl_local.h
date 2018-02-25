@@ -893,20 +893,6 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 
 #define GLM_Enabled GL_ShadersSupported
 
-typedef enum glm_uniform_block_id_s {
-	// Uniforms
-	GL_BINDINGPOINT_FRAMECONSTANTS,
-
-	GL_BINDINGPOINT_DRAWWORLD_CVARS,
-	GL_BINDINGPOINT_ALIASMODEL_CVARS,
-	GL_BINDINGPOINT_SPRITEDATA_CVARS,
-
-	GL_BINDINGPOINT_SKYDOME_CVARS,
-	GL_BINDINGPOINT_SKYBOX_CVARS,
-
-	GL_UNIFORM_BINDINGPOINT_COUNT
-} glm_uniform_block_id_t;
-
 // Reference cvars for 3D views...
 typedef struct uniform_block_frame_constants_s {
 	float modelViewMatrix[16];

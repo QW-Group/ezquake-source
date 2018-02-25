@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_framebuffer.h"
 #include "tr_types.h"
+#include "glsl/constants.glsl"
 
 static framebuffer_ref framebuffer;
 static glm_program_t post_process_program;
@@ -171,7 +172,7 @@ void GLM_UploadFrameConstants(void)
 	if (!frameConstantsUploaded) {
 		if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
 			ubo_frameConstants = GL_GenUniformBuffer("frameConstants", &ubo_frameConstants, sizeof(frameConstants));
-			GL_BindBufferBase(ubo_frameConstants, GL_BINDINGPOINT_FRAMECONSTANTS);
+			GL_BindBufferBase(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS);
 		}
 
 		GL_UpdateBuffer(ubo_frameConstants, sizeof(frameConstants), &frameConstants);

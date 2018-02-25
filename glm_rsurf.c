@@ -37,12 +37,13 @@ extern GLuint modelIndexMaximum;
 
 static glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 static GLuint index_count;
+
 static glm_program_t drawworld;
 static GLint drawWorld_outlines;
 static GLuint drawworld_WorldCvars_block;
 
-static int batch_count = 0;
-static int matrix_count = 0;
+static int batch_count;
+static int matrix_count;
 static buffer_ref vbo_worldIndirectDraw;
 
 #define DRAW_DETAIL_TEXTURES       1
@@ -157,16 +158,10 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
-		GLint size;
-
-		drawworld_WorldCvars_block = glGetUniformBlockIndex(drawworld.program, "WorldCvars");
-		glGetActiveUniformBlockiv(drawworld.program, drawworld_WorldCvars_block, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
-
 		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
 
-		glUniformBlockBinding(drawworld.program, drawworld_WorldCvars_block, GL_BINDINGPOINT_DRAWWORLD_CVARS);
 		ubo_worldcvars = GL_GenUniformBuffer("world-cvars", &world, sizeof(world));
-		GL_BindBufferBase(ubo_worldcvars, GL_BINDINGPOINT_DRAWWORLD_CVARS);
+		GL_BindBufferBase(ubo_worldcvars, EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS);
 
 		drawworld.uniforms_found = true;
 	}
