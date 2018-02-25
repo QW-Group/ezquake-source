@@ -20,7 +20,6 @@ layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
 layout(std140, binding=EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS) buffer WorldCvars {
-	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 	SamplerMapping samplerMapping[MAX_SAMPLER_MAPPINGS];
 };

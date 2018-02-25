@@ -37,7 +37,6 @@ out vec2 LightingPoint;
 #endif
 
 layout(std140, binding=EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS) buffer WorldCvars {
-	mat4 modelMatrix[MAX_MATRICES];
 	WorldDrawInfo drawInfo[MAX_INSTANCEID];
 	SamplerMapping samplerMapping[MAX_SAMPLER_MAPPINGS];
 };
@@ -61,7 +60,7 @@ void main()
 	int drawCallFlags = drawInfo[_instanceId].drawFlags;
 	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
 
-	gl_Position = projectionMatrix * modelMatrix[drawInfo[_instanceId].matrixMapping] * vec4(position, 1.0);
+	gl_Position = projectionMatrix * drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
 
 	FlatColor = flatColor;
 	Flags = vboFlags | drawCallFlags | textureFlags;

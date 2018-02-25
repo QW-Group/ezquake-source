@@ -42,7 +42,6 @@ typedef struct glm_brushmodel_drawcall_s {
 	texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
 	int material_samplers;
 	int sampler_mappings;
-	int matrix_count;
 	int batch_count;
 	GLintptr indirectDrawOffset;
 
@@ -159,7 +158,6 @@ static void Compile_DrawWorldProgram(void)
 		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
-		strlcat(included_definitions, va("#define MAX_MATRICES %d\n", MAX_WORLDMODEL_MATRICES), sizeof(included_definitions));
 		if (r_dynamic.integer == 2) {
 			strlcat(included_definitions, "#define HARDWARE_LIGHTING\n", sizeof(included_definitions));
 		}
@@ -243,28 +241,6 @@ void GLM_EnterBatchedWorldRegion(void)
 	memset(drawcalls, 0, sizeof(drawcalls[0]) * maximum_drawcalls);
 }
 
-// Matrices often duplicated (camera position, entity position) so shared over draw calls
-// Finds matrix in the common list, adds if missing or returns -1 if list is full
-static int GLM_BrushModelFindMatrix(void)
-{
-	float mvMatrix[16];
-	int i;
-
-	GLM_GetMatrix(GL_MODELVIEW, mvMatrix);
-	for (i = 0; i < drawcalls[current_drawcall].matrix_count; ++i) {
-		if (!memcmp(drawcalls[current_drawcall].world.modelMatrix[i], mvMatrix, sizeof(mvMatrix))) {
-			return i;
-		}
-	}
-
-	if (drawcalls[current_drawcall].matrix_count < MAX_WORLDMODEL_MATRICES) {
-		memcpy(drawcalls[current_drawcall].world.modelMatrix[drawcalls[current_drawcall].matrix_count], mvMatrix, sizeof(mvMatrix));
-		return drawcalls[current_drawcall].matrix_count++;
-	}
-
-	return -1;
-}
-
 static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 {
 	glm_worldmodel_req_t* req = GLM_CurrentRequest();
@@ -301,7 +277,6 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
-	int matrixMapping = GLM_BrushModelFindMatrix();
 	qbool worldmodel = model ? model->isworldmodel : false;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
@@ -312,7 +287,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 	}
 
 	// See if previous batch has same texture & matrix, if so just continue
-	if (drawcall->batch_count && matrixMapping >= 0) {
+	if (drawcall->batch_count) {
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
 		if (model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH) {
@@ -320,7 +295,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
 
 			memcpy(newreq, req, sizeof(*newreq));
-			newreq->mvMatrixMapping = matrixMapping;
+			GL_GetMatrix(GL_MODELVIEW, newreq->mvMatrix);
 			newreq->alpha = alpha;
 			newreq->flags = flags;
 			newreq->polygonOffset = polygonOffset;
@@ -338,10 +313,12 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool allow_duplicate)
 {
 	glm_worldmodel_req_t* req;
-	int matrixMapping = GLM_BrushModelFindMatrix();
 	qbool worldmodel = model ? model->isworldmodel : false;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
+	float mvMatrix[16];
+
+	GL_GetMatrix(GL_MODELVIEW, mvMatrix);
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
@@ -349,7 +326,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	}
 
 	// See if previous batch has same texture & matrix, if so just continue
-	if (drawcall->batch_count && matrixMapping >= 0) {
+	if (drawcall->batch_count) {
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
 		if (allow_duplicate && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH) {
@@ -357,7 +334,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
 
 			memcpy(newreq, req, sizeof(*newreq));
-			newreq->mvMatrixMapping = matrixMapping;
+			GL_GetMatrix(GL_MODELVIEW, newreq->mvMatrix);
 			newreq->alpha = alpha;
 			newreq->flags = flags;
 			newreq->polygonOffset = polygonOffset;
@@ -369,7 +346,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 		}
 
 		// Try and continue the previous batch
-		if (worldmodel == req->worldmodel && matrixMapping == req->mvMatrixMapping && polygonOffset == req->polygonOffset && req->flags == flags) {
+		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags) {
 			if (num_textures == 0) {
 				// We don't care about materials, so can draw with previous batch
 				return req;
@@ -393,10 +370,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	req = &drawcall->worldmodel_requests[drawcall->batch_count];
 
 	// If matrix list was full previously, will be okay now
-	if (matrixMapping < 0) {
-		matrixMapping = GLM_BrushModelFindMatrix();
-	}
-	req->mvMatrixMapping = matrixMapping;
+	memcpy(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix));
 	req->alpha = alpha;
 	req->samplerMappingBase = drawcall->sampler_mappings - first_texture;
 	req->samplerMappingCount = min(num_textures, MAX_SAMPLER_MAPPINGS - drawcall->sampler_mappings);
@@ -654,7 +628,6 @@ void GL_DrawWorldModelBatch(void)
 
 		frameStats.subdraw_calls += drawcall->batch_count;
 		drawcall->batch_count = 0;
-		drawcall->matrix_count = 0;
 		drawcall->material_samplers = 0;
 		drawcall->sampler_mappings = 0;
 	}
@@ -735,7 +708,7 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 
 		drawcall->world.calls[i].alpha = this->alpha;
 		drawcall->world.calls[i].flags = this->flags;
-		drawcall->world.calls[i].matrixMapping = this->mvMatrixMapping;
+		memcpy(drawcall->world.calls[i].modelMatrix, this->mvMatrix, sizeof(drawcall->world.calls[i].modelMatrix));
 		drawcall->world.calls[i].samplerBase = this->samplerMappingBase;
 		this->baseInstance = i;
 	}

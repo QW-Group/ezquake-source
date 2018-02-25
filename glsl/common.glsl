@@ -54,10 +54,11 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 };
 
 struct WorldDrawInfo {
+	mat4 mvMatrix;
 	float alpha;
 	int samplerBase;
 	int drawFlags;
-	int matrixMapping;
+	int padding;
 };
 
 struct SamplerMapping {

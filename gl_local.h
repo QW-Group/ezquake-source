@@ -941,7 +941,6 @@ typedef struct uniform_block_frame_constants_s {
 	float lightScale;
 } uniform_block_frame_constants_t;
 
-#define MAX_WORLDMODEL_MATRICES  32
 #define MAX_WORLDMODEL_BATCH     64
 #define MAX_SPRITE_BATCH         MAX_STANDARD_ENTITIES
 #define MAX_SAMPLER_MAPPINGS    256
@@ -954,14 +953,14 @@ typedef struct sampler_mapping_s {
 } sampler_mapping_t;
 
 typedef struct uniform_block_world_calldata_s {
+	float modelMatrix[16];
 	float alpha;
 	GLint samplerBase;
 	GLint flags;
-	GLint matrixMapping;
+	GLint padding;
 } uniform_block_world_calldata_t;
 
 typedef struct uniform_block_world_s {
-	float modelMatrix[MAX_WORLDMODEL_MATRICES][16];
 	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
 	sampler_mapping_t mappings[MAX_SAMPLER_MAPPINGS];
 } uniform_block_world_t;
@@ -1011,7 +1010,7 @@ typedef struct glm_worldmodel_req_s {
 	GLuint baseVertex;      // Offset of vertices in VBO
 	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
 
-	int mvMatrixMapping;
+	float mvMatrix[16];
 	int flags;
 	int samplerMappingBase;
 	int samplerMappingCount;
