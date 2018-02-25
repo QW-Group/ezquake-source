@@ -322,9 +322,9 @@ void Draw_Character(int x, int y, int num)
 	Draw_ResetCharGLState();
 }
 
-void Draw_SetColor(byte *rgba, float alpha)
+void Draw_SetColor(byte *rgba)
 {
-	GLM_Draw_SetColor(rgba, alpha);
+	GLM_Draw_SetColor(rgba);
 }
 
 static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
@@ -345,7 +345,7 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	// overall opacity is applied properly.
 	memcpy(rgba, color_white, sizeof(byte) * 4);
 	if (scr_coloredText.integer && color_count > 0) {
-		COLOR_TO_RGBA(color[color_index].c, rgba);
+		COLOR_TO_RGBA_PREMULT(color[color_index].c, rgba);
 	}
 
 	// Draw the string.
@@ -370,7 +370,11 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 
 						color_count++; // Keep track on how many colors we're using.
 
-						Draw_SetColor(rgba, alpha);
+						rgba[0] *= alpha;
+						rgba[1] *= alpha;
+						rgba[2] *= alpha;
+						rgba[3] = 255 * alpha;
+						Draw_SetColor(rgba);
 
 						i += 4;
 						continue;
@@ -378,9 +382,9 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 				}
 				else if (text[i + 1] == 'r') {
 					if (!color_is_white) {
-						memcpy(rgba, color_white, sizeof(byte) * 4);
+						rgba[0] = rgba[1] = rgba[2] = rgba[3] = 255 * alpha;
 						color_is_white = true;
-						Draw_SetColor(rgba, alpha);
+						Draw_SetColor(rgba);
 					}
 
 					i++;
@@ -396,7 +400,7 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
 				rgba[3] = 255;
-				Draw_SetColor(rgba, alpha);
+				Draw_SetColor(rgba);
 			}
 
 			color_index++; // Goto next color.

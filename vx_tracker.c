@@ -743,8 +743,9 @@ void VXSCR_DrawTrackerString (void)
 	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
 
-	if (!active_track)
+	if (!active_track) {
 		return;
+	}
 
 	StringToRGB(amf_tracker_frame_color.string);
 
@@ -754,13 +755,14 @@ void VXSCR_DrawTrackerString (void)
 	for (i = 0; i < max_active_tracks; i++)
 	{
 		// Time expired for this tracker, don't draw it.
-		if (trackermsg[i].die < r_refdef2.time)
+		if (trackermsg[i].die < r_refdef2.time) {
 			continue;
+		}
 
 		// Fade the text as it gets older.
 		alpha = min(1, (trackermsg[i].die - r_refdef2.time) / 2);
 
-		for (line = 0; line < 2; ++line) {
+		for (line = 0; line < MAX_LINES_PER_MESSAGE; ++line) {
 			printable_chars = trackermsg[i].printable_length[line];
 
 			if (printable_chars <= 0) {
@@ -772,7 +774,7 @@ void VXSCR_DrawTrackerString (void)
 			x += amf_tracker_x.value;
 
 			// Draw the string.
-			Draw_SColoredString(x, y, trackermsg[i].content[line], NULL, 0, 0, scale);
+			Draw_SColoredAlphaString(x, y, trackermsg[i].content[line], NULL, 0, 0, scale, alpha);
 
 			y += 8 * scale;	// Next line.
 		}
@@ -782,8 +784,12 @@ void VXSCR_DrawTrackerString (void)
 	y = vid.height * 0.2 / scale + amf_tracker_y.value;
 	for (i = 0; i < max_active_tracks; i++) {
 		// Time expired for this tracker, don't draw it.
-		if (trackermsg[i].die < r_refdef2.time)
+		if (trackermsg[i].die < r_refdef2.time) {
 			continue;
+		}
+
+		// Fade the text as it gets older.
+		alpha = min(1, (trackermsg[i].die - r_refdef2.time) / 2);
 
 		for (line = 0; line < MAX_LINES_PER_MESSAGE; ++line) {
 			int img;
@@ -807,11 +813,11 @@ void VXSCR_DrawTrackerString (void)
 				snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", trackermsg[i].imagename[line][img]);
 
 				if ((pic = Draw_CachePicSafe(fullpath, false, true))) {
-					Draw_FitPic(
+					Draw_FitPicAlpha(
 						(float)x + (trackermsg[i].imagepos[line][img] * 8 * scale) - 0.5 * 8 * 2 * (im_scale - 1) * scale,
 						(float)y - 0.5 * 8 * (im_scale - 1) * scale,
 						im_scale * 8 * 2 * scale,
-						im_scale * 8 * scale, pic
+						im_scale * 8 * scale, pic, alpha
 					);
 				}
 			}

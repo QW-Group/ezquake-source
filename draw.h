@@ -113,6 +113,7 @@ void Draw_SColoredStringBasic (int x, int y, const char *text, int red, float sc
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
+void Draw_SColoredAlphaString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic (cache_pic_id_t id);

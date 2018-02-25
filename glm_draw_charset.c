@@ -92,7 +92,7 @@ void GLM_Draw_ResetCharGLState(void)
 	Draw_TextCacheSetColor(color_white);
 }
 
-void GLM_Draw_SetColor(byte* rgba, float alpha)
+void GLM_Draw_SetColor(byte* rgba)
 {
 	extern cvar_t scr_coloredText;
 
