@@ -82,7 +82,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	memcpy(polygonVertices, vertices, sizeof(polygonVertices[0]) * num_vertices);
 }
 
-void GLM_DrawPolygonImpl(void)
+void GLM_DrawPolygons(int start, int end)
 {
 	float matrix[16];
 	float alpha;

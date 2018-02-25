@@ -30,7 +30,7 @@ void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 
 	// draw the coloured indicator strip
 	//Draw_Fill(x, y, length, charsize, 184);
-	GLM_DrawAlphaRectangeRGB(x, y, length, charsize, 0, true, color_white);
+	GLM_DrawAlphaRectangleRGB(x, y, length, charsize, 0, true, color_white);
 
-	GLM_DrawAlphaRectangeRGB(x + pos - 1, y, 3, charsize, 0, true, color);
+	GLM_DrawAlphaRectangleRGB(x + pos - 1, y, 3, charsize, 0, true, color);
 }

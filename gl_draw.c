@@ -867,7 +867,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	COLOR_TO_RGBA(color, bytecolor);
 	thickness = max(0, thickness);
 
-	GLM_DrawAlphaRectangeRGB(x, y, w, h, thickness, fill, bytecolor);
+	GLM_DrawAlphaRectangleRGB(x, y, w, h, thickness, fill, bytecolor);
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)

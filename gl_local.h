@@ -815,7 +815,7 @@ void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText);
-void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
+void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_DrawParticles(int number, qbool square);
 void GLM_Draw_FadeScreen(float alpha);
 void GLM_RenderDlight(dlight_t* light);
@@ -1169,7 +1169,8 @@ typedef enum {
 	imagetype_line
 } glm_image_type_t;
 
-qbool GLM_LogCustomImageType(glm_image_type_t type, int flags);
+qbool GLM_LogCustomImageType(glm_image_type_t type, int index);
+qbool GLM_LogCustomImageTypeWithTexture(glm_image_type_t type, int index, texture_ref texture);
 
 #endif /* !__GL_LOCAL_H__ */
 
