@@ -618,7 +618,7 @@ void GL_DrawWorldModelBatch(void)
 				GL_MultiDrawElementsIndirect(
 					GL_TRIANGLE_STRIP,
 					GL_UNSIGNED_INT,
-					(void*)0,
+					(void*)drawcall->indirectDrawOffset,
 					drawcall->polygonOffsetSplit,
 					sizeof(drawcall->worldmodel_requests[0])
 				);
@@ -628,7 +628,7 @@ void GL_DrawWorldModelBatch(void)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)(sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
+				(void*)(drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
 				drawcall->batch_count - drawcall->polygonOffsetSplit,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
@@ -640,7 +640,7 @@ void GL_DrawWorldModelBatch(void)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)0,
+				(void*)drawcall->indirectDrawOffset,
 				drawcall->batch_count,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
