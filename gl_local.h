@@ -1165,7 +1165,8 @@ qbool GL_DrawElementsBaseVertexAvailable(void);
 typedef enum {
 	imagetype_image,
 	imagetype_circle,
-	imagetype_polygon
+	imagetype_polygon,
+	imagetype_line
 } glm_image_type_t;
 
 qbool GLM_LogCustomImageType(glm_image_type_t type, int flags);

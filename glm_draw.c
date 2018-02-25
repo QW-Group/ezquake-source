@@ -31,8 +31,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern float overall_alpha;
 extern int circleCount;
+extern int lineCount;
 
 void GLM_DrawCircles(int start, int end);
+void GLM_DrawLines(int start, int end);
 
 #define IMAGEPROG_FLAGS_TEXTURE     1
 #define IMAGEPROG_FLAGS_ALPHATEST   2
@@ -40,73 +42,11 @@ void GLM_DrawCircles(int start, int end);
 
 void GLM_PreparePolygon(void);
 void GLM_DrawPolygonImpl(void);
+void GLM_PrepareLineProgram(void);
 
 void GLM_PrepareCircleDraw(void);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
-
-static glm_vao_t* GL_CreateLineVAO(void)
-{
-	static glm_vao_t vao;
-	static buffer_ref vbo;
-
-	float points[] = {
-		0.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,
-	};
-
-	if (!GL_BufferReferenceIsValid(vbo)) {
-		vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(points), points, GL_STATIC_DRAW);
-	}
-
-	if (!vao.vao) {
-		GL_GenVertexArray(&vao, "line-vao");
-
-		GL_ConfigureVertexAttribPointer(&vao, vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL, 0);
-	}
-
-	return &vao;
-}
-
-void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
-{
-	static glm_program_t line_program;
-	static GLint line_matrix;
-	static GLint line_color;
-
-	if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
-		GL_VFDeclare(line_draw);
-
-		// Very simple line-drawing
-		GLM_CreateVFProgram(
-			"LineDrawing",
-			GL_VFParams(line_draw),
-			&line_program
-		);
-	}
-
-	if (line_program.program && !line_program.uniforms_found) {
-		line_matrix = glGetUniformLocation(line_program.program, "matrix");
-		line_color = glGetUniformLocation(line_program.program, "inColor");
-		line_program.uniforms_found = true;
-	}
-
-	if (line_program.program) {
-		float matrix[16];
-
-		glDisable(GL_DEPTH_TEST);
-		GLM_GetMatrix(GL_PROJECTION, matrix);
-		GLM_TransformMatrix(matrix, x_start, y_start, 0);
-		GLM_ScaleMatrix(matrix, x_end - x_start, y_end - y_start, 1.0f);
-
-		GL_UseProgram(line_program.program);
-		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
-		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
-
-		GL_BindVertexArray(GL_CreateLineVAO());
-		GL_DrawArrays(GL_LINES, 0, 2);
-	}
-}
 
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
 {
@@ -285,6 +225,7 @@ static void GLM_PrepareImageDraw(void)
 
 	GLM_PreparePolygon();
 	GLM_PrepareCircleDraw();
+	GLM_PrepareLineProgram();
 }
 
 static void GLM_FlushImageDraw(void)
@@ -313,6 +254,9 @@ static void GLM_FlushImageDraw(void)
 					else if (imageTypes[i] == imagetype_polygon) {
 						GLM_DrawPolygonImpl();
 					}
+					else if (imageTypes[i] == imagetype_line) {
+						GLM_DrawLines(images[i].flags, images[i].flags);
+					}
 					++start;
 				}
 				--i;
@@ -330,6 +274,7 @@ static void GLM_FlushImageDraw(void)
 	memset(imageTypes, 0, sizeof(imageTypes));
 	imageCount = 0;
 	circleCount = 0;
+	lineCount = 0;
 }
 
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
@@ -579,6 +524,7 @@ void GL_FlushImageDraw(void)
 
 	imageCount = 0;
 	circleCount = 0;
+	lineCount = 0;
 }
 
 qbool GLM_LogCustomImageType(glm_image_type_t type, int flags)
