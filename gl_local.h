@@ -133,6 +133,8 @@ typedef struct r_frame_stats_s {
 	r_frame_stats_modern_t modern;
 
 	int texture_binds;
+	unsigned int lightmap_min_changed;
+	unsigned int lightmap_max_changed;
 	int lightmap_updates;
 	int draw_calls;
 	int subdraw_calls;

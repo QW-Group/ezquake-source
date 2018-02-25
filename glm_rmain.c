@@ -8,6 +8,8 @@ void GLM_DrawBillboards(void);
 
 void GLM_RenderView(void)
 {
+	GLM_UploadFrameConstants();
+	R_UploadChangedLightmaps();
 	GLM_PrepareWorldModelBatch();
 	GLM_PrepareAliasModelBatches();
 	GLM_PrepareBillboards();

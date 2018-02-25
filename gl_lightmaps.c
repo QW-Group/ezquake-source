@@ -387,7 +387,13 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
 }
 
-static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, unsigned int* min_changed, unsigned int* max_changed)
+void R_LightmapFrameInit(void)
+{
+	frameStats.lightmap_min_changed = lightmap_array_size;
+	frameStats.lightmap_max_changed = 0;
+}
+
+static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface)
 {
 	int k;
 	msurface_t* s;
@@ -402,8 +408,8 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, unsigned in
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
 			if (lightmaps[k].modified) {
-				*min_changed = min(k, *min_changed);
-				*max_changed = max(k, *max_changed);
+				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
+				frameStats.lightmap_max_changed = max(k, frameStats.lightmap_max_changed);
 			}
 		}
 	}
@@ -414,37 +420,49 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, unsigned in
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
 			if (lightmaps[k].modified) {
-				*min_changed = min(k, *min_changed);
-				*max_changed = max(k, *max_changed);
+				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
+				frameStats.lightmap_max_changed = max(k, frameStats.lightmap_max_changed);
 			}
 		}
+	}
+}
+
+void R_UploadChangedLightmaps(void)
+{
+	if (frameStats.lightmap_min_changed < lightmap_array_size) {
+		unsigned int i;
+
+		GL_EnterRegion(__FUNCTION__);
+		for (i = frameStats.lightmap_min_changed; i <= frameStats.lightmap_max_changed; ++i) {
+			if (lightmaps[i].modified) {
+				R_UploadLightMap(GL_TEXTURE0, i);
+			}
+		}
+
+		frameStats.lightmap_min_changed = lightmap_array_size;
+		frameStats.lightmap_max_changed = 0;
+		GL_LeaveRegion();
 	}
 }
 
 void R_RenderAllDynamicLightmaps(model_t *model)
 {
 	unsigned int i;
-	unsigned int min_changed = lightmap_array_size;
-	unsigned int max_changed = 0;
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i]) {
 			continue;
 		}
 
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0], &min_changed, &max_changed);
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1], &min_changed, &max_changed);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0]);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1]);
 	}
 
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], &min_changed, &max_changed);
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], &min_changed, &max_changed);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0]);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1]);
 
-	if (min_changed < lightmap_array_size) {
-		for (i = min_changed; i <= max_changed; ++i) {
-			if (lightmaps[i].modified) {
-				R_UploadLightMap(GL_TEXTURE0, i);
-			}
-		}
+	if (!GL_ShadersSupported()) {
+		R_UploadChangedLightmaps();
 	}
 }
 

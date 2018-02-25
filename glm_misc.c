@@ -153,7 +153,6 @@ void GLM_PreRenderView(void)
 	}
 
 	frameConstantsUploaded = false;
-	GLM_UploadFrameConstants();
 }
 
 void GLM_SetupGL(void)

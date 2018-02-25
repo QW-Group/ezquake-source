@@ -548,6 +548,7 @@ void R_SetupFrame(void)
 	V_CalcBlend ();
 
 	memset(&frameStats, 0, sizeof(frameStats));
+	R_LightmapFrameInit();
 }
 
 void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
