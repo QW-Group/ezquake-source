@@ -151,10 +151,10 @@ void GLC_StateBeginAliasModelShadow(void)
 	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GLC_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
+		GLC_ShadeModel(GL_FLAT);
 		GL_Disable(GL_LINE_SMOOTH);
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
@@ -229,18 +229,17 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	if (!GL_ShadersSupported()) {
-		GLC_ShadeModel(GL_FLAT);
-		GL_Disable(GL_LINE_SMOOTH);
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		GL_DisableFog();
-	}
 
 	if (GL_ShadersSupported()) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (e->alpha ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	}
 	else {
+		GLC_ShadeModel(GL_FLAT);
+		GL_Disable(GL_LINE_SMOOTH);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		GL_DisableFog();
+
 		if (e->alpha) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			GLC_InitTextureUnitsNoBind1(GL_MODULATE);

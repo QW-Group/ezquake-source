@@ -198,6 +198,7 @@ glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
 glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 glObjectLabel_t glObjectLabel;
+glGetObjectLabel_t glGetObjectLabel;
 
 static qbool shaders_supported = false;
 static int modern_only = -1;
@@ -321,20 +322,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glPrimitiveRestartIndex);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsBaseVertex);
 
-#ifdef _WIN32
-			// During init, enable debug output
-			if (IsDebuggerPresent()) {
-				glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
-
-				if (glDebugMessageCallback) {
-					glEnable(GL_DEBUG_OUTPUT);
-					glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-					glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
-				}
-			}
-#endif
-			glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
-
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameteriv);
@@ -352,6 +339,21 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_DSA_FUNCTION(glTextureSubImage3D);
 		}
 	}
+
+#ifdef _WIN32
+	// During init, enable debug output
+	if (IsDebuggerPresent()) {
+		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
+
+		if (glDebugMessageCallback) {
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
+		}
+	}
+#endif
+	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
+	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
 
 	if (glPrimitiveRestartIndex) {
 		glEnable(GL_PRIMITIVE_RESTART);
@@ -621,8 +623,8 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 		}
 	}
 	else if (debug_frame_out) {
-		++debug_frame_depth;
 		fprintf(debug_frame_out, "Enter: %.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", regionName);
+		++debug_frame_depth;
 	}
 
 	regions_trace_only <<= 1;
@@ -637,8 +639,8 @@ void GL_LeaveTracedRegion(qbool trace_only)
 		}
 	}
 	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Leave: %.*s\n", debug_frame_depth, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 		debug_frame_depth = max(debug_frame_depth - 1, 0);
+		fprintf(debug_frame_out, "Leave: %.*s\n", debug_frame_depth, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 	}
 }
 

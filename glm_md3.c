@@ -86,7 +86,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 
 void GLM_DrawAlias3Model(entity_t* ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_affinemodels, gl_fb_models;
 	extern byte	*shadedots;
 	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
 	extern float shadelight, ambientlight;

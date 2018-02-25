@@ -86,5 +86,7 @@ void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 void GLC_StateEndRenderScene(void);
 
 void GL_InvalidateAllTextureReferences(void);
+const char* GL_TextureIdentifier(texture_ref ref);
+const char* GL_TextureIdentifierByGLReference(GLuint texnum);
 
 #endif	//__GL_TEXTURE_H

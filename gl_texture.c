@@ -1314,7 +1314,16 @@ const char* GL_TextureIdentifier(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	return gltextures[ref.index].identifier;
+	return gltextures[ref.index].identifier[0] ? gltextures[ref.index].identifier : "null-texture";
+}
+
+const char* GL_TextureIdentifierByGLReference(GLuint texnum)
+{
+	static char name[256];
+
+	glGetObjectLabel(GL_TEXTURE, texnum, sizeof(name), NULL, name);
+
+	return name;
 }
 
 qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)

@@ -449,6 +449,7 @@ typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, 
 
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
+typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
 
 // VAO functions
 extern glBindVertexArray_t         glBindVertexArray;
@@ -510,6 +511,7 @@ extern glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 // Debug functions
 extern glObjectLabel_t glObjectLabel;
+extern glGetObjectLabel_t glGetObjectLabel;
 
 qbool GL_ShadersSupported(void);
 qbool GL_VBOsSupported(void);
