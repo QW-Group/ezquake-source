@@ -41,6 +41,7 @@ void R_InitBubble(void);
 void R_InitAliasModelCvars(void);
 void R_CreateWorldTextureChains(void);
 static void R_SetupGL(void);
+static void R_RenderTransparentWorld(void);
 
 extern msurface_t *alphachain;
 extern vec3_t     lightspot;
@@ -941,6 +942,10 @@ static void R_RenderScene(void)
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
+
+	if (GL_WaterAlpha() == 1) {
+		R_RenderTransparentWorld();
+	}
 
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
