@@ -112,7 +112,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
-		vbo_aliasIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, GL_STREAM_DRAW);
+		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, write_once_use_once);
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
@@ -429,7 +429,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 {
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
 	GLint mode = EZQ_ALIAS_MODE_NORMAL;
-	unsigned int extra_offset = 0;
+	unsigned int extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
 	int i;
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {

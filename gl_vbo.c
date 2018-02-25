@@ -25,7 +25,7 @@ static buffer_ref GL_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	return GL_GenFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, GL_STATIC_DRAW);
+	return GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, write_once_use_many);
 }
 
 static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
@@ -136,9 +136,9 @@ void GL_CreateModelVBOs(qbool vid_restart)
 		}
 	}
 
-	aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
+	aliasModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, write_once_use_many);
 	if (GL_ShadersSupported()) {
-		aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
+		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, write_once_use_many);
 	}
 
 	// VBO starts with simple-model/sprite vertices

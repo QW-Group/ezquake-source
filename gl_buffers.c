@@ -59,6 +59,7 @@ typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsiz
 typedef void (APIENTRY *glGenBuffers_t)(GLsizei n, GLuint* buffers);
 typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
 typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
+typedef void (APIENTRY *glBindBufferRange_t)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void (APIENTRY *glNamedBufferSubData_t)(GLuint buffer, GLintptr offset, GLsizei size, const void* data);
 typedef void (APIENTRY *glNamedBufferData_t)(GLuint buffer, GLsizei size, const void* data, GLenum usage);
 typedef void (APIENTRY *glUnmapNamedBuffer_t)(GLuint buffer);
@@ -86,6 +87,7 @@ static glBufferSubData_t  glBufferSubData = NULL;
 static glGenBuffers_t     glGenBuffers = NULL;
 static glDeleteBuffers_t  glDeleteBuffers = NULL;
 static glBindBufferBase_t glBindBufferBase = NULL;
+static glBindBufferRange_t glBindBufferRange = NULL;
 static glUnmapBuffer_t glUnmapBuffer = NULL;
 
 // DSA
@@ -227,7 +229,7 @@ void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 	assert(size <= buffers[vbo.index].size);
 
 	if (buffers[vbo.index].persistent_mapped_ptr) {
-		void* start = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + buffers[vbo.index].size * glConfig.tripleBufferIndex);
+		void* start = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + GL_BufferOffset(vbo));
 
 		memcpy(start, data, size);
 
@@ -306,7 +308,7 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 	assert(offset + size <= buffers[vbo.index].size);
 
 	if (buffers[vbo.index].persistent_mapped_ptr) {
-		void* base = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + buffers[vbo.index].size * glConfig.tripleBufferIndex + offset);
+		void* base = (void*)((uintptr_t)buffers[vbo.index].persistent_mapped_ptr + GL_BufferOffset(vbo) + offset);
 
 		memcpy(base, data, size);
 	}
@@ -349,6 +351,17 @@ void GL_BindBufferBase(buffer_ref ref, GLuint index)
 	assert(buffers[ref.index].glref);
 
 	glBindBufferBase(buffers[ref.index].target, index, buffers[ref.index].glref);
+}
+
+void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size)
+{
+	size_t true_size = buffers[ref.index].size * (buffers[ref.index].persistent_mapped_ptr ? 3 : 1);
+
+	assert(ref.index);
+	assert(buffers[ref.index].glref);
+	assert(offset + size <= true_size);
+
+	glBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
 }
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer)
@@ -421,6 +434,7 @@ void GL_InitialiseBufferHandling(void)
 
 	// OpenGL 3.0 onwards, for 4.3+ support only
 	glBindBufferBase = (glBindBufferBase_t)SDL_GL_GetProcAddress("glBindBufferBase");
+	glBindBufferRange = (glBindBufferRange_t)SDL_GL_GetProcAddress("glBindBufferRange");
 
 	// OpenGL 4.4, persistent mapping of buffers
 	glFenceSync = (glFenceSync_t)SDL_GL_GetProcAddress("glFenceSync");
@@ -625,3 +639,4 @@ uintptr_t GL_BufferOffset(buffer_ref ref)
 {
 	return buffers[ref.index].persistent_mapped_ptr ? buffers[ref.index].size * glConfig.tripleBufferIndex : 0;
 }
+

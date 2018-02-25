@@ -170,10 +170,10 @@ void GLM_UploadFrameConstants(void)
 {
 	if (!frameConstantsUploaded) {
 		if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
-			ubo_frameConstants = GL_GenUniformBuffer("frameConstants", &ubo_frameConstants, sizeof(frameConstants));
-			GL_BindBufferBase(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS);
+			ubo_frameConstants = GL_CreateFixedBuffer(GL_UNIFORM_BUFFER, "frameConstants", sizeof(frameConstants), &ubo_frameConstants, write_once_use_once_safe);
 		}
 
+		GL_BindBufferRange(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS, GL_BufferOffset(ubo_frameConstants), sizeof(frameConstants));
 		GL_UpdateBuffer(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
 		frameConstantsUploaded = true;
 	}

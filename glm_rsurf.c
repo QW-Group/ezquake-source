@@ -189,17 +189,14 @@ static void Compile_DrawWorldProgram(void)
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
 
-		ssbo_worldcvars = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(ssbo_worldcvars, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA);
-
-		ssbo_worldsamplers = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(ssbo_worldsamplers, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS);
+		ssbo_worldcvars = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, write_once_use_once);
+		ssbo_worldsamplers = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, write_once_use_once);
 
 		drawworld.uniforms_found = true;
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
-		vbo_worldIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, GL_STREAM_DRAW);
+		vbo_worldIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, write_once_use_once);
 	}
 }
 
@@ -517,6 +514,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 {
 	int begin = -1;
 	int i;
+	unsigned int extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
 
 	//
 	glUniform1i(drawWorld_outlines, 1);
@@ -527,7 +525,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 		if (!drawcall->worldmodel_requests[i].worldmodel) {
 			if (begin >= 0) {
 				// Draw outline models so far
-				GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(drawcall->worldmodel_requests[0])), i - begin, sizeof(drawcall->worldmodel_requests[0]));
+				GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])), i - begin, sizeof(drawcall->worldmodel_requests[0]));
 			}
 			begin = -1;
 			continue;
@@ -538,7 +536,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	}
 	if (begin >= 0) {
 		// Draw the rest
-		GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(drawcall->worldmodel_requests[0])), drawcall->batch_count - begin, sizeof(drawcall->worldmodel_requests[0]));
+		GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])), drawcall->batch_count - begin, sizeof(drawcall->worldmodel_requests[0]));
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
@@ -565,6 +563,7 @@ void GLM_PrepareWorldModelBatch(void)
 {
 	extern buffer_ref vbo_brushElements;
 	GLintptr drawOffset = 0;
+	GLintptr indexOffset = GL_BufferOffset(vbo_brushElements) / sizeof(modelIndexes[0]);
 	int samplerMappingOffset = 0;
 	int batchOffset = 0;
 	int draw, i;
@@ -574,6 +573,9 @@ void GLM_PrepareWorldModelBatch(void)
 	GL_EnsureBufferSize(vbo_worldIndirectDraw, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	GL_EnsureBufferSize(ssbo_worldcvars, sizeof(drawcalls[0].calls) * maximum_drawcalls);
 	GL_EnsureBufferSize(ssbo_worldsamplers, sizeof(drawcalls[0].mappings) * maximum_drawcalls);
+
+	GL_BindBufferRange(ssbo_worldcvars, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA, GL_BufferOffset(ssbo_worldcvars), sizeof(drawcalls[0].calls) * maximum_drawcalls);
+	GL_BindBufferRange(ssbo_worldsamplers, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS, GL_BufferOffset(ssbo_worldsamplers), sizeof(drawcalls[0].mappings) * maximum_drawcalls);
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
@@ -587,6 +589,7 @@ void GLM_PrepareWorldModelBatch(void)
 		for (i = 0; i < drawcall->batch_count; ++i) {
 			drawcall->calls[i].samplerBase += samplerMappingOffset;
 			drawcall->worldmodel_requests[i].baseInstance += batchOffset;
+			drawcall->worldmodel_requests[i].firstIndex += indexOffset;
 		}
 
 		drawcall->indirectDrawOffset = drawOffset;
@@ -609,6 +612,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	extern glm_vao_t brushModel_vao;
 	int draw;
 	qbool first = true;
+	unsigned int extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
@@ -636,7 +640,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 				GL_MultiDrawElementsIndirect(
 					GL_TRIANGLE_STRIP,
 					GL_UNSIGNED_INT,
-					(void*)drawcall->indirectDrawOffset,
+					(void*)(drawcall->indirectDrawOffset + extra_offset),
 					drawcall->polygonOffsetSplit,
 					sizeof(drawcall->worldmodel_requests[0])
 				);
@@ -646,7 +650,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)(drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
+				(void*)(extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
 				drawcall->batch_count - drawcall->polygonOffsetSplit,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
@@ -658,7 +662,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)drawcall->indirectDrawOffset,
+				(void*)(extra_offset + drawcall->indirectDrawOffset),
 				drawcall->batch_count,
 				sizeof(drawcall->worldmodel_requests[0])
 			);

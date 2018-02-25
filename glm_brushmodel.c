@@ -302,7 +302,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 			vbo_brushElements = GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {
-			vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, GL_STREAM_DRAW);
+			vbo_brushElements = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, write_once_use_once);
 		}
 	}
 
@@ -326,7 +326,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	}
 
 	// Copy VBO buffer across
-	brushModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "brushmodel-vbo", buffer_size, buffer, GL_STATIC_DRAW);
+	brushModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "brushmodel-vbo", buffer_size, buffer, write_once_use_many);
 
 	if (GL_ShadersSupported()) {
 		// Create vao

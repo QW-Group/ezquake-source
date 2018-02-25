@@ -679,6 +679,7 @@ void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr s
 void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
+void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size);
 void GL_UnBindBuffer(GLenum target);
 buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
 void GL_EnsureBufferSize(buffer_ref ref, size_t size);
