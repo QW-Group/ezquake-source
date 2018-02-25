@@ -179,18 +179,21 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 	imageData.images[imageData.imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
 	imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
-	imageData.images[imageData.imageCount].texNumber = texnum;
 
 	++imageData.imageCount;
 }
 
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
+	texture_ref solid_texture;
+	float s, t;
+
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
 	}
 
-	if (!GLM_LogCustomImageType(imagetype_image, imageData.imageCount)) {
+	Atlas_SolidTextureCoordinates(&solid_texture, &s, &t);
+	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, solid_texture)) {
 		return;
 	}
 
@@ -204,13 +207,11 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 			imageData.images[imageData.imageCount].colour[2] *= alpha;
 		}
 		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
-		Atlas_SolidTextureCoordinates(&imageData.images[imageData.imageCount].texNumber, &imageData.images[imageData.imageCount].s1, &imageData.images[imageData.imageCount].t1);
-		imageData.images[imageData.imageCount].s2 = imageData.images[imageData.imageCount].s1;
-		imageData.images[imageData.imageCount].t2 = imageData.images[imageData.imageCount].t1;
+		imageData.images[imageData.imageCount].s2 = imageData.images[imageData.imageCount].s1 = s;
+		imageData.images[imageData.imageCount].t2 = imageData.images[imageData.imageCount].t1 = t;
 	}
 	else {
 		int imageIndex = imageData.imageCount * 4;
-		float s, t;
 
 		memcpy(&imageData.glc_images[imageIndex].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
@@ -220,7 +221,6 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 			imageData.glc_images[imageIndex].colour[1] *= alpha;
 			imageData.glc_images[imageIndex].colour[2] *= alpha;
 		}
-		Atlas_SolidTextureCoordinates(&imageData.images[imageData.imageCount].texNumber, &s, &t);
 		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0);
 	}
 

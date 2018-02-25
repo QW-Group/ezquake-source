@@ -54,7 +54,6 @@ typedef struct glm_image_s {
 	float s2, t2;
 	unsigned char colour[4];
 	int flags;
-	texture_ref texNumber;
 } glm_image_t;
 
 typedef struct glc_image_s {
