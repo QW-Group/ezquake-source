@@ -132,7 +132,6 @@ cvar_t gl_subdivide_size                   = {"gl_subdivide_size", "64"};
 cvar_t gl_clear                            = {"gl_clear", "0"};
 cvar_t gl_clearColor                       = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};
 cvar_t gl_cull                             = {"gl_cull", "1"};
-cvar_t gl_affinemodels                     = {"gl_affinemodels", "0"};
 cvar_t gl_polyblend                        = {"gl_polyblend", "1"}; // 0
 cvar_t gl_flashblend                       = {"gl_flashblend", "0"};
 cvar_t gl_rl_globe                         = {"gl_rl_globe", "0"};
@@ -861,7 +860,6 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register(&r_farclip);
-	Cvar_Register(&gl_affinemodels);
 	Cvar_Register(&gl_clear);
 	Cvar_Register(&gl_clearColor);
 	Cvar_Register(&gl_cull);

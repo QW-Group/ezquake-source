@@ -37,9 +37,6 @@ void GL_StateEndEntities(visentlist_t* vislist)
 		GL_PolygonMode(GL_FILL);
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		if (gl_affinemodels.value) {
-			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		}
 	}
 
 	LEAVE_STATE;
@@ -187,10 +184,6 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	}
 	else {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-	}
-
-	if (gl_affinemodels.value) {
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	}
 
 	LEAVE_STATE;

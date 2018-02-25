@@ -2377,11 +2377,6 @@
         { "name": "2", "description": "None (it, its)" }
       ]
     },
-    "gl_affinemodels": {
-      "group-id": "35",
-      "desc": "Old setting: makes texture rendering quality worse if set to 1.\nMay give performance boost on very old hardware.\nIgnored when using modern renderer.",
-      "type": "boolean"
-    },
     "gl_alphafont": {
       "group-id": "5",
       "desc": "When turned on allows the alpha transparency layer support for the console font.",

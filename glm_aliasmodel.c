@@ -301,11 +301,6 @@ static void GLM_QueueAliasModelDraw(
 
 void GL_BeginDrawAliasModels(void)
 {
-	if (!GL_ShadersSupported()) {
-		if (gl_affinemodels.value) {
-			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-		}
-	}
 }
 
 void GL_EndDrawAliasModels(void)
