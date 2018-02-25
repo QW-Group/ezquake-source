@@ -235,13 +235,8 @@ void R_MarkLights(dlight_t *light, int bit, mnode_t *node)
 	float		dist;
 	msurface_t	*surf;
 	int			i;
-	// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-	float		l, maxdist;
-	int			j, s, t;
-	vec3_t		impact;
+
 loc0:
-	// LordHavoc: .lit support end
-	
 	if (node->contents < 0) {
 		return;
 	}
@@ -260,38 +255,19 @@ loc0:
 		// LordHavoc: .lit support end
 	}
 
-	// LordHavoc: .lit support (actually this is just a major lighting speedup, no relation to color :)
-	maxdist = light->radius * light->radius;
-
 	// mark the polygons
 	surf = cl.worldmodel->surfaces + node->firstsurface;
 	for (i = 0; i < node->numsurfaces; i++, surf++) {
 		// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
-		// LordHavoc: MAJOR dynamic light speedup here, eliminates marking of surfaces that are too far away from light, thus preventing unnecessary renders and uploads
-		for (j = 0; j < 3; j++) {
-			impact[j] = light->origin[j] - surf->plane->normal[j] * dist;
+		if (surf->dlightframe != r_dlightframecount) {
+			// not dynamic until now
+			surf->dlightbits = bit;
+			surf->dlightframe = r_dlightframecount;
 		}
-
-		// clamp center of light to corner and check brightness
-		l = DotProduct(impact, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3] - surf->texturemins[0];
-		s = l - bound(0, l + 0.5, surf->extents[0]);
-
-		l = DotProduct(impact, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3] - surf->texturemins[1];
-		t = l - bound(0, l + 0.5, surf->extents[1]);
-
-		// compare to minimum light
-		if ((s*s + t * t + dist * dist) < maxdist) {
-			if (surf->dlightframe != r_dlightframecount) {
-				// not dynamic until now
-				surf->dlightbits = bit;
-				surf->dlightframe = r_dlightframecount;
-			}
-			else {
-				// already dynamic
-				surf->dlightbits |= bit;
-			}
+		else {
+			// already dynamic
+			surf->dlightbits |= bit;
 		}
-		// LordHavoc: .lit support end
 	}
 	// LordHavoc: .lit support begin (actually this is just a major lighting speedup, no relation to color :)
 	if (node->children[0]->contents >= 0) {
