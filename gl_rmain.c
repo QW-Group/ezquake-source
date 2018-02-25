@@ -1105,8 +1105,6 @@ void R_PostProcessScreen(void)
 {
 	extern void GLM_PostProcessScreen(void);
 
-	GL_FlushImageDraw(true);
-
 	if (GL_ShadersSupported()) {
 		GLM_PostProcessScreen();
 	}

@@ -164,7 +164,7 @@ void main()
 			}
 		}
 		else if (turbType == TEXTURE_TURB_SKY) {
-#ifdef DRAW_SKYBOX
+#if defined(DRAW_SKYBOX)
 			frag_colour = texture(skyTex, Direction);
 #elif defined(DRAW_SKYDOME)
 			vec3 dir = normalize(Direction) * r_farclip;

@@ -595,15 +595,6 @@ void GL_FlushWorldModelBatch(void)
 	sampler_mappings = 0;
 }
 
-void GLM_DrawWorld(model_t* model)
-{
-	const qbool use_texture_array = true;
-
-	if (model->texture_array_count) {
-		GLM_DrawTexturedWorld(model);
-	}
-}
-
 void GLM_NewMap(void)
 {
 }

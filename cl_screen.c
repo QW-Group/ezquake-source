@@ -2136,7 +2136,6 @@ void SCR_UpdateScreenPlayerView(int flags)
 {
 	GL_ResetRegion(true);
 
-	GL_EnterRegion(__FUNCTION__);
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef();
 	}
@@ -2175,7 +2174,6 @@ void SCR_UpdateScreenPlayerView(int flags)
 	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_DrawMultiviewIndividualElements();
 	}
-	GL_LeaveRegion();
 }
 
 void SCR_HUD_WeaponStats(hud_t* hud);
@@ -2218,11 +2216,14 @@ void SCR_UpdateScreenPostPlayerView(void)
 	extern qbool  sb_showscores, sb_showteamscores;
 	extern cvar_t scr_menudrawhud;
 
+	GL_EnterRegion("HUD");
 	if (scr_newHud.value != 1) {
 		SCR_DrawNewHudElements();
 	}
 
 	SCR_DrawElements();
+	GL_FlushImageDraw(true);
+	GL_LeaveRegion();
 
 	R_PostProcessScreen();
 

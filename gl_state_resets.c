@@ -54,8 +54,6 @@ void GL_StateDefault3D(void)
 
 	GL_DepthRange(gldepthmin, gldepthmax);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_ONE, GL_ZERO);
-
 	GL_Enable(GL_DEPTH_TEST);
 
 	if (gl_gammacorrection.integer) {
@@ -86,12 +84,13 @@ void GLM_StateEndDrawBillboards(void)
 {
 	ENTER_STATE;
 
+	/*
 	GL_DepthMask(GL_TRUE);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_EnableFog();
 	GL_Enable(GL_CULL_FACE);
-
+	*/
 	LEAVE_STATE;
 }
 

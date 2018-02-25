@@ -32,10 +32,11 @@ void GL_StateEndEntities(visentlist_t* vislist)
 {
 	ENTER_STATE;
 
-	GL_PolygonMode(GL_FILL);
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	if (!GL_ShadersSupported()) {
+		// FIXME: Work on getting rid of these
+		GL_PolygonMode(GL_FILL);
+		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
+		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		if (gl_affinemodels.value) {
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		}

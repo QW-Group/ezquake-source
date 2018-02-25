@@ -388,14 +388,14 @@ void R_DrawWorld(void)
 	//draw the world sky
 	R_DrawSky();
 
+	GL_EnterRegion("DrawWorld");
 	if (GL_ShadersSupported()) {
-		GL_EnterRegion("DrawWorld");
 		GLM_DrawTexturedWorld(cl.worldmodel);
-		GL_LeaveRegion();
 	}
 	else {
 		GLC_DrawWorld();
 	}
+	GL_LeaveRegion();
 }
 
 void R_MarkLeaves (void) {

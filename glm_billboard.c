@@ -411,12 +411,12 @@ void GLM_DrawBillboards(void)
 {
 	unsigned int i;
 
-	if (!GLM_BillboardsInit()) {
-		return;
-	}
-
 	GL_EnterRegion(__FUNCTION__);
 
+	if (!GLM_BillboardsInit()) {
+		GL_LeaveRegion();
+		return;
+	}
 	GL_BindAndUpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
 	GLM_StateBeginDrawBillboards();
 	for (i = 0; i < batchCount; ++i) {
