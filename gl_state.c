@@ -48,7 +48,7 @@ static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
 
 // vid_common_gl.c
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 static const char* TexEnvName(GLenum mode)
 {
 	switch (mode) {
@@ -620,7 +620,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 		}
 	}
 
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 	if (GL_LoggingEnabled())
 	{
 		static char temp[1024];
@@ -890,7 +890,7 @@ void GL_Begin(GLenum primitive)
 
 void GL_End(void)
 {
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 	int primitives;
 	const char* count_name = "vertices";
 #endif
@@ -902,7 +902,7 @@ void GL_End(void)
 
 	glEnd();
 
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 	primitives = max(0, glcVertsSent - glcBaseVertsPerPrimitive);
 	if (glcVertsPerPrimitive) {
 		primitives = glcVertsSent / glcVertsPerPrimitive;
@@ -934,7 +934,7 @@ void GL_Vertex3fv(const GLfloat* v)
 	++glcVertsSent;
 }
 
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 void GL_PrintState(void)
 {
 	int i;

@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "image.h"
 
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 #define DEBUG_FRAME_DEPTH_CHARS 2
 #include "nvToolsExt.h"
 #endif
@@ -72,6 +72,12 @@ static glTextureSubImage3D_t glTextureSubImage3D = NULL;
 // <debug-functions (4.3)>
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
+typedef void (APIENTRY *glPushDebugGroup_t)(GLenum source, GLuint id, GLsizei length, const char* message);
+typedef void (APIENTRY *glPopDebugGroup_t)(void);
+
+static glPushDebugGroup_t glPushDebugGroup;
+static glPopDebugGroup_t glPopDebugGroup;
+
 // </debug-functions>
 
 // <draw-functions (various)>
@@ -346,6 +352,8 @@ static void CheckShaderExtensions(void)
 	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
 	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
+	glPushDebugGroup = (glPushDebugGroup_t)SDL_GL_GetProcAddress("glPushDebugGroup");
+	glPopDebugGroup = (glPopDebugGroup_t)SDL_GL_GetProcAddress("glPopDebugGroup");
 
 	// Draw functions required for modern & classic
 	glMultiDrawArrays = (glMultiDrawArrays_t)SDL_GL_GetProcAddress("glMultiDrawArrays");
@@ -607,7 +615,7 @@ void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 	}
 }
 
-#ifdef WITH_NVTX
+#ifdef WITH_OPENGL_TRACE
 static int debug_frame_depth = 0;
 static unsigned long regions_trace_only;
 FILE* debug_frame_out;
@@ -615,8 +623,8 @@ FILE* debug_frame_out;
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 {
 	if (GL_ShadersSupported()) {
-		if (!trace_only) {
-			nvtxRangePushA(regionName);
+		if (!trace_only && glPushDebugGroup) {
+			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
 		}
 	}
 	else if (debug_frame_out) {
@@ -631,8 +639,8 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 void GL_LeaveTracedRegion(qbool trace_only)
 {
 	if (GL_ShadersSupported()) {
-		if (!trace_only) {
-			nvtxRangePop();
+		if (!trace_only && glPopDebugGroup) {
+			glPopDebugGroup();
 		}
 	}
 	else if (debug_frame_out) {
@@ -952,10 +960,12 @@ void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
 	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
 }
 
+#ifdef WITH_OPENGL_TRACE
 void Dev_VidFrameTrace(void)
 {
 	dev_frame_debug_queued = true;
 }
+#endif
 
 // Wrappers around drawing functions
 void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount)

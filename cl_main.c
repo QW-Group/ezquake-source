@@ -1853,11 +1853,13 @@ void CL_InitLocal (void)
 	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
 	Cmd_AddMacro("conheight", CL_Macro_Conheight);
 
+#ifdef WITH_OPENGL_TRACE
 	if (COM_CheckParm("-dev")) {
 		extern void Dev_VidFrameTrace(void);
 
 		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);
 	}
+#endif
 }
 
 void GFX_Init (void) 
