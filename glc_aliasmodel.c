@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
 
 // Which pose to use if shadow to be drawn
 static int lastposenum;
@@ -54,8 +55,67 @@ extern vec3_t    lightcolor;
 extern float     apitch;
 extern float     ayaw;
 
+// Temporary r_lerpframes fix, unless we go for shaders-in-classic...
+//   After all models loaded, this needs to be allocated enough space to hold a complete pose of verts
+//   We fill it in with the lerped positions, then render model from there
+// Ugly, but don't think there's another way to do this in fixed pipeline
+typedef struct glc_aliasmodel_vert_s {
+	float position[3];
+	float texture_coords[2];
+	byte color[4];
+	float padding[2];
+} glc_aliasmodel_vert_t;
+static glc_aliasmodel_vert_t* temp_aliasmodel_buffer;
+static int temp_aliasmodel_buffer_size;
+
+void GLC_AllocateAliasPoseBuffer(void)
+{
+	int max_verts = 0;
+	int i;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod && mod->type == mod_alias) {
+			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+
+			if (hdr) {
+				max_verts = max(max_verts, hdr->vertsPerPose);
+			}
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod && mod->type == mod_alias) {
+			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+
+			if (hdr) {
+				max_verts = max(max_verts, hdr->vertsPerPose);
+			}
+		}
+	}
+
+	if (temp_aliasmodel_buffer_size < max_verts) {
+		Q_free(temp_aliasmodel_buffer);
+		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
+		temp_aliasmodel_buffer_size = max_verts;
+	}
+}
+
+void GLC_FreeAliasPoseBuffer(void)
+{
+	Q_free(temp_aliasmodel_buffer);
+}
+
 void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects)
 {
+	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
+	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+	int position = 0;
+	GLenum primitive;
+
 	int *order, count;
 	vec3_t interpolated_verts;
 	float l, lerpfrac;
@@ -63,7 +123,6 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
-	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 
 	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, r_modelalpha, custom_model);
 
@@ -71,31 +130,38 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
 	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-
 	verts1 += pose1 * paliashdr->poseverts;
 	verts2 += pose2 * paliashdr->poseverts;
 
-	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
-	for ( ; ; ) {
+	for (; ; ) {
 		count = *order++;
 		if (!count) {
 			break;
 		}
 
 		if (count < 0) {
+			primitive = GL_TRIANGLE_FAN;
 			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
 		}
 		else {
-			glBegin(GL_TRIANGLE_STRIP);
+			primitive = GL_TRIANGLE_STRIP;
+		}
+
+		if (!cache) {
+			glBegin(primitive);
 		}
 
 		do {
 			float color[4];
 
 			// texture coordinates come from the draw list
-			if (mtex) {
+			if (cache) {
+				temp_aliasmodel_buffer[position].texture_coords[0] = ((float *)order)[0];
+				temp_aliasmodel_buffer[position].texture_coords[1] = ((float *)order)[1];
+			}
+			else if (mtex) {
 				qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
 				qglMultiTexCoord2f(GL_TEXTURE1, ((float *)order)[0], ((float *)order)[1]);
 			}
@@ -108,6 +174,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 			if ((currententity->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
+			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
 			// VULT VERTEX LIGHTING
 			if (amf_lighting_vertex.value && !full_light) {
@@ -121,7 +188,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 
 			//VULT COLOURED MODEL LIGHTS
 			if (amf_lighting_colour.value && !full_light) {
-				for (i = 0;i < 3;i++) {
+				for (i = 0; i < 3; i++) {
 					lc[i] = lightcolor[i] / 256 + l;
 				}
 
@@ -156,23 +223,67 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 			color[2] *= r_modelalpha;
 			color[3] = r_modelalpha;
 
-			GL_Color4fv(color);
+			if (cache) {
+				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
+				temp_aliasmodel_buffer[position].color[0] = color[0] * 255;
+				temp_aliasmodel_buffer[position].color[1] = color[1] * 255;
+				temp_aliasmodel_buffer[position].color[2] = color[2] * 255;
+				temp_aliasmodel_buffer[position].color[3] = color[3] * 255;
 
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-			glVertex3fv(interpolated_verts);
+				++position;
+			}
+			else {
+				GL_Color4fv(color);
+				glVertex3fv(interpolated_verts);
+			}
 
 			verts1++;
 			verts2++;
 		} while (--count);
 
-		glEnd();
+		if (cache) {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+
+			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
+			glEnableClientState(GL_VERTEX_ARRAY);
+			qglClientActiveTexture(GL_TEXTURE0);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			if (mtex) {
+				qglClientActiveTexture(GL_TEXTURE1);
+				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color);
+			glEnableClientState(GL_COLOR_ARRAY);
+
+			GL_DrawArrays(primitive, 0, position);
+		}
+		else {
+			glEnd();
+		}
 	}
 
 	GLC_StateEndDrawAliasFrame();
 
 	if (outline) {
-		GLC_DrawAliasOutlineFrame(model, pose1, pose2);
+		if (cache) {
+			GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
+		}
+		else {
+			GLC_DrawAliasOutlineFrame(model, pose1, pose2);
+		}
 	}
+}
+
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)
+{
+	GL_StateBeginAliasOutlineFrame();
+	glDisableClientState(GL_COLOR_ARRAY);
+
+	GL_DrawArrays(primitive, 0, verts);
+
+	GL_StateEndAliasOutlineFrame();
 }
 
 static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
@@ -230,51 +341,55 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	GL_StateEndAliasOutlineFrame();
 }
 
+void GLC_SetPowerupShellColor(int layer_no, int effects)
+{
+	// set color: alpha so we can see colour underneath still
+	float r_shellcolor[3];
+	float base_level;
+	float effect_level;
+
+	base_level = bound(0, (layer_no == 0 ? gl_powerupshells_base1level.value : gl_powerupshells_base2level.value), 1);
+	effect_level = bound(0, (layer_no == 0 ? gl_powerupshells_effect1level.value : gl_powerupshells_effect2level.value), 1);
+	r_shellcolor[0] = base_level + ((effects & EF_RED) ? effect_level : 0);
+	r_shellcolor[1] = base_level + ((effects & EF_GREEN) ? effect_level : 0);
+	r_shellcolor[2] = base_level + ((effects & EF_BLUE) ? effect_level : 0);
+	GL_Color4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
+}
+
 void GLC_DrawPowerupShell(
-	model_t* model, int effects, int layer_no,
+	model_t* model, int effects,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {
-	float base_level;
-	float effect_level;
 	int pose1 = R_AliasFramePose(oldframe);
 	int pose2 = R_AliasFramePose(frame);
-	qbool scrolldir = (layer_no == 1);
 	trivertx_t* verts1;
 	trivertx_t* verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
-	float r_shellcolor[3];
+	int layer_no;
+	int *order, count;
+	float scroll[4];
+	float v[3];
+	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+	int position = 0;
 
 	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		return;
 	}
-
-	base_level = bound(0, (layer_no == 0 ? gl_powerupshells_base1level.value : gl_powerupshells_base2level.value), 1);
-	effect_level = bound(0, (layer_no == 0 ? gl_powerupshells_effect1level.value : gl_powerupshells_effect2level.value), 1);
-
-	r_shellcolor[0] = base_level + ((effects & EF_RED) ? effect_level : 0);
-	r_shellcolor[1] = base_level + ((effects & EF_GREEN) ? effect_level : 0);
-	r_shellcolor[2] = base_level + ((effects & EF_BLUE) ? effect_level : 0);
 
 	lastposenum = (r_framelerp >= 0.5) ? pose2 : pose1;
 	verts1 = verts2 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts1 += pose1 * paliashdr->poseverts;
 	verts2 += pose2 * paliashdr->poseverts;
 
-	{
-		int *order, count;
-		float scroll[2];
-		float v[3];
-		float shell_size = bound(0, gl_powerupshells_size.value, 20);
+	scroll[0] = cos(cl.time * 1.5);
+	scroll[1] = sin(cl.time * 1.1);
+	scroll[2] = cos(cl.time * -0.5);
+	scroll[3] = sin(cl.time * -0.5);
 
-		if (scrolldir) {
-			scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
-			scroll[1] = sin(cl.time * -0.5);
-		}
-		else {
-			scroll[0] = cos(cl.time * 1.5);
-			scroll[1] = sin(cl.time * 1.1);
-		}
+	for (layer_no = 0; layer_no <= 1; ++layer_no) {
+		GLC_SetPowerupShellColor(layer_no, effects);
 
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
@@ -291,12 +406,13 @@ void GLC_DrawPowerupShell(
 				drawMode = GL_TRIANGLE_FAN;
 			}
 
-			// alpha so we can see colour underneath still
-			GL_Color4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
+			if (!cache) {
+				glBegin(drawMode);
+			}
 
-			glBegin(drawMode);
 			do {
-				glTexCoord2f(((float *)order)[0] * 2.0f + scroll[0], ((float *)order)[1] * 2.0f + scroll[1]);
+				float s = ((float *)order)[0] * 2.0f + scroll[layer_no * 2];
+				float t = ((float *)order)[1] * 2.0f + scroll[layer_no * 2 + 1];
 
 				order += 2;
 
@@ -307,12 +423,47 @@ void GLC_DrawPowerupShell(
 				v[1] += r_framelerp * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
 				v[2] += r_framelerp * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
 
-				glVertex3f(v[0], v[1], v[2]);
+				if (cache) {
+					temp_aliasmodel_buffer[position].texture_coords[0] = s;
+					temp_aliasmodel_buffer[position].texture_coords[1] = t;
+					VectorCopy(v, temp_aliasmodel_buffer[position].position);
+					position++;
+				}
+				else {
+					glTexCoord2f(s, t);
+					glVertex3f(v[0], v[1], v[2]);
+				}
 
 				verts1++;
 				verts2++;
 			} while (--count);
-			glEnd();
+
+			if (cache) {
+				int i;
+
+				GL_UnBindBuffer(GL_ARRAY_BUFFER);
+
+				glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
+				glEnableClientState(GL_VERTEX_ARRAY);
+				qglClientActiveTexture(GL_TEXTURE0);
+				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glDisableClientState(GL_COLOR_ARRAY);
+
+				GL_DrawArrays(drawMode, 0, position);
+
+				// And quickly update texture-coordinates and run again...
+				GLC_SetPowerupShellColor(1, effects);
+				for (i = 0; i < position; ++i) {
+					temp_aliasmodel_buffer[i].texture_coords[0] += scroll[2] - scroll[0];
+					temp_aliasmodel_buffer[i].texture_coords[1] += scroll[3] - scroll[1];
+				}
+				GL_DrawArrays(drawMode, 0, position);
+				++layer_no;
+			}
+			else {
+				glEnd();
+			}
 		}
 	}
 }

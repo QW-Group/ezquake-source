@@ -375,8 +375,9 @@ void GLM_DrawAliasFrame(
 	);
 }
 
+// MEAG: FIXME, remove
 void GLM_DrawPowerupShell(
-	model_t* model, int effects, int layer_no,
+	model_t* model, int effects,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {

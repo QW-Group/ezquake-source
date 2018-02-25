@@ -162,4 +162,5 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
 	GL_CreateBrushModelVAO(instance_vbo);
 	GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+	GLC_AllocateAliasPoseBuffer();
 }
