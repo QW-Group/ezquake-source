@@ -827,7 +827,8 @@ void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
-void GL_FlushImageDraw(qbool draw);
+void GL_FlushImageDraw(void);
+void GL_EmptyImageQueue(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 
 void GLM_SetIdentityMatrix(float* matrix);

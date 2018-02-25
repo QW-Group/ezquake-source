@@ -304,7 +304,7 @@ static void GLM_FlushImageDraw(void)
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
-		GL_FlushImageDraw(true);
+		return;
 	}
 
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
@@ -346,7 +346,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
-		GL_FlushImageDraw(true);
+		return;
 	}
 
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
@@ -528,9 +528,14 @@ static void GLC_FlushImageDraw(void)
 	}
 }
 
-void GL_FlushImageDraw(qbool draw)
+void GL_EmptyImageQueue(void)
 {
-	if (!draw || !imageCount) {
+	imageCount = 0;
+}
+
+void GL_FlushImageDraw(void)
+{
+	if (!imageCount) {
 		imageCount = 0;
 		return;
 	}
@@ -553,7 +558,7 @@ static GLint polygonUniforms_color;
 
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
-	GL_FlushImageDraw(true);
+	GL_FlushImageDraw();
 
 	if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
 		GL_VFDeclare(draw_polygon);
@@ -620,7 +625,7 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	int end;
 	int points;
 
-	GL_FlushImageDraw(true);
+	GL_FlushImageDraw();
 
 	if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
 		GL_VFDeclare(draw_circle);

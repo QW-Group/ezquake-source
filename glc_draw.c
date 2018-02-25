@@ -65,7 +65,7 @@ void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	int start;
 	int end;
 
-	GL_FlushImageDraw(true);
+	GL_FlushImageDraw();
 
 	GLC_StateBeginDrawAlphaPieSliceRGB(thickness);
 
