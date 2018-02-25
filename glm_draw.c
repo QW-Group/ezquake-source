@@ -155,10 +155,61 @@ typedef struct glm_image_s {
 	texture_ref texNumber;
 } glm_image_t;
 
+typedef struct glc_image_s {
+	float pos[2];
+	float tex[2];
+	unsigned char colour[4];
+} glc_image_t;
+
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
+static glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 static int imageCount = 0;
 static glm_vao_t imageVAO;
 static buffer_ref imageVBO;
+
+static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float tex_width, float t, float tex_height)
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+	float matrix[16];
+	float v1[4] = { x1, y1, 0, 1 };
+	float v2[4] = { x2, y2, 0, 1 };
+	byte color[4];
+
+	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, matrix);
+	GLM_MultiplyVector(matrix, v1, v1);
+	GLM_MultiplyVector(matrix, v2, v2);
+
+	memcpy(color, targ->colour, 4);
+	targ->pos[0] = v1[0];
+	targ->pos[1] = v2[1];
+	targ->tex[0] = s;
+	targ->tex[1] = t + tex_height;
+
+	++targ;
+	memcpy(targ->colour, color, 4);
+	targ->pos[0] = v1[0];
+	targ->pos[1] = v1[1];
+	targ->tex[0] = s;
+	targ->tex[1] = t;
+
+	++targ;
+	memcpy(targ->colour, color, 4);
+	targ->pos[0] = v2[0];
+	targ->pos[1] = v1[1];
+	targ->tex[0] = s + tex_width;
+	targ->tex[1] = t;
+
+	++targ;
+	memcpy(targ->colour, color, 4);
+	targ->pos[0] = v2[0];
+	targ->pos[1] = v2[1];
+	targ->tex[0] = s + tex_width;
+	targ->tex[1] = t + tex_height;
+}
 
 static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2)
 {
@@ -257,15 +308,34 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		GL_FlushImageDraw(true);
 	}
 
-	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
-	if (color[3] != 255) {
-		float alpha = color[3] / 255.0f;
+	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
+		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+		if (color[3] != 255) {
+			float alpha = color[3] / 255.0f;
 
-		images[imageCount].colour[0] *= alpha;
-		images[imageCount].colour[1] *= alpha;
-		images[imageCount].colour[2] *= alpha;
+			images[imageCount].colour[0] *= alpha;
+			images[imageCount].colour[1] *= alpha;
+			images[imageCount].colour[2] *= alpha;
+		}
+		GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
+		images[imageCount].s1 = tex_s;
+		images[imageCount].s2 = tex_s + tex_width;
+		images[imageCount].t1 = tex_t;
+		images[imageCount].t2 = tex_t + tex_height;
 	}
-	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
+	else {
+		int imageIndex = imageCount * 4;
+		memcpy(&glc_images[imageIndex].colour, color, sizeof(byte) * 4);
+		if (color[3] != 255) {
+			float alpha = color[3] / 255.0f;
+
+			glc_images[imageIndex].colour[0] *= alpha;
+			glc_images[imageIndex].colour[1] *= alpha;
+			glc_images[imageIndex].colour[2] *= alpha;
+		}
+		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
+	}
+
 	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 	if (alpha) {
 		images[imageCount].flags |= IMAGEPROG_FLAGS_ALPHATEST;
@@ -273,10 +343,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	if (isText) {
 		images[imageCount].flags |= IMAGEPROG_FLAGS_TEXT;
 	}
-	images[imageCount].s1 = tex_s;
-	images[imageCount].s2 = tex_s + tex_width;
-	images[imageCount].t1 = tex_t;
-	images[imageCount].t2 = tex_t + tex_height;
 	images[imageCount].texNumber = texnum;
 
 	++imageCount;
@@ -288,17 +354,33 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 		GL_FlushImageDraw(true);
 	}
 
-	memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
-	if (color[3] != 255) {
-		float alpha = color[3] / 255.0f;
+	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
+		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+		if (color[3] != 255) {
+			float alpha = color[3] / 255.0f;
 
-		images[imageCount].colour[0] *= alpha;
-		images[imageCount].colour[1] *= alpha;
-		images[imageCount].colour[2] *= alpha;
+			images[imageCount].colour[0] *= alpha;
+			images[imageCount].colour[1] *= alpha;
+			images[imageCount].colour[2] *= alpha;
+		}
+		GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
+		images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
 	}
-	GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
+	else {
+		int imageIndex = imageCount * 4;
+
+		memcpy(&glc_images[imageIndex].colour, color, sizeof(byte) * 4);
+		if (color[3] != 255) {
+			float alpha = color[3] / 255.0f;
+
+			glc_images[imageIndex].colour[0] *= alpha;
+			glc_images[imageIndex].colour[1] *= alpha;
+			glc_images[imageIndex].colour[2] *= alpha;
+		}
+		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, 0, 0, 0, 0);
+	}
+
 	images[imageCount].flags = 0;
-	images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
 	GL_TextureReferenceInvalidate(images[imageCount].texNumber);
 
 	++imageCount;
@@ -320,6 +402,29 @@ static void GLC_FlushImageDraw(void)
 		GL_IdentityProjectionView();
 
 		GLC_StateBeginImageDraw();
+
+		if (GL_BuffersSupported()) {
+			GL_BindVertexArray(NULL);
+			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
+			if (!GL_BufferReferenceIsValid(imageVBO)) {
+				imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(glc_images), glc_images, GL_STREAM_DRAW);
+				GL_BindBuffer(imageVBO);
+			}
+			else {
+				GL_BindAndUpdateBuffer(imageVBO, imageCount * 4 * sizeof(glc_images[0]), glc_images);
+			}
+
+			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
+			glEnableClientState(GL_VERTEX_ARRAY);
+
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+			glEnableClientState(GL_COLOR_ARRAY);
+
+			qglClientActiveTexture(GL_TEXTURE0);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
 
 		for (i = 0; i < imageCount; ++i) {
 			qbool alpha_test = images[i].flags & IMAGEPROG_FLAGS_ALPHATEST;
@@ -352,7 +457,6 @@ static void GLC_FlushImageDraw(void)
 			GL_Color4ubv(images[i].colour);
 			memcpy(current_color, images[i].colour, sizeof(current_color));
 
-			glBegin(GL_QUADS);
 			for (j = i; j < imageCount; ++j) {
 				glm_image_t* next = &images[j];
 				qbool next_alpha_test = next->flags & IMAGEPROG_FLAGS_ALPHATEST;
@@ -378,37 +482,56 @@ static void GLC_FlushImageDraw(void)
 					GL_MarkEvent("(break for texture)");
 					break;
 				}
-
-				// Don't need to break for colour
-				if (memcmp(next->colour, current_color, sizeof(current_color))) {
-					memcpy(current_color, next->colour, sizeof(current_color));
-					GL_Color4ubv(next->colour);
-				}
-
-				if (texture) {
-					glTexCoord2f(next->s1, next->t2);
-				}
-				glVertex2f(next->x1, next->y2);
-				if (texture) {
-					glTexCoord2f(next->s1, next->t1);
-				}
-				glVertex2f(next->x1, next->y1);
-				if (texture) {
-					glTexCoord2f(next->s2, next->t1);
-				}
-				glVertex2f(next->x2, next->y1);
-				if (texture) {
-					glTexCoord2f(next->s2, next->t2);
-				}
-				glVertex2f(next->x2, next->y2);
 			}
-			glEnd();
 
-			i = j - 1;
+			if (GL_BuffersSupported()) {
+				GL_DrawArrays(GL_QUADS, i * 4, (j - i) * 4);
+
+				i = j - 1;
+			}
+			else {
+				glBegin(GL_QUADS);
+
+				while (i < j) {
+					glm_image_t* next = &images[i];
+
+					// Don't need to break for colour
+					if (memcmp(next->colour, current_color, sizeof(current_color))) {
+						memcpy(current_color, next->colour, sizeof(current_color));
+						GL_Color4ubv(next->colour);
+					}
+
+					if (texture) {
+						glTexCoord2f(next->s1, next->t2);
+					}
+					glVertex2f(next->x1, next->y2);
+					if (texture) {
+						glTexCoord2f(next->s1, next->t1);
+					}
+					glVertex2f(next->x1, next->y1);
+					if (texture) {
+						glTexCoord2f(next->s2, next->t1);
+					}
+					glVertex2f(next->x2, next->y1);
+					if (texture) {
+						glTexCoord2f(next->s2, next->t2);
+					}
+					glVertex2f(next->x2, next->y2);
+				}
+
+				--i;
+				glEnd();
+			}
 		}
 
 		GL_PopMatrix(GL_PROJECTION, projectionMatrix);
 		GL_PopMatrix(GL_MODELVIEW, modelviewMatrix);
+
+		if (GL_BuffersSupported()) {
+			glDisableClientState(GL_VERTEX_ARRAY);
+			glDisableClientState(GL_COLOR_ARRAY);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
 	}
 }
 
