@@ -295,9 +295,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			if (mod == cl.worldmodel || !mod->isworldmodel) {
-				position = GL_PopulateVBOForBrushModel(mod, buffer, position);
-			}
+			position = GL_PopulateVBOForBrushModel(mod, buffer, position);
 		}
 	}
 
