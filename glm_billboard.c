@@ -7,6 +7,7 @@
 #include "gl_billboards.h"
 
 void GLM_DrawBillboards(void);
+void GLM_PrepareBillboards(void);
 void GLC_DrawBillboards(void);
 
 #define MAX_BILLBOARDS_PER_BATCH    1024  // Batches limited to this so they can't break other functionality
@@ -216,14 +217,14 @@ void GL_DrawBillboards(void)
 	}
 
 	if (GL_ShadersSupported()) {
-		GLM_DrawBillboards();
+		GLM_PrepareBillboards();
 	}
 	else {
 		GLC_DrawBillboards();
-	}
 
-	batchCount = vertexCount = 0;
-	memset(batchMapping, 0, sizeof(batchMapping));
+		batchCount = vertexCount = 0;
+		memset(batchMapping, 0, sizeof(batchMapping));
+	}
 }
 
 static void GL_CreateBillboardVBO(void)
@@ -404,6 +405,19 @@ static void GLM_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offse
 	}
 }
 
+void GLM_PrepareBillboards(void)
+{
+	GL_EnterRegion(__FUNCTION__);
+
+	GLM_CreateBillboardVAO();
+
+	if (GL_BufferReferenceIsValid(billboardVBO)) {
+		GL_UpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
+	}
+
+	GL_LeaveRegion();
+}
+
 void GLM_DrawBillboards(void)
 {
 	unsigned int i;
@@ -414,8 +428,9 @@ void GLM_DrawBillboards(void)
 		GL_LeaveRegion();
 		return;
 	}
-	GL_BindAndUpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
+
 	GLM_StateBeginDrawBillboards();
+
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];
 
@@ -485,6 +500,9 @@ void GLM_DrawBillboards(void)
 	GLM_StateEndDrawBillboards();
 
 	GL_LeaveRegion();
+
+	batchCount = vertexCount = 0;
+	memset(batchMapping, 0, sizeof(batchMapping));
 }
 
 void GLC_DrawBillboards(void)

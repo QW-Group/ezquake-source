@@ -930,16 +930,7 @@ static void R_RenderScene(void)
 	}
 	
 	if (GL_ShadersSupported()) {
-		GL_EnterRegion("GLM_DrawBrushModels");
-		GL_DrawWorldModelBatch();
-		GL_LeaveRegion();
-
-		GL_EnterRegion("GLM_DrawEntities");
 		R_DrawViewModel();
-
-		GLM_PrepareAliasModelBatches();
-		GLM_DrawAliasModelBatches();
-		GL_LeaveRegion();
 	}
 	else {
 		GLC_StateEndRenderScene();
@@ -948,11 +939,11 @@ static void R_RenderScene(void)
 
 static void R_RenderTransparentWorld(void)
 {
-	if (!GL_ShadersSupported()) {
-		GLC_DrawWaterSurfaces();
+	if (GL_ShadersSupported()) {
+		GLM_DrawWaterSurfaces();
 	}
 	else {
-		GLM_DrawWaterSurfaces();
+		GLC_DrawWaterSurfaces();
 	}
 }
 
@@ -1122,7 +1113,7 @@ static void R_Render3DEffects(void)
 	// Run corona logic
 	R_DrawCoronas();
 
-	// Actually render
+	// Render billboards
 	GL_DrawBillboards();
 }
 
@@ -1163,6 +1154,25 @@ void R_RenderView(void)
 
 	// Draws transparent world surfaces
 	R_RenderTransparentWorld();
+
+	if (GL_ShadersSupported()) {
+		GL_PrepareWorldModelBatch();
+		GLM_PrepareAliasModelBatches();
+
+		GL_EnterRegion("GLM_DrawBrushModels");
+		GL_DrawWorldModelBatch(opaque_world);
+		GL_LeaveRegion();
+
+		GL_EnterRegion("GLM_DrawEntities");
+		GLM_DrawAliasModelBatches();
+		GL_LeaveRegion();
+
+		GLM_DrawBillboards();
+
+		GL_EnterRegion("GLM_DrawWaterSurfaces");
+		GL_DrawWorldModelBatch(alpha_surfaces);
+		GL_LeaveRegion();
+	}
 
 	// Draw 3D hud elements
 	R_Render3DHud();

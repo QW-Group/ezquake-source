@@ -1146,6 +1146,13 @@ void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
 
+typedef enum {
+	opaque_world,
+	alpha_surfaces
+} glm_brushmodel_drawcall_type;
+
+void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type);
+
 // Rendering functions
 void GL_DrawArrays(GLenum mode, GLint first, GLsizei count);
 void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount);

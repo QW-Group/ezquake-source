@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GLM_DRAWCALL_INCREMENT 8
 
+void GL_StartWaterSurfaceBatch(void);
+
 extern buffer_ref brushModel_vbo;
 extern GLuint* modelIndexes;
 extern GLuint modelIndexMaximum;
@@ -50,6 +52,7 @@ typedef struct glm_brushmodel_drawcall_s {
 	GLintptr indirectDrawOffset;
 
 	int polygonOffsetSplit;
+	glm_brushmodel_drawcall_type type;
 
 	struct glm_brushmodel_drawcall_s* next;
 } glm_brushmodel_drawcall_t;
@@ -245,6 +248,9 @@ void GLM_EnterBatchedWorldRegion(void)
 	index_count = 0;
 	GLM_CheckDrawCallSize();
 	memset(drawcalls, 0, sizeof(drawcalls[0]) * maximum_drawcalls);
+
+	index_count = 0;
+	current_drawcall = 0;
 }
 
 static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
@@ -401,17 +407,19 @@ void GLM_DrawWaterSurfaces(void)
 	extern msurface_t* waterchain;
 	msurface_t* surf;
 	glm_worldmodel_req_t* req = NULL;
-	qbool alpha = GL_WaterAlpha();
+	float alpha;
 	int v;
 
 	if (!waterchain) {
 		return;
 	}
 
+	alpha = GL_WaterAlpha();
+
 	// Waterchain has list of alpha-blended surfaces
 	GL_EnterRegion(__FUNCTION__);
-	GLM_EnterBatchedWorldRegion();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+
+	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(surf->texinfo->texture);
@@ -437,8 +445,6 @@ void GLM_DrawWaterSurfaces(void)
 			}
 		}
 	}
-
-	GL_FlushWorldModelBatch();
 
 	GL_LeaveRegion();
 }
@@ -546,7 +552,14 @@ void GL_FlushWorldModelBatch(void)
 	GLM_CheckDrawCallSize();
 }
 
-static void GL_PrepareWorldModelBatch(void)
+void GL_StartWaterSurfaceBatch(void)
+{
+	GL_FlushWorldModelBatch();
+
+	drawcalls[current_drawcall].type = alpha_surfaces;
+}
+
+void GL_PrepareWorldModelBatch(void)
 {
 	extern buffer_ref vbo_brushElements;
 	GLintptr drawOffset = 0;
@@ -554,6 +567,7 @@ static void GL_PrepareWorldModelBatch(void)
 	int batchOffset = 0;
 	int draw, i;
 
+	GL_EnterRegion(__FUNCTION__);
 	GL_UpdateBuffer(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	GL_EnsureBufferSize(vbo_worldIndirectDraw, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	GL_EnsureBufferSize(ssbo_worldcvars, sizeof(drawcalls[0].calls) * maximum_drawcalls);
@@ -583,24 +597,27 @@ static void GL_PrepareWorldModelBatch(void)
 		batchOffset += drawcall->batch_count;
 		samplerMappingOffset += drawcall->sampler_mappings;
 	}
+
+	GL_LeaveRegion();
 }
 
-void GL_DrawWorldModelBatch(void)
+void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
 	extern buffer_ref vbo_brushElements;
 	extern glm_vao_t brushModel_vao;
 	int draw;
 
-	GL_PrepareWorldModelBatch();
 	GL_StartWorldBatch();
 	GL_BindBuffer(vbo_brushElements);
 	GL_BindBuffer(vbo_worldIndirectDraw);
 
+	GL_AlphaBlendFlags(type == alpha_surfaces ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
+
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
 
-		if (!drawcall->batch_count) {
-			return;
+		if (!drawcall->batch_count || drawcall->type != type) {
+			continue;
 		}
 
 		// Bind texture units
@@ -650,9 +667,6 @@ void GL_DrawWorldModelBatch(void)
 		drawcall->material_samplers = 0;
 		drawcall->sampler_mappings = 0;
 	}
-
-	index_count = 0;
-	current_drawcall = 0;
 }
 
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
