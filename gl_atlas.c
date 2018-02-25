@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static char buffer[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
 static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
 static int atlas_delete_count = 0;
+static float solid_s;
+static float solid_t;
 
 static void AddToDeleteList(mpic_t* src)
 {
@@ -62,6 +64,13 @@ static texture_ref atlas_texnum;
 static qbool atlas_refresh = false;
 
 static cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };
+
+void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
+{
+	*ref = atlas_texnum;
+	*s = solid_s;
+	*t = solid_t;
+}
 
 // Returns false if allocation failed.
 static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
@@ -104,6 +113,22 @@ static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
 	*y *= ATLAS_CHUNK;
 
 	return true;
+}
+
+static void CachePics_AllocateSolidTexture(void)
+{
+	int x_pos, y_pos, y;
+
+	CachePics_AllocBlock(ATLAS_CHUNK, ATLAS_CHUNK, &x_pos, &y_pos);
+
+	for (y = 0; y < ATLAS_CHUNK; ++y) {
+		memset(atlas_texels + (x_pos + (y_pos + y) * ATLAS_TEXTURE_WIDTH) * 4, 0xFF, ATLAS_CHUNK * 4);
+	}
+
+	solid_s = (x_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_WIDTH;
+	solid_t = (y_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_HEIGHT;
+
+	Con_Printf("SolidTexture(%d,%d => %f, %f)\n", x_pos, y_pos, solid_s, solid_t);
 }
 
 static int CachePics_AddToAtlas(mpic_t* pic)
@@ -395,6 +420,7 @@ void CachePics_CreateAtlas(void)
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		CachePics_AddToAtlas(cur->data.pic);
 	}
+	CachePics_AllocateSolidTexture();
 
 	// Upload atlas textures
 	CachePics_AtlasUpload();

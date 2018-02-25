@@ -11,18 +11,15 @@ in vec2 gTexCoordTL[1];
 in vec2 gTexCoordBR[1];
 in vec4 gColour[1];
 in float gAlphaTest[1];
-in float gUseTexture[1];
 
 out vec2 TextureCoord;
 out vec4 Colour;
 out float AlphaTest;
-out float UseTexture;
 
 void main()
 {
 	Colour = gColour[0];
 	AlphaTest = gAlphaTest[0];
-	UseTexture = gUseTexture[0];
 
 	gl_Position = gPositionTL[0];
 	TextureCoord = gTexCoordTL[0];

@@ -39,6 +39,7 @@ extern float overall_alpha;
 #define IMAGEPROG_FLAGS_TEXT        4
 
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
+void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 
 static glm_vao_t* GL_CreateLineVAO(void)
 {
@@ -302,7 +303,7 @@ static void GLM_FlushImageDraw(void)
 	imageCount = 0;
 }
 
-void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText)
+void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
 {
 	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		GL_FlushImageDraw(true);
@@ -337,12 +338,8 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	}
 
 	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
-	if (alpha) {
-		images[imageCount].flags |= IMAGEPROG_FLAGS_ALPHATEST;
-	}
-	if (isText) {
-		images[imageCount].flags |= IMAGEPROG_FLAGS_TEXT;
-	}
+	images[imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
+	images[imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
 	images[imageCount].texNumber = texnum;
 
 	++imageCount;
@@ -364,10 +361,13 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 			images[imageCount].colour[2] *= alpha;
 		}
 		GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
-		images[imageCount].s1 = images[imageCount].s2 = images[imageCount].t1 = images[imageCount].t2 = 0;
+		Atlas_SolidTextureCoordinates(&images[imageCount].texNumber, &images[imageCount].s1, &images[imageCount].t1);
+		images[imageCount].s2 = images[imageCount].s1;
+		images[imageCount].t2 = images[imageCount].t1;
 	}
 	else {
 		int imageIndex = imageCount * 4;
+		float s, t;
 
 		memcpy(&glc_images[imageIndex].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
@@ -377,11 +377,11 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 			glc_images[imageIndex].colour[1] *= alpha;
 			glc_images[imageIndex].colour[2] *= alpha;
 		}
-		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, 0, 0, 0, 0);
+		Atlas_SolidTextureCoordinates(&images[imageCount].texNumber, &s, &t);
+		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0);
 	}
 
-	images[imageCount].flags = 0;
-	GL_TextureReferenceInvalidate(images[imageCount].texNumber);
+	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 
 	++imageCount;
 }
@@ -431,13 +431,8 @@ static void GLC_FlushImageDraw(void)
 			qbool texture = images[i].flags & IMAGEPROG_FLAGS_TEXTURE;
 			qbool text = images[i].flags & IMAGEPROG_FLAGS_TEXT;
 
-			if (texture) {
-				GLC_EnsureTMUEnabled(GL_TEXTURE0);
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, images[i].texNumber);
-			}
-			else {
-				GLC_EnsureTMUDisabled(GL_TEXTURE0);
-			}
+			GLC_EnsureTMUEnabled(GL_TEXTURE0);
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, images[i].texNumber);
 
 			if (text) {
 				alpha_test = !gl_alphafont.integer;

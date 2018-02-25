@@ -819,7 +819,7 @@ void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
-void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha, texture_ref texnum, qbool isText);
+void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText);
 void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_DrawParticles(int number, qbool square);
 void GLM_Draw_FadeScreen(float alpha);

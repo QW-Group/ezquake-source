@@ -15,7 +15,6 @@ out vec2 gTexCoordTL;
 out vec2 gTexCoordBR;
 out vec4 gColour;
 out float gAlphaTest;
-out float gUseTexture;
 
 void main()
 {
@@ -24,7 +23,6 @@ void main()
 	gTexCoordTL = inTexCoordTL;
 	gTexCoordBR = inTexCoordBR;
 	gColour = inColour;
-	gUseTexture = (inFlags & 1);
 	if ((inFlags & 4) != 0) {
 		gAlphaTest = r_alphafont != 0 ? 0 : 1;
 	}
