@@ -38,8 +38,28 @@ extern float overall_alpha;
 #define IMAGEPROG_FLAGS_ALPHATEST   2
 #define IMAGEPROG_FLAGS_TEXT        4
 
+static void GLM_PreparePolygon(void);
+static void GLM_PrepareCircleDraw(void);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
+
+static glm_program_t circleProgram;
+static glm_vao_t circleVAO;
+static buffer_ref circleVBO;
+static GLint drawCircleUniforms_matrix;
+static GLint drawCircleUniforms_color;
+
+#define FLOATS_PER_CIRCLE ((3 + 2 * CIRCLE_LINE_COUNT) * 2)
+#define CIRCLES_PER_FRAME 256
+
+static float drawCirclePointData[FLOATS_PER_CIRCLE * CIRCLES_PER_FRAME];
+static float drawCircleColors[CIRCLES_PER_FRAME][4];
+static qbool drawCircleFill[CIRCLES_PER_FRAME];
+static int drawCirclePoints[CIRCLES_PER_FRAME];
+static int circleCount;
+static void GLM_DrawCircles(int start, int end);
+
+static void GLM_DrawPolygonImpl(void);
 
 static glm_vao_t* GL_CreateLineVAO(void)
 {
@@ -162,6 +182,13 @@ typedef struct glc_image_s {
 	unsigned char colour[4];
 } glc_image_t;
 
+typedef enum {
+	imagetype_image,
+	imagetype_circle,
+	imagetype_polygon
+} glm_image_type_t;
+
+static glm_image_type_t imageTypes[MAX_MULTI_IMAGE_BATCH];
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
 static glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 static int imageCount = 0;
@@ -262,6 +289,28 @@ void GLM_CreateMultiImageProgram(void)
 	}
 }
 
+static void GL_DrawImageArraySequence(texture_ref texture, int start, int length)
+{
+	GL_UseProgram(multiImageProgram.program);
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	GL_Disable(GL_DEPTH_TEST);
+	GL_BindVertexArray(&imageVAO);
+	if (GL_TextureReferenceIsValid(texture)) {
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+	}
+	GL_DrawArrays(GL_POINTS, start, length);
+}
+
+static void GLM_PrepareImageDraw(void)
+{
+	GLM_CreateMultiImageProgram();
+	GL_UpdateBuffer(imageVBO, sizeof(images[0]) * imageCount, images);
+
+	GLM_PreparePolygon();
+	GLM_PrepareCircleDraw();
+}
+
 static void GLM_FlushImageDraw(void)
 {
 	if (imageCount && glConfig.initialized) {
@@ -269,36 +318,42 @@ static void GLM_FlushImageDraw(void)
 		int i;
 		texture_ref currentTexture = null_texture_reference;
 
-		GLM_CreateMultiImageProgram();
-		GL_UpdateBuffer(imageVBO, sizeof(images[0]) * imageCount, images);
-		GL_UseProgram(multiImageProgram.program);
-		GL_BindVertexArray(&imageVAO);
-
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST);
-
 		for (i = 0; i < imageCount; ++i) {
 			glm_image_t* img = &images[i];
 
-			if (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber)) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
-				GL_DrawArrays(GL_POINTS, start, i - start);
+			if (imageTypes[i] != imagetype_image || (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber))) {
+				if (i - start) {
+					GL_DrawImageArraySequence(currentTexture, start, i - start);
+				}
 				start = i;
 			}
 
-			if (GL_TextureReferenceIsValid(img->texNumber)) {
+			if (imageTypes[i] != imagetype_image) {
+				for (start = i; i < imageCount && imageTypes[i] != imagetype_image; ++i) {
+					// Draw sub-batch
+					if (imageTypes[i] == imagetype_circle) {
+						GLM_DrawCircles(images[i].flags, images[i].flags);
+					}
+					else if (imageTypes[i] == imagetype_polygon) {
+						GLM_DrawPolygonImpl();
+					}
+					++start;
+				}
+				--i;
+			}
+			else if (GL_TextureReferenceIsValid(img->texNumber)) {
 				currentTexture = img->texNumber;
 			}
 		}
 
-		if (GL_TextureReferenceIsValid(currentTexture)) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
+		if (imageCount - start) {
+			GL_DrawImageArraySequence(currentTexture, start, imageCount - start);
 		}
-		GL_DrawArrays(GL_POINTS, start, imageCount - start);
 	}
 
+	memset(imageTypes, 0, sizeof(imageTypes));
 	imageCount = 0;
+	circleCount = 0;
 }
 
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
@@ -307,6 +362,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		return;
 	}
 
+	imageTypes[imageCount] = imagetype_image;
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
 		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
@@ -349,6 +405,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 		return;
 	}
 
+	imageTypes[imageCount] = imagetype_image;
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
 		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
@@ -535,10 +592,7 @@ void GL_EmptyImageQueue(void)
 
 void GL_FlushImageDraw(void)
 {
-	if (!imageCount) {
-		imageCount = 0;
-		return;
-	}
+	GLM_PrepareImageDraw();
 
 	if (GL_ShadersSupported()) {
 		GLM_FlushImageDraw();
@@ -548,6 +602,7 @@ void GL_FlushImageDraw(void)
 	}
 
 	imageCount = 0;
+	circleCount = 0;
 }
 
 static glm_program_t polygonProgram;
@@ -556,10 +611,14 @@ static buffer_ref polygonVBO;
 static GLint polygonUniforms_matrix;
 static GLint polygonUniforms_color;
 
-void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
-{
-	GL_FlushImageDraw();
+static vec3_t polygonVertices[64];
+static int polygonVerts;
+static color_t polygonColor;
+static int polygonX;
+static int polygonY;
 
+static void GLM_PreparePolygon(void)
+{
 	if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
 		GL_VFDeclare(draw_polygon);
 
@@ -575,58 +634,76 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	}
 
 	if (!GL_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(vertices[0]) * max(num_vertices, 32), vertices, GL_STREAM_DRAW);
-	}
-	else if (num_vertices * sizeof(vertices[0]) > GL_VBOSize(polygonVBO)) {
-		GL_ResizeBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
+		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonVertices), polygonVertices, GL_STREAM_DRAW);
 	}
 	else {
-		GL_UpdateBuffer(polygonVBO, num_vertices * sizeof(vertices[0]), vertices);
+		GL_UpdateBuffer(polygonVBO, polygonVerts * sizeof(polygonVertices[0]), polygonVertices);
 	}
 
 	if (!polygonVAO.vao) {
 		GL_GenVertexArray(&polygonVAO, "polygon-vao");
 		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
+}
 
-	{
-		float matrix[16];
-		byte glColor[4];
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
+{
+	if (num_vertices > sizeof(polygonVertices) / sizeof(polygonVertices[0])) {
+		return;
+	}
 
-		COLOR_TO_RGBA(color, glColor);
+	polygonVerts = num_vertices;
+	polygonX = x;
+	polygonY = y;
+	memcpy(polygonVertices, vertices, sizeof(polygonVertices[0]) * num_vertices);
+}
 
-		GL_Disable(GL_DEPTH_TEST);
-		GLM_GetMatrix(GL_PROJECTION, matrix);
-		GLM_TransformMatrix(matrix, x, y, 0);
+static void GLM_DrawPolygonImpl(void)
+{
+	float matrix[16];
+	float alpha;
+	byte glColor[4];
 
-		GL_BindVertexArray(&polygonVAO);
-		GL_UseProgram(polygonProgram.program);
-		glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
-		glUniform4f(polygonUniforms_color, glColor[0] / 255.0f, glColor[1] / 255.0f, glColor[2] / 255.0f, glColor[3] / 255.0f);
+	COLOR_TO_RGBA(polygonColor, glColor);
 
-		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
+	alpha = glColor[3] / 255.0f;
+
+	GL_Disable(GL_DEPTH_TEST);
+	GLM_GetMatrix(GL_PROJECTION, matrix);
+	GLM_TransformMatrix(matrix, polygonX, polygonY, 0);
+
+	GL_BindVertexArray(&polygonVAO);
+	GL_UseProgram(polygonProgram.program);
+	glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+	glUniform4f(polygonUniforms_color, glColor[0] * alpha / 255.0f, glColor[1] * alpha / 255.0f, glColor[2] * alpha / 255.0f, alpha);
+
+	GL_DrawArrays(GL_TRIANGLE_STRIP, 0, polygonVerts);
+}
+
+static void GLM_DrawCircles(int start, int end)
+{
+	// FIXME: Not very efficient (but rarely used either)
+	float projectionMatrix[16];
+	int i;
+
+	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	start = max(0, start);
+	end = min(end, circleCount - 1);
+
+	GL_UseProgram(circleProgram.program);
+	GL_BindVertexArray(&circleVAO);
+
+	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
+	for (i = start; i <= end; ++i) {
+		glUniform4fv(drawCircleUniforms_color, 1, drawCircleColors[i]);
+
+		GL_DrawArrays(drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, i * FLOATS_PER_CIRCLE / 2, drawCirclePoints[i]);
 	}
 }
 
-static glm_program_t circleProgram;
-static glm_vao_t circleVAO;
-static buffer_ref circleVBO;
-static GLint drawCircleUniforms_matrix;
-static GLint drawCircleUniforms_color;
-
-void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+static void GLM_PrepareCircleDraw(void)
 {
-	float projectionMatrix[16];
-	float pointData[(3 + 2 * CIRCLE_LINE_COUNT) * 2];
-	byte bytecolor[4];
-	double angle;
-	int i;
-	int start;
-	int end;
-	int points;
-
-	GL_FlushImageDraw();
-
 	if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
 		GL_VFDeclare(draw_circle);
 
@@ -644,7 +721,10 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 
 	// Build VBO
 	if (!GL_BufferReferenceIsValid(circleVBO)) {
-		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(pointData), NULL, GL_STREAM_DRAW);
+		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(drawCirclePointData), drawCirclePointData, GL_STREAM_DRAW);
+	}
+	else {
+		GL_UpdateBuffer(circleVBO, sizeof(drawCirclePointData), drawCirclePointData);
 	}
 
 	// Build VAO
@@ -653,6 +733,24 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 
 		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
+}
+
+void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+{
+	float* pointData;
+	double angle;
+	byte color_bytes[4];
+	int i;
+	int start;
+	int end;
+	int points;
+
+	if (imageCount >= MAX_MULTI_IMAGE_BATCH || circleCount >= CIRCLES_PER_FRAME) {
+		return;
+	}
+
+	imageTypes[imageCount] = imagetype_circle;
+	images[imageCount].flags = circleCount;
 
 	// Get the vertex index where to start and stop drawing.
 	start = Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
@@ -664,8 +762,18 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 		end = end + CIRCLE_LINE_COUNT;
 	}
 
-	// Create a vertex at the exact position specified by the start angle.
 	points = 0;
+	pointData = drawCirclePointData + (FLOATS_PER_CIRCLE * circleCount);
+	COLOR_TO_RGBA(color, color_bytes);
+	drawCircleColors[circleCount][0] = (color_bytes[0] / 255.0f) * overall_alpha;
+	drawCircleColors[circleCount][1] = (color_bytes[1] / 255.0f) * overall_alpha;
+	drawCircleColors[circleCount][2] = (color_bytes[2] / 255.0f) * overall_alpha;
+	drawCircleColors[circleCount][3] = (color_bytes[3] / 255.0f) * overall_alpha;
+	drawCircleFill[circleCount] = fill;
+	++imageCount;
+	++circleCount;
+
+	// Create a vertex at the exact position specified by the start angle.
 	pointData[points * 2 + 0] = x + radius * cos(startangle);
 	pointData[points * 2 + 1] = y - radius * sin(startangle);
 	++points;
@@ -698,12 +806,5 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 		++points;
 	}
 
-	GL_UpdateBuffer(circleVBO, sizeof(pointData[0]) * points * 2, pointData);
-	GL_UseProgram(circleProgram.program);
-	GL_BindVertexArray(&circleVAO);
-	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
-	COLOR_TO_RGBA(color, bytecolor);
-	glUniform4f(drawCircleUniforms_color, bytecolor[0] / 255.0f, bytecolor[1] / 255.0f, bytecolor[2] / 255.0f, (bytecolor[3] / 255.0f) * overall_alpha);
-	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
-	GL_DrawArrays(fill ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, 0, points);
+	drawCirclePoints[circleCount - 1] = points;
 }
