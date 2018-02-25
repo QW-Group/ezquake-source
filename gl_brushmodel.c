@@ -1439,8 +1439,10 @@ void R_DrawBrushModel(entity_t *e)
 	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
 	currententity = e;
-
 	clmodel = e->model;
+	if (!clmodel->nummodelsurfaces) {
+		return;
+	}
 
 	if (e->angles[0] || e->angles[1] || e->angles[2]) {
 		rotated = true;
@@ -1565,6 +1567,10 @@ void R_DrawBrushModel(entity_t *e)
 
 	if (!glc_first_water_poly) {
 		GLC_StateEndWaterSurfaces();
+	}
+
+	if (clmodel->last_texture_chained < 0) {
+		return;
 	}
 
 	// START shaman FIX for no simple textures on world brush models {
