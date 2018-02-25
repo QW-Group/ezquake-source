@@ -196,6 +196,7 @@ void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 		glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
 	}
 
+	buffers[vbo.index].size = size;
 	GL_LogAPICall("GL_ResizeBuffer(%s)", buffers[vbo.index].name);
 }
 
