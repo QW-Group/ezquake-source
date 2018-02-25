@@ -496,7 +496,9 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, buffer_ref vbo, buffer_ref ssbo, int position)
 {
 	GL_UpdateBufferSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
-	GL_UpdateBufferSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
+	if (GL_BufferReferenceIsValid(ssbo)) {
+		GL_UpdateBufferSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
+	}
 
 	hdr->vertsOffset = mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);
