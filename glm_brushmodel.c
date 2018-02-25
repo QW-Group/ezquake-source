@@ -198,8 +198,8 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 		}
 
 		has_luma = GL_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
-		for (j = 0; j < m->numsurfaces; ++j) {
-			msurface_t* surf = m->surfaces + j;
+		for (j = 0; j < m->nummodelsurfaces; ++j) {
+			msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
 			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;
 			glpoly_t* poly;
 
