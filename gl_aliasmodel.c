@@ -141,7 +141,6 @@ static custom_model_color_t custom_model_colors[] = {
 };
 
 extern vec3_t lightspot;
-extern cvar_t gl_meshdraw;
 
 static qbool IsFlameModel(model_t* model)
 {

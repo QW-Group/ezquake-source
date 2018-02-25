@@ -199,11 +199,9 @@ void BuildTris (void)
 	int		i, j, k;
 	int		startv;
 	float	s, t;
-	int		len, bestlen, besttype = 0;
+	int		len, bestlen;
 	int		bestverts[1024];
 	int		besttris[1024];
-	int		type;
-	extern cvar_t gl_meshdraw;
 	qbool duplicate = false;
 	float previous_s, previous_t;
 
@@ -223,24 +221,16 @@ void BuildTris (void)
 
 		bestlen = 0;
 
-		for (type = gl_meshdraw.integer ? 1 : 0; type < 2; type++) {
-			for (startv = 0; startv < 3; startv++) {
-				if (type == 1) {
-					len = StripLength(i, startv);
-				}
-				else {
-					len = FanLength(i, startv);
-				}
+		for (startv = 0; startv < 3; startv++) {
+			len = StripLength(i, startv);
 
-				if (len > bestlen) {
-					besttype = type;
-					bestlen = len;
-					for (j = 0; j < bestlen + 2; j++) {
-						bestverts[j] = stripverts[j];
-					}
-					for (j = 0; j < bestlen; j++) {
-						besttris[j] = striptris[j];
-					}
+			if (len > bestlen) {
+				bestlen = len;
+				for (j = 0; j < bestlen + 2; j++) {
+					bestverts[j] = stripverts[j];
+				}
+				for (j = 0; j < bestlen; j++) {
+					besttris[j] = striptris[j];
 				}
 			}
 		}
@@ -251,33 +241,23 @@ void BuildTris (void)
 		}
 
 		duplicate = false;
-		if (gl_meshdraw.integer) {
-			commands[0] += bestlen + 2;
-			if (numcommands) {
-				// duplicate previous vertex to keep triangle strip running
-				vertexorder[numorder] = vertexorder[numorder - 1];
-				++numorder;
+		commands[0] += bestlen + 2;
+		if (numcommands) {
+			// duplicate previous vertex to keep triangle strip running
+			vertexorder[numorder] = vertexorder[numorder - 1];
+			++numorder;
 
-				// duplicate s & t coordinates
-				*(float *)&commands[numcommands++] = previous_s;
-				*(float *)&commands[numcommands++] = previous_t;
-				commands[0] += 2;
+			// duplicate s & t coordinates
+			*(float *)&commands[numcommands++] = previous_s;
+			*(float *)&commands[numcommands++] = previous_t;
+			commands[0] += 2;
 
-				// Duplicate the current one too
-				duplicate = true;
-			}
-			else {
-				duplicate = false;
-				++numcommands;
-			}
+			// Duplicate the current one too
+			duplicate = true;
 		}
 		else {
-			if (besttype == 1) {
-				commands[numcommands++] = (bestlen + 2);
-			}
-			else {
-				commands[numcommands++] = -(bestlen + 2);
-			}
+			duplicate = false;
+			++numcommands;
 		}
 
 		for (j = 0; j < bestlen + 2; j++) {
