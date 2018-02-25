@@ -292,6 +292,15 @@ void Draw_SetOverallAlpha(float alpha)
 	overall_alpha = alpha;
 }
 
+float Draw_MultiplyOverallAlpha(float alpha)
+{
+	float old = overall_alpha;
+
+	overall_alpha *= alpha;
+
+	return old;
+}
+
 void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 {
 	float resdif_w = (glwidth / (float)vid.conwidth);
