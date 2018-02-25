@@ -15,8 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-$Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -31,34 +29,19 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #endif
 
-#define MAX_MULTI_IMAGE_BATCH 4096
-#define CIRCLE_LINE_COUNT	40
 extern float overall_alpha;
+extern int circleCount;
+
+void GLM_DrawCircles(int start, int end);
 
 #define IMAGEPROG_FLAGS_TEXTURE     1
 #define IMAGEPROG_FLAGS_ALPHATEST   2
 #define IMAGEPROG_FLAGS_TEXT        4
 
 static void GLM_PreparePolygon(void);
-static void GLM_PrepareCircleDraw(void);
+void GLM_PrepareCircleDraw(void);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
-
-static glm_program_t circleProgram;
-static glm_vao_t circleVAO;
-static buffer_ref circleVBO;
-static GLint drawCircleUniforms_matrix;
-static GLint drawCircleUniforms_color;
-
-#define FLOATS_PER_CIRCLE ((3 + 2 * CIRCLE_LINE_COUNT) * 2)
-#define CIRCLES_PER_FRAME 256
-
-static float drawCirclePointData[FLOATS_PER_CIRCLE * CIRCLES_PER_FRAME];
-static float drawCircleColors[CIRCLES_PER_FRAME][4];
-static qbool drawCircleFill[CIRCLES_PER_FRAME];
-static int drawCirclePoints[CIRCLES_PER_FRAME];
-static int circleCount;
-static void GLM_DrawCircles(int start, int end);
 
 static void GLM_DrawPolygonImpl(void);
 
@@ -83,39 +66,6 @@ static glm_vao_t* GL_CreateLineVAO(void)
 	}
 
 	return &vao;
-}
-
-void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
-{
-	byte color[4] = { bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] };
-
-	if (color[3] != 255) {
-		float alpha = color[3] / 255.0f;
-
-		color[0] *= alpha;
-		color[1] *= alpha;
-		color[2] *= alpha;
-	}
-
-	if (fill) {
-		GLM_DrawRectangle(x, y, w, h, bytecolor);
-	}
-	else {
-		GLM_DrawRectangle(x, y, w, thickness, bytecolor);
-		GLM_DrawRectangle(x, y + thickness, thickness, h - thickness, bytecolor);
-		GLM_DrawRectangle(x + w - thickness, y + thickness, thickness, h - thickness, bytecolor);
-		GLM_DrawRectangle(x, y + h, w, thickness, bytecolor);
-	}
-}
-
-void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
-{
-	byte color[] = { 255, 255, 255, 255 };
-	if (alpha < 1.0) {
-		color[3] = alpha * 255;
-	}
-
-	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false);
 }
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
@@ -158,6 +108,39 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 	}
 }
 
+void GLM_DrawAlphaRectangeRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
+{
+	byte color[4] = { bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] };
+
+	if (color[3] != 255) {
+		float alpha = color[3] / 255.0f;
+
+		color[0] *= alpha;
+		color[1] *= alpha;
+		color[2] *= alpha;
+	}
+
+	if (fill) {
+		GLM_DrawRectangle(x, y, w, h, bytecolor);
+	}
+	else {
+		GLM_DrawRectangle(x, y, w, thickness, bytecolor);
+		GLM_DrawRectangle(x, y + thickness, thickness, h - thickness, bytecolor);
+		GLM_DrawRectangle(x + w - thickness, y + thickness, thickness, h - thickness, bytecolor);
+		GLM_DrawRectangle(x, y + h, w, thickness, bytecolor);
+	}
+}
+
+void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
+{
+	byte color[] = { 255, 255, 255, 255 };
+	if (alpha < 1.0) {
+		color[3] = alpha * 255;
+	}
+
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false);
+}
+
 void GLM_Draw_FadeScreen(float alpha)
 {
 	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
@@ -180,12 +163,6 @@ typedef struct glc_image_s {
 	float tex[2];
 	unsigned char colour[4];
 } glc_image_t;
-
-typedef enum {
-	imagetype_image,
-	imagetype_circle,
-	imagetype_polygon
-} glm_image_type_t;
 
 static glm_image_type_t imageTypes[MAX_MULTI_IMAGE_BATCH];
 static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
@@ -687,131 +664,14 @@ static void GLM_DrawPolygonImpl(void)
 	GL_DrawArrays(GL_TRIANGLE_STRIP, 0, polygonVerts);
 }
 
-static void GLM_DrawCircles(int start, int end)
+qbool GLM_LogCustomImageType(glm_image_type_t type, int flags)
 {
-	// FIXME: Not very efficient (but rarely used either)
-	float projectionMatrix[16];
-	int i;
-
-	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-	start = max(0, start);
-	end = min(end, circleCount - 1);
-
-	GL_UseProgram(circleProgram.program);
-	GL_BindVertexArray(&circleVAO);
-
-	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
-	for (i = start; i <= end; ++i) {
-		glUniform4fv(drawCircleUniforms_color, 1, drawCircleColors[i]);
-
-		GL_DrawArrays(drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, i * FLOATS_PER_CIRCLE / 2, drawCirclePoints[i]);
-	}
-}
-
-static void GLM_PrepareCircleDraw(void)
-{
-	if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
-		GL_VFDeclare(draw_circle);
-
-		if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(draw_circle), &circleProgram)) {
-			return;
-		}
+	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+		return false;
 	}
 
-	if (!circleProgram.uniforms_found) {
-		drawCircleUniforms_matrix = glGetUniformLocation(circleProgram.program, "matrix");
-		drawCircleUniforms_color = glGetUniformLocation(circleProgram.program, "color");
-
-		circleProgram.uniforms_found = false;
-	}
-
-	// Build VBO
-	if (!GL_BufferReferenceIsValid(circleVBO)) {
-		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(drawCirclePointData), drawCirclePointData, GL_STREAM_DRAW);
-	}
-	else {
-		GL_UpdateBuffer(circleVBO, sizeof(drawCirclePointData), drawCirclePointData);
-	}
-
-	// Build VAO
-	if (!circleVAO.vao) {
-		GL_GenVertexArray(&circleVAO, "circle-vao");
-
-		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
-	}
-}
-
-void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
-{
-	float* pointData;
-	double angle;
-	byte color_bytes[4];
-	int i;
-	int start;
-	int end;
-	int points;
-
-	if (imageCount >= MAX_MULTI_IMAGE_BATCH || circleCount >= CIRCLES_PER_FRAME) {
-		return;
-	}
-
-	imageTypes[imageCount] = imagetype_circle;
-	images[imageCount].flags = circleCount;
-
-	// Get the vertex index where to start and stop drawing.
-	start = Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
-	end = Q_rint((endangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
-
-	// If the end is less than the start, increase the index so that
-	// we start on a "new" circle.
-	if (end < start) {
-		end = end + CIRCLE_LINE_COUNT;
-	}
-
-	points = 0;
-	pointData = drawCirclePointData + (FLOATS_PER_CIRCLE * circleCount);
-	COLOR_TO_RGBA(color, color_bytes);
-	drawCircleColors[circleCount][0] = (color_bytes[0] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][1] = (color_bytes[1] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][2] = (color_bytes[2] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][3] = (color_bytes[3] / 255.0f) * overall_alpha;
-	drawCircleFill[circleCount] = fill;
-	++imageCount;
-	++circleCount;
-
-	// Create a vertex at the exact position specified by the start angle.
-	pointData[points * 2 + 0] = x + radius * cos(startangle);
-	pointData[points * 2 + 1] = y - radius * sin(startangle);
-	++points;
-
-	// TODO: Use lookup table for sin/cos?
-	for (i = start; i < end; i++) {
-		angle = (i * 2 * M_PI) / CIRCLE_LINE_COUNT;
-		pointData[points * 2 + 0] = x + radius * cos(angle);
-		pointData[points * 2 + 1] = y - radius * sin(angle);
-		++points;
-
-		// When filling we're drawing triangles so we need to
-		// create a vertex in the middle of the vertex to fill
-		// the entire pie slice/circle.
-		if (fill) {
-			pointData[points * 2 + 0] = x;
-			pointData[points * 2 + 1] = y;
-			++points;
-		}
-	}
-
-	pointData[points * 2 + 0] = x + radius * cos(endangle);
-	pointData[points * 2 + 1] = y - radius * sin(endangle);
-	++points;
-
-	// Create a vertex for the middle point if we're not drawing a complete circle.
-	if (endangle - startangle < 2 * M_PI) {
-		pointData[points * 2 + 0] = x;
-		pointData[points * 2 + 1] = y;
-		++points;
-	}
-
-	drawCirclePoints[circleCount - 1] = points;
+	imageTypes[imageCount] = type;
+	images[imageCount].flags = flags;
+	imageCount++;
+	return true;
 }

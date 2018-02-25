@@ -1160,6 +1160,16 @@ void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawc
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
 qbool GL_DrawElementsBaseVertexAvailable(void);
 
+// Move to glm_draw.h
+#define MAX_MULTI_IMAGE_BATCH 4096
+typedef enum {
+	imagetype_image,
+	imagetype_circle,
+	imagetype_polygon
+} glm_image_type_t;
+
+qbool GLM_LogCustomImageType(glm_image_type_t type, int flags);
+
 #endif /* !__GL_LOCAL_H__ */
 
 
