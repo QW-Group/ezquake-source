@@ -390,7 +390,8 @@ void R_DrawWorld(void)
 
 	GL_EnterRegion("DrawWorld");
 	if (GL_ShadersSupported()) {
-		GLM_DrawTexturedWorld(cl.worldmodel);
+		GLM_EnterBatchedWorldRegion();
+		GLM_DrawBrushModel(cl.worldmodel, false, false);
 	}
 	else {
 		GLC_DrawWorld();

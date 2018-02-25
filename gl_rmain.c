@@ -404,7 +404,7 @@ static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
 
 typedef void(*GL_StateChangeFunction)(void);
 
-static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
+static modtype_t R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
 {
 	int i;
 	GL_StateChangeFunction beginState[] = {
@@ -420,7 +420,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 		GL_EndDrawAliasModels,
 	};
 
-	if (r_drawentities.value && vislist->typecount[type] >= 0) {
+	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
 		GL_StateBeginEntities(vislist);
 
 		for (i = 0; i < vislist->count; i++) {
@@ -473,14 +473,17 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 				break;
 			}
 		}
+
+		if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
+			if (endState[current_state]) {
+				endState[current_state]();
+			}
+			GL_StateEndEntities(vislist);
+			current_state = mod_unknown;
+		}
 	}
 
-	if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
-		if (endState[current_state]) {
-			endState[current_state]();
-		}
-		GL_StateEndEntities(vislist);
-	}
+	return current_state;
 }
 
 void R_PolyBlend(void)
@@ -941,6 +944,7 @@ void R_Init(void)
 static void R_RenderScene(void)
 {
 	visentlist_entrytype_t ent_type;
+	modtype_t type = mod_brush;
 
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
@@ -959,7 +963,7 @@ static void R_RenderScene(void)
 		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
-			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);
+			type = R_DrawEntitiesOnList(&cl_visents, ent_type, type);
 		}
 		GL_LeaveRegion();
 
@@ -971,6 +975,10 @@ static void R_RenderScene(void)
 			GLM_DrawAliasModelBatches();
 			GL_LeaveRegion();
 		}
+	}
+
+	if (type != mod_unknown) {
+		GL_FlushWorldModelBatch();
 	}
 
 	if (!GL_ShadersSupported()) {

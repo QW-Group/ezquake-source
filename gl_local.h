@@ -762,7 +762,7 @@ int R_AliasFramePose(maliasframedesc_t* frame);
 void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 void GLM_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 
-void GLM_DrawTexturedWorld(model_t* model);
+void GLM_EnterBatchedWorldRegion(void);
 void GLM_DrawSpriteModel(entity_t* e);
 void GLM_PolyBlend(float v_blend[4]);
 void GLM_DrawVelocity3D(void);
