@@ -305,9 +305,6 @@ void GL_BeginDrawAliasModels(void)
 		if (gl_affinemodels.value) {
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 		}
-		if (gl_smoothmodels.value) {
-			GLC_ShadeModel(GL_SMOOTH);
-		}
 	}
 }
 

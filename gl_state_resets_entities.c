@@ -40,9 +40,6 @@ void GL_StateEndEntities(visentlist_t* vislist)
 		if (gl_affinemodels.value) {
 			GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		}
-		if (gl_smoothmodels.value) {
-			GLC_ShadeModel(GL_FLAT);
-		}
 	}
 
 	LEAVE_STATE;
@@ -58,7 +55,6 @@ void GLC_StateBeginAliasPowerupShell(void)
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
-		GLC_ShadeModel(GL_FLAT);
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -87,7 +83,6 @@ void GLC_StateBeginMD3Draw(float alpha)
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
-		GLC_ShadeModel(GL_FLAT);
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -110,7 +105,6 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GLC_ShadeModel(GL_FLAT);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	GL_Disable(GL_LINE_SMOOTH);
@@ -154,7 +148,6 @@ void GLC_StateBeginAliasModelShadow(void)
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
-		GLC_ShadeModel(GL_FLAT);
 		GL_Disable(GL_LINE_SMOOTH);
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
@@ -199,12 +192,6 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	if (gl_affinemodels.value) {
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	}
-	if (gl_smoothmodels.value) {
-		GLC_ShadeModel(GL_SMOOTH);
-	}
-	else {
-		GLC_ShadeModel(GL_FLAT);
-	}
 
 	LEAVE_STATE;
 }
@@ -234,7 +221,6 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (e->alpha ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	}
 	else {
-		GLC_ShadeModel(GL_FLAT);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -313,7 +299,6 @@ void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	GLC_ShadeModel(GL_FLAT);
 	GL_Color3ubv(color_white);
 	GL_Disable(GL_LINE_SMOOTH);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
@@ -336,9 +321,6 @@ void GL_StateBeginAliasOutlineFrame(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 
-	if (!GL_ShadersSupported()) {
-		GLC_ShadeModel(GL_FLAT);
-	}
 	GL_DisableFog();
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);

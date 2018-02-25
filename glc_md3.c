@@ -29,7 +29,7 @@ To draw, for each surface, run through the triangles, getting tex coords from s+
 */
 void GLC_DrawAlias3Model(entity_t *ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_affinemodels, gl_fb_models;
 	extern byte	*shadedots;
 	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
 	extern float shadelight, ambientlight;
