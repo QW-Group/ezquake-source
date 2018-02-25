@@ -10815,6 +10815,11 @@
       "desc": "Displays the amount of damage taken recently on the screen above your armour and health.",
       "type": "float"
     },
+    "r_drawdisc": {
+      "group-id": "8",
+      "desc": "Displays an indicator in top-right of screen when disk IO is in progress.",
+      "type": "boolean"
+    },
     "r_drawentities": {
       "group-id": "8",
       "desc": "This variable can be used to disable that any object entities are drawn. This \ncommand is useful to map authors who wish to take a look at their map without \ndrawing any objects such as lifts, buttons, platforms or items.",

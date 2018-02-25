@@ -98,6 +98,7 @@ cvar_t cl_mvinsethud                       = {"cl_mvinsethud", "1"};
 cvar_t r_drawentities                      = {"r_drawentities", "1"};
 cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
 cvar_t r_drawflame                         = {"r_drawflame", "1"};
+cvar_t r_drawdisc                          = {"r_drawdisc", "1"};
 cvar_t r_speeds                            = {"r_speeds", "0"};
 cvar_t r_fullbright                        = {"r_fullbright", "0"};
 cvar_t r_shadows                           = {"r_shadows", "0"};
@@ -764,6 +765,7 @@ void R_Init(void)
 	Cvar_Register(&r_drawentities);
 	Cvar_Register(&r_lerpframes);
 	Cvar_Register(&r_drawflame);
+	Cvar_Register(&r_drawdisc);
 	Cvar_Register(&gl_detail);
 	Cvar_Register(&gl_powerupshells);
 	Cvar_Register(&gl_powerupshells_size);

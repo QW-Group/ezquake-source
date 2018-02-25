@@ -1184,8 +1184,11 @@ void Draw_FadeScreen(float alpha)
 // Call before beginning any disc IO.
 void Draw_BeginDisc (void)
 {
-	if (!draw_disc)
+	extern cvar_t r_drawdisc;
+
+	if (!draw_disc || !r_drawdisc.integer) {
 		return;
+	}
 
 	// Intel cards, most notably Intel 915GM/910GML has problems with
 	// writing directly to the front buffer and then flipping the back buffer,
