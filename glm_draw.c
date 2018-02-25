@@ -84,7 +84,7 @@ void GLM_Draw_FadeScreen(float alpha)
 	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
 }
 
-static void GLM_PrepareImageDraw(void)
+void GLM_PrepareImageDraw(void)
 {
 	GLM_PrepareImages();
 	GLM_PreparePolygon();
@@ -304,8 +304,6 @@ void GL_EmptyImageQueue(void)
 
 void GL_FlushImageDraw(void)
 {
-	GLM_PrepareImageDraw();
-
 	if (GL_ShadersSupported()) {
 		GLM_FlushImageDraw();
 	}

@@ -561,7 +561,7 @@ void GL_StartWaterSurfaceBatch(void)
 	drawcalls[current_drawcall].type = alpha_surfaces;
 }
 
-void GL_PrepareWorldModelBatch(void)
+void GLM_PrepareWorldModelBatch(void)
 {
 	extern buffer_ref vbo_brushElements;
 	GLintptr drawOffset = 0;

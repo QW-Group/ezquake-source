@@ -216,10 +216,7 @@ void GL_DrawBillboards(void)
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
-		GLM_PrepareBillboards();
-	}
-	else {
+	if (!GL_ShadersSupported()) {
 		GLC_DrawBillboards();
 
 		batchCount = vertexCount = 0;
@@ -400,6 +397,10 @@ static void GLM_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offse
 
 void GLM_PrepareBillboards(void)
 {
+	if (!batchCount || !vertexCount) {
+		return;
+	}
+
 	GL_EnterRegion(__FUNCTION__);
 
 	GLM_CreateBillboardVAO();

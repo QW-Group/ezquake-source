@@ -2460,7 +2460,11 @@ void CL_Frame (double time)
 
 				CL_LinkEntities();
 
-				SCR_UpdateScreenPlayerView(UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
+				SCR_CalcRefdef();
+
+				SCR_UpdateScreenPlayerView(draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS);
+
+				SCR_DrawMultiviewIndividualElements();
 
 				if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 					CL_SoundFrame();

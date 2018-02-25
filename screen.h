@@ -134,5 +134,9 @@ typedef struct ti_player_s {
 void Update_TeamInfo(void);
 char *SCR_GetWeaponShortNameByFlag (int flag);
 
+//Must be called whenever vid changes
+void SCR_CalcRefdef(void);
+void SCR_DrawMultiviewIndividualElements(void);
+
 // end - scr_teaminfo
 

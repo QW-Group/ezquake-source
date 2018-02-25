@@ -43,6 +43,8 @@ void R_CreateWorldTextureChains(void);
 static void R_SetupGL(void);
 static void R_RenderTransparentWorld(void);
 
+void GLM_RenderView(void);
+
 extern msurface_t *alphachain;
 extern vec3_t     lightspot;
 
@@ -1158,22 +1160,7 @@ void R_RenderView(void)
 	// Render billboards
 	GL_DrawBillboards();
 
-	if (GL_ShadersSupported()) {
-		GL_PrepareWorldModelBatch();
-		GLM_PrepareAliasModelBatches();
-
-		GL_DrawWorldModelBatch(opaque_world);
-
-		GL_EnterRegion("GLM_DrawEntities");
-		GLM_DrawAliasModelBatches();
-		GL_LeaveRegion();
-
-		GLM_DrawBillboards();
-
-		GL_DrawWorldModelBatch(alpha_surfaces);
-	}
-
-	if (r_speeds.integer) {
+	if (!GL_ShadersSupported() && r_speeds.integer) {
 		double time = Sys_DoubleTime() - frameStats.start_time;
 
 		Print_flags[Print_current] |= PR_TR_SKIP;

@@ -105,9 +105,6 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
-		vbo_aliasDataBuffer = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA);
-
 		drawAliasModel_mode = glGetUniformLocation(drawAliasModelProgram.program, "mode");
 		cached_mode = 0;
 
@@ -116,6 +113,11 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
 		vbo_aliasIndirectDraw = GL_GenFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, GL_STREAM_DRAW);
+	}
+
+	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
+		vbo_aliasDataBuffer = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, GL_STREAM_DRAW);
+		GL_BindBufferBase(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA);
 	}
 
 	return drawAliasModelProgram.program;

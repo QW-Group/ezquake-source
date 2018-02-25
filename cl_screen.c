@@ -456,7 +456,8 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 }
 
 //Must be called whenever vid changes
-static void SCR_CalcRefdef (void) {
+void SCR_CalcRefdef(void)
+{
 	float size = 0;
 	qbool full = false;
 	int h;
@@ -1914,7 +1915,7 @@ void SCR_DrawMultiviewOverviewElements (void)
 }
 
 // Elements to be drawn on every view during multiview
-void SCR_DrawMultiviewIndividualElements (void)
+void SCR_DrawMultiviewIndividualElements(void)
 {
 	extern qbool  sb_showscores,  sb_showteamscores;
 
@@ -2123,11 +2124,13 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 		vid.recalc_refdef = true;
 	}
 
-	if (vid.recalc_refdef)
-		SCR_CalcRefdef ();
+	if (vid.recalc_refdef) {
+		SCR_CalcRefdef();
+	}
 
-	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
-		Sbar_Changed ();
+	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value) {
+		Sbar_Changed();
+	}
 
 	return true;
 }
@@ -2135,10 +2138,6 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 void SCR_UpdateScreenPlayerView(int flags)
 {
 	GL_ResetRegion(true);
-
-	if (flags & UPDATESCREEN_MULTIVIEW) {
-		SCR_CalcRefdef();
-	}
 
 	// check for changes in r_fullbright
 	R_Check_R_FullBright();
@@ -2159,6 +2158,10 @@ void SCR_UpdateScreenPlayerView(int flags)
 
 		R_RenderView();
 
+		if (GL_ShadersSupported()) {
+			GLM_RenderView();
+		}
+
 		if (flags & UPDATESCREEN_POSTPROCESS) {
 			R_PostProcessScene();
 		}
@@ -2172,7 +2175,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 	SCR_TileClear();
 
 	if (flags & UPDATESCREEN_MULTIVIEW) {
-		SCR_DrawMultiviewIndividualElements();
+		
 	}
 }
 
@@ -2222,6 +2225,10 @@ void SCR_UpdateScreenPostPlayerView(void)
 	}
 
 	SCR_DrawElements();
+	GL_LeaveRegion();
+
+	GL_EnterRegion("GLM_PrepareImageDraw");
+	GLM_PrepareImageDraw();
 	GL_LeaveRegion();
 
 	// Actual rendering...
