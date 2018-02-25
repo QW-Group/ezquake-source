@@ -162,20 +162,26 @@ void SCR_SetupCI(void)
 
 	ci_count = 0;
 
-	if (!bound(0, r_chaticons_alpha.value, 1))
+	if (!bound(0, r_chaticons_alpha.value, 1)) {
 		return;
+	}
 
-	if (cls.state != ca_active || !cl.validsequence || cl.intermission)
+	if (cls.state != ca_active || !cl.validsequence || cl.intermission) {
 		return;
+	}
 
-	if (cl.spectator)
+	if (cl.spectator) {
 		tracknum = Cam_TrackNum();
+	}
 
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
 	cent = &cl_entities[1];
 
 	for (j = 0; j < MAX_CLIENTS; j++, info++, state++, cent++) {
+		vec3_t diff;
+		float fade = 1;
+
 		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator) {
 			continue;
 		}
@@ -191,25 +197,20 @@ void SCR_SetupCI(void)
 		id->org[0] = cent->lerp_origin[0];
 		id->org[1] = cent->lerp_origin[1];
 		id->org[2] = cent->lerp_origin[2] + 33; // move balloon up a bit
+		VectorSubtract(id->org, r_refdef.vieworg, diff);
+		id->distance = VectorLength(diff);
 
-		id->size = 8; // scale baloon
-		id->rotangle = 5 * sin(2 * r_refdef2.time); // may be set to 0, if u dislike rolling
-		id->color[0] = 255; // r
-		id->color[1] = 255; // g
-		id->color[2] = 255; // b
-		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
-		{
-			vec3_t diff;
-
-			VectorSubtract(id->org, r_refdef.vieworg, diff);
-			id->distance = VectorLength(diff);
-		}
 		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing) {
 			if (id->distance < KTX_RACING_PLAYER_MIN_DISTANCE) {
 				continue; // too close, hide indicators
 			}
-			id->color[3] *= min(id->distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
+			fade = min(id->distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
 		}
+
+		id->size = 8; // scale baloon
+		id->rotangle = 5 * sin(2 * r_refdef2.time); // may be set to 0, if u dislike rolling
+		id->color[0] = id->color[1] = id->color[2] = id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1) * fade; // pre-multiplied alpha
+
 		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
