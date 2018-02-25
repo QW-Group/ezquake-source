@@ -895,18 +895,9 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 {
 	byte bytecolor[4];
 
-	GL_StateBeginAlphaLineRGB(thickness);
-
 	COLOR_TO_RGBA_PREMULT(color, bytecolor);
 
-	if (GL_ShadersSupported()) {
-		GLM_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
-	}
-	else {
-		GLC_Draw_LineRGB(bytecolor, x_start, y_start, x_end, y_end);
-	}
-
-	GL_StateEndAlphaLineRGB();
+	GLM_Draw_LineRGB(thickness, bytecolor, x_start, y_start, x_end, y_end);
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)
@@ -917,22 +908,12 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 
 void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
-	if (GL_ShadersSupported()) {
-		GLM_Draw_Polygon(x, y, vertices, num_vertices, color);
-	}
-	else {
-		GLC_Draw_Polygon(x, y, vertices, num_vertices, color);
-	}
+	GLM_Draw_Polygon(x, y, vertices, num_vertices, color);
 }
 
 static void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
-	if (GL_ShadersSupported()) {
-		GLM_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
-	}
-	else {
-		GLC_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
-	}
+	GLM_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
 }
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha)

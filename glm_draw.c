@@ -48,11 +48,11 @@ void GLM_DrawLines(int start, int end);
 void GLM_DrawPolygons(int start, int end);
 void GLM_DrawImageArraySequence(texture_ref texture, int start, int length);
 
-void GLM_PreparePolygon(void);
-void GLM_PrepareLineProgram(void);
-void GLM_PrepareImages(void);
+void GLC_DrawCircles(int start, int end);
+void GLC_DrawLines(int start, int end);
+void GLC_DrawPolygons(int start, int end);
+void GLC_DrawImageArraySequence(texture_ref texture, int start, int length);
 
-void GLM_PrepareCircleDraw(void);
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
 
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
@@ -86,25 +86,45 @@ void GLM_Draw_FadeScreen(float alpha)
 void GLM_PrepareImageDraw(void)
 {
 	GLM_PrepareImages();
-	GLM_PreparePolygon();
-	GLM_PrepareCircleDraw();
-	GLM_PrepareLineProgram();
+	GLM_PreparePolygons();
+	GLM_PrepareCircles();
+	GLM_PrepareLines();
 }
 
 static void GLM_DrawHudElements(glm_image_type_t type, texture_ref texture, int start, int end)
 {
 	switch (type) {
 		case imagetype_image:
-			GLM_DrawImageArraySequence(texture, elements[start].index, elements[end].index);
+			if (GL_ShadersSupported()) {
+				GLM_DrawImageArraySequence(texture, elements[start].index, elements[end].index);
+			}
+			else {
+				GLC_DrawImageArraySequence(texture, elements[start].index, elements[end].index);
+			}
 			break;
 		case imagetype_circle:
-			GLM_DrawCircles(elements[start].index, elements[end].index);
+			if (GL_ShadersSupported()) {
+				GLM_DrawCircles(elements[start].index, elements[end].index);
+			}
+			else {
+				GLC_DrawCircles(elements[start].index, elements[end].index);
+			}
 			break;
 		case imagetype_line:
-			GLM_DrawLines(elements[start].index, elements[end].index);
+			if (GL_ShadersSupported()) {
+				GLM_DrawLines(elements[start].index, elements[end].index);
+			}
+			else {
+				GLC_DrawLines(elements[start].index, elements[end].index);
+			}
 			break;
 		case imagetype_polygon:
-			GLM_DrawPolygons(elements[start].index, elements[end].index);
+			if (GL_ShadersSupported()) {
+				GLM_DrawPolygons(elements[start].index, elements[end].index);
+			}
+			else {
+				GLC_DrawPolygons(elements[start].index, elements[end].index);
+			}
 			break;
 	}
 }
@@ -138,156 +158,6 @@ static void GLM_FlushImageDraw(void)
 	}
 }
 
-static void GLC_FlushImageDraw(void)
-{
-
-}
-/*
-static void GLC_FlushImageDraw(void)
-{
-	if (imageCount) {
-		int i, j;
-		extern cvar_t gl_alphafont, scr_coloredText;
-		float modelviewMatrix[16];
-		float projectionMatrix[16];
-		byte current_color[4];
-
-		GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
-		GL_PushMatrix(GL_PROJECTION, projectionMatrix);
-
-		GL_IdentityModelView();
-		GL_IdentityProjectionView();
-
-		GLC_StateBeginImageDraw();
-
-		if (GL_BuffersSupported()) {
-			GL_BindVertexArray(NULL);
-			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-
-			if (!GL_BufferReferenceIsValid(imageVBO)) {
-				imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(glc_images), glc_images, GL_STREAM_DRAW);
-				GL_BindBuffer(imageVBO);
-			}
-			else {
-				GL_BindAndUpdateBuffer(imageVBO, imageCount * 4 * sizeof(glc_images[0]), glc_images);
-			}
-
-			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
-			glEnableClientState(GL_VERTEX_ARRAY);
-
-			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
-			glEnableClientState(GL_COLOR_ARRAY);
-
-			qglClientActiveTexture(GL_TEXTURE0);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-
-		for (i = 0; i < imageCount; ++i) {
-			qbool alpha_test = images[i].flags & IMAGEPROG_FLAGS_ALPHATEST;
-			qbool texture = images[i].flags & IMAGEPROG_FLAGS_TEXTURE;
-			qbool text = images[i].flags & IMAGEPROG_FLAGS_TEXT;
-
-			GLC_EnsureTMUEnabled(GL_TEXTURE0);
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, images[i].texNumber);
-
-			if (text) {
-				alpha_test = !gl_alphafont.integer;
-
-				if (scr_coloredText.integer) {
-					GL_TextureEnvMode(GL_MODULATE);
-				}
-				else {
-					GL_TextureEnvMode(GL_REPLACE);
-				}
-			}
-			else {
-				GL_TextureEnvMode(GL_MODULATE);
-			}
-
-			GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
-			GL_Color4ubv(images[i].colour);
-			memcpy(current_color, images[i].colour, sizeof(current_color));
-
-			for (j = i; j < imageCount; ++j) {
-				glm_image_t* next = &images[j];
-				qbool next_alpha_test = next->flags & IMAGEPROG_FLAGS_ALPHATEST;
-				qbool next_texture = next->flags & IMAGEPROG_FLAGS_TEXTURE;
-				qbool next_text = next->flags & IMAGEPROG_FLAGS_TEXT;
-
-				if (next_text) {
-					next_alpha_test = !gl_alphafont.integer;
-					if (!text && !scr_coloredText.integer) {
-						break; // will need to toggle TMU
-					}
-				}
-
-				if (next_alpha_test != alpha_test) {
-					GL_MarkEvent("(break for alpha-test)");
-					break;
-				}
-				if (next_texture != texture) {
-					GL_MarkEvent("(break for texturing-toggle)");
-					break;
-				}
-				if (next_texture && !GL_TextureReferenceEqual(images[i].texNumber, next->texNumber)) {
-					GL_MarkEvent("(break for texture)");
-					break;
-				}
-			}
-
-			if (GL_BuffersSupported()) {
-				GL_DrawArrays(GL_QUADS, i * 4, (j - i) * 4);
-
-				i = j - 1;
-			}
-			else {
-				glBegin(GL_QUADS);
-
-				while (i < j) {
-					glm_image_t* next = &images[i];
-
-					// Don't need to break for colour
-					if (memcmp(next->colour, current_color, sizeof(current_color))) {
-						memcpy(current_color, next->colour, sizeof(current_color));
-						GL_Color4ubv(next->colour);
-					}
-
-					if (texture) {
-						glTexCoord2f(next->s1, next->t2);
-					}
-					glVertex2f(next->x1, next->y2);
-					if (texture) {
-						glTexCoord2f(next->s1, next->t1);
-					}
-					glVertex2f(next->x1, next->y1);
-					if (texture) {
-						glTexCoord2f(next->s2, next->t1);
-					}
-					glVertex2f(next->x2, next->y1);
-					if (texture) {
-						glTexCoord2f(next->s2, next->t2);
-					}
-					glVertex2f(next->x2, next->y2);
-				}
-
-				--i;
-				glEnd();
-			}
-		}
-
-		GL_PopMatrix(GL_PROJECTION, projectionMatrix);
-		GL_PopMatrix(GL_MODELVIEW, modelviewMatrix);
-
-		if (GL_BuffersSupported()) {
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_COLOR_ARRAY);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-	}
-}
-*/
-
 void GL_EmptyImageQueue(void)
 {
 	hudElementCount = imageData.imageCount = circleData.circleCount = lineData.lineCount = polygonData.polygonCount = 0;
@@ -295,12 +165,7 @@ void GL_EmptyImageQueue(void)
 
 void GL_FlushImageDraw(void)
 {
-	if (GL_ShadersSupported()) {
-		GLM_FlushImageDraw();
-	}
-	else {
-		GLC_FlushImageDraw();
-	}
+	GLM_FlushImageDraw();
 
 	GL_EmptyImageQueue();
 }

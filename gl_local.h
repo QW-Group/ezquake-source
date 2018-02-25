@@ -746,7 +746,6 @@ void GLM_DrawWaterSurfaces(void);
 
 void GL_BuildCommonTextureArrays(qbool vid_restart);
 void GL_CreateModelVBOs(qbool vid_restart);
-void GLM_CreateBrushModelVAO(buffer_ref instance_vbo);
 
 void R_DrawAliasModel(entity_t *ent);
 void R_DrawAliasPowerupShell(entity_t *ent);
@@ -783,7 +782,6 @@ GLenum GLC_LightmapTexEnv(void);
 int GLC_LightmapCount(void);
 void GLM_CreateLightmapTextures(void);
 void GLC_CreateLightmapTextures(void);
-void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 void GLC_DrawSpriteModel(entity_t* e);
@@ -794,34 +792,25 @@ void GLC_RenderSceneBlurDo(float alpha);
 
 void SCR_SetupCI(void);
 
-void GLC_DrawTileClear(texture_ref texnum, int x, int y, int w, int h);
-void GLC_Draw_LineRGB(byte* bytecolor, int x_start, int y_start, int x_end, int y_end);
-void GLC_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
-
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
-void GLC_DrawParticles(int particles_to_draw, qbool square);
 void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawSkyChain(void);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(void);
 
-void GLC_Draw_FadeScreen(float alpha);
 void GLC_DrawSkyChain(void);
 void GLC_DrawSky(void);
 void GLC_DrawWaterSurfaces(void);
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 void GLC_DrawWorld(void);
 
-void GLC_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
-void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end);
+void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, int x_end, int y_end);
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText);
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
-void GLM_DrawParticles(int number, qbool square);
 void GLM_Draw_FadeScreen(float alpha);
-void GLM_RenderDlight(dlight_t* light);
 void GLM_DrawSkyChain(void);
 void GLM_DrawSky(void);
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics);

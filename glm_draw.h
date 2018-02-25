@@ -11,6 +11,7 @@ typedef struct glm_line_point_s {
 
 typedef struct glm_line_framedata_s {
 	glm_line_point_t line_points[MAX_LINES_PER_FRAME * 2];
+	float line_thickness[MAX_LINES_PER_FRAME];
 	int lineCount;
 } glm_line_framedata_t;
 
@@ -23,6 +24,7 @@ typedef struct glm_circle_framedata_s {
 	float drawCircleColors[CIRCLES_PER_FRAME][4];
 	qbool drawCircleFill[CIRCLES_PER_FRAME];
 	int drawCirclePoints[CIRCLES_PER_FRAME];
+	float drawCircleThickness[CIRCLES_PER_FRAME];
 
 	int circleCount;
 } glm_circle_framedata_t;
@@ -63,10 +65,8 @@ typedef struct glc_image_s {
 } glc_image_t;
 
 typedef struct glm_image_framedata_s {
-	union {
-		glm_image_t images[MAX_MULTI_IMAGE_BATCH];
-		glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
-	};
+	glm_image_t images[MAX_MULTI_IMAGE_BATCH];
+	glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 
 	int imageCount;
 } glm_image_framedata_t;
@@ -78,5 +78,10 @@ extern glm_line_framedata_t lineData;
 
 qbool GLM_LogCustomImageType(glm_image_type_t type, int index);
 qbool GLM_LogCustomImageTypeWithTexture(glm_image_type_t type, int index, texture_ref texture);
+
+void GLM_PreparePolygons(void);
+void GLM_PrepareLines(void);
+void GLM_PrepareImages(void);
+void GLM_PrepareCircles(void);
 
 #endif

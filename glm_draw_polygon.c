@@ -34,32 +34,34 @@ static GLint polygonUniforms_color;
 
 glm_polygon_framedata_t polygonData;
 
-void GLM_PreparePolygon(void)
+void GLM_PreparePolygons(void)
 {
-	if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
-		GL_VFDeclare(draw_polygon);
+	if (GL_ShadersSupported()) {
+		if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
+			GL_VFDeclare(draw_polygon);
 
-		if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(draw_polygon), &polygonProgram)) {
-			return;
+			if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(draw_polygon), &polygonProgram)) {
+				return;
+			}
 		}
-	}
 
-	if (!polygonProgram.uniforms_found) {
-		polygonUniforms_matrix = glGetUniformLocation(polygonProgram.program, "matrix");
-		polygonUniforms_color = glGetUniformLocation(polygonProgram.program, "color");
-		polygonProgram.uniforms_found = true;
-	}
+		if (!polygonProgram.uniforms_found) {
+			polygonUniforms_matrix = glGetUniformLocation(polygonProgram.program, "matrix");
+			polygonUniforms_color = glGetUniformLocation(polygonProgram.program, "color");
+			polygonProgram.uniforms_found = true;
+		}
 
-	if (!GL_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, write_once_use_once);
-	}
-	else if (polygonData.polygonVerts[0]) {
-		GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
-	}
+		if (!GL_BufferReferenceIsValid(polygonVBO)) {
+			polygonVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, write_once_use_once);
+		}
+		else if (polygonData.polygonVerts[0]) {
+			GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
+		}
 
-	if (!polygonVAO.vao) {
-		GL_GenVertexArray(&polygonVAO, "polygon-vao");
-		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+		if (!polygonVAO.vao) {
+			GL_GenVertexArray(&polygonVAO, "polygon-vao");
+			GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+		}
 	}
 }
 
@@ -103,4 +105,23 @@ void GLM_DrawPolygons(int start, int end)
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
 	}
+}
+
+void GLC_DrawPolygons(int start, int end)
+{
+	int i, j;
+	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
+
+	GLC_StateBeginDrawPolygon();
+
+	for (i = start; i <= end; ++i) {
+		glColor4fv(polygonData.polygonColor[i]);
+		glBegin(GL_TRIANGLE_STRIP);
+		for (j = 0; j < polygonData.polygonVerts[i]; j++) {
+			glVertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);
+		}
+		glEnd();
+	}
+
+	GLC_StateEndDrawPolygon(oldFlags);
 }

@@ -148,12 +148,108 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
 }
 
+void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
+{
+	float modelviewMatrix[16];
+	float projectionMatrix[16];
+	byte current_color[4];
+	qbool alpha_test = false;
+
+	GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
+	GL_PushMatrix(GL_PROJECTION, projectionMatrix);
+
+	GL_IdentityModelView();
+	GL_IdentityProjectionView();
+
+	GLC_StateBeginImageDraw();
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
+
+	if (imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT) {
+		extern cvar_t gl_alphafont, scr_coloredText;
+		
+		alpha_test = !gl_alphafont.integer;
+
+		GL_TextureEnvMode(scr_coloredText.integer ? GL_MODULATE : GL_REPLACE);
+	}
+	else {
+		GL_TextureEnvMode(GL_MODULATE);
+	}
+
+	GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
+
+	if (GL_BuffersSupported()) {
+		GL_BindVertexArray(NULL);
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
+		glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+		glEnableClientState(GL_COLOR_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		GL_DrawArrays(GL_QUADS, start * 4, (end - start + 1) * 4);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+	else {
+		int i;
+
+		GL_Color4ubv(imageData.images[start].colour);
+		glBegin(GL_QUADS);
+
+		for (i = start; i <= end; ++i) {
+			glm_image_t* next = &imageData.images[i];
+
+			// Don't need to break for colour
+			if (memcmp(next->colour, current_color, sizeof(current_color))) {
+				memcpy(current_color, next->colour, sizeof(current_color));
+				GL_Color4ubv(next->colour);
+			}
+
+			glTexCoord2f(next->s1, next->t2);
+			glVertex2f(next->x1, next->y2);
+			glTexCoord2f(next->s1, next->t1);
+			glVertex2f(next->x1, next->y1);
+			glTexCoord2f(next->s2, next->t1);
+			glVertex2f(next->x2, next->y1);
+			glTexCoord2f(next->s2, next->t2);
+			glVertex2f(next->x2, next->y2);
+		}
+
+		glEnd();
+	}
+
+	GL_PopMatrix(GL_PROJECTION, projectionMatrix);
+	GL_PopMatrix(GL_MODELVIEW, modelviewMatrix);
+}
+
 void GLM_PrepareImages(void)
 {
-	GLM_CreateMultiImageProgram();
+	if (GL_ShadersSupported()) {
+		GLM_CreateMultiImageProgram();
 
-	if (imageData.imageCount) {
-		GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
+		if (imageData.imageCount) {
+			GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
+		}
+	}
+	else if (GL_BuffersSupported()) {
+		if (!GL_BufferReferenceIsValid(imageVBO)) {
+			imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, GL_STREAM_DRAW);
+			GL_BindBuffer(imageVBO);
+		}
+		else {
+			GL_BindAndUpdateBuffer(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
+		}
+	}
+	else {
+
 	}
 }
 

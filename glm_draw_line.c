@@ -33,36 +33,38 @@ static GLint line_matrix;
 
 glm_line_framedata_t lineData;
 
-void GLM_PrepareLineProgram(void)
+void GLM_PrepareLines(void)
 {
-	if (!GL_BufferReferenceIsValid(line_vbo)) {
-		line_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, write_once_use_once);
-	}
-	else if (lineData.lineCount) {
-		GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
-	}
+	if (GL_ShadersSupported()) {
+		if (!GL_BufferReferenceIsValid(line_vbo)) {
+			line_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, write_once_use_once);
+		}
+		else if (lineData.lineCount) {
+			GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
+		}
 
-	if (!line_vao.vao) {
-		GL_GenVertexArray(&line_vao, "line-vao");
+		if (!line_vao.vao) {
+			GL_GenVertexArray(&line_vao, "line-vao");
 
-		GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
-		GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
-	}
+			GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
+			GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
+		}
 
-	if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
-		GL_VFDeclare(line_draw);
+		if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
+			GL_VFDeclare(line_draw);
 
-		// Very simple line-drawing
-		GLM_CreateVFProgram(
-			"LineDrawing",
-			GL_VFParams(line_draw),
-			&line_program
-		);
-	}
+			// Very simple line-drawing
+			GLM_CreateVFProgram(
+				"LineDrawing",
+				GL_VFParams(line_draw),
+				&line_program
+			);
+		}
 
-	if (line_program.program && !line_program.uniforms_found) {
-		line_matrix = glGetUniformLocation(line_program.program, "matrix");
-		line_program.uniforms_found = true;
+		if (line_program.program && !line_program.uniforms_found) {
+			line_matrix = glGetUniformLocation(line_program.program, "matrix");
+			line_program.uniforms_found = true;
+		}
 	}
 }
 
@@ -73,7 +75,7 @@ void GLM_Draw_Line3D(byte* color, vec3_t start, vec3_t end)
 	}
 }
 
-void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
+void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, int x_end, int y_end)
 {
 	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;
@@ -86,6 +88,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 	memcpy(lineData.line_points[lineData.lineCount * 2 + 0].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
 	VectorSet(lineData.line_points[lineData.lineCount * 2 + 1].position, x_end, y_end, 0);
 	memcpy(lineData.line_points[lineData.lineCount * 2 + 1].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
+	lineData.line_thickness[lineData.lineCount] = thickness;
 	++lineData.lineCount;
 }
 
@@ -102,7 +105,25 @@ void GLM_DrawLines(int start, int end)
 		GL_BindVertexArray(&line_vao);
 
 		for (i = start; i <= end; ++i) {
+			GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 			GL_DrawArrays(GL_LINES, offset + i * 2, 2);
+			GL_StateEndAlphaLineRGB();
 		}
+	}
+}
+
+void GLC_DrawLines(int start, int end)
+{
+	int i;
+
+	for (i = start; i <= end; ++i) {
+		GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
+		glBegin(GL_LINES);
+		glColor4ubv(lineData.line_points[0].color);
+		glVertex3fv(lineData.line_points[0].position);
+		glColor4ubv(lineData.line_points[1].color);
+		glVertex3fv(lineData.line_points[1].position);
+		glEnd();
+		GL_StateEndAlphaLineRGB();
 	}
 }

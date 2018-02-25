@@ -110,7 +110,6 @@ typedef struct mtexinfo_s {
 	int           surfaces;
 } mtexinfo_t;
 
-// Any changes to definition must be mirrored in GLM_CreateBrushModelVAO
 // Filled in CopyVertToBuffer in glm_brushmodel
 typedef struct vbo_world_vert_s {
 	vec3_t position;
