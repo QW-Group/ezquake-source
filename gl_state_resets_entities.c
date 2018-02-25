@@ -209,9 +209,8 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 			GL_Color3ubv(color_white);
 		}
+		GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 	}
-
-	GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 
 	LEAVE_STATE;
 }
