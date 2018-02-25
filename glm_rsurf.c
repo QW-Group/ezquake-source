@@ -328,7 +328,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	if (batch_count && matrixMapping >= 0) {
 		req = &worldmodel_requests[batch_count - 1];
 
-		if (allow_duplicate && developer.integer == 0 && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && batch_count < MAX_WORLDMODEL_BATCH) {
+		if (allow_duplicate && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && batch_count < MAX_WORLDMODEL_BATCH) {
 			// Duplicate details from previous request, but with different matrix
 			glm_worldmodel_req_t* newreq = &worldmodel_requests[batch_count];
 
@@ -353,7 +353,9 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 			else if (req->samplerMappingCount == 0) {
 				// Previous block didn't care about materials, allocate now
 				if (sampler_mappings < MAX_SAMPLER_MAPPINGS) {
+					req->samplerMappingBase = sampler_mappings - first_texture;
 					req->samplerMappingCount = min(num_textures, MAX_SAMPLER_MAPPINGS - sampler_mappings);
+					sampler_mappings += req->samplerMappingCount;
 					return req;
 				}
 			}
@@ -438,7 +440,7 @@ void GLM_DrawWaterSurfaces(void)
 	GL_LeaveRegion();
 }
 
-void GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurface_t* surf)
+static glm_worldmodel_req_t* GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurface_t* surf)
 {
 	glpoly_t* poly;
 	int v;
@@ -468,6 +470,46 @@ void GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurface_t* surf)
 
 		surf = surf->drawflatchain;
 	}
+
+	return req;
+}
+
+static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, msurface_t* surf, texture_t* tex, int i)
+{
+	glpoly_t* poly;
+	int v;
+
+	while (surf) {
+		for (poly = surf->polys; poly; poly = poly->next) {
+			int newVerts = poly->numverts;
+
+			if (index_count + 1 + newVerts > modelIndexMaximum) {
+				// Should never happen now
+				model_t* model = req->model;
+				qbool polygonOffset = req->polygonOffset;
+				qbool caustics = req->flags & EZQ_SURFACE_UNDERWATER;
+
+				// Should never happen...
+				GL_FlushWorldModelBatch();
+				req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
+				GLM_AssignTexture(req, i, tex);
+			}
+
+			if (req->count) {
+				modelIndexes[index_count++] = ~(GLuint)0;
+				req->count++;
+			}
+
+			for (v = 0; v < newVerts; ++v) {
+				modelIndexes[index_count++] = poly->vbo_start + v;
+				req->count++;
+			}
+		}
+
+		surf = surf->texturechain;
+	}
+
+	return req;
 }
 
 static void GLM_DrawWorldModelOutlines(void)
@@ -509,14 +551,13 @@ void GL_FlushWorldModelBatch(void)
 	extern buffer_ref vbo_brushElements;
 	extern glm_vao_t brushModel_vao;
 
-	int polygonOffsetStart = 0;
+	int polygonOffsetStart = -1;
 
 	if (!batch_count) {
 		return;
 	}
 
 	GL_SortDrawCalls(&polygonOffsetStart);
-
 	GL_StartWorldBatch();
 	GL_UseProgram(drawworld.program);
 	GL_BindVertexArray(&brushModel_vao);
@@ -646,8 +687,7 @@ void GL_DrawWorldModelBatches(void)
 
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 {
-	int i, waterline, v;
-	msurface_t* surf;
+	int i;
 	glm_worldmodel_req_t* req = NULL;
 
 	if (GLM_DuplicatePreviousRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics)) {
@@ -657,8 +697,8 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	if (model->drawflat_chain[0] || model->drawflat_chain[1]) {
 		req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false);
 
-		GLM_DrawFlatChain(req, model->drawflat_chain[0]);
-		GLM_DrawFlatChain(req, model->drawflat_chain[1]);
+		req = GLM_DrawFlatChain(req, model->drawflat_chain[0]);
+		req = GLM_DrawFlatChain(req, model->drawflat_chain[1]);
 	}
 
 	req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics, false);
@@ -671,36 +711,12 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 		tex = R_TextureAnimation(tex);
 		if (!GLM_AssignTexture(req, i, tex)) {
-			req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, false, false, false);
+			req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
 			GLM_AssignTexture(req, i, tex);
 		}
 
-		for (waterline = 0; waterline < 2; ++waterline) {
-			for (surf = model->textures[i]->texturechain[waterline]; surf; surf = surf->texturechain) {
-				glpoly_t* poly;
-
-				for (poly = surf->polys; poly; poly = poly->next) {
-					int newVerts = poly->numverts;
-
-					if (index_count + 1 + newVerts > modelIndexMaximum) {
-						// Should never happen...
-						GL_FlushWorldModelBatch();
-						req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
-						GLM_AssignTexture(req, i, tex);
-					}
-
-					if (req->count) {
-						modelIndexes[index_count++] = ~(GLuint)0;
-						req->count++;
-					}
-
-					for (v = 0; v < newVerts; ++v) {
-						modelIndexes[index_count++] = poly->vbo_start + v;
-						req->count++;
-					}
-				}
-			}
-		}
+		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0], tex, i);
+		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1], tex, i);
 	}
 
 	return;

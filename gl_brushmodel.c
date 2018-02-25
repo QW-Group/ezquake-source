@@ -1620,8 +1620,4 @@ void GL_BeginDrawBrushModels(void)
 
 void GL_EndDrawBrushModels(void)
 {
-	if (GL_ShadersSupported()) {
-		GL_FlushWorldModelBatch();
-		GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	}
 }

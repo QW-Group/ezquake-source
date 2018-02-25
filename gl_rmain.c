@@ -402,23 +402,9 @@ static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
 	return 0;
 }
 
-typedef void(*GL_StateChangeFunction)(void);
-
-static modtype_t R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
+static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
 {
 	int i;
-	GL_StateChangeFunction beginState[] = {
-		GL_BeginDrawBrushModels,
-		GL_BeginDrawSprites,
-		GL_BeginDrawAliasModels,
-		GL_BeginDrawAliasModels,
-	};
-	GL_StateChangeFunction endState[] = {
-		GL_EndDrawBrushModels,
-		GL_EndDrawSprites,
-		GL_EndDrawAliasModels,
-		GL_EndDrawAliasModels,
-	};
 
 	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
 		GL_StateBeginEntities(vislist);
@@ -429,20 +415,6 @@ static modtype_t R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytyp
 
 			if (!todraw->draw[type]) {
 				continue;
-			}
-
-			if (current_state != todraw->type) {
-				if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
-					if (endState[current_state]) {
-						endState[current_state]();
-					}
-				}
-				if (todraw->type >= 0 && todraw->type < sizeof(beginState) / sizeof(beginState[0])) {
-					if (beginState[todraw->type]) {
-						beginState[todraw->type]();
-					}
-				}
-				current_state = todraw->type;
 			}
 
 			switch (todraw->type) {
@@ -473,17 +445,7 @@ static modtype_t R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytyp
 				break;
 			}
 		}
-
-		if (current_state >= 0 && current_state < sizeof(endState) / sizeof(endState[0])) {
-			if (endState[current_state]) {
-				endState[current_state]();
-			}
-			GL_StateEndEntities(vislist);
-			current_state = mod_unknown;
-		}
 	}
-
-	return current_state;
 }
 
 void R_PolyBlend(void)
@@ -963,9 +925,14 @@ static void R_RenderScene(void)
 		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
-			type = R_DrawEntitiesOnList(&cl_visents, ent_type, type);
+			R_DrawEntitiesOnList(&cl_visents, ent_type, type);
 		}
 		GL_LeaveRegion();
+
+		if (type != mod_unknown) {
+			GL_FlushWorldModelBatch();
+			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+		}
 
 		if (GL_ShadersSupported()) {
 			GL_EnterRegion("GLM_DrawEntities");
@@ -975,10 +942,6 @@ static void R_RenderScene(void)
 			GLM_DrawAliasModelBatches();
 			GL_LeaveRegion();
 		}
-	}
-
-	if (type != mod_unknown) {
-		GL_FlushWorldModelBatch();
 	}
 
 	if (!GL_ShadersSupported()) {
