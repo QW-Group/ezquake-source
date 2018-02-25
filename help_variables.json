@@ -2429,6 +2429,15 @@
         { "name": "true", "description": "On." }
       ]
     },
+    "gl_charsets_min": {
+      "group-id": "5",
+      "desc": "Speeds up start-up time by only searching for minimum number of charsets during start-up",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Search for full range of unicode charsets" },
+        { "name": "true", "description": "Search for default and -cyr only (as per ezQuake 2.2)" }
+      ]
+    },
     "gl_clear": {
       "group-id": "35",
       "desc": "This variable will toggle the clearing of the screen between each frame. This\ncan be helpful when specing a game and flying out of the map or during map \ndevelopment when the map maker must fly outside of the map to look has his map\nfrom the outside. Enabling this command will clear the areas which are not \nrendered outside of the map thus preventing the flickering effect when images \nrepeat themselves repeatedly. However it causes problems when playing and \ngoing through the surfaces of a liquid (for example when diving into liquid), as\nyou will see a red flash where the liquid texture would normally be repeated.",

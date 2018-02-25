@@ -41,6 +41,7 @@ cvar_t gl_alphafont    = { "gl_alphafont", "1" };
 cvar_t gl_consolefont  = { "gl_consolefont", "povo5", 0, OnChange_gl_consolefont };
 cvar_t gl_smoothfont   = { "gl_smoothfont", "1", 0, OnChange_gl_smoothfont };
 cvar_t scr_coloredText = { "scr_coloredText", "1" };
+cvar_t gl_charsets_min = { "gl_charsets_min", "1" };
 
 static byte *draw_chars; // 8*8 graphic characters
 mpic_t char_textures[MAX_CHARSETS];
@@ -166,16 +167,21 @@ static int Draw_LoadCharset(const char *name)
 	}
 
 	// Load alternate charsets if available
-	for (i = 1; i < MAX_CHARSETS; ++i) {
-		char charsetName[10];
+	if (gl_charsets_min.integer) {
+		Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+	}
+	else {
+		for (i = 1; i < MAX_CHARSETS; ++i) {
+			char charsetName[10];
 
-		snprintf(charsetName, sizeof(charsetName), "%03d", i);
+			snprintf(charsetName, sizeof(charsetName), "%03d", i);
 
-		loaded = Load_Locale_Charset(name, charsetName, i, i << 8, flags);
+			loaded = Load_Locale_Charset(name, charsetName, i, i << 8, flags);
 
-		// 2.2 only supported -cyr suffix
-		if (i == 4 && !loaded) {
-			Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+			// 2.2 only supported -cyr suffix
+			if (i == 4 && !loaded) {
+				Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+			}
 		}
 	}
 
@@ -486,6 +492,7 @@ void Draw_Charset_Init(void)
 	Cvar_Register(&gl_smoothfont);
 	Cvar_Register(&gl_consolefont);
 	Cvar_Register(&gl_alphafont);
+	Cvar_Register(&gl_charsets_min);
 	Cvar_Register(&scr_coloredText);
 	Cvar_ResetCurrentGroup();
 
