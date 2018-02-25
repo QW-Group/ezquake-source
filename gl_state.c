@@ -548,12 +548,11 @@ void GL_InvalidateTextureReferences(GLuint texture)
 void GL_PolygonOffset(int option)
 {
 	extern cvar_t gl_brush_polygonoffset;
-	qbool enabled = (option == POLYGONOFFSET_STANDARD || option == POLYGONOFFSET_OUTLINES);
+	float factor = (option == POLYGONOFFSET_STANDARD ? 0.05 : 1);
+	float units = (option == POLYGONOFFSET_STANDARD ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
+	qbool enabled = (option == POLYGONOFFSET_STANDARD || option == POLYGONOFFSET_OUTLINES) && units > 0;
 
 	if (enabled) {
-		float factor = (option == POLYGONOFFSET_STANDARD ? 0.05 : 1);
-		float units = (option == POLYGONOFFSET_STANDARD ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
-
 		GL_Enable(GL_POLYGON_OFFSET_FILL);
 		GL_Enable(GL_POLYGON_OFFSET_LINE);
 
