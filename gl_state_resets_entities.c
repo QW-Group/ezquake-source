@@ -211,17 +211,14 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	}
 	else {
 		GL_Disable(GL_LINE_SMOOTH);
-		GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		GL_DisableFog();
 
 		if (e->alpha) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 			GL_Color4f(e->alpha, e->alpha, e->alpha, e->alpha);
 		}
 		else {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-			GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 			GL_Color3ubv(color_white);
 		}
 	}

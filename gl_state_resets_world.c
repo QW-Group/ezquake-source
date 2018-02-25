@@ -27,6 +27,8 @@ void GLC_StateBeginDrawFlatModel(void)
 {
 	ENTER_STATE;
 
+	GL_BindVertexArray(NULL);
+
 	GLC_InitTextureUnitsNoBind1(GL_BLEND);
 
 	// START shaman BUG /fog not working with /r_drawflat {
@@ -69,6 +71,7 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 
 	ENTER_STATE;
 
+	GL_BindVertexArray(NULL);
 	if (gl_fogenable.integer) {
 		GL_Enable(GL_FOG);
 	}
@@ -246,13 +249,15 @@ void GLC_StateBeginWaterSurfaces(void)
 	if (r_fastturb.integer) {
 		GLC_DisableAllTexturing();
 	}
+	else {
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	}
 
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 		GL_Color4f(wateralpha, wateralpha, wateralpha, wateralpha);
 		if (!r_fastturb.integer) {
 			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-			GLC_EnsureTMUEnabled(GL_TEXTURE0);
 		}
 		if (wateralpha < 0.9) {
 			GL_DepthMask(GL_FALSE);

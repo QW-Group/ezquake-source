@@ -47,9 +47,9 @@ static void GLC_DrawFlat(model_t *model)
 	msurface_t *s;
 	int waterline, k;
 	float *v;
-	byte w[3], f[3], sky[3];
-	int lastType = -1;
+	byte w[3], f[3], sky[3], current[3], desired[3];
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
+	qbool first_surf = true;
 	int last_lightmap = -1;
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
@@ -59,67 +59,60 @@ static void GLC_DrawFlat(model_t *model)
 	memcpy(w, r_wallcolor.color, 3);
 	memcpy(f, r_floorcolor.color, 3);
 	memcpy(sky, r_skycolor.color, 3);
+	memcpy(current, color_white, 3);
+	memcpy(desired, current, 3);
 
 	GLC_StateBeginDrawFlatModel();
 
 	for (waterline = 0; waterline < 2; waterline++) {
-		if (!(s = model->drawflat_chain[waterline])) {
-			continue;
-		}
+		for (s = model->drawflat_chain[waterline]; s; s = s->drawflatchain) {
+			int new_lightmap = s->lightmaptexturenum;
 
-		for (; s; s = s->drawflatchain) {
 			if (s->flags & SURF_DRAWSKY) {
-				if (lastType != 2) {
-					if (index_count) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						GL_LogAPICall("glDrawElements(switch to sky surfaces)");
-					}
-					index_count = 0;
-					glColor3ubv(sky);
-					lastType = 2;
-				}
-				GLC_EnsureTMUDisabled(GL_TEXTURE0);
+				memcpy(desired, sky, 3);
+				new_lightmap = -1;
 			}
 			else if (s->flags & SURF_DRAWTURB) {
-				if (index_count) {
-					glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					GL_LogAPICall("glDrawElements(turb surfaces)");
-				}
-				index_count = 0;
-				GLC_EnsureTMUDisabled(GL_TEXTURE0);
-				glColor3ubv(SurfaceFlatTurbColor(s->texinfo->texture));
-				lastType = -1;
+				memcpy(desired, SurfaceFlatTurbColor(s->texinfo->texture), 3);
+				new_lightmap = -1;
+			}
+			else if (s->flags & SURF_DRAWFLAT_FLOOR) {
+				memcpy(desired, f, 3);
 			}
 			else {
-				if (last_lightmap != s->lightmaptexturenum) {
-					if (index_count) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						GL_LogAPICall("glDrawElements(lightmap switch)");
-					}
-					index_count = 0;
+				memcpy(desired, w, 3);
+			}
+
+			if (index_count && last_lightmap != new_lightmap) {
+				glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				GL_LogAPICall("glDrawElements(lightmap-switch: GL_TRIANGLE_STRIP, %d)", index_count);
+				index_count = 0;
+			}
+
+			if (first_surf || desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]) {
+				if (index_count) {
+					glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					GL_LogAPICall("glDrawElements(color-switch: GL_TRIANGLE_STRIP, %d)", index_count);
 				}
-				GLC_SetTextureLightmap(GL_TEXTURE0, last_lightmap = s->lightmaptexturenum);
-				GLC_EnsureTMUEnabled(GL_TEXTURE0);
-				if (s->flags & SURF_DRAWFLAT_FLOOR) {
-					if (lastType != 0) {
-						if (index_count) {
-							glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-							GL_LogAPICall("glDrawElements(switch to floor)");
-						}
-						index_count = 0;
-						glColor3ubv(f);
-						lastType = 0;
-					}
+				index_count = 0;
+				glColor3ubv(desired);
+			}
+
+			if (last_lightmap != new_lightmap) {
+				if (new_lightmap >= 0) {
+					GLC_SetTextureLightmap(GL_TEXTURE0, new_lightmap);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
 				}
-				else if (lastType != 1) {
-					if (index_count) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					}
-					index_count = 0;
-					glColor3ubv(w);
-					lastType = 1;
+				else {
+					GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				}
 			}
+			last_lightmap = new_lightmap;
+
+			current[0] = desired[0];
+			current[1] = desired[1];
+			current[2] = desired[2];
+			first_surf = false;
 
 			{
 				glpoly_t *p;
@@ -129,7 +122,7 @@ static void GLC_DrawFlat(model_t *model)
 					if (GL_BuffersSupported()) {
 						if (index_count + 1 + p->numverts > modelIndexMaximum) {
 							glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-							GL_LogAPICall("glDrawElements(index buffer full)");
+							GL_LogAPICall("glDrawElements(full: TRIANGLE_STRIP, %d)", index_count);
 							index_count = 0;
 						}
 
@@ -163,7 +156,7 @@ static void GLC_DrawFlat(model_t *model)
 
 	if (index_count) {
 		glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		GL_LogAPICall("glDrawElements(flush)");
+		GL_LogAPICall("glDrawElements(flush: TRIANGLE_STRIP, %d)", index_count);
 	}
 
 	GLC_StateEndDrawFlatModel();
@@ -257,20 +250,6 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		//bind the world texture
 		texture_change = !GL_TextureReferenceEqual(t->gl_texturenum, current_material);
 		texture_change |= !GL_TextureReferenceEqual(t->fb_texturenum, current_material_fb);
-		if (index_count && texture_change) {
-			glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-			GL_LogAPICall("glDrawElements(lightmap switch)");
-			index_count = 0;
-		}
-
-		GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
-		if (GL_TextureReferenceIsValid(fb_texturenum)) {
-			GLC_EnsureTMUEnabled(fullbrightTextureUnit);
-			GL_EnsureTextureUnitBound(fullbrightTextureUnit, fb_texturenum);
-		}
-		else {
-			GLC_EnsureTMUDisabled(fullbrightTextureUnit);
-		}
 
 		current_material = t->gl_texturenum;
 		current_material_fb = t->fb_texturenum;
@@ -282,15 +261,29 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 
 			for (; s; s = s->texturechain) {
 				if (lightmapTextureUnit) {
-					if (index_count && s->lightmaptexturenum != current_lightmap) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						GL_LogAPICall("glDrawElements(lightmap switch)");
-						index_count = 0;
-					}
-					GLC_SetTextureLightmap(lightmapTextureUnit, current_lightmap = s->lightmaptexturenum);
+					texture_change |= (s->lightmaptexturenum != current_lightmap);
 				}
 				else {
 					GLC_AddToLightmapChain(s);
+				}
+
+				if (texture_change) {
+					if (index_count) {
+						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						GL_LogAPICall("glDrawElements(texture switch)");
+						index_count = 0;
+					}
+					GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
+					GLC_SetTextureLightmap(lightmapTextureUnit, current_lightmap = s->lightmaptexturenum);
+					if (GL_TextureReferenceIsValid(fb_texturenum)) {
+						GLC_EnsureTMUEnabled(fullbrightTextureUnit);
+						GL_EnsureTextureUnitBound(fullbrightTextureUnit, fb_texturenum);
+					}
+					else {
+						GLC_EnsureTMUDisabled(fullbrightTextureUnit);
+					}
+
+					texture_change = false;
 				}
 
 				if (use_vbo) {
@@ -369,7 +362,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		GL_LogAPICall("glDrawElements(flush)");
 	}
 
-	if (gl_fb_bmodels.value) {
+	if (gl_fb_bmodels.integer) {
 		if (!lightmapTextureUnit) {
 			GLC_BlendLightmaps();
 		}

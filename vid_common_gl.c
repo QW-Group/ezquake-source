@@ -326,7 +326,7 @@ static void CheckShaderExtensions(void)
 
 #ifdef _WIN32
 	// During init, enable debug output
-	if (IsDebuggerPresent()) {
+	if (GL_ShadersSupported() && IsDebuggerPresent()) {
 		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
 
 		if (glDebugMessageCallback) {
