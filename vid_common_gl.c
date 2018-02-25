@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 
 #ifdef WITH_NVTX
+#define DEBUG_FRAME_DEPTH_CHARS 2
 #include "nvToolsExt.h"
 #endif
 
@@ -616,8 +617,8 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 		}
 	}
 	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Enter: %.*s %s\n", debug_frame_depth, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", regionName);
-		++debug_frame_depth;
+		fprintf(debug_frame_out, "Enter: %.*s %s {\n", debug_frame_depth, "                                                          ", regionName);
+		debug_frame_depth += DEBUG_FRAME_DEPTH_CHARS;
 	}
 
 	regions_trace_only <<= 1;
@@ -632,8 +633,9 @@ void GL_LeaveTracedRegion(qbool trace_only)
 		}
 	}
 	else if (debug_frame_out) {
-		debug_frame_depth = max(debug_frame_depth - 1, 0);
-		fprintf(debug_frame_out, "Leave: %.*s\n", debug_frame_depth, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		debug_frame_depth -= DEBUG_FRAME_DEPTH_CHARS;
+		debug_frame_depth = max(debug_frame_depth, 0);
+		fprintf(debug_frame_out, "Leave: %.*s }\n", debug_frame_depth, "                                                          ");
 	}
 }
 

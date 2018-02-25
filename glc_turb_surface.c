@@ -35,14 +35,17 @@ void GLC_DrawWaterSurfaces(void)
 		return;
 	}
 
+	GL_EnterTracedRegion(__FUNCTION__, true);
 	GLC_StateBeginWaterSurfaces();
 
 	for (s = waterchain; s; s = s->texturechain) {
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, s->texinfo->texture->gl_texturenum);
+
 		EmitWaterPolys(s);
 	}
 
 	GLC_StateEndWaterSurfaces();
+	GL_LeaveTracedRegion(true);
 
 	waterchain = NULL;
 }

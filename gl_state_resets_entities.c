@@ -193,7 +193,7 @@ void GLC_StateEndDrawViewModel(void)
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 {
-	GL_EnterTracedRegion(va("GL_StateBeginDrawBrushModel(%s)", e->model->name), true);
+	GL_EnterTracedRegion("GL_StateBeginDrawBrushModel", true);
 
 	GLC_PauseMatrixUpdate();
 	GL_Translate(GL_MODELVIEW, e->origin[0],  e->origin[1],  e->origin[2]);
@@ -236,7 +236,7 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 
-	GL_EnterTracedRegion(va("GL_StateBeginDrawAliasModel(%s)", ent->model->name), true);
+	GL_EnterTracedRegion(__FUNCTION__, true);
 
 	GLC_PauseMatrixUpdate();
 	R_RotateForEntity(ent);

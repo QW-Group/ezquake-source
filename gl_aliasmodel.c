@@ -343,12 +343,14 @@ void R_DrawAliasModel(entity_t *ent)
 
 	frameStats.classic.alias_polys += paliashdr->numtris;
 
+	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	//get lighting information
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+	r_modelalpha = (ent->alpha ? ent->alpha : 1);
 
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
@@ -365,7 +367,6 @@ void R_DrawAliasModel(entity_t *ent)
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
-	r_modelalpha = (ent->alpha ? ent->alpha : 1);
 	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
@@ -378,6 +379,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	GL_StateEndDrawAliasModel();
+	GL_LeaveTracedRegion(true);
 
 	return;
 }
@@ -1013,9 +1015,11 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 
 	frameStats.classic.alias_polys += paliashdr->numtris;
 
+	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 	GL_AliasModelPowerupShell(ent, oldframe, frame);
 	GL_StateEndDrawAliasModel();
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_LeaveTracedRegion(true);
 }

@@ -1458,6 +1458,8 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
+	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
+
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
 	if (rotated) {
 		vec3_t	temp;
@@ -1603,6 +1605,8 @@ void R_DrawBrushModel(entity_t *e)
 
 	GL_StateEndDrawBrushModel();
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+
+	GL_LeaveTracedRegion(true);
 }
 
 void GL_BeginDrawBrushModels(void)
