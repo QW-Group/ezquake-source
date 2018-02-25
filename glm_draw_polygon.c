@@ -51,7 +51,7 @@ void GLM_PreparePolygon(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, GL_STREAM_DRAW);
+		polygonVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, write_once_use_once);
 	}
 	else if (polygonData.polygonVerts[0]) {
 		GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
@@ -59,7 +59,7 @@ void GLM_PreparePolygon(void)
 
 	if (!polygonVAO.vao) {
 		GL_GenVertexArray(&polygonVAO, "polygon-vao");
-		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL, 0);
+		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
 	}
 }
 
@@ -87,6 +87,7 @@ void GLM_DrawPolygons(int start, int end)
 {
 	float matrix[16];
 	int i;
+	uintptr_t offset = GL_BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
 	GL_BindVertexArray(&polygonVAO);
 	GL_UseProgram(polygonProgram.program);

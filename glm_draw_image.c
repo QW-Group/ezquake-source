@@ -118,7 +118,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.images), imageData.images, GL_STREAM_DRAW);
+		imageVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.images), imageData.images, write_once_use_once);
 	}
 
 	if (!imageVAO.vao) {
@@ -135,6 +135,8 @@ void GLM_CreateMultiImageProgram(void)
 
 void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 {
+	uintptr_t offset = GL_BufferOffset(imageVBO) / sizeof(imageData.images[0]);
+
 	GL_UseProgram(multiImageProgram.program);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -143,7 +145,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	if (GL_TextureReferenceIsValid(texture)) {
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 	}
-	GL_DrawArrays(GL_POINTS, start, end - start + 1);
+	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
 }
 
 void GLM_PrepareImages(void)

@@ -36,7 +36,7 @@ glm_line_framedata_t lineData;
 void GLM_PrepareLineProgram(void)
 {
 	if (!GL_BufferReferenceIsValid(line_vbo)) {
-		line_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, GL_STREAM_DRAW);
+		line_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, write_once_use_once);
 	}
 	else if (lineData.lineCount) {
 		GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
@@ -94,6 +94,7 @@ void GLM_DrawLines(int start, int end)
 	if (line_program.program && line_vao.vao) {
 		float matrix[16];
 		int i;
+		uintptr_t offset = GL_BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
 		GL_UseProgram(line_program.program);
 		GLM_GetMatrix(GL_PROJECTION, matrix);
@@ -101,7 +102,7 @@ void GLM_DrawLines(int start, int end)
 		GL_BindVertexArray(&line_vao);
 
 		for (i = start; i <= end; ++i) {
-			GL_DrawArrays(GL_LINES, i * 2, 2);
+			GL_DrawArrays(GL_LINES, offset + i * 2, 2);
 		}
 	}
 }

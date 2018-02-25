@@ -42,8 +42,7 @@ void GLM_DrawCircles(int start, int end)
 	// FIXME: Not very efficient (but rarely used either)
 	float projectionMatrix[16];
 	int i;
-
-	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
+	uintptr_t offset = GL_BufferOffset(circleVBO) / (sizeof(float) * 2);
 
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);
@@ -51,11 +50,13 @@ void GLM_DrawCircles(int start, int end)
 	GL_UseProgram(circleProgram.program);
 	GL_BindVertexArray(&circleVAO);
 
+	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
 	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
+
 	for (i = start; i <= end; ++i) {
 		glUniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
 
-		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
+		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, offset + i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
 	}
 }
 
@@ -78,7 +79,7 @@ void GLM_PrepareCircleDraw(void)
 
 	// Build VBO
 	if (!GL_BufferReferenceIsValid(circleVBO)) {
-		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, GL_STREAM_DRAW);
+		circleVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, write_once_use_once);
 	}
 	else if (circleData.circleCount) {
 		GL_UpdateBuffer(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
