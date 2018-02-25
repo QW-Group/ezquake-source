@@ -28,11 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
+#include "glm_draw.h"
+
+#define MAX_2D_ELEMENTS 4096
 
 extern float overall_alpha;
-extern int circleCount;
-extern int lineCount;
-extern int imageCount;
 
 typedef struct draw_hud_element_s {
 	glm_image_type_t type;
@@ -40,7 +40,7 @@ typedef struct draw_hud_element_s {
 	int index;
 } draw_hud_element_t;
 
-static draw_hud_element_t elements[MAX_MULTI_IMAGE_BATCH];
+static draw_hud_element_t elements[MAX_2D_ELEMENTS];
 static int hudElementCount = 0;
 
 void GLM_DrawCircles(int start, int end);
@@ -121,10 +121,7 @@ static void GLM_FlushImageDraw(void)
 		for (i = 0; i < hudElementCount; ++i) {
 			qbool texture_changed = (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(elements[i].texture) && !GL_TextureReferenceEqual(currentTexture, elements[i].texture));
 
-			if (start == i) {
-				type = elements[i].type;
-			}
-			else if (elements[i].type != type || texture_changed) {
+			if (i && elements[i].type != type || texture_changed) {
 				GLM_DrawHudElements(type, currentTexture, start, i - 1);
 
 				start = i;
@@ -133,18 +130,13 @@ static void GLM_FlushImageDraw(void)
 			if (GL_TextureReferenceIsValid(elements[i].texture)) {
 				currentTexture = elements[i].texture;
 			}
+			type = elements[i].type;
 		}
 
 		if (hudElementCount - start) {
 			GLM_DrawHudElements(type, currentTexture, start, hudElementCount - 1);
 		}
 	}
-
-	memset(elements, 0, sizeof(elements));
-	hudElementCount = 0;
-	imageCount = 0;
-	circleCount = 0;
-	lineCount = 0;
 }
 
 static void GLC_FlushImageDraw(void)
@@ -299,7 +291,7 @@ static void GLC_FlushImageDraw(void)
 
 void GL_EmptyImageQueue(void)
 {
-	hudElementCount = imageCount = circleCount = lineCount = 0;
+	hudElementCount = imageData.imageCount = circleData.circleCount = lineData.lineCount = polygonData.polygonCount = 0;
 }
 
 void GL_FlushImageDraw(void)
@@ -311,15 +303,12 @@ void GL_FlushImageDraw(void)
 		GLC_FlushImageDraw();
 	}
 
-	hudElementCount = 0;
-	imageCount = 0;
-	circleCount = 0;
-	lineCount = 0;
+	GL_EmptyImageQueue();
 }
 
 qbool GLM_LogCustomImageType(glm_image_type_t type, int index)
 {
-	if (hudElementCount >= MAX_MULTI_IMAGE_BATCH) {
+	if (hudElementCount >= MAX_2D_ELEMENTS) {
 		return false;
 	}
 
@@ -331,7 +320,7 @@ qbool GLM_LogCustomImageType(glm_image_type_t type, int index)
 
 qbool GLM_LogCustomImageTypeWithTexture(glm_image_type_t type, int index, texture_ref texture)
 {
-	if (hudElementCount >= MAX_MULTI_IMAGE_BATCH) {
+	if (hudElementCount >= MAX_2D_ELEMENTS) {
 		return false;
 	}
 

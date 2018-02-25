@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
+#include "glm_draw.h"
 
 #define IMAGEPROG_FLAGS_TEXTURE     1
 #define IMAGEPROG_FLAGS_ALPHATEST   2
@@ -31,27 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static glm_program_t multiImageProgram;
 
-typedef struct glm_image_s {
-	float x1, y1;
-	float x2, y2;
-	float s1, t1;
-	float s2, t2;
-	unsigned char colour[4];
-	int flags;
-	texture_ref texNumber;
-} glm_image_t;
-
-typedef struct glc_image_s {
-	float pos[2];
-	float tex[2];
-	unsigned char colour[4];
-} glc_image_t;
-
-static glm_image_t images[MAX_MULTI_IMAGE_BATCH];
-static glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 static glm_vao_t imageVAO;
 static buffer_ref imageVBO;
-int imageCount = 0;
+
+glm_image_framedata_t imageData;
 
 static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float tex_width, float t, float tex_height)
 {
@@ -132,18 +116,18 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(images), images, GL_STREAM_DRAW);
+		imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.images), imageData.images, GL_STREAM_DRAW);
 	}
 
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO, "image-vao");
 
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x2), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s1), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s2), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
-		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x2), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, s1), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, s2), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
+		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
 	}
 }
 
@@ -163,81 +147,84 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 void GLM_PrepareImages(void)
 {
 	GLM_CreateMultiImageProgram();
-	GL_UpdateBuffer(imageVBO, sizeof(images[0]) * imageCount, images);
+
+	if (imageData.imageCount) {
+		GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
+	}
 }
 
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
 {
-	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
 	}
-	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageCount, texnum)) {
+	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, texnum)) {
 		return;
 	}
 
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
-		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
-		GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
-		images[imageCount].s1 = tex_s;
-		images[imageCount].s2 = tex_s + tex_width;
-		images[imageCount].t1 = tex_t;
-		images[imageCount].t2 = tex_t + tex_height;
+		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
+		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
+		imageData.images[imageData.imageCount].s1 = tex_s;
+		imageData.images[imageData.imageCount].s2 = tex_s + tex_width;
+		imageData.images[imageData.imageCount].t1 = tex_t;
+		imageData.images[imageData.imageCount].t2 = tex_t + tex_height;
 	}
 	else {
-		int imageIndex = imageCount * 4;
-		memcpy(&glc_images[imageIndex].colour, color, sizeof(byte) * 4);
-		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
+		int imageIndex = imageData.imageCount * 4;
+		memcpy(&imageData.glc_images[imageIndex].colour, color, sizeof(byte) * 4);
+		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
 	}
 
-	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
-	images[imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
-	images[imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
-	images[imageCount].texNumber = texnum;
+	imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
+	imageData.images[imageData.imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
+	imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
+	imageData.images[imageData.imageCount].texNumber = texnum;
 
-	++imageCount;
+	++imageData.imageCount;
 }
 
 void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
-	if (imageCount >= MAX_MULTI_IMAGE_BATCH) {
+	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
 	}
 
-	if (!GLM_LogCustomImageType(imagetype_image, imageCount)) {
+	if (!GLM_LogCustomImageType(imagetype_image, imageData.imageCount)) {
 		return;
 	}
 
 	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
-		memcpy(&images[imageCount].colour, color, sizeof(byte) * 4);
+		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
 			float alpha = color[3] / 255.0f;
 
-			images[imageCount].colour[0] *= alpha;
-			images[imageCount].colour[1] *= alpha;
-			images[imageCount].colour[2] *= alpha;
+			imageData.images[imageData.imageCount].colour[0] *= alpha;
+			imageData.images[imageData.imageCount].colour[1] *= alpha;
+			imageData.images[imageData.imageCount].colour[2] *= alpha;
 		}
-		GLM_SetCoordinates(&images[imageCount], x, y, x + width, y + height);
-		Atlas_SolidTextureCoordinates(&images[imageCount].texNumber, &images[imageCount].s1, &images[imageCount].t1);
-		images[imageCount].s2 = images[imageCount].s1;
-		images[imageCount].t2 = images[imageCount].t1;
+		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
+		Atlas_SolidTextureCoordinates(&imageData.images[imageData.imageCount].texNumber, &imageData.images[imageData.imageCount].s1, &imageData.images[imageData.imageCount].t1);
+		imageData.images[imageData.imageCount].s2 = imageData.images[imageData.imageCount].s1;
+		imageData.images[imageData.imageCount].t2 = imageData.images[imageData.imageCount].t1;
 	}
 	else {
-		int imageIndex = imageCount * 4;
+		int imageIndex = imageData.imageCount * 4;
 		float s, t;
 
-		memcpy(&glc_images[imageIndex].colour, color, sizeof(byte) * 4);
+		memcpy(&imageData.glc_images[imageIndex].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
 			float alpha = color[3] / 255.0f;
 
-			glc_images[imageIndex].colour[0] *= alpha;
-			glc_images[imageIndex].colour[1] *= alpha;
-			glc_images[imageIndex].colour[2] *= alpha;
+			imageData.glc_images[imageIndex].colour[0] *= alpha;
+			imageData.glc_images[imageIndex].colour[1] *= alpha;
+			imageData.glc_images[imageIndex].colour[2] *= alpha;
 		}
-		Atlas_SolidTextureCoordinates(&images[imageCount].texNumber, &s, &t);
-		GLC_SetCoordinates(&glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0);
+		Atlas_SolidTextureCoordinates(&imageData.images[imageData.imageCount].texNumber, &s, &t);
+		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0);
 	}
 
-	images[imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
+	imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 
-	++imageCount;
+	++imageData.imageCount;
 }

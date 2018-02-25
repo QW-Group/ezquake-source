@@ -81,6 +81,7 @@ color_t RGBAVECT_TO_COLOR(byte rgba[4]);
 color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4]);
 byte* COLOR_TO_RGBA(int i, byte rgba[4]);
 byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4]);
+float* COLOR_TO_FLOATVEC_PREMULT(color_t i, float rgba[4]);
 void Draw_SetOverallAlpha(float opacity);
 float Draw_MultiplyOverallAlpha(float alpha);
 

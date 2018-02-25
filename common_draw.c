@@ -656,6 +656,18 @@ byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4])
 	return rgba;
 }
 
+float* COLOR_TO_FLOATVEC_PREMULT(color_t i, float rgba[4])
+{
+	float alpha = (i >> 24 & 0xFF) / 255.0f;
+
+	rgba[0] = ((i >> 0 & 0xFF) * alpha) / 255.0f;
+	rgba[1] = ((i >> 8 & 0xFF) * alpha) / 255.0f;
+	rgba[2] = ((i >> 16 & 0xFF) * alpha) / 255.0f;
+	rgba[3] = alpha;
+
+	return rgba;
+}
+
 //
 // Draw a subpic fitted inside a specified area.
 //

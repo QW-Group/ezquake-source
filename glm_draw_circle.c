@@ -25,10 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
-
-#define CIRCLE_LINE_COUNT	40
-#define FLOATS_PER_CIRCLE ((3 + 2 * CIRCLE_LINE_COUNT) * 2)
-#define CIRCLES_PER_FRAME 256
+#include "glm_draw.h"
 
 static glm_program_t circleProgram;
 static glm_vao_t circleVAO;
@@ -36,11 +33,7 @@ static buffer_ref circleVBO;
 static GLint drawCircleUniforms_matrix;
 static GLint drawCircleUniforms_color;
 
-static float drawCirclePointData[FLOATS_PER_CIRCLE * CIRCLES_PER_FRAME];
-static float drawCircleColors[CIRCLES_PER_FRAME][4];
-static qbool drawCircleFill[CIRCLES_PER_FRAME];
-static int drawCirclePoints[CIRCLES_PER_FRAME];
-int circleCount;
+glm_circle_framedata_t circleData;
 
 extern float overall_alpha;
 
@@ -53,16 +46,16 @@ void GLM_DrawCircles(int start, int end)
 	GL_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 	start = max(0, start);
-	end = min(end, circleCount - 1);
+	end = min(end, circleData.circleCount - 1);
 
 	GL_UseProgram(circleProgram.program);
 	GL_BindVertexArray(&circleVAO);
 
 	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
 	for (i = start; i <= end; ++i) {
-		glUniform4fv(drawCircleUniforms_color, 1, drawCircleColors[i]);
+		glUniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
 
-		GL_DrawArrays(drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, i * FLOATS_PER_CIRCLE / 2, drawCirclePoints[i]);
+		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
 	}
 }
 
@@ -85,10 +78,10 @@ void GLM_PrepareCircleDraw(void)
 
 	// Build VBO
 	if (!GL_BufferReferenceIsValid(circleVBO)) {
-		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(drawCirclePointData), drawCirclePointData, GL_STREAM_DRAW);
+		circleVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, GL_STREAM_DRAW);
 	}
-	else {
-		GL_UpdateBuffer(circleVBO, sizeof(drawCirclePointData), drawCirclePointData);
+	else if (circleData.circleCount) {
+		GL_UpdateBuffer(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
 	}
 
 	// Build VAO
@@ -109,11 +102,11 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	int end;
 	int points;
 
-	if (circleCount >= CIRCLES_PER_FRAME) {
+	if (circleData.circleCount >= CIRCLES_PER_FRAME) {
 		return;
 	}
 
-	if (!GLM_LogCustomImageType(imagetype_circle, circleCount)) {
+	if (!GLM_LogCustomImageType(imagetype_circle, circleData.circleCount)) {
 		return;
 	}
 
@@ -128,14 +121,14 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	}
 
 	points = 0;
-	pointData = drawCirclePointData + (FLOATS_PER_CIRCLE * circleCount);
+	pointData = circleData.drawCirclePointData + (FLOATS_PER_CIRCLE * circleData.circleCount);
 	COLOR_TO_RGBA(color, color_bytes);
-	drawCircleColors[circleCount][0] = (color_bytes[0] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][1] = (color_bytes[1] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][2] = (color_bytes[2] / 255.0f) * overall_alpha;
-	drawCircleColors[circleCount][3] = (color_bytes[3] / 255.0f) * overall_alpha;
-	drawCircleFill[circleCount] = fill;
-	++circleCount;
+	circleData.drawCircleColors[circleData.circleCount][0] = (color_bytes[0] / 255.0f) * overall_alpha;
+	circleData.drawCircleColors[circleData.circleCount][1] = (color_bytes[1] / 255.0f) * overall_alpha;
+	circleData.drawCircleColors[circleData.circleCount][2] = (color_bytes[2] / 255.0f) * overall_alpha;
+	circleData.drawCircleColors[circleData.circleCount][3] = (color_bytes[3] / 255.0f) * overall_alpha;
+	circleData.drawCircleFill[circleData.circleCount] = fill;
+	++circleData.circleCount;
 
 	// Create a vertex at the exact position specified by the start angle.
 	pointData[points * 2 + 0] = x + radius * cos(startangle);
@@ -170,5 +163,5 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 		++points;
 	}
 
-	drawCirclePoints[circleCount - 1] = points;
+	circleData.drawCirclePoints[circleData.circleCount - 1] = points;
 }

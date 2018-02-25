@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
+#include "glm_draw.h"
 
 static glm_program_t polygonProgram;
 static glm_vao_t polygonVAO;
@@ -31,11 +32,7 @@ static buffer_ref polygonVBO;
 static GLint polygonUniforms_matrix;
 static GLint polygonUniforms_color;
 
-static vec3_t polygonVertices[64];
-static int polygonVerts;
-static color_t polygonColor;
-static int polygonX;
-static int polygonY;
+glm_polygon_framedata_t polygonData;
 
 void GLM_PreparePolygon(void)
 {
@@ -54,10 +51,10 @@ void GLM_PreparePolygon(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonVertices), polygonVertices, GL_STREAM_DRAW);
+		polygonVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, GL_STREAM_DRAW);
 	}
-	else {
-		GL_UpdateBuffer(polygonVBO, polygonVerts * sizeof(polygonVertices[0]), polygonVertices);
+	else if (polygonData.polygonVerts[0]) {
+		GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
 	}
 
 	if (!polygonVAO.vao) {
@@ -68,38 +65,41 @@ void GLM_PreparePolygon(void)
 
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
-	if (num_vertices > sizeof(polygonVertices) / sizeof(polygonVertices[0])) {
+	if (num_vertices < 0 || num_vertices > MAX_POLYGON_POINTS) {
+		return;
+	}
+	if (polygonData.polygonCount >= MAX_POLYGONS_PER_FRAME) {
 		return;
 	}
 	if (!GLM_LogCustomImageType(imagetype_polygon, 0)) {
 		return;
 	}
 
-	polygonVerts = num_vertices;
-	polygonColor = color;
-	polygonX = x;
-	polygonY = y;
-	memcpy(polygonVertices, vertices, sizeof(polygonVertices[0]) * num_vertices);
+	polygonData.polygonVerts[polygonData.polygonCount] = num_vertices;
+	COLOR_TO_FLOATVEC_PREMULT(color, polygonData.polygonColor[polygonData.polygonCount]);
+	polygonData.polygonX[polygonData.polygonCount] = x;
+	polygonData.polygonY[polygonData.polygonCount] = y;
+	memcpy(polygonData.polygonVertices, vertices, sizeof(polygonData.polygonVertices[0]) * num_vertices);
+	++polygonData.polygonCount;
 }
 
 void GLM_DrawPolygons(int start, int end)
 {
 	float matrix[16];
-	float alpha;
-	byte glColor[4];
-
-	COLOR_TO_RGBA(polygonColor, glColor);
-
-	alpha = glColor[3] / 255.0f;
-
-	GL_Disable(GL_DEPTH_TEST);
-	GLM_GetMatrix(GL_PROJECTION, matrix);
-	GLM_TransformMatrix(matrix, polygonX, polygonY, 0);
+	int i;
 
 	GL_BindVertexArray(&polygonVAO);
 	GL_UseProgram(polygonProgram.program);
-	glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
-	glUniform4f(polygonUniforms_color, glColor[0] * alpha / 255.0f, glColor[1] * alpha / 255.0f, glColor[2] * alpha / 255.0f, alpha);
 
-	GL_DrawArrays(GL_TRIANGLE_STRIP, 0, polygonVerts);
+	GL_Disable(GL_DEPTH_TEST);
+	GLM_GetMatrix(GL_PROJECTION, matrix);
+	glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+
+	for (i = start; i <= end; ++i) {
+		GLM_TransformMatrix(matrix, polygonData.polygonX[i], polygonData.polygonY[i], 0);
+
+		glUniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
+
+		GL_DrawArrays(GL_TRIANGLE_STRIP, i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
+	}
 }

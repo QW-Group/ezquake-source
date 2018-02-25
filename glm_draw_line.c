@@ -24,29 +24,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
-
-#define MAX_LINES_PER_FRAME 128
-
-typedef struct glm_line_point_s {
-	vec3_t position;
-	byte color[4];
-} glm_line_point_t;
-
-static glm_line_point_t line_points[MAX_LINES_PER_FRAME * 2];
-int lineCount = 0;
+#include "glm_draw.h"
 
 static glm_program_t line_program;
 static glm_vao_t line_vao;
 static buffer_ref line_vbo;
 static GLint line_matrix;
 
+glm_line_framedata_t lineData;
+
 void GLM_PrepareLineProgram(void)
 {
 	if (!GL_BufferReferenceIsValid(line_vbo)) {
-		line_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(line_points), line_points, GL_STREAM_DRAW);
+		line_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, GL_STREAM_DRAW);
 	}
-	else {
-		GL_UpdateBuffer(line_vbo, sizeof(line_points[0]) * lineCount * 2, line_points);
+	else if (lineData.lineCount) {
+		GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
 	}
 
 	if (!line_vao.vao) {
@@ -75,25 +68,25 @@ void GLM_PrepareLineProgram(void)
 
 void GLM_Draw_Line3D(byte* color, vec3_t start, vec3_t end)
 {
-	if (lineCount >= MAX_LINES_PER_FRAME) {
+	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;
 	}
 }
 
 void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_end)
 {
-	if (lineCount >= MAX_LINES_PER_FRAME) {
+	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;
 	}
-	if (!GLM_LogCustomImageType(imagetype_line, lineCount)) {
+	if (!GLM_LogCustomImageType(imagetype_line, lineData.lineCount)) {
 		return;
 	}
 
-	VectorSet(line_points[lineCount * 2 + 0].position, x_start, y_start, 0);
-	memcpy(line_points[lineCount * 2 + 0].color, color, sizeof(line_points[lineCount * 2 + 0].color));
-	VectorSet(line_points[lineCount * 2 + 1].position, x_end, y_end, 0);
-	memcpy(line_points[lineCount * 2 + 1].color, color, sizeof(line_points[lineCount * 2 + 0].color));
-	++lineCount;
+	VectorSet(lineData.line_points[lineData.lineCount * 2 + 0].position, x_start, y_start, 0);
+	memcpy(lineData.line_points[lineData.lineCount * 2 + 0].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
+	VectorSet(lineData.line_points[lineData.lineCount * 2 + 1].position, x_end, y_end, 0);
+	memcpy(lineData.line_points[lineData.lineCount * 2 + 1].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
+	++lineData.lineCount;
 }
 
 void GLM_DrawLines(int start, int end)
