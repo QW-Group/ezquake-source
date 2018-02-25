@@ -948,7 +948,7 @@ static void R_RenderScene(void)
 			GLM_InitialiseAliasModelBatches();
 		}
 
-		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true);
+		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type, mod_unknown);

@@ -692,7 +692,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
+					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 					first = false;
 				}
 
@@ -722,7 +722,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
+					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 					first = false;
 				}
 
@@ -765,7 +765,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
+						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 						first = false;
 					}
 
@@ -812,7 +812,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true);
+						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 						first = false;
 					}
 

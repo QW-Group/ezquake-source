@@ -68,7 +68,7 @@ typedef enum {
 	MAX_BILLBOARD_BATCHES
 } billboard_batch_id;
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest);
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask);
 qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
 qbool GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int index);
 void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);

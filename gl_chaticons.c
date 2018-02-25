@@ -268,9 +268,9 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

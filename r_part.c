@@ -779,7 +779,7 @@ void Classic_DrawParticles(void)
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true);
+	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
 	if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];

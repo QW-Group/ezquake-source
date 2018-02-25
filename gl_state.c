@@ -349,6 +349,7 @@ void GL_DepthMask(GLboolean mask)
 {
 	if (mask != gl_depth_mask) {
 		glDepthMask(mask);
+		GL_LogAPICall("glDepthMask(%s)", mask ? "enabled" : "disabled");
 
 		gl_depth_mask = mask;
 	}

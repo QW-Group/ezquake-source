@@ -75,7 +75,6 @@ void GLM_StateBeginDrawBillboards(void)
 	ENTER_STATE;
 
 	GL_DisableFog();
-	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GL_Disable(GL_CULL_FACE);
 
@@ -118,7 +117,6 @@ void GLC_StateBeginDrawBillboards(void)
 	ENTER_STATE;
 
 	GL_DisableFog();
-	GL_DepthMask(GL_FALSE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);

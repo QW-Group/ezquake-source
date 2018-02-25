@@ -96,6 +96,7 @@ typedef struct gl_billboard_batch_s {
 	texture_ref texture;
 	int texture_index;
 	qbool depthTest;
+	qbool depthMask;
 	qbool allSameNumber;
 
 	GLint firstVertices[MAX_BILLBOARDS_PER_BATCH];
@@ -143,7 +144,7 @@ static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocat
 	return &batches[index - 1];
 }
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest)
+void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask)
 {
 	gl_billboard_batch_t* batch = BatchForType(type, true);
 
@@ -153,6 +154,7 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->count = 0;
 	batch->primitive = primitive_type;
 	batch->depthTest = depthTest;
+	batch->depthMask = depthMask;
 	batch->allSameNumber = true;
 	batch->texture_index = index;
 	batch->name = batch_type_names[type];
@@ -432,6 +434,7 @@ void GLM_DrawBillboards(void)
 
 		GL_EnterRegion(batch->name);
 		GL_BlendFunc(batch->blendSource, batch->blendDestination);
+		GL_DepthMask(batch->depthMask ? GL_TRUE : GL_FALSE);
 		if (batch->depthTest) {
 			GL_Enable(GL_DEPTH_TEST);
 		}
@@ -534,6 +537,7 @@ void GLC_DrawBillboards(void)
 		else {
 			GL_Disable(GL_DEPTH_TEST);
 		}
+		GL_DepthMask(batch->depthMask ? GL_TRUE : GL_FALSE);
 
 		if (GL_BuffersSupported()) {
 			if (batch->count == 1) {

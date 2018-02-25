@@ -270,6 +270,7 @@ void GLC_StateBeginWaterSurfaces(void)
 		GL_Color3ubv(color_white);
 	}
 
+	GL_Enable(GL_DEPTH_TEST);
 	GL_EnableFog();
 
 	LEAVE_STATE;
