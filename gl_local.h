@@ -1174,6 +1174,7 @@ typedef enum {
 
 buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage);
 void GL_BufferStartFrame(void);
+void GL_BufferEndFrame(void);
 uintptr_t GL_BufferOffset(buffer_ref ref);
 
 #endif /* !__GL_LOCAL_H__ */

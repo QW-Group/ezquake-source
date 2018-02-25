@@ -70,6 +70,7 @@ typedef void* (APIENTRY *glMapBufferRange_t)(GLenum mtarget, GLintptr offset, GL
 typedef void (APIENTRY *glBufferStorage_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLbitfield flags);
 typedef GLsync (APIENTRY *glFenceSync_t)(GLenum condition, GLbitfield flags);
 typedef void (APIENTRY *glWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+typedef void (APIENTRY *glDeleteSync_t)(GLsync sync);
 
 // VAO functions
 static glGenVertexArrays_t         glGenVertexArrays = NULL;
@@ -100,6 +101,7 @@ static glMapBufferRange_t glMapBufferRange = NULL;
 static glBufferStorage_t  glBufferStorage = NULL;
 static glFenceSync_t      glFenceSync = NULL;
 static glWaitSync_t       glWaitSync = NULL;
+static glDeleteSync_t     glDeleteSync = NULL;
 
 // Cache OpenGL state
 static GLuint currentArrayBuffer;
@@ -352,6 +354,13 @@ void GL_DeleteBuffers(void)
 	}
 	memset(buffers, 0, sizeof(buffers));
 	next_free_buffer = NULL;
+
+	for (i = 0; i < 3; ++i) {
+		if (tripleBufferSyncObjects[i]) {
+			glDeleteSync(tripleBufferSyncObjects[i]);
+		}
+	}
+	memset(tripleBufferSyncObjects, 0, sizeof(tripleBufferSyncObjects));
 }
 
 void GL_BindBufferBase(buffer_ref ref, GLuint index)
@@ -456,6 +465,7 @@ void GL_InitialiseBufferHandling(void)
 	glWaitSync = (glWaitSync_t)SDL_GL_GetProcAddress("glWaitSync");
 	glBufferStorage = (glBufferStorage_t)SDL_GL_GetProcAddress("glBufferStorage");
 	glMapBufferRange = (glMapBufferRange_t)SDL_GL_GetProcAddress("glMapBufferRange");
+	glDeleteSync = (glDeleteSync_t)SDL_GL_GetProcAddress("glDeleteSync");
 
 	// OpenGL 4.5 onwards, update directly
 	glNamedBufferSubData = (glNamedBufferSubData_t)SDL_GL_GetProcAddress("glNamedBufferSubData");
@@ -636,10 +646,16 @@ void GL_EnsureBufferSize(buffer_ref ref, size_t size)
 
 void GL_BufferStartFrame(void)
 {
-	// 
+	if (tripleBuffer_supported && tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
+		glWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, GL_TIMEOUT_IGNORED);
+	}
+}
+
+void GL_BufferEndFrame(void)
+{
 	if (tripleBuffer_supported) {
 		if (tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
-			glWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, GL_TIMEOUT_IGNORED);
+			glDeleteSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex]);
 		}
 		tripleBufferSyncObjects[glConfig.tripleBufferIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		glConfig.tripleBufferIndex = (glConfig.tripleBufferIndex + 1) % 3;

@@ -1285,6 +1285,8 @@ void GL_EndRendering (void)
 			GL_SwapBuffers(); 
 		}
 	}
+
+	GL_BufferEndFrame();
 }
 
 void VID_SetCaption (char *text)
