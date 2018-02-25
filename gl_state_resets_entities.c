@@ -55,7 +55,6 @@ void GLC_StateBeginAliasPowerupShell(void)
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 	GL_DisableFog();
 
@@ -105,7 +104,6 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	GL_Disable(GL_LINE_SMOOTH);
-	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_DisableFog();
 
 	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
@@ -146,7 +144,6 @@ void GLC_StateBeginAliasModelShadow(void)
 	GL_PolygonMode(GL_FILL);
 	if (!GL_ShadersSupported()) {
 		GL_Disable(GL_LINE_SMOOTH);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 	GL_DisableFog();
 
@@ -173,7 +170,6 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	GL_Disable(GL_LINE_SMOOTH);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_DisableFog();
 
 	// hack the depth range to prevent view model from poking into walls
@@ -216,7 +212,6 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	else {
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		GL_DisableFog();
 
 		if (e->alpha) {
@@ -276,7 +271,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 		GL_Color3ubv(color_white);
 		GL_Disable(GL_LINE_SMOOTH);
 		GLC_EnsureTMUEnabled(GL_TEXTURE0);
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 	GL_EnableFog();
 
@@ -295,7 +289,6 @@ void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 	GL_Color3ubv(color_white);
 	GL_Disable(GL_LINE_SMOOTH);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_DisableFog();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -327,7 +320,6 @@ void GL_StateBeginAliasOutlineFrame(void)
 		GL_Color3ubv(color_black);
 		GL_Enable(GL_LINE_SMOOTH);
 		GLC_DisableAllTexturing();
-		GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	}
 
 	LEAVE_STATE;

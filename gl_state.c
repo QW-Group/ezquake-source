@@ -21,7 +21,6 @@ static GLenum currentCullFace = GL_BACK;
 static GLenum currentBlendSFactor = GL_ONE;
 static GLenum currentBlendDFactor = GL_ZERO;
 static glm_vao_t* currentVAO = NULL;
-static GLenum currentShadeModel = GL_SMOOTH;
 // FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 static GLint currentViewportX = 0, currentViewportY = 0;
 static GLsizei currentViewportWidth, currentViewportHeight;
@@ -197,7 +196,6 @@ void GL_InitialiseState(void)
 	currentBlendSFactor = GL_ONE;
 	currentBlendDFactor = GL_ZERO;
 	currentVAO = NULL;
-	currentShadeModel = GL_SMOOTH;
 	polygonMode = GL_FILL;
 	currentViewportX = 0;
 	currentViewportY = 0;
@@ -220,7 +218,7 @@ void GL_InitialiseState(void)
 	old_alphablend_flags = 0;
 	polygonOffsetFactor = polygonOffsetUnits = 0;
 	gl_polygon_offset_line = gl_polygon_offset_fill = false;
-	perspectiveCorrectionHint = GL_NICEST;
+	perspectiveCorrectionHint = GL_DONT_CARE;
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
