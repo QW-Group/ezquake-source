@@ -402,7 +402,7 @@ static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
 	return 0;
 }
 
-static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type, modtype_t current_state)
+static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type)
 {
 	int i;
 
@@ -906,7 +906,6 @@ void R_Init(void)
 static void R_RenderScene(void)
 {
 	visentlist_entrytype_t ent_type;
-	modtype_t type = mod_brush;
 
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
@@ -925,26 +924,24 @@ static void R_RenderScene(void)
 		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
-			R_DrawEntitiesOnList(&cl_visents, ent_type, type);
+			R_DrawEntitiesOnList(&cl_visents, ent_type);
 		}
 		GL_LeaveRegion();
-
-		if (type != mod_unknown) {
-			GL_FlushWorldModelBatch();
-			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
-		}
-
-		if (GL_ShadersSupported()) {
-			GL_EnterRegion("GLM_DrawEntities");
-			R_DrawViewModel();
-
-			GLM_PrepareAliasModelBatches();
-			GLM_DrawAliasModelBatches();
-			GL_LeaveRegion();
-		}
 	}
+	
+	if (GL_ShadersSupported()) {
+		GL_EnterRegion("GLM_DrawBrushModels");
+		GL_DrawWorldModelBatch();
+		GL_LeaveRegion();
 
-	if (!GL_ShadersSupported()) {
+		GL_EnterRegion("GLM_DrawEntities");
+		R_DrawViewModel();
+
+		GLM_PrepareAliasModelBatches();
+		GLM_DrawAliasModelBatches();
+		GL_LeaveRegion();
+	}
+	else {
 		GLC_StateEndRenderScene();
 	}
 }

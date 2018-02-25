@@ -731,10 +731,8 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
-void GL_BeginDrawBrushModels(void);
 void GL_BeginDrawAliasModels(void);
 void GL_EndDrawAliasModels(void);
-void GL_EndDrawBrushModels(void);
 
 void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
 void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);

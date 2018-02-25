@@ -1608,16 +1608,3 @@ void R_DrawBrushModel(entity_t *e)
 
 	GL_LeaveTracedRegion(true);
 }
-
-void GL_BeginDrawBrushModels(void)
-{
-	if (GL_ShadersSupported()) {
-		extern void GLM_EnterBatchedWorldRegion(void);
-
-		GLM_EnterBatchedWorldRegion();
-	}
-}
-
-void GL_EndDrawBrushModels(void)
-{
-}

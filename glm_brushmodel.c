@@ -161,7 +161,7 @@ int GL_MeasureVBOSizeForBrushModel(model_t* m)
 	return (total_surf_verts);// +2 * (total_surfaces - 1));
 }
 
-int GL_MeasureIndexSizeForBrushModel(model_t* m)
+static int GL_MeasureIndexSizeForBrushModel(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
@@ -258,27 +258,21 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	int size = 0;
 	int position = 0;
 	int indexes = 0;
+	int max_entity_indexes = 0;
 	void* buffer = NULL;
 	size_t buffer_size;
-	int maxWorldDrawCalls = 0, maxEntityDrawCalls = 0, maxTexturesPerModel = 0;
-	int free_texture_units = max(1, glConfig.texture_units - MAX_STANDARD_TEXTURES);
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
+			int index_count = GL_MeasureIndexSizeForBrushModel(mod);
+
 			size += GL_MeasureVBOSizeForBrushModel(mod);
-			indexes += GL_MeasureIndexSizeForBrushModel(mod);
-
-			if (GL_ShadersSupported()) {
-				int max_drawcalls = (mod->numtextures + (free_texture_units - 1)) / free_texture_units;
-
-				maxTexturesPerModel = max(maxTexturesPerModel, mod->numtextures);
-				if (mod->isworldmodel) {
-					maxWorldDrawCalls += max_drawcalls;
-				}
-				else {
-					maxEntityDrawCalls = max(maxEntityDrawCalls, max_drawcalls);
-				}
+			if (mod->isworldmodel) {
+				indexes += index_count;
+			}
+			else {
+				max_entity_indexes = max(max_entity_indexes, index_count);
 			}
 		}
 	}
@@ -286,32 +280,19 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
+			int index_count = GL_MeasureIndexSizeForBrushModel(mod);
+
 			size += GL_MeasureVBOSizeForBrushModel(mod);
-			indexes += GL_MeasureIndexSizeForBrushModel(mod);
-
-			if (GL_ShadersSupported()) {
-				int max_drawcalls = (mod->numtextures + (free_texture_units - 1)) / free_texture_units;
-
-				maxTexturesPerModel = max(maxTexturesPerModel, mod->numtextures);
-				if (mod->isworldmodel) {
-					maxWorldDrawCalls += max_drawcalls;
-				}
-				else {
-					maxEntityDrawCalls = max(maxEntityDrawCalls, max_drawcalls);
-				}
+			if (mod->isworldmodel) {
+				indexes += index_count;
+			}
+			else {
+				max_entity_indexes = max(max_entity_indexes, index_count);
 			}
 		}
 	}
 
-	{
-		int maxDrawCalls = maxWorldDrawCalls + maxEntityDrawCalls * MAX_STANDARD_ENTITIES;
-		int maxSubDraws = (1 + MAX_STANDARD_ENTITIES);
-		int maxSamplerMappings = maxDrawCalls * maxSubDraws * maxTexturesPerModel;
-
-		Con_Printf("World %d calls, entities %d calls\n", maxWorldDrawCalls, maxEntityDrawCalls * MAX_STANDARD_ENTITIES);
-		Con_Printf("DrawCalls %d, SubDraws %d, SamplerMappings %d\n", maxDrawCalls, maxSubDraws, maxSamplerMappings);
-	}
-
+	indexes += max_entity_indexes * MAX_STANDARD_ENTITIES;
 	if (indexes > modelIndexMaximum) {
 		Q_free(modelIndexes);
 		modelIndexMaximum = indexes;
@@ -319,6 +300,9 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 
 		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
 			GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
+		}
+		else {
+			vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, GL_STREAM_DRAW);
 		}
 	}
 
@@ -347,10 +331,6 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	if (GL_ShadersSupported()) {
 		// Create vao
 		GL_GenVertexArray(&brushModel_vao, "brushmodel-vao");
-
-		if (!GL_BufferReferenceIsValid(vbo_brushElements)) {
-			vbo_brushElements = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, GL_STREAM_DRAW);
-		}
 		GL_BindBuffer(vbo_brushElements);
 
 		GL_ConfigureVertexAttribPointer(&brushModel_vao, brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
