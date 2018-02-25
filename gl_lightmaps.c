@@ -314,13 +314,11 @@ static void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
 	lm->modified = false;
-	if (r_dynamic.integer == 1) {
-		if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-			GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
-		}
-		else {
-			GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
-		}
+	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
+		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	}
+	else {
+		GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 	}
 	lm->change_area.l = LIGHTMAP_WIDTH;
 	lm->change_area.t = LIGHTMAP_HEIGHT;
@@ -355,7 +353,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		}
 	}
 
-	if (r_dynamic.integer) {
+	if (r_dynamic.integer == 1) {
 		if (fa->dlightframe == r_framecount) {
 			R_BuildDlightList (fa);
 		} else {

@@ -72,15 +72,15 @@ vec3 DynamicLighting(in vec3 lightmapBase)
 		vec3 impact = lightPositions[i].xyz - Plane.xyz * light_distance; 
 
 		// effect is based on distance from the impact point, not from the light itself...
-		vec2 offset = LightingPoint - vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact));
+		vec2 offset = abs(LightingPoint - vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact)));
 
-		float dist = length(offset);
+		float dist = max(offset.x, offset.y) + min(offset.x, offset.y) * 0.5;
 		if (dist < minlight) {
 			float effect = (rad - dist);
 
-			result.r += effect * lightColors[i].r * 2;
-			result.g += effect * lightColors[i].g * 2;
-			result.b += effect * lightColors[i].b * 2;
+			result.r += effect * lightColors[i].r;
+			result.g += effect * lightColors[i].g;
+			result.b += effect * lightColors[i].b;
 		}
 	}
 
