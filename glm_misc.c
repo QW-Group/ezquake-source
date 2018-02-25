@@ -271,8 +271,8 @@ static qbool GLM_CompilePostProcessProgram(void)
 	if (GL_BufferReferenceIsValid(post_process_vbo) && !post_process_vao.vao) {
 		GL_GenVertexArray(&post_process_vao, "post-process-vao");
 
-		GL_ConfigureVertexAttribPointer(&post_process_vao, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0);
-		GL_ConfigureVertexAttribPointer(&post_process_vao, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3));
+		GL_ConfigureVertexAttribPointer(&post_process_vao, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) 0, 0);
+		GL_ConfigureVertexAttribPointer(&post_process_vao, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 3), 0);
 	}
 
 	return post_process_program.program && post_process_vao.vao;

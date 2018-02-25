@@ -432,7 +432,7 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 	int total_vertices = 0;
 	int pose = 0;
 
-	if (GL_ShadersSupported()) {
+	if (GL_BuffersSupported()) {
 		hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
 		m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
 		GLM_MakeAliasModelDisplayLists(m, hdr);

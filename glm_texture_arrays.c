@@ -86,7 +86,7 @@ static int SortTexturesByArrayReference(const void* lhs_, const void* rhs_)
 	return 0;
 }
 
-static void GL_DeleteExistingArrays(qbool delete_textures)
+static void GL_DeleteExistingTextureArrays(qbool delete_textures)
 {
 	int i;
 
@@ -428,25 +428,15 @@ static void GL_ImportTexturesForModel(model_t* mod)
 // Called from R_NewMap
 void GL_BuildCommonTextureArrays(qbool vid_restart)
 {
-	extern model_t* Mod_LoadModel(model_t *mod, qbool crash);
-	int required_vbo_length = 4;
 	int i;
 
-	GL_DeleteExistingArrays(!vid_restart);
-	GL_DeleteModelData();
+	GL_DeleteExistingTextureArrays(!vid_restart);
+	GL_ClearModelTextureData();
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 
 		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
-				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
-					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
-				}
-			}
-			Mod_LoadModel(mod, true);
-
 			GL_FlagTexturesForModel(mod);
 		}
 	}
@@ -455,14 +445,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		model_t* mod = cl.vw_model_precache[i];
 
 		if (mod) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
-				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
-					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
-				}
-			}
-			Mod_LoadModel(mod, true);
-
 			GL_FlagTexturesForModel(mod);
 		}
 	}

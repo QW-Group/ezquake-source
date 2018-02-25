@@ -20,7 +20,6 @@ static double currentFarRange = 1;
 static GLenum currentCullFace = GL_BACK;
 static GLenum currentBlendSFactor = GL_ONE;
 static GLenum currentBlendDFactor = GL_ZERO;
-static glm_vao_t* currentVAO = NULL;
 // FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 static GLint currentViewportX = 0, currentViewportY = 0;
 static GLsizei currentViewportWidth, currentViewportHeight;
@@ -146,25 +145,6 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
 	}
 }
 
-void GL_BindVertexArray(glm_vao_t* vao)
-{
-	if (currentVAO != vao) {
-		glBindVertexArray(vao ? vao->vao : 0);
-		currentVAO = vao;
-
-		if (vao) {
-			GL_SetElementArrayBuffer(vao->element_array_buffer);
-		}
-	}
-}
-
-void GL_BindVertexArrayElementBuffer(buffer_ref ref)
-{
-	if (currentVAO && currentVAO->vao) {
-		currentVAO->element_array_buffer = ref;
-	}
-}
-
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
 	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
@@ -195,7 +175,6 @@ void GL_InitialiseState(void)
 	currentCullFace = GL_BACK;
 	currentBlendSFactor = GL_ONE;
 	currentBlendDFactor = GL_ZERO;
-	currentVAO = NULL;
 	polygonMode = GL_FILL;
 	currentViewportX = 0;
 	currentViewportY = 0;
@@ -585,54 +564,6 @@ void GL_PolygonOffset(int option)
 	else {
 		GL_Disable(GL_POLYGON_OFFSET_FILL);
 		GL_Disable(GL_POLYGON_OFFSET_LINE);
-	}
-}
-
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-	}
-
-	glEnableVertexAttribArray(index);
-	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
-}
-
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-	}
-
-	glEnableVertexAttribArray(index);
-	glVertexAttribIPointer(index, size, type, stride, pointer);
-}
-
-void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(ibo)) {
-		GL_BindBuffer(ibo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	}
 }
 

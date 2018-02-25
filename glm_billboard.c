@@ -289,11 +289,11 @@ static void GLM_CreateBillboardVAO(void)
 		GL_GenVertexArray(&billboardVAO, "billboard-vao");
 
 		// position
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position), 0);
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex), 0);
 		// color
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color));
+		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color), 0);
 	}
 
 	if (!GL_BufferReferenceIsValid(billboardIndexes)) {

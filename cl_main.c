@@ -1167,7 +1167,7 @@ void CL_Disconnect (void)
 	MT_Disconnect();
 
 	//
-	GL_DeleteModelData();
+	GL_ClearModelTextureData();
 
 	if (cls.demorecording && cls.state != ca_disconnected)
 		CL_Stop_f();

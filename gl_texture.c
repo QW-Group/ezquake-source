@@ -1558,7 +1558,7 @@ void GL_InvalidateAllTextureReferences(void)
 }
 
 // Called during disconnect
-void GL_DeleteModelData(void)
+void GL_ClearModelTextureData(void)
 {
 	int i;
 	for (i = 0; i < MAX_MODELS; ++i) {

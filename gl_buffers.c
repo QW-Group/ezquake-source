@@ -44,6 +44,10 @@ static int buffer_count;
 static buffer_data_t* next_free_buffer = NULL;
 static qbool buffers_supported = false;
 
+// Linked list of all vao buffers
+static glm_vao_t* vao_list = NULL;
+static glm_vao_t* currentVAO = NULL;
+
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
@@ -52,6 +56,15 @@ typedef void (APIENTRY *glDeleteBuffers_t)(GLsizei n, const GLuint* buffers);
 typedef void (APIENTRY *glBindBufferBase_t)(GLenum target, GLuint index, GLuint buffer);
 typedef void (APIENTRY *glNamedBufferSubData_t)(GLuint buffer, GLintptr offset, GLsizei size, const void* data);
 typedef void (APIENTRY *glNamedBufferData_t)(GLuint buffer, GLsizei size, const void* data, GLenum usage);
+
+// VAO functions
+static glGenVertexArrays_t         glGenVertexArrays = NULL;
+static glBindVertexArray_t         glBindVertexArray = NULL;
+static glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
+static glDeleteVertexArrays_t      glDeleteVertexArrays = NULL;
+static glVertexAttribPointer_t     glVertexAttribPointer = NULL;
+static glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
+static glVertexAttribDivisor_t     glVertexAttribDivisor = NULL;
 
 // Buffer functions
 static glBindBuffer_t     glBindBuffer = NULL;
@@ -299,6 +312,18 @@ void GL_InitialiseBufferHandling(void)
 	glNamedBufferData = (glNamedBufferData_t)SDL_GL_GetProcAddress("glNamedBufferData");
 
 	buffers_supported = (glBindBuffer && glBufferData && glBufferSubData && glGenBuffers && glDeleteBuffers);
+
+	// VAOs
+	glGenVertexArrays = (glGenVertexArrays_t)SDL_GL_GetProcAddress("glGenVertexArrays");
+	glBindVertexArray = (glBindVertexArray_t)SDL_GL_GetProcAddress("glBindVertexArray");
+	glDeleteVertexArrays = (glDeleteVertexArrays_t)SDL_GL_GetProcAddress("glDeleteVertexArrays");
+	glEnableVertexAttribArray = (glEnableVertexAttribArray_t)SDL_GL_GetProcAddress("glEnableVertexAttribArray");
+	glVertexAttribPointer = (glVertexAttribPointer_t)SDL_GL_GetProcAddress("glVertexAttribPointer");
+	glVertexAttribIPointer = (glVertexAttribIPointer_t)SDL_GL_GetProcAddress("glVertexAttribIPointer");
+	glVertexAttribDivisor = (glVertexAttribDivisor_t)SDL_GL_GetProcAddress("glVertexAttribDivisor");
+
+	buffers_supported &= (glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glEnableVertexAttribArray);
+	buffers_supported &= (glVertexAttribPointer && glVertexAttribIPointer && glVertexAttribDivisor);
 }
 
 buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size)
@@ -310,6 +335,7 @@ void GL_InitialiseBufferState(void)
 {
 	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
 	GL_BindVertexArrayElementBuffer(null_buffer_reference);
+	currentVAO = NULL;
 }
 
 void GL_UnBindBuffer(GLenum target)
@@ -317,7 +343,7 @@ void GL_UnBindBuffer(GLenum target)
 	GL_BindBufferImpl(target, 0);
 }
 
-qbool GL_VBOsSupported(void)
+qbool GL_BuffersSupported(void)
 {
 	return buffers_supported;
 }
@@ -336,4 +362,114 @@ void GL_SetElementArrayBuffer(buffer_ref buffer)
 	else {
 		currentElementArrayBuffer = 0;
 	}
+}
+
+void GL_BindVertexArray(glm_vao_t* vao)
+{
+	if (currentVAO != vao) {
+		glBindVertexArray(vao ? vao->vao : 0);
+		currentVAO = vao;
+
+		if (vao) {
+			GL_SetElementArrayBuffer(vao->element_array_buffer);
+		}
+	}
+}
+
+void GL_BindVertexArrayElementBuffer(buffer_ref ref)
+{
+	if (currentVAO && currentVAO->vao) {
+		currentVAO->element_array_buffer = ref;
+	}
+}
+
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	if (GL_BufferReferenceIsValid(vbo)) {
+		GL_BindBuffer(vbo);
+	}
+	else {
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
+	}
+
+	glEnableVertexAttribArray(index);
+	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+	glVertexAttribDivisor(index, divisor);
+}
+
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	if (GL_BufferReferenceIsValid(vbo)) {
+		GL_BindBuffer(vbo);
+	}
+	else {
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
+	}
+
+	glEnableVertexAttribArray(index);
+	glVertexAttribIPointer(index, size, type, stride, pointer);
+	glVertexAttribDivisor(index, divisor);
+}
+
+void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
+{
+	assert(vao);
+	assert(vao->vao);
+
+	GL_BindVertexArray(vao);
+	if (GL_BufferReferenceIsValid(ibo)) {
+		GL_BindBuffer(ibo);
+	}
+	else {
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+	}
+}
+
+void GL_GenVertexArray(glm_vao_t* vao, const char* name)
+{
+	extern void GL_SetElementArrayBuffer(buffer_ref buffer);
+
+	if (vao->vao) {
+		glDeleteVertexArrays(1, &vao->vao);
+	}
+	else {
+		vao->next = vao_list;
+		vao_list = vao;
+	}
+	glGenVertexArrays(1, &vao->vao);
+	GL_BindVertexArray(vao);
+	if (glObjectLabel) {
+		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
+	}
+	GL_SetElementArrayBuffer(null_buffer_reference);
+}
+
+void GL_DeleteVAOs(void)
+{
+	glm_vao_t* vao = vao_list;
+	if (glBindVertexArray) {
+		glBindVertexArray(0);
+	}
+	while (vao) {
+		glm_vao_t* prev = vao;
+
+		if (vao->vao) {
+			if (glDeleteVertexArrays) {
+				glDeleteVertexArrays(1, &vao->vao);
+			}
+			vao->vao = 0;
+		}
+
+		vao = vao->next;
+		prev->next = NULL;
+	}
+	vao_list = NULL;
 }

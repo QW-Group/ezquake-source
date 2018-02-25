@@ -57,7 +57,7 @@ static glm_vao_t* GL_CreateLineVAO(void)
 	if (!vao.vao) {
 		GL_GenVertexArray(&vao, "line-vao");
 
-		GL_ConfigureVertexAttribPointer(&vao, vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		GL_ConfigureVertexAttribPointer(&vao, vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
 
 	return &vao;
@@ -202,12 +202,12 @@ void GLM_CreateMultiImageProgram(void)
 	if (!imageVAO.vao) {
 		GL_GenVertexArray(&imageVAO, "image-vao");
 
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x1));
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x2));
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s1));
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s2));
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, colour));
-		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, flags));
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, x2), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s1), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, s2), 0);
+		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
+		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
 	}
 }
 
@@ -468,7 +468,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 
 	if (!polygonVAO.vao) {
 		GL_GenVertexArray(&polygonVAO, "polygon-vao");
-		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
 
 	{
@@ -534,7 +534,7 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	if (!circleVAO.vao) {
 		GL_GenVertexArray(&circleVAO, "circle-vao");
 
-		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
 
 	// Get the vertex index where to start and stop drawing.

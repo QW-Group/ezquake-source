@@ -133,15 +133,6 @@ void APIENTRY MessageCallback( GLenum source,
 	OutputDebugString(buffer);
 }
 
-// VAO functions
-glGenVertexArrays_t         glGenVertexArrays = NULL;
-glBindVertexArray_t         glBindVertexArray = NULL;
-glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
-glDeleteVertexArrays_t      glDeleteVertexArrays = NULL;
-glVertexAttribPointer_t     glVertexAttribPointer = NULL;
-glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
-glVertexAttribDivisor_t     glVertexAttribDivisor = NULL;
-
 // Shader functions
 glCreateShader_t      glCreateShader = NULL;
 glShaderSource_t      glShaderSource = NULL;
@@ -269,14 +260,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDeleteShader);
 			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderInfoLog);
 			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderiv);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glGenVertexArrays);
-			OPENGL_LOAD_SHADER_FUNCTION(glBindVertexArray);
-			OPENGL_LOAD_SHADER_FUNCTION(glDeleteVertexArrays);
-			OPENGL_LOAD_SHADER_FUNCTION(glEnableVertexAttribArray);
-			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribPointer);
-			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribIPointer);
-			OPENGL_LOAD_SHADER_FUNCTION(glVertexAttribDivisor);
 
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateProgram);
 			OPENGL_LOAD_SHADER_FUNCTION(glLinkProgram);
@@ -710,50 +693,6 @@ void GL_ResetRegion(qbool start)
 }
 
 #endif
-
-// Linked list of all vao buffers
-static glm_vao_t* vao_list = NULL;
-
-void GL_GenVertexArray(glm_vao_t* vao, const char* name)
-{
-	extern void GL_SetElementArrayBuffer(buffer_ref buffer);
-
-	if (vao->vao) {
-		glDeleteVertexArrays(1, &vao->vao);
-	}
-	else {
-		vao->next = vao_list;
-		vao_list = vao;
-	}
-	glGenVertexArrays(1, &vao->vao);
-	GL_BindVertexArray(vao);
-	if (glObjectLabel) {
-		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
-	}
-	GL_SetElementArrayBuffer(null_buffer_reference);
-}
-
-void GL_DeleteVAOs(void)
-{
-	glm_vao_t* vao = vao_list;
-	if (glBindVertexArray) {
-		glBindVertexArray(0);
-	}
-	while (vao) {
-		glm_vao_t* prev = vao;
-
-		if (vao->vao) {
-			if (glDeleteVertexArrays) {
-				glDeleteVertexArrays(1, &vao->vao);
-			}
-			vao->vao = 0;
-		}
-
-		vao = vao->next;
-		prev->next = NULL;
-	}
-	vao_list = NULL;
-}
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold)
 {

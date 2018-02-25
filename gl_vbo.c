@@ -100,6 +100,8 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	extern model_t* Mod_LoadModel(model_t *mod, qbool crash);
 	int required_vbo_length = 4;
 	int i;
+	int new_vbo_position = 0;
+	buffer_ref instance_vbo;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -133,36 +135,31 @@ void GL_CreateModelVBOs(qbool vid_restart)
 		}
 	}
 
-	{
-		int new_vbo_position = 0;
-		buffer_ref instance_vbo;
+	aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
+	aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
 
-		aliasModel_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_DRAW);
-		aliasModel_ssbo = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, GL_STATIC_COPY);
+	// VBO starts with simple-model/sprite vertices
+	GL_ImportSpriteCoordsToVBO(&new_vbo_position);
 
-		// VBO starts with simple-model/sprite vertices
-		GL_ImportSpriteCoordsToVBO(&new_vbo_position);
+	// Go back through all models, importing textures into arrays and creating new VBO
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
 
-		// Go back through all models, importing textures into arrays and creating new VBO
-		for (i = 1; i < MAX_MODELS; ++i) {
-			model_t* mod = cl.model_precache[i];
-
-			if (mod) {
-				GL_ImportModelToVBO(mod, &new_vbo_position);
-			}
+		if (mod) {
+			GL_ImportModelToVBO(mod, &new_vbo_position);
 		}
-
-		for (i = 0; i < MAX_VWEP_MODELS; i++) {
-			model_t* mod = cl.vw_model_precache[i];
-
-			if (mod) {
-				GL_ImportModelToVBO(mod, &new_vbo_position);
-			}
-		}
-
-		instance_vbo = GL_CreateInstanceVBO();
-		GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
-		GL_CreateBrushModelVAO(instance_vbo);
-		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			GL_ImportModelToVBO(mod, &new_vbo_position);
+		}
+	}
+
+	instance_vbo = GL_CreateInstanceVBO();
+	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
+	GL_CreateBrushModelVAO(instance_vbo);
+	GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 }

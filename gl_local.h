@@ -449,13 +449,6 @@ typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, 
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
 
-// VAO functions
-extern glBindVertexArray_t         glBindVertexArray;
-extern glEnableVertexAttribArray_t glEnableVertexAttribArray;
-extern glVertexAttribPointer_t     glVertexAttribPointer;
-extern glVertexAttribIPointer_t    glVertexAttribIPointer;
-extern glVertexAttribDivisor_t     glVertexAttribDivisor;
-
 // Shader functions
 extern glCreateShader_t      glCreateShader;
 extern glShaderSource_t      glShaderSource;
@@ -512,7 +505,7 @@ extern glObjectLabel_t glObjectLabel;
 extern glGetObjectLabel_t glGetObjectLabel;
 
 qbool GL_ShadersSupported(void);
-qbool GL_VBOsSupported(void);
+qbool GL_BuffersSupported(void);
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GL_TextureEnvMode(GLenum mode);
@@ -885,12 +878,12 @@ void GL_DeleteVAOs(void);
 void GL_InitialiseState(void);
 buffer_ref GL_GenUniformBuffer(const char* name, void* data, GLuint size);
 void GL_GenVertexArray(glm_vao_t* vao, const char* name);
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
+void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
 void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
 
-void GL_DeleteModelData(void);
+void GL_ClearModelTextureData(void);
 void GL_Hint(GLenum target, GLenum mode);
 
 // --------------
@@ -1126,7 +1119,7 @@ void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateEndAliasModelShadow(void);
 void GLC_StateBeginDrawFlatModel(void);
 void GLC_StateEndDrawFlatModel(void);
-void GLC_StateBeginDrawTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode);
+void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode);
 void GLC_StateEndDrawTextureChains(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
