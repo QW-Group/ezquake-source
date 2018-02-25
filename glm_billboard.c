@@ -10,6 +10,12 @@ void GLM_DrawBillboards(void);
 void GLC_DrawBillboards(void);
 
 #define MAX_BILLBOARDS_PER_BATCH    1024  // Batches limited to this so they can't break other functionality
+#define INDEXES_MAX_QUADS        512
+#define INDEXES_MAX_FLASHBLEND     8
+#define INDEXES_MAX_SPARKS        16
+static int indexes_start_quads;
+static int indexes_start_flashblend;
+static int indexes_start_sparks;
 
 static const char* batch_type_names[] = {
 	"BILLBOARD_ENTITIES",
@@ -227,63 +233,49 @@ void GL_DrawBillboards(void)
 	memset(batchMapping, 0, sizeof(batchMapping));
 }
 
-void GLC_DrawBillboards(void)
-{
-	unsigned int i, j, k;
-
-	if (!batchCount) {
-		return;
-	}
-
-	GLC_StateBeginDrawBillboards();
-
-	for (i = 0; i < batchCount; ++i) {
-		gl_billboard_batch_t* batch = &batches[i];
-
-		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-
-		for (j = 0; j < batch->count; ++j) {
-			gl_billboard_vert_t* v;
-
-			// FIXME: This should be enabling/disabling TMU0
-			if (GL_TextureReferenceIsValid(batch->textures[j])) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[j]);
-			}
-			else if (GL_TextureReferenceIsValid(batch->texture)) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
-			}
-			else {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, solidtexture);
-			}
-
-			glBegin(batch->primitive);
-			v = &verts[batch->firstVertices[j]];
-			for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
-				glTexCoord2fv(v->tex);
-				GL_Color4ubv(v->color);
-				glVertex3fv(v->position);
-			}
-			glEnd();
-		}
-
-		batch->count = 0;
-	}
-
-	GLC_StateEndDrawBillboards();
-}
-
-#define INDEXES_MAX_QUADS        512
-#define INDEXES_MAX_FLASHBLEND     8
-#define INDEXES_MAX_SPARKS        16
-static int indexes_start_quads;
-static int indexes_start_flashblend;
-static int indexes_start_sparks;
-
-static void GLM_CreateBillboardVAO(void)
+static void GL_CreateBillboardVBO(void)
 {
 	if (!GL_BufferReferenceIsValid(billboardVBO)) {
 		billboardVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, GL_STREAM_DRAW);
 	}
+
+	if (!GL_BufferReferenceIsValid(billboardIndexes)) {
+		static GLuint indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
+		int i, j;
+		int pos = 0;
+		int vbo_pos;
+
+		indexes_start_quads = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
+			for (j = 0; j < 4; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLuint)0;
+		}
+
+		indexes_start_sparks = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
+			for (j = 0; j < 9; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLuint)0;
+		}
+
+		indexes_start_flashblend = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
+			for (j = 0; j < 18; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
+			indexData[pos++] = ~(GLuint)0;
+		}
+
+		billboardIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "billboard-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
+	}
+}
+
+static void GLM_CreateBillboardVAO(void)
+{
+	GL_CreateBillboardVBO();
 
 	if (!billboardVAO.vao) {
 		GL_GenVertexArray(&billboardVAO, "billboard-vao");
@@ -294,42 +286,15 @@ static void GLM_CreateBillboardVAO(void)
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex), 0);
 		// color
 		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color), 0);
-	}
 
-	if (!GL_BufferReferenceIsValid(billboardIndexes)) {
-		static GLushort indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
-		int i, j;
-		int pos = 0;
-		int vbo_pos;
-
-		indexes_start_quads = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
-			for (j = 0; j < 4; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-			indexData[pos++] = ~(GLushort)0;
-		}
-
-		indexes_start_sparks = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
-			for (j = 0; j < 9; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-			indexData[pos++] = ~(GLushort)0;
-		}
-
-		indexes_start_flashblend = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
-			for (j = 0; j < 18; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-			indexData[pos++] = ~(GLushort)0;
-		}
-
-		billboardIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "billboard-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
 		GL_BindVertexArray(&billboardVAO);
 		GL_BindBuffer(billboardIndexes);
 	}
+}
+
+static void GLC_CreateBillboardVAO(void)
+{
+	GL_CreateBillboardVBO();
 }
 
 static void GLM_CompileBillboardProgram(void)
@@ -369,19 +334,59 @@ static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_ba
 	int batch_count = last_batch - first_batch;
 
 	while (batch_count > maximum_batch_size) {
-		glDrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_SHORT, (void*)(index_offset * sizeof(GLushort)), vertOffset);
+		glDrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
 		batch_count -= maximum_batch_size;
 		vertOffset += maximum_batch_size * numVertices;
 		frameStats.draw_calls += 1;
 	}
 	if (batch_count) {
-		glDrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_SHORT, (void*)(index_offset * sizeof(GLushort)), vertOffset);
-		vertOffset += batch_count * numVertices;
+		glDrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
+		frameStats.draw_calls += 1;
 	}
-	frameStats.draw_calls += 1;
 }
 
-static void GL_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
+static void GLC_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
+{
+	if (GL_TextureReferenceIsValid(batch->texture)) {
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
+		GLC_EnsureTMUEnabled(GL_TEXTURE0);
+
+		// All batches are the same texture, so no issues
+		GL_DrawSequentialBatchImpl(batch, 0, batch->count, index_offset, maximum_batch_size);
+	}
+	else {
+		// Group by texture usage
+		int start = 0, end = 1;
+
+		if (GL_TextureReferenceIsValid(batch->textures[start])) {
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[start]);
+			GLC_EnsureTMUEnabled(GL_TEXTURE0);
+		}
+		else {
+			GLC_EnsureTMUDisabled(GL_TEXTURE0);
+		}
+		for (end = 1; end < batch->count; ++end) {
+			if (!GL_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
+				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
+
+				if (GL_TextureReferenceIsValid(batch->textures[end])) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[end]);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				}
+				else {
+					GLC_EnsureTMUDisabled(GL_TEXTURE0);
+				}
+				start = end;
+			}
+		}
+
+		if (end > start) {
+			GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
+		}
+	}
+}
+
+static void GLM_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
 	if (GL_TextureReferenceIsValid(batch->texture)) {
 		// All batches are the same texture, so no issues
@@ -443,6 +448,7 @@ void GLM_DrawBillboards(void)
 
 			GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture = particletexture_array);
 		}
+
 		if (batch->count == 1) {
 			if (GL_TextureReferenceIsValid(batch->textures[0])) {
 				GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[0]);
@@ -451,13 +457,13 @@ void GLM_DrawBillboards(void)
 			frameStats.draw_calls += 1;
 		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
-			GL_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
+			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 9) {
-			GL_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
+			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 18) {
-			GL_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
+			GLM_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 		}
 		else {
 			if (GL_TextureReferenceIsValid(batch->texture)) {
@@ -493,4 +499,155 @@ void GLM_DrawBillboards(void)
 	GLM_StateEndDrawBillboards();
 
 	GL_LeaveRegion();
+}
+
+void GLC_DrawBillboards(void)
+{
+	unsigned int i, j, k;
+
+	if (!batchCount) {
+		return;
+	}
+
+	GLC_CreateBillboardVAO();
+	GLC_StateBeginDrawBillboards();
+
+	if (GL_BuffersSupported()) {
+		GL_BindVertexArray(NULL);
+		GL_BindBuffer(billboardIndexes);
+
+		GL_BindAndUpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
+		glVertexPointer(3, GL_FLOAT, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color));
+		glEnableClientState(GL_COLOR_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	for (i = 0; i < batchCount; ++i) {
+		gl_billboard_batch_t* batch = &batches[i];
+
+		if (!batch->count) {
+			continue;
+		}
+
+		GL_BlendFunc(batch->blendSource, batch->blendDestination);
+		if (batch->depthTest) {
+			GL_Enable(GL_DEPTH_TEST);
+		}
+		else {
+			GL_Disable(GL_DEPTH_TEST);
+		}
+
+		if (GL_BuffersSupported()) {
+			if (batch->count == 1) {
+				if (GL_TextureReferenceIsValid(batch->textures[0])) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[0]);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				}
+				else if (GL_TextureReferenceIsValid(batch->texture)) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				}
+				else {
+					GLC_EnsureTMUDisabled(GL_TEXTURE0);
+				}
+				glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
+				frameStats.draw_calls += 1;
+			}
+			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 4) {
+				// FIXME: We could just have primitive == GL_QUADS for compatibility mode?
+				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
+			}
+			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 9) {
+				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
+			}
+			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 18) {
+				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
+			}
+			else {
+				if (GL_TextureReferenceIsValid(batch->texture)) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+
+					glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
+					frameStats.draw_calls += 1;
+					frameStats.subdraw_calls += batch->count;
+				}
+				else {
+					int first = 0, last = 1;
+
+					if (GL_TextureReferenceIsValid(batch->textures[0])) {
+						GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[0]);
+						GLC_EnsureTMUEnabled(GL_TEXTURE0);
+					}
+					else {
+						GLC_EnsureTMUDisabled(GL_TEXTURE0);
+					}
+
+					while (last < batch->count) {
+						if (!GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
+							GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
+							frameStats.draw_calls += 1;
+							frameStats.subdraw_calls += batch->count;
+
+							if (GL_TextureReferenceIsValid(batch->textures[last])) {
+								GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[last]);
+								GLC_EnsureTMUEnabled(GL_TEXTURE0);
+							}
+							else {
+								GLC_EnsureTMUDisabled(GL_TEXTURE0);
+							}
+							first = last;
+						}
+						++last;
+					}
+
+					GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
+				}
+			}
+		}
+		else {
+			for (j = 0; j < batch->count; ++j) {
+				gl_billboard_vert_t* v;
+
+				if (GL_TextureReferenceIsValid(batch->textures[j])) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[j]);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				}
+				else if (GL_TextureReferenceIsValid(batch->texture)) {
+					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
+					GLC_EnsureTMUEnabled(GL_TEXTURE0);
+				}
+				else {
+					GLC_EnsureTMUDisabled(GL_TEXTURE0);
+				}
+
+				// Immediate mode
+				glBegin(batch->primitive);
+				v = &verts[batch->firstVertices[j]];
+				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
+					glTexCoord2fv(v->tex);
+					GL_Color4ubv(v->color);
+					glVertex3fv(v->position);
+				}
+				glEnd();
+			}
+		}
+
+		batch->count = 0;
+	}
+
+	GLC_StateEndDrawBillboards();
+
+	if (GL_BuffersSupported()) {
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
 }

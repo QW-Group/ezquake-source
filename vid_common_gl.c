@@ -296,15 +296,12 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
 
-			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArrays);
-			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElements);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElementsIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
-			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsBaseVertex);
 
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
@@ -339,6 +336,9 @@ static void CheckShaderExtensions(void)
 	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
 	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
+	glMultiDrawArrays = (glMultiDrawArrays_t)SDL_GL_GetProcAddress("glMultiDrawArrays");
+	glMultiDrawElements = (glMultiDrawElements_t)SDL_GL_GetProcAddress("glMultiDrawElements");
+	glDrawElementsBaseVertex = (glDrawElementsBaseVertex_t)SDL_GL_GetProcAddress("glDrawElementsBaseVertex");
 
 	if (glPrimitiveRestartIndex) {
 		glEnable(GL_PRIMITIVE_RESTART);
@@ -937,4 +937,20 @@ void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
 void Dev_VidFrameTrace(void)
 {
 	dev_frame_debug_queued = true;
+}
+
+// Wrapper around OpenGL 1.4 function
+void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount)
+{
+	if (glMultiDrawArrays) {
+		glMultiDrawArrays(mode, first, count, primcount);
+		frameStats.draw_calls += 1;
+		frameStats.subdraw_calls += primcount;
+	}
+	else {
+		int i;
+		for (i = 0; i < primcount; ++i) {
+			glDrawArrays(mode, first[i], count[i]);
+		}
+	}
 }
