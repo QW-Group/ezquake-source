@@ -332,14 +332,15 @@ static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_ba
 	int vertOffset = batch->firstVertices[first_batch];
 	int numVertices = batch->numVertices[first_batch];
 	int batch_count = last_batch - first_batch;
+	void* indexes = (void*)(index_offset * sizeof(GLuint));
 
 	while (batch_count > maximum_batch_size) {
-		GL_DrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
+		GL_DrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, indexes, vertOffset);
 		batch_count -= maximum_batch_size;
 		vertOffset += maximum_batch_size * numVertices;
 	}
 	if (batch_count) {
-		GL_DrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
+		GL_DrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, indexes, vertOffset);
 	}
 }
 
@@ -550,7 +551,6 @@ void GLC_DrawBillboards(void)
 				GL_DrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
 			}
 			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4) {
-				// FIXME: We could just have primitive == GL_QUADS for compatibility mode?
 				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 			}
 			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9) {
@@ -631,6 +631,7 @@ void GLC_DrawBillboards(void)
 	GLC_StateEndDrawBillboards();
 
 	if (GL_BuffersSupported()) {
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);

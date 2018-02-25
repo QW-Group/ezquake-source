@@ -964,7 +964,7 @@ void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primc
 		glMultiDrawArrays(mode, first, count, primcount);
 		++frameStats.draw_calls;
 		frameStats.subdraw_calls += primcount;
-		GL_LogAPICall("glMultiDrawElements(%d verts)", count);
+		GL_LogAPICall("glMultiDrawElements(%d sub-draws)", primcount);
 	}
 	else {
 		int i;

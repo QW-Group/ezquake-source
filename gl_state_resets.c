@@ -84,16 +84,6 @@ void GLM_StateBeginDrawBillboards(void)
 
 void GLM_StateEndDrawBillboards(void)
 {
-	ENTER_STATE;
-
-	/*
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_EnableFog();
-	GL_Enable(GL_CULL_FACE);
-	*/
-	LEAVE_STATE;
 }
 
 void GL_StateDefaultInit(void)
@@ -132,6 +122,8 @@ void GLC_StateBeginDrawBillboards(void)
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
+	glColor4ubv(color_white);
+	GL_Disable(GL_CULL_FACE);
 
 	LEAVE_STATE;
 }

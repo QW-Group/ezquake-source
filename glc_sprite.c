@@ -2,41 +2,20 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "gl_billboards.h"
+
+extern void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t);
 
 void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
-	vec3_t point;
-
-	GLC_StateBeginSimpleItem(simpletexture);
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 1);
-	VectorMA(org, -sprsize, up, point);
-	VectorMA(point, -sprsize, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(0, 0);
-	VectorMA(org, sprsize, up, point);
-	VectorMA(point, -sprsize, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(1, 0);
-	VectorMA(org, sprsize, up, point);
-	VectorMA(point, sprsize, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(1, 1);
-	VectorMA(org, -sprsize, up, point);
-	VectorMA(point, sprsize, right, point);
-	glVertex3fv(point);
-	glEnd();
-
-	GLC_StateEndSimpleItem();
+	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, simpletexture, 0)) {
+		GLM_SpriteToBillboard(org, up, right, sprsize, 1, 1);
+	}
 }
 
 void GLC_DrawSpriteModel(entity_t* e)
 {
-	vec3_t point, right, up;
+	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
 
@@ -68,29 +47,21 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, frame->gl_texturenum);
+	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_texturenum, 0)) {
+		vec3_t points[4];
 
-	glBegin(GL_QUADS);
+		VectorMA(e->origin, frame->up, up, points[0]);
+		VectorMA(points[0], frame->left, right, points[0]);
+		VectorMA(e->origin, frame->down, up, points[1]);
+		VectorMA(points[1], frame->left, right, points[1]);
+		VectorMA(e->origin, frame->up, up, points[2]);
+		VectorMA(points[2], frame->right, right, points[2]);
+		VectorMA(e->origin, frame->down, up, points[3]);
+		VectorMA(points[3], frame->right, right, points[3]);
 
-	glTexCoord2f(0, 1);
-	VectorMA(e->origin, frame->down, up, point);
-	VectorMA(point, frame->left, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(0, 0);
-	VectorMA(e->origin, frame->up, up, point);
-	VectorMA(point, frame->left, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(1, 0);
-	VectorMA(e->origin, frame->up, up, point);
-	VectorMA(point, frame->right, right, point);
-	glVertex3fv(point);
-
-	glTexCoord2f(1, 1);
-	VectorMA(e->origin, frame->down, up, point);
-	VectorMA(point, frame->right, right, point);
-	glVertex3fv(point);
-
-	glEnd();
+		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[0][0], points[0][1], points[0][2], 0, 0, color_white);
+		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[1][0], points[1][1], points[1][2], 0, 1, color_white);
+		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[2][0], points[2][1], points[2][2], 1, 0, color_white);
+		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[3][0], points[3][1], points[3][2], 1, 1, color_white);
+	}
 }

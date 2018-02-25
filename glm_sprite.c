@@ -7,7 +7,8 @@
 
 // For drawing sprites in 3D space
 
-static void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t)
+// FIXME: Now used by classic too.
+void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t)
 {
 	vec3_t points[4];
 
