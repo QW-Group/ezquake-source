@@ -1192,7 +1192,7 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	return gl_texturenum;
 }
 
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
+void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures, const char* identifier)
 {
 	GLsizei i;
 
@@ -1204,7 +1204,16 @@ void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref
 		GL_BindTextureUnit(textureUnit, glt->reference);
 
 		textures[i] = glt->reference;
+
+		if (identifier) {
+			strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
+		}
 	}
+}
+
+void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
+{
+	GL_CreateTexturesWithIdentifier(textureUnit, target, n, textures, NULL);
 }
 
 void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)
@@ -1314,7 +1323,11 @@ const char* GL_TextureIdentifier(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	return gltextures[ref.index].identifier[0] ? gltextures[ref.index].identifier : "null-texture";
+	if (ref.index == 0) {
+		return "null-texture";
+	}
+
+	return gltextures[ref.index].identifier[0] ? gltextures[ref.index].identifier : "unnamed-texture";
 }
 
 const char* GL_TextureIdentifierByGLReference(GLuint texnum)

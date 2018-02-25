@@ -609,7 +609,6 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 
 		if (!already_bound) {
 			glBindTextures(first, count, glTextures);
-			GL_LogAPICall("glBindTextures(first=%d, count=%d)", first, count);
 		}
 	}
 	else {
@@ -617,6 +616,22 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 			GL_EnsureTextureUnitBound(GL_TEXTURE0 + first + i, textures[i]);
 		}
 	}
+
+#ifdef WITH_NVTX
+	if (GL_LoggingEnabled())
+	{
+		static char temp[1024];
+
+		temp[0] = '\0';
+		for (i = 0; i < count; ++i) {
+			if (i) {
+				strlcat(temp, ",", sizeof(temp));
+			}
+			strlcat(temp, GL_TextureIdentifier(textures[i]), sizeof(temp));
+		}
+		GL_LogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
+	}
+#endif
 }
 
 void GL_PolygonMode(GLenum mode)

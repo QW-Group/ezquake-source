@@ -694,6 +694,7 @@ void GL_PrintState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
+qbool GL_LoggingEnabled(void);
 #else
 #define ENTER_STATE
 #define MIDDLE_STATE
@@ -706,6 +707,7 @@ void GL_MarkEvent(const char* message, ...);
 #define GL_MarkEvent(...)
 #define GL_LogAPICall(...)
 #define GL_PrintState()
+#define GL_LoggingEnabled() (false)
 #endif
 
 #define NUMVERTEXNORMALS 162
@@ -868,6 +870,7 @@ void GL_Hint(GLenum target, GLenum mode);
 // --------------
 
 void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
+void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references, const char* identifier);
 void GL_TexStorage2D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 void GL_GenerateMipmap(GLenum textureUnit, texture_ref reference);

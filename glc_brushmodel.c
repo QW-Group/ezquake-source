@@ -195,6 +195,9 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	texture_ref current_material_fb = null_texture_reference;
 	int current_lightmap = -1;
 
+	texture_ref desired_textures[4];
+	int texture_unit_count = 1;
+
 	// if (!gl_fb_bmodels)
 	//   (material + fullbright) * lightmap
 	// else
@@ -211,6 +214,10 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 
 		if (gl_textureunits >= 3) {
 			lightmapTextureUnit = GL_TEXTURE2;
+			texture_unit_count = 3;
+		}
+		else {
+			texture_unit_count = 2;
 		}
 	}
 	else if (gl_mtexable && gl_fb_bmodels.integer) {
@@ -219,6 +226,10 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		if (gl_textureunits >= 3) {
 			fullbrightTextureUnit = GL_TEXTURE2;
 			fullbrightMode = useLumaTextures ? GL_ADD : GL_DECAL;
+			texture_unit_count = 3;
+		}
+		else {
+			texture_unit_count = 2;
 		}
 	}
 
@@ -250,6 +261,11 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		current_material = t->gl_texturenum;
 		current_material_fb = t->fb_texturenum;
 
+		desired_textures[0] = current_material;
+		if (fullbrightTextureUnit) {
+			desired_textures[fullbrightTextureUnit - GL_TEXTURE0] = current_material_fb;
+		}
+
 		for (waterline = 0; waterline < 2; waterline++) {
 			if (!(s = model->textures[i]->texturechain[waterline])) {
 				continue;
@@ -258,6 +274,9 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			for (; s; s = s->texturechain) {
 				if (lightmapTextureUnit) {
 					texture_change |= (s->lightmaptexturenum != current_lightmap);
+
+					desired_textures[lightmapTextureUnit - GL_TEXTURE0] = GLC_LightmapTexture(s->lightmaptexturenum);
+					current_lightmap = s->lightmaptexturenum;
 				}
 				else {
 					GLC_AddToLightmapChain(s);
@@ -268,14 +287,19 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 						index_count = 0;
 					}
-					GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
-					GLC_SetTextureLightmap(lightmapTextureUnit, current_lightmap = s->lightmaptexturenum);
+
 					if (GL_TextureReferenceIsValid(fb_texturenum)) {
 						GLC_EnsureTMUEnabled(fullbrightTextureUnit);
-						GL_EnsureTextureUnitBound(fullbrightTextureUnit, fb_texturenum);
+						GL_BindTextures(0, texture_unit_count, desired_textures);
 					}
 					else {
 						GLC_EnsureTMUDisabled(fullbrightTextureUnit);
+						if (fullbrightTextureUnit == GL_TEXTURE0 + texture_unit_count - 1) {
+							GL_BindTextures(0, texture_unit_count - 1, desired_textures);
+						}
+						else {
+							GL_BindTextures(0, texture_unit_count, desired_textures);
+						}
 					}
 
 					texture_change = false;

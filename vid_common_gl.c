@@ -654,6 +654,11 @@ void GL_MarkEvent(const char* format, ...)
 	}
 }
 
+qbool GL_LoggingEnabled(void)
+{
+	return debug_frame_out != NULL;
+}
+
 void GL_LogAPICall(const char* format, ...)
 {
 	if (!GL_ShadersSupported() && debug_frame_out) {
