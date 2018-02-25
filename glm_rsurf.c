@@ -171,7 +171,7 @@ static void Compile_DrawWorldProgram(qbool detail_textures, qbool caustic_textur
 	}
 }
 
-void GLM_EnterBatchedWorldRegion(void)
+static void GL_StartWorldBatch(void)
 {
 	extern glm_vao_t brushModel_vao;
 	extern cvar_t gl_lumaTextures;
@@ -185,8 +185,6 @@ void GLM_EnterBatchedWorldRegion(void)
 
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !(r_skyboxloaded || r_fastsky.integer);
-
-	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
 
 	GL_UseProgram(drawworld.program);
 	GL_BindVertexArray(&brushModel_vao);
@@ -210,8 +208,22 @@ void GLM_EnterBatchedWorldRegion(void)
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
 		std_textures[TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE] = alphaskytexture;
 	}
-
 	GL_BindTextures(0, TEXTURE_UNIT_MATERIAL, std_textures);
+}
+
+void GLM_EnterBatchedWorldRegion(void)
+{
+	extern glm_vao_t brushModel_vao;
+	extern cvar_t gl_lumaTextures;
+	extern cvar_t gl_lumaTextures;
+
+	qbool draw_detail_texture = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
+	qbool draw_caustics = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool draw_lumas = gl_lumaTextures.integer && r_refdef2.allow_lumas;
+
+	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
+
+	Compile_DrawWorldProgram(draw_detail_texture, draw_caustics, draw_lumas, skybox);
 
 	material_samplers = 0;
 	sampler_mappings = 0;
@@ -519,6 +531,7 @@ void GL_FlushWorldModelBatch(void)
 
 	GL_SortDrawCalls(&polygonOffsetStart);
 
+	GL_StartWorldBatch();
 	GL_UseProgram(drawworld.program);
 	GL_BindVertexArray(&brushModel_vao);
 	GL_UpdateBuffer(ubo_worldcvars, sizeof(world), &world);
