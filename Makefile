@@ -139,31 +139,31 @@ RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 ### Object Files ###
 
 COMMON_OBJS := \
-    cmodel.o		\
-    cmd.o		\
-    com_msg.o		\
-    common.o		\
-    crc.o		\
-    cvar.o		\
-    fs.o		\
-    vfs_os.o		\
-    vfs_pak.o		\
-    vfs_zip.o		\
-    vfs_tcp.o		\
-    vfs_gzip.o		\
-    vfs_doomwad.o	\
-    vfs_mmap.o		\
-    vfs_tar.o		\
-    hash.o		\
-    host.o		\
-    mathlib.o		\
-    md4.o		\
-    net.o		\
-    net_chan.o		\
-    q_shared.o		\
-    version.o		\
-    zone.o              \
-    pmove.o             \
+    cmodel.o           \
+    cmd.o              \
+    com_msg.o          \
+    common.o           \
+    crc.o              \
+    cvar.o             \
+    fs.o               \
+    vfs_os.o           \
+    vfs_pak.o          \
+    vfs_zip.o          \
+    vfs_tcp.o          \
+    vfs_gzip.o         \
+    vfs_doomwad.o      \
+    vfs_mmap.o         \
+    vfs_tar.o          \
+    hash.o             \
+    host.o             \
+    mathlib.o          \
+    md4.o              \
+    net.o              \
+    net_chan.o         \
+    q_shared.o         \
+    version.o          \
+    zone.o             \
+    pmove.o            \
     pmovetst.o
 
 SERVER_OBJS := \
@@ -197,7 +197,7 @@ HELP_OBJS := \
     help_commands.o
 
 GLSL_OBJS := \
-	$(patsubst glsl/%.glsl,%.o,$(wildcard glsl/*.glsl))
+	$(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
 
 OBJS_c := \
     $(COMMON_OBJS) \
@@ -248,6 +248,7 @@ OBJS_c := \
     help.o \
     help_files.o \
     hud.o \
+    hud_262.o \
     hud_common.o \
     hud_weapon_stats.o \
     hud_radar.o \
@@ -303,6 +304,7 @@ OBJS_c := \
     xsd_variable.o \
     collision.o \
     gl_draw.o \
+    gl_draw_charset.o \
     gl_bloom.o \
     gl_md3.o \
     gl_mesh.o \
@@ -327,7 +329,53 @@ OBJS_c := \
     sys_sdl2.o \
     in_sdl2.o \
     cl_multiview.o \
-    snd_voip.o
+    snd_voip.o \
+    gl_aliasmodel.o \
+    gl_aliasmodel_skins.o \
+    gl_atlas.o \
+    gl_brushmodel.o \
+    gl_brushmodel_bspx.o \
+    gl_brushmodel_textures.o \
+    gl_buffers.o \
+    gl_chaticons.o \
+    gl_framebuffer.o \
+    gl_lightmaps.o \
+    gl_matrix.o \
+    gl_state.o \
+    gl_state_resets.o \
+    gl_state_resets_2d.o \
+    gl_state_resets_entities.o \
+    gl_state_resets_sky.o \
+    gl_state_resets_world.o \
+    gl_sky.o \
+    gl_sprites.o \
+    gl_vbo.o \
+    glc_aliasmodel.o \
+    glc_brushmodel.o \
+    glc_draw.o \
+    glc_md3.o \
+    glc_misc.o \
+    glc_screen.o \
+    glc_sky.o \
+    glc_sprite.o \
+    glc_surf.o \
+    glc_turb_surface.o \
+    glc_warp.o \
+    glm_aliasmodel.o \
+    glm_aliasmodel_program.o \
+    glm_billboard.o \
+    glm_brushmodel.o \
+    glm_draw.o \
+    glm_draw_charset.o \
+    glm_md3.o \
+    glm_misc.o \
+    glm_program.o \
+    glm_rsurf.o \
+    glm_screen.o \
+    glm_sky.o \
+    glm_sprite.o \
+    glm_texture_arrays.o \
+    glm_turb_surface.o
 
 ### Configuration Options ###
 
@@ -339,10 +387,10 @@ endif
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \
-	movie_avi.o \
-	localtime_win.o \
-	sys_win.o \
-	winquake.o
+        movie_avi.o \
+        localtime_win.o \
+        sys_win.o \
+        winquake.o
     LIBS_c += -lopengl32 -lws2_32 -lwinmm -lpthread
 else
     OBJS_c += \
@@ -431,7 +479,7 @@ strip: $(TARG_c)
 
 # ------
 
-$(BUILD_c)/%.o: glsl/%.glsl
+$(BUILD_c)/glsl_%.glsl.o: glsl/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
