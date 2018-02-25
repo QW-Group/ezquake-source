@@ -36,9 +36,11 @@ out flat vec3 PlaneMins1;
 out vec2 LightingPoint;
 #endif
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS) buffer WorldCvars {
-	WorldDrawInfo drawInfo[MAX_INSTANCEID];
-	SamplerMapping samplerMapping[MAX_SAMPLER_MAPPINGS];
+layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
+	WorldDrawInfo drawInfo[];
+};
+layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMappingsBuffer {
+	SamplerMapping samplerMapping[];
 };
 
 #ifdef HARDWARE_LIGHTING

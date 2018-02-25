@@ -960,11 +960,6 @@ typedef struct uniform_block_world_calldata_s {
 	GLint padding;
 } uniform_block_world_calldata_t;
 
-typedef struct uniform_block_world_s {
-	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
-	sampler_mapping_t mappings[MAX_SAMPLER_MAPPINGS];
-} uniform_block_world_t;
-
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
 	float color[4];

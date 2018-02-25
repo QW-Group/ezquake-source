@@ -35,9 +35,13 @@ extern GLuint* modelIndexes;
 extern GLuint modelIndexMaximum;
 static GLuint index_count;
 static buffer_ref vbo_worldIndirectDraw;
+static buffer_ref ssbo_worldcvars;
+static buffer_ref ssbo_worldsamplers;
 
 typedef struct glm_brushmodel_drawcall_s {
-	uniform_block_world_t world;
+	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
+	sampler_mapping_t mappings[MAX_SAMPLER_MAPPINGS];
+
 	glm_worldmodel_req_t worldmodel_requests[MAX_WORLDMODEL_BATCH];
 	texture_ref allocated_samplers[MAXIMUM_MATERIAL_SAMPLERS];
 	int material_samplers;
@@ -79,7 +83,6 @@ static GLuint drawworld_WorldCvars_block;
 #define DRAW_LIGHTMAPS           256
 #define DRAW_LUMA_TEXTURES_FB    512
 #define DRAW_TEXTURELESS        1024
-static buffer_ref ssbo_worldcvars;
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -183,8 +186,11 @@ static void Compile_DrawWorldProgram(void)
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
 
-		ssbo_worldcvars = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].world), NULL, GL_STREAM_DRAW);
-		GL_BindBufferBase(ssbo_worldcvars, EZQ_GL_BINDINGPOINT_DRAWWORLD_CVARS);
+		ssbo_worldcvars = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, GL_STREAM_DRAW);
+		GL_BindBufferBase(ssbo_worldcvars, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA);
+
+		ssbo_worldsamplers = GL_GenFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, GL_STREAM_DRAW);
+		GL_BindBufferBase(ssbo_worldsamplers, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS);
 
 		drawworld.uniforms_found = true;
 	}
@@ -248,7 +254,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	int i;
 	int sampler = -1;
 
-	if (index >= sizeof(drawcalls[current_drawcall].world.mappings) / sizeof(drawcalls[current_drawcall].world.mappings[0])) {
+	if (index >= sizeof(drawcalls[current_drawcall].mappings) / sizeof(drawcalls[current_drawcall].mappings[0])) {
 		return false;
 	}
 
@@ -268,9 +274,9 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 		drawcalls[current_drawcall].allocated_samplers[sampler] = texture->gl_texture_array;
 	}
 
-	drawcalls[current_drawcall].world.mappings[index].samplerIndex = sampler;
-	drawcalls[current_drawcall].world.mappings[index].arrayIndex = texture->gl_texture_index;
-	drawcalls[current_drawcall].world.mappings[index].flags = GL_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcalls[current_drawcall].mappings[index].samplerIndex = sampler;
+	drawcalls[current_drawcall].mappings[index].arrayIndex = texture->gl_texture_index;
+	drawcalls[current_drawcall].mappings[index].flags = GL_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
 	return true;
 }
 
@@ -582,7 +588,8 @@ void GL_DrawWorldModelBatch(void)
 			return;
 		}
 
-		GL_UpdateBuffer(ssbo_worldcvars, sizeof(drawcall->world), &drawcall->world);
+		GL_UpdateBuffer(ssbo_worldcvars, sizeof(drawcall->calls), &drawcall->calls);
+		GL_UpdateBuffer(ssbo_worldsamplers, sizeof(drawcall->mappings), &drawcall->mappings);
 
 		// Bind texture units
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
@@ -706,10 +713,10 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 	for (i = 0; i < drawcall->batch_count; ++i) {
 		glm_worldmodel_req_t* this = &drawcall->worldmodel_requests[i];
 
-		drawcall->world.calls[i].alpha = this->alpha;
-		drawcall->world.calls[i].flags = this->flags;
-		memcpy(drawcall->world.calls[i].modelMatrix, this->mvMatrix, sizeof(drawcall->world.calls[i].modelMatrix));
-		drawcall->world.calls[i].samplerBase = this->samplerMappingBase;
+		drawcall->calls[i].alpha = this->alpha;
+		drawcall->calls[i].flags = this->flags;
+		memcpy(drawcall->calls[i].modelMatrix, this->mvMatrix, sizeof(drawcall->calls[i].modelMatrix));
+		drawcall->calls[i].samplerBase = this->samplerMappingBase;
 		this->baseInstance = i;
 	}
 }
