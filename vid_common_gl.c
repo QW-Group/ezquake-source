@@ -153,13 +153,15 @@ void APIENTRY MessageCallback( GLenum source,
 	const void* userParam
 )
 {
-	char buffer[1024] = { 0 };
+	if (source != GL_DEBUG_SOURCE_APPLICATION) {
+		char buffer[1024] = { 0 };
 
-	snprintf(buffer, sizeof(buffer) - 1,
-		"GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+		snprintf(buffer, sizeof(buffer) - 1,
+				 "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+				 (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
 
-	OutputDebugString(buffer);
+		OutputDebugString(buffer);
+	}
 }
 
 // Shader functions
