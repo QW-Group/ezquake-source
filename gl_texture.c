@@ -1145,7 +1145,9 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	}
 
 	GL_BindTextureUnit(GL_TEXTURE0, gl_texturenum);
+#ifdef GL_PARANOIA
 	GL_ProcessErrors("Prior-texture-array-creation");
+#endif
 	while (*depth >= minimum_depth) {
 		GLenum error;
 

@@ -829,8 +829,8 @@ float* GLM_ModelviewMatrix(void);
 float* GLM_ProjectionMatrix(void);
 float* GL_MatrixForMode(GLenum type);
 
-void GL_ProcessErrors(const char* message);
 #ifdef GL_PARANOIA
+void GL_ProcessErrors(const char* message);
 #define GL_Paranoid_Printf(...) Con_Printf(__VA_ARGS__)
 #else
 #define GL_Paranoid_Printf(...)

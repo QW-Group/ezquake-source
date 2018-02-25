@@ -161,7 +161,9 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 	}
 
 	GL_GetTexImage(GL_TEXTURE0, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBufferSize, tempTextureBuffer);
+#ifdef GL_PARANOIA
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
+#endif
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
