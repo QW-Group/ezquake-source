@@ -50,7 +50,7 @@ typedef struct glm_brushmodel_drawcall_s {
 	struct glm_brushmodel_drawcall_s* next;
 } glm_brushmodel_drawcall_t;
 
-static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall, int* split);
+static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall);
 
 static glm_brushmodel_drawcall_t* drawcalls;
 static int maximum_drawcalls = 0;
@@ -569,7 +569,6 @@ void GL_DrawWorldModelBatch(void)
 {
 	extern buffer_ref vbo_brushElements;
 	extern glm_vao_t brushModel_vao;
-	int polygonOffsetStart = -1;
 	int draw;
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
@@ -579,7 +578,7 @@ void GL_DrawWorldModelBatch(void)
 			return;
 		}
 
-		GL_SortDrawCalls(drawcall, &polygonOffsetStart);
+		GL_SortDrawCalls(drawcall);
 		GL_StartWorldBatch();
 		GL_UseProgram(drawworld.program);
 		GL_BindVertexArray(&brushModel_vao);
@@ -590,13 +589,13 @@ void GL_DrawWorldModelBatch(void)
 		// Bind texture units
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
-		if (polygonOffsetStart >= 0 && polygonOffsetStart < drawcall->batch_count) {
-			if (polygonOffsetStart) {
+		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
+			if (drawcall->polygonOffsetSplit) {
 				GL_MultiDrawElementsIndirect(
 					GL_TRIANGLE_STRIP,
 					GL_UNSIGNED_INT,
 					(void*)0,
-					polygonOffsetStart,
+					drawcall->polygonOffsetSplit,
 					sizeof(drawcall->worldmodel_requests[0])
 				);
 			}
@@ -605,8 +604,8 @@ void GL_DrawWorldModelBatch(void)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)(sizeof(drawcall->worldmodel_requests[0]) * polygonOffsetStart),
-				drawcall->batch_count - polygonOffsetStart,
+				(void*)(sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
+				drawcall->batch_count - drawcall->polygonOffsetSplit,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
 			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
@@ -675,12 +674,12 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	}
 }
 
-static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall, int* split)
+static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 {
 	int i;
 	int back;
 
-	*split = drawcall->batch_count;
+	drawcall->polygonOffsetSplit = drawcall->batch_count;
 	if (drawcall->batch_count == 0) {
 		return;
 	}
@@ -688,7 +687,7 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall, int* split)
 	// All 'true' values need to be moved to the back
 	back = drawcall->batch_count - 1;
 	while (back >= 0 && drawcall->worldmodel_requests[back].polygonOffset) {
-		*split = back;
+		drawcall->polygonOffsetSplit = back;
 		--back;
 	}
 
@@ -701,7 +700,7 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall, int* split)
 			*this = copy;
 
 			while (back >= 0 && drawcall->worldmodel_requests[back].polygonOffset) {
-				*split = back;
+				drawcall->polygonOffsetSplit = back;
 				--back;
 			}
 		}
