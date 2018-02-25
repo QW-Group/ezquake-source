@@ -127,8 +127,6 @@ static void CachePics_AllocateSolidTexture(void)
 
 	solid_s = (x_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_WIDTH;
 	solid_t = (y_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_HEIGHT;
-
-	Con_Printf("SolidTexture(%d,%d => %f, %f)\n", x_pos, y_pos, solid_s, solid_t);
 }
 
 static int CachePics_AddToAtlas(mpic_t* pic)

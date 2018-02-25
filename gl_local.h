@@ -754,6 +754,15 @@ void R_DrawAliasPowerupShell(entity_t *ent);
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
 void R_RenderAllDynamicLightmaps(model_t *model);
+void R_LightmapFrameInit(void);
+void R_UploadChangedLightmaps(void);
+
+void GLM_RenderView(void);
+void GLM_UploadFrameConstants(void);
+void GLM_PrepareWorldModelBatch(void);
+void GLM_DrawBillboards(void);
+void GLM_PrepareBillboards(void);
+
 void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);

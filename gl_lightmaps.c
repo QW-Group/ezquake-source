@@ -81,7 +81,7 @@ static int dlightcolor[NUM_DLIGHTTYPES][3] = {
 	{ 128, 128, 128 },	// custom
 };
 
-void R_BuildDlightList (msurface_t *surf)
+static void R_BuildDlightList (msurface_t *surf)
 {
 	float dist;
 	vec3_t impact;
@@ -158,7 +158,7 @@ void R_BuildDlightList (msurface_t *surf)
 }
 
 //R_BuildDlightList must be called first!
-void R_AddDynamicLights(msurface_t *surf)
+static void R_AddDynamicLights(msurface_t *surf)
 {
 	int i, smax, tmax, s, t, sd, td, _sd, _td, irad, idist, iminlight, color[3], tmp;
 	dlightinfo_t *light;
@@ -223,7 +223,7 @@ void R_AddDynamicLights(msurface_t *surf)
 }
 
 //Combine and scale multiple lightmaps into the 8.8 format in blocklights
-void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
+static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 {
 	int smax, tmax, i, j, size, blocksize, maps;
 	byte *lightmap;
@@ -306,7 +306,7 @@ void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 }
 
-void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
+static void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 {
 	const void* data_source;
 	lightmap_data_t* lm = &lightmaps[lightmapnum];

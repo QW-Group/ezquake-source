@@ -3,9 +3,6 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
-void GLM_PrepareWorldModelBatch(void);
-void GLM_DrawBillboards(void);
-
 void GLM_RenderView(void)
 {
 	GLM_UploadFrameConstants();
