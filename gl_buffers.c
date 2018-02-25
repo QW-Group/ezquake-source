@@ -483,3 +483,13 @@ void GL_DeleteVAOs(void)
 	}
 	vao_list = NULL;
 }
+
+void GL_EnsureBufferSize(buffer_ref ref, size_t size)
+{
+	assert(ref.index);
+	assert(buffers[ref.index].glref);
+
+	if (buffers[ref.index].size < size) {
+		GL_ResizeBuffer(ref, size, NULL);
+	}
+}

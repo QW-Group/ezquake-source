@@ -44,6 +44,7 @@ typedef struct glm_brushmodel_drawcall_s {
 	int sampler_mappings;
 	int matrix_count;
 	int batch_count;
+	GLintptr indirectDrawOffset;
 
 	int polygonOffsetSplit;
 
@@ -565,11 +566,14 @@ void GL_FlushWorldModelBatch(void)
 	GLM_CheckDrawCallSize();
 }
 
-void GL_DrawWorldModelBatch(void)
+static void GL_PrepareWorldModelBatch(void)
 {
 	extern buffer_ref vbo_brushElements;
-	extern glm_vao_t brushModel_vao;
+	GLintptr drawOffset = 0;
 	int draw;
+
+	GL_UpdateBuffer(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	GL_EnsureBufferSize(vbo_worldIndirectDraw, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
@@ -579,12 +583,32 @@ void GL_DrawWorldModelBatch(void)
 		}
 
 		GL_SortDrawCalls(drawcall);
-		GL_StartWorldBatch();
-		GL_UseProgram(drawworld.program);
-		GL_BindVertexArray(&brushModel_vao);
+
+		drawcall->indirectDrawOffset = drawOffset;
+		GL_UpdateBufferSection(vbo_worldIndirectDraw, drawOffset, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
+		drawOffset += sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count;
+	}
+}
+
+void GL_DrawWorldModelBatch(void)
+{
+	extern buffer_ref vbo_brushElements;
+	extern glm_vao_t brushModel_vao;
+	int draw;
+
+	GL_PrepareWorldModelBatch();
+	GL_StartWorldBatch();
+	GL_BindBuffer(vbo_brushElements);
+	GL_BindBuffer(vbo_worldIndirectDraw);
+
+	for (draw = 0; draw <= current_drawcall; ++draw) {
+		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
+
+		if (!drawcall->batch_count) {
+			return;
+		}
+
 		GL_UpdateBuffer(ubo_worldcvars, sizeof(drawcall->world), &drawcall->world);
-		GL_BindAndUpdateBuffer(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-		GL_BindAndUpdateBuffer(vbo_worldIndirectDraw, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
 
 		// Bind texture units
 		GL_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);

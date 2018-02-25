@@ -679,6 +679,7 @@ void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_UnBindBuffer(GLenum target);
 void GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
+void GL_EnsureBufferSize(buffer_ref ref, size_t size);
 size_t GL_VBOSize(buffer_ref vbo);
 
 #ifdef WITH_OPENGL_TRACE
