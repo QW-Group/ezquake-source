@@ -334,14 +334,12 @@ static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_ba
 	int batch_count = last_batch - first_batch;
 
 	while (batch_count > maximum_batch_size) {
-		glDrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
+		GL_DrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
 		batch_count -= maximum_batch_size;
 		vertOffset += maximum_batch_size * numVertices;
-		frameStats.draw_calls += 1;
 	}
 	if (batch_count) {
-		glDrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
-		frameStats.draw_calls += 1;
+		GL_DrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, (void*)(index_offset * sizeof(GLuint)), vertOffset);
 	}
 }
 
@@ -453,8 +451,7 @@ void GLM_DrawBillboards(void)
 			if (GL_TextureReferenceIsValid(batch->textures[0])) {
 				GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[0]);
 			}
-			glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
-			frameStats.draw_calls += 1;
+			GL_DrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
 		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
 			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
@@ -467,18 +464,14 @@ void GLM_DrawBillboards(void)
 		}
 		else {
 			if (GL_TextureReferenceIsValid(batch->texture)) {
-				glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
-				frameStats.draw_calls += 1;
-				frameStats.subdraw_calls += batch->count;
+				GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
 			}
 			else {
 				int first = 0, last = 1;
 				GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[0]);
 				while (last < batch->count) {
 					if (! GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-						glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
-						frameStats.draw_calls += 1;
-						frameStats.subdraw_calls += batch->count;
+						GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
 
 						GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[last]);
 						first = last;
@@ -486,9 +479,7 @@ void GLM_DrawBillboards(void)
 					++last;
 				}
 
-				glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
-				frameStats.draw_calls += 1;
-				frameStats.subdraw_calls += batch->count;
+				GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
 			}
 		}
 
@@ -556,17 +547,16 @@ void GLC_DrawBillboards(void)
 				else {
 					GLC_EnsureTMUDisabled(GL_TEXTURE0);
 				}
-				glDrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
-				frameStats.draw_calls += 1;
+				GL_DrawArrays(batch->primitive, batch->firstVertices[0], batch->numVertices[0]);
 			}
-			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 4) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4) {
 				// FIXME: We could just have primitive == GL_QUADS for compatibility mode?
 				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 			}
-			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 9) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9) {
 				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 			}
-			else if (glDrawElementsBaseVertex && batch->allSameNumber && batch->numVertices[0] == 18) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18) {
 				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 			}
 			else {
@@ -574,9 +564,7 @@ void GLC_DrawBillboards(void)
 					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
 					GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
-					glMultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
-					frameStats.draw_calls += 1;
-					frameStats.subdraw_calls += batch->count;
+					GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, batch->count);
 				}
 				else {
 					int first = 0, last = 1;
@@ -592,8 +580,6 @@ void GLC_DrawBillboards(void)
 					while (last < batch->count) {
 						if (!GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
 							GL_MultiDrawArrays(batch->primitive, batch->firstVertices, batch->numVertices, last - first);
-							frameStats.draw_calls += 1;
-							frameStats.subdraw_calls += batch->count;
 
 							if (GL_TextureReferenceIsValid(batch->textures[last])) {
 								GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[last]);

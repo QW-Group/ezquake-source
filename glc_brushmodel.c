@@ -84,15 +84,13 @@ static void GLC_DrawFlat(model_t *model)
 			}
 
 			if (index_count && last_lightmap != new_lightmap) {
-				glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-				GL_LogAPICall("glDrawElements(lightmap-switch: GL_TRIANGLE_STRIP, %d)", index_count);
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
 
 			if (first_surf || desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]) {
 				if (index_count) {
-					glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					GL_LogAPICall("glDrawElements(color-switch: GL_TRIANGLE_STRIP, %d)", index_count);
+					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				}
 				index_count = 0;
 				glColor3ubv(desired);
@@ -121,8 +119,7 @@ static void GLC_DrawFlat(model_t *model)
 
 					if (GL_BuffersSupported()) {
 						if (index_count + 1 + p->numverts > modelIndexMaximum) {
-							glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-							GL_LogAPICall("glDrawElements(full: TRIANGLE_STRIP, %d)", index_count);
+							GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 							index_count = 0;
 						}
 
@@ -155,8 +152,7 @@ static void GLC_DrawFlat(model_t *model)
 	}
 
 	if (index_count) {
-		glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		GL_LogAPICall("glDrawElements(flush: TRIANGLE_STRIP, %d)", index_count);
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
 	GLC_StateEndDrawFlatModel();
@@ -269,8 +265,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 
 				if (texture_change) {
 					if (index_count) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						GL_LogAPICall("glDrawElements(texture switch)");
+						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 						index_count = 0;
 					}
 					GL_EnsureTextureUnitBound(materialTextureUnit, t->gl_texturenum);
@@ -288,8 +283,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 
 				if (use_vbo) {
 					if (index_count + 1 + s->polys->numverts > modelIndexMaximum) {
-						glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						GL_LogAPICall("glDrawElements(index buffer full)");
+						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 						index_count = 0;
 					}
 
@@ -358,8 +352,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	}
 
 	if (index_count) {
-		glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		GL_LogAPICall("glDrawElements(flush)");
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
 	if (gl_fb_bmodels.integer) {

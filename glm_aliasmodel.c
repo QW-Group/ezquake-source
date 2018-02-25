@@ -456,7 +456,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			GL_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
-		glMultiDrawArraysIndirect(
+		GL_MultiDrawArraysIndirect(
 			GL_TRIANGLES,
 			(const void*)(instr->indirect_buffer_offset + extra_offset),
 			instr->num_cmds[i],
@@ -472,7 +472,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		GLM_StateBeginAliasOutlineBatch();
 
 		for (i = 0; i < instr->num_calls; ++i) {
-			glMultiDrawArraysIndirect(
+			GL_MultiDrawArraysIndirect(
 				GL_TRIANGLES,
 				(const void*)instr->indirect_buffer_offset,
 				instr->num_cmds[i],

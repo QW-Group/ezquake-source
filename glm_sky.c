@@ -313,7 +313,7 @@ static void GLM_DrawSkyDomeFaces(void)
 
 		GL_BindVertexArray(&skyDome_vao);
 
-		glMultiDrawElementsIndirect(
+		GL_MultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_SHORT,
 			0,
@@ -383,8 +383,7 @@ static void GLM_DrawSkyBox(void)
 		GL_UpdateVBO(ubo_skyboxData, sizeof(cvars), &cvars);
 
 		GL_BindVertexArray(&skyBox_vao);
-		glDrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
-		++frameStats.draw_calls;
+		GL_DrawElements(GL_TRIANGLE_STRIP, number_to_draw * 5, GL_UNSIGNED_SHORT, indices);
 	}
 }
 #endif

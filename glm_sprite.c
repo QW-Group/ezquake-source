@@ -129,7 +129,7 @@ void GL_FlushSpriteBatch(void)
 	GL_BindTextures(0, allocated_samplers, sampler_textures);
 
 	GL_BindVertexArray(&spriteVAO);
-	glDrawElements(GL_TRIANGLE_STRIP, batch_count * 5, GL_UNSIGNED_SHORT, NULL);
+	GL_DrawElements(GL_TRIANGLE_STRIP, batch_count * 5, GL_UNSIGNED_SHORT, NULL);
 
 	GL_Enable(GL_CULL_FACE);
 

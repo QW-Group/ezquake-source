@@ -73,6 +73,28 @@ static glTextureSubImage3D_t glTextureSubImage3D = NULL;
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
 // </debug-functions>
 
+// <draw-functions (various)>
+typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
+typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
+typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
+typedef void (APIENTRY *glMultiDrawElementsIndirect_t)(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
+typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
+typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
+typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
+typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
+typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
+glMultiDrawArrays_t                               glMultiDrawArrays;
+glMultiDrawElements_t                             glMultiDrawElements;
+glMultiDrawArraysIndirect_t                       glMultiDrawArraysIndirect;
+glMultiDrawElementsIndirect_t                     glMultiDrawElementsIndirect;
+glDrawArraysInstancedBaseInstance_t               glDrawArraysInstancedBaseInstance;
+glDrawElementsInstancedBaseInstance_t             glDrawElementsInstancedBaseInstance;
+glDrawElementsInstancedBaseVertexBaseInstance_t   glDrawElementsInstancedBaseVertexBaseInstance;
+glPrimitiveRestartIndex_t                         glPrimitiveRestartIndex;
+glDrawElementsBaseVertex_t                        glDrawElementsBaseVertex;
+// </draw-functions>
+
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
@@ -176,18 +198,6 @@ static glTexSubImage3D_t        glTexSubImage3D;
 static glTexStorage3D_t         glTexStorage3D;
 static glGenerateMipmap_t       glGenerateMipmap;
 glBindTextures_t                glBindTextures;
-
-// Draw functions
-glMultiDrawArrays_t      glMultiDrawArrays;
-glMultiDrawElements_t    glMultiDrawElements;
-glDrawArraysInstanced_t  glDrawArraysInstanced;
-glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
-glMultiDrawElementsIndirect_t glMultiDrawElementsIndirect;
-glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
-glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
-glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
-glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
-glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 glObjectLabel_t glObjectLabel;
 glGetObjectLabel_t glGetObjectLabel;
@@ -296,8 +306,6 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
 
-			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstanced);
-			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElementsIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
@@ -939,18 +947,64 @@ void Dev_VidFrameTrace(void)
 	dev_frame_debug_queued = true;
 }
 
-// Wrapper around OpenGL 1.4 function
+// Wrappers around drawing functions
 void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount)
 {
 	if (glMultiDrawArrays) {
 		glMultiDrawArrays(mode, first, count, primcount);
-		frameStats.draw_calls += 1;
+		++frameStats.draw_calls;
 		frameStats.subdraw_calls += primcount;
+		GL_LogAPICall("glMultiDrawElements(%d verts)", count);
 	}
 	else {
 		int i;
 		for (i = 0; i < primcount; ++i) {
-			glDrawArrays(mode, first[i], count[i]);
+			GL_DrawArrays(mode, first[i], count[i]);
 		}
 	}
+}
+
+void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+	glDrawArrays(mode, first, count);
+	++frameStats.draw_calls;
+	GL_LogAPICall("glDrawArrays(%d verts)", count);
+}
+
+void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
+{
+	if (!glDrawElementsBaseVertex) {
+		Sys_Error("glDrawElementsBaseVertex called, not supported");
+	}
+	glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+	++frameStats.draw_calls;
+	GL_LogAPICall("glDrawElements(%d verts)", count);
+}
+
+qbool GL_DrawElementsBaseVertexAvailable(void)
+{
+	return glDrawElementsBaseVertex != NULL;
+}
+
+void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+{
+	glDrawElements(mode, count, type, indices);
+	++frameStats.draw_calls;
+	GL_LogAPICall("glDrawElements(%d verts)", count);
+}
+
+void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
+{
+	glMultiDrawArraysIndirect(mode, indirect, drawcount, stride);
+	++frameStats.draw_calls;
+	frameStats.subdraw_calls += drawcount;
+	GL_LogAPICall("glMultiDrawArraysIndirect(%d subdraws)", drawcount);
+}
+
+void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
+{
+	glMultiDrawElementsIndirect(mode, type, indirect, drawcount, stride);
+	++frameStats.draw_calls;
+	frameStats.subdraw_calls += drawcount;
+	GL_LogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
 }

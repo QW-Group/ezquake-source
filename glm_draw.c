@@ -132,8 +132,7 @@ void GLM_Draw_LineRGB(byte* color, int x_start, int y_start, int x_end, int y_en
 		glUniform4f(line_color, color[0] * 1.0 / 255, color[1] * 1.0 / 255, color[2] * 1.0 / 255, 1.0f);
 
 		GL_BindVertexArray(GL_CreateLineVAO());
-		glDrawArrays(GL_LINES, 0, 2);
-		++frameStats.draw_calls;
+		GL_DrawArrays(GL_LINES, 0, 2);
 	}
 }
 
@@ -234,8 +233,7 @@ static void GLM_FlushImageDraw(void)
 
 			if (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(img->texNumber) && !GL_TextureReferenceEqual(currentTexture, img->texNumber)) {
 				GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
-				glDrawArrays(GL_POINTS, start, i - start);
-				++frameStats.draw_calls;
+				GL_DrawArrays(GL_POINTS, start, i - start);
 				start = i;
 			}
 
@@ -247,8 +245,7 @@ static void GLM_FlushImageDraw(void)
 		if (GL_TextureReferenceIsValid(currentTexture)) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0, currentTexture);
 		}
-		glDrawArrays(GL_POINTS, start, imageCount - start);
-		++frameStats.draw_calls;
+		GL_DrawArrays(GL_POINTS, start, imageCount - start);
 	}
 
 	imageCount = 0;
@@ -486,8 +483,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 		glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
 		glUniform4f(polygonUniforms_color, glColor[0] / 255.0f, glColor[1] / 255.0f, glColor[2] / 255.0f, glColor[3] / 255.0f);
 
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
-		++frameStats.draw_calls;
+		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
 	}
 }
 
@@ -588,6 +584,5 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	COLOR_TO_RGBA(color, bytecolor);
 	glUniform4f(drawCircleUniforms_color, bytecolor[0] / 255.0f, bytecolor[1] / 255.0f, bytecolor[2] / 255.0f, (bytecolor[3] / 255.0f) * overall_alpha);
 	glUniformMatrix4fv(drawCircleUniforms_matrix, 1, GL_FALSE, projectionMatrix);
-	glDrawArrays(fill ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, 0, points);
-	++frameStats.draw_calls;
+	GL_DrawArrays(fill ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, 0, points);
 }

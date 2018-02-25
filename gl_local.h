@@ -434,18 +434,6 @@ typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum 
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 
-// Draw functions
-typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
-typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
-typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glMultiDrawElementsIndirect_t)(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
-typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
-typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
-
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
@@ -488,18 +476,6 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 // Textures
 extern glActiveTexture_t        glActiveTexture;
 extern glBindTextures_t         glBindTextures;
-
-// Draw functions
-extern glMultiDrawArrays_t      glMultiDrawArrays;
-extern glMultiDrawElements_t    glMultiDrawElements;
-extern glDrawArraysInstanced_t  glDrawArraysInstanced;
-extern glMultiDrawArraysIndirect_t glMultiDrawArraysIndirect;
-extern glMultiDrawElementsIndirect_t glMultiDrawElementsIndirect;
-extern glDrawArraysInstancedBaseInstance_t glDrawArraysInstancedBaseInstance;
-extern glDrawElementsInstancedBaseInstance_t glDrawElementsInstancedBaseInstance;
-extern glPrimitiveRestartIndex_t glPrimitiveRestartIndex;
-extern glDrawElementsInstancedBaseVertexBaseInstance_t glDrawElementsInstancedBaseVertexBaseInstance;
-extern glDrawElementsBaseVertex_t glDrawElementsBaseVertex;
 
 // Debug functions
 extern glObjectLabel_t glObjectLabel;
@@ -1186,6 +1162,15 @@ typedef enum aliasmodel_draw_batch_s {
 void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
+
+// Rendering functions
+void GL_DrawArrays(GLenum mode, GLint first, GLsizei count);
+void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount);
+void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
+void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride);
+void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
+qbool GL_DrawElementsBaseVertexAvailable(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

@@ -512,7 +512,7 @@ static void GLM_DrawWorldModelOutlines(void)
 		if (!worldmodel_requests[i].worldmodel) {
 			if (begin >= 0) {
 				// Draw outline models so far
-				glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), i - begin, sizeof(worldmodel_requests[0]));
+				GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), i - begin, sizeof(worldmodel_requests[0]));
 			}
 			begin = -1;
 			continue;
@@ -523,7 +523,7 @@ static void GLM_DrawWorldModelOutlines(void)
 	}
 	if (begin >= 0) {
 		// Draw outline models so far
-		glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), batch_count - begin, sizeof(worldmodel_requests[0]));
+		GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(begin * sizeof(worldmodel_requests[0])), batch_count - begin, sizeof(worldmodel_requests[0]));
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
@@ -555,7 +555,7 @@ void GL_FlushWorldModelBatch(void)
 
 	if (polygonOffsetStart >= 0 && polygonOffsetStart < batch_count) {
 		if (polygonOffsetStart) {
-			glMultiDrawElementsIndirect(
+			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
 				(void*)0,
@@ -565,7 +565,7 @@ void GL_FlushWorldModelBatch(void)
 		}
 
 		GL_PolygonOffset(POLYGONOFFSET_STANDARD);
-		glMultiDrawElementsIndirect(
+		GL_MultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_INT,
 			(void*)(sizeof(worldmodel_requests[0]) * polygonOffsetStart),
@@ -577,7 +577,7 @@ void GL_FlushWorldModelBatch(void)
 		frameStats.draw_calls += 2;
 	}
 	else {
-		glMultiDrawElementsIndirect(
+		GL_MultiDrawElementsIndirect(
 			GL_TRIANGLE_STRIP,
 			GL_UNSIGNED_INT,
 			(void*)0,
