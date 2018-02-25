@@ -169,21 +169,6 @@ void GLC_StateEndPolyBlend(void)
 {
 }
 
-void GL_StateBeginNetGraph(void)
-{
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	if (!GL_ShadersSupported()) {
-		GL_Color3ubv(color_white);
-		GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-		GLC_EnsureTMUDisabled(GL_TEXTURE0);
-	}
-}
-
-void GL_StateEndNetGraph(void)
-{
-}
-
 void GLC_StateBeginImageDraw(void)
 {
 	GL_Color3ubv(color_white);

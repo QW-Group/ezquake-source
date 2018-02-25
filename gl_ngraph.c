@@ -55,53 +55,55 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         par_dropheight = HUD_FindVar(hud, "lostscale");
     }
 
-	GL_FlushImageDraw();
-
     CL_CalcNet();
 
     alpha = par_alpha->value;
 
-    if (width < 0)
-        width = NET_TIMINGS;
+	if (width < 0) {
+		width = NET_TIMINGS;
+	}
     width = min(width, 256);
-    if (width < 16)
-        return;
+	if (width < 16) {
+		return;
+	}
 
-    if (height < 0)
-        height = 32;
-    if (height > MAX_NET_GRAPHHEIGHT)
-        height = MAX_NET_GRAPHHEIGHT;
-    if (height < 1)
-        return;
+	if (height < 0) {
+		height = 32;
+	}
+	if (height > MAX_NET_GRAPHHEIGHT) {
+		height = MAX_NET_GRAPHHEIGHT;
+	}
+	if (height < 1) {
+		return;
+	}
 
-    if (alpha < 0  ||  alpha > 1)
-        alpha = 1;
+	if (alpha < 0 || alpha > 1) {
+		alpha = 1;
+	}
 
-    if (posx < 0  ||  posy < 0)
-    {
+    if (posx < 0  ||  posy < 0) {
         int w, h;
 
         w = width;
         h = height;
-        if (lost >= 0)
-            h += 8;
-        if (!HUD_PrepareDraw(hud, w, h, &posx, &posy))
-            return;
+		if (lost >= 0) {
+			h += 8;
+		}
+		if (!HUD_PrepareDraw(hud, w, h, &posx, &posy)) {
+			return;
+		}
     }
 
     x = posx;
     y = posy;
 
-    if (lost >= 0)
-    {
-        if (avgping < 0)
-        {
+    if (lost >= 0) {
+        if (avgping < 0) {
             snprintf(st, sizeof (st)," %3i%% packet loss", lost);
             st[(width-1)/8] = 0;
             Draw_String(x+3, y, st);
         }
-        else
-        {
+        else {
             char buf[128];
             if (lost > 99)
                 lost = 99;
@@ -116,10 +118,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
         y += 8;
     }
 
-	GL_StateBeginNetGraph();
-
-    for (a=0; a < width; a++)
-    {
+    for (a=0; a < width; a++) {
         int px, py1, py2;
         unsigned char pColor[4];
         int h, color;
@@ -174,25 +173,6 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
             py2 = y + height-h;
         }
 
-		if (GL_ShadersSupported()) {
-			Draw_AlphaLineRGB(px, py1, px, py2, 1, RGBAVECT_TO_COLOR(pColor));
-		}
-		else {
-			glColor4ubv(pColor);
-			glBegin(GL_QUADS);
-
-			glTexCoord2f(0, 0);
-			glVertex2f(px, py1);
-			glTexCoord2f(1, 0);
-			glVertex2f(px + 1, py1);
-			glTexCoord2f(1, h / 2.0);
-			glVertex2f(px + 1, py2);
-			glTexCoord2f(0, h / 2.0);
-			glVertex2f(px, py2);
-
-			glEnd();
-		}
+		Draw_AlphaLineRGB(px, py1, px, py2, 1, RGBAVECT_TO_COLOR(pColor));
     }
-
-	GL_StateEndNetGraph();
 }

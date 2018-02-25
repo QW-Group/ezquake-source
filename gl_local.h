@@ -1111,8 +1111,6 @@ void GLC_StateBeginImageDraw(void);
 void GLC_StateEndImageDraw(void);
 void GLC_StateBeginPolyBlend(float v_blend[4]);
 void GLC_StateEndPolyBlend(void);
-void GL_StateBeginNetGraph(void);
-void GL_StateEndNetGraph(void);
 void GLC_StateBeginDrawPolygon(void);
 void GLC_StateEndDrawPolygon(int oldFlags);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
