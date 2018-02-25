@@ -307,6 +307,7 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
 
+			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElementsIndirect);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
@@ -345,6 +346,8 @@ static void CheckShaderExtensions(void)
 	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
 	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
+
+	// Draw functions required for modern & classic
 	glMultiDrawArrays = (glMultiDrawArrays_t)SDL_GL_GetProcAddress("glMultiDrawArrays");
 	glMultiDrawElements = (glMultiDrawElements_t)SDL_GL_GetProcAddress("glMultiDrawElements");
 	glDrawElementsBaseVertex = (glDrawElementsBaseVertex_t)SDL_GL_GetProcAddress("glDrawElementsBaseVertex");
