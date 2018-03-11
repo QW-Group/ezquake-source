@@ -325,15 +325,17 @@ qbool flashed = false; // it should be used for f_flashout tirgger
 extern cvar_t v_gamma, v_contrast;
 #define flash_gamma 0.55
 #define flash_contrast 1.0
-void V_TF_FlashSettings (qbool flashed)
+void V_TF_FlashSettings(qbool flashed)
 {
 	static float old_gamma, old_contrast;
 
 	// remove read only flag if it was set
-	if (Cvar_GetFlags(&v_gamma) & CVAR_ROM)
+	if (Cvar_GetFlags(&v_gamma) & CVAR_ROM) {
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) & ~CVAR_ROM);
-	if (Cvar_GetFlags(&v_contrast) & CVAR_ROM)
+	}
+	if (Cvar_GetFlags(&v_contrast) & CVAR_ROM) {
 		Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) & ~CVAR_ROM);
+	}
 
 	if (flashed) {
 		// store normal settings
@@ -341,18 +343,18 @@ void V_TF_FlashSettings (qbool flashed)
 		old_contrast = v_contrast.value;
 
 		// set MTFL flash settings	
-		Cvar_SetValue (&v_gamma, flash_gamma);
-		Cvar_SetValue (&v_contrast, flash_contrast);
-		
+		Cvar_SetValue(&v_gamma, flash_gamma);
+		Cvar_SetValue(&v_contrast, flash_contrast);
+
 		// made gamma&contrast read only
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) | CVAR_ROM);
 		Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) | CVAR_ROM);
-	} else {
-		// restore old settings
-		Cvar_SetValue (&v_gamma, old_gamma);
-		Cvar_SetValue (&v_contrast, old_contrast);
 	}
-	return;
+	else {
+		// restore old settings
+		Cvar_SetValue(&v_gamma, old_gamma);
+		Cvar_SetValue(&v_contrast, old_contrast);
+	}
 }
 
 void V_TF_FlashStuff (void)
@@ -364,16 +366,19 @@ void V_TF_FlashStuff (void)
 	// 240 = Normal TF || 255 = Angel TF
 	if (cshift_empty.percent == 240 || cshift_empty.percent == 255 ) {
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
-			V_TF_FlashSettings (true);
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			V_TF_FlashSettings(true);
+		}
 
 		flashed = true;
 		last_other_flash_time = cls.realtime;
 	}
 
-	if (cshift_empty.percent == 160) { // flashed by your own flash
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
-			V_TF_FlashSettings (true);
+	if (cshift_empty.percent == 160) {
+		// flashed by your own flash
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			V_TF_FlashSettings(true);
+		}
 
 		flashed = true;
 		last_own_flash_time = cls.realtime;
@@ -381,17 +386,22 @@ void V_TF_FlashStuff (void)
 
 	blocktime = (last_other_flash_time > last_own_flash_time) ? 20.0 : 10.0;
 
-	// turn gamma and contrast back if
-	if ((!(cls.realtime - max (last_own_flash_time, last_other_flash_time) < blocktime)) || // flashed for last 10 seconds or 
-	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
-		if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
-			V_TF_FlashSettings (false);
+	{
+		qbool flashed_for_10seconds = (!(cls.realtime - max(last_own_flash_time, last_other_flash_time) < blocktime));
+		qbool death_while_flashed = (cshift_empty.percent == 0 && cbuf_current == &cbuf_svc);
+
+		if (flashed_for_10seconds || death_while_flashed) {
+			// turn gamma and contrast back
+			if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+				V_TF_FlashSettings(false);
+			}
 			flashed = false;
 		}
 	}
 
-	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
-			cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
+	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1]) {
+		cshift_empty.percent *= cl_demoplay_flash.value / 1.0f;
+	}
 }
 // <-- disconnect
 
@@ -708,8 +718,8 @@ void V_TF_ClearGrenadeEffects (void)
 	// Flash effect off
 	if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 		V_TF_FlashSettings (false);
-		flashed = false;
 	}
+	flashed = false;
 
 	cshift_empty.destcolor[0] = 0;
 	cshift_empty.destcolor[1] = 0;
