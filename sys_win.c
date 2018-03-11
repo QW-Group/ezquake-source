@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #include "pcre.h"
 
-
 #define MINIMUM_WIN_MEMORY	0x0c00000
 #define MAXIMUM_WIN_MEMORY	0x8000000
 
@@ -54,6 +53,12 @@ void Sys_PushFPCW_SetHigh (void);
 typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(_In_ DWORD value);
 
 #ifndef WITHOUT_WINKEYHOOK
+
+#ifndef WH_KEYBOARD_LL
+#define WH_KEYBOARD_LL 13
+#endif
+
+unsigned int windows_keys_down, windows_keys_up;
 
 static HHOOK WinKeyHook;
 static qbool WinKeyHook_isActive;
@@ -77,7 +82,7 @@ static void ReleaseKeyHook (void)
 static qbool RegisterKeyHook (void)
 {
 	if (!WinKeyHook_isActive) {
-		WinKeyHook = SetWindowsHookEx (13, LLWinKeyHook, global_hInstance, 0);
+		WinKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, LLWinKeyHook, global_hInstance, 0);
 		WinKeyHook_isActive = (WinKeyHook != NULL);
 	}
 
@@ -98,7 +103,7 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 				return;
 			}
 		}
-	} 
+	}
 	else 
 	{
 		ReleaseKeyHook ();
@@ -107,28 +112,27 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) 
 {
-	PKBDLLHOOKSTRUCT p;
+	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
+	unsigned int* flags = (p->flags & LLKHF_UP) ? &windows_keys_up : &windows_keys_down;
 
-	p = (PKBDLLHOOKSTRUCT) lParam;
-
-	switch(p->vkCode)
+	switch (p->vkCode)
 	{
 		case VK_LWIN:
-			Key_Event (K_LWIN, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_LWINDOWSKEY;
 			return 1;
 		case VK_RWIN:
-			Key_Event (K_RWIN, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_RWINDOWSKEY;
 			return 1;
 		case VK_APPS:
-			Key_Event (K_MENU, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_MENU;
 			return 1;
 		case VK_SNAPSHOT:
-			Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_PRINTSCREEN;
 			return 1;
 		case VK_CAPITAL:
 			if (key_dest != key_console && key_dest != key_message) {
 				// Don't toggle capslock when in game
-				Key_Event (K_CAPSLOCK, !(p->flags & LLKHF_UP));
+				*flags |= WINDOWS_CAPSLOCK;
 				return 1;
 			}
 			break;

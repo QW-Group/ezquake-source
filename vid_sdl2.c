@@ -642,9 +642,37 @@ static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 	}
 }
 
+#if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
+static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
+{
+	if (flags & WINDOWS_LWINDOWSKEY) {
+		Key_Event(K_LWIN, down);
+	}
+	if (flags & WINDOWS_RWINDOWSKEY) {
+		Key_Event(K_RWIN, down);
+	}
+	if (flags & WINDOWS_MENU) {
+		Key_Event(K_MENU, down);
+	}
+	if (flags & WINDOWS_PRINTSCREEN) {
+		Key_Event(K_PRINTSCR, down);
+	}
+	if (flags & WINDOWS_CAPSLOCK) {
+		Key_Event(K_CAPSLOCK, down);
+	}
+}
+#endif
+
 static void HandleEvents(void)
 {
 	SDL_Event event;
+
+#if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
+	HandleWindowsKeyboardEvents(windows_keys_down, true);
+	HandleWindowsKeyboardEvents(windows_keys_up, false);
+
+	windows_keys_down = windows_keys_up = 0;
+#endif
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
