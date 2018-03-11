@@ -1856,8 +1856,10 @@ void CL_InitLocal (void)
 #ifdef WITH_OPENGL_TRACE
 	if (COM_CheckParm("-dev")) {
 		extern void Dev_VidFrameTrace(void);
+		extern void GL_DevCopyLightmaps(void);
 
 		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);
+		Cmd_AddCommand("dev_lightingcopy", GL_DevCopyLightmaps);
 	}
 #endif
 }

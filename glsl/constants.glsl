@@ -2,6 +2,10 @@
 // This file included in all .glsl files (inserted at #ezquake-definitions point)
 //   and also .c source files.  For compile-time constants only
 
+#ifndef MAX_LIGHTSTYLES
+#define MAX_LIGHTSTYLES         64
+#endif
+
 // Alias-model flags
 #define AMF_SHELLMODEL_RED      1
 #define AMF_SHELLMODEL_BLUE     2
@@ -35,6 +39,7 @@
 #define EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA 2
 #define EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA 3
 #define EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS 4
+#define EZQ_GL_BINDINGPOINT_LIGHTSTYLES         5
 
 // UBO bindings
 #define EZQ_GL_BINDINGPOINT_FRAMECONSTANTS      0
@@ -43,3 +48,6 @@
 #define EZQ_ALIAS_MODE_NORMAL   0
 #define EZQ_ALIAS_MODE_SHELLS   1
 #define EZQ_ALIAS_MODE_OUTLINES 2
+
+// 8x8 block
+#define HW_LIGHTING_BLOCK_SIZE 4

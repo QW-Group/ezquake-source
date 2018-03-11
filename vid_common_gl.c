@@ -156,9 +156,16 @@ void APIENTRY MessageCallback( GLenum source,
 	if (source != GL_DEBUG_SOURCE_APPLICATION) {
 		char buffer[1024] = { 0 };
 
-		snprintf(buffer, sizeof(buffer) - 1,
-				 "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-				 (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+		if (type == GL_DEBUG_TYPE_ERROR) {
+			snprintf(buffer, sizeof(buffer) - 1,
+					 "GL CALLBACK: ** GL ERROR ** type = 0x%x, severity = 0x%x, message = %s\n",
+					 type, severity, message);
+		}
+		else {
+			snprintf(buffer, sizeof(buffer) - 1,
+					 "GL CALLBACK: type = 0x%x, severity = 0x%x, message = %s\n",
+					 type, severity, message);
+		}
 
 		OutputDebugString(buffer);
 	}
@@ -199,8 +206,13 @@ glGetUniformBlockIndex_t    glGetUniformBlockIndex;
 glUniformBlockBinding_t     glUniformBlockBinding;
 glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
-// Texture functions 
-glActiveTexture_t        glActiveTexture;
+// Compute shaders
+glBindImageTexture_t     glBindImageTexture; 
+glDispatchCompute_t      glDispatchCompute;
+glMemoryBarrier_t        glMemoryBarrier;
+
+// Texture functions
+glActiveTexture_t               glActiveTexture;
 static glTexStorage2D_t         glTexStorage2D;
 static glTexSubImage3D_t        glTexSubImage3D;
 static glTexStorage3D_t         glTexStorage3D;
@@ -319,6 +331,10 @@ static void CheckShaderExtensions(void)
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
 			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
+
+			OPENGL_LOAD_SHADER_FUNCTION(glBindImageTexture);
+			OPENGL_LOAD_SHADER_FUNCTION(glDispatchCompute);
+			OPENGL_LOAD_SHADER_FUNCTION(glMemoryBarrier);
 
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
 			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);

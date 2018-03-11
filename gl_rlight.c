@@ -27,7 +27,7 @@ int	r_dlightframecount;
 
 
 void R_AnimateLight (void) {
-	int i,j,l1,l2;
+	int i, j, l1, l2, i1, i2;
 	float lerpfrac;
 
 	// light animations : 'm' is normal light, 'a' is no light, 'z' is double bright
@@ -39,16 +39,18 @@ void R_AnimateLight (void) {
 			continue;
 		}
 
-		l1 = i % cl_lightstyle[j].length;
+		i1 = l1 = i % cl_lightstyle[j].length;
 		l1 = (cl_lightstyle[j].map[l1] - 'a') * 22;
-		l2 = (i + 1) % cl_lightstyle[j].length;
+		i2 = l2 = (i + 1) % cl_lightstyle[j].length;
 		l2 = (cl_lightstyle[j].map[l2] - 'a') * 22;
 
-		if (l1 - l2 > 220 || l2 - l1 > 220)
+		if (l1 - l2 > 220 || l2 - l1 > 220) {
 			d_lightstylevalue[j] = l2;
-		else
+		}
+		else {
 			d_lightstylevalue[j] = l1 + (l2 - l1) * lerpfrac;
-	}	
+		}
+	}
 }
 
 

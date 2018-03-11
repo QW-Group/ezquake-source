@@ -1149,7 +1149,7 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	GL_ProcessErrors("Prior-texture-array-creation");
 #endif
 	while (*depth >= minimum_depth) {
-		GLenum error;
+		GLenum error = glGetError();
 
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
 		GL_TexStorage3D(GL_TEXTURE0, slot->reference, max_miplevels, GL_RGBA8, width, height, *depth);

@@ -494,6 +494,9 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 				depth = same_size;
 				array_ref = GL_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
+				if (!GL_TextureReferenceIsValid(array_ref)) {
+					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
+				}
 
 				// Copy the 2D textures across
 				for (k = i; k < j; ++k) {

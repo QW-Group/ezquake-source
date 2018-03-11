@@ -83,37 +83,37 @@ void GLM_PreRenderView(void)
 	// Lights
 	for (i = 0; i < MAX_DLIGHTS; ++i) {
 		if (cl_dlight_active[i / 32] & (1 << (i % 32))) {
-			dlight_t* light = &cl_dlights[i];
 			extern cvar_t gl_colorlights;
+
+			dlight_t* light = &cl_dlights[i];
+			float* lightColor = frameConstants.lightColor[active_lights];
+			float* lightPosition = frameConstants.lightPosition[active_lights];
 			
-			// TODO: if PlaneDist(forward, light) > radius, skip
-			VectorCopy(light->origin, frameConstants.lightPosition[active_lights]);
-			frameConstants.lightPosition[active_lights][3] = light->radius;
-			if (gl_colorlights.value) {
+			VectorCopy(light->origin, lightPosition);
+			lightPosition[3] = light->radius;
+			if (gl_colorlights.integer) {
 				if (light->type == lt_custom) {
-					frameConstants.lightColor[active_lights][0] = light->color[0] / 255.0;
-					frameConstants.lightColor[active_lights][1] = light->color[1] / 255.0;
-					frameConstants.lightColor[active_lights][2] = light->color[2] / 255.0;
+					lightColor[0] = light->color[0] / 255.0;
+					lightColor[1] = light->color[1] / 255.0;
+					lightColor[2] = light->color[2] / 255.0;
 				}
 				else {
 					extern float bubblecolor[NUM_DLIGHTTYPES][4];
 
-					frameConstants.lightColor[active_lights][0] = bubblecolor[light->type][0];
-					frameConstants.lightColor[active_lights][1] = bubblecolor[light->type][1];
-					frameConstants.lightColor[active_lights][2] = bubblecolor[light->type][2];
+					lightColor[0] = bubblecolor[light->type][0];
+					lightColor[1] = bubblecolor[light->type][1];
+					lightColor[2] = bubblecolor[light->type][2];
 				}
 			}
 			else {
-				frameConstants.lightColor[active_lights][0] = 0.5;
-				frameConstants.lightColor[active_lights][1] = 0.5;
-				frameConstants.lightColor[active_lights][2] = 0.5;
+				lightColor[0] = lightColor[1] = lightColor[2] = 0.5;
 			}
-			frameConstants.lightColor[active_lights][3] = light->minlight;
+			lightColor[3] = light->minlight;
 			++active_lights;
 		}
 	}
 	frameConstants.lightsActive = active_lights;
-	frameConstants.lightScale = ((lightmode == 2 ? 384 : 512) * bound(0.5, gl_modulate.value, 3)) / (65536);
+	frameConstants.lightScale = ((lightmode == 2 ? 1.5 : 2) * bound(0.5, gl_modulate.value, 3));
 
 	// Draw-world constants
 	frameConstants.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;

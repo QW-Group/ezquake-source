@@ -666,4 +666,3 @@ uintptr_t GL_BufferOffset(buffer_ref ref)
 {
 	return buffers[ref.index].persistent_mapped_ptr ? buffers[ref.index].size * glConfig.tripleBufferIndex : 0;
 }
-

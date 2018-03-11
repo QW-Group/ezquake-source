@@ -413,3 +413,41 @@ void GLM_ForceRecompile(void)
 		strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
 	}
 }
+
+qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)
+{
+	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
+	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
+	int components;
+	GLuint shader;
+
+	components = GLM_InsertDefinitions(shader_text, shader_text_length, "");
+	if (GLM_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
+		GLuint shader_program = glCreateProgram();
+		if (shader_program) {
+			GLint result;
+
+			glAttachShader(shader_program, shader);
+			glLinkProgram(shader_program);
+			glGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+
+			if (result) {
+				Con_DPrintf("ShaderProgram.Link() was successful\n");
+				program->compute_shader = shader;
+				program->program = shader_program;
+				program->uniforms_found = false;
+				program->force_recompile = false;
+
+				if (glObjectLabel) {
+					glObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
+				}
+				return true;
+			}
+			else {
+				Con_Printf("ShaderProgram.Link() failed\n");
+				GLM_ConPrintProgramLog(shader_program);
+			}
+		}
+	}
+	return false;
+}

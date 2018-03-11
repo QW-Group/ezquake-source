@@ -68,7 +68,7 @@ float     clearColor[3] = {0, 0, 0};
 int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
 int       lightmode = 2;
-int       d_lightstylevalue[256];             // 8.8 fraction of base light value
+unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light value
 texture_ref shelltexture;
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;

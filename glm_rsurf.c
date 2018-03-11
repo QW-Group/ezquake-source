@@ -112,7 +112,6 @@ static void Compile_DrawWorldProgram(void)
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
 		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
-		(r_dynamic.integer == 2 ? DRAW_HARDWARE_LIGHTING : 0) |
 		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
@@ -164,9 +163,6 @@ static void Compile_DrawWorldProgram(void)
 		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
-		if (r_dynamic.integer == 2) {
-			strlcat(included_definitions, "#define HARDWARE_LIGHTING\n", sizeof(included_definitions));
-		}
 		if (r_drawflat.integer == 1 || r_drawflat.integer == 2) {
 			strlcat(included_definitions, "#define DRAW_FLATFLOORS\n", sizeof(included_definitions));
 		}

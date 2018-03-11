@@ -62,31 +62,32 @@ vec3 DynamicLighting(in vec3 lightmapBase)
 		float rad = lightPositions[i].a - abs(light_distance);
 		float minlight = lightColors[i].a;
 
-		if (rad < minlight) {
-			continue;
-		}
+		if (rad >= minlight) {
+			minlight = rad - minlight;
 
-		minlight = rad - minlight;
+			// impact point on this surface
+			vec3 impact = lightPositions[i].xyz - Plane.xyz * light_distance;
 
-		// impact point on this surface
-		vec3 impact = lightPositions[i].xyz - Plane.xyz * light_distance; 
+			// effect is based on distance along surface from the impact point, not from the light itself...
+			vec2 local = vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact));
 
-		// effect is based on distance from the impact point, not from the light itself...
-		vec2 offset = abs(LightingPoint - vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact)));
+			// 
+			vec2 light_offset = abs(LightingPoint - local);
+			float dist = length(light_offset); //max(offset.x, offset.y) + min(offset.x, offset.y) * 0.5;
 
-		float dist = max(offset.x, offset.y) + min(offset.x, offset.y) * 0.5;
-		if (dist < minlight) {
-			float effect = (rad - dist);
+			if (dist < minlight) {
+				float effect = rad - dist;
 
-			result.r += effect * lightColors[i].r;
-			result.g += effect * lightColors[i].g;
-			result.b += effect * lightColors[i].b;
+				result.r += effect * lightColors[i].r;
+				result.g += effect * lightColors[i].g;
+				result.b += effect * lightColors[i].b;
+			}
 		}
 	}
 
 	result *= lightScale;
-
 	result += lightmapBase;
+
 	top = (max(max(result.r, result.g), result.b));
 	if (top > 1.5) {
 		result *= 1.5 / top;
@@ -212,11 +213,11 @@ void main()
 		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
 #if defined(DRAW_LIGHTMAPS)
-		frag_colour = vec4(1 - lmColor.rgb, 1);
+		frag_colour = vec4(lmColor.rgb, 1);
 #elif defined(HARDWARE_LIGHTING)
-		frag_colour = vec4(DynamicLighting(1 - lmColor.rgb), 1) * texColor;
+		frag_colour = vec4(DynamicLighting(lmColor.rgb), 1) * texColor;
 #else
-		frag_colour = vec4(1 - lmColor.rgb, 1) * texColor;
+		frag_colour = vec4(lmColor.rgb, 1) * texColor;
 #endif
 #if defined(DRAW_LUMA_TEXTURES_FB)
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);

@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
+#include "glsl/constants.glsl"
+
+static qbool full_lighting = true;
 
 #define	BLOCK_WIDTH  128
 #define	BLOCK_HEIGHT 128
@@ -47,6 +50,8 @@ static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct lightmap_data_s {
 	byte rawdata[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
+	int computeData[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
+	unsigned int sourcedata[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
 	int allocated[LIGHTMAP_WIDTH];
 
 	texture_ref gl_texref;
@@ -59,6 +64,8 @@ static lightmap_data_t* lightmaps;
 static unsigned int last_lightmap_updated;
 static unsigned int lightmap_array_size;
 static texture_ref lightmap_texture_array;
+static texture_ref lightmap_data_array;
+static texture_ref lightmap_source_array;
 static unsigned int lightmap_depth;
 
 static qbool gl_invlightmaps = true;
@@ -211,7 +218,6 @@ static void R_AddDynamicLights(msurface_t *surf)
 						}
 					}
 					else if (_sd < 0) {
-						dest += 3 * (smax - s);
 						s = smax;
 					}
 				}
@@ -339,10 +345,9 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 
 	++frameStats.classic.brush_polys;
 
-	if (r_dynamic.integer == 0 && !fa->cached_dlight) {
+	if (r_dynamic.integer != 1 && !fa->cached_dlight) {
 		return;
 	}
-
 	if (fa->lightmaptexturenum < 0) {
 		return;
 	}
@@ -439,7 +444,14 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface)
 
 void R_UploadChangedLightmaps(void)
 {
-	if (frameStats.lightmap_min_changed < lightmap_array_size) {
+	if (r_dynamic.integer == 2) {
+		extern void GL_DevCopyLightmaps(void);
+
+		GL_EnterRegion(__FUNCTION__);
+		GL_DevCopyLightmaps();
+		GL_LeaveRegion();
+	}
+	else if (frameStats.lightmap_min_changed < lightmap_array_size) {
 		unsigned int i;
 
 		GL_EnterRegion(__FUNCTION__);
@@ -607,7 +619,51 @@ void BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 	return;
 }
 
-static void GL_CreateSurfaceLightmap(msurface_t *surf)
+static void R_BuildLightmapData(msurface_t* surf, int surfnum)
+{
+	lightmap_data_t* lm = &lightmaps[surf->lightmaptexturenum];
+	qbool fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
+	byte* lightmap = surf->samples;
+	unsigned int smax = (surf->extents[0] >> 4) + 1;
+	unsigned int tmax = (surf->extents[1] >> 4) + 1;
+	unsigned int lightmap_flags;
+	int s, t, maps;
+
+	lightmap_flags = 0xFFFFFFFF;
+	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+		lightmap_flags &= ~(0xFF << (8 * maps));
+		lightmap_flags |= surf->styles[maps] << (8 * maps);
+	}
+
+	for (t = 0; t < tmax; ++t) {
+		size_t offset = ((surf->light_t + t) * LIGHTMAP_WIDTH + surf->light_s) * 4;
+		int* data = &lm->computeData[offset];
+		unsigned int* source = &lm->sourcedata[offset];
+
+		for (s = 0; s < smax; ++s, data += 4, source += 4) {
+
+			data[0] = surfnum;
+			data[1] = (s * 16 + surf->texturemins[0] - surf->texinfo->vecs[0][3]);
+			data[2] = (t * 16 + surf->texturemins[1] - surf->texinfo->vecs[1][3]);
+			data[3] = 0;
+
+			source[0] = source[1] = source[2] = (fullbright ? 0xFFFFFFFF : 0);
+			source[3] = lightmap_flags;
+
+			if (lightmap && !fullbright) {
+				for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+					size_t lightmap_index = (maps * smax * tmax + t * smax + s) * 3;
+
+					source[0] |= ((unsigned int)lightmap[lightmap_index + 0]) << (8 * maps);
+					source[1] |= ((unsigned int)lightmap[lightmap_index + 1]) << (8 * maps);
+					source[2] |= ((unsigned int)lightmap[lightmap_index + 2]) << (8 * maps);
+				}
+			}
+		}
+	}
+}
+
+static void GL_CreateSurfaceLightmap(msurface_t *surf, int surfnum)
 {
 	int smax, tmax;
 	byte *base;
@@ -626,8 +682,10 @@ static void GL_CreateSurfaceLightmap(msurface_t *surf)
 	}
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
+
 	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
+	R_BuildLightmapData(surf, surfnum);
 	R_BuildLightMap(surf, base, BLOCK_WIDTH * 4);
 }
 
@@ -649,7 +707,7 @@ void GL_BuildLightmaps(void)
 	}
 	last_lightmap_updated = 0;
 
-	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
+	gl_invlightmaps = !(GL_ShadersSupported() || COM_CheckParm("-noinvlmaps"));
 
 	r_framecount = 1;		// no dlightcache
 	for (j = 1; j < MAX_MODELS; j++) {
@@ -667,7 +725,7 @@ void GL_BuildLightmaps(void)
 				continue;
 			}
 
-			GL_CreateSurfaceLightmap(m->surfaces + i);
+			GL_CreateSurfaceLightmap(m->surfaces + i, i);
 			BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}
@@ -694,6 +752,27 @@ void GL_BuildLightmaps(void)
 				GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
 				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 				lightmaps[i].rawdata
+			);
+
+			if (full_lighting) {
+				GL_TexSubImage3D(
+					GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
+					LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
+					lightmaps[i].sourcedata
+				);
+			}
+			else {
+				GL_TexSubImage3D(
+					GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
+					LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+					lightmaps[i].rawdata
+				);
+			}
+
+			GL_TexSubImage3D(
+				GL_TEXTURE0, lightmap_data_array, 0, 0, 0, i,
+				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_INT,
+				lightmaps[i].computeData
 			);
 		}
 		else {
@@ -815,6 +894,14 @@ void GLM_CreateLightmapTextures(void)
 		GL_DeleteTextureArray(&lightmap_texture_array);
 	}
 
+	if (GL_TextureReferenceIsValid(lightmap_data_array)) {
+		GL_DeleteTextureArray(&lightmap_data_array);
+	}
+
+	if (GL_TextureReferenceIsValid(lightmap_source_array)) {
+		GL_DeleteTextureArray(&lightmap_source_array);
+	}
+
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -822,10 +909,85 @@ void GLM_CreateLightmapTextures(void)
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	lightmap_depth = lightmap_array_size;
-
 	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
+	if (glObjectLabel) {
+		extern GLuint GL_TextureNameFromReference(texture_ref ref);
+
+		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_texture_array), -1, "lightmap_texture_array");
+	}
+
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array);
+	if (full_lighting) {
+		GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	}
+	else {
+		GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	}
+	if (glObjectLabel) {
+		extern GLuint GL_TextureNameFromReference(texture_ref ref);
+
+		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_source_array), -1, "lightmap_source_array");
+	}
+
+	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array);
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	if (glObjectLabel) {
+		extern GLuint GL_TextureNameFromReference(texture_ref ref);
+
+		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_data_array), -1, "lightmap_data_array");
+	}
+}
+
+// Run compute shader to copy lightmap data over to new array
+void GL_DevCopyLightmaps(void)
+{
+	extern GLuint GL_TextureNameFromReference(texture_ref ref);
+	static glm_program_t lightmap_program;
+	static buffer_ref ssbo_lightingData;
+
+	if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
+		extern qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader, GLint length);
+
+		if (full_lighting) {
+			extern unsigned char glsl_lighting_compute_glsl[];
+			extern unsigned int glsl_lighting_compute_glsl_len;
+
+			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
+				return;
+			}
+		}
+		else {
+			extern unsigned char glsl_lighting_copy_compute_glsl[];
+			extern unsigned int glsl_lighting_copy_compute_glsl_len;
+
+			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_copy_compute_glsl, glsl_lighting_copy_compute_glsl_len)) {
+				return;
+			}
+		}
+	}
+
+	if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
+		ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, write_once_use_once);
+	}
+	else {
+		GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+	}
+	GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
+
+	if (full_lighting) {
+		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+	}
+	else {
+		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA8);
+	}
+	glBindImageTexture(1, GL_TextureNameFromReference(lightmap_texture_array), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(2, GL_TextureNameFromReference(lightmap_data_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
+
+	GL_UseProgram(lightmap_program.program);
+	glDispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
 texture_ref GLM_LightmapArray(void)

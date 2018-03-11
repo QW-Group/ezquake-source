@@ -155,7 +155,7 @@ extern	refdef_t	r_refdef;
 extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
 extern	mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 extern	texture_t	*r_notexture_mip;
-extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
+extern	unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 #define MAX_SKYBOXTEXTURES 6
 extern	texture_ref netgraphtexture;
@@ -435,6 +435,13 @@ typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum 
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 
+// Images
+typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+
+// Compute shaders
+typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
+
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
@@ -478,6 +485,13 @@ extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 extern glActiveTexture_t        glActiveTexture;
 extern glBindTextures_t         glBindTextures;
 
+// Images
+extern glBindImageTexture_t     glBindImageTexture;
+
+// Compute shaders
+extern glDispatchCompute_t      glDispatchCompute;
+extern glMemoryBarrier_t        glMemoryBarrier;
+
 // Debug functions
 extern glObjectLabel_t glObjectLabel;
 extern glGetObjectLabel_t glGetObjectLabel;
@@ -513,6 +527,7 @@ typedef struct glm_program_s {
 	GLuint vertex_shader;
 	GLuint geometry_shader;
 	GLuint fragment_shader;
+	GLuint compute_shader;
 	GLuint program;
 
 	struct glm_program_s* next;
@@ -889,6 +904,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
+// FIXME: Get rid
 #define GLM_Enabled GL_ShadersSupported
 
 // Reference cvars for 3D views...
