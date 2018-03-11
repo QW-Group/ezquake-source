@@ -290,9 +290,8 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 		glDeleteBuffers(1, &buffers[vbo.index].glref);
 
 		buffers[vbo.index].next_free = next_free_buffer;
-		next_free_buffer = &buffers[vbo.index];
 
-		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, buffers[vbo.index].size, data, write_once_use_once);
+		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, write_once_use_once);
 	}
 	else {
 		if (glNamedBufferData) {

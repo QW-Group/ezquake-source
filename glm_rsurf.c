@@ -241,9 +241,6 @@ void GLM_EnterBatchedWorldRegion(void)
 	index_count = 0;
 	GLM_CheckDrawCallSize();
 	memset(drawcalls, 0, sizeof(drawcalls[0]) * maximum_drawcalls);
-
-	index_count = 0;
-	current_drawcall = 0;
 }
 
 static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
