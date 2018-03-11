@@ -1375,10 +1375,11 @@ void R_LoadBrushModelTextures(model_t *m)
 
 		mipTexLevel  = noscale_flag ? 0 : gl_miptexLevel.value;
 
-		texmode      = TEX_MIPMAP | noscale_flag;
+		texmode = TEX_MIPMAP | noscale_flag;
 		brighten_flag = (!Mod_IsTurbTextureName(m, tx->name) && (lightmode == 2)) ? TEX_BRIGHTEN : 0;
+		alpha_flag = Mod_IsAlphaTextureName(m, tx->name) ? TEX_ALPHA : 0;
 
-		if (Mod_LoadExternalTexture(m, tx, texmode, brighten_flag)) {
+		if (Mod_LoadExternalTexture(m, tx, texmode | alpha_flag, brighten_flag)) {
 			tx->loaded = true; // mark as loaded
 			continue;
 		}
@@ -1386,7 +1387,6 @@ void R_LoadBrushModelTextures(model_t *m)
 		if (m->bspversion == HL_BSPVERSION) {
 			if ((data = WAD3_LoadTexture(tx))) {
 				fs_netpath[0] = 0;
-				alpha_flag = Mod_IsAlphaTextureName(m, tx->name) ? TEX_ALPHA : 0;
 				tx->gl_texturenum = GL_LoadTexturePixels (data, tx->name, tx->width, tx->height, texmode | alpha_flag);
 				Q_free(data);
 				tx->loaded = true; // mark as loaded
@@ -1409,9 +1409,9 @@ void R_LoadBrushModelTextures(model_t *m)
 			data     = (byte *) r_notexture_mip + r_notexture_mip->offsets[mipTexLevel];
 		}
 
-		tx->gl_texturenum = GL_LoadTexture(texname, width, height, data, texmode | brighten_flag, 1);
+		tx->gl_texturenum = GL_LoadTexture(texname, width, height, data, texmode | brighten_flag | alpha_flag, 1);
 		if (!Mod_IsTurbTextureName(m, tx->name) && Img_HasFullbrights(data, width * height)) {
-			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT, 1);
+			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT | alpha_flag, 1);
 		}
 		tx->loaded = true; // mark as loaded
 	}
@@ -1518,7 +1518,7 @@ void R_DrawBrushModel(entity_t *e)
 					}
 					EmitWaterPolys(psurf);
 				}
-				else if (!GL_ShadersSupported() && psurf->flags & SURF_DRAWALPHA) {
+				else if (psurf->flags & SURF_DRAWALPHA) {
 					CHAIN_SURF_B2F(psurf, alphachain);
 				}
 				else {

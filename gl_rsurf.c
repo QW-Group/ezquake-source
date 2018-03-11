@@ -327,7 +327,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				GL_EmitSurfaceParticleEffects(surf);
 			}
-			else if (!GL_ShadersSupported() && (surf->flags & SURF_DRAWALPHA)) {
+			else if (surf->flags & SURF_DRAWALPHA) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {

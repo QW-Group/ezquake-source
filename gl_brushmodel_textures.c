@@ -135,5 +135,5 @@ qbool Mod_IsSkyTextureName(model_t* model, const char* name)
 
 qbool Mod_IsAlphaTextureName(model_t* model, const char* name)
 {
-	return (model->bspversion == HL_BSPVERSION && name[0] == '{');
+	return (name[0] == '{');
 }
