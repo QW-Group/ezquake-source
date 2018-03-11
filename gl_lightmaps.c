@@ -40,6 +40,7 @@ typedef struct dlightinfo_s {
 	int rad;
 	int minlight;	// rad - minlight
 	int lnum; // reference to cl_dlights[]
+	int color[3];
 } dlightinfo_t;
 
 static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
@@ -145,6 +146,8 @@ static void R_BuildDlightList (msurface_t *surf)
 			distmin = (tdmin << 8) + (sdmin << 7);
 
 		if (distmin < iminlight) {
+			extern cvar_t gl_colorlights;
+
 			// save dlight info
 			light = &dlightlist[numdlights];
 			light->minlight = iminlight >> 7;
@@ -152,6 +155,18 @@ static void R_BuildDlightList (msurface_t *surf)
 			light->local[0] = local[0];
 			light->local[1] = local[1];
 			light->lnum = lnum;
+
+			if (gl_colorlights.integer) {
+				if (cl_dlights[light->lnum].type == lt_custom) {
+					VectorCopy(cl_dlights[light->lnum].color, light->color);
+				}
+				else {
+					VectorCopy(dlightcolor[cl_dlights[light->lnum].type], light->color);
+				}
+			}
+			else {
+				VectorSet(light->color, 128, 128, 128);
+			}
 			numdlights++;
 		}
 	}
@@ -160,7 +175,7 @@ static void R_BuildDlightList (msurface_t *surf)
 //R_BuildDlightList must be called first!
 static void R_AddDynamicLights(msurface_t *surf)
 {
-	int i, smax, tmax, s, t, sd, td, _sd, _td, irad, idist, iminlight, color[3], tmp;
+	int i, smax, tmax, s, t, sd, td, _sd, _td, irad, idist, iminlight, tmp;
 	dlightinfo_t *light;
 	unsigned *dest;
 
@@ -168,20 +183,6 @@ static void R_AddDynamicLights(msurface_t *surf)
 	tmax = (surf->extents[1] >> 4) + 1;
 
 	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
-		extern cvar_t gl_colorlights;
-
-		if (gl_colorlights.value) {
-			if (cl_dlights[light->lnum].type == lt_custom) {
-				VectorCopy(cl_dlights[light->lnum].color, color);
-			}
-			else {
-				VectorCopy(dlightcolor[cl_dlights[light->lnum].type], color);
-			}
-		}
-		else {
-			VectorSet(color, 128, 128, 128);
-		}
-
 		irad = light->rad;
 		iminlight = light->minlight;
 
@@ -193,7 +194,7 @@ static void R_AddDynamicLights(msurface_t *surf)
 				for (s = 0, _sd = light->local[0]; s < smax; s++, _sd -= 16, dest += 3) {
 					sd = _sd < 0 ? -_sd : _sd;
 
-					if (sd + td < irad) {
+					if (sd + td < iminlight) {
 						idist = sd + td;
 						if (sd > td) {
 							idist += sd;
@@ -204,9 +205,9 @@ static void R_AddDynamicLights(msurface_t *surf)
 
 						if (idist < iminlight) {
 							tmp = irad - idist;
-							dest[0] += tmp * color[0];
-							dest[1] += tmp * color[1];
-							dest[2] += tmp * color[2];
+							dest[0] += tmp * light->color[0];
+							dest[1] += tmp * light->color[1];
+							dest[2] += tmp * light->color[2];
 						}
 					}
 					else if (_sd < 0) {
@@ -273,9 +274,10 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	// bound, invert, and shift
 	bl = blocklights;
 	stride -= smax * 4;
+
+	scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
+	scale *= bound(0.5, gl_modulate.value, 3);
 	for (i = 0; i < tmax; i++, dest += stride) {
-		scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
-		scale *= bound(0.5, gl_modulate.value, 3);
 		for (j = smax; j; j--) {
 			unsigned r, g, b, m;
 			r = bl[0] * scale;
