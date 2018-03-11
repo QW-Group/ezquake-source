@@ -210,6 +210,7 @@ qbool VM_LoadNative( vm_t * vm )
 	char   *gpath = NULL;
 	void    ( *dllEntry ) ( void * );
 
+	memset(name, 0, sizeof(name));
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
 		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);

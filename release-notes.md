@@ -26,22 +26,29 @@
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 
+### Ruleset-related changes
+
+- `/gl_outline` now allowed in ruleset `thunderdome` (requested by VVD)
+- `/vid_hwgammacontrol` is now forced on when using ruleset `mtfl` (3.0 bug that this was removed)
+- `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
+- `/enemyforceskins` cannot be changed during match (old)
+
 ### Other changes
 
-- ruleset `thunderdome` now allows `/gl_outline` (requested by VVD)
+- `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
+- `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
-- `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
-- `/enemyforceskins` fixed during match (old)
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
 - `/timedemo2` command renders demo in stop-motion at a particular fps
+- `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
 - `/enemyforceskins 1` will search for player names in lower case (#345)
-- Gamma-shifting is forced on when using MTFL
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - GLSL gamma now supported in classic renderer
+- ezQuake will re-calculate normals on shared vertices as model is loaded (bug in models with normals set per-surface)
 
 ### Build/meta
 

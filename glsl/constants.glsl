@@ -17,6 +17,7 @@
 #define AMF_SHELLFLAGS        (AMF_SHELLMODEL_RED | AMF_SHELLMODEL_BLUE | AMF_SHELLMODEL_GREEN)
 
 #define AM_VERTEX_NOLERP        1 // the alias model vertex should not be lerped, and always use lerpfraction 1 (meag: update shader if value no longer 1)
+#define AM_VERTEX_NORMALFIXED   2 // set after the alias model pose has been checked for matching vertices with different normals
 
 // Brush-model flags
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*

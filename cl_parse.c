@@ -1425,8 +1425,19 @@ void CL_ParseServerData (void)
 
 #ifdef PROTOCOL_VERSION_MVD1
 		if (protover == PROTOCOL_VERSION_MVD1) {
+			extern cvar_t cl_pext_serversideweapon;
+			extern cvar_t cl_pext_lagteleport;
+
 			cls.mvdprotocolextensions1 = MSG_ReadLong();
 			Com_DPrintf("Using MVDSV extensions 0x%x\n", cls.mvdprotocolextensions1);
+			if (!cls.demoplayback) {
+				if (cl_pext_serversideweapon.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
+					Con_Printf("&cf00Warning&r: weapon scripts will be executed client-side\n");
+				}
+				if (cl_pext_lagteleport.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
+					Con_Printf("&cf00Warning&r: high-lag teleport fix not available\n");
+				}
+			}
 			continue;
 		}
 #endif

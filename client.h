@@ -32,6 +32,8 @@ $Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 #define __attribute__(A) /**/
 #endif
 
+#define MAXWEAPONS 10
+
 #define MAX_STATIC_SOUNDS 256
 typedef struct
 {
@@ -647,6 +649,10 @@ typedef struct {
 	// r_viewmodellastfired
 	int         lastfired;
 	int         lastviewplayernum;
+
+	// Weapon preferences
+	int         weapon_order[MAXWEAPONS];
+	int         weapon_order_sequence_set;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

@@ -1494,7 +1494,7 @@ guess_pm_type:
 			if (flags & PF_MSEC)
 				MSG_WriteByte(&cls.demomessage, msec);
 			if (flags & PF_COMMAND)
-				MSG_WriteDeltaUsercmd(&cls.demomessage, &nullcmd, &state->command);
+				MSG_WriteDeltaUsercmd(&cls.demomessage, &nullcmd, &state->command, 0);
 			for (i = 0; i < 3; i++)
 				if (flags & (PF_VELOCITY1 << i) )
 					MSG_WriteShort(&cls.demomessage, state->velocity[i]);

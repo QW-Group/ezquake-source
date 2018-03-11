@@ -707,7 +707,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 				cmd.impulse = EdictFieldFloat (ent, fofs_vw_index);
 			}
 
-			MSG_WriteDeltaUsercmd (msg, &nullcmd, &cmd);
+			MSG_WriteDeltaUsercmd (msg, &nullcmd, &cmd, 0);
 		}
 
 		for (i=0 ; i<3 ; i++)

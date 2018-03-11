@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "glsl/constants.glsl"
 
 void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_buffer, int v1, int v2, qbool limit_lerp, int key_pose);
+void GL_AliasModelFixNormals(vbo_model_vert_t* vbo_buffer, int v, int vertsPerPose);
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
 {
@@ -52,6 +53,8 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 
 	// foreach frame
 	for (framenum = 0, v = 0; framenum < pheader->numFrames; ++framenum) {
+		int initial_v = v;
+
 		// loop through the surfaces.
 		MD3_ForEachSurface(pheader, surf, surfnum) {
 			int i, triangle;
@@ -88,5 +91,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 				}
 			}
 		}
+
+		GL_AliasModelFixNormals(vbo, initial_v, v - initial_v);
 	}
 }

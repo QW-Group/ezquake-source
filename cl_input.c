@@ -27,26 +27,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
-cvar_t cl_anglespeedkey     = {"cl_anglespeedkey","1.5"};
-cvar_t cl_backspeed         = {"cl_backspeed","400"};
-cvar_t cl_c2spps            = {"cl_c2spps","0"};
-cvar_t cl_c2sImpulseBackup  = {"cl_c2sImpulseBackup","3"};
-cvar_t cl_forwardspeed      = {"cl_forwardspeed","400"};
-cvar_t cl_smartjump         = {"cl_smartjump", "1"};
-cvar_t cl_iDrive            = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
-cvar_t cl_movespeedkey      = {"cl_movespeedkey","2.0"};
-cvar_t cl_nodelta           = {"cl_nodelta","0"};
-cvar_t cl_pitchspeed        = {"cl_pitchspeed","150"};
-cvar_t cl_upspeed           = {"cl_upspeed","400"};
-cvar_t cl_sidespeed         = {"cl_sidespeed","400"};
-cvar_t cl_yawspeed          = {"cl_yawspeed","140"};
-cvar_t cl_weaponhide        = {"cl_weaponhide", "0"};
-cvar_t cl_weaponpreselect   = {"cl_weaponpreselect", "0"};
-cvar_t cl_weaponforgetorder = {"cl_weaponforgetorder", "0"};
-cvar_t cl_weaponhide_axe    = {"cl_weaponhide_axe", "0"};
-cvar_t freelook             = {"freelook","1"};
-cvar_t lookspring           = {"lookspring","0"};
-cvar_t lookstrafe           = {"lookstrafe","0"};
+cvar_t cl_anglespeedkey       = {"cl_anglespeedkey","1.5"};
+cvar_t cl_backspeed           = {"cl_backspeed","400"};
+cvar_t cl_c2spps              = {"cl_c2spps","0"};
+cvar_t cl_c2sImpulseBackup    = {"cl_c2sImpulseBackup","3"};
+cvar_t cl_forwardspeed        = {"cl_forwardspeed","400"};
+cvar_t cl_smartjump           = {"cl_smartjump", "1"};
+cvar_t cl_iDrive              = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
+cvar_t cl_movespeedkey        = {"cl_movespeedkey","2.0"};
+cvar_t cl_nodelta             = {"cl_nodelta","0"};
+cvar_t cl_pitchspeed          = {"cl_pitchspeed","150"};
+cvar_t cl_upspeed             = {"cl_upspeed","400"};
+cvar_t cl_sidespeed           = {"cl_sidespeed","400"};
+cvar_t cl_yawspeed            = {"cl_yawspeed","140"};
+cvar_t cl_weaponhide          = {"cl_weaponhide", "0"};
+cvar_t cl_weaponpreselect     = {"cl_weaponpreselect", "0"};
+cvar_t cl_weaponforgetorder   = {"cl_weaponforgetorder", "0"};
+cvar_t cl_weaponforgetondeath = {"cl_weaponforgetondeath", "0"};
+cvar_t cl_weaponhide_axe      = {"cl_weaponhide_axe", "0"};
+cvar_t freelook               = {"freelook","1"};
+cvar_t lookspring             = {"lookspring","0"};
+cvar_t lookstrafe             = {"lookstrafe","0"};
 
 cvar_t sensitivity          = {"sensitivity","12"};
 cvar_t cursor_sensitivity   = {"scr_cursor_sensitivity", "1"};
@@ -64,12 +65,19 @@ cvar_t cam_zoomspeed = {"cam_zoomspeed", "300"};
 cvar_t cam_zoomaccel = {"cam_zoomaccel", "2000"};
 #endif
 
+extern cvar_t cl_pext_serversideweapon;
 extern cvar_t cl_independentPhysics;
 extern qbool physframe;
 extern double physframetime;
 
-#define CL_INPUT_WEAPONHIDE() ((cl_weaponhide.integer == 1) \
-	|| ((cl_weaponhide.integer == 2) && (cl.deathmatch == 1)))
+#define CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(health) ( \
+	(cl_weaponforgetondeath.integer && cl_weaponhide.integer && (health) <= 0) \
+)
+#define CL_INPUT_WEAPONHIDE(health) ( \
+	(cl_weaponhide.integer == 1) || \
+	((cl_weaponhide.integer == 2) && (cl.deathmatch == 1)) || \
+	CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(health) \
+)
 
 /*
 ===============================================================================
@@ -96,10 +104,22 @@ kbutton_t in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t in_strafe, in_speed, in_use, in_jump, in_attack, in_attack2;
 kbutton_t in_up, in_down;
 
-int in_impulse;
+static int in_next_impulse;
+static qbool suppress_hide;
 
-#define MAXWEAPONS 10
-int weapon_order[MAXWEAPONS] = {2, 1};
+static void SetNextImpulse(int impulse, qbool from_weapon_script)
+{
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	if (from_weapon_script && (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
+		in_next_impulse = 0;
+		suppress_hide = false;
+		return;
+	}
+#endif
+
+	suppress_hide = !from_weapon_script;
+	in_next_impulse = impulse;
+}
 
 #define VOID_KEY (-1)
 
@@ -265,8 +285,9 @@ qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 void IN_AttackDown(void)
 {
 	int best;
-	if (cl_weaponpreselect.value && (best = IN_BestWeapon()))
-			in_impulse = best;
+	if (cl_weaponpreselect.value && (best = IN_BestWeapon())) {
+		SetNextImpulse(best, true);
+	}
 
 	KeyDown(&in_attack);
 }
@@ -296,33 +317,38 @@ void IN_FireDown(void)
 
 	for (i = 1; i <= last_arg_idx && i <= MAXWEAPONS; i++) {
 		int desired_impulse = Q_atoi(Cmd_Argv(i));
-		weapon_order[i - 1] = desired_impulse;
+		cl.weapon_order[i - 1] = desired_impulse;
 	}
 
 	for (; i <= MAXWEAPONS; i++) {
-		weapon_order[i - 1] = 0;
+		cl.weapon_order[i - 1] = 0;
 	}
 
-	in_impulse = IN_BestWeapon();
+	SetNextImpulse(IN_BestWeapon(), true);
 
 	KeyDown_common(&in_attack, key_code);
 }
 
 void IN_AttackUp_CommonHide(void)
 {
-	if (CL_INPUT_WEAPONHIDE())
-	{
-		if (cl_weaponhide_axe.integer)
-		{
+	if (CL_INPUT_WEAPONHIDE(cl.stats[STAT_HEALTH])) {
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) {
+			SetNextImpulse(0, false);
+			return;
+		}
+#endif
+		if (cl_weaponhide_axe.integer) {
 			// always switch to axe because user wants to
-			in_impulse = 1;
+			SetNextImpulse(1, false);
+			return;
 		}
-		else
-		{
-			// performs "weapon 2 1"
-			// that means: if player has shotgun and shells, select shotgun, otherwise select axe
-			in_impulse = ((cl.stats[STAT_ITEMS] & IT_SHOTGUN) && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1;
-		}
+
+		// performs "weapon 2 1"
+		// that means: if player has shotgun and shells, select shotgun, otherwise select axe
+		qbool can_shotgun = ((cl.stats[STAT_ITEMS] & IT_SHOTGUN) && cl.stats[STAT_SHELLS] >= 1);
+		can_shotgun |= (CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH]));
+		SetNextImpulse(can_shotgun ? 2 : 1, false);
 	}
 }
 
@@ -389,32 +415,37 @@ void IN_JumpUp(void)
 void IN_RememberWpOrder (void)
 {
 	int i, c;
-	c = Cmd_Argc() - 1;
 
-	for (i = 0; i < MAXWEAPONS; i++)
-		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
+	c = Cmd_Argc() - 1;
+	for (i = 0; i < MAXWEAPONS; i++) {
+		cl.weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i + 1)) : 0;
+	}
+
+	if (cl_pext_serversideweapon.integer) {
+		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
+	}
 }
 
-static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool persist);
+static int IN_BestWeapon_Common(int implicit, int* weapon_order);
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
-// or if the intersection (whished * carried) is empty
+// or if the intersection (wished * carried) is empty
 // select the top wished weapon
 int IN_BestWeapon(void)
 {
-	return IN_BestWeapon_Common(weapon_order[0], weapon_order, cl_weaponforgetorder.integer != 1);
+	return IN_BestWeapon_Common(cl.weapon_order[0], cl.weapon_order);
 }
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
-// or if the intersection (whished * carried) is empty
+// or if the intersection (wished * carried) is empty
 // select the current weapon
 int IN_BestWeaponReal(void)
 {
-	return IN_BestWeapon_Common(in_impulse, weapon_order, cl_weaponforgetorder.integer != 1);
+	return IN_BestWeapon_Common(in_next_impulse, cl.weapon_order);
 }
 
 // finds the best weapon from the carried weapons; if none is found, returns implicit
-static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool persist)
+static int IN_BestWeapon_Common(int implicit, int* weapon_order)
 {
 	int i, imp, items;
 	int best = implicit;
@@ -463,29 +494,27 @@ static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool persist)
 		}
 	}
 
-	/* If weapon order shouldn't persist, set the first element
-	 * of the order to the most recently selected weapon
-	 */
-	if (! persist) {
-		weapon_order[0] = best;
-	}
-
 	return best;
 }
 
-void IN_Impulse (void)
+void IN_Impulse(void)
 {
 	int best;
+	int first = Q_atoi(Cmd_Argv(1));
 
-	in_impulse = Q_atoi(Cmd_Argv(1));
-
-	if (Cmd_Argc() <= 2)
+	SetNextImpulse(first, false);
+	if (Cmd_Argc() <= 2) {
 		return;
+	}
 
 	// If more than one argument, select immediately the best weapon.
 	IN_RememberWpOrder();
-	if ((best = IN_BestWeapon()))
-		in_impulse = best;
+	if ((best = IN_BestWeapon())) {
+		SetNextImpulse(best, true);
+	}
+	else {
+		SetNextImpulse(first, true);
+	}
 }
 
 // This is the same command as impulse but cl_weaponpreselect can be used in here, while for impulses cannot be used.
@@ -513,7 +542,10 @@ void IN_Weapon(void)
 			0
 		};
 
-		weapon_order[0] = best = IN_BestWeapon_Common (1, temp_order, false);
+		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order);
+		if (cl_pext_serversideweapon.integer) {
+			cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
+		}
 	}
 	else if (first == 12) {
 		int temp_order[10] = {
@@ -529,7 +561,8 @@ void IN_Weapon(void)
 			0
 		};
 
-		weapon_order[0] = best = IN_BestWeapon_Common (1, temp_order, false);
+		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order);
+		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 	}
 	else {
 		// read user input
@@ -556,14 +589,18 @@ void IN_Weapon(void)
 	switch (mode)
 	{
 		case 2:
-			if ((in_attack.state & 3) && best) // user is holding +attack and there is some weapon available
-				in_impulse = best;
+			if ((in_attack.state & 3) && best) {
+				// user is holding +attack and there is some weapon available
+				SetNextImpulse(best, true);
+			}
 			break;
-		case 1: break;	// don't select weapon immediately
-		default: case 0:	// no pre-selection
-			if (best)
-				in_impulse = best;
-
+		case 1:
+			break;	// don't select weapon immediately
+		default:
+		case 0:	// no pre-selection
+			if (best) {
+				SetNextImpulse(best, true);
+			}
 			break;
 	}
 }
@@ -870,25 +907,36 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	VectorCopy (cl.viewangles, cmd->angles);
 
+	if (!cl.spectator && CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH])) {
+		cl.weapon_order[0] = in_next_impulse = (cl_weaponhide_axe.integer ? 1 : 2);
+		cl.weapon_order[1] = 0;
+	}
+
 	// shaman RFE 1030281 {
 	// KTPro's KFJump == impulse 156
 	// KTPro's KRJump == impulse 164
 	if ( *Info_ValueForKey(cl.serverinfo, "kmod") && (
-		((in_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2)) ||
-		((in_impulse == 164) && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0))
+		((in_next_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2)) ||
+		((in_next_impulse == 164) && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0))
 		)
 	) {
 		cmd->impulse = 0;
-	} else {
-		cmd->impulse = in_impulse;
+	}
+/*#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	else if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer && cmd->impulse <= 8) {
+		cmd->impulse = 0;
+	}
+#endif*/
+	else {
+		cmd->impulse = in_next_impulse;
 	}
 	// } shaman RFE 1030281
-	in_impulse = 0;
+	in_next_impulse = 0;
 
 	// chop down so no extra bits are kept that the server wouldn't get
-	cmd->forwardmove = MakeChar (cmd->forwardmove);
-	cmd->sidemove = MakeChar (cmd->sidemove);
-	cmd->upmove = MakeChar (cmd->upmove);
+	cmd->forwardmove = MakeChar(cmd->forwardmove);
+	cmd->sidemove = MakeChar(cmd->sidemove);
+	cmd->upmove = MakeChar(cmd->upmove);
 
 	for (i = 0; i < 3; i++) {
 		cmd->angles[i] = (Q_rint(cmd->angles[i] * 65536.0 / 360.0) & 65535) * (360.0 / 65536.0);
@@ -916,6 +964,49 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 		MSG_WriteString (&cls.cmdmsg, string);
 	}
 }
+
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
+{
+	int i = 0;
+	int flags = 0;
+
+	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
+		return;
+	}
+
+	// Compare our current preferred weaponlist to the server's confirmed list
+	if (cls.netchan.incoming_acknowledged >= cl.weapon_order_sequence_set) {
+		return;
+	}
+
+	// build flags
+	if (cl_pext_serversideweapon.integer) {
+		flags = MSG_EncodeMVDSVWeaponFlags(cl.deathmatch, cl_weaponpreselect.integer, (suppress_hide ? 0 : cl_weaponhide.integer), cl_weaponhide_axe.integer, cl_weaponforgetorder.integer, cl_weaponforgetondeath.integer);
+	}
+
+	// send data
+	MSG_WriteByte(buffer, clc_mvd_weapon);
+	MSG_WriteByte(buffer, flags);
+	if (flags & clc_mvd_weapon_forget_ranking) {
+		MSG_WriteByte(buffer, min(cls.netchan.outgoing_sequence - cl.weapon_order_sequence_set, 255));
+	}
+	if (cl_pext_serversideweapon.integer) {
+		for (i = 0; i < MAXWEAPONS; i += 2) {
+			int lhs = bound(0, cl.weapon_order[i], 15);
+			int rhs = bound(0, cl.weapon_order[i + 1], 15);
+
+			MSG_WriteByte(buffer, (lhs << 4) | rhs);
+			if (!lhs || !rhs) {
+				break;
+			}
+		}
+	}
+	if (i >= MAXWEAPONS || !cl_pext_serversideweapon.integer) {
+		MSG_WriteByte(buffer, 0);
+	}
+}
+#endif // MVD_PEXT1_SERVERSIDEWEAPON
 
 int cmdtime_msec = 0;
 
@@ -985,6 +1076,11 @@ void CL_SendCmd(void)
 
 	SZ_Clear(&cls.cmdmsg);
 
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	// Send this before the clc_move command
+	IN_SendServerSideWeaponSwitch(&buf);
+#endif
+
 	// begin a client move command
 	MSG_WriteByte (&buf, clc_move);
 
@@ -1006,7 +1102,7 @@ void CL_SendCmd(void)
 		dontdrop = dontdrop || cmd->impulse;
 	}
 
-	MSG_WriteDeltaUsercmd (&buf, &nullcmd, cmd);
+	MSG_WriteDeltaUsercmd (&buf, &nullcmd, cmd, cls.mvdprotocolextensions1);
 	oldcmd = cmd;
 
 	i = (cls.netchan.outgoing_sequence - 1) & UPDATE_MASK;
@@ -1016,14 +1112,14 @@ void CL_SendCmd(void)
 		dontdrop = dontdrop || cmd->impulse;
 	}
 
-	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd);
+	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd, cls.mvdprotocolextensions1);
 	oldcmd = cmd;
 
 	i = (cls.netchan.outgoing_sequence) & UPDATE_MASK;
 	cmd = &cl.frames[i].cmd;
 	if (cl_c2sImpulseBackup.value >= 1)
 		dontdrop = dontdrop || cmd->impulse;
-	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd);
+	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd, cls.mvdprotocolextensions1);
 
 	// calculate a checksum over the move commands
 	buf.data[checksumIndex] = COM_BlockSequenceCRCByte(
@@ -1140,6 +1236,7 @@ void CL_InitInput(void)
 	Cvar_Register(&cl_weaponhide);
 	Cvar_Register(&cl_weaponpreselect);
 	Cvar_Register(&cl_weaponforgetorder);
+	Cvar_Register(&cl_weaponforgetondeath);
 	Cvar_Register(&cl_weaponhide_axe);
 	Cvar_Register(&cl_upspeed);
 	Cvar_Register(&cl_forwardspeed);
@@ -1200,3 +1297,9 @@ void IN_ClearProtectedKeys (void)
 	KeyUp_common(&in_moveleft, VOID_KEY);
 	KeyUp_common(&in_moveright, VOID_KEY);
 }
+
+void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel)
+{
+	cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
+}
+

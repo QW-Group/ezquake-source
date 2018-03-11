@@ -82,6 +82,9 @@ static void Dev_PhysicsNormalShow(void);
 static void Cl_Reset_Min_fps_f(void);
 void CL_QWURL_ProcessChallenge(const char *parameters);
 
+// cl_input.c
+void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
+
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
@@ -100,6 +103,7 @@ cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
+cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -484,8 +488,9 @@ unsigned int CL_SupportedMVDExtensions1(void)
 {
 	unsigned int extensions_supported = 0;
 
-	if (!cl_pext.value)
+	if (!cl_pext.value) {
 		return 0;
+	}
 
 #ifdef MVD_PEXT1_FLOATCOORDS
 	if (cl_pext_floatcoords.value) {
@@ -496,6 +501,12 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	if (cl_pext_lagteleport.integer & 1) {
 		extensions_supported |= MVD_PEXT1_HIGHLAGTELEPORT;
+	}
+#endif
+
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	if (cl_pext_serversideweapon.integer) {
+		extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
 	}
 #endif
 
@@ -1757,7 +1768,12 @@ static void CL_InitLocal (void)
 	Cvar_Register (&cl_pext_limits);
 	Cvar_Register (&cl_pext_other);
 	Cvar_Register (&cl_pext_warndemos);
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	Cvar_Register (&cl_pext_lagteleport);
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	Cvar_Register (&cl_pext_serversideweapon);
+#endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
 	Cvar_Register (&cl_pext_256packetentities);
