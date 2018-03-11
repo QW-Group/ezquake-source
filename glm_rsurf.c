@@ -574,7 +574,7 @@ void GLM_PrepareWorldModelBatch(void)
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
 
 		if (!drawcall->batch_count) {
-			return;
+			break;
 		}
 
 		GL_SortDrawCalls(drawcall);
