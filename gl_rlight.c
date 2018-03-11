@@ -186,7 +186,7 @@ void R_RenderDlights(void)
 	unsigned int j;
 	dlight_t *l;
 
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
+	r_dlightframecount = r_framecount;
 	first_dlight = true;
 
 	for (i = 0; i < MAX_DLIGHTS / 32; i++) {

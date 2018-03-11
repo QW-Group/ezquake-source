@@ -370,6 +370,9 @@ void R_CreateWorldTextureChains(void)
 		//set up texture chains for the world
 		R_RecursiveWorldNode(cl.worldmodel->nodes, 15);
 
+		// these are rendered later now, so we can process earlier
+		R_RenderDlights();
+
 		R_RenderAllDynamicLightmaps(cl.worldmodel);
 	}
 }

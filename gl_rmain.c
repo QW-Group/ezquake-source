@@ -1141,9 +1141,6 @@ void R_RenderView(void)
 	R_MarkLeaves();	// done here so we know if we're in water
 	R_CreateWorldTextureChains();
 
-	// these are rendered later now, so we can process earlier
-	R_RenderDlights();
-
 	// render normal view (world & entities)
 	R_RenderScene();
 
