@@ -1603,7 +1603,7 @@ void R_DrawBrushModel(entity_t *e)
 
 		GLC_DrawSkyChain();
 
-		GLC_DrawAlphaChain(alphachain);
+		GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 	}
 	// } END shaman FIX for no simple textures on world brush models
 

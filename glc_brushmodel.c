@@ -426,7 +426,7 @@ void GLC_DrawWorld(void)
 	}
 
 	//draw the world alpha textures
-	GLC_DrawAlphaChain(alphachain);
+	GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
 }
 
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
@@ -599,4 +599,42 @@ static void GLC_BlendLightmaps(void)
 	GLC_ClearLightmapPolys();
 
 	GLC_StateEndBlendLightmaps();
+}
+
+//draws transparent textures for HL world and nonworld models
+void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
+{
+	int k;
+	msurface_t *s;
+	float *v;
+
+	if (!alphachain) {
+		return;
+	}
+
+	GLC_StateBeginAlphaChain();
+	for (s = alphachain; s; s = s->texturechain) {
+		++frameStats.classic.polycount[polyType];
+		R_RenderDynamicLightmaps(s);
+
+		GLC_StateBeginAlphaChainSurface(s);
+
+		glBegin(GL_POLYGON);
+		v = s->polys->verts[0];
+		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+			if (gl_mtexable) {
+				qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+				qglMultiTexCoord2f(GL_TEXTURE1, v[5], v[6]);
+			}
+			else {
+				glTexCoord2f(v[3], v[4]);
+			}
+			glVertex3fv(v);
+		}
+		glEnd();
+	}
+
+	alphachain = NULL;
+
+	GLC_StateEndAlphaChain();
 }

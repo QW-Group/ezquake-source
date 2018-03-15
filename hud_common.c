@@ -6928,6 +6928,8 @@ void CommonDraw_Init(void)
 
 	Radar_HudInit();
 	WeaponStats_HUDInit();
+	FrameStats_HudInit();
+
 	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef _DEBUG
 HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",

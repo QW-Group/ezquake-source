@@ -72,6 +72,7 @@ unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light v
 texture_ref shelltexture;
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;
+r_frame_stats_t prevFrameStats;
 r_frame_stats_t frameStats;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
@@ -542,10 +543,11 @@ void R_SetupFrame(void)
 		}
 	}
 
-	V_SetContentsColor (r_viewleaf->contents);
-	V_AddWaterfog (r_viewleaf->contents);	 
-	V_CalcBlend ();
+	V_SetContentsColor(r_viewleaf->contents);
+	V_AddWaterfog(r_viewleaf->contents);
+	V_CalcBlend();
 
+	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
 	memset(&frameStats, 0, sizeof(frameStats));
 	R_LightmapFrameInit();
 }
@@ -1158,17 +1160,11 @@ void R_RenderView(void)
 	// Render billboards
 	GL_DrawBillboards();
 
-	if (!GL_ShadersSupported() && r_speeds.integer) {
-		double time = Sys_DoubleTime() - frameStats.start_time;
-
-		Print_flags[Print_current] |= PR_TR_SKIP;
-		if (cl.standby || com_serveractive) {
-			Com_Printf("%5.2f ms %4i wpoly, %4i epoly, %4i texbinds\n", (time * 1000), frameStats.classic.brush_polys, frameStats.classic.alias_polys, frameStats.texture_binds);
-		}
-		else {
-			Com_Printf("%5.2f ms %4i wpoly\n", (time * 1000), frameStats.classic.brush_polys);
-		}
+	if (GL_ShadersSupported()) {
+		GLM_RenderView();
 	}
+
+	R_PerformanceEndFrame();
 }
 
 void GL_PreRenderView(void)

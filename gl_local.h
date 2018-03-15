@@ -117,9 +117,16 @@ extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
 
+typedef enum {
+	polyTypeWorldModel,
+	polyTypeAliasModel,
+	polyTypeBrushModel,
+
+	polyTypeMaximum
+} frameStatsPolyType;
+
 typedef struct r_frame_stats_classic_s {
-	int brush_polys;
-	int alias_polys;
+	int polycount[polyTypeMaximum];
 } r_frame_stats_classic_t;
 
 typedef struct r_frame_stats_modern_s {
@@ -140,9 +147,10 @@ typedef struct r_frame_stats_s {
 	int subdraw_calls;
 
 	double start_time;
+	double end_time;
 } r_frame_stats_t;
 
-extern r_frame_stats_t frameStats;
+extern r_frame_stats_t frameStats, prevFrameStats;
 
 // view origin
 extern	vec3_t	vup;
@@ -307,7 +315,7 @@ void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawWaterSurfaces (void);
-void GLC_DrawAlphaChain(msurface_t* alphachain);
+void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType);
 void GL_BuildLightmaps (void);
 
 qbool R_FullBrightAllowed(void);

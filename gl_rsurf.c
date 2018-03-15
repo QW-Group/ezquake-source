@@ -360,13 +360,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 
 void R_CreateWorldTextureChains(void)
 {
-	if (r_speeds.integer) {
-		glFinish ();
-
-		memset(&frameStats, 0, sizeof(frameStats));
-
-		frameStats.start_time = Sys_DoubleTime ();
-	}
+	R_PerformanceBeginFrame();
 
 	if (cl.worldmodel) {
 		R_ClearTextureChains(cl.worldmodel);
@@ -554,43 +548,6 @@ static void GL_EmitSurfaceParticleEffects(msurface_t* s)
 			break;
 		}
 	}
-}
-
-//draws transparent textures for HL world and nonworld models
-void GLC_DrawAlphaChain(msurface_t* alphachain)
-{
-	int k;
-	msurface_t *s;
-	float *v;
-
-	if (!alphachain) {
-		return;
-	}
-
-	GLC_StateBeginAlphaChain();
-	for (s = alphachain; s; s = s->texturechain) {
-		R_RenderDynamicLightmaps(s);
-
-		GLC_StateBeginAlphaChainSurface(s);
-
-		glBegin(GL_POLYGON);
-		v = s->polys->verts[0];
-		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-			if (gl_mtexable) {
-				qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
-				qglMultiTexCoord2f(GL_TEXTURE1, v[5], v[6]);
-			}
-			else {
-				glTexCoord2f(v[3], v[4]);
-			}
-			glVertex3fv(v);
-		}
-		glEnd();
-	}
-
-	alphachain = NULL;
-
-	GLC_StateEndAlphaChain();
 }
 
 qbool R_DrawWorldOutlines(void)

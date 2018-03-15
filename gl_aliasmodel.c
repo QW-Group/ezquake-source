@@ -338,7 +338,7 @@ void R_DrawAliasModel(entity_t *ent)
 		return;
 	}
 
-	frameStats.classic.alias_polys += paliashdr->numtris;
+	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
@@ -992,7 +992,7 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 		return;
 	}
 
-	frameStats.classic.alias_polys += paliashdr->numtris;
+	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);

@@ -341,8 +341,6 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	qbool lightstyle_modified = false;
 	lightmap_data_t* lm;
 
-	++frameStats.classic.brush_polys;
-
 	if (r_dynamic.integer != 1 && !fa->cached_dlight) {
 		return;
 	}
@@ -407,20 +405,25 @@ void R_LightmapFrameInit(void)
 	frameStats.lightmap_max_changed = 0;
 }
 
-static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface)
+static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world)
 {
 	int k;
 	msurface_t* s;
+	frameStatsPolyType polyType;
 
 	if (!surface) {
 		return;
 	}
 
+	polyType = world ? polyTypeWorldModel : polyTypeBrushModel;
 	for (s = surface; s; s = s->texturechain) {
 		k = s->lightmaptexturenum;
 
+		++frameStats.classic.polycount[polyType];
+
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
+
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
 				frameStats.lightmap_max_changed = max(k, frameStats.lightmap_max_changed);
@@ -431,8 +434,11 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface)
 	for (s = surface->drawflatchain; s; s = s->drawflatchain) {
 		k = s->lightmaptexturenum;
 
+		++frameStats.classic.polycount[polyType];
+
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
+
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
 				frameStats.lightmap_max_changed = max(k, frameStats.lightmap_max_changed);
@@ -499,12 +505,12 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 			continue;
 		}
 
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0]);
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1]);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0], model->isworldmodel);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1], model->isworldmodel);
 	}
 
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0]);
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1]);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], model->isworldmodel);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], model->isworldmodel);
 
 	if (!GL_ShadersSupported()) {
 		R_UploadChangedLightmaps();
