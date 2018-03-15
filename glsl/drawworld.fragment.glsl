@@ -39,64 +39,6 @@ in flat int Flags;
 in flat int SamplerNumber;
 in vec3 Direction;
 
-#ifdef HARDWARE_LIGHTING
-in flat vec4 Plane;
-in flat vec3 PlaneMins0;
-in flat vec3 PlaneMins1;
-in vec2 LightingPoint;
-
-float PlaneDiff(in vec3 p, in vec4 plane)
-{
-	return dot(p, plane.xyz) - plane.a;
-}
-
-vec3 DynamicLighting(in vec3 lightmapBase)
-{
-	int i;
-	vec3 result;
-	float top;
-
-	for (i = 0; i < lightsActive; ++i) {
-		// Find distance to this plane
-		float light_distance = PlaneDiff(lightPositions[i].xyz, Plane);
-		float rad = lightPositions[i].a - abs(light_distance);
-		float minlight = lightColors[i].a;
-
-		if (rad >= minlight) {
-			minlight = rad - minlight;
-
-			// impact point on this surface
-			vec3 impact = lightPositions[i].xyz - Plane.xyz * light_distance;
-
-			// effect is based on distance along surface from the impact point, not from the light itself...
-			vec2 local = vec2(dot(PlaneMins0, impact), dot(PlaneMins1, impact));
-
-			// 
-			vec2 light_offset = abs(LightingPoint - local);
-			float dist = length(light_offset); //max(offset.x, offset.y) + min(offset.x, offset.y) * 0.5;
-
-			if (dist < minlight) {
-				float effect = rad - dist;
-
-				result.r += effect * lightColors[i].r;
-				result.g += effect * lightColors[i].g;
-				result.b += effect * lightColors[i].b;
-			}
-		}
-	}
-
-	result *= lightScale;
-	result += lightmapBase;
-
-	top = (max(max(result.r, result.g), result.b));
-	if (top > 1.5) {
-		result *= 1.5 / top;
-	}
-
-	return result;
-}
-#endif
-
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
 #define TEXTURE_TURB_SLIME 2
@@ -214,8 +156,6 @@ void main()
 #endif
 #if defined(DRAW_LIGHTMAPS)
 		frag_colour = vec4(lmColor.rgb, 1);
-#elif defined(HARDWARE_LIGHTING)
-		frag_colour = vec4(DynamicLighting(lmColor.rgb), 1) * texColor;
 #else
 		frag_colour = vec4(lmColor.rgb, 1) * texColor;
 #endif
