@@ -119,9 +119,6 @@ lpMTexFUNC qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
 PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture = NULL;
 
-qbool gl_combine = false;
-qbool gl_add_ext = false;
-
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];
 
@@ -144,6 +141,7 @@ qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 // Debugging
+#ifdef _WIN32
 void APIENTRY MessageCallback( GLenum source,
 	GLenum type,
 	GLuint id,
@@ -170,6 +168,7 @@ void APIENTRY MessageCallback( GLenum source,
 		OutputDebugString(buffer);
 	}
 }
+#endif
 
 // Shader functions
 glCreateShader_t      glCreateShader = NULL;
@@ -402,9 +401,6 @@ static void GL_CheckShaderExtensions(void)
 void GL_CheckExtensions (void)
 {
 	CheckMultiTextureExtensions();
-
-	gl_combine = SDL_GL_ExtensionSupported("GL_ARB_texture_env_combine");
-	gl_add_ext = SDL_GL_ExtensionSupported("GL_ARB_texture_env_add");
 
 	if (SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;

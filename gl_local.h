@@ -357,11 +357,6 @@ void R_InitOtherTextures(void);
 #define GL_SRGB8_ALPHA8 0x8C43
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
 
-//combine extension
-#define GL_COMBINE_EXT				0x8570
-#define GL_COMBINE_RGB_EXT			0x8571
-#define GL_RGB_SCALE_EXT			0x8573
-
 typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
 
@@ -373,7 +368,6 @@ extern double gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
-extern qbool gl_combine, gl_add_ext;
 extern qbool gl_support_arb_texture_non_power_of_two;
 
 void Check_Gamma (unsigned char *pal);
