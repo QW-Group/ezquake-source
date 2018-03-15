@@ -467,9 +467,9 @@ void R_UploadChangedLightmaps(void)
 		}
 		GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
 
-		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-		glBindImageTexture(1, GL_TextureNameFromReference(lightmap_texture_array), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-		glBindImageTexture(2, GL_TextureNameFromReference(lightmap_data_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
+		GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+		GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
 
 		GL_UseProgram(lightmap_program.program);
 		glDispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);

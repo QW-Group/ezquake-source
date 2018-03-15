@@ -11,6 +11,16 @@ void GL_SetElementArrayBuffer(buffer_ref buffer);
 const buffer_ref null_buffer_reference = { 0 };
 
 #define MAX_LOGGED_TEXTURE_UNITS 32
+#define MAX_LOGGED_IMAGE_UNITS   32
+
+typedef struct image_unit_binding_s {
+	GLuint texture;
+	GLint level;
+	GLboolean layered;
+	GLint layer;
+	GLenum access;
+	GLenum format;
+} image_unit_binding_t;
 
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
 
@@ -43,6 +53,7 @@ static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
 static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
+static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS] = { 0 };
 
 static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
@@ -206,6 +217,7 @@ void GL_InitialiseState(void)
 
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
+	memset(bound_images, 0, sizeof(bound_images));
 	memset(texunitenabled, 0, sizeof(texunitenabled));
 
 	// Buffers
@@ -541,6 +553,12 @@ void GL_InvalidateTextureReferences(GLuint texture)
 		}
 		if (bound_arrays[i] == texture) {
 			bound_arrays[i] = 0;
+		}
+	}
+
+	for (i = 0; i < sizeof(bound_images) / sizeof(bound_images[0]); ++i) {
+		if (bound_images[i].texture == texture) {
+			bound_images[i].texture = 0;
 		}
 	}
 }
@@ -931,6 +949,35 @@ void GL_Vertex3fv(const GLfloat* v)
 {
 	glVertex3fv(v);
 	++glcVertsSent;
+}
+
+void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
+{
+	GLuint glRef = 0;
+
+	if (GL_TextureReferenceIsValid(texture)) {
+		glRef = GL_TextureNameFromReference(texture);
+
+		if (unit < MAX_LOGGED_IMAGE_UNITS) {
+			if (bound_images[unit].texture == glRef && bound_images[unit].level == level && bound_images[unit].layered == layered && bound_images[unit].layer == layer && bound_images[unit].access == access && bound_images[unit].format == format) {
+				return;
+			}
+
+			bound_images[unit].texture = glRef;
+			bound_images[unit].level = level;
+			bound_images[unit].layered = layered;
+			bound_images[unit].layer = layer;
+			bound_images[unit].access = access;
+			bound_images[unit].format = format;
+		}
+	}
+	else {
+		if (unit < MAX_LOGGED_IMAGE_UNITS) {
+			memset(&bound_images[unit], 0, sizeof(bound_images[unit]));
+		}
+	}
+
+	glBindImageTexture(unit, glRef, level, layered, layer, access, format);
 }
 
 #ifdef WITH_OPENGL_TRACE
