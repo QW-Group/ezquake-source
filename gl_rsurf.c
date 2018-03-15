@@ -759,6 +759,7 @@ void R_DrawAlphaChain (void) {
 		return;
 
 	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.333);
 
 	for (s = alphachain; s; s = s->texturechain) {
 		
@@ -798,6 +799,7 @@ void R_DrawAlphaChain (void) {
 	alphachain = NULL;
 
 	glDisable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.666);
 	GL_DisableMultitexture();
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
