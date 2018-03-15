@@ -287,13 +287,7 @@ static void GLM_QueueAliasModelDraw(
 )
 {
 	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
-	qbool shell = false;
-
-	if (shell_effects && GL_TextureReferenceIsValid(shelltexture)) {
-		// always allow powerupshells for specs or demos.
-		// do not allow powerupshells for eyes in other cases
-		shell = Ruleset_AllowPowerupShell(model);
-	}
+	qbool shell = shell_effects && GL_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
 
 	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
 }

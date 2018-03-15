@@ -590,10 +590,8 @@ void R_AliasSetupLighting(entity_t *ent)
 				vlight_yaw = ang[1];
 			}
 		}
-	}
 
-	// clamp lighting so it doesn't overbright as much
-	if (!full_light) {
+		// clamp lighting so it doesn't overbright as much
 		if (ambientlight > 128) {
 			ambientlight = 128;
 		}
