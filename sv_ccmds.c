@@ -1849,7 +1849,13 @@ void SV_InitOperatorCommands (void)
 		Cmd_AddCommand ("localcommand", SV_LocalCommand_f);
 
 	Cmd_AddCommand ("map", SV_Map_f);
+#ifdef SERVERONLY
 	Cmd_AddCommand ("devmap", SV_Map_f);
+#else
+	if (COM_CheckParm("-dev")) {
+		Cmd_AddCommand("devmap", SV_Map_f);
+	}
+#endif
 	Cmd_AddCommand ("setmaster", SV_SetMaster_f);
 
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);

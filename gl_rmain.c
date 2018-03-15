@@ -847,7 +847,9 @@ void R_Init(void)
 	Cvar_Register(&gl_vbo_clientmemory);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register(&r_speeds);
+	if (COM_CheckParm("-dev")) {
+		Cvar_Register(&r_speeds);
+	}
 	Cvar_Register(&r_netgraph);
 	Cvar_Register(&r_netstats);
 
