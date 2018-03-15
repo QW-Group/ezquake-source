@@ -424,7 +424,7 @@ void R_SetupAliasFrame(
 
 void R_AliasSetupLighting(entity_t *ent)
 {
-	int minlight, lnum;
+	int lnum;
 	float add, fbskins;
 	unsigned int i;
 	unsigned int j;
@@ -471,132 +471,6 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	//normal lighting
 	full_light = false;
-	ambientlight = shadelight = R_LightPoint(ent->origin);
-
-	/* FIXME: dimman... cache opt from fod */
-	//VULT COLOURED MODEL LIGHTS
-	if (amf_lighting_colour.value) {
-		for (i = 0; i < MAX_DLIGHTS / 32; i++) {
-			if (cl_dlight_active[i]) {
-				for (j = 0; j < 32; j++) {
-					if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
-						lnum = i * 32 + j;
-
-						VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
-						add = cl_dlights[lnum].radius - VectorLength(dist);
-
-						if (add > 0) {
-							//VULT VERTEX LIGHTING
-							if (amf_lighting_vertex.value) {
-								if (!radiusmax) {
-									radiusmax = cl_dlights[lnum].radius;
-									VectorCopy(cl_dlights[lnum].origin, vertexlight);
-								}
-								else if (cl_dlights[lnum].radius > radiusmax) {
-									radiusmax = cl_dlights[lnum].radius;
-									VectorCopy(cl_dlights[lnum].origin, vertexlight);
-								}
-							}
-
-							if (cl_dlights[lnum].type == lt_custom) {
-								VectorCopy(cl_dlights[lnum].color, dlight_color);
-								VectorScale(dlight_color, (1.0 / 255), dlight_color); // convert color from byte to float
-							}
-							else {
-								VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
-							}
-
-							for (k = 0;k < 3;k++) {
-								lightcolor[k] = lightcolor[k] + (dlight_color[k] * add) * 2;
-								if (lightcolor[k] > 256) {
-									switch (k) {
-									case 0:
-										lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-										lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
-										break;
-									case 1:
-										lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
-										lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
-										break;
-									case 2:
-										lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-										lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	else {
-		for (i = 0; i < MAX_DLIGHTS / 32; i++) {
-			if (cl_dlight_active[i]) {
-				for (j = 0; j < 32; j++) {
-					if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
-						lnum = i * 32 + j;
-
-						VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
-						add = cl_dlights[lnum].radius - VectorLength(dist);
-
-						if (add > 0) {
-							//VULT VERTEX LIGHTING
-							if (amf_lighting_vertex.value) {
-								if (!radiusmax) {
-									radiusmax = cl_dlights[lnum].radius;
-									VectorCopy(cl_dlights[lnum].origin, vertexlight);
-								}
-								else if (cl_dlights[lnum].radius > radiusmax) {
-									radiusmax = cl_dlights[lnum].radius;
-									VectorCopy(cl_dlights[lnum].origin, vertexlight);
-								}
-							}
-							ambientlight += add;
-						}
-					}
-				}
-			}
-		}
-	}
-	//calculate pitch and yaw for vertex lighting
-	if (amf_lighting_vertex.value) {
-		vec3_t dist, ang;
-		apitch = currententity->angles[0];
-		ayaw = currententity->angles[1];
-
-		if (!radiusmax) {
-			vlight_pitch = 45;
-			vlight_yaw = 45;
-		}
-		else {
-			VectorSubtract(vertexlight, currententity->origin, dist);
-			vectoangles(dist, ang);
-			vlight_pitch = ang[0];
-			vlight_yaw = ang[1];
-		}
-	}
-
-	// clamp lighting so it doesn't overbright as much
-	if (ambientlight > 128) {
-		ambientlight = 128;
-	}
-	if (ambientlight + shadelight > 192) {
-		shadelight = 192 - ambientlight;
-	}
-
-	// always give the gun some light
-	if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24) {
-		ambientlight = shadelight = 24;
-	}
-
-	// never allow players to go totally black
-	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-		if (ambientlight < 8) {
-			ambientlight = shadelight = 8;
-		}
-	}
 
 	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
 		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
@@ -618,11 +492,130 @@ void R_AliasSetupLighting(entity_t *ent)
 	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
 		ambientlight = shadelight = 4096;
 	}
+	else {
+		ambientlight = shadelight = R_LightPoint(ent->origin);
 
-	minlight = cl.minlight;
+		/* FIXME: dimman... cache opt from fod */
+		//VULT COLOURED MODEL LIGHTS
+		for (i = 0; i < MAX_DLIGHTS / 32; i++) {
+			if (cl_dlight_active[i]) {
+				for (j = 0; j < 32; j++) {
+					if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+						lnum = i * 32 + j;
 
-	if (ambientlight < minlight) {
-		ambientlight = shadelight = minlight;
+						if (amf_lighting_colour.integer) {
+							VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
+							add = cl_dlights[lnum].radius - VectorLength(dist);
+
+							if (add > 0) {
+								//VULT VERTEX LIGHTING
+								if (amf_lighting_vertex.value) {
+									if (!radiusmax) {
+										radiusmax = cl_dlights[lnum].radius;
+										VectorCopy(cl_dlights[lnum].origin, vertexlight);
+									}
+									else if (cl_dlights[lnum].radius > radiusmax) {
+										radiusmax = cl_dlights[lnum].radius;
+										VectorCopy(cl_dlights[lnum].origin, vertexlight);
+									}
+								}
+
+								if (cl_dlights[lnum].type == lt_custom) {
+									VectorCopy(cl_dlights[lnum].color, dlight_color);
+									VectorScale(dlight_color, (1.0 / 255), dlight_color); // convert color from byte to float
+								}
+								else {
+									VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+								}
+
+								for (k = 0; k < 3; k++) {
+									lightcolor[k] = lightcolor[k] + (dlight_color[k] * add) * 2;
+									if (lightcolor[k] > 256) {
+										switch (k) {
+											case 0:
+												lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
+												lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+												break;
+											case 1:
+												lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
+												lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+												break;
+											case 2:
+												lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
+												lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
+												break;
+										}
+									}
+								}
+							}
+						}
+						else {
+							VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
+							add = cl_dlights[lnum].radius - VectorLength(dist);
+
+							if (add > 0) {
+								//VULT VERTEX LIGHTING
+								if (amf_lighting_vertex.value) {
+									if (!radiusmax) {
+										radiusmax = cl_dlights[lnum].radius;
+										VectorCopy(cl_dlights[lnum].origin, vertexlight);
+									}
+									else if (cl_dlights[lnum].radius > radiusmax) {
+										radiusmax = cl_dlights[lnum].radius;
+										VectorCopy(cl_dlights[lnum].origin, vertexlight);
+									}
+								}
+								ambientlight += add;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		//calculate pitch and yaw for vertex lighting
+		if (amf_lighting_vertex.integer) {
+			vec3_t dist, ang;
+			apitch = currententity->angles[0];
+			ayaw = currententity->angles[1];
+
+			if (!radiusmax) {
+				vlight_pitch = 45;
+				vlight_yaw = 45;
+			}
+			else {
+				VectorSubtract(vertexlight, currententity->origin, dist);
+				vectoangles(dist, ang);
+				vlight_pitch = ang[0];
+				vlight_yaw = ang[1];
+			}
+		}
+	}
+
+	// clamp lighting so it doesn't overbright as much
+	if (!full_light) {
+		if (ambientlight > 128) {
+			ambientlight = 128;
+		}
+		if (ambientlight + shadelight > 192) {
+			shadelight = 192 - ambientlight;
+		}
+	}
+
+	// always give the gun some light
+	if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24) {
+		ambientlight = shadelight = 24;
+	}
+
+	// never allow players to go totally black
+	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
+		if (ambientlight < 8) {
+			ambientlight = shadelight = 8;
+		}
+	}
+
+	if (ambientlight < cl.minlight) {
+		ambientlight = shadelight = cl.minlight;
 	}
 }
 
