@@ -10895,10 +10895,12 @@
     },
     "r_dynamic": {
       "group-id": "15",
-      "type": "boolean",
+      "desc": "Controls dynamic lighting (muzzle-flash, quad & rocket glow, etc) on world surfaces",
+      "type": "enum",
       "values": [
-        { "name": "false", "description": "Do not display dynamic lighting." },
-        { "name": "true", "description": "Display dynamic lighting." }
+        { "name": "0", "description": "Do not display dynamic lighting." },
+        { "name": "1", "description": "Display dynamic lighting (calculated on CPU)" },
+        { "name": "2", "description": "Display dynamic lighting (calculated on GPU - GLSL only)" }
       ]
     },
     "r_enemyskincolor": {
@@ -14475,6 +14477,15 @@
       "group-id": "52",
       "desc": "This variable toggles the use of page-flipping during supported video modes. By default the game will allow for page-flipping for video modes that support this \nfeature. For example if a given VESA mode can support page flipping, then it \ndefaults to page-flipped operation.  A VESA mode can be forced to \nnon-page-flipped operation by setting the \"vid_nopageflip\" variable to \"1\", then\nsetting the mode (note that \"vid_nopageflip\" takes operation on the next, \nnot the current video mode, and note that it then stays in effect permanently, \neven when the client is exited and restarted, unless it is manually set back to \"0\").\nIf there is not enough memory for two pages in a VESA mode, or if the adapter \ndoesn't support page flipping, then the mode will automatically be \nnon-page-flipped.  \nPage-flipping works by drawing multiple virtual game screens at the same time in \nthe video memory and then switching among them to display the current \ngamescreen. Page-flipped modes thus use less system memory than non-page-flipped \nmodes, but require more video memory. When using page-flipping, visual quality \nmay be higher, but performance of the game can change to better or worse, \ndepending on the graphics adapter and other hardware (see the discussion of the \nPentium Pro below, for a discussion of why page flipping can be faster but is \nsometimes much slower on that processor). However in most cases the performance \n(and thus frame rate) will be increased, but for people with hardware that has \nproblems with page-flipping \"vid_nopageflip 1\" may help.\nThe Pentium Pro is an example for such a hardware: it is an okay client platform (sniff!), \nbut it has one weak spot, it is by default very slow on writes to video memory.  \nThis means that in default hardware configurations, you are usually much better \noff setting \"vid_nopageflip\" to \"1\" if you use VESA modes, so drawing is done to \nsystem memory instead of to video memory. Remember that you must set the mode\nafter setting \"vid_nopageflip\" to \"1\" in order to get \"vid_nopageflip\" to take\neffect. \"vid_nopageflip 1\" can sometimes be faster on a Pentium too, but not by nearly as much in general, and it's often slower.",
       "type": "float"
+    },
+    "vid_renderer": {
+      "group-id": "52",
+      "desc": "Selects which rendering mode to use",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "OpenGL, classic" },
+        { "name": "1", "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)" }
+      ]
     },
     "vid_resetonswitch": {
       "group-id": "52",

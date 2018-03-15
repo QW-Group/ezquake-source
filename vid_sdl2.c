@@ -140,7 +140,8 @@ cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CV
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH  }; /* Needs vid_restart thus vid_.... */
+cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
 
 #ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
@@ -803,6 +804,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_displayNumber);
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
+	Cvar_Register(&vid_renderer);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -972,14 +974,21 @@ static void VID_SDL_GL_SetupAttributes(void)
 {
 	if (gl_multisamples.integer > 0) {
 		VID_SDL_GL_EnableMSAA();
-	} else {
+	}
+	else {
 		VID_SDL_GL_DisableMSAA();
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-	if (COM_CheckParm("-modern")) {
+	if (vid_renderer.integer == 1) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	}
+	else {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 	}
 
 	if (r_24bit_depth.integer == 1) {
@@ -1165,7 +1174,6 @@ static void VID_SDL_Init(void)
 		}
 	}
       
-
 	if (VID_SetWindowIcon(sdl_window) < 0) {
 		Com_Printf("Failed to set window icon");
 	}
@@ -1173,6 +1181,17 @@ static void VID_SDL_Init(void)
 	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
 
 	sdl_context = SDL_GL_CreateContext(sdl_window);
+	if (!sdl_context && vid_renderer.integer == 1) {
+		Con_Printf("&cf00Error&r: failed to create glsl context, trying classic mode...\n");
+
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+		Cvar_LatchedSetValue(&vid_renderer, 0);
+
+		sdl_context = SDL_GL_CreateContext(sdl_window);
+	}
 	if (!sdl_context) {
 		Com_Printf("Couldn't create OpenGL context: %s\n", SDL_GetError());
 		return;
@@ -1427,7 +1446,10 @@ static void GfxInfo_f(void)
 	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
-	Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
+	if (GL_ShadersSupported()) {
+		Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
+		Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+	}
 
 	if (r_showextensions.value) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
@@ -1456,7 +1478,6 @@ static void GfxInfo_f(void)
 	}
 
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.gl_max_size_default);
-	Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
 	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
 	
@@ -1467,7 +1488,6 @@ static void GfxInfo_f(void)
 	}
 
 	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
-
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 }
 

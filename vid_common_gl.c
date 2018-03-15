@@ -120,7 +120,6 @@ lpSelTexFUNC qglActiveTexture = NULL;
 PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture = NULL;
 
 qbool gl_combine = false;
-
 qbool gl_add_ext = false;
 
 float vid_gamma = 1.0;
@@ -134,10 +133,11 @@ byte color_white[4] = {255, 255, 255, 255};
 byte color_black[4] = {0, 0, 0, 255};
 
 void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
+extern cvar_t vid_renderer;
 
-cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
-cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
-cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
+cvar_t gl_strings                 = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
+cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
+cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
 // GL_ARB_texture_non_power_of_two
 qbool gl_support_arb_texture_non_power_of_two = false;
@@ -207,9 +207,9 @@ glUniformBlockBinding_t     glUniformBlockBinding;
 glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Compute shaders
-glBindImageTexture_t     glBindImageTexture; 
-glDispatchCompute_t      glDispatchCompute;
-glMemoryBarrier_t        glMemoryBarrier;
+glBindImageTexture_t glBindImageTexture;
+glDispatchCompute_t  glDispatchCompute;
+glMemoryBarrier_t    glMemoryBarrier;
 
 // Texture functions
 glActiveTexture_t               glActiveTexture;
@@ -223,15 +223,10 @@ glObjectLabel_t glObjectLabel;
 glGetObjectLabel_t glGetObjectLabel;
 
 static qbool shaders_supported = false;
-static int modern_only = -1;
 
 qbool GL_ShadersSupported(void)
 {
-	if (modern_only < 0) {
-		modern_only = COM_CheckParm("-modern");
-	}
-
-	return modern_only || shaders_supported;
+	return vid_renderer.integer == 1 && shaders_supported;
 }
 
 #define OPENGL_LOAD_SHADER_FUNCTION(x) \
@@ -283,7 +278,7 @@ static void CheckShaderExtensions(void)
 	GL_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	if (COM_CheckParm("-modern")) {
+	if (vid_renderer.integer == 1) {
 		if (glConfig.majorVersion >= 2) {
 			shaders_supported = true;
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
@@ -389,6 +384,19 @@ static void CheckShaderExtensions(void)
 
 	// 4.4 - binds textures to consecutive texture units
 	glBindTextures = SDL_GL_GetProcAddress("glBindTextures");
+
+	if (vid_renderer.integer == 1 && !shaders_supported) {
+		Con_Printf("&cf00Error&r: GLSL not available, missing extensions.\n");
+		Cvar_SetValue(&vid_renderer, 0);
+		Cvar_SetFlags(&vid_renderer, CVAR_ROM);
+	}
+
+	if (vid_renderer.integer == 1) {
+		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
+	}
+	else {
+		Con_Printf("&c0f0Renderer&r: OpenGL (classic)\n");
+	}
 }
 
 void GL_CheckExtensions (void)
@@ -412,7 +420,7 @@ void GL_CheckExtensions (void)
 	if (SDL_GL_ExtensionSupported("GL_ARB_texture_compression")) {
 		Com_Printf_State(PRINT_OK, "Texture compression extensions found\n");
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-		Cvar_Register (&gl_ext_texture_compression);
+		Cvar_Register(&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
 	}
 
@@ -462,8 +470,9 @@ void GL_Init(void)
 	}
 
 	Cvar_Register(&gl_strings);
-	Cvar_ForceSet(&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
-		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
+	Cvar_ForceSet(&gl_strings,
+		va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
+		   "GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
 	Cvar_Register(&gl_maxtmu2);
 
 	GL_StateDefaultInit();
