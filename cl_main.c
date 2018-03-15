@@ -2453,12 +2453,18 @@ void CL_Frame (double time)
 	if (CL_MultiviewEnabled())
 	{
 		qbool draw_next_view = true;
+		qbool first_view = true;
 
 		if (SCR_UpdateScreenPrePlayerView()) {
 			R_ScreenDrawStart();
 
 			while (draw_next_view) {
 				draw_next_view = CL_MultiviewAdvanceView();
+				if (!first_view) {
+					GL_BufferEndFrame();
+					GL_BufferStartFrame();
+				}
+				first_view = false;
 
 				CL_LinkEntities();
 
