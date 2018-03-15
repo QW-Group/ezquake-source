@@ -271,7 +271,7 @@ static void CheckMultiTextureExtensions(void)
 	}
 }
 
-static void CheckShaderExtensions(void)
+static void GL_CheckShaderExtensions(void)
 {
 	shaders_supported = false;
 
@@ -401,8 +401,7 @@ static void CheckShaderExtensions(void)
 
 void GL_CheckExtensions (void)
 {
-	CheckMultiTextureExtensions ();
-	CheckShaderExtensions();
+	CheckMultiTextureExtensions();
 
 	gl_combine = SDL_GL_ExtensionSupported("GL_ARB_texture_env_combine");
 	gl_add_ext = SDL_GL_ExtensionSupported("GL_ARB_texture_env_add");
@@ -474,6 +473,8 @@ void GL_Init(void)
 		va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		   "GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
 	Cvar_Register(&gl_maxtmu2);
+
+	GL_CheckShaderExtensions();
 
 	GL_StateDefaultInit();
 
