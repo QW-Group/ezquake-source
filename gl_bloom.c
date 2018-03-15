@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // gl_bloom.c: 2D lighting post process effect
 
-//#include "r_local.h"
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"

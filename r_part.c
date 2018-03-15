@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "particles_classic.h"
 #include "glm_texture_arrays.h"
 #include "gl_billboards.h"
+#include "rulesets.h"
 
 static texture_ref particletexture;
 texture_ref particletexture_array;
@@ -837,7 +838,7 @@ void R_ClearParticles(void)
 
 void R_DrawParticles(void)
 {
-	if (!r_drawparticles.integer) {
+	if (!r_drawparticles.integer && !Rulesets_RestrictParticles()) {
 		return;
 	}
 

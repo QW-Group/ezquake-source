@@ -1199,6 +1199,16 @@
       "desc": "If set, enable support for FTE's floating point coordinate protocol extension.",
       "type": "boolean"
     },
+    "cl_pext_lagteleport": {
+      "group-id": "21",
+      "desc": "Enable support for MVDSV to correct movement commands when travelling through teleports. See https://www.quakeworld.nu/forum/topic/7239 for more details.",
+      "remarks": "You must reconnect to the server for changes to take effect",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "No adjustment made server-side" },
+        { "name": "true", "description": "Server will adjust movement in the delay between entering & exiting teleports" }
+      ]
+    },
     "cl_pext_limits": {
       "group-id": "21",
       "desc": "Enable support for FTE's extensions to support enhanced number of entities and models.",
@@ -10855,14 +10865,13 @@
         { "name": "3", "description": "Use solid walls and textured floors." }
       ]
     },
-    "r_draworder": {
-      "group-id": "31",
-      "desc": "Allows you to see through object - for development purposes only.",
-      "remarks": "Not allowed in multiplayer. See 'developer 1' too.",
-      "type": "boolean",
+    "r_drawparticles": {
+      "group-id": "8",
+      "desc": "Toggles drawing particle effects.  Intended for helping isolate rendering performance issues.",
+      "remarks": "Limited by particle ruleset",
       "values": [
-        { "name": "false", "description": "Standard behaviour - first draws object far from you then closer to you." },
-        { "name": "true", "description": "First draws closest object, then the more distanced ones." }
+        { "name": "0", "description": "Hide particles" },
+        { "name": "1", "description": "Draw particles" }
       ]
     },
     "r_drawviewmodel": {
