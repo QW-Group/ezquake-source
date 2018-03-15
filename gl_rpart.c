@@ -190,6 +190,7 @@ typedef struct particle_texture_s {
 	int         tex_index;
 	int			components;
 	float		coords[MAX_PTEX_COMPONENTS][4];		
+	float		originalCoords[MAX_PTEX_COMPONENTS][4];
 } particle_texture_t;
 
 #define TEXTURE_DETAILS(x) (GL_ShadersSupported() ? x->tex_array : x->texnum),(x->tex_index)
@@ -303,6 +304,7 @@ do {																						\
 	particle_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / 256.0;						\
 	particle_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / 256.0;						\
 	particle_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / 256.0;						\
+	memcpy(particle_textures[_ptex].originalCoords, particle_textures[_ptex].coords, sizeof(particle_textures[_ptex].originalCoords)); \
 } while(0);
 
 #define ADD_PARTICLE_TYPE(_id, _drawtype, _blend_type, _texture, _startalpha, _grav, _accel, _move, _custom, _verts_per_primitive) \
@@ -2910,15 +2912,17 @@ void QMB_ImportTextureArrayReferences(texture_flag_t* texture_flags)
 	int i;
 
 	for (tex = 0; tex < num_particletextures; ++tex) {
-		texture_array_ref_t* array_ref = &texture_flags[particle_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+		if (GL_TextureReferenceIsValid(particle_textures[tex].texnum)) {
+			texture_array_ref_t* array_ref = &texture_flags[particle_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
 
-		particle_textures[tex].tex_array = array_ref->ref;
-		particle_textures[tex].tex_index = array_ref->index;
-		for (i = 0; i < particle_textures[tex].components; ++i) {
-			particle_textures[tex].coords[i][0] *= array_ref->scale_s;
-			particle_textures[tex].coords[i][2] *= array_ref->scale_s;
-			particle_textures[tex].coords[i][1] *= array_ref->scale_t;
-			particle_textures[tex].coords[i][3] *= array_ref->scale_t;
+			particle_textures[tex].tex_array = array_ref->ref;
+			particle_textures[tex].tex_index = array_ref->index;
+			for (i = 0; i < particle_textures[tex].components; ++i) {
+				particle_textures[tex].coords[i][0] *= array_ref->scale_s;
+				particle_textures[tex].coords[i][2] *= array_ref->scale_s;
+				particle_textures[tex].coords[i][1] *= array_ref->scale_t;
+				particle_textures[tex].coords[i][3] *= array_ref->scale_t;
+			}
 		}
 	}
 }
@@ -2930,6 +2934,7 @@ void QMB_FlagTexturesForArray(texture_flag_t* texture_flags)
 	for (tex = 0; tex < num_particletextures; ++tex) {
 		if (GL_TextureReferenceIsValid(particle_textures[tex].texnum)) {
 			texture_flags[particle_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+			memcpy(particle_textures[tex].coords, particle_textures[tex].originalCoords, sizeof(particle_textures[tex].coords));
 		}
 	}
 }
