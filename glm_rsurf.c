@@ -367,6 +367,9 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 
 	if (drawcall->sampler_mappings >= MAX_SAMPLER_MAPPINGS || drawcall->batch_count >= MAX_WORLDMODEL_BATCH) {
 		GL_FlushWorldModelBatch();
+
+		drawcall = &drawcalls[current_drawcall];
+		memset(drawcall, 0, sizeof(*drawcall));
 	}
 
 	req = &drawcall->worldmodel_requests[drawcall->batch_count];
