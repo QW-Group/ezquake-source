@@ -2139,8 +2139,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 {
 	GL_ResetRegion(true);
 
-	// check for changes in r_fullbright
-	R_Check_R_FullBright();
+	R_Check_ReloadLightmaps();
 
 	// preache skins if needed
 	Skins_PreCache();
@@ -2171,10 +2170,6 @@ void SCR_UpdateScreenPlayerView(int flags)
 
 	// draw any areas not covered by the refresh
 	SCR_TileClear();
-
-	if (flags & UPDATESCREEN_MULTIVIEW) {
-		
-	}
 }
 
 void SCR_HUD_WeaponStats(hud_t* hud);

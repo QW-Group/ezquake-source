@@ -124,17 +124,20 @@ qbool R_FullBrightAllowed(void)
 	return r_fullbright.value && r_refdef2.allow_cheats;
 }
 
-void R_Check_R_FullBright(void)
+void R_Check_ReloadLightmaps(void)
 {
 	static qbool allowed;
+	static qbool hardware_lighting;
 
 	// not changed, nothing to do
-	if (allowed == R_FullBrightAllowed()) {
+	if (allowed == R_FullBrightAllowed() && hardware_lighting == (r_dynamic.integer == 2)) {
 		return;
 	}
 
 	// ok, it changed, lets update all our light maps...
 	allowed = R_FullBrightAllowed();
+	hardware_lighting = (r_dynamic.integer == 2);
+
 	R_ForceReloadLightMaps();
 }
 

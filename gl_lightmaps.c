@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "glsl/constants.glsl"
 
-static qbool full_lighting = true;
-
 #define	BLOCK_WIDTH  128
 #define	BLOCK_HEIGHT 128
 
@@ -362,8 +360,9 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 
 	if (r_dynamic.integer == 1) {
 		if (fa->dlightframe == r_framecount) {
-			R_BuildDlightList (fa);
-		} else {
+			R_BuildDlightList(fa);
+		}
+		else {
 			numdlights = 0;
 		}
 
@@ -444,17 +443,41 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface)
 
 void R_UploadChangedLightmaps(void)
 {
+	GL_EnterRegion(__FUNCTION__);
 	if (r_dynamic.integer == 2) {
-		extern void GL_DevCopyLightmaps(void);
+		extern GLuint GL_TextureNameFromReference(texture_ref ref);
+		static glm_program_t lightmap_program;
+		static buffer_ref ssbo_lightingData;
 
-		GL_EnterRegion(__FUNCTION__);
-		GL_DevCopyLightmaps();
-		GL_LeaveRegion();
+		if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
+			extern qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader, GLint length);
+			extern unsigned char glsl_lighting_compute_glsl[];
+			extern unsigned int glsl_lighting_compute_glsl_len;
+
+			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
+				return;
+			}
+		}
+
+		if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
+			ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, write_once_use_once);
+		}
+		else {
+			GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+		}
+		GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
+
+		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		glBindImageTexture(1, GL_TextureNameFromReference(lightmap_texture_array), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+		glBindImageTexture(2, GL_TextureNameFromReference(lightmap_data_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
+
+		GL_UseProgram(lightmap_program.program);
+		glDispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 	}
 	else if (frameStats.lightmap_min_changed < lightmap_array_size) {
 		unsigned int i;
 
-		GL_EnterRegion(__FUNCTION__);
 		for (i = frameStats.lightmap_min_changed; i <= frameStats.lightmap_max_changed; ++i) {
 			if (lightmaps[i].modified) {
 				R_UploadLightMap(GL_TEXTURE0, i);
@@ -463,8 +486,8 @@ void R_UploadChangedLightmaps(void)
 
 		frameStats.lightmap_min_changed = lightmap_array_size;
 		frameStats.lightmap_max_changed = 0;
-		GL_LeaveRegion();
 	}
+	GL_LeaveRegion();
 }
 
 void R_RenderAllDynamicLightmaps(model_t *model)
@@ -754,20 +777,11 @@ void GL_BuildLightmaps(void)
 				lightmaps[i].rawdata
 			);
 
-			if (full_lighting) {
-				GL_TexSubImage3D(
-					GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
-					LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
-					lightmaps[i].sourcedata
-				);
-			}
-			else {
-				GL_TexSubImage3D(
-					GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
-					LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-					lightmaps[i].rawdata
-				);
-			}
+			GL_TexSubImage3D(
+				GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
+				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
+				lightmaps[i].sourcedata
+			);
 
 			GL_TexSubImage3D(
 				GL_TEXTURE0, lightmap_data_array, 0, 0, 0, i,
@@ -919,12 +933,7 @@ void GLM_CreateLightmapTextures(void)
 	}
 
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array);
-	if (full_lighting) {
-		GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	}
-	else {
-		GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	}
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 	if (glObjectLabel) {
 		extern GLuint GL_TextureNameFromReference(texture_ref ref);
 
@@ -938,56 +947,6 @@ void GLM_CreateLightmapTextures(void)
 
 		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_data_array), -1, "lightmap_data_array");
 	}
-}
-
-// Run compute shader to copy lightmap data over to new array
-void GL_DevCopyLightmaps(void)
-{
-	extern GLuint GL_TextureNameFromReference(texture_ref ref);
-	static glm_program_t lightmap_program;
-	static buffer_ref ssbo_lightingData;
-
-	if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
-		extern qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader, GLint length);
-
-		if (full_lighting) {
-			extern unsigned char glsl_lighting_compute_glsl[];
-			extern unsigned int glsl_lighting_compute_glsl_len;
-
-			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
-				return;
-			}
-		}
-		else {
-			extern unsigned char glsl_lighting_copy_compute_glsl[];
-			extern unsigned int glsl_lighting_copy_compute_glsl_len;
-
-			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_copy_compute_glsl, glsl_lighting_copy_compute_glsl_len)) {
-				return;
-			}
-		}
-	}
-
-	if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
-		ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, write_once_use_once);
-	}
-	else {
-		GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
-	}
-	GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
-
-	if (full_lighting) {
-		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-	}
-	else {
-		glBindImageTexture(0, GL_TextureNameFromReference(lightmap_source_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA8);
-	}
-	glBindImageTexture(1, GL_TextureNameFromReference(lightmap_texture_array), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-	glBindImageTexture(2, GL_TextureNameFromReference(lightmap_data_array), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
-
-	GL_UseProgram(lightmap_program.program);
-	glDispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
 texture_ref GLM_LightmapArray(void)

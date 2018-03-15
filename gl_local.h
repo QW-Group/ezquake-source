@@ -311,7 +311,7 @@ void R_DrawAlphaChain(msurface_t* alphachain);
 void GL_BuildLightmaps (void);
 
 qbool R_FullBrightAllowed(void);
-void R_Check_R_FullBright(void);
+void R_Check_ReloadLightmaps(void);
 
 // gl_ngraph.c
 //void R_NetGraph (void); // HUD -> hexum
