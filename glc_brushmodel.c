@@ -426,7 +426,7 @@ void GLC_DrawWorld(void)
 	}
 
 	//draw the world alpha textures
-	R_DrawAlphaChain(alphachain);
+	GLC_DrawAlphaChain(alphachain);
 }
 
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)

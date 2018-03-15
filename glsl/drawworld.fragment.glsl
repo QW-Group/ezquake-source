@@ -141,7 +141,7 @@ void main()
 	lmColor = texture(lightmapTex, TexCoordLightmap);
 	texColor = texture(materialTex[SamplerNumber], TextureCoord);
 
-	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.666) {
+	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.333) {
 		discard;
 	}
 

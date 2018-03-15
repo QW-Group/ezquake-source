@@ -1599,13 +1599,11 @@ void R_DrawBrushModel(entity_t *e)
 		// TODO: DrawAlphaChain
 	}
 	else {
-		extern cvar_t gl_brush_polygonoffset;
-
 		GLC_DrawBrushModel(e, clmodel, caustics);
 
 		GLC_DrawSkyChain();
 
-		R_DrawAlphaChain(alphachain);
+		GLC_DrawAlphaChain(alphachain);
 	}
 	// } END shaman FIX for no simple textures on world brush models
 

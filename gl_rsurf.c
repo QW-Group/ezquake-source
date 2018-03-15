@@ -40,9 +40,10 @@ typedef void(*chain_surf_func)(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
+	qbool alphaSurface = surf->flags & SURF_DRAWALPHA;
 
 	while (current) {
-		if (surf->lightmaptexturenum > current->lightmaptexturenum) {
+		if ((alphaSurface && !current->flags & SURF_DRAWALPHA) || (!alphaSurface && surf->lightmaptexturenum > current->lightmaptexturenum)) {
 			chain_head = &(current->texturechain);
 			current = *chain_head;
 			continue;
@@ -286,6 +287,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 
 	if (c) {
 		qbool turbSurface;
+		qbool alphaSurface;
 
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 
@@ -310,6 +312,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			cl.worldmodel->last_texture_chained = max(cl.worldmodel->last_texture_chained, surf->texinfo->miptex);
 
 			turbSurface = (surf->flags & SURF_DRAWTURB);
+			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
 				if (r_fastsky.integer || GL_ShadersSupported()) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
@@ -330,7 +333,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				GL_EmitSurfaceParticleEffects(surf);
 			}
-			else if (surf->flags & SURF_DRAWALPHA) {
+			else if ((!GL_ShadersSupported()) && alphaSurface) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
@@ -339,10 +342,10 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 					underwater = 1;
 				}
 
-				if (drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
+				if (!alphaSurface && drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
-				else if (drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
+				else if (!alphaSurface && drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
 				else {
@@ -553,9 +556,8 @@ static void GL_EmitSurfaceParticleEffects(msurface_t* s)
 	}
 }
 
-// FIXME: Doesn't work in modern
 //draws transparent textures for HL world and nonworld models
-void R_DrawAlphaChain(msurface_t* alphachain)
+void GLC_DrawAlphaChain(msurface_t* alphachain)
 {
 	int k;
 	msurface_t *s;

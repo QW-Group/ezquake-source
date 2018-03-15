@@ -406,13 +406,14 @@ static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int 
 	}
 
 	if (mode & TEX_FULLBRIGHT) {
+		qbool was_alpha = mode & TEX_ALPHA;
+
 		// This is a fullbright mask, so make all non-fullbright colors transparent.
 		mode |= TEX_ALPHA;
 	
 		for (i = 0; i < image_size; i++) {
 			p = data[i];
-
-			if (p < 224) {
+			if (p < 224 || (p == 255 && was_alpha)) {
 				trans[i] = 0; // Transparent.
 			}
 			else {
