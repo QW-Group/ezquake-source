@@ -212,12 +212,14 @@ static const json_variable_t* JSON_Variable_Load(const char* name)
 	const char* variableType = NULL;
 
 	varsObj = json_object_get(variables_root, "vars");
-	if (varsObj == NULL)
+	if (varsObj == NULL) {
 		return NULL;
+	}
 
 	variable = json_object_get(varsObj, name);
-	if (variable == NULL)
+	if (variable == NULL) {
 		return NULL;
+	}
 
 	variableType = json_string_value(json_object_get(variable, "type"));
 
@@ -225,21 +227,32 @@ static const json_variable_t* JSON_Variable_Load(const char* name)
 	result.description = json_string_value(json_object_get(variable, "desc"));
 	result.name = name;
 	result.remarks = json_string_value(json_object_get(variable, "remarks"));
-	if (!strcmp(variableType, "string"))
-		result.value_type = t_string;
-	else if (!strcmp(variableType, "integer"))
-		result.value_type = t_integer;
-	else if (!strcmp(variableType, "float"))
-		result.value_type = t_float;
-	else if (!strcmp(variableType, "boolean"))
-		result.value_type = t_boolean;
-	else if (!strcmp(variableType, "enum"))
-		result.value_type = t_enum;
-	else
+	if (variableType) {
+		if (!strcmp(variableType, "string")) {
+			result.value_type = t_string;
+		}
+		else if (!strcmp(variableType, "integer")) {
+			result.value_type = t_integer;
+		}
+		else if (!strcmp(variableType, "float")) {
+			result.value_type = t_float;
+		}
+		else if (!strcmp(variableType, "boolean") || !strcmp(variableType, "bool")) {
+			result.value_type = t_boolean;
+		}
+		else if (!strcmp(variableType, "enum")) {
+			result.value_type = t_enum;
+		}
+		else
+			result.value_type = t_unknown;
+	}
+	else {
 		result.value_type = t_unknown;
+	}
 	result.values = json_object_get(variable, "values");
-	if (!json_is_array(result.values))
+	if (!json_is_array(result.values)) {
 		result.values = NULL;
+	}
 
 	return &result;
 }
