@@ -227,6 +227,9 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 			return GL_GenFixedBuffer(target, name, size, data, glUsage);
 		}
 
+		if (glObjectLabel && name) {
+			glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
+		}
 		ref.index = buffer - buffers;
 		return ref;
 	}
