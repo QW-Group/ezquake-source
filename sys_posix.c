@@ -96,7 +96,7 @@ void Sys_Quit(void)
 void Sys_Init(void)
 {
 #ifdef __APPLE__
-       extern void init_url_handler();
+       extern void init_url_handler( void );
        init_url_handler();
 #endif
 }
