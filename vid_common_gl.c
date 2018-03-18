@@ -1016,10 +1016,15 @@ void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 
 void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
 {
-	if (!glDrawElementsBaseVertex) {
+	if (basevertex && !glDrawElementsBaseVertex) {
 		Sys_Error("glDrawElementsBaseVertex called, not supported");
 	}
-	glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+	else if (glDrawElementsBaseVertex) {
+		glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+	}
+	else {
+		glDrawElements(mode, count, type, indices);
+	}
 	++frameStats.draw_calls;
 	GL_LogAPICall("glDrawElements(%d verts)", count);
 }

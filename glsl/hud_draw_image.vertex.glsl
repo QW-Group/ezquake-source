@@ -2,6 +2,7 @@
 
 #ezquake-definitions
 
+#ifdef HUD_IMAGE_GEOMETRY_SHADER
 layout(location = 0) in vec2 inPositionTL;
 layout(location = 1) in vec2 inPositionBR;
 layout(location = 2) in vec2 inTexCoordTL;
@@ -30,3 +31,26 @@ void main()
 		gAlphaTest = (inFlags & 2);
 	}
 }
+#else
+layout(location = 0) in vec2 inPosition;
+layout(location = 1) in vec2 inTexCoord;
+layout(location = 2) in vec4 inColour;
+layout(location = 3) in int inFlags;
+
+out vec2 TextureCoord;
+out vec4 Colour;
+out float AlphaTest;
+
+void main()
+{
+	gl_Position = vec4(inPosition, 0, 1);
+	TextureCoord = inTexCoord;
+	Colour = inColour;
+	if ((inFlags & 4) != 0) {
+		AlphaTest = r_alphafont != 0 ? 0 : 1;
+	}
+	else {
+		AlphaTest = (inFlags & 2);
+	}
+}
+#endif

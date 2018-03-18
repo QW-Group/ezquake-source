@@ -2,6 +2,7 @@
 #ifndef EZQUAKE_GLM_DRAW_HEADER
 #define EZQUAKE_GLM_DRAW_HEADER
 
+//#define HUD_IMAGE_GEOMETRY_SHADER
 #define MAX_LINES_PER_FRAME 128
 
 typedef struct glm_line_point_s {
@@ -50,10 +51,15 @@ typedef enum {
 } glm_image_type_t;
 
 typedef struct glm_image_s {
+#ifdef HUD_IMAGE_GEOMETRY_SHADER
 	float x1, y1;
 	float x2, y2;
 	float s1, t1;
 	float s2, t2;
+#else
+	float pos[2];
+	float tex[2];
+#endif
 	unsigned char colour[4];
 	int flags;
 } glm_image_t;
@@ -65,7 +71,11 @@ typedef struct glc_image_s {
 } glc_image_t;
 
 typedef struct glm_image_framedata_s {
+#ifdef HUD_IMAGE_GEOMETRY_SHADER
 	glm_image_t images[MAX_MULTI_IMAGE_BATCH];
+#else
+	glm_image_t images[MAX_MULTI_IMAGE_BATCH * 4];
+#endif
 	glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 
 	int imageCount;

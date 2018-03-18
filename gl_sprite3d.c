@@ -251,6 +251,7 @@ static void GL_Create3DSpriteVBO(void)
 			indexData[pos++] = ~(GLuint)0;
 		}
 
+		GL_BindVertexArray(NULL);
 		sprite3dIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "3dsprite-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
 	}
 }
