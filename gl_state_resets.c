@@ -70,18 +70,18 @@ void GL_StateDefault3D(void)
 	LEAVE_STATE;
 }
 
-void GLM_StateBeginDrawBillboards(void)
+void GLM_StateBeginDraw3DSprites(void)
 {
 	ENTER_STATE;
 
 	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GL_Disable(GL_CULL_FACE);
 
 	LEAVE_STATE;
 }
 
-void GLM_StateEndDrawBillboards(void)
+void GLM_StateEndDraw3DSprites(void)
 {
 }
 
@@ -112,7 +112,7 @@ void GL_StateDefaultInit(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginDrawBillboards(void)
+void GLC_StateBeginDraw3DSprites(void)
 {
 	ENTER_STATE;
 
@@ -126,7 +126,7 @@ void GLC_StateBeginDrawBillboards(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndDrawBillboards(void)
+void GLC_StateEndDraw3DSprites(void)
 {
 	ENTER_STATE;
 

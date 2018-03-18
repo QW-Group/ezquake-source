@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "glm_texture_arrays.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 
 // Chat icons
 typedef byte col_t[4]; // FIXME: why 4?
@@ -223,10 +223,10 @@ void SCR_SetupCI(void)
 	}
 }
 
-static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
+static void CI_DrawBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
 	float coordinates[4][4];
-	gl_billboard_vert_t* vert;
+	gl_sprite3d_vert_t* vert;
 	int i;
 
 	for (i = 0; i < 4; ++i) {
@@ -237,12 +237,12 @@ static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_p
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	vert = GL_BillboardAddEntry(batch, 4);
+	vert = GL_Sprite3DAddEntry(batch, 4);
 	if (vert) {
-		GL_BillboardSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
-		GL_BillboardSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-		GL_BillboardSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-		GL_BillboardSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
 	}
 }
 
@@ -271,9 +271,9 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true, true);
-	GL_BillboardInitialiseBatch(BILLBOARD_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];
@@ -281,15 +281,15 @@ void DrawChatIcons(void)
 
 		if ((flags & CIF_CHAT) && (flags & CIF_AFK)) {
 			flags = flags & ~(CIF_CHAT | CIF_AFK); // so they will be not showed below again
-			CI_DrawBillboard(BILLBOARD_CHATICON_AFK_CHAT, &ci_textures[citex_chat_afk], p, billboard2);
+			CI_DrawBillboard(SPRITE3D_CHATICON_AFK_CHAT, &ci_textures[citex_chat_afk], p, billboard2);
 		}
 
 		if (flags & CIF_CHAT) {
-			CI_DrawBillboard(BILLBOARD_CHATICON_CHAT, &ci_textures[citex_chat], p, billboard);
+			CI_DrawBillboard(SPRITE3D_CHATICON_CHAT, &ci_textures[citex_chat], p, billboard);
 		}
 
 		if (flags & CIF_AFK) {
-			CI_DrawBillboard(BILLBOARD_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
+			CI_DrawBillboard(SPRITE3D_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
 		}
 	}
 }

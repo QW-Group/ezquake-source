@@ -1,90 +1,90 @@
 
-// Billboard - 3d 
+// 3D sprites
 
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 
-void GLM_DrawBillboards(void);
-void GLM_PrepareBillboards(void);
-void GLC_DrawBillboards(void);
+void GLM_Draw3DSprites(void);
+void GLM_Prepare3DSprites(void);
+void GLC_Draw3DSprites(void);
 
-#define MAX_BILLBOARDS_PER_BATCH    1024  // Batches limited to this so they can't break other functionality
-#define INDEXES_MAX_QUADS        512
-#define INDEXES_MAX_FLASHBLEND     8
-#define INDEXES_MAX_SPARKS        16
+#define MAX_3DSPRITES_PER_BATCH     1024  // Batches limited to this so they can't break other functionality
+#define INDEXES_MAX_QUADS            512
+#define INDEXES_MAX_FLASHBLEND         8
+#define INDEXES_MAX_SPARKS            16
 static int indexes_start_quads;
 static int indexes_start_flashblend;
 static int indexes_start_sparks;
 
 static const char* batch_type_names[] = {
-	"BILLBOARD_ENTITIES",
-	"BILLBOARD_PARTICLES_CLASSIC",
-	"BILLBOARD_PARTICLES_NEW_p_spark",
-	"BILLBOARD_PARTICLES_NEW_p_smoke",
-	"BILLBOARD_PARTICLES_NEW_p_fire",
-	"BILLBOARD_PARTICLES_NEW_p_bubble",
-	"BILLBOARD_PARTICLES_NEW_p_lavasplash",
-	"BILLBOARD_PARTICLES_NEW_p_gunblast",
-	"BILLBOARD_PARTICLES_NEW_p_chunk",
-	"BILLBOARD_PARTICLES_NEW_p_shockwave",
-	"BILLBOARD_PARTICLES_NEW_p_inferno_flame",
-	"BILLBOARD_PARTICLES_NEW_p_inferno_trail",
-	"BILLBOARD_PARTICLES_NEW_p_sparkray",
-	"BILLBOARD_PARTICLES_NEW_p_staticbubble",
-	"BILLBOARD_PARTICLES_NEW_p_trailpart",
-	"BILLBOARD_PARTICLES_NEW_p_dpsmoke",
-	"BILLBOARD_PARTICLES_NEW_p_dpfire",
-	"BILLBOARD_PARTICLES_NEW_p_teleflare",
-	"BILLBOARD_PARTICLES_NEW_p_blood1",
-	"BILLBOARD_PARTICLES_NEW_p_blood2",
-	"BILLBOARD_PARTICLES_NEW_p_blood3",
+	"ENTITIES",
+	"PARTICLES_CLASSIC",
+	"PARTICLES_NEW_p_spark",
+	"PARTICLES_NEW_p_smoke",
+	"PARTICLES_NEW_p_fire",
+	"PARTICLES_NEW_p_bubble",
+	"PARTICLES_NEW_p_lavasplash",
+	"PARTICLES_NEW_p_gunblast",
+	"PARTICLES_NEW_p_chunk",
+	"PARTICLES_NEW_p_shockwave",
+	"PARTICLES_NEW_p_inferno_flame",
+	"PARTICLES_NEW_p_inferno_trail",
+	"PARTICLES_NEW_p_sparkray",
+	"PARTICLES_NEW_p_staticbubble",
+	"PARTICLES_NEW_p_trailpart",
+	"PARTICLES_NEW_p_dpsmoke",
+	"PARTICLES_NEW_p_dpfire",
+	"PARTICLES_NEW_p_teleflare",
+	"PARTICLES_NEW_p_blood1",
+	"PARTICLES_NEW_p_blood2",
+	"PARTICLES_NEW_p_blood3",
 
 	//VULT PARTICLES
-	"BILLBOARD_PARTICLES_NEW_p_rain",
-	"BILLBOARD_PARTICLES_NEW_p_alphatrail",
-	"BILLBOARD_PARTICLES_NEW_p_railtrail",
-	"BILLBOARD_PARTICLES_NEW_p_streak",
-	"BILLBOARD_PARTICLES_NEW_p_streaktrail",
-	"BILLBOARD_PARTICLES_NEW_p_streakwave",
-	"BILLBOARD_PARTICLES_NEW_p_lightningbeam",
-	"BILLBOARD_PARTICLES_NEW_p_vxblood",
-	"BILLBOARD_PARTICLES_NEW_p_lavatrail",
-	"BILLBOARD_PARTICLES_NEW_p_vxsmoke",
-	"BILLBOARD_PARTICLES_NEW_p_vxsmoke_red",
-	"BILLBOARD_PARTICLES_NEW_p_muzzleflash",
-	"BILLBOARD_PARTICLES_NEW_p_inferno",
-	"BILLBOARD_PARTICLES_NEW_p_2dshockwave",
-	"BILLBOARD_PARTICLES_NEW_p_vxrocketsmoke",
-	"BILLBOARD_PARTICLES_NEW_p_trailbleed",
-	"BILLBOARD_PARTICLES_NEW_p_bleedspike",
-	"BILLBOARD_PARTICLES_NEW_p_flame",
-	"BILLBOARD_PARTICLES_NEW_p_bubble2",
-	"BILLBOARD_PARTICLES_NEW_p_bloodcloud",
-	"BILLBOARD_PARTICLES_NEW_p_chunkdir",
-	"BILLBOARD_PARTICLES_NEW_p_smallspark",
-	"BILLBOARD_PARTICLES_NEW_p_slimeglow",
-	"BILLBOARD_PARTICLES_NEW_p_slimebubble",
-	"BILLBOARD_PARTICLES_NEW_p_blacklavasmoke",
-	"BILLBOARD_FLASHBLEND_LIGHTS",
-	"BILLBOARD_CORONATEX_STANDARD",
-	"BILLBOARD_CORONATEX_GUNFLASH",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH1",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH2",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH3",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH4",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH5",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH6",
-	"BILLBOARD_CORONATEX_EXPLOSIONFLASH7",
-	"BILLBOARD_CHATICON_AFK_CHAT",
-	"BILLBOARD_CHATICON_CHAT",
-	"BILLBOARD_CHATICON_AFK",
+	"PARTICLES_NEW_p_rain",
+	"PARTICLES_NEW_p_alphatrail",
+	"PARTICLES_NEW_p_railtrail",
+	"PARTICLES_NEW_p_streak",
+	"PARTICLES_NEW_p_streaktrail",
+	"PARTICLES_NEW_p_streakwave",
+	"PARTICLES_NEW_p_lightningbeam",
+	"PARTICLES_NEW_p_vxblood",
+	"PARTICLES_NEW_p_lavatrail",
+	"PARTICLES_NEW_p_vxsmoke",
+	"PARTICLES_NEW_p_vxsmoke_red",
+	"PARTICLES_NEW_p_muzzleflash",
+	"PARTICLES_NEW_p_inferno",
+	"PARTICLES_NEW_p_2dshockwave",
+	"PARTICLES_NEW_p_vxrocketsmoke",
+	"PARTICLES_NEW_p_trailbleed",
+	"PARTICLES_NEW_p_bleedspike",
+	"PARTICLES_NEW_p_flame",
+	"PARTICLES_NEW_p_bubble2",
+	"PARTICLES_NEW_p_bloodcloud",
+	"PARTICLES_NEW_p_chunkdir",
+	"PARTICLES_NEW_p_smallspark",
+	"PARTICLES_NEW_p_slimeglow",
+	"PARTICLES_NEW_p_slimebubble",
+	"PARTICLES_NEW_p_blacklavasmoke",
+	"FLASHBLEND_LIGHTS",
+	"CORONATEX_STANDARD",
+	"CORONATEX_GUNFLASH",
+	"CORONATEX_EXPLOSIONFLASH1",
+	"CORONATEX_EXPLOSIONFLASH2",
+	"CORONATEX_EXPLOSIONFLASH3",
+	"CORONATEX_EXPLOSIONFLASH4",
+	"CORONATEX_EXPLOSIONFLASH5",
+	"CORONATEX_EXPLOSIONFLASH6",
+	"CORONATEX_EXPLOSIONFLASH7",
+	"CHATICON_AFK_CHAT",
+	"CHATICON_CHAT",
+	"CHATICON_AFK",
 
-	"MAX_BILLBOARD_BATCHES"
+	"MAX_BATCHES"
 };
 
-typedef struct gl_billboard_batch_s {
+typedef struct gl_sprite3d_batch_s {
 	GLenum blendSource;
 	GLenum blendDestination;
 	GLenum primitive;
@@ -94,31 +94,31 @@ typedef struct gl_billboard_batch_s {
 	qbool depthMask;
 	qbool allSameNumber;
 
-	GLint firstVertices[MAX_BILLBOARDS_PER_BATCH];
-	GLint glFirstVertices[MAX_BILLBOARDS_PER_BATCH];
-	GLsizei numVertices[MAX_BILLBOARDS_PER_BATCH];
-	texture_ref textures[MAX_BILLBOARDS_PER_BATCH];
-	int textureIndexes[MAX_BILLBOARDS_PER_BATCH];
+	GLint firstVertices[MAX_3DSPRITES_PER_BATCH];
+	GLint glFirstVertices[MAX_3DSPRITES_PER_BATCH];
+	GLsizei numVertices[MAX_3DSPRITES_PER_BATCH];
+	texture_ref textures[MAX_3DSPRITES_PER_BATCH];
+	int textureIndexes[MAX_3DSPRITES_PER_BATCH];
 
 	const char* name;
 	GLuint count;
-} gl_billboard_batch_t;
+} gl_sprite3d_batch_t;
 
-#define MAX_VERTS_PER_SCENE (MAX_BILLBOARDS_PER_BATCH * MAX_BILLBOARD_BATCHES * 18)
+#define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
 
-static gl_billboard_vert_t verts[MAX_VERTS_PER_SCENE];
-static gl_billboard_batch_t batches[MAX_BILLBOARD_BATCHES];
-static unsigned int batchMapping[MAX_BILLBOARD_BATCHES];
+static gl_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
+static gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
+static unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 static unsigned int batchCount;
 static unsigned int vertexCount;
 
-static buffer_ref billboardVBO;
-static glm_vao_t billboardVAO;
-static buffer_ref billboardIndexes;
-static glm_program_t billboardProgram;
-static GLint billboardUniform_alpha_test;
+static buffer_ref sprite3dVBO;
+static glm_vao_t sprite3dVAO;
+static buffer_ref sprite3dIndexes;
+static glm_program_t sprite3dProgram;
+static GLint sprite3dUniform_alpha_test;
 
-static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
+static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 {
 	unsigned int index = batchMapping[type];
 
@@ -132,9 +132,9 @@ static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocat
 	return &batches[index - 1];
 }
 
-void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask)
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask)
 {
-	gl_billboard_batch_t* batch = BatchForType(type, true);
+	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
 	batch->blendSource = blendSource;
 	batch->blendDestination = blendDestination;
@@ -148,19 +148,19 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->name = batch_type_names[type];
 }
 
-gl_billboard_vert_t* GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int texture_index)
+gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
 {
-	gl_billboard_batch_t* batch = BatchForType(type, false);
+	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
 
-	if (!batch || batch->count >= MAX_BILLBOARDS_PER_BATCH) {
+	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH) {
 		return NULL;
 	}
 	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
 		return NULL;
 	}
 	batch->firstVertices[batch->count] = start;
-	batch->glFirstVertices[batch->count] = start + GL_BufferOffset(billboardVBO) / sizeof(verts[0]);
+	batch->glFirstVertices[batch->count] = start + GL_BufferOffset(sprite3dVBO) / sizeof(verts[0]);
 	batch->numVertices[batch->count] = verts_required;
 	batch->textures[batch->count] = texture;
 	batch->textureIndexes[batch->count] = texture_index;
@@ -173,17 +173,17 @@ gl_billboard_vert_t* GL_BillboardAddEntrySpecific(billboard_batch_id type, int v
 	return &verts[start];
 }
 
-gl_billboard_vert_t* GL_BillboardAddEntryFixed(billboard_batch_id type, int verts_required)
+gl_sprite3d_vert_t* GL_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
 {
-	return GL_BillboardAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-gl_billboard_vert_t* GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
+gl_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
 {
-	return GL_BillboardAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-void GL_BillboardSetVert(gl_billboard_vert_t* vert, float x, float y, float z, float s, float t, GLubyte color[4], int texture_index)
+void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, GLubyte color[4], int texture_index)
 {
 	extern int particletexture_array_index;
 
@@ -201,27 +201,27 @@ void GL_BillboardSetVert(gl_billboard_vert_t* vert, float x, float y, float z, f
 	}
 }
 
-void GL_DrawBillboards(void)
+void GL_Draw3DSprites(void)
 {
 	if (!batchCount || !vertexCount) {
 		return;
 	}
 
 	if (!GL_ShadersSupported()) {
-		GLC_DrawBillboards();
+		GLC_Draw3DSprites();
 
 		batchCount = vertexCount = 0;
 		memset(batchMapping, 0, sizeof(batchMapping));
 	}
 }
 
-static void GL_CreateBillboardVBO(void)
+static void GL_Create3DSpriteVBO(void)
 {
-	if (!GL_BufferReferenceIsValid(billboardVBO)) {
-		billboardVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "billboard", sizeof(verts), verts, write_once_use_once);
+	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
+		sprite3dVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "sprite3d-vbo", sizeof(verts), verts, write_once_use_once);
 	}
 
-	if (!GL_BufferReferenceIsValid(billboardIndexes)) {
+	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
 		static GLuint indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
 		int i, j;
 		int pos = 0;
@@ -251,60 +251,59 @@ static void GL_CreateBillboardVBO(void)
 			indexData[pos++] = ~(GLuint)0;
 		}
 
-		billboardIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "billboard-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
+		sprite3dIndexes = GL_GenFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "3dsprite-indexes", sizeof(indexData), indexData, GL_STATIC_DRAW);
 	}
 }
 
-static void GLM_CreateBillboardVAO(void)
+static void GLM_Create3DSpriteVAO(void)
 {
-	GL_CreateBillboardVBO();
+	GL_Create3DSpriteVBO();
 
-	if (!billboardVAO.vao) {
-		GL_GenVertexArray(&billboardVAO, "billboard-vao");
+	if (!sprite3dVAO.vao) {
+		GL_GenVertexArray(&sprite3dVAO, "3dsprite-vao");
 
 		// position
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position), 0);
+		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex), 0);
+		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
 		// color
-		GL_ConfigureVertexAttribPointer(&billboardVAO, billboardVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color), 0);
+		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
 
-		GL_BindVertexArray(&billboardVAO);
-		GL_BindBuffer(billboardIndexes);
+		GL_BindVertexArray(&sprite3dVAO);
+		GL_BindBuffer(sprite3dIndexes);
 	}
 }
 
-static void GLC_CreateBillboardVAO(void)
+static void GLC_Create3DSpriteVAO(void)
 {
-	GL_CreateBillboardVBO();
+	GL_Create3DSpriteVBO();
 }
 
-static void GLM_CompileBillboardProgram(void)
+static void GLM_Compile3DSpriteProgram(void)
 {
-	if (GLM_ProgramRecompileNeeded(&billboardProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(&sprite3dProgram, 0)) {
 		GL_VFDeclare(draw_sprites);
 
-		// Initialise program for drawing image
-		GLM_CreateVFProgram("Billboard", GL_VFParams(draw_sprites), &billboardProgram);
+		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), &sprite3dProgram);
 	}
 
-	if (billboardProgram.program && !billboardProgram.uniforms_found) {
-		billboardUniform_alpha_test = glGetUniformLocation(billboardProgram.program, "alpha_test");
+	if (sprite3dProgram.program && !sprite3dProgram.uniforms_found) {
+		sprite3dUniform_alpha_test = glGetUniformLocation(sprite3dProgram.program, "alpha_test");
 
-		billboardProgram.uniforms_found = true;
+		sprite3dProgram.uniforms_found = true;
 	}
 }
 
-static qbool GLM_BillboardsInit(void)
+static qbool GLM_3DSpritesInit(void)
 {
 	// Create program
-	GLM_CompileBillboardProgram();
-	GLM_CreateBillboardVAO();
+	GLM_Compile3DSpriteProgram();
+	GLM_Create3DSpriteVAO();
 
-	return (billboardProgram.program && billboardVAO.vao);
+	return (sprite3dProgram.program && sprite3dVAO.vao);
 }
 
-static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
+static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
 {
 	int vertOffset = batch->glFirstVertices[first_batch];
 	int numVertices = batch->numVertices[first_batch];
@@ -321,7 +320,7 @@ static void GL_DrawSequentialBatchImpl(gl_billboard_batch_t* batch, int first_ba
 	}
 }
 
-static void GLC_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
+static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
 	if (GL_TextureReferenceIsValid(batch->texture)) {
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);
@@ -362,7 +361,7 @@ static void GLC_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offse
 	}
 }
 
-static void GLM_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offset, GLuint maximum_batch_size)
+static void GLM_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
 	if (GL_TextureReferenceIsValid(batch->texture)) {
 		// All batches are the same texture, so no issues
@@ -388,7 +387,7 @@ static void GLM_DrawSequentialBatch(gl_billboard_batch_t* batch, int index_offse
 	}
 }
 
-void GLM_PrepareBillboards(void)
+void GLM_Prepare3DSprites(void)
 {
 	if (!batchCount || !vertexCount) {
 		return;
@@ -396,16 +395,16 @@ void GLM_PrepareBillboards(void)
 
 	GL_EnterRegion(__FUNCTION__);
 
-	GLM_CreateBillboardVAO();
+	GLM_Create3DSpriteVAO();
 
-	if (GL_BufferReferenceIsValid(billboardVBO)) {
-		GL_UpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
+	if (GL_BufferReferenceIsValid(sprite3dVBO)) {
+		GL_UpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 
 	GL_LeaveRegion();
 }
 
-void GLM_DrawBillboards(void)
+void GLM_Draw3DSprites(void)
 {
 	unsigned int i;
 	qbool current_alpha_test = false;
@@ -417,18 +416,18 @@ void GLM_DrawBillboards(void)
 
 	GL_EnterRegion(__FUNCTION__);
 
-	if (!GLM_BillboardsInit()) {
+	if (!GLM_3DSpritesInit()) {
 		GL_LeaveRegion();
 		return;
 	}
 
-	GLM_StateBeginDrawBillboards();
-	GL_UseProgram(billboardProgram.program);
-	GL_BindVertexArray(&billboardVAO);
+	GLM_StateBeginDraw3DSprites();
+	GL_UseProgram(sprite3dProgram.program);
+	GL_BindVertexArray(&sprite3dVAO);
 
 	for (i = 0; i < batchCount; ++i) {
-		gl_billboard_batch_t* batch = &batches[i];
-		qbool alpha_test = (i == batchMapping[BILLBOARD_ENTITIES] - 1);
+		gl_sprite3d_batch_t* batch = &batches[i];
+		qbool alpha_test = (i == batchMapping[SPRITE3D_ENTITIES] - 1);
 
 		if (!batch->count) {
 			continue;
@@ -444,7 +443,7 @@ void GLM_DrawBillboards(void)
 			GL_Disable(GL_DEPTH_TEST);
 		}
 		if (first_batch || current_alpha_test != alpha_test) {
-			glUniform1i(billboardUniform_alpha_test, current_alpha_test = alpha_test);
+			glUniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
 		}
 		first_batch = false;
 
@@ -497,7 +496,7 @@ void GLM_DrawBillboards(void)
 
 		batch->count = 0;
 	}
-	GLM_StateEndDrawBillboards();
+	GLM_StateEndDraw3DSprites();
 
 	GL_LeaveRegion();
 
@@ -505,7 +504,7 @@ void GLM_DrawBillboards(void)
 	memset(batchMapping, 0, sizeof(batchMapping));
 }
 
-void GLC_DrawBillboards(void)
+void GLC_Draw3DSprites(void)
 {
 	unsigned int i, j, k;
 
@@ -513,27 +512,27 @@ void GLC_DrawBillboards(void)
 		return;
 	}
 
-	GLC_CreateBillboardVAO();
-	GLC_StateBeginDrawBillboards();
+	GLC_Create3DSpriteVAO();
+	GLC_StateBeginDraw3DSprites();
 
 	if (GL_BuffersSupported()) {
 		GL_BindVertexArray(NULL);
-		GL_BindBuffer(billboardIndexes);
+		GL_BindBuffer(sprite3dIndexes);
 
-		GL_BindAndUpdateBuffer(billboardVBO, vertexCount * sizeof(verts[0]), verts);
-		glVertexPointer(3, GL_FLOAT, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, position));
+		GL_BindAndUpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+		glVertexPointer(3, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position));
 		glEnableClientState(GL_VERTEX_ARRAY);
 
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, color));
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color));
 		glEnableClientState(GL_COLOR_ARRAY);
 
 		qglClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(gl_billboard_vert_t), VBO_FIELDOFFSET(gl_billboard_vert_t, tex));
+		glTexCoordPointer(2, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex));
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
 
 	for (i = 0; i < batchCount; ++i) {
-		gl_billboard_batch_t* batch = &batches[i];
+		gl_sprite3d_batch_t* batch = &batches[i];
 
 		if (!batch->count) {
 			continue;
@@ -612,7 +611,7 @@ void GLC_DrawBillboards(void)
 		}
 		else {
 			for (j = 0; j < batch->count; ++j) {
-				gl_billboard_vert_t* v;
+				gl_sprite3d_vert_t* v;
 
 				if (GL_TextureReferenceIsValid(batch->textures[j])) {
 					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[j]);
@@ -641,7 +640,7 @@ void GLC_DrawBillboards(void)
 		batch->count = 0;
 	}
 
-	GLC_StateEndDrawBillboards();
+	GLC_StateEndDraw3DSprites();
 
 	if (GL_BuffersSupported()) {
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);

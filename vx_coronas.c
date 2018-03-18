@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "vx_stuff.h"
 #include "glm_texture_arrays.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
@@ -140,7 +140,7 @@ void R_DrawCoronas(void)
 	VectorScale(vright, 1, right);
 
 	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
-		billboard_batch_id batch_id = BILLBOARD_CORONATEX_STANDARD + (tex - CORONATEX_STANDARD);
+		sprite3d_batch_id batch_id = SPRITE3D_CORONATEX_STANDARD + (tex - CORONATEX_STANDARD);
 		corona_texture_t* texture = &corona_textures[tex];
 		GLubyte color[4];
 
@@ -148,10 +148,10 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_BillboardInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
+		GL_Sprite3DInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
-			gl_billboard_vert_t* vert;
+			gl_sprite3d_vert_t* vert;
 			if (c->type == C_FREE) {
 				continue;
 			}
@@ -179,12 +179,12 @@ void R_DrawCoronas(void)
 			color[2] = (c->color[2] * alpha) * 255;
 			color[3] = 0;
 
-			vert = GL_BillboardAddEntry(batch_id, 4);
+			vert = GL_Sprite3DAddEntry(batch_id, 4);
 			if (!vert) {
 				break;
 			}
 
-			GL_BillboardSetVert(
+			GL_Sprite3DSetVert(
 				vert++,
 				// Left/Up
 				c->origin[0] + up[0] * (scale / 2) + (right[0] * (scale / 2)*-1),
@@ -192,7 +192,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + up[2] * (scale / 2) + (right[2] * (scale / 2)*-1),
 				0, 0, color, texture->array_index
 			);
-			GL_BillboardSetVert(
+			GL_Sprite3DSetVert(
 				vert++,
 				// Right/Up
 				c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2),
@@ -200,7 +200,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2),
 				texture->array_scale_s, 0, color, texture->array_index
 			);
-			GL_BillboardSetVert(
+			GL_Sprite3DSetVert(
 				vert++,
 				// Left/Down
 				c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1),
@@ -208,7 +208,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1),
 				0, texture->array_scale_t, color, texture->array_index
 			);
-			GL_BillboardSetVert(
+			GL_Sprite3DSetVert(
 				vert++,
 				// Right/Down
 				c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1),
@@ -222,12 +222,12 @@ void R_DrawCoronas(void)
 				int a;
 
 				for (a = 0; a < 5; a++) {
-					vert = GL_BillboardAddEntry(batch_id, 4);
+					vert = GL_Sprite3DAddEntry(batch_id, 4);
 					if (!vert) {
 						break;
 					}
 
-					GL_BillboardSetVert(
+					GL_Sprite3DSetVert(
 						vert++,
 						// Left/Up
 						c->origin[0] + up[0] * (scale / 30) + (right[0] * (scale)*-1),
@@ -235,7 +235,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + up[2] * (scale / 30) + (right[2] * (scale)*-1),
 						0, 0, color, texture->array_index
 					);
-					GL_BillboardSetVert(
+					GL_Sprite3DSetVert(
 						vert++,
 						// Right/Up
 						c->origin[0] + right[0] * (scale)+up[0] * (scale / 30),
@@ -243,7 +243,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + right[2] * (scale)+up[2] * (scale / 30),
 						texture->array_scale_s, 0, color, texture->array_index
 					);
-					GL_BillboardSetVert(
+					GL_Sprite3DSetVert(
 						vert++,
 						// Left/Down
 						c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1),
@@ -251,7 +251,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1),
 						0, texture->array_scale_t, color, texture->array_index
 					);
-					GL_BillboardSetVert(
+					GL_Sprite3DSetVert(
 						vert++,
 						// Right/Down
 						c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1),

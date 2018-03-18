@@ -9,7 +9,7 @@ void GLM_RenderView(void)
 	R_UploadChangedLightmaps();
 	GLM_PrepareWorldModelBatch();
 	GLM_PrepareAliasModelBatches();
-	GLM_PrepareBillboards();
+	GLM_Prepare3DSprites();
 
 	GL_DrawWorldModelBatch(opaque_world);
 
@@ -17,7 +17,7 @@ void GLM_RenderView(void)
 	GLM_DrawAliasModelBatches();
 	GL_LeaveRegion();
 
-	GLM_DrawBillboards();
+	GLM_Draw3DSprites();
 
 	GL_DrawWorldModelBatch(alpha_surfaces);
 }

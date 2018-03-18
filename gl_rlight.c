@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 
 int	r_dlightframecount;
 
@@ -109,7 +109,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		GL_BillboardInitialiseBatch(BILLBOARD_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_FAN, true, false);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_FAN, true, false);
 
 		first_dlight = false;
 	}
@@ -123,7 +123,7 @@ void R_RenderDlight(dlight_t *light)
 		GLubyte center_color[4] = { 255, 255, 255, 255 };
 		GLubyte outer_color[4] = { 0, 0, 0, 0 };
 		float alpha = 0.7f;
-		gl_billboard_vert_t* vert;
+		gl_sprite3d_vert_t* vert;
 
 		VectorSubtract(light->origin, r_origin, v);
 		length = VectorNormalize(v);
@@ -134,7 +134,7 @@ void R_RenderDlight(dlight_t *light)
 			return;
 		}
 
-		vert = GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18);
+		vert = GL_Sprite3DAddEntry(SPRITE3D_FLASHBLEND_LIGHTS, 18);
 		if (!vert) {
 			return;
 		}
@@ -166,7 +166,7 @@ void R_RenderDlight(dlight_t *light)
 		center_color[2] *= alpha;
 		center_color[3] = 255 * alpha;
 
-		GL_BillboardSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
+		GL_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
 
 		bub_sin = bubble_sintable;
 		bub_cos = bubble_costable;
@@ -178,7 +178,7 @@ void R_RenderDlight(dlight_t *light)
 			bub_sin++;
 			bub_cos++;
 
-			GL_BillboardSetVert(vert++, v[0], v[1], v[2], 1, 1, outer_color, -1);
+			GL_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, outer_color, -1);
 		}
 	}
 }

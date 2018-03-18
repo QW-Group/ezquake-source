@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_bloom.h"
 #include "rulesets.h"
 #include "teamplay.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 #include "r_performance.h"
 
 void GLM_ScreenDrawStart(void);
@@ -922,7 +922,7 @@ static void R_RenderScene(void)
 			GLM_InitialiseAliasModelBatches();
 		}
 
-		GL_BillboardInitialiseBatch(BILLBOARD_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);
@@ -1152,7 +1152,7 @@ void R_RenderView(void)
 	R_Render3DHud();
 
 	// Render billboards
-	GL_DrawBillboards();
+	GL_Draw3DSprites();
 
 	if (GL_ShadersSupported()) {
 		GLM_RenderView();

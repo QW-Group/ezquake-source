@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "particles_classic.h"
 #include "glm_texture_arrays.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 #include "rulesets.h"
 
 static texture_ref particletexture;
@@ -47,7 +47,7 @@ typedef struct glm_particle_s {
 
 particle_t particles[ABSOLUTE_MAX_PARTICLES];
 glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
-gl_billboard_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
+gl_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
 
 static int	ramp1[8] = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
 static int	ramp2[8] = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
@@ -618,7 +618,7 @@ void Classic_ReScaleParticles(void)
 	float r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	int i;
 	vec3_t up, right;
-	gl_billboard_vert_t* vert;
+	gl_sprite3d_vert_t* vert;
 
 	if (particles_to_draw == 0) {
 		return;
@@ -633,9 +633,9 @@ void Classic_ReScaleParticles(void)
 		float dist = (glpart->gl_org[0] - r_origin[0]) * vpn[0] + (glpart->gl_org[1] - r_origin[1]) * vpn[1] + (glpart->gl_org[2] - r_origin[2]) * vpn[2];
 		float scale = glpart->gl_scale = 1 + dist * r_partscale;
 
-		GL_BillboardSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
-		GL_BillboardSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
-		GL_BillboardSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
+		GL_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
+		GL_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
+		GL_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
 	}
 }
 
@@ -717,7 +717,7 @@ void Classic_CalculateParticles(void)
 
 		{
 			glm_particle_t* glpart = &glparticles[particles_to_draw];
-			gl_billboard_vert_t* vert = &glvertices[particles_to_draw * 3];
+			gl_sprite3d_vert_t* vert = &glvertices[particles_to_draw * 3];
 			float alpha = color[3] / 255.0f;
 
 			glpart->gl_color[0] = color[0] * alpha;
@@ -727,9 +727,9 @@ void Classic_CalculateParticles(void)
 			glpart->gl_scale = scale;
 			VectorCopy(p->org, glpart->gl_org);
 
-			GL_BillboardSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, glpart->gl_color, particletexture_array_index);
-			GL_BillboardSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, glpart->gl_color, particletexture_array_index);
-			GL_BillboardSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, glpart->gl_color, particletexture_array_index);
+			GL_Sprite3DSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, glpart->gl_color, particletexture_array_index);
+			GL_Sprite3DSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, glpart->gl_color, particletexture_array_index);
+			GL_Sprite3DSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, glpart->gl_color, particletexture_array_index);
 
 			particles_to_draw++;
 		}
@@ -802,14 +802,14 @@ void Classic_CalculateParticles(void)
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
-	gl_billboard_vert_t* vert;
+	gl_sprite3d_vert_t* vert;
 
 	if (particles_to_draw == 0) {
 		return;
 	}
 
-	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
-	vert = GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
+	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
 	}

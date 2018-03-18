@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "tr_types.h"
 #include "glm_texture_arrays.h"
-#include "gl_billboards.h"
+#include "gl_sprite3d.h"
 
 //VULT
 static float alphatrail_s;
@@ -172,7 +172,7 @@ typedef struct particle_tree_s {
 	float		  custom;
 
 	int           verts_per_primitive;
-	billboard_batch_id billboard_type;
+	sprite3d_batch_id billboard_type;
 } particle_type_t;
 
 typedef struct qmb_particle_vertex_s {
@@ -319,7 +319,7 @@ do { \
 	particle_types[count].move = (_move);                                          \
 	particle_types[count].custom = (_custom);                                      \
 	particle_types[count].verts_per_primitive = (_verts_per_primitive);            \
-	particle_types[count].billboard_type = (BILLBOARD_PARTICLES_NEW_ ## _id);      \
+	particle_types[count].billboard_type = (SPRITE3D_PARTICLES_NEW_ ## _id);      \
 	particle_type_index[_id] = count;                                              \
 	count++;                                                                       \
 } while(0);
@@ -602,23 +602,23 @@ static void QMB_AdjustColor(col_t input, part_blend_info_t* blending, col_t outp
 	}
 }
 
-static void QMB_BillboardAddVert(gl_billboard_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
+static void QMB_BillboardAddVert(gl_sprite3d_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
 
 	QMB_AdjustColor(color, blend, new_color);
 
-	GL_BillboardSetVert(vert, x, y, z, s, t, new_color, texture_index);
+	GL_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
 
 __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
 {
 	vec3_t verts[4];
 	float scale = p->size;
-	gl_billboard_vert_t* vert;
+	gl_sprite3d_vert_t* vert;
 
-	vert = GL_BillboardAddEntry(type->billboard_type, 4);
+	vert = GL_Sprite3DAddEntry(type->billboard_type, 4);
 	if (!vert) {
 		return;
 	}
@@ -694,13 +694,13 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 					first = false;
 				}
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
-					gl_billboard_vert_t* vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+					gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
 					if (vert) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
@@ -719,18 +719,18 @@ static void QMB_FillParticleVertexBuffer(void)
 				float* point;
 				GLubyte farColor[4];
 				particle_texture_t* ptex = &particle_textures[ptex_none];
-				gl_billboard_vert_t* vert;
+				gl_sprite3d_vert_t* vert;
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
 				}
 
 				if (first) {
-					GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 					first = false;
 				}
 
-				vert = GL_BillboardAddEntry(pt->billboard_type, pt->verts_per_primitive);
+				vert = GL_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
 				if (vert) {
 					if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
 						VectorCopy(p->org, neworg);
@@ -770,7 +770,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 						first = false;
 					}
 
@@ -811,18 +811,18 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				for (p = pt->start; p; p = p->next) {
 					float vector[4];
-					gl_billboard_vert_t* vert;
+					gl_sprite3d_vert_t* vert;
 
 					if (particle_time < p->start || particle_time >= p->die) {
 						continue;
 					}
 
 					if (first) {
-						GL_BillboardInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
 						first = false;
 					}
 
-					vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+					vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
 					if (vert) {
 						GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
 						GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
@@ -839,7 +839,7 @@ static void QMB_FillParticleVertexBuffer(void)
 						GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 
-						vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+						vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
 						if (vert) {
 							GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
