@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int	r_dlightframecount;
 
-
 void R_AnimateLight (void) {
 	int i, j, l1, l2, i1, i2;
 	float lerpfrac;
@@ -124,6 +123,7 @@ void R_RenderDlight(dlight_t *light)
 		GLubyte center_color[4] = { 255, 255, 255, 255 };
 		GLubyte outer_color[4] = { 0, 0, 0, 0 };
 		float alpha = 0.7f;
+		gl_billboard_vert_t* vert;
 
 		VectorSubtract(light->origin, r_origin, v);
 		length = VectorNormalize(v);
@@ -134,7 +134,8 @@ void R_RenderDlight(dlight_t *light)
 			return;
 		}
 
-		if (!GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18)) {
+		vert = GL_BillboardAddEntry(BILLBOARD_FLASHBLEND_LIGHTS, 18);
+		if (!vert) {
 			return;
 		}
 
@@ -165,7 +166,7 @@ void R_RenderDlight(dlight_t *light)
 		center_color[2] *= alpha;
 		center_color[3] = 255 * alpha;
 
-		GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 1, 1, center_color);
+		GL_BillboardSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
 
 		bub_sin = bubble_sintable;
 		bub_cos = bubble_costable;
@@ -177,7 +178,7 @@ void R_RenderDlight(dlight_t *light)
 			bub_sin++;
 			bub_cos++;
 
-			GL_BillboardAddVert(BILLBOARD_FLASHBLEND_LIGHTS, v[0], v[1], v[2], 1, 1, outer_color);
+			GL_BillboardSetVert(vert++, v[0], v[1], v[2], 1, 1, outer_color, -1);
 		}
 	}
 }

@@ -602,27 +602,28 @@ static void QMB_AdjustColor(col_t input, part_blend_info_t* blending, col_t outp
 	}
 }
 
-static void QMB_BillboardAddVert(particle_type_t* type, float x, float y, float z, float s, float t, col_t color)
+static void QMB_BillboardAddVert(gl_billboard_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
 
 	QMB_AdjustColor(color, blend, new_color);
 
-	GL_BillboardAddVert(type->billboard_type, x, y, z, s, t, new_color);
+	GL_BillboardSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
 
-__inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
+__inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
 {
 	vec3_t verts[4];
 	float scale = p->size;
+	gl_billboard_vert_t* vert;
 
-	if (!GL_BillboardAddEntry(type->billboard_type, 4)) {
+	vert = GL_BillboardAddEntry(type->billboard_type, 4);
+	if (!vert) {
 		return;
 	}
 
-	if (p->rotspeed)
-	{
+	if (p->rotspeed) {
 		matrix3x3_t rotate_matrix;
 		Matrix3x3_CreateRotate(rotate_matrix, DEG2RAD(p->rotangle), vpn);
 
@@ -637,18 +638,17 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t * ptex, par
 		VectorMA(p->org, scale, verts[2], verts[2]);
 		VectorMA(p->org, scale, verts[3], verts[3]);
 	}
-	else
-	{
+	else {
 		VectorMA(p->org, scale, coord[0], verts[0]);
 		VectorMA(p->org, scale, coord[1], verts[1]);
 		VectorMA(p->org, scale, coord[2], verts[2]);
 		VectorMA(p->org, scale, coord[3], verts[3]);
 	}
 
-	QMB_BillboardAddVert(type, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
-	QMB_BillboardAddVert(type, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
-	QMB_BillboardAddVert(type, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
-	QMB_BillboardAddVert(type, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
+	QMB_BillboardAddVert(vert++, type, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
+	QMB_BillboardAddVert(vert++, type, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
+	QMB_BillboardAddVert(vert++, type, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
+	QMB_BillboardAddVert(vert++, type, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
 
 	return;
 }
@@ -700,13 +700,14 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
-					if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
+					gl_billboard_vert_t* vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+					if (vert) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
-						QMB_BillboardAddVert(pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color);
-						QMB_BillboardAddVert(pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color);
-						QMB_BillboardAddVert(pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color);
-						QMB_BillboardAddVert(pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
 					}
 				}
 			}
@@ -718,6 +719,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				float* point;
 				GLubyte farColor[4];
 				particle_texture_t* ptex = &particle_textures[ptex_none];
+				gl_billboard_vert_t* vert;
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -728,7 +730,8 @@ static void QMB_FillParticleVertexBuffer(void)
 					first = false;
 				}
 
-				if (GL_BillboardAddEntry(pt->billboard_type, pt->verts_per_primitive)) {
+				vert = GL_BillboardAddEntry(pt->billboard_type, pt->verts_per_primitive);
+				if (vert) {
 					if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
 						VectorCopy(p->org, neworg);
 					}
@@ -739,7 +742,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					farColor[2] = p->color[2] >> 1;
 					farColor[3] = 0;
 
-					QMB_BillboardAddVert(pt, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+					QMB_BillboardAddVert(vert++, pt, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color, -1);
 					for (j = 7; j >= 0; j--) {
 						vec3_t v;
 						for (k = 0; k < 3; k++) {
@@ -750,7 +753,7 @@ static void QMB_FillParticleVertexBuffer(void)
 								v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
 							}
 						}
-						QMB_BillboardAddVert(pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor);
+						QMB_BillboardAddVert(vert++, pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor, -1);
 					}
 				}
 			}
@@ -808,6 +811,7 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				for (p = pt->start; p; p = p->next) {
 					float vector[4];
+					gl_billboard_vert_t* vert;
 
 					if (particle_time < p->start || particle_time >= p->die) {
 						continue;
@@ -818,7 +822,8 @@ static void QMB_FillParticleVertexBuffer(void)
 						first = false;
 					}
 
-					if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
+					vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+					if (vert) {
 						GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
 						GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
 						GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
@@ -826,25 +831,26 @@ static void QMB_FillParticleVertexBuffer(void)
 						GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
 
 						GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-						QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
 						GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-						QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
+						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
 						GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-						QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
+						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
 						GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-						QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
+						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 
-						if (GL_BillboardAddEntry(pt->billboard_type, 4)) {
+						vert = GL_BillboardAddEntry(pt->billboard_type, 4);
+						if (vert) {
 							GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
 							GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
-							QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color);
+							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
 							GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
-							QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color);
+							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
 							GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
-							QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color);
+							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
 							GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
-							QMB_BillboardAddVert(pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color);
+							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 						}
 					}
 				}

@@ -8,7 +8,7 @@
 // For drawing sprites in 3D space
 
 // FIXME: Now used by classic too.
-void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t)
+void GLM_SpriteToBillboard(gl_billboard_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t, int index)
 {
 	vec3_t points[4];
 
@@ -21,16 +21,17 @@ void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, 
 	VectorMA(origin, -scale, up, points[3]);
 	VectorMA(points[3], +scale, right, points[3]);
 
-	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[0][0], points[0][1], points[0][2], 0, 0, color_white);
-	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[1][0], points[1][1], points[1][2], 0, t, color_white);
-	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[2][0], points[2][1], points[2][2], s, 0, color_white);
-	GL_BillboardAddVert(BILLBOARD_ENTITIES, points[3][0], points[3][1], points[3][2], s, t, color_white);
+	GL_BillboardSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, index);
+	GL_BillboardSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, t, color_white, index);
+	GL_BillboardSetVert(vert++, points[2][0], points[2][1], points[2][2], s, 0, color_white, index);
+	GL_BillboardSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
 }
 
 void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale_, vec3_t up, vec3_t right)
 {
-	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, texture_array, texture_index)) {
-		GLM_SpriteToBillboard(origin, up, right, scale_, scale_s, scale_t);
+	gl_billboard_vert_t* vert = GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, texture_array, texture_index);
+	if (vert) {
+		GLM_SpriteToBillboard(vert, origin, up, right, scale_, scale_s, scale_t, texture_index);
 	}
 }
 
@@ -39,6 +40,7 @@ void GLM_DrawSpriteModel(entity_t* e)
 	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
+	gl_billboard_vert_t* vert;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
@@ -69,8 +71,9 @@ void GLM_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex)) {
-		GLM_SpriteToBillboard(e->origin, up, right, 5, frame->gl_scalingS, frame->gl_scalingT);
+	vert = GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);
+	if (vert) {
+		GLM_SpriteToBillboard(vert, e->origin, up, right, 5, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);
 	}
 }
 

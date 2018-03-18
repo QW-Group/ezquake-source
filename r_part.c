@@ -772,6 +772,7 @@ void Classic_DrawParticles(void)
 {
 	int i;
 	vec3_t up, right;
+	gl_billboard_vert_t* vert;
 
 	if (particles_to_draw == 0) {
 		return;
@@ -781,7 +782,8 @@ void Classic_DrawParticles(void)
 	VectorScale(vright, 1.5, right);
 
 	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
-	if (GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw)) {
+	vert = GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw);
+	if (vert) {
 		for (i = 0; i < particles_to_draw; ++i) {
 			glm_particle_t* glpart = &glparticles[i];
 			float scale = glpart->gl_scale;
@@ -792,9 +794,9 @@ void Classic_DrawParticles(void)
 			color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
 			color[3] = glpart->gl_color[3] * 255;
 
-			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color);
-			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color);
-			GL_BillboardAddVert(BILLBOARD_PARTICLES_CLASSIC, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color);
+			GL_BillboardSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color, particletexture_array_index);
+			GL_BillboardSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color, particletexture_array_index);
+			GL_BillboardSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color, particletexture_array_index);
 		}
 	}
 

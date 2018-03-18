@@ -84,12 +84,6 @@ static const char* batch_type_names[] = {
 	"MAX_BILLBOARD_BATCHES"
 };
 
-typedef struct gl_billboard_vert_s {
-	float position[3];
-	float tex[3];
-	GLubyte color[4];
-} gl_billboard_vert_t;
-
 typedef struct gl_billboard_batch_s {
 	GLenum blendSource;
 	GLenum blendDestination;
@@ -154,19 +148,20 @@ void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GL
 	batch->name = batch_type_names[type];
 }
 
-qbool GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int texture_index)
+gl_billboard_vert_t* GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int texture_index)
 {
 	gl_billboard_batch_t* batch = BatchForType(type, false);
+	int start = vertexCount;
 
 	if (!batch || batch->count >= MAX_BILLBOARDS_PER_BATCH) {
-		return false;
+		return NULL;
 	}
-	if (vertexCount + verts_required >= MAX_VERTS_PER_SCENE) {
-		return false;
+	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
+		return NULL;
 	}
-	batch->firstVertices[batch->count] = vertexCount;
-	batch->glFirstVertices[batch->count] = vertexCount + GL_BufferOffset(billboardVBO) / sizeof(verts[0]);
-	batch->numVertices[batch->count] = 0;
+	batch->firstVertices[batch->count] = start;
+	batch->glFirstVertices[batch->count] = start + GL_BufferOffset(billboardVBO) / sizeof(verts[0]);
+	batch->numVertices[batch->count] = verts_required;
 	batch->textures[batch->count] = texture;
 	batch->textureIndexes[batch->count] = texture_index;
 
@@ -175,42 +170,35 @@ qbool GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, 
 	}
 	++batch->count;
 	vertexCount += verts_required;
-	return true;
+	return &verts[start];
 }
 
-qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
+gl_billboard_vert_t* GL_BillboardAddEntryFixed(billboard_batch_id type, int verts_required)
 {
 	return GL_BillboardAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4])
+gl_billboard_vert_t* GL_BillboardAddEntry(billboard_batch_id type, int verts_required)
 {
-	gl_billboard_batch_t* batch = BatchForType(type, false);
-	int v;
+	return GL_BillboardAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+}
 
-	if (!batch || !batch->count) {
-		return;
-	}
+void GL_BillboardSetVert(gl_billboard_vert_t* vert, float x, float y, float z, float s, float t, GLubyte color[4], int texture_index)
+{
+	extern int particletexture_array_index;
 
-	v = batch->firstVertices[batch->count - 1] + batch->numVertices[batch->count - 1];
-	if (v >= vertexCount) {
-		return;
-	}
-	memcpy(verts[v].color, color, sizeof(verts[v].color));
-	VectorSet(verts[v].position, x, y, z);
-	if (!GL_TextureReferenceIsValid(batch->texture) && !GL_TextureReferenceIsValid(batch->textures[batch->count - 1])) {
-		extern int particletexture_array_index;
-
-		verts[v].tex[0] = 0.99;
-		verts[v].tex[1] = 0.99;
-		verts[v].tex[2] = particletexture_array_index;
+	memcpy(vert->color, color, sizeof(vert->color));
+	VectorSet(vert->position, x, y, z);
+	if (texture_index < 0) {
+		vert->tex[0] = 0.99;
+		vert->tex[1] = 0.99;
+		vert->tex[2] = particletexture_array_index;
 	}
 	else {
-		verts[v].tex[0] = s;
-		verts[v].tex[1] = t;
-		verts[v].tex[2] = GL_TextureReferenceIsValid(batch->textures[batch->count - 1]) ? batch->textureIndexes[batch->count - 1] : batch->texture_index;
+		vert->tex[0] = s;
+		vert->tex[1] = t;
+		vert->tex[2] = texture_index;
 	}
-	++batch->numVertices[batch->count - 1];
 }
 
 void GL_DrawBillboards(void)

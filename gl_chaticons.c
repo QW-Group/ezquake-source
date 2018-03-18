@@ -226,6 +226,7 @@ void SCR_SetupCI(void)
 static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
 	float coordinates[4][4];
+	gl_billboard_vert_t* vert;
 	int i;
 
 	for (i = 0; i < 4; ++i) {
@@ -236,11 +237,12 @@ static void CI_DrawBillboard(billboard_batch_id batch, ci_texture_t* _ptex, ci_p
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	if (GL_BillboardAddEntry(batch, 4)) {
-		GL_BillboardAddVert(batch, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color);
-		GL_BillboardAddVert(batch, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color);
-		GL_BillboardAddVert(batch, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color);
-		GL_BillboardAddVert(batch, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color);
+	vert = GL_BillboardAddEntry(batch, 4);
+	if (vert) {
+		GL_BillboardSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_BillboardSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		GL_BillboardSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		GL_BillboardSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
 	}
 }
 

@@ -68,10 +68,17 @@ typedef enum {
 	MAX_BILLBOARD_BATCHES
 } billboard_batch_id;
 
+typedef struct gl_billboard_vert_s {
+	float position[3];
+	float tex[3];
+	GLubyte color[4];
+} gl_billboard_vert_t;
+
 void GL_BillboardInitialiseBatch(billboard_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask);
-qbool GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
-qbool GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int index);
-void GL_BillboardAddVert(billboard_batch_id type, float x, float y, float z, float s, float t, GLubyte color[4]);
+gl_billboard_vert_t* GL_BillboardAddEntry(billboard_batch_id type, int verts_required);
+gl_billboard_vert_t* GL_BillboardAddEntrySpecific(billboard_batch_id type, int verts_required, texture_ref texture, int index);
+void GL_BillboardSetVert(gl_billboard_vert_t* vert, float x, float y, float z, float s, float t, GLubyte color[4], int texture_index);
 void GL_DrawBillboards(void);
+void GLM_SpriteToBillboard(gl_billboard_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t, int index);
 
 #endif // #ifndef EZQUAKE_GL_BILLBOARDS_HEADER

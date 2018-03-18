@@ -4,12 +4,11 @@
 #include "gl_local.h"
 #include "gl_billboards.h"
 
-extern void GLM_SpriteToBillboard(vec3_t origin, vec3_t up, vec3_t right, float scale, float s, float t);
-
 void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
-	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, simpletexture, 0)) {
-		GLM_SpriteToBillboard(org, up, right, sprsize, 1, 1);
+	gl_billboard_vert_t* vert = GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, simpletexture, 0);
+	if (vert) {
+		GLM_SpriteToBillboard(vert, org, up, right, sprsize, 1, 1, 0);
 	}
 }
 
@@ -18,6 +17,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
+	gl_billboard_vert_t* vert;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
@@ -47,7 +47,8 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	if (GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_texturenum, 0)) {
+	vert = GL_BillboardAddEntrySpecific(BILLBOARD_ENTITIES, 4, frame->gl_texturenum, 0);
+	if (vert) {
 		vec3_t points[4];
 
 		VectorMA(e->origin, frame->up, up, points[0]);
@@ -59,9 +60,9 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorMA(e->origin, frame->down, up, points[3]);
 		VectorMA(points[3], frame->right, right, points[3]);
 
-		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[0][0], points[0][1], points[0][2], 0, 0, color_white);
-		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[1][0], points[1][1], points[1][2], 0, 1, color_white);
-		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[2][0], points[2][1], points[2][2], 1, 0, color_white);
-		GL_BillboardAddVert(BILLBOARD_ENTITIES, points[3][0], points[3][1], points[3][2], 1, 1, color_white);
+		GL_BillboardSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, 0);
+		GL_BillboardSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, 1, color_white, 0);
+		GL_BillboardSetVert(vert++, points[2][0], points[2][1], points[2][2], 1, 0, color_white, 0);
+		GL_BillboardSetVert(vert++, points[3][0], points[3][1], points[3][2], 1, 1, color_white, 0);
 	}
 }

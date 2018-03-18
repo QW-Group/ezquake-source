@@ -151,6 +151,7 @@ void R_DrawCoronas(void)
 		GL_BillboardInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
+			gl_billboard_vert_t* vert;
 			if (c->type == C_FREE) {
 				continue;
 			}
@@ -178,34 +179,42 @@ void R_DrawCoronas(void)
 			color[2] = (c->color[2] * alpha) * 255;
 			color[3] = 0;
 
-			GL_BillboardAddEntry(batch_id, 4);
-			GL_BillboardAddVert(batch_id,
+			vert = GL_BillboardAddEntry(batch_id, 4);
+			if (!vert) {
+				break;
+			}
+
+			GL_BillboardSetVert(
+				vert++,
 				// Left/Up
 				c->origin[0] + up[0] * (scale / 2) + (right[0] * (scale / 2)*-1),
 				c->origin[1] + up[1] * (scale / 2) + (right[1] * (scale / 2)*-1),
 				c->origin[2] + up[2] * (scale / 2) + (right[2] * (scale / 2)*-1),
-				0, 0, color
+				0, 0, color, texture->array_index
 			);
-			GL_BillboardAddVert(batch_id,
+			GL_BillboardSetVert(
+				vert++,
 				// Right/Up
 				c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2),
 				c->origin[1] + right[1] * (scale / 2) + up[1] * (scale / 2),
 				c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2),
-				texture->array_scale_s, 0, color
+				texture->array_scale_s, 0, color, texture->array_index
 			);
-			GL_BillboardAddVert(batch_id,
+			GL_BillboardSetVert(
+				vert++,
 				// Left/Down
 				c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1),
 				c->origin[1] + (right[1] * (scale / 2)*-1) + (up[1] * (scale / 2)*-1),
 				c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1),
-				0, texture->array_scale_t, color
+				0, texture->array_scale_t, color, texture->array_index
 			);
-			GL_BillboardAddVert(batch_id,
+			GL_BillboardSetVert(
+				vert++,
 				// Right/Down
 				c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1),
 				c->origin[1] + right[1] * (scale / 2) + (up[1] * (scale / 2)*-1),
 				c->origin[2] + right[2] * (scale / 2) + (up[2] * (scale / 2)*-1),
-				texture->array_scale_s, texture->array_scale_t, color
+				texture->array_scale_s, texture->array_scale_t, color, texture->array_index
 			);
 
 			// It's sort of cheap, but lets draw a few more here to make the effect more obvious
@@ -213,34 +222,42 @@ void R_DrawCoronas(void)
 				int a;
 
 				for (a = 0; a < 5; a++) {
-					GL_BillboardAddEntry(batch_id, 4);
-					GL_BillboardAddVert(batch_id,
+					vert = GL_BillboardAddEntry(batch_id, 4);
+					if (!vert) {
+						break;
+					}
+
+					GL_BillboardSetVert(
+						vert++,
 						// Left/Up
 						c->origin[0] + up[0] * (scale / 30) + (right[0] * (scale)*-1),
 						c->origin[1] + up[1] * (scale / 30) + (right[1] * (scale)*-1),
 						c->origin[2] + up[2] * (scale / 30) + (right[2] * (scale)*-1),
-						0, 0, color
+						0, 0, color, texture->array_index
 					);
-					GL_BillboardAddVert(batch_id,
+					GL_BillboardSetVert(
+						vert++,
 						// Right/Up
 						c->origin[0] + right[0] * (scale)+up[0] * (scale / 30),
 						c->origin[1] + right[1] * (scale)+up[1] * (scale / 30),
 						c->origin[2] + right[2] * (scale)+up[2] * (scale / 30),
-						texture->array_scale_s, 0, color
+						texture->array_scale_s, 0, color, texture->array_index
 					);
-					GL_BillboardAddVert(batch_id,
+					GL_BillboardSetVert(
+						vert++,
 						// Left/Down
 						c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1),
 						c->origin[1] + (right[1] * (scale)*-1) + (up[1] * (scale / 30)*-1),
 						c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1),
-						0, texture->array_scale_t, color
+						0, texture->array_scale_t, color, texture->array_index
 					);
-					GL_BillboardAddVert(batch_id,
+					GL_BillboardSetVert(
+						vert++,
 						// Right/Down
 						c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1),
 						c->origin[1] + right[1] * (scale)+(up[1] * (scale / 30)*-1),
 						c->origin[2] + right[2] * (scale)+(up[2] * (scale / 30)*-1),
-						texture->array_scale_s, texture->array_scale_t, color
+						texture->array_scale_s, texture->array_scale_t, color, texture->array_index
 					);
 				}
 			}
