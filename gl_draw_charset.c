@@ -33,13 +33,10 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 extern float overall_alpha;
 
-static void Apply_OnChange_gl_smoothfont(int value);
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
-static void OnChange_gl_smoothfont(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t gl_alphafont    = { "gl_alphafont", "1" };
 cvar_t gl_consolefont  = { "gl_consolefont", "povo5", 0, OnChange_gl_consolefont };
-cvar_t gl_smoothfont   = { "gl_smoothfont", "1", 0, OnChange_gl_smoothfont };
 cvar_t scr_coloredText = { "scr_coloredText", "1" };
 cvar_t gl_charsets_min = { "gl_charsets_min", "1" };
 
@@ -185,9 +182,6 @@ static int Draw_LoadCharset(const char *name)
 		}
 	}
 
-	// apply gl_smoothfont
-	Apply_OnChange_gl_smoothfont(gl_smoothfont.integer);
-
 	CachePics_MarkAtlasDirty();
 
 	return 0;
@@ -210,36 +204,6 @@ static void Draw_LoadCharset_f(void)
 	default:
 		Com_Printf("Usage: %s <charset>\n", Cmd_Argv(0));
 	}
-}
-
-// call it when gl_smoothfont changed or after we load charset
-static void Apply_OnChange_gl_smoothfont(int value)
-{
-	int i;
-
-	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
-		return;
-	}
-
-	for (i = 0; i < MAX_CHARSETS; i++) {
-		if (!GL_TextureReferenceIsValid(char_textures[i].texnum)) {
-			break;
-		}
-
-		if (value) {
-			GL_TexParameterf(GL_TEXTURE0, char_textures[i].texnum, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			GL_TexParameterf(GL_TEXTURE0, char_textures[i].texnum, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
-		else {
-			GL_TexParameterf(GL_TEXTURE0, char_textures[i].texnum, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			GL_TexParameterf(GL_TEXTURE0, char_textures[i].texnum, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
-	}
-}
-
-static void OnChange_gl_smoothfont(cvar_t *var, char *string, qbool *cancel)
-{
-	Apply_OnChange_gl_smoothfont(Q_atoi(string));
 }
 
 // Called when textencoding, if we can't display a font it can replace with alternative
@@ -493,7 +457,6 @@ void Draw_Charset_Init(void)
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register(&gl_smoothfont);
 	Cvar_Register(&gl_consolefont);
 	Cvar_Register(&gl_alphafont);
 	Cvar_Register(&gl_charsets_min);

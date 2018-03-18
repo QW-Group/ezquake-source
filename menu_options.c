@@ -188,7 +188,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void Sys_RegisterQWURLProtocol_f(void);
 #endif
-extern cvar_t scr_autoid, crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
 ;
 
@@ -1243,7 +1243,6 @@ setting settsystem_arr[] = {
 	ADDSET_SEPARATOR("Font"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
-	ADDSET_BOOL("Font Smoothing", gl_smoothfont),
 	ADDSET_BASIC_SECTION(),
 
 	//Sound & Volume
