@@ -293,10 +293,10 @@ static void GLC_CreateBillboardVAO(void)
 static void GLM_CompileBillboardProgram(void)
 {
 	if (GLM_ProgramRecompileNeeded(&billboardProgram, 0)) {
-		GL_VFDeclare(billboard);
+		GL_VFDeclare(draw_sprites);
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgram("Billboard", GL_VFParams(billboard), &billboardProgram);
+		GLM_CreateVFProgram("Billboard", GL_VFParams(draw_sprites), &billboardProgram);
 	}
 
 	if (billboardProgram.program && !billboardProgram.uniforms_found) {

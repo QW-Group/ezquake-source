@@ -77,7 +77,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 	if (GLM_ProgramRecompileNeeded(&drawAliasModelProgram, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
-		GL_VFDeclare(model_alias);
+		GL_VFDeclare(draw_aliasmodel);
 
 		included_definitions[0] = '\0';
 		if (caustic_textures) {
@@ -99,7 +99,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(model_alias), &drawAliasModelProgram, included_definitions);
+		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(draw_aliasmodel), &drawAliasModelProgram, included_definitions);
 
 		drawAliasModelProgram.custom_options = drawAlias_desiredOptions;
 	}

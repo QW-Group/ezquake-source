@@ -121,7 +121,7 @@ static void Compile_DrawWorldProgram(void)
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
 		int samplers = 0;
-		GL_VFDeclare(drawworld);
+		GL_VFDeclare(draw_world);
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (detail_textures) {
@@ -177,7 +177,7 @@ static void Compile_DrawWorldProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(drawworld), &drawworld, included_definitions);
+		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(draw_world), &drawworld, included_definitions);
 
 		drawworld.custom_options = drawworld_desiredOptions;
 	}
