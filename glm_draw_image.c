@@ -107,10 +107,10 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 void GLM_CreateMultiImageProgram(void)
 {
 	if (GLM_ProgramRecompileNeeded(&multiImageProgram, 0)) {
-		GL_VGFDeclare(multi_image_draw);
+		GL_VGFDeclare(hud_draw_image);
 
 		// Initialise program for drawing image
-		GLM_CreateVGFProgram("Multi-image", GL_VGFParams(multi_image_draw), &multiImageProgram);
+		GLM_CreateVGFProgram("Multi-image", GL_VGFParams(hud_draw_image), &multiImageProgram);
 	}
 
 	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {

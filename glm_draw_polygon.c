@@ -38,9 +38,9 @@ void GLM_PreparePolygons(void)
 {
 	if (GL_ShadersSupported()) {
 		if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
-			GL_VFDeclare(draw_polygon);
+			GL_VFDeclare(hud_draw_polygon);
 
-			if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(draw_polygon), &polygonProgram)) {
+			if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(hud_draw_polygon), &polygonProgram)) {
 				return;
 			}
 		}

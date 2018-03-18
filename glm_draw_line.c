@@ -51,12 +51,12 @@ void GLM_PrepareLines(void)
 		}
 
 		if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
-			GL_VFDeclare(line_draw);
+			GL_VFDeclare(hud_draw_line);
 
 			// Very simple line-drawing
 			GLM_CreateVFProgram(
 				"LineDrawing",
-				GL_VFParams(line_draw),
+				GL_VFParams(hud_draw_line),
 				&line_program
 			);
 		}

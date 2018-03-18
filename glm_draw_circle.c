@@ -82,9 +82,9 @@ void GLM_PrepareCircles(void)
 {
 	if (GL_ShadersSupported()) {
 		if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
-			GL_VFDeclare(draw_circle);
+			GL_VFDeclare(hud_draw_circle);
 
-			if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(draw_circle), &circleProgram)) {
+			if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(hud_draw_circle), &circleProgram)) {
 				return;
 			}
 		}
