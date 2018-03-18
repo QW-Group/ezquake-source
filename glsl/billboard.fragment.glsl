@@ -15,6 +15,10 @@ void main()
 
 	frag_color *= fsColor;
 
+	if (frag_color.a < 0.3) {
+		discard;
+	}
+
 #ifndef EZ_POSTPROCESS_GAMMA
 	frag_color = vec4(pow(frag_color.rgb, vec3(gamma3d)), frag_color.a);
 #endif
