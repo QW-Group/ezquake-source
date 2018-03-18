@@ -463,6 +463,7 @@ static gltexture_t* GL_NextTextureSlot(GLenum target)
 	}
 	else if (numgltextures >= MAX_GLTEXTURES) {
 		Sys_Error("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+		return NULL;
 	}
 	else {
 		slot = numgltextures++;

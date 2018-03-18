@@ -44,7 +44,7 @@ void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 	qbool alphaSurface = surf->flags & SURF_DRAWALPHA;
 
 	while (current) {
-		if ((alphaSurface && !current->flags & SURF_DRAWALPHA) || (!alphaSurface && surf->lightmaptexturenum > current->lightmaptexturenum)) {
+		if ((alphaSurface && !(current->flags & SURF_DRAWALPHA)) || (!alphaSurface && surf->lightmaptexturenum > current->lightmaptexturenum)) {
 			chain_head = &(current->texturechain);
 			current = *chain_head;
 			continue;

@@ -569,6 +569,8 @@ qbool GLM_CreateVFProgramWithInclude(
 	const char* included_definitions
 );
 
+qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const unsigned char* shadertext, GLint length);
+
 #define GL_VFDeclare(name) \
 	extern unsigned char glsl_##name##_vertex_glsl[];\
 	extern unsigned int glsl_##name##_vertex_glsl_len;\

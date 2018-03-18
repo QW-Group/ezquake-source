@@ -1277,8 +1277,6 @@ static void GL_SwapBuffersWithVsyncFix(void)
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
-	extern cvar_t vid_framebuffer;
-
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;

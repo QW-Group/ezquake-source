@@ -472,7 +472,6 @@ void R_UploadChangedLightmaps(void)
 		static buffer_ref ssbo_lightingData;
 
 		if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
-			extern qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader, GLint length);
 			extern unsigned char glsl_lighting_compute_glsl[];
 			extern unsigned int glsl_lighting_compute_glsl_len;
 

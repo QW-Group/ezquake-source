@@ -116,7 +116,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
-	GLenum primitive;
+	GLenum primitive = GL_TRIANGLE_STRIP;
 
 	int *order, count;
 	vec3_t interpolated_verts;

@@ -49,11 +49,11 @@ static GLenum perspectiveCorrectionHint;
 static GLenum polygonMode;
 
 static GLenum currentTextureUnit = GL_TEXTURE0;
-static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
-static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
-static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS] = { false };
+static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
+static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
+static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
 static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
-static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS] = { 0 };
+static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 
 static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);

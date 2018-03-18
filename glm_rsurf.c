@@ -73,7 +73,6 @@ static void GLM_CheckDrawCallSize(void)
 
 static glm_program_t drawworld;
 static GLint drawWorld_outlines;
-static GLuint drawworld_WorldCvars_block;
 
 #define DRAW_DETAIL_TEXTURES       1
 #define DRAW_CAUSTIC_TEXTURES      2

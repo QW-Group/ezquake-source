@@ -133,14 +133,14 @@ static void GLM_FlushImageDraw(void)
 {
 	if (hudElementCount && glConfig.initialized) {
 		texture_ref currentTexture = null_texture_reference;
-		glm_image_type_t type;
+		glm_image_type_t type = imagetype_image;
 		int start = 0;
 		int i;
 
 		for (i = 0; i < hudElementCount; ++i) {
 			qbool texture_changed = (GL_TextureReferenceIsValid(currentTexture) && GL_TextureReferenceIsValid(elements[i].texture) && !GL_TextureReferenceEqual(currentTexture, elements[i].texture));
 
-			if (i && elements[i].type != type || texture_changed) {
+			if (i && (elements[i].type != type || texture_changed)) {
 				GLM_DrawHudElements(type, currentTexture, start, i - 1);
 
 				start = i;

@@ -194,6 +194,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	}
 	else {
 		Sys_Error("Unknown usage flag passed to GL_CreateFixedBuffer");
+		return null_buffer_reference;
 	}
 
 	if (!tripleBuffer) {
@@ -207,7 +208,6 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 		GL_BindBufferImpl(target, buffer->glref);
 		if (target == GL_UNIFORM_BUFFER || target == GL_SHADER_STORAGE_BUFFER) {
 			GLsizei alignment = (target == GL_UNIFORM_BUFFER ? glConfig.uniformBufferOffsetAlignment : glConfig.shaderStorageBufferOffsetAlignment);
-			GLsizei requested = size;
 
 			size = ((size + (alignment - 1)) / alignment) * alignment;
 
@@ -376,8 +376,6 @@ void GL_BindBufferBase(buffer_ref ref, GLuint index)
 
 void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size)
 {
-	size_t true_size = buffers[ref.index].size * (buffers[ref.index].persistent_mapped_ptr ? 3 : 1);
-
 	if (size == 0) {
 		return;
 	}
@@ -386,7 +384,7 @@ void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeipt
 	assert(buffers[ref.index].glref);
 	assert(size >= 0);
 	assert(offset >= 0);
-	assert(offset + size <= true_size);
+	assert(offset + size <= buffers[ref.index].size * (buffers[ref.index].persistent_mapped_ptr ? 3 : 1));
 
 	glBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
 }

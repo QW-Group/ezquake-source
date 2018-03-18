@@ -35,7 +35,6 @@ void FrameStats_HudInit(void)
 		"Shows information about the renderer's status & workload.",
 		HUD_PLUSMINUS, ca_active, 0, FrameStats_DrawElement,
 		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-		"opacity", "0.5",
 		"scale", "1",
 		NULL
 	);
@@ -45,7 +44,6 @@ static void FrameStats_DrawElement(hud_t *hud)
 {
 	static cvar_t
 		*hud_frameStats_style = NULL,
-		*hud_frameStats_opacity,
 		*hud_frameStats_scale;
 	static char content[32][128];
 
@@ -59,7 +57,6 @@ static void FrameStats_DrawElement(hud_t *hud)
 	if (hud_frameStats_style == NULL) {
 		// first time
 		hud_frameStats_style = HUD_FindVar(hud, "style");
-		hud_frameStats_opacity = HUD_FindVar(hud, "opacity");
 		hud_frameStats_scale = HUD_FindVar(hud, "scale");
 	}
 

@@ -25,8 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int	r_dlightframecount;
 
-void R_AnimateLight (void) {
-	int i, j, l1, l2, i1, i2;
+void R_AnimateLight(void)
+{
+	int i, j, l1, l2;
 	float lerpfrac;
 
 	// light animations : 'm' is normal light, 'a' is no light, 'z' is double bright
@@ -38,9 +39,9 @@ void R_AnimateLight (void) {
 			continue;
 		}
 
-		i1 = l1 = i % cl_lightstyle[j].length;
+		l1 = i % cl_lightstyle[j].length;
 		l1 = (cl_lightstyle[j].map[l1] - 'a') * 22;
-		i2 = l2 = (i + 1) % cl_lightstyle[j].length;
+		l2 = (i + 1) % cl_lightstyle[j].length;
 		l2 = (cl_lightstyle[j].map[l2] - 'a') * 22;
 
 		if (l1 - l2 > 220 || l2 - l1 > 220) {

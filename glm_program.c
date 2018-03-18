@@ -400,7 +400,6 @@ qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int opti
 void GLM_ForceRecompile(void)
 {
 	glm_program_t* program = program_list;
-	extern cvar_t vid_framebuffer_gamma;
 
 	while (program) {
 		program->force_recompile = true;
@@ -410,15 +409,18 @@ void GLM_ForceRecompile(void)
 
 	memset(core_definitions, 0, sizeof(core_definitions));
 #ifdef SUPPORT_FRAMEBUFFERS
-	if (vid_framebuffer_gamma.integer) {
-		strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
+	{
+		extern cvar_t vid_framebuffer_gamma;
+		if (vid_framebuffer_gamma.integer) {
+			strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
+		}
 	}
 #endif
 }
 
-qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)
+qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const unsigned char* shadertext, GLint length)
 {
-	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
+	const char* shader_text[MAX_SHADER_COMPONENTS] = { (const char*)shadertext, "", "", "", "", "" };
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
 	GLuint shader;

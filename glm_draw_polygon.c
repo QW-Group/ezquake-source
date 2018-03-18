@@ -103,7 +103,7 @@ void GLM_DrawPolygons(int start, int end)
 
 		glUniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
 
-		GL_DrawArrays(GL_TRIANGLE_STRIP, i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
+		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
 	}
 }
 

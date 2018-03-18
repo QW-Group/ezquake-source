@@ -1217,11 +1217,9 @@ void Draw_EndDisc (void) {}
 //
 void GL_Set2D(void)
 {
-	qbool framebuffer_enabled = false;
-
 #ifdef SUPPORT_FRAMEBUFFERS
 	extern cvar_t vid_framebuffer;
-	framebuffer_enabled = GL_FramebufferEnabled();
+	qbool framebuffer_enabled = GL_FramebufferEnabled();
 
 	if (framebuffer_enabled && vid_framebuffer.integer == 2) {
 		int vid_width = VID_ScaledWidth2D();

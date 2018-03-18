@@ -203,7 +203,7 @@ void BuildTris (void)
 	int		bestverts[1024];
 	int		besttris[1024];
 	qbool duplicate = false;
-	float previous_s, previous_t;
+	float previous_s = 0, previous_t = 0;
 
 	//
 	// build tristrips

@@ -187,7 +187,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	GLenum materialTextureUnit = GL_TEXTURE0;
 	GLenum lightmapTextureUnit = 0;
 	GLenum fullbrightTextureUnit = 0;
-	GLenum fullbrightMode;
+	GLenum fullbrightMode = GL_ADD;
 
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
