@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_billboards.h"
 #include "r_performance.h"
 
+void GLM_ScreenDrawStart(void);
+
 void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
@@ -1086,8 +1088,6 @@ void R_PostProcessScreen(void)
 
 void R_ScreenDrawStart(void)
 {
-	extern void GLM_ScreenDrawStart(void);
-
 	if (GL_ShadersSupported()) {
 		GLM_ScreenDrawStart();
 	}

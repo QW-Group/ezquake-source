@@ -39,4 +39,9 @@ extern const framebuffer_ref null_framebuffer_ref;
 #define GL_FramebufferReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
 #define GL_FramebufferReferenceCompare(ref1, ref2) ((ref1).index < (ref2).index ? -1 : (ref1).index > (ref2).index ? 1 : 0)
 
+void GLM_FramebufferScreenDrawStart(void);
+void GLM_FramebufferPostProcessScreen(void);
+qbool GL_FramebufferEnabled(void);
+void VID_FramebufferFlip(void);
+
 #endif // __GL_FRAMEBUFFER_H__

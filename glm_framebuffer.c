@@ -18,7 +18,7 @@ static glm_vao_t post_process_vao;
 
 static qbool GLM_CompilePostProcessProgram(void);
 
-qbool GL_FrameBufferEnabled(void)
+qbool GL_FramebufferEnabled(void)
 {
 	return GL_FramebufferReferenceIsValid(framebuffer);
 }
@@ -39,12 +39,12 @@ void VID_FramebufferFlip(void)
 	}
 }
 
-void GLM_ScreenDrawStart(void)
+void GLM_FramebufferScreenDrawStart(void)
 {
 	extern cvar_t vid_framebuffer;
 
-	int effective_width = vid_framebuffer.integer != 0 ? VID_ScaledWidth3D(true) : 0;
-	int effective_height = vid_framebuffer.integer != 0 ? VID_ScaledHeight3D(true) : 0;
+	int effective_width = vid_framebuffer.integer != 0 ? VID_ScaledWidth3D() : 0;
+	int effective_height = vid_framebuffer.integer != 0 ? VID_ScaledHeight3D() : 0;
 
 	if (effective_width && effective_height) {
 		if (!GL_FramebufferReferenceIsValid(framebuffer)) {
@@ -116,7 +116,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 	return post_process_program.program && post_process_vao.vao;
 }
 
-void GLM_FrameBufferPostProcessScreen(void)
+void GLM_FramebufferPostProcessScreen(void)
 {
 	extern cvar_t vid_framebuffer;
 

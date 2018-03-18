@@ -168,7 +168,7 @@ cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CV
 cvar_t vid_framebuffer            = {"vid_framebuffer",            "0"};
 cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0"};
 cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0"};
-cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "0"};
+cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1"};
 cvar_t vid_framebuffer_gamma      = {"vid_framebuffer_gamma",      "0",       CVAR_RECOMPILE_PROGS};
 #endif
 
@@ -1284,7 +1284,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*height = glConfig.vidHeight;
 
 #ifdef SUPPORT_FRAMEBUFFERS
-	if (vid_framebuffer.integer) {
+	if (GL_FramebufferEnabled()) {
 		int scaled_width = VID_ScaledWidth3D();
 		int scaled_height = VID_ScaledHeight3D();
 

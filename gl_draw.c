@@ -30,6 +30,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #ifndef __APPLE__
 #include "tr_types.h"
 #endif
+#include "gl_framebuffer.h"
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);
@@ -1220,7 +1221,7 @@ void GL_Set2D(void)
 
 #ifdef SUPPORT_FRAMEBUFFERS
 	extern cvar_t vid_framebuffer;
-	framebuffer_enabled = GL_FrameBufferEnabled();
+	framebuffer_enabled = GL_FramebufferEnabled();
 
 	if (framebuffer_enabled && vid_framebuffer.integer == 2) {
 		int vid_width = VID_ScaledWidth2D();
@@ -1245,8 +1246,8 @@ void GL_Set2D(void)
 #else
 	GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-	GL_IdentityModelView();
 #endif
+	GL_IdentityModelView();
 
 	GL_StateDefault2D();
 }
