@@ -2148,10 +2148,10 @@ void SCR_UpdateScreenPlayerView(int flags)
 
 	SCR_SetupCI();
 
+	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+
 	if (V_PreRenderView()) {
 		R_SetupFrame();
-
-		GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
 		R_RenderView();
 

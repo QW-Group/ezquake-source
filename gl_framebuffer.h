@@ -29,6 +29,8 @@ void GL_FramebufferDelete(framebuffer_ref* pref);
 void GL_FramebufferStartUsing(framebuffer_ref ref);
 void GL_FramebufferStopUsing(framebuffer_ref ref);
 texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index);
+int GL_FrameBufferWidth(framebuffer_ref ref);
+int GL_FrameBufferHeight(framebuffer_ref ref);
 
 extern const framebuffer_ref null_framebuffer_ref;
 

@@ -32,19 +32,14 @@ typedef struct vrect_s {
 } vrect_t;
 
 typedef struct {
-	pixel_t			*buffer;		// invisible buffer
-	pixel_t			*colormap;		// 256 * VID_GRADES size
-	unsigned short	*colormap16;	// 256 * VID_GRADES size
-	unsigned		rowbytes;		// may be > width if displayed in a window
-	unsigned		width, actualwidth;		
-	unsigned		height, actualheight;
-	float			aspect;			// width / height -- < 0 is taller than wide
-	int				numpages;
-	int				recalc_refdef;	// if true, recalc vid-based stuff
-	unsigned		conwidth;
-	unsigned		conheight;
-	pixel_t			*direct;		// direct drawing to framebuffer, if not NULL
-	void 			(*blitter)(int x, int y, int *width, int *height);	// blitter function
+	pixel_t*        colormap;       // 256 * VID_GRADES size
+	unsigned int    width;
+	unsigned int    height;
+	float           aspect;         // width / height -- < 0 is taller than wide
+	int             numpages;
+	int             recalc_refdef;  // if true, recalc vid-based stuff
+	unsigned int    conwidth;
+	unsigned int    conheight;
 } viddef_t;
 
 extern viddef_t vid; // global video state
@@ -64,6 +59,13 @@ void VID_Init (unsigned char *palette);
 // Called at startup to set up translation tables, takes 256 8 bit RGB values
 // the palette data will go away after the call, so it must be copied off if
 // the video driver will need it again
+
+#ifdef SUPPORT_FRAMEBUFFERS
+int VID_ScaledWidth3D(void);
+int VID_ScaledHeight3D(void);
+int VID_ScaledWidth2D(void);
+int VID_ScaledHeight2D(void);
+#endif
 
 void VID_Shutdown (qbool restart);
 // Called at shutdown

@@ -164,6 +164,14 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
+#ifdef SUPPORT_FRAMEBUFFERS
+cvar_t vid_framebuffer            = {"vid_framebuffer",            "0"};
+cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0"};
+cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0"};
+cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "0"};
+cvar_t vid_framebuffer_gamma      = {"vid_framebuffer_gamma",      "0",       CVAR_RECOMPILE_PROGS};
+#endif
+
 //
 // function declaration
 //
@@ -805,6 +813,13 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
 	Cvar_Register(&vid_renderer);
+#ifdef SUPPORT_FRAMEBUFFERS
+	Cvar_Register(&vid_framebuffer);
+	Cvar_Register(&vid_framebuffer_width);
+	Cvar_Register(&vid_framebuffer_height);
+	Cvar_Register(&vid_framebuffer_scale);
+	Cvar_Register(&vid_framebuffer_gamma);
+#endif
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -1262,9 +1277,23 @@ static void GL_SwapBuffersWithVsyncFix(void)
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
+	extern cvar_t vid_framebuffer;
+
 	*x = *y = 0;
-	*width  = glConfig.vidWidth;
+	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
+
+#ifdef SUPPORT_FRAMEBUFFERS
+	if (vid_framebuffer.integer) {
+		int scaled_width = VID_ScaledWidth3D();
+		int scaled_height = VID_ScaledHeight3D();
+
+		if (scaled_width && scaled_height) {
+			*width = scaled_width;
+			*height = scaled_height;
+		}
+	}
+#endif
 
 	if (cls.state != ca_active) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -1622,33 +1651,46 @@ void VID_RegisterCommands(void)
 
 static void VID_UpdateConRes(void)
 {
+	qbool set_width = false;
+	qbool set_height = false;
+
 	// Default
 	if (r_conwidth.integer == 0 && r_conheight.integer == 0) {
 		vid.width   = vid.conwidth  = bound(320, (int)(glConfig.vidWidth  / r_conscale.value), glConfig.vidWidth);
 		vid.height  = vid.conheight = bound(200, (int)(glConfig.vidHeight / r_conscale.value), glConfig.vidHeight);
-		Cvar_AutoSetInt(&r_conwidth, vid.conwidth);
-		Cvar_AutoSetInt(&r_conheight, vid.conheight);
 
-	} else if (r_conwidth.integer == 0) {
+		set_width = set_height = true;
+	}
+	else if (r_conwidth.integer == 0) {
 		double ar_w = (double)glConfig.vidWidth/(double)glConfig.vidHeight;
 
 		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
 		vid.width   = vid.conwidth  = bound(320, (int)(r_conheight.integer*ar_w + 0.5), glConfig.vidWidth);
-		Cvar_AutoSetInt(&r_conwidth, vid.conwidth);
 
-	} else if (r_conheight.integer == 0) {
+		set_width = true;
+	}
+	else if (r_conheight.integer == 0) {
 		double ar_h = (double)glConfig.vidHeight/(double)glConfig.vidWidth;
 
 		vid.height  = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), glConfig.vidHeight);
 		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
-		Cvar_AutoSetInt(&r_conheight, vid.conheight);
 
-	} else {
+		set_height = true;
+	}
+	else {
 		// User specified, use that but check boundaries
 		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer,  glConfig.vidWidth);
 		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
+
 		Cvar_SetValue(&r_conwidth, vid.conwidth);
 		Cvar_SetValue(&r_conheight, vid.conheight);
+	}
+
+	if (set_width) {
+		Cvar_AutoSetInt(&r_conwidth, vid.conwidth);
+	}
+	if (set_height) {
+		Cvar_AutoSetInt(&r_conheight, vid.conheight);
 	}
 
 	vid.aspect = (double) glConfig.vidWidth / (double) glConfig.vidHeight;
@@ -1708,3 +1750,48 @@ void VID_Init(unsigned char *palette) {
 	vid_initialized = true;
 }
 
+#ifdef SUPPORT_FRAMEBUFFERS
+int VID_ScaledWidth3D(void)
+{
+	if (vid_framebuffer_scale.value > 0) {
+		return glConfig.vidWidth / vid_framebuffer_scale.value;
+	}
+	else if (vid_framebuffer_width.integer > 0) {
+		return vid_framebuffer_width.integer;
+	}
+	return 0;
+}
+
+int VID_ScaledHeight3D(void)
+{
+	if (vid_framebuffer_scale.value > 0) {
+		return glConfig.vidHeight / vid_framebuffer_scale.value;
+	}
+	else if (vid_framebuffer_height.integer > 0) {
+		return vid_framebuffer_height.integer;
+	}
+	return 0;
+}
+
+int VID_ScaledWidth2D(void)
+{
+	if (vid_framebuffer_scale.value > 0) {
+		return vid.width / vid_framebuffer_scale.value;
+	}
+	else if (vid_framebuffer_width.integer > 0) {
+		return vid_framebuffer_width.integer * vid.aspect;
+	}
+	return 0;
+}
+
+int VID_ScaledHeight2D(void)
+{
+	if (vid_framebuffer_scale.value > 0) {
+		return vid.height / vid_framebuffer_scale.value;
+	}
+	else if (vid_framebuffer_height.integer > 0) {
+		return vid_framebuffer_height.integer * vid.aspect;
+	}
+	return 0;
+}
+#endif

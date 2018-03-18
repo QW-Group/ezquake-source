@@ -1212,10 +1212,37 @@ void Draw_EndDisc (void) {}
 //
 void GL_Set2D(void)
 {
-	GL_Viewport(glx, gly, glwidth, glheight);
+	qbool framebuffer_enabled = false;
 
+#ifdef SUPPORT_FRAMEBUFFERS
+	extern cvar_t vid_framebuffer;
+	framebuffer_enabled = GL_FrameBufferEnabled();
+
+	if (framebuffer_enabled && vid_framebuffer.integer == 2) {
+		int vid_width = VID_ScaledWidth2D();
+		int vid_height = VID_ScaledHeight2D();
+
+		// 2D scaling as well: adjust projection
+		GL_Viewport(glx, gly, glwidth, glheight);
+		if (vid_width && vid_height) {
+			GL_OrthographicProjection(0, vid_width, vid_height, 0, -99999, 99999);
+		}
+		else {
+			GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+		}
+	}
+	else {
+		GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
+		if (framebuffer_enabled) {
+			VID_FramebufferFlip();
+		}
+		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+	}
+#else
+	GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	GL_IdentityModelView();
+#endif
 
 	GL_StateDefault2D();
 }

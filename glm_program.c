@@ -400,7 +400,7 @@ qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int opti
 void GLM_ForceRecompile(void)
 {
 	glm_program_t* program = program_list;
-	extern cvar_t gl_postprocess_gamma;
+	extern cvar_t vid_framebuffer_gamma;
 
 	while (program) {
 		program->force_recompile = true;
@@ -409,9 +409,11 @@ void GLM_ForceRecompile(void)
 	}
 
 	memset(core_definitions, 0, sizeof(core_definitions));
-	if (gl_postprocess_gamma.integer) {
+#ifdef SUPPORT_FRAMEBUFFERS
+	if (vid_framebuffer_gamma.integer) {
 		strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
 	}
+#endif
 }
 
 qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)

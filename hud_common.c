@@ -51,6 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void SCR_HUD_WeaponStats(hud_t *hud);
 void WeaponStats_HUDInit(void);
+void FrameStats_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 

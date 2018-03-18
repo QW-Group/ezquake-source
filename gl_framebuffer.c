@@ -155,11 +155,16 @@ framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthB
 	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE, 1, &fb->rgbaTexture);
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Depth buffer
 	if (depthBuffer) {
+		extern cvar_t r_24bit_depth;
+		GLenum depthFormat = r_24bit_depth.integer ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT;
+
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
-		GL_RenderBufferStorage(fb->depthBuffer, GL_DEPTH_COMPONENT, width, height);
+		GL_RenderBufferStorage(fb->depthBuffer, depthFormat, width, height);
 	}
 
 	// Create frame buffer with texture & depth
@@ -169,6 +174,8 @@ framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthB
 
 	fb->status = GL_CheckFramebufferStatus(fb->glref);
 	assert(fb->status == GL_FRAMEBUFFER_COMPLETE);
+	fb->width = width;
+	fb->height = height;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -323,4 +330,14 @@ static void GL_GenFramebuffers(GLsizei n, GLuint* buffers)
 	for (i = 0; i < n; ++i) {
 		glBindFramebuffer(GL_FRAMEBUFFER, buffers[i]);
 	}
+}
+
+int GL_FrameBufferWidth(framebuffer_ref ref)
+{
+	return framebuffer_data[ref.index].width;
+}
+
+int GL_FrameBufferHeight(framebuffer_ref ref)
+{
+	return framebuffer_data[ref.index].height;
 }

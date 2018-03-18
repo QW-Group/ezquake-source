@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "teamplay.h"
 #include "gl_billboards.h"
+#include "r_performance.h"
 
 void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
@@ -191,7 +192,6 @@ cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0"};
-cvar_t gl_postprocess_gamma                = {"gl_postprocess_gamma", "0", CVAR_RECOMPILE_PROGS};
 
 static cvar_t r_lightmap                   = {"r_lightmap", "0"};
 
@@ -675,7 +675,7 @@ void R_SetupViewport(void)
 
 	// Multiview
 	GL_IdentityProjectionView();
-	if (CL_MultiviewCurrentView() != 0 && CL_MultiviewEnabled()) {
+	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
 	if (!CL_MultiviewEnabled()) {
@@ -844,7 +844,6 @@ void R_Init(void)
 
 	Cvar_Register(&gl_outline);
 	Cvar_Register(&gl_outline_width);
-	Cvar_Register(&gl_postprocess_gamma);
 
 	Cvar_Register(&gl_vbo_clientmemory);
 
@@ -1066,14 +1065,9 @@ static void R_RenderSceneBlur(void)
 
 void R_PostProcessScene(void)
 {
-	extern void GLM_PostProcessScene(void);
-
 	if (!GL_ShadersSupported()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
-	}
-	else {
-		GLM_PostProcessScene();
 	}
 }
 
