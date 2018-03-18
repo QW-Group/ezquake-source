@@ -655,24 +655,18 @@ static void SCR_DrawNet(void)
 	Draw_Pic(scr_vrect.x + 64, scr_vrect.y, scr_net);
 }
 
-
-
 void SCR_DrawFPS(void)
 {
 	int x, y;
 	char str[80];
-	extern double lastfps;
 
-	if (!show_fps.value || scr_newHud.value == 1) // HUD -> hexum - newHud has its own fps
+	if (!show_fps.value || scr_newHud.value == 1) {
+		// HUD -> hexum - newHud has its own fps
 		return;
+	}
 
 	// Multiview
-	if (CL_MultiviewEnabled()) {
-		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05) / CL_MultiviewNumberViews());
-	}
-	else {
-		snprintf(str, sizeof(str), "%3.1f", lastfps + 0.05);
-	}
+	snprintf(str, sizeof(str), "%3.1f", cls.fps + 0.05);
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
@@ -795,21 +789,26 @@ void SCR_DrawGameClock (void) {
 	Draw_String (x, y, s);
 }
 
-void SCR_DrawDemoClock (void) {
+void SCR_DrawDemoClock(void)
+{
 	int x, y;
 	char str[80];
 
-	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK || !scr_democlock.value || scr_newHud.value == 1) // newHud has its own democlock
+	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK || !scr_democlock.value || scr_newHud.value == 1) {
+		// newHud has its own democlock
 		return;
+	}
 
-	if (scr_democlock.value == 2)
-		strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
-	else
-		strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+	if (scr_democlock.value == 2) {
+		strlcpy(str, SecondsToHourString((int)(cls.demotime)), sizeof(str));
+	}
+	else {
+		strlcpy(str, SecondsToHourString((int)(cls.demotime - demostarttime)), sizeof(str));
+	}
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
-	Draw_String (x, y, str);
+	Draw_String(x, y, str);
 }
 
 

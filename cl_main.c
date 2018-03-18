@@ -245,7 +245,6 @@ byte		*host_basepal = NULL;
 byte		*host_colormap = NULL;
 
 int		fps_count;
-double		lastfps;
 qbool physframe;
 double physframetime;
 
@@ -2084,11 +2083,11 @@ static double MinPhysFrameTime (void)
 
 void CL_CalcFPS(void)
 {
-	double t;
+	static double lastfps;
 	static double last_frame_time;
 	static double time_of_last_minfps_update;
 
-	t = Sys_DoubleTime();
+	double t = Sys_DoubleTime();
 
 	if ((t - last_frame_time) >= 1.0)
 	{
