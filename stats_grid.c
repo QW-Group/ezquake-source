@@ -21,7 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "stats_grid.h"
 #include "sbar.h"
+#include "hud.h"
+#include "utils.h"
 
+static hud_t* teamholdinfo;
+static hud_t* teamholdbar;
 
 stats_weight_grid_t *stats_grid = NULL;
 stats_entities_t *stats_important_ents = NULL;
@@ -802,10 +806,10 @@ void StatsGrid_Gather(void)
 
 	// Initiate the grid if it hasn't already been initiated.
 	// The grid is reset on all level changes.
-	if(stats_grid == NULL)
-	{
-		if (!cl.worldmodel)
+	if (stats_grid == NULL) {
+		if (!cl.worldmodel) {
 			return;
+		}
 
 		// TODO: Create cvars that let us set these values.
 		StatsGrid_Init(&stats_grid, // The grid to initiate.
@@ -817,27 +821,30 @@ void StatsGrid_Gather(void)
 			0.0);					// The threshold before a team is considered to "hold" a cell.
 
 		// We failed initializing the grid, so don't do anything.
-		if(stats_grid == NULL)
-		{
+		if(stats_grid == NULL) {
 			return;
 		}
 	}
 
 	// If it's the first time for this level initiate.
-	if(stats_important_ents == NULL)
-	{
+	if (stats_important_ents == NULL) {
 		StatsGrid_InitHoldItems();
 	}
 
+	if (teamholdinfo == NULL || teamholdbar == NULL) {
+		return;
+	}
+	if (teamholdinfo->show->value == 0 && teamholdbar->show->value == 0) {
+		return;
+	}
+
 	// Only gather once per frame.
-	if (cls.framecount == lastframecount)
-	{
+	if (cls.framecount == lastframecount) {
 		return;
 	}
 	lastframecount = cls.framecount;
 
-	if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)
-	{
+	if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active) {
 		return;
 	}
 
@@ -850,11 +857,9 @@ void StatsGrid_Gather(void)
 	// Get the info for the player.
 	info = cl.players;
 
-	for(i = 0; i < MAX_CLIENTS; i++, info++, state++)
-	{
+	for (i = 0; i < MAX_CLIENTS; i++, info++, state++) {
 		// Skip spectators.
-		if(!cl.players[i].name[0] || cl.players[i].spectator)
-		{
+		if(!cl.players[i].name[0] || cl.players[i].spectator) {
 			continue;
 		}
 
@@ -870,11 +875,522 @@ void StatsGrid_Gather(void)
 	StatsGrid_ResetHoldItemCounts();
 
 	// Go through all the cells and decrease their weights.
-	for(row = 0; row < stats_grid->row_count; row++)
-	{
-		for(col = 0; col < stats_grid->col_count; col++)
-		{
+	for(row = 0; row < stats_grid->row_count; row++) {
+		for(col = 0; col < stats_grid->col_count; col++) {
 			StatsGrid_DecreaseTeamWeights(stats_grid, row, col, stats_grid->hold_threshold);
 		}
 	}
+}
+
+
+
+
+// HUD rendering
+
+#define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		0
+#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS		1
+#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2	2
+
+// Team hold filters.
+static qbool teamhold_show_pent = false;
+static qbool teamhold_show_quad = false;
+static qbool teamhold_show_ring = false;
+static qbool teamhold_show_suit = false;
+static qbool teamhold_show_rl = false;
+static qbool teamhold_show_lg = false;
+static qbool teamhold_show_gl = false;
+static qbool teamhold_show_sng = false;
+static qbool teamhold_show_mh = false;
+static qbool teamhold_show_ra = false;
+static qbool teamhold_show_ya = false;
+static qbool teamhold_show_ga = false;
+
+void TeamHold_DrawBars(int x, int y, int width, int height,
+					   float team1_percent, float team2_percent,
+					   int team1_color, int team2_color,
+					   float opacity)
+{
+	int team1_width = 0;
+	int team2_width = 0;
+	int bar_height = 0;
+
+	bar_height = Q_rint(height / 2.0);
+	team1_width = (int)(width * team1_percent);
+	team2_width = (int)(width * team2_percent);
+
+	clamp(team1_width, 0, width);
+	clamp(team2_width, 0, width);
+
+	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
+
+	y += bar_height;
+
+	Draw_AlphaFill(x, y, team2_width, bar_height, team2_color, opacity);
+}
+
+void TeamHold_DrawPercentageBar(
+	int x, int y, int width, int height,
+	float team1_percent, float team2_percent,
+	int team1_color, int team2_color,
+	int show_text, int vertical,
+	int vertical_text, float opacity, float scale
+)
+{
+	int _x, _y;
+	int _width, _height;
+
+	if (vertical) {
+		//
+		// Draw vertical.
+		//
+
+		// Team 1.
+		_x = x;
+		_y = y;
+		_width = max(0, width);
+		_height = Q_rint(height * team1_percent);
+		_height = max(0, height);
+
+		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
+
+		// Team 2.
+		_x = x;
+		_y = Q_rint(y + (height * team1_percent));
+		_width = max(0, width);
+		_height = Q_rint(height * team2_percent);
+		_height = max(0, _height);
+
+		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
+
+		// Show the percentages in numbers also.
+		if (show_text) {
+			// TODO: Move this to a separate function (since it's prett much copy and paste for both teams).
+			// Team 1.
+			if (team1_percent > 0.05) {
+				if (vertical_text) {
+					int percent = 0;
+					int percent10 = 0;
+					int percent100 = 0;
+
+					_x = x + (width / 2) - 4 * scale;
+					_y = Q_rint(y + (height * team1_percent) / 2 - 8 * 1.5 * scale);
+
+					percent = Q_rint(100 * team1_percent);
+
+					if ((percent100 = percent / 100)) {
+						Draw_SString(_x, _y, va("%d", percent100), scale);
+						_y += 8 * scale;
+					}
+
+					if ((percent10 = percent / 10)) {
+						Draw_SString(_x, _y, va("%d", percent10), scale);
+						_y += 8 * scale;
+					}
+
+					Draw_SString(_x, _y, va("%d", percent % 10), scale);
+					_y += 8 * scale;
+
+					Draw_SString(_x, _y, "%", scale);
+				}
+				else {
+					_x = x + (width / 2) - 8 * 1.5 * scale;
+					_y = Q_rint(y + (height * team1_percent) / 2 - 8 * scale * 0.5);
+					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
+				}
+			}
+
+			// Team 2.
+			if (team2_percent > 0.05) {
+				if (vertical_text) {
+					int percent = 0;
+					int percent10 = 0;
+					int percent100 = 0;
+
+					_x = x + (width / 2) - 4;
+					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent) / 2 - 12);
+
+					percent = Q_rint(100 * team2_percent);
+
+					if ((percent100 = percent / 100)) {
+						Draw_String(_x, _y, va("%d", percent100));
+						_y += 8;
+					}
+
+					if ((percent10 = percent / 10)) {
+						Draw_String(_x, _y, va("%d", percent10));
+						_y += 8;
+					}
+
+					Draw_String(_x, _y, va("%d", percent % 10));
+					_y += 8;
+
+					Draw_String(_x, _y, "%");
+				}
+				else {
+					_x = x + (width / 2) - 12;
+					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent) / 2 - 4);
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				}
+			}
+		}
+	}
+	else {
+		//
+		// Draw horizontal.
+		//
+
+		// Team 1.
+		_x = x;
+		_y = y;
+		_width = Q_rint(width * team1_percent);
+		_width = max(0, _width);
+		_height = max(0, height);
+
+		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
+
+		// Team 2.
+		_x = Q_rint(x + (width * team1_percent));
+		_y = y;
+		_width = Q_rint(width * team2_percent);
+		_width = max(0, _width);
+		_height = max(0, height);
+
+		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
+
+		// Show the percentages in numbers also.
+		if (show_text) {
+			// Team 1.
+			if (team1_percent > 0.05) {
+				_x = Q_rint(x + (width * team1_percent) / 2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
+			}
+
+			// Team 2.
+			if (team2_percent > 0.05) {
+				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent) / 2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale);
+			}
+		}
+	}
+}
+
+static void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
+{
+	char *start = s;
+	char *end = start;
+	int order = 0;
+
+	// Parse the item filter.
+	teamhold_show_rl = Utils_RegExpMatch("RL", s);
+	teamhold_show_quad = Utils_RegExpMatch("QUAD", s);
+	teamhold_show_ring = Utils_RegExpMatch("RING", s);
+	teamhold_show_pent = Utils_RegExpMatch("PENT", s);
+	teamhold_show_suit = Utils_RegExpMatch("SUIT", s);
+	teamhold_show_lg = Utils_RegExpMatch("LG", s);
+	teamhold_show_gl = Utils_RegExpMatch("GL", s);
+	teamhold_show_sng = Utils_RegExpMatch("SNG", s);
+	teamhold_show_mh = Utils_RegExpMatch("MH", s);
+	teamhold_show_ra = Utils_RegExpMatch("RA", s);
+	teamhold_show_ya = Utils_RegExpMatch("YA", s);
+	teamhold_show_ga = Utils_RegExpMatch("GA", s);
+
+	// Reset the ordering of the items.
+	StatsGrid_ResetHoldItemsOrder();
+
+	// Trim spaces from the start of the word.
+	while (*start && *start == ' ') {
+		start++;
+	}
+
+	end = start;
+
+	// Go through the string word for word and set a
+	// rising order for each hold item based on their
+	// order in the string.
+	while (*end) {
+		if (*end != ' ') {
+			// Not at the end of the word yet.
+			end++;
+			continue;
+		}
+		else {
+			// We've found a word end.
+			char temp[256];
+
+			// Try matching the current word with a hold item
+			// and set it's ordering according to it's placement
+			// in the string.
+			strlcpy(temp, start, min(end - start, sizeof(temp)));
+			StatsGrid_SetHoldItemOrder(temp, order);
+			order++;
+
+			// Get rid of any additional spaces.
+			while (*end && *end == ' ') {
+				end++;
+			}
+
+			// Start trying to find a new word.
+			start = end;
+		}
+	}
+
+	// Order the hold items.
+	StatsGrid_SortHoldItems();
+}
+
+void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
+{
+	int i;
+	int x, y;
+	int width, height;
+
+	static cvar_t
+		*hud_teamholdinfo_style = NULL,
+		*hud_teamholdinfo_opacity,
+		*hud_teamholdinfo_width,
+		*hud_teamholdinfo_height,
+		*hud_teamholdinfo_onlytp,
+		*hud_teamholdinfo_itemfilter,
+		*hud_teamholdinfo_scale;
+
+	if (hud_teamholdinfo_style == NULL)    // first time
+	{
+		char val[256];
+
+		hud_teamholdinfo_style = HUD_FindVar(hud, "style");
+		hud_teamholdinfo_opacity = HUD_FindVar(hud, "opacity");
+		hud_teamholdinfo_width = HUD_FindVar(hud, "width");
+		hud_teamholdinfo_height = HUD_FindVar(hud, "height");
+		hud_teamholdinfo_onlytp = HUD_FindVar(hud, "onlytp");
+		hud_teamholdinfo_itemfilter = HUD_FindVar(hud, "itemfilter");
+		hud_teamholdinfo_scale = HUD_FindVar(hud, "scale");
+
+		// Unecessary to parse the item filter string on each frame.
+		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
+
+		// Parse the item filter the first time (trigger the OnChange function above).
+		strlcpy(val, hud_teamholdinfo_itemfilter->string, sizeof(val));
+		Cvar_Set(hud_teamholdinfo_itemfilter, val);
+	}
+
+	// Get the height based on how many items we have, or what the user has set it to.
+	height = max(0, hud_teamholdinfo_height->value);
+	width = max(0, hud_teamholdinfo_width->value);
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!HUD_ShowInDemoplayback(hud_teamholdinfo_onlytp->value)) {
+		HUD_PrepareDraw(hud, width, height, &x, &y);
+		return;
+	}
+
+	// We don't have anything to show.
+	if (stats_important_ents == NULL || stats_grid == NULL) {
+		HUD_PrepareDraw(hud, width, height, &x, &y);
+		return;
+	}
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		int _y = 0;
+
+		_y = y;
+
+		// Go through all the items and print the stats for them.
+		for (i = 0; i < stats_important_ents->count; i++) {
+			float team1_percent;
+			float team2_percent;
+			int team1_hold_count = 0;
+			int team2_hold_count = 0;
+			int names_width = 0;
+
+			// Don't draw outside the specified height.
+			if ((_y - y) + 8 * hud_teamholdinfo_scale->value > height) {
+				break;
+			}
+
+			// If the item isn't of the specified type, then skip it.
+			if (!((teamhold_show_rl && !strncmp(stats_important_ents->list[i].name, "RL", 2))
+				|| (teamhold_show_quad && !strncmp(stats_important_ents->list[i].name, "QUAD", 4))
+				|| (teamhold_show_ring && !strncmp(stats_important_ents->list[i].name, "RING", 4))
+				|| (teamhold_show_pent && !strncmp(stats_important_ents->list[i].name, "PENT", 4))
+				|| (teamhold_show_suit && !strncmp(stats_important_ents->list[i].name, "SUIT", 4))
+				|| (teamhold_show_lg && !strncmp(stats_important_ents->list[i].name, "LG", 2))
+				|| (teamhold_show_gl && !strncmp(stats_important_ents->list[i].name, "GL", 2))
+				|| (teamhold_show_sng && !strncmp(stats_important_ents->list[i].name, "SNG", 3))
+				|| (teamhold_show_mh && !strncmp(stats_important_ents->list[i].name, "MH", 2))
+				|| (teamhold_show_ra && !strncmp(stats_important_ents->list[i].name, "RA", 2))
+				|| (teamhold_show_ya && !strncmp(stats_important_ents->list[i].name, "YA", 2))
+				|| (teamhold_show_ga && !strncmp(stats_important_ents->list[i].name, "GA", 2))
+				)) {
+				continue;
+			}
+
+			// Calculate the width of the longest item name so we can use it for padding.
+			names_width = 8 * (stats_important_ents->longest_name + 1) * hud_teamholdinfo_scale->value;
+
+			// Calculate the percentages of this item that the two teams holds.
+			team1_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM1];
+			team2_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM2];
+
+			team1_percent = ((float)team1_hold_count) / (team1_hold_count + team2_hold_count);
+			team2_percent = ((float)team2_hold_count) / (team1_hold_count + team2_hold_count);
+
+			team1_percent = fabs(max(0, team1_percent));
+			team2_percent = fabs(max(0, team2_percent));
+
+			// Write the name of the item.
+			Draw_SColoredStringBasic(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0, hud_teamholdinfo_scale->value);
+
+			if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES) {
+				//
+				// Prints the team name that holds the item.
+				//
+				if (team1_percent > team2_percent) {
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0, hud_teamholdinfo_scale->value);
+				}
+				else if (team1_percent < team2_percent) {
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0, hud_teamholdinfo_scale->value);
+				}
+			}
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS) {
+				//
+				// Show a percenteage bar for the item.
+				//
+				TeamHold_DrawPercentageBar(
+					x + names_width, _y,
+					Q_rint(hud_teamholdinfo_width->value - names_width), 8,
+					team1_percent, team2_percent,
+					stats_important_ents->teams[STATS_TEAM1].color,
+					stats_important_ents->teams[STATS_TEAM2].color,
+					0, // Don't show percentage values, get's too cluttered.
+					false,
+					false,
+					hud_teamholdinfo_opacity->value,
+					hud_teamholdinfo_scale->value
+				);
+			}
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2) {
+				TeamHold_DrawBars(x + names_width, _y,
+								  Q_rint(hud_teamholdinfo_width->value - names_width), 8,
+								  team1_percent, team2_percent,
+								  stats_important_ents->teams[STATS_TEAM1].color,
+								  stats_important_ents->teams[STATS_TEAM2].color,
+								  hud_teamholdinfo_opacity->value);
+			}
+
+			// Next line.
+			_y += 8 * hud_teamholdinfo_scale->value;
+		}
+	}
+}
+
+void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+	float team1_percent = 0;
+	float team2_percent = 0;
+
+	static cvar_t
+		*hud_teamholdbar_style = NULL,
+		*hud_teamholdbar_opacity,
+		*hud_teamholdbar_width,
+		*hud_teamholdbar_height,
+		*hud_teamholdbar_vertical,
+		*hud_teamholdbar_show_text,
+		*hud_teamholdbar_onlytp,
+		*hud_teamholdbar_vertical_text,
+		*hud_teamholdbar_scale;
+
+	if (hud_teamholdbar_style == NULL)    // first time
+	{
+		hud_teamholdbar_style = HUD_FindVar(hud, "style");
+		hud_teamholdbar_opacity = HUD_FindVar(hud, "opacity");
+		hud_teamholdbar_width = HUD_FindVar(hud, "width");
+		hud_teamholdbar_height = HUD_FindVar(hud, "height");
+		hud_teamholdbar_vertical = HUD_FindVar(hud, "vertical");
+		hud_teamholdbar_show_text = HUD_FindVar(hud, "show_text");
+		hud_teamholdbar_onlytp = HUD_FindVar(hud, "onlytp");
+		hud_teamholdbar_vertical_text = HUD_FindVar(hud, "vertical_text");
+		hud_teamholdbar_scale = HUD_FindVar(hud, "scale");
+	}
+
+	height = max(1, hud_teamholdbar_height->value);
+	width = max(0, hud_teamholdbar_width->value);
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value)) {
+		HUD_PrepareDraw(hud, width, height, &x, &y);
+		return;
+	}
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		// We need something to work with.
+		if (stats_grid != NULL) {
+			// Check if we have any hold values to calculate from.
+			if (stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count > 0) {
+				// Calculate the percentage for the two teams for the "team strength bar".
+				team1_percent = ((float)stats_grid->teams[STATS_TEAM1].hold_count) / (stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count);
+				team2_percent = ((float)stats_grid->teams[STATS_TEAM2].hold_count) / (stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count);
+
+				team1_percent = fabs(max(0, team1_percent));
+				team2_percent = fabs(max(0, team2_percent));
+			}
+			else {
+				Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
+				return;
+			}
+
+			// Draw the percentage bar.
+			TeamHold_DrawPercentageBar(
+				x, y, width, height,
+				team1_percent, team2_percent,
+				stats_grid->teams[STATS_TEAM1].color,
+				stats_grid->teams[STATS_TEAM2].color,
+				hud_teamholdbar_show_text->value,
+				hud_teamholdbar_vertical->value,
+				hud_teamholdbar_vertical_text->value,
+				hud_teamholdbar_opacity->value,
+				hud_teamholdbar_scale->value
+			);
+		}
+		else {
+			// If there's no stats grid available we don't know what to show, so just show a black frame.
+			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value * 0.5);
+		}
+	}
+}
+
+void TeamHold_HudInit(void)
+{
+	teamholdinfo = HUD_Register(
+		"teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"onlytp", "0",
+		"style", "1",
+		"itemfilter", "quad ra ya ga mega pent rl quad",
+		"scale", "1",
+		NULL
+	);
+
+	teamholdbar = HUD_Register(
+		"teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"vertical_text", "0",
+		"show_text", "1",
+		"onlytp", "0",
+		"scale", "1",
+		NULL
+	);
 }
