@@ -107,15 +107,18 @@ static inline void NET_PacketQueueSetNextIndex(int* index)
 static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* from_address)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->head];
-	double time = Sys_DoubleTime();
+	double time;
 
 	// Empty queue
-	if (!next->time)
+	if (!next->time) {
 		return false;
+	}
 
 	// Not time yet
-	if (next->time > time)
+	time = Sys_DoubleTime();
+	if (next->time > time) {
 		return false;
+	}
 
 	SZ_Clear(buffer);
 	SZ_Write(buffer, next->data, next->length);
@@ -135,8 +138,9 @@ static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, net
 	float deviation = f_rnd(-bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION), bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION));
 
 	// If buffer is full, can't prevent packet loss - drop this packet
-	if (next->time && queue->head == queue->tail)
+	if (next->time && queue->head == queue->tail) {
 		return false;
+	}
 
 	memmove(next->data, data, size);
 	next->length = size;
@@ -942,12 +946,16 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 #ifndef SERVERONLY
 qbool CL_UnqueOutputPacket(qbool sendall)
 {
-	double time = Sys_DoubleTime();
+	double time = 0;
 	cl_delayed_packet_t* packet = NULL;
 	qbool released = false;
 
 	while ((packet = NET_PacketQueuePeek(&delay_queue_send)))
 	{
+		if (!time) {
+			time = Sys_DoubleTime();
+		}
+
 		// Not yet ready to send
 		if (packet->time > time && !sendall)
 			break;

@@ -501,11 +501,9 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		hud_ping_scale    = HUD_FindVar(hud, "scale");
 	}
 
-	t = Sys_DoubleTime();
-	if (t - last_calculated  >  hud_ping_period->value)
-	{
+	t = curtime;
+	if (t - last_calculated > hud_ping_period->value) {
 		// recalculate
-
 		net_stat_result_t result;
 		float period;
 
@@ -723,14 +721,13 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
 		*hud_democlock_blink,
 		*hud_democlock_scale;
 
-	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK)
-	{
+	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK) {
 		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;
 	}
 
-	if (hud_democlock_big == NULL)    // first time
-	{
+	if (hud_democlock_big == NULL) {
+		// first time
 		hud_democlock_big   = HUD_FindVar(hud, "big");
 		hud_democlock_style = HUD_FindVar(hud, "style");
 		hud_democlock_blink = HUD_FindVar(hud, "blink");
@@ -741,12 +738,13 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
 	width = SCR_GetClockStringWidth(t, hud_democlock_big->integer, hud_democlock_scale->value);
 	height = SCR_GetClockStringHeight(hud_democlock_big->integer, hud_democlock_scale->value);
 
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		if (hud_democlock_big->value)
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		if (hud_democlock_big->value) {
 			SCR_DrawBigClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
-		else
+		}
+		else {
 			SCR_DrawSmallClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
+		}
 	}
 }
 

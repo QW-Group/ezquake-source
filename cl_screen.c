@@ -684,13 +684,15 @@ void SCR_DrawSpeed (void)
 	static double lastframetime = 0;
 	static int lastmynum = -1;
 
-	if (!show_speed.value || scr_newHud.value == 1) // newHud has its own speed
+	if (!show_speed.value || scr_newHud.value == 1) {
+		// newHud has its own speed
 		return;
+	}
 
-	t = Sys_DoubleTime();
-
-	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
+	t = curtime;
+	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1) {
 		mynum = cl.playernum;
+	}
 
 	if (mynum != lastmynum) {
 		lastmynum = mynum;
@@ -699,11 +701,12 @@ void SCR_DrawSpeed (void)
 		maxspeed = 0;
 	}
 
-
-	if (!cl.spectator || cls.demoplayback || mynum == cl.playernum)
-		VectorCopy (cl.simvel, vel);
-	else
-		VectorCopy (cl.frames[cl.validsequence & UPDATE_MASK].playerstate[mynum].velocity, vel);
+	if (!cl.spectator || cls.demoplayback || mynum == cl.playernum) {
+		VectorCopy(cl.simvel, vel);
+	}
+	else {
+		VectorCopy(cl.frames[cl.validsequence & UPDATE_MASK].playerstate[mynum].velocity, vel);
+	}
 
 	vel[2] = 0;
 	speed = VectorLength(vel);
