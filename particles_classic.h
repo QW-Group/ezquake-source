@@ -16,12 +16,6 @@ typedef struct particle_s {
 	struct particle_s *next;
 } particle_t;
 
-typedef struct glm_particle_s {
-	vec3_t      gl_org;
-	float       gl_scale;
-	float       gl_color[4];
-} glm_particle_t;
-
 //#define DEFAULT_NUM_PARTICLES	2048
 #define ABSOLUTE_MIN_PARTICLES	512
 #define ABSOLUTE_MAX_PARTICLES	8192

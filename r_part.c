@@ -39,8 +39,15 @@ cvar_t r_particles_count = { "r_particles_count", "2048" };
 static cvar_t r_drawparticles = { "r_drawparticles", "1" };
 
 // Which particles to draw this frame
+typedef struct glm_particle_s {
+	vec3_t      gl_org;
+	float       gl_scale;
+	byte        gl_color[4];
+} glm_particle_t;
+
 particle_t particles[ABSOLUTE_MAX_PARTICLES];
 glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
+gl_billboard_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
 
 static int	ramp1[8] = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
 static int	ramp2[8] = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
@@ -610,12 +617,25 @@ void Classic_ReScaleParticles(void)
 {
 	float r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	int i;
+	vec3_t up, right;
+	gl_billboard_vert_t* vert;
 
-	for (i = 0; i < particles_to_draw; ++i) {
+	if (particles_to_draw == 0) {
+		return;
+	}
+
+	vert = glvertices;
+	VectorScale(vup, 1.5, up);
+	VectorScale(vright, 1.5, right);
+
+	for (i = 0; i < particles_to_draw; ++i, vert += 3) {
 		glm_particle_t* glpart = &glparticles[i];
 		float dist = (glpart->gl_org[0] - r_origin[0]) * vpn[0] + (glpart->gl_org[1] - r_origin[1]) * vpn[1] + (glpart->gl_org[2] - r_origin[2]) * vpn[2];
+		float scale = glpart->gl_scale = 1 + dist * r_partscale;
 
-		glpart->gl_scale = 1 + dist * r_partscale;
+		GL_BillboardSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
+		GL_BillboardSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
+		GL_BillboardSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
 	}
 }
 
@@ -627,6 +647,7 @@ void Classic_CalculateParticles(void)
 	float time2, time3, time1, dvel, frametime, grav;
 	unsigned char *at, theAlpha;
 	float dist, scale, r_partscale;
+	vec3_t up, right;
 
 	particles_to_draw = 0;
 	if (!active_particles || !r_drawparticles.integer) {
@@ -634,6 +655,8 @@ void Classic_CalculateParticles(void)
 	}
 
 	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
+	VectorScale(vup, 1.5, up);
+	VectorScale(vright, 1.5, right);
 
 	// load texture if not done yet
 	if (!GL_TextureReferenceIsValid(particletexture)) {
@@ -693,13 +716,22 @@ void Classic_CalculateParticles(void)
 		color[3] = theAlpha;
 
 		{
-			glm_particle_t* glpart = &glparticles[particles_to_draw++];
-			glpart->gl_color[0] = color[0] * 1.0 / 255;
-			glpart->gl_color[1] = color[1] * 1.0 / 255;
-			glpart->gl_color[2] = color[2] * 1.0 / 255;
-			glpart->gl_color[3] = color[3] * 1.0 / 255;
+			glm_particle_t* glpart = &glparticles[particles_to_draw];
+			gl_billboard_vert_t* vert = &glvertices[particles_to_draw * 3];
+			float alpha = color[3] / 255.0f;
+
+			glpart->gl_color[0] = color[0] * alpha;
+			glpart->gl_color[1] = color[1] * alpha;
+			glpart->gl_color[2] = color[2] * alpha;
+			glpart->gl_color[3] = color[3];
 			glpart->gl_scale = scale;
 			VectorCopy(p->org, glpart->gl_org);
+
+			GL_BillboardSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, glpart->gl_color, particletexture_array_index);
+			GL_BillboardSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, glpart->gl_color, particletexture_array_index);
+			GL_BillboardSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, glpart->gl_color, particletexture_array_index);
+
+			particles_to_draw++;
 		}
 
 		p->org[0] += p->vel[0] * frametime;
@@ -770,34 +802,16 @@ void Classic_CalculateParticles(void)
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
-	int i;
-	vec3_t up, right;
 	gl_billboard_vert_t* vert;
 
 	if (particles_to_draw == 0) {
 		return;
 	}
 
-	VectorScale(vup, 1.5, up);
-	VectorScale(vright, 1.5, right);
-
 	GL_BillboardInitialiseBatch(BILLBOARD_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
 	vert = GL_BillboardAddEntry(BILLBOARD_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
-		for (i = 0; i < particles_to_draw; ++i) {
-			glm_particle_t* glpart = &glparticles[i];
-			float scale = glpart->gl_scale;
-			GLubyte color[4];
-
-			color[0] = glpart->gl_color[0] * glpart->gl_color[3] * 255;
-			color[1] = glpart->gl_color[1] * glpart->gl_color[3] * 255;
-			color[2] = glpart->gl_color[2] * glpart->gl_color[3] * 255;
-			color[3] = glpart->gl_color[3] * 255;
-
-			GL_BillboardSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, color, particletexture_array_index);
-			GL_BillboardSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, color, particletexture_array_index);
-			GL_BillboardSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, color, particletexture_array_index);
-		}
+		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
 	}
 
 	return;
