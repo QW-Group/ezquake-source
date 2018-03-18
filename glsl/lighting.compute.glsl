@@ -17,7 +17,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_d
 	model_surface surfaces[];
 };
 layout(std430, binding=EZQ_GL_BINDINGPOINT_LIGHTSTYLES) buffer lightstyle_data {
-	unsigned int dlightstyles[MAX_LIGHTSTYLES];
+	uint dlightstyles[MAX_LIGHTSTYLES];
 };
 
 void main()
