@@ -2055,24 +2055,16 @@ static void SCR_DrawElements(void)
 
 /******************************* UPDATE SCREEN *******************************/
 
-static void SCR_RenderFrameEnd(void)
-{
-	extern double render_frame_end;
-	render_frame_end = Sys_DoubleTime();
-}
-
 qbool SCR_UpdateScreenPrePlayerView (void)
 {
 	extern qbool Minimized;
 	static int oldfovmode = 0;
 
 	if (!scr_initialized) {
-		SCR_RenderFrameEnd();
 		return false;
 	}
 
 	if (scr_skipupdate || block_drawing) {
-		SCR_RenderFrameEnd();
 		return false;
 	}
 
@@ -2081,14 +2073,12 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 			scr_disabled_for_loading = false;
 		}
 		else {
-			SCR_RenderFrameEnd();
 			return false;
 		}
 	}
 	// Don't suck up any cpu if minimized.
 
 	if (Minimized) {
-		SCR_RenderFrameEnd();
 		return false;
 	}
 
@@ -2230,7 +2220,7 @@ void SCR_UpdateScreenPostPlayerView(void)
 		SCR_CheckAutoScreenshot();
 	}
 
-	SCR_RenderFrameEnd();
+	VID_RenderFrameEnd();
 
 	GL_EndRendering();
 }
@@ -2240,6 +2230,7 @@ void SCR_UpdateScreenPostPlayerView(void)
 qbool SCR_UpdateScreen(void)
 {
 	if (!SCR_UpdateScreenPrePlayerView()) {
+		VID_RenderFrameEnd();
 		return false;
 	}
 
