@@ -48,7 +48,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "fs.h"
 #include "vfs.h"
 
-
 #ifdef _WIN32
 #define DEMO_TIME                 FILETIME
 #else
@@ -71,6 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEMO_TAB_PLAYLIST         1
 #define DEMO_TAB_OPTIONS          2
 #define DEMO_TAB_MAX              2
+
+extern int mvd_demo_track_run;
 
 typedef enum
 {
@@ -125,8 +126,7 @@ static int demo_playlist_started_test = 0;
 char demo_track[DEMO_PLAYLIST_NAME_MAX];
 
 // Demo Playlist Functions
-
-void M_Demo_Playlist_stop_f (void)
+static void M_Demo_Playlist_stop_f (void)
 {
 	if (!demo_playlist_started_test)
 	{
@@ -920,4 +920,18 @@ void Menu_Demo_Init(void)
 	CTab_AddPage(&demo_tab, "Entry", DEMOPG_ENTRY, &demo_entry_handlers);
 	CTab_AddPage(&demo_tab, "Options", DEMOPG_OPTIONS, &demo_options_handlers);
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
+}
+
+void CL_Demo_NextInPlaylist(void)
+{
+	if (demo_playlist_started) {
+		CL_Demo_Playlist_f();
+		mvd_demo_track_run = 0;
+	}
+}
+
+void CL_Demo_Disconnected(void)
+{
+	demo_playlist_started = false;
+	mvd_demo_track_run = 0;
 }

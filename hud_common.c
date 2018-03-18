@@ -1338,7 +1338,7 @@ void SCR_HUD_DrawArmorIcon(hud_t *hud)
 // face
 void SCR_HUD_DrawFace(hud_t *hud)
 {
-	extern mpic_t  *sb_faces[5][2]; // 0 is dead, 1-4 is alive
+	extern mpic_t  *sb_faces[5][2]; // 0 is dead, 1-4 are alive
 	// 0 is static, 1 is temporary animation
 	extern mpic_t  *sb_face_invis;
 	extern mpic_t  *sb_face_quad;

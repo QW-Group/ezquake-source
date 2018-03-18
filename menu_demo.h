@@ -41,5 +41,7 @@ void Menu_Demo_NewHome(const char *);
 
 
 // <interface for cl_demo.c>
-void CL_Demo_Playlist_f (void);
+void CL_Demo_Playlist_f(void);
+void CL_Demo_NextInPlaylist(void);
+void CL_Demo_Disconnected(void);
 // </interface>
