@@ -184,38 +184,39 @@ typedef struct glpoly_s {
 } glpoly_t;
 
 typedef struct msurface_s {
-	int					visframe;					// should be drawn when node is crossed
+	int                 visframe;                   // should be drawn when node is crossed
 
-	mplane_t			*plane;
-	int					flags;
+	mplane_t*           plane;
+	int                 flags;
 
-	int					firstedge;					// look up in model->surfedges[], negative numbers
-	int					numedges;					// are backwards edges
+	int                 firstedge;                  // look up in model->surfedges[], negative numbers
+	int                 numedges;                   // are backwards edges
 	
-	short				texturemins[2];
-	short				extents[2];
+	short               texturemins[2];
+	short               extents[2];
 
-	int					light_s, light_t;			// gl lightmap coordinates
+	// gl lightmap coordinates
+	int                 light_s;
+	int                 light_t;
 
-	glpoly_t			*polys;						// multiple if warped
-	struct	msurface_s	*texturechain;
-	struct	msurface_s	*drawflatchain;
+	glpoly_t            *polys;                     // multiple if warped
+	struct	msurface_s  *texturechain;
+	struct	msurface_s  *drawflatchain;
 
-	mtexinfo_t			*texinfo;
+	mtexinfo_t          *texinfo;
 	
 	// lighting info
-	int					dlightframe;
-	int					dlightbits;
+	int                 dlightframe;
+	int                 dlightbits;
 
 	// This is not an OpenGL texture name, it's the lightmap index
-	int					lightmaptexturenum;
+	int                 lightmaptexturenum;
+	int                 surfacenum;
 
-	byte				styles[MAXLIGHTMAPS];
-	int					cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
-	qbool				cached_dlight;				// true if dynamic light in cache
-	byte				*samples;					// [numstyles*surfsize]
-
-
+	byte                styles[MAXLIGHTMAPS];
+	int                 cached_light[MAXLIGHTMAPS]; // values currently used in lightmap
+	qbool               cached_dlight;              // true if dynamic light in cache
+	byte                *samples;                   // [numstyles*surfsize]
 } msurface_t;
 
 typedef struct mnode_s {

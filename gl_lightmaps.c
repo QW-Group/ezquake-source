@@ -26,8 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "glsl/constants.glsl"
 
-#define	BLOCK_WIDTH  128
-#define	BLOCK_HEIGHT 128
+// Lightmap size
+#define	LIGHTMAP_WIDTH  128
+#define	LIGHTMAP_HEIGHT 128
 
 #define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
 #define LIGHTMAP_ARRAY_GROWTH 4
@@ -65,6 +66,12 @@ static texture_ref lightmap_texture_array;
 static texture_ref lightmap_data_array;
 static texture_ref lightmap_source_array;
 static unsigned int lightmap_depth;
+
+// Hardware lighting: flag surfaces as we add them
+static buffer_ref ssbo_surfacesTodo;
+static int maximumSurfaceNumber;
+static unsigned int* surfaceTodoData;
+static int surfaceTodoLength;
 
 static qbool gl_invlightmaps = true;
 
@@ -403,6 +410,7 @@ void R_LightmapFrameInit(void)
 {
 	frameStats.lightmap_min_changed = lightmap_array_size;
 	frameStats.lightmap_max_changed = 0;
+	memset(surfaceTodoData, 0, surfaceTodoLength);
 }
 
 static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world)
@@ -424,6 +432,10 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
 
+			if (world && s->surfacenum < maximumSurfaceNumber) {
+				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+			}
+
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
 				frameStats.lightmap_max_changed = max(k, frameStats.lightmap_max_changed);
@@ -438,6 +450,10 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
+
+			if (world && s->surfacenum < maximumSurfaceNumber) {
+				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+			}
 
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
@@ -472,6 +488,9 @@ void R_UploadChangedLightmaps(void)
 			GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
 		}
 		GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
+
+		GL_UpdateBuffer(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
+		GL_BindBufferRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, GL_BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
 
 		GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 		GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -670,7 +689,6 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 		unsigned int* source = &lm->sourcedata[offset];
 
 		for (s = 0; s < smax; ++s, data += 4, source += 4) {
-
 			data[0] = surfnum;
 			data[1] = (s * 16 + surf->texturemins[0] - surf->texinfo->vecs[0][3]);
 			data[2] = (t * 16 + surf->texturemins[1] - surf->texinfo->vecs[1][3]);
@@ -700,10 +718,10 @@ static void GL_CreateSurfaceLightmap(msurface_t *surf, int surfnum)
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
 
-	if (smax > BLOCK_WIDTH) {
+	if (smax > LIGHTMAP_WIDTH) {
 		Host_Error("GL_CreateSurfaceLightmap: smax = %d > BLOCK_WIDTH", smax);
 	}
-	if (tmax > BLOCK_HEIGHT) {
+	if (tmax > LIGHTMAP_HEIGHT) {
 		Host_Error("GL_CreateSurfaceLightmap: tmax = %d > BLOCK_HEIGHT", tmax);
 	}
 	if (smax * tmax > MAX_LIGHTMAP_SIZE) {
@@ -712,10 +730,10 @@ static void GL_CreateSurfaceLightmap(msurface_t *surf, int surfnum)
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
 
-	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * BLOCK_WIDTH + surf->light_s) * 4;
+	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * LIGHTMAP_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
 	R_BuildLightmapData(surf, surfnum);
-	R_BuildLightMap(surf, base, BLOCK_WIDTH * 4);
+	R_BuildLightMap(surf, base, LIGHTMAP_WIDTH * 4);
 }
 
 //Builds the lightmap texture with all the surfaces from all brush models
@@ -739,6 +757,7 @@ void GL_BuildLightmaps(void)
 	gl_invlightmaps = !(GL_ShadersSupported() || COM_CheckParm("-noinvlmaps"));
 
 	r_framecount = 1;		// no dlightcache
+	maximumSurfaceNumber = 0;
 	for (j = 1; j < MAX_MODELS; j++) {
 		if (!(m = cl.model_precache[j])) {
 			break;
@@ -747,6 +766,7 @@ void GL_BuildLightmaps(void)
 			continue;
 		}
 		for (i = 0; i < m->numsurfaces; i++) {
+			m->surfaces[i].surfacenum = i;
 			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
 				continue;
 			}
@@ -754,9 +774,25 @@ void GL_BuildLightmaps(void)
 				continue;
 			}
 
-			GL_CreateSurfaceLightmap(m->surfaces + i, i);
+			GL_CreateSurfaceLightmap(m->surfaces + i, m->isworldmodel ? i : -1);
 			BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
+
+		if (m->isworldmodel) {
+			maximumSurfaceNumber = max(maximumSurfaceNumber, m->numsurfaces);
+		}
+	}
+
+	// Round up to nearest 32
+	surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
+	Q_free(surfaceTodoData);
+	surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
+
+	if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
+		ssbo_surfacesTodo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "surfaces-to-light", surfaceTodoLength, NULL, write_once_use_once);
+	}
+	else {
+		GL_EnsureBufferSize(ssbo_surfacesTodo, surfaceTodoLength);
 	}
 
 	// upload all lightmaps that were filled

@@ -735,10 +735,6 @@ qbool GL_LoggingEnabled(void);
 
 #define	MD3_INTERP_MAXDIST  300
 
-// Lightmap size
-#define	LIGHTMAP_WIDTH  128
-#define	LIGHTMAP_HEIGHT 128
-
 // 
 #define CHARSET_CHARS_PER_ROW	16
 #define CHARSET_WIDTH			1.0

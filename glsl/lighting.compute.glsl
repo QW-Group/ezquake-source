@@ -19,6 +19,9 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_d
 layout(std430, binding=EZQ_GL_BINDINGPOINT_LIGHTSTYLES) buffer lightstyle_data {
 	uint dlightstyles[MAX_LIGHTSTYLES];
 };
+layout(std430, binding=EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT) buffer todolist_data {
+	uint surfaces_to_light[];
+};
 
 void main()
 {
@@ -29,85 +32,91 @@ void main()
 	ivec4 srcData = imageLoad(sourceLightmapData, coord);
 
 	int surfaceNumber = srcData.x;
-	float sdelta = float(srcData.y);
-	float tdelta = float(srcData.z);
-	uvec4 mapIndexes = uvec4(
-		(blocklight.a >> 24) & 0xFF,
-		(blocklight.a >> 16) & 0xFF,
-		(blocklight.a >>  8) & 0xFF,
-		(blocklight.a >>  0) & 0xFF
-	);
-	blocklight.a = 0;
+	if (surfaceNumber >= 0) {
 
-	vec4 Plane = surfaces[surfaceNumber].normal;
-	vec3 PlaneMins0 = surfaces[surfaceNumber].vecs0;
-	vec3 PlaneMins1 = surfaces[surfaceNumber].vecs1;
+		if ((surfaces_to_light[surfaceNumber / 32] & (1 << (surfaceNumber % 32))) != 0) {
+			float sdelta = float(srcData.y);
+			float tdelta = float(srcData.z);
+			uvec4 mapIndexes = uvec4(
+				(blocklight.a >> 24) & 0xFF,
+				(blocklight.a >> 16) & 0xFF,
+				(blocklight.a >> 8) & 0xFF,
+				(blocklight.a >> 0) & 0xFF
+			);
+			blocklight.a = 0;
 
-	// Build static lights: default to black
-	vec4 baseLightmap = vec4(0, 0, 0, 0);
-	if (mapIndexes.a < 64) {
-		baseLightmap = (blocklight & 0xFF) * dlightstyles[mapIndexes.a];
-		if (mapIndexes.b < 64) {
-			blocklight >>= 8;
-			baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.b];
-			if (mapIndexes.g < 64) {
-				blocklight >>= 8;
-				baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.g];
-				if (mapIndexes.r < 64) {
+			vec4 Plane = surfaces[surfaceNumber].normal;
+			vec3 PlaneMins0 = surfaces[surfaceNumber].vecs0;
+			vec3 PlaneMins1 = surfaces[surfaceNumber].vecs1;
+
+			// Build static lights: default to black
+			vec4 baseLightmap = vec4(0, 0, 0, 0);
+			if (mapIndexes.a < 64) {
+				baseLightmap = (blocklight & 0xFF) * dlightstyles[mapIndexes.a];
+				if (mapIndexes.b < 64) {
 					blocklight >>= 8;
-					baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.r];
+					baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.b];
+					if (mapIndexes.g < 64) {
+						blocklight >>= 8;
+						baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.g];
+						if (mapIndexes.r < 64) {
+							blocklight >>= 8;
+							baseLightmap += (blocklight & 0xFF) * dlightstyles[mapIndexes.r];
+						}
+					}
 				}
 			}
+			baseLightmap *= 1.0 / (256.0 * 256.0);
+			baseLightmap.a = 1;
+
+			// Dynamic lights
+
+			for (i = 0; i < lightsActive; ++i) {
+				float dist = dot(lightPositions[i].xyz, Plane.xyz) - Plane.a;
+				float rad = lightPositions[i].a - abs(dist);
+				float minlight = lightColors[i].a;
+
+				if (rad >= minlight) {
+					minlight = rad - minlight;
+
+					vec3 impact = lightPositions[i].xyz - Plane.xyz * dist;
+					vec2 local = vec2(dot(impact, PlaneMins0), dot(impact, PlaneMins1));
+
+					int sd = int(abs(local[0] - sdelta)); // sdelta = s * 16 - tex->vecs[0][3] + surf->texturemins[0];
+					int td = int(abs(local[1] - tdelta)); // tdelta = t * 16 - tex->vecs[1][3] + surf->texturemins[1];
+
+					if (sd > td) {
+						dist = sd + (td >> 1);
+					}
+					else {
+						dist = td + (sd >> 1);
+					}
+					if (dist < minlight) {
+						// Increase blocklights...
+						float increase = (rad - dist) / 128.0f;
+
+						baseLightmap.r += increase * lightColors[i].r;
+						baseLightmap.g += increase * lightColors[i].g;
+						baseLightmap.b += increase * lightColors[i].b;
+					}
+				}
+			}
+
+			// Scale back... if we do simple scaling colour ratios will be lost
+			//   (red 1.5 green 1.0 would become ... whatever red+green is)
+			baseLightmap.r *= lightScale;
+			baseLightmap.g *= lightScale;
+			baseLightmap.b *= lightScale;
+
+			float maxComponent = max(baseLightmap.r, max(baseLightmap.g, baseLightmap.b));
+			if (maxComponent > 1) {
+				maxComponent = 1.0 / maxComponent;
+				baseLightmap.r *= maxComponent;
+				baseLightmap.g *= maxComponent;
+				baseLightmap.b *= maxComponent;
+			}
+
+			imageStore(destinationLightmap, coord, baseLightmap);
 		}
 	}
-	baseLightmap *= 1.0 / (256.0 * 256.0);
-	baseLightmap.a = 1;
-
-	// Dynamic lights
-	for (i = 0; i < lightsActive; ++i) {
-		float dist = dot(lightPositions[i].xyz, Plane.xyz) - Plane.a;
-		float rad = lightPositions[i].a - abs(dist);
-		float minlight = lightColors[i].a;
-
-		if (rad >= minlight) {
-			minlight = rad - minlight;
-
-			vec3 impact = lightPositions[i].xyz - Plane.xyz * dist;
-			vec2 local = vec2(dot(impact, PlaneMins0), dot(impact, PlaneMins1));
-
-			int sd = int(abs(local[0] - sdelta)); // sdelta = s * 16 - tex->vecs[0][3] + surf->texturemins[0];
-			int td = int(abs(local[1] - tdelta)); // tdelta = t * 16 - tex->vecs[1][3] + surf->texturemins[1];
-
-			if (sd > td) {
-				dist = sd + (td >> 1);
-			}
-			else {
-				dist = td + (sd >> 1);
-			}
-			if (dist < minlight) {
-				// Increase blocklights...
-				float increase = (rad - dist) / 128.0f;
-
-				baseLightmap.r += increase * lightColors[i].r;
-				baseLightmap.g += increase * lightColors[i].g;
-				baseLightmap.b += increase * lightColors[i].b;
-			}
-		}
-	}
-
-	// Scale back... if we do simple scaling colour ratios will be lost
-	//   (red 1.5 green 1.0 would become ... whatever red+green is)
-	baseLightmap.r *= lightScale;
-	baseLightmap.g *= lightScale;
-	baseLightmap.b *= lightScale;
-
-	float maxComponent = max(baseLightmap.r, max(baseLightmap.g, baseLightmap.b));
-	if (maxComponent > 1) {
-		maxComponent = 1.0 / maxComponent;
-		baseLightmap.r *= maxComponent;
-		baseLightmap.g *= maxComponent;
-		baseLightmap.b *= maxComponent;
-	}
-
-	imageStore(destinationLightmap, coord, baseLightmap);
 }
