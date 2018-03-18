@@ -122,6 +122,7 @@ static buffer_ref billboardVBO;
 static glm_vao_t billboardVAO;
 static buffer_ref billboardIndexes;
 static glm_program_t billboardProgram;
+static GLint billboardUniform_alpha_test;
 
 static gl_billboard_batch_t* BatchForType(billboard_batch_id type, qbool allocate)
 {
@@ -300,6 +301,8 @@ static void GLM_CompileBillboardProgram(void)
 	}
 
 	if (billboardProgram.program && !billboardProgram.uniforms_found) {
+		billboardUniform_alpha_test = glGetUniformLocation(billboardProgram.program, "alpha_test");
+
 		billboardProgram.uniforms_found = true;
 	}
 }
@@ -417,6 +420,8 @@ void GLM_PrepareBillboards(void)
 void GLM_DrawBillboards(void)
 {
 	unsigned int i;
+	qbool current_alpha_test = false;
+	qbool first_batch = true;
 
 	if (!batchCount || (batchCount == 1 && !batches[0].count)) {
 		return;
@@ -435,6 +440,7 @@ void GLM_DrawBillboards(void)
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_billboard_batch_t* batch = &batches[i];
+		qbool alpha_test = (i == batchMapping[BILLBOARD_ENTITIES] - 1);
 
 		if (!batch->count) {
 			continue;
@@ -449,6 +455,10 @@ void GLM_DrawBillboards(void)
 		else {
 			GL_Disable(GL_DEPTH_TEST);
 		}
+		if (first_batch || current_alpha_test != alpha_test) {
+			glUniform1i(billboardUniform_alpha_test, current_alpha_test = alpha_test);
+		}
+		first_batch = false;
 
 		if (GL_TextureReferenceIsValid(batch->texture)) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->texture);

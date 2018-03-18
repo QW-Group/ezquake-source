@@ -3,6 +3,7 @@
 #ezquake-definitions
 
 layout(binding=0) uniform sampler2DArray materialTex;
+uniform bool alpha_test;
 
 in vec3 TextureCoord;
 in vec4 fsColor;
@@ -15,7 +16,7 @@ void main()
 
 	frag_color *= fsColor;
 
-	if (frag_color.a < 0.3) {
+	if (alpha_test && frag_color.a < 0.3) {
 		discard;
 	}
 
