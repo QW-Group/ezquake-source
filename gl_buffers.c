@@ -69,7 +69,8 @@ typedef void (APIENTRY *glUnmapBuffer_t)(GLenum target);
 typedef void* (APIENTRY *glMapBufferRange_t)(GLenum mtarget, GLintptr offset, GLsizeiptr length, GLbitfield access);
 typedef void (APIENTRY *glBufferStorage_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLbitfield flags);
 typedef GLsync (APIENTRY *glFenceSync_t)(GLenum condition, GLbitfield flags);
-typedef void (APIENTRY *glWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+//typedef void (APIENTRY *glWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+typedef GLenum (APIENTRY *glClientWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
 typedef void (APIENTRY *glDeleteSync_t)(GLsync sync);
 
 // VAO functions
@@ -100,7 +101,7 @@ static glUnmapNamedBuffer_t   glUnmapNamedBuffer = NULL;
 static glMapBufferRange_t glMapBufferRange = NULL;
 static glBufferStorage_t  glBufferStorage = NULL;
 static glFenceSync_t      glFenceSync = NULL;
-static glWaitSync_t       glWaitSync = NULL;
+static glClientWaitSync_t glClientWaitSync = NULL;
 static glDeleteSync_t     glDeleteSync = NULL;
 
 // Cache OpenGL state
@@ -464,7 +465,7 @@ void GL_InitialiseBufferHandling(void)
 
 	// OpenGL 4.4, persistent mapping of buffers
 	glFenceSync = (glFenceSync_t)SDL_GL_GetProcAddress("glFenceSync");
-	glWaitSync = (glWaitSync_t)SDL_GL_GetProcAddress("glWaitSync");
+	glClientWaitSync = (glClientWaitSync_t)SDL_GL_GetProcAddress("glClientWaitSync");
 	glBufferStorage = (glBufferStorage_t)SDL_GL_GetProcAddress("glBufferStorage");
 	glMapBufferRange = (glMapBufferRange_t)SDL_GL_GetProcAddress("glMapBufferRange");
 	glDeleteSync = (glDeleteSync_t)SDL_GL_GetProcAddress("glDeleteSync");
@@ -486,7 +487,7 @@ void GL_InitialiseBufferHandling(void)
 	buffers_supported &= (glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glEnableVertexAttribArray);
 	buffers_supported &= (glVertexAttribPointer && glVertexAttribIPointer && glVertexAttribDivisor);
 
-	tripleBuffer_supported = buffers_supported && glFenceSync && glWaitSync && glBufferStorage && glMapBufferRange && !COM_CheckParm("-no-triple-gl-buffer");
+	tripleBuffer_supported = buffers_supported && glFenceSync && glClientWaitSync && glBufferStorage && glMapBufferRange && !COM_CheckParm("-no-triple-gl-buffer");
 	Con_Printf("Triple-buffering of GL buffers: %s\n", tripleBuffer_supported ? "enabled" : "disabled");
 }
 
@@ -649,7 +650,11 @@ void GL_EnsureBufferSize(buffer_ref ref, size_t size)
 void GL_BufferStartFrame(void)
 {
 	if (tripleBuffer_supported && tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
-		glWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, GL_TIMEOUT_IGNORED);
+		GLenum waitRet = glClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, 0);
+		while (waitRet == GL_TIMEOUT_EXPIRED) {
+			// Flush commands and wait for longer
+			waitRet = glClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000);
+		}
 	}
 }
 
