@@ -250,13 +250,12 @@ static void BuildBuiltinCrosshairs(void)
 	int i;
 	char str[256] = {0};
 	int crosshair_size = CrosshairPixelSize();
+	byte* crosshair_buffer = (byte*)Q_malloc(crosshair_size * crosshair_size);
 
 	if (!(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
 		memset(&crosshairpic, 0, sizeof(crosshairpic));
 	}
 	for (i = 0; i < NUMCROSSHAIRS; i++) {
-		byte* crosshair_buffer = (byte*)Q_malloc(crosshair_size * crosshair_size);
-
 		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		CreateBuiltinCrosshair(crosshair_buffer, crosshair_size, i + 2);
 		crosshairs_builtin[i].texnum = GL_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
@@ -264,11 +263,16 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
-		GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-		Q_free(crosshair_buffer);
+		if (glConfig.majorVersion >= 2 || glConfig.minorVersion >= 2) {
+			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
+		else {
+			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		}
 	}
+	Q_free(crosshair_buffer);
 	current_crosshair_pixel_size = crosshair_size;
 	CachePics_MarkAtlasDirty();
 }
