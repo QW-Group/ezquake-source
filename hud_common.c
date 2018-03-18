@@ -4645,7 +4645,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 	}
 }
 
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, hud_t *hud);
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health);
 
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
@@ -4665,7 +4665,11 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_name_width,
 		*hud_teaminfo_show_enemies,
 		*hud_teaminfo_show_self,
-		*hud_teaminfo_scale;
+		*hud_teaminfo_scale,
+		*hud_teaminfo_armor_style,
+		*hud_teaminfo_powerup_style,
+		*hud_teaminfo_low_health,
+		*hud_teaminfo_layout;
 
 	if (hud_teaminfo_weapon_style == NULL)    // first time
 	{
@@ -4676,6 +4680,10 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_show_enemies			= HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self				= HUD_FindVar(hud, "show_self");
 		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
+		hud_teaminfo_armor_style            = HUD_FindVar(hud, "armor_style");
+		hud_teaminfo_powerup_style          = HUD_FindVar(hud, "powerup_style");
+		hud_teaminfo_low_health             = HUD_FindVar(hud, "low_health");
+		hud_teaminfo_layout                 = HUD_FindVar(hud, "layout");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -4716,7 +4724,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	maxname = bound(0, maxname, hud_teaminfo_name_width->integer);
 
 	// this does't draw anything, just calculate width
-	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
+	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
 	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer?slots_num+n_teams:slots_num);
 
 	if (hud_editor)
@@ -4749,7 +4757,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 				i = slots[j];
 				if (!strcmp(cl.players[i].team,sorted_teams[k].name))
 				{
-					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
+					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
 					_y += FONTWIDTH * hud_teaminfo_scale->value;
 				}
 			}
@@ -4760,14 +4768,18 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	{
 		for ( j = 0; j < slots_num; j++ ) {
 			i = slots[j];
-			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
+			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 		}
 	}
 }
 
-qbool Has_Both_RL_and_LG (int flags) { return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING); }
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, hud_t *hud)
+qbool Has_Both_RL_and_LG(int flags)
+{ 
+	return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING);
+}
+
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health)
 {
 	extern mpic_t * SCR_GetWeaponIconByFlag (int flag);
 	extern cvar_t tp_name_rlg;
@@ -4776,7 +4788,6 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	int x_in = x; // save x
 	int i;
 	mpic_t *pic;
-	float scale = HUD_FindVar(hud, "scale")->value;
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
@@ -4794,7 +4805,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
+	strlcpy(tmp2, layout, sizeof(tmp2));
 	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
@@ -4820,8 +4831,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 						break;
 					case 'w': // draw "best" weapon icon/name
-
-						switch (HUD_FindVar(hud, "weapon_style")->integer) {
+						switch (weapon_style) {
 							case 1:
 								if(!width_only) {
 									if (Has_Both_RL_and_LG(ti_cl->items)) {
@@ -4854,7 +4864,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					case 'H': // draw health, padding with space on right side
 
 						if(!width_only) {
-							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < HUD_FindVar(hud, "low_health")->integer ? "&cf00" : ""), ti_cl->health);
+							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < low_health ? "&cf00" : ""), ti_cl->health);
 							Draw_SString (x, y, tmp, scale);
 						}
 						x += 3 * FONTWIDTH * scale;
@@ -4868,7 +4878,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 						//
 						// different styles of armor
 						//
-						switch (HUD_FindVar(hud,"armor_style")->integer) {
+						switch (armor_style) {
 							case 1: // image prefixed armor value
 								if(!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
@@ -4945,7 +4955,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 						break;
 					case 'p': // draw powerups
-						switch (HUD_FindVar(hud, "powerup_style")->integer) {
+						switch (powerup_style) {
 							case 1: // quad/pent/ring image
 								if(!width_only) {
 									if (ti_cl->items & IT_QUAD)
