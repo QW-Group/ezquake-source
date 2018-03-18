@@ -49,4 +49,48 @@ extern qbool autohud_loaded;
 extern cvar_t mvd_autohud;
 void HUD_AutoLoad_MVD(int autoload);
 
+// player sorting
+// for frags and players
+typedef struct sort_teams_info_s {
+	char *name;
+	int  frags;
+	int  min_ping;
+	int  avg_ping;
+	int  max_ping;
+	int  nplayers;
+	int  top, bottom;   // leader colours
+	int  rlcount;       // Number of RLs present in the team. (Cokeman 2006-05-27)
+	int  lgcount;       // number of LGs present in the team
+	int  weapcount;     // number of players with weapons (RLs | LGs) in the team
+	int  ra_taken;      // Total red armors taken
+	int  ya_taken;      // Total yellow armors taken
+	int  ga_taken;      // Total green armors taken
+	int  mh_taken;      // Total megahealths taken
+	int  quads_taken;   // Total quads taken
+	int  pents_taken;   // Total pents taken
+	int  rings_taken;   // Total rings taken
+	int  stack;         // Total damage the team can take
+	float ra_lasttime;  // last time ra taken
+	float ya_lasttime;  // last time ya taken
+	float ga_lasttime;  // last time ga taken
+	float mh_lasttime;  // last time mh taken
+	float q_lasttime;   // last time quad taken
+	float p_lasttime;   // last time pent taken
+	float r_lasttime;   // last time ring taken
+}
+sort_teams_info_t;
+
+typedef struct sort_players_info_s {
+	int playernum;
+	sort_teams_info_t *team;
+}
+sort_players_info_t;
+
+extern sort_players_info_t sorted_players[MAX_CLIENTS];
+extern sort_teams_info_t   sorted_teams[MAX_CLIENTS];
+extern int n_teams;
+extern int n_players;
+extern int n_spectators;
+
+
 #endif // __HUD_COMMON__H__
