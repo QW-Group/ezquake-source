@@ -232,13 +232,12 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't init cURL\n");
 		return;
 	}
-
+	
 	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
 	filename = Q_malloc(filename_buf_len);
 	SB_URL_to_FileName(s->address.url, filename, filename_buf_len);
-	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wb+")) {
+	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wt+")) {
 		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't open cached file");
-    curl_easy_cleanup(curl);
 		return;
 	}
 
@@ -250,14 +249,14 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 		Com_Printf("Error: Could not read URL %s\n", s->address.url);
 	}
 
-  fseek(f, 0, SEEK_SET);
-
+	fseek(f, 0, SEEK_SET);
+	
 	SB_Process_URL_Buffer(f, servers, serversn);
 	fclose(f);
 	Q_free(filename);
 
-  /* always cleanup */ 
-  curl_easy_cleanup(curl);
+    /* always cleanup */ 
+    curl_easy_cleanup(curl);
 }
 
 void Update_Source(source_data *s)
@@ -913,9 +912,9 @@ void Rebuild_Servers_List(void)
     int suppressed_servers = 0;
     int server_limit = sizeof(servers) / sizeof(servers[0]);
     serversn = 0;
-
+	
     rebuild_servers_list = 0;
-    SB_ServerList_Lock();
+	SB_ServerList_Lock();
 
     for (i=0; i < sourcesn; i++)
     {
