@@ -210,9 +210,10 @@ static void SB_Process_URL_Buffer(const struct curl_buf *curl_buf, server_data *
 	char *buf = Q_malloc(sizeof(char) * curl_buf->len);
 	memcpy(buf, curl_buf->ptr, sizeof(char) * curl_buf->len);
 
-	netadr_t addr;
 	// Not using strtok as it's not thread safe
-	for (char *p0 = buf, *p1 = buf; p1 < buf + curl_buf->len; p1++) {
+	netadr_t addr;
+	char *p0, *p1;
+	for (p0 = buf, p1 = buf; p1 < buf + curl_buf->len; p1++) {
 		if (*p1 == '\n') {
 			*p1 = '\0';
 			NET_StringToAdr(p0, &addr);
@@ -224,7 +225,7 @@ static void SB_Process_URL_Buffer(const struct curl_buf *curl_buf, server_data *
 	Q_free(buf);
 }
 
-static struct curl_buf *curl_buf_init()
+static struct curl_buf *curl_buf_init(void)
 {
 	// Q_malloc handles errors and exits on failure
 	struct curl_buf *curl_buf = Q_malloc(sizeof(struct curl_buf));
