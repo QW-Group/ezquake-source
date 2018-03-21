@@ -293,7 +293,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	}
 
 	indexes += max_entity_indexes * MAX_STANDARD_ENTITIES;
-	if (indexes > modelIndexMaximum) {
+	if (!GL_BufferReferenceIsValid(vbo_brushElements) || indexes > GL_BufferSize(vbo_brushElements) / sizeof(modelIndexes[0])) {
 		Q_free(modelIndexes);
 		modelIndexMaximum = indexes;
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);

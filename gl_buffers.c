@@ -269,7 +269,7 @@ void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data)
 	GL_UpdateBuffer(vbo, size, data);
 }
 
-size_t GL_VBOSize(buffer_ref vbo)
+size_t GL_BufferSize(buffer_ref vbo)
 {
 	if (!vbo.index) {
 		return 0;
