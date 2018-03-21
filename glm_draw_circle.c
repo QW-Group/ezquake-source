@@ -93,7 +93,7 @@ void GLM_PrepareCircles(void)
 			drawCircleUniforms_matrix = glGetUniformLocation(circleProgram.program, "matrix");
 			drawCircleUniforms_color = glGetUniformLocation(circleProgram.program, "color");
 
-			circleProgram.uniforms_found = false;
+			circleProgram.uniforms_found = true;
 		}
 
 		// Build VBO
