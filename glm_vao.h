@@ -22,15 +22,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_vao.h"
 
-void GL_BindVertexArray(r_vao_id vao);
-void GL_GenVertexArray(r_vao_id vao, const char* name);
-void GL_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo);
+void GLM_BindVertexArray(r_vao_id vao);
+void GLM_GenVertexArray(r_vao_id vao, const char* name);
+void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo);
+void GLM_DeleteVAOs(void);
 
 qbool GLM_InitialiseVAOHandling(void);
-void GLM_InitialiseVAOState(void);
-qbool GL_VertexArrayCreated(r_vao_id vao);
+qbool GLM_VertexArrayCreated(r_vao_id vao);
 
-void GL_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
-void GL_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
+void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
+void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
+
+void GLM_BindVertexArrayElementBuffer(r_vao_id, buffer_ref ref);
 
 #endif // EZQUAKE_GLM_VAO_HEADER

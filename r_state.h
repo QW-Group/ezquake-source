@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_STATE_HEADER
 #define EZQUAKE_R_STATE_HEADER
 
+#include "r_local.h"
+#include "r_vao.h"
+
 #define MAX_GLC_TEXTURE_UNIT_STATES 4
 
 // rendering state
@@ -128,7 +131,11 @@ typedef struct rendering_state_s {
 	float clearColor[4];
 	float color[4];
 	qbool blendingEnabled;
+	qbool colorMask[4];
 
+	r_vao_id vao_id;
+
+	// GLC only...
 	struct {
 		qbool enabled;
 		r_alphatest_func_t func;
@@ -140,7 +147,7 @@ typedef struct rendering_state_s {
 		r_texunit_mode_t mode;
 	} textureUnits[MAX_GLC_TEXTURE_UNIT_STATES];
 
-	qbool colorMask[4];
+	qbool colorValid;
 
 	// meta
 	qbool initialized;
@@ -151,7 +158,6 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state, const c
 void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name);
 void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name);
 void R_ApplyRenderingState(rendering_state_t* state);
-void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode);
 
 void R_CustomColor(float r, float g, float b, float a);
 void R_CustomColor4ubv(const byte* color);

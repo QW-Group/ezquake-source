@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "tr_types.h"
 #include "r_texture.h"
+#include "r_vao.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -134,13 +135,6 @@ void GLC_RenderFullbrights(void)
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
-	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
-
-	if (use_vbo) {
-		// Might have been using lightmap co-ordinates...
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-	}
 
 	GLC_StateBeginRenderFullbrights();
 
@@ -151,7 +145,7 @@ void GLC_RenderFullbrights(void)
 
 		texture.index = i;
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
-		if (use_vbo) {
+		if (R_VAOBound()) {
 			int index_count = 0;
 
 			for (p = fullbright_polys[i]; p; p = p->fb_chain) {
@@ -182,12 +176,6 @@ void GLC_RenderLumas(void)
 	glpoly_t *p;
 	texture_ref texture;
 	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
-
-	if (use_vbo) {
-		// Might have been using lightmap co-ordinates...
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-	}
 
 	GLC_StateBeginRenderLumas();
 
@@ -232,11 +220,6 @@ void GLC_EmitDetailPolys(qbool use_vbo)
 
 	if (!detail_polys) {
 		return;
-	}
-
-	if (use_vbo) {
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
 	}
 
 	GLC_StateBeginEmitDetailPolys();

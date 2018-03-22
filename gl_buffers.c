@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "glm_vao.h"
 
-void GL_BindVertexArrayElementBuffer(buffer_ref ref);
 static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 
 typedef struct buffer_data_s {
@@ -177,7 +176,7 @@ buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int size, void
 	qglBufferData(target, size, data, usage);
 	result.index = buffer - buffers;
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
-		GL_BindVertexArrayElementBuffer(result);
+		R_BindVertexArrayElementBuffer(result);
 	}
 	return result;
 }
@@ -462,7 +461,7 @@ void GL_BindBuffer(buffer_ref ref)
 	GL_BindBufferImpl(buffers[ref.index].target, buffers[ref.index].glref);
 
 	if (buffers[ref.index].target == GL_ELEMENT_ARRAY_BUFFER) {
-		GL_BindVertexArrayElementBuffer(ref);
+		R_BindVertexArrayElementBuffer(ref);
 	}
 
 	GL_LogAPICall("GL_BindBuffer(%s)", buffers[ref.index].name);
@@ -511,8 +510,8 @@ void GL_InitialiseBufferHandling(void)
 void GL_InitialiseBufferState(void)
 {
 	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
-	GL_BindVertexArrayElementBuffer(null_buffer_reference);
-	GLM_InitialiseVAOState();
+	R_BindVertexArrayElementBuffer(null_buffer_reference);
+	R_InitialiseVAOState();
 }
 
 void GL_UnBindBuffer(GLenum target)

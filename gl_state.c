@@ -26,6 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_state.h"
 #include "r_texture.h"
+#include "r_vao.h"
+#include "glm_vao.h"
+#include "glc_vao.h"
+#include "vk_vao.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
@@ -205,12 +209,12 @@ void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 		current->field = state->field; \
 	}
 
-void GL_ApplyRenderingState(rendering_state_t* state)
+static void GL_ApplyRenderingState(rendering_state_t* state)
 {
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
-	GL_EnterTracedRegion(va("GL_ApplyRenderingState(%s)", state->name), true);
+	GL_EnterTracedRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
 
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
@@ -321,84 +325,69 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		GL_LogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
 
-	if (GL_UseImmediateMode()) {
-		int i;
-
-		// Alpha-testing
-		GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
-		if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
-			glAlphaFunc(
-				glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
-				current->alphaTesting.value = state->alphaTesting.value
-			);
-			GL_LogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
-		}
-
-		// Texture units
-		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
-			if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
-				GL_SelectTexture(GL_TEXTURE0 + i);
-				if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
-					glEnable(GL_TEXTURE_2D);
-					GL_LogAPICall("Enabled texturing on unit %d", i);
-					if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
-						glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-						GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-					}
-				}
-				else {
-					glDisable(GL_TEXTURE_2D);
-					GL_LogAPICall("Disabled texturing on unit %d", i);
-				}
-			}
-			else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
-				GL_SelectTexture(GL_TEXTURE0 + i);
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-				GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-			}
-		}
-
-		// Color
-		if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
-			glColor4f(
-				current->color[0] = state->color[0],
-				current->color[1] = state->color[1],
-				current->color[2] = state->color[2],
-				current->color[3] = state->color[3]
-			);
-		}
-	}
-
 #ifdef WITH_OPENGL_TRACE
 	GL_DebugState();
 #endif
 	GL_LeaveTracedRegion(true);
 }
 
+static void GLC_ApplyRenderingState(rendering_state_t* state)
+{
+	rendering_state_t* current = &opengl.rendering_state;
+	int i;
+
+	GL_ApplyRenderingState(state);
+
+	// Alpha-testing
+	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
+	if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
+		glAlphaFunc(
+			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
+			current->alphaTesting.value = state->alphaTesting.value
+		);
+		GL_LogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
+	}
+
+	// Texture units
+	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
+		if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
+			GL_SelectTexture(GL_TEXTURE0 + i);
+			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
+				glEnable(GL_TEXTURE_2D);
+				GL_LogAPICall("Enabled texturing on unit %d", i);
+				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
+					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+					GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+				}
+			}
+			else {
+				glDisable(GL_TEXTURE_2D);
+				GL_LogAPICall("Disabled texturing on unit %d", i);
+			}
+		}
+		else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
+			GL_SelectTexture(GL_TEXTURE0 + i);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+			GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+		}
+	}
+
+	// Color
+	if (!current->colorValid || current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
+		glColor4f(
+			current->color[0] = state->color[0],
+			current->color[1] = state->color[1],
+			current->color[2] = state->color[2],
+			current->color[3] = state->color[3]
+		);
+		current->colorValid = true;
+	}
+}
+
 //static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
 
 // vid_common_gl.c
-#ifdef WITH_OPENGL_TRACE
-static const char* TexEnvName(GLenum mode)
-{
-	switch (mode) {
-	case GL_MODULATE:
-		return "GL_MODULATE";
-	case GL_REPLACE:
-		return "GL_REPLACE";
-	case GL_BLEND:
-		return "GL_BLEND";
-	case GL_DECAL:
-		return "GL_DECAL";
-	case GL_ADD:
-		return "GL_ADD";
-	default:
-		return "???";
-	}
-}
-#endif
-
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
@@ -431,6 +420,11 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 	GL_SelectTexture(unit);
 	GL_BindTexture(targetType, texture, true);
 	return;
+}
+
+static void GLM_ApplyRenderingState(rendering_state_t* state)
+{
+	GL_ApplyRenderingState(state);
 }
 
 void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference)
@@ -941,22 +935,30 @@ void R_ApplyRenderingState(rendering_state_t* state)
 		Con_Printf("ERROR: NULL rendering state\n");
 		return;
 	}
-
 	assert(state->initialized);
 
-	GL_ApplyRenderingState(state);
+	if (R_UseImmediateOpenGL()) {
+		GLC_ApplyRenderingState(state);
+	}
+	else if (R_UseModernOpenGL()) {
+		GLM_ApplyRenderingState(state);
+	}
+	else if (R_UseVulkan()) {
+
+	}
 }
 
 void R_CustomColor(float r, float g, float b, float a)
 {
 	if (GL_UseImmediateMode()) {
-		if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
+		if (!opengl.rendering_state.colorValid || opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
 			glColor4f(
 				opengl.rendering_state.color[0] = r,
 				opengl.rendering_state.color[1] = g,
 				opengl.rendering_state.color[2] = b,
 				opengl.rendering_state.color[3] = a
 			);
+			opengl.rendering_state.colorValid = true;
 		}
 	}
 }
@@ -1002,8 +1004,112 @@ void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_
 	state->textureUnits[index].mode = mode;
 }
 
+void R_GLC_InvalidateColor(void)
+{
+	opengl.rendering_state.colorValid = false;
+}
+
 void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name)
 {
 	memcpy(state, src, sizeof(*state));
 	strlcpy(state->name, name, sizeof(state->name));
+}
+
+// VAOs
+
+static r_vao_id currentVAO = vao_none;
+static const char* vaoNames[vao_count] = {
+	"none", "aliasmodel", "brushmodel", "3d-sprites",
+	"hud:circles", "hud:images", "hud:lines", "hud:polygons",
+	"post-process"
+};
+
+qbool R_InitialiseVAOHandling(void)
+{
+	if (R_UseModernOpenGL()) {
+		return GLM_InitialiseVAOHandling();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		return GLC_InitialiseVAOHandling();
+	}
+	else if (R_UseVulkan()) {
+		return VK_InitialiseVAOHandling();
+	}
+
+	return false;
+}
+
+void R_InitialiseVAOState(void)
+{
+	currentVAO = vao_none;
+}
+
+qbool R_VertexArrayCreated(r_vao_id vao)
+{
+	if (R_UseModernOpenGL()) {
+		return GLM_VertexArrayCreated(vao);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		return GLC_VertexArrayCreated(vao);
+	}
+	else if (R_UseVulkan()) {
+		return VK_VertexArrayCreated(vao);
+	}
+	return false;
+}
+
+void R_BindVertexArray(r_vao_id vao)
+{
+	if (currentVAO != vao) {
+		if (R_UseModernOpenGL()) {
+			GLM_BindVertexArray(vao);
+		}
+		else if (R_UseImmediateOpenGL()) {
+			GLC_BindVertexArray(vao);
+		}
+		else if (R_UseVulkan()) {
+			VK_BindVertexArray(vao);
+		}
+
+		currentVAO = vao;
+		GL_LogAPICall("BindVertexArray(%s)", vaoNames[vao]);
+	}
+}
+
+void R_GenVertexArray(r_vao_id vao)
+{
+	if (R_UseModernOpenGL()) {
+		GLM_GenVertexArray(vao, vaoNames[vao]);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_GenVertexArray(vao, vaoNames[vao]);
+	}
+	else if (R_UseVulkan()) {
+		VK_GenVertexArray(vao, vaoNames[vao]);
+	}
+}
+
+void R_DeleteVAOs(void)
+{
+	if (R_UseModernOpenGL()) {
+		GLM_DeleteVAOs();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_DeleteVAOs();
+	}
+	else if (R_UseVulkan()) {
+		VK_DeleteVAOs();
+	}
+}
+
+qbool R_VAOBound(void)
+{
+	return currentVAO != vao_none;
+}
+
+void R_BindVertexArrayElementBuffer(buffer_ref ref)
+{
+	if (R_UseModernOpenGL() && currentVAO != vao_none) {
+		GLM_BindVertexArrayElementBuffer(currentVAO, ref);
+	}
 }

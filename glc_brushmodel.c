@@ -28,7 +28,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "rulesets.h"
 #include "r_framestats.h"
 #include "r_texture.h"
-#include "r_state.h"
+#include "glc_state.h"
 
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];

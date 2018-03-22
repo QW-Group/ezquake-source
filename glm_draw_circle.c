@@ -46,7 +46,7 @@ void GLM_DrawCircles(int start, int end)
 	end = min(end, circleData.circleCount - 1);
 
 	GL_UseProgram(circleProgram.program);
-	GL_BindVertexArray(vao_hud_circles);
+	R_BindVertexArray(vao_hud_circles);
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, projectionMatrix);
@@ -112,10 +112,10 @@ void GLM_PrepareCircles(void)
 		}
 
 		// Build VAO
-		if (!GL_VertexArrayCreated(vao_hud_circles)) {
-			GL_GenVertexArray(vao_hud_circles, "circle-vao");
+		if (!R_VertexArrayCreated(vao_hud_circles)) {
+			R_GenVertexArray(vao_hud_circles);
 
-			GL_ConfigureVertexAttribPointer(vao_hud_circles, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
+			GLM_ConfigureVertexAttribPointer(vao_hud_circles, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 		}
 	}
 }

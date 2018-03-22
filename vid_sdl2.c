@@ -763,7 +763,7 @@ void VID_Shutdown(qbool restart)
 
 	GL_LightmapShutdown();
 	GLM_DeleteBrushModelIndexBuffer();
-	GL_DeleteVAOs();
+	R_DeleteVAOs();
 	GL_DeleteBuffers();
 	GL_DeleteTextures();
 	GL_DeleteSamplers();

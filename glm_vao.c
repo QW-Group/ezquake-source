@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2018 ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -6,17 +24,13 @@
 
 void GL_SetElementArrayBuffer(buffer_ref buffer);
 
-typedef struct glm_vao_s {
-	unsigned int vao;
-	char name[32];
+typedef struct r_vao_s {
+	GLuint vao;
 
 	buffer_ref element_array_buffer;
 } glm_vao_t;
 
 static glm_vao_t vaos[vao_count];
-
-// Linked list of all vao buffers
-static r_vao_id currentVAO = vao_none;
 
 // VAOs
 typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
@@ -52,38 +66,20 @@ qbool GLM_InitialiseVAOHandling(void)
 	return vaos_supported;
 }
 
-void GLM_InitialiseVAOState(void)
+void GLM_BindVertexArray(r_vao_id vao)
 {
-	currentVAO = vao_none;
-}
-
-void GL_BindVertexArray(r_vao_id vao)
-{
-	if (currentVAO != vao) {
-		qglBindVertexArray(vaos[vao].vao);
-		currentVAO = vao;
-
-		if (vao) {
-			GL_SetElementArrayBuffer(vaos[vao].element_array_buffer);
-		}
-
-		GL_LogAPICall("GL_BindVertexArray()");
+	qglBindVertexArray(vaos[vao].vao);
+	if (vao) {
+		GL_SetElementArrayBuffer(vaos[vao].element_array_buffer);
 	}
 }
 
-void GL_BindVertexArrayElementBuffer(buffer_ref ref)
-{
-	if (currentVAO && vaos[currentVAO].vao) {
-		vaos[currentVAO].element_array_buffer = ref;
-	}
-}
-
-void GL_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
+void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
 
-	GL_BindVertexArray(vao);
+	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(vbo)) {
 		GL_BindBuffer(vbo);
 	}
@@ -96,12 +92,12 @@ void GL_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index,
 	qglVertexAttribDivisor(index, divisor);
 }
 
-void GL_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
+void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
 
-	GL_BindVertexArray(vao);
+	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(vbo)) {
 		GL_BindBuffer(vbo);
 	}
@@ -114,12 +110,12 @@ void GL_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index
 	qglVertexAttribDivisor(index, divisor);
 }
 
-void GL_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
+void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
 
-	GL_BindVertexArray(vao);
+	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(ibo)) {
 		GL_BindBuffer(ibo);
 	}
@@ -128,19 +124,18 @@ void GL_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
 	}
 }
 
-void GL_GenVertexArray(r_vao_id vao, const char* name)
+void GLM_GenVertexArray(r_vao_id vao, const char* name)
 {
 	if (vaos[vao].vao) {
 		qglDeleteVertexArrays(1, &vaos[vao].vao);
 	}
 	qglGenVertexArrays(1, &vaos[vao].vao);
-	GL_BindVertexArray(vao);
+	R_BindVertexArray(vao);
 	GL_ObjectLabel(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
-	strlcpy(vaos[vao].name, name, sizeof(vaos[vao].name));
 	GL_SetElementArrayBuffer(null_buffer_reference);
 }
 
-void GL_DeleteVAOs(void)
+void GLM_DeleteVAOs(void)
 {
 	r_vao_id id;
 
@@ -158,7 +153,14 @@ void GL_DeleteVAOs(void)
 	}
 }
 
-qbool GL_VertexArrayCreated(r_vao_id vao)
+qbool GLM_VertexArrayCreated(r_vao_id vao)
 {
 	return vaos[vao].vao != 0;
+}
+
+void GLM_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
+{
+	if (vaos[vao].vao) {
+		vaos[vao].element_array_buffer = ref;
+	}
 }

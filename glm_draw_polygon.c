@@ -56,9 +56,10 @@ void GLM_PreparePolygons(void)
 			GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
 		}
 
-		if (GL_VertexArrayCreated(vao_hud_polygons)) {
-			GL_GenVertexArray(vao_hud_polygons, "polygon-vao");
-			GL_ConfigureVertexAttribPointer(vao_hud_polygons, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+		if (!R_VertexArrayCreated(vao_hud_polygons)) {
+			R_GenVertexArray(vao_hud_polygons);
+			GLM_ConfigureVertexAttribPointer(vao_hud_polygons, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+			R_BindVertexArray(vao_none);
 		}
 	}
 }
@@ -89,7 +90,7 @@ void GLM_DrawPolygons(int start, int end)
 	int i;
 	uintptr_t offset = GL_BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
-	GL_BindVertexArray(vao_hud_polygons);
+	R_BindVertexArray(vao_hud_polygons);
 	GL_UseProgram(polygonProgram.program);
 	GLM_GetMatrix(GL_PROJECTION, matrix);
 	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);

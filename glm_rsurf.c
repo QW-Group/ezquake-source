@@ -206,7 +206,7 @@ static void GL_StartWorldBatch(void)
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 
 	GL_UseProgram(drawworld.program);
-	GL_BindVertexArray(vao_brushmodel);
+	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
 	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();

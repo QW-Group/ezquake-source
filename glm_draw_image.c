@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "glm_vao.h"
 #include "r_state.h"
+#include "glc_vao.h"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
@@ -165,8 +166,8 @@ void GLM_CreateMultiImageProgram(void)
 		imageVBO = GL_CreateFixedBuffer(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 	}
 
-	if (!GL_VertexArrayCreated(vao_hud_images)) {
-		GL_GenVertexArray(vao_hud_images, "image-vao");
+	if (!R_VertexArrayCreated(vao_hud_images)) {
+		R_GenVertexArray(vao_hud_images);
 
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
@@ -191,11 +192,11 @@ void GLM_CreateMultiImageProgram(void)
 		}
 
 		GL_BindBuffer(imageIndexBuffer);
-		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
-		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
-		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
-		GL_ConfigureVertexAttribIPointer(vao_hud_images, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
-		GL_BindVertexArray(vao_none);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
+		GLM_ConfigureVertexAttribIPointer(vao_hud_images, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
+		R_BindVertexArray(vao_none);
 #endif
 	}
 }
@@ -207,7 +208,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 
 	GL_UseProgram(multiImageProgram.program);
 	GLM_StateBeginImageDraw();
-	GL_BindVertexArray(vao_hud_images);
+	R_BindVertexArray(vao_hud_images);
 	if (GL_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
@@ -225,6 +226,25 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 #endif
 }
 
+static void GLC_CreateImageVAO(void)
+{
+	extern cvar_t gl_vbo_clientmemory;
+
+	if (gl_vbo_clientmemory.integer) {
+		R_GenVertexArray(vao_hud_images);
+		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
+		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
+		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+	}
+	else {
+		R_GenVertexArray(vao_hud_images);
+		GLC_VAOSetVertexBuffer(vao_hud_images, imageVBO);
+		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
+		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
+		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+	}
+}
+
 void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 {
 	float modelviewMatrix[16];
@@ -234,6 +254,10 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	qbool nearest = imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST;
 	int i;
 	extern cvar_t scr_coloredText;
+
+	if (GL_BuffersSupported() && !R_VertexArrayCreated(vao_hud_images)) {
+		GLC_CreateImageVAO();
+	}
 
 	GL_PushModelviewMatrix(modelviewMatrix);
 	GL_PushProjectionMatrix(projectionMatrix);
@@ -253,33 +277,6 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	if (GL_BuffersSupported()) {
 		extern cvar_t gl_vbo_clientmemory;
 
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		if (scr_coloredText.integer) {
-			glEnableClientState(GL_COLOR_ARRAY);
-		}
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-
-		if (gl_vbo_clientmemory.integer) {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
-
-			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
-			if (scr_coloredText.integer) {
-				glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
-			}
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
-		}
-		else {
-			GL_BindBuffer(imageVBO);
-
-			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
-			if (scr_coloredText.integer) {
-				glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
-			}
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
-		}
-
 		for (i = start; i < end; ++i) {
 			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
 				GL_DrawArrays(GL_QUADS, start * 4, (i - start + 1) * 4);
@@ -292,22 +289,13 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		}
 
 		GL_DrawArrays(GL_QUADS, start * 4, (i - start + 1) * 4);
-
-		glDisableClientState(GL_VERTEX_ARRAY);
-		if (scr_coloredText.integer) {
-			glDisableClientState(GL_COLOR_ARRAY);
-		}
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		if (!gl_vbo_clientmemory.integer) {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
-		}
 	}
 	else {
 		int i;
 
 		R_CustomColor4ubv(imageData.glc_images[start * 4].colour);
 		memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
-		glBegin(GL_QUADS);
+		GL_Begin(GL_QUADS);
 
 		for (i = start * 4; i <= 4 * end + 3; ++i) {
 			glc_image_t* next = &imageData.glc_images[i];
@@ -322,14 +310,14 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 
 				GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
-				glBegin(GL_QUADS);
+				GL_Begin(GL_QUADS);
 			}
 
 			glTexCoord2f(next->tex[0], next->tex[1]);
 			glVertex2f(next->pos[0], next->pos[1]);
 		}
 
-		glEnd();
+		GL_End();
 	}
 
 	GL_PopProjectionMatrix(projectionMatrix);

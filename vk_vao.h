@@ -17,34 +17,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef EZQUAKE_R_VAO_HEADER
-#define EZQUAKE_R_VAO_HEADER
+#ifndef EZQUAKE_VK_VAO_HEADER
+#define EZQUAKE_VK_VAO_HEADER
 
-typedef enum {
-	vao_none,
-	vao_aliasmodel,
-	vao_brushmodel,
-	vao_3dsprites,
-	vao_hud_circles,
-	vao_hud_images,
-	vao_hud_lines,
-	vao_hud_polygons,
-	vao_postprocess,
-	vao_aliasmodel_powerupshell,
-	vao_brushmodel_drawflat,
-	vao_brushmodel_details,
-	vao_brushmodel_lightmaps,
+#include "r_vao.h"
 
-	vao_count
-} r_vao_id;
+void VK_DeleteVAOs(void);
+void VK_GenVertexArray(r_vao_id vao, const char* name);
+qbool VK_VertexArrayCreated(r_vao_id vao);
+void VK_BindVertexArray(r_vao_id vao);
+qbool VK_InitialiseVAOHandling(void);
 
-void R_DeleteVAOs(void);
-void R_GenVertexArray(r_vao_id vao);
-void R_BindVertexArray(r_vao_id vao);
-qbool R_VertexArrayCreated(r_vao_id vao);
-void R_InitialiseVAOState(void);
-qbool R_InitialiseVAOHandling(void);
-qbool R_VAOBound(void);
-void R_BindVertexArrayElementBuffer(buffer_ref ref);
+#endif // EZQUAKE_VK_VAO_HEADER
 
-#endif // EZQUAKE_R_VAO_HEADER

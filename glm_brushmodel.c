@@ -271,6 +271,27 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 	return vbo_pos;
 }
 
+static void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
+{
+	// Create vao
+	R_GenVertexArray(vao_brushmodel);
+	GL_BindBuffer(vbo_brushElements);
+
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 2, 2, GL_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_index), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_index), 0);
+	// 
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, instance_vbo, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
+
+	R_BindVertexArray(vao_none);
+}
+
 void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 {
 	int i;
@@ -317,7 +338,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 		modelIndexMaximum = indexes;
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
 
-		GL_BindVertexArray(vao_none);
+		R_BindVertexArray(vao_none);
 		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
 			vbo_brushElements = GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
@@ -349,23 +370,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	brushModel_vbo = GL_CreateFixedBuffer(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
 	if (GL_UseGLSL()) {
-		// Create vao
-		GL_GenVertexArray(vao_brushmodel, "brushmodel-vao");
-		GL_BindBuffer(vbo_brushElements);
-
-		GL_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
-		GL_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
-		GL_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 2, 2, GL_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
-		GL_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords), 0);
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_index), 0);
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_index), 0);
-		// 
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, instance_vbo, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
-		GL_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
-
-		GL_BindVertexArray(vao_none);
+		GLM_CreateBrushModelVAO(instance_vbo);
 
 		// Create surface information SSBO
 		if (cl.worldmodel) {

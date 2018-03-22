@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sprite3d.h"
 #include "tr_types.h"
 #include "glm_vao.h"
+#include "glc_vao.h"
 #include "r_state.h"
 
 void GLM_Draw3DSprites(void);
@@ -322,28 +323,36 @@ static void GLM_Create3DSpriteVAO(void)
 {
 	GL_Create3DSpriteVBO();
 
-	if (!GL_VertexArrayCreated(vao_3dsprites)) {
-		GL_GenVertexArray(vao_3dsprites, "3dsprite-vao");
+	if (!R_VertexArrayCreated(vao_3dsprites)) {
+		R_GenVertexArray(vao_3dsprites);
 
 		GL_Create3DSpriteIndexBuffer();
 		GL_BindBuffer(sprite3dIndexes);
 
 		// position
-		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
 		// color
-		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
 
-		GL_BindVertexArray(vao_none);
+		R_BindVertexArray(vao_none);
 	}
 }
 
 static void GLC_Create3DSpriteVAO(void)
 {
-	GL_Create3DSpriteVBO();
+	if (GL_BuffersSupported()) {
+		R_GenVertexArray(vao_3dsprites);
+		GL_Create3DSpriteVBO();
+		GL_Create3DSpriteIndexBuffer();
 
-	GL_Create3DSpriteIndexBuffer();
+		GLC_VAOSetIndexBuffer(vao_3dsprites, sprite3dIndexes);
+		GLC_VAOSetVertexBuffer(vao_3dsprites, sprite3dVBO);
+		GLC_VAOEnableVertexPointer(vao_3dsprites, 3, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position));
+		GLC_VAOEnableColorPointer(vao_3dsprites, 4, GL_UNSIGNED_BYTE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color));
+		GLC_VAOEnableTextureCoordPointer(vao_3dsprites, 0, 2, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex));
+	}
 }
 
 static void GLM_Compile3DSpriteProgram(void)
@@ -367,7 +376,7 @@ static qbool GLM_3DSpritesInit(void)
 	GLM_Compile3DSpriteProgram();
 	GLM_Create3DSpriteVAO();
 
-	return (sprite3dProgram.program && GL_VertexArrayCreated(vao_3dsprites));
+	return (sprite3dProgram.program && R_VertexArrayCreated(vao_3dsprites));
 }
 
 static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
@@ -512,7 +521,7 @@ void GLM_Draw3DSprites(void)
 
 	GLM_StateBeginDraw3DSprites();
 	GL_UseProgram(sprite3dProgram.program);
-	GL_BindVertexArray(vao_3dsprites);
+	R_BindVertexArray(vao_3dsprites);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
@@ -603,23 +612,11 @@ void GLC_Draw3DSprites(void)
 		return;
 	}
 
-	GLC_StateBeginDraw3DSprites();
-
 	if (GL_BuffersSupported()) {
-		GLC_Create3DSpriteVAO();
-
-		GL_BindBuffer(sprite3dIndexes);
-
-		GL_BindAndUpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
-		glVertexPointer(3, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position));
-		glEnableClientState(GL_VERTEX_ARRAY);
-
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color));
-		glEnableClientState(GL_COLOR_ARRAY);
-
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex));
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!R_VertexArrayCreated(vao_3dsprites)) {
+			GLC_Create3DSpriteVAO();
+		}
+		GL_UpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 
 	for (i = 0; i < batchCount; ++i) {

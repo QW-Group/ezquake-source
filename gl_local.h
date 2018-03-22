@@ -586,7 +586,7 @@ void GL_ProcessErrors(const char* message);
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
 void GL_DeleteBuffers(void);
-void GL_DeleteVAOs(void);
+//void GL_DeleteVAOs(void);
 
 void GLC_FreeAliasPoseBuffer(void);
 void CachePics_Shutdown(void);

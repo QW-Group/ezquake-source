@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_local.h"
 #include "r_state.h"
+#include "glc_vao.h"
 
 static rendering_state_t worldTextureChainState;
 static rendering_state_t worldTextureChainFullbrightState;
@@ -53,11 +54,13 @@ void R_InitialiseWorldStates(void)
 	worldTextureChainState.textureUnits[1].enabled = true;
 	//worldTextureChainState.textureUnits[1].mode = (gl_invlightmaps ? r_texunit_mode_blend : r_texunit_mode_modulate);
 	worldTextureChainState.textureUnits[1].mode = r_texunit_mode_blend;
+	worldTextureChainState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&worldTextureChainFullbrightState, true, "worldTextureChainFullbrightState");
 	worldTextureChainFullbrightState.fog.enabled = true;
 	worldTextureChainFullbrightState.textureUnits[0].enabled = true;
 	worldTextureChainFullbrightState.textureUnits[0].mode = r_texunit_mode_replace;
+	worldTextureChainState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&blendLightmapState, true, "blendLightmapState");
 	blendLightmapState.depth.mask_enabled = false;
@@ -66,6 +69,7 @@ void R_InitialiseWorldStates(void)
 	blendLightmapState.blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
 	blendLightmapState.textureUnits[0].enabled = true;
 	blendLightmapState.textureUnits[0].mode = r_texunit_mode_replace;
+	blendLightmapState.vao_id = vao_brushmodel_lightmaps;
 
 	R_InitRenderingState(&causticsState, true, "causticsState");
 	causticsState.textureUnits[0].enabled = true;
@@ -104,12 +108,14 @@ void R_InitialiseWorldStates(void)
 		alphaChainState.textureUnits[1].enabled = true;
 		alphaChainState.textureUnits[1].mode = r_texunit_mode_blend; // modulate if !inv_lmaps
 	}
+	alphaChainState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&fullbrightsState, true, "fullbrightsState");
 	fullbrightsState.depth.mask_enabled = false;
 	fullbrightsState.alphaTesting.enabled = true;
 	fullbrightsState.textureUnits[0].enabled = true;
 	fullbrightsState.textureUnits[0].mode = r_texunit_mode_replace;
+	lumasState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&lumasState, true, "lumasState");
 	lumasState.depth.mask_enabled = false;
@@ -117,32 +123,39 @@ void R_InitialiseWorldStates(void)
 	lumasState.blendFunc = r_blendfunc_additive_blending;
 	lumasState.textureUnits[0].enabled = true;
 	lumasState.textureUnits[0].mode = r_texunit_mode_replace;
+	lumasState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&detailPolyState, true, "detailPolyState");
 	detailPolyState.textureUnits[0].enabled = true;
 	detailPolyState.textureUnits[0].mode = r_texunit_mode_decal;
 	detailPolyState.blendingEnabled = true;
 	detailPolyState.blendFunc = r_blendfunc_src_dst_color_dest_src_color;
+	detailPolyState.vao_id = vao_brushmodel_details;
 
 	R_InitRenderingState(&mapOutlineState, true, "mapOutlineState");
 	mapOutlineState.polygonOffset.option = r_polygonoffset_outlines;
 	mapOutlineState.depth.mask_enabled = false;
 	//mapOutlineState.depth.test_enabled = false;
 	mapOutlineState.cullface.enabled = false;
+	mapOutlineState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&glmAlphaOffsetWorldState, true, "glmAlphaOffsetWorldState");
 	glmAlphaOffsetWorldState.blendingEnabled = true;
 	glmAlphaOffsetWorldState.blendFunc = r_blendfunc_premultiplied_alpha;
+	glmAlphaOffsetWorldState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&glmOffsetWorldState, true, "glmOffsetWorldState");
 	glmOffsetWorldState.polygonOffset.option = r_polygonoffset_standard;
+	glmOffsetWorldState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&glmAlphaWorldState, true, "glmAlphaWorldState");
-	glmAlphaOffsetWorldState.blendingEnabled = true;
-	glmAlphaOffsetWorldState.blendFunc = r_blendfunc_premultiplied_alpha;
-	glmAlphaOffsetWorldState.polygonOffset.option = r_polygonoffset_standard;
+	glmAlphaWorldState.blendingEnabled = true;
+	glmAlphaWorldState.blendFunc = r_blendfunc_premultiplied_alpha;
+	glmAlphaWorldState.polygonOffset.option = r_polygonoffset_standard;
+	glmAlphaWorldState.vao_id = vao_brushmodel;
 
 	R_InitRenderingState(&glmWorldState, true, "glmWorldState");
+	glmWorldState.vao_id = vao_brushmodel;
 
 	//if (fullbrightTextureUnit) {
 	//		GL_TextureEnvModeForUnit(fullbrightTextureUnit, fullbrightMode);
@@ -156,13 +169,10 @@ void GLC_StateBeginDrawFlatModel(void)
 	if (GL_BuffersSupported()) {
 		extern buffer_ref brushModel_vbo;
 
-		GL_BindBuffer(brushModel_vbo);
-		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
-		glEnableClientState(GL_VERTEX_ARRAY);
-
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		R_GenVertexArray(vao_brushmodel_drawflat);
+		GLC_VAOSetVertexBuffer(vao_brushmodel_drawflat, brushModel_vbo);
+		GLC_VAOEnableVertexPointer(vao_brushmodel_drawflat, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		GLC_VAOEnableTextureCoordPointer(vao_brushmodel_drawflat, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 	}
 
 	LEAVE_STATE;
@@ -172,16 +182,6 @@ void GLC_StateBeginDrawFlatModel(void)
 
 void GLC_StateEndDrawFlatModel(void)
 {
-	ENTER_STATE;
-
-	if (GL_BuffersSupported()) {
-		glDisableClientState(GL_VERTEX_ARRAY);
-
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit)
@@ -191,25 +191,21 @@ void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightText
 	if (GL_BuffersSupported()) {
 		extern buffer_ref brushModel_vbo;
 
-		GL_BindBuffer(brushModel_vbo);
-		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
-		glEnableClientState(GL_VERTEX_ARRAY);
-
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
+		R_GenVertexArray(vao_brushmodel);
+		GLC_VAOSetVertexBuffer(vao_brushmodel, brushModel_vbo);
+		GLC_VAOEnableVertexPointer(vao_brushmodel, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		GLC_VAOEnableTextureCoordPointer(vao_brushmodel, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 		if (lightmapTextureUnit >= 0) {
-			GLC_ClientActiveTexture(GL_TEXTURE0 + lightmapTextureUnit);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			GLC_VAOEnableTextureCoordPointer(vao_brushmodel, lightmapTextureUnit, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+		}
+		if (fullbrightTextureUnit >= 0) {
+			GLC_VAOEnableTextureCoordPointer(vao_brushmodel, fullbrightTextureUnit, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 		}
 
-		if (fullbrightTextureUnit >= 0) {
-			GLC_ClientActiveTexture(GL_TEXTURE0 + fullbrightTextureUnit);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
+		R_GenVertexArray(vao_brushmodel_details);
+		GLC_VAOSetVertexBuffer(vao_brushmodel_details, brushModel_vbo);
+		GLC_VAOEnableVertexPointer(vao_brushmodel_details, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		GLC_VAOEnableTextureCoordPointer(vao_brushmodel_details, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
 	}
 
 	LEAVE_STATE;
@@ -217,27 +213,6 @@ void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightText
 
 void GLC_StateEndWorldTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit)
 {
-	ENTER_STATE;
-
-	GL_DebugState();
-
-	if (GL_BuffersSupported()) {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-		glDisableClientState(GL_VERTEX_ARRAY);
-
-		if (lightmapTextureUnit >= 0) {
-			GLC_ClientActiveTexture(GL_TEXTURE0 + lightmapTextureUnit);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-		if (fullbrightTextureUnit >= 0) {
-			GLC_ClientActiveTexture(GL_TEXTURE0 + fullbrightTextureUnit);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-
-	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawTextureChains(void)
@@ -267,12 +242,6 @@ void GLC_StateBeginBlendLightmaps(qbool use_buffers)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&blendLightmapState);
-
-	if (use_buffers) {
-		// Use the lightmap co-ordinates instead of material
-		GLC_ClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
-	}
 
 	LEAVE_STATE;
 }

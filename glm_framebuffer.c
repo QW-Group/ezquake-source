@@ -60,7 +60,7 @@ static void VID_FramebufferFlip(void)
 
 		if (GLM_CompilePostProcessProgram()) {
 			GL_UseProgram(post_process_program.program);
-			GL_BindVertexArray(vao_postprocess);
+			R_BindVertexArray(vao_postprocess);
 
 			if (flip2d && flip3d) {
 				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer3d, 0));
@@ -185,14 +185,16 @@ static qbool GLM_CompilePostProcessProgram(void)
 		post_process_vbo = GL_CreateFixedBuffer(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
 	}
 
-	if (GL_BufferReferenceIsValid(post_process_vbo) && !GL_VertexArrayCreated(vao_postprocess)) {
-		GL_GenVertexArray(vao_postprocess, "post-process-vao");
+	if (GL_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {
+		R_GenVertexArray(vao_postprocess);
 
-		GL_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);
-		GL_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3), 0);
+		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);
+		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3), 0);
+
+		R_BindVertexArray(vao_none);
 	}
 
-	return post_process_program.program && GL_VertexArrayCreated(vao_postprocess);
+	return post_process_program.program && R_VertexArrayCreated(vao_postprocess);
 }
 
 void GLM_FramebufferPostProcessScreen(void)
