@@ -841,8 +841,6 @@ void GLC_StateBeginDraw3DSprites(void);
 void GLC_StateEndDraw3DSprites(void);
 void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GL_StateEndDrawAliasModel(void);
-void GLC_StateBeginSimpleItem(texture_ref simpletexture);
-void GLC_StateEndSimpleItem(void);
 
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);

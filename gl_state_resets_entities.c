@@ -40,7 +40,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static rendering_state_t powerupShellState;
 static rendering_state_t aliasModelState[10];
 static rendering_state_t aliasModelShadowState;
-static rendering_state_t simpleItemState;
 static rendering_state_t aliasModelOutlineState;
 static rendering_state_t brushModelOpaqueState;
 static rendering_state_t brushModelOpaqueOffsetState;
@@ -116,19 +115,7 @@ void R_InitialiseEntityStates(void)
 	aliasModelShadowState.blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelShadowState.color[0] = aliasModelShadowState.color[1] = aliasModelShadowState.color[2] = 0;
 	aliasModelShadowState.color[3] = 0.5f;
-
-	R_InitRenderingState(&simpleItemState, true, "simpleItemState");
-	simpleItemState.polygonOffset.option = r_polygonoffset_disabled;
-	simpleItemState.cullface.enabled = true;
-	simpleItemState.cullface.mode = r_cullface_front;
-	simpleItemState.polygonMode = r_polygonmode_fill;
-	simpleItemState.line.smooth = false;
-	simpleItemState.fog.enabled = false;
-	simpleItemState.alphaTesting.enabled = true;
-	simpleItemState.blendingEnabled = true;
-	simpleItemState.blendFunc = r_blendfunc_premultiplied_alpha;
-	simpleItemState.textureUnits[0].enabled = true;
-	simpleItemState.textureUnits[0].mode = r_texunit_mode_replace;
+	aliasModelShadowState.vao_id = vao_aliasmodel;
 
 	R_InitRenderingState(&aliasModelOutlineState, true, "aliasModelOutlineState");
 	aliasModelOutlineState.alphaTesting.enabled = false;
@@ -335,17 +322,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 }
 
 void GL_StateEndDrawAliasModel(void)
-{
-}
-
-void GLC_StateBeginSimpleItem(texture_ref simpletexture)
-{
-	R_ApplyRenderingState(&simpleItemState);
-
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, simpletexture);
-}
-
-void GLC_StateEndSimpleItem(void)
 {
 }
 
