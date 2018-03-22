@@ -508,21 +508,6 @@ void GL_PolygonOffset(int option)
 	}
 }
 
-void GL_Hint(GLenum target, GLenum mode)
-{
-	if (GL_UseImmediateMode()) {
-		if (target == GL_PERSPECTIVE_CORRECTION_HINT) {
-			if (mode == perspectiveCorrectionHint) {
-				return;
-			}
-
-			perspectiveCorrectionHint = mode;
-		}
-
-		glHint(target, mode);
-	}
-}
-
 void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 {
 	int i;

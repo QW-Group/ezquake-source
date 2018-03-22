@@ -74,7 +74,6 @@ void GLC_StateBeginMD3Draw(float alpha)
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 	GL_Disable(GL_LINE_SMOOTH);
-	GL_Hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	GL_EnableFog();
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);

@@ -627,7 +627,6 @@ void GL_AlphaFunc(GLenum func, GLclampf threshold);
 void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
 void GL_ClearModelTextureData(void);
-void GL_Hint(GLenum target, GLenum mode);
 void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);
 
 // --------------
