@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_chaticons.h"
 #include "r_matrix.h"
 #include "r_local.h"
+#include "r_state.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -50,6 +51,8 @@ static void R_SetupGL(void);
 static void R_RenderTransparentWorld(void);
 
 void GLM_RenderView(void);
+
+static rendering_state_t sprite_entity_state;
 
 extern msurface_t *alphachain;
 extern vec3_t     lightspot;
@@ -896,6 +899,16 @@ void R_Init(void)
 	InitTracker();
 	R_InitOtherTextures(); // safe re-init
 	R_InitBloomTextures();
+
+	// Init entity state
+	R_Init3DSpriteRenderingState(&sprite_entity_state);
+	sprite_entity_state.blendingEnabled = true;
+	sprite_entity_state.blendFunc = r_blendfunc_premultiplied_alpha;
+	sprite_entity_state.textureUnits[0].enabled = true;
+	sprite_entity_state.textureUnits[0].mode = r_texunit_mode_replace;
+	sprite_entity_state.alphaTesting.enabled = true;
+	sprite_entity_state.alphaTesting.func = r_alphatest_func_greater;
+	sprite_entity_state.alphaTesting.value = 0.333f;
 }
 
 static void R_RenderScene(void)
@@ -917,7 +930,7 @@ static void R_RenderScene(void)
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
 
-		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, null_texture_reference, 0, GL_TRIANGLE_STRIP);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);

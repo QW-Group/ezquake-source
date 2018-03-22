@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sprite3d.h"
 #include "tr_types.h"
 #include "glm_vao.h"
+#include "r_state.h"
 
 void GLM_Draw3DSprites(void);
 void GLM_Prepare3DSprites(void);
@@ -105,13 +106,11 @@ static const char* batch_type_names[] = {
 };
 
 typedef struct gl_sprite3d_batch_s {
-	GLenum blendSource;
-	GLenum blendDestination;
+	// FIXME: Change primitive type
+	rendering_state_t* rendering_state;
 	GLenum primitive;
 	texture_ref texture;
 	int texture_index;
-	qbool depthTest;
-	qbool depthMask;
 	qbool allSameNumber;
 
 	GLint firstVertices[MAX_3DSPRITES_PER_BATCH];
@@ -151,17 +150,15 @@ static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 	return &batches[index - 1];
 }
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask)
+// FIXME: Change primitive type
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, rendering_state_t* state, texture_ref texture, int index, GLenum primitive_type)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
-	batch->blendSource = blendSource;
-	batch->blendDestination = blendDestination;
+	batch->rendering_state = state;
 	batch->texture = texture;
 	batch->count = 0;
 	batch->primitive = primitive_type;
-	batch->depthTest = depthTest;
-	batch->depthMask = depthMask;
 	batch->allSameNumber = true;
 	batch->texture_index = index;
 	batch->name = batch_type_names[type];
@@ -492,14 +489,7 @@ void GLM_Draw3DSprites(void)
 		}
 
 		GL_EnterRegion(batch->name);
-		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		GL_DepthMask(batch->depthMask ? GL_TRUE : GL_FALSE);
-		if (batch->depthTest) {
-			GL_Enable(GL_DEPTH_TEST);
-		}
-		else {
-			GL_Disable(GL_DEPTH_TEST);
-		}
+		R_ApplyRenderingState(batch->rendering_state);
 		if (first_batch || current_alpha_test != alpha_test) {
 			GL_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
 		}
@@ -591,21 +581,12 @@ void GLC_Draw3DSprites(void)
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
-		qbool alpha_test = (i == batchMapping[SPRITE3D_ENTITIES] - 1);
 
 		if (!batch->count) {
 			continue;
 		}
 
-		GL_BlendFunc(batch->blendSource, batch->blendDestination);
-		if (batch->depthTest) {
-			GL_Enable(GL_DEPTH_TEST);
-		}
-		else {
-			GL_Disable(GL_DEPTH_TEST);
-		}
-		GL_DepthMask(batch->depthMask ? GL_TRUE : GL_FALSE);
-		GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
+		R_ApplyRenderingState(batch->rendering_state);
 
 		if (GL_BuffersSupported()) {
 			if (batch->count == 1) {

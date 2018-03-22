@@ -224,9 +224,7 @@ void GLC_StateEndImageDraw(void)
 void GL_StateBeginPolyBlend(void)
 {
 	ENTER_STATE;
-
 	R_ApplyRenderingState(&polyBlendState);
-
 	LEAVE_STATE;
 }
 
@@ -237,12 +235,13 @@ void GL_StateEndPolyBlend(void)
 void GLM_StateBeginImageDraw(void)
 {
 	ENTER_STATE;
-
 	R_ApplyRenderingState(&glmImageDrawState);
-
 	LEAVE_STATE;
 }
 
 void GLM_StateBeginPolygonDraw(void)
 {
+	ENTER_STATE;
+	R_ApplyRenderingState(&glmImageDrawState);
+	LEAVE_STATE;
 }

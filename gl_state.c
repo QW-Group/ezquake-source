@@ -152,6 +152,19 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	}
 }
 
+void R_Init3DSpriteRenderingState(rendering_state_t* state)
+{
+	R_InitRenderingState(state, true);
+
+	state->fog.enabled = false;
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->cullface.enabled = false;
+	state->alphaTesting.enabled = true;
+	state->alphaTesting.func = r_alphatest_func_greater;
+	state->alphaTesting.value = 0.333f;
+}
+
 #define GL_ApplySimpleToggle(state, current, field, option) \
 	if (state->field != current->field) { \
 		if (state->field) { \

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sprite3d.h"
 #include "r_texture.h"
 #include "r_chaticons.h"
+#include "r_state.h"
 
 // Chat icons
 typedef byte col_t[4]; // FIXME: why 4?
@@ -48,6 +49,8 @@ typedef enum {
 	citex_chat_afk,
 	num_citextures,
 } ci_tex_t;
+
+static rendering_state_t chaticon_state;
 
 #define	MAX_CITEX_COMPONENTS		8
 typedef struct ci_texture_s {
@@ -225,6 +228,8 @@ void R_SetupChatIcons(void)
 	}
 }
 
+
+
 void R_InitChatIcons(void)
 {
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
@@ -246,6 +251,14 @@ void R_InitChatIcons(void)
 		Q_free(temp_buffer);
 		Q_free(original);
 	}
+
+	R_Init3DSpriteRenderingState(&chaticon_state);
+	chaticon_state.blendFunc = r_blendfunc_premultiplied_alpha;
+	chaticon_state.blendingEnabled = true;
+	chaticon_state.depth.test_enabled = true;
+	chaticon_state.depth.mask_enabled = true;
+	chaticon_state.textureUnits[0].mode = r_texunit_mode_replace;
+	chaticon_state.textureUnits[0].enabled = true;
 
 	ci_initialized = true;
 }
@@ -275,9 +288,9 @@ void R_DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_STRIP, true, true);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_STRIP, true, true);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_STRIP, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, &chaticon_state, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_STRIP);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, &chaticon_state, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_STRIP);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, &chaticon_state, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_STRIP);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

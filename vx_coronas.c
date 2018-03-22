@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "glm_texture_arrays.h"
 #include "gl_sprite3d.h"
+#include "r_state.h"
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
@@ -49,6 +50,7 @@ typedef struct corona_s
 
 static corona_t r_corona[MAX_CORONAS];
 static corona_t* r_corona_by_tex[CORONATEX_COUNT];
+static rendering_state_t coronaState;
 
 #define CORONA_SCALE 130
 #define CORONA_ALPHA 1
@@ -148,7 +150,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_Sprite3DInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_UseGLSL() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
+		GL_Sprite3DInitialiseBatch(batch_id, &coronaState, GL_UseGLSL() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			gl_sprite3d_vert_t* vert;
@@ -488,7 +490,11 @@ void InitCoronas(void)
 		c->los = false;
 		c->sighted = false;
 	}
-};
+
+	R_Init3DSpriteRenderingState(&coronaState);
+	coronaState.depth.mask_enabled = false;
+	coronaState.depth.test_enabled = false;
+}
 
 //NewStaticLightCorona
 //Throws down a permanent light at origin, and wont put another on top of it

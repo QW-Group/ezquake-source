@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_sprite3d.h"
 #include "r_lightmaps.h"
+#include "r_state.h"
+
+static rendering_state_t bubble_state;
 
 int	r_dlightframecount;
 
@@ -57,7 +60,8 @@ void R_AnimateLight(void)
 
 float bubble_sintable[17], bubble_costable[17];
 
-void R_InitBubble(void) {
+void R_InitBubble(void)
+{
 	float a, *bub_sin, *bub_cos;
 	int i;
 
@@ -69,6 +73,10 @@ void R_InitBubble(void) {
 		*bub_sin++ = sin(a);
 		*bub_cos++ = cos(a);
 	}
+
+	R_Init3DSpriteRenderingState(&bubble_state);
+	bubble_state.depth.test_enabled = true;
+	bubble_state.depth.mask_enabled = false;
 }
 
 //VULT LIGHTS
@@ -111,7 +119,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_FAN, true, false);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, &bubble_state, null_texture_reference, 0, GL_TRIANGLE_FAN);
 
 		first_dlight = false;
 	}

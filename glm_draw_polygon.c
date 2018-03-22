@@ -93,8 +93,7 @@ void GLM_DrawPolygons(int start, int end)
 	GLM_GetMatrix(GL_PROJECTION, matrix);
 	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
 
-	GLM_BeginPolygonDraw();
-	GL_Disable(GL_DEPTH_TEST);
+	GLM_StateBeginPolygonDraw();
 
 	for (i = start; i <= end; ++i) {
 		GLM_TransformMatrix(matrix, polygonData.polygonX[i], polygonData.polygonY[i], 0);
@@ -108,7 +107,6 @@ void GLM_DrawPolygons(int start, int end)
 void GLC_DrawPolygons(int start, int end)
 {
 	int i, j;
-	int oldFlags = GL_AlphaBlendFlags(GL_ALPHATEST_NOCHANGE | GL_BLEND_NOCHANGE);
 
 	GLC_StateBeginDrawPolygon();
 
@@ -120,6 +118,4 @@ void GLC_DrawPolygons(int start, int end)
 		}
 		glEnd();
 	}
-
-	GLC_StateEndDrawPolygon(oldFlags);
 }

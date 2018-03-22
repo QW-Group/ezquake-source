@@ -83,7 +83,7 @@ typedef enum {
 	r_texunit_mode_count
 } r_texunit_mode_t;
 
-typedef struct {
+typedef struct rendering_state_s {
 	struct {
 		r_depthfunc_t func;
 		double nearRange;
@@ -143,6 +143,7 @@ typedef struct {
 } rendering_state_t;
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state);
+void R_Init3DSpriteRenderingState(rendering_state_t* state);
 void R_ApplyRenderingState(rendering_state_t* state);
 
 #endif // EZQUAKE_R_STATE_HEADER

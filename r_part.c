@@ -29,7 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "qmb_particles.h"
 #include "glm_particles.h"
+#include "r_state.h"
 
+static rendering_state_t particle_state;
 texture_ref particletexture;
 const int default_size = 32;
 
@@ -162,6 +164,9 @@ void Classic_InitParticles(void)
 	}
 
 	Classic_LoadParticleTexures(default_size, default_size);
+
+	R_Init3DSpriteRenderingState(&particle_state);
+	particle_state.depth.mask_enabled = false;
 }
 
 void Classic_ClearParticles(void)
@@ -696,7 +701,7 @@ void Classic_DrawParticles(void)
 		return;
 	}
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_UseGLSL() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, &particle_state, GL_UseGLSL() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES);
 	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
