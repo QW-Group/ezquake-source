@@ -481,7 +481,7 @@ void R_UploadChangedLightmaps(void)
 		}
 
 		if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
-			ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, write_once_use_once);
+			ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, buffertype_use_once);
 		}
 		else {
 			GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
@@ -788,7 +788,7 @@ void GL_BuildLightmaps(void)
 	surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
 
 	if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
-		ssbo_surfacesTodo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "surfaces-to-light", surfaceTodoLength, NULL, write_once_use_once);
+		ssbo_surfacesTodo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "surfaces-to-light", surfaceTodoLength, NULL, buffertype_use_once);
 	}
 	else {
 		GL_EnsureBufferSize(ssbo_surfacesTodo, surfaceTodoLength);

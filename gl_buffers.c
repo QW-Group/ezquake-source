@@ -35,7 +35,8 @@ typedef struct buffer_data_s {
 	// These set at creation
 	GLenum target;
 	size_t size;
-	GLuint usage;
+	GLuint usage;                // flags for BufferData()
+	GLuint storageFlags;         // flags for BufferStorage()
 
 	void* persistent_mapped_ptr;
 
@@ -175,46 +176,68 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 
 buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage)
 {
+	buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
+	buffer_ref ref;
+
 	GLenum glUsage;
 	qbool tripleBuffer = false;
+	qbool useStorage = false;
+	GLbitfield storageFlags = 0;
+	GLsizei alignment = 1;
 
-	if (usage == write_once_use_once) {
+	if (usage == buffertype_use_once) {
 		glUsage = GL_STREAM_DRAW;
-		
-		tripleBuffer = tripleBuffer_supported;
+
+		useStorage = tripleBuffer = tripleBuffer_supported;
+		storageFlags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 	}
-	else if (usage == write_once_use_once_safe) {
-		glUsage = GL_STREAM_DRAW;
-	}
-	else if (usage == write_once_use_many) {
+	else if (usage == buffertype_reuse_many) {
 		glUsage = GL_STATIC_DRAW;
+		storageFlags = GL_MAP_WRITE_BIT;
+		useStorage = (glBufferStorage != NULL);
+		if (!data) {
+			Sys_Error("Buffer %s flagged as constant but no initial data", name);
+			return null_buffer_reference;
+		}
 	}
-	else if (usage == write_once_read_many) {
+	else if (usage == buffertype_constant) {
 		glUsage = GL_STATIC_COPY;
+		storageFlags = 0;
+		useStorage = (glBufferStorage != NULL);
+		if (!data) {
+			Sys_Error("Buffer %s flagged as constant but no initial data", name);
+			return null_buffer_reference;
+		}
 	}
 	else {
 		Sys_Error("Unknown usage flag passed to GL_CreateFixedBuffer");
 		return null_buffer_reference;
 	}
 
-	if (!tripleBuffer) {
+	if (!useStorage) {
+		// Fall back to standard mutable buffer
 		return GL_GenFixedBuffer(target, name, size, data, glUsage);
 	}
-	else {
-		GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-		buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
-		buffer_ref ref;
 
-		GL_BindBufferImpl(target, buffer->glref);
-		if (target == GL_UNIFORM_BUFFER || target == GL_SHADER_STORAGE_BUFFER) {
-			GLsizei alignment = (target == GL_UNIFORM_BUFFER ? glConfig.uniformBufferOffsetAlignment : glConfig.shaderStorageBufferOffsetAlignment);
+	GL_BindBufferImpl(target, buffer->glref);
+	if (target == GL_UNIFORM_BUFFER) {
+		alignment = glConfig.uniformBufferOffsetAlignment;
+	}
+	else if (target == GL_SHADER_STORAGE_BUFFER) {
+		alignment = glConfig.shaderStorageBufferOffsetAlignment;
+	}
 
-			size = ((size + (alignment - 1)) / alignment) * alignment;
+	if (alignment > 1) {
+		buffer->size = size = ((size + (alignment - 1)) / alignment) * alignment;
+	}
 
-			buffer->size = size;
-		}
-		glBufferStorage(target, size * 3, NULL, flags);
-		buffer->persistent_mapped_ptr = glMapBufferRange(target, 0, size * 3, flags);
+	if (glObjectLabel && name) {
+		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
+	}
+
+	if (tripleBuffer) {
+		glBufferStorage(target, size * 3, NULL, storageFlags);
+		buffer->persistent_mapped_ptr = glMapBufferRange(target, 0, size * 3, storageFlags);
 
 		if (buffer->persistent_mapped_ptr) {
 			if (data) {
@@ -227,13 +250,14 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 			Con_Printf("\20opengl\21 triple-buffered allocation failed (%dKB)\n", (size * 3) / 1024);
 			return GL_GenFixedBuffer(target, name, size, data, glUsage);
 		}
-
-		if (glObjectLabel && name) {
-			glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
-		}
-		ref.index = buffer - buffers;
-		return ref;
 	}
+	else {
+		glBufferStorage(target, size, data, storageFlags);
+	}
+
+	buffer->storageFlags = storageFlags;
+	ref.index = buffer - buffers;
+	return ref;
 }
 
 void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
@@ -295,7 +319,7 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 
 		buffers[vbo.index].next_free = next_free_buffer;
 
-		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, write_once_use_once);
+		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, buffertype_use_once);
 	}
 	else {
 		if (glNamedBufferData) {

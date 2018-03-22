@@ -11,8 +11,6 @@
 #endif
 #include "glsl/constants.glsl"
 
-void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int position);
-
 static buffer_ref aliasModel_vbo;
 static buffer_ref aliasModel_ssbo;
 
@@ -25,7 +23,7 @@ static buffer_ref GL_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	return GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, write_once_use_many);
+	return GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, buffertype_constant);
 }
 
 static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
@@ -47,16 +45,16 @@ static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
 	}
 }
 
-static void GL_ImportModelToVBO(model_t* mod, int* new_vbo_position)
+static void GL_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
 {
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
-		GL_AliasModelAddToVBO(mod, paliashdr, aliasModel_vbo, aliasModel_ssbo, *new_vbo_position);
+		GL_AliasModelAddToVBO(mod, paliashdr, aliasmodel_data, *new_vbo_position);
 		*new_vbo_position += mod->vertsInVBO;
 	}
 	else if (mod->type == mod_alias3) {
-		GL_MD3ModelAddToVBO(mod, aliasModel_vbo, aliasModel_ssbo, *new_vbo_position);
+		GL_MD3ModelAddToVBO(mod, aliasmodel_data, *new_vbo_position);
 
 		*new_vbo_position += mod->vertsInVBO;
 	}
@@ -68,10 +66,8 @@ static void GL_ImportModelToVBO(model_t* mod, int* new_vbo_position)
 	}
 }
 
-static void GL_ImportSpriteCoordsToVBO(int* position)
+static void GL_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
 {
-	vbo_model_vert_t verts[4];
-
 	VectorSet(verts[0].position, 0, -1, -1);
 	verts[0].texture_coords[0] = 1;
 	verts[0].texture_coords[1] = 1;
@@ -92,7 +88,6 @@ static void GL_ImportSpriteCoordsToVBO(int* position)
 	verts[3].texture_coords[1] = 1;
 	verts[3].vert_index = 3;
 
-	GL_UpdateBufferSection(aliasModel_vbo, *position, sizeof(verts), verts);
 	*position += sizeof(verts) / sizeof(verts[0]);
 }
 
@@ -103,6 +98,7 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	int i;
 	int new_vbo_position = 0;
 	buffer_ref instance_vbo;
+	vbo_model_vert_t* aliasModelData;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -136,20 +132,17 @@ void GL_CreateModelVBOs(qbool vid_restart)
 		}
 	}
 
-	aliasModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), NULL, write_once_use_many);
-	if (GL_ShadersSupported()) {
-		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), NULL, write_once_use_many);
-	}
+	// Go back through all models, importing textures into arrays and creating new VBO
+	aliasModelData = Q_malloc(required_vbo_length * sizeof(vbo_model_vert_t));
 
 	// VBO starts with simple-model/sprite vertices
-	GL_ImportSpriteCoordsToVBO(&new_vbo_position);
+	GL_ImportSpriteCoordsToVBO(aliasModelData, &new_vbo_position);
 
-	// Go back through all models, importing textures into arrays and creating new VBO
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 
 		if (mod) {
-			GL_ImportModelToVBO(mod, &new_vbo_position);
+			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
 		}
 	}
 
@@ -157,17 +150,20 @@ void GL_CreateModelVBOs(qbool vid_restart)
 		model_t* mod = cl.vw_model_precache[i];
 
 		if (mod) {
-			GL_ImportModelToVBO(mod, &new_vbo_position);
+			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
 		}
 	}
 
+	aliasModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
 	instance_vbo = GL_CreateInstanceVBO();
 	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
 	GL_CreateBrushModelVAO(instance_vbo);
 	if (GL_ShadersSupported()) {
+		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
 		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
 	else {
 		GLC_AllocateAliasPoseBuffer();
 	}
+	Q_free(aliasModelData);
 }

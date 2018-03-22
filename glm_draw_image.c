@@ -151,7 +151,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.images), imageData.images, write_once_use_once);
+		imageVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.images), imageData.images, buffertype_use_once);
 	}
 
 	if (!imageVAO.vao) {
@@ -176,7 +176,7 @@ void GLM_CreateMultiImageProgram(void)
 				imageIndexData[i * 5 + 4] = ~(GLuint)0;
 			}
 
-			imageIndexBuffer = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "image-indexes", sizeof(imageIndexData), imageIndexData, write_once_use_many);
+			imageIndexBuffer = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "image-indexes", sizeof(imageIndexData), imageIndexData, buffertype_constant);
 		}
 		GL_BindBuffer(imageIndexBuffer);
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);

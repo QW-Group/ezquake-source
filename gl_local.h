@@ -307,7 +307,8 @@ void R_StoreEfrags (efrag_t **ppefrag);
 
 // gl_mesh.c
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, buffer_ref vbo, buffer_ref ssbo, int position);
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
+void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 
 // gl_rsurf.c
 
@@ -1180,11 +1181,10 @@ qbool GL_DrawElementsBaseVertexAvailable(void);
 
 // Buffers
 typedef enum {
-	unknown,
-	write_once_use_once,
-	write_once_use_once_safe,
-	write_once_use_many,
-	write_once_read_many
+	buffertype_unknown,
+	buffertype_use_once,
+	buffertype_reuse_many,
+	buffertype_constant
 } buffertype_t;
 
 buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage);

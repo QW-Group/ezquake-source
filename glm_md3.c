@@ -151,12 +151,9 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
 }
 
-void GL_MD3ModelAddToVBO(model_t* mod, buffer_ref vbo, buffer_ref ssbo, int position)
+void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelData, int position)
 {
-	GL_UpdateBufferSection(vbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
-	if (GL_BufferReferenceIsValid(ssbo)) {
-		GL_UpdateBufferSection(ssbo, position * sizeof(vbo_model_vert_t), mod->vertsInVBO * sizeof(vbo_model_vert_t), mod->temp_vbo_buffer);
-	}
+	memcpy(aliasModelData + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
 	mod->vbo_start = position;
 	Q_free(mod->temp_vbo_buffer);

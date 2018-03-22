@@ -112,11 +112,11 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
-		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, write_once_use_once);
+		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, buffertype_use_once);
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
-		vbo_aliasDataBuffer = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, write_once_use_once);
+		vbo_aliasDataBuffer = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, buffertype_use_once);
 	}
 
 	return drawAliasModelProgram.program;
