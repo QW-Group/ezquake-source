@@ -78,13 +78,12 @@ static GLint drawWorld_outlines;
 #define DRAW_CAUSTIC_TEXTURES      2
 #define DRAW_LUMA_TEXTURES         4
 #define DRAW_SKYBOX                8
-#define DRAW_HARDWARE_LIGHTING    16
-#define DRAW_SKYDOME              32
-#define DRAW_FLATFLOORS           64
-#define DRAW_FLATWALLS           128
-#define DRAW_LIGHTMAPS           256
-#define DRAW_LUMA_TEXTURES_FB    512
-#define DRAW_TEXTURELESS        1024
+#define DRAW_SKYDOME              16
+#define DRAW_FLATFLOORS           32
+#define DRAW_FLATWALLS            64
+#define DRAW_LIGHTMAPS           128
+#define DRAW_LUMA_TEXTURES_FB    256
+#define DRAW_TEXTURELESS         512
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
