@@ -90,9 +90,9 @@ void GL_StateDefaultInit(void)
 	ENTER_STATE;
 
 #ifndef __APPLE__
-	glClearColor(1, 0, 0, 0);
+	GL_ClearColor(0, 0, 0, 1);
 #else
-	glClearColor(0.2, 0.2, 0.2, 1.0);
+	GL_ClearColor(0.2, 0.2, 0.2, 1.0);
 #endif
 
 	GL_CullFace(GL_FRONT);

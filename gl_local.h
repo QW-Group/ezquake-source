@@ -881,6 +881,7 @@ void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint inde
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
 void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
+void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
 void GL_ClearModelTextureData(void);
 void GL_Hint(GLenum target, GLenum mode);

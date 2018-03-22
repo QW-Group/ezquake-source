@@ -960,7 +960,7 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	clearColor[1] = color[1] / 255.0;
 	clearColor[2] = color[2] / 255.0;
 
-	glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
+	GL_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
 }
 
 static void R_Clear(void)
@@ -984,10 +984,10 @@ static void R_Clear(void)
 
 	if (gl_clear.value) {
 		if (gl_fogenable.integer) {
-			glClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 0.5);//Tei custom clear color
+			GL_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
 		}
 		else {
-			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
+			GL_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
 		}
 	}
 

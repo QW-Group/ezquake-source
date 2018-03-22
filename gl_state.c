@@ -47,6 +47,7 @@ static qbool gl_polygon_offset_line;
 static qbool gl_polygon_offset_fill;
 static GLenum perspectiveCorrectionHint;
 static GLenum polygonMode;
+static float clearColor[4];
 
 static GLenum currentTextureUnit = GL_TEXTURE0;
 static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
@@ -211,6 +212,7 @@ void GL_InitialiseState(void)
 	polygonOffsetFactor = polygonOffsetUnits = 0;
 	gl_polygon_offset_line = gl_polygon_offset_fill = false;
 	perspectiveCorrectionHint = GL_DONT_CARE;
+	clearColor[0] = clearColor[1] = clearColor[2] = clearColor[3] = 0;
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -999,3 +1001,14 @@ void GL_PrintState(void)
 	}
 }
 #endif
+
+void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+{
+	if (r != clearColor[0] || g != clearColor[1] || b != clearColor[2] || a != clearColor[3]) {
+		glClearColor(r, g, b, a);
+		clearColor[0] = r;
+		clearColor[1] = g;
+		clearColor[2] = b;
+		clearColor[3] = a;
+	}
+}
