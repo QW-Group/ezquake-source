@@ -203,12 +203,6 @@ qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
 void R_BrightenScreen (void);
 
-#define POLYGONOFFSET_DISABLED 0
-#define POLYGONOFFSET_STANDARD 1
-#define POLYGONOFFSET_OUTLINES 2
-
-void GL_PolygonOffset(int options);
-
 // gl_rlight.c
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 void R_AnimateLight (void);
@@ -341,8 +335,6 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-int GL_AlphaBlendFlags(int modes);
-
 void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
 void GLM_TransformMatrix(float* matrix, float x, float y, float z);
 void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
@@ -461,8 +453,6 @@ qbool GLM_CreateVGFProgramWithInclude(
 
 void GL_Begin(GLenum primitive);
 void GL_End(void);
-void GL_Enable(GLenum option);
-void GL_Disable(GLenum option);
 void GL_Vertex2f(GLfloat x, GLfloat y);
 void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
 void GL_Vertex3fv(const GLfloat* v);
@@ -473,15 +463,21 @@ void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
 void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 
 void GL_UseProgram(GLuint program);
+void GL_InitTextureState(void);
+void GL_InvalidateTextureReferences(GLuint texture);
+
+void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_DepthFunc(GLenum func);
 void GL_DepthRange(double nearVal, double farVal);
 void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
-void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
-void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
-void GL_InvalidateTextureReferences(GLuint texture);
 void GL_PolygonMode(GLenum mode);
+int GL_AlphaBlendFlags(int modes);
+void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+void GL_Enable(GLenum option);
+void GL_PolygonOffset(int options);
+void GL_Disable(GLenum option);
 
 // gl_fog.c
 void GL_EnableFog(void);
@@ -624,7 +620,6 @@ void GLM_DeleteBrushModelIndexBuffer(void);
 
 void GL_InitialiseState(void);
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
-void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
 void GL_ClearModelTextureData(void);
 void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);
@@ -902,8 +897,6 @@ void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
 
 float GL_WaterAlpha(void);
-
-#define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
 
 typedef enum aliasmodel_draw_batch_s {
 	aliasmodel_batch_std_entities,

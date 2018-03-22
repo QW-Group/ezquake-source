@@ -316,12 +316,12 @@ void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 	float resdif_w = (glwidth / (float)vid.conwidth);
 	float resdif_h = (glheight / (float)vid.conheight);
 
-	glEnable(GL_SCISSOR_TEST);
-	glScissor(
-		Q_rint(x * resdif_w), 
-		Q_rint((vid.conheight - (y + height)) * resdif_h), 
-		Q_rint(width * resdif_w), 
-		Q_rint(height * resdif_h));
+	GL_EnableScissorTest(
+		Q_rint(x * resdif_w),
+		Q_rint((vid.conheight - (y + height)) * resdif_h),
+		Q_rint(width * resdif_w),
+		Q_rint(height * resdif_h)
+	);
 }
 
 void Draw_EnableScissor(int left, int right, int top, int bottom)
@@ -331,7 +331,7 @@ void Draw_EnableScissor(int left, int right, int top, int bottom)
 
 void Draw_DisableScissor(void)
 {
-	glDisable(GL_SCISSOR_TEST);
+	GL_DisableScissorTest();
 }
 
 //=============================================================================

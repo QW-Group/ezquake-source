@@ -67,6 +67,4 @@ extern cvar_t vid_renderer;
 #define R_UseModernOpenGL()       (vid_renderer.integer == 1)
 #define R_UseVulkan()             (vid_renderer.integer == 2)
 
-// vao
-
 #endif // EZQUAKE_R_LOCAL_HEADER

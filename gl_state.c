@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_state.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
@@ -49,38 +50,174 @@ typedef struct image_unit_binding_s {
 
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
 
-static GLenum currentDepthFunc = GL_LESS;
-static double currentNearRange = 0;
-static double currentFarRange = 1;
-static GLenum currentCullFace = GL_BACK;
-static GLenum currentBlendSFactor = GL_ONE;
-static GLenum currentBlendDFactor = GL_ZERO;
-// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
-static GLint currentViewportX = 0, currentViewportY = 0;
-static GLsizei currentViewportWidth, currentViewportHeight;
-static qbool gl_depthTestEnabled = false;
-static qbool gl_framebuffer_srgb = false;
-static qbool gl_blend = false;
-static qbool gl_cull_face = false;
-static qbool gl_line_smooth = false;
-static qbool gl_fog = false;
-static GLboolean gl_depth_mask = GL_FALSE;
-static GLfloat polygonOffsetFactor = 0;
-static GLfloat polygonOffsetUnits = 0;
-static qbool gl_polygon_offset_line;
-static qbool gl_polygon_offset_fill;
-static GLenum perspectiveCorrectionHint;
-static GLenum polygonMode;
-static float clearColor[4];
+typedef struct {
+	GLenum currentTextureUnit;
+	GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
+	GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
+	qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
+	GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
+	image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
+} texture_state_t;
 
-static GLenum currentTextureUnit = GL_TEXTURE0;
+typedef struct {
+	rendering_state_t rendering_state;
+	texture_state_t textures;
+} opengl_state_t;
+
+static opengl_state_t opengl;
+static GLenum glDepthFunctions[r_depthfunc_count];
+static GLenum glCullFaceValues[r_cullface_count];
+static GLenum glBlendFuncValuesSource[r_blendfunc_count];
+static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
+static GLenum glPolygonModeValues[r_polygonmode_count];
+
+static void GL_InitRenderingState(rendering_state_t* state)
+{
+	SDL_Window* window = SDL_GL_GetCurrentWindow();
+
+	state->depth.func = r_depthfunc_less;
+	state->depth.nearRange = 0;
+	state->depth.farRange = 1;
+	state->cullFaceMode = r_cullface_back;
+	state->blendFunc = r_blendfunc_overwrite;
+
+	state->currentViewportX = 0;
+	state->currentViewportY = 0;
+	SDL_GL_GetDrawableSize(window, &state->currentViewportWidth, &state->currentViewportHeight);
+
+	state->gl_depthTestEnabled = false;
+	state->gl_framebuffer_srgb = false;
+	state->gl_cull_face = false;
+	state->gl_line_smooth = false;
+	state->gl_fog = false;
+	state->depthMask = false;
+	state->polygonOffsetOption = r_polygonoffset_disabled;
+	state->polygonOffsetFactor = 0;
+	state->polygonOffsetUnits = 0;
+	state->polygonOffsetFillEnabled = false;
+	state->polygonOffsetLineEnabled = false;
+	state->polygonMode = r_polygonmode_fill;
+	state->clearColor[0] = 0;
+	state->clearColor[1] = 0;
+	state->clearColor[2] = 0;
+	state->clearColor[3] = 1;
+	state->blendingEnabled = false;
+	state->alphaTestingEnabled = false;
+}
+
+#define GL_ApplySimpleToggle(state, current, field, option) \
+	if (state->field != current->field) { \
+		if (state->field) { \
+			glEnable(option); \
+			GL_LogAPICall("glEnable(" # option ")"); \
+		} \
+		else { \
+			glDisable(option); \
+			GL_LogAPICall("glDisable(" # option ")"); \
+		} \
+		current->field = state->field; \
+	}
+
+void GL_ApplyRenderingState(rendering_state_t* state)
+{
+	extern cvar_t gl_brush_polygonoffset;
+	rendering_state_t* current = &opengl.rendering_state;
+
+	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
+	// TODO: Viewport changes
+	GLint currentViewportX, currentViewportY;
+	GLsizei currentViewportWidth, currentViewportHeight;
+
+	if (state->depth.func != current->depth.func) {
+		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
+	}
+	if (state->depth.nearRange != current->depth.nearRange || state->depth.farRange != current->depth.farRange) {
+		glDepthRange(
+			current->depth.nearRange = state->depth.nearRange,
+			current->depth.farRange = state->depth.farRange
+		);
+	}
+	if (state->cullFaceMode != current->cullFaceMode) {
+		glCullFace(glCullFaceValues[current->cullFaceMode = state->cullFaceMode]);
+	}
+	if (state->blendFunc != current->blendFunc) {
+		current->blendFunc = state->blendFunc;
+		glBlendFunc(
+			glBlendFuncValuesSource[state->blendFunc],
+			glBlendFuncValuesDestination[state->blendFunc]
+		);
+	}
+	GL_ApplySimpleToggle(state, current, gl_depthTestEnabled, GL_DEPTH_TEST);
+	GL_ApplySimpleToggle(state, current, gl_framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
+	GL_ApplySimpleToggle(state, current, gl_cull_face, GL_CULL_FACE);
+	GL_ApplySimpleToggle(state, current, gl_line_smooth, GL_LINE_SMOOTH);
+	GL_ApplySimpleToggle(state, current, gl_fog, GL_FOG);
+	if (state->depthMask != current->depthMask) {
+		glDepthMask((current->depthMask = state->depthMask) ? GL_TRUE : GL_FALSE);
+	}
+	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
+		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
+		float units = (state->polygonOffset.option == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
+		qbool enabled = (state->polygonOffset.option == r_polygonoffset_standard || state->polygonOffset.option == r_polygonoffset_outlines) && units > 0;
+
+		if (enabled) {
+			if (!current->polygonOffset.fillEnabled) {
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				current->polygonOffset.fillEnabled = true;
+			}
+			if (!current->polygonOffset.lineEnabled) {
+				glEnable(GL_POLYGON_OFFSET_LINE);
+				current->polygonOffset.lineEnabled = true;
+			}
+
+			if (current->polygonOffset.factor != factor || current->polygonOffset.units != units) {
+				glPolygonOffset(factor, units);
+
+				current->polygonOffset.factor = factor;
+				current->polygonOffset.units = units;
+			}
+		}
+		else {
+			if (current->polygonOffset.fillEnabled) {
+				glDisable(GL_POLYGON_OFFSET_FILL);
+				current->polygonOffset.fillEnabled = false;
+			}
+			if (current->polygonOffset.lineEnabled) {
+				glDisable(GL_POLYGON_OFFSET_LINE);
+				current->polygonOffset.lineEnabled = false;
+			}
+		}
+
+		gl_brush_polygonoffset.modified = false;
+		current->polygonOffset.option = state->polygonOffset.option;
+	}
+	if (state->polygonMode != current->polygonMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, glPolygonModeValues[current->polygonMode = state->polygonMode]);
+
+		GL_LogAPICall("glPolygonMode(%s)", state->polygonMode == r_polygonmode_fill ? "fill" : (state->polygonMode == r_polygonmode_line ? "lines" : "???"));
+	}
+	if (state->clearColor[0] != current->clearColor[0] || state->clearColor[1] != current->clearColor[1] || state->clearColor[2] != current->clearColor[2] || state->clearColor[3] != current->clearColor[3]) {
+		glClearColor(
+			current->clearColor[0] = state->clearColor[0],
+			current->clearColor[1] = state->clearColor[1],
+			current->clearColor[2] = state->clearColor[2],
+			current->clearColor[3] = state->clearColor[3]
+		);
+	}
+	GL_ApplySimpleToggle(state, current, blendingEnabled, GL_BLEND);
+	if (GL_UseImmediateMode()) {
+		GL_ApplySimpleToggle(state, current, alphaTestingEnabled, GL_ALPHA_TEST);
+	}
+}
+
+static GLenum currentTextureUnit;
 static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
 static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
 static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
 static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
 static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 
-static int old_alphablend_flags = 0;
+//static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
 
 // vid_common_gl.c
@@ -148,42 +285,7 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 	GL_BindTextureUnitImpl(unit, reference, true);
 }
 
-void GL_DepthFunc(GLenum func)
-{
-	if (func != currentDepthFunc) {
-		glDepthFunc(func);
-		currentDepthFunc = func;
-	}
-}
-
-void GL_DepthRange(double nearVal, double farVal)
-{
-	if (nearVal != currentNearRange || farVal != currentFarRange) {
-		glDepthRange(nearVal, farVal);
-
-		currentNearRange = nearVal;
-		currentFarRange = farVal;
-	}
-}
-
-void GL_CullFace(GLenum mode)
-{
-	if (mode != currentCullFace) {
-		glCullFace(mode);
-		currentCullFace = mode;
-	}
-}
-
-void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
-{
-	if (sfactor != currentBlendSFactor || dfactor != currentBlendDFactor) {
-		glBlendFunc(sfactor, dfactor);
-		currentBlendSFactor = sfactor;
-		currentBlendDFactor = dfactor;
-	}
-}
-
-void GL_Viewport(int x, int y, int width, int height)
+/*void GL_Viewport(int x, int y, int width, int height)
 {
 	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
 		glViewport(x, y, width, height);
@@ -193,48 +295,45 @@ void GL_Viewport(int x, int y, int width, int height)
 		currentViewportWidth = width;
 		currentViewportHeight = height;
 	}
-}
+}*/
 
 void GL_GetViewport(int* view)
 {
-	view[0] = currentViewportX;
-	view[1] = currentViewportY;
-	view[2] = currentViewportWidth;
-	view[3] = currentViewportHeight;
+	view[0] = opengl.rendering_state.currentViewportX;
+	view[1] = opengl.rendering_state.currentViewportY;
+	view[2] = opengl.rendering_state.currentViewportWidth;
+	view[3] = opengl.rendering_state.currentViewportHeight;
 }
 
 void GL_InitialiseState(void)
 {
 	int i;
 
-	currentDepthFunc = GL_LESS;
-	currentNearRange = 0;
-	currentFarRange = 1;
-	currentCullFace = GL_BACK;
-	currentBlendSFactor = GL_ONE;
-	currentBlendDFactor = GL_ZERO;
-	polygonMode = GL_FILL;
-	currentViewportX = 0;
-	currentViewportY = 0;
-	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
-	currentViewportWidth = 0;
-	currentViewportHeight = 0;
+	glDepthFunctions[r_depthfunc_less] = GL_LESS;
+	glDepthFunctions[r_depthfunc_equal] = GL_EQUAL;
+	glDepthFunctions[r_depthfunc_lessorequal] = GL_LEQUAL;
+	glCullFaceValues[r_cullface_back] = GL_BACK;
+	glCullFaceValues[r_cullface_front] = GL_FRONT;
+	glBlendFuncValuesSource[r_blendfunc_overwrite] = GL_ONE;
+	glBlendFuncValuesSource[r_blendfunc_additive_blending] = GL_ONE;
+	glBlendFuncValuesSource[r_blendfunc_premultiplied_alpha] = GL_ONE;
+	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_zero] = GL_DST_COLOR;
+	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_one] = GL_DST_COLOR;
+	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_src_color] = GL_DST_COLOR;
+	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ZERO;
+	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_src_color] = GL_ZERO;
+	glBlendFuncValuesDestination[r_blendfunc_overwrite] = GL_ZERO;
+	glBlendFuncValuesDestination[r_blendfunc_additive_blending] = GL_ONE;
+	glBlendFuncValuesDestination[r_blendfunc_premultiplied_alpha] = GL_ONE_MINUS_SRC_ALPHA;
+	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_zero] = GL_ZERO;
+	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_one] = GL_ONE;
+	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_src_color] = GL_SRC_COLOR;
+	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ONE_MINUS_SRC_COLOR;
+	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_src_color] = GL_SRC_COLOR;
+	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
+	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
 
-	gl_depthTestEnabled = false;
-	gl_framebuffer_srgb = false;
-	gl_blend = false;
-	gl_cull_face = false;
-	gl_line_smooth = false;
-	gl_fog = false;
-	gl_depth_mask = GL_FALSE;
-	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
-		unit_texture_mode[i] = GL_MODULATE;
-	}
-	old_alphablend_flags = 0;
-	polygonOffsetFactor = polygonOffsetUnits = 0;
-	gl_polygon_offset_line = gl_polygon_offset_fill = false;
-	perspectiveCorrectionHint = GL_DONT_CARE;
-	clearColor[0] = clearColor[1] = clearColor[2] = clearColor[3] = 0;
+	GL_InitRenderingState(&opengl.rendering_state);
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -243,6 +342,9 @@ void GL_InitialiseState(void)
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
 	memset(texunitenabled, 0, sizeof(texunitenabled));
+	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
+		unit_texture_mode[i] = GL_MODULATE;
+	}
 
 	GL_InitialiseBufferState();
 	GL_InitialiseProgramState();
@@ -367,16 +469,6 @@ void GL_InitTextureState(void)
 	memset(texunitenabled, 0, sizeof(texunitenabled));
 }
 
-void GL_DepthMask(GLboolean mask)
-{
-	if (mask != gl_depth_mask) {
-		glDepthMask(mask);
-		GL_LogAPICall("glDepthMask(%s)", mask ? "enabled" : "disabled");
-
-		gl_depth_mask = mask;
-	}
-}
-
 void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 {
 	if (GL_UseImmediateMode() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
@@ -434,34 +526,6 @@ void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref te
 	GL_TextureEnvModeForUnit(GL_TEXTURE1, envMode1);
 }
 
-int GL_AlphaBlendFlags(int flags)
-{
-	if (GL_UseImmediateMode()) {
-		if ((flags & GL_ALPHATEST_ENABLED) && !(old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
-			glEnable(GL_ALPHA_TEST);
-		}
-		else if ((flags & GL_ALPHATEST_DISABLED) && (old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
-			glDisable(GL_ALPHA_TEST);
-		}
-		else if (!(flags & (GL_ALPHATEST_ENABLED | GL_ALPHATEST_DISABLED))) {
-			flags |= (old_alphablend_flags & GL_ALPHATEST_ENABLED);
-		}
-	}
-
-	if ((flags & GL_BLEND_ENABLED) && !(old_alphablend_flags & GL_BLEND_ENABLED)) {
-		glEnable(GL_BLEND);
-	}
-	else if (flags & GL_BLEND_DISABLED && (old_alphablend_flags & GL_BLEND_ENABLED)) {
-		glDisable(GL_BLEND);
-	}
-	else if (!(flags & (GL_BLEND_ENABLED | GL_BLEND_DISABLED))) {
-		flags |= (old_alphablend_flags & GL_BLEND_ENABLED);
-	}
-
-	old_alphablend_flags = flags;
-	return old_alphablend_flags;
-}
-
 void GL_InvalidateTextureReferences(GLuint texture)
 {
 	int i;
@@ -481,30 +545,6 @@ void GL_InvalidateTextureReferences(GLuint texture)
 		if (bound_images[i].texture == texture) {
 			bound_images[i].texture = 0;
 		}
-	}
-}
-
-void GL_PolygonOffset(int option)
-{
-	extern cvar_t gl_brush_polygonoffset;
-	float factor = (option == POLYGONOFFSET_STANDARD ? 0.05 : 1);
-	float units = (option == POLYGONOFFSET_STANDARD ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
-	qbool enabled = (option == POLYGONOFFSET_STANDARD || option == POLYGONOFFSET_OUTLINES) && units > 0;
-
-	if (enabled) {
-		GL_Enable(GL_POLYGON_OFFSET_FILL);
-		GL_Enable(GL_POLYGON_OFFSET_LINE);
-
-		if (polygonOffsetFactor != factor || polygonOffsetUnits != units) {
-			glPolygonOffset(factor, units);
-
-			polygonOffsetFactor = factor;
-			polygonOffsetUnits = units;
-		}
-	}
-	else {
-		GL_Disable(GL_POLYGON_OFFSET_FILL);
-		GL_Disable(GL_POLYGON_OFFSET_LINE);
 	}
 }
 
@@ -561,200 +601,6 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 	}
 #endif
 }
-
-void GL_PolygonMode(GLenum mode)
-{
-	if (mode != polygonMode) {
-		glPolygonMode(GL_FRONT_AND_BACK, mode);
-		polygonMode = mode;
-
-		GL_LogAPICall("glPolygonMode(%s)", mode == GL_FILL ? "fill" : (mode == GL_LINE ? "lines" : "???"));
-	}
-}
-
-// ---
-
-#undef glEnable
-#undef glDisable
-
-void GL_Enable(GLenum option)
-{
-	if (GL_UseGLSL() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glEnable/Prior");
-#endif
-
-	if (option == GL_DEPTH_TEST) {
-		if (gl_depthTestEnabled) {
-			return;
-		}
-
-		gl_depthTestEnabled = true;
-		GL_LogAPICall("glEnable(GL_DEPTH_TEST)");
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (gl_framebuffer_srgb) {
-			return;
-		}
-
-		gl_framebuffer_srgb = true;
-		GL_LogAPICall("glEnable(GL_FRAMEBUFFER_SRGB)");
-	}
-	else if (option == GL_TEXTURE_2D) {
-		if (texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
-			return;
-		}
-
-		texunitenabled[currentTextureUnit - GL_TEXTURE0] = true;
-		GL_LogAPICall("glEnable(GL_TEXTURE%u, GL_TEXTURE_2D)", currentTextureUnit - GL_TEXTURE0);
-	}
-	else if (option == GL_BLEND) {
-		if (gl_blend) {
-			return;
-		}
-
-		gl_blend = true;
-		GL_LogAPICall("glEnable(GL_BLEND)");
-	}
-	else if (option == GL_CULL_FACE) {
-		if (gl_cull_face) {
-			return;
-		}
-
-		gl_cull_face = true;
-		GL_LogAPICall("glEnable(GL_CULL_FACE)");
-	}
-	else if (option == GL_POLYGON_OFFSET_FILL) {
-		if (gl_polygon_offset_fill) {
-			return;
-		}
-
-		gl_polygon_offset_fill = true;
-		GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
-	}
-	else if (option == GL_POLYGON_OFFSET_LINE) {
-		if (gl_polygon_offset_line) {
-			return;
-		}
-
-		gl_polygon_offset_line = true;
-		GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
-	}
-	else if (option == GL_LINE_SMOOTH) {
-		if (gl_line_smooth) {
-			return;
-		}
-
-		gl_line_smooth = true;
-		GL_LogAPICall("glEnable(GL_LINE_SMOOTH)");
-	}
-	else if (option == GL_FOG) {
-		if (gl_fog) {
-			return;
-		}
-
-		gl_fog = true;
-		GL_LogAPICall("glEnable(GL_FOG)");
-	}
-
-	glEnable(option);
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glEnable");
-#endif
-}
-
-void GL_Disable(GLenum option)
-{
-	if (GL_UseGLSL() && option == GL_TEXTURE_2D) {
-		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
-		return;
-	}
-
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glDisable/Prior");
-#endif
-
-	if (option == GL_DEPTH_TEST) {
-		if (!gl_depthTestEnabled) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_DEPTH_TEST)");
-		gl_depthTestEnabled = false;
-	}
-	else if (option == GL_FRAMEBUFFER_SRGB) {
-		if (!gl_framebuffer_srgb) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_FRAMEBUFFER_SRGB)");
-		gl_framebuffer_srgb = false;
-	}
-	else if (option == GL_TEXTURE_2D) {
-		if (!texunitenabled[currentTextureUnit - GL_TEXTURE0]) {
-			return;
-		}
-
-		texunitenabled[currentTextureUnit - GL_TEXTURE0] = false;
-		GL_LogAPICall("glDisable(GL_TEXTURE%u, GL_TEXTURE_2D)", currentTextureUnit - GL_TEXTURE0);
-	}
-	else if (option == GL_BLEND) {
-		if (!gl_blend) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_BLEND)");
-		gl_blend = false;
-	}
-	else if (option == GL_CULL_FACE) {
-		if (!gl_cull_face) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_CULL_FACE)");
-		gl_cull_face = false;
-	}
-	else if (option == GL_POLYGON_OFFSET_FILL) {
-		if (!gl_polygon_offset_fill) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
-		gl_polygon_offset_fill = false;
-	}
-	else if (option == GL_POLYGON_OFFSET_LINE) {
-		if (!gl_polygon_offset_line) {
-			return;
-		}
-
-		GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
-		gl_polygon_offset_line = false;
-	}
-	else if (option == GL_LINE_SMOOTH) {
-		if (!gl_line_smooth) {
-			return;
-		}
-
-		gl_line_smooth = false;
-		GL_LogAPICall("glDisable(GL_LINE_SMOOTH)");
-	}
-	else if (option == GL_FOG) {
-		if (!gl_fog) {
-			return;
-		}
-
-		gl_fog = false;
-		GL_LogAPICall("glDisable(GL_FOG)");
-	}
-
-	glDisable(option);
-}
-
-#undef glBegin
 
 static int glcVertsPerPrimitive = 0;
 static int glcBaseVertsPerPrimitive = 0;
@@ -906,17 +752,6 @@ void GL_PrintState(FILE* debug_frame_out)
 	}
 }
 #endif
-
-void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
-{
-	if (r != clearColor[0] || g != clearColor[1] || b != clearColor[2] || a != clearColor[3]) {
-		glClearColor(r, g, b, a);
-		clearColor[0] = r;
-		clearColor[1] = g;
-		clearColor[2] = b;
-		clearColor[3] = a;
-	}
-}
 
 qbool GLM_LoadStateFunctions(void)
 {
