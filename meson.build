@@ -337,7 +337,6 @@ sources += [
 	'glm_sky.o',
 	'glm_sprite.o',
 	'glm_texture_arrays.o',
-	'glm_turb_surface.o',
 	'glm_draw.o',
 	'glm_draw_charset.o',
 	'glm_draw_circle.o',
