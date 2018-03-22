@@ -12642,15 +12642,6 @@
       "desc": "Changes the color of the \"dths\" (deaths) column in your scoreboard when >0. Uses RGB values.",
       "type": "string"
     },
-    "scr_scoreboard_drawfps": {
-      "group-id": "40",
-      "desc": "Substitutes the \"time\" column with a \"FPS\" in scores showing how much FPS each player has.",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "Keep time in scoreboard" },
-        { "name": "true", "description": "Replace time with FPS in scoreboard" }
-      ]
-    },
     "scr_scoreboard_drawtitle": {
       "group-id": "47",
       "type": "boolean",

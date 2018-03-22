@@ -37,7 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 
 int sb_updates;		// if >= vid.numpages, no update needed
-extern cvar_t show_fps2;
 
 // --> mqwcl 0.96 oldhud customisation
 //cvar_t  sbar_teamfrags = {"scr_sbar_teamfrags", "1"};
@@ -1170,13 +1169,12 @@ static void Sbar_DeathmatchOverlay (int start) {
 	char *kill_color;
 	char *death_color;
 	char *tk_color;
-	int scr_scoreboard_drawfps;
 	player_info_t *s;
 	mpic_t *pic;
 
-	scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
-	if (!start && hud_faderankings.value)
+	if (!start && hud_faderankings.value) {
 		Draw_FadeScreen(hud_faderankings.value);
+	}
 
 #ifndef CLIENTONLY
 	// FIXME
@@ -1264,7 +1262,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		Draw_Fill (xofs - 1, y - 9, rank_width + 2, 1, 0);						//Border - Top
 	Draw_AlphaFill (xofs, y - 8, rank_width, 9, 1, SCOREBOARD_HEADINGALPHA);	//Draw heading row
 
-	Draw_String(xofs + 1, y - 8, cl.teamplay ? (scr_scoreboard_drawfps ? " ping pl  fps frags team name" : " ping pl time frags team name") : (scr_scoreboard_drawfps ? " ping pl  fps frags name" : " ping pl time frags name"));
+	Draw_String(xofs + 1, y - 8, cl.teamplay ? " ping pl time frags team name" : " ping pl time frags name");
 
 
 	if (statswidth) {
@@ -1409,19 +1407,6 @@ static void Sbar_DeathmatchOverlay (int start) {
 			}
 		} else {
 			snprintf (myminutes, sizeof (myminutes), "%3i", total);
-		}
-
-		if (scr_scoreboard_drawfps) {
-			if (s->last_fps > 0 && !s->spectator) {
-				snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
-				if (s->last_fps < 70) {
-					for (d=0; d < strlen(myminutes); d++)
-						myminutes[d] ^= 128;
-				}
-			}
-			else {
-				snprintf (myminutes, sizeof (myminutes), "   ");
-			}
 		}
 
 		// draw spectator

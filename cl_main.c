@@ -117,7 +117,6 @@ cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
-cvar_t  show_fps2 = {"scr_scoreboard_drawfps","0"};
 cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
 
 cvar_t  localid = {"localid", ""};
@@ -1667,8 +1666,6 @@ void CL_InitLocal (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
-	Cvar_Register (&show_fps2);
-	Cmd_AddLegacyCommand ("draw_fps", "scr_scoreboard_drawfps");
 	Cvar_Register (&cl_confirmquit);
 	Cvar_Register (&cl_window_caption);
 	Cvar_Register (&cl_onload);
