@@ -187,7 +187,10 @@ void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, flo
 {
 	extern int particletexture_array_index;
 
-	memcpy(vert->color, color, sizeof(vert->color));
+	vert->color[0] = color[0];
+	vert->color[1] = color[1];
+	vert->color[2] = color[2];
+	vert->color[3] = color[3];
 	VectorSet(vert->position, x, y, z);
 	if (texture_index < 0) {
 		vert->tex[0] = 0.99;

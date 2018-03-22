@@ -639,13 +639,13 @@ void Classic_ReScaleParticles(void)
 	}
 }
 
-// Moves particles into new locations this frame
-void Classic_CalculateParticles(void)
+// Prepares particles to be drawn this frame
+static void Classic_PrepareParticles(void)
 {
-	particle_t *p, *kill;
-	int i;
+	particle_t* p;
 	float time2, time3, time1, dvel, frametime, grav;
-	unsigned char *at, theAlpha;
+	unsigned char *at;
+	float theAlpha;
 	float dist, scale, r_partscale;
 	vec3_t up, right;
 
@@ -673,28 +673,13 @@ void Classic_CalculateParticles(void)
 	grav = frametime * 800 * 0.05;
 	dvel = 4 * frametime;
 
-	while (1) {
-		kill = active_particles;
-		if (kill && kill->die < r_refdef2.time) {
-			active_particles = kill->next;
-			kill->next = free_particles;
-			free_particles = kill;
+	for (p = active_particles; p; p = p->next) {
+		while (p && p->die < r_refdef2.time) {
+			p = p->next;
 			continue;
 		}
-		break;
-	}
 
-	for (p = active_particles; p; p = p->next) {
-		byte color[4];
-
-		while (1) {
-			kill = p->next;
-			if (kill && kill->die < r_refdef2.time) {
-				p->next = kill->next;
-				kill->next = free_particles;
-				free_particles = kill;
-				continue;
-			}
+		if (!p) {
 			break;
 		}
 
@@ -702,28 +687,25 @@ void Classic_CalculateParticles(void)
 		dist = (p->org[0] - r_origin[0]) * vpn[0] + (p->org[1] - r_origin[1]) * vpn[1] + (p->org[2] - r_origin[2]) * vpn[2];
 		scale = 1 + dist * r_partscale;
 
-		at = (byte *)&d_8to24table[(int)p->color];
-		if (p->type == pt_fire) {
-			theAlpha = 255 * (6 - p->ramp) / 6;
-		}
-		else {
-			theAlpha = 255;
-		}
-
-		color[0] = *at;
-		color[1] = *(at + 1);
-		color[2] = *(at + 2);
-		color[3] = theAlpha;
-
 		{
 			glm_particle_t* glpart = &glparticles[particles_to_draw];
 			gl_sprite3d_vert_t* vert = &glvertices[particles_to_draw * 3];
-			float alpha = color[3] / 255.0f;
+			at = (byte *)&d_8to24table[(int)p->color];
 
-			glpart->gl_color[0] = color[0] * alpha;
-			glpart->gl_color[1] = color[1] * alpha;
-			glpart->gl_color[2] = color[2] * alpha;
-			glpart->gl_color[3] = color[3];
+			if (p->type == pt_fire) {
+				theAlpha = (6 - p->ramp) / 6;
+				glpart->gl_color[0] = at[0] * theAlpha;
+				glpart->gl_color[1] = at[1] * theAlpha;
+				glpart->gl_color[2] = at[2] * theAlpha;
+				glpart->gl_color[3] = 255 * theAlpha;
+			}
+			else {
+				glpart->gl_color[0] = at[0];
+				glpart->gl_color[1] = at[1];
+				glpart->gl_color[2] = at[2];
+				glpart->gl_color[3] = 255;
+			}
+
 			glpart->gl_scale = scale;
 			VectorCopy(p->org, glpart->gl_org);
 
@@ -732,69 +714,6 @@ void Classic_CalculateParticles(void)
 			GL_Sprite3DSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, glpart->gl_color, particletexture_array_index);
 
 			particles_to_draw++;
-		}
-
-		p->org[0] += p->vel[0] * frametime;
-		p->org[1] += p->vel[1] * frametime;
-		p->org[2] += p->vel[2] * frametime;
-
-		switch (p->type) {
-		case pt_static:
-			break;
-		case pt_fire:
-			p->ramp += time1;
-			if (p->ramp >= 6) {
-				p->die = -1;
-			}
-			else {
-				p->color = ramp3[(int)p->ramp];
-			}
-			p->vel[2] += grav;
-			break;
-		case pt_explode:
-			p->ramp += time2;
-			if (p->ramp >= 8) {
-				p->die = -1;
-			}
-			else {
-				p->color = ramp1[(int)p->ramp];
-			}
-			for (i = 0; i < 3; i++) {
-				p->vel[i] += p->vel[i] * dvel;
-			}
-			p->vel[2] -= grav * 30;
-			break;
-		case pt_explode2:
-			p->ramp += time3;
-			if (p->ramp >= 8) {
-				p->die = -1;
-			}
-			else {
-				p->color = ramp2[(int)p->ramp];
-			}
-			for (i = 0; i < 3; i++) {
-				p->vel[i] -= p->vel[i] * frametime;
-			}
-			p->vel[2] -= grav * 30;
-			break;
-		case pt_blob:
-			for (i = 0; i < 3; i++) {
-				p->vel[i] += p->vel[i] * dvel;
-			}
-			p->vel[2] -= grav;
-			break;
-		case pt_blob2:
-			for (i = 0; i < 2; i++) {
-				p->vel[i] -= p->vel[i] * dvel;
-			}
-			p->vel[2] -= grav;
-			break;
-		case pt_slowgrav:
-		case pt_grav:
-			p->vel[2] -= grav;
-			break;
-		case pt_rail:
-			break;
 		}
 	}
 }
@@ -842,7 +761,7 @@ void R_ParticleFrame(void)
 		return;
 	}
 
-	Classic_CalculateParticles();
+	Classic_PrepareParticles();
 	QMB_CalculateParticles();
 }
 
@@ -944,4 +863,118 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 	particletexture_array_index = array_ref->index;
 	particletexture_scale_s = array_ref->scale_s;
 	particletexture_scale_t = array_ref->scale_t;
+}
+
+// Moves particles into new locations this frame
+static void Classic_MoveParticles(void)
+{
+	particle_t *p, *kill;
+	int i;
+	float time2, time3, time1, dvel, frametime, grav;
+
+	if (!active_particles) {
+		return;
+	}
+
+	frametime = cls.frametime;
+	if (ISPAUSED) {
+		frametime = 0;
+	}
+	time3 = frametime * 15;
+	time2 = frametime * 10; // 15;
+	time1 = frametime * 5;
+	grav = frametime * 800 * 0.05;
+	dvel = 4 * frametime;
+
+	while (1) {
+		kill = active_particles;
+		if (kill && kill->die < r_refdef2.time) {
+			active_particles = kill->next;
+			kill->next = free_particles;
+			free_particles = kill;
+			continue;
+		}
+		break;
+	}
+
+	for (p = active_particles; p; p = p->next) {
+		while (1) {
+			kill = p->next;
+			if (kill && kill->die < r_refdef2.time) {
+				p->next = kill->next;
+				kill->next = free_particles;
+				free_particles = kill;
+				continue;
+			}
+			break;
+		}
+
+		p->org[0] += p->vel[0] * frametime;
+		p->org[1] += p->vel[1] * frametime;
+		p->org[2] += p->vel[2] * frametime;
+
+		switch (p->type) {
+			case pt_static:
+				break;
+			case pt_fire:
+				p->ramp += time1;
+				if (p->ramp >= 6) {
+					p->die = -1;
+				}
+				else {
+					p->color = ramp3[(int)p->ramp];
+				}
+				p->vel[2] += grav;
+				break;
+			case pt_explode:
+				p->ramp += time2;
+				if (p->ramp >= 8) {
+					p->die = -1;
+				}
+				else {
+					p->color = ramp1[(int)p->ramp];
+				}
+				for (i = 0; i < 3; i++) {
+					p->vel[i] += p->vel[i] * dvel;
+				}
+				p->vel[2] -= grav * 30;
+				break;
+			case pt_explode2:
+				p->ramp += time3;
+				if (p->ramp >= 8) {
+					p->die = -1;
+				}
+				else {
+					p->color = ramp2[(int)p->ramp];
+				}
+				for (i = 0; i < 3; i++) {
+					p->vel[i] -= p->vel[i] * frametime;
+				}
+				p->vel[2] -= grav * 30;
+				break;
+			case pt_blob:
+				for (i = 0; i < 3; i++) {
+					p->vel[i] += p->vel[i] * dvel;
+				}
+				p->vel[2] -= grav;
+				break;
+			case pt_blob2:
+				for (i = 0; i < 2; i++) {
+					p->vel[i] -= p->vel[i] * dvel;
+				}
+				p->vel[2] -= grav;
+				break;
+			case pt_slowgrav:
+			case pt_grav:
+				p->vel[2] -= grav;
+				break;
+			case pt_rail:
+				break;
+		}
+	}
+}
+
+void R_ParticleEndFrame(void)
+{
+	Classic_MoveParticles();
 }

@@ -2515,6 +2515,8 @@ void CL_Frame (double time)
 
 	SB_ExecuteQueuedTriggers();
 
+	R_ParticleEndFrame();
+
 	CL_UpdateCaption(false);
 }
 
