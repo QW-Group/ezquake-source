@@ -73,6 +73,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern qbool ActiveApp, Minimized;
 
 static void Cl_Reset_Min_fps_f(void);
+void CL_QWURL_ProcessChallenge(const char *parameters);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -626,55 +627,6 @@ void CL_BeginServerConnect(void)
 {
 	connect_time = -999;	// CL_CheckForResend() will fire immediately
 	CL_CheckForResend();
-}
-
-static void CL_QWURL_ProcessChallenge(const char *parameters)
-{
-	extern cvar_t match_auto_logupload_token;
-	extern cvar_t match_challenge;
-
-	// parameters is expected to be of the format "?token=<string>&otherparam=<string>&..."
-	char info_buf[1024];
-	char *wp = info_buf;
-	const char *rp = parameters;
-	size_t write_len = 0;
-	ctxinfo_t ctx;
-	char *token;
-	memset(&ctx, 0, sizeof(ctxinfo_t));
-	ctx.max = 20;
-
-	while (*rp && write_len < 1022) {
-		char c = *rp++;
-		if (c == '?') {
-			c = '\\';
-		}
-		else if (c == '&') {
-			c = '\\';
-		}
-		else if (c == '=') {
-			c = '\\';
-		}
-
-		*wp++ = c;
-		write_len++;
-	}
-
-	*wp++ = '\0';
-
-	Info_Convert(&ctx, info_buf);
-
-	token = Info_Get(&ctx, "token");
-
-	Info_RemoveAll(&ctx);
-
-	if (*token) {
-		Cvar_Set(&match_auto_logupload_token, token);
-		Cvar_Set(&match_challenge, "1");
-		Com_Printf("Joining challenge ...\n");
-	}
-	else {
-		Com_Printf("Challenge token not found in the URL\n");
-	}
 }
 
 //

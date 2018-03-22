@@ -32,10 +32,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sha1.h"
 #include <time.h>
 
+void MT_Challenge_StartMatch(void);
+void MT_Challenge_Cancel(void);
+void MT_Challenge_InitCvars(void);
 
 #define MAX_STATIC_STRING 1024
-qbool Match_Running ;
-
+qbool Match_Running;
 
 cvar_t match_format_solo = {"match_format_solo", "solo/%n - [%M]"};
 cvar_t match_format_coop = {"match_format_coop", "coop/%n - [%C_player_coop] - [%M]"};
@@ -92,15 +94,18 @@ static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	return (char *) buf;
 }
 
-static char *MT_PlayerName(void) {
+char* MT_PlayerName(void)
+{
 	return TP_PlayerName();
 }
 
-static char *MT_PlayerTeam(void) {
+char* MT_PlayerTeam(void)
+{
 	return TP_PlayerTeam();
 }
 
-static char *MT_EnemyName(void) {
+char* MT_EnemyName(void)
+{
 	int i;
 	char *myname, *name;
 	static char	enemyname[MAX_INFO_STRING];
@@ -140,11 +145,13 @@ static char *MT_EnemyTeam(void) {
 	return enemyteam;
 }
 
-static int MT_CountPlayers(void) {
+int MT_CountPlayers(void)
+{
 	return TP_CountPlayers();
 }
 
-static int MT_CountTeamMembers(char *team) {
+static int MT_CountTeamMembers(char *team)
+{
 	int i, count = 0;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
@@ -612,279 +619,12 @@ char *MT_ShortStatus(void)
 	return va("%d/%d - %s", TP_CountPlayers(), maxclients, mapname);
 }
 
-void MT_ChallengeMode_Change(cvar_t *cvar, char *value, qbool *cancel)
-{
-	if (cls.state != ca_disconnected && !cl.standby && !cl.spectator) {
-		*cancel = true;
-		Com_Printf("Challenge mode cannot be toggled during the match\n");
-		return;
-	}
-}
-
-extern cvar_t match_auto_logupload_token;
-cvar_t match_challenge = {"match_challenge", "0", 0, MT_ChallengeMode_Change};
-cvar_t match_challenge_url = {"match_challenge_url", "http://stats.quakeworld.nu/post-challenge", 0, MT_ChallengeMode_Change};
-cvar_t match_ladder_id = {"match_ladder_id", "1"};
-
-typedef enum challenge_status_e {
-	challenge_start,
-	challenge_end
-} challenge_status_e;
-
-typedef struct challenge_data_s {
-	challenge_status_e status;
-	char *ladderid;
-	int players_count;
-	char *token;
-	char *player1;
-	char *player2;
-	char *server;
-	char *map;
-	char *url;
-	char *hash;
-} challenge_data_t;
-
-static challenge_data_t *last_challenge = NULL;
-
-qbool MT_Challenge_IsOn(void)
-{
-	return last_challenge != NULL;
-}
-
-const char *MT_Challenge_GetLadderId(void)
-{
-	if (last_challenge == NULL) {
-		return "";
-	}
-
-	return last_challenge->ladderid;
-}
-
-const char *MT_Challenge_GetHash(void)
-{
-	if (last_challenge == NULL) {
-		return "";
-	}
-
-	return last_challenge->hash;
-}
-
-const char *MT_Challenge_GetToken(void)
-{
-	if (last_challenge == NULL) {
-		return "";
-	}
-
-	return last_challenge->token;
-}
-
-const char* MT_Challenge_StatusName(challenge_status_e status)
-{
-	switch (status) {
-	case challenge_start: return "start";
-	case challenge_end: return "end";
-	default:
-		Com_Printf("ERROR: MT_Challenge_StatusName: Unknown challenge status");
-		return "";
-	}
-}
-
-size_t MT_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata)
-{
-	return size*nmemb;
-}
-
-static const char *MT_Challenge_GenerateHash(void)
-{
-	static unsigned char hash[DIGEST_SIZE];
-	SHA1_CTX context;
-	char* hostname = Info_ValueForKey(cl.serverinfo, "hostname");
-	double curtime = Sys_DoubleTime();
-
-	SHA1Init(&context);
-
-	SHA1Update(&context, (unsigned char *) match_ladder_id.string, strlen(match_ladder_id.string));
-	SHA1Update(&context, (unsigned char *) match_auto_logupload_token.string, strlen(match_auto_logupload_token.string));
-	SHA1Update(&context, (unsigned char *) MT_PlayerName(), strlen(MT_PlayerName()));
-	SHA1Update(&context, (unsigned char *) MT_EnemyName(), strlen(MT_EnemyName()));
-	SHA1Update(&context, (unsigned char *) hostname, strlen(hostname));
-	SHA1Update(&context, (unsigned char *) host_mapname.string, strlen(host_mapname.string));
-	SHA1Update(&context, (unsigned char *) match_challenge_url.string, strlen(match_challenge_url.string));
-	SHA1Update(&context, (unsigned char *) &curtime, sizeof(double));
-
-	SHA1Final(hash, &context);
-
-	return bin2hex(hash);
-}
-
-challenge_data_t *MT_Challenge_Create(challenge_status_e status, int players_count,
-		const char *ladderid, const char *token, const char *player1, const char *player2,
-		const char *server, const char *map, const char *url, const char *hash)
-{
-	challenge_data_t *retval = (challenge_data_t *)Q_malloc(sizeof(challenge_data_t));
-	retval->status = status;
-	retval->players_count = players_count;
-	retval->ladderid = Q_strdup(ladderid);
-	retval->token = Q_strdup(token);
-	retval->player1 = Q_strdup(player1);
-	retval->player2 = Q_strdup(player2);
-	retval->server = Q_strdup(server);
-	retval->map = Q_strdup(map);
-	retval->url = Q_strdup(url);
-	retval->hash = Q_strdup(hash);
-
-	return retval;
-}
-
-void MT_Challenge_Destroy(challenge_data_t *challenge)
-{
-	Q_free(challenge->ladderid);
-	Q_free(challenge->token);
-	Q_free(challenge->player1);
-	Q_free(challenge->player2);
-	Q_free(challenge->server);
-	Q_free(challenge->map);
-	Q_free(challenge->url);
-	Q_free(challenge->hash);
-	Q_free(challenge);
-}
-
-challenge_data_t *MT_Challenge_Init(challenge_status_e status)
-{
-	return MT_Challenge_Create(status, MT_CountPlayers(), match_ladder_id.string, match_auto_logupload_token.string,
-			MT_PlayerName(), MT_EnemyName(), Info_ValueForKey(cl.serverinfo, "hostname"), host_mapname.string,
-			match_challenge_url.string, MT_Challenge_GenerateHash());
-}
-
-challenge_data_t *MT_Challenge_Copy(const challenge_data_t *orig)
-{
-	return MT_Challenge_Create(orig->status, orig->players_count, orig->ladderid, orig->token, orig->player1, orig->player2,
-			orig->server, orig->map, orig->url, orig->hash);
-}
-
-int MT_Challenge_StartSend_Thread(void *arg)
-{
-	challenge_data_t *challenge_data = (challenge_data_t *) arg;
-
-	CURL *curl;
-	CURLcode res;
-	struct curl_httppost *post=NULL;
-	struct curl_httppost *last=NULL;
-	struct curl_slist *headers=NULL;
-	char errorbuffer[CURL_ERROR_SIZE] = "";
-
-	curl = curl_easy_init();
-
-	headers = curl_slist_append(headers, "Content-Type: text/plain");
-
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "status",
-		CURLFORM_COPYCONTENTS, MT_Challenge_StatusName(challenge_data->status),
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "ladderid",
-		CURLFORM_COPYCONTENTS, challenge_data->ladderid,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "hash",
-		CURLFORM_COPYCONTENTS, challenge_data->hash,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "token",
-		CURLFORM_COPYCONTENTS, challenge_data->token,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "players_count",
-		CURLFORM_COPYCONTENTS, va("%d", challenge_data->players_count),
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "player1",
-		CURLFORM_COPYCONTENTS, challenge_data->player1,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "player2",
-		CURLFORM_COPYCONTENTS, challenge_data->player2,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "server",
-		CURLFORM_COPYCONTENTS, challenge_data->server,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "map",
-		CURLFORM_COPYCONTENTS, challenge_data->map,
-		CURLFORM_END);
-
-	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_URL, challenge_data->url);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, MT_Curl_Write_Void);
-
-	res = curl_easy_perform(curl); /* post away! */
-
-	curl_formfree(post);
-	curl_easy_cleanup(curl);
-
-	if (res != CURLE_OK) {
-		Com_Printf("Challenge announcement upload failed:\n%s\n", curl_easy_strerror(res));
-		Com_Printf("%s\n", errorbuffer);
-	}
-	else {
-		Com_Printf("Challenge %s announced\n", MT_Challenge_StatusName(challenge_data->status));
-	}
-
-	MT_Challenge_Destroy(challenge_data);
-
-	return 0;
-}
-
-static void MT_Challenge_BreakSend(void)
-{
-	challenge_data_t *thread_data;
-
-	if (last_challenge != NULL) {
-		// normal situation - reuse the challenge we announced on start
-		thread_data = MT_Challenge_Copy(last_challenge);
-		thread_data->status = challenge_end;
-		thread_data->players_count = MT_CountPlayers();
-
-		MT_Challenge_Destroy(last_challenge);
-		last_challenge = NULL;
-	}
-	else {
-		// weird situation, we didn't send the start of the challenge (perhaps late-join of the match)
-		// but we now want to send the break of the challenge.. we will do our best-effort here
-		// - simply generate new challenge and say we break it; it is up to the challenge server
-		// what it will do with this message
-		thread_data = MT_Challenge_Init(challenge_end);
-	}
-
-	if (Sys_CreateDetachedThread(MT_Challenge_StartSend_Thread, thread_data) < 0) {
-		Com_Printf("Failed to create MT Challenge BreakSend thread\n");
-	}
-}
-
-static void MT_Challenge_StartSend(void)
-{
-	challenge_data_t *thread_data;
-
-	last_challenge = MT_Challenge_Init(challenge_start);
-
-	thread_data = MT_Challenge_Copy(last_challenge);
-
-	if (Sys_CreateDetachedThread(MT_Challenge_StartSend_Thread, thread_data) < 0) {
-		Com_Printf("Failed to create MT Challenge StartSend thread\n");
-	}
-}
-
 #define MT_SCOREBOARD_SHOWIME	4
 
 void MT_TakeScreenshot(void);
 
 cvar_t match_auto_record = {"match_auto_record", "0"};
 cvar_t match_auto_logconsole = {"match_auto_logconsole", "1"};
-cvar_t match_auto_logupload = {"match_auto_logupload", "0"};
-cvar_t match_auto_logupload_token = {"match_auto_logupload_token", "", 0, MT_ChallengeMode_Change};
-cvar_t match_auto_logurl = {"match_auto_logurl", "http://stats.quakeworld.nu/logupload"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
 cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
@@ -934,25 +674,25 @@ static void MT_CancelMatch(void) {
 
 	Log_AutoLogging_CancelMatch();
 	CL_AutoRecord_CancelMatch();
-	if (match_challenge.integer) {
-		MT_Challenge_BreakSend();
-	}
+	MT_Challenge_Cancel();
 }
 
 static void MT_StartMatch(void) {
 	Match_Running = 1;
-	if (matchstate.endtime)	
+	if (matchstate.endtime) {
 		MT_Delayed_EndMatch();
+	}
 
-	if (matchstate.status)	
+	if (matchstate.status) {
 		MT_CancelMatch();
+	}
 
 	matchstate.status = 1;
 	matchstate.starttime = cls.realtime;
 	matchstate.endtime = 0;
 
 	// disconnect: match_forcestart resets gameclock
-	cl.standby=false;
+	cl.standby = false;
 	cl.countdown = false;
 	cl.gametime = 0;
 	cl.gamestarttime = Sys_DoubleTime();
@@ -966,75 +706,77 @@ static void MT_StartMatch(void) {
 		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 
-	if (last_challenge != NULL) {
-		MT_Challenge_Destroy(last_challenge);
-		last_challenge = NULL;
-	}
+	MT_Challenge_StartMatch();
 
 	CL_AutoRecord_StartMatch(matchstate.matchname);
 	Log_AutoLogging_StartMatch(matchstate.matchname);
-	if (match_challenge.integer) {
-		Cbuf_AddText("play items/protect.wav\n");
-		Cbuf_AddText("say Challenge mode: on\n");
-		MT_Challenge_StartSend();
-	}
 
 	Stats_Reset();
 }
 
-static void MT_ClearClientState(void) {
+static void MT_ClearClientState(void)
+{
 	memset(&matchstate, 0, sizeof(matchstate));
 	cl.gamestarttime = Sys_DoubleTime();
 	cl.gamepausetime = 0;
 }
 
-void MT_Frame(void) {
-	if (matchstate.endtime && cls.realtime >= matchstate.endtime + MT_SCOREBOARD_SHOWIME)
+void MT_Frame(void)
+{
+	if (matchstate.endtime && cls.realtime >= matchstate.endtime + MT_SCOREBOARD_SHOWIME) {
 		MT_Delayed_EndMatch();
+	}
 
-	if (cls.state != ca_active || cls.demoplayback)
+	if (cls.state != ca_active || cls.demoplayback) {
 		return;
+	}
 
 	if (matchstate.standby && !cl.standby && !cl.intermission) {
-		if (!cl.spectator || match_auto_spectating.value)
+		if (!cl.spectator || match_auto_spectating.value) {
 			MT_StartMatch();
+		}
 
-		if (match_auto_unminimize.integer == 2 ||
-			(match_auto_unminimize.integer == 1 && !cl.spectator))
-		{
+		if (match_auto_unminimize.integer == 2 || (match_auto_unminimize.integer == 1 && !cl.spectator)) {
 			VID_Restore();
 		}
 	}
 
-	if (!matchstate.intermission && cl.intermission)
+	if (!matchstate.intermission && cl.intermission) {
 		MT_EndMatch();
-	else if (matchstate.status && !matchstate.standby && cl.standby)
+	}
+	else if (matchstate.status && !matchstate.standby && cl.standby) {
 		MT_CancelMatch();
+	}
 
 	matchstate.standby = cl.standby;
 	matchstate.intermission = cl.intermission;
 }
 
-void MT_NewMap(void) {
+void MT_NewMap(void)
+{
 	MT_CancelMatch();
 	MT_ClearClientState();
 	loc_loaded=0;
 }
 
-void MT_Disconnect(void) {
+void MT_Disconnect(void)
+{
 	MT_CancelMatch();
 	MT_ClearClientState();
 }
 
-char *MT_TempDirectory(void) {
+char* MT_TempDirectory(void)
+{
 	static char dir[MAX_OSPATH * 2] = {0};
 
-	if (!dir[0])
+	if (!dir[0]) {
 		snprintf(dir, sizeof(dir), "%s/temp", com_homedir);
+	}
 	return dir;
 }
 
-char *MT_TempDemoDirectory(void) {
+char *MT_TempDemoDirectory(void)
+{
 	static char dir[MAX_OSPATH * 2] = {0};
 
 	if (!dir[0])
@@ -1042,7 +784,8 @@ char *MT_TempDemoDirectory(void) {
 	return dir;
 }
 
-void MT_SaveMatch_f(void) {
+void MT_SaveMatch_f(void)
+{
 	int demo_status, log_status;
 
 	demo_status = CL_AutoRecord_Status();
@@ -1057,21 +800,27 @@ void MT_SaveMatch_f(void) {
 		Com_Printf("\x02Saving match...\n");
 		CL_AutoRecord_SaveMatch();
 		Log_AutoLogging_SaveMatch(false);
-	} else {
+	}
+	else {
 		if ((demo_status & 1) || (log_status & 1)) {
-			if ((demo_status & 1) && (log_status & 1))
+			if ((demo_status & 1) && (log_status & 1)) {
 				Com_Printf("Auto demo recording and console logging still in progress\n");
-			else if ((demo_status & 1))
+			}
+			else if ((demo_status & 1)) {
 				Com_Printf("Auto demo recording still in progress\n");
-			else if ((log_status & 1))
+			}
+			else if ((log_status & 1)) {
 				Com_Printf("Auto console logging still in progress\n");
-		} else {
+			}
+		}
+		else {
 			Com_Printf("Nothing to save!\n");
 		}
 	}
 }
 
-void MT_Match_ForceStart_f(void) {
+void MT_Match_ForceStart_f(void)
+{
 	switch (Cmd_Argc()) {
 	case 1:
 		if (cls.state != ca_active || cls.demoplayback) {
@@ -1086,7 +835,8 @@ void MT_Match_ForceStart_f(void) {
 	}
 }
 
-void MT_TakeScreenshot(void) {
+void MT_TakeScreenshot(void)
+{
 	int i;
 	qbool have_opponent;
 
@@ -1667,6 +1417,7 @@ void MT_Init(void)
 	Cmd_AddCommand("match_save", MT_SaveMatch_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MATCH_TOOLS);
+
 	Cvar_Register(&match_format_solo);
 	Cvar_Register(&match_format_coop);
 	Cvar_Register(&match_format_race);
@@ -1690,18 +1441,14 @@ void MT_Init(void)
 
 	Cvar_Register(&match_auto_record);
 	Cvar_Register(&match_auto_logconsole);
-	Cvar_Register(&match_auto_logupload);
-	Cvar_Register(&match_auto_logurl);
-	Cvar_Register(&match_auto_logupload_token);
 	Cvar_Register(&match_auto_sshot);
 	Cvar_Register(&match_auto_minlength);
 	Cvar_Register(&match_auto_spectating);
 	Cvar_Register(&match_auto_unminimize);
-	Cvar_Register(&match_challenge);
-	Cvar_Register(&match_challenge_url);
-	Cvar_Register(&match_ladder_id);
 
 	Cvar_ResetCurrentGroup();
+
+	MT_Challenge_InitCvars();
 }
 
 void MT_Shutdown(void)

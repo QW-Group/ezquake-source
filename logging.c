@@ -42,23 +42,11 @@ static char       logfilename[LOG_FILENAME_MAXSIZE];
 
 static qbool autologging = false;
 
-extern cvar_t match_challenge;
 const char *MT_Challenge_GetToken(void);
 const char *MT_Challenge_GetLadderId(void);
 const char *MT_Challenge_GetHash(void);
 qbool MT_Challenge_IsOn(void);
-
-typedef struct log_upload_job_s {
-	qbool challenge_mode;
-	char *challenge_hash;
-	char *player_name;
-	char *token;
-	char *hostname;
-	char *filename;
-	char *url;
-	char *mapname;
-	char *ladderid;
-} log_upload_job_t;
+void Log_UploadTemp(void);
 
 qbool Log_IsLogging(void) {
 	return logfile ? true : false;
@@ -209,37 +197,16 @@ void Log_Write(char *s) {
 
 static char	auto_matchname[2 * MAX_OSPATH];
 static qbool temp_log_ready = false;
-static qbool temp_log_upload_pending = false;
 static float auto_starttime;
 
 char *MT_TempDirectory(void);
 
-extern cvar_t match_auto_logconsole, match_auto_minlength,
-	match_auto_logupload, match_auto_logurl, match_auto_logupload_token;
-
-#define TEMP_LOG_NAME "_!_temp_!_.log"
-
-void Log_AutoLogging_Upload(const char *filename);
-
-qbool Log_TempLogUploadPending(void) {
-	return temp_log_upload_pending;
-}
-
-static qbool Log_IsUploadAllowed(void) {
-	return (match_challenge.integer || (match_auto_logupload.integer && match_auto_logconsole.integer))
-		&& !cls.demoplayback
-		&& cls.server_adr.type != NA_LOOPBACK;
-}
-
-static void Log_UploadTemp(void) {
-	char *tempname = va("%s/%s", MT_TempDirectory(), TEMP_LOG_NAME);
-	temp_log_upload_pending = true;
-	Log_AutoLogging_Upload(tempname);
-}
+extern cvar_t match_auto_logconsole, match_auto_minlength;
 
 void Log_AutoLogging_StopMatch(void) {
-	if (!autologging)
+	if (!autologging) {
 		return;
+	}
 
 	autologging = false;
 	Log_Stop();
@@ -249,7 +216,7 @@ void Log_AutoLogging_StopMatch(void) {
 		Log_AutoLogging_SaveMatch(true);
 	else {
 		Com_Printf ("Auto console logging completed\n");
-		if (Log_IsUploadAllowed()) {
+		if (MT_Challenge_Log_IsUploadAllowed()) {
 			Log_UploadTemp();
 		}
 	}
@@ -265,13 +232,15 @@ void Log_AutoLogging_CancelMatch(void) {
 	temp_log_ready = true;
 
 	if (match_auto_logconsole.value == 2) {
-		if (cls.realtime - auto_starttime > match_auto_minlength.value)
+		if (cls.realtime - auto_starttime > match_auto_minlength.value) {
 			Log_AutoLogging_SaveMatch(true);
-		else
+		}
+		else {
 			Com_Printf("Auto console logging cancelled\n");
-	} else if (match_auto_logconsole.integer == 1 || match_challenge.integer) {
+		}
+	} else if (match_auto_logconsole.integer == 1 || MT_ChallengeSpecified()) {
 		Com_Printf ("Auto console logging completed\n");
-		if (Log_IsUploadAllowed()) {
+		if (MT_Challenge_Log_IsUploadAllowed()) {
 			Log_UploadTemp();
 		}
 	} else {
@@ -287,27 +256,26 @@ void Log_AutoLogging_StartMatch(char *logname) {
 
 	temp_log_ready = false;
 
-	if (!match_auto_logconsole.value && !match_challenge.integer)
+	if (!match_auto_logconsole.integer && !MT_ChallengeSpecified()) {
 		return;
+	}
 
 	if (Log_IsLogging()) {
 		if (autologging) {		
-			
 			autologging = false;
 			Log_Stop();
-		} else {
+		}
+		else {
 			Com_Printf("Auto console logging skipped (already logging)\n");
 			return;
 		}
 	}
 
-
 	strlcpy(auto_matchname, logname, sizeof(auto_matchname));
 
-	strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
+	strlcpy(extendedname, TEMP_LOG_NAME, sizeof(extendedname));
 	COM_ForceExtensionEx (extendedname, ".log", sizeof (extendedname));
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
-
 
 	if (!(templog = fopen (fullname, log_readable.value ? "w" : "wb"))) {
 		FS_CreatePath(fullname);
@@ -336,138 +304,16 @@ qbool Log_AutoLogging_Status(void) {
 	return temp_log_ready ? 2 : autologging ? 1 : 0;
 }
 
-size_t Log_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata)
-{
-	return size*nmemb;
-}
-
-static log_upload_job_t* Log_Upload_Job_Prepare(qbool challenge_mode, const char *challenge_hash,
-                                                const char *filename, const char *hostname,
-                                                const char* player_name, const char *token, const char *url,
-                                                const char *mapname, const char *ladderid)
-{
-	log_upload_job_t *job = (log_upload_job_t *) Q_malloc(sizeof(log_upload_job_t));
-
-	job->challenge_mode = challenge_mode;
-	job->challenge_hash = Q_strdup(challenge_hash);
-	job->filename = Q_strdup(filename);
-	job->hostname = Q_strdup(hostname);
-	job->player_name = Q_strdup(player_name);
-	job->token = Q_strdup(token);
-	job->url = Q_strdup(url);
-	job->mapname = Q_strdup(mapname);
-	job->ladderid = Q_strdup(ladderid);
-
-	return job;
-}
-
-static void Log_Upload_Job_Free(log_upload_job_t *job)
-{
-	Q_free(job->filename);
-	Q_free(job->hostname);
-	Q_free(job->challenge_hash);
-	Q_free(job->player_name);
-	Q_free(job->token);
-	Q_free(job->url);
-	Q_free(job->mapname);
-	Q_free(job);
-}
-
-int Log_AutoLogging_Upload_Thread(void *vjob)
-{
-	log_upload_job_t *job = (log_upload_job_t *) vjob;
-	CURL *curl;
-	CURLcode res;
-	struct curl_httppost *post=NULL;
-	struct curl_httppost *last=NULL;
-	struct curl_slist *headers=NULL;
-	char errorbuffer[CURL_ERROR_SIZE] = "";
-
-	curl = curl_easy_init();
-
-	headers = curl_slist_append(headers, "Content-Type: text/plain");
-
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "name",
-		CURLFORM_COPYCONTENTS, job->player_name,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "challenge",
-		CURLFORM_COPYCONTENTS, job->challenge_mode ? "1" : "0",
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "challenge_hash",
-		CURLFORM_COPYCONTENTS, job->challenge_hash,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "token",
-		CURLFORM_COPYCONTENTS, job->token,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "host",
-		CURLFORM_COPYCONTENTS, job->hostname,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "map",
-		CURLFORM_COPYCONTENTS, job->mapname,
-		CURLFORM_END);
-	curl_formadd(&post, &last,
-		CURLFORM_COPYNAME, "log",
-		CURLFORM_FILE, job->filename,
-		CURLFORM_CONTENTHEADER, headers,
-		CURLFORM_END);
-
-	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_URL, job->url);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Log_Curl_Write_Void);
-
-	res = curl_easy_perform(curl); /* post away! */
-
-	curl_formfree(post);
-	curl_easy_cleanup(curl);
-
-	if (res != CURLE_OK) {
-		Com_Printf("Uploading of log failed:\n%s\n", curl_easy_strerror(res));
-		Com_Printf("%s\n", errorbuffer);
-	}
-	else {
-		Com_Printf("Match log uploaded\n");
-	}
-
-	Log_Upload_Job_Free(job);
-	temp_log_upload_pending = false;
-	return 0;
-}
-
-void Log_AutoLogging_Upload(const char *filename)
-{
-	log_upload_job_t *job = Log_Upload_Job_Prepare(
-		MT_Challenge_IsOn(),
-		MT_Challenge_GetHash(),
-		filename,
-		Info_ValueForKey(cl.serverinfo, "hostname"),
-		cl.players[cl.playernum].name,
-		MT_Challenge_GetToken(),
-		match_auto_logurl.string,
-		host_mapname.string,
-		MT_Challenge_GetLadderId());
-
-	Com_Printf("Uploading match log...\n");
-	if (Sys_CreateDetachedThread(Log_AutoLogging_Upload_Thread, (void *) job) < 0) {
-		Com_Printf("Failed to create AutoLogging_Upload thread\n");
-	}
-}
-
 void Log_AutoLogging_SaveMatch(qbool allow_upload) {
 	int error, num;
 	FILE *f;
 	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"log", NULL};
 
-	if (!temp_log_ready)
+	if (!temp_log_ready) {
 		return;
+	}
 
-	if (temp_log_upload_pending) {
+	if (Log_TempLogUploadPending()) {
 		Com_Printf("Error: Can't save the log. Log upload is still pending.\n");
 		return;
 	}
@@ -498,7 +344,7 @@ void Log_AutoLogging_SaveMatch(qbool allow_upload) {
 
 	if (!error) {
 		Com_Printf("Match console log saved to %s\n", savedname);
-		if (allow_upload && Log_IsUploadAllowed()) {
+		if (allow_upload && MT_Challenge_Log_IsUploadAllowed()) {
 			// note: we allow the client to be a spectator, so that spectators
 			// can submit logs for matches they spec in case players don't do it
 			Log_AutoLogging_Upload(fullsavedname);

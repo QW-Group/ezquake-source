@@ -33,6 +33,11 @@ void Log_AutoLogging_StartMatch(char *logname);
 qbool Log_AutoLogging_Status(void);
 void Log_AutoLogging_SaveMatch(qbool allow_upload);
 qbool Log_TempLogUploadPending(void);
+qbool MT_Challenge_Log_IsUploadAllowed(void);
+void Log_AutoLogging_Upload(const char *filename);
+qbool MT_ChallengeSpecified(void);
+
+#define TEMP_LOG_NAME "_!_temp_!_.log"
 
 extern cvar_t log_readable;
 extern cvar_t log_dir;

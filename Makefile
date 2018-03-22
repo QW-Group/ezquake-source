@@ -278,6 +278,7 @@ OBJS_c := \
     keys.o \
     logging.o \
     match_tools.o \
+    match_tools_challenge.o \
     menu.o \
     menu_demo.o \
     menu_ingame.o \
