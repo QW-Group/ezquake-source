@@ -70,6 +70,7 @@ typedef struct vk_options_s {
 		VkSwapchainKHR handle;
 		VkImage* images;
 		VkImageView* imageViews;
+		VkExtent2D imageSize;
 		int imageCount;
 	} swapChain;
 } vk_options_t;

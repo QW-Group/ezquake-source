@@ -101,6 +101,7 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 		return false;
 	}
 	vk_options.swapChain.imageCount = swapChainImageCount;
+	vk_options.swapChain.imageSize = createInfo.imageExtent;
 
 	// Create image views
 	vk_options.swapChain.imageViews = Q_malloc(swapChainImageCount * sizeof(vk_options.swapChain.imageViews[0]));
