@@ -113,6 +113,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
+cvar_t  cl_bufferwait = {"cl_bufferwait", "1"};
 cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
 
@@ -1690,6 +1691,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);
+	Cvar_Register (&cl_bufferwait);
 	Cvar_Register (&hud_fps_min_reset_interval);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
@@ -2184,6 +2186,7 @@ void CL_Frame (double time)
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 	qbool need_server_frame = false;
+	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || GL_BuffersReady();
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2435,59 +2438,78 @@ void CL_Frame (double time)
 		}
 	}
 
-	R_ParticleFrame();
+	if (render_frame) {
+		R_ParticleFrame();
 
-	GL_BufferStartFrame();
+		GL_BufferStartFrame();
 
-	CachePics_AtlasFrame();
+		CachePics_AtlasFrame();
 
-	CL_MultiviewPreUpdateScreen ();
+		CL_MultiviewPreUpdateScreen();
 
-	// update video
-	if (CL_MultiviewEnabled())
-	{
-		qbool draw_next_view = true;
-		qbool first_view = true;
+		// update video
+		if (CL_MultiviewEnabled()) {
+			qbool draw_next_view = true;
+			qbool first_view = true;
 
-		if (SCR_UpdateScreenPrePlayerView()) {
-			R_ScreenDrawStart();
+			if (SCR_UpdateScreenPrePlayerView()) {
+				R_ScreenDrawStart();
+
+				while (draw_next_view) {
+					draw_next_view = CL_MultiviewAdvanceView();
+					if (!first_view) {
+						GL_BufferEndFrame();
+						GL_BufferStartFrame();
+					}
+					first_view = false;
+
+					CL_LinkEntities();
+
+					SCR_CalcRefdef();
+
+					SCR_UpdateScreenPlayerView(draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS);
+
+					SCR_DrawMultiviewIndividualElements();
+
+					if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
+						CL_SoundFrame();
+					}
+
+					// Multiview: advance to next player
+					CL_MultiviewFrameFinish();
+				}
+
+				SCR_UpdateScreenPostPlayerView();
+			}
+			else {
+				VID_RenderFrameEnd();
+			}
+		}
+		else {
+			CL_LinkEntities();
+
+			SCR_UpdateScreen();
+
+			CL_SoundFrame();
+		}
+	}
+	else {
+		if (CL_MultiviewEnabled()) {
+			qbool draw_next_view = true;
 
 			while (draw_next_view) {
 				draw_next_view = CL_MultiviewAdvanceView();
-				if (!first_view) {
-					GL_BufferEndFrame();
-					GL_BufferStartFrame();
-				}
-				first_view = false;
-
-				CL_LinkEntities();
-
-				SCR_CalcRefdef();
-
-				SCR_UpdateScreenPlayerView(draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS);
-
-				SCR_DrawMultiviewIndividualElements();
 
 				if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 					CL_SoundFrame();
 				}
 
-				// Multiview: advance to next player
 				CL_MultiviewFrameFinish();
 			}
-
-			SCR_UpdateScreenPostPlayerView();
 		}
 		else {
-			VID_RenderFrameEnd();
+			CL_SoundFrame();
 		}
-	}
-	else {
-		CL_LinkEntities();
-
-		SCR_UpdateScreen();
-
-		CL_SoundFrame();
 	}
 
 	CL_DecayLights();
@@ -2496,16 +2518,17 @@ void CL_Frame (double time)
 
 	MT_Frame();
 
-	if (Movie_IsCapturing())
-	{
+	if (Movie_IsCapturing()) {
 		Movie_FinishFrame();
 	}
 
 	cls.framecount++;
 
-	fps_count++;
+	if (render_frame) {
+		fps_count++;
 
-	CL_CalcFPS();
+		CL_CalcFPS();
+	}
 
 	VFS_TICK(); // VFS hook for updating some systems
 

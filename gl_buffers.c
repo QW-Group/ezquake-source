@@ -695,3 +695,13 @@ uintptr_t GL_BufferOffset(buffer_ref ref)
 {
 	return buffers[ref.index].persistent_mapped_ptr ? buffers[ref.index].size * glConfig.tripleBufferIndex : 0;
 }
+
+qbool GL_BuffersReady(void)
+{
+	if (tripleBuffer_supported && tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
+		if (qglClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, 0) == GL_TIMEOUT_EXPIRED) {
+			return false;
+		}
+	}
+	return true;
+}

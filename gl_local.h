@@ -1110,6 +1110,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 void GL_BufferStartFrame(void);
 void GL_BufferEndFrame(void);
 uintptr_t GL_BufferOffset(buffer_ref ref);
+qbool GL_BuffersReady(void);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
