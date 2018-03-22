@@ -82,11 +82,6 @@ void GL_StateDefaultInit(void)
 
 void GLC_StateBeginDraw3DSprites(void)
 {
-	ENTER_STATE;
-
-	R_ApplyRenderingState(&spritesStateGLC);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateEndDraw3DSprites(void)

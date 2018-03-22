@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common_draw.h"
 #include "glm_draw.h"
 #include "glm_vao.h"
+#include "r_state.h"
 
 static glm_program_t circleProgram;
 static buffer_ref circleVBO;
@@ -67,7 +68,12 @@ void GLC_DrawCircles(int start, int end)
 
 	for (i = start; i <= end; ++i) {
 		GLC_StateBeginDrawAlphaPieSliceRGB(circleData.drawCircleThickness[i]);
-		glColor4fv(circleData.drawCircleColors[i]);
+		R_CustomColor(
+			circleData.drawCircleColors[i][0],
+			circleData.drawCircleColors[i][1],
+			circleData.drawCircleColors[i][2],
+			circleData.drawCircleColors[i][3]
+		);
 
 		glBegin(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP);
 		for (j = 0; j < circleData.drawCirclePoints[i]; ++j) {

@@ -210,7 +210,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
-	GL_LogAPICall("GL_ApplyRenderingState(%s)", state->name);
+	GL_EnterTracedRegion(va("GL_ApplyRenderingState(%s)", state->name), true);
 
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
@@ -233,7 +233,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			glBlendFuncValuesSource[state->blendFunc],
 			glBlendFuncValuesDestination[state->blendFunc]
 		);
-		GL_LogAPICall("glCullFace(%s)", txtBlendFuncNames[state->blendFunc]);
+		GL_LogAPICall("glBlendFunc(%s)", txtBlendFuncNames[state->blendFunc]);
 	}
 	if (state->line.width != current->line.width) {
 		glLineWidth(current->line.width = state->line.width);
@@ -359,14 +359,20 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		}
 
 		// Color
-		if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
-			glColor4fv(state->color);
-			current->color[0] = state->color[0];
-			current->color[1] = state->color[1];
-			current->color[2] = state->color[2];
-			current->color[3] = state->color[3];
+		/*if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3])*/ {
+			R_CustomColor(
+				current->color[0] = state->color[0],
+				current->color[1] = state->color[1],
+				current->color[2] = state->color[2],
+				current->color[3] = state->color[3]
+			);
 		}
 	}
+
+#ifdef WITH_OPENGL_TRACE
+	GL_DebugState();
+#endif
+	GL_LeaveTracedRegion(true);
 }
 
 //static int old_alphablend_flags = 0;
@@ -875,19 +881,21 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 }
 
 #ifdef WITH_OPENGL_TRACE
-void GL_PrintState(FILE* debug_frame_out)
+void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
 {
 	int i;
+
+	debug_frame_depth += 7;
 
 	if (debug_frame_out) {
 		rendering_state_t* current = &opengl.rendering_state;
 
-		fprintf(debug_frame_out, "... <state-dump>\n");
-		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %s range %f=>%f [mask %s]\n", current->depth.test_enabled ? "on" : "off", txtDepthFunctions[current->depth.func], current->depth.nearRange, current->depth.farRange, current->depth.mask_enabled ? "on" : "off");
-		fprintf(debug_frame_out, "..... Cull-face: %s, mode %s\n", current->cullface.enabled ? "enabled" : "disabled", txtCullFaceValues[current->cullface.mode]);
-		fprintf(debug_frame_out, "..... Blending: %s, func %s\n", current->blendingEnabled ? "enabled" : "disabled", txtBlendFuncNames[current->blendFunc]);
-		fprintf(debug_frame_out, "..... AlphaTest: %s, func %s(%f)\n", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
-		fprintf(debug_frame_out, "..... Texture units: [");
+		fprintf(debug_frame_out, "%.*s <state-dump>\n", debug_frame_depth, "                                                          ");
+		fprintf(debug_frame_out, "%.*s   Z-Buffer: %s, func %s range %f=>%f [mask %s]\n", debug_frame_depth, "                                                          ", current->depth.test_enabled ? "on" : "off", txtDepthFunctions[current->depth.func], current->depth.nearRange, current->depth.farRange, current->depth.mask_enabled ? "on" : "off");
+		fprintf(debug_frame_out, "%.*s   Cull-face: %s, mode %s\n", debug_frame_depth, "                                                          ", current->cullface.enabled ? "enabled" : "disabled", txtCullFaceValues[current->cullface.mode]);
+		fprintf(debug_frame_out, "%.*s   Blending: %s, func %s\n", debug_frame_depth, "                                                          ", current->blendingEnabled ? "enabled" : "disabled", txtBlendFuncNames[current->blendFunc]);
+		fprintf(debug_frame_out, "%.*s   AlphaTest: %s, func %s(%f)\n", debug_frame_depth, "                                                          ", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
+		fprintf(debug_frame_out, "%.*s   Texture units: [", debug_frame_depth, "                                                          ");
 		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
 			fprintf(debug_frame_out, "%s", i ? "," : "");
 			if (current->textureUnits[i].enabled && bound_textures[i]) {
@@ -901,8 +909,8 @@ void GL_PrintState(FILE* debug_frame_out)
 			}
 		}
 		fprintf(debug_frame_out, "]\n");
-		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", txtPolygonModeValues[current->polygonMode]);
-		fprintf(debug_frame_out, "... </state-dump>\n");
+		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
+		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
 	}
 }
 #endif
@@ -980,15 +988,26 @@ void R_ApplyRenderingState(rendering_state_t* state)
 void R_CustomColor(float r, float g, float b, float a)
 {
 	if (GL_UseImmediateMode()) {
-		if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
-			glColor4f(
-				opengl.rendering_state.color[0] = r,
-				opengl.rendering_state.color[1] = g,
-				opengl.rendering_state.color[2] = b,
-				opengl.rendering_state.color[3] = a
-			);
-		}
+		//if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
+		glColor4f(
+			opengl.rendering_state.color[0] = r,
+			opengl.rendering_state.color[1] = g,
+			opengl.rendering_state.color[2] = b,
+			opengl.rendering_state.color[3] = a
+		);
+		GL_LogAPICall("glColor(%f %f %f %f)", r, g, b, a);
+		//}
 	}
+}
+
+void R_CustomColor4ubv(const byte* color)
+{
+	float r = color[0] / 255.0f;
+	float g = color[1] / 255.0f;
+	float b = color[2] / 255.0f;
+	float a = color[3] / 255.0f;
+
+	R_CustomColor(r * a, g * a, b * a, a);
 }
 
 void R_EnableScissorTest(int x, int y, int width, int height)

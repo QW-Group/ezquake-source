@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_matrix.h"
+#include "r_state.h"
 
 // motion blur.
 texture_ref sceneblur_texture;
@@ -59,10 +60,10 @@ void GLC_BrightenScreen(void)
 	glBegin(GL_QUADS);
 	while (f > 1) {
 		if (f >= 2) {
-			glColor3ubv(color_white);
+			R_CustomColor(1, 1, 1, 1);
 		}
 		else {
-			glColor3f(f - 1, f - 1, f - 1);
+			R_CustomColor(f - 1, f - 1, f - 1, 1);
 		}
 
 		glVertex2f(0, 0);
@@ -212,7 +213,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vt *= 1;//gl_motionblurscale.value;
 
 	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
-	glColor4f(alpha, alpha, alpha, alpha);
+	R_CustomColor(alpha, alpha, alpha, alpha);
 	if (draw)
 	{
 		glBegin(GL_QUADS);

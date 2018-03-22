@@ -904,13 +904,8 @@ void R_Init(void)
 
 	// Init entity state
 	R_Init3DSpriteRenderingState(&sprite_entity_state, "sprite_entity_state");
-	sprite_entity_state.blendingEnabled = true;
-	sprite_entity_state.blendFunc = r_blendfunc_premultiplied_alpha;
 	sprite_entity_state.textureUnits[0].enabled = true;
 	sprite_entity_state.textureUnits[0].mode = r_texunit_mode_replace;
-	sprite_entity_state.alphaTesting.enabled = true;
-	sprite_entity_state.alphaTesting.func = r_alphatest_func_greater;
-	sprite_entity_state.alphaTesting.value = 0.333f;
 }
 
 static void R_RenderScene(void)

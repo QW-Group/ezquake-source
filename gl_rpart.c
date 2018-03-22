@@ -180,6 +180,10 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 	R_Init3DSpriteRenderingState(&type->state, name);
 	type->state.blendFunc = blend_options[blendtype].func;
 	type->state.depth.mask_enabled = false;
+	if (GL_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
+		type->state.textureUnits[0].enabled = true;
+		type->state.textureUnits[0].mode = r_texunit_mode_replace;
+	}
 	type->blendtype = blendtype;
 	type->id = id;
 	type->drawtype = drawtype;
@@ -192,7 +196,7 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 	type->verts_per_primitive = verts_per_primitive;
 	type->billboard_type = SPRITE3D_PARTICLES_NEW_p_spark + id;
 	particle_type_index[id] = *count;
-	*count++;
+	*count = *count + 1;
 }
 
 static int QMB_CompareParticleType(const void* lhs_, const void* rhs_)

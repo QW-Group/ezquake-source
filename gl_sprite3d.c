@@ -156,6 +156,9 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
+	assert(!textured_state || textured_state->initialized);
+	assert(!untextured_state || untextured_state->initialized);
+
 	batch->textured_rendering_state = textured_state;
 	batch->untextured_rendering_state = untextured_state;
 	batch->texture = texture;
@@ -174,6 +177,11 @@ gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int vert
 	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH) {
 		return NULL;
 	}
+	if (!GL_TextureReferenceIsValid(texture) && !GL_TextureReferenceIsValid(batch->texture) && !batch->untextured_rendering_state) {
+		assert(false);
+		return NULL;
+	}
+
 	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
 		return NULL;
 	}
@@ -381,6 +389,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 {
 	if (GL_TextureReferenceIsValid(batch->texture)) {
 		if (!batch->textured_rendering_state) {
+			assert(false);
 			return;
 		}
 		R_ApplyRenderingState(batch->textured_rendering_state);
@@ -395,6 +404,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 
 		if (GL_TextureReferenceIsValid(batch->textures[start])) {
 			if (!batch->textured_rendering_state) {
+				assert(false);
 				return;
 			}
 
@@ -403,6 +413,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 		}
 		else {
 			if (!batch->untextured_rendering_state) {
+				assert(false);
 				return;
 			}
 			R_ApplyRenderingState(batch->untextured_rendering_state);
@@ -413,6 +424,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 
 				if (GL_TextureReferenceIsValid(batch->textures[end])) {
 					if (!batch->textured_rendering_state) {
+						assert(false);
 						return;
 					}
 					GL_EnsureTextureUnitBound(GL_TEXTURE0, batch->textures[end]);
@@ -420,6 +432,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 				}
 				else {
 					if (!batch->untextured_rendering_state) {
+						assert(false);
 						return;
 					}
 					R_ApplyRenderingState(batch->untextured_rendering_state);
@@ -514,6 +527,7 @@ void GLM_Draw3DSprites(void)
 
 		if (GL_TextureReferenceIsValid(batch->texture)) {
 			if (!batch->textured_rendering_state) {
+				assert(false);
 				continue;
 			}
 			R_ApplyRenderingState(batch->textured_rendering_state);
@@ -523,6 +537,7 @@ void GLM_Draw3DSprites(void)
 			extern texture_ref particletexture_array;
 
 			if (!batch->textured_rendering_state) {
+				assert(false);
 				continue;
 			}
 			R_ApplyRenderingState(batch->textured_rendering_state);
@@ -694,7 +709,7 @@ void GLC_Draw3DSprites(void)
 				v = &verts[batch->firstVertices[j]];
 				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
 					glTexCoord2fv(v->tex);
-					glColor4ubv(v->color);
+					R_CustomColor4ubv(v->color);
 					glVertex3fv(v->position);
 				}
 				glEnd();

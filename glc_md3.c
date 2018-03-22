@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
+#include "r_state.h"
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
@@ -73,7 +74,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	GL_ScaleModelview(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
-	glColor4f(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
+	R_CustomColor(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
@@ -134,7 +135,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 			l = (l * shadelight + ambientlight) / 256;
 			l = min(l, 1);
 
-			glColor4f(l, l, l, r_modelalpha);
+			R_CustomColor(l, l, l, r_modelalpha);
 
 			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
 			glTexCoord2f(s, t);

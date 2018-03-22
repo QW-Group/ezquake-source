@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GL_LeaveRegion() GL_LeaveTracedRegion(false)
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
 void GL_LeaveTracedRegion(qbool trace_only);
-void GL_PrintState(FILE* output);
+void GL_PrintState(FILE* output, int indent);
 void GL_DebugState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);

@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_matrix.h"
 #include "glm_vao.h"
+#include "r_state.h"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
@@ -304,17 +305,14 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	else {
 		int i;
 
-		glColor4ubv(imageData.glc_images[start * 4].colour);
+		R_CustomColor4ubv(imageData.glc_images[start * 4].colour);
 		memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
 		glBegin(GL_QUADS);
 
 		for (i = start * 4; i <= 4 * end + 3; ++i) {
 			glc_image_t* next = &imageData.glc_images[i];
 
-			if (memcmp(next->colour, current_color, sizeof(current_color))) {
-				memcpy(current_color, next->colour, sizeof(current_color));
-				glColor4ubv(next->colour);
-			}
+			R_CustomColor4ubv(next->colour);
 
 			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST)) {
 				GL_End();

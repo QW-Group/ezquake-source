@@ -207,7 +207,7 @@ static void GLC_DrawFlat(model_t *model)
 					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				}
 				index_count = 0;
-				glColor3ubv(desired);
+				R_CustomColor4ubv(desired);
 			}
 
 			if (last_lightmap != new_lightmap) {

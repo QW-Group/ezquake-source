@@ -91,7 +91,7 @@ void R_InitialiseEntityStates(void)
 	R_CopyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE + 1], &aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], "transparentAliasModelSingleTex");
 	R_CopyRenderingState(&aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE + 1], &aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], "transparentAliasModelMultiTex");
 
-	for (i = ALIASMODEL_NOTEXTURE_OPAQUE; i <= ALIASMODEL_MULTITEXTURE_OPAQUE; ++i) {
+	for (i = ALIASMODEL_NOTEXTURE_OPAQUE; i <= ALIASMODEL_MULTITEXTURE_OPAQUE; i += 2) {
 		aliasModelState[i + 1].blendingEnabled = true;
 		aliasModelState[i + 1].blendFunc = r_blendfunc_premultiplied_alpha;
 	}

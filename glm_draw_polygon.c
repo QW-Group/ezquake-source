@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common_draw.h"
 #include "glm_draw.h"
 #include "glm_vao.h"
+#include "r_state.h"
 
 static glm_program_t polygonProgram;
 static buffer_ref polygonVBO;
@@ -111,7 +112,12 @@ void GLC_DrawPolygons(int start, int end)
 	GLC_StateBeginDrawPolygon();
 
 	for (i = start; i <= end; ++i) {
-		glColor4fv(polygonData.polygonColor[i]);
+		R_CustomColor(
+			polygonData.polygonColor[i][0],
+			polygonData.polygonColor[i][1],
+			polygonData.polygonColor[i][2],
+			polygonData.polygonColor[i][3]
+		);
 		glBegin(GL_TRIANGLE_STRIP);
 		for (j = 0; j < polygonData.polygonVerts[i]; j++) {
 			glVertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);

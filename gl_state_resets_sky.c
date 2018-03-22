@@ -88,7 +88,7 @@ void GLC_StateBeginFastSky(void)
 	else {
 		R_ApplyRenderingState(&fastSkyState);
 	}
-	R_CustomColor(r_skycolor.color[0], r_skycolor.color[1], r_skycolor.color[2], r_skycolor.color[3]);
+	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
 
 	LEAVE_STATE;
 }

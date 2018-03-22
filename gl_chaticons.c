@@ -253,12 +253,8 @@ void R_InitChatIcons(void)
 	}
 
 	R_Init3DSpriteRenderingState(&chaticon_state, "chaticon_state");
-	chaticon_state.blendFunc = r_blendfunc_premultiplied_alpha;
-	chaticon_state.blendingEnabled = true;
-	chaticon_state.depth.test_enabled = true;
-	chaticon_state.depth.mask_enabled = true;
-	chaticon_state.textureUnits[0].mode = r_texunit_mode_replace;
 	chaticon_state.textureUnits[0].enabled = true;
+	chaticon_state.textureUnits[0].mode = r_texunit_mode_replace;
 
 	ci_initialized = true;
 }

@@ -231,7 +231,7 @@ void Dev_VidFrameTrace(void)
 void GL_DebugState(void)
 {
 	if (debug_frame_out) {
-		GL_PrintState(debug_frame_out);
+		GL_PrintState(debug_frame_out, debug_frame_depth);
 	}
 }
 #endif

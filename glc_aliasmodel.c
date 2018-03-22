@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_aliasmodel.h"
 #include "crc.h"
 #include "r_matrix.h"
+#include "r_state.h"
 
 static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
@@ -275,7 +276,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 				++position;
 			}
 			else {
-				glColor4fv(color);
+				R_CustomColor(color[0], color[1], color[2], color[3]);
 				glVertex3fv(interpolated_verts);
 			}
 
@@ -393,7 +394,7 @@ static void GLC_SetPowerupShellColor(int layer_no, int effects)
 	r_shellcolor[0] = base_level + ((effects & EF_RED) ? effect_level : 0);
 	r_shellcolor[1] = base_level + ((effects & EF_GREEN) ? effect_level : 0);
 	r_shellcolor[2] = base_level + ((effects & EF_BLUE) ? effect_level : 0);
-	glColor4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
+	R_CustomColor(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
 }
 
 void GLC_DrawPowerupShell(
