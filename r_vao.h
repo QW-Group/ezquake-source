@@ -30,10 +30,13 @@ typedef enum {
 	vao_hud_lines,
 	vao_hud_polygons,
 	vao_postprocess,
+
+	// non-shader (classic OpenGL) only
 	vao_aliasmodel_powerupshell,
 	vao_brushmodel_drawflat,
 	vao_brushmodel_details,
 	vao_brushmodel_lightmaps,
+	vao_brushmodel_lm_unit1,
 
 	vao_count
 } r_vao_id;

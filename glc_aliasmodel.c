@@ -304,11 +304,9 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)
 {
 	GLC_StateBeginAliasOutlineFrame();
-	glEnableClientState(GL_VERTEX_ARRAY);
 
 	GL_DrawArrays(primitive, 0, verts);
 
-	glDisableClientState(GL_VERTEX_ARRAY);
 	GLC_StateEndAliasOutlineFrame();
 }
 

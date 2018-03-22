@@ -397,9 +397,6 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 	GL_ApplyRenderingState(state);
 }
 
-//static int old_alphablend_flags = 0;
-static void GLC_DisableTextureUnitOnwards(int first);
-
 // vid_common_gl.c
 // gl_texture.c
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -1133,13 +1130,16 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		}
 		glVertexPointer(size, type, stride, pointer_or_offset);
+		GL_LogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_vertex_array_enabled) {
 			glEnableClientState(GL_VERTEX_ARRAY);
+			GL_LogAPICall("glEnableClientState(GL_VERTEX_ARRAY)");
 			opengl.rendering_state.glc_vertex_array_enabled = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_vertex_array_enabled) {
 		glDisableClientState(GL_VERTEX_ARRAY);
+		GL_LogAPICall("glDisableClientState(GL_VERTEX_ARRAY)");
 		opengl.rendering_state.glc_vertex_array_enabled = false;
 	}
 }
@@ -1154,14 +1154,17 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		}
 		glColorPointer(size, type, stride, pointer_or_offset);
+		GL_LogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_color_array_enabled) {
 			glEnableClientState(GL_COLOR_ARRAY);
+			GL_LogAPICall("glEnableClientState(GL_COLOR_ARRAY)");
 			opengl.rendering_state.colorValid = false;
 			opengl.rendering_state.glc_color_array_enabled = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_color_array_enabled) {
 		glDisableClientState(GL_COLOR_ARRAY);
+		GL_LogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
 		opengl.rendering_state.colorValid = false;
 		opengl.rendering_state.glc_color_array_enabled = false;
 	}
@@ -1182,13 +1185,17 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		}
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glTexCoordPointer(size, type, stride, pointer_or_offset);
+		GL_LogAPICall("glTexCoordPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_texture_array_enabled[unit]) {
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			GL_LogAPICall("glEnableClientState(GL_TEXTURE_COORD_ARRAY)");
 			opengl.rendering_state.glc_texture_array_enabled[unit] = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_texture_array_enabled[unit]) {
+		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		GL_LogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
 		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
 	}
 }

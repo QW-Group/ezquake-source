@@ -34,9 +34,9 @@ void R_InitialiseStates(void)
 {
 	R_InitRenderingState(&default3DState, true, "default3DState", vao_none);
 
-	R_Init3DSpriteRenderingState(&spritesStateGLM, "spritesStateGLM", vao_3dsprites);
+	R_Init3DSpriteRenderingState(&spritesStateGLM, "spritesStateGLM");
 
-	R_Init3DSpriteRenderingState(&spritesStateGLC, "spritesStateGLC", vao_3dsprites);
+	R_Init3DSpriteRenderingState(&spritesStateGLC, "spritesStateGLC");
 }
 
 float GL_WaterAlpha(void)
@@ -94,10 +94,4 @@ void GL_StateEndFrame(void)
 
 void GLC_StateEndRenderScene(void)
 {
-	ENTER_STATE;
-
-	//GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	//GL_ConfigureFog();
-
-	LEAVE_STATE;
 }

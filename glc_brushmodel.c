@@ -29,6 +29,9 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_framestats.h"
 #include "r_texture.h"
 #include "glc_state.h"
+#include "glc_vao.h"
+
+extern buffer_ref brushModel_vbo;
 
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
@@ -106,7 +109,7 @@ void R_InitialiseBrushModelStates(void)
 	current->textureUnits[2].enabled = false;
 
 	// lumas enabled, 2 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[2][lm+luma]", vao_brushmodel);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[2][lm+luma]", vao_brushmodel_lm_unit1);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
 
@@ -117,7 +120,7 @@ void R_InitialiseBrushModelStates(void)
 	current->textureUnits[1].enabled = false;
 
 	// lumas enabled, 3 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[3][lm+luma]", vao_brushmodel);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[3][lm+luma]", vao_brushmodel_lm_unit1);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_add);
@@ -147,6 +150,73 @@ void R_InitialiseBrushModelStates(void)
 	brushModelStates[multitexture_3units][fb_only][tex_no_luma].textureUnits[2].mode = r_texunit_mode_decal;
 }
 
+static void GLC_EnsureVAOCreated(r_vao_id vao)
+{
+	if (R_VertexArrayCreated(vao)) {
+		return;
+	}
+
+	if (!GL_BufferReferenceIsValid(brushModel_vbo)) {
+		// TODO: vbo data in client memory
+		return;
+	}
+
+	R_GenVertexArray(vao);
+	GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+	// TODO: index data _not_ in client memory
+
+	switch (vao) {
+		case vao_brushmodel:
+		{
+			// tmus: [material, material, lightmap]
+			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			break;
+		}
+		case vao_brushmodel_lm_unit1:
+		{
+			// tmus: [material, material, lightmap]
+			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			break;
+		}
+		case vao_brushmodel_drawflat:
+		{
+			// tmus: [lightmap]
+			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			break;
+		}
+		case vao_brushmodel_details:
+		{
+			// tmus: [details]
+			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
+			break;
+		}
+		case vao_brushmodel_lightmaps:
+		{
+			// tmus: [lightmap]
+			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			break;
+		}
+		default:
+		{
+			assert(false);
+			break;
+		}
+	}
+}
+
 static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, qbool caustics);
 void GLC_RenderFullbrights(void);
@@ -167,6 +237,8 @@ static void GLC_DrawFlat(model_t *model)
 	qbool first_surf = true;
 	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
 	int last_lightmap = -2;
+
+	GLC_EnsureVAOCreated(vao_brushmodel_drawflat);
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;
@@ -323,6 +395,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		if (!gl_fb_bmodels.integer) {
 			fbTextureUnit = 1;
 			lmTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
+
 		}
 		else {
 			fb = (useLumaTextures ? fb_lumas : fb_only);
@@ -335,9 +408,15 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		noLumaState = &brushModelStates[units][fb][tex_no_luma];
 		noLightmapState = &brushModelStates[units][fb][tex_no_lightmap];
 		noLightmapOrLumaState = &brushModelStates[units][fb][tex_no_lightmap_or_luma];
+
+		GLC_EnsureVAOCreated(vao_brushmodel);
+		GLC_EnsureVAOCreated(vao_brushmodel_lm_unit1);
+	}
+	else {
+		GLC_EnsureVAOCreated(vao_brushmodel);
 	}
 
-	GLC_StateBeginDrawTextureChains(lmTextureUnit, fbTextureUnit);
+	GLC_StateBeginDrawTextureChains();
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
@@ -506,7 +585,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	GLC_EmitCausticsPolys(use_vbo);
 	GLC_EmitDetailPolys(use_vbo);
 
-	GLC_StateEndWorldTextureChains(lmTextureUnit, fbTextureUnit);
+	GLC_StateEndWorldTextureChains();
 	GLC_StateEndDrawTextureChains();
 }
 

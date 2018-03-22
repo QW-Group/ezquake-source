@@ -38,6 +38,7 @@ void GLC_Draw3DSprites(void);
 static int indexes_start_quads;
 static int indexes_start_flashblend;
 static int indexes_start_sparks;
+static GLuint indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 
 static GLenum glPrimitiveTypes[r_primitive_count] = {
 	GL_TRIANGLE_STRIP,
@@ -259,7 +260,6 @@ static void GL_Create3DSpriteIndexBuffer(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
 		// Meag: *3 is for case of primitive restart not being supported
-		static GLuint indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 		int i, j;
 		int pos = 0;
 		int vbo_pos;
@@ -720,12 +720,4 @@ void GLC_Draw3DSprites(void)
 	}
 
 	GLC_StateEndDraw3DSprites();
-
-	if (GL_BuffersSupported()) {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
 }

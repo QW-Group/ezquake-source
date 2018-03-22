@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_trace.h"
 
-static void GL_BindBufferImpl(GLenum target, GLuint buffer);
+static qbool GL_BindBufferImpl(GLenum target, GLuint buffer);
 
 typedef struct buffer_data_s {
 	GLuint glref;
@@ -474,7 +474,7 @@ void GL_BindBuffer(buffer_ref ref)
 
 void GL_InitialiseBufferHandling(void)
 {
-	buffers_supported = true && (GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true);
+	buffers_supported = true && R_InitialiseVAOHandling();
 
 	GL_LoadMandatoryFunctionExtension(glBindBuffer, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferData, buffers_supported);

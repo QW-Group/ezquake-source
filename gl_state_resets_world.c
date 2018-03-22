@@ -162,7 +162,7 @@ void GLC_StateBeginDrawTextureChains(void)
 {
 }
 
-void GLC_StateEndWorldTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit)
+void GLC_StateEndWorldTextureChains(void)
 {
 }
 

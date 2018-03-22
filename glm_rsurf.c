@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GL_StartWaterSurfaceBatch(void);
 
-extern buffer_ref brushModel_vbo;
 extern GLuint* modelIndexes;
 extern GLuint modelIndexMaximum;
 static GLuint index_count;
