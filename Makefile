@@ -213,12 +213,12 @@ HELP_OBJS := \
     $(patsubst help_%.json,help_%.o,$(wildcard help_*.json))
 
 GLSL_OBJS := \
-	$(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
+    $(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
 
 OBJS_c := \
     $(COMMON_OBJS) \
     $(HELP_OBJS) \
-	$(GLSL_OBJS) \
+    $(GLSL_OBJS) \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
