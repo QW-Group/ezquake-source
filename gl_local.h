@@ -189,9 +189,6 @@ extern	const char *gl_extensions;
 
 qbool R_PointIsUnderwater(vec3_t point);
 
-// gl_chaticons.c
-void DrawChatIcons(void);
-
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
 void GL_BuildSkySurfacePolys (msurface_t *fa);
@@ -206,14 +203,10 @@ qbool R_DrawWorldOutlines(void);
 
 extern qbool	r_skyboxloaded;
 
-// gl_draw.c
-void GL_Set2D (void);
-
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);
 qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
-void R_PolyBlend (void);
 void R_BrightenScreen (void);
 
 #define POLYGONOFFSET_DISABLED 0
@@ -243,10 +236,7 @@ void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawWaterSurfaces (void);
 void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType);
-void GL_BuildLightmaps (void);
 
-qbool R_FullBrightAllowed(void);
-void R_Check_ReloadLightmaps(void);
 extern int dlightcolor[NUM_DLIGHTTYPES][3];
 
 // gl_ngraph.c
@@ -347,7 +337,6 @@ extern cvar_t vid_gl_core_profile;
 #define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm(cmdline_param_client_forwardonlyprofile))
 #endif
 
-void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GL_TextureEnvMode(GLenum mode);
 void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 
@@ -484,21 +473,6 @@ void GL_Vertex2f(GLfloat x, GLfloat y);
 void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
 void GL_Vertex3fv(const GLfloat* v);
 
-void GL_GetMatrix(GLenum mode, GLfloat* matrix);
-void GL_GetViewport(GLint* view);
-
-void GL_IdentityProjectionView(void);
-void GL_IdentityModelView(void);
-void GL_Rotate(GLenum matrix, float angle, float x, float y, float z);
-void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale);
-void GL_Translate(GLenum matrix, float x, float y, float z);
-void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar);
-
-void GL_PopMatrix(GLenum mode, float* matrix);
-void GL_PushMatrix(GLenum mode, float* matrix);
-
-void GLM_DebugMatrix(GLenum type, const char* value);
-
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos);
 int GL_MeasureVBOSizeForBrushModel(model_t* m);
 void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
@@ -511,10 +485,6 @@ void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
 void GL_BindVertexArray(glm_vao_t* vao);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
-void GL_EnableFog(void);
-void GL_DisableFog(void);
-void GL_ConfigureFog(void);
-void GL_EnableWaterFog(int contents);
 void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(GLuint texture);
@@ -534,6 +504,12 @@ void GL_UnBindBuffer(GLenum target);
 buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
 void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
 size_t GL_BufferSize(buffer_ref vbo);
+
+// gl_fog.c
+void GL_EnableFog(void);
+void GL_DisableFog(void);
+void GL_ConfigureFog(void);
+void GL_EnableWaterFog(int contents);
 
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
@@ -617,8 +593,6 @@ void GLC_BrightenScreen(void);
 void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
-void SCR_SetupCI(void);
-
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
 void GLC_EmitWaterPoly(msurface_t* fa);
@@ -646,8 +620,6 @@ float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool app
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
-void GL_FlushImageDraw(void);
-void GL_EmptyImageQueue(void);
 void GLM_PrepareImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Cache2DMatrix(void);
@@ -816,7 +788,6 @@ typedef struct uniform_block_spritedata_s {
 	uniform_block_sprite_t sprites[MAX_SPRITE_BATCH];
 } uniform_block_spritedata_t;
 
-void GL_PreRenderView(void);
 void GLC_PreRenderView(void);
 void GLM_PreRenderView(void);
 
@@ -934,6 +905,7 @@ void GLC_StateEndSimpleItem(void);
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);
 void GL_StateEndFrame(void);
+void GLC_StateEndRenderScene(void);
 
 void GLC_StateBeginImageDraw(void);
 void GLC_StateEndImageDraw(void);
@@ -997,13 +969,13 @@ typedef enum {
 	buffertype_use_once,
 	buffertype_reuse_many,
 	buffertype_constant
-} buffertype_t;
+} bufferusage_t;
 
-buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage);
+buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, bufferusage_t usage);
 void GL_BufferStartFrame(void);
 void GL_BufferEndFrame(void);
-uintptr_t GL_BufferOffset(buffer_ref ref);
 qbool GL_BuffersReady(void);
+uintptr_t GL_BufferOffset(buffer_ref ref);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 

@@ -98,51 +98,6 @@ void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 	chain##_tail = &chain;		\
 }
 
-// mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()
-static void R_ForceReloadLightMaps(void)
-{
-	model_t	*m;
-	int i, j;
-
-	Com_DPrintf("forcing of reloading all light maps!\n");
-
-	for (j = 1; j < MAX_MODELS; j++)
-	{
-		if (!(m = cl.model_precache[j]))
-			break;
-
-		if (m->name[0] == '*')
-			continue;
-
-		for (i = 0; i < m->numsurfaces; i++)
-		{
-			m->surfaces[i].cached_dlight = true; // kinda hack, so we force reload light map
-		}
-	}
-}
-
-qbool R_FullBrightAllowed(void)
-{
-	return r_fullbright.value && r_refdef2.allow_cheats;
-}
-
-void R_Check_ReloadLightmaps(void)
-{
-	static qbool allowed;
-	static qbool hardware_lighting;
-
-	// not changed, nothing to do
-	if (allowed == R_FullBrightAllowed() && hardware_lighting == R_HardwareLighting()) {
-		return;
-	}
-
-	// ok, it changed, lets update all our light maps...
-	allowed = R_FullBrightAllowed();
-	hardware_lighting = R_HardwareLighting();
-
-	R_ForceReloadLightMaps();
-}
-
 //Returns the proper texture for a given time and base texture
 texture_t *R_TextureAnimation(texture_t *base)
 {

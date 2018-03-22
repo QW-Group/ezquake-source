@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_draw.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
+#include "r_matrix.h"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
@@ -234,8 +235,8 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	qbool nearest = imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST;
 	int i;
 
-	GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
-	GL_PushMatrix(GL_PROJECTION, projectionMatrix);
+	GL_PushModelviewMatrix(modelviewMatrix);
+	GL_PushProjectionMatrix(projectionMatrix);
 
 	GL_IdentityModelView();
 	GL_IdentityProjectionView();
@@ -339,8 +340,8 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		glEnd();
 	}
 
-	GL_PopMatrix(GL_PROJECTION, projectionMatrix);
-	GL_PopMatrix(GL_MODELVIEW, modelviewMatrix);
+	GL_PopProjectionMatrix(projectionMatrix);
+	GL_PopModelviewMatrix(modelviewMatrix);
 }
 
 void GLM_PrepareImages(void)

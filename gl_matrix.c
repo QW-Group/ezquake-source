@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_matrix.h"
 
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GLM_SetMatrix(float* target, const float* source);
@@ -274,30 +275,35 @@ void GL_IdentityModelView(void)
 	}
 }
 
-void GL_GetMatrix(GLenum mode, GLfloat* matrix)
+void GL_GetModelviewMatrix(float* matrix)
 {
-	GLM_GetMatrix(mode, matrix);
+	memcpy(matrix, modelMatrix, sizeof(modelMatrix));
 }
 
-void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
+void GL_GetProjectionMatrix(float* matrix)
 {
-	GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
+	memcpy(matrix, projectionMatrix, sizeof(projectionMatrix));
+}
+
+void GL_RotateModelview(float angle, float x, float y, float z)
+{
+	GLM_RotateMatrix(modelMatrix, angle, x, y, z);
 
 	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(matrix);
+		glMatrixMode(GL_MODELVIEW);
 		glRotatef(angle, x, y, z);
-		GL_LogAPICall("GL_RotateMatrix(%s)", NameForMatrix(matrix));
+		GL_LogAPICall("GL_RotateModelview()");
 	}
 }
 
-void GL_Translate(GLenum matrix, float x, float y, float z)
+void GL_TranslateModelview(float x, float y, float z)
 {
-	GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
+	GLM_TransformMatrix(modelMatrix, x, y, z);
 
 	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(matrix);
+		glMatrixMode(GL_MODELVIEW);
 		glTranslatef(x, y, z);
-		GL_LogAPICall("GL_Translate(%s)", NameForMatrix(matrix));
+		GL_LogAPICall("GL_TranslateModelview()");
 	}
 }
 
@@ -323,30 +329,46 @@ void GL_ProcessErrors(const char* message)
 }
 #endif
 
-void GL_PushMatrix(GLenum mode, float* matrix)
+void GL_PushModelviewMatrix(float* matrix)
 {
-	memcpy(matrix, GL_MatrixForMode(mode), sizeof(float) * 16);
+	memcpy(matrix, modelMatrix, sizeof(modelMatrix));
 }
 
-void GL_PopMatrix(GLenum mode, float* matrix)
+void GL_PushProjectionMatrix(float* matrix)
 {
-	memcpy(GL_MatrixForMode(mode), matrix, sizeof(float) * 16);
+	memcpy(matrix, projectionMatrix, sizeof(projectionMatrix));
+}
+
+void GL_PopModelviewMatrix(const float* matrix)
+{
+	memcpy(modelMatrix, matrix, sizeof(modelMatrix));
 
 	if (GL_UseImmediateMode()) {
-		glMatrixMode(mode);
+		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(matrix);
-		GL_LogAPICall("GL_PopMatrix(%s)", NameForMatrix(mode));
+		GL_LogAPICall("GL_PopModelviewMatrix()");
 	}
 }
 
-void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
+void GL_PopProjectionMatrix(const float* matrix)
 {
-	GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
+	memcpy(projectionMatrix, matrix, sizeof(projectionMatrix));
+
+	if (GL_UseImmediateMode()) {
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(matrix);
+		GL_LogAPICall("GL_PopProjectionMatrix()");
+	}
+}
+
+void GL_ScaleModelview(float xScale, float yScale, float zScale)
+{
+	GLM_ScaleMatrix(modelMatrix, xScale, yScale, zScale);
 
 	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(matrix);
+		glMatrixMode(GL_MODELVIEW);
 		glScalef(xScale, yScale, zScale);
-		GL_LogAPICall("GL_ScaleMatrix(%s)", NameForMatrix(matrix));
+		GL_LogAPICall("GL_ScaleModelviewMatrix()");
 	}
 }
 
@@ -373,7 +395,7 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 		GL_LogAPICall("glFrustum()");
 	}
 }
-
+/*
 void GLM_DebugMatrix(GLenum mode, const char* label)
 {
 	float matrix[16];
@@ -385,7 +407,7 @@ void GLM_DebugMatrix(GLenum mode, const char* label)
 	for (i = 0; i < 4; ++i) {
 		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 4], matrix[i + 8], matrix[i + 12]);
 	}
-}
+}*/
 
 void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 {
@@ -441,8 +463,8 @@ qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, fl
 	int view[4];
 	int i;
 
-	GL_GetMatrix(GL_MODELVIEW_MATRIX, model);
-	GL_GetMatrix(GL_PROJECTION_MATRIX, proj);
+	GL_GetModelviewMatrix(model);
+	GL_GetProjectionMatrix(proj);
 	GL_GetViewport(view);
 
 	for (i = 0; i < 4; i++) {

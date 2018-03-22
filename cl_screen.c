@@ -42,6 +42,9 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "qtv.h"
 #include "demo_controls.h"
 #include "r_trace.h"
+#include "r_lightmaps.h"
+#include "r_local.h"
+#include "r_chaticons.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -1143,14 +1146,14 @@ void SCR_UpdateScreenPlayerView(int flags)
 {
 	GL_ResetRegion(true);
 
-	R_Check_ReloadLightmaps();
+	R_CheckReloadLightmaps();
 
 	// preache skins if needed
 	Skins_PreCache();
 
 	SCR_SetUpToDrawConsole();
 
-	SCR_SetupCI();
+	R_SetupChatIcons();
 
 	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 

@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_aliasmodel.h"
 #include "crc.h"
 #include "qmb_particles.h"
+#include "r_matrix.h"
+#include "r_local.h"
 
 void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
 
@@ -337,7 +339,7 @@ void R_DrawAliasModel(entity_t *ent)
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PushModelviewMatrix(oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	//get lighting information
@@ -364,7 +366,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
 
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
 	if (R_CanDrawModelShadow(ent)) {
@@ -981,11 +983,11 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 
 	if (GL_UseImmediateMode()) {
 		GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-		GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+		GL_PushModelviewMatrix(oldMatrix);
 		GL_StateBeginDrawAliasModel(ent, paliashdr);
 		GLC_AliasModelPowerupShell(ent, oldframe, frame);
 		GL_StateEndDrawAliasModel();
-		GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+		GL_PopModelviewMatrix(oldMatrix);
 		GL_LeaveTracedRegion(true);
 	}
 }

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_md3.h"
 #include "gl_aliasmodel.h"
 #include "vx_vertexlights.h" 
+#include "r_matrix.h"
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
 {
@@ -104,7 +105,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		vertsPerFrame += 3 * surf[surfnum].numTriangles;
 	}
 
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity(ent);
 
 	// 
@@ -115,7 +116,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
 		// perform scalling for r_viewmodelsize
-		GL_Scale(GL_MODELVIEW, bound(0.5, r_viewmodelsize.value, 1), 1, 1);
+		GL_ScaleModelview(bound(0.5, r_viewmodelsize.value, 1), 1, 1);
 	}
 
 	R_AliasSetupLighting(ent);
@@ -148,7 +149,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		surfaceInfo[0].texnum, null_texture_reference, false, ent->effects, ent->renderfx
 	);
 
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 }
 
 void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelData, int position)

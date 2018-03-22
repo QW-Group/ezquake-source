@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
+#include "r_matrix.h"
 
 void GL_StateBeginEntities(visentlist_t* vislist)
 {
@@ -192,10 +193,10 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GL_EnterTracedRegion("GL_StateBeginDrawBrushModel", true);
 
 	GLC_PauseMatrixUpdate();
-	GL_Translate(GL_MODELVIEW, e->origin[0],  e->origin[1],  e->origin[2]);
-	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
-	GL_Rotate(GL_MODELVIEW, e->angles[0], 0, 1, 0);
-	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
+	GL_TranslateModelview(e->origin[0],  e->origin[1],  e->origin[2]);
+	GL_RotateModelview(e->angles[1], 0, 0, 1);
+	GL_RotateModelview(e->angles[0], 0, 1, 0);
+	GL_RotateModelview(e->angles[2], 1, 0, 0);
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
@@ -236,19 +237,19 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GLC_PauseMatrixUpdate();
 	R_RotateForEntity(ent);
 	if (ent->model->modhint == MOD_EYES) {
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
 		// double size of eyes, since they are really hard to see in gl
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+		GL_ScaleModelview(paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
 	}
 	else if (ent->renderfx & RF_WEAPONMODEL) {
 		float scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
 
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_ScaleModelview(paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	else {
-		GL_Translate(GL_MODELVIEW, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_Scale(GL_MODELVIEW, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		GL_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	GLC_ResumeMatrixUpdate();
 	GLC_LoadMatrix(GL_MODELVIEW);

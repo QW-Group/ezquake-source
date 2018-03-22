@@ -27,6 +27,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "movie_avi.h"	//
 #endif
 #include "utils.h"
+#include "r_local.h"
 
 void R_Screenshot(byte* buffer, size_t size);
 
@@ -429,10 +430,11 @@ void SCR_CheckAutoScreenshot(void)
 	snprintf(savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
-	glFinish();
+	R_EnsureFinished();
 
-	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS)
+	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS) {
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
+	}
 }
 
 void SCR_AutoScreenshot(char *matchname)

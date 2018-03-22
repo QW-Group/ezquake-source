@@ -29,13 +29,13 @@ typedef struct texture_flag_s {
 void QMB_FlagTexturesForArray(texture_flag_t* texture_flags);
 void QMB_ImportTextureArrayReferences(texture_flag_t* texture_flags);
 
-void CI_FlagTexturesForArray(texture_flag_t* texture_flags);
-void CI_ImportTextureArrayReferences(texture_flag_t* texture_flags);
-
 void VX_FlagTexturesForArray(texture_flag_t* texture_flags);
 void VX_ImportTextureArrayReferences(texture_flag_t* texture_flags);
 
 void Part_FlagTexturesForArray(texture_flag_t* texture_flags);
 void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags);
+
+void R_ImportChatIconTextureArrayReferences(texture_flag_t* texture_flags);
+void R_FlagChatIconTexturesForArray(texture_flag_t* texture_flags);
 
 #endif // #ifndef GLM_TEXTURE_ARRAYS_HEADER

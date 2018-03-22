@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "common_draw.h"
 #include "menu_mp3player.h"
-
+#include "r_matrix.h"
 
 qbool vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);

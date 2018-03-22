@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_rpart.h"
 #include "qmb_particles.h"
 #include "r_texture.h"
+#include "r_matrix.h"
 
 //VULT
 static float varray_vertex[16];
@@ -511,7 +512,7 @@ static void QMB_FillParticleVertexBuffer(void)
 	int l;
 	int pos = 0;
 
-	GL_GetMatrix(GL_MODELVIEW, oldMatrix);
+	GL_GetModelviewMatrix(oldMatrix);
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);

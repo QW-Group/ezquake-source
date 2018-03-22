@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "rulesets.h"
+#include "r_matrix.h"
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -398,7 +399,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	// Store static data ready for upload
 	memset(&aliasdata.models[alias_draw_count], 0, sizeof(aliasdata.models[alias_draw_count]));
 	uniform = &aliasdata.models[alias_draw_count];
-	GL_GetMatrix(GL_MODELVIEW, uniform->modelViewMatrix);
+	GL_GetModelviewMatrix(uniform->modelViewMatrix);
 	uniform->amFlags =
 		(effects & EF_RED ? AMF_SHELLMODEL_RED : 0) |
 		(effects & EF_GREEN ? AMF_SHELLMODEL_GREEN : 0) |

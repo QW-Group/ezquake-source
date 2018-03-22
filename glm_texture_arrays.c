@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "glm_texture_arrays.h"
 #include "r_texture.h"
+#include "r_chaticons.h"
 
 static const texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT];
 static texture_flag_t texture_flags[MAX_GLTEXTURES];
@@ -486,7 +487,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	// Add non-model textures we need (generally sprites)
 	{
 		QMB_FlagTexturesForArray(texture_flags);
-		CI_FlagTexturesForArray(texture_flags);
+		R_FlagChatIconTexturesForArray(texture_flags);
 		VX_FlagTexturesForArray(texture_flags);
 		Part_FlagTexturesForArray(texture_flags);
 	}
@@ -570,7 +571,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 	{
 		QMB_ImportTextureArrayReferences(texture_flags);
-		CI_ImportTextureArrayReferences(texture_flags);
+		R_ImportChatIconTextureArrayReferences(texture_flags);
 		VX_ImportTextureArrayReferences(texture_flags);
 		Part_ImportTexturesForArrayReferences(texture_flags);
 

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "r_texture.h"
+#include "r_local.h"
 
 #define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
 #define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096

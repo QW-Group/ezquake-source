@@ -183,7 +183,7 @@ void GL_BlendFunc(GLenum sfactor, GLenum dfactor)
 	}
 }
 
-void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
+void GL_Viewport(int x, int y, int width, int height)
 {
 	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
 		glViewport(x, y, width, height);
@@ -195,7 +195,7 @@ void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 	}
 }
 
-void GL_GetViewport(GLint* view)
+void GL_GetViewport(int* view)
 {
 	view[0] = currentViewportX;
 	view[1] = currentViewportY;
@@ -460,93 +460,6 @@ int GL_AlphaBlendFlags(int flags)
 
 	old_alphablend_flags = flags;
 	return old_alphablend_flags;
-}
-
-void GL_EnableFog(void)
-{
-	if (GL_UseImmediateMode() && gl_fogenable.integer) {
-		glEnable(GL_FOG);
-	}
-}
-
-void GL_DisableFog(void)
-{
-	if (GL_UseImmediateMode() && gl_fogenable.integer) {
-		glDisable(GL_FOG);
-	}
-}
-
-void GL_ConfigureFog(void)
-{
-	vec3_t colors;
-
-	if (GL_UseGLSL()) {
-		// TODO
-		return;
-	}
-
-	// START shaman BUG fog was out of control when fogstart>fogend {
-	if (gl_fogenable.integer && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
-		// } END shaman BUG fog was out of control when fogstart>fogend
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		colors[0] = gl_fogred.value;
-		colors[1] = gl_foggreen.value;
-		colors[2] = gl_fogblue.value;
-		glFogfv(GL_FOG_COLOR, colors);
-		glFogf(GL_FOG_START, gl_fogstart.value);
-		glFogf(GL_FOG_END, gl_fogend.value);
-		glEnable(GL_FOG);
-	}
-	else {
-		glDisable(GL_FOG);
-	}
-}
-
-void GL_EnableWaterFog(int contents)
-{
-	extern cvar_t gl_waterfog_color_water;
-	extern cvar_t gl_waterfog_color_lava;
-	extern cvar_t gl_waterfog_color_slime;
-
-	float colors[4];
-
-	// TODO
-	if (GL_UseGLSL()) {
-		return;
-	}
-
-	switch (contents) {
-	case CONTENTS_LAVA:
-		colors[0] = (float) gl_waterfog_color_lava.color[0] / 255.0;
-		colors[1] = (float) gl_waterfog_color_lava.color[1] / 255.0;
-		colors[2] = (float) gl_waterfog_color_lava.color[2] / 255.0;
-		colors[3] = (float) gl_waterfog_color_lava.color[3] / 255.0;
-		break;
-	case CONTENTS_SLIME:
-		colors[0] = (float) gl_waterfog_color_slime.color[0] / 255.0;
-		colors[1] = (float) gl_waterfog_color_slime.color[1] / 255.0;
-		colors[2] = (float) gl_waterfog_color_slime.color[2] / 255.0;
-		colors[3] = (float) gl_waterfog_color_slime.color[3] / 255.0;
-		break;
-	default:
-		colors[0] = (float) gl_waterfog_color_water.color[0] / 255.0;
-		colors[1] = (float) gl_waterfog_color_water.color[1] / 255.0;
-		colors[2] = (float) gl_waterfog_color_water.color[2] / 255.0;
-		colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
-		break;
-	}
-
-	glFogfv(GL_FOG_COLOR, colors);
-	if (((int)gl_waterfog.value) == 2) {
-		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
-		glFogi(GL_FOG_MODE, GL_EXP);
-	}
-	else {
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		glFogf(GL_FOG_START, 150.0f);
-		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
-	}
-	glEnable(GL_FOG);
 }
 
 void GL_InvalidateTextureReferences(GLuint texture)

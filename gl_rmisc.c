@@ -31,6 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "gl_sky.h"
 #include "r_texture.h"
+#include "r_lightmaps.h"
+#include "r_local.h"
 
 static texture_ref GL_GenerateShellTexture(void)
 {
@@ -56,11 +58,6 @@ static texture_ref GL_GenerateShellTexture(void)
 
 void R_InitOtherTextures(void)
 {
-	/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
-
-		underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );
-		detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);
-	*/
 	unsigned char solidtexels[] = { 255, 255, 255, 255 };
 	int flags = TEX_MIPMAP | TEX_ALPHA;
 
@@ -152,7 +149,7 @@ void R_NewMap(qbool vid_restart)
 	Mod_ReloadModels(vid_restart);
 
 	if (cl.worldmodel) {
-		GL_BuildLightmaps();
+		R_BuildLightmaps();
 		if (GL_UseGLSL()) {
 			GL_BuildCommonTextureArrays(vid_restart);
 		}

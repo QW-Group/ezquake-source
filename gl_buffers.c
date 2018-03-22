@@ -180,7 +180,7 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	return result;
 }
 
-buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, buffertype_t usage)
+buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, bufferusage_t usage)
 {
 	buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
 	buffer_ref ref;

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_matrix.h"
 
 // motion blur.
 texture_ref sceneblur_texture;
@@ -106,11 +107,11 @@ void GLC_DrawVelocity3D(void)
 	const vec3_t v3_zero = {0.f, 0.f, 0.f };
 	float oldMatrix[16];
 
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PushModelviewMatrix(oldMatrix);
 
-	GL_Translate(GL_MODELVIEW, (*origin)[0], (*origin)[1], (*origin)[2]);
-	GL_Rotate(GL_MODELVIEW, yaw_degrees, 0.f, 0.f, 1.f);
-	GL_Translate(GL_MODELVIEW, show_velocity_3d_offset_forward.value, 0.f, -show_velocity_3d_offset_down.value);
+	GL_TranslateModelview((*origin)[0], (*origin)[1], (*origin)[2]);
+	GL_RotateModelview(yaw_degrees, 0.f, 0.f, 1.f);
+	GL_TranslateModelview(show_velocity_3d_offset_forward.value, 0.f, -show_velocity_3d_offset_down.value);
 
 	glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
 	glDisable(GL_TEXTURE_2D);
@@ -163,7 +164,7 @@ void GLC_DrawVelocity3D(void)
 		break;
 	}
 	glPopAttrib();
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 }
 
 void GLC_RenderSceneBlurDo(float alpha)
@@ -196,8 +197,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	}
 
 	// go 2d
-	GL_PushMatrix(GL_PROJECTION, oldProjectionMatrix);
-	GL_PushMatrix(GL_MODELVIEW, oldModelviewMatrix);
+	GL_PushProjectionMatrix(oldProjectionMatrix);
+	GL_PushModelviewMatrix(oldModelviewMatrix);
 
 	GLC_StateBeginSceneBlur();
 
@@ -226,8 +227,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	}
 
 	// Restore matrices.
-	GL_PopMatrix(GL_PROJECTION, oldProjectionMatrix);
-	GL_PopMatrix(GL_MODELVIEW, oldModelviewMatrix);
+	GL_PopProjectionMatrix(oldProjectionMatrix);
+	GL_PopModelviewMatrix(oldModelviewMatrix);
 
 	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
 	// so I copy frame not every frame.

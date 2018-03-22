@@ -22,4 +22,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz);
 
+void GL_GetModelviewMatrix(float* matrix);
+void GL_GetProjectionMatrix(float* matrix);
+void GL_GetViewport(int* view);
+
+void GL_IdentityProjectionView(void);
+void GL_IdentityModelView(void);
+void GL_RotateModelview(float angle, float x, float y, float z);
+void GL_ScaleModelview(float xScale, float yScale, float zScale);
+void GL_TranslateModelview(float x, float y, float z);
+void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar);
+void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
+
+void GL_PushModelviewMatrix(float* matrix);
+void GL_PopModelviewMatrix(const float* matrix);
+void GL_PushProjectionMatrix(float* matrix);
+void GL_PopProjectionMatrix(const float* matrix);
+
+//void GL_PopMatrix(GLenum mode, float* matrix);
+//void GL_PushMatrix(GLenum mode, float* matrix);
+//void GLM_DebugMatrix(GLenum type, const char* value);
+
 #endif // EZQUAKE_R_MATRIX_HEADER

@@ -1566,7 +1566,6 @@ void GL_InvalidateAllTextureReferences(void)
 	}
 }
 
-// Called during disconnect
 void GL_ClearModelTextureData(void)
 {
 	int i;
@@ -1581,6 +1580,12 @@ void GL_ClearModelTextureData(void)
 			GL_ClearModelTextureReferences(cl.vw_model_precache[i], false);
 		}
 	}
+}
+
+// Called during disconnect
+void R_OnDisconnect(void)
+{
+	GL_ClearModelTextureData();
 }
 
 void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter)

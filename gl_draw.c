@@ -30,6 +30,8 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "tr_types.h"
 #include "gl_framebuffer.h"
 #include "r_texture.h"
+#include "r_matrix.h"
+#include "r_local.h"
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);

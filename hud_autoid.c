@@ -24,6 +24,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "teamplay.h"
 #include "fonts.h"
 #include "r_matrix.h"
+#include "r_local.h"
 
 /*********************************** AUTOID ***********************************/
 
@@ -66,7 +67,7 @@ static int autoid_count;
 
 void SCR_SetupAutoID(void)
 {
-	int j, view[4], tracknum = -1;
+	int j, tracknum = -1;
 	float winz, *origin;
 	player_state_t *state;
 	player_info_t *info;

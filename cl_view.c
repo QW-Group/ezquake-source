@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
 #endif
+#include "r_local.h"
 
 /*
 The view is allowed to move slightly from its true position for bobbing,
@@ -483,18 +484,6 @@ void V_SetContentsColor (int contents)
 			cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
 		}
 	}
-}
-
-void V_AddWaterfog (int contents)
-{
-	extern cvar_t gl_waterfog;
-
-	if (!gl_waterfog.value || COM_CheckParm(cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
-		GL_DisableFog();
-		return;
-	}
-
-	GL_EnableWaterFog(contents);
 }
 
 void V_CalcPowerupCshift (void) {
@@ -994,48 +983,44 @@ qbool V_PreRenderView(void)
 
 	if (cls.state != ca_active) {
 		V_CalcBlend();
-		GL_PreRenderView();
-		return false;
-	}
-
-	view_frame = &cl.frames[cl.validsequence & UPDATE_MASK];
-	if (!cls.nqdemoplayback) {
-		view_message = view_frame->playerstate[cl.viewplayernum];
-	}
-
-	DropPunchAngle ();
-	if (cl.intermission) {
-		// intermission / finale rendering
-		V_CalcIntermissionRefdef();
 	}
 	else {
-		V_CalcRefdef();
+		view_frame = &cl.frames[cl.validsequence & UPDATE_MASK];
+		if (!cls.nqdemoplayback) {
+			view_message = view_frame->playerstate[cl.viewplayernum];
+		}
+
+		DropPunchAngle();
+		if (cl.intermission) {
+			// intermission / finale rendering
+			V_CalcIntermissionRefdef();
+		}
+		else {
+			V_CalcRefdef();
+		}
+
+		R_PushDlights();
+
+		r_refdef2.time = cl.time;
+
+		// restrictions
+		r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);
+		if (cls.demoplayback || cl.spectator) {
+			r_refdef2.allow_lumas = true;
+			r_refdef2.max_fbskins = 1;
+			r_refdef2.max_watervis = 1;
+		}
+		else {
+			r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
+			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) :
+				cl.teamfortress ? 0 : 1;
+			r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
+		}
 	}
 
-	R_PushDlights ();
+	R_PreRenderView();
 
-	r_refdef2.time = cl.time;
-
-	// restrictions
-	r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);
-	if (cls.demoplayback || cl.spectator) {
-		r_refdef2.allow_lumas = true;
-		r_refdef2.max_fbskins = 1;
-		r_refdef2.max_watervis = 1;
-	}
-	else {
-		r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
-		r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) :
-			cl.teamfortress ? 0 : 1;
-		r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
-	}
-
-	//	r_refdef2.viewplayernum = Cam_PlayerNum();
-	//	r_refdef2.lightstyles = cl_lightstyle;
-
-	GL_PreRenderView();
-
-	return true;
+	return cls.state == ca_active;
 }
 
 //============================================================================

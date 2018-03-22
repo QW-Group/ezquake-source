@@ -32,10 +32,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sprite3d.h"
 #include "r_performance.h"
 #include "qmb_particles.h"
+#include "r_chaticons.h"
+#include "r_matrix.h"
+#include "r_local.h"
 
 void GLM_ScreenDrawStart(void);
 
-void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
@@ -224,11 +226,11 @@ qbool R_CullSphere(vec3_t centre, float radius)
 
 void R_RotateForEntity(entity_t *e)
 {
-	GL_Translate(GL_MODELVIEW, e->origin[0], e->origin[1], e->origin[2]);
+	GL_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
 
-	GL_Rotate(GL_MODELVIEW, e->angles[1], 0, 0, 1);
-	GL_Rotate(GL_MODELVIEW, -e->angles[0], 0, 1, 0);
-	GL_Rotate(GL_MODELVIEW, e->angles[2], 1, 0, 0);
+	GL_RotateModelview(e->angles[1], 0, 0, 1);
+	GL_RotateModelview(-e->angles[0], 0, 1, 0);
+	GL_RotateModelview(e->angles[2], 1, 0, 0);
 }
 
 void R_DrawSpriteModel(entity_t *e)
@@ -470,15 +472,16 @@ void R_PolyBlend(void)
 	GL_StateEndPolyBlend();
 }
 
-int SignbitsForPlane(mplane_t *out)
+static int SignbitsForPlane(mplane_t *out)
 {
 	int	bits, j;
 
 	// for fast box on planeside test
 	bits = 0;
 	for (j = 0; j < 3; j++) {
-		if (out->normal[j] < 0)
+		if (out->normal[j] < 0) {
 			bits |= 1 << j;
+		}
 	}
 	return bits;
 }
@@ -543,7 +546,7 @@ void R_SetupFrame(void)
 	}
 
 	V_SetContentsColor(r_viewleaf->contents);
-	V_AddWaterfog(r_viewleaf->contents);
+	R_AddWaterfog(r_viewleaf->contents);
 	V_CalcBlend();
 
 	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
@@ -693,13 +696,13 @@ static void R_SetupGL(void)
 
 	GLC_PauseMatrixUpdate();
 	GL_IdentityModelView();
-	GL_Rotate(GL_MODELVIEW, -90, 1, 0, 0);	    // put Z going up
-	GL_Rotate(GL_MODELVIEW, 90, 0, 0, 1);	    // put Z going up
-	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[2], 1, 0, 0);
-	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[0], 0, 1, 0);
-	GL_Rotate(GL_MODELVIEW, -r_refdef.viewangles[1], 0, 0, 1);
-	GL_Translate(GL_MODELVIEW, -r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
-	GL_GetMatrix(GL_MODELVIEW_MATRIX, r_world_matrix);
+	GL_RotateModelview(-90, 1, 0, 0);	    // put Z going up
+	GL_RotateModelview(90, 0, 0, 1);	    // put Z going up
+	GL_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
+	GL_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
+	GL_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
+	GL_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+	GL_GetModelviewMatrix(r_world_matrix);
 	GLC_ResumeMatrixUpdate();
 	GLC_LoadMatrix(GL_MODELVIEW);
 
@@ -885,7 +888,7 @@ void R_Init(void)
 	R_InitTextures();	   // FIXME: not sure is this safe re-init
 	R_InitBubble();	       // safe re-init
 	R_InitParticles();     // safe re-init imo
-	CI_Init();			   // safe re-init
+	R_InitChatIcons();     // safe re-init
 
 	//VULT STUFF
 	if (qmb_initialized) {
@@ -1097,7 +1100,7 @@ static void R_Render3DEffects(void)
 	R_DrawParticles();
 
 	// Adds chat icons over player's heads (afk etc)
-	DrawChatIcons();
+	R_DrawChatIcons();
 
 	// Run corona logic
 	R_DrawCoronas();
@@ -1156,7 +1159,7 @@ void R_RenderView(void)
 	R_PerformanceEndFrame();
 }
 
-void GL_PreRenderView(void)
+void R_PreRenderView(void)
 {
 	if (GL_UseGLSL()) {
 		GLM_PreRenderView();
@@ -1171,4 +1174,24 @@ qbool R_PointIsUnderwater(vec3_t point)
 	int contents = TruePointContents(point);
 
 	return ISUNDERWATER(contents);
+}
+
+void R_EnsureFinished(void)
+{
+	glFinish();
+}
+
+void R_BufferStartFrame(void)
+{
+	GL_BufferStartFrame();
+}
+
+void R_BufferEndFrame(void)
+{
+	GL_BufferEndFrame();
+}
+
+qbool R_BuffersReady(void)
+{
+	return GL_BuffersReady();
 }

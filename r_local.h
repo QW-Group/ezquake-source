@@ -24,5 +24,26 @@ extern int glx, gly, glwidth, glheight;
 
 void GL_BeginRendering(int *x, int *y, int *width, int *height);
 void GL_EndRendering(void);
+void GL_Set2D(void);
+void R_PolyBlend(void);
+void R_EnsureFinished(void);
+void R_PreRenderView(void);
+void R_OnDisconnect(void);
+
+// 2d rendering
+void GL_FlushImageDraw(void);
+void GL_EmptyImageQueue(void);
+
+// culling
+qbool R_CullBox(vec3_t mins, vec3_t maxs);
+qbool R_CullSphere(vec3_t centre, float radius);
+
+// buffers
+void R_BufferStartFrame(void);
+void R_BufferEndFrame(void);
+qbool R_BuffersReady(void);
+
+// fog
+void R_AddWaterfog(int contents);
 
 #endif // EZQUAKE_R_LOCAL_HEADER

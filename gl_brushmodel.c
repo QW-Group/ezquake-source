@@ -32,6 +32,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "glsl/constants.glsl"
 #include "gl_sky.h"
 #include "r_texture.h"
+#include "r_matrix.h"
 
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
@@ -1504,7 +1505,7 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PushModelviewMatrix(oldMatrix);
 
 	GL_StateBeginDrawBrushModel(e, polygonOffset);
 
@@ -1644,7 +1645,7 @@ void R_DrawBrushModel(entity_t *e)
 	}
 
 	GL_StateEndDrawBrushModel();
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 
 	GL_LeaveTracedRegion(true);
 }

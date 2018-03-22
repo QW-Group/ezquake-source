@@ -54,6 +54,8 @@ void Sys_ActiveAppChanged (void);
 #include "textencoding.h"
 
 #include "gl_framebuffer.h"
+#include "r_texture.h"
+#include "qmb_particles.h"
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 

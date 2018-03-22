@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
+#include "r_matrix.h"
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
@@ -60,7 +61,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	mod = ent->model;
 
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity (ent);
 
 	// 
@@ -73,7 +74,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
-	GL_Scale(GL_MODELVIEW, scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
+	GL_ScaleModelview(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
@@ -153,5 +154,5 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	GLC_StateEndMD3Draw();
 
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 }

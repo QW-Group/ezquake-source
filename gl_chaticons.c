@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_texture_arrays.h"
 #include "gl_sprite3d.h"
 #include "r_texture.h"
+#include "r_chaticons.h"
 
 // Chat icons
 typedef byte col_t[4]; // FIXME: why 4?
@@ -67,10 +68,8 @@ extern cvar_t r_chaticons_alpha;
 
 static ci_player_t ci_clients[MAX_CLIENTS];
 static int ci_count;
-
 static ci_texture_t ci_textures[num_citextures];
-
-qbool ci_initialized = false;
+static qbool ci_initialized = false;
 
 #define FONT_SIZE (256.0)
 
@@ -87,7 +86,7 @@ qbool ci_initialized = false;
 
 // FIXME: Almost duplicate of QMB_LoadTextureSubImage, extracting sprites from an atlas
 //        This version works on different enumeration, and doesn't double-up for pre-multiplied alpha
-static void CI_LoadTextureSubImage(ci_tex_t tex, const char* id, const byte* pixels, byte* temp_buffer, int full_width, int full_height, int texIndex, int components, int sub_x, int sub_y, int sub_x2, int sub_y2)
+static void R_LoadChatIconTextureSubImage(ci_tex_t tex, const char* id, const byte* pixels, byte* temp_buffer, int full_width, int full_height, int texIndex, int components, int sub_x, int sub_y, int sub_x2, int sub_y2)
 {
 	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE;// | TEX_MIPMAP;
 	texture_ref tex_ref;
@@ -116,32 +115,30 @@ static void CI_LoadTextureSubImage(ci_tex_t tex, const char* id, const byte* pix
 	ADD_CICON_TEXTURE(tex, tex_ref, 0, 1, 0, 0, FONT_SIZE, FONT_SIZE);
 }
 
-void CI_Init(void)
+static void R_DrawChatIconBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
-	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
+	float coordinates[4][4];
+	gl_sprite3d_vert_t* vert;
+	int i;
 
-	ci_initialized = false;
-
-	{
-		int real_width, real_height;
-		byte* original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
-		byte* temp_buffer;
-		if (!original) {
-			return;
+	for (i = 0; i < 4; ++i) {
+		VectorScale(_coord[i], _p->size, coordinates[i]);
+		if (_p->rotangle) {
+			GLM_RotateVector(coordinates[i], _p->rotangle, vpn[0], vpn[1], vpn[2]);
 		}
-
-		temp_buffer = Q_malloc(real_width * real_height * 4);
-		CI_LoadTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
-		CI_LoadTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
-		CI_LoadTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 128, 64);
-		Q_free(temp_buffer);
-		Q_free(original);
+		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	ci_initialized = true;
+	vert = GL_Sprite3DAddEntry(batch, 4);
+	if (vert) {
+		GL_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+	}
 }
 
-int CmpCI_Order(const void *p1, const void *p2)
+static int CmpCI_Order(const void *p1, const void *p2)
 {
 	const ci_player_t	*a1 = (ci_player_t *)p1;
 	const ci_player_t	*a2 = (ci_player_t *)p2;
@@ -156,7 +153,7 @@ int CmpCI_Order(const void *p1, const void *p2)
 	return 0;
 }
 
-void SCR_SetupCI(void)
+void R_SetupChatIcons(void)
 {
 	int j, tracknum = -1;
 	player_state_t *state;
@@ -228,30 +225,32 @@ void SCR_SetupCI(void)
 	}
 }
 
-static void CI_DrawBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
+void R_InitChatIcons(void)
 {
-	float coordinates[4][4];
-	gl_sprite3d_vert_t* vert;
-	int i;
+	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
 
-	for (i = 0; i < 4; ++i) {
-		VectorScale(_coord[i], _p->size, coordinates[i]);
-		if (_p->rotangle) {
-			GLM_RotateVector(coordinates[i], _p->rotangle, vpn[0], vpn[1], vpn[2]);
+	ci_initialized = false;
+
+	{
+		int real_width, real_height;
+		byte* original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
+		byte* temp_buffer;
+		if (!original) {
+			return;
 		}
-		VectorAdd(coordinates[i], _p->org, coordinates[i]);
+
+		temp_buffer = Q_malloc(real_width * real_height * 4);
+		R_LoadChatIconTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
+		R_LoadChatIconTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
+		R_LoadChatIconTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 128, 64);
+		Q_free(temp_buffer);
+		Q_free(original);
 	}
 
-	vert = GL_Sprite3DAddEntry(batch, 4);
-	if (vert) {
-		GL_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-	}
+	ci_initialized = true;
 }
 
-void DrawChatIcons(void)
+void R_DrawChatIcons(void)
 {
 	int	i, flags;
 	vec3_t billboard[4], billboard2[4], vright_tmp;
@@ -285,21 +284,18 @@ void DrawChatIcons(void)
 		flags = p->flags;
 
 		if ((flags & CIF_CHAT) && (flags & CIF_AFK)) {
-			flags = flags & ~(CIF_CHAT | CIF_AFK); // so they will be not showed below again
-			CI_DrawBillboard(SPRITE3D_CHATICON_AFK_CHAT, &ci_textures[citex_chat_afk], p, billboard2);
+			R_DrawChatIconBillboard(SPRITE3D_CHATICON_AFK_CHAT, &ci_textures[citex_chat_afk], p, billboard2);
 		}
-
-		if (flags & CIF_CHAT) {
-			CI_DrawBillboard(SPRITE3D_CHATICON_CHAT, &ci_textures[citex_chat], p, billboard);
+		else if (flags & CIF_CHAT) {
+			R_DrawChatIconBillboard(SPRITE3D_CHATICON_CHAT, &ci_textures[citex_chat], p, billboard);
 		}
-
-		if (flags & CIF_AFK) {
-			CI_DrawBillboard(SPRITE3D_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
+		else if (flags & CIF_AFK) {
+			R_DrawChatIconBillboard(SPRITE3D_CHATICON_AFK, &ci_textures[citex_afk], p, billboard);
 		}
 	}
 }
 
-void CI_ImportTextureArrayReferences(texture_flag_t* texture_flags)
+void R_ImportChatIconTextureArrayReferences(texture_flag_t* texture_flags)
 {
 	ci_tex_t tex;
 	int i;
@@ -320,7 +316,7 @@ void CI_ImportTextureArrayReferences(texture_flag_t* texture_flags)
 	}
 }
 
-void CI_FlagTexturesForArray(texture_flag_t* texture_flags)
+void R_FlagChatIconTexturesForArray(texture_flag_t* texture_flags)
 {
 	ci_tex_t tex;
 

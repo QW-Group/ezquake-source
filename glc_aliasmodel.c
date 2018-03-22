@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "gl_aliasmodel.h"
 #include "crc.h"
+#include "r_matrix.h"
 
 static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
@@ -537,15 +538,15 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 
 	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-	GL_Translate(GL_MODELVIEW, ent->origin[0], ent->origin[1], ent->origin[2]);
-	GL_Rotate(GL_MODELVIEW, ent->angles[1], 0, 0, 1);
+	GL_PushModelviewMatrix(oldMatrix);
+	GL_TranslateModelview(ent->origin[0], ent->origin[1], ent->origin[2]);
+	GL_RotateModelview(ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
 	GLC_StateEndAliasModelShadow();
 
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+	GL_PopModelviewMatrix(oldMatrix);
 }
 
 static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot)

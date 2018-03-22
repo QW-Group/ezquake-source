@@ -68,6 +68,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "vx_tracker.h"
 #include "menu_demo.h"
+#include "r_local.h"
 
 extern qbool ActiveApp, Minimized;
 
@@ -1119,24 +1120,22 @@ void CL_Disconnect (void)
 	MT_Disconnect();
 
 	//
-	GL_ClearModelTextureData();
+	R_OnDisconnect();
 
-	if (cls.demorecording && cls.state != ca_disconnected)
+	if (cls.demorecording && cls.state != ca_disconnected) {
 		CL_Stop_f();
+	}
 
-	if (cls.mvdrecording && cls.state != ca_disconnected)
-	{
+	if (cls.mvdrecording && cls.state != ca_disconnected) {
 		extern void CL_StopMvd_f(void);
 
 		CL_StopMvd_f();
 	}
 
-	if (cls.demoplayback) 
-	{
+	if (cls.demoplayback) {
 		CL_StopPlayback();
 	} 
-	else if (cls.state != ca_disconnected) 
-	{
+	else if (cls.state != ca_disconnected) {
 		final[0] = clc_stringcmd;
 		strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
 		Netchan_Transmit (&cls.netchan, 6, final);
@@ -1146,8 +1145,7 @@ void CL_Disconnect (void)
 		CL_UnqueOutputPacket(true);
 
 		// TCP connect, that gives TCP a chance to transfer data to the server...
-		if (cls.sockettcp != INVALID_SOCKET)
-		{
+		if (cls.sockettcp != INVALID_SOCKET) {
 			Sys_MSleep(1000);
 		}
 	}
@@ -1162,22 +1160,21 @@ void CL_Disconnect (void)
 
 	if (cls.download) {
 		CL_FinishDownload();
-	} else {
+	}
+	else {
 		/* Just to make sure it's not in an ambigious state */
 		cls.downloadmethod = DL_NONE;
 		cls.downloadnumber = 0;
 		cls.downloadpercent = 0;
 		cls.downloadtype = dl_none;
 	}
-		
 
 	CL_StopUpload();
 	DeleteServerAliases();
 	CL_RE_Trigger_ResetLasttime();
 
 	// TCP connect.
-	if (cls.sockettcp != INVALID_SOCKET)
-	{
+	if (cls.sockettcp != INVALID_SOCKET) {
 		closesocket(cls.sockettcp);
 		cls.sockettcp = INVALID_SOCKET;
 	}
@@ -1187,13 +1184,13 @@ void CL_Disconnect (void)
 	SZ_Clear(&cls.cmdmsg);
 
 	// So join/observe not confused
-	Info_SetValueForStarKey (cl.serverinfo, "*z_ext", "", sizeof(cl.serverinfo));
+	Info_SetValueForStarKey(cl.serverinfo, "*z_ext", "", sizeof(cl.serverinfo));
 	cl.z_ext = 0;
 
 	// well, we need free qtv users before new connection
 	QTV_FreeUserList();
 
-	Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet
+	Cvar_ForceSet(&host_mapname, ""); // Notice mapname not valid yet
 }
 
 void CL_Disconnect_f (void) 
@@ -2137,7 +2134,7 @@ void CL_Frame (double time)
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 	qbool need_server_frame = false;
-	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || GL_BuffersReady();
+	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || R_BuffersReady();
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2392,7 +2389,7 @@ void CL_Frame (double time)
 	if (render_frame) {
 		R_ParticleFrame();
 
-		GL_BufferStartFrame();
+		R_BufferStartFrame();
 
 		CachePics_AtlasFrame();
 
@@ -2409,8 +2406,8 @@ void CL_Frame (double time)
 				while (draw_next_view) {
 					draw_next_view = CL_MultiviewAdvanceView();
 					if (!first_view) {
-						GL_BufferEndFrame();
-						GL_BufferStartFrame();
+						R_BufferEndFrame();
+						R_BufferStartFrame();
 					}
 					first_view = false;
 

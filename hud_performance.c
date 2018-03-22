@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud.h"
 #include "hud_common.h"
 #include "tr_types.h"
-#include "gl_model.h"
 #include "r_framestats.h"
 
 r_frame_stats_t prevFrameStats;
@@ -178,7 +177,7 @@ static void FrameStats_DrawElement(hud_t *hud)
 	FrameStats_AddLine(content[lines++], "Sub-draw calls:", prevFrameStats.subdraw_calls);
 	FrameStats_AddLine(content[lines++], "Texture switches:", prevFrameStats.texture_binds);
 	FrameStats_AddLine(content[lines++], "Lightmap uploads:", prevFrameStats.lightmap_updates);
-	if (GL_UseImmediateMode()) {
+	if (frameStats.classic.polycount[polyTypeWorldModel]) {
 		FrameStats_AddLine(content[lines++], "", 0);
 		FrameStats_AddLine(content[lines++], "World-model polys:", frameStats.classic.polycount[polyTypeWorldModel]);
 		if (cl.standby || com_serveractive) {
