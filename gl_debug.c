@@ -83,7 +83,7 @@ void APIENTRY MessageCallback(GLenum source,
 void GL_InitialiseDebugging(void)
 {
 	// During init, enable debug output
-	if (GL_DebugProfileContext()) {
+	if (R_DebugProfileContext()) {
 		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
 
 		if (glDebugMessageCallback) {

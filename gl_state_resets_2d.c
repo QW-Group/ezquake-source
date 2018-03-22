@@ -103,6 +103,7 @@ void R_Initialise2DStates(void)
 
 	R_InitRenderingState(&glmImageDrawState, true);
 	glmImageDrawState.depth.test_enabled = false;
+	glmImageDrawState.cullface.enabled = false;
 	glmImageDrawState.alphaTesting.enabled = false;
 	glmImageDrawState.blendingEnabled = r_blendfunc_premultiplied_alpha;
 }

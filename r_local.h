@@ -67,4 +67,7 @@ extern cvar_t vid_renderer;
 #define R_UseModernOpenGL()       (vid_renderer.integer == 1)
 #define R_UseVulkan()             (vid_renderer.integer == 2)
 
+// Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
+#define R_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_gl_debug))
+
 #endif // EZQUAKE_R_LOCAL_HEADER

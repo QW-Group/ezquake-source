@@ -25,12 +25,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "r_state.h"
+#include "r_texture.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 static glBindImageTexture_t     qglBindImageTexture;
 static glBindTextures_t         qglBindTextures;
 glActiveTexture_t               qglActiveTexture;
+
+void R_InitialiseBrushModelStates(void);
+void R_InitialiseStates(void);
+void R_Initialise2DStates(void);
+void R_InitialiseEntityStates(void);
+void GLC_InitialiseSkyStates(void);
+void R_InitialiseWorldStates(void);
 
 void GL_BindBuffer(buffer_ref ref);
 void GL_SetElementArrayBuffer(buffer_ref buffer);
@@ -81,6 +89,15 @@ static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
 static GLenum glPolygonModeValues[r_polygonmode_count];
 static GLenum glAlphaTestModeValues[r_alphatest_func_count];
 static GLenum glTextureEnvModeValues[r_texunit_mode_count];
+
+#ifdef WITH_OPENGL_TRACE
+static const char* txtDepthFunctions[r_depthfunc_count];
+static const char* txtCullFaceValues[r_cullface_count];
+static const char* txtBlendFuncNames[r_blendfunc_count];
+static const char* txtPolygonModeValues[r_polygonmode_count];
+static const char* txtAlphaTestModeValues[r_alphatest_func_count];
+static const char* txtTextureEnvModeValues[r_texunit_mode_count];
+#endif
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 {
@@ -156,6 +173,8 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 
 		state->framebuffer_srgb = (gl_gammacorrection.integer > 0);
 	}
+
+	state->initialized = true;
 }
 
 void R_Init3DSpriteRenderingState(rendering_state_t* state)
@@ -440,8 +459,41 @@ void GL_InitialiseState(void)
 	glTextureEnvModeValues[r_texunit_mode_replace] = GL_REPLACE;
 	glTextureEnvModeValues[r_texunit_mode_modulate] = GL_MODULATE;
 	glTextureEnvModeValues[r_texunit_mode_decal] = GL_DECAL;
+	glTextureEnvModeValues[r_texunit_mode_add] = GL_ADD;
+#ifdef WITH_OPENGL_TRACE
+	txtDepthFunctions[r_depthfunc_less] = "<";
+	txtDepthFunctions[r_depthfunc_equal] = "=";
+	txtDepthFunctions[r_depthfunc_lessorequal] = "<=";
+	txtCullFaceValues[r_cullface_back] = "back";
+	txtCullFaceValues[r_cullface_front] = "front";
+	txtBlendFuncNames[r_blendfunc_overwrite] = "overwrite";
+	txtBlendFuncNames[r_blendfunc_additive_blending] = "additive";
+	txtBlendFuncNames[r_blendfunc_premultiplied_alpha] = "premul-alpha";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_zero] = "r_blendfunc_src_dst_color_dest_zero";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_one] = "r_blendfunc_src_dst_color_dest_one";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_src_color] = "r_blendfunc_src_dst_color_dest_src_color";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_one_minus_src_color] = "r_blendfunc_src_zero_dest_one_minus_src_color";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_src_color] = "r_blendfunc_src_zero_dest_src_color";
+	txtBlendFuncNames[r_blendfunc_src_one_dest_zero] = "r_blendfunc_src_one_dest_zero";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_one] = "r_blendfunc_src_zero_dest_one";
+	txtPolygonModeValues[r_polygonmode_fill] = "fill";
+	txtPolygonModeValues[r_polygonmode_line] = "line";
+	txtAlphaTestModeValues[r_alphatest_func_always] = "always";
+	txtAlphaTestModeValues[r_alphatest_func_greater] = "greater";
+	txtTextureEnvModeValues[r_texunit_mode_blend] = "blend";
+	txtTextureEnvModeValues[r_texunit_mode_replace] = "replace";
+	txtTextureEnvModeValues[r_texunit_mode_modulate] = "modulate";
+	txtTextureEnvModeValues[r_texunit_mode_decal] = "decal";
+	txtTextureEnvModeValues[r_texunit_mode_add] = "add";
+#endif
 
 	R_InitRenderingState(&opengl.rendering_state, false);
+	R_InitialiseBrushModelStates();
+	R_InitialiseStates();
+	R_Initialise2DStates();
+	R_InitialiseEntityStates();
+	GLC_InitialiseSkyStates();
+	R_InitialiseWorldStates();
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -718,12 +770,15 @@ static int glcBaseVertsPerPrimitive = 0;
 static int glcVertsSent = 0;
 static const char* glcPrimitiveName = "?";
 
+#undef glBegin
+
 void GL_Begin(GLenum primitive)
 {
 	if (GL_UseGLSL()) {
 		return;
 	}
 
+#ifdef WITH_OPENGL_TRACE
 	glcVertsSent = 0;
 	glcVertsPerPrimitive = 0;
 	glcBaseVertsPerPrimitive = 0;
@@ -761,6 +816,7 @@ void GL_Begin(GLenum primitive)
 		glcPrimitiveName = "GL_LINES";
 		break;
 	}
+#endif
 
 	++frameStats.draw_calls;
 	glBegin(primitive);
@@ -849,16 +905,19 @@ void GL_PrintState(FILE* debug_frame_out)
 	int i;
 
 	if (debug_frame_out) {
+		rendering_state_t* current = &opengl.rendering_state;
+
 		fprintf(debug_frame_out, "... <state-dump>\n");
-		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %u range %f=>%f [mask %s]\n", gl_depthTestEnabled ? "enabled" : "disabled", currentDepthFunc, currentNearRange, currentFarRange, gl_depth_mask ? "on" : "off");
-		fprintf(debug_frame_out, "..... Cull-face: %s, mode %u\n", gl_cull_face ? "enabled" : "disabled", currentCullFace);
-		fprintf(debug_frame_out, "..... Blending: %s, sfactor %u, dfactor %u\n", gl_blend ? "enabled" : "disabled", currentBlendSFactor, currentBlendDFactor);
-		fprintf(debug_frame_out, "..... Texturing: %s, tmu %d [", texunitenabled[currentTextureUnit - GL_TEXTURE0] ? "enabled" : "disabled", currentTextureUnit - GL_TEXTURE0);
-		for (i = 0; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
-			fprintf(debug_frame_out, "%s%s", i ? "," : "", texunitenabled[i] ? TexEnvName(unit_texture_mode[i]) : "n");
+		fprintf(debug_frame_out, "..... Z-Buffer: %s, func %s range %f=>%f [mask %s]\n", current->depth.test_enabled ? "on" : "off", txtDepthFunctions[current->depth.func], current->depth.nearRange, current->depth.farRange, current->depth.mask_enabled ? "on" : "off");
+		fprintf(debug_frame_out, "..... Cull-face: %s, mode %s\n", current->cullface.enabled ? "enabled" : "disabled", txtCullFaceValues[current->cullface.mode]);
+		fprintf(debug_frame_out, "..... Blending: %s, func %s\n", current->blendingEnabled ? "enabled" : "disabled", txtBlendFuncNames[current->blendFunc]);
+		fprintf(debug_frame_out, "..... AlphaTest: %s, func %s(%f)\n", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
+		fprintf(debug_frame_out, "..... Texture units: [");
+		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
+			fprintf(debug_frame_out, "%s%s", i ? "," : "", current->textureUnits[i].enabled ? txtTextureEnvModeValues[current->textureUnits[i].mode] : "n");
 		}
 		fprintf(debug_frame_out, "]\n");
-		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", polygonMode == GL_FILL ? "fill" : polygonMode == GL_LINE ? "line" : "???");
+		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", txtPolygonModeValues[current->polygonMode]);
 		fprintf(debug_frame_out, "... </state-dump>\n");
 	}
 }
@@ -929,6 +988,8 @@ void GLC_ClientActiveTexture(GLenum texture_unit)
 
 void R_ApplyRenderingState(rendering_state_t* state)
 {
+	assert(state->initialized);
+
 	GL_ApplyRenderingState(state);
 }
 
@@ -969,4 +1030,10 @@ void R_ClearColor(float r, float g, float b, float a)
 	else if (GL_UseGLSL()) {
 		glClearColor(r, g, b, a);
 	}
+}
+
+void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode)
+{
+	state->textureUnits[index].enabled = enabled;
+	state->textureUnits[index].mode = mode;
 }

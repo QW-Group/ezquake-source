@@ -1801,7 +1801,7 @@ void CL_InitLocal (void)
 	Cmd_AddMacro(macro_conheight, CL_Macro_Conheight);
 
 #ifdef WITH_OPENGL_TRACE
-	if (GL_DebugProfileContext()) {
+	if (R_DebugProfileContext()) {
 		extern void Dev_VidFrameTrace(void);
 
 		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);

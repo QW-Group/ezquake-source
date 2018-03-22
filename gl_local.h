@@ -307,9 +307,6 @@ extern cvar_t vid_gl_core_profile;
 
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
-// Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
-#define GL_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_gl_debug))
-
 // 
 #define GL_CoreProfileContext()   (vid_renderer.integer == 1 && vid_gl_core_profile.integer)
 
@@ -822,8 +819,8 @@ void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateEndAliasModelShadow(void);
 void GLC_StateBeginDrawFlatModel(void);
 void GLC_StateEndDrawFlatModel(void);
-void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode);
-void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit);
+void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit);
+void GLC_StateEndWorldTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit);
 void GLC_StateEndDrawTextureChains(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);

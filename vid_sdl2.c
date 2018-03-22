@@ -56,6 +56,7 @@ void Sys_ActiveAppChanged (void);
 #include "gl_framebuffer.h"
 #include "r_texture.h"
 #include "qmb_particles.h"
+#include "r_state.h"
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -1036,7 +1037,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 		else {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 		}
-		if (GL_DebugProfileContext()) {
+		if (R_DebugProfileContext()) {
 			contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 		}
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
@@ -1317,6 +1318,8 @@ static void VID_SDL_Init(void)
 			glConfig.glsl_version = (unsigned char*)"0";
 		}
 	}
+
+	GL_InitialiseState();
 
 	glConfig.initialized = true;
 }

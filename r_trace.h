@@ -34,8 +34,8 @@ void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
 qbool GL_LoggingEnabled(void);
-void GL_ObjectLabel(GLenum identifier, GLuint name, GLsizei length, const char* label);
-void GL_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
+void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
+void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
 #else
 #define ENTER_STATE
 #define MIDDLE_STATE

@@ -79,6 +79,7 @@ typedef enum {
 	r_texunit_mode_replace,
 	r_texunit_mode_modulate,
 	r_texunit_mode_decal,
+	r_texunit_mode_add,
 
 	r_texunit_mode_count
 } r_texunit_mode_t;
@@ -140,11 +141,15 @@ typedef struct rendering_state_s {
 	} textureUnits[MAX_GLC_TEXTURE_UNIT_STATES];
 
 	qbool colorMask[4];
+
+	// meta
+	qbool initialized;
 } rendering_state_t;
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state);
 void R_Init3DSpriteRenderingState(rendering_state_t* state);
 void R_ApplyRenderingState(rendering_state_t* state);
+void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode);
 
 void R_CustomColor(float r, float g, float b, float a);
 void R_EnableScissorTest(int x, int y, int width, int height);

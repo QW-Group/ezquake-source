@@ -28,12 +28,119 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "rulesets.h"
 #include "r_framestats.h"
 #include "r_texture.h"
+#include "r_state.h"
 
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
+
+enum {
+	fb_lumas,
+	fb_only,
+	fb_none,
+
+	fb_options
+};
+enum {
+	tex_lightmap_and_luma,
+	tex_no_lightmap_or_luma,
+	tex_no_lightmap,
+	tex_no_luma,
+
+	tex_options
+};
+enum {
+	multitexture_none,
+	multitexture_2units,
+	multitexture_3units,
+
+	multitexture_options
+};
+
+static rendering_state_t brushModelStates[multitexture_options][fb_options][tex_options];
+static rendering_state_t drawFlatLightmapState;
+static rendering_state_t drawFlatNoLightmapState;
+
+void R_InitialiseBrushModelStates(void)
+{
+	rendering_state_t* current;
+	rendering_state_t* base;
+	int i;
+
+	R_InitRenderingState(current = &drawFlatNoLightmapState, true);
+	current->fog.enabled = true;
+
+	R_InitRenderingState(current = &drawFlatLightmapState, true);
+	current->fog.enabled = true;
+	current->textureUnits[0].enabled = true;
+	current->textureUnits[0].mode = r_texunit_mode_blend;
+
+	// Single-texture: all of these are the same so we don't need to bother about others
+	R_InitRenderingState(current = &brushModelStates[multitexture_none][0][0], true);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+
+	// no fullbrights, 2 units
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_none][tex_lightmap_and_luma], true);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
+
+	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap], base, sizeof(*current));
+	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap_or_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+
+	// no fullbrights, 3 units
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_none][tex_lightmap_and_luma], true);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
+	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_blend);
+
+	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap], base, sizeof(*current));
+	current->textureUnits[2].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap_or_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	current->textureUnits[2].enabled = false;
+
+	// lumas enabled, 2 units
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
+
+	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_luma], base, sizeof(*current));
+	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap_or_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+
+	// lumas enabled, 3 units
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
+	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_add);
+
+	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_luma], base, sizeof(*current));
+	current->textureUnits[2].enabled = false;
+	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap_or_luma], base, sizeof(*current));
+	current->textureUnits[1].enabled = false;
+	current->textureUnits[2].enabled = false;
+
+	// lumas not enabled - exactly the same
+	for (i = 0; i < tex_options; ++i) {
+		// in 2unit mode 2nd unit is lightmap: so no changes required
+		memcpy(&brushModelStates[multitexture_2units][fb_only][i], &brushModelStates[multitexture_2units][fb_lumas][i], sizeof(*current));
+
+		// lumas not enabled, fb only... copy from lumas but change texunit_mode_add => texunit_mode_decal
+		memcpy(&brushModelStates[multitexture_3units][fb_only][i], &brushModelStates[multitexture_3units][fb_lumas][i], sizeof(*current));
+		brushModelStates[multitexture_3units][fb_only][i].textureUnits[2].mode = r_texunit_mode_decal;
+	}
+}
 
 static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, qbool caustics);
@@ -65,8 +172,6 @@ static void GLC_DrawFlat(model_t *model)
 	memcpy(sky, r_skycolor.color, 3);
 	memcpy(current, color_white, 3);
 	memcpy(desired, current, 3);
-
-	GLC_StateBeginDrawFlatModel();
 
 	for (waterline = 0; waterline < 2; waterline++) {
 		for (s = model->drawflat_chain[waterline]; s; s = s->drawflatchain) {
@@ -102,12 +207,11 @@ static void GLC_DrawFlat(model_t *model)
 
 			if (last_lightmap != new_lightmap) {
 				if (new_lightmap >= 0) {
+					R_ApplyRenderingState(&drawFlatLightmapState);
 					GLC_SetTextureLightmap(GL_TEXTURE0, new_lightmap);
-					GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_BLEND);
-					GLC_EnsureTMUEnabled(GL_TEXTURE0);
 				}
 				else {
-					GLC_EnsureTMUDisabled(GL_TEXTURE0);
+					R_ApplyRenderingState(&drawFlatNoLightmapState);
 				}
 			}
 			last_lightmap = new_lightmap;
@@ -165,6 +269,10 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	extern GLuint* modelIndexes;
 	extern GLuint modelIndexMaximum;
 	int index_count = 0;
+	rendering_state_t* lumaState = &brushModelStates[multitexture_none][0][0];
+	rendering_state_t* noLumaState = &brushModelStates[multitexture_none][0][0];
+	rendering_state_t* noLightmapState = &brushModelStates[multitexture_none][0][0];
+	rendering_state_t* noLightmapOrLumaState = &brushModelStates[multitexture_none][0][0];
 
 	texture_ref fb_texturenum = null_texture_reference;
 	int waterline, i, k;
@@ -180,15 +288,12 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	qbool drawlumas = false;
 	qbool useLumaTextures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 
-	GLenum materialTextureUnit = GL_TEXTURE0;
-	GLenum lightmapTextureUnit = 0;
-	GLenum fullbrightTextureUnit = 0;
-	GLenum fullbrightMode = GL_ADD;
-
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
 	texture_ref current_material_fb = null_texture_reference;
 	int current_lightmap = -1;
+	int fbTextureUnit = -1;
+	int lmTextureUnit = -1;
 
 	texture_ref desired_textures[4];
 	int texture_unit_count = 1;
@@ -203,32 +308,29 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	// Instead we keep 0 for material, 1 for (fullbright/lightmap), 2 for (fullbright/lightmap)
 	//   and if fullbright/luma texture not available, we enable/disable texture unit 1 or 2
 	// Default: no multi-texturing, each pass done at the bottom
-	if (gl_mtexable && !gl_fb_bmodels.integer) {
-		fullbrightTextureUnit = GL_TEXTURE1;
-		fullbrightMode = GL_ADD;
+	if (gl_mtexable) {
+		int units = gl_textureunits >= 3 ? multitexture_3units : multitexture_2units;
+		int fb = fb_none;
+		texture_unit_count = gl_textureunits >= 3 ? 3 : 2;
 
-		if (gl_textureunits >= 3) {
-			lightmapTextureUnit = GL_TEXTURE2;
-			texture_unit_count = 3;
+		if (!gl_fb_bmodels.integer) {
+			fbTextureUnit = 1;
+			lmTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
 		}
 		else {
-			texture_unit_count = 2;
-		}
-	}
-	else if (gl_mtexable && gl_fb_bmodels.integer) {
-		lightmapTextureUnit = GL_TEXTURE1;
+			fb = (useLumaTextures ? fb_lumas : fb_only);
 
-		if (gl_textureunits >= 3) {
-			fullbrightTextureUnit = GL_TEXTURE2;
-			fullbrightMode = useLumaTextures ? GL_ADD : GL_DECAL;
-			texture_unit_count = 3;
+			lmTextureUnit = 1;
+			fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
 		}
-		else {
-			texture_unit_count = 2;
-		}
+
+		lumaState = &brushModelStates[units][fb][tex_lightmap_and_luma];
+		noLumaState = &brushModelStates[units][fb][tex_no_luma];
+		noLightmapState = &brushModelStates[units][fb][tex_no_lightmap];
+		noLightmapOrLumaState = &brushModelStates[units][fb][tex_no_lightmap_or_luma];
 	}
 
-	GLC_StateBeginDrawTextureChains(model, lightmapTextureUnit, fullbrightTextureUnit, fullbrightMode);
+	GLC_StateBeginDrawTextureChains(lmTextureUnit, fbTextureUnit);
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
@@ -257,8 +359,8 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		current_material_fb = t->fb_texturenum;
 
 		desired_textures[0] = current_material;
-		if (fullbrightTextureUnit) {
-			desired_textures[fullbrightTextureUnit - GL_TEXTURE0] = current_material_fb;
+		if (fbTextureUnit >= 0) {
+			desired_textures[fbTextureUnit] = current_material_fb;
 		}
 
 		for (waterline = 0; waterline < 2; waterline++) {
@@ -267,10 +369,10 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			}
 
 			for (; s; s = s->texturechain) {
-				if (lightmapTextureUnit) {
+				if (lmTextureUnit >= 0) {
 					texture_change |= (s->lightmaptexturenum != current_lightmap);
 
-					desired_textures[lightmapTextureUnit - GL_TEXTURE0] = GLC_LightmapTexture(s->lightmaptexturenum);
+					desired_textures[lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
 					current_lightmap = s->lightmaptexturenum;
 				}
 				else {
@@ -283,21 +385,23 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 						index_count = 0;
 					}
 
-					if (fullbrightTextureUnit && GL_TextureReferenceIsValid(fb_texturenum)) {
-						GLC_EnsureTMUEnabled(fullbrightTextureUnit);
-						GL_BindTextures(0, texture_unit_count, desired_textures);
-					}
-					else {
-						if (fullbrightTextureUnit) {
-							GLC_EnsureTMUDisabled(fullbrightTextureUnit);
-						}
-						if (fullbrightTextureUnit == GL_TEXTURE0 + texture_unit_count - 1) {
-							GL_BindTextures(0, texture_unit_count - 1, desired_textures);
+					if (fbTextureUnit >= 0 && GL_TextureReferenceIsValid(fb_texturenum)) {
+						if (lmTextureUnit >= 0 && current_lightmap != -1) {
+							R_ApplyRenderingState(lumaState);
 						}
 						else {
-							GL_BindTextures(0, texture_unit_count, desired_textures);
+							R_ApplyRenderingState(noLightmapState);
 						}
 					}
+					else {
+						if (lmTextureUnit >= 0 && current_lightmap != -1) {
+							R_ApplyRenderingState(noLumaState);
+						}
+						else {
+							R_ApplyRenderingState(noLightmapOrLumaState);
+						}
+					}
+					GL_BindTextures(0, texture_unit_count, desired_textures);
 
 					texture_change = false;
 				}
@@ -315,15 +419,15 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 							float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
 							float tex_t = gl_textureless.value && model->isworldmodel ? 0 : v[4];
 
-							if (lightmapTextureUnit || fullbrightTextureUnit) {
-								qglMultiTexCoord2f(materialTextureUnit, tex_s, tex_t);
+							if (lmTextureUnit >= 0 || fbTextureUnit >= 0) {
+								qglMultiTexCoord2f(GL_TEXTURE0, tex_s, tex_t);
 
-								if (lightmapTextureUnit) {
-									qglMultiTexCoord2f(lightmapTextureUnit, v[5], v[6]);
+								if (lmTextureUnit >= 0) {
+									qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
 								}
 
-								if (fullbrightTextureUnit) {
-									qglMultiTexCoord2f(fullbrightTextureUnit, tex_s, tex_t);
+								if (fbTextureUnit >= 0) {
+									qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, tex_s, tex_t);
 								}
 							}
 							else {
@@ -345,7 +449,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 					detail_polys = s->polys;
 				}
 
-				if (GL_TextureReferenceIsValid(fb_texturenum) && gl_fb_bmodels.integer && !fullbrightTextureUnit) {
+				if (GL_TextureReferenceIsValid(fb_texturenum) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
 					if (isLumaTexture) {
 						s->polys->luma_chain = luma_polys[fb_texturenum.index];
 						luma_polys[fb_texturenum.index] = s->polys;
@@ -366,7 +470,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	}
 
 	if (gl_fb_bmodels.integer) {
-		if (!lightmapTextureUnit) {
+		if (lmTextureUnit < 0) {
 			GLC_BlendLightmaps();
 		}
 		if (drawfullbrights) {
@@ -383,7 +487,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			GLC_RenderLumas();
 			drawlumas = false;
 		}
-		if (!lightmapTextureUnit) {
+		if (lmTextureUnit < 0) {
 			GLC_BlendLightmaps();
 		}
 		if (drawfullbrights) {
@@ -395,7 +499,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 	GLC_EmitCausticsPolys(use_vbo);
 	GLC_EmitDetailPolys(use_vbo);
 
-	GLC_StateEndWorldTextureChains(lightmapTextureUnit, fullbrightTextureUnit);
+	GLC_StateEndWorldTextureChains(lmTextureUnit, fbTextureUnit);
 	GLC_StateEndDrawTextureChains();
 }
 

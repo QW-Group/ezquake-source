@@ -470,7 +470,7 @@ void GL_BindBuffer(buffer_ref ref)
 
 void GL_InitialiseBufferHandling(void)
 {
-	buffers_supported = GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true;
+	buffers_supported = false && (GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true);
 
 	GL_LoadMandatoryFunctionExtension(glBindBuffer, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferData, buffers_supported);
@@ -484,7 +484,7 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadOptionalFunction(glBindBufferRange);
 
 	// OpenGL 4.4, persistent mapping of buffers
-	tripleBuffer_supported = !COM_CheckParm(cmdline_param_client_notriplebuffering);
+	tripleBuffer_supported = false && !COM_CheckParm(cmdline_param_client_notriplebuffering);
 	GL_LoadMandatoryFunctionExtension(glFenceSync, tripleBuffer_supported);
 	GL_LoadMandatoryFunctionExtension(glClientWaitSync, tripleBuffer_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferStorage, tripleBuffer_supported);

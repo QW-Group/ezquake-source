@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_state.h"
 
-static rendering_state_t drawFlatState;
 static rendering_state_t worldTextureChainState;
 static rendering_state_t worldTextureChainFullbrightState;
 static rendering_state_t blendLightmapState;
@@ -47,11 +46,6 @@ static rendering_state_t glmWorldState;
 
 void R_InitialiseWorldStates(void)
 {
-	R_InitRenderingState(&drawFlatState, true);
-	drawFlatState.textureUnits[0].enabled = true;
-	drawFlatState.textureUnits[0].mode = r_texunit_mode_blend;
-	drawFlatState.fog.enabled = true;
-
 	R_InitRenderingState(&worldTextureChainState, true);
 	worldTextureChainState.fog.enabled = true;
 	worldTextureChainState.textureUnits[0].enabled = true;
@@ -155,8 +149,6 @@ void GLC_StateBeginDrawFlatModel(void)
 {
 	ENTER_STATE;
 
-	R_ApplyRenderingState(&drawFlatState);
-
 	if (GL_BuffersSupported()) {
 		extern buffer_ref brushModel_vbo;
 
@@ -188,16 +180,9 @@ void GLC_StateEndDrawFlatModel(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode)
+void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit)
 {
 	ENTER_STATE;
-
-	if (lightmapTextureUnit) {
-		R_ApplyRenderingState(&worldTextureChainState);
-	}
-	else {
-		R_ApplyRenderingState(&worldTextureChainFullbrightState);
-	}
 
 	if (GL_BuffersSupported()) {
 		extern buffer_ref brushModel_vbo;
@@ -210,14 +195,14 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		if (lightmapTextureUnit) {
-			GLC_ClientActiveTexture(lightmapTextureUnit);
+		if (lightmapTextureUnit >= 0) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + lightmapTextureUnit);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 
-		if (fullbrightTextureUnit) {
-			GLC_ClientActiveTexture(fullbrightTextureUnit);
+		if (fullbrightTextureUnit >= 0) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + fullbrightTextureUnit);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
@@ -226,7 +211,7 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 	LEAVE_STATE;
 }
 
-void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
+void GLC_StateEndWorldTextureChains(int lightmapTextureUnit, int fullbrightTextureUnit)
 {
 	ENTER_STATE;
 
@@ -236,12 +221,12 @@ void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrigh
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		if (lightmapTextureUnit) {
-			GLC_ClientActiveTexture(lightmapTextureUnit);
+		if (lightmapTextureUnit >= 0) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + lightmapTextureUnit);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		if (fullbrightTextureUnit) {
-			GLC_ClientActiveTexture(fullbrightTextureUnit);
+		if (fullbrightTextureUnit >= 0) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + fullbrightTextureUnit);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		GLC_ClientActiveTexture(GL_TEXTURE0);
