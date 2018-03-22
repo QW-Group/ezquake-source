@@ -32,7 +32,7 @@ void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 
 	// draw the coloured indicator strip
 	//Draw_Fill(x, y, length, charsize, 184);
-	glColor3f(1.f, 1.f, 1.f);
+	R_CustomColor(1.f, 1.f, 1.f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex2f(x, y);
 	glVertex2f(x + length, y);
@@ -41,7 +41,7 @@ void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 	glEnd();
 
 	//Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
-	glColor3f(0.f, 1.f, 0.f);
+	R_CustomColor(0.f, 1.f, 0.f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex2f(x + length / 2 - 2, y);
 	glVertex2f(x + length / 2 - 2 + 5, y);
@@ -50,7 +50,7 @@ void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 	glEnd();
 
 	//Draw_Fill(x + pos - 1, y, 3, charsize, 192);
-	glColor3f(0.f, 0.f, 1.f);
+	R_CustomColor(0.f, 0.f, 1.f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex2f(x + pos - 1, y);
 	glVertex2f(x + pos - 1 + 3, y);

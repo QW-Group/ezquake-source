@@ -125,7 +125,7 @@ void GLC_DrawVelocity3D(void)
 		glLineStipple(1, 0xFF00);
 		glLineWidth(stipple_line_width);
 
-		glColor3fv(stipple_line_colour);
+		R_CustomColor(stipple_line_colour[0], stipple_line_colour[1], stipple_line_colour[2], stipple_line_colour[3]);
 		glBegin(GL_LINES);
 		glVertex3f(v_forward, v_side, 0.f);
 		glVertex3f(v_forward, v_side, v_up);
@@ -133,7 +133,7 @@ void GLC_DrawVelocity3D(void)
 
 		glDisable(GL_LINE_STIPPLE);
 		glLineWidth(line_width);
-		glColor3f(0.f, 1.f, 0.f);
+		R_CustomColor(0.f, 1.f, 0.f, 1.0f);
 
 		glBegin(GL_LINES);
 		glVertex3fv(v3_zero);
@@ -143,7 +143,7 @@ void GLC_DrawVelocity3D(void)
 
 	case 2:
 		//show horizontal velocity only
-		glColor3f(1.f, 0.f, 0.f);
+		R_CustomColor(1.f, 0.f, 0.f, 1.0f);
 		glLineWidth(line_width);
 		glBegin(GL_LINES);
 		glVertex3fv(v3_zero);
@@ -152,7 +152,7 @@ void GLC_DrawVelocity3D(void)
 
 		glEnable(GL_LINE_STIPPLE);
 		glLineStipple(1, 0xFF00);
-		glColor3fv(stipple_line_colour);
+		R_CustomColor(stipple_line_colour[0], stipple_line_colour[1], stipple_line_colour[2], stipple_line_colour[3]);
 		glLineWidth(stipple_line_width);
 
 		glBegin(GL_LINE_LOOP);

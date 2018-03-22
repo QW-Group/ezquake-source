@@ -316,7 +316,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Start modifying the small scene corner.
-	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
+	R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
     // Darkening passes
@@ -352,7 +352,7 @@ void R_Bloom_GeneratexDiamonds( void )
 				{
 					continue;
 				}
-				glColor4f( intensity, intensity, intensity, 1.0);
+				R_CustomColor( intensity, intensity, intensity, 1.0);
 				R_Bloom_SamplePass( i - 4, j - 4 );
 			}
 		}
@@ -373,7 +373,7 @@ void R_Bloom_GeneratexDiamonds( void )
 				{
 					continue;
 				}
-				glColor4f( intensity, intensity, intensity, 1.0);
+				R_CustomColor( intensity, intensity, intensity, 1.0);
 				R_Bloom_SamplePass( i - 3, j - 3 );
 			}
 		}
@@ -391,7 +391,7 @@ void R_Bloom_GeneratexDiamonds( void )
 			{
 				intensity = r_bloom_intensity.value * 0.8f * Diamond4x[i][j];
 				if( intensity < 0.01f ) continue;
-				glColor4f( intensity, intensity, intensity, 1.0);
+				R_CustomColor( intensity, intensity, intensity, 1.0);
 				R_Bloom_SamplePass( i-2, j-2 );
 			}
 		}
@@ -411,7 +411,7 @@ void R_Bloom_GeneratexDiamonds( void )
 void R_Bloom_DownsampleView( void )
 {
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
+	R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
 
 	// Stepped downsample.
 	if( r_screendownsamplingtexture_size )
@@ -429,16 +429,16 @@ void R_Bloom_DownsampleView( void )
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, midsample_width, midsample_height);
 
 		// Now draw again in bloom size.
-		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
+		R_CustomColor( 0.5f, 0.5f, 0.5f, 1.0f );
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, sampleText_tcw, sampleText_tch );
 
 		// Now blend the big screen texture into the bloom generation space (hoping it adds some blur).
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
-		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
+		R_CustomColor( 0.5f, 0.5f, 0.5f, 1.0f );
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
-		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
+		R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	} 
 	else
@@ -479,7 +479,7 @@ void R_BloomBlend(void)
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_Enable(GL_TEXTURE_2D);
 
-	glColor4f(1, 1, 1, 1);
+	R_CustomColor(1, 1, 1, 1);
 
 	// Setup current sizes
 	curView_x = scr_vrect.x * ((float)glwidth / vid.width);
@@ -513,7 +513,7 @@ void R_BloomBlend(void)
 	// Restore the screen-backup to the screen.
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloombackuptexture);
-	glColor4f(1, 1, 1, 1);
+	R_CustomColor(1, 1, 1, 1);
 	R_Bloom_Quad(0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),
 		r_screenbackuptexture_size * sampleText_tcw,
