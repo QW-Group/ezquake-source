@@ -139,7 +139,6 @@ extern  cvar_t  gl_waterfog_density;
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	gl_clear;
-extern	cvar_t	gl_cull;
 extern	cvar_t	gl_polyblend;
 extern	cvar_t	gl_flashblend;
 extern	cvar_t	gl_rl_globe;
