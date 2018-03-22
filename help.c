@@ -907,7 +907,7 @@ static void Help_FindConsoleVariableIssues(qbool generate)
 			const char* desc = jsonVar->description;
 			qbool valid_desc = (desc && desc[0]);
 			qbool valid_type, enum_without_examples;
-			int num_examples;
+			size_t num_examples;
 
 			valid_type = (jsonVar->value_type != t_unknown);
 			num_examples = jsonVar->values ? json_array_size(jsonVar->values) : 0;

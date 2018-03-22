@@ -19,7 +19,7 @@ A million repetitions of "a"
 #define _SHA1
 typedef struct {
     unsigned int state[5];
-    unsigned int count[2];
+    size_t count[2];
     unsigned char buffer[64];
 } SHA1_CTX;
 

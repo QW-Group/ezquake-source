@@ -609,7 +609,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		GL_MultiDrawArraysIndirect(
 			GL_TRIANGLES,
-			(const void*)(instr->indirect_buffer_offset + extra_offset),
+			(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
 			instr->num_cmds[i],
 			0
 		);
@@ -625,7 +625,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		for (i = 0; i < instr->num_calls; ++i) {
 			GL_MultiDrawArraysIndirect(
 				GL_TRIANGLES,
-				(const void*)(instr->indirect_buffer_offset + extra_offset),
+				(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
 				instr->num_cmds[i],
 				0
 			);

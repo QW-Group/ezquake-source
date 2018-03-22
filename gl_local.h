@@ -595,16 +595,15 @@ void GL_PolygonMode(GLenum mode);
 void GL_InitialiseBufferHandling(void);
 void GL_InitialiseBufferState(void);
 buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
-void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data);
-void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data);
-void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
-void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+void GL_BindAndUpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_UpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizei size, const GLvoid* data);
 void GL_BindBuffer(buffer_ref ref);
 void GL_BindBufferBase(buffer_ref ref, GLuint index);
 void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size);
 void GL_UnBindBuffer(GLenum target);
-buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data);
-void GL_EnsureBufferSize(buffer_ref ref, size_t size);
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
 size_t GL_BufferSize(buffer_ref vbo);
 
 #ifdef WITH_OPENGL_TRACE

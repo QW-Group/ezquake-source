@@ -279,7 +279,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	int indexes = 0;
 	int max_entity_indexes = 0;
 	void* buffer = NULL;
-	size_t buffer_size;
+	GLsizei buffer_size;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];

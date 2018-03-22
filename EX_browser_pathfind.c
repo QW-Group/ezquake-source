@@ -256,9 +256,9 @@ static void SB_PingTree_AddProxyPing(netadr_t adr, dist_t dist)
 	SB_PingTree_AddNeighbour(id_neighbour, dist);
 }
 
-static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_callback callback)
+static void SB_Proxy_ParseReply(const byte *buf, size_t buflen, proxy_ping_report_callback callback)
 {
-	int entries = buflen / PROXY_REPLY_ENTRY_LEN;
+	size_t entries = buflen / PROXY_REPLY_ENTRY_LEN;
 	int i;
 
 	Com_DPrintf("Reading %d entries from a proxy reply\n", entries);

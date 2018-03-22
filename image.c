@@ -906,12 +906,12 @@ int Image_WritePNGPLTE (char *filename, int compression,
 static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
 	vfserrno_t err;
-	VFS_READ(v, data, length, &err);
+	VFS_READ(v, data, (int)length, &err);
 }
 
 static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
-	VFS_WRITE(v, data, length);
+	VFS_WRITE(v, data, (int)length);
 }
 
 static void PNG_IO_user_flush_data(png_structp png_ptr) {
@@ -950,7 +950,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	png_data *png_return_val = NULL;	// Return struct containing data + text chunks.
 	int n_textcount = 0;				// Number of text chunks.
 	int y, width, height, bitdepth, colortype, interlace, compression, filter, bytesperpixel;
-	unsigned long rowbytes;
+	png_size_t rowbytes;
 
 	// Check if we were given a non-null file pointer
 	// if so then use it, otherwise try to open the specified filename.
@@ -1197,7 +1197,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	if (pdata)
 	{		
 		// Return text chunks + count.
-		(*text_count) = pdata->text_count;
+		(*text_count) = (int)pdata->text_count;
 		textchunks = pdata->textchunks;
 
 		Q_free(pdata->data);
@@ -1820,7 +1820,7 @@ static void JPEG_IO_term_destination (j_compress_ptr cinfo)
 	size_t datacount = JPEG_OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
 
 	if (datacount > 0) {
-		if (((size_t) VFS_WRITE(dest->outfile, dest->buffer, datacount)) != datacount)
+		if (((size_t) VFS_WRITE(dest->outfile, dest->buffer, (int)datacount)) != datacount)
 		{
 			jpeg_in_error = true;
 			return;

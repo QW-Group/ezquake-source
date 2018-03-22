@@ -46,8 +46,9 @@ static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread_, vf
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 	size_t bytestoread = bytestoread_;
 
-	if (bytestoread < 0)
+	if (bytestoread < 0) {
 		Sys_Error("VFSMMAP_ReadBytes: bytestoread < 0");
+	}
 
 	/* Make sure we don't read past the valid memory */
 	if ((bytestoread + intfile->position) > intfile->len) {
@@ -64,7 +65,8 @@ static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread_, vf
 		*err = (bytestoread == 0) ? VFSERR_EOF : VFSERR_NONE;
 	}
 
-	return bytestoread;
+	// safe cast: will be <= bytestoread_
+	return (int)bytestoread;
 }
 
 static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
@@ -123,14 +125,14 @@ static unsigned long VFSMMAP_Tell(vfsfile_t *file)
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
-	return intfile->position;
+	return (unsigned long)intfile->position;
 }
 
 static unsigned long VFSMMAP_GetLen(vfsfile_t *file) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 	
-	return intfile->len;
+	return (unsigned long)intfile->len;
 }
 
 static void VFSMMAP_Close(vfsfile_t *file) 

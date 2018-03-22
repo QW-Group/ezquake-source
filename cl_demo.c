@@ -3659,7 +3659,7 @@ void CL_Play_f (void)
 	// Read the file completely into memory
 	if (playbackfile) 
 	{
-		size_t len;
+		unsigned long len;
 		void *buf;
 		vfsfile_t *mmap_file;
 

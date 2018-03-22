@@ -34,7 +34,7 @@ typedef struct buffer_data_s {
 
 	// These set at creation
 	GLenum target;
-	size_t size;
+	GLsizei size;
 	GLuint usage;                // flags for BufferData()
 	GLuint storageFlags;         // flags for BufferStorage()
 
@@ -264,7 +264,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	return ref;
 }
 
-void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
+void GL_UpdateBuffer(buffer_ref vbo, GLsizei size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
@@ -280,18 +280,18 @@ void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 	}
 	else {
 		if (qglNamedBufferSubData) {
-			qglNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
+			qglNamedBufferSubData(buffers[vbo.index].glref, 0, (GLsizei)size, data);
 		}
 		else {
 			GL_BindBuffer(vbo);
-			qglBufferSubData(buffers[vbo.index].target, 0, size, data);
+			qglBufferSubData(buffers[vbo.index].target, 0, (GLsizeiptr)size, data);
 		}
 
 		GL_LogAPICall("GL_UpdateBuffer(%s)", buffers[vbo.index].name);
 	}
 }
 
-void GL_BindAndUpdateBuffer(buffer_ref vbo, size_t size, void* data)
+void GL_BindAndUpdateBuffer(buffer_ref vbo, GLsizei size, void* data)
 {
 	GL_BindBuffer(vbo);
 	GL_UpdateBuffer(vbo, size, data);
@@ -306,7 +306,7 @@ size_t GL_BufferSize(buffer_ref vbo)
 	return buffers[vbo.index].size;
 }
 
-buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
@@ -340,7 +340,7 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 	}
 }
 
-void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizei size, const GLvoid* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
@@ -364,12 +364,6 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 		}
 	}
 	GL_LogAPICall("GL_UpdateBufferSection(%s)", buffers[vbo.index].name);
-}
-
-void GL_BindAndUpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, const GLvoid* data)
-{
-	GL_BindBuffer(vbo);
-	GL_UpdateBufferSection(vbo, offset, size, data);
 }
 
 void GL_DeleteBuffers(void)
@@ -659,7 +653,7 @@ void GL_DeleteVAOs(void)
 	vao_list = NULL;
 }
 
-void GL_EnsureBufferSize(buffer_ref ref, size_t size)
+void GL_EnsureBufferSize(buffer_ref ref, GLsizei size)
 {
 	assert(ref.index);
 	assert(buffers[ref.index].glref);
