@@ -1010,7 +1010,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		if (GL_CoreProfileContext()) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-			Cvar_SetValue(&vid_clientmemory, 0);
+			Cvar_LatchedSetValue(&vid_clientmemory, 0);
 			Cvar_SetFlags(&vid_clientmemory, Cvar_GetFlags(&vid_clientmemory) | CVAR_ROM);
 
 			if (GL_ForwardOnlyProfile()) {
