@@ -24,6 +24,139 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_aliasmodel.h"
 #include "r_matrix.h"
+#include "r_state.h"
+
+static rendering_state_t powerupShellState;
+static rendering_state_t aliasModelOpaqueState;
+static rendering_state_t aliasModelTranslucentState;
+static rendering_state_t aliasModelShadowState;
+static rendering_state_t viewModelOpaqueState;
+static rendering_state_t viewModelTranslucentState;
+static rendering_state_t simpleItemState;
+static rendering_state_t aliasModelOutlineState;
+static rendering_state_t brushModelOpaqueState;
+static rendering_state_t brushModelOpaqueOffsetState;
+static rendering_state_t brushModelTranslucentState;
+static rendering_state_t brushModelTranslucentOffsetState;
+static rendering_state_t aliasModelBatchState;
+static rendering_state_t aliasModelTranslucentBatchState;
+
+void R_InitialiseEntityStates(void)
+{
+	extern cvar_t gl_outline_width;
+
+	R_InitRenderingState(&powerupShellState, true);
+	powerupShellState.polygonOffset.option = r_polygonoffset_disabled;
+	powerupShellState.cullface.enabled = true;
+	powerupShellState.cullface.mode = r_cullface_front;
+	powerupShellState.polygonMode = r_polygonmode_fill;
+	powerupShellState.line.smooth = false;
+	powerupShellState.fog.enabled = false;
+	powerupShellState.alphaTestingEnabled = false;
+	powerupShellState.blendingEnabled = true;
+	powerupShellState.blendFunc = r_blendfunc_additive_blending;
+	//GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
+
+	R_InitRenderingState(&aliasModelOpaqueState, true);
+	aliasModelOpaqueState.blendFunc = r_blendfunc_premultiplied_alpha;
+	aliasModelOpaqueState.blendingEnabled = aliasModelOpaqueState.alphaTestingEnabled = false;
+	aliasModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
+	aliasModelOpaqueState.cullface.enabled = true;
+	aliasModelOpaqueState.cullface.mode = r_cullface_front;
+	aliasModelOpaqueState.polygonMode = r_polygonmode_fill;
+	aliasModelOpaqueState.line.smooth = false;
+	aliasModelOpaqueState.fog.enabled = true;
+	//GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+
+	R_InitRenderingState(&aliasModelTranslucentState, true);
+	memcpy(&aliasModelTranslucentState, &aliasModelOpaqueState, sizeof(aliasModelTranslucentState));
+	aliasModelTranslucentState.blendingEnabled = true;
+
+	R_InitRenderingState(&aliasModelShadowState, true);
+	aliasModelShadowState.polygonOffset.option = r_polygonoffset_disabled;
+	aliasModelShadowState.cullface.enabled = true;
+	aliasModelShadowState.cullface.mode = r_cullface_front;
+	aliasModelShadowState.polygonMode = r_polygonmode_fill;
+	aliasModelShadowState.line.smooth = false;
+	aliasModelShadowState.fog.enabled = false;
+	aliasModelShadowState.alphaTestingEnabled = false;
+	aliasModelShadowState.blendingEnabled = true;
+	aliasModelShadowState.blendFunc = r_blendfunc_premultiplied_alpha;
+	//GLC_DisableAllTexturing();
+
+	R_InitRenderingState(&viewModelOpaqueState, true);
+	viewModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
+	viewModelOpaqueState.cullface.mode = r_cullface_front;
+	viewModelOpaqueState.cullface.enabled = true;
+	viewModelOpaqueState.polygonMode = r_polygonmode_fill;
+	viewModelOpaqueState.line.smooth = false;
+	viewModelOpaqueState.fog.enabled = false;
+	viewModelOpaqueState.depth.mask_enabled = true;
+	viewModelOpaqueState.depth.test_enabled = true;
+	viewModelOpaqueState.depth.nearRange = 0;   // gldepthmin
+	viewModelOpaqueState.depth.farRange = 0.3; // gldepthmin + 0.3 * (gldepthmax - gldepthmin)
+	viewModelOpaqueState.alphaTestingEnabled = false;
+	viewModelOpaqueState.blendingEnabled = false;
+	viewModelOpaqueState.blendFunc = r_blendfunc_premultiplied_alpha;
+
+	memcpy(&viewModelTranslucentState, &viewModelOpaqueState, sizeof(viewModelTranslucentState));
+	viewModelOpaqueState.blendingEnabled = true;
+
+	R_InitRenderingState(&simpleItemState, true);
+	simpleItemState.polygonOffset.option = r_polygonoffset_disabled;
+	simpleItemState.cullface.enabled = true;
+	simpleItemState.cullface.mode = r_cullface_front;
+	simpleItemState.polygonMode = r_polygonmode_fill;
+	simpleItemState.line.smooth = false;
+	simpleItemState.fog.enabled = false;
+	simpleItemState.alphaTestingEnabled = true;
+	simpleItemState.blendingEnabled = true;
+	simpleItemState.blendFunc = r_blendfunc_premultiplied_alpha;
+
+	R_InitRenderingState(&aliasModelOutlineState, true);
+	aliasModelOutlineState.alphaTestingEnabled = false;
+	aliasModelOutlineState.blendingEnabled = false;
+	aliasModelOutlineState.fog.enabled = false;
+	aliasModelOutlineState.polygonOffset.option = r_polygonoffset_outlines;
+	aliasModelOutlineState.cullface.enabled = true;
+	aliasModelOutlineState.cullface.mode = r_cullface_back;
+	aliasModelOutlineState.polygonMode = r_polygonmode_line;
+	// limit outline width, since even width == 3 can be considered as cheat.
+	aliasModelOutlineState.line.width = bound(0.1, gl_outline_width.value, 3.0);
+	aliasModelOutlineState.line.flexible_width = true;
+	aliasModelOutlineState.line.smooth = true;
+
+	R_InitRenderingState(&brushModelOpaqueState, true);
+	brushModelOpaqueState.cullface.mode = r_cullface_front;
+	brushModelOpaqueState.cullface.enabled = true;
+	brushModelOpaqueState.polygonMode = r_polygonmode_fill;
+	brushModelOpaqueState.alphaTestingEnabled = false;
+	brushModelOpaqueState.blendingEnabled = false;
+	brushModelOpaqueState.line.smooth = false;
+	brushModelOpaqueState.fog.enabled = false;
+	brushModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
+
+	memcpy(&brushModelOpaqueOffsetState, &brushModelOpaqueState, sizeof(brushModelTranslucentState));
+	brushModelOpaqueOffsetState.polygonOffset.option = r_polygonoffset_standard;
+
+	memcpy(&brushModelTranslucentState, &brushModelOpaqueState, sizeof(brushModelTranslucentState));
+	brushModelTranslucentState.blendingEnabled = true;
+	brushModelTranslucentState.blendFunc = r_blendfunc_premultiplied_alpha;
+
+	memcpy(&brushModelTranslucentOffsetState, &brushModelTranslucentState, sizeof(brushModelTranslucentState));
+	brushModelTranslucentOffsetState.polygonOffset.option = r_polygonoffset_standard;
+
+	R_InitRenderingState(&aliasModelBatchState, true);
+	aliasModelBatchState.cullface.mode = r_cullface_front;
+	aliasModelBatchState.cullface.enabled = true;
+	aliasModelBatchState.depth.mask_enabled = true;
+	aliasModelBatchState.depth.test_enabled = true;
+	aliasModelBatchState.blendingEnabled = false;
+
+	memcpy(&aliasModelTranslucentBatchState, &aliasModelBatchState, sizeof(aliasModelTranslucentBatchState));
+	aliasModelTranslucentBatchState.blendFunc = r_blendfunc_premultiplied_alpha;
+	aliasModelTranslucentBatchState.blendingEnabled = true;
+}
 
 void GL_StateBeginEntities(visentlist_t* vislist)
 {
@@ -31,34 +164,12 @@ void GL_StateBeginEntities(visentlist_t* vislist)
 
 void GL_StateEndEntities(visentlist_t* vislist)
 {
-	ENTER_STATE;
-
-	if (GL_UseImmediateMode()) {
-		// FIXME: Work on getting rid of these
-		GL_PolygonMode(GL_FILL);
-		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginAliasPowerupShell(void)
 {
-	ENTER_STATE;
-
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	GL_Disable(GL_LINE_SMOOTH);
-	GL_DisableFog();
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
-	GL_BlendFunc(GL_ONE, GL_ONE);
+	R_ApplyRenderingState(&powerupShellState);
 	glColor3ubv(color_white);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateEndAliasPowerupShell(void)
@@ -67,19 +178,13 @@ void GLC_StateEndAliasPowerupShell(void)
 
 void GLC_StateBeginMD3Draw(float alpha)
 {
-	ENTER_STATE;
-
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	GL_Disable(GL_LINE_SMOOTH);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
-	GL_EnableFog();
-	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+	if (alpha < 1) {
+		R_ApplyRenderingState(&aliasModelTranslucentState);
+	}
+	else {
+		R_ApplyRenderingState(&aliasModelOpaqueState);
+	}
 	glColor3ubv(color_white);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateEndMD3Draw(void)
@@ -90,17 +195,13 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 {
 	ENTER_STATE;
 
-	GL_DebugState();
-
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	GL_Disable(GL_LINE_SMOOTH);
-	GL_DisableFog();
+	if (alpha_blend) {
+		R_ApplyRenderingState(&aliasModelTranslucentState);
+	}
+	else {
+		R_ApplyRenderingState(&aliasModelOpaqueState);
+	}
 	glColor3ubv(color_white);
-
-	GL_AlphaBlendFlags(alpha_blend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
 	if (!GL_TextureReferenceIsValid(texture)) {
 		GLC_DisableAllTexturing();
@@ -118,8 +219,6 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 		GLC_InitTextureUnits1(texture, GL_MODULATE);
 	}
 
-	GL_DebugState();
-
 	LEAVE_STATE;
 }
 
@@ -131,17 +230,8 @@ void GLC_StateBeginAliasModelShadow(void)
 {
 	ENTER_STATE;
 
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	if (GL_UseImmediateMode()) {
-		GL_Disable(GL_LINE_SMOOTH);
-	}
-	GL_DisableFog();
-
+	R_ApplyRenderingState(&aliasModelShadowState);
 	GLC_DisableAllTexturing();
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(0, 0, 0, 0.5);
 
 	LEAVE_STATE;
@@ -155,40 +245,32 @@ void GLC_StateBeginDrawViewModel(float alpha)
 {
 	ENTER_STATE;
 
-	GL_DebugState();
-
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	GL_Disable(GL_LINE_SMOOTH);
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_DisableFog();
-	GL_DepthMask(GL_TRUE);
-	GL_Enable(GL_DEPTH_TEST);
-	GL_Enable(GL_CULL_FACE);
-
 	// hack the depth range to prevent view model from poking into walls
-	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 	if (gl_mtexable && alpha < 1) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		R_ApplyRenderingState(&viewModelTranslucentState);
 	}
 	else {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
+		R_ApplyRenderingState(&viewModelOpaqueState);
 	}
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
 	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawViewModel(void)
 {
-	GL_DepthRange(gldepthmin, gldepthmax);
-	GL_PolygonMode(GL_FILL);
 }
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 {
+	static rendering_state_t* brushModelStates[] = {
+		&brushModelOpaqueState,
+		&brushModelOpaqueOffsetState,
+		&brushModelTranslucentState,
+		&brushModelTranslucentOffsetState,
+	};
+
 	GL_EnterTracedRegion("GL_StateBeginDrawBrushModel", true);
 
 	GLC_PauseMatrixUpdate();
@@ -199,25 +281,15 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GLC_LoadMatrix(GL_MODELVIEW);
 	GLC_ResumeMatrixUpdate();
 
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
+	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
 
-	if (GL_UseGLSL()) {
-		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (e->alpha ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
-	}
-	else {
-		GL_Disable(GL_LINE_SMOOTH);
-		GL_DisableFog();
-
+	if (GL_UseImmediateMode()) {
 		if (e->alpha) {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 			glColor4f(e->alpha, e->alpha, e->alpha, e->alpha);
 		}
 		else {
-			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 			glColor3ubv(color_white);
 		}
-		GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 	}
 
 	LEAVE_STATE;
@@ -253,16 +325,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GLC_ResumeMatrixUpdate();
 	GLC_LoadMatrix(GL_MODELVIEW);
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	if (GL_UseImmediateMode()) {
-		GL_Disable(GL_LINE_SMOOTH);
-	}
-	GL_EnableFog();
-
 	LEAVE_STATE;
 }
 
@@ -272,16 +334,11 @@ void GL_StateEndDrawAliasModel(void)
 
 void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 {
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_CullFace(GL_FRONT);
-	GL_PolygonMode(GL_FILL);
-	glColor3ubv(color_white);
-	GL_Disable(GL_LINE_SMOOTH);
+	R_ApplyRenderingState(&simpleItemState);
+
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
+	glColor3ubv(color_white);
 }
 
 void GLC_StateEndSimpleItem(void)
@@ -290,24 +347,12 @@ void GLC_StateEndSimpleItem(void)
 
 void GLC_StateBeginAliasOutlineFrame(void)
 {
-	extern cvar_t gl_outline_width;
-
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-
-	GL_DisableFog();
-
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	GL_PolygonMode(GL_LINE);
-
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+	R_ApplyRenderingState(&aliasModelOutlineState);
 
 	if (GL_UseImmediateMode()) {
 		glColor3ubv(color_black);
-		GL_Enable(GL_LINE_SMOOTH);
 		GLC_DisableAllTexturing();
 	}
 
@@ -316,30 +361,23 @@ void GLC_StateBeginAliasOutlineFrame(void)
 
 void GLC_StateEndAliasOutlineFrame(void)
 {
-	// FIXME: Work on getting rid of these
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_PolygonMode(GL_FILL);
-	GL_CullFace(GL_FRONT);
 }
 
 void GLM_StateBeginAliasOutlineBatch(void)
 {
-	extern cvar_t gl_outline_width;
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-	GL_DisableFog();
-
-	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_CullFace(GL_BACK);
-	GL_PolygonMode(GL_LINE);
-
-	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+	R_ApplyRenderingState(&aliasModelOutlineState);
 }
 
 void GLM_StateEndAliasOutlineBatch(void)
 {
-	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
-	GL_PolygonMode(GL_FILL);
-	GL_CullFace(GL_FRONT);
+}
+
+void GLM_StateBeginAliasModelBatch(qbool translucent)
+{
+	if (translucent) {
+		R_ApplyRenderingState(&aliasModelTranslucentBatchState);
+	}
+	else {
+		R_ApplyRenderingState(&aliasModelBatchState);
+	}
 }

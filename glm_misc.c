@@ -155,8 +155,6 @@ void GLM_PreRenderView(void)
 
 void GLM_SetupGL(void)
 {
-	extern cvar_t gl_textureless;
-
 	GLM_GetMatrix(GL_MODELVIEW, frameConstants.modelViewMatrix);
 	GLM_GetMatrix(GL_PROJECTION, frameConstants.projectionMatrix);
 	VectorCopy(r_refdef.vieworg, frameConstants.position);

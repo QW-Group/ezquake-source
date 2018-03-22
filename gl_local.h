@@ -279,7 +279,6 @@ extern glMultiTexCoord2f_t qglMultiTexCoord2f;
 extern glActiveTexture_t qglActiveTexture;
 extern glClientActiveTexture_t qglClientActiveTexture;
 
-extern double gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
@@ -466,6 +465,7 @@ void GL_UseProgram(GLuint program);
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 
+/*
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_DepthFunc(GLenum func);
 void GL_DepthRange(double nearVal, double farVal);
@@ -478,6 +478,7 @@ void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 void GL_Enable(GLenum option);
 void GL_PolygonOffset(int options);
 void GL_Disable(GLenum option);
+*/
 
 // gl_fog.c
 void GL_EnableFog(void);
@@ -785,6 +786,7 @@ void GLC_StateEndAliasOutlineFrame(void);
 
 void GLM_StateBeginAliasOutlineBatch(void);
 void GLM_StateEndAliasOutlineBatch(void);
+void GLM_StateBeginAliasModelBatch(qbool translucent);
 
 void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateEndWaterSurfaces(void);

@@ -68,20 +68,31 @@ typedef struct {
 		r_depthfunc_t func;
 		double nearRange;
 		double farRange;
+		qbool test_enabled;
+		qbool mask_enabled;
 	} depth;
 
 	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 	int currentViewportX, currentViewportY;
 	int currentViewportWidth, currentViewportHeight;
 
-	qbool gl_depthTestEnabled;
-	qbool gl_framebuffer_srgb;
-	qbool gl_cull_face;
-	qbool gl_line_smooth;
-	qbool gl_fog;
-	qbool depthMask;
+	qbool framebuffer_srgb;
 
-	r_cullface_t cullFaceMode;
+	struct {
+		qbool smooth;
+		float width;
+		qbool flexible_width;
+	} line;
+
+	struct {
+		qbool enabled;
+	} fog;
+
+	struct {
+		r_cullface_t mode;
+		qbool enabled;
+	} cullface;
+
 	r_blendfunc_t blendFunc;
 
 	struct {
@@ -97,5 +108,8 @@ typedef struct {
 	qbool blendingEnabled;
 	qbool alphaTestingEnabled;
 } rendering_state_t;
+
+void R_InitRenderingState(rendering_state_t* state, qbool default_state);
+void R_ApplyRenderingState(rendering_state_t* state);
 
 #endif // EZQUAKE_R_STATE_HEADER

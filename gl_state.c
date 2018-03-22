@@ -71,38 +71,45 @@ static GLenum glBlendFuncValuesSource[r_blendfunc_count];
 static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
 static GLenum glPolygonModeValues[r_polygonmode_count];
 
-static void GL_InitRenderingState(rendering_state_t* state)
+void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 {
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
 
 	state->depth.func = r_depthfunc_less;
 	state->depth.nearRange = 0;
 	state->depth.farRange = 1;
-	state->cullFaceMode = r_cullface_back;
+	state->depth.test_enabled = false;
+	state->depth.mask_enabled = false;
+
 	state->blendFunc = r_blendfunc_overwrite;
+	state->blendingEnabled = false;
+	state->alphaTestingEnabled = false;
 
 	state->currentViewportX = 0;
 	state->currentViewportY = 0;
 	SDL_GL_GetDrawableSize(window, &state->currentViewportWidth, &state->currentViewportHeight);
 
-	state->gl_depthTestEnabled = false;
-	state->gl_framebuffer_srgb = false;
-	state->gl_cull_face = false;
-	state->gl_line_smooth = false;
-	state->gl_fog = false;
-	state->depthMask = false;
-	state->polygonOffsetOption = r_polygonoffset_disabled;
-	state->polygonOffsetFactor = 0;
-	state->polygonOffsetUnits = 0;
-	state->polygonOffsetFillEnabled = false;
-	state->polygonOffsetLineEnabled = false;
+	state->cullface.enabled = false;
+	state->cullface.mode = r_cullface_back;
+
+	state->framebuffer_srgb = false;
+	state->lineSmooth = false;
+	state->lineWidth = 1.0f;
+	state->fog.enabled = false;
+	state->polygonOffset.option = r_polygonoffset_disabled;
+	state->polygonOffset.factor = 0;
+	state->polygonOffset.units = 0;
+	state->polygonOffset.fillEnabled = false;
+	state->polygonOffset.lineEnabled = false;
 	state->polygonMode = r_polygonmode_fill;
 	state->clearColor[0] = 0;
 	state->clearColor[1] = 0;
 	state->clearColor[2] = 0;
 	state->clearColor[3] = 1;
-	state->blendingEnabled = false;
-	state->alphaTestingEnabled = false;
+
+	if (default_state) {
+
+	}
 }
 
 #define GL_ApplySimpleToggle(state, current, field, option) \
@@ -137,8 +144,8 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			current->depth.farRange = state->depth.farRange
 		);
 	}
-	if (state->cullFaceMode != current->cullFaceMode) {
-		glCullFace(glCullFaceValues[current->cullFaceMode = state->cullFaceMode]);
+	if (state->cullface.mode != current->cullface.mode) {
+		glCullFace(glCullFaceValues[current->cullface.mode = state->cullface.mode]);
 	}
 	if (state->blendFunc != current->blendFunc) {
 		current->blendFunc = state->blendFunc;
@@ -147,14 +154,17 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			glBlendFuncValuesDestination[state->blendFunc]
 		);
 	}
-	GL_ApplySimpleToggle(state, current, gl_depthTestEnabled, GL_DEPTH_TEST);
-	GL_ApplySimpleToggle(state, current, gl_framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
-	GL_ApplySimpleToggle(state, current, gl_cull_face, GL_CULL_FACE);
-	GL_ApplySimpleToggle(state, current, gl_line_smooth, GL_LINE_SMOOTH);
-	GL_ApplySimpleToggle(state, current, gl_fog, GL_FOG);
-	if (state->depthMask != current->depthMask) {
-		glDepthMask((current->depthMask = state->depthMask) ? GL_TRUE : GL_FALSE);
+	if (state->lineWidth != current->lineWidth) {
+		glLineWidth(current->lineWidth = state->lineWidth);
 	}
+	GL_ApplySimpleToggle(state, current, depth.test_enabled, GL_DEPTH_TEST);
+	if (state->depth.mask_enabled != current->depth.mask_enabled) {
+		glDepthMask((current->depth.mask_enabled = state->depth.mask_enabled) ? GL_TRUE : GL_FALSE);
+	}
+	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
+	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
+	GL_ApplySimpleToggle(state, current, lineSmooth, GL_LINE_SMOOTH);
+	GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
 		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
 		float units = (state->polygonOffset.option == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
@@ -333,7 +343,7 @@ void GL_InitialiseState(void)
 	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
 	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
 
-	GL_InitRenderingState(&opengl.rendering_state);
+	R_InitRenderingState(&opengl.rendering_state, false);
 
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
@@ -814,4 +824,9 @@ void GLC_ClientActiveTexture(GLenum texture_unit)
 	else {
 		assert(texture_unit == GL_TEXTURE0);
 	}
+}
+
+void R_ApplyRenderingState(rendering_state_t* state)
+{
+	GL_ApplyRenderingState(state);
 }

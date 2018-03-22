@@ -67,7 +67,6 @@ mleaf_t   *r_oldviewleaf2;                    // for watervis hack
 vec3_t    modelorg;
 vec3_t    vup, vpn, vright;                   // view origin
 vec3_t    r_origin; // view origin
-double    gldepthmin, gldepthmax;
 float     r_world_matrix[16];
 float     r_base_world_matrix[16];
 float     clearColor[3] = {0, 0, 0};
@@ -968,8 +967,7 @@ static void R_Clear(void)
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
-	{
+	if (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1))) {
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}
 
@@ -980,7 +978,7 @@ static void R_Clear(void)
 		}
 	}
 
-	if (gl_clear.value) {
+	if (gl_clear.integer) {
 		if (gl_fogenable.integer) {
 			GL_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
 		}
@@ -990,12 +988,7 @@ static void R_Clear(void)
 	}
 
 	clearbits |= GL_DEPTH_BUFFER_BIT;
-	glClear (clearbits);
-	gldepthmin = 0;
-	gldepthmax = 1;
-	GL_DepthFunc(GL_LEQUAL);
-
-	GL_DepthRange(gldepthmin, gldepthmax);
+	glClear(clearbits);
 }
 
 // player velocity is drawn on screen

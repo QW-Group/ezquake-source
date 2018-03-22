@@ -575,21 +575,9 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		return;
 	}
 
-	GL_CullFace(GL_FRONT);
-	GL_Enable(GL_CULL_FACE);
-	GL_DepthMask(GL_TRUE);
-	GL_Enable(GL_DEPTH_TEST);
-
+	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std);
 	GL_BindBuffer(vbo_aliasIndirectDraw);
 	extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
-
-	if (type == aliasmodel_draw_std) {
-		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	}
-	else {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	}
 
 	if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 		mode = EZQ_ALIAS_MODE_SHELLS;
