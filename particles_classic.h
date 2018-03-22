@@ -13,7 +13,7 @@ typedef struct particle_s {
 	float       ramp;
 	float       die;
 	ptype_t     type;
-	struct particle_s *next;
+	//struct particle_s *next;
 } particle_t;
 
 //#define DEFAULT_NUM_PARTICLES	2048

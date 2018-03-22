@@ -53,8 +53,8 @@ static int	ramp1[8] = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
 static int	ramp2[8] = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
 static int	ramp3[8] = { 0x6d, 0x6b, 6, 5, 4, 3 };
 
-static particle_t	*active_particles, *free_particles;
-static int			r_numparticles;
+static int r_numparticles;
+static int r_numactiveparticles;
 
 float crand(void)
 {
@@ -168,19 +168,13 @@ void Classic_InitParticles(void)
 
 void Classic_ClearParticles(void)
 {
-	int		i;
-
-	if (!r_numparticles)
+	if (!r_numparticles) {
 		return;
+	}
 
 	Classic_AllocParticles();	// and alloc again
 
-	free_particles = &particles[0];
-	active_particles = NULL;
-
-	for (i = 0;i < r_numparticles; i++)
-		particles[i].next = &particles[i + 1];
-	particles[r_numparticles - 1].next = NULL;
+	r_numactiveparticles = 0;
 }
 
 #ifndef CLIENTONLY
@@ -224,14 +218,11 @@ void R_ReadPointFile_f(void)
 			break;
 
 		c++;
-		if (!free_particles) {
+		if (r_numactiveparticles >= r_numparticles) {
 			Com_Printf("Not enough free particles\n");
 			break;
 		}
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		p = &particles[r_numactiveparticles++];
 
 		p->die = 99999;
 		p->color = (-c) & 15;
@@ -258,12 +249,10 @@ void Classic_ParticleExplosion(vec3_t org)
 		return;
 
 	for (i = 0; i < 1024; i++) {
-		if (!free_particles)
+		if (r_numactiveparticles >= r_numparticles) {
 			return;
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		}
+		p = &particles[r_numactiveparticles++];
 
 		p->die = r_refdef2.time + 5;
 		p->color = ramp1[0];
@@ -291,12 +280,10 @@ void Classic_BlobExplosion(vec3_t org)
 	particle_t *p;
 
 	for (i = 0; i < 1024; i++) {
-		if (!free_particles)
+		if (r_numactiveparticles >= r_numparticles) {
 			return;
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		}
+		p = &particles[r_numactiveparticles++];
 
 		p->die = r_refdef2.time + 1 + (rand() & 8) * 0.05;
 
@@ -330,12 +317,10 @@ void Classic_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
 		color = 0;
 
 	for (i = 0; i < count; i++) {
-		if (!free_particles)
+		if (r_numactiveparticles >= r_numparticles) {
 			return;
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		}
+		p = &particles[r_numactiveparticles++];
 
 		p->die = r_refdef2.time + 0.1 * (rand() % 5);
 		p->color = (color & ~7) + (rand() & 7);
@@ -357,12 +342,10 @@ void Classic_LavaSplash(vec3_t org)
 	for (i = -16; i < 16; i++) {
 		for (j = -16; j < 16; j++) {
 			for (k = 0; k < 1; k++) {
-				if (!free_particles)
+				if (r_numactiveparticles >= r_numparticles) {
 					return;
-				p = free_particles;
-				free_particles = p->next;
-				p->next = active_particles;
-				active_particles = p;
+				}
+				p = &particles[r_numactiveparticles++];
 
 				p->die = r_refdef2.time + 2 + (rand() & 31) * 0.02;
 				p->color = 224 + (rand() & 7);
@@ -394,12 +377,10 @@ void Classic_TeleportSplash(vec3_t org)
 	for (i = -16; i < 16; i += 4) {
 		for (j = -16; j < 16; j += 4) {
 			for (k = -24; k < 32; k += 4) {
-				if (!free_particles)
+				if (r_numactiveparticles >= r_numparticles) {
 					return;
-				p = free_particles;
-				free_particles = p->next;
-				p->next = active_particles;
-				active_particles = p;
+				}
+				p = &particles[r_numactiveparticles++];
 
 				p->die = r_refdef2.time + 0.2 + (rand() & 7) * 0.02;
 				p->color = 7 + (rand() & 7);
@@ -449,11 +430,8 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail
 
 	VectorScale(delta, 1.0 / num_particles, delta);
 
-	for (i = 0; i < num_particles && free_particles; i++) {
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+	for (i = 0; i < num_particles && r_numactiveparticles < r_numparticles; i++) {
+		p = &particles[r_numactiveparticles++];
 
 		VectorClear(p->vel);
 		p->die = r_refdef2.time + 2;
@@ -528,9 +506,6 @@ done:
 	VectorCopy(point, *trail_origin);
 }
 
-
-
-
 // deurk: ported from zquake, thx Tonik
 void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 {
@@ -547,13 +522,10 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 
 	// color spiral
 	for (i = 0; i < len; i++) {
-		if (!free_particles)
+		if (r_numactiveparticles >= r_numparticles) {
 			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		}
+		p = &particles[r_numactiveparticles++];
 
 		p->type = pt_rail;
 
@@ -585,12 +557,10 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 	while (len > 0) {
 		len -= dec;
 
-		if (!free_particles)
+		if (r_numactiveparticles >= r_numparticles) {
 			return;
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
+		}
+		p = &particles[r_numactiveparticles++];
 
 		p->type = pt_rail;
 
@@ -648,9 +618,10 @@ static void Classic_PrepareParticles(void)
 	float theAlpha;
 	float dist, scale, r_partscale;
 	vec3_t up, right;
+	int i;
 
 	particles_to_draw = 0;
-	if (!active_particles || !r_drawparticles.integer) {
+	if (r_numactiveparticles == 0 || !r_drawparticles.integer) {
 		return;
 	}
 
@@ -673,47 +644,52 @@ static void Classic_PrepareParticles(void)
 	grav = frametime * 800 * 0.05;
 	dvel = 4 * frametime;
 
-	for (p = active_particles; p; p = p->next) {
-		while (p && p->die < r_refdef2.time) {
-			p = p->next;
-			continue;
-		}
+	p = particles;
+	for (i = 0; i < r_numactiveparticles; ++i, ++p) {
+		if (p->die >= r_refdef2.time) {
+			// hack a scale up to keep particles from disapearing
+			dist = (p->org[0] - r_origin[0]) * vpn[0] + (p->org[1] - r_origin[1]) * vpn[1] + (p->org[2] - r_origin[2]) * vpn[2];
+			scale = 1 + dist * r_partscale;
 
-		if (!p) {
-			break;
-		}
+			{
+				glm_particle_t* glpart = &glparticles[particles_to_draw];
+				gl_sprite3d_vert_t* vert = &glvertices[particles_to_draw * 3];
+				at = (byte *)&d_8to24table[(int)p->color];
 
-		// hack a scale up to keep particles from disapearing
-		dist = (p->org[0] - r_origin[0]) * vpn[0] + (p->org[1] - r_origin[1]) * vpn[1] + (p->org[2] - r_origin[2]) * vpn[2];
-		scale = 1 + dist * r_partscale;
+				if (p->type == pt_fire) {
+					theAlpha = (6 - p->ramp) / 6;
+					glpart->gl_color[0] = at[0] * theAlpha;
+					glpart->gl_color[1] = at[1] * theAlpha;
+					glpart->gl_color[2] = at[2] * theAlpha;
+					glpart->gl_color[3] = 255 * theAlpha;
+				}
+				else {
+					glpart->gl_color[0] = at[0];
+					glpart->gl_color[1] = at[1];
+					glpart->gl_color[2] = at[2];
+					glpart->gl_color[3] = 255;
+				}
 
-		{
-			glm_particle_t* glpart = &glparticles[particles_to_draw];
-			gl_sprite3d_vert_t* vert = &glvertices[particles_to_draw * 3];
-			at = (byte *)&d_8to24table[(int)p->color];
+				glpart->gl_scale = scale;
+				VectorCopy(p->org, glpart->gl_org);
 
-			if (p->type == pt_fire) {
-				theAlpha = (6 - p->ramp) / 6;
-				glpart->gl_color[0] = at[0] * theAlpha;
-				glpart->gl_color[1] = at[1] * theAlpha;
-				glpart->gl_color[2] = at[2] * theAlpha;
-				glpart->gl_color[3] = 255 * theAlpha;
+				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+				VectorSet(vert->tex, 0, 0, particletexture_array_index);
+				VectorSet(vert->position, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2]);
+				++vert;
+
+				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+				VectorSet(vert->tex, 1, 0, particletexture_array_index);
+				VectorSet(vert->position, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
+				++vert;
+
+				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+				VectorSet(vert->tex, 0, 1, particletexture_array_index);
+				VectorSet(vert->position, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
+				++vert;
+
+				++particles_to_draw;
 			}
-			else {
-				glpart->gl_color[0] = at[0];
-				glpart->gl_color[1] = at[1];
-				glpart->gl_color[2] = at[2];
-				glpart->gl_color[3] = 255;
-			}
-
-			glpart->gl_scale = scale;
-			VectorCopy(p->org, glpart->gl_org);
-
-			GL_Sprite3DSetVert(vert++, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, glpart->gl_color, particletexture_array_index);
-			GL_Sprite3DSetVert(vert++, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, glpart->gl_color, particletexture_array_index);
-			GL_Sprite3DSetVert(vert++, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, glpart->gl_color, particletexture_array_index);
-
-			particles_to_draw++;
 		}
 	}
 }
@@ -868,11 +844,11 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 // Moves particles into new locations this frame
 static void Classic_MoveParticles(void)
 {
-	particle_t *p, *kill;
+	particle_t *p;
 	int i;
 	float time2, time3, time1, dvel, frametime, grav;
 
-	if (!active_particles) {
+	if (r_numactiveparticles == 0) {
 		return;
 	}
 
@@ -886,27 +862,16 @@ static void Classic_MoveParticles(void)
 	grav = frametime * 800 * 0.05;
 	dvel = 4 * frametime;
 
-	while (1) {
-		kill = active_particles;
-		if (kill && kill->die < r_refdef2.time) {
-			active_particles = kill->next;
-			kill->next = free_particles;
-			free_particles = kill;
-			continue;
-		}
-		break;
-	}
-
-	for (p = active_particles; p; p = p->next) {
-		while (1) {
-			kill = p->next;
-			if (kill && kill->die < r_refdef2.time) {
-				p->next = kill->next;
-				kill->next = free_particles;
-				free_particles = kill;
-				continue;
+	p = particles;
+	for (i = 0; i < r_numactiveparticles; ++i, ++p) {
+		while (p->die < r_refdef2.time) {
+			if (i == r_numactiveparticles - 1) {
+				goto finished;
 			}
-			break;
+
+			// move it to the back
+			*p = particles[r_numactiveparticles - 1];
+			--r_numactiveparticles;
 		}
 
 		p->org[0] += p->vel[0] * frametime;
@@ -972,6 +937,9 @@ static void Classic_MoveParticles(void)
 				break;
 		}
 	}
+
+finished:
+	return;
 }
 
 void R_ParticleEndFrame(void)
