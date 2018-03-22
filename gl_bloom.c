@@ -294,100 +294,6 @@ void R_Bloom_DrawEffect( void )
 	GLC_StateEndBloomDraw();
 }
 
-#if 0
-// =================
-// R_Bloom_GeneratexCross - alternative bluring method
-// =================
-void R_Bloom_GeneratexCross( void )
-{
-	int         i;
-	static int      BLOOM_BLUR_RADIUS = 8;
-	//static float  BLOOM_BLUR_INTENSITY = 2.5f;
-	float   BLOOM_BLUR_INTENSITY;
-	static float intensity;
-	static float range;
-
-	// Setup sample size workspace.
-	GL_Viewport( 0, 0, sample_width, sample_height );
-	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity ();
-
-	// Copy small scene into r_bloomeffecttexture.
-	GL_Bind(r_bloomeffecttexture);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
-
-	// Start modifying the small scene corner.
-	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
-	glEnable(GL_BLEND);
-
-	// Darkening passes.
-	if( r_bloom_darken.value )
-	{
-		GL_BlendFunc(GL_DST_COLOR, GL_ZERO);
-		GL_TextureEnvMode(GL_MODULATE);
-
-		for(i=0; i<r_bloom_darken.integer ;i++) 
-		{
-			R_Bloom_SamplePass( 0, 0 );
-		}
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
-	}
-
-    // Bluring passes.
-	if( BLOOM_BLUR_RADIUS ) 
-	{
-		GL_BlendFunc(GL_ONE, GL_ONE);
-
-		range = (float)BLOOM_BLUR_RADIUS;
-
-		BLOOM_BLUR_INTENSITY = r_bloom_intensity.value;
-		//diagonal-cross draw 4 passes to add initial smooth
-		glColor4f( 0.5f, 0.5f, 0.5f, 1.0);
-		R_Bloom_SamplePass( 1, 1 );
-		R_Bloom_SamplePass( -1, 1 );
-		R_Bloom_SamplePass( -1, -1 );
-		R_Bloom_SamplePass( 1, -1 );
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
-
-		for(i =- (BLOOM_BLUR_RADIUS + 1); i <BLOOM_BLUR_RADIUS; i++) 
-		{
-			intensity = BLOOM_BLUR_INTENSITY/(range*2+1)*(1 - fabs(i*i)/(float)(range*range));
-			if( intensity < 0.05f )
-			{
-				continue;
-			}
-			glColor4f( intensity, intensity, intensity, 1.0f);
-			R_Bloom_SamplePass( i, 0 );
-			//R_Bloom_SamplePass( -i, 0 );
-		}
-
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
-
-		//for(i = 0; i < BLOOM_BLUR_RADIUS; i++)
-		for(i =- (BLOOM_BLUR_RADIUS + 1); i < BLOOM_BLUR_RADIUS; i++) 
-		{
-			intensity = BLOOM_BLUR_INTENSITY / (range*2+1) * (1 - fabs(i * i) / (float)(range * range));
-			if( intensity < 0.05f )
-			{
-				continue;
-			}
-			glColor4f( intensity, intensity, intensity, 1.0f);
-			R_Bloom_SamplePass( 0, i );
-			//R_Bloom_SamplePass( 0, -i );
-		}
-
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
-	}
-
-	// Restore full screen workspace.
-	GL_Viewport( 0, 0, glwidth, glheight );
-	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity ();
-}
-#endif
-
 // =================
 // R_Bloom_GeneratexDiamonds
 //=================
@@ -562,13 +468,13 @@ void R_BloomBlend(void)
 
 	// Set up full screen workspace.
 	GL_Viewport(0, 0, glwidth, glheight);
-	glDisable(GL_DEPTH_TEST);
+	GL_Disable(GL_DEPTH_TEST);
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	GL_IdentityModelView();
-	glDisable(GL_CULL_FACE);
+	GL_Disable(GL_CULL_FACE);
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	glEnable(GL_TEXTURE_2D);
+	GL_Enable(GL_TEXTURE_2D);
 
 	glColor4f(1, 1, 1, 1);
 
