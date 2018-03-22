@@ -36,6 +36,10 @@ void GL_BindBuffer(buffer_ref ref);
 void GL_SetElementArrayBuffer(buffer_ref buffer);
 const buffer_ref null_buffer_reference = { 0 };
 
+// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
+GLint currentViewportX, currentViewportY;
+GLsizei currentViewportWidth, currentViewportHeight;
+
 #define MAX_LOGGED_TEXTURE_UNITS 32
 #define MAX_LOGGED_IMAGE_UNITS   32
 
@@ -64,6 +68,11 @@ typedef struct {
 	texture_state_t textures;
 } opengl_state_t;
 
+static GLenum currentTextureUnit;
+static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
+static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
+static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
+
 static opengl_state_t opengl;
 static GLenum glDepthFunctions[r_depthfunc_count];
 static GLenum glCullFaceValues[r_cullface_count];
@@ -71,6 +80,7 @@ static GLenum glBlendFuncValuesSource[r_blendfunc_count];
 static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
 static GLenum glPolygonModeValues[r_polygonmode_count];
 static GLenum glAlphaTestModeValues[r_alphatest_func_count];
+static GLenum glTextureEnvModeValues[r_texunit_mode_count];
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 {
@@ -105,10 +115,10 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	state->polygonOffset.fillEnabled = false;
 	state->polygonOffset.lineEnabled = false;
 	state->polygonMode = r_polygonmode_fill;
-	state->clearColor[0] = 0;
-	state->clearColor[1] = 0;
-	state->clearColor[2] = 0;
+	state->clearColor[0] = state->clearColor[1] = state->clearColor[2] = 0;
 	state->clearColor[3] = 1;
+	state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1;
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = true;
 
 	if (default_state) {
 		state->cullface.mode = r_cullface_front;
@@ -121,6 +131,22 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 		state->blendingEnabled = false;
 		state->depth.test_enabled = true;
 		state->depth.mask_enabled = true;
+
+#ifndef __APPLE__
+		state->clearColor[0] = 0;
+		state->clearColor[1] = 0;
+		state->clearColor[2] = 0;
+		state->clearColor[3] = 1;
+#else
+		state->clearColor[0] = 0.2;
+		state->clearColor[1] = 0.2;
+		state->clearColor[2] = 0.2;
+		state->clearColor[3] = 1;
+#endif
+		state->polygonMode = r_polygonmode_fill;
+		state->blendFunc = r_blendfunc_premultiplied_alpha;
+		state->textureUnits[0].enabled = false;
+		state->textureUnits[0].mode = r_texunit_mode_replace;
 
 		state->framebuffer_srgb = (gl_gammacorrection.integer > 0);
 	}
@@ -143,11 +169,6 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 {
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
-
-	// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
-	// TODO: Viewport changes
-	GLint currentViewportX, currentViewportY;
-	GLsizei currentViewportWidth, currentViewportHeight;
 
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
@@ -229,23 +250,53 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		);
 	}
 	GL_ApplySimpleToggle(state, current, blendingEnabled, GL_BLEND);
+	if (state->colorMask[0] != current->colorMask[0] || state->colorMask[1] != current->colorMask[1] || state->colorMask[2] != current->colorMask[2] || state->colorMask[3] != current->colorMask[3]) {
+		glColorMask(
+			(current->colorMask[0] = state->colorMask[0]) ? GL_TRUE : GL_FALSE,
+			(current->colorMask[1] = state->colorMask[1]) ? GL_TRUE : GL_FALSE,
+			(current->colorMask[2] = state->colorMask[2]) ? GL_TRUE : GL_FALSE,
+			(current->colorMask[3] = state->colorMask[3]) ? GL_TRUE : GL_FALSE
+		);
+	}
+
 	if (GL_UseImmediateMode()) {
+		int i;
+
+		// Alpha-testing
 		GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
-		if (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value) {
+		if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
 			glAlphaFunc(
 				glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
 				current->alphaTesting.value = state->alphaTesting.value
 			);
 		}
+
+		// Texture units
+		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
+			if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
+					glEnable(GL_TEXTURE_2D);
+					if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
+						glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+					}
+				}
+				else {
+					glDisable(GL_TEXTURE_2D);
+				}
+			}
+		}
+
+		// Color
+		if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
+			glColor4fv(state->color);
+			current->color[0] = state->color[0];
+			current->color[1] = state->color[1];
+			current->color[2] = state->color[2];
+			current->color[3] = state->color[3];
+		}
 	}
 }
-
-static GLenum currentTextureUnit;
-static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
-static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
-static qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
-static GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
-static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 
 //static int old_alphablend_flags = 0;
 static void GLC_DisableTextureUnitOnwards(int first);
@@ -315,7 +366,7 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 	GL_BindTextureUnitImpl(unit, reference, true);
 }
 
-/*void GL_Viewport(int x, int y, int width, int height)
+void GL_Viewport(int x, int y, int width, int height)
 {
 	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
 		glViewport(x, y, width, height);
@@ -325,7 +376,7 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 		currentViewportWidth = width;
 		currentViewportHeight = height;
 	}
-}*/
+}
 
 void GL_GetViewport(int* view)
 {
@@ -352,6 +403,8 @@ void GL_InitialiseState(void)
 	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_src_color] = GL_DST_COLOR;
 	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ZERO;
 	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_src_color] = GL_ZERO;
+	glBlendFuncValuesSource[r_blendfunc_src_one_dest_zero] = GL_ONE;
+	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_one] = GL_ZERO;
 	glBlendFuncValuesDestination[r_blendfunc_overwrite] = GL_ZERO;
 	glBlendFuncValuesDestination[r_blendfunc_additive_blending] = GL_ONE;
 	glBlendFuncValuesDestination[r_blendfunc_premultiplied_alpha] = GL_ONE_MINUS_SRC_ALPHA;
@@ -360,10 +413,16 @@ void GL_InitialiseState(void)
 	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_src_color] = GL_SRC_COLOR;
 	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ONE_MINUS_SRC_COLOR;
 	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_src_color] = GL_SRC_COLOR;
+	glBlendFuncValuesDestination[r_blendfunc_src_one_dest_zero] = GL_ZERO;
+	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_one] = GL_ONE;
 	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
 	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
 	glAlphaTestModeValues[r_alphatest_func_always] = GL_ALWAYS;
 	glAlphaTestModeValues[r_alphatest_func_greater] = GL_GREATER;
+	glTextureEnvModeValues[r_texunit_mode_blend] = GL_BLEND;
+	glTextureEnvModeValues[r_texunit_mode_replace] = GL_REPLACE;
+	glTextureEnvModeValues[r_texunit_mode_modulate] = GL_MODULATE;
+	glTextureEnvModeValues[r_texunit_mode_decal] = GL_DECAL;
 
 	R_InitRenderingState(&opengl.rendering_state, false);
 
@@ -373,9 +432,9 @@ void GL_InitialiseState(void)
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
-	memset(texunitenabled, 0, sizeof(texunitenabled));
-	for (i = 0; i < sizeof(unit_texture_mode) / sizeof(unit_texture_mode[0]); ++i) {
-		unit_texture_mode[i] = GL_MODULATE;
+	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
+		opengl.rendering_state.textureUnits[i].enabled = false;
+		opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
 	}
 
 	GL_InitialiseBufferState();
@@ -447,7 +506,7 @@ void GL_SelectTexture(GLenum textureUnit)
 	currentTextureUnit = textureUnit;
 	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
-
+/*
 void GLC_DisableAllTexturing(void)
 {
 	GLC_DisableTextureUnitOnwards(0);
@@ -490,18 +549,24 @@ void GLC_EnsureTMUDisabled(GLenum textureUnit)
 		GLC_DisableTMU(textureUnit);
 	}
 }
+*/
 
 void GL_InitTextureState(void)
 {
+	int i;
+
 	// Multi texture.
 	currentTextureUnit = GL_TEXTURE0;
 
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
-	memset(texunitenabled, 0, sizeof(texunitenabled));
+	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
+		opengl.rendering_state.textureUnits[i].enabled = false;
+		opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
+	}
 }
 
-void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
+/*void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 {
 	if (GL_UseImmediateMode() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
 		GL_SelectTexture(unit);
@@ -516,8 +581,8 @@ void GL_TextureEnvMode(GLenum mode)
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
 		unit_texture_mode[currentTextureUnit - GL_TEXTURE0] = mode;
 	}
-}
-
+}*/
+/*
 static void GLC_DisableTextureUnitOnwards(int first)
 {
 	int i;
@@ -557,6 +622,7 @@ void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref te
 	GL_EnsureTextureUnitBound(GL_TEXTURE1, texture1);
 	GL_TextureEnvModeForUnit(GL_TEXTURE1, envMode1);
 }
+*/
 
 void GL_InvalidateTextureReferences(GLuint texture)
 {

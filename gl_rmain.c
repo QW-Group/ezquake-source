@@ -704,7 +704,6 @@ static void R_SetupGL(void)
 	GLC_LoadMatrix(GL_MODELVIEW);
 
 	GL_StateDefault3D();
-	GL_DepthMask(GL_TRUE);
 
 	if (GL_UseGLSL()) {
 		GLM_SetupGL();

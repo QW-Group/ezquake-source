@@ -64,7 +64,6 @@ void GL_StateDefault3D(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&default3DState);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
 	GL_DebugState();
 
 	LEAVE_STATE;
@@ -87,34 +86,10 @@ void GL_StateDefaultInit(void)
 {
 	rendering_state_t state;
 
-	R_InitRenderingState(&state, true);
-
 	ENTER_STATE;
 
-#ifndef __APPLE__
-	state.clearColor[0] = 0;
-	state.clearColor[1] = 0;
-	state.clearColor[2] = 0;
-	state.clearColor[3] = 1;
-#else
-	state.clearColor[0] = 0.2;
-	state.clearColor[1] = 0.2;
-	state.clearColor[2] = 0.2;
-	state.clearColor[3] = 1;
-#endif
-	state.cullface.mode = r_cullface_front;
-	state.alphaTesting.enabled = true;
-	state.alphaTesting.func = r_alphatest_func_greater;
-	state.alphaTesting.value = 0.666f;
-	state.polygonMode = r_polygonmode_fill;
-	state.blendFunc = r_blendfunc_premultiplied_alpha;
-
+	R_InitRenderingState(&state, true);
 	R_ApplyRenderingState(&state);
-
-	if (GL_UseImmediateMode()) {
-		glEnable(GL_TEXTURE_2D);
-		GL_TextureEnvMode(GL_REPLACE);
-	}
 
 	LEAVE_STATE;
 }
@@ -124,9 +99,6 @@ void GLC_StateBeginDraw3DSprites(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&spritesStateGLC);
-	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	glColor4ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -143,8 +115,8 @@ void GLC_StateEndRenderScene(void)
 {
 	ENTER_STATE;
 
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_ConfigureFog();
+	//GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	//GL_ConfigureFog();
 
 	LEAVE_STATE;
 }

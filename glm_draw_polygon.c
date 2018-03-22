@@ -90,10 +90,11 @@ void GLM_DrawPolygons(int start, int end)
 
 	GL_BindVertexArray(vao_hud_polygons);
 	GL_UseProgram(polygonProgram.program);
-
-	GL_Disable(GL_DEPTH_TEST);
 	GLM_GetMatrix(GL_PROJECTION, matrix);
 	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+
+	GLM_BeginPolygonDraw();
+	GL_Disable(GL_DEPTH_TEST);
 
 	for (i = start; i <= end; ++i) {
 		GLM_TransformMatrix(matrix, polygonData.polygonX[i], polygonData.polygonY[i], 0);

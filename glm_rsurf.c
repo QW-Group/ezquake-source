@@ -631,8 +631,6 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			GL_BindBuffer(vbo_worldIndirectDraw);
 			extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
 
-			GL_AlphaBlendFlags(type == alpha_surfaces ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
-
 			first = false;
 		}
 
@@ -641,6 +639,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 
 		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
 			if (drawcall->polygonOffsetSplit) {
+				GLM_BeginDrawWorld(type == alpha_surfaces, false);
 				GL_MultiDrawElementsIndirect(
 					GL_TRIANGLE_STRIP,
 					GL_UNSIGNED_INT,
@@ -650,7 +649,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 				);
 			}
 
-			GL_PolygonOffset(POLYGONOFFSET_STANDARD);
+			GLM_BeginDrawWorld(type == alpha_surfaces, true);
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
@@ -658,11 +657,11 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 				drawcall->batch_count - drawcall->polygonOffsetSplit,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
-			GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 
 			frameStats.draw_calls += 2;
 		}
 		else {
+			GLM_BeginDrawWorld(type == alpha_surfaces, false);
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,

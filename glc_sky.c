@@ -290,7 +290,7 @@ static void GLC_DrawSkyDome(void)
 		}
 	}
 	else {
-		GLC_StateBeginSkyDome();
+		GLC_StateBeginSingleTextureSkyDome();
 
 		speedscale = r_refdef2.time * 8;
 		speedscale -= (int)speedscale & ~127;
@@ -302,7 +302,7 @@ static void GLC_DrawSkyDome(void)
 			GLC_DrawSkyFace(i, false);
 		}
 
-		GLC_StateBeginSkyDomeCloudPass();
+		GLC_StateBeginSingleTextureSkyDomeCloudPass();
 
 		speedscale = r_refdef2.time * 16;
 		speedscale -= (int)speedscale & ~127;

@@ -37,6 +37,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_matrix.h"
 
+#ifdef BLOOM_SUPPORTED
+
 /*
 ==============================================================================
  
@@ -525,7 +527,11 @@ void R_BloomBlend(void)
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+#else // BLOOM_SUPPORTED
 
+
+
+#endif // BLOOM_SUPPORTED
 
 
 

@@ -26,9 +26,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_state.h"
 
+#define ALIASMODEL_NOTEXTURE_OPAQUE            0
+#define ALIASMODEL_NOTEXTURE_TRANSPARENT       1
+#define ALIASMODEL_SINGLETEXTURE_OPAQUE        2
+#define ALIASMODEL_SINGLETEXTURE_TRANSPARENT   3
+#define ALIASMODEL_MULTITEXTURE_OPAQUE         4
+#define ALIASMODEL_MULTITEXTURE_TRANSPARENT    5
+
 static rendering_state_t powerupShellState;
-static rendering_state_t aliasModelOpaqueState;
-static rendering_state_t aliasModelTranslucentState;
+static rendering_state_t aliasModelState[6];
 static rendering_state_t aliasModelShadowState;
 static rendering_state_t viewModelOpaqueState;
 static rendering_state_t viewModelTranslucentState;
@@ -44,6 +50,7 @@ static rendering_state_t aliasModelTranslucentBatchState;
 void R_InitialiseEntityStates(void)
 {
 	extern cvar_t gl_outline_width;
+	int i;
 
 	R_InitRenderingState(&powerupShellState, true);
 	powerupShellState.polygonOffset.option = r_polygonoffset_disabled;
@@ -52,25 +59,37 @@ void R_InitialiseEntityStates(void)
 	powerupShellState.polygonMode = r_polygonmode_fill;
 	powerupShellState.line.smooth = false;
 	powerupShellState.fog.enabled = false;
-	powerupShellState.alphaTestingEnabled = false;
+	powerupShellState.alphaTesting.enabled = false;
 	powerupShellState.blendingEnabled = true;
 	powerupShellState.blendFunc = r_blendfunc_additive_blending;
-	//GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
+	powerupShellState.textureUnits[0].enabled = true;
+	powerupShellState.textureUnits[0].mode = r_texunit_mode_modulate;
 
-	R_InitRenderingState(&aliasModelOpaqueState, true);
-	aliasModelOpaqueState.blendFunc = r_blendfunc_premultiplied_alpha;
-	aliasModelOpaqueState.blendingEnabled = aliasModelOpaqueState.alphaTestingEnabled = false;
-	aliasModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
-	aliasModelOpaqueState.cullface.enabled = true;
-	aliasModelOpaqueState.cullface.mode = r_cullface_front;
-	aliasModelOpaqueState.polygonMode = r_polygonmode_fill;
-	aliasModelOpaqueState.line.smooth = false;
-	aliasModelOpaqueState.fog.enabled = true;
-	//GLC_InitTextureUnitsNoBind1(GL_MODULATE);
+	R_InitRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], true);
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendFunc = r_blendfunc_premultiplied_alpha;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendingEnabled = aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].alphaTesting.enabled = false;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].polygonOffset.option = r_polygonoffset_disabled;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].cullface.enabled = true;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].cullface.mode = r_cullface_front;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].polygonMode = r_polygonmode_fill;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].line.smooth = false;
+	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].fog.enabled = true;
 
-	R_InitRenderingState(&aliasModelTranslucentState, true);
-	memcpy(&aliasModelTranslucentState, &aliasModelOpaqueState, sizeof(aliasModelTranslucentState));
-	aliasModelTranslucentState.blendingEnabled = true;
+	memcpy(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], sizeof(aliasModelState[0]));
+	aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE].textureUnits[0].enabled = true;
+	aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE].textureUnits[0].mode = r_texunit_mode_modulate;
+
+	memcpy(&aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], sizeof(aliasModelState[0]));
+	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[0].enabled = true;
+	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[0].mode = r_texunit_mode_modulate;
+	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[1].enabled = true;
+	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[1].mode = r_texunit_mode_decal;
+
+	for (i = ALIASMODEL_NOTEXTURE_OPAQUE; i <= ALIASMODEL_MULTITEXTURE_OPAQUE; ++i) {
+		memcpy(&aliasModelState[i+1], &aliasModelState[i], sizeof(aliasModelState[0]));
+		aliasModelState[i + 1].blendingEnabled = true;
+		aliasModelState[i + 1].blendFunc = r_blendfunc_premultiplied_alpha;
+	}
 
 	R_InitRenderingState(&aliasModelShadowState, true);
 	aliasModelShadowState.polygonOffset.option = r_polygonoffset_disabled;
@@ -79,10 +98,11 @@ void R_InitialiseEntityStates(void)
 	aliasModelShadowState.polygonMode = r_polygonmode_fill;
 	aliasModelShadowState.line.smooth = false;
 	aliasModelShadowState.fog.enabled = false;
-	aliasModelShadowState.alphaTestingEnabled = false;
+	aliasModelShadowState.alphaTesting.enabled = false;
 	aliasModelShadowState.blendingEnabled = true;
 	aliasModelShadowState.blendFunc = r_blendfunc_premultiplied_alpha;
-	//GLC_DisableAllTexturing();
+	aliasModelShadowState.color[0] = aliasModelShadowState.color[1] = aliasModelShadowState.color[2] = 0;
+	aliasModelShadowState.color[3] = 0.5f;
 
 	R_InitRenderingState(&viewModelOpaqueState, true);
 	viewModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
@@ -95,9 +115,11 @@ void R_InitialiseEntityStates(void)
 	viewModelOpaqueState.depth.test_enabled = true;
 	viewModelOpaqueState.depth.nearRange = 0;   // gldepthmin
 	viewModelOpaqueState.depth.farRange = 0.3; // gldepthmin + 0.3 * (gldepthmax - gldepthmin)
-	viewModelOpaqueState.alphaTestingEnabled = false;
+	viewModelOpaqueState.alphaTesting.enabled = false;
 	viewModelOpaqueState.blendingEnabled = false;
 	viewModelOpaqueState.blendFunc = r_blendfunc_premultiplied_alpha;
+	viewModelOpaqueState.textureUnits[0].enabled = true;
+	viewModelOpaqueState.textureUnits[0].mode = r_texunit_mode_replace;
 
 	memcpy(&viewModelTranslucentState, &viewModelOpaqueState, sizeof(viewModelTranslucentState));
 	viewModelOpaqueState.blendingEnabled = true;
@@ -109,12 +131,14 @@ void R_InitialiseEntityStates(void)
 	simpleItemState.polygonMode = r_polygonmode_fill;
 	simpleItemState.line.smooth = false;
 	simpleItemState.fog.enabled = false;
-	simpleItemState.alphaTestingEnabled = true;
+	simpleItemState.alphaTesting.enabled = true;
 	simpleItemState.blendingEnabled = true;
 	simpleItemState.blendFunc = r_blendfunc_premultiplied_alpha;
+	simpleItemState.textureUnits[0].enabled = true;
+	simpleItemState.textureUnits[0].mode = r_texunit_mode_replace;
 
 	R_InitRenderingState(&aliasModelOutlineState, true);
-	aliasModelOutlineState.alphaTestingEnabled = false;
+	aliasModelOutlineState.alphaTesting.enabled = false;
 	aliasModelOutlineState.blendingEnabled = false;
 	aliasModelOutlineState.fog.enabled = false;
 	aliasModelOutlineState.polygonOffset.option = r_polygonoffset_outlines;
@@ -125,12 +149,13 @@ void R_InitialiseEntityStates(void)
 	aliasModelOutlineState.line.width = bound(0.1, gl_outline_width.value, 3.0);
 	aliasModelOutlineState.line.flexible_width = true;
 	aliasModelOutlineState.line.smooth = true;
+	aliasModelOutlineState.color[0] = aliasModelOutlineState.color[1] = aliasModelOutlineState.color[2] = 0;
 
 	R_InitRenderingState(&brushModelOpaqueState, true);
 	brushModelOpaqueState.cullface.mode = r_cullface_front;
 	brushModelOpaqueState.cullface.enabled = true;
 	brushModelOpaqueState.polygonMode = r_polygonmode_fill;
-	brushModelOpaqueState.alphaTestingEnabled = false;
+	brushModelOpaqueState.alphaTesting.enabled = false;
 	brushModelOpaqueState.blendingEnabled = false;
 	brushModelOpaqueState.line.smooth = false;
 	brushModelOpaqueState.fog.enabled = false;
@@ -169,22 +194,32 @@ void GL_StateEndEntities(visentlist_t* vislist)
 void GLC_StateBeginAliasPowerupShell(void)
 {
 	R_ApplyRenderingState(&powerupShellState);
-	glColor3ubv(color_white);
+
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, shelltexture);
 }
 
 void GLC_StateEndAliasPowerupShell(void)
 {
 }
 
-void GLC_StateBeginMD3Draw(float alpha)
+void GLC_StateBeginMD3Draw(float alpha, qbool textured)
 {
-	if (alpha < 1) {
-		R_ApplyRenderingState(&aliasModelTranslucentState);
+	if (textured) {
+		if (alpha < 1) {
+			R_ApplyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_TRANSPARENT]);
+		}
+		else {
+			R_ApplyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE]);
+		}
 	}
 	else {
-		R_ApplyRenderingState(&aliasModelOpaqueState);
+		if (alpha < 1) {
+			R_ApplyRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_TRANSPARENT]);
+		}
+		else {
+			R_ApplyRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE]);
+		}
 	}
-	glColor3ubv(color_white);
 }
 
 void GLC_StateEndMD3Draw(void)
@@ -193,31 +228,24 @@ void GLC_StateEndMD3Draw(void)
 
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model)
 {
+	int index;
+
 	ENTER_STATE;
 
-	if (alpha_blend) {
-		R_ApplyRenderingState(&aliasModelTranslucentState);
+	if (!GL_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer)) {
+		index = ALIASMODEL_NOTEXTURE_OPAQUE;
+	}
+	else if (custom_model == NULL && GL_TextureReferenceIsValid(fb_texture) && mtex) {
+		index = ALIASMODEL_MULTITEXTURE_OPAQUE;
 	}
 	else {
-		R_ApplyRenderingState(&aliasModelOpaqueState);
+		index = ALIASMODEL_SINGLETEXTURE_OPAQUE;
 	}
-	glColor3ubv(color_white);
 
-	if (!GL_TextureReferenceIsValid(texture)) {
-		GLC_DisableAllTexturing();
+	if (alpha_blend) {
+		++index;
 	}
-	else if (custom_model && custom_model->fullbright_cvar.integer) {
-		GLC_DisableAllTexturing();
-	}
-	else if (custom_model) {
-		GLC_InitTextureUnits1(texture, GL_MODULATE);
-	}
-	else if (GL_TextureReferenceIsValid(fb_texture) && mtex) {
-		GLC_InitTextureUnits2(texture, GL_MODULATE, fb_texture, GL_DECAL);
-	}
-	else {
-		GLC_InitTextureUnits1(texture, GL_MODULATE);
-	}
+	R_ApplyRenderingState(&aliasModelState[index]);
 
 	LEAVE_STATE;
 }
@@ -231,8 +259,6 @@ void GLC_StateBeginAliasModelShadow(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&aliasModelShadowState);
-	GLC_DisableAllTexturing();
-	glColor4f(0, 0, 0, 0.5);
 
 	LEAVE_STATE;
 }
@@ -252,8 +278,6 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	else {
 		R_ApplyRenderingState(&viewModelOpaqueState);
 	}
-	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 
 	LEAVE_STATE;
 }
@@ -285,10 +309,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 
 	if (GL_UseImmediateMode()) {
 		if (e->alpha) {
-			glColor4f(e->alpha, e->alpha, e->alpha, e->alpha);
-		}
-		else {
-			glColor3ubv(color_white);
+			GL_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
 		}
 	}
 
@@ -336,9 +357,7 @@ void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 {
 	R_ApplyRenderingState(&simpleItemState);
 
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GLC_InitTextureUnits1(simpletexture, GL_REPLACE);
-	glColor3ubv(color_white);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, simpletexture);
 }
 
 void GLC_StateEndSimpleItem(void)
@@ -350,11 +369,6 @@ void GLC_StateBeginAliasOutlineFrame(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&aliasModelOutlineState);
-
-	if (GL_UseImmediateMode()) {
-		glColor3ubv(color_black);
-		GLC_DisableAllTexturing();
-	}
 
 	LEAVE_STATE;
 }

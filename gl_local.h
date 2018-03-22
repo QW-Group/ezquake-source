@@ -441,8 +441,8 @@ qbool GLM_CreateVGFProgramWithInclude(
 	(const char*)name##_fragment_glsl,\
 	name##_fragment_glsl_len
 
-#define glEnable GL_Enable
-#define glDisable GL_Disable
+//#define glEnable GL_Enable
+//#define glDisable GL_Disable
 #define glBegin GL_Begin
 #define glEnd GL_End
 #define glVertex2f GL_Vertex2f
@@ -463,21 +463,6 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 void GL_UseProgram(GLuint program);
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
-
-/*
-void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
-void GL_DepthFunc(GLenum func);
-void GL_DepthRange(double nearVal, double farVal);
-void GL_CullFace(GLenum mode);
-void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
-void GL_DepthMask(GLboolean mask);
-void GL_PolygonMode(GLenum mode);
-int GL_AlphaBlendFlags(int modes);
-void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
-void GL_Enable(GLenum option);
-void GL_PolygonOffset(int options);
-void GL_Disable(GLenum option);
-*/
 
 // gl_fog.c
 void GL_EnableFog(void);
@@ -545,7 +530,6 @@ mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
-void GLC_SetLightmapBlendFunc(void);
 texture_ref GLC_LightmapTexture(int index);
 texture_ref GLM_LightmapArray(void);
 void GLC_ClearLightmapPolys(void);
@@ -799,7 +783,7 @@ void GLC_StateBeginAliasPowerupShell(void);
 void GLC_StateEndAliasPowerupShell(void);
 void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_StateEndUnderwaterCaustics(void);
-void GLC_StateBeginMD3Draw(float alpha);
+void GLC_StateBeginMD3Draw(float alpha, qbool textured);
 void GLC_StateEndMD3Draw(void);
 void GLC_StateBeginBrightenScreen(void);
 void GLC_StateEndBrightenScreen(void);
@@ -809,8 +793,8 @@ void GLC_StateBeginSky(void);
 void GLC_StateBeginSkyZBufferPass(void);
 void GLC_StateEndSkyZBufferPass(void);
 void GLC_StateEndSkyNoZBufferPass(void);
-void GLC_StateBeginSkyDome(void);
-void GLC_StateBeginSkyDomeCloudPass(void);
+void GLC_StateBeginSingleTextureSkyDome(void);
+void GLC_StateBeginSingleTextureSkyDomeCloudPass(void);
 void GLC_StateBeginMultiTextureSkyDome(void);
 void GLC_StateEndMultiTextureSkyDome(void);
 void GLC_StateBeginMultiTextureSkyChain(void);
@@ -830,6 +814,7 @@ void GLM_StateBeginDraw3DSprites(void);
 void GLM_StateEndDraw3DSprites(void);
 void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_StateEndDrawWorldOutlines(void);
+void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 void GL_StateBeginAlphaLineRGB(float thickness);
 void GL_StateEndAlphaLineRGB(void);
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model);
@@ -878,11 +863,6 @@ void GLC_StateBeginDrawPolygon(void);
 void GLC_StateEndDrawPolygon(int oldFlags);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
 void GLC_StateEndDrawAlphaPieSliceRGB(float thickness);
-
-void GLC_DisableAllTexturing(void);
-void GLC_InitTextureUnitsNoBind1(GLenum envMode0);
-void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0);
-void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1);
 
 void GLC_PauseMatrixUpdate(void);
 void GLC_ResumeMatrixUpdate(void);
@@ -996,4 +976,30 @@ void GLM_SamplerSetNearest(GLuint texture_unit_number);
 void GLM_SamplerClear(GLuint texture_unit_number);
 void GL_DeleteSamplers(void);
 
+void GLM_StateBeginImageDraw(void);
+void GLM_StateBeginPolygonDraw(void);
+
+void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+/*
+void GL_DepthFunc(GLenum func);
+void GL_DepthRange(double nearVal, double farVal);
+void GL_CullFace(GLenum mode);
+void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
+void GL_DepthMask(GLboolean mask);
+void GL_PolygonMode(GLenum mode);
+int GL_AlphaBlendFlags(int modes);
+void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+void GL_Enable(GLenum option);
+void GL_PolygonOffset(int options);
+void GL_Disable(GLenum option);
+void GL_AlphaFunc(GLenum func, GLclampf threshold);
+
+void GLC_DisableAllTexturing(void);
+void GLC_InitTextureUnitsNoBind1(GLenum envMode0);
+void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0);
+void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1);
+*/
+
 #endif /* !__GL_LOCAL_H__ */
+

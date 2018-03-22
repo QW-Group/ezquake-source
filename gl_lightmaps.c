@@ -878,16 +878,6 @@ void GLC_SetLightmapTextureEnvironment(GLenum textureUnit)
 	GL_TextureEnvModeForUnit(textureUnit, GLC_LightmapTexEnv());
 }
 
-void GLC_SetLightmapBlendFunc(void)
-{
-	if (gl_invlightmaps) {
-		GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-	}
-	else {
-		GL_BlendFunc(GL_ZERO, GL_SRC_COLOR);
-	}
-}
-
 void GLC_ClearLightmapPolys(void)
 {
 	int i;

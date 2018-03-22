@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-
+/*
 void GL_EnableFog(void)
 {
 	if (GL_UseImmediateMode() && gl_fogenable.integer) {
@@ -35,7 +35,7 @@ void GL_DisableFog(void)
 		glDisable(GL_FOG);
 	}
 }
-
+*/
 void GL_ConfigureFog(void)
 {
 	vec3_t colors;

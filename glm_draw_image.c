@@ -205,9 +205,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	uintptr_t buffer_offset = GL_BufferOffset(imageVBO) / sizeof(imageData.images[0]);
 
 	GL_UseProgram(multiImageProgram.program);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_Disable(GL_DEPTH_TEST);
+	GLM_StateBeginImageDraw();
 	GL_BindVertexArray(vao_hud_images);
 	if (GL_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
@@ -247,7 +245,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	glc_last_texture_used = ref;
 
 	GLC_StateBeginImageDraw();
-	GLC_InitTextureUnits1(ref, GL_MODULATE);
+	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
 	GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
 	if (imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT) {

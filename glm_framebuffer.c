@@ -117,7 +117,6 @@ qbool GL_Framebuffer2DSwitch(void)
 {
 	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
 		if (VID_FramebufferInit(&framebuffer2d, glConfig.vidWidth, glConfig.vidHeight, false)) {
-			GL_ClearColor(0, 0, 0, 0);
 			GL_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 			glClear(GL_COLOR_BUFFER_BIT);
 			return true;

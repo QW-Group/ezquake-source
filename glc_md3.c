@@ -70,8 +70,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		r_modelalpha = ent->alpha;
 	}
 
-	GLC_StateBeginMD3Draw(r_modelalpha);
-
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	GL_ScaleModelview(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
@@ -101,6 +99,11 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
+	GLC_StateBeginMD3Draw(r_modelalpha, GL_TextureReferenceIsValid(sinf->texnum));
+	if (GL_TextureReferenceIsValid(sinf->texnum)) {
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, sinf->texnum);
+	}
+
 	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);
 	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++) {
 		// loop through the surfaces.
@@ -113,13 +116,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
 		numtris = surf->numTriangles * 3;
-
-		if (GL_TextureReferenceIsValid(sinf->texnum)) {
-			GLC_InitTextureUnits1(sinf->texnum, GL_REPLACE);
-		}
-		else {
-			GLC_DisableAllTexturing();
-		}
 
 		glBegin (GL_TRIANGLES);
 		for (i = 0; i < numtris; i++) {
