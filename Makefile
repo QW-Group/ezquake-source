@@ -370,7 +370,6 @@ OBJS_c := \
     gl_vbo.o \
     glc_aliasmodel.o \
     glc_brushmodel.o \
-    glc_draw.o \
     glc_md3.o \
     glc_misc.o \
     glc_screen.o \
