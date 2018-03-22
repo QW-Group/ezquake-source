@@ -75,7 +75,6 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
 static vec3_t    shadevector;
-static vec3_t    vertexlight;
 static vec3_t    dlight_color;
 
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
@@ -85,8 +84,6 @@ cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" 
 cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
 cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
 
-float     apitch;
-float     ayaw;
 float     r_framelerp;
 float     r_lerpdistance;
 qbool     full_light;
@@ -162,19 +159,19 @@ static void R_RenderAliasModelEntity(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(model, oldframe, frame, true, false, outline, texture, fb_texture, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, true, false, outline, texture, fb_texture, effects, ent->renderfx);
 	}
 	else {
-		R_SetupAliasFrame(model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		if (GL_TextureReferenceIsValid(fb_texture)) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
+			R_SetupAliasFrame(ent, model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -395,6 +392,7 @@ int R_AliasFramePose(maliasframedesc_t* frame)
 }
 
 void R_SetupAliasFrame(
+	entity_t* ent,
 	model_t* model,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
 	qbool mtex, qbool scrolldir, qbool outline,
@@ -416,23 +414,97 @@ void R_SetupAliasFrame(
 		GLM_DrawAliasFrame(model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
+		GLC_DrawAliasFrame(ent, model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
+	}
+}
+
+static void R_AliasModelColoredLighting(entity_t* ent)
+{
+	int i, j, k, lnum;
+	vec3_t dist;
+	float add;
+
+	/* FIXME: dimman... cache opt from fod */
+	//VULT COLOURED MODEL LIGHTS
+	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
+		if (!cl_dlight_active[i]) {
+			continue;
+		}
+
+		for (j = 0; j < 32; j++) {
+			if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+				lnum = i * 32 + j;
+
+				VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
+				add = cl_dlights[lnum].radius - VectorLength(dist);
+
+				if (add > 0) {
+					if (cl_dlights[lnum].type == lt_custom) {
+						VectorCopy(cl_dlights[lnum].color, dlight_color);
+						VectorScale(dlight_color, (1.0 / 255), dlight_color); // convert color from byte to float
+					}
+					else {
+						VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+					}
+
+					for (k = 0; k < 3; k++) {
+						lightcolor[k] = lightcolor[k] + (dlight_color[k] * add) * 2;
+						if (lightcolor[k] > 256) {
+							switch (k) {
+								case 0:
+									lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
+									lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+									break;
+								case 1:
+									lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
+									lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+									break;
+								case 2:
+									lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
+									lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
+									break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+static void R_AliasModelStandardLighting(entity_t* ent)
+{
+	int i, j, lnum;
+	vec3_t dist;
+	float add;
+
+	/* FIXME: dimman... cache opt from fod */
+	//VULT COLOURED MODEL LIGHTS
+	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
+		if (cl_dlight_active[i]) {
+			for (j = 0; j < 32; j++) {
+				if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+					lnum = i * 32 + j;
+
+					VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
+					add = cl_dlights[lnum].radius - VectorLength(dist);
+
+					if (add > 0) {
+						ambientlight += add;
+					}
+				}
+			}
+		}
 	}
 }
 
 void R_AliasSetupLighting(entity_t *ent)
 {
-	int lnum;
-	float add, fbskins;
+	float fbskins;
 	unsigned int i;
-	unsigned int j;
-	unsigned int k;
-	vec3_t dist;
 	model_t *clmodel;
 
 	//VULT COLOURED MODEL LIGHTING
-	float radiusmax = 0;
-
 	clmodel = ent->model;
 
 	custom_model = NULL;
@@ -497,100 +569,11 @@ void R_AliasSetupLighting(entity_t *ent)
 	else {
 		ambientlight = shadelight = R_LightPoint(ent->origin);
 
-		/* FIXME: dimman... cache opt from fod */
-		//VULT COLOURED MODEL LIGHTS
-		for (i = 0; i < MAX_DLIGHTS / 32; i++) {
-			if (cl_dlight_active[i]) {
-				for (j = 0; j < 32; j++) {
-					if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
-						lnum = i * 32 + j;
-
-						if (amf_lighting_colour.integer) {
-							VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
-							add = cl_dlights[lnum].radius - VectorLength(dist);
-
-							if (add > 0) {
-								//VULT VERTEX LIGHTING
-								if (amf_lighting_vertex.value) {
-									if (!radiusmax) {
-										radiusmax = cl_dlights[lnum].radius;
-										VectorCopy(cl_dlights[lnum].origin, vertexlight);
-									}
-									else if (cl_dlights[lnum].radius > radiusmax) {
-										radiusmax = cl_dlights[lnum].radius;
-										VectorCopy(cl_dlights[lnum].origin, vertexlight);
-									}
-								}
-
-								if (cl_dlights[lnum].type == lt_custom) {
-									VectorCopy(cl_dlights[lnum].color, dlight_color);
-									VectorScale(dlight_color, (1.0 / 255), dlight_color); // convert color from byte to float
-								}
-								else {
-									VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
-								}
-
-								for (k = 0; k < 3; k++) {
-									lightcolor[k] = lightcolor[k] + (dlight_color[k] * add) * 2;
-									if (lightcolor[k] > 256) {
-										switch (k) {
-											case 0:
-												lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-												lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
-												break;
-											case 1:
-												lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
-												lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
-												break;
-											case 2:
-												lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-												lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
-												break;
-										}
-									}
-								}
-							}
-						}
-						else {
-							VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
-							add = cl_dlights[lnum].radius - VectorLength(dist);
-
-							if (add > 0) {
-								//VULT VERTEX LIGHTING
-								if (amf_lighting_vertex.value) {
-									if (!radiusmax) {
-										radiusmax = cl_dlights[lnum].radius;
-										VectorCopy(cl_dlights[lnum].origin, vertexlight);
-									}
-									else if (cl_dlights[lnum].radius > radiusmax) {
-										radiusmax = cl_dlights[lnum].radius;
-										VectorCopy(cl_dlights[lnum].origin, vertexlight);
-									}
-								}
-								ambientlight += add;
-							}
-						}
-					}
-				}
-			}
+		if (amf_lighting_colour.integer) {
+			R_AliasModelColoredLighting(ent);
 		}
-
-		//calculate pitch and yaw for vertex lighting
-		if (amf_lighting_vertex.integer) {
-			vec3_t dist, ang;
-			apitch = currententity->angles[0];
-			ayaw = currententity->angles[1];
-
-			if (!radiusmax) {
-				vlight_pitch = 45;
-				vlight_yaw = 45;
-			}
-			else {
-				VectorSubtract(vertexlight, currententity->origin, dist);
-				vectoangles(dist, ang);
-				vlight_pitch = ang[0];
-				vlight_yaw = ang[1];
-			}
+		else {
+			R_AliasModelStandardLighting(ent);
 		}
 
 		// clamp lighting so it doesn't overbright as much

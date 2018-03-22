@@ -52,8 +52,6 @@ extern float     r_framelerp;
 extern float     r_lerpdistance;
 extern qbool     full_light;
 extern vec3_t    lightcolor;
-extern float     apitch;
-extern float     ayaw;
 
 // Temporary r_lerpframes fix, unless we go for shaders-in-classic...
 //   After all models loaded, this needs to be allocated enough space to hold a complete pose of verts
@@ -118,7 +116,7 @@ void GLC_FreeAliasPoseBuffer(void)
 	temp_aliasmodel_buffer_size = 0;
 }
 
-void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
+void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
@@ -220,8 +218,8 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
 			// VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.value && !full_light) {
-				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
+			if (amf_lighting_vertex.integer && !full_light) {
+				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
 			}
 			else {
 				l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
@@ -230,7 +228,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 			l = min(l, 1);
 
 			//VULT COLOURED MODEL LIGHTS
-			if (amf_lighting_colour.value && !full_light) {
+			if (amf_lighting_colour.integer && !full_light) {
 				for (i = 0; i < 3; i++) {
 					lc[i] = lightcolor[i] / 256 + l;
 				}
@@ -519,7 +517,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	if (gl_caustics.integer && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
-		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0, 0);
+		R_SetupAliasFrame(ent, clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0, 0);
 
 		GLC_StateEndUnderwaterCaustics();
 	}
