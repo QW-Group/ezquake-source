@@ -34,7 +34,7 @@ void GLM_PrepareLines(void)
 {
 	if (GL_UseGLSL()) {
 		if (!GL_BufferReferenceIsValid(line_vbo)) {
-			line_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, buffertype_use_once);
+			line_vbo = GL_CreateFixedBuffer(buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
 		}
 		else if (lineData.lineCount) {
 			GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);

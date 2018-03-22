@@ -953,13 +953,23 @@ qbool GL_DrawElementsBaseVertexAvailable(void);
 
 // Buffers
 typedef enum {
-	buffertype_unknown,
-	buffertype_use_once,
-	buffertype_reuse_many,
-	buffertype_constant
+	bufferusage_unknown,
+	bufferusage_once_per_frame,     // filled & used once per frame
+	bufferusage_reuse_per_frame,    // filled & used many times per frame
+	bufferusage_reuse_many_frames,  // filled once, expect to use many times over subsequent frames
+	bufferusage_constant_data       // filled once, never updated again
 } bufferusage_t;
 
-buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, bufferusage_t usage);
+typedef enum {
+	buffertype_unknown,
+	buffertype_vertex,
+	buffertype_index,
+	buffertype_storage,
+	buffertype_uniform,
+	buffertype_indirect
+} buffertype_t;
+
+buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage);
 void GL_BufferStartFrame(void);
 void GL_BufferEndFrame(void);
 qbool GL_BuffersReady(void);

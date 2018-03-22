@@ -322,7 +322,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 			vbo_brushElements = GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {
-			vbo_brushElements = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, buffertype_use_once);
+			vbo_brushElements = GL_CreateFixedBuffer(buffertype_index, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, bufferusage_once_per_frame);
 		}
 	}
 
@@ -346,7 +346,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	}
 
 	// Copy VBO buffer across
-	brushModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "brushmodel-vbo", buffer_size, buffer, buffertype_constant);
+	brushModel_vbo = GL_CreateFixedBuffer(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
 	if (GL_UseGLSL()) {
 		// Create vao
@@ -378,7 +378,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 				memcpy(surfaces[i].tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
 				memcpy(surfaces[i].tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
 			}
-			worldModel_surfaces_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, buffertype_constant);
+			worldModel_surfaces_ssbo = GL_CreateFixedBuffer(buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
 			Q_free(surfaces);
 			GL_BindBufferBase(worldModel_surfaces_ssbo, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 		}

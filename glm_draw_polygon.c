@@ -49,7 +49,7 @@ void GLM_PreparePolygons(void)
 		}
 
 		if (!GL_BufferReferenceIsValid(polygonVBO)) {
-			polygonVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, buffertype_use_once);
+			polygonVBO = GL_CreateFixedBuffer(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
 		}
 		else if (polygonData.polygonVerts[0]) {
 			GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);

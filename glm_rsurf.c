@@ -181,14 +181,14 @@ static void Compile_DrawWorldProgram(void)
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawWorld_outlines = GL_UniformGetLocation(drawworld.program, "draw_outlines");
 
-		ssbo_worldcvars = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, buffertype_use_once);
-		ssbo_worldsamplers = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, buffertype_use_once);
+		ssbo_worldcvars = GL_CreateFixedBuffer(buffertype_storage, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
+		ssbo_worldsamplers = GL_CreateFixedBuffer(buffertype_storage, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 
 		drawworld.uniforms_found = true;
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
-		vbo_worldIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, buffertype_use_once);
+		vbo_worldIndirectDraw = GL_CreateFixedBuffer(buffertype_indirect, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 	}
 }
 

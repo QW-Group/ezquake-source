@@ -240,7 +240,7 @@ void GL_Draw3DSprites(void)
 static void GL_Create3DSpriteVBO(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
-		sprite3dVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "sprite3d-vbo", sizeof(verts), verts, buffertype_use_once);
+		sprite3dVBO = GL_CreateFixedBuffer(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
 	}
 }
 
@@ -304,7 +304,7 @@ static void GL_Create3DSpriteIndexBuffer(void)
 			}
 		}
 
-		sprite3dIndexes = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "3dsprite-indexes", sizeof(indexData), indexData, buffertype_constant);
+		sprite3dIndexes = GL_CreateFixedBuffer(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
 	}
 }
 

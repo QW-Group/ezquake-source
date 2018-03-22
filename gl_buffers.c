@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_local.h"
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 void GL_BindVertexArrayElementBuffer(buffer_ref ref);
@@ -164,7 +165,7 @@ static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLs
 	return buffer;
 }
 
-buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage)
+buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, int size, void* data, GLenum usage)
 {
 	buffer_data_t* buffer = GL_BufferAllocateSlot(target, name, size, usage);
 	buffer_ref result;
@@ -180,8 +181,27 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	return result;
 }
 
-buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, bufferusage_t usage)
+static GLenum GL_BufferTypeToTarget(buffertype_t type)
 {
+	switch (type) {
+		case buffertype_index:
+			return GL_ELEMENT_ARRAY_BUFFER;
+		case buffertype_indirect:
+			return GL_DRAW_INDIRECT_BUFFER;
+		case buffertype_storage:
+			return GL_SHADER_STORAGE_BUFFER;
+		case buffertype_vertex:
+			return GL_ARRAY_BUFFER;
+		case buffertype_uniform:
+			return GL_UNIFORM_BUFFER;
+	}
+
+	return GL_ARRAY_BUFFER;
+}
+
+buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
+{
+	GLenum target = GL_BufferTypeToTarget(type);
 	buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
 	buffer_ref ref;
 
@@ -191,13 +211,19 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	GLbitfield storageFlags = 0;
 	GLsizei alignment = 1;
 
-	if (usage == buffertype_use_once) {
+	if (usage == bufferusage_once_per_frame) {
 		glUsage = GL_STREAM_DRAW;
 
 		useStorage = tripleBuffer = tripleBuffer_supported;
 		storageFlags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 	}
-	else if (usage == buffertype_reuse_many) {
+	else if (usage == bufferusage_reuse_per_frame) {
+		glUsage = GL_STREAM_DRAW;
+
+		useStorage = (qglBufferStorage != NULL);
+		tripleBuffer = false;
+	}
+	else if (usage == bufferusage_reuse_many_frames) {
 		glUsage = GL_STATIC_DRAW;
 		storageFlags = GL_MAP_WRITE_BIT;
 		useStorage = (qglBufferStorage != NULL);
@@ -206,7 +232,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 			return null_buffer_reference;
 		}
 	}
-	else if (usage == buffertype_constant) {
+	else if (usage == bufferusage_constant_data) {
 		glUsage = GL_STATIC_COPY;
 		storageFlags = 0;
 		useStorage = (qglBufferStorage != NULL);
@@ -306,7 +332,7 @@ size_t GL_BufferSize(buffer_ref vbo)
 	return buffers[vbo.index].size;
 }
 
-buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data)
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 {
 	assert(vbo.index);
 	assert(buffers[vbo.index].glref);
@@ -323,7 +349,7 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data)
 
 		buffers[vbo.index].next_free = next_free_buffer;
 
-		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, buffertype_use_once);
+		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, bufferusage_once_per_frame);
 	}
 	else {
 		if (qglNamedBufferData) {

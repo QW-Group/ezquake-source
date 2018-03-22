@@ -136,11 +136,11 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
-		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(GL_DRAW_INDIRECT_BUFFER, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, buffertype_use_once);
+		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
-		vbo_aliasDataBuffer = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "alias-data", sizeof(aliasdata), NULL, buffertype_use_once);
+		vbo_aliasDataBuffer = GL_CreateFixedBuffer(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
 	}
 
 	return drawAliasModelProgram.program;
@@ -266,11 +266,11 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 		}
 	}
 
-	vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
+	vbo = GL_CreateFixedBuffer(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 
 	if (GL_UseGLSL()) {
 		GL_CreateAliasModelVAO(vbo, instanceVBO);
-		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
+		aliasModel_ssbo = GL_CreateFixedBuffer(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
 	else {

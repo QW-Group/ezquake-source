@@ -99,7 +99,7 @@ void GLM_PrepareCircles(void)
 
 		// Build VBO
 		if (!GL_BufferReferenceIsValid(circleVBO)) {
-			circleVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, buffertype_use_once);
+			circleVBO = GL_CreateFixedBuffer(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
 		}
 		else if (circleData.circleCount) {
 			GL_UpdateBuffer(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);

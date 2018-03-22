@@ -39,7 +39,7 @@ static buffer_ref GL_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	return GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, buffertype_constant);
+	return GL_CreateFixedBuffer(buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
 }
 
 void GL_CreateModelVBOs(qbool vid_restart)
