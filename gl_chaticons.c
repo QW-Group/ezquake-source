@@ -254,7 +254,7 @@ void R_InitChatIcons(void)
 
 	R_Init3DSpriteRenderingState(&chaticon_state, "chaticon_state");
 	chaticon_state.textureUnits[0].enabled = true;
-	chaticon_state.textureUnits[0].mode = r_texunit_mode_replace;
+	chaticon_state.textureUnits[0].mode = r_texunit_mode_modulate;
 
 	ci_initialized = true;
 }

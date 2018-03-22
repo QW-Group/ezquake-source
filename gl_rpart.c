@@ -182,7 +182,7 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 	type->state.depth.mask_enabled = false;
 	if (GL_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
 		type->state.textureUnits[0].enabled = true;
-		type->state.textureUnits[0].mode = r_texunit_mode_replace;
+		type->state.textureUnits[0].mode = r_texunit_mode_modulate;
 	}
 	type->blendtype = blendtype;
 	type->id = id;

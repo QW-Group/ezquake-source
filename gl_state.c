@@ -187,7 +187,7 @@ void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->cullface.enabled = false;
-	state->alphaTesting.enabled = true;
+	state->alphaTesting.enabled = false;
 	state->alphaTesting.func = r_alphatest_func_greater;
 	state->alphaTesting.value = 0.333f;
 }
@@ -359,8 +359,8 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		}
 
 		// Color
-		/*if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3])*/ {
-			R_CustomColor(
+		if (current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
+			glColor4f(
 				current->color[0] = state->color[0],
 				current->color[1] = state->color[1],
 				current->color[2] = state->color[2],
@@ -610,50 +610,6 @@ void GL_SelectTexture(GLenum textureUnit)
 	currentTextureUnit = textureUnit;
 	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
-/*
-void GLC_DisableAllTexturing(void)
-{
-	GLC_DisableTextureUnitOnwards(0);
-}
-
-void GLC_EnableTMU(GLenum target)
-{
-	if (GL_UseImmediateMode()) {
-		GL_SelectTexture(target);
-		glEnable(GL_TEXTURE_2D);
-	}
-}
-
-void GLC_DisableTMU(GLenum target)
-{
-	if (GL_UseImmediateMode()) {
-		GL_SelectTexture(target);
-		glDisable(GL_TEXTURE_2D);
-	}
-}
-
-void GLC_EnsureTMUEnabled(GLenum textureUnit)
-{
-	if (GL_UseImmediateMode()) {
-		if (texunitenabled[textureUnit - GL_TEXTURE0]) {
-			return;
-		}
-
-		GLC_EnableTMU(textureUnit);
-	}
-}
-
-void GLC_EnsureTMUDisabled(GLenum textureUnit)
-{
-	if (GL_UseImmediateMode()) {
-		if (!texunitenabled[textureUnit - GL_TEXTURE0]) {
-			return;
-		}
-
-		GLC_DisableTMU(textureUnit);
-	}
-}
-*/
 
 void GL_InitTextureState(void)
 {
@@ -801,7 +757,7 @@ void GL_Begin(GLenum primitive)
 
 	++frameStats.draw_calls;
 	glBegin(primitive);
-	//GL_LogAPICall("GL_Begin()...");
+	GL_LogAPICall("glBegin(%s...)", glcPrimitiveName);
 }
 
 #undef glEnd
@@ -825,7 +781,7 @@ void GL_End(void)
 		primitives = glcVertsSent / glcVertsPerPrimitive;
 		count_name = "primitives";
 	}
-	GL_LogAPICall("glBegin/End(%s: %d %s)", glcPrimitiveName, primitives, count_name);
+	GL_LogAPICall("glEnd(%s: %d %s)", glcPrimitiveName, primitives, count_name);
 #endif
 }
 
@@ -980,6 +936,12 @@ void GLC_ClientActiveTexture(GLenum texture_unit)
 
 void R_ApplyRenderingState(rendering_state_t* state)
 {
+	assert(state);
+	if (!state) {
+		Con_Printf("ERROR: NULL rendering state\n");
+		return;
+	}
+
 	assert(state->initialized);
 
 	GL_ApplyRenderingState(state);
@@ -988,15 +950,14 @@ void R_ApplyRenderingState(rendering_state_t* state)
 void R_CustomColor(float r, float g, float b, float a)
 {
 	if (GL_UseImmediateMode()) {
-		//if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
-		glColor4f(
-			opengl.rendering_state.color[0] = r,
-			opengl.rendering_state.color[1] = g,
-			opengl.rendering_state.color[2] = b,
-			opengl.rendering_state.color[3] = a
-		);
-		GL_LogAPICall("glColor(%f %f %f %f)", r, g, b, a);
-		//}
+		if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
+			glColor4f(
+				opengl.rendering_state.color[0] = r,
+				opengl.rendering_state.color[1] = g,
+				opengl.rendering_state.color[2] = b,
+				opengl.rendering_state.color[3] = a
+			);
+		}
 	}
 }
 
@@ -1007,7 +968,7 @@ void R_CustomColor4ubv(const byte* color)
 	float b = color[2] / 255.0f;
 	float a = color[3] / 255.0f;
 
-	R_CustomColor(r * a, g * a, b * a, a);
+	R_CustomColor(r, g, b, a);
 }
 
 void R_EnableScissorTest(int x, int y, int width, int height)
