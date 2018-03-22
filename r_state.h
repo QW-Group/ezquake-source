@@ -157,7 +157,7 @@ typedef struct rendering_state_s {
 	char name[32];
 } rendering_state_t;
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name);
+void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name, r_vao_id vao);
 void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name);
 void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name);
 void R_ApplyRenderingState(rendering_state_t* state);

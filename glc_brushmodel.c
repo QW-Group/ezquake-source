@@ -68,26 +68,22 @@ void R_InitialiseBrushModelStates(void)
 	rendering_state_t* current;
 	rendering_state_t* base;
 
-	R_InitRenderingState(current = &drawFlatNoLightmapState, true, "drawFlatNoLightmapState");
+	R_InitRenderingState(current = &drawFlatNoLightmapState, true, "drawFlatNoLightmapState", vao_brushmodel);
 	current->fog.enabled = true;
-	current->vao_id = vao_brushmodel;
 
-	R_InitRenderingState(current = &drawFlatLightmapState, true, "drawFlatLightmapState");
+	R_InitRenderingState(current = &drawFlatLightmapState, true, "drawFlatLightmapState", vao_brushmodel_lightmaps);
 	current->fog.enabled = true;
 	current->textureUnits[0].enabled = true;
 	current->textureUnits[0].mode = r_texunit_mode_blend;
-	current->vao_id = vao_brushmodel_lightmaps;
 
 	// Single-texture: all of these are the same so we don't need to bother about others
-	R_InitRenderingState(current = &brushModelStates[multitexture_none][0][0], true, "world:singletex");
+	R_InitRenderingState(current = &brushModelStates[multitexture_none][0][0], true, "world:singletex", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-	current->vao_id = vao_brushmodel;
 
 	// no fullbrights, 2 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_none][tex_lightmap_and_luma], true, "world:multitex[2][lm+luma]");
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_none][tex_lightmap_and_luma], true, "world:multitex[2][lm+luma]", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
-	current->vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap], base, "world:multitex[2][luma]");
 	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_none][tex_no_luma], base, "world:multitex[2][lm]");
@@ -96,11 +92,10 @@ void R_InitialiseBrushModelStates(void)
 	current->textureUnits[1].enabled = false;
 
 	// no fullbrights, 3 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_none][tex_lightmap_and_luma], true, "world:multitex[3][lm+luma]");
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_none][tex_lightmap_and_luma], true, "world:multitex[3][lm+luma]", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_blend);
-	current->vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap], base, "world:multitex[3][luma]");
 	current->textureUnits[2].enabled = false;
@@ -111,10 +106,9 @@ void R_InitialiseBrushModelStates(void)
 	current->textureUnits[2].enabled = false;
 
 	// lumas enabled, 2 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[2][lm+luma]");
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[2][lm+luma]", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
-	current->vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap], base, "world:multitex-luma[2][luma]");
 	current->textureUnits[1].enabled = false;
@@ -123,11 +117,10 @@ void R_InitialiseBrushModelStates(void)
 	current->textureUnits[1].enabled = false;
 
 	// lumas enabled, 3 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[3][lm+luma]");
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[3][lm+luma]", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_add);
-	current->vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap], base, "world:multitex-luma[3][luma]");
 	current->textureUnits[1].enabled = false;

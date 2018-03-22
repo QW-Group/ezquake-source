@@ -32,11 +32,11 @@ static rendering_state_t spritesStateGLC;
 
 void R_InitialiseStates(void)
 {
-	R_InitRenderingState(&default3DState, true, "default3DState");
+	R_InitRenderingState(&default3DState, true, "default3DState", vao_none);
 
-	R_Init3DSpriteRenderingState(&spritesStateGLM, "spritesStateGLM");
+	R_Init3DSpriteRenderingState(&spritesStateGLM, "spritesStateGLM", vao_3dsprites);
 
-	R_Init3DSpriteRenderingState(&spritesStateGLC, "spritesStateGLC");
+	R_Init3DSpriteRenderingState(&spritesStateGLC, "spritesStateGLC", vao_3dsprites);
 }
 
 float GL_WaterAlpha(void)

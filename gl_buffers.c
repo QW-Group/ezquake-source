@@ -420,52 +420,56 @@ void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeipt
 	qglBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
 }
 
-static void GL_BindBufferImpl(GLenum target, GLuint buffer)
+static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
 {
 	if (target == GL_ARRAY_BUFFER) {
 		if (buffer == currentArrayBuffer) {
-			return;
+			return false;
 		}
 		currentArrayBuffer = buffer;
 	}
 	else if (target == GL_UNIFORM_BUFFER) {
 		if (buffer == currentUniformBuffer) {
-			return;
+			return false;
 		}
 		currentUniformBuffer = buffer;
 	}
 	else if (target == GL_DRAW_INDIRECT_BUFFER) {
 		if (buffer == currentDrawIndirectBuffer) {
-			return;
+			return false;
 		}
 
 		currentDrawIndirectBuffer = buffer;
 	}
 	else if (target == GL_ELEMENT_ARRAY_BUFFER) {
 		if (buffer == currentElementArrayBuffer) {
-			return;
+			return false;
 		}
 
 		currentElementArrayBuffer = buffer;
 	}
 
 	qglBindBuffer(target, buffer);
+	return true;
 }
 
 void GL_BindBuffer(buffer_ref ref)
 {
+	qbool switched;
+
 	if (!(GL_BufferReferenceIsValid(ref) && buffers[ref.index].glref)) {
 		GL_LogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffers[ref.index].name);
 		return;
 	}
 
-	GL_BindBufferImpl(buffers[ref.index].target, buffers[ref.index].glref);
-
+	switched = GL_BindBufferImpl(buffers[ref.index].target, buffers[ref.index].glref);
 	if (buffers[ref.index].target == GL_ELEMENT_ARRAY_BUFFER) {
 		R_BindVertexArrayElementBuffer(ref);
 	}
 
-	GL_LogAPICall("GL_BindBuffer(%s)", buffers[ref.index].name);
+	if (switched) {
+		GL_LogAPICall("GL_BindBuffer(%s)", buffers[ref.index].name);
+	}
 }
 
 void GL_InitialiseBufferHandling(void)

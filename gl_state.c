@@ -111,7 +111,7 @@ static const char* txtAlphaTestModeValues[r_alphatest_func_count];
 static const char* txtTextureEnvModeValues[r_texunit_mode_count];
 #endif
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name)
+void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name, r_vao_id vao)
 {
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
 	int i;
@@ -157,6 +157,8 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state, const c
 		state->textureUnits[i].mode = GL_MODULATE;
 	}
 
+	state->vao_id = vao;
+
 	if (default_state) {
 		state->cullface.mode = r_cullface_front;
 		state->cullface.enabled = true;
@@ -193,7 +195,7 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state, const c
 
 void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 {
-	R_InitRenderingState(state, true, name);
+	R_InitRenderingState(state, true, name, vao_3dsprites);
 
 	state->fog.enabled = false;
 	state->blendingEnabled = true;
@@ -531,7 +533,7 @@ void GL_InitialiseState(void)
 	txtTextureEnvModeValues[r_texunit_mode_add] = "add";
 #endif
 
-	R_InitRenderingState(&opengl.rendering_state, false, "opengl");
+	R_InitRenderingState(&opengl.rendering_state, false, "opengl", vao_none);
 	R_InitialiseBrushModelStates();
 	R_InitialiseStates();
 	R_Initialise2DStates();

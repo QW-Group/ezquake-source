@@ -54,7 +54,7 @@ void R_InitialiseEntityStates(void)
 	extern cvar_t gl_outline_width;
 	int i;
 
-	R_InitRenderingState(&powerupShellState, true, "powerupShellState");
+	R_InitRenderingState(&powerupShellState, true, "powerupShellState", vao_aliasmodel);
 	powerupShellState.polygonOffset.option = r_polygonoffset_disabled;
 	powerupShellState.cullface.enabled = true;
 	powerupShellState.cullface.mode = r_cullface_front;
@@ -66,9 +66,8 @@ void R_InitialiseEntityStates(void)
 	powerupShellState.blendFunc = r_blendfunc_additive_blending;
 	powerupShellState.textureUnits[0].enabled = true;
 	powerupShellState.textureUnits[0].mode = r_texunit_mode_modulate;
-	powerupShellState.vao_id = vao_aliasmodel;
 
-	R_InitRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], true, "opaqueAliasModelNoTexture");
+	R_InitRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], true, "opaqueAliasModelNoTexture", vao_aliasmodel);
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendingEnabled = aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].alphaTesting.enabled = false;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].polygonOffset.option = r_polygonoffset_disabled;
@@ -77,7 +76,6 @@ void R_InitialiseEntityStates(void)
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].polygonMode = r_polygonmode_fill;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].line.smooth = false;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].fog.enabled = true;
-	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].vao_id = vao_aliasmodel;
 
 	R_CopyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], "opaqueAliasModelSingleTex");
 	aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE].textureUnits[0].enabled = true;
@@ -106,7 +104,7 @@ void R_InitialiseEntityStates(void)
 		aliasModelState[i].depth.farRange = 0.3f;
 	}
 
-	R_InitRenderingState(&aliasModelShadowState, true, "aliasModelShadowState");
+	R_InitRenderingState(&aliasModelShadowState, true, "aliasModelShadowState", vao_aliasmodel);
 	aliasModelShadowState.polygonOffset.option = r_polygonoffset_disabled;
 	aliasModelShadowState.cullface.enabled = true;
 	aliasModelShadowState.cullface.mode = r_cullface_front;
@@ -118,9 +116,8 @@ void R_InitialiseEntityStates(void)
 	aliasModelShadowState.blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelShadowState.color[0] = aliasModelShadowState.color[1] = aliasModelShadowState.color[2] = 0;
 	aliasModelShadowState.color[3] = 0.5f;
-	aliasModelShadowState.vao_id = vao_aliasmodel;
 
-	R_InitRenderingState(&aliasModelOutlineState, true, "aliasModelOutlineState");
+	R_InitRenderingState(&aliasModelOutlineState, true, "aliasModelOutlineState", vao_aliasmodel);
 	aliasModelOutlineState.alphaTesting.enabled = false;
 	aliasModelOutlineState.blendingEnabled = false;
 	aliasModelOutlineState.fog.enabled = false;
@@ -133,9 +130,8 @@ void R_InitialiseEntityStates(void)
 	aliasModelOutlineState.line.flexible_width = true;
 	aliasModelOutlineState.line.smooth = true;
 	aliasModelOutlineState.color[0] = aliasModelOutlineState.color[1] = aliasModelOutlineState.color[2] = 0;
-	aliasModelOutlineState.vao_id = vao_aliasmodel;
 
-	R_InitRenderingState(&brushModelOpaqueState, true, "brushModelOpaqueState");
+	R_InitRenderingState(&brushModelOpaqueState, true, "brushModelOpaqueState", vao_brushmodel);
 	brushModelOpaqueState.cullface.mode = r_cullface_front;
 	brushModelOpaqueState.cullface.enabled = true;
 	brushModelOpaqueState.polygonMode = r_polygonmode_fill;
@@ -144,33 +140,27 @@ void R_InitialiseEntityStates(void)
 	brushModelOpaqueState.line.smooth = false;
 	brushModelOpaqueState.fog.enabled = false;
 	brushModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
-	brushModelOpaqueState.vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(&brushModelOpaqueOffsetState, &brushModelOpaqueState, "brushModelOpaqueOffsetState");
 	brushModelOpaqueOffsetState.polygonOffset.option = r_polygonoffset_standard;
-	brushModelOpaqueOffsetState.vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(&brushModelTranslucentState, &brushModelOpaqueState, "brushModelTranslucentState");
 	brushModelTranslucentState.blendingEnabled = true;
 	brushModelTranslucentState.blendFunc = r_blendfunc_premultiplied_alpha;
-	brushModelTranslucentState.vao_id = vao_brushmodel;
 
 	R_CopyRenderingState(&brushModelTranslucentOffsetState, &brushModelTranslucentState, "brushModelTranslucentOffsetState");
 	brushModelTranslucentOffsetState.polygonOffset.option = r_polygonoffset_standard;
-	brushModelTranslucentOffsetState.vao_id = vao_brushmodel;
 
-	R_InitRenderingState(&aliasModelBatchState, true, "aliasModelBatchState");
+	R_InitRenderingState(&aliasModelBatchState, true, "aliasModelBatchState", vao_aliasmodel);
 	aliasModelBatchState.cullface.mode = r_cullface_front;
 	aliasModelBatchState.cullface.enabled = true;
 	aliasModelBatchState.depth.mask_enabled = true;
 	aliasModelBatchState.depth.test_enabled = true;
 	aliasModelBatchState.blendingEnabled = false;
-	aliasModelBatchState.vao_id = vao_aliasmodel;
 
 	R_CopyRenderingState(&aliasModelTranslucentBatchState, &aliasModelBatchState, "aliasModelTranslucentBatchState");
 	aliasModelTranslucentBatchState.blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelTranslucentBatchState.blendingEnabled = true;
-	aliasModelBatchState.vao_id = vao_aliasmodel;
 }
 
 void GL_StateBeginEntities(visentlist_t* vislist)

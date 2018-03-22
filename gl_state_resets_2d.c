@@ -39,27 +39,25 @@ static rendering_state_t polyBlendState;
 
 void R_Initialise2DStates(void)
 {
-	R_InitRenderingState(&default2DState, true, "default2DState");
+	R_InitRenderingState(&default2DState, true, "default2DState", vao_none);
 	default2DState.depth.test_enabled = false;
 	default2DState.cullface.enabled = false;
 
-	R_InitRenderingState(&brightenScreenState, true, "brightenScreenState");
+	R_InitRenderingState(&brightenScreenState, true, "brightenScreenState", vao_postprocess);
 	brightenScreenState.depth.test_enabled = false;
 	brightenScreenState.cullface.enabled = false;
 	brightenScreenState.alphaTesting.enabled = true; // really?
 	brightenScreenState.blendingEnabled = true;
 	brightenScreenState.blendFunc = r_blendfunc_src_dst_color_dest_one;
-	brightenScreenState.vao_id = vao_postprocess;
 
-	R_InitRenderingState(&lineState, true, "lineState");
+	R_InitRenderingState(&lineState, true, "lineState", vao_hud_lines);
 	lineState.depth.test_enabled = false;
 	lineState.cullface.enabled = false;
 	lineState.blendingEnabled = true;
 	lineState.blendFunc = r_blendfunc_premultiplied_alpha;
 	lineState.line.flexible_width = true;
-	lineState.vao_id = vao_hud_lines;
 
-	R_InitRenderingState(&sceneBlurState, true, "sceneBlurState");
+	R_InitRenderingState(&sceneBlurState, true, "sceneBlurState", vao_postprocess);
 	sceneBlurState.depth.test_enabled = false;
 	sceneBlurState.cullface.enabled = false;
 	//GL_Viewport(0, 0, glwidth, glheight);
@@ -68,22 +66,20 @@ void R_Initialise2DStates(void)
 	sceneBlurState.blendFunc = r_blendfunc_premultiplied_alpha;
 	sceneBlurState.textureUnits[0].enabled = true;
 	sceneBlurState.textureUnits[0].mode = r_texunit_mode_replace;
-	sceneBlurState.vao_id = vao_postprocess;
 
-	R_InitRenderingState(&glcImageDrawState, true, "glcImageDrawState");
+	R_InitRenderingState(&glcImageDrawState, true, "glcImageDrawState", vao_hud_images);
 	glcImageDrawState.depth.test_enabled = false;
 	glcImageDrawState.cullface.enabled = false;
 	glcImageDrawState.textureUnits[0].enabled = true;
 	glcImageDrawState.textureUnits[0].mode = r_texunit_mode_modulate;
 	glcImageDrawState.blendingEnabled = true;
 	glcImageDrawState.blendFunc = r_blendfunc_premultiplied_alpha;
-	glcImageDrawState.vao_id = vao_hud_images;
 
 	R_CopyRenderingState(&glcAlphaTestedImageDrawState, &glcImageDrawState, "glcAlphaTestedImageDrawState");
 	glcAlphaTestedImageDrawState.alphaTesting.enabled = true;
 
 #ifdef BLOOM_SUPPORTED
-	R_InitRenderingState(&glcBloomState, true, "glcBloomState");
+	R_InitRenderingState(&glcBloomState, true, "glcBloomState", vao_postprocess);
 	glcBloomState.depth.test_enabled = false;
 	glcBloomState.cullface.enabled = false;
 	glcBloomState.alphaTesting.enabled = true;
@@ -93,10 +89,9 @@ void R_Initialise2DStates(void)
 	glcBloomState.color[3] = 1.0f;
 	glcBloomState.textureUnits[0].enabled = true;
 	glcBloomState.textureUnits[0].mode = r_texunit_mode_modulate;
-	glcBloomState.vao_id = vao_postprocess;
 #endif
 
-	R_InitRenderingState(&polyBlendState, true, "polyBlendState");
+	R_InitRenderingState(&polyBlendState, true, "polyBlendState", vao_postprocess);
 	polyBlendState.depth.test_enabled = false;
 	polyBlendState.cullface.enabled = false;
 	polyBlendState.blendingEnabled = true;
@@ -105,14 +100,12 @@ void R_Initialise2DStates(void)
 	polyBlendState.color[1] = v_blend[1] * v_blend[3];
 	polyBlendState.color[2] = v_blend[2] * v_blend[3];
 	polyBlendState.color[3] = v_blend[3];
-	polyBlendState.vao_id = vao_postprocess;
 
-	R_InitRenderingState(&glmImageDrawState, true, "glmImageDrawState");
+	R_InitRenderingState(&glmImageDrawState, true, "glmImageDrawState", vao_hud_images);
 	glmImageDrawState.depth.test_enabled = false;
 	glmImageDrawState.cullface.enabled = false;
 	glmImageDrawState.alphaTesting.enabled = false;
 	glmImageDrawState.blendingEnabled = r_blendfunc_premultiplied_alpha;
-	glmImageDrawState.vao_id = vao_hud_images;
 }
 
 void GL_StateDefault2D(void)
