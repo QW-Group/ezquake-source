@@ -58,7 +58,6 @@ cvar_t  cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
 cvar_t  cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
 cvar_t  cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
 cvar_t  cl_teamlock = {"teamlock", "0", 0, OnChangeSkinAndColorForcing};
-cvar_t  r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
 
 cvar_t	tp_name_axe = {"tp_name_axe", "axe"};
 cvar_t	tp_name_sg = {"tp_name_sg", "sg"};

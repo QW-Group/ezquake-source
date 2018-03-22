@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "r_performance.h"
 #include "r_local.h"
+#include "r_texture.h"
 
 static void GL_EmitSurfaceParticleEffects(msurface_t* s);
 

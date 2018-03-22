@@ -91,8 +91,6 @@ extern	texture_t	*r_notexture_mip;
 extern	unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	texture_ref netgraphtexture;
-extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
-extern	texture_ref underwatertexture, detailtexture, solidtexture;
 extern	texture_ref shelltexture;
 
 // Tomaz - Fog Begin

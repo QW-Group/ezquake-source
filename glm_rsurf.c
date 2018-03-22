@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sky.h"
 #include "r_matrix.h"
 #include "glm_vao.h"
+#include "r_texture.h"
 
 #define GLM_DRAWCALL_INCREMENT 8
 

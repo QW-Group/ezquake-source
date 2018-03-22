@@ -21,13 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "image.h"
 #include "qtv.h"
 #include "utils.h"
 #include "tr_types.h"
 #include "r_texture.h"
+#include "rulesets.h"
+
+extern cvar_t gl_playermip;
+extern cvar_t gl_nocolors;
 
 typedef struct player_skin_s {
 	texture_ref base;       // The standard skin.
@@ -56,6 +59,7 @@ cvar_t  r_enemyskincolor    = {"r_enemyskincolor", "", CVAR_COLOR, OnChangeSkinF
 cvar_t  r_teamskincolor     = {"r_teamskincolor",  "", CVAR_COLOR, OnChangeSkinForcing};
 static cvar_t  r_skincolormode     = {"r_skincolormode",  "0", 0, OnChangeSkinForcing};
 static cvar_t  r_skincolormodedead = {"r_skincolormodedead", "-1", 0, OnChangeSkinForcing};
+cvar_t  r_fullbrightSkins = { "r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins };
 
 char	allskins[MAX_OSPATH];
 
@@ -570,7 +574,6 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 	int i;
 	byte* specific;
 	char texture_name[128];
-	GLuint GL_TextureNameFromReference(texture_ref ref);
 
 	// FIXME: Delete old, don't leave lying around.  Watch out for solidtexture references
 	memset(skin->texnum, 0, sizeof(skin->texnum));
@@ -784,7 +787,6 @@ void R_TranslatePlayerSkin(int playernum)
 	}
 
 	R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, false);
-	GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].base, GL_LINEAR, GL_LINEAR);
 
 	// TODO: Dead skins
 
@@ -830,7 +832,6 @@ void R_TranslatePlayerSkin(int playernum)
 		}
 
 		R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, true);
-		GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].fb, GL_LINEAR, GL_LINEAR);
 	}
 }
 
