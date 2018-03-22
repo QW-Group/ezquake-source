@@ -41,7 +41,7 @@ void GLC_StateBeginBrightenScreen(void)
 {
 	ENTER_STATE;
 
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GLC_DisableAllTexturing();
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
@@ -58,7 +58,7 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 	ENTER_STATE;
 
 	if (GL_UseImmediateMode()) {
-		GL_Color3ubv(color_white);
+		glColor3ubv(color_white);
 		GLC_DisableAllTexturing();
 	}
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
@@ -79,7 +79,7 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 	ENTER_STATE;
 
 	GLC_DisableAllTexturing();
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	if (thickness > 0.0) {
@@ -99,7 +99,7 @@ void GLC_StateBeginSceneBlur(void)
 
 	if (GL_UseImmediateMode()) {
 		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-		GL_Color3ubv(color_white);
+		glColor3ubv(color_white);
 	}
 	// Remember all attributes.
 	GL_Viewport(0, 0, glwidth, glheight);
@@ -135,10 +135,10 @@ void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	ENTER_STATE;
 
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
-	GL_Color4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
+	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	GLC_InitTextureUnits1(texture, GL_MODULATE);
 
 	LEAVE_STATE;
@@ -171,7 +171,7 @@ void GLC_StateEndPolyBlend(void)
 
 void GLC_StateBeginImageDraw(void)
 {
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED); // alphatest depends on image type
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

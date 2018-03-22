@@ -60,7 +60,7 @@ void GLC_StateEndDrawFlatModel(void)
 		GL_Disable(GL_FOG);
 	}
 
-	GL_Color4ubv(color_white);
+	glColor4ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -132,10 +132,10 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
 	if (wateralpha < 1.0 && wateralpha >= 0) {
-		GL_Color4ub(color[0] * wateralpha, color[1] * wateralpha, color[2] * wateralpha, 255 * wateralpha);
+		glColor4ub(color[0] * wateralpha, color[1] * wateralpha, color[2] * wateralpha, 255 * wateralpha);
 	}
 	else {
-		GL_Color3ubv(color);
+		glColor3ubv(color);
 	}
 	// END shaman FIX /gl_turbalpha + /r_fastturb {
 
@@ -146,7 +146,7 @@ void GLC_StateEndFastTurbPoly(void)
 {
 	ENTER_STATE;
 
-	GL_Color4ubv(color_white);
+	glColor4ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -253,7 +253,7 @@ void GLC_StateBeginWaterSurfaces(void)
 
 	if (wateralpha < 1.0) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-		GL_Color4f(wateralpha, wateralpha, wateralpha, wateralpha);
+		glColor4f(wateralpha, wateralpha, wateralpha, wateralpha);
 		if (!r_fastturb.integer) {
 			GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 		}
@@ -263,7 +263,7 @@ void GLC_StateBeginWaterSurfaces(void)
 	}
 	else {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-		GL_Color3ubv(color_white);
+		glColor3ubv(color_white);
 		if (!r_fastturb.integer) {
 			GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		}
@@ -280,7 +280,7 @@ void GLC_StateEndWaterSurfaces(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_DepthMask(GL_TRUE);
 	GL_DisableFog();
@@ -400,7 +400,7 @@ void GLC_StateBeginDrawMapOutline(void)
 	ENTER_STATE;
 
 	GL_PolygonOffset(POLYGONOFFSET_OUTLINES);
-	GL_Color4ubv(color_white);
+	glColor4ubv(color_white);
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	GL_Disable(GL_DEPTH_TEST);
@@ -414,7 +414,7 @@ void GLC_StateBeginEndMapOutline(void)
 {
 	ENTER_STATE;
 
-	GL_Color4ubv(color_white);
+	glColor4ubv(color_white);
 	GL_Enable(GL_DEPTH_TEST);
 	if (gl_cull.integer) {
 		GL_Enable(GL_CULL_FACE);

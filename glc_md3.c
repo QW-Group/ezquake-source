@@ -74,7 +74,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	GL_Scale(GL_MODELVIEW, scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
-	GL_Color4f(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
+	glColor4f(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];

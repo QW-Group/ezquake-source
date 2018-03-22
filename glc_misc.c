@@ -43,10 +43,12 @@ void GLC_BrightenScreen(void)
 	extern float vid_gamma;
 	float f;
 
-	if (vid_hwgamma_enabled)
+	if (vid_hwgamma_enabled) {
 		return;
-	if (v_contrast.value <= 1.0)
+	}
+	if (v_contrast.value <= 1.0) {
 		return;
+	}
 
 	f = min(v_contrast.value, 3);
 	f = pow(f, vid_gamma);

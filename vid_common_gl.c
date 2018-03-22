@@ -557,65 +557,8 @@ void VID_SetPalette (unsigned char *palette) {
 	d_8to24table2[255] = 0;	// 255 is transparent
 }
 
-#undef glColor3f
-#undef glColor4f
-#undef glColor3fv
-#undef glColor3ubv
-#undef glColor4ubv
-#undef glColor4ub
-
 #undef glDisable
 #undef glEnable
-
-void GL_Color3f(float r, float g, float b)
-{
-	if (GL_UseImmediateMode()) {
-		glColor3f(r, g, b);
-	}
-}
-
-void GL_Color4f(float r, float g, float b, float a)
-{
-	if (GL_UseImmediateMode()) {
-		glColor4f(r, g, b, a);
-	}
-}
-
-void GL_Color3fv(const float* rgbVec)
-{
-	if (GL_UseImmediateMode()) {
-		glColor3fv(rgbVec);
-	}
-}
-
-void GL_Color4fv(const float* rgbaVec)
-{
-	if (GL_UseImmediateMode()) {
-		glColor4fv(rgbaVec);
-	}
-}
-
-void GL_Color3ubv(const GLubyte* rgbVec)
-{
-	if (GL_UseImmediateMode()) {
-		glColor3ubv(rgbVec);
-	}
-}
-
-void GL_Color4ubv(const GLubyte* rgbaVec)
-{
-	if (GL_UseImmediateMode()) {
-		glColor4ubv(rgbaVec);
-	}
-
-}
-
-void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
-{
-	if (GL_UseImmediateMode()) {
-		glColor4ub(r, g, b, a);
-	}
-}
 
 #ifdef WITH_OPENGL_TRACE
 static int debug_frame_depth = 0;

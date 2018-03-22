@@ -264,7 +264,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	else {
 		int i;
 
-		GL_Color4ubv(imageData.images[start].colour);
+		glColor4ubv(imageData.images[start].colour);
 		glBegin(GL_QUADS);
 
 		for (i = start; i <= end; ++i) {
@@ -274,7 +274,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 			// Don't need to break for colour
 			if (memcmp(next->colour, current_color, sizeof(current_color))) {
 				memcpy(current_color, next->colour, sizeof(current_color));
-				GL_Color4ubv(next->colour);
+				glColor4ubv(next->colour);
 			}
 
 #ifdef HUD_IMAGE_GEOMETRY_SHADER

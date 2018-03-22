@@ -55,7 +55,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GLC_InitTextureUnits1(shelltexture, GL_MODULATE);
 	GL_BlendFunc(GL_ONE, GL_ONE);
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -77,7 +77,7 @@ void GLC_StateBeginMD3Draw(float alpha)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	GL_EnableFog();
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 
 	LEAVE_STATE;
 }
@@ -96,7 +96,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	GL_PolygonMode(GL_FILL);
 	GL_Disable(GL_LINE_SMOOTH);
 	GL_DisableFog();
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 
 	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
@@ -138,7 +138,7 @@ void GLC_StateBeginAliasModelShadow(void)
 	GLC_DisableAllTexturing();
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_Color4f(0, 0, 0, 0.5);
+	glColor4f(0, 0, 0, 0.5);
 
 	LEAVE_STATE;
 }
@@ -203,11 +203,11 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 
 		if (e->alpha) {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-			GL_Color4f(e->alpha, e->alpha, e->alpha, e->alpha);
+			glColor4f(e->alpha, e->alpha, e->alpha, e->alpha);
 		}
 		else {
 			GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-			GL_Color3ubv(color_white);
+			glColor3ubv(color_white);
 		}
 		GL_PolygonOffset(polygonOffset ? POLYGONOFFSET_STANDARD : POLYGONOFFSET_DISABLED);
 	}
@@ -267,7 +267,7 @@ void GLC_StateBeginSimpleItem(texture_ref simpletexture)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	GL_Color3ubv(color_white);
+	glColor3ubv(color_white);
 	GL_Disable(GL_LINE_SMOOTH);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	GL_DisableFog();
@@ -298,7 +298,7 @@ void GL_StateBeginAliasOutlineFrame(void)
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	if (GL_UseImmediateMode()) {
-		GL_Color3ubv(color_black);
+		glColor3ubv(color_black);
 		GL_Enable(GL_LINE_SMOOTH);
 		GLC_DisableAllTexturing();
 	}

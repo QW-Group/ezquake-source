@@ -645,12 +645,6 @@ qbool GLM_CreateVGFProgramWithInclude(
 	(const char*)glsl_##name##_fragment_glsl,\
 	glsl_##name##_fragment_glsl_len
 
-#define glColor3f GL_Color3f
-#define glColor4f GL_Color4f
-#define glColor3fv GL_Color3fv
-#define glColor3ubv GL_Color3ubv
-#define glColor4ubv GL_Color4ubv
-#define glColor4ub GL_Color4ub
 #define glEnable GL_Enable
 #define glDisable GL_Disable
 #define glBegin GL_Begin
@@ -666,15 +660,6 @@ void GL_Disable(GLenum option);
 void GL_Vertex2f(GLfloat x, GLfloat y);
 void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
 void GL_Vertex3fv(const GLfloat* v);
-
-
-void GL_Color3f(float r, float g, float b);
-void GL_Color4f(float r, float g, float b, float a);
-void GL_Color4fv(const float* rgbaVec);
-void GL_Color3fv(const float* rgbVec);
-void GL_Color3ubv(const GLubyte* rgbVec);
-void GL_Color4ubv(const GLubyte* rgbaVec);
-void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a);
 
 void GL_GetMatrix(GLenum mode, GLfloat* matrix);
 void GL_GetViewport(GLint* view);
@@ -806,7 +791,6 @@ void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
 void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
-void GLM_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 
 void GLM_EnterBatchedWorldRegion(void);
 void GLM_DrawSpriteModel(entity_t* e);

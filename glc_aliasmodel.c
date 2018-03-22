@@ -269,7 +269,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 				++position;
 			}
 			else {
-				GL_Color4fv(color);
+				glColor4fv(color);
 				glVertex3fv(interpolated_verts);
 			}
 
@@ -375,7 +375,7 @@ void GLC_SetPowerupShellColor(int layer_no, int effects)
 	r_shellcolor[0] = base_level + ((effects & EF_RED) ? effect_level : 0);
 	r_shellcolor[1] = base_level + ((effects & EF_GREEN) ? effect_level : 0);
 	r_shellcolor[2] = base_level + ((effects & EF_BLUE) ? effect_level : 0);
-	GL_Color4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
+	glColor4f(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
 }
 
 void GLC_DrawPowerupShell(

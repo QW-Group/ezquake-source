@@ -36,7 +36,7 @@ void GLC_StateBeginFastSky(void)
 		GL_DisableFog();
 	}
 	GLC_DisableAllTexturing();
-	GL_Color3ubv(r_skycolor.color);
+	glColor3ubv(r_skycolor.color);
 
 	LEAVE_STATE;
 }
@@ -67,7 +67,7 @@ void GLC_StateBeginSkyZBufferPass(void)
 	GL_Enable(GL_DEPTH_TEST);
 	if (gl_fogenable.integer && gl_fogsky.integer) {
 		GL_EnableFog();
-		GL_Color4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+		glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
 		GL_BlendFunc(GL_ONE, GL_ZERO);
 	}
 	else {

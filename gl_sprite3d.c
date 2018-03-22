@@ -634,7 +634,7 @@ void GLC_Draw3DSprites(void)
 				v = &verts[batch->firstVertices[j]];
 				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
 					glTexCoord2fv(v->tex);
-					GL_Color4ubv(v->color);
+					glColor4ubv(v->color);
 					glVertex3fv(v->position);
 				}
 				glEnd();
