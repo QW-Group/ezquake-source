@@ -535,7 +535,6 @@ texture_ref GLM_LightmapArray(void);
 void GLC_ClearLightmapPolys(void);
 void GLC_AddToLightmapChain(msurface_t* s);
 void GLC_LightmapUpdate(int index);
-void GLC_SetLightmapTextureEnvironment(GLenum textureUnit);
 GLenum GLC_LightmapDestBlendFactor(void);
 glpoly_t* GLC_LightmapChain(int i);
 GLenum GLC_LightmapTexEnv(void);
@@ -855,7 +854,7 @@ void GLC_StateEndBloomDraw(void);
 void GL_StateEndFrame(void);
 void GLC_StateEndRenderScene(void);
 
-void GLC_StateBeginImageDraw(void);
+void GLC_StateBeginImageDraw(qbool is_text);
 void GLC_StateEndImageDraw(void);
 void GLC_StateBeginPolyBlend(float v_blend[4]);
 void GLC_StateEndPolyBlend(void);

@@ -146,4 +146,9 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state);
 void R_Init3DSpriteRenderingState(rendering_state_t* state);
 void R_ApplyRenderingState(rendering_state_t* state);
 
+void R_CustomColor(float r, float g, float b, float a);
+void R_EnableScissorTest(int x, int y, int width, int height);
+void R_DisableScissorTest(void);
+void R_ClearColor(float r, float g, float b, float a);
+
 #endif // EZQUAKE_R_STATE_HEADER

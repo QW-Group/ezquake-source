@@ -725,6 +725,7 @@ void R_Init(void)
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+#ifdef BLOOM_SUPPORTED
 	Cvar_Register(&r_bloom);
 	Cvar_Register(&r_bloom_darken);
 	Cvar_Register(&r_bloom_alpha);
@@ -732,6 +733,7 @@ void R_Init(void)
 	Cvar_Register(&r_bloom_intensity);
 	Cvar_Register(&r_bloom_sample_size);
 	Cvar_Register(&r_bloom_fast_sample);
+#endif
 	Cvar_Register(&r_drawentities);
 	Cvar_Register(&r_lerpframes);
 	Cvar_Register(&r_drawflame);
@@ -930,7 +932,7 @@ static void R_RenderScene(void)
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
 
-		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, null_texture_reference, 0, GL_TRIANGLE_STRIP);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, NULL, null_texture_reference, 0, GL_TRIANGLE_STRIP);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);
@@ -967,7 +969,7 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	clearColor[1] = color[1] / 255.0;
 	clearColor[2] = color[2] / 255.0;
 
-	GL_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
+	R_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
 }
 
 static void R_Clear(void)
@@ -990,10 +992,10 @@ static void R_Clear(void)
 
 	if (gl_clear.integer) {
 		if (gl_fogenable.integer) {
-			GL_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
+			R_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
 		}
 		else {
-			GL_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
+			R_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
 		}
 	}
 

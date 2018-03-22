@@ -873,11 +873,6 @@ GLenum GLC_LightmapTexEnv(void)
 	return gl_invlightmaps ? GL_BLEND : GL_MODULATE;
 }
 
-void GLC_SetLightmapTextureEnvironment(GLenum textureUnit)
-{
-	GL_TextureEnvModeForUnit(textureUnit, GLC_LightmapTexEnv());
-}
-
 void GLC_ClearLightmapPolys(void)
 {
 	int i;

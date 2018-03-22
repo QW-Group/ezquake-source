@@ -119,7 +119,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, &bubble_state, null_texture_reference, 0, GL_TRIANGLE_FAN);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, NULL, &bubble_state, null_texture_reference, 0, GL_TRIANGLE_FAN);
 
 		first_dlight = false;
 	}

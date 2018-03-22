@@ -529,11 +529,12 @@ void R_BloomBlend(void)
 
 #else // BLOOM_SUPPORTED
 
+void R_BloomBlend(void)
+{
+}
 
+void R_InitBloomTextures(void)
+{
+}
 
 #endif // BLOOM_SUPPORTED
-
-
-
-
-

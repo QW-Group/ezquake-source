@@ -3,6 +3,7 @@
 #define EZQUAKE_GL_RPART_HEADER
 
 #include "gl_sprite3d.h"
+#include "r_state.h"
 
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				32768
@@ -118,6 +119,7 @@ typedef struct particle_type_s {
 	sprite3d_batch_id billboard_type;
 
 	int           particles;
+	rendering_state_t state;
 } particle_type_t;
 
 #define	MAX_PTEX_COMPONENTS		8

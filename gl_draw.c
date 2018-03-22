@@ -32,6 +32,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "r_texture.h"
 #include "r_matrix.h"
 #include "r_local.h"
+#include "r_state.h"
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);
@@ -316,7 +317,7 @@ void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 	float resdif_w = (glwidth / (float)vid.conwidth);
 	float resdif_h = (glheight / (float)vid.conheight);
 
-	GL_EnableScissorTest(
+	R_EnableScissorTest(
 		Q_rint(x * resdif_w),
 		Q_rint((vid.conheight - (y + height)) * resdif_h),
 		Q_rint(width * resdif_w),
@@ -331,7 +332,7 @@ void Draw_EnableScissor(int left, int right, int top, int bottom)
 
 void Draw_DisableScissor(void)
 {
-	GL_DisableScissorTest();
+	R_DisableScissorTest();
 }
 
 //=============================================================================

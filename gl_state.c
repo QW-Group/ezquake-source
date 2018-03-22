@@ -85,6 +85,7 @@ static GLenum glTextureEnvModeValues[r_texunit_mode_count];
 void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 {
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
+	int i;
 
 	state->depth.func = r_depthfunc_less;
 	state->depth.nearRange = 0;
@@ -119,6 +120,11 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	state->clearColor[3] = 1;
 	state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1;
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = true;
+
+	for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
+		state->textureUnits[i].enabled = false;
+		state->textureUnits[i].mode = GL_MODULATE;
+	}
 
 	if (default_state) {
 		state->cullface.mode = r_cullface_front;
@@ -401,8 +407,6 @@ void GL_GetViewport(int* view)
 
 void GL_InitialiseState(void)
 {
-	int i;
-
 	glDepthFunctions[r_depthfunc_less] = GL_LESS;
 	glDepthFunctions[r_depthfunc_equal] = GL_EQUAL;
 	glDepthFunctions[r_depthfunc_lessorequal] = GL_LEQUAL;
@@ -445,10 +449,6 @@ void GL_InitialiseState(void)
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
-	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
-		opengl.rendering_state.textureUnits[i].enabled = false;
-		opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
-	}
 
 	GL_InitialiseBufferState();
 	GL_InitialiseProgramState();
@@ -930,4 +930,43 @@ void GLC_ClientActiveTexture(GLenum texture_unit)
 void R_ApplyRenderingState(rendering_state_t* state)
 {
 	GL_ApplyRenderingState(state);
+}
+
+void R_CustomColor(float r, float g, float b, float a)
+{
+	if (GL_UseImmediateMode()) {
+		if (opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
+			glColor4f(
+				opengl.rendering_state.color[0] = r,
+				opengl.rendering_state.color[1] = g,
+				opengl.rendering_state.color[2] = b,
+				opengl.rendering_state.color[3] = a
+			);
+		}
+	}
+}
+
+void R_EnableScissorTest(int x, int y, int width, int height)
+{
+	if (GL_UseImmediateMode()) {
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(x, y, width, height);
+	}
+}
+
+void R_DisableScissorTest(void)
+{
+	if (GL_UseImmediateMode()) {
+		glDisable(GL_SCISSOR_TEST);
+	}
+}
+
+void R_ClearColor(float r, float g, float b, float a)
+{
+	if (GL_UseImmediateMode()) {
+		glClearColor(r, g, b, a);
+	}
+	else if (GL_UseGLSL()) {
+		glClearColor(r, g, b, a);
+	}
 }

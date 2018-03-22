@@ -26,28 +26,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_state.h"
 
-rendering_state_t default3DState;
-rendering_state_t spritesStateGLM;
-rendering_state_t spritesStateGLC;
+static rendering_state_t default3DState;
+static rendering_state_t spritesStateGLM;
+static rendering_state_t spritesStateGLC;
 
 void R_InitialiseStates(void)
 {
 	R_InitRenderingState(&default3DState, true);
 
-	R_InitRenderingState(&spritesStateGLM, true);
-	spritesStateGLM.fog.enabled = false;
-	spritesStateGLM.blendingEnabled = true;
-	spritesStateGLM.blendFunc = r_blendfunc_premultiplied_alpha;
-	spritesStateGLM.cullface.enabled = false;
+	R_Init3DSpriteRenderingState(&spritesStateGLM);
 
-	R_InitRenderingState(&spritesStateGLC, true);
-	spritesStateGLC.fog.enabled = false;
-	spritesStateGLC.blendingEnabled = true;
-	spritesStateGLC.blendFunc = r_blendfunc_premultiplied_alpha;
-	spritesStateGLC.cullface.enabled = false;
-	spritesStateGLC.alphaTesting.enabled = true;
-	spritesStateGLC.alphaTesting.func = r_alphatest_func_greater;
-	spritesStateGLC.alphaTesting.value = 0.333f;
+	R_Init3DSpriteRenderingState(&spritesStateGLC);
 }
 
 float GL_WaterAlpha(void)
@@ -84,12 +73,9 @@ void GLM_StateEndDraw3DSprites(void)
 
 void GL_StateDefaultInit(void)
 {
-	rendering_state_t state;
-
 	ENTER_STATE;
 
-	R_InitRenderingState(&state, true);
-	R_ApplyRenderingState(&state);
+	R_ApplyRenderingState(&default3DState);
 
 	LEAVE_STATE;
 }

@@ -232,6 +232,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	qbool alpha_test = false;
 	qbool nearest = imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST;
 	int i;
+	extern cvar_t scr_coloredText;
 
 	GL_PushModelviewMatrix(modelviewMatrix);
 	GL_PushProjectionMatrix(projectionMatrix);
@@ -244,29 +245,18 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	}
 	glc_last_texture_used = ref;
 
-	GLC_StateBeginImageDraw();
+	GLC_StateBeginImageDraw(imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT);
 	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
 	GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
-
-	if (imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT) {
-		extern cvar_t gl_alphafont, scr_coloredText;
-		
-		alpha_test = !gl_alphafont.integer;
-
-		GL_TextureEnvMode(scr_coloredText.integer ? GL_MODULATE : GL_REPLACE);
-	}
-	else {
-		GL_TextureEnvMode(GL_MODULATE);
-	}
-
-	GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
 
 	if (GL_BuffersSupported()) {
 		extern cvar_t gl_vbo_clientmemory;
 
 		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
+		if (scr_coloredText.integer) {
+			glEnableClientState(GL_COLOR_ARRAY);
+		}
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
@@ -274,14 +264,18 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);
 
 			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
-			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+			if (scr_coloredText.integer) {
+				glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+			}
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
 		}
 		else {
 			GL_BindBuffer(imageVBO);
 
 			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
-			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+			if (scr_coloredText.integer) {
+				glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+			}
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
 		}
 
@@ -299,7 +293,9 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		GL_DrawArrays(GL_QUADS, start * 4, (i - start + 1) * 4);
 
 		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		if (scr_coloredText.integer) {
+			glDisableClientState(GL_COLOR_ARRAY);
+		}
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		if (!gl_vbo_clientmemory.integer) {
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);

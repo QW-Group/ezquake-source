@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_texture.h"
 #include "r_matrix.h"
+#include "r_state.h"
 
 //VULT
 static float varray_vertex[16];
@@ -43,8 +44,7 @@ static void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t r
 static void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width);
 
 typedef struct part_blend_info_s {
-	GLenum glSourceFactor;
-	GLenum glDestFactor;
+	r_blendfunc_t func;
 
 	func_color_transform_t color_transform;
 } part_blend_info_t;
@@ -85,15 +85,15 @@ static void blend_color_constant(col_t input, col_t output)
 
 static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 	// BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_premult_alpha },
+	{ r_blendfunc_premultiplied_alpha, blend_premult_alpha },
 	// BLEND_GL_SRC_ALPHA_GL_ONE (additive)
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_additive },
+	{ r_blendfunc_premultiplied_alpha, blend_additive },
 	// BLEND_GL_ONE_GL_ONE, (meag: was blend_additive... telesplash only)
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_one_one },
+	{ r_blendfunc_premultiplied_alpha, blend_one_one },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_color_constant },
+	{ r_blendfunc_premultiplied_alpha, blend_color_constant },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, (this is now for varying color only, can't convert?)
-	{ GL_ZERO, GL_ONE_MINUS_SRC_COLOR, blend_premult_alpha }
+	{ r_blendfunc_src_zero_dest_one_minus_src_color, blend_premult_alpha }
 };
 
 #define MAX_BEAM_TRAIL 10
@@ -173,22 +173,27 @@ do {																						\
 	memcpy(particle_textures[_ptex].originalCoords, particle_textures[_ptex].coords, sizeof(particle_textures[_ptex].originalCoords)); \
 } while(0);
 
-#define ADD_PARTICLE_TYPE(_id, _drawtype, _blend_type, _texture, _startalpha, _grav, _accel, _move, _custom, _verts_per_primitive) \
-do { \
-	particle_types[count].id = (_id);                                              \
-	particle_types[count].drawtype = (_drawtype);                                  \
-	particle_types[count].blendtype = (_blend_type);                               \
-	particle_types[count].texture = (_texture);                                    \
-	particle_types[count].startalpha = (_startalpha);                              \
-	particle_types[count].grav = 9.8 * (_grav);                                    \
-	particle_types[count].accel = (_accel);                                        \
-	particle_types[count].move = (_move);                                          \
-	particle_types[count].custom = (_custom);                                      \
-	particle_types[count].verts_per_primitive = (_verts_per_primitive);            \
-	particle_types[count].billboard_type = (SPRITE3D_PARTICLES_NEW_ ## _id);      \
-	particle_type_index[_id] = count;                                              \
-	count++;                                                                       \
-} while(0);
+static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendtype, part_tex_t texture_id, float startalpha, float grav, float accel, part_move_t move, float custom, int verts_per_primitive, int* count)
+{
+	particle_type_t* type = &particle_types[*count];
+
+	R_Init3DSpriteRenderingState(&type->state);
+	type->state.blendFunc = blend_options[blendtype].func;
+	type->state.depth.mask_enabled = false;
+	type->blendtype = blendtype;
+	type->id = id;
+	type->drawtype = drawtype;
+	type->texture = texture_id;
+	type->startalpha = startalpha;
+	type->grav = 9.8 * grav;
+	type->accel = accel;
+	type->move = move;
+	type->custom = custom;
+	type->verts_per_primitive = verts_per_primitive;
+	type->billboard_type = SPRITE3D_PARTICLES_NEW_p_spark + id;
+	particle_type_index[id] = *count;
+	*count++;
+}
 
 static int QMB_CompareParticleType(const void* lhs_, const void* rhs_)
 {
@@ -349,63 +354,63 @@ void QMB_InitParticles (void)
 	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 256, 256);
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
 
-	ADD_PARTICLE_TYPE(p_spark, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9);
-	ADD_PARTICLE_TYPE(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9);
-	ADD_PARTICLE_TYPE(p_gunblast, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -16, 0, pm_bounce, 1.3, 9);
+	QMB_AddParticleType(p_spark, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9, &count);
+	QMB_AddParticleType(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9, &count);
+	QMB_AddParticleType(p_gunblast, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -16, 0, pm_bounce, 1.3, 9, &count);
 
-	ADD_PARTICLE_TYPE(p_fire, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 204, 0, -2.95, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_chunk, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, -16, 0, pm_bounce, 1.475, 4);
-	ADD_PARTICLE_TYPE(p_shockwave, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 0, -4.85, pm_nophysics, 0, 4);
-	ADD_PARTICLE_TYPE(p_inferno_flame, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 153, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_inferno_trail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 204, 0, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_trailpart, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 230, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_smoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_smoke, 140, 3, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_dpfire, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_dpsmoke, 144, 0, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_dpsmoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_dpsmoke, 85, 3, 0, pm_die, 0, 4);
+	QMB_AddParticleType(p_fire, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 204, 0, -2.95, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_chunk, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, -16, 0, pm_bounce, 1.475, 4, &count);
+	QMB_AddParticleType(p_shockwave, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 0, -4.85, pm_nophysics, 0, 4, &count);
+	QMB_AddParticleType(p_inferno_flame, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 153, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_inferno_trail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 204, 0, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_trailpart, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 230, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_smoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_smoke, 140, 3, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_dpfire, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_dpsmoke, 144, 0, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_dpsmoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_dpsmoke, 85, 3, 0, pm_die, 0, 4, &count);
 
-	ADD_PARTICLE_TYPE(p_teleflare, pd_billboard, BLEND_GL_ONE_GL_ONE, ptex_blueflare, 255, 0, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_blood1, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_blood1, 255, -20, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_blood2, pd_billboard_vel, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_blood2, 255, -25, 0, pm_die, 0.018, 4);
+	QMB_AddParticleType(p_teleflare, pd_billboard, BLEND_GL_ONE_GL_ONE, ptex_blueflare, 255, 0, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_blood1, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_blood1, 255, -20, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_blood2, pd_billboard_vel, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_blood2, 255, -25, 0, pm_die, 0.018, 4, &count);
 
-	ADD_PARTICLE_TYPE(p_lavasplash, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_lava, 170, 0, 0, pm_nophysics, 0, 4);
-	ADD_PARTICLE_TYPE(p_blood3, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_blood3, 255, -20, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_bubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 8, 0, pm_float, 0, 4);
-	ADD_PARTICLE_TYPE(p_staticbubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0, 4);
+	QMB_AddParticleType(p_lavasplash, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_lava, 170, 0, 0, pm_nophysics, 0, 4, &count);
+	QMB_AddParticleType(p_blood3, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_blood3, 255, -20, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_bubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 8, 0, pm_float, 0, 4, &count);
+	QMB_AddParticleType(p_staticbubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0, 4, &count);
 
 	//VULT PARTICLES
-	ADD_PARTICLE_TYPE(p_rain, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 100, 0, 0, pm_rain, 0, 4);
-	ADD_PARTICLE_TYPE(p_alphatrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 100, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_railtrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 0, 0, pm_die, 0, 4);
+	QMB_AddParticleType(p_rain, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 100, 0, 0, pm_rain, 0, 4, &count);
+	QMB_AddParticleType(p_alphatrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 100, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_railtrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 0, 0, pm_die, 0, 4, &count);
 
-	ADD_PARTICLE_TYPE(p_vxblood, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_blood3, 255, -38, 0, pm_normal, 0, 4); //HyperNewbie - Blood does NOT glow like fairy light
-	ADD_PARTICLE_TYPE(p_streak, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -64, 0, pm_streak, 1.5, 4); //grav was -64
-	ADD_PARTICLE_TYPE(p_streakwave, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, 0, 0, pm_streakwave, 0, 4);
-	ADD_PARTICLE_TYPE(p_lavatrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 3, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_vxsmoke, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT, ptex_smoke, 140, 3, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_vxsmoke_red, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_muzzleflash, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_2dshockwave, pd_normal, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_shockwave, 255, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_vxrocketsmoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_flame, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 10, 0, pm_die, 0, 4);
-	ADD_PARTICLE_TYPE(p_trailbleed, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_bleedspike, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_lightningbeam, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lightning, 128, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_bubble2, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 1, 0, pm_float, 0, 4);
-	ADD_PARTICLE_TYPE(p_bloodcloud, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_generic, 255, -3, 0, pm_normal, 0, 4);
-	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475, 4);
-	ADD_PARTICLE_TYPE(p_smallspark, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5, 4); //grav was -64
+	QMB_AddParticleType(p_vxblood, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_blood3, 255, -38, 0, pm_normal, 0, 4, &count); //HyperNewbie - Blood does NOT glow like fairy light
+	QMB_AddParticleType(p_streak, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -64, 0, pm_streak, 1.5, 4, &count); //grav was -64
+	QMB_AddParticleType(p_streakwave, pd_hide, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, 0, 0, pm_streakwave, 0, 4, &count);
+	QMB_AddParticleType(p_lavatrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, 3, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_vxsmoke, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT, ptex_smoke, 140, 3, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_vxsmoke_red, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_muzzleflash, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_2dshockwave, pd_normal, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_shockwave, 255, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_vxrocketsmoke, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_flame, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 10, 0, pm_die, 0, 4, &count);
+	QMB_AddParticleType(p_trailbleed, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_bleedspike, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_lightningbeam, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lightning, 128, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_bubble2, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 1, 0, pm_float, 0, 4, &count);
+	QMB_AddParticleType(p_bloodcloud, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_generic, 255, -3, 0, pm_normal, 0, 4, &count);
+	QMB_AddParticleType(p_chunkdir, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475, 4, &count);
+	QMB_AddParticleType(p_smallspark, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5, 4, &count); //grav was -64
 
 	//HyperNewbie particles
-	ADD_PARTICLE_TYPE(p_slimeglow, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lava, 72, 0, 0, pm_nophysics, 0, 4); //Glow
-	ADD_PARTICLE_TYPE(p_slimebubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0, 4);
-	ADD_PARTICLE_TYPE(p_blacklavasmoke, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT, ptex_smoke, 140, 3, 0, pm_normal, 0, 4);
+	QMB_AddParticleType(p_slimeglow, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_lava, 72, 0, 0, pm_nophysics, 0, 4, &count); //Glow
+	QMB_AddParticleType(p_slimebubble, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0, 4, &count);
+	QMB_AddParticleType(p_blacklavasmoke, pd_billboard, BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT, ptex_smoke, 140, 3, 0, pm_normal, 0, 4, &count);
 
 	//Allow overkill trails
 	if (amf_part_fulldetail.integer) {
-		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_static, 0, 4);
+		QMB_AddParticleType(p_streaktrail, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 128, 0, 0, pm_static, 0, 4, &count);
 	}
 	else {
-		ADD_PARTICLE_TYPE(p_streaktrail, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 128, 0, 0, pm_die, 0, 4);
+		QMB_AddParticleType(p_streaktrail, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 128, 0, 0, pm_die, 0, 4, &count);
 	}
 
 	QMB_SortParticleTypes();
@@ -543,7 +548,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_STRIP, true, false);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_STRIP);
 					first = false;
 				}
 
@@ -581,7 +586,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
 					first = false;
 				}
 
@@ -631,7 +636,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
 						first = false;
 					}
 
@@ -679,7 +684,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
 						first = false;
 					}
 

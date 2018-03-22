@@ -263,7 +263,7 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 	ENTER_STATE;
 
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
-	GL_CustomColor(color[0] * wateralpha / 255.0f, color[1] * wateralpha / 255.0f, color[2] * wateralpha / 255.0f, wateralpha);
+	R_CustomColor(color[0] * wateralpha / 255.0f, color[1] * wateralpha / 255.0f, color[2] * wateralpha / 255.0f, wateralpha);
 	// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 	LEAVE_STATE;
@@ -335,7 +335,7 @@ void GLC_StateBeginWaterSurfaces(void)
 	if (r_fastturb.integer) {
 		if (wateralpha < 1.0) {
 			R_ApplyRenderingState(&fastTranslucentWaterSurfacesState);
-			GL_CustomColor(wateralpha, wateralpha, wateralpha, wateralpha);
+			R_CustomColor(wateralpha, wateralpha, wateralpha, wateralpha);
 		}
 		else {
 			R_ApplyRenderingState(&fastWaterSurfacesState);
@@ -344,7 +344,7 @@ void GLC_StateBeginWaterSurfaces(void)
 	else {
 		if (wateralpha < 1.0) {
 			R_ApplyRenderingState(&translucentWaterSurfacesState);
-			GL_CustomColor(wateralpha, wateralpha, wateralpha, wateralpha);
+			R_CustomColor(wateralpha, wateralpha, wateralpha, wateralpha);
 		}
 		else {
 			R_ApplyRenderingState(&waterSurfacesState);

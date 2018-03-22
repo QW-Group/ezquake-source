@@ -88,7 +88,7 @@ void GLC_StateBeginFastSky(void)
 	else {
 		R_ApplyRenderingState(&fastSkyState);
 	}
-	GL_CustomColor(r_skycolor.color);
+	R_CustomColor(r_skycolor.color[0], r_skycolor.color[1], r_skycolor.color[2], r_skycolor.color[3]);
 
 	LEAVE_STATE;
 }
@@ -107,7 +107,7 @@ void GLC_StateBeginSkyZBufferPass(void)
 
 	if (gl_fogenable.integer && gl_fogsky.integer) {
 		R_ApplyRenderingState(&skyDomeZPassFoggedState);
-		GL_CustomColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+		R_CustomColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
 	}
 	else {
 		R_ApplyRenderingState(&skyDomeZPassState);

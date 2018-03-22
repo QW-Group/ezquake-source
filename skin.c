@@ -784,7 +784,6 @@ void R_TranslatePlayerSkin(int playernum)
 	}
 
 	R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, false);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 	GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].base, GL_LINEAR, GL_LINEAR);
 
 	// TODO: Dead skins
@@ -831,7 +830,6 @@ void R_TranslatePlayerSkin(int playernum)
 		}
 
 		R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, true);
-		GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 		GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].fb, GL_LINEAR, GL_LINEAR);
 	}
 }

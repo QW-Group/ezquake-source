@@ -309,7 +309,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 
 	if (GL_UseImmediateMode()) {
 		if (e->alpha) {
-			GL_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
+			R_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
 		}
 	}
 

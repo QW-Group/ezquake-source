@@ -32,6 +32,7 @@ static rendering_state_t brightenScreenState;
 static rendering_state_t lineState;
 static rendering_state_t sceneBlurState;
 static rendering_state_t glcImageDrawState;
+static rendering_state_t glcAlphaTestedImageDrawState;
 static rendering_state_t glmImageDrawState;
 static rendering_state_t glcBloomState;
 static rendering_state_t polyBlendState;
@@ -74,6 +75,10 @@ void R_Initialise2DStates(void)
 	glcImageDrawState.blendingEnabled = true;
 	glcImageDrawState.blendFunc = r_blendfunc_premultiplied_alpha;
 
+	memcpy(&glcAlphaTestedImageDrawState, &glcImageDrawState, sizeof(glcAlphaTestedImageDrawState));
+	glcAlphaTestedImageDrawState.alphaTesting.enabled = true;
+
+#ifdef BLOOM_SUPPORTED
 	R_InitRenderingState(&glcBloomState, true);
 	glcBloomState.depth.test_enabled = false;
 	glcBloomState.cullface.enabled = false;
@@ -84,6 +89,7 @@ void R_Initialise2DStates(void)
 	glcBloomState.color[3] = 1.0f;
 	glcBloomState.textureUnits[0].enabled = true;
 	glcBloomState.textureUnits[0].mode = r_texunit_mode_modulate;
+#endif
 
 	R_InitRenderingState(&polyBlendState, true);
 	polyBlendState.depth.test_enabled = false;
@@ -208,12 +214,17 @@ void GLC_StateEndPolyBlend(void)
 {
 }
 
-void GLC_StateBeginImageDraw(void)
+void GLC_StateBeginImageDraw(qbool is_text)
 {
+	extern cvar_t gl_alphafont;
+
 	ENTER_STATE;
-
-	R_ApplyRenderingState(&glcImageDrawState);
-
+	if (is_text && !gl_alphafont.integer) {
+		R_ApplyRenderingState(&glcAlphaTestedImageDrawState);
+	}
+	else {
+		R_ApplyRenderingState(&glcImageDrawState);
+	}
 	LEAVE_STATE;
 }
 

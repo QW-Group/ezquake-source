@@ -71,7 +71,6 @@ void GL_EnableWaterFog(int contents)
 	float colors[4];
 
 	if (!gl_waterfog.value || COM_CheckParm(cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
-		GL_DisableFog();
 		return;
 	}
 

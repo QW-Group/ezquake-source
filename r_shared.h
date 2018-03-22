@@ -49,8 +49,6 @@ extern	float	pixelAspect;
 
 extern int		r_drawnpolycount;
 
-extern cvar_t	r_clearcolor;
-
 extern int	sintable[MAXWIDTH + CYCLE];
 extern int	intsintable[MAXWIDTH + CYCLE];
 
