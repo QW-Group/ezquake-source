@@ -178,6 +178,7 @@ void GLM_CreateMultiImageProgram(void)
 
 			imageIndexBuffer = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "image-indexes", sizeof(imageIndexData), imageIndexData, buffertype_constant);
 		}
+
 		GL_BindBuffer(imageIndexBuffer);
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
@@ -190,7 +191,8 @@ void GLM_CreateMultiImageProgram(void)
 
 void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 {
-	uintptr_t offset = GL_BufferOffset(imageVBO) / sizeof(imageData.images[0]);
+	uintptr_t index_offset = (start * 5 * sizeof(GLuint));
+	uintptr_t buffer_offset = GL_BufferOffset(imageVBO) / sizeof(imageData.images[0]);
 
 	GL_UseProgram(multiImageProgram.program);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
@@ -203,9 +205,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
 #else
-	{
-		GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)(start * 5 * sizeof(GLuint)), offset);
-	}
+	GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)index_offset, buffer_offset);
 #endif
 }
 
@@ -263,6 +263,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		int i;
 
 		glColor4ubv(imageData.images[start].colour);
+		memcpy(current_color, imageData.images[start].colour, sizeof(current_color));
 		glBegin(GL_QUADS);
 
 		for (i = start; i <= end; ++i) {
@@ -365,7 +366,14 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	}
 	else {
 		int imageIndex = imageData.imageCount * 4;
-		memcpy(&imageData.glc_images[imageIndex].colour, color, sizeof(byte) * 4);
+		glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
+		float alpha = color[3] / 255.0f;
+
+		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
+		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
+		img->colour[2] = (img + 1)->colour[2] = (img + 2)->colour[2] = (img + 3)->colour[2] = color[2] * alpha;
+		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3];
+
 		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
 
 		imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
