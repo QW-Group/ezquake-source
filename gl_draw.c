@@ -1074,6 +1074,16 @@ void Draw_AdjustConback (void)
 	}
 }
 
+static void Draw_DeleteOldLevelshot(mpic_t* pic)
+{
+	if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
+		GL_DeleteTexture(&pic->texnum);
+		if (!CachePic_RemoveByPic(pic)) {
+			GL_TextureReferenceInvalidate(pic->texnum);
+		}
+	}
+}
+
 void Draw_InitConback (void)
 {
 	qpic_t *cb;
@@ -1082,6 +1092,7 @@ void Draw_InitConback (void)
 
 	// Level shots init. It's cache based so don't free!
 	// Expect the cache to be wiped thus render the old data invalid
+	Draw_DeleteOldLevelshot(last_lvlshot);
 	last_lvlshot = NULL;
 	last_mapname[0] = 0;
 
@@ -1127,24 +1138,17 @@ void Draw_ConsoleBackground (int lines)
 	{
 		// Here we limit call Draw_CachePicSafe() once per level,
 		// because if image not found Draw_CachePicSafe() will try open image again each frame, that cause HDD lag.
-		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname)))
-		{
+		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) {
 			char name[MAX_QPATH];
 			mpic_t* old_levelshot = last_lvlshot;
 
 			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
-			if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
-			{
+			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) {
 				// Resize.
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
 
-				if (old_levelshot) {
-					GL_DeleteTexture(&old_levelshot->texnum);
-					if (!CachePic_RemoveByPic(old_levelshot)) {
-						GL_TextureReferenceInvalidate(old_levelshot->texnum);
-					}
-				}
+				Draw_DeleteOldLevelshot(old_levelshot);
 			}
 
 			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
