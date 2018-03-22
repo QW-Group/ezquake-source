@@ -310,6 +310,7 @@ void CL_DecayLights(void)
 	unsigned int i;
 	unsigned int j;
 	dlight_t *dl;
+	extern cvar_t r_lightdecayrate;
 
 	if (cls.state < ca_active) {
 		return;
@@ -320,7 +321,7 @@ void CL_DecayLights(void)
 			for (j = 0; j < 32; j++) {
 				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
 					dl = cl_dlights + i*32 + j;
-					dl->radius -= cls.frametime * dl->decay;
+					dl->radius -= max(r_lightdecayrate.value, 1) * cls.frametime * dl->decay;
 
 					if (dl->radius < 0) {
 						dl->radius = 0;

@@ -11072,6 +11072,12 @@
       "desc": "Determines the color of the blood (for standard particles). The QW-default value is 225.",
       "type": "float"
     },
+    "r_lightdecayrate": {
+      "default": "2",
+      "desc": "Determines how fast lights decay (radius decreases).  Minimum value 1 (QWCL)",
+      "group-id": "8",
+      "type": "float"
+    },
     "r_lightflicker": {
       "group-id": "8",
       "type": "boolean",
