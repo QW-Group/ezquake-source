@@ -61,7 +61,6 @@ texture_t *r_notexture_mip = NULL;
 refdef2_t r_refdef2;                          // screen size info
 refdef_t  r_refdef;                           // screen size info
 entity_t  r_worldentity;
-entity_t  *currententity;
 mplane_t  frustum[4];
 mleaf_t   *r_viewleaf;
 mleaf_t   *r_oldviewleaf;
@@ -77,7 +76,6 @@ int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
 int       lightmode = 2;
 unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light value
-texture_ref shelltexture;
 texture_ref underwatertexture, detailtexture, solidtexture;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
@@ -261,7 +259,7 @@ qbool R_CanDrawSimpleItem(entity_t* e)
 	}
 }
 
-static qbool R_DrawTrySimpleItem(void)
+static qbool R_DrawTrySimpleItem(entity_t* ent)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
@@ -269,16 +267,16 @@ static qbool R_DrawTrySimpleItem(void)
 	vec3_t right, up, org, offset, angles;
 	int skin;
 
-	if (!currententity || !currententity->model) {
+	if (!ent || !ent->model) {
 		return false;
 	}
 
-	skin = currententity->skinnum >= 0 && currententity->skinnum < MAX_SIMPLE_TEXTURES ? currententity->skinnum : 0;
+	skin = ent->skinnum >= 0 && ent->skinnum < MAX_SIMPLE_TEXTURES ? ent->skinnum : 0;
 	if (GL_UseGLSL()) {
-		simpletexture = currententity->model->simpletexture_array[skin];
+		simpletexture = ent->model->simpletexture_array[skin];
 	}
 	else {
-		simpletexture = currententity->model->simpletexture[skin];
+		simpletexture = ent->model->simpletexture[skin];
 	}
 	if (!GL_TextureReferenceIsValid(simpletexture)) {
 		return false;
@@ -293,8 +291,8 @@ static qbool R_DrawTrySimpleItem(void)
 	}
 	else if (sprtype == SPR_FACING_UPRIGHT) {
 		VectorSet(up, 0, 0, 1);
-		right[0] = currententity->origin[1] - r_origin[1];
-		right[1] = -(currententity->origin[0] - r_origin[0]);
+		right[0] = ent->origin[1] - r_origin[1];
+		right[1] = -(ent->origin[0] - r_origin[0]);
 		right[2] = 0;
 		VectorNormalizeFast(right);
 		vectoangles(right, angles);
@@ -311,12 +309,12 @@ static qbool R_DrawTrySimpleItem(void)
 		vectoangles(right, angles);
 	}
 
-	VectorCopy(currententity->origin, org);
+	VectorCopy(ent->origin, org);
 	// brush models require some additional centering
-	if (currententity->model->type == mod_brush) {
+	if (ent->model->type == mod_brush) {
 		extern cvar_t cl_model_bobbing;
 
-		VectorSubtract(currententity->model->maxs, currententity->model->mins, offset);
+		VectorSubtract(ent->model->maxs, ent->model->mins, offset);
 		offset[2] = 0;
 		VectorMA(org, 0.5, offset, org);
 
@@ -327,7 +325,7 @@ static qbool R_DrawTrySimpleItem(void)
 	org[2] += sprsize;
 
 	if (GL_UseGLSL()) {
-		model_t* m = currententity->model;
+		model_t* m = ent->model;
 
 		GLM_DrawSimpleItem(
 			m->simpletexture_array[skin],
@@ -414,7 +412,6 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 
 		for (i = 0; i < vislist->count; i++) {
 			visentity_t* todraw = &vislist->list[i];
-			currententity = &todraw->ent;
 
 			if (!todraw->draw[type]) {
 				continue;
@@ -422,26 +419,26 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 
 			switch (todraw->type) {
 			case mod_brush:
-				R_DrawBrushModel(currententity);
+				R_DrawBrushModel(&todraw->ent);
 				break;
 			case mod_sprite:
-				if (currententity->model->type == mod_sprite) {
-					R_DrawSpriteModel(currententity);
+				if (todraw->ent.model->type == mod_sprite) {
+					R_DrawSpriteModel(&todraw->ent);
 				}
 				else {
-					R_DrawTrySimpleItem();
+					R_DrawTrySimpleItem(&todraw->ent);
 				}
 				break;
 			case mod_alias:
 				if (type == visent_shells) {
-					R_DrawAliasPowerupShell(currententity);
+					R_DrawAliasPowerupShell(&todraw->ent);
 				}
 				else {
-					R_DrawAliasModel(currententity);
+					R_DrawAliasModel(&todraw->ent);
 				}
 				break;
 			case mod_alias3:
-				R_DrawAlias3Model(currententity);
+				R_DrawAlias3Model(&todraw->ent);
 				break;
 			case mod_unknown:
 				// keeps compiler happy

@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_lightmaps.h"
 #include "r_local.h"
+#include "gl_aliasmodel.h"
 
 static texture_ref GL_GenerateShellTexture(void)
 {
@@ -77,8 +78,9 @@ void R_InitTextures(void)
 	int x, y, m;
 	byte *dest;
 
-	if (r_notexture_mip)
+	if (r_notexture_mip) {
 		return; // FIXME: may be do not Hunk_AllocName but made other stuff ???
+	}
 
 	// create a simple checkerboard texture for the default
 	r_notexture_mip = (texture_t *)Hunk_AllocName(sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture");

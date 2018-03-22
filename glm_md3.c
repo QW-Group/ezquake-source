@@ -145,7 +145,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	}
 
 	GLM_DrawAliasModelFrame(
-		mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
+		ent, mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
 		surfaceInfo[0].texnum, null_texture_reference, false, ent->effects, ent->renderfx
 	);
 

@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_vao.h"
 
+#include "gl_aliasmodel.h" // for shelltexture only
+
 #define ALIASMODEL_NOTEXTURE_OPAQUE            0
 #define ALIASMODEL_NOTEXTURE_TRANSPARENT       1
 #define ALIASMODEL_SINGLETEXTURE_OPAQUE        2
@@ -174,7 +176,6 @@ void GL_StateEndEntities(visentlist_t* vislist)
 void GLC_StateBeginAliasPowerupShell(void)
 {
 	R_ApplyRenderingState(&powerupShellState);
-
 	R_TextureUnitBind(0, shelltexture);
 }
 

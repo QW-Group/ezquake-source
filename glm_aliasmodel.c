@@ -459,7 +459,7 @@ void GL_EndDrawAliasModels(void)
 
 // Called for .mdl & .md3
 void GLM_DrawAliasModelFrame(
-	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
+	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects
 )
 {
@@ -499,7 +499,7 @@ void GLM_DrawAliasModelFrame(
 	color[3] = r_modelalpha;
 
 	if (gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture)) {
-		if (R_PointIsUnderwater(currententity->origin)) {
+		if (R_PointIsUnderwater(ent->origin)) {
 			render_effects |= RF_CAUSTICS;
 		}
 	}
@@ -507,12 +507,12 @@ void GLM_DrawAliasModelFrame(
 	GLM_QueueAliasModelDraw(
 		model, color, poseVertIndex, vertsPerPose,
 		texture, fb_texture, effects,
-		currententity->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline, render_effects
+		ent->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline, render_effects
 	);
 }
 
 void GLM_DrawAliasFrame(
-	model_t* model, int pose1, int pose2,
+	entity_t* ent, model_t* model, int pose1, int pose2,
 	texture_ref texture, texture_ref fb_texture,
 	qbool outline, int effects, int render_effects
 )
@@ -522,7 +522,7 @@ void GLM_DrawAliasFrame(
 	int nextVertIndex = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
 
 	GLM_DrawAliasModelFrame(
-		model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
+		ent, model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
 		texture, fb_texture, outline, effects, render_effects
 	);
 }

@@ -40,8 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vao.h"
 #include "glc_vao.h"
 
-static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2);
-static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
+static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
+static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
 
 // Which pose to use if shadow to be drawn
@@ -210,7 +210,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 
 			order += 2;
 
-			if ((currententity->renderfx & RF_LIMITLERP)) {
+			if ((ent->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
@@ -296,7 +296,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 			GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
 		}
 		else {
-			GLC_DrawAliasOutlineFrame(model, pose1, pose2);
+			GLC_DrawAliasOutlineFrame(ent, model, pose1, pose2);
 		}
 	}
 }
@@ -310,7 +310,7 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 	GLC_StateEndAliasOutlineFrame();
 }
 
-static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
+static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2)
 {
 	int *order, count;
 	vec3_t interpolated_verts;
@@ -349,7 +349,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 		do {
 			order += 2;
 
-			if ((currententity->renderfx & RF_LIMITLERP))
+			if ((ent->renderfx & RF_LIMITLERP))
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
@@ -517,17 +517,17 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	GL_RotateModelview(ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
-	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
+	GLC_DrawAliasShadow(ent, paliashdr, lastposenum, shadevector, lightspot);
 	GLC_StateEndAliasModelShadow();
 
 	GL_PopModelviewMatrix(oldMatrix);
 }
 
-static void GLC_DrawAliasShadow(aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot)
+static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot)
 {
 	int *order, count;
 	vec3_t point;
-	float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
+	float lheight = ent->origin[2] - lightspot[2], height = 1 - lheight;
 	trivertx_t *verts;
 
 	verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);

@@ -55,7 +55,6 @@ extern int	intsintable[MAXWIDTH + CYCLE];
 extern	vec3_t	vup, base_vup;
 extern	vec3_t	vpn, base_vpn;
 extern	vec3_t	vright, base_vright;
-extern	entity_t		*currententity;
 
 #define NUMSTACKEDGES		2000
 #define	MINEDGES			NUMSTACKEDGES

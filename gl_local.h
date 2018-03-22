@@ -57,11 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#define GL_PARANOIA
 
-#define ALIAS_BASE_SIZE_RATIO		(1.0 / 11.0)
-					// normalizing factor so player model works out to about
-					//  1 pixel per triangle
-#define	MAX_LBM_HEIGHT		480
-
 #define SKYSHIFT		7
 #define	SKYSIZE			(1 << SKYSHIFT)
 #define SKYMASK			(SKYSIZE - 1)
@@ -69,13 +64,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BACKFACE_EPSILON	0.01
 
 void R_TimeRefresh_f (void);
-texture_t *R_TextureAnimation (texture_t *base);
+texture_t *R_TextureAnimation(entity_t* ent, texture_t *base);
 
 //====================================================
 
 extern	entity_t	r_worldentity;
 extern	vec3_t		modelorg;
-extern	entity_t	*currententity;
 extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
@@ -91,7 +85,6 @@ extern	texture_t	*r_notexture_mip;
 extern	unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	texture_ref netgraphtexture;
-extern	texture_ref shelltexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -208,11 +201,6 @@ int R_LightPoint (vec3_t p);
 
 // gl_refrag.c
 void R_StoreEfrags (efrag_t **ppefrag);
-
-// gl_mesh.c
-void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
-void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 
 // gl_rsurf.c
 
@@ -465,11 +453,6 @@ void GL_DisableFog(void);
 void GL_ConfigureFog(void);
 void GL_EnableWaterFog(int contents);
 
-#define NUMVERTEXNORMALS 162
-#define SHADEDOT_QUANT   64
-
-#define	MD3_INTERP_MAXDIST  300
-
 // 
 #define CHARSET_CHARS_PER_ROW	16
 #define CHARSET_WIDTH			1.0
@@ -495,9 +478,6 @@ void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(qbool vid_restart);
 void GL_CreateModelVBOs(qbool vid_restart);
 
-void R_DrawAliasModel(entity_t *ent);
-void R_DrawAliasPowerupShell(entity_t *ent);
-
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
@@ -514,7 +494,6 @@ void GLM_Prepare3DSprites(void);
 void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
-void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
 
 void GLM_EnterBatchedWorldRegion(void);
 void GLM_DrawSpriteModel(entity_t* e);
@@ -537,8 +516,6 @@ int GLC_LightmapCount(void);
 void GLM_CreateLightmapTextures(void);
 void GLM_PostProcessScreen(void);
 void GLC_CreateLightmapTextures(void);
-void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
-void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
@@ -561,8 +538,7 @@ void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, in
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair);
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_Draw_FadeScreen(float alpha);
-void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics);
-void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
+void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics);
 float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional);
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba);
@@ -773,12 +749,6 @@ void GL_StateEndPolyBlend(void);
 void GLC_StateBeginAlphaChain(void);
 void GLC_StateEndAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
-void GLC_StateBeginAliasPowerupShell(void);
-void GLC_StateEndAliasPowerupShell(void);
-void GLC_StateBeginUnderwaterCaustics(void);
-void GLC_StateEndUnderwaterCaustics(void);
-void GLC_StateBeginMD3Draw(float alpha, qbool textured);
-void GLC_StateEndMD3Draw(void);
 void GLC_StateBeginBrightenScreen(void);
 void GLC_StateEndBrightenScreen(void);
 void GLC_StateBeginFastSky(void);
@@ -829,8 +799,6 @@ void GLC_StateBeginSceneBlur(void);
 void GLC_StateEndSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
 void GLC_StateEndCausticsPolys(void);
-void GLC_StateBeginDrawViewModel(float alpha);
-void GLC_StateEndDrawViewModel(void);
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
 void GL_StateEndDrawBrushModel(void);
 void GL_StateDefault2D(void);
@@ -839,8 +807,6 @@ void GL_StateDefaultInit(void);
 
 void GLC_StateBeginDraw3DSprites(void);
 void GLC_StateEndDraw3DSprites(void);
-void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
-void GL_StateEndDrawAliasModel(void);
 
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateEndBloomDraw(void);

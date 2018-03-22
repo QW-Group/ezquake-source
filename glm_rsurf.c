@@ -411,7 +411,7 @@ void GLM_DrawWaterSurfaces(void)
 	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
 		glpoly_t* poly;
-		texture_t* tex = R_TextureAnimation(surf->texinfo->texture);
+		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
 		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, false);
 		GLM_AssignTexture(surf->texinfo->miptex, tex);
@@ -688,7 +688,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	}
 }
 
-void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
+void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics)
 {
 	int i;
 	glm_worldmodel_req_t* req = NULL;
@@ -716,7 +716,7 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 			continue;
 		}
 
-		tex = R_TextureAnimation(tex);
+		tex = R_TextureAnimation(ent, tex);
 		if (!GLM_AssignTexture(i, tex)) {
 			req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
 			GLM_AssignTexture(i, tex);

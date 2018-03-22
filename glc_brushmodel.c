@@ -218,7 +218,6 @@ static void GLC_EnsureVAOCreated(r_vao_id vao)
 }
 
 static void GLC_BlendLightmaps(void);
-static void GLC_DrawTextureChains(model_t *model, qbool caustics);
 void GLC_RenderFullbrights(void);
 void GLC_RenderLumas(void);
 GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count);
@@ -341,7 +340,7 @@ static void GLC_DrawFlat(model_t *model)
 	// } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-static void GLC_DrawTextureChains(model_t *model, qbool caustics)
+static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 {
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
@@ -424,7 +423,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			continue;
 		}
 
-		t = R_TextureAnimation(model->textures[i]);
+		t = R_TextureAnimation(ent, model->textures[i]);
 
 		if (t->isLumaTexture) {
 			isLumaTexture = useLumaTextures;
@@ -594,7 +593,7 @@ void GLC_DrawWorld(void)
 	extern msurface_t* alphachain;
 
 	if (r_drawflat.integer != 1) {
-		GLC_DrawTextureChains(cl.worldmodel, false);
+		GLC_DrawTextureChains(NULL, cl.worldmodel, false);
 	}
 	if (cl.worldmodel->drawflat_chain[0] || cl.worldmodel->drawflat_chain[1]) {
 		GLC_DrawFlat(cl.worldmodel);
@@ -615,12 +614,12 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 			GLC_DrawFlat(clmodel);
 		}
 		else {
-			GLC_DrawTextureChains(clmodel, caustics);
+			GLC_DrawTextureChains(e, clmodel, caustics);
 			GLC_DrawFlat(clmodel);
 		}
 	}
 	else {
-		GLC_DrawTextureChains(clmodel, caustics);
+		GLC_DrawTextureChains(e, clmodel, caustics);
 	}
 
 	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {

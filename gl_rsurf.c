@@ -101,14 +101,12 @@ void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 }
 
 //Returns the proper texture for a given time and base texture
-texture_t *R_TextureAnimation(texture_t *base)
+texture_t *R_TextureAnimation(entity_t* ent, texture_t *base)
 {
 	int relative, count;
 
-	if (currententity->frame) {
-		if (base->alternate_anims) {
-			base = base->alternate_anims;
-		}
+	if (ent && ent->frame && base->alternate_anims) {
+		base = base->alternate_anims;
 	}
 
 	if (!base->anim_total) {
@@ -344,15 +342,13 @@ void R_DrawWorld(void)
 
 	VectorCopy(r_refdef.vieworg, modelorg);
 
-	currententity = &ent;
-
 	//draw the world sky
 	R_DrawSky();
 
 	GL_EnterRegion("DrawWorld");
 	if (GL_UseGLSL()) {
 		GLM_EnterBatchedWorldRegion();
-		GLM_DrawBrushModel(cl.worldmodel, false, false);
+		GLM_DrawBrushModel(&ent, cl.worldmodel, false, false);
 	}
 	else {
 		GLC_DrawWorld();

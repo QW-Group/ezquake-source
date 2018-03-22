@@ -1447,7 +1447,6 @@ void R_DrawBrushModel(entity_t *e)
 	// dimman: disabled for qcon
 	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
-	currententity = e;
 	clmodel = e->model;
 	if (!clmodel->nummodelsurfaces) {
 		return;
@@ -1630,7 +1629,7 @@ void R_DrawBrushModel(entity_t *e)
 		}
 
 		if (GL_UseGLSL()) {
-			GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
+			GLM_DrawBrushModel(e, clmodel, polygonOffset, caustics);
 
 			// TODO: DrawAlphaChain for brush models in modern
 		}

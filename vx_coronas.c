@@ -144,7 +144,7 @@ void R_DrawCoronas(void)
 	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
 		sprite3d_batch_id batch_id = SPRITE3D_CORONATEX_STANDARD + (tex - CORONATEX_STANDARD);
 		corona_texture_t* texture = &corona_textures[tex];
-		GLubyte color[4];
+		byte color[4];
 
 		if (!r_corona_by_tex[tex]) {
 			continue;

@@ -25,13 +25,14 @@ void GLC_DrawAliasFrame(
 	qbool outline, int effects, qbool alpha_blend
 );
 void GLM_DrawAliasFrame(
+	entity_t* ent,
 	model_t* model, int pose1, int pose2,
 	texture_ref texture, texture_ref fb_texture,
 	qbool outline, int effects, int render_effects
 );
 
 void GLM_DrawAliasModelFrame(
-	model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
+	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
 	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects
 );
 
@@ -39,5 +40,50 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;
 extern cvar_t gl_powerupshells_effect1level, gl_powerupshells_effect2level;
+extern cvar_t gl_fb_models, r_shadows, r_fullbrightSkins, r_drawentities;
+
+void R_SetupAliasFrame(
+	entity_t* ent,
+	model_t* model,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
+	qbool mtex, qbool scrolldir, qbool outline,
+	texture_ref texture, texture_ref fb_texture,
+	int effects, int render_effects
+);
+
+#define ALIAS_BASE_SIZE_RATIO		(1.0 / 11.0)
+// normalizing factor so player model works out to about
+//  1 pixel per triangle
+#define	MAX_LBM_HEIGHT		480
+
+// FIXME: Get rid
+extern qbool gl_mtexable;
+
+extern texture_ref shelltexture;
+
+void GLC_StateBeginMD3Draw(float alpha, qbool textured);
+void GLC_StateEndMD3Draw(void);
+void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
+void GL_StateEndDrawAliasModel(void);
+void GLC_StateBeginUnderwaterCaustics(void);
+void GLC_StateEndUnderwaterCaustics(void);
+void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
+void GLC_StateBeginDrawViewModel(float alpha);
+void GLC_StateEndDrawViewModel(void);
+
+void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
+void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
+
+// gl_mesh.c
+void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);
+void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
+void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
+
+void GLC_StateBeginAliasPowerupShell(void);
+void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
+void GLC_StateEndAliasPowerupShell(void);
+
+void R_DrawAliasModel(entity_t *ent);
+void R_DrawAliasPowerupShell(entity_t *ent);
 
 #endif

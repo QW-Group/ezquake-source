@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+//#include "gl_local.h"
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
 #include "utils.h"
@@ -37,6 +37,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_matrix.h"
 #include "r_local.h"
+#include "r_framestats.h"
+#include "r_trace.h"
+
+texture_ref shelltexture;
 
 void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
 
@@ -177,7 +181,7 @@ static void R_RenderAliasModelEntity(
 		}
 	}
 
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		GLC_UnderwaterCaustics(ent, model, oldframe, frame, paliashdr);
 	}
 }
@@ -290,7 +294,7 @@ void R_OverrideModelTextures(entity_t* ent, texture_ref* texture, texture_ref* f
 
 static qbool R_CanDrawModelShadow(entity_t* ent)
 {
-	return (r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
+	return (r_shadows.integer && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
 }
 
 void R_DrawAliasModel(entity_t *ent)
@@ -411,8 +415,8 @@ void R_SetupAliasFrame(
 	oldpose = R_AliasFramePose(oldframe);
 	pose = R_AliasFramePose(frame);
 
-	if (GL_UseGLSL()) {
-		GLM_DrawAliasFrame(model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
+	if (R_UseModernOpenGL()) {
+		GLM_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else {
 		GLC_DrawAliasFrame(ent, model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
@@ -620,7 +624,6 @@ void R_DrawViewModel(void)
 
 	memset(&gun, 0, sizeof(gun));
 	cent = &cl.viewent;
-	currententity = &gun;
 
 	if (!(gun.model = cl.model_precache[cent->current.modelindex])) {
 		Host_Error("R_DrawViewModel: bad modelindex");
@@ -657,34 +660,49 @@ void R_DrawViewModel(void)
 		gun.framelerp = -1;
 	}
 
-	if (gl_mtexable) {
-		gun.alpha = bound(0, cl_drawgun.value, 1);
-	}
+	gun.alpha = bound(0, cl_drawgun.value, 1);
 
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
+		if (!gl_mtexable) {
+			gun.alpha = 0;
+		}
+
 		GL_EnterRegion("R_DrawViewModel");
 		GLC_StateBeginDrawViewModel(gun.alpha);
-	}
 
-	switch (currententity->model->type) {
-	case mod_alias:
-		R_DrawAliasModel(currententity);
-		if (gun.effects) {
-			R_DrawAliasPowerupShell(currententity);
+		switch (gun.model->type) {
+			case mod_alias:
+				R_DrawAliasModel(&gun);
+				if (gun.effects) {
+					R_DrawAliasPowerupShell(&gun);
+				}
+				break;
+			case mod_alias3:
+				R_DrawAlias3Model(&gun);
+				break;
+			default:
+				Com_Printf("Not drawing view model of type %i\n", gun.model->type);
+				break;
 		}
-		break;
-	case mod_alias3:
-		R_DrawAlias3Model(currententity);
-		break;
-	default:
-		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
-		break;
-	}
 
-	if (GL_UseImmediateMode()) {
 		GLC_StateEndDrawViewModel();
-
 		GL_LeaveRegion();
+	}
+	else {
+		switch (gun.model->type) {
+			case mod_alias:
+				R_DrawAliasModel(&gun);
+				if (gun.effects) {
+					R_DrawAliasPowerupShell(&gun);
+				}
+				break;
+			case mod_alias3:
+				R_DrawAlias3Model(&gun);
+				break;
+			default:
+				Com_Printf("Not drawing view model of type %i\n", gun.model->type);
+				break;
+		}
 	}
 }
 
@@ -923,7 +941,7 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
 	}
 	else {
@@ -949,7 +967,7 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 	maliasframedesc_t *oldframe, *frame;
 	float oldMatrix[16];
 
-	if (GL_UseGLSL()) {
+	if (!R_UseImmediateOpenGL()) {
 		return;
 	}
 
@@ -979,13 +997,11 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	if (GL_UseImmediateMode()) {
-		GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-		GL_PushModelviewMatrix(oldMatrix);
-		GL_StateBeginDrawAliasModel(ent, paliashdr);
-		GLC_AliasModelPowerupShell(ent, oldframe, frame);
-		GL_StateEndDrawAliasModel();
-		GL_PopModelviewMatrix(oldMatrix);
-		GL_LeaveTracedRegion(true);
-	}
+	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	GL_PushModelviewMatrix(oldMatrix);
+	GL_StateBeginDrawAliasModel(ent, paliashdr);
+	GLC_AliasModelPowerupShell(ent, oldframe, frame);
+	GL_StateEndDrawAliasModel();
+	GL_PopModelviewMatrix(oldMatrix);
+	GL_LeaveTracedRegion(true);
 }
