@@ -30,26 +30,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "vk_local.h"
 
-static VkInstance instance;
-static VkSurfaceKHR surface;
+vk_options_t vk_options;
 
 qbool VK_Initialise(SDL_Window* window)
 {
-	if (!VK_CreateInstance(window, &instance)) {
+	memset(&vk_options, 0, sizeof(vk_options));
+
+	if (!VK_CreateInstance(window, &vk_options.instance)) {
 		return false;
 	}
 
-	if (!VK_CreateWindowSurface(window, instance, &surface)) {
+	if (!VK_CreateWindowSurface(window, vk_options.instance, &vk_options.surface)) {
 		VK_Shutdown();
 		return false;
 	}
 
-	if (!VK_SelectPhysicalDevice(instance, surface)) {
+	if (!VK_SelectPhysicalDevice(vk_options.instance, vk_options.surface)) {
 		VK_Shutdown();
 		return false;
 	}
 
-	if (!VK_CreateLogicalDevice(instance)) {
+	if (!VK_CreateLogicalDevice(vk_options.instance)) {
+		VK_Shutdown();
+		return false;
+	}
+
+	if (!VK_CreateSwapChain(window, vk_options.instance, vk_options.surface)) {
 		VK_Shutdown();
 		return false;
 	}
@@ -60,12 +66,15 @@ qbool VK_Initialise(SDL_Window* window)
 
 void VK_Shutdown(void)
 {
-	if (instance) {
-		VK_DestroyWindowSurface(instance, surface);
-		VK_ShutdownDebugCallback(instance);
-		vkDestroyInstance(instance, NULL);
-		instance = NULL;
+	VK_DestroySwapChain();
+	
+	if (vk_options.instance) {
+		VK_DestroyWindowSurface(vk_options.instance, vk_options.surface);
+		VK_ShutdownDebugCallback(vk_options.instance);
+		vkDestroyInstance(vk_options.instance, NULL);
 	}
+
+	memset(&vk_options, 0, sizeof(vk_options));
 }
 
 #endif

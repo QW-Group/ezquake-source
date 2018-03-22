@@ -30,18 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "vk_local.h"
 
-static VkPhysicalDevice physicalDevice;
-static VkPhysicalDeviceFeatures physicalDeviceFeatures;
-static VkPhysicalDeviceProperties physicalDeviceProperties;
-static uint32_t physicalDeviceGraphicsQueueFamilyIndex;
-static uint32_t physicalDeviceComputeQueueFamilyIndex;
-static uint32_t physicalDevicePresentQueueFamilyIndex;
-static VkDevice logicalDevice;
-static VkQueue graphicsQueue;
-static VkQueue presentQueue;
-static const char* requiredDeviceExtensions[] = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
+static const char* validationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
+static const char* requiredDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, int* graphics_queue_index, int* compute_queue_index, int* present_queue_index)
 {
@@ -103,8 +93,22 @@ static qbool VK_PhysicalDeviceSupportsRequiredExtensions(VkPhysicalDevice device
 
 static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSurfaceKHR surface, VkPresentModeKHR* best)
 {
+	extern cvar_t r_swapInterval;
+	VkPresentModeKHR preferredModes[] = {
+		VK_PRESENT_MODE_MAILBOX_KHR,       // triple buffered
+		VK_PRESENT_MODE_IMMEDIATE_KHR,     // tearing
+		VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+		VK_PRESENT_MODE_FIFO_KHR
+	};
 	VkPresentModeKHR* presentationModes;
 	uint32_t count;
+	uint32_t i, j;
+
+	// This is guaranteed to be supported
+	if (r_swapInterval.integer) {
+		*best = VK_PRESENT_MODE_FIFO_KHR;
+		return true;
+	}
 
 	if (vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &count, NULL) != VK_SUCCESS) {
 		return false;
@@ -116,19 +120,29 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 		return false;
 	}
 
+	for (i = 0; i < sizeof(preferredModes) / sizeof(preferredModes[0]); ++i) {
+		for (j = 0; j < count; ++j) {
+			if (preferredModes[i] == presentationModes[j]) {
+				Q_free(presentationModes);
+				*best = preferredModes[i];
+				return true;
+			}
+		}
+	}
 
+	Q_free(presentationModes);
+	*best = VK_PRESENT_MODE_FIFO_KHR;
+	return true;
 }
 
-static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSurfaceKHR surface, VkSurfaceFormatKHR* preferred_format)
+static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSurfaceKHR surface, VkSurfaceFormatKHR* preferred_format, VkSurfaceCapabilitiesKHR* capabilities)
 {
-	extern cvar_t vid_gammacorrection;
-
-	VkSurfaceCapabilitiesKHR capabilities;
+	extern cvar_t gl_gammacorrection;
 	uint32_t num_formats;
 	VkSurfaceFormatKHR* formats;
-	VkColorSpaceKHR req_color_space = (vid_gammacorrection.integer ? VK_COLOR_SPACE_SRGB_NONLINEAR_KHR : VK_COLOR_SPACE_PASS_THROUGH_EXT);
+	VkColorSpaceKHR req_color_space = (gl_gammacorrection.integer ? VK_COLOR_SPACE_SRGB_NONLINEAR_KHR : VK_COLOR_SPACE_PASS_THROUGH_EXT);
 
-	if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &capabilities) != VK_SUCCESS) {
+	if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, capabilities) != VK_SUCCESS) {
 		return false;
 	}
 
@@ -186,15 +200,17 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		return false;
 	}
 
-	physicalDevice = VK_NULL_HANDLE;
+	vk_options.physicalDevice = VK_NULL_HANDLE;
 	for (i = 0; i < deviceCount; ++i) {
 		VkPhysicalDeviceFeatures features;
 		VkPhysicalDeviceProperties properties;
+		VkPresentModeKHR best_presentation_mode;
 		qbool new_best = true;
 		int graphics_queue_index = -1;
 		int compute_queue_index = -1;
 		int present_queue_index = -1;
 		VkSurfaceFormatKHR preferred_format;
+		VkSurfaceCapabilitiesKHR capabilities;
 
 		vkGetPhysicalDeviceProperties(physicalDevices[i], &properties);
 		Con_Printf("Device %d: %s\n", i, properties.deviceName);
@@ -209,11 +225,15 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 			continue;
 		}
 
-		if (!VK_PhysicalDeviceSwapChainCompatible(physicalDevices[i], surface, &preferred_format)) {
+		if (!VK_PhysicalDeviceSwapChainCompatible(physicalDevices[i], surface, &preferred_format, &capabilities)) {
 			continue;
 		}
 
-		if (physicalDevice != VK_NULL_HANDLE) {
+		if (!VK_PhysicalDeviceBestPresentationMode(physicalDevices[i], surface, &best_presentation_mode)) {
+			continue;
+		}
+
+		if (vk_options.physicalDevice != VK_NULL_HANDLE) {
 			// Score?  Or cvar...
 			/*
 			vkGetPhysicalDeviceFeatures(physicalDevices[i], &features);
@@ -224,48 +244,49 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		}
 
 		if (new_best) {
-			physicalDevice = physicalDevices[i];
-			memcpy(&physicalDeviceFeatures, &features, sizeof(physicalDeviceFeatures));
-			memcpy(&physicalDeviceProperties, &properties, sizeof(physicalDeviceProperties));
-			physicalDeviceGraphicsQueueFamilyIndex = graphics_queue_index;
-			physicalDeviceComputeQueueFamilyIndex = compute_queue_index;
-			physicalDevicePresentQueueFamilyIndex = present_queue_index;
+			vk_options.physicalDevice = physicalDevices[i];
+			memcpy(&vk_options.physicalDeviceFeatures, &features, sizeof(vk_options.physicalDeviceFeatures));
+			memcpy(&vk_options.physicalDeviceProperties, &properties, sizeof(vk_options.physicalDeviceProperties));
+			vk_options.physicalDeviceGraphicsQueueFamilyIndex = graphics_queue_index;
+			vk_options.physicalDeviceComputeQueueFamilyIndex = compute_queue_index;
+			vk_options.physicalDevicePresentQueueFamilyIndex = present_queue_index;
+			vk_options.physicalDevicePresentationMode = best_presentation_mode;
+			vk_options.physicalDeviceSurfaceFormat = preferred_format;
+			vk_options.physicalDeviceSurfaceCapabilities = capabilities;
 		}
 	}
 
 	Q_free(physicalDevices);
-	if (physicalDevice == VK_NULL_HANDLE) {
+	if (vk_options.physicalDevice == VK_NULL_HANDLE) {
 		Com_Printf("No appropriate device found :(\n");
 		return false;
 	}
 
-	Com_Printf("Selected device: %s\n", physicalDeviceProperties.deviceName);
+	Com_Printf("Selected device: %s\n", vk_options.physicalDeviceProperties.deviceName);
 
 	return true;
 }
 
 uint32_t VK_PhysicalDeviceGraphicsQueueFamilyIndex(void)
 {
-	assert(physicalDevice != VK_NULL_HANDLE);
+	assert(vk_options.physicalDevice != VK_NULL_HANDLE);
 
-	return physicalDeviceGraphicsQueueFamilyIndex;
+	return vk_options.physicalDeviceGraphicsQueueFamilyIndex;
 }
 
 uint32_t VK_PhysicalDeviceComputeQueueFamilyIndex(void)
 {
-	assert(physicalDevice != VK_NULL_HANDLE);
+	assert(vk_options.physicalDevice != VK_NULL_HANDLE);
 
-	return physicalDeviceComputeQueueFamilyIndex;
+	return vk_options.physicalDeviceComputeQueueFamilyIndex;
 }
 
 uint32_t VK_PhysicalDevicePresentQueueFamilyIndex(void)
 {
-	assert(physicalDevice != VK_NULL_HANDLE);
+	assert(vk_options.physicalDevice != VK_NULL_HANDLE);
 
-	return physicalDevicePresentQueueFamilyIndex;
+	return vk_options.physicalDevicePresentQueueFamilyIndex;
 }
-
-static const char* validationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
 
 static qbool VK_AddDeviceValidationLayers(VkDeviceCreateInfo* createInfo)
 {
@@ -338,18 +359,18 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	deviceInfo.enabledExtensionCount = 0;
 	VK_AddDeviceValidationLayers(&deviceInfo);
 
-	logicalDevice = VK_NULL_HANDLE;
-	if (vkCreateDevice(physicalDevice, &deviceInfo, NULL, &logicalDevice) != VK_SUCCESS) {
+	vk_options.logicalDevice = VK_NULL_HANDLE;
+	if (vkCreateDevice(vk_options.physicalDevice, &deviceInfo, NULL, &vk_options.logicalDevice) != VK_SUCCESS) {
 		Con_Printf("vkCreateDevice() failed\n");
 		return false;
 	}
 
-	vkGetDeviceQueue(logicalDevice, VK_PhysicalDeviceGraphicsQueueFamilyIndex(), 0, &graphicsQueue);
+	vkGetDeviceQueue(vk_options.logicalDevice, VK_PhysicalDeviceGraphicsQueueFamilyIndex(), 0, &vk_options.graphicsQueue);
 	if (VK_PhysicalDeviceGraphicsQueueFamilyIndex() != VK_PhysicalDevicePresentQueueFamilyIndex()) {
-		vkGetDeviceQueue(logicalDevice, VK_PhysicalDevicePresentQueueFamilyIndex(), 0, &presentQueue);
+		vkGetDeviceQueue(vk_options.logicalDevice, VK_PhysicalDevicePresentQueueFamilyIndex(), 0, &vk_options.presentQueue);
 	}
 	else {
-		presentQueue = graphicsQueue;
+		vk_options.presentQueue = vk_options.graphicsQueue;
 	}
 
 	return true;
