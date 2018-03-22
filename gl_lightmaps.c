@@ -1000,6 +1000,8 @@ void GL_InvalidateLightmapTextures(void)
 	int i;
 
 	GL_TextureReferenceInvalidate(lightmap_texture_array);
+	GL_TextureReferenceInvalidate(lightmap_data_array);
+	GL_TextureReferenceInvalidate(lightmap_source_array);
 	for (i = 0; i < lightmap_array_size; ++i) {
 		GL_TextureReferenceInvalidate(lightmaps[i].gl_texref);
 	}
