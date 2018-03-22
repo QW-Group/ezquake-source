@@ -206,13 +206,14 @@ static void Precache_Source(source_data *s)
 
 static void SB_Process_URL_Buffer(const struct curl_buf *curl_buf, server_data *servers[], int *serversn)
 {
+	netadr_t addr;
+	char *buf, *p0, *p1;
+
 	// Don't modify curl_buf as it might be used to create cache file
-	char *buf = Q_malloc(sizeof(char) * curl_buf->len);
+	buf = Q_malloc(sizeof(char) * curl_buf->len);
 	memcpy(buf, curl_buf->ptr, sizeof(char) * curl_buf->len);
 
 	// Not using strtok as it's not thread safe
-	netadr_t addr;
-	char *p0, *p1;
 	for (p0 = buf, p1 = buf; p1 < buf + curl_buf->len; p1++) {
 		if (*p1 == '\n') {
 			*p1 = '\0';
@@ -243,6 +244,7 @@ static void curl_buf_deinit(struct curl_buf *curl_buf)
 static size_t curl_write_func( void *ptr, size_t size, size_t nmemb, struct curl_buf *buf )
 {
 	size_t new_len = buf->len + size * nmemb;
+
 	// not checking for realloc errors since Q_realloc will exit on failure
 	buf->ptr = Q_realloc(buf->ptr, new_len + 1);
 
@@ -279,6 +281,7 @@ struct curl_buf *SB_Retrieve_Data(const source_data *s)
 {
 	CURL *curl;
 	CURLcode res;
+	struct curl_buf *curl_buf;
 
 	curl = curl_easy_init();
 	if (curl) {
@@ -290,7 +293,7 @@ struct curl_buf *SB_Retrieve_Data(const source_data *s)
 		return NULL;
 	}
 
-	struct curl_buf *curl_buf = curl_buf_init();
+	curl_buf = curl_buf_init();
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, curl_buf);
 
@@ -308,13 +311,15 @@ struct curl_buf *SB_Retrieve_Data(const source_data *s)
 static void SB_Update_Source_From_URL(const source_data *s, server_data *servers[],
 	int *serversn)
 {
+	struct curl_buf *curl_buf;
+
 	if (s->type != type_url) {
 		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Invalid argument\n");
 		return;
 	}
 
 	// Retrieve servers
-	struct curl_buf *curl_buf = SB_Retrieve_Data(s);
+	curl_buf = SB_Retrieve_Data(s);
 	if (curl_buf == NULL) {
 		// SB_Retrieve_Data will print meaningful error message
 		return;
