@@ -725,7 +725,9 @@ void Draw_Crosshair (void)
 		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
 
-		memcpy(col, crosshaircolor.color, 3);
+		col[0] = crosshaircolor.color[0];
+		col[1] = crosshaircolor.color[1];
+		col[2] = crosshaircolor.color[2];
 		col[3] = bound(0, crosshairalpha.value, 1) * 255;
 
 		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
