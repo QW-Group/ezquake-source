@@ -50,7 +50,7 @@ static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int 
 	GL_GenerateMipmap(GL_TEXTURE0, cubemap);
 }
 
-qbool GLM_LoadSkyboxTextures(char* skyname)
+qbool GLM_LoadSkyboxTextures(const char* skyname)
 {
 	int widths[MAX_SKYBOXTEXTURES], heights[MAX_SKYBOXTEXTURES];
 	qbool all_same = true;

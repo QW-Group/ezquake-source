@@ -86,15 +86,10 @@ extern	vec3_t	vright;
 extern	vec3_t	r_origin;
 
 // screen size info
-extern	refdef_t	r_refdef;
-extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
-extern	mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 extern	texture_t	*r_notexture_mip;
 extern	unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-#define MAX_SKYBOXTEXTURES 6
 extern	texture_ref netgraphtexture;
-extern	texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	texture_ref skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	texture_ref underwatertexture, detailtexture, solidtexture;
 extern	texture_ref shelltexture;
@@ -191,14 +186,12 @@ qbool R_PointIsUnderwater(vec3_t point);
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
-void GL_BuildSkySurfacePolys (msurface_t *fa);
-void EmitBothSkyLayers (msurface_t *fa);
+void GL_BuildSkySurfacePolys(msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
-void EmitSkyPolys (msurface_t *fa, qbool mtex);
-void R_DrawSky (void);
+void R_DrawSky(void);
 void R_LoadSky_f(void);
+void R_InitSky(texture_t *mt);	// called at level load
 void R_AddSkyBoxSurface (msurface_t *fa);
-void R_InitSky (texture_t *mt);	// called at level load
 qbool R_DrawWorldOutlines(void);
 
 extern qbool	r_skyboxloaded;
@@ -596,12 +589,9 @@ void GLC_RenderSceneBlurDo(float alpha);
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
 void GLC_EmitWaterPoly(msurface_t* fa);
-void GLC_DrawSkyChain(void);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(qbool use_vbo);
 
-void GLC_DrawSkyChain(void);
-void GLC_DrawSky(void);
 void GLC_DrawWaterSurfaces(void);
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 void GLC_DrawWorld(void);
@@ -612,8 +602,6 @@ void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, in
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair);
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_Draw_FadeScreen(float alpha);
-void GLM_DrawSkyChain(void);
-void GLM_DrawSky(void);
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics);
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional);

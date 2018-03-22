@@ -358,7 +358,7 @@ static void GLC_MakeSkyVec(float s, float t, int axis)
 	glVertex3fv(v);
 }
 
-qbool GLC_LoadSkyboxTextures(char* skyname)
+qbool GLC_LoadSkyboxTextures(const char* skyname)
 {
 	return Sky_LoadSkyboxTextures(skyname);
 }

@@ -46,4 +46,17 @@ qbool R_BuffersReady(void);
 // fog
 void R_AddWaterfog(int contents);
 
+// vis
+extern refdef_t	r_refdef;
+extern struct mleaf_s* r_viewleaf;
+extern struct mleaf_s* r_oldviewleaf;
+extern struct mleaf_s* r_viewleaf2;
+extern struct mleaf_s* r_oldviewleaf2;	// 2 is for watervis hack
+
+// Which renderer to use
+extern cvar_t vid_renderer;
+#define R_UseImmediateOpenGL()    (vid_renderer.integer == 0)
+#define R_UseModernOpenGL()       (vid_renderer.integer == 1)
+#define R_UseVulkan()             (vid_renderer.integer == 2)
+
 #endif // EZQUAKE_R_LOCAL_HEADER

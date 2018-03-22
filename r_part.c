@@ -24,18 +24,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "particles_classic.h"
-#include "glm_texture_arrays.h"
 #include "gl_sprite3d.h"
 #include "rulesets.h"
 #include "r_texture.h"
 #include "qmb_particles.h"
+#include "glm_particles.h"
 
-static texture_ref particletexture;
-texture_ref particletexture_array;
-int particletexture_array_index;
-static float particletexture_scale_s;
-static float particletexture_scale_t;
+texture_ref particletexture;
 const int default_size = 32;
+
+extern cvar_t gl_part_blood;
+extern cvar_t gl_part_gunshots;
+extern cvar_t gl_part_trails;
+extern cvar_t gl_part_spikes;
+extern cvar_t gl_part_explosions;
+extern cvar_t gl_part_blobs;
+extern cvar_t gl_part_lavasplash;
+extern cvar_t gl_part_telesplash;
 
 cvar_t r_particles_count = { "r_particles_count", "2048" };
 static cvar_t r_drawparticles = { "r_drawparticles", "1" };
@@ -63,7 +68,7 @@ float crand(void)
 	return (rand() & 32767) * (2.0 / 32767) - 1;
 }
 
-static byte* Classic_CreateParticleTexture(int width, int height)
+byte* Classic_CreateParticleTexture(int width, int height)
 {
 	byte* data = Q_malloc(sizeof(byte) * width * height * 4);
 	int x, y;
@@ -127,11 +132,9 @@ static byte* Classic_CreateParticleTexture(int width, int height)
 
 void Classic_LoadParticleTexures(int width, int height)
 {
-	byte* data = Classic_CreateParticleTexture(width, height);
-
 	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
+	byte* data = Classic_CreateParticleTexture(width, height);
 	particletexture = GL_LoadTexture("particles:classic", width, height, data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
-
 	Q_free(data);
 
 	if (!GL_TextureReferenceIsValid(particletexture)) {
@@ -139,15 +142,8 @@ void Classic_LoadParticleTexures(int width, int height)
 		return;
 	}
 
-	if (GL_UseGLSL() && GL_TextureReferenceIsValid(particletexture_array)) {
-		int width = GL_TextureWidth(particletexture_array);
-		int height = GL_TextureHeight(particletexture_array);
-		byte* data = Classic_CreateParticleTexture(width, height);
-
-		GL_TexSubImage3D(GL_TEXTURE0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		GL_GenerateMipmap(GL_TEXTURE0, particletexture_array);
-
-		Q_free(data);
+	if (GL_UseGLSL()) {
+		GLM_LoadParticleTextures();
 	}
 }
 
@@ -810,35 +806,6 @@ ParticleFunction(explosions, ParticleExplosion);
 ParticleFunction(blobs, BlobExplosion);
 ParticleFunction(lavasplash, LavaSplash);
 ParticleFunction(telesplash, TeleportSplash);
-
-void Part_FlagTexturesForArray(texture_flag_t* texture_flags)
-{
-	if (GL_TextureReferenceIsValid(particletexture)) {
-		texture_flags[particletexture.index].flags |= (1 << TEXTURETYPES_SPRITES);
-	}
-}
-
-void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
-{
-	if (GL_TextureReferenceIsValid(particletexture)) {
-		texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
-
-		if (GL_TextureWidth(array_ref->ref) != GL_TextureWidth(particletexture) || GL_TextureHeight(array_ref->ref) != GL_TextureHeight(particletexture)) {
-			int width = GL_TextureWidth(array_ref->ref);
-			int height = GL_TextureHeight(array_ref->ref);
-			byte* data = Classic_CreateParticleTexture(width, height);
-
-			GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-			Q_free(data);
-		}
-
-		particletexture_array = array_ref->ref;
-		particletexture_array_index = array_ref->index;
-		particletexture_scale_s = array_ref->scale_s;
-		particletexture_scale_t = array_ref->scale_t;
-	}
-}
 
 // Moves particles into new locations this frame
 static void Classic_MoveParticles(void)

@@ -76,7 +76,6 @@ int       r_framecount;                       // used for dlight push checking
 int       lightmode = 2;
 unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light value
 texture_ref shelltexture;
-texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)

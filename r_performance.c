@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_surf.c: surface-related refresh code
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
+#include "r_framestats.h"
+#include "r_local.h"
 
 static cvar_t* framestats_shown;
 
@@ -36,7 +36,7 @@ void R_PerformanceBeginFrame(void)
 	frameStatsVisible = framestats_shown && framestats_shown->integer;
 
 	if (r_speeds.integer) {
-		glFinish();
+		R_EnsureFinished();
 	}
 
 	memset(&frameStats, 0, sizeof(frameStats));

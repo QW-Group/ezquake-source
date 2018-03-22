@@ -21,12 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "gl_sky.h"
 #include "r_texture.h"
+#include "r_local.h"
+#include "r_trace.h"
 
 texture_ref solidskytexture, alphaskytexture;
+texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 
 float skymins[2][6], skymaxs[2][6];
 qbool r_skyboxloaded;
@@ -69,6 +71,16 @@ void R_InitSky (texture_t *mt) {
 	alphaskytexture = GL_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
 }
 
+qbool R_LoadSkyboxTextures(const char* skyname)
+{
+	if (R_UseModernOpenGL()) {
+		return GLM_LoadSkyboxTextures(skyname);
+	}
+	else {
+		return GLC_LoadSkyboxTextures(skyname);
+	}
+}
+
 int R_SetSky(char *skyname)
 {
 	char *groupname;
@@ -85,15 +97,8 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	if (GL_UseGLSL()) {
-		if (!GLM_LoadSkyboxTextures(skyname)) {
-			return 1;
-		}
-	}
-	else {
-		if (!GLC_LoadSkyboxTextures(skyname)) {
-			return 1;
-		}
+	if (!R_LoadSkyboxTextures(skyname)) {
+		return 1;
 	}
 
 	// everything was OK
@@ -390,7 +395,7 @@ void R_DrawSky (void)
 	}
 
 	GL_EnterRegion("R_DrawSky");
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_DrawSky();
 	}
 	else {

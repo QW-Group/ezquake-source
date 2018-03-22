@@ -39,8 +39,4 @@ void GL_PopModelviewMatrix(const float* matrix);
 void GL_PushProjectionMatrix(float* matrix);
 void GL_PopProjectionMatrix(const float* matrix);
 
-//void GL_PopMatrix(GLenum mode, float* matrix);
-//void GL_PushMatrix(GLenum mode, float* matrix);
-//void GLM_DebugMatrix(GLenum type, const char* value);
-
 #endif // EZQUAKE_R_MATRIX_HEADER

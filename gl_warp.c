@@ -22,14 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
-#include "gl_local.h"
-#include "teamplay.h"
-#include "utils.h"
 #include "glsl/constants.glsl"
+#include "r_local.h"
+#include "utils.h"
 
 extern model_t *loadmodel;
-
 static msurface_t *warpface;
+void GLC_EmitWaterPoly(msurface_t* fa);
 
 static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
 {
@@ -41,10 +40,12 @@ static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
 	v = verts;
 	for (i=0 ; i<numverts ; i++) {
 		for (j = 0; j < 3; j++, v++) {
-			if (*v < mins[j])
+			if (*v < mins[j]) {
 				mins[j] = *v;
-			if (*v > maxs[j])
+			}
+			if (*v > maxs[j]) {
 				maxs[j] = *v;
+			}
 		}
 	}
 }
@@ -55,10 +56,12 @@ static void SubdividePolygon (int numverts, float *verts)
 	vec3_t mins, maxs, front[64], back[64];
 	float m, *v, dist[64], frac, s, t;
 	glpoly_t *poly;
-	float subdivide_size;	
+	float subdivide_size;
+	extern cvar_t gl_subdivide_size;
 
-	if (numverts > 60)
-		Sys_Error ("numverts = %i", numverts);
+	if (numverts > 60) {
+		Sys_Error("numverts = %i", numverts);
+	}
 
 	subdivide_size = max(1, gl_subdivide_size.value);
 	BoundPoly (numverts, verts, mins, maxs);
@@ -66,15 +69,18 @@ static void SubdividePolygon (int numverts, float *verts)
 	for (i = 0; i < 3; i++) {
 		m = (mins[i] + maxs[i]) * 0.5;
 		m = subdivide_size * floor (m / subdivide_size + 0.5);
-		if (maxs[i] - m < 8)
+		if (maxs[i] - m < 8) {
 			continue;
-		if (m - mins[i] < 8)
+		}
+		if (m - mins[i] < 8) {
 			continue;
+		}
 
 		// cut it
 		v = verts + i;
-		for (j = 0; j < numverts; j++, v += 3)
+		for (j = 0; j < numverts; j++, v += 3) {
 			dist[j] = *v - m;
+		}
 
 		// wrap cases
 		dist[j] = dist[0];
@@ -92,13 +98,15 @@ static void SubdividePolygon (int numverts, float *verts)
 				VectorCopy (v, back[b]);
 				b++;
 			}
-			if (dist[j] == 0 || dist[j + 1] == 0)
+			if (dist[j] == 0 || dist[j + 1] == 0) {
 				continue;
+			}
 			if ( (dist[j] > 0) != (dist[j + 1] > 0) ) {
 				// clip point
 				frac = dist[j] / (dist[j] - dist[j + 1]);
-				for (k = 0; k < 3; k++)
+				for (k = 0; k < 3; k++) {
 					front[f][k] = back[b][k] = v[k] + frac * (v[3 + k] - v[k]);
+				}
 				f++;
 				b++;
 			}
@@ -149,7 +157,7 @@ void GL_SubdivideSurface(msurface_t *fa)
 }
 
 // Just build the gl polys, don't subdivide
-void GL_BuildSkySurfacePolys (msurface_t *fa)
+void GL_BuildSkySurfacePolys(msurface_t *fa)
 {
 	vec3_t		verts[64];
 	int			numverts;
@@ -163,19 +171,20 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 	// convert edges back to a normal polygon
 	//
 	numverts = 0;
-	for (i=0 ; i<fa->numedges ; i++)
-	{
+	for (i = 0; i < fa->numedges; i++) {
 		lindex = loadmodel->surfedges[fa->firstedge + i];
 
-		if (lindex > 0)
+		if (lindex > 0) {
 			vec = loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position;
-		else
+		}
+		else {
 			vec = loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
-		VectorCopy (vec, verts[numverts]);
+		}
+		VectorCopy(vec, verts[numverts]);
 		numverts++;
 	}
 
-	poly = Hunk_Alloc (sizeof(glpoly_t) + (numverts-4) * VERTEXSIZE*sizeof(float));
+	poly = Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
 	poly->next = NULL;
 	fa->polys = poly;
 	poly->numverts = numverts;
@@ -209,7 +218,7 @@ byte* SurfaceFlatTurbColor(texture_t* texture)
 //Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys(msurface_t *fa)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		GLC_EmitWaterPoly(fa);
 	}
 	else {

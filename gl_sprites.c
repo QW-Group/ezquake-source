@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "r_texture.h"
 
 extern model_t* loadmodel;
@@ -306,9 +305,11 @@ mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
 		// are positive, so we don't have to worry about division by 0
 		targettime = time - ((int) (time / fullinterval)) * fullinterval;
 
-		for (i = 0; i < (numframes - 1); i++)
-			if (pspriteframe2[i].interval > targettime)
+		for (i = 0; i < (numframes - 1); i++) {
+			if (pspriteframe2[i].interval > targettime) {
 				break;
+			}
+		}
 
 		pspriteframe = &pspriteframe2[i].frame;
 	}

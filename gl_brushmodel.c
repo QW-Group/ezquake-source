@@ -63,7 +63,7 @@ static void SetTextureFlags(model_t* mod, msurface_t* out)
 	// sky, turb and alpha should be mutually exclusive
 	if (Mod_IsSkyTextureName(mod, out->texinfo->texture->name)) {	// sky
 		out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-		GL_BuildSkySurfacePolys (out);	// build gl polys
+		GL_BuildSkySurfacePolys(out);	// build gl polys
 		out->texinfo->skippable = false;
 		return;
 	}

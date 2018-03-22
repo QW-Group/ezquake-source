@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include "quakedef.h"
 #include "server.h"
+#include "utils.h"
 #define MAX_STRINGS 16 // well, this used not only for va, anyway, static buffers is evil...
 #endif
 
@@ -128,8 +129,6 @@ static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, net
 	NET_PacketQueueSetNextIndex(&queue->head);
 	return true;
 }
-
-float f_rnd(float from, float to);
 
 static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
 {

@@ -71,13 +71,13 @@ typedef enum {
 typedef struct gl_sprite3d_vert_s {
 	float position[3];
 	float tex[3];
-	GLubyte color[4];
+	byte color[4];
 } gl_sprite3d_vert_t;
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, GLenum blendSource, GLenum blendDestination, texture_ref texture, int index, GLenum primitive_type, qbool depthTest, qbool depthMask);
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, unsigned int blendSource, unsigned int blendDestination, texture_ref texture, int index, unsigned int primitive_type, qbool depthTest, qbool depthMask);
 gl_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
 gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
-void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, GLubyte color[4], int texture_index);
+void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);
 void GL_Draw3DSprites(void);
 void GLM_RenderSprite(gl_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index);
 

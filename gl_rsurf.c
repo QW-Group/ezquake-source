@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 #include "r_performance.h"
+#include "r_local.h"
 
 static void GL_EmitSurfaceParticleEffects(msurface_t* s);
 
@@ -358,24 +359,27 @@ void R_DrawWorld(void)
 	GL_LeaveRegion();
 }
 
-void R_MarkLeaves (void) {
+void R_MarkLeaves(void)
+{
 	byte *vis;
 	mnode_t *node;
 	int i;
-	byte solid[MAX_MAP_LEAFS/8];
+	byte solid[MAX_MAP_LEAFS / 8];
 
-	if (!r_novis.value && r_oldviewleaf == r_viewleaf
-		&& r_oldviewleaf2 == r_viewleaf2)	// watervis hack
+	if (!r_novis.value && r_oldviewleaf == r_viewleaf && r_oldviewleaf2 == r_viewleaf2) {
+		// watervis hack
 		return;
+	}
 
 	r_visframecount++;
 	r_oldviewleaf = r_viewleaf;
 
 	if (r_novis.value) {
 		vis = solid;
-		memset (solid, 0xff, (cl.worldmodel->numleafs + 7) >> 3);
-	} else {
-		vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
+		memset(solid, 0xff, (cl.worldmodel->numleafs + 7) >> 3);
+	}
+	else {
+		vis = Mod_LeafPVS(r_viewleaf, cl.worldmodel);
 
 		if (r_viewleaf2) {
 			int			i, count;
@@ -383,17 +387,17 @@ void R_MarkLeaves (void) {
 
 			// merge visibility data for two leafs
 			count = (cl.worldmodel->numleafs + 7) >> 3;
-			memcpy (solid, vis, count);
-			src = (unsigned *) Mod_LeafPVS (r_viewleaf2, cl.worldmodel);
-			dest = (unsigned *) solid;
+			memcpy(solid, vis, count);
+			src = (unsigned *)Mod_LeafPVS(r_viewleaf2, cl.worldmodel);
+			dest = (unsigned *)solid;
 			count = (count + 3) >> 2;
 			for (i = 0; i < count; i++)
 				*dest++ |= *src++;
 			vis = solid;
 		}
 	}
-		
-	for (i = 0; i < cl.worldmodel->numleafs; i++)	{
+
+	for (i = 0; i < cl.worldmodel->numleafs; i++) {
 		if (vis[i >> 3] & (1 << (i & 7))) {
 			node = (mnode_t *)&cl.worldmodel->leafs[i + 1];
 			do {

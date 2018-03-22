@@ -36,5 +36,6 @@ typedef struct r_frame_stats_s {
 } r_frame_stats_t;
 
 extern r_frame_stats_t frameStats, prevFrameStats;
+extern cvar_t r_speeds;
 
 #endif // EZQUAKE_R_FRAMESTATS_HEADER
