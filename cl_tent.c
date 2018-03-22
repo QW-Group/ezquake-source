@@ -22,12 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "rulesets.h"
 #include "pmove.h"
 #include "utils.h"
 #include "qsound.h"
+#include "qmb_particles.h"
+
+extern cvar_t gl_no24bit;
 
 #define	MAX_BEAMS 32
 typedef struct 
@@ -401,6 +403,7 @@ static void CL_Parse_TE_SUPERSPIKE(vec3_t pos)
 static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 {
 	dlight_t *dl;
+	extern cvar_t gl_part_explosions;
 
 	if (cls.state != ca_active) {
 		return;
@@ -597,12 +600,16 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 	}
 	else
 	{
+		extern cvar_t gl_part_blood;
+
 		pos[0] = MSG_ReadCoord();
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage(true))
+		if (CL_Demo_SkipMessage(true)) {
 			return;
+		}
+
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
 	}
 }

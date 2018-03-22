@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 
 #include "gl_model.h"
-#include "gl_local.h"
 
 #if 0
 void Draw_CenterString (int y, char *str)

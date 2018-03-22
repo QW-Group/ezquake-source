@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "stats_grid.h"
 #include "sbar.h"
 #include "hud.h"

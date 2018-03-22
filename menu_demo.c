@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "settings.h"
 #include "settings_page.h"
 #include "EX_FileList.h"

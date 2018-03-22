@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "rulesets.h"
+#include "r_texture.h"
 
 static void Mod_FloodFillSkin(byte *skin, int skinwidth, int skinheight);
 

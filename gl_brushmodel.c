@@ -31,6 +31,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "utils.h"
 #include "glsl/constants.glsl"
 #include "gl_sky.h"
+#include "r_texture.h"
 
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);

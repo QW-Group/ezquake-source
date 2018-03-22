@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 #include "glsl/constants.glsl"
+#include "r_texture.h"
 
 extern GLuint GL_TextureNameFromReference(texture_ref ref);
 
@@ -912,11 +913,7 @@ void GLC_CreateLightmapTextures(void)
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		if (!GL_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, &lightmaps[i].gl_texref, va("lightmap-%03d", i));
-			GL_TexStorage2D(GL_TEXTURE0, lightmaps[i].gl_texref, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT);
-			GL_SetTextureFiltering(GL_TEXTURE0, lightmaps[i].gl_texref, GL_LINEAR, GL_LINEAR);
-			GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			GL_TexParameteri(GL_TEXTURE0, lightmaps[i].gl_texref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			GL_CreateTexture2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
 		}
 	}
 }

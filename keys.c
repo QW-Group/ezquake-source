@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "gl_model.h"
-#include "gl_local.h"
 #include "tr_types.h"
 
 #include "hud.h"

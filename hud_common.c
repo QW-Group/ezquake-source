@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stats_grid.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "tr_types.h"
 #include "rulesets.h"
 #include "utils.h"

@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 #include "gl_sky.h"
+#include "r_texture.h"
 
 static texture_ref GL_GenerateShellTexture(void)
 {

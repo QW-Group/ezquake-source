@@ -47,25 +47,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // __APPLE__
 
 #include "gl_texture.h"
+#include "r_framestats.h"
+#include "r_trace.h"
 
 #ifndef APIENTRY
 #define APIENTRY
 #endif
 
 //#define GL_PARANOIA
-
-void GL_BeginRendering (int *x, int *y, int *width, int *height);
-void GL_EndRendering (void);
-
-typedef struct {
-	float	x, y, z;
-	float	s, t;
-	float	r, g, b;
-} glvert_t;
-
-extern glvert_t glv;
-
-extern	int glx, gly, glwidth, glheight;
 
 #define ALIAS_BASE_SIZE_RATIO		(1.0 / 11.0)
 					// normalizing factor so player model works out to about
@@ -83,72 +72,12 @@ texture_t *R_TextureAnimation (texture_t *base);
 
 //====================================================
 
-
-void QMB_InitParticles(void);
-void QMB_ClearParticles(void);
-void QMB_CalculateParticles(void);
-void QMB_DrawParticles(void);
-void QMB_ShutdownParticles(void);
-
-void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
-void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *, trail_type_t type);
-void QMB_ParticleRailTrail (vec3_t start, vec3_t end, int color_num);
-void QMB_BlobExplosion (vec3_t org);
-void QMB_ParticleExplosion (vec3_t org);
-void QMB_LavaSplash (vec3_t org);
-void QMB_TeleportSplash (vec3_t org);
-
-void QMB_DetpackExplosion (vec3_t org);
-
-void QMB_InfernoFlame (vec3_t org);
-void QMB_StaticBubble (entity_t *ent);
-
-extern qbool qmb_initialized;
-
-
-//====================================================
-
 extern	entity_t	r_worldentity;
 extern	vec3_t		modelorg;
 extern	entity_t	*currententity;
 extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
-
-typedef enum {
-	polyTypeWorldModel,
-	polyTypeAliasModel,
-	polyTypeBrushModel,
-
-	polyTypeMaximum
-} frameStatsPolyType;
-
-typedef struct r_frame_stats_classic_s {
-	int polycount[polyTypeMaximum];
-} r_frame_stats_classic_t;
-
-typedef struct r_frame_stats_modern_s {
-	int world_batches;
-	int buffer_uploads;
-	int multidraw_calls;
-} r_frame_stats_modern_t;
-
-typedef struct r_frame_stats_s {
-	r_frame_stats_classic_t classic;
-	r_frame_stats_modern_t modern;
-
-	int texture_binds;
-	unsigned int lightmap_min_changed;
-	unsigned int lightmap_max_changed;
-	int lightmap_updates;
-	int draw_calls;
-	int subdraw_calls;
-
-	double start_time;
-	double end_time;
-} r_frame_stats_t;
-
-extern r_frame_stats_t frameStats, prevFrameStats;
 
 // view origin
 extern	vec3_t	vup;
@@ -606,40 +535,6 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
 void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
 size_t GL_BufferSize(buffer_ref vbo);
 
-#ifdef WITH_OPENGL_TRACE
-#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
-#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
-#define LEAVE_STATE GL_LeaveTracedRegion(true)
-#define GL_EnterRegion(x) GL_EnterTracedRegion(x, false)
-#define GL_LeaveRegion() GL_LeaveTracedRegion(false)
-void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
-void GL_LeaveTracedRegion(qbool trace_only);
-void GL_PrintState(FILE* output);
-void GL_DebugState(void);
-void GL_ResetRegion(qbool start);
-void GL_LogAPICall(const char* message, ...);
-void GL_MarkEvent(const char* message, ...);
-qbool GL_LoggingEnabled(void);
-void GL_ObjectLabel(GLenum identifier, GLuint name, GLsizei length, const char* label);
-void GL_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
-#else
-#define ENTER_STATE
-#define MIDDLE_STATE
-#define LEAVE_STATE
-#define GL_EnterTracedRegion(...)
-#define GL_LeaveTracedRegion(...)
-#define GL_EnterRegion(x)
-#define GL_LeaveRegion()
-#define GL_ResetRegion(x)
-#define GL_MarkEvent(...)
-#define GL_LogAPICall(...)
-#define GL_PrintState(...)
-#define GL_DebugState()
-#define GL_LoggingEnabled() (false)
-#define GL_ObjectLabel(...)
-#define GL_GetObjectLabel(...)
-#endif
-
 #define NUMVERTEXNORMALS 162
 #define SHADEDOT_QUANT   64
 
@@ -780,7 +675,6 @@ void CachePics_Shutdown(void);
 void GL_LightmapShutdown(void);
 void GLM_DeleteBrushModelIndexBuffer(void);
 
-#define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);

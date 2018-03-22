@@ -25,7 +25,6 @@ $Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 #include "parser.h"
 #include "localtime.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "utils.h"
 #include "mvd_utils_common.h"

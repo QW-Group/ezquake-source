@@ -42,7 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "modules.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #include "teamplay.h"
 #include "pmove.h"

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qtv.h"
 #include "utils.h"
 #include "tr_types.h"
+#include "r_texture.h"
 
 typedef struct player_skin_s {
 	texture_ref base;       // The standard skin.

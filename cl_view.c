@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "rulesets.h"
 #include "utils.h"
@@ -439,7 +438,9 @@ void V_BonusFlash_f (void) {
 }
 
 //Underwater, lava, etc each has a color shift
-void V_SetContentsColor (int contents) {
+void V_SetContentsColor (int contents)
+{
+	extern cvar_t gl_polyblend, gl_waterfog;
 
 	if (!v_contentblend.value) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
@@ -468,7 +469,8 @@ void V_SetContentsColor (int contents) {
 
 	if (!gl_polyblend.value && !cl.teamfortress) {
 		cl.cshifts[CSHIFT_CONTENTS].percent = 0;
-	} else {
+	}
+	else {
 		// ignore gl_cshiftpercent on custom cshifts (set with v_cshift
 		// command) to avoid cheating in TF
 		if (contents != CONTENTS_EMPTY) {
@@ -483,8 +485,11 @@ void V_SetContentsColor (int contents) {
 	}
 }
 
-void V_AddWaterfog (int contents) {
-	if (!gl_waterfog.value || COM_CheckParm (cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
+void V_AddWaterfog (int contents)
+{
+	extern cvar_t gl_waterfog;
+
+	if (!gl_waterfog.value || COM_CheckParm(cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
 		GL_DisableFog();
 		return;
 	}
@@ -528,6 +533,7 @@ void V_CalcBlend (void)
 {
 	float r, g, b, a, a2;
 	int j;
+	extern cvar_t gl_polyblend;
 
 	r = g = b = a= 0;
 
@@ -581,18 +587,22 @@ void V_CalcBlend (void)
 	v_blend[3] = bound(0, v_blend[3], 1);
 }
 
-void V_AddLightBlend (float r, float g, float b, float a2) {
-	float	a;
+void V_AddLightBlend (float r, float g, float b, float a2)
+{
+	float a;
+	extern cvar_t gl_polyblend;
 
-	if (!gl_polyblend.value || !gl_cshiftpercent.value || !v_dlightcshift.value)
+	if (!gl_polyblend.value || !gl_cshiftpercent.value || !v_dlightcshift.value) {
 		return;
+	}
 
 	a2 = a2 * bound(0, v_dlightcshift.value, 1) * gl_cshiftpercent.value / 100.0;
 
 	v_blend[3] = a = v_blend[3] + a2 * (1 - v_blend[3]);
 
-	if (!a)
+	if (!a) {
 		return;
+	}
 
 	a2 = a2 / a;
 

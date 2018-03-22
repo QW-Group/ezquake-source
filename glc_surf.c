@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 #include "tr_types.h"
+#include "r_texture.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];

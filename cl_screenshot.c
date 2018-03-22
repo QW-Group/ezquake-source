@@ -21,13 +21,14 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "image.h"
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi
 #include "movie_avi.h"	//
 #endif
 #include "utils.h"
+
+void R_Screenshot(byte* buffer, size_t size);
 
 #define	DEFAULT_SSHOT_FORMAT "png"
 
@@ -138,8 +139,8 @@ int SCR_Screenshot(char *name)
 		target_params->buffer = Q_malloc(glwidth * glheight * 3);
 		target_params->freeMemory = true;
 	}
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, target_params->buffer);
+
+	R_Screenshot(target_params->buffer, glwidth * glheight * 3);
 
 	if (Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
@@ -345,7 +346,7 @@ void SCR_RSShot_f(void)
 	base = (byte *)Q_malloc((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
-	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, base);
+	R_Screenshot(base, glwidth * glheight * 3);
 	Image_Resample(base, glwidth, glheight, pixels, width, height, 3, 0);
 #ifdef WITH_JPEG
 #ifndef WITH_JPEG_STATIC
@@ -457,7 +458,7 @@ void SCR_Movieshot(char *name)
 
 		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
 		buffer = (byte *)Q_malloc(size);
-		glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+		R_Screenshot(buffer, size);
 		applyHWGamma(buffer, size);
 
 		// We now have a byte buffer with RGB values, but

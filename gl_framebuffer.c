@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "gl_framebuffer.h"
 #include "tr_types.h"
+#include "r_texture.h"
 
 // OpenGL functionality from elsewhere
 GLuint GL_TextureNameFromReference(texture_ref ref);

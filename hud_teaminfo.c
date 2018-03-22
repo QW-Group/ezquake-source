@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 // Get rid of these once we remove matrix scaling from cl_screen.c version...
 #include "gl_model.h"
-#include "gl_local.h"
 #include "fonts.h"
 
 #define FONT_WIDTH 8

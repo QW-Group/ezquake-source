@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
+#define MAX_CHARSETS 256
 
 typedef struct charset_s {
 	mpic_t glyphs[256];
@@ -75,6 +76,9 @@ void GLC_StateEndRenderScene(void);
 
 void GL_InvalidateAllTextureReferences(void);
 const char* GL_TextureIdentifier(texture_ref ref);
+
+void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
+void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 #endif	// EZQUAKE_R_TEXTURE_H
 

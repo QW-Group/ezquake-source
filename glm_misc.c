@@ -63,7 +63,7 @@ static qbool frameConstantsUploaded = false;
 
 void GLM_PreRenderView(void)
 {
-	extern cvar_t gl_alphafont;
+	extern cvar_t gl_alphafont, gl_max_size;
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
 	extern cvar_t gl_textureless, gl_hwblend;
 	int i, active_lights = 0;

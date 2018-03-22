@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 #include "fmod.h"
 #include "utils.h"
+#include "r_texture.h"
 
 model_t	*loadmodel;
 char	loadname[32];	// for hunk tags

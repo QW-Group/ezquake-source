@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "teamplay.h"
+#include "r_texture.h"
 
 /* Some id maps have textures with identical names but different looks.
 We hardcode a list of names, checksums and alternative names to provide a way

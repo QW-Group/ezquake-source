@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl_Tab.h"
 #include "menu.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "menu_multiplayer.h"
 
 #define BROWSERPADDING 4

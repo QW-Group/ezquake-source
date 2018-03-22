@@ -37,7 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_editor.h"
 #include "input.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "tr_types.h"
 #include "teamplay.h"
 #include "tp_triggers.h"

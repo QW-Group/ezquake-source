@@ -24,12 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+#include "r_texture.h"
 #include "fonts.h"
 
 #ifdef EZ_FREETYPE_SUPPORT
-GLuint GL_TextureNameFromReference(texture_ref ref);
-
 typedef struct glyphinfo_s {
 	float offsets[2];
 	int sizes[2];
@@ -219,12 +217,8 @@ static qbool FontCreate(int grouping, const char* path)
 		original_width = texture_width = FONT_TEXTURE_SIZE * 2;
 		original_height = texture_height = FONT_TEXTURE_SIZE * 2;
 		original_left = original_top = 0;
-		GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, &charset->master, "font");
-		GL_TexStorage2D(GL_TEXTURE0, charset->master, 1, GL_RGBA8, texture_width, texture_height);
-		GL_TexParameterf(GL_TEXTURE0, charset->master, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, charset->master, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, charset->master, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE0, charset->master, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		GL_CreateTexture2D(&charset->master, texture_width, texture_height, "font");
 	}
 	base_font_width = texture_width / 16;
 	base_font_height = texture_height / 16;
@@ -332,14 +326,7 @@ static qbool FontCreate(int grouping, const char* path)
 		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
 		charset->glyphs[ch].texnum = charset->master;
 
-		GL_TexSubImage2D(
-			GL_TEXTURE0, charset->master, 0,
-			original_left + xbase,
-			original_top + ybase,
-			base_font_width,
-			base_font_height,
-			GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer
-		);
+		GL_ReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
 

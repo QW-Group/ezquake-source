@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
+#include "r_texture.h"
 
 void GLM_MakeAlias3DisplayLists(model_t* model);
 

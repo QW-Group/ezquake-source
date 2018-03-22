@@ -86,6 +86,8 @@ void VID_SetCaption (char *text);
 void VID_SetDeviceGammaRamp (unsigned short *ramps);
 extern qbool vid_hwgamma_enabled;
 
+extern int glx, gly, glwidth, glheight;
+
 // these macros map "window" coordinates into "console"
 #define VID_ConsoleX(x) ((x) * vid.conwidth / glwidth)
 #define VID_ConsoleY(y) ((y) * vid.conheight / glheight)

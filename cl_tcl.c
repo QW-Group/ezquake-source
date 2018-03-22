@@ -29,7 +29,6 @@
 #include "quakedef.h"
 #include "embed_tcl.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "rulesets.h"
 

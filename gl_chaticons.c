@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "glm_texture_arrays.h"
 #include "gl_sprite3d.h"
+#include "r_texture.h"
 
 // Chat icons
 typedef byte col_t[4]; // FIXME: why 4?

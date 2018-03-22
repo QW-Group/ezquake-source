@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "fonts.h"
 #include "tr_types.h"
+#include "r_texture.h"
 
 extern charset_t char_textures[MAX_CHARSETS];
 extern int char_mapping[MAX_CHARSETS];

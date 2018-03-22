@@ -21,10 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "hud.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "image.h"
 #include <png.h>
 #include "sbar.h"
+#include "r_texture.h"
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -136,8 +136,7 @@ void HUD_NewRadarMap(void)
 	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
 
 	// Load the map picture.
-	if ((radar_pic_p = GL_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL)
-	{
+	if ((radar_pic_p = GL_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL) {
 		radar_pic = *radar_pic_p;
 		radar_pic_found = true;
 

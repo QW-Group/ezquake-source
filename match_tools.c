@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 #include "logging.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "utils.h"
 #include <curl/curl.h>
@@ -1243,6 +1242,7 @@ void MT_SkyGroup_f(void) {
 	int i, c, j;
 	qbool removeflag = false;
 	skygroup_t *node, *group, *tempnode;
+	extern cvar_t r_skyname;
 	char *groupname, *member;
 
 	extern int R_SetSky(char *skyname);
@@ -1345,11 +1345,11 @@ void MT_SkyGroup_f(void) {
 			AddSkyGroupMember(group, member);
 	}
 
-	if (!group->nummembers)	
+	if (!group->nummembers) {
 		DeleteSkyGroup(group);
+	}
 
-	R_SetSky (r_skyname.string);
-
+	R_SetSky(r_skyname.string);
 }
 
 void MT_AddSkyGroups (void) {

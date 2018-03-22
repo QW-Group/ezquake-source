@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #include "mp3_player.h"
 #include "input.h"
@@ -701,6 +700,7 @@ qbool Rulesets_ToggleWhenFlashed(void)
 
 qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game)
 {
+	extern cvar_t gl_fb_models;
 	qbool protected_model = (model->modhint == MOD_EYES || model->modhint == MOD_BACKPACK) && rulesetDef.ruleset != rs_default;
 	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !local_singleplayer_game;
 
@@ -719,5 +719,7 @@ qbool Ruleset_AllowPowerupShell(model_t* model)
 {
 	// always allow powerupshells for specs or demos.
 	// do not allow powerupshells for eyes in other cases
+	extern cvar_t gl_powerupshells;
+
 	return (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES));
 }

@@ -145,11 +145,6 @@ void GL_TexSubImage2D(
 )
 {
 	if (qglTextureSubImage2D) {
-		GLint textureWidth, textureHeight;
-
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_WIDTH, &textureWidth);
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_HEIGHT, &textureHeight);
-
 		qglTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	else {
@@ -373,4 +368,10 @@ void GL_DeleteSamplers(void)
 		qglDeleteSamplers(1, &nearest_sampler);
 	}
 	nearest_sampler = 0;
+}
+
+// meag: *RGBA is bit ugly, just trying to keep OpenGL enums out of the way for now
+void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
+{
+	GL_TexSubImage2D(GL_TEXTURE0, ref, 0, offsetx, offsety, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 }

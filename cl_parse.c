@@ -21,7 +21,6 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "cdaudio.h"
 #include "ignore.h"
 #include "fchecks.h"
@@ -32,7 +31,6 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "textencoding.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "tp_triggers.h"
 #include "pmove.h"

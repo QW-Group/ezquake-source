@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "gl_aliasmodel.h"
 #include "crc.h"
+#include "qmb_particles.h"
 
 void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
 

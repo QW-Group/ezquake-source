@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "sbar.h"
 #include "fonts.h"
+#include "r_texture.h"
 
 corona_texture_t corona_textures[CORONATEX_COUNT];
 

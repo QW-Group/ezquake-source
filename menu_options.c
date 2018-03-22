@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "vx_tracker.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "tr_types.h"
 #include "teamplay.h"
 #include "EX_FileList.h"
@@ -51,6 +50,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
+
+extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
+extern cvar_t r_bloom, gl_flashblend, r_dynamic, gl_lightmode;
 
 typedef enum {
 	OPTPG_MISC,

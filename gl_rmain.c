@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "gl_sprite3d.h"
 #include "r_performance.h"
+#include "qmb_particles.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -75,8 +76,6 @@ unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light v
 texture_ref shelltexture;
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 texture_ref underwatertexture, detailtexture, solidtexture;
-r_frame_stats_t prevFrameStats;
-r_frame_stats_t frameStats;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {

@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glm_texture_arrays.h"
 #include "gl_rpart.h"
+#include "qmb_particles.h"
+#include "r_texture.h"
 
 //VULT
 static float varray_vertex[16];

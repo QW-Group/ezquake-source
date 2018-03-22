@@ -25,7 +25,6 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include <time.h>
 #include "vx_tracker.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "mvd_utils.h"
 #include "keys.h"
 #include "hud.h"
@@ -34,7 +33,6 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "utils.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "input.h"
 #include "utils.h"
@@ -43,6 +41,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "Ctrl.h"
 #include "qtv.h"
 #include "demo_controls.h"
+#include "r_trace.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -56,7 +55,7 @@ void SCR_Draw_TeamInfo(void);
 void SCR_Draw_ShowNick(void);
 qbool V_PreRenderView(void);
 
-int				glx, gly, glwidth, glheight;
+int	glx, gly, glwidth, glheight;
 
 #define ALPHA_COLOR(x, y) RGBA_TO_COLOR((x)[0],(x)[1],(x)[2],(y))
 
@@ -1069,6 +1068,7 @@ static void SCR_DrawElements(void)
 
 qbool SCR_UpdateScreenPrePlayerView (void)
 {
+	extern cvar_t gl_clear;
 	extern qbool Minimized;
 	static int oldfovmode = 0;
 
@@ -1177,6 +1177,7 @@ void SCR_HUD_WeaponStats(hud_t* hud);
 // Drawing new HUD items in old HUD mode - eventually move everything across
 static void SCR_DrawNewHudElements(void)
 {
+	extern cvar_t r_netgraph, r_netstats;
 	static hud_t *hud_netstats = NULL;
 	static hud_t *hud_weaponstats = NULL;
 	if (hud_netstats == NULL) // first time

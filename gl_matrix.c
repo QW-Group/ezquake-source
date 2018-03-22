@@ -432,3 +432,35 @@ void GLC_EndCausticsTextureMatrix(void)
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 }
+
+qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz)
+{
+	float model[16], proj[16];
+	float in[4] = { objx, objy, objz, 1.0f };
+	float out[4];
+	int view[4];
+	int i;
+
+	GL_GetMatrix(GL_MODELVIEW_MATRIX, model);
+	GL_GetMatrix(GL_PROJECTION_MATRIX, proj);
+	GL_GetViewport(view);
+
+	for (i = 0; i < 4; i++) {
+		out[i] = in[0] * model[0 * 4 + i] + in[1] * model[1 * 4 + i] + in[2] * model[2 * 4 + i] + in[3] * model[3 * 4 + i];
+	}
+
+	for (i = 0; i < 4; i++) {
+		in[i] = out[0] * proj[0 * 4 + i] + out[1] * proj[1 * 4 + i] + out[2] * proj[2 * 4 + i] + out[3] * proj[3 * 4 + i];
+	}
+
+	if (!in[3]) {
+		return false;
+	}
+
+	VectorScale(in, 1 / in[3], in);
+	*winx = view[0] + (1 + in[0]) * view[2] / 2;
+	*winy = view[1] + (1 + in[1]) * view[3] / 2;
+	*winz = (1 + in[2]) / 2;
+
+	return true;
+}

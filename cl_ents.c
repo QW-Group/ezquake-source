@@ -19,11 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "pmove.h"
 #include "utils.h"
-
+#include "qmb_particles.h"
 
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
@@ -189,6 +188,7 @@ void CL_AddEntity(entity_t *ent)
 	visentlist_entrytype_t vistype;
 	modtype_t type = ent->model->type;
 	qbool shell = false;
+	extern cvar_t gl_powerupshells;
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		if (R_CanDrawSimpleItem(ent)) {
@@ -1096,6 +1096,8 @@ void CL_LinkPacketEntities(void)
 		{
 			if (state->modelindex == cl_modelindices[mi_explod1] || state->modelindex == cl_modelindices[mi_explod2]) 
 			{
+				extern cvar_t gl_part_inferno;
+
 				if (gl_part_inferno.value) 
 				{
 					QMB_InfernoFlame (ent.origin);
@@ -1105,6 +1107,8 @@ void CL_LinkPacketEntities(void)
 
 			if (state->modelindex == cl_modelindices[mi_bubble]) 
 			{
+				extern cvar_t gl_part_bubble;
+
 				if (gl_part_bubble.value) {
 					QMB_StaticBubble(&ent);
 					continue;
@@ -2352,6 +2356,7 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec)
 // Moved out of CL_LinkPacketEntities() so NQD playback can use same code.
 void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, customlight_t* cst_lt, entity_state_t *state)
 {
+	extern cvar_t gl_no24bit;
 	model_t* model = cl.model_precache[state->modelindex];
 	float rocketlightsize = 0.0f;
 
@@ -2376,14 +2381,17 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
 			if (rocketlightsize >= 1)
 			{
+				extern cvar_t gl_rl_globe;
 				int bubble = gl_rl_globe.integer ? 2 : 1;
 
 				if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
 				{
 					dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, cst_lt);
 					CL_NewDlightEx(state->number, ent->origin, rocketlightsize, 0.1, cst_lt, bubble);
-					if (!ISPAUSED && amf_coronas.value) //VULT CORONAS
+					if (!ISPAUSED && amf_coronas.value) {
+						//VULT CORONAS
 						NewCorona(C_ROCKETLIGHT, ent->origin);
+					}
 				}
 				else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
 				{

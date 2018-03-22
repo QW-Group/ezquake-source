@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 #include "glm_texture_arrays.h"
+#include "r_texture.h"
 
 static const texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT];
 static texture_flag_t texture_flags[MAX_GLTEXTURES];

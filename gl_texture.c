@@ -26,6 +26,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_texture.h"
 
 const texture_ref null_texture_reference = { 0 };
 
@@ -73,6 +74,25 @@ extern float vid_gamma;
 extern int anisotropy_ext;
 static int anisotropy_tap = 1; //  1 - is off
 
+typedef struct {
+	char *name;
+	int	minimize, maximize;
+} glmode_t;
+
+static glmode_t modes[] = {
+	{ "GL_NEAREST", GL_NEAREST, GL_NEAREST },
+	{ "GL_LINEAR", GL_LINEAR, GL_LINEAR },
+	{ "GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST },
+	{ "GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR },
+	{ "GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST },
+	{ "GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR }
+};
+
+#define GLMODE_NUMODES	(sizeof(modes) / sizeof(glmode_t))
+static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
+static int gl_filter_max = GL_LINEAR;
+static const int gl_filter_max_2d = GL_LINEAR;   // no longer controlled by cvar
+
 // Private GL function to allocate names
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
 
@@ -119,27 +139,6 @@ void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel)
 		return;
 	}
 }
-
-typedef struct 
-{
-	char *name;
-	int	minimize, maximize;
-} glmode_t;
-
-static glmode_t modes[] = {
-	{"GL_NEAREST", GL_NEAREST, GL_NEAREST },
-	{"GL_LINEAR", GL_LINEAR, GL_LINEAR },
-	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST },
-	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR },
-	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST },
-	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR }
-};
-
-#define GLMODE_NUMODES	(sizeof(modes) / sizeof(glmode_t))
-
-static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-static int gl_filter_max = GL_LINEAR;
-static const int gl_filter_max_2d = GL_LINEAR;   // no longer controlled by cvar
 
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) 
 {
@@ -1225,6 +1224,15 @@ void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei 
 void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
 {
 	GL_CreateTexturesWithIdentifier(textureUnit, target, n, textures, NULL);
+}
+
+void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
+{
+	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, reference, name);
+	GL_TexStorage2D(GL_TEXTURE0, *reference, 1, GL_RGBA8, width, height);
+	GL_SetTextureFiltering(GL_TEXTURE0, *reference, GL_LINEAR, GL_LINEAR);
+	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)

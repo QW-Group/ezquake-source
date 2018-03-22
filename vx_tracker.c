@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_tracker.h"
 #include "server.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "fonts.h"
 
 #define MAX_IMAGENAME 32
@@ -51,10 +50,11 @@ static weapon_image_t weapon_images[MAX_WEAPON_CLASSES];
 static weapon_label_t weapon_labels[MAX_WEAPON_CLASSES];
 
 // hard-coded values, remember tracker color codes were 0-9, not 0-F
-const byte color960[4] = { 255, 170, 0, 255 };      // 'you died', suicides etc
-const byte color940[4] = { 255, 113, 0, 255 };      // streaks
-const byte color900[4] = { 255,   0, 0, 255 };      // <x> killed you
-const byte color380[4] = {  77, 227, 0, 255 };      // teamkills
+static const byte color_white[4] = { 255, 255, 255, 255 };
+static const byte color960[4] = { 255, 170, 0, 255 };      // 'you died', suicides etc
+static const byte color940[4] = { 255, 113, 0, 255 };      // streaks
+static const byte color900[4] = { 255,   0, 0, 255 };      // <x> killed you
+static const byte color380[4] = {  77, 227, 0, 255 };      // teamkills
 
 //static void VX_TrackerAddText(char *msg, tracktype_t tt);
 

@@ -21,9 +21,9 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "teamplay.h"
 #include "fonts.h"
+#include "r_matrix.h"
 
 /*********************************** AUTOID ***********************************/
 
@@ -64,38 +64,10 @@ static int autoid_count;
 #define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
 #define AUTOID_WEAPON_OFFSET_X				2
 
-static int qglProject(float objx, float objy, float objz, float *model, float *proj, int *view, float* winx, float* winy, float* winz)
-{
-	float in[4], out[4];
-	int i;
-
-	in[0] = objx; in[1] = objy; in[2] = objz; in[3] = 1.0;
-
-
-	for (i = 0; i < 4; i++)
-		out[i] = in[0] * model[0 * 4 + i] + in[1] * model[1 * 4 + i] + in[2] * model[2 * 4 + i] + in[3] * model[3 * 4 + i];
-
-
-	for (i = 0; i < 4; i++)
-		in[i] = out[0] * proj[0 * 4 + i] + out[1] * proj[1 * 4 + i] + out[2] * proj[2 * 4 + i] + out[3] * proj[3 * 4 + i];
-
-	if (!in[3])
-		return 0;
-
-	VectorScale(in, 1 / in[3], in);
-
-
-	*winx = view[0] + (1 + in[0]) * view[2] / 2;
-	*winy = view[1] + (1 + in[1]) * view[3] / 2;
-	*winz = (1 + in[2]) / 2;
-
-	return 1;
-}
-
 void SCR_SetupAutoID(void)
 {
 	int j, view[4], tracknum = -1;
-	float model[16], project[16], winz, *origin;
+	float winz, *origin;
 	player_state_t *state;
 	player_info_t *info;
 	centity_t *cent;
@@ -112,10 +84,6 @@ void SCR_SetupAutoID(void)
 
 	if (!cls.demoplayback && !cl.spectator)
 		return;
-
-	GL_GetMatrix(GL_MODELVIEW_MATRIX, model);
-	GL_GetMatrix(GL_PROJECTION_MATRIX, project);
-	GL_GetViewport((GLint *)view);
 
 	if (cl.spectator) {
 		tracknum = Cam_TrackNum();
@@ -156,8 +124,9 @@ void SCR_SetupAutoID(void)
 
 		id = &autoids[autoid_count];
 		id->player = info;
-		if (qglProject(origin[0], origin[1], origin[2] + 28, model, project, view, &id->x, &id->y, &winz))
+		if (R_Project3DCoordinates(origin[0], origin[1], origin[2] + 28, &id->x, &id->y, &winz)) {
 			autoid_count++;
+		}
 	}
 }
 
