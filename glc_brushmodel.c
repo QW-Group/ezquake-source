@@ -213,10 +213,12 @@ static void GLC_DrawFlat(model_t *model)
 			if (last_lightmap != new_lightmap) {
 				if (new_lightmap >= 0) {
 					R_ApplyRenderingState(&drawFlatLightmapState);
+					R_CustomColor4ubv(desired);
 					GLC_SetTextureLightmap(GL_TEXTURE0, new_lightmap);
 				}
 				else {
 					R_ApplyRenderingState(&drawFlatNoLightmapState);
+					R_CustomColor4ubv(desired);
 				}
 			}
 			last_lightmap = new_lightmap;
