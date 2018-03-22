@@ -384,7 +384,12 @@ void GLM_InitPrograms(void)
 
 	while (program) {
 		if (!program->program) {
-			GLM_CompileProgram(program);
+			if (program->shader_text[GLM_COMPUTE_SHADER]) {
+				GLM_CompileComputeShaderProgram(program, program->shader_text[GLM_COMPUTE_SHADER], program->shader_length[GLM_COMPUTE_SHADER]);
+			}
+			else {
+				GLM_CompileProgram(program);
+			}
 		}
 
 		program = program->next;
@@ -425,6 +430,12 @@ qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const unsigned cha
 	int components;
 	GLuint shader;
 
+	program->program = 0;
+	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
+	memset(program->shader_length, 0, sizeof(program->shader_length));
+	program->shader_text[GLM_COMPUTE_SHADER] = shadertext;
+	program->shader_length[GLM_COMPUTE_SHADER] = length;
+
 	components = GLM_InsertDefinitions(shader_text, shader_text_length, "");
 	if (GLM_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
 		GLuint shader_program = glCreateProgram();
@@ -441,6 +452,7 @@ qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const unsigned cha
 				program->program = shader_program;
 				program->uniforms_found = false;
 				program->force_recompile = false;
+				GLM_AddToProgramList(program);
 
 				if (glObjectLabel) {
 					glObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);

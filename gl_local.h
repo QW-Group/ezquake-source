@@ -523,7 +523,8 @@ void GLM_GetMatrix(GLenum type, float* matrix);
 #define GLM_VERTEX_SHADER   0
 #define GLM_FRAGMENT_SHADER 1
 #define GLM_GEOMETRY_SHADER 2
-#define GLM_SHADER_COUNT    3
+#define GLM_COMPUTE_SHADER  3
+#define GLM_SHADER_COUNT    4
 
 typedef struct glm_program_s {
 	GLuint vertex_shader;
