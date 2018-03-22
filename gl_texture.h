@@ -82,9 +82,9 @@ extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel, gl_mipmap_viewmodels;
 extern cvar_t gl_no24bit;
 
-GLint GL_TextureWidth(texture_ref ref);
-GLint GL_TextureHeight(texture_ref ref);
-GLint GL_TextureDepth(texture_ref ref);
+int GL_TextureWidth(texture_ref ref);
+int GL_TextureHeight(texture_ref ref);
+int GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 void GLC_StateEndRenderScene(void);
 

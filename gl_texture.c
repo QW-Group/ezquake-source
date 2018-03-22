@@ -27,8 +27,6 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_local.h"
 #include "tr_types.h"
 
-// #define USE_OPENGL_DIMENSIONS
-
 const texture_ref null_texture_reference = { 0 };
 
 typedef struct gltexture_s {
@@ -1368,47 +1366,27 @@ qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)
 	       (gltextures[tex1.index].texture_height == gltextures[tex2.index].texture_height);
 }
 
-GLint GL_TextureWidth(texture_ref ref)
+int GL_TextureWidth(texture_ref ref)
 {
 	assert(ref.index && ref.index < numgltextures);
 	if (ref.index >= numgltextures) {
 		return 0;
 	}
 
-#ifdef USE_OPENGL_DIMENSIONS
-	{
-		GLint result;
-
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, ref, 0, GL_TEXTURE_WIDTH, &result);
-
-		return result;
-	}
-#else
 	return gltextures[ref.index].texture_width;
-#endif
 }
 
-GLint GL_TextureHeight(texture_ref ref)
+int GL_TextureHeight(texture_ref ref)
 {
 	assert(ref.index && ref.index < numgltextures);
 	if (ref.index >= numgltextures) {
 		return 0;
 	}
 
-#ifdef USE_OPENGL_DIMENSIONS
-	{
-		GLint result;
-
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, ref, 0, GL_TEXTURE_HEIGHT, &result);
-
-		return result;
-	}
-#else
 	return gltextures[ref.index].texture_height;
-#endif
 }
 
-GLint GL_TextureDepth(texture_ref ref)
+int GL_TextureDepth(texture_ref ref)
 {
 	assert(ref.index && ref.index < numgltextures);
 	assert(gltextures[ref.index].target == GL_TEXTURE_2D_ARRAY);
@@ -1416,17 +1394,7 @@ GLint GL_TextureDepth(texture_ref ref)
 		return 0;
 	}
 
-#ifdef USE_OPENGL_DIMENSIONS
-	{
-		GLint result;
-
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, ref, 0, GL_TEXTURE_DEPTH, &result);
-
-		return result;
-	}
-#else
 	return gltextures[ref.index].depth;
-#endif
 }
 
 void GL_GenerateMipmapsIfNeeded(texture_ref ref)
