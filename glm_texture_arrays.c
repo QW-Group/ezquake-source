@@ -239,6 +239,7 @@ static void GL_FlagTexturesForModel(model_t* mod)
 				}
 
 				if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !GL_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
+					Con_Printf("Warning: luma texture mismatch: %s (%dx%d vs %dx%d)\n", tx->name, GL_TextureWidth(tx->gl_texturenum), GL_TextureHeight(tx->gl_texturenum), GL_TextureWidth(tx->fb_texturenum), GL_TextureHeight(tx->fb_texturenum));
 					GL_TextureReferenceInvalidate(tx->fb_texturenum);
 				}
 

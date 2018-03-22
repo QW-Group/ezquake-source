@@ -34,8 +34,6 @@ const texture_ref null_texture_reference = { 0 };
 typedef struct gltexture_s {
 	// OpenGL texture number (or array)
 	GLuint      texnum;
-	// OpenGL texture array index (modern only)
-	GLuint      texindex;
 
 	// 
 	char        identifier[MAX_QPATH];
