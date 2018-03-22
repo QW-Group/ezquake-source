@@ -1178,6 +1178,17 @@ static void VID_SDL_Init(void)
 	VID_SetupModeList();
 	VID_SetupResolution();
 
+	sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
+	{
+		extern qbool VK_Initialise(SDL_Window* window);
+		extern void VK_Shutdown(void);
+
+		if (VK_Initialise(sdl_window)) {
+			VK_Shutdown();
+		}
+		SDL_DestroyWindow(sdl_window);
+	}
+
 	sdl_window = VID_SDL_CreateWindow(flags);
 	if (!sdl_window) {
 		if (gl_multisamples.integer > 0) {
