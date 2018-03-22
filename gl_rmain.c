@@ -1002,7 +1002,7 @@ static void GL_DrawVelocity3D(void)
 		GLM_DrawVelocity3D();
 	}
 	else {
-		GLC_DrawVelocity3D();
+		//GLC_DrawVelocity3D();
 	}
 }
 

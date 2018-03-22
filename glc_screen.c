@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
+/*
 void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 {
 	glPushAttrib(GL_TEXTURE_BIT);
@@ -59,3 +60,4 @@ void GLC_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 
 	glPopAttrib();
 }
+*/

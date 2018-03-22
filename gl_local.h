@@ -564,7 +564,7 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
-void GLC_DrawVelocity3D(void);
+//void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
 void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
