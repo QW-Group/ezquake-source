@@ -52,8 +52,6 @@ ALIAS MODELS
 ==============================================================================
 */
 
-static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
-
 aliashdr_t	*pheader;
 
 stvert_t	stverts[MAXALIASVERTS];

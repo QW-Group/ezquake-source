@@ -204,8 +204,6 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
 #else
 	{
-		GLuint last = (end - start + 1) * 5 + (start * 5);
-
 		GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)(start * 5 * sizeof(GLuint)), offset);
 	}
 #endif

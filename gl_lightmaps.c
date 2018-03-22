@@ -475,7 +475,7 @@ void R_UploadChangedLightmaps(void)
 			extern unsigned char glsl_lighting_compute_glsl[];
 			extern unsigned int glsl_lighting_compute_glsl_len;
 
-			if (!GLM_CompileComputeShaderProgram(&lightmap_program, glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
+			if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
 				return;
 			}
 		}

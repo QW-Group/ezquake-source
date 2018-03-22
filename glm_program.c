@@ -423,9 +423,9 @@ void GLM_ForceRecompile(void)
 #endif
 }
 
-qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const unsigned char* shadertext, GLint length)
+qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)
 {
-	const char* shader_text[MAX_SHADER_COMPONENTS] = { (const char*)shadertext, "", "", "", "", "" };
+	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
 	GLuint shader;

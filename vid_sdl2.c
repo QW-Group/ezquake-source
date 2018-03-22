@@ -53,6 +53,10 @@ void Sys_ActiveAppChanged (void);
 #include "gl_local.h"
 #include "textencoding.h"
 
+#ifdef SUPPORT_FRAMEBUFFERS
+#include "gl_framebuffer.h"
+#endif
+
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
 /* FIXME: This should be in a header file and it probably shouldn't be called TP_

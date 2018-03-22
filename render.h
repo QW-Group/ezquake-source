@@ -56,8 +56,8 @@ typedef struct entity_s {
 	struct efrag_s			*efrag;			// linked list of efrags (FIXME)
 	int						visframe;		// last frame this entity was found in an active leaf. only used for static objects
 
-	int						dlightframe;	// dynamic lighting
-	int						dlightbits;
+	//int						dlightframe;	// dynamic lighting
+	//int						dlightbits;
 
 	//VULT MOTION TRAILS
 	float alpha;
@@ -150,10 +150,11 @@ typedef enum trail_type_s {
 	BLEEDING_TRAIL2,
 } trail_type_t;
 
-void R_InitParticles (void);
-void R_ClearParticles (void);
-void R_DrawParticles (void);
+void R_InitParticles(void);
+void R_ClearParticles(void);
+void R_DrawParticles(void);
 void R_ParticleFrame(void);
+void R_ParticleEndFrame(void);
 
 void R_ReadPointFile_f (void);
 

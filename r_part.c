@@ -613,7 +613,6 @@ void Classic_ReScaleParticles(void)
 static void Classic_PrepareParticles(void)
 {
 	particle_t* p;
-	float time2, time3, time1, dvel, frametime, grav;
 	unsigned char *at;
 	float theAlpha;
 	float dist, scale, r_partscale;
@@ -633,16 +632,6 @@ static void Classic_PrepareParticles(void)
 	if (!GL_TextureReferenceIsValid(particletexture)) {
 		Classic_LoadParticleTexures(default_size, default_size);
 	}
-
-	frametime = cls.frametime;
-	if (ISPAUSED) {
-		frametime = 0;
-	}
-	time3 = frametime * 15;
-	time2 = frametime * 10; // 15;
-	time1 = frametime * 5;
-	grav = frametime * 800 * 0.05;
-	dvel = 4 * frametime;
 
 	p = particles;
 	for (i = 0; i < r_numactiveparticles; ++i, ++p) {

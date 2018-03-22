@@ -322,7 +322,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 					glBegin(GL_POLYGON);
 					v = s->polys->verts[0];
 
-					if (!s->texinfo->flags & TEX_SPECIAL) {
+					if (!(s->texinfo->flags & TEX_SPECIAL)) {
 						for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 							//Tei: textureless for the world brush models (Qrack)
 							float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
