@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_brushmodel.h"
 #include "tr_types.h"
 #include <limits.h>
+#include "glm_vao.h"
 
 typedef struct vbo_world_surface_s {
 	float normal[4];

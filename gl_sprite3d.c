@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_sprite3d.h"
 #include "tr_types.h"
+#include "glm_vao.h"
 
 void GLM_Draw3DSprites(void);
 void GLM_Prepare3DSprites(void);

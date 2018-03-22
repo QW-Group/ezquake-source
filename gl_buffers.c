@@ -25,9 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "r_local.h"
+#include "glm_vao.h"
 
-static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 void GL_BindVertexArrayElementBuffer(buffer_ref ref);
+static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 
 typedef struct buffer_data_s {
 	GLuint glref;
@@ -51,19 +52,6 @@ static qbool buffers_supported = false;
 static qbool tripleBuffer_supported = false;
 static GLsync tripleBufferSyncObjects[3];
 
-// Linked list of all vao buffers
-static glm_vao_t* vao_list = NULL;
-static glm_vao_t* currentVAO = NULL;
-
-// VAOs
-typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
-typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
-typedef void (APIENTRY *glDeleteVertexArrays_t)(GLsizei n, const GLuint* arrays);
-typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
-typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
-
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
@@ -82,15 +70,6 @@ typedef void (APIENTRY *glBufferStorage_t)(GLenum target, GLsizeiptr size, const
 typedef GLsync (APIENTRY *glFenceSync_t)(GLenum condition, GLbitfield flags);
 typedef GLenum (APIENTRY *glClientWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
 typedef void (APIENTRY *glDeleteSync_t)(GLsync sync);
-
-// VAO functions
-static glGenVertexArrays_t         qglGenVertexArrays = NULL;
-static glBindVertexArray_t         qglBindVertexArray = NULL;
-static glEnableVertexAttribArray_t qglEnableVertexAttribArray = NULL;
-static glDeleteVertexArrays_t      qglDeleteVertexArrays = NULL;
-static glVertexAttribPointer_t     qglVertexAttribPointer = NULL;
-static glVertexAttribIPointer_t    qglVertexAttribIPointer = NULL;
-static glVertexAttribDivisor_t     qglVertexAttribDivisor = NULL;
 
 // Buffer functions
 static glBindBuffer_t        qglBindBuffer = NULL;
@@ -487,7 +466,7 @@ void GL_BindBuffer(buffer_ref ref)
 
 void GL_InitialiseBufferHandling(void)
 {
-	buffers_supported = true;
+	buffers_supported = GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true;
 
 	GL_LoadMandatoryFunctionExtension(glBindBuffer, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferData, buffers_supported);
@@ -495,15 +474,6 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadMandatoryFunctionExtension(glGenBuffers, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glDeleteBuffers, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glUnmapBuffer, buffers_supported);
-
-	// VAOs
-	GL_LoadMandatoryFunctionExtension(glGenVertexArrays, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glBindVertexArray, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glDeleteVertexArrays, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glVertexAttribIPointer, buffers_supported);
-	GL_LoadMandatoryFunctionExtension(glVertexAttribDivisor, buffers_supported);
 
 	// OpenGL 3.0 onwards, for 4.3+ support only
 	GL_LoadOptionalFunction(glBindBufferBase);
@@ -538,7 +508,7 @@ void GL_InitialiseBufferState(void)
 {
 	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
 	GL_BindVertexArrayElementBuffer(null_buffer_reference);
-	currentVAO = NULL;
+	GLM_InitialiseVAOState();
 }
 
 void GL_UnBindBuffer(GLenum target)
@@ -566,117 +536,6 @@ void GL_SetElementArrayBuffer(buffer_ref buffer)
 	else {
 		currentElementArrayBuffer = 0;
 	}
-}
-
-void GL_BindVertexArray(glm_vao_t* vao)
-{
-	if (currentVAO != vao) {
-		qglBindVertexArray(vao ? vao->vao : 0);
-		currentVAO = vao;
-
-		if (vao) {
-			GL_SetElementArrayBuffer(vao->element_array_buffer);
-		}
-
-		GL_LogAPICall("GL_BindVertexArray()");
-	}
-}
-
-void GL_BindVertexArrayElementBuffer(buffer_ref ref)
-{
-	if (currentVAO && currentVAO->vao) {
-		currentVAO->element_array_buffer = ref;
-	}
-}
-
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-	}
-
-	qglEnableVertexAttribArray(index);
-	qglVertexAttribPointer(index, size, type, normalized, stride, pointer);
-	qglVertexAttribDivisor(index, divisor);
-}
-
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
-	}
-
-	qglEnableVertexAttribArray(index);
-	qglVertexAttribIPointer(index, size, type, stride, pointer);
-	qglVertexAttribDivisor(index, divisor);
-}
-
-void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
-{
-	assert(vao);
-	assert(vao->vao);
-
-	GL_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(ibo)) {
-		GL_BindBuffer(ibo);
-	}
-	else {
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-	}
-}
-
-void GL_GenVertexArray(glm_vao_t* vao, const char* name)
-{
-	extern void GL_SetElementArrayBuffer(buffer_ref buffer);
-
-	if (vao->vao) {
-		qglDeleteVertexArrays(1, &vao->vao);
-	}
-	else {
-		vao->next = vao_list;
-		vao_list = vao;
-	}
-	qglGenVertexArrays(1, &vao->vao);
-	GL_BindVertexArray(vao);
-	GL_ObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
-	strlcpy(vao->name, name, sizeof(vao->name));
-	GL_SetElementArrayBuffer(null_buffer_reference);
-}
-
-void GL_DeleteVAOs(void)
-{
-	glm_vao_t* vao = vao_list;
-	if (qglBindVertexArray) {
-		qglBindVertexArray(0);
-	}
-	while (vao) {
-		glm_vao_t* prev = vao;
-
-		if (vao->vao) {
-			if (qglDeleteVertexArrays) {
-				qglDeleteVertexArrays(1, &vao->vao);
-			}
-			vao->vao = 0;
-		}
-
-		vao = vao->next;
-		prev->next = NULL;
-	}
-	vao_list = NULL;
 }
 
 void GL_EnsureBufferSize(buffer_ref ref, GLsizei size)

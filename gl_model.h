@@ -154,23 +154,6 @@ typedef struct vbo_model_vert_s {
 	int padding;
 } vbo_model_vert_t;
 
-typedef struct gl_buffer_s {
-	int index;
-} buffer_ref;
-
-qbool GL_BufferValid(buffer_ref buffer);
-#define GL_BufferReferenceIsValid(x) (x.index && GL_BufferValid(x))
-extern const buffer_ref null_buffer_reference;
-
-typedef struct glm_vao_s {
-	unsigned int vao;
-	char name[32];
-
-	struct glm_vao_s* next;
-
-	buffer_ref element_array_buffer;
-} glm_vao_t;
-
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;						//next lightmap poly in chain

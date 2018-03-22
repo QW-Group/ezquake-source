@@ -43,6 +43,14 @@ void R_BufferStartFrame(void);
 void R_BufferEndFrame(void);
 qbool R_BuffersReady(void);
 
+typedef struct gl_buffer_s {
+	int index;
+} buffer_ref;
+
+qbool GL_BufferValid(buffer_ref buffer);
+#define GL_BufferReferenceIsValid(x) (x.index && GL_BufferValid(x))
+extern const buffer_ref null_buffer_reference;
+
 // fog
 void R_AddWaterfog(int contents);
 
@@ -58,5 +66,7 @@ extern cvar_t vid_renderer;
 #define R_UseImmediateOpenGL()    (vid_renderer.integer == 0)
 #define R_UseModernOpenGL()       (vid_renderer.integer == 1)
 #define R_UseVulkan()             (vid_renderer.integer == 2)
+
+// vao
 
 #endif // EZQUAKE_R_LOCAL_HEADER

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "r_matrix.h"
+#include "glm_vao.h"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];

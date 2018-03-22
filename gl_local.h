@@ -49,6 +49,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture.h"
 #include "r_framestats.h"
 #include "r_trace.h"
+#include "r_local.h"
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -476,7 +477,6 @@ void GL_DepthFunc(GLenum func);
 void GL_DepthRange(double nearVal, double farVal);
 void GL_CullFace(GLenum mode);
 void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
-void GL_BindVertexArray(glm_vao_t* vao);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_InitTextureState(void);
 void GL_DepthMask(GLboolean mask);
@@ -638,10 +638,6 @@ void GLM_DeleteBrushModelIndexBuffer(void);
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
-void GL_GenVertexArray(glm_vao_t* vao, const char* name);
-void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
-void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
-void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo);
 void GL_AlphaFunc(GLenum func, GLclampf threshold);
 void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
