@@ -927,7 +927,7 @@ static void R_RenderScene(void)
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
 
-		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, NULL, null_texture_reference, 0, GL_TRIANGLE_STRIP);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, NULL, null_texture_reference, 0, r_primitive_triangle_strip);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);

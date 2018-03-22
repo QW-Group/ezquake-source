@@ -74,7 +74,15 @@ typedef struct gl_sprite3d_vert_s {
 	byte color[4];
 } gl_sprite3d_vert_t;
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s* textured_state, struct rendering_state_s* untextured_state, texture_ref texture, int index, unsigned int primitive_type);
+typedef enum {
+	r_primitive_triangle_strip,
+	r_primitive_triangle_fan,
+	r_primitive_triangles,
+
+	r_primitive_count
+} r_primitive_id;
+
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s* textured_state, struct rendering_state_s* untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
 gl_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
 gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
 void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);

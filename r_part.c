@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+//#include "gl_local.h"
 #include "particles_classic.h"
 #include "gl_sprite3d.h"
 #include "rulesets.h"
@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "glm_particles.h"
 #include "r_state.h"
+#include "r_local.h"
 
 static rendering_state_t particle_state;
 texture_ref particletexture;
@@ -144,7 +145,7 @@ void Classic_LoadParticleTexures(int width, int height)
 		return;
 	}
 
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_LoadParticleTextures();
 	}
 }
@@ -703,7 +704,7 @@ void Classic_DrawParticles(void)
 		return;
 	}
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, &particle_state, NULL, GL_UseGLSL() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, &particle_state, NULL, R_UseModernOpenGL() ? particletexture_array : particletexture, particletexture_array_index, r_primitive_triangles);
 	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));

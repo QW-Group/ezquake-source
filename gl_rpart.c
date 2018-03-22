@@ -552,7 +552,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_STRIP);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 					first = false;
 				}
 
@@ -590,7 +590,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 					first = false;
 				}
 
@@ -640,7 +640,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 						first = false;
 					}
 
@@ -688,7 +688,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN);
+						GL_Sprite3DInitialiseBatch(pt->billboard_type, &pt->state, &pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 						first = false;
 					}
 
