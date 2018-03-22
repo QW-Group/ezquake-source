@@ -423,11 +423,20 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 {
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
 	GLint mode = EZQ_ALIAS_MODE_NORMAL;
-	unsigned int extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
+	unsigned int extra_offset = 0;
+	extern cvar_t vid_clientmemory;
 	int i;
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
 		return;
+	}
+
+	if (vid_clientmemory.integer) {
+		GL_UnBindBuffer(GL_DRAW_INDIRECT_BUFFER);
+	}
+	else {
+		GL_BindBuffer(vbo_aliasIndirectDraw);
+		extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
 	}
 
 	if (type == aliasmodel_draw_std) {
@@ -445,7 +454,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	GL_BindVertexArray(&aliasModel_vao);
 	GL_UseProgram(drawAliasModelProgram.program);
 	SetAliasModelMode(mode);
-	GL_BindBuffer(vbo_aliasIndirectDraw);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	for (i = 0; i < instr->num_calls; ++i) {
@@ -458,7 +466,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		GL_MultiDrawArraysIndirect(
 			GL_TRIANGLES,
-			(const void*)(instr->indirect_buffer_offset + extra_offset),
+			vid_clientmemory.integer ? instr->indirect_buffer : (const void*)(instr->indirect_buffer_offset + extra_offset),
 			instr->num_cmds[i],
 			0
 		);
@@ -474,7 +482,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		for (i = 0; i < instr->num_calls; ++i) {
 			GL_MultiDrawArraysIndirect(
 				GL_TRIANGLES,
-				(const void*)instr->indirect_buffer_offset,
+				vid_clientmemory.integer ? instr->indirect_buffer : (const void*)instr->indirect_buffer_offset,
 				instr->num_cmds[i],
 				0
 			);

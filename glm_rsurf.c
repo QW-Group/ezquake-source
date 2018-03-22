@@ -508,7 +508,8 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 {
 	int begin = -1;
 	int i;
-	unsigned int extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
+	uintptr_t extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
+	extern cvar_t vid_clientmemory;
 
 	//
 	glUniform1i(drawWorld_outlines, 1);
@@ -519,7 +520,13 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 		if (!drawcall->worldmodel_requests[i].worldmodel) {
 			if (begin >= 0) {
 				// Draw outline models so far
-				GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])), i - begin, sizeof(drawcall->worldmodel_requests[0]));
+				GL_MultiDrawElementsIndirect(
+					GL_TRIANGLE_STRIP,
+					GL_UNSIGNED_INT,
+					vid_clientmemory.integer ? drawcall->worldmodel_requests + begin : (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])),
+					i - begin,
+					sizeof(drawcall->worldmodel_requests[0])
+				);
 			}
 			begin = -1;
 			continue;
@@ -530,7 +537,13 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	}
 	if (begin >= 0) {
 		// Draw the rest
-		GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])), drawcall->batch_count - begin, sizeof(drawcall->worldmodel_requests[0]));
+		GL_MultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			vid_clientmemory.integer ? (void*)(drawcall->worldmodel_requests + begin) : (void*)(extra_offset + begin * sizeof(drawcall->worldmodel_requests[0])),
+			drawcall->batch_count - begin,
+			sizeof(drawcall->worldmodel_requests[0])
+		);
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
@@ -606,7 +619,8 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	extern glm_vao_t brushModel_vao;
 	int draw;
 	qbool first = true;
-	unsigned int extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
+	unsigned int extra_offset = 0;
+	extern cvar_t vid_clientmemory;
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
@@ -618,8 +632,16 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		if (first) {
 			GL_EnterRegion(__FUNCTION__);
 			GL_StartWorldBatch();
-			GL_BindBuffer(vbo_brushElements);
-			GL_BindBuffer(vbo_worldIndirectDraw);
+			if (vid_clientmemory.integer) {
+				GL_UnBindBuffer(GL_DRAW_INDIRECT_BUFFER);
+			}
+			else {
+				GL_BindBuffer(vbo_brushElements);
+				extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
+			}
+			if (!vid_clientmemory.integer) {
+				GL_BindBuffer(vbo_worldIndirectDraw);
+			}
 
 			GL_AlphaBlendFlags(type == alpha_surfaces ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
@@ -634,7 +656,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 				GL_MultiDrawElementsIndirect(
 					GL_TRIANGLE_STRIP,
 					GL_UNSIGNED_INT,
-					(void*)(drawcall->indirectDrawOffset + extra_offset),
+					vid_clientmemory.integer ? drawcall->worldmodel_requests : (void*)(drawcall->indirectDrawOffset + extra_offset),
 					drawcall->polygonOffsetSplit,
 					sizeof(drawcall->worldmodel_requests[0])
 				);
@@ -644,7 +666,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)(extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
+				vid_clientmemory.integer ? &drawcall->worldmodel_requests[drawcall->polygonOffsetSplit]: (void*)(extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
 				drawcall->batch_count - drawcall->polygonOffsetSplit,
 				sizeof(drawcall->worldmodel_requests[0])
 			);
@@ -656,7 +678,7 @@ void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			GL_MultiDrawElementsIndirect(
 				GL_TRIANGLE_STRIP,
 				GL_UNSIGNED_INT,
-				(void*)(extra_offset + drawcall->indirectDrawOffset),
+				vid_clientmemory.integer ? drawcall->worldmodel_requests : (void*)(extra_offset + drawcall->indirectDrawOffset),
 				drawcall->batch_count,
 				sizeof(drawcall->worldmodel_requests[0])
 			);

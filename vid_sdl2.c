@@ -142,6 +142,7 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+cvar_t vid_clientmemory           = {"vid_clientmemory",           "1",       CVAR_LATCH };
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
 
 #ifdef X11_GAMMA_WORKAROUND
@@ -815,6 +816,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_grab_keyboard);
 	Cvar_Register(&vid_renderer);
 	Cvar_Register(&vid_gl_core_profile);
+	Cvar_Register(&vid_clientmemory);
 #ifdef SUPPORT_FRAMEBUFFERS
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_width);
@@ -998,14 +1000,31 @@ static void VID_SDL_GL_SetupAttributes(void)
 
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 	if (GL_UseGLSL()) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		int contextFlags = 0;
+
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		if (GL_CoreProfileContext()) {
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+			if (GL_ForwardOnlyProfile()) {
+				contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+			}
+		}
+		else {
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+		}
+		if (GL_DebugProfileContext()) {
+			contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
+		}
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
 	}
 	else {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+		// SDL defaults - take what we can get
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	}
 
 	if (r_24bit_depth.integer == 1) {
@@ -1201,8 +1220,8 @@ static void VID_SDL_Init(void)
 	if (!sdl_context && vid_renderer.integer == 1) {
 		Con_Printf("&cf00Error&r: failed to create glsl context, trying classic mode...\n");
 
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
 		Cvar_LatchedSetValue(&vid_renderer, 0);
