@@ -327,7 +327,7 @@ static void GLC_DrawSkyBox(void)
 			continue;
 		}
 
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
+		R_TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
 
 		glBegin(GL_QUADS);
 		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);

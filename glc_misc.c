@@ -212,7 +212,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vs *= 1;//gl_motionblurscale.value;
 	vt *= 1;//gl_motionblurscale.value;
 
-	GL_BindTextureUnit(GL_TEXTURE0, sceneblur_texture);
+	R_TextureUnitBind(GL_TEXTURE0, sceneblur_texture);
 	R_CustomColor(alpha, alpha, alpha, alpha);
 	if (draw)
 	{

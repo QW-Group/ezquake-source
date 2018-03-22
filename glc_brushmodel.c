@@ -286,7 +286,7 @@ static void GLC_DrawFlat(model_t *model)
 				if (new_lightmap >= 0) {
 					R_ApplyRenderingState(&drawFlatLightmapState);
 					R_CustomColor4ubv(desired);
-					GLC_SetTextureLightmap(GL_TEXTURE0, new_lightmap);
+					GLC_SetTextureLightmap(0, new_lightmap);
 				}
 				else {
 					R_ApplyRenderingState(&drawFlatNoLightmapState);
@@ -768,7 +768,7 @@ static void GLC_BlendLightmaps(void)
 		}
 
 		GLC_LightmapUpdate(i);
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, GLC_LightmapTexture(i));
+		R_TextureUnitBind(0, GLC_LightmapTexture(i));
 		if (use_vbo) {
 			GLuint index_count = 0;
 

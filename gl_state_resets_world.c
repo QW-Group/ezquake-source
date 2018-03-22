@@ -287,9 +287,9 @@ void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 	ENTER_STATE;
 
 	//bind the world texture
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, t->gl_texturenum);
+	R_TextureUnitBind(0, t->gl_texturenum);
 	if (gl_mtexable) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE1, GLC_LightmapTexture(s->lightmaptexturenum));
+		R_TextureUnitBind(1, GLC_LightmapTexture(s->lightmaptexturenum));
 	}
 
 	LEAVE_STATE;

@@ -144,7 +144,7 @@ void GLC_RenderFullbrights(void)
 		}
 
 		texture.index = i;
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+		R_TextureUnitBind(0, texture);
 		if (R_VAOBound()) {
 			int index_count = 0;
 
@@ -185,7 +185,7 @@ void GLC_RenderLumas(void)
 		}
 
 		texture.index = i;
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+		R_TextureUnitBind(0, texture);
 		if (use_vbo) {
 			int index_count = 0;
 

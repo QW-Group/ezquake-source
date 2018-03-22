@@ -436,7 +436,7 @@ void R_Bloom_DownsampleView( void )
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
 		R_CustomColor( 0.5f, 0.5f, 0.5f, 1.0f );
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloomscreentexture);
+		R_TextureUnitBind(0, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
@@ -512,7 +512,7 @@ void R_BloomBlend(void)
 
 	// Restore the screen-backup to the screen.
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, r_bloombackuptexture);
+	R_TextureUnitBind(0, r_bloombackuptexture);
 	R_CustomColor(1, 1, 1, 1);
 	R_Bloom_Quad(0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),

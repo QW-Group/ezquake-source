@@ -321,7 +321,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 }
 
-static void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
+static void R_UploadLightMap(int textureUnit, int lightmapnum)
 {
 	const void* data_source;
 	lightmap_data_t* lm = &lightmaps[lightmapnum];
@@ -330,10 +330,10 @@ static void R_UploadLightMap(GLenum textureUnit, int lightmapnum)
 
 	lm->modified = false;
 	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+		GL_TexSubImage3D(GL_TEXTURE0 + textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 	}
 	else {
-		GL_TexSubImage2D(textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+		GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 	}
 	lm->change_area.l = LIGHTMAP_WIDTH;
 	lm->change_area.t = LIGHTMAP_HEIGHT;
@@ -478,7 +478,7 @@ void R_UploadChangedLightmaps(void)
 			for (i = frameStats.lightmap_min_changed; i <= frameStats.lightmap_max_changed; ++i) {
 				if (lightmaps[i].modified) {
 					memset(lightmaps[i].rawdata, 255, sizeof(lightmaps[i].rawdata));
-					R_UploadLightMap(GL_TEXTURE0, i);
+					R_UploadLightMap(0, i);
 				}
 			}
 
@@ -520,7 +520,7 @@ void R_UploadChangedLightmaps(void)
 
 		for (i = frameStats.lightmap_min_changed; i <= frameStats.lightmap_max_changed; ++i) {
 			if (lightmaps[i].modified) {
-				R_UploadLightMap(GL_TEXTURE0, i);
+				R_UploadLightMap(0, i);
 			}
 		}
 
@@ -857,14 +857,14 @@ void R_BuildLightmaps(void)
 	}
 }
 
-void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num)
+void GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 {
 	//update lightmap if it has been modified by dynamic lights
 	if (lightmaps[lightmap_num].modified) {
 		R_UploadLightMap(textureUnit, lightmap_num);
 	}
 	else {
-		GL_EnsureTextureUnitBound(textureUnit, lightmaps[lightmap_num].gl_texref);
+		R_TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
 	}
 }
 
@@ -905,7 +905,7 @@ void GLC_LightmapUpdate(int index)
 {
 	if (index >= 0 && index < lightmap_array_size) {
 		if (lightmaps[index].modified) {
-			R_UploadLightMap(GL_TEXTURE0, index);
+			R_UploadLightMap(0, index);
 		}
 	}
 }

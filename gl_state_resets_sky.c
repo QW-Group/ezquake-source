@@ -129,7 +129,7 @@ void GLC_StateBeginSingleTextureSkyDome(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeFirstPassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, solidskytexture);
+	R_TextureUnitBind(0, solidskytexture);
 
 	LEAVE_STATE;
 }
@@ -139,7 +139,7 @@ void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeCloudPassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, alphaskytexture);
+	R_TextureUnitBind(0, alphaskytexture);
 
 	LEAVE_STATE;
 }
@@ -149,8 +149,8 @@ void GLC_StateBeginMultiTextureSkyDome(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeSinglePassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, solidskytexture);
-	GL_EnsureTextureUnitBound(GL_TEXTURE1, alphaskytexture);
+	R_TextureUnitBind(0, solidskytexture);
+	R_TextureUnitBind(1, alphaskytexture);
 
 	LEAVE_STATE;
 }
@@ -164,8 +164,8 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeSinglePassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, solidskytexture);
-	GL_EnsureTextureUnitBound(GL_TEXTURE1, alphaskytexture);
+	R_TextureUnitBind(0, solidskytexture);
+	R_TextureUnitBind(1, alphaskytexture);
 
 	LEAVE_STATE;
 }
@@ -179,7 +179,7 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeFirstPassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, solidskytexture);
+	R_TextureUnitBind(0, solidskytexture);
 
 	LEAVE_STATE;
 }
@@ -189,7 +189,7 @@ void GLC_StateBeginSingleTextureCloudPass(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&skyDomeCloudPassState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, alphaskytexture);
+	R_TextureUnitBind(0, alphaskytexture);
 
 	LEAVE_STATE;
 }

@@ -63,14 +63,14 @@ static void VID_FramebufferFlip(void)
 			R_BindVertexArray(vao_postprocess);
 
 			if (flip2d && flip3d) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer3d, 0));
-				GL_EnsureTextureUnitBound(GL_TEXTURE1, GL_FramebufferTextureReference(framebuffer2d, 0));
+				R_TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer3d, 0));
+				R_TextureUnitBind(1, GL_FramebufferTextureReference(framebuffer2d, 0));
 			}
 			else if (flip3d) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer3d, 0));
+				R_TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer3d, 0));
 			}
 			else if (flip2d) {
-				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer2d, 0));
+				R_TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer2d, 0));
 			}
 			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}

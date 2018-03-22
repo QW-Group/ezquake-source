@@ -70,4 +70,7 @@ extern cvar_t vid_renderer;
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
 #define R_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_gl_debug))
 
+// textures
+void R_TextureUnitBind(int unit, texture_ref texture);
+
 #endif // EZQUAKE_R_LOCAL_HEADER

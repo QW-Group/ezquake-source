@@ -215,7 +215,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 			GL_BindTextures(0, 2, textures);
 		}
 		else {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+			R_TextureUnitBind(0, texture);
 		}
 	}
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
@@ -274,7 +274,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	glc_last_texture_used = ref;
 
 	GLC_StateBeginImageDraw(imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
+	R_TextureUnitBind(0, ref);
 	GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
 	if (R_VAOBound()) {

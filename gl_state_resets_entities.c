@@ -175,7 +175,7 @@ void GLC_StateBeginAliasPowerupShell(void)
 {
 	R_ApplyRenderingState(&powerupShellState);
 
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, shelltexture);
+	R_TextureUnitBind(0, shelltexture);
 }
 
 void GLC_StateEndAliasPowerupShell(void)
@@ -217,12 +217,12 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	}
 	else if (custom_model == NULL && GL_TextureReferenceIsValid(fb_texture) && mtex) {
 		index = weapon_model ? WEAPONMODEL_MULTITEXTURE_OPAQUE : ALIASMODEL_MULTITEXTURE_OPAQUE;
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
-		GL_EnsureTextureUnitBound(GL_TEXTURE1, fb_texture);
+		R_TextureUnitBind(0, texture);
+		R_TextureUnitBind(1, fb_texture);
 	}
 	else {
 		index = weapon_model ? WEAPONMODEL_SINGLETEXTURE_OPAQUE : ALIASMODEL_SINGLETEXTURE_OPAQUE;
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+		R_TextureUnitBind(0, texture);
 	}
 
 	if (alpha_blend) {

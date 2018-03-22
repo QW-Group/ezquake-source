@@ -102,7 +102,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	GLC_StateBeginMD3Draw(r_modelalpha, GL_TextureReferenceIsValid(sinf->texnum));
 	if (GL_TextureReferenceIsValid(sinf->texnum)) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, sinf->texnum);
+		R_TextureUnitBind(0, sinf->texnum);
 	}
 
 	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);

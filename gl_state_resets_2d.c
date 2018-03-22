@@ -193,7 +193,7 @@ void GLC_StateBeginBloomDraw(texture_ref texture)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&glcBloomState);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+	R_TextureUnitBind(0, texture);
 
 	LEAVE_STATE;
 }

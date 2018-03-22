@@ -28,6 +28,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "tr_types.h"
 #include "r_texture.h"
 #include "gl_sky.h"
+#include "r_local.h"
 
 const texture_ref null_texture_reference = { 0 };
 
@@ -1159,7 +1160,7 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 		min_dimension /= 2;
 	}
 
-	GL_BindTextureUnit(GL_TEXTURE0, gl_texturenum);
+	R_TextureUnitBind(0, gl_texturenum);
 	while ((error = glGetError()) != GL_NO_ERROR) {
 		Com_Printf("Prior-texture-array-creation: OpenGL error %u\n", error);
 	}

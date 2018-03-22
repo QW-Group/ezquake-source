@@ -524,7 +524,7 @@ void GLM_RenderSceneBlurDo(float alpha);
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_ClearTextureChains(void);
-void GLC_SetTextureLightmap(GLenum textureUnit, int lightmap_num);
+void GLC_SetTextureLightmap(int textureUnit, int lightmap_num);
 texture_ref GLC_LightmapTexture(int index);
 texture_ref GLM_LightmapArray(void);
 void GLC_ClearLightmapPolys(void);
