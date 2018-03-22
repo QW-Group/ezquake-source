@@ -32,12 +32,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define ALIASMODEL_SINGLETEXTURE_TRANSPARENT   3
 #define ALIASMODEL_MULTITEXTURE_OPAQUE         4
 #define ALIASMODEL_MULTITEXTURE_TRANSPARENT    5
+#define WEAPONMODEL_SINGLETEXTURE_OPAQUE       6
+#define WEAPONMODEL_SINGLETEXTURE_TRANSPARENT  7
+#define WEAPONMODEL_MULTITEXTURE_OPAQUE        8
+#define WEAPONMODEL_MULTITEXTURE_TRANSPARENT   9
 
 static rendering_state_t powerupShellState;
-static rendering_state_t aliasModelState[6];
+static rendering_state_t aliasModelState[10];
 static rendering_state_t aliasModelShadowState;
-static rendering_state_t viewModelOpaqueState;
-static rendering_state_t viewModelTranslucentState;
 static rendering_state_t simpleItemState;
 static rendering_state_t aliasModelOutlineState;
 static rendering_state_t brushModelOpaqueState;
@@ -94,6 +96,14 @@ void R_InitialiseEntityStates(void)
 		aliasModelState[i + 1].blendFunc = r_blendfunc_premultiplied_alpha;
 	}
 
+	R_CopyRenderingState(&aliasModelState[WEAPONMODEL_SINGLETEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], "weaponModelSingleOpaque");
+	R_CopyRenderingState(&aliasModelState[WEAPONMODEL_SINGLETEXTURE_TRANSPARENT], &aliasModelState[ALIASMODEL_SINGLETEXTURE_TRANSPARENT], "weaponModelSingleTransparent");
+	R_CopyRenderingState(&aliasModelState[WEAPONMODEL_MULTITEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], "weaponModelMultiOpaque");
+	R_CopyRenderingState(&aliasModelState[WEAPONMODEL_MULTITEXTURE_TRANSPARENT], &aliasModelState[ALIASMODEL_MULTITEXTURE_TRANSPARENT], "weaponModelMultiOpaque");
+	for (i = WEAPONMODEL_SINGLETEXTURE_OPAQUE; i <= WEAPONMODEL_MULTITEXTURE_TRANSPARENT; ++i) {
+		aliasModelState[i].depth.farRange = 0.3f;
+	}
+
 	R_InitRenderingState(&aliasModelShadowState, true, "aliasModelShadowState");
 	aliasModelShadowState.polygonOffset.option = r_polygonoffset_disabled;
 	aliasModelShadowState.cullface.enabled = true;
@@ -106,26 +116,6 @@ void R_InitialiseEntityStates(void)
 	aliasModelShadowState.blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelShadowState.color[0] = aliasModelShadowState.color[1] = aliasModelShadowState.color[2] = 0;
 	aliasModelShadowState.color[3] = 0.5f;
-
-	R_InitRenderingState(&viewModelOpaqueState, true, "viewModelOpaqueState");
-	viewModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
-	viewModelOpaqueState.cullface.mode = r_cullface_front;
-	viewModelOpaqueState.cullface.enabled = true;
-	viewModelOpaqueState.polygonMode = r_polygonmode_fill;
-	viewModelOpaqueState.line.smooth = false;
-	viewModelOpaqueState.fog.enabled = false;
-	viewModelOpaqueState.depth.mask_enabled = true;
-	viewModelOpaqueState.depth.test_enabled = true;
-	viewModelOpaqueState.depth.nearRange = 0;   // gldepthmin
-	viewModelOpaqueState.depth.farRange = 0.3; // gldepthmin + 0.3 * (gldepthmax - gldepthmin)
-	viewModelOpaqueState.alphaTesting.enabled = false;
-	viewModelOpaqueState.blendingEnabled = false;
-	viewModelOpaqueState.blendFunc = r_blendfunc_premultiplied_alpha;
-	viewModelOpaqueState.textureUnits[0].enabled = true;
-	viewModelOpaqueState.textureUnits[0].mode = r_texunit_mode_replace;
-
-	R_CopyRenderingState(&viewModelTranslucentState, &viewModelOpaqueState, "viewModelTranslucentState");
-	viewModelOpaqueState.blendingEnabled = true;
 
 	R_InitRenderingState(&simpleItemState, true, "simpleItemState");
 	simpleItemState.polygonOffset.option = r_polygonoffset_disabled;
@@ -229,20 +219,23 @@ void GLC_StateEndMD3Draw(void)
 {
 }
 
-void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model)
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model)
 {
 	int index;
 
 	ENTER_STATE;
 
-	if (!GL_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer)) {
+	if (!weapon_model && (!GL_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
 		index = ALIASMODEL_NOTEXTURE_OPAQUE;
 	}
 	else if (custom_model == NULL && GL_TextureReferenceIsValid(fb_texture) && mtex) {
-		index = ALIASMODEL_MULTITEXTURE_OPAQUE;
+		index = weapon_model ? WEAPONMODEL_MULTITEXTURE_OPAQUE : ALIASMODEL_MULTITEXTURE_OPAQUE;
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+		GL_EnsureTextureUnitBound(GL_TEXTURE1, fb_texture);
 	}
 	else {
-		index = ALIASMODEL_SINGLETEXTURE_OPAQUE;
+		index = weapon_model ? WEAPONMODEL_SINGLETEXTURE_OPAQUE : ALIASMODEL_SINGLETEXTURE_OPAQUE;
+		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 	}
 
 	if (alpha_blend) {
@@ -272,17 +265,6 @@ void GLC_StateEndAliasModelShadow(void)
 
 void GLC_StateBeginDrawViewModel(float alpha)
 {
-	ENTER_STATE;
-
-	// hack the depth range to prevent view model from poking into walls
-	if (gl_mtexable && alpha < 1) {
-		R_ApplyRenderingState(&viewModelTranslucentState);
-	}
-	else {
-		R_ApplyRenderingState(&viewModelOpaqueState);
-	}
-
-	LEAVE_STATE;
 }
 
 void GLC_StateEndDrawViewModel(void)

@@ -132,7 +132,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 	int i;
 	vec3_t lc;
 
-	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, alpha_blend || r_modelalpha < 1, custom_model);
+	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, alpha_blend || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
