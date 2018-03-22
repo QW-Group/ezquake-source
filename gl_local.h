@@ -483,21 +483,6 @@ void GL_DepthMask(GLboolean mask);
 void GL_InvalidateTextureReferences(GLuint texture);
 void GL_PolygonMode(GLenum mode);
 
-// gl_buffers.c
-void GL_InitialiseBufferHandling(void);
-void GL_InitialiseBufferState(void);
-buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void* data, GLenum usage);
-void GL_BindAndUpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_UpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizei size, const GLvoid* data);
-void GL_BindBuffer(buffer_ref ref);
-void GL_BindBufferBase(buffer_ref ref, GLuint index);
-void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size);
-void GL_UnBindBuffer(GLenum target);
-buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
-size_t GL_BufferSize(buffer_ref vbo);
-
 // gl_fog.c
 void GL_EnableFog(void);
 void GL_DisableFog(void);
@@ -970,6 +955,21 @@ void GL_BufferStartFrame(void);
 void GL_BufferEndFrame(void);
 qbool GL_BuffersReady(void);
 uintptr_t GL_BufferOffset(buffer_ref ref);
+
+// gl_buffers.c
+void GL_InitialiseBufferHandling(void);
+void GL_InitialiseBufferState(void);
+buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, GLsizei size, void* data, GLenum usage);
+void GL_BindAndUpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_UpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizei size, const GLvoid* data);
+void GL_BindBuffer(buffer_ref ref);
+void GL_BindBufferBase(buffer_ref ref, GLuint index);
+void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size);
+void GL_UnBindBuffer(GLenum target);
+buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
+void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
+size_t GL_BufferSize(buffer_ref vbo);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 

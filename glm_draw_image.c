@@ -369,7 +369,7 @@ void GLM_PrepareImages(void)
 	}
 	else if (GL_BuffersSupported()) {
 		if (!GL_BufferReferenceIsValid(imageVBO)) {
-			imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, GL_STREAM_DRAW);
+			imageVBO = GL_GenFixedBuffer(buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, GL_STREAM_DRAW);
 		}
 		else {
 			GL_UpdateBuffer(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);

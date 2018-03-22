@@ -183,7 +183,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		verts[3][3] = 1;
 		verts[3][4] = 1;
 
-		post_process_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "post-process-screen", sizeof(verts), verts, GL_STATIC_DRAW);
+		post_process_vbo = GL_CreateFixedBuffer(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
 	}
 
 	if (GL_BufferReferenceIsValid(post_process_vbo) && !GL_VertexArrayCreated(vao_postprocess)) {

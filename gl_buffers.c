@@ -35,6 +35,7 @@ typedef struct buffer_data_s {
 	char name[64];
 
 	// These set at creation
+	buffertype_t type;
 	GLenum target;
 	GLsizei size;
 	GLuint usage;                // flags for BufferData()
@@ -51,6 +52,25 @@ static buffer_data_t* next_free_buffer = NULL;
 static qbool buffers_supported = false;
 static qbool tripleBuffer_supported = false;
 static GLsync tripleBufferSyncObjects[3];
+
+static GLenum GL_BufferTypeToTarget(buffertype_t type)
+{
+	switch (type) {
+		case buffertype_index:
+			return GL_ELEMENT_ARRAY_BUFFER;
+		case buffertype_indirect:
+			return GL_DRAW_INDIRECT_BUFFER;
+		case buffertype_storage:
+			return GL_SHADER_STORAGE_BUFFER;
+		case buffertype_vertex:
+			return GL_ARRAY_BUFFER;
+		case buffertype_uniform:
+			return GL_UNIFORM_BUFFER;
+	}
+
+	assert(false);
+	return 0;
+}
 
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
@@ -99,7 +119,7 @@ static GLuint currentUniformBuffer;
 static GLuint currentDrawIndirectBuffer;
 static GLuint currentElementArrayBuffer;
 
-static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLsizei size, GLenum usage)
+static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, GLenum target, const char* name, GLsizei size, GLenum usage)
 {
 	buffer_data_t* buffer = NULL;
 	int i;
@@ -140,13 +160,15 @@ static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLs
 	buffer->target = target;
 	buffer->size = size;
 	buffer->usage = usage;
+	buffer->type = type;
 	qglGenBuffers(1, &buffer->glref);
 	return buffer;
 }
 
-buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, int size, void* data, GLenum usage)
+buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int size, void* data, GLenum usage)
 {
-	buffer_data_t* buffer = GL_BufferAllocateSlot(target, name, size, usage);
+	GLenum target = GL_BufferTypeToTarget(type);
+	buffer_data_t* buffer = GL_BufferAllocateSlot(type, target, name, size, usage);
 	buffer_ref result;
 
 	buffer->persistent_mapped_ptr = NULL;
@@ -160,28 +182,10 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, int size, void* da
 	return result;
 }
 
-static GLenum GL_BufferTypeToTarget(buffertype_t type)
-{
-	switch (type) {
-		case buffertype_index:
-			return GL_ELEMENT_ARRAY_BUFFER;
-		case buffertype_indirect:
-			return GL_DRAW_INDIRECT_BUFFER;
-		case buffertype_storage:
-			return GL_SHADER_STORAGE_BUFFER;
-		case buffertype_vertex:
-			return GL_ARRAY_BUFFER;
-		case buffertype_uniform:
-			return GL_UNIFORM_BUFFER;
-	}
-
-	return GL_ARRAY_BUFFER;
-}
-
 buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
 {
 	GLenum target = GL_BufferTypeToTarget(type);
-	buffer_data_t * buffer = GL_BufferAllocateSlot(target, name, size, usage);
+	buffer_data_t* buffer = GL_BufferAllocateSlot(type, target, name, size, usage);
 	buffer_ref ref;
 
 	GLenum glUsage;
@@ -227,7 +231,7 @@ buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, v
 
 	if (!useStorage) {
 		// Fall back to standard mutable buffer
-		return GL_GenFixedBuffer(target, name, size, data, glUsage);
+		return GL_GenFixedBuffer(type, name, size, data, glUsage);
 	}
 
 	GL_BindBufferImpl(target, buffer->glref);
@@ -257,7 +261,7 @@ buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, v
 		}
 		else {
 			Con_Printf("\20opengl\21 triple-buffered allocation failed (%dKB)\n", (size * 3) / 1024);
-			return GL_GenFixedBuffer(target, name, size, data, glUsage);
+			return GL_GenFixedBuffer(type, name, size, data, glUsage);
 		}
 	}
 	else {
@@ -328,7 +332,7 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 
 		buffers[vbo.index].next_free = next_free_buffer;
 
-		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, bufferusage_once_per_frame);
+		return GL_CreateFixedBuffer(buffers[vbo.index].type, buffers[vbo.index].name, size, data, bufferusage_once_per_frame);
 	}
 	else {
 		if (qglNamedBufferData) {

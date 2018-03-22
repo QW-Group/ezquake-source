@@ -107,7 +107,7 @@ void GLC_AllocateAliasPoseBuffer(void)
 		aliasmodel_pose_vbo = GL_ResizeBuffer(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
 	}
 	else {
-		aliasmodel_pose_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, GL_STREAM_DRAW);
+		aliasmodel_pose_vbo = GL_GenFixedBuffer(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, GL_STREAM_DRAW);
 	}
 }
 
