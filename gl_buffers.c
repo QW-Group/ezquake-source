@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_local.h"
 #include "glm_vao.h"
+#include "r_trace.h"
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer);
 
@@ -469,7 +470,7 @@ void GL_BindBuffer(buffer_ref ref)
 
 void GL_InitialiseBufferHandling(void)
 {
-	buffers_supported = false && (GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true);
+	buffers_supported = true && (GL_UseGLSL() ? GLM_InitialiseVAOHandling() : true);
 
 	GL_LoadMandatoryFunctionExtension(glBindBuffer, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferData, buffers_supported);
@@ -587,3 +588,19 @@ qbool GL_BuffersReady(void)
 	}
 	return true;
 }
+
+#ifdef WITH_OPENGL_TRACE
+void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
+{
+	char label[64];
+
+	if (currentArrayBuffer) {
+		GL_GetObjectLabel(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
+		fprintf(debug_frame_out, "%.*s   ArrayBuffer: %u (%s)\n", debug_frame_depth, "                                                          ", currentArrayBuffer, label);
+	}
+	if (currentElementArrayBuffer) {
+		GL_GetObjectLabel(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
+		fprintf(debug_frame_out, "%.*s   ElementArray: %u (%s)\n", debug_frame_depth, "                                                          ", currentElementArrayBuffer, label);
+	}
+}
+#endif

@@ -208,7 +208,6 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 
 	GL_UseProgram(multiImageProgram.program);
 	GLM_StateBeginImageDraw();
-	R_BindVertexArray(vao_hud_images);
 	if (GL_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
@@ -235,6 +234,7 @@ static void GLC_CreateImageVAO(void)
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+		R_BindVertexArray(vao_none);
 	}
 	else {
 		R_GenVertexArray(vao_hud_images);
@@ -242,6 +242,7 @@ static void GLC_CreateImageVAO(void)
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+		R_BindVertexArray(vao_none);
 	}
 }
 
@@ -255,8 +256,10 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	int i;
 	extern cvar_t scr_coloredText;
 
-	if (GL_BuffersSupported() && !R_VertexArrayCreated(vao_hud_images)) {
-		GLC_CreateImageVAO();
+	if (GL_BuffersSupported()) {
+		if (!R_VertexArrayCreated(vao_hud_images)) {
+			GLC_CreateImageVAO();
+		}
 	}
 
 	GL_PushModelviewMatrix(modelviewMatrix);
@@ -274,7 +277,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
 	GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
-	if (GL_BuffersSupported()) {
+	if (R_VAOBound()) {
 		extern cvar_t gl_vbo_clientmemory;
 
 		for (i = start; i < end; ++i) {

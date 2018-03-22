@@ -37,4 +37,8 @@ qbool GLC_VertexArrayCreated(r_vao_id vao);
 void GLC_BindVertexArray(r_vao_id vao);
 qbool GLC_InitialiseVAOHandling(void);
 
+#ifdef WITH_OPENGL_TRACE
+void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao);
+#endif
+
 #endif // EZQUAKE_GLC_VAO_HEADER

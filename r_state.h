@@ -148,6 +148,9 @@ typedef struct rendering_state_s {
 	} textureUnits[MAX_GLC_TEXTURE_UNIT_STATES];
 
 	qbool colorValid;
+	qbool glc_vertex_array_enabled;
+	qbool glc_texture_array_enabled[MAX_GLC_TEXTURE_UNIT_STATES];
+	qbool glc_color_array_enabled;
 
 	// meta
 	qbool initialized;

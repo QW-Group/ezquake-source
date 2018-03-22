@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_vao.h"
 
 // <draw-functions (various)>
 typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
@@ -105,6 +106,11 @@ void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primc
 
 void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+	assert(R_VAOBound());
+	if (!R_VAOBound()) {
+		Con_Printf("GL_DrawArrays() with no VAO bound\n");
+		return;
+	}
 	glDrawArrays(mode, first, count);
 	++frameStats.draw_calls;
 	GL_LogAPICall("glDrawArrays(%d verts)", count);

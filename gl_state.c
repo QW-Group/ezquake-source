@@ -52,6 +52,14 @@ const buffer_ref null_buffer_reference = { 0 };
 GLint currentViewportX, currentViewportY;
 GLsizei currentViewportWidth, currentViewportHeight;
 
+// VAOs
+static r_vao_id currentVAO = vao_none;
+static const char* vaoNames[vao_count] = {
+	"none", "aliasmodel", "brushmodel", "3d-sprites",
+	"hud:circles", "hud:images", "hud:lines", "hud:polygons",
+	"post-process"
+};
+
 #define MAX_LOGGED_TEXTURE_UNITS 32
 #define MAX_LOGGED_IMAGE_UNITS   32
 
@@ -324,6 +332,9 @@ static void GL_ApplyRenderingState(rendering_state_t* state)
 		);
 		GL_LogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
+	if (state->vao_id != currentVAO) {
+		R_BindVertexArray(state->vao_id);
+	}
 
 #ifdef WITH_OPENGL_TRACE
 	GL_DebugState();
@@ -335,8 +346,6 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 {
 	rendering_state_t* current = &opengl.rendering_state;
 	int i;
-
-	GL_ApplyRenderingState(state);
 
 	// Alpha-testing
 	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
@@ -382,6 +391,8 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 		);
 		current->colorValid = true;
 	}
+
+	GL_ApplyRenderingState(state);
 }
 
 //static int old_alphablend_flags = 0;
@@ -860,6 +871,13 @@ void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
 		}
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
+		fprintf(debug_frame_out, "%.*s   vao: %s\n", debug_frame_depth, "                                                          ", vaoNames[currentVAO]);
+		if (R_VAOBound()) {
+			if (R_UseImmediateOpenGL()) {
+				GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
+			}
+		}
+		GL_PrintBufferState(debug_frame_out, debug_frame_depth);
 		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
 	}
 }
@@ -1004,11 +1022,6 @@ void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_
 	state->textureUnits[index].mode = mode;
 }
 
-void R_GLC_InvalidateColor(void)
-{
-	opengl.rendering_state.colorValid = false;
-}
-
 void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name)
 {
 	memcpy(state, src, sizeof(*state));
@@ -1016,14 +1029,6 @@ void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src
 }
 
 // VAOs
-
-static r_vao_id currentVAO = vao_none;
-static const char* vaoNames[vao_count] = {
-	"none", "aliasmodel", "brushmodel", "3d-sprites",
-	"hud:circles", "hud:images", "hud:lines", "hud:polygons",
-	"post-process"
-};
-
 qbool R_InitialiseVAOHandling(void)
 {
 	if (R_UseModernOpenGL()) {
@@ -1061,6 +1066,8 @@ qbool R_VertexArrayCreated(r_vao_id vao)
 void R_BindVertexArray(r_vao_id vao)
 {
 	if (currentVAO != vao) {
+		assert(vao == vao_none || R_VertexArrayCreated(vao));
+
 		if (R_UseModernOpenGL()) {
 			GLM_BindVertexArray(vao);
 		}
@@ -1111,5 +1118,75 @@ void R_BindVertexArrayElementBuffer(buffer_ref ref)
 {
 	if (R_UseModernOpenGL() && currentVAO != vao_none) {
 		GLM_BindVertexArrayElementBuffer(currentVAO, ref);
+	}
+}
+
+void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+{
+	if (enabled) {
+		if (GL_BufferReferenceIsValid(buf)) {
+			GL_BindBuffer(buf);
+		}
+		else {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		}
+		glVertexPointer(size, type, stride, pointer_or_offset);
+		if (!opengl.rendering_state.glc_vertex_array_enabled) {
+			glEnableClientState(GL_VERTEX_ARRAY);
+			opengl.rendering_state.glc_vertex_array_enabled = true;
+		}
+	}
+	else if (!enabled && opengl.rendering_state.glc_vertex_array_enabled) {
+		glDisableClientState(GL_VERTEX_ARRAY);
+		opengl.rendering_state.glc_vertex_array_enabled = false;
+	}
+}
+
+void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+{
+	if (enabled) {
+		if (GL_BufferReferenceIsValid(buf)) {
+			GL_BindBuffer(buf);
+		}
+		else {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		}
+		glColorPointer(size, type, stride, pointer_or_offset);
+		if (!opengl.rendering_state.glc_color_array_enabled) {
+			glEnableClientState(GL_COLOR_ARRAY);
+			opengl.rendering_state.colorValid = false;
+			opengl.rendering_state.glc_color_array_enabled = true;
+		}
+	}
+	else if (!enabled && opengl.rendering_state.glc_color_array_enabled) {
+		glDisableClientState(GL_COLOR_ARRAY);
+		opengl.rendering_state.colorValid = false;
+		opengl.rendering_state.glc_color_array_enabled = false;
+	}
+}
+
+void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+{
+	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
+		return;
+	}
+
+	if (enabled) {
+		if (GL_BufferReferenceIsValid(buf)) {
+			GL_BindBuffer(buf);
+		}
+		else {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		}
+		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
+		glTexCoordPointer(size, type, stride, pointer_or_offset);
+		if (!opengl.rendering_state.glc_texture_array_enabled[unit]) {
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			opengl.rendering_state.glc_texture_array_enabled[unit] = true;
+		}
+	}
+	else if (!enabled && opengl.rendering_state.glc_texture_array_enabled[unit]) {
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
 	}
 }

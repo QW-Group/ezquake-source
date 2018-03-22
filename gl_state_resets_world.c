@@ -206,6 +206,11 @@ void GLC_StateBeginDrawTextureChains(int lightmapTextureUnit, int fullbrightText
 		GLC_VAOSetVertexBuffer(vao_brushmodel_details, brushModel_vbo);
 		GLC_VAOEnableVertexPointer(vao_brushmodel_details, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 		GLC_VAOEnableTextureCoordPointer(vao_brushmodel_details, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
+
+		R_GenVertexArray(vao_brushmodel_lightmaps);
+		GLC_VAOSetVertexBuffer(vao_brushmodel_lightmaps, brushModel_vbo);
+		GLC_VAOEnableVertexPointer(vao_brushmodel_details, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
+		GLC_VAOEnableTextureCoordPointer(vao_brushmodel_details, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 	}
 
 	LEAVE_STATE;

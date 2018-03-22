@@ -35,65 +35,55 @@ typedef struct {
 } glc_va_element;
 
 typedef struct glc_vao_s {
+	qbool initialised;
 	buffer_ref vertex_buffer;
 	buffer_ref element_index_buffer;
 
-	glc_va_element  vertex_array;
-	glc_va_element  color_array;
-	glc_va_element  texture_array[MAX_GLC_TEXTURE_UNIT_STATES];
+	glc_va_element vertex_array;
+	glc_va_element color_array;
+	glc_va_element texture_array[MAX_GLC_TEXTURE_UNIT_STATES];
 } glc_vao_t;
 
 static glc_vao_t vaos[vao_count];
 
 qbool GLC_InitialiseVAOHandling(void)
 {
+	memset(&vaos, 0, sizeof(vaos));
 	return true;
 }
 
 void GLC_BindVertexArray(r_vao_id vao)
 {
-	glc_va_element* element;
+	glc_va_element* vertexes = &vaos[vao].vertex_array;
+	glc_va_element* colors = &vaos[vao].color_array;
+	buffer_ref buf = vaos[vao].vertex_buffer;
 	int i;
 
-	if ((element = &vaos[vao].vertex_array)->enabled) {
-		glVertexPointer(element->size, element->type, element->stride, element->pointer_or_offset);
-		glEnableClientState(GL_VERTEX_ARRAY);
-	}
-	else {
-		glDisableClientState(GL_VERTEX_ARRAY);
-	}
-
-	if ((element = &vaos[vao].color_array)->enabled) {
-		glColorPointer(element->size, element->type, element->stride, element->pointer_or_offset);
-		glEnableClientState(GL_COLOR_ARRAY);
-		R_GLC_InvalidateColor();
-	}
-	else {
-		glDisableClientState(GL_COLOR_ARRAY);
-		R_GLC_InvalidateColor();
-	}
-
+	R_GLC_VertexPointer(buf, vertexes->enabled, vertexes->size, vertexes->type, vertexes->stride, vertexes->pointer_or_offset);
+	R_GLC_ColorPointer(buf, colors->enabled, colors->size, colors->type, colors->stride, colors->pointer_or_offset);
 	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
-		GLC_ClientActiveTexture(GL_TEXTURE0 + i);
-		if ((element = &vaos[vao].vertex_array)->enabled) {
-			glTexCoordPointer(element->size, element->type, element->stride, element->pointer_or_offset);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-		else {
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
+		glc_va_element* textures = &vaos[vao].texture_array[i];
+
+		R_GLC_TexturePointer(buf, i, textures->enabled, textures->size, textures->type, textures->stride, textures->pointer_or_offset);
+	}
+
+	if (GL_BufferReferenceIsValid(vaos[vao].element_index_buffer)) {
+		GL_BindBuffer(vaos[vao].element_index_buffer);
+	}
+	else {
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	}
 }
 
 qbool GLC_VertexArrayCreated(r_vao_id vao)
 {
-	// There isn't really an object to be created, so this is non-issue
-	return true;
+	return vaos[vao].initialised;
 }
 
 void GLC_GenVertexArray(r_vao_id vao, const char* name)
 {
 	memset(&vaos[vao], 0, sizeof(vaos[vao]));
+	vaos[vao].initialised = true;
 }
 
 void GLC_DeleteVAOs(void)
@@ -122,7 +112,7 @@ void GLC_VAOEnableVertexPointer(r_vao_id vao, int size, GLenum type, GLsizei str
 
 void GLC_VAODisableVertexPointer(r_vao_id vao)
 {
-	vaos[vao].vertex_array.enabled = false;
+	GLC_VAODisableComponent(&vaos[vao].vertex_array);
 }
 
 void GLC_VAOEnableColorPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer)
@@ -132,7 +122,7 @@ void GLC_VAOEnableColorPointer(r_vao_id vao, int size, GLenum type, GLsizei stri
 
 void GLC_VAODisableColorPointer(r_vao_id vao)
 {
-	vaos[vao].color_array.enabled = false;
+	GLC_VAODisableComponent(&vaos[vao].color_array);
 }
 
 void GLC_VAOEnableTextureCoordPointer(r_vao_id vao, int index, int size, GLenum type, GLsizei stride, GLvoid* pointer)
@@ -154,3 +144,23 @@ void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref)
 {
 	vaos[vao].element_index_buffer = ref;
 }
+
+#ifdef WITH_OPENGL_TRACE
+void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao)
+{
+	int i;
+
+	indent += 2;
+	if (vaos[vao].vertex_array.enabled) {
+		fprintf(output, "%.*s   vertex-array: enabled\n", indent, "                                                          ");
+	}
+	if (vaos[vao].color_array.enabled) {
+		fprintf(output, "%.*s   color_array: enabled\n", indent, "                                                          ");
+	}
+	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
+		if (vaos[vao].texture_array[i].enabled) {
+			fprintf(output, "%.*s   texture-array[%d]: enabled\n", indent, "                                                          ", i);
+		}
+	}
+}
+#endif

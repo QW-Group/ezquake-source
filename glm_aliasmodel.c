@@ -586,7 +586,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
-	R_BindVertexArray(vao_aliasmodel);
 	GL_UseProgram(drawAliasModelProgram.program);
 	SetAliasModelMode(mode);
 
