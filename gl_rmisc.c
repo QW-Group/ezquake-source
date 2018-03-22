@@ -140,11 +140,13 @@ void R_NewMap(qbool vid_restart)
 #endif
 	}
 
-	GL_BuildLightmaps();
-	if (GL_ShadersSupported()) {
-		GL_BuildCommonTextureArrays(vid_restart);
+	if (cl.worldmodel) {
+		GL_BuildLightmaps();
+		if (GL_ShadersSupported()) {
+			GL_BuildCommonTextureArrays(vid_restart);
+		}
+		GL_CreateModelVBOs(vid_restart);
 	}
-	GL_CreateModelVBOs(vid_restart);
 	if (GL_ShadersSupported()) {
 		GLM_InitPrograms();
 	}
