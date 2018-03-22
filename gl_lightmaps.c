@@ -530,7 +530,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], model->isworldmodel);
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], model->isworldmodel);
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		R_UploadChangedLightmaps();
 	}
 }
@@ -753,7 +753,7 @@ void GL_BuildLightmaps(void)
 	}
 	last_lightmap_updated = 0;
 
-	gl_invlightmaps = !(GL_ShadersSupported() || COM_CheckParm("-noinvlmaps"));
+	gl_invlightmaps = GL_UseImmediateMode() && !COM_CheckParm("-noinvlmaps");
 
 	r_framecount = 1;		// no dlightcache
 	maximumSurfaceNumber = 0;
@@ -795,7 +795,7 @@ void GL_BuildLightmaps(void)
 	}
 
 	// upload all lightmaps that were filled
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_CreateLightmapTextures();
 	}
 	else {
@@ -811,7 +811,7 @@ void GL_BuildLightmaps(void)
 		lightmaps[i].change_area.t = LIGHTMAP_HEIGHT;
 		lightmaps[i].change_area.w = 0;
 		lightmaps[i].change_area.h = 0;
-		if (GL_ShadersSupported()) {
+		if (GL_UseGLSL()) {
 			GL_TexSubImage3D(
 				GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
 				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,

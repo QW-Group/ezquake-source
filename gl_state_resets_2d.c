@@ -57,7 +57,7 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 {
 	ENTER_STATE;
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_Color3ubv(color_white);
 		GLC_DisableAllTexturing();
 	}
@@ -97,7 +97,7 @@ void GLC_StateBeginSceneBlur(void)
 {
 	ENTER_STATE;
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		GL_Color3ubv(color_white);
 	}

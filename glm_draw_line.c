@@ -35,7 +35,7 @@ glm_line_framedata_t lineData;
 
 void GLM_PrepareLines(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (!GL_BufferReferenceIsValid(line_vbo)) {
 			line_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "line", sizeof(lineData.line_points), lineData.line_points, buffertype_use_once);
 		}

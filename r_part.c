@@ -137,7 +137,7 @@ void Classic_LoadParticleTexures(int width, int height)
 		return;
 	}
 
-	if (GL_ShadersSupported() && GL_TextureReferenceIsValid(particletexture_array)) {
+	if (GL_UseGLSL() && GL_TextureReferenceIsValid(particletexture_array)) {
 		int width = GL_TextureWidth(particletexture_array);
 		int height = GL_TextureHeight(particletexture_array);
 		byte* data = Classic_CreateParticleTexture(width, height);
@@ -703,7 +703,7 @@ void Classic_DrawParticles(void)
 		return;
 	}
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_UseGLSL() ? particletexture_array : particletexture, particletexture_array_index, GL_TRIANGLES, true, false);
 	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));

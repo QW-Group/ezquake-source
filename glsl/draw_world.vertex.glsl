@@ -56,7 +56,6 @@ void main()
 		TextureCoord.z = materialArrayIndex;
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = position - cameraPosition;
-		LightingPoint = vec2(0, 0);
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif

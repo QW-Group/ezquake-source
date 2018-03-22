@@ -193,7 +193,7 @@ typedef struct particle_texture_s {
 	float		originalCoords[MAX_PTEX_COMPONENTS][4];
 } particle_texture_t;
 
-#define TEXTURE_DETAILS(x) (GL_ShadersSupported() ? x->tex_array : x->texnum),(x->tex_index)
+#define TEXTURE_DETAILS(x) (GL_UseGLSL() ? x->tex_array : x->texnum),(x->tex_index)
 
 static float sint[7] = {0.000000, 0.781832, 0.974928, 0.433884, -0.433884, -0.974928, -0.781832};
 static float cost[7] = {1.000000, 0.623490, -0.222521, -0.900969, -0.900969, -0.222521, 0.623490};

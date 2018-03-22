@@ -87,8 +87,8 @@ void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 
 static void OnDynamicLightingChange(cvar_t* var, char* value, qbool* cancel)
 {
-	if (!GL_ShadersSupported() && atoi(value) > 1) {
-		Con_Printf("Hardware lighting not supported\n");
+	if (GL_UseImmediateMode() && atoi(value) > 1) {
+		Con_Printf("Hardware lighting not supported when not using GLSL\n");
 		*cancel = true;
 		return;
 	}
@@ -193,7 +193,7 @@ cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
-cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0"};
+cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
 
 static cvar_t r_lightmap                   = {"r_lightmap", "0"};
 
@@ -236,7 +236,7 @@ void R_RotateForEntity(entity_t *e)
 
 void R_DrawSpriteModel(entity_t *e)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawSpriteModel(e);
 	}
 	else {
@@ -254,7 +254,7 @@ qbool R_CanDrawSimpleItem(entity_t* e)
 
 	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		return GL_TextureReferenceIsValid(e->model->simpletexture_array[skin]);
 	}
 	else {
@@ -275,7 +275,7 @@ static qbool R_DrawTrySimpleItem(void)
 	}
 
 	skin = currententity->skinnum >= 0 && currententity->skinnum < MAX_SIMPLE_TEXTURES ? currententity->skinnum : 0;
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		simpletexture = currententity->model->simpletexture_array[skin];
 	}
 	else {
@@ -327,7 +327,7 @@ static qbool R_DrawTrySimpleItem(void)
 	}
 	org[2] += sprsize;
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		model_t* m = currententity->model;
 
 		GLM_DrawSimpleItem(
@@ -464,7 +464,7 @@ void R_PolyBlend(void)
 	}
 
 	GL_StateBeginPolyBlend();
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_PolyBlend(v_blend);
 	}
 	else {
@@ -709,7 +709,7 @@ static void R_SetupGL(void)
 	GL_StateDefault3D();
 	GL_DepthMask(GL_TRUE);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_SetupGL();
 	}
 	else {
@@ -918,7 +918,7 @@ static void R_RenderScene(void)
 
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
-		if (GL_ShadersSupported()) {
+		if (GL_UseGLSL()) {
 			GLM_InitialiseAliasModelBatches();
 		}
 
@@ -927,20 +927,20 @@ static void R_RenderScene(void)
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);
 		}
+		if (GL_UseGLSL()) {
+			R_DrawViewModel();
+		}
 		GL_LeaveRegion();
 	}
 	
-	if (GL_ShadersSupported()) {
-		R_DrawViewModel();
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		GLC_StateEndRenderScene();
 	}
 }
 
 static void R_RenderTransparentWorld(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawWaterSurfaces();
 	}
 	else {
@@ -976,7 +976,7 @@ static void R_Clear(void)
 
 	// If outside level or in wall, sky is usually visible
 	if (r_viewleaf->contents == CONTENTS_SOLID) {
-		if (GL_ShadersSupported() || r_fastsky.integer) {
+		if (GL_UseGLSL() || r_fastsky.integer) {
 			clearbits |= GL_COLOR_BUFFER_BIT;
 		}
 	}
@@ -1008,7 +1008,7 @@ static void GL_DrawVelocity3D(void)
 		return;
 	}
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawVelocity3D();
 	}
 	else {
@@ -1022,7 +1022,7 @@ static void GL_DrawVelocity3D(void)
 */
 static void R_RenderSceneBlurDo(float alpha)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_RenderSceneBlurDo(alpha);
 	}
 	else {
@@ -1067,7 +1067,7 @@ static void R_RenderSceneBlur(void)
 
 void R_PostProcessScene(void)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
 	}
@@ -1077,7 +1077,7 @@ void R_PostProcessScreen(void)
 {
 	extern void GLM_PostProcessScreen(void);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_PostProcessScreen();
 	}
 	else {
@@ -1088,7 +1088,7 @@ void R_PostProcessScreen(void)
 
 void R_ScreenDrawStart(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_ScreenDrawStart();
 	}
 	else {
@@ -1111,7 +1111,7 @@ static void R_Render3DEffects(void)
 static void R_Render3DHud(void)
 {
 	// Draw the player's view model (gun)
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		R_DrawViewModel();
 	}
 
@@ -1154,7 +1154,7 @@ void R_RenderView(void)
 	// Render billboards
 	GL_Draw3DSprites();
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_RenderView();
 	}
 
@@ -1163,7 +1163,7 @@ void R_RenderView(void)
 
 void GL_PreRenderView(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_PreRenderView();
 	}
 	else {

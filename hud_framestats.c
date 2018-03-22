@@ -64,7 +64,7 @@ static void FrameStats_DrawElement(hud_t *hud)
 	snprintf(content[lines++], sizeof(content[0]), "Sub-draw calls:      %4d", prevFrameStats.subdraw_calls);
 	snprintf(content[lines++], sizeof(content[0]), "Texture switches:    %4d", prevFrameStats.texture_binds);
 	snprintf(content[lines++], sizeof(content[0]), "Lightmap uploads:    %4d", prevFrameStats.lightmap_updates);
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		content[lines++][0] = '\0';
 		snprintf(content[lines++], sizeof(content[0]), "World-model polys:   %4d", frameStats.classic.polycount[polyTypeWorldModel]);
 		if (cl.standby || com_serveractive) {

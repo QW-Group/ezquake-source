@@ -84,7 +84,7 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (!GLM_LoadSkyboxTextures(skyname)) {
 			return 1;
 		}
@@ -389,7 +389,7 @@ void R_DrawSky (void)
 	}
 
 	GL_EnterRegion("R_DrawSky");
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawSky();
 	}
 	else {

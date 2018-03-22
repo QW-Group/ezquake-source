@@ -187,7 +187,7 @@ static int GL_MeasureIndexSizeForBrushModel(model_t* m)
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 {
 	int i, j;
-	CopyVertToBufferFunc_t addVertFunc = GL_ShadersSupported() ? CopyVertToBuffer : CopyVertToBufferClassic;
+	CopyVertToBufferFunc_t addVertFunc = GL_UseGLSL() ? CopyVertToBuffer : CopyVertToBufferClassic;
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
@@ -308,7 +308,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	}
 
 	// Create vbo buffer
-	buffer_size = size * (GL_ShadersSupported() ? sizeof(vbo_world_vert_t) : sizeof(glc_vbo_world_vert_t));
+	buffer_size = size * (GL_UseGLSL() ? sizeof(vbo_world_vert_t) : sizeof(glc_vbo_world_vert_t));
 	buffer = Q_malloc(buffer_size);
 
 	// Copy data into buffer
@@ -329,7 +329,7 @@ void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
 	// Copy VBO buffer across
 	brushModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "brushmodel-vbo", buffer_size, buffer, buffertype_constant);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		// Create vao
 		GL_GenVertexArray(&brushModel_vao, "brushmodel-vao");
 		GL_BindBuffer(vbo_brushElements);

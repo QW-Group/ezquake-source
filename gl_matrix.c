@@ -97,7 +97,7 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 {
 	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(left, right, top, bottom, zNear, zFar);
@@ -248,7 +248,7 @@ void GL_IdentityModelView(void)
 {
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
-	if (!GL_ShadersSupported() && !glc_pause_updates) {
+	if (GL_UseImmediateMode() && !glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		GL_LogAPICall("GL_IdentityModelView(%s)", NameForMatrix(GL_MODELVIEW));
@@ -264,7 +264,7 @@ void GL_Rotate(GLenum matrix, float angle, float x, float y, float z)
 {
 	GLM_RotateMatrix(GL_MatrixForMode(matrix), angle, x, y, z);
 
-	if (!GL_ShadersSupported() && !glc_pause_updates) {
+	if (GL_UseImmediateMode() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glRotatef(angle, x, y, z);
 		GL_LogAPICall("GL_RotateMatrix(%s)", NameForMatrix(matrix));
@@ -275,7 +275,7 @@ void GL_Translate(GLenum matrix, float x, float y, float z)
 {
 	GLM_TransformMatrix(GL_MatrixForMode(matrix), x, y, z);
 
-	if (!GL_ShadersSupported() && !glc_pause_updates) {
+	if (GL_UseImmediateMode() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glTranslatef(x, y, z);
 		GL_LogAPICall("GL_Translate(%s)", NameForMatrix(matrix));
@@ -286,7 +286,7 @@ void GL_IdentityProjectionView(void)
 {
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		GL_LogAPICall("GL_Identity(%s)", NameForMatrix(GL_PROJECTION));
@@ -313,7 +313,7 @@ void GL_PopMatrix(GLenum mode, float* matrix)
 {
 	memcpy(GL_MatrixForMode(mode), matrix, sizeof(float) * 16);
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glMatrixMode(mode);
 		glLoadMatrixf(matrix);
 		GL_LogAPICall("GL_PopMatrix(%s)", NameForMatrix(mode));
@@ -324,7 +324,7 @@ void GL_Scale(GLenum matrix, float xScale, float yScale, float zScale)
 {
 	GLM_ScaleMatrix(GL_MatrixForMode(matrix), xScale, yScale, zScale);
 
-	if (!GL_ShadersSupported() && !glc_pause_updates) {
+	if (GL_UseImmediateMode() && !glc_pause_updates) {
 		glMatrixMode(matrix);
 		glScalef(xScale, yScale, zScale);
 		GL_LogAPICall("GL_ScaleMatrix(%s)", NameForMatrix(matrix));
@@ -349,7 +349,7 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 	GLM_MultiplyMatrix(perspective, projection, new_projection);
 	GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
 	
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glFrustum(left, right, bottom, top, zNear, zFar);
 		GL_LogAPICall("glFrustum()");
 	}
@@ -388,7 +388,7 @@ void GLC_ResumeMatrixUpdate(void)
 
 void GLC_LoadMatrix(GLenum matrix)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glMatrixMode(matrix);
 		glLoadMatrixf(GL_MatrixForMode(matrix));
 		GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));

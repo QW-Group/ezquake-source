@@ -277,7 +277,7 @@ static void GL_CheckShaderExtensions(void)
 	GL_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	if (vid_renderer.integer == 1) {
+	if (GL_UseGLSL()) {
 		if (glConfig.majorVersion >= 2) {
 			shaders_supported = true;
 			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
@@ -350,7 +350,7 @@ static void GL_CheckShaderExtensions(void)
 
 #ifdef _WIN32
 	// During init, enable debug output
-	if (GL_ShadersSupported() && IsDebuggerPresent()) {
+	if (IsDebuggerPresent() && GL_DebugProfileContext()) {
 		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
 
 		if (glDebugMessageCallback) {
@@ -384,13 +384,13 @@ static void GL_CheckShaderExtensions(void)
 	// 4.4 - binds textures to consecutive texture units
 	glBindTextures = SDL_GL_GetProcAddress("glBindTextures");
 
-	if (vid_renderer.integer == 1 && !shaders_supported) {
+	if (GL_UseGLSL() && !shaders_supported) {
 		Con_Printf("&cf00Error&r: GLSL not available, missing extensions.\n");
-		Cvar_SetValue(&vid_renderer, 0);
+		Cvar_LatchedSetValue(&vid_renderer, 0);
 		Cvar_SetFlags(&vid_renderer, CVAR_ROM);
 	}
 
-	if (vid_renderer.integer == 1) {
+	if (GL_UseGLSL()) {
 		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
 	}
 	else {
@@ -446,7 +446,7 @@ void GL_Init(void)
 	gl_vendor = (const char*)glGetString(GL_VENDOR);
 	gl_renderer = (const char*)glGetString(GL_RENDERER);
 	gl_version = (const char*)glGetString(GL_VERSION);
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		gl_extensions = "(using modern OpenGL)\n";
 	}
 	else {
@@ -569,60 +569,42 @@ void VID_SetPalette (unsigned char *palette) {
 
 void GL_Color3f(float r, float g, float b)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor3f(r, g, b);
 	}
 }
 
 void GL_Color4f(float r, float g, float b, float a)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor4f(r, g, b, a);
 	}
 }
 
 void GL_Color3fv(const float* rgbVec)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor3fv(rgbVec);
 	}
 }
 
 void GL_Color4fv(const float* rgbaVec)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor4fv(rgbaVec);
 	}
 }
 
 void GL_Color3ubv(const GLubyte* rgbVec)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor3ubv(rgbVec);
 	}
 }
 
 void GL_Color4ubv(const GLubyte* rgbaVec)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor4ubv(rgbaVec);
 	}
 
@@ -630,10 +612,7 @@ void GL_Color4ubv(const GLubyte* rgbaVec)
 
 void GL_Color4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 {
-	if (GL_ShadersSupported()) {
-		// TODO
-	}
-	else {
+	if (GL_UseImmediateMode()) {
 		glColor4ub(r, g, b, a);
 	}
 }
@@ -645,7 +624,7 @@ FILE* debug_frame_out;
 
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (!trace_only && glPushDebugGroup) {
 			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
 		}
@@ -661,7 +640,7 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 
 void GL_LeaveTracedRegion(qbool trace_only)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (!trace_only && glPopDebugGroup) {
 			glPopDebugGroup();
 		}
@@ -682,7 +661,7 @@ void GL_MarkEvent(const char* format, ...)
 	vsnprintf(msg, sizeof(msg), format, argptr);
 	va_end(argptr);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		//nvtxMark(va(msg));
 	}
 	else if (debug_frame_out) {
@@ -697,7 +676,7 @@ qbool GL_LoggingEnabled(void)
 
 void GL_LogAPICall(const char* format, ...)
 {
-	if (!GL_ShadersSupported() && debug_frame_out) {
+	if (GL_UseImmediateMode() && debug_frame_out) {
 		va_list argptr;
 		char msg[4096];
 
@@ -737,7 +716,7 @@ void GL_ResetRegion(qbool start)
 		dev_frame_debug_queued = false;
 	}
 
-	if (!GL_ShadersSupported() && debug_frame_out) {
+	if (GL_UseImmediateMode() && debug_frame_out) {
 		fprintf(debug_frame_out, "---Reset---\n");
 		debug_frame_depth = 0;
 	}
@@ -747,7 +726,7 @@ void GL_ResetRegion(qbool start)
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glAlphaFunc(func, threshold);
 	}
 }

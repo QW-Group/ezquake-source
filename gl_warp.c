@@ -209,7 +209,7 @@ byte* SurfaceFlatTurbColor(texture_t* texture)
 //Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys(msurface_t *fa)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_EmitWaterPoly(fa);
 	}
 	else {
@@ -250,7 +250,7 @@ void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 //Tei, add fire to lava
 void EmitCausticsPolys (void)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_EmitCausticsPolys();
 	}
 }

@@ -315,7 +315,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
-				if (r_fastsky.integer || GL_ShadersSupported()) {
+				if (r_fastsky.integer || GL_UseGLSL()) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
 				}
 				if (!r_fastsky.integer) {
@@ -326,7 +326,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				if (r_fastturb.integer && wateralpha == 1) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
 				}
-				else if (solidTexTurb && GL_ShadersSupported()) {
+				else if (solidTexTurb && GL_UseGLSL()) {
 					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[0], surf);
 				}
 				else {
@@ -334,7 +334,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				GL_EmitSurfaceParticleEffects(surf);
 			}
-			else if ((!GL_ShadersSupported()) && alphaSurface) {
+			else if (GL_UseImmediateMode() && alphaSurface) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
@@ -393,7 +393,7 @@ void R_DrawWorld(void)
 	R_DrawSky();
 
 	GL_EnterRegion("DrawWorld");
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_EnterBatchedWorldRegion();
 		GLM_DrawBrushModel(cl.worldmodel, false, false);
 	}

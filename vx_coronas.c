@@ -148,7 +148,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_Sprite3DInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ShadersSupported() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
+		GL_Sprite3DInitialiseBatch(batch_id, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_UseGLSL() ? texture->array_tex : texture->texnum, texture->array_index, GL_TRIANGLE_STRIP, false, false);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			gl_sprite3d_vert_t* vert;

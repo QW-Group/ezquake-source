@@ -92,7 +92,7 @@ static void GLM_DrawHudElements(glm_image_type_t type, texture_ref texture, int 
 {
 	switch (type) {
 		case imagetype_image:
-			if (GL_ShadersSupported()) {
+			if (GL_UseGLSL()) {
 				GLM_DrawImageArraySequence(texture, elements[start].index, elements[end].index);
 			}
 			else {
@@ -100,7 +100,7 @@ static void GLM_DrawHudElements(glm_image_type_t type, texture_ref texture, int 
 			}
 			break;
 		case imagetype_circle:
-			if (GL_ShadersSupported()) {
+			if (GL_UseGLSL()) {
 				GLM_DrawCircles(elements[start].index, elements[end].index);
 			}
 			else {
@@ -108,7 +108,7 @@ static void GLM_DrawHudElements(glm_image_type_t type, texture_ref texture, int 
 			}
 			break;
 		case imagetype_line:
-			if (GL_ShadersSupported()) {
+			if (GL_UseGLSL()) {
 				GLM_DrawLines(elements[start].index, elements[end].index);
 			}
 			else {
@@ -116,7 +116,7 @@ static void GLM_DrawHudElements(glm_image_type_t type, texture_ref texture, int 
 			}
 			break;
 		case imagetype_polygon:
-			if (GL_ShadersSupported()) {
+			if (GL_UseGLSL()) {
 				GLM_DrawPolygons(elements[start].index, elements[end].index);
 			}
 			else {

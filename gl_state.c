@@ -246,7 +246,7 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
@@ -255,12 +255,12 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_ShadersSupported() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
 	}
 
 	++frameStats.texture_binds;
@@ -300,7 +300,7 @@ void GLC_DisableAllTexturing(void)
 
 void GLC_EnableTMU(GLenum target)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_SelectTexture(target);
 		glEnable(GL_TEXTURE_2D);
 	}
@@ -308,7 +308,7 @@ void GLC_EnableTMU(GLenum target)
 
 void GLC_DisableTMU(GLenum target)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_SelectTexture(target);
 		glDisable(GL_TEXTURE_2D);
 	}
@@ -316,7 +316,7 @@ void GLC_DisableTMU(GLenum target)
 
 void GLC_EnsureTMUEnabled(GLenum textureUnit)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		if (texunitenabled[textureUnit - GL_TEXTURE0]) {
 			return;
 		}
@@ -327,7 +327,7 @@ void GLC_EnsureTMUEnabled(GLenum textureUnit)
 
 void GLC_EnsureTMUDisabled(GLenum textureUnit)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		if (!texunitenabled[textureUnit - GL_TEXTURE0]) {
 			return;
 		}
@@ -371,7 +371,7 @@ void GL_DepthMask(GLboolean mask)
 
 void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 {
-	if (!GL_ShadersSupported() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
+	if (GL_UseImmediateMode() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
 		GL_SelectTexture(unit);
 		GL_TextureEnvMode(mode);
 	}
@@ -379,7 +379,7 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
 
 void GL_TextureEnvMode(GLenum mode)
 {
-	if (!GL_ShadersSupported() && mode != unit_texture_mode[currentTextureUnit - GL_TEXTURE0]) {
+	if (GL_UseImmediateMode() && mode != unit_texture_mode[currentTextureUnit - GL_TEXTURE0]) {
 		GL_LogAPICall("GL_TextureEnvMode(GL_TEXTURE%d, mode=%s)", currentTextureUnit - GL_TEXTURE0, TexEnvName(mode));
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
 		unit_texture_mode[currentTextureUnit - GL_TEXTURE0] = mode;
@@ -428,7 +428,7 @@ void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref te
 
 int GL_AlphaBlendFlags(int flags)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		if ((flags & GL_ALPHATEST_ENABLED) && !(old_alphablend_flags & GL_ALPHATEST_ENABLED)) {
 			glEnable(GL_ALPHA_TEST);
 		}
@@ -456,14 +456,14 @@ int GL_AlphaBlendFlags(int flags)
 
 void GL_EnableFog(void)
 {
-	if (!GLM_Enabled() && gl_fogenable.integer) {
+	if (GL_UseImmediateMode() && gl_fogenable.integer) {
 		glEnable(GL_FOG);
 	}
 }
 
 void GL_DisableFog(void)
 {
-	if (!GLM_Enabled() && gl_fogenable.integer) {
+	if (GL_UseImmediateMode() && gl_fogenable.integer) {
 		glDisable(GL_FOG);
 	}
 }
@@ -472,7 +472,7 @@ void GL_ConfigureFog(void)
 {
 	vec3_t colors;
 
-	if (GLM_Enabled()) {
+	if (GL_UseGLSL()) {
 		// TODO
 		return;
 	}
@@ -503,7 +503,7 @@ void GL_EnableWaterFog(int contents)
 	float colors[4];
 
 	// TODO
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		return;
 	}
 
@@ -589,7 +589,7 @@ void GL_PolygonOffset(int option)
 
 void GL_Hint(GLenum target, GLenum mode)
 {
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		if (target == GL_PERSPECTIVE_CORRECTION_HINT) {
 			if (mode == perspectiveCorrectionHint) {
 				return;
@@ -671,7 +671,7 @@ void GL_PolygonMode(GLenum mode)
 
 void GL_Enable(GLenum option)
 {
-	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+	if (GL_UseGLSL() && option == GL_TEXTURE_2D) {
 		Con_Printf("WARNING: glEnable(GL_TEXTURE_2D) called in modern\n");
 		return;
 	}
@@ -761,7 +761,7 @@ void GL_Enable(GLenum option)
 
 void GL_Disable(GLenum option)
 {
-	if (GL_ShadersSupported() && option == GL_TEXTURE_2D) {
+	if (GL_UseGLSL() && option == GL_TEXTURE_2D) {
 		Con_Printf("WARNING: glDisable(GL_TEXTURE_2D) called in modern\n");
 		return;
 	}
@@ -855,8 +855,7 @@ static const char* glcPrimitiveName = "?";
 
 void GL_Begin(GLenum primitive)
 {
-	if (GL_ShadersSupported()) {
-		assert(0);
+	if (GL_UseGLSL()) {
 		return;
 	}
 
@@ -912,8 +911,7 @@ void GL_End(void)
 	const char* count_name = "vertices";
 #endif
 
-	if (GL_ShadersSupported()) {
-		assert(0);
+	if (GL_UseGLSL()) {
 		return;
 	}
 

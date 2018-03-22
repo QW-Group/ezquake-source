@@ -499,8 +499,30 @@ extern glMemoryBarrier_t        glMemoryBarrier;
 extern glObjectLabel_t glObjectLabel;
 extern glGetObjectLabel_t glGetObjectLabel;
 
-qbool GL_ShadersSupported(void);
 qbool GL_BuffersSupported(void);
+
+extern cvar_t vid_renderer;
+extern cvar_t vid_gl_core_profile;
+
+// Which renderer to use
+#define GL_UseGLSL()              (vid_renderer.integer == 1)
+#define GL_UseImmediateMode()     (vid_renderer.integer == 0)
+
+// Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
+#define GL_DebugProfileContext()  (COM_CheckParm("-dev") && COM_CheckParm("-gl-debug-profile"))
+
+// 
+#define GL_CoreProfileContext()   (vid_renderer.integer == 1 && vid_gl_core_profile.integer)
+
+#ifdef __APPLE__
+// https://www.khronos.org/opengl/wiki/OpenGL_Context
+// "Recommendation: You should use the forward compatibility bit only if you need compatibility with MacOS.
+//    That API requires the forward compatibility bit to create any core profile context."
+#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext())
+#else
+// There's no reason for this unless we need to check that we're not using deprecated functionality, so keep disabled
+#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm("-gl-forward-only-profile"))
+#endif
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GL_TextureEnvMode(GLenum mode);
@@ -905,9 +927,6 @@ void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference);
 void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
-
-// FIXME: Get rid
-#define GLM_Enabled GL_ShadersSupported
 
 // Reference cvars for 3D views...
 typedef struct uniform_block_frame_constants_s {

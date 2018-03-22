@@ -80,7 +80,7 @@ void GLC_DrawCircles(int start, int end)
 
 void GLM_PrepareCircles(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
 			GL_VFDeclare(hud_draw_circle);
 

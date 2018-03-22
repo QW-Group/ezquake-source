@@ -210,7 +210,7 @@ void GL_Draw3DSprites(void)
 		return;
 	}
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_Draw3DSprites();
 
 		batchCount = vertexCount = 0;

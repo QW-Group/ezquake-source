@@ -303,7 +303,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 
 void GLM_PrepareImages(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_CreateMultiImageProgram();
 
 		if (imageData.imageCount) {
@@ -337,7 +337,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		return;
 	}
 
-	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
+	if (GL_UseGLSL() || !GL_BuffersSupported()) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
 		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
@@ -392,7 +392,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 		return;
 	}
 
-	if (GL_ShadersSupported() || !GL_BuffersSupported()) {
+	if (GL_UseGLSL() || !GL_BuffersSupported()) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {

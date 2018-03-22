@@ -181,7 +181,7 @@ static void R_RenderAliasModelEntity(
 		}
 	}
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_UnderwaterCaustics(ent, model, oldframe, frame, paliashdr);
 	}
 }
@@ -414,7 +414,7 @@ void R_SetupAliasFrame(
 	oldpose = R_AliasFramePose(oldframe);
 	pose = R_AliasFramePose(frame);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawAliasFrame(model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else {
@@ -675,7 +675,7 @@ void R_DrawViewModel(void)
 		gun.alpha = bound(0, cl_drawgun.value, 1);
 	}
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_EnterRegion("R_DrawViewModel");
 		GLC_StateBeginDrawViewModel(gun.alpha);
 	}
@@ -695,7 +695,7 @@ void R_DrawViewModel(void)
 		break;
 	}
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GLC_StateEndDrawViewModel();
 
 		GL_LeaveRegion();
@@ -937,7 +937,7 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
 	}
 	else {
@@ -955,7 +955,7 @@ static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe
 	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
 		model_t* clmodel = ent->model;
 
-		if (GL_ShadersSupported()) {
+		if (GL_UseGLSL()) {
 			GLM_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
 		}
 		else {

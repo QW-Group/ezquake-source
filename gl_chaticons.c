@@ -56,7 +56,7 @@ typedef struct ci_texture_s {
 	float        coords[MAX_CITEX_COMPONENTS][4];
 } ci_texture_t;
 
-#define TEXTURE_DETAILS(x) (GL_ShadersSupported() ? x.tex_array : x.texnum),(x.tex_index)
+#define TEXTURE_DETAILS(x) (GL_UseGLSL() ? x.tex_array : x.texnum),(x.tex_index)
 
 extern cvar_t r_chaticons_alpha;
 

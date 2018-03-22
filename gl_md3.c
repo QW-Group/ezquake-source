@@ -312,7 +312,7 @@ void GLM_DrawAlias3Model(entity_t *ent);
 
 void R_DrawAlias3Model(entity_t *ent)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawAlias3Model(ent);
 	}
 	else {

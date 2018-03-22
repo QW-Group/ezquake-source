@@ -158,7 +158,7 @@ void GL_CreateModelVBOs(qbool vid_restart)
 	instance_vbo = GL_CreateInstanceVBO();
 	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
 	GL_CreateBrushModelVAO(instance_vbo);
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
 		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}

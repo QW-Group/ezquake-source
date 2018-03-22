@@ -174,7 +174,7 @@ static qbool GLM_CompileProgram(
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLint result = 0;
 
 		vertex_components = GLM_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);

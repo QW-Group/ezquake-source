@@ -32,7 +32,7 @@ void GL_StateEndEntities(visentlist_t* vislist)
 {
 	ENTER_STATE;
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		// FIXME: Work on getting rid of these
 		GL_PolygonMode(GL_FILL);
 		GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
@@ -130,7 +130,7 @@ void GLC_StateBeginAliasModelShadow(void)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_Disable(GL_LINE_SMOOTH);
 	}
 	GL_DisableFog();
@@ -194,7 +194,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | (e->alpha ? GL_BLEND_ENABLED : GL_BLEND_DISABLED));
 	}
 	else {
@@ -250,7 +250,7 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_Disable(GL_LINE_SMOOTH);
 	}
 	GL_EnableFog();
@@ -297,7 +297,7 @@ void GL_StateBeginAliasOutlineFrame(void)
 	// limit outline width, since even width == 3 can be considered as cheat.
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		GL_Color3ubv(color_black);
 		GL_Enable(GL_LINE_SMOOTH);
 		GLC_DisableAllTexturing();

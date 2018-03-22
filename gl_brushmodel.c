@@ -1500,7 +1500,7 @@ void R_DrawBrushModel(entity_t *e)
 	R_ClearTextureChains(clmodel);
 
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
-		if (!GL_ShadersSupported()) {
+		if (GL_UseImmediateMode()) {
 			// find which side of the node we are on
 			pplane = psurf->plane;
 			dot = PlaneDiff(modelorg, pplane);
@@ -1530,6 +1530,8 @@ void R_DrawBrushModel(entity_t *e)
 			}
 		}
 		else {
+			// GLSL mode - always render the whole model, the surfaces will be re-used if there is
+			//   another entity with the same model later in the scene
 			if (psurf->flags & SURF_DRAWSKY) {
 				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
 
@@ -1593,10 +1595,10 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
 
-		// TODO: DrawAlphaChain
+		// TODO: DrawAlphaChain for brush models in modern
 	}
 	else {
 		GLC_DrawBrushModel(e, clmodel, caustics);

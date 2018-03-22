@@ -96,7 +96,7 @@ void GL_StateDefaultInit(void)
 #endif
 
 	GL_CullFace(GL_FRONT);
-	if (!GL_ShadersSupported()) {
+	if (GL_UseImmediateMode()) {
 		glEnable(GL_TEXTURE_2D);
 	}
 

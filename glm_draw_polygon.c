@@ -36,7 +36,7 @@ glm_polygon_framedata_t polygonData;
 
 void GLM_PreparePolygons(void)
 {
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
 			GL_VFDeclare(hud_draw_polygon);
 

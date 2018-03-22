@@ -142,6 +142,7 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
 
 #ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
@@ -745,7 +746,7 @@ void VID_Shutdown(qbool restart)
 	}
 #endif
 
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		GLM_DeletePrograms(restart);
 	}
 
@@ -813,6 +814,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
 	Cvar_Register(&vid_renderer);
+	Cvar_Register(&vid_gl_core_profile);
 #ifdef SUPPORT_FRAMEBUFFERS
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_width);
@@ -995,7 +997,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-	if (vid_renderer.integer == 1) {
+	if (GL_UseGLSL()) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -1408,7 +1410,7 @@ static void GfxInfo_f(void)
 	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
-	if (GL_ShadersSupported()) {
+	if (GL_UseGLSL()) {
 		Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
 		Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	}
