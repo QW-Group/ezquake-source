@@ -619,7 +619,6 @@ void GLM_DeleteBrushModelIndexBuffer(void);
 #define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
-void GL_AlphaFunc(GLenum func, GLclampf threshold);
 
 void GL_ClearModelTextureData(void);
 void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);

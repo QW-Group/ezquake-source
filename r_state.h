@@ -63,6 +63,13 @@ typedef enum {
 	r_polygonoffset_count
 } r_polygonoffset_t;
 
+typedef enum {
+	r_alphatest_func_always,
+	r_alphatest_func_greater,
+
+	r_alphatest_func_count
+} r_alphatest_func_t;
+
 typedef struct {
 	struct {
 		r_depthfunc_t func;
@@ -106,7 +113,12 @@ typedef struct {
 	r_polygonmode_t polygonMode;
 	float clearColor[4];
 	qbool blendingEnabled;
-	qbool alphaTestingEnabled;
+
+	struct {
+		qbool enabled;
+		r_alphatest_func_t func;
+		float value;
+	} alphaTesting;
 } rendering_state_t;
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state);

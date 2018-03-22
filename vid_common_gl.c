@@ -274,10 +274,3 @@ void VID_SetPalette (unsigned char *palette) {
 	}
 	d_8to24table2[255] = 0;	// 255 is transparent
 }
-
-void GL_AlphaFunc(GLenum func, GLclampf threshold)
-{
-	if (GL_UseImmediateMode()) {
-		glAlphaFunc(func, threshold);
-	}
-}

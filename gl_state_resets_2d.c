@@ -25,27 +25,54 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_matrix.h"
+#include "r_state.h"
+
+static rendering_state_t default2DState;
+static rendering_state_t brightenScreenState;
+static rendering_state_t lineState;
+static rendering_state_t sceneBlurState;
+
+void R_Initialise2DStates(void)
+{
+	R_InitRenderingState(&default2DState, true);
+	default2DState.depth.test_enabled = false;
+	default2DState.cullface.enabled = false;
+
+	R_InitRenderingState(&brightenScreenState, true);
+	brightenScreenState.depth.test_enabled = false;
+	brightenScreenState.cullface.enabled = false;
+	brightenScreenState.alphaTestingEnabled = true; // really?
+	brightenScreenState.blendingEnabled = true;
+	brightenScreenState.blendFunc = r_blendfunc_src_dst_color_dest_one;
+
+	R_InitRenderingState(&lineState, true);
+	lineState.depth.test_enabled = false;
+	lineState.cullface.enabled = false;
+	lineState.blendingEnabled = true;
+	lineState.blendFunc = r_blendfunc_premultiplied_alpha;
+	lineState.line.flexible_width = true;
+
+	R_InitRenderingState(&sceneBlurState, true);
+	sceneBlurState.depth.test_enabled = false;
+	sceneBlurState.cullface.enabled = false;
+	//GL_Viewport(0, 0, glwidth, glheight);
+	sceneBlurState.alphaTestingEnabled = false;
+	sceneBlurState.blendingEnabled = true;
+	sceneBlurState.blendFunc = r_blendfunc_premultiplied_alpha;
+}
 
 void GL_StateDefault2D(void)
 {
 	GL_ResetRegion(false);
-
-	ENTER_STATE;
-
-	GL_Disable(GL_DEPTH_TEST);
-	GL_Disable(GL_CULL_FACE);
-
-	LEAVE_STATE;
 }
 
 void GLC_StateBeginBrightenScreen(void)
 {
 	ENTER_STATE;
 
+	R_ApplyRenderingState(&brightenScreenState);
 	glColor3ubv(color_white);
 	GLC_DisableAllTexturing();
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_DST_COLOR, GL_ONE);
 
 	LEAVE_STATE;
 }
@@ -62,8 +89,8 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 		glColor3ubv(color_white);
 		GLC_DisableAllTexturing();
 	}
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+	R_ApplyRenderState(lineState);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
@@ -79,10 +106,13 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 {
 	ENTER_STATE;
 
-	GLC_DisableAllTexturing();
-	glColor3ubv(color_white);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	// Same as lineState
+	if (GL_UseImmediateMode()) {
+		glColor3ubv(color_white);
+		GLC_DisableAllTexturing();
+	}
+
+	R_ApplyRenderState(lineState);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
@@ -98,16 +128,16 @@ void GLC_StateBeginSceneBlur(void)
 {
 	ENTER_STATE;
 
+	// Same as lineState
 	if (GL_UseImmediateMode()) {
-		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 		glColor3ubv(color_white);
+		GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	}
-	// Remember all attributes.
-	GL_Viewport(0, 0, glwidth, glheight);
+
+	R_ApplyRenderState(&sceneBlurState);
+
 	GL_IdentityModelView();
 	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	LEAVE_STATE;
 }
@@ -120,10 +150,8 @@ void GLC_StateBeginDrawPolygon(void)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GLC_DisableAllTexturing();
-	// (color set during call)
+	R_ApplyRenderState(lineState);
 
 	LEAVE_STATE;
 }
@@ -136,7 +164,6 @@ void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	ENTER_STATE;
 
-	glColor3ubv(color_white);
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE);
 	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
@@ -153,8 +180,6 @@ void GLC_StateBeginPolyBlend(float v_blend[4])
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GLC_DisableAllTexturing();
 	glColor4f(
 		v_blend[0] * v_blend[3],
@@ -162,6 +187,9 @@ void GLC_StateBeginPolyBlend(float v_blend[4])
 		v_blend[2] * v_blend[3],
 		v_blend[3]
 	);
+
+	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
+	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	LEAVE_STATE;
 }

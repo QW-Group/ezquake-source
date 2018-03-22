@@ -70,6 +70,7 @@ static GLenum glCullFaceValues[r_cullface_count];
 static GLenum glBlendFuncValuesSource[r_blendfunc_count];
 static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
 static GLenum glPolygonModeValues[r_polygonmode_count];
+static GLenum glAlphaTestModeValues[r_alphatest_func_count];
 
 void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 {
@@ -83,7 +84,9 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 
 	state->blendFunc = r_blendfunc_overwrite;
 	state->blendingEnabled = false;
-	state->alphaTestingEnabled = false;
+	state->alphaTesting.enabled = false;
+	state->alphaTesting.value = 0;
+	state->alphaTesting.func = r_alphatest_func_always;
 
 	state->currentViewportX = 0;
 	state->currentViewportY = 0;
@@ -93,8 +96,8 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	state->cullface.mode = r_cullface_back;
 
 	state->framebuffer_srgb = false;
-	state->lineSmooth = false;
-	state->lineWidth = 1.0f;
+	state->line.smooth = false;
+	state->line.width = 1.0f;
 	state->fog.enabled = false;
 	state->polygonOffset.option = r_polygonoffset_disabled;
 	state->polygonOffset.factor = 0;
@@ -108,7 +111,18 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	state->clearColor[3] = 1;
 
 	if (default_state) {
+		state->cullface.mode = r_cullface_front;
+		state->cullface.enabled = true;
 
+		state->depth.func = r_depthfunc_lessorequal;
+		state->alphaTesting.enabled = false;
+		state->alphaTesting.value = 0.666f;
+		state->alphaTesting.func = r_alphatest_func_greater;
+		state->blendingEnabled = false;
+		state->depth.test_enabled = true;
+		state->depth.mask_enabled = true;
+
+		state->framebuffer_srgb = (gl_gammacorrection.integer > 0);
 	}
 }
 
@@ -154,8 +168,8 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			glBlendFuncValuesDestination[state->blendFunc]
 		);
 	}
-	if (state->lineWidth != current->lineWidth) {
-		glLineWidth(current->lineWidth = state->lineWidth);
+	if (state->line.width != current->line.width) {
+		glLineWidth(current->line.width = state->line.width);
 	}
 	GL_ApplySimpleToggle(state, current, depth.test_enabled, GL_DEPTH_TEST);
 	if (state->depth.mask_enabled != current->depth.mask_enabled) {
@@ -163,7 +177,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 	}
 	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
-	GL_ApplySimpleToggle(state, current, lineSmooth, GL_LINE_SMOOTH);
+	GL_ApplySimpleToggle(state, current, line.smooth, GL_LINE_SMOOTH);
 	GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
 		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
@@ -216,7 +230,13 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 	}
 	GL_ApplySimpleToggle(state, current, blendingEnabled, GL_BLEND);
 	if (GL_UseImmediateMode()) {
-		GL_ApplySimpleToggle(state, current, alphaTestingEnabled, GL_ALPHA_TEST);
+		GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
+		if (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value) {
+			glAlphaFunc(
+				glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
+				current->alphaTesting.value = state->alphaTesting.value
+			);
+		}
 	}
 }
 
@@ -342,6 +362,8 @@ void GL_InitialiseState(void)
 	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_src_color] = GL_SRC_COLOR;
 	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
 	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
+	glAlphaTestModeValues[r_alphatest_func_always] = GL_ALWAYS;
+	glAlphaTestModeValues[r_alphatest_func_greater] = GL_GREATER;
 
 	R_InitRenderingState(&opengl.rendering_state, false);
 

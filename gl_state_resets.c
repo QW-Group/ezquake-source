@@ -24,6 +24,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_state.h"
+
+rendering_state_t default3DState;
+rendering_state_t spritesStateGLM;
+rendering_state_t spritesStateGLC;
+
+void R_InitialiseStates(void)
+{
+	R_InitRenderingState(&default3DState, true);
+
+	R_InitRenderingState(&spritesStateGLM, true);
+	spritesStateGLM.fog.enabled = false;
+	spritesStateGLM.blendingEnabled = true;
+	spritesStateGLM.blendFunc = r_blendfunc_premultiplied_alpha;
+	spritesStateGLM.cullface.enabled = false;
+
+	R_InitRenderingState(&spritesStateGLC, true);
+	spritesStateGLC.fog.enabled = false;
+	spritesStateGLC.blendingEnabled = true;
+	spritesStateGLC.blendFunc = r_blendfunc_premultiplied_alpha;
+	spritesStateGLC.cullface.enabled = false;
+	spritesStateGLC.alphaTesting.enabled = true;
+	spritesStateGLC.alphaTesting.func = r_alphatest_func_greater;
+	spritesStateGLC.alphaTesting.value = 0.333f;
+}
 
 float GL_WaterAlpha(void)
 {
@@ -38,32 +63,7 @@ void GL_StateDefault3D(void)
 
 	ENTER_STATE;
 
-	// set drawing parms
-	GL_CullFace(GL_FRONT);
-	if (gl_cull.value) {
-		glEnable(GL_CULL_FACE);
-	}
-	else {
-		glDisable(GL_CULL_FACE);
-	}
-
-	if (CL_MultiviewEnabled()) {
-		glClear(GL_DEPTH_BUFFER_BIT);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		GL_DepthFunc(GL_LEQUAL);
-	}
-
-	GL_DepthRange(gldepthmin, gldepthmax);
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
-	GL_Enable(GL_DEPTH_TEST);
-
-	if (gl_gammacorrection.integer) {
-		glEnable(GL_FRAMEBUFFER_SRGB);
-	}
-	else {
-		glDisable(GL_FRAMEBUFFER_SRGB);
-	}
+	R_ApplyRenderingState(&default3DState);
 	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
 	GL_DebugState();
 
@@ -74,9 +74,7 @@ void GLM_StateBeginDraw3DSprites(void)
 {
 	ENTER_STATE;
 
-	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	GL_Disable(GL_CULL_FACE);
+	R_ApplyRenderingState(&spritesStateGLM);
 
 	LEAVE_STATE;
 }
@@ -87,27 +85,36 @@ void GLM_StateEndDraw3DSprites(void)
 
 void GL_StateDefaultInit(void)
 {
+	rendering_state_t state;
+
+	R_InitRenderingState(&state, true);
+
 	ENTER_STATE;
 
 #ifndef __APPLE__
-	GL_ClearColor(0, 0, 0, 1);
+	state.clearColor[0] = 0;
+	state.clearColor[1] = 0;
+	state.clearColor[2] = 0;
+	state.clearColor[3] = 1;
 #else
-	GL_ClearColor(0.2, 0.2, 0.2, 1.0);
+	state.clearColor[0] = 0.2;
+	state.clearColor[1] = 0.2;
+	state.clearColor[2] = 0.2;
+	state.clearColor[3] = 1;
 #endif
+	state.cullface.mode = r_cullface_front;
+	state.alphaTesting.enabled = true;
+	state.alphaTesting.func = r_alphatest_func_greater;
+	state.alphaTesting.value = 0.666f;
+	state.polygonMode = r_polygonmode_fill;
+	state.blendFunc = r_blendfunc_premultiplied_alpha;
 
-	GL_CullFace(GL_FRONT);
+	R_ApplyRenderingState(&state);
+
 	if (GL_UseImmediateMode()) {
 		glEnable(GL_TEXTURE_2D);
+		GL_TextureEnvMode(GL_REPLACE);
 	}
-
-	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
-	GL_AlphaFunc(GL_GREATER, 0.666);
-
-	GL_PolygonMode(GL_FILL);
-
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-	GL_TextureEnvMode(GL_REPLACE);
 
 	LEAVE_STATE;
 }
@@ -116,29 +123,16 @@ void GLC_StateBeginDraw3DSprites(void)
 {
 	ENTER_STATE;
 
-	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	R_ApplyRenderingState(&spritesStateGLC);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	glColor4ubv(color_white);
-	GL_Disable(GL_CULL_FACE);
-	GL_AlphaFunc(GL_GREATER, 0.333f);
 
 	LEAVE_STATE;
 }
 
 void GLC_StateEndDraw3DSprites(void)
 {
-	ENTER_STATE;
-
-	GL_DepthMask(GL_TRUE);
-	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	GL_TextureEnvMode(GL_REPLACE);
-	GL_EnableFog();
-	GL_AlphaFunc(GL_GREATER, 0.666f);
-
-	LEAVE_STATE;
 }
 
 void GL_StateEndFrame(void)
@@ -150,7 +144,6 @@ void GLC_StateEndRenderScene(void)
 	ENTER_STATE;
 
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-
 	GL_ConfigureFog();
 
 	LEAVE_STATE;

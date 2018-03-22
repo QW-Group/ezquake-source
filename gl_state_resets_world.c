@@ -324,7 +324,7 @@ void GLC_StateBeginAlphaChain(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.333);
+	GL_AlphaFunc(GL_GREATER, 0.333);
 
 	LEAVE_STATE;
 }
@@ -335,7 +335,6 @@ void GLC_StateEndAlphaChain(void)
 
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
-	GL_AlphaFunc(GL_GREATER, 0.666);
 
 	LEAVE_STATE;
 }
@@ -446,9 +445,7 @@ void GLC_StateBeginEndMapOutline(void)
 
 	glColor4ubv(color_white);
 	GL_Enable(GL_DEPTH_TEST);
-	if (gl_cull.integer) {
-		GL_Enable(GL_CULL_FACE);
-	}
+	GL_Enable(GL_CULL_FACE);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 
 	LEAVE_STATE;
