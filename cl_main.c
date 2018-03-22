@@ -2144,7 +2144,8 @@ void CL_SoundFrame (void)
 	{
 		if (!ISPAUSED) {
 			S_Update (r_origin, vpn, vright, vup);
-		} else {
+		}
+		else {
 			// do not play loop sounds (lifts etc.) when paused
 #ifndef INFINITY
 			float temp = 1.0;
