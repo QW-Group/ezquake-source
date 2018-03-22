@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 
 static glm_program_t circleProgram;
-static glm_vao_t circleVAO;
 static buffer_ref circleVBO;
 static GLint drawCircleUniforms_matrix;
 static GLint drawCircleUniforms_color;
@@ -46,7 +45,7 @@ void GLM_DrawCircles(int start, int end)
 	end = min(end, circleData.circleCount - 1);
 
 	GL_UseProgram(circleProgram.program);
-	GL_BindVertexArray(&circleVAO);
+	GL_BindVertexArray(vao_hud_circles);
 
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, projectionMatrix);
@@ -107,10 +106,10 @@ void GLM_PrepareCircles(void)
 		}
 
 		// Build VAO
-		if (!circleVAO.vao) {
-			GL_GenVertexArray(&circleVAO, "circle-vao");
+		if (!GL_VertexArrayCreated(vao_hud_circles)) {
+			GL_GenVertexArray(vao_hud_circles, "circle-vao");
 
-			GL_ConfigureVertexAttribPointer(&circleVAO, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
+			GL_ConfigureVertexAttribPointer(vao_hud_circles, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 		}
 	}
 }

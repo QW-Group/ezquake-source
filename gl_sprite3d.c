@@ -133,7 +133,6 @@ static unsigned int batchCount;
 static unsigned int vertexCount;
 
 static buffer_ref sprite3dVBO;
-static glm_vao_t sprite3dVAO;
 static buffer_ref sprite3dIndexes;
 static glm_program_t sprite3dProgram;
 static GLint sprite3dUniform_alpha_test;
@@ -313,20 +312,20 @@ static void GLM_Create3DSpriteVAO(void)
 {
 	GL_Create3DSpriteVBO();
 
-	if (!sprite3dVAO.vao) {
-		GL_GenVertexArray(&sprite3dVAO, "3dsprite-vao");
+	if (!GL_VertexArrayCreated(vao_3dsprites)) {
+		GL_GenVertexArray(vao_3dsprites, "3dsprite-vao");
 
 		GL_Create3DSpriteIndexBuffer();
 		GL_BindBuffer(sprite3dIndexes);
 
 		// position
-		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
+		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
 		// texture coordinates
-		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
+		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
 		// color
-		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
+		GL_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
 
-		GL_BindVertexArray(NULL);
+		GL_BindVertexArray(vao_none);
 	}
 }
 
@@ -358,7 +357,7 @@ static qbool GLM_3DSpritesInit(void)
 	GLM_Compile3DSpriteProgram();
 	GLM_Create3DSpriteVAO();
 
-	return (sprite3dProgram.program && sprite3dVAO.vao);
+	return (sprite3dProgram.program && GL_VertexArrayCreated(vao_3dsprites));
 }
 
 static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
@@ -482,7 +481,7 @@ void GLM_Draw3DSprites(void)
 
 	GLM_StateBeginDraw3DSprites();
 	GL_UseProgram(sprite3dProgram.program);
-	GL_BindVertexArray(&sprite3dVAO);
+	GL_BindVertexArray(vao_3dsprites);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];

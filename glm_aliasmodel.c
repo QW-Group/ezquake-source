@@ -75,7 +75,6 @@ extern float r_framelerp;
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
 static glm_program_t drawAliasModelProgram;
-static glm_vao_t aliasModel_vao;
 static GLint drawAliasModel_mode;
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
@@ -149,13 +148,13 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 static void GL_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
 {
-	GL_GenVertexArray(&aliasModel_vao, "aliasmodel-vao");
+	GL_GenVertexArray(vao_aliasmodel, "aliasmodel-vao");
 
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position), 0);
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
-	GL_ConfigureVertexAttribPointer(&aliasModel_vao, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
-	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-	GL_ConfigureVertexAttribIPointer(&aliasModel_vao, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), 0);
+	GL_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position), 0);
+	GL_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
+	GL_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
+	GL_ConfigureVertexAttribIPointer(vao_aliasmodel, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+	GL_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), 0);
 }
 
 static void GL_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
@@ -596,7 +595,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
-	GL_BindVertexArray(&aliasModel_vao);
+	GL_BindVertexArray(vao_aliasmodel);
 	GL_UseProgram(drawAliasModelProgram.program);
 	SetAliasModelMode(mode);
 

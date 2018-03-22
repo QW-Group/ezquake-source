@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 
 static glm_program_t polygonProgram;
-static glm_vao_t polygonVAO;
 static buffer_ref polygonVBO;
 static GLint polygonUniforms_matrix;
 static GLint polygonUniforms_color;
@@ -56,9 +55,9 @@ void GLM_PreparePolygons(void)
 			GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
 		}
 
-		if (!polygonVAO.vao) {
-			GL_GenVertexArray(&polygonVAO, "polygon-vao");
-			GL_ConfigureVertexAttribPointer(&polygonVAO, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+		if (GL_VertexArrayCreated(vao_hud_polygons)) {
+			GL_GenVertexArray(vao_hud_polygons, "polygon-vao");
+			GL_ConfigureVertexAttribPointer(vao_hud_polygons, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
 		}
 	}
 }
@@ -89,7 +88,7 @@ void GLM_DrawPolygons(int start, int end)
 	int i;
 	uintptr_t offset = GL_BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
-	GL_BindVertexArray(&polygonVAO);
+	GL_BindVertexArray(vao_hud_polygons);
 	GL_UseProgram(polygonProgram.program);
 
 	GL_Disable(GL_DEPTH_TEST);

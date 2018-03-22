@@ -202,11 +202,10 @@ static glm_worldmodel_req_t* GLM_CurrentRequest(void)
 
 static void GL_StartWorldBatch(void)
 {
-	extern glm_vao_t brushModel_vao;
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 
 	GL_UseProgram(drawworld.program);
-	GL_BindVertexArray(&brushModel_vao);
+	GL_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
 	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();
@@ -614,7 +613,6 @@ void GLM_PrepareWorldModelBatch(void)
 void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
 	extern buffer_ref vbo_brushElements;
-	extern glm_vao_t brushModel_vao;
 	int draw;
 	qbool first = true;
 	unsigned int extra_offset = 0;

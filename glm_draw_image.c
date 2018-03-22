@@ -48,7 +48,6 @@ void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 
 static glm_program_t multiImageProgram;
 
-static glm_vao_t imageVAO;
 static buffer_ref imageVBO;
 static float cachedMatrix[16];
 
@@ -165,8 +164,8 @@ void GLM_CreateMultiImageProgram(void)
 		imageVBO = GL_CreateFixedBuffer(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 	}
 
-	if (!imageVAO.vao) {
-		GL_GenVertexArray(&imageVAO, "image-vao");
+	if (!GL_VertexArrayCreated(vao_hud_images)) {
+		GL_GenVertexArray(vao_hud_images, "image-vao");
 
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
@@ -191,11 +190,11 @@ void GLM_CreateMultiImageProgram(void)
 		}
 
 		GL_BindBuffer(imageIndexBuffer);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
-		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
-		GL_BindVertexArray(NULL);
+		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
+		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
+		GL_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
+		GL_ConfigureVertexAttribIPointer(vao_hud_images, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
+		GL_BindVertexArray(vao_none);
 #endif
 	}
 }
@@ -209,7 +208,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_Disable(GL_DEPTH_TEST);
-	GL_BindVertexArray(&imageVAO);
+	GL_BindVertexArray(vao_hud_images);
 	if (GL_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };

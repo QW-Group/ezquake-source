@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 
 static glm_program_t line_program;
-static glm_vao_t line_vao;
 static buffer_ref line_vbo;
 static GLint line_matrix;
 
@@ -41,11 +40,11 @@ void GLM_PrepareLines(void)
 			GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
 		}
 
-		if (!line_vao.vao) {
-			GL_GenVertexArray(&line_vao, "line-vao");
+		if (vao_hud_lines) {
+			GL_GenVertexArray(vao_hud_lines, "line-vao");
 
-			GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
-			GL_ConfigureVertexAttribPointer(&line_vao, line_vbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
+			GL_ConfigureVertexAttribPointer(vao_hud_lines, line_vbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
+			GL_ConfigureVertexAttribPointer(vao_hud_lines, line_vbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
 		}
 
 		if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
@@ -92,7 +91,7 @@ void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, in
 
 void GLM_DrawLines(int start, int end)
 {
-	if (line_program.program && line_vao.vao) {
+	if (line_program.program && GL_VertexArrayCreated(vao_hud_lines)) {
 		float matrix[16];
 		int i;
 		uintptr_t offset = GL_BufferOffset(line_vbo) / sizeof(glm_line_point_t);
@@ -100,7 +99,7 @@ void GLM_DrawLines(int start, int end)
 		GL_UseProgram(line_program.program);
 		GLM_GetMatrix(GL_PROJECTION, matrix);
 		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
-		GL_BindVertexArray(&line_vao);
+		GL_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {
 			GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
