@@ -945,24 +945,15 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 	}
 }
 
-static void GL_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
+static void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
-	if (!Ruleset_AllowPowerupShell(ent->model)) {
-		return;
-	}
-
 	// FIXME: think need put it after caustics
 	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
 		model_t* clmodel = ent->model;
 
-		if (GL_UseGLSL()) {
-			GLM_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-		}
-		else {
-			GLC_StateBeginAliasPowerupShell();
-			GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-			GLC_StateEndAliasPowerupShell();
-		}
+		GLC_StateBeginAliasPowerupShell();
+		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
+		GLC_StateEndAliasPowerupShell();
 	}
 }
 
@@ -972,8 +963,16 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 	maliasframedesc_t *oldframe, *frame;
 	float oldMatrix[16];
 
+	if (GL_UseGLSL()) {
+		return;
+	}
+
 	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
 	if (R_FilterEntity(ent)) {
+		return;
+	}
+
+	if (!Ruleset_AllowPowerupShell(ent->model)) {
 		return;
 	}
 
@@ -994,11 +993,13 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-	GL_StateBeginDrawAliasModel(ent, paliashdr);
-	GL_AliasModelPowerupShell(ent, oldframe, frame);
-	GL_StateEndDrawAliasModel();
-	GL_PopMatrix(GL_MODELVIEW, oldMatrix);
-	GL_LeaveTracedRegion(true);
+	if (GL_UseImmediateMode()) {
+		GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+		GL_PushMatrix(GL_MODELVIEW, oldMatrix);
+		GL_StateBeginDrawAliasModel(ent, paliashdr);
+		GLC_AliasModelPowerupShell(ent, oldframe, frame);
+		GL_StateEndDrawAliasModel();
+		GL_PopMatrix(GL_MODELVIEW, oldMatrix);
+		GL_LeaveTracedRegion(true);
+	}
 }

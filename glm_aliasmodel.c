@@ -370,15 +370,6 @@ void GLM_DrawAliasFrame(
 	);
 }
 
-// MEAG: FIXME, remove
-void GLM_DrawPowerupShell(
-	model_t* model, int effects,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame
-)
-{
-	return;
-}
-
 void GLM_PrepareAliasModelBatches(void)
 {
 	if (!GLM_CompileAliasModelProgram() || !alias_draw_count) {
