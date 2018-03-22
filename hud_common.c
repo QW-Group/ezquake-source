@@ -351,8 +351,8 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 
 			switch (align) {
 				case 0: break;
-				case 1: x += scale * (width - size * len) / 2; break;
-				case 2: x += scale * (width - size * len); break;
+				case 1: x += (width - size * len * scale) / 2; break;
+				case 2: x += (width - size * len * scale); break;
 			}
 
 			for (i = 0; i < len; i++) {
