@@ -916,11 +916,12 @@ static void R_RenderScene(void)
 		R_RenderTransparentWorld();
 	}
 
+	if (GL_UseGLSL()) {
+		GLM_InitialiseAliasModelBatches();
+	}
+
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
-		if (GL_UseGLSL()) {
-			GLM_InitialiseAliasModelBatches();
-		}
 
 		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, null_texture_reference, 0, GL_TRIANGLE_STRIP, true, true);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
