@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the included (GNU.txt) GNU General Public License for more details.
 
@@ -77,3 +77,4 @@ void GL_InvalidateAllTextureReferences(void);
 const char* GL_TextureIdentifier(texture_ref ref);
 
 #endif	// EZQUAKE_R_TEXTURE_H
+
