@@ -74,7 +74,7 @@ void R_InitBubble(void)
 		*bub_cos++ = cos(a);
 	}
 
-	R_Init3DSpriteRenderingState(&bubble_state);
+	R_Init3DSpriteRenderingState(&bubble_state, "bubble-state");
 	bubble_state.depth.test_enabled = true;
 	bubble_state.depth.mask_enabled = false;
 }

@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_STATE_HEADER
 #define EZQUAKE_R_STATE_HEADER
 
-#define MAX_GLC_TEXTURE_UNIT_STATES 8
+#define MAX_GLC_TEXTURE_UNIT_STATES 4
 
 // rendering state
 typedef enum {
@@ -144,10 +144,12 @@ typedef struct rendering_state_s {
 
 	// meta
 	qbool initialized;
+	char name[32];
 } rendering_state_t;
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state);
-void R_Init3DSpriteRenderingState(rendering_state_t* state);
+void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name);
+void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name);
+void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name);
 void R_ApplyRenderingState(rendering_state_t* state);
 void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode);
 

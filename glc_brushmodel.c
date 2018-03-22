@@ -67,79 +67,84 @@ void R_InitialiseBrushModelStates(void)
 {
 	rendering_state_t* current;
 	rendering_state_t* base;
-	int i;
 
-	R_InitRenderingState(current = &drawFlatNoLightmapState, true);
+	R_InitRenderingState(current = &drawFlatNoLightmapState, true, "drawFlatNoLightmapState");
 	current->fog.enabled = true;
 
-	R_InitRenderingState(current = &drawFlatLightmapState, true);
+	R_InitRenderingState(current = &drawFlatLightmapState, true, "drawFlatLightmapState");
 	current->fog.enabled = true;
 	current->textureUnits[0].enabled = true;
 	current->textureUnits[0].mode = r_texunit_mode_blend;
 
 	// Single-texture: all of these are the same so we don't need to bother about others
-	R_InitRenderingState(current = &brushModelStates[multitexture_none][0][0], true);
+	R_InitRenderingState(current = &brushModelStates[multitexture_none][0][0], true, "world:singletex");
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 
 	// no fullbrights, 2 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_none][tex_lightmap_and_luma], true);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_none][tex_lightmap_and_luma], true, "world:multitex[2][lm+luma]");
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
 
-	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap], base, sizeof(*current));
-	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap], base, "world:multitex[2][luma]");
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_none][tex_no_luma], base, "world:multitex[2][lm]");
 	current->textureUnits[1].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap_or_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_none][tex_no_lightmap_or_luma], base, "world:multitex[2][_]");
 	current->textureUnits[1].enabled = false;
 
 	// no fullbrights, 3 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_none][tex_lightmap_and_luma], true);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_none][tex_lightmap_and_luma], true, "world:multitex[3][lm+luma]");
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_blend);
 
-	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap], base, "world:multitex[3][luma]");
 	current->textureUnits[2].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_none][tex_no_luma], base, "world:multitex[3][lm]");
 	current->textureUnits[1].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap_or_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_none][tex_no_lightmap_or_luma], base, "world:multitex[3][_]");
 	current->textureUnits[1].enabled = false;
 	current->textureUnits[2].enabled = false;
 
 	// lumas enabled, 2 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[2][lm+luma]");
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
 
-	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap], base, "world:multitex-luma[2][luma]");
 	current->textureUnits[1].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_luma], base, sizeof(*current));
-	memcpy(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap_or_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_luma], base, "world:multitex-luma[2][lm]");
+	R_CopyRenderingState(current = &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap_or_luma], base, "world:multitex-luma[2][_]");
 	current->textureUnits[1].enabled = false;
 
 	// lumas enabled, 3 units
-	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true);
+	R_InitRenderingState(base = current = &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], true, "world:multitex-luma[3][lm+luma]");
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, true, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, true, r_texunit_mode_add);
 
-	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap], base, "world:multitex-luma[3][luma]");
 	current->textureUnits[1].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_luma], base, "world:multitex-luma[3][lm]");
 	current->textureUnits[2].enabled = false;
-	memcpy(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap_or_luma], base, sizeof(*current));
+	R_CopyRenderingState(current = &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap_or_luma], base, "world:multitex-luma[3][_]");
 	current->textureUnits[1].enabled = false;
 	current->textureUnits[2].enabled = false;
 
-	// lumas not enabled - exactly the same
-	for (i = 0; i < tex_options; ++i) {
-		// in 2unit mode 2nd unit is lightmap: so no changes required
-		memcpy(&brushModelStates[multitexture_2units][fb_only][i], &brushModelStates[multitexture_2units][fb_lumas][i], sizeof(*current));
+	// in 2unit mode 2nd unit is lightmap: so no changes required
+	R_CopyRenderingState(&brushModelStates[multitexture_2units][fb_only][tex_lightmap_and_luma], &brushModelStates[multitexture_2units][fb_lumas][tex_lightmap_and_luma], "world:multitex-fb[2][lm+luma]");
+	R_CopyRenderingState(&brushModelStates[multitexture_2units][fb_only][tex_no_lightmap_or_luma], &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap_or_luma], "world:multitex-fb[2][_]");
+	R_CopyRenderingState(&brushModelStates[multitexture_2units][fb_only][tex_no_lightmap], &brushModelStates[multitexture_2units][fb_lumas][tex_no_lightmap], "world:multitex-fb[2][luma]");
+	R_CopyRenderingState(&brushModelStates[multitexture_2units][fb_only][tex_no_luma], &brushModelStates[multitexture_2units][fb_lumas][tex_no_luma], "world:multitex-fb[2][lm+luma]");
 
-		// lumas not enabled, fb only... copy from lumas but change texunit_mode_add => texunit_mode_decal
-		memcpy(&brushModelStates[multitexture_3units][fb_only][i], &brushModelStates[multitexture_3units][fb_lumas][i], sizeof(*current));
-		brushModelStates[multitexture_3units][fb_only][i].textureUnits[2].mode = r_texunit_mode_decal;
-	}
+	// lumas not enabled, fb only... copy from lumas but change texunit_mode_add => texunit_mode_decal
+	R_CopyRenderingState(&brushModelStates[multitexture_3units][fb_only][tex_lightmap_and_luma], &brushModelStates[multitexture_3units][fb_lumas][tex_lightmap_and_luma], "world:multitex-fb[3][lm+luma]");
+	R_CopyRenderingState(&brushModelStates[multitexture_3units][fb_only][tex_no_lightmap_or_luma], &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap_or_luma], "world:multitex-fb[3][_]");
+	R_CopyRenderingState(&brushModelStates[multitexture_3units][fb_only][tex_no_lightmap], &brushModelStates[multitexture_3units][fb_lumas][tex_no_lightmap], "world:multitex-fb[3][luma]");
+	R_CopyRenderingState(&brushModelStates[multitexture_3units][fb_only][tex_no_luma], &brushModelStates[multitexture_3units][fb_lumas][tex_no_luma], "world:multitex-fb[3][lm+luma]");
+	brushModelStates[multitexture_3units][fb_only][tex_lightmap_and_luma].textureUnits[2].mode = r_texunit_mode_decal;
+	brushModelStates[multitexture_3units][fb_only][tex_no_lightmap_or_luma].textureUnits[2].mode = r_texunit_mode_decal;
+	brushModelStates[multitexture_3units][fb_only][tex_no_lightmap].textureUnits[2].mode = r_texunit_mode_decal;
+	brushModelStates[multitexture_3units][fb_only][tex_no_luma].textureUnits[2].mode = r_texunit_mode_decal;
 }
 
 static void GLC_BlendLightmaps(void);

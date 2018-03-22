@@ -252,7 +252,7 @@ void R_InitChatIcons(void)
 		Q_free(original);
 	}
 
-	R_Init3DSpriteRenderingState(&chaticon_state);
+	R_Init3DSpriteRenderingState(&chaticon_state, "chaticon_state");
 	chaticon_state.blendFunc = r_blendfunc_premultiplied_alpha;
 	chaticon_state.blendingEnabled = true;
 	chaticon_state.depth.test_enabled = true;

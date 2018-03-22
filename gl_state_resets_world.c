@@ -46,7 +46,7 @@ static rendering_state_t glmWorldState;
 
 void R_InitialiseWorldStates(void)
 {
-	R_InitRenderingState(&worldTextureChainState, true);
+	R_InitRenderingState(&worldTextureChainState, true, "worldTextureChainState");
 	worldTextureChainState.fog.enabled = true;
 	worldTextureChainState.textureUnits[0].enabled = true;
 	worldTextureChainState.textureUnits[0].mode = r_texunit_mode_replace;
@@ -54,12 +54,12 @@ void R_InitialiseWorldStates(void)
 	//worldTextureChainState.textureUnits[1].mode = (gl_invlightmaps ? r_texunit_mode_blend : r_texunit_mode_modulate);
 	worldTextureChainState.textureUnits[1].mode = r_texunit_mode_blend;
 
-	R_InitRenderingState(&worldTextureChainFullbrightState, true);
+	R_InitRenderingState(&worldTextureChainFullbrightState, true, "worldTextureChainFullbrightState");
 	worldTextureChainFullbrightState.fog.enabled = true;
 	worldTextureChainFullbrightState.textureUnits[0].enabled = true;
 	worldTextureChainFullbrightState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&blendLightmapState, true);
+	R_InitRenderingState(&blendLightmapState, true, "blendLightmapState");
 	blendLightmapState.depth.mask_enabled = false;
 	blendLightmapState.depth.func = r_depthfunc_equal;
 	blendLightmapState.blendingEnabled = true;
@@ -67,32 +67,33 @@ void R_InitialiseWorldStates(void)
 	blendLightmapState.textureUnits[0].enabled = true;
 	blendLightmapState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&causticsState, true);
+	R_InitRenderingState(&causticsState, true, "causticsState");
 	causticsState.textureUnits[0].enabled = true;
 	causticsState.textureUnits[0].mode = r_texunit_mode_decal;
 	causticsState.blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	causticsState.blendingEnabled = true;
 
-	R_InitRenderingState(&aliasModelCausticsState, true);
+	R_InitRenderingState(&aliasModelCausticsState, true, "aliasModelCausticsState");
 	aliasModelCausticsState.blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	aliasModelCausticsState.blendingEnabled = true;
 	aliasModelCausticsState.textureUnits[0].enabled = true;
 	aliasModelCausticsState.textureUnits[0].mode = r_texunit_mode_decal;
 
-	R_InitRenderingState(&fastWaterSurfacesState, true);
+	R_InitRenderingState(&fastWaterSurfacesState, true, "fastWaterSurfacesState");
 	fastWaterSurfacesState.depth.test_enabled = true;
 	fastWaterSurfacesState.fog.enabled = true;
 
-	memcpy(&waterSurfacesState, &fastWaterSurfacesState, sizeof(waterSurfacesState));
+	R_CopyRenderingState(&waterSurfacesState, &fastWaterSurfacesState, "waterSurfacesState");
+	waterSurfacesState.cullface.enabled = false;
 	waterSurfacesState.textureUnits[0].enabled = true;
 	waterSurfacesState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	memcpy(&translucentWaterSurfacesState, &fastWaterSurfacesState, sizeof(waterSurfacesState));
+	R_CopyRenderingState(&translucentWaterSurfacesState, &fastWaterSurfacesState, "translucentWaterSurfacesState");
 	translucentWaterSurfacesState.depth.mask_enabled = false; // FIXME: water-alpha < 0.9 only?
 	translucentWaterSurfacesState.textureUnits[0].enabled = true;
 	translucentWaterSurfacesState.textureUnits[0].mode = r_texunit_mode_modulate;
 
-	R_InitRenderingState(&alphaChainState, true);
+	R_InitRenderingState(&alphaChainState, true, "alphaChainState");
 	alphaChainState.alphaTesting.enabled = true;
 	alphaChainState.alphaTesting.func = r_alphatest_func_greater;
 	alphaChainState.alphaTesting.value = 0.333f;
@@ -104,41 +105,44 @@ void R_InitialiseWorldStates(void)
 		alphaChainState.textureUnits[1].mode = r_texunit_mode_blend; // modulate if !inv_lmaps
 	}
 
-	R_InitRenderingState(&fullbrightsState, true);
+	R_InitRenderingState(&fullbrightsState, true, "fullbrightsState");
 	fullbrightsState.depth.mask_enabled = false;
 	fullbrightsState.alphaTesting.enabled = true;
 	fullbrightsState.textureUnits[0].enabled = true;
 	fullbrightsState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&lumasState, true);
+	R_InitRenderingState(&lumasState, true, "lumasState");
 	lumasState.depth.mask_enabled = false;
 	lumasState.blendingEnabled = true;
 	lumasState.blendFunc = r_blendfunc_additive_blending;
 	lumasState.textureUnits[0].enabled = true;
 	lumasState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&detailPolyState, true);
+	R_InitRenderingState(&detailPolyState, true, "detailPolyState");
 	detailPolyState.textureUnits[0].enabled = true;
 	detailPolyState.textureUnits[0].mode = r_texunit_mode_decal;
 	detailPolyState.blendingEnabled = true;
 	detailPolyState.blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 
-	R_InitRenderingState(&mapOutlineState, true);
+	R_InitRenderingState(&mapOutlineState, true, "mapOutlineState");
 	mapOutlineState.polygonOffset.option = r_polygonoffset_outlines;
 	mapOutlineState.depth.mask_enabled = false;
 	//mapOutlineState.depth.test_enabled = false;
 	mapOutlineState.cullface.enabled = false;
 
-	R_InitRenderingState(&glmAlphaOffsetWorldState, true);
+	R_InitRenderingState(&glmAlphaOffsetWorldState, true, "glmAlphaOffsetWorldState");
 	glmAlphaOffsetWorldState.blendingEnabled = true;
 	glmAlphaOffsetWorldState.blendFunc = r_blendfunc_premultiplied_alpha;
-	R_InitRenderingState(&glmOffsetWorldState, true);
+
+	R_InitRenderingState(&glmOffsetWorldState, true, "glmOffsetWorldState");
 	glmOffsetWorldState.polygonOffset.option = r_polygonoffset_standard;
-	R_InitRenderingState(&glmAlphaWorldState, true);
+
+	R_InitRenderingState(&glmAlphaWorldState, true, "glmAlphaWorldState");
 	glmAlphaOffsetWorldState.blendingEnabled = true;
 	glmAlphaOffsetWorldState.blendFunc = r_blendfunc_premultiplied_alpha;
 	glmAlphaOffsetWorldState.polygonOffset.option = r_polygonoffset_standard;
-	R_InitRenderingState(&glmWorldState, true);
+
+	R_InitRenderingState(&glmWorldState, true, "glmWorldState");
 
 	//if (fullbrightTextureUnit) {
 	//		GL_TextureEnvModeForUnit(fullbrightTextureUnit, fullbrightMode);

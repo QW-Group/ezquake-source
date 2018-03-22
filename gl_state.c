@@ -62,7 +62,7 @@ typedef struct image_unit_binding_s {
 
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
 
-typedef struct {
+/*typedef struct {
 	GLenum currentTextureUnit;
 	GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
 	GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
@@ -70,10 +70,10 @@ typedef struct {
 	GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
 	image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 } texture_state_t;
-
+*/
 typedef struct {
 	rendering_state_t rendering_state;
-	texture_state_t textures;
+	//texture_state_t textures;
 } opengl_state_t;
 
 static GLenum currentTextureUnit;
@@ -99,10 +99,12 @@ static const char* txtAlphaTestModeValues[r_alphatest_func_count];
 static const char* txtTextureEnvModeValues[r_texunit_mode_count];
 #endif
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state)
+void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name)
 {
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
 	int i;
+
+	strlcpy(state->name, name, sizeof(state->name));
 
 	state->depth.func = r_depthfunc_less;
 	state->depth.nearRange = 0;
@@ -177,9 +179,9 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state)
 	state->initialized = true;
 }
 
-void R_Init3DSpriteRenderingState(rendering_state_t* state)
+void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 {
-	R_InitRenderingState(state, true);
+	R_InitRenderingState(state, true, name);
 
 	state->fog.enabled = false;
 	state->blendingEnabled = true;
@@ -208,17 +210,22 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
+	GL_LogAPICall("GL_ApplyRenderingState(%s)", state->name);
+
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
+		GL_LogAPICall("glDepthFunc(%s)", txtDepthFunctions[current->depth.func]);
 	}
 	if (state->depth.nearRange != current->depth.nearRange || state->depth.farRange != current->depth.farRange) {
 		glDepthRange(
 			current->depth.nearRange = state->depth.nearRange,
 			current->depth.farRange = state->depth.farRange
 		);
+		GL_LogAPICall("glDepthRange(%f,%f)", state->depth.nearRange, state->depth.farRange);
 	}
 	if (state->cullface.mode != current->cullface.mode) {
 		glCullFace(glCullFaceValues[current->cullface.mode = state->cullface.mode]);
+		GL_LogAPICall("glCullFace(%s)", txtCullFaceValues[state->cullface.mode]);
 	}
 	if (state->blendFunc != current->blendFunc) {
 		current->blendFunc = state->blendFunc;
@@ -226,18 +233,28 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			glBlendFuncValuesSource[state->blendFunc],
 			glBlendFuncValuesDestination[state->blendFunc]
 		);
+		GL_LogAPICall("glCullFace(%s)", txtBlendFuncNames[state->blendFunc]);
 	}
 	if (state->line.width != current->line.width) {
 		glLineWidth(current->line.width = state->line.width);
+		GL_LogAPICall("glLineWidth(%f)", current->line.width);
 	}
 	GL_ApplySimpleToggle(state, current, depth.test_enabled, GL_DEPTH_TEST);
 	if (state->depth.mask_enabled != current->depth.mask_enabled) {
 		glDepthMask((current->depth.mask_enabled = state->depth.mask_enabled) ? GL_TRUE : GL_FALSE);
+		GL_LogAPICall("glDepthMask(%s)", current->depth.mask_enabled ? "on" : "off");
 	}
 	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
 	GL_ApplySimpleToggle(state, current, line.smooth, GL_LINE_SMOOTH);
-	GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
+	if (gl_fogenable.integer) {
+		GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
+	}
+	else if (current->fog.enabled) {
+		glDisable(GL_FOG);
+		GL_LogAPICall("glDisable(GL_FOG)");
+		current->fog.enabled = false;
+	}
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
 		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
 		float units = (state->polygonOffset.option == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
@@ -246,15 +263,18 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		if (enabled) {
 			if (!current->polygonOffset.fillEnabled) {
 				glEnable(GL_POLYGON_OFFSET_FILL);
+				GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
 				current->polygonOffset.fillEnabled = true;
 			}
 			if (!current->polygonOffset.lineEnabled) {
 				glEnable(GL_POLYGON_OFFSET_LINE);
+				GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
 				current->polygonOffset.lineEnabled = true;
 			}
 
 			if (current->polygonOffset.factor != factor || current->polygonOffset.units != units) {
 				glPolygonOffset(factor, units);
+				GL_LogAPICall("glPolygonOffset(factor %f, units %f)", factor, units);
 
 				current->polygonOffset.factor = factor;
 				current->polygonOffset.units = units;
@@ -263,10 +283,12 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 		else {
 			if (current->polygonOffset.fillEnabled) {
 				glDisable(GL_POLYGON_OFFSET_FILL);
+				GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
 				current->polygonOffset.fillEnabled = false;
 			}
 			if (current->polygonOffset.lineEnabled) {
 				glDisable(GL_POLYGON_OFFSET_LINE);
+				GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
 				current->polygonOffset.lineEnabled = false;
 			}
 		}
@@ -277,7 +299,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 	if (state->polygonMode != current->polygonMode) {
 		glPolygonMode(GL_FRONT_AND_BACK, glPolygonModeValues[current->polygonMode = state->polygonMode]);
 
-		GL_LogAPICall("glPolygonMode(%s)", state->polygonMode == r_polygonmode_fill ? "fill" : (state->polygonMode == r_polygonmode_line ? "lines" : "???"));
+		GL_LogAPICall("glPolygonMode(%s)", txtPolygonModeValues[state->polygonMode]);
 	}
 	if (state->clearColor[0] != current->clearColor[0] || state->clearColor[1] != current->clearColor[1] || state->clearColor[2] != current->clearColor[2] || state->clearColor[3] != current->clearColor[3]) {
 		glClearColor(
@@ -286,6 +308,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			current->clearColor[2] = state->clearColor[2],
 			current->clearColor[3] = state->clearColor[3]
 		);
+		GL_LogAPICall("glClearColor(...)");
 	}
 	GL_ApplySimpleToggle(state, current, blendingEnabled, GL_BLEND);
 	if (state->colorMask[0] != current->colorMask[0] || state->colorMask[1] != current->colorMask[1] || state->colorMask[2] != current->colorMask[2] || state->colorMask[3] != current->colorMask[3]) {
@@ -295,6 +318,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 			(current->colorMask[2] = state->colorMask[2]) ? GL_TRUE : GL_FALSE,
 			(current->colorMask[3] = state->colorMask[3]) ? GL_TRUE : GL_FALSE
 		);
+		GL_LogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
 
 	if (GL_UseImmediateMode()) {
@@ -307,6 +331,7 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 				glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
 				current->alphaTesting.value = state->alphaTesting.value
 			);
+			GL_LogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
 		}
 
 		// Texture units
@@ -315,13 +340,21 @@ void GL_ApplyRenderingState(rendering_state_t* state)
 				GL_SelectTexture(GL_TEXTURE0 + i);
 				if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
 					glEnable(GL_TEXTURE_2D);
+					GL_LogAPICall("Enabled texturing on unit %d", i);
 					if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
 						glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+						GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 					}
 				}
 				else {
 					glDisable(GL_TEXTURE_2D);
+					GL_LogAPICall("Disabled texturing on unit %d", i);
 				}
+			}
+			else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+				GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 			}
 		}
 
@@ -487,7 +520,7 @@ void GL_InitialiseState(void)
 	txtTextureEnvModeValues[r_texunit_mode_add] = "add";
 #endif
 
-	R_InitRenderingState(&opengl.rendering_state, false);
+	R_InitRenderingState(&opengl.rendering_state, false, "opengl");
 	R_InitialiseBrushModelStates();
 	R_InitialiseStates();
 	R_Initialise2DStates();
@@ -630,64 +663,6 @@ void GL_InitTextureState(void)
 		opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
 	}
 }
-
-/*void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode)
-{
-	if (GL_UseImmediateMode() && mode != unit_texture_mode[unit - GL_TEXTURE0]) {
-		GL_SelectTexture(unit);
-		GL_TextureEnvMode(mode);
-	}
-}
-
-void GL_TextureEnvMode(GLenum mode)
-{
-	if (GL_UseImmediateMode() && mode != unit_texture_mode[currentTextureUnit - GL_TEXTURE0]) {
-		GL_LogAPICall("GL_TextureEnvMode(GL_TEXTURE%d, mode=%s)", currentTextureUnit - GL_TEXTURE0, TexEnvName(mode));
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
-		unit_texture_mode[currentTextureUnit - GL_TEXTURE0] = mode;
-	}
-}*/
-/*
-static void GLC_DisableTextureUnitOnwards(int first)
-{
-	int i;
-
-	for (i = first; i < sizeof(texunitenabled) / sizeof(texunitenabled[0]); ++i) {
-		if (texunitenabled[i]) {
-			GLC_EnsureTMUDisabled(GL_TEXTURE0 + i);
-		}
-	}
-	GL_SelectTexture(GL_TEXTURE0);
-}
-
-void GLC_InitTextureUnitsNoBind1(GLenum envMode0)
-{
-	GLC_DisableTextureUnitOnwards(1);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
-}
-
-void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0)
-{
-	GLC_DisableTextureUnitOnwards(1);
-
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, texture0);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
-}
-
-void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1)
-{
-	GLC_DisableTextureUnitOnwards(2);
-
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, texture0);
-	GL_TextureEnvModeForUnit(GL_TEXTURE0, envMode0);
-
-	GLC_EnsureTMUEnabled(GL_TEXTURE1);
-	GL_EnsureTextureUnitBound(GL_TEXTURE1, texture1);
-	GL_TextureEnvModeForUnit(GL_TEXTURE1, envMode1);
-}
-*/
 
 void GL_InvalidateTextureReferences(GLuint texture)
 {
@@ -914,7 +889,16 @@ void GL_PrintState(FILE* debug_frame_out)
 		fprintf(debug_frame_out, "..... AlphaTest: %s, func %s(%f)\n", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
 		fprintf(debug_frame_out, "..... Texture units: [");
 		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
-			fprintf(debug_frame_out, "%s%s", i ? "," : "", current->textureUnits[i].enabled ? txtTextureEnvModeValues[current->textureUnits[i].mode] : "n");
+			fprintf(debug_frame_out, "%s", i ? "," : "");
+			if (current->textureUnits[i].enabled && bound_textures[i]) {
+				fprintf(debug_frame_out, "%s(%s)", txtTextureEnvModeValues[current->textureUnits[i].mode], GL_TextureIdentifierByGLReference(bound_textures[i]));
+			}
+			else if (current->textureUnits[i].enabled) {
+				fprintf(debug_frame_out, "%s(<null>)", txtTextureEnvModeValues[current->textureUnits[i].mode]);
+			}
+			else {
+				fprintf(debug_frame_out, "<off>");
+			}
 		}
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "..... glPolygonMode: %s\n", txtPolygonModeValues[current->polygonMode]);
@@ -1036,4 +1020,10 @@ void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_
 {
 	state->textureUnits[index].enabled = enabled;
 	state->textureUnits[index].mode = mode;
+}
+
+void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name)
+{
+	memcpy(state, src, sizeof(*state));
+	strlcpy(state->name, name, sizeof(state->name));
 }

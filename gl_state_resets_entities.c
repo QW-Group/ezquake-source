@@ -52,7 +52,7 @@ void R_InitialiseEntityStates(void)
 	extern cvar_t gl_outline_width;
 	int i;
 
-	R_InitRenderingState(&powerupShellState, true);
+	R_InitRenderingState(&powerupShellState, true, "powerupShellState");
 	powerupShellState.polygonOffset.option = r_polygonoffset_disabled;
 	powerupShellState.cullface.enabled = true;
 	powerupShellState.cullface.mode = r_cullface_front;
@@ -65,7 +65,7 @@ void R_InitialiseEntityStates(void)
 	powerupShellState.textureUnits[0].enabled = true;
 	powerupShellState.textureUnits[0].mode = r_texunit_mode_modulate;
 
-	R_InitRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], true);
+	R_InitRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], true, "opaqueAliasModelNoTexture");
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].blendingEnabled = aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].alphaTesting.enabled = false;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].polygonOffset.option = r_polygonoffset_disabled;
@@ -75,23 +75,26 @@ void R_InitialiseEntityStates(void)
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].line.smooth = false;
 	aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE].fog.enabled = true;
 
-	memcpy(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], sizeof(aliasModelState[0]));
+	R_CopyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], "opaqueAliasModelSingleTex");
 	aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE].textureUnits[0].enabled = true;
 	aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE].textureUnits[0].mode = r_texunit_mode_modulate;
 
-	memcpy(&aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], sizeof(aliasModelState[0]));
+	R_CopyRenderingState(&aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], "opaqueAliasModelMultiTex");
 	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[0].enabled = true;
 	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[0].mode = r_texunit_mode_modulate;
 	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[1].enabled = true;
 	aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE].textureUnits[1].mode = r_texunit_mode_decal;
 
+	R_CopyRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE + 1], &aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE], "transparentAliasModelNoTex");
+	R_CopyRenderingState(&aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE + 1], &aliasModelState[ALIASMODEL_SINGLETEXTURE_OPAQUE], "transparentAliasModelSingleTex");
+	R_CopyRenderingState(&aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE + 1], &aliasModelState[ALIASMODEL_MULTITEXTURE_OPAQUE], "transparentAliasModelMultiTex");
+
 	for (i = ALIASMODEL_NOTEXTURE_OPAQUE; i <= ALIASMODEL_MULTITEXTURE_OPAQUE; ++i) {
-		memcpy(&aliasModelState[i+1], &aliasModelState[i], sizeof(aliasModelState[0]));
 		aliasModelState[i + 1].blendingEnabled = true;
 		aliasModelState[i + 1].blendFunc = r_blendfunc_premultiplied_alpha;
 	}
 
-	R_InitRenderingState(&aliasModelShadowState, true);
+	R_InitRenderingState(&aliasModelShadowState, true, "aliasModelShadowState");
 	aliasModelShadowState.polygonOffset.option = r_polygonoffset_disabled;
 	aliasModelShadowState.cullface.enabled = true;
 	aliasModelShadowState.cullface.mode = r_cullface_front;
@@ -104,7 +107,7 @@ void R_InitialiseEntityStates(void)
 	aliasModelShadowState.color[0] = aliasModelShadowState.color[1] = aliasModelShadowState.color[2] = 0;
 	aliasModelShadowState.color[3] = 0.5f;
 
-	R_InitRenderingState(&viewModelOpaqueState, true);
+	R_InitRenderingState(&viewModelOpaqueState, true, "viewModelOpaqueState");
 	viewModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
 	viewModelOpaqueState.cullface.mode = r_cullface_front;
 	viewModelOpaqueState.cullface.enabled = true;
@@ -121,10 +124,10 @@ void R_InitialiseEntityStates(void)
 	viewModelOpaqueState.textureUnits[0].enabled = true;
 	viewModelOpaqueState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	memcpy(&viewModelTranslucentState, &viewModelOpaqueState, sizeof(viewModelTranslucentState));
+	R_CopyRenderingState(&viewModelTranslucentState, &viewModelOpaqueState, "viewModelTranslucentState");
 	viewModelOpaqueState.blendingEnabled = true;
 
-	R_InitRenderingState(&simpleItemState, true);
+	R_InitRenderingState(&simpleItemState, true, "simpleItemState");
 	simpleItemState.polygonOffset.option = r_polygonoffset_disabled;
 	simpleItemState.cullface.enabled = true;
 	simpleItemState.cullface.mode = r_cullface_front;
@@ -137,7 +140,7 @@ void R_InitialiseEntityStates(void)
 	simpleItemState.textureUnits[0].enabled = true;
 	simpleItemState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&aliasModelOutlineState, true);
+	R_InitRenderingState(&aliasModelOutlineState, true, "aliasModelOutlineState");
 	aliasModelOutlineState.alphaTesting.enabled = false;
 	aliasModelOutlineState.blendingEnabled = false;
 	aliasModelOutlineState.fog.enabled = false;
@@ -151,7 +154,7 @@ void R_InitialiseEntityStates(void)
 	aliasModelOutlineState.line.smooth = true;
 	aliasModelOutlineState.color[0] = aliasModelOutlineState.color[1] = aliasModelOutlineState.color[2] = 0;
 
-	R_InitRenderingState(&brushModelOpaqueState, true);
+	R_InitRenderingState(&brushModelOpaqueState, true, "brushModelOpaqueState");
 	brushModelOpaqueState.cullface.mode = r_cullface_front;
 	brushModelOpaqueState.cullface.enabled = true;
 	brushModelOpaqueState.polygonMode = r_polygonmode_fill;
@@ -161,24 +164,24 @@ void R_InitialiseEntityStates(void)
 	brushModelOpaqueState.fog.enabled = false;
 	brushModelOpaqueState.polygonOffset.option = r_polygonoffset_disabled;
 
-	memcpy(&brushModelOpaqueOffsetState, &brushModelOpaqueState, sizeof(brushModelTranslucentState));
+	R_CopyRenderingState(&brushModelOpaqueOffsetState, &brushModelOpaqueState, "brushModelOpaqueOffsetState");
 	brushModelOpaqueOffsetState.polygonOffset.option = r_polygonoffset_standard;
 
-	memcpy(&brushModelTranslucentState, &brushModelOpaqueState, sizeof(brushModelTranslucentState));
+	R_CopyRenderingState(&brushModelTranslucentState, &brushModelOpaqueState, "brushModelTranslucentState");
 	brushModelTranslucentState.blendingEnabled = true;
 	brushModelTranslucentState.blendFunc = r_blendfunc_premultiplied_alpha;
 
-	memcpy(&brushModelTranslucentOffsetState, &brushModelTranslucentState, sizeof(brushModelTranslucentState));
+	R_CopyRenderingState(&brushModelTranslucentOffsetState, &brushModelTranslucentState, "brushModelTranslucentOffsetState");
 	brushModelTranslucentOffsetState.polygonOffset.option = r_polygonoffset_standard;
 
-	R_InitRenderingState(&aliasModelBatchState, true);
+	R_InitRenderingState(&aliasModelBatchState, true, "aliasModelBatchState");
 	aliasModelBatchState.cullface.mode = r_cullface_front;
 	aliasModelBatchState.cullface.enabled = true;
 	aliasModelBatchState.depth.mask_enabled = true;
 	aliasModelBatchState.depth.test_enabled = true;
 	aliasModelBatchState.blendingEnabled = false;
 
-	memcpy(&aliasModelTranslucentBatchState, &aliasModelBatchState, sizeof(aliasModelTranslucentBatchState));
+	R_CopyRenderingState(&aliasModelTranslucentBatchState, &aliasModelBatchState, "aliasModelTranslucentBatchState");
 	aliasModelTranslucentBatchState.blendFunc = r_blendfunc_premultiplied_alpha;
 	aliasModelTranslucentBatchState.blendingEnabled = true;
 }

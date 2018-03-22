@@ -36,40 +36,40 @@ extern texture_ref solidskytexture, alphaskytexture;
 
 void GLC_InitialiseSkyStates(void)
 {
-	R_InitRenderingState(&fastSkyState, true);
+	R_InitRenderingState(&fastSkyState, true, "fastSkyState");
 	fastSkyState.depth.test_enabled = false;
 
-	R_InitRenderingState(&fastSkyStateFogged, true);
+	R_InitRenderingState(&fastSkyStateFogged, true, "fastSkyStateFogged");
 	fastSkyStateFogged.depth.test_enabled = false;
 	fastSkyStateFogged.fog.enabled = true;
 
-	R_InitRenderingState(&skyDomeZPassState, true);
+	R_InitRenderingState(&skyDomeZPassState, true, "skyDomeZPassState");
 	skyDomeZPassState.depth.test_enabled = true;
 	skyDomeZPassState.blendingEnabled = true;
 	skyDomeZPassState.fog.enabled = false;
 	skyDomeZPassState.colorMask[0] = skyDomeZPassState.colorMask[1] = skyDomeZPassState.colorMask[2] = skyDomeZPassState.colorMask[3] = false;
 	skyDomeZPassState.blendFunc = r_blendfunc_src_zero_dest_one;
 
-	R_InitRenderingState(&skyDomeZPassFoggedState, true);
+	R_InitRenderingState(&skyDomeZPassFoggedState, true, "skyDomeZPassFoggedState");
 	skyDomeZPassFoggedState.depth.test_enabled = true;
 	skyDomeZPassFoggedState.blendingEnabled = true;
 	skyDomeZPassFoggedState.fog.enabled = true;
 	skyDomeZPassFoggedState.blendFunc = r_blendfunc_src_one_dest_zero;
 
-	R_InitRenderingState(&skyDomeFirstPassState, true);
+	R_InitRenderingState(&skyDomeFirstPassState, true, "skyDomeFirstPassState");
 	skyDomeFirstPassState.depth.test_enabled = false;
 	skyDomeFirstPassState.blendingEnabled = false;
 	skyDomeFirstPassState.textureUnits[0].enabled = true;
 	skyDomeFirstPassState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&skyDomeCloudPassState, true);
+	R_InitRenderingState(&skyDomeCloudPassState, true, "skyDomeCloudPassState");
 	skyDomeCloudPassState.depth.test_enabled = false;
 	skyDomeCloudPassState.blendingEnabled = true;
 	skyDomeCloudPassState.blendFunc = r_blendfunc_premultiplied_alpha;
 	skyDomeCloudPassState.textureUnits[0].enabled = true;
 	skyDomeCloudPassState.textureUnits[0].mode = r_texunit_mode_replace;
 
-	R_InitRenderingState(&skyDomeSinglePassState, true);
+	R_InitRenderingState(&skyDomeSinglePassState, true, "skyDomeSinglePassState");
 	skyDomeSinglePassState.depth.test_enabled = false;
 	skyDomeSinglePassState.blendingEnabled = false;
 	skyDomeSinglePassState.textureUnits[0].enabled = true;

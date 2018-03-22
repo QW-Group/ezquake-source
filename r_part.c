@@ -165,7 +165,7 @@ void Classic_InitParticles(void)
 
 	Classic_LoadParticleTexures(default_size, default_size);
 
-	R_Init3DSpriteRenderingState(&particle_state);
+	R_Init3DSpriteRenderingState(&particle_state, "particle_state");
 	particle_state.depth.mask_enabled = false;
 }
 

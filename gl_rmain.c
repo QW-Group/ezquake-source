@@ -903,7 +903,7 @@ void R_Init(void)
 	R_InitBloomTextures();
 
 	// Init entity state
-	R_Init3DSpriteRenderingState(&sprite_entity_state);
+	R_Init3DSpriteRenderingState(&sprite_entity_state, "sprite_entity_state");
 	sprite_entity_state.blendingEnabled = true;
 	sprite_entity_state.blendFunc = r_blendfunc_premultiplied_alpha;
 	sprite_entity_state.textureUnits[0].enabled = true;

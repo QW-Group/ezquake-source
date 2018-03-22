@@ -491,7 +491,7 @@ void InitCoronas(void)
 		c->sighted = false;
 	}
 
-	R_Init3DSpriteRenderingState(&coronaState);
+	R_Init3DSpriteRenderingState(&coronaState, "coronaState");
 	coronaState.depth.mask_enabled = false;
 	coronaState.depth.test_enabled = false;
 }
