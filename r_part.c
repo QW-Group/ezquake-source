@@ -166,6 +166,8 @@ void Classic_InitParticles(void)
 	Classic_LoadParticleTexures(default_size, default_size);
 
 	R_Init3DSpriteRenderingState(&particle_state, "particle_state");
+	particle_state.textureUnits[0].enabled = true;
+	particle_state.textureUnits[0].mode = r_texunit_mode_modulate;
 	particle_state.depth.mask_enabled = false;
 }
 
