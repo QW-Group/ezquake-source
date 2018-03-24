@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_framebuffer.h"
+#include "tr_types.h"
 
 // OpenGL functionality from elsewhere
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -55,9 +56,8 @@ static framebuffer_data_t framebuffer_data[MAX_FRAMEBUFFERS];
 static int framebuffers;
 const framebuffer_ref null_framebuffer_ref = { 0 };
 
-#define STATIC_FUNCTION_POINTER(x) static x##_t x
-#define OPTIONAL_FUNCTION_LOAD(x) x = (x##_t)SDL_GL_GetProcAddress(#x)
-#define MANDATORY_FUNCTION_LOAD(x) framebuffers_supported &= (x = (x##_t)SDL_GL_GetProcAddress(#x)) != NULL
+#define OPTIONAL_FUNCTION_LOAD(x) { x = (x##_t)SDL_GL_GetProcAddress(#x); }
+#define MANDATORY_FUNCTION_LOAD(x) { framebuffers_supported &= ((x = (x##_t)SDL_GL_GetProcAddress(#x)) != NULL); }
 
 // 
 typedef void (APIENTRY *glGenFramebuffers_t)(GLsizei n, GLuint* ids);
@@ -76,6 +76,8 @@ typedef void (APIENTRY *glFramebufferTexture_t)(GLenum target, GLenum attachment
 typedef void (APIENTRY *glNamedFramebufferTexture_t)(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
 typedef GLenum (APIENTRY *glCheckFramebufferStatus_t)(GLenum target);
 typedef GLenum (APIENTRY *glCheckNamedFramebufferStatus_t)(GLuint framebuffer, GLenum target);
+typedef void (APIENTRY *glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void (APIENTRY *glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 static glGenFramebuffers_t glGenFramebuffers;
 static glDeleteFramebuffers_t glDeleteFramebuffers;
@@ -93,6 +95,9 @@ static glFramebufferTexture_t glFramebufferTexture;
 static glNamedFramebufferTexture_t glNamedFramebufferTexture;
 static glCheckFramebufferStatus_t glCheckFramebufferStatus;
 static glCheckNamedFramebufferStatus_t glCheckNamedFramebufferStatus;
+
+static glBlitFramebuffer_t glBlitFramebuffer;
+static glBlitNamedFramebuffer_t glBlitNamedFramebuffer;
 
 static qbool framebuffers_supported;
 
@@ -114,6 +119,8 @@ void GL_InitialiseFramebufferHandling(void)
 	OPTIONAL_FUNCTION_LOAD(glNamedRenderbufferStorage);
 	MANDATORY_FUNCTION_LOAD(glFramebufferRenderbuffer);
 	OPTIONAL_FUNCTION_LOAD(glNamedFramebufferRenderbuffer);
+	MANDATORY_FUNCTION_LOAD(glBlitFramebuffer);
+	OPTIONAL_FUNCTION_LOAD(glBlitNamedFramebuffer);
 
 	MANDATORY_FUNCTION_LOAD(glFramebufferTexture);
 	OPTIONAL_FUNCTION_LOAD(glNamedFramebufferTexture);
@@ -135,7 +142,7 @@ framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthB
 		return null_framebuffer_ref;
 	}
 
-	for (i = 0; fb == NULL && i < framebuffers; ++i) {
+	for (i = 1; fb == NULL && i < framebuffers; ++i) {
 		if (!framebuffer_data[i].glref) {
 			fb = &framebuffer_data[i];
 			break;
@@ -340,4 +347,36 @@ int GL_FrameBufferWidth(framebuffer_ref ref)
 int GL_FrameBufferHeight(framebuffer_ref ref)
 {
 	return framebuffer_data[ref.index].height;
+}
+
+void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destination)
+{
+	GLint srcTL[2] = { 0, 0 };
+	GLint srcSize[2];
+	GLint destTL[2] = { 0, 0 };
+	GLint destSize[2];
+
+	srcSize[0] = GL_FramebufferReferenceIsValid(source) ? GL_FrameBufferWidth(source) : glConfig.vidWidth;
+	srcSize[1] = GL_FramebufferReferenceIsValid(source) ? GL_FrameBufferHeight(source) : glConfig.vidHeight;
+	destSize[0] = GL_FramebufferReferenceIsValid(destination) ? GL_FrameBufferWidth(destination) : glConfig.vidWidth;
+	destSize[1] = GL_FramebufferReferenceIsValid(destination) ? GL_FrameBufferHeight(destination) : glConfig.vidHeight;
+
+	if (glBlitNamedFramebuffer) {
+		glBlitNamedFramebuffer(
+			framebuffer_data[source.index].glref, framebuffer_data[destination.index].glref,
+			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
+			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
+			GL_COLOR_BUFFER_BIT, GL_LINEAR
+		);
+	}
+	else {
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer_data[source.index].glref);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer_data[destination.index].glref);
+
+		glBlitFramebuffer(
+			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
+			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
+			GL_COLOR_BUFFER_BIT, GL_LINEAR
+		);
+	}
 }

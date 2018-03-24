@@ -168,10 +168,10 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
-cvar_t vid_framebuffer            = {"vid_framebuffer",            "0"};
-cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0"};
-cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0"};
-cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1"};
+cvar_t vid_framebuffer            = {"vid_framebuffer",            "0",       CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1",       CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0"};
 
 //
@@ -1618,6 +1618,13 @@ static void VID_UpdateConRes(void)
 	if (effective_width && effective_height) {
 		vidWidth = effective_width;
 		vidHeight = effective_height;
+
+		Cvar_AutoSetInt(&vid_framebuffer_width, effective_width);
+		Cvar_AutoSetInt(&vid_framebuffer_height, effective_height);
+	}
+	else {
+		Cvar_AutoReset(&vid_framebuffer_width);
+		Cvar_AutoReset(&vid_framebuffer_height);
 	}
 
 	// Default
@@ -1666,7 +1673,7 @@ static void VID_UpdateConRes(void)
 	vid.recalc_refdef = 1;
 }
 
-static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
+static void conres_changed_callback(cvar_t *var, char *string, qbool *cancel)
 {
 	/* Cvar_SetValue won't trigger a recursive callback since we're in the callback,
 	 * but it's required to set the values here first to make them apply, and then cancel
@@ -1674,11 +1681,26 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 	 */
 	if (var == &r_conwidth) {
 		Cvar_SetValue(&r_conwidth, Q_atoi(string));
-	} else if (var == &r_conheight) {
+	}
+	else if (var == &r_conheight) {
 		Cvar_SetValue(&r_conheight, Q_atoi(string));
-	} else if (var == &r_conscale) {
+	}
+	else if (var == &r_conscale) {
 		Cvar_SetValue(&r_conscale, Q_atof(string));
-	} else {
+	}
+	else if (var == &vid_framebuffer) {
+		Cvar_SetValue(&vid_framebuffer, Q_atof(string));
+	}
+	else if (var == &vid_framebuffer_width) {
+		Cvar_SetValue(&vid_framebuffer_width, Q_atof(string));
+	}
+	else if (var == &vid_framebuffer_height) {
+		Cvar_SetValue(&vid_framebuffer_height, Q_atof(string));
+	}
+	else if (var == &vid_framebuffer_scale) {
+		Cvar_SetValue(&vid_framebuffer_scale, Q_atof(string));
+	}
+	else {
 		Com_Printf("Called with unknown variable: %s\n", var->name ? var->name : "unknown");
 	}
 

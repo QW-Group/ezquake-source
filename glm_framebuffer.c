@@ -35,9 +35,9 @@ void VID_FramebufferFlip(void)
 			GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
 			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
-		//else {
-			//GL_FrameBufferBlit(framebuffer, 0, 0, 0, GL_FramebufferWidth(framebuffer), GL_FramebufferHeight(framebuffer), )
-		//}
+		else {
+			GL_FramebufferBlitSimple(framebuffer, null_framebuffer_ref);
+		}
 	}
 }
 
@@ -76,9 +76,9 @@ static qbool GLM_CompilePostProcessProgram(void)
 	extern cvar_t vid_framebuffer_palette;
 
 	// This is all we have at the moment, can just blit if turned off
-	//if (!vid_framebuffer_palette.integer) {
-	//	return false;
-	//}
+	if (!vid_framebuffer_palette.integer) {
+		return false;
+	}
 
 	if (GLM_ProgramRecompileNeeded(&post_process_program, vid_framebuffer_palette.integer)) {
 		static char included_definitions[512];
