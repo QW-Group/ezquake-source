@@ -377,10 +377,18 @@ void GLM_DeletePrograms(qbool restarting)
 	}
 }
 
+static void GLM_BuildCoreDefinitions(void)
+{
+	// Set common definitions here (none yet)
+	memset(core_definitions, 0, sizeof(core_definitions));
+}
+
 // Called during vid_restart, as starting up again
 void GLM_InitPrograms(void)
 {
 	glm_program_t* program = program_list;
+
+	GLM_BuildCoreDefinitions();
 
 	while (program) {
 		if (!program->program) {
@@ -412,15 +420,7 @@ void GLM_ForceRecompile(void)
 		program = program->next;
 	}
 
-	memset(core_definitions, 0, sizeof(core_definitions));
-#ifdef SUPPORT_FRAMEBUFFERS
-	{
-		extern cvar_t vid_framebuffer_gamma;
-		if (vid_framebuffer_gamma.integer) {
-			strlcat(core_definitions, "#define EZ_POSTPROCESS_GAMMA\n", sizeof(core_definitions));
-		}
-	}
-#endif
+	GLM_BuildCoreDefinitions();
 }
 
 qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)

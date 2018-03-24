@@ -53,9 +53,7 @@ void Sys_ActiveAppChanged (void);
 #include "gl_local.h"
 #include "textencoding.h"
 
-#ifdef SUPPORT_FRAMEBUFFERS
 #include "gl_framebuffer.h"
-#endif
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -170,13 +168,11 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
-#ifdef SUPPORT_FRAMEBUFFERS
 cvar_t vid_framebuffer            = {"vid_framebuffer",            "0"};
 cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0"};
 cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0"};
 cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1"};
-cvar_t vid_framebuffer_gamma      = {"vid_framebuffer_gamma",      "0",       CVAR_RECOMPILE_PROGS};
-#endif
+cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0"};
 
 //
 // function declaration
@@ -821,13 +817,11 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_renderer);
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_clientmemory);
-#ifdef SUPPORT_FRAMEBUFFERS
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_width);
 	Cvar_Register(&vid_framebuffer_height);
 	Cvar_Register(&vid_framebuffer_scale);
-	Cvar_Register(&vid_framebuffer_gamma);
-#endif
+	Cvar_Register(&vid_framebuffer_palette);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -1002,6 +996,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 		VID_SDL_GL_DisableMSAA();
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 	if (GL_UseGLSL()) {
 		int contextFlags = 0;
@@ -1308,7 +1303,6 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
 
-#ifdef SUPPORT_FRAMEBUFFERS
 	if (GL_FramebufferEnabled()) {
 		int scaled_width = VID_ScaledWidth3D();
 		int scaled_height = VID_ScaledHeight3D();
@@ -1318,7 +1312,6 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 			*height = scaled_height;
 		}
 	}
-#endif
 
 	if (cls.state != ca_active) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -1611,36 +1604,49 @@ void VID_RegisterCommands(void)
 
 static void VID_UpdateConRes(void)
 {
+	extern cvar_t vid_framebuffer;
+
 	qbool set_width = false;
 	qbool set_height = false;
 
+	int vidWidth = glConfig.vidWidth;
+	int vidHeight = glConfig.vidHeight;
+
+	int effective_width = vid_framebuffer.integer != 0 ? VID_ScaledWidth3D() : 0;
+	int effective_height = vid_framebuffer.integer != 0 ? VID_ScaledHeight3D() : 0;
+
+	if (effective_width && effective_height) {
+		vidWidth = effective_width;
+		vidHeight = effective_height;
+	}
+
 	// Default
 	if (r_conwidth.integer == 0 && r_conheight.integer == 0) {
-		vid.width   = vid.conwidth  = bound(320, (int)(glConfig.vidWidth  / r_conscale.value), glConfig.vidWidth);
-		vid.height  = vid.conheight = bound(200, (int)(glConfig.vidHeight / r_conscale.value), glConfig.vidHeight);
+		vid.width   = vid.conwidth  = bound(320, (int)(vidWidth  / r_conscale.value), vidWidth);
+		vid.height  = vid.conheight = bound(200, (int)(vidHeight / r_conscale.value), vidHeight);
 
 		set_width = set_height = true;
 	}
 	else if (r_conwidth.integer == 0) {
-		double ar_w = (double)glConfig.vidWidth/(double)glConfig.vidHeight;
+		double ar_w = (double)vidWidth/(double)vidHeight;
 
-		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
-		vid.width   = vid.conwidth  = bound(320, (int)(r_conheight.integer*ar_w + 0.5), glConfig.vidWidth);
+		vid.height  = vid.conheight = bound(200, r_conheight.integer, vidHeight);
+		vid.width   = vid.conwidth  = bound(320, (int)(r_conheight.integer*ar_w + 0.5), vidWidth);
 
 		set_width = true;
 	}
 	else if (r_conheight.integer == 0) {
-		double ar_h = (double)glConfig.vidHeight/(double)glConfig.vidWidth;
+		double ar_h = (double)vidHeight/(double)vidWidth;
 
-		vid.height  = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), glConfig.vidHeight);
-		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
+		vid.height  = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), vidHeight);
+		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer, vidWidth);
 
 		set_height = true;
 	}
 	else {
 		// User specified, use that but check boundaries
-		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer,  glConfig.vidWidth);
-		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
+		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer,  vidWidth);
+		vid.height  = vid.conheight = bound(200, r_conheight.integer, vidHeight);
 
 		Cvar_SetValue(&r_conwidth, vid.conwidth);
 		Cvar_SetValue(&r_conheight, vid.conheight);
@@ -1653,7 +1659,7 @@ static void VID_UpdateConRes(void)
 		Cvar_AutoSetInt(&r_conheight, vid.conheight);
 	}
 
-	vid.aspect = (double) glConfig.vidWidth / (double) glConfig.vidHeight;
+	vid.aspect = (double) vidWidth / (double) vidHeight;
 
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
@@ -1710,14 +1716,13 @@ void VID_Init(unsigned char *palette) {
 	vid_initialized = true;
 }
 
-#ifdef SUPPORT_FRAMEBUFFERS
 int VID_ScaledWidth3D(void)
 {
 	if (vid_framebuffer_scale.value > 0) {
-		return glConfig.vidWidth / vid_framebuffer_scale.value;
+		return glConfig.vidWidth / max(vid_framebuffer_scale.value, 0.25);
 	}
 	else if (vid_framebuffer_width.integer > 0) {
-		return vid_framebuffer_width.integer;
+		return max(vid_framebuffer_width.integer, 320);
 	}
 	return 0;
 }
@@ -1725,33 +1730,10 @@ int VID_ScaledWidth3D(void)
 int VID_ScaledHeight3D(void)
 {
 	if (vid_framebuffer_scale.value > 0) {
-		return glConfig.vidHeight / vid_framebuffer_scale.value;
+		return glConfig.vidHeight / max(vid_framebuffer_scale.value, 0.25);
 	}
 	else if (vid_framebuffer_height.integer > 0) {
-		return vid_framebuffer_height.integer;
+		return max(vid_framebuffer_height.integer, 200);
 	}
 	return 0;
 }
-
-int VID_ScaledWidth2D(void)
-{
-	if (vid_framebuffer_scale.value > 0) {
-		return vid.width / vid_framebuffer_scale.value;
-	}
-	else if (vid_framebuffer_width.integer > 0) {
-		return vid_framebuffer_width.integer * vid.aspect;
-	}
-	return 0;
-}
-
-int VID_ScaledHeight2D(void)
-{
-	if (vid_framebuffer_scale.value > 0) {
-		return vid.height / vid_framebuffer_scale.value;
-	}
-	else if (vid_framebuffer_height.integer > 0) {
-		return vid_framebuffer_height.integer * vid.aspect;
-	}
-	return 0;
-}
-#endif

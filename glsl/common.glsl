@@ -21,10 +21,11 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	vec4 r_slimecolor;
 	vec4 r_watercolor;
 	vec4 r_skycolor;
+	vec4 v_blend;
 
 	float time;
-	float gamma3d;
-	float gamma2d;
+	float gamma;
+	float contrast;
 	int r_alphafont;
 
 	// sky

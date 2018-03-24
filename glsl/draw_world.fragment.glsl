@@ -171,8 +171,4 @@ void main()
 		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_DETAIL)), frag_colour.a);
 #endif
 	}
-
-#ifndef EZ_POSTPROCESS_GAMMA
-	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma3d)), frag_colour.a);
-#endif
 }

@@ -4,7 +4,6 @@
 
 // For the moment, also contains general framebuffer code as immediate-mode isn't supported
 
-#ifdef SUPPORT_FRAMEBUFFERS
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -26,7 +25,7 @@ qbool GL_FramebufferEnabled(void)
 void VID_FramebufferFlip(void)
 {
 	if (GL_FramebufferReferenceIsValid(framebuffer)) {
-		// 3D scaling only: render to screen from now on
+		// render to screen from now on
 		GL_FramebufferStopUsing(framebuffer);
 
 		if (GLM_CompilePostProcessProgram()) {
@@ -36,6 +35,9 @@ void VID_FramebufferFlip(void)
 			GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
 			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
+		//else {
+			//GL_FrameBufferBlit(framebuffer, 0, 0, 0, GL_FramebufferWidth(framebuffer), GL_FramebufferHeight(framebuffer), )
+		//}
 	}
 }
 
@@ -68,18 +70,29 @@ void GLM_FramebufferScreenDrawStart(void)
 	}
 }
 
+// If this returns false then the framebuffer will be blitted instead
 static qbool GLM_CompilePostProcessProgram(void)
 {
-	if (GLM_ProgramRecompileNeeded(&post_process_program, 0)) {
+	extern cvar_t vid_framebuffer_palette;
+
+	// This is all we have at the moment, can just blit if turned off
+	//if (!vid_framebuffer_palette.integer) {
+	//	return false;
+	//}
+
+	if (GLM_ProgramRecompileNeeded(&post_process_program, vid_framebuffer_palette.integer)) {
 		static char included_definitions[512];
 		GL_VFDeclare(post_process_screen);
 
 		memset(included_definitions, 0, sizeof(included_definitions));
+		if (vid_framebuffer_palette.integer) {
+			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
+		}
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("post-process-screen", GL_VFParams(post_process_screen), &post_process_program, included_definitions);
 
-		post_process_program.custom_options = 0;
+		post_process_program.custom_options = vid_framebuffer_palette.integer;
 	}
 
 	post_process_program.uniforms_found = true;
@@ -118,20 +131,20 @@ static qbool GLM_CompilePostProcessProgram(void)
 
 void GLM_FramebufferPostProcessScreen(void)
 {
-	extern cvar_t vid_framebuffer;
+	extern cvar_t vid_framebuffer, vid_framebuffer_palette;
 
-	if (vid_framebuffer.integer == 2 && GL_FramebufferReferenceIsValid(framebuffer)) {
+	if (vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer)) {
 		GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 
 		VID_FramebufferFlip();
-		GL_FramebufferStopUsing(framebuffer);
-		if (GLM_CompilePostProcessProgram()) {
-			GL_UseProgram(post_process_program.program);
-			GL_BindVertexArray(&post_process_vao);
 
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
-			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		if (!vid_framebuffer_palette.integer) {
+			// Hardware palette changes
+			V_UpdatePalette();
 		}
 	}
+	else {
+		// Hardware palette changes
+		V_UpdatePalette();
+	}
 }
-#endif

@@ -814,6 +814,7 @@ glpoly_t* GLC_LightmapChain(int i);
 GLenum GLC_LightmapTexEnv(void);
 int GLC_LightmapCount(void);
 void GLM_CreateLightmapTextures(void);
+void GLM_PostProcessScreen(void);
 void GLC_CreateLightmapTextures(void);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
@@ -933,11 +934,12 @@ typedef struct uniform_block_frame_constants_s {
 	float r_slimecolor[4];
 	float r_watercolor[4];
 	float r_skycolor[4];
+	float v_blend[4];
 
 	//
 	float time;
-	float gamma3d;
-	float gamma2d;
+	float gamma;
+	float contrast;
 	int r_alphafont;
 
 	// turb settings

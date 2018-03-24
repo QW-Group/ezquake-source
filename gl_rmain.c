@@ -1076,8 +1076,6 @@ void R_PostProcessScene(void)
 
 void R_PostProcessScreen(void)
 {
-	extern void GLM_PostProcessScreen(void);
-
 	if (GL_UseGLSL()) {
 		GLM_PostProcessScreen();
 	}

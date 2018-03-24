@@ -60,12 +60,8 @@ void VID_Init (unsigned char *palette);
 // the palette data will go away after the call, so it must be copied off if
 // the video driver will need it again
 
-#ifdef SUPPORT_FRAMEBUFFERS
 int VID_ScaledWidth3D(void);
 int VID_ScaledHeight3D(void);
-int VID_ScaledWidth2D(void);
-int VID_ScaledHeight2D(void);
-#endif
 
 void VID_Shutdown (qbool restart);
 // Called at shutdown

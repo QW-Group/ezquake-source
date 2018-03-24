@@ -13,8 +13,11 @@ void main()
 
 	frag_colour = texture(materialTex, TextureCoord);
 
-#ifdef EZ_POSTPROCESS_GAMMA
-	// FIXME: 2d or 3d?
-	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma2d)), 1);
+#ifdef EZ_POSTPROCESS_PALETTE
+	// apply blend & contrast
+	frag_colour = vec4((frag_colour.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
+
+	// apply gamma
+	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma)), 1);
 #endif
 }

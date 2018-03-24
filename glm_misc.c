@@ -66,14 +66,20 @@ void GLM_PreRenderView(void)
 {
 	extern cvar_t gl_alphafont;
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
-	extern cvar_t gl_textureless;
+	extern cvar_t gl_textureless, gl_hwblend;
 	int i, active_lights = 0;
+	float blend_alpha;
 
 	// General constants
 	frameConstants.time = cl.time;
-	frameConstants.gamma2d = v_gamma.value;
-	frameConstants.gamma3d = v_gamma.value;
+	frameConstants.gamma = bound(0.3, v_gamma.value, 3);
+	frameConstants.contrast = bound(1, v_contrast.value, 3);
 	frameConstants.r_alphafont = gl_alphafont.value;
+	blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
+	frameConstants.v_blend[0] = v_blend[0] * blend_alpha;
+	frameConstants.v_blend[1] = v_blend[1] * blend_alpha;
+	frameConstants.v_blend[2] = v_blend[2] * blend_alpha;
+	frameConstants.v_blend[3] = 1 - blend_alpha;
 
 	// Lights
 	for (i = 0; i < MAX_DLIGHTS; ++i) {
@@ -176,14 +182,10 @@ void GLM_UploadFrameConstants(void)
 
 void GLM_ScreenDrawStart(void)
 {
-#ifdef SUPPORT_FRAMEBUFFERS
 	GLM_FramebufferScreenDrawStart();
-#endif
 }
 
 void GLM_PostProcessScreen(void)
 {
-#ifdef SUPPORT_FRAMEBUFFERS
 	GLM_FramebufferPostProcessScreen();
-#endif
 }
