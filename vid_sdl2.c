@@ -144,7 +144,6 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
-cvar_t vid_clientmemory           = {"vid_clientmemory",           "1",       CVAR_LATCH };
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
 
 #ifdef X11_GAMMA_WORKAROUND
@@ -816,7 +815,6 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_grab_keyboard);
 	Cvar_Register(&vid_renderer);
 	Cvar_Register(&vid_gl_core_profile);
-	Cvar_Register(&vid_clientmemory);
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_width);
 	Cvar_Register(&vid_framebuffer_height);
@@ -1005,8 +1003,6 @@ static void VID_SDL_GL_SetupAttributes(void)
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		if (GL_CoreProfileContext()) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-			Cvar_LatchedSetValue(&vid_clientmemory, 0);
-			Cvar_SetFlags(&vid_clientmemory, Cvar_GetFlags(&vid_clientmemory) | CVAR_ROM);
 
 			if (GL_ForwardOnlyProfile()) {
 				contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
