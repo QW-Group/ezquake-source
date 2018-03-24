@@ -115,9 +115,9 @@ int anisotropy_ext = 0;
 
 qbool gl_mtexable = false;
 int gl_textureunits = 1;
-lpMTexFUNC qglMultiTexCoord2f = NULL;
-lpSelTexFUNC qglActiveTexture = NULL;
-PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture = NULL;
+glMultiTexCoord2f_t qglMultiTexCoord2f = NULL;
+glActiveTexture_t qglActiveTexture = NULL;
+glClientActiveTexture_t qglClientActiveTexture = NULL;
 
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];

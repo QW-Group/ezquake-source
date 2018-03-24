@@ -366,12 +366,13 @@ void R_InitOtherTextures(void);
 #define GL_SRGB8_ALPHA8 0x8C43
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
 
-typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
-typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
+typedef void (APIENTRY *glMultiTexCoord2f_t)(GLenum target, GLfloat s, GLfloat t);
+typedef void (APIENTRY *glActiveTexture_t)(GLenum target);
+typedef void (APIENTRY *glClientActiveTexture_t)(GLenum target);
 
-extern lpMTexFUNC qglMultiTexCoord2f;
-extern lpSelTexFUNC qglActiveTexture;
-extern PFNGLCLIENTACTIVETEXTUREPROC qglClientActiveTexture;
+extern glMultiTexCoord2f_t qglMultiTexCoord2f;
+extern glActiveTexture_t qglActiveTexture;
+extern glClientActiveTexture_t qglClientActiveTexture;
 
 extern double gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];

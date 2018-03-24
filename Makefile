@@ -366,7 +366,6 @@ OBJS_c := \
     glc_turb_surface.o \
     glc_warp.o \
     glm_aliasmodel.o \
-    glm_aliasmodel_program.o \
     gl_sprite3d.o \
     glm_brushmodel.o \
     glm_md3.o \
