@@ -42,6 +42,7 @@ typedef struct gltexture_s {
 	int         texture_width, texture_height;
 	int         texmode;
 	GLint       internal_format;
+	GLint       storage_format;
 	unsigned    crc;
 	int         bpp;
 
@@ -290,6 +291,16 @@ static int GL_InternalFormat(int mode)
 	}
 	else {
 		return (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
+	}
+}
+
+static int GL_StorageFormat(int mode)
+{
+	if (gl_gammacorrection.integer) {
+		return (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
+	}
+	else {
+		return (mode & TEX_ALPHA) ? GL_RGBA8 : GL_RGB8;
 	}
 }
 
@@ -574,8 +585,9 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 	// Allocate storage
 	if (!glt->storage_allocated && (target == GL_TEXTURE_2D || target == GL_TEXTURE_CUBE_MAP)) {
 		glt->internal_format = GL_InternalFormat(mode);
+		glt->storage_format = GL_StorageFormat(mode);
 
-		GL_TexStorage2D(GL_TEXTURE0, glt->reference, miplevels, glt->internal_format, gl_width, gl_height);
+		GL_TexStorage2D(GL_TEXTURE0, glt->reference, miplevels, glt->storage_format, gl_width, gl_height);
 		glt->storage_allocated = true;
 	}
 
@@ -1117,6 +1129,7 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	qbool new_texture = false;
 	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	texture_ref gl_texturenum;
+	GLenum error;
 	int max_miplevels = 0;
 	int min_dimension = min(width, height);
 
@@ -1137,14 +1150,12 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 	}
 
 	GL_BindTextureUnit(GL_TEXTURE0, gl_texturenum);
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("Prior-texture-array-creation");
-#endif
+	while ((error = glGetError()) != GL_NO_ERROR) {
+		Com_Printf("Prior-texture-array-creation: OpenGL error %u\n", error);
+	}
 	while (*depth >= minimum_depth) {
-		GLenum error = glGetError();
-
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, slot->reference, max_miplevels, GL_InternalFormat(TEX_ALPHA), width, height, *depth);
+		GL_TexStorage3D(GL_TEXTURE0, slot->reference, max_miplevels, GL_StorageFormat(TEX_ALPHA), width, height, *depth);
 
 		error = glGetError();
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
