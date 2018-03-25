@@ -262,13 +262,12 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	else {
 		int i;
 
-		glColor4ubv(imageData.images[start].colour);
-		memcpy(current_color, imageData.images[start].colour, sizeof(current_color));
+		glColor4ubv(imageData.glc_images[start * 4].colour);
+		memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
 		glBegin(GL_QUADS);
 
-		for (i = start; i <= end; ++i) {
-			glm_image_t* next = &imageData.images[i];
-			int j;
+		for (i = start * 4; i <= 4 * end + 3; ++i) {
+			glc_image_t* next = &imageData.glc_images[i];
 
 			// Don't need to break for colour
 			if (memcmp(next->colour, current_color, sizeof(current_color))) {
@@ -276,21 +275,8 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 				glColor4ubv(next->colour);
 			}
 
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-			glTexCoord2f(next->s1, next->t2);
-			glVertex2f(next->x1, next->y2);
-			glTexCoord2f(next->s1, next->t1);
-			glVertex2f(next->x1, next->y1);
-			glTexCoord2f(next->s2, next->t1);
-			glVertex2f(next->x2, next->y1);
-			glTexCoord2f(next->s2, next->t2);
-			glVertex2f(next->x2, next->y2);
-#else
-			for (j = 0; j < 4; ++j) {
-				glTexCoord2f(next[j].tex[0], next[j].tex[1]);
-				glVertex2f(next[j].pos[0], next[j].pos[1]);
-			}
-#endif
+			glTexCoord2f(next->tex[0], next->tex[1]);
+			glVertex2f(next->pos[0], next->pos[1]);
 		}
 
 		glEnd();
@@ -336,7 +322,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		return;
 	}
 
-	if (GL_UseGLSL() || !GL_BuffersSupported()) {
+	if (GL_UseGLSL()) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
 		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
@@ -398,7 +384,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 		return;
 	}
 
-	if (GL_UseGLSL() || !GL_BuffersSupported()) {
+	if (GL_UseGLSL()) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
 		if (color[3] != 255) {
