@@ -108,14 +108,13 @@ typedef struct clrinfo_s
 void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
 void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
 void Draw_String (int x, int y, const char *str);
-void Draw_StringW (int x, int y, const wchar *ws);
 void Draw_Alt_String (int x, int y, const char *str);
 void Draw_ColoredString (int x, int y, const char *str, int red);
 void Draw_SColoredStringBasic (int x, int y, const char *text, int red, float scale);
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
-void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
-void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
-void Draw_SColoredAlphaString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
+void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
+
+void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic (cache_pic_id_t id);

@@ -288,8 +288,124 @@ void Draw_SetColor(byte *rgba)
 	GLM_Draw_SetColor(rgba);
 }
 
-static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
+static void Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
 {
+	byte rgba[4];
+	qbool color_is_white = true;
+	int i, r, g, b;
+	int curr_char;
+	int color_index = 0;
+	color_t last_color = COLOR_WHITE;
+
+	// Nothing to draw.
+	if (!*text) {
+		return;
+	}
+
+	// Make sure we set the color from scratch so that the 
+	// overall opacity is applied properly.
+	memcpy(rgba, color_white, sizeof(byte) * 4);
+	if (scr_coloredText.integer && color_count > 0) {
+		COLOR_TO_RGBA(color[color_index].c, rgba);
+	}
+
+	// Draw the string.
+	GLM_Draw_StringBase_StartString(x, y, scale);
+	for (i = 0; text[i]; i++) {
+		// If we didn't get a color array, check for color codes in the text instead.
+		if (!color) {
+			if (text[i] == '&') {
+				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4]) {
+					r = HexToInt(text[i + 2]);
+					g = HexToInt(text[i + 3]);
+					b = HexToInt(text[i + 4]);
+
+					if (r >= 0 && g >= 0 && b >= 0) {
+						if (scr_coloredText.value) {
+							rgba[0] = (r * 16);
+							rgba[1] = (g * 16);
+							rgba[2] = (b * 16);
+							rgba[3] = 255;
+							color_is_white = false;
+						}
+
+						color_count++; // Keep track on how many colors we're using.
+
+						rgba[3] = 255 * alpha;
+						Draw_SetColor(rgba);
+
+						i += 4;
+						continue;
+					}
+				}
+				else if (text[i + 1] == 'r') {
+					if (!color_is_white) {
+						rgba[0] = rgba[1] = rgba[2] = 255;
+						rgba[3] = 255 * alpha;
+						color_is_white = true;
+						Draw_SetColor(rgba);
+					}
+
+					i++;
+					continue;
+				}
+			}
+		}
+		else if (scr_coloredText.value && (color_index < color_count) && (i == color[color_index].i)) {
+			// Change color if the color array tells us this index should have a new color.
+
+			// Set the new color if it's not the same as the last.
+			if (color[color_index].c != last_color) {
+				last_color = color[color_index].c;
+				COLOR_TO_RGBA(color[color_index].c, rgba);
+				rgba[3] = 255;
+				Draw_SetColor(rgba);
+			}
+
+			color_index++; // Goto next color.
+		}
+		curr_char = (unsigned char)text[i];
+
+		// Do not convert the character to red if we're applying color to the text.
+		if (red && color_count <= 0) {
+			curr_char |= 128;
+		}
+
+		// Draw the character but don't apply overall opacity, we've already done that
+		// And don't update the glstate, we've done that also!
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
+
+		x += ((bigchar ? 64 : 8) * scale) + char_gap;
+	}
+	Draw_ResetCharGLState();
+}
+
+void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
+{
+	Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap);
+}
+
+void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
+{
+	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
+}
+
+void Draw_SString(int x, int y, const char *text, float scale)
+{
+	Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0);
+}
+
+void Draw_SAlt_String(int x, int y, const char *text, float scale)
+{
+	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0);
+}
+
+// Only ever called by console
+void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale)
+{
+	float alpha = 1;
+	qbool bigchar = false;
+	int char_gap = 0;
 	byte rgba[4];
 	qbool color_is_white = true;
 	int i, r, g, b;
@@ -380,70 +496,34 @@ static void Draw_StringBase(int x, int y, const wchar *text, clrinfo_t *color, i
 	Draw_ResetCharGLState();
 }
 
-void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
-{
-	Draw_StringBase(x, y, str2wcs(text), color, color_count, false, scale, alpha, true, char_gap);
-}
-
-void Draw_SColoredAlphaString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
-{
-	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
-}
-
-void Draw_SColoredString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale)
-{
-	Draw_StringBase(x, y, text, color, color_count, red, scale, 1, false, 0);
-}
-
-void Draw_SString(int x, int y, const char *text, float scale)
-{
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, 1, false, 0);
-}
-
-void Draw_SAlt_String(int x, int y, const char *text, float scale)
-{
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, scale, 1, false, 0);
-}
-
-// Only ever called by console, hence scale 1
-void Draw_ColoredString3W(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red)
+void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
 {
 	Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);
 }
 
-void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
-{
-	Draw_StringBase(x, y, str2wcs(text), color, color_count, red, 1, 1, false, 0);
-}
-
 void Draw_ColoredString(int x, int y, const char *text, int red)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, 1, 1, false, 0);
+	Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0);
 }
 
 void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, scale, 1, false, 0);
+	Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0);
 }
 
 void Draw_Alt_String(int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, 1, 1, false, 0);
+	Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0);
 }
 
 void Draw_AlphaString(int x, int y, const char *text, float alpha)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, alpha, false, 0);
-}
-
-void Draw_StringW(int x, int y, const wchar *text)
-{
-	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
+	Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0);
 }
 
 void Draw_String(int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, 1, false, 0);
+	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
 }
 
 // Called during initialisation, before GL_Texture_Init

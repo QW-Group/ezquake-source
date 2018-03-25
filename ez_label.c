@@ -96,10 +96,12 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	EZ_label_SetTextScale(label, 1.0);
 	EZ_label_DeselectText(label);
 
-	if (text)
-	{
+	if (text) {
 		EZ_label_SetText(label, text);
 	}
+
+	label->color.i = 0;
+	label->color.c = RGBA_TO_COLOR(255, 255, 255, 255);
 }
 
 //
@@ -527,7 +529,6 @@ int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 	int last_index			= -1;
 	int curr_row			= 0;
 	int curr_col			= 0;
-	clrinfo_t text_color	= {RGBA_TO_COLOR(255, 255, 255, 255), 0}; // TODO : Set this in the struct instead.
 	color_t selection_color	= RGBA_TO_COLOR(178, 0, 255, 125);
 	color_t caret_color		= RGBA_TO_COLOR(255, 0, 0, 125);
 
@@ -575,13 +576,11 @@ int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 			snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
 			last_index = i;	// Skip the newline character
 
-			if (label->ext_flags & label_largefont)
-			{
-				Draw_BigString(x, y + (curr_row * scaled_char_size), line, &text_color, 1, label->scale, 1, 0);
+			if (label->ext_flags & label_largefont) {
+				Draw_BigString(x, y + (curr_row * scaled_char_size), line, NULL, 0, label->scale, 1, 0);
 			}
-			else
-			{
-				Draw_SColoredString(x, y + (curr_row * scaled_char_size), str2wcs(line), &text_color, 1, false, label->scale);
+			else {
+				Draw_SColoredAlphaString(x, y + (curr_row * scaled_char_size), line, &label->color, 1, 0, label->scale, 1);
 			}
 
 			curr_row++;

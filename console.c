@@ -720,7 +720,7 @@ static void Con_DrawInput(void) {
 		text += 1 + key_linepos - con_linewidth;
 	}
 
-	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
+	Draw_ConsoleString(8, con_vislines - 22 + bound(0, con_shift.value, 8), text, NULL, 0, 0, 1);
 }
 
 // Returns first line to start printing from in order to fill up notify area
@@ -751,13 +751,15 @@ void Con_DrawNotify (void) {
 	clrinfo_t clr[sizeof(buf)];
 	float time;
 	float timeout = bound (0, con_notifytime.value, MAX_NOTIFICATION_TIME);
-	int first_line = Con_FirstNotifyLine(_con_notifylines.integer, timeout);
 
-	if (!con_notify.value)
+	if (!con_notify.value) {
 		return;
+	}
 
 	v = 0;
 	if (_con_notifylines.integer) {
+		int first_line = Con_FirstNotifyLine(_con_notifylines.integer, timeout);
+
 		for (i = first_line; i <= con.current; i++) {
 			if (i < 0)
 				continue;
@@ -780,7 +782,7 @@ void Con_DrawNotify (void) {
 				clr[x].i = x; // set proper index
 			}
 			buf[x] = '\0';
-			Draw_ColoredString3W(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
+			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0, 1);
 			v += 8;
 		}
 	}
@@ -919,7 +921,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 					if (!draw)
 						continue;
 
-					Draw_SColoredString(
+					Draw_ConsoleString(
 						posX,
 						v + posY,
 						buf,
@@ -927,7 +929,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 						notifyCols,
 						0,
 						scale
-						);
+					);
 
 					// move text down
 					v += (8 * scale);
@@ -1051,7 +1053,7 @@ void Con_DrawConsole (int lines) {
 		}
 		buf[x] = '\0';
 
-		Draw_ColoredString3W( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
+		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0, 1);
 	}
 
 	// draw the download bar

@@ -84,7 +84,7 @@ typedef struct
 	char imagename[MAX_LINES_PER_MESSAGE][MAX_IMAGES_PER_LINE][64];
 	int imagepos[MAX_LINES_PER_MESSAGE][MAX_IMAGES_PER_LINE];
 
-	wchar content[MAX_LINES_PER_MESSAGE][MAX_TRACKER_MSG_LEN];
+	char content[MAX_LINES_PER_MESSAGE][MAX_TRACKER_MSG_LEN];
 	int printable_length[MAX_LINES_PER_MESSAGE];
 } trackmsg_t;
 
@@ -110,7 +110,7 @@ static char ToHex(int v)
 	}
 }
 
-static int VX_TrackerColourToStandard(const char* input, wchar* output, int position)
+static int VX_TrackerColourToStandard(const char* input, char* output, int position)
 {
 	// The tracker's strings use 9 as maximum, standard drawing functions expect f
 	// Can't just change elsewhere as everyone's configs will have these set...

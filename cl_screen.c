@@ -1153,18 +1153,21 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	// Draw the name of the armor type.
 	if(scr_autoid.integer >= 3 && scr_autoid.integer < 6 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
 	{
-		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
+		if (autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
 			strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
-		} else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
+		}
+		else if (autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
 			strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
-		} else {
+		}
+		else {
 			strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
 		}
 
-		Draw_SColoredString(
-				x - AUTOID_ARMORNAME_OFFSET_X * scale,
-				y - AUTOID_ARMORNAME_OFFSET_Y * scale,
-				str2wcs(armor_name), NULL, 0, 0, scale);
+		Draw_SColoredStringBasic(
+			x - AUTOID_ARMORNAME_OFFSET_X * scale,
+			y - AUTOID_ARMORNAME_OFFSET_Y * scale,
+			armor_name, 0, scale
+		);
 	}
 
 	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer >= 4))
@@ -1211,7 +1214,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 				break;
 		}
 
-		if(weapon_pic != NULL && best_weapon > 0 && ((scr_autoid.integer == 4 && best_weapon == 7) || (scr_autoid.integer > 4 && best_weapon >= scr_autoid_weapons.integer)))
+		if (weapon_pic != NULL && best_weapon > 0 && ((scr_autoid.integer == 4 && best_weapon == 7) || (scr_autoid.integer > 4 && best_weapon >= scr_autoid_weapons.integer)))
 		{
 			if (scr_autoid_weaponicon.value) {
 				Draw_SSubPic (
@@ -1222,12 +1225,15 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 						0,
 						weapon_pic->width,
 						weapon_pic->height,
-						scale);
-			} else {
-				Draw_SColoredString(
-						x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
-						y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
-						str2wcs(weapon_name), NULL, 0, 1, scale);
+						scale
+				);
+			}
+			else {
+				Draw_SColoredStringBasic(
+					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
+					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
+					weapon_name, 1, scale
+				);
 			}
 		}
 	}
