@@ -1692,6 +1692,9 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value) {
 		Sbar_Changed();
 	}
+	else if (scr_newHud.integer == 2 && scr_newHudClear.integer && scr_viewsize.value < 120) {
+		Sbar_Changed();
+	}
 
 	return true;
 }
