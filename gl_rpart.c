@@ -1105,6 +1105,11 @@ static void QMB_UpdateParticles(void)
 					ParticleStats(-1);
 				}
 				else {
+					if (particle_time >= p->start) {
+						particle_count++;
+
+						QMB_ProcessParticle(pt, p);
+					}
 					p = p->next;
 				}
 			}
@@ -1117,16 +1122,6 @@ static void QMB_UpdateParticles(void)
 				//VULT STATS
 				ParticleStats(-1);
 			}
-		}
-
-		for (p = pt->start; p; p = p->next) {
-			if (particle_time < p->start) {
-				continue;
-			}
-
-			particle_count++;
-
-			QMB_ProcessParticle(pt, p);
 		}
 	}
 }
