@@ -27,9 +27,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "utils.h"
 #include "sbar.h"
 #include "common_draw.h"
-#ifndef __APPLE__
 #include "tr_types.h"
-#endif
 #include "gl_framebuffer.h"
 
 void CachePics_Init(void);

@@ -44,7 +44,7 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 //
 // client related things
 //
-	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown
+	VID_Shutdown(false);  // bk010104 - shouldn't this be CL_Shutdown
 
 	Sys_Quit();
 	exit(0);

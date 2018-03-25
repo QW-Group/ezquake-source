@@ -934,10 +934,6 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode &= ~TEX_MIPMAP;
 
-	if (id && !strcmp(id, "ibar")) {
-		mode = mode;
-	}
-
 	if (no24bit) {
 		return NULL;
 	}

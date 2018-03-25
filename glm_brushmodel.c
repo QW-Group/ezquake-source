@@ -7,6 +7,7 @@
 #include "glsl/constants.glsl"
 #include "glm_brushmodel.h"
 #include "tr_types.h"
+#include <limits.h>
 
 typedef struct vbo_world_surface_s {
 	float normal[4];

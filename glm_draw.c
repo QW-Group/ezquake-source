@@ -25,9 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "sbar.h"
 #include "common_draw.h"
-#ifndef __APPLE__
 #include "tr_types.h"
-#endif
 #include "glm_draw.h"
 
 #define MAX_2D_ELEMENTS 4096

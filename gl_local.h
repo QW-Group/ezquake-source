@@ -23,7 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __APPLE__
 
 #include <OpenGL/gl.h>
+#ifdef TRAVIS_BUILD
+#include "opengl/glext.h"
+#else
 #include <OpenGL/glext.h>
+#endif
 
 #else // __APPLE__
 
@@ -37,19 +41,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <glext.h>
 #endif
 
-#ifdef FRAMEBUFFERS
-#include "GL/glext.h"
-#endif
-
 #ifndef _WIN32
 #include <GL/glx.h>
 #endif // _WIN32
 #endif // __APPLE__
 
 #include "gl_texture.h"
-#ifdef FRAMEBUFFERS
-#include "gl_framebuffer.h"
-#endif
 
 #ifndef APIENTRY
 #define APIENTRY

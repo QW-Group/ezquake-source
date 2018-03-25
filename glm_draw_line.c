@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "common_draw.h"
-#ifndef __APPLE__
-#include "tr_types.h"
-#endif
 #include "glm_draw.h"
 
 static glm_program_t line_program;
