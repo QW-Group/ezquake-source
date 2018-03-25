@@ -392,7 +392,8 @@ OBJS_c := \
     glm_framebuffer.o \
     glm_texture.o \
     gl_drawcall_wrappers.o \
-    gl_debug.o
+    gl_debug.o \
+    hud_autoid.o
 
 ### Configuration Options ###
 

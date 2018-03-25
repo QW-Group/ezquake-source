@@ -100,8 +100,10 @@ extern qbool flashed;
 #define	ELEMENT_Y_COORD(var)	((var##_y.value < 0) ? vid.height - sb_lines + 8 * var##_y.value : 8 * var##_y.value)
 
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
-void SCR_SetupAutoID (void);
 void SCR_TileClear(void);
+void SCR_SetupAutoID(void);
+void SCR_RegisterAutoIDCvars(void);
+void SCR_DrawAutoID(void);
 
 // the current position of the mouse pointer
 extern double cursor_x, cursor_y;
