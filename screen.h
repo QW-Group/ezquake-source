@@ -104,6 +104,9 @@ void SCR_TileClear(void);
 void SCR_SetupAutoID(void);
 void SCR_RegisterAutoIDCvars(void);
 void SCR_DrawAutoID(void);
+void SShot_RegisterCvars(void);
+qbool SCR_TakingAutoScreenshot(void);
+void SCR_CheckAutoScreenshot(void);
 
 // the current position of the mouse pointer
 extern double cursor_x, cursor_y;

@@ -393,7 +393,8 @@ OBJS_c := \
     glm_texture.o \
     gl_drawcall_wrappers.o \
     gl_debug.o \
-    hud_autoid.o
+    hud_autoid.o \
+    cl_screenshot.o
 
 ### Configuration Options ###
 

@@ -1527,7 +1527,7 @@ static void Sbar_TeamOverlay (void) {
 	team_t *tm;
 	mpic_t *pic;
 
-	if (key_dest == key_console && ! SCR_TakingAutoScreenshot())
+	if (key_dest == key_console && !SCR_TakingAutoScreenshot())
 		return;
 
 #ifndef CLIENTONLY
