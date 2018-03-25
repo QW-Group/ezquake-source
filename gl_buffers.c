@@ -79,40 +79,39 @@ typedef void (APIENTRY *glUnmapBuffer_t)(GLenum target);
 typedef void* (APIENTRY *glMapBufferRange_t)(GLenum mtarget, GLintptr offset, GLsizeiptr length, GLbitfield access);
 typedef void (APIENTRY *glBufferStorage_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLbitfield flags);
 typedef GLsync (APIENTRY *glFenceSync_t)(GLenum condition, GLbitfield flags);
-//typedef void (APIENTRY *glWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
 typedef GLenum (APIENTRY *glClientWaitSync_t)(GLsync sync, GLbitfield flags, GLuint64 timeout);
 typedef void (APIENTRY *glDeleteSync_t)(GLsync sync);
 
 // VAO functions
-static glGenVertexArrays_t         glGenVertexArrays = NULL;
-static glBindVertexArray_t         glBindVertexArray = NULL;
-static glEnableVertexAttribArray_t glEnableVertexAttribArray = NULL;
-static glDeleteVertexArrays_t      glDeleteVertexArrays = NULL;
-static glVertexAttribPointer_t     glVertexAttribPointer = NULL;
-static glVertexAttribIPointer_t    glVertexAttribIPointer = NULL;
-static glVertexAttribDivisor_t     glVertexAttribDivisor = NULL;
+static glGenVertexArrays_t         qglGenVertexArrays = NULL;
+static glBindVertexArray_t         qglBindVertexArray = NULL;
+static glEnableVertexAttribArray_t qglEnableVertexAttribArray = NULL;
+static glDeleteVertexArrays_t      qglDeleteVertexArrays = NULL;
+static glVertexAttribPointer_t     qglVertexAttribPointer = NULL;
+static glVertexAttribIPointer_t    qglVertexAttribIPointer = NULL;
+static glVertexAttribDivisor_t     qglVertexAttribDivisor = NULL;
 
 // Buffer functions
-static glBindBuffer_t     glBindBuffer = NULL;
-static glBufferData_t     glBufferData = NULL;
-static glBufferSubData_t  glBufferSubData = NULL;
-static glGenBuffers_t     glGenBuffers = NULL;
-static glDeleteBuffers_t  glDeleteBuffers = NULL;
-static glBindBufferBase_t glBindBufferBase = NULL;
-static glBindBufferRange_t glBindBufferRange = NULL;
-static glUnmapBuffer_t glUnmapBuffer = NULL;
+static glBindBuffer_t        qglBindBuffer = NULL;
+static glBufferData_t        qglBufferData = NULL;
+static glBufferSubData_t     qglBufferSubData = NULL;
+static glGenBuffers_t        qglGenBuffers = NULL;
+static glDeleteBuffers_t     qglDeleteBuffers = NULL;
+static glBindBufferBase_t    qglBindBufferBase = NULL;
+static glBindBufferRange_t   qglBindBufferRange = NULL;
+static glUnmapBuffer_t       qglUnmapBuffer = NULL;
 
 // DSA
-static glNamedBufferSubData_t glNamedBufferSubData = NULL;
-static glNamedBufferData_t    glNamedBufferData = NULL;
-static glUnmapNamedBuffer_t   glUnmapNamedBuffer = NULL;
+static glNamedBufferSubData_t qglNamedBufferSubData = NULL;
+static glNamedBufferData_t    qglNamedBufferData = NULL;
+static glUnmapNamedBuffer_t   qglUnmapNamedBuffer = NULL;
 
 // Persistent mapped buffers
-static glMapBufferRange_t glMapBufferRange = NULL;
-static glBufferStorage_t  glBufferStorage = NULL;
-static glFenceSync_t      glFenceSync = NULL;
-static glClientWaitSync_t glClientWaitSync = NULL;
-static glDeleteSync_t     glDeleteSync = NULL;
+static glMapBufferRange_t qglMapBufferRange = NULL;
+static glBufferStorage_t  qglBufferStorage = NULL;
+static glFenceSync_t      qglFenceSync = NULL;
+static glClientWaitSync_t qglClientWaitSync = NULL;
+static glDeleteSync_t     qglDeleteSync = NULL;
 
 // Cache OpenGL state
 static GLuint currentArrayBuffer;
@@ -130,7 +129,7 @@ static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLs
 			if (!strcmp(name, buffers[i].name)) {
 				buffer = &buffers[i];
 				if (buffer->glref) {
-					glDeleteBuffers(1, &buffer->glref);
+					qglDeleteBuffers(1, &buffer->glref);
 				}
 				break;
 			}
@@ -161,7 +160,7 @@ static buffer_data_t* GL_BufferAllocateSlot(GLenum target, const char* name, GLs
 	buffer->target = target;
 	buffer->size = size;
 	buffer->usage = usage;
-	glGenBuffers(1, &buffer->glref);
+	qglGenBuffers(1, &buffer->glref);
 	return buffer;
 }
 
@@ -175,7 +174,7 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 	if (glObjectLabel && name) {
 		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
 	}
-	glBufferData(target, size, data, usage);
+	qglBufferData(target, size, data, usage);
 	result.index = buffer - buffers;
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
 		GL_BindVertexArrayElementBuffer(result);
@@ -203,7 +202,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	else if (usage == buffertype_reuse_many) {
 		glUsage = GL_STATIC_DRAW;
 		storageFlags = GL_MAP_WRITE_BIT;
-		useStorage = (glBufferStorage != NULL);
+		useStorage = (qglBufferStorage != NULL);
 		if (!data) {
 			Sys_Error("Buffer %s flagged as constant but no initial data", name);
 			return null_buffer_reference;
@@ -212,7 +211,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	else if (usage == buffertype_constant) {
 		glUsage = GL_STATIC_COPY;
 		storageFlags = 0;
-		useStorage = (glBufferStorage != NULL);
+		useStorage = (qglBufferStorage != NULL);
 		if (!data) {
 			Sys_Error("Buffer %s flagged as constant but no initial data", name);
 			return null_buffer_reference;
@@ -245,8 +244,8 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 	}
 
 	if (tripleBuffer) {
-		glBufferStorage(target, size * 3, NULL, storageFlags);
-		buffer->persistent_mapped_ptr = glMapBufferRange(target, 0, size * 3, storageFlags);
+		qglBufferStorage(target, size * 3, NULL, storageFlags);
+		buffer->persistent_mapped_ptr = qglMapBufferRange(target, 0, size * 3, storageFlags);
 
 		if (buffer->persistent_mapped_ptr) {
 			if (data) {
@@ -261,7 +260,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 		}
 	}
 	else {
-		glBufferStorage(target, size, data, storageFlags);
+		qglBufferStorage(target, size, data, storageFlags);
 	}
 
 	buffer->storageFlags = storageFlags;
@@ -284,12 +283,12 @@ void GL_UpdateBuffer(buffer_ref vbo, size_t size, void* data)
 		GL_LogAPICall("GL_UpdateBuffer[memcpy](%s)", buffers[vbo.index].name);
 	}
 	else {
-		if (glNamedBufferSubData) {
-			glNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
+		if (qglNamedBufferSubData) {
+			qglNamedBufferSubData(buffers[vbo.index].glref, 0, size, data);
 		}
 		else {
 			GL_BindBuffer(vbo);
-			glBufferSubData(buffers[vbo.index].target, 0, size, data);
+			qglBufferSubData(buffers[vbo.index].target, 0, size, data);
 		}
 
 		GL_LogAPICall("GL_UpdateBuffer(%s)", buffers[vbo.index].name);
@@ -317,26 +316,26 @@ buffer_ref GL_ResizeBuffer(buffer_ref vbo, size_t size, void* data)
 	assert(buffers[vbo.index].glref);
 
 	if (buffers[vbo.index].persistent_mapped_ptr) {
-		if (glUnmapNamedBuffer) {
-			glUnmapNamedBuffer(buffers[vbo.index].glref);
+		if (qglUnmapNamedBuffer) {
+			qglUnmapNamedBuffer(buffers[vbo.index].glref);
 		}
 		else {
 			GL_BindBuffer(vbo);
-			glUnmapBuffer(buffers[vbo.index].target);
+			qglUnmapBuffer(buffers[vbo.index].target);
 		}
-		glDeleteBuffers(1, &buffers[vbo.index].glref);
+		qglDeleteBuffers(1, &buffers[vbo.index].glref);
 
 		buffers[vbo.index].next_free = next_free_buffer;
 
 		return GL_CreateFixedBuffer(buffers[vbo.index].target, buffers[vbo.index].name, size, data, buffertype_use_once);
 	}
 	else {
-		if (glNamedBufferData) {
-			glNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);
+		if (qglNamedBufferData) {
+			qglNamedBufferData(buffers[vbo.index].glref, size, data, buffers[vbo.index].usage);
 		}
 		else {
 			GL_BindBuffer(vbo);
-			glBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
+			qglBufferData(buffers[vbo.index].target, size, data, buffers[vbo.index].usage);
 		}
 
 		buffers[vbo.index].size = size;
@@ -360,12 +359,12 @@ void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizeiptr size, co
 		memcpy(base, data, size);
 	}
 	else {
-		if (glNamedBufferSubData) {
-			glNamedBufferSubData(buffers[vbo.index].glref, offset, size, data);
+		if (qglNamedBufferSubData) {
+			qglNamedBufferSubData(buffers[vbo.index].glref, offset, size, data);
 		}
 		else {
 			GL_BindBuffer(vbo);
-			glBufferSubData(buffers[vbo.index].target, offset, size, data);
+			qglBufferSubData(buffers[vbo.index].target, offset, size, data);
 		}
 	}
 	GL_LogAPICall("GL_UpdateBufferSection(%s)", buffers[vbo.index].name);
@@ -383,8 +382,8 @@ void GL_DeleteBuffers(void)
 
 	for (i = 0; i < buffer_count; ++i) {
 		if (buffers[i].glref) {
-			if (glDeleteBuffers) {
-				glDeleteBuffers(1, &buffers[i].glref);
+			if (qglDeleteBuffers) {
+				qglDeleteBuffers(1, &buffers[i].glref);
 			}
 		}
 	}
@@ -393,7 +392,7 @@ void GL_DeleteBuffers(void)
 
 	for (i = 0; i < 3; ++i) {
 		if (tripleBufferSyncObjects[i]) {
-			glDeleteSync(tripleBufferSyncObjects[i]);
+			qglDeleteSync(tripleBufferSyncObjects[i]);
 		}
 	}
 	memset(tripleBufferSyncObjects, 0, sizeof(tripleBufferSyncObjects));
@@ -404,7 +403,7 @@ void GL_BindBufferBase(buffer_ref ref, GLuint index)
 	assert(ref.index);
 	assert(buffers[ref.index].glref);
 
-	glBindBufferBase(buffers[ref.index].target, index, buffers[ref.index].glref);
+	qglBindBufferBase(buffers[ref.index].target, index, buffers[ref.index].glref);
 }
 
 void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size)
@@ -419,7 +418,7 @@ void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeipt
 	assert(offset >= 0);
 	assert(offset + size <= buffers[ref.index].size * (buffers[ref.index].persistent_mapped_ptr ? 3 : 1));
 
-	glBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
+	qglBindBufferRange(buffers[ref.index].target, index, buffers[ref.index].glref, offset, size);
 }
 
 static void GL_BindBufferImpl(GLenum target, GLuint buffer)
@@ -451,7 +450,7 @@ static void GL_BindBufferImpl(GLenum target, GLuint buffer)
 		currentElementArrayBuffer = buffer;
 	}
 
-	glBindBuffer(target, buffer);
+	qglBindBuffer(target, buffer);
 }
 
 void GL_BindBuffer(buffer_ref ref)
@@ -471,54 +470,42 @@ void GL_BindBuffer(buffer_ref ref)
 
 void GL_InitialiseBufferHandling(void)
 {
-	glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBuffer");
-	glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferData");
-	glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubData");
-	glGenBuffers = (glGenBuffers_t)SDL_GL_GetProcAddress("glGenBuffers");
-	glDeleteBuffers = (glDeleteBuffers_t)SDL_GL_GetProcAddress("glDeleteBuffers");
-	glUnmapBuffer = (glUnmapBuffer_t)SDL_GL_GetProcAddress("glUnmapBuffer");
+	buffers_supported = true;
 
-	// Keeping this because it was in earlier versions of ezquake, I think we're past the days of OpenGL 1.x support tho?
-	if (!glBindBuffer && SDL_GL_ExtensionSupported("GL_ARB_vertex_buffer_object")) {
-		glBindBuffer = (glBindBuffer_t)SDL_GL_GetProcAddress("glBindBufferARB");
-		glBufferData = (glBufferData_t)SDL_GL_GetProcAddress("glBufferDataARB");
-		glBufferSubData = (glBufferSubData_t)SDL_GL_GetProcAddress("glBufferSubDataARB");
-		glGenBuffers = (glGenBuffers_t)SDL_GL_GetProcAddress("glGenBuffersARB");
-		glDeleteBuffers = (glDeleteBuffers_t)SDL_GL_GetProcAddress("glDeleteBuffersARB");
-		glUnmapBuffer = (glUnmapBuffer_t)SDL_GL_GetProcAddress("glUnmapBufferARB");
-	}
-
-	buffers_supported = (glBindBuffer && glBufferData && glBufferSubData && glGenBuffers && glDeleteBuffers && glUnmapBuffer);
-
-	// OpenGL 3.0 onwards, for 4.3+ support only
-	glBindBufferBase = (glBindBufferBase_t)SDL_GL_GetProcAddress("glBindBufferBase");
-	glBindBufferRange = (glBindBufferRange_t)SDL_GL_GetProcAddress("glBindBufferRange");
-
-	// OpenGL 4.4, persistent mapping of buffers
-	glFenceSync = (glFenceSync_t)SDL_GL_GetProcAddress("glFenceSync");
-	glClientWaitSync = (glClientWaitSync_t)SDL_GL_GetProcAddress("glClientWaitSync");
-	glBufferStorage = (glBufferStorage_t)SDL_GL_GetProcAddress("glBufferStorage");
-	glMapBufferRange = (glMapBufferRange_t)SDL_GL_GetProcAddress("glMapBufferRange");
-	glDeleteSync = (glDeleteSync_t)SDL_GL_GetProcAddress("glDeleteSync");
-
-	// OpenGL 4.5 onwards, update directly
-	glNamedBufferSubData = (glNamedBufferSubData_t)SDL_GL_GetProcAddress("glNamedBufferSubData");
-	glNamedBufferData = (glNamedBufferData_t)SDL_GL_GetProcAddress("glNamedBufferData");
-	glUnmapNamedBuffer = (glUnmapNamedBuffer_t)SDL_GL_GetProcAddress("glUnmapNamedBuffer");
+	GL_LoadMandatoryFunctionExtension(glBindBuffer, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glBufferData, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glBufferSubData, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glGenBuffers, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glDeleteBuffers, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glUnmapBuffer, buffers_supported);
 
 	// VAOs
-	glGenVertexArrays = (glGenVertexArrays_t)SDL_GL_GetProcAddress("glGenVertexArrays");
-	glBindVertexArray = (glBindVertexArray_t)SDL_GL_GetProcAddress("glBindVertexArray");
-	glDeleteVertexArrays = (glDeleteVertexArrays_t)SDL_GL_GetProcAddress("glDeleteVertexArrays");
-	glEnableVertexAttribArray = (glEnableVertexAttribArray_t)SDL_GL_GetProcAddress("glEnableVertexAttribArray");
-	glVertexAttribPointer = (glVertexAttribPointer_t)SDL_GL_GetProcAddress("glVertexAttribPointer");
-	glVertexAttribIPointer = (glVertexAttribIPointer_t)SDL_GL_GetProcAddress("glVertexAttribIPointer");
-	glVertexAttribDivisor = (glVertexAttribDivisor_t)SDL_GL_GetProcAddress("glVertexAttribDivisor");
+	GL_LoadMandatoryFunctionExtension(glGenVertexArrays, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glBindVertexArray, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glDeleteVertexArrays, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glVertexAttribIPointer, buffers_supported);
+	GL_LoadMandatoryFunctionExtension(glVertexAttribDivisor, buffers_supported);
 
-	buffers_supported &= (glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glEnableVertexAttribArray);
-	buffers_supported &= (glVertexAttribPointer && glVertexAttribIPointer && glVertexAttribDivisor);
+	// OpenGL 3.0 onwards, for 4.3+ support only
+	GL_LoadOptionalFunction(glBindBufferBase);
+	GL_LoadOptionalFunction(glBindBufferRange);
 
-	tripleBuffer_supported = buffers_supported && glFenceSync && glClientWaitSync && glBufferStorage && glMapBufferRange && !COM_CheckParm("-no-triple-gl-buffer");
+	// OpenGL 4.4, persistent mapping of buffers
+	tripleBuffer_supported = !COM_CheckParm("-no-triple-gl-buffer");
+	GL_LoadMandatoryFunctionExtension(glFenceSync, tripleBuffer_supported);
+	GL_LoadMandatoryFunctionExtension(glClientWaitSync, tripleBuffer_supported);
+	GL_LoadMandatoryFunctionExtension(glBufferStorage, tripleBuffer_supported);
+	GL_LoadMandatoryFunctionExtension(glMapBufferRange, tripleBuffer_supported);
+	GL_LoadMandatoryFunctionExtension(glDeleteSync, tripleBuffer_supported);
+
+	// OpenGL 4.5 onwards, update directly
+	GL_LoadOptionalFunction(glNamedBufferSubData);
+	GL_LoadOptionalFunction(glNamedBufferData);
+	GL_LoadOptionalFunction(glUnmapNamedBuffer);
+
+	tripleBuffer_supported &= buffers_supported;
 	Con_Printf("Triple-buffering of GL buffers: %s\n", tripleBuffer_supported ? "enabled" : "disabled");
 }
 
@@ -559,7 +546,7 @@ void GL_SetElementArrayBuffer(buffer_ref buffer)
 void GL_BindVertexArray(glm_vao_t* vao)
 {
 	if (currentVAO != vao) {
-		glBindVertexArray(vao ? vao->vao : 0);
+		qglBindVertexArray(vao ? vao->vao : 0);
 		currentVAO = vao;
 
 		if (vao) {
@@ -590,9 +577,9 @@ void GL_ConfigureVertexAttribPointer(glm_vao_t* vao, buffer_ref vbo, GLuint inde
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 	}
 
-	glEnableVertexAttribArray(index);
-	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
-	glVertexAttribDivisor(index, divisor);
+	qglEnableVertexAttribArray(index);
+	qglVertexAttribPointer(index, size, type, normalized, stride, pointer);
+	qglVertexAttribDivisor(index, divisor);
 }
 
 void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
@@ -608,9 +595,9 @@ void GL_ConfigureVertexAttribIPointer(glm_vao_t* vao, buffer_ref vbo, GLuint ind
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 	}
 
-	glEnableVertexAttribArray(index);
-	glVertexAttribIPointer(index, size, type, stride, pointer);
-	glVertexAttribDivisor(index, divisor);
+	qglEnableVertexAttribArray(index);
+	qglVertexAttribIPointer(index, size, type, stride, pointer);
+	qglVertexAttribDivisor(index, divisor);
 }
 
 void GL_SetVertexArrayElementBuffer(glm_vao_t* vao, buffer_ref ibo)
@@ -632,13 +619,13 @@ void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 	extern void GL_SetElementArrayBuffer(buffer_ref buffer);
 
 	if (vao->vao) {
-		glDeleteVertexArrays(1, &vao->vao);
+		qglDeleteVertexArrays(1, &vao->vao);
 	}
 	else {
 		vao->next = vao_list;
 		vao_list = vao;
 	}
-	glGenVertexArrays(1, &vao->vao);
+	qglGenVertexArrays(1, &vao->vao);
 	GL_BindVertexArray(vao);
 	if (glObjectLabel) {
 		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
@@ -649,15 +636,15 @@ void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 void GL_DeleteVAOs(void)
 {
 	glm_vao_t* vao = vao_list;
-	if (glBindVertexArray) {
-		glBindVertexArray(0);
+	if (qglBindVertexArray) {
+		qglBindVertexArray(0);
 	}
 	while (vao) {
 		glm_vao_t* prev = vao;
 
 		if (vao->vao) {
-			if (glDeleteVertexArrays) {
-				glDeleteVertexArrays(1, &vao->vao);
+			if (qglDeleteVertexArrays) {
+				qglDeleteVertexArrays(1, &vao->vao);
 			}
 			vao->vao = 0;
 		}
@@ -681,10 +668,10 @@ void GL_EnsureBufferSize(buffer_ref ref, size_t size)
 void GL_BufferStartFrame(void)
 {
 	if (tripleBuffer_supported && tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
-		GLenum waitRet = glClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, 0);
+		GLenum waitRet = qglClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, 0);
 		while (waitRet == GL_TIMEOUT_EXPIRED) {
 			// Flush commands and wait for longer
-			waitRet = glClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000);
+			waitRet = qglClientWaitSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000);
 		}
 	}
 }
@@ -693,9 +680,9 @@ void GL_BufferEndFrame(void)
 {
 	if (tripleBuffer_supported) {
 		if (tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
-			glDeleteSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex]);
+			qglDeleteSync(tripleBufferSyncObjects[glConfig.tripleBufferIndex]);
 		}
-		tripleBufferSyncObjects[glConfig.tripleBufferIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		tripleBufferSyncObjects[glConfig.tripleBufferIndex] = qglFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		glConfig.tripleBufferIndex = (glConfig.tripleBufferIndex + 1) % 3;
 	}
 }

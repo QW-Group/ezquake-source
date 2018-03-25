@@ -386,15 +386,14 @@ void GL_Init (void);
 
 qbool GLM_LoadProgramFunctions(void);
 qbool GLM_LoadStateFunctions(void);
+qbool GLM_LoadTextureManagementFunctions(void);
+qbool GLM_LoadDrawFunctions(void);
+void GL_LoadDrawFunctions(void);
+void GL_CheckMultiTextureExtensions(void);
 
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
-
-// Images
-typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-// Images
-extern glBindImageTexture_t     glBindImageTexture;
 
 // Debug functions
 extern glObjectLabel_t glObjectLabel;
@@ -1101,8 +1100,8 @@ uintptr_t GL_BufferOffset(buffer_ref ref);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
-#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
-#define GL_LoadOptionalFunction(functionName) { functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
 
 void GLM_UploadFrameConstants(void);
 void GL_InitialiseProgramState(void);

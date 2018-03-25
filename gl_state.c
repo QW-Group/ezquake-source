@@ -5,10 +5,13 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
-glActiveTexture_t               glActiveTexture;
-glBindTextures_t                glBindTextures;
+typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+static glBindImageTexture_t     qglBindImageTexture;
+static glBindTextures_t         qglBindTextures;
+glActiveTexture_t               qglActiveTexture;
 
 void GL_BindBuffer(buffer_ref ref);
 void GL_SetElementArrayBuffer(buffer_ref buffer);
@@ -282,10 +285,7 @@ void GL_SelectTexture(GLenum textureUnit)
 #ifdef GL_PARANOIA
 	GL_ProcessErrors("glActiveTexture/Prior");
 #endif
-	if (glActiveTexture) {
-		glActiveTexture(textureUnit);
-	}
-	else {
+	if (qglActiveTexture) {
 		qglActiveTexture(textureUnit);
 	}
 #ifdef GL_PARANOIA
@@ -596,7 +596,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 {
 	int i;
 
-	if (glBindTextures) {
+	if (qglBindTextures) {
 		GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
 		qbool already_bound = true;
 
@@ -618,7 +618,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 		}
 
 		if (!already_bound) {
-			glBindTextures(first, count, glTextures);
+			qglBindTextures(first, count, glTextures);
 		}
 	}
 	else {
@@ -965,7 +965,7 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 		}
 	}
 
-	glBindImageTexture(unit, glRef, level, layered, layer, access, format);
+	qglBindImageTexture(unit, glRef, level, layered, layer, access, format);
 }
 
 #ifdef WITH_OPENGL_TRACE
@@ -1006,9 +1006,48 @@ qbool GLM_LoadStateFunctions(void)
 	qbool all_available = true;
 
 	GL_LoadMandatoryFunctionExtension(glActiveTexture, all_available);
+	GL_LoadMandatoryFunctionExtension(glBindImageTexture, all_available);
 
 	// 4.4 - binds textures to consecutive texture units
 	GL_LoadOptionalFunction(glBindTextures);
 
 	return all_available;
+}
+
+void GL_CheckMultiTextureExtensions(void)
+{
+	extern cvar_t gl_maxtmu2;
+
+	if (!COM_CheckParm("-nomtex") && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+		if (strstr(gl_renderer, "Savage")) {
+			return;
+		}
+		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+		if (!qglActiveTexture) {
+			qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
+		}
+		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
+		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
+			return;
+		}
+		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
+		gl_mtexable = true;
+	}
+
+	gl_textureunits = min(glConfig.texture_units, 4);
+
+	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
+		gl_textureunits = min(gl_textureunits, 2);
+	}
+
+	if (gl_textureunits < 2) {
+		gl_mtexable = false;
+	}
+
+	if (!gl_mtexable) {
+		gl_textureunits = 1;
+	}
+	else {
+		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
+	}
 }

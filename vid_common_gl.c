@@ -36,40 +36,6 @@ static void GL_InitialiseDebugging(void);
 static qbool dev_frame_debug_queued;
 #endif
 
-// <DSA-functions (4.5)>
-// These allow modification of textures without binding (-bind-to-edit)
-typedef void (APIENTRY *glCreateTextures_t)(GLenum target, GLsizei n, GLuint* textures);
-typedef void (APIENTRY *glGetnTexImage_t)(GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
-typedef void (APIENTRY *glGetTextureImage_t)(GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels);
-typedef void (APIENTRY *glGetTextureLevelParameterfv_t)(GLuint texture, GLint level, GLenum pname, GLfloat *params);
-typedef void (APIENTRY *glGetTextureLevelParameteriv_t)(GLuint texture, GLint level, GLenum pname, GLint *params);
-typedef void (APIENTRY *glTextureParameteri_t)(GLuint texture, GLenum pname, GLint param);
-typedef void (APIENTRY *glTextureParameterf_t)(GLuint texture, GLenum pname, GLfloat param);
-typedef void (APIENTRY *glTextureParameterfv_t)(GLuint texture, GLenum pname, const GLfloat *params);
-typedef void (APIENTRY *glTextureParameteriv_t)(GLuint texture, GLenum pname, const GLint *params);
-typedef void (APIENTRY *glGenerateTextureMipmap_t)(GLuint texture);
-typedef void (APIENTRY *glTextureStorage3D_t)(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (APIENTRY *glTextureStorage2D_t)(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glTextureSubImage2D_t)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-typedef void (APIENTRY *glTextureSubImage3D_t)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
- 
-static glGetTextureLevelParameterfv_t glGetTextureLevelParameterfv = NULL;
-static glGetTextureLevelParameteriv_t glGetTextureLevelParameteriv = NULL;
-static glGenerateTextureMipmap_t glGenerateTextureMipmap = NULL;
-static glGetTextureImage_t glGetTextureImage = NULL;
-static glCreateTextures_t glCreateTextures = NULL;
-static glGetnTexImage_t glGetnTexImage = NULL;
-static glTextureParameteri_t glTextureParameteri = NULL;
-static glTextureParameterf_t glTextureParameterf = NULL;
-static glTextureParameterfv_t glTextureParameterfv = NULL;
-static glTextureParameteriv_t glTextureParameteriv = NULL;
-static glTextureStorage3D_t glTextureStorage3D = NULL;
-static glTextureStorage2D_t glTextureStorage2D = NULL;
-static glTextureSubImage2D_t glTextureSubImage2D = NULL;
-static glTextureSubImage3D_t glTextureSubImage3D = NULL;
-
-#define OPENGL_LOAD_DSA_FUNCTION(x) x = (x ## _t)SDL_GL_GetProcAddress(#x);
-
 // <debug-functions (4.3)>
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
@@ -79,31 +45,6 @@ typedef void (APIENTRY *glPopDebugGroup_t)(void);
 static glPushDebugGroup_t glPushDebugGroup;
 static glPopDebugGroup_t glPopDebugGroup;
 // </debug-functions>
-
-// <draw-functions (various)>
-typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
-typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
-typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glMultiDrawElementsIndirect_t)(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
-typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
-typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
-glMultiDrawArrays_t                               glMultiDrawArrays;
-glMultiDrawElements_t                             glMultiDrawElements;
-glMultiDrawArraysIndirect_t                       glMultiDrawArraysIndirect;
-glMultiDrawElementsIndirect_t                     glMultiDrawElementsIndirect;
-glDrawArraysInstancedBaseInstance_t               glDrawArraysInstancedBaseInstance;
-glDrawElementsInstancedBaseInstance_t             glDrawElementsInstancedBaseInstance;
-glDrawElementsInstancedBaseVertexBaseInstance_t   glDrawElementsInstancedBaseVertexBaseInstance;
-glPrimitiveRestartIndex_t                         glPrimitiveRestartIndex;
-glDrawElementsBaseVertex_t                        glDrawElementsBaseVertex;
-// </draw-functions>
-
-GLuint GL_TextureNameFromReference(texture_ref ref);
-GLenum GL_TextureTargetFromReference(texture_ref ref);
 
 void GL_BindBuffer(buffer_ref ref);
 
@@ -171,25 +112,6 @@ void APIENTRY MessageCallback( GLenum source,
 }
 #endif
 
-// Compute shaders
-typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
-
-glBindImageTexture_t glBindImageTexture;
-static glDispatchCompute_t  glDispatchCompute;
-static glMemoryBarrier_t    glMemoryBarrier;
-
-// Texture functions
-typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
-
-static glTexStorage2D_t         glTexStorage2D;
-static glTexSubImage3D_t        glTexSubImage3D;
-static glTexStorage3D_t         glTexStorage3D;
-static glGenerateMipmap_t       glGenerateMipmap;
-
 glObjectLabel_t glObjectLabel;
 glGetObjectLabel_t glGetObjectLabel;
 
@@ -208,40 +130,6 @@ qbool GL_ShadersSupported(void)
 
 /************************************* EXTENSIONS *************************************/
 
-static void CheckMultiTextureExtensions(void)
-{
-	if (!COM_CheckParm("-nomtex") && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
-		if (strstr(gl_renderer, "Savage")) {
-			return;
-		}
-		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
-		qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
-		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
-		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
-			return;
-		}
-		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
-		gl_mtexable = true;
-	}
-
-	gl_textureunits = min(glConfig.texture_units, 4);
-
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
-		gl_textureunits = min(gl_textureunits, 2);
-	}
-
-	if (gl_textureunits < 2) {
-		gl_mtexable = false;
-	}
-
-	if (!gl_mtexable) {
-		gl_textureunits = 1;
-	}
-	else {
-		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
-	}
-}
-
 static void GL_CheckShaderExtensions(void)
 {
 	shaders_supported = false;
@@ -249,61 +137,15 @@ static void GL_CheckShaderExtensions(void)
 	GL_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	if (GL_UseGLSL()) {
-		if (glConfig.majorVersion >= 2) {
-			shaders_supported = GLM_LoadProgramFunctions();
-			shaders_supported &= GLM_LoadStateFunctions();
-
-			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
-			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage2D);
-			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
-			OPENGL_LOAD_SHADER_FUNCTION(glGenerateMipmap);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawArraysIndirect);
-			OPENGL_LOAD_SHADER_FUNCTION(glMultiDrawElementsIndirect);
-			OPENGL_LOAD_SHADER_FUNCTION(glDrawArraysInstancedBaseInstance);
-			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseInstance);
-			OPENGL_LOAD_SHADER_FUNCTION(glDrawElementsInstancedBaseVertexBaseInstance);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glBindImageTexture);
-			OPENGL_LOAD_SHADER_FUNCTION(glDispatchCompute);
-			OPENGL_LOAD_SHADER_FUNCTION(glMemoryBarrier);
-
-			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
-			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameterfv);
-			OPENGL_LOAD_DSA_FUNCTION(glGetTextureLevelParameteriv);
-			OPENGL_LOAD_DSA_FUNCTION(glGenerateTextureMipmap);
-			OPENGL_LOAD_DSA_FUNCTION(glGetTextureImage);
-			OPENGL_LOAD_DSA_FUNCTION(glCreateTextures);
-			OPENGL_LOAD_DSA_FUNCTION(glGetnTexImage);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureParameteri);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureParameterf);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureParameterfv);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureParameteriv);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureStorage3D);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureStorage2D);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureSubImage2D);
-			OPENGL_LOAD_DSA_FUNCTION(glTextureSubImage3D);
-		}
+	if (GL_UseGLSL() && glConfig.majorVersion >= 2) {
+		shaders_supported = GLM_LoadProgramFunctions();
+		shaders_supported &= GLM_LoadStateFunctions();
+		shaders_supported &= GLM_LoadTextureManagementFunctions();
+		shaders_supported &= GLM_LoadDrawFunctions();
 	}
 
+	GL_LoadDrawFunctions();
 	GL_InitialiseDebugging();
-
-	// Draw functions required for modern & classic
-	glMultiDrawArrays = (glMultiDrawArrays_t)SDL_GL_GetProcAddress("glMultiDrawArrays");
-	glMultiDrawElements = (glMultiDrawElements_t)SDL_GL_GetProcAddress("glMultiDrawElements");
-	glDrawElementsBaseVertex = (glDrawElementsBaseVertex_t)SDL_GL_GetProcAddress("glDrawElementsBaseVertex");
-
-	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
-	if (glPrimitiveRestartIndex) {
-		glEnable(GL_PRIMITIVE_RESTART);
-		if (glConfig.majorVersion > 4 || (glConfig.majorVersion == 4 && glConfig.minorVersion >= 3)) {
-			glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-		}
-		else {
-			glPrimitiveRestartIndex(~(GLuint)0);
-		}
-	}
 
 	if (GL_UseGLSL() && !shaders_supported) {
 		Con_Printf("&cf00Error&r: GLSL not available, missing extensions.\n");
@@ -321,7 +163,7 @@ static void GL_CheckShaderExtensions(void)
 
 void GL_CheckExtensions (void)
 {
-	CheckMultiTextureExtensions();
+	GL_CheckMultiTextureExtensions();
 
 	if (SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;
@@ -488,321 +330,12 @@ void GL_AlphaFunc(GLenum func, GLclampf threshold)
 	}
 }
 
-void GL_TexSubImage3D(
-	GLenum textureUnit, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
-	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
-)
-{
-	if (glTextureSubImage3D) {
-		glTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
-	}
-	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
-}
-
-/*
-void GL_TexImage2D(
-	GLenum textureUnit, GLenum target, texture_ref texture, GLint level, GLint internalformat,
-	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels
-)
-{
-	GL_BindTextureUnit(textureUnit, texture);
-	glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
-}
-*/
-
-void GL_TexSubImage2D(
-	GLenum textureUnit, texture_ref texture, GLint level,
-	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
-)
-{
-	if (glTextureSubImage2D) {
-		GLint textureWidth, textureHeight;
-
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_WIDTH, &textureWidth);
-		GL_GetTexLevelParameteriv(GL_TEXTURE0, texture, 0, GL_TEXTURE_HEIGHT, &textureHeight);
-
-		glTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
-	}
-	GL_LogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
-}
-
-void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
-{
-	if (glTextureStorage2D) {
-		glTextureStorage2D(texture, levels, internalformat, width, height);
-	}
-	else {
-		glBindTexture(textureUnit, target);
-		if (glTexStorage2D) {
-			glTexStorage2D(target, levels, internalformat, width, height);
-		}
-		else {
-			int level;
-			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				width = max(1, width / 2);
-				height = max(1, height / 2);
-			}
-		}
-		GL_BindTextureUnit(textureUnit, null_texture_reference);
-	}
-}
-
-void GL_TexStorage2D(
-	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
-)
-{
-	if (glTextureStorage2D) {
-		glTextureStorage2D(GL_TextureNameFromReference(texture), levels, internalformat, width, height);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		if (glTexStorage2D) {
-			glTexStorage2D(target, levels, internalformat, width, height);
-		}
-		else {
-			int level;
-			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				width = max(1, width / 2);
-				height = max(1, height / 2);
-			}
-		}
-	}
-}
-
-void GL_TexStorage3D(
-	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
-)
-{
-	if (glTextureStorage3D) {
-		glTextureStorage3D(GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexStorage3D(target, levels, internalformat, width, height, depth);
-	}
-}
-
-void GL_TexParameterf(GLenum textureUnit, texture_ref texture, GLenum pname, GLfloat param)
-{
-	if (glTextureParameterf) {
-		glTextureParameterf(GL_TextureNameFromReference(texture), pname, param);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameterf(target, pname, param);
-	}
-}
-
-void GL_TexParameterfv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLfloat *params)
-{
-	if (glTextureParameterfv) {
-		glTextureParameterfv(GL_TextureNameFromReference(texture), pname, params);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameterfv(target, pname, params);
-	}
-}
-
-void GL_TexParameteri(GLenum textureUnit, texture_ref texture, GLenum pname, GLint param)
-{
-	if (glTextureParameteri) {
-		glTextureParameteri(GL_TextureNameFromReference(texture), pname, param);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameteri(target, pname, param);
-	}
-}
-
-void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLint *params)
-{
-	if (glTextureParameteriv) {
-		glTextureParameteriv(GL_TextureNameFromReference(texture), pname, params);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameteriv(target, pname, params);
-	}
-}
-
-void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
-{
-	if (glCreateTextures) {
-		glCreateTextures(target, n, textures);
-	}
-	else {
-		int i;
-
-		glGenTextures(n, textures);
-		for (i = 0; i < n; ++i) {
-			GL_SelectTexture(textureUnit);
-			glBindTexture(target, textures[i]);
-		}
-	}
-}
-
-void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint level, GLenum pname, GLint* params)
-{
-	if (glGetTextureLevelParameteriv) {
-		glGetTextureLevelParameteriv(GL_TextureNameFromReference(texture), level, pname, params);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		glGetTexLevelParameteriv(target, level, pname, params);
-	}
-}
-
-void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
-{
-	// TODO: Use glGetnTexImage() if available (4.5)
-	if (glGetTextureImage) {
-		glGetTextureImage(GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		if (glGetnTexImage) {
-			glGetnTexImage(target, level, format, type, bufSize, buffer);
-		}
-		else {
-			glGetTexImage(target, level, format, type, buffer);
-		}
-	}
-}
-
-void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
-{
-	if (glGenerateTextureMipmap) {
-		glGenerateTextureMipmap(GL_TextureNameFromReference(texture));
-	}
-	else {
-		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
-		if (glGenerateMipmap) {
-			glGenerateMipmap(target);
-		}
-		else if (newdata) {
-			int miplevel = 0;
-
-			// Calculate the mip maps for the images.
-			while (width > 1 || height > 1) {
-				Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
-				miplevel++;
-				GL_TexSubImage2D(GL_TEXTURE0, texture, miplevel, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
-			}
-		}
-	}
-}
-
-void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
-{
-	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
-}
-
 #ifdef WITH_OPENGL_TRACE
 void Dev_VidFrameTrace(void)
 {
 	dev_frame_debug_queued = true;
 }
 #endif
-
-// Wrappers around drawing functions
-void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount)
-{
-	if (glMultiDrawArrays) {
-		glMultiDrawArrays(mode, first, count, primcount);
-		++frameStats.draw_calls;
-		frameStats.subdraw_calls += primcount;
-		GL_LogAPICall("glMultiDrawElements(%d sub-draws)", primcount);
-	}
-	else {
-		int i;
-		for (i = 0; i < primcount; ++i) {
-			GL_DrawArrays(mode, first[i], count[i]);
-		}
-	}
-}
-
-void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-	glDrawArrays(mode, first, count);
-	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawArrays(%d verts)", count);
-}
-
-void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
-{
-	if (basevertex && !glDrawElementsBaseVertex) {
-		Sys_Error("glDrawElementsBaseVertex called, not supported");
-	}
-	else if (glDrawElementsBaseVertex) {
-		glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
-	}
-	else {
-		glDrawElements(mode, count, type, indices);
-	}
-	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawElements(%d verts)", count);
-}
-
-qbool GL_DrawElementsBaseVertexAvailable(void)
-{
-	return glDrawElementsBaseVertex != NULL;
-}
-
-void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
-{
-	glDrawElements(mode, count, type, indices);
-	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawElements(%d verts)", count);
-}
-
-void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
-{
-	glMultiDrawArraysIndirect(mode, indirect, drawcount, stride);
-	++frameStats.draw_calls;
-	frameStats.subdraw_calls += drawcount;
-	GL_LogAPICall("glMultiDrawArraysIndirect(%d subdraws)", drawcount);
-}
-
-void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
-{
-	glMultiDrawElementsIndirect(mode, type, indirect, drawcount, stride);
-	++frameStats.draw_calls;
-	frameStats.subdraw_calls += drawcount;
-	GL_LogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
-}
-
-// Compute shaders
-void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
-{
-	glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
-}
-
-void GL_MemoryBarrier(GLbitfield barriers)
-{
-	glMemoryBarrier(barriers);
-}
 
 static void GL_InitialiseDebugging(void)
 {
