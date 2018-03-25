@@ -119,28 +119,60 @@ typedef enum {
 	NUMBER_OF_BLEND_TYPES
 } part_blend_id;
 
-typedef struct part_blend_info_s {
-	//GLenum glSourceFactorOld;
-	//GLenum glDestFactorOld;
+typedef void (*func_color_transform_t)(col_t input, col_t output);
 
+typedef struct part_blend_info_s {
 	GLenum glSourceFactor;
 	GLenum glDestFactor;
 
-	int fixed_alpha; // -1 = no adjustment
-	qbool zero_color;
+	func_color_transform_t color_transform;
 } part_blend_info_t;
+
+static void blend_premult_alpha(col_t input, col_t output)
+{
+	float alpha = input[3] / 255.0f;
+
+	output[0] = input[0] * alpha;
+	output[1] = input[1] * alpha;
+	output[2] = input[2] * alpha;
+	output[3] = input[3];
+}
+
+static void blend_additive(col_t input, col_t output)
+{
+	float alpha = input[3] / 255.0f;
+
+	output[0] = input[0] * alpha;
+	output[1] = input[1] * alpha;
+	output[2] = input[2] * alpha;
+	output[3] = 0;
+}
+
+static void blend_one_one(col_t input, col_t output)
+{
+	output[0] = input[0];
+	output[1] = input[1];
+	output[2] = input[2];
+	output[3] = 0;
+}
+
+static void blend_color_constant(col_t input, col_t output)
+{
+	output[0] = output[1] = output[2] = 0;
+	output[3] = input[3];
+}
 
 static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 	// BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, -1, false },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_premult_alpha },
 	// BLEND_GL_SRC_ALPHA_GL_ONE (additive)
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, 0, false },
-	// BLEND_GL_ONE_GL_ONE,
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, 0, false },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_additive },
+	// BLEND_GL_ONE_GL_ONE, (meag: was blend_additive... telesplash only)
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_one_one },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR_CONSTANT
-	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, -1, true },
+	{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA, blend_color_constant },
 	// BLEND_GL_ZERO_GL_ONE_MINUS_SRC_COLOR, (this is now for varying color only, can't convert?)
-	{ GL_ZERO, GL_ONE_MINUS_SRC_COLOR, -1, false }
+	{ GL_ZERO, GL_ONE_MINUS_SRC_COLOR, blend_premult_alpha }
 };
 
 typedef struct particle_s {
@@ -607,24 +639,7 @@ static void QMB_BillboardAddVert(gl_sprite3d_vert_t* vert, particle_type_t* type
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
 
-	new_color[3] = color[3];
-	if (blend->zero_color) {
-		new_color[0] = new_color[1] = new_color[2] = 0;
-	}
-	else {
-		float alpha = color[3] / 255.0f;
-
-		new_color[0] = color[0] * alpha;
-		new_color[1] = color[1] * alpha;
-		new_color[2] = color[2] * alpha;
-	}
-
-	if (blend->fixed_alpha == 0) {
-		new_color[3] = 0;
-	}
-	else if (blend->fixed_alpha == 1) {
-		new_color[3] = 255;
-	}
+	blend->color_transform(color, new_color);
 
 	GL_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
@@ -665,27 +680,7 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 	}
 
 	// Set color
-	if (blend->zero_color) {
-		new_color[0] = new_color[1] = new_color[2] = 0;
-	}
-	else {
-		float alpha = p->color[3] / 255.0f;
-
-		new_color[0] = p->color[0] * alpha;
-		new_color[1] = p->color[1] * alpha;
-		new_color[2] = p->color[2] * alpha;
-	}
-
-	// set alpha
-	if (blend->fixed_alpha == 0) {
-		new_color[3] = 0;
-	}
-	else if (blend->fixed_alpha == 1) {
-		new_color[3] = 255;
-	}
-	else {
-		new_color[3] = p->color[3];
-	}
+	blend->color_transform(p->color, new_color);
 
 	GL_Sprite3DSetVert(vert++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
 	GL_Sprite3DSetVert(vert++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
