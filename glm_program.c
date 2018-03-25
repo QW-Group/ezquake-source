@@ -264,9 +264,7 @@ static qbool GLM_CompileProgram(
 							program->uniforms_found = false;
 							program->force_recompile = false;
 
-							if (glObjectLabel) {
-								glObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
-							}
+							GL_ObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
 							return true;
 						}
 						else {
@@ -513,9 +511,7 @@ qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader
 				program->force_recompile = false;
 				GLM_AddToProgramList(program);
 
-				if (glObjectLabel) {
-					glObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
-				}
+				GL_ObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
 				return true;
 			}
 			else {

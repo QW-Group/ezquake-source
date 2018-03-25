@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "glsl/constants.glsl"
 
+extern GLuint GL_TextureNameFromReference(texture_ref ref);
+
 // Lightmap size
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
@@ -967,27 +969,15 @@ void GLM_CreateLightmapTextures(void)
 	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
-	if (glObjectLabel) {
-		extern GLuint GL_TextureNameFromReference(texture_ref ref);
-
-		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_texture_array), -1, "lightmap_texture_array");
-	}
+	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_texture_array), -1, "lightmap_texture_array");
 
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array);
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	if (glObjectLabel) {
-		extern GLuint GL_TextureNameFromReference(texture_ref ref);
-
-		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_source_array), -1, "lightmap_source_array");
-	}
+	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_source_array), -1, "lightmap_source_array");
 
 	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array);
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	if (glObjectLabel) {
-		extern GLuint GL_TextureNameFromReference(texture_ref ref);
-
-		glObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_data_array), -1, "lightmap_data_array");
-	}
+	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_data_array), -1, "lightmap_data_array");
 }
 
 texture_ref GLM_LightmapArray(void)

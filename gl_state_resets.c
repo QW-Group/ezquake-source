@@ -65,7 +65,7 @@ void GL_StateDefault3D(void)
 		glDisable(GL_FRAMEBUFFER_SRGB);
 	}
 	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_REPLACE);
-	GL_PrintState();
+	GL_DebugState();
 
 	LEAVE_STATE;
 }

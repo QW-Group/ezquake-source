@@ -969,10 +969,9 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 }
 
 #ifdef WITH_OPENGL_TRACE
-void GL_PrintState(void)
+void GL_PrintState(FILE* debug_frame_out)
 {
 	int i;
-	extern FILE* debug_frame_out;
 
 	if (debug_frame_out) {
 		fprintf(debug_frame_out, "... <state-dump>\n");

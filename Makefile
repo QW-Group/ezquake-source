@@ -387,7 +387,8 @@ OBJS_c := \
     r_performance.o \
     glm_framebuffer.o \
     glm_texture.o \
-    gl_drawcall_wrappers.o
+    gl_drawcall_wrappers.o \
+    gl_debug.o
 
 ### Configuration Options ###
 

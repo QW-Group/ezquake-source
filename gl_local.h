@@ -389,15 +389,8 @@ qbool GLM_LoadStateFunctions(void);
 qbool GLM_LoadTextureManagementFunctions(void);
 qbool GLM_LoadDrawFunctions(void);
 void GL_LoadDrawFunctions(void);
+void GL_InitialiseDebugging(void);
 void GL_CheckMultiTextureExtensions(void);
-
-// Debug functions
-typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
-typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
-
-// Debug functions
-extern glObjectLabel_t glObjectLabel;
-extern glGetObjectLabel_t glGetObjectLabel;
 
 qbool GL_BuffersSupported(void);
 
@@ -409,7 +402,7 @@ extern cvar_t vid_gl_core_profile;
 #define GL_UseImmediateMode()     (vid_renderer.integer == 0)
 
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
-#define GL_DebugProfileContext()  (COM_CheckParm("-dev") && COM_CheckParm("-gl-debug-profile"))
+#define GL_DebugProfileContext()  (COM_CheckParm("-dev"))
 
 // 
 #define GL_CoreProfileContext()   (vid_renderer.integer == 1 && vid_gl_core_profile.integer)
@@ -621,11 +614,14 @@ size_t GL_BufferSize(buffer_ref vbo);
 #define GL_LeaveRegion() GL_LeaveTracedRegion(false)
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
 void GL_LeaveTracedRegion(qbool trace_only);
-void GL_PrintState(void);
+void GL_PrintState(FILE* output);
+void GL_DebugState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
 void GL_MarkEvent(const char* message, ...);
 qbool GL_LoggingEnabled(void);
+void GL_ObjectLabel(GLenum identifier, GLuint name, GLsizei length, const char* label);
+void GL_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
 #else
 #define ENTER_STATE
 #define MIDDLE_STATE
@@ -637,8 +633,11 @@ qbool GL_LoggingEnabled(void);
 #define GL_ResetRegion(x)
 #define GL_MarkEvent(...)
 #define GL_LogAPICall(...)
-#define GL_PrintState()
+#define GL_PrintState(...)
+#define GL_DebugState()
 #define GL_LoggingEnabled() (false)
+#define GL_ObjectLabel(...)
+#define GL_GetObjectLabel(...)
 #endif
 
 #define NUMVERTEXNORMALS 162

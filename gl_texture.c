@@ -551,15 +551,11 @@ static gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
 		GL_CreateTextureNames(GL_TEXTURE0, glt->target, 1, &glt->texnum);
-		if (glObjectLabel) {
-			glObjectLabel(GL_TEXTURE, glt->texnum, -1, glt->identifier);
-		}
+		GL_ObjectLabel(GL_TEXTURE, glt->texnum, -1, glt->identifier);
 	}
 	else if (glt && !glt->texnum) {
 		GL_CreateTextureNames(GL_TEXTURE0, glt->target, 1, &glt->texnum);
-		if (glObjectLabel) {
-			glObjectLabel(GL_TEXTURE, glt->texnum, -1, glt->identifier);
-		}
+		GL_ObjectLabel(GL_TEXTURE, glt->texnum, -1, glt->identifier);
 	}
 	else if (glt && glt->storage_allocated) {
 		if (gl_width != glt->texture_width || gl_height != glt->texture_height || glt->bpp != bpp) {
@@ -1336,7 +1332,7 @@ const char* GL_TextureIdentifierByGLReference(GLuint texnum)
 {
 	static char name[256];
 
-	glGetObjectLabel(GL_TEXTURE, texnum, sizeof(name), NULL, name);
+	GL_GetObjectLabel(GL_TEXTURE, texnum, sizeof(name), NULL, name);
 
 	return name;
 }

@@ -28,24 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "image.h"
 
-static void GL_InitialiseDebugging(void);
-
-#ifdef WITH_OPENGL_TRACE
-#define DEBUG_FRAME_DEPTH_CHARS 2
-
-static qbool dev_frame_debug_queued;
-#endif
-
-// <debug-functions (4.3)>
-//typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
-typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
-typedef void (APIENTRY *glPushDebugGroup_t)(GLenum source, GLuint id, GLsizei length, const char* message);
-typedef void (APIENTRY *glPopDebugGroup_t)(void);
-
-static glPushDebugGroup_t glPushDebugGroup;
-static glPopDebugGroup_t glPopDebugGroup;
-// </debug-functions>
-
 void GL_BindBuffer(buffer_ref ref);
 
 const char *gl_vendor;
@@ -82,39 +64,6 @@ cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
-// Debugging
-#ifdef _WIN32
-void APIENTRY MessageCallback( GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar* message,
-	const void* userParam
-)
-{
-	if (source != GL_DEBUG_SOURCE_APPLICATION) {
-		char buffer[1024] = { 0 };
-
-		if (type == GL_DEBUG_TYPE_ERROR) {
-			snprintf(buffer, sizeof(buffer) - 1,
-					 "GL CALLBACK: ** GL ERROR ** type = 0x%x, severity = 0x%x, message = %s\n",
-					 type, severity, message);
-		}
-		else {
-			snprintf(buffer, sizeof(buffer) - 1,
-					 "GL CALLBACK: type = 0x%x, severity = 0x%x, message = %s\n",
-					 type, severity, message);
-		}
-
-		OutputDebugString(buffer);
-	}
-}
-#endif
-
-glObjectLabel_t glObjectLabel;
-glGetObjectLabel_t glGetObjectLabel;
-
 static qbool shaders_supported = false;
 
 qbool GL_ShadersSupported(void)
@@ -137,7 +86,7 @@ static void GL_CheckShaderExtensions(void)
 	GL_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	if (GL_UseGLSL() && glConfig.majorVersion >= 2) {
+	if (GL_UseGLSL() && glConfig.majorVersion >= 2 && GL_BuffersSupported()) {
 		shaders_supported = GLM_LoadProgramFunctions();
 		shaders_supported &= GLM_LoadStateFunctions();
 		shaders_supported &= GLM_LoadTextureManagementFunctions();
@@ -320,147 +269,9 @@ void VID_SetPalette (unsigned char *palette) {
 	d_8to24table2[255] = 0;	// 255 is transparent
 }
 
-#undef glDisable
-#undef glEnable
-
 void GL_AlphaFunc(GLenum func, GLclampf threshold)
 {
 	if (GL_UseImmediateMode()) {
 		glAlphaFunc(func, threshold);
 	}
 }
-
-#ifdef WITH_OPENGL_TRACE
-void Dev_VidFrameTrace(void)
-{
-	dev_frame_debug_queued = true;
-}
-#endif
-
-static void GL_InitialiseDebugging(void)
-{
-#ifdef _WIN32
-	// During init, enable debug output
-	if (IsDebuggerPresent()) {
-		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
-
-		if (glDebugMessageCallback) {
-			glEnable(GL_DEBUG_OUTPUT);
-			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
-		}
-	}
-#endif
-
-	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
-	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
-	glPushDebugGroup = (glPushDebugGroup_t)SDL_GL_GetProcAddress("glPushDebugGroup");
-	glPopDebugGroup = (glPopDebugGroup_t)SDL_GL_GetProcAddress("glPopDebugGroup");
-}
-
-#ifdef WITH_OPENGL_TRACE
-static int debug_frame_depth = 0;
-static unsigned long regions_trace_only;
-FILE* debug_frame_out;
-
-void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
-{
-	if (GL_UseGLSL()) {
-		if (!trace_only && glPushDebugGroup) {
-			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
-		}
-	}
-	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Enter: %.*s %s {\n", debug_frame_depth, "                                                          ", regionName);
-		debug_frame_depth += DEBUG_FRAME_DEPTH_CHARS;
-	}
-
-	regions_trace_only <<= 1;
-	regions_trace_only &= (trace_only ? 1 : 0);
-}
-
-void GL_LeaveTracedRegion(qbool trace_only)
-{
-	if (GL_UseGLSL()) {
-		if (!trace_only && glPopDebugGroup) {
-			glPopDebugGroup();
-		}
-	}
-	else if (debug_frame_out) {
-		debug_frame_depth -= DEBUG_FRAME_DEPTH_CHARS;
-		debug_frame_depth = max(debug_frame_depth, 0);
-		fprintf(debug_frame_out, "Leave: %.*s }\n", debug_frame_depth, "                                                          ");
-	}
-}
-
-void GL_MarkEvent(const char* format, ...)
-{
-	va_list argptr;
-	char msg[4096];
-
-	va_start(argptr, format);
-	vsnprintf(msg, sizeof(msg), format, argptr);
-	va_end(argptr);
-
-	if (GL_UseGLSL()) {
-		//nvtxMark(va(msg));
-	}
-	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
-	}
-}
-
-qbool GL_LoggingEnabled(void)
-{
-	return debug_frame_out != NULL;
-}
-
-void GL_LogAPICall(const char* format, ...)
-{
-	if (GL_UseImmediateMode() && debug_frame_out) {
-		va_list argptr;
-		char msg[4096];
-
-		va_start(argptr, format);
-		vsnprintf(msg, sizeof(msg), format, argptr);
-		va_end(argptr);
-
-		fprintf(debug_frame_out, "API:   %.*s %s\n", debug_frame_depth, "                                                          ", msg);
-	}
-}
-
-void GL_ResetRegion(qbool start)
-{
-	if (start && debug_frame_out) {
-		fclose(debug_frame_out);
-		debug_frame_out = NULL;
-	}
-	else if (start && dev_frame_debug_queued) {
-		char fileName[MAX_PATH];
-#ifndef _WIN32
-		time_t t;
-		struct tm date;
-		t = time(NULL);
-		localtime_r(&t, &date);
-
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-				 com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
-#else
-		SYSTEMTIME date;
-		GetLocalTime(&date);
-
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-				 com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
-#endif
-
-		debug_frame_out = fopen(fileName, "wt");
-		dev_frame_debug_queued = false;
-	}
-
-	if (GL_UseImmediateMode() && debug_frame_out) {
-		fprintf(debug_frame_out, "---Reset---\n");
-		debug_frame_depth = 0;
-	}
-}
-
-#endif

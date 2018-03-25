@@ -171,9 +171,7 @@ buffer_ref GL_GenFixedBuffer(GLenum target, const char* name, GLsizei size, void
 
 	buffer->persistent_mapped_ptr = NULL;
 	GL_BindBufferImpl(target, buffer->glref);
-	if (glObjectLabel && name) {
-		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
-	}
+	GL_ObjectLabel(GL_BUFFER, buffer->glref, -1, name);
 	qglBufferData(target, size, data, usage);
 	result.index = buffer - buffers;
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
@@ -239,9 +237,7 @@ buffer_ref GL_CreateFixedBuffer(GLenum target, const char* name, GLsizei size, v
 		buffer->size = size = ((size + (alignment - 1)) / alignment) * alignment;
 	}
 
-	if (glObjectLabel && name) {
-		glObjectLabel(GL_BUFFER, buffer->glref, -1, name);
-	}
+	GL_ObjectLabel(GL_BUFFER, buffer->glref, -1, name);
 
 	if (tripleBuffer) {
 		qglBufferStorage(target, size * 3, NULL, storageFlags);
@@ -627,9 +623,7 @@ void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 	}
 	qglGenVertexArrays(1, &vao->vao);
 	GL_BindVertexArray(vao);
-	if (glObjectLabel) {
-		glObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
-	}
+	GL_ObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
 	GL_SetElementArrayBuffer(null_buffer_reference);
 }
 
