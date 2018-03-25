@@ -601,50 +601,41 @@ void QMB_ClearParticles (void)
 	ParticleCount = 0;
 	ParticleCountHigh = 0;
 }
-/*
-static void QMB_SetParticleVertex(int pos, float x, float y, float z, float s, float t, col_t colour)
-{
-	VectorSet(vertices[pos].position, x, y, z);
-	vertices[pos].tex[0] = s;
-	vertices[pos].tex[1] = t;
-	memcpy(vertices[pos].color, colour, sizeof(vertices[pos].color));
-}*/
-
-static void QMB_AdjustColor(col_t input, part_blend_info_t* blending, col_t output)
-{
-	if (blending->zero_color) {
-		output[0] = output[1] = output[2] = 0;
-	}
-	else {
-		output[0] = (byte)(((int)input[0] * (int)input[3]) / 255.0f);
-		output[1] = (byte)(((int)input[1] * (int)input[3]) / 255.0f);
-		output[2] = (byte)(((int)input[2] * (int)input[3]) / 255.0f);
-		output[3] = input[3];
-	}
-
-	if (blending->fixed_alpha == 0) {
-		output[3] = 0;
-	}
-	else if (blending->fixed_alpha == 1) {
-		output[3] = 255;
-	}
-}
 
 static void QMB_BillboardAddVert(gl_sprite3d_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
 
-	QMB_AdjustColor(color, blend, new_color);
+	new_color[3] = color[3];
+	if (blend->zero_color) {
+		new_color[0] = new_color[1] = new_color[2] = 0;
+	}
+	else {
+		float alpha = color[3] / 255.0f;
+
+		new_color[0] = color[0] * alpha;
+		new_color[1] = color[1] * alpha;
+		new_color[2] = color[2] * alpha;
+	}
+
+	if (blend->fixed_alpha == 0) {
+		new_color[3] = 0;
+	}
+	else if (blend->fixed_alpha == 1) {
+		new_color[3] = 255;
+	}
 
 	GL_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
 
 __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
 {
+	part_blend_info_t* blend = &blend_options[type->blendtype];
 	vec3_t verts[4];
 	float scale = p->size;
 	gl_sprite3d_vert_t* vert;
+	col_t new_color;
 
 	vert = GL_Sprite3DAddEntry(type->billboard_type, 4);
 	if (!vert) {
@@ -673,10 +664,33 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 		VectorMA(p->org, scale, coord[3], verts[3]);
 	}
 
-	QMB_BillboardAddVert(vert++, type, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
-	QMB_BillboardAddVert(vert++, type, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
-	QMB_BillboardAddVert(vert++, type, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
-	QMB_BillboardAddVert(vert++, type, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
+	// Set color
+	if (blend->zero_color) {
+		new_color[0] = new_color[1] = new_color[2] = 0;
+	}
+	else {
+		float alpha = p->color[3] / 255.0f;
+
+		new_color[0] = p->color[0] * alpha;
+		new_color[1] = p->color[1] * alpha;
+		new_color[2] = p->color[2] * alpha;
+	}
+
+	// set alpha
+	if (blend->fixed_alpha == 0) {
+		new_color[3] = 0;
+	}
+	else if (blend->fixed_alpha == 1) {
+		new_color[3] = 255;
+	}
+	else {
+		new_color[3] = p->color[3];
+	}
+
+	GL_Sprite3DSetVert(vert++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
+	GL_Sprite3DSetVert(vert++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
+	GL_Sprite3DSetVert(vert++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
+	GL_Sprite3DSetVert(vert++, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
 
 	return;
 }
