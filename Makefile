@@ -394,7 +394,8 @@ OBJS_c := \
     gl_drawcall_wrappers.o \
     gl_debug.o \
     hud_autoid.o \
-    cl_screenshot.o
+    cl_screenshot.o \
+    gl_rpart_spawn.o
 
 ### Configuration Options ###
 
