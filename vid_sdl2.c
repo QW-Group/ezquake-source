@@ -1432,6 +1432,7 @@ static void GfxInfo_f(void)
 	if (r_showextensions.value) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
 		if (glConfig.majorVersion >= 3) {
+			typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
 			glGetStringi_t glGetStringi = (glGetStringi_t)SDL_GL_GetProcAddress("glGetStringi");
 			if (glGetStringi) {
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);

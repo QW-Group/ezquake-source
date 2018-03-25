@@ -62,7 +62,7 @@ void GLM_PrepareLines(void)
 		}
 
 		if (line_program.program && !line_program.uniforms_found) {
-			line_matrix = glGetUniformLocation(line_program.program, "matrix");
+			line_matrix = GL_UniformGetLocation(line_program.program, "matrix");
 			line_program.uniforms_found = true;
 		}
 	}
@@ -101,7 +101,7 @@ void GLM_DrawLines(int start, int end)
 
 		GL_UseProgram(line_program.program);
 		GLM_GetMatrix(GL_PROJECTION, matrix);
-		glUniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
+		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
 		GL_BindVertexArray(&line_vao);
 
 		for (i = start; i <= end; ++i) {

@@ -50,7 +50,7 @@ void GLM_DrawCircles(int start, int end)
 	GL_BindVertexArray(&circleVAO);
 
 	for (i = start; i <= end; ++i) {
-		glUniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
+		GL_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
 
 		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, offset + i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
 	}
@@ -90,8 +90,8 @@ void GLM_PrepareCircles(void)
 		}
 
 		if (!circleProgram.uniforms_found) {
-			drawCircleUniforms_matrix = glGetUniformLocation(circleProgram.program, "matrix");
-			drawCircleUniforms_color = glGetUniformLocation(circleProgram.program, "color");
+			drawCircleUniforms_matrix = GL_UniformGetLocation(circleProgram.program, "matrix");
+			drawCircleUniforms_color = GL_UniformGetLocation(circleProgram.program, "color");
 
 			circleProgram.uniforms_found = true;
 		}

@@ -54,6 +54,15 @@ static GLsync tripleBufferSyncObjects[3];
 static glm_vao_t* vao_list = NULL;
 static glm_vao_t* currentVAO = NULL;
 
+// VAOs
+typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
+typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
+typedef void (APIENTRY *glDeleteVertexArrays_t)(GLsizei n, const GLuint* arrays);
+typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
+typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+typedef void (APIENTRY *glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
+
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);
 typedef void (APIENTRY *glBufferData_t)(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
 typedef void (APIENTRY *glBufferSubData_t)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);

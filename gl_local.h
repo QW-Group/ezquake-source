@@ -384,117 +384,27 @@ void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
 
-// General
-typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
-
-// VAOs
-typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
-typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
-typedef void (APIENTRY *glDeleteVertexArrays_t)(GLsizei n, const GLuint* arrays);
-typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
-typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
-
-// Shader functions
-typedef GLuint (APIENTRY *glCreateShader_t)(GLenum shaderType);
-typedef void (APIENTRY *glShaderSource_t)(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
-typedef void (APIENTRY *glCompileShader_t)(GLuint shader);
-typedef void (APIENTRY *glDeleteShader_t)(GLuint shader);
-typedef void (APIENTRY *glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
-typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
-
-// Program functions
-typedef GLuint(APIENTRY *glCreateProgram_t)(void);
-typedef void (APIENTRY *glLinkProgram_t)(GLuint program);
-typedef void (APIENTRY *glDeleteProgram_t)(GLuint program);
-typedef void (APIENTRY *glGetProgramInfoLog_t)(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
-typedef void (APIENTRY *glUseProgram_t)(GLuint program);
-typedef void (APIENTRY *glAttachShader_t)(GLuint program, GLuint shader);
-typedef void (APIENTRY *glDetachShader_t)(GLuint program, GLuint shader);
-typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* params);
-
-// Uniforms
-typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
-typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat v0);
-typedef void (APIENTRY *glUniform1fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniform2f_t)(GLint location, GLfloat v0, GLfloat v1);
-typedef void (APIENTRY *glUniform3f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
-typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniform4f_t)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
-typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
-typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLint location, GLint v0);
-typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniform1iv_t)(GLint location, GLsizei count, const GLint *value);
-typedef GLuint (APIENTRY *glGetUniformBlockIndex_t)(GLuint program, const GLchar * uniformBlockName);
-typedef void (APIENTRY *glUniformBlockBinding_t)(GLuint program, GLuint uBlockIndex, GLuint uBlockBinding);
-typedef void (APIENTRY *glGetActiveUniformBlockiv_t)(GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params);
+qbool GLM_LoadProgramFunctions(void);
 
 // Textures
-typedef void (APIENTRY *glActiveTexture_t)(GLenum texture);
 typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
 typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 
-// Images
-typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-
-// Compute shaders
-typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
-
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
-
-// Shader functions
-extern glCreateShader_t      glCreateShader;
-extern glShaderSource_t      glShaderSource;
-extern glCompileShader_t     glCompileShader;
-extern glDeleteShader_t      glDeleteShader;
-extern glGetShaderInfoLog_t  glGetShaderInfoLog;
-extern glGetShaderiv_t       glGetShaderiv;
-
-// Program functions
-extern glCreateProgram_t     glCreateProgram;
-extern glLinkProgram_t       glLinkProgram;
-extern glDeleteProgram_t     glDeleteProgram;
-extern glGetProgramInfoLog_t glGetProgramInfoLog;
-extern glUseProgram_t        glUseProgram;
-extern glAttachShader_t      glAttachShader;
-extern glDetachShader_t      glDetachShader;
-extern glGetProgramiv_t      glGetProgramiv;
-
-// Uniforms
-extern glGetUniformLocation_t   glGetUniformLocation;
-extern glUniform1f_t            glUniform1f;
-extern glUniform1fv_t           glUniform1fv;
-extern glUniform2f_t            glUniform2f;
-extern glUniform3f_t            glUniform3f;
-extern glUniform3fv_t           glUniform3fv;
-extern glUniform4f_t            glUniform4f;
-extern glUniform1i_t            glUniform1i;
-extern glProgramUniform1i_t     glProgramUniform1i;
-extern glUniform4fv_t           glUniform4fv;
-extern glUniform1iv_t           glUniform1iv;
-extern glUniformMatrix4fv_t     glUniformMatrix4fv;
-extern glGetUniformBlockIndex_t glGetUniformBlockIndex;
-extern glUniformBlockBinding_t  glUniformBlockBinding;
-extern glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
 
 // Textures
 extern glActiveTexture_t        glActiveTexture;
 extern glBindTextures_t         glBindTextures;
 
 // Images
+typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+// Images
 extern glBindImageTexture_t     glBindImageTexture;
-
-// Compute shaders
-extern glDispatchCompute_t      glDispatchCompute;
-extern glMemoryBarrier_t        glMemoryBarrier;
 
 // Debug functions
 extern glObjectLabel_t glObjectLabel;
@@ -1201,6 +1111,18 @@ uintptr_t GL_BufferOffset(buffer_ref ref);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadOptionalFunction(functionName) { functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+
+void GLM_UploadFrameConstants(void);
+void GL_InitialiseProgramState(void);
+
+void GL_Uniform1i(GLint location, GLint value);
+void GL_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
+void GL_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values);
+GLint GL_UniformGetLocation(GLuint program, const char* name);
+
+void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+void GL_MemoryBarrier(GLbitfield barriers);
+
 #endif /* !__GL_LOCAL_H__ */
-
-

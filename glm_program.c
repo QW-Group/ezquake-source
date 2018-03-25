@@ -6,6 +6,57 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
+// Cached OpenGL state
+static GLuint currentProgram = 0;
+
+// Shader functions
+typedef GLuint(APIENTRY *glCreateShader_t)(GLenum shaderType);
+typedef void (APIENTRY *glShaderSource_t)(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
+typedef void (APIENTRY *glCompileShader_t)(GLuint shader);
+typedef void (APIENTRY *glDeleteShader_t)(GLuint shader);
+typedef void (APIENTRY *glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
+
+// Program functions
+typedef GLuint(APIENTRY *glCreateProgram_t)(void);
+typedef void (APIENTRY *glLinkProgram_t)(GLuint program);
+typedef void (APIENTRY *glDeleteProgram_t)(GLuint program);
+typedef void (APIENTRY *glGetProgramInfoLog_t)(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY *glUseProgram_t)(GLuint program);
+typedef void (APIENTRY *glAttachShader_t)(GLuint program, GLuint shader);
+typedef void (APIENTRY *glDetachShader_t)(GLuint program, GLuint shader);
+typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* params);
+
+// Uniforms
+typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
+typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
+typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+
+// Shader functions
+static glCreateShader_t      glCreateShader = NULL;
+static glShaderSource_t      glShaderSource = NULL;
+static glCompileShader_t     glCompileShader = NULL;
+static glDeleteShader_t      glDeleteShader = NULL;
+static glGetShaderInfoLog_t  glGetShaderInfoLog = NULL;
+static glGetShaderiv_t       glGetShaderiv = NULL;
+
+// Program functions
+static glCreateProgram_t     glCreateProgram = NULL;
+static glLinkProgram_t       glLinkProgram = NULL;
+static glDeleteProgram_t     glDeleteProgram = NULL;
+static glGetProgramiv_t      glGetProgramiv = NULL;
+static glGetProgramInfoLog_t glGetProgramInfoLog = NULL;
+static glUseProgram_t        glUseProgram = NULL;
+static glAttachShader_t      glAttachShader = NULL;
+static glDetachShader_t      glDetachShader = NULL;
+
+// Uniform functions
+static glGetUniformLocation_t      glGetUniformLocation = NULL;
+static glUniform1i_t               glUniform1i;
+static glUniformMatrix4fv_t        glUniformMatrix4fv;
+static glUniform4fv_t              glUniform4fv;
+
 #define MAX_SHADER_COMPONENTS 6
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
@@ -466,4 +517,71 @@ qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader
 		}
 	}
 	return false;
+}
+
+qbool GLM_LoadProgramFunctions(void)
+{
+	qbool all_available = true;
+
+	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glShaderSource, all_available);
+	GL_LoadMandatoryFunctionExtension(glCompileShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glDeleteShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glGetShaderInfoLog, all_available);
+	GL_LoadMandatoryFunctionExtension(glGetShaderiv, all_available);
+
+	GL_LoadMandatoryFunctionExtension(glCreateProgram, all_available);
+	GL_LoadMandatoryFunctionExtension(glLinkProgram, all_available);
+	GL_LoadMandatoryFunctionExtension(glDeleteProgram, all_available);
+	GL_LoadMandatoryFunctionExtension(glUseProgram, all_available);
+	GL_LoadMandatoryFunctionExtension(glAttachShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glDetachShader, all_available);
+	GL_LoadMandatoryFunctionExtension(glGetProgramInfoLog, all_available);
+	GL_LoadMandatoryFunctionExtension(glGetProgramiv, all_available);
+
+	GL_LoadMandatoryFunctionExtension(glGetUniformLocation, all_available);
+	GL_LoadMandatoryFunctionExtension(glUniform1i, all_available);
+	GL_LoadMandatoryFunctionExtension(glUniform4fv, all_available);
+	GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, all_available);
+
+	return all_available;
+}
+
+void GL_UseProgram(GLuint program)
+{
+	if (program != currentProgram) {
+		glUseProgram(program);
+
+		currentProgram = program;
+	}
+
+	if (program != 0) {
+		GLM_UploadFrameConstants();
+	}
+}
+
+void GL_InitialiseProgramState(void)
+{
+	currentProgram = 0;
+}
+
+void GL_Uniform1i(GLint location, GLint value)
+{
+	glUniform1i(location, value);
+}
+
+void GL_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
+{
+	glUniform4fv(location, count, values);
+}
+
+void GL_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
+{
+	glUniformMatrix4fv(location, count, transpose, values);
+}
+
+GLint GL_UniformGetLocation(GLuint program, const char* name)
+{
+	return glGetUniformLocation(program, name);
 }

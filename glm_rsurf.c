@@ -181,7 +181,7 @@ static void Compile_DrawWorldProgram(void)
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
-		drawWorld_outlines = glGetUniformLocation(drawworld.program, "draw_outlines");
+		drawWorld_outlines = GL_UniformGetLocation(drawworld.program, "draw_outlines");
 
 		ssbo_worldcvars = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, buffertype_use_once);
 		ssbo_worldsamplers = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, buffertype_use_once);
@@ -511,7 +511,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	uintptr_t extra_offset = GL_BufferOffset(vbo_worldIndirectDraw);
 
 	//
-	glUniform1i(drawWorld_outlines, 1);
+	GL_Uniform1i(drawWorld_outlines, 1);
 
 	GLM_StateBeginDrawWorldOutlines();
 
@@ -546,7 +546,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
-	glUniform1i(drawWorld_outlines, 0);
+	GL_Uniform1i(drawWorld_outlines, 0);
 
 	GLM_StateEndDrawWorldOutlines();
 }

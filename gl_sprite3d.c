@@ -292,7 +292,7 @@ static void GLM_Compile3DSpriteProgram(void)
 	}
 
 	if (sprite3dProgram.program && !sprite3dProgram.uniforms_found) {
-		sprite3dUniform_alpha_test = glGetUniformLocation(sprite3dProgram.program, "alpha_test");
+		sprite3dUniform_alpha_test = GL_UniformGetLocation(sprite3dProgram.program, "alpha_test");
 
 		sprite3dProgram.uniforms_found = true;
 	}
@@ -447,7 +447,7 @@ void GLM_Draw3DSprites(void)
 			GL_Disable(GL_DEPTH_TEST);
 		}
 		if (first_batch || current_alpha_test != alpha_test) {
-			glUniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
+			GL_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
 		}
 		first_batch = false;
 

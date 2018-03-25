@@ -61,7 +61,7 @@ static int cached_mode;
 static void SetAliasModelMode(int mode)
 {
 	if (cached_mode != mode) {
-		glUniform1i(drawAliasModel_mode, mode);
+		GL_Uniform1i(drawAliasModel_mode, mode);
 		cached_mode = mode;
 	}
 }
@@ -105,7 +105,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
-		drawAliasModel_mode = glGetUniformLocation(drawAliasModelProgram.program, "mode");
+		drawAliasModel_mode = GL_UniformGetLocation(drawAliasModelProgram.program, "mode");
 		cached_mode = 0;
 
 		drawAliasModelProgram.uniforms_found = true;

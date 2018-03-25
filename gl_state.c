@@ -33,7 +33,6 @@ static GLenum currentBlendDFactor = GL_ZERO;
 // FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 static GLint currentViewportX = 0, currentViewportY = 0;
 static GLsizei currentViewportWidth, currentViewportHeight;
-static GLuint currentProgram = 0;
 static qbool gl_depthTestEnabled = false;
 static qbool gl_framebuffer_srgb = false;
 static qbool gl_blend = false;
@@ -196,8 +195,6 @@ void GL_InitialiseState(void)
 	currentViewportWidth = 0;
 	currentViewportHeight = 0;
 
-	currentProgram = 0;
-
 	gl_depthTestEnabled = false;
 	gl_framebuffer_srgb = false;
 	gl_blend = false;
@@ -222,8 +219,8 @@ void GL_InitialiseState(void)
 	memset(bound_images, 0, sizeof(bound_images));
 	memset(texunitenabled, 0, sizeof(texunitenabled));
 
-	// Buffers
 	GL_InitialiseBufferState();
+	GL_InitialiseProgramState();
 }
 
 // These functions taken from gl_texture.c
@@ -346,19 +343,6 @@ void GL_InitTextureState(void)
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(texunitenabled, 0, sizeof(texunitenabled));
-}
-
-void GL_UseProgram(GLuint program)
-{
-	void GLM_UploadFrameConstants(void);
-
-	if (program != currentProgram) {
-		glUseProgram(program);
-
-		currentProgram = program;
-	}
-
-	GLM_UploadFrameConstants();
 }
 
 void GL_DepthMask(GLboolean mask)

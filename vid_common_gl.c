@@ -170,45 +170,13 @@ void APIENTRY MessageCallback( GLenum source,
 }
 #endif
 
-// Shader functions
-glCreateShader_t      glCreateShader = NULL;
-glShaderSource_t      glShaderSource = NULL;
-glCompileShader_t     glCompileShader = NULL;
-glDeleteShader_t      glDeleteShader = NULL;
-glGetShaderInfoLog_t  glGetShaderInfoLog = NULL;
-glGetShaderiv_t       glGetShaderiv = NULL;
-
-// Program functions
-glCreateProgram_t     glCreateProgram = NULL;
-glLinkProgram_t       glLinkProgram = NULL;
-glDeleteProgram_t     glDeleteProgram = NULL;
-glGetProgramiv_t      glGetProgramiv = NULL;
-glGetProgramInfoLog_t glGetProgramInfoLog = NULL;
-glUseProgram_t        glUseProgram = NULL;
-glAttachShader_t      glAttachShader = NULL;
-glDetachShader_t      glDetachShader = NULL;
-
-// Uniforms
-glGetUniformLocation_t      glGetUniformLocation = NULL;
-glUniform1f_t               glUniform1f;
-glUniform1fv_t              glUniform1fv;
-glUniform2f_t               glUniform2f;
-glUniform3f_t               glUniform3f;
-glUniform3fv_t              glUniform3fv;
-glUniform4f_t               glUniform4f;
-glUniform1i_t               glUniform1i;
-glProgramUniform1i_t        glProgramUniform1i;
-glUniformMatrix4fv_t        glUniformMatrix4fv;
-glUniform4fv_t              glUniform4fv;
-glUniform1iv_t              glUniform1iv;
-glGetUniformBlockIndex_t    glGetUniformBlockIndex;
-glUniformBlockBinding_t     glUniformBlockBinding;
-glGetActiveUniformBlockiv_t glGetActiveUniformBlockiv;
-
 // Compute shaders
+typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
+
 glBindImageTexture_t glBindImageTexture;
-glDispatchCompute_t  glDispatchCompute;
-glMemoryBarrier_t    glMemoryBarrier;
+static glDispatchCompute_t  glDispatchCompute;
+static glMemoryBarrier_t    glMemoryBarrier;
 
 // Texture functions
 glActiveTexture_t               glActiveTexture;
@@ -279,40 +247,7 @@ static void GL_CheckShaderExtensions(void)
 
 	if (GL_UseGLSL()) {
 		if (glConfig.majorVersion >= 2) {
-			shaders_supported = true;
-			OPENGL_LOAD_SHADER_FUNCTION(glCreateShader);
-			OPENGL_LOAD_SHADER_FUNCTION(glShaderSource);
-			OPENGL_LOAD_SHADER_FUNCTION(glCompileShader);
-			OPENGL_LOAD_SHADER_FUNCTION(glDeleteShader);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderInfoLog);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetShaderiv);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glCreateProgram);
-			OPENGL_LOAD_SHADER_FUNCTION(glLinkProgram);
-			OPENGL_LOAD_SHADER_FUNCTION(glDeleteProgram);
-			OPENGL_LOAD_SHADER_FUNCTION(glUseProgram);
-			OPENGL_LOAD_SHADER_FUNCTION(glAttachShader);
-			OPENGL_LOAD_SHADER_FUNCTION(glDetachShader);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetProgramInfoLog);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetProgramiv);
-
-			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformLocation);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform1f);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform1fv);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform2f);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform3f);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform3fv);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform4f);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform1i);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform4fv);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniform1iv);
-			OPENGL_LOAD_SHADER_FUNCTION(glProgramUniform1i);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniformMatrix4fv);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformBlockIndex);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetUniformBlockIndex);
-			OPENGL_LOAD_SHADER_FUNCTION(glUniformBlockBinding);
-			OPENGL_LOAD_SHADER_FUNCTION(glGetActiveUniformBlockiv);
+			shaders_supported = GLM_LoadProgramFunctions();
 
 			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
@@ -977,4 +912,15 @@ void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
 	GL_LogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
+}
+
+// Compute shaders
+void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
+{
+	glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
+}
+
+void GL_MemoryBarrier(GLbitfield barriers)
+{
+	glMemoryBarrier(barriers);
 }

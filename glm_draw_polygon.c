@@ -46,8 +46,8 @@ void GLM_PreparePolygons(void)
 		}
 
 		if (!polygonProgram.uniforms_found) {
-			polygonUniforms_matrix = glGetUniformLocation(polygonProgram.program, "matrix");
-			polygonUniforms_color = glGetUniformLocation(polygonProgram.program, "color");
+			polygonUniforms_matrix = GL_UniformGetLocation(polygonProgram.program, "matrix");
+			polygonUniforms_color = GL_UniformGetLocation(polygonProgram.program, "color");
 			polygonProgram.uniforms_found = true;
 		}
 
@@ -96,12 +96,12 @@ void GLM_DrawPolygons(int start, int end)
 
 	GL_Disable(GL_DEPTH_TEST);
 	GLM_GetMatrix(GL_PROJECTION, matrix);
-	glUniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
 
 	for (i = start; i <= end; ++i) {
 		GLM_TransformMatrix(matrix, polygonData.polygonX[i], polygonData.polygonY[i], 0);
 
-		glUniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
+		GL_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
 	}
