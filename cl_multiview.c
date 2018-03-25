@@ -1587,8 +1587,7 @@ int CL_MultiviewAutotrackSlot (void)
 
 qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size)
 {
-	extern vrect_t	scr_vrect;
-	extern int glx, gly, glwidth, glheight;
+	extern vrect_t scr_vrect;
 
 	float x, y;
 	float min_x = scr_vrect.x;
@@ -1597,13 +1596,12 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 	float height = scr_vrect.height;
 
 	if (use_screen_coords) {
-		min_x = glx;
-		min_y = gly;
-		width = glwidth;
-		height = glheight;
+		min_x = min_y = 0;
+		width = VID_RenderWidth2D();
+		height = VID_RenderHeight2D();
 
-		min_y += scr_vrect.y * ((float)glheight / vid.height);
-		height -= (vid.height - scr_vrect.height) * ((float)glheight / vid.height);
+		min_y += scr_vrect.y * ((float)height / vid.height);
+		height -= (vid.height - scr_vrect.height) * ((float)height / vid.height);
 	}
 
 	x = min_x + 0.5 * width;

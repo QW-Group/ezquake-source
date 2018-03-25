@@ -24,10 +24,10 @@ typedef struct framebuffer_ref_s {
 } framebuffer_ref;
 
 void GL_InitialiseFramebufferHandling(void);
-framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthBuffer);
+framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool is3D);
 void GL_FramebufferDelete(framebuffer_ref* pref);
 void GL_FramebufferStartUsing(framebuffer_ref ref);
-void GL_FramebufferStopUsing(framebuffer_ref ref);
+void GL_FramebufferStartUsingScreen(void);
 texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index);
 int GL_FrameBufferWidth(framebuffer_ref ref);
 int GL_FrameBufferHeight(framebuffer_ref ref);
@@ -41,8 +41,12 @@ extern const framebuffer_ref null_framebuffer_ref;
 #define GL_FramebufferReferenceCompare(ref1, ref2) ((ref1).index < (ref2).index ? -1 : (ref1).index > (ref2).index ? 1 : 0)
 
 void GLM_FramebufferScreenDrawStart(void);
+qbool GL_Framebuffer2DSwitch(void);
 void GLM_FramebufferPostProcessScreen(void);
-qbool GL_FramebufferEnabled(void);
-void VID_FramebufferFlip(void);
+qbool GL_FramebufferEnabled3D(void);
+qbool GL_FramebufferEnabled2D(void);
+
+#define USE_FRAMEBUFFER_SCREEN    1
+#define USE_FRAMEBUFFER_3DONLY    2
 
 #endif // __GL_FRAMEBUFFER_H__

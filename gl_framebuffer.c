@@ -129,7 +129,7 @@ void GL_InitialiseFramebufferHandling(void)
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
-framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthBuffer)
+framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool is3d)
 {
 	framebuffer_data_t* fb = NULL;
 	framebuffer_ref ref;
@@ -156,24 +156,28 @@ framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool depthB
 	memset(fb, 0, sizeof(*fb));
 
 	// Render to texture
-	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE, 1, &fb->rgbaTexture);
+	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->rgbaTexture);
+	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(fb->rgbaTexture), -1, is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+	// Create frame buffer with texture & depth
+	GL_GenFramebuffers(1, &fb->glref);
+	GL_ObjectLabel(GL_FRAMEBUFFER, fb->glref, -1, is3d ? "framebuffer(3D)" : "framebuffer(2D)");
+
 	// Depth buffer
-	if (depthBuffer) {
+	if (is3d) {
 		extern cvar_t r_24bit_depth;
 		GLenum depthFormat = r_24bit_depth.integer ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT;
 
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
+		GL_ObjectLabel(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
 		GL_RenderBufferStorage(fb->depthBuffer, depthFormat, width, height);
+		GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
 	}
 
-	// Create frame buffer with texture & depth
-	GL_GenFramebuffers(1, &fb->glref);
-	GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb->rgbaTexture), 0);
 
 	fb->status = GL_CheckFramebufferStatus(fb->glref);
@@ -211,7 +215,7 @@ void GL_FramebufferStartUsing(framebuffer_ref ref)
 	qglBindFramebuffer(GL_FRAMEBUFFER, framebuffer_data[ref.index].glref);
 }
 
-void GL_FramebufferStopUsing(framebuffer_ref ref)
+void GL_FramebufferStartUsingScreen(void)
 {
 	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

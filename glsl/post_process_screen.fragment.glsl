@@ -2,16 +2,22 @@
 
 #ezquake-definitions
 
-layout(binding = 0) uniform sampler2D materialTex;
+layout(binding = 0) uniform sampler2D base;
+#ifdef EZ_USE_OVERLAY
+layout(binding = 1) uniform sampler2D overlay;
+#endif
 
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
 void main()
 {
-	vec4 texColor;
-
-	frag_colour = texture(materialTex, TextureCoord);
+	frag_colour = texture(base, TextureCoord);
+#ifdef EZ_USE_OVERLAY
+	vec4 add = texture(overlay, TextureCoord);
+	frag_colour *= 1 - add.a;
+	frag_colour += add;
+#endif
 
 #ifdef EZ_POSTPROCESS_PALETTE
 	// apply blend & contrast

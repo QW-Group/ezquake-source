@@ -10,73 +10,111 @@
 #include "gl_framebuffer.h"
 #include "tr_types.h"
 
-static framebuffer_ref framebuffer;
+static qbool GLM_CompilePostProcessProgram(void);
+
+static framebuffer_ref framebuffer3d;
+static framebuffer_ref framebuffer2d;
 static glm_program_t post_process_program;
 static buffer_ref post_process_vbo;
 static glm_vao_t post_process_vao;
 
-static qbool GLM_CompilePostProcessProgram(void);
+extern cvar_t vid_framebuffer;
+extern cvar_t vid_framebuffer_palette;
 
-qbool GL_FramebufferEnabled(void)
+qbool GL_FramebufferEnabled3D(void)
 {
-	return GL_FramebufferReferenceIsValid(framebuffer);
+	return vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer3d);
 }
 
-void VID_FramebufferFlip(void)
+qbool GL_FramebufferEnabled2D(void)
 {
-	if (GL_FramebufferReferenceIsValid(framebuffer)) {
+	return GL_FramebufferReferenceIsValid(framebuffer2d);
+}
+
+static void VID_FramebufferFlip(void)
+{
+	qbool flip3d = vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer3d);
+	qbool flip2d = vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY && GL_FramebufferReferenceIsValid(framebuffer2d);
+
+	if (flip3d || flip2d) {
 		// render to screen from now on
-		GL_FramebufferStopUsing(framebuffer);
+		GL_FramebufferStartUsingScreen();
 
 		if (GLM_CompilePostProcessProgram()) {
 			GL_UseProgram(post_process_program.program);
 			GL_BindVertexArray(&post_process_vao);
 
-			GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer, 0));
+			if (flip2d && flip3d) {
+				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer3d, 0));
+				GL_EnsureTextureUnitBound(GL_TEXTURE1, GL_FramebufferTextureReference(framebuffer2d, 0));
+			}
+			else if (flip3d) {
+				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer3d, 0));
+			}
+			else if (flip2d) {
+				GL_EnsureTextureUnitBound(GL_TEXTURE0, GL_FramebufferTextureReference(framebuffer2d, 0));
+			}
 			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
-		else {
-			GL_FramebufferBlitSimple(framebuffer, null_framebuffer_ref);
+		else if (flip3d) {
+			GL_FramebufferBlitSimple(framebuffer3d, null_framebuffer_ref);
 		}
 	}
 }
 
-void GLM_FramebufferScreenDrawStart(void)
+static qbool VID_FramebufferInit(framebuffer_ref* framebuffer, int effective_width, int effective_height, qbool is3D)
 {
-	extern cvar_t vid_framebuffer;
-
-	int effective_width = vid_framebuffer.integer != 0 ? VID_ScaledWidth3D() : 0;
-	int effective_height = vid_framebuffer.integer != 0 ? VID_ScaledHeight3D() : 0;
-
 	if (effective_width && effective_height) {
-		if (!GL_FramebufferReferenceIsValid(framebuffer)) {
-			framebuffer = GL_FramebufferCreate(effective_width, effective_height, true);
+		if (!GL_FramebufferReferenceIsValid(*framebuffer)) {
+			*framebuffer = GL_FramebufferCreate(effective_width, effective_height, is3D);
 		}
-		else if (GL_FrameBufferWidth(framebuffer) != effective_width || GL_FrameBufferHeight(framebuffer) != effective_height) {
-			GL_FramebufferDelete(&framebuffer);
+		else if (GL_FrameBufferWidth(*framebuffer) != effective_width || GL_FrameBufferHeight(*framebuffer) != effective_height) {
+			GL_FramebufferDelete(framebuffer);
 
-			framebuffer = GL_FramebufferCreate(effective_width, effective_height, true);
+			*framebuffer = GL_FramebufferCreate(effective_width, effective_height, is3D);
 		}
 
-		if (GL_FramebufferReferenceIsValid(framebuffer)) {
-			GL_Viewport(0, 0, effective_width, effective_height);
-			GL_FramebufferStartUsing(framebuffer);
+		if (GL_FramebufferReferenceIsValid(*framebuffer)) {
+			GL_FramebufferStartUsing(*framebuffer);
+			return true;
 		}
 	}
 	else {
-		if (GL_FramebufferReferenceIsValid(framebuffer)) {
-			GL_FramebufferDelete(&framebuffer);
+		if (GL_FramebufferReferenceIsValid(*framebuffer)) {
+			GL_FramebufferDelete(framebuffer);
 		}
 	}
+
+	return false;
+}
+
+void GLM_FramebufferScreenDrawStart(void)
+{
+	if (vid_framebuffer.integer) {
+		VID_FramebufferInit(&framebuffer3d, VID_ScaledWidth3D(), VID_ScaledHeight3D(), true);
+	}
+}
+
+qbool GL_Framebuffer2DSwitch(void)
+{
+	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+		if (VID_FramebufferInit(&framebuffer2d, glConfig.vidWidth, glConfig.vidHeight, false)) {
+			GL_ClearColor(0, 0, 0, 0);
+			GL_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+			glClear(GL_COLOR_BUFFER_BIT);
+			return true;
+		}
+	}
+	
+	GL_Viewport(glx, gly, glwidth, glheight);
+	return false;
 }
 
 // If this returns false then the framebuffer will be blitted instead
 static qbool GLM_CompilePostProcessProgram(void)
 {
-	extern cvar_t vid_framebuffer_palette;
-
-	// This is all we have at the moment, can just blit if turned off
-	if (!vid_framebuffer_palette.integer) {
+	if (vid_framebuffer.integer == 1 && !vid_framebuffer_palette.integer) {
+		// Screen-wide framebuffer, so we can just blit if turned off
 		return false;
 	}
 
@@ -87,6 +125,9 @@ static qbool GLM_CompilePostProcessProgram(void)
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (vid_framebuffer_palette.integer) {
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
+		}
+		if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+			strlcat(included_definitions, "#define EZ_USE_OVERLAY\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image
@@ -132,8 +173,9 @@ static qbool GLM_CompilePostProcessProgram(void)
 void GLM_FramebufferPostProcessScreen(void)
 {
 	extern cvar_t vid_framebuffer, vid_framebuffer_palette;
+	qbool framebuffer_active = (GL_FramebufferReferenceIsValid(framebuffer3d) || GL_FramebufferReferenceIsValid(framebuffer2d));
 
-	if (vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer)) {
+	if (framebuffer_active) {
 		GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 
 		VID_FramebufferFlip();

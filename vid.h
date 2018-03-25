@@ -63,6 +63,9 @@ void VID_Init (unsigned char *palette);
 int VID_ScaledWidth3D(void);
 int VID_ScaledHeight3D(void);
 
+int VID_RenderWidth2D(void);
+int VID_RenderHeight2D(void);
+
 void VID_Shutdown (qbool restart);
 // Called at shutdown
 

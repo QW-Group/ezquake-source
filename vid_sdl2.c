@@ -1299,7 +1299,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
 
-	if (GL_FramebufferEnabled()) {
+	if (GL_FramebufferEnabled3D()) {
 		int scaled_width = VID_ScaledWidth3D();
 		int scaled_height = VID_ScaledHeight3D();
 
@@ -1609,8 +1609,8 @@ static void VID_UpdateConRes(void)
 	int vidWidth = glConfig.vidWidth;
 	int vidHeight = glConfig.vidHeight;
 
-	int effective_width = vid_framebuffer.integer != 0 ? VID_ScaledWidth3D() : 0;
-	int effective_height = vid_framebuffer.integer != 0 ? VID_ScaledHeight3D() : 0;
+	int effective_width = vid_framebuffer.integer == 1 ? VID_ScaledWidth3D() : 0;
+	int effective_height = vid_framebuffer.integer == 1 ? VID_ScaledHeight3D() : 0;
 
 	if (effective_width && effective_height) {
 		vidWidth = effective_width;
@@ -1755,4 +1755,20 @@ int VID_ScaledHeight3D(void)
 		return max(vid_framebuffer_height.integer, 200);
 	}
 	return 0;
+}
+
+int VID_RenderWidth2D(void)
+{
+	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+		return glConfig.vidWidth;
+	}
+	return glwidth;
+}
+
+int VID_RenderHeight2D(void)
+{
+	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+		return glConfig.vidHeight;
+	}
+	return glheight;
 }

@@ -709,6 +709,8 @@ void Draw_Crosshair (void)
 		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
 		qbool half_size = false;
 		texture_ref texnum;
+		int width2d = VID_RenderWidth2D();
+		int height2d = VID_RenderHeight2D();
 
 		if (!crosshairalpha.value) {
 			return;
@@ -718,10 +720,10 @@ void Draw_Crosshair (void)
 			return;
 		}
 
-		GL_OrthographicProjection(0, glwidth, glheight, 0, -99999, 99999);
+		GL_OrthographicProjection(0, width2d, height2d, 0, -99999, 99999);
 
-		x += (crosshairscalemethod.integer ? 1 : (float)glwidth / vid.width) * cl_crossx.value;
-		y += (crosshairscalemethod.integer ? 1 : (float)glheight / vid.height) * cl_crossy.value;
+		x += (crosshairscalemethod.integer ? 1 : (float)width2d / vid.width) * cl_crossx.value;
+		y += (crosshairscalemethod.integer ? 1 : (float)height2d / vid.height) * cl_crossy.value;
 
 		col[0] = crosshaircolor.color[0];
 		col[1] = crosshaircolor.color[1];
@@ -1221,13 +1223,9 @@ void Draw_EndDisc (void) {}
 //
 void GL_Set2D(void)
 {
-	extern int glx, gly, glwidth, glheight;
-
-	GL_Viewport(glx, gly, glwidth, glheight);
+	GL_Framebuffer2DSwitch();
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-
 	GL_IdentityModelView();
-
 	GL_StateDefault2D();
 }
 
