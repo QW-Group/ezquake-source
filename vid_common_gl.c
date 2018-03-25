@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "image.h"
 
+static void GL_InitialiseDebugging(void);
+
 #ifdef WITH_OPENGL_TRACE
 #define DEBUG_FRAME_DEPTH_CHARS 2
 
@@ -76,7 +78,6 @@ typedef void (APIENTRY *glPopDebugGroup_t)(void);
 
 static glPushDebugGroup_t glPushDebugGroup;
 static glPopDebugGroup_t glPopDebugGroup;
-
 // </debug-functions>
 
 // <draw-functions (various)>
@@ -179,12 +180,15 @@ static glDispatchCompute_t  glDispatchCompute;
 static glMemoryBarrier_t    glMemoryBarrier;
 
 // Texture functions
-glActiveTexture_t               glActiveTexture;
+typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
+
 static glTexStorage2D_t         glTexStorage2D;
 static glTexSubImage3D_t        glTexSubImage3D;
 static glTexStorage3D_t         glTexStorage3D;
 static glGenerateMipmap_t       glGenerateMipmap;
-glBindTextures_t                glBindTextures;
 
 glObjectLabel_t glObjectLabel;
 glGetObjectLabel_t glGetObjectLabel;
@@ -248,8 +252,8 @@ static void GL_CheckShaderExtensions(void)
 	if (GL_UseGLSL()) {
 		if (glConfig.majorVersion >= 2) {
 			shaders_supported = GLM_LoadProgramFunctions();
+			shaders_supported &= GLM_LoadStateFunctions();
 
-			OPENGL_LOAD_SHADER_FUNCTION(glActiveTexture);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexSubImage3D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage2D);
 			OPENGL_LOAD_SHADER_FUNCTION(glTexStorage3D);
@@ -283,29 +287,14 @@ static void GL_CheckShaderExtensions(void)
 		}
 	}
 
-#ifdef _WIN32
-	// During init, enable debug output
-	if (IsDebuggerPresent() && GL_DebugProfileContext()) {
-		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
-
-		if (glDebugMessageCallback) {
-			glEnable(GL_DEBUG_OUTPUT);
-			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
-		}
-	}
-#endif
-	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
-	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
-	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
-	glPushDebugGroup = (glPushDebugGroup_t)SDL_GL_GetProcAddress("glPushDebugGroup");
-	glPopDebugGroup = (glPopDebugGroup_t)SDL_GL_GetProcAddress("glPopDebugGroup");
+	GL_InitialiseDebugging();
 
 	// Draw functions required for modern & classic
 	glMultiDrawArrays = (glMultiDrawArrays_t)SDL_GL_GetProcAddress("glMultiDrawArrays");
 	glMultiDrawElements = (glMultiDrawElements_t)SDL_GL_GetProcAddress("glMultiDrawElements");
 	glDrawElementsBaseVertex = (glDrawElementsBaseVertex_t)SDL_GL_GetProcAddress("glDrawElementsBaseVertex");
 
+	glPrimitiveRestartIndex = (glPrimitiveRestartIndex_t)SDL_GL_GetProcAddress("glPrimitiveRestartIndex");
 	if (glPrimitiveRestartIndex) {
 		glEnable(GL_PRIMITIVE_RESTART);
 		if (glConfig.majorVersion > 4 || (glConfig.majorVersion == 4 && glConfig.minorVersion >= 3)) {
@@ -315,9 +304,6 @@ static void GL_CheckShaderExtensions(void)
 			glPrimitiveRestartIndex(~(GLuint)0);
 		}
 	}
-
-	// 4.4 - binds textures to consecutive texture units
-	glBindTextures = SDL_GL_GetProcAddress("glBindTextures");
 
 	if (GL_UseGLSL() && !shaders_supported) {
 		Con_Printf("&cf00Error&r: GLSL not available, missing extensions.\n");
@@ -358,7 +344,7 @@ void GL_CheckExtensions (void)
 	// NOTE: we always register cvar even if ext is not supported.
 	// cvar added just to be able force OFF an extension.
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register (&gl_ext_arb_texture_non_power_of_two);
+	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
 	Cvar_ResetCurrentGroup();
 
 	gl_support_arb_texture_non_power_of_two =
@@ -494,113 +480,6 @@ void VID_SetPalette (unsigned char *palette) {
 
 #undef glDisable
 #undef glEnable
-
-#ifdef WITH_OPENGL_TRACE
-static int debug_frame_depth = 0;
-static unsigned long regions_trace_only;
-FILE* debug_frame_out;
-
-void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
-{
-	if (GL_UseGLSL()) {
-		if (!trace_only && glPushDebugGroup) {
-			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
-		}
-	}
-	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Enter: %.*s %s {\n", debug_frame_depth, "                                                          ", regionName);
-		debug_frame_depth += DEBUG_FRAME_DEPTH_CHARS;
-	}
-
-	regions_trace_only <<= 1;
-	regions_trace_only &= (trace_only ? 1 : 0);
-}
-
-void GL_LeaveTracedRegion(qbool trace_only)
-{
-	if (GL_UseGLSL()) {
-		if (!trace_only && glPopDebugGroup) {
-			glPopDebugGroup();
-		}
-	}
-	else if (debug_frame_out) {
-		debug_frame_depth -= DEBUG_FRAME_DEPTH_CHARS;
-		debug_frame_depth = max(debug_frame_depth, 0);
-		fprintf(debug_frame_out, "Leave: %.*s }\n", debug_frame_depth, "                                                          ");
-	}
-}
-
-void GL_MarkEvent(const char* format, ...)
-{
-	va_list argptr;
-	char msg[4096];
-
-	va_start(argptr, format);
-	vsnprintf(msg, sizeof(msg), format, argptr);
-	va_end(argptr);
-
-	if (GL_UseGLSL()) {
-		//nvtxMark(va(msg));
-	}
-	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
-	}
-}
-
-qbool GL_LoggingEnabled(void)
-{
-	return debug_frame_out != NULL;
-}
-
-void GL_LogAPICall(const char* format, ...)
-{
-	if (GL_UseImmediateMode() && debug_frame_out) {
-		va_list argptr;
-		char msg[4096];
-
-		va_start(argptr, format);
-		vsnprintf(msg, sizeof(msg), format, argptr);
-		va_end(argptr);
-
-		fprintf(debug_frame_out, "API:   %.*s %s\n", debug_frame_depth, "                                                          ", msg);
-	}
-}
-
-void GL_ResetRegion(qbool start)
-{
-	if (start && debug_frame_out) {
-		fclose(debug_frame_out);
-		debug_frame_out = NULL;
-	}
-	else if (start && dev_frame_debug_queued) {
-		char fileName[MAX_PATH];
-#ifndef _WIN32
-		time_t t;
-		struct tm date;
-		t = time(NULL);
-		localtime_r(&t, &date);
-
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-			com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
-#else
-		SYSTEMTIME date;
-		GetLocalTime(&date);
-
-		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-			com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
-#endif
-
-		debug_frame_out = fopen(fileName, "wt");
-		dev_frame_debug_queued = false;
-	}
-
-	if (GL_UseImmediateMode() && debug_frame_out) {
-		fprintf(debug_frame_out, "---Reset---\n");
-		debug_frame_depth = 0;
-	}
-}
-
-#endif
 
 void GL_AlphaFunc(GLenum func, GLclampf threshold)
 {
@@ -924,3 +803,131 @@ void GL_MemoryBarrier(GLbitfield barriers)
 {
 	glMemoryBarrier(barriers);
 }
+
+static void GL_InitialiseDebugging(void)
+{
+#ifdef _WIN32
+	// During init, enable debug output
+	if (IsDebuggerPresent()) {
+		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
+
+		if (glDebugMessageCallback) {
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
+		}
+	}
+#endif
+
+	glObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
+	glGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
+	glPushDebugGroup = (glPushDebugGroup_t)SDL_GL_GetProcAddress("glPushDebugGroup");
+	glPopDebugGroup = (glPopDebugGroup_t)SDL_GL_GetProcAddress("glPopDebugGroup");
+}
+
+#ifdef WITH_OPENGL_TRACE
+static int debug_frame_depth = 0;
+static unsigned long regions_trace_only;
+FILE* debug_frame_out;
+
+void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
+{
+	if (GL_UseGLSL()) {
+		if (!trace_only && glPushDebugGroup) {
+			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
+		}
+	}
+	else if (debug_frame_out) {
+		fprintf(debug_frame_out, "Enter: %.*s %s {\n", debug_frame_depth, "                                                          ", regionName);
+		debug_frame_depth += DEBUG_FRAME_DEPTH_CHARS;
+	}
+
+	regions_trace_only <<= 1;
+	regions_trace_only &= (trace_only ? 1 : 0);
+}
+
+void GL_LeaveTracedRegion(qbool trace_only)
+{
+	if (GL_UseGLSL()) {
+		if (!trace_only && glPopDebugGroup) {
+			glPopDebugGroup();
+		}
+	}
+	else if (debug_frame_out) {
+		debug_frame_depth -= DEBUG_FRAME_DEPTH_CHARS;
+		debug_frame_depth = max(debug_frame_depth, 0);
+		fprintf(debug_frame_out, "Leave: %.*s }\n", debug_frame_depth, "                                                          ");
+	}
+}
+
+void GL_MarkEvent(const char* format, ...)
+{
+	va_list argptr;
+	char msg[4096];
+
+	va_start(argptr, format);
+	vsnprintf(msg, sizeof(msg), format, argptr);
+	va_end(argptr);
+
+	if (GL_UseGLSL()) {
+		//nvtxMark(va(msg));
+	}
+	else if (debug_frame_out) {
+		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
+	}
+}
+
+qbool GL_LoggingEnabled(void)
+{
+	return debug_frame_out != NULL;
+}
+
+void GL_LogAPICall(const char* format, ...)
+{
+	if (GL_UseImmediateMode() && debug_frame_out) {
+		va_list argptr;
+		char msg[4096];
+
+		va_start(argptr, format);
+		vsnprintf(msg, sizeof(msg), format, argptr);
+		va_end(argptr);
+
+		fprintf(debug_frame_out, "API:   %.*s %s\n", debug_frame_depth, "                                                          ", msg);
+	}
+}
+
+void GL_ResetRegion(qbool start)
+{
+	if (start && debug_frame_out) {
+		fclose(debug_frame_out);
+		debug_frame_out = NULL;
+	}
+	else if (start && dev_frame_debug_queued) {
+		char fileName[MAX_PATH];
+#ifndef _WIN32
+		time_t t;
+		struct tm date;
+		t = time(NULL);
+		localtime_r(&t, &date);
+
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
+				 com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
+#else
+		SYSTEMTIME date;
+		GetLocalTime(&date);
+
+		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
+				 com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
+#endif
+
+		debug_frame_out = fopen(fileName, "wt");
+		dev_frame_debug_queued = false;
+	}
+
+	if (GL_UseImmediateMode() && debug_frame_out) {
+		fprintf(debug_frame_out, "---Reset---\n");
+		debug_frame_depth = 0;
+	}
+}
+
+#endif

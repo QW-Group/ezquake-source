@@ -6,6 +6,10 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
+typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
+glActiveTexture_t               glActiveTexture;
+glBindTextures_t                glBindTextures;
+
 void GL_BindBuffer(buffer_ref ref);
 void GL_SetElementArrayBuffer(buffer_ref buffer);
 const buffer_ref null_buffer_reference = { 0 };
@@ -995,4 +999,16 @@ void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 		clearColor[2] = b;
 		clearColor[3] = a;
 	}
+}
+
+qbool GLM_LoadStateFunctions(void)
+{
+	qbool all_available = true;
+
+	GL_LoadMandatoryFunctionExtension(glActiveTexture, all_available);
+
+	// 4.4 - binds textures to consecutive texture units
+	GL_LoadOptionalFunction(glBindTextures);
+
+	return all_available;
 }

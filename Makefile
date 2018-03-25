@@ -384,7 +384,8 @@ OBJS_c := \
     glm_draw_line.o \
     glm_draw_polygon.o \
     glm_rmain.o \
-    r_performance.o
+    r_performance.o \
+	glm_framebuffer.o
 
 ### Configuration Options ###
 

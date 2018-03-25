@@ -385,21 +385,11 @@ void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
 
 qbool GLM_LoadProgramFunctions(void);
-
-// Textures
-typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
-typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
+qbool GLM_LoadStateFunctions(void);
 
 // Debug functions
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
 typedef void (APIENTRY *glGetObjectLabel_t)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label);
-
-// Textures
-extern glActiveTexture_t        glActiveTexture;
-extern glBindTextures_t         glBindTextures;
 
 // Images
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
