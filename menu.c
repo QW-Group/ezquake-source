@@ -913,7 +913,7 @@ void M_SinglePlayer_Draw (void) {
 	mpic_t *p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic (CACHEPIC_QPLAQUE) );
-	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
+	p = Draw_CachePic (CACHEPIC_TTL_SGL);
 	M_DrawPic ( (320-p->width)/2, 4, p);
 	//    M_DrawTransPic (72, 32, Draw_CachePic (CACHEPIC_SP_MENU) );
 

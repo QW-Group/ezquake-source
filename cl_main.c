@@ -2164,6 +2164,7 @@ void CL_SoundFrame (void)
 
 static void CL_ServerFrame(double frametime)
 {
+#ifndef CLIENTONLY
 	if (com_serveractive) {
 		playermove_t oldmove;
 
@@ -2173,6 +2174,7 @@ static void CL_ServerFrame(double frametime)
 
 		memcpy(&pmove, &oldmove, sizeof(playermove_t));
 	}
+#endif
 }
 
 void CL_Frame (double time) 
