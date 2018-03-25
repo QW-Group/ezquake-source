@@ -389,7 +389,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// Pentagram.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cf00P", 0, text_scale);
@@ -399,7 +399,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// Quad.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0ffQ", 0, text_scale);
@@ -409,7 +409,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// Ring.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cff0R", 0, text_scale);
@@ -419,7 +419,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// Suit.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0f0S", 0, text_scale);
@@ -433,7 +433,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// RL.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale);
@@ -443,7 +443,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// LG.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale);
@@ -468,7 +468,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			if (radar_show_ga && currententity->skinnum == HUD_RADAR_GA) {
 				// GA.
 				if (simple_valid && simple_items) {
-					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 				}
 				else {
 					Draw_AlphaCircleFill(entity_p_x, entity_p_y, 3.0, 178, 1.0);
@@ -478,7 +478,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			else if (radar_show_ya && currententity->skinnum == HUD_RADAR_YA) {
 				// YA.
 				if (simple_valid && simple_items) {
-					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 				}
 				else {
 					Draw_AlphaCircleFill(entity_p_x, entity_p_y, 3.0, 192, 1.0);
@@ -488,7 +488,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			else if (radar_show_ra && currententity->skinnum == HUD_RADAR_RA) {
 				// RA.
 				if (simple_valid && simple_items) {
-					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+					Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 				}
 				else {
 					Draw_AlphaCircleFill(entity_p_x, entity_p_y, 3.0, 251, 1.0);
@@ -503,7 +503,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			// Show megahealth.
 			//
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				// Draw a red border around the cross.
@@ -523,7 +523,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// SSG.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_String(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SSG");
@@ -533,7 +533,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// NG.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_String(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "NG");
@@ -543,7 +543,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// SNG.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_String(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SNG");
@@ -553,7 +553,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		{
 			// GL.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_String(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "GL");
@@ -578,7 +578,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				// Draw a black outline cross.
@@ -603,7 +603,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				// Draw a black outline.
@@ -626,7 +626,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				// Draw a black outline.
@@ -651,7 +651,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 
 			// Draw a black outline.
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				Draw_AlphaFill(entity_p_x - 3, entity_p_y - 3, 7, 3, 0, 1);
@@ -676,7 +676,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			if (simple_valid && simple_items) {
-				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 0.99f);
+				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
 				// Draw a black outline.

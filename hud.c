@@ -1304,7 +1304,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	// Item Opacity.
 	//
 	{
-		hud->opacity = HUD_CreateVar(name, "item_opacity", (item_opacity) ? item_opacity : "0.99");
+		hud->opacity = HUD_CreateVar(name, "item_opacity", (item_opacity) ? item_opacity : "1");
 		hud->flags |= HUD_OPACITY;
 		hud->params[hud->num_params++] = hud->opacity;
 	}
