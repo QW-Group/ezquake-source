@@ -96,6 +96,7 @@ void GLM_SetMatrix(float* target, const float* source)
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
+	GLM_Cache2DMatrix();
 
 	if (GL_UseImmediateMode()) {
 		glMatrixMode(GL_PROJECTION);

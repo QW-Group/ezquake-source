@@ -103,8 +103,8 @@ void GLC_StateBeginSceneBlur(void)
 	}
 	// Remember all attributes.
 	GL_Viewport(0, 0, glwidth, glheight);
-	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 	GL_IdentityModelView();
+	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_ENABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 

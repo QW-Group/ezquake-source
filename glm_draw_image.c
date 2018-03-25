@@ -38,24 +38,18 @@ static glm_program_t multiImageProgram;
 
 static glm_vao_t imageVAO;
 static buffer_ref imageVBO;
+static float cachedMatrix[16];
 
 glm_image_framedata_t imageData;
 
 static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float tex_width, float t, float tex_height)
 {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-	float matrix[16];
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
 	byte color[4];
 
-	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, matrix);
-	GLM_MultiplyVector(matrix, v1, v1);
-	GLM_MultiplyVector(matrix, v2, v2);
+	GLM_MultiplyVector(cachedMatrix, v1, v1);
+	GLM_MultiplyVector(cachedMatrix, v2, v2);
 
 	memcpy(color, targ->colour, 4);
 	targ->pos[0] = v1[0];
@@ -91,18 +85,11 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, int flags)
 #endif
 {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-	float matrix[16];
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
 
-	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, matrix);
-	GLM_MultiplyVector(matrix, v1, v1);
-	GLM_MultiplyVector(matrix, v2, v2);
+	GLM_MultiplyVector(cachedMatrix, v1, v1);
+	GLM_MultiplyVector(cachedMatrix, v2, v2);
 
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 	targ->x1 = v1[0];
@@ -422,4 +409,15 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	}
 
 	++imageData.imageCount;
+}
+
+void GLM_Cache2DMatrix(void)
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+
+	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+
+	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, cachedMatrix);
 }
