@@ -51,7 +51,6 @@ cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
 cbuf_t cbuf_server;
 
-char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
 
 //=============================================================================
@@ -70,28 +69,6 @@ void Cmd_Wait_f (void)
 		cbuf_current->wait = true;
 
 	return;
-}
-
-void Hud262_CatchStringsOnLoad(char *line)
-{
-	char *tmpbuff;
-
-	if (Utils_RegExpMatch("^((\\s+)?(?i)hud262_(add|alpha|bg|blink|disable|enable|position|width))", line))
-	{
-		if (hud262_load_buff == NULL)
-		{
-			hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
-		}
-		else
-		{
-			tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
-			strcpy(tmpbuff, hud262_load_buff);
-			hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
-			Q_free(tmpbuff);
-		}
-	}
 }
 
 /*
@@ -314,8 +291,9 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		// (some cvars are not created/initialized at the time when we want to use them in hud262)
 		// we should save these commands to buffer and execute it when all
 		// cvars will be created
-		if(!host_initialized)
-			Hud262_CatchStringsOnLoad(line);
+		if (!host_initialized) {
+			Hud_262CatchStringsOnLoad(line);
+		}
 
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 

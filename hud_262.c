@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 
 void Draw_AlphaString (int x, int y, char *str, float alpha);
+static char *hud262_load_buff = NULL;
 
 extern cvar_t cl_hud;
 
@@ -52,8 +53,6 @@ void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 
 void Hud_262LoadOnFirstStart(void)
 {
-	extern char *hud262_load_buff;
-
 	if (hud262_load_buff != NULL) {
 		Cbuf_AddText(hud262_load_buff);
 		Cbuf_Execute();
@@ -883,4 +882,23 @@ void Hud_262Init(void)
 	Cmd_AddCommand("hud262_bringtofront", Hud_BringToFront_f);
 	//	Cmd_AddCommand ("hud262_hover",);
 	//	Cmd_AddCommand ("hud262_button",Hud_Button_f);
+}
+
+void Hud_262CatchStringsOnLoad(char *line)
+{
+	char *tmpbuff;
+
+	if (Utils_RegExpMatch("^((\\s+)?(?i)hud262_(add|alpha|bg|blink|disable|enable|position|width))", line)) {
+		if (hud262_load_buff == NULL) {
+			hud262_load_buff = (char*)Q_malloc((strlen(line) + 2) * sizeof(char));
+			snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
+		}
+		else {
+			tmpbuff = (char *)Q_malloc(strlen(hud262_load_buff) + 1);
+			strcpy(tmpbuff, hud262_load_buff);
+			hud262_load_buff = (char *)Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
+			snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
+			Q_free(tmpbuff);
+		}
+	}
 }

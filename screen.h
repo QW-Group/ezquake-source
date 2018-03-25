@@ -89,6 +89,7 @@ typedef struct hud_element_s {
 
 void Hud_262Init (void);
 void Hud_262LoadOnFirstStart(void);
+void Hud_262CatchStringsOnLoad(char *line);
 
 qbool Hud_ElementExists(const char* name);
 
