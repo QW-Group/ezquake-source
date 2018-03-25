@@ -400,8 +400,7 @@ void Draw_SAlt_String(int x, int y, const char *text, float scale)
 	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0);
 }
 
-// Only ever called by console
-void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale)
+void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale)
 {
 	float alpha = 1;
 	qbool bigchar = false;
@@ -412,6 +411,7 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int c
 	int curr_char;
 	int color_index = 0;
 	color_t last_color = COLOR_WHITE;
+	int color_count = color ? text_length : 0;
 
 	// Nothing to draw.
 	if (!*text) {
@@ -427,11 +427,11 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int c
 
 	// Draw the string.
 	GLM_Draw_StringBase_StartString(x, y, scale);
-	for (i = 0; text[i]; i++) {
+	for (i = 0; (text_length ? i < text_length : text[i]); i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
 			if (text[i] == '&') {
-				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4]) {
+				if ((text_length == 0 || i + 4 < text_length) && text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4]) {
 					r = HexToInt(text[i + 2]);
 					g = HexToInt(text[i + 3]);
 					b = HexToInt(text[i + 4]);
@@ -454,7 +454,7 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int c
 						continue;
 					}
 				}
-				else if (text[i + 1] == 'r') {
+				else if ((text_length == 0 || i + 1 < text_length) && text[i + 1] == 'r') {
 					if (!color_is_white) {
 						rgba[0] = rgba[1] = rgba[2] = 255;
 						rgba[3] = 255 * alpha;
@@ -467,7 +467,7 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int c
 				}
 			}
 		}
-		else if (scr_coloredText.value && (color_index < color_count) && (i == color[color_index].i)) {
+		else if (scr_coloredText.value) {
 			// Change color if the color array tells us this index should have a new color.
 
 			// Set the new color if it's not the same as the last.

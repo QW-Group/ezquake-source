@@ -746,9 +746,7 @@ static int Con_FirstNotifyLine (int notification_lines, float notification_timel
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
 	int x, v, skip = 0, i, idx;
-	wchar *text, *s;
-	wchar buf[1024];
-	clrinfo_t clr[sizeof(buf)];
+	wchar *s;
 	float time;
 	float timeout = bound (0, con_notifytime.value, MAX_NOTIFICATION_TIME);
 
@@ -770,19 +768,11 @@ void Con_DrawNotify (void) {
 			if (time > timeout)
 				continue;
 			idx = (i % con_totallines)*con_linewidth;
-			text = con.text + idx;
 
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			// copy current line to buffer
-			for (x = 0; x < con_linewidth; x++) {
-				buf[x] = text[x];
-				clr[x] = con.clr[idx + x]; // copy whole color struct
-				clr[x].i = x; // set proper index
-			}
-			buf[x] = '\0';
-			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0, 1);
+			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1);
 			v += 8;
 		}
 	}
@@ -853,16 +843,18 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	clrinfo_t clr[sizeof(buf)];
 	float time;
 	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
-	int first_line = Con_FirstNotifyLine(notifyLines, timeout);
 
-	if (notifyCols > (con_linewidth))
+	if (notifyCols > (con_linewidth)) {
 		notifyCols = con_linewidth;
+	}
 
-	if (notifyCols < 10)
+	if (notifyCols < 10) {
 		notifyCols = 10;
+	}
 
 	v = 0;
 	if (notifyLines) {
+		int first_line = Con_FirstNotifyLine(notifyLines, timeout);
 		for (i = first_line; i <= con.current; i++) {
 			if (i < 0)
 				continue;
@@ -1006,13 +998,11 @@ void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx;
 	wchar *wtext;
 	char *text, dlbar[1024];
-	wchar buf[1024];
-	clrinfo_t clr[sizeof(buf)];
 
 	if (lines <= 0)
 		return;
 
-// draw the background
+	// draw the background
 	Draw_ConsoleBackground (lines);
 
 	// draw the text
@@ -1046,14 +1036,7 @@ void Con_DrawConsole (int lines) {
 		wtext = con.text + idx;
 
 		// copy current line to buffer
-		for(x = 0; x < con_linewidth; x++) {
-			buf[x] = wtext[x];
-			clr[x] = con.clr[idx + x]; // copy whole color struct
-			clr[x].i = x; // set proper index
-		}
-		buf[x] = '\0';
-
-		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0, 1);
+		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1);
 	}
 
 	// draw the download bar
