@@ -133,6 +133,38 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 	return &box_hull;
 }
 
+int CM_CachedHullPointContents(hull_t *hull, int num, vec3_t p, float* min_dist)
+{
+	mclipnode_t *node;
+	mplane_t *plane;
+	float d;
+
+	*min_dist = 999;
+	while (num >= 0) {
+		if (num < hull->firstclipnode || num > hull->lastclipnode) {
+			if (map_halflife && num == hull->lastclipnode + 1) {
+				return CONTENTS_EMPTY;
+			}
+			Sys_Error("CM_HullPointContents: bad node number");
+		}
+
+		node = hull->clipnodes + num;
+		plane = hull->planes + node->planenum;
+
+		d = PlaneDiff(p, plane);
+		if (d < 0) {
+			*min_dist = min(*min_dist, -d);
+			num = node->children[1];
+		}
+		else {
+			*min_dist = min(*min_dist, d);
+			num = node->children[0];
+		}
+	}
+
+	return num;
+}
+
 int CM_HullPointContents(hull_t *hull, int num, vec3_t p)
 {
 	mclipnode_t *node;

@@ -2963,6 +2963,15 @@
         { "name": "true", "description": "Advanced particles for bubbles (drowning effect)" }
       ]
     },
+    "gl_part_cache": {
+      "group-id": "36",
+      "type": "boolean",
+      "description": "Reduce CPU overhead when newer particle effects are used",
+      "values": [
+        { "name": "false", "description": "Do not cache hull-traces" },
+        { "name": "true", "description": "Reduce hull-traces as particles move" },
+      ]
+    },
     "gl_part_detpackexplosion_fire_color": {
       "group-id": "36",
       "desc": "Change color of the detpack explosion fire (TF).",

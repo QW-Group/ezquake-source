@@ -145,18 +145,22 @@ static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 
 typedef struct particle_s {
 	struct particle_s *next;
-	vec3_t		org, endorg;
-	col_t		color;
-	float		growth;		
-	vec3_t		vel;
-	float		rotangle;
-	float		rotspeed;	
-	float		size;
-	float		start;		
-	float		die;		
-	byte		hit;		
-	byte		texindex;	
-	byte		bounces;	
+	vec3_t      org, endorg;
+	col_t       color;
+	float       growth;
+	vec3_t      vel;
+	float       rotangle;
+	float       rotspeed;
+	float       size;
+	float       start;
+	float       die;
+	byte        hit;
+	byte        texindex;
+	byte        bounces;
+
+	int         cached_contents;
+	vec3_t      cached_movement;
+	float       cached_distance;
 } particle_t;
 
 typedef struct particle_tree_s {
@@ -213,7 +217,30 @@ qbool qmb_initialized = false;
 
 static cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 static cvar_t amf_part_fulldetail = {"gl_particle_fulldetail", "0", CVAR_LATCH};
+static cvar_t gl_part_cache = { "gl_part_cache", "1" };
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
+
+static int ParticleContents(particle_t* p, vec3_t movement)
+{
+	if (gl_part_cache.integer) {
+		float moved;
+
+		VectorAdd(p->cached_movement, movement, p->cached_movement);
+		moved = p->cached_movement[0] * p->cached_movement[0] + p->cached_movement[1] * p->cached_movement[1] + p->cached_movement[2] * p->cached_movement[2];
+
+		if (p->cached_distance <= moved) {
+			p->cached_contents = CM_CachedHullPointContents(&cl.clipmodels[1]->hulls[0], 0, p->org, &p->cached_distance);
+
+			VectorClear(p->cached_movement);
+			p->cached_distance *= p->cached_distance;
+		}
+
+		return p->cached_contents;
+	}
+	else {
+		return CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p->org);
+	}
+}
 
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
@@ -417,7 +444,8 @@ void QMB_InitParticles (void)
 	int	i, count = 0;
 	texture_ref shockwave_texture, lightning_texture, spark_texture;
 
-    Cvar_Register (&amf_part_fulldetail);
+	Cvar_Register(&amf_part_fulldetail);
+	Cvar_Register(&gl_part_cache);
 	if (!host_initialized && COM_CheckParm("-detailtrails")) {
 		Cvar_LatchedSetValue(&amf_part_fulldetail, 1);
 	}
@@ -866,7 +894,7 @@ static void QMB_FillParticleVertexBuffer(void)
 static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 {
 	float grav = movevars.gravity / 800.0;
-	vec3_t oldorg, stop, normal;
+	vec3_t oldorg, stop, normal, movement;
 	int contents;
 	float bounce;
 
@@ -900,17 +928,19 @@ static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			break;
 		case pm_normal:
 			VectorCopy(p->org, oldorg);
-			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+			VectorScale(p->vel, cls.frametime, movement);
+			VectorAdd(p->org, movement, p->org);
+			if (ParticleContents(p, movement) == CONTENTS_SOLID) {
 				p->hit = 1;
 				VectorCopy(oldorg, p->org);
 				VectorClear(p->vel);
 			}
 			break;
 		case pm_float:
-			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			p->org[2] += p->size + 1;
-			contents = TruePointContents(p->org);
+			VectorScale(p->vel, cls.frametime, movement);
+			movement[2] += p->size + 1;
+			VectorAdd(p->org, movement, p->org);
+			contents = ParticleContents(p, movement);
 			if (!ISUNDERWATER(contents)) {
 				p->die = 0;
 			}
@@ -920,26 +950,32 @@ static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			VectorMA(p->org, cls.frametime, p->vel, p->org);
 			break;
 		case pm_die:
-			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+			VectorScale(p->vel, cls.frametime, movement);
+			VectorAdd(p->org, movement, p->org);
+			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
 				p->die = 0;
 			}
 			break;
 		case pm_bounce:
 			if (!gl_bounceparticles.value || p->bounces) {
-				if (pt->id == p_smallspark)
+				if (pt->id == p_smallspark) {
 					VectorCopy(p->org, p->endorg);
+				}
 
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (CONTENTS_SOLID == TruePointContents(p->org))
+				VectorScale(p->vel, cls.frametime, movement);
+				VectorAdd(p->org, movement, p->org);
+				if (CONTENTS_SOLID == ParticleContents(p, movement)) {
 					p->die = 0;
+				}
 			}
 			else {
 				VectorCopy(p->org, oldorg);
-				if (pt->id == p_smallspark)
+				if (pt->id == p_smallspark) {
 					VectorCopy(oldorg, p->endorg);
-				VectorMA(p->org, cls.frametime, p->vel, p->org);
-				if (CONTENTS_SOLID == TruePointContents(p->org)) {
+				}
+				VectorScale(p->vel, cls.frametime, movement);
+				VectorAdd(p->org, movement, p->org);
+				if (CONTENTS_SOLID == ParticleContents(p, movement)) {
 					if (TraceLineN(oldorg, p->org, stop, normal)) {
 						VectorCopy(stop, p->org);
 						bounce = -pt->custom * DotProduct(p->vel, normal);
@@ -955,8 +991,9 @@ static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			//VULT PARTICLES
 		case pm_rain:
 			VectorCopy(p->org, oldorg);
-			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			contents = TruePointContents(p->org);
+			VectorScale(p->vel, cls.frametime, movement);
+			VectorAdd(p->org, movement, p->org);
+			contents = ParticleContents(p, movement);
 			if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID) {
 				if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2) {
 					vec3_t rorg;
@@ -991,8 +1028,9 @@ static void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			//VULT PARTICLES
 		case pm_streak:
 			VectorCopy(p->org, oldorg);
-			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			if (CONTENTS_SOLID == TruePointContents(p->org)) {
+			VectorScale(p->vel, cls.frametime, movement);
+			VectorAdd(p->org, movement, p->org);
+			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
 				if (TraceLineN(oldorg, p->org, stop, normal)) {
 					VectorCopy(stop, p->org);
 					bounce = -pt->custom * DotProduct(p->vel, normal);
@@ -1119,6 +1157,9 @@ void QMB_DrawParticles(void)
 		_p->texindex = (rand() % particle_textures[_pt->texture].components);	\
 		_p->bounces = 0;									\
 		memcpy(_p->color, _color, sizeof(_p->color));		\
+		_p->cached_contents = 0;                            \
+		_p->cached_distance = 0;                            \
+		VectorClear(_p->cached_movement);                   \
 		ParticleStats(1);		//VULT PARTICLES
 
 
@@ -1276,9 +1317,8 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 		//VULT PARTICLES
 		case p_vxblood:
 			VectorCopy(org, p->org);
-			for (j = 0; j < 2; j++)
-				p->vel[j] = (rand()%80)-40;
-			p->vel[2] = (rand()%65)-15;
+			p->vel[0] = p->vel[1] = 40;
+			p->vel[2] = 17;
 			break;
 		//VULT PARTICLES
 		case p_vxsmoke:

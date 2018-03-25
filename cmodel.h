@@ -77,6 +77,7 @@ typedef struct {
 
 hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs);
 int CM_HullPointContents (hull_t *hull, int num, vec3_t p);
+int CM_CachedHullPointContents(hull_t *hull, int num, vec3_t p, float* min_dist);
 trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end);
 struct cleaf_s *CM_PointInLeaf (const vec3_t p);
 int CM_Leafnum (const struct cleaf_s *leaf);
