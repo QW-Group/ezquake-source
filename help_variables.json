@@ -2969,7 +2969,7 @@
       "description": "Reduce CPU overhead when newer particle effects are used",
       "values": [
         { "name": "false", "description": "Do not cache hull-traces" },
-        { "name": "true", "description": "Reduce hull-traces as particles move" },
+        { "name": "true", "description": "Reduce hull-traces as particles move" }
       ]
     },
     "gl_part_detpackexplosion_fire_color": {
