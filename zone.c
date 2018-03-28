@@ -574,10 +574,10 @@ void Cache_Init(void)
 void Cache_Init_Commands(void)
 {
 	Cmd_AddCommand("flush", Cache_Flush);
-	Cmd_AddCommand("cache_print", Cache_Print);
-	Cmd_AddCommand("cache_report", Cache_Report);
+	Cmd_AddCommand("dev_cache_print", Cache_Print);
+	Cmd_AddCommand("dev_cache_report", Cache_Report);
 
-	Cmd_AddCommand("hunk_print", Hunk_Print_f);
+	Cmd_AddCommand("dev_hunk_print", Hunk_Print_f);
 }
 
 #ifndef WITH_DP_MEM

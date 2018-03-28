@@ -191,6 +191,7 @@ int COM_Argc (void);
 int COM_CheckParm (char *parm);
 int COM_CheckParmOffset (char *parm, int offset);
 
+#define IsDeveloperMode() (COM_CheckParm("-dev"))
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
 // "1 3.5 6 7" will lead to fl_array[0] = 1.0; fl_array[1] = 3.5; ...

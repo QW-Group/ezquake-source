@@ -1852,7 +1852,7 @@ void SV_InitOperatorCommands (void)
 #ifdef SERVERONLY
 	Cmd_AddCommand ("devmap", SV_Map_f);
 #else
-	if (COM_CheckParm("-dev")) {
+	if (IsDeveloperMode()) {
 		Cmd_AddCommand("devmap", SV_Map_f);
 	}
 #endif

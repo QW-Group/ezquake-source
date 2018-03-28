@@ -399,7 +399,7 @@ extern cvar_t vid_gl_core_profile;
 #define GL_UseImmediateMode()     (vid_renderer.integer == 0)
 
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
-#define GL_DebugProfileContext()  (COM_CheckParm("-dev"))
+#define GL_DebugProfileContext()  (IsDeveloperMode())
 
 // 
 #define GL_CoreProfileContext()   (vid_renderer.integer == 1 && vid_gl_core_profile.integer)

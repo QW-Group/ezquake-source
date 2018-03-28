@@ -461,6 +461,10 @@ void Help_Describe_f(void)
 void Help_Missing_Commands(void)
 {
 	extern int Cmd_CommandCompare(const void *, const void *);
+	extern void HUD_Plus_f(void);
+	extern void HUD_Minus_f(void);
+	extern void HUD_Func_f(void);
+
 	extern cmd_function_t *cmd_functions;
 
 	cmd_function_t *sorted_commands[4096];
@@ -469,8 +473,14 @@ void Help_Missing_Commands(void)
 
 	for (cmd_func = cmd_functions; cmd_func && cmd_count < sizeof(sorted_commands) / sizeof(sorted_commands[0]); cmd_func = cmd_func->next) {
 		const json_command_t* help_cmd = JSON_Command_Load(cmd_func->name);
-		if (!help_cmd)
+		if (!help_cmd) {
+			if (cmd_func->function == HUD_Plus_f || cmd_func->function == HUD_Minus_f || cmd_func->function == HUD_Func_f) {
+				// not interested in hud's system-generated commands for the moment
+				continue;
+			}
+
 			sorted_commands[cmd_count++] = cmd_func;
+		}
 	}
 
 	if (cmd_count) {
@@ -728,7 +738,7 @@ static void Help_Issues_f(void)
 void Help_Init(void)
 {
 	Cmd_AddCommand("describe", Help_Describe_f);
-	if (COM_CheckParm("-dev")) {
+	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_help_missing", Help_Missing_f);
 		Cmd_AddCommand("dev_help_issues", Help_Issues_f);
 		Cmd_AddCommand("dev_help_verify_config", Help_VerifyConfig_f);
