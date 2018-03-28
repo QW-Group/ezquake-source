@@ -287,6 +287,74 @@ else
 	includes += include_directories('minizip')
 endif
 
+# meag: extra source files for renderer update
+sources += [
+	'hud_262.o',
+	'hud_framestats.o',
+	'hud_speed.o',
+	'hud_teaminfo.o',
+	'gl_draw_charset.o',
+	'vid_vsync.o',
+	'gl_aliasmodel.o',
+	'gl_aliasmodel_skins.o',
+	'gl_atlas.o',
+	'gl_brushmodel.o',
+	'gl_brushmodel_bspx.o',
+	'gl_brushmodel_textures.o',
+	'gl_buffers.o',
+	'gl_chaticons.o',
+	'gl_framebuffer.o',
+	'gl_lightmaps.o',
+	'gl_matrix.o',
+	'gl_state.o',
+	'gl_state_resets.o',
+	'gl_state_resets_2d.o',
+	'gl_state_resets_entities.o',
+	'gl_state_resets_sky.o',
+	'gl_state_resets_world.o',
+	'gl_sky.o',
+	'gl_sprites.o',
+	'gl_vbo.o',
+	'glc_aliasmodel.o',
+	'glc_brushmodel.o',
+	'glc_draw.o',
+	'glc_md3.o',
+	'glc_misc.o',
+	'glc_screen.o',
+	'glc_sky.o',
+	'glc_sprite.o',
+	'glc_surf.o',
+	'glc_turb_surface.o',
+	'glc_warp.o',
+	'glm_aliasmodel.o',
+	'gl_sprite3d.o',
+	'glm_brushmodel.o',
+	'glm_md3.o',
+	'glm_misc.o',
+	'glm_program.o',
+	'glm_rsurf.o',
+	'glm_screen.o',
+	'glm_sky.o',
+	'glm_sprite.o',
+	'glm_texture_arrays.o',
+	'glm_turb_surface.o',
+	'glm_draw.o',
+	'glm_draw_charset.o',
+	'glm_draw_circle.o',
+	'glm_draw_image.o',
+	'glm_draw_line.o',
+	'glm_draw_polygon.o',
+	'glm_rmain.o',
+	'r_performance.o',
+	'glm_framebuffer.o',
+	'glm_texture.o',
+	'gl_drawcall_wrappers.o',
+	'gl_debug.o',
+	'hud_autoid.o',
+	'cl_screenshot.o',
+	'gl_rpart_spawn.o'
+]
+
 awk = find_program('awk')
 od = find_program('od')
 gen = generator(find_program(meson.source_root() + '/json2c.sh'),
@@ -296,6 +364,30 @@ gen = generator(find_program(meson.source_root() + '/json2c.sh'),
 sources += gen.process(
 	'help_commands.json',
 	'help_variables.json',
+)
+
+# meag: change this to 'all .glsl files in directory'
+# (https://github.com/mesonbuild/meson/blob/master/docs/markdown/FAQ.md#but-i-really-want-to-use-wildcards)
+sources += gen.process(
+	'glsl/common.glsl',
+	'glsl/constants.glsl',
+	'glsl/draw_aliasmodel.fragment.glsl',
+	'glsl/draw_aliasmodel.vertex.glsl',
+	'glsl/draw_sprites.fragment.glsl',
+	'glsl/draw_sprites.vertex.glsl',
+	'glsl/draw_world.fragment.glsl',
+	'glsl/draw_world.vertex.glsl',
+	'glsl/hud_draw_circle.fragment.glsl',
+	'glsl/hud_draw_circle.vertex.glsl',
+	'glsl/hud_draw_image.fragment.glsl',
+	'glsl/hud_draw_image.vertex.glsl',
+	'glsl/hud_draw_line.fragment.glsl',
+	'glsl/hud_draw_line.vertex.glsl',
+	'glsl/hud_draw_polygon.fragment.glsl',
+	'glsl/hud_draw_polygon.vertex.glsl',
+	'glsl/lighting.compute.glsl',
+	'glsl/post_process_screen.fragment.glsl',
+	'glsl/post_process_screen.vertex.glsl'
 )
 
 link_args = []
