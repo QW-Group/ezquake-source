@@ -587,8 +587,9 @@ void Classic_ReScaleParticles(void)
 {
 	float r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	int i;
-	vec3_t up, right;
+	vec3_t up, right, scaled_vpn;
 	gl_sprite3d_vert_t* vert;
+	float dist_precalc = 0;
 
 	if (particles_to_draw == 0) {
 		return;
@@ -597,11 +598,12 @@ void Classic_ReScaleParticles(void)
 	vert = glvertices;
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
+	VectorScale(vpn, r_partscale, scaled_vpn);
 
+	dist_precalc = 1 - DotProduct(r_origin, scaled_vpn);
 	for (i = 0; i < particles_to_draw; ++i, vert += 3) {
 		glm_particle_t* glpart = &glparticles[i];
-		float dist = (glpart->gl_org[0] - r_origin[0]) * vpn[0] + (glpart->gl_org[1] - r_origin[1]) * vpn[1] + (glpart->gl_org[2] - r_origin[2]) * vpn[2];
-		float scale = glpart->gl_scale = 1 + dist * r_partscale;
+		float scale = glpart->gl_scale = dist_precalc + DotProduct(glpart->gl_org, scaled_vpn);
 
 		GL_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
 		GL_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
@@ -615,9 +617,11 @@ static void Classic_PrepareParticles(void)
 	particle_t* p;
 	unsigned char *at;
 	float theAlpha;
-	float dist, scale, r_partscale;
+	float scale, r_partscale;
 	vec3_t up, right;
 	int i;
+	float dist_precalc;
+	vec3_t scaled_vpn;
 
 	particles_to_draw = 0;
 	if (r_numactiveparticles == 0 || !r_drawparticles.integer) {
@@ -627,6 +631,7 @@ static void Classic_PrepareParticles(void)
 	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
+	VectorScale(vpn, r_partscale, scaled_vpn);
 
 	// load texture if not done yet
 	if (!GL_TextureReferenceIsValid(particletexture)) {
@@ -634,51 +639,52 @@ static void Classic_PrepareParticles(void)
 	}
 
 	p = particles;
+	dist_precalc = 1 - DotProduct(r_origin, scaled_vpn);
 	for (i = 0; i < r_numactiveparticles; ++i, ++p) {
 		if (p->die >= r_refdef2.time) {
+			glm_particle_t* glpart;
+			gl_sprite3d_vert_t* vert;
+
 			// hack a scale up to keep particles from disapearing
-			dist = (p->org[0] - r_origin[0]) * vpn[0] + (p->org[1] - r_origin[1]) * vpn[1] + (p->org[2] - r_origin[2]) * vpn[2];
-			scale = 1 + dist * r_partscale;
+			scale = dist_precalc + DotProduct(p->org, scaled_vpn);
 
-			{
-				glm_particle_t* glpart = &glparticles[particles_to_draw];
-				gl_sprite3d_vert_t* vert = &glvertices[particles_to_draw * 3];
-				at = (byte *)&d_8to24table[(int)p->color];
+			glpart = &glparticles[particles_to_draw];
+			vert = &glvertices[particles_to_draw * 3];
+			at = (byte *)&d_8to24table[(int)p->color];
 
-				if (p->type == pt_fire) {
-					theAlpha = (6 - p->ramp) / 6;
-					glpart->gl_color[0] = at[0] * theAlpha;
-					glpart->gl_color[1] = at[1] * theAlpha;
-					glpart->gl_color[2] = at[2] * theAlpha;
-					glpart->gl_color[3] = 255 * theAlpha;
-				}
-				else {
-					glpart->gl_color[0] = at[0];
-					glpart->gl_color[1] = at[1];
-					glpart->gl_color[2] = at[2];
-					glpart->gl_color[3] = 255;
-				}
-
-				glpart->gl_scale = scale;
-				VectorCopy(p->org, glpart->gl_org);
-
-				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-				VectorSet(vert->tex, 0, 0, particletexture_array_index);
-				VectorSet(vert->position, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2]);
-				++vert;
-
-				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-				VectorSet(vert->tex, 1, 0, particletexture_array_index);
-				VectorSet(vert->position, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
-				++vert;
-
-				*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-				VectorSet(vert->tex, 0, 1, particletexture_array_index);
-				VectorSet(vert->position, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
-				++vert;
-
-				++particles_to_draw;
+			if (p->type == pt_fire) {
+				theAlpha = (6 - p->ramp) / 6;
+				glpart->gl_color[0] = at[0] * theAlpha;
+				glpart->gl_color[1] = at[1] * theAlpha;
+				glpart->gl_color[2] = at[2] * theAlpha;
+				glpart->gl_color[3] = 255 * theAlpha;
 			}
+			else {
+				glpart->gl_color[0] = at[0];
+				glpart->gl_color[1] = at[1];
+				glpart->gl_color[2] = at[2];
+				glpart->gl_color[3] = 255;
+			}
+
+			glpart->gl_scale = scale;
+			VectorCopy(p->org, glpart->gl_org);
+
+			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+			VectorSet(vert->tex, 0, 0, particletexture_array_index);
+			VectorSet(vert->position, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2]);
+			++vert;
+
+			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+			VectorSet(vert->tex, 1, 0, particletexture_array_index);
+			VectorSet(vert->position, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
+			++vert;
+
+			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
+			VectorSet(vert->tex, 0, 1, particletexture_array_index);
+			VectorSet(vert->position, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
+			++vert;
+
+			++particles_to_draw;
 		}
 	}
 }
