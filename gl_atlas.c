@@ -63,8 +63,6 @@ static qbool atlas_dirty;
 static texture_ref atlas_texnum;
 static qbool atlas_refresh = false;
 
-static cvar_t gfx_atlasautoupload = { "gfx_atlasautoupload", "1" };
-
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 {
 	*ref = atlas_texnum;
@@ -187,10 +185,8 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 void CachePics_AtlasFrame(void)
 {
-	if (gfx_atlasautoupload.integer) {
-		if (atlas_refresh) {
-			CachePics_CreateAtlas();
-		}
+	if (atlas_refresh) {
+		CachePics_CreateAtlas();
 	}
 }
 
@@ -207,9 +203,6 @@ void CachePics_Init(void)
 	atlas_dirty = ~0;
 
 	CachePics_AtlasUpload();
-
-	Cvar_Register(&gfx_atlasautoupload);
-	Cmd_AddCommand("gfx_atlasupload", CachePics_CreateAtlas);
 }
 
 void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
