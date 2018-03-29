@@ -116,7 +116,7 @@ int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, i
 int Draw_SString(int x, int y, const char *str, float scale);
 int Draw_SAlt_String(int x, int y, const char *text, float scale);
 
-int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
+int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
 int Draw_StringLength(int x, int y, const char *text, int length);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
@@ -125,8 +125,6 @@ mpic_t *Draw_CacheWadPic (char *name, int code);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);
 
-void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha);
-void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale);
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.

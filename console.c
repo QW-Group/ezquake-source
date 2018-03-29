@@ -720,7 +720,7 @@ static void Con_DrawInput(void) {
 		text += 1 + key_linepos - con_linewidth;
 	}
 
-	Draw_ConsoleString(8, con_vislines - 22 + bound(0, con_shift.value, 8), text, NULL, 0, 0, 1);
+	Draw_ConsoleString(8, con_vislines - 22 + bound(0, con_shift.value, 8), text, NULL, 0, 0, 1, false);
 }
 
 // Returns first line to start printing from in order to fill up notify area
@@ -772,7 +772,7 @@ void Con_DrawNotify (void) {
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1);
+			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, false);
 			v += 8;
 		}
 	}
@@ -920,7 +920,8 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 						clr,
 						notifyCols,
 						0,
-						scale
+						scale,
+						false
 					);
 
 					// move text down
@@ -1034,7 +1035,7 @@ void Con_DrawConsole (int lines) {
 		idx = (row % con_totallines)*con_linewidth;
 
 		// copy current line to buffer
-		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1);
+		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, false);
 	}
 
 	// draw the download bar

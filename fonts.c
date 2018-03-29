@@ -17,8 +17,8 @@ typedef struct glyphinfo_s {
 
 static glyphinfo_t glyphs[4096];
 
-#define MAX_FONT_TEXTURE_SIZE 1024
-static mpic_t* font_textures[4];
+#define FONT_TEXTURE_SIZE 512
+mpic_t font_texture;
 
 static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, byte base_color[4])
 {
@@ -53,20 +53,12 @@ void FontCreate(const char* path)
 	int ch;
 	byte* temp_buffer;
 	byte* full_buffer;
-
-	int original_width = GL_TextureWidth(char_textures[0].texnum);
-	int original_height = GL_TextureHeight(char_textures[0].texnum);
-	int original_left = original_width * char_textures[0].sl;
-	int original_top = original_height * char_textures[0].tl;
-	int texture_width = original_width * (char_textures[0].sh - char_textures[0].sl);
-	int texture_height = original_height * (char_textures[0].th - char_textures[0].tl);
-	int base_font_width = texture_width / 16;
-	int base_font_height = texture_height / 16;
-	int baseline_offset = 0;
 	byte color_brown[4] = { 100, 64, 24, 255 };
 	byte color_numbers[4] = { 227, 224, 130, 255 };
-
-	memset(glyphs, 0, sizeof(glyphs));
+	int original_width, original_height, original_left, original_top;
+	int texture_width, texture_height;
+	int base_font_width, base_font_height;
+	int baseline_offset;
 
 	error = FT_Init_FreeType(&library);
 	if (error) {
@@ -83,6 +75,34 @@ void FontCreate(const char* path)
 		Con_Printf("Font file could not be opened\n");
 		return;
 	}
+
+	if (GL_TextureReferenceIsValid(font_texture.texnum)) {
+		original_width = GL_TextureWidth(font_texture.texnum);
+		original_height = GL_TextureHeight(font_texture.texnum);
+		original_left = original_width * font_texture.sl;
+		original_top = original_height * font_texture.tl;
+		texture_width = original_width * (font_texture.sh - font_texture.sl);
+		texture_height = original_height * (font_texture.th - font_texture.tl);
+	}
+	else {
+		original_width = texture_width = FONT_TEXTURE_SIZE;
+		original_height = texture_height = FONT_TEXTURE_SIZE * 2;
+		original_left = original_top = 0;
+		GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, &font_texture.texnum, "font");
+		GL_TexStorage2D(GL_TEXTURE0, font_texture.texnum, 1, GL_RGBA8, texture_width, texture_height);
+		GL_TexParameterf(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameterf(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		font_texture.sl = font_texture.tl = 0;
+		font_texture.sh = font_texture.th = 1.0f;
+		font_texture.width = font_texture.height = FONT_TEXTURE_SIZE;
+	}
+	base_font_width = texture_width / 16;
+	base_font_height = texture_height / 16;
+	baseline_offset = 0;
+
+	memset(glyphs, 0, sizeof(glyphs));
 
 	FT_Set_Pixel_Sizes(
 		face,
@@ -161,7 +181,7 @@ void FontCreate(const char* path)
 		glyphs[ch].offsets[0] /= base_font_width;
 
 		GL_TexSubImage2D(
-			GL_TEXTURE0, char_textures[0].texnum, 0,
+			GL_TEXTURE0, font_texture.texnum, 0,
 			original_left + xbase,
 			original_top + ybase,
 			base_font_width,
@@ -170,6 +190,8 @@ void FontCreate(const char* path)
 		);
 	}
 	Q_free(full_buffer);
+
+	CachePics_MarkAtlasDirty();
 }
 
 qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale)
@@ -216,7 +238,7 @@ float FontCharacterWidthWide(wchar ch)
 	}
 }
 
-qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale)
+qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 
@@ -230,19 +252,19 @@ qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale)
 		return false;
 	}
 
-	if (ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	if (proportional && !bigchar && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
 
 	return true;
 }
 
-void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, int char_gap)
+void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, int char_gap, qbool proportional)
 {
 	if (bigchar) {
 		*x += 64 * scale + char_gap;
 	}
-	else if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	else if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += ceil(8 * (glyphs[ch].advance[0] - glyphs[ch].offsets[0])) * scale + char_gap;
 	}
 	else {
@@ -250,9 +272,9 @@ void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, 
 	}
 }
 
-float FontCharacterWidth(char ch)
+float FontCharacterWidth(char ch, qbool proportional)
 {
-	if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		return ceil(8 * glyphs[ch].advance[0]);
 	}
 	else {

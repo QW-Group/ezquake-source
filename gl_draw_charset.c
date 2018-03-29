@@ -219,9 +219,9 @@ qbool R_CharAvailable(wchar num)
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-void Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
+static void Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
 {
-	if (FontAlterCharCoords(&x, &y, num, bigchar, scale)) {
+	if (FontAlterCharCoords(&x, &y, num, bigchar, scale, proportional)) {
 		GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
 	}
 }
@@ -231,44 +231,27 @@ static void Draw_ResetCharGLState(void)
 	GLM_Draw_ResetCharGLState();
 }
 
-void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
-{
-	byte rgba[4];
-	COLOR_TO_RGBA(color, rgba);
-	Draw_CharacterBase(x, y, char2wc(c), scale, true, rgba, true, true);
-	Draw_ResetCharGLState();
-}
-
-// Only ever called by the tracker
-void Draw_SColoredCharacterW(int x, int y, wchar num, color_t color, float scale)
-{
-	byte rgba[4];
-	COLOR_TO_RGBA(color, rgba);
-	Draw_CharacterBase(x, y, num, scale, true, rgba, false, true);
-	Draw_ResetCharGLState();
-}
-
 void Draw_SCharacter(int x, int y, int num, float scale)
 {
-	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false, true);
+	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 void Draw_SCharacterW(int x, int y, wchar num, float scale)
 {
-	Draw_CharacterBase(x, y, num, scale, true, color_white, false, true);
+	Draw_CharacterBase(x, y, num, scale, true, color_white, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 void Draw_CharacterW(int x, int y, wchar num)
 {
-	Draw_CharacterBase(x, y, num, 1, true, color_white, false, true);
+	Draw_CharacterBase(x, y, num, 1, true, color_white, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 void Draw_Character(int x, int y, int num)
 {
-	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false, true);
+	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false, true, false);
 	Draw_ResetCharGLState();
 }
 
@@ -277,7 +260,7 @@ void Draw_SetColor(byte *rgba)
 	GLM_Draw_SetColor(rgba);
 }
 
-static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
+static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap, qbool proportional)
 {
 	byte rgba[4];
 	qbool color_is_white = true;
@@ -363,9 +346,9 @@ static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
 
-		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap);
+		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap, proportional);
 	}
 	Draw_ResetCharGLState();
 	return x - original_x;
@@ -373,25 +356,28 @@ static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int
 
 int Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
 {
-	return Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap);
+	return Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap, false);
 }
 
+// TODO: proportional
 int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
 {
-	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
+	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_SString(int x, int y, const char *text, float scale)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_SAlt_String(int x, int y, const char *text, float scale)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, false);
 }
 
-int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale)
+int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale, qbool proportional)
 {
 	float alpha = 1;
 	qbool bigchar = false;
@@ -481,52 +467,58 @@ int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int te
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
 
-		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap);
+		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap, proportional);
 	}
 	Draw_ResetCharGLState();
 
 	return x - original_x;
 }
 
+// TODO: proportional
 int Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
 {
-	return Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_ColoredString(int x, int y, const char *text, int red)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_Alt_String(int x, int y, const char *text)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_AlphaString(int x, int y, const char *text, float alpha)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_String(int x, int y, const char *text)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0, false);
 }
 
+// TODO: proportional
 int Draw_StringLength(int x, int y, const char *text, int length)
 {
 	int i;
-	int x = 0, y = 0;
 
 	for (i = 0; text[i] && i < length; i++) {
-		FontAdvanceCharCoords(&x, &y, text[i], false, 1, 0);
+		FontAdvanceCharCoords(&x, &y, text[i], false, 1, 0, false);
 	}
 
 	return x;

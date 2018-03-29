@@ -49,6 +49,7 @@ static qbool atlas_dirty;
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
+static cachepic_node_t fontpics[1];
 
 static float solid_s;
 static float solid_t;
@@ -372,6 +373,19 @@ void CachePics_CreateAtlas(void)
 			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
 
 			AddToDeleteList(src);
+		}
+	}
+
+	// Copy any proportional fonts
+	{
+		extern mpic_t font_texture;
+
+		if (GL_TextureReferenceIsValid(font_texture.texnum)) {
+			fontpics[0].data.pic = &font_texture;
+
+			CachePics_InsertBySize(&sized_list, &fontpics[0]);
+
+			AddToDeleteList(&font_texture);
 		}
 	}
 
