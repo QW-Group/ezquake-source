@@ -28,8 +28,6 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "sbar.h"
 #include "common_draw.h"
 
-extern float overall_alpha;
-
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
 
 cvar_t gl_alphafont    = { "gl_alphafont", "1" };

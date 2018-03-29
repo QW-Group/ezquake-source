@@ -868,8 +868,9 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	byte bytecolor[4];
 
 	// Is alpha 0?
-	if ((byte)(color >> 24 & 0xFF) == 0)
+	if ((byte)(color >> 24 & 0xFF) == 0) {
 		return;
+	}
 
 	COLOR_TO_RGBA(color, bytecolor);
 	thickness = max(0, thickness);

@@ -893,12 +893,7 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
     {
 		hud->frame_color_cache[3] = (byte)(255 * hud->frame->value);
 
-		Draw_AlphaFillRGB(x, y, width, height,
-			RGBA_TO_COLOR(
-			hud->frame_color_cache[0],
-			hud->frame_color_cache[1],
-			hud->frame_color_cache[2],
-			hud->frame_color_cache[3]));
+		Draw_AlphaFillRGB(x, y, width, height, RGBAVECT_TO_COLOR(hud->frame_color_cache));
         return;
     }
     else

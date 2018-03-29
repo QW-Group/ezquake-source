@@ -30,8 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_2D_ELEMENTS 4096
 
-extern float overall_alpha;
-
 typedef struct draw_hud_element_s {
 	glm_image_type_t type;
 	texture_ref texture;

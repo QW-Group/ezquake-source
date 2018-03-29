@@ -28,6 +28,8 @@ static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
 static buffer_ref imageIndexBuffer;
 #endif
 
+extern float overall_alpha;
+
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 
 #define IMAGEPROG_FLAGS_TEXTURE     1
@@ -307,8 +309,12 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	}
 
 	if (GL_UseGLSL()) {
+		float alpha = (color[3] * overall_alpha / 255.0f);
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
-		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
+		imageData.images[imageData.imageCount].colour[0] = color[0] * alpha;
+		imageData.images[imageData.imageCount].colour[1] = color[1] * alpha;
+		imageData.images[imageData.imageCount].colour[2] = color[2] * alpha;
+		imageData.images[imageData.imageCount].colour[3] = color[3] * overall_alpha;
 		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
 
 		imageData.images[imageData.imageCount].s1 = tex_s;
@@ -321,7 +327,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
 #else
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
-		float alpha = color[3] / 255.0f;
 		int flags = IMAGEPROG_FLAGS_TEXTURE;
 		flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
 		flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
@@ -329,7 +334,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
 		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
 		img->colour[2] = (img + 1)->colour[2] = (img + 2)->colour[2] = (img + 3)->colour[2] = color[2] * alpha;
-		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3];
+		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 		GLM_SetCoordinates(img, x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags);
 #endif
@@ -337,12 +342,12 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	else {
 		int imageIndex = imageData.imageCount * 4;
 		glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
-		float alpha = color[3] / 255.0f;
+		float alpha = (color[3] * overall_alpha / 255.0f);
 
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
 		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
 		img->colour[2] = (img + 1)->colour[2] = (img + 2)->colour[2] = (img + 3)->colour[2] = color[2] * alpha;
-		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3];
+		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
 
@@ -370,41 +375,36 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 
 	if (GL_UseGLSL()) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
-		memcpy(&imageData.images[imageData.imageCount].colour, color, sizeof(byte) * 4);
-		if (color[3] != 255) {
-			float alpha = color[3] / 255.0f;
+		float alpha = (color[3] * overall_alpha / 255.0f);
 
-			imageData.images[imageData.imageCount].colour[0] *= alpha;
-			imageData.images[imageData.imageCount].colour[1] *= alpha;
-			imageData.images[imageData.imageCount].colour[2] *= alpha;
-		}
+		imageData.images[imageData.imageCount].colour[0] = color[0] * alpha;
+		imageData.images[imageData.imageCount].colour[1] = color[1] * alpha;
+		imageData.images[imageData.imageCount].colour[2] = color[2] * alpha;
+		imageData.images[imageData.imageCount].colour[3] = color[3] * overall_alpha;
 		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
 		imageData.images[imageData.imageCount].s2 = imageData.images[imageData.imageCount].s1 = s;
 		imageData.images[imageData.imageCount].t2 = imageData.images[imageData.imageCount].t1 = t;
 		imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
 #else 
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
-		float alpha = color[3] / 255.0f;
+		float alpha = (color[3] * overall_alpha / 255.0f);
 
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
 		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
 		img->colour[2] = (img + 1)->colour[2] = (img + 2)->colour[2] = (img + 3)->colour[2] = color[2] * alpha;
-		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3];
+		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 		GLM_SetCoordinates(img, x, y, x + width, y + height, s, 0, t, 0, IMAGEPROG_FLAGS_TEXTURE);
 #endif
 	}
 	else {
 		int imageIndex = imageData.imageCount * 4;
+		float alpha = (color[3] * overall_alpha / 255.0f);
 
-		memcpy(&imageData.glc_images[imageIndex].colour, color, sizeof(byte) * 4);
-		if (color[3] != 255) {
-			float alpha = color[3] / 255.0f;
-
-			imageData.glc_images[imageIndex].colour[0] *= alpha;
-			imageData.glc_images[imageIndex].colour[1] *= alpha;
-			imageData.glc_images[imageIndex].colour[2] *= alpha;
-		}
+		imageData.glc_images[imageIndex].colour[0] = color[0] * alpha;
+		imageData.glc_images[imageIndex].colour[1] = color[1] * alpha;
+		imageData.glc_images[imageIndex].colour[2] = color[2] * alpha;
+		imageData.glc_images[imageIndex].colour[3] = color[3] * overall_alpha;
 		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0);
 	}
 
