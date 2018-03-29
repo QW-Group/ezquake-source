@@ -27,6 +27,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "utils.h"
 #include "sbar.h"
 #include "common_draw.h"
+#include "fonts.h"
 
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
 
@@ -220,19 +221,9 @@ qbool R_CharAvailable(wchar num)
 // gl_statechange		= Change the gl state before drawing?
 void Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
 {
-	int char_size = (bigchar ? 64 : 8);
-
-	// Totally off screen.
-	if (y <= (-char_size * scale)) {
-		return;
+	if (FontAlterCharCoords(&x, &y, num, bigchar, scale)) {
+		GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
 	}
-
-	// Space.
-	if (num == 32) {
-		return;
-	}
-
-	GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange);
 }
 
 static void Draw_ResetCharGLState(void)
@@ -286,7 +277,7 @@ void Draw_SetColor(byte *rgba)
 	GLM_Draw_SetColor(rgba);
 }
 
-static void Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
+static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
 {
 	byte rgba[4];
 	qbool color_is_white = true;
@@ -294,10 +285,11 @@ static void Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, in
 	int curr_char;
 	int color_index = 0;
 	color_t last_color = COLOR_WHITE;
+	int original_x = x;
 
 	// Nothing to draw.
 	if (!*text) {
-		return;
+		return 0;
 	}
 
 	// Make sure we set the color from scratch so that the 
@@ -373,32 +365,33 @@ static void Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, in
 		// And don't update the glstate, we've done that also!
 		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
 
-		x += ((bigchar ? 64 : 8) * scale) + char_gap;
+		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap);
 	}
 	Draw_ResetCharGLState();
+	return x - original_x;
 }
 
-void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
+int Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
 {
-	Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap);
+	return Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap);
 }
 
-void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
+int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
+	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
 }
 
-void Draw_SString(int x, int y, const char *text, float scale)
+int Draw_SString(int x, int y, const char *text, float scale)
 {
-	Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0);
 }
 
-void Draw_SAlt_String(int x, int y, const char *text, float scale)
+int Draw_SAlt_String(int x, int y, const char *text, float scale)
 {
-	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0);
 }
 
-void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale)
+int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale)
 {
 	float alpha = 1;
 	qbool bigchar = false;
@@ -410,10 +403,11 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int t
 	int color_index = 0;
 	color_t last_color = COLOR_WHITE;
 	int color_count = color ? text_length : 0;
+	int original_x = x;
 
 	// Nothing to draw.
 	if (!*text) {
-		return;
+		return 0;
 	}
 
 	// Make sure we set the color from scratch so that the 
@@ -489,45 +483,67 @@ void Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int t
 		// And don't update the glstate, we've done that also!
 		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
 
-		x += ((bigchar ? 64 : 8) * scale) + char_gap;
+		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap);
 	}
 	Draw_ResetCharGLState();
+
+	return x - original_x;
 }
 
-void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
+int Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);
 }
 
-void Draw_ColoredString(int x, int y, const char *text, int red)
+int Draw_ColoredString(int x, int y, const char *text, int red)
 {
-	Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0);
 }
 
-void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
+int Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
 {
-	Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0);
 }
 
-void Draw_Alt_String(int x, int y, const char *text)
+int Draw_Alt_String(int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0);
 }
 
-void Draw_AlphaString(int x, int y, const char *text, float alpha)
+int Draw_AlphaString(int x, int y, const char *text, float alpha)
 {
-	Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0);
 }
 
-void Draw_String(int x, int y, const char *text)
+int Draw_String(int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
+	return Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
+}
+
+int Draw_StringLength(int x, int y, const char *text, int length)
+{
+	int i;
+	int x = 0, y = 0;
+
+	for (i = 0; text[i] && i < length; i++) {
+		FontAdvanceCharCoords(&x, &y, text[i], false, 1, 0);
+	}
+
+	return x;
+}
+
+void Draw_LoadFont_f(void)
+{
+	if (Cmd_Argc() > 1) {
+		FontCreate(Cmd_Argv(1));
+	}
 }
 
 // Called during initialisation, before GL_Texture_Init
 void Draw_Charset_Init(void)
 {
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
+	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register(&gl_consolefont);
