@@ -902,23 +902,29 @@ char* SCR_GetDemoTime(void)
 	return str;
 }
 
-int SCR_GetClockStringWidth(const char *s, qbool big, float scale)
+int SCR_GetClockStringWidth(const char *s, qbool big, float scale, qbool proportional)
 {
 	int w = 0;
 	if (big) {
 		while (*s) {
 			w += (*s++ == ':') ? (16 * scale) : (24 * scale);
 		}
-	} else {
-		w = strlen(s) * LETTERWIDTH * scale;
+	}
+	else {
+		w = Draw_StringLength(s, -1, scale, proportional);
 	}
 	return w;
 }
 
 int SCR_GetClockStringHeight(qbool big, float scale)
 {
-	if (big) return (24 * scale);
-	else return (LETTERWIDTH * scale);
+	if (big) {
+		return (24 * scale);
+	}
+	else {
+		// FIXME: proportional
+		return (LETTERWIDTH * scale);
+	}
 }
 
 const char* SCR_GetTimeString(int timetype, const char *format)
@@ -942,83 +948,6 @@ static qbool SCR_BlinkNow(void)
 
 	GetLocalTime(&tm);
 	return tm.wMilliseconds < 500;
-}
-
-// ------------------
-// draw BIG clock
-// style:
-//  0 - normal
-//  1 - red
-void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const char *t)
-{
-    extern  mpic_t  *sb_nums[2][11];
-    extern  mpic_t  *sb_colon/*, *sb_slash*/;
-	qbool lblink = SCR_BlinkNow();
-
-    if (style > 1)  style = 1;
-    if (style < 0)  style = 0;
-
-	while (*t)
-    {
-        if (*t >= '0'  &&  *t <= '9')
-        {
-			Draw_STransPic(x, y, sb_nums[style][*t-'0'], scale);
-            x += 24*scale;
-        }
-        else if (*t == ':')
-        {
-            if (lblink || !blink)
-				Draw_STransPic (x, y, sb_colon, scale);
-
-			x += 16*scale;
-        }
-        else
-		{
-			Draw_SCharacter(x, y, *t+(style?128:0), 3*scale);
-            x += 24*scale;
-		}
-        t++;
-    }
-}
-
-// ------------------
-// draw SMALL clock
-// style:
-//  0 - small white
-//  1 - small red
-//  2 - small yellow/white
-//  3 - small yellow/red
-void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t)
-{
-	qbool lblink = SCR_BlinkNow();
-	int c;
-
-    if (style > 3)  style = 3;
-    if (style < 0)  style = 0;
-
-    while (*t)
-    {
-		c = (int) *t;
-        if (c >= '0'  &&  c <= '9')
-        {
-            if (style == 1)
-                c += 128;
-            else if (style == 2  ||  style == 3)
-                c -= 30;
-        }
-        else if (c == ':')
-        {
-            if (style == 1  ||  style == 3)
-                c += 128;
-            if (lblink ||  !blink)
-                ;
-            else
-                c = ' ';
-        }
-        Draw_SCharacter(x, y, c, scale);
-        x+= 8*scale;
-        t++;
-    }
 }
 
 // ================================================================

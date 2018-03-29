@@ -117,13 +117,15 @@ int Draw_SString(int x, int y, const char *str, float scale);
 int Draw_SAlt_String(int x, int y, const char *text, float scale);
 
 int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
-int Draw_StringLength(int x, int y, const char *text, int length);
+int Draw_StringLength(const char *text, int length, float scale, qbool proportional);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic (cache_pic_id_t id);
 mpic_t *Draw_CacheWadPic (char *name, int code);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);
+
+void Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional);
 
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);

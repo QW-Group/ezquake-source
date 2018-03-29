@@ -48,11 +48,9 @@ qbool CachePic_Remove(const char *path);
 qbool CachePic_RemoveByPic(mpic_t* pic);
 void CachePics_DeInit(void);
 
-int SCR_GetClockStringWidth(const char *s, qbool big, float scale);
+int SCR_GetClockStringWidth(const char *s, qbool big, float scale, qbool proportional);
 int SCR_GetClockStringHeight(qbool big, float scale);
 const char* SCR_GetTimeString(int timetype, const char *format);
-void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const char *t);
-void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t);
 void SCR_NetStats(int x, int y, float period);
 
 void Draw_FitAlphaSubPic (int x, int y, int target_width, int target_height, 
