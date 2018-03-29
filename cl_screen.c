@@ -50,6 +50,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 void WeaponStats_CommandInit(void);
 void SCR_DrawHud(void);
+void SCR_DrawClocks(void);
 void R_SetupFrame(void);
 void SCR_Draw_TeamInfo(void);
 int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, const char* order_string);
@@ -82,7 +83,6 @@ float	unzoomedsensitivity;
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel);
 void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel);
-void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel);
 cvar_t	scr_fov					= {"fov", "90", CVAR_NONE, OnFovChange};	// 10 - 140
 cvar_t	default_fov				= {"default_fov", "90", CVAR_NONE, OnDefaultFovChange};
 cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_NONE};
@@ -96,20 +96,6 @@ cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
 
 cvar_t	scr_newHud = {"scr_newhud", "0"};
 cvar_t	scr_newHudClear = {"scr_newhud_clear", "0"};	// force clearing screen on every frame (necessary with viewsize)
-
-cvar_t	scr_clock				= {"cl_clock", "0"};
-cvar_t	scr_clock_format		= {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
-cvar_t	scr_clock_x				= {"cl_clock_x", "0"};
-cvar_t	scr_clock_y				= {"cl_clock_y", "-1"};
-
-cvar_t	scr_gameclock			= {"cl_gameclock", "0"};
-cvar_t	scr_gameclock_x			= {"cl_gameclock_x", "0"};
-cvar_t	scr_gameclock_y			= {"cl_gameclock_y", "-3"};
-cvar_t	scr_gameclock_offset	= {"cl_gameclock_offset", "0"};
-
-cvar_t	scr_democlock			= {"cl_democlock", "0"};
-cvar_t	scr_democlock_x			= {"cl_democlock_x", "0"};
-cvar_t	scr_democlock_y			= {"cl_democlock_y", "-2"};
 
 cvar_t	scr_qtvbuffer			= {"scr_qtvbuffer", "0"};
 cvar_t	scr_qtvbuffer_x			= {"scr_qtvbuffer_x", "0"};
@@ -132,6 +118,20 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
+
+static void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
+{
+	if (!host_initialized) {
+		return; // we in progress of initialization, allow
+	}
+
+	// MEAG: You what now?
+	if (cls.state == ca_active) {
+		Com_Printf("Can't change %s while connected\n", var->name);
+		*cancel = true; // prevent stick notes
+		return;
+	}
+}
 
 cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
 cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR};
@@ -680,94 +680,6 @@ void SCR_DrawSpeed (void)
 	}
 }
 
-void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel) {
-	if (!host_initialized)
-		return; // we in progress of initialization, allow
-
-	if (cls.state == ca_active) {
-		Com_Printf("Can't change %s while connected\n", var->name);
-		*cancel = true; // prevent stick notes
-		return;
-	}
-}
-
-void SCR_DrawClock (void) {
-	int x, y;
-	time_t t;
-	struct tm *ptm;
-	char str[64];
-
-	if (!scr_clock.value || scr_newHud.value == 1) // newHud  has its own clock
-		return;
-
-	if (scr_clock.value == 2) {
-		time (&t);
-		if ((ptm = localtime (&t))) {
-			strftime (str, sizeof (str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
-		} else {
-			strlcpy (str, "#bad date#", sizeof (str));
-		}
-	} else {
-		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		strlcpy (str, SecondsToHourString((int) time), sizeof (str));
-	}
-
-	x = ELEMENT_X_COORD(scr_clock);
-	y = ELEMENT_Y_COORD(scr_clock);
-	Draw_String (x, y, str);
-}
-
-void SCR_DrawGameClock (void) {
-	int x, y;
-	char str[80], *s;
-	float timelimit;
-
-	if (!scr_gameclock.value || scr_newHud.value == 1) // newHud has its own gameclock
-		return;
-
-	if (scr_gameclock.value == 2 || scr_gameclock.value == 4)
-		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
-	else
-		timelimit = 0;
-
-	if (cl.countdown || cl.standby)
-		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
-	else
-		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
-
-	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
-		s++;		// or just use SecondsToMinutesString() ...
-	else
-		s = str;
-
-	x = ELEMENT_X_COORD(scr_gameclock);
-	y = ELEMENT_Y_COORD(scr_gameclock);
-	Draw_String (x, y, s);
-}
-
-void SCR_DrawDemoClock(void)
-{
-	int x, y;
-	char str[80];
-
-	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK || !scr_democlock.value || scr_newHud.value == 1) {
-		// newHud has its own democlock
-		return;
-	}
-
-	if (scr_democlock.value == 2) {
-		strlcpy(str, SecondsToHourString((int)(cls.demotime)), sizeof(str));
-	}
-	else {
-		strlcpy(str, SecondsToHourString((int)(cls.demotime - demostarttime)), sizeof(str));
-	}
-
-	x = ELEMENT_X_COORD(scr_democlock);
-	y = ELEMENT_Y_COORD(scr_democlock);
-	Draw_String(x, y, str);
-}
-
-
 void SCR_DrawQTVBuffer (void)
 {
 	extern double Demo_GetSpeed(void);
@@ -1227,9 +1139,7 @@ static void SCR_DrawElements(void)
 
 						SCR_CheckDrawCenterString ();
 						SCR_DrawSpeed ();
-						SCR_DrawClock ();
-						SCR_DrawGameClock ();
-						SCR_DrawDemoClock ();
+						SCR_DrawClocks();
 						SCR_DrawQTVBuffer ();
 						SCR_DrawFPS ();
 					}
@@ -1530,20 +1440,6 @@ void SCR_Init (void)
 	Cvar_Register (&scr_showpause);
 	Cvar_Register (&scr_centertime);
 	Cvar_Register (&scr_centershift);
-
-	Cvar_Register (&scr_clock_x);
-	Cvar_Register (&scr_clock_y);
-	Cvar_Register (&scr_clock_format);
-	Cvar_Register (&scr_clock);
-
-	Cvar_Register (&scr_gameclock_offset);
-	Cvar_Register (&scr_gameclock_x);
-	Cvar_Register (&scr_gameclock_y);
-	Cvar_Register (&scr_gameclock);
-
-	Cvar_Register (&scr_democlock_x);
-	Cvar_Register (&scr_democlock_y);
-	Cvar_Register (&scr_democlock);
 
 	Cvar_Register (&scr_qtvbuffer_x);
 	Cvar_Register (&scr_qtvbuffer_y);

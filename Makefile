@@ -395,7 +395,8 @@ OBJS_c := \
     gl_debug.o \
     hud_autoid.o \
     cl_screenshot.o \
-    gl_rpart_spawn.o
+    gl_rpart_spawn.o \
+    hud_clock.o
 
 ### Configuration Options ###
 

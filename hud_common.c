@@ -64,6 +64,7 @@ void FrameStats_HudInit(void);
 void TeamInfo_HudInit(void);
 void Speed_HudInit(void);
 void TeamHold_HudInit(void);
+void Clock_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -547,55 +548,6 @@ void SCR_HUD_DrawPing(hud_t *hud)
 	}
 }
 
-static const char *SCR_HUD_ClockFormat(int format)
-{
-	switch (format) {
-		case 1: return "%I:%M %p";
-		case 2: return "%I:%M:%S %p";
-		case 3: return "%H:%M";
-		default: case 0: return "%H:%M:%S";
-	}
-}
-
-//---------------------
-//
-// draw HUD clock
-//
-void SCR_HUD_DrawClock(hud_t *hud)
-{
-	int width, height;
-	int x, y;
-	const char *t;
-
-	static cvar_t
-		*hud_clock_big = NULL,
-		*hud_clock_style,
-		*hud_clock_blink,
-		*hud_clock_scale,
-		*hud_clock_format;
-
-	if (hud_clock_big == NULL)    // first time
-	{
-		hud_clock_big   = HUD_FindVar(hud, "big");
-		hud_clock_style = HUD_FindVar(hud, "style");
-		hud_clock_blink = HUD_FindVar(hud, "blink");
-		hud_clock_scale = HUD_FindVar(hud, "scale");
-		hud_clock_format= HUD_FindVar(hud, "format");
-	}
-
-	t = SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
-	width = SCR_GetClockStringWidth(t, hud_clock_big->integer, hud_clock_scale->value);
-	height = SCR_GetClockStringHeight(hud_clock_big->integer, hud_clock_scale->value);
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		if (hud_clock_big->value)
-			SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, t);
-		else
-			SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, t);
-	}
-}
-
 //---------------------
 //
 // draw HUD notify
@@ -629,94 +581,6 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
 		SCR_DrawNotify(x, y, hud_notify_scale->value, hud_notify_time->integer, hud_notify_rows->integer, chars_per_line);
-	}
-}
-
-//---------------------
-//
-// draw HUD gameclock
-//
-void SCR_HUD_DrawGameClock(hud_t *hud)
-{
-	int width, height;
-	int x, y;
-	int timetype;
-	const char *t;
-
-	static cvar_t
-		*hud_gameclock_big = NULL,
-		*hud_gameclock_style,
-		*hud_gameclock_blink,
-		*hud_gameclock_countdown,
-		*hud_gameclock_scale,
-		*hud_gameclock_offset;
-
-	if (hud_gameclock_big == NULL)    // first time
-	{
-		hud_gameclock_big   = HUD_FindVar(hud, "big");
-		hud_gameclock_style = HUD_FindVar(hud, "style");
-		hud_gameclock_blink = HUD_FindVar(hud, "blink");
-		hud_gameclock_countdown = HUD_FindVar(hud, "countdown");
-		hud_gameclock_scale = HUD_FindVar(hud, "scale");
-		hud_gameclock_offset = HUD_FindVar(hud, "offset");
-		gameclockoffset = &hud_gameclock_offset->integer;
-	}
-
-	timetype = (hud_gameclock_countdown->value) ? TIMETYPE_GAMECLOCKINV : TIMETYPE_GAMECLOCK;
-	t = SCR_GetTimeString(timetype, NULL);
-	width = SCR_GetClockStringWidth(t, hud_gameclock_big->integer, hud_gameclock_scale->value);
-	height = SCR_GetClockStringHeight(hud_gameclock_big->integer, hud_gameclock_scale->value);
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		if (hud_gameclock_big->value)
-			SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, t);
-		else
-			SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, t);
-	}
-}
-
-//---------------------
-//
-// draw HUD democlock
-//
-void SCR_HUD_DrawDemoClock(hud_t *hud)
-{
-	int width = 0;
-	int height = 0;
-	int x = 0;
-	int y = 0;
-	const char *t;
-	static cvar_t
-		*hud_democlock_big = NULL,
-		*hud_democlock_style,
-		*hud_democlock_blink,
-		*hud_democlock_scale;
-
-	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK) {
-		HUD_PrepareDraw(hud, width, height, &x, &y);
-		return;
-	}
-
-	if (hud_democlock_big == NULL) {
-		// first time
-		hud_democlock_big   = HUD_FindVar(hud, "big");
-		hud_democlock_style = HUD_FindVar(hud, "style");
-		hud_democlock_blink = HUD_FindVar(hud, "blink");
-		hud_democlock_scale = HUD_FindVar(hud, "scale");
-	}
-
-	t = SCR_GetTimeString(TIMETYPE_DEMOCLOCK, NULL);
-	width = SCR_GetClockStringWidth(t, hud_democlock_big->integer, hud_democlock_scale->value);
-	height = SCR_GetClockStringHeight(hud_democlock_big->integer, hud_democlock_scale->value);
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		if (hud_democlock_big->value) {
-			SCR_DrawBigClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
-		}
-		else {
-			SCR_DrawSmallClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
-		}
 	}
 }
 
@@ -4868,20 +4732,6 @@ void CommonDraw_Init(void)
 
 	autohud.active = 0;
 
-	// init gameclock
-	HUD_Register(
-		"gameclock", NULL, "Shows current game time (hh:mm:ss).",
-		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
-		"1", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-		"big",      "1",
-		"style",    "0",
-		"scale",    "1",
-		"blink",    "1",
-		"countdown","0",
-		"offset","0",
-		NULL
-	);
-
 	HUD_Register(
 		"notify", NULL, "Shows last console lines",
 		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
@@ -4899,7 +4749,7 @@ void CommonDraw_Init(void)
 		"Shows your current framerate in frames per second (fps)."
 		"This can also show the minimum framerate that occured in the last measured period.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-		"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"1", "top", "center", "after", "0", "0", "0", "0 0 0", NULL,
 		"show_min", "0",
 		"style",    "0",
 		"title",    "1",
@@ -4915,31 +4765,6 @@ void CommonDraw_Init(void)
 		"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
 		"style", "0",
 		"scale", "1",
-		NULL
-	);
-
-	// init clock
-	HUD_Register(
-		"clock", NULL, "Shows current local time (hh:mm:ss).",
-		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
-		"0", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-		"big",      "1",
-		"style",    "0",
-		"scale",    "1",
-		"blink",    "1",
-		"format",   "0",
-		NULL
-	);
-
-	// init democlock
-	HUD_Register(
-		"democlock", NULL, "Shows current demo time (hh:mm:ss).",
-		HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
-		"1", "top", "right", "console", "0", "8", "0", "0 0 0", NULL,
-		"big",      "0",
-		"style",    "0",
-		"scale",    "1",
-		"blink",    "0",
 		NULL
 	);
 
@@ -5556,6 +5381,7 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
+	Clock_HudInit();
 	Speed_HudInit();
 	Radar_HudInit();
 	WeaponStats_HUDInit();
