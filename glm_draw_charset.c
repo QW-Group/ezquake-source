@@ -2,6 +2,7 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "fonts.h"
 
 extern mpic_t char_textures[MAX_CHARSETS];
 extern int char_range[MAX_CHARSETS];
@@ -24,7 +25,7 @@ static void Draw_TextCacheSetColor(GLubyte* color)
 	memcpy(cache_currentColor, color, sizeof(cache_currentColor));
 }
 
-static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
+static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
 {
 	int new_charset = (ch & 0xFF00) >> 8;
 	mpic_t* texture = &char_textures[0];
@@ -73,6 +74,8 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, 
 
 		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, s, t, tex_width, tex_height, cache_currentColor, false, texture->texnum, true, nextCharacterIsCrosshair);
 	}
+
+	return FontCharacterWidth(ch, proportional);
 }
 
 // x, y					= Pixel position of char.
@@ -82,7 +85,7 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, 
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+int GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 
@@ -103,13 +106,13 @@ void GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_ov
 				Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, (((float)char_size / char_width) * scale), 1);
 			}
 
-			return;
+			return 64 * scale;
 		}
 
 		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
 
-	Draw_TextCacheAddCharacter(x, y, num, scale, proportional);
+	return Draw_TextCacheAddCharacter(x, y, num, scale, proportional);
 }
 
 void GLM_Draw_ResetCharGLState(void)

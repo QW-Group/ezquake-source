@@ -43,7 +43,7 @@ void HUD_NewRadarMap(void);
 void SCR_HUD_DrawRadar(hud_t *hud);
 
 void HudCommon_Init(void);
-void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low, float scale, int style, int digits, char *s_align);
+void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low, float scale, int style, int digits, char *s_align, qbool proportional);
 
 extern qbool autohud_loaded;
 extern cvar_t mvd_autohud;

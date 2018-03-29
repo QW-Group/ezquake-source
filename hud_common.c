@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "teamplay.h"
 #include "mvd_utils.h"
 #include "mvd_utils_common.h"
+#include "fonts.h"
 
 void TeamHold_DrawPercentageBar(
 	int x, int y, int width, int height,
@@ -1261,7 +1262,7 @@ void SCR_HUD_DrawFace(hud_t *hud)
 
 // status numbers
 void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
-		float scale, int style, int digits, char *s_align)
+		float scale, int style, int digits, char *s_align, qbool proportional)
 {
 	extern mpic_t *sb_nums[2][11];
 
@@ -1348,10 +1349,12 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 			break;
 	}
 
-	if(digits)
+	if (digits) {
 		width = digits * size;
-	else
+	}
+	else {
 		width = size * len;
+	}
 
 	height = size;
 
@@ -1359,18 +1362,21 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	{
 		case 1:
 		case 3:
-			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
+			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y)) {
 				return;
+			}
 			switch (align)
 			{
 				case 0: break;
 				case 1: x += scale * (width - size * len) / 2; break;
 				case 2: x += scale * (width - size * len); break;
 			}
-			if (low)
+			if (low) {
 				Draw_SAlt_String(x, y, buf, scale);
-			else
+			}
+			else {
 				Draw_SString(x, y, buf, scale);
+			}
 			break;
 
 		case 0:
@@ -1414,7 +1420,7 @@ void SCR_HUD_DrawHealth(hud_t *hud)
 	}
 	value = HUD_Stats(STAT_HEALTH);
 	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(),
-			scale->value, style->value, digits->value, align->string);
+			scale->value, style->value, digits->value, align->string, false);
 }
 
 void SCR_HUD_DrawArmor(hud_t *hud)
@@ -1451,7 +1457,7 @@ void SCR_HUD_DrawArmor(hud_t *hud)
 	}
 
 	SCR_HUD_DrawNum(hud, level, low,
-			scale->value, style->value, digits->value, align->string);
+			scale->value, style->value, digits->value, align->string, false);
 }
 
 void Draw_AMFStatLoss (int stat, hud_t* hud);
@@ -1473,12 +1479,13 @@ void SCR_HUD_DrawArmorDamage(hud_t *hud)
 }
 
 void SCR_HUD_DrawAmmo(
-	hud_t *hud, int num, float scale, int style, int digits, char *s_align
+	hud_t *hud, int num, float scale, int style, int digits, char *s_align, qbool proportional
 )
 {
 	extern mpic_t sb_ib_ammo[4];
 	int value, num_old;
 	qbool low;
+	char c;
 
 	num_old = num;
 	if (num < 1 || num > 4)
@@ -1526,7 +1533,7 @@ void SCR_HUD_DrawAmmo(
 
 	if (style < 2) {
 		// simply draw number
-		SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align);
+		SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align, proportional);
 	}
 	else {
 		// else - draw classic ammo-count box with background
@@ -1535,80 +1542,98 @@ void SCR_HUD_DrawAmmo(
 
 		scale = max(scale, 0.01);
 
-		if (!HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x, &y)) {
+		snprintf(buf, sizeof(buf), "%3i", value);
+
+		if (!HUD_PrepareDraw(hud, Draw_StringLength(buf, -1, scale, proportional) + 18 * scale, 11 * scale, &x, &y)) {
 			return;
 		}
 
-		snprintf (buf, sizeof (buf), "%3i", value);
 		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && GL_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
 			Draw_SPic(x, y, &sb_ib_ammo[num - 1], scale);
 		}
-		if (buf[0] != ' ')  Draw_SCharacter (x +  7*scale, y, 18+buf[0]-'0', scale);
-		if (buf[1] != ' ')  Draw_SCharacter (x + 15*scale, y, 18+buf[1]-'0', scale);
-		if (buf[2] != ' ')  Draw_SCharacter (x + 23*scale, y, 18+buf[2]-'0', scale);
+		x += 7 * scale;
+		if (buf[0] != ' ') {
+			c = 18 + buf[0] - '0';
+			Draw_SCharacterP(x, y, c, scale, proportional);
+			FontAdvanceCharCoords(&x, &y, c, false, scale, 0, proportional);
+		}
+		if (buf[1] != ' ') {
+			c = 18 + buf[1] - '0';
+			Draw_SCharacterP(x, y, c, scale, proportional);
+			FontAdvanceCharCoords(&x, &y, c, false, scale, 0, proportional);
+		}
+		if (buf[2] != ' ') {
+			c = 18 + buf[2] - '0';
+			Draw_SCharacterP(x, y, c, scale, proportional);
+		}
 	}
 }
 
 void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	if (scale == NULL)  // first time called
 	{
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 
 void SCR_HUD_DrawAmmo1(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	if (scale == NULL)  // first time called
 	{
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 void SCR_HUD_DrawAmmo2(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	if (scale == NULL)  // first time called
 	{
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 void SCR_HUD_DrawAmmo3(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	if (scale == NULL)  // first time called
 	{
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 void SCR_HUD_DrawAmmo4(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	if (scale == NULL)  // first time called
 	{
 		scale  = HUD_FindVar(hud, "scale");
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 
 // Problem icon, Net
@@ -4092,7 +4117,7 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
 
 	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
-	SCR_HUD_DrawNum(hud, teamFrags, (colorize->integer) ? (teamFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, teamFrags, (colorize->integer) ? (teamFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, false);
 }
 
 void SCR_HUD_DrawScoresEnemy(hud_t *hud)
@@ -4112,7 +4137,7 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 
 	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
-	SCR_HUD_DrawNum(hud, enemyFrags, (colorize->integer) ? (enemyFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, enemyFrags, (colorize->integer) ? (enemyFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, false);
 }
 
 void SCR_HUD_DrawScoresDifference(hud_t *hud)
@@ -4132,7 +4157,7 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
 
 	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
-	SCR_HUD_DrawNum(hud, teamFrags - enemyFrags, (colorize->integer) ? ((teamFrags - enemyFrags) < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, teamFrags - enemyFrags, (colorize->integer) ? ((teamFrags - enemyFrags) < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, false);
 }
 
 void SCR_HUD_DrawScoresPosition(hud_t *hud)
@@ -4168,7 +4193,7 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
 		}
 	}
 
-	SCR_HUD_DrawNum(hud, position, (colorize->integer) ? (position != 1 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+	SCR_HUD_DrawNum(hud, position, (colorize->integer) ? (position != 1 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, false);
 }
 
 /*
@@ -4941,6 +4966,7 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"align", "right",
 			"digits", "3",
+			"proportional", "0",
 			NULL);
 	HUD_Register("ammo1", NULL, "Part of your inventory - ammo - shells.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo1,
@@ -4949,6 +4975,7 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"align", "right",
 			"digits", "3",
+			"proportional", "0",
 			NULL);
 	HUD_Register("ammo2", NULL, "Part of your inventory - ammo - nails.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo2,
@@ -4957,6 +4984,7 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"align", "right",
 			"digits", "3",
+			"proportional", "0",
 			NULL);
 	HUD_Register("ammo3", NULL, "Part of your inventory - ammo - rockets.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo3,
@@ -4965,6 +4993,7 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"align", "right",
 			"digits", "3",
+			"proportional", "0",
 			NULL);
 	HUD_Register("ammo4", NULL, "Part of your inventory - ammo - cells.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo4,
@@ -4973,6 +5002,7 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"align", "right",
 			"digits", "3",
+			"proportional", "0",
 			NULL);
 
 	// ammo icon/s

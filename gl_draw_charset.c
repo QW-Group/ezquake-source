@@ -219,11 +219,14 @@ qbool R_CharAvailable(wchar num)
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-static void Draw_CharacterBaseW(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+static int Draw_CharacterBaseW(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
 {
+	int original_x = x;
+
 	if (FontAlterCharCoords(&x, &y, num, bigchar, scale, proportional)) {
-		GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange, proportional);
+		return GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange, proportional);
 	}
+	return x - original_x;
 }
 
 static void Draw_ResetCharGLState(void)
@@ -231,15 +234,15 @@ static void Draw_ResetCharGLState(void)
 	GLM_Draw_ResetCharGLState();
 }
 
-void Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
-{
-	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, proportional);
-	Draw_ResetCharGLState();
-}
-
 void Draw_SCharacter(int x, int y, int num, float scale)
 {
 	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, false);
+	Draw_ResetCharGLState();
+}
+
+void Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
+{
+	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, proportional);
 	Draw_ResetCharGLState();
 }
 
@@ -518,7 +521,6 @@ int Draw_String(int x, int y, const char *text)
 	return Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0, false);
 }
 
-// TODO: proportional
 int Draw_StringLength(const char *text, int length, float scale, qbool proportional)
 {
 	int i;

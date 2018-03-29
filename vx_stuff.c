@@ -241,7 +241,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		float alpha = min(1, (*vxdmgcnt_t - cl.time));
 		float old_alpha = Draw_MultiplyOverallAlpha(alpha);
 		if (hud) {
-			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string);
+			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string, false);
 		}
 		else {
 			Sbar_DrawNum(x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);

@@ -127,7 +127,7 @@ void Draw_TextBox (int x, int y, int width, int lines);
 
 void Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional);
 
-void Draw_SCharacter (int x, int y, int num, float scale);
+void Draw_SCharacter(int x, int y, int num, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
 void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, float alpha);
