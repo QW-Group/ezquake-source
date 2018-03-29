@@ -364,15 +364,6 @@ void Clock_HudInit(void)
 	);
 }
 
-// MEAG: !?!
-static qbool SCR_BlinkNow(void)
-{
-	SYSTEMTIME tm;
-
-	GetLocalTime(&tm);
-	return tm.wMilliseconds < 500;
-}
-
 //
 // ------------------
 // draw BIG clock
@@ -383,7 +374,7 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const cha
 {
 	extern  mpic_t  *sb_nums[2][11];
 	extern  mpic_t  *sb_colon/*, *sb_slash*/;
-	qbool lblink = SCR_BlinkNow();
+	qbool lblink = blink && ((int)(curtime * 10)) % 10 < 5;
 
 	style = bound(0, style, 1);
 
@@ -416,7 +407,7 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const cha
 //  3 - small yellow/red
 void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t, qbool proportional)
 {
-	qbool lblink = SCR_BlinkNow();
+	qbool lblink = blink && ((int)(curtime * 10)) % 10 < 5;
 	int c;
 
 	style = bound(0, style, 3);
