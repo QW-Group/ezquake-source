@@ -1212,6 +1212,7 @@ void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei 
 
 		if (identifier) {
 			strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
+			GL_ObjectLabel(GL_TEXTURE, glt->texnum, -1, identifier);
 		}
 	}
 }
@@ -1314,6 +1315,15 @@ GLuint GL_TextureNameFromReference(texture_ref ref)
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
 	return gltextures[ref.index].texnum;
+}
+
+// For OpenGL wrapper functions
+void GL_TextureSetDimensions(texture_ref ref, int width, int height)
+{
+	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
+
+	gltextures[ref.index].texture_width = width;
+	gltextures[ref.index].texture_height = height;
 }
 
 // For OpenGL wrapper functions

@@ -959,7 +959,7 @@ void GLM_CreateLightmapTextures(void)
 		GL_DeleteTextureArray(&lightmap_source_array);
 	}
 
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array);
+	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array, "lightmap_texture_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -969,15 +969,12 @@ void GLM_CreateLightmapTextures(void)
 	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
-	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_texture_array), -1, "lightmap_texture_array");
 
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array);
+	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array, "lightmap_source_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_source_array), -1, "lightmap_source_array");
 
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array);
+	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array, "lightmap_data_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(lightmap_data_array), -1, "lightmap_data_array");
 }
 
 texture_ref GLM_LightmapArray(void)
