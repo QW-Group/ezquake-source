@@ -508,6 +508,11 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
 				}
 
+				if (flagged_type == TEXTURETYPES_SPRITES) {
+					GL_TexParameteri(GL_TEXTURE0, array_ref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+					GL_TexParameteri(GL_TEXTURE0, array_ref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+				}
+
 				// Copy the 2D textures across
 				for (k = i; k < j; ++k) {
 					texture_ref ref_2d = texture_flags[k].ref;
