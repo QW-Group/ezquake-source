@@ -3651,7 +3651,8 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		*hud_itemsclock_timelimit = NULL,
 		*hud_itemsclock_style = NULL,
 		*hud_itemsclock_scale = NULL,
-		*hud_itemsclock_filter = NULL;
+		*hud_itemsclock_filter = NULL,
+		*hud_itemsclock_proportional = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -3660,6 +3661,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
+		hud_itemsclock_proportional = HUD_FindVar(hud, "proportional");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -3669,7 +3671,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
-	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value);
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value, hud_itemsclock_proportional->integer);
 
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width, LETTERHEIGHT * hud_itemsclock_scale->value, &x, &y);
@@ -3680,7 +3682,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter, hud_itemsclock_proportional->integer);
 }
 
 static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
@@ -4858,6 +4860,7 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"scale", "1",
 		"filter", "",
+		"proportional", "0",
 		NULL
 	);
 

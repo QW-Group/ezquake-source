@@ -403,7 +403,8 @@ int MVD_ClockList_GetLongestName(void)
 	return longest;
 }
 
-void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height, float scale)
+// MEAG: Deliberately not taking 'proportional' argument into account here, don't think we should measure by item type either...
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height, float scale, qbool proportional)
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
@@ -427,16 +428,18 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	*height = LETTERHEIGHT * lines * scale * (style == 3 ? 2 : 1);
 }
 
-void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter)
+void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter, qbool proportional)
 {
 	mvd_clock_t *current = mvd_clocklist;
 	char clockitem[32];
 	char temp[16];
+	int base_x = x;
 
 	while (current && current->clockval - cls.demotime < time_limit) {
 		int time = (int) ((current->clockval - cls.demotime) + 1);
 		mpic_t* texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
+		x = base_x;
 		if (filter & mvd_wp_info[current->itemtype].it) {
 			current = current->next;
 			continue;
@@ -453,8 +456,9 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 		}
 		else if (style == 3 && texture) {
 			// simpleitem
-			strlcpy(clockitem, "  ", sizeof(clockitem));
 			Draw_FitPic(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture);
+			x += 2 * LETTERWIDTH * scale;
+			clockitem[0] = '\0';
 			y += LETTERHEIGHT * scale / 2;
 		}
 		else {
@@ -470,7 +474,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			strlcat(clockitem, " spawn", sizeof(clockitem));
 		}
 
-		Draw_SString (x, y, clockitem, scale, false);
+		Draw_SString(x, y, clockitem, scale, proportional);
 
 		current = current->next;
 		y += LETTERHEIGHT * scale;
