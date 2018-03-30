@@ -280,7 +280,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 		snprintf(name, sizeof(name), "hud_ammo_%d", i - WADPIC_SB_IBAR_AMMO1);
 
 		for (y = 0; y < realheight; ++y) {
-			memset(target + (y * realwidth) * 4, source[(x_src + (y_src + y) * texWidth) * 4], realwidth * 4);
+			memcpy(target + (y * realwidth) * 4, &source[(x_src + (y_src + y) * texWidth) * 4], realwidth * 4);
 		}
 
 		targPic = wad_pictures[i].pic = &sb_ib_ammo[num];
