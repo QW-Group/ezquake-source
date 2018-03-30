@@ -188,7 +188,8 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		*hud_fps_style,
 		*hud_fps_title,
 		*hud_fps_drop,
-		*hud_fps_scale;
+		*hud_fps_scale,
+		*hud_fps_proportional;
 
 	if (hud_fps_show_min == NULL) {
 		// first time called
@@ -197,6 +198,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		hud_fps_title    = HUD_FindVar(hud, "title");
 		hud_fps_drop     = HUD_FindVar(hud, "drop");
 		hud_fps_scale    = HUD_FindVar(hud, "scale");
+		hud_fps_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	if (hud_fps_show_min->value) {
@@ -210,25 +212,25 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		strlcat(st, " fps", sizeof(st));
 	}
 
-	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_fps_scale->value, 8 * hud_fps_scale->value, &x, &y)) {
+	if (HUD_PrepareDraw(hud, Draw_StringLength(st, -1, hud_fps_scale->value, hud_fps_proportional->integer), 8 * hud_fps_scale->value, &x, &y)) {
 		if ((hud_fps_style->value) == 1) {
-			Draw_SAlt_String(x, y, st, hud_fps_scale->value, false);
+			Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 		}
 		else if ((hud_fps_style->value) == 2) {
 			// if fps is less than a user-set value, then show it
 			if ((hud_fps_drop->value) >= cls.fps) {
-				Draw_SString(x, y, st, hud_fps_scale->value);
+				Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 			}
 		}
 		else if ((hud_fps_style->value) == 3) {
 			// if fps is less than a user-set value, then show it
 			if ((hud_fps_drop->value) >= cls.fps) {
-				Draw_SAlt_String(x, y, st, hud_fps_scale->value, false);
+				Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 			}
 		}
 		else {
 			// hud_fps_style is anything other than 1,2,3
-			Draw_SString(x, y, st, hud_fps_scale->value);
+			Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 		}
 	}
 }
@@ -239,6 +241,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
 	static cvar_t *hud_vidlag_scale = NULL;
+	static cvar_t *hud_vidlag_proportional = NULL;
 
 	extern qbool VID_VSyncIsOn(void);
 	extern double vid_vsync_lag;
@@ -266,16 +269,17 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 		// first time called
 		hud_vidlag_style = HUD_FindVar(hud, "style");
 		hud_vidlag_scale = HUD_FindVar(hud, "scale");
+		hud_vidlag_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	strlcat (st, " ms", sizeof (st));
 
-	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_vidlag_scale->value, 8 * hud_vidlag_scale->value, &x, &y)) {
+	if (HUD_PrepareDraw(hud, Draw_StringLength(st, -1, hud_vidlag_scale->value, hud_vidlag_proportional->integer), 8 * hud_vidlag_scale->value, &x, &y)) {
 		if (hud_vidlag_style->value) {
-			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value, false);
+			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value, hud_vidlag_proportional->integer);
 		}
 		else {
-			Draw_SString(x, y, st, hud_vidlag_scale->value);
+			Draw_SString(x, y, st, hud_vidlag_scale->value, hud_vidlag_proportional->integer);
 		}
 	}
 }
@@ -288,12 +292,15 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	char track_string[MAX_TRACKING_STRING];
 	int player = spec_track;
 
-	static cvar_t *hud_tracking_format = NULL,
-		      *hud_tracking_scale;
+	static cvar_t
+		*hud_tracking_format = NULL,
+		*hud_tracking_scale,
+		*hud_tracking_proportional;
 
 	if (!hud_tracking_format) {
 		hud_tracking_format = HUD_FindVar(hud, "format");
 		hud_tracking_scale = HUD_FindVar(hud, "scale");
+		hud_tracking_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
@@ -301,12 +308,12 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 			"n", cl.players[player].name,						// Replace %n with player name.
 			"t", cl.teamplay ? cl.players[player].team : "");	// Replace %t with player team if teamplay is on.
 	height = 8 * hud_tracking_scale->value;
-	width = 8 * strlen_color(track_string) * hud_tracking_scale->value;
+	width = Draw_StringLength(track_string, -1, hud_tracking_scale->value, hud_tracking_proportional->integer);
 
-	if (HUD_PrepareDraw (hud, width, height, &x, &y)) {
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		if (cl.spectator && autocam == CAM_TRACK) {
 			// Normal
-			Draw_SString (x, y, track_string, hud_tracking_scale->value);
+			Draw_SString(x, y, track_string, hud_tracking_scale->value, hud_tracking_proportional->integer);
 		}
 	}
 }
@@ -444,7 +451,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
 			Draw_SAlt_String(x, y, buf, hud_ping_scale->value, false);
 		}
 		else {
-			Draw_SString(x, y, buf, hud_ping_scale->value);
+			Draw_SString(x, y, buf, hud_ping_scale->value, false);
 		}
 	}
 }
@@ -553,7 +560,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 				if ( ((HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i)) && (style==1)) ||
 						((HUD_Stats(STAT_ACTIVEWEAPON) != (IT_SHOTGUN<<i)) && (style==3))
 				   )
-					Draw_SString(x, y, tmp, scale);
+					Draw_SString(x, y, tmp, scale, false);
 				else
 					Draw_SAlt_String(x, y, tmp, scale, false);
 			}
@@ -589,7 +596,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 						char *weap_str = TP_ItemName((IT_SHOTGUN<<i));
 						char weap_white_stripped[32];
 						Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-						Draw_SString(x, y, weap_white_stripped, scale);
+						Draw_SString(x, y, weap_white_stripped, scale, false);
 					}
 					else { //Strip both &cRGB and {}
 						char inactive_weapon_buf[16];
@@ -600,7 +607,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 						if (style==8) // gold active
 							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale, false);
 						else if (style==6) // white active
-							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale);
+							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale, false);
 					}
 				}
 				else {
@@ -613,13 +620,13 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 						if (style==5) // gold inactive
 							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale, false);
 						else if (style==7) // white inactive
-							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale);
+							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale, false);
 					}
 					else if ((style==6) || (style==8)) { // strip only {}
 						char *weap_str = TP_ItemName((IT_SHOTGUN<<i));
 						char weap_white_stripped[32];
 						Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-						Draw_SString(x, y, weap_white_stripped, scale);
+						Draw_SString(x, y, weap_white_stripped, scale, false);
 					}
 
 				}
@@ -1173,7 +1180,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 				Draw_SAlt_String(x, y, buf, scale, false);
 			}
 			else {
-				Draw_SString(x, y, buf, scale);
+				Draw_SString(x, y, buf, scale, false);
 			}
 			break;
 
@@ -1810,7 +1817,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 	else {
 		// Normal text size.
 		snprintf(buf, sizeof (buf), "%3d", frags);
-		Draw_SString(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf, scale);
+		Draw_SString(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf, scale, false);
 	}
 
 	if (drawBrackets && width) {
@@ -2445,15 +2452,15 @@ int Frags_DrawText(int px, int py,
 
 		if (pad && flip) {
 			px += (max_team_length - team_length) * char_size;
-			Draw_SString(px, y_pos, _team, scale);
+			Draw_SString(px, y_pos, _team, scale, false);
 			px += team_length * char_size;
 		}
 		else if (pad) {
-			Draw_SString(px, y_pos, _team, scale);
+			Draw_SString(px, y_pos, _team, scale, false);
 			px += max_team_length * char_size;
 		}
 		else {
-			Draw_SString(px, y_pos, _team, scale);
+			Draw_SString(px, y_pos, _team, scale, false);
 			px += team_length * char_size;
 		}
 
@@ -2469,15 +2476,15 @@ int Frags_DrawText(int px, int py,
 
 		if (flip && pad) {
 			px += (max_name_length - name_length) * char_size;
-			Draw_SString(px, y_pos, _name, scale);
+			Draw_SString(px, y_pos, _name, scale, false);
 			px += name_length * char_size;
 		}
 		else if (pad) {
-			Draw_SString(px, y_pos, _name, scale);
+			Draw_SString(px, y_pos, _name, scale, false);
 			px += max_name_length * char_size;
 		}
 		else {
-			Draw_SString(px, y_pos, _name, scale);
+			Draw_SString(px, y_pos, _name, scale, false);
 			px += name_length * char_size;
 		}
 
@@ -3413,7 +3420,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	height = 8 * scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		Draw_SString(x, y, time_string, scale->value);
+		Draw_SString(x, y, time_string, scale->value, false);
 	}
 #else
 	HUD_PrepareDraw(hud, width , height, &x, &y);
@@ -4022,8 +4029,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			width = 8 * strlen_color(buf) * scale->value;
 			height = 8 * scale->value;
 
-			if(HUD_PrepareDraw(hud, width, height, &x, &y)) {
-				Draw_SString(x, y, buf, scale->value);
+			if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+				Draw_SString(x, y, buf, scale->value, false);
 			}
 			break;
 	}
@@ -4167,11 +4174,13 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
 	alpha = 2 - hud_ownfrags_timeout->value / VX_OwnFragTime() * 2;
 	alpha = bound(0, alpha, 1);
 
-	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
+	if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		return;
+	}
 
-	if (VX_OwnFragTime() < hud_ownfrags_timeout->value)
-		Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value);
+	if (VX_OwnFragTime() < hud_ownfrags_timeout->value) {
+		Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value, false);
+	}
 }
 
 void SCR_HUD_DrawKeys(hud_t *hud)
@@ -4216,8 +4225,8 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width ,height, &x, &y))
 		return;
 
-	Draw_SString(x, y, line1, scale);
-	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
+	Draw_SString(x, y, line1, scale, false);
+	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale, false);
 }
 
 #endif // WITH_PNG
@@ -4328,7 +4337,7 @@ void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int a
 				SCR_DrawWadString(line_x, y, scale, line_start); 
 			}
 			else {
-				Draw_SString(line_x, y, line_start, scale);
+				Draw_SString(line_x, y, line_start, scale, false);
 			}
 
 			y += character_height;
@@ -4419,6 +4428,7 @@ void CommonDraw_Init(void)
 		"title",    "1",
 		"scale",    "1",
 		"drop",     "70",
+		"proportional", "0",
 		NULL
 	);
 
@@ -4429,6 +4439,7 @@ void CommonDraw_Init(void)
 		"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
 		"style", "0",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 
@@ -4623,7 +4634,7 @@ void CommonDraw_Init(void)
 			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
 			"1", "face", "center", "before", "0", "0", "0", "0 0 0", NULL,
 			"format", "\xD4\xF2\xE1\xE3\xEB\xE9\xEE\xE7\xBA %t %n, \xCA\xD5\xCD\xD0 for next", //"Tracking: team name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
-			"scale", "1",
+			"scale", "1", "proportional", "0",
 			NULL);
 
 	// groups
@@ -5162,7 +5173,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 				}
 
 				if (value) {
-					Draw_SString(x + hud_gamesummary_scale->value * (icon_size / 2 - length * 8 / 2), y + text_offset, buffer, hud_gamesummary_scale->value);
+					Draw_SString(x + hud_gamesummary_scale->value * (icon_size / 2 - length * 8 / 2), y + text_offset, buffer, hud_gamesummary_scale->value, false);
 				}
 			}
 

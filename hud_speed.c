@@ -302,7 +302,7 @@ static void SCR_DrawHUDSpeed(
 				break;
 			}
 
-			Draw_SString(Q_rint(x + width / 2.0 - 4 * scale), y, va("%1d", (player_speed % i) / next), scale);
+			Draw_SString(Q_rint(x + width / 2.0 - 4 * scale), y, va("%1d", (player_speed % i) / next), scale, false);
 			y += 8;
 		}
 	}
@@ -321,7 +321,7 @@ static void SCR_DrawHUDSpeed(
 				break;
 		}
 
-		Draw_SString(x, Q_rint(y + height / 2.0 - 4 * scale), va("%4d", player_speed), scale);
+		Draw_SString(x, Q_rint(y + height / 2.0 - 4 * scale), va("%4d", player_speed), scale, false);
 	}
 }
 
@@ -642,7 +642,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_AlphaLineRGB(needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, RGBA_TO_COLOR(250, 250, 250, 255 * hud_speed2_opacity->value));
 
 		// Draw the speed.
-		Draw_SString(text_x, text_y, va("%d", player_speed), hud_speed2_scale->value);
+		Draw_SString(text_x, text_y, va("%d", player_speed), hud_speed2_scale->value, false);
 	}
 }
 

@@ -81,7 +81,7 @@ static void FrameStats_DrawElement(hud_t *hud)
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		for (i = 0; i < lines; ++i, y += 8) {
 			if (content[i][0]) {
-				Draw_SString(x, y, content[i], hud_frameStats_scale->value);
+				Draw_SString(x, y, content[i], hud_frameStats_scale->value, false);
 			}
 		}
 	}

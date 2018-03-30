@@ -152,9 +152,9 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	k = 0;
 	if (hud_teaminfo_show_enemies->integer) {
 		while (sorted_teams[k].name) {
-			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value);
+			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, false);
 			sprintf(tmp, "%s %i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SString(x + (strlen(sorted_teams[k].name) + 1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value);
+			Draw_SString(x + (strlen(sorted_teams[k].name) + 1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value, false);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
@@ -225,7 +225,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 						if (!width_only) {
 							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
 							str_align_right(tmp, sizeof(tmp), nick, maxname);
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += maxname * FONTWIDTH * scale;
 
@@ -265,7 +265,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < low_health ? "&cf00" : ""), ti_cl->health);
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += 3 * FONTWIDTH * scale;
 
@@ -323,11 +323,11 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 							case 4: // armor value prefixed with letter
 								if (!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
-										Draw_SString(x, y, "r", scale);
+										Draw_SString(x, y, "r", scale, false);
 									else if (ti_cl->items & IT_ARMOR2)
-										Draw_SString(x, y, "y", scale);
+										Draw_SString(x, y, "y", scale, false);
 									else if (ti_cl->items & IT_ARMOR1)
-										Draw_SString(x, y, "g", scale);
+										Draw_SString(x, y, "g", scale, false);
 								}
 								x += FONTWIDTH * scale;
 
@@ -336,7 +336,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 						if (!width_only) { // value drawed no matter which style
 							snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += 3 * FONTWIDTH * scale;
 
@@ -349,7 +349,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 								loc = "unknown";
 
 							str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += maxloc * FONTWIDTH * scale;
 
@@ -406,7 +406,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					case 't':
 						if (!width_only) {
 							sprintf(tmp, "%i", Player_GetTrackId(cl.players[ti_cl->client].userid));
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += FONTWIDTH * scale; // will break if tracknumber is double digits
 						break;
@@ -414,7 +414,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					case '%': // wow, %% result in one %, how smart
 
 						if (!width_only)
-							Draw_SString(x, y, "%", scale);
+							Draw_SString(x, y, "%", scale, false);
 						x += FONTWIDTH * scale;
 
 						break;
@@ -423,7 +423,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-							Draw_SString(x, y, tmp, scale);
+							Draw_SString(x, y, tmp, scale, false);
 						}
 						x += (s[0] ? 2 : 1) * FONTWIDTH * scale;
 
@@ -435,8 +435,10 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 			default: // print x
 				if (!width_only) {
 					snprintf(tmp, sizeof(tmp), "%c", s[0]);
-					if (s[0] != ' ') // inhuman smart optimization, do not print space!
-						Draw_SString(x, y, tmp, scale);
+					if (s[0] != ' ') {
+						// inhuman smart optimization, do not print space!
+						Draw_SString(x, y, tmp, scale, false);
+					}
 				}
 				x += FONTWIDTH * scale;
 

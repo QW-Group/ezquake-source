@@ -343,10 +343,10 @@ void SCR_DrawAutoID(void)
 
 				strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_namelength.integer] = 0;
-				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
+				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale, false);
 			}
 			else {
-				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale);
+				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale, false);
 			}
 		}
 

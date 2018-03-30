@@ -436,7 +436,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale);
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale, false);
 			}
 		}
 		else if(radar_show_lg && currententity->model->modhint == MOD_LIGHTNINGGUN)
@@ -446,7 +446,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale);
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale, false);
 			}
 		}
 		else if(radar_show_backpacks && currententity->model->modhint == MOD_BACKPACK)
@@ -1191,7 +1191,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				}
 				else {
 					// Draw other players in normal character color.
-					Draw_SString (name_x, name_y, info->name, text_scale);
+					Draw_SString (name_x, name_y, info->name, text_scale, false);
 				}
 			}
 

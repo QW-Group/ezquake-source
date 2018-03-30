@@ -470,7 +470,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			strlcat(clockitem, " spawn", sizeof(clockitem));
 		}
 
-		Draw_SString (x, y, clockitem, scale);
+		Draw_SString (x, y, clockitem, scale, false);
 
 		current = current->next;
 		y += LETTERHEIGHT * scale;

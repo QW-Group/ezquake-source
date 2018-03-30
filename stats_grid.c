@@ -978,24 +978,24 @@ void TeamHold_DrawPercentageBar(
 					percent = Q_rint(100 * team1_percent);
 
 					if ((percent100 = percent / 100)) {
-						Draw_SString(_x, _y, va("%d", percent100), scale);
+						Draw_SString(_x, _y, va("%d", percent100), scale, false);
 						_y += 8 * scale;
 					}
 
 					if ((percent10 = percent / 10)) {
-						Draw_SString(_x, _y, va("%d", percent10), scale);
+						Draw_SString(_x, _y, va("%d", percent10), scale, false);
 						_y += 8 * scale;
 					}
 
-					Draw_SString(_x, _y, va("%d", percent % 10), scale);
+					Draw_SString(_x, _y, va("%d", percent % 10), scale, false);
 					_y += 8 * scale;
 
-					Draw_SString(_x, _y, "%", scale);
+					Draw_SString(_x, _y, "%", scale, false);
 				}
 				else {
 					_x = x + (width / 2) - 8 * 1.5 * scale;
 					_y = Q_rint(y + (height * team1_percent) / 2 - 8 * scale * 0.5);
-					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
+					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale, false);
 				}
 			}
 
@@ -1063,14 +1063,14 @@ void TeamHold_DrawPercentageBar(
 			if (team1_percent > 0.05) {
 				_x = Q_rint(x + (width * team1_percent) / 2 - 8 * scale);
 				_y = y + (height / 2) - 4 * scale;
-				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale, false);
 			}
 
 			// Team 2.
 			if (team2_percent > 0.05) {
 				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent) / 2 - 8 * scale);
 				_y = y + (height / 2) - 4 * scale;
-				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale);
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale, false);
 			}
 		}
 	}

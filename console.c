@@ -949,12 +949,12 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 
 		if (chat_team)
 		{
-			Draw_SString (posX, v + posY, "say_team: ", scale);
+			Draw_SString (posX, v + posY, "say_team: ", scale, false);
 			skip = 10;
 		}
 		else
 		{
-			Draw_SString (posX, v + posY, "say: ", scale);
+			Draw_SString (posX, v + posY, "say: ", scale, false);
 			skip = 5;
 		}
 
