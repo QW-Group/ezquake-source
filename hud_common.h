@@ -92,5 +92,8 @@ extern int n_teams;
 extern int n_players;
 extern int n_spectators;
 
+int HUD_Stats(int stat_num);
+extern cvar_t cl_weaponpreselect;
+int IN_BestWeapon(void);
 
 #endif // __HUD_COMMON__H__

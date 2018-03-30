@@ -396,7 +396,8 @@ OBJS_c := \
     hud_autoid.o \
     cl_screenshot.o \
     gl_rpart_spawn.o \
-    hud_clock.o
+    hud_clock.o \
+    hud_ammo.o
 
 ### Configuration Options ###
 
