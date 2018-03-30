@@ -247,9 +247,10 @@ float FontCharacterWidthWide(wchar ch)
 	}
 }
 
-qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, qbool proportional)
+qbool FontAlterCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
+	unsigned char ch = (unsigned char)ch_;
 
 	// Totally off screen.
 	if (*y <= (-char_size * scale)) {
@@ -268,8 +269,10 @@ qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, q
 	return true;
 }
 
-void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, int char_gap, qbool proportional)
+void FontAdvanceCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, int char_gap, qbool proportional)
 {
+	unsigned char ch = (unsigned char)ch_;
+
 	if (bigchar) {
 		*x += 64 * scale + char_gap;
 	}
@@ -281,8 +284,10 @@ void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, 
 	}
 }
 
-float FontCharacterWidth(char ch, qbool proportional)
+float FontCharacterWidth(char ch_, qbool proportional)
 {
+	unsigned char ch = (unsigned char)ch_;
+
 	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		return ceil(8 * glyphs[ch].advance[0]);
 	}
