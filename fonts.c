@@ -19,13 +19,14 @@ static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
 
-#define FONT_TEXTURE_SIZE 512
+#define FONT_TEXTURE_SIZE 1024
 mpic_t font_texture;
 
 static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, byte base_color[4])
 {
 	byte* font_buffer;
 	int x, y;
+	qbool outline = false; // Need to be smarter with font edges for this to be enabled
 
 	glyphs[ch].loaded = true;
 	glyphs[ch].advance[0] = (face->glyph->advance.x / 64.0f) / base_font_width;
@@ -43,11 +44,36 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	font_buffer = face->glyph->bitmap.buffer;
 	for (y = 0; y < face->glyph->bitmap.rows && y < base_font_height; ++y, font_buffer += face->glyph->bitmap.pitch) {
 		for (x = 0; x < face->glyph->bitmap.width && x < base_font_width; ++x) {
+			int base_lineup = (x + (y - 1) * base_font_width) * 4;
 			int base = (x + y * base_font_width) * 4;
-			image_buffer[base] = (base_color[0] / 255.0f) * font_buffer[x];
-			image_buffer[base + 1] = (base_color[1] / 255.0f) * font_buffer[x];
-			image_buffer[base + 2] = (base_color[2] / 255.0f) * font_buffer[x];
-			image_buffer[base + 3] = font_buffer[x] ? 255 : 0;
+			byte alpha = font_buffer[x];
+
+			if (outline) {
+				// If previous pixel was transparent, make it black
+				if (x && alpha && font_buffer[x - 1] == 0) {
+					image_buffer[base - 1] = 255;
+				}
+
+				if (y && alpha && image_buffer[base_lineup + 3] == 0) {
+					image_buffer[base_lineup + 3] = 255;
+				}
+			}
+			
+			image_buffer[base] = (base_color[0] / 255.0f) * alpha;
+			image_buffer[base + 1] = (base_color[1] / 255.0f) * alpha;
+			image_buffer[base + 2] = (base_color[2] / 255.0f) * alpha;
+
+			// If previous pixel was solid, make this black
+			if (outline) {
+				if (x && !alpha && font_buffer[x - 1] != 0) {
+					alpha = 255;
+				}
+
+				if (y && !alpha && image_buffer[base_lineup + 3] && (image_buffer[base_lineup] || image_buffer[base_lineup + 1] || image_buffer[base_lineup + 2])) {
+					alpha = 255;
+				}
+			}
+			image_buffer[base + 3] = alpha;// ? 255 : 0;
 		}
 	}
 }
