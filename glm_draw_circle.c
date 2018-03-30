@@ -38,6 +38,7 @@ void GLM_DrawCircles(int start, int end)
 {
 	// FIXME: Not very efficient (but rarely used either)
 	int i;
+	float projectionMatrix[16];
 	uintptr_t offset = GL_BufferOffset(circleVBO) / (sizeof(float) * 2);
 
 	start = max(0, start);
@@ -45,6 +46,9 @@ void GLM_DrawCircles(int start, int end)
 
 	GL_UseProgram(circleProgram.program);
 	GL_BindVertexArray(&circleVAO);
+
+	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
+	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, projectionMatrix);
 
 	for (i = start; i <= end; ++i) {
 		GL_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
@@ -119,7 +123,6 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	int start;
 	int end;
 	int points;
-	float projectionMatrix[16];
 
 	if (circleData.circleCount >= CIRCLES_PER_FRAME) {
 		return;
@@ -127,8 +130,6 @@ void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, flo
 	if (!GLM_LogCustomImageType(imagetype_circle, circleData.circleCount)) {
 		return;
 	}
-
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 	// Get the vertex index where to start and stop drawing.
 	start = Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
