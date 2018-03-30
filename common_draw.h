@@ -62,17 +62,6 @@ void Draw_SubPicTiled(int x, int y,
 					int src_width, int src_height,
 					float alpha);
 
-void SCR_DrawWordWrapString(
-	int x, int y, 
-	int y_spacing, 
-	int width, int height, 
-	int wordwrap, 
-	int scroll, 
-	double scroll_delay, 
-	char *txt,
-	float scale
-);
-
 void HUD_BeforeDraw(void);
 void HUD_AfterDraw(void);
 

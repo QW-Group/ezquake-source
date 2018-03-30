@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "common_draw.h"
-#include "mp3_player.h"
 #ifdef WITH_PNG
 #include <png.h>
 #endif
@@ -68,6 +67,7 @@ void TeamHold_HudInit(void);
 void Clock_HudInit(void);
 void Ammo_HudInit(void);
 void Items_HudInit(void);
+void MP3_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -3058,207 +3058,6 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 	}
 }
 
-char *Get_MP3_HUD_style(float style, char *st)
-{
-	static char HUD_style[32];
-	if(style == 1.0)
-	{
-		strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
-	}
-	else if(style == 2.0)
-	{
-		strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
-	}
-	else
-	{
-		strlcpy(HUD_style, "", sizeof(HUD_style));
-	}
-	return HUD_style;
-}
-
-// Draws MP3 Title.
-void SCR_HUD_DrawMP3_Title(hud_t *hud)
-{
-	int x=0, y=0/*, n=1*/;
-	int width = 64;
-	int height = 8;
-
-#ifdef WITH_MP3_PLAYER
-	//int width_as_text = 0;
-	static int title_length = 0;
-	//int row_break = 0;
-	//int i=0;
-	int status = 0;
-	static char title[MP3_MAXSONGTITLE];
-	double t;		// current time
-	static double lastframetime;	// last refresh
-
-	static cvar_t *style = NULL, 
-		*width_var, *height_var, *scroll, *scroll_delay, 
-		*on_scoreboard, *wordwrap, *scale;
-
-	if (style == NULL)  // first time called
-	{
-		style = HUD_FindVar(hud, "style");
-		width_var = HUD_FindVar(hud, "width");
-		height_var = HUD_FindVar(hud, "height");
-		scroll = HUD_FindVar(hud, "scroll");
-		scroll_delay = HUD_FindVar(hud, "scroll_delay");
-		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
-		wordwrap = HUD_FindVar(hud, "wordwrap");
-		scale = HUD_FindVar(hud, "scale");
-	}
-
-	if(on_scoreboard->value)
-	{
-		hud->flags |= HUD_ON_SCORES;
-	}
-	else if((int)on_scoreboard->value & HUD_ON_SCORES)
-	{
-		hud->flags -= HUD_ON_SCORES;
-	}
-
-	width = (int)width_var->value * scale->value;
-	height = (int)height_var->value * scale->value;
-
-	if(width < 0) width = 0;
-	if(width > vid.width) width = vid.width;
-	if(height < 0) height = 0;
-	if(height > vid.width) height = vid.height;
-
-	t = Sys_DoubleTime();
-
-	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
-		lastframetime = t;
-		status = MP3_GetStatus();
-
-		switch(status)
-		{
-			case MP3_PLAYING :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
-				break;
-			case MP3_PAUSED :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
-				break;
-			case MP3_STOPPED :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
-				break;
-			case MP3_NOTRUNNING	:
-			default :
-				status = MP3_NOTRUNNING;
-				title_length = snprintf (title, sizeof (title), "%s is not running.", mp3_player->PlayerName_AllCaps);
-				break;
-		}
-
-		if(title_length < 0)
-		{
-			snprintf(title, sizeof (title), "Error retrieving current song.");
-		}
-	}
-
-	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-	{
-		SCR_DrawWordWrapString(x, y, 8 * scale->value, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title, scale->value);
-	}
-#else
-	HUD_PrepareDraw(hud, width , height, &x, &y);
-#endif
-}
-
-// Draws MP3 Time as a HUD-element.
-void SCR_HUD_DrawMP3_Time(hud_t *hud)
-{
-	int x = 0, y = 0, width = 0, height = 0;
-#ifdef WITH_MP3_PLAYER
-	int elapsed = 0;
-	int remain = 0;
-	int total = 0;
-	static char time_string[MP3_MAXSONGTITLE];
-	static char elapsed_string[MP3_MAXSONGTITLE];
-	double t; // current time
-	static double lastframetime; // last refresh
-
-	static cvar_t *style = NULL, *on_scoreboard, *scale;
-
-	if (style == NULL) {
-		style = HUD_FindVar(hud, "style");
-		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
-		scale = HUD_FindVar(hud, "scale");
-	}
-
-	if (on_scoreboard->value) {
-		hud->flags |= HUD_ON_SCORES;
-	}
-	else if ((int)on_scoreboard->value & HUD_ON_SCORES) {
-		hud->flags -= HUD_ON_SCORES;
-	}
-
-	t = Sys_DoubleTime();
-	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
-		lastframetime = t;
-
-		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) {
-			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
-		}
-		else {
-			switch((int)style->value)
-			{
-				case 1 :
-					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
-					break;
-				case 2 :
-					remain = total - elapsed;
-					snprintf (time_string, sizeof (time_string), "\x10-%s\x11", SecondsToMinutesString (remain));
-					break;
-				case 3 :
-					snprintf (time_string, sizeof (time_string), "\x10%s\x11", SecondsToMinutesString (elapsed));
-					break;
-				case 4 :
-					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
-					break;
-				case 5 :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
-					break;
-				case 6 :
-					remain = total - elapsed;
-					snprintf (time_string, sizeof (time_string), "-%s", SecondsToMinutesString (remain));
-					break;
-				case 7 :
-					snprintf (time_string, sizeof (time_string), "%s", SecondsToMinutesString (elapsed));
-					break;
-				case 0 :
-				default :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
-					break;
-			}
-		}
-
-	}
-
-	// Don't allow showing the timer if ruleset disallows it
-	// It could be used for timing powerups
-	// Use same check that is used for any external communication
-	if (Rulesets_RestrictPacket()) {
-		snprintf(time_string, sizeof(time_string), "\x10%s\x11", "Not allowed");
-	}
-
-	width = strlen (time_string) * 8 * scale->value;
-	height = 8 * scale->value;
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		Draw_SString(x, y, time_string, scale->value, false);
-	}
-#else
-	HUD_PrepareDraw(hud, width , height, &x, &y);
-#endif
-}
-
 #define TEMPHUD_NAME "_temphud"
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
 
@@ -4579,27 +4378,7 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
-		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
-		"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
-		"style", "2",
-		"width", "512",
-		"height", "8",
-		"scroll", "1",
-		"scroll_delay", "0.5",
-		"on_scoreboard", "0",
-		"wordwrap", "0",
-		"scale", "1",
-		NULL
-	);
-
-	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
-		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
-		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-		"style",	"0",
-		"on_scoreboard", "0",
-		"scale", "1",
-		NULL);
+	MP3_HudInit();
 
 #ifdef WITH_PNG
 	HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",
@@ -4766,22 +4545,8 @@ void CommonDraw_Init(void)
 	FrameStats_HudInit();
 	TeamInfo_HudInit();
 	TeamHold_HudInit();
-
-	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
-#ifdef _DEBUG
-HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",
-HUD_PLUSMINUS | HUD_ON_SCORES, ca_disconnected, 0, SCR_HUD_DrawFrameGraph,
-"0", "top", "left", "bottom", "0", "0", "2",
-"swap_x",       "0",
-"swap_y",       "0",
-"scale",        "14",
-"width",        "256",
-"height",       "64",
-"alpha",        "1",
-NULL);
-#endif
-*/
 }
+
 static void SCR_Hud_GameSummary(hud_t* hud)
 {
 	int x, y;

@@ -240,10 +240,11 @@ void Draw_SCharacter(int x, int y, int num, float scale)
 	Draw_ResetCharGLState();
 }
 
-void Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
+int Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
 {
-	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, proportional);
+	int new_x = Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, proportional);
 	Draw_ResetCharGLState();
+	return new_x;
 }
 
 void Draw_SCharacterW(int x, int y, wchar num, float scale)
@@ -530,6 +531,28 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 	}
 
 	return x;
+}
+
+int Draw_CharacterFit(const char* text, int width, float scale, qbool proportional)
+{
+	int fit = 0;
+
+	if (!proportional) {
+		return width / (8 * scale);
+	}
+
+	while (*text) {
+		int next_char_width = FontCharacterWidthWide(*text) * scale;
+		if (next_char_width > width) {
+			break;
+		}
+
+		width -= next_char_width;
+		++fit;
+		++text;
+	}
+
+	return fit;
 }
 
 void Draw_LoadFont_f(void)
