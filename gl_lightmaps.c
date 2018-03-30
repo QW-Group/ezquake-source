@@ -468,38 +468,53 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 void R_UploadChangedLightmaps(void)
 {
 	GL_EnterRegion(__FUNCTION__);
-	if (r_dynamic.integer == 2) {
+	if (r_dynamic.integer == 2 && GL_UseGLSL()) {
 		extern GLuint GL_TextureNameFromReference(texture_ref ref);
 		static glm_program_t lightmap_program;
 		static buffer_ref ssbo_lightingData;
 
-		if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
-			extern unsigned char glsl_lighting_compute_glsl[];
-			extern unsigned int glsl_lighting_compute_glsl_len;
+		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
+			int i;
 
-			if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
-				return;
+			for (i = frameStats.lightmap_min_changed; i <= frameStats.lightmap_max_changed; ++i) {
+				if (lightmaps[i].modified) {
+					memset(lightmaps[i].rawdata, 255, sizeof(lightmaps[i].rawdata));
+					R_UploadLightMap(GL_TEXTURE0, i);
+				}
 			}
-		}
 
-		if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
-			ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, buffertype_use_once);
+			frameStats.lightmap_min_changed = lightmap_array_size;
+			frameStats.lightmap_max_changed = 0;
 		}
 		else {
-			GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+			if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
+				extern unsigned char glsl_lighting_compute_glsl[];
+				extern unsigned int glsl_lighting_compute_glsl_len;
+
+				if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
+					return;
+				}
+			}
+
+			if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
+				ssbo_lightingData = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, buffertype_use_once);
+			}
+			else {
+				GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+			}
+			GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
+
+			GL_UpdateBuffer(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
+			GL_BindBufferRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, GL_BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
+
+			GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+			GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+			GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
+
+			GL_UseProgram(lightmap_program.program);
+			GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
+			GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 		}
-		GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
-
-		GL_UpdateBuffer(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
-		GL_BindBufferRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, GL_BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
-
-		GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-		GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-		GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
-
-		GL_UseProgram(lightmap_program.program);
-		GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
-		GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 	}
 	else if (frameStats.lightmap_min_changed < lightmap_array_size) {
 		unsigned int i;
