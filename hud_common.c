@@ -368,7 +368,8 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		*hud_ping_show_max,
 		*hud_ping_style,
 		*hud_ping_blink,
-		*hud_ping_scale;
+		*hud_ping_scale,
+		*hud_ping_proportional;
 
 	if (hud_ping_period == NULL)    // first time
 	{
@@ -380,6 +381,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		hud_ping_style    = HUD_FindVar(hud, "style");
 		hud_ping_blink    = HUD_FindVar(hud, "blink");
 		hud_ping_scale    = HUD_FindVar(hud, "scale");
+		hud_ping_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	t = curtime;
@@ -443,15 +445,15 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
 	// display that on screen
-	width = strlen(buf) * 8 * hud_ping_scale->value;
+	width = Draw_StringLength(buf, -1, hud_ping_scale->value, hud_ping_proportional->integer);
 	height = 8 * hud_ping_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		if (hud_ping_style->value) {
-			Draw_SAlt_String(x, y, buf, hud_ping_scale->value, false);
+			Draw_SAlt_String(x, y, buf, hud_ping_scale->value, hud_ping_proportional->integer);
 		}
 		else {
-			Draw_SString(x, y, buf, hud_ping_scale->value, false);
+			Draw_SString(x, y, buf, hud_ping_scale->value, hud_ping_proportional->integer);
 		}
 	}
 }
@@ -4456,6 +4458,7 @@ void CommonDraw_Init(void)
 		"style",    "0",
 		"blink",    "1",
 		"scale",    "1",
+		"proportional", "0",
 		NULL);
 
 	// init net
