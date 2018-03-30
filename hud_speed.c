@@ -63,7 +63,8 @@ static void SCR_DrawHUDSpeed(
 	byte color_fastest,
 	byte color_insane,
 	int style,
-	float scale
+	float scale,
+	qbool proportional
 )
 {
 	byte color_offset;
@@ -302,18 +303,22 @@ static void SCR_DrawHUDSpeed(
 				break;
 			}
 
-			Draw_SString(Q_rint(x + width / 2.0 - 4 * scale), y, va("%1d", (player_speed % i) / next), scale, false);
+			Draw_SString(Q_rint(x + width / 2.0 - 4 * scale), y, va("%1d", (player_speed % i) / next), scale, proportional);
 			y += 8;
 		}
 	}
 	else {
+		char speed_text[20];
+
+		snprintf(speed_text, sizeof(speed_text), "%4d", player_speed);
+
 		// Align the text accordingly.
 		switch (text_align) {
 			case SPEED_TEXT_ALIGN_FAR:
-				x = x + width - 4 * 8 * scale;
+				x = x + width - Draw_StringLength(speed_text, 4, scale, true);
 				break;
 			case SPEED_TEXT_ALIGN_CENTER:
-				x = Q_rint(x + width / 2.0 - 2 * 8 * scale);
+				x = Q_rint(x + width / 2.0 - Draw_StringLength(speed_text, 4, scale, true) / 2);
 				break;
 			case SPEED_TEXT_ALIGN_CLOSE:
 			case SPEED_TEXT_ALIGN_NONE:
@@ -321,7 +326,7 @@ static void SCR_DrawHUDSpeed(
 				break;
 		}
 
-		Draw_SString(x, Q_rint(y + height / 2.0 - 4 * scale), va("%4d", player_speed), scale, false);
+		Draw_SString(x, Q_rint(y + height / 2.0 - 4 * scale), speed_text, scale, proportional);
 	}
 }
 
@@ -344,7 +349,8 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 		*hud_speed_vertical_text,
 		*hud_speed_text_align,
 		*hud_speed_style,
-		*hud_speed_scale;
+		*hud_speed_scale,
+		*hud_speed_proportional;
 
 	if (hud_speed_xyz == NULL)    // first time
 	{
@@ -363,26 +369,29 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 		hud_speed_text_align = HUD_FindVar(hud, "text_align");
 		hud_speed_style = HUD_FindVar(hud, "style");
 		hud_speed_scale = HUD_FindVar(hud, "scale");
+		hud_speed_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	width = max(0, hud_speed_width->value) * hud_speed_scale->value;
 	height = max(0, hud_speed_height->value) * hud_speed_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		SCR_DrawHUDSpeed(x, y, width, height,
-						 hud_speed_xyz->value,
-						 hud_speed_tick_spacing->value,
-						 hud_speed_opacity->value,
-						 hud_speed_vertical->value,
-						 hud_speed_vertical_text->value,
-						 hud_speed_text_align->value,
-						 hud_speed_color_stopped->value,
-						 hud_speed_color_normal->value,
-						 hud_speed_color_fast->value,
-						 hud_speed_color_fastest->value,
-						 hud_speed_color_insane->value,
-						 hud_speed_style->integer,
-						 hud_speed_scale->value
+		SCR_DrawHUDSpeed(
+			x, y, width, height,
+			hud_speed_xyz->value,
+			hud_speed_tick_spacing->value,
+			hud_speed_opacity->value,
+			hud_speed_vertical->value,
+			hud_speed_vertical_text->value,
+			hud_speed_text_align->value,
+			hud_speed_color_stopped->value,
+			hud_speed_color_normal->value,
+			hud_speed_color_fast->value,
+			hud_speed_color_fastest->value,
+			hud_speed_color_insane->value,
+			hud_speed_style->integer,
+			hud_speed_scale->value,
+			hud_speed_proportional->integer
 		);
 	}
 }
@@ -392,6 +401,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 {
 	int width, height;
 	int x, y;
+	char player_speed_text[20];
+	float text_length;
 
 	static cvar_t *hud_speed2_xyz = NULL,
 		*hud_speed2_opacity,
@@ -403,7 +414,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		*hud_speed2_radius,
 		*hud_speed2_wrapspeed,
 		*hud_speed2_orientation,
-		*hud_speed2_scale;
+		*hud_speed2_scale,
+		*hud_speed2_proportional;
 
 	if (hud_speed2_xyz == NULL)    // first time
 	{
@@ -418,6 +430,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		hud_speed2_wrapspeed = HUD_FindVar(hud, "wrapspeed");
 		hud_speed2_orientation = HUD_FindVar(hud, "orientation");
 		hud_speed2_scale = HUD_FindVar(hud, "scale");
+		hud_speed2_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	// Calculate the height and width based on the radius.
@@ -493,6 +506,9 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 								+ velocity[2] * velocity[2]);
 		}
 
+		snprintf(player_speed_text, sizeof(player_speed_text), "%d", player_speed);
+		text_length = Draw_StringLength(player_speed_text, -1, hud_speed2_scale->value, hud_speed2_proportional->integer);
+
 		// Set the color based on the wrap speed.
 		switch ((int)(player_speed / hud_speed2_wrapspeed->value)) {
 			case 0:
@@ -523,7 +539,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 				circle_startangle = M_PI / 2.0;
 				circle_endangle = (3 * M_PI) / 2.0;
 
-				text_x = x - 4 * 8 * hud_speed2_scale->value;
+				text_x = x - text_length;
 				text_y = y - 8 * hud_speed2_scale->value * 0.5;
 				break;
 			}
@@ -545,7 +561,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 				circle_endangle = 2 * M_PI;
 				needle_end_y = y + hud_speed2_radius->value * sin(needle_angle);
 
-				text_x = x - 2 * 8 * hud_speed2_scale->value;
+				text_x = x - 0.5 * text_length;
 				text_y = y;
 				break;
 			}
@@ -558,7 +574,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 				circle_endangle = M_PI;
 				needle_end_y = y - hud_speed2_radius->value * sin(needle_angle);
 
-				text_x = x - 8 * 2 * hud_speed2_scale->value;
+				text_x = x - 0.5 * text_length;
 				text_y = y - 8 * hud_speed2_scale->value;
 				break;
 			}
@@ -642,7 +658,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_AlphaLineRGB(needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, RGBA_TO_COLOR(250, 250, 250, 255 * hud_speed2_opacity->value));
 
 		// Draw the speed.
-		Draw_SString(text_x, text_y, va("%d", player_speed), hud_speed2_scale->value, false);
+		Draw_SString(text_x, text_y, player_speed_text, hud_speed2_scale->value, hud_speed2_proportional->integer);
 	}
 }
 
@@ -667,6 +683,7 @@ void Speed_HudInit(void)
 		"text_align", "1",
 		"style", "0",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 
@@ -685,6 +702,7 @@ void Speed_HudInit(void)
 		"wrapspeed", "500",
 		"orientation", "0",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 }

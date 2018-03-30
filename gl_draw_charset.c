@@ -526,6 +526,13 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 	int i;
 	int x = 0, y = 0;
 
+	if (!proportional) {
+		if (length < 0) {
+			length = strlen(text);
+		}
+		return length * scale * 8;
+	}
+
 	for (i = 0; text[i] && (length == -1 || i < length); i++) {
 		FontAdvanceCharCoords(&x, &y, text[i], false, scale, 0, proportional);
 	}
