@@ -380,10 +380,9 @@ int Draw_SString(int x, int y, const char *text, float scale)
 	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, false);
 }
 
-// TODO: proportional
-int Draw_SAlt_String(int x, int y, const char *text, float scale)
+int Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, false);
+	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional);
 }
 
 int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale, qbool proportional)

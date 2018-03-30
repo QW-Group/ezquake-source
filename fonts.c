@@ -16,6 +16,8 @@ typedef struct glyphinfo_s {
 } glyphinfo_t;
 
 static glyphinfo_t glyphs[4096];
+static float max_glyph_width;
+static float max_num_glyph_width;
 
 #define FONT_TEXTURE_SIZE 512
 mpic_t font_texture;
@@ -32,6 +34,11 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	glyphs[ch].offsets[1] = face->glyph->bitmap_top;
 	glyphs[ch].sizes[0] = face->glyph->bitmap.width;
 	glyphs[ch].sizes[1] = face->glyph->bitmap.rows;
+
+	max_glyph_width = max(max_glyph_width, glyphs[ch].advance[0] * 8);
+	if ((ch >= '0' && ch <= '9') || ch == '+' || ch == '-') {
+		max_num_glyph_width = max(max_num_glyph_width, glyphs[ch].advance[0] * 8);
+	}
 
 	font_buffer = face->glyph->bitmap.buffer;
 	for (y = 0; y < face->glyph->bitmap.rows && y < base_font_height; ++y, font_buffer += face->glyph->bitmap.pitch) {
@@ -103,6 +110,7 @@ void FontCreate(const char* path)
 	baseline_offset = 0;
 
 	memset(glyphs, 0, sizeof(glyphs));
+	max_glyph_width = max_num_glyph_width = 0;
 
 	FT_Set_Pixel_Sizes(
 		face,
@@ -192,6 +200,7 @@ void FontCreate(const char* path)
 	Q_free(full_buffer);
 
 	CachePics_MarkAtlasDirty();
+	Con_Printf("Maximum widths: [%f, %f]\n", max_glyph_width, max_num_glyph_width);
 }
 
 qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale)
@@ -280,6 +289,17 @@ float FontCharacterWidth(char ch, qbool proportional)
 	else {
 		return 8;
 	}
+}
+
+// Used for allocating space - if we just measure the string then other hud elements
+//   might move around as content changes, which is probably not what is wanted
+int FontFixedWidth(int max_length, qbool digits_only, qbool proportional)
+{
+	if (!proportional || !GL_TextureReferenceIsValid(font_texture.texnum)) {
+		return max_length * 8;
+	}
+
+	return (int)((digits_only ? max_num_glyph_width : max_glyph_width) * max_length + 0.5f);
 }
 
 #endif // EZ_FREETYPE_SUPPORT

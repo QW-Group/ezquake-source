@@ -312,7 +312,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_fps_scale->value, 8 * hud_fps_scale->value, &x, &y)) {
 		if ((hud_fps_style->value) == 1) {
-			Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+			Draw_SAlt_String(x, y, st, hud_fps_scale->value, false);
 		}
 		else if ((hud_fps_style->value) == 2) {
 			// if fps is less than a user-set value, then show it
@@ -323,7 +323,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		else if ((hud_fps_style->value) == 3) {
 			// if fps is less than a user-set value, then show it
 			if ((hud_fps_drop->value) >= cls.fps) {
-				Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+				Draw_SAlt_String(x, y, st, hud_fps_scale->value, false);
 			}
 		}
 		else {
@@ -372,7 +372,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_vidlag_scale->value, 8 * hud_vidlag_scale->value, &x, &y)) {
 		if (hud_vidlag_style->value) {
-			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value);
+			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value, false);
 		}
 		else {
 			Draw_SString(x, y, st, hud_vidlag_scale->value);
@@ -541,7 +541,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		if (hud_ping_style->value) {
-			Draw_SAlt_String(x, y, buf, hud_ping_scale->value);
+			Draw_SAlt_String(x, y, buf, hud_ping_scale->value, false);
 		}
 		else {
 			Draw_SString(x, y, buf, hud_ping_scale->value);
@@ -655,7 +655,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 				   )
 					Draw_SString(x, y, tmp, scale);
 				else
-					Draw_SAlt_String(x, y, tmp, scale);
+					Draw_SAlt_String(x, y, tmp, scale, false);
 			}
 			break;
 		case 4: // opposite colors of case 2
@@ -698,7 +698,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 						Util_SkipChars(inactive_weapon_buf, "{}", inactive_weapon_buf_nowhite, sizeof(inactive_weapon_buf_nowhite));
 
 						if (style==8) // gold active
-							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale);
+							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale, false);
 						else if (style==6) // white active
 							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale);
 					}
@@ -711,7 +711,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 						Util_SkipChars(inactive_weapon_buf, "{}", inactive_weapon_buf_nowhite, sizeof(inactive_weapon_buf_nowhite));
 
 						if (style==5) // gold inactive
-							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale);
+							Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale, false);
 						else if (style==7) // white inactive
 							Draw_SString(x, y, inactive_weapon_buf_nowhite, scale);
 					}
@@ -1055,10 +1055,10 @@ void SCR_HUD_DrawAmmoIcon(hud_t *hud, int num, float scale, int style)
 	{
 		switch (num)
 		{
-			case 1: Draw_SAlt_String(x, y, "s", scale); break;
-			case 2: Draw_SAlt_String(x, y, "n", scale); break;
-			case 3: Draw_SAlt_String(x, y, "r", scale); break;
-			case 4: Draw_SAlt_String(x, y, "c", scale); break;
+			case 1: Draw_SAlt_String(x, y, "s", scale, false); break;
+			case 2: Draw_SAlt_String(x, y, "n", scale, false); break;
+			case 3: Draw_SAlt_String(x, y, "r", scale, false); break;
+			case 4: Draw_SAlt_String(x, y, "c", scale, false); break;
 		}
 	}
 	else
@@ -1372,7 +1372,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 				case 2: x += scale * (width - size * len); break;
 			}
 			if (low) {
-				Draw_SAlt_String(x, y, buf, scale);
+				Draw_SAlt_String(x, y, buf, scale, false);
 			}
 			else {
 				Draw_SString(x, y, buf, scale);
