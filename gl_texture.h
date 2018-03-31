@@ -46,6 +46,7 @@ void GLC_EnsureTMUDisabled(GLenum target);
 
 typedef struct charset_s {
 	mpic_t glyphs[256];
+	texture_ref master;
 } charset_t;
 
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);

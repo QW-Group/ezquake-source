@@ -49,7 +49,7 @@ static qbool atlas_dirty;
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS * 256];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
-static cachepic_node_t fontpics[1];
+static cachepic_node_t fontpics[MAX_CHARSETS * 256];
 
 static float solid_s;
 static float solid_t;
@@ -362,33 +362,32 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
-	// Copy text images over
 	for (i = 0; i < MAX_CHARSETS; ++i) {
 		extern charset_t char_textures[MAX_CHARSETS];
+		extern charset_t proportional_fonts[MAX_CHARSETS];
+		charset_t* charset;
 		int j;
-		charset_t* src = &char_textures[i];
 
-		if (GL_TextureReferenceIsValid(src->glyphs[0].texnum)) {
+		charset = &char_textures[i];
+		if (GL_TextureReferenceIsValid(charset->glyphs[0].texnum)) {
 			for (j = 0; j < 256; ++j) {
-				if (GL_TextureReferenceIsValid(src->glyphs[j].texnum)) {
-					charsetpics[i * 256 + j].data.pic = &src->glyphs[j];
+				if (GL_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+					charsetpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
 					CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
 				}
 			}
 		}
-	}
 
-	// Copy any proportional fonts
-	{
-		extern mpic_t font_texture;
+		charset = &proportional_fonts[i];
+		if (GL_TextureReferenceIsValid(charset->master)) {
+			for (j = 0; j < 256; ++j) {
+				if (GL_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+					fontpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
-		if (GL_TextureReferenceIsValid(font_texture.texnum)) {
-			fontpics[0].data.pic = &font_texture;
-
-			CachePics_InsertBySize(&sized_list, &fontpics[0]);
-
-			AddToDeleteList(&font_texture);
+					CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
+				}
+			}
 		}
 	}
 

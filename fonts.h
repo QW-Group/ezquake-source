@@ -11,6 +11,6 @@ int FontFixedWidth(int max_length, qbool digits_only, qbool proportional);
 qbool FontAlterCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, qbool proportional);
 void FontAdvanceCharCoords(int* x, int* y, char ch, qbool bigchar, float scale, int char_gap, qbool proportional);
 
-void FontCreate(const char* path);
+void FontCreate(int grouping, const char* path);
 
 #endif

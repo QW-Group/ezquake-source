@@ -582,7 +582,7 @@ int Draw_CharacterFit(const char* text, int width, float scale, qbool proportion
 void Draw_LoadFont_f(void)
 {
 	if (Cmd_Argc() > 1) {
-		FontCreate(Cmd_Argv(1));
+		FontCreate(0, Cmd_Argv(1));
 	}
 }
 

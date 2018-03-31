@@ -8,6 +8,8 @@
 #include "gl_model.h"
 #include "gl_local.h"
 
+GLuint GL_TextureNameFromReference(texture_ref ref);
+
 typedef struct glyphinfo_s {
 	float offsets[2];
 	int sizes[2];
@@ -20,7 +22,7 @@ static float max_glyph_width;
 static float max_num_glyph_width;
 
 #define FONT_TEXTURE_SIZE 1024
-mpic_t font_texture;
+charset_t proportional_fonts[MAX_CHARSETS];
 
 static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, byte base_color[4])
 {
@@ -29,7 +31,7 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	qbool outline = false; // Need to be smarter with font edges for this to be enabled
 
 	glyphs[ch].loaded = true;
-	glyphs[ch].advance[0] = (face->glyph->advance.x / 64.0f) / base_font_width;
+	glyphs[ch].advance[0] = (face->glyph->advance.x / 64.0f) / (base_font_width / 2);
 	glyphs[ch].advance[1] = (face->glyph->advance.y / 64.0f) / (base_font_height / 2);
 	glyphs[ch].offsets[0] = face->glyph->bitmap_left;
 	glyphs[ch].offsets[1] = face->glyph->bitmap_top;
@@ -42,8 +44,8 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 
 	font_buffer = face->glyph->bitmap.buffer;
-	for (y = 0; y < face->glyph->bitmap.rows && y < base_font_height; ++y, font_buffer += face->glyph->bitmap.pitch) {
-		for (x = 0; x < face->glyph->bitmap.width && x < base_font_width; ++x) {
+	for (y = 0; y < face->glyph->bitmap.rows && y < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
+		for (x = 0; x < face->glyph->bitmap.width && x < base_font_width / 2; ++x) {
 			int base_lineup = (x + (y - 1) * base_font_width) * 4;
 			int base = (x + y * base_font_width) * 4;
 			byte alpha = font_buffer[x];
@@ -59,7 +61,7 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 				}
 			}
 			
-			image_buffer[base] = (base_color[0] / 255.0f) * alpha;
+			image_buffer[base + 0] = (base_color[0] / 255.0f) * alpha;
 			image_buffer[base + 1] = (base_color[1] / 255.0f) * alpha;
 			image_buffer[base + 2] = (base_color[2] / 255.0f) * alpha;
 
@@ -78,7 +80,7 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 }
 
-void FontCreate(const char* path)
+void FontCreate(int grouping, const char* path)
 {
 	FT_Library library;
 	FT_Error error;
@@ -92,6 +94,7 @@ void FontCreate(const char* path)
 	int texture_width, texture_height;
 	int base_font_width, base_font_height;
 	int baseline_offset;
+	charset_t* charset;
 
 	error = FT_Init_FreeType(&library);
 	if (error) {
@@ -109,27 +112,25 @@ void FontCreate(const char* path)
 		return;
 	}
 
-	if (GL_TextureReferenceIsValid(font_texture.texnum)) {
-		original_width = GL_TextureWidth(font_texture.texnum);
-		original_height = GL_TextureHeight(font_texture.texnum);
-		original_left = original_width * font_texture.sl;
-		original_top = original_height * font_texture.tl;
-		texture_width = original_width * (font_texture.sh - font_texture.sl);
-		texture_height = original_height * (font_texture.th - font_texture.tl);
+	charset = &proportional_fonts[grouping];
+	if (GL_TextureReferenceIsValid(charset->master)) {
+		original_width = GL_TextureWidth(charset->master);
+		original_height = GL_TextureHeight(charset->master);
+		original_left = 0;
+		original_top = 0;
+		texture_width = original_width;
+		texture_height = original_height;
 	}
 	else {
-		original_width = texture_width = FONT_TEXTURE_SIZE;
+		original_width = texture_width = FONT_TEXTURE_SIZE * 2;
 		original_height = texture_height = FONT_TEXTURE_SIZE * 2;
 		original_left = original_top = 0;
-		GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, &font_texture.texnum, "font");
-		GL_TexStorage2D(GL_TEXTURE0, font_texture.texnum, 1, GL_RGBA8, texture_width, texture_height);
-		GL_TexParameterf(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		GL_TexParameteri(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		GL_TexParameteri(GL_TEXTURE0, font_texture.texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		font_texture.sl = font_texture.tl = 0;
-		font_texture.sh = font_texture.th = 1.0f;
-		font_texture.width = font_texture.height = FONT_TEXTURE_SIZE;
+		GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, &charset->master, "font");
+		GL_TexStorage2D(GL_TEXTURE0, charset->master, 1, GL_RGBA8, texture_width, texture_height);
+		GL_TexParameterf(GL_TEXTURE0, charset->master, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_TexParameterf(GL_TEXTURE0, charset->master, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_TexParameteri(GL_TEXTURE0, charset->master, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, charset->master, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 	base_font_width = texture_width / 16;
 	base_font_height = texture_height / 16;
@@ -140,7 +141,7 @@ void FontCreate(const char* path)
 
 	FT_Set_Pixel_Sizes(
 		face,
-		base_font_width,
+		base_font_width / 2,
 		base_font_height / 2
 	);
 
@@ -198,6 +199,7 @@ void FontCreate(const char* path)
 
 	// Update charset image
 	temp_buffer = full_buffer;
+	memset(charset->glyphs, 0, sizeof(charset->glyphs));
 	for (ch = 18; ch < 256; ++ch, temp_buffer += 4 * base_font_width * base_font_height) {
 		int xbase = (ch % 16) * base_font_width;
 		int ybase = (ch / 16) * base_font_height;
@@ -214,8 +216,16 @@ void FontCreate(const char* path)
 
 		glyphs[ch].offsets[0] /= base_font_width;
 
+		charset->glyphs[ch].width = base_font_width / 2;
+		charset->glyphs[ch].height = base_font_height / 2;
+		charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
+		charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
+		charset->glyphs[ch].sh = charset->glyphs[ch].sl + 0.5f * base_font_width / texture_width;
+		charset->glyphs[ch].th = charset->glyphs[ch].tl + 0.5f * base_font_height / texture_height;
+		charset->glyphs[ch].texnum = charset->master;
+
 		GL_TexSubImage2D(
-			GL_TEXTURE0, font_texture.texnum, 0,
+			GL_TEXTURE0, charset->master, 0,
 			original_left + xbase,
 			original_top + ybase,
 			base_font_width,
@@ -226,7 +236,6 @@ void FontCreate(const char* path)
 	Q_free(full_buffer);
 
 	CachePics_MarkAtlasDirty();
-	Con_Printf("Maximum widths: [%f, %f]\n", max_glyph_width, max_num_glyph_width);
 }
 
 qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale)
@@ -326,7 +335,7 @@ float FontCharacterWidth(char ch_, qbool proportional)
 //   might move around as content changes, which is probably not what is wanted
 int FontFixedWidth(int max_length, qbool digits_only, qbool proportional)
 {
-	if (!proportional || !GL_TextureReferenceIsValid(font_texture.texnum)) {
+	if (!proportional || !GL_TextureReferenceIsValid(proportional_fonts[0].master)) {
 		return max_length * 8;
 	}
 

@@ -32,25 +32,21 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 	charset_t* texture = &char_textures[0];
 	mpic_t* pic;
 
-	/*if (proportional) {
-		if (new_charset != 0) {
-			// TODO: add support for these
-			ch = '?';
-			proportional = false;
+	if (proportional) {
+		extern charset_t proportional_fonts[MAX_CHARSETS];
+
+		if (GL_TextureReferenceIsValid(proportional_fonts[new_charset].master) && GL_TextureReferenceIsValid(proportional_fonts[new_charset].glyphs[ch & 0xFF].texnum)) {
+			texture = &proportional_fonts[new_charset];
 		}
 		else {
-			extern mpic_t font_texture;
-
-			texture = &font_texture;
-
-			proportional = GL_TextureReferenceIsValid(texture->texnum);
+			proportional = false;
 		}
 	}
 
-	if (!proportional)*/ {
+	if (!proportional) {
 		int slot = 0;
 
-		if ((ch & 0xFF00) != 0) {
+		if (new_charset) {
 			slot = ((ch >> 8) & 0xFF);
 			if (!char_mapping[slot]) {
 				slot = 0;
