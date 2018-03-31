@@ -47,7 +47,7 @@ static int atlas_chunk_size = 64;
 static qbool atlas_dirty;
 
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
-static cachepic_node_t charsetpics[MAX_CHARSETS];
+static cachepic_node_t charsetpics[MAX_CHARSETS * 256];
 static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
 static cachepic_node_t fontpics[1];
 
@@ -364,15 +364,18 @@ void CachePics_CreateAtlas(void)
 
 	// Copy text images over
 	for (i = 0; i < MAX_CHARSETS; ++i) {
-		extern mpic_t char_textures[MAX_CHARSETS];
-		mpic_t* src = &char_textures[i];
+		extern charset_t char_textures[MAX_CHARSETS];
+		int j;
+		charset_t* src = &char_textures[i];
 
-		if (GL_TextureReferenceIsValid(src->texnum)) {
-			charsetpics[i].data.pic = src;
+		if (GL_TextureReferenceIsValid(src->glyphs[0].texnum)) {
+			for (j = 0; j < 256; ++j) {
+				if (GL_TextureReferenceIsValid(src->glyphs[j].texnum)) {
+					charsetpics[i * 256 + j].data.pic = &src->glyphs[j];
 
-			CachePics_InsertBySize(&sized_list, &charsetpics[i]);
-
-			AddToDeleteList(src);
+					CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
+				}
+			}
 		}
 	}
 

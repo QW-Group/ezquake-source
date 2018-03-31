@@ -5,8 +5,8 @@
 #include "fonts.h"
 #include "tr_types.h"
 
-extern mpic_t char_textures[MAX_CHARSETS];
-extern int char_range[MAX_CHARSETS];
+extern charset_t char_textures[MAX_CHARSETS];
+extern int char_mapping[MAX_CHARSETS];
 
 static GLubyte cache_currentColor[4];
 static qbool nextCharacterIsCrosshair = false;
@@ -29,9 +29,10 @@ static void Draw_TextCacheSetColor(GLubyte* color)
 static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
 {
 	int new_charset = (ch & 0xFF00) >> 8;
-	mpic_t* texture = &char_textures[0];
+	charset_t* texture = &char_textures[0];
+	mpic_t* pic;
 
-	if (proportional) {
+	/*if (proportional) {
 		if (new_charset != 0) {
 			// TODO: add support for these
 			ch = '?';
@@ -46,12 +47,12 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 		}
 	}
 
-	if (!proportional) {
+	if (!proportional)*/ {
 		int slot = 0;
 
 		if ((ch & 0xFF00) != 0) {
 			slot = ((ch >> 8) & 0xFF);
-			if (!char_range[slot]) {
+			if (!char_mapping[slot]) {
 				slot = 0;
 				ch = '?';
 			}
@@ -62,19 +63,8 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 
 	ch &= 0xFF;	// Only use the first byte.
 
-	{
-		float char_height = (texture->th - texture->tl) / (2 * CHARSET_CHARS_PER_ROW);
-		float char_width = (texture->sh - texture->sl) / (2 * CHARSET_CHARS_PER_ROW);
-		float frow = texture->tl + (ch >> 4) * char_height * 2;
-		float fcol = texture->sl + (ch & 0x0F) * char_width * 2;
-
-		float s = fcol;
-		float t = frow;
-		float tex_width = char_width;
-		float tex_height = char_height;
-
-		GLM_DrawImage(x, y, scale * 8, scale * 8, s, t, tex_width, tex_height, cache_currentColor, false, texture->texnum, true, nextCharacterIsCrosshair);
-	}
+	pic = &texture->glyphs[ch];
+	GLM_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
 
 	return FontCharacterWidth(ch, proportional);
 }

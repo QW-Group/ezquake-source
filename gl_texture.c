@@ -1016,10 +1016,11 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	return &pic;
 }
 
-qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic)
+qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic)
 {
 	int i, j, image_size, real_width, real_height;
 	byte *data, *buf = NULL, *dest, *src;
+	texture_ref tex;
 
 	if (no24bit) {
 		return false;
@@ -1048,13 +1049,28 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 		}
 	}
 
-	pic->texnum = GL_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
-	pic->sl = pic->tl = 0.0f;
-	pic->sh = pic->th = 1.0f;
-
+	tex = GL_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
 	Q_free(buf);
+	if (GL_TextureReferenceIsValid(tex)) {
+		memset(pic->glyphs, 0, sizeof(pic->glyphs));
+		for (i = 0; i < 255; ++i) {
+			float char_height = 1.0f / (2 * CHARSET_CHARS_PER_ROW);
+			float char_width = 1.0f / (2 * CHARSET_CHARS_PER_ROW);
+			float frow = (i >> 4) * char_height * 2;
+			float fcol = (i & 0x0F) * char_width * 2;
+
+			pic->glyphs[i].texnum = tex;
+			pic->glyphs[i].sl = fcol;
+			pic->glyphs[i].sh = fcol + char_width;
+			pic->glyphs[i].tl = frow;
+			pic->glyphs[i].th = frow + char_height;
+			pic->glyphs[i].width = real_width >> 4;
+			pic->glyphs[i].height = real_height >> 4;
+		}
+	}
+
 	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
-	return GL_TextureReferenceIsValid(pic->texnum);
+	return GL_TextureReferenceIsValid(tex);
 }
 
 void GL_Texture_Init(void) 

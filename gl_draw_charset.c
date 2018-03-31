@@ -37,19 +37,21 @@ cvar_t scr_coloredText = { "scr_coloredText", "1" };
 cvar_t gl_charsets_min = { "gl_charsets_min", "1" };
 
 static byte *draw_chars; // 8*8 graphic characters
-mpic_t char_textures[MAX_CHARSETS];
-int char_range[MAX_CHARSETS];
+
+charset_t char_textures[MAX_CHARSETS];
+int char_mapping[256]; // need to expand in future...
 
 /*
 * Load_LMP_Charset
 */
-static qbool Load_LMP_Charset(char *name, int flags, mpic_t* pic)
+static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 {
 	int i;
 	byte	buf[256 * 256];
 	byte	*data;
 	byte	*src, *dest;
 	int filesize;
+	texture_ref tex;
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
 	if (!strcasecmp(name, "charset")) {
@@ -104,20 +106,30 @@ static qbool Load_LMP_Charset(char *name, int flags, mpic_t* pic)
 		}
 	}
 
-	pic->texnum = GL_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
-	pic->width = 256;
-	pic->height = 256;
-	pic->sl = pic->tl = 0.0f;
-	pic->sh = pic->th = 1.0f;
-	return GL_TextureReferenceIsValid(pic->texnum);
+	tex = GL_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
+	if (GL_TextureReferenceIsValid(tex)) {
+		for (i = 0; i < 256; ++i) {
+			charset->glyphs[i].texnum = tex;
+			charset->glyphs[i].width = 128 / 16;
+			charset->glyphs[i].height = 128 / 16;
+			charset->glyphs[i].sl = 2 * (i & 0x0F) * (1.0f / 32);
+			charset->glyphs[i].sh = charset->glyphs[i].sl + 8.0f / 256;
+			charset->glyphs[i].tl = 2 * (i / 0x10) * (1.0f / 32);
+			charset->glyphs[i].th = charset->glyphs[i].tl + 8.0f / 256;
+		}
+
+		return true;
+	}
+	return false;
 }
 
 /*
 * Load_Locale_Charset
 */
-static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned int num, int range, int flags)
+static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned int num, int flags)
 {
 	char texture[1024], id[256], lmp[256], basename[MAX_QPATH];
+	int range = num << 8;
 
 	if (num >= MAX_CHARSETS) {
 		return 0;
@@ -131,15 +143,15 @@ static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned 
 	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
 
 	// try first 24 bit, then 8 bit
-	char_range[num] = 0;
+	char_mapping[num] = 0;
 	if (GL_LoadCharsetImage(texture, id, flags, &char_textures[num])) {
-		char_range[num] = range;
+		char_mapping[num] = num;
 	}
 	else if (Load_LMP_Charset(lmp, flags, &char_textures[num])) {
-		char_range[num] = range;
+		char_mapping[num] = num;
 	}
 
-	return GL_TextureReferenceIsValid(char_textures[num].texnum);
+	return char_mapping[num];
 }
 
 static int Draw_LoadCharset(const char *name)
@@ -152,7 +164,6 @@ static int Draw_LoadCharset(const char *name)
 	// NOTE: we trying to not change char_textures[0] if we can't load charset.
 	//		This way user still have some charset and can fix issue.
 	//
-
 	if (!strcasecmp(name, "original")) {
 		loaded = Load_LMP_Charset("charset", flags, &char_textures[0]);
 	}
@@ -167,7 +178,7 @@ static int Draw_LoadCharset(const char *name)
 
 	// Load alternate charsets if available
 	if (gl_charsets_min.integer) {
-		Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+		Load_Locale_Charset(name, "cyr", 4, flags);
 	}
 	else {
 		for (i = 1; i < MAX_CHARSETS; ++i) {
@@ -175,11 +186,11 @@ static int Draw_LoadCharset(const char *name)
 
 			snprintf(charsetName, sizeof(charsetName), "%03d", i);
 
-			loaded = Load_Locale_Charset(name, charsetName, i, i << 8, flags);
+			loaded = Load_Locale_Charset(name, charsetName, i, flags);
 
 			// 2.2 only supported -cyr suffix
 			if (i == 4 && !loaded) {
-				Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+				Load_Locale_Charset(name, "cyr", 4, flags);
 			}
 		}
 	}
@@ -215,7 +226,7 @@ qbool R_CharAvailable(wchar num)
 		return true;
 	}
 
-	return (char_range[(num >> 8) & 0xff]);
+	return (char_mapping[(num >> 8) & 0xff]);
 }
 
 // x, y					= Pixel position of char.
@@ -597,7 +608,7 @@ void Draw_InitCharset(void)
 	int i;
 
 	memset(char_textures, 0, sizeof(char_textures));
-	memset(char_range, 0, sizeof(char_range));
+	memset(char_mapping, 0, sizeof(char_mapping));
 
 	draw_chars = W_GetLumpName("conchars");
 	for (i = 0; i < 256 * 64; i++) {
@@ -608,12 +619,11 @@ void Draw_InitCharset(void)
 
 	Draw_LoadCharset(gl_consolefont.string);
 
-	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
+	if (!GL_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
 		Cvar_Set(&gl_consolefont, "original");
 	}
 
-	if (!GL_TextureReferenceIsValid(char_textures[0].texnum)) {
+	if (!GL_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 	}
 }
-

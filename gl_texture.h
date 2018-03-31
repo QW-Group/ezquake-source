@@ -44,9 +44,13 @@ void GLC_DisableTMU(GLenum target);
 void GLC_EnsureTMUEnabled(GLenum target);
 void GLC_EnsureTMUDisabled(GLenum target);
 
+typedef struct charset_s {
+	mpic_t glyphs[256];
+} charset_t;
+
 mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic);
+qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
 void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
 void GL_Texture_Init(void);
