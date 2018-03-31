@@ -46,7 +46,7 @@ int char_range[MAX_CHARSETS];
 static qbool Load_LMP_Charset(char *name, int flags, mpic_t* pic)
 {
 	int i;
-	byte	buf[128 * 256];
+	byte	buf[256 * 256];
 	byte	*data;
 	byte	*src, *dest;
 	int filesize;
@@ -84,22 +84,28 @@ static qbool Load_LMP_Charset(char *name, int flags, mpic_t* pic)
 		}
 	}
 
-	// Convert the 128*128 conchars texture to 128*256 leaving
+	// Convert the 128*128 conchars texture to 256*256 leaving
 	// empty space between rows so that chars don't stumble on
 	// each other because of texture smoothing.
-	// This hack costs us 64K of GL texture memory
 	memset(buf, 255, sizeof(buf));
 	src = data;
 	dest = buf;
 
-	for (i = 0; i < 16; i++) {
-		memcpy(dest, src, 128 * 8);
-		src += 128 * 8;
-		dest += 128 * 8 * 2;
+	for (i = 0; i < 128; i++) {
+		int j;
+
+		if (i % 8 == 0 && i) {
+			dest += 256 * 8;
+		}
+		for (j = 0; j < 16; ++j) {
+			memcpy(dest, src, 8);
+			src += 8;
+			dest += 8 * 2;
+		}
 	}
 
-	pic->texnum = GL_LoadTexture(va("pic:%s", name), 128, 256, buf, flags, 1);
-	pic->width = 128;
+	pic->texnum = GL_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
+	pic->width = 256;
 	pic->height = 256;
 	pic->sl = pic->tl = 0.0f;
 	pic->sh = pic->th = 1.0f;

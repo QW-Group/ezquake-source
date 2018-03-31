@@ -3,6 +3,7 @@
 #include "gl_model.h"
 #include "gl_local.h"
 #include "fonts.h"
+#include "tr_types.h"
 
 extern mpic_t char_textures[MAX_CHARSETS];
 extern int char_range[MAX_CHARSETS];
@@ -62,17 +63,17 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 	ch &= 0xFF;	// Only use the first byte.
 
 	{
-		float char_height = (texture->th - texture->tl) * CHARSET_CHAR_HEIGHT;
-		float char_width = (texture->sh - texture->sl) * CHARSET_CHAR_WIDTH;
-		float frow = texture->tl + (ch >> 4) * char_height;	// row = num * (16 chars per row)
-		float fcol = texture->sl + (ch & 0x0F) * char_width;
+		float char_height = (texture->th - texture->tl) / (2 * CHARSET_CHARS_PER_ROW);
+		float char_width = (texture->sh - texture->sl) / (2 * CHARSET_CHARS_PER_ROW);
+		float frow = texture->tl + (ch >> 4) * char_height * 2;
+		float fcol = texture->sl + (ch & 0x0F) * char_width * 2;
 
-		float s = fcol + 0.5f * (texture->th - texture->tl) / GL_TextureWidth(texture->texnum);
-		float t = frow + 0.5f * (texture->th - texture->tl) / GL_TextureHeight(texture->texnum);
-		float tex_width = char_width - 0.5f / GL_TextureWidth(texture->texnum);
-		float tex_height = char_height - 0.5f / GL_TextureHeight(texture->texnum);
+		float s = fcol;
+		float t = frow;
+		float tex_width = char_width;
+		float tex_height = char_height;
 
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, s, t, tex_width, tex_height, cache_currentColor, false, texture->texnum, true, nextCharacterIsCrosshair);
+		GLM_DrawImage(x, y, scale * 8, scale * 8, s, t, tex_width, tex_height, cache_currentColor, false, texture->texnum, true, nextCharacterIsCrosshair);
 	}
 
 	return FontCharacterWidth(ch, proportional);

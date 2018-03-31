@@ -1018,8 +1018,8 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* pic)
 {
-	int i, image_size, real_width, real_height;
-	byte *data, *buf, *dest, *src;
+	int i, j, image_size, real_width, real_height;
+	byte *data, *buf = NULL, *dest, *src;
 
 	if (no24bit) {
 		return false;
@@ -1037,15 +1037,18 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, mpic_t* p
 
 	image_size = real_width * real_height;
 
-	buf = dest = (byte *)Q_calloc(image_size * 2, 4);
+	buf = dest = (byte *)Q_calloc(image_size * 4, 4);
 	src = data;
-	for (i = 0; i < 16; i++) {
-		memcpy(dest, src, image_size >> 2);
-		src += image_size >> 2;
-		dest += image_size >> 1;
+	for (j = 0; j < real_height; ++j) {
+		for (i = 0; i < real_width; ++i) {
+			int x_offset = (i / (real_width >> 4)) * (real_width >> 4);
+			int y_offset = (j / (real_height >> 4)) * (real_height >> 4);
+
+			memcpy(&buf[(i + x_offset + 2 * real_width * (j + y_offset)) * 4], &src[(i + real_width * j) * 4], 4);
+		}
 	}
 
-	pic->texnum = GL_LoadTexture(identifier, real_width, real_height * 2, buf, flags, 4);
+	pic->texnum = GL_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
 	pic->sl = pic->tl = 0.0f;
 	pic->sh = pic->th = 1.0f;
 
