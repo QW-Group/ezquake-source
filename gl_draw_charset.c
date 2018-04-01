@@ -508,10 +508,9 @@ int Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int co
 	return Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0, false);
 }
 
-// TODO: proportional
-int Draw_ColoredString(int x, int y, const char *text, int red)
+int Draw_ColoredString(int x, int y, const char *text, int red, qbool proportional)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0, false);
+	return Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0, proportional);
 }
 
 // TODO: proportional
@@ -520,10 +519,10 @@ int Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scal
 	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0, false);
 }
 
-// TODO: proportional
-int Draw_Alt_String(int x, int y, const char *text)
+// FIXME: Replace with Draw_ColoredString()
+int Draw_Alt_String(int x, int y, const char *text, float scale, qbool proportional)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, true, 1, 1, false, 0, false);
+	return Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional);
 }
 
 // TODO: proportional

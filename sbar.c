@@ -340,11 +340,11 @@ static void Sbar_DrawCharacter (int x, int y, int num) {
 }
 
 void Sbar_DrawString (int x, int y, char *str) {
-	Draw_String (x + sbar_xofs, y + vid.height - SBAR_HEIGHT, str);
+	Draw_String(x + sbar_xofs, y + vid.height - SBAR_HEIGHT, str);
 }
 
 static void Sbar_DrawAltString (int x, int y, char *str) {
-	Draw_Alt_String (x + sbar_xofs, y + vid.height - SBAR_HEIGHT, str);
+	Draw_Alt_String(x + sbar_xofs, y + vid.height - SBAR_HEIGHT, str, 1, false);
 }
 
 static int Sbar_itoa (int num, char *buf) {
@@ -1368,7 +1368,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			p = 999;
 
 		snprintf (num, sizeof(num), "&cAAD%4i", p);
-		Draw_ColoredString(x, y, num, 0);
+		Draw_ColoredString(x, y, num, 0, false);
 		x += 32; // move it forward, ready to print next column
 
 		// draw pl
@@ -1376,21 +1376,21 @@ static void Sbar_DeathmatchOverlay (int start) {
 		if (p == 0) {
 			// 0 - white
 			snprintf (num, sizeof(num), "%3i", p);
-			Draw_ColoredString (x, y, num, 0);
+			Draw_ColoredString (x, y, num, 0, false);
 		}
 		else if (p < 3) {
 			// 1-2 - yellow
 			snprintf (num, sizeof(num), "&cdd2%3i", p);
-			Draw_ColoredString (x, y, num, 1);
+			Draw_ColoredString (x, y, num, 1, false);
 		}
 		else if (p < 6) {
 			// 3-5 orange
 			snprintf (num, sizeof(num), "&cf50%3i", p);
-			Draw_ColoredString (x, y, num, 1);
+			Draw_ColoredString (x, y, num, 1, false);
 		}
 		else {	// 6+ - red
 			snprintf (num, sizeof(num), "&cf00%3i", p);
-			Draw_ColoredString (x, y, num, 1);
+			Draw_ColoredString (x, y, num, 1, false);
 		}
 
 		x += 32;
@@ -1417,12 +1417,12 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
 			if (cl.teamplay) // use columns frags and team
-				Draw_ColoredString (x, y, scr_scoreboard_spectator_name.string, 0);
+				Draw_ColoredString (x, y, scr_scoreboard_spectator_name.string, 0, false);
 			else {// use only frags column
 #define SHORT_SPECTATOR_NAME_LEN 5 // if it's not teamplay, there is only room for 4 characters here
 				char short_spectator_name[SHORT_SPECTATOR_NAME_LEN];
 				strlcpy(short_spectator_name, scr_scoreboard_spectator_name.string, SHORT_SPECTATOR_NAME_LEN);
-				Draw_ColoredString (x, y, short_spectator_name, 0);
+				Draw_ColoredString (x, y, short_spectator_name, 0, false);
 			}
 
 			x += cl.teamplay ? 88 : 48; // move across to print the name
@@ -1503,7 +1503,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 				strlcat (scorerow, va("  &c%s%2i ", color, playerstats[6]), sizeof (scorerow));
 			}
 
-			Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);
+			Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0, false);
 		}
 
 		if (Sbar_ShowScoreboardIndicator()) {

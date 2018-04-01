@@ -45,7 +45,7 @@ void UI_Print (int cx, int cy, const char *str, int red)
 	}
 	else
 	{
-		Draw_ColoredString (cx, cy, str, red);
+		Draw_ColoredString (cx, cy, str, red, false);
 	}
 }
 

@@ -389,13 +389,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 							case 3: // colored font (QPR)
 								if (!width_only) {
 									if (ti_cl->items & IT_QUAD)
-										Draw_ColoredString(x, y, "&c03fQ", false);
+										Draw_ColoredString(x, y, "&c03fQ", false, false);
 									x += FONTWIDTH;
 									if (ti_cl->items & IT_INVULNERABILITY)
-										Draw_ColoredString(x, y, "&cf00P", false);
+										Draw_ColoredString(x, y, "&cf00P", false, false);
 									x += FONTWIDTH;
 									if (ti_cl->items & IT_INVISIBILITY)
-										Draw_ColoredString(x, y, "&cff0R", false);
+										Draw_ColoredString(x, y, "&cff0R", false, false);
 									x += FONTWIDTH;
 								}
 								else { x += 3 * FONTWIDTH; }
@@ -505,7 +505,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 						if (!width_only) {
 							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
 							str_align_right(tmp, sizeof(tmp), nick, maxname);
-							Draw_ColoredString(x, y, tmp, false);
+							Draw_ColoredString(x, y, tmp, false, false);
 						}
 						x += maxname * FONTWIDTH;
 						break;
@@ -518,13 +518,13 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 										char *weap_str = tp_name_rlg.string;
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString(x, y, weap_white_stripped, false);
+										Draw_ColoredString(x, y, weap_white_stripped, false, false);
 									}
 									else {
 										char *weap_str = TP_ItemName(BestWeaponFromStatItems(ti_cl->items));
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString(x, y, weap_white_stripped, false);
+										Draw_ColoredString(x, y, weap_white_stripped, false, false);
 									}
 								}
 								x += 3 * FONTWIDTH;
@@ -544,7 +544,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
-							Draw_ColoredString(x, y, tmp, false);
+							Draw_ColoredString(x, y, tmp, false, false);
 						}
 						x += 3 * FONTWIDTH;
 
@@ -602,11 +602,11 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 							case 4: // armor value prefixed with letter
 								if (!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
-										Draw_ColoredString(x, y, "r", false);
+										Draw_ColoredString(x, y, "r", false, false);
 									else if (ti_cl->items & IT_ARMOR2)
-										Draw_ColoredString(x, y, "y", false);
+										Draw_ColoredString(x, y, "y", false, false);
 									else if (ti_cl->items & IT_ARMOR1)
-										Draw_ColoredString(x, y, "g", false);
+										Draw_ColoredString(x, y, "g", false, false);
 								}
 								x += FONTWIDTH;
 
@@ -615,7 +615,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 
 						if (!width_only) { // value drawn no matter which style
 							snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
-							Draw_ColoredString(x, y, tmp, false);
+							Draw_ColoredString(x, y, tmp, false, false);
 						}
 						x += 3 * FONTWIDTH;
 
@@ -628,7 +628,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 								loc = "unknown";
 
 							str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
-							Draw_ColoredString(x, y, tmp, false);
+							Draw_ColoredString(x, y, tmp, false, false);
 						}
 						x += maxloc * FONTWIDTH;
 
@@ -670,13 +670,13 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 							case 3: // colored font (QPR)
 								if (!width_only) {
 									if (ti_cl->items & IT_QUAD)
-										Draw_ColoredString(x, y, "&c03fQ", false);
+										Draw_ColoredString(x, y, "&c03fQ", false, false);
 									x += FONTWIDTH;
 									if (ti_cl->items & IT_INVULNERABILITY)
-										Draw_ColoredString(x, y, "&cf00P", false);
+										Draw_ColoredString(x, y, "&cf00P", false, false);
 									x += FONTWIDTH;
 									if (ti_cl->items & IT_INVISIBILITY)
-										Draw_ColoredString(x, y, "&cff0R", false);
+										Draw_ColoredString(x, y, "&cff0R", false, false);
 									x += FONTWIDTH;
 								}
 								else { x += 3 * FONTWIDTH; }
@@ -687,7 +687,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 					case '%': // wow, %% result in one %, how smart
 
 						if (!width_only)
-							Draw_ColoredString(x, y, "%", false);
+							Draw_ColoredString(x, y, "%", false, false);
 						x += FONTWIDTH;
 
 						break;
@@ -696,7 +696,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-							Draw_ColoredString(x, y, tmp, false);
+							Draw_ColoredString(x, y, tmp, false, false);
 						}
 						x += (s[0] ? 2 : 1) * FONTWIDTH;
 
@@ -709,7 +709,7 @@ int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int m
 				if (!width_only) {
 					snprintf(tmp, sizeof(tmp), "%c", s[0]);
 					if (s[0] != ' ') // inhuman smart optimization, do not print space!
-						Draw_ColoredString(x, y, tmp, false);
+						Draw_ColoredString(x, y, tmp, false, false);
 				}
 				x += FONTWIDTH;
 

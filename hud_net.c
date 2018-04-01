@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "common_draw.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "fonts.h"
 
 //---------------------
 //
@@ -32,15 +33,17 @@ void SCR_HUD_DrawNetStats(hud_t *hud)
 
 	static cvar_t *hud_net_period = NULL;
 	static cvar_t *hud_net_proportional = NULL;
+	static cvar_t *hud_net_scale = NULL;
 
 	if (hud_net_period == NULL) {
 		// first time
 		hud_net_period = HUD_FindVar(hud, "period");
 		hud_net_proportional = HUD_FindVar(hud, "proportional");
+		hud_net_scale = HUD_FindVar(hud, "scale");
 	}
 
-	width = FontFixedWidth(16, false, hud_net_proportional->integer) * 8;
-	height = 12 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8;
+	width = FontFixedWidth(16, hud_net_scale->value, false, hud_net_proportional->integer);
+	height = (12 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8) * hud_net_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		float period = hud_net_period->value;
@@ -129,63 +132,74 @@ void SCR_HUD_DrawNetStats(hud_t *hud)
 			with_delta = result.delta;
 		}
 
-		Draw_Alt_String(x + 36, y, "latency");
-		y += 12;
+		Draw_Alt_String(x + (width - Draw_StringLength("latency", 7, hud_net_scale->value, hud_net_proportional->integer)) / 2, y, "latency", hud_net_scale->value, hud_net_proportional->integer);
+		y += 12 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "min  %4.1f %3d ms", f_min, ping_min);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "min", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%4.1f %3d ms", f_min, ping_min);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "avg  %4.1f %3d ms", f_avg, ping_avg);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "avg", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%4.1f %3d ms", f_avg, ping_avg);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "max  %4.1f %3d ms", f_max, ping_max);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "max", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%4.1f %3d ms", f_max, ping_max);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "dev     %5.2f ms", ping_dev);
-		Draw_String(x, y, line);
-		y += 12;
+		Draw_SString(x, y, "dev", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%5.2f ms", ping_dev);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 12 * hud_net_scale->value;
 
-		Draw_Alt_String(x + 20, y, "packet loss");
-		y += 12;
+		Draw_Alt_String(x + (width - Draw_StringLength("packet loss", 11, hud_net_scale->value, hud_net_proportional->integer)) / 2, y, "packet loss", hud_net_scale->value, hud_net_proportional->integer);
+		y += 12 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "lost       %3d %%", lost_lost);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "lost", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %%", lost_lost);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "rate cut   %3d %%", lost_rate);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "rate cut", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %%", lost_rate);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
 		if (with_delta) {
-			snprintf(line, sizeof(line), "bad delta  %3d %%", lost_delta);
+			Draw_SString(x, y, "bad delta", hud_net_scale->value, hud_net_proportional->integer);
+			snprintf(line, sizeof(line), "%3d %%", lost_delta);
+			Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
 		}
 		else {
-			strlcpy(line, "no delta compr", sizeof(line));
+			Draw_SString(x, y, "no delta compr", hud_net_scale->value, hud_net_proportional->integer);
 		}
-		Draw_String(x, y, line);
-		y += 8;
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "total      %3d %%", lost_total);
-		Draw_String(x, y, line);
-		y += 12;
+		Draw_SString(x, y, "total", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %%", lost_total);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 12 * hud_net_scale->value;
 
-		Draw_Alt_String(x + 4, y, "packet size/BPS");
-		y += 12;
+		Draw_Alt_String(x + (width - Draw_StringLength("packet size/BPS", 15, hud_net_scale->value, hud_net_proportional->integer)) / 2, y, "packet size/BPS", hud_net_scale->value, hud_net_proportional->integer);
+		y += 12 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "out    %3d %5d", size_out, bandwidth_out);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "out", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %5d", size_out, bandwidth_out);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "in     %3d %5d", size_in, bandwidth_in);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "in", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %5d", size_in, bandwidth_in);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 
-		snprintf(line, sizeof(line), "total  %3d %5d", size_all, bandwidth_all);
-		Draw_String(x, y, line);
-		y += 8;
+		Draw_SString(x, y, "total", hud_net_scale->value, hud_net_proportional->integer);
+		snprintf(line, sizeof(line), "%3d %5d", size_all, bandwidth_all);
+		Draw_SString(x + width - Draw_StringLength(line, -1, hud_net_scale->value, hud_net_proportional->integer), y, line, hud_net_scale->value, hud_net_proportional->integer);
+		y += 8 * hud_net_scale->value;
 	}
 }
 

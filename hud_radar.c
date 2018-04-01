@@ -810,7 +810,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			entity_p_y = y + Q_rint((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
 
 			Draw_ColoredString(entity_p_x  - (8 * strlen(stats_important_ents->list[i].name)) / 2.0, entity_p_y - 4,
-				va("&c55f%s", stats_important_ents->list[i].name), 0);
+				va("&c55f%s", stats_important_ents->list[i].name), 0, false);
 
 			Draw_AlphaCircleOutline(entity_p_x , entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
 		}

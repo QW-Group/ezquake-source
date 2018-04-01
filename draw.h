@@ -108,8 +108,8 @@ typedef struct clrinfo_s
 void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
 int Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
 int Draw_String (int x, int y, const char *str);
-int Draw_Alt_String (int x, int y, const char *str);
-int Draw_ColoredString (int x, int y, const char *str, int red);
+int Draw_Alt_String (int x, int y, const char *str, float scale, qbool proportional);
+int Draw_ColoredString (int x, int y, const char *str, int red, qbool proportional);
 int Draw_SColoredStringBasic (int x, int y, const char *text, int red, float scale);
 int Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
 int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);

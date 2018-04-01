@@ -68,6 +68,7 @@ void Clock_HudInit(void);
 void Ammo_HudInit(void);
 void Items_HudInit(void);
 void MP3_HudInit(void);
+void Net_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -1985,7 +1986,7 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 				&& style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = Q_rint(py + (height / 2.0) - 4);
-			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num].rlcount), 0);
+			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num].rlcount), 0, false);
 			px += 8 + 1;
 		}
 
@@ -1999,13 +2000,13 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = Q_rint(py + (height / 2.0) - 4);
-			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num].rlcount), 0);
+			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num].rlcount), 0, false);
 		}
 
 		if(style == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = Q_rint(py + (height / 2.0) - 4);
-			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num].rlcount), 0);
+			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num].rlcount), 0, false);
 			px += 8*3 + 1;
 		}
 	}
@@ -2152,34 +2153,34 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 				&& info->stats[STAT_ITEMS] & IT_INVISIBILITY
 				&& info->stats[STAT_ITEMS] & IT_QUAD)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD
 				&& info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cf00P", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cf00P", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD
 				&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cff0R", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY
 				&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&cf00P&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&cf00P&cff0R", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&c0ffQ", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&c0ffQ", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cf00P", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cf00P", 0, false);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cff0R", 0, false);
 		}
 	}
 

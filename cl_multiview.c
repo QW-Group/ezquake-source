@@ -323,7 +323,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 
 		// Armor value.
 		if (style >= MV_HUD_STYLE_ALL_TEXT) {
-			Draw_ColoredString (x, y, va ("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0);
+			Draw_ColoredString (x, y, va ("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0, false);
 		}
 	}
 
@@ -433,7 +433,7 @@ static void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
 void SCR_MV_DrawCurrentAmmo (int x, int y, int *width, int *height)
 {
 	// Draw the ammo count in blue/greyish color.
-	Draw_ColoredString (x, y, va ("&c5CE%4d", cl.stats[STAT_AMMO]), 0);
+	Draw_ColoredString (x, y, va ("&c5CE%4d", cl.stats[STAT_AMMO]), 0, false);
 	SCR_MV_SetBoundValue (width, MV_HUD_CURRAMMO_WIDTH);
 	SCR_MV_SetBoundValue (height, 8);
 }

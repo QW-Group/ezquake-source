@@ -131,10 +131,12 @@ void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, const char *str, qbool r
 	cy += m_yofs;
 	*rx = cx;
 	*ry = cy;
-	if (red)
-		Draw_Alt_String (cx, cy, str);
-	else
+	if (red) {
+		Draw_Alt_String(cx, cy, str, 1, false);
+	}
+	else {
 		Draw_String(cx, cy, str);
+	}
 }
 
 void M_Print (int cx, int cy, char *str) {

@@ -385,13 +385,13 @@ float FontCharacterWidth(char ch_, qbool proportional)
 
 // Used for allocating space - if we just measure the string then other hud elements
 //   might move around as content changes, which is probably not what is wanted
-int FontFixedWidth(int max_length, qbool digits_only, qbool proportional)
+int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proportional)
 {
 	if (!proportional || !GL_TextureReferenceIsValid(proportional_fonts[0].master)) {
-		return max_length * 8;
+		return max_length * 8 * scale;
 	}
 
-	return (int)((digits_only ? max_num_glyph_width : max_glyph_width) * max_length + 0.5f);
+	return (int)((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale + 0.5f);
 }
 
 void FontInitialise(void)

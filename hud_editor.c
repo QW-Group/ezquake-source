@@ -2255,7 +2255,7 @@ static void HUD_Editor_DrawHelp(void)
 	Draw_ColoredString(
 		HUD_EDITOR_HELP_X + ((HUD_EDITOR_HELP_WIDTH - strlen(HUD_EDITOR_HELP_TITLE) * 8) / 2),
 		HUD_EDITOR_HELP_Y + 10,
-		HUD_EDITOR_HELP_TITLE, 1);
+		HUD_EDITOR_HELP_TITLE, 1, false);
 
 	UI_PrintTextBlock(
 		HUD_EDITOR_HELP_X + 10,
