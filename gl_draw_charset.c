@@ -542,13 +542,13 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 	}
 	else {
 		int i;
-		int x = 0;
+		float x = 0;
 
 		for (i = 0; text[i] && (length == -1 || i < length); i++) {
 			x += FontCharacterWidth(text[i], proportional) * scale;
 		}
 
-		return x;
+		return (int)(x + 0.5f);
 	}
 }
 

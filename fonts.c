@@ -379,7 +379,7 @@ float FontCharacterWidth(char ch_, qbool proportional)
 	unsigned char ch = (unsigned char)ch_;
 
 	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return ceil(8 * glyphs[ch].advance[0]);
+		return 8 * glyphs[ch].advance[0];
 	}
 	else {
 		return 8;

@@ -62,7 +62,7 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 	pic = &texture->glyphs[ch];
 	GLM_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
 
-	return FontCharacterWidth(ch, proportional);
+	return FontCharacterWidth(ch, proportional) * scale;
 }
 
 // x, y					= Pixel position of char.
