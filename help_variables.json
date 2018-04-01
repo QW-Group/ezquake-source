@@ -3387,12 +3387,6 @@
         { "name": "GL_NEAREST_MIPMAP_NEAREST", "description": "GL_NEAREST but with a bit more quality for far objects." }
       ]
     },
-    "gl_texturemode2d": {
-      "group-id": "50",
-      "desc": "Texture mode used for objects in the head up display, such as font, image of armor, player's face or crosshair.",
-      "remarks": "See gl_texturemode for possible values.",
-      "type": "string"
-    },
     "gl_triplebuffer": {
       "group-id": "35",
       "desc": "Triple buffering of head up display graphics. If you have problems with screen graphics, turn this on.",

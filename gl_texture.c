@@ -83,7 +83,6 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel);
 GLenum gl_lightmap_format = GL_RGB8, gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;
 
 static cvar_t gl_lerpimages               = {"gl_lerpimages", "1"};
-static cvar_t gl_texturemode2d            = {"gl_texturemode2d", "GL_LINEAR", 0, OnChange_gl_texturemode};
 static cvar_t gl_externalTextures_world   = {"gl_externalTextures_world", "1"};
 static cvar_t gl_externalTextures_bmodels = {"gl_externalTextures_bmodels", "1"};
 static cvar_t gl_wicked_luma_level        = {"gl_luma_level", "1", CVAR_LATCH};
@@ -127,19 +126,19 @@ typedef struct
 } glmode_t;
 
 static glmode_t modes[] = {
-	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
-	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR}
+	{"GL_NEAREST", GL_NEAREST, GL_NEAREST },
+	{"GL_LINEAR", GL_LINEAR, GL_LINEAR },
+	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST },
+	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR },
+	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST },
+	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR }
 };
 
 #define GLMODE_NUMODES	(sizeof(modes) / sizeof(glmode_t))
 
 static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static int gl_filter_max = GL_LINEAR;
-static int gl_filter_max_2d = GL_LINEAR;
+static const int gl_filter_max_2d = GL_LINEAR;   // no longer controlled by cvar
 
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) 
 {
@@ -165,11 +164,6 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 		gl_filter_min = filter_min = modes[i].minimize;
 		gl_filter_max = filter_max = modes[i].maximize;
 		mipmap = true;
-	}
-	else if (var == &gl_texturemode2d)
-	{
-		gl_filter_max_2d = filter_min = filter_max = modes[i].maximize;
-		mipmap = false;
 	}
 	else
 	{
@@ -1101,7 +1095,6 @@ void GL_Texture_Init(void)
 	Cvar_Register(&gl_picmip);
 	Cvar_Register(&gl_lerpimages);
 	Cvar_Register(&gl_texturemode);
-	Cvar_Register(&gl_texturemode2d);
 	Cvar_Register(&gl_anisotropy);
 	Cvar_Register(&gl_scaleModelTextures);
 	Cvar_Register(&gl_mipmap_viewmodels);
