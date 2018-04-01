@@ -76,6 +76,7 @@ void Health_HudInit(void);
 void GameSummary_HudInit(void);
 void Performance_HudInit(void);
 void Scores_HudInit(void);
+void Face_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -252,66 +253,6 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 //  s t a t u s   b a r   e l e m e n t s
 //
 //
-
-// face
-void SCR_HUD_DrawFace(hud_t *hud)
-{
-	extern mpic_t  *sb_faces[5][2]; // 0 is dead, 1-4 are alive
-	// 0 is static, 1 is temporary animation
-	extern mpic_t  *sb_face_invis;
-	extern mpic_t  *sb_face_quad;
-	extern mpic_t  *sb_face_invuln;
-	extern mpic_t  *sb_face_invis_invuln;
-
-	int     f, anim;
-	int     x, y;
-	float   scale;
-
-	static cvar_t *v_scale = NULL;
-	if (v_scale == NULL)  // first time called
-	{
-		v_scale = HUD_FindVar(hud, "scale");
-	}
-
-	scale = max(v_scale->value, 0.01);
-
-	if (!HUD_PrepareDraw(hud, 24*scale, 24*scale, &x, &y))
-		return;
-
-	if ( (HUD_Stats(STAT_ITEMS) & (IT_INVISIBILITY | IT_INVULNERABILITY) )
-			== (IT_INVISIBILITY | IT_INVULNERABILITY) )
-	{
-		Draw_SPic (x, y, sb_face_invis_invuln, scale);
-		return;
-	}
-	if (HUD_Stats(STAT_ITEMS) & IT_QUAD)
-	{
-		Draw_SPic (x, y, sb_face_quad, scale);
-		return;
-	}
-	if (HUD_Stats(STAT_ITEMS) & IT_INVISIBILITY)
-	{
-		Draw_SPic (x, y, sb_face_invis, scale);
-		return;
-	}
-	if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
-	{
-		Draw_SPic (x, y, sb_face_invuln, scale);
-		return;
-	}
-
-	if (HUD_Stats(STAT_HEALTH) >= 100)
-		f = 4;
-	else
-		f = max(0, HUD_Stats(STAT_HEALTH)) / 20;
-
-	if (cl.time <= cl.faceanimtime)
-		anim = 1;
-	else
-		anim = 0;
-	Draw_SPic (x, y, sb_faces[f][anim], scale);
-}
-
 
 // status numbers
 void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
@@ -2401,13 +2342,6 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	// player face (health indicator)
-	HUD_Register("face", NULL, "Your bloody face.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
-			"1", "screen", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"scale", "1",
-			NULL);
-
 	// Tracking JohnNy_cz (Contains name of the player who's player we're watching at the moment)
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
 			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
@@ -2529,6 +2463,7 @@ void CommonDraw_Init(void)
 	Armor_HudInit();
 	MP3_HudInit();
 	Scores_HudInit();
+	Face_HudInit();
 	GameSummary_HudInit();
 	Net_HudInit();
 	Clock_HudInit();

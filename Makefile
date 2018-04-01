@@ -404,7 +404,8 @@ OBJS_c := \
     hud_groups.o \
     hud_armor.o \
     hud_health.o \
-    hud_gamesummary.o
+    hud_gamesummary.o \
+    hud_face.o
 
 ### Configuration Options ###
 
