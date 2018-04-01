@@ -4,6 +4,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_OUTLINE_H
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -20,11 +21,8 @@ typedef struct glyphinfo_s {
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
-static qbool outline_fonts = false; // Need to be smarter with font edges for this to be enabled
-static int forced_indent_left = 0;
-static int forced_indent_right = 0;
-static int forced_indent_top = 0;
-static int forced_indent_bottom = 0;
+static qbool outline_fonts = true;
+static int outline_width = 2;
 
 #define FONT_TEXTURE_SIZE 1024
 charset_t proportional_fonts[MAX_CHARSETS];
@@ -48,7 +46,7 @@ static void FontSetColor(byte* color, byte alpha, gradient_def_t* gradient, floa
 	}
 	else {
 		float mix = (relative_y - gradient->gradient_start) / (1.0f - gradient->gradient_start);
-		
+
 		VectorScale(gradient->top_color, (1.0f - mix) / 255.0f, base_color);
 		VectorMA(base_color, mix / 255.0f, gradient->bottom_color, base_color);
 	}
@@ -57,6 +55,46 @@ static void FontSetColor(byte* color, byte alpha, gradient_def_t* gradient, floa
 	color[1] = min(1, base_color[1]) * alpha;
 	color[2] = min(1, base_color[2]) * alpha;
 	color[3] = alpha;
+}
+
+// Very simple: boost the alpha of every pixel to strongest alpha nearby
+// - small adjustment made for distance
+// - not a great solution but works for the moment
+// - can supply matrix to freetype, should use that instead
+static void SimpleOutline(byte* image_buffer, int base_font_width, int base_font_height)
+{
+	int x, y;
+	int xdiff, ydiff;
+	byte* font_buffer = Q_malloc(base_font_width * base_font_height * 4);
+	const int search_distance = outline_width;
+
+	memcpy(font_buffer, image_buffer, base_font_width * base_font_height * 4);
+	for (x = 0; x < base_font_width; ++x) {
+		for (y = 0; y < base_font_height; ++y) {
+			int base = (x + y * base_font_width) * 4;
+			float best_distance = -1;
+			int best_alpha = 0;
+
+			if (font_buffer[base + 3] == 255) {
+				continue;
+			}
+
+			for (xdiff = max(0, x - search_distance); xdiff <= min(x + search_distance, base_font_width - 1); ++xdiff) {
+				for (ydiff = max(0, y - search_distance); ydiff <= min(y + search_distance, base_font_height - 1); ++ydiff) {
+					float dist = abs(x - xdiff) + abs(y - ydiff);
+					int this_alpha = font_buffer[(xdiff + ydiff * base_font_width) * 4 + 3] / (0.3 * (dist + 1));
+
+					if (this_alpha >= best_alpha) {
+						best_alpha = min(255, this_alpha);
+					}
+				}
+			}
+
+			image_buffer[base + 3] = best_alpha;
+		}
+	}
+
+	Q_free(font_buffer);
 }
 
 static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, gradient_def_t* gradient)
@@ -78,10 +116,9 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 
 	font_buffer = face->glyph->bitmap.buffer;
-	for (y = 0; y < face->glyph->bitmap.rows && y + forced_indent_top < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
-		for (x = 0; x < face->glyph->bitmap.width && x + forced_indent_left < base_font_width / 2; ++x) {
-			int base_lineup = (x + forced_indent_left + (y + forced_indent_top - 1) * base_font_width) * 4;
-			int base = (x + forced_indent_left + (y + forced_indent_top) * base_font_width) * 4;
+	for (y = 0; y < face->glyph->bitmap.rows && y + outline_width < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
+		for (x = 0; x < face->glyph->bitmap.width && x + outline_width < base_font_width / 2; ++x) {
+			int base = (x + outline_width + (y + outline_width) * base_font_width) * 4;
 			byte alpha = font_buffer[x];
 
 			FontSetColor(&image_buffer[base], alpha, gradient, y * 1.0f / face->glyph->bitmap.rows);
@@ -89,29 +126,7 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 
 	if (outline_fonts) {
-		// Post-process
-		/*
-		for (y = 0; y < base_font_height; ++y) {
-			for (x = 0; x < base_font_width; ++x) {
-				// If previous pixel was transparent, make it black
-				if (x && alpha && font_buffer[x - 1] == 0) {
-					image_buffer[base - 1] = 255;
-				}
-
-				if (y && alpha && image_buffer[base_lineup + 3] == 0) {
-					image_buffer[base_lineup + 3] = 255;
-				}
-
-				// If previous pixel was solid, make this black
-				if (x && !alpha && font_buffer[x - 1] != 0) {
-					alpha = 255;
-				}
-
-				if (y && !alpha && image_buffer[base_lineup + 3] && (image_buffer[base_lineup] || image_buffer[base_lineup + 1] || image_buffer[base_lineup + 2])) {
-					alpha = 255;
-				}
-			}
-		}*/
+		SimpleOutline(image_buffer, base_font_width, base_font_height);
 	}
 }
 
@@ -129,6 +144,7 @@ void FontCreate(int grouping, const char* path)
 	int texture_width, texture_height;
 	int base_font_width, base_font_height;
 	int baseline_offset;
+	qbool draw_outline = outline_fonts;
 	charset_t* charset;
 
 	error = FT_Init_FreeType(&library);
@@ -176,8 +192,8 @@ void FontCreate(int grouping, const char* path)
 
 	FT_Set_Pixel_Sizes(
 		face,
-		base_font_width / 2 - forced_indent_left - forced_indent_right,
-		base_font_height / 2 - forced_indent_top - forced_indent_bottom
+		base_font_width / 2 - 2 * outline_width,
+		base_font_height / 2 - 2 * outline_width
 	);
 
 	temp_buffer = full_buffer = Q_malloc(4 * base_font_width * base_font_height * 256);
@@ -214,6 +230,7 @@ void FontCreate(int grouping, const char* path)
 			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, &brown_gradient);
 		}
 	}
+	FT_Done_FreeType(library);
 
 	// Work out where the baseline is...
 	{
@@ -229,7 +246,7 @@ void FontCreate(int grouping, const char* path)
 			max_beneath = max(max_beneath, beneath_baseline);
 		}
 
-		baseline_offset = base_font_height / 2 - 1 - max_beneath - forced_indent_bottom;
+		baseline_offset = base_font_height / 2 - 1 - max_beneath - outline_width;
 	}
 
 	// Update charset image

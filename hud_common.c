@@ -4531,7 +4531,7 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"onlytp", "0",
 		"scale", "1",
-		"format", "QYyq",
+		"format", "RYM myr",
 		"circles", "0",
 		"ratio", "4",
 		"flash", "1",
