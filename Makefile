@@ -255,7 +255,6 @@ OBJS_c := \
     hud_262.o \
     hud_common.o \
     hud_editor.o \
-    hud_framestats.o \
     hud_radar.o \
     hud_speed.o \
     hud_teaminfo.o \

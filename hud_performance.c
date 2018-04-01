@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud.h"
 #include "hud_common.h"
 #include "tr_types.h"
+#include "gl_model.h"
+#include "gl_local.h"
 
 // ----------------
 // DrawFPS
@@ -130,6 +132,78 @@ static void SCR_HUD_DrawVidLag(hud_t *hud)
 	}
 }
 
+static void FrameStats_AddLine(char content[2][64], const char* name, int value)
+{
+	strlcpy(content[0], name, sizeof(content[0]));
+	if (name[0]) {
+		snprintf(content[1], sizeof(content[1]), "%4d", value);
+	}
+	else {
+		content[1][0] = '\0';
+	}
+}
+
+#define MAX_FRAMESTATS_LINES 32
+
+static void FrameStats_DrawElement(hud_t *hud)
+{
+	static cvar_t
+		*hud_frameStats_style = NULL,
+		*hud_frameStats_scale,
+		*hud_frameStats_proportional;
+	static char content[MAX_FRAMESTATS_LINES][2][64];
+
+	int height = 8;
+	int width = 0;
+	int x = 0;
+	int y = 0;
+	int lines = 0;
+	int i;
+	int max_field_length;
+	int max_value_length;
+	int value_length[MAX_FRAMESTATS_LINES];
+
+	if (hud_frameStats_style == NULL) {
+		// first time
+		hud_frameStats_style = HUD_FindVar(hud, "style");
+		hud_frameStats_scale = HUD_FindVar(hud, "scale");
+		hud_frameStats_proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	FrameStats_AddLine(content[lines++], "Draw calls:", prevFrameStats.draw_calls);
+	FrameStats_AddLine(content[lines++], "Sub-draw calls:", prevFrameStats.subdraw_calls);
+	FrameStats_AddLine(content[lines++], "Texture switches:", prevFrameStats.texture_binds);
+	FrameStats_AddLine(content[lines++], "Lightmap uploads:", prevFrameStats.lightmap_updates);
+	if (GL_UseImmediateMode()) {
+		FrameStats_AddLine(content[lines++], "", 0);
+		FrameStats_AddLine(content[lines++], "World-model polys:", frameStats.classic.polycount[polyTypeWorldModel]);
+		if (cl.standby || com_serveractive) {
+			FrameStats_AddLine(content[lines++], "Alias-model polys:", frameStats.classic.polycount[polyTypeAliasModel]);
+			FrameStats_AddLine(content[lines++], "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
+		}
+	}
+
+	height = lines * 8 * hud_frameStats_scale->value;
+	max_field_length = max_value_length = 0;
+	for (i = 0; i < lines; ++i) {
+		int name_length = Draw_StringLength(content[i][0], -1, hud_frameStats_scale->value, hud_frameStats_proportional->integer);
+		value_length[i] = Draw_StringLength(content[i][1], -1, hud_frameStats_scale->value, hud_frameStats_proportional->integer);
+
+		max_field_length = max(max_field_length, name_length);
+		max_value_length = max(max_value_length, value_length[i]);
+	}
+
+	width = max_field_length + 8 * hud_frameStats_scale->value + max_value_length;
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		for (i = 0; i < lines; ++i, y += 8 * hud_frameStats_scale->value) {
+			if (content[i][0][0]) {
+				Draw_SString(x, y, content[i][0], hud_frameStats_scale->value, hud_frameStats_proportional->integer);
+				Draw_SString(x + width - value_length[i], y, content[i][1], hud_frameStats_scale->value, hud_frameStats_proportional->integer);
+			}
+		}
+	}
+}
+
 void Performance_HudInit(void)
 {
 	// fps
@@ -154,6 +228,16 @@ void Performance_HudInit(void)
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
 		"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
 		"style", "0",
+		"scale", "1",
+		"proportional", "0",
+		NULL
+	);
+
+	HUD_Register(
+		"framestats", NULL,
+		"Shows information about the renderer's status & workload.",
+		HUD_PLUSMINUS, ca_active, 0, FrameStats_DrawElement,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
 		"scale", "1",
 		"proportional", "0",
 		NULL

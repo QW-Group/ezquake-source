@@ -290,7 +290,6 @@ endif
 # meag: extra source files for renderer update
 sources += [
 	'hud_262.o',
-	'hud_framestats.o',
 	'hud_speed.o',
 	'hud_teaminfo.o',
 	'gl_draw_charset.o',

@@ -61,7 +61,6 @@ void TeamHold_DrawPercentageBar(
 
 void SCR_HUD_WeaponStats(hud_t *hud);
 void WeaponStats_HUDInit(void);
-void FrameStats_HudInit(void);
 void TeamInfo_HudInit(void);
 void Speed_HudInit(void);
 void TeamHold_HudInit(void);
@@ -2402,22 +2401,12 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	Performance_HudInit();
-
-	Guns_HudInit();
-
-	Items_HudInit();
-
 	// player face (health indicator)
 	HUD_Register("face", NULL, "Your bloody face.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
 			"1", "screen", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
 			"scale", "1",
 			NULL);
-
-	Ammo_HudInit();
-
-	Armor_HudInit();
 
 	// Tracking JohnNy_cz (Contains name of the player who's player we're watching at the moment)
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
@@ -2481,8 +2470,6 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	MP3_HudInit();
-
 #ifdef WITH_PNG
 	HUD_Register(
 		"keys", NULL, "Shows which keys user does press at the moment",
@@ -2535,6 +2522,12 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
+	Performance_HudInit();
+	Guns_HudInit();
+	Items_HudInit();
+	Ammo_HudInit();
+	Armor_HudInit();
+	MP3_HudInit();
 	Scores_HudInit();
 	GameSummary_HudInit();
 	Net_HudInit();
@@ -2542,7 +2535,6 @@ void CommonDraw_Init(void)
 	Speed_HudInit();
 	Radar_HudInit();
 	WeaponStats_HUDInit();
-	FrameStats_HudInit();
 	TeamInfo_HudInit();
 	TeamHold_HudInit();
 	Health_HudInit();
