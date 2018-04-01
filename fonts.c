@@ -20,15 +20,49 @@ typedef struct glyphinfo_s {
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
+static qbool outline_fonts = false; // Need to be smarter with font edges for this to be enabled
+static int forced_indent_left = 0;
+static int forced_indent_right = 0;
+static int forced_indent_top = 0;
+static int forced_indent_bottom = 0;
 
 #define FONT_TEXTURE_SIZE 1024
 charset_t proportional_fonts[MAX_CHARSETS];
 
-static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, byte base_color[4])
+typedef struct gradient_def_s {
+	byte top_color[3];
+	byte bottom_color[3];
+	float gradient_start;
+} gradient_def_t;
+
+static gradient_def_t standard_gradient = { { 255, 255, 255 }, { 107, 98, 86 }, 0.2f };
+static gradient_def_t brown_gradient = { { 120, 82, 35 },{ 75, 52, 22 }, 0.0f };
+static gradient_def_t numbers_gradient = { { 255, 255, 150 }, { 218, 132, 7 }, 0.2f };
+
+static void FontSetColor(byte* color, byte alpha, gradient_def_t* gradient, float relative_y)
+{
+	float base_color[3];
+
+	if (relative_y <= gradient->gradient_start) {
+		VectorScale(gradient->top_color, 1.0f / 255, base_color);
+	}
+	else {
+		float mix = (relative_y - gradient->gradient_start) / (1.0f - gradient->gradient_start);
+		
+		VectorScale(gradient->top_color, (1.0f - mix) / 255.0f, base_color);
+		VectorMA(base_color, mix / 255.0f, gradient->bottom_color, base_color);
+	}
+
+	color[0] = min(1, base_color[0]) * alpha;
+	color[1] = min(1, base_color[1]) * alpha;
+	color[2] = min(1, base_color[2]) * alpha;
+	color[3] = alpha;
+}
+
+static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_font_height, byte* image_buffer, gradient_def_t* gradient)
 {
 	byte* font_buffer;
 	int x, y;
-	qbool outline = false; // Need to be smarter with font edges for this to be enabled
 
 	glyphs[ch].loaded = true;
 	glyphs[ch].advance[0] = (face->glyph->advance.x / 64.0f) / (base_font_width / 2);
@@ -44,13 +78,21 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 
 	font_buffer = face->glyph->bitmap.buffer;
-	for (y = 0; y < face->glyph->bitmap.rows && y < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
-		for (x = 0; x < face->glyph->bitmap.width && x < base_font_width / 2; ++x) {
-			int base_lineup = (x + (y - 1) * base_font_width) * 4;
-			int base = (x + y * base_font_width) * 4;
+	for (y = 0; y < face->glyph->bitmap.rows && y + forced_indent_top < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
+		for (x = 0; x < face->glyph->bitmap.width && x + forced_indent_left < base_font_width / 2; ++x) {
+			int base_lineup = (x + forced_indent_left + (y + forced_indent_top - 1) * base_font_width) * 4;
+			int base = (x + forced_indent_left + (y + forced_indent_top) * base_font_width) * 4;
 			byte alpha = font_buffer[x];
 
-			if (outline) {
+			FontSetColor(&image_buffer[base], alpha, gradient, y * 1.0f / face->glyph->bitmap.rows);
+		}
+	}
+
+	if (outline_fonts) {
+		// Post-process
+		/*
+		for (y = 0; y < base_font_height; ++y) {
+			for (x = 0; x < base_font_width; ++x) {
 				// If previous pixel was transparent, make it black
 				if (x && alpha && font_buffer[x - 1] == 0) {
 					image_buffer[base - 1] = 255;
@@ -59,14 +101,8 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 				if (y && alpha && image_buffer[base_lineup + 3] == 0) {
 					image_buffer[base_lineup + 3] = 255;
 				}
-			}
-			
-			image_buffer[base + 0] = (base_color[0] / 255.0f) * alpha;
-			image_buffer[base + 1] = (base_color[1] / 255.0f) * alpha;
-			image_buffer[base + 2] = (base_color[2] / 255.0f) * alpha;
 
-			// If previous pixel was solid, make this black
-			if (outline) {
+				// If previous pixel was solid, make this black
 				if (x && !alpha && font_buffer[x - 1] != 0) {
 					alpha = 255;
 				}
@@ -75,8 +111,7 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 					alpha = 255;
 				}
 			}
-			image_buffer[base + 3] = alpha;// ? 255 : 0;
-		}
+		}*/
 	}
 }
 
@@ -141,8 +176,8 @@ void FontCreate(int grouping, const char* path)
 
 	FT_Set_Pixel_Sizes(
 		face,
-		base_font_width / 2,
-		base_font_height / 2
+		base_font_width / 2 - forced_indent_left - forced_indent_right,
+		base_font_height / 2 - forced_indent_top - forced_indent_bottom
 	);
 
 	temp_buffer = full_buffer = Q_malloc(4 * base_font_width * base_font_height * 256);
@@ -171,12 +206,12 @@ void FontCreate(int grouping, const char* path)
 		}
 
 		if (ch < 32) {
-			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, color_numbers);
-			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, color_numbers);
+			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, &numbers_gradient);
+			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, &numbers_gradient);
 		}
 		else {
-			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, color_white);
-			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, color_brown);
+			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, &standard_gradient);
+			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, &brown_gradient);
 		}
 	}
 
@@ -194,7 +229,7 @@ void FontCreate(int grouping, const char* path)
 			max_beneath = max(max_beneath, beneath_baseline);
 		}
 
-		baseline_offset = base_font_height / 2 - 1 - max_beneath;
+		baseline_offset = base_font_height / 2 - 1 - max_beneath - forced_indent_bottom;
 	}
 
 	// Update charset image
@@ -340,6 +375,11 @@ int FontFixedWidth(int max_length, qbool digits_only, qbool proportional)
 	}
 
 	return (int)((digits_only ? max_num_glyph_width : max_glyph_width) * max_length + 0.5f);
+}
+
+void FontInitialise(void)
+{
+	
 }
 
 #endif // EZ_FREETYPE_SUPPORT
