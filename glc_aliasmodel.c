@@ -65,8 +65,9 @@ typedef struct glc_aliasmodel_vert_s {
 	byte color[4];
 } glc_aliasmodel_vert_t;
 static glc_aliasmodel_vert_t* temp_aliasmodel_buffer;
-static buffer_ref aliasmodel_pose_vbo;
 static int temp_aliasmodel_buffer_size;
+
+static buffer_ref aliasmodel_pose_vbo;
 
 void GLC_AllocateAliasPoseBuffer(void)
 {
@@ -101,7 +102,12 @@ void GLC_AllocateAliasPoseBuffer(void)
 		Q_free(temp_aliasmodel_buffer);
 		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
 		temp_aliasmodel_buffer_size = max_verts;
+	}
 
+	if (GL_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
+		aliasmodel_pose_vbo = GL_ResizeBuffer(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
+	}
+	else {
 		aliasmodel_pose_vbo = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, GL_STREAM_DRAW);
 	}
 }

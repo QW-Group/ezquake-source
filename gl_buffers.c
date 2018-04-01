@@ -502,7 +502,13 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadOptionalFunction(glUnmapNamedBuffer);
 
 	tripleBuffer_supported &= buffers_supported;
-	Con_Printf("Triple-buffering of GL buffers: %s\n", tripleBuffer_supported ? "enabled" : "disabled");
+
+	if (!buffers_supported) {
+		Con_Printf("Using GL buffers: disabled\n");
+	}
+	else {
+		Con_Printf("Triple-buffering of GL buffers: %s\n", tripleBuffer_supported ? "enabled" : "disabled");
+	}
 }
 
 void GL_InitialiseBufferState(void)
