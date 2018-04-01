@@ -495,29 +495,6 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 	}
 }
 
-//---------------------
-//
-// network statistics
-//
-void SCR_HUD_DrawNetStats(hud_t *hud)
-{
-	int width, height;
-	int x, y;
-
-	static cvar_t *hud_net_period = NULL;
-
-	if (hud_net_period == NULL)    // first time
-	{
-		hud_net_period = HUD_FindVar(hud, "period");
-	}
-
-	width = 16*8 ;
-	height = 12 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8 + 8 + 16 + 8 + 8 + 8;
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-		SCR_NetStats(x, y, hud_net_period->value);
-}
-
 // =======================================================
 //
 //  s t a t u s   b a r   e l e m e n t s
@@ -4092,17 +4069,6 @@ void CommonDraw_Init(void)
 		"proportional", "0",
 		NULL);
 
-	// init net
-	HUD_Register(
-		"net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
-		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
-		"0", "top", "left", "center", "0", "0", "0.2", "0 0 0", NULL,
-		"period", "1",
-		"scale", "1",
-		"proportional", "0",
-		NULL
-	);
-
 	// init guns
 	HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
 			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGunCurrent,
@@ -4538,6 +4504,7 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
+	Net_HudInit();
 	Clock_HudInit();
 	Speed_HudInit();
 	Radar_HudInit();
