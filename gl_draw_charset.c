@@ -392,7 +392,6 @@ int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, i
 	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, false);
 }
 
-// TODO: proportional
 int Draw_SString(int x, int y, const char *text, float scale, qbool proportional)
 {
 	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, proportional);

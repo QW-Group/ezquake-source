@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Get rid of these once we remove matrix scaling from cl_screen.c version...
 #include "gl_model.h"
 #include "gl_local.h"
+#include "fonts.h"
 
 static void Update_TeamInfo(void);
 
@@ -46,7 +47,7 @@ cvar_t  scr_teaminfo_show_enemies    = { "scr_teaminfo_show_enemies","0" };
 cvar_t  scr_teaminfo_show_self       = { "scr_teaminfo_show_self",   "2" };
 cvar_t  scr_teaminfo                 = { "scr_teaminfo",             "1" };
 
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health);
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional);
 
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
@@ -70,7 +71,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_armor_style,
 		*hud_teaminfo_powerup_style,
 		*hud_teaminfo_low_health,
-		*hud_teaminfo_layout;
+		*hud_teaminfo_layout,
+		*hud_teaminfo_proportional;
 
 	if (hud_teaminfo_weapon_style == NULL) {
 		// first time
@@ -85,11 +87,13 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_powerup_style = HUD_FindVar(hud, "powerup_style");
 		hud_teaminfo_low_health = HUD_FindVar(hud, "low_health");
 		hud_teaminfo_layout = HUD_FindVar(hud, "layout");
+		hud_teaminfo_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
-	if (CL_MultiviewCurrentView() != 1 && CL_MultiviewCurrentView() != 0)
+	if (CL_MultiviewCurrentView() != 1 && CL_MultiviewCurrentView() != 0) {
 		return;
+	}
 
 	if (cls.mvdplayback) {
 		Update_TeamInfo();
@@ -97,18 +101,19 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// fill data we require to draw teaminfo
 	for (maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++) {
-		if (!cl.players[i].name[0] || cl.players[i].spectator
-			|| !ti_clients[i].time || ti_clients[i].time + 5 < r_refdef2.time
-			)
+		if (!cl.players[i].name[0] || cl.players[i].spectator || !ti_clients[i].time || ti_clients[i].time + 5 < r_refdef2.time) {
 			continue;
+		}
 
 		// do not show enemy players unless it's MVD and user wishes to show them
-		if (VX_TrackerIsEnemy(i) && (!cls.mvdplayback || !hud_teaminfo_show_enemies->integer))
+		if (VX_TrackerIsEnemy(i) && (!cls.mvdplayback || !hud_teaminfo_show_enemies->integer)) {
 			continue;
+		}
 
 		// do not show tracked player to spectator
-		if ((cl.spectator && Cam_TrackNum() == i) && hud_teaminfo_show_self->integer == 0)
+		if ((cl.spectator && Cam_TrackNum() == i) && hud_teaminfo_show_self->integer == 0) {
 			continue;
+		}
 
 		// dynamically guess max length of name/location
 		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
@@ -126,7 +131,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	maxname = bound(0, maxname, hud_teaminfo_name_width->integer);
 
 	// this does't draw anything, just calculate width
-	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
+	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
 	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer ? slots_num + n_teams : slots_num);
 
 	if (hud_editor) {
@@ -142,8 +147,9 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		return;
 	}
 
-	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+	if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
 		return;
+	}
 
 	_y = y;
 	x = (hud_teaminfo_align_right->value ? x - (width * (FONTWIDTH * hud_teaminfo_scale->value)) : x);
@@ -152,14 +158,14 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	k = 0;
 	if (hud_teaminfo_show_enemies->integer) {
 		while (sorted_teams[k].name) {
-			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, false);
+			int width = Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
 			sprintf(tmp, "%s %i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SString(x + (strlen(sorted_teams[k].name) + 1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value, false);
+			Draw_SString(x + width + hud_teaminfo_scale->value * 8, _y, tmp, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
 				if (!strcmp(cl.players[i].team, sorted_teams[k].name)) {
-					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
+					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
 					_y += FONTWIDTH * hud_teaminfo_scale->value;
 				}
 			}
@@ -169,7 +175,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	else {
 		for (j = 0; j < slots_num; j++) {
 			i = slots[j];
-			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer);
+			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 		}
 	}
@@ -180,7 +186,7 @@ qbool Has_Both_RL_and_LG(int flags)
 	return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING);
 }
 
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health)
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional)
 {
 	extern mpic_t * SCR_GetWeaponIconByFlag(int flag);
 	extern cvar_t tp_name_rlg;
@@ -189,16 +195,17 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	int x_in = x; // save x
 	int i;
 	mpic_t *pic;
+	int width;
 
-	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
-	extern mpic_t  *sb_armor[3];
+	extern mpic_t *sb_face_invis, *sb_face_quad, *sb_face_invuln;
+	extern mpic_t *sb_armor[3];
 	extern mpic_t *sb_items[32];
 
-	if (!ti_cl)
+	if (!ti_cl) {
 		return 0;
+	}
 
 	i = ti_cl->client;
-
 	if (i < 0 || i >= MAX_CLIENTS) {
 		Com_DPrintf("SCR_Draw_TeamInfoPlayer: wrong client %d\n", i);
 		return 0;
@@ -212,23 +219,20 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	//
 	// parse/draw string like this "%n %h:%a %l %p %w"
 	//
-
 	for (; *s; s++) {
 		switch ((int)s[0]) {
 			case '%':
-
 				s++; // advance
 
 				switch ((int)s[0]) {
 					case 'n': // draw name
-
+						width = FontFixedWidth(maxname, scale, false, proportional);
 						if (!width_only) {
 							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
-							str_align_right(tmp, sizeof(tmp), nick, maxname);
-							Draw_SString(x, y, tmp, scale, false);
-						}
-						x += maxname * FONTWIDTH * scale;
 
+							Draw_SString(x + width - Draw_StringLength(nick, -1, scale, proportional), y, nick, scale, proportional);
+						}
+						x += width;
 						break;
 					case 'w': // draw "best" weapon icon/name
 						switch (weapon_style) {
@@ -238,46 +242,43 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 										char *weap_str = tp_name_rlg.string;
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
+										Draw_SString(x, y, weap_white_stripped, scale, proportional);
 									}
 									else {
 										char *weap_str = TP_ItemName(BestWeaponFromStatItems(ti_cl->items));
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
+										Draw_SString(x, y, weap_white_stripped, scale, proportional);
 									}
 								}
-								x += 3 * FONTWIDTH * scale;
-
+								x += FontFixedWidth(3, scale, false, proportional);
 								break;
 							default: // draw image by default
-								if (!width_only)
-									if ((pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems(ti_cl->items))))
+								if (!width_only) {
+									if ((pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems(ti_cl->items)))) {
 										Draw_SPic(x, y, pic, 0.5 * scale);
-								x += 2 * FONTWIDTH * scale;
-
+									}
+								}
+								x += FontFixedWidth(2, scale, false, proportional);
 								break;
 						}
 
 						break;
 					case 'h': // draw health, padding with space on left side
 					case 'H': // draw health, padding with space on right side
-
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < low_health ? "&cf00" : ""), ti_cl->health);
-							Draw_SString(x, y, tmp, scale, false);
+							Draw_SString(x, y, tmp, scale, proportional);
 						}
-						x += 3 * FONTWIDTH * scale;
-
+						x += FontFixedWidth(3, scale, false, proportional);
 						break;
+
 					case 'a': // draw armor, padded with space on left side
 					case 'A': // draw armor, padded with space on right side
-
-						aclr = "";
-
 						//
 						// different styles of armor
 						//
+						aclr = "";
 						switch (armor_style) {
 							case 1: // image prefixed armor value
 								if (!width_only) {
@@ -288,117 +289,132 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 									else if (ti_cl->items & IT_ARMOR1)
 										Draw_SPic(x, y, sb_armor[0], 1.0 / 3 * scale);
 								}
-								x += FONTWIDTH * scale;
-
+								x += FontFixedWidth(1, scale, false, proportional);
 								break;
 							case 2: // colored background of armor value
-									/*
-									if(!width_only) {
-									byte col[4] = {255, 255, 255, 0};
+								/*
+									if (!width_only) {
+										byte col[4] = {255, 255, 255, 0};
 
-									if (ti_cl->items & IT_ARMOR3) {
-									col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
+										if (ti_cl->items & IT_ARMOR3) {
+											col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
+										}
+										else if (ti_cl->items & IT_ARMOR2) {
+											col[0] = 255; col[1] = 255; col[2] =   0; col[3] = 255;
+										}
+										else if (ti_cl->items & IT_ARMOR1) {
+											col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
+										}
 									}
-									else if (ti_cl->items & IT_ARMOR2) {
-									col[0] = 255; col[1] = 255; col[2] =   0; col[3] = 255;
-									}
-									else if (ti_cl->items & IT_ARMOR1) {
-									col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
-									}
-									}
-									*/
-
+								*/
 								break;
 							case 3: // colored armor value
 								if (!width_only) {
-									if (ti_cl->items & IT_ARMOR3)
+									if (ti_cl->items & IT_ARMOR3) {
 										aclr = "&cf00";
-									else if (ti_cl->items & IT_ARMOR2)
+									}
+									else if (ti_cl->items & IT_ARMOR2) {
 										aclr = "&cff0";
-									else if (ti_cl->items & IT_ARMOR1)
+									}
+									else if (ti_cl->items & IT_ARMOR1) {
 										aclr = "&c0f0";
+									}
 								}
-
 								break;
 							case 4: // armor value prefixed with letter
 								if (!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
-										Draw_SString(x, y, "r", scale, false);
+										Draw_SString(x, y, "r", scale, proportional);
 									else if (ti_cl->items & IT_ARMOR2)
-										Draw_SString(x, y, "y", scale, false);
+										Draw_SString(x, y, "y", scale, proportional);
 									else if (ti_cl->items & IT_ARMOR1)
-										Draw_SString(x, y, "g", scale, false);
+										Draw_SString(x, y, "g", scale, proportional);
 								}
-								x += FONTWIDTH * scale;
-
+								x += FontFixedWidth(1, scale, false, proportional);
 								break;
 						}
 
 						if (!width_only) { // value drawed no matter which style
 							snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
-							Draw_SString(x, y, tmp, scale, false);
+							Draw_SString(x, y, tmp, scale, proportional);
 						}
-						x += 3 * FONTWIDTH * scale;
-
+						x += FontFixedWidth(3, scale, false, proportional);
 						break;
-					case 'l': // draw location
 
+					case 'l': // draw location
+						width = FontFixedWidth(maxloc, scale, false, proportional);
 						if (!width_only) {
 							loc = TP_LocationName(ti_cl->org);
-							if (!loc[0])
+							if (!loc[0]) {
 								loc = "unknown";
+							}
+							loc = TP_ParseFunChars(loc, false);
 
-							str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
-							Draw_SString(x, y, tmp, scale, false);
+							Draw_SString(x + width - Draw_StringLength(loc, -1, scale, proportional), y, loc, scale, proportional);
 						}
-						x += maxloc * FONTWIDTH * scale;
-
+						x += width;
 						break;
+
 					case 'p': // draw powerups
 						switch (powerup_style) {
 							case 1: // quad/pent/ring image
 								if (!width_only) {
-									if (ti_cl->items & IT_QUAD)
-										Draw_SPic(x, y, sb_items[5], 1.0 / 2);
-									x += FONTWIDTH;
-									if (ti_cl->items & IT_INVULNERABILITY)
-										Draw_SPic(x, y, sb_items[3], 1.0 / 2);
-									x += FONTWIDTH;
-									if (ti_cl->items & IT_INVISIBILITY)
-										Draw_SPic(x, y, sb_items[2], 1.0 / 2);
-									x += FONTWIDTH;
+									if (ti_cl->items & IT_QUAD) {
+										Draw_SPic(x, y, sb_items[5], scale / 2);
+									}
+									x += FontFixedWidth(1, scale, false, proportional);
+									if (ti_cl->items & IT_INVULNERABILITY) {
+										Draw_SPic(x, y, sb_items[3], scale / 2);
+									}
+									x += FontFixedWidth(1, scale, false, proportional);
+									if (ti_cl->items & IT_INVISIBILITY) {
+										Draw_SPic(x, y, sb_items[2], scale / 2);
+									}
+									x += FontFixedWidth(1, scale, false, proportional);
 								}
-								else { x += 3 * FONTWIDTH; }
+								else { 
+									x += FontFixedWidth(3, scale, false, proportional);
+								}
 								break;
 
 							case 2: // player powerup face
 								if (!width_only) {
-									if (sb_face_quad && (ti_cl->items & IT_QUAD))
-										Draw_SPic(x, y, sb_face_quad, 1.0 / 3);
-									x += FONTWIDTH;
-									if (sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
-										Draw_SPic(x, y, sb_face_invuln, 1.0 / 3);
-									x += FONTWIDTH;
-									if (sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
-										Draw_SPic(x, y, sb_face_invis, 1.0 / 3);
-									x += FONTWIDTH;
+									if (sb_face_quad && (ti_cl->items & IT_QUAD)) {
+										Draw_SPic(x, y, sb_face_quad, scale / 3);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
+									if (sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY)) {
+										Draw_SPic(x, y, sb_face_invuln, scale / 3);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
+									if (sb_face_invis && (ti_cl->items & IT_INVISIBILITY)) {
+										Draw_SPic(x, y, sb_face_invis, scale / 3);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
 								}
-								else { x += 3 * FONTWIDTH; }
+								else {
+									x += FontFixedWidth(3, 1, false, proportional);
+								}
 								break;
 
 							case 3: // colored font (QPR)
 								if (!width_only) {
-									if (ti_cl->items & IT_QUAD)
-										Draw_ColoredString(x, y, "&c03fQ", false, false);
-									x += FONTWIDTH;
-									if (ti_cl->items & IT_INVULNERABILITY)
-										Draw_ColoredString(x, y, "&cf00P", false, false);
-									x += FONTWIDTH;
-									if (ti_cl->items & IT_INVISIBILITY)
-										Draw_ColoredString(x, y, "&cff0R", false, false);
-									x += FONTWIDTH;
+									if (ti_cl->items & IT_QUAD) {
+										Draw_SString(x, y, "&c03fQ", scale, proportional);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
+									if (ti_cl->items & IT_INVULNERABILITY) {
+										Draw_SString(x, y, "&cf00P", scale, proportional);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
+									if (ti_cl->items & IT_INVISIBILITY) {
+										Draw_SString(x, y, "&cff0R", scale, proportional);
+									}
+									x += FontFixedWidth(1, 1, false, proportional);
 								}
-								else { x += 3 * FONTWIDTH; }
+								else {
+									x += FontFixedWidth(3, 1, false, proportional);
+								}
 								break;
 						}
 						break;
@@ -406,27 +422,24 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					case 't':
 						if (!width_only) {
 							sprintf(tmp, "%i", Player_GetTrackId(cl.players[ti_cl->client].userid));
-							Draw_SString(x, y, tmp, scale, false);
+							Draw_SString(x, y, tmp, scale, proportional);
 						}
-						x += FONTWIDTH * scale; // will break if tracknumber is double digits
+						x += FontFixedWidth(Player_GetTrackId(cl.players[ti_cl->client].userid) >= 10 ? 2 : 1, scale, false, proportional);
 						break;
 
 					case '%': // wow, %% result in one %, how smart
-
-						if (!width_only)
-							Draw_SString(x, y, "%", scale, false);
-						x += FONTWIDTH * scale;
-
+						if (!width_only) {
+							Draw_SString(x, y, "%", scale, proportional);
+						}
+						x += FontFixedWidth(1, scale, false, proportional);
 						break;
 
 					default: // print %x - that mean sequence unknown
-
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-							Draw_SString(x, y, tmp, scale, false);
+							Draw_SString(x, y, tmp, scale, proportional);
 						}
-						x += (s[0] ? 2 : 1) * FONTWIDTH * scale;
-
+						x += FontFixedWidth(s[0] ? 2 : 1, scale, false, proportional);
 						break;
 				}
 
@@ -437,16 +450,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					snprintf(tmp, sizeof(tmp), "%c", s[0]);
 					if (s[0] != ' ') {
 						// inhuman smart optimization, do not print space!
-						Draw_SString(x, y, tmp, scale, false);
+						Draw_SString(x, y, tmp, scale, proportional);
 					}
 				}
-				x += FONTWIDTH * scale;
-
+				x += FontFixedWidth(1, scale, false, proportional);
 				break;
 		}
 	}
 
-	return (x - x_in) / (FONTWIDTH * scale); // return width
+	return (x - x_in); // return width
 }
 
 
@@ -894,6 +906,7 @@ void TeamInfo_HudInit(void)
 		"show_self", "1",
 		"scale", "1",
 		"powerup_style", "1",
+		"proportional", "0",
 		NULL
 	);
 }
