@@ -1,0 +1,190 @@
+/*
+Copyright (C) 2011 azazello and ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "quakedef.h"
+#include "common_draw.h"
+#include "hud.h"
+#include "hud_common.h"
+#include "fonts.h"
+#include "teamplay.h"
+
+static int TP_IsArmorLow(void)
+{
+	extern cvar_t tp_need_ra, tp_need_ya, tp_need_ga;
+
+	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR3)) {
+		return cl.stats[STAT_ARMOR] <= tp_need_ra.value;
+	}
+	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR2)) {
+		return cl.stats[STAT_ARMOR] <= tp_need_ya.value;
+	}
+	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR1)) {
+		return cl.stats[STAT_ARMOR] <= tp_need_ga.value;
+	}
+	return 1;
+}
+
+static qbool HUD_ArmorLow(void)
+{
+	extern cvar_t hud_tp_need;
+
+	if (hud_tp_need.value) {
+		return (TP_IsArmorLow());
+	}
+	else {
+		return (HUD_Stats(STAT_ARMOR) <= 25);
+	}
+}
+
+static void SCR_HUD_DrawArmor(hud_t *hud)
+{
+	int level;
+	qbool low;
+	static cvar_t *scale = NULL, *style, *digits, *align, *pent_666, *proportional;
+
+	if (scale == NULL) {
+		// first time called
+		scale = HUD_FindVar(hud, "scale");
+		style = HUD_FindVar(hud, "style");
+		digits = HUD_FindVar(hud, "digits");
+		align = HUD_FindVar(hud, "align");
+		pent_666 = HUD_FindVar(hud, "pent_666"); // Show 666 or armor value when carrying pentagram
+		proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	if (HUD_Stats(STAT_HEALTH) > 0) {
+		if ((HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) && pent_666->integer) {
+			level = 666;
+			low = true;
+		}
+		else {
+			level = HUD_Stats(STAT_ARMOR);
+			low = HUD_ArmorLow();
+		}
+	}
+	else {
+		level = 0;
+		low = true;
+	}
+
+	SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
+}
+
+static void SCR_HUD_DrawArmorIcon(hud_t *hud)
+{
+	extern mpic_t  *sb_armor[3];
+	extern mpic_t  *draw_disc;
+	int   x, y, height;
+
+	int style;
+	float scale;
+
+	static cvar_t *v_scale = NULL, *v_style, *v_proportional;
+	if (v_scale == NULL) {
+		// first time called
+		v_scale = HUD_FindVar(hud, "scale");
+		v_style = HUD_FindVar(hud, "style");
+		v_proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	scale = max(v_scale->value, 0.01);
+	style = (int)(v_style->value);
+
+	height = (style ? 8 : 24) * scale;
+
+	if (style) {
+		int c;
+
+		if (!HUD_PrepareDraw(hud, FontFixedWidth(1, scale, 0, v_proportional->integer), height, &x, &y)) {
+			return;
+		}
+
+		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
+			c = '@';
+		}
+		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
+			c = 'r';
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
+			c = 'y';
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
+			c = 'g';
+		}
+		else {
+			return;
+		}
+
+		c += 128;
+
+		Draw_SCharacterP(x, y, c, scale, v_proportional->integer);
+	}
+	else {
+		mpic_t  *pic;
+
+		if (!HUD_PrepareDraw(hud, 24 * scale, height, &x, &y)) {
+			return;
+		}
+
+		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
+			pic = draw_disc;
+		}
+		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
+			pic = sb_armor[2];
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
+			pic = sb_armor[1];
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
+			pic = sb_armor[0];
+		}
+		else {
+			return;
+		}
+
+		Draw_SPic(x, y, pic, scale);
+	}
+}
+
+void Armor_HudInit(void)
+{
+	// armor count
+	HUD_Register(
+		"armor", NULL, "Part of your inventory - armor level.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
+		"1", "face", "before", "center", "-32", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"align", "right",
+		"digits", "3",
+		"pent_666", "1",  // Show 666 instead of armor value
+		"proportional", "0",
+		NULL
+	);
+
+	// armor icon
+	HUD_Register(
+		"iarmor", NULL, "Part of your inventory - armor icon.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorIcon,
+		"1", "armor", "before", "center", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"proportional", "0",
+		NULL
+	);
+}

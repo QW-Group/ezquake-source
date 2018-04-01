@@ -71,6 +71,7 @@ void MP3_HudInit(void);
 void Net_HudInit(void);
 void Guns_HudInit(void);
 void Groups_HudInit(void);
+void Armor_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -141,17 +142,6 @@ int TP_IsHealthLow(void)
 	return cl.stats[STAT_HEALTH] <= tp_need_health.value;
 }
 
-int TP_IsArmorLow(void)
-{
-	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR3))
-		return cl.stats[STAT_ARMOR] <= tp_need_ra.value;
-	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR2))
-		return cl.stats[STAT_ARMOR] <= tp_need_ya.value;
-	if ((cl.stats[STAT_ARMOR] > 0) && (cl.stats[STAT_ITEMS] & IT_ARMOR1))
-		return cl.stats[STAT_ARMOR] <= tp_need_ga.value;
-	return 1;
-}
-
 int TP_IsWeaponLow(void)
 {
 	char *s = tp_weapon_order.string;
@@ -170,14 +160,6 @@ qbool HUD_HealthLow(void)
 		return TP_IsHealthLow();
 	else
 		return HUD_Stats(STAT_HEALTH) <= 25;
-}
-
-qbool HUD_ArmorLow(void)
-{
-	if (hud_tp_need.value)
-		return (TP_IsArmorLow());
-	else
-		return (HUD_Stats(STAT_ARMOR) <= 25);
 }
 
 // ----------------
@@ -391,66 +373,6 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 //
 //
 
-void SCR_HUD_DrawArmorIcon(hud_t *hud)
-{
-	extern mpic_t  *sb_armor[3];
-	extern mpic_t  *draw_disc;
-	int   x, y, width, height;
-
-	int style;
-	float scale;
-
-	static cvar_t *v_scale = NULL, *v_style;
-	if (v_scale == NULL)  // first time called
-	{
-		v_scale = HUD_FindVar(hud, "scale");
-		v_style = HUD_FindVar(hud, "style");
-	}
-
-	scale = max(v_scale->value, 0.01);
-	style = (int)(v_style->value);
-
-	width = height = (style ? 8 : 24) * scale;
-
-	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
-		return;
-
-	if (style)
-	{
-		int c;
-
-		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
-			c = '@';
-		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
-			c = 'r';
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
-			c = 'y';
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
-			c = 'g';
-		else return;
-
-		c += 128;
-
-		Draw_SCharacter(x, y, c, scale);
-	}
-	else
-	{
-		mpic_t  *pic;
-
-		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
-			pic = draw_disc;
-		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
-			pic = sb_armor[2];
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
-			pic = sb_armor[1];
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
-			pic = sb_armor[0];
-		else return;
-
-		Draw_SPic (x, y, pic, scale);
-	}
-}
-
 // face
 void SCR_HUD_DrawFace(hud_t *hud)
 {
@@ -601,55 +523,60 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	}
 
 	if (digits) {
-		width = digits * size;
+		if (size == 8) {
+			width = FontFixedWidth(digits, scale, true, proportional);
+		}
+		else {
+			width = digits * size * scale;
+		}
 	}
 	else {
-		width = size * len;
+		width = len * size * scale;
 	}
 
-	height = size;
+	height = size * scale;
 
 	switch (style)
 	{
 		case 1:
 		case 3:
-			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y)) {
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
 				return;
 			}
 			switch (align)
 			{
 				case 0: break;
-				case 1: x += scale * (width - size * len) / 2; break;
-				case 2: x += scale * (width - size * len); break;
+				case 1: x += width / 2 - Draw_StringLength(buf, -1, scale, proportional) / 2; break;
+				case 2: x += width - Draw_StringLength(buf, -1, scale, proportional); break;
 			}
+
 			if (low) {
-				Draw_SAlt_String(x, y, buf, scale, false);
+				Draw_SAlt_String(x, y, buf, scale, proportional);
 			}
 			else {
-				Draw_SString(x, y, buf, scale, false);
+				Draw_SString(x, y, buf, scale, proportional);
 			}
 			break;
 
 		case 0:
 		case 2:
 		default:
-			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
 				return;
-			switch (align)
-			{
+			}
+
+			switch (align) {
 				case 0: break;
 				case 1: x += scale * (width - size * len) / 2; break;
 				case 2: x += scale * (width - size * len); break;
 			}
-			for (i = 0; i < len; i++)
-			{
-				if(buf[i] == '-' && style == 2)
-				{
+
+			for (i = 0; i < len; i++) {
+				if(buf[i] == '-' && style == 2) {
 					Draw_STransPic (x, y, sb_nums[low ? 1 : 0][STAT_MINUS], scale);
 					x += 24 * scale;
 				}
-				else
-				{
+				else {
 					Draw_STransPic (x, y, sb_nums[low ? 1 : 0][buf[i] - '0'], scale);
 					x += 24 * scale;
 				}
@@ -671,43 +598,6 @@ void SCR_HUD_DrawHealth(hud_t *hud)
 	}
 	value = HUD_Stats(STAT_HEALTH);
 	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(),
-			scale->value, style->value, digits->value, align->string, false);
-}
-
-void SCR_HUD_DrawArmor(hud_t *hud)
-{
-	int level;
-	qbool low;
-	static cvar_t *scale = NULL, *style, *digits, *align, *pent_666;
-	if (scale == NULL)  // first time called
-	{
-		scale  = HUD_FindVar(hud, "scale");
-		style  = HUD_FindVar(hud, "style");
-		digits = HUD_FindVar(hud, "digits");
-		align  = HUD_FindVar(hud, "align");
-		pent_666 = HUD_FindVar(hud, "pent_666"); // Show 666 or armor value when carrying pentagram
-	}
-
-	if (HUD_Stats(STAT_HEALTH) > 0)
-	{
-		if ((HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) && pent_666->integer)
-		{
-			level = 666;
-			low = true;
-		}
-		else
-		{
-			level = HUD_Stats(STAT_ARMOR);
-			low = HUD_ArmorLow();
-		}
-	}
-	else
-	{
-		level = 0;
-		low = true;
-	}
-
-	SCR_HUD_DrawNum(hud, level, low,
 			scale->value, style->value, digits->value, align->string, false);
 }
 
@@ -3499,24 +3389,7 @@ void CommonDraw_Init(void)
 
 	Ammo_HudInit();
 
-	// armor count
-	HUD_Register("armor", NULL, "Part of your inventory - armor level.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
-			"1", "face", "before", "center", "-32", "0", "0", "0 0 0", NULL,
-			"style",  "0",
-			"scale",  "1",
-			"align",  "right",
-			"digits", "3",
-			"pent_666", "1",  // Show 666 instead of armor value
-			NULL);
-
-	// armor icon
-	HUD_Register("iarmor", NULL, "Part of your inventory - armor icon.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorIcon,
-			"1", "armor", "before", "center", "0", "0", "0", "0 0 0", NULL,
-			"style", "0",
-			"scale", "1",
-			NULL);
+	Armor_HudInit();
 
 	// Tracking JohnNy_cz (Contains name of the player who's player we're watching at the moment)
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
