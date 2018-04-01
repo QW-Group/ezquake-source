@@ -133,7 +133,6 @@ void SCR_HUD_DrawAmmo(
 	extern mpic_t sb_ib_ammo[4];
 	int value, num_old;
 	qbool low;
-	char c;
 
 	num_old = num;
 	if (num < 1 || num > 4) {	// draw 'current' ammo, which one is it?
@@ -185,31 +184,44 @@ void SCR_HUD_DrawAmmo(
 	else {
 		// else - draw classic ammo-count box with background
 		char buf[8];
-		int  x, y;
+		int  x_, y;
+		float x;
+		int align;
+		float length;
+
+		align = 2;
+		switch (tolower(s_align[0])) {
+			case 'l':   // 'l'eft
+				align = 0; break;
+			case 'c':   // 'c'enter
+				align = 1; break;
+			default:
+			case 'r':   // 'r'ight
+				align = 2; break;
+		}
 
 		scale = max(scale, 0.01);
-
-		snprintf(buf, sizeof(buf), "%3i", value);
-
-		if (!HUD_PrepareDraw(hud, Draw_StringLength(buf, -1, scale, proportional) + 18 * scale, 11 * scale, &x, &y)) {
+		if (!HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x_, &y)) {
 			return;
 		}
 
+		x = x_;
 		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && GL_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
 			Draw_SPic(x, y, &sb_ib_ammo[num - 1], scale);
 		}
-		x += 7 * scale;
-		if (buf[0] != ' ') {
-			c = 18 + buf[0] - '0';
-			x += Draw_SCharacterP(x, y, c, scale, proportional);
+
+		snprintf(buf, sizeof(buf), "%d", value);
+		if (align == 0) {
+			Draw_SString(x, y, buf, scale, proportional);
 		}
-		if (buf[1] != ' ') {
-			c = 18 + buf[1] - '0';
-			x += Draw_SCharacterP(x, y, c, scale, proportional);
-		}
-		if (buf[2] != ' ') {
-			c = 18 + buf[2] - '0';
-			x += Draw_SCharacterP(x, y, c, scale, proportional);
+		else {
+			length = Draw_StringLength(buf, -1, scale, proportional);
+			if (align == 1) {
+				Draw_SString(x + (30 * scale - length) / 2, y, buf, scale, proportional);
+			}
+			else {
+				Draw_SString(x + 30 * scale - length, y, buf, scale, proportional);
+			}
 		}
 	}
 }
