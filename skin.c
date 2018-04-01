@@ -369,8 +369,9 @@ static byte* Skin_Cache(skin_t *skin, qbool no_baseskin)
 		}
 	}
 
-	if (!(out = pix = (byte *)Cache_Alloc(&skin->cache, max_w * max_h * bpp, skin->name)))
+	if (!(out = pix = (byte *)Cache_Alloc(&skin->cache, max_w * max_h * bpp, skin->name))) {
 		Sys_Error("Skin_Cache: couldn't allocate");
+	}
 
 	memset(out, 0, max_w * max_h * bpp);
 	for (y = 0; y < real_height; y++, pix += (max_w * bpp)) {
@@ -513,33 +514,47 @@ void Skin_ShowSkins_f(void)
 static texture_ref Skin_ApplyRGBColor(skin_t* skin, byte* original, byte* specific, byte* color, int mode, const char* texture_name)
 {
 	int x, y;
+	float fColor[3];
 
+	if (color) {
+		VectorScale(color, 1 / 255.0f, fColor);
+	}
+	else {
+		VectorSet(fColor, 1, 1, 1);
+	}
 	memcpy(specific, original, skin->width * skin->height * 4);
 	for (x = 0; x < skin->width; ++x) {
 		for (y = 0; y < skin->height; ++y) {
 			byte* src = &original[(x + y * skin->width) * 4];
 			byte* dst = &specific[(x + y * skin->width) * 4];
 
-			dst[3] = src[3];
 			switch (mode) {
-			case 1: // GL_REPLACE, no action
-			case 3: // GL_DECAL... should be affected by alpha but it's RGB, so it's the same (?)
-				break;
-			case 2: // GL_BLEND
-				dst[0] = (color[0] * (255 - src[0])) / 256;
-				dst[1] = (color[1] * (255 - src[1])) / 256;
-				dst[2] = (color[2] * (255 - src[2])) / 256;
-				break;
-			case 4: // GL_ADD
-				dst[0] = min(255, src[0] + color[0]);
-				dst[1] = min(255, src[1] + color[1]);
-				dst[2] = min(255, src[2] + color[2]);
-				break;
-			default: // GL_MODULATE
-				dst[0] = (src[0] * color[0]) / 256;
-				dst[1] = (src[1] * color[1]) / 256;
-				dst[2] = (src[2] * color[2]) / 256;
-				break;
+				case 0:
+					// Solid colour
+					if (color) {
+						VectorCopy(color, dst);
+					}
+					break;
+				case 1: // GL_REPLACE, no action
+				case 3: // GL_DECAL... should be affected by alpha but it's RGB, so it's the same (?)
+					break;
+				case 2: // GL_BLEND
+					dst[0] = fColor[0] * (255 - src[0]);
+					dst[1] = fColor[1] * (255 - src[1]);
+					dst[2] = fColor[2] * (255 - src[2]);
+					break;
+				case 4: // GL_ADD
+					if (color) {
+						dst[0] = min(255, src[0] + color[0]);
+						dst[1] = min(255, src[1] + color[1]);
+						dst[2] = min(255, src[2] + color[2]);
+					}
+					break;
+				default: // GL_MODULATE
+					dst[0] = fColor[0] * src[0];
+					dst[1] = fColor[1] * src[1];
+					dst[2] = fColor[2] * src[2];
+					break;
 			}
 		}
 	}
@@ -572,13 +587,8 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 		int mode = (i == skin_dead || i == skin_dead_teammate) && r_skincolormodedead.integer >= 0 ? r_skincolormodedead.integer : r_skincolormode.integer;
 
 		snprintf(texture_name, sizeof(texture_name), "%s-%02d", types[i], skin_number);
-		if (mode == 0) {
-			skin->texnum[i] = solidtexture;
-			continue;
-		}
-
-		// If no color adjustment required then we only need one version
 		if (!color->string[0]) {
+			// If no color adjustment required then we only need one version
 			if (i == skin_base) {
 				// Load normal texture
 				skin->texnum[skin_base] = GL_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
@@ -640,6 +650,10 @@ void R_TranslatePlayerSkin(int playernum)
 		player->skin = NULL;
 	}
 
+	/*if (player->skin && (player->skin->colormode != r_skincolormode.integer || player->skin->colormode_dead != r_skincolormodedead.integer)) {
+		player->skin = NULL;
+	}*/
+
 	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin) {
 		return;
 	}
@@ -653,7 +667,7 @@ void R_TranslatePlayerSkin(int playernum)
 
 	Skin_RemoveSkinsForPlayer(playernum);
 
-	if (GL_TextureReferenceIsValid(player->skin->texnum[skin_base]) && player->skin->bpp == 4) {
+	if (GL_TextureReferenceIsValid(player->skin->texnum[skin_base]) && player->skin->bpp == 4 && !(r_enemyskincolor.string[0] || r_teamskincolor.string[0])) {
 		// do not even bother call Skin_Cache(), we have texture num already
 		if (teammate && GL_TextureReferenceIsValid(player->skin->texnum[skin_base_teammate])) {
 			playerskins[playernum].base = player->skin->texnum[skin_base_teammate];
@@ -683,14 +697,14 @@ void R_TranslatePlayerSkin(int playernum)
 			char texture_name[128];
 
 			snprintf(texture_name, sizeof(texture_name), "$player-skin-%d", playernum);
-			playerskins[playernum].base = solidtexture;
-			if (r_skincolormode.integer != 0) {
-				playerskins[playernum].base = Skin_ApplyRGBColor(player->skin, original, specific, color->color, r_skincolormode.integer, texture_name);
-			}
+			playerskins[playernum].base = Skin_ApplyRGBColor(player->skin, original, specific, color->string[0] ? color->color : NULL, r_skincolormode.integer, texture_name);
+			playerskins[playernum].owned[0] = true;
 			if (r_skincolormodedead.integer >= 0 && r_skincolormodedead.integer != r_skincolormode.integer) {
 				strlcat(texture_name, "-dead", sizeof(texture_name));
 				playerskins[playernum].dead = Skin_ApplyRGBColor(player->skin, original, specific, color->color, r_skincolormodedead.integer, texture_name);
+				playerskins[playernum].owned[2] = true;
 			}
+			Q_free(specific);
 			return;
 		}
 
@@ -834,20 +848,12 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 
 		*fb_texture = playerskins[playernum].fb;
 		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1 && r_skincolormodedead.integer != r_skincolormode.integer) {
-			if (r_skincolormodedead.integer) {
+			if (r_skincolormodedead.integer && GL_TextureReferenceIsValid(playerskins[playernum].dead)) {
 				*texture = playerskins[playernum].dead;
-			}
-			else {
-				*texture = solidtexture;
 			}
 		}
 		else {
-			if (r_skincolormode.integer) {
-				*texture = playerskins[playernum].base;
-			}
-			else {
-				*texture = solidtexture;
-			}
+			*texture = playerskins[playernum].base;
 		}
 
 		if (is_player_model && GL_TextureReferenceEqual(*texture, solidtexture)) {
