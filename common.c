@@ -683,8 +683,9 @@ char *va (char *format, ...)
 	static int idx = 0;
 
 	idx++;
-	if (idx == 32)
+	if (idx == 32) {
 		idx = 0;
+	}
 
 	va_start (argptr, format);
 	vsnprintf (string[idx], sizeof(string[idx]), format, argptr);

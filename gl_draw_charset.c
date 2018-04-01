@@ -373,9 +373,7 @@ static int Draw_StringBase(int x, int y, const char *text, clrinfo_t *color, int
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
-
-		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap, proportional);
+		x += Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
 	}
 	Draw_ResetCharGLState();
 	return x - original_x;
@@ -492,9 +490,7 @@ int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *color, int te
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
-
-		FontAdvanceCharCoords(&x, &y, curr_char, bigchar, scale, char_gap, proportional);
+		x += Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
 	}
 	Draw_ResetCharGLState();
 
@@ -538,9 +534,6 @@ int Draw_String(int x, int y, const char *text)
 
 int Draw_StringLength(const char *text, int length, float scale, qbool proportional)
 {
-	int i;
-	int x = 0, y = 0;
-
 	if (!proportional) {
 		if (length < 0) {
 			length = strlen(text);
@@ -548,9 +541,11 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 		return length * scale * 8;
 	}
 	else {
+		int i;
+		int x = 0;
+
 		for (i = 0; text[i] && (length == -1 || i < length); i++) {
-			FontAlterCharCoordsWide(&x, &y, text[i], false, scale);
-			FontAdvanceCharCoords(&x, &y, text[i], false, scale, 0, true);
+			x += FontCharacterWidth(text[i], proportional) * scale;
 		}
 
 		return x;

@@ -437,8 +437,7 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const c
 				c = ' ';
 			}
 		}
-		Draw_SCharacterP(x, y, c, scale, proportional);
-		FontAdvanceCharCoords(&x, &y, c, false, scale, 0, proportional);
+		x += Draw_SCharacterP(x, y, c, scale, proportional);
 		t++;
 	}
 }

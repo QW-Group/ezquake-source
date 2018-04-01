@@ -77,6 +77,7 @@ cvar_t      con_timestamps          = {"con_timestamps", "0"};
 cvar_t      con_shift               = {"con_shift", "-10"};
 cvar_t      cl_textEncoding         = {"cl_textencoding", "0"};
 cvar_t      con_mm2_only            = {"con_mm2_only", "0"};
+cvar_t      con_proportional        = {"con_proportional", "0"};
 
 #ifdef _WIN32
 cvar_t      con_toggle_deadkey      = {"con_deadkey", "1"};
@@ -466,6 +467,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_timestamps); 
 	Cvar_Register (&con_shift); 
 	Cvar_Register (&con_mm2_only);
+	Cvar_Register (&con_proportional);
 
 	Cvar_ResetCurrentGroup();
 
@@ -720,7 +722,7 @@ static void Con_DrawInput(void) {
 		text += 1 + key_linepos - con_linewidth;
 	}
 
-	Draw_ConsoleString(8, con_vislines - 22 + bound(0, con_shift.value, 8), text, NULL, 0, 0, 1, false);
+	Draw_ConsoleString(8, con_vislines - 22 + bound(0, con_shift.value, 8), text, NULL, 0, 0, 1, con_proportional.integer);
 }
 
 // Returns first line to start printing from in order to fill up notify area
@@ -772,7 +774,7 @@ void Con_DrawNotify (void) {
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, false);
+			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, con_proportional.integer);
 			v += 8;
 		}
 	}
@@ -921,7 +923,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 						notifyCols,
 						0,
 						scale,
-						false
+						con_proportional.integer
 					);
 
 					// move text down
@@ -949,12 +951,12 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 
 		if (chat_team)
 		{
-			Draw_SString (posX, v + posY, "say_team: ", scale, false);
+			Draw_SString (posX, v + posY, "say_team: ", scale, con_proportional.integer);
 			skip = 10;
 		}
 		else
 		{
-			Draw_SString (posX, v + posY, "say: ", scale, false);
+			Draw_SString (posX, v + posY, "say: ", scale, con_proportional.integer);
 			skip = 5;
 		}
 
@@ -1035,7 +1037,7 @@ void Con_DrawConsole (int lines) {
 		idx = (row % con_totallines)*con_linewidth;
 
 		// copy current line to buffer
-		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, false);
+		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, con_proportional.integer);
 	}
 
 	// draw the download bar

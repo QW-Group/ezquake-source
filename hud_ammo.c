@@ -201,17 +201,15 @@ void SCR_HUD_DrawAmmo(
 		x += 7 * scale;
 		if (buf[0] != ' ') {
 			c = 18 + buf[0] - '0';
-			Draw_SCharacterP(x, y, c, scale, proportional);
-			FontAdvanceCharCoords(&x, &y, c, false, scale, 0, proportional);
+			x += Draw_SCharacterP(x, y, c, scale, proportional);
 		}
 		if (buf[1] != ' ') {
 			c = 18 + buf[1] - '0';
-			Draw_SCharacterP(x, y, c, scale, proportional);
-			FontAdvanceCharCoords(&x, &y, c, false, scale, 0, proportional);
+			x += Draw_SCharacterP(x, y, c, scale, proportional);
 		}
 		if (buf[2] != ' ') {
 			c = 18 + buf[2] - '0';
-			Draw_SCharacterP(x, y, c, scale, proportional);
+			x += Draw_SCharacterP(x, y, c, scale, proportional);
 		}
 	}
 }

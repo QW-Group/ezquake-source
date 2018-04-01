@@ -8,6 +8,7 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "fonts.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 
@@ -21,7 +22,7 @@ typedef struct glyphinfo_s {
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
-static qbool outline_fonts = true;
+static qbool outline_fonts = false;
 static int outline_width = 2;
 
 #define FONT_TEXTURE_SIZE 1024
@@ -103,10 +104,10 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	int x, y;
 
 	glyphs[ch].loaded = true;
-	glyphs[ch].advance[0] = (face->glyph->advance.x / 64.0f) / (base_font_width / 2);
-	glyphs[ch].advance[1] = (face->glyph->advance.y / 64.0f) / (base_font_height / 2);
-	glyphs[ch].offsets[0] = face->glyph->bitmap_left;
-	glyphs[ch].offsets[1] = face->glyph->bitmap_top;
+	glyphs[ch].advance[0] = ((face->glyph->metrics.horiAdvance / 64.0f) + (outline_fonts ? 2 * outline_width : 0)) / (base_font_width / 2);
+	glyphs[ch].advance[1] = ((face->glyph->metrics.vertAdvance / 64.0f) + (outline_fonts ? 2 * outline_width : 0)) / (base_font_height / 2);
+	glyphs[ch].offsets[0] = face->glyph->metrics.horiBearingX / 64.0f - (outline_fonts ? outline_width : 0);
+	glyphs[ch].offsets[1] = face->glyph->metrics.horiBearingY / 64.0f - (outline_fonts ? outline_width : 0);
 	glyphs[ch].sizes[0] = face->glyph->bitmap.width;
 	glyphs[ch].sizes[1] = face->glyph->bitmap.rows;
 
@@ -290,7 +291,7 @@ void FontCreate(int grouping, const char* path)
 	CachePics_MarkAtlasDirty();
 }
 
-qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale)
+qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 
@@ -301,6 +302,7 @@ qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float sca
 
 	// Space.
 	if (ch == 32) {
+		*x += (proportional ? FontCharacterWidthWide(ch) : 8) * scale;
 		return false;
 	}
 
@@ -346,6 +348,7 @@ qbool FontAlterCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, 
 
 	// Space.
 	if (ch == 32) {
+		*x += (proportional ? FontCharacterWidthWide(ch) : 8) * scale;
 		return false;
 	}
 
