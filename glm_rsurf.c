@@ -81,9 +81,8 @@ static GLint drawWorld_outlines;
 #define DRAW_SKYDOME              16
 #define DRAW_FLATFLOORS           32
 #define DRAW_FLATWALLS            64
-#define DRAW_LIGHTMAPS           128
-#define DRAW_LUMA_TEXTURES_FB    256
-#define DRAW_TEXTURELESS         512
+#define DRAW_LUMA_TEXTURES_FB    128
+#define DRAW_TEXTURELESS         256
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -113,7 +112,6 @@ static void Compile_DrawWorldProgram(void)
 		(r_fastsky.integer ? 0 : (skybox ? DRAW_SKYBOX : DRAW_SKYDOME)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
-		(R_DrawLightmaps() ? DRAW_LIGHTMAPS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
@@ -134,7 +132,7 @@ static void Compile_DrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
-		if (luma_textures && r_drawflat.integer != 1 && !R_DrawLightmaps()) {
+		if (luma_textures && r_drawflat.integer != 1) {
 			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
 			if (gl_fb_bmodels.integer) {
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES_FB\n", sizeof(included_definitions));
@@ -166,9 +164,6 @@ static void Compile_DrawWorldProgram(void)
 		}
 		if (r_drawflat.integer == 1 || r_drawflat.integer == 3) {
 			strlcat(included_definitions, "#define DRAW_FLATWALLS\n", sizeof(included_definitions));
-		}
-		if (R_DrawLightmaps()) {
-			strlcat(included_definitions, "#define DRAW_LIGHTMAPS\n", sizeof(included_definitions));
 		}
 		if (gl_textureless.integer) {
 			strlcat(included_definitions, "#define DRAW_TEXTURELESS\n", sizeof(included_definitions));

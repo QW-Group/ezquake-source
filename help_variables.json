@@ -11110,14 +11110,6 @@
         { "name": "true", "description": "Enable rocket/explosion/flag/powerup light flickering." }
       ]
     },
-    "r_lightmap": {
-      "group-id": "15",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "Disable light sources on the map." },
-        { "name": "true", "description": "Enable light sources on the map." }
-      ]
-    },
     "r_max_size_1": {
       "group-id": "31",
       "type": "enum",

@@ -1053,7 +1053,6 @@ void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
 
 float GL_WaterAlpha(void);
-qbool R_DrawLightmaps(void);
 
 #define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
 

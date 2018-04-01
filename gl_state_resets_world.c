@@ -158,9 +158,7 @@ void GLC_StateBeginBlendLightmaps(void)
 	GL_DepthMask(GL_FALSE);		// don't bother writing Z
 	GL_BlendFunc(GL_ZERO, GLC_LightmapDestBlendFactor());
 
-	if (!R_DrawLightmaps()) {
-		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-	}
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
 	LEAVE_STATE;
 }

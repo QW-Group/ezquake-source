@@ -195,8 +195,6 @@ cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
 
-static cvar_t r_lightmap                   = {"r_lightmap", "0"};
-
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
 {
@@ -817,7 +815,6 @@ void R_Init(void)
 	Cvar_Register(&gl_rl_globe);
 	Cvar_Register(&r_shadows);
 	Cvar_Register(&r_fullbright);
-	Cvar_Register(&r_lightmap);
 	Cvar_Register(&gl_loadlitfiles);
 	Cvar_Register(&gl_oldlitscaling);
 	Cvar_Register(&gl_colorlights);
@@ -1175,9 +1172,4 @@ qbool R_PointIsUnderwater(vec3_t point)
 	int contents = TruePointContents(point);
 
 	return ISUNDERWATER(contents);
-}
-
-qbool R_DrawLightmaps(void)
-{
-	return (r_lightmap.value && r_refdef2.allow_cheats);
 }
