@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 #include "fonts.h"
 #include "teamplay.h"
+#include "vx_stuff.h"
 
 static int TP_IsArmorLow(void)
 {
@@ -161,11 +162,54 @@ static void SCR_HUD_DrawArmorIcon(hud_t *hud)
 	}
 }
 
-void Draw_AMFStatLoss(int stat, hud_t* hud);
-
 static void SCR_HUD_DrawArmorDamage(hud_t *hud)
 {
 	Draw_AMFStatLoss(STAT_ARMOR, hud);
+}
+
+void SCR_HUD_DrawBarArmor(hud_t *hud)
+{
+	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
+	int		x, y;
+	int		armor = HUD_Stats(STAT_ARMOR);
+	qbool	alive = cl.stats[STAT_HEALTH] > 0;
+
+	if (width == NULL) {
+		// first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		direction = HUD_FindVar(hud, "direction");
+		color_noarmor = HUD_FindVar(hud, "color_noarmor");
+		color_ga = HUD_FindVar(hud, "color_ga");
+		color_ya = HUD_FindVar(hud, "color_ya");
+		color_ra = HUD_FindVar(hud, "color_ra");
+		color_unnatural = HUD_FindVar(hud, "color_unnatural");
+	}
+
+	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y)) {
+		if (!width->integer || !height->integer) {
+			return;
+		}
+
+		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY && alive) {
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3 && alive) {
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, armor, 200.0, color_ra->color, x, y, width->integer, height->integer);
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2 && alive) {
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1 && alive) {
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
+		}
+		else {
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
+		}
+	}
 }
 
 void Armor_HudInit(void)
@@ -206,6 +250,21 @@ void Armor_HudInit(void)
 		"digits", "3",
 		"duration", "0.8",
 		"proportional", "0",
+		NULL
+	);
+
+	HUD_Register(
+		"bar_armor", NULL, "Armor bar.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarArmor,
+		"0", "armor", "left", "center", "0", "0", "0", "0 0 0", NULL,
+		"height", "16",
+		"width", "64",
+		"direction", "1",
+		"color_noarmor", "128 128 128 64",
+		"color_ga", "32 128 0 128",
+		"color_ya", "192 128 0 128",
+		"color_ra", "128 0 0 128",
+		"color_unnatural", "255 255 255 128",
 		NULL
 	);
 }

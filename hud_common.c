@@ -72,6 +72,7 @@ void Net_HudInit(void);
 void Guns_HudInit(void);
 void Groups_HudInit(void);
 void Armor_HudInit(void);
+void Health_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -137,11 +138,6 @@ extern cvar_t tp_need_health, tp_need_ra, tp_need_ya, tp_need_ga,
        tp_weapon_order, tp_need_weapon, tp_need_shells,
        tp_need_nails, tp_need_rockets, tp_need_cells;
 
-int TP_IsHealthLow(void)
-{
-	return cl.stats[STAT_HEALTH] <= tp_need_health.value;
-}
-
 int TP_IsWeaponLow(void)
 {
 	char *s = tp_weapon_order.string;
@@ -152,14 +148,6 @@ int TP_IsWeaponLow(void)
 		s++;
 	}
 	return true;
-}
-
-qbool HUD_HealthLow(void)
-{
-	if (hud_tp_need.value)
-		return TP_IsHealthLow();
-	else
-		return HUD_Stats(STAT_HEALTH) <= 25;
 }
 
 // ----------------
@@ -578,34 +566,6 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 				}
 			}
 			break;
-	}
-}
-
-void SCR_HUD_DrawHealth(hud_t *hud)
-{
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
-	static int value;
-	if (scale == NULL) {
-		// first time called
-		scale  = HUD_FindVar(hud, "scale");
-		style  = HUD_FindVar(hud, "style");
-		digits = HUD_FindVar(hud, "digits");
-		align  = HUD_FindVar(hud, "align");
-		proportional = HUD_FindVar(hud, "proportional");
-	}
-
-	value = HUD_Stats(STAT_HEALTH);
-	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(), scale->value, style->value, digits->value, align->string, proportional->integer);
-}
-
-void Draw_AMFStatLoss(int stat, hud_t* hud);
-
-void SCR_HUD_DrawHealthDamage(hud_t *hud)
-{
-	Draw_AMFStatLoss(STAT_HEALTH, hud);
-
-	if (HUD_Stats(STAT_HEALTH) <= 0) {
-		Amf_Reset_DamageStats();
 	}
 }
 
@@ -2949,106 +2909,6 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 	}
 }
 
-void SCR_HUD_DrawBarArmor(hud_t *hud)
-{
-	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
-	int		x, y;
-	int		armor = HUD_Stats(STAT_ARMOR);
-	qbool	alive = cl.stats[STAT_HEALTH] > 0;
-
-	if (width == NULL)  // first time called
-	{
-		width			= HUD_FindVar(hud, "width");
-		height			= HUD_FindVar(hud, "height");
-		direction		= HUD_FindVar(hud, "direction");
-		color_noarmor	= HUD_FindVar(hud, "color_noarmor");
-		color_ga		= HUD_FindVar(hud, "color_ga");
-		color_ya		= HUD_FindVar(hud, "color_ya");
-		color_ra		= HUD_FindVar(hud, "color_ra");
-		color_unnatural	= HUD_FindVar(hud, "color_unnatural");
-	}
-
-	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
-	{
-		if(!width->integer || !height->integer)
-			return;
-
-		if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY && alive)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
-		}
-		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3 && alive)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, armor, 200.0, color_ra->color, x, y, width->integer, height->integer);
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2 && alive)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1 && alive)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
-		}
-		else
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
-		}
-	}
-}
-
-void SCR_HUD_DrawBarHealth(hud_t *hud)
-{
-	static	cvar_t *width = NULL, *height, *direction, *color_nohealth, *color_normal, *color_mega, *color_twomega, *color_unnatural;
-	int		x, y;
-	int		health = cl.stats[STAT_HEALTH];
-
-	if (width == NULL)  // first time called
-	{
-		width			= HUD_FindVar(hud, "width");
-		height			= HUD_FindVar(hud, "height");
-		direction		= HUD_FindVar(hud, "direction");
-		color_nohealth	= HUD_FindVar(hud, "color_nohealth");
-		color_normal	= HUD_FindVar(hud, "color_normal");
-		color_mega		= HUD_FindVar(hud, "color_mega");
-		color_twomega	= HUD_FindVar(hud, "color_twomega");
-		color_unnatural	= HUD_FindVar(hud, "color_unnatural");
-	}
-
-	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
-	{
-		if(!width->integer || !height->integer)
-			return;
-
-		if(health > 250)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
-		}
-		else if(health > 200)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_normal->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, health - 200, 100.0, color_twomega->color, x, y, width->integer, height->integer);
-		}
-		else if(health > 100)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_normal->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, health - 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
-		}
-		else if(health > 0)
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_nohealth->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, health, 100.0, color_normal->color, x, y, width->integer, height->integer);
-		}
-		else
-		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_nohealth->color, x, y, width->integer, height->integer);
-		}
-	}
-}
-
 #ifdef WITH_PNG
 
 void SCR_HUD_DrawOwnFrags(hud_t *hud)
@@ -3367,19 +3227,6 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			NULL);
 
-	// health
-	HUD_Register(
-		"health", NULL, "Part of your status - health level.",
-		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
-		"1", "face", "after", "center", "0", "0", "0", "0 0 0", NULL,
-		"style",  "0",
-		"scale",  "1",
-		"align",  "right",
-		"digits", "3",
-		"proportional", "0",
-		NULL
-	);
-
 	Ammo_HudInit();
 
 	Armor_HudInit();
@@ -3391,20 +3238,6 @@ void CommonDraw_Init(void)
 			"format", "\xD4\xF2\xE1\xE3\xEB\xE9\xEE\xE7\xBA %t %n, \xCA\xD5\xCD\xD0 for next", //"Tracking: team name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
 			"scale", "1", "proportional", "0",
 			NULL);
-
-	// healthdamage
-	HUD_Register(
-		"healthdamage", NULL, "Shows amount of damage done to your health.",
-		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
-		"0", "health", "left", "before", "0", "0", "0", "0 0 0", NULL,
-		"style",  "0",
-		"scale",  "1",
-		"align",  "right",
-		"digits", "3",
-		"duration", "0.8",
-		"proportional", "0",
-		NULL
-	);
 
 	HUD_Register(
 		"frags", NULL, "Show list of player frags in short form.",
@@ -3551,34 +3384,6 @@ void CommonDraw_Init(void)
 			NULL
 		    );
 
-	HUD_Register("bar_armor", NULL, "Armor bar.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarArmor,
-			"0", "armor", "left", "center", "0", "0", "0", "0 0 0", NULL,
-			"height", "16",
-			"width", "64",
-			"direction", "1",
-			"color_noarmor", "128 128 128 64",
-			"color_ga", "32 128 0 128",
-			"color_ya", "192 128 0 128",
-			"color_ra", "128 0 0 128",
-			"color_unnatural", "255 255 255 128",
-			NULL
-		    );
-
-	HUD_Register("bar_health", NULL, "Health bar.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarHealth,
-			"0", "health", "right", "center", "0", "0", "0", "0 0 0", NULL,
-			"height", "16",
-			"width", "64",
-			"direction", "0",
-			"color_nohealth", "128 128 128 64",
-			"color_normal", "32 64 128 128",
-			"color_mega", "64 96 128 128",
-			"color_twomega", "128 128 255 128",
-			"color_unnatural", "255 255 255 128",
-			NULL
-		    );
-
 	HUD_Register("static_text", NULL, "Static text (demos only).",
 			0, ca_active, 0, SCR_HUD_DrawStaticText,
 			"0", "screen", "left", "top", "0", "0", "0", "0 0 0", NULL,
@@ -3628,6 +3433,7 @@ void CommonDraw_Init(void)
 	FrameStats_HudInit();
 	TeamInfo_HudInit();
 	TeamHold_HudInit();
+	Health_HudInit();
 }
 
 static void SCR_Hud_GameSummary(hud_t* hud)

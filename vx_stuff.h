@@ -178,6 +178,7 @@ void VX_DetpackExplosion(vec3_t org);
 void VX_LightningTrail(vec3_t start, vec3_t end);
 
 void Amf_Reset_DamageStats(void);
+void Draw_AMFStatLoss(int stat, struct hud_s* hud);
 
 int VX_OwnFragTextLen(void);
 double VX_OwnFragTime(void);
