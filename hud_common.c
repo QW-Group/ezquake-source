@@ -75,6 +75,7 @@ void Performance_HudInit(void);
 void Scores_HudInit(void);
 void Face_HudInit(void);
 void Frags_HudInit(void);
+void Tracking_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -147,40 +148,6 @@ int TP_IsWeaponLow(void)
 		s++;
 	}
 	return true;
-}
-
-#define MAX_TRACKING_STRING		512
-
-void SCR_HUD_DrawTracking(hud_t *hud)
-{
-	int x = 0, y = 0, width = 0, height = 0;
-	char track_string[MAX_TRACKING_STRING];
-	int player = spec_track;
-
-	static cvar_t
-		*hud_tracking_format = NULL,
-		*hud_tracking_scale,
-		*hud_tracking_proportional;
-
-	if (!hud_tracking_format) {
-		hud_tracking_format = HUD_FindVar(hud, "format");
-		hud_tracking_scale = HUD_FindVar(hud, "scale");
-		hud_tracking_proportional = HUD_FindVar(hud, "proportional");
-	}
-
-	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
-	Replace_In_String(track_string, sizeof(track_string), '%', 2,
-			"n", cl.players[player].name,						// Replace %n with player name.
-			"t", cl.teamplay ? cl.players[player].team : "");	// Replace %t with player team if teamplay is on.
-	height = 8 * hud_tracking_scale->value;
-	width = Draw_StringLength(track_string, -1, hud_tracking_scale->value, hud_tracking_proportional->integer);
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		if (cl.spectator && autocam == CAM_TRACK) {
-			// Normal
-			Draw_SString(x, y, track_string, hud_tracking_scale->value, hud_tracking_proportional->integer);
-		}
-	}
 }
 
 void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
@@ -915,13 +882,7 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	// Tracking JohnNy_cz (Contains name of the player who's player we're watching at the moment)
-	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
-			"1", "face", "center", "before", "0", "0", "0", "0 0 0", NULL,
-			"format", "\xD4\xF2\xE1\xE3\xEB\xE9\xEE\xE7\xBA %t %n, \xCA\xD5\xCD\xD0 for next", //"Tracking: team name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
-			"scale", "1", "proportional", "0",
-			NULL);
+	Tracking_HudInit();
 
 #ifdef WITH_PNG
 	HUD_Register(

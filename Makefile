@@ -406,7 +406,8 @@ OBJS_c := \
     hud_health.o \
     hud_gamesummary.o \
     hud_face.o \
-    hud_frags.o
+    hud_frags.o \
+    hud_tracking.o
 
 ### Configuration Options ###
 

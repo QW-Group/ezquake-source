@@ -141,10 +141,6 @@ cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
 cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
 
-// Tracking text.
-cvar_t	scr_tracking			= {"scr_tracking", "\xD4\xF2\xE1\xE3\xEB\xE9\xEE\xE7\xBA %t %n, \xCA\xD5\xCD\xD0 for next"}; //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
-cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
-
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
 cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
@@ -1473,8 +1469,6 @@ void SCR_Init (void)
 	// QW 262 HUD
 	Cvar_Register (&cl_hud);
 
-	Cvar_Register (&scr_tracking);
-	Cvar_Register (&scr_spectatorMessage);
 	Cvar_Register (&scr_showcrosshair);
 	Cvar_Register (&scr_notifyalways);
 	Cvar_ResetCurrentGroup();

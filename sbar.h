@@ -51,4 +51,11 @@ int Sbar_ColorForMap (int m);
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
 
+void Sbar_DrawPic(int x, int y, mpic_t *pic);
+void Sbar_DrawString(int x, int y, char *str);
+qbool Sbar_IsStandardBar(void);
+
+void Sbar_DrawTrackingString(void);
+void Sbar_DrawSpectatorMessage(void);
+
 #endif // #ifdef EZQUAKE_SBAR_HEADER

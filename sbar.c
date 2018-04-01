@@ -117,7 +117,8 @@ cvar_t	scr_scoreboard_fillcolored    = {"scr_scoreboard_fillcolored",    "2"};
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
 
-static qbool Sbar_IsStandardBar(void) {
+qbool Sbar_IsStandardBar(void)
+{
 	// Old status bar is turned on, or the screen size is less than full width
 	return cl_sbar.value || scr_viewsize.value < 100;
 }
@@ -320,25 +321,30 @@ void Request_Pings (void)
 
 // drawing routines are relative to the status bar location
 
-static void Sbar_DrawPic (int x, int y, mpic_t *pic) {
+void Sbar_DrawPic (int x, int y, mpic_t *pic)
+{
 	Draw_Pic (x + sbar_xofs, y + (vid.height - SBAR_HEIGHT), pic);
 }
 
 //JACK: Draws a portion of the picture in the status bar.
-static void Sbar_DrawSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height) {
+static void Sbar_DrawSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
+{
 	Draw_SubPic (x, y + (vid.height - SBAR_HEIGHT), pic, srcx, srcy, width, height);
 }
 
-static void Sbar_DrawTransPic (int x, int y, mpic_t *pic) {
+static void Sbar_DrawTransPic (int x, int y, mpic_t *pic)
+{
 	Draw_TransPic (x + sbar_xofs, y + (vid.height - SBAR_HEIGHT), pic);
 }
 
 //Draws one solid graphics character
-static void Sbar_DrawCharacter (int x, int y, int num) {
+static void Sbar_DrawCharacter (int x, int y, int num)
+{
 	Draw_Character (x + 4 + sbar_xofs, y + vid.height - SBAR_HEIGHT, num);
 }
 
-void Sbar_DrawString (int x, int y, char *str) {
+void Sbar_DrawString(int x, int y, char *str)
+{
 	Draw_String(x + sbar_xofs, y + vid.height - SBAR_HEIGHT, str);
 }
 
@@ -1863,33 +1869,6 @@ void Sbar_FinaleOverlay (void) {
 }
 
 /********************************* INTERFACE *********************************/
-
-static void Sbar_DrawTrackingString(void) {
-	char st[512];
-	extern cvar_t scr_tracking, scr_newHud;
-
-	// If showing ammo on top of status, display higher up
-	int y_coordinate = (Sbar_IsStandardBar() ? SBAR_HEIGHT - sb_lines : 0) - 8;
-
-	if (sb_lines > 0 && scr_newHud.value != 1 && cl.spectator && autocam == CAM_TRACK)
-	{
-		strlcpy(st, scr_tracking.string, sizeof(st));
-
-		Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
-
-		// Multiview
-		// Fix displaying "tracking .." for both players with inset on
-		if (cl_multiview.value != 2 || !cls.mvdplayback)
-		{
-			Sbar_DrawString(0, y_coordinate, st);
-		}
-		else if (CL_MultiviewCurrentView() == 1 && cl_mvinset.value)
-		{
-			Sbar_DrawString(0, y_coordinate, st);
-		}
-	}
-}
-
 void Sbar_Draw(void) {
 	qbool headsup;
 	extern cvar_t scr_tracking, scr_spectatorMessage, scr_newHud;
@@ -1926,12 +1905,9 @@ void Sbar_Draw(void) {
 	if (sb_lines > 0 && scr_newHud.value != 1) {  // HUD -> hexum
 		if (cl.spectator) {
 			if (autocam != CAM_TRACK) {
-				if (scr_spectatorMessage.value != 0) {
-					Sbar_DrawPic (0, 0, sb_scorebar);
-					Sbar_DrawString (160 - 7 * 8,4, "SPECTATOR MODE");
-					Sbar_DrawString(160 - 14 * 8 + 4, 12, "Press [ATTACK] for AutoCamera");
-				}
-			} else {
+				Sbar_DrawSpectatorMessage();
+			}
+			else {
 				if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 					Sbar_SoloScoreboard ();
 
