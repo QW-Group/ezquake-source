@@ -68,7 +68,7 @@ void Con_PrintW (wchar *txt);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 
-void SCR_DrawNotify(int x, int y, float scale, int notifyTime, int notifyLines, int notifyCols);
+void SCR_DrawNotify(int x, int y, float scale, int notifyTime, int notifyLines, int notifyCols, qbool proportional);
 
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);

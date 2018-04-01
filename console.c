@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "localtime.h"
 #include "irc.h"
-
+#include "fonts.h"
 
 #define     MINIMUM_CONBUFSIZE     (1 << 15)
 #define     DEFAULT_CONBUFSIZE     (1 << 16)
@@ -558,7 +558,8 @@ void Con_SafePrintf (char *fmt, ...)
 }
 
 //Handles cursor positioning, line wrapping, etc
-void Con_PrintW (wchar *txt) {
+void Con_PrintW(wchar *txt)
+{
 	int y, c, l, d, mask, color = COLOR_WHITE, r, g, b, idx;
 	wchar *s;
 	static int cr;
@@ -574,11 +575,12 @@ void Con_PrintW (wchar *txt) {
 			if (log_readable.value) {
 				char *s, *tempbuf = wcs2str_malloc(txt);
 				for (s = tempbuf; *s; s++)
-					*s = readableChars[(unsigned char) *s];
+					*s = readableChars[(unsigned char)*s];
 				Log_Write(tempbuf);
 				Q_free(tempbuf);
-			} else {
-				Log_Write(wcs2str(txt));	
+			}
+			else {
+				Log_Write(wcs2str(txt));
 			}
 		}
 	}
@@ -589,10 +591,11 @@ void Con_PrintW (wchar *txt) {
 	if (!con_initialized || con_suppress)
 		goto zomfg;
 
-	if (txt[0] == 1 || txt[0] == 2)	{
+	if (txt[0] == 1 || txt[0] == 2) {
 		mask = 128;		// go to colored text
 		txt++;
-	} else {
+	}
+	else {
 		mask = 0;
 	}
 
@@ -608,7 +611,8 @@ void Con_PrintW (wchar *txt) {
 					txt += 5;
 					continue; // we got color, get now normal char
 				}
-            } else if (txt[1] == 'r') {
+			}
+			else if (txt[1] == 'r') {
 				color = COLOR_WHITE;
 				txt += 2;
 				continue; // we got color, get now normal char
@@ -627,16 +631,17 @@ void Con_PrintW (wchar *txt) {
 						s += 5;
 						continue; // we got color, get now normal char
 					}
-                } else if (s[1] == 'r') {
+				}
+				else if (s[1] == 'r') {
 					s += 2;
 					continue; // we got color, get now normal char
 				}
 			}
-		
+
 			d = (s[0] & ~128);
-			if (   ( con_wordwrap.value && (!d || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20))
+			if ((con_wordwrap.value && (!d || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20))
 				|| (!con_wordwrap.value && d <= 32) // 32 is a space as well as 0x20
-			   )
+				)
 				break;
 
 			l++; // increase word length
@@ -655,7 +660,7 @@ void Con_PrintW (wchar *txt) {
 		}
 
 		if (!con.x)
-			Con_Linefeed ();
+			Con_Linefeed();
 
 		switch (c) {
 			case '\n':
@@ -668,8 +673,9 @@ void Con_PrintW (wchar *txt) {
 				break;
 
 			default:	// display character and advance
-				if (con.x >= con_linewidth)
-					Con_Linefeed ();
+				if (con.x >= con_linewidth) {
+					Con_Linefeed();
+				}
 				y = con.current % con_totallines;
 				idx = y * con_linewidth + con.x;
 				con.text[idx] = c | (c <= 0x7F ? mask | con_ormask : 0);	// only apply mask if in 'standard' charset
@@ -745,12 +751,93 @@ static int Con_FirstNotifyLine (int notification_lines, float notification_timel
 	return first_line;
 }
 
+static qbool Con_NotifyMessageLine(float posX, float posY, float width, float height, float scale, qbool proportional)
+{
+	int x;
+
+	if (key_dest == key_message) {
+		wchar temp[MAXCMDLINE + 1];
+		wchar* s;
+		qbool display_cursor;
+
+		clearnotify = 0;
+		scr_copytop = 1;
+
+		if (chat_team == chat_mm2) {
+			posX += Draw_SString(posX, posY + bound(0, con_shift.value, 8), "say_team:", scale, proportional);
+		}
+		else if (chat_team == chat_mm1) {
+			posX += Draw_SString(posX, posY + bound(0, con_shift.value, 8), "say:", scale, proportional);
+		}
+#ifdef WITH_IRC
+		else if (chat_team == chat_irc) {
+			char dest[256];
+
+			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
+			strlcat(dest, ":", sizeof(dest));
+
+			indent += Draw_SString(posX, v + bound(0, con_shift.value, 8), dest, scale, proportional);
+		}
+#endif
+		else if (chat_team == chat_qtvtogame) {
+			posX += Draw_SString(posX, posY + bound(0, con_shift.value, 8), "say_game:", scale, proportional);
+		}
+
+		// FIXME: clean this up
+		qwcslcpy(temp, chat_buffer, sizeof(temp) / sizeof(wchar));
+		s = temp;
+
+		// add the cursor frame
+		display_cursor = (int)(curtime * con_cursorspeed) & 1;
+		if (display_cursor && chat_linepos == (int)qwcslen(s)) {
+			s[chat_linepos + 1] = '\0';
+		}
+
+		// prestep if horizontally scrolling
+		if (!proportional) {
+			if (chat_linepos * 8 * scale + posX >= width) {
+				s += (int)((1 + chat_linepos) * 8 * scale) + ((int)(posX - width) >> 3);
+			}
+		}
+		else {
+			// measure full string, cut off characters until string fits
+			float length = Draw_StringLengthW(s, chat_linepos, scale, proportional);
+
+			while (*s && length >= 0 && length >= width - posX) {
+				length -= FontCharacterWidthWide(*s, scale, proportional);
+				++s;
+			}
+		}
+
+		x = 0;
+		while (s[x] && posX < width) {
+			float char_width = Draw_SCharacterP(posX, posY + bound(0, con_shift.value, 8), s[x], scale, proportional);
+
+			if (display_cursor && x == chat_linepos) {
+				Draw_SCharacterP(posX, posY + bound(0, con_shift.value, 8), 11, scale, proportional);
+				display_cursor = false;
+			}
+			posX += char_width;
+			x++;
+		}
+		if (display_cursor) {
+			Draw_SCharacterP(posX, posY + bound(0, con_shift.value, 8), 11, scale, proportional);
+		}
+		posY += 8 * scale;
+		return true;
+	}
+
+	return false;
+}
+
 //Draws the last few lines of output transparently over the game top
-void Con_DrawNotify (void) {
-	int x, v, skip = 0, i, idx;
-	wchar *s;
+void Con_DrawNotify(void)
+{
+	int v, i, idx;
 	float time;
-	float timeout = bound (0, con_notifytime.value, MAX_NOTIFICATION_TIME);
+	float timeout = bound(0, con_notifytime.value, MAX_NOTIFICATION_TIME);
+	float indent = 8;
+	qbool proportional = con_proportional.integer;
 
 	if (!con_notify.value) {
 		return;
@@ -759,92 +846,51 @@ void Con_DrawNotify (void) {
 	v = 0;
 	if (_con_notifylines.integer) {
 		int first_line = Con_FirstNotifyLine(_con_notifylines.integer, timeout);
+		if (first_line < 0) {
+			first_line = 0;
+		}
 
 		for (i = first_line; i <= con.current; i++) {
-			if (i < 0)
+			if (i < 0) {
 				continue;
+			}
 			time = con_times[i % NUM_CON_TIMES];
-			if (time == 0)
+			if (time == 0) {
 				continue;
+			}
 			time = cls.realtime - time;
-			if (time > timeout)
+			if (time > timeout) {
 				continue;
-			idx = (i % con_totallines)*con_linewidth;
+			}
+			idx = (i % con_totallines) * con_linewidth;
 
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, con_proportional.integer);
+			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, proportional);
 			v += 8;
 		}
 	}
 
-	if (key_dest == key_message) {
-		wchar temp[MAXCMDLINE + 1];
-
-		clearnotify = 0;
-		scr_copytop = 1;
-
-		if (chat_team == chat_mm2) {
-			Draw_String (8, v + bound(0, con_shift.value, 8), "say_team:");
-			skip = 11;
-		}
-		else if (chat_team == chat_mm1) {
-			Draw_String (8, v + bound(0, con_shift.value, 8), "say:");
-			skip = 5;
-		}
-#ifdef WITH_IRC
-		else if (chat_team == chat_irc) {
-			char dest[256];
-			
-			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
-			strlcat(dest, ":", sizeof(dest));
-			skip = strlen(dest) + 1; // is this correct? not sure
-
-			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
-		}
-#endif
-		else if (chat_team == chat_qtvtogame) {
-			Draw_String (8, v + bound(0, con_shift.value, 8), "say_game:");
-			skip = 11;
-		}
-
-		// FIXME: clean this up
-		qwcslcpy (temp, chat_buffer, sizeof(temp) / sizeof(wchar));
-		s = temp;
-
-		// add the cursor frame
-		if ((int) (curtime * con_cursorspeed) & 1) {
-			if (chat_linepos == (int) qwcslen(s))
-				s[chat_linepos+1] = '\0';
-			s[chat_linepos] = 11;
-		}
-
-		// prestep if horizontally scrolling
-		if (chat_linepos + skip >= (vid.width >> 3))
-			s += 1 + chat_linepos + skip - (vid.width >> 3);
-
-		x = 0;
-		while (s[x] && x+skip < (vid.width>>3)) {
-			Draw_CharacterW ( (x+skip)<<3, v + bound(0, con_shift.value, 8), s[x]);
-			x++;
-		}
+	if (Con_NotifyMessageLine(indent, v, vid.width - indent, vid.height, 1, proportional)) {
 		v += 8;
 	}
 
-	if (v > con_notifylines)
+	if (v > con_notifylines) {
 		con_notifylines = v + bound(0, con_shift.value, 8);
+	}
 }
 
 // Draws the last few lines of output as a custom HUD element.
-void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
+void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols, qbool proportional)
 {
-	int v, skip, i, j, k, idx, draw, offset;
-	wchar *text, *s;
+	int v, i, j, k, idx, draw, offset;
+	wchar *text;
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
 	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
+	float indent = 0;
 
 	if (notifyCols > (con_linewidth)) {
 		notifyCols = con_linewidth;
@@ -858,16 +904,19 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	if (notifyLines) {
 		int first_line = Con_FirstNotifyLine(notifyLines, timeout);
 		for (i = first_line; i <= con.current; i++) {
-			if (i < 0)
+			if (i < 0) {
 				continue;
+			}
 
 			time = con_times[i % NUM_CON_TIMES];
-			if (time == 0)
+			if (time == 0) {
 				continue;
+			}
 
 			time = cls.realtime - time;
-			if (time > timeout)
+			if (time > timeout) {
 				continue;
+			}
 
 			idx = (i % con_totallines)*con_linewidth;
 			text = con.text + idx;
@@ -878,15 +927,11 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 			// Copy current line to buffer
 			offset = 0;
 			draw = 0;
-			for (j = 0; j < con_linewidth; j++)
-			{
+			for (j = 0; j < con_linewidth; j++) {
 				// each new line of a notify hud element
-				if ((j % notifyCols) == 0 && j != 0)
-				{
-					for (k = 0; k < (j - offset); ++k)
-					{
-						if (buf[k] != ' ')
-						{
+				if ((j % notifyCols) == 0 && j != 0) {
+					for (k = 0; k < (j - offset); ++k) {
+						if (buf[k] != ' ') {
 							draw = 1;
 							break;
 						}
@@ -895,12 +940,10 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 					buf[j - offset] = '\0';
 					offset = j;
 				}
-				else if (j == (con_linewidth - 1)) // Ending of the string.
-				{
-					for (k = 0; k < (j - offset); ++k)
-					{
-						if (buf[k] != ' ')
-						{
+				else if (j == (con_linewidth - 1)) {
+					// Ending of the string.
+					for (k = 0; k < (j - offset); ++k) {
+						if (buf[k] != ' ') {
 							draw = 1;
 							break;
 						}
@@ -910,11 +953,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 				}
 
 				// Output.
-				if (draw)
-				{
-					if (!draw)
-						continue;
-
+				if (draw) {
 					Draw_ConsoleString(
 						posX,
 						v + posY,
@@ -923,14 +962,15 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 						notifyCols,
 						0,
 						scale,
-						con_proportional.integer
+						proportional
 					);
 
 					// move text down
 					v += (8 * scale);
 
-					if (v > (notifyLines * scale))
+					if (v > (notifyLines * scale)) {
 						notifyLines = v;
+					}
 
 					draw = 0;
 				}
@@ -942,57 +982,12 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 		}
 	}
 
-	if (key_dest == key_message)
-	{
-		wchar temp[MAXCMDLINE + 1];
+	if (Con_NotifyMessageLine(indent, v, vid.width - indent, vid.height, scale, proportional)) {
+		v += 8 * scale;
+	}
 
-		clearnotify = 0;
-		scr_copytop = 1;
-
-		if (chat_team)
-		{
-			Draw_SString (posX, v + posY, "say_team: ", scale, con_proportional.integer);
-			skip = 10;
-		}
-		else
-		{
-			Draw_SString (posX, v + posY, "say: ", scale, con_proportional.integer);
-			skip = 5;
-		}
-
-		// FIXME: clean this up
-		qwcslcpy (temp, chat_buffer, sizeof(temp) / sizeof(wchar));
-		s = temp;
-
-		// Add the cursor frame.
-		if ((int) (curtime * con_cursorspeed) & 1)
-		{
-			if (chat_linepos == (int) qwcslen(s))
-				s[chat_linepos+1] = '\0';
-			s[chat_linepos] = 11;
-		}
-
-
-		if (chat_linepos + skip >= notifyCols)
-			s += 1 + chat_linepos + skip - notifyCols;
-
-		j = 0;
-
-		while (s[j] && (j + skip < notifyCols))
-		{
-			Draw_SCharacter (
-				posX + (j + skip) * 8 * scale,
-				v + posY,
-				s[j],
-				scale
-				);
-
-			j++;
-		}
-
-		v += (8 * scale);
-		if (v > con_notifylines)
-			con_notifylines = v + bound(0, con_shift.value, 8);
+	if (v > con_notifylines) {
+		con_notifylines = v + bound(0, con_shift.value, 8);
 	}
 }
 

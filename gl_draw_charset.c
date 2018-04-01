@@ -529,6 +529,26 @@ void Draw_String(int x, int y, const char *text)
 	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0, false);
 }
 
+float Draw_StringLengthW(const wchar *text, int length, float scale, qbool proportional)
+{
+	if (!proportional) {
+		if (length < 0) {
+			length = wcslen(text);
+		}
+		return length * scale * 8;
+	}
+	else {
+		int i;
+		float x = 0;
+
+		for (i = 0; text[i] && (length == -1 || i < length); i++) {
+			x += FontCharacterWidthWide(text[i], scale, proportional);
+		}
+
+		return x;
+	}
+}
+
 float Draw_StringLength(const char *text, int length, float scale, qbool proportional)
 {
 	if (!proportional) {

@@ -118,6 +118,7 @@ void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proport
 float Draw_SString(int x, int y, const char *str, float scale, qbool proportional);
 
 float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
+float Draw_StringLengthW(const wchar *text, int length, float scale, qbool proportional);
 float Draw_StringLength(const char *text, int length, float scale, qbool proportional);
 float Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional);
 float Draw_StringLengthColorsByTerminator(const char *text, int length, float scale, qbool proportional, char terminator);

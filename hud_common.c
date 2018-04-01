@@ -223,6 +223,7 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 	static cvar_t* hud_notify_scale;
 	static cvar_t* hud_notify_time;
 	static cvar_t* hud_notify_cols;
+	static cvar_t* hud_notify_proportional;
 
 	int x;
 	int y;
@@ -236,15 +237,16 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 		hud_notify_cols  = HUD_FindVar(hud, "cols");
 		hud_notify_scale = HUD_FindVar(hud, "scale");
 		hud_notify_time  = HUD_FindVar(hud, "time");
+		hud_notify_proportional = HUD_FindVar(hud, "proportional");
 	}
 
+	// Deliberately leaving this alone for the moment, not doing FontFixedWidth()...
 	chars_per_line = (hud_notify_cols->integer > 0 ? hud_notify_cols->integer : con_linewidth);
 	height = Q_rint ((con_linewidth / chars_per_line) * hud_notify_rows->integer * 8 * hud_notify_scale->value);
 	width = 8 * chars_per_line * hud_notify_scale->value;
 
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		SCR_DrawNotify(x, y, hud_notify_scale->value, hud_notify_time->integer, hud_notify_rows->integer, chars_per_line);
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		SCR_DrawNotify(x, y, hud_notify_scale->value, hud_notify_time->integer, hud_notify_rows->integer, chars_per_line, hud_notify_proportional->integer);
 	}
 }
 
@@ -2339,6 +2341,7 @@ void CommonDraw_Init(void)
 		"cols", "30",
 		"scale", "1",
 		"time", "4",
+		"proportional", "0",
 		NULL
 	);
 
