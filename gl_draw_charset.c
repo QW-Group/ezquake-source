@@ -547,9 +547,42 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 		}
 		return length * scale * 8;
 	}
+	else {
+		for (i = 0; text[i] && (length == -1 || i < length); i++) {
+			FontAlterCharCoordsWide(&x, &y, text[i], false, scale);
+			FontAdvanceCharCoords(&x, &y, text[i], false, scale, 0, true);
+		}
 
-	for (i = 0; text[i] && (length == -1 || i < length); i++) {
-		FontAdvanceCharCoords(&x, &y, text[i], false, scale, 0, proportional);
+		return x;
+	}
+}
+
+int Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional)
+{
+	int i;
+	int x = 0, y = 0;
+
+	if (!proportional) {
+		if (length < 0) {
+			length = strlen_color(text);
+		}
+		return length * scale * 8;
+	}
+	else {
+		for (i = 0; text[i] && (length == -1 || i < length); i++) {
+			if (text[i] == '&') {
+				if (text[i + 1] == 'c' && HexToInt(text[i + 2]) >= 0 && HexToInt(text[i + 3]) >= 0 && HexToInt(text[i + 4]) >= 0) {
+					i += 4; // skip "&cRGB"
+					continue;
+				}
+				else if (text[i + 1] == 'r') {
+					i += 1; // skip "&r"
+					continue;
+				}
+			}
+
+			x += FontCharacterWidthWide(text[i]) * scale;
+		}
 	}
 
 	return x;

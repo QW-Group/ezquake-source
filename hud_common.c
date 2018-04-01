@@ -2721,7 +2721,7 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
    */
 void SCR_HUD_DrawScoresBar(hud_t *hud)
 {
-	static	cvar_t *scale = NULL, *style, *format_big, *format_small, *frag_length, *reversed_big, *reversed_small;
+	static	cvar_t *scale = NULL, *style, *format_big, *format_small, *frag_length, *reversed_big, *reversed_small, *proportional;
 	int		width = 0, height = 0, x, y;
 	int		i = 0;
 
@@ -2742,6 +2742,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		frag_length    = HUD_FindVar(hud, "frag_length");
 		reversed_big   = HUD_FindVar(hud, "format_reversed_big");
 		reversed_small = HUD_FindVar(hud, "format_reversed_small");
+		proportional   = HUD_FindVar(hud, "proportional");
 	}
 
 	frag_digits = max(1, min(frag_length->value, 4));
@@ -2891,7 +2892,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			width *= scale->value;
 			height = 24 * scale->value;
 
-			if(HUD_PrepareDraw(hud, width, height, &x, &y)) {
+			if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
 				SCR_DrawWadString(x, y, scale->value, buf);
 			}
 			break;
@@ -2899,11 +2900,11 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			// Small
 		case 0:
 		default:
-			width = 8 * strlen_color(buf) * scale->value;
+			width = Draw_StringLengthColors(buf, -1, scale->value, proportional->integer);
 			height = 8 * scale->value;
 
 			if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-				Draw_SString(x, y, buf, scale->value, false);
+				Draw_SString(x, y, buf, scale->value, proportional->integer);
 			}
 			break;
 	}
@@ -3371,18 +3372,20 @@ void CommonDraw_Init(void)
 			NULL
 		    );
 
-	HUD_Register("score_bar", NULL, "Team, enemy, and difference scores together.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawScoresBar,
-			"0", "screen", "center", "console", "0", "0", "0.5", "0 0 0", NULL,
-			"style", "0",
-			"scale", "1",
-			"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
-			"format_big", "%t:%e:%Z",
-			"format_reversed_big", "",
-			"format_reversed_small", "",
-			"frag_length", "0",
-			NULL
-		    );
+	HUD_Register(
+		"score_bar", NULL, "Team, enemy, and difference scores together.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawScoresBar,
+		"0", "screen", "center", "console", "0", "0", "0.5", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
+		"format_big", "%t:%e:%Z",
+		"format_reversed_big", "",
+		"format_reversed_small", "",
+		"frag_length", "0",
+		"proportional", "0",
+		NULL
+	);
 
 	HUD_Register("static_text", NULL, "Static text (demos only).",
 			0, ca_active, 0, SCR_HUD_DrawStaticText,
