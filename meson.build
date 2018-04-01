@@ -358,7 +358,8 @@ sources += [
 	'hud_items.o',
 	'hud_mp3.o',
 	'hud_net.o',
-	'hud_guns.o'
+	'hud_guns.o',
+	'hud_groups.o'
 ]
 
 awk = find_program('awk')
