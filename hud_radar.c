@@ -9,6 +9,71 @@
 #include <png.h>
 #include "sbar.h"
 
+// What stats to draw.
+#define HUD_RADAR_STATS_NONE				0
+#define HUD_RADAR_STATS_BOTH_TEAMS_HOLD		1
+#define HUD_RADAR_STATS_TEAM1_HOLD			2
+#define HUD_RADAR_STATS_TEAM2_HOLD			3
+#define HUD_RADAR_STATS_BOTH_TEAMS_DEATHS	4
+#define HUD_RADAR_STATS_TEAM1_DEATHS		5
+#define HUD_RADAR_STATS_TEAM2_DEATHS		6
+
+// The skinnum property in the entity_s structure is used
+// for determening what type of armor to draw on the radar.
+#define HUD_RADAR_GA					0
+#define HUD_RADAR_YA					1
+#define HUD_RADAR_RA					2
+
+#define HUD_RADAR_HIGHLIGHT_NONE			0
+#define HUD_RADAR_HIGHLIGHT_TEXT_ONLY		1
+#define HUD_RADAR_HIGHLIGHT_OUTLINE			2
+#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	3
+#define HUD_RADAR_HIGHLIGHT_CIRCLE			4
+#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	5
+#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	6
+#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	7
+#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		8
+#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	9
+#define HUD_RADAR_HIGHLIGHT_BRIGHT_VIEW    10
+
+// Radar filters.
+#define RADAR_SHOW_WEAPONS (radar_show_ssg || radar_show_ng || radar_show_sng || radar_show_gl || radar_show_rl || radar_show_lg)
+static qbool radar_show_ssg = false;
+static qbool radar_show_ng = false;
+static qbool radar_show_sng = false;
+static qbool radar_show_gl = false;
+static qbool radar_show_rl = false;
+static qbool radar_show_lg = false;
+
+#define RADAR_SHOW_ITEMS (radar_show_backpacks || radar_show_health || radar_show_ra || radar_show_ya || radar_show_ga || radar_show_rockets || radar_show_nails || radar_show_cells || radar_show_shells || radar_show_quad || radar_show_pent || radar_show_ring || radar_show_suit)
+static qbool radar_show_backpacks = false;
+static qbool radar_show_health = false;
+static qbool radar_show_ra = false;
+static qbool radar_show_ya = false;
+static qbool radar_show_ga = false;
+static qbool radar_show_rockets = false;
+static qbool radar_show_nails = false;
+static qbool radar_show_cells = false;
+static qbool radar_show_shells = false;
+static qbool radar_show_quad = false;
+static qbool radar_show_pent = false;
+static qbool radar_show_ring = false;
+static qbool radar_show_suit = false;
+static qbool radar_show_mega = false;
+
+#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p || radar_show_teleport || radar_show_shotgun)
+static qbool radar_show_nails_p = false;
+static qbool radar_show_rockets_p = false;
+static qbool radar_show_shaft_p = false;
+static qbool radar_show_gibs = false;
+static qbool radar_show_explosions = false;
+static qbool radar_show_teleport = false;
+static qbool radar_show_shotgun = false;
+
+#define HUD_COLOR_DEFAULT_TRANSPARENCY	75
+
+byte hud_radar_highlight_color[4] = { 255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY };
+
 #ifdef WITH_PNG
 
 // Map picture to draw for the mapoverview hud control.
@@ -43,13 +108,13 @@ void HUD_NewRadarMap(void)
 	if (!cl.worldmodel)
 		return; // seems we are not ready to do that
 
-				// Reset the radar pic status.
+	// Reset the radar pic status.
 	memset (&radar_pic, 0, sizeof(radar_pic));
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
 	// Allocate a string for the path to the radar image.
-	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (host_mapname.string);
+	len = strlen (RADAR_BASE_PATH_FORMAT) + strlen (host_mapname.string);
 	radar_filename = Q_calloc (len, sizeof(char));
 	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
 
@@ -119,16 +184,7 @@ void HUD_NewRadarMap(void)
 	Q_free (radar_filename);
 }
 
-// What stats to draw.
-#define HUD_RADAR_STATS_NONE				0
-#define HUD_RADAR_STATS_BOTH_TEAMS_HOLD		1
-#define HUD_RADAR_STATS_TEAM1_HOLD			2
-#define HUD_RADAR_STATS_TEAM2_HOLD			3
-#define HUD_RADAR_STATS_BOTH_TEAMS_DEATHS	4
-#define HUD_RADAR_STATS_TEAM1_DEATHS		5
-#define HUD_RADAR_STATS_TEAM2_DEATHS		6
-
-void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
+static void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
 {
 	int row, col;
 
@@ -158,8 +214,8 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 										// seperatly because we'll get errors when converting from
 										// quake coordinates -> pixel coordinates.
 
-										// Calculate the pixel coordinates of the top left corner of the current cell.
-										// (This is times 8 because the conversion formula was calculated from a .loc-file)
+			// Calculate the pixel coordinates of the top left corner of the current cell.
+			// (This is times 8 because the conversion formula was calculated from a .loc-file)
 			tl_x = (map_x_slope * (8.0 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
 			tl_y = (map_y_slope * (8.0 * grid->cells[row][col].tl_y) + map_y_intercept) * scale;
 
@@ -238,47 +294,7 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 	}
 }
 
-// The skinnum property in the entity_s structure is used
-// for determening what type of armor to draw on the radar.
-#define HUD_RADAR_GA					0
-#define HUD_RADAR_YA					1
-#define HUD_RADAR_RA					2
-
-// Radar filters.
-#define RADAR_SHOW_WEAPONS (radar_show_ssg || radar_show_ng || radar_show_sng || radar_show_gl || radar_show_rl || radar_show_lg)
-static qbool radar_show_ssg			= false;
-static qbool radar_show_ng			= false;
-static qbool radar_show_sng			= false;
-static qbool radar_show_gl			= false;
-static qbool radar_show_rl			= false;
-static qbool radar_show_lg			= false;
-
-#define RADAR_SHOW_ITEMS (radar_show_backpacks || radar_show_health || radar_show_ra || radar_show_ya || radar_show_ga || radar_show_rockets || radar_show_nails || radar_show_cells || radar_show_shells || radar_show_quad || radar_show_pent || radar_show_ring || radar_show_suit)
-static qbool radar_show_backpacks	= false;
-static qbool radar_show_health		= false;
-static qbool radar_show_ra			= false;
-static qbool radar_show_ya			= false;
-static qbool radar_show_ga			= false;
-static qbool radar_show_rockets		= false;
-static qbool radar_show_nails		= false;
-static qbool radar_show_cells		= false;
-static qbool radar_show_shells		= false;
-static qbool radar_show_quad		= false;
-static qbool radar_show_pent		= false;
-static qbool radar_show_ring		= false;
-static qbool radar_show_suit		= false;
-static qbool radar_show_mega		= false;
-
-#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p || radar_show_teleport || radar_show_shotgun)
-static qbool radar_show_nails_p		= false;
-static qbool radar_show_rockets_p	= false;
-static qbool radar_show_shaft_p		= false;
-static qbool radar_show_gibs		= false;
-static qbool radar_show_explosions	= false;
-static qbool radar_show_teleport	= false;
-static qbool radar_show_shotgun		= false;
-
-void Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
+static void Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the weapon filter.
 	radar_show_ssg		= Utils_RegExpMatch("SSG|SUPERSHOTGUN|ALL",			newval);
@@ -289,7 +305,7 @@ void Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_lg		= Utils_RegExpMatch("LG|SHAFT|LIGHTNING|ALL",		newval);
 }
 
-void Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
+static void Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the item filter.
 	radar_show_backpacks		= Utils_RegExpMatch("BP|BACKPACK|ALL",					newval);
@@ -308,7 +324,7 @@ void Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_mega				= Utils_RegExpMatch("MH|MEGA|MEGAHEALTH|100\\+|ALL",	newval);
 }
 
-void Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
+static void Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the "other" filter.
 	radar_show_nails_p			= Utils_RegExpMatch("NAILS|PROJECTILES|ALL",	newval);
@@ -320,12 +336,7 @@ void Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_shotgun			= Utils_RegExpMatch("SHOTGUN|SG|BUCK|ALL",		newval);
 }
 
-
-#define HUD_COLOR_DEFAULT_TRANSPARENCY	75
-
-byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY};
-
-void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
+static void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	char *new_color;
 	char buf[MAX_COM_TOKEN];
@@ -343,17 +354,15 @@ void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 	Cvar_Set(var, new_color);
 }
 
-void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas, float text_scale, qbool simple_items)
+static void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas, float text_scale, qbool simple_items, qbool proportional)
 {
 	int i;
-	qbool proportional = false;
 
 	// Entities (weapons and such). cl_main.c
 	extern visentlist_t cl_visents;
 
 	// Go through all the entities and draw the ones we're supposed to.
-	for (i = 0; i < cl_visents.count; i++)
-	{
+	for (i = 0; i < cl_visents.count; i++) {
 		entity_t* currententity = &cl_visents.list[i].ent;
 		texture_ref simpletexture;
 		qbool simple_valid;
@@ -373,8 +382,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		simple_valid = GL_TextureReferenceIsValid(simpletexture);
 
 		// Get quake coordinates (times 8 to get them in the same format as .locs).
-		entity_q_x = currententity->origin[0]*8;
-		entity_q_y = currententity->origin[1]*8;
+		entity_q_x = currententity->origin[0] * 8;
+		entity_q_y = currententity->origin[1] * 8;
 
 		// Convert from quake coordiantes -> pixel coordinates.
 		entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
@@ -386,8 +395,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		// Powerups.
 		//
 
-		if (radar_show_pent && currententity->model->modhint == MOD_PENT)
-		{
+		if (radar_show_pent && currententity->model->modhint == MOD_PENT) {
 			// Pentagram.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -396,8 +404,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cf00P", 0, text_scale, proportional);
 			}
 		}
-		else if (radar_show_quad && currententity->model->modhint == MOD_QUAD)
-		{
+		else if (radar_show_quad && currententity->model->modhint == MOD_QUAD) {
 			// Quad.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -406,8 +413,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0ffQ", 0, text_scale, proportional);
 			}
 		}
-		else if(radar_show_ring && currententity->model->modhint == MOD_RING)
-		{
+		else if (radar_show_ring && currententity->model->modhint == MOD_RING) {
 			// Ring.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -416,8 +422,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cff0R", 0, text_scale, proportional);
 			}
 		}
-		else if(radar_show_suit && currententity->model->modhint == MOD_SUIT)
-		{
+		else if (radar_show_suit && currententity->model->modhint == MOD_SUIT) {
 			// Suit.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -430,8 +435,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		//
 		// Show RL, LG and backpacks.
 		//
-		if(radar_show_rl && currententity->model->modhint == MOD_ROCKETLAUNCHER)
-		{
+		if (radar_show_rl && currententity->model->modhint == MOD_ROCKETLAUNCHER) {
 			// RL.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -440,8 +444,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale, proportional);
 			}
 		}
-		else if(radar_show_lg && currententity->model->modhint == MOD_LIGHTNINGGUN)
-		{
+		else if (radar_show_lg && currententity->model->modhint == MOD_LIGHTNINGGUN) {
 			// LG.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
@@ -450,19 +453,17 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale, proportional);
 			}
 		}
-		else if(radar_show_backpacks && currententity->model->modhint == MOD_BACKPACK)
-		{
+		else if (radar_show_backpacks && currententity->model->modhint == MOD_BACKPACK) {
 			// Back packs.
 			float back_pack_size = 0;
 
 			back_pack_size = max(player_size * 0.5, 0.05);
 
-			Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
-			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
+			Draw_AlphaCircleFill(entity_p_x, entity_p_y, back_pack_size, 114, 1);
+			Draw_AlphaCircleOutline(entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
 		}
 
-		if(currententity->model->modhint == MOD_ARMOR)
-		{
+		if (currententity->model->modhint == MOD_ARMOR) {
 			//
 			// Show armors.
 			//
@@ -473,7 +474,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				}
 				else {
 					Draw_AlphaCircleFill(entity_p_x, entity_p_y, 3.0, 178, 1.0);
-					Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
+					Draw_AlphaCircleOutline(entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
 				}
 			}
 			else if (radar_show_ya && currententity->skinnum == HUD_RADAR_YA) {
@@ -498,8 +499,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_mega && currententity->model->modhint == MOD_MEGAHEALTH)
-		{
+		if (radar_show_mega && currententity->model->modhint == MOD_MEGAHEALTH) {
 			//
 			// Show megahealth.
 			//
@@ -520,49 +520,44 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_ssg && !strcmp(currententity->model->name, "progs/g_shot.mdl"))
-		{
+		if (radar_show_ssg && !strcmp(currententity->model->name, "progs/g_shot.mdl")) {
 			// SSG.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_String(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SSG");
+				Draw_SString(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SSG", text_scale, proportional);
 			}
 		}
-		else if(radar_show_ng && !strcmp(currententity->model->name, "progs/g_nail.mdl"))
-		{
+		else if (radar_show_ng && !strcmp(currententity->model->name, "progs/g_nail.mdl")) {
 			// NG.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_String(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "NG");
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "NG", text_scale, proportional);
 			}
 		}
-		else if (radar_show_sng && !strcmp(currententity->model->name, "progs/g_nail2.mdl"))
-		{
+		else if (radar_show_sng && !strcmp(currententity->model->name, "progs/g_nail2.mdl")) {
 			// SNG.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_String(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SNG");
+				Draw_SString(entity_p_x - (3 * 8) / 2, entity_p_y - 4, "SNG", text_scale, proportional);
 			}
 		}
-		else if (radar_show_gl && currententity->model->modhint == MOD_GRENADELAUNCHER)
-		{
+		else if (radar_show_gl && currententity->model->modhint == MOD_GRENADELAUNCHER) {
 			// GL.
 			if (simple_valid && simple_items) {
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_String(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "GL");
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "GL", text_scale, proportional);
 			}
 		}
 
-		if (radar_show_gibs && currententity->model->modhint == MOD_GIB)
-		{
+		if (radar_show_gibs && currententity->model->modhint == MOD_GIB) {
 			//
 			// Gibs.
 			//
@@ -571,9 +566,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		}
 
 		if (radar_show_health
-			&&(!strcmp(currententity->model->name, "maps/b_bh25.bsp")
-				|| !strcmp(currententity->model->name, "maps/b_bh10.bsp")))
-		{
+			&& (!strcmp(currententity->model->name, "maps/b_bh25.bsp")
+			|| !strcmp(currententity->model->name, "maps/b_bh10.bsp"))) {
 			//
 			// Health.
 			//
@@ -595,10 +589,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		//
 		// Ammo.
 		//
-		if(radar_show_rockets
-			&&(!strcmp(currententity->model->name, "maps/b_rock0.bsp")
-				|| !strcmp(currententity->model->name, "maps/b_rock1.bsp")))
-		{
+		if (radar_show_rockets
+			&& (!strcmp(currententity->model->name, "maps/b_rock0.bsp")
+			|| !strcmp(currententity->model->name, "maps/b_rock1.bsp"))) {
 			//
 			// Rockets.
 			//
@@ -618,10 +611,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_cells
-			&&(!strcmp(currententity->model->name, "maps/b_batt0.bsp")
-				|| !strcmp(currententity->model->name, "maps/b_batt1.bsp")))
-		{
+		if (radar_show_cells
+			&& (!strcmp(currententity->model->name, "maps/b_batt0.bsp")
+			|| !strcmp(currententity->model->name, "maps/b_batt1.bsp"))) {
 			//
 			// Cells.
 			//
@@ -642,10 +634,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_nails
-			&&(!strcmp(currententity->model->name, "maps/b_nail0.bsp")
-				|| !strcmp(currententity->model->name, "maps/b_nail1.bsp")))
-		{
+		if (radar_show_nails
+			&& (!strcmp(currententity->model->name, "maps/b_nail0.bsp")
+			|| !strcmp(currententity->model->name, "maps/b_nail1.bsp"))) {
 			//
 			// Nails.
 			//
@@ -668,10 +659,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			}
 		}
 
-		if(radar_show_shells
-			&&(!strcmp(currententity->model->name, "maps/b_shell0.bsp")
-				|| !strcmp(currententity->model->name, "maps/b_shell1.bsp")))
-		{
+		if (radar_show_shells
+			&& (!strcmp(currententity->model->name, "maps/b_shell0.bsp")
+			|| !strcmp(currententity->model->name, "maps/b_shell1.bsp"))) {
 			//
 			// Shells.
 			//
@@ -696,18 +686,16 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		// Show projectiles (rockets, grenades, nails, shaft).
 		//
 
-		if (radar_show_nails_p && currententity->model->modhint == MOD_SPIKE)
-		{
+		if (radar_show_nails_p && currententity->model->modhint == MOD_SPIKE) {
 			//
 			// Spikes from SNG and NG.
 			//
 
 			Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
 		}
-		else if (radar_show_rockets_p && 
-		         (currententity->model->modhint == MOD_ROCKET || currententity->model->modhint == MOD_GRENADE)
-			)
-		{
+		else if (radar_show_rockets_p &&
+			(currententity->model->modhint == MOD_ROCKET || currententity->model->modhint == MOD_GRENADE)
+			) {
 			//
 			// Rockets and grenades.
 			//
@@ -723,10 +711,9 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
 
 			// Draw the rocket/grenade showing it's angle also.
-			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
+			Draw_AlphaLine(entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
 		}
-		else if (radar_show_shaft_p && currententity->model->modhint == MOD_THUNDERBOLT)
-		{
+		else if (radar_show_shaft_p && currententity->model->modhint == MOD_THUNDERBOLT) {
 			//
 			// Shaft beam.
 			//
@@ -738,14 +725,14 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 
 			// Get the length and angle of the shaft.
 			shaft_length = currententity->model->maxs[1];
-			entity_angle = (currententity->angles[1]*M_PI)/180;
+			entity_angle = (currententity->angles[1] * M_PI) / 180;
 
 			// Calculate where the shaft beam's ending point.
 			x_line_end = entity_p_x + shaft_length * cos(entity_angle);
 			y_line_end = entity_p_y - shaft_length * sin(entity_angle);
 
 			// Draw the shaft beam.
-			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
+			Draw_AlphaLine(entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
 		}
 	}
 
@@ -800,28 +787,25 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 	// Draw a circle around "hold areas", the grid cells within this circle
 	// are the ones that are counted for that particular hold area. The team
 	// that has the most percentage of these cells is considered to hold that area.
-	if(show_hold_areas && stats_important_ents != NULL && stats_important_ents->list != NULL)
-	{
+	if (show_hold_areas && stats_important_ents != NULL && stats_important_ents->list != NULL) {
 		int entity_p_x = 0;
 		int entity_p_y = 0;
 
-		for(i = 0; i < stats_important_ents->count; i++)
-		{
-			entity_p_x = x + Q_rint((map_x_slope*8*stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
-			entity_p_y = y + Q_rint((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
+		for (i = 0; i < stats_important_ents->count; i++) {
+			entity_p_x = x + Q_rint((map_x_slope * 8 * stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
+			entity_p_y = y + Q_rint((map_y_slope * 8 * stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
 
-			Draw_ColoredString(entity_p_x  - (8 * strlen(stats_important_ents->list[i].name)) / 2.0, entity_p_y - 4,
-				va("&c55f%s", stats_important_ents->list[i].name), 0, false);
+			Draw_SColoredStringBasic(entity_p_x - Draw_StringLength(stats_important_ents->list[i].name, -1, text_scale, proportional) / 2.0, entity_p_y - 4,
+				va("&c55f%s", stats_important_ents->list[i].name), 0, text_scale, proportional);
 
-			Draw_AlphaCircleOutline(entity_p_x , entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
+			Draw_AlphaCircleOutline(entity_p_x, entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
 		}
 	}
 
 	//
 	// Draw temp entities (explosions, blood, teleport effects).
 	//
-	for(i = 0; i < MAX_TEMP_ENTITIES; i++)
-	{
+	for (i = 0; i < MAX_TEMP_ENTITIES; i++) {
 		float time_diff = 0.0;
 
 		int entity_q_x = 0;
@@ -830,51 +814,45 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		int entity_p_y = 0;
 
 		// Get the time since the entity spawned.
-		if(cls.demoplayback)
-		{
+		if (cls.demoplayback) {
 			time_diff = cls.demotime - temp_entities.list[i].time;
 		}
-		else
-		{
+		else {
 			time_diff = cls.realtime - temp_entities.list[i].time;
 		}
 
 		// Don't show temp entities for long.
-		if(time_diff < 0.25)
-		{
+		if (time_diff < 0.25) {
 			float radius = 0.0;
 			radius = (time_diff < 0.125) ? (time_diff * 32.0) : (time_diff * 32.0) - time_diff;
 			radius *= scale;
 			radius = min(max(radius, 0), 200);
 
 			// Get quake coordinates (times 8 to get them in the same format as .locs).
-			entity_q_x = temp_entities.list[i].pos[0]*8;
-			entity_q_y = temp_entities.list[i].pos[1]*8;
+			entity_q_x = temp_entities.list[i].pos[0] * 8;
+			entity_q_y = temp_entities.list[i].pos[1] * 8;
 
 			entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
 			entity_p_y = y + Q_rint((map_y_slope*entity_q_y + map_y_intercept) * scale);
 
-			if(radar_show_explosions
+			if (radar_show_explosions
 				&& (temp_entities.list[i].type == TE_EXPLOSION
-					|| temp_entities.list[i].type == TE_TAREXPLOSION))
-			{
+				|| temp_entities.list[i].type == TE_TAREXPLOSION)) {
 				//
 				// Explosions.
 				//
 
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 235, 0.8);
+				Draw_AlphaCircleFill(entity_p_x, entity_p_y, radius, 235, 0.8);
 			}
-			else if(radar_show_teleport && temp_entities.list[i].type == TE_TELEPORT)
-			{
+			else if (radar_show_teleport && temp_entities.list[i].type == TE_TELEPORT) {
 				//
 				// Teleport effect.
 				//
 
 				radius *= 1.5;
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 244, 0.8);
+				Draw_AlphaCircleFill(entity_p_x, entity_p_y, radius, 244, 0.8);
 			}
-			else if(radar_show_shotgun && temp_entities.list[i].type == TE_GUNSHOT)
-			{
+			else if (radar_show_shotgun && temp_entities.list[i].type == TE_GUNSHOT) {
 				//
 				// Shotgun fire.
 				//
@@ -884,12 +862,11 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				int spread_y = 0;
 				int n = 0;
 
-				for(n = 0; n < 10; n++)
-				{
+				for (n = 0; n < 10; n++) {
 					spread_x = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
 					spread_y = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
 
-					Draw_AlphaFill (entity_p_x + spread_x - (SHOTGUN_SPREAD/2), entity_p_y + spread_y - (SHOTGUN_SPREAD/2), 1, 1, 8, 0.9);
+					Draw_AlphaFill(entity_p_x + spread_x - (SHOTGUN_SPREAD / 2), entity_p_y + spread_y - (SHOTGUN_SPREAD / 2), 1, 1, 8, 0.9);
 				}
 			}
 		}
@@ -900,12 +877,11 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 	float show_height, float show_powerups,
 	float player_size, float show_names,
 	float fade_players, float highlight,
-	char *highlight_color, float text_scale, qbool team_colours_for_name)
+	char *highlight_color, float text_scale, qbool team_colours_for_name, qbool proportional)
 {
 	int i;
 	player_state_t *state;
 	player_info_t *info;
-	qbool proportional = false;
 
 	// Get player state so we can know where he is (or on rare occassions, she).
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
@@ -1027,18 +1003,6 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				}
 			}
 
-#define HUD_RADAR_HIGHLIGHT_NONE			0
-#define HUD_RADAR_HIGHLIGHT_TEXT_ONLY		1
-#define HUD_RADAR_HIGHLIGHT_OUTLINE			2
-#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	3
-#define HUD_RADAR_HIGHLIGHT_CIRCLE			4
-#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	5
-#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	6
-#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	7
-#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		8
-#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	9
-#define HUD_RADAR_HIGHLIGHT_BRIGHT_VIEW    10
-
 			// Draw a circle around the tracked player.
 			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && Cam_TrackNum() >= 0 && info->userid == cl.players[Cam_TrackNum()].userid)
 			{
@@ -1147,14 +1111,14 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			{
 				int name_x = 0;
 				int name_y = 0;
+				int text_length = Draw_StringLength(info->name, -1, text_scale, proportional);
 
 				name_x = x + player_p_x;
 				name_y = y + player_p_y;
 
 				// Make sure we're not too far right.
-				while(name_x + 8 * strlen(info->name) > x + width)
-				{
-					name_x--;
+				if (name_x + text_length > x + width) {
+					name_x -= (name_x + text_length - (x + width));
 				}
 
 				// Make sure we're not outside the radar to the left.
@@ -1193,7 +1157,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				}
 				else {
 					// Draw other players in normal character color.
-					Draw_SString (name_x, name_y, info->name, text_scale, false);
+					Draw_SString (name_x, name_y, info->name, text_scale, proportional);
 				}
 			}
 
@@ -1238,7 +1202,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_otherfilter,
 		*hud_radar_scale,
 		*hud_radar_simple,
-		*hud_radar_colour_names;
+		*hud_radar_colour_names,
+		*hud_radar_proportional;
 
 	if (hud_radar_opacity == NULL)    // first time
 	{
@@ -1264,6 +1229,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_scale             = HUD_FindVar(hud, "scale");
 		hud_radar_simple            = HUD_FindVar(hud, "simpleitems");
 		hud_radar_colour_names      = HUD_FindVar(hud, "colornames");
+		hud_radar_proportional      = HUD_FindVar(hud, "proportional");
 
 		//
 		// Only parse the the filters when they change, not on each frame.
@@ -1313,27 +1279,25 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	height_limit = hud_radar_height->value;
 
 	// we support also sizes specified as a percentage of total screen width/height
-	if (strchr(hud_radar_width->string, '%'))
+	if (strchr(hud_radar_width->string, '%')) {
 		width_limit = width_limit * vid.conwidth / 100.0;
-	if (strchr(hud_radar_height->string, '%'))
+	}
+	if (strchr(hud_radar_height->string, '%')) {
 		height_limit = hud_radar_height->value * vid.conheight / 100.0;
+	}
 
 	// This map doesn't have a map pic.
-	if(!radar_pic_found)
-	{
-		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-		{
-			Draw_String(x, y, "No radar picture found!");
+	if (!radar_pic_found) {
+		if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y)) {
+			Draw_SString(x, y, "No radar picture found!", hud_radar_scale->value, hud_radar_proportional->integer);
 		}
 		return;
 	}
 
 	// Make sure we can translate the coordinates.
-	if(!conversion_formula_found)
-	{
-		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-		{
-			Draw_String(x, y, "No conversion formula found!");
+	if (!conversion_formula_found) {
+		if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y)) {
+			Draw_SString(x, y, "No conversion formula found!", hud_radar_scale->value, hud_radar_proportional->integer);
 		}
 		return;
 	}
@@ -1343,8 +1307,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 	scale = 1;
 
-	if(hud_radar_autosize->value)
-	{
+	if (hud_radar_autosize->value) {
 		//
 		// Autosize the hud element based on the size of the radar picture.
 		//
@@ -1352,8 +1315,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		width = width_limit = radar_pic.width;
 		height = height_limit = radar_pic.height;
 	}
-	else
-	{
+	else {
 		//
 		// Size the picture so that it fits inside the hud element.
 		//
@@ -1368,8 +1330,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		height = radar_pic.height * scale;
 	}
 
-	if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-	{
+	if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y)) {
 		float player_size = 1.0;
 		static int lastframecount = -1;
 
@@ -1383,17 +1344,15 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		y = min(y + height, y);
 
 		// Draw the radar background.
-		Draw_SAlphaPic (x, y, &radar_pic, hud_radar_opacity->value, scale);
+		Draw_SAlphaPic(x, y, &radar_pic, hud_radar_opacity->value, scale);
 
 		// Only draw once per frame.
-		if (cls.framecount == lastframecount)
-		{
+		if (cls.framecount == lastframecount) {
 			return;
 		}
 		lastframecount = cls.framecount;
 
-		if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)
-		{
+		if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active) {
 			return;
 		}
 
@@ -1401,17 +1360,15 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		player_size = hud_radar_player_size->value * scale;
 
 		// Draw team stats.
-		if(hud_radar_show_stats->value)
-		{
+		if (hud_radar_show_stats->value) {
 			Radar_DrawGrid(stats_grid, x, y, scale, width, height, hud_radar_show_stats->value);
 		}
 
 		// Draw entities such as powerups, weapons and backpacks.
-		if(RADAR_SHOW_WEAPONS || RADAR_SHOW_ITEMS || RADAR_SHOW_OTHER)
-		{
+		if (RADAR_SHOW_WEAPONS || RADAR_SHOW_ITEMS || RADAR_SHOW_OTHER) {
 			Radar_DrawEntities(
 				x, y, scale, player_size,
-				hud_radar_show_hold->value, hud_radar_scale->value, hud_radar_simple->value
+				hud_radar_show_hold->value, hud_radar_scale->value, hud_radar_simple->value, hud_radar_proportional->integer
 			);
 		}
 
@@ -1426,7 +1383,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			hud_radar_highlight->value,
 			hud_radar_highlight_color->string,
 			hud_radar_scale->value,
-			hud_radar_colour_names->integer
+			hud_radar_colour_names->integer,
+			hud_radar_proportional->integer
 		);
 	}
 }
@@ -1459,6 +1417,7 @@ void Radar_HudInit(void)
 		"scale", "1",
 		"simpleitems", "1",
 		"colornames", "0",
+		"proportional", "0",
 		NULL);
 #endif
 }
