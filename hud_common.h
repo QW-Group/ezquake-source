@@ -96,4 +96,14 @@ int HUD_Stats(int stat_num);
 extern cvar_t cl_weaponpreselect;
 int IN_BestWeapon(void);
 
+#define HUD_SCOREBOARD_ALL			0xffffffff
+#define HUD_SCOREBOARD_SORT_TEAMS	(1 << 0)
+#define HUD_SCOREBOARD_SORT_PLAYERS	(1 << 1)
+#define HUD_SCOREBOARD_UPDATE		(1 << 2)
+#define HUD_SCOREBOARD_AVG_PING		(1 << 3)
+void HUD_Sort_Scoreboard(int flags);
+
+extern int active_player_position;
+extern int active_team_position;
+
 #endif // __HUD_COMMON__H__

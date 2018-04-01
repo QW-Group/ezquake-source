@@ -330,9 +330,9 @@ static void VX_OwnFragNew(const char *victim)
 	snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", amf_tracker_own_frag_prefix.string, victim);
 }
 
-int VX_OwnFragTextLen(void)
+int VX_OwnFragTextLen(float scale, qbool proportional)
 {
-	return (int) strlen_color(ownfragtext.text);
+	return Draw_StringLengthColors(ownfragtext.text, -1, scale, proportional);
 }
 
 double VX_OwnFragTime(void)

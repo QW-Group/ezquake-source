@@ -329,7 +329,7 @@ void FontAdvanceCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float sc
 float FontCharacterWidthWide(wchar ch)
 {
 	if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return ceil(8 * glyphs[ch].advance[0]);
+		return 8 * glyphs[ch].advance[0];
 	}
 	else {
 		return 8;
@@ -348,18 +348,18 @@ qbool FontAlterCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, 
 
 	// Space.
 	if (ch == 32) {
-		*x += (proportional ? FontCharacterWidthWide(ch) : 8) * scale;
+		*x = ceil(*x + (proportional ? FontCharacterWidthWide(ch) : 8) * scale);
 		return false;
 	}
 
 	if (proportional && !bigchar && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x += glyphs[ch].offsets[0] * char_size * scale;
+		*x = ceil(*x + glyphs[ch].offsets[0] * char_size * scale);
 	}
 
 	return true;
 }
 
-void FontAdvanceCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, int char_gap, qbool proportional)
+/*void FontAdvanceCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, int char_gap, qbool proportional)
 {
 	unsigned char ch = (unsigned char)ch_;
 
@@ -372,7 +372,7 @@ void FontAdvanceCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale,
 	else {
 		*x += 8 * scale + char_gap;
 	}
-}
+}*/
 
 float FontCharacterWidth(char ch_, qbool proportional)
 {

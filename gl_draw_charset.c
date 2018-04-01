@@ -554,9 +554,6 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 
 int Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional)
 {
-	int i;
-	int x = 0, y = 0;
-
 	if (!proportional) {
 		if (length < 0) {
 			length = strlen_color(text);
@@ -564,6 +561,9 @@ int Draw_StringLengthColors(const char *text, int length, float scale, qbool pro
 		return length * scale * 8;
 	}
 	else {
+		int i;
+		float x = 0;
+
 		for (i = 0; text[i] && (length == -1 || i < length); i++) {
 			if (text[i] == '&') {
 				if (text[i + 1] == 'c' && HexToInt(text[i + 2]) >= 0 && HexToInt(text[i + 3]) >= 0 && HexToInt(text[i + 4]) >= 0) {
@@ -578,9 +578,8 @@ int Draw_StringLengthColors(const char *text, int length, float scale, qbool pro
 
 			x += FontCharacterWidthWide(text[i]) * scale;
 		}
+		return (int)(x + 0.5f);
 	}
-
-	return x;
 }
 
 int Draw_CharacterFit(const char* text, int width, float scale, qbool proportional)
