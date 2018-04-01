@@ -267,7 +267,8 @@ void FontCreate(int grouping, const char* path)
 			memset(temp_buffer, 0, yoffset * base_font_width * 4);
 		}
 
-		glyphs[ch].offsets[0] /= base_font_width;
+		glyphs[ch].offsets[0] /= (base_font_width / 2);
+		glyphs[ch].offsets[1] /= (base_font_height / 2);
 
 		charset->glyphs[ch].width = base_font_width / 2;
 		charset->glyphs[ch].height = base_font_height / 2;
@@ -276,6 +277,14 @@ void FontCreate(int grouping, const char* path)
 		charset->glyphs[ch].sh = charset->glyphs[ch].sl + 0.5f * base_font_width / texture_width;
 		charset->glyphs[ch].th = charset->glyphs[ch].tl + 0.5f * base_font_height / texture_height;
 		charset->glyphs[ch].texnum = charset->master;
+
+		if (ch == '\'') {
+			Con_Printf("> Offsets: %f %f\n", glyphs[ch].offsets[0] * 8, glyphs[ch].offsets[1] * 8);
+			Con_Printf("> Advance: %f %f\n", glyphs[ch].advance[0] * 8, glyphs[ch].advance[1] * 8);
+			Con_Printf("> Sizes: %f %f\n", glyphs[ch].sizes[0] * 8.0f / (base_font_width / 2), glyphs[ch].sizes[1] * 8.0f / (base_font_width / 2));
+			Con_Printf("> DrawWidth: %f\n", GLM_Draw_CharacterBase(0, 0, ch, 1, false, color_white, false, false, true));
+			Con_Printf("base_font_width: %d\n", base_font_width);
+		}
 
 		GL_TexSubImage2D(
 			GL_TEXTURE0, charset->master, 0,
@@ -291,7 +300,7 @@ void FontCreate(int grouping, const char* path)
 	CachePics_MarkAtlasDirty();
 }
 
-qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale, qbool proportional)
+qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 
@@ -302,41 +311,42 @@ qbool FontAlterCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float sca
 
 	// Space.
 	if (ch == 32) {
-		*x += (proportional ? FontCharacterWidthWide(ch) : 8) * scale;
+		*x += FontCharacterWidthWide(ch, scale, proportional);
 		return false;
 	}
 
-	if (ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	if (proportional && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
 
 	return true;
 }
 
+/*
 void FontAdvanceCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale, int char_gap)
 {
 	if (bigchar) {
 		*x += 64 * scale + char_gap;
 	}
 	else if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x += ceil(8 * (glyphs[ch].advance[0] - glyphs[ch].offsets[0])) * scale + char_gap;
+		*x += 8 * (glyphs[ch].advance[0] - glyphs[ch].offsets[0]) * scale) + char_gap;
 	}
 	else {
 		*x += 8 * scale + char_gap;
 	}
-}
+}*/
 
-float FontCharacterWidthWide(wchar ch)
+float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
 {
-	if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return 8 * glyphs[ch].advance[0];
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+		return 8 * glyphs[ch].advance[0] * scale;
 	}
 	else {
-		return 8;
+		return 8 * scale;
 	}
 }
 
-qbool FontAlterCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, qbool proportional)
+qbool FontAlterCharCoords(float* x, float* y, char ch_, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 	unsigned char ch = (unsigned char)ch_;
@@ -348,31 +358,16 @@ qbool FontAlterCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, 
 
 	// Space.
 	if (ch == 32) {
-		*x = ceil(*x + (proportional ? FontCharacterWidthWide(ch) : 8) * scale);
+		*x += (proportional ? FontCharacterWidthWide(ch, scale, proportional) : 8 * scale);
 		return false;
 	}
 
 	if (proportional && !bigchar && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x = ceil(*x + glyphs[ch].offsets[0] * char_size * scale);
+		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
 
 	return true;
 }
-
-/*void FontAdvanceCharCoords(int* x, int* y, char ch_, qbool bigchar, float scale, int char_gap, qbool proportional)
-{
-	unsigned char ch = (unsigned char)ch_;
-
-	if (bigchar) {
-		*x += 64 * scale + char_gap;
-	}
-	else if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x += ceil(8 * (glyphs[ch].advance[0] - glyphs[ch].offsets[0])) * scale + char_gap;
-	}
-	else {
-		*x += 8 * scale + char_gap;
-	}
-}*/
 
 float FontCharacterWidth(char ch_, qbool proportional)
 {
@@ -394,7 +389,7 @@ int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proport
 		return max_length * 8 * scale;
 	}
 
-	return (int)((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale + 0.5f);
+	return ceil((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale);
 }
 
 void FontInitialise(void)

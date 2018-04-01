@@ -26,7 +26,7 @@ static void Draw_TextCacheSetColor(GLubyte* color)
 	memcpy(cache_currentColor, color, sizeof(cache_currentColor));
 }
 
-static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
+static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
 {
 	int new_charset = (ch & 0xFF00) >> 8;
 	charset_t* texture = &char_textures[0];
@@ -72,7 +72,7 @@ static int Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, q
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-int GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 

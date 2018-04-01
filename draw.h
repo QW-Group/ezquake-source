@@ -106,37 +106,38 @@ typedef struct clrinfo_s
 } clrinfo_t;
 
 void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
-int Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
-int Draw_String (int x, int y, const char *str);
-int Draw_Alt_String (int x, int y, const char *str, float scale, qbool proportional);
-int Draw_ColoredString (int x, int y, const char *str, int red, qbool proportional);
-int Draw_SColoredStringBasic (int x, int y, const char *text, int red, float scale, qbool proportional);
-int Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
-int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
-int Draw_SString(int x, int y, const char *str, float scale, qbool proportional);
-int Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional);
+void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
+void Draw_String(int x, int y, const char *str);
+void Draw_AlphaString(int x, int y, const char *str, float alpha);
+void Draw_Alt_String(int x, int y, const char *str, float scale, qbool proportional);
+void Draw_ColoredString(int x, int y, const char *str, int red, qbool proportional);
+void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale, qbool proportional);
+void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
+void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
+void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional);
+float Draw_SString(int x, int y, const char *str, float scale, qbool proportional);
 
-int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
-int Draw_StringLength(const char *text, int length, float scale, qbool proportional);
-int Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional);
-int Draw_StringLengthColorsByTerminator(const char *text, int length, float scale, qbool proportional, char terminator);
-int Draw_CharacterFit(const char* text, int width, float scale, qbool proportional);
+float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
+float Draw_StringLength(const char *text, int length, float scale, qbool proportional);
+float Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional);
+float Draw_StringLengthColorsByTerminator(const char *text, int length, float scale, qbool proportional, char terminator);
+int Draw_CharacterFit(const char* text, float width, float scale, qbool proportional);
 
-mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
-mpic_t *Draw_CachePic (cache_pic_id_t id);
-mpic_t *Draw_CacheWadPic (char *name, int code);
+mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit);
+mpic_t *Draw_CachePic(cache_pic_id_t id);
+mpic_t *Draw_CacheWadPic(char *name, int code);
 void Draw_Crosshair(void);
-void Draw_TextBox (int x, int y, int width, int lines);
+void Draw_TextBox(int x, int y, int width, int lines);
 
-int Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional);
+float Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional);
 
 void Draw_SCharacter(int x, int y, int num, float scale);
-void Draw_SPic (int x, int y, mpic_t *, float scale);
-void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
+void Draw_SPic(int x, int y, mpic_t *, float scale);
+void Draw_FitPic(int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
 void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, float alpha);
-void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
+void Draw_SAlphaPic(int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
-void Draw_STransPic (int x, int y, mpic_t *, float scale);
+void Draw_STransPic(int x, int y, mpic_t *, float scale);
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha);
 

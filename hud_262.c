@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 #include "image.h"
 
-void Draw_AlphaString (int x, int y, char *str, float alpha);
 static char *hud262_load_buff = NULL;
 
 extern cvar_t cl_hud;

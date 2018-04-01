@@ -744,7 +744,7 @@ void GLM_DrawSkyChain(void);
 void GLM_DrawSky(void);
 void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics);
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
-int GLM_Draw_CharacterBase(int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional);
+float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional);
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba);
 void GLM_Draw_StringBase_StartString(int x, int y, float scale);
