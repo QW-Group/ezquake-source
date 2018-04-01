@@ -119,6 +119,7 @@ int Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proporti
 int Draw_ConsoleString(int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
 int Draw_StringLength(const char *text, int length, float scale, qbool proportional);
 int Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional);
+int Draw_StringLengthColorsByTerminator(const char *text, int length, float scale, qbool proportional, char terminator);
 int Draw_CharacterFit(const char* text, int width, float scale, qbool proportional);
 
 mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);

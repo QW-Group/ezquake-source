@@ -2220,8 +2220,6 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 
 #endif // WITH_PNG
 
-void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale);
-
 //---------------------
 //
 // draw HUD static text
@@ -2235,7 +2233,8 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 		*hud_statictext_big = NULL,
 		*hud_statictext_scale,
 		*hud_statictext_text,
-		*hud_statictext_textalign;
+		*hud_statictext_textalign,
+		*hud_statictext_proportional;
 
 	if (hud_statictext_big == NULL) {
 		// first time
@@ -2243,6 +2242,7 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 		hud_statictext_scale = HUD_FindVar(hud, "scale");
 		hud_statictext_text = HUD_FindVar(hud, "text");
 		hud_statictext_textalign = HUD_FindVar(hud, "textalign");
+		hud_statictext_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	// Static text valid for demos/qtv only
@@ -2253,10 +2253,12 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	}
 
 	alignment = 0;
-	if (!strcmp(hud_statictext_textalign->string, "right"))
+	if (!strcmp(hud_statictext_textalign->string, "right")) {
 		alignment = 1;
-	else if (!strcmp(hud_statictext_textalign->string, "center"))
+	}
+	else if (!strcmp(hud_statictext_textalign->string, "center")) {
 		alignment = 2;
+	}
 
 	// convert special characters
 	in = hud_statictext_text->string;
@@ -2265,22 +2267,22 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	}
 	in = TP_ParseFunChars(in, false);
 
-	SCR_HUD_MultiLineString(hud, in, hud_statictext_big->integer, alignment, hud_statictext_scale->value);
+	SCR_HUD_MultiLineString(hud, in, hud_statictext_big->integer, alignment, hud_statictext_scale->value, hud_statictext_proportional->integer);
 }
 
-void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale)
+void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale, qbool proportional)
 {
 	// find carriage returns
 	int x, y;
 	const char *line_start = in;
-	int max_length = strlen_color_by_terminator(line_start, '\r');
+	int max_length = Draw_StringLengthColorsByTerminator(line_start, -1, scale, proportional, '\r');
 	char* line_end;
 	int lines = 0;
-	int character_width, character_height;
+	int character_height;
 
 	while ((line_end = strchr(line_start, '\r'))) {
 		line_start = line_end + 1;
-		max_length = max(max_length, strlen_color_by_terminator(line_start, '\r'));
+		max_length = max(max_length, Draw_StringLengthColorsByTerminator(line_start, -1, scale, proportional, '\r'));
 
 		++lines;
 	}
@@ -2294,39 +2296,35 @@ void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int a
 		lines = 0;
 	}
 
-	character_width = 8 * scale;
 	character_height = 8 * scale;
 	if (large_font) {
-		character_width = 24 * scale;
 		character_height = 24 * scale;
 	}
 
-	if (HUD_PrepareDraw(hud, max_length * character_width, lines * character_height, &x, &y)) {
+	if (HUD_PrepareDraw(hud, max_length, lines * character_height, &x, &y)) {
 		for (line_start = in; *line_start; line_start = line_end + 1) {
 			line_end = strchr(line_start, '\r');
-			int diff = max_length - strlen_color(line_start);
+			int diff = max_length - Draw_StringLengthColors(line_start, -1, scale, proportional);
 			int line_x = x;
 
 			if (line_end) {
 				*line_end = '\0';
 			}
 
-			// Left pad string depending on alignment
 			if (alignment == 1) {
-				line_x += (max_length - strlen_color(line_start)) * character_width;
+				// Right-justified
+				line_x += (max_length - Draw_StringLengthColors(line_start, -1, scale, proportional));
 			}
 			else if (alignment == 2) {
-				if (diff % 2 == 1) {
-					line_x += 0.5 * character_width;
-				}
-				line_x += (max_length - strlen_color(line_start)) / 2 * character_width;
+				// Centered
+				line_x += (max_length - Draw_StringLengthColors(line_start, -1, scale, proportional)) / 2;
 			}
 
 			if (large_font) {
 				SCR_DrawWadString(line_x, y, scale, line_start); 
 			}
 			else {
-				Draw_SString(line_x, y, line_start, scale, false);
+				Draw_SString(line_x, y, line_start, scale, proportional);
 			}
 
 			y += character_height;
@@ -2502,16 +2500,18 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	HUD_Register("static_text", NULL, "Static text (demos only).",
-			0, ca_active, 0, SCR_HUD_DrawStaticText,
-			"0", "screen", "left", "top", "0", "0", "0", "0 0 0", NULL,
-			"big", "0",
-			"style", "0",
-			"scale", "1",
-			"text", "",
-			"textalign", "left",
-			NULL
-		    );
+	HUD_Register(
+		"static_text", NULL, "Static text (demos only).",
+		0, ca_active, 0, SCR_HUD_DrawStaticText,
+		"0", "screen", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"big", "0",
+		"style", "0",
+		"scale", "1",
+		"text", "",
+		"textalign", "left",
+		"proportional", "0",
+		NULL
+	);
 
 	HUD_Register(
 		"teamstackbar", NULL, "Shows relative stacks of each team.",

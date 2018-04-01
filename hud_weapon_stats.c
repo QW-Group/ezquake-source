@@ -2,8 +2,7 @@
 #include "quakedef.h"
 #include "teamplay.h"
 #include "hud.h"
-
-void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale);
+#include "hud_common.h"
 
 typedef enum
 {
@@ -150,19 +149,23 @@ void SCR_HUD_WeaponStats(hud_t *hud)
 	static cvar_t
 		*hud_weaponstats_format = NULL,
 		*hud_weaponstats_textalign,
-		*hud_weaponstats_scale;
+		*hud_weaponstats_scale,
+		*hud_weaponstats_proportional;
 
 	if (hud_weaponstats_format == NULL) {
 		// first time
 		hud_weaponstats_format = HUD_FindVar(hud, "format");
 		hud_weaponstats_textalign = HUD_FindVar(hud, "textalign");
 		hud_weaponstats_scale = HUD_FindVar(hud, "scale");
+		hud_weaponstats_proportional = HUD_FindVar(hud, "proportional");
 	}
 
-	if (!strcmp(hud_weaponstats_textalign->string, "right"))
+	if (!strcmp(hud_weaponstats_textalign->string, "right")) {
 		alignment = 1;
-	else if (!strcmp(hud_weaponstats_textalign->string, "center"))
+	}
+	else if (!strcmp(hud_weaponstats_textalign->string, "center")) {
 		alignment = 2;
+	}
 
 	i = (cl.spectator ? Cam_TrackNum() : cl.playernum);
 	if (i < 0 || i >= MAX_CLIENTS) {
@@ -172,7 +175,7 @@ void SCR_HUD_WeaponStats(hud_t *hud)
 
 	SCR_CreateWeaponStatsPlayerText(&ws_clients[i], hud_weaponstats_format->string, content, sizeof(content));
 
-	SCR_HUD_MultiLineString(hud, content, false, alignment, hud_weaponstats_scale->value);
+	SCR_HUD_MultiLineString(hud, content, false, alignment, hud_weaponstats_scale->value, hud_weaponstats_proportional->integer);
 }
 
 void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel)
@@ -203,12 +206,14 @@ void WeaponStats_HUDInit(void)
 {
 	cvar_t* show_cvar;
 
-	HUD_Register("weaponstats", NULL, "Weapon stats",
+	HUD_Register(
+		"weaponstats", NULL, "Weapon stats",
 		0, ca_active, 0, SCR_HUD_WeaponStats,
 		"0", "screen", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
 		"format", "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8",
 		"textalign", "center",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 

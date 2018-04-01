@@ -554,9 +554,14 @@ int Draw_StringLength(const char *text, int length, float scale, qbool proportio
 
 int Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional)
 {
+	return Draw_StringLengthColorsByTerminator(text, length, scale, proportional, 0);
+}
+
+int Draw_StringLengthColorsByTerminator(const char *text, int length, float scale, qbool proportional, char terminator)
+{
 	if (!proportional) {
 		if (length < 0) {
-			length = strlen_color(text);
+			length = strlen_color_by_terminator(text, terminator);
 		}
 		return length * scale * 8;
 	}
@@ -564,7 +569,7 @@ int Draw_StringLengthColors(const char *text, int length, float scale, qbool pro
 		int i;
 		float x = 0;
 
-		for (i = 0; text[i] && (length == -1 || i < length); i++) {
+		for (i = 0; text[i] && text[i] != terminator && (length == -1 || i < length); i++) {
 			if (text[i] == '&') {
 				if (text[i + 1] == 'c' && HexToInt(text[i + 2]) >= 0 && HexToInt(text[i + 3]) >= 0 && HexToInt(text[i + 4]) >= 0) {
 					i += 4; // skip "&cRGB"
