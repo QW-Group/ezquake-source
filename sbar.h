@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // the status bar is only redrawn if something has changed, but if anything
 // does, the entire thing will be redrawn for the next vid.numpages frames.
 
+#ifndef EZQUAKE_SBAR_HEADER
+#define EZQUAKE_SBAR_HEADER
+
 #define	SBAR_HEIGHT		24
 
 extern	int			sb_lines;			// scan lines to draw
@@ -45,3 +48,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color);
 
 // covert quake pallete color number to rgb color
 int Sbar_ColorForMap (int m);
+
+#define STAT_MINUS		10	// num frame for '-' stats digit
+
+#endif // #ifdef EZQUAKE_SBAR_HEADER

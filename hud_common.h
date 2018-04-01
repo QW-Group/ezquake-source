@@ -108,4 +108,8 @@ extern int active_team_position;
 
 void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale, qbool proportional);
 
+float SCR_HUD_TotalStrength(float health, float armorValue, float armorType);
+
+float SCR_HUD_ArmorType(int items);
+
 #endif // __HUD_COMMON__H__

@@ -61,7 +61,6 @@ cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
 //cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
 
-#define STAT_MINUS		10	// num frame for '-' stats digit
 mpic_t		*sb_nums[2][11];
 mpic_t		*sb_colon, *sb_slash;
 mpic_t		*sb_ibar;
