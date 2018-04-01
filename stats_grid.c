@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sbar.h"
 #include "hud.h"
 #include "utils.h"
+#include "fonts.h"
 
 static hud_t* teamholdinfo;
 static hud_t* teamholdbar;
@@ -933,7 +934,8 @@ void TeamHold_DrawPercentageBar(
 	float team1_percent, float team2_percent,
 	int team1_color, int team2_color,
 	int show_text, int vertical,
-	int vertical_text, float opacity, float scale
+	int vertical_text, float opacity, float scale,
+	qbool proportional
 )
 {
 	int _x, _y;
@@ -972,28 +974,28 @@ void TeamHold_DrawPercentageBar(
 					int percent10 = 0;
 					int percent100 = 0;
 
-					_x = x + (width / 2) - 4 * scale;
+					_x = x + (width / 2) - FontFixedWidth(1, scale / 2, true, proportional);
 					_y = Q_rint(y + (height * team1_percent) / 2 - 8 * 1.5 * scale);
 
 					percent = Q_rint(100 * team1_percent);
 
 					if ((percent100 = percent / 100)) {
-						Draw_SString(_x, _y, va("%d", percent100), scale, false);
+						Draw_SString(_x, _y, va("%d", percent100), scale, proportional);
 						_y += 8 * scale;
 					}
 
 					if ((percent10 = percent / 10)) {
-						Draw_SString(_x, _y, va("%d", percent10), scale, false);
+						Draw_SString(_x, _y, va("%d", percent10), scale, proportional);
 						_y += 8 * scale;
 					}
 
-					Draw_SString(_x, _y, va("%d", percent % 10), scale, false);
+					Draw_SString(_x, _y, va("%d", percent % 10), scale, proportional);
 					_y += 8 * scale;
 
-					Draw_SString(_x, _y, "%", scale, false);
+					Draw_SString(_x, _y, "%", scale, proportional);
 				}
 				else {
-					_x = x + (width / 2) - 8 * 1.5 * scale;
+					_x = x + (width / 2) - FontFixedWidth(1, 1.5 * scale, 1, proportional);
 					_y = Q_rint(y + (height * team1_percent) / 2 - 8 * scale * 0.5);
 					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale, false);
 				}
@@ -1006,30 +1008,30 @@ void TeamHold_DrawPercentageBar(
 					int percent10 = 0;
 					int percent100 = 0;
 
-					_x = x + (width / 2) - 4;
+					_x = x + (width / 2) - FontFixedWidth(1, scale / 2, true, proportional);
 					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent) / 2 - 12);
 
 					percent = Q_rint(100 * team2_percent);
 
 					if ((percent100 = percent / 100)) {
-						Draw_String(_x, _y, va("%d", percent100));
+						Draw_SString(_x, _y, va("%d", percent100), scale, proportional);
 						_y += 8;
 					}
 
 					if ((percent10 = percent / 10)) {
-						Draw_String(_x, _y, va("%d", percent10));
+						Draw_SString(_x, _y, va("%d", percent10), scale, proportional);
 						_y += 8;
 					}
 
-					Draw_String(_x, _y, va("%d", percent % 10));
+					Draw_SString(_x, _y, va("%d", percent % 10), scale, proportional);
 					_y += 8;
 
-					Draw_String(_x, _y, "%");
+					Draw_SString(_x, _y, "%", scale, proportional);
 				}
 				else {
-					_x = x + (width / 2) - 12;
+					_x = x + (width / 2) - FontFixedWidth(1, scale * 1.5, true, proportional);
 					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent) / 2 - 4);
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+					Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale, proportional);
 				}
 			}
 		}
@@ -1061,16 +1063,16 @@ void TeamHold_DrawPercentageBar(
 		if (show_text) {
 			// Team 1.
 			if (team1_percent > 0.05) {
-				_x = Q_rint(x + (width * team1_percent) / 2 - 8 * scale);
+				_x = Q_rint(x + (width * team1_percent) / 2 - FontFixedWidth(1, scale, true, proportional));
 				_y = y + (height / 2) - 4 * scale;
-				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale, false);
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale, proportional);
 			}
 
 			// Team 2.
 			if (team2_percent > 0.05) {
-				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent) / 2 - 8 * scale);
+				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent) / 2 - FontFixedWidth(1, scale, true, proportional));
 				_y = y + (height / 2) - 4 * scale;
-				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale, false);
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale, proportional);
 			}
 		}
 	}
@@ -1153,7 +1155,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		*hud_teamholdinfo_height,
 		*hud_teamholdinfo_onlytp,
 		*hud_teamholdinfo_itemfilter,
-		*hud_teamholdinfo_scale;
+		*hud_teamholdinfo_scale,
+		*hud_teamholdinfo_proportional;
 
 	if (hud_teamholdinfo_style == NULL)    // first time
 	{
@@ -1166,6 +1169,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_onlytp = HUD_FindVar(hud, "onlytp");
 		hud_teamholdinfo_itemfilter = HUD_FindVar(hud, "itemfilter");
 		hud_teamholdinfo_scale = HUD_FindVar(hud, "scale");
+		hud_teamholdinfo_proportional = HUD_FindVar(hud, "proportional");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
@@ -1227,7 +1231,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Calculate the width of the longest item name so we can use it for padding.
-			names_width = 8 * (stats_important_ents->longest_name + 1) * hud_teamholdinfo_scale->value;
+			names_width = FontFixedWidth(stats_important_ents->longest_name + 1, hud_teamholdinfo_scale->value, false, hud_teamholdinfo_proportional->integer);
 
 			// Calculate the percentages of this item that the two teams holds.
 			team1_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM1];
@@ -1240,22 +1244,22 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			team2_percent = fabs(max(0, team2_percent));
 
 			// Write the name of the item.
-			Draw_SColoredStringBasic(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0, hud_teamholdinfo_scale->value);
+			Draw_SColoredStringBasic(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0, hud_teamholdinfo_scale->value, hud_teamholdinfo_proportional->integer);
 
 			if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES) {
 				//
 				// Prints the team name that holds the item.
 				//
 				if (team1_percent > team2_percent) {
-					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0, hud_teamholdinfo_scale->value);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0, hud_teamholdinfo_scale->value, hud_teamholdinfo_proportional->integer);
 				}
 				else if (team1_percent < team2_percent) {
-					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0, hud_teamholdinfo_scale->value);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0, hud_teamholdinfo_scale->value, hud_teamholdinfo_proportional->integer);
 				}
 			}
 			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS) {
 				//
-				// Show a percenteage bar for the item.
+				// Show a percentage bar for the item.
 				//
 				TeamHold_DrawPercentageBar(
 					x + names_width, _y,
@@ -1267,7 +1271,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 					false,
 					false,
 					hud_teamholdinfo_opacity->value,
-					hud_teamholdinfo_scale->value
+					hud_teamholdinfo_scale->value,
+					hud_teamholdinfo_proportional->integer
 				);
 			}
 			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2) {
@@ -1302,7 +1307,8 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		*hud_teamholdbar_show_text,
 		*hud_teamholdbar_onlytp,
 		*hud_teamholdbar_vertical_text,
-		*hud_teamholdbar_scale;
+		*hud_teamholdbar_scale,
+		*hud_teamholdbar_proportional;
 
 	if (hud_teamholdbar_style == NULL)    // first time
 	{
@@ -1315,6 +1321,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		hud_teamholdbar_onlytp = HUD_FindVar(hud, "onlytp");
 		hud_teamholdbar_vertical_text = HUD_FindVar(hud, "vertical_text");
 		hud_teamholdbar_scale = HUD_FindVar(hud, "scale");
+		hud_teamholdbar_proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	height = max(1, hud_teamholdbar_height->value);
@@ -1353,7 +1360,8 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 				hud_teamholdbar_vertical->value,
 				hud_teamholdbar_vertical_text->value,
 				hud_teamholdbar_opacity->value,
-				hud_teamholdbar_scale->value
+				hud_teamholdbar_scale->value,
+				hud_teamholdbar_proportional->integer
 			);
 		}
 		else {
@@ -1376,6 +1384,7 @@ void TeamHold_HudInit(void)
 		"style", "1",
 		"itemfilter", "quad ra ya ga mega pent rl quad",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 
@@ -1391,6 +1400,7 @@ void TeamHold_HudInit(void)
 		"show_text", "1",
 		"onlytp", "0",
 		"scale", "1",
+		"proportional", "0",
 		NULL
 	);
 }

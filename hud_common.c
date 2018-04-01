@@ -48,7 +48,8 @@ void TeamHold_DrawPercentageBar(
 	float team1_percent, float team2_percent,
 	int team1_color, int team2_color,
 	int show_text, int vertical,
-	int vertical_text, float opacity, float scale
+	int vertical_text, float opacity, float scale,
+	qbool proportional
 );
 
 #ifndef STAT_MINUS
@@ -2057,7 +2058,8 @@ void SCR_Hud_StackBar(hud_t* hud)
 		*hud_stackbar_show_text,
 		*hud_stackbar_vertical_text,
 		*hud_stackbar_onlytp,
-		*hud_stackbar_scale;
+		*hud_stackbar_scale,
+		*hud_stackbar_proportional;
 
 	if (hud_stackbar_style == NULL)    // first time
 	{
@@ -2070,6 +2072,7 @@ void SCR_Hud_StackBar(hud_t* hud)
 		hud_stackbar_vertical_text       = HUD_FindVar(hud, "vertical_text");
 		hud_stackbar_onlytp              = HUD_FindVar(hud, "onlytp");
 		hud_stackbar_scale               = HUD_FindVar(hud, "scale");
+		hud_stackbar_proportional        = HUD_FindVar(hud, "proportional");
 	}
 
 	height = max(1, hud_stackbar_height->value);
@@ -2098,7 +2101,8 @@ void SCR_Hud_StackBar(hud_t* hud)
 				hud_stackbar_vertical->value,
 				hud_stackbar_vertical_text->value,
 				hud_stackbar_opacity->value,
-				hud_stackbar_scale->value
+				hud_stackbar_scale->value,
+				hud_stackbar_proportional->integer
 			);
 		}
 		else {
@@ -2480,12 +2484,13 @@ void CommonDraw_Init(void)
 	MP3_HudInit();
 
 #ifdef WITH_PNG
-	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
-			0, ca_active, 1, SCR_HUD_DrawKeys,
-			"0", "screen", "right", "center", "0", "0", "0.5", "20 20 20", NULL,
-			"scale", "2", "player", "",
-			NULL
-		    );
+	HUD_Register(
+		"keys", NULL, "Shows which keys user does press at the moment",
+		0, ca_active, 1, SCR_HUD_DrawKeys,
+		"0", "screen", "right", "center", "0", "0", "0.5", "20 20 20", NULL,
+		"scale", "2", "player", "",
+		NULL
+	);
 #endif
 
 	HUD_Register(
@@ -2526,6 +2531,7 @@ void CommonDraw_Init(void)
 		"onlytp", "0",
 		"scale", "1",
 		"simpleitems", "1",
+		"proportional", "0",
 		NULL
 	);
 

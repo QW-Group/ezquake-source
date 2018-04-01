@@ -110,7 +110,7 @@ int Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_
 int Draw_String (int x, int y, const char *str);
 int Draw_Alt_String (int x, int y, const char *str, float scale, qbool proportional);
 int Draw_ColoredString (int x, int y, const char *str, int red, qbool proportional);
-int Draw_SColoredStringBasic (int x, int y, const char *text, int red, float scale);
+int Draw_SColoredStringBasic (int x, int y, const char *text, int red, float scale, qbool proportional);
 int Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
 int Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
 int Draw_SString(int x, int y, const char *str, float scale, qbool proportional);

@@ -346,6 +346,7 @@ void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas, float text_scale, qbool simple_items)
 {
 	int i;
+	qbool proportional = false;
 
 	// Entities (weapons and such). cl_main.c
 	extern visentlist_t cl_visents;
@@ -392,7 +393,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cf00P", 0, text_scale);
+				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cf00P", 0, text_scale, proportional);
 			}
 		}
 		else if (radar_show_quad && currententity->model->modhint == MOD_QUAD)
@@ -402,7 +403,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0ffQ", 0, text_scale);
+				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0ffQ", 0, text_scale, proportional);
 			}
 		}
 		else if(radar_show_ring && currententity->model->modhint == MOD_RING)
@@ -412,7 +413,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cff0R", 0, text_scale);
+				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&cff0R", 0, text_scale, proportional);
 			}
 		}
 		else if(radar_show_suit && currententity->model->modhint == MOD_SUIT)
@@ -422,7 +423,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0f0S", 0, text_scale);
+				Draw_SColoredStringBasic(entity_p_x, entity_p_y, "&c0f0S", 0, text_scale, proportional);
 			}
 		}
 
@@ -436,7 +437,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale, false);
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "RL", text_scale, proportional);
 			}
 		}
 		else if(radar_show_lg && currententity->model->modhint == MOD_LIGHTNINGGUN)
@@ -446,7 +447,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 				Draw_2dAlphaTexture(entity_p_x - 3.0, entity_p_y - 3.0, 6.0, 6.0, simpletexture, 1.0f);
 			}
 			else {
-				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale, false);
+				Draw_SString(entity_p_x - (2 * 8) / 2, entity_p_y - 4, "LG", text_scale, proportional);
 			}
 		}
 		else if(radar_show_backpacks && currententity->model->modhint == MOD_BACKPACK)
@@ -791,7 +792,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 					"X"
 				);
 
-				Draw_SColoredStringBasic(entity_p_x - 4, entity_p_y - 4, buffer, 0, 0.75f);
+				Draw_SColoredStringBasic(entity_p_x - 4, entity_p_y - 4, buffer, 0, 0.75f, proportional);
 			}
 		}
 	}
@@ -904,6 +905,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 	int i;
 	player_state_t *state;
 	player_info_t *info;
+	qbool proportional = false;
 
 	// Get player state so we can know where he is (or on rare occassions, she).
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
@@ -1170,7 +1172,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					);
 
 					// Draw the tracked players name in the user specified color.
-					Draw_SColoredStringBasic(name_x, name_y, buffer, 0, text_scale);
+					Draw_SColoredStringBasic(name_x, name_y, buffer, 0, text_scale, proportional);
 				}
 				else if (team_colours_for_name) {
 					char buffer[MAX_SCOREBOARDNAME + 8];
@@ -1187,7 +1189,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					);
 
 					// Draw the tracked players name in the user specified color.
-					Draw_SColoredStringBasic(name_x, name_y, buffer, 0, text_scale);
+					Draw_SColoredStringBasic(name_x, name_y, buffer, 0, text_scale, proportional);
 				}
 				else {
 					// Draw other players in normal character color.
@@ -1199,7 +1201,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			if (info->stats[STAT_HEALTH] <= 0 && info->stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 			{
 				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative*2, 1.0, 254, player_alpha);
-				Draw_SColoredStringBasic (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1, text_scale);
+				Draw_SColoredStringBasic (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1, text_scale, proportional);
 			}
 		}
 	}

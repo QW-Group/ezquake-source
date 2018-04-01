@@ -254,7 +254,7 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 		Draw_SColoredStringBasic(
 			x - AUTOID_ARMORNAME_OFFSET_X * scale,
 			y - AUTOID_ARMORNAME_OFFSET_Y * scale,
-			armor_name, 0, scale
+			armor_name, 0, scale, false
 		);
 	}
 
@@ -317,7 +317,7 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 				Draw_SColoredStringBasic(
 					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
 					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
-					weapon_name, 1, scale
+					weapon_name, 1, scale, false
 				);
 			}
 		}

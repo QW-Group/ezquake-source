@@ -509,9 +509,9 @@ int Draw_ColoredString(int x, int y, const char *text, int red, qbool proportion
 }
 
 // TODO: proportional
-int Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale)
+int Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale, qbool proportional)
 {
-	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0, false);
+	return Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0, proportional);
 }
 
 // FIXME: Replace with Draw_ColoredString()
