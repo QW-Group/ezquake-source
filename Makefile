@@ -400,7 +400,8 @@ OBJS_c := \
     hud_ammo.o \
     hud_items.o \
     hud_mp3.o \
-    hud_net.o
+    hud_net.o \
+    hud_guns.o
 
 ### Configuration Options ###
 
