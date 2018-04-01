@@ -350,119 +350,6 @@ void SCR_HUD_Netgraph(hud_t *hud)
 
 //---------------------
 //
-// draw HUD ping
-//
-void SCR_HUD_DrawPing(hud_t *hud)
-{
-	double t;
-	static double last_calculated;
-	static int ping_avg, pl, ping_min, ping_max;
-	static float ping_dev;
-
-	int width, height;
-	int x, y;
-	char buf[512];
-
-	static cvar_t
-		*hud_ping_period = NULL,
-		*hud_ping_show_pl,
-		*hud_ping_show_dev,
-		*hud_ping_show_min,
-		*hud_ping_show_max,
-		*hud_ping_style,
-		*hud_ping_blink,
-		*hud_ping_scale,
-		*hud_ping_proportional;
-
-	if (hud_ping_period == NULL)    // first time
-	{
-		hud_ping_period   = HUD_FindVar(hud, "period");
-		hud_ping_show_pl  = HUD_FindVar(hud, "show_pl");
-		hud_ping_show_dev = HUD_FindVar(hud, "show_dev");
-		hud_ping_show_min = HUD_FindVar(hud, "show_min");
-		hud_ping_show_max = HUD_FindVar(hud, "show_max");
-		hud_ping_style    = HUD_FindVar(hud, "style");
-		hud_ping_blink    = HUD_FindVar(hud, "blink");
-		hud_ping_scale    = HUD_FindVar(hud, "scale");
-		hud_ping_proportional = HUD_FindVar(hud, "proportional");
-	}
-
-	t = curtime;
-	if (t - last_calculated > hud_ping_period->value) {
-		// recalculate
-		net_stat_result_t result;
-		float period;
-
-		last_calculated = t;
-
-		period = max(hud_ping_period->value, 0);
-
-		CL_CalcNetStatistics(
-				period,             // period of time
-				network_stats,      // samples table
-				NETWORK_STATS_SIZE, // number of samples in table
-				&result);           // results
-
-		if (result.samples == 0)
-			return; // error calculating net
-
-		ping_avg = (int)(result.ping_avg + 0.5);
-		ping_min = (int)(result.ping_min + 0.5);
-		ping_max = (int)(result.ping_max + 0.5);
-		ping_dev = result.ping_dev;
-		pl = result.lost_lost;
-
-		clamp(ping_avg, 0, 999);
-		clamp(ping_min, 0, 999);
-		clamp(ping_max, 0, 999);
-		clamp(ping_dev, 0, 99.9);
-		clamp(pl, 0, 100);
-	}
-
-	buf[0] = 0;
-
-	// blink
-	if (hud_ping_blink->value)   // add dot
-		strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
-
-	// min ping
-	if (hud_ping_show_min->value)
-		strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
-
-	// ping
-	strlcat (buf, va("%d", ping_avg), sizeof (buf));
-
-	// max ping
-	if (hud_ping_show_max->value)
-		strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
-
-	// unit
-	strlcat (buf, " ms", sizeof (buf));
-
-	// standard deviation
-	if (hud_ping_show_dev->value)
-		strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
-
-	// pl
-	if (hud_ping_show_pl->value)
-		strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
-
-	// display that on screen
-	width = Draw_StringLength(buf, -1, hud_ping_scale->value, hud_ping_proportional->integer);
-	height = 8 * hud_ping_scale->value;
-
-	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		if (hud_ping_style->value) {
-			Draw_SAlt_String(x, y, buf, hud_ping_scale->value, hud_ping_proportional->integer);
-		}
-		else {
-			Draw_SString(x, y, buf, hud_ping_scale->value, hud_ping_proportional->integer);
-		}
-	}
-}
-
-//---------------------
-//
 // draw HUD notify
 //
 
@@ -839,30 +726,6 @@ void SCR_HUD_DrawArmorDamage(hud_t *hud)
 {
 	// TODO: NAUGHTY!! HUD_PrepareDraw(hud, width, height, &x, &y); plz
 	Draw_AMFStatLoss(STAT_ARMOR, hud);
-}
-
-// Problem icon, Net
-void SCR_HUD_NetProblem (hud_t *hud) {
-	extern mpic_t *scr_net;
-	static cvar_t *scale = NULL;
-	int x, y;
-	extern qbool hud_editor;
-
-	if (scale == NULL) {
-		scale = HUD_FindVar(hud, "scale");
-	}
-
-	if ((cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1) || cls.demoplayback)
-	{
-		if (hud_editor)
-			HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y);
-		return;
-	}
-
-	if (!HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
-		return;
-
-	Draw_SPic (x, y, scr_net, scale->value);
 }
 
 // ============================================================================0
@@ -3802,30 +3665,7 @@ void CommonDraw_Init(void)
 		NULL
 	);
 
-	// init ping
-	HUD_Register(
-		"ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
-		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
-		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-		"period",   "1",
-		"show_pl",  "1",
-		"show_min", "0",
-		"show_max", "0",
-		"show_dev", "0",
-		"style",    "0",
-		"blink",    "1",
-		"scale",    "1",
-		"proportional", "0",
-		NULL);
-
 	Guns_HudInit();
-
-	// netproblem icon
-	HUD_Register("netproblem", NULL, "Shows an icon if you are experiencing network problems",
-			HUD_NO_FRAME, ca_active, 0, SCR_HUD_NetProblem,
-			"1", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
-			"scale", "1",
-			NULL);
 
 	Items_HudInit();
 
