@@ -448,13 +448,13 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	int align;
 
 	clamp(num, -99999, 999999);
-
 	scale = max(scale, 0.01);
-
-	if (digits > 0)
+	if (digits > 0) {
 		clamp(digits, 1, 6);
-	else
+	}
+	else {
 		digits = 0; // auto-resize
+	}
 
 	align = 2;
 	switch (tolower(s_align[0]))
@@ -469,20 +469,18 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	}
 
 	snprintf(buf, sizeof (buf), "%d", (style == 2 || style == 3) ? num : abs(num));
-
-	if(digits)
-	{
-		switch (hud_digits_trim.integer)
-		{
+	if (digits) {
+		switch (hud_digits_trim.integer) {
 			case 0: // 10030 -> 999
 				len = strlen(buf);
-				if (len > digits)
-				{
+				if (len > digits) {
 					char *p = buf;
-					if(num < 0)
+					if (num < 0) {
 						*p++ = '-';
-					for (i = (num < 0) ? 1 : 0 ; i < digits; i++)
+					}
+					for (i = (num < 0) ? 1 : 0; i < digits; i++) {
 						*p++ = '9';
+					}
 					*p = 0;
 					len = digits;
 				}
@@ -490,8 +488,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 			default:
 			case 1: // 10030 -> 030
 				len = strlen(buf);
-				if(len > digits)
-				{
+				if(len > digits) {
 					char *p = buf;
 					memmove(p, p + (len - digits), digits);
 					buf[digits] = '\0';
@@ -504,8 +501,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 				break;
 		}
 	}
-	else
-	{
+	else {
 		len = strlen(buf);
 	}
 
@@ -531,7 +527,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 		}
 	}
 	else {
-		width = len * size * scale;
+		width = FontFixedWidth(len, scale, true, proportional);
 	}
 
 	height = size * scale;
@@ -587,7 +583,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 
 void SCR_HUD_DrawHealth(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
 	static int value;
 	if (scale == NULL) {
 		// first time called
@@ -595,28 +591,22 @@ void SCR_HUD_DrawHealth(hud_t *hud)
 		style  = HUD_FindVar(hud, "style");
 		digits = HUD_FindVar(hud, "digits");
 		align  = HUD_FindVar(hud, "align");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
+
 	value = HUD_Stats(STAT_HEALTH);
-	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(),
-			scale->value, style->value, digits->value, align->string, false);
+	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(), scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 
-void Draw_AMFStatLoss (int stat, hud_t* hud);
+void Draw_AMFStatLoss(int stat, hud_t* hud);
 
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
-	// TODO: This is very naughty, HUD_PrepareDraw(hud, width, height, &x, &y); MUST be called.
-
 	Draw_AMFStatLoss(STAT_HEALTH, hud);
+
 	if (HUD_Stats(STAT_HEALTH) <= 0) {
 		Amf_Reset_DamageStats();
 	}
-}
-
-void SCR_HUD_DrawArmorDamage(hud_t *hud)
-{
-	// TODO: NAUGHTY!! HUD_PrepareDraw(hud, width, height, &x, &y); plz
-	Draw_AMFStatLoss(STAT_ARMOR, hud);
 }
 
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
@@ -3378,14 +3368,17 @@ void CommonDraw_Init(void)
 			NULL);
 
 	// health
-	HUD_Register("health", NULL, "Part of your status - health level.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
-			"1", "face", "after", "center", "0", "0", "0", "0 0 0", NULL,
-			"style",  "0",
-			"scale",  "1",
-			"align",  "right",
-			"digits", "3",
-			NULL);
+	HUD_Register(
+		"health", NULL, "Part of your status - health level.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
+		"1", "face", "after", "center", "0", "0", "0", "0 0 0", NULL,
+		"style",  "0",
+		"scale",  "1",
+		"align",  "right",
+		"digits", "3",
+		"proportional", "0",
+		NULL
+	);
 
 	Ammo_HudInit();
 
@@ -3400,26 +3393,18 @@ void CommonDraw_Init(void)
 			NULL);
 
 	// healthdamage
-	HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
-			"0", "health", "left", "before", "0", "0", "0", "0 0 0", NULL,
-			"style",  "0",
-			"scale",  "1",
-			"align",  "right",
-			"digits", "3",
-			"duration", "0.8",
-			NULL);
-
-	// armordamage
-	HUD_Register("armordamage", NULL, "Shows amount of damage done to your armour.",
-			HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorDamage,
-			"0", "armor", "left", "before", "0", "0", "0", "0 0 0", NULL,
-			"style",  "0",
-			"scale",  "1",
-			"align",  "right",
-			"digits", "3",
-			"duration", "0.8",
-			NULL);
+	HUD_Register(
+		"healthdamage", NULL, "Shows amount of damage done to your health.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
+		"0", "health", "left", "before", "0", "0", "0", "0 0 0", NULL,
+		"style",  "0",
+		"scale",  "1",
+		"align",  "right",
+		"digits", "3",
+		"duration", "0.8",
+		"proportional", "0",
+		NULL
+	);
 
 	HUD_Register(
 		"frags", NULL, "Show list of player frags in short form.",

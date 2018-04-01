@@ -161,6 +161,13 @@ static void SCR_HUD_DrawArmorIcon(hud_t *hud)
 	}
 }
 
+void Draw_AMFStatLoss(int stat, hud_t* hud);
+
+static void SCR_HUD_DrawArmorDamage(hud_t *hud)
+{
+	Draw_AMFStatLoss(STAT_ARMOR, hud);
+}
+
 void Armor_HudInit(void)
 {
 	// armor count
@@ -184,6 +191,20 @@ void Armor_HudInit(void)
 		"1", "armor", "before", "center", "0", "0", "0", "0 0 0", NULL,
 		"style", "0",
 		"scale", "1",
+		"proportional", "0",
+		NULL
+	);
+
+	// armordamage
+	HUD_Register(
+		"armordamage", NULL, "Shows amount of damage done to your armour.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorDamage,
+		"0", "armor", "left", "before", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"align", "right",
+		"digits", "3",
+		"duration", "0.8",
 		"proportional", "0",
 		NULL
 	);

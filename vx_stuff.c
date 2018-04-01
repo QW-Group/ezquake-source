@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 #include "vx_stuff.h"
 #include "sbar.h"
+#include "fonts.h"
 
 corona_texture_t corona_textures[CORONATEX_COUNT];
 
@@ -197,7 +198,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 {
 	static int *vxdmgcnt, *vxdmgcnt_t, *vxdmgcnt_o;
 	static int x;
-	static cvar_t *scale = NULL, *style, *digits, *align, *duration;
+	static cvar_t *scale = NULL, *style, *digits, *align, *duration, *proportional;
 	float effect_duration = hud && duration ? duration->value : amf_stat_loss.value;
 
 	if (scale == NULL) {
@@ -207,6 +208,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		duration = HUD_FindVar(hud, "duration");
+		proportional = HUD_FindVar(hud, "proportional");
 	}
 
 	if (stat == STAT_HEALTH) {
@@ -241,7 +243,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		float alpha = min(1, (*vxdmgcnt_t - cl.time));
 		float old_alpha = Draw_MultiplyOverallAlpha(alpha);
 		if (hud) {
-			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string, false);
+			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string, proportional->integer);
 		}
 		else {
 			Sbar_DrawNum(x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
