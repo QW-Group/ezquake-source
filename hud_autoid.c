@@ -23,6 +23,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "gl_model.h"
 #include "gl_local.h"
 #include "teamplay.h"
+#include "fonts.h"
 
 /*********************************** AUTOID ***********************************/
 
@@ -33,6 +34,7 @@ static cvar_t scr_autoid_namelength                = { "scr_autoid_namelength", 
 static cvar_t scr_autoid_barlength                 = { "scr_autoid_barlength", "16" };
 static cvar_t scr_autoid_weaponicon                = { "scr_autoid_weaponicon", "1" };
 static cvar_t scr_autoid_scale                     = { "scr_autoid_scale", "1" };
+static cvar_t scr_autoid_proportional              = { "scr_autoid_proportional", "0" };
 
 // These aren't static as they're also used for multiview hud
 cvar_t scr_autoid_healthbar_bg_color               = { "scr_autoid_healthbar_bg_color", "180 115 115 100", CVAR_COLOR };
@@ -159,7 +161,7 @@ void SCR_SetupAutoID(void)
 	}
 }
 
-static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float scale)
+static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float scale, qbool proportional)
 {
 	char armor_name[20];
 	char weapon_name[20];
@@ -168,13 +170,14 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 	if (scr_autoid_barlength.integer > 0) {
 		bar_length = scr_autoid_barlength.integer;
 	}
+	else if (scr_autoid_namelength.integer >= 1) {
+		float fixed = FontFixedWidth(scr_autoid_namelength.integer, false, scale, proportional);
+		float particular = Draw_StringLength(autoid_p->player->name, -1, scale, proportional);
+
+		bar_length = min(fixed, particular) * 0.5;
+	}
 	else {
-		if (scr_autoid_namelength.integer >= 1) {
-			bar_length = min(scr_autoid_namelength.integer, strlen(autoid_p->player->name)) * 4;
-		}
-		else {
-			bar_length = strlen(autoid_p->player->name) * 4;
-		}
+		bar_length = Draw_StringLength(autoid_p->player->name, -1, scale, proportional) * 0.5;
 	}
 
 	// Draw health above the name.
@@ -254,7 +257,7 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 		Draw_SColoredStringBasic(
 			x - AUTOID_ARMORNAME_OFFSET_X * scale,
 			y - AUTOID_ARMORNAME_OFFSET_Y * scale,
-			armor_name, 0, scale, false
+			armor_name, 0, scale, proportional
 		);
 	}
 
@@ -317,7 +320,7 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 				Draw_SColoredStringBasic(
 					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
 					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
-					weapon_name, 1, scale, false
+					weapon_name, 1, scale, proportional
 				);
 			}
 		}
@@ -328,9 +331,11 @@ void SCR_DrawAutoID(void)
 {
 	int i, x, y;
 	float scale;
+	qbool proportional = scr_autoid_proportional.integer;
 
-	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator) || cl.intermission)
+	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator) || cl.intermission) {
 		return;
+	}
 
 	for (i = 0; i < autoid_count; i++) {
 		x = autoids[i].x * vid.width / glwidth;
@@ -343,16 +348,16 @@ void SCR_DrawAutoID(void)
 
 				strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_namelength.integer] = 0;
-				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale, false);
+				Draw_SString(x - Draw_StringLength(name, -1, 0.5 * scale, proportional), y - 8 * scale, name, scale, proportional);
 			}
 			else {
-				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale, false);
+				Draw_SString(x - Draw_StringLength(autoids[i].player->name, -1, 0.5 * scale, proportional), y - 8 * scale, autoids[i].player->name, scale, proportional);
 			}
 		}
 
 		// We only have health/armor info for all players when in demo playback.
 		if (cls.demoplayback && scr_autoid.value >= 2) {
-			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale);
+			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale, proportional);
 		}
 	}
 }
@@ -370,6 +375,7 @@ void SCR_RegisterAutoIDCvars(void)
 	Cvar_Register(&scr_autoid_healthbar_mega_color);
 	Cvar_Register(&scr_autoid_healthbar_two_mega_color);
 	Cvar_Register(&scr_autoid_healthbar_unnatural_color);
+	Cvar_Register(&scr_autoid_proportional);
 
 	Cvar_Register(&scr_autoid_armorbar_green_armor);
 	Cvar_Register(&scr_autoid_armorbar_yellow_armor);
