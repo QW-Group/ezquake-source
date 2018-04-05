@@ -36,8 +36,8 @@ static float varray_vertex[16];
 void RainSplash(vec3_t org);
 void ParticleStats (int change);
 void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t color);
-void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2);
-void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width);
+static void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2);
+static void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width);
 
 typedef struct part_blend_info_s {
 	GLenum glSourceFactor;
@@ -535,20 +535,26 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_FAN, true, false);
+					GL_Sprite3DInitialiseBatch(pt->billboard_type, blend_options[pt->blendtype].glSourceFactor, blend_options[pt->blendtype].glDestFactor, TEXTURE_DETAILS(ptex), GL_TRIANGLE_STRIP, true, false);
 					first = false;
 				}
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
-					gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
+					gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 6);
 					if (vert) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], p->color, ptex->tex_index);
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], 1, 0.5, p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], 0, 0.5, p->color, ptex->tex_index);
+
+						// near center
+						QMB_BillboardAddVert(vert++, pt, (varray_vertex[0] + varray_vertex[4]) / 2, (varray_vertex[1] + varray_vertex[5]) / 2, (varray_vertex[2] + varray_vertex[6]) / 2, 1.0, 0.25, p->color, ptex->tex_index);
+						// far center
+						QMB_BillboardAddVert(vert++, pt, (varray_vertex[8] + varray_vertex[12]) / 2, (varray_vertex[9] + varray_vertex[13]) / 2, (varray_vertex[10] + varray_vertex[14]) / 2, 0, 0.25, p->color, ptex->tex_index);
+
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], 1, 0, p->color, ptex->tex_index);
+						QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], 0, 0, p->color, ptex->tex_index);
 					}
 				}
 			}
@@ -960,39 +966,32 @@ void ParticleStats (int change)
 }
 
 //from darkplaces engine - finds which corner of a particle goes where, so I don't have to :D
-void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2)
+static void R_PreCalcBeamVerts(vec3_t org1, vec3_t org2, vec3_t right1, vec3_t right2)
 {
 	vec3_t diff, normal;
 
-	VectorSubtract (org2, org1, normal);
-	VectorNormalize (normal);
+	VectorSubtract(org2, org1, normal);
+	VectorNormalize(normal);
 
-	//width = width / 2;
 	// calculate 'right' vector for start
-	VectorSubtract (r_origin, org1, diff);
-	VectorNormalize (diff);
-	CrossProduct (normal, diff, right1);
+	VectorSubtract(r_origin, org1, diff);
+	VectorMA(diff, 32, vup, diff);
+	VectorNormalize(diff);
+	CrossProduct(normal, diff, right1);
 
 	// calculate 'right' vector for end
-	VectorSubtract (r_origin, org2, diff);
-	VectorNormalize (diff);
-	CrossProduct (normal, diff, right2);
+	VectorSubtract(r_origin, org2, diff);
+	VectorMA(diff, 32, vup, diff);
+	VectorNormalize(diff);
+	CrossProduct(normal, diff, right2);
 }
 
-void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width)
+static void R_CalcBeamVerts(float *vert, const vec3_t org1, const vec3_t org2, const vec3_t right1, const vec3_t right2, float width)
 {
-	vert[ 0] = org1[0] + width * right1[0];
-	vert[ 1] = org1[1] + width * right1[1];
-	vert[ 2] = org1[2] + width * right1[2];
-	vert[ 4] = org1[0] - width * right1[0];
-	vert[ 5] = org1[1] - width * right1[1];
-	vert[ 6] = org1[2] - width * right1[2];
-	vert[ 8] = org2[0] - width * right2[0];
-	vert[ 9] = org2[1] - width * right2[1];
-	vert[10] = org2[2] - width * right2[2];
-	vert[12] = org2[0] + width * right2[0];
-	vert[13] = org2[1] + width * right2[1];
-	vert[14] = org2[2] + width * right2[2];
+	VectorMA(org1, +width, right1, &vert[0]);
+	VectorMA(org1, -width, right1, &vert[4]);
+	VectorMA(org2, -width, right2, &vert[8]);
+	VectorMA(org2, +width, right2, &vert[12]);
 }
 
 int QMB_ParticleTextureCount(void)
