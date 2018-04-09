@@ -739,8 +739,11 @@ void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int a
 	int character_height;
 
 	while ((line_end = strchr(line_start, '\r'))) {
+		int line_length;
+
 		line_start = line_end + 1;
-		max_length = max(max_length, Draw_StringLengthColorsByTerminator(line_start, -1, scale, proportional, '\r'));
+		line_length = Draw_StringLengthColorsByTerminator(line_start, -1, scale, proportional, '\r');
+		max_length = max(max_length, line_length);
 
 		++lines;
 	}

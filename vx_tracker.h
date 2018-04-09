@@ -22,20 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 extern cvar_t amf_tracker_messages;
 extern cvar_t amf_tracker_time;
 extern cvar_t amf_tracker_align_right;
-extern cvar_t amf_tracker_x;
-extern cvar_t amf_tracker_y;
-extern cvar_t amf_tracker_frame_color;
 extern cvar_t amf_tracker_scale;
-extern cvar_t amf_tracker_images_scale;
-extern cvar_t amf_tracker_string_suicides;
-extern cvar_t amf_tracker_string_died;
-extern cvar_t amf_tracker_color_good;		// Good news
-extern cvar_t amf_tracker_color_bad;		// Bad news
-extern cvar_t amf_tracker_color_tkgood;		// Team kill, not on ur team
-extern cvar_t amf_tracker_color_tkbad;		// Team kill, on ur team
-extern cvar_t amf_tracker_color_myfrag;		// Use this color for frag which u done
-extern cvar_t amf_tracker_color_fragonme;	// Use this color when u frag someone
-extern cvar_t amf_tracker_color_suicide;	// Use this color when u suicides
 
 void VX_TrackerDeath(int player, int weapon, int count);
 void VX_TrackerSuicide(int player, int weapon, int count);
@@ -49,13 +36,6 @@ void VX_TrackerOddTeamkilled(int player, int weapon);
 void VX_TrackerFlagTouch(int count);
 void VX_TrackerFlagDrop(int count);
 void VX_TrackerFlagCapture(int count);
-
-typedef enum tracktype_s 
-{
-	tt_death,		// Deaths, suicides, frags, teamkills... we may split this, but currently no need
-	tt_streak,		// Streak msgs
-	tt_flag,		// Flag msgs
-} tracktype_t;
 
 char* GetWeaponName(int num);
 const char* GetWeaponImageName(int num);

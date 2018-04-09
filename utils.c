@@ -139,13 +139,13 @@ int StringToRGB_W(char *s, byte *rgb)
 	int i;
 	char buf[20]; // "255 255 255 255" - the longest possible string
 	char *result;
+
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
 
 	strlcpy(buf, s, sizeof(buf));
 	result = strtok(buf, " ");
 
-	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " "))
-	{
+	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " ")) {
 		rgb[i] = (byte) Q_atoi(result);
 	}
 
@@ -160,6 +160,17 @@ int StringToRGB_W(char *s, byte *rgb)
 	}
 
 	return i;
+}
+
+void TrackerStringToRGB_W(const char *s, byte *rgb)
+{
+	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
+
+	if (s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9' && s[2] >= '0' && s[2] <= '9') {
+		rgb[0] = ((s[0] - '0') / 9.0f) * 255;
+		rgb[1] = ((s[1] - '0') / 9.0f) * 255;
+		rgb[2] = ((s[2] - '0') / 9.0f) * 255;
+	}
 }
 
 byte* StringToRGB(char *s)

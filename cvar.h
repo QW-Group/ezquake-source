@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_AUTO            (1<<14) // Cvar can possibly have an automatically calculated value that shouldn't be saved, but still presentable
 #define CVAR_MOD_CREATED     (1<<15) // Cvar created by the mod issuing 'set' command
 #define CVAR_RECOMPILE_PROGS (1<<16) // Flag all programs to be recompiled if the value changes
+#define CVAR_TRACKERCOLOR    (1<<17) // Convert the string from tracker format (0-9)(0-9)(0-9) 
 
 typedef struct cvar_s {
 	char    *name;

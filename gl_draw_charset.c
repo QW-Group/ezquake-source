@@ -306,7 +306,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 	// overall opacity is applied properly.
 	memcpy(rgba, color_white, sizeof(byte) * 4);
 	if (scr_coloredText.integer && color_count > 0) {
-		COLOR_TO_RGBA(color[color_index].c, rgba);
+		COLOR_TO_RGBA(color[0].c, rgba);
 	}
 
 	// Draw the string.
@@ -358,7 +358,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 			if (color[color_index].c != last_color) {
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
-				rgba[3] = 255;
+				rgba[3] = 255 * alpha;
 				Draw_SetColor(rgba);
 			}
 
@@ -384,10 +384,9 @@ void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_
 	Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap, false);
 }
 
-// TODO: proportional
-void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
+float Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, false);
+	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, proportional);
 }
 
 float Draw_SString(int x, int y, const char *text, float scale, qbool proportional)

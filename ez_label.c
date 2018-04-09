@@ -580,7 +580,7 @@ int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 				Draw_BigString(x, y + (curr_row * scaled_char_size), line, NULL, 0, label->scale, 1, 0);
 			}
 			else {
-				Draw_SColoredAlphaString(x, y + (curr_row * scaled_char_size), line, &label->color, 1, 0, label->scale, 1);
+				Draw_SColoredAlphaString(x, y + (curr_row * scaled_char_size), line, &label->color, 1, 0, label->scale, 1, false);
 			}
 
 			curr_row++;

@@ -218,7 +218,12 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	var->value = Q_atof (var->string);
 #ifndef SERVERONLY
 	var->integer = Q_atoi (var->string);
-	StringToRGB_W(var->string, var->color);
+	if (var->flags & CVAR_TRACKERCOLOR) {
+		TrackerStringToRGB_W(var->string, var->color);
+	}
+	else {
+		StringToRGB_W(var->string, var->color);
+	}
 	if (!same_value) {
 		Cvar_AutoReset (var);
 	}

@@ -79,6 +79,7 @@ extern const color_t COLOR_WHITE;
 color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a);
 color_t RGBAVECT_TO_COLOR(byte rgba[4]);
 color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4]);
+color_t RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(byte rgba[4], float alpha);
 byte* COLOR_TO_RGBA(int i, byte rgba[4]);
 byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4]);
 float* COLOR_TO_FLOATVEC_PREMULT(color_t i, float rgba[4]);
@@ -113,7 +114,7 @@ void Draw_Alt_String(int x, int y, const char *str, float scale, qbool proportio
 void Draw_ColoredString(int x, int y, const char *str, int red, qbool proportional);
 void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale, qbool proportional);
 void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
-void Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha);
+float Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional);
 void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional);
 float Draw_SString(int x, int y, const char *str, float scale, qbool proportional);
 
