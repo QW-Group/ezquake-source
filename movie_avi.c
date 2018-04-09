@@ -558,6 +558,7 @@ qbool ValidateMovieCodec (char* name)
 	int valueIndex;
 	char valueName[64];
 	DWORD valueLength = sizeof (valueName);
+	DWORD lookupLength;
 
 	// Uncompressed stream
 	if (name[0] == 0 || !strcmp (name, "0")) {
@@ -573,7 +574,7 @@ qbool ValidateMovieCodec (char* name)
 
 	strlcpy (valueName, "vidc.", sizeof (valueName));
 	strlcat (valueName, name, sizeof (valueName));
-	if (RegGetValue (registryKey, NULL, valueName, RRF_RT_ANY, NULL, NULL, NULL) == ERROR_SUCCESS) {
+	if (RegQueryValueEx(registryKey, valueName, NULL, NULL, NULL, &lookupLength) == ERROR_SUCCESS) {
 		RegCloseKey (registryKey);
 		return true;
 	}
