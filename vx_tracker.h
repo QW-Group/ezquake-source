@@ -55,6 +55,7 @@ typedef enum tracktype_s
 	tt_death,		// Deaths, suicides, frags, teamkills... we may split this, but currently no need
 	tt_streak,		// Streak msgs
 	tt_flag,		// Flag msgs
+	tt_pickups,     // Item pickup msgs
 } tracktype_t;
 
 void VX_TrackerAddText(char *msg, tracktype_t tt);

@@ -5379,13 +5379,16 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 void SCR_HUD_DrawItemsClock(hud_t *hud)
 {
 	extern qbool hud_editor;
+	extern const char* MVD_AnnouncerString(int line, int total, float* alpha);
 	int width, height;
 	int x, y;
+	int i;
 	static cvar_t
 		*hud_itemsclock_timelimit = NULL,
 		*hud_itemsclock_style = NULL,
 		*hud_itemsclock_scale = NULL,
-		*hud_itemsclock_filter = NULL;
+		*hud_itemsclock_filter = NULL,
+		*hud_itemsclock_announcer = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -5394,6 +5397,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
+		hud_itemsclock_announcer = HUD_FindVar(hud, "announcer");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -6783,6 +6787,7 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"scale", "1",
 		"filter", "",
+		"announcer", "0",
 		NULL
 	);
 

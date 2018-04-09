@@ -38,11 +38,12 @@ static int active_track = 0;
 static int max_active_tracks = 0;
 
 
+cvar_t      amf_tracker_pickups         = {"r_tracker_pickups", "1"};
 cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0"};
 cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1"};
 cvar_t		amf_tracker_streaks			= {"r_tracker_streaks", "0"};
 cvar_t		amf_tracker_time			= {"r_tracker_time", "4"};
-cvar_t		amf_tracker_messages		= {"r_tracker_messages", "10"};
+cvar_t		amf_tracker_messages		= {"r_tracker_messages", "20"};
 cvar_t		amf_tracker_inconsole       = {"r_tracker_inconsole", "0"};
 cvar_t		amf_tracker_align_right		= {"r_tracker_align_right", "1"};
 cvar_t		amf_tracker_x				= {"r_tracker_x", "0"};
@@ -90,6 +91,7 @@ void InitTracker(void)
 
 	Cvar_Register (&amf_tracker_frags);
 	Cvar_Register (&amf_tracker_flags);
+	Cvar_Register (&amf_tracker_pickups);
 	Cvar_Register (&amf_tracker_streaks);
 	Cvar_Register (&amf_tracker_messages);
 	Cvar_Register (&amf_tracker_inconsole);
@@ -191,6 +193,7 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 		case tt_death:  if (!amf_tracker_frags.value)   return; break;
 		case tt_streak: if (!amf_tracker_streaks.value) return; break;
 		case tt_flag:   if (!amf_tracker_flags.value)   return; break;
+		case tt_pickups:if (!amf_tracker_pickups.value) return; break;
 		default: return;
 	}
 

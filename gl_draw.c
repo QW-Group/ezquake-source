@@ -1181,6 +1181,11 @@ void Draw_SString (int x, int y, const char *text, float scale)
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, 1, false, 0);
 }
 
+void Draw_SStringAlpha(int x, int y, const char *text, float scale, float alpha)
+{
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, alpha, false, 0);
+}
+
 void Draw_SAlt_String (int x, int y, const char *text, float scale)
 {
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, scale, 1, false, 0);

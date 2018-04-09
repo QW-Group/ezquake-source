@@ -90,6 +90,7 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale);
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, const char *str, float scale);
+void Draw_SStringAlpha(int x, int y, const char *text, float scale, float alpha);
 void Draw_SAlt_String (int x, int y, const char *text, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
