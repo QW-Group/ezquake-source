@@ -47,6 +47,9 @@ void VX_TrackerStreak(int player, int count);
 void VX_TrackerStreakEnd(int player, int killer, int count);
 void VX_TrackerStreakEndOddTeamkilled(int player, int count);
 
+// This needs improved...
+void VX_TrackerPickupText(const char* line);
+
 #define MAX_WEAPON_CLASSES		64
 #define MAX_FRAG_DEFINITIONS	512
 #define MAX_FRAGMSG_LENGTH		256

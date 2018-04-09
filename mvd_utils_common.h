@@ -40,6 +40,7 @@ $Id: mvd_utils_common.h,v 1.2 2007-09-24 21:34:51 johnnycz Exp $
 #define mvd_info_types 15
 
 #define IS_WEAPON(x) ((x) >= SSG_INFO && (x) <= LG_INFO)
+#define MAX_MEGAS_PER_PLAYER 4
 
 #define AMMO_TYPES 4
 
@@ -149,6 +150,7 @@ typedef struct mvd_new_info_s {
 	player_info_t	*p_info;
 	int lwf;						// last weapon fired
 	mvd_info_t mvdinfo;
+	vec3_t mega_locations[MAX_MEGAS_PER_PLAYER];
 } mvd_new_info_t;// mvd_new_info;
 
 extern mvd_new_info_t mvd_new_info[MAX_CLIENTS];
@@ -190,6 +192,8 @@ typedef struct mvd_wp_info_s {
 	byte    Rcolor;
 	byte    Gcolor;
 	byte    Bcolor;
+	const cvar_t* name_cvar;
+	const char* color_string;
 } mvd_wp_info_t;
 
 extern mvd_wp_info_t mvd_wp_info[mvd_info_types];

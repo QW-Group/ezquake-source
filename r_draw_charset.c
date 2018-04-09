@@ -445,6 +445,11 @@ float Draw_SString(float x, float y, const char *text, float scale, qbool propor
 	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, proportional, 0);
 }
 
+float Draw_SStringAlpha(int x, int y, const char* text, float scale, float alpha)
+{
+	return Draw_StringBase(x, y, text, NULL, 0, false, scale, alpha, false, 0, false, 0);
+}
+
 void Draw_SAlt_String(float x, float y, const char *text, float scale, qbool proportional)
 {
 	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional, 0);

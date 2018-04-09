@@ -95,7 +95,8 @@ cvar_t amf_tracker_flags                         = {"r_tracker_flags", "0"};
 cvar_t amf_tracker_frags                         = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                       = {"r_tracker_streaks", "0"};
 cvar_t amf_tracker_time                          = {"r_tracker_time", "4"};
-cvar_t amf_tracker_messages                      = {"r_tracker_messages", "10"};
+cvar_t amf_tracker_messages                      = {"r_tracker_messages", "20"};
+cvar_t amf_tracker_pickups                       = {"r_tracker_pickups", "0"};
 cvar_t amf_tracker_align_right                   = {"r_tracker_align_right", "1"};
 cvar_t amf_tracker_scale                         = {"r_tracker_scale", "1"};
 static cvar_t amf_tracker_inconsole              = {"r_tracker_inconsole", "0"};
@@ -166,6 +167,11 @@ static qbool VX_FilterFlags(void)
 	return !amf_tracker_flags.integer;
 }
 
+static qbool VX_FilterPickups(void)
+{
+	return !amf_tracker_pickups.integer;
+}
+
 static struct {
 	double time;
 	char text[MAX_SCOREBOARDNAME+20];
@@ -188,6 +194,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_frame_color);
 	Cvar_Register(&amf_tracker_scale);
 	Cvar_Register(&amf_tracker_images_scale);
+	Cvar_Register(&amf_tracker_pickups);
 
 	Cvar_Register(&amf_tracker_color_good);
 	Cvar_Register(&amf_tracker_color_bad);
@@ -1484,4 +1491,14 @@ void SCR_HUD_DrawTracker(hud_t* hud)
 	if (height > 0 && width > 0 && HUD_PrepareDraw(hud, ceil(width), ceil(height), &x, &y)) {
 		VXSCR_DrawTrackerString(x, y, ceil(width), hud_tracker_name_width->integer, hud_tracker_proportional->integer, hud_tracker_scale->value, hud_tracker_image_scale->value, hud_tracker_align_right->integer);
 	}
+}
+
+// This needs improved...
+void VX_TrackerPickupText(const char* line)
+{
+	if (VX_FilterPickups()) {
+		return;
+	}
+
+	VX_TrackerAddSimpleText(line, color_white);
 }

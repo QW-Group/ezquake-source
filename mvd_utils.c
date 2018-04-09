@@ -29,7 +29,27 @@ $Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 #include "utils.h"
 #include "mvd_utils_common.h"
 #include "Ctrl.h"
+#include "sbar.h"
+#include "vx_tracker.h"
 
+#define MENTION_PICKED_UP_ITEM  1
+#define MENTION_PICKED_UP_PACK  2
+#define MENTION_DIED_WITH_ITEM -1
+#define MENTION_ITEM_RAN_OUT   -2
+#define MENTION_DROPPED_ITEM   -3
+
+#define MAX_ANNOUNCER_LINES 16
+#define MAX_ANNOUNCER_LINE_TIME 10
+#define MAX_ANNOUNCER_LINE_TIME_FADE 8
+static char announcer_line_strings[MAX_ANNOUNCER_LINES][256];
+static double announcer_line_times[MAX_ANNOUNCER_LINES];
+static int announcer_lines;
+
+// Can contain 'pack'
+#define MVD_ANNOUNCER_ITEM_LENGTH 9
+
+extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator, tp_name_backpack, tp_name_suit;
+extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg, tp_name_ga, tp_name_ya, tp_name_ra, tp_name_mh;
 
 mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 	{gt_1on1,"duel"},
@@ -42,28 +62,30 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA},
-    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA},
-    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA},
-    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA},
-    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA},
-    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA},
-    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA},
-    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA},
-    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00},
-    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9},
-    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01},
-    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36},
-    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00},
-    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01},
-    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A},
+    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f"},
+    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f"},
+    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ssg,  "&cf0f"},
+    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ng,   "&cf0f"},
+    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_sng,  "&cf0f"},
+    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_gl,   "&cf0f"},
+    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA, &tp_name_rl,   "&cf0f"},
+    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA, &tp_name_lg,   "&cf0f"},
+    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00, &tp_name_ring, "&cff0"},
+    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9, &tp_name_quad, "&c00f"},
+    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01, &tp_name_pent, "&cf00"},
+    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36, &tp_name_ga,   "&c0f0"},
+    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00, &tp_name_ya,   "&cff0"},
+    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01, &tp_name_ra,   "&cf00"},
+    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A, &tp_name_mh,   "&c00f"},
 };
+static int item_counts[mvd_info_types];
 
 typedef struct mvd_clock_t {
-	int itemtype;             // RA, Quad, RL, ...
-	double clockval;          // time when the clock expires
-	struct mvd_clock_t *next; // next item in the linked list
-	struct mvd_clock_t *prev; // prev item in the linked list
+	int itemtype;                       // RA, Quad, RL, ...
+	double clockval;                    // time when the clock expires
+	char location[MAX_MACRO_STRING];    // Player location when the object was picked up
+	struct mvd_clock_t *next;           // next item in the linked list
+	struct mvd_clock_t *prev;           // prev item in the linked list
 } mvd_clock_t;
 
 // points to the first (earliest) item of the clock list
@@ -156,8 +178,6 @@ int cam_1,cam_2,cam_3,cam_4;
 static qbool was_standby = true;
 
 
-extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator, tp_name_backpack, tp_name_suit;
-extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg,tp_name_ga,tp_name_ya,tp_name_ra,tp_name_mh;
 extern cvar_t tp_name_none, tp_weapon_order;
 char mvd_info_best_weapon[20];
 extern int loc_loaded;
@@ -224,7 +244,8 @@ char *Make_Red (char *s,int i){
 	return buf;
 }
 
-void MVD_Init_Info (int player_slot) {
+void MVD_Init_Info (int player_slot)
+{
 	int i;
 	int z;
 
@@ -240,7 +261,7 @@ void MVD_Init_Info (int player_slot) {
 	}
 
 	strlcpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
-	mvd_cg_info.timelimit=cl.timelimit;
+	mvd_cg_info.timelimit = cl.timelimit;
 
 	strlcpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
 	for (i = 0; i < z; i++) {
@@ -262,12 +283,40 @@ void MVD_Init_Info (int player_slot) {
 		mvd_cg_info.gametype=4;
 
 	strlcpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
-	mvd_cg_info.deathmatch=atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
+	mvd_cg_info.deathmatch = cl.deathmatch;
 
 	mvd_cg_info.pcount = z;
 
-	for (i = 0; i < mvd_cg_info.pcount; i++)
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		mvd_new_info[i].p_state = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[mvd_new_info[i].id];
+	}
+
+	memset(item_counts, 0, sizeof(item_counts));
+	for (i = 0; i < sizeof(item_counts) / sizeof(item_counts[0]); ++i) {
+		int item_model_hint = mvd_wp_info[i].model_hint;
+		int item_skin_number = mvd_wp_info[i].skin_number;
+
+		if (item_model_hint) {
+			int j;
+
+			for (j = 0; j < CL_MAX_EDICTS; j++) {
+				int modindex = cl_entities[j].baseline.modelindex;
+				int skin = cl_entities[j].baseline.skinnum;
+
+				if (modindex >= 0 && modindex < sizeof(cl.model_precache) / sizeof(cl.model_precache[0]) && cl.model_precache[modindex]) {
+					if (cl.model_precache[modindex]->modhint == item_model_hint && skin == item_skin_number) {
+						++item_counts[i];
+					}
+				}
+			}
+		}
+	}
+
+	if (player_slot == MAX_CLIENTS) {
+		memset(announcer_line_strings, 0, sizeof(announcer_line_strings));
+		memset(announcer_line_times, 0, sizeof(announcer_line_times));
+		announcer_lines = 0;
+	}
 }
 
 double MVD_RespawnTimeGet(int itemtype)
@@ -367,11 +416,14 @@ mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
 	return ret;
 }
 
-void MVD_ClockStart(int itemtype)
+static void MVD_ClockStart(int itemtype, vec3_t origin)
 {
 	mvd_clock_t *newclock = (mvd_clock_t *) Q_malloc(sizeof (mvd_clock_t));
 	newclock->clockval = cls.demotime + MVD_RespawnTimeGet(itemtype);
 	newclock->itemtype = itemtype;
+	if (origin) {
+		strlcpy(newclock->location, TP_LocationName(origin), sizeof(newclock->location));
+	}
 	MVD_ClockList_Insert(newclock);
 }
 
@@ -430,7 +482,7 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter, qbool proportional)
 {
 	mvd_clock_t *current = mvd_clocklist;
-	char clockitem[32];
+	char clockitem[128];
 	char temp[16];
 	int base_x = x;
 	int barWidth;
@@ -462,37 +514,56 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			clockitem[0] = '\0';
 			y += LETTERHEIGHT * scale / 2;
 		}
+		else if (style == 4) {
+			char item_name[MAX_MACRO_STRING];
+
+			if (mvd_wp_info[current->itemtype].name_cvar && mvd_wp_info[current->itemtype].name_cvar->string[0]) {
+				Util_SkipChars(mvd_wp_info[current->itemtype].name_cvar->string, "{}", item_name, sizeof(item_name));
+			}
+			else {
+				strlcpy(item_name, mvd_wp_info[current->itemtype].colored_name, sizeof(item_name));
+			}
+
+			snprintf(clockitem, sizeof(clockitem), "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name);
+
+			strlcat(clockitem, " \034", sizeof(clockitem));
+		}
 		else if (style == 6) {
 			// progress bar countdown
 			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
 
-			barWidth = (round(67*scale)/time_limit) * (time_limit - time + 1);
+			barWidth = (round(67 * scale) / time_limit) * (time_limit - time + 1);
 			if (time == 0) {
-				barWidth = (round(67*scale)/time_limit) * time_limit;
+				barWidth = (round(67 * scale) / time_limit) * time_limit;
 			}
 
-			Draw_AlphaFillRGB(x-1, y, barWidth, 10*scale,
-							  RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
-									  	  	mvd_wp_info[current->itemtype].Gcolor,
-											mvd_wp_info[current->itemtype].Bcolor, 128));
+			Draw_AlphaFillRGB(x - 1, y, barWidth, 10 * scale,
+				RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+					mvd_wp_info[current->itemtype].Gcolor,
+					mvd_wp_info[current->itemtype].Bcolor, 128));
 		}
 		else if (style == 7) {
 			// progress bar countdown, but itemname not in bar
 			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
 
-			barWidth = (round(44*scale)/time_limit) * (time_limit - time + 1);
+			barWidth = (round(44 * scale) / time_limit) * (time_limit - time + 1);
 			if (time == 0) {
-				barWidth = (round(44*scale)/time_limit) * time_limit;
+				barWidth = (round(44 * scale) / time_limit) * time_limit;
 			}
 
-			Draw_AlphaFillRGB(x+(22*scale), y, barWidth, 10*scale,
-							  RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
-									  	    mvd_wp_info[current->itemtype].Gcolor,
-											mvd_wp_info[current->itemtype].Bcolor, 128));
+			Draw_AlphaFillRGB(x + (22 * scale), y, barWidth, 10 * scale,
+				RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+					mvd_wp_info[current->itemtype].Gcolor,
+					mvd_wp_info[current->itemtype].Bcolor, 128));
 		}
 		else {
 			// built-in color(GL) or simple white (software)
-			strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+			if (mvd_wp_info[current->itemtype].name_cvar) {
+				strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+			}
+			else {
+				strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+			}
 		}
 
 		//add the time
@@ -502,6 +573,12 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 		}
 		else {
 			strlcat(clockitem, " spawn", sizeof(clockitem));
+		}
+
+		if (style == 4 && item_counts[current->itemtype] != 1 && current->location[0]) {
+			strlcat(clockitem, " \020", sizeof(clockitem));
+			strlcat(clockitem, current->location, sizeof(clockitem));
+			strlcat(clockitem, "\021", sizeof(clockitem));
 		}
 
 		Draw_SString(x, y, clockitem, scale, proportional);
@@ -521,9 +598,9 @@ static void MVD_Took(int player, int item, qbool addclock)
 {
 	if (mvd_new_info[player].mvdinfo.initialized) {
 		if (addclock) {
-			MVD_ClockStart(item);
+			MVD_ClockStart(item, mvd_new_info[player].p_state ? mvd_new_info[player].p_state->origin : NULL);
 		}
-		mvd_new_info[player].mvdinfo.itemstats[item].mention = 1;
+		mvd_new_info[player].mvdinfo.itemstats[item].mention = addclock ? MENTION_PICKED_UP_ITEM : MENTION_PICKED_UP_PACK;
 	}
 }
 
@@ -703,58 +780,162 @@ void MVD_Info (void){
 	}
 }
 
+static void MVD_AddString(const char* line)
+{
+	VX_TrackerPickupText(line);
+
+	if (announcer_lines == MAX_ANNOUNCER_LINES) {
+		memmove(&announcer_line_strings[0], &announcer_line_strings[1], sizeof(announcer_line_strings[0]) * (MAX_ANNOUNCER_LINES - 1));
+		memmove(&announcer_line_times[0], &announcer_line_times[1], sizeof(announcer_line_times[0]) * (MAX_ANNOUNCER_LINES - 1));
+		strlcpy(announcer_line_strings[announcer_lines - 1], line, sizeof(announcer_line_strings[announcer_lines - 1]));
+		announcer_line_times[announcer_lines - 1] = cl.time;
+	}
+	else {
+		strlcpy(announcer_line_strings[announcer_lines], line, sizeof(announcer_line_strings[announcer_lines]));
+		announcer_line_times[announcer_lines] = cl.time;
+		++announcer_lines;
+	}
+}
+
+const char* MVD_AnnouncerString(int line, int total, float* alpha)
+{
+	int index = announcer_lines - total + line;
+	if (index >= 0 && index < announcer_lines && announcer_line_times[index] > cl.time - MAX_ANNOUNCER_LINE_TIME) {
+		if (cl.time - announcer_line_times[index] < MAX_ANNOUNCER_LINE_TIME_FADE) {
+			*alpha = 1;
+		}
+		else {
+			*alpha = (1 - (cl.time - announcer_line_times[index] - MAX_ANNOUNCER_LINE_TIME_FADE) / (MAX_ANNOUNCER_LINE_TIME - MAX_ANNOUNCER_LINE_TIME_FADE));
+		}
+		return announcer_line_strings[index];
+	}
+	else {
+		*alpha = 0;
+		return "";
+	}
+}
+
+static const char* MVD_AnnouncerPlayerName(int i)
+{
+	if (cl.teamplay) {
+		int player_color = Sbar_BottomColor(mvd_new_info[i].p_info);
+
+		byte red = host_basepal[player_color * 3];
+		byte green = host_basepal[player_color * 3 + 1];
+		byte blue = host_basepal[player_color * 3 + 2];
+
+		if (mvd_new_info[i].p_info->bottomcolor == 3) {
+			red = 99;
+			green = 255;
+			blue = 120;
+		}
+		else if (mvd_new_info[i].p_info->bottomcolor == 12) {
+			red = green = 255;
+			blue = 0;
+		}
+
+		return va("&c%x%x%x%s&r", (unsigned int)(red / 16), (unsigned int)(green / 16), (unsigned int)(blue / 16), mvd_new_info[i].p_info->name);
+	}
+	else {
+		return mvd_new_info[i].p_info->name;
+	}
+}
+
 void MVD_Status_Announcer(int i, int z){
-	char *pn;
-	vec3_t *pl;
-	pn=mvd_new_info[i].p_info->name;
-	pl=&mvd_new_info[i].p_state->origin;
-	if (mvd_new_info[i].mvdinfo.itemstats[z].mention==1)
-	{
+	//char *pn = mvd_new_info[i].p_info->name;
+	vec3_t *pl = &mvd_new_info[i].p_state->origin;
+
+	if (mvd_new_info[i].mvdinfo.itemstats[z].mention > 0) {
+		int mention = mvd_new_info[i].mvdinfo.itemstats[z].mention;
+
 		mvd_new_info[i].mvdinfo.itemstats[z].mention = 0;
 
-		if (!mvd_moreinfo.integer)
+		if (!mvd_moreinfo.integer) {
 			return;
+		}
 
-		switch (z)
-		{
-			case 2: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ssg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 3: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ng.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 4: Com_Printf("%s Took %s @ %s\n",pn, tp_name_sng.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 5: Com_Printf("%s Took %s @ %s\n",pn, tp_name_gl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 6: Com_Printf("%s Took %s @ %s\n",pn, tp_name_rl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 7: Com_Printf("%s Took %s @ %s\n",pn, tp_name_lg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 8: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ring.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 9: Com_Printf("%s Took %s @ %s\n",pn, tp_name_quad.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 10: Com_Printf("%s Took %s @ %s\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 11: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ga.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 12: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ya.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 13: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ra.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+		if (z >= 2 && z < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]) && z != GA_INFO && z != GL_INFO) {
+			char location_name[MAX_MACRO_STRING];
+			char item_name[MAX_MACRO_STRING];
+			char simple_item_name[MAX_MACRO_STRING];
+
+			if (mvd_wp_info[z].name_cvar && mvd_wp_info[z].name_cvar->string && mvd_wp_info[z].name_cvar->string[0]) {
+				Util_SkipChars(mvd_wp_info[z].name_cvar->string, "{}", item_name, sizeof(item_name));
+			}
+			else {
+				strlcpy(item_name, mvd_wp_info[z].colored_name, sizeof(item_name));
+			}
+			Util_SkipEZColors(simple_item_name, item_name, sizeof(simple_item_name));
+			strlcpy(location_name, TP_ParseFunChars(TP_LocationName(*pl), false), sizeof(location_name));
+			if (mention == MENTION_PICKED_UP_ITEM) {
+				qbool names_match = !strcmp(location_name, simple_item_name);
+				int len = strlen(simple_item_name);
+
+				if (item_counts[z] == 1 || names_match) {
+					MVD_AddString(va("%*s \015 %s\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, MVD_AnnouncerPlayerName(i)));
+				}
+				else {
+					MVD_AddString(va("%*s \015 %s \020%s\021\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, MVD_AnnouncerPlayerName(i), location_name));
+				}
+			}
+			else if (mention == MENTION_PICKED_UP_PACK) {
+				if (tp_name_backpack.string[0]) {
+					char pack_name[MAX_MACRO_STRING];
+
+					Util_SkipChars(tp_name_backpack.string, "{}", pack_name, sizeof(pack_name));
+
+					strlcat(item_name, " ", sizeof(item_name));
+					strlcat(item_name, pack_name, sizeof(item_name));
+				}
+				else {
+					strlcat(item_name, " pack", sizeof(item_name));
+				}
+
+				MVD_AddString(va("%*s \015 %s \020%s\021\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, MVD_AnnouncerPlayerName(i), location_name));
+			}
 		}
 	}
-	else if (mvd_new_info[i].mvdinfo.itemstats[z].mention==-1)
-	{
+	else if (mvd_new_info[i].mvdinfo.itemstats[z].mention < 0) {
+		int mention = mvd_new_info[i].mvdinfo.itemstats[z].mention;
+
 		mvd_new_info[i].mvdinfo.itemstats[z].mention = 0;
 
-		if (!mvd_moreinfo.integer)
+		if (!mvd_moreinfo.integer) {
 			return;
+		}
 
-		switch (z) {
-			case 5: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_gl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 6: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_rl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 7: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_lg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 8: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ring.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 9: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_quad.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 10:
-				if (mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].starttime - cls.demotime < 30) {
-					Com_Printf("%s Lost %s @ %s\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-				} else {
-					Com_Printf("%s's %s ended\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+		if (z >= 5 && z < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0])) {
+			char location_name[MAX_MACRO_STRING];
+			char item_name[MAX_MACRO_STRING];
+			const char* pn = MVD_AnnouncerPlayerName(i);
+
+			if (mvd_wp_info[z].name_cvar && mvd_wp_info[z].name_cvar->string && mvd_wp_info[z].name_cvar->string[0]) {
+				Util_SkipChars(mvd_wp_info[z].name_cvar->string, "{}", item_name, sizeof(item_name));
+			}
+			else {
+				strlcpy(item_name, mvd_wp_info[z].colored_name, sizeof(item_name));
+			}
+			strlcpy(location_name, TP_ParseFunChars(TP_LocationName(*pl), false), sizeof(location_name));
+			if (mention == MENTION_DIED_WITH_ITEM) {
+				// Weapon tracking should probably be added back in
+				if (cl.deathmatch == 1 && (z == RING_INFO || z == QUAD_INFO)) {
+					strlcat(item_name, " &cf00dead&r", sizeof(item_name));
+
+					MVD_AddString(va("%*s   (%s)\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, pn));
 				}
-			case 11: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ga.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 12: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ya.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 13: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ra.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
-			case 14: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_mh.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			}
+			else if (mention == MENTION_ITEM_RAN_OUT) {
+				strlcat(item_name, " over", sizeof(item_name));
+
+				MVD_AddString(va("%*s   (%s)\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, pn));
+			}
+			else if (mention == MENTION_DROPPED_ITEM) {
+				if (cl.deathmatch == 1) {
+					strlcat(item_name, " &cf00drop&r", sizeof(item_name));
+
+					MVD_AddString(va("%*s \015 %s \020%s\021\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, MVD_AnnouncerPlayerName(i), location_name));
+				}
+			}
 		}
 	}
 }
@@ -976,25 +1157,34 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	has_mega = mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH;
 	if (!had_mega && has_mega) {
 		// Picked up mega
-		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = MENTION_PICKED_UP_ITEM;
+		VectorCopy(mvd_new_info[i].p_state->origin, mvd_new_info[i].mega_locations[0]);
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
+		MVD_Status_Announcer(i, MH_INFO);
 	}
 	else if (has_mega && mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost < mvd_new_info[i].p_info->stats[STAT_HEALTH] && mvd_new_info[i].p_info->stats[STAT_HEALTH] > 100) {
 		// They already had mega health but health increased - must have been another mega
-		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = MENTION_PICKED_UP_ITEM;
+		if (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has < MAX_MEGAS_PER_PLAYER) {
+			VectorCopy(mvd_new_info[i].p_state->origin, mvd_new_info[i].mega_locations[mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has]);
+		}
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has++;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
+		MVD_Status_Announcer(i, MH_INFO);
 	}
 	mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost = mvd_new_info[i].p_info->stats[STAT_HEALTH];
 
 	if (had_mega && !has_mega) {
 		// Might have had two megas ticking down, create as many clocks as necessary
-		while (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has--) {
-			MVD_ClockStart(MH_INFO);
+		int megas = mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has;
+		while (megas > 0) {
+			--megas;
+			MVD_ClockStart(MH_INFO, megas < MAX_MEGAS_PER_PLAYER ? mvd_new_info[i].mega_locations[megas] : NULL);
 		}
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 0;
 	}
 
 	for (z=RING_INFO;z<=PENT_INFO;z++){
@@ -1054,7 +1244,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 	if (mvd_cg_info.deathmatch!=4){
 		MVD_Status_WP(i, &taken);
-		for (z=SSG_INFO;z<=RA_INFO;z++) {
+		for (z = SSG_INFO; z <= RA_INFO; z++) {
 			MVD_Status_Announcer(i,z);
 		}
 	}
@@ -1084,15 +1274,17 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	}
 }
 
-int MVD_Stats_Gather(void){
+int MVD_Stats_Gather(void)
+{
 	int death_stats = 0;
 	int x,i;
 
-	if (cl.countdown == true) {
+	if (cl.countdown || cl.standby) {
 		return 0;
 	}
-	if (cl.standby == true) {
-		return 0;
+
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		mvd_new_info[i].p_state = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[mvd_new_info[i].id];
 	}
 
 	for ( i=0; i<mvd_cg_info.pcount ; i++ ){
@@ -1126,10 +1318,21 @@ int MVD_Stats_Gather(void){
 			mvd_new_info[i].mvdinfo.run++;
 
 			for (x = 0; x < mvd_info_types; x++) {
-				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)) {
-					mvd_new_info[i].mvdinfo.itemstats[x].mention = -1;
+				if (mvd_new_info[i].p_info && mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON] == mvd_wp_info[x].it) {
+					if (mvd_wp_info[x].it == IT_ROCKET_LAUNCHER || mvd_wp_info[x].it == IT_LIGHTNING) {
+						mvd_new_info[i].mvdinfo.itemstats[x].mention = MENTION_DROPPED_ITEM;
+					}
 					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
 				}
+				else if (mvd_new_info[i].p_info && (mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)) {
+					if (mvd_wp_info[x].it == IT_ROCKET_LAUNCHER || mvd_wp_info[x].it == IT_LIGHTNING || mvd_wp_info[x].it == IT_QUAD || mvd_wp_info[x].it == IT_INVISIBILITY) {
+						mvd_new_info[i].mvdinfo.itemstats[x].mention = MENTION_DIED_WITH_ITEM;
+					}
+				}
+				/*if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)) {
+					mvd_new_info[i].mvdinfo.itemstats[x].mention = MENTION_DIED_WITH_ITEM;
+					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
+				}*/
 
 				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has) {
 					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demotime < 30) {
@@ -1143,8 +1346,15 @@ int MVD_Stats_Gather(void){
 			mvd_new_info[i].mvdinfo.lfw = -1;
 		}
 
-		if(!mvd_new_info[i].mvdinfo.das.isdead) {
+		if (!mvd_new_info[i].mvdinfo.das.isdead) {
 			MVD_Stats_Gather_AlivePlayer(i);
+		}
+		else {
+			// Report dropped items immediately
+			int z;
+			for (z = SSG_INFO; z <= RA_INFO; z++) {
+				MVD_Status_Announcer(i, z);
+			}
 		}
 
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){

@@ -606,7 +606,8 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		*hud_itemsclock_style = NULL,
 		*hud_itemsclock_scale = NULL,
 		*hud_itemsclock_filter = NULL,
-		*hud_itemsclock_proportional = NULL;
+		*hud_itemsclock_proportional = NULL,
+		*hud_itemsclock_announcer = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -616,6 +617,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
 		hud_itemsclock_proportional = HUD_FindVar(hud, "proportional");
+		hud_itemsclock_announcer = HUD_FindVar(hud, "announcer");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -926,6 +928,7 @@ void CommonDraw_Init(void)
 		"scale", "1",
 		"filter", "",
 		"proportional", "0",
+		"announcer", "0",
 		NULL
 	);
 
