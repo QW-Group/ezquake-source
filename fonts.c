@@ -4,7 +4,6 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include FT_OUTLINE_H
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -22,7 +21,7 @@ typedef struct glyphinfo_s {
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
-static qbool outline_fonts = false;
+static qbool outline_fonts = true;
 static int outline_width = 2;
 
 #define FONT_TEXTURE_SIZE 1024
