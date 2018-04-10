@@ -305,6 +305,7 @@ struct curl_buf *SB_Retrieve_Data(const source_data *s)
 		return NULL;
 	}
 
+	curl_easy_cleanup(curl);
 	return curl_buf;
 }
 
