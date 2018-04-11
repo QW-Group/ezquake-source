@@ -1515,6 +1515,10 @@ static void VID_ParseCmdLine(void)
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc()) {
 		Cvar_SetIgnoreCallback(&r_conheight, COM_Argv(i + 1));
 	}
+
+	if (COM_CheckParm("-glsl-renderer")) {
+		Cvar_LatchedSetValue(&vid_renderer, 1);
+	}
 }
 
 static void VID_Restart_f(void)
