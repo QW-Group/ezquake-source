@@ -486,16 +486,16 @@ qbool GLM_CreateVFProgramWithInclude(
 qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length);
 
 #define GL_VFDeclare(name) \
-	extern unsigned char glsl_##name##_vertex_glsl[];\
-	extern unsigned int glsl_##name##_vertex_glsl_len;\
-	extern unsigned char glsl_##name##_fragment_glsl[];\
-	extern unsigned int glsl_##name##_fragment_glsl_len;
+	extern unsigned char name##_vertex_glsl[];\
+	extern unsigned int name##_vertex_glsl_len;\
+	extern unsigned char name##_fragment_glsl[];\
+	extern unsigned int name##_fragment_glsl_len;
 
 #define GL_VFParams(name) \
-	(const char*)glsl_##name##_vertex_glsl,\
-	glsl_##name##_vertex_glsl_len,\
-	(const char*)glsl_##name##_fragment_glsl,\
-	glsl_##name##_fragment_glsl_len
+	(const char*)name##_vertex_glsl,\
+	name##_vertex_glsl_len,\
+	(const char*)name##_fragment_glsl,\
+	name##_fragment_glsl_len
 
 qbool GLM_CreateVGFProgram(
 	const char* friendlyName,
@@ -521,19 +521,19 @@ qbool GLM_CreateVGFProgramWithInclude(
 );
 
 #define GL_VGFDeclare(name) \
-	extern unsigned char glsl_##name##_vertex_glsl[];\
-	extern unsigned int glsl_##name##_vertex_glsl_len;\
-	extern unsigned char glsl_##name##_geometry_glsl[];\
-	extern unsigned int glsl_##name##_geometry_glsl_len;\
-	extern unsigned char glsl_##name##_fragment_glsl[];\
-	extern unsigned int glsl_##name##_fragment_glsl_len;
+	extern unsigned char name##_vertex_glsl[];\
+	extern unsigned int name##_vertex_glsl_len;\
+	extern unsigned char name##_geometry_glsl[];\
+	extern unsigned int name##_geometry_glsl_len;\
+	extern unsigned char name##_fragment_glsl[];\
+	extern unsigned int name##_fragment_glsl_len;
 #define GL_VGFParams(name) \
-	(const char*)glsl_##name##_vertex_glsl,\
-	glsl_##name##_vertex_glsl_len,\
-	(const char*)glsl_##name##_geometry_glsl,\
-	glsl_##name##_geometry_glsl_len,\
-	(const char*)glsl_##name##_fragment_glsl,\
-	glsl_##name##_fragment_glsl_len
+	(const char*)name##_vertex_glsl,\
+	name##_vertex_glsl_len,\
+	(const char*)name##_geometry_glsl,\
+	name##_geometry_glsl_len,\
+	(const char*)name##_fragment_glsl,\
+	name##_fragment_glsl_len
 
 #define glEnable GL_Enable
 #define glDisable GL_Disable

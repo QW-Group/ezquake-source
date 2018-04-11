@@ -501,7 +501,7 @@ strip: $(TARG_c)
 
 $(BUILD_c)/glsl_%.glsl.o: glsl/%.glsl
 	$(E) [GLSL] $@
-	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
+	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.json

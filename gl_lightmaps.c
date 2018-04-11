@@ -488,10 +488,10 @@ void R_UploadChangedLightmaps(void)
 		}
 		else {
 			if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
-				extern unsigned char glsl_lighting_compute_glsl[];
-				extern unsigned int glsl_lighting_compute_glsl_len;
+				extern unsigned char lighting_compute_glsl[];
+				extern unsigned int lighting_compute_glsl_len;
 
-				if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)glsl_lighting_compute_glsl, glsl_lighting_compute_glsl_len)) {
+				if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)lighting_compute_glsl, lighting_compute_glsl_len)) {
 					return;
 				}
 			}
