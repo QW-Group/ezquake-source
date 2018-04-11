@@ -194,8 +194,14 @@ void CL_AddEntity(entity_t *ent)
 	qbool shell = false;
 
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
-		vistype = visent_normal;
-		shell = true;
+		if (R_CanDrawSimpleItem(ent)) {
+			vistype = visent_alpha;
+			type = mod_sprite;
+		}
+		else {
+			vistype = visent_normal;
+			shell = true;
+		}
 	}
 	else if (ent->renderfx & RF_NORMALENT) {
 		vistype = visent_normal;
