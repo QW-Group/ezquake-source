@@ -327,98 +327,6 @@ void Draw_DisableScissor(void)
 	glDisable(GL_SCISSOR_TEST);
 }
 
-//
-// =============================================================================
-//  Scrap allocation
-//
-//  Allocate all the little status bar objects into a single texture
-//  to crutch up stupid hardware / drivers
-// =============================================================================
-
-// Some cards have low quality of alpha pics, so load the pics
-// without transparent pixels into a different scrap block.
-// scrap 0 is solid pics, 1 is transparent.
-#define	MAX_SCRAPS		2 // funny, but you can't change this size unless you rewrote code,
-						  // you can looks in FTE how they done it.
-						  // there really no point to split transparent and solid images.
-#define	BLOCK_WIDTH		256
-#define	BLOCK_HEIGHT	256
-
-static int          scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
-static byte         scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
-static int          scrap_dirty; // Bit mask.
-static texture_ref  scrap_texnum[MAX_SCRAPS];
-
-// Returns false if allocation failed.
-static qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
-{
-	int i, j, best, best2;
-
-	best = BLOCK_HEIGHT;
-
-	for (i = 0; i < BLOCK_WIDTH - w; i++)
-	{
-		best2 = 0;
-
-		for (j = 0; j < w; j++)
-		{
-			if (scrap_allocated[scrapnum][i + j] >= best)
-				break;
-			if (scrap_allocated[scrapnum][i + j] > best2)
-				best2 = scrap_allocated[scrapnum][i + j];
-		}
-
-		if (j == w)
-		{
-			// This is a valid spot.
-			*x = i;
-			*y = best = best2;
-		}
-	}
-
-	if (best + h > BLOCK_HEIGHT)
-		return false;
-
-	for (i = 0; i < w; i++)
-		scrap_allocated[scrapnum][*x + i] = best + h;
-
-	scrap_dirty |= (1 << scrapnum);
-
-	return true;
-}
-
-static void Scrap_Upload (void)
-{
-	int i;
-
-	for (i = 0; i < MAX_SCRAPS; i++)
-	{
-		// is dirty?
-		if (scrap_dirty & (1 << i))
-		{
-			char id[64];
-			// generate id
-			snprintf(id, sizeof(id), "scrap:%d", i);
-			// upload it
-			scrap_texnum[i] = GL_LoadTexture(id, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEX_ALPHA | TEX_NOSCALE, 1);
-		}
-	}
-
-	// no we are clear!
-	scrap_dirty = 0;
-}
-
-static void Scrap_Init(void)
-{
-	memset (scrap_allocated, 0, sizeof(scrap_allocated));
-	memset (scrap_texels,    0, sizeof(scrap_texels));
-	memset (scrap_texnum,    0, sizeof(scrap_texnum));
-	scrap_dirty = ~0;	// Bit mask - make all bits dirty!
-
-	// upload at least first time, so we set scrap_texnum[], its required
-	Scrap_Upload();
-}
-
 //=============================================================================
 // Support Routines
 wadpic_t wad_pictures[WADPIC_PIC_COUNT];
@@ -457,46 +365,7 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		return pic;
 	}
 
-	// Load little ones into the scrap.
-	if (p->width < 64 && p->height < 64)
-	{
-		int x = 0, y = 0, i, j, k;
-		// is this pic contain alpha bytes (255)
-		qbool alpha = memchr(p->data, 255, p->width * p->height) != NULL;
-		// FIXME: as you can see, MAX_SCRAPS hardcoded to 2 and define is just a fiction!
-		int texnum = alpha ? 1 : 0;
-
-		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y))
-		{
-			GL_LoadPicTexture(name, pic, p->data);
-			return pic;
-		}
-
-		k = 0;
-
-		for (i = 0; i < p->height; i++)
-		{
-			for (j  = 0; j < p->width; j++, k++)
-			{
-				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
-			}
-		}
-
-		pic->sl = (x + 0.25) / (float) BLOCK_WIDTH;
-		pic->sh = (x + p->width - 0.25) / (float) BLOCK_WIDTH;
-		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
-		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
-
-		if (!GL_TextureReferenceIsValid(scrap_texnum[texnum])) {
-			Com_Printf("Scrap_Upload: texture[%d] still not set, HUD will be broken\n", texnum);
-		}
-
-		pic->texnum = scrap_texnum[texnum];
-	}
-	else
-	{
-		GL_LoadPicTexture(name, pic, p->data);
-	}
+	GL_LoadPicTexture(name, pic, p->data);
 
 	if (code == WADPIC_SB_IBAR) {
 		CachePics_LoadAmmoPics(pic);
@@ -672,7 +541,6 @@ void Draw_Init (void)
 	GL_Texture_Init();  // Probably safe to re-init now.
 
 	// Clear the scrap, should be called ASAP after textures initialization
-	Scrap_Init();
 	CachePics_Init();
 
 	// Load the console background and the charset by hand, because we need to write the version
@@ -971,10 +839,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
-
-    if (scrap_dirty) {
-        Scrap_Upload();
-	}
 
     oldglwidth = pic->sh - pic->sl;
     oldglheight = pic->th - pic->tl;
