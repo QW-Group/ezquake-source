@@ -554,7 +554,9 @@ void VX_FlagTexturesForArray(texture_flag_t* texture_flags)
 	corona_texture_id tex;
 
 	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
-		texture_flags[corona_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+		if (GL_TextureReferenceIsValid(corona_textures[tex].texnum)) {
+			texture_flags[corona_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+		}
 	}
 }
 
@@ -563,11 +565,13 @@ void VX_ImportTextureArrayReferences(texture_flag_t* texture_flags)
 	corona_texture_id tex;
 
 	for (tex = CORONATEX_STANDARD; tex < CORONATEX_COUNT; ++tex) {
-		texture_array_ref_t* array_ref = &texture_flags[corona_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+		if (GL_TextureReferenceIsValid(corona_textures[tex].texnum)) {
+			texture_array_ref_t* array_ref = &texture_flags[corona_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
 
-		corona_textures[tex].array_tex = array_ref->ref;
-		corona_textures[tex].array_index = array_ref->index;
-		corona_textures[tex].array_scale_s = array_ref->scale_s;
-		corona_textures[tex].array_scale_t = array_ref->scale_t;
+			corona_textures[tex].array_tex = array_ref->ref;
+			corona_textures[tex].array_index = array_ref->index;
+			corona_textures[tex].array_scale_s = array_ref->scale_s;
+			corona_textures[tex].array_scale_t = array_ref->scale_t;
+		}
 	}
 }

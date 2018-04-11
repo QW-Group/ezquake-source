@@ -811,29 +811,31 @@ ParticleFunction(telesplash, TeleportSplash);
 
 void Part_FlagTexturesForArray(texture_flag_t* texture_flags)
 {
-	texture_flags[particletexture.index].flags |= (1 << TEXTURETYPES_SPRITES);
+	if (GL_TextureReferenceIsValid(particletexture)) {
+		texture_flags[particletexture.index].flags |= (1 << TEXTURETYPES_SPRITES);
+	}
 }
 
 void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 {
-	texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
+	if (GL_TextureReferenceIsValid(particletexture)) {
+		texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
 
-	if (GL_TextureWidth(array_ref->ref) != GL_TextureWidth(particletexture) ||
-		GL_TextureHeight(array_ref->ref) != GL_TextureHeight(particletexture)
-	) {
-		int width = GL_TextureWidth(array_ref->ref);
-		int height = GL_TextureHeight(array_ref->ref);
-		byte* data = Classic_CreateParticleTexture(width, height);
+		if (GL_TextureWidth(array_ref->ref) != GL_TextureWidth(particletexture) || GL_TextureHeight(array_ref->ref) != GL_TextureHeight(particletexture)) {
+			int width = GL_TextureWidth(array_ref->ref);
+			int height = GL_TextureHeight(array_ref->ref);
+			byte* data = Classic_CreateParticleTexture(width, height);
 
-		GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-		Q_free(data);
+			Q_free(data);
+		}
+
+		particletexture_array = array_ref->ref;
+		particletexture_array_index = array_ref->index;
+		particletexture_scale_s = array_ref->scale_s;
+		particletexture_scale_t = array_ref->scale_t;
 	}
-
-	particletexture_array = array_ref->ref;
-	particletexture_array_index = array_ref->index;
-	particletexture_scale_s = array_ref->scale_s;
-	particletexture_scale_t = array_ref->scale_t;
 }
 
 // Moves particles into new locations this frame
