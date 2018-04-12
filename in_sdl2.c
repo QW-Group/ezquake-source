@@ -127,13 +127,7 @@ void IN_Init (void)
 	Cvar_Register (&cl_keypad);
 	Cvar_ResetCurrentGroup ();
 
-	if (!host_initialized)
-	{
-		/* FIXME: Decide whether to have nomouse option or not
-		if (COM_CheckParm ("-nomouse"))
-			;
-		*/
-
+	if (!host_initialized) {
 		Cmd_AddCommand("in_restart", IN_Restart_f);
 	}
 

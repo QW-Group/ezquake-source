@@ -1044,7 +1044,7 @@ static void Help_FindCommandLineParamIssues(qbool generate)
 		}
 		else {
 			if (issues == 0) {
-				Con_Printf("Macros with issues:\n");
+				Con_Printf("Command-line parameters with issues:\n");
 				con_margin = CONSOLE_HELP_MARGIN;
 			}
 			con_ormask = 128;
@@ -1056,7 +1056,7 @@ static void Help_FindCommandLineParamIssues(qbool generate)
 	}
 
 	con_margin = 0;
-	Con_Printf("Number of cmdline params with issues: %d\n", issues);
+	Con_Printf("Number of command-line params with issues: %d\n", issues);
 }
 
 static void Help_Issues_f(void)

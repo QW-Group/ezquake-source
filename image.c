@@ -602,7 +602,7 @@ static void PNG_FreeLibrary(void) {
 }
 
 static qbool PNG_LoadLibrary(void) {
-	if (COM_CheckParm("-nolibpng"))
+	if (COM_CheckParm(cmdline_param_client_nolibpng))
 		return false;
 
 #ifdef _WIN32
@@ -1624,7 +1624,7 @@ static void JPEG_FreeLibrary(void) {
 }
 
 static qbool JPEG_LoadLibrary(void) {
-	if (COM_CheckParm("-nolibjpeg"))
+	if (COM_CheckParm(cmdline_param_client_nolibjpeg))
 		return false;
 
 #ifdef _WIN32

@@ -429,7 +429,7 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 #ifdef X11_GAMMA_WORKAROUND
 static void VID_RestoreSystemGamma(void)
 {
-	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
+	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
 		return;
 	}
 	VID_SetDeviceGammaRampReal(sysramps);

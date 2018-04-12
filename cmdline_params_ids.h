@@ -33,6 +33,8 @@ CMDLINE_DEF(client_video_glsl_renderer, "-glsl-renderer"),
 CMDLINE_DEF(client_video_gl_debug, "-gl-debug"),
 CMDLINE_DEF(client_nostdinput, "-noconinput"),
 CMDLINE_DEF(client_nostdoutput, "-nostdout"),
+CMDLINE_DEF(client_nolibpng, "-nolibpng"),
+CMDLINE_DEF(client_nolibjpeg, "-nolibjpeg"),
 
 CMDLINE_DEF(filesystem_basedir, "-basedir"),
 CMDLINE_DEF(filesystem_nohome, "-nohome"),
