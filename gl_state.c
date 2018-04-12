@@ -1019,7 +1019,7 @@ void GL_CheckMultiTextureExtensions(void)
 {
 	extern cvar_t gl_maxtmu2;
 
-	if (!COM_CheckParm("-nomtex") && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
 		if (strstr(gl_renderer, "Savage")) {
 			return;
 		}
@@ -1039,7 +1039,7 @@ void GL_CheckMultiTextureExtensions(void)
 
 	gl_textureunits = min(glConfig.texture_units, 4);
 
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
+	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
 		gl_textureunits = min(gl_textureunits, 2);
 	}
 

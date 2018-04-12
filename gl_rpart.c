@@ -282,7 +282,7 @@ void QMB_InitParticles (void)
 
 	Cvar_Register(&amf_part_fulldetail);
 	Cvar_Register(&gl_part_cache);
-	if (!host_initialized && COM_CheckParm("-detailtrails")) {
+	if (!host_initialized && COM_CheckParm(cmdline_param_client_detailtrails)) {
 		Cvar_LatchedSetValue(&amf_part_fulldetail, 1);
 	}
 

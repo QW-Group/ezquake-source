@@ -772,7 +772,7 @@ void GL_BuildLightmaps(void)
 	}
 	last_lightmap_updated = 0;
 
-	gl_invlightmaps = GL_UseImmediateMode() && !COM_CheckParm("-noinvlmaps");
+	gl_invlightmaps = GL_UseImmediateMode() && !COM_CheckParm(cmdline_param_client_noinverselightmaps);
 
 	r_framecount = 1;		// no dlightcache
 	maximumSurfaceNumber = 0;

@@ -484,7 +484,7 @@ void V_SetContentsColor (int contents) {
 }
 
 void V_AddWaterfog (int contents) {
-	if (!gl_waterfog.value || COM_CheckParm ("-nomtex") || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
+	if (!gl_waterfog.value || COM_CheckParm (cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
 		GL_DisableFog();
 		return;
 	}

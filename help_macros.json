@@ -1,0 +1,406 @@
+{
+  "ammo": {
+    "description": "returns amount of ammo held for currently selected weapon",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "armor": {
+    "description": "returns current armor value",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "armortype": {
+    "description": "returns current armor type",
+    "related-cvars": [
+      "tp_name_armortype_ga",
+      "tp_name_armortype_ya",
+      "tp_name_armortype_ra",
+      "tp_name_armortype_none"
+    ],
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "bestammo": {
+    "description": "returns ammo held for the 'best' weapon",
+    "related-cvars": [
+      "tp_weapon_order"
+    ],
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "bestweapon": {
+    "description": "returns name of best weapon in inventory",
+    "related-cvars": [
+      "tp_weapon_order",
+      "tp_name_sg",
+      "tp_name_ssg",
+      "tp_name_ng",
+      "tp_name_sng",
+      "tp_name_gl",
+      "tp_name_rl",
+      "tp_name_lg"
+    ],
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "cam_angles": {
+    "description": "returns current camera angles, in format that can be passed to /cam_angles command.",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "cam_angles_pitch": {
+    "description": "returns current camera pitch (vertical angle).",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cam_angles_roll": {
+    "description": "returns current camera roll (not used).",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cam_angles_yaw": {
+    "description": "returns current camera yaw (horizontal angle).",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cam_pos": {
+    "description": "returns current camera position, in format that can be passed to /cam_pos command.",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "cam_pos_x": {
+    "description": "returns one component of current camera position.",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cam_pos_y": {
+    "description": "returns one component of current camera position.",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cam_pos_z": {
+    "description": "returns one component of current camera position.",
+    "flags": [
+      "spectator-only"
+    ],
+    "teamplay-restricted": true,
+    "type": "float"
+  },
+  "cells": {
+    "description": "returns number of cells held, regardless of weapon selected",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "colored_armor": {
+    "description": "returns $armor, surrounded by color codes so it is displayed in &c0b0red&r, &cff0yellow&r, &e00green&r or &cfffwhite&r",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "colored_powerups": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "colored_short_powerups": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "conheight": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "connectiontype": {
+    "description": "returns the current type of the connection",
+    "enum": [
+      {
+        "description": "client is disconnected from the server",
+        "value": "disconnected"
+      },
+      {
+        "description": "client is connected as a spectator",
+        "value": "spectator"
+      },
+      {
+        "description": "client is connected as a player",
+        "value": "player"
+      }
+    ],
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "conwidth": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "date": {
+    "description": "returns the current date in the format <day>.<month>.<year>",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "deathloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "demolength": {
+    "description": "returns the expected length of the current demo, in seconds",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "demoname": {
+    "description": "returns the name of the current demo, minus extension",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "demoplayback": {
+    "description": "returns whether or not the client is current watching a demo",
+    "teamplay-restricted": true,
+    "type": "boolean"
+  },
+  "demotime": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "droploc": {
+    "description": "returns the name of the location where the last backpack was dropped by the current player.",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "droptime": {
+    "description": "returns the number of seconds since the last backpack was dropped by the current player.",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "gamedir": {
+    "description": "returns the current gamedir, which is often set when a server is running a mod.\ne.g: 'fortress' for Team Fortress mods",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "health": {
+    "description": "the current player's health (0 - 250)",
+    "teamplay-restricted": true
+  },
+  "lastip": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "lastloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "lastpowerup": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "latency": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "ledpoint": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "ledstatus": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "location": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "matchname": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "matchstatus": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "matchtype": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "mp3_volume": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "mp3info": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "nails": {
+    "description": "returns number of nails held, regardless of weapon selected",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "need": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "ping": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "point": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "pointatloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "pointloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "powerups": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "qt": {
+    "description": "returns \" - useful to clear cvars in scripts",
+    "teamplay-restricted": true
+  },
+  "rand": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "rockets": {
+    "description": "returns number of rockets held, regardless of weapon selected",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "serverip": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "shells": {
+    "description": "returns number of shells held, regardless of weapon selected",
+    "teamplay-restricted": true,
+    "type": "integer"
+  },
+  "tf_skin": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "time": {
+    "description": "returns the local time in the format <hours>:<minutes>",
+    "teamplay-restricted": true,
+    "type": "string"
+  },
+  "took": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "tookatloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "tookloc": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "triggermatch": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "weapon": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "weaponnum": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  },
+  "weapons": {
+    "flags": [
+      "incomplete"
+    ],
+    "teamplay-restricted": true
+  }
+}

@@ -1661,8 +1661,8 @@ void MT_Init(void)
 
 	MT_ClearClientState();
 
-	Cmd_AddMacro("matchname", Macro_MatchName);
-	Cmd_AddMacro("matchtype", Macro_MatchType);
+	Cmd_AddMacro(macro_matchname, Macro_MatchName);
+	Cmd_AddMacro(macro_matchtype, Macro_MatchType);
 
 	Cmd_AddCommand("match_format_macrolist", MT_Macrolist_f);
 	Cmd_AddCommand("match_forcestart", MT_Match_ForceStart_f);

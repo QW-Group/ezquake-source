@@ -8,6 +8,12 @@
   "+back": {
     "description": "When active the player will move backwards."
   },
+  "+cl_wp_stats": {
+    "system-generated": true
+  },
+  "+fire": {
+    "system-generated": true
+  },
   "+forward": {
     "description": "When active the player will move forward."
   },
@@ -59,6 +65,12 @@
   "+use": {
     "description": "When used it will activate objects in the game that have been designed to react  at \"+use\""
   },
+  "+voip": {
+    "system-generated": true
+  },
+  "+zoom": {
+    "system-generated": true
+  },
   "-attack": {
     "description": "When used the player will stop firing the gun if \"+attack\" is active."
   },
@@ -67,6 +79,12 @@
   },
   "-back": {
     "description": "When used the player will stop moving back if \"+back\" is active."
+  },
+  "-cl_wp_stats": {
+    "system-generated": true
+  },
+  "-fire": {
+    "system-generated": true
   },
   "-forward": {
     "description": "When used the player will stop moving forward if \"+forward\" is active."
@@ -119,16 +137,40 @@
   "-use": {
     "description": "When used it will stop activating objects in the game that have been designed to  react at \"+use\"."
   },
+  "-voip": {
+    "system-generated": true
+  },
+  "-zoom": {
+    "system-generated": true
+  },
+  "acc_block": {
+    "system-generated": true
+  },
+  "acc_create": {
+    "system-generated": true
+  },
+  "acc_list": {
+    "system-generated": true
+  },
+  "acc_remove": {
+    "system-generated": true
+  },
+  "acc_unblock": {
+    "system-generated": true
+  },
   "addip": {
     "description": "Add a single IP or a domain of IPs to the IP list of the server. Very useful for  banning people or for specifing which IPs only have access to the server.  Examples:  addip 123.123.123.123  addip 123.123.123",
     "syntax": "(ip)"
   },
   "addloc": {
-    "description": "Adds a new loc with the specified name at current location.",
-    "syntax": "addloc \"locname\"",
     "arguments": [
-      { "name": "locname", "description": "The name of the loc." }
-    ]
+      {
+        "description": "The name of the loc.",
+        "name": "locname"
+      }
+    ],
+    "description": "Adds a new loc with the specified name at current location.",
+    "syntax": "addloc \"locname\""
   },
   "addserver": {
     "description": "Server Browser: This allows you to add a server to the UNBOUND source. This can be used to quickly bookmark servers."
@@ -136,25 +178,43 @@
   "alias": {
     "description": "Used to create a reference to a command or list of commands. When used without  parameters, displays all current aliases.  Note: Enclose multiple commands within quotes and seperate each command with a semi-colon."
   },
+  "alias_in": {
+    "arguments": [
+      {
+        "description": "alias to be changed",
+        "name": "alias"
+      },
+      {
+        "description": "variable whose value is inserted into alias",
+        "name": "variable"
+      },
+      {
+        "description": "bitmask, 1 - (0 - insert from left, 1 - from right side) 2 - (check in advance whether a string being inserted already exists in alias)  4 - (print an error message if the inserted string is already present in the alias)  8 - (automatically create an alias if it doesn't exist yet) ",
+        "name": "options"
+      }
+    ],
+    "description": "Inserts contents of variable into alias. ",
+    "syntax": "<alias> <variable> [<options>]"
+  },
+  "alias_out": {
+    "system-generated": true
+  },
   "aliasedit": {
     "description": "Allows you to edit your alias in console manually.",
     "syntax": "<alias>"
   },
   "aliaslist": {
+    "arguments": [
+      {
+        "description": "will print only [regexp] matching aliases",
+        "name": "[regexp]"
+      }
+    ],
     "description": "Prints all aliases.",
-    "syntax": "[regexp]",
-    "arguments": [
-      { "name": "[regexp]", "description": "will print only [regexp] matching aliases" }
-    ]
+    "syntax": "[regexp]"
   },
-  "alias_in": {
-    "description": "Inserts contents of variable into alias. ",
-    "syntax": "<alias> <variable> [<options>]",
-    "arguments": [
-      { "name": "alias", "description": "alias to be changed" },
-      { "name": "variable", "description": "variable whose value is inserted into alias" },
-      { "name": "options", "description": "bitmask, 1 - (0 - insert from left, 1 - from right side) 2 - (check in advance whether a string being inserted already exists in alias)  4 - (print an error message if the inserted string is already present in the alias)  8 - (automatically create an alias if it doesn't exist yet) " }
-    ]
+  "align": {
+    "system-generated": true
   },
   "allskins": {
     "description": "Downloads all skins that is currently in use. Useful for refreshing skins without  exiting the level"
@@ -168,6 +228,9 @@
   "bar_health": {
     "description": "HUD element that displays a bar representing your amount of health."
   },
+  "batteryinfo": {
+    "system-generated": true
+  },
   "bf": {
     "description": "This command shows a background screen flash that is the same one that is  produced when the player picked up an item in the game. This command basically  serves no useful function except when people want to use it in scripts to give  the user some visual feedback when an aliases is used for example."
   },
@@ -177,31 +240,52 @@
   "bindlist": {
     "description": "Prints all binds."
   },
+  "calc_fov": {
+    "arguments": [
+      {
+        "description": "The old wideaspect fov used in v2.x",
+        "name": "old_fov"
+      }
+    ],
+    "description": "Convert (ezq2) wideaspect fov to new fov"
+  },
   "calendar": {
     "description": "Same as \"date\" but also shows a small calendar of the month. Nice :)"
   },
-  "calc_fov": {
-    "description": "Convert (ezq2) wideaspect fov to new fov",
-    "arguments": [
-      { "name": "old_fov", "description": "The old wideaspect fov used in v2.x" }
-    ]
-  },
   "cam_angles": {
-    "description": "Set new angles",
-    "syntax": "cam_angles pitch yaw or cam_angles \"pitch yaw\"",
     "arguments": [
-      { "name": "pitch", "description": "" },
-      { "name": "yaw", "description": "" }
-    ]
+      {
+        "description": "",
+        "name": "pitch"
+      },
+      {
+        "description": "",
+        "name": "yaw"
+      }
+    ],
+    "description": "Set new angles",
+    "syntax": "cam_angles pitch yaw or cam_angles \"pitch yaw\""
   },
   "cam_pos": {
-    "description": "Set new position",
-    "syntax": "cam_pos x y z or cam_pos \"x y z",
     "arguments": [
-      { "name": "x", "description": "X-coord." },
-      { "name": "y", "description": "Y-coord." },
-      { "name": "z", "description": "Z-coord." }
-    ]
+      {
+        "description": "X-coord.",
+        "name": "x"
+      },
+      {
+        "description": "Y-coord.",
+        "name": "y"
+      },
+      {
+        "description": "Z-coord.",
+        "name": "z"
+      }
+    ],
+    "description": "Set new position",
+    "syntax": "cam_pos x y z or cam_pos \"x y z"
+  },
+  "cancel": {
+    "system-generated": true
   },
   "cd": {
     "description": "cd play 5 plays cd track #5  Note: You need -cdaudio to use this command."
@@ -220,14 +304,17 @@
     "description": "This command will dump all aliases, bindings, plus commands,  msg_triggers, teamplay settings and variables to filename.cfg .  User made variables (created with set/seta) are saved as well.  Note: configs saved with cfg_save are saved in quake/ezquake/configs/*.cfg",
     "syntax": "(filename)"
   },
+  "check_maps": {
+    "system-generated": true
+  },
+  "cl_messages": {
+    "description": "Prints amount and size of messages sent from server to ezQuake client."
+  },
   "clear": {
     "description": "This command clears the console screen of any text."
   },
   "clearlocs": {
     "description": "Clear all currently loaded locs."
-  },
-  "cl_messages": {
-    "description": "Prints amount and size of messages sent from server to ezQuake client."
   },
   "cmd": {
     "description": "Sends a command directly to the server."
@@ -242,17 +329,26 @@
     "description": "This command sets the color for the player's shirt and pants.  Note: If only the shirt color is given, the pant color will match."
   },
   "connect": {
-    "description": "Connects your client to a QuakeWorld server.",
-    "syntax": "<address>",
     "arguments": [
-      { "name": "address", "description": "IP address of a QuakeWorld server." }
-    ]
+      {
+        "description": "IP address of a QuakeWorld server.",
+        "name": "address"
+      }
+    ],
+    "description": "Connects your client to a QuakeWorld server.",
+    "syntax": "<address>"
   },
-  "cvarlist": {
-    "description": "Print cvars"
+  "connectbr": {
+    "system-generated": true
   },
-  "cvarlist_re": {
-    "description": "This command same as cvarlist, but supports (perl) regexp matching. "
+  "cuff": {
+    "system-generated": true
+  },
+  "cvar_in": {
+    "system-generated": true
+  },
+  "cvar_out": {
+    "system-generated": true
   },
   "cvar_reset": {
     "description": "This will reset cvar to default.  Example:  cvar_reset topcolor will set topcolor to default.",
@@ -262,28 +358,58 @@
     "description": "This will reset cvar to default. Example: cvar_reset ^gl_.* - resets all OpenGL settings to default values.",
     "syntax": "<cvar>"
   },
+  "cvaredit": {
+    "system-generated": true
+  },
+  "cvarlist": {
+    "description": "Print cvars"
+  },
+  "cvarlist_re": {
+    "description": "This command same as cvarlist, but supports (perl) regexp matching. "
+  },
   "date": {
     "description": "Shows current time, date, month and year."
   },
   "demo_capture": {
-    "description": "Captures series of screenshot or avi file. See below.",
-    "syntax": "<start time [avifile] | stop>",
     "arguments": [
-      { "name": "start", "description": "Directive that tells the client to start capturing." },
-      { "name": "time", "description": "Number of seconds the capturing should take. Can be float value. Must be positive. Required argument." },
-      { "name": "avifile", "description": "When third argument is present instead of singlescreenshot avifile will be saved. See demo_capture_codec." },
-      { "name": "stop", "description": "You can force the client to stop capturing before the time given by <time> argument passes." }
-    ]
+      {
+        "description": "Directive that tells the client to start capturing.",
+        "name": "start"
+      },
+      {
+        "description": "Number of seconds the capturing should take. Can be float value. Must be positive. Required argument.",
+        "name": "time"
+      },
+      {
+        "description": "When third argument is present instead of singlescreenshot avifile will be saved. See demo_capture_codec.",
+        "name": "avifile"
+      },
+      {
+        "description": "You can force the client to stop capturing before the time given by <time> argument passes.",
+        "name": "stop"
+      }
+    ],
+    "description": "Captures series of screenshot or avi file. See below.",
+    "syntax": "<start time [avifile] | stop>"
+  },
+  "demo_controls": {
+    "system-generated": true
   },
   "demo_jump": {
     "description": "This jumps playback to a point in time you specify.  Examples:  demo_jump 120 will make playback jump to 120 seconds from the start of  the demo.  demo_jump 4:30 will make playback jump to 4 minutes and 30 seconds  from the start of the demo."
   },
+  "demo_jump_mark": {
+    "system-generated": true
+  },
   "demo_jump_status": {
-    "description": "Fast-forward in the demo playback until certain condition holds.",
-    "syntax": "<condition>",
     "arguments": [
-      { "name": "condition", "description": "For example h<1 +rl or +lg" }
-    ]
+      {
+        "description": "For example h<1 +rl or +lg",
+        "name": "condition"
+      }
+    ],
+    "description": "Fast-forward in the demo playback until certain condition holds.",
+    "syntax": "<condition>"
   },
   "demo_playlist_clear": {
     "description": "clears the demo playlist"
@@ -305,8 +431,32 @@
     "description": "Prints manual info about given variable or command into the console.",
     "syntax": "(variable or command name)"
   },
+  "dev_cache_print": {
+    "system-generated": true
+  },
+  "dev_cache_report": {
+    "system-generated": true
+  },
+  "dev_dump_defaults": {
+    "system-generated": true
+  },
+  "dev_gfxtrace": {
+    "system-generated": true
+  },
+  "dev_help_issues": {
+    "system-generated": true
+  },
+  "dev_help_verify_config": {
+    "system-generated": true
+  },
+  "dev_hunk_print": {
+    "system-generated": true
+  },
   "devmap": {
     "description": "Try it in cheats mode, start a map (devmap dm6) and type fly."
+  },
+  "dir": {
+    "system-generated": true
   },
   "disconnect": {
     "description": "This command will disconnect you from the server/demo/proxy you are currently connected to."
@@ -338,26 +488,56 @@
     "description": "This will overwride enemy color.  Example:  enemycolor 12 13  Note: If only the shirt color is given, the pant color will match."
   },
   "eval": {
-    "description": "Evaluates given expression and prints the result into the console",
-    "syntax": "<expression>",
     "arguments": [
-      { "name": "expression", "description": "Arithmetic expression, can also contain strings" }
-    ]
+      {
+        "description": "Arithmetic expression, can also contain strings",
+        "name": "expression"
+      }
+    ],
+    "description": "Evaluates given expression and prints the result into the console",
+    "syntax": "<expression>"
   },
   "exec": {
     "description": "Executes a config file from \\qw, \\id1 or \\ezquake."
   },
+  "f_modified": {
+    "description": "All the usual dm models, sounds, palettes etc are included in the check.  In teamfortress the teamfortress flag, dispensers and sentry guns are also  checked. There is also an f_modified command which will print your  f_modified response.  Note: You need to install security files."
+  },
+  "f_ruleset": {
+    "system-generated": true
+  },
+  "f_server": {
+    "description": "Prints proxies you are using."
+  },
   "filter": {
     "description": "Message filtering system. Only team messages are filtered.  Use filter with no parameters to list current filters and filter clear to remove all filters.  Example:  filter #a  say_team i can see this message #a.  say_team i can't see this message #d."
   },
+  "find": {
+    "system-generated": true
+  },
+  "find_update": {
+    "system-generated": true
+  },
   "floodprot": {
-    "description": "Sets flood protection parameters.",
-    "syntax": "<messages> <seconds> <silence>",
     "arguments": [
-      { "name": "messages", "description": "Number of allowed messages per client in given time period." },
-      { "name": "seconds", "description": "Time period in which more than <messages> cannot be sent by a client." },
-      { "name": "silence", "description": "Time the flooding player will be muted for." }
-    ]
+      {
+        "description": "Number of allowed messages per client in given time period.",
+        "name": "messages"
+      },
+      {
+        "description": "Time period in which more than <messages> cannot be sent by a client.",
+        "name": "seconds"
+      },
+      {
+        "description": "Time the flooding player will be muted for.",
+        "name": "silence"
+      }
+    ],
+    "description": "Sets flood protection parameters.",
+    "syntax": "<messages> <seconds> <silence>"
+  },
+  "floodprotmsg": {
+    "system-generated": true
   },
   "flush": {
     "description": "This command will clear the current game cache. It is usually used by developers  to flush the memory of all game information and objects to test if the mechanism  which handles the loading of the necessary files into memory works properly.  Sometimes the game cache can become filled with unnecessary information and may  need to be flushed manually. This is usually not necessary since the game  automatically flushes all the data between every map."
@@ -375,17 +555,17 @@
   "fraglogfile": {
     "description": "Enables logging of kills to a file. Useful for external frag polling programs.  The file name is frag_##.log"
   },
+  "fs_diff": {
+    "system-generated": true
+  },
+  "fs_restart": {
+    "system-generated": true
+  },
   "fs_search": {
     "description": "Search the filesystem cache by suffix."
   },
   "fullinfo": {
     "description": "Used by QuakeSpy and Qlist to set setinfo variables.  Note: Use the setinfo command to see the output.  Example:  fullinfo \"\\quote\\I am the only Lamer!\\\""
-  },
-  "f_modified": {
-    "description": "All the usual dm models, sounds, palettes etc are included in the check.  In teamfortress the teamfortress flag, dispensers and sentry guns are also  checked. There is also an f_modified command which will print your  f_modified response.  Note: You need to install security files."
-  },
-  "f_server": {
-    "description": "Prints proxies you are using."
   },
   "gamedir": {
     "description": "Specifies the directory where the QWPROGS.DAT file is found and other additional  files such as maps, models, sound, and skins for Quake modifications.  Note: This command can be specified while a game is in progress, after the current  map ends this command will take effect."
@@ -409,130 +589,226 @@
   "god": {
     "description": "You are immortal with god mode on.  Note: Needs cheats support by server."
   },
+  "hash": {
+    "system-generated": true
+  },
   "heartbeat": {
     "description": "Forces a heartbeat to be sent to the master server. A heartbeat informs  the master server of the server's IP address thus making sure that  the master server knows that the server is still alive."
   },
   "help": {
     "description": "Enters manual pages. Use arrows, [Page Down], [Page Up], [Tab] and [Enter] for navigation."
   },
+  "hide": {
+    "system-generated": true
+  },
   "hud262_add": {
-    "description": "creates or changes a hud element with hud_name; the following types of hud elements are avaliable:  cvar\ta value of a variable is displayed; in this case param must be a name of this variable.\t str\ta string defined by param is displayed; Cvar and %macros expansion is performed every time element is shown",
-    "syntax": "<hud_name> <type> <param>",
     "arguments": [
-      { "name": "type", "description": "can be cvar or str" },
-      { "name": "param", "description": "string or cvarname" }
-    ]
+      {
+        "description": "can be cvar or str",
+        "name": "type"
+      },
+      {
+        "description": "string or cvarname",
+        "name": "param"
+      }
+    ],
+    "description": "creates or changes a hud element with hud_name; the following types of hud elements are avaliable:  cvar\ta value of a variable is displayed; in this case param must be a name of this variable.\t str\ta string defined by param is displayed; Cvar and %macros expansion is performed every time element is shown",
+    "syntax": "<hud_name> <type> <param>"
   },
   "hud262_alpha": {
-    "description": "Sets a transparency for strings-hud element",
-    "syntax": "<name> <value>",
     "arguments": [
-      { "name": "name", "description": "hud element's name" },
-      { "name": "value", "description": " from 0 up to 1 (0 - invisible, 1 - opaque" }
-    ]
+      {
+        "description": "hud element's name",
+        "name": "name"
+      },
+      {
+        "description": " from 0 up to 1 (0 - invisible, 1 - opaque",
+        "name": "value"
+      }
+    ],
+    "description": "Sets a transparency for strings-hud element",
+    "syntax": "<name> <value>"
   },
   "hud262_bg": {
-    "description": "defines a color of the hud element backgdround; 0 - transparent (default).",
-    "syntax": "<hud_name> <bg_color>",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" },
-      { "name": "bg_color", "description": "color 111 - yellow, 79 - red, etc" }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      },
+      {
+        "description": "color 111 - yellow, 79 - red, etc",
+        "name": "bg_color"
+      }
+    ],
+    "description": "defines a color of the hud element backgdround; 0 - transparent (default).",
+    "syntax": "<hud_name> <bg_color>"
   },
   "hud262_blink": {
-    "description": "Allows to make blinking strings-hud elements.",
-    "syntax": "<name> <period> <mask>",
     "arguments": [
-      { "name": "name", "description": "hud element's name" },
-      { "name": "period", "description": "blinking perion in milliseconds" },
-      { "name": "mask", "description": "defines what exactly should blink: 0 - nothing 1 - text only 2 - background only 3 - text and background" }
-    ]
+      {
+        "description": "hud element's name",
+        "name": "name"
+      },
+      {
+        "description": "blinking perion in milliseconds",
+        "name": "period"
+      },
+      {
+        "description": "defines what exactly should blink: 0 - nothing 1 - text only 2 - background only 3 - text and background",
+        "name": "mask"
+      }
+    ],
+    "description": "Allows to make blinking strings-hud elements.",
+    "syntax": "<name> <period> <mask>"
   },
   "hud262_bringtofront": {
-    "description": "Transfers all hud elements created after hud_name element (including) to the end of drawing list, that in short means that they will be displayed above all other elements which could be present on that place already.",
-    "syntax": "<name>",
     "arguments": [
-      { "name": "name", "description": "hud element's name" }
-    ]
+      {
+        "description": "hud element's name",
+        "name": "name"
+      }
+    ],
+    "description": "Transfers all hud elements created after hud_name element (including) to the end of drawing list, that in short means that they will be displayed above all other elements which could be present on that place already.",
+    "syntax": "<name>"
   },
   "hud262_disable": {
-    "description": "prohibits to display one or more hud elements.",
-    "syntax": "<hud_name> [hud_name2...]",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      }
+    ],
+    "description": "prohibits to display one or more hud elements.",
+    "syntax": "<hud_name> [hud_name2...]"
   },
   "hud262_enable": {
-    "description": "allows to display one or more hud elements.",
-    "syntax": "<hud_name> [hud_name2...]",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      }
+    ],
+    "description": "allows to display one or more hud elements.",
+    "syntax": "<hud_name> [hud_name2...]"
   },
   "hud262_list": {
-    "description": "prints a list of strings-hud elements.",
-    "syntax": "[regexp]",
     "arguments": [
-      { "name": "regexp", "description": "print only [regexp] matching huds" }
-    ]
+      {
+        "description": "print only [regexp] matching huds",
+        "name": "regexp"
+      }
+    ],
+    "description": "prints a list of strings-hud elements.",
+    "syntax": "[regexp]"
   },
   "hud262_move": {
-    "description": "moves a hud element; dx and dy deviations are measured in symbols.",
-    "syntax": "<hud_name> <dx> <dy>",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" },
-      { "name": "dx", "description": "horisontal shift" },
-      { "name": "dy", "description": "vertical shift" }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      },
+      {
+        "description": "horisontal shift",
+        "name": "dx"
+      },
+      {
+        "description": "vertical shift",
+        "name": "dy"
+      }
+    ],
+    "description": "moves a hud element; dx and dy deviations are measured in symbols.",
+    "syntax": "<hud_name> <dx> <dy>"
   },
   "hud262_position": {
-    "description": "indicates position of a hud element on the screen;",
-    "syntax": "<hud_name> <pos> <x> <y>",
     "arguments": [
-      { "name": "hud_name", "description": "name of your hud element" },
-      { "name": "pos", "description": "Posotion:  1 upper left corner  2 upper rightcorner  3 lower right corner  4 lower left corner  5 upper central position  6 lower central position." },
-      { "name": "x", "description": "horisontal offset" },
-      { "name": "y", "description": "vertical offset" }
-    ]
+      {
+        "description": "name of your hud element",
+        "name": "hud_name"
+      },
+      {
+        "description": "Posotion:  1 upper left corner  2 upper rightcorner  3 lower right corner  4 lower left corner  5 upper central position  6 lower central position.",
+        "name": "pos"
+      },
+      {
+        "description": "horisontal offset",
+        "name": "x"
+      },
+      {
+        "description": "vertical offset",
+        "name": "y"
+      }
+    ],
+    "description": "indicates position of a hud element on the screen;",
+    "syntax": "<hud_name> <pos> <x> <y>"
   },
   "hud262_remove": {
-    "description": "kills a hud element.",
-    "syntax": "<hud_name>",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      }
+    ],
+    "description": "kills a hud element.",
+    "syntax": "<hud_name>"
   },
   "hud262_width": {
-    "description": "forces a hud element width and cuts undesired space or adds it when needed.",
-    "syntax": "<hud_name> <width>",
     "arguments": [
-      { "name": "hud_name", "description": "Hud element's name" },
-      { "name": "width", "description": "The range of width is 0-128, the value 0 (default) cancels the width forcing." }
-    ]
+      {
+        "description": "Hud element's name",
+        "name": "hud_name"
+      },
+      {
+        "description": "The range of width is 0-128, the value 0 (default) cancels the width forcing.",
+        "name": "width"
+      }
+    ],
+    "description": "forces a hud element width and cuts undesired space or adds it when needed.",
+    "syntax": "<hud_name> <width>"
   },
   "hud_editor": {
     "description": "Toggles the HUD editor on or off."
   },
   "hud_export": {
-    "description": "Saves setup of your HUD (scr_newhud 1) into separate .cfg file.",
-    "syntax": "<filename>",
     "arguments": [
-      { "name": "filename", "description": "Name (with optional path) of saved file. If .cfg extension is not present it will be automatically added." }
-    ]
+      {
+        "description": "Name (with optional path) of saved file. If .cfg extension is not present it will be automatically added.",
+        "name": "filename"
+      }
+    ],
+    "description": "Saves setup of your HUD (scr_newhud 1) into separate .cfg file.",
+    "syntax": "<filename>"
+  },
+  "hud_fps_min_reset": {
+    "system-generated": true
   },
   "hud_recalculate": {
     "description": "Refresh the positions of your HUD elements"
   },
   "if": {
-    "description": "Condition clause.",
-    "syntax": "<expr1> <operator> <expr2> <cmd1> [else <cmd1>]",
     "arguments": [
-      { "name": "expr1", "description": "A string where you usually use your own text, macros, and values of variables (like $volume)." },
-      { "name": "operator", "description": "==, =, !=, <>, >, <, >=, <=, isin, !isin. Where 'isin' means \"expr1 is a substring of expr2\" and '!isin' is a negation of this. The others are standard mathematical comparison." },
-      { "name": "expr2", "description": "See expr1" },
-      { "name": "cmd1", "description": "Will get executed if the binary operation succeeds." },
-      { "name": "cmd2", "description": "Will get executed if the binary operation fails." }
-    ]
+      {
+        "description": "A string where you usually use your own text, macros, and values of variables (like $volume).",
+        "name": "expr1"
+      },
+      {
+        "description": "==, =, !=, <>, >, <, >=, <=, isin, !isin. Where 'isin' means \"expr1 is a substring of expr2\" and '!isin' is a negation of this. The others are standard mathematical comparison.",
+        "name": "operator"
+      },
+      {
+        "description": "See expr1",
+        "name": "expr2"
+      },
+      {
+        "description": "Will get executed if the binary operation succeeds.",
+        "name": "cmd1"
+      },
+      {
+        "description": "Will get executed if the binary operation fails.",
+        "name": "cmd2"
+      }
+    ],
+    "description": "Condition clause.",
+    "syntax": "<expr1> <operator> <expr2> <cmd1> [else <cmd1>]"
   },
   "if_exists": {
     "description": "if an object <name> of a type <type> exists, a command <cmd1> will be issued, or a command <cmd2> if such object could not be found.  The type of the object can be either cvar, alias, trigger or hud.",
@@ -542,9 +818,6 @@
     "description": "You can give ignore either a player's name (name completion is useful for this)  or a userid (ignore <name|userid>). ignore without any command line  parameters displays your ignore list.",
     "syntax": "<name|userid>"
   },
-  "ignorelist": {
-    "description": "Prints ignorelist"
-  },
   "ignore_id": {
     "description": "ignore_id is identical except it only accepts user id's (only useful if there is  a player whose name is the userid of someone you want to ignore).",
     "syntax": "(userid)"
@@ -552,14 +825,23 @@
   "ignore_team": {
     "description": "You can ignore teams instead of players.  Example:  ignoreteam nine will ignore whole clan nine."
   },
+  "ignore_voip": {
+    "system-generated": true
+  },
+  "ignorelist": {
+    "description": "Prints ignorelist"
+  },
   "impulse": {
     "description": "This command calls a game function or QuakeC function. Often impulses are used  by the mod by defining aliases for game functions like \"ready\" and \"break\" that  call certain impulses."
   },
-  "inc": {
-    "description": "Increments a variable by one or adds to it the optional second argument.  There are no 'add' or 'dec' commands because 'inc' can handle both addition and  subtraction.  Example:  inc sensitivity -2 would subtract 2 from sensitivity."
-  },
   "in_evdevlist": {
     "description": "print list of evdev devices if you got empty list, probably you dont have access rights to /dev/input/eventX sudo chmod 644 /dev/input/event* should help you"
+  },
+  "in_restart": {
+    "system-generated": true
+  },
+  "inc": {
+    "description": "Increments a variable by one or adds to it the optional second argument.  There are no 'add' or 'dec' commands because 'inc' can handle both addition and  subtraction.  Example:  inc sensitivity -2 would subtract 2 from sensitivity."
   },
   "itemsclock": {
     "description": "HUD element displaying items that will spawn soon in the game. Works only in MVD and QuakeTV playback."
@@ -574,9 +856,6 @@
   "keycode": {
     "description": "This command enables the setting of a new keymapping.",
     "syntax": "keycode [ext] <scancode> <key> [<shiftmap>] [<altgrmap>]"
-  },
-  "keymaplist": {
-    "description": "This command prints all the current keymappings to the quake console."
   },
   "keymap_init": {
     "description": "This resets the current keymapping and then generates a copy of the internal defaults (US keyboard) to be the new keymappings. This can be used as a base to generate a new keymapping file. It has the same (unchangeable) mapping as the example keymap-file \"default.kmap\""
@@ -595,6 +874,9 @@
     "description": "With this command the active keymappings will be written to a kmap-file (including a descriptive header which explains the usage).",
     "syntax": "[layoutname] <filename>"
   },
+  "keymaplist": {
+    "description": "This command prints all the current keymappings to the quake console."
+  },
   "kick": {
     "description": "Removes a user from the server. Use the status command to receive the user's id.  Example:  kick 1234",
     "syntax": "(userid)"
@@ -603,11 +885,14 @@
     "description": "Suicide. (-2 frags on ktpro/kteam servers)"
   },
   "legacyquake": {
-    "description": "Command that turns off new features added to the client that may confuse experienced users who don't like new features :-)",
-    "syntax": "[ver]",
     "arguments": [
-      { "name": "ver", "description": "Optional argument, when specified, will disable only new features from specified client version" }
-    ]
+      {
+        "description": "Optional argument, when specified, will disable only new features from specified client version",
+        "name": "ver"
+      }
+    ],
+    "description": "Command that turns off new features added to the client that may confuse experienced users who don't like new features :-)",
+    "syntax": "[ver]"
   },
   "listip": {
     "description": "Prints out the current list of IPs on the server list. Not to be confused with  the status command which prints out the list of the IPs of the connected players."
@@ -616,8 +901,14 @@
     "description": "Load 123 loads saved game 123.",
     "syntax": "(filename)"
   },
+  "loadFragfile": {
+    "system-generated": true
+  },
   "loadcharset": {
     "description": "You can change your console font from within ezQuake. Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use  /loadcharset XXX to load XXX.png (or tga). \"/loadcharset original\" will restore the 8bit  font in your gfx.wad (this is default). Note that the /loadcharset command is just a 'shortcut'  for the new gl_consolefont variable."
+  },
+  "loadfont": {
+    "system-generated": true
   },
   "loadfragfile": {
     "description": "loadfragfile 123 loads fragfile 123",
@@ -627,6 +918,9 @@
     "description": "Loads a loc file (must be located in id1/locs, qw/locs, or ezquake/locs.  The \".loc\" extention is optional, for example, \"loadloc dm6\"; if the file name has  no extension, use its explicit name (\"loadloc dm6.\").",
     "syntax": "(filename)"
   },
+  "loadpak": {
+    "system-generated": true
+  },
   "loadsky": {
     "description": "Loads your skybox (qw\\env).  Example:  loadsky snow",
     "syntax": "(filename)"
@@ -634,12 +928,33 @@
   "localinfo": {
     "description": "Shows or sets localinfo variables. Useful for mod programmers who need to allow the admin  to change settings. This is an alternative storage space to the serverinfo space for mod  variables. The variables stored in this space are not broadcast on the network.  This space also has a 32-kilobyte limit which is much greater then the 512-byte limit on  the serverinfo space.  Special Keys: (current map) (next map) - Using this combination will allow the creation  of a custom map cycle without editing code.  Examples:  localinfo dm2 dm4  localinfo dm4 dm6  localinfo dm6 dm2"
   },
+  "locate": {
+    "system-generated": true
+  },
   "locname": {
     "description": "Create a new location in the current spot."
   },
   "log": {
     "description": "If you type \"log filename\" it will log console to filename.log in your gamedir.  It overwrites logs without asking.",
     "syntax": "(filename)"
+  },
+  "logerrors": {
+    "system-generated": true
+  },
+  "logfile": {
+    "system-generated": true
+  },
+  "logplayers": {
+    "system-generated": true
+  },
+  "logrcon": {
+    "system-generated": true
+  },
+  "logtelnet": {
+    "system-generated": true
+  },
+  "ls": {
+    "system-generated": true
   },
   "macrolist": {
     "description": "Prints a list of all available macros."
@@ -650,6 +965,9 @@
   "mapgroup": {
     "description": "mapgroup 2fort5r 2fort5: will make 2fort5r and 2fort5 use the 2fort5r textures, locs and etc... ",
     "syntax": "mapgroup [map1] [map2] ..."
+  },
+  "master_rcon_password": {
+    "system-generated": true
   },
   "match_forcestart": {
     "description": "Simulates the start of a match (so that auto recording etc is triggered). Useful if you join a  ktpro server after countdown has started, or you are playing a mode that doesn't have a  proper countdown (eg race mode).  Most importantly this is useful for tf servers, since you can use a msg_trigger to execute  match_forcestart on \"MATCH BEGINS NOW\"."
@@ -717,6 +1035,15 @@
   "messagemodeqtvtogame": {
     "description": "Go into message mode for chatting in the Quake TV chat."
   },
+  "mod": {
+    "system-generated": true
+  },
+  "modfraglogfile": {
+    "system-generated": true
+  },
+  "move": {
+    "system-generated": true
+  },
   "mp3_fadeout": {
     "description": "Like stop but fades out."
   },
@@ -766,17 +1093,41 @@
   "mp3_stop": {
     "description": "Stop mp3."
   },
+  "mp3_volume": {
+    "system-generated": true
+  },
   "msg_trigger": {
-    "description": "Allows you to set rules that will automatically execute actions when a certain message is sent from a server. This is very usefull in Team Fortress, in deathmatch it can be used for example for auto-reporting \"quad in 30\" when you receive \"Quad Damage is wearing out\" message. Note that only some server messages can be triggered. Usually no pickup messages nor your teammates text is triggered.",
-    "syntax": "<alias> <string> [-l] <level>",
     "arguments": [
-      { "name": "alias", "description": "The name of the alias you want to be executed when trigger matches the string." },
-      { "name": "string", "description": "Case-sensitive substring of the message you want to catch in this trigger." },
-      { "name": "level", "description": "Level of the message. Level 0 is pickup messages, level 1 is death messages, level 2 is critical messages, level 3 is chat messages. Everything else is level 4." }
-    ]
+      {
+        "description": "The name of the alias you want to be executed when trigger matches the string.",
+        "name": "alias"
+      },
+      {
+        "description": "Case-sensitive substring of the message you want to catch in this trigger.",
+        "name": "string"
+      },
+      {
+        "description": "Level of the message. Level 0 is pickup messages, level 1 is death messages, level 2 is critical messages, level 3 is chat messages. Everything else is level 4.",
+        "name": "level"
+      }
+    ],
+    "description": "Allows you to set rules that will automatically execute actions when a certain message is sent from a server. This is very usefull in Team Fortress, in deathmatch it can be used for example for auto-reporting \"quad in 30\" when you receive \"Quad Damage is wearing out\" message. Note that only some server messages can be triggered. Usually no pickup messages nor your teammates text is triggered.",
+    "syntax": "<alias> <string> [-l] <level>"
+  },
+  "mute": {
+    "system-generated": true
+  },
+  "mutesound": {
+    "system-generated": true
   },
   "mvd_dumpstats": {
     "description": "Will dump statistics gathered from a MVD demo into a \"stats.xml\" file in the current working directory"
+  },
+  "mvdrecord": {
+    "system-generated": true
+  },
+  "mvdstop": {
+    "system-generated": true
   },
   "netproblem": {
     "description": "HUD element - icon displayed when network traffic is experiencing problems like lost packets, large delay, etc."
@@ -784,9 +1135,18 @@
   "noclip": {
     "description": "You can fly and go thru objects (free mode as spectator)  Note: Needs cheats support by server."
   },
+  "nslookup": {
+    "system-generated": true
+  },
   "observe": {
     "description": "observe connects you to a server as a spectator. If no address is specified, observe will reconnect to the last visited server as a spectator.  Example:  observe 123.124.125.126",
     "syntax": "(address)"
+  },
+  "observeqtv": {
+    "system-generated": true
+  },
+  "order": {
+    "system-generated": true
   },
   "packet": {
     "description": "Sends a packet with specified contents to the destination.  Example:  packet 123.123.123.123:27500 \"status\"",
@@ -800,6 +1160,15 @@
   },
   "pause": {
     "description": "Pauses a game.  Note: Servers must support pausing."
+  },
+  "penaltylist": {
+    "system-generated": true
+  },
+  "penaltyremove": {
+    "system-generated": true
+  },
+  "place": {
+    "system-generated": true
   },
   "play": {
     "description": "Plays a sound effect.  Example:  play misc/runekey.wav",
@@ -820,18 +1189,57 @@
   "profile": {
     "description": "Reports information about QuakeC stuff."
   },
+  "qstat": {
+    "system-generated": true
+  },
   "qtv": {
-    "description": "Connects you to internet QuakeTV broadcasting some action, using your local proxy. Starts local QuakeTV proxy, tells it what broadcasting proxy it should connect to and by connecting to it you'll see the action broadcasted on the IP you've specified.",
-    "syntax": "<address>",
     "arguments": [
-      { "name": "address", "description": "IP address of the internet QuakeTV broadcasting some QW action" }
-    ]
+      {
+        "description": "IP address of the internet QuakeTV broadcasting some QW action",
+        "name": "address"
+      }
+    ],
+    "description": "Connects you to internet QuakeTV broadcasting some action, using your local proxy. Starts local QuakeTV proxy, tells it what broadcasting proxy it should connect to and by connecting to it you'll see the action broadcasted on the IP you've specified.",
+    "syntax": "<address>"
+  },
+  "qtv_close": {
+    "system-generated": true
+  },
+  "qtv_fixuser": {
+    "system-generated": true
+  },
+  "qtv_list": {
+    "system-generated": true
+  },
+  "qtv_query_demolist": {
+    "system-generated": true
+  },
+  "qtv_query_sourcelist": {
+    "system-generated": true
   },
   "qtv_reconnect": {
     "description": "Reconnect to last QuakeTV server the client was connected to."
   },
+  "qtv_status": {
+    "system-generated": true
+  },
+  "qtv_update": {
+    "system-generated": true
+  },
+  "qtvplay": {
+    "system-generated": true
+  },
+  "qtvreconnect": {
+    "system-generated": true
+  },
+  "qtvusers": {
+    "system-generated": true
+  },
   "quit": {
     "description": "Exit - disconnects from the server and closes the client."
+  },
+  "qwurl": {
+    "system-generated": true
   },
   "radar": {
     "description": "HUD element showing a map overview.",
@@ -840,12 +1248,122 @@
   "rcon": {
     "description": "Issue the set of commands to the server you are currently connected to or  have set in rcon_address. You must know the rcon password for that specific  server."
   },
+  "re_trigger": {
+    "arguments": [
+      {
+        "description": "re_trigger name",
+        "name": "rt_name"
+      },
+      {
+        "description": "regexp defines which messages (or whatever) will activate a trigger. The client uses the PCRE library (Perl-compatible regular expression library). You can find information how to write regexps in the PCRE's documentation.",
+        "name": "regexp"
+      }
+    ],
+    "description": "when used w/o parameter, prints a list of all triggers; when regexp is not defined prints options set for rt_name trigger; otherwise creates or changes rt_name trigger.",
+    "syntax": "re_trigger [rt_name [regexp]]"
+  },
+  "re_trigger_delete": {
+    "arguments": [
+      {
+        "description": "re_trigger name",
+        "name": "rt_name"
+      }
+    ],
+    "description": "deletes the corresponding trigger.",
+    "syntax": "re_trigger_delete rt_name"
+  },
+  "re_trigger_disable": {
+    "arguments": [
+      {
+        "description": "Re_trigger name. Can be REGEXP.",
+        "name": "rt_name"
+      }
+    ],
+    "description": "disables activation of one or more triggers.",
+    "syntax": "re_trigger_disable rt_name1 [rt_name2...]"
+  },
+  "re_trigger_enable": {
+    "arguments": [
+      {
+        "description": "Re_trigger name. Can be REGEXP.",
+        "name": "rt_name"
+      }
+    ],
+    "description": "enables activation of one or more triggers.",
+    "syntax": "re_trigger_enable rt_name1 [rt_name2...]"
+  },
+  "re_trigger_match": {
+    "arguments": [
+      {
+        "description": "Re_trigger name",
+        "name": "trigger_name"
+      },
+      {
+        "description": "your string",
+        "name": "string"
+      }
+    ],
+    "description": "allows to direct a <string> to a trigger <trigger_name>. If this string match regexp, then a corresponding alias is activated.",
+    "syntax": "re_trigger_match <trigger_name> <string>"
+  },
+  "re_trigger_options": {
+    "arguments": [
+      {
+        "description": "value represents a bit mask which determines which types of messages can cause activation of a trigger: 1 - pickup messages  2 - death messages  4 - critical messages (most of TeamFortress messages)  8 - chat  16 - centerprint  32 - echo command output  64 - other strings printed in the console The default mask for any trigger equals 31.",
+        "name": "mask"
+      },
+      {
+        "description": "sets a minimal interval of trigger activation (in seconds). If a second activation happened earlier than the value time - it is ignored. Default is 0.",
+        "name": "interval"
+      },
+      {
+        "description": "if activation of this trigger happened, the remaining (in the list of triggers) triggers are not  checked. Triggers are checked in a reversed order of their definition.",
+        "name": "final"
+      },
+      {
+        "description": "activation of such trigger doesn't stop the checking of other triggers (default).",
+        "name": "notfinal"
+      },
+      {
+        "description": "a string which caused activation of a trigger is not printed on the screen.",
+        "name": "remove"
+      },
+      {
+        "description": "a string which caused activation of a trigger is printed on the screen (default).",
+        "name": "noremove"
+      },
+      {
+        "description": "a string which caused activation of a trigger is not added to a log-file.",
+        "name": "log"
+      },
+      {
+        "description": "a string which caused activation of a trigger is added to a log-file (default).",
+        "name": "nolog"
+      },
+      {
+        "description": "a corresponding alias is not executed upon a trigger activation. There is no need to exec alias if all you need is to use remove option :)",
+        "name": "noaction"
+      },
+      {
+        "description": "a corresponding alias is executed upon a trigger activation (default).",
+        "name": "action"
+      }
+    ],
+    "description": "changes options for a corresponding trigger",
+    "syntax": "re_trigger_options rt_name option_list"
+  },
   "reconnect": {
     "description": "Reconnects to the last server/proxy."
   },
   "record": {
     "description": "Records a demo.  Example:  record test records test.qwd to qw folder",
     "syntax": "(filename)"
+  },
+  "recordqwd": {
+    "system-generated": true
+  },
+  "register_qwurl_protocol": {
+    "system-generated": true
   },
   "removeip": {
     "description": "Removes an IP address from the server IP list.  Examples:  removeip 123.123.123.123  removeip 123.123.123",
@@ -854,71 +1372,42 @@
   "removeloc": {
     "description": "Remove the closest location (use teamsay to see which)"
   },
-  "re_trigger": {
-    "description": "when used w/o parameter, prints a list of all triggers; when regexp is not defined prints options set for rt_name trigger; otherwise creates or changes rt_name trigger.",
-    "syntax": "re_trigger [rt_name [regexp]]",
-    "arguments": [
-      { "name": "rt_name", "description": "re_trigger name" },
-      { "name": "regexp", "description": "regexp defines which messages (or whatever) will activate a trigger. The client uses the PCRE library (Perl-compatible regular expression library). You can find information how to write regexps in the PCRE's documentation." }
-    ]
+  "removepak": {
+    "system-generated": true
   },
-  "re_trigger_delete": {
-    "description": "deletes the corresponding trigger.",
-    "syntax": "re_trigger_delete rt_name",
-    "arguments": [
-      { "name": "rt_name", "description": "re_trigger name" }
-    ]
+  "reset": {
+    "system-generated": true
   },
-  "re_trigger_disable": {
-    "description": "disables activation of one or more triggers.",
-    "syntax": "re_trigger_disable rt_name1 [rt_name2...]",
-    "arguments": [
-      { "name": "rt_name", "description": "Re_trigger name. Can be REGEXP." }
-    ]
+  "rm": {
+    "system-generated": true
   },
-  "re_trigger_enable": {
-    "description": "enables activation of one or more triggers.",
-    "syntax": "re_trigger_enable rt_name1 [rt_name2...]",
-    "arguments": [
-      { "name": "rt_name", "description": "Re_trigger name. Can be REGEXP." }
-    ]
-  },
-  "re_trigger_match": {
-    "description": "allows to direct a <string> to a trigger <trigger_name>. If this string match regexp, then a corresponding alias is activated.",
-    "syntax": "re_trigger_match <trigger_name> <string>",
-    "arguments": [
-      { "name": "trigger_name", "description": "Re_trigger name" },
-      { "name": "string", "description": "your string" }
-    ]
-  },
-  "re_trigger_options": {
-    "description": "changes options for a corresponding trigger",
-    "syntax": "re_trigger_options rt_name option_list",
-    "arguments": [
-      { "name": "mask", "description": "value represents a bit mask which determines which types of messages can cause activation of a trigger: 1 - pickup messages  2 - death messages  4 - critical messages (most of TeamFortress messages)  8 - chat  16 - centerprint  32 - echo command output  64 - other strings printed in the console The default mask for any trigger equals 31." },
-      { "name": "interval", "description": "sets a minimal interval of trigger activation (in seconds). If a second activation happened earlier than the value time - it is ignored. Default is 0." },
-      { "name": "final", "description": "if activation of this trigger happened, the remaining (in the list of triggers) triggers are not  checked. Triggers are checked in a reversed order of their definition." },
-      { "name": "notfinal", "description": "activation of such trigger doesn't stop the checking of other triggers (default)." },
-      { "name": "remove", "description": "a string which caused activation of a trigger is not printed on the screen." },
-      { "name": "noremove", "description": "a string which caused activation of a trigger is printed on the screen (default)." },
-      { "name": "log", "description": "a string which caused activation of a trigger is not added to a log-file." },
-      { "name": "nolog", "description": "a string which caused activation of a trigger is added to a log-file (default)." },
-      { "name": "noaction", "description": "a corresponding alias is not executed upon a trigger activation. There is no need to exec alias if all you need is to use remove option :)" },
-      { "name": "action", "description": "a corresponding alias is executed upon a trigger activation (default)." }
-    ]
+  "rmdir": {
+    "system-generated": true
   },
   "rotate": {
     "description": "rotates the player by x degrees.  Note: Negative values can also be used for the desired angle.  Example: \"rotate 180\" will rotate your pov by 180 degrees."
+  },
+  "s_audiodevicelist": {
+    "system-generated": true
+  },
+  "s_listdrivers": {
+    "system-generated": true
+  },
+  "s_restart": {
+    "system-generated": true
   },
   "save": {
     "description": "To save games in singleplaying.  Example: save 123"
   },
   "saveloc": {
-    "description": "Saves the current locs in memory to the specified file.",
-    "syntax": "(filename)",
     "arguments": [
-      { "name": "filename", "description": "The .loc file the locs should be saved in." }
-    ]
+      {
+        "description": "The .loc file the locs should be saved in.",
+        "name": "filename"
+      }
+    ],
+    "description": "Saves the current locs in memory to the specified file.",
+    "syntax": "(filename)"
   },
   "say": {
     "description": "Broadcasts a string to all other players.  Example: say ezQuake rules!"
@@ -926,20 +1415,35 @@
   "say_team": {
     "description": "Broadcasts a string to teammates.  Example: say_team stop boring!"
   },
+  "sb_buildpingtree": {
+    "system-generated": true
+  },
   "sb_pingsdump": {
     "description": "Dumps a list of pairs (IP address, ping) into the console based on the current content of the Server Browser list"
+  },
+  "sb_proxygetpings": {
+    "system-generated": true
   },
   "sb_refresh": {
     "description": "Causes Server Browser refresh ping and status info for all servers"
   },
   "sb_sourceadd": {
-    "description": "Adds new server list source.",
-    "syntax": "<name> <source> <type>",
     "arguments": [
-      { "name": "name", "description": "Name of the source" },
-      { "name": "source", "description": "(IP) address of master server or filename of the server list file" },
-      { "name": "type", "description": "\"master\" for master server or \"file\" for server list file" }
-    ]
+      {
+        "description": "Name of the source",
+        "name": "name"
+      },
+      {
+        "description": "(IP) address of master server or filename of the server list file",
+        "name": "source"
+      },
+      {
+        "description": "\"master\" for master server or \"file\" for server list file",
+        "name": "type"
+      }
+    ],
+    "description": "Adds new server list source.",
+    "syntax": "<name> <source> <type>"
   },
   "sb_sourcemark": {
     "description": "Marks \"source-name\" as selected server source list.",
@@ -964,11 +1468,20 @@
     "description": "HUD element which displays your position on the frag leaders board."
   },
   "screenshot": {
-    "description": "Saves a still picture of current screen to your harddrive.",
-    "syntax": "[name]",
     "arguments": [
-      { "name": "name", "description": "Optional. When used tells the destination filename. If extension is not preset it will be added automatically according to sshot_format setting." }
-    ]
+      {
+        "description": "Optional. When used tells the destination filename. If extension is not preset it will be added automatically according to sshot_format setting.",
+        "name": "name"
+      }
+    ],
+    "description": "Saves a still picture of current screen to your harddrive.",
+    "syntax": "[name]"
+  },
+  "script": {
+    "system-generated": true
+  },
+  "serverexec": {
+    "system-generated": true
   },
   "serverinfo": {
     "description": "Reports the current server info."
@@ -977,18 +1490,18 @@
     "description": "Prints the status of the ezQuake server."
   },
   "set": {
-    "description": "Sets a variable to a given value.",
-    "syntax": "<varname> <value>",
     "arguments": [
-      { "name": "varname", "description": "Name of variable or custom variable." },
-      { "name": "value", "description": "Value you want to store in the variable." }
-    ]
-  },
-  "setinfo": {
-    "description": "Sets information about your FuhWorld user. Used without a key it will list  all of your current settings. Specifying a non-existent key and a value will  create the new key."
-  },
-  "setmaster": {
-    "description": "Lists the server with up to eight masters. When a server is listed with a master,  the master is aware of the server's IP address and port and it is added to the  list of current server connected to a master. A heartbeat is sent to the master  from the server to indicated that the server is still running and alive.  Examples:  setmaster 192.246.40.12:27002  setmaster 192.246.40.12:27002 192.246.40.12:27004"
+      {
+        "description": "Name of variable or custom variable.",
+        "name": "varname"
+      },
+      {
+        "description": "Value you want to store in the variable.",
+        "name": "value"
+      }
+    ],
+    "description": "Sets a variable to a given value.",
+    "syntax": "<varname> <value>"
   },
   "set_alias_str": {
     "description": "assigns variable a value which contains an indicated alias.",
@@ -999,20 +1512,56 @@
     "syntax": "<cvar> <key>"
   },
   "set_calc": {
-    "description": "Advanced variables customization.",
-    "syntax": "<cvar command cmdargs> | <cvar arg1 oper arg2>",
     "arguments": [
-      { "name": "cvar", "description": "Name of variable you want to save the result in." },
-      { "name": "command", "description": "Possible commands: strlen - gets length of given string, int - converts given float value to integer, substr - return substring of given string, set_substr - replaces given position in string with another string, pos - gets position of substring in given string." },
-      { "name": "cmdargs", "description": "Arguments of commands: strlen <string>; int <float>; substr <sourcestr> <position> [<length>]; set_substr - <replacestr> <position>; pos <haystack> <needle>;" },
-      { "name": "arg1", "description": "First argument" },
-      { "name": "oper", "description": "Possible operators: +, -, *, /, div, %%, and, or, xor." },
-      { "name": "arg2", "description": "Second argument." }
-    ]
+      {
+        "description": "Name of variable you want to save the result in.",
+        "name": "cvar"
+      },
+      {
+        "description": "Possible commands: strlen - gets length of given string, int - converts given float value to integer, substr - return substring of given string, set_substr - replaces given position in string with another string, pos - gets position of substring in given string.",
+        "name": "command"
+      },
+      {
+        "description": "Arguments of commands: strlen <string>; int <float>; substr <sourcestr> <position> [<length>]; set_substr - <replacestr> <position>; pos <haystack> <needle>;",
+        "name": "cmdargs"
+      },
+      {
+        "description": "First argument",
+        "name": "arg1"
+      },
+      {
+        "description": "Possible operators: +, -, *, /, div, %%, and, or, xor.",
+        "name": "oper"
+      },
+      {
+        "description": "Second argument.",
+        "name": "arg2"
+      }
+    ],
+    "description": "Advanced variables customization.",
+    "syntax": "<cvar command cmdargs> | <cvar arg1 oper arg2>"
+  },
+  "set_eval": {
+    "system-generated": true
   },
   "set_ex": {
     "description": "assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks.",
     "syntax": "<cvar> <value>"
+  },
+  "set_tp": {
+    "system-generated": true
+  },
+  "setinfo": {
+    "description": "Sets information about your FuhWorld user. Used without a key it will list  all of your current settings. Specifying a non-existent key and a value will  create the new key."
+  },
+  "setmaster": {
+    "description": "Lists the server with up to eight masters. When a server is listed with a master,  the master is aware of the server's IP address and port and it is added to the  list of current server connected to a master. A heartbeat is sent to the master  from the server to indicated that the server is still running and alive.  Examples:  setmaster 192.246.40.12:27002  setmaster 192.246.40.12:27002 192.246.40.12:27004"
+  },
+  "show": {
+    "system-generated": true
+  },
+  "showskins": {
+    "system-generated": true
   },
   "sizedown": {
     "description": "Reduces the screen size."
@@ -1055,11 +1604,56 @@
   "stop": {
     "description": "Stops demo recording."
   },
+  "stopqwd": {
+    "system-generated": true
+  },
   "stopsound": {
     "description": "Stops all sounds currently being played."
   },
+  "sv_democancel": {
+    "system-generated": true
+  },
+  "sv_demoeasyrecord": {
+    "system-generated": true
+  },
+  "sv_demoinfo": {
+    "system-generated": true
+  },
+  "sv_demoinfoadd": {
+    "system-generated": true
+  },
+  "sv_demoinforemove": {
+    "system-generated": true
+  },
+  "sv_demolist": {
+    "system-generated": true
+  },
+  "sv_demolistr": {
+    "system-generated": true
+  },
+  "sv_demolistregex": {
+    "system-generated": true
+  },
+  "sv_demonumremove": {
+    "system-generated": true
+  },
+  "sv_demorecord": {
+    "system-generated": true
+  },
+  "sv_demoremove": {
+    "system-generated": true
+  },
+  "sv_demostop": {
+    "system-generated": true
+  },
   "sv_gamedir": {
     "description": "Displays or determines the value of the serverinfo *gamedir variable.   This is the directory clients will use.  Note: Useful when the physical gamedir directory has a different  name than the widely accepted gamedir directory.  Examples:  gamedir tf2_5; sv_gamedir fortress  gamedir ctf4_2; sv_gamedir ctf  gamedir ktffa;  sv_gamedir qw  // FFA servers should use default *gamedir"
+  },
+  "sv_lastscores": {
+    "system-generated": true
+  },
+  "svadmin": {
+    "system-generated": true
   },
   "tcl_eval": {
     "description": "execute <string> as tcl code",
@@ -1074,12 +1668,18 @@
     "syntax": "<name> [parameters]"
   },
   "tcpconnect": {
-    "description": "Connects your client to a QuakeWorld server via TCP.",
-    "syntax": "<address>:<port>",
     "arguments": [
-      { "name": "address", "description": "IP address of a QuakeWorld server." },
-      { "name": "port", "description": "TCP port of a QuakeWorld server." }
-    ]
+      {
+        "description": "IP address of a QuakeWorld server.",
+        "name": "address"
+      },
+      {
+        "description": "TCP port of a QuakeWorld server.",
+        "name": "port"
+      }
+    ],
+    "description": "Connects your client to a QuakeWorld server via TCP.",
+    "syntax": "<address>:<port>"
   },
   "teamcolor": {
     "description": "This will overwride team color.  Example: teamcolor 12 13  Note: If only the shirt color is given, the pant color will match."
@@ -1103,15 +1703,24 @@
   "toggle": {
     "description": "You can turn off/on cvars.  Example:  toggle sensitivity turns off sensitivity and toggle sensitivity again turns on."
   },
+  "toggle_re": {
+    "description": "You can turn variable values ON and OFF. Example: toggle ^gl_part.* - turns all particle effects on/off.",
+    "syntax": "[cvar_regexp1] [cvar_regexp2] ... [cvar_regexpN]"
+  },
   "toggleconsole": {
     "description": "Brings the console up and down."
+  },
+  "togglehud": {
+    "system-generated": true
   },
   "togglemenu": {
     "description": "Displays the menu screens."
   },
-  "toggle_re": {
-    "description": "You can turn variable values ON and OFF. Example: toggle ^gl_part.* - turns all particle effects on/off.",
-    "syntax": "[cvar_regexp1] [cvar_regexp2] ... [cvar_regexpN]"
+  "toggleproxymenu": {
+    "system-generated": true
+  },
+  "togglespec": {
+    "system-generated": true
   },
   "tp_msgcoming": {
     "description": "Will send a message to your teammates telling them where you are coming from, and what your status is. Doubles as tp_lost when you are dead (because you can't be coming from somewhere if you're dead)."
@@ -1128,11 +1737,20 @@
   "tp_msghelp": {
     "description": "Requests help at a location. Also gives your status."
   },
+  "tp_msgitemsoon": {
+    "system-generated": true
+  },
+  "tp_msgkillme": {
+    "system-generated": true
+  },
   "tp_msglost": {
     "description": "Will send a message to your teammates telling them you died at a location. Also tells them how many enemies are there, and what weapon (if any) you dropped."
   },
   "tp_msgneed": {
     "description": "Equivalent of %u (need macro). Will display what you need (health/armor/ammo)."
+  },
+  "tp_msgnocancel": {
+    "system-generated": true
   },
   "tp_msgpoint": {
     "description": "Will report to your team item you see in your point at its location. Will report team/enemy powerup if you, a teammte, or an enemy has a powerup and are in your point. Note that tp_pointpriorities is default to 1 and it is strongly suggested to keep this value. You can alter the priorities of this bind by altering tp_point."
@@ -1149,11 +1767,26 @@
   "tp_msgsafe": {
     "description": "Will send a message to your teammates informing them your current location is safe. Will print nothing if there is enemy in your point. Also reports your status."
   },
+  "tp_msgslipped": {
+    "system-generated": true
+  },
+  "tp_msgtfconced": {
+    "system-generated": true
+  },
   "tp_msgtook": {
     "description": "Informs your team of the last item you took. Saves each item in memory for 15 seconds."
   },
   "tp_msgtrick": {
     "description": "Requests a trick at a location. Best for cases like dm2 when you need a teammate to help you get quad from stairs."
+  },
+  "tp_msgutake": {
+    "system-generated": true
+  },
+  "tp_msgwaiting": {
+    "system-generated": true
+  },
+  "tp_msgyesok": {
+    "system-generated": true
   },
   "tp_pickup": {
     "description": "Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg,  rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag,  armor, weapons, powerups, ammo, all, default, none"
@@ -1166,18 +1799,36 @@
     "description": "Specifies which items will be included in the took (%X or $took) macro. If you took an item and it's not listed in tp_took list, %X and $took macro will display tp_name_nothing (default: \"nothing\"). Supported items: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, armor, weapons, powerups, ammo, all, default, none. Item names can be customized with tp_name_item.",
     "syntax": "item1 item2 ... DO NOT USE QUOTES"
   },
+  "track": {
+    "system-generated": true
+  },
   "track-": {
     "description": "This means when you are spectating or watching an mvd, keys will automatically be assigned  to track certain players (so in a 4v4 8 keys are needed, the first 4 make you track the  4 players in the first team and the last 4 make you track the second team)."
+  },
+  "track1": {
+    "system-generated": true
+  },
+  "track2": {
+    "system-generated": true
+  },
+  "track3": {
+    "system-generated": true
+  },
+  "track4": {
+    "system-generated": true
   },
   "trackkiller": {
     "description": "Will switch view to the player who killed the player we are tracking at the moment"
   },
   "trackteam": {
-    "description": "When using MultiView, allows you to assign all available points of view to a desired team.",
-    "syntax": "<teamnum>",
     "arguments": [
-      { "name": "teamnum", "description": "Team number. In standard 4on4 use 1 or 2." }
-    ]
+      {
+        "description": "Team number. In standard 4on4 use 1 or 2.",
+        "name": "teamnum"
+      }
+    ],
+    "description": "When using MultiView, allows you to assign all available points of view to a desired team.",
+    "syntax": "<teamnum>"
   },
   "troubleshoot": {
     "description": "Performs a check on client settings and displays possible sources of issues."
@@ -1185,12 +1836,12 @@
   "unalias": {
     "description": "Example:  unalias myreport removes myreport alias."
   },
-  "unaliasall": {
-    "description": "Removes all aliases."
-  },
   "unalias_re": {
     "description": "Deletes given alias(es). Example: unalias ^_zoom. - removes all aliases beginning with '_zoom', e.g. _zoom_in, _zoom_out",
     "syntax": "<cvar1> [cvar2] ..."
+  },
+  "unaliasall": {
+    "description": "Removes all aliases."
   },
   "unbind": {
     "description": "Example: unbind x delete strings on x button."
@@ -1215,6 +1866,9 @@
   "unignore_team": {
     "description": "If you have ignored team nine and wan't to remove team nine from ignore so type unignore_team nine  to remove ignore."
   },
+  "unignore_voip": {
+    "system-generated": true
+  },
   "unset": {
     "description": "removes user-created variable ",
     "syntax": "<cvar1> [cvar2] ..."
@@ -1228,12 +1882,18 @@
     "syntax": "(userid)"
   },
   "userdir": {
-    "description": "A userdir command can be used for addition of directories to the list searched for files by the client (configs, sounds, models, etc.). Real handy when several players with their own configs files play Quake on a single computer. When issuing this command after reconnection to a server or parameter is not defined, a current userdir is printed in the console.",
-    "syntax": "[dir [type]]",
     "arguments": [
-      { "name": "dir", "description": "String used as the <dir> part in the final path (see 'type' argument below)." },
-      { "name": "type", "description": "Optional number. Default is 0. 0 - <quake_dir>/<gamedir>/<dir>,  1 - <quake_dir>/<dir>/<gamedir>.  2 - <quake_dir>/qw/<dir>/<gamedir>,  3 - <quake_dir>/qw/<dir>,  4 - <quake_dir>/<dir>,  5 - $HOME/qw/<dir>" }
-    ]
+      {
+        "description": "String used as the <dir> part in the final path (see 'type' argument below).",
+        "name": "dir"
+      },
+      {
+        "description": "Optional number. Default is 0. 0 - <quake_dir>/<gamedir>/<dir>,  1 - <quake_dir>/<dir>/<gamedir>.  2 - <quake_dir>/qw/<dir>/<gamedir>,  3 - <quake_dir>/qw/<dir>,  4 - <quake_dir>/<dir>,  5 - $HOME/qw/<dir>",
+        "name": "type"
+      }
+    ],
+    "description": "A userdir command can be used for addition of directories to the list searched for files by the client (configs, sounds, models, etc.). Real handy when several players with their own configs files play Quake on a single computer. When issuing this command after reconnection to a server or parameter is not defined, a current userdir is printed in the console.",
+    "syntax": "[dir [type]]"
   },
   "userinfo": {
     "description": "Prints your user settings."
@@ -1241,11 +1901,17 @@
   "users": {
     "description": "Reports information on connected players and retrieve user ids."
   },
+  "v_cshift": {
+    "description": "This adjusts all of the colors currently being displayed.  Used when you are underwater, hit, have the Ring of Shadows, or  Quad Damage.  Example: v_cshift 16 32 64  Note: v_cshift (red) (green) (blue) (intensity)"
+  },
   "validate_clients": {
     "description": "This shows authed ezQuake users, nonauthed and non ezQuake users."
   },
   "version": {
     "description": "Prints client version number and date into the console."
+  },
+  "vid_displaylist": {
+    "system-generated": true
   },
   "vid_forcemode": {
     "description": "This command will force ezQuake to use a certain video mode."
@@ -1274,8 +1940,17 @@
   "viewalias": {
     "description": "Example:  viewalias mystatus print mystatus alias."
   },
-  "v_cshift": {
-    "description": "This adjusts all of the colors currently being displayed.  Used when you are underwater, hit, have the Ring of Shadows, or  Quad Damage.  Example: v_cshift 16 32 64  Note: v_cshift (red) (green) (blue) (intensity)"
+  "vip_addip": {
+    "system-generated": true
+  },
+  "vip_listip": {
+    "system-generated": true
+  },
+  "vip_removeip": {
+    "system-generated": true
+  },
+  "vip_writeip": {
+    "system-generated": true
   },
   "wait": {
     "description": "Adds one wait frame."
@@ -1289,5 +1964,8 @@
   },
   "writeip": {
     "description": "Records all IP addresses on the server IP list. The file name is listip.cfg."
+  },
+  "z_ext_list": {
+    "system-generated": true
   }
 }

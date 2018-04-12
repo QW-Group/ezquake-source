@@ -501,7 +501,7 @@ void Sys_InitDoubleTime (void)
 {
 	__int64 freq;
 
-	if (!COM_CheckParm("-nohwtimer") && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0) 
+	if (!COM_CheckParm(cmdline_param_client_nohardwaretimers) && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0)
 	{
 		// Hardware timer available
 		pfreq = (double)freq;
@@ -611,7 +611,7 @@ void Sys_Init_ (void)
 	// Enabled for development purposes, but disabled for official builds.
 
 #ifdef _DEBUG
-	if (!COM_CheckParm("-allowmultiple"))
+	if (!COM_CheckParm(cmdline_param_client_allowmultipleclients))
 #endif
 	{
 		// Mutex will fail if semaphore already exists.
@@ -622,7 +622,7 @@ void Sys_Init_ (void)
 
 		if (!qwclsemaphore)
 		{
-			int qwurl_parm = COM_CheckParm("+qwurl");
+			int qwurl_parm = COM_FindParm("+qwurl");
 			char cmd[1024] = { 0 };
 
 			if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
@@ -1206,7 +1206,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	COM_InitArgv (argc, argv);
 
 	// Let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
-	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) 
+	if ((i = COM_CheckParm(cmdline_param_console_debug)) && i < COM_Argc() - 1)
 	{
 		extern FILE *qconsole_log;
 		char *s = COM_Argv(i + 1);

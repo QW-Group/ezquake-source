@@ -5097,7 +5097,7 @@ void CL_Demo_Init(void)
 	// Init the demo cache if the user specified to use one.
 	//
 	democache_available = false;
-	if ((parm = COM_CheckParm("-democache")) && parm + 1 < COM_Argc())
+	if ((parm = COM_CheckParm(cmdline_param_client_democache)) && parm + 1 < COM_Argc())
 	{
 		democache_size = Q_atoi(COM_Argv(parm + 1)) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
@@ -5146,8 +5146,8 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("qtv_fixuser", CL_QTVFixUser_f);
 
 	// Macros
-	Cmd_AddMacro ("demoname", CL_Macro_DemoName_f);
-	Cmd_AddMacro ("demolength", CL_Macro_DemoLength_f);
+	Cmd_AddMacro (macro_demoname, CL_Macro_DemoName_f);
+	Cmd_AddMacro (macro_demolength, CL_Macro_DemoLength_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32

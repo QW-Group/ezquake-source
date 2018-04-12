@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 // $Id: xsd_command.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
 
+#if 0
+
 #include "quakedef.h"
 #include "expat.h"
 #include "xsd_command.h"
@@ -205,3 +207,5 @@ xml_command_t * XSD_Command_Load(char *filename)
 	VFS_CLOSE(f);
     return document;
 }
+
+#endif

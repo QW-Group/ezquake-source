@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "net.h"
 #include "protocol.h"
 #include "cmodel.h"
+#include "cmdline_params.h"
 
 #ifdef _WIN64
 int Q_strlen(const char* s);
@@ -188,10 +189,12 @@ void COM_ClearArgv (int arg);
 void COM_AddParm (char *parm);
 void COM_InitArgv (int argc, char **argv);
 int COM_Argc (void);
-int COM_CheckParm (char *parm);
-int COM_CheckParmOffset (char *parm, int offset);
+int COM_CheckParm(cmdline_param_id parm_id);
+int COM_CheckParmOffset(cmdline_param_id parm_id, int offset);
+int COM_FindParm(const char* parm);
+const char* Cmd_CommandLineParamName(cmdline_param_id id);
 
-#define IsDeveloperMode() (COM_CheckParm("-dev"))
+#define IsDeveloperMode() (COM_CheckParm(cmdline_param_developer_mode))
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
 // "1 3.5 6 7" will lead to fl_array[0] = 1.0; fl_array[1] = 3.5; ...

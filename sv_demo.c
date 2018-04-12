@@ -1768,7 +1768,7 @@ static void MVD_Init (void)
 
 	Cvar_Register (&extralogname);
 
-	p = COM_CheckParm ("-democache");
+	p = COM_CheckParm (cmdline_param_server_democache_kb);
 	if (p)
 	{
 		if (p < COM_Argc()-1)

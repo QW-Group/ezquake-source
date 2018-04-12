@@ -1131,8 +1131,8 @@ void GL_Texture_Init(void)
 		Cvar_SetValue(&gl_max_size, i);
 	}
 
-	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
-	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
+	no24bit = (COM_CheckParm(cmdline_param_client_no24bittextures) || gl_no24bit.integer) ? true : false;
+	forceTextureReload = COM_CheckParm(cmdline_param_client_forcetexturereload) ? true : false;
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?

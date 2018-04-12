@@ -717,7 +717,7 @@ void R_InitParticles(void)
 		Cvar_Register(&r_drawparticles);
 		Cvar_ResetCurrentGroup();
 
-		if ((i = COM_CheckParm("-particles")) && i + 1 < COM_Argc()) {
+		if ((i = COM_CheckParm(cmdline_param_client_particlecount)) && i + 1 < COM_Argc()) {
 			Cvar_SetValue(&r_particles_count, Q_atoi(COM_Argv(i + 1)));
 		}
 	}

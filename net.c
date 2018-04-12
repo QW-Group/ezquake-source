@@ -1093,7 +1093,7 @@ int TCP_OpenListenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1158,7 +1158,7 @@ int UDP_OpenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1315,7 +1315,7 @@ void NET_InitClient(void)
 	int port = PORT_CLIENT;
 	int p;
 
-	p = COM_CheckParm ("-clientport");
+	p = COM_CheckParm (cmdline_param_net_clientport);
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
 	}
@@ -1401,7 +1401,7 @@ void NET_InitServer (void)
 	int port = PORT_SERVER;
 	int p;
 
-	p = COM_CheckParm ("-port");
+	p = COM_CheckParm (cmdline_param_net_serverport);
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
 	}

@@ -1394,7 +1394,7 @@ void VID_NotifyActivity(void)
 
 void VID_SetDeviceGammaRamp(unsigned short *ramps)
 {
-	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
+	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
 		return;
 	}
 
@@ -1486,24 +1486,24 @@ static void VID_ParseCmdLine(void)
 {
 	int i, w = 0, h = 0, display = 0;
 
-	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed")) {
+	if (COM_CheckParm(cmdline_param_client_windowedmode) || COM_CheckParm(cmdline_param_client_startwindowed)) {
 		Cvar_LatchedSetValue(&r_fullscreen, 0);
 	}
 
-	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_client_video_frequency)) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
 	}
 
-	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_client_video_bpp)) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
 	}
 
-	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
-	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	w = ((i = COM_CheckParm(cmdline_param_client_video_width))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	h = ((i = COM_CheckParm(cmdline_param_client_video_height)) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 
-	display = ((i = COM_CheckParm("-display")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	display = ((i = COM_CheckParm(cmdline_param_client_video_displaynumber)) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 	if (i) {
-		if (COM_CheckParm("-window")) {
+		if (COM_CheckParm(cmdline_param_client_windowedmode)) {
 			Cvar_LatchedSetValue(&vid_win_displayNumber, display);
 		} else {
 			Cvar_LatchedSetValue(&vid_displayNumber, display);
@@ -1511,7 +1511,7 @@ static void VID_ParseCmdLine(void)
 	}
 
 	if (w && h) {
-		if (COM_CheckParm("-window")) {
+		if (COM_CheckParm(cmdline_param_client_windowedmode)) {
 			Cvar_LatchedSetValue(&vid_win_width,  w);
 			Cvar_LatchedSetValue(&vid_win_height, h);
 		} else {
@@ -1520,15 +1520,15 @@ static void VID_ParseCmdLine(void)
 		}
 	} // else if (w || h) { Sys_Error("Must specify both -width and -height\n"); }
 
-	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_client_video_conwidth)) && i + 1 < COM_Argc()) {
 		Cvar_SetIgnoreCallback(&r_conwidth, COM_Argv(i + 1));
 	}
 
-	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_client_video_conheight)) && i + 1 < COM_Argc()) {
 		Cvar_SetIgnoreCallback(&r_conheight, COM_Argv(i + 1));
 	}
 
-	if (COM_CheckParm("-glsl-renderer")) {
+	if (COM_CheckParm(cmdline_param_client_video_glsl_renderer)) {
 		Cvar_LatchedSetValue(&vid_renderer, 1);
 	}
 }

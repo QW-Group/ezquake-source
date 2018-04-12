@@ -1813,7 +1813,7 @@ void SV_InitOperatorCommands (void)
 
 	Cvar_Register (&sv_cheats);
 
-	if (COM_CheckParm ("-cheats"))
+	if (COM_CheckParm (cmdline_param_server_enablecheats))
 	{
 		sv_allow_cheats = true;
 		Cvar_SetValue (&sv_cheats, 1);
@@ -1845,7 +1845,7 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("chmod", SV_ChmodFile_f);
 #endif //_WIN32
 	//<-
-	if (COM_CheckParm ("-enablelocalcommand"))
+	if (COM_CheckParm (cmdline_param_server_enablelocalcommand))
 		Cmd_AddCommand ("localcommand", SV_LocalCommand_f);
 
 	Cmd_AddCommand ("map", SV_Map_f);

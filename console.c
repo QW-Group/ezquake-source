@@ -425,14 +425,14 @@ void Con_Init (void) {
 	int i, conbufsize;
 
 	//Tei: moved there, because on windows can't capture the output for debug purposes
-	if (!qconsole_log && COM_CheckParm("-condebug")) {
+	if (!qconsole_log && COM_CheckParm(cmdline_param_console_debug)) {
 		char tmp_path[MAX_OSPATH] = {0};
 
 		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/qw/qconsole.log", com_basedir);
 		qconsole_log = fopen(tmp_path, "a");
 	}
 
-	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < COM_Argc()) {
+	if ((i = COM_CheckParm(cmdline_param_console_buffersize)) && i + 1 < COM_Argc()) {
 		conbufsize = Q_atoi(COM_Argv(i + 1)) << 10;
 		conbufsize = bound (MINIMUM_CONBUFSIZE , conbufsize, MAXIMUM_CONBUFSIZE);
 	} else {

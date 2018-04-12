@@ -35,8 +35,8 @@ typedef struct xsd_mapping_s
 xsd_mapping_t;
 
 xsd_mapping_t xsd_mappings[] = {
-    {"variable", XSD_Variable_LoadFromHandle, XSD_Variable_Free, XSD_Variable_Convert},
-    {"command", XSD_Command_LoadFromHandle, XSD_Command_Free, NULL},
+    //{"variable", XSD_Variable_LoadFromHandle, XSD_Variable_Free, XSD_Variable_Convert},
+    //{"command", XSD_Command_LoadFromHandle, XSD_Command_Free, NULL},
     {"document", XSD_Document_LoadFromHandle, XSD_Document_Free, NULL},
     {NULL, NULL, NULL}
 };

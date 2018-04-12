@@ -624,7 +624,6 @@ GLOBAL void TP_Msg_TFConced_f (void)
 
 GLOBAL const char *TP_MSG_Colored_Armor(void) // $colored_armor
 {
-	extern cvar_t tp_name_ra, tp_name_ya, tp_name_ga;
 	MSGPART armor = "";
  
 	if (HAVE_GA())

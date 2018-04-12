@@ -36,6 +36,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "keys.h"
 
+typedef struct {
+	char name[MAX_MACRO_NAME];
+	char *(*func) (void);
+	int teamplay;
+} macro_command_t;
+
+#define MACRO_DEF(x) { #x, NULL, 0 }
+
+static macro_command_t macro_commands[num_macros] = {
+#include "macro_ids.h"
+};
+
+#undef MACRO_DEF
+
 qbool CL_CheckServerCommand (void);
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
@@ -1414,63 +1428,57 @@ void Cmd_CmdList_re_f (void)
 	Cmd_CmdList (true);
 }
 
-#define MAX_MACROS 64
-
-static macro_command_t macro_commands[MAX_MACROS];
-static int macro_count = 0;
-
-void Cmd_ReInitAllMacro (void)
+void Cmd_ReInitAllMacro(void)
 {
 	int i;
-	int teamplay;
+	int teamplay = (int)Rulesets_RestrictTriggers();
 
-	teamplay = (int) Rulesets_RestrictTriggers ();
-
-	for (i = 0; i < macro_count; i++)
-		if (macro_commands[i].teamplay != MACRO_NORULES)
+	for (i = 0; i < num_macros; i++) {
+		if (macro_commands[i].teamplay != MACRO_NORULES) {
 			macro_commands[i].teamplay = teamplay;
+		}
+	}
 }
 
-void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay)
+void Cmd_AddMacroEx(macro_id id, char *(*f) (void), int teamplay)
 {
-	if (macro_count == MAX_MACROS)
-		Sys_Error ("Cmd_AddMacro: macro_count == MAX_MACROS");
+	if (id < 0 || id >= num_macros) {
+		return;
+	}
 
-	snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
-	macro_commands[macro_count].func = f;
-	macro_commands[macro_count].teamplay = teamplay;
+	macro_commands[id].func = f;
+	macro_commands[id].teamplay = teamplay;
 
 #ifdef WITH_TCL
 // disconnect: it seems macro are safe with TCL NOW
 //	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
 		TCL_RegisterMacro (macro_commands + macro_count);
 #endif
-
-	macro_count++;
 }
 
-void Cmd_AddMacro (const char *s, char *(*f) (void))
+void Cmd_AddMacro (macro_id id, char *(*f) (void))
 {
-	Cmd_AddMacroEx (s, f, MACRO_NORULES);
+	Cmd_AddMacroEx(id, f, MACRO_NORULES);
 }
 
-char *Cmd_MacroString (const char *s, int *macro_length)
+char *Cmd_MacroString (const char* s, int *macro_length)
 {
 	int i;
 	macro_command_t	*macro;
 
-	for (i = 0; i < macro_count; i++) {
-		macro = &macro_commands[i];
-		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
-			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
-				cbuf_current = &cbuf_formatted_comms;
-			*macro_length = strlen (macro->name);
-			return macro->func();
-		}
-		macro++;
-	}
-
 	*macro_length = 0;
+	for (i = 0; i < num_macros; i++) {
+		macro = &macro_commands[i];
+		if (macro->func) {
+			if (!strncasecmp(s, macro->name, strlen(macro->name))) {
+				if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED)) {
+					cbuf_current = &cbuf_formatted_comms;
+				}
+				*macro_length = strlen(macro->name);
+				return macro->func();
+			}
+		}
+	}
 
 	return NULL;
 }
@@ -1480,35 +1488,46 @@ static int Cmd_MacroCompare (const void *p1, const void *p2)
 	return strcmp ((*((macro_command_t **) p1))->name, (*((macro_command_t **) p2))->name);
 }
 
+const char* Cmd_MacroName(macro_id id)
+{
+	return macro_commands[id].name;
+}
+
+qbool Cmd_MacroTeamplayRestricted(macro_id id)
+{
+	return macro_commands[id].teamplay;
+}
+
 void Cmd_MacroList_f (void)
 {
 	int i, c, m = 0;
-	static macro_command_t *sorted_macros[MAX_MACROS];
+	static macro_command_t* sorted_macros[num_macros];
 
-	for (i = 0; i < macro_count; i++)
+	for (i = 0; i < num_macros; i++) {
 		sorted_macros[i] = &macro_commands[i];
-	qsort (sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
-
-	if (macro_count == MAX_MACROS)
-		assert(!"count == MAX_MACROS");
+	}
+	qsort(sorted_macros, num_macros, sizeof (macro_command_t *), Cmd_MacroCompare);
 
 	c = Cmd_Argc();
-	if (c > 1)
-		if (!ReSearchInit (Cmd_Argv (1)))
+	if (c > 1) {
+		if (!ReSearchInit(Cmd_Argv(1))) {
 			return;
+		}
+	}
 
 	Com_Printf ("List of macros:\n");
-	for (i = 0; i < macro_count; i++) {
+	for (i = 0; i < num_macros; i++) {
 		if (c==1 || ReSearchMatch (sorted_macros[i]->name)) {
 			Com_Printf ("$%s\n", sorted_macros[i]->name);
 			m++;
 		}
 	}
 
-	if (c > 1)
+	if (c > 1) {
 		ReSearchDone();
+	}
 
-	Com_Printf ("------------\n%i/%i macros\n", m, macro_count);
+	Com_Printf ("------------\n%i/%i macros\n", m, num_macros);
 }
 
 void TP_SetDefaultMacroFormat(char* cvar_lookup, int* fixed_width, int* alignment);

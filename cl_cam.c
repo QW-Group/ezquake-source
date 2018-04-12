@@ -810,14 +810,14 @@ void CL_InitCam(void)
  #ifdef JSS_CAM
 	Cmd_AddCommand ("cam_pos", Cam_Pos_f);
 	Cmd_AddCommand ("cam_angles", Cam_Angles_f);
-	Cmd_AddMacro ("cam_pos_x", Macro_Cam_Pos_X);
-	Cmd_AddMacro ("cam_pos_y", Macro_Cam_Pos_Y);
-	Cmd_AddMacro ("cam_pos_z", Macro_Cam_Pos_Z);
-	Cmd_AddMacro ("cam_pos", Macro_Cam_Pos);
- 	Cmd_AddMacro ("cam_angles_pitch", Macro_Cam_Angles_Pitch);
- 	Cmd_AddMacro ("cam_angles_yaw", Macro_Cam_Angles_Yaw);
- 	Cmd_AddMacro ("cam_angles_roll", Macro_Cam_Angles_Roll);
- 	Cmd_AddMacro ("cam_angles", Macro_Cam_Angles);
+	Cmd_AddMacro (macro_cam_pos_x, Macro_Cam_Pos_X);
+	Cmd_AddMacro (macro_cam_pos_y, Macro_Cam_Pos_Y);
+	Cmd_AddMacro (macro_cam_pos_z, Macro_Cam_Pos_Z);
+	Cmd_AddMacro (macro_cam_pos, Macro_Cam_Pos);
+	Cmd_AddMacro (macro_cam_angles_pitch, Macro_Cam_Angles_Pitch);
+	Cmd_AddMacro (macro_cam_angles_yaw, Macro_Cam_Angles_Yaw);
+	Cmd_AddMacro (macro_cam_angles_roll, Macro_Cam_Angles_Roll);
+	Cmd_AddMacro (macro_cam_angles, Macro_Cam_Angles);
  #endif
  
 	// Multiview tracking.	

@@ -58,7 +58,7 @@ void PR2_Init(void)
 	Cvar_Register(&sv_enableprofile);
 #endif
 
-	p = COM_CheckParm ("-progtype");
+	p = COM_CheckParm (cmdline_param_server_progtype);
 
 	if (p && p < COM_Argc())
 	{

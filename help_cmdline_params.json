@@ -1,0 +1,274 @@
+{
+  "-allowmultiple": {
+    "builds": [
+      "debug"
+    ],
+    "description": "On Windows, launch multiple copies of ezQuake rather than re-using the existing instance",
+    "systems": [
+      "windows"
+    ]
+  },
+  "-basedir": {
+    "arguments": "<path>",
+    "description": "The \"base\" directory is the path to the directory holding the quake.exe and all game directories.\n\nThis can be overridden with the \"-basedir\" command line parm to allow code debugging in a different directory."
+  },
+  "-bpp": {
+    "arguments": "<integer>",
+    "description": "Allows setting of 'r_colorbits' cvar during start-up"
+  },
+  "-cdaudio": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-cddev": {
+    "arguments": "<path>",
+    "description": "On Linux, specifies the cd device to use.  Must specify -cdaudio for this to have effect",
+    "remarks": "(is this only used in meson build?)",
+    "systems": [
+      "linux"
+    ]
+  },
+  "-cheats": {
+    "description": "enable cheats on local server (/noclip etc)"
+  },
+  "-clientport": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-conbufsize": {
+    "arguments": "<size-in-kb>",
+    "description": "set size of console buffer",
+    "remarks": "between 32KB & 4MB, default is 64KB"
+  },
+  "-condebug": {
+    "description": "log all console output to qw/qconsole.log"
+  },
+  "-conheight": {
+    "description": "set vid_conheight during startup"
+  },
+  "-conwidth": {
+    "description": "set vid_conwidth during startup"
+  },
+  "-data": {
+    "system-generated": true
+  },
+  "-democache": {
+    "arguments": "<size-in-kb>",
+    "description": "create memory buffer during startup, used instead of writing directly to disk when recording demos",
+    "remarks": "Minimum value 2048KB"
+  },
+  "-detailtrails": {
+    "description": "sets /gl_particle_fulldetail 1 during startup"
+  },
+  "-dev": {
+    "system-generated": true
+  },
+  "-display": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-enablelocalcommand": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-forceTextureReload": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-forcetexturereload": {
+    "system-generated": true
+  },
+  "-freq": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-game": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-gamma": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-gl-forward-only-profile": {
+    "system-generated": true
+  },
+  "-gl_ext": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-glsl-renderer": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-heapsize": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-height": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-ip": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-maxtmu2": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-mem": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-minmemory": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-no-triple-gl-buffer": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-no24bit": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-noconinput": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nohome": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nohwgamma": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nohwtimer": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-noindphys": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-noinvlmaps": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nolibjpeg": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nolibpng": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nomouse": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nomtex": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nopriority": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-norjscripts": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-noscripts": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nosound": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-nostdout": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-particles": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-port": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-progtype": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-ruleset": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-showliberrors": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-startwindowed": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-userdir": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-width": {
+    "flags": [
+      "incomplete"
+    ]
+  },
+  "-window": {
+    "flags": [
+      "incomplete"
+    ]
+  }
+}

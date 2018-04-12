@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 	COM_InitArgv (argc, argv);
 
 	// let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
-	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) {
+	if ((i = COM_CheckParm(CMDLINE_PARAM_CONSOLE_DEBUG)) && i < COM_Argc() - 1) {
 		extern FILE *qconsole_log;
 		char *s = COM_Argv(i + 1);
 		if (*s != '-' && *s != '+')
@@ -322,10 +322,10 @@ int main(int argc, char **argv)
 	signal(SIGFPE, SIG_IGN);
 
 	// we need to check for -noconinput and -nostdout before Host_Init is called
-	if (!(noconinput = COM_CheckParm("-noconinput")))
+	if (!(noconinput = COM_CheckParm(CMDLINE_PARAM_CLIENT_NOSTDINPUT)))
 		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | FNDELAY);
 
-	if (COM_CheckParm("-nostdout"))
+	if (COM_CheckParm(CMDLINE_PARAM_CLIENT_NOSTDOUTPUT))
 		sys_nostdout.value = 1;
 
 	Host_Init (argc, argv, 128 * 1024 * 1024);

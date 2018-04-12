@@ -483,7 +483,7 @@ void S_Init (void)
 		Com_Printf_State (PRINT_INFO, "[sound] Sound is already initialized!\n");
 		return;
 	}
-	if (COM_CheckParm("-nosound")) {
+	if (COM_CheckParm(cmdline_param_client_nosound)) {
 		Cmd_AddLegacyCommand ("play", ""); // just suppress warnings
 		return;
 	}	

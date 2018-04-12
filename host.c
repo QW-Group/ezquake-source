@@ -425,13 +425,13 @@ void Host_InitMemory (int memsize)
 {
 	int t;
 
-	if (COM_CheckParm ("-minmemory"))
+	if (COM_CheckParm (cmdline_param_host_memory_minimum))
 		memsize = MINIMUM_MEMORY;
 
-	if ((t = COM_CheckParm ("-heapsize")) != 0 && t + 1 < COM_Argc())
+	if ((t = COM_CheckParm (cmdline_param_host_memory_kb)) != 0 && t + 1 < COM_Argc())
 		memsize = Q_atoi (COM_Argv(t + 1)) * 1024;
 
-	if ((t = COM_CheckParm ("-mem")) != 0 && t + 1 < COM_Argc())
+	if ((t = COM_CheckParm (cmdline_param_host_memory_mb)) != 0 && t + 1 < COM_Argc())
 		memsize = Q_atoi (COM_Argv(t + 1)) * 1024 * 1024;
 
 	if (memsize < MINIMUM_MEMORY)
@@ -604,7 +604,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	ConfigManager_Init();
 	ResetBinds();
 
-	i = COM_CheckParm("+cfg_load");
+	i = COM_FindParm("+cfg_load");
 
 	if (i && (i + 1 < COM_Argc())) {
 		cfg_name = COM_Argv(i + 1);

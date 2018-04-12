@@ -1804,12 +1804,12 @@ void CL_InitLocal (void)
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
-	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
+	if (COM_CheckParm (cmdline_param_client_norjscripts) || COM_CheckParm (cmdline_param_client_noscripts))
 		Cvar_SetValue (&allow_scripts, 0);
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
 
-	if (COM_CheckParm("-noindphys")) 
+	if (COM_CheckParm(cmdline_param_client_noindphys))
 	{
 		Cvar_SetValue(&cl_independentPhysics, 0);
 		Cvar_SetValue(&cl_nolerp, 1);
@@ -1841,14 +1841,14 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("hash", CL_Hash_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 
-	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
-	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
-	Cmd_AddMacro("demotime", CL_Macro_Demotime);
-	Cmd_AddMacro("rand", CL_Macro_Rand);
-	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
-	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
-	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
-	Cmd_AddMacro("conheight", CL_Macro_Conheight);
+	Cmd_AddMacro(macro_connectiontype, CL_Macro_ConnectionType);
+	Cmd_AddMacro(macro_demoplayback, CL_Macro_Demoplayback);
+	Cmd_AddMacro(macro_demotime, CL_Macro_Demotime);
+	Cmd_AddMacro(macro_rand, CL_Macro_Rand);
+	Cmd_AddMacro(macro_matchstatus, CL_Macro_Serverstatus);
+	Cmd_AddMacro(macro_serverip, CL_Macro_ServerIp);
+	Cmd_AddMacro(macro_conwidth, CL_Macro_Conwidth);
+	Cmd_AddMacro(macro_conheight, CL_Macro_Conheight);
 
 #ifdef WITH_OPENGL_TRACE
 	if (GL_DebugProfileContext()) {

@@ -93,7 +93,7 @@ qbool QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs
 
 void QLib_MissingModuleError(int errortype, char *libname, char *cmdline, char *features)
 {
-	if (!COM_CheckParm("-showliberrors"))
+	if (!COM_CheckParm(cmdline_param_client_showlibraryerrors))
 		return;
 	switch (errortype) {
 	case QLIB_ERROR_MODULE_NOT_FOUND:

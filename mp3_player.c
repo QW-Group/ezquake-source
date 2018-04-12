@@ -156,8 +156,8 @@ char* Media_GetVolume_f(void);
 void MP3_Init(void) {
 	mp3_player->Init();
 
-	Cmd_AddMacro("mp3info", MP3_Macro_MP3Info);
-	Cmd_AddMacro("mp3_volume", Media_GetVolume_f);
+	Cmd_AddMacro(macro_mp3info, MP3_Macro_MP3Info);
+	Cmd_AddMacro(macro_mp3_volume, Media_GetVolume_f);
 
 	Cmd_AddCommand("mp3_prev", MP3_Prev_f);
 	Cmd_AddCommand("mp3_play", MP3_Play_f);

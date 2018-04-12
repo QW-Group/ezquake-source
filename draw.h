@@ -320,7 +320,3 @@ qbool Draw_IsTiledBackground(const char* path);
 mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
 #endif // __DRAW_H__
-
-
-
-

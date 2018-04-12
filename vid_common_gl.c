@@ -180,7 +180,7 @@ void GL_Init(void)
 	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
 #endif
 
-	if (COM_CheckParm("-gl_ext")) {
+	if (COM_CheckParm(cmdline_param_client_printopenglextensions)) {
 		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
 	}
 
@@ -208,7 +208,7 @@ void Check_Gamma (unsigned char *pal) {
 	if (!host_initialized) {
 		float old = v_gamma.value;
 		char string = v_gamma.string[0];
-		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < COM_Argc()) {
+		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
 			vid_gamma = bound(0.3, Q_atof(COM_Argv(i + 1)), 1);
 		}
 		else {

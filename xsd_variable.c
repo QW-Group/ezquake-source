@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 // $Id: xsd_variable.c,v 1.7 2007-10-04 14:56:54 dkure Exp $
 
+#if 0
+
 #include "quakedef.h"
 #include "expat.h"
 #include "xsd_variable.h"
@@ -282,3 +284,5 @@ xml_document_t * XSD_Variable_Convert(xml_t *doc)
 
     return ret;
 }
+
+#endif

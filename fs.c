@@ -711,7 +711,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 				break;
 			}
 	}
-	else if ((i = COM_CheckParm ("-basedir")) && i < COM_Argc() - 1) {
+	else if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
 		// -basedir <path>
 		// Overrides the system supplied base directory (under id1)
 		strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
@@ -753,8 +753,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		com_homedir[0] = 0;
 #endif
 
-	if (COM_CheckParm("-nohome"))
+	if (COM_CheckParm(cmdline_param_filesystem_nohome)) {
 		com_homedir[0] = 0;
+	}
 
 	if (com_homedir[0])
 	{
@@ -783,7 +784,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	//Tei: original code from qbism.
 
 	i = 1;
-	while((i = COM_CheckParmOffset ("-data", i))) {
+	while((i = COM_CheckParmOffset (cmdline_param_filesystem_data, i))) {
 		if (i && i < COM_Argc()-1) {
 			char tmp_path[MAX_OSPATH];
 			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", com_basedir, COM_Argv(i+1)); /* FIXME: No slash?? Intentional?? */
@@ -796,12 +797,12 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	// any set gamedirs will be freed up to here
 	fs_base_searchpaths = fs_searchpaths;
 
-	if ((i = COM_CheckParm("-userdir")) && i < COM_Argc() - 2)
+	if ((i = COM_CheckParm(cmdline_param_filesystem_userdir)) && i < COM_Argc() - 2)
 		FS_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
 
 	// the user might want to override default game directory
-	if (!(i = COM_CheckParm ("-game")))
-		i = COM_CheckParm ("+gamedir");
+	if (!(i = COM_CheckParm (cmdline_param_filesystem_game)))
+		i = COM_FindParm("+gamedir");
 	if (i && i < COM_Argc() - 1)
 		FS_SetGamedir (COM_Argv(i + 1), true);
 }

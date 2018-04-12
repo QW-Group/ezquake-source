@@ -785,7 +785,7 @@ void R_Init(void)
 	Cvar_Register(&r_novis);
 	Cvar_Register(&r_wateralpha);
 	Cvar_Register(&gl_caustics);
-	if (!COM_CheckParm("-nomtex")) {
+	if (!COM_CheckParm(cmdline_param_client_nomultitexturing)) {
 		Cvar_Register(&gl_waterfog);
 		Cvar_Register(&gl_waterfog_density);
 		Cvar_Register(&gl_waterfog_color_water);

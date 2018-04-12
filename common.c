@@ -42,6 +42,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tp_triggers.h"
 #include "fs.h"
 
+typedef struct commandline_option_s {
+	const char* name;
+	int position;
+} commandline_option_t;
+
+#define CMDLINE_DEF(x, str) { str, 0 }
+
+static commandline_option_t commandline_parameters[num_cmdline_params] = {
+#include "cmdline_params_ids.h"
+};
+
+#undef CMDLINE_DEF
+
+const char* Cmd_CommandLineParamName(cmdline_param_id id)
+{
+	return commandline_parameters[id].name;
+}
+
 void Draw_BeginDisc (void);
 void Draw_EndDisc (void);
 
@@ -602,31 +620,48 @@ void COM_AddParm (char *parm)
 
 //Returns the position (1 to argc-1) in the program's argument list
 //where the given parameter appears, or 0 if not present
-int COM_CheckParm (char *parm)
+int COM_FindParm(const char* parm)
 {
 	int		i;
 
 	for (i = 1; i < com_argc; i++) {
-		if (!strcmp(parm, com_argv[i]))
+		if (!strcmp(parm, com_argv[i])) {
 			return i;
+		}
 	}
 
 	return 0;
 }
 
+int COM_CheckParm(cmdline_param_id id)
+{
+	if (id < 0 || id >= num_cmdline_params) {
+		return 0;
+	}
+
+	return commandline_parameters[id].position;
+}
 
 //Tei: added cos -data feature use it.
-int COM_CheckParmOffset (char *parm, int offset)
+int COM_CheckParmOffset(cmdline_param_id id, int offset)
 {
 	int             i;
+	const char* parm;
 
-	for (i=offset ; i<com_argc ; i++)
-	{
-		if (!com_argv[i])
-			continue;               // NEXTSTEP sometimes clears appkit vars.
+	if (id < 0 || id >= num_cmdline_params) {
+		return 0;
+	}
 
-		if (!strcmp (parm,com_argv[i]))
+	parm = commandline_parameters[id].name;
+	for (i = offset; i < com_argc; i++) {
+		// NEXTSTEP sometimes clears appkit vars.
+		if (!com_argv[i]) {
+			continue;
+		}
+
+		if (!strcmp(parm, com_argv[i])) {
 			return i;
+		}
 	}
 
 	return 0;
@@ -639,38 +674,48 @@ int COM_Argc (void)
 	return com_argc;
 }
 
-char *COM_Argv (int arg)
+char *COM_Argv(int arg)
 {
-	if (arg < 0 || arg >= com_argc)
+	if (arg < 0 || arg >= com_argc) {
 		return "";
+	}
 	return com_argv[arg];
 }
 
-void COM_ClearArgv (int arg)
+void COM_ClearArgv(int arg)
 {
-	if (arg < 0 || arg >= com_argc)
+	if (arg < 0 || arg >= com_argc) {
 		return;
+	}
 	com_argv[arg] = "";
 }
 
-void COM_InitArgv (int argc, char **argv)
+void COM_InitArgv(int argc, char **argv)
 {
+	int id;
+
 	for (com_argc = 0; com_argc < MAX_NUM_ARGVS && com_argc < argc; com_argc++) {
-		if (argv[com_argc])
+		if (argv[com_argc]) {
 			largv[com_argc] = argv[com_argc];
-		else
+		}
+		else {
 			largv[com_argc] = "";
+		}
 	}
 
 	largv[com_argc] = "";
 	com_argv = largv;
+
+	for (id = 0; id < num_cmdline_params; ++id) {
+		commandline_parameters[id].position = COM_FindParm(commandline_parameters[id].name);
+	}
 }
 
-void COM_Init (void)
+void COM_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
-	Cvar_Register (&developer);
-	Cvar_Register (&host_mapname);
+	Cvar_Register(&developer);
+	Cvar_Register(&host_mapname);
 
 	Cvar_ResetCurrentGroup();
 }

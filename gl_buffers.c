@@ -489,7 +489,7 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadOptionalFunction(glBindBufferRange);
 
 	// OpenGL 4.4, persistent mapping of buffers
-	tripleBuffer_supported = !COM_CheckParm("-no-triple-gl-buffer");
+	tripleBuffer_supported = !COM_CheckParm(cmdline_param_client_notriplebuffering);
 	GL_LoadMandatoryFunctionExtension(glFenceSync, tripleBuffer_supported);
 	GL_LoadMandatoryFunctionExtension(glClientWaitSync, tripleBuffer_supported);
 	GL_LoadMandatoryFunctionExtension(glBufferStorage, tripleBuffer_supported);

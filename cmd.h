@@ -215,13 +215,10 @@ void DeleteServerAliases (void);
 #define MACRO_ALLOWED 0
 #define MACRO_DISALLOWED 1
 
-typedef struct
-{
-	char name[MAX_MACRO_NAME];
-	char *(*func) (void);
-	int teamplay;			
-} macro_command_t;
+#include "macro_definitions.h"
 
-void Cmd_AddMacro (const char *s, char *(*f)(void)); 
-void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay);
-char *Cmd_MacroString (const char *s, int *macro_length);
+void Cmd_AddMacro(macro_id id, char *(*f)(void));
+void Cmd_AddMacroEx(macro_id id, char *(*f)(void), int teamplay);
+char* Cmd_MacroString(const char *s, int *macro_length);
+const char* Cmd_MacroName(macro_id id);
+qbool Cmd_MacroTeamplayRestricted(macro_id id);

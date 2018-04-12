@@ -412,7 +412,7 @@ extern cvar_t vid_gl_core_profile;
 #define GL_ForwardOnlyProfile()   (GL_CoreProfileContext())
 #else
 // There's no reason for this unless we need to check that we're not using deprecated functionality, so keep disabled
-#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm("-gl-forward-only-profile"))
+#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm(cmdline_param_client_forwardonlyprofile))
 #endif
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
