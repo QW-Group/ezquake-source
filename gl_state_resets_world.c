@@ -62,6 +62,13 @@ void GLC_StateEndDrawFlatModel(void)
 
 	glColor4ubv(color_white);
 
+	if (GL_BuffersSupported()) {
+		glDisableClientState(GL_VERTEX_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE0);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
 	LEAVE_STATE;
 }
 
@@ -120,6 +127,18 @@ void GLC_StateEndDrawTextureChains(void)
 		glDisable(GL_FOG);
 	}
 	GL_BindVertexArray(NULL);
+
+	if (GL_BuffersSupported()) {
+		GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		glDisableClientState(GL_VERTEX_ARRAY);
+
+		qglClientActiveTexture(GL_TEXTURE2);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglClientActiveTexture(GL_TEXTURE1);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglClientActiveTexture(GL_TEXTURE0);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
 
 	LEAVE_STATE;
 }

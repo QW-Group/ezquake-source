@@ -226,24 +226,40 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
 
 	if (GL_BuffersSupported()) {
+		extern cvar_t gl_vbo_clientmemory;
+
 		GL_BindVertexArray(NULL);
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-
-		glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
-		glEnableClientState(GL_VERTEX_ARRAY);
-
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
-		glEnableClientState(GL_COLOR_ARRAY);
 
 		qglClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		if (gl_vbo_clientmemory.integer) {
+			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+
+			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
+		}
+		else {
+			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+			GL_BindBuffer(imageVBO);
+
+			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
+			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
+		}
 
 		GL_DrawArrays(GL_QUADS, start * 4, (end - start + 1) * 4);
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!gl_vbo_clientmemory.integer) {
+			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		}
 	}
 	else {
 		int i;
@@ -255,7 +271,6 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		for (i = start * 4; i <= 4 * end + 3; ++i) {
 			glc_image_t* next = &imageData.glc_images[i];
 
-			// Don't need to break for colour
 			if (memcmp(next->colour, current_color, sizeof(current_color))) {
 				memcpy(current_color, next->colour, sizeof(current_color));
 				glColor4ubv(next->colour);
@@ -288,10 +303,9 @@ void GLM_PrepareImages(void)
 	else if (GL_BuffersSupported()) {
 		if (!GL_BufferReferenceIsValid(imageVBO)) {
 			imageVBO = GL_GenFixedBuffer(GL_ARRAY_BUFFER, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, GL_STREAM_DRAW);
-			GL_BindBuffer(imageVBO);
 		}
 		else {
-			GL_BindAndUpdateBuffer(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
+			GL_UpdateBuffer(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
 		}
 	}
 	else {
