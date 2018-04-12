@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "image.h"
+#include "tr_types.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
@@ -116,7 +117,10 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 		GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
 	}
-	GL_LoadOptionalFunction(glGetnTexImage);
+
+	if (GL_VersionAtLeast(4, 5)) {
+		GL_LoadOptionalFunction(glGetnTexImage);
+	}
 }
 
 void GL_TexSubImage3D(

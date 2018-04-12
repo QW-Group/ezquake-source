@@ -1272,17 +1272,26 @@ static void VID_SDL_Init(void)
 
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
-		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
 		if (GL_VersionAtLeast(2, 0)) {
 			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
 		}
 		else {
 			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
 		}
-		glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &glConfig.uniformBufferOffsetAlignment);
-		glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &glConfig.shaderStorageBufferOffsetAlignment);
-		glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+		if (GL_VersionAtLeast(4, 3)) {
+			glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
+			glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
+			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &glConfig.uniformBufferOffsetAlignment);
+			glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &glConfig.shaderStorageBufferOffsetAlignment);
+			glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+		}
+		else {
+			glConfig.max_3d_texture_size = 0;
+			glConfig.max_texture_depth = 0;
+			glConfig.uniformBufferOffsetAlignment = 0;
+			glConfig.shaderStorageBufferOffsetAlignment = 0;
+			glConfig.glsl_version = "0";
+		}
 	}
 
 	glConfig.initialized = true;
