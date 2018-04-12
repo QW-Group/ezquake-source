@@ -1771,7 +1771,7 @@ static void NQP_Flush (int count)
 // FIXME, we make no distinction reliable or not
 	assert (count <= nqp_buf.cursize);
 	SZ_Write (&sv.reliable_datagram, nqp_buf_data, count);
-	memcpy (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
+	memmove (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
 	nqp_buf.cursize -= count;
 }
 
