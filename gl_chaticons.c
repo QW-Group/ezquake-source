@@ -300,15 +300,17 @@ void CI_ImportTextureArrayReferences(texture_flag_t* texture_flags)
 	int i;
 
 	for (tex = 0; tex < num_citextures; ++tex) {
-		texture_array_ref_t* array_ref = &texture_flags[ci_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
+		if (GL_TextureReferenceIsValid(ci_textures[tex].texnum)) {
+			texture_array_ref_t* array_ref = &texture_flags[ci_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
 
-		ci_textures[tex].tex_array = array_ref->ref;
-		ci_textures[tex].tex_index = array_ref->index;
-		for (i = 0; i < ci_textures[tex].components; ++i) {
-			ci_textures[tex].coords[i][0] *= array_ref->scale_s;
-			ci_textures[tex].coords[i][2] *= array_ref->scale_s;
-			ci_textures[tex].coords[i][1] *= array_ref->scale_t;
-			ci_textures[tex].coords[i][3] *= array_ref->scale_t;
+			ci_textures[tex].tex_array = array_ref->ref;
+			ci_textures[tex].tex_index = array_ref->index;
+			for (i = 0; i < ci_textures[tex].components; ++i) {
+				ci_textures[tex].coords[i][0] *= array_ref->scale_s;
+				ci_textures[tex].coords[i][2] *= array_ref->scale_s;
+				ci_textures[tex].coords[i][1] *= array_ref->scale_t;
+				ci_textures[tex].coords[i][3] *= array_ref->scale_t;
+			}
 		}
 	}
 }
@@ -318,6 +320,8 @@ void CI_FlagTexturesForArray(texture_flag_t* texture_flags)
 	ci_tex_t tex;
 
 	for (tex = 0; tex < num_citextures; ++tex) {
-		texture_flags[ci_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+		if (GL_TextureReferenceIsValid(ci_textures[tex].texnum)) {
+			texture_flags[ci_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+		}
 	}
 }
