@@ -117,7 +117,7 @@ void GLC_FreeAliasPoseBuffer(void)
 	Q_free(temp_aliasmodel_buffer);
 }
 
-void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects)
+void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
@@ -132,7 +132,7 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 	int i;
 	vec3_t lc;
 
-	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, r_modelalpha, custom_model);
+	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, alpha_blend || r_modelalpha < 1, custom_model);
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;

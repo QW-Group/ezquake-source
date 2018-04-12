@@ -174,7 +174,7 @@ static void R_RenderAliasModelEntity(
 
 		if (GL_TextureReferenceIsValid(fb_texture)) {
 			GL_AlphaBlendFlags(GL_BLEND_ENABLED);
-			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx);
+			R_SetupAliasFrame(model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
 			GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 		}
 	}
@@ -416,7 +416,7 @@ void R_SetupAliasFrame(
 		GLM_DrawAliasFrame(model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else {
-		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects);
+		GLC_DrawAliasFrame(model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
 	}
 }
 

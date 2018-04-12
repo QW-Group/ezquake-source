@@ -992,7 +992,7 @@ void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_StateEndDrawWorldOutlines(void);
 void GL_StateBeginAlphaLineRGB(float thickness);
 void GL_StateEndAlphaLineRGB(void);
-void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model);
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model);
 void GLC_StateEndDrawAliasFrame(void);
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateEndAliasModelShadow(void);

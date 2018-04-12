@@ -38,6 +38,7 @@ typedef struct efrag_s {
 #define RF_PLAYERMODEL  8
 #define RF_NORMALENT    16
 #define RF_CAUSTICS     32
+#define RF_ALPHABLEND   64   // bit of a hack - always enable blending (used for 2nd pass when multi-texturing disabled)
 
 typedef struct entity_s {
 	vec3_t					origin;

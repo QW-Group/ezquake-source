@@ -86,7 +86,7 @@ void GLC_StateEndMD3Draw(void)
 {
 }
 
-void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, float alpha, struct custom_model_color_s* custom_model)
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model)
 {
 	ENTER_STATE;
 
@@ -98,7 +98,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	GL_DisableFog();
 	glColor3ubv(color_white);
 
-	GL_AlphaBlendFlags(alpha < 1 ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
+	GL_AlphaBlendFlags(alpha_blend ? GL_BLEND_ENABLED : GL_BLEND_DISABLED);
 
 	if (!GL_TextureReferenceIsValid(texture)) {
 		GLC_DisableAllTexturing();
