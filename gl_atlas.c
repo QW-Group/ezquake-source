@@ -22,18 +22,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "common_draw.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
-#define ATLAS_TEXTURE_WIDTH  4096
-#define ATLAS_TEXTURE_HEIGHT 4096
-#define ATLAS_CHUNK 64
-#define ATLAS_WIDTH (ATLAS_TEXTURE_WIDTH / ATLAS_CHUNK)
-#define ATLAS_HEIGHT (ATLAS_TEXTURE_HEIGHT / ATLAS_CHUNK)
+#define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
+#define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096
+//#define ATLAS_CHUNK 64
 
-static byte buffer[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
+static byte buffer[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
+static byte atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
+static byte prev_atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
 static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
+static int atlas_allocated[MAXIMUM_ATLAS_TEXTURE_WIDTH];
 static int atlas_delete_count = 0;
+static int atlas_texture_width = 0;
+static int atlas_texture_height = 0;
+static int atlas_block_width = 0;
+static int atlas_block_height = 0;
+static int atlas_chunk_size = 64;
+static qbool atlas_dirty;
+
+static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
+static cachepic_node_t charsetpics[MAX_CHARSETS];
+static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
+
 static float solid_s;
 static float solid_t;
+static texture_ref atlas_texnum;
+static qbool atlas_refresh = false;
 
 static void AddToDeleteList(mpic_t* src)
 {
@@ -52,17 +67,6 @@ static void DeleteOldTextures(void)
 	}
 }
 
-static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
-static cachepic_node_t charsetpics[MAX_CHARSETS];
-static cachepic_node_t crosshairpics[NUMCROSSHAIRS + 2];
-
-static int  atlas_allocated[ATLAS_WIDTH];
-static byte atlas_texels[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
-static byte prev_atlas_texels[ATLAS_TEXTURE_WIDTH * ATLAS_TEXTURE_HEIGHT * 4];
-static qbool atlas_dirty;
-static texture_ref atlas_texnum;
-static qbool atlas_refresh = false;
-
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 {
 	*ref = atlas_texnum;
@@ -75,11 +79,11 @@ static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
 
-	w = (w + (ATLAS_CHUNK - 1)) / ATLAS_CHUNK;
-	h = (h + (ATLAS_CHUNK - 1)) / ATLAS_CHUNK;
-	best = ATLAS_HEIGHT;
+	w = (w + (atlas_chunk_size - 1)) / atlas_chunk_size;
+	h = (h + (atlas_chunk_size - 1)) / atlas_chunk_size;
+	best = atlas_block_height;
 
-	for (i = 0; i < ATLAS_WIDTH - w; i++) {
+	for (i = 0; i < atlas_block_width - w; i++) {
 		best2 = 0;
 
 		for (j = 0; j < w; j++) {
@@ -98,7 +102,7 @@ static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
 		}
 	}
 
-	if (best + h > ATLAS_HEIGHT) {
+	if (best + h > atlas_block_height) {
 		return false;
 	}
 
@@ -107,8 +111,8 @@ static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
 	}
 
 	atlas_dirty = true;
-	*x *= ATLAS_CHUNK;
-	*y *= ATLAS_CHUNK;
+	*x *= atlas_chunk_size;
+	*y *= atlas_chunk_size;
 
 	return true;
 }
@@ -117,14 +121,14 @@ static void CachePics_AllocateSolidTexture(void)
 {
 	int x_pos, y_pos, y;
 
-	CachePics_AllocBlock(ATLAS_CHUNK, ATLAS_CHUNK, &x_pos, &y_pos);
+	CachePics_AllocBlock(atlas_chunk_size, atlas_chunk_size, &x_pos, &y_pos);
 
-	for (y = 0; y < ATLAS_CHUNK; ++y) {
-		memset(atlas_texels + (x_pos + (y_pos + y) * ATLAS_TEXTURE_WIDTH) * 4, 0xFF, ATLAS_CHUNK * 4);
+	for (y = 0; y < atlas_chunk_size; ++y) {
+		memset(atlas_texels + (x_pos + (y_pos + y) * atlas_texture_width) * 4, 0xFF, atlas_chunk_size * 4);
 	}
 
-	solid_s = (x_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_WIDTH;
-	solid_t = (y_pos + ATLAS_CHUNK / 2) * 1.0f / ATLAS_TEXTURE_HEIGHT;
+	solid_s = (x_pos + atlas_chunk_size / 2) * 1.0f / atlas_texture_width;
+	solid_t = (y_pos + atlas_chunk_size / 2) * 1.0f / atlas_texture_height;
 }
 
 static int CachePics_AddToAtlas(mpic_t* pic)
@@ -141,12 +145,12 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	width = (pic->sh - pic->sl) * texWidth;
 	height = (pic->th - pic->tl) * texHeight;
 
-	if (width > ATLAS_TEXTURE_WIDTH || height > ATLAS_TEXTURE_HEIGHT) {
+	if (width > atlas_texture_width || height > atlas_texture_height) {
 		return -1;
 	}
 
 	// Allocate space in an atlas texture
-	if (CachePics_AllocBlock(width + (width == ATLAS_TEXTURE_WIDTH ? 0 : padding), height + (height == ATLAS_TEXTURE_HEIGHT ? 0 : padding), &x_pos, &y_pos)) {
+	if (CachePics_AllocBlock(width + (width == atlas_texture_width ? 0 : padding), height + (height == atlas_texture_height ? 0 : padding), &x_pos, &y_pos)) {
 		int yOffset;
 		byte* input_image = NULL;
 
@@ -162,16 +166,16 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 		for (yOffset = 0; yOffset < height; ++yOffset) {
 			int y = y_pos + yOffset;
-			int base = (x_pos + y * ATLAS_TEXTURE_WIDTH) * 4;
+			int base = (x_pos + y * atlas_texture_width) * 4;
 			int srcBase = (pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
 
 			memcpy(atlas_texels + base, input_image + srcBase, 4 * width);
 		}
 
-		pic->sl = (x_pos) / (float)ATLAS_TEXTURE_WIDTH;
-		pic->sh = (x_pos + width) / (float)ATLAS_TEXTURE_WIDTH;
-		pic->tl = (y_pos) / (float)ATLAS_TEXTURE_HEIGHT;
-		pic->th = (y_pos + height) / (float)ATLAS_TEXTURE_HEIGHT;
+		pic->sl = (x_pos) / (float)atlas_texture_width;
+		pic->sh = (x_pos + width) / (float)atlas_texture_width;
+		pic->tl = (y_pos) / (float)atlas_texture_height;
+		pic->th = (y_pos + height) / (float)atlas_texture_height;
 		pic->texnum = atlas_texnum;
 
 		return 0;
@@ -193,7 +197,7 @@ void CachePics_AtlasFrame(void)
 void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
-		atlas_texnum = GL_LoadTexture("cachepics:atlas", ATLAS_TEXTURE_WIDTH, ATLAS_TEXTURE_HEIGHT, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		atlas_texnum = GL_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 	}
 	atlas_dirty = 0;
 }
@@ -311,6 +315,11 @@ void CachePics_CreateAtlas(void)
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
 	atlas_delete_count = 0;
+
+	atlas_texture_width = atlas_texture_height = min(glConfig.gl_max_size_default, MAXIMUM_ATLAS_TEXTURE_WIDTH);
+	atlas_chunk_size = atlas_texture_width >= 4096 ? 64 : atlas_texture_width >= 2048 ? 32 : 16;
+	atlas_block_width = atlas_texture_width / atlas_chunk_size;
+	atlas_block_height = atlas_texture_height / atlas_chunk_size;
 
 	// Copy wadpic data over
 	for (i = 0; i < WADPIC_PIC_COUNT; ++i) {
