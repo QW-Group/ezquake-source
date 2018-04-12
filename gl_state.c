@@ -1041,7 +1041,7 @@ void GLC_ApplyRenderingState(r_state_id id)
 	if (r_refdef2.fog_enabled) {
 		GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
 	}
-	else {
+	else if (current->fog.enabled) {
 		current->fog.enabled = false;
 		glDisable(GL_FOG);
 		R_TraceLogAPICall("glDisable(GL_FOG)");
