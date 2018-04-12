@@ -36,37 +36,30 @@ static void R_InitialiseWorldStates(void)
 
 	state = R_InitRenderingState(r_state_world_texture_chain, true, "worldTextureChainState", vao_brushmodel);
 	state->fog.enabled = true;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
-	state->textureUnits[1].enabled = true;
-	state->textureUnits[1].mode = r_texunit_mode_blend;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_blend);
 
 	state = R_InitRenderingState(r_state_world_texture_chain_fullbright, true, "worldTextureChainFullbrightState", vao_brushmodel);
 	state->fog.enabled = true;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_blend_lightmaps, true, "blendLightmapState", vao_brushmodel_lightmap_pass);
 	state->depth.mask_enabled = false;
 	state->depth.func = r_depthfunc_equal;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_caustics, true, "causticsState", vao_brushmodel);
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_decal;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_decal);
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	state->blendingEnabled = true;
 
 	state = R_InitRenderingState(r_state_aliasmodel_caustics, true, "aliasModelCausticsState", vao_aliasmodel);
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	state->blendingEnabled = true;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
-	state->textureUnits[1].enabled = true;
-	state->textureUnits[1].mode = r_texunit_mode_decal;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_decal);
 
 	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel);
 	state->depth.test_enabled = true;
@@ -74,43 +67,34 @@ static void R_InitialiseWorldStates(void)
 
 	state = R_CopyRenderingState(r_state_world_opaque_water, r_state_world_fast_opaque_water, "waterSurfacesState");
 	state->cullface.enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_CopyRenderingState(r_state_world_translucent_water, r_state_world_fast_opaque_water, "translucentWaterSurfacesState");
 	state->depth.mask_enabled = false; // FIXME: water-alpha < 0.9 only?
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_InitRenderingState(r_state_world_alpha_surfaces, true, "alphaChainState", vao_brushmodel);
-	state->alphaTesting.enabled = true;
-	state->alphaTesting.func = r_alphatest_func_greater;
-	state->alphaTesting.value = 0.333f;
+	R_GLC_ConfigureAlphaTesting(state, true, r_alphatest_func_greater, 0.333f);
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 	if (glConfig.texture_units >= 2) {
-		state->textureUnits[1].enabled = true;
-		state->textureUnits[1].mode = r_texunit_mode_blend; // modulate if !inv_lmaps
+		R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_blend); // modulate if !inv_lmaps
 	}
 
 	state = R_InitRenderingState(r_state_world_fullbrights, true, "fullbrightsState", vao_brushmodel);
 	state->depth.mask_enabled = false;
-	state->alphaTesting.enabled = true;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_EnableAlphaTesting(state);
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_lumas, true, "lumasState", vao_brushmodel);
 	state->depth.mask_enabled = false;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_additive_blending;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_details, true, "detailPolyState", vao_brushmodel_details);
 	state->fog.enabled = true;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_decal;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_decal);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 
@@ -147,7 +131,7 @@ static void R_Initialise2DStates(void)
 	state = R_InitRenderingState(r_state_brighten_screen, true, "brightenScreenState", vao_postprocess);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
-	state->alphaTesting.enabled = true; // really?
+	R_GLC_EnableAlphaTesting(state); // really?
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_src_dst_color_dest_one;
 
@@ -161,34 +145,31 @@ static void R_Initialise2DStates(void)
 	state = R_InitRenderingState(r_state_scene_blur, true, "sceneBlurState", vao_postprocess);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_hud_images_glc, true, "glcImageDrawState", vao_hud_images);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_CopyRenderingState(r_state_hud_images_alphatested_glc, r_state_hud_images_glc, "glcAlphaTestedImageDrawState");
-	state->alphaTesting.enabled = true;
+	R_GLC_EnableAlphaTesting(state);
 
 #ifdef BLOOM_SUPPORTED
-	R_InitRenderingState(&glcBloomState, true, "glcBloomState", vao_postprocess);
+	state = R_InitRenderingState(&glcBloomState, true, "glcBloomState", vao_postprocess);
 	glcBloomState.depth.test_enabled = false;
 	glcBloomState.cullface.enabled = false;
-	glcBloomState.alphaTesting.enabled = true;
+	R_GLC_EnableAlphaTesting(state);
 	glcBloomState.blendingEnabled = true;
 	glcBloomState.blendFunc = r_blendfunc_additive_blending;
 	glcBloomState.color[0] = glcBloomState.color[1] = glcBloomState.color[2] = r_bloom_alpha.value;
 	glcBloomState.color[3] = 1.0f;
-	glcBloomState.textureUnits[0].enabled = true;
-	glcBloomState.textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 #endif
 
 	state = R_InitRenderingState(r_state_poly_blend, true, "polyBlendState", vao_postprocess);
@@ -204,7 +185,7 @@ static void R_Initialise2DStates(void)
 	state = R_InitRenderingState(r_state_hud_images_glm, true, "glmImageDrawState", vao_hud_images);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
 }
 
@@ -214,30 +195,24 @@ static void R_InitialiseSpriteStates(void)
 
 	// Simple items
 	state = R_Init3DSpriteRenderingState(r_state_sprites_textured, "sprite_entity_state");
-	state->alphaTesting.enabled = true;
-	state->alphaTesting.func = r_alphatest_func_greater;
-	state->alphaTesting.value = 0.333f;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
+	R_GLC_ConfigureAlphaTesting(state, true, r_alphatest_func_greater, 0.333f);
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	// Standard particles
 	state = R_Init3DSpriteRenderingState(r_state_particles_classic, "particle_state");
 	state->depth.mask_enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	// QMB particles
 	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured_blood, "qmb-textured-blood");
 	state->blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
 	state->depth.mask_enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured, "qmb-textured");
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->depth.mask_enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_untextured, "qmb-untextured");
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -250,8 +225,7 @@ static void R_InitialiseSpriteStates(void)
 
 	// Chaticons
 	state = R_Init3DSpriteRenderingState(r_state_chaticon, "chaticon_state");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	// Coronas
 	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
@@ -267,12 +241,10 @@ static void R_InitialiseEntityStates(void)
 	state->fog.enabled = true;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_additive_blending;
-
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_CopyRenderingState(r_state_weaponmodel_powerupshell, r_state_aliasmodel_powerupshell, "weaponmodel-shell");
 	if (R_UseImmediateOpenGL()) {
@@ -281,7 +253,8 @@ static void R_InitialiseEntityStates(void)
 
 	state = R_InitRenderingState(r_state_aliasmodel_notexture_opaque, true, "opaqueAliasModelNoTexture", vao_aliasmodel);
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->blendingEnabled = state->alphaTesting.enabled = false;
+	state->blendingEnabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->polygonOffset.option = r_polygonoffset_disabled;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
@@ -290,14 +263,11 @@ static void R_InitialiseEntityStates(void)
 	state->fog.enabled = true;
 
 	state = R_CopyRenderingState(r_state_aliasmodel_singletexture_opaque, r_state_aliasmodel_notexture_opaque, "opaqueAliasModelSingleTex");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_CopyRenderingState(r_state_aliasmodel_multitexture_opaque, r_state_aliasmodel_notexture_opaque, "opaqueAliasModelMultiTex");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
-	state->textureUnits[1].enabled = true;
-	state->textureUnits[1].mode = r_texunit_mode_decal;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_decal);
 
 	state = R_CopyRenderingState(r_state_aliasmodel_notexture_transparent, r_state_aliasmodel_notexture_opaque, "transparentAliasModelNoTex");
 	state->blendingEnabled = true;
@@ -333,14 +303,14 @@ static void R_InitialiseEntityStates(void)
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
 	state->fog.enabled = true;
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->color[0] = state->color[1] = state->color[2] = 0;
 	state->color[3] = 0.5f;
 
 	state = R_InitRenderingState(r_state_aliasmodel_outline, true, "aliasModelOutlineState", vao_aliasmodel);
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = false;
 	state->fog.enabled = true;
 	state->polygonOffset.option = r_polygonoffset_outlines;
@@ -356,7 +326,7 @@ static void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->cullface.enabled = true;
 	state->polygonMode = r_polygonmode_fill;
-	state->alphaTesting.enabled = false;
+	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = false;
 	state->line.smooth = false;
 	state->fog.enabled = false;
@@ -393,8 +363,7 @@ static void R_InitialiseBrushModelStates(void)
 
 	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lightmap_pass);
 	current->fog.enabled = true;
-	current->textureUnits[0].enabled = true;
-	current->textureUnits[0].mode = r_texunit_mode_blend;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_blend);
 
 	// Single-texture: all of these are the same so we don't need to bother about others
 	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);

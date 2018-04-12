@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
 #include "r_program.h"
+#include "glc_state.h"
 
 static rendering_state_t states[r_state_count];
 
@@ -110,7 +111,6 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 {
 	rendering_state_t* state = &states[id];
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
-	int i;
 
 	strlcpy(state->name, name, sizeof(state->name));
 
@@ -122,9 +122,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 
 	state->blendFunc = r_blendfunc_overwrite;
 	state->blendingEnabled = false;
-	state->alphaTesting.enabled = false;
-	state->alphaTesting.value = 0;
-	state->alphaTesting.func = r_alphatest_func_always;
+	R_GLC_ConfigureAlphaTesting(state, false, r_alphatest_func_always, 0);
 
 	state->currentViewportX = 0;
 	state->currentViewportY = 0;
@@ -148,10 +146,15 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 	state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1;
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = true;
 
-	for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
-		state->textureUnits[i].enabled = false;
-		state->textureUnits[i].mode = GL_MODULATE;
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	{
+		int i;
+		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
+			state->textureUnits[i].enabled = false;
+			state->textureUnits[i].mode = GL_MODULATE;
+		}
 	}
+#endif
 
 	state->vao_id = vao;
 
@@ -160,9 +163,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		state->cullface.enabled = true;
 
 		state->depth.func = r_depthfunc_lessorequal;
-		state->alphaTesting.enabled = false;
-		state->alphaTesting.value = 0.666f;
-		state->alphaTesting.func = r_alphatest_func_greater;
+		R_GLC_ConfigureAlphaTesting(state, false, r_alphatest_func_greater, 0.666f);
 		state->blendingEnabled = false;
 		state->depth.test_enabled = true;
 		state->depth.mask_enabled = true;
@@ -180,8 +181,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 #endif
 		state->polygonMode = r_polygonmode_fill;
 		state->blendFunc = r_blendfunc_premultiplied_alpha;
-		state->textureUnits[0].enabled = false;
-		state->textureUnits[0].mode = r_texunit_mode_replace;
+		R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
 
 		state->framebuffer_srgb = (gl_gammacorrection.integer > 0);
 	}
@@ -198,9 +198,7 @@ rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name)
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->cullface.enabled = false;
-	state->alphaTesting.enabled = false;
-	state->alphaTesting.func = r_alphatest_func_greater;
-	state->alphaTesting.value = 0.333f;
+	R_GLC_ConfigureAlphaTesting(state, false, r_alphatest_func_greater, 0.333f);
 
 	return state;
 }
@@ -559,21 +557,25 @@ void GL_SelectTexture(GLenum textureUnit)
 
 	currentTextureUnit = textureUnit;
 	R_TraceLogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
-}
+	}
 
 void GL_TextureInitialiseState(void)
 {
-	int i;
-
 	// Multi texture.
 	currentTextureUnit = GL_TEXTURE0;
 
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
-	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
-		opengl.rendering_state.textureUnits[i].enabled = false;
-		opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	{
+		int i;
+		for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
+			opengl.rendering_state.textureUnits[i].enabled = false;
+			opengl.rendering_state.textureUnits[i].mode = GL_MODULATE;
+		}
 	}
+#endif
 }
 
 void GL_InvalidateTextureReferences(GLuint texture)
@@ -683,8 +685,6 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 #ifdef WITH_RENDERING_TRACE
 void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 {
-	int i;
-
 	debug_frame_depth += 7;
 
 	if (debug_frame_out) {
@@ -694,21 +694,26 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 		fprintf(debug_frame_out, "%.*s   Z-Buffer: %s, func %s range %f=>%f [mask %s]\n", debug_frame_depth, "                                                          ", current->depth.test_enabled ? "on" : "off", txtDepthFunctions[current->depth.func], current->depth.nearRange, current->depth.farRange, current->depth.mask_enabled ? "on" : "off");
 		fprintf(debug_frame_out, "%.*s   Cull-face: %s, mode %s\n", debug_frame_depth, "                                                          ", current->cullface.enabled ? "enabled" : "disabled", txtCullFaceValues[current->cullface.mode]);
 		fprintf(debug_frame_out, "%.*s   Blending: %s, func %s\n", debug_frame_depth, "                                                          ", current->blendingEnabled ? "enabled" : "disabled", txtBlendFuncNames[current->blendFunc]);
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 		fprintf(debug_frame_out, "%.*s   AlphaTest: %s, func %s(%f)\n", debug_frame_depth, "                                                          ", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
 		fprintf(debug_frame_out, "%.*s   Texture units: [", debug_frame_depth, "                                                          ");
-		for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
-			fprintf(debug_frame_out, "%s", i ? "," : "");
-			if (current->textureUnits[i].enabled && bound_textures[i]) {
-				fprintf(debug_frame_out, "%s(%s)", txtTextureEnvModeValues[current->textureUnits[i].mode], GL_TextureIdentifierByGLReference(bound_textures[i]));
-			}
-			else if (current->textureUnits[i].enabled) {
-				fprintf(debug_frame_out, "%s(<null>)", txtTextureEnvModeValues[current->textureUnits[i].mode]);
-			}
-			else {
-				fprintf(debug_frame_out, "<off>");
+		{
+			int i;
+			for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
+				fprintf(debug_frame_out, "%s", i ? "," : "");
+				if (current->textureUnits[i].enabled && bound_textures[i]) {
+					fprintf(debug_frame_out, "%s(%s)", txtTextureEnvModeValues[current->textureUnits[i].mode], GL_TextureIdentifierByGLReference(bound_textures[i]));
+				}
+				else if (current->textureUnits[i].enabled) {
+					fprintf(debug_frame_out, "%s(<null>)", txtTextureEnvModeValues[current->textureUnits[i].mode]);
+				}
+				else {
+					fprintf(debug_frame_out, "<off>");
+				}
 			}
 		}
 		fprintf(debug_frame_out, "]\n");
+#endif
 		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
 		fprintf(debug_frame_out, "%.*s   vao: %s\n", debug_frame_depth, "                                                          ", vaoNames[currentVAO]);
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
@@ -761,6 +766,7 @@ void R_ApplyRenderingState(r_state_id state)
 
 void R_CustomColor(float r, float g, float b, float a)
 {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		if (!opengl.rendering_state.colorValid || opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
 			glColor4f(
@@ -772,6 +778,7 @@ void R_CustomColor(float r, float g, float b, float a)
 			opengl.rendering_state.colorValid = true;
 		}
 	}
+#endif
 }
 
 void R_CustomLineWidth(float width)
@@ -1075,6 +1082,13 @@ void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_
 {
 	state->textureUnits[index].enabled = enabled;
 	state->textureUnits[index].mode = mode;
+}
+
+void R_GLC_ConfigureAlphaTesting(rendering_state_t* state, qbool enabled, r_alphatest_func_t func, float value)
+{
+	state->alphaTesting.enabled = enabled;
+	state->alphaTesting.func = func;
+	state->alphaTesting.value = value;
 }
 
 #endif // RENDERER_OPTION_CLASSIC_OPENGL

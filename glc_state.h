@@ -25,11 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode);
 void GLC_InitialiseSkyStates(void);
+void R_GLC_ConfigureAlphaTesting(rendering_state_t* state, qbool enabled, r_alphatest_func_t func, float value);
+#define R_GLC_EnableAlphaTesting(state) { state->alphaTesting.enabled = true; }
+#define R_GLC_DisableAlphaTesting(state) { state->alphaTesting.enabled = false; }
 
 void R_GLC_DisableColorPointer(void);
 void R_GLC_DisableTexturePointer(int unit);
 #else
 #define R_GLC_TextureUnitSet(...)
+#define R_GLC_ConfigureAlphaTesting(...)
+#define R_GLC_EnableAlphaTesting(...)
+#define R_GLC_DisableAlphaTesting(...)
 #endif // RENDERER_OPTION_CLASSIC_OPENGL
 
 #endif // EZQUAKE_GLC_STATE_HEADER
