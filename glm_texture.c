@@ -100,7 +100,7 @@ qbool GLM_LoadTextureManagementFunctions(void)
 
 void GL_LoadTextureManagementFunctions(void)
 {
-	if (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access")) {
+	if (GL_UseDirectStateAccess()) {
 		GL_LoadOptionalFunction(glGenerateTextureMipmap);
 		GL_LoadOptionalFunction(glGetTextureImage);
 		GL_LoadOptionalFunction(glCreateTextures);

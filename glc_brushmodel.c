@@ -121,18 +121,7 @@ static void GLC_DrawFlat(model_t *model)
 					v = p->verts[0];
 
 					if (use_vbo) {
-						if (index_count + 1 + p->numverts > modelIndexMaximum) {
-							GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-							index_count = 0;
-						}
-
-						if (index_count) {
-							modelIndexes[index_count++] = ~(GLuint)0;
-						}
-
-						for (k = 0; k < p->numverts; ++k) {
-							modelIndexes[index_count++] = p->vbo_start + k;
-						}
+						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
 					else {
 						glBegin(GL_POLYGON);
@@ -312,18 +301,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 				}
 
 				if (use_vbo) {
-					if (index_count + 1 + s->polys->numverts > modelIndexMaximum) {
-						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-						index_count = 0;
-					}
-
-					if (index_count) {
-						modelIndexes[index_count++] = ~(GLuint)0;
-					}
-
-					for (k = 0; k < s->polys->numverts; ++k) {
-						modelIndexes[index_count++] = s->polys->vbo_start + k;
-					}
+					index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
 				}
 				else {
 					glBegin(GL_POLYGON);

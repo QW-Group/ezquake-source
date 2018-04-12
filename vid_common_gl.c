@@ -86,9 +86,7 @@ static void GL_CheckShaderExtensions(void)
 	GL_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	if (GL_UseGLSL() && glConfig.majorVersion >= 2 && GL_BuffersSupported()) {
-		shaders_supported = GLM_LoadProgramFunctions();
-	}
+	shaders_supported = GL_UseGLSL() && GLM_LoadProgramFunctions();
 
 	if (!GLM_LoadStateFunctions()) {
 		shaders_supported = false;

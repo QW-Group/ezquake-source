@@ -1273,7 +1273,7 @@ static void VID_SDL_Init(void)
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
 		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
-		if (glConfig.majorVersion >= 2) {
+		if (GL_VersionAtLeast(2, 0)) {
 			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
 		}
 		else {
@@ -1443,7 +1443,7 @@ static void GfxInfo_f(void)
 
 	if (r_showextensions.value) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
-		if (glConfig.majorVersion >= 3) {
+		if (GL_VersionAtLeast(3, 0)) {
 			typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
 			glGetStringi_t glGetStringi = (glGetStringi_t)SDL_GL_GetProcAddress("glGetStringi");
 			if (glGetStringi) {

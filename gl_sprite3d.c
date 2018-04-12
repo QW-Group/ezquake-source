@@ -5,6 +5,7 @@
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_sprite3d.h"
+#include "tr_types.h"
 
 void GLM_Draw3DSprites(void);
 void GLM_Prepare3DSprites(void);
@@ -228,33 +229,61 @@ static void GL_Create3DSpriteVBO(void)
 static void GL_Create3DSpriteIndexBuffer(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
-		static GLuint indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
+		// Meag: *3 is for case of primitive restart not being supported
+		static GLuint indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 		int i, j;
 		int pos = 0;
 		int vbo_pos;
 
 		indexes_start_quads = pos;
 		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
+			if (i) {
+				if (glConfig.primitiveRestartSupported) {
+					indexData[pos++] = ~(GLuint)0;
+				}
+				else {
+					indexData[pos++] = vbo_pos - 1;
+					indexData[pos++] = vbo_pos;
+				}
+			}
 			for (j = 0; j < 4; ++j) {
 				indexData[pos++] = vbo_pos++;
 			}
-			indexData[pos++] = ~(GLuint)0;
 		}
 
-		indexes_start_sparks = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
-			for (j = 0; j < 9; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-			indexData[pos++] = ~(GLuint)0;
-		}
-
+		// These are currently only supported/used if primitive restart supported, as they're rendered as triangle fans
 		indexes_start_flashblend = pos;
 		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
+			if (i) {
+				if (glConfig.primitiveRestartSupported) {
+					indexData[pos++] = ~(GLuint)0;
+				}
+				else {
+					indexData[pos++] = vbo_pos - 1;
+					indexData[pos++] = vbo_pos;
+				}
+			}
 			for (j = 0; j < 18; ++j) {
 				indexData[pos++] = vbo_pos++;
 			}
-			indexData[pos++] = ~(GLuint)0;
+		}
+
+		// These are currently only supported/used if primitive restart supported, as they're rendered as triangle fans
+		indexes_start_sparks = pos;
+		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
+			if (i) {
+				if (glConfig.primitiveRestartSupported) {
+					indexData[pos++] = ~(GLuint)0;
+				}
+				else {
+					indexData[pos++] = vbo_pos - 1;
+					indexData[pos++] = vbo_pos - 1;
+					indexData[pos++] = vbo_pos;
+				}
+			}
+			for (j = 0; j < 9; ++j) {
+				indexData[pos++] = vbo_pos++;
+			}
 		}
 
 		sprite3dIndexes = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "3dsprite-indexes", sizeof(indexData), indexData, buffertype_constant);
@@ -319,14 +348,15 @@ static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_bat
 	int numVertices = batch->numVertices[first_batch];
 	int batch_count = last_batch - first_batch;
 	void* indexes = (void*)(index_offset * sizeof(GLuint));
+	int terminators = glConfig.primitiveRestartSupported ? 1 : (numVertices % 2 == 0 ? 2 : 3);
 
 	while (batch_count > maximum_batch_size) {
-		GL_DrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1), GL_UNSIGNED_INT, indexes, vertOffset);
+		GL_DrawElementsBaseVertex(batch->primitive, maximum_batch_size * numVertices + (maximum_batch_size - 1) * terminators, GL_UNSIGNED_INT, indexes, vertOffset);
 		batch_count -= maximum_batch_size;
 		vertOffset += maximum_batch_size * numVertices;
 	}
 	if (batch_count) {
-		GL_DrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1), GL_UNSIGNED_INT, indexes, vertOffset);
+		GL_DrawElementsBaseVertex(batch->primitive, batch_count * numVertices + (batch_count - 1) * terminators, GL_UNSIGNED_INT, indexes, vertOffset);
 	}
 }
 
@@ -475,10 +505,10 @@ void GLM_Draw3DSprites(void)
 		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
 			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 9) {
+		else if (batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
 			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 18) {
+		else if (batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
 			GLM_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 		}
 		else {
@@ -577,10 +607,10 @@ void GLC_Draw3DSprites(void)
 			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4) {
 				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
 				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
 				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 			}
 			else {

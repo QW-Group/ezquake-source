@@ -52,14 +52,18 @@ void GL_LoadDrawFunctions(void)
 	GL_LoadOptionalFunction(glMultiDrawElements);
 	GL_LoadOptionalFunction(glDrawElementsBaseVertex);
 
-	GL_LoadOptionalFunction(glPrimitiveRestartIndex);
-	if (qglPrimitiveRestartIndex) {
-		glEnable(GL_PRIMITIVE_RESTART);
-		if (glConfig.majorVersion > 4 || (glConfig.majorVersion == 4 && glConfig.minorVersion >= 3)) {
-			glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-		}
-		else {
-			qglPrimitiveRestartIndex(~(GLuint)0);
+	glConfig.primitiveRestartSupported = false;
+	if (GL_UseGLSL() || GL_VersionAtLeast(3, 1)) {
+		GL_LoadOptionalFunction(glPrimitiveRestartIndex);
+		if (qglPrimitiveRestartIndex) {
+			glEnable(GL_PRIMITIVE_RESTART);
+			if (GL_VersionAtLeast(4, 3)) {
+				glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+			}
+			else {
+				qglPrimitiveRestartIndex(~(GLuint)0);
+			}
+			glConfig.primitiveRestartSupported = true;
 		}
 	}
 }

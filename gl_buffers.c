@@ -498,7 +498,7 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadMandatoryFunctionExtension(glDeleteSync, tripleBuffer_supported);
 
 	// OpenGL 4.5 onwards, update directly
-	if (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access")) {
+	if (GL_UseDirectStateAccess()) {
 		GL_LoadOptionalFunction(glNamedBufferSubData);
 		GL_LoadOptionalFunction(glNamedBufferData);
 		GL_LoadOptionalFunction(glUnmapNamedBuffer);

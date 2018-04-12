@@ -399,6 +399,8 @@ extern cvar_t vid_gl_core_profile;
 #define GL_UseGLSL()              (vid_renderer.integer == 1)
 #define GL_UseImmediateMode()     (vid_renderer.integer == 0)
 
+#define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
+
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
 #define GL_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_gl_debug))
 
@@ -1104,9 +1106,11 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 #ifndef EZ_OPENGL_NO_EXTENSIONS
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_UseDirectStateAccess() (false && SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #else
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = NULL; }
+#define GL_UseDirectStateAccess() (false)
 #endif
 
 void GLM_UploadFrameConstants(void);

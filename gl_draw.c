@@ -266,7 +266,7 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
-		if (glConfig.majorVersion >= 2 || glConfig.minorVersion >= 2) {
+		if (GL_VersionAtLeast(1, 2)) {
 			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}

@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
+#include "tr_types.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -91,13 +92,30 @@ GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexM
 {
 	int k;
 
-	if (index_count + 1 + p->numverts > modelIndexMaximum) {
-		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		index_count = 0;
-	}
+	if (glConfig.primitiveRestartSupported) {
+		if (index_count + 1 + p->numverts > modelIndexMaximum) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			index_count = 0;
+		}
 
-	if (index_count) {
-		modelIndexes[index_count++] = ~(GLuint)0;
+		if (index_count) {
+			modelIndexes[index_count++] = ~(GLuint)0;
+		}
+	}
+	else {
+		if (index_count + 3 + p->numverts > modelIndexMaximum) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			index_count = 0;
+		}
+
+		if (index_count) {
+			int prev = index_count - 1;
+			if (index_count % 2 == 1) {
+				modelIndexes[index_count++] = modelIndexes[prev];
+			}
+			modelIndexes[index_count++] = modelIndexes[prev];
+			modelIndexes[index_count++] = p->vbo_start;
+		}
 	}
 
 	for (k = 0; k < p->numverts; ++k) {

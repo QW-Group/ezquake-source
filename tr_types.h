@@ -77,6 +77,8 @@ typedef struct {
 	int tripleBufferIndex;
 	int uniformBufferOffsetAlignment;
 	int shaderStorageBufferOffsetAlignment;
+
+	qbool primitiveRestartSupported;
 } glconfig_t;
 
 extern glconfig_t	glConfig;
