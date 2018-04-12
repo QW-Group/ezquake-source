@@ -144,6 +144,9 @@
       "incomplete"
     ]
   },
+  "-no-accel-visuals": {
+    "description": "Requests un-accelerated graphics (used in debugging to create OpenGL 1.1 context)"
+  },
   "-no-triple-gl-buffer": {
     "flags": [
       "incomplete"

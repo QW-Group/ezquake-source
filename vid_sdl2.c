@@ -1007,7 +1007,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
 	if (GL_UseGLSL()) {
 		int contextFlags = 0;
 
