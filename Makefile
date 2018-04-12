@@ -358,9 +358,6 @@ OBJS_c := \
     $(HELP_OBJS) \
     $(HUD_OBJS) \
     $(COMMON_RENDERER_OBJS) \
-    $(COMMON_OPENGL_OBJS) \
-    $(MODERN_OPENGL_OBJS) \
-    $(CLASSIC_OPENGL_OBJS) \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
