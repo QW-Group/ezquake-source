@@ -137,6 +137,14 @@ ifdef SPEEX_LIBS
 endif
 LIBS_c += $(SPEEX_LIBS)
 
+FREETYPE_CFLAGS ?= $(shell pkg-config freetype2 --cflags)
+FREETYPE_LIBS ?= $(shell pkg-config freetype2 --libs)
+ifdef FREETYPE_LIBS
+	CFLAGS_c += -DEZ_FREETYPE_SUPPORT
+endif
+LIBS_c += $(FREETYPE_LIBS)
+CFLAGS += $(FREETYPE_CFLAGS)
+
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 
@@ -197,10 +205,7 @@ SERVER_OBJS := \
     sv_mod_frags.o
 
 HELP_OBJS := \
-    help_variables.o \
-    help_commands.o \
-    help_macros.o \
-    help_cmdline_params.o
+    $(patsubst help_%.json,help_%.o,$(wildcard help_*.json))
 
 GLSL_OBJS := \
 	$(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
