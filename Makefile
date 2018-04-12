@@ -198,7 +198,9 @@ SERVER_OBJS := \
 
 HELP_OBJS := \
     help_variables.o \
-    help_commands.o
+    help_commands.o \
+    help_macros.o \
+    help_cmdline_params.o
 
 GLSL_OBJS := \
 	$(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))

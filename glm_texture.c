@@ -100,21 +100,23 @@ qbool GLM_LoadTextureManagementFunctions(void)
 
 void GL_LoadTextureManagementFunctions(void)
 {
-	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
-	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
-	GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
-	GL_LoadOptionalFunction(glGenerateTextureMipmap);
-	GL_LoadOptionalFunction(glGetTextureImage);
-	GL_LoadOptionalFunction(glCreateTextures);
+	if (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access")) {
+		GL_LoadOptionalFunction(glGenerateTextureMipmap);
+		GL_LoadOptionalFunction(glGetTextureImage);
+		GL_LoadOptionalFunction(glCreateTextures);
+		GL_LoadOptionalFunction(glTextureParameteri);
+		GL_LoadOptionalFunction(glTextureParameterf);
+		GL_LoadOptionalFunction(glTextureParameterfv);
+		GL_LoadOptionalFunction(glTextureParameteriv);
+		GL_LoadOptionalFunction(glTextureStorage3D);
+		GL_LoadOptionalFunction(glTextureStorage2D);
+		GL_LoadOptionalFunction(glTextureSubImage2D);
+		GL_LoadOptionalFunction(glTextureSubImage3D);
+		GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
+		GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
+		GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
+	}
 	GL_LoadOptionalFunction(glGetnTexImage);
-	GL_LoadOptionalFunction(glTextureParameteri);
-	GL_LoadOptionalFunction(glTextureParameterf);
-	GL_LoadOptionalFunction(glTextureParameterfv);
-	GL_LoadOptionalFunction(glTextureParameteriv);
-	GL_LoadOptionalFunction(glTextureStorage3D);
-	GL_LoadOptionalFunction(glTextureStorage2D);
-	GL_LoadOptionalFunction(glTextureSubImage2D);
-	GL_LoadOptionalFunction(glTextureSubImage3D);
 }
 
 void GL_TexSubImage3D(
