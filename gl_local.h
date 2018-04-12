@@ -1000,6 +1000,7 @@ void GLC_StateEndAliasModelShadow(void);
 void GLC_StateBeginDrawFlatModel(void);
 void GLC_StateEndDrawFlatModel(void);
 void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode);
+void GLC_StateEndWorldTextureChains(void);
 void GLC_StateEndDrawTextureChains(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);

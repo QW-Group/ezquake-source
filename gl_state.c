@@ -1033,6 +1033,8 @@ void GL_CheckMultiTextureExtensions(void)
 		}
 		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
 		gl_mtexable = true;
+
+		qglBindTextures = SDL_GL_GetProcAddress("glBindTextures");
 	}
 
 	gl_textureunits = min(glConfig.texture_units, 4);

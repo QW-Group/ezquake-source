@@ -119,13 +119,10 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 	LEAVE_STATE;
 }
 
-void GLC_StateEndDrawTextureChains(void)
+void GLC_StateEndWorldTextureChains(void)
 {
 	ENTER_STATE;
 
-	if (gl_fogenable.integer) {
-		glDisable(GL_FOG);
-	}
 	GL_BindVertexArray(NULL);
 
 	if (GL_BuffersSupported()) {
@@ -138,6 +135,17 @@ void GLC_StateEndDrawTextureChains(void)
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		qglClientActiveTexture(GL_TEXTURE0);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	LEAVE_STATE;
+}
+
+void GLC_StateEndDrawTextureChains(void)
+{
+	ENTER_STATE;
+
+	if (gl_fogenable.integer) {
+		glDisable(GL_FOG);
 	}
 
 	LEAVE_STATE;
@@ -178,6 +186,7 @@ void GLC_StateBeginBlendLightmaps(void)
 	GL_BlendFunc(GL_ZERO, GLC_LightmapDestBlendFactor());
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
+	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 
 	LEAVE_STATE;
 }

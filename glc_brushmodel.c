@@ -287,12 +287,14 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 						index_count = 0;
 					}
 
-					if (GL_TextureReferenceIsValid(fb_texturenum)) {
+					if (fullbrightTextureUnit && GL_TextureReferenceIsValid(fb_texturenum)) {
 						GLC_EnsureTMUEnabled(fullbrightTextureUnit);
 						GL_BindTextures(0, texture_unit_count, desired_textures);
 					}
 					else {
-						GLC_EnsureTMUDisabled(fullbrightTextureUnit);
+						if (fullbrightTextureUnit) {
+							GLC_EnsureTMUDisabled(fullbrightTextureUnit);
+						}
 						if (fullbrightTextureUnit == GL_TEXTURE0 + texture_unit_count - 1) {
 							GL_BindTextures(0, texture_unit_count - 1, desired_textures);
 						}
@@ -378,6 +380,8 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
+	GLC_StateEndWorldTextureChains();
+
 	if (gl_fb_bmodels.integer) {
 		if (!lightmapTextureUnit) {
 			GLC_BlendLightmaps();
@@ -396,7 +400,7 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			GLC_RenderLumas();
 			drawlumas = false;
 		}
-		if (lightmapTextureUnit) {
+		if (!lightmapTextureUnit) {
 			GLC_BlendLightmaps();
 		}
 		if (drawfullbrights) {

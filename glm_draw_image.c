@@ -209,8 +209,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	GL_IdentityProjectionView();
 
 	GLC_StateBeginImageDraw();
-	GLC_EnsureTMUEnabled(GL_TEXTURE0);
-	GL_EnsureTextureUnitBound(GL_TEXTURE0, ref);
+	GLC_InitTextureUnits1(ref, GL_MODULATE);
 
 	if (imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT) {
 		extern cvar_t gl_alphafont, scr_coloredText;
