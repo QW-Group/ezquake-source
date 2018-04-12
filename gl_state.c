@@ -623,7 +623,9 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 	}
 	else {
 		for (i = 0; i < count; ++i) {
-			GL_EnsureTextureUnitBound(GL_TEXTURE0 + first + i, textures[i]);
+			if (GL_TextureReferenceIsValid(textures[i])) {
+				GL_EnsureTextureUnitBound(GL_TEXTURE0 + first + i, textures[i]);
+			}
 		}
 	}
 
