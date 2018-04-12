@@ -764,9 +764,8 @@ void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int a
 
 	if (HUD_PrepareDraw(hud, max_length, lines * character_height, &x, &y)) {
 		for (line_start = in; *line_start; line_start = line_end + 1) {
-			line_end = strchr(line_start, '\r');
-			int diff = max_length - Draw_StringLengthColors(line_start, -1, scale, proportional);
 			int line_x = x;
+			line_end = strchr(line_start, '\r');
 
 			if (line_end) {
 				*line_end = '\0';

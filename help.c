@@ -489,7 +489,6 @@ const json_cmdlineparam_t* JSON_CommandLineParam_Load(const char* name)
 {
 	static json_cmdlineparam_t result;
 	const json_t* json = NULL;
-	const json_t* arr = NULL;
 
 	json = json_object_get(document_root[helpdoc_cmdlineparams], name);
 	if (json == NULL) {
@@ -511,7 +510,6 @@ const json_cmdlineparam_t* JSON_CommandLineParam_Load(const char* name)
 const json_macro_t* JSON_Macro_Load(const char* name)
 {
 	static json_macro_t result;
-	const json_t* arr = NULL;
 	json_t* json = NULL;
 
 	json = json_object_get(document_root[helpdoc_macros], name);
@@ -760,10 +758,6 @@ static qbool Help_VariableIgnoreByCvar(cvar_t* cvar)
 
 static qbool Help_VariableIgnoreByGroup(const json_variable_t* var, const json_t* groupsObj)
 {
-	extern cvar_t *cvar_vars;
-	cvar_t *cvar = NULL;
-	qbool in_client = false;
-
 	// ignore documentation for server variables (tighten this in future)
 	{
 		const char* group_id = var->group_id;
@@ -787,8 +781,6 @@ static qbool Help_VariableIgnoreByGroup(const json_variable_t* var, const json_t
 // Check all variable values against help files
 static void Help_VerifyConfig_f(void)
 {
-	extern cvar_t *cvar_vars;
-
 	json_t* varsObj = NULL;
 	int num_errors = 0;
 	const char* name = NULL;

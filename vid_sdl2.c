@@ -1290,7 +1290,7 @@ static void VID_SDL_Init(void)
 			glConfig.max_texture_depth = 0;
 			glConfig.uniformBufferOffsetAlignment = 0;
 			glConfig.shaderStorageBufferOffsetAlignment = 0;
-			glConfig.glsl_version = "0";
+			glConfig.glsl_version = (unsigned char*)"0";
 		}
 	}
 

@@ -1287,8 +1287,6 @@ static void Sbar_DeathmatchOverlay(int start)
 	Draw_SStringAligned(x, y - 8, "name", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 	x += 16 * FONT_WIDTH;
 	if (statswidth) {
-		char temp[32] = { 0 };
-
 		stats_xoffset = x;
 
 		Draw_SStringAligned(x, y - 8, "kills", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
