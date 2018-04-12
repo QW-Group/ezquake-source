@@ -1778,7 +1778,7 @@ static void NQP_Flush (int count)
 static void NQP_Skip (int count)
 {
 	assert (count <= nqp_buf.cursize);
-	memcpy (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
+	memmove (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
 	nqp_buf.cursize -= count;
 }
 
