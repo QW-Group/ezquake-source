@@ -187,7 +187,6 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 				int array_depth = GL_TextureDepth(arrayTexture);
 
 				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
-				GL_Paranoid_Printf(">  Parameters: %d %d %d, %d %d 1, tempBuffer = %X\n", x * width, y * height, index, width, height, tempBuffer);
 			}
 #endif
 		}

@@ -335,7 +335,7 @@ void Movie_FinishFrame(void)
 	}
 	#else
 	snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
-		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
+		movie_dir.string, movie_start_date.tm_mday, 1 + movie_start_date.tm_mon, 1900 + movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec, movie_frame_count, image_ext);
 
 	con_suppress = true;
@@ -387,7 +387,7 @@ static void WAVCaptureStart (void)
 		movie_start_date.wHour, movie_start_date.wMinute, movie_start_date.wSecond);
 #else
 	snprintf (fname, sizeof (fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/audio.wav",
-		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
+		movie_dir.string, movie_start_date.tm_mday, 1 + movie_start_date.tm_mon, 1900 + movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec);
 #endif
 	if (!(wav_output = FS_OpenVFS (fname, "wb", FS_NONE_OS))) {

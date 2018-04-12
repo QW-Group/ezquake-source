@@ -269,9 +269,9 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
 		if (gl_vbo_clientmemory.integer) {
-			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);
 
 			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
@@ -279,7 +279,6 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
 		}
 		else {
-			GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 			GL_BindBuffer(imageVBO);
 
 			glVertexPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));

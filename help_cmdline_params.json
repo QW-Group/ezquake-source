@@ -98,6 +98,9 @@
       "incomplete"
     ]
   },
+  "-gl-debug": {
+    "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
+  },
   "-gl-forward-only-profile": {
     "system-generated": true
   },

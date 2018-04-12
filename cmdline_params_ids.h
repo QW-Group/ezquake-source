@@ -30,6 +30,7 @@ CMDLINE_DEF(client_video_displaynumber, "-display"),
 CMDLINE_DEF(client_video_conwidth, "-conwidth"),
 CMDLINE_DEF(client_video_conheight, "-conheight"),
 CMDLINE_DEF(client_video_glsl_renderer, "-glsl-renderer"),
+CMDLINE_DEF(client_video_gl_debug, "-gl-debug"),
 CMDLINE_DEF(client_nostdinput, "-noconinput"),
 CMDLINE_DEF(client_nostdoutput, "-nostdout"),
 

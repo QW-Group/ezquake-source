@@ -43,10 +43,7 @@ static glGetObjectLabel_t qglGetObjectLabel;
 // </debug-functions>
 
 // Debugging
-#ifdef _WIN32
-
-// Not sure what to do with this on non-windows systems... essentially in Visual Studio, messages
-//  from the driver appear in Output tab
+// In Visual Studio, messages from the driver appear in Output tab
 void APIENTRY MessageCallback(GLenum source,
 							  GLenum type,
 							  GLuint id,
@@ -70,16 +67,23 @@ void APIENTRY MessageCallback(GLenum source,
 					 type, severity, message);
 		}
 
-		OutputDebugString(buffer);
+#ifdef _WIN32
+		if (IsDebuggerPresent()) {
+			OutputDebugString(buffer);
+		}
+		else {
+			printf("[OGL] %s\n", buffer);
+		}
+#else
+		printf("[OGL] %s\n", buffer);
+#endif
 	}
 }
-#endif
 
 void GL_InitialiseDebugging(void)
 {
-#ifdef _WIN32
 	// During init, enable debug output
-	if (GL_DebugProfileContext() && IsDebuggerPresent()) {
+	if (GL_DebugProfileContext()) {
 		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
 
 		if (glDebugMessageCallback) {
@@ -88,7 +92,6 @@ void GL_InitialiseDebugging(void)
 			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
 		}
 	}
-#endif
 
 #ifdef WITH_OPENGL_TRACE
 	qglObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
@@ -187,7 +190,7 @@ void GL_ResetRegion(qbool start)
 		localtime_r(&t, &date);
 
 		snprintf(fileName, sizeof(fileName), "%s/qw/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-				 com_basedir, date.tm_year, date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
+				 com_basedir, 1900 + date.tm_year, 1 + date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
 #else
 		SYSTEMTIME date;
 		GetLocalTime(&date);

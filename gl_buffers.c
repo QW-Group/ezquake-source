@@ -452,6 +452,7 @@ static void GL_BindBufferImpl(GLenum target, GLuint buffer)
 void GL_BindBuffer(buffer_ref ref)
 {
 	if (!(GL_BufferReferenceIsValid(ref) && buffers[ref.index].glref)) {
+		GL_LogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffers[ref.index].name);
 		return;
 	}
 
@@ -497,9 +498,11 @@ void GL_InitialiseBufferHandling(void)
 	GL_LoadMandatoryFunctionExtension(glDeleteSync, tripleBuffer_supported);
 
 	// OpenGL 4.5 onwards, update directly
-	GL_LoadOptionalFunction(glNamedBufferSubData);
-	GL_LoadOptionalFunction(glNamedBufferData);
-	GL_LoadOptionalFunction(glUnmapNamedBuffer);
+	if (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access")) {
+		GL_LoadOptionalFunction(glNamedBufferSubData);
+		GL_LoadOptionalFunction(glNamedBufferData);
+		GL_LoadOptionalFunction(glUnmapNamedBuffer);
+	}
 
 	tripleBuffer_supported &= buffers_supported;
 

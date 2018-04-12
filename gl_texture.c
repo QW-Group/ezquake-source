@@ -1187,9 +1187,6 @@ texture_ref GL_CreateTextureArray(const char* identifier, int width, int height,
 #endif
 			gl_texturenum = invalid_texture_reference;
 		}
-		else {
-			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
-		}
 		break;
 	}
 
