@@ -229,7 +229,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 
 		GL_BindVertexArray(NULL);
 
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);

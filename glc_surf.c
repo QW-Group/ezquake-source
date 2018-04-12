@@ -73,7 +73,7 @@ void GLC_DrawMapOutline(model_t *model)
 	}
 }
 
-void DrawGLPoly(glpoly_t *p)
+static void DrawGLPoly(glpoly_t *p)
 {
 	int i;
 	float *v;
@@ -87,11 +87,41 @@ void DrawGLPoly(glpoly_t *p)
 	glEnd();
 }
 
+GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count)
+{
+	int k;
+
+	if (index_count + 1 + p->numverts > modelIndexMaximum) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		index_count = 0;
+	}
+
+	if (index_count) {
+		modelIndexes[index_count++] = ~(GLuint)0;
+	}
+
+	for (k = 0; k < p->numverts; ++k) {
+		modelIndexes[index_count++] = p->vbo_start + k;
+	}
+
+	return index_count;
+}
+
 void GLC_RenderFullbrights(void)
 {
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
+	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+
+	if (use_vbo) {
+		// Might have been using lightmap co-ordinates...
+		GLC_ClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+	}
 
 	GLC_StateBeginRenderFullbrights();
 
@@ -102,8 +132,21 @@ void GLC_RenderFullbrights(void)
 
 		texture.index = i;
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
-		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
-			DrawGLPoly(p);
+		if (use_vbo) {
+			int index_count = 0;
+
+			for (p = fullbright_polys[i]; p; p = p->fb_chain) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+			}
+
+			if (index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			}
+		}
+		else {
+			for (p = fullbright_polys[i]; p; p = p->fb_chain) {
+				DrawGLPoly(p);
+			}
 		}
 		fullbright_polys[i] = NULL;
 	}
@@ -113,9 +156,19 @@ void GLC_RenderFullbrights(void)
 
 void GLC_RenderLumas(void)
 {
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
+	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+
+	if (use_vbo) {
+		// Might have been using lightmap co-ordinates...
+		GLC_ClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+	}
 
 	GLC_StateBeginRenderLumas();
 
@@ -126,8 +179,21 @@ void GLC_RenderLumas(void)
 
 		texture.index = i;
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
-		for (p = luma_polys[i]; p; p = p->luma_chain) {
-			DrawGLPoly(p);
+		if (use_vbo) {
+			int index_count = 0;
+
+			for (p = luma_polys[i]; p; p = p->luma_chain) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+			}
+
+			if (index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			}
+		}
+		else {
+			for (p = luma_polys[i]; p; p = p->luma_chain) {
+				DrawGLPoly(p);
+			}
 		}
 		luma_polys[i] = NULL;
 	}
@@ -135,26 +201,44 @@ void GLC_RenderLumas(void)
 	GLC_StateEndRenderLumas();
 }
 
-void EmitDetailPolys(void)
+void GLC_EmitDetailPolys(qbool use_vbo)
 {
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+
 	glpoly_t *p;
 	int i;
 	float *v;
+	GLuint index_count = 0;
 
 	if (!detail_polys) {
 		return;
 	}
 
+	if (use_vbo) {
+		GLC_ClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
+	}
+
 	GLC_StateBeginEmitDetailPolys();
 
 	for (p = detail_polys; p; p = p->detail_chain) {
-		glBegin(GL_POLYGON);
-		v = p->verts[0];
-		for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
-			glTexCoord2f(v[7] * 18, v[8] * 18);
-			glVertex3fv(v);
+		if (use_vbo) {
+			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 		}
-		glEnd();
+		else {
+			glBegin(GL_POLYGON);
+			v = p->verts[0];
+			for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
+				glTexCoord2f(v[7], v[8]);
+				glVertex3fv(v);
+			}
+			glEnd();
+		}
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
 	GLC_StateEndEmitDetailPolys();

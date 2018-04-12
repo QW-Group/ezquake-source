@@ -268,7 +268,6 @@ void GL_BuildSkySurfacePolys (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa, qbool mtex);
-void EmitCausticsPolys (void);
 void R_DrawSky (void);
 void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
@@ -309,7 +308,7 @@ void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int p
 
 // gl_rsurf.c
 
-void EmitDetailPolys (void);
+void GLC_EmitDetailPolys(qbool use_vbo);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawWaterSurfaces (void);
@@ -726,7 +725,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawSkyChain(void);
 void GLC_DrawFlatPoly(glpoly_t* p);
-void GLC_EmitCausticsPolys(void);
+void GLC_EmitCausticsPolys(qbool use_vbo);
 
 void GLC_DrawSkyChain(void);
 void GLC_DrawSky(void);
@@ -1000,12 +999,12 @@ void GLC_StateEndAliasModelShadow(void);
 void GLC_StateBeginDrawFlatModel(void);
 void GLC_StateEndDrawFlatModel(void);
 void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit, GLenum fullbrightMode);
-void GLC_StateEndWorldTextureChains(void);
+void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit);
 void GLC_StateEndDrawTextureChains(void);
 void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
 
-void GLC_StateBeginBlendLightmaps(void);
+void GLC_StateBeginBlendLightmaps(qbool use_buffers);
 void GLC_StateEndBlendLightmaps(void);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateEndSceneBlur(void);
@@ -1110,5 +1109,7 @@ GLint GL_UniformGetLocation(GLuint program, const char* name);
 
 void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
 void GL_MemoryBarrier(GLbitfield barriers);
+
+void GLC_ClientActiveTexture(GLenum texture_unit);
 
 #endif /* !__GL_LOCAL_H__ */

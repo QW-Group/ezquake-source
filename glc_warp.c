@@ -147,7 +147,8 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 
 // Caustics
 
-static void CalcCausticTexCoords(float *v, float *s, float *t) {
+static void GLC_CalcCausticTexCoords(float *v, float *s, float *t)
+{
 	float os, ot;
 
 	os = v[3];
@@ -160,7 +161,8 @@ static void CalcCausticTexCoords(float *v, float *s, float *t) {
 	*t *= -3 * (0.5 / 64);
 }
 
-void GLC_EmitCausticsPolys (void) {
+void GLC_EmitCausticsPolys(qbool use_vbo)
+{
 	glpoly_t *p;
 	int i;
 	float s, t, *v;
@@ -174,14 +176,42 @@ void GLC_EmitCausticsPolys (void) {
 
 	GL_EnsureTextureUnitBound(GL_TEXTURE0, underwatertexture);
 	for (p = caustics_polys; p; p = p->caustics_chain) {
-		glBegin(GL_POLYGON);
-		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-			CalcCausticTexCoords(v, &s, &t);
+		if (use_vbo) {
+			if (p->numverts >= 3) {
+				int alt = p->numverts - 1;
 
-			glTexCoord2f(s, t);
-			glVertex3fv(v);
+				// Meag: this isn't using a VBO until we can move the texture co-ordinate calculation to an older opengl shader
+				//   in the meantime we just make sure we render as a triangle-strip so we don't have z-fighting with previous draw
+				glBegin(GL_TRIANGLE_STRIP);
+				GLC_CalcCausticTexCoords(p->verts[0], &s, &t);
+				glTexCoord2f(s, t);
+				glVertex3fv(p->verts[0]);
+
+				for (i = 1; i <= alt; i++, alt--) {
+					GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
+					glTexCoord2f(s, t);
+					glVertex3fv(p->verts[i]);
+
+					if (i < alt) {
+						GLC_CalcCausticTexCoords(p->verts[alt], &s, &t);
+						glTexCoord2f(s, t);
+						glVertex3fv(p->verts[alt]);
+					}
+				}
+				glEnd();
+			}
 		}
-		glEnd();
+		else {
+			glBegin(GL_POLYGON);
+
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+				GLC_CalcCausticTexCoords(v, &s, &t);
+
+				glTexCoord2f(s, t);
+				glVertex3fv(v);
+			}
+			glEnd();
+		}
 	}
 
 	GLC_StateEndCausticsPolys();

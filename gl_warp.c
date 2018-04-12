@@ -246,11 +246,3 @@ void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 		}
 	}
 }
-
-//Tei, add fire to lava
-void EmitCausticsPolys (void)
-{
-	if (GL_UseImmediateMode()) {
-		GLC_EmitCausticsPolys();
-	}
-}

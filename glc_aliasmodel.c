@@ -149,11 +149,11 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		if (gl_vbo_clientmemory.integer) {
 			GL_UnBindBuffer(GL_ARRAY_BUFFER);
 			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
-			qglClientActiveTexture(GL_TEXTURE0);
+			GLC_ClientActiveTexture(GL_TEXTURE0);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
 			if (mtex) {
-				qglClientActiveTexture(GL_TEXTURE1);
+				GLC_ClientActiveTexture(GL_TEXTURE1);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
 			}
@@ -162,11 +162,11 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 		else {
 			GL_BindBuffer(aliasmodel_pose_vbo);
 			glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
-			qglClientActiveTexture(GL_TEXTURE0);
+			GLC_ClientActiveTexture(GL_TEXTURE0);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
 			if (mtex) {
-				qglClientActiveTexture(GL_TEXTURE1);
+				GLC_ClientActiveTexture(GL_TEXTURE1);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
 			}
@@ -294,10 +294,10 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 
 	if (cache) {
 		if (mtex) {
-			qglClientActiveTexture(GL_TEXTURE1);
+			GLC_ClientActiveTexture(GL_TEXTURE1);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
@@ -484,7 +484,7 @@ void GLC_DrawPowerupShell(
 
 				glVertexPointer(3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
 				glEnableClientState(GL_VERTEX_ARRAY);
-				qglClientActiveTexture(GL_TEXTURE0);
+				GLC_ClientActiveTexture(GL_TEXTURE0);
 				glTexCoordPointer(2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 				glDisableClientState(GL_COLOR_ARRAY);

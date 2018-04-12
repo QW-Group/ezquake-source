@@ -1054,3 +1054,13 @@ void GL_CheckMultiTextureExtensions(void)
 		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
 	}
 }
+
+void GLC_ClientActiveTexture(GLenum texture_unit)
+{
+	if (qglClientActiveTexture) {
+		qglClientActiveTexture(texture_unit);
+	}
+	else {
+		assert(texture_unit == GL_TEXTURE0);
+	}
+}

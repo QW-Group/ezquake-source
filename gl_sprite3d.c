@@ -530,7 +530,7 @@ void GLC_Draw3DSprites(void)
 		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color));
 		glEnableClientState(GL_COLOR_ARRAY);
 
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex));
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}

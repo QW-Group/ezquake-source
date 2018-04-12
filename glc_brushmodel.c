@@ -37,6 +37,7 @@ static void GLC_BlendLightmaps(void);
 static void GLC_DrawTextureChains(model_t *model, qbool caustics);
 void GLC_RenderFullbrights(void);
 void GLC_RenderLumas(void);
+GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count);
 
 static void GLC_DrawFlat(model_t *model)
 {
@@ -50,6 +51,7 @@ static void GLC_DrawFlat(model_t *model)
 	byte w[3], f[3], sky[3], current[3], desired[3];
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
+	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
 	int last_lightmap = -1;
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
@@ -117,7 +119,7 @@ static void GLC_DrawFlat(model_t *model)
 				for (p = s->polys; p; p = p->next) {
 					v = p->verts[0];
 
-					if (GL_BuffersSupported()) {
+					if (use_vbo) {
 						if (index_count + 1 + p->numverts > modelIndexMaximum) {
 							GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 							index_count = 0;
@@ -158,7 +160,7 @@ static void GLC_DrawFlat(model_t *model)
 	GLC_StateEndDrawFlatModel();
 
 	// START shaman FIX /r_drawflat + /gl_caustics {
-	EmitCausticsPolys();
+	GLC_EmitCausticsPolys(use_vbo);
 	// } END shaman FIX /r_drawflat + /gl_caustics
 }
 
@@ -380,8 +382,6 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
-	GLC_StateEndWorldTextureChains();
-
 	if (gl_fb_bmodels.integer) {
 		if (!lightmapTextureUnit) {
 			GLC_BlendLightmaps();
@@ -408,10 +408,12 @@ static void GLC_DrawTextureChains(model_t *model, qbool caustics)
 			drawfullbrights = false;
 		}
 	}
-	GLC_StateEndDrawTextureChains();
 
-	EmitCausticsPolys();
-	EmitDetailPolys();
+	GLC_EmitCausticsPolys(use_vbo);
+	GLC_EmitDetailPolys(use_vbo);
+
+	GLC_StateEndWorldTextureChains(lightmapTextureUnit, fullbrightTextureUnit);
+	GLC_StateEndDrawTextureChains();
 }
 
 void GLC_DrawWorld(void)
@@ -581,23 +583,40 @@ static void GLC_BlendLightmaps(void)
 	int i, j;
 	glpoly_t *p;
 	float *v;
+	extern GLuint* modelIndexes;
+	extern GLuint modelIndexMaximum;
+	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
 
-	GLC_StateBeginBlendLightmaps();
+	GLC_StateBeginBlendLightmaps(use_vbo);
 
 	for (i = 0; i < GLC_LightmapCount(); i++) {
 		if (!(p = GLC_LightmapChain(i))) {
 			continue;
 		}
+
 		GLC_LightmapUpdate(i);
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, GLC_LightmapTexture(i));
-		for (; p; p = p->chain) {
-			glBegin(GL_POLYGON);
-			v = p->verts[0];
-			for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
-				glTexCoord2f(v[5], v[6]);
-				glVertex3fv(v);
+		if (use_vbo) {
+			GLuint index_count = 0;
+
+			for (; p; p = p->chain) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 			}
-			glEnd();
+
+			if (index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			}
+		}
+		else {
+			for (; p; p = p->chain) {
+				glBegin(GL_POLYGON);
+				v = p->verts[0];
+				for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
+					glTexCoord2f(v[5], v[6]);
+					glVertex3fv(v);
+				}
+				glEnd();
+			}
 		}
 	}
 	GLC_ClearLightmapPolys();

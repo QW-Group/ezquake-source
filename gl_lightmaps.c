@@ -675,8 +675,10 @@ void BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 		t /= 128;
 
 		VectorCopy(vec, poly->verts[i]);
-		poly->verts[i][7] = s;
-		poly->verts[i][8] = t;
+
+		// Detail textures
+		poly->verts[i][7] = 18 * s;
+		poly->verts[i][8] = 18 * t;
 	}
 
 	poly->numverts = lnumverts;

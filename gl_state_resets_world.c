@@ -44,7 +44,7 @@ void GLC_StateBeginDrawFlatModel(void)
 		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 		glEnableClientState(GL_VERTEX_ARRAY);
 
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
@@ -65,7 +65,7 @@ void GLC_StateEndDrawFlatModel(void)
 	if (GL_BuffersSupported()) {
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
 
@@ -99,18 +99,18 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 		glVertexPointer(3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 		glEnableClientState(GL_VERTEX_ARRAY);
 
-		qglClientActiveTexture(GL_TEXTURE0);
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 		if (lightmapTextureUnit) {
-			qglClientActiveTexture(lightmapTextureUnit);
+			GLC_ClientActiveTexture(lightmapTextureUnit);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 
 		if (fullbrightTextureUnit) {
-			qglClientActiveTexture(fullbrightTextureUnit);
+			GLC_ClientActiveTexture(fullbrightTextureUnit);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
@@ -119,7 +119,7 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 	LEAVE_STATE;
 }
 
-void GLC_StateEndWorldTextureChains(void)
+void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
 {
 	ENTER_STATE;
 
@@ -129,11 +129,15 @@ void GLC_StateEndWorldTextureChains(void)
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		qglClientActiveTexture(GL_TEXTURE2);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		qglClientActiveTexture(GL_TEXTURE1);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		qglClientActiveTexture(GL_TEXTURE0);
+		if (lightmapTextureUnit) {
+			GLC_ClientActiveTexture(lightmapTextureUnit);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+		if (fullbrightTextureUnit) {
+			GLC_ClientActiveTexture(fullbrightTextureUnit);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
 
@@ -178,7 +182,7 @@ void GLC_StateEndFastTurbPoly(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginBlendLightmaps(void)
+void GLC_StateBeginBlendLightmaps(qbool use_buffers)
 {
 	ENTER_STATE;
 
@@ -187,6 +191,13 @@ void GLC_StateBeginBlendLightmaps(void)
 
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
+	GL_DepthFunc(GL_EQUAL);
+
+	if (use_buffers) {
+		// Use the lightmap co-ordinates instead of material
+		GLC_ClientActiveTexture(GL_TEXTURE0);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+	}
 
 	LEAVE_STATE;
 }
@@ -197,6 +208,7 @@ void GLC_StateEndBlendLightmaps(void)
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	GL_DepthFunc(GL_LEQUAL);
 	GL_DepthMask(GL_TRUE);		// back to normal Z buffering
 
 	LEAVE_STATE;

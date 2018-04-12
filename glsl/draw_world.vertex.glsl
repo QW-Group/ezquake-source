@@ -75,7 +75,7 @@ void main()
 #endif
 		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
 #ifdef DRAW_DETAIL_TEXTURES
-		DetailCoord = detailCoord * 18;
+		DetailCoord = detailCoord;
 #endif
 	}
 }
