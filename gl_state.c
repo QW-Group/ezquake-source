@@ -880,105 +880,120 @@ void R_BindVertexArrayElementBuffer(buffer_ref ref)
 void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
+		glc_vertex_array_element_t* array = &opengl.rendering_state.vertex_array;
+
 		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {
 			buffers.UnBind(buffertype_vertex);
 		}
-		glVertexPointer(size, type, stride, pointer_or_offset);
-		R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
-		if (!opengl.rendering_state.glc_vertex_array_enabled) {
+
+		if (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
+			glVertexPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		}
+		if (!opengl.rendering_state.vertex_array.enabled) {
 			glEnableClientState(GL_VERTEX_ARRAY);
 			R_TraceLogAPICall("glEnableClientState(GL_VERTEX_ARRAY)");
-			opengl.rendering_state.glc_vertex_array_enabled = true;
+			opengl.rendering_state.vertex_array.enabled = true;
 		}
 	}
-	else if (!enabled && opengl.rendering_state.glc_vertex_array_enabled) {
+	else if (!enabled && opengl.rendering_state.vertex_array.enabled) {
 		glDisableClientState(GL_VERTEX_ARRAY);
 		R_TraceLogAPICall("glDisableClientState(GL_VERTEX_ARRAY)");
-		opengl.rendering_state.glc_vertex_array_enabled = false;
+		opengl.rendering_state.vertex_array.enabled = false;
 	}
 }
 
 void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
+		glc_vertex_array_element_t* array = &opengl.rendering_state.color_array;
+
 		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {
 			buffers.UnBind(buffertype_vertex);
 		}
-		glColorPointer(size, type, stride, pointer_or_offset);
-		R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
-		if (!opengl.rendering_state.glc_color_array_enabled) {
+
+		if (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
+			glColorPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		}
+		if (!opengl.rendering_state.color_array.enabled) {
 			glEnableClientState(GL_COLOR_ARRAY);
 			R_TraceLogAPICall("glEnableClientState(GL_COLOR_ARRAY)");
 			opengl.rendering_state.colorValid = false;
-			opengl.rendering_state.glc_color_array_enabled = true;
+			opengl.rendering_state.color_array.enabled = true;
 		}
 	}
-	else if (!enabled && opengl.rendering_state.glc_color_array_enabled) {
+	else if (!enabled && opengl.rendering_state.color_array.enabled) {
 		glDisableClientState(GL_COLOR_ARRAY);
 		R_TraceLogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
 		opengl.rendering_state.colorValid = false;
-		opengl.rendering_state.glc_color_array_enabled = false;
+		opengl.rendering_state.color_array.enabled = false;
 	}
 }
 
 void R_GLC_DisableColorPointer(void)
 {
-	if (opengl.rendering_state.glc_color_array_enabled) {
+	if (opengl.rendering_state.color_array.enabled) {
 		glDisableClientState(GL_COLOR_ARRAY);
 		R_TraceLogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
 		opengl.rendering_state.colorValid = false;
-		opengl.rendering_state.glc_color_array_enabled = false;
+		opengl.rendering_state.color_array.enabled = false;
 		opengl.rendering_state.glc_vao_force_rebind = true;
 	}
 }
 
 void R_GLC_DisableTexturePointer(int unit)
 {
-	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
+	if (unit < 0 || unit >= sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0])) {
 		return;
 	}
 
-	if (opengl.rendering_state.glc_texture_array_enabled[unit]) {
+	if (opengl.rendering_state.textureUnits[unit].va.enabled) {
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		R_TraceLogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
-		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
+		R_TraceLogAPICall("glDisableClientState[unit %d](GL_TEXTURE_COORD_ARRAY)", unit);
+		opengl.rendering_state.textureUnits[unit].va.enabled = false;
 	}
 }
 
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
-	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
+	if (unit < 0 || unit >= sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0])) {
 		return;
 	}
 
 	if (enabled) {
+		glc_vertex_array_element_t* array = &opengl.rendering_state.textureUnits[unit].va;
+		qbool pointer_call_needed = (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset);
+
 		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {
 			buffers.UnBind(buffertype_vertex);
 		}
-		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
-		glTexCoordPointer(size, type, stride, pointer_or_offset);
-		R_TraceLogAPICall("glTexCoordPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
-		if (!opengl.rendering_state.glc_texture_array_enabled[unit]) {
+
+		if (!array->enabled || pointer_call_needed) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
+		}
+		if (pointer_call_needed) {
+			glTexCoordPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			R_TraceLogAPICall("glTexCoordPointer[unit %d](size %d, type %s, stride %d, ptr %p)", unit, size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		}
+		if (!array->enabled) {
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			R_TraceLogAPICall("glEnableClientState(GL_TEXTURE_COORD_ARRAY)");
-			opengl.rendering_state.glc_texture_array_enabled[unit] = true;
+			R_TraceLogAPICall("glEnableClientState[unit %d](GL_TEXTURE_COORD_ARRAY)", unit);
+			array->enabled = true;
 		}
 	}
-	else if (!enabled && opengl.rendering_state.glc_texture_array_enabled[unit]) {
-		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		R_TraceLogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
-		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
+	else if (!enabled) {
+		R_GLC_DisableTexturePointer(unit);
 	}
 }
 

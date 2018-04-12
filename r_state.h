@@ -87,6 +87,16 @@ typedef enum {
 	r_texunit_mode_count
 } r_texunit_mode_t;
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+typedef struct glc_vertex_array_element_s {
+	qbool enabled;
+	int size;
+	unsigned int type;
+	int stride;
+	void* pointer_or_offset;
+} glc_vertex_array_element_t;
+#endif
+
 typedef struct rendering_state_s {
 	struct {
 		r_depthfunc_t func;
@@ -136,6 +146,7 @@ typedef struct rendering_state_s {
 	r_vao_id vao_id;
 
 	// GLC only...
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	struct {
 		qbool enabled;
 		r_alphatest_func_t func;
@@ -145,13 +156,16 @@ typedef struct rendering_state_s {
 	struct {
 		qbool enabled;
 		r_texunit_mode_t mode;
+
+		glc_vertex_array_element_t va;
 	} textureUnits[MAX_GLC_TEXTURE_UNIT_STATES];
 
 	qbool colorValid;
-	qbool glc_vertex_array_enabled;
-	qbool glc_texture_array_enabled[MAX_GLC_TEXTURE_UNIT_STATES];
-	qbool glc_color_array_enabled;
+
+	glc_vertex_array_element_t vertex_array;
+	glc_vertex_array_element_t color_array;
 	qbool glc_vao_force_rebind;
+#endif
 
 	// meta
 	qbool initialized;
