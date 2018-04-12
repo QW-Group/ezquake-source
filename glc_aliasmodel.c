@@ -42,11 +42,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "glc_local.h"
 #include "glc_matrix.h"
+#include "glc_state.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
-void R_GLC_DisableColorPointer(void);
 
 // Which pose to use if shadow to be drawn
 static int lastposenum;

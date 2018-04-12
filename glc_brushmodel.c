@@ -251,6 +251,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 	texture_ref desired_textures[4];
 	int texture_unit_count = 1;
 
+	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
+
 	// if (!gl_fb_bmodels)
 	//   (material + fullbright) * lightmap
 	// else
@@ -292,6 +294,28 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 	}
 
 	R_ApplyRenderingState(state);
+
+	//Tei: textureless for the world brush models (Qrack)
+	if (draw_textureless) {
+		if (use_vbo) {
+			// meag: better to have different states for this
+			R_GLC_DisableTexturePointer(0);
+			if (fbTextureUnit >= 0) {
+				R_GLC_DisableTexturePointer(fbTextureUnit);
+			}
+		}
+
+		if (qglMultiTexCoord2f) {
+			qglMultiTexCoord2f(GL_TEXTURE0, 0, 0);
+
+			if (fbTextureUnit >= 0) {
+				qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, 0, 0);
+			}
+		}
+		else {
+			glTexCoord2f(0, 0);
+		}
+	}
 
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
@@ -358,23 +382,21 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 
 						GLC_Begin(GL_TRIANGLE_STRIP);
 						for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-							//Tei: textureless for the world brush models (Qrack)
-							float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
-							float tex_t = gl_textureless.value && model->isworldmodel ? 0 : v[4];
-
-							if (lmTextureUnit >= 0 || fbTextureUnit >= 0) {
-								qglMultiTexCoord2f(GL_TEXTURE0, tex_s, tex_t);
-
-								if (lmTextureUnit >= 0) {
-									qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
-								}
-
-								if (fbTextureUnit >= 0) {
-									qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, tex_s, tex_t);
-								}
+							if (lmTextureUnit >= 0) {
+								qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
 							}
-							else {
-								glTexCoord2f(tex_s, tex_t);
+
+							if (!draw_textureless) {
+								if (qglMultiTexCoord2f) {
+									qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+
+									if (fbTextureUnit >= 0) {
+										qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, v[3], v[4]);
+									}
+								}
+								else {
+									glTexCoord2f(v[3], v[4]);
+								}
 							}
 							GLC_Vertex3fv(v);
 						}

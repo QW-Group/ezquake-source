@@ -938,6 +938,20 @@ void R_GLC_DisableColorPointer(void)
 	}
 }
 
+void R_GLC_DisableTexturePointer(int unit)
+{
+	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
+		return;
+	}
+
+	if (opengl.rendering_state.glc_texture_array_enabled[unit]) {
+		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		R_TraceLogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
+		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
+	}
+}
+
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
