@@ -38,13 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define SOURCES_LIST_FILENAME "sb/sources.txt"
 
-// Used by curl to read server lists from the web
-struct curl_buf
-{
-	char *ptr;
-	size_t len;
-};
-
 // sources table
 source_data *sources[MAX_SOURCES];
 int sourcesn;
@@ -204,84 +197,31 @@ static void Precache_Source(source_data *s)
 	}
 }
 
-static void SB_Process_URL_Buffer(const struct curl_buf *curl_buf, server_data *servers[], int *serversn)
+static void SB_Process_URL_Buffer(FILE *f, server_data *servers[],
+	int *serversn)
 {
 	netadr_t addr;
-	char *buf, *p0, *p1;
+	char buf[32];
 
-	// Don't modify curl_buf as it might be used to create cache file
-	buf = Q_malloc(sizeof(char) * curl_buf->len);
-	memcpy(buf, curl_buf->ptr, sizeof(char) * curl_buf->len);
-
-	// Not using strtok as it's not thread safe
-	for (p0 = buf, p1 = buf; p1 < buf + curl_buf->len; p1++) {
-		if (*p1 == '\n') {
-			*p1 = '\0';
-			NET_StringToAdr(p0, &addr);
-			servers[(*serversn)++] = Create_Server2(addr);
-			p0 = p1 + 1;
-		}
+	while (fgets(buf, sizeof (buf), f) != NULL) {
+		NET_StringToAdr(buf, &addr);
+		servers[(*serversn)++] = Create_Server2(addr);
 	}
-
-	Q_free(buf);
 }
 
-static struct curl_buf *curl_buf_init(void)
-{
-	// Q_malloc handles errors and exits on failure
-	struct curl_buf *curl_buf = Q_malloc(sizeof(struct curl_buf));
-	curl_buf->len = 0;
-	curl_buf->ptr = Q_malloc(curl_buf->len + 1);
-	return curl_buf;
-}
-
-static void curl_buf_deinit(struct curl_buf *curl_buf)
-{
-	Q_free(curl_buf->ptr);
-	Q_free(curl_buf);
-}
-
-static size_t curl_write_func( void *ptr, size_t size, size_t nmemb, struct curl_buf *buf )
-{
-	size_t new_len = buf->len + size * nmemb;
-
-	// not checking for realloc errors since Q_realloc will exit on failure
-	buf->ptr = Q_realloc(buf->ptr, new_len + 1);
-
-	memcpy(buf->ptr + buf->len, ptr, size * nmemb);
-	buf->ptr[new_len] = '\0';
-	buf->len = new_len;
-
-	return size * nmemb;
-}
-
-int SB_Cache_Source(const source_data *s, const struct curl_buf *curl_buf)
-{
-	size_t filename_buf_len;
-	char *filename;
-	FILE *f;
-
-	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
-	filename = Q_malloc(filename_buf_len);
-	SB_URL_to_FileName(s->address.url, filename, filename_buf_len);
-	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wb+")) {
-		Com_Printf_State(PRINT_FAIL, "SB_Cache_Source() Can't create cache file");
-		Q_free(filename);
-		return 0;
-	}
-
-	fwrite(curl_buf->ptr, sizeof(char), curl_buf->len, f);
-
-	fclose(f);
-	Q_free(filename);
-	return 1;
-}
-
-struct curl_buf *SB_Retrieve_Data(const source_data *s)
+static void SB_Update_Source_From_URL(const source_data *s, server_data *servers[],
+	int *serversn)
 {
 	CURL *curl;
 	CURLcode res;
-	struct curl_buf *curl_buf;
+	size_t filename_buf_len;
+	char *filename;
+	FILE *f;
+ 
+	if (s->type != type_url) {
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Invalid argument\n");
+		return;
+	}
 
 	curl = curl_easy_init();
 	if (curl) {
@@ -289,51 +229,34 @@ struct curl_buf *SB_Retrieve_Data(const source_data *s)
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	}
 	else {
-		Com_Printf_State(PRINT_FAIL, "SB_Retrieve_Data() Can't init cURL\n");
-		return NULL;
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't init cURL\n");
+		return;
+	}
+	
+	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
+	filename = Q_malloc(filename_buf_len);
+	SB_URL_to_FileName(s->address.url, filename, filename_buf_len);
+	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wt+")) {
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't open cached file");
+		return;
 	}
 
-	curl_buf = curl_buf_init();
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, curl_buf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
-		Com_Printf("SB_Retrieve_Data(): Could not read URL %s\n", s->address.url);
-		curl_easy_cleanup(curl);
-		curl_buf_deinit(curl_buf);
-		return NULL;
+		Com_Printf("Error: Could not read URL %s\n", s->address.url);
 	}
 
-	curl_easy_cleanup(curl);
-	return curl_buf;
-}
+	fseek(f, 0, SEEK_SET);
+	
+	SB_Process_URL_Buffer(f, servers, serversn);
+	fclose(f);
+	Q_free(filename);
 
-static void SB_Update_Source_From_URL(const source_data *s, server_data *servers[],
-	int *serversn)
-{
-	struct curl_buf *curl_buf;
-
-	if (s->type != type_url) {
-		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Invalid argument\n");
-		return;
-	}
-
-	// Retrieve servers
-	curl_buf = SB_Retrieve_Data(s);
-	if (curl_buf == NULL) {
-		// SB_Retrieve_Data will print meaningful error message
-		return;
-	}
-
-	// Update servers variable
-	SB_Process_URL_Buffer(curl_buf, servers, serversn);
-
-	// Cache servers (file)
-	// No need to check for errors since we cleanup anyways
-	SB_Cache_Source(s, curl_buf);
-
-	curl_buf_deinit(curl_buf);
+    /* always cleanup */ 
+    curl_easy_cleanup(curl);
 }
 
 void Update_Source(source_data *s)
