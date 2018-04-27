@@ -5382,7 +5382,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	extern const char* MVD_AnnouncerString(int line, int total, float* alpha);
 	int width, height;
 	int x, y;
-	int i;
+
 	static cvar_t
 		*hud_itemsclock_timelimit = NULL,
 		*hud_itemsclock_style = NULL,
@@ -7104,5 +7104,15 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 			x += icon_size * hud_gamesummary_scale->value;
 		}
+	}
+}
+
+const char* HUD_FirstTeam(void)
+{
+	if (n_teams) {
+		return sorted_teams[0].name;
+	}
+	else {
+		return "";
 	}
 }

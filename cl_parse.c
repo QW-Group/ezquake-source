@@ -2998,9 +2998,41 @@ void CL_ParseStufftext (void)
 			return;
 		}
 	}
-	else if (!strncmp(s, "//ktx race ", sizeof("//ktx race ") - 1)) {
-		if (!strncmp(s, "//ktx race pm ", sizeof("//ktx race pm ") - 1)) {
-			cl.race_pacemaker_ent = atoi(s + sizeof("//ktx race pm ") - 1);
+	else if (!strncmp(s, "//ktx ", sizeof("//ktx ") - 1)) {
+		if (!strncmp(s, "//ktx race ", sizeof("//ktx race ") - 1)) {
+			if (!strncmp(s, "//ktx race pm ", sizeof("//ktx race pm ") - 1)) {
+				cl.race_pacemaker_ent = atoi(s + sizeof("//ktx race pm ") - 1);
+			}
+		}
+		else if (!strcmp(s, "//ktx matchstart\n")) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_MatchStart();
+			}
+		}
+		else if (!strncmp(s, "//ktx took ", sizeof("//ktx took ") - 1)) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_ItemTaken(s + 2);
+			}
+		}
+		else if (!strncmp(s, "//ktx timer ", sizeof("//ktx timer ") - 1)) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_StartTimer(s + 2);
+			}
+		}
+		else if (!strncmp(s, "//ktx drop ", sizeof("//ktx drop ") - 1)) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_PackDropped(s + 2);
+			}
+		}
+		else if (!strncmp(s, "//ktx expire ", sizeof("//ktx expire ") - 1)) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_Expired(s + 2);
+			}
+		}
+		else if (!strncmp(s, "//ktx bp ", sizeof("//ktx bp ") - 1)) {
+			if (cls.mvdplayback) {
+				MVDAnnouncer_BackpackPickup(s + 2);
+			}
 		}
 	}
 

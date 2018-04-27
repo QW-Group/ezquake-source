@@ -228,6 +228,8 @@ typedef struct custom_model_color_s {
 	cvar_t fullbright_cvar;
 	cvar_t* amf_cvar;
 	int model_hint;
+	int renderfx;
+	qbool disable_texturing;
 } custom_model_color_t;
 
 custom_model_color_t custom_model_colors[] = {
@@ -236,28 +238,52 @@ custom_model_color_t custom_model_colors[] = {
 		{ "gl_custom_lg_color", "", CVAR_COLOR },
 		{ "gl_custom_lg_fullbright", "1" },
 		&amf_lightning,
-		MOD_THUNDERBOLT
+		MOD_THUNDERBOLT,
+		0,
+		true
 	},
 	// Rockets
 	{
 		{ "gl_custom_rocket_color", "", CVAR_COLOR },
 		{ "gl_custom_rocket_fullbright", "1" },
 		NULL,
-		MOD_ROCKET
+		MOD_ROCKET,
+		0,
+		true
 	},
 	// Grenades
 	{
 		{ "gl_custom_grenade_color", "", CVAR_COLOR },
 		{ "gl_custom_grenade_fullbright", "1" },
 		NULL,
-		MOD_GRENADE
+		MOD_GRENADE,
+		0,
+		true
 	},
 	// Spikes
 	{
 		{ "gl_custom_spike_color", "", CVAR_COLOR },
 		{ "gl_custom_spike_fullbright", "1" },
 		&amf_part_spikes,
-		MOD_SPIKE
+		MOD_SPIKE,
+		0,
+		true
+	},
+	{
+		{ "gl_custom_rlpack_color", "255 64 64", CVAR_COLOR },
+		{ "", "0" },
+		NULL,
+		MOD_BACKPACK,
+		RF_ROCKETPACK,
+		false
+	},
+	{
+		{ "gl_custom_lgpack_color", "64 64 255", CVAR_COLOR },
+		{ "", "0" },
+		NULL,
+		MOD_BACKPACK,
+		RF_LGPACK,
+		false
 	}
 };
 
@@ -608,8 +634,9 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glEnable(GL_BLEND);
 
 		if (custom_model) {
-			glDisable(GL_TEXTURE_2D);
-			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
+			if (custom_model->disable_texturing) {
+				glDisable(GL_TEXTURE_2D);
+			}
 		}
 
 		for ( ;; )
@@ -664,18 +691,30 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 					else
 						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
 				}
-				else if (custom_model == NULL)
-				{
+				else if (custom_model == NULL) {
 					if (r_modelcolor[0] < 0) {
 						glColor4f(l, l, l, r_modelalpha); // normal color
-					} else {
+					}
+					else {
 						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
 					}
+				}
+				else {
+					if (custom_model->fullbright_cvar.name[0] && custom_model->fullbright_cvar.integer) {
+						l = 1;
+					}
+
+					// model color
+					glColor4ub(
+						l * custom_model->color_cvar.color[0],
+						l * custom_model->color_cvar.color[1],
+						l * custom_model->color_cvar.color[2],
+						r_modelalpha * 255
+					);
 				}
 
 				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 				glVertex3fv(interpolated_verts);
-
 
 				verts1++;
 				verts2++;
@@ -684,11 +723,14 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glEnd();
 		}
 
-		if (r_modelalpha < 1)
+		if (r_modelalpha < 1) {
 			glDisable(GL_BLEND);
+		}
 
 		if (custom_model) {
-			glEnable(GL_TEXTURE_2D);
+			if (custom_model->disable_texturing) {
+				glEnable(GL_TEXTURE_2D);
+			}
 			custom_model = NULL;
 		}
 	}
@@ -777,9 +819,9 @@ void R_AliasSetupLighting(entity_t *ent)
 	clmodel = ent->model;
 
 	custom_model = NULL;
-	for (i = 0; i < sizeof (custom_model_colors) / sizeof (custom_model_colors[0]); ++i) {
+	for (i = 0; i < sizeof(custom_model_colors) / sizeof(custom_model_colors[0]); ++i) {
 		custom_model_color_t* test = &custom_model_colors[i];
-		if (test->model_hint == clmodel->modhint) {
+		if (test->model_hint && test->model_hint == clmodel->modhint && (test->renderfx == 0 || test->renderfx == ent->renderfx)) {
 			if (test->color_cvar.string[0] && (test->amf_cvar == NULL || test->amf_cvar->integer == 0)) {
 				custom_model = &custom_model_colors[i];
 			}
@@ -787,7 +829,7 @@ void R_AliasSetupLighting(entity_t *ent)
 		}
 	}
 
-	if (custom_model && custom_model->fullbright_cvar.integer) {
+	if (custom_model && custom_model->fullbright_cvar.name[0] && custom_model->fullbright_cvar.integer) {
 		ambientlight = 4096;
 		shadelight = 0;
 		full_light = true;
@@ -810,7 +852,6 @@ void R_AliasSetupLighting(entity_t *ent)
 	//normal lighting
 	full_light = false;
 	ambientlight = shadelight = R_LightPoint (ent->origin);
-
 
 /* FIXME: dimman... cache opt from fod */
 	//VULT COLOURED MODEL LIGHTS

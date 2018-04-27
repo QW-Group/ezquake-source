@@ -1107,6 +1107,16 @@ void CL_LinkPacketEntities(void)
 			continue;
 		}
 
+		ent.renderfx &= ~(RF_BACKPACK_FLAGS);
+		if (cls.mvdplayback && model->modhint == MOD_BACKPACK) {
+			if (cent->contents == IT_ROCKET_LAUNCHER) {
+				ent.renderfx |= RF_ROCKETPACK;
+			}
+			else if (cent->contents == IT_LIGHTNING) {
+				ent.renderfx |= RF_LGPACK;
+			}
+		}
+
 		CL_AddEntity (&ent);
 	}
 }

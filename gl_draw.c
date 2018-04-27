@@ -1057,6 +1057,8 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 	if (!*text)
 		return;
 
+	Draw_SetColor(color_white, alpha);
+
 	// Turn on alpha transparency.
 	if (gl_alphafont.value || (overall_alpha < 1.0))
 	{

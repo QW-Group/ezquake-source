@@ -1644,10 +1644,17 @@ char *TP_SkinForcingTeam(void)
 		return cl.players[cl.playernum].team;
 	}
 	else if (cl_teamlock.integer == 1) {
-		int i;
-		for (i = 0; i < MAX_CLIENTS; i++) {
-			if (cl.players[i].name[0] && !cl.players[i].spectator && cl.players[i].team[0]) {
-				return cl.players[i].team;
+		if (cls.mvdplayback) {
+			extern const char* HUD_FirstTeam(void);
+
+			return (char*) HUD_FirstTeam();
+		}
+		else {
+			int i;
+			for (i = 0; i < MAX_CLIENTS; i++) {
+				if (cl.players[i].name[0] && !cl.players[i].spectator && cl.players[i].team[0]) {
+					return cl.players[i].team;
+				}
 			}
 		}
 	}

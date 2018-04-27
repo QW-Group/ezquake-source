@@ -35,5 +35,13 @@ void MVD_Init_Info(int player_slot);
 void MVD_GameStart(void);
 void MVD_Initialise(void);
 
+// //ktx event notifications
+void MVDAnnouncer_MatchStart(void);
+void MVDAnnouncer_ItemTaken(const char* s);
+void MVDAnnouncer_StartTimer(const char* s);
+void MVDAnnouncer_PackDropped(const char* s);
+void MVDAnnouncer_Expired(const char* s);
+void MVDAnnouncer_BackpackPickup(const char* s);
+
 extern int powerup_cam_active,cam_1,cam_2,cam_3,cam_4;
 extern cvar_t mvd_pc_view_1,mvd_pc_view_2,mvd_pc_view_3,mvd_pc_view_4;
