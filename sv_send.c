@@ -1058,12 +1058,6 @@ static void SV_UpdateToReliableMessages (void)
 	SZ_Clear (&sv.datagram);
 }
 
-//#ifdef _WIN32
-//#pragma optimize( "", off )
-//#endif
-
-
-
 /*
 =======================
 SV_SendClientMessages
@@ -1099,6 +1093,18 @@ void SV_SendClientMessages (void)
 			continue;
 		}
 
+#ifdef USE_PR2
+		if (c->isBot) {
+			SZ_Clear(&c->netchan.message);
+			SZ_Clear(&c->datagram);
+			c->num_backbuf = 0;
+
+			// Need to tell mod what the bot would have seen
+			SV_SetVisibleEntitiesForBot(c);
+			continue;
+		}
+#endif
+
 		// check to see if we have a backbuf to stick in the reliable
 		if (c->num_backbuf)
 		{
@@ -1133,18 +1139,6 @@ void SV_SendClientMessages (void)
 			}
 		}
 
-#ifdef USE_PR2
-		if(c->isBot)
-		{
-			SZ_Clear (&c->netchan.message);
-			SZ_Clear (&c->datagram);
-			c->num_backbuf = 0;
-
-			// Need to tell mod what the bot would have seen
-			SV_SetVisibleEntitiesForBot (c);
-			continue;
-		}
-#endif
 		// if the reliable message overflowed,
 		// drop the client
 		if (c->netchan.message.overflowed)
@@ -1169,8 +1163,9 @@ void SV_SendClientMessages (void)
 			continue;		// bandwidth choke
 		}
 
-		if (c->state == cs_spawned)
-			SV_SendClientDatagram (c, i);
+		if (c->state == cs_spawned) {
+			SV_SendClientDatagram(c, i);
+		}
 		else {
 			Netchan_Transmit (&c->netchan, c->datagram.cursize, c->datagram.data);	// just update reliable
 			c->datagram.cursize = 0;
@@ -1383,13 +1378,6 @@ void SV_SendDemoMessage(void)
 
 	demo.parsecount++;
 }
-
-
-//#ifdef _WIN32
-//#pragma optimize( "", on )
-//#endif
-
-
 
 /*
 =======================
