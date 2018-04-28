@@ -3148,7 +3148,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 //
 void CL_StopPlayback (void)
 {
-	extern int demo_playlist_started;
+	extern qbool demo_playlist_started;
 	extern int mvd_demo_track_run;
 
 	// Nothing to stop.

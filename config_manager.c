@@ -55,7 +55,7 @@ extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack, in_up,	in_down
 extern qbool		sb_showscores, sb_showteamscores;
 
 extern cvar_t		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
-extern char		allskins[128];
+extern char		allskins[MAX_OSPATH];
 
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
 cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};

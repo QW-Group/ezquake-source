@@ -1240,10 +1240,10 @@ void CL_Disconnect (void)
 
 void CL_Disconnect_f (void) 
 {
-	extern int demo_playlist_started;
+	extern qbool demo_playlist_started;
 	extern int mvd_demo_track_run ;
 	cl.intermission = 0;
-	demo_playlist_started= 0;
+	demo_playlist_started = false;
 	mvd_demo_track_run = 0;
 
 	Host_EndGame();
