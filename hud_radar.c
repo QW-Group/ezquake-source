@@ -60,7 +60,7 @@ void HUD_NewRadarMap(void)
 		radar_pic_found = true;
 
 		// Calculate the height of the map.
-		map_height_diff = abs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
+		map_height_diff = fabs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
 
 		// Get the comments from the PNG.
 		txt = Image_LoadPNG_Comments(radar_filename, &n_textcount);
