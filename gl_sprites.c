@@ -37,7 +37,7 @@ static texture_ref Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
 	int texmode;
 	texture_ref texnum;
 
-	texmode = TEX_MIPMAP | TEX_ALPHA;
+	texmode = TEX_MIPMAP | TEX_ALPHA | TEX_PREMUL_ALPHA;
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
 		texmode |= TEX_NOSCALE;
 	}
