@@ -8,7 +8,7 @@ void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, ve
 {
 	gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
 	if (vert) {
-		GLM_RenderSprite(vert, org, up, right, sprsize, 1, 1, 0);
+		GLM_RenderSprite(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
 	}
 }
 
