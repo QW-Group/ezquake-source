@@ -54,6 +54,7 @@ typedef struct ci_texture_s {
 	int          tex_index;
 	int          components;
 	float        coords[MAX_CITEX_COMPONENTS][4];
+	float        originalCoords[MAX_CITEX_COMPONENTS][4];
 } ci_texture_t;
 
 #define TEXTURE_DETAILS(x) (GL_UseGLSL() ? x.tex_array : x.texnum),(x.tex_index)
@@ -80,6 +81,7 @@ qbool ci_initialized = false;
 		ci_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / FONT_SIZE;					\
 		ci_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / FONT_SIZE;					\
 		ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
+		memcpy(ci_textures[_ptex].originalCoords, ci_textures[_ptex].coords, sizeof(ci_textures[_ptex].originalCoords)); \
 	} while(0);
 
 // FIXME: Almost duplicate of QMB_LoadTextureSubImage, extracting sprites from an atlas
@@ -322,6 +324,7 @@ void CI_FlagTexturesForArray(texture_flag_t* texture_flags)
 	for (tex = 0; tex < num_citextures; ++tex) {
 		if (GL_TextureReferenceIsValid(ci_textures[tex].texnum)) {
 			texture_flags[ci_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
+			memcpy(ci_textures[tex].coords, ci_textures[tex].originalCoords, sizeof(ci_textures[tex].coords));
 		}
 	}
 }
