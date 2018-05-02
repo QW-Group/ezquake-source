@@ -627,3 +627,23 @@ mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum)
 
 	return 0;
 }
+
+model_t* Mod_CustomModel(custom_model_id_t id, qbool crash)
+{
+	switch (id) {
+		case custom_model_explosion:
+			return Mod_ForName("progs/s_explod.spr", crash);
+		case custom_model_bolt:
+			return Mod_ForName("progs/bolt.mdl", crash);
+		case custom_model_bolt2:
+			return Mod_ForName("progs/bolt2.mdl", crash);
+		case custom_model_bolt3:
+			return Mod_ForName("progs/bolt3.mdl", crash);
+		case custom_model_beam:
+			return Mod_ForName("progs/beam.mdl", crash);
+		case custom_model_flame0:
+			return Mod_ForName("progs/flame0.mdl", crash);
+		default:
+			return NULL;
+	}
+}

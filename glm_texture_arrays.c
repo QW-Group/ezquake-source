@@ -445,6 +445,15 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		}
 	}
 
+	// custom models are explicitly loaded by client, not notified by server
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
+
+		if (mod) {
+			GL_FlagTexturesForModel(mod);
+		}
+	}
+
 	// Add non-model textures we need (generally sprites)
 	{
 		QMB_FlagTexturesForArray(texture_flags);
@@ -542,6 +551,15 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 		for (i = 0; i < MAX_VWEP_MODELS; i++) {
 			model_t* mod = cl.vw_model_precache[i];
+
+			if (mod) {
+				GL_ImportTexturesForModel(mod);
+			}
+		}
+
+		// custom models are explicitly loaded by client, not notified by server
+		for (i = 0; i < custom_model_count; ++i) {
+			model_t* mod = Mod_CustomModel(i, false);
 
 			if (mod) {
 				GL_ImportTexturesForModel(mod);

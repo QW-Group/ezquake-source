@@ -139,7 +139,7 @@ void CL_InitEnts(void) {
 	#endif
 
 	// FIXME, delay until map load time?
-	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
+	cl_flame0_model = Mod_CustomModel(custom_model_flame0, false);
 
 	for (i = 0; i < cl_num_modelindices; i++) {
 		if (!cl_modelnames[i]) {

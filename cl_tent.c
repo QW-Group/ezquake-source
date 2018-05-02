@@ -246,22 +246,22 @@ static void CL_ParseBeam(int type)
 	{
 		case 1:
 			if (!cl_bolt1_mod)
-				cl_bolt1_mod = Mod_ForName("progs/bolt.mdl", true);
+				cl_bolt1_mod = Mod_CustomModel(custom_model_bolt, true);
 			m = cl_bolt1_mod;
 			break;
 		case 2:
 			if (!cl_bolt2_mod)
-				cl_bolt2_mod = Mod_ForName("progs/bolt2.mdl", true);
+				cl_bolt2_mod = Mod_CustomModel(custom_model_bolt2, true);
 			m = cl_bolt2_mod;
 			break;
 		case 3:
 			if (!cl_bolt3_mod)
-				cl_bolt3_mod = Mod_ForName("progs/bolt3.mdl", true);
+				cl_bolt3_mod = Mod_CustomModel(custom_model_bolt3, true);
 			m = cl_bolt3_mod;
 			break;
 		case 4: default:
 			if (!cl_beam_mod)
-				cl_beam_mod = Mod_ForName("progs/beam.mdl", true);
+				cl_beam_mod = Mod_CustomModel(custom_model_beam, true);
 			m = cl_beam_mod;
 			break;
 	}
@@ -308,7 +308,7 @@ void CL_ExplosionSprite(vec3_t pos)
 	VectorCopy(pos, ex->origin);
 	ex->start = cl.time;
 	if (!cl_explo_mod)
-		cl_explo_mod = Mod_ForName("progs/s_explod.spr", true);
+		cl_explo_mod = Mod_CustomModel(custom_model_explosion, true);
 	ex->model = cl_explo_mod;
 }
 

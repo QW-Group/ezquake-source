@@ -590,4 +590,17 @@ typedef struct bspx_header_s {
 	int numlumps;
 } bspx_header_t;
 
+typedef enum {
+	custom_model_explosion,
+	custom_model_bolt,
+	custom_model_bolt2,
+	custom_model_bolt3,
+	custom_model_beam,
+	custom_model_flame0,
+
+	custom_model_count
+} custom_model_id_t;
+
+model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
+
 #endif	// __MODEL__
