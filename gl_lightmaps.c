@@ -453,7 +453,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
 
-			if (world && s->surfacenum < maximumSurfaceNumber) {
+			if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
 				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
 			}
 
