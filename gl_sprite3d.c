@@ -254,7 +254,6 @@ static void GL_Create3DSpriteVBO(void)
 			indexData[pos++] = ~(GLuint)0;
 		}
 
-		GL_BindVertexArray(NULL);
 		sprite3dIndexes = GL_CreateFixedBuffer(GL_ELEMENT_ARRAY_BUFFER, "3dsprite-indexes", sizeof(indexData), indexData, buffertype_constant);
 	}
 }
@@ -521,7 +520,6 @@ void GLC_Draw3DSprites(void)
 	if (GL_BuffersSupported()) {
 		GLC_Create3DSpriteVAO();
 
-		GL_BindVertexArray(NULL);
 		GL_BindBuffer(sprite3dIndexes);
 
 		GL_BindAndUpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);

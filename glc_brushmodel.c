@@ -52,7 +52,7 @@ static void GLC_DrawFlat(model_t *model)
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
 	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
-	int last_lightmap = -1;
+	int last_lightmap = -2;
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;
@@ -101,6 +101,7 @@ static void GLC_DrawFlat(model_t *model)
 			if (last_lightmap != new_lightmap) {
 				if (new_lightmap >= 0) {
 					GLC_SetTextureLightmap(GL_TEXTURE0, new_lightmap);
+					GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_BLEND);
 					GLC_EnsureTMUEnabled(GL_TEXTURE0);
 				}
 				else {
@@ -136,7 +137,9 @@ static void GLC_DrawFlat(model_t *model)
 					else {
 						glBegin(GL_POLYGON);
 						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
-							glTexCoord2f(v[5], v[6]);
+							if (new_lightmap >= 0) {
+								glTexCoord2f(v[5], v[6]);
+							}
 							glVertex3fv(v);
 						}
 						glEnd();

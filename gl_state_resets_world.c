@@ -27,8 +27,6 @@ void GLC_StateBeginDrawFlatModel(void)
 {
 	ENTER_STATE;
 
-	GL_BindVertexArray(NULL);
-
 	GLC_InitTextureUnitsNoBind1(GL_BLEND);
 
 	// START shaman BUG /fog not working with /r_drawflat {
@@ -76,7 +74,6 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 {
 	ENTER_STATE;
 
-	GL_BindVertexArray(NULL);
 	if (gl_fogenable.integer) {
 		GL_Enable(GL_FOG);
 	}
@@ -122,8 +119,6 @@ void GLC_StateBeginDrawTextureChains(model_t* model, GLenum lightmapTextureUnit,
 void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrightTextureUnit)
 {
 	ENTER_STATE;
-
-	GL_BindVertexArray(NULL);
 
 	if (GL_BuffersSupported()) {
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
