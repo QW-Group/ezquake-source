@@ -121,9 +121,8 @@ void R_RenderDlight(dlight_t *light)
 		float length;
 		float rad = light->radius * 0.35;
 		float *bub_sin, *bub_cos;
-		GLubyte center_color[4] = { 255, 255, 255, 255 };
+		GLubyte center_color[4] = { 255, 255, 255, 0 };
 		GLubyte outer_color[4] = { 0, 0, 0, 0 };
-		float alpha = 0.7f;
 		gl_sprite3d_vert_t* vert;
 
 		VectorSubtract(light->origin, r_origin, v);
@@ -161,11 +160,6 @@ void R_RenderDlight(dlight_t *light)
 			center_color[1] = bubblecolor[light->type][1] * 255;
 			center_color[2] = bubblecolor[light->type][2] * 255;
 		}
-
-		center_color[0] *= alpha;
-		center_color[1] *= alpha;
-		center_color[2] *= alpha;
-		center_color[3] = 255 * alpha;
 
 		GL_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
 
