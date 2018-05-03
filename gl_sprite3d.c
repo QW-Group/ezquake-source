@@ -516,10 +516,11 @@ void GLC_Draw3DSprites(void)
 		return;
 	}
 
-	GLC_Create3DSpriteVAO();
 	GLC_StateBeginDraw3DSprites();
 
 	if (GL_BuffersSupported()) {
+		GLC_Create3DSpriteVAO();
+
 		GL_BindVertexArray(NULL);
 		GL_BindBuffer(sprite3dIndexes);
 
