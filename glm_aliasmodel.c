@@ -228,9 +228,9 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 	}
 
 	vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
-	GL_CreateAliasModelVAO(vbo, instanceVBO);
 
 	if (GL_UseGLSL()) {
+		GL_CreateAliasModelVAO(vbo, instanceVBO);
 		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
 		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
