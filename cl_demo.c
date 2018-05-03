@@ -1793,6 +1793,11 @@ static qbool CL_DemoReadDemRead(void)
 	// Read the net message from the demo.
 	CL_Demo_Read(net_message.data, net_message.cursize, false);
 
+	// Skip over any dem_multiple packets sent to no-one
+	if (cls.mvdplayback && cls.lasttype == dem_multiple && cls.lastto == 0) {
+		return true;
+	}
+
 	return false;
 }
 
