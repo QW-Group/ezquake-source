@@ -308,6 +308,10 @@ void GL_StateBeginAliasOutlineFrame(void)
 
 void GL_StateEndAliasOutlineFrame(void)
 {
+	// FIXME: Work on getting rid of these
+	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
+	GL_PolygonMode(GL_FILL);
+	GL_CullFace(GL_FRONT);
 }
 
 void GLM_StateBeginAliasOutlineBatch(void)
