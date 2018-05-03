@@ -171,6 +171,7 @@ qbool GLM_LogCustomImageType(glm_image_type_t type, int index)
 
 	elements[hudElementCount].type = type;
 	elements[hudElementCount].index = index;
+	elements[hudElementCount].texture = null_texture_reference;
 	hudElementCount++;
 	return true;
 }

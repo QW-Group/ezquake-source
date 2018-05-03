@@ -116,10 +116,10 @@ void GLC_DrawLines(int start, int end)
 	for (i = start; i <= end; ++i) {
 		GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 		glBegin(GL_LINES);
-		glColor4ubv(lineData.line_points[0].color);
-		glVertex3fv(lineData.line_points[0].position);
-		glColor4ubv(lineData.line_points[1].color);
-		glVertex3fv(lineData.line_points[1].position);
+		glColor4ubv(lineData.line_points[i * 2 + 0].color);
+		glVertex3fv(lineData.line_points[i * 2 + 0].position);
+		glColor4ubv(lineData.line_points[i * 2 + 1].color);
+		glVertex3fv(lineData.line_points[i * 2 + 1].position);
 		glEnd();
 		GL_StateEndAlphaLineRGB();
 	}
