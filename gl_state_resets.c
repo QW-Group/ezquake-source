@@ -117,7 +117,7 @@ void GLC_StateBeginDraw3DSprites(void)
 	ENTER_STATE;
 
 	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_DISABLED);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_ENABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	glColor4ubv(color_white);

@@ -568,7 +568,7 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 
-	texmode = TEX_MIPMAP | TEX_ALPHA;
+	texmode = TEX_MIPMAP | TEX_ALPHA | TEX_PREMUL_ALPHA;
 	if (!gl_scaleModelTextures.value) {
 		texmode |= TEX_NOSCALE;
 	}
