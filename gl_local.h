@@ -1099,8 +1099,13 @@ uintptr_t GL_BufferOffset(buffer_ref ref);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
+#if 0
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#else
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
+#define GL_LoadOptionalFunction(functionName) { q##functionName = NULL; }
+#endif
 
 void GLM_UploadFrameConstants(void);
 void GL_InitialiseProgramState(void);
