@@ -380,7 +380,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	GL_StateEndAliasOutlineFrame();
 }
 
-void GLC_SetPowerupShellColor(int layer_no, int effects)
+static void GLC_SetPowerupShellColor(int layer_no, int effects)
 {
 	// set color: alpha so we can see colour underneath still
 	float r_shellcolor[3];
@@ -418,9 +418,6 @@ void GLC_DrawPowerupShell(
 	}
 
 	lastposenum = (r_framelerp >= 0.5) ? pose2 : pose1;
-	verts1 = verts2 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
 
 	scroll[0] = cos(cl.time * 1.5);
 	scroll[1] = sin(cl.time * 1.1);
@@ -432,6 +429,10 @@ void GLC_DrawPowerupShell(
 
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
+		verts1 = verts2 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		verts1 += pose1 * paliashdr->poseverts;
+		verts2 += pose2 * paliashdr->poseverts;
+
 		for (;;) {
 			GLenum drawMode = GL_TRIANGLE_STRIP;
 
