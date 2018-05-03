@@ -31,6 +31,9 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "utils.h"
 #include "glsl/constants.glsl"
 
+void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
+void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
+
 #define CHAIN_SURF_B2F(surf, chain) 			\
 	{											\
 		(surf)->texturechain = (chain);			\
@@ -1432,6 +1435,11 @@ void R_DrawBrushModel(entity_t *e)
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
 	qbool glc_first_water_poly = true;
+	extern cvar_t r_fastturb;
+
+	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	qbool solidTexTurb = (!r_fastturb.integer && GL_WaterAlpha() == 1);
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
@@ -1443,6 +1451,9 @@ void R_DrawBrushModel(entity_t *e)
 	if (!clmodel->nummodelsurfaces) {
 		return;
 	}
+
+	drawFlatFloors &= clmodel->isworldmodel;
+	drawFlatWalls &= clmodel->isworldmodel;
 
 	if (e->angles[0] || e->angles[1] || e->angles[2]) {
 		rotated = true;
@@ -1523,9 +1534,22 @@ void R_DrawBrushModel(entity_t *e)
 				}
 				else {
 					underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
-					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-					CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
+
+					if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+						chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+					}
+					else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+						chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+					}
+					else {
+						chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
+
+						clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+						clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+					}
+					//clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+					//clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+					//CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 				}
 			}
 		}
@@ -1533,6 +1557,7 @@ void R_DrawBrushModel(entity_t *e)
 			// GLSL mode - always render the whole model, the surfaces will be re-used if there is
 			//   another entity with the same model later in the scene
 			if (psurf->flags & SURF_DRAWSKY) {
+				// FIXME: Find an example...
 				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
 
 				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
@@ -1540,6 +1565,7 @@ void R_DrawBrushModel(entity_t *e)
 			}
 			else if (psurf->flags & SURF_DRAWTURB) {
 				extern cvar_t r_fastturb;
+				// FIXME: Find an example...
 				if (r_fastturb.integer) {
 					CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
 				}
@@ -1551,6 +1577,7 @@ void R_DrawBrushModel(entity_t *e)
 				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
 			}
 			else if (psurf->flags & SURF_DRAWALPHA) {
+				// FIXME: Find an example...
 				CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
 			}
 			else {
@@ -1559,10 +1586,19 @@ void R_DrawBrushModel(entity_t *e)
 					underwater = 1;
 				}
 
-				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				}
+				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				}
+				else {
+					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
 
-				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
+					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+				}
+				//CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
 			}
 		}
 	}
@@ -1571,43 +1607,41 @@ void R_DrawBrushModel(entity_t *e)
 		GLC_StateEndWaterSurfaces();
 	}
 
-	if (clmodel->last_texture_chained < 0) {
-		return;
-	}
+	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
+		// START shaman FIX for no simple textures on world brush models {
+		//draw the textures chains for the model
+		R_RenderAllDynamicLightmaps(clmodel);
 
-	// START shaman FIX for no simple textures on world brush models {
-	//draw the textures chains for the model
-	R_RenderAllDynamicLightmaps(clmodel);
+		//R00k added contents point for underwater bmodels
+		if (gl_caustics.integer) {
+			if (clmodel->isworldmodel) {
+				vec3_t midpoint;
 
-	//R00k added contents point for underwater bmodels
-	if (gl_caustics.integer) {
-		if (clmodel->isworldmodel) {
-			vec3_t midpoint;
+				VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
+				VectorScale(midpoint, 0.5f, midpoint);
+				VectorAdd(midpoint, e->origin, midpoint);
 
-			VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
-			VectorScale(midpoint, 0.5f, midpoint);
-			VectorAdd(midpoint, e->origin, midpoint);
+				caustics = R_PointIsUnderwater(midpoint);
+			}
+			else {
+				caustics = R_PointIsUnderwater(e->origin);
+			}
+		}
 
-			caustics = R_PointIsUnderwater(midpoint);
+		if (GL_UseGLSL()) {
+			GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
+
+			// TODO: DrawAlphaChain for brush models in modern
 		}
 		else {
-			caustics = R_PointIsUnderwater(e->origin);
+			GLC_DrawBrushModel(e, clmodel, caustics);
+
+			GLC_DrawSkyChain();
+
+			GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 		}
+		// } END shaman FIX for no simple textures on world brush models
 	}
-
-	if (GL_UseGLSL()) {
-		GLM_DrawBrushModel(clmodel, polygonOffset, caustics);
-
-		// TODO: DrawAlphaChain for brush models in modern
-	}
-	else {
-		GLC_DrawBrushModel(e, clmodel, caustics);
-
-		GLC_DrawSkyChain();
-
-		GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
-	}
-	// } END shaman FIX for no simple textures on world brush models
 
 	GL_StateEndDrawBrushModel();
 	GL_PopMatrix(GL_MODELVIEW, oldMatrix);

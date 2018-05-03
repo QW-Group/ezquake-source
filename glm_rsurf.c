@@ -692,10 +692,6 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 	int i;
 	glm_worldmodel_req_t* req = NULL;
 
-	if (model->last_texture_chained < 0) {
-		return;
-	}
-
 	if (GLM_DuplicatePreviousRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics)) {
 		return;
 	}
@@ -705,6 +701,10 @@ void GLM_DrawBrushModel(model_t* model, qbool polygonOffset, qbool caustics)
 
 		req = GLM_DrawFlatChain(req, model->drawflat_chain[0]);
 		req = GLM_DrawFlatChain(req, model->drawflat_chain[1]);
+	}
+
+	if (model->last_texture_chained < 0) {
+		return;
 	}
 
 	req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics, false);
