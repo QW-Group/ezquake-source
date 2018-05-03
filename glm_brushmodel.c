@@ -253,7 +253,7 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 	return vbo_pos;
 }
 
-void GL_CreateBrushModelVAO(buffer_ref instance_vbo)
+void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 {
 	int i;
 	int size = 0;

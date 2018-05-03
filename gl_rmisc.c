@@ -140,6 +140,8 @@ void R_NewMap(qbool vid_restart)
 #endif
 	}
 
+	Mod_ReloadModels(vid_restart);
+
 	if (cl.worldmodel) {
 		GL_BuildLightmaps();
 		if (GL_UseGLSL()) {

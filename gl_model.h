@@ -565,6 +565,7 @@ model_t *Mod_ForName (char *name, qbool crash);
 void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart
+void Mod_ReloadModels(qbool vid_restart);
 
 mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model);
 byte	*Mod_LeafPVS(mleaf_t *leaf, model_t *model);

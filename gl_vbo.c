@@ -11,9 +11,6 @@
 #endif
 #include "glsl/constants.glsl"
 
-static buffer_ref aliasModel_vbo;
-static buffer_ref aliasModel_ssbo;
-
 static buffer_ref GL_CreateInstanceVBO(void)
 {
 	unsigned int values[MAX_STANDARD_ENTITIES];
@@ -26,144 +23,10 @@ static buffer_ref GL_CreateInstanceVBO(void)
 	return GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "instance#", sizeof(values), values, buffertype_constant);
 }
 
-static void GL_MeasureVBOForModel(model_t* mod, int* required_vbo_length)
-{
-	switch (mod->type) {
-	case mod_alias:
-	case mod_alias3:
-		*required_vbo_length += mod->vertsInVBO;
-		break;
-	case mod_sprite:
-		// We allocated 4 points at beginning of VBO, no need to duplicate per-model
-		break;
-	case mod_brush:
-		// These are in different format/vbo at the moment
-		break;
-	case mod_unknown:
-		// Keep compiler happy
-		break;
-	}
-}
-
-static void GL_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
-{
-	if (mod->type == mod_alias) {
-		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-
-		GL_AliasModelAddToVBO(mod, paliashdr, aliasmodel_data, *new_vbo_position);
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_alias3) {
-		GL_MD3ModelAddToVBO(mod, aliasmodel_data, *new_vbo_position);
-
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_sprite) {
-		mod->vbo_start = 0;
-	}
-	else if (mod->type == mod_brush) {
-		mod->vbo_start = 0;
-	}
-}
-
-static void GL_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
-{
-	VectorSet(verts[0].position, 0, -1, -1);
-	verts[0].texture_coords[0] = 1;
-	verts[0].texture_coords[1] = 1;
-	verts[0].vert_index = 0;
-
-	VectorSet(verts[1].position, 0, -1, 1);
-	verts[1].texture_coords[0] = 1;
-	verts[1].texture_coords[1] = 0;
-	verts[1].vert_index = 1;
-
-	VectorSet(verts[2].position, 0, 1, 1);
-	verts[2].texture_coords[0] = 0;
-	verts[2].texture_coords[1] = 0;
-	verts[2].vert_index = 2;
-
-	VectorSet(verts[3].position, 0, 1, -1);
-	verts[3].texture_coords[0] = 0;
-	verts[3].texture_coords[1] = 1;
-	verts[3].vert_index = 3;
-
-	*position += sizeof(verts) / sizeof(verts[0]);
-}
-
 void GL_CreateModelVBOs(qbool vid_restart)
 {
-	extern model_t* Mod_LoadModel(model_t *mod, qbool crash);
-	int required_vbo_length = 4;
-	int i;
-	int new_vbo_position = 0;
-	buffer_ref instance_vbo;
-	vbo_model_vert_t* aliasModelData;
+	buffer_ref instance_vbo = GL_CreateInstanceVBO();
 
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-
-		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
-				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
-					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
-				}
-			}
-			Mod_LoadModel(mod, true);
-
-			GL_MeasureVBOForModel(mod, &required_vbo_length);
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
-				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
-					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
-				}
-			}
-			Mod_LoadModel(mod, true);
-
-			GL_MeasureVBOForModel(mod, &required_vbo_length);
-		}
-	}
-
-	// Go back through all models, importing textures into arrays and creating new VBO
-	aliasModelData = Q_malloc(required_vbo_length * sizeof(vbo_model_vert_t));
-
-	// VBO starts with simple-model/sprite vertices
-	GL_ImportSpriteCoordsToVBO(aliasModelData, &new_vbo_position);
-
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-
-		if (mod) {
-			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod) {
-			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
-		}
-	}
-
-	aliasModel_vbo = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
-	instance_vbo = GL_CreateInstanceVBO();
-	GL_CreateAliasModelVAO(aliasModel_vbo, instance_vbo);
-	GL_CreateBrushModelVAO(instance_vbo);
-	if (GL_UseGLSL()) {
-		aliasModel_ssbo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, buffertype_constant);
-		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
-	}
-	else {
-		GLC_AllocateAliasPoseBuffer();
-	}
-	Q_free(aliasModelData);
+	GL_CreateAliasModelVBO(instance_vbo);
+	GL_CreateBrushModelVBO(instance_vbo);
 }

@@ -568,8 +568,8 @@ void GLM_DebugMatrix(GLenum type, const char* value);
 
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos);
 int GL_MeasureVBOSizeForBrushModel(model_t* m);
-void GL_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO);
-void GL_CreateBrushModelVAO(buffer_ref instance_vbo);
+void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
+void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 
 void GL_UseProgram(GLuint program);
 void GL_DepthFunc(GLenum func);

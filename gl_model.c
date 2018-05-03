@@ -211,6 +211,39 @@ void Mod_TouchModels(void)
 	}
 }
 
+void Mod_ReloadModels(qbool vid_restart)
+{
+	int i;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
+			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
+					// Invalidate cache so VBO buffer gets refilled
+					Cache_Free(&mod->cache);
+				}
+			}
+			Mod_LoadModel(mod, true);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
+					// Invalidate cache so VBO buffer gets refilled
+					Cache_Free(&mod->cache);
+				}
+			}
+			Mod_LoadModel(mod, true);
+		}
+	}
+}
+
 //Loads a model into the cache
 model_t *Mod_LoadModel(model_t *mod, qbool crash)
 {
