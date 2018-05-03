@@ -1112,4 +1112,8 @@ void GL_MemoryBarrier(GLbitfield barriers);
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
 
+#define R_NoLighting() (r_dynamic.integer == 0)
+#define R_HardwareLighting() (r_dynamic.integer == 2 && GL_UseGLSL())
+#define R_SoftwareLighting() (r_dynamic.integer && !R_HardwareLighting())
+
 #endif /* !__GL_LOCAL_H__ */

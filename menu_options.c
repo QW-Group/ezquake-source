@@ -169,6 +169,7 @@ const char* autorecord_enum[] = { "off", "don't save", "auto save" };
 const char* hud_enum[] = { "classic", "new", "combined" };
 const char* ignorespec_enum[] = { "off", "on (as player)", "on (always)" };
 const char* gender_enum[] = { "Male", "m", "Female", "f", "Neutral", "n", "Not specified", "" };
+const char* lighting_enum[] = { "Off", "0", "On (CPU)", "1", "On (GPU - GLSL only)", "2" };
 
 const char* scr_sshot_format_enum[] = {
 	"JPG", "jpg", "PNG", "png", "TGA", "tga" };
@@ -972,7 +973,7 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
-	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
+	ADDSET_ENUM     ("Dynamic Lights", r_dynamic, lighting_enum),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Darken Map", gl_lightmode),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),

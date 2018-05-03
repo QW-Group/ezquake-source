@@ -350,7 +350,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 	qbool lightstyle_modified = false;
 	lightmap_data_t* lm;
 
-	if (r_dynamic.integer != 1 && !fa->cached_dlight) {
+	if (!R_SoftwareLighting() && !fa->cached_dlight) {
 		return;
 	}
 	if (fa->lightmaptexturenum < 0) {
@@ -365,7 +365,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa)
 		}
 	}
 
-	if (r_dynamic.integer == 1) {
+	if (R_SoftwareLighting()) {
 		if (fa->dlightframe == r_framecount) {
 			R_BuildDlightList(fa);
 		}
@@ -468,7 +468,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 void R_UploadChangedLightmaps(void)
 {
 	GL_EnterRegion(__FUNCTION__);
-	if (r_dynamic.integer == 2 && GL_UseGLSL()) {
+	if (R_HardwareLighting()) {
 		extern GLuint GL_TextureNameFromReference(texture_ref ref);
 		static glm_program_t lightmap_program;
 		static buffer_ref ssbo_lightingData;

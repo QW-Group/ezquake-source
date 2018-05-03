@@ -234,7 +234,7 @@ void R_MarkLights(dlight_t *light, int bit, mnode_t *node)
 	msurface_t	*surf;
 	int			i;
 
-	if (r_dynamic.integer != 1) {
+	if (!R_SoftwareLighting()) {
 		return;
 	}
 

@@ -132,13 +132,13 @@ void R_Check_ReloadLightmaps(void)
 	static qbool hardware_lighting;
 
 	// not changed, nothing to do
-	if (allowed == R_FullBrightAllowed() && hardware_lighting == (r_dynamic.integer == 2)) {
+	if (allowed == R_FullBrightAllowed() && hardware_lighting == R_HardwareLighting()) {
 		return;
 	}
 
 	// ok, it changed, lets update all our light maps...
 	allowed = R_FullBrightAllowed();
-	hardware_lighting = (r_dynamic.integer == 2);
+	hardware_lighting = R_HardwareLighting();
 
 	R_ForceReloadLightMaps();
 }
