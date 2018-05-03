@@ -434,7 +434,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
 			R_RenderDynamicLightmaps(s);
 
-			if (world && s->surfacenum < maximumSurfaceNumber) {
+			if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
 				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
 			}
 
@@ -801,20 +801,19 @@ void GL_BuildLightmaps(void)
 		}
 	}
 
-	// Round up to nearest 32
-	surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
-	Q_free(surfaceTodoData);
-	surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
-
-	if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
-		ssbo_surfacesTodo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "surfaces-to-light", surfaceTodoLength, NULL, buffertype_use_once);
-	}
-	else {
-		GL_EnsureBufferSize(ssbo_surfacesTodo, surfaceTodoLength);
-	}
-
 	// upload all lightmaps that were filled
 	if (GL_UseGLSL()) {
+		// Round up to nearest 32
+		surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
+		Q_free(surfaceTodoData);
+		surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
+		if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
+			ssbo_surfacesTodo = GL_CreateFixedBuffer(GL_SHADER_STORAGE_BUFFER, "surfaces-to-light", surfaceTodoLength, NULL, buffertype_use_once);
+		}
+		else {
+			GL_EnsureBufferSize(ssbo_surfacesTodo, surfaceTodoLength);
+		}
+
 		GLM_CreateLightmapTextures();
 	}
 	else {
