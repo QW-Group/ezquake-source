@@ -537,6 +537,7 @@ void GLC_Draw3DSprites(void)
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
+		qbool alpha_test = (i == batchMapping[SPRITE3D_ENTITIES] - 1);
 
 		if (!batch->count) {
 			continue;
@@ -550,6 +551,7 @@ void GLC_Draw3DSprites(void)
 			GL_Disable(GL_DEPTH_TEST);
 		}
 		GL_DepthMask(batch->depthMask ? GL_TRUE : GL_FALSE);
+		GL_AlphaBlendFlags(alpha_test ? GL_ALPHATEST_ENABLED : GL_ALPHATEST_DISABLED);
 
 		if (GL_BuffersSupported()) {
 			if (batch->count == 1) {

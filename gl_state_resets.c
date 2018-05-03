@@ -117,11 +117,12 @@ void GLC_StateBeginDraw3DSprites(void)
 	ENTER_STATE;
 
 	GL_DisableFog();
-	GL_AlphaBlendFlags(GL_BLEND_ENABLED | GL_ALPHATEST_ENABLED);
+	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 	GLC_InitTextureUnitsNoBind1(GL_MODULATE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	glColor4ubv(color_white);
 	GL_Disable(GL_CULL_FACE);
+	GL_AlphaFunc(GL_GREATER, 0.333f);
 
 	LEAVE_STATE;
 }
@@ -135,6 +136,7 @@ void GLC_StateEndDraw3DSprites(void)
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_TextureEnvMode(GL_REPLACE);
 	GL_EnableFog();
+	GL_AlphaFunc(GL_GREATER, 0.666f);
 
 	LEAVE_STATE;
 }
