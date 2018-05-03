@@ -67,10 +67,8 @@ void main()
 				}
 			}
 			baseLightmap *= 1.0 / (256.0 * 256.0);
-			baseLightmap.a = 1;
 
 			// Dynamic lights
-
 			for (i = 0; i < lightsActive; ++i) {
 				float dist = dot(lightPositions[i].xyz, Plane.xyz) - Plane.a;
 				float rad = lightPositions[i].a - abs(dist);
@@ -104,17 +102,9 @@ void main()
 
 			// Scale back... if we do simple scaling colour ratios will be lost
 			//   (red 1.5 green 1.0 would become ... whatever red+green is)
-			baseLightmap.r *= lightScale;
-			baseLightmap.g *= lightScale;
-			baseLightmap.b *= lightScale;
-
-			float maxComponent = max(baseLightmap.r, max(baseLightmap.g, baseLightmap.b));
-			if (maxComponent > 1) {
-				maxComponent = 1.0 / maxComponent;
-				baseLightmap.r *= maxComponent;
-				baseLightmap.g *= maxComponent;
-				baseLightmap.b *= maxComponent;
-			}
+			baseLightmap *= lightScale;
+			baseLightmap /= max(1, max(baseLightmap.r, max(baseLightmap.g, baseLightmap.b)));
+			baseLightmap.a = 1;
 
 			imageStore(destinationLightmap, coord, baseLightmap);
 		}

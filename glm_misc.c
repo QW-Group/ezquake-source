@@ -98,11 +98,9 @@ void GLM_PreRenderView(void)
 					lightColor[2] = light->color[2] / 255.0;
 				}
 				else {
-					extern float bubblecolor[NUM_DLIGHTTYPES][4];
-
-					lightColor[0] = bubblecolor[light->type][0];
-					lightColor[1] = bubblecolor[light->type][1];
-					lightColor[2] = bubblecolor[light->type][2];
+					lightColor[0] = dlightcolor[light->type][0] / 255.0;
+					lightColor[1] = dlightcolor[light->type][1] / 255.0;
+					lightColor[2] = dlightcolor[light->type][2] / 255.0;
 				}
 			}
 			else {

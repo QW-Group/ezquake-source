@@ -317,6 +317,7 @@ void GL_BuildLightmaps (void);
 
 qbool R_FullBrightAllowed(void);
 void R_Check_ReloadLightmaps(void);
+extern int dlightcolor[NUM_DLIGHTTYPES][3];
 
 // gl_ngraph.c
 //void R_NetGraph (void); // HUD -> hexum

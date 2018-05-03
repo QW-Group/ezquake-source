@@ -81,7 +81,7 @@ static dlightinfo_t dlightlist[MAX_DLIGHTS];
 static int numdlights;
 
 // funny, but this colors differ from bubblecolor[NUM_DLIGHTTYPES][4]
-static int dlightcolor[NUM_DLIGHTTYPES][3] = {
+int dlightcolor[NUM_DLIGHTTYPES][3] = {
 	{ 100,  90,  80 },	// dimlight or brightlight
 	{ 100,  50,  10 },	// muzzleflash
 	{ 100,  50,  10 },	// explosion
