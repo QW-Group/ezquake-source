@@ -1065,6 +1065,7 @@ typedef enum aliasmodel_draw_batch_s {
 void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
+void GLM_DrawAliasModelPostSceneBatches(void);
 
 typedef enum {
 	opaque_world,

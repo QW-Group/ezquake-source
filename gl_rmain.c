@@ -1144,11 +1144,11 @@ void R_RenderView(void)
 	// Draws transparent world surfaces
 	R_RenderTransparentWorld();
 
-	// Draw 3D hud elements
-	R_Render3DHud();
-
 	// Render billboards
 	GL_Draw3DSprites();
+
+	// Draw 3D hud elements
+	R_Render3DHud();
 
 	if (GL_UseGLSL()) {
 		GLM_RenderView();

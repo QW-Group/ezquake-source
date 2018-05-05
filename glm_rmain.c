@@ -20,4 +20,6 @@ void GLM_RenderView(void)
 	GLM_Draw3DSprites();
 
 	GL_DrawWorldModelBatch(alpha_surfaces);
+
+	GLM_DrawAliasModelPostSceneBatches();
 }

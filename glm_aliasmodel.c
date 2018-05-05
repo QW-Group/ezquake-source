@@ -16,6 +16,8 @@ typedef enum aliasmodel_draw_type_s {
 	aliasmodel_draw_alpha,
 	aliasmodel_draw_outlines,
 	aliasmodel_draw_shells,
+	aliasmodel_draw_postscene,
+	aliasmodel_draw_postscene_shells,
 
 	aliasmodel_draw_max
 } aliasmodel_draw_type_t;
@@ -314,14 +316,27 @@ static void GLM_QueueAliasModelDrawImpl(
 )
 {
 	uniform_block_aliasmodel_t* uniform;
-	aliasmodel_draw_type_t type = (color[3] == 1 ? aliasmodel_draw_std : aliasmodel_draw_alpha);
-	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
+	aliasmodel_draw_type_t type = aliasmodel_draw_std;
+	aliasmodel_draw_type_t shelltype = aliasmodel_draw_shells;
+	aliasmodel_draw_instructions_t* instr;
 	int textureSampler = -1, lumaSampler = -1;
 
 	// Compile here so we can work out how many samplers we have free to allocate per draw-call
 	if (!GLM_CompileAliasModelProgram()) {
 		return;
 	}
+
+	if ((render_effects & RF_WEAPONMODEL) && color[3] < 1) {
+		type = aliasmodel_draw_postscene;
+		shelltype = aliasmodel_draw_postscene_shells;
+		outline = false;
+	}
+	else if (color[3] < 1) {
+		type = aliasmodel_draw_alpha;
+		outline = false;
+	}
+
+	instr = &alias_draw_instructions[type];
 
 	// Should never happen...
 	if (alias_draw_count >= sizeof(aliasdata.models) / sizeof(aliasdata.models[0])) {
@@ -370,17 +385,12 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->lumaSamplerMapping = lumaSampler;
 
 	// Add to queues
-	if (color[3] == 1.0) {
-		GLM_QueueDrawCall(aliasmodel_draw_std, vbo_start, vbo_count, alias_draw_count);
-		if (outline) {
-			GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
-		}
-	}
-	else {
-		GLM_QueueDrawCall(aliasmodel_draw_alpha, vbo_start, vbo_count, alias_draw_count);
+	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
+	if (outline) {
+		GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
 	}
 	if (shell) {
-		GLM_QueueDrawCall(aliasmodel_draw_shells, vbo_start, vbo_count, alias_draw_count);
+		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_draw_count);
 	}
 
 	alias_draw_count++;
@@ -528,6 +538,11 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		return;
 	}
 
+	GL_CullFace(GL_FRONT);
+	GL_Enable(GL_CULL_FACE);
+	GL_DepthMask(GL_TRUE);
+	GL_Enable(GL_DEPTH_TEST);
+
 	GL_BindBuffer(vbo_aliasIndirectDraw);
 	extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
 
@@ -539,7 +554,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
-	if (type == aliasmodel_draw_shells) {
+	if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
@@ -549,7 +564,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	for (i = 0; i < instr->num_calls; ++i) {
-		if (type == aliasmodel_draw_shells) {
+		if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 			GL_EnsureTextureUnitBound(GL_TEXTURE0 + TEXTURE_UNIT_MATERIAL, shelltexture);
 		}
 		else if (instr->num_textures[i]) {
@@ -590,6 +605,12 @@ void GLM_DrawAliasModelBatches(void)
 	GLM_RenderPreparedEntities(aliasmodel_draw_std);
 	GLM_RenderPreparedEntities(aliasmodel_draw_alpha);
 	GLM_RenderPreparedEntities(aliasmodel_draw_shells);
+}
+
+void GLM_DrawAliasModelPostSceneBatches(void)
+{
+	GLM_RenderPreparedEntities(aliasmodel_draw_postscene);
+	GLM_RenderPreparedEntities(aliasmodel_draw_postscene_shells);
 }
 
 void GLM_InitialiseAliasModelBatches(void)

@@ -151,7 +151,6 @@ void GLC_StateBeginDrawViewModel(float alpha)
 {
 	ENTER_STATE;
 
-	GL_AlphaBlendFlags(GL_ALPHATEST_DISABLED | GL_BLEND_DISABLED);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
 	GL_PolygonMode(GL_FILL);
@@ -159,6 +158,9 @@ void GLC_StateBeginDrawViewModel(float alpha)
 	GLC_InitTextureUnitsNoBind1(GL_REPLACE);
 	GLC_EnsureTMUEnabled(GL_TEXTURE0);
 	GL_DisableFog();
+	GL_DepthMask(GL_TRUE);
+	GL_Enable(GL_DEPTH_TEST);
+	GL_Enable(GL_CULL_FACE);
 
 	// hack the depth range to prevent view model from poking into walls
 	GL_DepthRange(gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
