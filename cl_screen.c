@@ -1422,10 +1422,6 @@ void SCR_UpdateScreenPostPlayerView(void)
 	SCR_DrawElements();
 	GL_LeaveRegion();
 
-	GL_EnterRegion("GLM_PrepareImageDraw");
-	GLM_PrepareImageDraw();
-	GL_LeaveRegion();
-
 	// Actual rendering...
 	GL_EnterRegion("GL_DrawHUD");
 	GL_FlushImageDraw();

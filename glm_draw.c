@@ -43,6 +43,7 @@ void GLM_DrawCircles(int start, int end);
 void GLM_DrawLines(int start, int end);
 void GLM_DrawPolygons(int start, int end);
 void GLM_DrawImageArraySequence(texture_ref texture, int start, int length);
+void GLM_ImageDrawComplete(void);
 
 void GLC_DrawCircles(int start, int end);
 void GLC_DrawLines(int start, int end);
@@ -68,7 +69,7 @@ void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_he
 {
 	byte color[] = { 255, 255, 255, alpha * 255 };
 
-	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false);
+	GLM_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false, false);
 }
 
 void GLM_Draw_FadeScreen(float alpha)
@@ -158,9 +159,13 @@ void GL_EmptyImageQueue(void)
 
 void GL_FlushImageDraw(void)
 {
+	GLM_PrepareImageDraw();
+
 	GLM_FlushImageDraw();
 
 	GL_EmptyImageQueue();
+
+	GLM_ImageDrawComplete();
 }
 
 qbool GLM_LogCustomImageType(glm_image_type_t type, int index)

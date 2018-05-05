@@ -7,8 +7,14 @@ extern mpic_t char_textures[MAX_CHARSETS];
 extern int char_range[MAX_CHARSETS];
 
 static GLubyte cache_currentColor[4];
+static qbool nextCharacterIsCrosshair = false;
 
-void Draw_TextCacheInit(float x, float y, float scale)
+void Draw_SetCrosshairTextMode(qbool enabled)
+{
+	nextCharacterIsCrosshair = enabled;
+}
+
+static void Draw_TextCacheInit(float x, float y, float scale)
 {
 	memcpy(cache_currentColor, color_white, sizeof(cache_currentColor));
 }
@@ -39,12 +45,17 @@ static void Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale)
 		float frow = char_textures[slot].tl + (ch >> 4) * char_height;	// row = num * (16 chars per row)
 		float fcol = char_textures[slot].sl + (ch & 0x0F) * char_width;
 
+		/*
+		pic = &texture->glyphs[ch];
+		GLM_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
+		*/
+
 		float s = fcol + 0.5f * (char_textures[slot].th - char_textures[slot].tl) / GL_TextureWidth(char_textures[slot].texnum);
 		float t = frow + 0.5f * (char_textures[slot].th - char_textures[slot].tl) / GL_TextureHeight(char_textures[slot].texnum);
 		float tex_width = char_width - 0.5f / GL_TextureWidth(char_textures[slot].texnum);
 		float tex_height = char_height - 0.5f / GL_TextureHeight(char_textures[slot].texnum);
 
-		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, s, t, tex_width, tex_height, cache_currentColor, false, char_textures[new_charset].texnum, true);
+		GLM_DrawImage(x, y, scale * 8, scale * 8 * 2, s, t, tex_width, tex_height, cache_currentColor, false, char_textures[new_charset].texnum, true, nextCharacterIsCrosshair);
 	}
 }
 

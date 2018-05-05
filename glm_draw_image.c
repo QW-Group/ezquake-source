@@ -22,19 +22,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "common_draw.h"
 #include "glm_draw.h"
+#include "tr_types.h"
+#include "glsl/constants.glsl"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
 static buffer_ref imageIndexBuffer;
 #endif
 
+extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
+
+// Flags to detect when the user has changed settings
+#define GLM_HUDIMAGES_SMOOTHTEXT        1
+#define GLM_HUDIMAGES_SMOOTHCROSSHAIR   2
+#define GLM_HUDIMAGES_SMOOTHIMAGES      4
+#define GLM_HUDIMAGES_SMOOTHEVERYTHING  (GLM_HUDIMAGES_SMOOTHTEXT | GLM_HUDIMAGES_SMOOTHCROSSHAIR | GLM_HUDIMAGES_SMOOTHIMAGES)
+
 extern float overall_alpha;
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
-
-#define IMAGEPROG_FLAGS_TEXTURE     1
-#define IMAGEPROG_FLAGS_ALPHATEST   2
-#define IMAGEPROG_FLAGS_TEXT        4
 
 static glm_program_t multiImageProgram;
 
@@ -116,19 +122,40 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 
 void GLM_CreateMultiImageProgram(void)
 {
+	int program_flags =
+		(r_smoothtext.integer ? GLM_HUDIMAGES_SMOOTHTEXT : 0) |
+		(r_smoothcrosshair.integer ? GLM_HUDIMAGES_SMOOTHCROSSHAIR : 0) |
+		(r_smoothimages.integer ? GLM_HUDIMAGES_SMOOTHIMAGES : 0);
+
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
-	if (GLM_ProgramRecompileNeeded(&multiImageProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
 		GL_VGFDeclare(hud_draw_image);
 
 		// Initialise program for drawing image
 		GLM_CreateVGFProgramWithInclude("Multi-image", GL_VGFParams(hud_draw_image), &multiImageProgram, "#define HUD_IMAGE_GEOMETRY_SHADER\n");
 	}
 #else
-	if (GLM_ProgramRecompileNeeded(&multiImageProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
+		char included_definitions[512];
 		GL_VFDeclare(hud_draw_image);
 
+		if (program_flags == 0) {
+			// all nearest-sampling
+			strlcpy(included_definitions, "#define NEAREST_SAMPLING", sizeof(included_definitions));
+		}
+		else if (program_flags == GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+			// all linear
+			strlcpy(included_definitions, "#define LINEAR_SAMPLING", sizeof(included_definitions));
+		}
+		else {
+			// depends on flags on individual elements
+			strlcpy(included_definitions, "#define MIXED_SAMPLING", sizeof(included_definitions));
+		}
+
 		// Initialise program for drawing image
-		GLM_CreateVFProgram("Multi-image", GL_VFParams(hud_draw_image), &multiImageProgram);
+		GLM_CreateVFProgramWithInclude("Multi-image", GL_VFParams(hud_draw_image), &multiImageProgram, included_definitions);
+
+		multiImageProgram.custom_options = program_flags;
 	}
 #endif
 
@@ -312,7 +339,7 @@ void GLM_PrepareImages(void)
 	}
 }
 
-void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText)
+void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair)
 {
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
@@ -343,6 +370,22 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		int flags = IMAGEPROG_FLAGS_TEXTURE;
 		flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
 		flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
+		if (isCrosshair) {
+			if (!r_smoothcrosshair.integer) {
+				flags |= IMAGEPROG_FLAGS_NEAREST;
+			}
+		}
+		else if (isText) {
+			flags |= IMAGEPROG_FLAGS_TEXT;
+			if (!r_smoothtext.integer) {
+				flags |= IMAGEPROG_FLAGS_NEAREST;
+			}
+		}
+		else {
+			if (!r_smoothimages.integer) {
+				flags |= IMAGEPROG_FLAGS_NEAREST;
+			}
+		}
 
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
 		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;

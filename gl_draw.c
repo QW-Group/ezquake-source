@@ -33,6 +33,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 void CachePics_Init(void);
 void Draw_InitCharset(void);
 void CachePics_LoadAmmoPics(mpic_t* ibar);
+void Draw_SetCrosshairTextMode(qbool enabled);
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t con_shift, hud_faderankings;
@@ -44,6 +45,9 @@ cvar_t  scr_conpicture      = {"scr_conpicture", "conback", 0, OnChange_scr_conp
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 
+cvar_t  r_smoothtext        = { "r_smoothtext",      "1" };
+cvar_t  r_smoothcrosshair   = { "r_smoothcrosshair", "1" };
+cvar_t  r_smoothimages      = { "r_smoothimages",    "1" };
 
 void OnChange_crosshairimage(cvar_t *, char *, qbool *);
 static cvar_t crosshairimage          = {"crosshairimage", "", 0, OnChange_crosshairimage};
@@ -519,16 +523,20 @@ void Draw_Init (void)
 	Cvar_Register (&scr_conalpha);
 	Cvar_Register (&scr_conback);
 	Cvar_Register (&scr_conpicture);
+	Cvar_Register (&r_smoothtext);
+	Cmd_AddLegacyCommand("gl_smoothfont", "r_smoothtext");
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_menualpha);
 	Cvar_Register (&scr_menudrawhud);
+	Cvar_Register (&r_smoothimages);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
 	Cvar_Register (&crosshairimage);
 	Cvar_Register (&crosshairalpha);
 	Cvar_Register (&crosshairscale);
 	Cvar_Register (&crosshairscalemethod);
+	Cvar_Register (&r_smoothcrosshair);
 
 	Cvar_ResetCurrentGroup();
 
@@ -626,12 +634,13 @@ void Draw_Crosshair (void)
 			ofs2 *= 0.5f;
 		}
 
-		GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false);
+		GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false, true);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 	else if (crosshair.value) {
 		// Multiview
+		Draw_SetCrosshairTextMode(true);
 		if (CL_MultiviewInsetEnabled()) {
 			if (CL_MultiviewInsetView()) {
 				if (cl_sbar.value) {
@@ -663,6 +672,7 @@ void Draw_Crosshair (void)
 		else {
 			Draw_Character(scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
 		}
+		Draw_SetCrosshairTextMode(false);
 	}
 }
 
@@ -728,7 +738,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
 void Draw_TileClear(int x, int y, int w, int h)
 {
-	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false);
+	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false, false);
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)

@@ -40,17 +40,23 @@ layout(location = 3) in int inFlags;
 out vec2 TextureCoord;
 out vec4 Colour;
 out float AlphaTest;
+#ifdef MIXED_SAMPLING
+flat out int IsNearest;
+#endif
 
 void main()
 {
 	gl_Position = vec4(inPosition, 0, 1);
 	TextureCoord = inTexCoord;
 	Colour = inColour;
-	if ((inFlags & 4) != 0) {
-		AlphaTest = r_alphafont != 0 ? 0 : 1;
+#ifdef MIXED_SAMPLING
+	IsNearest = (inFlags & IMAGEPROG_FLAGS_NEAREST) != 0 ? 1 : 0;
+#endif
+	if ((inFlags & IMAGEPROG_FLAGS_TEXT) != 0) {
+		AlphaTest = r_alphafont == 0 ? 1 : 0;
 	}
 	else {
-		AlphaTest = (inFlags & 2);
+		AlphaTest = (inFlags & IMAGEPROG_FLAGS_ALPHATEST) != 0 ? 1 : 0;
 	}
 }
 #endif

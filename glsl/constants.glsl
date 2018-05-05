@@ -52,3 +52,9 @@
 
 // 8x8 block
 #define HW_LIGHTING_BLOCK_SIZE 4
+
+// HUD rendering
+#define IMAGEPROG_FLAGS_TEXTURE     1    // Texture the image (otherwise colored rectangle)
+#define IMAGEPROG_FLAGS_ALPHATEST   2    // Enable alpha-testing when rendering
+#define IMAGEPROG_FLAGS_TEXT        4    // Use r_alphafont to determine alpha-testing
+#define IMAGEPROG_FLAGS_NEAREST     8    // Simulate GL_NEAREST when sampling texture
