@@ -630,6 +630,7 @@ void GL_GenVertexArray(glm_vao_t* vao, const char* name)
 	qglGenVertexArrays(1, &vao->vao);
 	GL_BindVertexArray(vao);
 	GL_ObjectLabel(GL_VERTEX_ARRAY, vao->vao, -1, name);
+	strlcpy(vao->name, name, sizeof(vao->name));
 	GL_SetElementArrayBuffer(null_buffer_reference);
 }
 

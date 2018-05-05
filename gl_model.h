@@ -164,6 +164,7 @@ extern const buffer_ref null_buffer_reference;
 
 typedef struct glm_vao_s {
 	unsigned int vao;
+	char name[32];
 
 	struct glm_vao_s* next;
 

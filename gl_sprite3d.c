@@ -223,7 +223,10 @@ static void GL_Create3DSpriteVBO(void)
 	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
 		sprite3dVBO = GL_CreateFixedBuffer(GL_ARRAY_BUFFER, "sprite3d-vbo", sizeof(verts), verts, buffertype_use_once);
 	}
+}
 
+static void GL_Create3DSpriteIndexBuffer(void)
+{
 	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
 		static GLuint indexData[INDEXES_MAX_QUADS * 5 + INDEXES_MAX_SPARKS * 10 + INDEXES_MAX_FLASHBLEND * 19];
 		int i, j;
@@ -265,6 +268,9 @@ static void GLM_Create3DSpriteVAO(void)
 	if (!sprite3dVAO.vao) {
 		GL_GenVertexArray(&sprite3dVAO, "3dsprite-vao");
 
+		GL_Create3DSpriteIndexBuffer();
+		GL_BindBuffer(sprite3dIndexes);
+
 		// position
 		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
 		// texture coordinates
@@ -272,14 +278,15 @@ static void GLM_Create3DSpriteVAO(void)
 		// color
 		GL_ConfigureVertexAttribPointer(&sprite3dVAO, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
 
-		GL_BindVertexArray(&sprite3dVAO);
-		GL_BindBuffer(sprite3dIndexes);
+		GL_BindVertexArray(NULL);
 	}
 }
 
 static void GLC_Create3DSpriteVAO(void)
 {
 	GL_Create3DSpriteVBO();
+
+	GL_Create3DSpriteIndexBuffer();
 }
 
 static void GLM_Compile3DSpriteProgram(void)
