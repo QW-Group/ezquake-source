@@ -30,6 +30,8 @@ static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
 static buffer_ref imageIndexBuffer;
 #endif
 
+static texture_ref glc_last_texture_used;
+
 extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 
 // Flags to detect when the user has changed settings
@@ -226,6 +228,8 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	float projectionMatrix[16];
 	byte current_color[4];
 	qbool alpha_test = false;
+	qbool nearest = imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST;
+	int i;
 
 	GL_PushMatrix(GL_MODELVIEW, modelviewMatrix);
 	GL_PushMatrix(GL_PROJECTION, projectionMatrix);
@@ -233,8 +237,14 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	GL_IdentityModelView();
 	GL_IdentityProjectionView();
 
+	if (GL_TextureReferenceIsValid(glc_last_texture_used) && !GL_TextureReferenceEqual(glc_last_texture_used, ref)) {
+		GL_SetTextureFiltering(GL_TEXTURE0, glc_last_texture_used, GL_LINEAR, GL_LINEAR);
+	}
+	glc_last_texture_used = ref;
+
 	GLC_StateBeginImageDraw();
 	GLC_InitTextureUnits1(ref, GL_MODULATE);
+	GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
 	if (imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT) {
 		extern cvar_t gl_alphafont, scr_coloredText;
@@ -251,8 +261,6 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 
 	if (GL_BuffersSupported()) {
 		extern cvar_t gl_vbo_clientmemory;
-
-		GL_BindVertexArray(NULL);
 
 		GLC_ClientActiveTexture(GL_TEXTURE0);
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -276,7 +284,18 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 			glTexCoordPointer(2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
 		}
 
-		GL_DrawArrays(GL_QUADS, start * 4, (end - start + 1) * 4);
+		for (i = start; i < end; ++i) {
+			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
+				GL_DrawArrays(GL_QUADS, start * 4, (i - start + 1) * 4);
+
+				nearest = (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST);
+				start = i;
+
+				GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
+			}
+		}
+
+		GL_DrawArrays(GL_QUADS, start * 4, (i - start + 1) * 4);
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
@@ -300,6 +319,17 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 				glColor4ubv(next->colour);
 			}
 
+			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST)) {
+				GL_End();
+
+				nearest = (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST);
+				start = i;
+
+				GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
+
+				glBegin(GL_QUADS);
+			}
+
 			glTexCoord2f(next->tex[0], next->tex[1]);
 			glVertex2f(next->pos[0], next->pos[1]);
 		}
@@ -313,6 +343,8 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 
 void GLM_PrepareImages(void)
 {
+	GL_TextureReferenceInvalidate(glc_last_texture_used);
+
 	if (GL_UseGLSL()) {
 		GLM_CreateMultiImageProgram();
 
@@ -355,15 +387,40 @@ void GLM_ImageDrawComplete(void)
 			GLM_SamplerClear(1);
 		}
 	}
+	else if (GL_UseImmediateMode()) {
+		if (GL_TextureReferenceIsValid(glc_last_texture_used)) {
+			GL_SetTextureFiltering(GL_TEXTURE0, glc_last_texture_used, GL_LINEAR, GL_LINEAR);
+		}
+	}
 }
 
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair)
 {
+	int flags = IMAGEPROG_FLAGS_TEXTURE;
+
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
 	}
 	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, texnum)) {
 		return;
+	}
+
+	flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
+	if (isCrosshair) {
+		if (!r_smoothcrosshair.integer) {
+			flags |= IMAGEPROG_FLAGS_NEAREST;
+		}
+	}
+	else if (isText) {
+		flags |= IMAGEPROG_FLAGS_TEXT;
+		if (!r_smoothtext.integer) {
+			flags |= IMAGEPROG_FLAGS_NEAREST;
+		}
+	}
+	else {
+		if (!r_smoothimages.integer) {
+			flags |= IMAGEPROG_FLAGS_NEAREST;
+		}
 	}
 
 	if (GL_UseGLSL()) {
@@ -385,24 +442,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
 #else
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
-		int flags = IMAGEPROG_FLAGS_TEXTURE;
-		flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
-		if (isCrosshair) {
-			if (!r_smoothcrosshair.integer) {
-				flags |= IMAGEPROG_FLAGS_NEAREST;
-			}
-		}
-		else if (isText) {
-			flags |= IMAGEPROG_FLAGS_TEXT;
-			if (!r_smoothtext.integer) {
-				flags |= IMAGEPROG_FLAGS_NEAREST;
-			}
-		}
-		else {
-			if (!r_smoothimages.integer) {
-				flags |= IMAGEPROG_FLAGS_NEAREST;
-			}
-		}
 
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
 		img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
@@ -424,9 +463,7 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 
 		GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
 
-		imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
-		imageData.images[imageData.imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
-		imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
+		imageData.images[imageData.imageCount].flags = flags;
 	}
 
 	++imageData.imageCount;

@@ -780,8 +780,7 @@ void R_TranslatePlayerSkin(int playernum)
 
 	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerskins[playernum].base, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
-	GL_TexParameterf(GL_TEXTURE0, playerskins[playernum].base, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	GL_TexParameterf(GL_TEXTURE0, playerskins[playernum].base, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].base, GL_LINEAR, GL_LINEAR);
 	playerskins[playernum].owned[0] = true;
 
 	// TODO: Dead skins
@@ -829,8 +828,7 @@ void R_TranslatePlayerSkin(int playernum)
 
 		GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerskins[playernum].fb, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
-		GL_TexParameterf(GL_TEXTURE0, playerskins[playernum].fb, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		GL_TexParameterf(GL_TEXTURE0, playerskins[playernum].fb, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].fb, GL_LINEAR, GL_LINEAR);
 		playerskins[playernum].owned[1] = true;
 	}
 }

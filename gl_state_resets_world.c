@@ -48,6 +48,8 @@ void GLC_StateBeginDrawFlatModel(void)
 	}
 
 	LEAVE_STATE;
+
+	GL_DebugState();
 }
 
 void GLC_StateEndDrawFlatModel(void)
