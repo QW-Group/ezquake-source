@@ -51,6 +51,11 @@ typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum 
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 
+typedef void (APIENTRY *glSamplerParameterf_t)(GLuint sampler, GLenum pname, GLfloat param);
+typedef void (APIENTRY *glGenSamplers_t)(GLsizei n, GLuint* samplers);
+typedef void (APIENTRY *glDeleteSamplers_t)(GLsizei n, const GLuint* samplers);
+typedef void (APIENTRY *glBindSampler_t)(GLuint unit, GLuint sampler);
+
 static glGetTextureLevelParameterfv_t qglGetTextureLevelParameterfv;
 static glGetTextureLevelParameteriv_t qglGetTextureLevelParameteriv;
 static glGenerateTextureMipmap_t qglGenerateTextureMipmap;
@@ -71,6 +76,11 @@ static glTexSubImage3D_t qglTexSubImage3D;
 static glTexStorage3D_t qglTexStorage3D;
 static glGenerateMipmap_t qglGenerateMipmap;
 
+static glGenSamplers_t qglGenSamplers;
+static glDeleteSamplers_t qglDeleteSamplers;
+static glSamplerParameterf_t qglSamplerParameterf;
+static glBindSampler_t qglBindSampler;
+
 qbool GLM_LoadTextureManagementFunctions(void)
 {
 	qbool all_available = true;
@@ -79,6 +89,11 @@ qbool GLM_LoadTextureManagementFunctions(void)
 	GL_LoadMandatoryFunctionExtension(glTexStorage2D, all_available);
 	GL_LoadMandatoryFunctionExtension(glTexStorage3D, all_available);
 	GL_LoadMandatoryFunctionExtension(glGenerateMipmap, all_available);
+
+	GL_LoadMandatoryFunctionExtension(glGenSamplers, all_available);
+	GL_LoadMandatoryFunctionExtension(glDeleteSamplers, all_available);
+	GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
+	GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
 
 	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
@@ -320,3 +335,30 @@ void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
 	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
 }
 
+// Samplers
+static GLuint nearest_sampler;
+
+void GLM_SamplerSetNearest(GLuint texture_unit_number)
+{
+	if (!nearest_sampler) {
+		qglGenSamplers(1, &nearest_sampler);
+
+		qglSamplerParameterf(nearest_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		qglSamplerParameterf(nearest_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+
+	qglBindSampler(texture_unit_number, nearest_sampler);
+}
+
+void GLM_SamplerClear(GLuint texture_unit_number)
+{
+	qglBindSampler(texture_unit_number, 0);
+}
+
+void GL_DeleteSamplers(void)
+{
+	if (qglDeleteSamplers) {
+		qglDeleteSamplers(1, &nearest_sampler);
+	}
+	nearest_sampler = 0;
+}

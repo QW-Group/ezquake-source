@@ -137,17 +137,11 @@ void GLM_CreateMultiImageProgram(void)
 #else
 	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
 		char included_definitions[512];
-		GL_VFDeclare(hud_draw_image);
 
-		if (program_flags == 0) {
-			// all nearest-sampling
-			strlcpy(included_definitions, "#define NEAREST_SAMPLING", sizeof(included_definitions));
-		}
-		else if (program_flags == GLM_HUDIMAGES_SMOOTHEVERYTHING) {
-			// all linear
-			strlcpy(included_definitions, "#define LINEAR_SAMPLING", sizeof(included_definitions));
-		}
-		else {
+		GL_VFDeclare(hud_draw_image);
+		included_definitions[0] = '\0';
+
+		if (program_flags != 0 && program_flags != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			// depends on flags on individual elements
 			strlcpy(included_definitions, "#define MIXED_SAMPLING", sizeof(included_definitions));
 		}
@@ -214,6 +208,10 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	GL_BindVertexArray(&imageVAO);
 	if (GL_TextureReferenceIsValid(texture)) {
 		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
+		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+			// Mixed, bind a second texture unit for GL_NEAREST
+			GL_EnsureTextureUnitBound(GL_TEXTURE1, texture);
+		}
 	}
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
 	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
@@ -324,6 +322,14 @@ void GLM_PrepareImages(void)
 #else
 			GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 #endif
+			if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
+				// Everything is GL_NEAREST
+				GLM_SamplerSetNearest(0);
+			}
+			else if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+				// Mixed, second texture unit for GL_NEAREST
+				GLM_SamplerSetNearest(1);
+			}
 		}
 	}
 	else if (GL_BuffersSupported()) {
@@ -336,6 +342,18 @@ void GLM_PrepareImages(void)
 	}
 	else {
 
+	}
+}
+
+void GLM_ImageDrawComplete(void)
+{
+	if (GL_UseGLSL()) {
+		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
+			GLM_SamplerClear(0);
+		}
+		else if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+			GLM_SamplerClear(1);
+		}
 	}
 }
 
@@ -369,7 +387,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
 		int flags = IMAGEPROG_FLAGS_TEXTURE;
 		flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
-		flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
 		if (isCrosshair) {
 			if (!r_smoothcrosshair.integer) {
 				flags |= IMAGEPROG_FLAGS_NEAREST;
