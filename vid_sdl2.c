@@ -57,6 +57,9 @@ void Sys_ActiveAppChanged (void);
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
+#define VID_RENDERER_MIN 0
+#define VID_RENDERER_MAX 1
+
 /* FIXME: This should be in a header file and it probably shouldn't be called TP_
  *        since there are a lot of triggers that has nothing to do with teamplay.
  *        Should probably split them
@@ -993,6 +996,11 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 	else {
 		VID_SDL_GL_DisableMSAA();
+	}
+
+	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
+		Con_Printf("Invalid vid_renderer value detected, falling back to classic.\n");
+		Cvar_LatchedSetValue(&vid_renderer, 0);
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
