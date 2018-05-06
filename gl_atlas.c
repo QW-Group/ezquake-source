@@ -205,6 +205,7 @@ void CachePics_AtlasUpload(void)
 void CachePics_Init(void)
 {
 	atlas_dirty = ~0;
+	atlas_texture_width = atlas_texture_height = min(glConfig.gl_max_size_default, MAXIMUM_ATLAS_TEXTURE_WIDTH);
 
 	CachePics_AtlasUpload();
 }
@@ -316,7 +317,6 @@ void CachePics_CreateAtlas(void)
 	memset(wadpics, 0, sizeof(wadpics));
 	atlas_delete_count = 0;
 
-	atlas_texture_width = atlas_texture_height = min(glConfig.gl_max_size_default, MAXIMUM_ATLAS_TEXTURE_WIDTH);
 	atlas_chunk_size = atlas_texture_width >= 4096 ? 64 : atlas_texture_width >= 2048 ? 32 : 16;
 	atlas_block_width = atlas_texture_width / atlas_chunk_size;
 	atlas_block_height = atlas_texture_height / atlas_chunk_size;
