@@ -996,7 +996,6 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx;
-	wchar *wtext;
 	char *text, dlbar[1024];
 
 	if (lines <= 0)
@@ -1033,7 +1032,6 @@ void Con_DrawConsole (int lines) {
 			break;		// past scrollback wrap point
 
 		idx = (row % con_totallines)*con_linewidth;
-		wtext = con.text + idx;
 
 		// copy current line to buffer
 		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1);

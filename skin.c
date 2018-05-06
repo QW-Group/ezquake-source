@@ -651,18 +651,12 @@ void R_TranslatePlayerSkin(int playernum)
 	byte translate[256], *inrow, *original;
 	char s[512];
 	int	top, bottom, i, j, scaled_width, scaled_height, inwidth, inheight, tinwidth, tinheight;
-	GLenum glinternalfmt = GL_RGB8, glinternalfmt_alpha = GL_RGBA8;
 	unsigned translate32[256], *out, frac, fracstep;
 	unsigned pixels[512 * 256];
 	extern byte player_8bit_texels[256 * 256];
 	extern cvar_t gl_scaleModelTextures;
 	player_info_t *player;
 	qbool teammate = false;
-
-	if (gl_gammacorrection.integer) {
-		glinternalfmt = GL_SRGB8;
-		glinternalfmt_alpha = GL_SRGB8_ALPHA8;
-	}
 
 	player = &cl.players[playernum];
 	if (!player->name[0]) {

@@ -1439,7 +1439,6 @@ void R_DrawBrushModel(entity_t *e)
 
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
-	qbool solidTexTurb = (!r_fastturb.integer && GL_WaterAlpha() == 1);
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
