@@ -511,7 +511,7 @@ void Skin_ShowSkins_f(void)
 	}
 }
 
-static texture_ref Skin_ApplyRGBColor(skin_t* skin, byte* original, byte* specific, byte* color, int mode, const char* texture_name)
+static texture_ref Skin_ApplyRGBColor(byte* original, int width, int height, byte* specific, byte* color, int mode, const char* texture_name)
 {
 	int x, y;
 	float fColor[3];
@@ -522,11 +522,11 @@ static texture_ref Skin_ApplyRGBColor(skin_t* skin, byte* original, byte* specif
 	else {
 		VectorSet(fColor, 1, 1, 1);
 	}
-	memcpy(specific, original, skin->width * skin->height * 4);
-	for (x = 0; x < skin->width; ++x) {
-		for (y = 0; y < skin->height; ++y) {
-			byte* src = &original[(x + y * skin->width) * 4];
-			byte* dst = &specific[(x + y * skin->width) * 4];
+	memcpy(specific, original, width * height * 4);
+	for (x = 0; x < width; ++x) {
+		for (y = 0; y < height; ++y) {
+			byte* src = &original[(x + y * width) * 4];
+			byte* dst = &specific[(x + y * width) * 4];
 
 			switch (mode) {
 				case 0:
@@ -559,7 +559,7 @@ static texture_ref Skin_ApplyRGBColor(skin_t* skin, byte* original, byte* specif
 		}
 	}
 
-	return GL_LoadTexture(texture_name, skin->width, skin->height, specific, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+	return GL_LoadTexture(texture_name, width, height, specific, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 }
 
 static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
@@ -597,7 +597,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 		}
 
 		// Modify the original as per mapping to OpenGL functions
-		skin->texnum[i] = Skin_ApplyRGBColor(skin, original, specific, color->color, mode, texture_name);
+		skin->texnum[i] = Skin_ApplyRGBColor(original, skin->width, skin->height, specific, color->color, mode, texture_name);
 	}
 	Q_free(specific);
 }
@@ -617,6 +617,32 @@ static void Skin_RemoveSkinsForPlayer(int playernum)
 	GL_TextureReferenceInvalidate(playerskins[playernum].fb);
 	GL_TextureReferenceInvalidate(playerskins[playernum].dead);
 	memset(playerskins[playernum].owned, 0, sizeof(playerskins[playernum].owned));
+}
+
+static void R_BlendPlayerSkin(skin_t* skin, qbool teammate, int playernum, byte* original, int width, int height, qbool fullbright)
+{
+	cvar_t* color = teammate ? &r_teamskincolor : &r_enemyskincolor;
+	byte* specific = Q_malloc(width * height * 4);
+	texture_ref blended;
+	char texture_name[128];
+
+	snprintf(texture_name, sizeof(texture_name), "$player-skin-%d", playernum);
+	blended = Skin_ApplyRGBColor(original, width, height, specific, color->string[0] ? color->color : NULL, r_skincolormode.integer, texture_name);
+	if (fullbright) {
+		playerskins[playernum].fb = blended;
+		playerskins[playernum].owned[1] = true;
+	}
+	else {
+		playerskins[playernum].base = blended;
+		playerskins[playernum].owned[0] = true;
+
+		if (r_skincolormodedead.integer >= 0 && r_skincolormodedead.integer != r_skincolormode.integer) {
+			strlcat(texture_name, "-dead", sizeof(texture_name));
+			playerskins[playernum].dead = Skin_ApplyRGBColor(original, width, height, specific, color->color, r_skincolormodedead.integer, texture_name);
+			playerskins[playernum].owned[2] = true;
+		}
+	}
+	Q_free(specific);
 }
 
 //Translates a skin texture by the per-player color lookup
@@ -690,23 +716,10 @@ void R_TranslatePlayerSkin(int playernum)
 
 	if ((original = Skin_Cache(player->skin, false)) != NULL) {
 		switch (player->skin->bpp) {
-		case 4: // 32 bit skin
-		{
-			cvar_t* color = teammate ? &r_teamskincolor : &r_enemyskincolor;
-			byte* specific = Q_malloc(player->skin->width * player->skin->height * 4);
-			char texture_name[128];
-
-			snprintf(texture_name, sizeof(texture_name), "$player-skin-%d", playernum);
-			playerskins[playernum].base = Skin_ApplyRGBColor(player->skin, original, specific, color->string[0] ? color->color : NULL, r_skincolormode.integer, texture_name);
-			playerskins[playernum].owned[0] = true;
-			if (r_skincolormodedead.integer >= 0 && r_skincolormodedead.integer != r_skincolormode.integer) {
-				strlcat(texture_name, "-dead", sizeof(texture_name));
-				playerskins[playernum].dead = Skin_ApplyRGBColor(player->skin, original, specific, color->color, r_skincolormodedead.integer, texture_name);
-				playerskins[playernum].owned[2] = true;
-			}
-			Q_free(specific);
+		case 4:
+			// 32 bit skin
+			R_BlendPlayerSkin(player->skin, teammate, playernum, original, player->skin->width, player->skin->height, false);
 			return;
-		}
 
 		case 1:
 			break;
@@ -778,10 +791,9 @@ void R_TranslatePlayerSkin(int playernum)
 		}
 	}
 
-	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerskins[playernum].base, glinternalfmt, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, false);
 	GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 	GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].base, GL_LINEAR, GL_LINEAR);
-	playerskins[playernum].owned[0] = true;
 
 	// TODO: Dead skins
 
@@ -826,10 +838,9 @@ void R_TranslatePlayerSkin(int playernum)
 			}
 		}
 
-		GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &playerskins[playernum].fb, glinternalfmt_alpha, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		R_BlendPlayerSkin(player->skin, teammate, playernum, (byte*)pixels, scaled_width, scaled_height, true);
 		GL_TextureEnvModeForUnit(GL_TEXTURE0, GL_MODULATE);
 		GL_SetTextureFiltering(GL_TEXTURE0, playerskins[playernum].fb, GL_LINEAR, GL_LINEAR);
-		playerskins[playernum].owned[1] = true;
 	}
 }
 
