@@ -493,6 +493,19 @@ static const char* cache_pic_paths[] = {
 	"gfx/finale.lmp"
 };
 
+qbool Draw_IsTiledBackground(const char* path)
+{
+	int i;
+
+	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR; ++i) {
+		if (!strcmp(path, cache_pic_paths[i])) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 mpic_t *Draw_CachePic(cache_pic_id_t id)
 {
 	if (id < 0 || id >= CACHEPIC_NUM_OF_PICS) {

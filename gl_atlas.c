@@ -408,7 +408,7 @@ void CachePics_CreateAtlas(void)
 		cachepic_node_t *cur;
 
 		for (cur = cachepics[i]; cur; cur = cur->next) {
-			if (!Draw_IsConsoleBackground(cur->data.pic)) {
+			if (!Draw_IsConsoleBackground(cur->data.pic) && !Draw_IsTiledBackground(cur->data.name)) {
 				CachePics_InsertBySize(&sized_list, cur);
 
 				AddToDeleteList(cur->data.pic);
