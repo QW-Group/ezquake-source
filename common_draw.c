@@ -806,7 +806,7 @@ char* SCR_GetGameTime(int t)
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
+		strlcpy (str, SecondsToMinutesString((int) fabs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
 
 	return str;
 }
@@ -1461,9 +1461,9 @@ void SCR_HUD_DrawBar(int direction, int value, float max_value, byte *color, int
 
 	if(direction >= 2)
 		// top-down
-		amount = Q_rint(abs((height * value) / max_value));
+		amount = Q_rint(fabsf((height * value) / max_value));
 	else// left-right
-		amount = Q_rint(abs((width * value) / max_value));
+		amount = Q_rint(fabsf((width * value) / max_value));
 
 	if(direction == 0)
 		// left->right
