@@ -588,16 +588,17 @@ void Cam_FinishMove(usercmd_t *cmd)
 	i = end;
 	do {
 		s = &cl.players[i];
-		if (s->name[0] && !s->spectator) {
-			if (cls.mvdplayback && cl.teamfortress) 
+		if (s->name[0] && !s->spectator && (!cls.mvdplayback || cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].messagenum == cl.parsecount)) {
+			if (cls.mvdplayback && cl.teamfortress) {
 				V_TF_ClearGrenadeEffects(); // BorisU
+			}
 			Cam_Lock(i);
 			ideal_track = i;    
 			return;
 		}
 		i = (i + MAX_CLIENTS + inc) % MAX_CLIENTS;
 	} while (i != end);
-	// stay on same guy?	
+	// stay on same guy?
 
 	i = ideal_track;	
 	s = &cl.players[i];
