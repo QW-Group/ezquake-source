@@ -397,6 +397,45 @@ void GLM_ImageDrawComplete(void)
 	}
 }
 
+int Draw_ImagePosition(void)
+{
+	return imageData.imageCount;
+}
+
+void Draw_AdjustImages(int first, int last, float x_offset)
+{
+	int i;
+	float v1[4] = { x_offset, 0, 0, 1 };
+	float v2[4] = { 0, 0, 0, 1 };
+
+	GLM_MultiplyVector(cachedMatrix, v1, v1);
+	GLM_MultiplyVector(cachedMatrix, v2, v2);
+
+	x_offset = v1[0] - v2[0];
+
+	if (GL_UseGLSL()) {
+		for (i = first; i < last; ++i) {
+#ifdef HUD_IMAGE_GEOMETRY_SHADER
+			imageData.images[i].x1 += x_offset;
+			imageData.images[i].x2 += x_offset;
+#else
+			imageData.images[i * 4 + 0].pos[0] += x_offset;
+			imageData.images[i * 4 + 1].pos[0] += x_offset;
+			imageData.images[i * 4 + 2].pos[0] += x_offset;
+			imageData.images[i * 4 + 3].pos[0] += x_offset;
+#endif
+		}
+	}
+	else {
+		for (i = first; i < last; ++i) {
+			imageData.glc_images[i * 4 + 0].pos[0] += x_offset;
+			imageData.glc_images[i * 4 + 1].pos[0] += x_offset;
+			imageData.glc_images[i * 4 + 2].pos[0] += x_offset;
+			imageData.glc_images[i * 4 + 3].pos[0] += x_offset;
+		}
+	}
+}
+
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair)
 {
 	int flags = IMAGEPROG_FLAGS_TEXTURE;
@@ -533,4 +572,11 @@ void GLM_Cache2DMatrix(void)
 	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
 
 	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, cachedMatrix);
+}
+
+void GLM_UndoLastCharacter(void)
+{
+	if (imageData.imageCount) {
+		--imageData.imageCount;
+	}
 }

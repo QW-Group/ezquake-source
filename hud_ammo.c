@@ -186,18 +186,17 @@ void SCR_HUD_DrawAmmo(
 		char buf[8];
 		int  x_, y;
 		float x;
-		int align;
-		float length;
+		text_alignment_t align;
 
-		align = 2;
+		align = text_align_right;
 		switch (tolower(s_align[0])) {
 			case 'l':   // 'l'eft
-				align = 0; break;
+				align = text_align_left; break;
 			case 'c':   // 'c'enter
-				align = 1; break;
+				align = text_align_center; break;
 			default:
 			case 'r':   // 'r'ight
-				align = 2; break;
+				align = text_align_right; break;
 		}
 
 		scale = max(scale, 0.01);
@@ -211,18 +210,13 @@ void SCR_HUD_DrawAmmo(
 		}
 
 		snprintf(buf, sizeof(buf), "%d", value);
-		if (align == 0) {
-			Draw_SString(x, y, buf, scale, proportional);
-		}
-		else {
-			length = Draw_StringLength(buf, -1, scale, proportional);
-			if (align == 1) {
-				Draw_SString(x + (30 * scale - length) / 2, y, buf, scale, proportional);
-			}
-			else {
-				Draw_SString(x + 30 * scale - length, y, buf, scale, proportional);
-			}
-		}
+
+		// convert to nicer numbers
+		buf[0] = buf[0] >= '0' ? 18 + buf[0] - '0' : buf[0];
+		buf[1] = buf[1] >= '0' ? 18 + buf[1] - '0' : buf[1];
+		buf[2] = buf[2] >= '0' ? 18 + buf[2] - '0' : buf[2];
+
+		Draw_SStringAligned(x, y, buf, scale, proportional, align, x + 30 * scale);
 	}
 }
 

@@ -695,9 +695,7 @@ static void SCR_HUD_DrawOwnFrags(hud_t *hud)
 	}
 
 	if (VX_OwnFragTime() < hud_ownfrags_timeout->value) {
-		int actual = Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value, hud_ownfrags_proportional->integer);
-		
-		actual = actual;
+		Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value, hud_ownfrags_proportional->integer);
 	}
 }
 

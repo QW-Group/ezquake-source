@@ -753,6 +753,7 @@ void GL_EmptyImageQueue(void);
 void GLM_PrepareImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Cache2DMatrix(void);
+void GLM_UndoLastCharacter(void);
 
 void GLM_SetIdentityMatrix(float* matrix);
 float* GLM_ModelviewMatrix(void);

@@ -106,6 +106,16 @@ typedef struct clrinfo_s
 	int i;		// Index when this colors starts.
 } clrinfo_t;
 
+typedef enum {
+	text_align_left,
+	text_align_center,
+	text_align_right
+} text_alignment_t;
+
+void Draw_AdjustImages(int first, int last, float x_offset);
+int Draw_ImagePosition(void);
+void Draw_SStringAligned(int x, int y, const char *text, float scale, qbool proportional, text_alignment_t align, float max_width);
+
 void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
 void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
 void Draw_String(int x, int y, const char *str);
