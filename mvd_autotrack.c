@@ -247,6 +247,19 @@ static void MVD_UpdatePlayerValues(void)
 	}
 }
 
+static qbool MVD_LockTeamIgnore(player_info_t* plr)
+{
+	int tracked;
+
+	if (!mvd_autotrack_lockteam.integer || !cl.teamplay) {
+		return false;
+	}
+
+	tracked = CL_MultiviewAutotrackSlot();
+
+	return plr == NULL || (tracked >= 0 && tracked < 31 && strcmp(plr->team, cl.players[tracked].team));
+}
+
 static int MVD_FindId_By_TrackId(int track_id)
 {
 	int i;
@@ -262,31 +275,38 @@ static int MVD_FindId_By_TrackId(int track_id)
 static int MVD_GetBestPlayer(void)
 {
 	int initial_track, initial_id, i, bp_id;
-	float bp_val;
+	float bp_val = -1000;
+	qbool candidate_found = false;
 	int tracked = CL_MultiviewAutotrackSlot();
 
-	if (last_track < 0 || last_track > mvd_cg_info.pcount)
-		initial_track = 0;
-	else
+	initial_track = 0;
+	if (last_track >= 0 && last_track < mvd_cg_info.pcount && mvd_new_info[last_track].p_info) {
 		initial_track = last_track;
+	}
 
 	initial_id = MVD_FindId_By_TrackId(initial_track);
 
-	bp_val = mvd_new_info[initial_id].value;
+	if (!MVD_LockTeamIgnore(mvd_new_info[initial_track].p_info)) {
+		bp_val = mvd_new_info[initial_id].value;
+		candidate_found = true;
+	}
 	bp_id = mvd_new_info[initial_id].id;
-	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ) {
-		if (bp_val < mvd_new_info[i].value) {
-			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[tracked].team))
-				continue;
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
+			continue;
+		}
 
+		if (!candidate_found || bp_val < mvd_new_info[i].value) {
 			bp_val = mvd_new_info[i].value;
-			bp_id 	= mvd_new_info[i].id;
+			bp_id = mvd_new_info[i].id;
+			candidate_found = true;
 		}
 	}
-	return bp_id ;
+	return bp_id;
 }
 
-static int MVD_FindBestPlayer(void) {
+static int MVD_FindBestPlayer(void)
+{
 	MVD_UpdatePlayerValues();
 	return MVD_GetBestPlayer();
 }
@@ -314,14 +334,16 @@ int MVD_GetBetterPlayerSimple(int a, int b)
 	return a;
 }
 
-static int MVD_FindBestPlayerSimple(void) {
+static int MVD_FindBestPlayerSimple(void)
+{
 	int i, b;
 	int tracked = CL_MultiviewAutotrackSlot();
 
 	b = tracked;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
-		if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[tracked].team))
+		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
 			continue;
+		}
 		b = MVD_GetBetterPlayerSimple(b, mvd_new_info[i].id);
 	}
 
@@ -340,7 +362,11 @@ static qbool MVD_TrackedHasNoWeapon(int pov) {
 
 static qbool MVD_SomeoneHasWeapon(void) {
 	int i, stats;
+	int tracked = CL_MultiviewAutotrackSlot();
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
+			continue;
+		}
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
 		if ((stats & IT_ROCKET_LAUNCHER) || (stats & IT_LIGHTNING)) {
 			return true;
@@ -351,22 +377,35 @@ static qbool MVD_SomeoneHasWeapon(void) {
 
 static qbool MVD_TrackedHasNoPowerup(int pov) {
 	int stats = cl.players[pov].stats[STAT_ITEMS];
-	if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return false;
-	else return true;
+	if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) {
+		return false;
+	}
+	else {
+		return true;
+	}
 }
 
 static qbool MVD_SomeoneHasPowerup(void) {
 	int i, stats;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
+			continue;
+		}
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
-		if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return true;
+		if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) {
+			return true;
+		}
 	}
 	return false;
 }
 
 static qbool MVD_SomeoneHasPentWithRL(void) {
 	int i, stats;
+
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
+			continue;
+		}
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
 		if ((stats & IT_ROCKET_LAUNCHER) && (stats & IT_INVULNERABILITY)) {
 			return true;
@@ -391,8 +430,6 @@ static qbool MVD_SwitchMoment(void) {
 		return false;
 	}
 }
-
-
 
 void MVD_AutoTrack(void) {
 	char arg[64];
@@ -459,13 +496,15 @@ void MVD_AutoTrack(void) {
 	}
 	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2 or 3
 	{
-		if (mvd_autotrack.integer == 4) 
+		if (mvd_autotrack.integer == 4) {
 			id = MVD_FindBestPlayerSimple();
-		else
+		}
+		else {
 			id = MVD_FindBestPlayer();
+		}
 
 		if (id != last_track || CL_MultiviewAutotrackSlot() != id) {
-			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
+			snprintf(arg, sizeof (arg), "track \"%s\"\n", cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}
