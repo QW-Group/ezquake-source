@@ -53,7 +53,7 @@ void SCR_DrawHud(void);
 void SCR_DrawClocks(void);
 void R_SetupFrame(void);
 void SCR_Draw_TeamInfo(void);
-int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, const char* order_string);
+void SCR_Draw_ShowNick(void);
 qbool V_PreRenderView(void);
 
 int				glx, gly, glwidth, glheight;
@@ -119,7 +119,7 @@ cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
-static void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
+void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
 {
 	if (!host_initialized) {
 		return; // we in progress of initialization, allow
@@ -132,14 +132,6 @@ static void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 }
-
-cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
-cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR};
-cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1"};
-cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0"};
-cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
-cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
-cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
 
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
@@ -816,106 +808,6 @@ void SCR_DrawConsole (void) {
 	}
 }
 
-/***************************** customizeable shownick *************************/
-
-static ti_player_t shownick;
-
-void SCR_ClearShownick(void)
-{
-	memset(&shownick, 0, sizeof(shownick));
-}
-
-void Parse_Shownick(char *s)
-{
-	int		client, version, arg;
-
-	Cmd_TokenizeString( s );
-
-	arg = 1;
-
-	version  = atoi( Cmd_Argv( arg++ ) );
-
-	switch ( version )
-	{
-		case 1:
-			{
-				client = atoi( Cmd_Argv( arg++ ) );
-
-				if (client < 0 || client >= MAX_CLIENTS)
-				{
-					Com_DPrintf("Parse_Shownick: wrong client %d\n", client);
-					return;
-				}
-
-				shownick.client = client;
-
-				shownick.time   = r_refdef2.time;
-
-				shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
-				shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
-				shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
-				shownick.health = atoi( Cmd_Argv( arg++ ) );
-				shownick.armor  = atoi( Cmd_Argv( arg++ ) );
-				shownick.items  = atoi( Cmd_Argv( arg++ ) );
-				strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
-
-				return;
-			}
-
-		default:
-
-			Com_DPrintf("Parse_Shownick: unsupported version %d\n", version);
-			return;
-	}
-}
-
-static void SCR_Draw_ShowNick(void)
-{
-	qbool	scr_shownick_align_right = false;
-	int		x, y, w, h;
-	int		maxname, maxloc;
-	byte	*col;
-	float	scale = bound(0.1, scr_shownick_scale.value, 10);
-	float   oldMatrix[16];
-
-	// check do we have something do draw
-	if (!shownick.time || shownick.time + bound(0.1, scr_shownick_time.value, 3) < r_refdef2.time)
-		return;
-
-	// loc is unused
-	maxloc = 0;
-
-	// limit name length
-	maxname = 999;
-	maxname = bound(0, maxname, scr_shownick_name_width.integer);
-
-	if (scale != 1) {
-		GL_PushMatrix(GL_PROJECTION, oldMatrix);
-		GL_Scale(GL_PROJECTION, scale, scale, 1);
-	}
-
-	y = vid.height*0.6/scale + scr_shownick_y.value;
-
-	// this does't draw anything, just calculate width
-	w = SCR_Draw_TeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scr_shownick_order.string);
-	h = 1;
-
-	x = (scr_shownick_align_right ? (vid.width/scale - w * FONTWIDTH) - FONTWIDTH : FONTWIDTH);
-	x += scr_shownick_x.value;
-
-	// draw frame
-	col = scr_shownick_frame_color.color;
-
-	Draw_AlphaRectangleRGB(x, y, w * FONTWIDTH, h * FONTWIDTH, 0, true, RGBAVECT_TO_COLOR(col));
-
-	// draw shownick
-	SCR_Draw_TeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, scr_shownick_order.string);
-
-	if (scale != 1) {
-		GL_PopMatrix(GL_PROJECTION, oldMatrix);
-	}
-}
-
 /********************************* TILE CLEAR *********************************/
 
 void SCR_TileClear (void) {
@@ -1456,13 +1348,6 @@ void SCR_Init (void)
 	SCR_RegisterAutoIDCvars();
 
 	Cvar_Register (&scr_coloredfrags);
-	Cvar_Register (&scr_shownick_order);
-	Cvar_Register (&scr_shownick_frame_color);
-	Cvar_Register (&scr_shownick_scale);
-	Cvar_Register (&scr_shownick_y);
-	Cvar_Register (&scr_shownick_x);
-	Cvar_Register (&scr_shownick_name_width);
-	Cvar_Register (&scr_shownick_time);
 
 	Cmd_AddCommand("calc_fov", tmp_calc_fov);
 
