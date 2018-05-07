@@ -382,7 +382,7 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 		for (i = 0; i < s_speex.framesize; i++) {
 			f = start[i] * micamp;
 			start[i] = f;
-			f = fabs (start[i]);
+			f = abs (start[i]);
 			level += f*f;
 		}
 		samps += s_speex.framesize;

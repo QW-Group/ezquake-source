@@ -61,8 +61,8 @@ float VLight_GetLightValue(int index, float apitch, float ayaw)
 	while(yawofs < 0)
 		yawofs += 256;*/
 
-	pitchofs = fmodf(fabsf(pitchofs), 256);
-	yawofs = fmodf(fabsf(yawofs), 256);
+	pitchofs = fmodf(abs(pitchofs), 256);
+	yawofs = fmodf(abs(yawofs), 256);
 
 	retval = vlighttable[(unsigned int)pitchofs][(unsigned int)yawofs];
 

@@ -339,7 +339,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	int health_amount_width = 0;
 
 	health = min (100, health);
-	health_amount_width = Q_rint (abs ((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+	health_amount_width = Q_rint (fabs ((MV_HUD_HEALTH_WIDTH * health) / 100.0));
 
 	if (health > 0) {
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_normal_color.color, 2 * MV_HEALTH_OPACITY));
