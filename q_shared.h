@@ -148,11 +148,17 @@ float	FloatSwapPDP2Lit (float f);
 
 #include <machine/endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
+#ifndef __BIG_ENDIAN__
 #define __BIG_ENDIAN__
+#endif
 #elif BYTE_ORDER == LITTLE_ENDIAN
+#ifndef __LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__
+#endif
 #elif BYTE_ORDER == PDP_ENDIAN
+#ifndef __PDP_ENDIAN__
 #define __PDP_ENDIAN__
+#endif
 #endif
 
 #endif
