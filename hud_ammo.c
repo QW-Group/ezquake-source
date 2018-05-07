@@ -216,7 +216,7 @@ void SCR_HUD_DrawAmmo(
 		buf[1] = buf[1] >= '0' ? 18 + buf[1] - '0' : buf[1];
 		buf[2] = buf[2] >= '0' ? 18 + buf[2] - '0' : buf[2];
 
-		Draw_SStringAligned(x, y, buf, scale, proportional, align, x + 30 * scale);
+		Draw_SStringAligned(x, y, buf, scale, 1.0f, proportional, align, x + 30 * scale);
 	}
 }
 

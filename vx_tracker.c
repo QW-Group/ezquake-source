@@ -79,6 +79,7 @@ static int active_track = 0;
 static int max_active_tracks = 0;
 
 static void VXSCR_DrawTrackerString(void);
+static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t amf_tracker_flags                         = {"r_tracker_flags", "0"};
 cvar_t amf_tracker_frags                         = {"r_tracker_frags", "1"};
@@ -103,7 +104,7 @@ static cvar_t amf_tracker_string_suicides        = {"r_tracker_string_suicides",
 static cvar_t amf_tracker_string_died            = {"r_tracker_string_died",     " (died)"};
 static cvar_t amf_tracker_string_teammate        = {"r_tracker_string_teammate", "teammate"};
 static cvar_t amf_tracker_string_enemy           = {"r_tracker_string_enemy",    "enemy"};
-static cvar_t amf_tracker_name_width             = {"r_tracker_name_width",      "0"};
+static cvar_t amf_tracker_name_width             = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
 static cvar_t amf_tracker_name_remove_prefixes   = {"r_tracker_name_remove_prefixes", ""};
 static cvar_t amf_tracker_own_frag_prefix        = {"r_tracker_own_frag_prefix", "You fragged "};
 static cvar_t amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
@@ -122,6 +123,7 @@ typedef struct
 	char text[MAX_SEGMENTS_PER_LINE][64];
 	byte colors[MAX_SEGMENTS_PER_LINE][4];
 	mpic_t* images[MAX_SEGMENTS_PER_LINE];
+	text_alignment_t alignment[MAX_SEGMENTS_PER_LINE];
 	int segments;
 
 	// Kept this as it's used for positioning...
@@ -219,6 +221,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_name_remove_prefixes);
 	Cvar_Register(&amf_tracker_own_frag_prefix);
 	Cvar_Register(&amf_tracker_positive_enemy_suicide);
+	Cvar_Register(&amf_tracker_proportional);
 }
 
 void VX_TrackerClear(void)
@@ -420,12 +423,8 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 		return;
 	}
 
-	{
-		const char* msg = "TODO";
-
-		if (!VX_TrackerStringPrintSegments(lhs_text, GetWeaponName(weapon), rhs_text, NULL)) {
-			return;
-		}
+	if (!VX_TrackerStringPrintSegments(lhs_text, GetWeaponName(weapon), rhs_text, NULL)) {
+		return;
 	}
 
 	msg = VX_NewTrackerMsg();
@@ -460,8 +459,9 @@ static char *VX_RemovePrefix(int player)
 		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
 			skip = strlen(prefix);
 			// remove spaces from the new start of the name
-			while (name[skip] == ' ')
+			while (name[skip] == ' ') {
 				skip++;
+			}
 			// if it would skip the whole name, just use the whole name
 			if (name[skip] == 0) {
 				skip = 0;
@@ -479,10 +479,7 @@ static char *VX_RemovePrefix(int player)
 
 static char* VX_Name(int player, char* buffer, int max_length)
 {
-	int length;
-
-	length = bound(amf_tracker_name_width.integer, 0, max_length - 1);
-	strlcpy(buffer, VX_RemovePrefix(player), length);
+	strlcpy(buffer, VX_RemovePrefix(player), max_length);
 
 	return buffer;
 }
@@ -1179,7 +1176,7 @@ void VXSCR_DrawTrackerString (void)
 				clr.i = 0;
 
 				if (trackermsg[i].pad && padded_width) {
-					Draw_SColoredAlphaString(x, y, trackermsg[i].text[s], &clr, 1, 0, scale, alpha, proportional);
+					Draw_SColoredStringAligned(x, y, trackermsg[i].text[s], &clr, 1, scale, alpha, proportional, trackermsg[i].alignment[s], x + padded_width);
 					x += padded_width;
 				}
 				else {
@@ -1199,34 +1196,40 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 	int line = 0;
 	int img = 0;
 	int s;
+	int padded_chars = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
 
 	msg->printable_characters = msg->image_characters = 0;
-
 	for (s = 0; s < msg->segments; ++s) {
 		if (msg->images[s]) {
 			msg->image_characters += 2;
+			msg->printable_characters += 2;
 		}
-		else {
-			msg->printable_characters += strlen(msg->text[s]);
+		else  {
+			int length = 0;
+
+			if (msg->pad && padded_chars) {
+				length = padded_chars;
+			}
+			else {
+				length = strlen(msg->text[s]);
+			}
+			msg->printable_characters += length;
 		}
 	}
 }
 
-static void VX_PreProcessMessage3Columns(trackmsg_t* msg)
+static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel)
 {
-	int line = 0;
-	int img = 0;
-	int s;
+	int i;
 
-	msg->printable_characters = msg->image_characters = 0;
+	Cvar_SetIgnoreCallback(var, value);
 
-	for (s = 0; s < msg->segments; ++s) {
-		if (msg->images[s]) {
-			msg->image_characters += 2;
+	for (i = 0; i < max_active_tracks; ++i) {
+		if (trackermsg[i].die < cl.time) {
+			continue;
 		}
-		else {
-			msg->printable_characters += strlen(msg->text[s]);
-		}
+
+		VX_PreProcessMessage(&trackermsg[i]);
 	}
 }
 

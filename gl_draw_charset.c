@@ -397,13 +397,30 @@ float Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color,
 	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, proportional, 0);
 }
 
-void Draw_SStringAligned(int x, int y, const char *text, float scale, qbool proportional, text_alignment_t align, float max_x)
+void Draw_SColoredStringAligned(int x, int y, const char *text, clrinfo_t* color, int color_count, float scale, float alpha, qbool proportional, text_alignment_t align, float max_x)
 {
 	int initial_position, final_position;
 	float width;
 
 	initial_position = Draw_ImagePosition();
-	width = Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, proportional, max_x);
+	width = Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, false, 0, proportional, max_x);
+	final_position = Draw_ImagePosition();
+
+	if (align == text_align_center) {
+		Draw_AdjustImages(initial_position, final_position, (max_x - x - width) / 2);
+	}
+	else if (align == text_align_right) {
+		Draw_AdjustImages(initial_position, final_position, max_x - x - width);
+	}
+}
+
+void Draw_SStringAligned(int x, int y, const char *text, float scale, float alpha, qbool proportional, text_alignment_t align, float max_x)
+{
+	int initial_position, final_position;
+	float width;
+
+	initial_position = Draw_ImagePosition();
+	width = Draw_StringBase(x, y, text, NULL, 0, false, scale, alpha, false, 0, proportional, max_x);
 	final_position = Draw_ImagePosition();
 
 	if (align == text_align_center) {
