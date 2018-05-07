@@ -317,12 +317,13 @@ void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool 
 
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)
 {
-	GL_StateBeginAliasOutlineFrame();
-	glDisableClientState(GL_COLOR_ARRAY);
+	GLC_StateBeginAliasOutlineFrame();
+	glEnableClientState(GL_VERTEX_ARRAY);
 
 	GL_DrawArrays(primitive, 0, verts);
 
-	GL_StateEndAliasOutlineFrame();
+	glDisableClientState(GL_VERTEX_ARRAY);
+	GLC_StateEndAliasOutlineFrame();
 }
 
 static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
@@ -334,7 +335,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 	trivertx_t* verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
-	GL_StateBeginAliasOutlineFrame();
+	GLC_StateBeginAliasOutlineFrame();
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -377,7 +378,7 @@ static void GLC_DrawAliasOutlineFrame(model_t* model, int pose1, int pose2)
 		glEnd();
 	}
 
-	GL_StateEndAliasOutlineFrame();
+	GLC_StateEndAliasOutlineFrame();
 }
 
 static void GLC_SetPowerupShellColor(int layer_no, int effects)

@@ -282,7 +282,7 @@ void GLC_StateEndSimpleItem(void)
 {
 }
 
-void GL_StateBeginAliasOutlineFrame(void)
+void GLC_StateBeginAliasOutlineFrame(void)
 {
 	extern cvar_t gl_outline_width;
 
@@ -308,7 +308,7 @@ void GL_StateBeginAliasOutlineFrame(void)
 	LEAVE_STATE;
 }
 
-void GL_StateEndAliasOutlineFrame(void)
+void GLC_StateEndAliasOutlineFrame(void)
 {
 	// FIXME: Work on getting rid of these
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);

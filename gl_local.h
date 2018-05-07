@@ -942,8 +942,8 @@ typedef struct glm_worldmodel_req_s {
 
 struct custom_model_color_s;
 
-void GL_StateBeginAliasOutlineFrame(void);
-void GL_StateEndAliasOutlineFrame(void);
+void GLC_StateBeginAliasOutlineFrame(void);
+void GLC_StateEndAliasOutlineFrame(void);
 
 void GLM_StateBeginAliasOutlineBatch(void);
 void GLM_StateEndAliasOutlineBatch(void);
