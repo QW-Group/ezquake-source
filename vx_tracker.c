@@ -1202,7 +1202,6 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 	for (s = 0; s < msg->segments; ++s) {
 		if (msg->images[s]) {
 			msg->image_characters += 2;
-			msg->printable_characters += 2;
 		}
 		else  {
 			int length = 0;
@@ -1215,7 +1214,10 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 			}
 			msg->printable_characters += length;
 		}
+		++msg->printable_characters;
 	}
+
+	--msg->printable_characters;
 }
 
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel)
