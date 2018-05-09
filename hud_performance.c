@@ -61,24 +61,25 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 	}
 
 	if (HUD_PrepareDraw(hud, Draw_StringLength(st, -1, hud_fps_scale->value, hud_fps_proportional->integer), 8 * hud_fps_scale->value, &x, &y)) {
-		if ((hud_fps_style->value) == 1) {
-			Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
-		}
-		else if ((hud_fps_style->value) == 2) {
-			// if fps is less than a user-set value, then show it
-			if ((hud_fps_drop->value) >= cls.fps) {
+		switch (hud_fps_style->integer) {
+			case 1:
+				Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);;
+				break;
+			case 2:
+				// if fps is less than a user-set value, then show it
+				if ((hud_fps_drop->value) >= cls.fps) {
+					Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
+				}
+				break;
+			case 3:
+				// if fps is less than a user-set value, then show it
+				if ((hud_fps_drop->value) >= cls.fps) {
+					Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
+				}
+				break;
+			default:
 				Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
-			}
-		}
-		else if ((hud_fps_style->value) == 3) {
-			// if fps is less than a user-set value, then show it
-			if ((hud_fps_drop->value) >= cls.fps) {
-				Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
-			}
-		}
-		else {
-			// hud_fps_style is anything other than 1,2,3
-			Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
+				break;
 		}
 	}
 }
@@ -212,7 +213,7 @@ void Performance_HudInit(void)
 		"Shows your current framerate in frames per second (fps)."
 		"This can also show the minimum framerate that occured in the last measured period.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-		"1", "top", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
 		"show_min", "0",
 		"style", "0",
 		"title", "1",
