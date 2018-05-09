@@ -844,3 +844,16 @@ const char* GetWeaponImageName(int num)
 
 	return NULL;
 }
+
+const char* GetWeaponTextName(int num)
+{
+	if (wclasses[num].shortname && wclasses[num].shortname[0]) {
+		return wclasses[num].shortname;
+	}
+
+	if (wclasses[num].name && wclasses[num].name[0]) {
+		return wclasses[num].name;
+	}
+
+	return NULL;
+}

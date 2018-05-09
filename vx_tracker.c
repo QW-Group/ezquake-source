@@ -40,7 +40,15 @@ typedef struct weapon_image_s {
 	int count;
 } weapon_image_t;
 
+typedef struct weapon_label_s {
+	char label[64];
+	int starts[4];
+	byte colors[4][4];
+	int count;
+} weapon_label_t;
+
 static weapon_image_t weapon_images[MAX_WEAPON_CLASSES];
+static weapon_label_t weapon_labels[MAX_WEAPON_CLASSES];
 
 // hard-coded values, remember tracker color codes were 0-9, not 0-F
 const byte color960[4] = { 255, 170, 0, 255 };      // 'you died', suicides etc
@@ -53,6 +61,7 @@ const byte color380[4] = {  77, 227, 0, 255 };      // teamkills
 static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color, const char* center_text, const byte* center_color, const char* rhs_text, const byte* rhs_color, const char* extra_text, const byte* extra_color);
 #define VX_TrackerAddSegmented(lhs_text, lhs_color, center_text, center_color, rhs_text, rhs_color) VX_TrackerAddSegmented4(lhs_text, lhs_color, center_text, center_color, rhs_text, rhs_color, "", NULL)
 static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_color, int weapon, const char* rhs_text, const byte* rhs_color);
+static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const byte* weapon_color, const char* rhs_text);
 
 //STREAKS
 typedef struct {
@@ -437,6 +446,34 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	VX_PreProcessMessage(msg);
 }
 
+static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const byte* weapon_color, const char* rhs_text)
+{
+	trackmsg_t* msg;
+	int i;
+
+	if ((!lhs_text && !rhs_text) || (!lhs_text[0] && !rhs_text[0]) || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+
+	if (!VX_TrackerStringPrintSegments(lhs_text, GetWeaponName(weapon), rhs_text, NULL)) {
+		return;
+	}
+
+	msg = VX_NewTrackerMsg();
+	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
+	VX_TrackerAddTextSegment(msg, lhs_text, color_white);
+	for (i = 0; i < weapon_labels[weapon].count; ++i) {
+		if (weapon_labels[weapon].colors[i][3]) {
+			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i]);
+		}
+		else {
+			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color);
+		}
+	}
+	VX_TrackerAddTextSegment(msg, rhs_text, color_white);
+	VX_PreProcessMessage(msg);
+}
+
 static void VX_TrackerLinkStrings(void)
 {
 	// TODO
@@ -662,7 +699,7 @@ void VX_TrackerDeath(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", VX_Name(player), SuiColor(player), GetWeaponName(weapon), amf_tracker_string_died.string);
-			VX_TrackerAddSegmented(player_name, color_white, GetWeaponName(weapon), SuicideColor(player), amf_tracker_string_died.string, color_white);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_died.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -701,7 +738,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", VX_Name(player), SuiColor(player), GetWeaponName(weapon), amf_tracker_string_suicides.string);
-			VX_TrackerAddSegmented(player_name, color_white, GetWeaponName(weapon), SuicideColor(player), amf_tracker_string_suicides.string, color_white);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_suicides.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -744,7 +781,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 			VX_TrackerAddWeaponImageSplit(killer_name, XvsYFullColor(player, killer), weapon, player_name, XvsYFullColor(killer, player));
 		}
 		else {
-			VX_TrackerAddSegmented(killer_name, color_white, GetWeaponName(weapon), XvsYFullColor(player, killer), player_name, color_white);
+			VX_TrackerAddWeaponTextSplit(killer_name, weapon, XvsYFullColor(player, killer), player_name);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -804,12 +841,8 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 			VX_TrackerAddWeaponImageSplit(player_name, OddFragFullColor(player), weapon, amf_tracker_string_enemy.string, EnemyFullColor());
 		}
 		else {
-			char image_name[MAX_IMAGENAME];
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), OddFragColor(player), GetWeaponName(weapon), amf_tracker_string_enemy.string);
-
-			strlcpy(image_name, GetWeaponName(weapon), sizeof(image_name));
-
-			VX_TrackerAddSegmented(player_name, color_white, image_name, OddFragFullColor(player), amf_tracker_string_enemy.string, color_white);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, OddFragFullColor(player), amf_tracker_string_enemy.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -853,7 +886,7 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(killer), TKColor(player), GetWeaponName(weapon), VX_Name(player));
-			VX_TrackerAddSegmented(killer_name, color_white, GetWeaponName(weapon), color, player_name, color);
+			VX_TrackerAddWeaponTextSplit(killer_name, weapon, color, player_name);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -903,7 +936,7 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), TKColor(player), GetWeaponName(weapon), amf_tracker_string_teammate.string);
-			VX_TrackerAddSegmented(player_name, color_white, GetWeaponName(weapon), TeamKillColor(player), amf_tracker_string_teammate.string, color_white);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, TeamKillColor(player), amf_tracker_string_teammate.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -930,7 +963,7 @@ void VX_TrackerOddTeamkilled(int player, int weapon)
 			VX_TrackerAddWeaponImageSplit(amf_tracker_string_teammate.string, TeamKillColor(player), weapon, player_name, TeamKillColor(player));
 		}
 		else {
-			VX_TrackerAddSegmented(amf_tracker_string_teammate.string, color_white, GetWeaponName(weapon), TeamKillColor(player), player_name, color_white);
+			VX_TrackerAddWeaponTextSplit(amf_tracker_string_teammate.string, weapon, TeamKillColor(player), player_name);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -1241,10 +1274,12 @@ void VX_TrackerInit(void)
 	char fullpath[MAX_PATH];
 
 	memset(weapon_images, 0, sizeof(weapon_images));
+	memset(weapon_labels, 0, sizeof(weapon_labels));
 
 	// Pre-cache weapon-class images
 	for (i = 0; i < MAX_WEAPON_CLASSES; ++i) {
 		const char* image = GetWeaponImageName(i);
+		const char* text = GetWeaponTextName(i);
 
 		if (image && image[0]) {
 			const char* start = image;
@@ -1289,6 +1324,72 @@ void VX_TrackerInit(void)
 				}
 
 				l++; // Increment count of any chars in string untill end or new line.
+			}
+		}
+
+		if (text && text[0]) {
+			int j, pos = 0, count = 0;
+			int len;
+
+			strlcpy(weapon_labels[i].label, text, sizeof(weapon_labels[i].label));
+
+			len = strlen(weapon_labels[i].label);
+			for (j = 0; j < len; ++j) {
+				if (text[j] == '&' && text[j + 1] == 'c' && text[j + 2] && text[j + 3] && text[j + 4]) {
+					weapon_labels[i].label[j] = '\0';
+
+					if (count) {
+						++weapon_labels[i].count;
+						if (weapon_labels[i].count >= sizeof(weapon_labels[i].starts) / sizeof(weapon_labels[i].starts[0])) {
+							break;
+						}
+					}
+
+					weapon_labels[i].colors[weapon_labels[i].count][0] = HexToInt(text[j + 2]) * 16;
+					weapon_labels[i].colors[weapon_labels[i].count][1] = HexToInt(text[j + 3]) * 16;
+					weapon_labels[i].colors[weapon_labels[i].count][2] = HexToInt(text[j + 4]) * 16;
+					weapon_labels[i].colors[weapon_labels[i].count][3] = 255;
+					count = 0;
+					j += 4;
+				}
+				else if (text[j] == '&' && text[j + 1] == 'r') {
+					weapon_labels[i].label[pos++] = '\0';
+
+					if (count) {
+						++weapon_labels[i].count;
+						if (weapon_labels[i].count >= sizeof(weapon_labels[i].starts) / sizeof(weapon_labels[i].starts[0])) {
+							break;
+						}
+					}
+
+					memset(weapon_labels[i].colors[0], 0, sizeof(weapon_labels[i].colors[0]));
+					count = 0;
+					j += 1;
+				}
+				else if (text[j] == ' ') {
+					weapon_labels[i].label[pos++] = '\0';
+
+					if (count) {
+						++weapon_labels[i].count;
+						if (weapon_labels[i].count >= sizeof(weapon_labels[i].starts) / sizeof(weapon_labels[i].starts[0])) {
+							break;
+						}
+					}
+
+					memset(weapon_labels[i].colors[0], 0, sizeof(weapon_labels[i].colors[0]));
+					count = 0;
+				}
+				else {
+					if (!count) {
+						weapon_labels[i].starts[weapon_labels[i].count] = pos;
+					}
+					weapon_labels[i].label[pos++] = text[j];
+					++count;
+				}
+			}
+
+			if (!weapon_labels[i].count && count) {
+				weapon_labels[i].count = 1;
 			}
 		}
 	}

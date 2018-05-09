@@ -39,6 +39,7 @@ void VX_TrackerFlagCapture(int count);
 
 char* GetWeaponName(int num);
 const char* GetWeaponImageName(int num);
+const char* GetWeaponTextName(int num);
 void VX_TrackerThink(void);
 void VX_TrackerInit(void);
 void VX_TrackerClear(void);
