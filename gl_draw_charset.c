@@ -668,18 +668,13 @@ int Draw_CharacterFit(const char* text, float width, float scale, qbool proporti
 	return fit;
 }
 
-void Draw_LoadFont_f(void)
-{
-	if (Cmd_Argc() > 1) {
-		FontCreate(0, Cmd_Argv(1));
-	}
-}
-
 // Called during initialisation, before GL_Texture_Init
 void Draw_Charset_Init(void)
 {
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
-	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
+#ifdef EZ_FREETYPE_SUPPORT
+	FontInitialise();
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register(&gl_consolefont);

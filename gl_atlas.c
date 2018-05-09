@@ -364,7 +364,9 @@ void CachePics_CreateAtlas(void)
 
 	for (i = 0; i < MAX_CHARSETS; ++i) {
 		extern charset_t char_textures[MAX_CHARSETS];
+#ifdef EZ_FREETYPE_SUPPORT
 		extern charset_t proportional_fonts[MAX_CHARSETS];
+#endif
 		charset_t* charset;
 		int j;
 
@@ -379,6 +381,7 @@ void CachePics_CreateAtlas(void)
 			}
 		}
 
+#ifdef EZ_FREETYPE_SUPPORT
 		charset = &proportional_fonts[i];
 		if (GL_TextureReferenceIsValid(charset->master)) {
 			for (j = 0; j < 256; ++j) {
@@ -389,6 +392,7 @@ void CachePics_CreateAtlas(void)
 				}
 			}
 		}
+#endif
 	}
 
 	// Copy crosshairs

@@ -1,14 +1,15 @@
 
 // fonts.c
 #ifdef EZ_FREETYPE_SUPPORT
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#endif
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
 #include "fonts.h"
 
+#ifdef EZ_FREETYPE_SUPPORT
 GLuint GL_TextureNameFromReference(texture_ref ref);
 
 typedef struct glyphinfo_s {
@@ -277,14 +278,6 @@ void FontCreate(int grouping, const char* path)
 		charset->glyphs[ch].th = charset->glyphs[ch].tl + 0.5f * base_font_height / texture_height;
 		charset->glyphs[ch].texnum = charset->master;
 
-		if (ch == '\'') {
-			Con_Printf("> Offsets: %f %f\n", glyphs[ch].offsets[0] * 8, glyphs[ch].offsets[1] * 8);
-			Con_Printf("> Advance: %f %f\n", glyphs[ch].advance[0] * 8, glyphs[ch].advance[1] * 8);
-			Con_Printf("> Sizes: %f %f\n", glyphs[ch].sizes[0] * 8.0f / (base_font_width / 2), glyphs[ch].sizes[1] * 8.0f / (base_font_width / 2));
-			Con_Printf("> DrawWidth: %f\n", GLM_Draw_CharacterBase(0, 0, ch, 1, false, color_white, false, false, true));
-			Con_Printf("base_font_width: %d\n", base_font_width);
-		}
-
 		GL_TexSubImage2D(
 			GL_TEXTURE0, charset->master, 0,
 			original_left + xbase,
@@ -297,6 +290,27 @@ void FontCreate(int grouping, const char* path)
 	Q_free(full_buffer);
 
 	CachePics_MarkAtlasDirty();
+}
+
+float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
+{
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+		return 8 * glyphs[ch].advance[0] * scale;
+	}
+	else {
+		return 8 * scale;
+	}
+}
+
+float FontCharacterWidth(char ch_, qbool proportional)
+{
+	unsigned char ch = (unsigned char)ch_;
+
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+		return 8 * glyphs[ch].advance[0];
+	}
+
+	return 8;
 }
 
 qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float scale, qbool proportional)
@@ -321,29 +335,30 @@ qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float
 	return true;
 }
 
-/*
-void FontAdvanceCharCoordsWide(int* x, int* y, wchar ch, qbool bigchar, float scale, int char_gap)
+// Used for allocating space - if we just measure the string then other hud elements
+//   might move around as content changes, which is probably not what is wanted
+int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proportional)
 {
-	if (bigchar) {
-		*x += 64 * scale + char_gap;
+	if (!proportional || !GL_TextureReferenceIsValid(proportional_fonts[0].master)) {
+		return max_length * 8 * scale;
 	}
-	else if (ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x += 8 * (glyphs[ch].advance[0] - glyphs[ch].offsets[0]) * scale) + char_gap;
-	}
-	else {
-		*x += 8 * scale + char_gap;
-	}
-}*/
 
-float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
+	return ceil((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale);
+}
+
+void Draw_LoadFont_f(void)
 {
-	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return 8 * glyphs[ch].advance[0] * scale;
-	}
-	else {
-		return 8 * scale;
+	if (Cmd_Argc() > 1) {
+		FontCreate(0, Cmd_Argv(1));
 	}
 }
+
+void FontInitialise(void)
+{
+	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
+}
+
+#endif // EZ_FREETYPE_SUPPORT
 
 qbool FontAlterCharCoords(float* x, float* y, char ch_, qbool bigchar, float scale, qbool proportional)
 {
@@ -357,43 +372,19 @@ qbool FontAlterCharCoords(float* x, float* y, char ch_, qbool bigchar, float sca
 
 	// Space.
 	if (ch == 32) {
+#ifdef EZ_FREETYPE_SUPPORT
 		*x += (proportional ? FontCharacterWidthWide(ch, scale, proportional) : 8 * scale);
+#else
+		*x += 8 * scale;
+#endif
 		return false;
 	}
 
+#ifdef EZ_FREETYPE_SUPPORT
 	if (proportional && !bigchar && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
+#endif
 
 	return true;
 }
-
-float FontCharacterWidth(char ch_, qbool proportional)
-{
-	unsigned char ch = (unsigned char)ch_;
-
-	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return 8 * glyphs[ch].advance[0];
-	}
-	else {
-		return 8;
-	}
-}
-
-// Used for allocating space - if we just measure the string then other hud elements
-//   might move around as content changes, which is probably not what is wanted
-int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proportional)
-{
-	if (!proportional || !GL_TextureReferenceIsValid(proportional_fonts[0].master)) {
-		return max_length * 8 * scale;
-	}
-
-	return ceil((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale);
-}
-
-void FontInitialise(void)
-{
-	
-}
-
-#endif // EZ_FREETYPE_SUPPORT

@@ -32,6 +32,7 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 	charset_t* texture = &char_textures[0];
 	mpic_t* pic;
 
+#ifdef EZ_FREETYPE_SUPPORT
 	if (proportional) {
 		extern charset_t proportional_fonts[MAX_CHARSETS];
 
@@ -42,6 +43,9 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 			proportional = false;
 		}
 	}
+#else
+	proportional = false;
+#endif
 
 	if (!proportional) {
 		int slot = 0;
