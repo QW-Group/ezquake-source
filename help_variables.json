@@ -3463,15 +3463,6 @@
       "desc": "Adjusts speed of rain.",
       "type": "float"
     },
-    "gl_ztrick": {
-      "group-id": "31",
-      "desc": "This variables toggles the use of a trick to prevent the clearning of the \nz-buffer between frames. When this variable is set to \"1\", the game will not \nclear the z-buffer between frames. This will result in increased performance \nbut might cause problems for some display hardware.",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "Do not use the z-buffer trick." },
-        { "name": "true", "description": "Use the z-buffer trick." }
-      ]
-    },
     "help_files_dircolor": {
       "group-id": "25",
       "desc": "The RGB color of directories in the help browser.",
