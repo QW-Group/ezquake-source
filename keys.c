@@ -1548,7 +1548,7 @@ void Key_Message (int key, wchar unichar) {
 //Single ascii characters return themselves, while the K_* names are matched up.
 #define UNKNOWN_S "UNKNOWN"
 
-int Key_CharacterToQuakeCode(char ch);
+byte Key_CharacterToQuakeCode(char ch);
 
 int Key_StringToKeynum (const char *str)
 {
@@ -2265,6 +2265,11 @@ void Key_Event (int key, qbool down)
 			return;
 	}
 
+	// Caps lock shouldn't trigger bind in chat/console
+	if (key == K_CAPSLOCK && processTextInput) {
+		return;
+	}
+
 	lastKeyGeneratedCharacter = false;
 	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
 	if (unichar < 32 || unichar > 127)
@@ -2347,7 +2352,7 @@ char* escape_regex(char* string)
 	char *out = "";
 
 	len = strlen(string);
-	out = (char*) Q_malloc(len * 2 * sizeof(char));
+	out = (char*) Q_malloc((len * 2 + 1) * sizeof(char));
 
 	for(i = 0, j = 0; i < len; i++)
 	{

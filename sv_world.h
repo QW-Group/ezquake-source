@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: world.h 636 2007-07-20 05:07:57Z disconn3ct $
 */
 // world.h
 #ifndef __WORLD_H__
@@ -25,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MOVE_NORMAL	0
 #define	MOVE_NOMONSTERS	1
 #define	MOVE_MISSILE	2
+// { sv_antilag related
+#define MOVE_LAGGED		64	//trace touches current last-known-state, instead of actual ents (just affects players for now)
+// }
 
 typedef struct areanode_s
 {
@@ -42,7 +44,6 @@ typedef struct areanode_s
 #define	AREA_NODES	32
 
 extern	areanode_t	sv_areanodes[AREA_NODES];
-
 
 void SV_ClearWorld (void);
 // called after the world model has been loaded, before linking any entities
@@ -78,5 +79,7 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 // passedict is explicitly excluded from clipping checks (normally NULL)
 
 int SV_AreaEdicts (vec3_t mins, vec3_t maxs, edict_t **edicts, int max_edicts, int area);
+
+void SV_AntilagReset (edict_t *ent);
 
 #endif /* !__WORLD_H__ */

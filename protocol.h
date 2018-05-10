@@ -24,8 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //=========================================
 
 // fte protocol extensions.
-#define PROTOCOL_VERSION_FTE	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24)) //fte extensions.
-#define PROTOCOL_VERSION_FTE2	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('2' << 24))	//fte extensions.
+#define PROTOCOL_VERSION_FTE    (('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24)) //fte extensions.
+#define PROTOCOL_VERSION_FTE2   (('F'<<0) + ('T'<<8) + ('E'<<16) + ('2' << 24)) //fte extensions.
+#define PROTOCOL_VERSION_MVD1   (('M'<<0) + ('V'<<8) + ('D'<<16) + ('1' << 24)) //mvdsv extensions
 
 #ifdef PROTOCOL_VERSION_FTE 
 
@@ -48,11 +49,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef PROTOCOL_VERSION_FTE2
 
 #ifdef WITH_SPEEX
+#include <SDL_version.h>
+
+#ifdef USE_SDL_VOICE
+#undef USE_SDL_VOICE
+#endif
+
+#if SDL_VERSION_ATLEAST(2,0,5)
 #define FTE_PEXT2_VOICECHAT			0x00000002
 #endif
+#endif // WITH_SPEEX
 
 #endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+
+#define MVD_PEXT1_FLOATCOORDS       0x00000001 // FTE_PEXT_FLOATCOORDS but for entity/player coords only
+#define MVD_PEXT1_HIGHLAGTELEPORT   0x00000002 // Adjust movement direction for frames following teleport
+
+#endif
 
 //=========================================
 
@@ -399,8 +414,9 @@ typedef struct entity_state_s {
 	byte	trans;
 } entity_state_t;
 
-#define	MAX_MVD_PACKET_ENTITIES	300		
-#define	MAX_PACKET_ENTITIES	64
+#define	MAX_PACKET_ENTITIES	64          // doesn't include nails
+#define MAX_PEXT256_PACKET_ENTITIES 256 // up to 256 ents, look FTE_PEXT_256PACKETENTITIES
+#define	MAX_MVD_PACKET_ENTITIES	300	    // !!! MUST not be less than any of above values!!!
 
 typedef struct packet_entities_s {
 	int		num_entities;

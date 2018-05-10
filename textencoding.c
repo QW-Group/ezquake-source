@@ -105,7 +105,7 @@ static int fteEncoder(char* out, wchar in, int maxCharacters) {
 
 static int TextEncodingMethod(void)
 {
-	return bound(0, cl_textEncoding.value, sizeof(encodingFunctions) / sizeof(encodingFunctions[0]));
+	return bound(0, cl_textEncoding.value, sizeof(encodingFunctions) / sizeof(encodingFunctions[0]) - 1);
 }
 
 int TextEncodingEncode(char* out, wchar input, int maxBytes)

@@ -61,6 +61,8 @@ cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};
 
 int loc_loaded = 0;
 
+char *CL_DemoDirectory(void);
+
 static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	byte *in, *out, c, d, *disallowed;
 	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
@@ -1029,6 +1031,14 @@ char *MT_TempDirectory(void) {
 
 	if (!dir[0])
 		snprintf(dir, sizeof(dir), "%s/temp", com_homedir);
+	return dir;
+}
+
+char *MT_TempDemoDirectory(void) {
+	static char dir[MAX_OSPATH * 2] = {0};
+
+	if (!dir[0])
+		snprintf(dir, sizeof(dir), "%s/temp", CL_DemoDirectory());
 	return dir;
 }
 

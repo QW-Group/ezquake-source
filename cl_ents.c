@@ -28,8 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
 
-#define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
-
 extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
 extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
@@ -178,26 +176,26 @@ void CL_ClearScene (void) {
 void CL_AddEntity (entity_t *ent) {
 	visentlist_t *vislist;
 
-	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1))
-	{
+	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1)) {
 		vislist = &cl_visents;
 	}
-	else if (ent->model->type == mod_sprite)
-	{
+	else if (ent->renderfx & RF_NORMALENT) {
+		vislist = &cl_visents;
+	}
+	else if (ent->model->type == mod_sprite) {
 		vislist = &cl_alphaents;
 	}
-	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL)
-	{
+	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL) {
 		vislist = &cl_firstpassents;
 		ent->renderfx |= RF_NOSHADOW;
 	}
-	else
-	{
+	else {
 		vislist = &cl_visents;
 	}
 
-	if (vislist->count < vislist->max)
+	if (vislist->count < vislist->max) {
 		vislist->list[vislist->count++] = *ent;
+	}
 }
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
@@ -446,9 +444,8 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 #endif
 
 	to->flags = bits;
-
 	if (bits & U_MODEL)
-		to->modelindex = MSG_ReadByte ();
+		to->modelindex = MSG_ReadByte();
 
 	if (bits & U_FRAME)
 		to->frame = MSG_ReadByte ();
@@ -462,20 +459,38 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	if (bits & U_EFFECTS)
 		to->effects = MSG_ReadByte();
 
-	if (bits & U_ORIGIN1)
-		to->origin[0] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN1) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[0] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[0] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE1)
 		to->angles[0] = MSG_ReadAngle();
 
-	if (bits & U_ORIGIN2)
-		to->origin[1] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN2) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[1] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[1] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE2)
 		to->angles[1] = MSG_ReadAngle();
 
-	if (bits & U_ORIGIN3)
-		to->origin[2] = MSG_ReadCoord ();
+	if (bits & U_ORIGIN3) {
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			to->origin[2] = MSG_ReadFloatCoord();
+		}
+		else {
+			to->origin[2] = MSG_ReadCoord();
+		}
+	}
 
 	if (bits & U_ANGLE3)
 		to->angles[2] = MSG_ReadAngle();
@@ -486,21 +501,25 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 
 #ifdef PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_TRANS
-	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS) {
 		to->trans = MSG_ReadByte();
+	}
 #endif
 
 #ifdef FTE_PEXT_ENTITYDBL
-	if (morebits & U_FTE_ENTITYDBL)
+	if (morebits & U_FTE_ENTITYDBL) {
 		to->number += 512;
+	}
 #endif
 #ifdef FTE_PEXT_ENTITYDBL2
-	if (morebits & U_FTE_ENTITYDBL2)
+	if (morebits & U_FTE_ENTITYDBL2) {
 		to->number += 1024;
+	}
 #endif
 #ifdef FTE_PEXT_MODELDBL
-	if (morebits & U_FTE_MODELDBL)
+	if (morebits & U_FTE_MODELDBL) {
 		to->modelindex += 256;
+	}
 #endif
 #endif
 }
@@ -812,7 +831,23 @@ static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, ent
 	{
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
 	}
+}
 
+static qbool CL_SetAlphaByDistance(entity_t* ent)
+{
+	vec3_t diff;
+	float distance;
+
+	VectorSubtract(ent->origin, cl.simorg, diff);
+	distance = VectorLength(diff);
+
+	// If too close to player, just hide entirely
+	if (distance < KTX_RACING_PLAYER_MIN_DISTANCE)
+		return false;
+
+	ent->alpha = min(distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
+	ent->renderfx |= RF_NORMALENT;
+	return true;
 }
 
 // TODO: OMG SPLIT THIS UP!
@@ -1067,6 +1102,10 @@ void CL_LinkPacketEntities(void)
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
 
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && cl.race_pacemaker_ent == state->number && !CL_SetAlphaByDistance(&ent)) {
+			continue;
+		}
+
 		CL_AddEntity (&ent);
 	}
 }
@@ -1297,8 +1336,9 @@ void CL_ParsePlayerinfo (void)
 
 		for (i = 0; i < 3; i++) 
 		{
-			if (flags & (DF_ORIGIN << i))
-				state->origin[i] = MSG_ReadCoord ();
+			if (flags & (DF_ORIGIN << i)) {
+				state->origin[i] = MSG_ReadCoord();
+			}
 		}
 
 		for (i = 0; i < 3; i++) 
@@ -1335,10 +1375,16 @@ void CL_ParsePlayerinfo (void)
 		flags = state->flags = MSG_ReadShort ();
 
 		state->messagenum = cl.parsecount;
-		state->origin[0] = MSG_ReadCoord ();
-		state->origin[1] = MSG_ReadCoord ();
-		state->origin[2] = MSG_ReadCoord ();
-
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+			state->origin[0] = MSG_ReadFloatCoord();
+			state->origin[1] = MSG_ReadFloatCoord();
+			state->origin[2] = MSG_ReadFloatCoord();
+		}
+		else {
+			state->origin[0] = MSG_ReadCoord();
+			state->origin[1] = MSG_ReadCoord();
+			state->origin[2] = MSG_ReadCoord();
+		}
 		state->frame = MSG_ReadByte ();
 
 		// the other player's last move was likely some time before the packet was sent out,
@@ -1376,15 +1422,23 @@ void CL_ParsePlayerinfo (void)
 			else
 				state->velocity[i] = 0;
 		}
-		if (flags & PF_MODEL)
-			state->modelindex = MSG_ReadByte ();
-		else
+		if (flags & PF_MODEL) {
+			state->modelindex = MSG_ReadByte();
+		}
+		else {
 			state->modelindex = cl_modelindices[mi_player];
+		}
 
-		if (flags & PF_SKINNUM)
-			state->skinnum = MSG_ReadByte ();
-		else
+		if (flags & PF_SKINNUM) {
+			state->skinnum = MSG_ReadByte();
+			if (state->skinnum & (1<<7) && (flags & PF_MODEL)) {
+				state->modelindex += 256;
+				state->skinnum -= (1<<7);
+			}
+		}
+		else {
 			state->skinnum = 0;
+		}
 
 		if (flags & PF_EFFECTS)
 			state->effects = MSG_ReadByte ();
@@ -1468,9 +1522,16 @@ guess_pm_type:
 			//   in protocol 27 - we always write out in new format
 			MSG_WriteByte(&cls.demomessage, num);
 			MSG_WriteShort(&cls.demomessage, flags);
-			MSG_WriteCoord(&cls.demomessage, state->origin[0]);
-			MSG_WriteCoord(&cls.demomessage, state->origin[1]);
-			MSG_WriteCoord(&cls.demomessage, state->origin[2]);
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[0]);
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[1]);
+				MSG_WriteLongCoord(&cls.demomessage, state->origin[2]);
+			}
+			else {
+				MSG_WriteCoord(&cls.demomessage, state->origin[0]);
+				MSG_WriteCoord(&cls.demomessage, state->origin[1]);
+				MSG_WriteCoord(&cls.demomessage, state->origin[2]);
+			}
 			MSG_WriteByte(&cls.demomessage, state->frame);
 			if (flags & PF_MSEC)
 				MSG_WriteByte(&cls.demomessage, msec);
@@ -1597,6 +1658,10 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 	newent.effects = ent->effects; // Electro - added for shells
+
+	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
+		return false;
+	}
 
 	CL_AddEntity (&newent);
 	return true;
@@ -1748,6 +1813,7 @@ void CL_LinkPlayers (void)
 				&& cls.mvdplayback) // For non-mvd, let the server decide 
 		{
 			ent.model = cl.vw_model_precache[0];
+			ent.renderfx |= RF_PLAYERMODEL;
 		}
 
 		ent.skinnum = state->skinnum;
@@ -1810,6 +1876,11 @@ void CL_LinkPlayers (void)
 			VectorCopy (cl.simorg, ent.origin);
 		}
 
+		// Set alpha after origin determined
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&ent)) {
+			continue;
+		}
+
 		VectorCopy (ent.origin, cent->lerp_origin);
 
 		// VULT MOTION TRAILS
@@ -1853,6 +1924,9 @@ void CL_LinkPlayers (void)
 				{
 					ent.model = cl.vw_model_precache[0];
 					ent.renderfx |= RF_PLAYERMODEL;
+					if (Cam_TrackNum() >= 0 && cl.racing) {
+						CL_SetAlphaByDistance(&ent);
+					}
 					CL_AddEntity (&ent);
 				}
 				else 
@@ -1860,11 +1934,13 @@ void CL_LinkPlayers (void)
 					// server said don't add vwep player model
 				}
 			}
-			else
-				CL_AddEntity (&ent);
+			else {
+				CL_AddEntity(&ent);
+			}
 		}
-		else
-			CL_AddEntity (&ent);
+		else {
+			CL_AddEntity(&ent);
+		}
 	}
 }
 
@@ -2009,6 +2085,54 @@ void CL_SetSolidPlayers (int playernum)
 	}
 }
 
+static float VectorDistance(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return VectorLength(diff);
+}
+
+static int AlphaEntityComparer(const void* lhs_, const void* rhs_)
+{
+	const entity_t* lhs = (entity_t*)lhs_;
+	const entity_t* rhs = (entity_t*)rhs_;
+
+	float alpha_lhs = lhs->alpha == 0 ? 0 : 1 - lhs->alpha;
+	float alpha_rhs = rhs->alpha == 0 ? 0 : 1 - rhs->alpha;
+
+	float distance_lhs;
+	float distance_rhs;
+
+	// Try not to bother with distance calculation
+	if (alpha_lhs == alpha_rhs && alpha_lhs == 0) {
+		return 0;
+	}
+	if (alpha_lhs == 0) {
+		return -1;
+	}
+	if (alpha_rhs == 0) {
+		return 1;
+	}
+
+	// Furthest first
+	distance_lhs = VectorDistance(cl.simorg, lhs->origin);
+	distance_rhs = VectorDistance(cl.simorg, rhs->origin);
+	if (distance_lhs > distance_rhs) {
+		return -1;
+	}
+	else if (distance_lhs == distance_rhs) {
+		return 0;
+	}
+	return 1;
+}
+
+static void CL_SortEntities(void)
+{
+	if (Cam_TrackNum() >= 0 && cl.racing) {
+		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), AlphaEntityComparer);
+	}
+}
+
 // Builds the visedicts array for cl.time
 // Made up of: clients, packet_entities, nails, and tents
 void CL_EmitEntities (void) 
@@ -2024,16 +2148,18 @@ void CL_EmitEntities (void)
 
 	CL_ClearScene ();
 	
-	if (cls.nqdemoplayback)
-		NQD_LinkEntities ();
-	else 
-	{
+	if (cls.nqdemoplayback) {
+		NQD_LinkEntities();
+	}
+	else {
 		CL_LinkPlayers();
 		CL_LinkPacketEntities();
 		CL_LinkProjectiles();
 	}
 
 	CL_UpdateTEnts();
+
+	CL_SortEntities();
 }
 
 int	mvd_fixangle;
@@ -2156,7 +2282,7 @@ void MVD_Interpolate(void) {
 	frame_t	*frame, *oldframe;
 	player_state_t *state, *oldstate, *self, *oldself;
 	struct predicted_player *pplayer;
-	static float old;
+	static double old;
 
 	self = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum];
 	oldself = &cl.frames[(cls.netchan.outgoing_sequence - 1) & UPDATE_MASK].playerstate[cl.playernum];

@@ -40,9 +40,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _MAX_FNAME 1024
 #define _MAX_EXT 64
 #define _MAX_DIR 1024
+
+typedef void *DL_t;
+#define DLEXT "so"
+#else
+typedef HMODULE DL_t;
+#define DLEXT "dll"
 #endif
 
-
+DL_t Sys_DLOpen(const char *path);
+qbool Sys_DLClose(DL_t dl);
+void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
@@ -130,6 +138,7 @@ typedef struct timerresolution_session_s {
 } timerresolution_session_t;
 
 #ifdef _WIN32
+
 // for initialization of the session structure
 void Sys_TimerResolution_InitSession(timerresolution_session_t * s);
 
@@ -144,9 +153,15 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 
 // Cancel deadkey combination for keyboards where console toggle is also deadkey
 void Sys_CancelDeadKey (void);
-#else
+
+void Sys_CheckQWProtocolHandler(void);
+void Sys_RegisterQWURLProtocol_f(void);
+
+#else // NOT _WIN32 below
 
 // not implemented on other platforms
+#define Sys_CheckQWProtocolHandler(x)
+#define Sys_RegisterQWURLProtocol_f(x)
 #define Sys_TimerResolution_InitSession(x)
 #define Sys_TimerResolution_RequestMinimum(x)
 #define Sys_TimerResolution_Clear(x)

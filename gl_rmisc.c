@@ -84,7 +84,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	unsigned pixels[512 * 256];
 
 	player_info_t *player;
-	extern byte player_8bit_texels[320 * 200];
+	extern byte player_8bit_texels[256 * 256];
 	extern cvar_t gl_scaleModelTextures;
 	extern int gl_max_size_default;
 

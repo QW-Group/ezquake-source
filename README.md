@@ -57,10 +57,123 @@ If you want to make a clean installation of ezQuake you can do this by following
 3. Create a subdirectory called *id1*
 4. Copy *pak0.pak* and *pak1.pak* into this subdirectory
 
+## Compiling
+
+### Compiling a Windows binary
+
+#### Using Ubuntu Bash
+
+You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
+
+To enable Bash for Windows, press the `Start` button and type `Turn Windows f` and select `Turn Windows features on or off`. Scroll down to `Windows Subsystem for Linux (Beta)` and enable it.
+
+Now press WINDOWS+I, go to `Update & security` and then to the `For developers` tab. Enable `Developer mode`.
+
+Now press the `Start` button again and enter `bash`. Click it and install Bash.
+
+Enter the following command to install all required prerequisites to build ezQuake:
+
+```
+sudo apt-get install -y git mingw-w64 build-essential
+```
+
+Now clone the ezQuake source code:
+
+```
+git clone https://github.com/ezQuake/ezquake-source.git ezquake
+```
+
+Now build the ezQuake executable:
+
+```
+EZ_CONFIG_FILE=.config_windows make
+```
+
+Copy the compiled binary to your Quake folder, the binary is called `ezquake.exe`.
+
+#### Using a Linux system
+
+Make sure you have mingw32 toolchain installed. On Arch Linux it's `mingw-w64` (select complete group).
+
+Build an executable using the following command:
+
+```
+EZ_CONFIG_FILE=.config_windows make
+```
+
+You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
+
+### Compiling a Linux binary
+
+_These instructions were tested on Ubuntu_
+
+Make sure you have the dependencies installed:
+
+- For *Ubuntu 15.10-16.04*
+```
+sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng12-dev libjpeg-dev libspeex-dev libspeexdsp-dev
+```
+- For *Ubuntu 16.10+*
+```
+sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
+```
+
+Clone the git repository:
+```
+git clone https://github.com/ezQuake/ezquake-source.git
+```
+
+Switch to `ezquake-source` path:
+```
+ cd ~/ezquake-source/
+```
+Run the compilation (replace 5 with the number of cpu cores you have +1):
+```
+make -j5
+```
+You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
+
+Copy the compiled binary to your Quake folder, on 64bit linux the binary will be called `ezquake-linux-x86_64`.
+
+### Compiling an OS X binary
+
+_These instructions were tested on Mac OS X 10.10._
+
+Get [Homebrew](http://brew.sh)
+
+Run exactly as it says on the front page:
+
+```
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+Make sure you run the `brew doctor` as instructed before doing anything else.
+
+Then run:
+
+```
+brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp
+```
+
+When it's done, just run `make` and it should compile without errors.
+
+
+#### Creating an app bundle
+
+Call from main ezquake-source directory, e.g. you probably do something like this:
+
+```
+make
+sh misc/install/create_osx_bundle.sh
+```
+
+Current directory should have an `ezQuake.app` folder which is the app.
+
+There will also be an `ezquake.zip` which basically just zips up the .app.
+
 ## Nightly builds
 
 Nightly builds for Windows can be found [here][nightly]
-
 
  [nQuake]: http://nquake.com/
  [webchat]: http://webchat.quakenet.org/?channels=#ezquake

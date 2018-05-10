@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: server.h 783 2008-06-26 23:15:19Z qqshka $
+
 */
 
 // server.h
@@ -22,29 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __SERVER_H__
 
 #include "progs.h"
+#ifdef USE_PR2
+#include "pr2_vm.h"
+#include "pr2.h"
+#include "g_public.h"
+#endif
 #include "qtv.h"
-
-// { !!! FIXME: MOVE ME TO SYS.H !!!
-
-#ifdef _WIN32
-
-typedef HMODULE DL_t;
-
-#define DLEXT "dll"
-
-#else
-
-typedef void *DL_t;
-
-#define DLEXT "so"
-
-#endif /* _WIN32 */
-
-DL_t Sys_DLOpen (const char *path);
-qbool Sys_DLClose( DL_t dl);
-void *Sys_DLProc (DL_t dl, const char *name);
-
-// }
 
 #define CHAT_ICON_EXPERIMENTAL 1
 
@@ -81,21 +64,23 @@ typedef struct
 
 	double		time;
 	double		old_time;			// bumped by SV_Physics
+	double      old_bot_time;       // bumped by SV_RunBots
 
 	double		physicstime;		// last time physics was run
 
 	int			lastcheck;			// used by PF_checkclient
 	double		lastchecktime;			// for monster ai
 
-	byte		paused;				// are we paused?
+	qbool		paused;				// are we paused?
 	double		pausedsince;		// Sys_DoubleTime() when pause started
 
 	qbool		loadgame;			// handle connections specially
 
-	//check player/eyes models for hacks
+									//check player/eyes models for hacks
 	unsigned	model_player_checksum;
+	unsigned	model_newplayer_checksum;
 	unsigned	eyes_player_checksum;
-	
+
 	char		mapname[MAP_NAME_LEN];		// map name
 	char		modelname[MAX_QPATH];		// maps/<name>.bsp, for model_precache[0]
 	unsigned	map_checksum;
@@ -107,15 +92,17 @@ typedef struct
 	char		*lightstyles[MAX_LIGHTSTYLES];
 	cmodel_t	*models[MAX_MODELS];
 
-	int		num_edicts;			// increases towards MAX_EDICTS
-	edict_t		*edicts;			// can NOT be array indexed, because
-							// edict_t is variable sized, but can
-							// be used to reference the world ent
-	sv_edict_t	sv_edicts[MAX_EDICTS]; // part of the edict_t
+	int         num_edicts;         // increases towards MAX_EDICTS
+	int         num_baseline_edicts;// number of entities that have baselines
+	edict_t     *edicts;            // can NOT be array indexed, because
+									// edict_t is variable sized, but can
+									// be used to reference the world ent
+	sv_edict_t  sv_edicts[MAX_EDICTS]; // part of the edict_t
+	int         max_edicts;         // might not MAX_EDICTS if mod allocates memory
 
 	byte		*pvs, *phs;			// fully expanded and decompressed
 
-	// added to every client's unreliable buffer each frame, then cleared
+									// added to every client's unreliable buffer each frame, then cleared
 	sizebuf_t	datagram;
 	byte		datagram_buf[MAX_DATAGRAM];
 
@@ -131,24 +118,35 @@ typedef struct
 	// includes the entity baselines, the static entities, etc
 	// large levels will have >MAX_DATAGRAM sized signons, so 
 	// multiple signon messages are kept
-	sizebuf_t	signon;
-	unsigned int	num_signon_buffers;
-	int		signon_buffer_size[MAX_SIGNON_BUFFERS];
-	byte		signon_buffers[MAX_SIGNON_BUFFERS][MAX_DATAGRAM];
+	sizebuf_t      signon;
+	unsigned int   num_signon_buffers;
+	int            signon_buffer_size[MAX_SIGNON_BUFFERS];
+	byte           signon_buffers[MAX_SIGNON_BUFFERS][MAX_DATAGRAM];
 
-	qbool		mvdrecording;
+	qbool		   mvdrecording;
+
+	entity_state_t static_entities[512];
+	int            static_entity_count;
 } server_t;
 
 #define	NUM_SPAWN_PARMS 16
+
+// { sv_antilag related
+typedef struct
+{
+	qbool present;
+	vec3_t laggedpos;
+} laggedentinfo_t;
+// }
 
 typedef enum
 {
 	cs_free,		// can be reused for a new connection
 	cs_zombie,		// client has been disconnected, but don't reuse
-				// connection for a couple seconds
-	cs_preconnected,	// has been assigned, but login/realip not settled yet
-	cs_connected,		// has been assigned to a client_t, but not in game yet
-	cs_spawned		// client is fully in game
+					// connection for a couple seconds
+					cs_preconnected,	// has been assigned, but login/realip not settled yet
+					cs_connected,		// has been assigned to a client_t, but not in game yet
+					cs_spawned		// client is fully in game
 } sv_client_state_t;		// FIXME
 
 typedef struct
@@ -158,13 +156,28 @@ typedef struct
 	// reply
 	double			senttime;
 	float			ping_time;
+
+	// { sv_antilag
+	double				sv_time;
+	// }
+
 	packet_entities_t	entities;
 } client_frame_t;
 
-#define MAX_BACK_BUFFERS	128
-#define MAX_STUFFTEXT		256
-#define	CLIENT_LOGIN_LEN	16
-#define	CLIENT_NAME_LEN		32
+typedef struct
+{
+	double			localtime;
+	vec3_t			origin;
+} antilag_position_t;
+
+#define MAX_ANTILAG_POSITIONS      128
+#define MAX_BACK_BUFFERS           128
+#define MAX_STUFFTEXT              256
+#define	CLIENT_LOGIN_LEN            16
+#define	CLIENT_NAME_LEN             32
+#define LOGIN_CHALLENGE_LENGTH     128
+#define LOGIN_MIN_RETRY_TIME         5    // 1 login attempt per x seconds
+
 typedef struct client_s
 {
 	sv_client_state_t	state;
@@ -174,7 +187,7 @@ typedef struct client_s
 	int				vip;
 
 	qbool			sendinfo;			// at end of frame, send info to all
-							// this prevents malicious multiple broadcasts
+										// this prevents malicious multiple broadcasts
 	float			lastnametime;			// time of last name change
 	int				lastnamecount;			// time of last name change
 	unsigned		checksum;			// checksum for calcs
@@ -185,6 +198,9 @@ typedef struct client_s
 	ctxinfo_t		_userinfo_ctx_;			// infostring
 	ctxinfo_t		_userinfoshort_ctx_;	// infostring
 
+	antilag_position_t	antilag_positions[MAX_ANTILAG_POSITIONS];
+	int				antilag_position_next;
+
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
 	qbool			jump_held;
@@ -194,18 +210,17 @@ typedef struct client_s
 
 	edict_t			*edict;				// EDICT_NUM(clientnum+1)
 #ifdef USE_PR2
-	int		isBot;
+	int				isBot;
 	usercmd_t		botcmd;				// bot movment
-	char			*name;				// in PR2 points to ent->v.netname
-#else
-	char			name[CLIENT_NAME_LEN];		// for printing to other people
 #endif
+	char			name[CLIENT_NAME_LEN];		// for printing to other people
+
 	char			team[CLIENT_NAME_LEN];
-							// extracted from userinfo
+	// extracted from userinfo
 	int				messagelevel;			// for filtering printed messages
 
-	// the datagram is written to after every frame, but only cleared
-	// when it is sent out to the client.  overflow is tolerated.
+											// the datagram is written to after every frame, but only cleared
+											// when it is sent out to the client.  overflow is tolerated.
 	sizebuf_t		datagram;
 	byte			datagram_buf[MAX_DATAGRAM];
 
@@ -220,12 +235,18 @@ typedef struct client_s
 	double			connection_started;		// or time of disconnect for zombies
 	qbool			send_message;			// set on frames a datagram arived on
 
-// spawn parms are carried from level to level
+											// { sv_antilag related
+	laggedentinfo_t	laggedents[MAX_CLIENTS];
+	unsigned int	laggedents_count;
+	float			laggedents_frac;
+	// }
+
+	// spawn parms are carried from level to level
 	float			spawn_parms[NUM_SPAWN_PARMS];
 
-// client known data for deltas	
+	// client known data for deltas	
 	int				old_frags;
-	
+
 	int				stats[MAX_CL_STATS];
 
 	double			lastservertimeupdate;		// last realtime we sent STAT_TIME to the client
@@ -233,7 +254,6 @@ typedef struct client_s
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
 
 	vfsfile_t		*download;			// file being downloaded
-
 #ifdef PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	int				download_chunks_perframe;
@@ -241,17 +261,17 @@ typedef struct client_s
 #endif
 	int				downloadsize;			// total bytes
 	int				downloadcount;			// bytes sent
-// demo download list for internal cmd dl function
-//Added by VVD {
+											// demo download list for internal cmd dl function
+											//Added by VVD {
 	int				demonum[MAX_ARGS];
 	qbool			demolist;
-// } Added by VVD
+	// } Added by VVD
 
 	int				spec_track;			// entnum of player tracking
 
 	double			whensaid[10];			// JACK: For floodprots
- 	int				whensaidhead;			// Head value for floodprots
- 	double			lockedtill;
+	int				whensaidhead;			// Head value for floodprots
+	double			lockedtill;
 
 	FILE			*upload;
 	char			uploadfn[MAX_QPATH];
@@ -259,36 +279,58 @@ typedef struct client_s
 	qbool			remote_snap;
 
 	char			login[CLIENT_LOGIN_LEN];
+	char            challenge[LOGIN_CHALLENGE_LENGTH];
 	int				logged;
+	double          login_request_time;
 
 	int				spawncount;			// for tracking map changes during downloading
 
-//bliP: additional ->
+										//bliP: additional ->
 	int				file_percent;
 	qbool			special;
 	int				logincount;
 	float			lasttoptime;			// time of last topcolor change
 	int				lasttopcount;			// count of last topcolor change
-	int				lastconnect;
 	int				spec_print;
 	double			cuff_time;
-//bliP: 24/9 anti speed ->
+	//bliP: 24/9 anti speed ->
 	int				msecs;
 	double			last_check;
-//<-
-//<-
+	//<-
+	//<-
 	float			lastuserinfotime;		// time of last userinfo change
 	int				lastuserinfocount;		// count of last userinfo change
 
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int	fteprotocolextensions;
-#endif
+#endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 	unsigned int	fteprotocolextensions2;
+#endif // PROTOCOL_VERSION_FTE2
+
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int    mvdprotocolextensions1;
 #endif
 
-//===== NETWORK ============
+#ifdef FTE_PEXT2_VOICECHAT
+	unsigned int voice_read;	/*place in ring*/
+	unsigned char voice_mute[MAX_CLIENTS/8];
+	qbool voice_active;
+	enum
+	{
+		/*note - when recording an mvd, only 'all' will be received by non-spectating viewers. all other chat will only be heard when spectating the receiver(or sender) of said chat*/
+
+		/*should we add one to respond to the last speaker? or should that be an automagic +voip_reply instead?*/
+		VT_TEAM,
+		VT_ALL,
+		VT_NONMUTED,	/*cheap, but allows custom private channels with no external pesters*/
+		VT_PLAYERSLOT0
+		/*player0+...*/
+	} voice_target;
+#endif
+
+	//===== NETWORK ============
 	qbool			process_pext;		// true if we wait for reply from client on "cmd pext" command.
 	int				chokecount;
 	int				delta_sequence;			// -1 = no compression
@@ -300,6 +342,12 @@ typedef struct client_s
 	double			delay;
 	double			disable_updates_stop;		//Vladis
 	packet_t		*packets, *last_packet;
+
+	// lagged-teleport extension
+	qbool           lastteleport_teleport;    // true if teleport, otherwise it was spawn
+	int             lastteleport_outgoingseq; // outgoing sequence# when the player teleported (0 if no action)
+	int             lastteleport_incomingseq; // incoming sequence# when the player teleported
+	float           lastteleport_teleportyaw; // new yaw angle, post-teleport
 } client_t;
 
 // a client can leave the server in one of four ways:
@@ -323,7 +371,6 @@ typedef struct
 
 	qbool			fixangle;
 
-	float			cmdtime;
 	float			sec;
 
 } demo_client_t;
@@ -333,7 +380,7 @@ typedef struct
 	demo_client_t	clients[MAX_CLIENTS];
 	double			time;
 
-// { reset each time frame wroten with SV_MVDWritePackets()
+	// { reset each time frame wroten with SV_MVDWritePackets()
 	sizebuf_t		_buf_;
 	// !!! OUCH OUCH OUCH, 64 frames, so it about 2mb !!!
 	// here data with mvd headers, so it up to 4 mvd msg with maximum size, however basically here alot of small msgs,
@@ -344,7 +391,7 @@ typedef struct
 	int				lasttype;
 	int				lastsize;
 	int				lastsize_offset; // this is tricky
-// }
+									 // }
 
 } demo_frame_t;
 
@@ -363,6 +410,8 @@ typedef struct mvdpendingdest_s
 
 	int insize;
 	int outsize;
+
+	qbool			must_be_qizmo_tcp_connect; // HACK, this stream should not be allowed but just checked ONLY AND ONLY for qizmo tcp connection
 
 	double			io_time; // when last IO occur on socket, so we can timeout this dest
 	netadr_t		na;
@@ -392,7 +441,7 @@ typedef struct mvddest_s
 
 	unsigned int totalsize;
 
-// { used by QTV
+	// { used by QTV
 	double			io_time; // when last IO occur on socket, so we can timeout this dest
 	int				id; // dest id, used by QTV only
 	netadr_t		na;
@@ -401,8 +450,12 @@ typedef struct mvddest_s
 	int				inbuffersize;
 
 	char			qtvname[64];
+
 	qtvuser_t		*qtvuserlist;
-// }
+
+	char            qtvaddress[128];
+	int             qtvstreamid;
+	// }
 
 	struct mvddest_s *nextdest;
 } mvddest_t;
@@ -415,7 +468,7 @@ typedef struct
 	double			time;
 	double			pingtime;
 
-	// SOmething like time of last mvd message, so we can guess delta milliseconds for next message.
+	// Something like time of last mvd message, so we can guess delta milliseconds for next message.
 	// you better not relay on this variable...
 	double			prevtime;
 
@@ -431,11 +484,9 @@ typedef struct
 	demo_frame_t	frames[UPDATE_BACKUP]; // here we store all previous frames
 	demo_client_t	clients[MAX_CLIENTS]; // we store here what we wrote last time so we can delta
 
-	int				forceFrame;
-
-	// =====================================
+										  // =====================================
 	char			mem_set_point; // fields below, like ->dest and ->pendingdest must not be memset to 0
-	// =====================================
+								   // =====================================
 
 	struct mvddest_s		*dest;
 	struct mvdpendingdest_s *pendingdest;
@@ -476,44 +527,53 @@ typedef struct
 } challenge_t;
 
 // TCPCONNECT -->
-typedef struct svtcpstream_s {
-	int socketnum;
-	int inlen;
-	qbool waitingforprotocolconfirmation;
-	char inbuffer[1500];
-	float timeouttime;
-	netadr_t remoteaddr;
-	struct svtcpstream_s *next;
+typedef struct svtcpstream_s
+{
+	int                     socketnum;                         // socket
+	qbool                   waitingforprotocolconfirmation;    // wait for "qizmo\n", first 6 bytes before confirming that is tcpconnection
+	int                     inlen;                             // how much bytes we have in inbuffer
+	char                    inbuffer[1500];                    // recv buffer
+	int                     outlen;                            // how much bytes we have in outbuffer
+	char                    outbuffer[1500 * 5];               // send buffer
+	qbool                   drop;                              // do we need drop that connection ASAP
+	float                   timeouttime;                       // I/O timeout
+	netadr_t                remoteaddr;                        // peer remoter addr
+	struct svtcpstream_s    *next;                             // next tcpconnection in list
 } svtcpstream_t;
 // <-- TCPCONNECT
 
 typedef struct
 {
 	int				spawncount;		// number of servers spawned since start,
-						// used to check late spawns
+									// used to check late spawns
 	int				lastuserid;		// userid of last spawned client
-	socket_t socketip;
 
-// TCPCONNECT -->
-	int sockettcp;
-	svtcpstream_t *tcpstreams;
-// <-- TCPCONNECT
+	socket_t		socketip;		// main server UDP socket.
+
+									// TCPCONNECT -->
+	int				sockettcp;		// server TCP socket, used for QTV/TCPCONNECT.
+	svtcpstream_t *	tcpstreams;
+	// <-- TCPCONNECT
 
 	client_t		clients[MAX_CLIENTS];
 	int				serverflags;		// episode completion information
-	
+
 	double			last_heartbeat;
 	int				heartbeat_sequence;
 	svstats_t		stats;
 
-	char				info[MAX_SERVERINFO_STRING];
+	char			info[MAX_SERVERINFO_STRING];
 
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int fteprotocolextensions;
-#endif
+#endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 	unsigned int fteprotocolextensions2;
+#endif // PROTOCOL_VERSION_FTE2
+
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int mvdprotocolextension1;
 #endif
 
 	// log messages are used so that fraglog processes can get stats
@@ -569,6 +629,10 @@ typedef struct
 #define	FL_PARTIALGROUND		1024	// not all corners are valid
 #define	FL_WATERJUMP			2048	// player jumping out of water
 
+// { sv_antilag
+#define FL_LAGGEDMOVE			(1<<16)
+// }
+
 #define	SPAWNFLAG_NOT_EASY		256
 #define	SPAWNFLAG_NOT_MEDIUM		512
 #define	SPAWNFLAG_NOT_HARD		1024
@@ -582,22 +646,10 @@ typedef struct
 #define	MULTICAST_PHS_R			4
 #define	MULTICAST_PVS_R			5
 
-// maps in localinfo supported only by ktpro & ktx mods {
-
-#define MAX_LOCALINFOS 10000
-
-#define LOCALINFO_MAPS_LIST_START		1000
-#define LOCALINFO_MAPS_LIST_END			4999
-
-#define LOCALINFO_MAPS_KTPRO_VERSION	1.63
-#define LOCALINFO_MAPS_KTPRO_VERSION_S	"1.63"
-#define LOCALINFO_MAPS_KTPRO_BUILD		42795
-#define SERVERINFO_KTPRO_VERSION		"kmod"
-#define SERVERINFO_KTPRO_BUILD			"build"
-
-// all versions of ktx with such serverinfo's keys support maps in localinfo
-#define SERVERINFO_KTX_VERSION			"ktxver"
-#define SERVERINFO_KTX_BUILD			"ktxbuild"
+#define MAX_LOCALINFOS			10000
+// maps in localinfo {
+#define LOCALINFO_MAPS_LIST_START	1000
+#define LOCALINFO_MAPS_LIST_END		4999
 // }
 
 #define MAX_REDIRECTMESSAGES	128
@@ -611,15 +663,14 @@ typedef struct
 // do not join server as spectator if server full and sv_forcespec_onfull == 1
 #define SVF_NO_SPEC_ONFULL		(1<<1)
 
-
 // } server flags
 
 //============================================================================
 
 extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
-
-extern	cvar_t	sv_mintic, sv_maxtic, sv_ticrate;
 extern	cvar_t	sv_maxspeed;
+extern	cvar_t	sv_mintic, sv_maxtic, sv_maxfps;
+extern	cvar_t	sv_antilag, sv_antilag_no_pred, sv_antilag_projectiles;
 
 extern	int current_skill;
 
@@ -638,24 +689,18 @@ extern	cvar_t	sv_specprint;	//bliP: spectator print
 extern	server_static_t	svs;	// persistant server info
 extern	server_t	sv;	// local server
 extern	demo_t		demo;	// server demo struct
-//extern	entity_state_t	cl_state_entities[MAX_CLIENTS][UPDATE_BACKUP][MAX_PACKET_ENTITIES]; // client entities
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
 
 #define	MODEL_NAME_LEN	5
 extern	char		localmodels[MAX_MODELS][MODEL_NAME_LEN]; // inline model names for precache
-//extern	char		localinfo[MAX_LOCALINFO_STRING+1];
+															 //extern	char		localinfo[MAX_LOCALINFO_STRING+1];
 extern  ctxinfo_t _localinfo_;
-
-extern	int		host_hunklevel;
 
 extern	qbool		sv_error;
 
-extern qbool		server_cfg_done;
-extern char		master_rcon_password[128];
-
-extern qbool is_ktpro;
+extern char			master_rcon_password[128];
 
 //===========================================================
 
@@ -693,7 +738,6 @@ typedef struct
 } penfilter_t;
 //<-
 
-//void SV_Shutdown (void);
 void SV_Frame (double time);
 void SV_FinalMessage (const char *message);
 void SV_DropClient (client_t *drop);
@@ -752,22 +796,18 @@ qbool GameStarted(void);
 void SV_Script_f (void);
 int SV_GenerateUserID (void);
 
-char *Q_normalizetext (char *name); //bliP: red to white text
-unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
-unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
-
 //
 // sv_init.c
 //
 int SV_ModelIndex (char *name);
 void SV_FlushSignon (void);
-void SV_SpawnServer (char *server, qbool devmap);
+void SV_SpawnServer (char *server, qbool devmap, char* entityfile);
 
 
 //
 // sv_phys.c
 //
-void SV_ProgStartFrame (void);
+void SV_ProgStartFrame (qbool isBotFrame);
 void SV_Physics (void);
 void SV_CheckVelocity (edict_t *ent);
 void SV_AddGravity (edict_t *ent, float scale);
@@ -777,6 +817,9 @@ void SV_RunNewmis (void);
 void SV_RunNQNewmis (void);
 void SV_Impact (edict_t *e1, edict_t *e2);
 void SV_SetMoveVars(void);
+#ifdef USE_PR2
+void SV_RunBots(void);
+#endif
 
 //
 // sv_send.c
@@ -784,12 +827,14 @@ void SV_SetMoveVars(void);
 typedef enum {RD_NONE, RD_CLIENT, RD_PACKET, RD_MOD} redirect_t;
 void SV_BeginRedirect (redirect_t rd);
 void SV_EndRedirect (void);
+qbool SV_AddToRedirect(char *msg);
 
 void SV_Multicast (vec3_t origin, int to);
+void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key);
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
-					   int replacement_te, int replacement_count);
+	int replacement_te, int replacement_count);
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
-    float attenuation);
+	float attenuation);
 void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...);
 void SV_ClientPrintf2 (client_t *cl, int level, char *fmt, ...);
 void SV_BroadcastPrintf (int level, char *fmt, ...);
@@ -811,17 +856,26 @@ void SV_FindModelNumbers (void);
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);
+void ProcessUserInfoChange (client_t* sv_client, const char* key, const char* old_value);
+void SV_RotateCmd(client_t* cl, usercmd_t* cmd);
+
+#ifdef FTE_PEXT2_VOICECHAT
+void SV_VoiceInitClient(client_t *client);
+void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf);
+#endif
 
 //
 // sv_ccmds.c
 //
 void SV_Status_f (void);
+void SV_ServerinfoChanged (char *key, char *string);
 void SV_SendServerInfoChange (char *key, char *value);
 
 //
 // sv_ents.c
 //
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder);
+void SV_SetVisibleEntitiesForBot (client_t* client);
 
 //
 // sv_nchan.c
@@ -841,9 +895,9 @@ void ClientReliableWrite_String(client_t *cl, char *s);
 void ClientReliableWrite_SZ(client_t *cl, void *data, int len);
 void SV_ClearReliable (client_t *cl); // clear cl->netchan.message and backbuf
 
-//
-// sv_demo.c
-//
+									  //
+									  // sv_demo.c
+									  //
 
 void MVD_MSG_WriteChar   (const int c);
 void MVD_MSG_WriteByte   (const int c);
@@ -880,7 +934,6 @@ extern cvar_t	sv_demoClearOld;
 extern cvar_t	sv_demoDir;
 extern cvar_t	sv_demofps;
 extern cvar_t	sv_demoPings;
-extern cvar_t	sv_demoNoVis;
 extern cvar_t	sv_demoMaxSize;
 extern cvar_t	sv_demoExtraNames;
 
@@ -891,6 +944,8 @@ extern cvar_t	sv_onrecordfinish;
 
 extern cvar_t	sv_ondemoremove;
 extern cvar_t	sv_demoRegexp;
+
+extern cvar_t	sv_silentrecord;
 
 void SV_MVDInit (void);
 char *SV_MVDNum(int num);
@@ -919,15 +974,12 @@ void	SV_MVDInfoAdd_f (void);
 void	SV_MVDInfoRemove_f (void);
 void	SV_MVDInfo_f (void);
 void	SV_LastScores_f (void);
+char*   SV_MVDName2Txt (const char *name);
 
 //
 // sv_demo_qtv.c
 //
 
-extern cvar_t	qtv_streamport;
-extern cvar_t	qtv_maxstreams;
-extern cvar_t	qtv_password;
-extern cvar_t	qtv_pendingtimeout;
 extern cvar_t	qtv_streamtimeout;
 
 
@@ -937,6 +989,9 @@ void SV_QTV_Init(void);
 
 void DemoWriteQTV (sizebuf_t *msg);
 void QTVsv_FreeUserList(mvddest_t *d);
+void QTV_Streams_List (void);
+void QTV_Streams_UserList (void);
+const char* SV_MVDDemoName(void);
 
 //
 // sv_login.c
@@ -962,5 +1017,15 @@ void Master_Heartbeat (void);
 void SV_SaveGame_f (void); 
 void SV_LoadGame_f (void); 
 
+//
+void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force);
+qbool SV_SkipCommsBotMessage(client_t* client);
+
+// 
+#ifdef SERVERONLY
+#include "central.h"
+#else
+extern qbool       server_cfg_done;
+#endif
 
 #endif /* !__SERVER_H__ */

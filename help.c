@@ -642,7 +642,68 @@ void Help_Issues_Variables(void)
 	Con_Printf("%d variables with issues.\n", num_errors);
 }
 
-void Help_Issues_f(void)
+// Check all variable values against help files
+static void Help_VerifyConfig_f(void)
+{
+	extern cvar_t *cvar_vars;
+
+	json_t* varsObj = NULL;
+	int num_errors = 0;
+	const char* name = NULL;
+	json_t* variable = NULL;
+
+	if (!variables_root) {
+		return;
+	}
+
+	varsObj = json_object_get(variables_root, "vars");
+	if (!varsObj) {
+		return;
+	}
+
+	json_object_foreach(varsObj, name, variable)
+	{
+		cvar_t* cvar     = Cvar_Find(name);
+		const char* type = json_string_value(json_object_get(variable, "type"));
+		json_t* examples = json_object_get(variable, "values");
+		int num_examples = examples && json_is_array(examples) ? json_array_size(examples) : 0;
+
+		// obsolete cvars might be in documentation so people can see notes using /describe
+		if (cvar == NULL) {
+			continue;
+		}
+
+		if (!strcmp("boolean", type) && cvar->value != 0 && cvar->value != 1) {
+			con_ormask = 128;
+			Com_Printf ("%s", name);
+			con_ormask = 0;
+			Com_Printf(": boolean, value %f\n", cvar->value);
+			++num_errors;
+		}
+		else if (!strcmp("enum", type) && num_examples > 0) {
+			qbool found = false;
+			int i;
+
+			for (i = 0; i < num_examples; ++i) {
+				const json_t* value = json_array_get(examples, i);
+				const char*   name = json_string_value(json_object_get(value, "name"));
+
+				found |= !strcmp(name, cvar->string);
+			}
+
+			if (!found) {
+				con_ormask = 128;
+				Con_Printf("%s", name);
+				con_ormask = 0;
+				Con_Printf(": enum, value %s\n", cvar->string);
+			}
+		}
+	}
+
+	Con_Printf("%d variables with values that don't match documentation.\n", num_errors);
+}
+
+static void Help_Issues_f(void)
 {
 	Help_Issues_Commands();
 	Help_Issues_Variables();
@@ -653,6 +714,7 @@ void Help_Init(void)
 	Cmd_AddCommand("describe", Help_Describe_f);
 	Cmd_AddCommand("help_missing", Help_Missing_f);
 	Cmd_AddCommand("help_issues", Help_Issues_f);
+	Cmd_AddCommand("help_verify_config", Help_VerifyConfig_f);
 
 	Help_LoadDocs();
 }

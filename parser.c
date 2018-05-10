@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctype.h>
 #include <string.h>
 #include <wctype.h>
+#include "quakedef.h"
 #ifndef snprintf
 #include "q_shared.h"
 #endif

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- *  $Id: pr2_vm.c 761 2008-02-25 20:39:51Z qqshka $
+ *  
  */
 /*
   Quake3 compatible virtual machine
@@ -30,7 +30,6 @@
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
-//#include "crc.c"
 
 #ifdef QVM_PROFILE
 cvar_t	sv_enableprofile = {"sv_enableprofile","0"};
@@ -48,6 +47,47 @@ profile_t;
 
 profile_t profile_funcs[MAX_PROFILE_FUNCS];
 int num_profile_func;
+
+qbool PR2_IsValidReadAddress(register qvm_t * qvm, intptr_t address)
+{
+	if (address >= (intptr_t)&sv && address < ((intptr_t)&sv) + sizeof(sv) - 4) {
+		return true;
+	}
+	if (address >= (intptr_t)&svs.clients && address < ((intptr_t)&svs.clients) + sizeof(svs.clients) - 4) {
+		return true;
+	}
+	if (address == (intptr_t)VersionStringFull()) {
+		return true;
+	}
+
+	return (address >= (intptr_t)qvm->ds && address < (intptr_t)qvm->ds + qvm->len_ds);
+}
+
+qbool PR2_IsValidWriteAddress(register qvm_t * qvm, intptr_t address)
+{
+	if (address >= (intptr_t)&sv && address < ((intptr_t)&sv) + sizeof(sv) - 4) {
+		return true;
+	}
+	if (address >= (intptr_t)&svs.clients && address < ((intptr_t)&svs.clients) + sizeof(svs.clients) - 4) {
+		return true;
+	}
+
+	return (address >= (intptr_t)qvm->ds && address < (intptr_t)qvm->ds + qvm->len_ds);
+}
+
+#define OLD_VM_POINTER(base,mask,x) ((void*)((char *)base+((x)&mask)))
+
+void* VM_POINTER(byte* base, uintptr_t mask, intptr_t offset)
+{
+	intptr_t address = (intptr_t) base + offset;
+	qvm_t* qvm = (qvm_t*) sv_vm->hInst;
+
+	if (PR2_IsValidWriteAddress(qvm, address)) {
+		return (void*)address;
+	}
+
+	return OLD_VM_POINTER(base, mask, offset);
+}
 
 profile_t* ProfileEnterFunction(int adress)
 {
@@ -184,7 +224,7 @@ qbool VM_LoadNative( vm_t * vm )
 		return false;
 
 	dllEntry = (void (EXPORT_FN *)(void *)) Sys_DLProc( (DL_t) vm->hInst, "dllEntry" );
-	vm->vmMain = (int (EXPORT_FN *)(int,int,int,int,int,int,int,int,int,int,int,int,int)) Sys_DLProc( (DL_t) vm->hInst, "vmMain" );
+	vm->vmMain = (intptr_t (EXPORT_FN *)(int,int,int,int,int,int,int,int,int,int,int,int,int)) Sys_DLProc( (DL_t) vm->hInst, "vmMain" );
 	if ( !dllEntry || !vm->vmMain )
 	{
 		VM_Unload( vm );
@@ -192,8 +232,6 @@ qbool VM_LoadNative( vm_t * vm )
 	}
 	dllEntry( (void *) vm->syscall );
 
-	//	Info_SetValueForStarKey( svs.info, "*qvm", DLEXT, MAX_SERVERINFO_STRING );
-	Info_SetStar( &_localinfo_, "*qvm", DLEXT );
 	Info_SetValueForStarKey( svs.info, "*progs", DLEXT, MAX_SERVERINFO_STRING );
 	vm->type = VM_NATIVE;
 	return true;
@@ -326,9 +364,6 @@ qbool VM_LoadBytecode( vm_t * vm, sys_callex_t syscall1 )
 		return false;
 
 	// add qvm crc to the serverinfo
-	Info_SetStar( &_localinfo_, "*qvm", "QVM" );
-	//	Info_SetValueForStarKey( svs.info, "*qvm", "QVM", MAX_SERVERINFO_STRING );
-
 	snprintf( num, sizeof(num), "%i", CRC_Block( ( byte * ) buff, filesize ) );
 	Info_SetValueForStarKey( svs.info, "*progs", num, MAX_SERVERINFO_STRING );
 
@@ -493,7 +528,7 @@ vm_t   *VM_Load( vm_t * vm, vm_type_t type, char *name, sys_call_t syscall1, sys
 int     QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, int arg3,
                   int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11 );
 
-int VM_Call( vm_t * vm, int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
+intptr_t VM_Call( vm_t * vm, int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
              int arg6, int arg7, int arg8, int arg9, int arg10, int arg11 )
 {
 	if ( !vm )
@@ -877,7 +912,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 			ivar = opStack[qvm->SP]._int;
 
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidReadAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data load 1 out of range %8x\n", ivar );
 			opStack[qvm->SP]._int = *( char * ) ( qvm->ds + ivar );
 #else
@@ -888,7 +923,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_LOAD2:
 			ivar = opStack[qvm->SP]._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidReadAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data load 2 out of range %8x\n", ivar );
 			opStack[qvm->SP]._int = *( short * ) ( qvm->ds + ivar );
 #else
@@ -899,7 +934,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_LOAD4:
 			ivar = opStack[qvm->SP]._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidReadAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data load 4 out of range %8x\n", ivar );
 			opStack[qvm->SP]._int = *( int * ) ( qvm->ds + ivar );
 #else
@@ -909,7 +944,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_STORE1:
 			ivar = opStack[qvm->SP - 1]._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data store 1 out of range %8x\n", ivar );
 			*( char * ) ( qvm->ds + ivar ) = opStack[qvm->SP]._int & 0xff;
 #else
@@ -920,7 +955,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_STORE2:
 			ivar = opStack[qvm->SP - 1]._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data store 2 out of range %8x\n", ivar );
 			*( short * ) ( qvm->ds + ivar ) = opStack[qvm->SP]._int & 0xffff;
 #else
@@ -932,7 +967,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_STORE4:
 			ivar = opStack[qvm->SP - 1]._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "data store 4 out of range %8x\n", ivar );
 			*( int * ) ( qvm->ds + ivar ) = opStack[qvm->SP]._int;
 #else
@@ -944,7 +979,7 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 		case OP_ARG:
 			ivar = qvm->LP + op.parm._int;
 #ifdef QVM_DATA_PROTECTION
-			if ( ivar & (~qvm->ds_mask) )
+			if (!PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + ivar))
 				QVM_RunError( qvm, "arg out of range %8x\n", ivar );
 			*( int * ) ( qvm->ds + ivar ) = opStack[qvm->SP--]._int;
 #else
@@ -959,10 +994,10 @@ int QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, i
 				off2 = opStack[qvm->SP]._int;
 				len = op.parm._int;
 #ifdef QVM_DATA_PROTECTION
-				if ( (off1 & (~qvm->ds_mask) ) || (off2 & (~qvm->ds_mask) )
-				        || ((off1 + len) & (~qvm->ds_mask) )
-				        || ((off2 + len) & (~qvm->ds_mask) ))
-					QVM_RunError( qvm, "block copy out of range %8x\n", ivar );
+				if (!PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + off1) || !PR2_IsValidWriteAddress(qvm, (intptr_t)qvm->ds + off1 + len) ||
+					!PR2_IsValidReadAddress(qvm, (intptr_t)qvm->ds + off2) || !PR2_IsValidReadAddress(qvm, (intptr_t)qvm->ds + off2 + len)) {
+					QVM_RunError(qvm, "block copy out of range %8x\n", ivar);
+				}
 				memmove( qvm->ds + off1, qvm->ds + off2, len );
 #else
 				memmove( qvm->ds + (off1 & qvm->ds_mask), qvm->ds + (off2 & qvm->ds_mask), len );
@@ -1239,4 +1274,4 @@ void PrintInstruction( qvm_t * qvm )
 
 }
 
-#endif				/* USE_PR2 */
+#endif /* USE_PR2 */

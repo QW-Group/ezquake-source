@@ -42,50 +42,66 @@ static short capture_audio_samples[44100];	// big enough buffer for 1fps at 4410
 static int captured_audio_samples;
 static qbool frame_has_sound = false;
 
-extern cvar_t scr_sshot_type;
-
-cvar_t   movie_fps			=  {"demo_capture_fps", "30.0"};
-cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
-cvar_t   movie_steadycam	=  {"demo_capture_steadycam", "0"};
-
 #ifdef _WIN32
-cvar_t   movie_codec		= {"demo_capture_codec", "0"};	// Capturing to avi
-cvar_t   movie_mp3			= {"demo_capture_mp3", "0"};
-cvar_t   movie_mp3_kbps		= {"demo_capture_mp3_kbps", "128"};
-cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
-static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
-static void Movie_Start_AVI_Capture(qbool split);
-static int avi_number = 0;
-#endif
-static unsigned char aviSoundBuffer[4096] = { 0 }; // Static buffer for mixing
+void OnChange_movie_codec(cvar_t *var, char *string, qbool *cancel);
+LONG Movie_CurrentLength(void);
 
-static volatile qbool movie_is_capturing = false;
-static double movie_start_time, movie_len;
-static double movie_fragment_start_time;
-static int movie_frame_count;
-static char	image_ext[4];
+static char movie_avi_filename[MAX_OSPATH]; // Stores the user's requested filename
+static void Movie_Start_AVI_Capture(void);
+static int avi_number = 0;
 
 //joe: capturing to avi
-#ifdef _WIN32
 static qbool movie_is_avi = false;
 qbool movie_avi_loaded = false, movie_acm_loaded = false;
 static char avipath[256];
 static FILE *avifile = NULL;
+cvar_t   movie_codec      = {"demo_capture_codec", "0", 0, OnChange_movie_codec };	// Capturing to avi
+cvar_t   movie_mp3        = {"demo_capture_mp3", "0"};
+cvar_t   movie_mp3_kbps   = {"demo_capture_mp3_kbps", "128"};
+cvar_t   movie_vid_maxlen = {"demo_capture_vid_maxlen", "0"};
 #endif
+
+cvar_t          movie_fps                = {"demo_capture_fps", "30.0"};
+static cvar_t   movie_dir                = {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
+cvar_t          movie_steadycam          = {"demo_capture_steadycam", "0"};
+static cvar_t   movie_background_threads = {"demo_capture_background_threads", "0"};
+
+extern cvar_t scr_sshot_type;
+
+static unsigned char aviSoundBuffer[4096]; // Static buffer for mixing
+
+static double movie_real_start_time;
+static volatile qbool movie_is_capturing = false;
+static double movie_start_time;
+static double movie_len;
+static int movie_frame_count;
+static char image_ext[4];
+
 
 #ifdef _WIN32
-	static SYSTEMTIME	movie_start_date;
+	static SYSTEMTIME movie_start_date;
 #else
-	struct tm			movie_start_date;
+	struct tm movie_start_date;
 #endif
 
-qbool Movie_IsCapturing(void) {
+qbool Movie_IsCapturing(void)
+{
 	return cls.demoplayback && !cls.timedemo && movie_is_capturing;
 }
 
-float Movie_Frametime(void) {
-	if (movie_steadycam.value)
+double Movie_Frametime(void)
+{
+	double time = (double)(movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0);
+
+	return bound(1.0 / 1000, time, 1.0);;
+}
+
+double Movie_InputFrametime(void)
+{
+	if (movie_steadycam.value) {
 		return movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
+	}
+
 	return cls.trueframetime;
 }
 
@@ -105,7 +121,6 @@ static void Movie_Start(double _time)
 	#endif
 	movie_len = _time;
 	movie_start_time = cls.realtime;
-	movie_fragment_start_time = cls.realtime;
 
 	movie_frame_count = 0;
 
@@ -132,6 +147,7 @@ static void Movie_Start(double _time)
 		movie_is_capturing = true;
 		WAVCaptureStart ();
 	}
+	movie_real_start_time = Sys_DoubleTime ();
 }
 
 void Movie_Stop (qbool restarting) {
@@ -143,8 +159,10 @@ void Movie_Stop (qbool restarting) {
 	}
 	if (!restarting) {
 		S_StopAllSounds();
+		Movie_BackgroundShutdown();
 
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
+		Com_Printf("  Time: %5.1f seconds\n", Sys_DoubleTime() - movie_real_start_time);
 	}
 #endif
 	WAVCaptureStop ();
@@ -155,7 +173,7 @@ void Movie_Demo_Capture_f(void) {
 	int argc;
 	double time;
 	char *error;
-	
+
 #ifdef _WIN32
 	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\"\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3 && argc != 4) {
@@ -201,23 +219,29 @@ void Movie_Demo_Capture_f(void) {
 			return;
 		}
 
-		Movie_Start_AVI_Capture(movie_vid_maxlen.value > 0 && movie_vid_maxlen.value < time);
+		Movie_Start_AVI_Capture();
 	}
+	else
 #endif
+	{
+		Movie_BackgroundInitialise();
+	}
 	Movie_Start(time);
 }
 
 #ifdef _WIN32
-static void Movie_Start_AVI_Capture(qbool split) 
+static void Movie_Start_AVI_Capture(void)
 {
 	++avi_number;
 
 	// If we're going to break up the movie, append number
 	char aviname[MAX_OSPATH];
-	if (split)
-		snprintf (aviname, sizeof(aviname), "%s-%03d", movie_avi_filename, avi_number);
-	else 
-		strlcpy (aviname, movie_avi_filename, sizeof(aviname));
+	if (avi_number > 1) {
+		snprintf (aviname, sizeof (aviname), "%s-%03d", movie_avi_filename, avi_number);
+	}
+	else {
+		strlcpy (aviname, movie_avi_filename, sizeof (aviname));
+	}
 
 	if (!(Util_Is_Valid_Filename(aviname))) {
 		Com_Printf(Util_Invalid_Filename_Msg(aviname));
@@ -239,6 +263,7 @@ void Movie_Init(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 	Cvar_Register(&movie_fps);
 	Cvar_Register(&movie_dir);
+	Cvar_Register(&movie_background_threads);
 	Cvar_Register(&movie_steadycam);
 
 	Cvar_ResetCurrentGroup();
@@ -269,23 +294,11 @@ void Movie_Init(void) {
 #endif
 }
 
-double Movie_FrameTime (void)
+void Movie_StartFrame(void) 
 {
-	// Default to 30 fps.
-	return (movie_fps.value > 0) ? (1.0 / movie_fps.value) : (1 / 30.0);
-}
-
-double Movie_StartFrame(void) 
-{
-	double time;
-
-	if (Cmd_FindAlias("f_captureframe"))
-	{
+	if (Cmd_FindAlias("f_captureframe")) {
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
 	}
-
-	time = Movie_FrameTime();
-	return bound(1.0 / 1000, time, 1.0);
 }
 
 void Movie_FinishFrame(void) 
@@ -305,14 +318,15 @@ void Movie_FinishFrame(void)
 	}
 	else 
 	{
+		fname[0] = '\0';
 		// Split up if we're over the time limit for each segment
-		if (movie_vid_maxlen.value && cls.realtime >= movie_fragment_start_time + movie_vid_maxlen.value) 
+		if (movie_vid_maxlen.integer && Movie_CurrentLength() >= movie_vid_maxlen.value * 1024 * 1024) 
 		{
 			double original_start_time = movie_start_time;
 
 			// Close existing, and start again
 			Movie_Stop(true);
-			Movie_Start_AVI_Capture(true);
+			Movie_Start_AVI_Capture();
 			Movie_Start(movie_len);
 
 			// keep track of original start time so we know when to stop for good
@@ -327,7 +341,7 @@ void Movie_FinishFrame(void)
 	con_suppress = true;
 	#endif // _WIN32
 
-	SCR_Screenshot(fname);
+	SCR_Movieshot (fname);
 	movie_frame_count++;
 
 #ifdef _WIN32
@@ -337,16 +351,18 @@ void Movie_FinishFrame(void)
 		con_suppress = false;
 	}
 
-	if (cls.realtime >= movie_start_time + movie_len)
-		Movie_Stop(false);
+	if (cls.realtime >= movie_start_time + movie_len) {
+		Movie_Stop (false);
+	}
 }
 
-//joe: capturing audio
-#ifdef _WIN32
 qbool Movie_IsCapturingAVI(void) {
+#ifdef _WIN32
 	return movie_is_avi && Movie_IsCapturing();
-}
+#else
+	return false;
 #endif
+}
 
 static vfsfile_t *wav_output = NULL;
 static int wav_sample_count = 0;
@@ -439,7 +455,7 @@ static void WAVCaptureStop (void)
 
 void Movie_MixFrameSound (void (*mixFunction)(void))
 {
-	int samples_required = (int)(0.5 + Movie_FrameTime() * shw->khz) * shw->numchannels;
+	int samples_required = (int)(0.5 + Movie_Frametime() * shw->khz) * shw->numchannels - (captured_audio_samples << 1);
 
 	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
 	shw->buffer = (unsigned char*)aviSoundBuffer;
@@ -453,7 +469,7 @@ void Movie_MixFrameSound (void (*mixFunction)(void))
 
 void Movie_TransferSound(void* data, int snd_linear_count)
 {
-	int samples_per_frame = (int)(0.5 + Movie_FrameTime() * shw->khz);
+	int samples_per_frame = (int)(0.5 + Movie_Frametime() * shw->khz);
 
 	// Write some sound
 	memcpy(capture_audio_samples + (captured_audio_samples << 1), data, snd_linear_count * shw->numchannels);
@@ -495,4 +511,124 @@ static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel) {
 		*cancel = true;
 		return;
 	}
+}
+
+typedef struct background_thread_s {
+	SDL_Thread* thread;            // thread handle
+	SDL_mutex* mutex;              // mutex
+	SDL_sem* finished;             // signals that the background thread should terminate (set by main)
+	SDL_sem* signal;               // queue length
+	scr_sshot_target_t* data;      // queue data
+	byte* buffer;                  // screenshot data
+} background_thread_t;
+
+#define MAX_SCREENSHOT_THREADS           8
+
+static background_thread_t threads[MAX_SCREENSHOT_THREADS] = { { 0 } };
+static byte* tempBuffer = 0;
+static int background_threads = 0;
+static int next_thread = 0;
+static int movie_width = 0;
+static int movie_height = 0;
+
+static int Movie_BackgroundThread(void* thread_data)
+{
+	background_thread_t* thread = (background_thread_t*) thread_data;
+	while (true) {
+		// Wait to be woken up
+		SDL_SemWait(thread->signal);
+
+		SDL_LockMutex(thread->mutex);
+		if (SDL_SemTryWait(thread->finished) == SDL_MUTEX_TIMEDOUT) {
+			SCR_ScreenshotWrite(thread->data);
+			SDL_UnlockMutex(thread->mutex);
+		}
+		else {
+			SDL_UnlockMutex(thread->mutex);
+			break;
+		}
+	}
+
+	return 0;
+}
+
+qbool Movie_BackgroundInitialise(void)
+{
+	extern int glwidth, glheight;
+	int i;
+
+	background_threads = (int) bound(0, movie_background_threads.integer, MAX_SCREENSHOT_THREADS);
+	if (background_threads) {
+		memset(&threads, 0, sizeof(threads));
+		next_thread = 0;
+
+		// Create background threads in background
+		for (i = 0; i < background_threads; ++i) {
+			threads[i].mutex = SDL_CreateMutex();
+			threads[i].signal = SDL_CreateSemaphore(0);
+			threads[i].finished = SDL_CreateSemaphore(0);
+			threads[i].buffer = Q_malloc(glwidth * glheight * 3);
+			threads[i].thread = SDL_CreateThread(Movie_BackgroundThread, NULL, (void*)&threads[i]);
+		}
+	}
+
+	movie_height = glheight;
+	movie_width = glwidth;
+	tempBuffer = Q_malloc(movie_width * movie_height * 3);
+
+	return true;
+}
+
+void Movie_BackgroundShutdown(void)
+{
+	int i;
+
+	for (i = 0; i < background_threads; ++i) {
+		SDL_SemPost(threads[i].finished);
+		SDL_SemPost(threads[i].signal);
+	}
+
+	for (i = 0; i < background_threads; ++i) {
+		SDL_WaitThread(threads[i].thread, NULL);
+		SDL_DestroySemaphore(threads[i].finished);
+		SDL_DestroySemaphore(threads[i].signal);
+		SDL_DestroyMutex(threads[i].mutex);
+
+		Q_free(threads[i].buffer);
+	}
+
+	Q_free(tempBuffer);
+
+}
+
+byte* Movie_TempBuffer(int width, int height)
+{
+	if (width != movie_width || height != movie_height) {
+		return NULL;
+	}
+
+	return tempBuffer;
+}
+
+qbool Movie_BackgroundCapture(scr_sshot_target_t* params)
+{
+	if (params->buffer != tempBuffer) {
+		return false;
+	}
+
+	if (Movie_IsCapturing() && ! Movie_IsCapturingAVI() && background_threads) {
+		background_thread_t* thread = &threads[next_thread];
+
+		SDL_LockMutex(thread->mutex);
+		memcpy(thread->buffer, params->buffer, params->width * params->height * 3);
+		params->buffer = thread->buffer;
+		thread->data = params;
+		SDL_UnlockMutex(thread->mutex);
+		SDL_SemPost(thread->signal);
+
+		next_thread = (next_thread + 1) % background_threads;
+		return true;
+	}
+
+	return false;
 }

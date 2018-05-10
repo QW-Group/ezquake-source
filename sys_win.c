@@ -32,9 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #include "pcre.h"
 
-
 #define MINIMUM_WIN_MEMORY	0x0c00000
-#define MAXIMUM_WIN_MEMORY	0x2000000
+#define MAXIMUM_WIN_MEMORY	0x8000000
 
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
@@ -51,7 +50,15 @@ void MaskExceptions (void);
 void Sys_PopFPCW (void);
 void Sys_PushFPCW_SetHigh (void);
 
+typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(_In_ DWORD value);
+
 #ifndef WITHOUT_WINKEYHOOK
+
+#ifndef WH_KEYBOARD_LL
+#define WH_KEYBOARD_LL 13
+#endif
+
+unsigned int windows_keys_down, windows_keys_up;
 
 static HHOOK WinKeyHook;
 static qbool WinKeyHook_isActive;
@@ -75,7 +82,7 @@ static void ReleaseKeyHook (void)
 static qbool RegisterKeyHook (void)
 {
 	if (!WinKeyHook_isActive) {
-		WinKeyHook = SetWindowsHookEx (13, LLWinKeyHook, global_hInstance, 0);
+		WinKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, LLWinKeyHook, global_hInstance, 0);
 		WinKeyHook_isActive = (WinKeyHook != NULL);
 	}
 
@@ -96,7 +103,7 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 				return;
 			}
 		}
-	} 
+	}
 	else 
 	{
 		ReleaseKeyHook ();
@@ -105,24 +112,30 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) 
 {
-	PKBDLLHOOKSTRUCT p;
+	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
+	unsigned int* flags = (p->flags & LLKHF_UP) ? &windows_keys_up : &windows_keys_down;
 
-	p = (PKBDLLHOOKSTRUCT) lParam;
-
-	switch(p->vkCode)
+	switch (p->vkCode)
 	{
 		case VK_LWIN:
-			Key_Event (K_LWIN, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_LWINDOWSKEY;
 			return 1;
 		case VK_RWIN:
-			Key_Event (K_RWIN, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_RWINDOWSKEY;
 			return 1;
 		case VK_APPS:
-			Key_Event (K_MENU, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_MENU;
 			return 1;
 		case VK_SNAPSHOT:
-			Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP));
+			*flags |= WINDOWS_PRINTSCREEN;
 			return 1;
+		case VK_CAPITAL:
+			if (key_dest != key_console && key_dest != key_message) {
+				// Don't toggle capslock when in game
+				*flags |= WINDOWS_CAPSLOCK;
+				return 1;
+			}
+			break;
 	}
 
 	return CallNextHookEx(NULL, Code, wParam, lParam);
@@ -284,13 +297,12 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	return go;
 }
 
-
+#ifndef CLIENTONLY
 /*
 ================
 Sys_listdir
 ================
 */
-
 dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 {
 	static file_t	list[MAX_DIRFILES];
@@ -383,7 +395,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	}
 	return dir;
 }
-
+#endif
 
 // ===============================================================================
 // SYSTEM IO
@@ -584,6 +596,20 @@ void WinCheckOSInfo(void)
 
 	if (vinfo.dwPlatformId != VER_PLATFORM_WIN32_NT || vinfo.dwMajorVersion < 5 || (vinfo.dwMajorVersion == 5 && vinfo.dwMinorVersion < 1))
 		Sys_Error ("ezQuake requires at least Windows XP.");
+
+	// Use raw resolutions, not scaled
+	{
+		HMODULE lib = LoadLibrary("Shcore.dll");
+		if (lib != NULL) {
+			SetProcessDpiAwarenessFunc SetProcessDpiAwareness;
+
+			SetProcessDpiAwareness = (SetProcessDpiAwarenessFunc) GetProcAddress(lib, "SetProcessDpiAwareness");
+			if (SetProcessDpiAwareness != NULL) {
+				SetProcessDpiAwareness(2);
+			}
+			FreeLibrary(lib);
+		}
+	}
 }
 
 void Sys_Init_ (void) 
@@ -697,6 +723,214 @@ void ParseCommandLine (char *lpCmdLine)
 	}
 }
 
+#define QW_URL_ROOT_REGKEY         "Software\\Classes\\qw"
+#define QW_URL_OPEN_CMD_REGKEY     QW_URL_ROOT_REGKEY"\\shell\\Open\\Command"
+#define QW_URL_DEFAULTICON_REGKEY  QW_URL_ROOT_REGKEY"\\DefaultIcon"
+
+//
+// Checks if this client is the default qw protocol handler.
+//
+static qbool Sys_CheckIfQWProtocolHandler(void)
+{
+	DWORD type;
+	char reg_path[1024];
+	DWORD len = (DWORD) sizeof(reg_path);
+	HKEY hk;
+
+	if (RegOpenKey(HKEY_CURRENT_USER, QW_URL_OPEN_CMD_REGKEY, &hk) != 0) {
+		return false;
+	}
+
+	// Get the size we need to read.
+	if (RegQueryValueEx(hk, NULL, 0, &type, (BYTE *) reg_path, &len) == ERROR_SUCCESS) {
+		char expanded_reg_path[MAX_PATH];
+
+		// Expand any environment variables in the reg value so that we get a real path to compare with.
+		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_reg_path));
+
+		#if 0
+		// This checks if the current exe is associated with, otherwise it will prompt the user
+		// a bit more "in the face" if the user has more than one ezquake version.
+		{
+			char exe_path[MAX_PATH];
+		
+			// Get the long path of the current process.
+			// C:\Program Files\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				// This exe is associated with the qw:// protocol, return true.
+				CloseHandle(hk);
+				return true;
+			}
+
+			// Get the short path and check if that matches instead.
+			// C:\Program~1\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				CloseHandle(hk);
+				return true;
+			}
+		}
+		#else
+		// Only check if ezquake is in the string that associates with the qw:// protocol
+		// so if you have several ezquake exes it won't bug you if you just switch between those
+		// (Only one will be registered as the protocol handler though ofcourse).
+
+		if (strstri(reg_path, "ezquake"))
+		{
+			CloseHandle(hk);
+			return true;
+		}
+
+		#endif
+	}
+
+	CloseHandle(hk);
+	return false;
+}
+
+void Sys_CheckQWProtocolHandler(void)
+{
+	// Verify that ezQuake is associated with the QW:// protocl handler.
+	//
+	#define INITIAL_CON_WIDTH 35
+	extern cvar_t cl_verify_qwprotocol;
+
+	if (cl_verify_qwprotocol.integer >= 2) {
+		// Always register the qw:// protocol.
+		Cbuf_AddText("register_qwurl_protocol\n");
+	} else if (cl_verify_qwprotocol.integer == 1 && !Sys_CheckIfQWProtocolHandler()) {
+		// Check if the running exe is the one associated with the qw:// protocol.
+		Com_PrintVerticalBar(INITIAL_CON_WIDTH);
+		Com_Printf("\n");
+		Com_Printf("ezQuake is not associated with the ");
+		Com_Printf("\x02QW:// protocol. ");
+		Com_Printf("Register it using"); 
+		Com_Printf("\x02/register_qwurl_protocol\n");
+		Com_Printf("(set");
+		Com_Printf("\x02 cl_verify_qwprotocol 0 ");
+		Com_Printf("to hide this warning)\n");
+		Com_PrintVerticalBar(INITIAL_CON_WIDTH);
+		Com_Printf("\n\n");
+	}
+}
+
+void Sys_RegisterQWURLProtocol_f(void)
+{
+	//
+	// Note!
+	// HKEY_CLASSES_ROOT is a "merged view" of both: HKEY_LOCAL_MACHINE\Software\Classes 
+	// and HKEY_CURRENT_USER\Software\Classes. 
+	// User specific settings has priority over machine settings.
+	//
+	// If you try to write to HKEY_CLASSES_ROOT directly, it will default to
+	// trying to write to the machine specific settings. If the user isn't
+	// admin this will fail. On Vista this requires UAC usage.
+	// Because of this, we always write specifically to "HKEY_CURRENT_USER\Software\Classes"
+	//
+
+	HKEY keyhandle;
+	char exe_path[MAX_PATH];
+
+	Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+	//
+	// HKCU\qw\shell\Open\Command
+	//
+	{
+		char open_cmd[1024];
+		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
+						QW_URL_OPEN_CMD_REGKEY,		// Subkey.
+						0,							// Reserved, must be 0.
+						NULL,						// Class, ignored.
+						REG_OPTION_NON_VOLATILE,	// Save the change to disk.
+						KEY_WRITE,					// Access rights.
+						NULL,						// Security attributes (NULL means default, inherited from direct parent).
+						&keyhandle,					// Handle to the created key.
+						NULL))						// Don't care if the key existed or not.
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) open_cmd,  strlen(open_cmd) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCU\qw\DefaultIcon
+	//
+	{
+		char default_icon[1024];
+		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) default_icon, strlen(default_icon) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCU\qw
+	//
+	{
+		char protocol_name[] = "URL:QW Protocol";
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_ROOT_REGKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\qw\n");
+			return;
+		}
+
+		// Set the protocol name.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) protocol_name, strlen(protocol_name) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, (BYTE *) "", sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\URL Protocol\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+}
+
+//============================================================================
 HHOOK hMsgBoxHook;
 
 LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -848,7 +1082,7 @@ void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
 //
 // Gets the registry value for the "HKCU\Software\ezQuake\AskForQWProtocol key"
 //
-qwurl_regkey_t WinGetCheckQWURLRegKey()
+qwurl_regkey_t WinGetCheckQWURLRegKey(void)
 {
 	HKEY keyhandle = NULL;
 	DWORD returnval = QWURL_ASK;
@@ -897,9 +1131,6 @@ qwurl_regkey_t WinGetCheckQWURLRegKey()
 //
 qbool WinCheckQWURL(void)
 {
-	extern qbool CL_CheckIfQWProtocolHandler();
-	extern void CL_RegisterQWURLProtocol_f();
-
 	int retval;
 
 	// Check the registry if we should ask at all. By relying on this
@@ -920,8 +1151,7 @@ qbool WinCheckQWURL(void)
 			return true;
 	}
 
-	if (CL_CheckIfQWProtocolHandler())
-	{
+	if (Sys_CheckIfQWProtocolHandler()) {
 		return true;
 	}
 	
@@ -936,7 +1166,7 @@ qbool WinCheckQWURL(void)
 	switch (retval)
 	{
 		case IDYES :
-			CL_RegisterQWURLProtocol_f();
+			Sys_RegisterQWURLProtocol_f();
 			WinSetCheckQWURLRegKey(QWURL_ASK);
 			return true;
 
@@ -1120,7 +1350,7 @@ void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name)
 
 HANDLE ezquake_server_mailslot;
 
-void Sys_InitIPC()
+void Sys_InitIPC(void)
 {	
 	ezquake_server_mailslot = CreateMailslot( 
 							  EZQUAKE_MAILSLOT,					// Mailslot name
@@ -1129,12 +1359,12 @@ void Sys_InitIPC()
 							  NULL);							// Default security attribute 
 }
 
-void Sys_CloseIPC()
+void Sys_CloseIPC(void)
 {
 	CloseHandle(ezquake_server_mailslot);
 }
 
-void Sys_ReadIPC()
+void Sys_ReadIPC(void)
 {
 	char buf[MAILSLOT_BUFFERSIZE] = {0};
 	DWORD num_bytes_read = 0;

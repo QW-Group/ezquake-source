@@ -23,7 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "common_draw.h"
 #include "mp3_player.h"
+#ifdef WITH_PNG
 #include <png.h>
+#endif
 #include "image.h"
 #include "stats_grid.h"
 #include "vx_stuff.h"
@@ -38,12 +40,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "console.h"
 #include "teamplay.h"
 #include "mvd_utils.h"
+#include "mvd_utils_common.h"
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
 
+#define MAX_FRAGS_NAME 32
+#define FRAGS_HEALTH_SPACING 1
+
+void SCR_HUD_WeaponStats(hud_t *hud);
+void WeaponStats_HUDInit(void);
+
 hud_t *hud_netgraph = NULL;
+
+// Items to be filtered out
+static int itemsclock_filter = 0;
 
 // ----------------
 // HUD planning
@@ -65,6 +77,56 @@ qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
 cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
 cvar_t hud_digits_trim = {"hud_digits_trim", "1"};
+
+// player sorting
+// for frags and players
+typedef struct sort_teams_info_s
+{
+	char *name;
+	int  frags;
+	int  min_ping;
+	int  avg_ping;
+	int  max_ping;
+	int  nplayers;
+	int  top, bottom;   // leader colours
+	int  rlcount;       // Number of RLs present in the team. (Cokeman 2006-05-27)
+	int  lgcount;       // number of LGs present in the team
+	int  weapcount;     // number of players with weapons (RLs | LGs) in the team
+	int  ra_taken;      // Total red armors taken
+	int  ya_taken;      // Total yellow armors taken
+	int  ga_taken;      // Total green armors taken
+	int  mh_taken;      // Total megahealths taken
+	int  quads_taken;   // Total quads taken
+	int  pents_taken;   // Total pents taken
+	int  rings_taken;   // Total rings taken
+	int  stack;         // Total damage the team can take
+	float ra_lasttime;  // last time ra taken
+	float ya_lasttime;  // last time ya taken
+	float ga_lasttime;  // last time ga taken
+	float mh_lasttime;  // last time mh taken
+	float q_lasttime;   // last time quad taken
+	float p_lasttime;   // last time pent taken
+	float r_lasttime;   // last time ring taken
+}
+sort_teams_info_t;
+
+typedef struct sort_players_info_s
+{
+	int playernum;
+	sort_teams_info_t *team;
+}
+sort_players_info_t;
+
+static sort_players_info_t		sorted_players[MAX_CLIENTS];
+static sort_teams_info_t		sorted_teams[MAX_CLIENTS];
+static int       n_teams;
+static int       n_players;
+static int       n_spectators;
+static cvar_t    hud_sortrules_teamsort = { "hud_sortrules_teamsort", "0" };
+static cvar_t    hud_sortrules_playersort = { "hud_sortrules_playersort", "1" };
+static cvar_t    hud_sortrules_includeself = { "hud_sortrules_includeself", "1" };
+static int       active_player_position = -1;
+static int       active_team_position = -1;
 
 int hud_stats[MAX_CL_STATS];
 
@@ -249,38 +311,49 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		*hud_fps_show_min = NULL,
 		*hud_fps_style,
 		*hud_fps_title,
-		*hud_fps_drop;
+		*hud_fps_drop,
+		*hud_fps_scale;
 
-	if (hud_fps_show_min == NULL)   // first time called
-	{
+	if (hud_fps_show_min == NULL) {
+		// first time called
 		hud_fps_show_min = HUD_FindVar(hud, "show_min");
 		hud_fps_style    = HUD_FindVar(hud, "style");
 		hud_fps_title    = HUD_FindVar(hud, "title");
-		hud_fps_drop = HUD_FindVar(hud, "drop");
+		hud_fps_drop     = HUD_FindVar(hud, "drop");
+		hud_fps_scale    = HUD_FindVar(hud, "scale");
 	}
 
-	if (hud_fps_show_min->value)
-		snprintf (st, sizeof (st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int) (cls.fps + 0.25));
-	else
-		snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
+	if (hud_fps_show_min->value) {
+		snprintf(st, sizeof(st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int)(cls.fps + 0.25));
+	}
+	else {
+		snprintf(st, sizeof(st), "%3d", (int)(cls.fps + 0.25));
+	}
 
-	if (hud_fps_title->value)
-		strlcat (st, " fps", sizeof (st));
+	if (hud_fps_title->value) {
+		strlcat(st, " fps", sizeof(st));
+	}
 
-	if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-	{
-		if ((hud_fps_style->value) == 1)
-			Draw_Alt_String(x, y, st);
+	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_fps_scale->value, 8 * hud_fps_scale->value, &x, &y)) {
+		if ((hud_fps_style->value) == 1) {
+			Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+		}
 		else if ((hud_fps_style->value) == 2) {
-			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
-				Draw_String(x, y, st);
+			// if fps is less than a user-set value, then show it
+			if ((hud_fps_drop->value) >= cls.fps) {
+				Draw_SString(x, y, st, hud_fps_scale->value);
+			}
 		}
 		else if ((hud_fps_style->value) == 3) {
-			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
-				Draw_Alt_String(x, y, st);
+			// if fps is less than a user-set value, then show it
+			if ((hud_fps_drop->value) >= cls.fps) {
+				Draw_SAlt_String(x, y, st, hud_fps_scale->value);
+			}
 		}
-		else // hud_fps_style is anything other than 1,2,3
-			Draw_String(x, y, st);
+		else {
+			// hud_fps_style is anything other than 1,2,3
+			Draw_SString(x, y, st, hud_fps_scale->value);
+		}
 	}
 }
 
@@ -289,44 +362,44 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	int x, y;
 	char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
+	static cvar_t *hud_vidlag_scale = NULL;
 
 	extern qbool VID_VSyncIsOn(void);
 	extern double vid_vsync_lag;
 	static double old_lag;
 
-	if (VID_VSyncIsOn() || glConfig.displayFrequency)
-	{
+	if (VID_VSyncIsOn() || glConfig.displayFrequency) {
 		// take the average of last two values, otherwise it
 		// changes very fast and is hard to read
 		double current, avg;
-		if (VID_VSyncIsOn())
+		if (VID_VSyncIsOn()) {
 			current = vid_vsync_lag;
-		else
-			current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
+		}
+		else {
+			current = min(cls.trueframetime, 1.0 / glConfig.displayFrequency) * 0.5;
+		}
 		avg = (current + old_lag) * 0.5;
 		old_lag = current;
 		snprintf (st, sizeof (st), "%2.1f", avg * 1000);
 	}
-	else
-
+	else {
 		strcpy(st, "?");
+	}
 
-	if (hud_vidlag_style == NULL)  // first time called
-	{
+	if (hud_vidlag_style == NULL) {
+		// first time called
 		hud_vidlag_style = HUD_FindVar(hud, "style");
+		hud_vidlag_scale = HUD_FindVar(hud, "scale");
 	}
 
 	strlcat (st, " ms", sizeof (st));
 
-	if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-	{
-		if (hud_vidlag_style->value)
-		{
-			Draw_Alt_String(x, y, st);
+	if (HUD_PrepareDraw(hud, strlen(st) * 8 * hud_vidlag_scale->value, 8 * hud_vidlag_scale->value, &x, &y)) {
+		if (hud_vidlag_style->value) {
+			Draw_SAlt_String(x, y, st, hud_vidlag_scale->value);
 		}
-		else
-		{
-			Draw_String(x, y, st);
+		else {
+			Draw_SString(x, y, st, hud_vidlag_scale->value);
 		}
 	}
 }
@@ -411,7 +484,8 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		*hud_ping_show_min,
 		*hud_ping_show_max,
 		*hud_ping_style,
-		*hud_ping_blink;
+		*hud_ping_blink,
+		*hud_ping_scale;
 
 	if (hud_ping_period == NULL)    // first time
 	{
@@ -422,6 +496,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		hud_ping_show_max = HUD_FindVar(hud, "show_max");
 		hud_ping_style    = HUD_FindVar(hud, "style");
 		hud_ping_blink    = HUD_FindVar(hud, "blink");
+		hud_ping_scale    = HUD_FindVar(hud, "scale");
 	}
 
 	t = Sys_DoubleTime();
@@ -487,18 +562,15 @@ void SCR_HUD_DrawPing(hud_t *hud)
 		strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
 	// display that on screen
-	width = strlen(buf) * 8;
-	height = 8;
+	width = strlen(buf) * 8 * hud_ping_scale->value;
+	height = 8 * hud_ping_scale->value;
 
-	if (HUD_PrepareDraw(hud, width, height, &x, &y))
-	{
-		if (hud_ping_style->value)
-		{
-			Draw_Alt_String(x, y, buf);
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		if (hud_ping_style->value) {
+			Draw_SAlt_String(x, y, buf, hud_ping_scale->value);
 		}
-		else
-		{
-			Draw_String(x, y, buf);
+		else {
+			Draw_SString(x, y, buf, hud_ping_scale->value);
 		}
 	}
 }
@@ -721,56 +793,60 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 	int x, y;
 
 	static cvar_t *hud_speed_xyz = NULL,
-		      *hud_speed_width,
-		      *hud_speed_height,
-		      *hud_speed_tick_spacing,
-		      *hud_speed_opacity,
-		      *hud_speed_color_stopped,
-		      *hud_speed_color_normal,
-		      *hud_speed_color_fast,
-		      *hud_speed_color_fastest,
-		      *hud_speed_color_insane,
-		      *hud_speed_vertical,
-		      *hud_speed_vertical_text,
-		      *hud_speed_text_align,
-		      *hud_speed_style;
+		*hud_speed_width,
+		*hud_speed_height,
+		*hud_speed_tick_spacing,
+		*hud_speed_opacity,
+		*hud_speed_color_stopped,
+		*hud_speed_color_normal,
+		*hud_speed_color_fast,
+		*hud_speed_color_fastest,
+		*hud_speed_color_insane,
+		*hud_speed_vertical,
+		*hud_speed_vertical_text,
+		*hud_speed_text_align,
+		*hud_speed_style,
+		*hud_speed_scale;
 
 	if (hud_speed_xyz == NULL)    // first time
 	{
-		hud_speed_xyz			= HUD_FindVar(hud, "xyz");
-		hud_speed_width			= HUD_FindVar(hud, "width");
-		hud_speed_height		= HUD_FindVar(hud, "height");
-		hud_speed_tick_spacing	= HUD_FindVar(hud, "tick_spacing");
-		hud_speed_opacity		= HUD_FindVar(hud, "opacity");
-		hud_speed_color_stopped	= HUD_FindVar(hud, "color_stopped");
-		hud_speed_color_normal	= HUD_FindVar(hud, "color_normal");
-		hud_speed_color_fast	= HUD_FindVar(hud, "color_fast");
-		hud_speed_color_fastest	= HUD_FindVar(hud, "color_fastest");
-		hud_speed_color_insane	= HUD_FindVar(hud, "color_insane");
-		hud_speed_vertical		= HUD_FindVar(hud, "vertical");
-		hud_speed_vertical_text	= HUD_FindVar(hud, "vertical_text");
-		hud_speed_text_align	= HUD_FindVar(hud, "text_align");
-		hud_speed_style			= HUD_FindVar(hud, "style");
+		hud_speed_xyz           = HUD_FindVar(hud, "xyz");
+		hud_speed_width         = HUD_FindVar(hud, "width");
+		hud_speed_height        = HUD_FindVar(hud, "height");
+		hud_speed_tick_spacing  = HUD_FindVar(hud, "tick_spacing");
+		hud_speed_opacity       = HUD_FindVar(hud, "opacity");
+		hud_speed_color_stopped = HUD_FindVar(hud, "color_stopped");
+		hud_speed_color_normal  = HUD_FindVar(hud, "color_normal");
+		hud_speed_color_fast    = HUD_FindVar(hud, "color_fast");
+		hud_speed_color_fastest = HUD_FindVar(hud, "color_fastest");
+		hud_speed_color_insane  = HUD_FindVar(hud, "color_insane");
+		hud_speed_vertical      = HUD_FindVar(hud, "vertical");
+		hud_speed_vertical_text = HUD_FindVar(hud, "vertical_text");
+		hud_speed_text_align    = HUD_FindVar(hud, "text_align");
+		hud_speed_style         = HUD_FindVar(hud, "style");
+		hud_speed_scale         = HUD_FindVar(hud, "scale");
 	}
 
-	width = max(0, hud_speed_width->value);
-	height = max(0, hud_speed_height->value);
+	width = max(0, hud_speed_width->value) * hud_speed_scale->value;
+	height = max(0, hud_speed_height->value) * hud_speed_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
 		SCR_DrawHUDSpeed(x, y, width, height,
-				hud_speed_xyz->value,
-				hud_speed_tick_spacing->value,
-				hud_speed_opacity->value,
-				hud_speed_vertical->value,
-				hud_speed_vertical_text->value,
-				hud_speed_text_align->value,
-				hud_speed_color_stopped->value,
-				hud_speed_color_normal->value,
-				hud_speed_color_fast->value,
-				hud_speed_color_fastest->value,
-				hud_speed_color_insane->value,
-				hud_speed_style->integer);
+			hud_speed_xyz->value,
+			hud_speed_tick_spacing->value,
+			hud_speed_opacity->value,
+			hud_speed_vertical->value,
+			hud_speed_vertical_text->value,
+			hud_speed_text_align->value,
+			hud_speed_color_stopped->value,
+			hud_speed_color_normal->value,
+			hud_speed_color_fast->value,
+			hud_speed_color_fastest->value,
+			hud_speed_color_insane->value,
+			hud_speed_style->integer,
+			hud_speed_scale->value
+		);
 	}
 }
 
@@ -785,28 +861,30 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 	int x, y;
 
 	static cvar_t *hud_speed2_xyz = NULL,
-		      *hud_speed2_opacity,
-		      *hud_speed2_color_stopped,
-		      *hud_speed2_color_normal,
-		      *hud_speed2_color_fast,
-		      *hud_speed2_color_fastest,
-		      *hud_speed2_color_insane,
-		      *hud_speed2_radius,
-		      *hud_speed2_wrapspeed,
-		      *hud_speed2_orientation;
+		*hud_speed2_opacity,
+		*hud_speed2_color_stopped,
+		*hud_speed2_color_normal,
+		*hud_speed2_color_fast,
+		*hud_speed2_color_fastest,
+		*hud_speed2_color_insane,
+		*hud_speed2_radius,
+		*hud_speed2_wrapspeed,
+		*hud_speed2_orientation,
+		*hud_speed2_scale;
 
 	if (hud_speed2_xyz == NULL)    // first time
 	{
-		hud_speed2_xyz				= HUD_FindVar(hud, "xyz");
-		hud_speed2_opacity			= HUD_FindVar(hud, "opacity");
-		hud_speed2_color_stopped	= HUD_FindVar(hud, "color_stopped");
-		hud_speed2_color_normal		= HUD_FindVar(hud, "color_normal");
-		hud_speed2_color_fast		= HUD_FindVar(hud, "color_fast");
-		hud_speed2_color_fastest	= HUD_FindVar(hud, "color_fastest");
-		hud_speed2_color_insane		= HUD_FindVar(hud, "color_insane");
-		hud_speed2_radius			= HUD_FindVar(hud, "radius");
-		hud_speed2_wrapspeed		= HUD_FindVar(hud, "wrapspeed");
-		hud_speed2_orientation		= HUD_FindVar(hud, "orientation");
+		hud_speed2_xyz              = HUD_FindVar(hud, "xyz");
+		hud_speed2_opacity          = HUD_FindVar(hud, "opacity");
+		hud_speed2_color_stopped    = HUD_FindVar(hud, "color_stopped");
+		hud_speed2_color_normal     = HUD_FindVar(hud, "color_normal");
+		hud_speed2_color_fast       = HUD_FindVar(hud, "color_fast");
+		hud_speed2_color_fastest    = HUD_FindVar(hud, "color_fastest");
+		hud_speed2_color_insane     = HUD_FindVar(hud, "color_insane");
+		hud_speed2_radius           = HUD_FindVar(hud, "radius");
+		hud_speed2_wrapspeed        = HUD_FindVar(hud, "wrapspeed");
+		hud_speed2_orientation      = HUD_FindVar(hud, "orientation");
+		hud_speed2_scale            = HUD_FindVar(hud, "scale");
 	}
 
 	// Calculate the height and width based on the radius.
@@ -826,8 +904,12 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 			break;
 	}
 
+	width *= hud_speed2_scale->value;
+	height *= hud_speed2_scale->value;
+
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
+		float radius;
 		int player_speed;
 		int arc_length;
 		int color1, color2;
@@ -917,8 +999,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_startangle = M_PI / 2.0;
 					circle_endangle	= (3*M_PI) / 2.0;
 
-					text_x = x - 32;
-					text_y = y - 4;
+					text_x = x - 4 * 8 * hud_speed2_scale->value;
+					text_y = y - 8 * hud_speed2_scale->value * 0.5;
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_RIGHT :
@@ -929,7 +1011,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
 
 					text_x = x;
-					text_y = y - 4;
+					text_y = y - 8 * hud_speed2_scale->value * 0.5;
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_DOWN :
@@ -939,7 +1021,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_endangle = 2*M_PI;
 					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
 
-					text_x = x - 16;
+					text_x = x - 2 * 8 * hud_speed2_scale->value;
 					text_y = y;
 					break;
 				}
@@ -952,8 +1034,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 					circle_endangle = M_PI;
 					needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
 
-					text_x = x - 16;
-					text_y = y - 8;
+					text_x = x - 8 * 2 * hud_speed2_scale->value;
+					text_y = y - 8 * hud_speed2_scale->value;
 					break;
 				}
 		}
@@ -974,56 +1056,61 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 			needle_start_y = y;
 		}
 
-		// Set the needle end point depending on the orientation of the hud item.
+		radius = hud_speed2_radius->value * hud_speed2_scale->value;
 
+		// Set the needle end point depending on the orientation of the hud item.
 		switch((int)hud_speed2_orientation->value)
 		{
 			case HUD_SPEED2_ORIENTATION_LEFT :
 				{
-					needle_end_x = x - hud_speed2_radius->value * sin (needle_angle);
-					needle_end_y = y + hud_speed2_radius->value * cos (needle_angle);
+					needle_end_x = x - radius * sin (needle_angle);
+					needle_end_y = y + radius * cos (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_RIGHT :
 				{
-					needle_end_x = x + hud_speed2_radius->value * sin (needle_angle);
-					needle_end_y = y - hud_speed2_radius->value * cos (needle_angle);
+					needle_end_x = x + radius * sin (needle_angle);
+					needle_end_y = y - radius * cos (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_DOWN :
 				{
-					needle_end_x = x + hud_speed2_radius->value * cos (needle_angle);
-					needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
+					needle_end_x = x + radius * cos (needle_angle);
+					needle_end_y = y + radius * sin (needle_angle);
 					break;
 				}
 			case HUD_SPEED2_ORIENTATION_UP :
 			default :
 				{
-					needle_end_x = x - hud_speed2_radius->value * cos (needle_angle);
-					needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
+					needle_end_x = x - radius * cos (needle_angle);
+					needle_end_y = y - radius * sin (needle_angle);
 					break;
 				}
 		}
 
 		// Draw the speed-o-meter background.
-		Draw_AlphaPieSlice (x, y,				// Position
-				hud_speed2_radius->value,			// Radius
-				circle_startangle,					// Start angle
-				circle_endangle - needle_angle,		// End angle
-				1,									// Thickness
-				true,								// Fill
-				color1,								// Color
-				hud_speed2_opacity->value);			// Opacity
+		Draw_AlphaPieSlice (
+			x, y,                            // Position
+			radius,                          // Radius
+			circle_startangle,               // Start angle
+			circle_endangle - needle_angle,  // End angle
+			1,                               // Thickness
+			true,                            // Fill
+			color1,                          // Color
+			hud_speed2_opacity->value        // Opacity
+		);
 
 		// Draw a pie slice that shows the "color" of the speed.
-		Draw_AlphaPieSlice (x, y,				// Position
-				hud_speed2_radius->value,			// Radius
-				circle_endangle - needle_angle,		// Start angle
-				circle_endangle,					// End angle
-				1,									// Thickness
-				true,								// Fill
-				color2,								// Color
-				hud_speed2_opacity->value);			// Opacity
+		Draw_AlphaPieSlice(
+			x, y,                               // Position
+			radius,                             // Radius
+			circle_endangle - needle_angle,     // Start angle
+			circle_endangle,                    // End angle
+			1,                                  // Thickness
+			true,                               // Fill
+			color2,                             // Color
+			hud_speed2_opacity->value           // Opacity
+		);
 
 		// Draw the "needle attachment" circle.
 		Draw_AlphaCircle (x, y, 2.0, 1, true, 15, hud_speed2_opacity->value);
@@ -1032,7 +1119,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_AlphaLineRGB (needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, RGBA_TO_COLOR(250, 250, 250, 255 * hud_speed2_opacity->value));
 
 		// Draw the speed.
-		Draw_String (text_x, text_y, va("%d", player_speed));
+		Draw_SString (text_x, text_y, va("%d", player_speed), hud_speed2_scale->value);
 	}
 }
 
@@ -1631,7 +1718,7 @@ void SCR_HUD_DrawArmorIcon(hud_t *hud)
 // face
 void SCR_HUD_DrawFace(hud_t *hud)
 {
-	extern mpic_t  *sb_faces[7][2]; // 0 is gibbed, 1 is dead, 2-6 are alive
+	extern mpic_t  *sb_faces[5][2]; // 0 is dead, 1-4 is alive
 	// 0 is static, 1 is temporary animation
 	extern mpic_t  *sb_face_invis;
 	extern mpic_t  *sb_face_quad;
@@ -2241,35 +2328,6 @@ static void SCR_HUD_Groups_Draw(hud_t *hud)
 	SCR_HUD_DrawGroup(hud, width[idx]->value, height[idx]->value, hud_group_pics[idx], pic_scalemode[idx]->value, pic_alpha[idx]->value);
 }
 
-// player sorting
-// for frags and players
-typedef struct sort_teams_info_s
-{
-	char *name;
-	int  frags;
-	int  min_ping;
-	int  avg_ping;
-	int  max_ping;
-	int  nplayers;
-	int  top, bottom;   // leader colours
-	int  rlcount;		// Number of RL's present in the team. (Cokeman 2006-05-27)
-}
-sort_teams_info_t;
-
-typedef struct sort_players_info_s
-{
-	int playernum;
-	sort_teams_info_t *team;
-}
-sort_players_info_t;
-
-static sort_players_info_t		sorted_players[MAX_CLIENTS];
-static sort_teams_info_t		sorted_teams[MAX_CLIENTS];
-static int						n_teams;
-static int						n_players;
-static int						n_spectators;
-static int						sort_teamsort = 0;
-
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
 	const sort_players_info_t *p1 = vp1;
@@ -2279,39 +2337,35 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 	player_info_t *i1 = &cl.players[p1->playernum];
 	player_info_t *i2 = &cl.players[p2->playernum];
 
-	if (i1->spectator && !i2->spectator)
-	{
+	if (i1->spectator && !i2->spectator) {
 		r = -1;
 	}
-	else if (!i1->spectator && i2->spectator)
-	{
+	else if (!i1->spectator && i2->spectator) {
 		r = 1;
 	}
-	else if (i1->spectator && i2->spectator)
-	{
+	else if (i1->spectator && i2->spectator) {
 		r = strcmp(i1->name, i2->name);
 	}
-	else
-	{
+	else {
 		//
 		// Both are players.
 		//
-		if(sort_teamsort && cl.teamplay && p1->team && p2->team)
-		{
+		if ((hud_sortrules_playersort.integer & 2) && cl.teamplay && p1->team && p2->team) {
 			// Leading team on top, sort players inside of the teams.
 
 			// Teamsort 1, first sort on team frags.
-			if (sort_teamsort == 1)
-			{
+			if (hud_sortrules_teamsort.integer == 1) {
 				r = p1->team->frags - p2->team->frags;
 			}
 
-			// Teamsort == 2, sort on team name only.
-			r = (r == 0) ? -strcmp(p1->team->name, p2->team->name) : r;
+			// sort on team name only.
+			r = (r == 0) ? -strcasecmp(p1->team->name, p2->team->name) : r;
 		}
 
-		r = (r == 0) ? i1->frags - i2->frags : r;
-		r = (r == 0) ? strcmp(i1->name, i2->name) : r;
+		if (hud_sortrules_playersort.integer & 1) {
+			r = (r == 0) ? i1->frags - i2->frags : r;
+		}
+		r = (r == 0) ? -strcasecmp(i1->name, i2->name) : r;
 	}
 
 	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
@@ -2327,8 +2381,10 @@ static int HUD_CompareTeams(const void *vt1, const void *vt2)
 	const sort_teams_info_t *t1 = vt1;
 	const sort_teams_info_t *t2 = vt2;
 
-	r = (t1->frags - t2->frags);
-	r = !r ? strcmp(t1->name, t2->name) : r;
+	if (hud_sortrules_teamsort.integer == 1) {
+		r = (t1->frags - t2->frags);
+	}
+	r = !r ? -strcasecmp(t1->name, t2->name) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
@@ -2345,44 +2401,55 @@ static void HUD_Sort_Scoreboard(int flags)
 {
 	int i;
 	int team;
+	int active_player = -1;
+	
+	active_player_position = -1;
+	active_team_position = -1;
 
 	n_teams = 0;
 	n_players = 0;
 	n_spectators = 0;
 
+	// This taken from score_bar logic
+	if (cls.demoplayback && !cl.spectator && !cls.mvdplayback) {
+		active_player = cl.playernum;
+	}
+	else if ((cls.demoplayback || cl.spectator) && Cam_TrackNum() >= 0) {
+		active_player = spec_track;
+	}
+	else {
+		active_player = cl.playernum;
+	}
+
 	// Set team properties.
-	if(flags & HUD_SCOREBOARD_UPDATE)
-	{
+	if (flags & HUD_SCOREBOARD_UPDATE) {
 		memset(sorted_teams, 0, sizeof(sorted_teams));
 
-		for (i=0; i < MAX_CLIENTS; i++)
-		{
-			if (cl.players[i].name[0] && !cl.players[i].spectator)
-			{
+		for (i=0; i < MAX_CLIENTS; i++) {
+			if (cl.players[i].name[0] && !cl.players[i].spectator) {
 				// Find players team
-				for (team = 0; team < n_teams; team++)
-				{
-					if (!strcmp(cl.players[i].team, sorted_teams[team].name)
-							&& sorted_teams[team].name[0])
-					{
+				for (team = 0; team < n_teams; team++) {
+					if (cl.teamplay && !strcmp(cl.players[i].team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
+						break;
+					}
+					if (!cl.teamplay && !strcmp(cl.players[i].name, sorted_teams[team].name) && sorted_teams[team].name[0]) {
 						break;
 					}
 				}
 
 				// The team wasn't found in the list of existing teams
 				// so add a new team.
-				if (team == n_teams)
-				{
+				if (team == n_teams) {
 					team = n_teams++;
-					sorted_teams[team].avg_ping = 0;
-					sorted_teams[team].max_ping = 0;
 					sorted_teams[team].min_ping = 999;
-					sorted_teams[team].nplayers = 0;
-					sorted_teams[team].frags = 0;
 					sorted_teams[team].top = Sbar_TopColor(&cl.players[i]);
 					sorted_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
-					sorted_teams[team].name = cl.players[i].team;
-					sorted_teams[team].rlcount = 0;
+					if (cl.teamplay) {
+						sorted_teams[team].name = cl.players[i].team;
+					}
+					else {
+						sorted_teams[team].name = cl.players[i].name;
+					}
 				}
 
 				sorted_teams[team].nplayers++;
@@ -2390,24 +2457,52 @@ static void HUD_Sort_Scoreboard(int flags)
 				sorted_teams[team].avg_ping += cl.players[i].ping;
 				sorted_teams[team].min_ping = min(sorted_teams[team].min_ping, cl.players[i].ping);
 				sorted_teams[team].max_ping = max(sorted_teams[team].max_ping, cl.players[i].ping);
+				sorted_teams[team].stack += SCR_HUD_TotalStrength(cl.players[i].stats[STAT_HEALTH], cl.players[i].stats[STAT_ARMOR], SCR_HUD_ArmorType(cl.players[i].stats[STAT_ITEMS]));
 
 				// The total RL count for the players team.
-				if(cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
-				{
+				if (cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
 					sorted_teams[team].rlcount++;
+				}
+				if (cl.players[i].stats[STAT_ITEMS] & IT_LIGHTNING) {
+					sorted_teams[team].lgcount++;
+				}
+				if (cl.players[i].stats[STAT_ITEMS] & (IT_ROCKET_LAUNCHER | IT_LIGHTNING)) {
+					sorted_teams[team].weapcount++;
+				}
+
+				if (cls.mvdplayback) {
+					mvd_new_info_t* stats = MVD_StatsForPlayer(&cl.players[i]);
+					sort_teams_info_t* t = &sorted_teams[team];
+
+					if (stats) {
+						t->quads_taken += stats->mvdinfo.itemstats[QUAD_INFO].count;
+						t->pents_taken += stats->mvdinfo.itemstats[PENT_INFO].count;
+						t->rings_taken += stats->mvdinfo.itemstats[RING_INFO].count;
+						t->ga_taken += stats->mvdinfo.itemstats[GA_INFO].count;
+						t->ya_taken += stats->mvdinfo.itemstats[YA_INFO].count;
+						t->ra_taken += stats->mvdinfo.itemstats[RA_INFO].count;
+						t->mh_taken += stats->mvdinfo.itemstats[MH_INFO].count;
+						t->q_lasttime = max(t->q_lasttime, stats->mvdinfo.itemstats[QUAD_INFO].starttime);
+						t->p_lasttime = max(t->p_lasttime, stats->mvdinfo.itemstats[PENT_INFO].starttime);
+						t->r_lasttime = max(t->r_lasttime, stats->mvdinfo.itemstats[RING_INFO].starttime);
+						t->ga_lasttime = max(t->ga_lasttime, stats->mvdinfo.itemstats[GA_INFO].starttime);
+						t->ya_lasttime = max(t->ya_lasttime, stats->mvdinfo.itemstats[YA_INFO].starttime);
+						t->ra_lasttime = max(t->ra_lasttime, stats->mvdinfo.itemstats[RA_INFO].starttime);
+						t->mh_lasttime = max(t->mh_lasttime, stats->mvdinfo.itemstats[MH_INFO].starttime);
+					}
 				}
 
 				// Set player data.
 				sorted_players[n_players + n_spectators].playernum = i;
-				//sorted_players[n_players + n_spectators].team = &sorted_teams[team];
+				if (i == active_player && !cl.players[i].spectator) {
+					active_player_position = n_players + n_spectators;
+				}
 
 				// Increase the count.
-				if (cl.players[i].spectator)
-				{
+				if (cl.players[i].spectator) {
 					n_spectators++;
 				}
-				else
-				{
+				else {
 					n_players++;
 				}
 			}
@@ -2415,33 +2510,49 @@ static void HUD_Sort_Scoreboard(int flags)
 	}
 
 	// Calc avg ping.
-	if(flags & HUD_SCOREBOARD_AVG_PING)
-	{
-		for (team = 0; team < n_teams; team++)
-		{
+	if (flags & HUD_SCOREBOARD_AVG_PING) {
+		for (team = 0; team < n_teams; team++) {
 			sorted_teams[team].avg_ping /= sorted_teams[team].nplayers;
 		}
 	}
 
 	// Sort teams.
-	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
-	{
+	if (flags & HUD_SCOREBOARD_SORT_TEAMS) {
+		active_team_position = -1;
+
 		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
+
+		// if set, need to make sure that the player's team is first or second position
+		if (hud_sortrules_includeself.integer && active_player_position >= 0) {
+			player_info_t *player = &cl.players[sorted_players[active_player_position].playernum];
+			sorted_players[active_player_position].team = NULL;
+
+			// Find players team.
+			for (team = 0; team < n_teams; team++) {
+				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
+					if (hud_sortrules_includeself.integer == 2 && team != 0) {
+						sort_teams_info_t temp = sorted_teams[0];
+						sorted_teams[0] = sorted_teams[team];
+						sorted_teams[team] = temp;
+					}
+					break;
+				}
+			}
+		}
 
 		// BUGFIX, this needs to happen AFTER the team array has been sorted, otherwise the
 		// players might be pointing to the incorrect team adress.
-		for (i = 0; i < MAX_CLIENTS; i++)
-		{
+		for (i = 0; i < MAX_CLIENTS; i++) {
 			player_info_t *player = &cl.players[sorted_players[i].playernum];
 			sorted_players[i].team = NULL;
 
 			// Find players team.
-			for (team = 0; team < n_teams; team++)
-			{
-				if (!strcmp(player->team, sorted_teams[team].name)
-						&& sorted_teams[team].name[0])
-				{
+			for (team = 0; team < n_teams; team++) {
+				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
 					sorted_players[i].team = &sorted_teams[team];
+					if (sorted_players[i].playernum == active_player) {
+						active_team_position = team;
+					}
 					break;
 				}
 			}
@@ -2449,28 +2560,41 @@ static void HUD_Sort_Scoreboard(int flags)
 	}
 
 	// Sort players.
-	if(flags & HUD_SCOREBOARD_SORT_PLAYERS)
-	{
+	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
+
+		if (hud_sortrules_includeself.integer) {
+			// Re-find player
+			active_player_position = -1;
+			for (i = 0; i < n_players + n_spectators; ++i) {
+				if (sorted_players[i].playernum == active_player) {
+					if (hud_sortrules_includeself.integer == 2 && i > 0) {
+						sort_players_info_t temp = sorted_players[1];
+						sorted_players[1] = sorted_players[i];
+						sorted_players[i] = temp;
+					}
+					active_player_position = i;
+				}
+			}
+		}
 	}
 }
 
 void Frags_DrawColors(int x, int y, int width, int height,
 		int top_color, int bottom_color, float color_alpha,
 		int frags, int drawBrackets, int style,
-		float bignum)
+		float bignum, float scale)
 {
 	char buf[32];
 	int posy = 0;
-	int char_size = (bignum > 0) ? Q_rint(24 * bignum) : 8;
+	int char_size = (bignum > 0) ? Q_rint(24 * bignum) : 8 * scale;
 
 	Draw_AlphaFill(x, y, width, height / 2, top_color, color_alpha);
 	Draw_AlphaFill(x, y + height / 2, width, height - height / 2, bottom_color, color_alpha);
 
 	posy = y + (height - char_size) / 2;
 
-	if (bignum > 0)
-	{
+	if (bignum > 0) {
 		//
 		// Scaled big numbers for frags.
 		//
@@ -2485,13 +2609,11 @@ void Frags_DrawColors(int x, int y, int width, int height,
 
 		while (*t)
 		{
-			if (*t >= '0' && *t <= '9')
-			{
+			if (*t >= '0' && *t <= '9') {
 				Draw_STransPic(char_x, char_y, sb_nums[0][*t - '0'], bignum);
 				char_x += char_size;
 			}
-			else if (*t == '-')
-			{
+			else if (*t == '-') {
 				Draw_STransPic(char_x, char_y, sb_nums[0][STAT_MINUS], bignum);
 				char_x += char_size;
 			}
@@ -2499,24 +2621,22 @@ void Frags_DrawColors(int x, int y, int width, int height,
 			t++;
 		}
 	}
-	else
-	{
+	else {
 		// Normal text size.
 		snprintf(buf, sizeof (buf), "%3d", frags);
-		Draw_String(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf);
+		Draw_SString(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf, scale);
 	}
 
-	if(drawBrackets)
-	{
+	if (drawBrackets && width) {
 		// Brackets [] are not available scaled, so use normal size even
 		// if we're drawing big frag nums.
-		int brack_posy = y + (height - 8) / 2;
+		int brack_posy = y + (height - 8 * scale) / 2;
 		int d = (width >= 32) ? 0 : 1;
 
 		switch(style)
 		{
 			case 1 :
-				Draw_Character(x - 8, posy, 13);
+				Draw_SCharacter(x - 8, posy, 13, scale);
 				break;
 			case 2 :
 				// Red outline.
@@ -2527,23 +2647,263 @@ void Frags_DrawColors(int x, int y, int width, int height,
 				break;
 			case 0 :
 			default :
-				Draw_Character(x - 2 - 2 * d, brack_posy, 16); // [
-				Draw_Character(x + width - 8 + 1 + d, brack_posy, 17); // ]
+				Draw_SCharacter(x - 2 - 2 * d, brack_posy, 16, scale); // [
+				Draw_SCharacter(x + width - 8 + 1 + d, brack_posy, 17, scale); // ]
 				break;
 		}
 	}
 }
-
-#define	FRAGS_HEALTHBAR_WIDTH			5
 
 #define FRAGS_HEALTHBAR_NORMAL_COLOR	75
 #define FRAGS_HEALTHBAR_MEGA_COLOR		251
 #define	FRAGS_HEALTHBAR_TWO_MEGA_COLOR	238
 #define	FRAGS_HEALTHBAR_UNNATURAL_COLOR	144
 
-void Frags_DrawHealthBar(int original_health, int x, int y, int height, int width)
+float SCR_HUD_TotalStrength (float health, float armorValue, float armorType)
 {
-	float health_height = 0.0;
+	return max (0, min (
+		health / (1 - armorType),
+		health + armorValue
+	) );
+}
+
+float SCR_HUD_ArmorType(int items)
+{
+	if (items & IT_INVULNERABILITY) {
+		return 0.99f;
+	}
+	else if (items & IT_ARMOR3) {
+		return 0.8f;
+	}
+	else if (items & IT_ARMOR2) {
+		return 0.6f;
+	}
+	else if (items & IT_ARMOR1) {
+		return 0.3f;
+	}
+	return 0.0f;
+}
+
+void Frags_DrawHorizontalHealthBar(player_info_t* info, int x, int y, int width, int height, qbool flip, qbool use_power)
+{
+	static cvar_t* health_color_nohealth = NULL;
+	static cvar_t* health_color_normal = NULL;
+	static cvar_t* health_color_mega = NULL;
+	static cvar_t* health_color_twomega = NULL;
+	static cvar_t* health_color_unnatural = NULL;
+	static cvar_t* armor_color_noarmor = NULL;
+	static cvar_t* armor_color_ga = NULL;
+	static cvar_t* armor_color_ya = NULL;
+	static cvar_t* armor_color_ra = NULL;
+	static cvar_t* armor_color_unnatural = NULL;
+
+	int armor = info->stats[STAT_ARMOR];
+	int items = info->stats[STAT_ITEMS];
+	int health;
+	int true_health = info->stats[STAT_HEALTH];
+	float max_health = (use_power ? 450 : 250);
+	float max_armor = 200;
+	float armorType;
+	float health_width, armor_width;
+	float max_health_width, max_health_value;
+	int health_height = (height * 3) / 4;
+	int armor_height = height - health_height;
+	color_t armor_color = 0;
+	color_t health_color = 0;
+	double now = (cls.mvdplayback ? cls.demotime : cl.time);
+	qbool prewar = cl.standby || cl.countdown;
+
+	float drop_wait_time = 3.0f;
+	float drop_speed = 300.0f;
+
+	byte* bk;
+	color_t border_color;
+
+	// Use other hud elements to get range of colours
+	if (health_color_nohealth == NULL) {
+		health_color_nohealth = Cvar_Find("hud_bar_health_color_nohealth");
+		health_color_normal = Cvar_Find("hud_bar_health_color_normal");
+		health_color_mega = Cvar_Find("hud_bar_health_color_mega");
+		health_color_twomega = Cvar_Find("hud_bar_health_color_twomega");
+		health_color_unnatural = Cvar_Find("hud_bar_health_color_unnatural");
+
+		armor_color_noarmor = Cvar_Find("hud_bar_armor_color_noarmor");
+		armor_color_ga = Cvar_Find("hud_bar_armor_color_ga");
+		armor_color_ya = Cvar_Find("hud_bar_armor_color_ya");
+		armor_color_ra = Cvar_Find("hud_bar_armor_color_ra");
+		armor_color_unnatural = Cvar_Find("hud_bar_armor_color_unnatural");
+	}
+
+	bk = (byte*) &health_color_nohealth->color;
+	border_color = RGBA_TO_COLOR(
+		max(bk[0], 24) - 24,
+		max(bk[1], 24) - 24,
+		max(bk[2], 24) - 24,
+		min(bk[3], 128) + 127
+	);
+
+	if (health_color_nohealth == NULL || armor_color_noarmor == NULL) {
+		return;
+	}
+
+	// work out colours
+	armorType = true_health >= 1 ? SCR_HUD_ArmorType(items) : 0;
+	if (items & IT_INVULNERABILITY && true_health >= 1) {
+		armor_color = RGBAVECT_TO_COLOR(armor_color_unnatural->color);
+	}
+	else if (items & IT_ARMOR3 && true_health >= 1) {
+		armor_color = RGBAVECT_TO_COLOR(armor_color_ra->color);
+		max_armor = 200;
+	}
+	else if (items & IT_ARMOR2 && true_health >= 1) {
+		armor_color = RGBAVECT_TO_COLOR(armor_color_ya->color);
+		max_armor = 150;
+	}
+	else if (items & IT_ARMOR1 && true_health >= 1) {
+		armor_color = RGBAVECT_TO_COLOR(armor_color_ga->color);
+		max_armor = 100;
+	}
+
+	if (use_power) {
+		health = prewar ? 0 : SCR_HUD_TotalStrength(true_health, armor, armorType);
+		if (health <= 110) {
+			health_color = RGBAVECT_TO_COLOR(health_color_normal->color);
+		}
+		else if (health <= 220) {
+			health_color = RGBAVECT_TO_COLOR(health_color_mega->color);
+		}
+		else if (health <= 450) {
+			health_color = RGBAVECT_TO_COLOR(health_color_twomega->color);
+		}
+		else {
+			health_color = RGBAVECT_TO_COLOR(health_color_unnatural->color);
+		}
+	}
+	else {
+		health = prewar ? 0 : true_health;
+		if (health <= 100) {
+			health_color = RGBAVECT_TO_COLOR(health_color_normal->color);
+		}
+		else if (health <= 200) {
+			health_color = RGBAVECT_TO_COLOR(health_color_mega->color);
+		}
+		else if (health <= 250) {
+			health_color = RGBAVECT_TO_COLOR(health_color_twomega->color);
+		}
+		else {
+			health_color = RGBAVECT_TO_COLOR(health_color_unnatural->color);
+		}
+	}
+
+	// Background
+	Draw_AlphaRectangleRGB(x, y, width, health_height, 1.0, false, border_color);
+	Draw_AlphaFillRGB(x, y + health_height, width, armor_height, RGBAVECT_TO_COLOR(armor_color_noarmor->color));
+	x += 1;
+	width -= 2;
+	y += 1;
+	health_height -= 2;
+	Draw_AlphaFillRGB(x, y, width, health_height, RGBAVECT_TO_COLOR(health_color_nohealth->color));
+
+	// Calculate figures
+	health = min(health, max_health);
+	if (info->prev_health > health && info->prev_health > 0) {
+		// Decrease health bar to current health
+		double dropTime = now - info->prev_health_last_set;
+		int new_health = health;
+
+		health = max(health, info->prev_health - dropTime * drop_speed);
+		if (health == new_health) {
+			info->prev_health = health;
+			info->prev_health_last_set = now;
+		}
+	}
+	else if (info->prev_health < health && info->prev_health > 0) {
+		// Increase health bar to current health
+		double dropTime = now - info->prev_health_last_set;
+		int new_health = health;
+
+		health = min(health, info->prev_health + dropTime * drop_speed);
+		if (health == new_health) {
+			info->prev_health = health;
+			info->prev_health_last_set = now;
+		}
+	}
+	else {
+		info->prev_health = (prewar && health == max_health ? 0 : health);
+		info->prev_health_last_set = now;
+	}
+
+	// Decrease the maximum health
+	max_health_value = min(info->max_health, max_health);
+	if (info->max_health_last_set && info->max_health_last_set < now - drop_wait_time) {
+		double dropTime = now - info->max_health_last_set - drop_wait_time;
+
+		if (health < info->max_health && info->prev_health > 0) {
+			max_health_value = max(health, info->max_health - dropTime * drop_speed);
+			if (max_health_value == health) {
+				info->max_health = max_health_value = health;
+				info->max_health_last_set = 0;
+			}
+		}
+		else {
+			info->max_health = max_health_value = (prewar ? 0 : health);
+			info->max_health_last_set = 0;
+		}
+	}
+	else if (health >= info->max_health) {
+		info->max_health = (prewar ? 0 : health);
+		info->max_health_last_set = 0;
+	}
+	else if (health < info->prev_health && !cls.mvdplayback) {
+		info->max_health_last_set = now;
+	}
+	else if (prewar) {
+		info->max_health = max_health_value = 0;
+	}
+
+	// Draw a health bar.
+	health_width = prewar ? width : Q_rint((width / max_health) * health);
+	health_width = (health_width > 0.0 && health_width < 1.0) ? 1 : health_width;
+	health_width = max(health_width, 0);
+
+	armor = min(armor, max_armor);
+	armor_width = Q_rint((width / max_armor) * armor);
+	armor_width = (armor_width > 0.0 && armor_width < 1.0) ? 1 : armor_width;
+	armor_width = max(armor_width, 0);
+
+	max_health_width = 0;
+	if (info->max_health_last_set && health < max_health_value) {
+		max_health_width = Q_rint((width / max_health) * max_health_value);
+		max_health_width -= health_width;
+		max_health_width = (max_health_width > 0.0 && max_health_width < 1.0) ? 1 : max_health_width;
+		max_health_width = max(max_health_width, 0);
+	}
+
+	if (flip) {
+		Draw_AlphaFillRGB(x + width - (int)health_width, y, health_width, health_height, health_color);
+		if (max_health_width) {
+			Draw_AlphaFillRGB(x + width - (int)health_width - (int)max_health_width, y, max_health_width, health_height, RGBA_TO_COLOR(255, 0, 0, 128));
+		}
+
+		if (armor_width > 0 && health > 0) {
+			Draw_AlphaFillRGB(x + width - (int)armor_width, y + health_height, armor_width, armor_height, armor_color);
+		}
+	}
+	else {
+		Draw_AlphaFillRGB(x, y, health_width, health_height, health_color);
+		if (max_health_width) {
+			Draw_AlphaFillRGB(x + health_width, y, max_health_width, health_height, RGBA_TO_COLOR(255, 0, 0, 128));
+		}
+
+		Draw_AlphaFillRGB(x, y + health_height, width, armor_height, RGBAVECT_TO_COLOR(armor_color_noarmor->color));
+		if (armor_width > 0 && health > 0) {
+			Draw_AlphaFillRGB(x, y + health_height, armor_width, armor_height, armor_color);
+		}
+	}
+}
+
+void Frags_DrawHealthBar(int original_health, int x, int y, int height, int width, qbool horizontal, qbool flip)
+{
 	int health;
 
 	// Get the health.
@@ -2551,28 +2911,42 @@ void Frags_DrawHealthBar(int original_health, int x, int y, int height, int widt
 	health = min(100, health);
 
 	// Draw a health bar.
-	health_height = Q_rint((height / 100.0) * health);
-	health_height = (health_height > 0.0 && health_height < 1.0) ? 1 : health_height;
-	health_height = (health_height < 0.0) ? 0.0 : health_height;
-	Draw_Fill(x, y + height - (int)health_height, 3, (int)health_height, FRAGS_HEALTHBAR_NORMAL_COLOR);
+	if (horizontal) {
+		float health_width = Q_rint((width / 100.0) * health);
+		health_width = (health_width > 0.0 && health_width < 1.0) ? 1 : health_width;
+		health_width = (health_width < 0.0) ? 0.0 : health_width;
 
-	// Get the health again to check if health is more than 100.
-	health = original_health;
-	if(health > 100 && health <= 200)
-	{
-		health_height = (int)Q_rint((height / 100.0) * (health - 100));
-		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_MEGA_COLOR);
+		if (flip) {
+			Draw_Fill(x + width - (int)health_width, y, health_width, (height * 3) / 4, FRAGS_HEALTHBAR_NORMAL_COLOR);
+		}
+		else {
+			Draw_Fill(x, y, x + (int)health_width, (height * 3) / 4, FRAGS_HEALTHBAR_NORMAL_COLOR);
+		}
 	}
-	else if(health > 200 && health <= 250)
-	{
-		health_height = (int)Q_rint((height / 100.0) * (health - 200));
-		Draw_Fill(x, y, width, height, FRAGS_HEALTHBAR_MEGA_COLOR);
-		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_TWO_MEGA_COLOR);
-	}
-	else if(health > 250)
-	{
-		// This will never happen during a normal game.
-		Draw_Fill(x, y, width, health_height, FRAGS_HEALTHBAR_UNNATURAL_COLOR);
+	else {
+		float health_height = Q_rint((height / 100.0) * health);
+		health_height = (health_height > 0.0 && health_height < 1.0) ? 1 : health_height;
+		health_height = (health_height < 0.0) ? 0.0 : health_height;
+		Draw_Fill(x, y + height - (int)health_height, 3, (int)health_height, FRAGS_HEALTHBAR_NORMAL_COLOR);
+
+		// Get the health again to check if health is more than 100.
+		health = original_health;
+		if(health > 100 && health <= 200)
+		{
+			float health_height = (int)Q_rint((height / 100.0) * (health - 100));
+			Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_MEGA_COLOR);
+		}
+		else if(health > 200 && health <= 250)
+		{
+			float health_height = (int)Q_rint((height / 100.0) * (health - 200));
+			Draw_Fill(x, y, width, height, FRAGS_HEALTHBAR_MEGA_COLOR);
+			Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_TWO_MEGA_COLOR);
+		}
+		else if(health > 250)
+		{
+			// This will never happen during a normal game.
+			Draw_Fill(x, y, width, health_height, FRAGS_HEALTHBAR_UNNATURAL_COLOR);
+		}
 	}
 }
 
@@ -2666,6 +3040,8 @@ static qbool hud_frags_show_armor		= true;
 static qbool hud_frags_show_health		= true;
 static qbool hud_frags_show_powerup		= true;
 static qbool hud_frags_textonly			= false;
+static qbool hud_frags_horiz_health     = false;
+static qbool hud_frags_horiz_power      = false;
 
 void Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s, qbool *cancel)
 {
@@ -2675,6 +3051,8 @@ void Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s, qbool *cancel)
 	hud_frags_show_health	= Utils_RegExpMatch("HEALTH|ALL",	s);
 	hud_frags_show_powerup	= Utils_RegExpMatch("POWERUP|ALL",	s);
 	hud_frags_textonly		= Utils_RegExpMatch("TEXT",			s);
+	hud_frags_horiz_health  = Utils_RegExpMatch("HMETER",       s);
+	hud_frags_horiz_power   = Utils_RegExpMatch("PMETER",       s);
 
 	hud_frags_extra_spec_info = (hud_frags_show_rl || hud_frags_show_armor || hud_frags_show_health || hud_frags_show_powerup);
 }
@@ -2691,8 +3069,7 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	int		armor = 0;
 	int		armor_bg_color = 0;
 	float	armor_bg_power = 0;
-	int		health_spacing = 1;
-	int		weapon_width = 24;
+	int		weapon_width = 0;
 
 	// Only allow this for spectators.
 	if (!(cls.demoplayback || cl.spectator))
@@ -2701,13 +3078,15 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	}
 
 	// Set width based on text or picture.
-	weapon_width = hud_frags_textonly ? rl_picture->width : 24;
+	if (hud_frags_show_armor || hud_frags_show_rl || hud_frags_show_powerup) {
+		weapon_width = (!hud_frags_textonly ? rl_picture->width : 24);
+	}
 
 	// Draw health bar. (flipped)
 	if(flip && hud_frags_show_health)
 	{
-		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
-		px += 3 + health_spacing;
+		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3, false, false);
+		px += 3 + FRAGS_HEALTH_SPACING;
 	}
 
 	armor = info->stats[STAT_ARMOR];
@@ -2764,7 +3143,6 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	// Only draw powerups is the current player has it and the style allows it.
 	if(hud_frags_show_powerup)
 	{
-
 		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
 		float powerups_x = px + (weapon_width / 2.0);
 
@@ -2803,13 +3181,13 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 		}
 	}
 
-	px += weapon_width + health_spacing;
+	px += weapon_width + FRAGS_HEALTH_SPACING;
 
 	// Draw health bar. (not flipped)
 	if(!flip && hud_frags_show_health)
 	{
-		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
-		px += 3 + health_spacing;
+		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3, false, false);
+		px += 3 + FRAGS_HEALTH_SPACING;
 	}
 
 	return px;
@@ -2842,7 +3220,7 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 
 	Draw_AlphaFill(px - 1, py - space_y / 2, bg_width, cell_height + space_y, bg_color, bg_alpha);
 
-	if(drawBrackets && (style == 5 || style == 6))
+	if (drawBrackets && (style == 5 || style == 6))
 	{
 		Draw_Fill(px - 1, py - 1 - space_y / 2, bg_width, 1, 0x4f);
 
@@ -2859,67 +3237,61 @@ int Frags_DrawText(int px, int py,
 		int max_name_length, int max_team_length,
 		int flip, int pad,
 		int shownames, int showteams,
-		char* name, char* team)
+		char* name, char* team, float scale)
 {
-	char _name[MAX_SCOREBOARDNAME + 1];
-	char _team[MAX_SCOREBOARDNAME + 1];
+	char _name[MAX_FRAGS_NAME + 1];
+	char _team[MAX_FRAGS_NAME + 1];
 	int team_length = 0;
 	int name_length = 0;
-	int char_size = 8;
+	float char_size = 8 * scale;
 	int y_pos;
 
-	y_pos = Q_rint(py + (cell_height / 2.0) - 4);
+	y_pos = Q_rint(py + (cell_height / 2.0) - 4 * scale);
 
 	// Draw team
-	if(showteams && cl.teamplay)
-	{
+	if (showteams && cl.teamplay) {
 		strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
 		team_length = strlen(_team);
 
-		if(!flip)
+		if (!flip) {
 			px += space_x;
+		}
 
-		if(pad && flip)
-		{
+		if (pad && flip) {
 			px += (max_team_length - team_length) * char_size;
-			Draw_String(px, y_pos, _team);
+			Draw_SString(px, y_pos, _team, scale);
 			px += team_length * char_size;
 		}
-		else if(pad)
-		{
-			Draw_String(px, y_pos, _team);
+		else if (pad) {
+			Draw_SString(px, y_pos, _team, scale);
 			px += max_team_length * char_size;
 		}
-		else
-		{
-			Draw_String(px, y_pos, _team);
+		else {
+			Draw_SString(px, y_pos, _team, scale);
 			px += team_length * char_size;
 		}
 
-		if(flip)
+		if (flip) {
 			px += space_x;
+		}
 	}
 
-	if(shownames)
-	{
+	if (shownames) {
 		// Draw name
 		strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
 		name_length = strlen(_name);
 
-		if(flip && pad)
-		{
+		if (flip && pad) {
 			px += (max_name_length - name_length) * char_size;
-			Draw_String(px, y_pos, _name);
+			Draw_SString(px, y_pos, _name, scale);
 			px += name_length * char_size;
 		}
-		else if(pad)
-		{
-			Draw_String(px, y_pos, _name);
+		else if (pad) {
+			Draw_SString(px, y_pos, _name, scale);
 			px += max_name_length * char_size;
 		}
-		else
-		{
-			Draw_String(px, y_pos, _name);
+		else {
+			Draw_SString(px, y_pos, _name, scale);
 			px += name_length * char_size;
 		}
 
@@ -2938,6 +3310,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 	int rows, cols, cell_width, cell_height, space_x, space_y;
 	int a_rows, a_cols; // actual
+	qbool any_labels_or_info;
+	qbool two_lines;
 
 	static cvar_t
 		*hud_frags_cell_width = NULL,
@@ -2948,25 +3322,24 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_space_y,
 		*hud_frags_vertical,
 		*hud_frags_strip,
-		*hud_frags_teamsort,
 		*hud_frags_shownames,
 		*hud_frags_teams,
 		*hud_frags_padtext,
-		*hud_frags_showself,
 		*hud_frags_extra_spec,
 		*hud_frags_fliptext,
 		*hud_frags_style,
 		*hud_frags_bignum,
 		*hud_frags_colors_alpha,
 		*hud_frags_maxname,
-		*hud_frags_notintp;
+		*hud_frags_notintp,
+		*hud_frags_fixedwidth,
+		*hud_frags_scale;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
 	mpic_t *rl_picture;				 // Picture of RL.
 	rl_picture = sb_weapons[0][5];
 
-	if (hud_frags_cell_width == NULL)    // first time
-	{
+	if (hud_frags_cell_width == NULL) {   // first time
 		char specval[256];
 
 		hud_frags_cell_width    = HUD_FindVar(hud, "cell_width");
@@ -2975,13 +3348,11 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_cols          = HUD_FindVar(hud, "cols");
 		hud_frags_space_x       = HUD_FindVar(hud, "space_x");
 		hud_frags_space_y       = HUD_FindVar(hud, "space_y");
-		hud_frags_teamsort      = HUD_FindVar(hud, "teamsort");
 		hud_frags_strip         = HUD_FindVar(hud, "strip");
 		hud_frags_vertical      = HUD_FindVar(hud, "vertical");
 		hud_frags_shownames		= HUD_FindVar(hud, "shownames");
 		hud_frags_teams			= HUD_FindVar(hud, "showteams");
 		hud_frags_padtext		= HUD_FindVar(hud, "padtext");
-		hud_frags_showself		= HUD_FindVar(hud, "showself_always");
 		hud_frags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
@@ -2989,6 +3360,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
 		hud_frags_maxname		= HUD_FindVar(hud, "maxname");
 		hud_frags_notintp		= HUD_FindVar(hud, "notintp");
+		hud_frags_fixedwidth    = HUD_FindVar(hud, "fixedwidth");
+		hud_frags_scale         = HUD_FindVar(hud, "scale");
 
 		// Set the OnChange function for extra spec info.
 		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
@@ -2997,8 +3370,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 	}
 
 	// Don't draw the frags if we're in teamplay.
-	if(hud_frags_notintp->value && cl.teamplay)
-	{
+	if (hud_frags_notintp->value && cl.teamplay) {
 		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;
 	}
@@ -3015,93 +3387,97 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 		// Some users doesn't want to show the actual frags, just
 		// extra_spec_info stuff + names.
-		cell_width = hud_frags_cell_width->value;
+		cell_width = hud_frags_cell_width->value * hud_frags_scale->value;
 		clamp(cell_width, 0, 128);
 
-		cell_height = hud_frags_cell_height->value;
+		cell_height = hud_frags_cell_height->value * hud_frags_scale->value;
 		clamp(cell_height, 7, 32);
 
-		space_x = hud_frags_space_x->value;
+		space_x = hud_frags_space_x->value * hud_frags_scale->value;
 		clamp(space_x, 0, 128);
 
-		space_y = hud_frags_space_y->value;
+		space_y = hud_frags_space_y->value * hud_frags_scale->value;
 		clamp(space_y, 0, 128);
 	}
 
-	sort_teamsort = hud_frags_teamsort->integer;
-
-	if (hud_frags_strip->integer)
-	{
+	if (hud_frags_strip->integer) {
 		// Auto set the number of rows / cols based on the number of players.
 		// (This is kinda fucked up, but I won't mess with it for the sake of backwards compability).
-
-		if (hud_frags_vertical->value)
-		{
+		if (hud_frags_vertical->value) {
 			a_cols = min((n_players + rows - 1) / rows, cols);
 			a_rows = min(rows, n_players);
 		}
-		else
-		{
+		else {
 			a_rows = min((n_players + cols - 1) / cols, rows);
 			a_cols = min(cols, n_players);
 		}
 	}
-	else
-	{
+	else {
 		a_rows = rows;
 		a_cols = cols;
 	}
 
-	width  = (a_cols * cell_width)  + ((a_cols + 1) * space_x);
+	width = (a_cols * cell_width) + ((a_cols + 1) * space_x);
 	height = (a_rows * cell_height) + ((a_rows + 1) * space_y);
 
 	// Get the longest name/team name for padding.
-	if(hud_frags_shownames->value || hud_frags_teams->value)
-	{
+	if (hud_frags_shownames->value || hud_frags_teams->value) {
 		int cur_length = 0;
 		int n;
 
-		for(n = 0; n < n_players; n++)
-		{
-			player_info_t *info = &cl.players[sorted_players[n].playernum];
-			cur_length = strlen(info->name);
-
-			// Name.
-			if(cur_length >= max_name_length)
-			{
-				max_name_length = cur_length + 1;
-			}
-
-			cur_length = strlen(info->team);
-
-			// Team name.
-			if(cur_length >= max_team_length)
-			{
-				max_team_length = cur_length + 1;
-			}
-		}
-
 		// If the user has set a limit on how many chars that
 		// are allowed to be shown for a name/teamname.
-		max_name_length = min(max(0, (int)hud_frags_maxname->value), max_name_length) + 1;
-		max_team_length = min(max(0, (int)hud_frags_maxname->value), max_team_length) + 1;
+		if (hud_frags_fixedwidth->value) {
+			max_name_length = min(max(0, (int)hud_frags_maxname->value) + 1, MAX_FRAGS_NAME);
+			max_team_length = min(max(0, (int)hud_frags_maxname->value) + 1, MAX_FRAGS_NAME);
+		}
+		else {
+			for(n = 0; n < n_players; n++) {
+				player_info_t *info = &cl.players[sorted_players[n].playernum];
+				cur_length = strlen(info->name);
 
-		// We need a wider box to draw in if we show the names.
-		if(hud_frags_shownames->value)
-		{
-			width += (a_cols * (max_name_length + 3) * 8) + ((a_cols + 1) * space_x);
+				// Name.
+				if (cur_length >= max_name_length) {
+					max_name_length = cur_length + 1;
+				}
+
+				cur_length = strlen(info->team);
+
+				// Team name.
+				if (cur_length >= max_team_length) {
+					max_team_length = cur_length + 1;
+				}
+			}
+
+			max_name_length = min(max(0, (int)hud_frags_maxname->value), max_name_length) + 1;
+			max_team_length = min(max(0, (int)hud_frags_maxname->value), max_team_length) + 1;
 		}
 
-		if(cl.teamplay && hud_frags_teams->value)
-		{
-			width += (a_cols * max_team_length * 8) + ((a_cols + 1) * space_x);
+		// We need a wider box to draw in if we show the names.
+		if (hud_frags_shownames->value) {
+			width += (a_cols * max_name_length * 8 * hud_frags_scale->value) + ((a_cols + 1) * space_x);
+		}
+
+		if (cl.teamplay && hud_frags_teams->value) {
+			width += (a_cols * max_team_length * 8 * hud_frags_scale->value) + ((a_cols + 1) * space_x);
 		}
 	}
 
 	// Make room for the extra spectator stuff.
-	if(hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator) )
-	{
-		width += a_cols * (rl_picture->width + FRAGS_HEALTHBAR_WIDTH);
+	if (hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator)) {
+		if (hud_frags_show_health) {
+			width += a_cols * (3 + FRAGS_HEALTH_SPACING);
+		}
+		if (hud_frags_show_armor || hud_frags_show_powerup || hud_frags_show_rl) {
+			width += a_cols * (!hud_frags_textonly ? rl_picture->width : 24 * hud_frags_scale->value);
+		}
+	}
+
+	any_labels_or_info = hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec_info;
+	two_lines = (cls.demoplayback || cl.spectator) && any_labels_or_info && (hud_frags_horiz_health || hud_frags_horiz_power);
+
+	if (two_lines) {
+		height *= 2;
 	}
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -3115,45 +3491,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		// The number of players that are to be visible.
 		int limit = min(n_players, a_rows * a_cols);
 
-		// Always show my current frags (don't just show the leaders).
-		// TODO: When all players aren't being shown in the frags, draw
-		// a small arrow that indicates that there are more frags to be seen.
-		if(hud_frags_showself->value && !cl_multiview.value)
-		{
-			int player_pos = 0;
-
-			// Find my position in the scoreboard.
-			for(player_pos = 0; i < n_players; player_pos++)
-			{
-				if (cls.demoplayback || cl.spectator)
-				{
-					if (spec_track == sorted_players[player_pos].playernum)
-					{
-						break;
-					}
-				}
-				else if(sorted_players[player_pos].playernum == cl.playernum)
-				{
-					break;
-				}
-			}
-
-			if(player_pos + 1 <= (a_rows * a_cols))
-			{
-				// If I'm not "outside" the shown frags, start drawing from the top.
-				num = 0;
-			}
-			else
-			{
-				// Always include me in the shown frags.
-				num = abs((a_rows * a_cols) - (player_pos + 1));
-			}
-
-			// Make sure we're not trying to go outside the player array.
-			num = (num < 0 || num > n_players) ? 0 : num;
-		}
-
-		//num = 0;  // FIXME! johnnycz; (see fixme below)
+		num = 0;
+		num = (num <= limit || num >= n_players) ? 0 : num;
 
 		//
 		// Loop through all the positions that should be drawn (columns * rows or number of players).
@@ -3164,34 +3503,34 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		//
 		for (i = 0; i < limit; i++)
 		{
-			player_info_t *info = &cl.players[sorted_players[num].playernum]; // FIXME! johnnycz; causes crashed on some demos
+			player_info_t *info;
+
+			// Always include the current player's position
+			if (active_player_position >= 0 && i == limit - 1 && num < active_player_position) {
+				num = active_player_position;
+			}
+
+			info = &cl.players[sorted_players[num].playernum]; // FIXME! johnnycz; causes crashed on some demos
 
 			//
 			// Set the coordinates where to draw the next element.
 			//
-			if (hud_frags_vertical->value)
-			{
-				if (i % a_rows == 0)
-				{
+			if (hud_frags_vertical->value) {
+				if (i % a_rows == 0) {
 					// We're drawing a new column.
-
 					int element_width = cell_width + space_x;
 
 					// Get the width of all the stuff that is shown, the name, frag cell and so on.
-
-					if(hud_frags_shownames->value)
-					{
-						element_width += (max_name_length) * 8;
+					if (hud_frags_shownames->value) {
+						element_width += (max_name_length) * 8 * hud_frags_scale->value;
 					}
 
-					if(hud_frags_teams->value)
-					{
-						element_width += (max_team_length) * 8;
+					if (hud_frags_teams->value) {
+						element_width += (max_team_length) * 8 * hud_frags_scale->value;
 					}
 
-					if(hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator) )
-					{
-						element_width += rl_picture->width;
+					if (hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator)) {
+						element_width += (!hud_frags_textonly ? rl_picture->width : 24 * hud_frags_scale->value);
 					}
 
 					player_x = x + space_x + ((i / a_rows) * element_width);
@@ -3200,14 +3539,11 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					player_y = y + space_y;
 				}
 			}
-			else
+			else if (i % a_cols == 0)
 			{
-				if (i % a_cols == 0)
-				{
-					// Drawing new row.
-					player_x = x + space_x;
-					player_y = y + space_y + (i / a_cols) * (cell_height + space_y);
-				}
+				// Drawing new row.
+				player_x = x + space_x;
+				player_y = y + space_y + (i / a_cols) * (cell_height * (two_lines ? 2 : 1) + space_y);
 			}
 
 			drawBrackets = 0;
@@ -3215,69 +3551,77 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			// Bug fix. Before the wrong player would be higlighted
 			// during qwd-playback, since you ARE the player that you're
 			// being spectated (you're not a spectator).
-			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
-			{
+			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback) {
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
-			else if (cls.demoplayback || cl.spectator)
-			{
+			else if (cls.demoplayback || cl.spectator) {
 				drawBrackets = (spec_track == sorted_players[num].playernum && Cam_TrackNum() >= 0);
 			}
-			else
-			{
+			else {
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 
-			// Don't draw any brackets in multiview since we're
-			// tracking several players.
-			if (cl_multiview.value > 1 && cls.mvdplayback)
-			{
-				// TODO: Highlight all players being tracked (See tracking hud-element)
+			// Don't draw any brackets in multiview since we're tracking several players.
+			if (CL_MultiviewEnabled() && !CL_MultiviewInsetEnabled()) {
 				drawBrackets = 0;
 			}
 
-			if(hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec_info)
+			if (any_labels_or_info)
 			{
 				// Relative x coordinate where we draw the subitems.
 				int rel_player_x = player_x;
+				qbool odd_column = (hud_frags_vertical->value ? (i / a_rows) : (i % a_cols));
+				qbool fliptext = hud_frags_fliptext->integer == 1;
+
+				fliptext |= hud_frags_fliptext->integer == 2 && !odd_column;
+				fliptext |= hud_frags_fliptext->integer == 3 && odd_column;
 
 				if(hud_frags_style->value >= 4 && hud_frags_style->value <= 8)
 				{
 					// Draw background based on the style.
-
 					Frags_DrawBackground(player_x, player_y, cell_width, cell_height, space_x, space_y,
 							max_name_length, max_team_length, Sbar_BottomColor(info),
 							hud_frags_shownames->value, hud_frags_teams->value, drawBrackets,
 							hud_frags_style->value);
 				}
 
-				if(hud_frags_fliptext->value)
+				if (fliptext)
 				{
 					//
 					// Flip the text
 					// NAME | TEAM | FRAGS | EXTRA_SPEC_INFO
 					//
+					if (two_lines) {
+						Frags_DrawHorizontalHealthBar(info, rel_player_x, player_y, max_name_length * 8 * hud_frags_scale->value, cell_height, fliptext, hud_frags_horiz_power);
+					}
 
 					// Draw name.
-					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							hud_frags_shownames->value, 0,
-							info->name, info->team);
+					rel_player_x = Frags_DrawText(
+						rel_player_x, player_y + (two_lines ? cell_height : 0), cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
+						info->name, info->team, hud_frags_scale->value
+					);
 
 					// Draw team.
-					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							0, hud_frags_teams->value,
-							info->name, info->team);
+					rel_player_x = Frags_DrawText(
+						rel_player_x, player_y + (two_lines ? cell_height : 0), cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
+						info->name, info->team, hud_frags_scale->value
+					);
 
-					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
-							Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
-							info->frags,
-							drawBrackets,
-							hud_frags_style->value,
-							hud_frags_bignum->value);
+					Frags_DrawColors(
+						rel_player_x, player_y, cell_width, cell_height * (two_lines ? 2 : 1),
+						Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
+						info->frags,
+						drawBrackets,
+						hud_frags_style->value,
+						hud_frags_bignum->value,
+						hud_frags_scale->value
+					);
 
 					rel_player_x += cell_width + space_x;
 
@@ -3286,9 +3630,9 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// - How much health.
 					// - If they have RL or not.
 					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y,
-							hud_frags_fliptext->value);
-
+						space_x, space_y,
+						fliptext
+					);
 				}
 				else
 				{
@@ -3296,39 +3640,47 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// Don't flip the text
 					// EXTRA_SPEC_INFO | FRAGS | TEAM | NAME
 					//
-
 					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y,
-							hud_frags_fliptext->value);
+						space_x, space_y,
+						fliptext
+					);
 
-					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
-							Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
-							info->frags,
-							drawBrackets,
-							hud_frags_style->value,
-							hud_frags_bignum->value);
+					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height * (two_lines ? 2 : 1),
+						Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
+						info->frags,
+						drawBrackets,
+						hud_frags_style->value,
+						hud_frags_bignum->value,
+						hud_frags_scale->value
+					);
 
 					rel_player_x += cell_width + space_x;
 
+					if (two_lines) {
+						Frags_DrawHorizontalHealthBar(info, rel_player_x, player_y, max_name_length * 8 * hud_frags_scale->value, cell_height, fliptext, hud_frags_horiz_power);
+					}
+
 					// Draw team.
-					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							0, hud_frags_teams->value,
-							info->name, info->team);
+					rel_player_x = Frags_DrawText(rel_player_x, player_y + (two_lines ? cell_height : 0), cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
+						info->name, info->team, hud_frags_scale->value
+					);
 
 					// Draw name.
-					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
-							space_x, space_y, max_name_length, max_team_length,
-							hud_frags_fliptext->value, hud_frags_padtext->value,
-							hud_frags_shownames->value, 0,
-							info->name, info->team);
+					rel_player_x = Frags_DrawText(rel_player_x, player_y + (two_lines ? cell_height : 0), cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						fliptext, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
+						info->name, info->team, hud_frags_scale->value
+					);
 				}
 
 				if(hud_frags_vertical->value)
 				{
 					// Next row.
-					player_y += cell_height + space_y;
+					player_y += cell_height * (two_lines ? 2 : 1) + space_y;
 				}
 				else
 				{
@@ -3340,12 +3692,15 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			{
 				// Only showing the frags, no names or extra spec info.
 
-				Frags_DrawColors(player_x, player_y, cell_width, cell_height,
-						Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
-						info->frags,
-						drawBrackets,
-						hud_frags_style->value,
-						hud_frags_bignum->value);
+				Frags_DrawColors(
+					player_x, player_y, cell_width, cell_height,
+					Sbar_TopColor(info), Sbar_BottomColor(info), hud_frags_colors_alpha->value,
+					info->frags,
+					drawBrackets,
+					hud_frags_style->value,
+					hud_frags_bignum->value,
+					hud_frags_scale->value
+				);
 
 				if (hud_frags_vertical->value)
 				{
@@ -3389,7 +3744,8 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		*hud_teamfrags_extra_spec,
 		*hud_teamfrags_onlytp,
 		*hud_teamfrags_bignum,
-		*hud_teamfrags_colors_alpha;
+		*hud_teamfrags_colors_alpha,
+		*hud_teamfrags_scale;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c
 	mpic_t rl_picture = *sb_weapons[0][5];
@@ -3412,10 +3768,11 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_onlytp		= HUD_FindVar(hud, "onlytp");
 		hud_teamfrags_bignum		= HUD_FindVar(hud, "bignum");
 		hud_teamfrags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
+		hud_teamfrags_scale         = HUD_FindVar(hud, "scale");
 	}
 
 	// Don't draw the frags if we're not in teamplay.
-	if(hud_teamfrags_onlytp->value && !cl.teamplay)
+	if (hud_teamfrags_onlytp->value && !cl.teamplay)
 	{
 		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;
@@ -3453,8 +3810,8 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		a_cols = cols;
 	}
 
-	width  = a_cols*cell_width  + (a_cols+1)*space_x;
-	height = a_rows*cell_height + (a_rows+1)*space_y;
+	width  = a_cols * cell_width  + (a_cols+1)*space_x;
+	height = a_rows * cell_height + (a_rows+1)*space_y;
 
 	// Get the longest team name for padding.
 	if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
@@ -3573,6 +3930,9 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
 			{
 				int _px = px;
+				qbool text_lhs = hud_teamfrags_fliptext->integer == 1;
+				text_lhs |= hud_teamfrags_fliptext->integer == 2 && ((i % a_cols) % 2 == 0);
+				text_lhs |= hud_teamfrags_fliptext->integer == 3 && ((i % a_cols) % 2 == 1);
 
 				// Draw a background if the style tells us to.
 				if(hud_teamfrags_style->value >= 4 && hud_teamfrags_style->value <= 8)
@@ -3584,80 +3944,87 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 
 				// Draw the text on the left or right side of the score?
-				if(hud_teamfrags_fliptext->value)
+				if (text_lhs)
 				{
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
-							space_x, space_y, 0, max_team_length,
-							hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
-							0, hud_teamfrags_shownames->value,
-							"", sorted_teams[num].name);
+					_px = Frags_DrawText(
+						_px, py, cell_width, cell_height,
+						space_x, space_y, 0, max_team_length,
+						true, hud_teamfrags_padtext->value,
+						0, hud_teamfrags_shownames->value,
+						"", sorted_teams[num].name, hud_teamfrags_scale->value
+					);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height,
-							sorted_teams[num].top,
-							sorted_teams[num].bottom,
-							hud_teamfrags_colors_alpha->value,
-							sorted_teams[num].frags,
-							drawBrackets,
-							hud_teamfrags_style->value,
-							hud_teamfrags_bignum->value);
-
-					_px += cell_width + space_x;
-
-					// Draw the rl if the current player has it and the style allows it.
-					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
-
-				}
-				else
-				{
-					// Draw the rl if the current player has it and the style allows it.
-					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
-
-					Frags_DrawColors(_px, py, cell_width, cell_height,
-							sorted_teams[num].top,
-							sorted_teams[num].bottom,
-							hud_teamfrags_colors_alpha->value,
-							sorted_teams[num].frags,
-							drawBrackets,
-							hud_teamfrags_style->value,
-							hud_teamfrags_bignum->value);
-
-					_px += cell_width + space_x;
-
-					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
-							space_x, space_y, 0, max_team_length,
-							hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
-							0, hud_teamfrags_shownames->value,
-							"", sorted_teams[num].name);
-				}
-
-				if(hud_teamfrags_vertical->value)
-				{
-					py += cell_height + space_y;
-				}
-				else
-				{
-					px = _px + space_x;
-				}
-			}
-			else
-			{
-				Frags_DrawColors(px, py, cell_width, cell_height,
+					Frags_DrawColors(
+						_px, py, cell_width, cell_height,
 						sorted_teams[num].top,
 						sorted_teams[num].bottom,
 						hud_teamfrags_colors_alpha->value,
 						sorted_teams[num].frags,
 						drawBrackets,
 						hud_teamfrags_style->value,
-						hud_teamfrags_bignum->value);
+						hud_teamfrags_bignum->value,
+						hud_teamfrags_scale->value
+					);
 
-				if (hud_teamfrags_vertical->value)
-				{
-					py += cell_height + space_y;
+					_px += cell_width + space_x;
+
+					// Draw the rl if the current player has it and the style allows it.
+					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
 				}
 				else
 				{
+					// Draw the rl if the current player has it and the style allows it.
+					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
+
+					Frags_DrawColors(
+						_px, py, cell_width, cell_height,
+						sorted_teams[num].top,
+						sorted_teams[num].bottom,
+						hud_teamfrags_colors_alpha->value,
+						sorted_teams[num].frags,
+						drawBrackets,
+						hud_teamfrags_style->value,
+						hud_teamfrags_bignum->value,
+						hud_teamfrags_scale->value
+					);
+
+					_px += cell_width + space_x;
+
+					// Draw team.
+					_px = Frags_DrawText(
+						_px, py, cell_width, cell_height,
+						space_x, space_y, 0, max_team_length,
+						false, hud_teamfrags_padtext->value,
+						0, hud_teamfrags_shownames->value,
+						"", sorted_teams[num].name,
+						hud_teamfrags_scale->value
+					);
+				}
+
+				if (hud_teamfrags_vertical->value) {
+					py += cell_height + space_y;
+				}
+				else {
+					px = _px + space_x;
+				}
+			}
+			else {
+				Frags_DrawColors(px, py, cell_width, cell_height,
+					sorted_teams[num].top,
+					sorted_teams[num].bottom,
+					hud_teamfrags_colors_alpha->value,
+					sorted_teams[num].frags,
+					drawBrackets,
+					hud_teamfrags_style->value,
+					hud_teamfrags_bignum->value,
+					hud_teamfrags_scale->value
+				);
+
+				if (hud_teamfrags_vertical->value) {
+					py += cell_height + space_y;
+				}
+				else {
 					px += cell_width + space_x;
 				}
 			}
@@ -3701,17 +4068,20 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	double t;		// current time
 	static double lastframetime;	// last refresh
 
-	static cvar_t *style = NULL, *width_var, *height_var, *scroll, *scroll_delay, *on_scoreboard, *wordwrap;
+	static cvar_t *style = NULL, 
+		*width_var, *height_var, *scroll, *scroll_delay, 
+		*on_scoreboard, *wordwrap, *scale;
 
 	if (style == NULL)  // first time called
 	{
-		style =				HUD_FindVar(hud, "style");
-		width_var =			HUD_FindVar(hud, "width");
-		height_var =		HUD_FindVar(hud, "height");
-		scroll =			HUD_FindVar(hud, "scroll");
-		scroll_delay =		HUD_FindVar(hud, "scroll_delay");
-		on_scoreboard =		HUD_FindVar(hud, "on_scoreboard");
-		wordwrap =			HUD_FindVar(hud, "wordwrap");
+		style = HUD_FindVar(hud, "style");
+		width_var = HUD_FindVar(hud, "width");
+		height_var = HUD_FindVar(hud, "height");
+		scroll = HUD_FindVar(hud, "scroll");
+		scroll_delay = HUD_FindVar(hud, "scroll_delay");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		wordwrap = HUD_FindVar(hud, "wordwrap");
+		scale = HUD_FindVar(hud, "scale");
 	}
 
 	if(on_scoreboard->value)
@@ -3723,8 +4093,8 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 		hud->flags -= HUD_ON_SCORES;
 	}
 
-	width = (int)width_var->value;
-	height = (int)height_var->value;
+	width = (int)width_var->value * scale->value;
+	height = (int)height_var->value * scale->value;
 
 	if(width < 0) width = 0;
 	if(width > vid.width) width = vid.width;
@@ -3763,7 +4133,7 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
-		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
+		SCR_DrawWordWrapString(x, y, 8 * scale->value, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title, scale->value);
 	}
 #else
 	HUD_PrepareDraw(hud, width , height, &x, &y);
@@ -3783,20 +4153,18 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	double t; // current time
 	static double lastframetime; // last refresh
 
-	static cvar_t *style = NULL, *on_scoreboard;
+	static cvar_t *style = NULL, *on_scoreboard, *scale;
 
-	if(style == NULL)
-	{
-		style			= HUD_FindVar(hud, "style");
-		on_scoreboard	= HUD_FindVar(hud, "on_scoreboard");
+	if (style == NULL) {
+		style = HUD_FindVar(hud, "style");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		scale = HUD_FindVar(hud, "scale");
 	}
 
-	if(on_scoreboard->value)
-	{
+	if (on_scoreboard->value) {
 		hud->flags |= HUD_ON_SCORES;
 	}
-	else if((int)on_scoreboard->value & HUD_ON_SCORES)
-	{
+	else if ((int)on_scoreboard->value & HUD_ON_SCORES) {
 		hud->flags -= HUD_ON_SCORES;
 	}
 
@@ -3804,12 +4172,10 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
 		lastframetime = t;
 
-		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
-		{
+		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) {
 			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
 		}
-		else
-		{
+		else {
 			switch((int)style->value)
 			{
 				case 1 :
@@ -3853,127 +4219,20 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	// Don't allow showing the timer if ruleset disallows it
 	// It could be used for timing powerups
 	// Use same check that is used for any external communication
-	if(Rulesets_RestrictPacket())
-		snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
+	if (Rulesets_RestrictPacket()) {
+		snprintf(time_string, sizeof(time_string), "\x10%s\x11", "Not allowed");
+	}
 
-	width = strlen (time_string) * 8;
-	height = 8;
+	width = strlen (time_string) * 8 * scale->value;
+	height = 8 * scale->value;
 
-	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-		Draw_String(x, y, time_string);
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		Draw_SString(x, y, time_string, scale->value);
+	}
 #else
 	HUD_PrepareDraw(hud, width , height, &x, &y);
 #endif
 }
-
-#ifdef WITH_PNG
-
-// Map picture to draw for the mapoverview hud control.
-mpic_t radar_pic;
-static qbool radar_pic_found = false;
-
-// The conversion formula used for converting from quake coordinates to pixel coordinates
-// when drawing on the map overview.
-static float map_x_slope;
-static float map_x_intercept;
-static float map_y_slope;
-static float map_y_intercept;
-static qbool conversion_formula_found = false;
-
-// Used for drawing the height of the player.
-static float map_height_diff = 0.0;
-
-#define RADAR_BASE_PATH_FORMAT	"radars/%s.png"
-
-//
-// Is run when a new map is loaded.
-//
-void HUD_NewRadarMap(void)
-{
-	int i = 0;
-	int len = 0;
-	int n_textcount = 0;
-	mpic_t *radar_pic_p = NULL;
-	png_textp txt = NULL;
-	char *radar_filename = NULL;
-
-	if (!cl.worldmodel)
-		return; // seems we are not ready to do that
-
-	// Reset the radar pic status.
-	memset (&radar_pic, 0, sizeof(radar_pic));
-	radar_pic_found = false;
-	conversion_formula_found = false;
-
-	// Allocate a string for the path to the radar image.
-	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (host_mapname.string);
-	radar_filename = Q_calloc (len, sizeof(char));
-	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
-
-	// Load the map picture.
-	if ((radar_pic_p = GL_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL)
-	{
-		radar_pic = *radar_pic_p;
-		radar_pic_found = true;
-
-		// Calculate the height of the map.
-		map_height_diff = abs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
-
-		// Get the comments from the PNG.
-		txt = Image_LoadPNG_Comments(radar_filename, &n_textcount);
-
-		// Check if we found any comments.
-		if(txt != NULL)
-		{
-			int found_count = 0;
-
-			// Find the conversion formula in the comments found in the PNG.
-			for(i = 0; i < n_textcount; i++)
-			{
-				if(!strcmp(txt[i].key, "QWLMConversionSlopeX"))
-				{
-					map_x_slope = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionInterceptX"))
-				{
-					map_x_intercept = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionSlopeY"))
-				{
-					map_y_slope = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionInterceptY"))
-				{
-					map_y_intercept = atof(txt[i].text);
-					found_count++;
-				}
-
-				conversion_formula_found = (found_count == 4);
-			}
-
-			// Free the text chunks.
-			Q_free(txt);
-		}
-		else
-		{
-			conversion_formula_found = false;
-		}
-	}
-	else
-	{
-		// No radar pic found.
-		memset (&radar_pic, 0, sizeof(radar_pic));
-		radar_pic_found = false;
-		conversion_formula_found = false;
-	}
-
-	// Free the path string to the radar png.
-	Q_free (radar_filename);
-}
-#endif // WITH_PNG
 
 #define TEMPHUD_NAME "_temphud"
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
@@ -4084,9 +4343,6 @@ void HUD_NewMap(void) {
 	autohud_loaded = false;
 }
 
-#define HUD_SHOW_ONLY_IN_TEAMPLAY		1
-#define HUD_SHOW_ONLY_IN_DEMOPLAYBACK	2
-
 qbool HUD_ShowInDemoplayback(int val)
 {
 	if(!cl.teamplay && val == HUD_SHOW_ONLY_IN_TEAMPLAY)
@@ -4143,11 +4399,13 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	Draw_AlphaFill(x, y, team2_width, bar_height, team2_color, opacity);
 }
 
-void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
-		float team1_percent, float team2_percent,
-		int team1_color, int team2_color,
-		int show_text, int vertical,
-		int vertical_text, float opacity)
+static void TeamHold_DrawPercentageBar(
+	int x, int y, int width, int height,
+	float team1_percent, float team2_percent,
+	int team1_color, int team2_color,
+	int show_text, int vertical,
+	int vertical_text, float opacity, float scale
+)
 {
 	int _x, _y;
 	int _width, _height;
@@ -4189,33 +4447,33 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 					int percent10 = 0;
 					int percent100 = 0;
 
-					_x = x + (width / 2) - 4;
-					_y = Q_rint(y + (height * team1_percent)/2 - 12);
+					_x = x + (width / 2) - 4 * scale;
+					_y = Q_rint(y + (height * team1_percent)/2 - 8 * 1.5 * scale);
 
 					percent = Q_rint(100 * team1_percent);
 
-					if((percent100 = percent / 100))
+					if ((percent100 = percent / 100))
 					{
-						Draw_String(_x, _y, va("%d", percent100));
-						_y += 8;
+						Draw_SString(_x, _y, va("%d", percent100), scale);
+						_y += 8 * scale;
 					}
 
-					if((percent10 = percent / 10))
+					if ((percent10 = percent / 10))
 					{
-						Draw_String(_x, _y, va("%d", percent10));
-						_y += 8;
+						Draw_SString(_x, _y, va("%d", percent10), scale);
+						_y += 8 * scale;
 					}
 
-					Draw_String(_x, _y, va("%d", percent % 10));
-					_y += 8;
+					Draw_SString(_x, _y, va("%d", percent % 10), scale);
+					_y += 8 * scale;
 
-					Draw_String(_x, _y, "%");
+					Draw_SString(_x, _y, "%", scale);
 				}
 				else
 				{
-					_x = x + (width / 2) - 12;
-					_y = Q_rint(y + (height * team1_percent)/2 - 4);
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+					_x = x + (width / 2) - 8 * 1.5 * scale;
+					_y = Q_rint(y + (height * team1_percent)/2 - 8 * scale * 0.5);
+					Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
 				}
 			}
 
@@ -4289,17 +4547,17 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 			// Team 1.
 			if(team1_percent > 0.05)
 			{
-				_x = Q_rint(x + (width * team1_percent)/2 - 8);
-				_y = y + (height / 2) - 4;
-				Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+				_x = Q_rint(x + (width * team1_percent)/2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team1_percent), scale);
 			}
 
 			// Team 2.
 			if(team2_percent > 0.05)
 			{
-				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent)/2 - 8);
-				_y = y + (height / 2) - 4;
-				Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent)/2 - 8 * scale);
+				_y = y + (height / 2) - 4 * scale;
+				Draw_SString(_x, _y, va("%2.0f%%", 100 * team2_percent), scale);
 			}
 		}
 	}
@@ -4321,32 +4579,32 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		*hud_teamholdbar_vertical,
 		*hud_teamholdbar_show_text,
 		*hud_teamholdbar_onlytp,
-		*hud_teamholdbar_vertical_text;
+		*hud_teamholdbar_vertical_text,
+		*hud_teamholdbar_scale;
 
 	if (hud_teamholdbar_style == NULL)    // first time
 	{
-		hud_teamholdbar_style				= HUD_FindVar(hud, "style");
-		hud_teamholdbar_opacity				= HUD_FindVar(hud, "opacity");
-		hud_teamholdbar_width				= HUD_FindVar(hud, "width");
-		hud_teamholdbar_height				= HUD_FindVar(hud, "height");
-		hud_teamholdbar_vertical			= HUD_FindVar(hud, "vertical");
-		hud_teamholdbar_show_text			= HUD_FindVar(hud, "show_text");
-		hud_teamholdbar_onlytp				= HUD_FindVar(hud, "onlytp");
-		hud_teamholdbar_vertical_text		= HUD_FindVar(hud, "vertical_text");
+		hud_teamholdbar_style               = HUD_FindVar(hud, "style");
+		hud_teamholdbar_opacity             = HUD_FindVar(hud, "opacity");
+		hud_teamholdbar_width               = HUD_FindVar(hud, "width");
+		hud_teamholdbar_height              = HUD_FindVar(hud, "height");
+		hud_teamholdbar_vertical            = HUD_FindVar(hud, "vertical");
+		hud_teamholdbar_show_text           = HUD_FindVar(hud, "show_text");
+		hud_teamholdbar_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_teamholdbar_vertical_text       = HUD_FindVar(hud, "vertical_text");
+		hud_teamholdbar_scale               = HUD_FindVar(hud, "scale");
 	}
 
 	height = max(1, hud_teamholdbar_height->value);
 	width = max(0, hud_teamholdbar_width->value);
 
 	// Don't show when not in teamplay/demoplayback.
-	if(!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value))
-	{
+	if (!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value)) {
 		HUD_PrepareDraw(hud, width , height, &x, &y);
 		return;
 	}
 
-	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-	{
+	if (HUD_PrepareDraw(hud, width , height, &x, &y)) {
 		// We need something to work with.
 		if(stats_grid != NULL)
 		{
@@ -4367,14 +4625,17 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			}
 
 			// Draw the percentage bar.
-			TeamHold_DrawPercentageBar(x, y, width, height,
-					team1_percent, team2_percent,
-					stats_grid->teams[STATS_TEAM1].color,
-					stats_grid->teams[STATS_TEAM2].color,
-					hud_teamholdbar_show_text->value,
-					hud_teamholdbar_vertical->value,
-					hud_teamholdbar_vertical_text->value,
-					hud_teamholdbar_opacity->value);
+			TeamHold_DrawPercentageBar(
+				x, y, width, height,
+				team1_percent, team2_percent,
+				stats_grid->teams[STATS_TEAM1].color,
+				stats_grid->teams[STATS_TEAM2].color,
+				hud_teamholdbar_show_text->value,
+				hud_teamholdbar_vertical->value,
+				hud_teamholdbar_vertical_text->value,
+				hud_teamholdbar_opacity->value,
+				hud_teamholdbar_scale->value
+			);
 		}
 		else
 		{
@@ -4382,6 +4643,91 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value * 0.5);
 		}
 	}
+}
+
+void SCR_Hud_StackBar(hud_t* hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+
+	static cvar_t
+		*hud_stackbar_style = NULL,
+		*hud_stackbar_opacity,
+		*hud_stackbar_width,
+		*hud_stackbar_height,
+		*hud_stackbar_vertical,
+		*hud_stackbar_show_text,
+		*hud_stackbar_vertical_text,
+		*hud_stackbar_onlytp,
+		*hud_stackbar_scale;
+
+	if (hud_stackbar_style == NULL)    // first time
+	{
+		hud_stackbar_style               = HUD_FindVar(hud, "style");
+		hud_stackbar_opacity             = HUD_FindVar(hud, "opacity");
+		hud_stackbar_width               = HUD_FindVar(hud, "width");
+		hud_stackbar_height              = HUD_FindVar(hud, "height");
+		hud_stackbar_vertical            = HUD_FindVar(hud, "vertical");
+		hud_stackbar_show_text           = HUD_FindVar(hud, "show_text");
+		hud_stackbar_vertical_text       = HUD_FindVar(hud, "vertical_text");
+		hud_stackbar_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_stackbar_scale               = HUD_FindVar(hud, "scale");
+	}
+
+	height = max(1, hud_stackbar_height->value);
+	width = max(0, hud_stackbar_width->value);
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!HUD_ShowInDemoplayback(hud_stackbar_onlytp->value)) {
+		HUD_PrepareDraw(hud, width , height, &x, &y);
+		return;
+	}
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		// Get stack for each team, convert to %
+		int stack1 = sorted_teams[0].stack;
+		int stack2 = sorted_teams[1].stack;
+
+		if (stack1 + stack2 > 0) {
+			float percent1 = (stack1 * 1.0f) / (stack1 + stack2);
+
+			TeamHold_DrawPercentageBar(
+				x, y, width, height,
+				percent1, 1.0f - percent1,
+				sorted_teams[0].bottom,
+				sorted_teams[1].bottom,
+				hud_stackbar_show_text->value,
+				hud_stackbar_vertical->value,
+				hud_stackbar_vertical_text->value,
+				hud_stackbar_opacity->value,
+				hud_stackbar_scale->value
+			);
+		}
+		else {
+			Draw_AlphaFill(x, y, hud_stackbar_width->value, height, 0, hud_stackbar_opacity->value * 0.5);
+		}
+	}
+}
+
+void ItemsClock_OnChangeItemFilter(cvar_t* var, char *s, qbool *cancel)
+{
+	int new_filter = 0;
+
+	new_filter |= Utils_RegExpMatch("RL", s) ? IT_ROCKET_LAUNCHER : 0;
+	new_filter |= Utils_RegExpMatch("QUAD",	s) ? IT_QUAD : 0;
+	new_filter |= Utils_RegExpMatch("RING",	s) ? IT_INVISIBILITY : 0;
+	new_filter |= Utils_RegExpMatch("PENT",	s) ? IT_INVULNERABILITY : 0;
+	new_filter |= Utils_RegExpMatch("SUIT", s) ? IT_SUIT : 0;
+	new_filter |= Utils_RegExpMatch("LG", s) ? IT_LIGHTNING : 0;
+	new_filter |= Utils_RegExpMatch("GL", s) ? IT_GRENADE_LAUNCHER : 0;
+	new_filter |= Utils_RegExpMatch("SNG", s) ? IT_SUPER_NAILGUN : 0;
+	new_filter |= Utils_RegExpMatch("MH", s) ? IT_SUPERHEALTH : 0;
+	new_filter |= Utils_RegExpMatch("RA", s) ? IT_ARMOR3 : 0;
+	new_filter |= Utils_RegExpMatch("YA", s) ? IT_ARMOR2 : 0;
+	new_filter |= Utils_RegExpMatch("GA", s) ? IT_ARMOR1 : 0;
+
+	itemsclock_filter = new_filter;
 }
 
 void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
@@ -4469,18 +4815,20 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		*hud_teamholdinfo_width,
 		*hud_teamholdinfo_height,
 		*hud_teamholdinfo_onlytp,
-		*hud_teamholdinfo_itemfilter;
+		*hud_teamholdinfo_itemfilter,
+		*hud_teamholdinfo_scale;
 
 	if (hud_teamholdinfo_style == NULL)    // first time
 	{
 		char val[256];
 
-		hud_teamholdinfo_style				= HUD_FindVar(hud, "style");
-		hud_teamholdinfo_opacity			= HUD_FindVar(hud, "opacity");
-		hud_teamholdinfo_width				= HUD_FindVar(hud, "width");
-		hud_teamholdinfo_height				= HUD_FindVar(hud, "height");
-		hud_teamholdinfo_onlytp				= HUD_FindVar(hud, "onlytp");
-		hud_teamholdinfo_itemfilter			= HUD_FindVar(hud, "itemfilter");
+		hud_teamholdinfo_style      = HUD_FindVar(hud, "style");
+		hud_teamholdinfo_opacity    = HUD_FindVar(hud, "opacity");
+		hud_teamholdinfo_width      = HUD_FindVar(hud, "width");
+		hud_teamholdinfo_height     = HUD_FindVar(hud, "height");
+		hud_teamholdinfo_onlytp     = HUD_FindVar(hud, "onlytp");
+		hud_teamholdinfo_itemfilter = HUD_FindVar(hud, "itemfilter");
+		hud_teamholdinfo_scale      = HUD_FindVar(hud, "scale");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
@@ -4524,7 +4872,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			int names_width = 0;
 
 			// Don't draw outside the specified height.
-			if((_y - y) + 8 > height)
+			if((_y - y) + 8 * hud_teamholdinfo_scale->value > height)
 			{
 				break;
 			}
@@ -4548,7 +4896,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Calculate the width of the longest item name so we can use it for padding.
-			names_width = 8 * (stats_important_ents->longest_name + 1);
+			names_width = 8 * (stats_important_ents->longest_name + 1) * hud_teamholdinfo_scale->value;
 
 			// Calculate the percentages of this item that the two teams holds.
 			team1_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM1];
@@ -4561,38 +4909,41 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			team2_percent = fabs(max(0, team2_percent));
 
 			// Write the name of the item.
-			Draw_ColoredString(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0);
+			Draw_SColoredStringBasic(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0, hud_teamholdinfo_scale->value);
 
-			if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
+			if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
 			{
 				//
 				// Prints the team name that holds the item.
 				//
 				if(team1_percent > team2_percent)
 				{
-					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0, hud_teamholdinfo_scale->value);
 				}
 				else if(team1_percent < team2_percent)
 				{
-					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0);
+					Draw_SColoredStringBasic(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0, hud_teamholdinfo_scale->value);
 				}
 			}
-			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
 			{
 				//
 				// Show a percenteage bar for the item.
 				//
-				TeamHold_DrawPercentageBar(x + names_width, _y,
-						Q_rint(hud_teamholdinfo_width->value - names_width), 8,
-						team1_percent, team2_percent,
-						stats_important_ents->teams[STATS_TEAM1].color,
-						stats_important_ents->teams[STATS_TEAM2].color,
-						0, // Don't show percentage values, get's too cluttered.
-						false,
-						false,
-						hud_teamholdinfo_opacity->value);
+				TeamHold_DrawPercentageBar(
+					x + names_width, _y,
+					Q_rint(hud_teamholdinfo_width->value - names_width), 8,
+					team1_percent, team2_percent,
+					stats_important_ents->teams[STATS_TEAM1].color,
+					stats_important_ents->teams[STATS_TEAM2].color,
+					0, // Don't show percentage values, get's too cluttered.
+					false,
+					false,
+					hud_teamholdinfo_opacity->value,
+					hud_teamholdinfo_scale->value
+				);
 			}
-			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
+			else if (hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
 			{
 				TeamHold_DrawBars(x + names_width, _y,
 						Q_rint(hud_teamholdinfo_width->value - names_width), 8,
@@ -4603,7 +4954,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Next line.
-			_y += 8;
+			_y += 8 * hud_teamholdinfo_scale->value;
 		}
 	}
 }
@@ -4791,13 +5142,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 										char *weap_str = tp_name_rlg.string;
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString (x, y, weap_white_stripped, false);
+										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
 									}
 									else {
 										char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
 										char weap_white_stripped[32];
 										Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-										Draw_ColoredString (x, y, weap_white_stripped, false);
+										Draw_SColoredStringBasic(x, y, weap_white_stripped, false, scale);
 									}
 								}
 								x += 3 * FONTWIDTH * scale;
@@ -5006,14 +5357,26 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	extern qbool hud_editor;
 	int width, height;
 	int x, y;
-	static cvar_t *hud_itemsclock_timelimit = NULL,
-		      *hud_itemsclock_style = NULL,
-		      *hud_itemsclock_scale = NULL;
+	static cvar_t
+		*hud_itemsclock_timelimit = NULL,
+		*hud_itemsclock_style = NULL,
+		*hud_itemsclock_scale = NULL,
+		*hud_itemsclock_filter = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
+		char val[256];
+
 		hud_itemsclock_timelimit = HUD_FindVar(hud, "timelimit");
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
+		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
+
+		// Unecessary to parse the item filter string on each frame.
+		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
+
+		// Parse the item filter the first time (trigger the OnChange function above).
+		strlcpy(val, hud_itemsclock_filter->string, sizeof(val));
+		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
 	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value);
@@ -5027,75 +5390,69 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter);
 }
 
-static void SCR_Hud_GetScores (int* team, int* enemy, int* position)
+static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
 {
-	int i = 0;
+	qbool swap = false;
 
-	*team = *enemy = *position = 0;
+	*team = *enemy = 0;
+	*teamName = *enemyName = NULL;
 
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
-			if(	!strcmp (TP_SkinForcingTeam (), sorted_teams[i].name) )
-			{
-				*position = i + 1;
+	if (cl.teamplay) {
+		*team = sorted_teams[0].frags;
+		*teamName = sorted_teams[0].name;
 
-				if(i == 0)
-				{
-					if (n_teams > 1) {
-						*team = sorted_teams[0].frags;
-						*enemy = sorted_teams[1].frags;
-					}
-					else {
-						*team = sorted_teams[0].frags;
-					}
-				}
-				else
-				{
-					if (n_teams > 1) {
-						*team = sorted_teams[i].frags;
-						*enemy = sorted_teams[0].frags;
-					}
-				}
-				break;
+		if (n_teams > 1) {
+			if (hud_sortrules_includeself.integer >= 1 && active_team_position > 1) {
+				*enemy = sorted_teams[active_team_position].frags;
+				*enemyName = sorted_teams[active_team_position].name;
 			}
+			else {
+				*enemy = sorted_teams[1].frags;
+				*enemyName = sorted_teams[1].name;
+			}
+
+			swap = (hud_sortrules_includeself.integer == 1 && active_team_position > 0);
 		}
 	}
-	else if(cl.deathmatch)
-	{
-		for(i = 0; i < n_players; i++)
-		{
-			qbool spectating_player = cl.spectator && spec_track == sorted_players[i].playernum;
-			qbool is_player         = !cl.spectator && cl.playernum == sorted_players[i].playernum;
+	else if (cl.deathmatch) {
+		*team = cl.players[sorted_players[0].playernum].frags;
+		*teamName = cl.players[sorted_players[0].playernum].name;
 
-			if (spectating_player || is_player) {
-				*position = i + 1;
-
-				if(i == 0)
-				{
-					if (n_players > 1) {
-						*team = cl.players[sorted_players[0].playernum].frags;
-						*enemy = cl.players[sorted_players[1].playernum].frags;
-					}
-					else {
-						*team = cl.players[sorted_players[0].playernum].frags;
-					}
-				}
-				else
-				{
-					if (n_players > 1) {
-						*team = cl.players[sorted_players[i].playernum].frags;
-						*enemy = cl.players[sorted_players[0].playernum].frags;
-					}
-				}
-				break;
+		if (n_players > 1) {
+			if (hud_sortrules_includeself.integer >= 1 && active_player_position > 1) {
+				*enemy = cl.players[sorted_players[active_player_position].playernum].frags;
+				*enemyName = cl.players[sorted_players[active_player_position].playernum].name;
 			}
+			else {
+				*enemy = cl.players[sorted_players[1].playernum].frags;
+				*enemyName = cl.players[sorted_players[1].playernum].name;
+			}
+
+			swap = (hud_sortrules_includeself.integer == 1 && active_player_position > 0);
 		}
 	}
+
+	if (!*teamName) {
+		*teamName = "T";
+	}
+	if (!*enemyName) {
+		*enemyName = "E";
+	}
+
+	if (swap) {
+		int temp_frags = *team;
+		char* temp_name = *teamName;
+
+		*team = *enemy;
+		*teamName = *enemyName;
+		*enemy = temp_frags;
+		*enemyName = temp_name;
+	}
+
+	return swap;
 }
 
 //
@@ -5104,7 +5461,8 @@ static void SCR_Hud_GetScores (int* team, int* enemy, int* position)
 void SCR_HUD_DrawScoresTeam(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int teamFrags = 0, enemyFrags = 0, position = 0;
+	int teamFrags = 0, enemyFrags = 0;
+	char* teamName = 0, *enemyName = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5115,7 +5473,7 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
 	SCR_HUD_DrawNum(hud, teamFrags, (colorize->integer) ? (teamFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
@@ -5123,7 +5481,8 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
 void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int teamFrags = 0, enemyFrags = 0, position = 0;
+	int teamFrags = 0, enemyFrags = 0;
+	char* teamName = 0, *enemyName = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5134,7 +5493,7 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
 	SCR_HUD_DrawNum(hud, enemyFrags, (colorize->integer) ? (enemyFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
@@ -5142,7 +5501,8 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 void SCR_HUD_DrawScoresDifference(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int teamFrags = 0, enemyFrags = 0, position = 0;
+	int teamFrags = 0, enemyFrags = 0;
+	char* teamName = 0, *enemyName = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5153,7 +5513,7 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
 
 	SCR_HUD_DrawNum(hud, teamFrags - enemyFrags, (colorize->integer) ? ((teamFrags - enemyFrags) < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
@@ -5161,7 +5521,8 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
 void SCR_HUD_DrawScoresPosition(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
-	int teamFrags = 0, enemyFrags = 0, position = 0;
+	int teamFrags = 0, enemyFrags = 0, position = 0, i = 0;
+	char* teamName = 0, *enemyName = 0;
 
 	if (scale == NULL)  // first time called
 	{
@@ -5172,7 +5533,23 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
 	}
 
-	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &position);
+	SCR_Hud_GetScores (&teamFrags, &enemyFrags, &teamName, &enemyName);
+
+	position = 1;
+	if (cl.teamplay) {
+		for (i = 0; i < n_teams; ++i) {
+			if (sorted_teams[i].frags > teamFrags) {
+				++position;
+			}
+		}
+	}
+	else {
+		for (i = 0; i < n_players + n_spectators; ++i) {
+			if (cl.players[sorted_players[i].playernum].frags > teamFrags) {
+				++position;
+			}
+		}
+	}
 
 	SCR_HUD_DrawNum(hud, position, (colorize->integer) ? (position != 1 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
@@ -5183,7 +5560,7 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
    */
 void SCR_HUD_DrawScoresBar(hud_t *hud)
 {
-	static	cvar_t *scale = NULL, *style, *format_big, *format_small, *fixed_order, *frag_length, *reversed_big, *reversed_small;
+	static	cvar_t *scale = NULL, *style, *format_big, *format_small, *frag_length, *reversed_big, *reversed_small;
 	int		width = 0, height = 0, x, y;
 	int		i = 0;
 
@@ -5201,7 +5578,6 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		style          = HUD_FindVar(hud, "style");
 		format_big     = HUD_FindVar(hud, "format_big");
 		format_small   = HUD_FindVar(hud, "format_small");
-		fixed_order    = HUD_FindVar(hud, "fixed_order");
 		frag_length    = HUD_FindVar(hud, "frag_length");
 		reversed_big   = HUD_FindVar(hud, "format_reversed_big");
 		reversed_small = HUD_FindVar(hud, "format_reversed_small");
@@ -5209,74 +5585,11 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 
 	frag_digits = max(1, min(frag_length->value, 4));
 
-	//
-	// AAS: nightmare comes back
-	//
-	if(cl.teamplay)
-	{
-		for(i = 0; i < n_teams; i++)
-		{
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-					((cls.mvdplayback || cl.spectator) && Cam_TrackNum() < 0))
-			{
-				s_team = sorted_teams[i].frags;
-				n_team = sorted_teams[i].name;
-				if(n_teams > 1)
-				{
-					s_enemy = sorted_teams[i == 0 ? 1 : 0].frags;
-					n_enemy = sorted_teams[i == 0 ? 1 : 0].name;
-
-					swappedOrder = fixed_order->value && (cls.demoplayback || cl.spectator) && strcmp(n_team, n_enemy) < 0;
-				}
-				s_difference = s_team - s_enemy;
-				break;
-			}
-		}
-	}
-	else if(cl.deathmatch)
-	{
-		for (i = 0; i < n_players; i++)
-		{
-			if ((cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-					(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-					((cls.mvdplayback || cl.spectator) && Cam_TrackNum() < 0))
-			{
-				// This is the current player
-				s_team = cl.players[sorted_players[i].playernum].frags;
-				n_team = cl.players[sorted_players[i].playernum].name;
-
-				if (n_players > 1)
-				{
-					s_enemy = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].frags;
-					n_enemy = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].name;
-
-					swappedOrder = fixed_order->value && (cls.demoplayback || cl.spectator) && sorted_players[i].playernum > sorted_players[i == 0 ? 1 : 0].playernum;
-				}
-
-				s_difference = s_team - s_enemy;
-
-				break;
-			}
-		}
-	}
-
-	if (swappedOrder)
-	{
-		// switch names & scores, leave difference correct
-		int tempScore = s_team;
-		char* tempName = n_team;
-
-		s_team = s_enemy;
-		n_team = n_enemy;
-		s_enemy = tempScore;
-		n_enemy = tempName;
-	}
+	swappedOrder = SCR_Hud_GetScores(&s_team, &s_enemy, &n_team, &n_enemy);
+	s_difference = s_team - s_enemy;
 
 	// two pots of delicious customized copypasta from math_tools.c
-	switch(style->integer)
+	switch (style->integer)
 	{
 		// Big
 		case 1:
@@ -5284,10 +5597,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			buf[0] = 0;
 			out = buf;
 
-			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1))
-			{
-				if((c == '%') && *in)
-				{
+			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1)) {
+				if((c == '%') && *in) {
 					switch((c = *in++))
 					{
 						// c = colorize, r = reset
@@ -5348,8 +5659,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 							break;
 					}
 
-					if(temp != NULL)
-					{
+					if (temp != NULL) {
 						strlcpy(out, temp, sizeof(buf) - (out - buf));
 						out += strlen(temp);
 					}
@@ -5370,10 +5680,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			buf[0] = 0;
 			out = buf;
 
-			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1))
-			{
-				if((c == '%') && *in)
-				{
+			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1)) {
+				if ((c == '%') && *in) {
 					switch((c = *in++))
 					{
 						case '%':
@@ -5407,8 +5715,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 					strlcpy(out, temp, sizeof(buf) - (out - buf));
 					out += strlen(temp);
 				}
-				else
-				{
+				else {
 					*out++ = c;
 				}
 			}
@@ -5423,8 +5730,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			width *= scale->value;
 			height = 24 * scale->value;
 
-			if(HUD_PrepareDraw(hud, width, height, &x, &y))
-			{
+			if(HUD_PrepareDraw(hud, width, height, &x, &y)) {
 				SCR_DrawWadString(x, y, scale->value, buf);
 			}
 			break;
@@ -5435,8 +5741,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			width = 8 * strlen_color(buf) * scale->value;
 			height = 8 * scale->value;
 
-			if(HUD_PrepareDraw(hud, width, height, &x, &y))
-			{
+			if(HUD_PrepareDraw(hud, width, height, &x, &y)) {
 				Draw_SString(x, y, buf, scale->value);
 			}
 			break;
@@ -5592,14 +5897,23 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 {
 	char line1[4], line2[4];
 	int width, height, x, y;
-	usermainbuttons_t b = CL_GetLastCmd();
+	usermainbuttons_t b;
 	int i;
 	static cvar_t* vscale = NULL;
+	static cvar_t* player = NULL;
 	float scale;
+	int player_slot = -1;
 
 	if (!vscale) {
 		vscale = HUD_FindVar(hud, "scale");
+		player = HUD_FindVar(hud, "player");
 	}
+
+	if (cls.demoplayback && !cls.nqdemoplayback && !cls.mvdplayback && player->string[0]) {
+		player_slot = Player_GetSlot(player->string);
+	}
+
+	b = CL_GetLastCmd(player_slot);
 
 	scale = vscale->value;
 	scale = max(0, scale);
@@ -5625,1128 +5939,9 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
 }
 
-// What stats to draw.
-#define HUD_RADAR_STATS_NONE				0
-#define HUD_RADAR_STATS_BOTH_TEAMS_HOLD		1
-#define HUD_RADAR_STATS_TEAM1_HOLD			2
-#define HUD_RADAR_STATS_TEAM2_HOLD			3
-#define HUD_RADAR_STATS_BOTH_TEAMS_DEATHS	4
-#define HUD_RADAR_STATS_TEAM1_DEATHS		5
-#define HUD_RADAR_STATS_TEAM2_DEATHS		6
-
-void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
-{
-	int row, col;
-
-	// Don't try to draw anything if we got no data.
-	if(grid == NULL || grid->cells == NULL || style == HUD_RADAR_STATS_NONE)
-	{
-		return;
-	}
-
-	// Go through all the cells and draw them based on their weight.
-	for(row = 0; row < grid->row_count; row++)
-	{
-		// Just to be safe if something went wrong with the allocation.
-		if(grid->cells[row] == NULL)
-		{
-			continue;
-		}
-
-		for(col = 0; col < grid->col_count; col++)
-		{
-			float weight = 0.0;
-			int color = 0;
-
-			float tl_x, tl_y;			// The pixel coordinate of the top left corner of a grid cell.
-			float p_cell_length_x;		// The pixel length of a cell.
-			float p_cell_length_y;		// The pixel "length" on the Y-axis. We calculate this
-			// seperatly because we'll get errors when converting from
-			// quake coordinates -> pixel coordinates.
-
-			// Calculate the pixel coordinates of the top left corner of the current cell.
-			// (This is times 8 because the conversion formula was calculated from a .loc-file)
-			tl_x = (map_x_slope * (8.0 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
-			tl_y = (map_y_slope * (8.0 * grid->cells[row][col].tl_y) + map_y_intercept) * scale;
-
-			// Calculate the cell length in pixel length.
-			p_cell_length_x = map_x_slope*(8.0 * grid->cell_length) * scale;
-			p_cell_length_y = map_y_slope*(8.0 * grid->cell_length) * scale;
-
-			// Add rounding errors (so that we don't get weird gaps in the grid).
-			p_cell_length_x += tl_x - Q_rint(tl_x);
-			p_cell_length_y += tl_y - Q_rint(tl_y);
-
-			// Don't draw the stats stuff outside the picture.
-			if(tl_x + p_cell_length_x > pic_width || tl_y + p_cell_length_y > pic_height || x + tl_x < x || y + tl_y < y)
-			{
-				continue;
-			}
-
-			//
-			// Death stats.
-			//
-			if(grid->cells[row][col].teams[STATS_TEAM1].death_weight + grid->cells[row][col].teams[STATS_TEAM2].death_weight > 0)
-			{
-				weight = 0;
-
-				if(style == HUD_RADAR_STATS_BOTH_TEAMS_DEATHS || style == HUD_RADAR_STATS_TEAM1_DEATHS)
-				{
-					weight = grid->cells[row][col].teams[STATS_TEAM1].death_weight;
-				}
-
-				if(style == HUD_RADAR_STATS_BOTH_TEAMS_DEATHS || style == HUD_RADAR_STATS_TEAM2_DEATHS)
-				{
-					weight += grid->cells[row][col].teams[STATS_TEAM2].death_weight;
-				}
-
-				color = 79;
-			}
-
-			//
-			// Team stats.
-			//
-			{
-				// No point in drawing if we have no weight.
-				if(grid->cells[row][col].teams[STATS_TEAM1].weight + grid->cells[row][col].teams[STATS_TEAM2].weight <= 0
-						&& (style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD
-							||	style == HUD_RADAR_STATS_TEAM1_HOLD
-							||	style == HUD_RADAR_STATS_TEAM2_HOLD))
-				{
-					continue;
-				}
-
-				// Get the team with the highest weight for this cell.
-				if(grid->cells[row][col].teams[STATS_TEAM1].weight > grid->cells[row][col].teams[STATS_TEAM2].weight
-						&& (style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD
-							||	style == HUD_RADAR_STATS_TEAM1_HOLD))
-				{
-					weight = grid->cells[row][col].teams[STATS_TEAM1].weight;
-					color = stats_grid->teams[STATS_TEAM1].color;
-				}
-				else if(style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD ||	style == HUD_RADAR_STATS_TEAM2_HOLD)
-				{
-					weight = grid->cells[row][col].teams[STATS_TEAM2].weight;
-					color = stats_grid->teams[STATS_TEAM2].color;
-				}
-			}
-
-			// Draw the cell in the color of the team with the
-			// biggest weight for this cell. Or draw deaths.
-			Draw_AlphaFill(
-					x + Q_rint(tl_x),			// X.
-					y + Q_rint(tl_y),			// Y.
-					Q_rint(p_cell_length_x),		// Width.
-					Q_rint(p_cell_length_y),		// Height.
-					color,						// Color.
-					weight);					// Alpha.
-		}
-	}
-}
-
-// The skinnum property in the entity_s structure is used
-// for determening what type of armor to draw on the radar.
-#define HUD_RADAR_GA					0
-#define HUD_RADAR_YA					1
-#define HUD_RADAR_RA					2
-
-// Radar filters.
-#define RADAR_SHOW_WEAPONS (radar_show_ssg || radar_show_ng || radar_show_sng || radar_show_gl || radar_show_rl || radar_show_lg)
-static qbool radar_show_ssg			= false;
-static qbool radar_show_ng			= false;
-static qbool radar_show_sng			= false;
-static qbool radar_show_gl			= false;
-static qbool radar_show_rl			= false;
-static qbool radar_show_lg			= false;
-
-#define RADAR_SHOW_ITEMS (radar_show_backpacks || radar_show_health || radar_show_ra || radar_show_ya || radar_show_ga || radar_show_rockets || radar_show_nails || radar_show_cells || radar_show_shells || radar_show_quad || radar_show_pent || radar_show_ring || radar_show_suit)
-static qbool radar_show_backpacks	= false;
-static qbool radar_show_health		= false;
-static qbool radar_show_ra			= false;
-static qbool radar_show_ya			= false;
-static qbool radar_show_ga			= false;
-static qbool radar_show_rockets		= false;
-static qbool radar_show_nails		= false;
-static qbool radar_show_cells		= false;
-static qbool radar_show_shells		= false;
-static qbool radar_show_quad		= false;
-static qbool radar_show_pent		= false;
-static qbool radar_show_ring		= false;
-static qbool radar_show_suit		= false;
-static qbool radar_show_mega		= false;
-
-#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p || radar_show_teleport || radar_show_shotgun)
-static qbool radar_show_nails_p		= false;
-static qbool radar_show_rockets_p	= false;
-static qbool radar_show_shaft_p		= false;
-static qbool radar_show_gibs		= false;
-static qbool radar_show_explosions	= false;
-static qbool radar_show_teleport	= false;
-static qbool radar_show_shotgun		= false;
-
-void Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
-{
-	// Parse the weapon filter.
-	radar_show_ssg		= Utils_RegExpMatch("SSG|SUPERSHOTGUN|ALL",			newval);
-	radar_show_ng		= Utils_RegExpMatch("([^S]|^)NG|NAILGUN|ALL",		newval); // Yes very ugly, but we don't want to match SNG.
-	radar_show_sng		= Utils_RegExpMatch("SNG|SUPERNAILGUN|ALL",			newval);
-	radar_show_rl		= Utils_RegExpMatch("RL|ROCKETLAUNCHER|ALL",		newval);
-	radar_show_gl		= Utils_RegExpMatch("GL|GRENADELAUNCHER|ALL",		newval);
-	radar_show_lg		= Utils_RegExpMatch("LG|SHAFT|LIGHTNING|ALL",		newval);
-}
-
-void Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
-{
-	// Parse the item filter.
-	radar_show_backpacks		= Utils_RegExpMatch("BP|BACKPACK|ALL",					newval);
-	radar_show_health			= Utils_RegExpMatch("HP|HEALTH|ALL",					newval);
-	radar_show_ra				= Utils_RegExpMatch("RA|REDARMOR|ARMOR|ALL",			newval);
-	radar_show_ya				= Utils_RegExpMatch("YA|YELLOWARMOR|ARMOR|ALL",			newval);
-	radar_show_ga				= Utils_RegExpMatch("GA|GREENARMOR|ARMOR|ALL",			newval);
-	radar_show_rockets			= Utils_RegExpMatch("ROCKETS|ROCKS|AMMO|ALL",			newval);
-	radar_show_nails			= Utils_RegExpMatch("NAILS|SPIKES|AMMO|ALL",			newval);
-	radar_show_cells			= Utils_RegExpMatch("CELLS|BATTERY|AMMO|ALL",			newval);
-	radar_show_shells			= Utils_RegExpMatch("SHELLS|AMMO|ALL",					newval);
-	radar_show_quad				= Utils_RegExpMatch("QUAD|POWERUPS|ALL",				newval);
-	radar_show_pent				= Utils_RegExpMatch("PENT|PENTAGRAM|666|POWERUPS|ALL",	newval);
-	radar_show_ring				= Utils_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS|ALL",	newval);
-	radar_show_suit				= Utils_RegExpMatch("SUIT|POWERUPS|ALL",				newval);
-	radar_show_mega				= Utils_RegExpMatch("MH|MEGA|MEGAHEALTH|100\\+|ALL",	newval);
-}
-
-void Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
-{
-	// Parse the "other" filter.
-	radar_show_nails_p			= Utils_RegExpMatch("NAILS|PROJECTILES|ALL",	newval);
-	radar_show_rockets_p		= Utils_RegExpMatch("ROCKETS|PROJECTILES|ALL",	newval);
-	radar_show_shaft_p			= Utils_RegExpMatch("SHAFT|PROJECTILES|ALL",	newval);
-	radar_show_gibs				= Utils_RegExpMatch("GIBS|ALL",					newval);
-	radar_show_explosions		= Utils_RegExpMatch("EXPLOSIONS|ALL",			newval);
-	radar_show_teleport			= Utils_RegExpMatch("TELE|ALL",					newval);
-	radar_show_shotgun			= Utils_RegExpMatch("SHOTGUN|SG|BUCK|ALL",		newval);
-}
-
-
-#define HUD_COLOR_DEFAULT_TRANSPARENCY	75
-
-byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY};
-
-void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
-{
-	char *new_color;
-	char buf[MAX_COM_TOKEN];
-
-	// Translate a colors name to RGB values.
-	new_color = ColorNameToRGBString(newval);
-
-	// Parse the colors.
-	//color = StringToRGB(new_color);
-	strlcpy(buf,new_color,sizeof(buf));
-	memcpy(hud_radar_highlight_color, StringToRGB(buf), sizeof(byte) * 4);
-
-	// Set the cvar to contain the new color string
-	// (if the user entered "red" it will be "255 0 0").
-	Cvar_Set(var, new_color);
-}
-
-void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas)
-{
-	int i;
-
-	// Entities (weapons and such). cl_main.c
-	extern visentlist_t cl_visents;
-
-	// Go through all the entities and draw the ones we're supposed to.
-	for (i = 0; i < cl_visents.count; i++)
-	{
-		int entity_q_x = 0;
-		int entity_q_y = 0;
-		int entity_p_x = 0;
-		int entity_p_y = 0;
-
-		// Get quake coordinates (times 8 to get them in the same format as .locs).
-		entity_q_x = cl_visents.list[i].origin[0]*8;
-		entity_q_y = cl_visents.list[i].origin[1]*8;
-
-		// Convert from quake coordiantes -> pixel coordinates.
-		entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
-		entity_p_y = y + Q_rint((map_y_slope*entity_q_y + map_y_intercept) * scale);
-
-		// TODO: Replace all model name comparison below with MOD_HINT's instead for less comparisons (create new ones in Mod_LoadAliasModel() in r_model.c and gl_model.c/.h for the ones that don't have one already).
-
-		//
-		// Powerups.
-		//
-
-		if(radar_show_pent && !strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
-		{
-			// Pentagram.
-			Draw_ColoredString(entity_p_x, entity_p_y, "&cf00P", 0);
-		}
-		else if(radar_show_quad && !strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))
-		{
-			// Quad.
-			Draw_ColoredString(entity_p_x, entity_p_y, "&c0ffQ", 0);
-		}
-		else if(radar_show_ring && !strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
-		{
-			// Ring.
-			Draw_ColoredString(entity_p_x, entity_p_y, "&cff0R", 0);
-		}
-		else if(radar_show_suit && !strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
-		{
-			// Suit.
-			Draw_ColoredString(entity_p_x, entity_p_y, "&c0f0S", 0);
-		}
-
-		//
-		// Show RL, LG and backpacks.
-		//
-		if(radar_show_rl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
-		{
-			// RL.
-			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "RL");
-		}
-		else if(radar_show_lg && !strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
-		{
-			// LG.
-			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "LG");
-		}
-		else if(radar_show_backpacks && cl_visents.list[i].model->modhint == MOD_BACKPACK)
-		{
-			// Back packs.
-			float back_pack_size = 0;
-
-			back_pack_size = max(player_size * 0.5, 0.05);
-
-			Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
-			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
-		}
-
-		if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl"))
-		{
-			//
-			// Show armors.
-			//
-
-			if(radar_show_ga && cl_visents.list[i].skinnum == HUD_RADAR_GA)
-			{
-				// GA.
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 178, 1.0);
-			}
-			else if(radar_show_ya && cl_visents.list[i].skinnum == HUD_RADAR_YA)
-			{
-				// YA.
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 192, 1.0);
-			}
-			else if(radar_show_ra && cl_visents.list[i].skinnum == HUD_RADAR_RA)
-			{
-				// RA.
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 251, 1.0);
-			}
-
-			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
-		}
-
-		if(radar_show_mega && !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
-		{
-			//
-			// Show megahealth.
-			//
-
-			// Draw a red border around the cross.
-			Draw_AlphaRectangleRGB(entity_p_x - 3, entity_p_y - 3, 8, 8, 1, false, RGBA_TO_COLOR(200, 0, 0, 200));
-
-			// Draw a black outline cross.
-			Draw_AlphaFill(entity_p_x - 3, entity_p_y - 1, 8, 4, 0, 1);
-			Draw_AlphaFill(entity_p_x - 1, entity_p_y - 3, 4, 8, 0, 1);
-
-			// Draw a 2 pixel cross.
-			Draw_AlphaFill(entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
-			Draw_AlphaFill(entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
-		}
-
-		if(radar_show_ssg && !strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
-		{
-			// SSG.
-			Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SSG");
-		}
-		else if(radar_show_ng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
-		{
-			// NG.
-			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "NG");
-		}
-		else if(radar_show_sng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
-		{
-			// SNG.
-			Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SNG");
-		}
-		else if(radar_show_gl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
-		{
-			// GL.
-			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "GL");
-		}
-
-		if(radar_show_gibs
-				&&(!strcmp(cl_visents.list[i].model->name, "progs/gib1.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/gib2.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/gib3.mdl")))
-		{
-			//
-			// Gibs.
-			//
-
-			Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);
-		}
-
-		if(radar_show_health
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_bh25.bsp")
-					|| !strcmp(cl_visents.list[i].model->name, "maps/b_bh10.bsp")))
-		{
-			//
-			// Health.
-			//
-
-			// Draw a black outline cross.
-			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 1, 7, 3, 0, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 3, 3, 7, 0, 1);
-
-			// Draw a cross.
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 5, 1, 79, 1);
-			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 1, 5, 79, 1);
-		}
-
-		//
-		// Ammo.
-		//
-		if(radar_show_rockets
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_rock0.bsp")
-					|| !strcmp(cl_visents.list[i].model->name, "maps/b_rock1.bsp")))
-		{
-			//
-			// Rockets.
-			//
-
-			// Draw a black outline.
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 6, 3, 5, 0, 1);
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 1, 5, 5, 0, 1);
-
-			// The brown rocket.
-			Draw_AlphaFill (entity_p_x, entity_p_y - 5, 1, 5, 120, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y, 1, 3, 120, 1);
-			Draw_AlphaFill (entity_p_x + 1, entity_p_y, 1, 3, 120, 1);
-		}
-
-		if(radar_show_cells
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_batt0.bsp")
-					|| !strcmp(cl_visents.list[i].model->name, "maps/b_batt1.bsp")))
-		{
-			//
-			// Cells.
-			//
-
-			// Draw a black outline.
-			Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 4, entity_p_y - 5, 3, 0, 1);
-			Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 3 , entity_p_y, 3, 0, 1);
-			Draw_AlphaLine(entity_p_x + 3, entity_p_y, entity_p_x - 3, entity_p_y + 4, 3, 0, 1);
-
-			// Draw a yellow lightning!
-			Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 3, entity_p_y - 4, 1, 111, 1);
-			Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 2 , entity_p_y, 1, 111, 1);
-			Draw_AlphaLine(entity_p_x + 2, entity_p_y, entity_p_x - 2, entity_p_y + 3, 1, 111, 1);
-		}
-
-		if(radar_show_nails
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_nail0.bsp")
-					|| !strcmp(cl_visents.list[i].model->name, "maps/b_nail1.bsp")))
-		{
-			//
-			// Nails.
-			//
-
-			// Draw a black outline.
-			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 3, 7, 3, 0, 1);
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 3, 0, 0.5);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y, 3, 3, 0, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y + 3, 1, 1, 0, 0.5);
-			Draw_AlphaFill (entity_p_x + 1, entity_p_y + 3, 1, 1, 0, 0.5);
-			Draw_AlphaFill (entity_p_x, entity_p_y + 4, 1, 1, 0, 1);
-
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 1, 6, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 1, 3, 1, 6, 0.5);
-			Draw_AlphaFill (entity_p_x, entity_p_y, 1, 4, 6, 1);
-		}
-
-		if(radar_show_shells
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_shell0.bsp")
-					|| !strcmp(cl_visents.list[i].model->name, "maps/b_shell1.bsp")))
-		{
-			//
-			// Shells.
-			//
-
-			// Draw a black outline.
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 3, 5, 9, 0, 1);
-
-			// Draw 2 shotgun shells.
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2, 1, 4, 73, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
-
-			Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2, 1, 4, 73, 1);
-			Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
-		}
-
-		//
-		// Show projectiles (rockets, grenades, nails, shaft).
-		//
-
-		if(radar_show_nails_p
-				&& (!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl")))
-		{
-			//
-			// Spikes from SNG and NG.
-			//
-
-			Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
-		}
-		else if(radar_show_rockets_p
-				&& (!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl")))
-		{
-			//
-			// Rockets and grenades.
-			//
-
-			float entity_angle = 0;
-			int x_line_end = 0;
-			int y_line_end = 0;
-
-			// Get the entity angle in radians.
-			entity_angle = DEG2RAD(cl_visents.list[i].angles[1]);
-
-			x_line_end = entity_p_x + 5 * cos(entity_angle) * scale;
-			y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
-
-			// Draw the rocket/grenade showing it's angle also.
-			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
-		}
-		else if(radar_show_shaft_p
-				&& (!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl")))
-		{
-			//
-			// Shaft beam.
-			//
-
-			float entity_angle = 0;
-			float shaft_length = 0;
-			float x_line_end = 0;
-			float y_line_end = 0;
-
-			// Get the length and angle of the shaft.
-			shaft_length = cl_visents.list[i].model->maxs[1];
-			entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
-
-			// Calculate where the shaft beam's ending point.
-			x_line_end = entity_p_x + shaft_length * cos(entity_angle);
-			y_line_end = entity_p_y - shaft_length * sin(entity_angle);
-
-			// Draw the shaft beam.
-			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
-		}
-	}
-
-	// Draw a circle around "hold areas", the grid cells within this circle
-	// are the ones that are counted for that particular hold area. The team
-	// that has the most percentage of these cells is considered to hold that area.
-	if(show_hold_areas && stats_important_ents != NULL && stats_important_ents->list != NULL)
-	{
-		int entity_p_x = 0;
-		int entity_p_y = 0;
-
-		for(i = 0; i < stats_important_ents->count; i++)
-		{
-			entity_p_x = x + Q_rint((map_x_slope*8*stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
-			entity_p_y = y + Q_rint((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
-
-			Draw_ColoredString(entity_p_x  - (8 * strlen(stats_important_ents->list[i].name)) / 2.0, entity_p_y - 4,
-					va("&c55f%s", stats_important_ents->list[i].name), 0);
-
-			Draw_AlphaCircleOutline(entity_p_x , entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
-		}
-	}
-
-	//
-	// Draw temp entities (explosions, blood, teleport effects).
-	//
-	for(i = 0; i < MAX_TEMP_ENTITIES; i++)
-	{
-		float time_diff = 0.0;
-
-		int entity_q_x = 0;
-		int entity_q_y = 0;
-		int entity_p_x = 0;
-		int entity_p_y = 0;
-
-		// Get the time since the entity spawned.
-		if(cls.demoplayback)
-		{
-			time_diff = cls.demotime - temp_entities.list[i].time;
-		}
-		else
-		{
-			time_diff = cls.realtime - temp_entities.list[i].time;
-		}
-
-		// Don't show temp entities for long.
-		if(time_diff < 0.25)
-		{
-			float radius = 0.0;
-			radius = (time_diff < 0.125) ? (time_diff * 32.0) : (time_diff * 32.0) - time_diff;
-			radius *= scale;
-			radius = min(max(radius, 0), 200);
-
-			// Get quake coordinates (times 8 to get them in the same format as .locs).
-			entity_q_x = temp_entities.list[i].pos[0]*8;
-			entity_q_y = temp_entities.list[i].pos[1]*8;
-
-			entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
-			entity_p_y = y + Q_rint((map_y_slope*entity_q_y + map_y_intercept) * scale);
-
-			if(radar_show_explosions
-					&& (temp_entities.list[i].type == TE_EXPLOSION
-						|| temp_entities.list[i].type == TE_TAREXPLOSION))
-			{
-				//
-				// Explosions.
-				//
-
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 235, 0.8);
-			}
-			else if(radar_show_teleport && temp_entities.list[i].type == TE_TELEPORT)
-			{
-				//
-				// Teleport effect.
-				//
-
-				radius *= 1.5;
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 244, 0.8);
-			}
-			else if(radar_show_shotgun && temp_entities.list[i].type == TE_GUNSHOT)
-			{
-				//
-				// Shotgun fire.
-				//
-
-#define SHOTGUN_SPREAD 10
-				int spread_x = 0;
-				int spread_y = 0;
-				int n = 0;
-
-				for(n = 0; n < 10; n++)
-				{
-					spread_x = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
-					spread_y = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
-
-					Draw_AlphaFill (entity_p_x + spread_x - (SHOTGUN_SPREAD/2), entity_p_y + spread_y - (SHOTGUN_SPREAD/2), 1, 1, 8, 0.9);
-				}
-			}
-		}
-	}
-}
-
-void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
-		float show_height, float show_powerups,
-		float player_size, float show_names,
-		float fade_players, float highlight,
-		char *highlight_color)
-{
-	int i;
-	player_state_t *state;
-	player_info_t *info;
-
-	// Get player state so we can know where he is (or on rare occassions, she).
-	state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
-
-	// Get the info for the player.
-	info = cl.players;
-
-	//
-	// Draw the players.
-	//
-	for (i = 0; i < MAX_CLIENTS; i++, info++, state++)
-	{
-		// Players quake coordinates
-		// (these are multiplied by 8, since the conversion formula was
-		// calculated using the coordinates in a .loc-file, which are in
-		// the format quake-coordainte*8).
-		int player_q_x = 0;
-		int player_q_y = 0;
-
-		// The height of the player.
-		float player_z = 1.0;
-		float player_z_relative = 1.0;
-
-		// Players pixel coordinates.
-		int player_p_x = 0;
-		int player_p_y = 0;
-
-		// Used for drawing the the direction the
-		// player is looking at.
-		float player_angle = 0;
-		int x_line_start = 0;
-		int y_line_start = 0;
-		int x_line_end = 0;
-		int y_line_end = 0;
-
-		// Color and opacity of the player.
-		int player_color = 0;
-		float player_alpha = 1.0;
-
-		// Make sure we're not drawing any ghosts.
-		if(!info->name[0])
-		{
-			continue;
-		}
-
-		if (state->messagenum == cl.oldparsecount)
-		{
-			// TODO: Implement lerping to get smoother drawing.
-
-			// Get the quake coordinates. Multiply by 8 since
-			// the conversion formula has been calculated using
-			// a .loc-file which is in that format.
-			player_q_x = state->origin[0]*8;
-			player_q_y = state->origin[1]*8;
-
-			// Get the players view angle.
-			player_angle = cls.demoplayback ? state->viewangles[1] : cl.simangles[1];
-
-			// Convert from quake coordiantes -> pixel coordinates.
-			player_p_x = Q_rint((map_x_slope*player_q_x + map_x_intercept) * scale);
-			player_p_y = Q_rint((map_y_slope*player_q_y + map_y_intercept) * scale);
-
-			player_color = Sbar_BottomColor(info);
-
-			// Calculate the height of the player.
-			if(show_height)
-			{
-				player_z = state->origin[2];
-				player_z += (player_z >= 0) ? fabs(cl.worldmodel->mins[2]) : fabs(cl.worldmodel->maxs[2]);
-				player_z_relative = min(fabs(player_z / map_height_diff), 1.0);
-				player_z_relative = max(player_z_relative, 0.2);
-			}
-
-			// Make the players fade out as they get less armor/health.
-			if(fade_players)
-			{
-				int armor_strength = 0;
-				armor_strength = (info->stats[STAT_ITEMS] & IT_ARMOR1) ? 100 :
-					((info->stats[STAT_ITEMS] & IT_ARMOR2) ? 150 :
-					 ((info->stats[STAT_ITEMS] & IT_ARMOR3) ? 200 : 0));
-
-				// Don't let the players get completly transparent so add 0.2 to the final value.
-				player_alpha = ((info->stats[STAT_HEALTH] + (info->stats[STAT_ARMOR] * armor_strength)) / 100.0) + 0.2;
-			}
-
-			// Turn dead people red.
-			if(info->stats[STAT_HEALTH] <= 0)
-			{
-				player_alpha = 1.0;
-				player_color = 79;
-			}
-
-			// Draw a ring around players with powerups if it's enabled.
-			if(show_powerups)
-			{
-				if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
-				{
-					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 161, 0.2);
-				}
-
-				if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
-				{
-					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 79, 0.5);
-				}
-
-				if(info->stats[STAT_ITEMS] & IT_QUAD)
-				{
-					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 244, 0.2);
-				}
-			}
-
-#define HUD_RADAR_HIGHLIGHT_NONE			0
-#define HUD_RADAR_HIGHLIGHT_TEXT_ONLY		1
-#define HUD_RADAR_HIGHLIGHT_OUTLINE			2
-#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	3
-#define HUD_RADAR_HIGHLIGHT_CIRCLE			4
-#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	5
-#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	6
-#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	7
-#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		8
-#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	9
-
-			// Draw a circle around the tracked player.
-			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && Cam_TrackNum() >= 0 && info->userid == cl.players[Cam_TrackNum()].userid)
-			{
-				color_t higlight_color = RGBAVECT_TO_COLOR(hud_radar_highlight_color);
-
-				// Draw the highlight.
-				switch ((int)highlight)
-				{
-					case HUD_RADAR_HIGHLIGHT_CROSS_CORNERS :
-						{
-							// Top left
-							Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, higlight_color);
-
-							// Top right.
-							Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, higlight_color);
-
-							// Bottom left.
-							Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
-
-							// Bottom right.
-							Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_ARROW_TOP :
-						{
-							// Top center.
-							Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_ARROW_CENTER :
-						{
-							// Center.
-							Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM :
-						{
-							// Bottom center.
-							Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE :
-						{
-							Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_CIRCLE :
-						{
-							Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE :
-						{
-							Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_OUTLINE :
-						{
-							Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, higlight_color);
-							break;
-						}
-					case HUD_RADAR_HIGHLIGHT_TEXT_ONLY :
-					default :
-						{
-							break;
-						}
-				}
-			}
-
-			// Draw the actual player and a line showing what direction the player is looking in.
-			{
-				float relative_x = 0;
-				float relative_y = 0;
-
-				x_line_start = x + player_p_x;
-				y_line_start = y + player_p_y;
-
-				// Translate the angle into radians.
-				player_angle = DEG2RAD(player_angle);
-
-				relative_x = cos(player_angle);
-				relative_y = sin(player_angle);
-
-				// Draw a slightly larger line behind the colored one
-				// so that it get's an outline.
-				x_line_end = x_line_start + (player_size * 2 * player_z_relative + 1) * relative_x;
-				y_line_end = y_line_start - (player_size * 2 * player_z_relative + 1) * relative_y;
-				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, 1.0);
-
-				// Draw the colored line.
-				x_line_end = x_line_start + (player_size * 2 * player_z_relative) * relative_x;
-				y_line_end = y_line_start - (player_size * 2 * player_z_relative) * relative_y;
-				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
-
-				// Draw the player on the map.
-				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size * player_z_relative, player_color, player_alpha);
-				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size * player_z_relative, 1.0, 0, 1.0);
-			}
-
-			// Draw the players name.
-			if(show_names)
-			{
-				int name_x = 0;
-				int name_y = 0;
-
-				name_x = x + player_p_x;
-				name_y = y + player_p_y;
-
-				// Make sure we're not too far right.
-				while(name_x + 8 * strlen(info->name) > x + width)
-				{
-					name_x--;
-				}
-
-				// Make sure we're not outside the radar to the left.
-				name_x = max(name_x, x);
-
-				// Draw the name.
-				if (highlight >= HUD_RADAR_HIGHLIGHT_TEXT_ONLY
-						&& info->userid == cl.players[Cam_TrackNum()].userid)
-				{
-					// Draw the tracked players name in the user specified color.
-					Draw_ColoredString (name_x, name_y,
-							va("&c%x%x%x%s",
-								(unsigned int)(hud_radar_highlight_color[0] * 15),
-								(unsigned int)(hud_radar_highlight_color[1] * 15),
-								(unsigned int)(hud_radar_highlight_color[2] * 15), info->name), 0);
-				}
-				else
-				{
-					// Draw other players in normal character color.
-					Draw_String (name_x, name_y, info->name);
-				}
-			}
-
-			// Show if a person lost an RL-pack.
-			if(info->stats[STAT_HEALTH] <= 0 && info->stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
-			{
-				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative*2, 1.0, 254, player_alpha);
-				Draw_ColoredString (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1);
-			}
-		}
-	}
-}
-
-//
-// Draws a map of the current level and plots player movements on it.
-//
-void SCR_HUD_DrawRadar(hud_t *hud)
-{
-	int width, height, x, y;
-	float width_limit, height_limit;
-	float scale;
-	float x_scale;
-	float y_scale;
-
-	static cvar_t
-		*hud_radar_opacity = NULL,
-		*hud_radar_width,
-		*hud_radar_height,
-		*hud_radar_autosize,
-		*hud_radar_fade_players,
-		*hud_radar_show_powerups,
-		*hud_radar_show_names,
-		*hud_radar_highlight,
-		*hud_radar_highlight_color,
-		*hud_radar_player_size,
-		*hud_radar_show_height,
-		*hud_radar_show_stats,
-		*hud_radar_show_hold,
-		*hud_radar_weaponfilter,
-		*hud_radar_itemfilter,
-		*hud_radar_onlytp,
-		*hud_radar_otherfilter;
-
-	if (hud_radar_opacity == NULL)    // first time
-	{
-		char checkval[256];
-
-		hud_radar_opacity			= HUD_FindVar(hud, "opacity");
-		hud_radar_width				= HUD_FindVar(hud, "width");
-		hud_radar_height			= HUD_FindVar(hud, "height");
-		hud_radar_autosize			= HUD_FindVar(hud, "autosize");
-		hud_radar_fade_players		= HUD_FindVar(hud, "fade_players");
-		hud_radar_show_powerups		= HUD_FindVar(hud, "show_powerups");
-		hud_radar_show_names		= HUD_FindVar(hud, "show_names");
-		hud_radar_player_size		= HUD_FindVar(hud, "player_size");
-		hud_radar_show_height		= HUD_FindVar(hud, "show_height");
-		hud_radar_show_stats		= HUD_FindVar(hud, "show_stats");
-		hud_radar_show_hold			= HUD_FindVar(hud, "show_hold");
-		hud_radar_weaponfilter		= HUD_FindVar(hud, "weaponfilter");
-		hud_radar_itemfilter		= HUD_FindVar(hud, "itemfilter");
-		hud_radar_otherfilter		= HUD_FindVar(hud, "otherfilter");
-		hud_radar_onlytp			= HUD_FindVar(hud, "onlytp");
-		hud_radar_highlight			= HUD_FindVar(hud, "highlight");
-		hud_radar_highlight_color	= HUD_FindVar(hud, "highlight_color");
-
-		//
-		// Only parse the the filters when they change, not on each frame.
-		//
-
-		// Weapon filter.
-		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
-		strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
-		Cvar_Set(hud_radar_weaponfilter, checkval);
-
-		// Item filter.
-		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
-		strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
-		Cvar_Set(hud_radar_itemfilter, checkval);
-
-		// Other filter.
-		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
-		strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
-		Cvar_Set(hud_radar_otherfilter, checkval);
-
-		// Highlight color.
-		hud_radar_highlight_color->OnChange = Radar_OnChangeHighlightColor;
-		strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
-		Cvar_Set(hud_radar_highlight_color, checkval);
-	}
-
-	// Don't show anything if it's a normal player.
-	if(!(cls.demoplayback || cl.spectator))
-	{
-		HUD_PrepareDraw(hud, hud_radar_width->value, hud_radar_height->value, &x, &y);
-		return;
-	}
-
-	// Don't show when not in teamplay/demoplayback.
-	if(!HUD_ShowInDemoplayback(hud_radar_onlytp->value))
-	{
-		HUD_PrepareDraw(hud, hud_radar_width->value, hud_radar_height->value, &x, &y);
-		return;
-	}
-
-	// Save the width and height of the HUD. We're using these because
-	// if autosize is on these will be altered and we don't want to change
-	// the settings that the user set, if we try, and the user turns off
-	// autosize again the size of the HUD will remain "autosized" until the user
-	// resets it by hand again.
-	width_limit = hud_radar_width->value;
-	height_limit = hud_radar_height->value;
-
-	// we support also sizes specified as a percentage of total screen width/height
-	if (strchr(hud_radar_width->string, '%'))
-		width_limit = width_limit * vid.conwidth / 100.0;
-	if (strchr(hud_radar_height->string, '%'))
-		height_limit = hud_radar_height->value * vid.conheight / 100.0;
-
-	// This map doesn't have a map pic.
-	if(!radar_pic_found)
-	{
-		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-		{
-			Draw_String(x, y, "No radar picture found!");
-		}
-		return;
-	}
-
-	// Make sure we can translate the coordinates.
-	if(!conversion_formula_found)
-	{
-		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-		{
-			Draw_String(x, y, "No conversion formula found!");
-		}
-		return;
-	}
-
-	x = 0;
-	y = 0;
-
-	scale = 1;
-
-	if(hud_radar_autosize->value)
-	{
-		//
-		// Autosize the hud element based on the size of the radar picture.
-		//
-
-		width = width_limit = radar_pic.width;
-		height = height_limit = radar_pic.height;
-	}
-	else
-	{
-		//
-		// Size the picture so that it fits inside the hud element.
-		//
-
-		// Set the scaling based on the picture dimensions.
-		x_scale = (width_limit / radar_pic.width);
-		y_scale = (height_limit / radar_pic.height);
-
-		scale = (x_scale < y_scale) ? x_scale : y_scale;
-
-		width = radar_pic.width * scale;
-		height = radar_pic.height * scale;
-	}
-
-	if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
-	{
-		float player_size = 1.0;
-		static int lastframecount = -1;
-
-		// Place the map picture in the center of the HUD element.
-		x += Q_rint((width_limit / 2.0) - (width / 2.0));
-		x = max(0, x);
-		x = min(x + width, x);
-
-		y += Q_rint((height_limit / 2.0) - (height / 2.0));
-		y = max(0, y);
-		y = min(y + height, y);
-
-		// Draw the radar background.
-		Draw_SAlphaPic (x, y, &radar_pic, hud_radar_opacity->value, scale);
-
-		// Only draw once per frame.
-		if (cls.framecount == lastframecount)
-		{
-			return;
-		}
-		lastframecount = cls.framecount;
-
-		if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)
-		{
-			return;
-		}
-
-		// Scale the player size after the size of the radar.
-		player_size = hud_radar_player_size->value * scale;
-
-		// Draw team stats.
-		if(hud_radar_show_stats->value)
-		{
-			Radar_DrawGrid(stats_grid, x, y, scale, width, height, hud_radar_show_stats->value);
-		}
-
-		// Draw entities such as powerups, weapons and backpacks.
-		if(RADAR_SHOW_WEAPONS || RADAR_SHOW_ITEMS || RADAR_SHOW_OTHER)
-		{
-			Radar_DrawEntities(x, y, scale,
-					player_size,
-					hud_radar_show_hold->value);
-		}
-
-		// Draw the players.
-		Radar_DrawPlayers(x, y, width, height, scale,
-				hud_radar_show_height->value,
-				hud_radar_show_powerups->value,
-				player_size,
-				hud_radar_show_names->value,
-				hud_radar_fade_players->value,
-				hud_radar_highlight->value,
-				hud_radar_highlight_color->string);
-	}
-}
-
 #endif // WITH_PNG
+
+void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale);
 
 //---------------------
 //
@@ -6754,19 +5949,11 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 //
 void SCR_HUD_DrawStaticText(hud_t *hud)
 {
-	int x, y;
-	const char *line_start;
-	char *line_end;
 	const char *in;
-	int lines = 1;
-	int max_length = 0;
 	int alignment = 0;
-	int character_width = 8;
-	int character_height = 8;
 
 	static cvar_t
 		*hud_statictext_big = NULL,
-		*hud_statictext_style,
 		*hud_statictext_scale,
 		*hud_statictext_text,
 		*hud_statictext_textalign;
@@ -6774,7 +5961,6 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	if (hud_statictext_big == NULL) {
 		// first time
 		hud_statictext_big = HUD_FindVar(hud, "big");
-		hud_statictext_style = HUD_FindVar(hud, "style");
 		hud_statictext_scale = HUD_FindVar(hud, "scale");
 		hud_statictext_text = HUD_FindVar(hud, "text");
 		hud_statictext_textalign = HUD_FindVar(hud, "textalign");
@@ -6782,6 +5968,7 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 
 	// Static text valid for demos/qtv only
 	if (!cls.demoplayback) {
+		int x, y;
 		HUD_PrepareDraw(hud, 0, 0, &x, &y);
 		return;
 	}
@@ -6799,13 +5986,27 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	}
 	in = TP_ParseFunChars(in, false);
 
+	SCR_HUD_MultiLineString(hud, in, hud_statictext_big->integer, alignment, hud_statictext_scale->value);
+}
+
+void SCR_HUD_MultiLineString(hud_t* hud, const char* in, qbool large_font, int alignment, float scale)
+{
 	// find carriage returns
-	line_start = in;
-	max_length = strlen_color_by_terminator(line_start, '\r');
+	int x, y;
+	const char *line_start = in;
+	int max_length = strlen_color_by_terminator(line_start, '\r');
+	char* line_end;
+	int lines = 0;
+	int character_width, character_height;
+
 	while ((line_end = strchr(line_start, '\r'))) {
 		line_start = line_end + 1;
 		max_length = max(max_length, strlen_color_by_terminator(line_start, '\r'));
 
+		++lines;
+	}
+
+	if (*line_start) {
 		++lines;
 	}
 
@@ -6814,11 +6015,11 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 		lines = 0;
 	}
 
-	character_width = 8 * hud_statictext_scale->value;
-	character_height = 8 * hud_statictext_scale->value;
-	if (hud_statictext_style->integer == 1) {
-		character_width = 24 * hud_statictext_scale->value;
-		character_height = 24 * hud_statictext_scale->value;
+	character_width = 8 * scale;
+	character_height = 8 * scale;
+	if (large_font) {
+		character_width = 24 * scale;
+		character_height = 24 * scale;
 	}
 
 	if (HUD_PrepareDraw(hud, max_length * character_width, lines * character_height, &x, &y)) {
@@ -6842,11 +6043,11 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 				line_x += (max_length - strlen_color(line_start)) / 2 * character_width;
 			}
 
-			if (hud_statictext_style->integer == 1) {
-				SCR_DrawWadString(line_x, y, hud_statictext_scale->value, line_start); 
+			if (large_font) {
+				SCR_DrawWadString(line_x, y, scale, line_start); 
 			}
 			else {
-				Draw_SString(line_x, y, line_start, hud_statictext_scale->value);
+				Draw_SString(line_x, y, line_start, scale);
 			}
 
 			y += character_height;
@@ -6879,15 +6080,20 @@ void HUD_AfterDraw(void)
 // and add some common elements to hud (clock etc)
 //
 
+static void SCR_Hud_GameSummary(hud_t* hud);
+
 void CommonDraw_Init(void)
 {
 	int i;
 
 	// variables
 	Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
-	Cvar_Register (&hud_planmode);
-	Cvar_Register (&hud_tp_need);
-	Cvar_Register (&hud_digits_trim);
+	Cvar_Register(&hud_planmode);
+	Cvar_Register(&hud_tp_need);
+	Cvar_Register(&hud_digits_trim);
+	Cvar_Register(&hud_sortrules_playersort);
+	Cvar_Register(&hud_sortrules_teamsort);
+	Cvar_Register(&hud_sortrules_includeself);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
@@ -6910,121 +6116,144 @@ void CommonDraw_Init(void)
 	autohud.active = 0;
 
 	// init gameclock
-	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
-			"1", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-			"big",      "1",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "1",
-			"countdown","0",
-			"offset","0",
-			NULL);
+	HUD_Register(
+		"gameclock", NULL, "Shows current game time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
+		"1", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
+		"big",      "1",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "1",
+		"countdown","0",
+		"offset","0",
+		NULL
+	);
 
-	HUD_Register("notify", NULL, "Shows last console lines",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
-			"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
-			"rows", "4",
-			"cols", "30",
-			"scale", "1",
-			"time", "4",
-			NULL);
+	HUD_Register(
+		"notify", NULL, "Shows last console lines",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
+		"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"rows", "4",
+		"cols", "30",
+		"scale", "1",
+		"time", "4",
+		NULL
+	);
 
 	// fps
-	HUD_Register("fps", NULL,
-			"Shows your current framerate in frames per second (fps)."
-			"This can also show the minimum framerate that occured in the last measured period.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-			"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
-			"show_min", "0",
-			"style",	"0",
-			"title",    "1",
-			"drop", "70",
-			NULL);
+	HUD_Register(
+		"fps", NULL,
+		"Shows your current framerate in frames per second (fps)."
+		"This can also show the minimum framerate that occured in the last measured period.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
+		"1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"show_min", "0",
+		"style",    "0",
+		"title",    "1",
+		"scale",    "1",
+		"drop",     "70",
+		NULL
+	);
 
-	HUD_Register("vidlag", NULL,
-			"Shows the delay between the time a frame is rendered and the time it's displayed.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
-			"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
-			"style",	"0",
-			NULL);
+	HUD_Register(
+		"vidlag", NULL,
+		"Shows the delay between the time a frame is rendered and the time it's displayed.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
+		"0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// init clock
-	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
-			"0", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
-			"big",      "1",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "1",
-			"format",   "0",
-			NULL);
+	HUD_Register(
+		"clock", NULL, "Shows current local time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
+		"0", "top", "right", "console", "0", "0", "0", "0 0 0", NULL,
+		"big",      "1",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "1",
+		"format",   "0",
+		NULL
+	);
 
 	// init democlock
-	HUD_Register("democlock", NULL, "Shows current demo time (hh:mm:ss).",
-			HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
-			"1", "top", "right", "console", "0", "8", "0", "0 0 0", NULL,
-			"big",      "0",
-			"style",    "0",
-			"scale",    "1",
-			"blink",    "0",
-			NULL);
+	HUD_Register(
+		"democlock", NULL, "Shows current demo time (hh:mm:ss).",
+		HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
+		"1", "top", "right", "console", "0", "8", "0", "0 0 0", NULL,
+		"big",      "0",
+		"style",    "0",
+		"scale",    "1",
+		"blink",    "0",
+		NULL
+	);
 
 	// init ping
-	HUD_Register("ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
-			HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
-			"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"period",       "1",
-			"show_pl",      "1",
-			"show_min",     "0",
-			"show_max",     "0",
-			"show_dev",     "0",
-			"style",		"0",
-			"blink",        "1",
-			NULL);
+	HUD_Register(
+		"ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
+		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"period",   "1",
+		"show_pl",  "1",
+		"show_min", "0",
+		"show_max", "0",
+		"show_dev", "0",
+		"style",    "0",
+		"blink",    "1",
+		"scale",    "1",
+		NULL);
 
 	// init net
-	HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
-			"0", "top", "left", "center", "0", "0", "0.2", "0 0 0", NULL,
-			"period",  "1",
-			NULL);
+	HUD_Register(
+		"net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
+		"0", "top", "left", "center", "0", "0", "0.2", "0 0 0", NULL,
+		"period", "1",
+		"scale", "1",
+		NULL
+	);
 
 	// init speed
 	HUD_Register("speed", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
-			"0", "top", "center", "bottom", "0", "-5", "0", "0 0 0", NULL,
-			"xyz",  "0",
-			"width", "160",
-			"height", "15",
-			"opacity", "1.0",
-			"tick_spacing", "0.2",
-			"color_stopped", SPEED_STOPPED,
-			"color_normal", SPEED_NORMAL,
-			"color_fast", SPEED_FAST,
-			"color_fastest", SPEED_FASTEST,
-			"color_insane", SPEED_INSANE,
-			"vertical", "0",
-			"vertical_text", "1",
-			"text_align", "1",
-			"style", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
+		"0", "top", "center", "bottom", "0", "-5", "0", "0 0 0", NULL,
+		"xyz",  "0",
+		"width", "160",
+		"height", "15",
+		"opacity", "1.0",
+		"tick_spacing", "0.2",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"vertical", "0",
+		"vertical_text", "1",
+		"text_align", "1",
+		"style", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// Init speed2 (half circle thingie).
 	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
-			HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
-			"0", "top", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"xyz",  "0",
-			"opacity", "1.0",
-			"color_stopped", SPEED_STOPPED,
-			"color_normal", SPEED_NORMAL,
-			"color_fast", SPEED_FAST,
-			"color_fastest", SPEED_FASTEST,
-			"color_insane", SPEED_INSANE,
-			"radius", "50.0",
-			"wrapspeed", "500",
-			"orientation", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
+		"0", "top", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"xyz",  "0",
+		"opacity", "1.0",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"radius", "50.0",
+		"wrapspeed", "500",
+		"orientation", "0",
+		"scale", "1",
+		NULL
+	);
 
 	// init guns
 	HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
@@ -7381,52 +6610,59 @@ void CommonDraw_Init(void)
 			"duration", "0.8",
 			NULL);
 
-	HUD_Register("frags", NULL, "Show list of player frags in short form.",
-			0, ca_active, 0, SCR_HUD_DrawFrags,
-			"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"cell_width", "32",
-			"cell_height", "8",
-			"rows", "1",
-			"cols", "4",
-			"space_x", "1",
-			"space_y", "1",
-			"teamsort", "0",
-			"strip", "1",
-			"vertical", "0",
-			"shownames", "0",
-			"showteams", "0",
-			"padtext", "1",
-			"showself_always", "1",
-			"extra_spec_info", "ALL",
-			"fliptext", "0",
-			"style", "0",
-			"bignum", "0",
-			"colors_alpha", "1.0",
-			"maxname", "16",
-			"notintp", "0",
-			NULL);
+	HUD_Register(
+		"frags", NULL, "Show list of player frags in short form.",
+		0, ca_active, 0, SCR_HUD_DrawFrags,
+		"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"cell_width", "32",
+		"cell_height", "8",
+		"rows", "1",
+		"cols", "4",
+		"space_x", "1",
+		"space_y", "1",
+		"teamsort", "0",
+		"strip", "1",
+		"vertical", "0",
+		"shownames", "0",
+		"showteams", "0",
+		"padtext", "1",
+		"showself_always", "1",
+		"extra_spec_info", "ALL",
+		"fliptext", "0",
+		"style", "0",
+		"bignum", "0",
+		"colors_alpha", "1.0",
+		"maxname", "16",
+		"notintp", "0",
+		"fixedwidth", "0",
+		"scale", "1",
+		NULL
+	);
 
-	HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
-			0, ca_active, 0, SCR_HUD_DrawTeamFrags,
-			"1", "ibar", "center", "before", "0", "0", "0", "0 0 0", NULL,
-			"cell_width", "32",
-			"cell_height", "8",
-			"rows", "1",
-			"cols", "2",
-			"space_x", "1",
-			"space_y", "1",
-			"strip", "1",
-			"vertical", "0",
-			"shownames", "0",
-			"padtext", "1",
-			"fliptext", "1",
-			"style", "0",
-			"extra_spec_info", "1",
-			"onlytp", "0",
-			"bignum", "0",
-			"colors_alpha", "1.0",
-			"maxname", "16",
-			NULL);
+	HUD_Register(
+		"teamfrags", NULL, "Show list of team frags in short form.",
+		0, ca_active, 0, SCR_HUD_DrawTeamFrags,
+		"1", "ibar", "center", "before", "0", "0", "0", "0 0 0", NULL,
+		"cell_width", "32",
+		"cell_height", "8",
+		"rows", "1",
+		"cols", "2",
+		"space_x", "1",
+		"space_y", "1",
+		"strip", "1",
+		"vertical", "0",
+		"shownames", "0",
+		"padtext", "1",
+		"fliptext", "1",
+		"style", "0",
+		"extra_spec_info", "1",
+		"onlytp", "0",
+		"bignum", "0",
+		"colors_alpha", "1.0",
+		"maxname", "16",
+		"scale", "1",
+		NULL
+	);
 
 	HUD_Register("teaminfo", NULL, "Show information about your team in short form.",
 			0, ca_active, 0, SCR_HUD_DrawTeamInfo,
@@ -7445,70 +6681,55 @@ void CommonDraw_Init(void)
 			NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
-			HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
-			"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"style",	"2",
-			"width",	"512",
-			"height",	"8",
-			"scroll",	"1",
-			"scroll_delay", "0.5",
-			"on_scoreboard", "0",
-			"wordwrap", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
+		"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style", "2",
+		"width", "512",
+		"height", "8",
+		"scroll", "1",
+		"scroll_delay", "0.5",
+		"on_scoreboard", "0",
+		"wordwrap", "0",
+		"scale", "1",
+		NULL
+	);
 
 	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
-			HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"style",	"0",
-			"on_scoreboard", "0",
-			NULL);
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style",	"0",
+		"on_scoreboard", "0",
+		"scale", "1",
+		NULL);
 
-#ifdef WITH_PNG
-	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawRadar,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"opacity", "0.5",
-			"width", "30%",
-			"height", "25%",
-			"autosize", "0",
-			"show_powerups", "1",
-			"show_names", "0",
-			"highlight_color", "yellow",
-			"highlight", "0",
-			"player_size", "10",
-			"show_height", "1",
-			"show_stats", "1",
-			"fade_players", "1",
-			"show_hold", "0",
-			"weaponfilter", "gl rl lg",
-			"itemfilter", "backpack quad pent armor mega",
-			"otherfilter", "projectiles gibs explosions shotgun",
-			"onlytp", "0",
-			NULL);
-#endif // WITH_PNG
+	HUD_Register(
+		"teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"vertical_text", "0",
+		"show_text", "1",
+		"onlytp", "0",
+		"scale", "1",
+		NULL
+	);
 
-	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"opacity", "0.8",
-			"width", "200",
-			"height", "8",
-			"vertical", "0",
-			"vertical_text", "0",
-			"show_text", "1",
-			"onlytp", "0",
-			NULL);
-
-	HUD_Register("teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
-			HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
-			"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-			"opacity", "0.8",
-			"width", "200",
-			"height", "8",
-			"onlytp", "0",
-			"style", "1",
-			"itemfilter", "quad ra ya ga mega pent rl quad",
-			NULL);
+	HUD_Register(
+		"teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"onlytp", "0",
+		"style", "1",
+		"itemfilter", "quad ra ya ga mega pent rl quad",
+		"scale", "1",
+		NULL
+	);
 
 #ifdef WITH_PNG
 	HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",
@@ -7525,19 +6746,21 @@ void CommonDraw_Init(void)
 	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
 			0, ca_active, 1, SCR_HUD_DrawKeys,
 			"0", "screen", "right", "center", "0", "0", "0.5", "20 20 20", NULL,
-			"scale", "2",
+			"scale", "2", "player", "",
 			NULL
 		    );
 #endif
 
-	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
-			0, ca_active, 1, SCR_HUD_DrawItemsClock,
-			"0", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,
-			"timelimit", "5",
-			"style", "0",
-			"scale", "1",
-			NULL
-		    );
+	HUD_Register(
+		"itemsclock", NULL, "Displays upcoming item respawns",
+		0, ca_active, 1, SCR_HUD_DrawItemsClock,
+		"0", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,
+		"timelimit", "5",
+		"style", "0",
+		"scale", "1",
+		"filter", "",
+		NULL
+	);
 
 	HUD_Register("score_team", NULL, "Own scores or team scores.",
 			0, ca_active, 0, SCR_HUD_DrawScoresTeam,
@@ -7590,7 +6813,6 @@ void CommonDraw_Init(void)
 			"scale", "1",
 			"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
 			"format_big", "%t:%e:%Z",
-			"fixed_order", "0",
 			"format_reversed_big", "",
 			"format_reversed_small", "",
 			"frag_length", "0",
@@ -7636,6 +6858,38 @@ void CommonDraw_Init(void)
 			NULL
 		    );
 
+	HUD_Register(
+		"teamstackbar", NULL, "Shows relative stacks of each team.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_Hud_StackBar,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"vertical_text", "0",
+		"show_text", "1",
+		"onlytp", "0",
+		"scale", "1",
+		"simpleitems", "1",
+		NULL
+	);
+
+	HUD_Register(
+		"gamesummary", NULL, "Shows total pickups & current weapons.",
+		HUD_PLUSMINUS, ca_active, 0, SCR_Hud_GameSummary,
+		"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"onlytp", "0",
+		"scale", "1",
+		"format", "QYyq",
+		"circles", "0",
+		"ratio", "4",
+		"flash", "1",
+		NULL
+	);
+
+	Radar_HudInit();
+	WeaponStats_HUDInit();
 	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef _DEBUG
 HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",
@@ -7650,7 +6904,176 @@ HUD_PLUSMINUS | HUD_ON_SCORES, ca_disconnected, 0, SCR_HUD_DrawFrameGraph,
 NULL);
 #endif
 */
-
 }
+static void SCR_Hud_GameSummary(hud_t* hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+	char* format_string;
+	int icon_size = 32;
 
+	static cvar_t
+		*hud_gamesummary_style = NULL,
+		*hud_gamesummary_onlytp,
+		*hud_gamesummary_scale,
+		*hud_gamesummary_format,
+		*hud_gamesummary_circles,
+		*hud_gamesummary_ratio,
+		*hud_gamesummary_flash;
 
+	if (hud_gamesummary_style == NULL)    // first time
+	{
+		hud_gamesummary_style               = HUD_FindVar(hud, "style");
+		hud_gamesummary_onlytp              = HUD_FindVar(hud, "onlytp");
+		hud_gamesummary_scale               = HUD_FindVar(hud, "scale");
+		hud_gamesummary_format              = HUD_FindVar(hud, "format");
+		hud_gamesummary_circles             = HUD_FindVar(hud, "circles");
+		hud_gamesummary_ratio               = HUD_FindVar(hud, "ratio");
+		hud_gamesummary_flash               = HUD_FindVar(hud, "flash");
+	}
+
+	// Don't show when not in teamplay/demoplayback.
+	if (!cls.mvdplayback || !HUD_ShowInDemoplayback(hud_gamesummary_onlytp->value)) {
+		HUD_PrepareDraw(hud, 0, 0, &x, &y);
+		return;
+	}
+
+	// Measure for width
+	icon_size = 8 * bound(1, hud_gamesummary_ratio->value, 8);
+	width = strlen(hud_gamesummary_format->string) * icon_size * hud_gamesummary_scale->value;
+	height = (icon_size + (hud_gamesummary_style->integer ? 8 : 0)) * hud_gamesummary_scale->value;
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		int text_offset = hud_gamesummary_scale->value * (icon_size / 2 - 4);
+		int icon_offset = 0;
+
+		if (hud_gamesummary_style->integer == 1) {
+			text_offset = icon_size * hud_gamesummary_scale->value;
+		}
+		else if (hud_gamesummary_style->integer == 2) {
+			text_offset = 0;
+			icon_offset = 8 * hud_gamesummary_scale->value;
+		}
+
+		for (format_string = hud_gamesummary_format->string; *format_string; ++format_string) {
+			int team = isupper(format_string[0]) ? 0 : 1;
+			int background_tex = 0;
+			int value = 0;
+			float alpha = 1.0f;
+			float last_taken = 0.0f;
+			byte* background_color = NULL;
+			byte mega_color[] = { 0x00, 0xAF, 0x00 };
+			byte ra_color[] = { 0xFF, 0x00, 0x00 };
+			byte ya_color[] = { 0xFF, 0xFF, 0x00 };
+			byte ga_color[] = { 0x00, 0xBF, 0x00 };
+			byte rl_color[] = { 0xFF, 0x1F, 0x3F };
+			byte lg_color[] = { 0x2F, 0xAA, 0xAA };
+			byte quad_color[] = { 0x00, 0x5F, 0xFF };
+			byte pent_color[] = { 0xFF, 0x00, 0x00 };
+			byte ring_color[] = { 0xFF, 0xFF, 0x00 };
+
+			switch (tolower(format_string[0])) {
+			case 'm':
+				background_tex = Mod_SimpleTextureForHint(MOD_MEGAHEALTH, 0);
+				value = sorted_teams[team].mh_taken;
+				background_color = mega_color;
+				last_taken = sorted_teams[team].mh_lasttime;
+				break;
+			case 'r':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 2);
+				value = sorted_teams[team].ra_taken;
+				background_color = ra_color;
+				last_taken = sorted_teams[team].ra_lasttime;
+				break;
+			case 'y':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 1);
+				value = sorted_teams[team].ya_taken;
+				background_color = ya_color;
+				last_taken = sorted_teams[team].ya_lasttime;
+				break;
+			case 'g':
+				background_tex = Mod_SimpleTextureForHint(MOD_ARMOR, 0);
+				value = sorted_teams[team].ga_taken;
+				background_color = ga_color;
+				last_taken = sorted_teams[team].ga_lasttime;
+				break;
+			case 'o':
+				background_tex = Mod_SimpleTextureForHint(MOD_ROCKETLAUNCHER, 0);
+				value = sorted_teams[team].rlcount;
+				background_color = rl_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'l':
+				background_tex = Mod_SimpleTextureForHint(MOD_LIGHTNINGGUN, 0);
+				value = sorted_teams[team].lgcount;
+				background_color = lg_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'w':
+				background_tex = Mod_SimpleTextureForHint(MOD_ROCKETLAUNCHER, 0);
+				value = sorted_teams[team].weapcount;
+				background_color = rl_color;
+				last_taken = value ? -1 : 0;
+				break;
+			case 'q':
+				background_tex = Mod_SimpleTextureForHint(MOD_QUAD, 0);
+				value = sorted_teams[team].quads_taken;
+				background_color = quad_color;
+				last_taken = sorted_teams[team].q_lasttime;
+				break;
+			case 'p':
+				background_tex = Mod_SimpleTextureForHint(MOD_PENT, 0);
+				value = sorted_teams[team].pents_taken;
+				background_color = pent_color;
+				last_taken = sorted_teams[team].p_lasttime;
+				break;
+			case 'e':
+				background_tex = Mod_SimpleTextureForHint(MOD_RING, 0);
+				value = sorted_teams[team].rings_taken;
+				background_color = ring_color;
+				last_taken = sorted_teams[team].r_lasttime;
+				break;
+			}
+
+			alpha = last_taken == -1 ? 1.0f : 0.3f;
+			if (last_taken > 0 && cls.demotime >= last_taken) {
+				if (hud_gamesummary_flash->integer && cls.demotime - last_taken <= 1.0f) {
+					// Flash for first second
+					alpha = (int)((cls.demotime - last_taken) * 10) % 4 >= 2 ? 0.5f : 1.0f;
+				}
+				else if (cls.demotime - last_taken <= 2.3f) {
+					// Then solid colour
+					alpha = 1.0f;
+				}
+				else if (cls.demotime - last_taken <= 3.0f) {
+					// Then fade back to normal
+					alpha = bound(0.3f, 1.0f - (cls.demotime - last_taken - 2.3f), 1.0f);
+				}
+			}
+
+			{
+				char buffer[10];
+				int length;
+
+				snprintf(buffer, sizeof(buffer), "%d", value);
+				length = strlen(buffer);
+
+				if (hud_gamesummary_circles->integer && background_color) {
+					float half_width = icon_size * 0.5f * hud_gamesummary_scale->value;
+
+					Draw_AlphaCircleFillRGB(x + half_width, y + icon_offset + half_width, half_width, RGBA_TO_COLOR(background_color[0], background_color[1], background_color[2], alpha / 2 * 255));
+				}
+				else if (background_tex) {
+					Draw_2dAlphaTexture(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
+				}
+
+				if (value) {
+					Draw_SString(x + hud_gamesummary_scale->value * (icon_size / 2 - length * 8 / 2), y + text_offset, buffer, hud_gamesummary_scale->value);
+				}
+			}
+
+			x += icon_size * hud_gamesummary_scale->value;
+		}
+	}
+}

@@ -56,7 +56,9 @@ void CEditBox_Key(CEditBox *e, int key, wchar unichar)
 
 	switch (key) {
 			case K_LEFTARROW:
-				e->pos--;
+				if (e->pos != 0) {
+					e->pos--;
+				}
 				break;
 			case K_RIGHTARROW:
 				e->pos++;

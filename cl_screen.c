@@ -53,6 +53,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "server.h"
 #endif
 
+void WeaponStats_CommandInit(void);
+
 int				glx, gly, glwidth, glheight;
 
 #define			DEFAULT_SSHOT_FORMAT		"png"
@@ -168,15 +170,6 @@ cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0"};
 cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
 cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
-
-void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel);
-cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_NONE, OnChange_scr_clock_format};
-cvar_t	scr_weaponstats_align_right  = {"scr_weaponstats_align_right", "1"};
-cvar_t	scr_weaponstats_frame_color  = {"scr_weaponstats_frame_color", "10 0 0 120", CVAR_COLOR};
-cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1"};
-cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0"};
-cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0"};
-cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "", CVAR_NONE, OnChange_scr_weaponstats};
 
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
@@ -1036,8 +1029,6 @@ typedef struct player_autoid_s {
 static autoid_player_t autoids[MAX_CLIENTS];
 static int autoid_count;
 
-#define ISDEAD(i) ((i) >= 41 && (i) <= 102)
-
 void SCR_SetupAutoID (void) {
 	int j, view[4], tracknum = -1;
 	float model[16], project[16], winz, *origin;
@@ -1321,6 +1312,7 @@ typedef struct ci_player_s {
 	float		size;
 	byte		texindex;
 	int			flags;
+	float       distance;
 
 	player_info_t *player;
 
@@ -1383,13 +1375,8 @@ int CmpCI_Order(const void *p1, const void *p2)
 {
 	const ci_player_t	*a1 = (ci_player_t *) p1;
 	const ci_player_t	*a2 = (ci_player_t *) p2;
-	int l1, l2;
-	vec3_t v;
-
-	VectorSubtract (r_refdef.vieworg, a1->org, v);
-	l1 = VectorLength (v);
-	VectorSubtract (r_refdef.vieworg, a2->org, v);
-	l2 = VectorLength (v);
+	int l1 = a1->distance;
+	int l2 = a2->distance;
 
 	if (l1 > l2)
 		return -1;
@@ -1443,6 +1430,18 @@ void SCR_SetupCI (void) {
 		id->color[1] = 255; // g
 		id->color[2] = 255; // b
 		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
+		{
+			vec3_t diff;
+
+			VectorSubtract(id->org, r_refdef.vieworg, diff);
+			id->distance = VectorLength(diff);
+		}
+		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing) {
+			if (id->distance < KTX_RACING_PLAYER_MIN_DISTANCE) {
+				continue; // too close, hide indicators
+			}
+			id->color[3] *= min(id->distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
+		}
 		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
@@ -2097,270 +2096,6 @@ static void SCR_Draw_ShowNick(void)
 	glDisable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
-}
-
-/***************************** weapon stats *************************/
-
-typedef enum
-{
-	wpNONE = 0,
-	wpAXE,
-	wpSG,
-	wpSSG,
-	wpNG,
-	wpSNG,
-	wpGL,
-	wpRL,
-	wpLG,
-	wpMAX
-
-} weaponName_t;
-
-typedef struct wpType_s {
-
-	int hits;			// hits with this weapon, for SG and SSG this is count of bullets
-	int attacks;		// all attacks with this weapon, for SG and SSG this is count of bullets
-
-} wpType_t;
-
-
-typedef struct ws_player_s {
-
-	int 		client;
-
-	wpType_t	wpn[wpMAX];
-
-} ws_player_t;
-
-static ws_player_t ws_clients[MAX_CLIENTS];
-
-void SCR_ClearWeaponStats(void)
-{
-	memset(ws_clients, 0, sizeof(ws_clients));
-}
-
-static weaponName_t WS_NameToNum(const char *name)
-{
-	if ( !strcmp(name, "axe") )
-		return wpAXE;
-	if ( !strcmp(name, "sg") )
-		return wpSG;
-	if ( !strcmp(name, "ssg") )
-		return wpSSG;
-	if ( !strcmp(name, "ng") )
-		return wpNG;
-	if ( !strcmp(name, "sng") )
-		return wpSNG;
-	if ( !strcmp(name, "gl") )
-		return wpGL;
-	if ( !strcmp(name, "rl") )
-		return wpRL;
-	if ( !strcmp(name, "lg") )
-		return wpLG;
-
-	return wpNONE;
-}
-
-/*
-   static char *WS_NumToName( weaponName_t wp )
-   {
-   switch ( wp ) {
-   case wpAXE: return "axe";
-   case wpSG:  return "sg";
-   case wpSSG: return "ssg";
-   case wpNG:  return "ng";
-   case wpSNG: return "sng";
-   case wpGL:  return "gl";
-   case wpRL:  return "rl";
-   case wpLG:  return "lg";
-
-// shut up gcc
-case wpNONE:
-case wpMAX: return "unknown";
-}
-
-return "unknown";
-}
-*/
-
-void Parse_WeaponStats(char *s)
-{
-	int		client, arg;
-	weaponName_t wp;
-
-	Cmd_TokenizeString( s );
-
-	arg = 1;
-
-	client = atoi( Cmd_Argv( arg++ ) );
-
-	if (client < 0 || client >= MAX_CLIENTS)
-	{
-		Com_DPrintf("Parse_WeaponStats: wrong client %d\n", client);
-		return;
-	}
-
-	ws_clients[ client ].client = client; // no, its not stupid
-
-	wp = WS_NameToNum( Cmd_Argv( arg++ ) );
-
-	if ( wp == wpNONE )
-	{
-		Com_DPrintf("Parse_WeaponStats: wrong weapon\n");
-		return;
-	}
-
-	ws_clients[ client ].wpn[wp].attacks = atoi( Cmd_Argv( arg++ ) );
-	ws_clients[ client ].wpn[wp].hits    = atoi( Cmd_Argv( arg++ ) );
-}
-
-static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool width_only)
-{
-	char *s, tmp[1024], tmp2[MAX_MACRO_STRING], *start, *end;
-	qbool percentage;
-	int x_in = x; // save x
-	int i;
-	weaponName_t wp;
-
-	if (!ws_cl)
-		return 0;
-
-	i = ws_cl->client;
-
-	if (i < 0 || i >= MAX_CLIENTS)
-	{
-		Com_DPrintf("SCR_Draw_WeaponStatsPlayer: wrong client %d\n", i);
-		return 0;
-	}
-
-	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
-	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
-	s = tmp2;
-
-	//
-	// parse/draw string like this "#1 %2 %3 #7 %8"
-	//
-
-	start = s; // set start
-
-	for ( ; *s; s++)
-	{
-		if ( s[0] != '%' && s[0] != '#' )
-			continue;
-
-		end = s;
-
-		percentage = (s[0] == '%');
-
-		s++; // advance
-
-		wp = (int)s[0] - '0'; 
-
-		if ( wp <= wpNONE || wp >= wpMAX )
-			continue; // unsupported weapon
-
-		if ( (int)(end - start) > 0 )
-		{
-			strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
-
-			if( !width_only )
-				Draw_ColoredString (x, y, tmp, false);
-
-			x += strlen_color(tmp) * FONTWIDTH;
-		}
-
-		start = s + 1; // set new start
-
-		if ( percentage )
-		{
-			float	accuracy = (ws_cl->wpn[wp].attacks ? 100.0f * ws_cl->wpn[wp].hits / ws_cl->wpn[wp].attacks : 0 );
-			snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
-		}
-		else
-		{
-			snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
-		}
-
-		if(!width_only)
-			Draw_ColoredString (x, y, tmp, false);
-
-		x += strlen_color(tmp) * FONTWIDTH;
-	}
-
-	return (x - x_in) / FONTWIDTH; // return width
-}
-
-static void SCR_Draw_WeaponStats(void)
-{
-	int x, y, w, h;
-	int i;
-
-	byte	*col = scr_weaponstats_frame_color.color;
-	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
-
-	if ( !scr_weaponstats.integer)
-		return;
-
-	i = ( cl.spectator ? Cam_TrackNum() : cl.playernum );
-
-	if ( i < 0 || i >= MAX_CLIENTS )
-		return;
-
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glColor4f(1, 1, 1, 1);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
-
-	if (scale != 1)
-	{
-		glPushMatrix ();
-		glScalef(scale, scale, 1);
-	}
-
-	y = vid.height*0.6/scale + scr_weaponstats_y.value;
-
-	// this does't draw anything, just calculate width
-	w = SCR_Draw_WeaponStatsPlayer(&ws_clients[i], 0, 0, true);
-	h = 1;
-
-	x = (scr_weaponstats_align_right.value ? (vid.width/scale - w * FONTWIDTH) - FONTWIDTH : FONTWIDTH);
-	x += scr_weaponstats_x.value;
-
-	// draw frame
-	glDisable (GL_TEXTURE_2D);
-	glColor4ub(col[0], col[1], col[2], col[3]);
-	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
-	glColor4f(1, 1, 1, 1);
-
-	SCR_Draw_WeaponStatsPlayer(&ws_clients[i], x, y, false);
-
-	if (scale != 1)
-		glPopMatrix();
-
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
-}
-
-void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel)
-{
-	extern void CL_UserinfoChanged (char *key, char *value);
-
-	// do not allow set "wpsx" to "0" instead set it to ""
-	CL_UserinfoChanged("wpsx", strcmp(value, "0") ? value : "");
-}
-
-static void SCR_MvdWeaponStatsOn_f(void)
-{
-	Cvar_Set (&scr_weaponstats, "1");
-}
-
-static void SCR_MvdWeaponStatsOff_f(void)
-{
-	Cvar_Set (&scr_weaponstats, "0");
 }
 
 /**************************************** 262 HUD *****************************/
@@ -3218,6 +2953,39 @@ static void SCR_UpdateCursor(void)
 	}
 }
 
+static void SCR_VoiceMeter(void)
+{
+#ifdef FTE_PEXT2_VOICECHAT
+
+	float	range;
+	int		loudness;
+	int		w1, w2;
+	int		w = 100;												// random.
+	int     h = 8;
+	int     x, y;
+
+	if (!S_Voip_ShowMeter (&x, &y)) {
+		return;
+	}
+
+	loudness = S_Voip_Loudness();
+
+	if (loudness < 0)
+		return;
+
+	range = loudness / 100.0f;
+	range = bound(0.0f, range, 1.0f);
+	w1 = range * w;
+	w2 = w - w1;
+	Draw_String (x, y, "mic ");
+	x += 8 * (sizeof("mic ")-1);
+	Draw_AlphaRectangleRGB(x, y, w1, h, 1, true, RGBA_TO_COLOR(255, 0, 0, 255));
+	x += w1;
+	Draw_AlphaRectangleRGB(x, y, w2, h, 1, true, RGBA_TO_COLOR(0, 255, 0, 255));
+
+#endif // FTE_PEXT2_VOICECHAT
+}
+
 void SCR_DrawMultiviewOverviewElements (void)
 {
 	SCR_DrawMultiviewBorders ();
@@ -3303,6 +3071,8 @@ static void SCR_DrawElements(void)
 					SCR_DrawPause ();
 
 					SCR_DrawAutoID ();
+
+					SCR_VoiceMeter ();
 				}
 
 				if (!cl.intermission) 
@@ -3316,7 +3086,7 @@ static void SCR_DrawElements(void)
 					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						SCR_Draw_TeamInfo();
-						SCR_Draw_WeaponStats();
+						//SCR_Draw_WeaponStats();
 
 						SCR_Draw_ShowNick();
 
@@ -3441,9 +3211,9 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	return true;
 }
 
-void SCR_UpdateScreenPlayerView (qbool multiview)
+void SCR_UpdateScreenPlayerView (int flags)
 {
-	if (multiview) {
+	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_CalcRefdef ();
 	}
 
@@ -3456,6 +3226,10 @@ void SCR_UpdateScreenPlayerView (qbool multiview)
 
 	V_RenderView ();
 
+	if (flags & UPDATESCREEN_POSTPROCESS) {
+		R_RenderPostProcess();
+	}
+
 	GL_Set2D ();
 
 	R_PolyBlend ();
@@ -3463,20 +3237,25 @@ void SCR_UpdateScreenPlayerView (qbool multiview)
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
 
-	if (multiview) {
+	if (flags & UPDATESCREEN_MULTIVIEW) {
 		SCR_DrawMultiviewIndividualElements ();
 	}
 }
 
-void SCR_UpdateScreenPostPlayerView (void)
+void SCR_HUD_WeaponStats(hud_t* hud);
+
+// Drawing new HUD items in old HUD mode - eventually move everything across
+void SCR_DrawNewHudElements(void)
 {
 	static hud_t *hud_netstats = NULL;
+	static hud_t *hud_weaponstats = NULL;
 	if (hud_netstats == NULL) // first time
 		hud_netstats = HUD_Find("net");
+	if (hud_weaponstats == NULL)
+		hud_weaponstats = HUD_Find("weaponstats");
 
-	if (r_netgraph.value && scr_newHud.value != 1)
+	if (r_netgraph.value)
 	{
-		// FIXME: ugly hack :(
 		float temp = hud_netgraph->show->value;
 
 		Cvar_SetValue(hud_netgraph->show, 1);
@@ -3484,14 +3263,24 @@ void SCR_UpdateScreenPostPlayerView (void)
 		Cvar_SetValue(hud_netgraph->show, temp);
 	}
 
-	if (r_netstats.value && scr_newHud.value != 1)
+	if (r_netstats.value)
 	{
-		// FIXME: ugly hack :(
 		float temp = hud_netstats->show->value;
 
 		Cvar_SetValue(hud_netstats->show, 1);
 		SCR_HUD_DrawNetStats(hud_netstats);
 		Cvar_SetValue(hud_netstats->show, temp);
+	}
+
+	if (hud_weaponstats && hud_weaponstats->show && hud_weaponstats->show->value) {
+		SCR_HUD_WeaponStats(hud_weaponstats);
+	}
+}
+
+void SCR_UpdateScreenPostPlayerView (void)
+{
+	if (scr_newHud.value != 1) {
+		SCR_DrawNewHudElements();
 	}
 
 	SCR_DrawElements();
@@ -3511,14 +3300,15 @@ void SCR_UpdateScreenPostPlayerView (void)
 
 // This is called every frame, and can also be called explicitly to flush text to the screen.
 // WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
-qbool SCR_UpdateScreen (void)
+qbool SCR_UpdateScreen(void)
 {
-	if (!SCR_UpdateScreenPrePlayerView ())
+	if (!SCR_UpdateScreenPrePlayerView()) {
 		return false;
+	}
 
-	SCR_UpdateScreenPlayerView (false);
+	SCR_UpdateScreenPlayerView(UPDATESCREEN_POSTPROCESS);
 
-	SCR_UpdateScreenPostPlayerView ();
+	SCR_UpdateScreenPostPlayerView();
 
 	return true;
 }
@@ -3533,8 +3323,6 @@ void SCR_UpdateWholeScreen (void) {
 #define SSHOT_FAILED		-1
 #define SSHOT_FAILED_QUIET	-2		//failed but don't print an error message
 #define SSHOT_SUCCESS		0
-
-typedef enum image_format_s {IMAGE_PCX, IMAGE_TGA, IMAGE_JPEG, IMAGE_PNG} image_format_t;
 
 static char *SShot_ExtForFormat(int format) {
 	switch (format) {
@@ -3586,8 +3374,12 @@ static char *Sshot_SshotDirectory(void) {
 	return dir;
 }
 
+#ifdef X11_GAMMA_WORKAROUND
+unsigned short ramps[3][4096];
+#else
+unsigned short  ramps[3][256];
+#endif
 
-extern unsigned short ramps[3][256];
 //applies hwgamma to RGB data
 static void applyHWGamma(byte *buffer, int size) {
 	int i;
@@ -3601,22 +3393,41 @@ static void applyHWGamma(byte *buffer, int size) {
 	}
 }
 
-int SCR_Screenshot(char *name) {
-	int i, temp, buffersize;
-	int success = SSHOT_FAILED;
-	byte *buffer;
-	image_format_t format;
+int SCR_Screenshot(char *name)
+{
+	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
 
 	// name is fullpath now
 	//	name = (*name == '/') ? name + 1 : name;
+	target_params->format = SShot_FormatForName(name);
+	strlcpy(target_params->fileName, name, sizeof(target_params->fileName));
+	COM_ForceExtension(target_params->fileName, SShot_ExtForFormat(target_params->format));
+	target_params->width = glwidth;
+	target_params->height = glheight;
 
-	format = SShot_FormatForName(name);
-	COM_ForceExtension (name, SShot_ExtForFormat(format));
-	buffersize = glwidth * glheight * 3;
-
-	buffer = Q_malloc (buffersize);
+	target_params->buffer = Movie_TempBuffer(glwidth, glheight);
+	if (!target_params->buffer) {
+		target_params->buffer = Q_malloc(glwidth * glheight * 3);
+		target_params->freeMemory = true;
+	}
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, target_params->buffer);
+
+	if (Movie_BackgroundCapture(target_params)) {
+		return SSHOT_SUCCESS;
+	}
+
+	return SCR_ScreenshotWrite(target_params);
+}
+
+int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
+{
+	int i, temp;
+	int success = SSHOT_FAILED;
+	int format = target_params->format;
+	byte* buffer = target_params->buffer;
+	char* name = target_params->fileName;
+	int buffersize = target_params->width * target_params->height * 3;
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
@@ -3624,15 +3435,20 @@ int SCR_Screenshot(char *name) {
 		if (QLib_isModuleLoaded(qlib_libpng)) {
 #endif
 			applyHWGamma(buffer, buffersize);
-			success = Image_WritePNG(name, image_png_compression_level.value,
-					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
-				? SSHOT_SUCCESS : SSHOT_FAILED;
+			success = Image_WritePNG(
+				name, image_png_compression_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_PNG_STATIC
-		} else {
-			Com_Printf("Can't take a PNG screenshot without libpng.");
-			if (SShot_FormatForName("noext") == IMAGE_PNG)
-				Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-			Com_Printf("\n");
+		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a PNG screenshot without libpng.");
+				if (SShot_FormatForName("noext") == IMAGE_PNG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
 			success = SSHOT_FAILED_QUIET;
 		}
 #endif
@@ -3645,15 +3461,20 @@ int SCR_Screenshot(char *name) {
 		if (QLib_isModuleLoaded(qlib_libjpeg)) {
 #endif
 			applyHWGamma(buffer, buffersize);
-			success = Image_WriteJPEG(name, image_jpeg_quality_level.value,
-					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
-				? SSHOT_SUCCESS : SSHOT_FAILED;;
+			success = Image_WriteJPEG(
+				name, image_jpeg_quality_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_JPEG_STATIC
-		} else {
-			Com_Printf("Can't take a JPEG screenshot without libjpeg.");
-			if (SShot_FormatForName("noext") == IMAGE_JPEG)
-				Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-			Com_Printf("\n");
+		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a JPEG screenshot without libjpeg.");
+				if (SShot_FormatForName("noext") == IMAGE_JPEG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
 			success = SSHOT_FAILED_QUIET;
 		}
 #endif
@@ -3668,11 +3489,13 @@ int SCR_Screenshot(char *name) {
 			buffer[i + 2] = temp;
 		}
 		applyHWGamma(buffer, buffersize);
-		success = Image_WriteTGA(name, buffer, glwidth, glheight)
-			? SSHOT_SUCCESS : SSHOT_FAILED;
+		success = Image_WriteTGA(name, buffer, glwidth, glheight) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
-	Q_free(buffer);
+	if (target_params->freeMemory) {
+		Q_free(target_params->buffer);
+	}
+	Q_free(target_params);
 	return success;
 }
 
@@ -4092,16 +3915,6 @@ void SCR_Init (void)
 	Cvar_Register (&scr_shownick_x);
 	Cvar_Register (&scr_shownick_name_width);
 	Cvar_Register (&scr_shownick_time);
-	Cvar_Register (&scr_weaponstats_order);
-	Cvar_Register (&scr_weaponstats_align_right);
-	Cvar_Register (&scr_weaponstats_frame_color);
-	Cvar_Register (&scr_weaponstats_scale);
-	Cvar_Register (&scr_weaponstats_y);
-	Cvar_Register (&scr_weaponstats_x);
-	Cvar_Register (&scr_weaponstats);
-
-	Cmd_AddCommand ("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
-	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
 
 	Cmd_AddCommand("calc_fov", tmp_calc_fov);
 
@@ -4131,12 +3944,13 @@ void SCR_Init (void)
 
 	Cvar_ResetCurrentGroup();
 
-
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
 	Cmd_AddCommand ("+zoom", SCR_ZoomIn_f);
 	Cmd_AddCommand ("-zoom", SCR_ZoomOut_f);
+
+	WeaponStats_CommandInit();
 
 	scr_initialized = true;
 

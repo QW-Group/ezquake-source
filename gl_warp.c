@@ -290,28 +290,28 @@ void EmitWaterPolys (msurface_t *fa) {
 		}
 		glColor3ubv (col);
 
- // START shaman FIX /gl_turbalpha + /r_fastturb {
-	if (wateralpha < 1.0 && wateralpha >= 0) {
-		glEnable (GL_BLEND);
-		col[3] = wateralpha*255;
-		glColor4ubv (col); // 1, 1, 1, wateralpha
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_FALSE);
-	}
- // END shaman FIX /gl_turbalpha + /r_fastturb {
+		// START shaman FIX /gl_turbalpha + /r_fastturb {
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			glEnable (GL_BLEND);
+			col[3] = wateralpha*255;
+			glColor4ubv (col); // 1, 1, 1, wateralpha
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			if (wateralpha < 0.9)
+				glDepthMask (GL_FALSE);
+		}
+		// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		EmitFlatWaterPoly (fa);
 
- // START shaman FIX /gl_turbalpha + /r_fastturb {
-	if (wateralpha < 1.0 && wateralpha >= 0) {
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glColor3ubv (color_white);
-		glDisable (GL_BLEND);
-		if (wateralpha < 0.9)
-			glDepthMask (GL_TRUE);
-	}
- // END shaman FIX /gl_turbalpha + /r_fastturb {
+		// START shaman FIX /gl_turbalpha + /r_fastturb {
+		if (wateralpha < 1.0 && wateralpha >= 0) {
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glColor3ubv (color_white);
+			glDisable (GL_BLEND);
+			if (wateralpha < 0.9)
+				glDepthMask (GL_TRUE);
+		}
+		// END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
@@ -352,35 +352,32 @@ void EmitWaterPolys (msurface_t *fa) {
 
 
 //Tei, add fire to lava
-void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) {
+void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
+{
 	glpoly_t *p;
-	float *v;//, s, t, os, ot;
+	float *v;
 	int i;
-
 	vec3_t nv;
 
+	for (p = fa->polys; p; p = p->next) {
+		float min_x, min_y, max_x, max_y;
+		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+			min_x = i == 0 ? v[0] : min(min_x, v[0]);
+			min_y = i == 0 ? v[1] : min(min_y, v[1]);
+			max_x = i == 0 ? v[0] : max(max_x, v[0]);
+			max_y = i == 0 ? v[1] : max(max_y, v[1]);
+		}
 
-	
-	for (p = fa->polys; p; p = p->next) 
-	{
-			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) 
-			{
-
+		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+			if (rand() % 100 <= (cls.frametime / 0.00416) * 4) {
 				VectorCopy(v, nv);
 
-				//glVertex3fv (nv);
-				nv[0] += rand()%100 - 50;
-				nv[1] += rand()%100 - 50;
+				nv[0] += f_rnd(min_x - v[0], max_x - v[0]);
+				nv[1] += f_rnd(min_y - v[1], max_y - v[1]);
 
-//TODO: frametime here 
-				//if( (rand()%1000) * cls.frametime>27)//not work ok
-				if (rand()%100>95)
-				{					
-					fun(nv);
-				}
-
+				fun(nv);
 			}
-		
+		}
 	}
 }
 //Tei, add fire to lava

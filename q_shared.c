@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // q_shared.c -- functions shared by all subsystems
 
+#include "quakedef.h"
 #include "q_shared.h"
 
 /*

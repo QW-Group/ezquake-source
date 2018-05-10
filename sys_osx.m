@@ -14,7 +14,7 @@
 
 static URL *url = NULL;
 
-void init_url_handler()
+void init_url_handler(void)
 {
 	if (url == NULL)
 	{

@@ -10,7 +10,7 @@
 #META       DESCRIPTION     "frag messages for DM and TDM, additionaly support KTPRO and KTX mods"
 #META       AUTHOR          "fuh but slightly modified by ezquake team"
 #META       EMAIL           none
-#META       WEBPAGE         http://ezquake.sf.net
+#META       WEBPAGE         https://ezquake.github.io/
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -600,7 +600,7 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the SPAZ-BALL!"		// Spaz4
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" droped the hot potatoe"	// Tater. it's a dropped msg, but putting it here since the map has no taken msg
-
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ball!"
 
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
@@ -620,6 +620,7 @@
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" העןננוה פטו Âלץו Æלבח"	//Dissect
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" העןננוה פטו Òוה Æלבח"		//Dissect
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" droped the hot potatoe"	//tater
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped the ball!"
 
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" has captured"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" capped the red flag"
@@ -664,3 +665,4 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shows RED How It's Done!"		// Spaz4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Decides YELLOW Must Lose!"		// Spaz4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shoves It Up GREENS Backside!"	// Spaz4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" scores!"

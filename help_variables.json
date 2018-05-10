@@ -30,7 +30,7 @@
     { "id": "29", "name": "Obsolete (3.0) - Invalid", "major-group": "Obsolete" },
     { "id": "30", "name": "Obsolete (3.0) - Software Renderer", "major-group": "Obsolete" },
     { "id": "31", "name": "Obsolete (3.0) - Video", "major-group": "Obsolete" },
-    { "id": "32", "name": "Obsolete (3.0) - VOIP", "major-group": "Obsolete" },
+    { "id": "32", "name": "VOIP", "major-group": "Sound" },
     { "id": "33", "name": "Obsolete (Commands)", "major-group": "Obsolete" },
     { "id": "34", "name": "Obsolete (server infokeys)", "major-group": "Obsolete" },
     { "id": "35", "name": "OpenGL Rendering", "major-group": "Graphics" },
@@ -183,7 +183,7 @@
     },
     "auth_validate": {
       "group-id": "27",
-      "remarks": "If you have \n'auth_warninvalid 1' and someone gives a dirty hash in a version response \n(because they are using a hacked client that can't work out the right \nresponse), the client will print something like \n'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).",
+      "remarks": "If you have 'auth_warninvalid 1' and someone gives a dirty hash in a version response (because they are using a hacked client that can't work out the right response), the client will print something like \n'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "If you don't want your client to validate other ezQuake clients." },
@@ -205,7 +205,7 @@
     },
     "b_switch": {
       "group-id": "37",
-      "desc": "This variable allows you to define the highest weapon that the client should switch \nto upon a backpack pickup. The possible arguments of \"b_switch\" refer to the \nimpulse that is used to switch to a certain weapon.  Note that a setting of 1 will effectively disable backpack weapon switching.",
+      "desc": "This variable allows you to define the highest weapon that the client should switch to upon a backpack pickup. The possible arguments of \"b_switch\" refer to the impulse that is used to switch to a certain weapon.  Note that a setting of 1 will effectively disable backpack weapon switching.",
       "type": "enum",
       "values": [
         { "name": "1", "description": "Axe" },
@@ -284,7 +284,7 @@
     },
     "cam_thirdperson": {
       "group-id": "46",
-      "desc": "Enables third person view in demo playback and spectator mode. In track mode, we look at the person being tracked rather than through his eyes.\nUnlike cl_camera_tpp, you can use the mouse to look around.",
+      "desc": "Enables third person view in demo playback and spectator mode. In track mode, we look at the person being tracked rather than through his eyes. Unlike cl_camera_tpp, you can use the mouse to look around.",
       "remarks": "in track mode, we look at the person being tracked rather than through his eyes",
       "type": "boolean",
       "values": [
@@ -480,7 +480,7 @@
     },
     "cfg_use_gamedir": {
       "group-id": "4",
-      "desc": "If set & gamedir is not 'qw', configurations will be saved to subdirectory based on gamedir.\nUseful if configurations differ depending on gametype (e.g. team fortress)",
+      "desc": "If set & gamedir is not 'qw', configurations will be saved to subdirectory based on gamedir. Useful if configurations differ depending on gametype (e.g. team fortress)",
       "type": "boolean"
     },
     "cfg_use_home": {
@@ -495,7 +495,7 @@
     },
     "cl_anglespeedkey": {
       "group-id": "9",
-      "desc": "This variable sets multiplier by which your \"cl_yawspeed\" (how fast you turn) is\nmultiplied when running (+speed).",
+      "desc": "This variable sets multiplier by which your \"cl_yawspeed\" (how fast you turn) is multiplied when running (+speed).",
       "type": "float"
     },
     "cl_backpackfilter": {
@@ -508,7 +508,7 @@
     },
     "cl_backspeed": {
       "group-id": "9",
-      "desc": "This allows you to set your backward speed. Obviously this is also limited by\nthe server, usually to \"320\".",
+      "desc": "This allows you to set your backward speed. Obviously this is also limited by the server, usually to \"320\".",
       "type": "float"
     },
     "cl_bob": {
@@ -523,7 +523,7 @@
     },
     "cl_bobup": {
       "group-id": "54",
-      "desc": "This variable controls how long your weapon stays up before cycling when \nwalking.",
+      "desc": "This variable controls how long your weapon stays up before cycling when walking.",
       "type": "float"
     },
     "cl_bonusflash": {
@@ -537,12 +537,12 @@
     },
     "cl_c2sImpulseBackup": {
       "group-id": "21",
-      "desc": "Used with cl_c2spps, it controls how many backup copies of packets with non-zero \nimpulses are to be sent to the server. The recommended value is 3, \nbut you can try 2 or even 1 to reduce traffic if you don't have any packet loss.",
+      "desc": "Used with cl_c2spps, it controls how many backup copies of packets with non-zero impulses are to be sent to the server. The recommended value is 3, but you can try 2 or even 1 to reduce traffic if you don't have any packet loss.",
       "type": "integer"
     },
     "cl_c2spps": {
       "group-id": "21",
-      "desc": "Packet filtering (a la Qizmo's .c2spps command). Use this to reduce network traffic\nif you're playing on a 28800 (or worse) connection and can't set cl_maxfps 72 \nbecause it causes lag.  Also consider use of FPS independent physics in conjunction with cl_physfps.",
+      "desc": "Packet filtering (a la Qizmo's .c2spps command). Use this to reduce network traffic if you're playing on a 28800 (or worse) connection and can't set cl_maxfps 72 because it causes lag.  Also consider use of FPS independent physics in conjunction with cl_physfps.",
       "type": "integer"
     },
     "cl_camera_death": {
@@ -603,7 +603,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Off." },
-        { "name": "1", "description": "Shows the time you spent on server (you'll also see it in the status bar when you press TAB)." },
+        { "name": "1", "description": "Shows the time you spent on server." },
         { "name": "2", "description": "Shows the time of day." }
       ]
     },
@@ -620,7 +620,7 @@
     },
     "cl_clock_y": {
       "group-id": "40",
-      "desc": "Vertical coordinates of the clock.\nIf < 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.",
+      "desc": "Vertical coordinates of the clock. If < 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.",
       "type": "float"
     },
     "cl_cmdline": {
@@ -639,12 +639,12 @@
     },
     "cl_crossx": {
       "group-id": "6",
-      "desc": "This variable allows you to move the position of the crosshair on the X-axis\nby the specified amount of pixels.",
+      "desc": "This variable allows you to move the position of the crosshair on the X-axis by the specified amount of pixels.",
       "type": "float"
     },
     "cl_crossy": {
       "group-id": "6",
-      "desc": "This variable allows you to move the position of the crosshair on the Y-axis\nby the specified amount of pixels.",
+      "desc": "This variable allows you to move the position of the crosshair on the Y-axis by the specified amount of pixels.",
       "type": "float"
     },
     "cl_crypt_rcon": {
@@ -676,6 +676,12 @@
       "group-id": "21",
       "desc": "Client will delay incoming and outgoing packets, allowing user to increase his ping in the game.",
       "remarks": "Specified in ms.  If delay is 20ms, incoming packets will be delayed by 10ms, outgoing packets too. It's preferred to use the least value that gives the desired ping.",
+      "type": "integer"
+    },
+    "cl_delay_packet_deviation": {
+      "group-id": "21",
+      "desc": "Allows random deviation to be added to /cl_delay_packet delay.",
+      "remarks": "Specified in ms.  Makes /cl_delay_packet better simulate high-ping connections.",
       "type": "integer"
     },
     "cl_democlock": {
@@ -744,7 +750,7 @@
     },
     "cl_fakeshaft": {
       "group-id": "8",
-      "desc": "Smoothes out shaft movement, 0 means no smoothing at all, 1 = 100% smoothing;\na value of about 0.5 is recommended for modem players.  Note that this only affects the visual display of the shaft beam; the 'true' beam remains in the original location.",
+      "desc": "Smoothes out shaft movement, 0 means no smoothing at all, 1 = 100% smoothing; a value of about 0.5 is recommended for modem players.  Note that this only affects the visual display of the shaft beam; the 'true' beam remains in the original location.",
       "type": "float"
     },
     "cl_fakeshaft_extra_updates": {
@@ -783,22 +789,22 @@
     },
     "cl_forwardspeed": {
       "group-id": "9",
-      "desc": "This allows you to set your forward speed. Obviously this is also limited by the\nserver, usually to \"320\".",
+      "desc": "This allows you to set your forward speed. Obviously this is also limited by the server, usually to \"320\".",
       "type": "float"
     },
     "cl_fp_messages": {
       "group-id": "3",
-      "desc": "This variable is used in conjunction with the variable \"cl_fp_persecond\" to\ndefine when the floodprot protection should be triggered (if \"cl_floodprot\"\nis set to \"1\").",
+      "desc": "This variable is used in conjunction with the variable \"cl_fp_persecond\" to define when the floodprot protection should be triggered (if \"cl_floodprot\" is set to \"1\").",
       "type": "float"
     },
     "cl_fp_persecond": {
       "group-id": "3",
-      "desc": "This variable is used in conjunction with the variable \"cl_fp_messages\" to\ndefine when the floodprot protection should be triggered (if \"cl_floodprot\"\nis set to \"1\").",
+      "desc": "This variable is used in conjunction with the variable \"cl_fp_messages\" to define when the floodprot protection should be triggered (if \"cl_floodprot\" is set to \"1\").",
       "type": "float"
     },
     "cl_gameclock": {
       "group-id": "40",
-      "desc": "Displays clock with seconds on the screen.\n",
+      "desc": "Displays clock with seconds on the screen.",
       "remarks": "Use cl_gameclock_x and cl_gameclock_y to place it anywhere on the screen.",
       "type": "enum",
       "values": [
@@ -938,7 +944,7 @@
     },
     "cl_movespeedkey": {
       "group-id": "9",
-      "desc": "This variable is the multiplier for how fast you move when running (+speed) in\nrelation to when walking (-speed).",
+      "desc": "This variable is the multiplier for how fast you move when running (+speed) in relation to when walking (-speed).",
       "type": "float"
     },
     "cl_multiview": {
@@ -992,13 +998,20 @@
       "remarks": "This only applies to the mini-HUD when cl_mvdisplayhud has a value greater than 1. Otherwise old mini-HUD will be used (just strings).",
       "type": "enum",
       "values": [
-        { "name": "bottom center/bc", "description": "" },
-        { "name": "bottom left/bl", "description": "" },
-        { "name": "bottom right/br", "description": "" },
-        { "name": "gather/g", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
-        { "name": "top center/tc", "description": "" },
-        { "name": "top left/tl", "description": "" },
-        { "name": "top right/tr", "description": "" }
+        { "name": "bottom center", "description": "bottom, centered horizontally" },
+        { "name": "bottom left", "description": "bottom, left hand side" },
+        { "name": "bottom right", "description": "bottom, right hand side" },
+        { "name": "gather", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
+        { "name": "top center", "description": "top, centered horizontally" },
+        { "name": "top left", "description": "top, left hand side" },
+        { "name": "top right", "description": "top, right hand side" },
+        { "name": "bc", "description": "bottom, centered horizontally" },
+        { "name": "bl", "description": "bottom, left hand side" },
+        { "name": "br", "description": "bottom, right hand side" },
+        { "name": "g", "description": "The mini-HUDs are all \"gathered\" towards the center of the screen. Top left view has the hud in the lower right corner; bottom left view has it in the upper left corner and so on." },
+        { "name": "tc", "description": "top, centered horizontally" },
+        { "name": "tl", "description": "top, left hand side" },
+        { "name": "tr", "description": "top, right hand side" }
       ]
     },
     "cl_mvhudvertical": {
@@ -1051,13 +1064,13 @@
     },
     "cl_newlerp": {
       "group-id": "8",
-      "desc": "Experimental rockets/grenades/spikes smoothing code.\n\nDefault value 0.1 means: use 90% of our 'vision' and 10% of server 'vision'. Should be OK for most case, but floating ping (see remarks)",
+      "desc": "Experimental rockets/grenades/spikes smoothing code.\nDefault value 0.1 means: use 90% of our 'vision' and 10% of server 'vision'. Should be OK for most case, but floating ping (see remarks)",
       "remarks": "Range between 0 and 1.  This smoothing algorithm works well only with stable ping.",
       "type": "float"
     },
     "cl_nodelta": {
       "group-id": "21",
-      "desc": "Control the network packet delta compression. When you get blue lines\nin your netgraph, you should set 'cl_nodelta 1'.",
+      "desc": "Control the network packet delta compression. When you get blue lines in your netgraph, you should set 'cl_nodelta 1'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Enable delta compression." },
@@ -1085,8 +1098,8 @@
     },
     "cl_nolerp_on_entity": {
       "group-id": "8",
-      "desc": "Disables linear interpolation only when player is standing on an entity.\nIt is a workaround to remove jittering of floating platforms under feets.",
-      "remarks": "No effect if fps independent physics is turned off.\nSee cl_nolerp.",
+      "desc": "Disables linear interpolation only when player is standing on an entity. It is a workaround to remove jittering of floating platforms under feets.",
+      "remarks": "No effect if fps independent physics is turned off. See cl_nolerp.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -1186,6 +1199,15 @@
       "desc": "If set, enable support for FTE's floating point coordinate protocol extension.",
       "type": "boolean"
     },
+    "cl_pext_limits": {
+      "group-id": "21",
+      "desc": "Enable support for FTE's extensions to support enhanced number of entities and models.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "FTE extensions disabled.  Some enemies/projectiles may be invisible." },
+        { "name": "true", "description": "FTE extensions enabled." }
+      ]
+    },
     "cl_pext_other": {
       "group-id": "21",
       "desc": "Allows other protocol extensions other than Chunked downloads",
@@ -1194,6 +1216,11 @@
         { "name": "false", "description": "" },
         { "name": "true", "description": "" }
       ]
+    },
+    "cl_pext_warndemos": {
+      "group-id": "21",
+      "desc": "If set, warning will be displayed when recording a demo that is not backwards compatible with old clients.",
+      "type": "boolean"
     },
     "cl_physfps": {
       "group-id": "8",
@@ -1208,7 +1235,7 @@
     },
     "cl_pitchspeed": {
       "group-id": "9",
-      "desc": "This variable determines how fast you you turn up/down when using \"+lookup\" and\n\"+lookdown\".",
+      "desc": "This variable determines how fast you you turn up/down when using \"+lookup\" and \"+lookdown\".",
       "type": "float"
     },
     "cl_predict_half": {
@@ -1222,7 +1249,7 @@
     },
     "cl_predict_players": {
       "group-id": "21",
-      "desc": "This toggles the prediction for other players' movement. Unless you are having \nproblems this variable should be left at \"1\".",
+      "desc": "This toggles the prediction for other players' movement. Unless you are having problems this variable should be left at \"1\".",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -1246,7 +1273,7 @@
     "cl_restrictions": {
       "group-id": "3",
       "desc": "Triggers and re/msg trigger restrictions for spectator and demoplay modes",
-      "remarks": "FuhQuake always behave as cl_restrictions 1.\nQW262 by default it have cl_restrictions 1.",
+      "remarks": "FuhQuake always behave as cl_restrictions 1. QW262 by default it have cl_restrictions 1.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Allow triggersand huds" },
@@ -1266,12 +1293,12 @@
     },
     "cl_rollspeed": {
       "group-id": "53",
-      "desc": "This variable controls how quickly you and other players straighten out after \nstrafing.",
+      "desc": "This variable controls how quickly you and other players straighten out after strafing.",
       "type": "float"
     },
     "cl_savehistory": {
       "group-id": "5",
-      "desc": "Save console commands history to .ezquake_history.\nLoads history from this file while starting ezquake.",
+      "desc": "Save console commands history to .ezquake_history. Loads history from this file while starting ezquake.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "don't save" },
@@ -1330,7 +1357,7 @@
     },
     "cl_sidespeed": {
       "group-id": "9",
-      "desc": "This allows you to set your strafe speed. Obviously this is also limited by the\nserver, usually to \"320\".",
+      "desc": "This allows you to set your strafe speed. Obviously this is also limited by the server, usually to \"320\".",
       "type": "float"
     },
     "cl_smartjump": {
@@ -1374,12 +1401,12 @@
     },
     "cl_timeout": {
       "group-id": "21",
-      "desc": "This variable defines the timeout value in seconds until the client considers\nhimself to be disconnected from the server.",
+      "desc": "This variable defines the timeout value in seconds until the client considers himself to be disconnected from the server.",
       "type": "float"
     },
     "cl_upspeed": {
       "group-id": "9",
-      "desc": "This allows you to set the speed with which you move up and down in liquids or in spectator mode.\nObviously this is also limited by the server, usually to 320*0.7 = 224 when being in liquid and to 500 in spectator mode.",
+      "desc": "This allows you to set the speed with which you move up and down in liquids or in spectator mode. Obviously this is also limited by the server, usually to 320*0.7 = 224 when being in liquid and to 500 in spectator mode.",
       "type": "float"
     },
     "cl_useimagesinfraglog": {
@@ -1394,7 +1421,7 @@
     },
     "cl_useproxy": {
       "group-id": "21",
-      "desc": "This toggles whether Qizmo should be used (if detected) to a server. When\nenabled the server browser will use an existing connection to a Qizmo when \nconnecting another server by using the ezQuake Server Browser.",
+      "desc": "This toggles whether Qizmo should be used (if detected) to a server. When enabled the server browser will use an existing connection to a Qizmo when connecting another server by using the ezQuake Server Browser.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "do not use Qizmo to connect a server chosen in the Server Browser" },
@@ -1414,7 +1441,7 @@
     },
     "cl_voip_capturingvol ": {
       "group-id": "32",
-      "desc": "Voice (VOIP) support. Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
+      "desc": "Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
       "type": "integer"
     },
     "cl_voip_micamp": {
@@ -1648,7 +1675,7 @@
     "con_completion_format": {
       "group-id": "5",
       "desc": "Console completion variants format.",
-      "remarks": "Modern - plain list with colorization.\nOld - somehow grouped list without colorization.",
+      "remarks": "Modern - plain list with colorization. Old - somehow grouped list without colorization.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Old completion format" },
@@ -1781,7 +1808,7 @@
     "con_tilde_mode": {
       "group-id": "5",
       "desc": "When enabled, allows you to use the tilde key also in the console and when typing messages.",
-      "remarks": "To exit the console with con_tilde_mode 1, use Escape\n",
+      "remarks": "To exit the console with con_tilde_mode 1, use Escape",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Always use tilde to toggle the console" },
@@ -1809,7 +1836,7 @@
     },
     "coop": {
       "group-id": "43",
-      "desc": "Whether the next \"map\" command should start a coop (cooperative) game.\nOnly works when deathmatch var is 0, otherwise coop will be forced off and a deathmatch game will start.\n\nYou need a file, spprogs.dat, in your quake/qw/ folder for coop games to work.",
+      "desc": "Whether the next \"map\" command should start a coop (cooperative) game. Only works when deathmatch var is 0, otherwise coop will be forced off and a deathmatch game will start.\n\nYou need a file, spprogs.dat, in your quake/qw/ folder for coop games to work.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable cooperative." },
@@ -1826,17 +1853,27 @@
         { "name": "3", "description": "A small cross crosshair." },
         { "name": "4", "description": "A dot crosshair." },
         { "name": "5", "description": "Star wars crosshair." },
-        { "name": "6", "description": "Happyface crosshair." },
-        { "name": "7", "description": "F22 simulator crosshair." }
+        { "name": "6", "description": "F22 simulator crosshair." },
+        { "name": "7", "description": "(same as 6)" }
       ]
     },
     "crosshairalpha": {
       "group-id": "6",
-      "desc": "This command regulates crosshair transparency, you can use any value from \"0\" \nto \"1\".",
+      "desc": "This command regulates crosshair transparency, you can use any value from \"0\" to \"1\".",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Transparent crosshair." },
         { "name": "true", "description": "Opaque crosshair." }
+      ]
+    },
+    "crosshairscalemethod": {
+      "group-id": "6",
+      "desc": "Determines how crosshair images are scaled",
+      "remarks": "When changing this value, /crosshairscale & /crosshairsize should be adjusted accordingly.",
+      "type": "boolean",
+      "value": [
+        { "name": "0", "description": "Quake standard scaling: resolution width / 320" },
+        { "name": "1", "description": "No scaling, sizes are in pixels" }
       ]
     },
     "crosshaircolor": {
@@ -1846,12 +1883,28 @@
     },
     "crosshairimage": {
       "group-id": "6",
-      "desc": "To load the crosshair use \"crosshairimage image_name\" where\n'image_name' is the name of the crosshair image you put in the above directory.\nExample, if I have c:\\quake\\ezQuake\\crosshairs\\cross.png I'd use\n\"crosshairimage cross\" to load it.",
+      "desc": "The filename of the crosshair image.",
+      "remarks": "Crosshair images should be placed in ./ezquake/crosshairs or ./qw/crosshairs directory.",
       "type": "string"
+    },
+    "crosshairscale": {
+      "group-id": "6",
+      "desc": "When using built-in crosshairs, increases the resolution of the crosshair, giving a crisper image on screen.",
+      "remarks": "Max value 5.  Increasing this value will require lowering of /crosshairsize to give same size image on screen.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "8x8" },
+        { "name": "1", "description": "16x16" },
+        { "name": "2", "description": "32x32" },
+        { "name": "3", "description": "64x64" },
+        { "name": "4", "description": "128x128" },
+        { "name": "5", "description": "256x256" }
+      ]
     },
     "crosshairsize": {
       "group-id": "6",
-      "desc": "Basically crosshairsize scales the size of the crosshair. \nExample:\ncrosshairsize 0.5 halves the size and crosshair 2 doubles it.",
+      "desc": "Performs basic scaling of the crosshair.",
+      "remarks": "Maximum value 20. For example, /crosshairsize 0.5 halves the size, and /crosshair 2 doubles it.",
       "type": "float"
     },
     "cvar_viewdefault": {
@@ -1917,7 +1970,7 @@
     },
     "default_fov": {
       "group-id": "53",
-      "desc": "Very useful in TeamFortress, and other mods that reset your fov when you spawn to 90. \nBasically, when the server sends you \"fov 90\", your fov is set to default_fov.",
+      "desc": "Very useful in TeamFortress, and other mods that reset your fov when you spawn to 90.\nBasically, when the server sends you \"fov 90\", your fov is set to default_fov.",
       "remarks": "-",
       "type": "float"
     },
@@ -2025,9 +2078,14 @@
       "desc": "Color of the zip entries in the demo browser",
       "type": "string"
     },
+    "demo_capture_background_threads": {
+      "group-id": "7",
+      "desc": "Determines how many background threads should be used writing images to disk",
+      "type": "integer"
+    },
     "demo_capture_codec": {
       "group-id": "7",
-      "desc": "Determines what codes should be used for captured video stream compression. E.g. XVID, DIVX, ...",
+      "desc": "Determines what codes should be used for captured video stream compression. E.g: xvid, divx, x264, ...",
       "type": "float"
     },
     "demo_capture_dir": {
@@ -2067,7 +2125,8 @@
     },
     "demo_capture_vid_maxlen": {
       "group-id": "7",
-      "desc": "If set, multiple files will be created.  This variable determines length in seconds of each file",
+      "desc": "If set, multiple files will be created.  This variable determines length of each file in MB",
+      "remarks": "The .avi format has issues with files over 2GB in size.",
       "type": "integer"
     },
     "demo_dir": {
@@ -2094,10 +2153,10 @@
     },
     "demo_getpings": {
       "group-id": "7",
-      "desc": "This toggles whether the client should always record pings into the demo or only\nwhen the player died and show(team)scores are being shown (QWCL default).",
+      "desc": "This toggles whether the client should always record pings into the demo or only when the player died and show(team)scores are being shown (QWCL default).",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "only update pings in the demo when the player died and show(team)scores\n    are being shown" },
+        { "name": "false", "description": "only update pings in the demo when the player died and show(team)scores are being shown" },
         { "name": "true", "description": "always update pings" }
       ]
     },
@@ -2112,7 +2171,7 @@
     },
     "demo_playlist_track_name": {
       "group-id": "40",
-      "desc": "will set the default track name in the demo playlist for mvd demos \nexample: jogi, will always track the player jogi or versions of it (jogihoogi, angryjogi, etc)",
+      "desc": "will set the default track name in the demo playlist for mvd demos \nExample: jogi, will always track the player jogi or versions of it (jogihoogi, angryjogi, etc)",
       "type": "string"
     },
     "developer": {
@@ -2139,7 +2198,21 @@
       "remarks": "To be able to use RGB 24bit colors, look for r_enemyskincolor variable.",
       "type": "enum",
       "values": [
-        { "name": "-1", "description": "disabled" }
+        { "name": "-1", "description": "Disabled" },
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
       ]
     },
     "enemyforceskins": {
@@ -2298,7 +2371,7 @@
       "remarks": "This relies on server/mod support to function correctly",
       "type": "enum",
       "values": [
-        { "name": "(empty)", "description": "Not specified (use gender-neutral language)" },
+        { "name": "", "description": "Not specified (use gender-neutral language)" },
         { "name": "0", "description": "Male (he, his)" },
         { "name": "1", "description": "Female (she, her)" },
         { "name": "2", "description": "None (it, its)" }
@@ -2822,8 +2895,15 @@
     },
     "gl_outline": {
       "group-id": "35",
-      "desc": "If set, draws outline on models to create rotoscope effect.",
-      "type": "boolean"
+      "desc": "Controls outlining of models and map.",
+      "type": "enum",
+      "remarks": "Outlining of the world is only valid when cheats are enabled",
+      "values": [
+        { "name": "0", "description": "Outlining disabled" },
+        { "name": "1", "description": "Outline models to create rotoscope effect" },
+        { "name": "2", "description": "Outline world" },
+        { "name": "3", "description": "Outline models and world" }
+      ]
     },
     "gl_outline_width": {
       "group-id": "35",
@@ -3066,7 +3146,7 @@
       "group-id": "36",
       "type": "float"
     },
-    "gl_particle_trail_lenght": {
+    "gl_particle_trail_length": {
       "group-id": "36",
       "desc": "X - Multiplies the length of the trail on particle trails.",
       "type": "float"
@@ -3089,7 +3169,7 @@
       "group-id": "50",
       "desc": "This variable determines the the level of detail for textures used on walls. You\ncan use this variable to lower the texture detail used on walls thus increasing\nthe game's performance.",
       "remarks": "X = etc..",
-      "type": "enum",
+      "type": "float",
       "values": [
         { "name": "0", "description": "Original size." },
         { "name": "1", "description": "Half the dimensions." },
@@ -3314,8 +3394,8 @@
     },
     "gl_turbalpha": {
       "group-id": "51",
-      "desc": "This variable determines the level of opacity for liquids, which requires\nthe use of maps that were VISed with transparent water. When using maps that\nhave not been VISed in such a way, you have to use \"r_novis 1\". If \"r_novis\" is\nset to \"1\" or when using a map VISed with transparent water and using setting\n\"gl_turbalpha\" to a value lower than \"1\", the player will be able to see objects \nand walls through liquids if the server allows that. This is a very nice feature \nto have in the game, for more information refer to the \"r_novis\" command. You \ncan use any value between \"0\" and \"1\" for \"gl_turbalpha\", here are some \nExamples:",
-      "type": "enum",
+      "desc": "This variable determines the level of opacity for liquids, which requires the use of maps that were VISed with transparent water. When using maps that have not been VISed in such a way, you have to use \"r_novis 1\". If \"r_novis\" is set to \"1\" or when using a map VISed with transparent water and using setting \"gl_turbalpha\" to a value lower than \"1\", the player will be able to see objects and walls through liquids if the server allows that. This is a very nice feature to have in the game, for more information refer to the \"r_novis\" command. You can use any value between \"0\" and \"1\" for \"gl_turbalpha\", here are some examples:",
+      "type": "float",
       "values": [
         { "name": "0.00", "description": "Transparent." },
         { "name": "0.25", "description": "Low opacity." },
@@ -4667,7 +4747,7 @@
         { "name": "0", "description": "Golden brackets around your own frags field." },
         { "name": "1", "description": "Arrow pointing to your own frags field." },
         { "name": "2", "description": "Red rectangle around your own frags fiels." },
-        { "name": "3", "description": "Similar to 1." },
+        { "name": "3", "description": "Similar to 0." },
         { "name": "4", "description": "Sets background color for your own field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for all field to teamcolors enemycolors, all fields 50% transparent, your own field not transparent. Red rectangle around your own field including name and team tag." },
         { "name": "6", "description": "Red rectangle around your own field including name and team tag. Background color only for your own field and set to 'teamcolor'." },
@@ -5559,7 +5639,7 @@
         { "name": "1", "description": "Text, white" },
         { "name": "2", "description": "Number, white" },
         { "name": "3", "description": "Text, gold" },
-        { "name": "4", "description": "Text, white" },
+        { "name": "4", "description": "Number, gold" },
         { "name": "5", "description": "Text: value of tp_name_X, where X is the name of the current gun held." }
       ]
     },
@@ -5633,8 +5713,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_sg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_sg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_sg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_sg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_sg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_sg inactive" }
       ]
     },
@@ -5703,8 +5783,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_ssg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_ssg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_ssg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_ssg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_ssg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_ssg inactive" }
       ]
     },
@@ -5773,8 +5853,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_ng active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_ng active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_ng inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_ng inactive" },
+        { "name": "7", "description": "Text: value of tp_name_ng active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_ng inactive" }
       ]
     },
@@ -5843,8 +5923,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_sng active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_sng active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_sng inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_sng inactive" },
+        { "name": "7", "description": "Text: value of tp_name_sng active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_sng inactive" }
       ]
     },
@@ -5913,8 +5993,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_gl active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_gl active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_gl inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_gl inactive" },
+        { "name": "7", "description": "Text: value of tp_name_gl active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_gl inactive" }
       ]
     },
@@ -5983,8 +6063,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_rl active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_rl active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_rl inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_rl inactive" },
+        { "name": "7", "description": "Text: value of tp_name_rl active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_rl inactive" }
       ]
     },
@@ -6053,8 +6133,8 @@
         { "name": "3", "description": "Text: white inactive, gold active" },
         { "name": "4", "description": "Numbers: white inactive, gold active" },
         { "name": "5", "description": "Text: value of tp_name_lg active, gold inactive" },
-        { "name": "6", "description": "Text: value of tp_name_lg active, white inactive" },
-        { "name": "7", "description": "Text: white active, value of tp_name_lg inactive" },
+        { "name": "6", "description": "Text: white active, value of tp_name_lg inactive" },
+        { "name": "7", "description": "Text: value of tp_name_lg active, white inactive" },
         { "name": "8", "description": "Text: gold active, value of tp_name_lg inactive" }
       ]
     },
@@ -6600,6 +6680,15 @@
     "hud_itemsclock_align_y": {
       "group-id": "19",
       "type": "string"
+    },
+    "hud_itemsclock_filter": {
+      "group-id": "19",
+      "type": "integer",
+      "desc": "Space-separated list of items to NOT be shown",
+      "remarks": "Options are: gl, rl, lg, quad, pent, ring, suit, mh, ga, ya, ra",
+      "values": [
+        { "name": "gl ga suit", "description": "hide grenade launcher, green armor & suit from items list" }
+      ]
     },
     "hud_itemsclock_frame": {
       "group-id": "19",
@@ -7870,7 +7959,7 @@
       "desc": "If set, order of player names is fixed, irrespective of who is currently being tracked.",
       "values": [
         { "name": "0", "description": "Current player is always %t" },
-        { "name": "1", "description": "When spectating, leading player is always %t" }
+        { "name": "1", "description": "Fixed order of player names" }
       ]
     },
     "hud_score_bar_frag_length": {
@@ -8420,6 +8509,36 @@
       "desc": "Switches graphical style of sigil 4 icon",
       "type": "float"
     },
+    "hud_sortrules_includeself": {
+      "group-id": "19",
+      "desc": "Determines how the current player is sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "No special treatment, sort as normal." },
+        { "name": "1", "description": "The current player always appears in first place." },
+        { "name": "2", "description": "The current player be in first or second place." }
+      ]
+    },
+    "hud_sortrules_playersort": {
+      "group-id": "19",
+      "desc": "Determines how players are sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Sort by name." },
+        { "name": "1", "description": "Sort by frags, then by name." },
+        { "name": "2", "description": "Sort by team, then name." },
+        { "name": "3", "description": "Sort by team, frags, then name." }
+      ]
+    },
+    "hud_sortrules_teamsort": {
+      "group-id": "19",
+      "desc": "Determines how teams are sorted",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Sort by name." },
+        { "name": "1", "description": "Sort by frags, then by name." }
+      ]
+    },
     "hud_speed_align_x": {
       "group-id": "19",
       "desc": "Sets horizontal align of your current speed",
@@ -8433,7 +8552,7 @@
     "hud_speed_color_fast": {
       "group-id": "19",
       "desc": "Sets the color of the speed hud item when the player is moving at a \"fast\" speed (above 500).",
-      "remarks": "Use the quake pallete colors to set this (0-255).",
+      "remarks": "Use the quake palette colors to set this (0-255).",
       "type": "integer"
     },
     "hud_speed_color_fastest": {
@@ -8959,7 +9078,7 @@
         { "name": "0", "description": "Golden brackets around field with your team frags." },
         { "name": "1", "description": "Arrow pointing to your own team frags field." },
         { "name": "2", "description": "Red rectangle around your own team frags field." },
-        { "name": "3", "description": "Similar to 1." },
+        { "name": "3", "description": "Similar to 0." },
         { "name": "4", "description": "Sets background color for your own team field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for fields to teamcolors and enemycolors. Red rectangle around your own field including name and team tag." },
         { "name": "6", "description": "Red rectangle around your own team field including team tag. Background color only for your own team field and set to 'teamcolor'." },
@@ -10309,6 +10428,7 @@
       "desc": "Sets the powerup camera for viewport 1",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10322,6 +10442,7 @@
       "desc": "Sets the powerup camera for viewport 2",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10335,6 +10456,7 @@
       "desc": "Sets the powerup camera for viewport 3",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10348,6 +10470,7 @@
       "desc": "Sets the powerup camera for viewport 4",
       "type": "enum",
       "values": [
+        { "name": "", "description": "(disabled)" },
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
         { "name": "p3", "description": "mvd_pc_pent_3" },
@@ -10498,7 +10621,7 @@
     "qtv_adjustbuffer": {
       "group-id": "38",
       "desc": "Enables balancing of the buffer length of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
-      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer lenght is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
+      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer length is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not adjust buffer size, always play at 100% speed" },
@@ -11184,6 +11307,15 @@
         { "name": "5", "description": "Applies r_enemy/team skincolor hue to skin." }
       ]
     },
+    "r_skincolormodedead": {
+      "group-id": "44",
+      "desc": "Sets r_skincolormode for players upon death.",
+      "remarks": "See r_skincolormode for valid values",
+      "type": "enum",
+      "values": [
+        { "name": "-1", "description": "Do not change r_skincolormode when player dies." }
+	]
+    },
     "r_skycolor": {
       "group-id": "51",
       "desc": "Changes colour of sky when r_fastsky set to 1",
@@ -11313,9 +11445,15 @@
     },
     "r_tracker_inconsole": {
       "group-id": "40",
-      "type": "boolean",
-      "desc": "If set, tracker messages will also appear in the console",
-      "remarks": "To see full death messages in the console, use con_fragmessages 2"
+      "type": "enum",
+      "desc": "Controls how tracker messages will appear in the console/notify area",
+      "remarks": "To see full death messages in the console, use con_fragmessages 2",
+      "values": [
+        { "name": "0", "description": "Tracker messages will not be shown in the console" },
+        { "name": "1", "description": "Tracker messages will be shown in console and notify area (disables regular tracker messages)" },
+        { "name": "2", "description": "Tracker messages will be shown in console and notify area (regular tracker messages enabled)" },
+	{ "name": "3", "description": "Tracker messages will be shown in console and regular tracker area but not in notify area" }
+      ]
     },
     "r_tracker_messages": {
       "group-id": "40",
@@ -11468,6 +11606,7 @@
       "remarks": "Possible values are: 1 - 7.  Sent to server, requires mod support",
       "type": "enum",
       "values": [
+        { "name": "", "description": "Server decides color" },
         { "name": "0", "description": "White" },
         { "name": "1", "description": "Blue" },
         { "name": "2", "description": "Green" },
@@ -11760,11 +11899,11 @@
     },
     "samelevel": {
       "group-id": "43",
-      "desc": "When enabled, the same level will be played once the match is over",
-      "type": "boolean",
+      "desc": "When enabled, the same level will be played once the match is over\nOther mods use this value to store options",
+      "type": "float",
       "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
+        { "name": "0", "description": "Advance to next map after intermission" },
+        { "name": "1", "description": "Play same map again" }
       ]
     },
     "sb_autohide": {
@@ -12184,7 +12323,7 @@
         { "name": "1", "description": "Will display armour/health/ammo/weapons *very* compactly." },
         { "name": "2", "description": "Will display armour/health/ammo *very* compactly." },
         { "name": "3", "description": "Displays only health/armour." },
-        { "name": "4", "description": "Is just like \"2\" except it also displays your current weapon's ammo in big numbers." }
+        { "name": "4", "description": "Will display armour/health/ammo/weapons compactly with icons." }
       ]
     },
     "scr_compactHudAlign": {
@@ -12365,6 +12504,12 @@
         { "name": "true", "description": "Draw ammo." }
       ]
     },
+    "scr_sbar_lowammo": {
+      "group-id": "47",
+      "desc": "The ammo limit at which ammo numbers will start using the alternate text.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
+      "type": "integer"
+    },
     "scr_sbar_drawammocounts": {
       "group-id": "47",
       "desc": "Turns drawing amounts of ammo on/off.",
@@ -12457,10 +12602,10 @@
     },
     "scr_scaleMenu": {
       "group-id": "17",
-      "type": "boolean",
+      "type": "float",
+      "desc": "Scales the frontend menu.",
       "values": [
-        { "name": "false", "description": "Disable scaling." },
-        { "name": "true", "description": "Scales the frontend menu to match the resolution you are using." }
+        { "name": "0", "description": "Disable scaling." }
       ]
     },
     "scr_scoreboard_afk": {
@@ -12900,10 +13045,13 @@
     },
     "showpackets": {
       "group-id": "40",
-      "type": "boolean",
+      "description": "Dumps log of network activity to the console (from client's point of view)",
+      "type": "enum",
       "values": [
-        { "name": "false", "description": "Do not display information about all network packets." },
-        { "name": "true", "description": "Display information about all network packets." }
+        { "name": "0", "description": "Do not display information about all network packets." },
+        { "name": "1", "description": "Display information about all network packets." },
+        { "name": "2", "description": "Display information about incoming network packets only." },
+        { "name": "3", "description": "Display information about outgoing network packets only." }
       ]
     },
     "showpause": {
@@ -13423,6 +13571,17 @@
     "sv_speedcheck": {
       "group-id": "43",
       "type": ""
+    },
+    "sv_showpackets": {
+      "group-id": "40",
+      "description": "Dumps log of network activity to the console (from internal server's point of view)",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Do not display information about all network packets." },
+        { "name": "1", "description": "Display information about all network packets." },
+        { "name": "2", "description": "Display information about incoming network packets only." },
+        { "name": "3", "description": "Display information about outgoing network packets only." }
+      ]
     },
     "sv_stopspeed": {
       "group-id": "43",
@@ -14289,6 +14448,11 @@
       "desc": "This variable sets the full screen video mode that the game will switch to when\nthe \"vid_fullscreen\" command is executed.",
       "type": "float"
     },
+    "vid_grab_keyboard": {
+      "group-id": "9",
+      "desc": "If set, grabs keyboard hotkeys.  May need to be enabled/disabled depending on your window manager.",
+      "type": "boolean"
+    },
     "vid_height": {
       "group-id": "52",
       "desc": "Determines width of screen resolution when in fullscreen mode",
@@ -14305,6 +14469,11 @@
         { "name": "3", "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only)" }
       ]
     },
+    "vid_minimize_on_focus_loss": {
+      "group-id": "52",
+      "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab)",
+      "type": "boolean"
+    },
     "vid_mode": {
       "group-id": "52",
       "desc": "This variables sets the next video mode to be used, any change of this variable\nwill cause the video mode to be changed immediately.",
@@ -14312,7 +14481,7 @@
     },
     "vid_nopageflip": {
       "group-id": "52",
-      "desc": "This variable toggles the use of page-flipping during supported video modes. By \ndefault the game will allow for page-flipping for video modes that support this \nfeature. For example if a given VESA mode can support page flipping, then it \ndefaults to page-flipped operation.  A VESA mode can be forced to \nnon-page-flipped operation by setting the \"vid_nopageflip\" variable to \"1\", then\nsetting the mode (note that \"vid_nopageflip\" takes operation on the next, \nnot the current video mode, and note that it then stays in effect permanently, \neven when the client is exited and restarted, unless it is manually set back to \"0\").\nIf there is not enough memory for two pages in a VESA mode, or if the adapter \ndoesn't support page flipping, then the mode will automatically be \nnon-page-flipped.  \nPage-flipping works by drawing multiple virtual game screens at the same time in \nthe video memory and then switching among them to display the current \ngamescreen. Page-flipped modes thus use less system memory than non-page-flipped \nmodes, but require more video memory. When using page-flipping, visual quality \nmay be higher, but performance of the game can change to better or worse, \ndepending on the graphics adapter and other hardware (see the discussion of the \nPentium Pro below, for a discussion of why page flipping can be faster but is \nsometimes much slower on that processor). However in most cases the performance \n(and thus frame rate) will be increased, but for people with hardware that has \nproblems with page-flipping \"vid_nopageflip 1\" may help.\nThe Pentium Pro is an example for such a hardware: it is an okay client platform (sniff!), \nbut it has one weak spot, it is by default very slow on writes to video memory.  \nThis means that in default hardware configurations, you are usually much better \noff setting \"vid_nopageflip\" to \"1\" if you use VESA modes, so drawing is done to \nsystem memory instead of to video memory. Remember that you must set the mode\nafter setting \"vid_nopageflip\" to \"1\" in order to get \"vid_nopageflip\" to take\neffect. \"vid_nopageflip 1\" can sometimes be faster on a Pentium too, but not by \nnearly as much in general, and it's often slower.",
+      "desc": "This variable toggles the use of page-flipping during supported video modes. By default the game will allow for page-flipping for video modes that support this \nfeature. For example if a given VESA mode can support page flipping, then it \ndefaults to page-flipped operation.  A VESA mode can be forced to \nnon-page-flipped operation by setting the \"vid_nopageflip\" variable to \"1\", then\nsetting the mode (note that \"vid_nopageflip\" takes operation on the next, \nnot the current video mode, and note that it then stays in effect permanently, \neven when the client is exited and restarted, unless it is manually set back to \"0\").\nIf there is not enough memory for two pages in a VESA mode, or if the adapter \ndoesn't support page flipping, then the mode will automatically be \nnon-page-flipped.  \nPage-flipping works by drawing multiple virtual game screens at the same time in \nthe video memory and then switching among them to display the current \ngamescreen. Page-flipped modes thus use less system memory than non-page-flipped \nmodes, but require more video memory. When using page-flipping, visual quality \nmay be higher, but performance of the game can change to better or worse, \ndepending on the graphics adapter and other hardware (see the discussion of the \nPentium Pro below, for a discussion of why page flipping can be faster but is \nsometimes much slower on that processor). However in most cases the performance \n(and thus frame rate) will be increased, but for people with hardware that has \nproblems with page-flipping \"vid_nopageflip 1\" may help.\nThe Pentium Pro is an example for such a hardware: it is an okay client platform (sniff!), \nbut it has one weak spot, it is by default very slow on writes to video memory.  \nThis means that in default hardware configurations, you are usually much better \noff setting \"vid_nopageflip\" to \"1\" if you use VESA modes, so drawing is done to \nsystem memory instead of to video memory. Remember that you must set the mode\nafter setting \"vid_nopageflip\" to \"1\" in order to get \"vid_nopageflip\" to take\neffect. \"vid_nopageflip 1\" can sometimes be faster on a Pentium too, but not by nearly as much in general, and it's often slower.",
       "type": "float"
     },
     "vid_resetonswitch": {

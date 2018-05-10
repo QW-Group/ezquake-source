@@ -986,8 +986,6 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 
 }
 
-#define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
-
 static void CountNearbyPlayers(qbool dead)
 {
 	int i;
@@ -2382,7 +2380,7 @@ int TP_PlayersNumber(int userid, const char* team)
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		cp = &cl.players[i];
-		if (!cp->name || !cp->name[0] || cp->spectator) continue;
+		if (!cp->name[0] || cp->spectator) continue;
 		if (pt)
 			t2 = !strcmp(cp->team, pt);	// is the current one our teammate?
 		else

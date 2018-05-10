@@ -429,16 +429,20 @@ static void GL_Upload8 (byte *data, int width, int height, int mode)
 
 	if (mode & TEX_FULLBRIGHT) 
 	{
+		qbool was_alpha = mode & TEX_ALPHA;
+
 		// This is a fullbright mask, so make all non-fullbright colors transparent.
 		mode |= TEX_ALPHA;
 	
 		for (i = 0; i < image_size; i++)
 		{
 			p = data[i];
-			if (p < 224)
-				trans[i] = table[p] & LittleLong(0x00FFFFFF); // Transparent.
-			else
+			if (p < 224 || (was_alpha && p == 255)) {
+				trans[i] = 0; // Transparent.
+			}
+			else {
 				trans[i] = (p == 255) ? LittleLong(0xff535b9f) : table[p]; // Fullbright. Disable transparancy on fullbright colors (255).
+			}
 		}
 	} 
 	else if (mode & TEX_ALPHA) 

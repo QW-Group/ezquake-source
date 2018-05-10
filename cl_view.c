@@ -28,6 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 
+#ifdef X11_GAMMA_WORKAROUND
+#include "tr_types.h"
+#endif
+
 /*
 The view is allowed to move slightly from its true position for bobbing,
 but if it exceeds 8 pixels linear distance (spherical, not box), the list of
@@ -246,7 +250,12 @@ cvar_t		v_contrast = {"gl_contrast", "1.3"};
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
 #endif
+
+#ifdef X11_GAMMA_WORKAROUND
+unsigned short ramps[3][4096];
+#else
 unsigned short	ramps[3][256];
+#endif
 
 void V_ParseDamage (void)
 {
@@ -259,7 +268,11 @@ void V_ParseDamage (void)
 	for (i = 0; i < 3; i++)
 		from[i] = MSG_ReadCoord ();
 
-	if (CL_Demo_SkipMessage())
+	if (cls.mvdplayback && cls.lastto >= 0 && cls.lastto < MAX_CLIENTS) {
+		cl.players[cls.lastto].max_health_last_set = cls.demotime;
+	}
+
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	count = blood * 0.5 + armor * 0.5;
@@ -312,15 +325,17 @@ qbool flashed = false; // it should be used for f_flashout tirgger
 extern cvar_t v_gamma, v_contrast;
 #define flash_gamma 0.55
 #define flash_contrast 1.0
-void V_TF_FlashSettings (qbool flashed)
+void V_TF_FlashSettings(qbool flashed)
 {
 	static float old_gamma, old_contrast;
 
 	// remove read only flag if it was set
-	if (Cvar_GetFlags(&v_gamma) & CVAR_ROM)
+	if (Cvar_GetFlags(&v_gamma) & CVAR_ROM) {
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) & ~CVAR_ROM);
-	if (Cvar_GetFlags(&v_contrast) & CVAR_ROM)
+	}
+	if (Cvar_GetFlags(&v_contrast) & CVAR_ROM) {
 		Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) & ~CVAR_ROM);
+	}
 
 	if (flashed) {
 		// store normal settings
@@ -328,18 +343,18 @@ void V_TF_FlashSettings (qbool flashed)
 		old_contrast = v_contrast.value;
 
 		// set MTFL flash settings	
-		Cvar_SetValue (&v_gamma, flash_gamma);
-		Cvar_SetValue (&v_contrast, flash_contrast);
-		
+		Cvar_SetValue(&v_gamma, flash_gamma);
+		Cvar_SetValue(&v_contrast, flash_contrast);
+
 		// made gamma&contrast read only
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) | CVAR_ROM);
 		Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) | CVAR_ROM);
-	} else {
-		// restore old settings
-		Cvar_SetValue (&v_gamma, old_gamma);
-		Cvar_SetValue (&v_contrast, old_contrast);
 	}
-	return;
+	else {
+		// restore old settings
+		Cvar_SetValue(&v_gamma, old_gamma);
+		Cvar_SetValue(&v_contrast, old_contrast);
+	}
 }
 
 void V_TF_FlashStuff (void)
@@ -351,16 +366,19 @@ void V_TF_FlashStuff (void)
 	// 240 = Normal TF || 255 = Angel TF
 	if (cshift_empty.percent == 240 || cshift_empty.percent == 255 ) {
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
-			V_TF_FlashSettings (true);
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			V_TF_FlashSettings(true);
+		}
 
 		flashed = true;
 		last_other_flash_time = cls.realtime;
 	}
 
-	if (cshift_empty.percent == 160) { // flashed by your own flash
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
-			V_TF_FlashSettings (true);
+	if (cshift_empty.percent == 160) {
+		// flashed by your own flash
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			V_TF_FlashSettings(true);
+		}
 
 		flashed = true;
 		last_own_flash_time = cls.realtime;
@@ -368,17 +386,22 @@ void V_TF_FlashStuff (void)
 
 	blocktime = (last_other_flash_time > last_own_flash_time) ? 20.0 : 10.0;
 
-	// turn gamma and contrast back if
-	if ((!(cls.realtime - max (last_own_flash_time, last_other_flash_time) < blocktime)) || // flashed for last 10 seconds or 
-	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
-		if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
-			V_TF_FlashSettings (false);
+	{
+		qbool flashed_for_10seconds = (!(cls.realtime - max(last_own_flash_time, last_other_flash_time) < blocktime));
+		qbool death_while_flashed = (cshift_empty.percent == 0 && cbuf_current == &cbuf_svc);
+
+		if (flashed_for_10seconds || death_while_flashed) {
+			// turn gamma and contrast back
+			if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+				V_TF_FlashSettings(false);
+			}
 			flashed = false;
 		}
 	}
 
-	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
-			cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
+	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1]) {
+		cshift_empty.percent *= cl_demoplay_flash.value / 1.0f;
+	}
 }
 // <-- disconnect
 
@@ -654,13 +677,17 @@ void V_UpdatePalette (void) {
 	rgb[2] = 255 * v_blend[2] * a;
 
 	a = 1 - a;
-
 	if (vid_gamma != 1.0) {
 		current_contrast = pow (current_contrast, vid_gamma);
 		current_gamma = current_gamma/vid_gamma;
 	}
 
+#ifdef X11_GAMMA_WORKAROUND
+	a *= 256.0/glConfig.gammacrap.size;
+	for (i = 0; i < glConfig.gammacrap.size; i++) {
+#else
 	for (i = 0; i < 256; i++) {
+#endif
 		for (j = 0; j < 3; j++) {
 			// apply blend and contrast
 			c = (i * a + rgb[j]) * current_contrast;
@@ -691,8 +718,8 @@ void V_TF_ClearGrenadeEffects (void)
 	// Flash effect off
 	if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 		V_TF_FlashSettings (false);
-		flashed = false;
 	}
+	flashed = false;
 
 	cshift_empty.destcolor[0] = 0;
 	cshift_empty.destcolor[1] = 0;

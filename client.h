@@ -45,7 +45,7 @@ extern cvar_t cl_demospeed;
 extern cvar_t cl_demoteamplay;
 
 #define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
-#define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK))
+#define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK && !cls.timedemo))
 #define	MAX_PROJECTILES	32
 
 typedef struct 
@@ -125,9 +125,10 @@ typedef struct player_info_s
 
 	qbool dead;
 	qbool	skin_refresh;
-	qbool	ignored;				// for ignore
-	qbool	validated;				// for authentication
-	char	f_server[16];			// for f_server responses
+	qbool	ignored;                // for ignore
+	qbool   vignored;               // for voip-ignore
+	qbool	validated;              // for authentication
+	char	f_server[16];           // for f_server responses
 
 	// VULT DEATH EFFECT
 	// Better putting the dead flag here instead of on the entity so whats dead stays dead
@@ -136,6 +137,12 @@ typedef struct player_info_s
 	char	userinfo[MAX_INFO_STRING];
 	char	team[MAX_INFO_STRING];
 	char	_team[MAX_INFO_STRING];
+
+	// 
+	double  max_health_last_set;
+	int     max_health;
+	double  prev_health_last_set;
+	int     prev_health;
 } __attribute__((aligned(64))) player_info_t;
 
 
@@ -252,7 +259,7 @@ typedef struct {
 } lightstyle_t;
 
 #define	MAX_EFRAGS			512
-#define	MAX_STATIC_ENTITIES	128		// torches, etc
+#define	MAX_STATIC_ENTITIES	512		// torches, etc
 #define	MAX_DEMOS			8
 #define	MAX_DEMONAME		16
 
@@ -381,6 +388,9 @@ typedef struct
 #ifdef PROTOCOL_VERSION_FTE2
 	unsigned int fteprotocolextensions2; ///< the extensions we told the server that we support.
 #endif
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int mvdprotocolextensions1;
+#endif
 
 	//
 	// Upload vars.
@@ -406,9 +416,9 @@ typedef struct
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
-	float		td_lastframe;       ///< To meter out one message a frame.
+	double		td_lastframe;       ///< To meter out one message a frame.
 	int			td_startframe;      ///< cls.framecount at start
-	float		td_starttime;       ///< Realtime at second frame of timedemo.
+	double		td_starttime;       ///< Realtime at second frame of timedemo.
 
 	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
 
@@ -593,6 +603,19 @@ typedef struct {
 	int         last_armor_pickup;
 	int         last_weapon_pickup;
 	int         last_ammo_pickup;
+
+	float       mvd_time_offset;
+	int         mvd_user_cmd[8];
+	float       mvd_user_cmd_time[8];
+
+	qbool       racing;
+	int         race_pacemaker_ent;
+
+	float       fakeshaft_policy;
+
+	int         sv_maxclients;
+
+	int         cif_flags;
 } clientState_t;
 
 extern	clientState_t	cl;
@@ -675,7 +698,6 @@ extern byte		*host_colormap;
 
 void CL_Init (void);
 void CL_ClearState (void);
-void CL_ReadPackets (void);
 void CL_BeginServerConnect(void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
@@ -691,7 +713,7 @@ typedef struct {
 } usermainbuttons_t;
 void CL_PrintQStatReply (char *s);
 // returns last button user pressed
-usermainbuttons_t CL_GetLastCmd (void);
+usermainbuttons_t CL_GetLastCmd (int player_slot);
 
 // cl_nqdemo.c
 void NQD_StartPlayback (void);
@@ -716,7 +738,8 @@ void CL_Demo_Stop_Rewinding(void);
 double Demo_GetSpeed(void);
 void Demo_AdjustSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
-qbool CL_Demo_SkipMessage(void);
+qbool CL_Demo_SkipMessage(qbool skip_if_seeking);
+qbool CL_Demo_NotForTrackedPlayer(void);
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
@@ -725,7 +748,7 @@ qbool CL_AutoRecord_Status(void);
 void CL_AutoRecord_SaveMatch(void);
 
 extern double demostarttime;
-extern float nextdemotime, olddemotime;
+extern double nextdemotime, olddemotime;
 
 // cl_parse.c
 #define NET_TIMINGS 256
@@ -874,9 +897,9 @@ void CL_ParseProjectiles(qbool indexed);
 
 
 // cl_pred.c
-void CL_InitPrediction (void);
-void CL_PredictMove (void);
-void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u);
+void CL_InitPrediction(void);
+void CL_PredictMove(qbool physframe);
+void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u);
 
 // cl_cam.c
 void vectoangles(vec3_t vec, vec3_t ang);
@@ -953,6 +976,7 @@ int CL_MultiviewNumberViews (void);
 int CL_MultiviewActiveViews (void);
 int CL_MultiviewCurrentView (void);
 int CL_MultiviewNextPlayer (void);
+int CL_MultiviewAutotrackSlot (void);
 
 void CL_MultiviewSetTrackSlot (int trackNum, int player);
 void CL_MultiviewResetCvars (void);
@@ -971,9 +995,11 @@ void CL_MultiviewDemoStopRewind (void);
 // client side min_ping aka delay
 
 extern cvar_t cl_delay_packet;
+extern cvar_t cl_delay_packet_dev;
 
 #define CL_MAX_DELAYED_PACKETS 16 /* 13 * 16 = 208 ms, should be enough */
 #define CL_MAX_PACKET_DELAY 75 /* total delay two times more */
+#define CL_MAX_PACKET_DELAY_DEVIATION 5
 
 typedef struct cl_delayed_packet_s
 {
@@ -986,6 +1012,49 @@ typedef struct cl_delayed_packet_s
 } cl_delayed_packet_t;
 
 qbool CL_QueInputPacket(void);
-void CL_UnqueOutputPacket(qbool sendall);
+qbool CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================
+
+// Sound
+#ifdef FTE_PEXT2_VOICECHAT
+void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
+qbool S_Voip_ShowMeter(int* x, int* y);
+qbool S_Voip_Speaking (unsigned int player);
+void S_Capture_Shutdown(void);
+int S_Voip_Loudness (void);
+void S_Voip_MapChange (void);
+void S_Voip_Parse (void);
+void S_Voip_Ignore (unsigned int slot, qbool ignore);
+#else
+#define S_Voip_ShowMeter(x, y) false
+#define S_Voip_Speaking(x) false
+#define S_Voip_Loudness 0
+#endif
+
+// KTX
+#define KTX_RACING_PLAYER_MIN_DISTANCE 24.0f
+#define KTX_RACING_PLAYER_MAX_DISTANCE 256.0f
+#define KTX_RACING_PLAYER_ALPHA_SCALE  512.0f
+
+// Player Dead?
+#define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
+
+// Screenshot queue
+typedef enum image_format_s {IMAGE_PCX, IMAGE_TGA, IMAGE_JPEG, IMAGE_PNG} image_format_t;
+
+typedef struct scr_sshot_target_s {
+	char fileName[128];
+	byte* buffer;
+	qbool freeMemory;
+	int width;
+	int height;
+	image_format_t format;
+} scr_sshot_target_t;
+
+int SCR_ScreenshotWrite(scr_sshot_target_t* target_params);
+
+qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
+byte* Movie_TempBuffer(int width, int height);
+qbool Movie_BackgroundInitialise(void);
+void Movie_BackgroundShutdown(void);

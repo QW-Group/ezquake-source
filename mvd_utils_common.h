@@ -185,6 +185,8 @@ typedef struct mvd_wp_info_s {
 	char	*name;
 	int		it;
 	const char *colored_name;
+	int     model_hint;
+	int     skin_number;
 } mvd_wp_info_t;
 
 extern mvd_wp_info_t mvd_wp_info[mvd_info_types];
@@ -195,3 +197,5 @@ void MVD_AutoTrack_Init(void);
 
 // mvd_xmlstats:
 void MVD_XMLStats_Init(void);
+
+mvd_new_info_t* MVD_StatsForPlayer(player_info_t* info);

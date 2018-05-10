@@ -32,12 +32,15 @@ STRIP ?= strip
 RM ?= rm -f
 RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
-XXD ?= xxd -i
+JSON2C ?= ./json2c.sh
 
 CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
+
+#Temporarily disable tree vectorization optimization enabled at O3 due to gcc bug
+CFLAGS += -fno-tree-vectorize
 
 CFLAGS_c :=
 RCFLAGS_c :=
@@ -56,6 +59,7 @@ else
 
     # Resolve all symbols at link time
     ifeq ($(SYS),Linux)
+    	CFLAGS += -DX11_GAMMA_WORKAROUND
         LDFLAGS_c += -Wl,--no-undefined
     endif
 
@@ -84,7 +88,7 @@ VER_DEFS += -DVERSION='"$(VER)"'
 SDL2_CFLAGS ?= $(shell sdl2-config --cflags)
 SDL2_LIBS ?= $(shell sdl2-config --libs)
 
-CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2 -DWITH_ZIP
+CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DNDEBUG -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2 -DWITH_ZIP
 LIBS_c += $(SDL2_LIBS)
 
 # built-in requirements
@@ -123,6 +127,12 @@ JANSSON_LIBS ?= $(shell pkg-config jansson --libs)
 CFLAGS += $(JANSSON_CFLAGS)
 LIBS_c += $(JANSSON_LIBS)
 
+SPEEX_LIBS ?= $(shell pkg-config speex --libs) $(shell pkg-config speexdsp --libs)
+ifdef SPEEX_LIBS
+    CFLAGS_c += -DWITH_SPEEX
+endif
+LIBS_c += $(SPEEX_LIBS)
+
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 
@@ -152,12 +162,11 @@ COMMON_OBJS := \
     net_chan.o		\
     q_shared.o		\
     version.o		\
-    zone.o
+    zone.o              \
+    pmove.o             \
+    pmovetst.o
 
-# temporary
 SERVER_OBJS := \
-    pmove.o \
-    pmovetst.o \
     pr_cmds.o \
     pr_edict.o \
     pr_exec.o \
@@ -189,7 +198,6 @@ HELP_OBJS := \
 
 OBJS_c := \
     $(COMMON_OBJS) \
-    $(SERVER_OBJS) \
     $(HELP_OBJS) \
     ioapi.o \
     unzip.o \
@@ -239,6 +247,8 @@ OBJS_c := \
     help_files.o \
     hud.o \
     hud_common.o \
+    hud_weapon_stats.o \
+    hud_radar.o \
     hud_editor.o \
     ignore.o \
     image.o \
@@ -314,9 +324,16 @@ OBJS_c := \
     vid_sdl2.o \
     sys_sdl2.o \
     in_sdl2.o \
-    cl_multiview.o
+    cl_multiview.o \
+    snd_voip.o
 
 ### Configuration Options ###
+
+ifndef CLIENT_ONLY
+    OBJS_c += $(SERVER_OBJS)
+else
+    CFLAGS += -DCLIENTONLY
+endif
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \
@@ -324,7 +341,7 @@ ifdef CONFIG_WINDOWS
 	localtime_win.o \
 	sys_win.o \
 	winquake.o
-    LIBS_c += -lopengl32 -lws2_32 -lwinmm
+    LIBS_c += -lopengl32 -lws2_32 -lwinmm -lpthread
 else
     OBJS_c += \
     	localtime_posix.o \
@@ -345,7 +362,9 @@ else
     endif
 
     ifneq ($(SYS),FreeBSD)
-        LIBS_c += -ldl
+        ifneq ($(SYS),OpenBSD)
+            LIBS_c += -ldl
+	endif
     endif
 endif
 
@@ -402,7 +421,7 @@ strip: $(TARG_c)
 
 $(BUILD_c)/%.o: %.json
 	$(E) [JS] $@
-	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
+	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.c

@@ -186,9 +186,9 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
-void CL_RegisterQWURLProtocol_f(void);
+void Sys_RegisterQWURLProtocol_f(void);
 #endif
-extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+extern cvar_t scr_autoid, crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
 ;
 
@@ -987,7 +987,7 @@ setting settview_arr[] = {
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Crosshair Size", crosshairsize, 0.2, 3, 0.2),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Crosshair Alpha", gl_crosshairalpha, 0.1, 1, 0.1),
+	ADDSET_NUMBER	("Crosshair Alpha", crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 	ADDSET_BASIC_SECTION(),
 
@@ -1202,7 +1202,7 @@ setting settmisc_arr[] = {
 	ADDSET_STRING	("Qizmo Path", qizmo_dir),
 	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
 #ifdef _WIN32
-	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
+	ADDSET_ACTION	("Set qw:// assoc.", Sys_RegisterQWURLProtocol_f,
 		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
 #endif
 
@@ -1227,7 +1227,6 @@ setting settsystem_arr[] = {
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 	ADDSET_BASIC_SECTION(),
 
-#if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
 	ADDSET_SEPARATOR("Screen Settings"),
 	ADDSET_BOOL("Use desktop resolution", vid_usedesktopres),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
@@ -1238,15 +1237,12 @@ setting settsystem_arr[] = {
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-#endif
 
 	//Font
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Font"),
-#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
-#endif
 	ADDSET_BOOL("Font Smoothing", gl_smoothfont),
 	ADDSET_BASIC_SECTION(),
 

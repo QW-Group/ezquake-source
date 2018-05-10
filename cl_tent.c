@@ -155,7 +155,7 @@ static void CL_ParseBeam(int type)
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
     // an experimental protocol extension:
@@ -536,7 +536,7 @@ static void CL_Parse_TE_GUNSHOT(void)
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 	
 	if (amf_part_gunshot.value && !Rulesets_RestrictParticles())
@@ -562,7 +562,7 @@ static void CL_Parse_TE_BLOOD(void)
 		MSG_ReadByte(); // colorStart
 		MSG_ReadByte(); // colorLength
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 
 		dl = CL_AllocDlight(0);
@@ -579,7 +579,7 @@ static void CL_Parse_TE_BLOOD(void)
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	if (amf_part_blood.value)
@@ -605,7 +605,7 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
 	}
@@ -666,7 +666,7 @@ void CL_ParseTEnt (void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage())
+		if (CL_Demo_SkipMessage(true))
 			return;
 		
 		switch (type) 
@@ -727,14 +727,12 @@ void vectoangles(vec3_t vec, vec3_t ang);
 
 static float fakeshaft_policy (void)
 {
-	char *p;
-	if (cls.demoplayback || cl.spectator)
+	if (cls.demoplayback || cl.spectator) {
 		return 1;
-	else
-		return *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
-			bound(0, Q_atof(p), 1) :
-			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
-			bound(0, Q_atof(p), 1) : 1;
+	}
+	else {
+		return cl.fakeshaft_policy;
+	}
 }
 
 void CL_UpdateBeams(void) 
@@ -778,7 +776,8 @@ void CL_UpdateBeams(void)
 
 				playerbeam_update = false;
 
-				if (cl_fakeshaft.value == 2 && !cl.spectator) { // try to simulate 13 ms ping
+				if (cl_fakeshaft.value == 2 && !cl.spectator && !cls.nqdemoplayback) {
+					// try to simulate 13 ms ping
 					frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
 					VectorCopy(frame->cmd.angles, target_angles);
 					VectorCopy(frame->playerstate[cl.viewplayernum].origin, target_origin);
@@ -855,9 +854,10 @@ void CL_UpdateBeams(void)
 				ent.model = b->model;
 				ent.angles[0] = pitch;
 				ent.angles[1] = yaw;
-				ent.angles[2] = rand() % 360;
-				if (!Rulesets_RestrictParticles())
+				ent.angles[2] = (cl.racing ? 0 : rand() % 360);
+				if ((cl.racing && b->entity >= MAX_CLIENTS) || !Rulesets_RestrictParticles()) {
 					ent.alpha = r_shaftalpha.value;
+				}
 
 				CL_AddEntity (&ent);
 			}
@@ -868,10 +868,11 @@ void CL_UpdateBeams(void)
 					//VULT - Some people might like their lightning beams thicker
 					for (k=0;k<beamstodraw;k++)
 					{
-
 						VectorAdd (org, dist, beamend[k]);
-						for (j = 0; j < 3; j++)
-							beamend[k][j] += f_rnd(-lg_size, lg_size);
+						if (!cl.racing) {
+							for (j = 0; j < 3; j++)
+								beamend[k][j] += f_rnd(-lg_size, lg_size);
+						}
 						VX_LightningBeam (beamstart[k], beamend[k]);
 						VectorCopy (beamend[k], beamstart[k]);
 					}

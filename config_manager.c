@@ -55,7 +55,7 @@ extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack, in_up,	in_down
 extern qbool		sb_showscores, sb_showteamscores;
 
 extern cvar_t		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
-extern char		allskins[128];
+extern char		allskins[MAX_OSPATH];
 
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
 cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};
@@ -227,7 +227,7 @@ static void DumpVariables(FILE	*f)
 
 
 	for	(col_size = col_size - 2, count = 0, var = cvar_vars; var && count < MAX_DUMPED_CVARS; var = var->next)	{
-		if (var->flags & CVAR_USER_CREATED) {
+		if ((var->flags & CVAR_USER_CREATED) && !(var->flags & CVAR_MOD_CREATED)) {
 			sorted_vars[count++] = var;
 			col_size = max(col_size, strlen(var->name));
 		}
@@ -451,11 +451,13 @@ static void DumpTeamplay(FILE *f)
 	TP_DumpTriggers(f);
 }
 
+#ifndef CLIENTONLY
 void DumpFloodProtSettings(FILE *f)
 {
 	extern int fp_messages, fp_persecond, fp_secondsdead;
 	fprintf(f, "floodprot %d %d %d\n", fp_messages, fp_persecond, fp_secondsdead);
 }
+#endif
 
 void DumpMisc(FILE *f)
 {
@@ -466,8 +468,10 @@ void DumpMisc(FILE *f)
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
 
+#ifndef CLIENTONLY
 	DumpFloodProtSettings(f);
 	fprintf(f, "\n");
+#endif
 
 	fprintf(f, "hud_recalculate\n\n");
 
@@ -571,8 +575,9 @@ static void DeleteUserVariables(void)
 	for (var = cvar_vars; var; var = next) {
 		next = var->next;
 
-		if (var->flags & CVAR_USER_CREATED)
+		if ((var->flags & CVAR_USER_CREATED) && !(var->flags & CVAR_MOD_CREATED)) {
 			Cvar_Delete(var->name);
+		}
 	}
 
 }

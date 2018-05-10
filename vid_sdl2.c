@@ -26,7 +26,7 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 #include <X11/extensions/xf86vmode.h>
 #endif
 
@@ -90,9 +90,8 @@ double vid_last_swap_time;
 static SDL_DisplayMode *modelist;
 static int modelist_count;
 
-#ifdef __linux__
-static unsigned short sysramps[768];
-static qbool use_linux_gamma_workaround;
+#ifdef X11_GAMMA_WORKAROUND
+static unsigned short sysramps[3*4096];
 #endif
 
 qbool vid_initialized = false;
@@ -143,7 +142,7 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH  }; /* Needs vid_restart thus vid_.... */
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
 #endif
 
@@ -162,7 +161,7 @@ cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CV
 cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
-cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH }; // It's here because it needs to be registered before window creation
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
 //
 // function declaration
@@ -369,51 +368,24 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 
 static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 {
-#ifdef __linux__
-	SDL_SysWMinfo info;
-	Display *display;
-	int screen;
+#ifdef X11_GAMMA_WORKAROUND
 	static short once = 1;
 	static short gamma_works = 0;
 
-	if (!use_linux_gamma_workaround) {
-		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+	if (!vid_gamma_workaround.integer) {
+		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+4096,ramps+(2*4096));
 		vid_hwgamma_enabled = true;
 		return;
 	}
 
-	SDL_VERSION(&info.version);
-	screen = SDL_GetWindowDisplayIndex(sdl_window);
-
-	if (screen < 0) {
-		Com_Printf("error: couldn't get screen number to set gamma\n");
-		return;
-	}
-
-	if (SDL_GetWindowWMInfo(sdl_window, &info) != SDL_TRUE) {
-		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
-		return;
-	}
-
-	if (info.subsystem != SDL_SYSWM_X11) {
-		Com_Printf("error: not x11, gamma won't work\n");
-		return;
-	}
-
-	display = info.info.x11.display;
-
 	if (once) {
-		int size;
-		XF86VidModeGetGammaRampSize(display, screen, &size);
-
-		if (size != 256) {
-			Com_Printf("error: gamma size (%d) not supported, gamma wont work!\n", size);
+		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
+			Com_Printf("error: gamma size is broken, gamma won't work\n");
 			once = 0;
 			return;
 		}
-
-		if (!XF86VidModeGetGammaRamp(display, screen, 256, sysramps, sysramps+256, sysramps+512)) {
-			Com_DPrintf("error: cannot get system gamma ramps, gamma won't work\n");
+		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps+4096, sysramps+(2*4096))) {
+			Com_Printf("error: cannot get system gamma ramps, gamma won't work\n");
 			once = 0;
 			return;
 		}
@@ -422,21 +394,30 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	}
 
 	if (gamma_works) {
+		/* Just double check the gamma size... */
+		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
+			Com_Printf("error: gamma size broken but worked initially, wtf?! gamma won't work\n");
+			gamma_works = 0;
+			vid_hwgamma_enabled = false;
+		}
 		/* It returns true unconditionally ... */
-		XF86VidModeSetGammaRamp(display, screen, 256, ramps, ramps+256, ramps+512);
+		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps+4096, ramps+(2*4096));
 		vid_hwgamma_enabled = true;
 	}
 	return;
 #else
+	/* SDL2 uses 256 entries in the API so this is correct */
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-#endif
-
 	vid_hwgamma_enabled = true;
+#endif
 }
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 static void VID_RestoreSystemGamma(void)
 {
+	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
+		return;
+	}
 	VID_SetDeviceGammaRampReal(sysramps);
 }
 #endif
@@ -452,8 +433,8 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
-#ifdef __linux__
-			if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+			if (vid_gamma_workaround.integer) {
 				if (Minimized || vid_hwgammacontrol.integer != 3) {
 					VID_RestoreSystemGamma();
 				}
@@ -471,8 +452,8 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef __linux__
-			if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+			if (vid_gamma_workaround.integer) {
 				v_gamma.modified = true;
 			}
 #endif
@@ -661,9 +642,37 @@ static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 	}
 }
 
+#if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
+static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
+{
+	if (flags & WINDOWS_LWINDOWSKEY) {
+		Key_Event(K_LWIN, down);
+	}
+	if (flags & WINDOWS_RWINDOWSKEY) {
+		Key_Event(K_RWIN, down);
+	}
+	if (flags & WINDOWS_MENU) {
+		Key_Event(K_MENU, down);
+	}
+	if (flags & WINDOWS_PRINTSCREEN) {
+		Key_Event(K_PRINTSCR, down);
+	}
+	if (flags & WINDOWS_CAPSLOCK) {
+		Key_Event(K_CAPSLOCK, down);
+	}
+}
+#endif
+
 static void HandleEvents(void)
 {
 	SDL_Event event;
+
+#if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
+	HandleWindowsKeyboardEvents(windows_keys_down, true);
+	HandleWindowsKeyboardEvents(windows_keys_up, false);
+
+	windows_keys_down = windows_keys_up = 0;
+#endif
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
@@ -709,8 +718,8 @@ static void HandleEvents(void)
 			Cbuf_AddText("\n");
 			SDL_free(event.drop.file);
 			break;
-		}   
-	} 
+		}
+	}
 }
 
 /*****************************************************************************/
@@ -721,8 +730,8 @@ void VID_Shutdown(void)
 
 	SDL_StopTextInput();
 
-#ifdef __linux__
-	if (use_linux_gamma_workaround) {
+#ifdef X11_GAMMA_WORKAROUND
+	if (vid_gamma_workaround.integer) {
 		VID_RestoreSystemGamma();
 	}
 #endif
@@ -784,7 +793,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
 
-#ifdef __linux__
+#ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
 #endif
 
@@ -936,11 +945,24 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 	return &modelist[index];
 }
 
+static void VID_SDL_GL_EnableMSAA(void)
+{
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(2, gl_multisamples.integer, 16));
+}
+
+static void VID_SDL_GL_DisableMSAA(void)
+{
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+}
+
 static void VID_SDL_GL_SetupAttributes(void)
 {
 	if (gl_multisamples.integer > 0) {
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(0, gl_multisamples.integer, 16));
+		VID_SDL_GL_EnableMSAA();
+	} else {
+		VID_SDL_GL_DisableMSAA();
 	}
 
 	if (r_24bit_depth.integer == 1) {
@@ -969,6 +991,71 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 	return -1;
 #endif
 }
+
+static SDL_Window *VID_SDL_CreateWindow(int flags)
+{
+	if (r_fullscreen.integer == 0) {
+		int displayNumber = VID_DisplayNumber(false);
+		int xpos = vid_xpos.integer;
+		int ypos = vid_ypos.integer;
+
+		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
+
+		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+	} else {
+		int windowWidth = glConfig.vidWidth;
+		int windowHeight = glConfig.vidHeight;
+		int windowX = SDL_WINDOWPOS_CENTERED;
+		int windowY = SDL_WINDOWPOS_CENTERED;
+		int displayNumber = VID_DisplayNumber(true);
+		SDL_Rect bounds;
+
+		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0) {
+			windowX = bounds.x;
+			windowY = bounds.y;
+			windowWidth = bounds.w;
+			windowHeight = bounds.h;
+		} else {
+			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
+		}
+
+		return SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
+	}
+}
+
+#ifdef X11_GAMMA_WORKAROUND
+static void VID_X11_GetGammaRampSize(void)
+{
+	glConfig.gammacrap.size = -1;
+
+	SDL_VERSION(&glConfig.gammacrap.info.version);
+	glConfig.gammacrap.screen = SDL_GetWindowDisplayIndex(sdl_window);
+
+	if (glConfig.gammacrap.screen < 0) {
+		Com_Printf("error: couldn't get screen number to set gamma\n");
+		return;
+	}
+
+	if (SDL_GetWindowWMInfo(sdl_window, &glConfig.gammacrap.info) != SDL_TRUE) {
+		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
+		return;
+	}
+
+	if (glConfig.gammacrap.info.subsystem != SDL_SYSWM_X11) {
+		Com_Printf("error: not x11, gamma won't work\n");
+		return;
+	}
+
+	glConfig.gammacrap.display = glConfig.gammacrap.info.info.x11.display;
+	XF86VidModeGetGammaRampSize(glConfig.gammacrap.display, glConfig.gammacrap.screen, &glConfig.gammacrap.size);
+
+	if (glConfig.gammacrap.size <= 0 || glConfig.gammacrap.size > 4096) {
+		Com_Printf("error: gamma size '%d' seems weird, refusing to use it\n", glConfig.gammacrap.size);
+		glConfig.gammacrap.size = -1;
+		return;
+	}
+}
+#endif
 
 static void VID_SDL_Init(void)
 {
@@ -1009,39 +1096,18 @@ static void VID_SDL_Init(void)
 	VID_SetupModeList();
 	VID_SetupResolution();
 
-	if (r_fullscreen.integer == 0) {
-		int displayNumber = VID_DisplayNumber(false);
-		int xpos = vid_xpos.integer;
-		int ypos = vid_ypos.integer;
-
-		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
-
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
-	} else {
-		int windowWidth = glConfig.vidWidth;
-		int windowHeight = glConfig.vidHeight;
-		int windowX = SDL_WINDOWPOS_CENTERED;
-		int windowY = SDL_WINDOWPOS_CENTERED;
-		int displayNumber = VID_DisplayNumber(true);
-		SDL_Rect bounds;
-
-		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0)
-		{
-			windowX = bounds.x;
-			windowY = bounds.y;
-			windowWidth = bounds.w;
-			windowHeight = bounds.h;
-		}
-		else
-		{
-			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
-		}
-
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
-	}
-
+	sdl_window = VID_SDL_CreateWindow(flags);
 	if (!sdl_window) {
-		Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+		if (gl_multisamples.integer > 0) {
+			VID_SDL_GL_DisableMSAA();
+			Cvar_AutoSet(&gl_multisamples, "0");
+			sdl_window = VID_SDL_CreateWindow(flags);
+		}
+		if (sdl_window) {
+			Com_Printf("WARNING: Invalid gl_multisamples value. Disabling MSAA");
+		} else {
+			Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+		}
 	}
 
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
@@ -1111,6 +1177,15 @@ static void VID_SDL_Init(void)
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
+
+#ifdef X11_GAMMA_WORKAROUND
+	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
+	if (vid_gamma_workaround.integer != 0) {
+		VID_X11_GetGammaRampSize();
+	} else {
+		glConfig.gammacrap.size = 256;
+	}
+#endif
 
 	glConfig.initialized = true;
 }
@@ -1330,6 +1405,8 @@ static void GfxInfo_f(void)
 		Com_Printf_State(PRINT_ALL, "[windowed]\n");
 	}
 
+	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
+
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
 }
@@ -1494,6 +1571,8 @@ static void VID_UpdateConRes(void)
 		Cvar_SetValue(&r_conheight, vid.conheight);
 	}
 
+	vid.aspect = (double) glConfig.vidWidth / (double) glConfig.vidHeight;
+
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
 	vid.recalc_refdef = 1;
@@ -1528,10 +1607,6 @@ void VID_Init(unsigned char *palette) {
 	VID_SetPalette(palette);
 
 	VID_RegisterLatchCvars();
-
-#ifdef __linux__
-	use_linux_gamma_workaround = (vid_gamma_workaround.integer != 0);
-#endif
 
 	if (!host_initialized) {
 		VID_RegisterCvars();

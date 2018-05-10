@@ -51,8 +51,13 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 	}
 }
 
-qbool RuleSets_DisallowModelOutline(model_t *mod)
+qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 {
+	if (mod == NULL) {
+		// World model - only allow in default ruleset, cheats enabled
+		return !(r_refdef2.allow_cheats && rulesetDef.ruleset == rs_default);
+	}
+
 	switch (mod->modhint) {
 		case MOD_EYES:
 			return true;
@@ -440,7 +445,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
 	progress = (strstr (p, "left")) ? true : false;
-	val = Q_atoi(value);;
+	val = Q_atoi(value);
 
 	if (cls.state >= ca_connected && progress && !cl.spectator) {
 		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
@@ -463,31 +468,47 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 {
-	int ival = Q_atoi(value);	// this is used in the code
-	float fval = Q_atof(value); // this is used to check value validity
+	int ival = Q_atoi(value);
 
-	if (ival == var->integer && fval == var->value) {
+	if (ival == var->integer) {
 		// no change
 		return;
 	}
 
-	if (fval < 0) {
-		Com_Printf("%s doesn't allow negative values\n", var->name);
+	if (var == &cl_delay_packet && (ival < 0 || ival > CL_MAX_PACKET_DELAY * 2)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY * 2);
+		*cancel = true;
+		return;
+	}
+
+	if (var == &cl_delay_packet_dev && (ival < 0 || ival > CL_MAX_PACKET_DELAY_DEVIATION)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY_DEVIATION);
 		*cancel = true;
 		return;
 	}
 
 	if (cls.state == ca_active) {
 		if ((cl.standby) || (cl.teamfortress)) {
+			char announce[128];
+
+			if (var == &cl_delay_packet) {
+				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", ival, cl_delay_packet_dev.integer);
+			}
+			else {
+				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", cl_delay_packet.integer, ival);
+			}
+
 			// allow in standby or teamfortress. For teamfortress, more often than not
 			// People 1on1 without "match mode" and they may want to sync pings.
-			Cbuf_AddText(va("say delay packet: %d ms\n", ival));
-		} else {
+			Cbuf_AddText(announce);
+		}
+		else {
 			// disallow during the match
 			Com_Printf("%s changes are not allowed during the match\n", var->name);
 			*cancel = true;
 		}
-	} else {
+	}
+	else {
 		// allow in not fully connected state
 	}
 }

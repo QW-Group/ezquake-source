@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: sv_ccmds.c 761 2008-02-25 20:39:51Z qqshka $
+	
 */
 
 #include "qwsvdef.h"
@@ -28,6 +28,8 @@ int fp_messages=4, fp_persecond=4, fp_secondsdead=10;
 char fp_msg[255] = { 0 };
 extern	cvar_t		sv_logdir; //bliP: 24/7 logdir
 extern	redirect_t	sv_redirected;
+
+void SV_Localinfo_Set (const char *name, const char *value);
 
 /*
 ===============================================================================
@@ -45,11 +47,12 @@ SV_Quit
 */
 void SV_Quit (qbool restart)
 {
-//	SV_FinalMessage ("server shutdown\n");
-	Con_Printf ("Shutting down.\n");
-//	SV_Shutdown ("quit\n");
-//	Sys_Quit (restart);
-	Host_Quit();
+	SV_Shutdown ("Server shutdown.\n");
+#ifdef SERVERONLY
+	Sys_Quit (restart);
+#else
+	Host_Quit(); // will also call SV_Shutdown(), but it is not an issue.
+#endif
 }
 
 /*
@@ -137,7 +140,6 @@ void SV_Logfile (int sv_log, qbool newlog)
 		logs[sv_log].log_level = 1;
 	}
 }
-
 
 /*
 ============
@@ -391,7 +393,6 @@ void SV_Fly_f (void)
 	}
 }
 
-
 /*
 ======================
 SV_Map_f
@@ -403,17 +404,12 @@ command from the console or progs.
 */
 void SV_Map (qbool now)
 {
-	static char	level[MAX_QPATH];
-	static char	expanded[MAX_QPATH];
-	static qbool changed = false;
-	// -> scream
-	vfsfile_t *f;
+	static char     level[MAX_QPATH];
+	static char     expanded[MAX_QPATH];
+	static char     entityfile[MAX_QPATH];
+	static qbool    changed = false;
+
 	char	*s;
-	//bliP: date check
-	/*time_t	t;
-	struct tm	*tblock;*/
-	date_t date;
-	// <-
 
 	// if now, change it
 	if (now)
@@ -423,26 +419,24 @@ void SV_Map (qbool now)
 
 		changed = false;
 
-		// uh, is it possible ?
-
-		if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
+		if (!FS_FLocateFile(expanded, FSLFRT_IFFOUND, NULL))
 		{
-			Con_Printf ("Can't find %s\n", expanded);
+			Sys_Printf ("Can't find %s\n", expanded);
 			return;
 		}
-		VFS_CLOSE(f);
 
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
+#ifndef SERVERONLY
 		CL_BeginLocalConnection ();
-		SV_BroadcastCommand ("changing\n");
-		SV_SendMessagesToAll ();
+#endif
 
 		// -> scream
 		if ((int)frag_log_type.value)
 		{
 			//bliP: date check ->
+			date_t date;
 			SV_TimeOfDay(&date);
 			s = va("\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
 			       level,
@@ -460,38 +454,50 @@ void SV_Map (qbool now)
 		}
 		// <-
 
-		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"));
+		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"), entityfile);
 
+#ifdef SERVERONLY
+		SV_BroadcastCommand ("changing\n"
+		                     "reconnect\n");
+		SV_SendMessagesToAll ();
+#else
 		SV_BroadcastCommand ("reconnect\n");
+#endif
 
 		return;
 	}
 
 	// get the map name, but don't change now, could be executed from progs.dat
 
-	if (Cmd_Argc() != 2)
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
 	{
-		Con_Printf ("map <levelname> : continue game on a new level\n");
+		Con_Printf ("map <levelname> [<entityfile>] : continue game on a new level\n");
 		return;
 	}
 
 	strlcpy (level, Cmd_Argv(1), MAX_QPATH);
 
+	memset(entityfile, 0, sizeof(entityfile));
+	if (Cmd_Argc() >= 3)
+		strlcpy (entityfile, Cmd_Argv(2), MAX_QPATH);
+
 	// check to make sure the level exists
 	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
 
-	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
+	if (!FS_FLocateFile(expanded, FSLFRT_IFFOUND, NULL))
 	{
 		Con_Printf ("Can't find %s\n", expanded);
 		return;
 	}
-	VFS_CLOSE(f);
+
 	changed = true;
+#ifndef SERVERONLY
+	com_serveractive = true;
+#endif
 }
 
 void SV_Map_f (void)
 {
-
 	SV_Map(false);
 }
 
@@ -528,6 +534,7 @@ void SV_ListFiles_f (void)
 	dirname = Cmd_Argv(1);
 	SV_ReplaceChar(dirname, '\\', '/');
 
+	// Double-check then move to FS_UnsafeFilename() ?
 	if (	!strncmp(dirname, "../", 3) || strstr(dirname, "/../") || *dirname == '/'
 	        ||	( (i = strlen(dirname)) < 3 ? 0 : !strncmp(dirname + i - 3, "/..", 4) )
 	        ||	!strncmp(dirname, "..", 3)
@@ -681,6 +688,9 @@ void SV_RemoveFile_f (void)
 		else
 			Con_Printf("Unable to remove file %s\n", filename);
 	}
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 /*==================
@@ -794,11 +804,14 @@ void SV_Kick_f (void)
 	c = Cmd_Argc ();
 	if (c < 2)
 	{
+#ifndef SERVERONLY
 		// some mods use a "kick" alias for their own needs, sigh
-		if (CL_ClientState() && Cmd_FindAlias("kick")) {
+		if (CL_ClientState() && Cmd_FindAlias("kick"))
+		{
 			Cmd_ExecuteString (Cmd_AliasString("kick"));
 			return;
 		}
+#endif
 		Con_Printf ("kick <userid> [reason]\n");
 		return;
 	}
@@ -1107,7 +1120,7 @@ resolve IP via DNS lookup
 char *SV_Resolve(char *addr)
 {
 #if defined (__linux__) || defined (_WIN32)
-	unsigned int ip;
+	unsigned long ip;
 #else
 	in_addr_t ip;
 #endif
@@ -1181,38 +1194,6 @@ void SV_Status_f (void)
 
 	switch (sv_redirected)
 	{
-		case RD_MOD:
-			if (is_ktpro)
-			{
-				Con_Printf ("frags id  address         name            rate ping drop  real ip\n"
-							"----- --- --------------- --------------- ---- ---- ----- ---------------\n");
-				for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
-				{
-					if (!cl->state)
-						continue;
-					s = NET_BaseAdrToString(cl->netchan.remote_address);
-					Con_Printf ("%5i %3i %-15s %-15s ", (int)cl->edict->v.frags, cl->userid,
-								(int)sv_use_dns.value ? SV_Resolve(s) : s, cl->name);
-					switch (cl->state)
-					{
-						case cs_connected:
-						case cs_preconnected:
-							Con_Printf ("CONNECTING\n");
-							continue;
-						case cs_zombie:
-							Con_Printf ("ZOMBIE\n");
-							continue;
-						default:;
-					}
-					Con_Printf ("%4i %4i %5.1f %s %s\n",
-								(int)(1000 * cl->netchan.frame_rate),
-								(int)SV_CalcPing (cl),
-								100.0 * cl->netchan.drop_count / cl->netchan.incoming_sequence,
-								cl->realip.ip[0] ? NET_BaseAdrToString (cl->realip) : "",
-								cl->spectator ? "(s)" : "");
-				}
-				break;
-			} // if
 		case RD_NONE:
 			Con_Printf ("name             ping frags   id   address                real ip\n"
 						"---------------- ---- ----- ------ ---------------------- ---------------\n");
@@ -1241,6 +1222,7 @@ void SV_Status_f (void)
 				}
 			}
 			break;
+		//case RD_MOD:
 		//case RD_CLIENT:
 		//case RD_PACKET:
 		default:
@@ -1279,117 +1261,49 @@ void SV_Status_f (void)
 	Con_Printf ("\n");
 }
 
-void SV_Check_localinfo_maps_support(void)
-{
-	float	k_version;
-	char	*k_version_s;
-	int		k_build;
-	char	*k_build_s;
-
-	char	*x_version;
-	char	*x_build;
-
-	k_version = Q_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
-	k_build   = Q_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
-
-	x_version = Info_ValueForKey(svs.info, SERVERINFO_KTX_VERSION);
-	x_build   = Info_ValueForKey(svs.info, SERVERINFO_KTX_BUILD);
-
-	if ((k_version < LOCALINFO_MAPS_KTPRO_VERSION || k_build < LOCALINFO_MAPS_KTPRO_BUILD) &&
-		!(*x_version && *x_build))
-	{
-		Con_DPrintf("WARNING: Storing maps list in LOCALINFO supported only by ktpro version "
-		           LOCALINFO_MAPS_KTPRO_VERSION_S " build %i and newer and by ktx.\n",
-		           LOCALINFO_MAPS_KTPRO_BUILD);
-		if (k_version && k_build)
-			Con_DPrintf("Current running ktpro version %s build %s.\n",
-			           k_version_s, k_build_s);
-		else
-			Con_DPrintf("Current running mod is not ktpro and is not ktx.\n");
-	}
-}
 /*
 ==================
 SV_Check_maps_f
 ==================
 */
-extern func_t localinfoChanged;
 void SV_Check_maps_f(void)
 {
 	dir_t d;
 	file_t *list;
 	int i, j, maps_id1;
-	char *s=NULL, *key;
-
-	SV_Check_localinfo_maps_support();
 
 	d = Sys_listdir("id1/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;
-	for (i = LOCALINFO_MAPS_LIST_START; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++)
+	for (i = LOCALINFO_MAPS_LIST_START; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++, i++)
 	{
 		list->name[strlen(list->name) - 4] = 0;
-		if (!list->name[0]) continue;
+		if (!list->name[0])
+			continue;
 
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set (&_localinfo_, key, list->name);
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
-		i++;
+		SV_Localinfo_Set(va("%d", i), list->name);
 	}
 	maps_id1 = i - 1;
 
 	d = Sys_listdir("qw/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;
-	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++)
+	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++, i++)
 	{
 		list->name[strlen(list->name) - 4] = 0;
-		if (!list->name[0]) continue;
+		if (!list->name[0])
+			continue;
 
 		for (j = LOCALINFO_MAPS_LIST_START; j <= maps_id1; j++)
 			if (!strncmp(Info_Get(&_localinfo_, va("%d", j)), list->name, MAX_KEY_STRING))
 				break;
-		if (j <= maps_id1) continue;
+		if (j <= maps_id1)
+			continue;
 
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set (&_localinfo_, key, list->name);
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
-		i++;
+		SV_Localinfo_Set(va("%d", i), list->name);
 	}
 
 	for (; i <= LOCALINFO_MAPS_LIST_END; i++)
 	{
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set(&_localinfo_, key, "");
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
+		SV_Localinfo_Set(va("%d", i), "");
 	}
 }
 
@@ -1451,16 +1365,14 @@ void SV_SendServerInfoChange(char *key, char *value)
 }
 
 //Cvar system calls this when a CVAR_SERVERINFO cvar changes
-void SV_ServerinfoChanged (char *key, char *string) {
-	if ( (!strcmp(key, "pm_bunnyspeedcap") || !strcmp(key, "pm_slidefix")
-		|| !strcmp(key, "pm_airstep") || !strcmp(key, "pm_pground")
-		|| !strcmp(key, "samelevel") || !strcmp(key, "watervis") || !strcmp(key, "coop") )
-		&& !strcmp(string, "0") ) {
-		// don't add default values to serverinfo to keep it cleaner
+void SV_ServerinfoChanged (char *key, char *string)
+{
+	// force serverinfo "0" vars to be "".
+	if (!strcmp(string, "0"))
 		string = "";
-	}
 
-	if (strcmp(string, Info_ValueForKey (svs.info, key))) {
+	if (strcmp(string, Info_ValueForKey (svs.info, key)))
+	{
 		Info_SetValueForKey (svs.info, key, string, MAX_SERVERINFO_STRING);
 		SV_SendServerInfoChange (key, string);
 	}
@@ -1514,23 +1426,45 @@ void SV_Serverinfo_f (void)
 		return;
 	}
 
-	Info_SetValueForKey (svs.info, key, value, MAX_SERVERINFO_STRING);
+	// force serverinfo "0" vars to be ""
+	if (!strcmp(value, "0"))
+		value = "";
 
 	// if the key is also a serverinfo cvar, change it too
 	var = Cvar_Find(key);
 	if (var && (var->flags & CVAR_SERVERINFO))
 	{
-		// a hack - strip the serverinfo flag so that the Cvar_Set
-		// doesn't trigger SV_SendServerInfoChange
-		var->flags &= ~CVAR_SERVERINFO;
-		Cvar_Set (var, value);
-		var->flags |= CVAR_SERVERINFO; // put it back
+		Cvar_Set (var, value); // this call SV_ServerinfoChanged() as well.
 	}
-
-	// FIXME, don't send if the key hasn't changed
-	SV_SendServerInfoChange(key, value);
+	else
+	{
+		SV_ServerinfoChanged(key, value);
+	}
 }
 
+void SV_Localinfo_Set (const char *name, const char *value)
+{
+	char *old_value;
+
+	if (!name || !*name)
+		return;
+
+	if (!value)
+		value = "";
+
+	old_value = Info_Get(&_localinfo_, name); // remember old value.
+	Info_Set (&_localinfo_, name, value); // set new value.
+
+	if (mod_localinfoChanged)
+	{
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = 0;
+		PR_SetTmpString(&G_INT(OFS_PARM0), name);
+		PR_SetTmpString(&G_INT(OFS_PARM1), old_value);
+		PR_SetTmpString(&G_INT(OFS_PARM2), Info_Get(&_localinfo_, name));
+		PR_ExecuteProgram (mod_localinfoChanged);
+	}
+}
 
 /*
 ===========
@@ -1541,8 +1475,6 @@ SV_Localinfo_f
 */
 void SV_Localinfo_f (void)
 {
-	char *s;
-
 	if (Cmd_Argc() == 1)
 	{
 		char info[MAX_LOCALINFO_STRING];
@@ -1557,7 +1489,8 @@ void SV_Localinfo_f (void)
 	//bliP: sane localinfo usage (mercury) ->
 	if (Cmd_Argc() == 2)
 	{
-		s = Info_Get(&_localinfo_, Cmd_Argv(1));
+		char *s = Info_Get(&_localinfo_, Cmd_Argv(1));
+
 		if (*s)
 			Con_Printf ("Localinfo %s: \"%s\"\n", Cmd_Argv(1), s);
 		else
@@ -1578,18 +1511,7 @@ void SV_Localinfo_f (void)
 		return;
 	}
 
-	s = Info_Get(&_localinfo_, Cmd_Argv(1));
-	Info_Set (&_localinfo_, Cmd_Argv(1), Cmd_Argv(2));
-
-	if (localinfoChanged)
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = 0;
-		G_INT(OFS_PARM0) = PR_SetTmpString(Cmd_Argv(1));
-		G_INT(OFS_PARM1) = PR_SetTmpString(s);
-		G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, Cmd_Argv(1)));
-		PR_ExecuteProgram (localinfoChanged);
-	}
+	SV_Localinfo_Set(Cmd_Argv(1), Cmd_Argv(2));
 }
 
 
@@ -1752,12 +1674,15 @@ void SV_Gamedir_f (void)
 		return;
 	}
 
-	if (CL_ClientState()) {
-		Com_Printf ("you must disconnect before changing gamedir\n");
+#ifndef SERVERONLY
+	if (CL_ClientState())
+	{
+		Con_Printf ("you must disconnect before changing gamedir\n");
 		return;
 	}
+#endif
 
-	FS_SetGamedir (dir);
+	FS_SetGamedir (dir, false);
 	Info_SetValueForStarKey (svs.info, "*gamedir", dir, MAX_SERVERINFO_STRING);
 }
 
@@ -1864,25 +1789,16 @@ SV_MasterPassword
 */
 void SV_MasterPassword_f (void)
 {
+#ifdef SERVERONLY
+	if (!host_everything_loaded)
+#else
 	if (!server_cfg_done)
+#endif
 		strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
 	else
-		Con_Printf("master_rcon_password can be set only in server.cfg\n");
+		Con_DPrintf("master_rcon_password can be set only in server.cfg\n");
 }
 // <-- QW262
-
-/*
-==================
-SV_ShowTime_f
-For development purposes only
-//VVD
-==================
-*/
-/*void SV_ShowTime_f (void)
-{
-	Con_Printf("realtime = %f,\nsv.time = %f,\nsv.old_time = %f\n",
-			realtime, sv.time, sv.old_time);
-}*/
 
 /*
 ==================
@@ -1933,23 +1849,38 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("map", SV_Map_f);
 	Cmd_AddCommand ("devmap", SV_Map_f);
 	Cmd_AddCommand ("setmaster", SV_SetMaster_f);
+
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);
 	Cmd_AddCommand ("save", SV_SaveGame_f); 
 	Cmd_AddCommand ("load", SV_LoadGame_f); 
-	//Cmd_AddCommand ("restart", SV_Restart_f);
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("say", SV_ConSay_f);
+	Cmd_AddCommand ("quit", SV_Quit_f);
+	Cmd_AddCommand ("restart", SV_Restart_f);
+#endif
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("god", SV_God_f);
+	Cmd_AddCommand ("give", SV_Give_f);
+	Cmd_AddCommand ("noclip", SV_Noclip_f);
+#endif
 
 	Cmd_AddCommand ("localinfo", SV_Localinfo_f);
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
+	Cmd_AddCommand ("user", SV_User_f); // FIXME: probably should be done like CL_Serverinfo_f().
+#endif
+
 	Cmd_AddCommand ("gamedir", SV_Gamedir_f);
 	Cmd_AddCommand ("sv_gamedir", SV_Gamedir);
 
-// qqshka: alredy registered at host.c
-//	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
-//	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+// I wonder why it registered in host.c in ezquake...
+#ifdef SERVERONLY
+	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#endif
 
 	Cmd_AddCommand ("master_rcon_password", SV_MasterPassword_f);
-/*
-	Cmd_AddCommand ("showtime", SV_ShowTime_f);
-For development purposes only
-//VVD
-*/
 }

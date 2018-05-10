@@ -49,6 +49,7 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
+cbuf_t cbuf_server;
 
 char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
@@ -114,6 +115,7 @@ void Cbuf_Execute (void)
 	Cbuf_ExecuteEx (&cbuf_main);
 	Cbuf_ExecuteEx (&cbuf_safe);
 	Cbuf_ExecuteEx (&cbuf_formatted_comms);
+	Cbuf_ExecuteEx (&cbuf_server);
 }
 
 //fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
@@ -137,6 +139,7 @@ void Cbuf_Init (void)
 	Cbuf_Register (&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register (&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register (&cbuf_formatted_comms, 1 << 11); // 2kb
+	Cbuf_Register (&cbuf_server, 1 << 18); // 256kb
 }
 
 //Adds command text at the end of the buffer
@@ -459,11 +462,16 @@ void Cmd_Exec_f (void)
 	char *f, name[MAX_OSPATH];
 	char reset_bindphysical[128];
 	int mark;
+	qbool server_command = false;
 
 	if (Cmd_Argc () != 2) {
-		Com_Printf ("exec <filename> : execute a script file\n");
+		Com_Printf ("%s <filename> : execute a script file\n", Cmd_Argv(0));
 		return;
 	}
+
+#if !defined(SERVERONLY) && !defined(CLIENTONLY)
+	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
+#endif
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
@@ -488,14 +496,17 @@ void Cmd_Exec_f (void)
 	//   want different behaviour.
 	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
 	if (cbuf_current == &cbuf_svc) {
-		Cbuf_AddTextEx (&cbuf_main, "con_bindphysical 1\n");
-		Cbuf_AddTextEx (&cbuf_main, f);
-		Cbuf_AddTextEx (&cbuf_main, reset_bindphysical);
+		Cbuf_AddTextEx(&cbuf_main, "con_bindphysical 1\n");
+		Cbuf_AddTextEx(&cbuf_main, f);
+		Cbuf_AddTextEx(&cbuf_main, reset_bindphysical);
+	}
+	else if (server_command) {
+		Cbuf_AddTextEx(&cbuf_server, f);
 	}
 	else {
-		Cbuf_InsertTextEx (&cbuf_main, reset_bindphysical);
-		Cbuf_InsertTextEx (&cbuf_main, f);
-		Cbuf_InsertTextEx (&cbuf_main, "con_bindphysical 1\n");
+		Cbuf_InsertTextEx(&cbuf_main, reset_bindphysical);
+		Cbuf_InsertTextEx(&cbuf_main, f);
+		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
 	}
 	
 	Hunk_FreeToLowMark (mark);
@@ -969,7 +980,7 @@ qbool Cmd_IsLegacyCommand (char *oldname)
 
 static qbool Cmd_LegacyCommand (void)
 {
-	qbool recursive = false;
+	static qbool recursive = false;
 	legacycmd_t *cmd;
 	char text[1024];
 
@@ -984,13 +995,18 @@ static qbool Cmd_LegacyCommand (void)
 		return true;		// just ignore this command
 
 	// build new command string
-	strlcpy (text, cmd->newname, sizeof(text));
-	strlcat (text, " ", sizeof(text));
-	strlcat (text, Cmd_Args(), sizeof(text));
+	strlcpy(text, cmd->newname, sizeof(text));
+	strlcat(text, " ", sizeof(text));
+	strlcat(text, Cmd_Args(), sizeof(text));
 
-	assert (!recursive);
+	if (recursive) {
+		Com_Printf("error: recursive legacy command, aborting");
+		recursive = false;
+		return false;
+	}
+
 	recursive = true;
-	Cmd_ExecuteString (text);
+	Cmd_ExecuteString(text);
 	recursive = false;
 
 	return true;
@@ -1603,30 +1619,37 @@ int Commands_Compare_Func (const void * arg1, const void * arg2)
 {
 	return strcasecmp (*(char**) arg1, *(char**) arg2);
 }
+
 char *msgtrigger_commands[] = {
-                                  "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
-                                  "alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-                                  "easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
-                                  "dns", "addserver", "connect", "join", "observe",
-                                  "tcl_proc", "tcl_exec", "tcl_eval", "exec",
-                                  "set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
-                                  "toggle", "toggle_re", "set_calc", "rcon", "user", "users",
-                                  "unalias", "unalias_re",
-                                  "re_trigger", "re_trigger_options", "re_trigger_delete",
-                                  "re_trigger_enable","re_trigger_disable", "re_trigger_match",
-                                  "hud262_add","hud262_remove","hud262_position","hud262_bg",
-                                  "hud262_move","hud262_width","hud262_alpha","hud262_blink",
-                                  "hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
-                                  "hud_262font","hud262_hover","hud262_button",
-								  "alias_in", "alias_out", "cvar_in", "cvar_out"
-                                  //               ,NULL
-                              };
+	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
+	"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
+	"easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
+	"dns", "addserver", "connect", "join", "observe",
+	"tcl_proc", "tcl_exec", "tcl_eval", "exec",
+	"set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
+	"toggle", "toggle_re", "set_calc", "rcon", "user", "users",
+	"unalias", "unalias_re",
+	"re_trigger", "re_trigger_options", "re_trigger_delete",
+	"re_trigger_enable","re_trigger_disable", "re_trigger_match",
+	"hud262_add","hud262_remove","hud262_position","hud262_bg",
+	"hud262_move","hud262_width","hud262_alpha","hud262_blink",
+	"hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
+	"hud_262font","hud262_hover","hud262_button",
+	"alias_in", "alias_out", "cvar_in", "cvar_out"
+	// ,NULL
+};
 
 char *formatted_comms_commands[] = {
-                                       "if", "wait", "echo", "say", "say_team", "set_tp",
-                                       "tp_point", "tp_pickup", "tp_took",
-                                       NULL
-                                   };
+	"if", "wait", "echo", "say", "say_team", "set_tp",
+	"tp_point", "tp_pickup", "tp_took",
+	"tp_msgreport", "tp_msgcoming", "tp_msglost", "tp_msgenemypwr",
+	"tp_msgquaddead", "tp_msgsafe", "tp_msgkillme", "tp_msghelp",
+	"tp_msggetquad", "tp_msggetpent", "tp_msgpoint", "tp_msgtook",
+	"tp_msgtrick", "tp_msgreplace", "tp_msgneed", "tp_msgyesok",
+	"tp_msgnocancel", "tp_msgutake", "tp_msgitemsoon", "tp_msgwaiting",
+	"tp_msgslipped",
+    NULL
+};
 
 float	impulse_time = -9999;
 int		impulse_counter;
@@ -1666,6 +1689,7 @@ static qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
 	                   sizeof(msgtrigger_commands[0]),Commands_Compare_Func) != NULL;
 }
+
 static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
@@ -2324,6 +2348,9 @@ void Cmd_Init (void)
 {
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
+#ifndef SERVERONLY
+	Cmd_AddCommand ("serverexec", Cmd_Exec_f);
+#endif
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
 	Cmd_AddCommand ("aliasedit", Cmd_EditAlias_f);

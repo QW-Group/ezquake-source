@@ -163,32 +163,33 @@ void Cam_Lock(int playernum)
 {
 	char st[32];
 
-	if (Cmd_FindAlias("f_trackspectate"))
-	{
+	if (Cmd_FindAlias("f_trackspectate")) {
 		Cbuf_AddTextEx (&cbuf_main, "f_trackspectate\n");
 	}
 
-	if (CL_MultiviewEnabled())
-		return; 
-
 	snprintf(st, sizeof (st), "ptrack %i", playernum);
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		// its not setinfo extension, but adding new extension just for this is stupid IMO
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, st);
+	}
+	else {
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, st);
+	}
+
+	if (CL_MultiviewEnabled ()) {
+		CL_MultiviewSetTrackSlot (-1, playernum);
+		if (!cls.findtrack) {
+			return;
+		}
+	}
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
 		ideal_track = playernum;
-	}	
+		cl.mvd_time_offset = 0;
+	}
 	last_lock = cls.realtime;
-
-	if (cls.mvdplayback == QTV_PLAYBACK)
-	{
-		// its not setinfo extension, but adding new extension just for this is stupid IMO
-		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, st);
-	}
-	else
-	{
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, st);
-	}
 
 	spec_track = playernum;
 	locked = false;
@@ -587,16 +588,17 @@ void Cam_FinishMove(usercmd_t *cmd)
 	i = end;
 	do {
 		s = &cl.players[i];
-		if (s->name[0] && !s->spectator) {
-			if (cls.mvdplayback && cl.teamfortress) 
+		if (s->name[0] && !s->spectator && (!cls.mvdplayback || cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].messagenum == cl.parsecount)) {
+			if (cls.mvdplayback && cl.teamfortress) {
 				V_TF_ClearGrenadeEffects(); // BorisU
+			}
 			Cam_Lock(i);
 			ideal_track = i;    
 			return;
 		}
 		i = (i + MAX_CLIENTS + inc) % MAX_CLIENTS;
 	} while (i != end);
-	// stay on same guy?	
+	// stay on same guy?
 
 	i = ideal_track;	
 	s = &cl.players[i];
@@ -820,6 +822,16 @@ void CL_InitCam(void)
 	CL_MultiviewInitialise ();
 }
 
+int Cam_MainTrackNum (void)
+{
+	extern int CL_MultiviewMainView (void);
+
+	if (CL_MultiviewInsetEnabled ()) {
+		return CL_MultiviewMainView ();
+	}
+	return Cam_TrackNum ();
+}
+
 //
 // Change what player we are tracking.
 //
@@ -897,7 +909,7 @@ void CL_Track (int trackview)
 	{
 		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
 	} 
-	else if (Cam_TrackNum() != slot || trackview >= 0) 
+	else if (Cam_MainTrackNum() != slot || trackview >= 0)
 	{
 		// If we're not already tracking the found slot
 		// set the camera to track mode and lock it to the selected slot.

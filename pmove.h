@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.h,v 1.10 2007-10-07 16:21:10 tonik Exp $
+	
 */
 
 #ifndef __PMOVE_H__
@@ -32,18 +32,16 @@ typedef struct {
 } physent_t;
 
 typedef enum {
-	PM_NORMAL,				// normal ground movement
-	PM_OLD_SPECTATOR,		// fly, no clip to world (QW bug)
-	PM_SPECTATOR,			// fly, no clip to world
-	PM_DEAD,				// no acceleration
-	PM_FLY,					// fly, bump into walls
-	PM_NONE,				// can't move
-	PM_LOCK					// can't move or look around
+	PM_NORMAL,              // normal ground movement
+	PM_OLD_SPECTATOR,       // fly, no clip to world (QW bug)
+	PM_SPECTATOR,           // fly, no clip to world
+	PM_DEAD,                // no acceleration
+	PM_FLY,                 // fly, bump into walls
+	PM_NONE,                // can't move
+	PM_LOCK                 // server controls origin and view angles
 } pmtype_t;
 
 typedef struct {
-	int			sequence; // just for debugging prints
-
 	// player state
 	vec3_t		origin;
 	vec3_t		angles;
@@ -51,7 +49,6 @@ typedef struct {
 	qbool		jump_held;
 	int			jump_msec; // msec since last jump
 	float		waterjumptime;
-	qbool		onground;
 	int			pm_type;
 
 	// world state
@@ -64,6 +61,7 @@ typedef struct {
 	// results
 	int			numtouch;
 	int			touchindex[MAX_PHYSENTS];
+	qbool		onground;
 	int			groundent; // index in physents array, only valid when onground is true
 	int			waterlevel;
 	int			watertype;
@@ -87,12 +85,10 @@ typedef struct {
 	qbool	pground; // NQ-style "onground" flag handling.
 } movevars_t;
 
-
 extern movevars_t movevars;
 extern playermove_t pmove;
 
-void PM_PlayerMove (void);
-void PM_Init (void);
+int PM_PlayerMove (void);
 
 int PM_PointContents (vec3_t point);
 int PM_PointContents_AllBSPs (vec3_t p);
@@ -101,4 +97,4 @@ qbool PM_TestPlayerPosition (vec3_t point);
 trace_t PM_PlayerTrace (vec3_t start, vec3_t end);
 trace_t PM_TraceLine (vec3_t start, vec3_t end);
 
-#endif
+#endif /* !__PMOVE_H__ */

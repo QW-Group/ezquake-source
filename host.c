@@ -380,7 +380,9 @@ void Host_Abort (void)
 
 void Host_EndGame (void)
 {
+#ifndef CLIENTONLY
 	SV_Shutdown ("Server was killed");
+#endif
 	CL_Disconnect ();
 	// clear disconnect messages from loopback
 	NET_ClearLoopback ();
@@ -405,7 +407,9 @@ void Host_Error (char *error, ...)
 	Com_Printf ("Host_Error: %s\n",string);
 	Com_Printf ("===========================\n\n");
 
+#ifndef CLIENTONLY
 	SV_Shutdown (va("server crashed: %s\n", string));
+#endif
 	CL_Disconnect ();
 
 	if (!host_initialized)
@@ -513,8 +517,10 @@ extern void LoadConfig_f(void);
 
 
 	//disconnect: fix it if i forgot something
+#ifndef CLIENTONLY
 	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
 	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#endif
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("tp_took", TP_Took_f);
@@ -625,10 +631,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Sys_Init ();
 	Sys_CvarInit();
 	CM_Init ();
-	PM_Init ();
 	Mod_Init ();
 
+#ifndef CLIENTONLY
 	SV_Init ();
+#endif
 	CL_Init ();
 
 	Cvar_CleanUpTempVars ();
@@ -683,37 +690,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cmd_StuffCmds_f ();		// process command line arguments
 	Cbuf_AddText ("cl_warncmd 1\n");
 
-	#ifdef WIN32
-	//
-	// Verify that ezQuake is associated with the QW:// protocl handler.
-	//
-	{
-		#define INITIAL_CON_WIDTH 35
-		extern qbool CL_CheckIfQWProtocolHandler();
-		extern cvar_t cl_verify_qwprotocol;
-
-		if (cl_verify_qwprotocol.integer >= 2)
-		{
-			// Always register the qw:// protocol.
-			Cbuf_AddText("register_qwurl_protocol\n");
-		}
-		else if (cl_verify_qwprotocol.integer == 1 && !CL_CheckIfQWProtocolHandler())
-		{
-			// Check if the running exe is the one associated with the qw:// protocol.
-			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
-			Com_Printf("\n");
-			Com_Printf("ezQuake is not associated with the ");
-			Com_Printf("\x02QW:// protocol. ");
-			Com_Printf("Register it using"); 
-			Com_Printf("\x02/register_qwurl_protocol\n");
-			Com_Printf("(set");
-			Com_Printf("\x02 cl_verify_qwprotocol 0 ");
-			Com_Printf("to hide this warning)\n");
-			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
-			Com_Printf("\n\n");
-		}
-	}
-	#endif // WIN32
+	Sys_CheckQWProtocolHandler();
 
 	// Check if a qtv/demo file is specified as the first argument, in that case play that
 	// otherwise, do some more checks of what to show at startup.
@@ -750,7 +727,9 @@ void Host_Shutdown (void)
 	S_StopAllSounds();
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 
+#ifndef CLIENTONLY
 	SV_Shutdown ("Server quit\n");
+#endif
 
 #if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();

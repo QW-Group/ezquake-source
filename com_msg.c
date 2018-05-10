@@ -208,7 +208,7 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 		MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
-void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
+void MSG_WriteDeltaUsercmd (sizebuf_t *buf, struct usercmd_s *from, struct usercmd_s *cmd)
 {
 	int bits;
 
@@ -256,22 +256,20 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
 
 //Writes part of a packetentities message.
 //Can delta from either a baseline or a previous packet_entity
-void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force)
+void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions, unsigned int mvdsv_extensions)
 {
 	int bits, i;
-	float miss;
-
-	assert (to->number > 0);
-	assert (to->number < 512);
+#ifdef PROTOCOL_VERSION_FTE
+	int evenmorebits = 0;
+	unsigned int required_extensions = 0;
+#endif
 
 	// send an update
 	bits = 0;
 
-	for (i = 0; i < 3; i++) {
-		miss = to->origin[i] - from->origin[i];
-		if ( miss < -0.1 || miss > 0.1 )
-			bits |= U_ORIGIN1 << i;
-	}
+	for (i=0 ; i<3 ; i++)
+		if ( to->origin[i] != from->origin[i] )
+			bits |= U_ORIGIN1<<i;
 
 	if ( to->angles[0] != from->angles[0] )
 		bits |= U_ANGLE1;
@@ -294,28 +292,98 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	if ( to->effects != from->effects )
 		bits |= U_EFFECTS;
 
-	if ( to->modelindex != from->modelindex )
+	if (to->modelindex != from->modelindex) {
 		bits |= U_MODEL;
+#ifdef FTE_PEXT_ENTITYDBL
+		if (to->modelindex > 255) {
+			evenmorebits |= U_FTE_MODELDBL;
+			required_extensions |= FTE_PEXT_MODELDBL;
+		}
+#endif
+	}
 
-	if (bits & 511)
+	if (bits & U_CHECKMOREBITS)
 		bits |= U_MOREBITS;
 
 	if (to->flags & U_SOLID)
 		bits |= U_SOLID;
 
+	// Taken from FTE
+	if (msg->cursize + 40 > msg->maxsize)
+	{	//not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+		*to = *from;
+		return;
+	}
+
+	//
 	// write the message
+	//
+	if (!to->number) {
+		Sys_Error("Unset entity number");
+	}
 
-	if (!bits && !force)
-		return; // nothing to send!
+#ifdef PROTOCOL_VERSION_FTE
+	if (to->number >= 512)
+	{
+		if (to->number >= 1024)
+		{
+			if (to->number >= 1024 + 512) {
+				evenmorebits |= U_FTE_ENTITYDBL;
+				required_extensions |= FTE_PEXT_ENTITYDBL;
+			}
 
-	i = to->number | (bits & ~511);
-	assert (!(i & U_REMOVE));
+			evenmorebits |= U_FTE_ENTITYDBL2;
+			required_extensions |= FTE_PEXT_ENTITYDBL2;
+			if (to->number >= 2048) {
+				Sys_Error("Entity number >= 2048");
+			}
+		}
+		else {
+			evenmorebits |= U_FTE_ENTITYDBL;
+			required_extensions |= FTE_PEXT_ENTITYDBL;
+		}
+	}
+
+	if (evenmorebits&0xff00)
+		evenmorebits |= U_FTE_YETMORE;
+	if (evenmorebits&0x00ff)
+		bits |= U_FTE_EVENMORE;
+	if (bits & 511)
+		bits |= U_MOREBITS;
+#endif
+
+	if (to->number >= MAX_EDICTS)
+	{
+		/*SV_Error*/
+		Con_Printf ("Entity number >= MAX_EDICTS (%d), set to MAX_EDICTS - 1\n", MAX_EDICTS);
+		to->number = MAX_EDICTS - 1;
+	}
+
+#ifdef PROTOCOL_VERSION_FTE
+	if (evenmorebits && (fte_extensions & required_extensions) != required_extensions) {
+		return;
+	}
+#endif
+	if (!bits && !force) {
+		return;		// nothing to send!
+	}
+
+	i = (to->number & U_CHECKMOREBITS) | (bits&~U_CHECKMOREBITS);
+	if (i & U_REMOVE)
+		Sys_Error ("U_REMOVE");
 	MSG_WriteShort (msg, i);
 
 	if (bits & U_MOREBITS)
 		MSG_WriteByte (msg, bits&255);
+#ifdef PROTOCOL_VERSION_FTE
+	if (bits & U_FTE_EVENMORE)
+		MSG_WriteByte (msg, evenmorebits&255);
+	if (evenmorebits & U_FTE_YETMORE)
+		MSG_WriteByte (msg, (evenmorebits>>8)&255);
+#endif
+
 	if (bits & U_MODEL)
-		MSG_WriteByte (msg,	to->modelindex);
+		MSG_WriteByte (msg, to->modelindex & 255);
 	if (bits & U_FRAME)
 		MSG_WriteByte (msg, to->frame);
 	if (bits & U_COLORMAP)
@@ -324,70 +392,36 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 		MSG_WriteByte (msg, to->skinnum);
 	if (bits & U_EFFECTS)
 		MSG_WriteByte (msg, to->effects);
-	if (bits & U_ORIGIN1)
-		MSG_WriteCoord (msg, to->origin[0]);
+	if (bits & U_ORIGIN1) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[0]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[0]);
+		}
+	}
 	if (bits & U_ANGLE1)
 		MSG_WriteAngle(msg, to->angles[0]);
-	if (bits & U_ORIGIN2)
-		MSG_WriteCoord (msg, to->origin[1]);
+	if (bits & U_ORIGIN2) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[1]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[1]);
+		}
+	}
 	if (bits & U_ANGLE2)
 		MSG_WriteAngle(msg, to->angles[1]);
-	if (bits & U_ORIGIN3)
-		MSG_WriteCoord (msg, to->origin[2]);
+	if (bits & U_ORIGIN3) {
+		if (mvdsv_extensions & MVD_PEXT1_FLOATCOORDS) {
+			MSG_WriteLongCoord(msg, to->origin[2]);
+		}
+		else {
+			MSG_WriteCoord(msg, to->origin[2]);
+		}
+	}
 	if (bits & U_ANGLE3)
 		MSG_WriteAngle(msg, to->angles[2]);
-}
-
-//Writes a delta update of a packet_entities_t to the message.
-void MSG_EmitPacketEntities (packet_entities_t *from,
-		int delta_sequence, packet_entities_t *to, sizebuf_t *msg,
-		entity_state_t *(*GetBaseline)(int number))
-{
-	int oldindex, newindex, oldnum, newnum, oldmax;
-
-	// this is the frame that we are going to delta update from
-	if (from) {
-		oldmax = from->num_entities;
-
-		MSG_WriteByte (msg, svc_deltapacketentities);
-		MSG_WriteByte (msg, delta_sequence);
-	} else {
-		oldmax = 0; // no delta update
-		from = NULL;
-
-		MSG_WriteByte (msg, svc_packetentities);
-	}
-
-	newindex = 0;
-	oldindex = 0;
-	while (newindex < to->num_entities || oldindex < oldmax) {
-		newnum = newindex >= to->num_entities ? 9999 : to->entities[newindex].number;
-		oldnum = oldindex >= oldmax ? 9999 : from->entities[oldindex].number;
-
-		if (newnum == oldnum) {
-			// delta update from old position
-			MSG_WriteDeltaEntity (&from->entities[oldindex], &to->entities[newindex], msg, false);
-			oldindex++;
-			newindex++;
-			continue;
-		}
-
-		if (newnum < oldnum) {
-			// this is a new entity, send it from the baseline
-			MSG_WriteDeltaEntity (GetBaseline(newnum), &to->entities[newindex], msg, true);
-			newindex++;
-			continue;
-		}
-
-		if (newnum > oldnum) {
-			// the old entity isn't present in the new message
-			MSG_WriteShort (msg, oldnum | U_REMOVE);
-			oldindex++;
-			continue;
-		}
-	}
-
-	MSG_WriteShort (msg, 0); // end of packetentities
 }
 
 /********************************** READING **********************************/
@@ -552,6 +586,20 @@ float MSG_ReadCoord (void)
 	return MSG_ReadShort() * (1.0 / 8);
 
 #endif // FTE_PEXT_FLOATCOORDS
+}
+
+float MSG_ReadFloatCoord(void)
+{
+	float f;
+	MSG_ReadData(&f, 4);
+	return LittleFloat(f);
+}
+
+void MSG_WriteLongCoord(sizebuf_t* sb, float f)
+{
+	f = LittleFloat(f);
+
+	MSG_WriteFloat(sb, f);
 }
 
 float MSG_ReadAngle16 (void)

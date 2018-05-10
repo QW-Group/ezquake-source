@@ -953,37 +953,38 @@ void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 #define SPEED_TEXT_ALIGN_CENTER	2
 #define SPEED_TEXT_ALIGN_FAR	3
 
-void SCR_DrawHUDSpeed (int x, int y, int width, int height,
-					 int type,
-					 float tick_spacing,
-					 float opacity,
-					 int vertical,
-					 int vertical_text,
-					 int text_align,
-					 byte color_stopped,
-					 byte color_normal,
-					 byte color_fast,
-					 byte color_fastest,
-					 byte color_insane,
-					 int style)
+// FIXME: hud-only now, can/should be moved
+void SCR_DrawHUDSpeed (
+	int x, int y, int width, int height,
+	int type,
+	float tick_spacing,
+	float opacity,
+	int vertical,
+	int vertical_text,
+	int text_align,
+	byte color_stopped,
+	byte color_normal,
+	byte color_fast,
+	byte color_fastest,
+	byte color_insane,
+	int style,
+	float scale
+)
 {
 	byte color_offset;
 	byte color1, color2;
     int player_speed;
     vec_t *velocity;
 
-    if (scr_con_current == vid.height)
-	{
+    if (scr_con_current == vid.height) {
         return;     // console is full screen
 	}
 
     // Get the velocity.
-    if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
-    {
+    if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0) {
         velocity = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].velocity;
     }
-    else
-    {
+    else {
         velocity = cl.simvel;
     }
 
@@ -1003,12 +1004,10 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 	}
 
 	// Calculate the color offset for the "background color".
-	if(vertical)
-	{
+	if (vertical) {
 		color_offset = height * (player_speed % 500) / 500;
 	}
-	else
-	{
+	else {
 		color_offset = width * (player_speed % 500) / 500;
 	}
 
@@ -1034,7 +1033,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
     }
 
 	// Draw tag marks.
-	if(tick_spacing > 0.0 && style != SPEED_TEXT_ONLY)
+	if (tick_spacing > 0.0 && style != SPEED_TEXT_ONLY)
 	{
 		float f;
 
@@ -1202,7 +1201,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 				break;
 			}
 
-			Draw_String(Q_rint(x + width/2.0 - 4), y, va("%1d", (player_speed % i) / next));
+			Draw_SString(Q_rint(x + width/2.0 - 4 * scale), y, va("%1d", (player_speed % i) / next), scale);
 			y += 8;
 		}
 	}
@@ -1211,65 +1210,67 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 		// Align the text accordingly.
 		switch(text_align)
 		{
-			case SPEED_TEXT_ALIGN_NONE:		return;
-			case SPEED_TEXT_ALIGN_FAR:		x = x + width - 4*8; break;
-			case SPEED_TEXT_ALIGN_CENTER:	x = Q_rint(x + width/2.0 - 16); break;
+			case SPEED_TEXT_ALIGN_FAR:
+				x = x + width - 4 * 8 * scale;
+				break;
+			case SPEED_TEXT_ALIGN_CENTER:
+				x = Q_rint(x + width / 2.0 - 2 * 8 * scale);
+				break;
 			case SPEED_TEXT_ALIGN_CLOSE:
-			default: break;
+			case SPEED_TEXT_ALIGN_NONE:
+			default: 
+				break;
 		}
 
-		Draw_String(x, Q_rint(y + height/2.0 - 4), va("%4d", player_speed));
+		Draw_SString(x, Q_rint(y + height/2.0 - 4 * scale), va("%4d", player_speed), scale);
 	}
 }
+
 // ================================================================
 // Draws a word wrapped scrolling string inside the given bounds.
 // ================================================================
-void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, int wordwrap, int scroll, double scroll_delay, char *txt)
+void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, int wordwrap, int scroll, double scroll_delay, char *txt, float scale)
 {
-	int wordlen = 0;			// Length of words.
-	int cur_x = -1;				// the current x position.
-	int cur_y = 0;				// current y position.
-	char c;					// Current char.
-	int width_as_text = width / 8;		// How many chars that fits the given width.
-	int height_as_rows = 0;			// How many rows that fits the given height.
+	int wordlen = 0;                         // Length of words.
+	int cur_x = -1;                          // the current x position.
+	int cur_y = 0;                           // current y position.
+	char c;                                  // Current char.
+	int width_as_text = width / (8 * scale); // How many chars that fits the given width.
+	int height_as_rows = 0;                  // How many rows that fits the given height.
 
 	// Scroll variables.
-	double t;				// Current time.
+	double t;                           // Current time.
 	static double t_last_scroll = 0;	// Time at the last scroll.
 	static int scroll_position = 0; 	// At what index to start printing the string.
 	static int scroll_direction = 1;	// The direction the string is scrolling.
 	static int last_text_length = 0;	// The last text length.
-	int text_length = 0;			// The current text length.
+	int text_length = 0;                // The current text length.
 
 	// Don't print all the char's ontop of each other :)
-	if(!y_spacing)
-	{
-		y_spacing = 8;
+	if (!y_spacing) {
+		y_spacing = 8 * scale;
 	}
 
 	height_as_rows = height / y_spacing;
 
 	// Scroll the text.
-	if(scroll)
-	{
+	if (scroll) {
 		text_length = strlen(txt);
 
 		// If the text has changed since last time we scrolled
 		// the scroll data will be invalid so reset it.
-		if(last_text_length != text_length)
-		{
+		if (last_text_length != text_length) {
 			scroll_position = 0;
 			scroll_direction = 1;
 			last_text_length = text_length;
-
 		}
 
 		// Check if the text is longer that can fit inside the given bounds.
-		if((wordwrap && text_length > (width_as_text * height_as_rows)) // For more than one row.
+		if ((wordwrap && text_length > (width_as_text * height_as_rows)) // For more than one row.
 			|| (!wordwrap && text_length > width_as_text)) // One row.
 		{
 			// Set what position to start printing the string at.
-			if((wordwrap && text_length - scroll_position >= width_as_text * height_as_rows) // More than one row.
+			if ((wordwrap && text_length - scroll_position >= width_as_text * height_as_rows) // More than one row.
 				|| (!wordwrap && (text_length - scroll_position) >= width_as_text)) // One row.
 			{
 				txt += scroll_position;
@@ -1279,22 +1280,19 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 			t = Sys_DoubleTime();
 
 			// Only advance the scroll position every n:th second.
-			if((t - t_last_scroll) > scroll_delay)
-			{
+			if((t - t_last_scroll) > scroll_delay) {
 				t_last_scroll = t;
 
-				if(scroll_direction)
-				{
+				if (scroll_direction) {
 					scroll_position++;
 				}
-				else
-				{
+				else {
 					scroll_position--;
 				}
 			}
 
 			// Set the scroll direction.
-			if((wordwrap && (text_length - scroll_position) == width_as_text * height_as_rows)
+			if ((wordwrap && (text_length - scroll_position) == width_as_text * height_as_rows)
 				|| (!wordwrap && (text_length - scroll_position) == width_as_text))
 			{
 				scroll_direction = 0; // Left
@@ -1311,14 +1309,14 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 	{
 		txt++;
 
-		if(wordwrap == 1)
+		if (wordwrap == 1)
 		{
 			// count the word length.
-			for(wordlen = 0; wordlen < width_as_text; wordlen++)
+			for (wordlen = 0; wordlen < width_as_text; wordlen++)
 			{
 				// Make sure the char isn't above 127.
 				char ch = txt[wordlen] & 127;
-				if((wordwrap && (!txt[wordlen] || ch == 0x09 || ch == 0x0D ||ch == 0x0A || ch == 0x20)) || (!wordwrap && txt[wordlen] <= ' '))
+				if ((wordwrap && (!txt[wordlen] || ch == 0x09 || ch == 0x0D ||ch == 0x0A || ch == 0x20)) || (!wordwrap && txt[wordlen] <= ' '))
 				{
 					break;
 				}
@@ -1326,7 +1324,7 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 		}
 
 		// Wordwrap if the word doesn't fit inside the textbox.
-		if(wordwrap == 1 && (wordlen != width_as_text) && ((cur_x + wordlen) >= width_as_text))
+		if (wordwrap == 1 && (wordlen != width_as_text) && ((cur_x + wordlen) >= width_as_text))
 		{
 			cur_x = 0;
 			cur_y += y_spacing;
@@ -1347,11 +1345,9 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 		}
 
 		// Check so that the draw position isn't outside the textbox.
-		if(cur_x >= width_as_text)
-		{
+		if (cur_x >= width_as_text) {
 			// Don't change row if wordwarp is enabled.
-			if(!wordwrap)
-			{
+			if(!wordwrap) {
 				return;
 			}
 
@@ -1360,9 +1356,8 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 		}
 
 		// Make sure the new line is within the bounds.
-		if(cur_y < height)
-		{
-			Draw_Character(x + (cur_x)* 8, y + cur_y, c);
+		if (cur_y < height) {
+			Draw_SCharacter(x + (cur_x) * 8 * scale, y + cur_y, c, scale);
 		}
 	}
 }

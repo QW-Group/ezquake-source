@@ -439,7 +439,9 @@ static void NQD_ParseStufftext (void)
 	}
 
 	s = MSG_ReadString ();
-	Com_DPrintf ("stufftext: %s\n", s);
+	if (developer.integer > 1) {
+		Com_DPrintf("stufftext: %s\n", s);
+	}
 
 	for (p = (byte *)s; *p; p++) {
 		if (*p > 32 && *p < 128)
@@ -469,6 +471,23 @@ static void NQD_ParseServerData (void)
 
 	// wipe the client_state_t struct
 	CL_ClearState ();
+
+#ifdef PROTOCOL_VERSION_FTE
+	cls.fteprotocolextensions = 0;
+#endif // PROTOCOL_VERSION_FTE
+
+#ifdef PROTOCOL_VERSION_FTE2
+	cls.fteprotocolextensions2 = 0;
+#endif // PROTOCOL_VERSION_FTE2
+
+#ifdef PROTOCOL_VERSION_MVD1
+	cls.mvdprotocolextensions1 = 0;
+#endif
+
+#ifdef FTE_PEXT_FLOATCOORDS
+	msg_coordsize = 2;
+	msg_anglesize = 1;
+#endif
 
 	// parse protocol version number
 	i = MSG_ReadLong ();

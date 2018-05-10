@@ -1555,13 +1555,10 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 
 int Image_WriteTGA (char *filename, byte *pixels, int width, int height) 
 {
-	byte *buffer;
-	int size;
-	qbool retval = true;
+	char name[MAX_PATH];
+	byte buffer[18] = { 0 };
+	vfsfile_t *outfile;
 
-	size = width * height * 3;
-	buffer = (byte *) Q_malloc (size + 18);
-	memset (buffer, 0, 18);
 	buffer[2] = 2;          // uncompressed type
 	buffer[12] = width & 255;
 	buffer[13] = width >> 8;
@@ -1569,12 +1566,18 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height)
 	buffer[15] = height >> 8;
 	buffer[16] = 24;
 
-	memcpy (buffer + 18, pixels, size);
+	snprintf (name, sizeof(name), "%s", filename);
+	if (!(outfile = FS_OpenVFS(filename, "wb", FS_NONE_OS))) {
+		FS_CreatePath (name);
+		if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
+			return false;
+		}
+	}
 
-	if (!(FS_WriteFile_2 (filename, buffer, size + 18)))
-		retval = false;
-	Q_free (buffer);
-	return retval;
+	VFS_WRITE(outfile, buffer, sizeof(buffer));
+	VFS_WRITE(outfile, pixels, width * height * 3);
+	VFS_CLOSE(outfile);
+	return true;
 }
 
 /*********************************** JPEG ************************************/
@@ -1723,7 +1726,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	if (!jpeg_handle)
 		return false;
 
-	snprintf (name, sizeof(name), "%s", filename);	
+	snprintf (name, sizeof(name), "%s", filename);
 	if (!(outfile = fopen (name, "wb"))) {
 		COM_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))
@@ -1854,7 +1857,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	struct jpeg_compress_struct cinfo;
 	JSAMPROW row_pointer[1];
 
-	snprintf (name, sizeof(name), "%s", filename);	
+	snprintf (name, sizeof(name), "%s", filename);  
 	if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
 		FS_CreatePath (name);
 		if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS)))

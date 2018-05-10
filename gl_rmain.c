@@ -40,7 +40,12 @@ void R_MarkLeaves(void);
 void R_InitBubble(void);
 
 extern msurface_t *alphachain;
+#ifndef CLIENTONLY
 extern cvar_t     maxclients;
+#define IsLocalSinglePlayerGame() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
+#else
+#define IsLocalSinglePlayerGame() (0)
+#endif
 extern vec3_t     lightcolor;
 extern vec3_t     lightspot;
 extern float      bubblecolor[NUM_DLIGHTTYPES][4];
@@ -131,6 +136,7 @@ cvar_t r_fullbrightSkins                   = {"r_fullbrightSkins", "1", 0, Rules
 cvar_t r_enemyskincolor                    = {"r_enemyskincolor", "", CVAR_COLOR};
 cvar_t r_teamskincolor                     = {"r_teamskincolor",  "", CVAR_COLOR};
 cvar_t r_skincolormode                     = {"r_skincolormode",  "0"};
+cvar_t r_skincolormodedead                 = {"r_skincolormodedead",  "-1"};
 cvar_t r_fastsky                           = {"r_fastsky", "0"};
 cvar_t r_fastturb                          = {"r_fastturb", "0"};
 cvar_t r_skycolor                          = {"r_skycolor", "40 80 150", CVAR_COLOR};
@@ -603,7 +609,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 		if (custom_model) {
 			glDisable(GL_TEXTURE_2D);
-			glColor3ubv(custom_model->color_cvar.color);
+			glColor4ub(custom_model->color_cvar.color[0], custom_model->color_cvar.color[1], custom_model->color_cvar.color[2], r_modelalpha * 255);
 		}
 
 		for ( ;; )
@@ -960,7 +966,7 @@ void R_AliasSetupLighting(entity_t *ent)
 	}
 	else if (
 			!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-			(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
+			(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !IsLocalSinglePlayerGame())
 		) {
 		ambientlight = shadelight = 4096;
 	}
@@ -993,7 +999,7 @@ void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effec
 
 void R_DrawAliasModel(entity_t *ent)
 {
-	int i, anim, skinnum, texture, fb_texture, playernum = -1;
+	int i, anim, skinnum, texture, fb_texture, playernum = -1, local_skincolormode;
 	float scale;
 	vec3_t mins, maxs;
 	aliashdr_t *paliashdr;
@@ -1007,8 +1013,9 @@ void R_DrawAliasModel(entity_t *ent)
 	//static sfx_t *step;//foosteps sounds, commented out
 	//static int setstep;
 
-	extern qbool RuleSets_DisallowModelOutline (model_t *mod);
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
+
+	local_skincolormode=r_skincolormode.integer;
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
@@ -1146,6 +1153,10 @@ void R_DrawAliasModel(entity_t *ent)
 			cv = &r_teamskincolor;
 		else 
 			cv = &r_enemyskincolor;
+
+		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1)
+			local_skincolormode=r_skincolormodedead.integer;
+
 	}
 
 	if (cv && cv->string[0])
@@ -1156,7 +1167,7 @@ void R_DrawAliasModel(entity_t *ent)
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = (gl_outline.integer && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
+	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
 
 	if (color32bit) {
 		//
@@ -1169,12 +1180,12 @@ void R_DrawAliasModel(entity_t *ent)
 		}
 
 		GL_DisableMultitexture();
-		GL_Bind (r_skincolormode.integer ? texture : particletexture); // particletexture is just solid white texture
+		GL_Bind (local_skincolormode ? texture : particletexture); // particletexture is just solid white texture
 
 		//
 		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
 		//	
-		switch(r_skincolormode.integer) {
+		switch(local_skincolormode) {
 			case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
 			case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
 			case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
@@ -2018,6 +2029,7 @@ void R_Init(void)
 	Cvar_Register (&r_enemyskincolor);
 	Cvar_Register (&r_teamskincolor);
 	Cvar_Register (&r_skincolormode);
+	Cvar_Register (&r_skincolormodedead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
 	Cvar_Register (&r_dynamic);

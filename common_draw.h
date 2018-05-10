@@ -52,18 +52,20 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const cha
 void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t);
 void SCR_NetStats(int x, int y, float period);
 void SCR_DrawHUDSpeed (int x, int y, int width, int height, 
-					 int type, 
-					 float tick_spacing, 
-					 float opacity,
-					 int vertical,
-					 int vertical_text,
-					 int text_align,
-					 byte color_stopped,
-					 byte color_normal,
-					 byte color_fast,
-					 byte color_fastest,
-					 byte color_insane,
-					 int style);
+	int type, 
+	float tick_spacing, 
+	float opacity,
+	int vertical,
+	int vertical_text,
+	int text_align,
+	byte color_stopped,
+	byte color_normal,
+	byte color_fast,
+	byte color_fastest,
+	byte color_insane,
+	int style,
+	float scale
+);
 
 void Draw_FitAlphaSubPic (int x, int y, int target_width, int target_height, 
 						  mpic_t *gl, int srcx, int srcy, int src_width, int src_height, float alpha);
@@ -74,13 +76,16 @@ void Draw_SubPicTiled(int x, int y,
 					int src_width, int src_height,
 					float alpha);
 
-void SCR_DrawWordWrapString(int x, int y, 
-							int y_spacing, 
-							int width, int height, 
-							int wordwrap, 
-							int scroll, 
-							double scroll_delay, 
-							char *txt);
+void SCR_DrawWordWrapString(
+	int x, int y, 
+	int y_spacing, 
+	int width, int height, 
+	int wordwrap, 
+	int scroll, 
+	double scroll_delay, 
+	char *txt,
+	float scale
+);
 
 void HUD_BeforeDraw(void);
 void HUD_AfterDraw(void);

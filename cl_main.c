@@ -66,6 +66,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _DEBUG
 #include "parser.h"
 #endif
+#include "pmove.h"
 extern qbool ActiveApp, Minimized;
 
 static void Cl_Reset_Min_fps_f(void);
@@ -78,12 +79,16 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
 cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
-#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
+cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
+cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -264,196 +269,6 @@ void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
-
-#ifdef WIN32
-
-#define QW_URL_ROOT_REGKEY			"Software\\Classes\\qw"
-#define QW_URL_OPEN_CMD_REGKEY		QW_URL_ROOT_REGKEY"\\shell\\Open\\Command"
-#define QW_URL_DEFAULTICON_REGKEY	QW_URL_ROOT_REGKEY"\\DefaultIcon"
-
-//
-// Checks if this client is the default qw protocol handler.
-//
-qbool CL_CheckIfQWProtocolHandler()
-{
-	DWORD type;
-	char reg_path[1024];
-	DWORD len = (DWORD) sizeof(reg_path);
-	HKEY hk;
-
-	if (RegOpenKey(HKEY_CURRENT_USER, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
-	{
-		return false;
-	}
-
-	// Get the size we need to read.
-	if (RegQueryValueEx(hk, NULL, 0, &type, (BYTE *) reg_path, &len) == ERROR_SUCCESS)
-	{
-		char expanded_reg_path[MAX_PATH];
-
-		// Expand any environment variables in the reg value so that we get a real path to compare with.
-		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_reg_path));
-
-		#if 0
-		// This checks if the current exe is associated with, otherwise it will prompt the user
-		// a bit more "in the face" if the user has more than one ezquake version.
-		{
-			char exe_path[MAX_PATH];
-		
-			// Get the long path of the current process.
-			// C:\Program Files\Quake\ezquake-gl.exe
-			Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
-
-			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
-			{
-				// This exe is associated with the qw:// protocol, return true.
-				CloseHandle(hk);
-				return true;
-			}
-
-			// Get the short path and check if that matches instead.
-			// C:\Program~1\Quake\ezquake-gl.exe
-			Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
-
-			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
-			{
-				CloseHandle(hk);
-				return true;
-			}
-		}
-		#else
-		// Only check if ezquake is in the string that associates with the qw:// protocol
-		// so if you have several ezquake exes it won't bug you if you just switch between those
-		// (Only one will be registered as the protocol handler though ofcourse).
-
-		if (strstri(reg_path, "ezquake"))
-		{
-			CloseHandle(hk);
-			return true;
-		}
-
-		#endif
-	}
-
-	CloseHandle(hk);
-	return false;
-}
-
-void CL_RegisterQWURLProtocol_f(void)
-{
-	//
-	// Note!
-	// HKEY_CLASSES_ROOT is a "merged view" of both: “HKEY_LOCAL_MACHINE\Software\Classes” 
-	// and “HKEY_CURRENT_USER\Software\Classes”. 
-	// User specific settings has priority over machine settings.
-	//
-	// If you try to write to HKEY_CLASSES_ROOT directly, it will default to
-	// trying to write to the machine specific settings. If the user isn't
-	// admin this will fail. On Vista this requires UAC usage.
-	// Because of this, we always write specifically to "HKEY_CURRENT_USER\Software\Classes"
-	//
-
-	HKEY keyhandle;
-	char exe_path[MAX_PATH];
-
-	Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
-
-	//
-	// HKCU\qw\shell\Open\Command
-	//
-	{
-		char open_cmd[1024];
-		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
-
-		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
-						QW_URL_OPEN_CMD_REGKEY,		// Subkey.
-						0,							// Reserved, must be 0.
-						NULL,						// Class, ignored.
-						REG_OPTION_NON_VOLATILE,	// Save the change to disk.
-						KEY_WRITE,					// Access rights.
-						NULL,						// Security attributes (NULL means default, inherited from direct parent).
-						&keyhandle,					// Handle to the created key.
-						NULL))						// Don't care if the key existed or not.
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
-			return;
-		}
-
-		// Set the key value.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) open_cmd,  strlen(open_cmd) * sizeof(char)))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
-			RegCloseKey(keyhandle);
-			return;
-		}
-
-		RegCloseKey(keyhandle);
-	}
-
-	//
-	// HKCU\qw\DefaultIcon
-	//
-	{
-		char default_icon[1024];
-		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
-
-		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
-			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
-			return;
-		}
-
-		// Set the key value.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) default_icon, strlen(default_icon) * sizeof(char)))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
-			RegCloseKey(keyhandle);
-			return;
-		}
-
-		RegCloseKey(keyhandle);
-	}
-
-	//
-	// HKCU\qw
-	//
-	{
-		char protocol_name[] = "URL:QW Protocol";
-
-		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_ROOT_REGKEY, 
-			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\qw\n");
-			return;
-		}
-
-		// Set the protocol name.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) protocol_name, strlen(protocol_name) * sizeof(char)))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\@\n");
-			RegCloseKey(keyhandle);
-			return;
-		}
-
-		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, (BYTE *) "", sizeof(char)))
-		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\URL Protocol\n");
-			RegCloseKey(keyhandle);
-			return;
-		}
-
-		RegCloseKey(keyhandle);
-	}
-}
-
-#endif // WIN32
-
-//============================================================================
-
 char *CL_Macro_ConnectionType(void) 
 {
 	char *s;
@@ -595,14 +410,7 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
 
-	if (cl_pext_other.value)
-	{
-#ifdef FTE_PEXT_ACCURATETIMINGS
-		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
-#endif
-#ifdef FTE_PEXT_HLBSP
-		fteprotextsupported |= FTE_PEXT_HLBSP;
-#endif
+	if (cl_pext_limits.value) {
 #ifdef FTE_PEXT_MODELDBL
 		fteprotextsupported |= FTE_PEXT_MODELDBL;
 #endif
@@ -617,6 +425,16 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
+	if (cl_pext_other.value)
+	{
+#ifdef FTE_PEXT_ACCURATETIMINGS
+		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
+#endif
+#ifdef FTE_PEXT_HLBSP
+		fteprotextsupported |= FTE_PEXT_HLBSP;
+#endif
+	}
+
 	return fteprotextsupported;
 }
 #endif // PROTOCOL_VERSION_FTE
@@ -624,7 +442,11 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef PROTOCOL_VERSION_FTE2
 unsigned int CL_SupportedFTEExtensions2 (void)
 {
-	unsigned int fteprotextsupported2 = 0;
+	unsigned int fteprotextsupported2 = 0
+#ifdef FTE_PEXT2_VOICECHAT
+		| FTE_PEXT2_VOICECHAT
+#endif
+		;
 
 	if (!cl_pext.value)
 		return 0;
@@ -633,19 +455,47 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 }
 #endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+unsigned int CL_SupportedMVDExtensions1(void)
+{
+	unsigned int extensions_supported = 0;
+
+	if (!cl_pext.value)
+		return 0;
+
+#ifdef MVD_PEXT1_FLOATCOORDS
+	if (cl_pext_floatcoords.value) {
+		extensions_supported |= MVD_PEXT1_FLOATCOORDS;
+	}
+#endif
+
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
+	if (cl_pext_lagteleport.integer & 1) {
+		extensions_supported |= MVD_PEXT1_HIGHLAGTELEPORT;
+	}
+#endif
+
+	return extensions_supported;
+}
+#endif
 
 // Called by CL_Connect_f and CL_CheckResend
 static void CL_SendConnectPacket(
 #ifdef PROTOCOL_VERSION_FTE
-							unsigned int ftepext
+	unsigned int ftepext
 #ifdef PROTOCOL_VERSION_FTE2
-							,
+	,
 #endif // PROTOCOL_VERSION_FTE2
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
-							unsigned int ftepext2
+	unsigned int ftepext2
+#ifdef PROTOCOL_VERSION_MVD1
+	,
+#endif
 #endif // PROTOCOL_VERSION_FTE2
-
+#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int mvdpext1
+#endif
 								) 
 {
 	char data[2048];
@@ -656,12 +506,15 @@ static void CL_SendConnectPacket(
 	if (cls.state != ca_disconnected)
 		return;
 
-	#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions  = (ftepext & CL_SupportedFTEExtensions());
-	#endif // PROTOCOL_VERSION_FTE
-	#ifdef PROTOCOL_VERSION_FTE2
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
 	cls.fteprotocolextensions2  = (ftepext2 & CL_SupportedFTEExtensions2());
-	#endif // PROTOCOL_VERSION_FTE
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_MVD1
+	cls.mvdprotocolextensions1 = (mvdpext1 & CL_SupportedMVDExtensions1());
+#endif
 
 	connect_time = cls.realtime; // For retransmit requests
 	cls.qport = Cvar_Value("qport");
@@ -673,7 +526,7 @@ static void CL_SendConnectPacket(
 
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 
-	#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 	if (cls.fteprotocolextensions) 
 	{
 		char tmp[128];
@@ -681,9 +534,9 @@ static void CL_SendConnectPacket(
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		strlcat(data, tmp, sizeof(data));
 	}
-	#endif // PROTOCOL_VERSION_FTE 
+#endif // PROTOCOL_VERSION_FTE
 
-	#ifdef PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_FTE2
 	if (cls.fteprotocolextensions2) 
 	{
 		char tmp[128];
@@ -691,8 +544,16 @@ static void CL_SendConnectPacket(
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		strlcat(data, tmp, sizeof(data));
 	}
-	#endif // PROTOCOL_VERSION_FTE2 
+#endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+	if (cls.mvdprotocolextensions1) {
+		char tmp[128];
+		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_MVD1, cls.mvdprotocolextensions1);
+		Com_Printf_State(PRINT_DBG, "0x%x is mvd protocol ver and 0x%x is mvdprotocolextensions1\n", PROTOCOL_VERSION_MVD1, cls.mvdprotocolextensions1);
+		strlcat(data, tmp, sizeof(data));
+	}
+#endif
 
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
@@ -703,6 +564,7 @@ void CL_CheckForResend (void)
 	char data[2048];
 	double t1, t2;
 
+#ifndef CLIENTONLY
 	if (cls.state == ca_disconnected && com_serveractive) 
 	{
 		// if the local server is running and we are not, then connect
@@ -719,12 +581,19 @@ void CL_CheckForResend (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				svs.fteprotocolextensions2
+	#ifdef PROTOCOL_VERSION_MVD1
+                ,
+	#endif
 #endif // PROTOCOL_VERSION_FTE
-				);
+#ifdef PROTOCOL_VERSION_MVD1
+                svs.mvdprotocolextension1
+#endif
+		);
 		
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
 	}
+#endif
 
 	if (cls.state != ca_disconnected || !connect_time)
 		return;
@@ -860,7 +729,7 @@ void CL_QWURL_f (void)
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
 	{
-		Cbuf_AddText(va("connect %s\n", connection_str));
+		Cbuf_AddText(va("join %s\n", connection_str));
 	}
 	else if (!strncmp(command, "challenge?", 10))
 	{
@@ -1269,6 +1138,8 @@ void CL_ClearState (void)
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet.
 
+	cl.fakeshaft_policy = 1;
+
 	CL_ProcessServerInfo(); // Force set some default variables, because server may not sent fullserverinfo.
 }
 
@@ -1369,10 +1240,10 @@ void CL_Disconnect (void)
 
 void CL_Disconnect_f (void) 
 {
-	extern int demo_playlist_started;
+	extern qbool demo_playlist_started;
 	extern int mvd_demo_track_run ;
 	cl.intermission = 0;
-	demo_playlist_started= 0;
+	demo_playlist_started = false;
 	mvd_demo_track_run = 0;
 
 	Host_EndGame();
@@ -1386,8 +1257,7 @@ void CL_Reconnect_f (void)
 
 	S_StopAllSounds();
 
-	if (cls.mvdplayback == QTV_PLAYBACK) 
-	{
+	if (cls.mvdplayback) {
 		return; // Change map during qtv playback.
 	}
 
@@ -1448,6 +1318,9 @@ void CL_ConnectionlessPacket (void)
 	#ifdef PROTOCOL_VERSION_FTE2
 	unsigned int pext2 = 0;
 	#endif // PROTOCOL_VERSION_FTE2
+	#ifdef PROTOCOL_VERSION_MVD1
+	unsigned int pext_mvd1 = 0;
+	#endif
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
@@ -1487,6 +1360,11 @@ void CL_ConnectionlessPacket (void)
 					pext2 = MSG_ReadLong();
 				else
 #endif // PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_MVD1
+				if (c == PROTOCOL_VERSION_MVD1)
+					pext_mvd1 = MSG_ReadLong();
+				else
+#endif
 					MSG_ReadLong();
 			}
 
@@ -1499,7 +1377,13 @@ void CL_ConnectionlessPacket (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				pext2
+#ifdef PROTOCOL_VERSION_MVD1
+				,
+#endif
 #endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_MVD1
+				pext_mvd1
+#endif
 				);
 
 			break;
@@ -1517,7 +1401,7 @@ void CL_ConnectionlessPacket (void)
 					Com_Printf("Dup connect received.  Ignored.\n");
 				break;
 			}
-			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport);
+			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport, 0);
 			MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
@@ -1633,7 +1517,7 @@ qbool CL_GetMessage (void)
 	return true;
 }
 
-void CL_ReadPackets (void) 
+static void CL_ReadPackets(void)
 {
 	if (cls.nqdemoplayback) 
 	{
@@ -1880,11 +1764,15 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_fix_mvd);
 
 	Cvar_Register (&cl_delay_packet);
+	Cvar_Register (&cl_delay_packet_dev);
 	Cvar_Register (&cl_earlypackets);
 
-#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register (&cl_pext);
+	Cvar_Register (&cl_pext_limits);
 	Cvar_Register (&cl_pext_other);
+	Cvar_Register (&cl_pext_warndemos);
+	Cvar_Register (&cl_pext_lagteleport);
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
 	Cvar_Register (&cl_pext_256packetentities);
@@ -1950,7 +1838,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("hud_fps_min_reset", Cl_Reset_Min_fps_f);
 
 	#ifdef WIN32
-	Cmd_AddCommand ("register_qwurl_protocol", CL_RegisterQWURLProtocol_f);
+	Cmd_AddCommand ("register_qwurl_protocol", Sys_RegisterQWURLProtocol_f);
 	#endif // WIN32
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
@@ -2234,12 +2122,12 @@ void CL_LinkEntities (void)
 		if (setup_player_prediction) {
 			// Set up prediction for other players
 			CL_SetUpPlayerPrediction(false);
-			CL_PredictMove();
+			CL_PredictMove(true);
 			CL_SetUpPlayerPrediction(true);
 		}
 		else {
 			// Do client side motion prediction
-			CL_PredictMove();
+			CL_PredictMove(false);
 		}
 
 		// build a refresh entity list
@@ -2272,11 +2160,25 @@ void CL_SoundFrame (void)
 	}
 }
 
+static void CL_ServerFrame(double frametime)
+{
+	if (com_serveractive) {
+		playermove_t oldmove;
+
+		memcpy(&oldmove, &pmove, sizeof(playermove_t));
+
+		SV_Frame(frametime);
+
+		memcpy(&pmove, &oldmove, sizeof(playermove_t));
+	}
+}
+
 void CL_Frame (double time) 
 {
 	static double extratime = 0.001;
 	double minframetime;
 	static double	extraphysframetime;	//#fps
+	qbool need_server_frame = false;
 
 	extern double render_frame_start;
 
@@ -2284,11 +2186,9 @@ void CL_Frame (double time)
 	minframetime = CL_MinFrameTime();
 	CL_MultiviewFrameStart ();
 
-	if (extratime < minframetime) 
-	{
+	if (extratime < minframetime) {
 		extern cvar_t sys_yieldcpu;
-		if (sys_yieldcpu.integer || Minimized)
-		{
+		if (sys_yieldcpu.integer || Minimized) {
 			#ifdef _WIN32
 			Sys_MSleep(0);
 			#else
@@ -2296,23 +2196,29 @@ void CL_Frame (double time)
 			#endif
 		}
 
-		if (cl_delay_packet.integer)
-		{
+		if (cl_delay_packet.integer) {
 			CL_QueInputPacket();
-			CL_UnqueOutputPacket(false);
+			need_server_frame = CL_UnqueOutputPacket(false);
+		}
+
+		if (need_server_frame && com_serveractive) {
+			CL_ServerFrame(0);
 		}
 
 		return;
 	}
 
-	if (cl_delay_packet.integer)
-	{
+	if (cl_delay_packet.integer) {
 		CL_QueInputPacket();
-		CL_UnqueOutputPacket(false);
+		need_server_frame = CL_UnqueOutputPacket(false);
 	}
 
-	if (VID_VSyncLagFix())
+	if (VID_VSyncLagFix()) {
+		if (need_server_frame && com_serveractive) {
+			CL_ServerFrame(0);
+		}
 		return;
+	}
 
 	render_frame_start = Sys_DoubleTime();
 
@@ -2320,48 +2226,55 @@ void CL_Frame (double time)
 	cls.trueframetime = max(cls.trueframetime, minframetime);
 	extratime -= cls.trueframetime;
 
-	if (Movie_IsCapturing())
-		cls.frametime = Movie_StartFrame();
-	else
+	if (Movie_IsCapturing()) {
+		Movie_StartFrame();
+		cls.frametime = Movie_Frametime();
+	}
+	else {
 		cls.frametime = min(0.2, cls.trueframetime);
+	}
 	
 	if (cl_independentPhysics.value != 0)
 	{
 		double minphysframetime = MinPhysFrameTime();
 
 		extraphysframetime += cls.frametime;
-		if (extraphysframetime < minphysframetime)
+		if (extraphysframetime < minphysframetime) {
 			physframe = false;
-		else
-		{
+		}
+		else {
 			physframe = true;
 
-			if (extraphysframetime > minphysframetime*2)// FIXME: this is for the case when
-				physframetime = extraphysframetime;		// actual fps is too low
-			else										// Dunno how to do it right
+			// FIXME: this is for the case when actual fps is too low.  Dunno how to do it right
+			if (extraphysframetime > minphysframetime * 2) {
+				physframetime = extraphysframetime;
+			}
+			else {
 				physframetime = minphysframetime;
+			}
 			extraphysframetime -= physframetime;
 		}
 	} 
-	else 
-	{
+	else {
 		// this vars SHOULD NOT be used in case of cl_independentPhysics == 0, so we just reset it for sanity
 		physframetime = extraphysframetime = 0;
 		// this var actually used
 		physframe = true;
 	}
 
-	if (cls.demoplayback) 
-	{
+	if (cls.demoplayback) {
 		Demo_AdjustSpeed();
 
-		if (cl.paused & PAUSED_DEMO)
+		if (cl.paused & PAUSED_DEMO) {
 			cls.frametime = 0;
-		else if (!cls.timedemo)
+		}
+		else if (!cls.timedemo) {
 			cls.frametime *= Demo_GetSpeed();
+		}
 
-		if (!host_skipframe)
+		if (!host_skipframe) {
 			cls.demotime += cls.frametime;
+		}
 		host_skipframe = false;
 	}
 
@@ -2398,8 +2311,9 @@ void CL_Frame (double time)
 		Cbuf_Execute();
 		CL_CheckAutoPause();
 
-//		if (com_serveractive)
-			SV_Frame(cls.frametime);
+#ifndef CLIENTONLY
+		CL_ServerFrame(cls.frametime);
+#endif
 
 		// fetch results from server
 		CL_ReadPackets();
@@ -2443,8 +2357,9 @@ void CL_Frame (double time)
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
 
-//			if (com_serveractive)
-				SV_Frame (physframetime);
+#ifndef CLIENTONLY
+			CL_ServerFrame(physframetime);
+#endif
 
 			// Fetch results from server
 			CL_ReadPackets();
@@ -2476,8 +2391,11 @@ void CL_Frame (double time)
 		}
 		else
 		{
-			if (!cls.demoplayback && cl_earlypackets.integer)
-			{
+			if (need_server_frame && com_serveractive) {
+				CL_ServerFrame(0);
+			}
+
+			if (!cls.demoplayback && cl_earlypackets.integer) {
 				CL_ReadPackets(); // read packets ASAP
 			}
 
@@ -2494,22 +2412,28 @@ void CL_Frame (double time)
 		}
 	}
 
-	{ // chat icons
-		char char_flags[64] = {0};
+	{
+		// chat icons
 		int cif_flags = 0;
 
-		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
-			cif_flags |= CIF_CHAT;
+		// add chat flag if in console, menus, mm1, mm2 etc...
+		cif_flags |= (key_dest != key_game ? CIF_CHAT : 0);
 
 		// add AFK flag if app minimized, or not the focus
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
-		if (!ActiveApp || Minimized)
-			cif_flags |= CIF_AFK;
+		cif_flags |= (!ActiveApp || Minimized ? CIF_AFK : 0);
 
-		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
-			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+		if (cif_flags != cl.cif_flags) {
+			char char_flags[64] = {0};
 
-		CL_UserinfoChanged ("chat", char_flags);
+			if (cif_flags && cls.state >= ca_connected) {
+				// put key in userinfo only then we are connected, remove key if we not connected yet
+				snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+			}
+
+			CL_UserinfoChanged("chat", char_flags);
+			cl.cif_flags = cif_flags;
+		}
 	}
 
 	CL_MultiviewPreUpdateScreen ();
@@ -2525,7 +2449,7 @@ void CL_Frame (double time)
 
 			CL_LinkEntities ();
 
-			SCR_UpdateScreenPlayerView (true);
+			SCR_UpdateScreenPlayerView (UPDATESCREEN_MULTIVIEW | (draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS));
 
 			if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 				CL_SoundFrame ();

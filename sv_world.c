@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: world.c 636 2007-07-20 05:07:57Z disconn3ct $
 */
 // world.c -- world query functions
 
@@ -136,6 +135,17 @@ void InsertLinkAfter (link_t *l, link_t *after)
 
 //============================================================================
 
+// well, here should be all things related to world but atm it antilag only
+typedef struct world_s
+{
+// { sv_antilag related
+	float lagentsfrac;
+	laggedentinfo_t *lagents;
+	unsigned int maxlagents;
+// }
+} world_t;
+
+static world_t w;
 
 areanode_t sv_areanodes[AREA_NODES];
 int sv_numareanodes;
@@ -235,6 +245,7 @@ int SV_AreaEdicts (vec3_t mins, vec3_t maxs, edict_t **edicts, int max_edicts, i
 			touch = EDICT_FROM_AREA(l);
 			if (touch->v.solid == SOLID_NOT)
 				continue;
+
 			if (mins[0] > touch->v.absmax[0]
 						 || mins[1] > touch->v.absmax[1]
 						 || mins[2] > touch->v.absmax[2]
@@ -283,13 +294,13 @@ checkstack:
 SV_TouchLinks
 ====================
 */
-void SV_TouchLinks ( edict_t *ent, areanode_t *node )
+static void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 {
 	int			i, numtouch;
 	edict_t		*touchlist[MAX_EDICTS], *touch;
 	int			old_self, old_other;
 
-	numtouch = SV_AreaEdicts (ent->v.absmin, ent->v.absmax, touchlist, MAX_EDICTS, AREA_TRIGGERS);
+	numtouch = SV_AreaEdicts (ent->v.absmin, ent->v.absmax, touchlist, sv.max_edicts, AREA_TRIGGERS);
 
 // touch linked edicts
 	for (i = 0; i < numtouch; i++)
@@ -306,12 +317,7 @@ void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 		pr_global_struct->self = EDICT_TO_PROG(touch);
 		pr_global_struct->other = EDICT_TO_PROG(ent);
 		pr_global_struct->time = sv.time;
-#ifdef USE_PR2
-		if ( sv_vm )
-			PR2_EdictTouch();
-		else
-#endif
-			PR_ExecuteProgram (touch->v.touch);
+		PR_EdictTouch (touch->v.touch);
 
 		pr_global_struct->self = old_self;
 		pr_global_struct->other = old_other;
@@ -471,27 +477,32 @@ Handles selection or creation of a clipping hull, and offseting (and
 eventually rotation) of the end points
 ==================
 */
-trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t *eorg, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 {
 	trace_t		trace;
 	vec3_t		offset;
 	vec3_t		start_l, end_l;
 	hull_t		*hull;
 
-// get the clipping hull
+	// get the clipping hull
 	hull = SV_HullForEntity (ent, mins, maxs, offset);
+
+	// { well, its hack for sv_antilag
+	if (eorg)
+		VectorCopy((*eorg), offset);
+	// }
 
 	VectorSubtract (start, offset, start_l);
 	VectorSubtract (end, offset, end_l);
 
-// trace a line through the apropriate clipping hull
+	// trace a line through the apropriate clipping hull
 	trace = CM_HullTrace (hull, start_l, end_l);
 
-// fix trace up by the offset
+	// fix trace up by the offset
 	VectorAdd (trace.endpos, offset, trace.endpos);
 
-// did we clip the move?
-	if (trace.fraction < 1 || trace.startsolid )
+	// did we clip the move?
+	if (trace.fraction < 1 || trace.startsolid)
 		trace.e.ent = ent;
 
 	return trace;
@@ -512,26 +523,35 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 	edict_t		*touchlist[MAX_EDICTS], *touch;
 	trace_t		trace;
 
-	numtouch = SV_AreaEdicts (clip->boxmins, clip->boxmaxs, touchlist, MAX_EDICTS, AREA_SOLID);
+	numtouch = SV_AreaEdicts (clip->boxmins, clip->boxmaxs, touchlist, sv.max_edicts, AREA_SOLID);
 
-// touch linked edicts
+	// touch linked edicts
 	for (i = 0; i < numtouch; i++)
 	{
+		// might intersect, so do an exact clip
+		if (clip->trace.allsolid)
+			return; // return!!!
+
 		touch = touchlist[i];
 		if (touch == clip->passedict)
 			continue;
 		if (touch->v.solid == SOLID_TRIGGER)
 			SV_Error ("Trigger in clipping list");
 
-		if (clip->type == MOVE_NOMONSTERS && touch->v.solid != SOLID_BSP)
+		if ((clip->type & MOVE_NOMONSTERS) && touch->v.solid != SOLID_BSP)
 			continue;
 
 		if (clip->passedict && clip->passedict->v.size[0] && !touch->v.size[0])
 			continue;	// points never interact
 
-	// might intersect, so do an exact clip
-		if (clip->trace.allsolid)
-			return;
+		if (clip->type & MOVE_LAGGED)
+		{
+			//can't touch lagged ents - we do an explicit test for them later in SV_AntilagClipCheck.
+			if (touch->e->entnum - 1 < w.maxlagents)
+				if (w.lagents[touch->e->entnum - 1].present)
+					continue;
+		}
+
 		if (clip->passedict)
 		{
 			if (PROG_TO_EDICT(touch->v.owner) == clip->passedict)
@@ -541,23 +561,24 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 		}
 
 		if ((int)touch->v.flags & FL_MONSTER)
-			trace = SV_ClipMoveToEntity (touch, clip->start, clip->mins2, clip->maxs2, clip->end);
+			trace = SV_ClipMoveToEntity (touch, NULL, clip->start, clip->mins2, clip->maxs2, clip->end);
 		else
-			trace = SV_ClipMoveToEntity (touch, clip->start, clip->mins, clip->maxs, clip->end);
-		if (trace.allsolid || trace.startsolid ||
-				  trace.fraction < clip->trace.fraction)
+			trace = SV_ClipMoveToEntity (touch, NULL, clip->start, clip->mins, clip->maxs, clip->end);
+
+		// qqshka: I have NO idea why we keep startsolid but let do it.
+
+		// make sure we keep a startsolid from a previous trace
+		clip->trace.startsolid |= trace.startsolid;
+
+		if ( trace.allsolid || trace.fraction < clip->trace.fraction )
 		{
+			// set edict
 			trace.e.ent = touch;
-			if (clip->trace.startsolid)
-			{
-				clip->trace = trace;
-				clip->trace.startsolid = true;
-			}
-			else
-				clip->trace = trace;
+			// make sure we keep a startsolid from a previous trace
+			trace.startsolid |= clip->trace.startsolid;
+			// bit by bit copy trace struct
+			clip->trace = trace;
 		}
-		else if (trace.startsolid)
-			clip->trace.startsolid = true;
 	}
 }
 
@@ -592,6 +613,112 @@ void SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t b
 #endif
 }
 
+//=============================================
+
+void SV_AntilagReset (edict_t *ent)
+{
+	if (ent->e->entnum == 0 || ent->e->entnum > MAX_CLIENTS)
+		return;
+
+	svs.clients[ent->e->entnum - 1].antilag_position_next = 0;
+}
+
+void SV_AntilagClipSetUp ( areanode_t *node, moveclip_t *clip )
+{
+	edict_t *passedict = clip->passedict;
+
+	clip->type &= ~MOVE_LAGGED;
+
+	if (passedict->e->entnum && passedict->e->entnum <= MAX_CLIENTS)
+	{
+		clip->type |= MOVE_LAGGED;
+		w.lagents = svs.clients[passedict->e->entnum-1].laggedents;
+		w.maxlagents = svs.clients[passedict->e->entnum-1].laggedents_count;
+		w.lagentsfrac = svs.clients[passedict->e->entnum-1].laggedents_frac;
+	}
+	else if (passedict->v.owner)
+	{
+		int owner = PROG_TO_EDICT(passedict->v.owner)->e->entnum;
+
+		if (owner && owner <= MAX_CLIENTS)
+		{
+			clip->type |= MOVE_LAGGED;
+			w.lagents = svs.clients[owner-1].laggedents;
+			w.maxlagents = svs.clients[owner-1].laggedents_count;
+			w.lagentsfrac = svs.clients[owner-1].laggedents_frac;
+		}
+	}
+}
+
+void SV_AntilagClipCheck ( areanode_t *node, moveclip_t *clip )
+{
+	trace_t trace;
+	edict_t *touch;
+	vec3_t lp;
+	int i;
+
+	for (i = 0; i < w.maxlagents; i++)
+	{
+		if (clip->trace.allsolid)
+			return; // return!!!
+
+		if (!w.lagents[i].present)
+			continue;
+
+		touch = EDICT_NUM(i + 1);
+		if (touch->v.solid == SOLID_NOT)
+			continue;
+		if (touch == clip->passedict)
+			continue;
+		if (touch->v.solid == SOLID_TRIGGER)
+			SV_Error ("Trigger (%s) in clipping list", PR_GetEntityString(touch->v.classname));
+
+		if ((clip->type & MOVE_NOMONSTERS) && touch->v.solid != SOLID_BSP)
+			continue;
+
+		VectorInterpolate(touch->v.origin, w.lagentsfrac, w.lagents[i].laggedpos, lp);
+
+		if (   clip->boxmins[0] > lp[0]+touch->v.maxs[0]
+			|| clip->boxmins[1] > lp[1]+touch->v.maxs[1]
+			|| clip->boxmins[2] > lp[2]+touch->v.maxs[2]
+			|| clip->boxmaxs[0] < lp[0]+touch->v.mins[0]
+			|| clip->boxmaxs[1] < lp[1]+touch->v.mins[1]
+			|| clip->boxmaxs[2] < lp[2]+touch->v.mins[2] )
+			continue;
+
+		if (clip->passedict && clip->passedict->v.size[0] && !touch->v.size[0])
+			continue;	// points never interact
+
+		if (clip->passedict)
+		{
+			if (PROG_TO_EDICT(touch->v.owner) == clip->passedict)
+				continue;	// don't clip against own missiles
+			if (PROG_TO_EDICT(clip->passedict->v.owner) == touch)
+				continue;	// don't clip against owner
+		}
+
+		if ((int)touch->v.flags & FL_MONSTER)
+			trace = SV_ClipMoveToEntity (touch, &lp, clip->start, clip->mins2, clip->maxs2, clip->end);
+		else
+			trace = SV_ClipMoveToEntity (touch, &lp, clip->start, clip->mins, clip->maxs, clip->end);
+
+		// qqshka: I have NO idea why we keep startsolid but let do it.
+
+		// make sure we keep a startsolid from a previous trace
+		clip->trace.startsolid |= trace.startsolid;
+
+		if ( trace.allsolid || trace.fraction < clip->trace.fraction )
+		{
+			// set edict
+			trace.e.ent = touch;
+			// make sure we keep a startsolid from a previous trace
+			trace.startsolid |= clip->trace.startsolid;
+			// bit by bit copy trace struct
+			clip->trace = trace;
+		}
+	}
+}
+
 /*
 ==================
 SV_Trace
@@ -605,7 +732,7 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 	memset ( &clip, 0, sizeof ( moveclip_t ) );
 
 	// clip to world
-	clip.trace = SV_ClipMoveToEntity ( sv.edicts, start, mins, maxs, end );
+	clip.trace = SV_ClipMoveToEntity ( sv.edicts, NULL, start, mins, maxs, end );
 
 	clip.start = start;
 	clip.end = end;
@@ -614,7 +741,7 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 	clip.type = type;
 	clip.passedict = passedict;
 
-	if (type == MOVE_MISSILE)
+	if (type & MOVE_MISSILE)
 	{
 		for (i=0 ; i<3 ; i++)
 		{
@@ -631,9 +758,16 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 	// create the bounding box of the entire move
 	SV_MoveBounds ( start, clip.mins2, clip.maxs2, end, clip.boxmins, clip.boxmaxs );
 
+	// set up antilag
+	if (clip.type & MOVE_LAGGED)
+		SV_AntilagClipSetUp ( sv_areanodes, &clip );
+
 	// clip to entities
 	SV_ClipToLinks ( sv_areanodes, &clip );
 
+	// additional antilag clip check
+	if (clip.type & MOVE_LAGGED)
+		SV_AntilagClipCheck ( sv_areanodes, &clip );
+
 	return clip.trace;
 }
-

@@ -92,49 +92,55 @@ typedef void (*action_fnc) (void);
 //
 
 typedef enum  {
-	stt_separator,	// decorating purpose only, needs only type+label then
-	stt_num,		// integer or float variable, needs cvar, min, max and step are required
-	stt_intnum,		// integer non-quake-variable
-	stt_bool,		// simple boolean setting, needs cvar
-	stt_custom,		// fully customizable setting, needs readfnc and togglefnc
-	stt_named,		// named integer 0..max, max is number of elements in array of strings assigned to readfnc
-	stt_enum,		// named enum, pairs of "name", "value"
-	stt_action,		// function is assigned to this, pointer must be stored in togglefnc
-	stt_string,		// string - fully editable by the user, needs only cvar
-	stt_playercolor,// named enum 0..13
-	stt_skin,		// player skin
-	stt_bind,		// keybinding
-	stt_advmark,	// denotes advanced settings area
-	stt_basemark,	// denotes basic settings area
+	stt_separator,             // decorating purpose only, needs only type+label then
+	stt_num,                   // integer or float variable, needs cvar, min, max and step are required
+	stt_intnum,                // integer non-quake-variable
+	stt_bool,                  // simple boolean setting, needs cvar
+	stt_custom,                // fully customizable setting, needs readfnc and togglefnc
+	stt_named,                 // named integer 0..max, max is number of elements in array of strings assigned to readfnc
+	stt_enum,                  // named enum, pairs of "name", "value"
+	stt_action,                // function is assigned to this, pointer must be stored in togglefnc
+	stt_string,                // string - fully editable by the user, needs only cvar
+	stt_playercolor,           // named enum 0..13
+	stt_skin,                  // player skin
+	stt_bind,                  // keybinding
+	stt_advmark,               // denotes advanced settings area
+	stt_basemark,              // denotes basic settings area
 	stt_blank
 } setting_type;
 
 typedef struct {
-	setting_type type;	// see above; always required
-	const char* label;	// to be displayed on screen; always required
-	qbool advanced;		// is this settings advanced?
-	cvar_t* cvar;		// assigned variable; required for num, bool, named
-	float min;			// minimal value; required for num, named
-	float max;			// maximal value; required for num, named
-	float step;			// change step; required for num, named
-	enum_readfnc readfnc;		// reading function pointer; required for enum
-	enum_togglefnc togglefnc;	// toggle function pointer; required for enum
-	action_fnc actionfnc;		// action function pointer; required for stt_action
-	const char** named_ints;	// array of strings; required for sett_named and stt_enum
-	const char*	varname;		// name of a non-static cvar_t, also used for command name for bind
-	const char* description;	// manual-like description
-	int top;					// distance of the setting from the top of the settings page
+	setting_type type;         // see above; always required
+	const char* label;         // to be displayed on screen; always required
+	qbool advanced;            // is this settings advanced?
+	cvar_t* cvar;              // assigned variable; required for num, bool, named
+	float min;                 // min value; required for num, named
+	float max;                 // max value; required for num, named
+	float step;                // change step; required for num, named
+	enum_readfnc readfnc;      // reading function pointer; required for enum
+	enum_togglefnc togglefnc;  // toggle function pointer; required for enum
+	action_fnc actionfnc;      // action function pointer; required for stt_action
+	const char** named_ints;   // array of strings; required for sett_named and stt_enum
+	const char* varname;       // name of a non-static cvar_t, also used for command name for bind
+	const char* description;   // manual-like description
+	int top;                   // distance of the setting from the top of the settings page
 } setting;
 
 typedef struct {
-	setting* settings;	// array of settings
-	int count;			// amount of elements in set_tab
-	int marked;			// currently selected element in settings
-	int viewpoint;		// where rendering start (internal)
-    PScrollBar  scrollbar;  // scrollbar gui element
-	enum { SPM_NORMAL, SPM_BINDING, SPM_VIEWHELP, SPM_CHOOSESKIN } mode;
-    int width, height;  // last drawed width and height
-	qbool mini;			// minimalistic version (doesn't display help and has infinite scrolling)
+	setting* settings;         // array of settings
+	int count;                 // amount of elements in set_tab
+	int marked;                // currently selected element in settings
+	int viewpoint;		   // where rendering start (internal)
+	PScrollBar  scrollbar;     // scrollbar gui element
+	enum {
+		SPM_NORMAL,
+		SPM_BINDING,
+		SPM_VIEWHELP,
+		SPM_CHOOSESKIN
+	} mode;
+	int width;                 // last drawn width
+	int height;                // last drawn height
+	qbool mini;                // minimalistic version (doesn't display help and has infinite scrolling)
 } settings_page;
 
 char* SettingColorName(int color);

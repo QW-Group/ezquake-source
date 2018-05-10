@@ -67,7 +67,7 @@ typedef struct demo_state_s
 	#endif // _WIN32
 } demo_state_t;
 
-float olddemotime, nextdemotime; // TODO: Put in a demo struct.
+double olddemotime, nextdemotime; // TODO: Put in a demo struct.
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
 
@@ -304,8 +304,9 @@ void CL_WriteDemoEntities (void)
 	ent_total = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.num_entities;
 
 	// Write all the entity changes since last packet entity message.
-	for (ent_index = 0; ent_index < ent_total; ent_index++, ent++)
-		MSG_WriteDeltaEntity (&cl_entities[ent->number].baseline, ent, &cls.demomessage, true);
+	for (ent_index = 0; ent_index < ent_total; ent_index++, ent++) {
+		MSG_WriteDeltaEntity(&cl_entities[ent->number].baseline, ent, &cls.demomessage, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+	}
 
 	// End of packetentities.
 	MSG_WriteShort (&cls.demomessage, 0);
@@ -436,6 +437,17 @@ void CL_WriteServerdata (sizebuf_t *msg)
 		MSG_WriteLong (msg, cls.fteprotocolextensions2);
 	}
 	#endif // PROTOCOL_VERSION_FTE2
+
+	// Maintain demo pseudo-compatibility,
+	ignore_extensions = 0;
+
+#ifdef PROTOCOL_VERSION_MVD1
+	if (cls.mvdprotocolextensions1 & ~ignore_extensions)
+	{
+		MSG_WriteLong (msg, PROTOCOL_VERSION_MVD1);
+		MSG_WriteLong (msg, cls.mvdprotocolextensions1);
+	}
+#endif // PROTOCOL_VERSION_MVD1
 
 	MSG_WriteLong (msg, PROTOCOL_VERSION);
 	MSG_WriteLong (msg, cl.servercount);
@@ -1366,8 +1378,9 @@ void CL_WriteMVDStartupData(void)
 		ent_total = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.num_entities;
 
 		// Write all the entity changes since last packet entity message.
-		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++)
-			MSG_WriteDeltaEntity (&cl_entities[ent_state->number].baseline, ent_state, &buf, true);
+		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++) {
+			MSG_WriteDeltaEntity(&cl_entities[ent_state->number].baseline, ent_state, &buf, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+		}
 
 		// End of packetentities.
 		MSG_WriteShort (&buf, 0);
@@ -1541,8 +1554,9 @@ qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
 void CL_Demo_PB_Init(void *buf, int buflen)
 {
 	// The length of the buffer is out of bounds.
-	if (buflen < 0 || buflen > (int)sizeof(pb_buf))
+	if (buflen < 0 || (size_t) buflen > sizeof(pb_buf)) {
 		Sys_Error("CL_Demo_PB_Init: buflen out of bounds.");
+	}
 
 	// Copy the specified init data into the playback buffer.
 	memcpy(pb_buf, buf, buflen);
@@ -1645,9 +1659,9 @@ qbool pb_ensure(void)
 //
 // Peeks the demo time.
 //
-static float CL_PeekDemoTime(void)
+static double CL_PeekDemoTime(void)
 {
-	float demotime = 0.0;
+	double demotime = 0.0;
 
 	if (cls.mvdplayback)
 	{
@@ -1663,7 +1677,7 @@ static float CL_PeekDemoTime(void)
 		// so we need to multiply it by 0.001 to get it in seconds like normal quake time).
 		demotime = cls.demopackettime + (mvd_time * 0.001);
 
-		if ((cls.demotime - nextdemotime) > 0.0001 && (nextdemotime != demotime))
+		if ((cls.demotime - nextdemotime) > 0.001 && (nextdemotime != demotime))
 		{
 			olddemotime = nextdemotime;
 			cls.netchan.incoming_sequence++;
@@ -1675,11 +1689,13 @@ static float CL_PeekDemoTime(void)
 	}
 	else 
 	{
+		float floatTime;
+
 		// Peek inside, but don't read.
 		// (Since it might not be time to continue reading in the demo
 		// we want to be able to check this again later if that's the case).
-		CL_Demo_Read(&demotime, sizeof(demotime), true);
-		demotime = LittleFloat(demotime);
+		CL_Demo_Read(&floatTime, sizeof(floatTime), true);
+		demotime = LittleFloat(floatTime);
 
 		if (demotime < cls.demotime)
 		{
@@ -1777,6 +1793,11 @@ static qbool CL_DemoReadDemRead(void)
 	// Read the net message from the demo.
 	CL_Demo_Read(net_message.data, net_message.cursize, false);
 
+	// Skip over any dem_multiple packets sent to no-one
+	if (cls.mvdplayback && cls.lasttype == dem_multiple && cls.lastto == 0) {
+		return true;
+	}
+
 	return false;
 }
 
@@ -1800,7 +1821,7 @@ static void CL_DemoReadDemSet(void)
 //
 // Returns true if it's time to read the next message, false otherwise.
 //
-static qbool CL_DemoShouldWeReadNextMessage(float demotime)
+static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 {
 	if (cls.timedemo)
 	{
@@ -1828,6 +1849,7 @@ static qbool CL_DemoShouldWeReadNextMessage(float demotime)
 			cls.td_startframe = cls.framecount;
 		}
 
+		cl.gametime += (demotime - cls.demotime);
 		cls.demotime = demotime; // Warp.
 	}
 	else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // Always grab until fully connected.
@@ -1890,7 +1912,7 @@ static qbool CL_DemoShouldWeReadNextMessage(float demotime)
 //
 qbool CL_GetDemoMessage (void)
 {
-	float demotime;
+	double demotime;
 	byte c;
 	byte message_type;
 
@@ -1930,12 +1952,14 @@ qbool CL_GetDemoMessage (void)
 	if (cls.mvdplayback)
 	{
 		// Reset the previous time.
-		if (cls.demopackettime < nextdemotime)
+		if (cls.demopackettime < nextdemotime) {
 			cls.demopackettime = nextdemotime;
+		}
 
 		// Always be within one second from the next demo time.
-		if (cls.demotime + 1.0 < nextdemotime)
+		if (cls.demotime + 1.0 < nextdemotime) {
 			cls.demotime = nextdemotime - 1.0;
+		}
 	}
 
 	// Check if we need to get more messages for now and if so read it
@@ -2211,11 +2235,13 @@ static void CL_StopRecording (void)
 //
 void CL_Stop_f (void)
 {
+#ifndef CLIENTONLY
 	if (com_serveractive && strcmp(Cmd_Argv(0), "stop") == 0)
 	{
 		SV_MVDStop_f();
 		return;
 	}
+#endif
 
 	if (!cls.demorecording)
 	{
@@ -2244,7 +2270,7 @@ void CL_Stop_f (void)
 //
 // Returns the Demo directory. If the user hasn't set the demo_dir var, the gamedir is returned.
 //
-char *CL_DemoDirectory(void)
+extern char *CL_DemoDirectory(void)
 {
 	static char dir[MAX_PATH];
 
@@ -2259,17 +2285,25 @@ void CL_Record_f (void)
 {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
 
+#ifndef CLIENTONLY
 	if (com_serveractive && strcmp(Cmd_Argv(0), "record") == 0)
 	{
 		SV_MVD_Record_f();
 		return;
 	}
+#endif
 
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
 	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))
 	{
-		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
-			"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
+		extern cvar_t cl_pext_warndemos;
+
+		if (cl_pext_warndemos.value) {
+			Com_Printf("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
+				"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
+		}
 	}
+#endif
 
 	switch(Cmd_Argc())
 	{
@@ -2462,11 +2496,13 @@ void CL_EasyRecord_f (void)
 {
 	char *name;
 
+#ifndef CLIENTONLY
 	if ( com_serveractive )
 	{
 		SV_MVDEasyRecord_f();
 		return;
 	}
+#endif
 
 	if (cls.state != ca_active)
 	{
@@ -2506,7 +2542,7 @@ static char	auto_matchname[MAX_PATH];	// Demoname when recording auto match demo
 static qbool temp_demo_ready = false;	// Indicates if the autorecorded match demo is done recording.
 static float auto_starttime;
 
-char *MT_TempDirectory(void);
+char *MT_TempDemoDirectory(void);
 
 extern cvar_t match_auto_record, match_auto_minlength;
 
@@ -2603,7 +2639,7 @@ void CL_AutoRecord_StartMatch(char *demoname)
 	strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
 
 	// Try starting to record the demo.
-	if (!CL_MatchRecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true))
+	if (!CL_MatchRecordDemo(MT_TempDemoDirectory(), TEMP_DEMO_NAME, true))
 	{
 		Com_Printf ("Auto demo recording failed to start!\n");
 		return;
@@ -2647,7 +2683,7 @@ void CL_AutoRecord_SaveMatch(void)
 	dir = CL_DemoDirectory();
 
 	// Get the temp name of the file we've recorded.
-	tempname = va("%s/%s", MT_TempDirectory(), TEMP_DEMO_NAME);
+	tempname = va("%s/%s", MT_TempDemoDirectory(), TEMP_DEMO_NAME);
 
 	// Get the final name where we'll save the final product.
 	fullsavedname = va("%s/%s", dir, auto_matchname);
@@ -3117,7 +3153,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 //
 void CL_StopPlayback (void)
 {
-	extern int demo_playlist_started;
+	extern qbool demo_playlist_started;
 	extern int mvd_demo_track_run;
 
 	// Nothing to stop.
@@ -3447,7 +3483,7 @@ static void CL_DemoPlaybackInit(void)
 	}
 
 	// Setup the netchan and state.
-	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0, 0);
 	cls.state		= ca_demostart;
 	cls.demotime	= 0;
 	demostarttime	= -1.0;
@@ -3467,6 +3503,29 @@ static void CL_DemoPlaybackInit(void)
 	{
 		CL_Stop_f();
 	}
+	MVD_Initialise();
+}
+
+char *CL_Macro_DemoName_f (void)
+{
+	static char macrobuf[128];
+
+	if (cls.demoplayback) {
+		COM_StripExtension (COM_SkipPath (cls.demoname), macrobuf, sizeof (macrobuf));
+	}
+	else {
+		macrobuf[0] = '\0';
+	}
+	return macrobuf;
+}
+
+char *CL_Macro_DemoLength_f (void)
+{
+	static char macrobuf[64];
+
+	snprintf (macrobuf, sizeof (macrobuf), "%d", (cls.demoplayback ? (int) ceil(CL_GetDemoLength()) : 0));
+
+	return macrobuf;
 }
 
 //
@@ -3503,8 +3562,6 @@ void CL_Play_f (void)
 	// Disconnect any current game.
 	Host_EndGame();
 
-	TP_ExecTrigger("f_demostart");
-	
 	// VFS-FIXME: This will affect playing qwz inside a zip
 	#ifndef WITH_VFS_ARCHIVE_LOADING 
 	#ifdef WITH_ZIP
@@ -3647,6 +3704,7 @@ void CL_Play_f (void)
 	cls.demo_rewindtime = 0;
 
 	CL_DemoPlaybackInit();
+	TP_ExecTrigger("f_demostart");
 
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
@@ -4113,7 +4171,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	// Setup demo playback for the netchan.
 	cls.state = ca_demostart;
-	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0, 0);
 	cls.demotime = 0;
 	demostarttime = -1.0;
 	olddemotime = nextdemotime = 0;
@@ -4134,6 +4192,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 		CL_Stop_f();
 	}
 
+	MVD_Initialise();
 	TP_ExecTrigger ("f_demostart");
 
 	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", (double)(QTVBUFFERTIME));
@@ -5092,6 +5151,10 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
 	Cmd_AddCommand ("qtv_fixuser", CL_QTVFixUser_f);
 
+	// Macros
+	Cmd_AddMacro ("demoname", CL_Macro_DemoName_f);
+	Cmd_AddMacro ("demolength", CL_Macro_DemoLength_f);
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32
 	Cvar_Register(&demo_format);
@@ -5104,14 +5167,9 @@ void CL_Demo_Init(void)
 	Cvar_ResetCurrentGroup();
 }
 
-qbool CL_Demo_SkipMessage (void)
+qbool CL_Demo_NotForTrackedPlayer(void)
 {
 	int tracknum = Cam_TrackNum();
-
-	if (cls.demoseeking)
-		return true;
-	if (!cls.mvdplayback)
-		return false;
 
 	if (cls.lasttype == dem_multiple && ((tracknum == -1) || !(cls.lastto & (1 << tracknum))))
 		return true;
@@ -5119,4 +5177,16 @@ qbool CL_Demo_SkipMessage (void)
 		return true;
 
 	return false;
+}
+
+qbool CL_Demo_SkipMessage (qbool skip_if_seeking)
+{
+	if (!cls.demoplayback)
+		return false;
+	if (skip_if_seeking && cls.demoseeking)
+		return true;
+	if (!cls.mvdplayback)
+		return false;
+
+	return CL_Demo_NotForTrackedPlayer();
 }

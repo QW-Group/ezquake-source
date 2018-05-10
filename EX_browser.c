@@ -2494,7 +2494,7 @@ int SB_Sources_Key(int key)
 				else
 				{
 					buf[0] = '-';
-					strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
+					strlcpy(buf+1, sb_sortsources.string, sizeof (buf)-1);
 				}
 				Cvar_Set(&sb_sortsources, buf);
 			}
@@ -2502,7 +2502,7 @@ int SB_Sources_Key(int key)
 			{
 				char buf[32];
 				buf[0] = key;
-				strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
+				strlcpy(buf+1, sb_sortsources.string, sizeof (buf)-1);
 				Cvar_Set(&sb_sortsources, buf);
 			}
 			resort_sources = 1;
@@ -2636,7 +2636,7 @@ int SB_Players_Key(int key)
 					else
 					{
 						buf[0] = '-';
-						strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
+						strlcpy(buf+1, sb_sortplayers.string, sizeof (buf)-1);
 					}
 					Cvar_Set(&sb_sortplayers, buf);
 				}
@@ -2644,7 +2644,7 @@ int SB_Players_Key(int key)
 				{
 					char buf[32];
 					buf[0] = key;
-					strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
+					strlcpy(buf+1, sb_sortplayers.string, sizeof (buf)-1);
 					Cvar_Set(&sb_sortplayers, buf);
 				}
 				resort_all_players = 1;

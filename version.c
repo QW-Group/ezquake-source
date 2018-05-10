@@ -118,3 +118,12 @@ char *VersionStringColour(void)
 
 	return str;
 }
+
+char *VersionStringFull (void)
+{
+	static char str[256];
+
+	snprintf (str, sizeof(str), SERVER_NAME " %s " "(" QW_PLATFORM ")" "\n", VersionString());
+
+	return str;
+}

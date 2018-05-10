@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: sv_master.c 636 2007-07-20 05:07:57Z disconn3ct $
+    
 */
 // sv_master.c - send heartbeats to master server
 
@@ -69,7 +69,7 @@ SV_Heartbeat_f
 */
 void SV_Heartbeat_f (void)
 {
-	svs.last_heartbeat = -9999;
+	svs.last_heartbeat = -99999;
 }
 
 /*

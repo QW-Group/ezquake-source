@@ -643,7 +643,7 @@ void CL_AdjustAngles(void)
 
 	frametime = cls.trueframetime;
 	if (Movie_IsCapturing()) {
-		frametime = Movie_Frametime();
+		frametime = Movie_InputFrametime();
 	}
 
 	basespeed = ((in_speed.state & 1) ? cl_anglespeedkey.value : 1);
@@ -655,7 +655,10 @@ void CL_AdjustAngles(void)
 		speed *= frametime;
 		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right, true);
 		cl.viewangles[YAW] += speed * CL_KeyState(&in_left, true);
-		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
+		if (cl.viewangles[YAW] < 0)
+			cl.viewangles[YAW] += 360.0;
+		else if (cl.viewangles[YAW] > 360)
+			cl.viewangles[YAW] -= 360.0;
 	}
 
 	speed = basespeed * cl_pitchspeed.value;
@@ -831,7 +834,7 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	frametime = cls.trueframetime;
 	if (Movie_IsCapturing()) {
-		frametime = Movie_Frametime();
+		frametime = Movie_InputFrametime();
 	}
 
 	// figure button bits
@@ -917,7 +920,7 @@ int cmdtime_msec = 0;
 void CL_SendCmd(void)
 {
 	sizebuf_t buf;
-	byte data[128];
+	byte data[1024];
 	usercmd_t *cmd, *oldcmd;
 	int i, checksumIndex, lost;
 	qbool dontdrop;
@@ -1072,6 +1075,10 @@ void CL_SendCmd(void)
 		pps_balance = 0;
 		dropcount = 0;
 	}
+
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Voip_Transmit(clc_voicechat, &buf);
+#endif
 
 	cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
 	// network stats table

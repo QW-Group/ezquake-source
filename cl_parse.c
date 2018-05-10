@@ -1398,6 +1398,10 @@ void CL_ParseServerData (void)
 	cls.fteprotocolextensions2 = 0;
 #endif // PROTOCOL_VERSION_FTE2
 
+#ifdef PROTOCOL_VERSION_MVD1
+	cls.mvdprotocolextensions1 = 0;
+#endif
+
 	for(;;)
 	{
 		protover = MSG_ReadLong ();
@@ -1415,6 +1419,14 @@ void CL_ParseServerData (void)
 		{
 			cls.fteprotocolextensions2 = MSG_ReadLong();
 			Com_DPrintf ("Using FTE extensions2 0x%x\n", cls.fteprotocolextensions2);
+			continue;
+		}
+#endif
+
+#ifdef PROTOCOL_VERSION_MVD1
+		if (protover == PROTOCOL_VERSION_MVD1) {
+			cls.mvdprotocolextensions1 = MSG_ReadLong();
+			Com_DPrintf("Using MVDSV extensions 0x%x\n", cls.mvdprotocolextensions1);
 			continue;
 		}
 #endif
@@ -1479,7 +1491,7 @@ void CL_ParseServerData (void)
 	}
 
 	if (!com_serveractive)
-		FS_SetGamedir (str);
+		FS_SetGamedir (str, false);
 
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
@@ -1600,6 +1612,10 @@ void CL_ParseServerData (void)
 
 	// now waiting for downloads, etc
 	cls.state = ca_onserver;
+
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Voip_MapChange();
+#endif
 }
 
 void CL_ParseSoundlist (void)
@@ -1921,7 +1937,7 @@ void CL_ParseStartSoundPacket(void)
 		}
     }
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
@@ -2129,6 +2145,15 @@ void CL_UpdateUserinfo (void)
 	int slot;
 	player_info_t *player;
 
+	if (CL_Demo_SkipMessage(false)) {
+		// Older demos (kteams?) can send blank userinfo strings to specs, then re-send the old strings again in next packet
+		//   Not sure why this happened, but it breaks our scoreboard, autotrack etc, so ignore
+		MSG_ReadByte();
+		MSG_ReadLong();
+		MSG_ReadString();
+		return;
+	}
+
 	slot = MSG_ReadByte();
 	if (slot >= MAX_CLIENTS)
 		Host_Error ("CL_ParseServerMessage: svc_updateuserinfo > MAX_CLIENTS");
@@ -2251,6 +2276,10 @@ void CL_ProcessServerInfo (void)
 	{
 		cl.gametime = 0;
 		cl.gamestarttime = Sys_DoubleTime();
+
+		if (cls.mvdplayback) {
+			MVD_GameStart();
+		}
 	}
 
 	cl.standby = standby;
@@ -2283,6 +2312,23 @@ void CL_ProcessServerInfo (void)
 	// Timelimit and fraglimit.
 	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
+
+	cl.racing = !strcmp(Info_ValueForKey(cl.serverinfo, "ktxmode"), "race");
+
+	// Update fakeshaft limits
+	{
+		char* p = Info_ValueForKey(cl.serverinfo, "fakeshaft");
+		if (!p[0]) {
+			p = Info_ValueForKey(cl.serverinfo, "truelightning");
+		}
+
+		if (p[0]) {
+			cl.fakeshaft_policy = bound(0, Q_atof(p), 1);
+		}
+		else {
+			cl.fakeshaft_policy = 1;
+		}
+	}
 
 	// Update skins if needed.
 	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
@@ -2514,6 +2560,10 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 	// s0 is same after Stats_ParsePrint like before, but Stats_ParsePrint modify it during it's work
 	// we can change this function a bit, so s0 can be const char*
 	Stats_ParsePrint (s0, level, &cff);
+
+	if (CL_Demo_SkipMessage(true)) {
+		return;
+	}
 
 	// Colorize player names here
 	if (scr_coloredfrags.value && cff.p1len)
@@ -2847,15 +2897,14 @@ void CL_ProcessPrint (int level, char* s0)
 				}
 			}
 		}
-		if (chat_sound_file == NULL)
-		{
+
+		if (chat_sound_file == NULL) {
 			// assign "other" if not recognized
 			chat_sound_file = con_sound_other_file.string;
 			chat_sound_vol = con_sound_other_volume.value;
 		}
 
-		if (chat_sound_vol > 0) 
-		{
+		if (chat_sound_vol > 0 && !suppress_talksound) {
 			S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
 		}
 
@@ -2921,8 +2970,9 @@ void CL_ParsePrint (void)
 	int level = MSG_ReadByte ();
 	char* s0 = MSG_ReadString ();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_NotForTrackedPlayer()) {
 		return;
+	}
 
 	CL_ProcessPrint (level, s0);
 }
@@ -2941,18 +2991,22 @@ void CL_ParseStufftext (void)
 			return;
 		}
 	}
+	else if (!strncmp(s, "//ktx race ", sizeof("//ktx race ") - 1)) {
+		if (!strncmp(s, "//ktx race pm ", sizeof("//ktx race pm ") - 1)) {
+			cl.race_pacemaker_ent = atoi(s + sizeof("//ktx race pm ") - 1);
+		}
+	}
 
 	// Any processing after this point will be ignored if not tracking the target player
-	if (cls.state == ca_active && CL_Demo_SkipMessage())
+	if (cls.state == ca_active && CL_Demo_SkipMessage(true))
 		return;
 
-	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
-	{
-		if (developer.integer > 1)
-			Com_DPrintf ("stufftext: %s\n", s);	
+	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1) || !strncmp(s, "alias ", 6) || !strncmp(s, "cmd mapslist_dl ", sizeof("cmd mapslist_dl ") - 1) || !strncmp(s, "cmd cmdslist_dl ", sizeof("cmd cmdslist_dl ") - 1)) {
+		if (developer.integer > 1) {
+			Com_DPrintf("stufftext: %s\n", s);
+		}
 	}
-	else
-	{
+	else {
 		Com_DPrintf ("stufftext: %s\n", s);	
 	}
 
@@ -3018,6 +3072,9 @@ void CL_ParseStufftext (void)
 #ifdef PROTOCOL_VERSION_FTE2
 		extern unsigned int CL_SupportedFTEExtensions2 (void);
 #endif // PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_MVD1
+		extern unsigned int CL_SupportedMVDExtensions1(void);
+#endif
 
 		char tmp[128];
 		char data[1024] = "cmd pext";
@@ -3037,8 +3094,21 @@ void CL_ParseStufftext (void)
 		strlcat(data, tmp, sizeof(data));
 #endif // PROTOCOL_VERSION_FTE2 
 
+#ifdef PROTOCOL_VERSION_MVD1
+		ext = cls.mvdprotocolextensions1 ? cls.mvdprotocolextensions1 : CL_SupportedMVDExtensions1();
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_MVD1, ext);
+		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is mvdsv protocol ver and 0x%x is mvdprotocolextensions1\n", PROTOCOL_VERSION_MVD1, ext);
+		strlcat(data, tmp, sizeof(data));
+#endif
+
 		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
+	}
+	else if (!strncmp(s, "//ucmd ", sizeof("//ucmd ") - 1))
+	{
+		extern void MVD_ParseUserCommand (const char* s);
+
+		MVD_ParseUserCommand (s + sizeof("//ucmd ") - 1);
 	}
 	else
 	{
@@ -3115,7 +3185,7 @@ void CL_MuzzleFlash (void)
 
 	i = MSG_ReadShort();
 
-	if (CL_Demo_SkipMessage())
+	if (CL_Demo_SkipMessage(true))
 		return;
 
 	if (!cl_muzzleflash.value)
@@ -3269,6 +3339,20 @@ void CL_ParseQizmoVoice (void)
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
 
+// SV_RotateCmd
+// Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
+static void CL_RotateCmd(usercmd_t* cmd, float yaw_delta)
+{
+	static vec3_t up = { 0, 0, 1 };
+	vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
+	vec3_t result;
+
+	RotatePointAroundVector(result, up, direction, yaw_delta);
+
+	cmd->sidemove = result[0];
+	cmd->forwardmove = result[1];
+}
+
 void CL_ParseServerMessage (void) 
 {
 	int cmd, i, j = 0;
@@ -3343,7 +3427,7 @@ void CL_ParseServerMessage (void)
 					if (cls.mvdplayback == QTV_PLAYBACK)
 					{ 
 						// Workaround, do not disconnect in case of QTV playback
-						if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
+						if (net_message.cursize > msg_readcount && strcmp(s = MSG_ReadString(), "EndOfDemo"))
 							Com_Printf("WARNING: Non-standard disconnect message from QTV '%s'\n", s);
 						break;
 					}
@@ -3355,7 +3439,7 @@ void CL_ParseServerMessage (void)
 						// We still have some data, so lets try ignore disconnect since it probably multy map MVD.
 						if (pb_cnt > 0)
 						{
-							if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
+							if (net_message.cursize > msg_readcount && strcmp(s = MSG_ReadString(), "EndOfDemo"))
 								Com_Printf("WARNING: Non-standard disconnect message in MVD '%s'\n", s);
 
 							Com_DPrintf("Ignoring Server disconnect\n");
@@ -3396,7 +3480,7 @@ void CL_ParseServerMessage (void)
 					// Centerprint re-triggers
 					s = MSG_ReadString();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					if (!cls.demoseeking)
@@ -3426,13 +3510,15 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_setangle:
 				{
-					if (cls.mvdplayback)
+					if (cls.mvdplayback || (cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
 						j = MSG_ReadByte();
+					}
 
-					for (i = 0; i < 3; i++)
+					for (i = 0; i < 3; i++) {
 						newangles[i] = MSG_ReadAngle();
+					}
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					if (cls.mvdplayback) 
@@ -3451,6 +3537,26 @@ void CL_ParseServerMessage (void)
 						cl.viewangles[2] = newangles[2];
 #else
 						VectorCopy (newangles, cl.viewangles);
+						if ((cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) && j) {
+							// Update all subsequent packets with amended directions to try and keep prediction correct
+							frame_t* this_frame = &cl.frames[cl.parsecount & UPDATE_MASK];
+							float yaw_delta = newangles[YAW] - this_frame->cmd.angles[YAW];
+
+							for (i = 2; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
+								frame_t* f = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
+
+								if (j == 1) {
+									// Teleport
+									CL_RotateCmd(&f->cmd, yaw_delta);
+
+									cl.viewangles[YAW] = f->cmd.angles[YAW] + yaw_delta;
+								}
+								else if (j == 2) {
+									// Respawn, angle sent from client was over-ruled
+									f->cmd.angles[YAW] = newangles[YAW];
+								}
+							}
+						}
 #endif // I_WANT_HAX
 					}
 					break;
@@ -3473,12 +3579,20 @@ void CL_ParseServerMessage (void)
 				{
 					i = MSG_ReadShort();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					S_StopSound(i >> 3, i & 7);
 					break;
 				}
+
+#ifdef FTE_PEXT2_VOICECHAT
+			case svc_fte_voicechat:
+			{
+				S_Voip_Parse();
+				break;
+			}
+#endif
 
 			case svc_updatefrags:
 				{
@@ -3614,7 +3728,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_smallkick:
 				{
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					cl.ideal_punchangle = -2;
@@ -3622,7 +3736,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_bigkick:
 				{
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (true))
 						break;
 
 					cl.ideal_punchangle = -4;
@@ -3723,7 +3837,7 @@ void CL_ParseServerMessage (void)
 				{
 					float newspeed = MSG_ReadFloat ();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (false))
 						break;
 
 					cl.maxspeed = newspeed;
@@ -3733,7 +3847,7 @@ void CL_ParseServerMessage (void)
 				{
 					float newgravity = MSG_ReadFloat ();
 
-					if (CL_Demo_SkipMessage ())
+					if (CL_Demo_SkipMessage (false))
 						break;
 
 					cl.entgravity = newgravity;
@@ -3770,15 +3884,19 @@ void CL_ParseServerMessage (void)
 
 			// Write the change in entities to the demo being recorded
 			// or the net message we just received.
-			if (cmd == svc_deltapacketentities)
+			if (cmd == svc_deltapacketentities) {
 				CL_WriteDemoEntities();
+			}
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
-			else if (cmd == svc_serverdata)
+			else if (cmd == svc_serverdata) {
 				CL_WriteServerdata(&cls.demomessage);
-			else if (cmd != svc_playerinfo)		// We write svc_playerinfo out as we read it in
+			}
+			else if (cmd != svc_playerinfo) {
+				// We write svc_playerinfo out as we read it in
 				SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
+			}
 		}
 	}
 

@@ -300,6 +300,7 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 
 //
 // Get the path of a temporary directory.
+// Returns length of the path or negative value if error.
 //
 int COM_GetTempDir(char *buf, int bufsize)
 {
@@ -332,6 +333,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 
 //
 // Get a unique temp filename.
+// Returns negative value on failure.
 //
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
 {
@@ -345,7 +347,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	// (This is done automatically in unix)
 	if (path == NULL)
 	{
-		if (!COM_GetTempDir(real_path, MAX_PATH))
+		if (COM_GetTempDir(real_path, MAX_PATH) < 0)
 		{
 			return -1;
 		}
@@ -1575,6 +1577,103 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
     return false;
 }
 
+//============================================================================
+
+static char q_normalize_chartbl[256];
+static qbool q_normalize_chartbl_init;
+
+static void Q_normalizetext_Init (void)
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = '#';
+	for (i = 32; i < 128; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = i;
+
+	// special cases
+	q_normalize_chartbl[10] = 10;
+	q_normalize_chartbl[13] = 13;
+
+	// dot
+	q_normalize_chartbl[5      ] = q_normalize_chartbl[14      ] = q_normalize_chartbl[15      ] = q_normalize_chartbl[28      ] = q_normalize_chartbl[46      ] = '.';
+	q_normalize_chartbl[5 + 128] = q_normalize_chartbl[14 + 128] = q_normalize_chartbl[15 + 128] = q_normalize_chartbl[28 + 128] = q_normalize_chartbl[46 + 128] = '.';
+
+	// numbers
+	for (i = 18; i < 28; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = i + 30;
+
+	// brackets
+	q_normalize_chartbl[16] = q_normalize_chartbl[16 + 128]= '[';
+	q_normalize_chartbl[17] = q_normalize_chartbl[17 + 128] = ']';
+	q_normalize_chartbl[29] = q_normalize_chartbl[29 + 128] = q_normalize_chartbl[128] = '(';
+	q_normalize_chartbl[31] = q_normalize_chartbl[31 + 128] = q_normalize_chartbl[130] = ')';
+
+	// left arrow
+	q_normalize_chartbl[127] = '>';
+	// right arrow
+	q_normalize_chartbl[141] = '<';
+
+	// '='
+	q_normalize_chartbl[30] = q_normalize_chartbl[129] = q_normalize_chartbl[30 + 128] = '=';
+
+	q_normalize_chartbl_init = true;
+}
+
+/*
+==================
+Q_normalizetext
+returns readable extended quake names
+==================
+*/
+char *Q_normalizetext (char *str)
+{
+	unsigned char	*i;
+
+	if (!q_normalize_chartbl_init)
+		Q_normalizetext_Init();
+
+	for (i = (unsigned char*)str; *i; i++)
+		*i = q_normalize_chartbl[*i];
+	return str;
+}
+
+/*
+==================
+Q_redtext
+returns extended quake names
+==================
+*/
+unsigned char *Q_redtext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+		if (*i > 32 && *i < 128)
+			*i |= 128;
+	return str;
+}
+//<-
+
+/*
+==================
+Q_yelltext
+returns extended quake names (yellow numbers)
+==================
+*/
+unsigned char *Q_yelltext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+	{
+		if (*i >= '0' && *i <= '9')
+			*i += 18 - '0';
+		else if (*i > 32 && *i < 128)
+			*i |= 128;
+		else if (*i == 13)
+			*i = ' ';
+	}
+	return str;
+}
 
 //=====================================================================
 
@@ -1615,3 +1714,14 @@ int Com_TranslateMapChecksum (const char *mapname, int checksum)
 	return checksum;
 }
 
+float AdjustAngle(float current, float ideal, float fraction)
+{
+	float move = ideal - current;
+
+	if (move >= 180)
+		move -= 360;
+	else if (move <= -180)
+		move += 360;
+
+	return current + fraction * move;
+}

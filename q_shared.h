@@ -85,7 +85,7 @@ typedef unsigned char byte;
 #define	MINIMUM_MEMORY		0x550000
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
-#define	MAX_OSPATH			128		// max length of a filesystem pathname
+#define	MAX_OSPATH			260		// max length of a filesystem pathname
 
 #define	ON_EPSILON			0.1		// point on plane side epsilon
 
@@ -143,16 +143,22 @@ float	FloatSwapPDP2Lit (float f);
 
 #endif
 
-//======================= FreeBSD DEFINES ====================================
-#ifdef __FreeBSD__
+//======================= FreeBSD/OpenBSD DEFINES ====================================
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 
 #include <machine/endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
+#ifndef __BIG_ENDIAN__
 #define __BIG_ENDIAN__
+#endif
 #elif BYTE_ORDER == LITTLE_ENDIAN
+#ifndef __LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__
+#endif
 #elif BYTE_ORDER == PDP_ENDIAN
+#ifndef __PDP_ENDIAN__
 #define __PDP_ENDIAN__
+#endif
 #endif
 
 #endif
@@ -206,7 +212,7 @@ char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
 
 // Added by VVD {
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
 #define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
 // vc++ snprintf and vsnprintf are non-standard and not compatible with C99.
@@ -279,6 +285,7 @@ char *Q_strdup (const char *src);
 #define	MAX_DATAGRAM		1450		// max length of unreliable message
 #define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	(MAX_MSGLEN - 100)
+#define MIN_MTU             1350        // since user can specifie MTU it is a good idea to limit it at some "sane" value.
 
 // qqshka: Its all messy.
 // For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,

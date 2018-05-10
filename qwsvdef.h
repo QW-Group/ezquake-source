@@ -25,19 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 #include "common.h"
 #include "fs.h"
-
 #include "gl_model.h"
-
 #include "server.h"
-
-#ifdef USE_PR2
-// Angel -->
-#include "pr2_vm.h"
-#include "pr2.h"
-#include "g_public.h"
-// <-- Angel
-#endif
-
 
 #include "net.h"
 #include "crc.h"
@@ -46,3 +35,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "sv_log.h"
 #include "sv_world.h"
+#include "vfs.h"

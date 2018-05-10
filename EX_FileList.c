@@ -545,7 +545,7 @@ void FL_ReadArchive (filelist_t *fl)
 	fl->current_entry = 0;
 
 	// Open the zip file.
-	if (fl->current_archive != NULL)
+	if (fl->current_archive[0])
 	{
 		zip_file = FS_ZipUnpackOpenFile (fl->current_archive);
 	}
