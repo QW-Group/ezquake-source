@@ -328,7 +328,7 @@ int main(int argc, char **argv)
 	if (COM_CheckParm("-nostdout"))
 		sys_nostdout.value = 1;
 
-	Host_Init (argc, argv, 32 * 1024 * 1024);
+	Host_Init (argc, argv, 128 * 1024 * 1024);
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
