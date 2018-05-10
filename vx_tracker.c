@@ -128,6 +128,9 @@ typedef struct
 {
 	float die;
 
+	// If set, delete subsequent message at same time as this one
+	qbool linked;
+
 	// Pre-parse now, don't do this every frame
 	char text[MAX_SEGMENTS_PER_LINE][64];
 	byte colors[MAX_SEGMENTS_PER_LINE][4];
@@ -354,14 +357,24 @@ static trackmsg_t* VX_NewTrackerMsg(void)
 	// free space by removing the oldest one
 	if (active_track >= max_active_tracks) {
 		int i;
+		int remove = 1;
 
-		for (i = 1; i < max_active_tracks; i++) {
-			memcpy(&trackermsg[i - 1], &trackermsg[i], sizeof(trackermsg[0]));
+		for (i = 0; i < max_active_tracks; ++i) {
+			if (!trackermsg[i].linked) {
+				break;
+			}
+			++remove;
 		}
-		active_track = max_active_tracks - 1;
-	}
 
-	memset(&trackermsg[active_track], 0, sizeof(trackermsg[active_track]));
+		for (i = remove; i < max_active_tracks; i++) {
+			memcpy(&trackermsg[i - remove], &trackermsg[i], sizeof(trackermsg[0]));
+		}
+		active_track = max_active_tracks - remove;
+		memset(&trackermsg[active_track], 0, sizeof(trackermsg[active_track]) * remove);
+	}
+	else {
+		memset(&trackermsg[active_track], 0, sizeof(trackermsg[active_track]));
+	}
 	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	return &trackermsg[active_track++];
 }
@@ -428,7 +441,7 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	trackmsg_t* msg;
 	int i;
 
-	if ((!lhs_text && !rhs_text) || (!lhs_text[0] && !rhs_text[0]) || CL_Demo_SkipMessage(true)) {
+	if (((!lhs_text || !lhs_text[0]) && (!rhs_text || !rhs_text[0])) || CL_Demo_SkipMessage(true)) {
 		return;
 	}
 
@@ -476,7 +489,9 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 
 static void VX_TrackerLinkStrings(void)
 {
-	// TODO
+	if (active_track > 1) {
+		trackermsg[active_track - 2].linked = true;
+	}
 }
 
 static char *VX_RemovePrefix(int player)
