@@ -79,7 +79,7 @@ cvar_t menu_advanced = {"menu_advanced", "0"};
 //=============================================================================
 // <SETTINGS>
 
-enum {mode_fastest, mode_faithful, mode_higheyecandy, mode_eyecandy, mode_undef} fps_mode = mode_undef;
+enum {mode_fastest, mode_faithful, mode_higheyecandy, mode_eyecandy, mode_teamfortress, mode_undef} fps_mode = mode_undef;
 
 extern cvar_t scr_fov, scr_newHud, cl_staticsounds, r_fullbrightSkins, cl_deadbodyfilter, cl_muzzleflash, r_fullbright;
 extern cvar_t scr_sshot_format;
@@ -118,7 +118,7 @@ void AutoSWToggle(qbool back) {
 static int GFXPreset(void) {
 	if (fps_mode == mode_undef) {
 		switch ((int) cl_deadbodyfilter.value) {
-		case 0: fps_mode = mode_eyecandy; break;
+		case 0: fps_mode = amf_detpacklights.value ? mode_teamfortress : mode_eyecandy; break;
 		case 1: fps_mode = cl_muzzleflash.value ? mode_faithful : mode_eyecandy; break;
 		default: fps_mode = mode_fastest; break;
 		}
@@ -130,6 +130,7 @@ const char* GFXPresetRead(void) {
 	case mode_fastest: return "fastest";
 	case mode_higheyecandy: return "high eyecandy";
 	case mode_faithful: return "faithful";
+	case mode_teamfortress: return "team fortress";
 	default: return "eyecandy";
 	}
 }
@@ -152,6 +153,7 @@ void GFXPresetToggle(qbool back) {
 	case mode_higheyecandy: Cbuf_AddText ("exec cfg/gfx_gl_higheyecandy.cfg\n"); return;
 	case mode_faithful: Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n"); return;
 	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
+	case mode_teamfortress: Cbuf_AddText ("exec cfg/gfx_gl_teamfortress.cfg\n"); return;
 	}
 }
 
