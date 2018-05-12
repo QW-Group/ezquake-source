@@ -474,7 +474,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Do not save userinfo variables." },
-        { "name": "1", "description": "Save all userinfo variables except spectator/name/topcolor/bottomcolor/teamcolor/skin/team/rate/msg/w and b_switch" },
+        { "name": "1", "description": "Save all userinfo variables except spectator/topcolor/bottomcolor/teamcolor/skin/team/rate/msg/w and b_switch" },
         { "name": "2", "description": "Save all userinfo variables" }
       ]
     },
