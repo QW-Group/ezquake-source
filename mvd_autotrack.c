@@ -277,7 +277,6 @@ static int MVD_GetBestPlayer(void)
 	int initial_track, initial_id, i, bp_id;
 	float bp_val = -1000;
 	qbool candidate_found = false;
-	int tracked = CL_MultiviewAutotrackSlot();
 
 	initial_track = 0;
 	if (last_track >= 0 && last_track < mvd_cg_info.pcount && mvd_new_info[last_track].p_info) {
@@ -362,7 +361,6 @@ static qbool MVD_TrackedHasNoWeapon(int pov) {
 
 static qbool MVD_SomeoneHasWeapon(void) {
 	int i, stats;
-	int tracked = CL_MultiviewAutotrackSlot();
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		if (MVD_LockTeamIgnore(mvd_new_info[i].p_info)) {
 			continue;
