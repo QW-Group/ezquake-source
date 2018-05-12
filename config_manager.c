@@ -156,8 +156,8 @@ static void DumpVariables(FILE	*f)
 		for (count = 0, var = group->head; var && count < MAX_DUMPED_CVARS; var = var->next_in_group) {
 			if (skip_userinfo && (
 			            !strcmp(var->name, "team") || !strcmp(var->name, "skin") ||
-			            !strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
-			            !strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
+			            !strcmp(var->name, "spectator") || !strcmp(var->name, "topcolor") ||
+				    !strcmp(var->name, "bottomcolor")
 			        ))
 				continue;
 			
@@ -547,8 +547,8 @@ static void ResetVariables(int cvar_flags, qbool userinfo)
 		        )) {
 			if (check_userinfos && (
 			            !strcmp(var->name, "team") || !strcmp(var->name, "skin") ||
-			            !strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
-			            !strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
+			            !strcmp(var->name, "spectator") || !strcmp(var->name, "topcolor") ||
+				    !strcmp(var->name, "bottomcolor")
 			        ))
 				continue;
 			Cvar_ResetVar(var);
