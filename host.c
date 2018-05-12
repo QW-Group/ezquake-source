@@ -141,7 +141,7 @@ void SYSINFO_Init(void)
 
 	if (gl_renderer && gl_renderer[0]) {
 		if (SYSINFO_3D_description != NULL) {
-			free(SYSINFO_3D_description);
+			Q_free(SYSINFO_3D_description);
 		}
 		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}

@@ -946,7 +946,7 @@ void Cvar_AutoSet(cvar_t *var, char *value)
 
 	Q_free(var->autoString);
 
-	var->autoString = strdup(value);
+	var->autoString = Q_strdup(value);
 }
 
 void Cvar_AutoSetInt(cvar_t *var, int value)
@@ -961,7 +961,7 @@ void Cvar_AutoSetInt(cvar_t *var, int value)
 
 	snprintf(&val[0], sizeof(val), "%d", value);
 
-	var->autoString = strdup(val);
+	var->autoString = Q_strdup(val);
 }
 
 void Cvar_AutoReset(cvar_t *var)
@@ -1475,7 +1475,7 @@ void Cvar_Set_Eval_f(void)
 				break;
 			case ET_STR:
 				Cvar_Set(var, result.s_val);
-				free(result.s_val);
+				Q_free(result.s_val);
 				break;
 			}
 		}

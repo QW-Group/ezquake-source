@@ -879,6 +879,22 @@ void SZ_Print (sizebuf_t *buf, char *data) {
 
 //============================================================================
 
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+static unsigned int allocation_number = 0;
+
+typedef struct ezquake_memory_block_s {
+	char filename[MAX_OSPATH];
+	char label[64];
+	int line_number;
+	size_t size;
+	unsigned int allocation_number;
+} ezquake_memory_block_t;
+
+#define MEMORY_BLOCK_FOR_PTR(ptr) ((ezquake_memory_block_t*) (((intptr_t)ptr) - sizeof(ezquake_memory_block_t)));
+#define PTR_FOR_MEMORY_BLOCK(block) (void*)(((intptr_t)block) + sizeof(ezquake_memory_block_t))
+
+#endif
+
 /*
 ** Q_malloc
 **
@@ -886,12 +902,38 @@ void SZ_Print (sizebuf_t *buf, char *data) {
 ** the program exits with a message saying there's not enough memory
 ** instead of crashing after trying to use a NULL pointer
 */
-void *Q_malloc (size_t size)
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+void* Q_malloc_debug(size_t size, const char* file, int line, const char* label)
+#else
+void* Q_malloc(size_t size)
+#endif
 {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	void *p;
+	ezquake_memory_block_t* block = malloc(sizeof(ezquake_memory_block_t) + size);
+
+	Sys_Printf("memory,alloc,%u,%s,%d,%u,%s\n", allocation_number, file, line, size, label ? label : "");
+
+	if (!block) {
+		Sys_Error("Q_malloc: Not enough memory free; check disk space\n");
+	}
+
+	strlcpy(block->filename, file, sizeof(block->filename));
+	if (label) {
+		strlcpy(block->label, label, sizeof(block->label));
+	}
+	block->line_number = line;
+	block->size = size;
+	block->allocation_number = allocation_number++;
+
+	p = PTR_FOR_MEMORY_BLOCK(block);
+#else
 	void *p = malloc(size);
 
-	if (!p)
-		Sys_Error ("Q_malloc: Not enough memory free; check disk space\n");
+	if (!p) {
+		Sys_Error("Q_malloc: Not enough memory free; check disk space\n");
+	}
+#endif
 
 //#ifndef _DEBUG
 	memset(p, 0, size);
@@ -900,24 +942,87 @@ void *Q_malloc (size_t size)
 	return p;
 }
 
-void *Q_calloc (size_t n, size_t size)
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+void *Q_calloc_debug(size_t n, size_t size, const char* file, int line, const char* label)
+#else
+void *Q_calloc(size_t n, size_t size)
+#endif
 {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	void *p = Q_malloc_debug(n * size, file, line, label);
+#else
 	void *p = calloc(n, size);
 
-	if (!p)
-		Sys_Error ("Q_calloc: Not enough memory free; check disk space\n");
+	if (!p) {
+		Sys_Error("Q_calloc: Not enough memory free; check disk space\n");
+	}
+#endif
 
 	return p;
 }
 
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+void *Q_realloc_debug(void *p, size_t newsize, const char* file, int line, const char* label)
+#else
 void *Q_realloc(void *p, size_t newsize)
+#endif
 {
-	if(!(p = realloc(p, newsize)))
-		Sys_Error ("Q_realloc: Not enough memory free; check disk space\n");
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	ezquake_memory_block_t* block = MEMORY_BLOCK_FOR_PTR(p);
+
+	Sys_Printf("memory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+	Sys_Printf("memory,alloc(realloc),%u,%s,%d,%u,%s\n", allocation_number, file, line, newsize, label ? label : "");
+
+	block = p = realloc(block, newsize + sizeof(ezquake_memory_block_t));
+
+	strlcpy(block->filename, file, sizeof(block->filename));
+	block->line_number = line;
+	block->size = newsize;
+	block->allocation_number = allocation_number++;
+	if (label) {
+		strlcpy(block->label, label, sizeof(block->label));
+	}
+
+	return (void*)(((intptr_t)p) + sizeof(ezquake_memory_block_t));
+#else
+	if (!(p = realloc(p, newsize))) {
+		Sys_Error("Q_realloc: Not enough memory free; check disk space\n");
+	}
 
 	return p;
+#endif
 }
 
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+void Q_free_debug(void* ptr, const char* file, int line)
+{
+	if (ptr) {
+		ezquake_memory_block_t* block = MEMORY_BLOCK_FOR_PTR(ptr);
+
+		Sys_Printf("memory,free,%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+
+		free(block);
+	}
+}
+
+char *Q_strdup_debug(const char *src, const char* file, int line, const char* label)
+{
+	if (src) {
+		size_t size = strlen(src) + 1;
+		char *p = Q_malloc_debug(size, file, line, label);
+
+		if (!p) {
+			Sys_Error("Q_strdup: Not enough memory free; check disk space\n");
+		}
+
+		strlcpy(p, src, size);
+
+		return p;
+	}
+	return NULL;
+}
+
+#else
 char *Q_strdup(const char *src)
 {
 	if (src) {
@@ -930,6 +1035,7 @@ char *Q_strdup(const char *src)
 	}
 	return NULL;
 }
+#endif
 
 #ifdef _WIN64
 #undef strlen

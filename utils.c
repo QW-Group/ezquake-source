@@ -1212,31 +1212,24 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	// Check for an error compiling the regexp.
 	if(error)
 	{
-		if(re)
-		{
-			Q_free(re);
+		if (re) {
+			free(re);
 		}
 
 		return false;
 	}
 
 	// Check if we have a match.
-	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
-	{
-		if(re)
-		{
-			free(re);
-		}
+	if (re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0) {
+		free(re);
 
 		return true;
 	}
 
 	// Make sure we clean up.
-	if(re)
-	{
+	if (re) {
 		free(re);
 	}
-
 	return false;
 }
 

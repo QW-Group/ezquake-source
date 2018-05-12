@@ -32,12 +32,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <wctype.h>
 #include "quakedef.h"
-#ifndef snprintf
 #include "q_shared.h"
-#endif
 #include "utils.h"
 #include "pcre.h"
 #include "parser.h"
+
+#undef Q_malloc
+#undef Q_free
+#undef Q_strdup
+#define Q_malloc malloc
+#define Q_free free
+#define Q_strdup strdup
 
 #define GLOBAL /* */
 #define LOCAL static
@@ -130,7 +135,7 @@ LOCAL void SetError(EParser p, int error)
 LOCAL void FreeIfStr(const expr_val *e)
 {
 	if (e->type == ET_STR) {
-		free(e->s_val);
+		Q_free(e->s_val);
 	}
 }
 
@@ -162,7 +167,7 @@ LOCAL int Get_Bool(const expr_val e)
 	case ET_BOOL:return e.b_val;
 	case ET_STR: {
 		int retval = (*e.s_val) ? BOOL_TRUE : BOOL_FALSE;
-		free(e.s_val);
+		Q_free(e.s_val);
 		return retval;
 		}
 	default: assert(false); return 0;
@@ -181,7 +186,7 @@ GLOBAL expr_val Get_Expr_String(const char *v)
 {
 	expr_val t = {0};
 	t.type = ET_STR;
-	t.s_val = strdup(v);
+	t.s_val = Q_strdup(v);
 	return t;
 }
 
@@ -267,8 +272,8 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 	}
 	strlcpy(ret.s_val, e1.s_val, len);
 	strlcat(ret.s_val, e2.s_val, len);
-	free(e1.s_val);
-	free(e2.s_val);
+	Q_free(e1.s_val);
+	Q_free(e2.s_val);
 
 	return ret;
 }
@@ -439,7 +444,7 @@ LOCAL expr_val operator_strlen(EParser p, const expr_val arg1)
 	
 	if (arg1.type == ET_STR) {
 		ret.i_val = strlen(arg1.s_val);
-		free(arg1.s_val);
+		Q_free(arg1.s_val);
 	}
 	else {
 		SetError(p, ERR_TYPE_MISMATCH);
@@ -462,7 +467,7 @@ LOCAL expr_val operator_substr(EParser p, const expr_val arg1, const expr_val ar
 		if (pos >= 0 && len >= 0) {
 			if (len == 0 || pos >= arglen) {
 				ret.type = ET_STR;
-				ret.s_val = strdup("");
+				ret.s_val = Q_strdup("");
 			}
 			else { // len > 0 && pos < arglen
 				char *buf;
@@ -519,8 +524,8 @@ LOCAL expr_val operator_pos(EParser p, const expr_val arg1, const expr_val arg2)
 			ret.i_val = -1;
 		}
 
-		free(arg1.s_val);
-		free(arg2.s_val);
+		Q_free(arg1.s_val);
+		Q_free(arg2.s_val);
 	}
 	else {
 		SetError(p, ERR_TYPE_MISMATCH);
@@ -546,7 +551,7 @@ LOCAL expr_val operator_int(EParser p, const expr_val arg1)
 			break;
 		case ET_STR:
 			ret.i_val = atoi(arg1.s_val);
-			free(arg1.s_val);
+			Q_free(arg1.s_val);
 			break;
 		case ET_BOOL:
 			ret.i_val = arg1.b_val ? 1 : 0;
@@ -561,7 +566,7 @@ LOCAL expr_val operator_tobrown(EParser p, const expr_val arg1)
 	expr_val ret;
 
 	if (arg1.type == ET_STR) {
-		ret.s_val = strdup(arg1.s_val);
+		ret.s_val = Q_strdup(arg1.s_val);
 		ret.type = ET_STR;
 		CharsToBrown(ret.s_val, ret.s_val + strlen(ret.s_val));
 	}
@@ -579,7 +584,7 @@ LOCAL expr_val operator_towhite(EParser p, const expr_val arg1)
 	expr_val ret;
 
 	if (arg1.type == ET_STR) {
-		ret.s_val = strdup(arg1.s_val);
+		ret.s_val = Q_strdup(arg1.s_val);
 		ret.type = ET_STR;
 		CharsToWhite(ret.s_val, ret.s_val + strlen(ret.s_val));
 	}
@@ -614,10 +619,10 @@ LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2,
 	if (e1.type != ET_STR && e2.type != ET_STR)	{
 		SetError(p, ERR_INTERNAL);
 	} else if (e1.type != ET_STR) {
-		free(e2.s_val);
+		Q_free(e2.s_val);
 		SetError(p, ERR_TYPE_MISMATCH);
 	} else if (e2.type != ET_STR) {
-		free(e1.s_val);
+		Q_free(e1.s_val);
 		SetError(p, ERR_TYPE_MISMATCH);
 	} else {	// both STR
 		int a = strcmp(e1.s_val, e2.s_val);
@@ -629,8 +634,8 @@ LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2,
 		case CMPRESULT_ge: r.b_val = a >= 0; break;
 		case CMPRESULT_gt: r.b_val = a >  0; break;
 		}
-		free(e1.s_val);
-		free(e2.s_val);
+		Q_free(e1.s_val);
+		Q_free(e2.s_val);
 	}
 	return r;
 }
@@ -741,8 +746,8 @@ LOCAL expr_val operator_isin(EParser p, const expr_val e1, const expr_val e2)
 		r.b_val = strstr(s2.s_val, s1.s_val) ? BOOL_TRUE : BOOL_FALSE;
 	}
 
-	free(s1.s_val);
-	free(s2.s_val);
+	Q_free(s1.s_val);
+	Q_free(s2.s_val);
 	return r;
 }
 
@@ -782,8 +787,8 @@ LOCAL expr_val operator_reeq(EParser p, const expr_val e1, const expr_val e2)
 	} else
 		r.b_val = BOOL_FALSE;
 
-	free(e1.s_val);
-	free(e2.s_val);
+	Q_free(e1.s_val);
+	Q_free(e2.s_val);
 
 	pcre_free (regexp);
 	return r;
@@ -1456,7 +1461,7 @@ LOCAL int Expr_Run_Test_Core(const char *str, const expr_val expected_result, in
 					case ET_BOOL: return (expected_result.b_val == real_result.b_val) ? 0 : -1;
 					case ET_STR: {
 						int equal = (strcmp(expected_result.s_val, real_result.s_val) == 0);
-						free(real_result.s_val);
+						Q_free(real_result.s_val);
 
 						return (equal ? 0 : -1);
 					}
@@ -1511,7 +1516,7 @@ LOCAL int Expr_Run_Test_Str(const char *str, const char *val)
 {
 	expr_val eval = Get_Expr_String(val);
 	int res = Expr_Run_Test(str, eval, EXPR_EVAL_SUCCESS);
-	free(eval.s_val);
+	Q_free(eval.s_val);
 	return res;
 }
 

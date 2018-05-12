@@ -137,8 +137,8 @@ static void VFSMMAP_Close(vfsfile_t *file)
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
-	free(intfile->handle);
-	free(intfile);
+	Q_free(intfile->handle);
+	Q_free(intfile);
 }
 
 static void VFSMMAP_Flush(vfsfile_t *file) 

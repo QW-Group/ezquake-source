@@ -33,28 +33,29 @@ extern char *CL_QTV_GetCurrentStream(void);
 
 static size_t qtvlist_curl_callback(char *content, size_t size, size_t nmemb, void *userp)
 {
-        size_t realsize = nmemb * size;
-        struct str_buf *buf = (struct str_buf *)userp;
-        char *tmpstr = NULL;
+	size_t realsize = nmemb * size;
+	struct str_buf *buf = (struct str_buf *)userp;
+	char *tmpstr = NULL;
 
 	if (buf->len > (4*1024*1024)) { /* Some sort of sanity check */
 		Com_Printf("error: file too big\n");
 		return -1;
 	}
 
-        tmpstr = realloc(buf->str, buf->len + realsize + 1);
-        if (tmpstr == NULL) {
-                Com_Printf("error: Out of memory (realloc returned NULL)\n");
-                return 0;
-        } else {
-                buf->str = tmpstr;
-        }
+	tmpstr = realloc(buf->str, buf->len + realsize + 1);
+	if (tmpstr == NULL) {
+		Com_Printf("error: Out of memory (realloc returned NULL)\n");
+		return 0;
+	}
+	else {
+		buf->str = tmpstr;
+	}
 
-        memcpy(&(buf->str[buf->len]), content, realsize);
-        buf->len += realsize;
-        buf->str[buf->len] = 0;
+	memcpy(&(buf->str[buf->len]), content, realsize);
+	buf->len += realsize;
+	buf->str[buf->len] = 0;
 
-        return realsize;
+	return realsize;
 }
 
 /* Caller must free */
@@ -71,7 +72,7 @@ static char* qtvlist_get_jsondata(void)
 		return NULL;
 	}
 
-	buf.str = calloc(1, 128); /*  Initially set to 128 bytes, will grow if necessary */
+	buf.str = Q_calloc_untracked(1, 128); /*  Initially set to 128 bytes, will grow if necessary */
 
 	res += curl_easy_setopt(handle, CURLOPT_URL, qtv_api_url.string);
 	res += curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void*)&buf);
@@ -81,7 +82,7 @@ static char* qtvlist_get_jsondata(void)
 
 	if (res != CURLE_OK) {
 		Com_Printf("error: Failed to fetch qtv list JSON data\n");
-		Q_free(buf.str); /* Will set to NULL */
+		Q_free_untracked(buf.str); /* Will set to NULL */
 	}
 	
 	curl_easy_cleanup(handle);
@@ -427,7 +428,7 @@ static int qtvlist_update(void *unused)
 	}
 
 	qtvlist_json_load_and_verify_string(jsondata);
-	Q_free(jsondata);
+	Q_free_untracked(jsondata);
 
 	if (root == NULL) {
 		goto out;

@@ -328,7 +328,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		{
 			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
 			           ext, errbuf, r);
-			Q_free(preg);
+			Q_free_untracked(preg);
 			return dir;
 		}
 
@@ -336,7 +336,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
 		if (!all)
-			Q_free(preg);
+			Q_free_untracked(preg);
 		return dir;
 	}
 
@@ -355,7 +355,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
 				           ext, fd.cFileName, r);
 				if (!all)
-					Q_free(preg);
+					Q_free_untracked(preg);
 				return dir;
 			}
 		}
@@ -383,7 +383,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 
 	FindClose (h);
 	if (!all)
-		Q_free(preg);
+		Q_free_untracked(preg);
 
 	switch (sort_type)
 	{

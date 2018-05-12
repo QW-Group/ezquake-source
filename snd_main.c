@@ -197,7 +197,7 @@ static void S_SDL_Shutdown(void)
 	}
 
 	if (shw != NULL) {
-		free(shw);
+		Q_free(shw);
 		shw = NULL;
 	}
 }
