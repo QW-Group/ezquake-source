@@ -115,7 +115,9 @@ static void GL_DeleteExistingTextureArrays(qbool delete_textures)
 static qbool GL_SkipTexture(model_t* mod, texture_t* tx);
 
 static GLubyte* tempTextureBuffer;
+static GLubyte* emptyTextureBuffer;
 static GLuint tempTextureBufferSize;
+static GLuint emptyTextureBufferSize;
 
 /*
 static qbool AliasModelIsAnySize(model_t* mod)
@@ -160,10 +162,19 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 		tempTextureBuffer = Q_malloc(tempTextureBufferSize);
 	}
 
+	if (emptyTextureBufferSize < final_width * final_height * 4 * sizeof(GLubyte)) {
+		Q_free(emptyTextureBuffer);
+		emptyTextureBufferSize = final_width * final_height * 4 * sizeof(GLubyte);
+		emptyTextureBuffer = Q_malloc(emptyTextureBufferSize);
+	}
+
 	GL_GetTexImage(GL_TEXTURE0, tex2dname, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBufferSize, tempTextureBuffer);
 #ifdef GL_PARANOIA
 	GL_ProcessErrors(va("GL_AddTextureToArray(%u => %u)/glGetTexImage", tex2dname, arrayTexture));
 #endif
+
+	// Clear
+	GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, 0, 0, index, final_width, final_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, emptyTextureBuffer);
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
@@ -596,5 +607,6 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	}
 
 	Q_free(tempTextureBuffer);
-	tempTextureBufferSize = 0;
+	Q_free(emptyTextureBuffer);
+	emptyTextureBufferSize = tempTextureBufferSize = 0;
 }
