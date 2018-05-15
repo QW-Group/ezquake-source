@@ -135,6 +135,7 @@ void R_RenderView(void);		// must set r_refdef first
 void R_AddEfrags(entity_t *ent);
 void R_RemoveEfrags(entity_t *ent);
 void R_NewMap(qbool vid_restart);
+void R_NewMapPreLoad(void);
 
 // particles
 

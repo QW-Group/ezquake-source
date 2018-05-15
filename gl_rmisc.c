@@ -104,6 +104,15 @@ void R_InitTextures(void)
 	}
 }
 
+// Called after models have been downloaded but before they've been loaded into memory
+void R_NewMapPreLoad(void)
+{
+	R_ClearSkyTextures();
+
+	// Set this here so lightmaps & textures both use the same setting...
+	lightmode = gl_lightmode.integer ? 2 : 0;
+}
+
 void R_NewMap(qbool vid_restart)
 {
 	int	i, waterline;
@@ -112,8 +121,6 @@ void R_NewMap(qbool vid_restart)
 	extern void HUD_NewRadarMap(void); // hud_common.c
 
 	R_SetSky (r_skyname.string);
-
-	lightmode = gl_lightmode.integer ? 2 : 0;
 
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++) {
