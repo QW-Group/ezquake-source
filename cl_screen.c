@@ -349,12 +349,13 @@ void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 	else if (newfov < 10)
 		newfov = 10;
 
-	if (newfov == scr_fov.value) {
+	if (newfov == scr_fov.value && newfov == default_fov.value) {
 		*cancel = true;
 		return;
 	}
 
 	if (cbuf_current != &cbuf_svc) {
+		Cvar_SetValue (&default_fov, newfov);
 		if (concussioned && !cls.demoplayback) {
 			*cancel = true;
 			return;
