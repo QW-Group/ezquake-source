@@ -341,7 +341,7 @@ void Cvar_Register (cvar_t *var)
 	// we already register cvar, warn about it
 	if (old && !(old->flags & CVAR_USER_CREATED))
 	{
-		// allow re-register lacthed cvar
+		// allow re-register latched cvar
 		if (old->flags & CVAR_LATCH)
 		{
 			// if we have a latched string, take that value now

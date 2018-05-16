@@ -110,30 +110,38 @@ qbool GL_Framebuffer2DSwitch(void)
 	return false;
 }
 
+#define POST_PROCESS_PALETTE    1
+#define POST_PROCESS_3DONLY     2
+
 // If this returns false then the framebuffer will be blitted instead
 static qbool GLM_CompilePostProcessProgram(void)
 {
-	if (vid_framebuffer.integer == 1 && !vid_framebuffer_palette.integer) {
+	extern cvar_t vid_framebuffer_blit;
+	int post_process_flags =
+		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
+		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0);
+
+	if (!post_process_flags && vid_framebuffer_blit.integer) {
 		// Screen-wide framebuffer, so we can just blit if turned off
 		return false;
 	}
 
-	if (GLM_ProgramRecompileNeeded(&post_process_program, vid_framebuffer_palette.integer)) {
+	if (GLM_ProgramRecompileNeeded(&post_process_program, post_process_flags)) {
 		static char included_definitions[512];
 		GL_VFDeclare(post_process_screen);
 
 		memset(included_definitions, 0, sizeof(included_definitions));
-		if (vid_framebuffer_palette.integer) {
+		if (post_process_flags & POST_PROCESS_PALETTE) {
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
 		}
-		if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+		if (post_process_flags & POST_PROCESS_3DONLY) {
 			strlcat(included_definitions, "#define EZ_USE_OVERLAY\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image
 		GLM_CreateVFProgramWithInclude("post-process-screen", GL_VFParams(post_process_screen), &post_process_program, included_definitions);
 
-		post_process_program.custom_options = vid_framebuffer_palette.integer;
+		post_process_program.custom_options = post_process_flags;
 	}
 
 	post_process_program.uniforms_found = true;

@@ -209,10 +209,13 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 	GL_Disable(GL_DEPTH_TEST);
 	GL_BindVertexArray(&imageVAO);
 	if (GL_TextureReferenceIsValid(texture)) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
-			// Mixed, bind a second texture unit for GL_NEAREST
-			GL_EnsureTextureUnitBound(GL_TEXTURE1, texture);
+			texture_ref textures[] = { texture, texture };
+
+			GL_BindTextures(0, 2, textures);
+		}
+		else {
+			GL_EnsureTextureUnitBound(GL_TEXTURE0, texture);
 		}
 	}
 #ifdef HUD_IMAGE_GEOMETRY_SHADER

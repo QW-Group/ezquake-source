@@ -170,11 +170,12 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
-cvar_t vid_framebuffer            = {"vid_framebuffer",            "0",       CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
-cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
-cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0",       CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
-cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1",       CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
-cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0"};
+cvar_t vid_framebuffer            = {"vid_framebuffer",            "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
+cvar_t vid_framebuffer_blit       = {"vid_framebuffer_blit",       "0",       CVAR_NO_RESET };
+cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1",       CVAR_NO_RESET, conres_changed_callback };
+cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0",       CVAR_NO_RESET | CVAR_LATCH };
 
 //
 // function declaration
@@ -820,9 +821,6 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_renderer);
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
-	Cvar_Register(&vid_framebuffer_width);
-	Cvar_Register(&vid_framebuffer_height);
-	Cvar_Register(&vid_framebuffer_scale);
 	Cvar_Register(&vid_framebuffer_palette);
 
 #ifdef X11_GAMMA_WORKAROUND
@@ -850,6 +848,11 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_flashonactivity);
 	Cvar_Register(&r_showextensions);
 	Cvar_Register(&vid_win_displayNumber);
+
+	Cvar_Register(&vid_framebuffer_blit);
+	Cvar_Register(&vid_framebuffer_width);
+	Cvar_Register(&vid_framebuffer_height);
+	Cvar_Register(&vid_framebuffer_scale);
 
 	Cvar_ResetCurrentGroup();
 }

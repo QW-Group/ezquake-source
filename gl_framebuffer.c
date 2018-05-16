@@ -355,18 +355,22 @@ void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destinatio
 	GLint srcSize[2];
 	GLint destTL[2] = { 0, 0 };
 	GLint destSize[2];
+	GLenum filter = GL_NEAREST;
 
 	srcSize[0] = GL_FramebufferReferenceIsValid(source) ? GL_FrameBufferWidth(source) : glConfig.vidWidth;
 	srcSize[1] = GL_FramebufferReferenceIsValid(source) ? GL_FrameBufferHeight(source) : glConfig.vidHeight;
 	destSize[0] = GL_FramebufferReferenceIsValid(destination) ? GL_FrameBufferWidth(destination) : glConfig.vidWidth;
 	destSize[1] = GL_FramebufferReferenceIsValid(destination) ? GL_FrameBufferHeight(destination) : glConfig.vidHeight;
+	if (srcSize[0] != destSize[0] || srcSize[1] != destSize[1]) {
+		filter = GL_LINEAR;
+	}
 
 	if (qglBlitNamedFramebuffer) {
 		qglBlitNamedFramebuffer(
 			framebuffer_data[source.index].glref, framebuffer_data[destination.index].glref,
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
-			GL_COLOR_BUFFER_BIT, GL_LINEAR
+			GL_COLOR_BUFFER_BIT, filter
 		);
 	}
 	else {
@@ -376,7 +380,7 @@ void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destinatio
 		qglBlitFramebuffer(
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
-			GL_COLOR_BUFFER_BIT, GL_LINEAR
+			GL_COLOR_BUFFER_BIT, filter
 		);
 	}
 }
