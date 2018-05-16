@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef  __APPLE__
 #include "tr_types.h"
 #endif
+#include "gl_sky.h"
 
 static texture_ref GL_GenerateShellTexture(void)
 {

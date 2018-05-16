@@ -28,10 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096
 //#define ATLAS_CHUNK 64
 
+typedef struct deleteable_texture_s {
+	texture_ref original;
+	qbool moved_to_atlas;
+} deleteable_texture_t;
+
 static byte buffer[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
 static byte atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
 static byte prev_atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
-static texture_ref atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS] = { { 0 } };
+static deleteable_texture_t atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS];
 static int atlas_allocated[MAXIMUM_ATLAS_TEXTURE_WIDTH];
 static int atlas_delete_count = 0;
 static int atlas_texture_width = 0;
@@ -54,7 +59,19 @@ static void AddToDeleteList(mpic_t* src)
 {
 	if (src->sl == 0 && src->tl == 0 && src->th == 1 && src->sh == 1) {
 		if (atlas_delete_count < sizeof(atlas_deletable_textures) / sizeof(atlas_deletable_textures[0])) {
-			atlas_deletable_textures[atlas_delete_count++] = src->texnum;
+			atlas_deletable_textures[atlas_delete_count].original = src->texnum;
+			atlas_deletable_textures[atlas_delete_count].moved_to_atlas = false;
+			atlas_delete_count++;
+		}
+	}
+}
+
+static void ConfirmDeleteTexture(texture_ref tex)
+{
+	int i;
+	for (i = 0; i < atlas_delete_count; ++i) {
+		if (GL_TextureReferenceEqual(atlas_deletable_textures[i].original, tex)) {
+			atlas_deletable_textures[i].moved_to_atlas = true;
 		}
 	}
 }
@@ -63,7 +80,9 @@ static void DeleteOldTextures(void)
 {
 	int i;
 	for (i = 0; i < atlas_delete_count; ++i) {
-		GL_DeleteTexture(&atlas_deletable_textures[i]);
+		if (atlas_deletable_textures[i].moved_to_atlas) {
+			GL_DeleteTexture(&atlas_deletable_textures[i].original);
+		}
 	}
 }
 
@@ -417,7 +436,10 @@ void CachePics_CreateAtlas(void)
 	}
 
 	for (cur = sized_list; cur; cur = cur->size_order) {
-		CachePics_AddToAtlas(cur->data.pic);
+		texture_ref original = cur->data.pic->texnum;
+		if (CachePics_AddToAtlas(cur->data.pic) >= 0) {
+			ConfirmDeleteTexture(original);
+		}
 	}
 	CachePics_AllocateSolidTexture();
 
