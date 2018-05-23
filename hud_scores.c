@@ -127,6 +127,10 @@ void HUD_Sort_Scoreboard(int flags)
 
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			if (cl.players[i].name[0] && !cl.players[i].spectator) {
+				if (cl.players[i].frags == 0 && cl.players[i].team[0] == '\0' && !strcmp(cl.players[i].name, "[ServeMe]")) {
+					continue;
+				}
+
 				// Find players team
 				for (team = 0; team < n_teams; team++) {
 					if (cl.teamplay && !strcmp(cl.players[i].team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
