@@ -12647,11 +12647,6 @@
         { "name": "true", "description": "Scoreboard will be centered" }
       ]
     },
-    "scr_scoreboard_death_color": {
-      "group-id": "47",
-      "desc": "Changes the color of the \"dths\" (deaths) column in your scoreboard when >0. Uses RGB values.",
-      "type": "string"
-    },
     "scr_scoreboard_drawtitle": {
       "group-id": "47",
       "type": "boolean",
@@ -12685,11 +12680,6 @@
         { "name": "false", "description": "When you overwrite team/enemy color it will use only those colors for skins" },
         { "name": "true", "description": "When you overwrite team/enemy color it will use only those colors for skins and scoreboard" }
       ]
-    },
-    "scr_scoreboard_kill_color": {
-      "group-id": "47",
-      "desc": "Changes the color of the \"kills\" column in your scoreboard when >0. Uses RGB values.",
-      "type": "string"
     },
     "scr_scoreboard_posx": {
       "group-id": "47",
@@ -12727,11 +12717,6 @@
         { "name": "false", "description": "Frag sort." },
         { "name": "true", "description": "Team sort." }
       ]
-    },
-    "scr_scoreboard_tk_color": {
-      "group-id": "47",
-      "desc": "Changes the color of the \"tks\" column in your scoreboard when >0. Uses RGB values.",
-      "type": "string"
     },
     "scr_showcrosshair": {
       "group-id": "40",
