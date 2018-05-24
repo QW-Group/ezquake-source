@@ -95,6 +95,11 @@ qbool GLM_LoadTextureManagementFunctions(void)
 	GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
 	GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
 
+	return all_available;
+}
+
+void GL_LoadTextureManagementFunctions(void)
+{
 	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 	GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 	GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
@@ -110,8 +115,6 @@ qbool GLM_LoadTextureManagementFunctions(void)
 	GL_LoadOptionalFunction(glTextureStorage2D);
 	GL_LoadOptionalFunction(glTextureSubImage2D);
 	GL_LoadOptionalFunction(glTextureSubImage3D);
-
-	return all_available;
 }
 
 void GL_TexSubImage3D(

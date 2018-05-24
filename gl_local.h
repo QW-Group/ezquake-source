@@ -384,6 +384,7 @@ void GL_Init (void);
 qbool GLM_LoadProgramFunctions(void);
 qbool GLM_LoadStateFunctions(void);
 qbool GLM_LoadTextureManagementFunctions(void);
+void GL_LoadTextureManagementFunctions(void);
 qbool GLM_LoadDrawFunctions(void);
 void GL_LoadDrawFunctions(void);
 void GL_InitialiseDebugging(void);

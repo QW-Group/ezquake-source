@@ -88,11 +88,19 @@ static void GL_CheckShaderExtensions(void)
 
 	if (GL_UseGLSL() && glConfig.majorVersion >= 2 && GL_BuffersSupported()) {
 		shaders_supported = GLM_LoadProgramFunctions();
-		shaders_supported &= GLM_LoadStateFunctions();
-		shaders_supported &= GLM_LoadTextureManagementFunctions();
-		shaders_supported &= GLM_LoadDrawFunctions();
 	}
 
+	if (!GLM_LoadStateFunctions()) {
+		shaders_supported = false;
+	}
+	if (!GLM_LoadTextureManagementFunctions()) {
+		shaders_supported = false;
+	}
+	if (!GLM_LoadDrawFunctions()) {
+		shaders_supported &= false;
+	}
+
+	GL_LoadTextureManagementFunctions();
 	GL_LoadDrawFunctions();
 	GL_InitialiseDebugging();
 
