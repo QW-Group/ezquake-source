@@ -26,7 +26,11 @@ static float max_num_glyph_width;
 #define FONT_TEXTURE_SIZE 1024
 charset_t proportional_fonts[MAX_CHARSETS];
 
-static cvar_t font_allcaps = { "font_allcaps", "0" };
+int Font_Load(const char* path);
+static void OnChange_font_facepath(cvar_t* cvar, char* newvalue, qbool* cancel);
+
+static cvar_t font_facepath                   = { "font_facepath", "", 0, OnChange_font_facepath };
+static cvar_t font_capitalize                 = { "font_capitalize", "0" };
 static cvar_t font_gradient_normal_color1     = { "font_gradient_normal_color1", "255 255 255", CVAR_COLOR };
 static cvar_t font_gradient_normal_color2     = { "font_gradient_normal_color2", "107 98 86", CVAR_COLOR };
 static cvar_t font_gradient_normal_percent    = { "font_gradient_normal_percent", "0.2" };
@@ -143,7 +147,18 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 }
 
-void FontCreate(int grouping, const char* path)
+static void FontClear(int grouping)
+{
+	charset_t* charset;
+
+	memset(glyphs, 0, sizeof(glyphs));
+	max_glyph_width = max_num_glyph_width = 0;
+
+	charset = &proportional_fonts[grouping];
+	memset(charset, 0, sizeof(*charset));
+}
+
+static qbool FontCreate(int grouping, const char* path)
 {
 	FT_Library library;
 	FT_Error error;
@@ -163,17 +178,17 @@ void FontCreate(int grouping, const char* path)
 	error = FT_Init_FreeType(&library);
 	if (error) {
 		Con_Printf("Error during freetype initialisation\n");
-		return;
+		return false;
 	}
 
 	error = FT_New_Face(library, path, 0, &face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Con_Printf("Font file found, but format is unsupported\n");
-		return;
+		return false;
 	}
 	else if (error) {
 		Con_Printf("Font file could not be opened\n");
-		return;
+		return false;
 	}
 
 	charset = &proportional_fonts[grouping];
@@ -219,7 +234,7 @@ void FontCreate(int grouping, const char* path)
 			continue;
 		}
 
-		if (font_allcaps.integer && ch >= 'a' && ch <= 'z') {
+		if (font_capitalize.integer && ch >= 'a' && ch <= 'z') {
 			continue;
 		}
 
@@ -247,7 +262,7 @@ void FontCreate(int grouping, const char* path)
 			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, &standard_gradient);
 			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, &brown_gradient);
 
-			if (font_allcaps.integer && ch >= 'A' && ch <= 'Z') {
+			if (font_capitalize.integer && ch >= 'A' && ch <= 'Z') {
 				FontLoadBitmap(ch + ('a' - 'A'), face, base_font_width, base_font_height, temp_buffer + offsetCaps, &standard_gradient);
 				FontLoadBitmap(ch + ('a' - 'A') + 128, face, base_font_width, base_font_height, temp_buffer + offset128 + offsetCaps, &brown_gradient);
 			}
@@ -314,6 +329,8 @@ void FontCreate(int grouping, const char* path)
 	Q_free(full_buffer);
 
 	CachePics_MarkAtlasDirty();
+
+	return true;
 }
 
 float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
@@ -370,10 +387,40 @@ int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proport
 	return ceil((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale);
 }
 
+static void OnChange_font_facepath(cvar_t* cvar, char* newvalue, qbool* cancel)
+{
+	if (newvalue && !newvalue[0]) {
+		FontClear(0);
+		*cancel = false;
+	}
+	else {
+		*cancel = !FontCreate(0, Cmd_Argv(1));
+	}
+}
+
 void Draw_LoadFont_f(void)
 {
-	if (Cmd_Argc() > 1) {
-		FontCreate(0, Cmd_Argv(1));
+	switch (Cmd_Argc()) {
+		case 1:
+			if (font_facepath.string[0]) {
+				Com_Printf("Current proportional font is \"%s\"\n", font_facepath.string);
+				Com_Printf("To clear, use \"%s none\"\n", Cmd_Argv(0));
+			}
+			else {
+				Com_Printf("No proportional font loaded\n");
+			}
+			break;
+		case 2:
+			if (!strcmp(Cmd_Argv(1), "none")) {
+				Cvar_Set(&font_facepath, "");
+			}
+			else {
+				Cvar_Set(&font_facepath, Cmd_Argv(1));
+			}
+			break;
+		default:
+			Com_Printf("Usage: \"%s <path>\" or \"%s none\"\n", Cmd_Argv(0), Cmd_Argv(0));
+			break;
 	}
 }
 
@@ -381,7 +428,8 @@ void FontInitialise(void)
 {
 	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
 
-	Cvar_Register(&font_allcaps);
+	Cvar_Register(&font_facepath);
+	Cvar_Register(&font_capitalize);
 	Cvar_Register(&font_gradient_normal_color1);
 	Cvar_Register(&font_gradient_normal_color2);
 	Cvar_Register(&font_gradient_normal_percent);
