@@ -188,10 +188,13 @@ void GL_TexStorage2D(
 		}
 		else {
 			int level;
+			GLsizei level_width = width;
+			GLsizei level_height = height;
+
 			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				width = max(1, width / 2);
-				height = max(1, height / 2);
+				glTexImage2D(target, level, internalformat, level_width, level_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				level_width = max(1, level_width / 2);
+				level_height = max(1, level_height / 2);
 			}
 		}
 	}
