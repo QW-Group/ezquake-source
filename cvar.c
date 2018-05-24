@@ -640,7 +640,7 @@ static void Cvar_CvarEdit_f(void)
 		s = Q_strdup(cvar->string);
 	}
 
-	snprintf(final_string, sizeof(final_string), "\"%s\" \"%s\"", Cmd_Argv(1), s);
+	snprintf(final_string, sizeof(final_string), "/%s \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy(key_lines[edit_line] + 1, str2wcs(final_string), strlen(final_string) * sizeof(wchar));
 	Q_free(s);
