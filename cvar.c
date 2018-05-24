@@ -618,6 +618,34 @@ void Cvar_CvarList_re_f (void)
 	Cvar_CvarList (true);
 }
 
+static void Cvar_CvarEdit_f(void)
+{
+	cvar_t* cvar;
+	char *s, final_string[MAXCMDLINE - 1];
+	int c;
+
+	c = Cmd_Argc();
+	if (c == 1) {
+		Com_Printf("%s <name> : modify a cvar\n", Cmd_Argv(0));
+		Com_Printf("cvarlist : list all cvars\n");
+		return;
+	}
+
+	cvar = Cvar_Find(Cmd_Argv(1));
+	if (cvar == NULL) {
+		Com_Printf("\"%s\" not a valid cvar\n", Cmd_Argv(1));
+		return;
+	}
+	else {
+		s = Q_strdup(cvar->string);
+	}
+
+	snprintf(final_string, sizeof(final_string), "\"%s\" \"%s\"", Cmd_Argv(1), s);
+	Key_ClearTyping();
+	memcpy(key_lines[edit_line] + 1, str2wcs(final_string), strlen(final_string) * sizeof(wchar));
+	Q_free(s);
+}
+
 cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 {
 	cvar_t *v;
@@ -1485,6 +1513,7 @@ void Cvar_CleanUpTempVars (void)
 void Cvar_Init (void)
 {
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
+	Cmd_AddCommand ("cvaredit", Cvar_CvarEdit_f);
 	Cmd_AddCommand ("cvarlist_re", Cvar_CvarList_re_f);
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
