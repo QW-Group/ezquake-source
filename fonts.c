@@ -22,36 +22,45 @@ typedef struct glyphinfo_s {
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
-static qbool outline_fonts = true;
-static int outline_width = 2;
 
 #define FONT_TEXTURE_SIZE 1024
 charset_t proportional_fonts[MAX_CHARSETS];
 
+static cvar_t font_allcaps = { "font_allcaps", "0" };
+static cvar_t font_gradient_normal_color1     = { "font_gradient_normal_color1", "255 255 255", CVAR_COLOR };
+static cvar_t font_gradient_normal_color2     = { "font_gradient_normal_color2", "107 98 86", CVAR_COLOR };
+static cvar_t font_gradient_normal_percent    = { "font_gradient_normal_percent", "0.2" };
+static cvar_t font_gradient_alternate_color1  = { "font_gradient_alternate_color1", "175 120 52", CVAR_COLOR };
+static cvar_t font_gradient_alternate_color2  = { "font_gradient_alternate_color2", "75 52 22", CVAR_COLOR };
+static cvar_t font_gradient_alternate_percent = { "font_gradient_alternate_percent", "0.4" };
+static cvar_t font_gradient_number_color1     = { "font_gradient_number_color1", "255 255 150", CVAR_COLOR };
+static cvar_t font_gradient_number_color2     = { "font_gradient_number_color2", "218 132 7", CVAR_COLOR };
+static cvar_t font_gradient_number_percent    = { "font_gradient_number_percent", "0.2" };
+static cvar_t font_outline                    = { "font_outline_width", "2" };
+
 typedef struct gradient_def_s {
-	byte top_color[3];
-	byte bottom_color[3];
-	float gradient_start;
+	cvar_t* top_color;
+	cvar_t* bottom_color;
+	cvar_t* gradient_start;
 } gradient_def_t;
 
-static gradient_def_t standard_gradient = { { 255, 255, 255 }, { 107, 98, 86 }, 0.2f };
-static gradient_def_t brown_gradient = { { 120, 82, 35 },{ 75, 52, 22 }, 0.0f };
-static gradient_def_t numbers_gradient = { { 255, 255, 150 }, { 218, 132, 7 }, 0.2f };
-
-static cvar_t font_allcaps = { "font_allcaps", "0" };
+static gradient_def_t standard_gradient = { &font_gradient_normal_color1, &font_gradient_normal_color2, &font_gradient_normal_percent };
+static gradient_def_t brown_gradient    = { &font_gradient_alternate_color1, &font_gradient_alternate_color2, &font_gradient_alternate_percent };
+static gradient_def_t numbers_gradient  = { &font_gradient_number_color1, &font_gradient_number_color2, &font_gradient_number_percent };
 
 static void FontSetColor(byte* color, byte alpha, gradient_def_t* gradient, float relative_y)
 {
 	float base_color[3];
+	float grad_start = bound(0, gradient->gradient_start->value, 1);
 
-	if (relative_y <= gradient->gradient_start) {
-		VectorScale(gradient->top_color, 1.0f / 255, base_color);
+	if (relative_y <= grad_start) {
+		VectorScale(gradient->top_color->color, 1.0f / 255, base_color);
 	}
 	else {
-		float mix = (relative_y - gradient->gradient_start) / (1.0f - gradient->gradient_start);
+		float mix = (relative_y - grad_start) / (1.0f - grad_start);
 
-		VectorScale(gradient->top_color, (1.0f - mix) / 255.0f, base_color);
-		VectorMA(base_color, mix / 255.0f, gradient->bottom_color, base_color);
+		VectorScale(gradient->top_color->color, (1.0f - mix) / 255.0f, base_color);
+		VectorMA(base_color, mix / 255.0f, gradient->bottom_color->color, base_color);
 	}
 
 	color[0] = min(1, base_color[0]) * alpha;
@@ -69,7 +78,7 @@ static void SimpleOutline(byte* image_buffer, int base_font_width, int base_font
 	int x, y;
 	int xdiff, ydiff;
 	byte* font_buffer = Q_malloc(base_font_width * base_font_height * 4);
-	const int search_distance = outline_width;
+	const int search_distance = bound(0, font_outline.integer, 4);
 
 	memcpy(font_buffer, image_buffer, base_font_width * base_font_height * 4);
 	for (x = 0; x < base_font_width; ++x) {
@@ -104,12 +113,13 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 {
 	byte* font_buffer;
 	int x, y;
+	int outline = bound(0, font_outline.integer, 4);
 
 	glyphs[ch].loaded = true;
-	glyphs[ch].advance[0] = ((face->glyph->metrics.horiAdvance / 64.0f) + (outline_fonts ? 2 * outline_width : 0)) / (base_font_width / 2);
-	glyphs[ch].advance[1] = ((face->glyph->metrics.vertAdvance / 64.0f) + (outline_fonts ? 2 * outline_width : 0)) / (base_font_height / 2);
-	glyphs[ch].offsets[0] = face->glyph->metrics.horiBearingX / 64.0f - (outline_fonts ? outline_width : 0);
-	glyphs[ch].offsets[1] = face->glyph->metrics.horiBearingY / 64.0f - (outline_fonts ? outline_width : 0);
+	glyphs[ch].advance[0] = ((face->glyph->metrics.horiAdvance / 64.0f) + (2 * outline)) / (base_font_width / 2);
+	glyphs[ch].advance[1] = ((face->glyph->metrics.vertAdvance / 64.0f) + (2 * outline)) / (base_font_height / 2);
+	glyphs[ch].offsets[0] = face->glyph->metrics.horiBearingX / 64.0f - (outline);
+	glyphs[ch].offsets[1] = face->glyph->metrics.horiBearingY / 64.0f - (outline);
 	glyphs[ch].sizes[0] = face->glyph->bitmap.width;
 	glyphs[ch].sizes[1] = face->glyph->bitmap.rows;
 
@@ -119,16 +129,16 @@ static void FontLoadBitmap(int ch, FT_Face face, int base_font_width, int base_f
 	}
 
 	font_buffer = face->glyph->bitmap.buffer;
-	for (y = 0; y < face->glyph->bitmap.rows && y + outline_width < base_font_height / 2; ++y, font_buffer += face->glyph->bitmap.pitch) {
-		for (x = 0; x < face->glyph->bitmap.width && x + outline_width < base_font_width / 2; ++x) {
-			int base = (x + outline_width + (y + outline_width) * base_font_width) * 4;
+	for (y = 0; y < face->glyph->bitmap.rows && y + outline < base_font_height - 4; ++y, font_buffer += face->glyph->bitmap.pitch) {
+		for (x = 0; x < face->glyph->bitmap.width && x + outline < base_font_width - 4; ++x) {
+			int base = (x + outline + (y + outline) * base_font_width) * 4;
 			byte alpha = font_buffer[x];
 
 			FontSetColor(&image_buffer[base], alpha, gradient, y * 1.0f / face->glyph->bitmap.rows);
 		}
 	}
 
-	if (outline_fonts) {
+	if (outline) {
 		SimpleOutline(image_buffer, base_font_width, base_font_height);
 	}
 }
@@ -147,8 +157,8 @@ void FontCreate(int grouping, const char* path)
 	int texture_width, texture_height;
 	int base_font_width, base_font_height;
 	int baseline_offset;
-	qbool draw_outline = outline_fonts;
 	charset_t* charset;
+	int outline_width = bound(0, font_outline.integer, 4);
 
 	error = FT_Init_FreeType(&library);
 	if (error) {
@@ -269,6 +279,8 @@ void FontCreate(int grouping, const char* path)
 		int xbase = (ch % 16) * base_font_width;
 		int ybase = (ch / 16) * base_font_height;
 		int yoffset = max(0, baseline_offset - glyphs[ch].offsets[1]);
+		float width = max(base_font_width / 2, glyphs[ch].sizes[0]);
+		float height = max(base_font_height / 2, glyphs[ch].sizes[1]);
 
 		if (!glyphs[ch].loaded) {
 			continue;
@@ -282,12 +294,12 @@ void FontCreate(int grouping, const char* path)
 		glyphs[ch].offsets[0] /= (base_font_width / 2);
 		glyphs[ch].offsets[1] /= (base_font_height / 2);
 
-		charset->glyphs[ch].width = base_font_width / 2;
-		charset->glyphs[ch].height = base_font_height / 2;
+		charset->glyphs[ch].width = width;
+		charset->glyphs[ch].height = height;
 		charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
 		charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
-		charset->glyphs[ch].sh = charset->glyphs[ch].sl + 0.5f * base_font_width / texture_width;
-		charset->glyphs[ch].th = charset->glyphs[ch].tl + 0.5f * base_font_height / texture_height;
+		charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
+		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
 		charset->glyphs[ch].texnum = charset->master;
 
 		GL_TexSubImage2D(
@@ -368,7 +380,18 @@ void Draw_LoadFont_f(void)
 void FontInitialise(void)
 {
 	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
+
 	Cvar_Register(&font_allcaps);
+	Cvar_Register(&font_gradient_normal_color1);
+	Cvar_Register(&font_gradient_normal_color2);
+	Cvar_Register(&font_gradient_normal_percent);
+	Cvar_Register(&font_gradient_alternate_color1);
+	Cvar_Register(&font_gradient_alternate_color2);
+	Cvar_Register(&font_gradient_alternate_percent);
+	Cvar_Register(&font_gradient_number_color1);
+	Cvar_Register(&font_gradient_number_color2);
+	Cvar_Register(&font_gradient_number_percent);
+	Cvar_Register(&font_outline);
 }
 
 #endif // EZ_FREETYPE_SUPPORT
