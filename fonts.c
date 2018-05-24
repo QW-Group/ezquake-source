@@ -38,6 +38,8 @@ static gradient_def_t standard_gradient = { { 255, 255, 255 }, { 107, 98, 86 }, 
 static gradient_def_t brown_gradient = { { 120, 82, 35 },{ 75, 52, 22 }, 0.0f };
 static gradient_def_t numbers_gradient = { { 255, 255, 150 }, { 218, 132, 7 }, 0.2f };
 
+static cvar_t font_allcaps = { "font_allcaps", "0" };
+
 static void FontSetColor(byte* color, byte alpha, gradient_def_t* gradient, float relative_y)
 {
 	float base_color[3];
@@ -201,8 +203,13 @@ void FontCreate(int grouping, const char* path)
 	for (ch = 18; ch < 128; ++ch, temp_buffer += 4 * base_font_width * base_font_height) {
 		FT_UInt glyph_index;
 		int offset128 = 4 * base_font_width * base_font_height * 128;
+		int offsetCaps = 4 * base_font_width * base_font_height * ('a' - 'A');
 
 		if (ch >= 28 && ch < 32) {
+			continue;
+		}
+
+		if (font_allcaps.integer && ch >= 'a' && ch <= 'z') {
 			continue;
 		}
 
@@ -229,6 +236,11 @@ void FontCreate(int grouping, const char* path)
 		else {
 			FontLoadBitmap(ch, face, base_font_width, base_font_height, temp_buffer, &standard_gradient);
 			FontLoadBitmap(ch + 128, face, base_font_width, base_font_height, temp_buffer + offset128, &brown_gradient);
+
+			if (font_allcaps.integer && ch >= 'A' && ch <= 'Z') {
+				FontLoadBitmap(ch + ('a' - 'A'), face, base_font_width, base_font_height, temp_buffer + offsetCaps, &standard_gradient);
+				FontLoadBitmap(ch + ('a' - 'A') + 128, face, base_font_width, base_font_height, temp_buffer + offset128 + offsetCaps, &brown_gradient);
+			}
 		}
 	}
 	FT_Done_FreeType(library);
@@ -356,6 +368,7 @@ void Draw_LoadFont_f(void)
 void FontInitialise(void)
 {
 	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
+	Cvar_Register(&font_allcaps);
 }
 
 #endif // EZ_FREETYPE_SUPPORT
