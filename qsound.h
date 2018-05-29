@@ -123,8 +123,6 @@ extern unsigned int	total_channels;
 extern qbool		snd_initialized;
 extern qbool		snd_started;
 
-extern int		snd_blocked;
-
 extern int		soundtime;
 
 extern cvar_t		s_loadas8bit;

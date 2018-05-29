@@ -2871,6 +2871,7 @@ void CL_ProcessPrint (int level, char* s0)
 				return;
 			}
 
+			// Allow customisation of sounds...
 			if (cl.players[client].spectator)
 			{
 				chat_sound_file = con_sound_spec_file.string;
@@ -2895,6 +2896,11 @@ void CL_ProcessPrint (int level, char* s0)
 					default:
 						break;
 				}
+			}
+
+			// ... but only when spec (players can still customise volume)
+			if (!cls.demoplayback && !cl.spectator) {
+				chat_sound_file = DEFAULT_CHAT_SOUND;
 			}
 		}
 

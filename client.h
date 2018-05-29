@@ -1058,3 +1058,5 @@ qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
 byte* Movie_TempBuffer(int width, int height);
 qbool Movie_BackgroundInitialise(void);
 void Movie_BackgroundShutdown(void);
+
+#define DEFAULT_CHAT_SOUND "misc/talk.wav"

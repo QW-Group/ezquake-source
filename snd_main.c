@@ -51,8 +51,6 @@ void S_Voip_RegisterCvars (void);
 channel_t	channels[MAX_CHANNELS] = { {0} };
 unsigned int	total_channels;
 
-int		snd_blocked = 0;
-
 qbool		snd_initialized = false;
 qbool		snd_started = false;
 
@@ -847,7 +845,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	static unsigned int printed_total = 0;
 	channel_t *ch, *combine;
 
-	if (!snd_initialized || !snd_started || snd_blocked > 0 || !shw)
+	if (!snd_initialized || !snd_started || !shw)
 		return;
 
 	S_LockMixer();
@@ -955,8 +953,9 @@ static void S_Update_(void)
 	unsigned int endtime;
 	int samps;
 
-	if (!shw || (snd_blocked > 0))
+	if (!shw) {
 		return;
+	}
 
 	// Updates soundtime
 	GetSoundtime();

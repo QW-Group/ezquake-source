@@ -147,11 +147,17 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 
 	str = wcs2str (wstr);
  
-	if (!*str)
+	if (!*str) {
 		return false;
+	}
  
-	if (!tp_soundtrigger.string[0])
+	if (!tp_soundtrigger.string[0]) {
 		return false;
+	}
+
+	if (Rulesets_RestrictTriggers()) {
+		return false;
+	}
  
 	for (i = strlen (str) - 1; i; i--)	{
 		if (str[i] != 0x0A && str[i] != 0x0D)
