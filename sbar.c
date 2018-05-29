@@ -1433,7 +1433,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 		}
 
-		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		x += 5 * FONT_WIDTH;
 
 		// draw spectator
