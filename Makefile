@@ -137,13 +137,18 @@ ifdef SPEEX_LIBS
 endif
 LIBS_c += $(SPEEX_LIBS)
 
-FREETYPE_CFLAGS ?= $(shell pkg-config freetype2 --cflags)
-FREETYPE_LIBS ?= $(shell pkg-config freetype2 --libs)
-ifdef FREETYPE_LIBS
-	CFLAGS_c += -DEZ_FREETYPE_SUPPORT
+ifndef CONFIG_WINDOWS
+    ifeq ($(shell pkg-config --exists freetype2 && echo 1),1)
+        FREETYPE_CFLAGS ?= $(shell pkg-config freetype2 --cflags)
+        FREETYPE_LIBS ?= $(shell pkg-config freetype2 --libs)
+    endif
 endif
-LIBS_c += $(FREETYPE_LIBS)
-CFLAGS += $(FREETYPE_CFLAGS)
+
+ifdef FREETYPE_LIBS
+    CFLAGS_c += -DEZ_FREETYPE_SUPPORT
+    LIBS_c += $(FREETYPE_LIBS)
+    CFLAGS += $(FREETYPE_CFLAGS)
+endif
 
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
@@ -312,9 +317,7 @@ OBJS_c := \
     vx_tracker.o \
     wad.o \
     xsd.o \
-    xsd_command.o \
     xsd_document.o \
-    xsd_variable.o \
     collision.o \
     gl_draw.o \
     gl_draw_charset.o \
