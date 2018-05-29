@@ -114,7 +114,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 		return;
 
 	// force serverinfo "0" vars to be "".
-	if ((var->flags & CVAR_SERVERINFO) && !strcmp(value, "0")) {
+	if ((var->flags & CVAR_SERVERINFO) && !strcmp(value, "0") && strcmp(var->name, "deathmatch")) {
 		value = "";
 	}
 

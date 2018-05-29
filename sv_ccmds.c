@@ -1368,8 +1368,10 @@ void SV_SendServerInfoChange(char *key, char *value)
 void SV_ServerinfoChanged (char *key, char *string)
 {
 	// force serverinfo "0" vars to be "".
-	if (!strcmp(string, "0"))
+	// meag: deathmatch is a special case as clients default 'not in serverinfo' to non-coop
+	if (!strcmp(string, "0") && strcmp(key, "deathmatch")) {
 		string = "";
+	}
 
 	if (strcmp(string, Info_ValueForKey (svs.info, key)))
 	{
