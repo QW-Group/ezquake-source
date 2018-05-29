@@ -571,7 +571,7 @@ float Draw_StringLengthW(const wchar *text, int length, float scale, qbool propo
 {
 	if (!proportional) {
 		if (length < 0) {
-			length = wcslen(text);
+			length = qwcslen(text);
 		}
 		return length * scale * 8;
 	}
