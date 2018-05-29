@@ -375,10 +375,10 @@ qbool MP3_WINAMP_GetOutputtime(int *elapsed, int *total)
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return false;
 	
-	if (!(ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GETOUTPUTTIME)) == -1)
+	if ((ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GETOUTPUTTIME)) == -1)
 		return false;
 	
-	if (!(ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME)) == -1)
+	if ((ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME)) == -1)
 		return false;
 
 	*elapsed = ret1 / 1000;
@@ -394,10 +394,10 @@ qbool MP3_WINAMP_GetToggleState(int *shuffle, int *repeat)
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return false;
 
-	if (!(ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_SHUFFLE)) == -1)
+	if ((ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_SHUFFLE)) == -1)
 		return false;
 
-	if (!(ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_REPEAT)) == -1)
+	if ((ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_REPEAT)) == -1)
 		return false;
 
 	*shuffle = ret1;
