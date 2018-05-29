@@ -88,7 +88,6 @@ static void SimpleOutline(byte* image_buffer, int base_font_width, int base_font
 	for (x = 0; x < base_font_width; ++x) {
 		for (y = 0; y < base_font_height; ++y) {
 			int base = (x + y * base_font_width) * 4;
-			float best_distance = -1;
 			int best_alpha = 0;
 
 			if (font_buffer[base + 3] == 255) {
@@ -166,8 +165,6 @@ static qbool FontCreate(int grouping, const char* path)
 	int ch;
 	byte* temp_buffer;
 	byte* full_buffer;
-	byte color_brown[4] = { 100, 64, 24, 255 };
-	byte color_numbers[4] = { 227, 224, 130, 255 };
 	int original_width, original_height, original_left, original_top;
 	int texture_width, texture_height;
 	int base_font_width, base_font_height;
