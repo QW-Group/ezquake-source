@@ -1656,10 +1656,10 @@ static void Sbar_TeamOverlay(void)
 	Draw_SStringAligned(x, y, "high", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
-	Draw_SStringAligned(x, y, "team", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
+	Draw_SStringAligned(x, y, "team", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
-	Draw_SStringAligned(x, y, (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS ? "score" : "total"), 1, 1, proportional, text_align_center, x + FONT_WIDTH * 5);
+	Draw_SStringAligned(x, y, (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS ? "score" : "total"), 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 5 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "players", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
