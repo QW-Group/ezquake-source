@@ -25,8 +25,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include <jansson.h>
-#include "expat.h"
-#include "xsd.h"
+
+typedef enum {
+	t_boolean,
+	t_enum,         // "value1, value2, value_wih_spaces"
+	t_integer,      // "min max"
+	t_float,        // "min max"
+	t_string,       // "max length"
+	t_unknown       // (missing from docs)
+} cvartype_t;
 
 enum {
 	helpdoc_variables,

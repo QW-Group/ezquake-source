@@ -33,8 +33,6 @@ xml_t;
 
 
 // include different document types handlers
-#include "xsd_variable.h"
-#include "xsd_command.h"
 #include "xsd_document.h"
 
 
