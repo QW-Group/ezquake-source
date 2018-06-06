@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
 #include "r_program.h"
+#include "r_renderer.h"
 
 void GLM_StateBeginAliasModelBatch(qbool translucent);
 void GLM_StateBeginAliasOutlineBatch(void);
@@ -596,7 +597,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
 		}
 		else if (instr->num_textures[i]) {
-			R_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
+			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
 		GL_MultiDrawArraysIndirect(

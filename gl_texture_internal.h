@@ -38,7 +38,6 @@ void GL_SelectTexture(GLenum target);
 
 void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
 
-void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* references);
 void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref* references, const char* identifier);
 void GL_TexStorage2D(texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);

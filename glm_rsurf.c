@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h"
 #include "r_buffers.h"
 #include "r_program.h"
+#include "r_renderer.h"
 
 #define GLM_DRAWCALL_INCREMENT 8
 
@@ -242,7 +243,7 @@ static void GL_StartWorldBatch(void)
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
 		std_textures[TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE] = alphaskytexture;
 	}
-	R_BindTextures(0, TEXTURE_UNIT_MATERIAL, std_textures);
+	renderer.TextureUnitMultiBind(0, TEXTURE_UNIT_MATERIAL, std_textures);
 }
 
 void GLM_EnterBatchedWorldRegion(void)
@@ -649,7 +650,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		}
 
 		// Bind texture units
-		R_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
 		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
 			if (drawcall->polygonOffsetSplit) {

@@ -106,8 +106,6 @@ int R_TextureDepth(texture_ref ref);
 void R_GenerateMipmapsIfNeeded(texture_ref ref);
 
 void R_TexturesInvalidateAllReferences(void);
-void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
-void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 qbool R_ExternalTexturesEnabled(qbool worldmodel);
 
@@ -142,17 +140,7 @@ typedef enum {
 	texture_magnification_count
 } texture_magnification_id;
 
-typedef enum {
-	texture_type_2d,
-	texture_type_2d_array,
-	texture_type_cubemap,
-	texture_type_count
-} r_texture_type_id;
-
 void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, texture_magnification_id mag_mode);
-void R_CreateTextures(r_texture_type_id type, int count, texture_ref* texture);
-void R_SetTextureCompression(qbool enabled);
-void R_TextureGet(texture_ref tex, int buffer_size, byte* buffer);
 void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS

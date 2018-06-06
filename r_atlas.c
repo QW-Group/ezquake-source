@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tr_types.h"
 #include "r_texture.h"
 #include "r_local.h"
+#include "r_renderer.h"
 
 #define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
 #define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096
@@ -188,7 +189,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = prev_atlas_texels;
 		}
 		else {
-			R_TextureGet(pic->texnum, ATLAS_SIZE_IN_BYTES, buffer);
+			renderer.TextureGet(pic->texnum, ATLAS_SIZE_IN_BYTES, buffer);
 
 			input_image = buffer;
 		}
@@ -290,7 +291,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	source = Q_malloc(texWidth * texHeight * 4);
 	target = Q_malloc(texWidth * texHeight * 4);
 
-	R_TextureGet(ibar->texnum, texWidth * texHeight * 4, source);
+	renderer.TextureGet(ibar->texnum, texWidth * texHeight * 4, source);
 	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
 		int num = i - WADPIC_SB_IBAR_AMMO1;
 		int y;
@@ -346,7 +347,7 @@ void CachePics_CreateAtlas(void)
 	atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	prev_atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	if (R_TextureReferenceIsValid(atlas_texnum)) {
-		R_TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels);
+		renderer.TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels);
 	}
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));

@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "image.h"
 #include "r_texture.h"
+#include "r_renderer.h"
 
 int anisotropy_ext = 0;
 
@@ -80,7 +81,9 @@ static qbool GL_InitialiseRenderer(void)
 
 static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel)
 {
-	R_SetTextureCompression(Q_atof(string));
+	if (renderer.TextureCompressionSet) {
+		renderer.TextureCompressionSet(Q_atof(string));
+	}
 }
 
 /************************************** GL INIT **************************************/

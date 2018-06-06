@@ -43,6 +43,12 @@ static void R_Stubs_NoOperation(void)
 #define GLM_TextureWrapModeClamp           GL_TextureWrapModeClamp
 #define GLM_TextureLabelSet                GL_TextureLabelSet
 #define GLM_TextureUnitBind                GL_EnsureTextureUnitBound
+#define GLM_TextureGet                     GL_TextureGet
+#define GLM_TextureCompressionSet          GL_TextureCompressionSet
+#define GLM_TextureCreate2D                GL_TextureCreate2D
+#define GLM_TextureUnitMultiBind           GL_TextureUnitMultiBind
+#define GLM_TexturesCreate                 GL_TexturesCreate
+#define GLM_TextureReplaceSubImageRGBA     GL_TextureReplaceSubImageRGBA
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

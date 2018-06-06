@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_local.h"
 #include "r_state.h"
 #include "r_program.h"
+#include "r_renderer.h"
 
 static qbool GLM_CompilePostProcessProgram(void);
 

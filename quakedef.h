@@ -54,4 +54,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+typedef enum {
+	texture_type_2d,
+	texture_type_2d_array,
+	texture_type_cubemap,
+	texture_type_count
+} r_texture_type_id;
+
 #endif /* !__QUAKEDEF_H__ */

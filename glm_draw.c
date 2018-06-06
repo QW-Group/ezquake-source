@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "glm_local.h"
 #include "r_program.h"
+#include "r_renderer.h"
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 static void GLM_CreateMultiImageProgram(void);
@@ -305,7 +306,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 		if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
 
-			R_BindTextures(0, 2, textures);
+			renderer.TextureUnitMultiBind(0, 2, textures);
 		}
 		else {
 			renderer.TextureUnitBind(0, texture);

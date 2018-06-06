@@ -598,7 +598,7 @@ void GL_InvalidateTextureReferences(GLuint texture)
 	}
 }
 
-void GL_BindTextures(int first, int count, texture_ref* textures)
+void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 {
 	int i;
 

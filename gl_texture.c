@@ -25,6 +25,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "image.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_renderer.h"
 #include "tr_types.h"
 #include "r_texture.h"
 #include "r_texture_internal.h"
@@ -107,7 +108,7 @@ void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref*
 	}
 }
 
-void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* textures)
+void GL_TexturesCreate(r_texture_type_id type, int n, texture_ref* textures)
 {
 	GL_CreateTexturesWithIdentifier(type, n, textures, NULL);
 }
@@ -145,7 +146,7 @@ void GL_TextureReplace2D(
 	gltexture_t* tex;
 
 	if (!R_TextureReferenceIsValid(*ref)) {
-		GL_CreateTextures(texture_type_2d, 1, ref);
+		renderer.TexturesCreate(texture_type_2d, 1, ref);
 	}
 
 	tex = &gltextures[ref->index];
@@ -260,7 +261,7 @@ void GL_AllocateTextureNames(gltexture_t* glt)
 	GL_CreateTextureNames(GL_TEXTURE0, glTextureTargetForType[glt->type], 1, &glt->texnum);
 }
 
-void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char* name)
+void GL_TextureCreate2D(texture_ref* texture, int width, int height, const char* name)
 {
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, texture, name);
 	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
@@ -271,7 +272,7 @@ void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char*
 #endif
 }
 
-void GL_SetTextureCompression(qbool enabled)
+void GL_TextureCompressionSet(qbool enabled)
 {
 	gl_alpha_format = (enabled ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8);
 	gl_solid_format = (enabled ? GL_COMPRESSED_RGB_ARB : GL_RGB8);

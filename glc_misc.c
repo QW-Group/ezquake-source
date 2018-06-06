@@ -252,5 +252,5 @@ void GLC_TextureInitialiseState(void)
 	GL_TextureInitialiseState();
 
 	// Motion blur.
-	R_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
+	renderer.TexturesCreate(texture_type_2d, 1, &sceneblur_texture);
 }

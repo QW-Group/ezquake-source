@@ -62,7 +62,7 @@ void GLC_CreateLightmapTextures(void)
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			R_CreateTexture2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
+			renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
 		}
 	}
 }

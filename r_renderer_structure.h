@@ -83,6 +83,12 @@ RENDERER_METHOD(void, TextureMipmapGenerate, texture_ref texture)
 RENDERER_METHOD(void, TextureWrapModeClamp, texture_ref tex)
 RENDERER_METHOD(void, TextureLabelSet, texture_ref texnum, const char* identifier)
 RENDERER_METHOD(void, TextureUnitBind, int unit, texture_ref texture)
+RENDERER_METHOD(void, TextureUnitMultiBind, int first_unit, int num_textures, texture_ref* textures)
+RENDERER_METHOD(void, TextureGet, texture_ref tex, int buffer_size, byte* buffer)
+RENDERER_METHOD(void, TextureCompressionSet, qbool enabled)
+RENDERER_METHOD(void, TextureCreate2D, texture_ref* reference, int width, int height, const char* name)
+RENDERER_METHOD(void, TexturesCreate, r_texture_type_id type, int count, texture_ref* texture)
+RENDERER_METHOD(void, TextureReplaceSubImageRGBA, texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
 
 // VAOs
 RENDERER_METHOD(void, DeleteVAOs, void)

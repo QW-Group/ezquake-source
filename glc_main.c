@@ -52,6 +52,12 @@ qbool GLC_False(void)
 #define GLC_TextureWrapModeClamp           GL_TextureWrapModeClamp
 #define GLC_TextureLabelSet                GL_TextureLabelSet
 #define GLC_TextureUnitBind                GL_EnsureTextureUnitBound
+#define GLC_TextureGet                     GL_TextureGet
+#define GLC_TextureCompressionSet          GL_TextureCompressionSet
+#define GLC_TextureCreate2D                GL_TextureCreate2D
+#define GLC_TextureUnitMultiBind           GL_TextureUnitMultiBind
+#define GLC_TexturesCreate                 GL_TexturesCreate
+#define GLC_TextureReplaceSubImageRGBA     GL_TextureReplaceSubImageRGBA
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
