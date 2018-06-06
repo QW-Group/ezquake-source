@@ -317,6 +317,15 @@ void R_SetupFrame(void)
 	V_SetContentsColor(r_viewleaf->contents);
 	renderer.ConfigureFog(r_viewleaf->contents);
 	V_CalcBlend();
+	{
+		if (amf_waterripple.value && (cls.demoplayback || cl.spectator)) {
+			//Over 20 this setting gets pretty cheaty
+			r_refdef2.turb_ripple = bound(0, amf_waterripple.value, 20);
+		}
+		else {
+			r_refdef2.turb_ripple = 0;
+		}
+	}
 
 	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
 	memset(&frameStats, 0, sizeof(frameStats));

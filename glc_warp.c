@@ -41,6 +41,18 @@ static byte turbsin[TURBSINSIZE] = {
 	37, 41, 46, 51, 56, 61, 67, 72, 78, 84, 90, 96, 102, 108, 115, 121, 
 };
 
+//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
+//I got this one from the QMB engine though
+static void GLC_ApplyTurbRippleVertex(msurface_t* surf, float* v)
+{
+	if (r_refdef2.turb_ripple && surf->texinfo->texture->turbType != TEXTURE_TURB_TELE) {
+		GLC_Vertex3f(v[0], v[1], v[2] + r_refdef2.turb_ripple * sin(v[0] * 0.02 + r_refdef2.time) * sin(v[1] * 0.02 + r_refdef2.time) * sin(v[2] * 0.02 + r_refdef2.time));
+	}
+	else {
+		GLC_Vertex3fv(v);
+	}
+}
+
 __inline static float SINTABLE_APPROX(float time) {
 	float sinlerpf, lerptime, lerp;
 	int sinlerp1, sinlerp2;
@@ -55,91 +67,41 @@ __inline static float SINTABLE_APPROX(float time) {
 	return -8 + 16 * lerp / 255.0;
 }
 
-void GLC_DrawFlatPoly(glpoly_t* p)
-{
-	float* v;
-	int i;
-
-	GLC_Begin(GL_POLYGON);
-	for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-		GLC_Vertex3fv(v);
-	}
-	GLC_End();
-}
-
-void GLC_EmitFlatWaterPoly(msurface_t* fa)
-{
-	glpoly_t *p;
-	float *v;
-	int i;
-	vec3_t nv;
-
-	for (p = fa->subdivided; p; p = p->next) {
-		GLC_Begin(GL_POLYGON);
-		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-			VectorCopy(v, nv);
-			nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0] * 0.02 + r_refdef2.time)*sin(v[1] * 0.02 + r_refdef2.time)*sin(v[2] * 0.02 + r_refdef2.time);
-			GLC_Vertex3fv(v);
-		}
-		GLC_End();
-	}
-}
-
-static void EmitFlatWaterPoly(msurface_t *fa)
-{
-	glpoly_t *p;
-
-	if (!amf_waterripple.value || !(cls.demoplayback || cl.spectator) || fa->texinfo->texture->turbType == TEXTURE_TURB_TELE) {
-		for (p = fa->subdivided; p; p = p->next) {
-			GLC_DrawFlatPoly(p);
-		}
-	}
-	else {
-		GLC_EmitFlatWaterPoly(fa);
-	}
-}
-
 void GLC_EmitWaterPoly(msurface_t* fa)
 {
 	extern cvar_t r_fastturb;
+	glpoly_t *p;
+	float* v;
+	int i;
 
 	if (r_fastturb.integer) {
 		byte* col = SurfaceFlatTurbColor(fa->texinfo->texture);
 		byte color[4] = { col[0], col[1], col[2], 255 };
 
 		GLC_StateBeginFastTurbPoly(color);
-
-		EmitFlatWaterPoly(fa);
+		for (p = fa->subdivided; p; p = p->next) {
+			GLC_Begin(GL_POLYGON);
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+				GLC_ApplyTurbRippleVertex(fa, v);
+			}
+			GLC_End();
+		}
 	}
 	else {
-		glpoly_t *p;
-		float *v, s, t, os, ot;
-		vec3_t nv;
-		int i;
-
 		renderer.TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->subdivided; p; p = p->next) {
 			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-				os = v[3];
-				ot = v[4];
+				float os = v[3];
+				float ot = v[4];
+				float s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
+				float t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
 
-				s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
 				s *= (1.0 / 64);
-
-				t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
 				t *= (1.0 / 64);
 
-				//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
-				//I got this one from the QMB engine though
-				VectorCopy(v, nv);
-				//Over 20 this setting gets pretty cheaty
-				if (amf_waterripple.value && (cls.demoplayback || cl.spectator) && fa->texinfo->texture->turbType != TEXTURE_TURB_TELE) {
-					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0] * 0.02 + r_refdef2.time)*sin(v[1] * 0.02 + r_refdef2.time)*sin(v[2] * 0.02 + r_refdef2.time);
-				}
-
 				glTexCoord2f(s, t);
-				GLC_Vertex3fv(nv);
+				GLC_ApplyTurbRippleVertex(fa, v);
 			}
 			GLC_End();
 		}

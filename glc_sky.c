@@ -40,6 +40,18 @@ typedef enum {
 	skypoly_mode_clouds,
 } skypoly_mode_id;
 
+static void GLC_DrawFlatPoly(glpoly_t* p)
+{
+	int i;
+	float* v;
+
+	GLC_Begin(GL_POLYGON);
+	for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+		GLC_Vertex3fv(v);
+	}
+	GLC_End();
+}
+
 static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 {
 	glpoly_t *p;
