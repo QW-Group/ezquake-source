@@ -23,6 +23,10 @@ static void R_Stubs_NoOperation(void)
 {
 }
 
+static void GLM_TextureLabelSetNull(texture_ref texture, const char* name)
+{
+}
+
 #define GLM_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLM_Viewport                       GL_Viewport
 #define GLM_ClearRenderingSurface          GL_Clear
@@ -41,7 +45,11 @@ static void R_Stubs_NoOperation(void)
 #define GLM_TextureDelete                  GL_TextureDelete
 #define GLM_TextureMipmapGenerate          GL_TextureMipmapGenerate
 #define GLM_TextureWrapModeClamp           GL_TextureWrapModeClamp
+#ifdef WITH_RENDERING_TRACE
 #define GLM_TextureLabelSet                GL_TextureLabelSet
+#else
+#define GLM_TextureLabelSet                GLM_TextureLabelSetNull
+#endif
 #define GLM_TextureUnitBind                GL_EnsureTextureUnitBound
 #define GLM_TextureGet                     GL_TextureGet
 #define GLM_TextureCompressionSet          GL_TextureCompressionSet

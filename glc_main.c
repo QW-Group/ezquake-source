@@ -23,6 +23,10 @@ static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
 {
 }
 
+static void GLC_TextureLabelSetNull(texture_ref texture, const char* name)
+{
+}
+
 qbool GLC_False(void)
 {
 	return false;
@@ -50,7 +54,11 @@ qbool GLC_False(void)
 #define GLC_TextureDelete                  GL_TextureDelete
 #define GLC_TextureMipmapGenerate          GL_TextureMipmapGenerate
 #define GLC_TextureWrapModeClamp           GL_TextureWrapModeClamp
+#ifdef WITH_RENDERING_TRACE
 #define GLC_TextureLabelSet                GL_TextureLabelSet
+#else
+#define GLC_TextureLabelSet                GLC_TextureLabelSetNull
+#endif
 #define GLC_TextureUnitBind                GL_EnsureTextureUnitBound
 #define GLC_TextureGet                     GL_TextureGet
 #define GLC_TextureCompressionSet          GL_TextureCompressionSet

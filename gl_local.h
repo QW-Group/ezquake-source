@@ -352,8 +352,13 @@ void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_gro
 void GL_MemoryBarrier(GLbitfield barriers);
 
 // Trace functions
+#ifdef WITH_RENDERING_TRACE
 void GL_TraceObjectLabelSet(GLenum identifier, GLuint name, int length, const char* label);
 void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* length, char* label);
+#else
+#define GL_TraceObjectLabelSet(...)
+#define GL_TraceObjectLabelGet(...)
+#endif
 
 #endif /* !__GL_LOCAL_H__ */
 
