@@ -3,7 +3,7 @@
 #define EZQUAKE_GL_SPRITE3D_INTERNAL
 
 // Internal only
-#define MAX_3DSPRITES_PER_BATCH     1024  // Batches limited to this so they can't break other functionality
+#define MAX_3DSPRITES_PER_BATCH     2048  // Batches limited to this so they can't break other functionality
 #define INDEXES_MAX_QUADS            512
 #define INDEXES_MAX_FLASHBLEND         8
 #define INDEXES_MAX_SPARKS            16
