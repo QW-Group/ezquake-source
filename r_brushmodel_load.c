@@ -53,11 +53,15 @@ bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
 
 model_t* Mod_FindName(char *name);
 
-static void SetTextureFlags(model_t* mod, msurface_t* out)
+static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 {
 	int i;
 
 	out->texinfo->surfaces++;
+
+	if (surfnum == 259) {
+		surfnum = surfnum;
+	}
 
 	// set the drawing flags flag
 	// sky, turb and alpha should be mutually exclusive
@@ -72,13 +76,11 @@ static void SetTextureFlags(model_t* mod, msurface_t* out)
 		out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
 		out->texinfo->skippable = false;
 
-		if (R_UseImmediateOpenGL()) {
-			for (i = 0; i < 2; i++) {
-				out->extents[i] = 16384;
-				out->texturemins[i] = -8192;
-			}
-			R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
+		for (i = 0; i < 2; i++) {
+			out->extents[i] = 16384;
+			out->texturemins[i] = -8192;
 		}
+		R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
 		return;
 	}
 
@@ -925,8 +927,9 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 		planenum = LittleShort(in->planenum);
 		side = LittleShort(in->side);
-		if (side)
+		if (side) {
 			out->flags |= SURF_PLANEBACK;
+		}
 
 		out->plane = loadmodel->planes + planenum;
 		out->texinfo = loadmodel->texinfo + LittleShort (in->texinfo);
@@ -936,7 +939,7 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 		// lighting info
 		SetSurfaceLighting(loadmodel, out, in->styles, in->lightofs);
 
-		SetTextureFlags(loadmodel, out);
+		SetTextureFlags(loadmodel, out, surfnum);
 	}
 }
 
@@ -975,7 +978,7 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		// lighting info
 		SetSurfaceLighting(loadmodel, out, in->styles, in->lightofs);
 
-		SetTextureFlags(loadmodel, out);
+		SetTextureFlags(loadmodel, out, surfnum);
 	}
 }
 

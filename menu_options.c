@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 #ifdef BLOOM_SUPPORTED
-extern cvar_t r_bloom
+extern cvar_t r_bloom;
 #endif
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode;
 

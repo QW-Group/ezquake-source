@@ -187,6 +187,7 @@ typedef struct msurface_s {
 	int                 light_t;
 
 	glpoly_t            *polys;                     // multiple if warped
+	glpoly_t            *subdivided;
 	struct	msurface_s  *texturechain;
 	struct	msurface_s  *drawflatchain;
 

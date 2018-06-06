@@ -74,12 +74,12 @@ void GLC_EmitFlatWaterPoly(msurface_t* fa)
 	int i;
 	vec3_t nv;
 
-	for (p = fa->polys; p; p = p->next) {
+	for (p = fa->subdivided; p; p = p->next) {
 		GLC_Begin(GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorCopy(v, nv);
 			nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0] * 0.02 + r_refdef2.time)*sin(v[1] * 0.02 + r_refdef2.time)*sin(v[2] * 0.02 + r_refdef2.time);
-			GLC_Vertex3fv(nv);
+			GLC_Vertex3fv(v);
 		}
 		GLC_End();
 	}
@@ -90,7 +90,7 @@ static void EmitFlatWaterPoly(msurface_t *fa)
 	glpoly_t *p;
 
 	if (!amf_waterripple.value || !(cls.demoplayback || cl.spectator) || fa->texinfo->texture->turbType == TEXTURE_TURB_TELE) {
-		for (p = fa->polys; p; p = p->next) {
+		for (p = fa->subdivided; p; p = p->next) {
 			GLC_DrawFlatPoly(p);
 		}
 	}
@@ -118,7 +118,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		int i;
 
 		renderer.TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
-		for (p = fa->polys; p; p = p->next) {
+		for (p = fa->subdivided; p; p = p->next) {
 			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				os = v[3];

@@ -736,7 +736,7 @@ void R_BuildLightmaps(void)
 			qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
 
 			m->surfaces[i].surfacenum = i;
-			if (isSky || (R_UseImmediateOpenGL() && isTurb)) {
+			if (isSky) {
 				continue;
 			}
 			if (!isTurb && (m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {

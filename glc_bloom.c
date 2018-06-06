@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 /**
-	
+
 	GL Bloom
 
 	Ported by Cokeman, June 2007
@@ -36,50 +36,52 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_texture.h"
 #include "r_matrix.h"
+#include "r_renderer.h"
+#include "glc_local.h"
 
 #ifdef BLOOM_SUPPORTED
 
 /*
 ==============================================================================
- 
-                        LIGHT BLOOMS
- 
+
+						LIGHT BLOOMS
+
 ==============================================================================
 */
 
-static float Diamond8x[8][8] = { 
-	{0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f}, 
-	{0.0f, 0.0f, 0.2f, 0.3f, 0.3f, 0.2f, 0.0f, 0.0f}, 
-	{0.0f, 0.2f, 0.4f, 0.6f, 0.6f, 0.4f, 0.2f, 0.0f}, 
-	{0.1f, 0.3f, 0.6f, 0.9f, 0.9f, 0.6f, 0.3f, 0.1f}, 
-	{0.1f, 0.3f, 0.6f, 0.9f, 0.9f, 0.6f, 0.3f, 0.1f}, 
-	{0.0f, 0.2f, 0.4f, 0.6f, 0.6f, 0.4f, 0.2f, 0.0f}, 
-	{0.0f, 0.0f, 0.2f, 0.3f, 0.3f, 0.2f, 0.0f, 0.0f}, 
+static float Diamond8x[8][8] = {
+	{0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f},
+	{0.0f, 0.0f, 0.2f, 0.3f, 0.3f, 0.2f, 0.0f, 0.0f},
+	{0.0f, 0.2f, 0.4f, 0.6f, 0.6f, 0.4f, 0.2f, 0.0f},
+	{0.1f, 0.3f, 0.6f, 0.9f, 0.9f, 0.6f, 0.3f, 0.1f},
+	{0.1f, 0.3f, 0.6f, 0.9f, 0.9f, 0.6f, 0.3f, 0.1f},
+	{0.0f, 0.2f, 0.4f, 0.6f, 0.6f, 0.4f, 0.2f, 0.0f},
+	{0.0f, 0.0f, 0.2f, 0.3f, 0.3f, 0.2f, 0.0f, 0.0f},
 	{0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f} };
 
-static float Diamond6x[6][6] = { 
-	{0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f}, 
-	{0.0f, 0.3f, 0.5f, 0.5f, 0.3f, 0.0f},  
-	{0.1f, 0.5f, 0.9f, 0.9f, 0.5f, 0.1f}, 
-	{0.1f, 0.5f, 0.9f, 0.9f, 0.5f, 0.1f}, 
-	{0.0f, 0.3f, 0.5f, 0.5f, 0.3f, 0.0f}, 
+static float Diamond6x[6][6] = {
+	{0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f},
+	{0.0f, 0.3f, 0.5f, 0.5f, 0.3f, 0.0f},
+	{0.1f, 0.5f, 0.9f, 0.9f, 0.5f, 0.1f},
+	{0.1f, 0.5f, 0.9f, 0.9f, 0.5f, 0.1f},
+	{0.0f, 0.3f, 0.5f, 0.5f, 0.3f, 0.0f},
 	{0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f} };
 
-static float Diamond4x[4][4] = {  
-	{0.3f, 0.4f, 0.4f, 0.3f},  
-	{0.4f, 0.9f, 0.9f, 0.4f}, 
-	{0.4f, 0.9f, 0.9f, 0.4f}, 
+static float Diamond4x[4][4] = {
+	{0.3f, 0.4f, 0.4f, 0.3f},
+	{0.4f, 0.9f, 0.9f, 0.4f},
+	{0.4f, 0.9f, 0.9f, 0.4f},
 	{0.3f, 0.4f, 0.4f, 0.3f} };
 
 static int BLOOM_SIZE;
 
-cvar_t      r_bloom = {"r_bloom", "0", true};
-cvar_t      r_bloom_alpha = {"r_bloom_alpha", "0.5", true};
-cvar_t      r_bloom_diamond_size = {"r_bloom_diamond_size", "8", true};
-cvar_t      r_bloom_intensity = {"r_bloom_intensity", "1", true};
-cvar_t      r_bloom_darken = {"r_bloom_darken", "3", true};
-cvar_t      r_bloom_sample_size = {"r_bloom_sample_size", "256", true};
-cvar_t      r_bloom_fast_sample = {"r_bloom_fast_sample", "0", true};
+cvar_t      r_bloom = { "r_bloom", "0", true };
+cvar_t      r_bloom_alpha = { "r_bloom_alpha", "0.5", true };
+cvar_t      r_bloom_diamond_size = { "r_bloom_diamond_size", "8", true };
+cvar_t      r_bloom_intensity = { "r_bloom_intensity", "1", true };
+cvar_t      r_bloom_darken = { "r_bloom_darken", "3", true };
+cvar_t      r_bloom_sample_size = { "r_bloom_sample_size", "256", true };
+cvar_t      r_bloom_fast_sample = { "r_bloom_fast_sample", "0", true };
 
 texture_ref r_bloomscreentexture;
 texture_ref r_bloomeffecttexture;
@@ -135,23 +137,23 @@ static float sampleText_tch;
 //=================
 // GLC_Bloom_InitBackUpTexture
 // =================
-static void GLC_Bloom_InitBackUpTexture( int width, int height )
+static void GLC_Bloom_InitBackUpTexture(int width, int height)
 {
 	unsigned char *data;
-	
-	data = (unsigned char *) Q_calloc (width * height, sizeof (int));
+
+	data = (unsigned char *)Q_calloc(width * height, sizeof(int));
 
 	r_screenbackuptexture_size = width;
 
 	r_bloombackuptexture = R_LoadTexture("***r_bloombackuptexture***", width, height, data, 0, 4);
 
-	Q_free (data);
+	Q_free(data);
 }
 
 // =================
 // GLC_Bloom_InitEffectTexture
 // =================
-static void GLC_Bloom_InitEffectTexture (void)
+static void GLC_Bloom_InitEffectTexture(void)
 {
 	unsigned char *data;
 	float bloomsizecheck;
@@ -162,7 +164,7 @@ static void GLC_Bloom_InitEffectTexture (void)
 
 	// Make sure bloom size is a power of 2.
 	BLOOM_SIZE = r_bloom_sample_size.value;
-	bloomsizecheck = (float) BLOOM_SIZE;
+	bloomsizecheck = (float)BLOOM_SIZE;
 
 	while (bloomsizecheck > 1.0f) {
 		bloomsizecheck /= 2.0f;
@@ -185,54 +187,47 @@ static void GLC_Bloom_InitEffectTexture (void)
 		Cvar_SetValue(&r_bloom_sample_size, BLOOM_SIZE);
 	}
 
-	data = (unsigned char *) Q_calloc (BLOOM_SIZE * BLOOM_SIZE, sizeof (int));
+	data = (unsigned char *)Q_calloc(BLOOM_SIZE * BLOOM_SIZE, sizeof(int));
 
-	r_bloomeffecttexture = R_LoadTexture ("***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
+	r_bloomeffecttexture = R_LoadTexture("***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
 
-	Q_free (data);
+	Q_free(data);
 }
 
 // =================
 // GLC_Bloom_InitTextures
 // =================
-static void GLC_Bloom_InitTextures( void )
+static void GLC_Bloom_InitTextures(void)
 {
 	unsigned char *data;
-	int maxtexsize, glinternalfmt;
+	int maxtexsize;
 	size_t size;
 
 	// Find closer power of 2 to screen size.
-	for (screen_texture_width = 1;  screen_texture_width  < glwidth;  screen_texture_width *= 2);
+	for (screen_texture_width = 1; screen_texture_width < glwidth; screen_texture_width *= 2);
 	for (screen_texture_height = 1; screen_texture_height < glheight; screen_texture_height *= 2);
 
-    // Disable blooms if we can't handle a texture of that size.
-	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxtexsize);
+	// Disable blooms if we can't handle a texture of that size.
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxtexsize);
 	if (screen_texture_width > maxtexsize || screen_texture_height > maxtexsize) {
 		screen_texture_width = screen_texture_height = 0;
-		Cvar_SetValue (&r_bloom, 0);
-		Com_Printf ("WARNING: 'R_InitBloomScreenTexture' too high resolution for Light Bloom. Effect disabled\n");
+		Cvar_SetValue(&r_bloom, 0);
+		Com_Printf("WARNING: 'R_InitBloomScreenTexture' too high resolution for Light Bloom. Effect disabled\n");
 		return;
 	}
 
 	// Init the screen texture.
-	size = screen_texture_width * screen_texture_height * sizeof (int);
-	data = Q_malloc (size);
-	memset (data, 255, size);
+	size = screen_texture_width * screen_texture_height * sizeof(int);
+	data = Q_malloc(size);
+	memset(data, 255, size);
 
-	if (gl_gammacorrection.integer) {
-		glinternalfmt = GL_SRGB8;
-	}
-	else {
-		glinternalfmt = gl_solid_format;
+	if (R_TextureWidth(r_bloomscreentexture) != screen_texture_width || R_TextureHeight(r_bloomscreentexture) != screen_texture_height) {
+		renderer.TextureDelete(r_bloomscreentexture);
+		r_bloomscreentexture = R_LoadTexture("bloom:screentexture", screen_texture_width, screen_texture_height, data, TEX_NOCOMPRESS | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+		renderer.TextureSetFiltering(r_bloomscreentexture, texture_minification_nearest, texture_magnification_nearest);
 	}
 
-	if (!R_TextureReferenceIsValid(r_bloomscreentexture)) {
-		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &r_bloomscreentexture);
-	}
-	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &r_bloomscreentexture, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	renderer.TextureSetFiltering(r_bloomscreentexture, texture_minification_nearest, texture_magnification_nearest);
-
-	Q_free (data);
+	Q_free(data);
 
 	// Validate bloom size and init the bloom effect texture.
 	GLC_Bloom_InitEffectTexture();
@@ -240,12 +235,11 @@ static void GLC_Bloom_InitTextures( void )
 	// If screensize is more than 2x the bloom effect texture, set up for stepped downsampling.
 	R_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
 	r_screendownsamplingtexture_size = 0;
-	if( glwidth > (BLOOM_SIZE * 2) && !r_bloom_fast_sample.value )
-	{
+	if (glwidth > (BLOOM_SIZE * 2) && !r_bloom_fast_sample.value) {
 		r_screendownsamplingtexture_size = (int)(BLOOM_SIZE * 2);
-		data = Q_calloc (r_screendownsamplingtexture_size * r_screendownsamplingtexture_size, sizeof (int));
-		r_bloomdownsamplingtexture = R_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
-		Q_free (data);
+		data = Q_calloc(r_screendownsamplingtexture_size * r_screendownsamplingtexture_size, sizeof(int));
+		r_bloomdownsamplingtexture = R_LoadTexture("***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
+		Q_free(data);
 	}
 
 	// Init the screen backup texture.
@@ -279,172 +273,154 @@ void GLC_InitBloomTextures(void)
 // =================
 // R_Bloom_DrawEffect
 // =================
-static void GLC_Bloom_DrawEffect( void )
+static void GLC_Bloom_DrawEffect(void)
 {
 	GLC_StateBeginBloomDraw(r_bloomeffecttexture);
 
 	GLC_Begin(GL_QUADS);
-	glTexCoord2f(  0,                          sampleText_tch  ); 
-	GLC_Vertex2f(    curView_x,                  curView_y   );             
-	glTexCoord2f(  0,                          0   );             
-	GLC_Vertex2f(    curView_x,                  curView_y + curView_height  ); 
-	glTexCoord2f(  sampleText_tcw,             0   );             
-	GLC_Vertex2f(    curView_x + curView_width,  curView_y + curView_height  ); 
-	glTexCoord2f(  sampleText_tcw,             sampleText_tch  ); 
-	GLC_Vertex2f(    curView_x + curView_width,  curView_y   );             
+	glTexCoord2f(0, sampleText_tch);
+	GLC_Vertex2f(curView_x, curView_y);
+	glTexCoord2f(0, 0);
+	GLC_Vertex2f(curView_x, curView_y + curView_height);
+	glTexCoord2f(sampleText_tcw, 0);
+	GLC_Vertex2f(curView_x + curView_width, curView_y + curView_height);
+	glTexCoord2f(sampleText_tcw, sampleText_tch);
+	GLC_Vertex2f(curView_x + curView_width, curView_y);
 	GLC_End();
 }
 
 // =================
 // R_Bloom_GeneratexDiamonds
 //=================
-static void GLC_Bloom_GeneratexDiamonds( void )
+static void GLC_Bloom_GeneratexDiamonds(void)
 {
 	int         i, j;
 	static float intensity;
 
 	// Setup sample size workspace
-	R_Viewport( 0, 0, sample_width, sample_height );
+	R_Viewport(0, 0, sample_width, sample_height);
 
-	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
-	GL_IdentityModelView();
+	R_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
+	R_IdentityModelView();
 
 	// Copy small scene into r_bloomeffecttexture.
 	GL_BindTextureUnit(GL_TEXTURE0, r_bloomeffecttexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Start modifying the small scene corner.
-	R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
+	R_CustomColor(1.0f, 1.0f, 1.0f, 1.0f);
 	GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 
-    // Darkening passes
-	if( r_bloom_darken.value )
-	{
+	// Darkening passes
+	if (r_bloom_darken.value) {
 		GL_BlendFunc(GL_DST_COLOR, GL_ZERO);
 		GL_TextureEnvMode(GL_MODULATE);
 
-		for(i=0; i < r_bloom_darken.integer ;i++) 
-		{
-			R_Bloom_SamplePass( 0, 0 );
+		for (i = 0; i < r_bloom_darken.integer; i++) {
+			R_Bloom_SamplePass(0, 0);
 		}
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 	}
 
-    // Bluring passes.
-    //GL_BlendFunc(GL_ONE, GL_ONE);
+	// Bluring passes.
+	//GL_BlendFunc(GL_ONE, GL_ONE);
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
-   
-    if( r_bloom_diamond_size.value > 7 || r_bloom_diamond_size.value <= 3)
-	{
-		if( r_bloom_diamond_size.integer != 8 ) 
-		{
-			Cvar_SetValue( &r_bloom_diamond_size, 8 );
+
+	if (r_bloom_diamond_size.value > 7 || r_bloom_diamond_size.value <= 3) {
+		if (r_bloom_diamond_size.integer != 8) {
+			Cvar_SetValue(&r_bloom_diamond_size, 8);
 		}
 
-		for(i = 0; i < r_bloom_diamond_size.integer; i++) 
-		{
-			for(j = 0; j < r_bloom_diamond_size.integer; j++) 
-			{
+		for (i = 0; i < r_bloom_diamond_size.integer; i++) {
+			for (j = 0; j < r_bloom_diamond_size.integer; j++) {
 				intensity = r_bloom_intensity.value * 0.3 * Diamond8x[i][j];
-				if( intensity < 0.01f )
-				{
+				if (intensity < 0.01f) {
 					continue;
 				}
-				R_CustomColor( intensity, intensity, intensity, 1.0);
-				R_Bloom_SamplePass( i - 4, j - 4 );
-			}
-		}
-	} 
-	else if( r_bloom_diamond_size.integer > 5 ) 
-	{
-		if( r_bloom_diamond_size.integer != 6 ) 
-		{
-			Cvar_SetValue( &r_bloom_diamond_size, 6 );
-		}
-
-		for(i = 0; i < r_bloom_diamond_size.integer; i++) 
-		{
-			for(j = 0; j < r_bloom_diamond_size.integer; j++) 
-			{
-				intensity = r_bloom_intensity.value * 0.5 * Diamond6x[i][j];
-				if( intensity < 0.01f ) 
-				{
-					continue;
-				}
-				R_CustomColor( intensity, intensity, intensity, 1.0);
-				R_Bloom_SamplePass( i - 3, j - 3 );
-			}
-		}
-	} 
-	else if( r_bloom_diamond_size.value > 3 ) 
-	{
-		if( r_bloom_diamond_size.integer != 4 )
-		{
-			Cvar_SetValue( &r_bloom_diamond_size, 4 );
-		}
-
-		for(i = 0; i < r_bloom_diamond_size.integer; i++) 
-		{
-			for(j = 0; j < r_bloom_diamond_size.integer; j++) 
-			{
-				intensity = r_bloom_intensity.value * 0.8f * Diamond4x[i][j];
-				if( intensity < 0.01f ) continue;
-				R_CustomColor( intensity, intensity, intensity, 1.0);
-				R_Bloom_SamplePass( i-2, j-2 );
+				R_CustomColor(intensity, intensity, intensity, 1.0);
+				R_Bloom_SamplePass(i - 4, j - 4);
 			}
 		}
 	}
-   
+	else if (r_bloom_diamond_size.integer > 5) {
+		if (r_bloom_diamond_size.integer != 6) {
+			Cvar_SetValue(&r_bloom_diamond_size, 6);
+		}
+
+		for (i = 0; i < r_bloom_diamond_size.integer; i++) {
+			for (j = 0; j < r_bloom_diamond_size.integer; j++) {
+				intensity = r_bloom_intensity.value * 0.5 * Diamond6x[i][j];
+				if (intensity < 0.01f) {
+					continue;
+				}
+				R_CustomColor(intensity, intensity, intensity, 1.0);
+				R_Bloom_SamplePass(i - 3, j - 3);
+			}
+		}
+	}
+	else if (r_bloom_diamond_size.value > 3) {
+		if (r_bloom_diamond_size.integer != 4) {
+			Cvar_SetValue(&r_bloom_diamond_size, 4);
+		}
+
+		for (i = 0; i < r_bloom_diamond_size.integer; i++) {
+			for (j = 0; j < r_bloom_diamond_size.integer; j++) {
+				intensity = r_bloom_intensity.value * 0.8f * Diamond4x[i][j];
+				if (intensity < 0.01f) continue;
+				R_CustomColor(intensity, intensity, intensity, 1.0);
+				R_Bloom_SamplePass(i - 2, j - 2);
+			}
+		}
+	}
+
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Restore full screen workspace.
-	R_Viewport( 0, 0, glwidth, glheight );
-	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
+	R_Viewport(0, 0, glwidth, glheight);
+	R_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	GL_IdentityModelView();
-}                                           
+}
 
 // =================
 // R_Bloom_DownsampleView
 // =================
-static void GLC_Bloom_DownsampleView( void )
+static void GLC_Bloom_DownsampleView(void)
 {
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
+	R_CustomColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Stepped downsample.
-	if( r_screendownsamplingtexture_size )
-	{
+	if (r_screendownsamplingtexture_size) {
 		int     midsample_width = r_screendownsamplingtexture_size * sampleText_tcw;
 		int     midsample_height = r_screendownsamplingtexture_size * sampleText_tch;
 
 		// Copy the screen and draw resized.
 		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
-		R_Bloom_Quad( 0,  glheight - midsample_height, midsample_width, midsample_height, screenText_tcw, screenText_tch  );
+		R_Bloom_Quad(0, glheight - midsample_height, midsample_width, midsample_height, screenText_tcw, screenText_tch);
 
 		// Now copy into Downsampling (mid-sized) texture.
 		GL_BindTextureUnit(GL_TEXTURE0, r_bloomdownsamplingtexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, midsample_width, midsample_height);
 
 		// Now draw again in bloom size.
-		R_CustomColor( 0.5f, 0.5f, 0.5f, 1.0f );
-		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, sampleText_tcw, sampleText_tch );
+		R_CustomColor(0.5f, 0.5f, 0.5f, 1.0f);
+		R_Bloom_Quad(0, glheight - sample_height, sample_width, sample_height, sampleText_tcw, sampleText_tch);
 
 		// Now blend the big screen texture into the bloom generation space (hoping it adds some blur).
 		GL_AlphaBlendFlags(GL_BLEND_ENABLED);
 		GL_BlendFunc(GL_ONE, GL_ONE);
-		R_CustomColor( 0.5f, 0.5f, 0.5f, 1.0f );
+		R_CustomColor(0.5f, 0.5f, 0.5f, 1.0f);
 		renderer.TextureUnitBind(0, r_bloomscreentexture);
-		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
-		R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
+		R_Bloom_Quad(0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch);
+		R_CustomColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GL_AlphaBlendFlags(GL_BLEND_DISABLED);
-	} 
-	else
-	{    
+	}
+	else {
 		// Downsample simple.
 		GL_BindTextureUnit(GL_TEXTURE0, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
-		R_Bloom_Quad( 0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
+		R_Bloom_Quad(0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch);
 	}
 }
 
@@ -470,8 +446,8 @@ void GLC_BloomBlend(void)
 	// Set up full screen workspace.
 	R_Viewport(0, 0, glwidth, glheight);
 	GL_Disable(GL_DEPTH_TEST);
-	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
-	GL_IdentityModelView();
+	R_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
+	R_IdentityModelView();
 	GL_Disable(GL_CULL_FACE);
 
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);

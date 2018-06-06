@@ -67,7 +67,7 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 
 	for (i = 0; i < 3; i++) {
 		m = (mins[i] + maxs[i]) * 0.5;
-		m = subdivide_size * floor (m / subdivide_size + 0.5);
+		m = subdivide_size * floor(m / subdivide_size + 0.5);
 		if (maxs[i] - m < 8) {
 			continue;
 		}
@@ -84,23 +84,23 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		// wrap cases
 		dist[j] = dist[0];
 		v -= i;
-		VectorCopy (verts, v);
+		VectorCopy(verts, v);
 
 		f = b = 0;
 		v = verts;
 		for (j = 0; j < numverts; j++, v += 3) {
 			if (dist[j] >= 0) {
-				VectorCopy (v, front[f]);
+				VectorCopy(v, front[f]);
 				f++;
 			}
 			if (dist[j] <= 0) {
-				VectorCopy (v, back[b]);
+				VectorCopy(v, back[b]);
 				b++;
 			}
 			if (dist[j] == 0 || dist[j + 1] == 0) {
 				continue;
 			}
-			if ( (dist[j] > 0) != (dist[j + 1] > 0) ) {
+			if ((dist[j] > 0) != (dist[j + 1] > 0)) {
 				// clip point
 				frac = dist[j] / (dist[j] - dist[j + 1]);
 				for (k = 0; k < 3; k++) {
@@ -115,14 +115,14 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		return;
 	}
 
-	poly = (glpoly_t *) Hunk_Alloc (sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
-	poly->next = warpface->polys;
-	warpface->polys = poly;
+	poly = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
+	poly->next = warpface->subdivided;
+	warpface->subdivided = poly;
 	poly->numverts = numverts;
-	for (i = 0; i < numverts; i++, verts += 3)	{
-		VectorCopy (verts, poly->verts[i]);
-		s = DotProduct (verts, warpface->texinfo->vecs[0]);
-		t = DotProduct (verts, warpface->texinfo->vecs[1]);
+	for (i = 0; i < numverts; i++, verts += 3) {
+		VectorCopy(verts, poly->verts[i]);
+		s = DotProduct(verts, warpface->texinfo->vecs[0]);
+		t = DotProduct(verts, warpface->texinfo->vecs[1]);
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 	}
@@ -222,7 +222,7 @@ void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 	int i;
 	vec3_t nv;
 
-	for (p = fa->polys; p; p = p->next) {
+	for (p = fa->subdivided; p; p = p->next) {
 		float min_x, min_y, max_x, max_y;
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			min_x = i == 0 ? v[0] : min(min_x, v[0]);
