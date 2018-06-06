@@ -153,6 +153,7 @@ void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, te
 void R_CreateTextures(r_texture_type_id type, int count, texture_ref* texture);
 void R_SetTextureCompression(qbool enabled);
 void R_TextureGet(texture_ref tex, int buffer_size, byte* buffer);
+void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);

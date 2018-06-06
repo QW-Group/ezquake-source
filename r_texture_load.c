@@ -442,7 +442,7 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 {
 	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
-	gltexture_t *glt = GL_AllocateTextureSlot(texture_type_2d, identifier, width, height, 0, bpp, mode, crc, &new_texture);
+	gltexture_t *glt = R_TextureAllocateSlot(texture_type_2d, identifier, width, height, 0, bpp, mode, crc, &new_texture);
 
 	if (glt && !new_texture) {
 		return glt->reference;

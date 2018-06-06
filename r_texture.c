@@ -353,7 +353,7 @@ void R_DeleteTextures(void)
 texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode)
 {
 	qbool new_texture;
-	gltexture_t* slot = GL_AllocateTextureSlot(texture_type_cubemap, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot = R_TextureAllocateSlot(texture_type_cubemap, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
 
 	if (!slot) {
 		return invalid_texture_reference;
@@ -368,7 +368,7 @@ texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int m
 	return slot->reference;
 }
 
-gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture)
+gltexture_t* R_TextureAllocateSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture)
 {
 	int gl_width, gl_height;
 	gltexture_t* glt = NULL;
@@ -445,7 +445,7 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 
 			R_DeleteTexture(&ref);
 
-			return GL_AllocateTextureSlot(type, identifier, width, height, 0, bpp, mode, crc, new_texture);
+			return R_TextureAllocateSlot(type, identifier, width, height, 0, bpp, mode, crc, new_texture);
 		}
 	}
 
@@ -495,7 +495,7 @@ void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, in
 texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
 {
 	qbool new_texture = false;
-	gltexture_t* slot = GL_AllocateTextureSlot(texture_type_2d_array, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot = R_TextureAllocateSlot(texture_type_2d_array, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	texture_ref gl_texturenum;
 
 	if (!slot) {
@@ -508,9 +508,10 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 
 	gl_texturenum = slot->reference;
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	R_TextureUnitBind(0, gl_texturenum);
 	if (R_UseModernOpenGL()) {
-		if (GL_AllocateTextureArrayStorage(slot, minimum_depth, depth)) {
+		if (GLM_TextureAllocateArrayStorage(slot, minimum_depth, depth)) {
 			R_TextureUtil_SetFiltering(slot->reference);
 		}
 		else {
@@ -519,9 +520,12 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 			return null_texture_reference;
 		}
 	}
-	else if (R_UseVulkan()) {
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
 
 	}
+#endif
 
 	return gl_texturenum;
 }
@@ -553,7 +557,10 @@ gltexture_t* R_NextTextureSlot(r_texture_type_id type)
 
 static void R_AllocateTextureNames(gltexture_t* glt)
 {
-	if (R_UseModernOpenGL() || R_UseImmediateOpenGL()) {
+	if (R_UseImmediateOpenGL()) {
+		GL_AllocateTextureNames(glt);
+	}
+	else if (R_UseModernOpenGL()) {
 		GL_AllocateTextureNames(glt);
 	}
 	else if (R_UseVulkan()) {
@@ -573,6 +580,26 @@ gltexture_t* R_FindTexture(const char *identifier)
 
 	return NULL;
 }
+
+void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references)
+{
+	int i;
+
+	for (i = 0; i < number; ++i) {
+		qbool new_texture;
+		gltexture_t* slot = R_TextureAllocateSlot(type_id, "", width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
+
+		if (slot) {
+			references[i] = slot->reference;
+		}
+		else {
+			references[i] = null_texture_reference;
+		}
+	}
+}
+
+
+
 
 void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
 {
@@ -634,3 +661,4 @@ void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width,
 		//VK_ReplaceSubImageRGBA(ref, offsetx, offsety, width, height, buffer);
 	}
 }
+

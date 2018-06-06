@@ -112,23 +112,6 @@ void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* textures)
 	GL_CreateTexturesWithIdentifier(type, n, textures, NULL);
 }
 
-void GL_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, GLsizei number, texture_ref* references)
-{
-	GLsizei i;
-
-	for (i = 0; i < number; ++i) {
-		qbool new_texture;
-		gltexture_t* slot = GL_AllocateTextureSlot(type_id, "", width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
-
-		if (slot) {
-			references[i] = slot->reference;
-		}
-		else {
-			references[i] = null_texture_reference;
-		}
-	}
-}
-
 // For OpenGL wrapper functions
 GLuint GL_TextureNameFromReference(texture_ref ref)
 {
@@ -230,7 +213,8 @@ void GL_AllocateStorage(gltexture_t* texture)
 #endif
 }
 
-qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)
 {
 	GLenum error;
 
@@ -267,6 +251,7 @@ qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* 
 #endif
 	return true;
 }
+#endif // RENDERER_OPTION_MODERN_OPENGL
 
 void GL_AllocateTextureNames(gltexture_t* glt)
 {

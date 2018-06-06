@@ -159,7 +159,7 @@ framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3d)
 	memset(fb, 0, sizeof(*fb));
 
 	// Render to texture
-	GL_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->rgbaTexture);
+	R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->rgbaTexture);
 	renderer.TextureLabelSet(fb->rgbaTexture, is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
 	R_SetTextureFiltering(fb->rgbaTexture, texture_minification_linear, texture_minification_linear);
 	renderer.TextureWrapModeClamp(fb->rgbaTexture);

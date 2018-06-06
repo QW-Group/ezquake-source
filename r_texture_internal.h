@@ -36,7 +36,7 @@ typedef struct gltexture_s {
 extern gltexture_t gltextures[MAX_GLTEXTURES];
 
 void R_TextureSetDimensions(texture_ref ref, int width, int height);
-gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture);
+gltexture_t* R_TextureAllocateSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture);
 
 void R_TextureUtil_ScaleDimensions(int width, int height, int *scaled_width, int *scaled_height, int mode);
 void R_TextureUtil_Brighten32(byte *data, int size);
