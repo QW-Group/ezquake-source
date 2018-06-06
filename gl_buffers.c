@@ -221,7 +221,7 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 	buffer->persistent_mapped_ptr = NULL;
 	buffer->using_storage = false;
 	GL_BindBufferImpl(target, buffer->glref);
-	R_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
+	GL_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 	qglBufferData(target, size, data, glUsage);
 	result.index = buffer - buffer_data;
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
@@ -297,7 +297,7 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 		buffer->size = size = ((size + (alignment - 1)) / alignment) * alignment;
 	}
 
-	R_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
+	GL_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 
 	if (tripleBuffer) {
 		qglBufferStorage(target, size * 3, NULL, storageFlags);
@@ -620,11 +620,11 @@ static void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
 	char label[64];
 
 	if (currentArrayBuffer) {
-		R_TraceObjectLabelGet(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
+		GL_TraceObjectLabelGet(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
 		fprintf(debug_frame_out, "%.*s   ArrayBuffer: %u (%s)\n", debug_frame_depth, "                                                          ", currentArrayBuffer, label);
 	}
 	if (currentElementArrayBuffer) {
-		R_TraceObjectLabelGet(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
+		GL_TraceObjectLabelGet(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
 		fprintf(debug_frame_out, "%.*s   ElementArray: %u (%s)\n", debug_frame_depth, "                                                          ", currentElementArrayBuffer, label);
 	}
 }

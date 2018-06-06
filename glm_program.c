@@ -396,7 +396,7 @@ static qbool GLM_CompileProgram(
 						program->uniforms_found = false;
 						program->force_recompile = false;
 
-						R_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
+						GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
 						return true;
 					}
 					else {
@@ -550,7 +550,7 @@ static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char
 				program->uniforms_found = false;
 				program->force_recompile = false;
 
-				R_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
+				GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
 				return true;
 			}
 			else {

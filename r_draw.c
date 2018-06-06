@@ -274,7 +274,7 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
-		R_TextureWrapModeClamp(crosshairs_builtin[i].texnum);
+		renderer.TextureWrapModeClamp(crosshairs_builtin[i].texnum);
 	}
 	Q_free(crosshair_buffer);
 	current_crosshair_pixel_size = crosshair_size;

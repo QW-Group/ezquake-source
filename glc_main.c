@@ -49,6 +49,8 @@ qbool GLC_False(void)
 #define GLC_IsFramebufferEnabled3D         GLC_False
 #define GLC_TextureDelete                  GL_TextureDelete
 #define GLC_TextureMipmapGenerate          GL_TextureMipmapGenerate
+#define GLC_TextureWrapModeClamp           GL_TextureWrapModeClamp
+#define GLC_TextureLabelSet                GL_TextureLabelSet
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

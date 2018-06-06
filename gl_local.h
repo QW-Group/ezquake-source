@@ -351,5 +351,9 @@ void VK_PrintGfxInfo(void);
 void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
 void GL_MemoryBarrier(GLbitfield barriers);
 
+// Trace functions
+void GL_TraceObjectLabelSet(GLenum identifier, GLuint name, int length, const char* label);
+void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* length, char* label);
+
 #endif /* !__GL_LOCAL_H__ */
 

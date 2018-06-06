@@ -81,7 +81,6 @@ extern texture_api_t textures;
 void R_Texture_Init(void);
 
 void R_TextureAnisotropyChanged(texture_ref tex);
-void R_TextureWrapModeClamp(texture_ref tex);
 
 mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);

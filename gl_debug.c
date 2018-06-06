@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 
+GLuint GL_TextureNameFromReference(texture_ref ref);
+
 // <debug-functions (4.3)>
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
@@ -192,28 +194,28 @@ void R_TraceResetRegion(qbool start)
 	}
 }
 
-void R_TraceObjectLabelSet(GLenum identifier, GLuint name, GLsizei length, const char* label)
+void GL_TraceObjectLabelSet(GLenum identifier, GLuint name, int length, const char* label)
 {
 	if (qglObjectLabel) {
 		qglObjectLabel(identifier, name, length, label ? label : "?");
 	}
 }
 
-void R_TraceObjectLabelGet(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label)
+void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* length, char* label)
 {
 	if (qglGetObjectLabel) {
 		qglGetObjectLabel(identifier, name, bufSize, length, label);
 	}
 }
 
-void R_TraceTextureLabelSet(unsigned int name, const char* label)
+void GL_TextureLabelSet(texture_ref ref, const char* label)
 {
-	R_TraceObjectLabelSet(GL_TEXTURE, name, -1, label);
+	GL_TraceObjectLabelSet(GL_TEXTURE, GL_TextureNameFromReference(ref), -1, label);
 }
 
-void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* label)
+void GL_TextureLabelGet(texture_ref ref, int bufSize, int* length, char* label)
 {
-	R_TraceObjectLabelGet(GL_TEXTURE, name, bufSize, length, label);
+	GL_TraceObjectLabelGet(GL_TEXTURE, GL_TextureNameFromReference(ref), bufSize, length, label);
 }
 
 void Dev_VidFrameTrace(void)

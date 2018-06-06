@@ -33,9 +33,6 @@ void R_TraceResetRegion(qbool start);
 void R_TraceLogAPICallDirect(const char* message, ...);
 #define R_TraceLogAPICall(...) { if (R_UseImmediateOpenGL()) { R_TraceLogAPICallDirect(__VA_ARGS__); }}
 qbool R_TraceLoggingEnabled(void);
-void R_TraceObjectLabelSet(unsigned int identifier, unsigned int name, int length, const char* label);
-void R_TraceObjectLabelGet(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
-void R_TraceTextureLabelSet(unsigned int name, const char* label);
 void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* label);
 #else
 #define R_TraceEnterFunctionRegion
@@ -49,8 +46,6 @@ void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* l
 #define R_TracePrintState(...)
 #define R_TraceDebugState()
 #define R_TraceLoggingEnabled() (false)
-#define R_TraceObjectLabelSet(...)
-#define R_TraceObjectLabelGet(...)
 #define R_TraceTextureLabelSet(...)
 #define R_TraceTextureLabelGet(...)
 #endif

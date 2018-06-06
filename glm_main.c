@@ -40,6 +40,8 @@ static void R_Stubs_NoOperation(void)
 #define GLM_TextureInitialiseState         GL_TextureInitialiseState
 #define GLM_TextureDelete                  GL_TextureDelete
 #define GLM_TextureMipmapGenerate          GL_TextureMipmapGenerate
+#define GLM_TextureWrapModeClamp           GL_TextureWrapModeClamp
+#define GLM_TextureLabelSet                GL_TextureLabelSet
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

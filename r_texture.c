@@ -38,8 +38,6 @@ static int   numgltextures = 1;
 static int   next_free_texture = 0;
 static texture_ref invalid_texture_reference = { 0 };
 
-void R_TextureLabel(unsigned int texnum, const char* identifier);
-
 void R_TextureUnitBind(int unit, texture_ref texture)
 {
 	if (R_UseImmediateOpenGL()) {
@@ -155,16 +153,6 @@ void R_ClearModelTextureData(void)
 
 	for (i = 0; i < MAX_VWEP_MODELS; ++i) {
 		R_ClearModelTextureReferences(cl.vw_model_precache[i], false);
-	}
-}
-
-void R_TextureWrapModeClamp(texture_ref tex)
-{
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_TextureWrapModeClamp(tex);
-	}
-	else if (R_UseVulkan()) {
-		//VK_TextureWrapModeClamp(tex);
 	}
 }
 
@@ -341,17 +329,20 @@ void R_GenerateMipmapsIfNeeded(texture_ref ref)
 void R_DeleteTextures(void)
 {
 	extern void R_InvalidateLightmapTextures(void);
-	extern texture_ref particletexture_array;
 	int i;
 
 	R_InvalidateLightmapTextures();
 	Skin_InvalidateTextures();
-	R_TextureReferenceInvalidate(particletexture_array);
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	{
+		extern texture_ref particletexture_array;
+		R_TextureReferenceInvalidate(particletexture_array);
+	}
+#endif
 
 	for (i = 0; i < numgltextures; ++i) {
-		texture_ref ref = gltextures[i].reference;
-
-		R_DeleteTexture(&ref);
+		R_DeleteTexture(&gltextures[i].reference);
 	}
 
 	memset(gltextures, 0, sizeof(gltextures));
@@ -442,11 +433,11 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
 		R_AllocateTextureNames(glt);
-		R_TextureLabel(glt->texnum, glt->identifier);
+		renderer.TextureLabelSet(glt->reference, glt->identifier);
 	}
 	else if (glt && !glt->texnum) {
 		R_AllocateTextureNames(glt);
-		R_TextureLabel(glt->texnum, glt->identifier);
+		renderer.TextureLabelSet(glt->reference, glt->identifier);
 	}
 	else if (glt && glt->storage_allocated) {
 		if (gl_width != glt->texture_width || gl_height != glt->texture_height || glt->bpp != bpp) {
@@ -590,16 +581,6 @@ void R_CreateTexture2D(texture_ref* reference, int width, int height, const char
 	}
 	else if (R_UseVulkan()) {
 		// VK_CreateTexture2D(reference, width, height, name);
-	}
-}
-
-void R_TextureLabel(unsigned int texnum, const char* identifier)
-{
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		R_TraceTextureLabelSet(texnum, identifier);
-	}
-	else if (R_UseVulkan()) {
-		// VK_TextureLabel(...);
 	}
 }
 

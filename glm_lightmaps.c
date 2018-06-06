@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_local.h"
 #include "gl_texture_internal.h"
 #include "r_program.h"
+#include "r_renderer.h"
 
 // Hardware lighting: flag surfaces as we add them
 static buffer_ref ssbo_surfacesTodo;
@@ -127,7 +128,7 @@ void GLM_CreateLightmapTextures(void)
 	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
 #endif
 	R_SetTextureFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
-	R_TextureWrapModeClamp(lightmap_texture_array);
+	renderer.TextureWrapModeClamp(lightmap_texture_array);
 	lightmap_depth = lightmap_array_size;
 	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
