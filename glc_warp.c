@@ -128,7 +128,7 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 {
 	glpoly_t *p;
 	int i;
-	float s, t, *v;
+	float s, t;
 	extern glpoly_t *caustics_polys;
 
 	if (!caustics_polys) {

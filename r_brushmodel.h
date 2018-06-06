@@ -42,7 +42,6 @@ void R_TurbSurfacesSubdivide(msurface_t *fa);
 void R_SkySurfacesBuildPolys(msurface_t *fa);
 void R_InitSky(texture_t *mt);	// called at level load
 void R_DrawSky(void);
-void R_AddSkyBoxSurface(msurface_t *fa);
 qbool R_DrawWorldOutlines(void);
 
 // internal

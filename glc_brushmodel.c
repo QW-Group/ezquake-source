@@ -484,7 +484,7 @@ void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 		GLC_DrawMapOutline(clmodel);
 	}
 
-	GLC_DrawSkyChain();
+	GLC_SkyDrawChainedSurfaces();
 	GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 }
 
