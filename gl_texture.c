@@ -112,13 +112,13 @@ void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* textures)
 	GL_CreateTexturesWithIdentifier(type, n, textures, NULL);
 }
 
-void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)
+void GL_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, GLsizei number, texture_ref* references)
 {
 	GLsizei i;
 
 	for (i = 0; i < number; ++i) {
 		qbool new_texture;
-		gltexture_t* slot = GL_AllocateTextureSlot(target, "", width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
+		gltexture_t* slot = GL_AllocateTextureSlot(type_id, "", width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
 
 		if (slot) {
 			references[i] = slot->reference;
@@ -270,6 +270,8 @@ qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* 
 
 void GL_AllocateTextureNames(gltexture_t* glt)
 {
+	assert(glt->type >= 0 && glt->type < sizeof(glTextureTargetForType) / sizeof(glTextureTargetForType[0]));
+
 	GL_CreateTextureNames(GL_TEXTURE0, glTextureTargetForType[glt->type], 1, &glt->texnum);
 }
 

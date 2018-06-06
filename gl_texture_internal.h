@@ -34,7 +34,7 @@ void GL_TextureReplace2D(
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid *pixels
 );
 const char* GL_TextureIdentifierByGLReference(GLuint texnum);
-void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references);
+void GL_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, GLsizei number, texture_ref* references);
 void GL_SelectTexture(GLenum target);
 
 void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
