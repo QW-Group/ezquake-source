@@ -494,11 +494,26 @@ static const char* cache_pic_paths[] = {
 	"gfx/finale.lmp"
 };
 
-qbool Draw_IsTiledBackground(const char* path)
+qbool Draw_KeepOffAtlas(const char* path)
 {
 	int i;
 
+	// Tiled backgrounds: atlas not suitable for tiling, so keep off atlas
 	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR; ++i) {
+		if (!strcmp(path, cache_pic_paths[i])) {
+			return true;
+		}
+	}
+
+	// Single-player & main menu items - take up too much space for no high-performance path
+	for (i = CACHEPIC_TTL_MAIN; i <= CACHEPIC_P_MULTI; ++i) {
+		if (!strcmp(path, cache_pic_paths[i])) {
+			return true;
+		}
+	}
+
+	// Single-player intermission titles
+	for (i = CACHEPIC_COMPLETE; i <= CACHEPIC_FINALE; ++i) {
 		if (!strcmp(path, cache_pic_paths[i])) {
 			return true;
 		}
@@ -1045,9 +1060,8 @@ void Draw_ConsoleBackground (int lines)
 				// Resize.
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
-
-				Draw_DeleteOldLevelshot(old_levelshot);
 			}
+			Draw_DeleteOldLevelshot(old_levelshot);
 
 			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}

@@ -317,7 +317,7 @@ void CachePics_CreateAtlas(void);
 void CachePics_AtlasFrame(void);
 void CachePics_MarkAtlasDirty(void);
 qbool Draw_IsConsoleBackground(mpic_t* pic);
-qbool Draw_IsTiledBackground(const char* path);
+qbool Draw_KeepOffAtlas(const char* path);
 mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum);
 
 #endif // __DRAW_H__

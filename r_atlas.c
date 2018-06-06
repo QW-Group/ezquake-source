@@ -467,7 +467,7 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
-	// Add simple item textures
+	// Add simple item textures (meag: these should be very low priority)
 	for (i = 0; i < MOD_NUMBER_HINTS; ++i) {
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
 			mpic_t* pic = Mod_SimpleTextureForHint(i, j);
@@ -489,7 +489,7 @@ void CachePics_CreateAtlas(void)
 		cachepic_node_t *cur;
 
 		for (cur = cachepics[i]; cur; cur = cur->next) {
-			if (!Draw_IsConsoleBackground(cur->data.pic) && !Draw_IsTiledBackground(cur->data.name)) {
+			if (!Draw_IsConsoleBackground(cur->data.pic) && !Draw_KeepOffAtlas(cur->data.name)) {
 				CachePics_InsertBySize(&sized_list, cur);
 
 				AddToDeleteList(cur->data.pic);
