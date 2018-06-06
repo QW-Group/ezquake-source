@@ -160,7 +160,7 @@ void GL_TextureReplace2D(
 	}
 }
 
-void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter)
+void GL_TextureSetFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter)
 {
 	assert(minification_filter >= 0 && minification_filter < texture_minification_count);
 	assert(magnification_filter >= 0 && magnification_filter < texture_magnification_count);
@@ -185,7 +185,7 @@ void GL_TextureWrapModeClamp(texture_ref tex)
 	}
 }
 
-void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy)
+void GL_TextureSetAnisotropy(texture_ref texture, int anisotropy)
 {
 	if (anisotropy_ext) {
 		GL_TexParameterf(GL_TEXTURE0, texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
@@ -265,7 +265,7 @@ void GL_TextureCreate2D(texture_ref* texture, int width, int height, const char*
 {
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, texture, name);
 	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
-	GL_SetTextureFiltering(*texture, texture_minification_linear, texture_magnification_linear);
+	renderer.TextureSetFiltering(*texture, texture_minification_linear, texture_magnification_linear);
 	GL_TextureWrapModeClamp(*texture);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->index, width, height, width * height * 4, name);

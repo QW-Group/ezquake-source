@@ -143,16 +143,6 @@ void R_ClearModelTextureData(void)
 	}
 }
 
-void R_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter)
-{
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_SetTextureFiltering(texture, minification_filter, magnification_filter);
-	}
-	else if (R_UseVulkan()) {
-		//VK_SetTextureFiltering(texture, minification_filter, magnification_filter);
-	}
-}
-
 qbool R_TextureValid(texture_ref ref)
 {
 	return ref.index && ref.index < numgltextures && gltextures[ref.index].texnum;

@@ -25,6 +25,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "r_texture_internal.h"
 #include "tr_types.h"
 #include "gl_texture.h"
+#include "r_renderer.h"
 
 void R_TextureModeForEach(void(*func)(texture_ref ref));
 
@@ -72,15 +73,7 @@ void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
 
 void R_TextureAnisotropyChanged(texture_ref tex)
 {
-	if (R_UseImmediateOpenGL()) {
-		GL_SetTextureAnisotropy(tex, anisotropy_tap);
-	}
-	else if (R_UseModernOpenGL()) {
-		GL_SetTextureAnisotropy(tex, anisotropy_tap);
-	}
-	else if (R_UseVulkan()) {
-		// VK_TextureAnisotropyChanged(tex);
-	}
+	renderer.TextureSetAnisotropy(tex, anisotropy_tap);
 }
 
 void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel)
@@ -123,7 +116,7 @@ static const texture_magnification_id gl_filter_max_2d = texture_magnification_l
 
 void R_TextureModeChanged(texture_ref tex)
 {
-	R_SetTextureFiltering(tex, gl_filter_min, gl_filter_max);
+	renderer.TextureSetFiltering(tex, gl_filter_min, gl_filter_max);
 }
 
 static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel)

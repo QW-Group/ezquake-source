@@ -89,6 +89,8 @@ RENDERER_METHOD(void, TextureCompressionSet, qbool enabled)
 RENDERER_METHOD(void, TextureCreate2D, texture_ref* reference, int width, int height, const char* name)
 RENDERER_METHOD(void, TexturesCreate, r_texture_type_id type, int count, texture_ref* texture)
 RENDERER_METHOD(void, TextureReplaceSubImageRGBA, texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
+RENDERER_METHOD(void, TextureSetFiltering, texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter)
+RENDERER_METHOD(void, TextureSetAnisotropy, texture_ref texture, int anisotropy)
 
 // VAOs
 RENDERER_METHOD(void, DeleteVAOs, void)

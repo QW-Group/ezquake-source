@@ -122,25 +122,6 @@ extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidbl
 
 void R_ClearModelTextureData(void);
 
-typedef enum {
-	texture_minification_nearest,
-	texture_minification_linear,
-	texture_minification_nearest_mipmap_nearest,
-	texture_minification_linear_mipmap_nearest,
-	texture_minification_nearest_mipmap_linear,
-	texture_minification_linear_mipmap_linear,
-
-	texture_minification_count
-} texture_minification_id;
-
-typedef enum {
-	texture_magnification_nearest,
-	texture_magnification_linear,
-
-	texture_magnification_count
-} texture_magnification_id;
-
-void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, texture_magnification_id mag_mode);
 void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS

@@ -61,4 +61,22 @@ typedef enum {
 	texture_type_count
 } r_texture_type_id;
 
+typedef enum {
+	texture_minification_nearest,
+	texture_minification_linear,
+	texture_minification_nearest_mipmap_nearest,
+	texture_minification_linear_mipmap_nearest,
+	texture_minification_nearest_mipmap_linear,
+	texture_minification_linear_mipmap_linear,
+
+	texture_minification_count
+} texture_minification_id;
+
+typedef enum {
+	texture_magnification_nearest,
+	texture_magnification_linear,
+
+	texture_magnification_count
+} texture_magnification_id;
+
 #endif /* !__QUAKEDEF_H__ */

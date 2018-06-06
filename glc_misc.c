@@ -229,7 +229,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 		//copy the image into the texture so that we can play with it next frame too!
 		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
-		R_SetTextureFiltering(sceneblur_texture, texture_minification_linear, texture_magnification_linear);
+		renderer.TextureSetFiltering(sceneblur_texture, texture_minification_linear, texture_magnification_linear);
 	}
 }
 

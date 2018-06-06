@@ -48,7 +48,7 @@ void GLC_DrawDisc(void)
 void GLC_HudDrawComplete(void)
 {
 	if (R_TextureReferenceIsValid(glc_last_texture_used)) {
-		R_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
+		renderer.TextureSetFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 }
 
@@ -275,13 +275,13 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	R_IdentityProjectionView();
 
 	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
-		R_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
+		renderer.TextureSetFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 	glc_last_texture_used = ref;
 
 	GLC_StateBeginImageDraw(imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT);
 	renderer.TextureUnitBind(0, ref);
-	R_SetTextureFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
+	renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 
 	if (R_VAOBound()) {
 		extern cvar_t gl_vbo_clientmemory;
@@ -294,7 +294,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 				nearest = (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST);
 				start = i;
 
-				R_SetTextureFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
+				renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 			}
 		}
 
@@ -318,7 +318,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 				nearest = (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST);
 				start = i;
 
-				R_SetTextureFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
+				renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 
 				GLC_Begin(GL_QUADS);
 			}

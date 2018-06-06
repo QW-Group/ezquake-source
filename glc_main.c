@@ -58,6 +58,8 @@ qbool GLC_False(void)
 #define GLC_TextureUnitMultiBind           GL_TextureUnitMultiBind
 #define GLC_TexturesCreate                 GL_TexturesCreate
 #define GLC_TextureReplaceSubImageRGBA     GL_TextureReplaceSubImageRGBA
+#define GLC_TextureSetAnisotropy           GL_TextureSetAnisotropy
+#define GLC_TextureSetFiltering            GL_TextureSetFiltering
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

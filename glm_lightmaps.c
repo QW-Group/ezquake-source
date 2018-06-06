@@ -127,7 +127,7 @@ void GLM_CreateLightmapTextures(void)
 	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
 	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
 #endif
-	R_SetTextureFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
+	renderer.TextureSetFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
 	renderer.TextureWrapModeClamp(lightmap_texture_array);
 	lightmap_depth = lightmap_array_size;
 	for (i = 0; i < lightmap_array_size; ++i) {
