@@ -351,10 +351,12 @@ void R_GenerateMipmapsIfNeeded(texture_ref ref)
 void R_DeleteTextures(void)
 {
 	extern void R_InvalidateLightmapTextures(void);
+	extern texture_ref particletexture_array;
 	int i;
 
 	R_InvalidateLightmapTextures();
 	Skin_InvalidateTextures();
+	R_TextureReferenceInvalidate(particletexture_array);
 
 	for (i = 0; i < numgltextures; ++i) {
 		texture_ref ref = gltextures[i].reference;
