@@ -253,7 +253,7 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-void GL_InitTextureState(void);
+void GL_TextureInitialiseState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 
 // Functions

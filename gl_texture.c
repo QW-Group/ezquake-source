@@ -81,7 +81,7 @@ void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 	// Upload the main texture to OpenGL.
 	GL_TexSubImage2D(GL_TEXTURE0, texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 	if (mode & TEX_MIPMAP) {
-		GL_GenerateMipmapWithData(GL_TEXTURE0, texture, (byte*)newdata, width, height, GL_InternalFormat(mode));
+		GL_TextureMipmapGenerateWithData(GL_TEXTURE0, texture, (byte*)newdata, width, height, GL_InternalFormat(mode));
 	}
 }
 
@@ -208,7 +208,7 @@ void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy)
 	}
 }
 
-void GL_DeleteTexture(texture_ref texture)
+void GL_TextureDelete(texture_ref texture)
 {
 	gltexture_t* slot = &gltextures[texture.index];
 

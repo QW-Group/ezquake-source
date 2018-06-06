@@ -77,7 +77,9 @@ RENDERER_METHOD(void, TimeRefresh, void)
 RENDERER_METHOD(void, Screenshot, byte* buffer, size_t size)
 
 // Textures
-RENDERER_METHOD(void, InitTextureState, void)
+RENDERER_METHOD(void, TextureInitialiseState, void)
+RENDERER_METHOD(void, TextureDelete, texture_ref texture)
+RENDERER_METHOD(void, TextureMipmapGenerate, texture_ref texture)
 
 // VAOs
 RENDERER_METHOD(void, DeleteVAOs, void)

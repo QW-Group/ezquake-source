@@ -274,7 +274,7 @@ void R_Texture_Init(void)
 	// Reset textures array and linked globals
 	for (i = 0; i < numgltextures; i++) {
 		if (gltextures[i].texnum) {
-			GL_DeleteTexture(gltextures[i].reference);
+			renderer.TextureDelete(gltextures[i].reference);
 		}
 		Q_free(gltextures[i].pathname);
 	}
@@ -284,7 +284,7 @@ void R_Texture_Init(void)
 	numgltextures = 1;
 	next_free_texture = 0;
 
-	renderer.InitTextureState();
+	renderer.TextureInitialiseState();
 
 	// Powerup shells.
 	R_TextureReferenceInvalidate(shelltexture); // Force reload.
@@ -301,13 +301,8 @@ void R_DeleteTexture(texture_ref* texture)
 		return;
 	}
 
-	// Delete OpenGL
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_DeleteTexture(*texture);
-	}
-	else {
-		// VK_DeleteTexture(*texture);
-	}
+	// Delete renderer's version
+	renderer.TextureDelete(*texture);
 
 	// Free structure, updated linked list so we can re-use this slot
 	Q_free(gltextures[texture->index].pathname);
@@ -337,12 +332,7 @@ void R_GenerateMipmapsIfNeeded(texture_ref ref)
 	}
 
 	if (!gltextures[ref.index].mipmaps_generated) {
-		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-			GL_GenerateMipmap(ref);
-		}
-		else if (R_UseVulkan()) {
-			//VK_GenerateMipmap(ref);
-		}
+		renderer.TextureMipmapGenerate(ref);
 		gltextures[ref.index].mipmaps_generated = true;
 	}
 }

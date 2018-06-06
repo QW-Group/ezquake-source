@@ -28,7 +28,6 @@ static void R_Stubs_NoOperation(void)
 #define GLM_ClearRenderingSurface          GL_Clear
 #define GLM_EnsureFinished                 GL_EnsureFinished
 #define GLM_Screenshot                     GL_Screenshot
-#define GLM_InitTextureState               GL_InitTextureState
 #define GLM_InitialiseVAOState             GL_InitialiseVAOState
 #define GLM_DescriptiveString              GL_DescriptiveString
 #define GLM_Draw3DSpritesInline            R_Stubs_NoOperation
@@ -38,6 +37,9 @@ static void R_Stubs_NoOperation(void)
 #define GLM_DrawAliasModelShadow           R_Stubs_NoOperationEntity
 #define GLM_DrawAliasModelPowerupShell     R_Stubs_NoOperationEntity
 #define GLM_DrawAlias3ModelPowerupShell    R_Stubs_NoOperationEntity
+#define GLM_TextureInitialiseState         GL_TextureInitialiseState
+#define GLM_TextureDelete                  GL_TextureDelete
+#define GLM_TextureMipmapGenerate          GL_TextureMipmapGenerate
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

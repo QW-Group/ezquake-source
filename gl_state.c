@@ -561,7 +561,7 @@ void GL_SelectTexture(GLenum textureUnit)
 	R_TraceLogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
 
-void GL_InitTextureState(void)
+void GL_TextureInitialiseState(void)
 {
 	int i;
 

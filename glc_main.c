@@ -47,6 +47,8 @@ qbool GLC_False(void)
 #define GLC_Prepare3DSprites               GLC_NoOperation
 #define GLC_Begin2DRendering               GLC_NoOperation    // GL_Framebuffer2DSwitch
 #define GLC_IsFramebufferEnabled3D         GLC_False
+#define GLC_TextureDelete                  GL_TextureDelete
+#define GLC_TextureMipmapGenerate          GL_TextureMipmapGenerate
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

@@ -27,9 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void GL_BindTextures(int unit, int count, texture_ref* textures);
 void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char* name);
 void GL_CreateTextures(r_texture_type_id type, int count, texture_ref* textures);
-void GL_DeleteTexture(texture_ref texture);
 void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
-void GL_GenerateMipmap(texture_ref texture);
+void GL_TextureMipmapGenerate(texture_ref texture);
 void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy);
 void GL_SetTextureCompression(qbool enabled);
 void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);

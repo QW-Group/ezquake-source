@@ -318,7 +318,7 @@ void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum
 	}
 }
 
-void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
+void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
 {
 	if (qglGenerateTextureMipmap) {
 		qglGenerateTextureMipmap(GL_TextureNameFromReference(texture));
@@ -342,9 +342,9 @@ void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* ne
 	}
 }
 
-void GL_GenerateMipmap(texture_ref texture)
+void GL_TextureMipmapGenerate(texture_ref texture)
 {
-	GL_GenerateMipmapWithData(GL_TEXTURE0, texture, NULL, 0, 0, 0);
+	GL_TextureMipmapGenerateWithData(GL_TEXTURE0, texture, NULL, 0, 0, 0);
 }
 
 // Samplers

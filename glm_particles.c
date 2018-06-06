@@ -70,7 +70,7 @@ void GLM_LoadParticleTextures(void)
 		byte* data = Classic_CreateParticleTexture(width, height);
 
 		GL_TexSubImage3D(0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		GL_GenerateMipmap(particletexture_array);
+		GL_TextureMipmapGenerate(particletexture_array);
 
 		Q_free(data);
 	}

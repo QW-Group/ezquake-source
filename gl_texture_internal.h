@@ -43,8 +43,8 @@ void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* references);
 void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref* references, const char* identifier);
 void GL_TexStorage2D(texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-void GL_GenerateMipmap(texture_ref reference);
-void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);
+void GL_TextureMipmapGenerate(texture_ref reference);
+void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);
 
 void GL_TexParameterf(GLenum textureUnit, texture_ref reference, GLenum pname, GLfloat param);
 void GL_TexParameterfv(GLenum textureUnit, texture_ref reference, GLenum pname, const GLfloat *params);
