@@ -190,7 +190,7 @@ static void GLC_DrawFlat(model_t *model)
 						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
 					else {
-						GLC_Begin(GL_POLYGON);
+						GLC_Begin(GL_TRIANGLE_STRIP);
 						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
 							if (new_lightmap >= 0) {
 								glTexCoord2f(v[5], v[6]);
@@ -356,7 +356,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 					else {
 						v = s->polys->verts[0];
 
-						GLC_Begin(GL_POLYGON);
+						GLC_Begin(GL_TRIANGLE_STRIP);
 						for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 							//Tei: textureless for the world brush models (Qrack)
 							float tex_s = gl_textureless.value && model->isworldmodel ? 0 : v[3];
@@ -640,7 +640,7 @@ static void GLC_BlendLightmaps(void)
 		}
 		else {
 			for (; p; p = p->chain) {
-				GLC_Begin(GL_POLYGON);
+				GLC_Begin(GL_TRIANGLE_STRIP);
 				v = p->verts[0];
 				for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
 					glTexCoord2f(v[5], v[6]);
@@ -671,7 +671,7 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 
 		GLC_StateBeginAlphaChainSurface(s);
 
-		GLC_Begin(GL_POLYGON);
+		GLC_Begin(GL_TRIANGLE_STRIP);
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {

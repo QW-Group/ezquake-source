@@ -199,9 +199,7 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 
 			// copy verts into buffer (alternate to turn fan into triangle strip)
 			for (poly = surf->polys; poly; poly = poly->next) {
-				int end_vert = 0;
-				int start_vert = 1;
-				int output = 0;
+				int k = 0;
 				int material = i;
 				float scaleS = m->textures[i]->gl_texture_scaleS;
 				float scaleT = m->textures[i]->gl_texture_scaleT;
@@ -212,23 +210,8 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 
 				// Store position for drawing individual polys
 				poly->vbo_start = vbo_pos;
-				vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf, has_luma);
-				++output;
-
-				start_vert = 1;
-				end_vert = poly->numverts - 1;
-
-				while (start_vert <= end_vert) {
-					vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
-					++output;
-
-					if (start_vert < end_vert) {
-						vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
-						++output;
-					}
-
-					++start_vert;
-					--end_vert;
+				for (k = 0; k < poly->numverts; ++k) {
+					vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[k], lightmap, material, scaleS, scaleT, surf, has_luma);
 				}
 
 				length += poly->numverts;
@@ -358,4 +341,18 @@ void R_BrushModelDrawEntity(entity_t *e)
 	R_PopModelviewMatrix(oldMatrix);
 
 	R_TraceLeaveRegion(true);
+}
+
+// Convert ordering of verts for convex polygons to triangle strip
+void R_BrushModelPolygonToTriangleStrip(glpoly_t* poly)
+{
+	float tempVert[VERTEXSIZE];
+	int i;
+
+	// Apart from first vertex, replace odd verts with vert at end of list
+	for (i = 2; i < poly->numverts - 1; i += 2) {
+		memcpy(tempVert, poly->verts[poly->numverts - 1], sizeof(tempVert));
+		memmove(poly->verts[i + 1], poly->verts[i], sizeof(tempVert) * (poly->numverts - i - 1));
+		memcpy(poly->verts[i], tempVert, sizeof(tempVert));
+	}
 }

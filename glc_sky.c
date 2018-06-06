@@ -43,11 +43,10 @@ typedef enum {
 static void GLC_DrawFlatPoly(glpoly_t* p)
 {
 	int i;
-	float* v;
 
-	GLC_Begin(GL_POLYGON);
-	for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-		GLC_Vertex3fv(v);
+	GLC_Begin(GL_TRIANGLE_STRIP);
+	for (i = 0; i < p->numverts; ++i) {
+		GLC_Vertex3fv(p->verts[i]);
 	}
 	GLC_End();
 }
@@ -60,7 +59,7 @@ static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 	vec3_t dir;
 
 	for (p = fa->polys; p; p = p->next) {
-		GLC_Begin(GL_POLYGON);
+		GLC_Begin(GL_TRIANGLE_STRIP);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorSubtract(v, r_origin, dir);
 			dir[2] *= 3;	// flatten the sphere
@@ -238,7 +237,7 @@ static void GLC_MakeSkyVec2(float s, float t, int axis, float range, vec3_t v)
 static void GLC_DrawSkyFace(int axis, qbool multitexture)
 {
 	int i, j;
-	vec3_t	vecs[4];
+	vec3_t vecs[4];
 	float s, t;
 	int v;
 	float fstep = 2.0 / SUBDIVISIONS;
@@ -280,39 +279,29 @@ static void GLC_DrawSkyDome(void)
 
 	if (gl_mtexable) {
 		GLC_StateBeginMultiTextureSkyDome();
-
-		speedscale = r_refdef2.time * 8;
-		speedscale -= (int)speedscale & ~127;
-
-		speedscale2 = r_refdef2.time * 16;
-		speedscale2 -= (int)speedscale2 & ~127;
-
-		for (i = 0; i < 6; i++) {
-			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
-				continue;
-			}
-			GLC_DrawSkyFace(i, true);
-		}
 	}
 	else {
 		GLC_StateBeginSingleTextureSkyDome();
+	}
 
-		speedscale = r_refdef2.time * 8;
-		speedscale -= (int)speedscale & ~127;
+	speedscale = r_refdef2.time * 8;
+	speedscale -= (int)speedscale & ~127;
 
-		for (i = 0; i < 6; i++) {
-			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
-				continue;
-			}
-			GLC_DrawSkyFace(i, false);
+	speedscale2 = r_refdef2.time * 16;
+	speedscale2 -= (int)speedscale2 & ~127;
+
+	for (i = 0; i < 6; i++) {
+		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
+			continue;
 		}
+		GLC_DrawSkyFace(i, gl_mtexable);
+	}
 
+	if (!gl_mtexable) {
 		GLC_StateBeginSingleTextureSkyDomeCloudPass();
 
-		speedscale = r_refdef2.time * 16;
-		speedscale -= (int)speedscale & ~127;
+		speedscale = speedscale2;
 
-		//skyVerts = 0;
 		for (i = 0; i < 6; i++) {
 			if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 				continue;

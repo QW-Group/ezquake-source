@@ -84,7 +84,7 @@ static void DrawGLPoly(glpoly_t *p)
 	int i;
 	float *v;
 
-	GLC_Begin(GL_POLYGON);
+	GLC_Begin(GL_TRIANGLE_STRIP);
 	v = p->verts[0];
 	for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
 		glTexCoord2f(v[3], v[4]);
@@ -219,7 +219,7 @@ void GLC_EmitDetailPolys(qbool use_vbo)
 			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 		}
 		else {
-			GLC_Begin(GL_POLYGON);
+			GLC_Begin(GL_TRIANGLE_STRIP);
 			v = p->verts[0];
 			for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
 				glTexCoord2f(v[7], v[8]);

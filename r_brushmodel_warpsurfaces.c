@@ -130,6 +130,7 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		poly->verts[i][7] = 8 * cos(2 * t) / 64.0f;
 		poly->verts[i][8] = 8 * cos(2 * s) / 64.0f;
 	}
+	R_BrushModelPolygonToTriangleStrip(poly);
 }
 
 // Breaks a polygon up along axial 64 unit boundaries so that turbulent and sky warps can be done reasonably.
@@ -195,6 +196,7 @@ void R_SkySurfacesBuildPolys(msurface_t *fa)
 	for (i = 0; i < numverts; i++, vert += 3) {
 		VectorCopy(vert, poly->verts[i]);
 	}
+	R_BrushModelPolygonToTriangleStrip(poly);
 }
 
 byte* SurfaceFlatTurbColor(texture_t* texture)

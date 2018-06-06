@@ -629,8 +629,9 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 			poly->verts[i][8] = 18 * t;
 		}
 	}
-
 	poly->numverts = lnumverts;
+
+	R_BrushModelPolygonToTriangleStrip(poly);
 	return;
 }
 

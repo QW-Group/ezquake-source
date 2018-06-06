@@ -572,6 +572,7 @@ qbool Mod_IsTurbTextureName(model_t* model, const char* name);
 float RadiusFromBounds(vec3_t mins, vec3_t maxs);
 void Mod_AddModelFlags(model_t *mod);
 void R_LoadBrushModelTextures(model_t *m);
+void R_BrushModelPolygonToTriangleStrip(glpoly_t* poly);
 
 #include "r_aliasmodel_md3.h"
 

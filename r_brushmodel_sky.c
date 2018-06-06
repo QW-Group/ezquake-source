@@ -167,7 +167,8 @@ static int	vec_to_st[6][3] = {
 	{-2,1,-3}
 };
 
-void DrawSkyPolygon (int nump, vec3_t vecs) {
+static void DrawSkyPolygon (int nump, vec3_t vecs)
+{
 	int i,j, axis;
 	vec3_t v, av;
 	float s, t, dv, *vp;
@@ -180,12 +181,15 @@ void DrawSkyPolygon (int nump, vec3_t vecs) {
 	av[0] = fabs(v[0]);
 	av[1] = fabs(v[1]);
 	av[2] = fabs(v[2]);
-	if (av[0] > av[1] && av[0] > av[2])
+	if (av[0] > av[1] && av[0] > av[2]) {
 		axis = (v[0] < 0) ? 1 : 0;
-	else if (av[1] > av[2] && av[1] > av[0])
+	}
+	else if (av[1] > av[2] && av[1] > av[0]) {
 		axis = (v[1] < 0) ? 3 : 2;
-	else
+	}
+	else {
 		axis = (v[2] < 0) ? 5 : 4;
+	}
 
 	// project new texture coords
 	for (i = 0; i < nump; i++, vecs += 3) {
@@ -198,82 +202,91 @@ void DrawSkyPolygon (int nump, vec3_t vecs) {
 		j = vec_to_st[axis][1];
 		t = (j < 0) ? -vecs[-j -1] / dv : vecs[j-1] / dv;
 
-		if (s < skymins[0][axis])
+		if (s < skymins[0][axis]) {
 			skymins[0][axis] = s;
-		if (t < skymins[1][axis])
+		}
+		if (t < skymins[1][axis]) {
 			skymins[1][axis] = t;
-		if (s > skymaxs[0][axis])
+		}
+		if (s > skymaxs[0][axis]) {
 			skymaxs[0][axis] = s;
-		if (t > skymaxs[1][axis])
+		}
+		if (t > skymaxs[1][axis]) {
 			skymaxs[1][axis] = t;
+		}
 	}
 }
 
 #define	MAX_CLIP_VERTS	64
-void ClipSkyPolygon (int nump, vec3_t vecs, int stage) {
+
+static void ClipSkyPolygon(int nump, vec3_t vecs, int stage)
+{
 	float *norm, *v, d, e, dists[MAX_CLIP_VERTS];
 	qbool front, back;
 	int sides[MAX_CLIP_VERTS], newc[2], i, j;
 	vec3_t newv[2][MAX_CLIP_VERTS];
 
-	if (nump > MAX_CLIP_VERTS - 2)
-		Sys_Error ("ClipSkyPolygon: nump > MAX_CLIP_VERTS - 2");
-	if (stage == 6) {	
+	if (nump > MAX_CLIP_VERTS - 2) {
+		Sys_Error("ClipSkyPolygon: nump > MAX_CLIP_VERTS - 2");
+	}
+	if (stage == 6) {
 		// fully clipped, so draw it
-		DrawSkyPolygon (nump, vecs);
+		DrawSkyPolygon(nump, vecs);
 		return;
 	}
 
 	front = back = false;
 	norm = skyclip[stage];
 	for (i = 0, v = vecs; i < nump; i++, v += 3) {
-		d = DotProduct (v, norm);
+		d = DotProduct(v, norm);
 		if (d > ON_EPSILON) {
 			front = true;
 			sides[i] = SIDE_FRONT;
-		} else if (d < -ON_EPSILON) {
+		}
+		else if (d < -ON_EPSILON) {
 			back = true;
 			sides[i] = SIDE_BACK;
-		} else {
+		}
+		else {
 			sides[i] = SIDE_ON;
 		}
 		dists[i] = d;
 	}
 
-	if (!front || !back) {	
+	if (!front || !back) {
 		// not clipped
-		ClipSkyPolygon (nump, vecs, stage + 1);
+		ClipSkyPolygon(nump, vecs, stage + 1);
 		return;
 	}
 
 	// clip it
 	sides[i] = sides[0];
 	dists[i] = dists[0];
-	VectorCopy (vecs, (vecs + (i * 3)));
+	VectorCopy(vecs, (vecs + (i * 3)));
 	newc[0] = newc[1] = 0;
 
 	for (i = 0, v = vecs; i < nump; i++, v += 3) {
 		switch (sides[i]) {
-		case SIDE_FRONT:
-			VectorCopy (v, newv[0][newc[0]]);
-			newc[0]++;
-			break;
-		case SIDE_BACK:
-			VectorCopy (v, newv[1][newc[1]]);
-			newc[1]++;
-			break;
-		case SIDE_ON:
-			VectorCopy (v, newv[0][newc[0]]);
-			newc[0]++;
-			VectorCopy (v, newv[1][newc[1]]);
-			newc[1]++;
-			break;
+			case SIDE_FRONT:
+				VectorCopy(v, newv[0][newc[0]]);
+				newc[0]++;
+				break;
+			case SIDE_BACK:
+				VectorCopy(v, newv[1][newc[1]]);
+				newc[1]++;
+				break;
+			case SIDE_ON:
+				VectorCopy(v, newv[0][newc[0]]);
+				newc[0]++;
+				VectorCopy(v, newv[1][newc[1]]);
+				newc[1]++;
+				break;
 		}
 
 		if (sides[i] == SIDE_ON || sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i])
 			continue;
 
-		d = dists[i] / (dists[i] - dists[i+1]);
+		d = dists[i] / (dists[i] - dists[i + 1]);
 		for (j = 0; j < 3; j++) {
 			e = v[j] + d * (v[j + 3] - v[j]);
 			newv[0][newc[0]][j] = e;
@@ -284,8 +297,8 @@ void ClipSkyPolygon (int nump, vec3_t vecs, int stage) {
 	}
 
 	// continue
-	ClipSkyPolygon (newc[0], newv[0][0], stage + 1);
-	ClipSkyPolygon (newc[1], newv[1][0], stage + 1);
+	ClipSkyPolygon(newc[0], newv[0][0], stage + 1);
+	ClipSkyPolygon(newc[1], newv[1][0], stage + 1);
 }
 
 /*
@@ -299,10 +312,26 @@ void R_AddSkyBoxSurface (msurface_t *fa) {
 	glpoly_t *p;
 
 	// calculate vertex values for sky box
+	// Meag: the ClipSkyPolygon() requires verts in convex polygon order, i'm not messing
+	//       with it... so we add the verts in a weird order to get back from triangle strip
+	//       to verts
 	for (p = fa->polys; p; p = p->next) {
-		for (i = 0; i < p->numverts; i++)
-			VectorSubtract (p->verts[i], r_origin, verts[i]);
-		ClipSkyPolygon (p->numverts, verts[0], 0);
+		int v, i, j;
+
+		VectorSubtract(p->verts[0], r_origin, verts[0]);
+		i = 1;
+		j = p->numverts - 1;
+		for (v = 1; v < p->numverts; ++v) {
+			if (v % 2) {
+				VectorSubtract(p->verts[v], r_origin, verts[i]);
+				++i;
+			}
+			else {
+				VectorSubtract(p->verts[v], r_origin, verts[j]);
+				--j;
+			}
+		}
+		ClipSkyPolygon(p->numverts, verts[0], 0);
 	}
 }
 
@@ -358,8 +387,9 @@ qbool R_DetermineSkyLimits(qbool *ignore_z)
 		msurface_t* fa;
 
 		// no sky at all
-		if (!skychain)
+		if (!skychain) {
 			return false;
+		}
 
 		// figure out how much of the sky box we need to draw
 		Sky_ClearSky();

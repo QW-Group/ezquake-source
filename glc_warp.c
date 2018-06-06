@@ -80,7 +80,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 
 		GLC_StateBeginFastTurbPoly(color);
 		for (p = r_refdef2.turb_ripple ? fa->subdivided : fa->polys; p; p = p->next) {
-			GLC_Begin(GL_POLYGON);
+			GLC_Begin(GL_TRIANGLE_STRIP);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				GLC_ApplyTurbRippleVertex(fa, v);
 			}
@@ -90,7 +90,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 	else {
 		renderer.TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->subdivided; p; p = p->next) {
-			GLC_Begin(GL_POLYGON);
+			GLC_Begin(GL_TRIANGLE_STRIP);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				float os = v[3];
 				float ot = v[4];
@@ -139,41 +139,13 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 
 	renderer.TextureUnitBind(0, underwatertexture);
 	for (p = caustics_polys; p; p = p->caustics_chain) {
-		if (use_vbo) {
-			if (p->numverts >= 3) {
-				int alt = p->numverts - 1;
-
-				// Meag: this isn't using a VBO until we can move the texture co-ordinate calculation to an older opengl shader
-				//   in the meantime we just make sure we render as a triangle-strip so we don't have z-fighting with previous draw
-				GLC_Begin(GL_TRIANGLE_STRIP);
-				GLC_CalcCausticTexCoords(p->verts[0], &s, &t);
-				glTexCoord2f(s, t);
-				GLC_Vertex3fv(p->verts[0]);
-
-				for (i = 1; i <= alt; i++, alt--) {
-					GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
-					glTexCoord2f(s, t);
-					GLC_Vertex3fv(p->verts[i]);
-
-					if (i < alt) {
-						GLC_CalcCausticTexCoords(p->verts[alt], &s, &t);
-						glTexCoord2f(s, t);
-						GLC_Vertex3fv(p->verts[alt]);
-					}
-				}
-				GLC_End();
-			}
+		GLC_Begin(GL_TRIANGLE_STRIP);
+		for (i = 0; i < p->numverts; ++i) {
+			GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
+			glTexCoord2f(s, t);
+			GLC_Vertex3fv(p->verts[i]);
 		}
-		else {
-			GLC_Begin(GL_POLYGON);
-			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-				GLC_CalcCausticTexCoords(v, &s, &t);
-
-				glTexCoord2f(s, t);
-				GLC_Vertex3fv(v);
-			}
-			GLC_End();
-		}
+		GLC_End();
 	}
 
 	caustics_polys = NULL;
