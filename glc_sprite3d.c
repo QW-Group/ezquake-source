@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "tr_types.h"
 #include "glc_local.h"
+#include "r_renderer.h"
 
 static void GLC_Create3DSpriteVAO(void)
 {
@@ -52,7 +53,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 			return;
 		}
 		R_ApplyRenderingState(batch->textured_rendering_state);
-		R_TextureUnitBind(0, batch->texture);
+		renderer.TextureUnitBind(0, batch->texture);
 
 		// All batches are the same texture, so no issues
 		GL_DrawSequentialBatchImpl(batch, 0, batch->count, index_offset, maximum_batch_size);
@@ -68,7 +69,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 			}
 
 			R_ApplyRenderingState(batch->textured_rendering_state);
-			R_TextureUnitBind(0, batch->textures[start]);
+			renderer.TextureUnitBind(0, batch->textures[start]);
 		}
 		else {
 			if (!batch->untextured_rendering_state) {
@@ -86,7 +87,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 						assert(false);
 						return;
 					}
-					R_TextureUnitBind(0, batch->textures[end]);
+					renderer.TextureUnitBind(0, batch->textures[end]);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
@@ -131,11 +132,11 @@ void GLC_Draw3DSpritesInline(void)
 		if (buffers.supported) {
 			if (batch->count == 1) {
 				if (R_TextureReferenceIsValid(batch->textures[0])) {
-					R_TextureUnitBind(0, batch->textures[0]);
+					renderer.TextureUnitBind(0, batch->textures[0]);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else if (R_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
+					renderer.TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
@@ -154,7 +155,7 @@ void GLC_Draw3DSpritesInline(void)
 			}
 			else {
 				if (R_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
+					renderer.TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 
 					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
@@ -163,7 +164,7 @@ void GLC_Draw3DSpritesInline(void)
 					int first = 0, last = 1;
 
 					if (R_TextureReferenceIsValid(batch->textures[0])) {
-						R_TextureUnitBind(0, batch->textures[0]);
+						renderer.TextureUnitBind(0, batch->textures[0]);
 						R_ApplyRenderingState(batch->textured_rendering_state);
 					}
 					else {
@@ -175,7 +176,7 @@ void GLC_Draw3DSpritesInline(void)
 							GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
 
 							if (R_TextureReferenceIsValid(batch->textures[last])) {
-								R_TextureUnitBind(0, batch->textures[last]);
+								renderer.TextureUnitBind(0, batch->textures[last]);
 								R_ApplyRenderingState(batch->textured_rendering_state);
 							}
 							else {
@@ -195,11 +196,11 @@ void GLC_Draw3DSpritesInline(void)
 				r_sprite3d_vert_t* v;
 
 				if (R_TextureReferenceIsValid(batch->textures[j])) {
-					R_TextureUnitBind(0, batch->textures[j]);
+					renderer.TextureUnitBind(0, batch->textures[j]);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else if (R_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
+					renderer.TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {

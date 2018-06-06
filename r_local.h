@@ -81,7 +81,6 @@ void R_SelectRenderer(void);
 #define R_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_r_debug))
 
 // textures
-void R_TextureUnitBind(int unit, texture_ref texture);
 void R_BindTextures(int first_unit, int num_textures, texture_ref* textures);
 
 // bloom.c

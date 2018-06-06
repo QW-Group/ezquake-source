@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel_sky.h"
 #include "glc_local.h"
 #include "r_brushmodel_sky.h"
+#include "r_renderer.h"
 
 #define SUBDIVISIONS 10
 
@@ -319,7 +320,7 @@ static void GLC_DrawSkyBox(void)
 			continue;
 		}
 
-		R_TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
+		renderer.TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
 
 		GLC_Begin(GL_QUADS);
 		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);

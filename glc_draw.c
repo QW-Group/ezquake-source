@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "glsl/constants.glsl" // FIXME: remove
 #include "glc_local.h"
+#include "r_renderer.h"
 
 static texture_ref glc_last_texture_used;
 static buffer_ref imageVBO;
@@ -279,7 +280,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	glc_last_texture_used = ref;
 
 	GLC_StateBeginImageDraw(imageData.images[start].flags & IMAGEPROG_FLAGS_TEXT);
-	R_TextureUnitBind(0, ref);
+	renderer.TextureUnitBind(0, ref);
 	R_SetTextureFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 
 	if (R_VAOBound()) {

@@ -82,6 +82,7 @@ RENDERER_METHOD(void, TextureDelete, texture_ref texture)
 RENDERER_METHOD(void, TextureMipmapGenerate, texture_ref texture)
 RENDERER_METHOD(void, TextureWrapModeClamp, texture_ref tex)
 RENDERER_METHOD(void, TextureLabelSet, texture_ref texnum, const char* identifier)
+RENDERER_METHOD(void, TextureUnitBind, int unit, texture_ref texture)
 
 // VAOs
 RENDERER_METHOD(void, DeleteVAOs, void)

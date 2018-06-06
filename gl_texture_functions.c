@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture_internal.h"
 #include "gl_texture_internal.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
@@ -137,7 +138,7 @@ void GL_TexSubImage3D(
 		GLenum textureUnit = GL_TEXTURE0 + unit;
 		GLenum target = GL_TextureTargetFromReference(texture);
 
-		R_TextureUnitBind(textureUnit, texture);
+		renderer.TextureUnitBind(textureUnit, texture);
 		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));

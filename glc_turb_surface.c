@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "utils.h"
 #include "r_brushmodel.h"
+#include "r_renderer.h"
 
 extern msurface_t* waterchain;
 void GLC_EmitWaterPoly(msurface_t* fa);
@@ -41,7 +42,7 @@ void GLC_DrawWaterSurfaces(void)
 	GLC_StateBeginWaterSurfaces();
 
 	for (s = waterchain; s; s = s->texturechain) {
-		R_TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
+		renderer.TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
 
 		GLC_EmitWaterPoly(s);
 	}

@@ -630,7 +630,7 @@ void GL_BindTextures(int first, int count, texture_ref* textures)
 	else {
 		for (i = 0; i < count; ++i) {
 			if (R_TextureReferenceIsValid(textures[i])) {
-				R_TextureUnitBind(first + i, textures[i]);
+				renderer.TextureUnitBind(first + i, textures[i]);
 			}
 		}
 	}

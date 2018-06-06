@@ -34,6 +34,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_brushmodel_sky.h"
 #include "glc_local.h"
 #include "tr_types.h"
+#include "r_renderer.h"
 
 extern buffer_ref brushModel_vbo;
 
@@ -625,7 +626,7 @@ static void GLC_BlendLightmaps(void)
 		}
 
 		GLC_LightmapUpdate(i);
-		R_TextureUnitBind(0, GLC_LightmapTexture(i));
+		renderer.TextureUnitBind(0, GLC_LightmapTexture(i));
 		if (use_vbo) {
 			GLuint index_count = 0;
 

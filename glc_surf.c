@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vao.h"
 #include "glc_local.h"
 #include "r_brushmodel.h"
+#include "r_renderer.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -143,7 +144,7 @@ void GLC_RenderFullbrights(void)
 		}
 
 		texture.index = i;
-		R_TextureUnitBind(0, texture);
+		renderer.TextureUnitBind(0, texture);
 		if (R_VAOBound()) {
 			int index_count = 0;
 
@@ -179,7 +180,7 @@ void GLC_RenderLumas(void)
 		}
 
 		texture.index = i;
-		R_TextureUnitBind(0, texture);
+		renderer.TextureUnitBind(0, texture);
 		if (use_vbo) {
 			int index_count = 0;
 

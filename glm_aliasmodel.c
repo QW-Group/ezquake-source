@@ -593,7 +593,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	for (i = 0; i < instr->num_calls; ++i) {
 		if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
-			R_TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
+			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
 		}
 		else if (instr->num_textures[i]) {
 			R_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);

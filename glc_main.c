@@ -51,6 +51,7 @@ qbool GLC_False(void)
 #define GLC_TextureMipmapGenerate          GL_TextureMipmapGenerate
 #define GLC_TextureWrapModeClamp           GL_TextureWrapModeClamp
 #define GLC_TextureLabelSet                GL_TextureLabelSet
+#define GLC_TextureUnitBind                GL_EnsureTextureUnitBound
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_state.h"
 #include "r_texture.h"
+#include "r_renderer.h"
 
 // motion blur.
 texture_ref sceneblur_texture;
@@ -200,7 +201,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vs *= 1;//gl_motionblurscale.value;
 	vt *= 1;//gl_motionblurscale.value;
 
-	R_TextureUnitBind(GL_TEXTURE0, sceneblur_texture);
+	renderer.TextureUnitBind(GL_TEXTURE0, sceneblur_texture);
 	R_CustomColor(alpha, alpha, alpha, alpha);
 	if (draw)
 	{

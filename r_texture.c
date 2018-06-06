@@ -38,19 +38,6 @@ static int   numgltextures = 1;
 static int   next_free_texture = 0;
 static texture_ref invalid_texture_reference = { 0 };
 
-void R_TextureUnitBind(int unit, texture_ref texture)
-{
-	if (R_UseImmediateOpenGL()) {
-		GL_EnsureTextureUnitBound(unit, texture);
-	}
-	else if (R_UseModernOpenGL()) {
-		GL_EnsureTextureUnitBound(unit, texture);
-	}
-	else if (R_UseVulkan()) {
-		//
-	}
-}
-
 static void R_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 {
 	int j;
@@ -509,8 +496,8 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 	gl_texturenum = slot->reference;
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	R_TextureUnitBind(0, gl_texturenum);
 	if (R_UseModernOpenGL()) {
+		renderer.TextureUnitBind(0, gl_texturenum);
 		if (GLM_TextureAllocateArrayStorage(slot, minimum_depth, depth)) {
 			R_TextureUtil_SetFiltering(slot->reference);
 		}
@@ -603,7 +590,10 @@ void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int heigh
 
 void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
 {
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+	if (R_UseImmediateOpenGL()) {
+		GL_CreateTexture2D(reference, width, height, name);
+	}
+	else if (R_UseModernOpenGL()) {
 		GL_CreateTexture2D(reference, width, height, name);
 	}
 	else if (R_UseVulkan()) {
@@ -613,8 +603,11 @@ void R_CreateTexture2D(texture_ref* reference, int width, int height, const char
 
 void R_BindTextures(int unit, int count, texture_ref* textures)
 {
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+	if (R_UseImmediateOpenGL()) {
 		GL_BindTextures(unit, count, textures);
+	}
+	else if (R_UseModernOpenGL()) {
+
 	}
 	else if (R_UseVulkan()) {
 		//VK_BindTextures(unit, count, textures);
@@ -623,7 +616,10 @@ void R_BindTextures(int unit, int count, texture_ref* textures)
 
 void R_CreateTextures(r_texture_type_id type, int count, texture_ref* textures)
 {
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+	if (R_UseImmediateOpenGL()) {
+		GL_CreateTextures(type, count, textures);
+	}
+	else if (R_UseModernOpenGL()) {
 		GL_CreateTextures(type, count, textures);
 	}
 	else if (R_UseVulkan()) {
@@ -633,7 +629,10 @@ void R_CreateTextures(r_texture_type_id type, int count, texture_ref* textures)
 
 void R_SetTextureCompression(qbool enabled)
 {
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+	if (R_UseImmediateOpenGL()) {
+		GL_SetTextureCompression(enabled);
+	}
+	else if (R_UseModernOpenGL()) {
 		GL_SetTextureCompression(enabled);
 	}
 	else if (R_UseVulkan()) {

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_state.h"
 #include "r_aliasmodel.h"
 #include "glc_local.h"
+#include "r_renderer.h"
 
 void GLC_SetPowerupShellColor(int layer_no, int effects);
 
@@ -104,7 +105,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum));
 	if (R_TextureReferenceIsValid(sinf->texnum)) {
-		R_TextureUnitBind(0, sinf->texnum);
+		renderer.TextureUnitBind(0, sinf->texnum);
 	}
 
 	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);

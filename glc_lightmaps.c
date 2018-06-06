@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps_internal.h"
 #include "r_texture.h"
 #include "gl_texture_internal.h"
+#include "r_renderer.h"
 
 void GLC_UploadLightmap(int textureUnit, int lightmapnum);
 
@@ -34,7 +35,7 @@ void GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 		GLC_UploadLightmap(textureUnit, lightmap_num);
 	}
 	else {
-		R_TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
+		renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
 	}
 }
 

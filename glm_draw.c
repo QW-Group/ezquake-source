@@ -308,7 +308,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 			R_BindTextures(0, 2, textures);
 		}
 		else {
-			R_TextureUnitBind(0, texture);
+			renderer.TextureUnitBind(0, texture);
 		}
 	}
 	GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)index_offset, buffer_offset);

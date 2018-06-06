@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_texture.h"
 #include "glc_local.h"
+#include "r_renderer.h"
 
 #define TURBSINSIZE 128
 #define TURBSCALE ((float) TURBSINSIZE / (2 * M_PI))
@@ -116,7 +117,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		vec3_t nv;
 		int i;
 
-		R_TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
+		renderer.TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
 			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -174,7 +175,7 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 
 	GLC_StateBeginCausticsPolys();
 
-	R_TextureUnitBind(0, underwatertexture);
+	renderer.TextureUnitBind(0, underwatertexture);
 	for (p = caustics_polys; p; p = p->caustics_chain) {
 		if (use_vbo) {
 			if (p->numverts >= 3) {

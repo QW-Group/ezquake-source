@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_aliasmodel.h"
 #include "r_matrix.h"
+#include "r_renderer.h"
 
 extern texture_ref solidskytexture, alphaskytexture;
 
@@ -55,9 +56,9 @@ void GLC_StateBeginCausticsPolys(void)
 void GLC_StateBeginUnderwaterAliasModelCaustics(texture_ref base_texture, texture_ref caustics_texture)
 {
 	R_ApplyRenderingState(r_state_aliasmodel_caustics);
-	R_TextureUnitBind(0, base_texture);
+	renderer.TextureUnitBind(0, base_texture);
 	GLC_BeginCausticsTextureMatrix();
-	R_TextureUnitBind(1, caustics_texture);
+	renderer.TextureUnitBind(1, caustics_texture);
 }
 
 void GLC_StateEndUnderwaterAliasModelCaustics(void)
@@ -102,9 +103,9 @@ void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 	R_TraceEnterFunctionRegion;
 
 	//bind the world texture
-	R_TextureUnitBind(0, t->gl_texturenum);
+	renderer.TextureUnitBind(0, t->gl_texturenum);
 	if (gl_mtexable) {
-		R_TextureUnitBind(1, GLC_LightmapTexture(s->lightmaptexturenum));
+		renderer.TextureUnitBind(1, GLC_LightmapTexture(s->lightmaptexturenum));
 	}
 
 	R_TraceLeaveFunctionRegion;
@@ -125,7 +126,7 @@ void GLC_StateBeginEmitDetailPolys(void)
 	extern texture_ref detailtexture;
 
 	R_ApplyRenderingState(r_state_world_details);
-	R_TextureUnitBind(0, detailtexture);
+	renderer.TextureUnitBind(0, detailtexture);
 }
 
 void GLC_StateBeginDrawMapOutline(void)
@@ -141,7 +142,7 @@ void GLC_StateBeginAliasPowerupShell(qbool weapon)
 	extern texture_ref shelltexture;
 
 	R_ApplyRenderingState(weapon ? r_state_weaponmodel_powerupshell : r_state_aliasmodel_powerupshell);
-	R_TextureUnitBind(0, shelltexture);
+	renderer.TextureUnitBind(0, shelltexture);
 }
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured)
@@ -175,12 +176,12 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	}
 	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture) && mtex) {
 		state = weapon_model ? (alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque) : (alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque);
-		R_TextureUnitBind(0, texture);
-		R_TextureUnitBind(1, fb_texture);
+		renderer.TextureUnitBind(0, texture);
+		renderer.TextureUnitBind(1, fb_texture);
 	}
 	else {
 		state = weapon_model ? (alpha_blend ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque) : (alpha_blend ? r_state_aliasmodel_singletexture_transparent : r_state_aliasmodel_singletexture_opaque);
-		R_TextureUnitBind(0, texture);
+		renderer.TextureUnitBind(0, texture);
 	}
 
 	R_ApplyRenderingState(state);
@@ -385,7 +386,7 @@ void GLC_StateBeginSingleTextureSkyDome(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_background_pass);
-	R_TextureUnitBind(0, solidskytexture);
+	renderer.TextureUnitBind(0, solidskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -395,7 +396,7 @@ void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_cloud_pass);
-	R_TextureUnitBind(0, alphaskytexture);
+	renderer.TextureUnitBind(0, alphaskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -405,8 +406,8 @@ void GLC_StateBeginMultiTextureSkyDome(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_single_pass);
-	R_TextureUnitBind(0, solidskytexture);
-	R_TextureUnitBind(1, alphaskytexture);
+	renderer.TextureUnitBind(0, solidskytexture);
+	renderer.TextureUnitBind(1, alphaskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -416,8 +417,8 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_single_pass);
-	R_TextureUnitBind(0, solidskytexture);
-	R_TextureUnitBind(1, alphaskytexture);
+	renderer.TextureUnitBind(0, solidskytexture);
+	renderer.TextureUnitBind(1, alphaskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -427,7 +428,7 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_background_pass);
-	R_TextureUnitBind(0, solidskytexture);
+	renderer.TextureUnitBind(0, solidskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -437,7 +438,7 @@ void GLC_StateBeginSingleTextureCloudPass(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_cloud_pass);
-	R_TextureUnitBind(0, alphaskytexture);
+	renderer.TextureUnitBind(0, alphaskytexture);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -472,7 +473,7 @@ void GLC_StateBeginDrawPolygon(void)
 void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	R_ApplyRenderingState(r_state_postprocess_bloom);
-	R_TextureUnitBind(0, texture);
+	renderer.TextureUnitBind(0, texture);
 }
 
 void GLC_StateBeginPolyBlend(float v_blend[4])

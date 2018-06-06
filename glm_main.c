@@ -42,6 +42,7 @@ static void R_Stubs_NoOperation(void)
 #define GLM_TextureMipmapGenerate          GL_TextureMipmapGenerate
 #define GLM_TextureWrapModeClamp           GL_TextureWrapModeClamp
 #define GLM_TextureLabelSet                GL_TextureLabelSet
+#define GLM_TextureUnitBind                GL_EnsureTextureUnitBound
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

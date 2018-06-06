@@ -76,12 +76,12 @@ static void GLM_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 		// Group by texture usage
 		int start = 0, end = 1;
 
-		R_TextureUnitBind(0, batch->textures[start]);
+		renderer.TextureUnitBind(0, batch->textures[start]);
 		for (end = 1; end < batch->count; ++end) {
 			if (!R_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
 				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
 
-				R_TextureUnitBind(0, batch->textures[end]);
+				renderer.TextureUnitBind(0, batch->textures[end]);
 				start = end;
 			}
 		}
@@ -144,17 +144,17 @@ void GLM_Draw3DSprites(void)
 
 		R_ApplyRenderingState(batch->textured_rendering_state);
 		if (R_TextureReferenceIsValid(batch->texture)) {
-			R_TextureUnitBind(0, batch->texture);
+			renderer.TextureUnitBind(0, batch->texture);
 		}
 		else if (!R_TextureReferenceIsValid(batch->textures[0])) {
 			extern texture_ref particletexture_array;
 
-			R_TextureUnitBind(0, batch->texture = particletexture_array);
+			renderer.TextureUnitBind(0, batch->texture = particletexture_array);
 		}
 
 		if (batch->count == 1) {
 			if (R_TextureReferenceIsValid(batch->textures[0])) {
-				R_TextureUnitBind(0, batch->textures[0]);
+				renderer.TextureUnitBind(0, batch->textures[0]);
 			}
 			GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
 		}
@@ -173,12 +173,12 @@ void GLM_Draw3DSprites(void)
 			}
 			else {
 				int first = 0, last = 1;
-				R_TextureUnitBind(0, batch->textures[0]);
+				renderer.TextureUnitBind(0, batch->textures[0]);
 				while (last < batch->count) {
 					if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
 						GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
 
-						R_TextureUnitBind(0, batch->textures[last]);
+						renderer.TextureUnitBind(0, batch->textures[last]);
 						first = last;
 					}
 					++last;
