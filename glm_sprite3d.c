@@ -109,7 +109,7 @@ void GLM_Prepare3DSprites(void)
 	R_TraceLeaveNamedRegion();
 }
 
-void GLM_Draw3DSprites()
+void GLM_Draw3DSprites(void)
 {
 	unsigned int i;
 	qbool current_alpha_test = false;

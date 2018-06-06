@@ -58,6 +58,8 @@ extern cvar_t vid_renderer;
 #define R_UseImmediateOpenGL()    (vid_renderer.integer == 0)
 #define R_UseModernOpenGL()       (vid_renderer.integer == 1)
 #define R_UseVulkan()             (vid_renderer.integer == 2)
+
+void R_SelectRenderer(void);
 #endif
 
 #ifndef EZ_MULTIPLE_RENDERERS
