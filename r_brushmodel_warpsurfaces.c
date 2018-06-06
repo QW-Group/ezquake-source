@@ -123,8 +123,12 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		VectorCopy(verts, poly->verts[i]);
 		s = DotProduct(verts, warpface->texinfo->vecs[0]);
 		t = DotProduct(verts, warpface->texinfo->vecs[1]);
-		poly->verts[i][3] = s;
-		poly->verts[i][4] = t;
+		poly->verts[i][3] = s / 64.0f;
+		poly->verts[i][4] = t / 64.0f;
+		poly->verts[i][5] = 8 * sin(2 * t) / 64.0f;
+		poly->verts[i][6] = 8 * sin(2 * s) / 64.0f;
+		poly->verts[i][7] = 8 * cos(2 * t) / 64.0f;
+		poly->verts[i][8] = 8 * cos(2 * s) / 64.0f;
 	}
 }
 

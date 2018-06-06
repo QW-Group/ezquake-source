@@ -114,6 +114,9 @@ typedef struct {
 //	lightstyle_t    *lightstyles;
 	qbool           fog_enabled;    // fog is enabled
 	float           turb_ripple;
+
+	float           cos_time;
+	float           sin_time;
 } refdef2_t;
 
 

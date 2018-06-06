@@ -79,7 +79,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		byte color[4] = { col[0], col[1], col[2], 255 };
 
 		GLC_StateBeginFastTurbPoly(color);
-		for (p = fa->subdivided; p; p = p->next) {
+		for (p = r_refdef2.turb_ripple ? fa->subdivided : fa->polys; p; p = p->next) {
 			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				GLC_ApplyTurbRippleVertex(fa, v);
@@ -94,11 +94,11 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				float os = v[3];
 				float ot = v[4];
-				float s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
-				float t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
-
-				s *= (1.0 / 64);
-				t *= (1.0 / 64);
+				// meag: v[5] = 8 * sin(2t), v[6] = 8 * sin(2s)
+				//       v[7] = 8 * cos(2t), v[8] = 8 * cos(2s)
+				// was: SINTABLE_APPROX(ot * 2 + r_refdef2.time)) / 64.0f, SINTABLE_APPROX(os * 2 + r_refdef2.time)) / 64.0f
+				float s = os + v[5] * r_refdef2.cos_time + v[7] * r_refdef2.sin_time;
+				float t = ot + v[6] * r_refdef2.cos_time + v[8] * r_refdef2.sin_time;
 
 				glTexCoord2f(s, t);
 				GLC_ApplyTurbRippleVertex(fa, v);

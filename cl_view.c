@@ -1003,6 +1003,8 @@ qbool V_PreRenderView(void)
 		R_PushDlights();
 
 		r_refdef2.time = cl.time;
+		r_refdef2.sin_time = sin(r_refdef2.time);
+		r_refdef2.cos_time = cos(r_refdef2.time);
 
 		// restrictions
 		r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);

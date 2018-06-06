@@ -144,6 +144,7 @@ typedef struct glc_vbo_world_vert_s {
 } glc_vbo_world_vert_t;
 
 // GLC only...
+// For turb surfaces, we use lightmap tex coords to store 8*sin(<s or t>), and detail coords to store 8*cos(<s or t>)
 #define VERTEXSIZE 9  //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
 					  //s2t2 = lightmap tex coords; s3t3 = detail tex coords
 
