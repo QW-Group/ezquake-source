@@ -144,7 +144,7 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	if (surf->flags & SURF_DRAWSKY) {
 		target->flags = TEXTURE_TURB_SKY;
 	}
-	else {
+	else if (surf->flags & SURF_DRAWTURB) {
 		target->flags = surf->texinfo->texture->turbType & EZQ_SURFACE_TYPE;
 	}
 
