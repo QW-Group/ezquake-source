@@ -865,19 +865,19 @@ void Cvar_Reset_re_f (void)
 	Cvar_Reset(true);
 }
 
-void Cvar_SetDefault(cvar_t *var, float value)
+void Cvar_SetDefaultAndValue(cvar_t *var, float default_value, float actual_value)
 {
 	char val[128];
 	int i;
 
-	snprintf (val, sizeof(val), "%f", value);
+	snprintf (val, sizeof(val), "%f", default_value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
 	Q_free(var->defaultvalue);
 	var->defaultvalue = Q_strdup_named(val, var->name);
-	Cvar_Set(var, val);
+	Cvar_SetValue(var, actual_value);
 }
 
 char *Cvar_CompleteVariable (char *partial)

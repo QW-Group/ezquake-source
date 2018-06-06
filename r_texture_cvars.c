@@ -179,11 +179,7 @@ void R_TextureRegisterCvars(void)
 	Cvar_Register(&gl_externalTextures_bmodels);
 	Cvar_Register(&gl_wicked_luma_level);
 
-	Cvar_SetDefault(&gl_max_size, glConfig.gl_max_size_default);
-
 	// This way user can specify gl_max_size in his cfg.
 	i = (cv = Cvar_Find(gl_max_size.name)) ? cv->integer : 0;
-	if (i) {
-		Cvar_SetValue(&gl_max_size, i);
-	}
+	Cvar_SetDefaultAndValue(&gl_max_size, glConfig.gl_max_size_default, i ? i : glConfig.gl_max_size_default);
 }

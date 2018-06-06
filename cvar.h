@@ -150,7 +150,7 @@ void Cvar_RulesetSet(cvar_t *var, char *val, int m); // m=0 --> min, m=1--> max,
 
 void Cvar_SetFlags (cvar_t *var, int flags);
 
-void Cvar_SetDefault(cvar_t *var, float value);
+void Cvar_SetDefaultAndValue(cvar_t *var, float default_value, float actual_value);
 
 // attempts to match a partial variable name for command line completion
 // returns NULL if nothing fits

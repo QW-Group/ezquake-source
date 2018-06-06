@@ -44,9 +44,7 @@ void Check_Gamma(unsigned char *pal)
 			vid_gamma = 1;
 		}
 
-		Cvar_SetDefault(&v_gamma, vid_gamma);
-		// Cvar_SetDefault set not only default value, but also reset to default, fix that
-		Cvar_SetValue(&v_gamma, old || string == '0' ? old : vid_gamma);
+		Cvar_SetDefaultAndValue(&v_gamma, vid_gamma, old || string == '0' ? old : vid_gamma);
 	}
 
 	if (vid_gamma != 1) {
