@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
 #define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096
-//#define ATLAS_CHUNK 64
 
 typedef struct deleteable_texture_s {
 	texture_ref original;
@@ -59,6 +58,7 @@ static cachepic_node_t fontpics[MAX_CHARSETS * 256];
 static float solid_s;
 static float solid_t;
 static texture_ref atlas_texnum;
+static texture_ref solid_texnum;
 static qbool atlas_refresh = false;
 
 static void AddTextureToDeleteList(texture_ref tex)
@@ -99,7 +99,7 @@ static void DeleteOldTextures(void)
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 {
-	*ref = atlas_texnum;
+	*ref = solid_texnum;
 	*s = solid_s;
 	*t = solid_t;
 }
@@ -133,6 +133,7 @@ static qbool Atlas_AllocBlock(int w, int h, int *x, int *y)
 	}
 
 	if (best + h > atlas_block_height) {
+		*x = *y = 0;
 		return false;
 	}
 
@@ -151,7 +152,12 @@ static void CachePics_AllocateSolidTexture(void)
 {
 	int x_pos, y_pos, y;
 
-	Atlas_AllocBlock(atlas_chunk_size, atlas_chunk_size, &x_pos, &y_pos);
+	if (!Atlas_AllocBlock(atlas_chunk_size, atlas_chunk_size, &x_pos, &y_pos)) {
+		solid_texnum = solidwhite_texture;
+		solid_s = 0.5;
+		solid_t = 0.5;
+		return;
+	}
 
 	for (y = 0; y < atlas_chunk_size; ++y) {
 		memset(atlas_texels + (x_pos + (y_pos + y) * atlas_texture_width) * 4, 0xFF, atlas_chunk_size * 4);
@@ -159,6 +165,24 @@ static void CachePics_AllocateSolidTexture(void)
 
 	solid_s = (x_pos + atlas_chunk_size / 2) * 1.0f / atlas_texture_width;
 	solid_t = (y_pos + atlas_chunk_size / 2) * 1.0f / atlas_texture_height;
+	solid_texnum = atlas_texnum;
+}
+
+static void CachePics_CopyToBuffer(mpic_t* pic, int x_pos, int y_pos, int new_texture_width, const byte* input, byte* output)
+{
+	int texWidth = R_TextureWidth(pic->texnum);
+	int texHeight = R_TextureHeight(pic->texnum);
+	int height = (pic->th - pic->tl) * texHeight;
+	int width = (pic->sh - pic->sl) * texWidth;
+	int yOffset;
+
+	for (yOffset = 0; yOffset < height; ++yOffset) {
+		int y = y_pos + yOffset;
+		int base = (x_pos + y * new_texture_width) * 4;
+		int srcBase = (pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
+
+		memcpy(output + base, input + srcBase, 4 * width);
+	}
 }
 
 static int CachePics_AddToAtlas(mpic_t* pic)
@@ -181,7 +205,6 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 	// Allocate space in an atlas texture
 	if (Atlas_AllocBlock(width + (width == atlas_texture_width ? 0 : padding), height + (height == atlas_texture_height ? 0 : padding), &x_pos, &y_pos)) {
-		int yOffset;
 		byte* input_image = NULL;
 
 		// Copy texture image
@@ -194,13 +217,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = buffer;
 		}
 
-		for (yOffset = 0; yOffset < height; ++yOffset) {
-			int y = y_pos + yOffset;
-			int base = (x_pos + y * atlas_texture_width) * 4;
-			int srcBase = (pic->sl * texWidth + (yOffset + pic->tl * texHeight) * texWidth) * 4;
-
-			memcpy(atlas_texels + base, input_image + srcBase, 4 * width);
-		}
+		CachePics_CopyToBuffer(pic, x_pos, y_pos, atlas_texture_width, input_image, atlas_texels);
 
 		pic->sl = (x_pos) / (float)atlas_texture_width;
 		pic->sh = (x_pos + width) / (float)atlas_texture_width;
@@ -210,8 +227,13 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 		return 0;
 	}
-	else {
-		Con_DPrintf("&cf00atlas&r FAILED TO PLACE: %d (%d x %d)\n", pic->texnum, width, height);
+	else if (R_TextureReferenceEqual(atlas_texnum, pic->texnum)) {
+		// Was on texture but no longer fits - need to create new texture
+		CachePics_CopyToBuffer(pic, 0, 0, width, prev_atlas_texels, buffer);
+
+		pic->tl = pic->sl = 0;
+		pic->th = pic->sh = 1;
+		pic->texnum = R_LoadTexturePixels(buffer, "", width, height, TEX_ALPHA);
 	}
 
 	return -1;
