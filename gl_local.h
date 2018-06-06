@@ -298,7 +298,6 @@ void GLC_BrightenScreen(void);
 //void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
-void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(qbool use_vbo);
 
 void GLC_DrawWorld(void);
