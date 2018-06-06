@@ -750,8 +750,9 @@ void Cmd_Alias_f (void)
 
 	c = Cmd_Argc();
 	if (c == 1)	{
-		Com_Printf ("%s <name> <command> : create or modify an alias\n", Cmd_Argv(0));
-		Com_Printf ("aliaslist : list all aliases\n");
+		Com_Printf("%s <name> : show alias content\n", Cmd_Argv(0));
+		Com_Printf("%s <name> <command> : create or modify an alias\n", Cmd_Argv(0));
+		Com_Printf("use aliaslist to search for aliases\n");
 		return;
 	}
 
@@ -766,6 +767,11 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
 		if (!strcasecmp(a->name, s)) {
+			if (Cmd_Argc() == 2) {
+				Com_Printf("\x02%s :", a->name);
+				Com_Printf(" %s\n", a->value);
+				return;
+			}
 			Q_free(a->value);
 			break;
 		}
