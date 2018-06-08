@@ -940,6 +940,7 @@ void CommonDraw_Init(void)
 
 	Performance_HudInit();
 	Guns_HudInit();
+	Groups_HudInit();
 	Items_HudInit();
 	Ammo_HudInit();
 	Armor_HudInit();
