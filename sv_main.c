@@ -56,6 +56,7 @@ cvar_t	sys_select_timeout = {"sys_select_timeout", "10000", 0, OnChange_sysselec
 cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 
 #ifdef SERVERONLY
+cvar_t  sys_simulation = { "sys_simulation", "0" };
 cvar_t	developer = {"developer", "0"};		// show extra messages
 cvar_t	version = {"version", "", CVAR_ROM};
 #endif
@@ -3709,6 +3710,7 @@ void COM_Init (void)
 {
 	Cvar_Register (&developer);
 	Cvar_Register (&version);
+	Cvar_Register (&sys_simulation);
 
 	Cvar_SetROM(&version, VersionStringFull());
 }
