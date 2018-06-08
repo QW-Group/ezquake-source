@@ -53,8 +53,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //=============================================================================
 
 
-#define Q1_BSPVERSION	  29
-#define HL_BSPVERSION	  30
+#define Q1_BSPVERSION     29
+#define HL_BSPVERSION     30
 #define Q1_BSPVERSION29a  (('2') + ('P' << 8) + ('S' << 16) + ('B' << 24))
 #define Q1_BSPVERSION2    (('B') + ('S' << 8) + ('P' << 16) + ('2' << 24))
 
@@ -89,6 +89,7 @@ typedef struct
 	int         visleafs;                    // not including the solid leaf 0
 	int         firstface, numfaces;
 } dmodel_t;
+
 
 typedef struct
 {
