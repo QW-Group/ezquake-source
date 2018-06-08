@@ -243,8 +243,8 @@ static void CI_DrawBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex, ci_pl
 	if (vert) {
 		GL_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
 		GL_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
 		GL_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
 	}
 }
 
@@ -273,9 +273,9 @@ void DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_FAN, true, true);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_FAN, true, true);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_FAN, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), GL_TRIANGLE_STRIP, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_afk]), GL_TRIANGLE_STRIP, true, true);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, TEXTURE_DETAILS(ci_textures[citex_chat]), GL_TRIANGLE_STRIP, true, true);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

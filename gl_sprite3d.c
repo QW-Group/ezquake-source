@@ -604,7 +604,7 @@ void GLC_Draw3DSprites(void)
 				}
 				GL_DrawArrays(batch->primitive, batch->glFirstVertices[0], batch->numVertices[0]);
 			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4 && batch->primitive == GL_TRIANGLE_STRIP) {
 				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 			}
 			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
