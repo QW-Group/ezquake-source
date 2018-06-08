@@ -412,6 +412,14 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	trackmsg_t* msg;
 	int i;
 
+	while (lhs_text && isspace((byte)lhs_text[0] & 127)) {
+		++lhs_text;
+	}
+
+	while (rhs_text && isspace((byte)rhs_text[0] & 127)) {
+		++rhs_text;
+	}
+
 	if (((!lhs_text || !lhs_text[0]) && (!rhs_text || !rhs_text[0])) || CL_Demo_SkipMessage(true)) {
 		return;
 	}
