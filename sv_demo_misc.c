@@ -133,25 +133,6 @@ char *SV_CleanName (unsigned char *name)
 	return text;
 }
 
-// only one .. is allowed (security)
-void sv_demoDir_OnChange (cvar_t *cvar, char *value, qbool *cancel)
-{
-	if (!value[0])
-	{
-		*cancel = true;
-		return;
-	}
-
-	if (value[0] == '.' && value[1] == '.')
-		value += 2;
-
-	if (strstr(value,"/.."))
-	{
-		*cancel = true;
-		return;
-	}
-}
-
 /*
 ====================
 SV_DirSizeCheck
@@ -378,7 +359,7 @@ void SV_DemoList (qbool use_regex)
 		{
 			if (use_regex)
 			{
-				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)), PCRE_CASELESS, &errbuf, &r, NULL)))
+				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)),	PCRE_CASELESS, &errbuf, &r, NULL)))
 				{
 					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
 					           Cmd_Argv(j), errbuf, r);

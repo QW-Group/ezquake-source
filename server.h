@@ -932,6 +932,7 @@ extern cvar_t	sv_demoCacheSize;
 extern cvar_t	sv_demoMaxDirSize;
 extern cvar_t	sv_demoClearOld;
 extern cvar_t	sv_demoDir;
+extern cvar_t	sv_demoDirAlt;
 extern cvar_t	sv_demofps;
 extern cvar_t	sv_demoPings;
 extern cvar_t	sv_demoMaxSize;

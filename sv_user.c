@@ -1297,6 +1297,16 @@ static void SV_NextUpload (void)
 	}
 }
 
+static void SV_UserCleanFilename(char* name)
+{
+	char* p;
+
+	// lowercase name (needed for casesen file systems)
+	for (p = name; *p; p++) {
+		*p = (char)tolower(*p);
+	}
+}
+
 /*
 ==================
 Cmd_Download_f
@@ -1305,7 +1315,8 @@ Cmd_Download_f
 //void SV_ReplaceChar(char *s, char from, char to);
 static void Cmd_Download_f(void)
 {
-	char	*name, n[MAX_OSPATH], *val, *p;
+	char	*name, n[MAX_OSPATH], *val;
+	char alternative_path[MAX_OSPATH];
 	extern	cvar_t	allow_download;
 	extern	cvar_t	allow_download_skins;
 	extern	cvar_t	allow_download_models;
@@ -1376,10 +1387,17 @@ static void Cmd_Download_f(void)
 		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
 	}
 
+	memset(alternative_path, 0, sizeof(alternative_path));
 	if ( !strncmp(name, "demos/", 6) && sv_demoDir.string[0])
 	{
 		snprintf(n,sizeof(n), "%s/%s", sv_demoDir.string, name + 6);
 		name = n;
+
+		if (sv_demoDirAlt.string[0]) {
+			strlcpy(alternative_path, sv_demoDirAlt.string, sizeof(alternative_path));
+			strlcat(alternative_path, "/", sizeof(alternative_path));
+			strlcat(alternative_path, name + 6, sizeof(alternative_path));
+		}
 	}
 	else if (!strncmp(name, "demonum/", 8))
 	{
@@ -1418,39 +1436,27 @@ static void Cmd_Download_f(void)
 		return;
 	}
 
-	// lowercase name (needed for casesen file systems)
-	{
-		for (p = name; *p; p++)
-			*p = (char)tolower(*p);
-	}
+	SV_UserCleanFilename(name);
+	SV_UserCleanFilename(alternative_path);
 
 	sv_client->downloadcount = 0;
 
-	// techlogin download uses simple path from quake folder
-	if (sv_client->special)
-	{
 #ifdef SERVERONLY
-		sv_client->download = FS_OpenVFS(name, "rb", FS_GAME); // FIXME: Should we use FS_BASE ???
+#define CLIENT_DOWNLOAD_RELATIVE_BASE FS_GAME // FIXME: Should we use FS_BASE ???
 #else
-		sv_client->download = FS_OpenVFS(name, "rb", FS_BASE); // FIXME: Should we use FS_BASE ???
+#define CLIENT_DOWNLOAD_RELATIVE_BASE FS_BASE
 #endif
-		if (sv_client->download)
-		{
-			if ((int) developer.value)
-				Sys_Printf ("FindFile: %s\n", name);
-			sv_client->downloadsize = VFS_GETLEN(sv_client->download);
-		}
-	}
-	else
-	{
-#ifdef SERVERONLY
-		sv_client->download = FS_OpenVFS(name, "rb", FS_GAME); // FIXME: Should we use FS_BASE ???
-#else
-		sv_client->download = FS_OpenVFS(name, "rb", FS_BASE); // FIXME: Should we use FS_BASE ???
-#endif
-		if (sv_client->download)
-			sv_client->downloadsize = VFS_GETLEN(sv_client->download);
 
+	sv_client->download = FS_OpenVFS(name, "rb", CLIENT_DOWNLOAD_RELATIVE_BASE);
+	if (!sv_client->download && alternative_path[0]) {
+		sv_client->download = FS_OpenVFS(alternative_path, "rb", CLIENT_DOWNLOAD_RELATIVE_BASE);
+	}
+	if (sv_client->download) {
+		sv_client->downloadsize = VFS_GETLEN(sv_client->download);
+	}
+
+	// if not techlogin, perform extra check to block .pak maps
+	if (!sv_client->special) {
 		// special check for maps that came from a pak file
 		if (sv_client->download && !strncmp(name, "maps/", 5) && VFS_COPYPROTECTED(sv_client->download) && !(int)allow_download_pakmaps.value)
 		{
