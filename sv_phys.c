@@ -1026,6 +1026,7 @@ void SV_RunBots(void)
 	client_t *cl,*savehc;
 	edict_t *savesvpl;
 	double max_physfps = sv_maxfps.value;
+	static double extramsec = 0;
 
 	if (max_physfps < 20 || max_physfps > 1000) {
 		max_physfps = 77.0;
@@ -1035,15 +1036,22 @@ void SV_RunBots(void)
 		return;
 
 #ifdef SERVERONLY
-	if (sv.old_bot_time)
-	{
+	if (sv.old_bot_time) {
 		// don't bother running a frame if 1/fps seconds haven't passed
-		sv_frametime = sv.time - sv.old_bot_time;
-		if (sv_frametime < (double) 1.0f / max_physfps)
+		double required = (double) 1.0f / max_physfps;
+
+		extramsec += (sv.time - sv.old_bot_time);
+		sv.old_bot_time = sv.time;
+		if (extramsec < required) {
 			return;
+		}
+		sv_frametime = required;
+		extramsec -= required;
 	}
 	else {
 		sv_frametime = 1.0f / max_physfps; // initialization frame
+		extramsec = 0;
+		sv.old_bot_time = sv.time;
 	}
 #else
 	// On internal server, try and match the user's framerate
@@ -1051,9 +1059,9 @@ void SV_RunBots(void)
 	if (sv.old_bot_time && sv.old_bot_time == sv.time) {
 		return;
 	}
-#endif
-
 	sv.old_bot_time = sv.time;
+	extramsec = 0;
+#endif
 
 	savesvpl = sv_player;
 	savehc = sv_client;
