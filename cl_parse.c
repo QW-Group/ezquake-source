@@ -3173,6 +3173,9 @@ void CL_SetStat (int stat, int value)
 	if (cl.stats[STAT_MATCHSTARTTIME])
 	{
 		cl.gamestarttime = Sys_DoubleTime() - cl.servertime + ((double)cl.stats[STAT_MATCHSTARTTIME])/1000 - cl.gamepausetime;
+		if (cls.mvdplayback && cl.servertime_works) {
+			cl.gametime = max(0, cl.servertime - cl.stats[STAT_MATCHSTARTTIME] * 0.001);
+		}
 	}
 
 	TP_StatChanged(stat, value);
