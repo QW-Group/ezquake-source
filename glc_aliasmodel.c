@@ -515,9 +515,7 @@ void GLC_DrawPowerupShell(
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
 {
 	// Underwater caustics on alias models of QRACK -->
-#define GL_RGB_SCALE 0x8573
-
-	if ((gl_caustics.value) && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
+	if (gl_caustics.integer && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
 		R_SetupAliasFrame(clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0, 0);

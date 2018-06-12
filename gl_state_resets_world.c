@@ -240,6 +240,7 @@ void GLC_StateBeginUnderwaterCaustics(void)
 	GLC_EnsureTMUEnabled(GL_TEXTURE1);
 	GL_EnsureTextureUnitBound(GL_TEXTURE1, underwatertexture);
 
+	GL_SelectTexture(GL_TEXTURE1);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 	glScalef(0.5, 0.5, 1);
@@ -260,6 +261,7 @@ void GLC_StateEndUnderwaterCaustics(void)
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 
+	GL_SelectTexture(GL_TEXTURE1);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
