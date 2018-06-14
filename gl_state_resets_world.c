@@ -122,6 +122,8 @@ void GLC_StateEndWorldTextureChains(GLenum lightmapTextureUnit, GLenum fullbrigh
 {
 	ENTER_STATE;
 
+	GL_DebugState();
+
 	if (GL_BuffersSupported()) {
 		GL_UnBindBuffer(GL_ARRAY_BUFFER);
 		glDisableClientState(GL_VERTEX_ARRAY);

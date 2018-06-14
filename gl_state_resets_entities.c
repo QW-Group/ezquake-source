@@ -90,6 +90,8 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 {
 	ENTER_STATE;
 
+	GL_DebugState();
+
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
@@ -115,6 +117,8 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	else {
 		GLC_InitTextureUnits1(texture, GL_MODULATE);
 	}
+
+	GL_DebugState();
 
 	LEAVE_STATE;
 }
@@ -150,6 +154,8 @@ void GLC_StateEndAliasModelShadow(void)
 void GLC_StateBeginDrawViewModel(float alpha)
 {
 	ENTER_STATE;
+
+	GL_DebugState();
 
 	GL_PolygonOffset(POLYGONOFFSET_DISABLED);
 	GL_CullFace(GL_FRONT);
