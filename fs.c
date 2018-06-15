@@ -2061,13 +2061,18 @@ int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
 
 void FS_InitModuleFS (void)
 {
-	Cmd_AddCommand("loadpak", FS_PakAdd_f);
-	Cmd_AddCommand("removepak", FS_PakRem_f);
-	Cmd_AddCommand("path", FS_Path_f);
+	Cmd_AddCommand("fs_loadpak", FS_PakAdd_f);
+	Cmd_AddLegacyCommand("loadpak", "fs_loadpak");
+	Cmd_AddCommand("fs_removepak", FS_PakRem_f);
+	Cmd_AddLegacyCommand("removepak", "fs_removepak");
+	Cmd_AddCommand("fs_path", FS_Path_f);
+	Cmd_AddLegacyCommand("path", "fs_path");
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
-	Cmd_AddCommand("dir", FS_Dir_f);
-	Cmd_AddCommand("locate", FS_Locate_f);
+	Cmd_AddCommand("fs_dir", FS_Dir_f);
+	Cmd_AddLegacyCommand("dir", "fs_dir");
+	Cmd_AddCommand("fs_locate", FS_Locate_f);
+	Cmd_AddLegacyCommand("locate", "fs_locate");
 	Cmd_AddCommand("fs_search", FS_ListFiles_f);
 	Cvar_Register(&fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
@@ -2140,31 +2145,72 @@ searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, voi
 FS_Dir_f
 ============
 */
+#define FS_DIR_HIDE_DIRECTORY 1
+#define FS_DIR_HIDE_EXTENSION 2
+#define FS_DIR_HIDE_SIZE      4
+
 static int FS_Dir_List(char *name, int size, void *parm)
 {
-	Com_Printf("%s  (%i)\n", name, size);
+	char filename[MAX_QPATH];
+	int options = (int)(intptr_t)parm;
+
+	if (options & FS_DIR_HIDE_DIRECTORY) {
+		name = COM_SkipPathWritable(name);
+	}
+
+	if (options & FS_DIR_HIDE_EXTENSION) {
+		COM_StripExtension(name, filename, sizeof(filename));
+		name = filename;
+	}
+
+	if (name && name[0]) {
+		if (options & FS_DIR_HIDE_SIZE) {
+			Com_Printf("%s\n", name);
+		}
+		else {
+			Com_Printf("%s  (%i)\n", name, size);
+		}
+	}
 	return 1;
 }
 
-void FS_Dir_f (void)
+void FS_Dir_f(void)
 {
 	char match[MAX_QPATH];
+	int options = 0;
 
-	if (Cmd_Argc() > 3)  {
-		Com_Printf("Usage: %s [directory [file_suffix]]\n", Cmd_Argv(0));
+	if (Cmd_Argc() == 1) {
+		Com_Printf("Usage: %s [directory [file_suffix [options]]]\n", Cmd_Argv(0));
+		Com_Printf("Options: hideext, hidedir, hidesize\n");
 		return;
 	}
 
-	strlcpy (match, Cmd_Argv(1), sizeof (match));
+	strlcpy(match, Cmd_Argv(1), sizeof(match));
 
-	if (Cmd_Argc() > 2) {
-		strlcat (match, "/*.", sizeof (match));
-		strlcat (match, Cmd_Argv(2), sizeof (match));
-	} else {
-		strlcat (match, "/*", sizeof (match));
+	if (Cmd_Argc() > 2 && Cmd_Argv(2)[0]) {
+		strlcat(match, "/*.", sizeof(match));
+		strlcat(match, Cmd_Argv(2), sizeof(match));
+	}
+	else {
+		strlcat(match, "/*", sizeof(match));
 	}
 
-	FS_EnumerateFiles (match, FS_Dir_List, NULL);
+	if (Cmd_Argc() > 3) {
+		int i;
+		for (i = 3; i < Cmd_Argc(); ++i) {
+			if (!strcmp(Cmd_Argv(i), "hidedir")) {
+				options |= FS_DIR_HIDE_DIRECTORY;
+			}
+			else if (!strcmp(Cmd_Argv(i), "hideext")) {
+				options |= FS_DIR_HIDE_EXTENSION;
+			}
+			else if (!strcmp(Cmd_Argv(i), "hidesize")) {
+				options |= FS_DIR_HIDE_SIZE;
+			}
+		}
+	}
+
+	FS_EnumerateFiles(match, FS_Dir_List, (void*)(intptr_t)options);
 }
 
 /*
