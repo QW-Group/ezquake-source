@@ -35,8 +35,6 @@ portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
 int snd_scaletable[32][256];
 int snd_vol, *snd_p;
 
-float voicevolumemod = 1; // voice volume modifier.
-
 static int snd_linear_count;
 static short *snd_out;
 
@@ -69,7 +67,7 @@ static void S_TransferStereo16 (int endtime)
 	int lpaintedtime, lpos, clientVolume;
 	DWORD *pbuf;
 
-	clientVolume = snd_vol = (s_volume.value * voicevolumemod) * 256;
+	clientVolume = snd_vol = (s_volume.value * S_VoipVoiceTransmitVolume()) * 256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = shw->paintedtime;
@@ -123,7 +121,7 @@ static void S_TransferPaintBuffer(int endtime)
 	out_mask = shw->samples - 1;
 	out_idx = shw->paintedtime * shw->numchannels & out_mask;
 	step = 3 - shw->numchannels;
-	snd_vol = (s_volume.value * voicevolumemod) * 256;
+	snd_vol = (s_volume.value * S_VoipVoiceTransmitVolume()) * 256;
 
 	pbuf = (DWORD *)shw->buffer;
 

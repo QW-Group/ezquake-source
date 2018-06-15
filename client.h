@@ -1022,14 +1022,16 @@ void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
 qbool S_Voip_ShowMeter(int* x, int* y);
 qbool S_Voip_Speaking (unsigned int player);
 void S_Capture_Shutdown(void);
-int S_Voip_Loudness (void);
-void S_Voip_MapChange (void);
-void S_Voip_Parse (void);
-void S_Voip_Ignore (unsigned int slot, qbool ignore);
+int S_Voip_Loudness(void);
+void S_Voip_MapChange(void);
+void S_Voip_Parse(void);
+void S_Voip_Ignore(unsigned int slot, qbool ignore);
+float S_VoipVoiceTransmitVolume(void);
 #else
 #define S_Voip_ShowMeter(x, y) false
 #define S_Voip_Speaking(x) false
-#define S_Voip_Loudness 0
+#define S_Voip_Loudness() (0)
+#define S_VoipVoiceTransmitVolume() (1)
 #endif
 
 // KTX

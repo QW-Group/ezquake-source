@@ -57,6 +57,11 @@ static cvar_t cl_voip_showmeter_y = { "cl_voip_showmeter_y", "0" };             
 
 static float voicevolumemod = 1; // voice volume modifier.
 
+float S_VoipVoiceTransmitVolume(void)
+{
+	return voicevolumemod;
+}
+
 static struct
 {
 	qbool inited;
