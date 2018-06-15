@@ -1026,7 +1026,9 @@ void SV_RunBots(void)
 	client_t *cl,*savehc;
 	edict_t *savesvpl;
 	double max_physfps = sv_maxfps.value;
+#ifdef SERVERONLY
 	static double extramsec = 0;
+#endif
 
 	if (max_physfps < 20 || max_physfps > 1000) {
 		max_physfps = 77.0;
@@ -1060,7 +1062,6 @@ void SV_RunBots(void)
 		return;
 	}
 	sv.old_bot_time = sv.time;
-	extramsec = 0;
 #endif
 
 	savesvpl = sv_player;

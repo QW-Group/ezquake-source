@@ -1207,7 +1207,6 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	}
 
 	if (pad_lumps) {
-		unsigned int* old_buf = buf;
 		int position = 0;
 		int required_size = sizeof(dheader_t) + required_length + HEADER_LUMPS * 4 + 1;
 		padded_buf = Q_malloc(required_size);
