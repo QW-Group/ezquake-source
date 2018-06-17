@@ -74,7 +74,8 @@ void SV_SavegameComment (char *buffer) {
 	buffer[SAVEGAME_COMMENT_LENGTH] = 0;
 }
 
-void SV_SaveGame_f (void) {
+void SV_SaveGame_f(void)
+{
 	char fname[MAX_OSPATH], comment[SAVEGAME_COMMENT_LENGTH+1];
 	FILE *f;
 	int i;
@@ -155,8 +156,8 @@ void SV_SaveGame_f (void) {
 	FS_FlushFSHash();
 }
 
-void SV_LoadGame_f (void) {
-	extern cvar_t sv_progtype;
+void SV_LoadGame_f(void)
+{
 	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024], *start;
 	FILE *f;
 	float time, tfloat, spawn_parms[NUM_SPAWN_PARMS];
@@ -210,17 +211,6 @@ void SV_LoadGame_f (void) {
 		return;
 	}
 	current_skill = (int)(tfloat + 0.1);
-	Cvar_Set (&skill, va("%i", current_skill));
-
-	Cvar_SetValue (&deathmatch, 0);
-	Cvar_SetValue (&coop, 0);
-	Cvar_SetValue (&teamplay, 0);
-	Cvar_SetValue (&maxclients, 1);
-
-	Cvar_Set (&sv_progsname, "spprogs"); // force progsname
-#ifdef USE_PR2
-	Cvar_Set (&sv_progtype, "0"); // force .dat
-#endif
 
 	if (fscanf (f, "%s\n", mapname) != 1) {
 		fclose (f);
@@ -238,7 +228,7 @@ void SV_LoadGame_f (void) {
 	CL_BeginLocalConnection ();
 #endif
 
-	SV_SpawnServer (mapname, false, NULL);
+	SV_SpawnServer(mapname, false, NULL, true);
 
 	if (sv.state != ss_active) {
 		Con_Printf ("Couldn't load map\n");

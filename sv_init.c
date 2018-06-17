@@ -197,15 +197,16 @@ SV_SpawnServer
 Change the server to a new map, taking all connected
 clients along with it.
 
-This is only called from the SV_Map_f() function.
+This is called from the SV_Map_f() function, and when loading .sav files
 ================
 */
-void SV_SpawnServer (char *mapname, qbool devmap, char* entityfile)
+void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading_savegame)
 {
 	extern func_t ED_FindFunctionOffset (char *name);
 
 	edict_t *ent;
 	int i;
+	int skill_level = current_skill;
 
 	extern cvar_t sv_loadentfiles, sv_loadentfiles_dir;
 	char *entitystring;
@@ -269,6 +270,18 @@ void SV_SpawnServer (char *mapname, qbool devmap, char* entityfile)
 		Cbuf_ExecuteEx(&cbuf_server);
 	}
 #endif
+
+	if (loading_savegame) {
+		Cvar_SetValue(&skill, skill_level);
+		Cvar_SetValue(&deathmatch, 0);
+		Cvar_SetValue(&coop, 0);
+		Cvar_SetValue(&teamplay, 0);
+		Cvar_SetValue(&maxclients, 1);
+		Cvar_Set(&sv_progsname, "spprogs"); // force progsname
+#ifdef USE_PR2
+		Cvar_SetValue(&sv_progtype, 0); // force .dat
+#endif
+	}
 
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (sv_bigcoords.value)
