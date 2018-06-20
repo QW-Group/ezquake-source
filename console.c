@@ -796,7 +796,7 @@ static qbool Con_NotifyMessageLine(float posX, float posY, float width, float he
 		// prestep if horizontally scrolling
 		if (!proportional) {
 			if (chat_linepos * 8 * scale + posX >= width) {
-				s += (int)((1 + chat_linepos) * 8 * scale) + ((int)(posX - width) >> 3);
+				s += (int)((1 + chat_linepos)) + (int)((posX - width) / (8 * scale));
 			}
 		}
 		else {
