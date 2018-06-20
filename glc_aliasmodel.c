@@ -540,8 +540,8 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
 	GL_PushMatrix(GL_MODELVIEW, oldMatrix);
-	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
-	glRotatef(ent->angles[1], 0, 0, 1);
+	GL_Translate(GL_MODELVIEW, ent->origin[0], ent->origin[1], ent->origin[2]);
+	GL_Rotate(GL_MODELVIEW, ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasShadow(paliashdr, lastposenum, shadevector, lightspot);
