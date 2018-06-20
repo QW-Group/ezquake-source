@@ -885,7 +885,8 @@ static void QMB_UpdateParticles(void)
 {
 	int i;
 	particle_type_t *pt;
-	particle_t *p, *kill;
+	particle_t *p;
+	particle_t **prev;
 
 	if (!qmb_initialized) {
 		return;
@@ -909,33 +910,22 @@ static void QMB_UpdateParticles(void)
 		}
 #endif // _WIN32
 
-		if (pt->start) {
-			for (p = pt->start; p && p->next; ) {
-				kill = p->next;
-				if (kill->die <= particle_time) {
-					p->next = kill->next;
-					kill->next = free_particles;
-					free_particles = kill;
-					//VULT STATS
-					ParticleStats(-1);
-				}
-				else {
-					if (particle_time >= p->start) {
-						particle_count++;
-
-						QMB_ProcessParticle(pt, p);
-					}
-					p = p->next;
-				}
-			}
-
-			if (pt->start->die <= particle_time) {
-				kill = pt->start;
-				pt->start = kill->next;
-				kill->next = free_particles;
-				free_particles = kill;
-				//VULT STATS
+		prev = &pt->start;
+		for (p = pt->start; p; ) {
+			if (particle_time >= p->die) {
+				*prev = p->next;
+				p->next = free_particles;
+				free_particles = p;
 				ParticleStats(-1);
+				p = *prev;
+			}
+			else if (particle_time >= p->start) {
+				particle_count++;
+
+				QMB_ProcessParticle(pt, p);
+
+				prev = &p->next;
+				p = p->next;
 			}
 		}
 	}
