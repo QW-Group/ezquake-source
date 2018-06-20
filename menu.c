@@ -1312,6 +1312,15 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
 
+void M_Shutdown(void)
+{
+	Menu_Help_Shutdown();
+	Menu_Demo_Shutdown();
+	Menu_Options_Shutdown();
+	Menu_Ingame_Shutdown();
+	Menu_MultiPlayer_Shutdown();
+}
+
 void M_Draw (void) {
 	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy)
 		return;

@@ -1370,6 +1370,19 @@ void Menu_Options_Init(void) {
 	CTab_SetCurrentId(&options_tab, OPTPG_PLAYER);
 }
 
+void Menu_Options_Shutdown(void)
+{
+	FL_Shutdown(&configs_filelist);
+	Settings_Shutdown(&settmisc);
+	Settings_Shutdown(&settfps);
+	Settings_Shutdown(&settview);
+	Settings_Shutdown(&settplayer);
+	Settings_Shutdown(&settbinds);
+	Settings_Shutdown(&settsystem);
+	Settings_Shutdown(&settconfig);
+	Settings_MainShutdown();
+}
+
 qbool Menu_Options_IsBindingKey (void)
 {
 	// Options/Binds, and waiting for a keypress

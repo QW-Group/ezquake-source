@@ -201,3 +201,12 @@ void Menu_Ingame_Init(void)
 	Settings_Page_Init(qtv_menu, qtv_menu_entries);
 	Settings_Page_SetMinit(qtv_menu);
 }
+
+void Menu_Ingame_Shutdown(void)
+{
+	Settings_Shutdown(&single_menu);
+	Settings_Shutdown(&ingame_menu);
+	Settings_Shutdown(&democtrl_menu);
+	Settings_Shutdown(&botmatch_menu);
+	Settings_Shutdown(&qtv_menu);
+}

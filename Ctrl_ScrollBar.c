@@ -56,9 +56,9 @@ void ScrollBars_Init(void)
     }
 }
 
-PScrollBar ScrollBar_Create(ScrollPos_setter pos_setter)
+PScrollBar ScrollBar_Create(ScrollPos_setter pos_setter, const char* name)
 {
-    PScrollBar scb_new = Q_malloc(sizeof(ScrollBar));
+    PScrollBar scb_new = Q_malloc_named(sizeof(ScrollBar), name);
 
     if (!scb_new) return NULL;
 

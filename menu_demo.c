@@ -922,6 +922,12 @@ void Menu_Demo_Init(void)
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
 }
 
+void Menu_Demo_Shutdown(void)
+{
+	FL_Shutdown(&demo_filelist);
+	Settings_Shutdown(&demoplsett);
+}
+
 void CL_Demo_NextInPlaylist(void)
 {
 	if (demo_playlist_started) {

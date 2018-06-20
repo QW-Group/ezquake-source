@@ -109,12 +109,17 @@ void FL_Init(filelist_t	*fl, char *initdir)
 	fl->show_dirup = true;
 	fl->show_dirs = true;
 
-	fl->scrollbar = ScrollBar_Create(NULL);
+	fl->scrollbar = ScrollBar_Create(NULL, fl->current_dir);
 
 #ifdef WITH_ZIP
 	fl->current_archive[0] = 0;
 	fl->in_archive = false;
 #endif // WITH_ZIP
+}
+
+void FL_Shutdown(filelist_t* fl)
+{
+	Q_free(fl->scrollbar);
 }
 
 //

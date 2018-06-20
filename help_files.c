@@ -49,6 +49,11 @@ void Help_Browser_Init(void)
     CPageViewer_GoUrl(&help_viewer, "help/index.xml");
 }
 
+void Help_Browser_Shutdown(void)
+{
+	CPageViewer_Free(&help_viewer);
+}
+
 int Help_Browser_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
     return CPageViewer_Key(&help_viewer, key, unichar);
@@ -202,6 +207,13 @@ void Menu_Help_Init(void)
 	CTab_AddPage(&help_tab, "Tutorials", HELPM_TUTORIALS, &help_tutorials_handlers);
 
     CTab_SetCurrentId(&help_tab, HELPM_BROWSER);
+}
+
+void Menu_Help_Shutdown(void)
+{
+	Help_Browser_Shutdown();
+	FL_Shutdown(&help_index_fl);
+	FL_Shutdown(&help_tutorials_fl);
 }
 
 void Menu_Help_Key(int key, wchar unichar)

@@ -73,4 +73,6 @@ typedef enum {
 
 extern m_state_t m_state;
 
+void M_Shutdown(void);
+
 #endif // __MENU_H_

@@ -493,6 +493,12 @@ void Menu_MultiPlayer_Init(void)
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
 }
 
+void Menu_MultiPlayer_Shutdown(void)
+{
+	Settings_Shutdown(&sbsettings);
+	Settings_Shutdown(&create_game_options);
+}
+
 void Menu_MultiPlayer_SwitchToServersTab(void)
 {
 	M_EnterMenu(m_multiplayer);

@@ -959,7 +959,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	return false;
 }
 
-void Settings_Init(settings_page *page, setting *arr, int size)
+void Settings_Init(settings_page *page, setting *arr, int size, const char* name)
 {
 	int i;
 	qbool onlyseparators = true;
@@ -970,7 +970,7 @@ void Settings_Init(settings_page *page, setting *arr, int size)
 	page->settings = arr;
 	page->viewpoint = 0;
 	page->mode = SPM_NORMAL;
-	page->scrollbar = ScrollBar_Create(NULL);
+	page->scrollbar = ScrollBar_Create(NULL, name);
 	page->mini = false;
 
 	for (i = 0; i < size; i++) {
@@ -998,6 +998,11 @@ void Settings_Init(settings_page *page, setting *arr, int size)
 	}
 }
 
+void Settings_Shutdown(settings_page *page)
+{
+	Q_free(page->scrollbar);
+}
+
 void Settings_MainInit(void)
 {
 	FL_Init(&skins_filelist, "./qw/skins");
@@ -1008,4 +1013,9 @@ void Settings_MainInit(void)
 	FL_AddFileType(&skins_filelist, 1, ".png");
 	FL_AddFileType(&skins_filelist, 2, ".jpg");
 	FL_AddFileType(&skins_filelist, 3, ".tga");
+}
+
+void Settings_MainShutdown(void)
+{
+	FL_Shutdown(&skins_filelist);
 }

@@ -34,8 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // initializes the page structure
 void Settings_Init(settings_page *page, setting *settings, int size); 
 
+void Settings_Shutdown(settings_page *page);
+
 // initilalize settings pages structures
 void Settings_MainInit(void);
+void Settings_MainShutdown(void);
 
 // draw request handler
 void Settings_Draw(int x, int y, int w, int h, settings_page* page);

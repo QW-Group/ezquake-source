@@ -73,7 +73,7 @@ typedef struct ScrollBar_s {
 
 // scrollbar constructor
 // 1st parameter: a function it should call, can be NULL
-PScrollBar ScrollBar_Create(ScrollPos_setter);
+PScrollBar ScrollBar_Create(ScrollPos_setter, const char* name);
 
 // scrollbar destructor
 void ScrollBar_Delete(PScrollBar);

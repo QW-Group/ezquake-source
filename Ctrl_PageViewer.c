@@ -444,7 +444,4 @@ void CPageViewer_Free(CPageViewer_t *viewer)
 {
     // clear all data
     CPageViewer_Clear(viewer);
-
-    // and free 'this'
-    Q_free(viewer);
 }

@@ -33,4 +33,10 @@ void Menu_Help_Draw (int x, int y, int w, int h);
 void Menu_Help_Key (int key, wchar unichar);
 qbool Menu_Help_Mouse_Event (const mouse_state_t *ms);
 
+void Menu_Help_Shutdown(void);
+void Menu_Demo_Shutdown(void);
+void Menu_Options_Shutdown(void);
+void Menu_Ingame_Shutdown(void);
+void Menu_MultiPlayer_Shutdown(void);
+
 #endif // __HELP_H__

@@ -157,6 +157,8 @@ qbool FL_Mouse_Event(filelist_t *, const mouse_state_t *ms);
 //
 void FL_Init(filelist_t	*fl, char *initdir);
 
+void FL_Shutdown(filelist_t* fl);
+
 //
 // Add new file type (.qwd, .qwz, .mp3).
 //

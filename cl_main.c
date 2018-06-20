@@ -2543,6 +2543,7 @@ void CL_Shutdown (void)
 	Cmd_Shutdown();
 	Key_Shutdown();
 	TP_ShutdownTriggers();
+	M_Shutdown();
 }
 
 void CL_UpdateCaption(qbool force)
