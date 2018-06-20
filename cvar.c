@@ -188,7 +188,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 			}
 			Com_Printf ("%s needs %s to take effect.\n", var->name, restartcmd);
 		}
-		var->latchedString = Q_strdup(value);
+		var->latchedString = Q_strdup_named(value, var->name);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
 	}
@@ -210,7 +210,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	same_value = value && var->string && (value == var->string || !strcmp (value, var->string));
 #endif
 	// dup string first (before free) since 'value' and 'var->string' can point at the same memory area.
-	new_val = Q_strdup(value);
+	new_val = Q_strdup_named(value, var->name);
 	// free the old value string
 	Q_free(var->string);
 	// assign new value
@@ -379,7 +379,7 @@ void Cvar_Register (cvar_t *var)
 	if (var->defaultvalue)
 		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
 
-	var->defaultvalue = Q_strdup(var->string);
+	var->defaultvalue = Q_strdup_named(var->string, var->name);
 	if (old)
 	{
 		char string[512];
@@ -387,12 +387,12 @@ void Cvar_Register (cvar_t *var)
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
 		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
 		Cvar_Delete (old->name);
-		var->string = Q_strdup(string);
+		var->string = Q_strdup_named(string, var->name);
 	}
 	else
 	{
 		// allocate the string on zone because future sets will Q_free it
-		var->string = Q_strdup(var->string);
+		var->string = Q_strdup_named(var->string, var->name);
 	}
 
 	var->value = Q_atof (var->string);
@@ -877,7 +877,7 @@ void Cvar_SetDefault(cvar_t *var, float value)
 	if (val[i] == '.')
 		val[i] = 0;
 	Q_free(var->defaultvalue);
-	var->defaultvalue = Q_strdup(val);
+	var->defaultvalue = Q_strdup_named(val, var->name);
 	Cvar_Set(var, val);
 }
 
@@ -961,7 +961,7 @@ void Cvar_AutoSetInt(cvar_t *var, int value)
 
 	snprintf(&val[0], sizeof(val), "%d", value);
 
-	var->autoString = Q_strdup(val);
+	var->autoString = Q_strdup_named(val, var->name);
 }
 
 void Cvar_AutoReset(cvar_t *var)
@@ -1538,5 +1538,36 @@ void Cvar_Init (void)
 	Cvar_Register (&cvar_viewlatched);
 
 	Cvar_ResetCurrentGroup();
+#endif
+}
+
+void Cvar_Shutdown(void)
+{
+	cvar_t *cvar;
+	cvar_t *next;
+	cvar_group_t* group;
+	cvar_group_t* next_group;
+
+	for (cvar = cvar_vars; cvar; cvar = next) {
+		next = cvar->next;
+
+#ifndef SERVERONLY
+		Q_free(cvar->autoString);
+		Q_free(cvar->defaultvalue);
+#endif
+		Q_free(cvar->string);
+
+#ifndef SERVERONLY
+		if (cvar->flags & CVAR_USER_CREATED) {
+			Q_free(cvar);
+		}
+#endif
+	}
+
+#ifndef SERVERONLY
+	for (group = cvar_groups; group; group = next_group) {
+		next_group = group->next;
+		Q_free(group);
+	}
 #endif
 }

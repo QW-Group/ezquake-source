@@ -131,7 +131,8 @@ qbool Cvar_Command (void);
 cvar_t *Cvar_Find (const char *name);
 qbool Cvar_Delete (const char *name);
 
-void Cvar_Init (void);
+void Cvar_Init(void);
+void Cvar_Shutdown(void);
 
 #ifndef SERVERONLY
 // Used for automatically calculated variables (for presentation)
