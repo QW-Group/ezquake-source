@@ -46,7 +46,7 @@ mpic_t *CachePic_Find(const char *path, qbool inc_refcount);
 mpic_t* CachePic_Add(const char *path, mpic_t *pic);
 qbool CachePic_Remove(const char *path);
 qbool CachePic_RemoveByPic(mpic_t* pic);
-void CachePics_DeInit(void);
+void CachePics_Shutdown(void);
 
 int SCR_GetClockStringWidth(const char *s, qbool big, float scale, qbool proportional);
 int SCR_GetClockStringHeight(qbool big, float scale);

@@ -756,8 +756,7 @@ void VID_Shutdown(qbool restart)
 	else {
 		GLC_FreeAliasPoseBuffer();
 	}
-
-	CachePics_DeInit();
+	CachePics_Shutdown();
 
 	GL_LightmapShutdown();
 	GLM_DeleteBrushModelIndexBuffer();

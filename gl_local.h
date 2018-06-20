@@ -775,6 +775,12 @@ void GLM_InitPrograms(void);
 void GL_DeleteBuffers(void);
 void GL_DeleteVAOs(void);
 
+void GLC_FreeAliasPoseBuffer(void);
+void CachePics_Shutdown(void);
+
+void GL_LightmapShutdown(void);
+void GLM_DeleteBrushModelIndexBuffer(void);
+
 #define MAX_CHARSETS 256
 #define NUMCROSSHAIRS  6
 

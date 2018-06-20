@@ -241,6 +241,7 @@ extern char com_homedir[MAX_PATH];
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);
+void FS_Shutdown(void);
 void FS_SetGamedir (char *dir, qbool force);
 int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);

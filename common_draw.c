@@ -585,7 +585,7 @@ mpic_t *CachePic_Add(const char *path, mpic_t *pic)
 	return searchpos->data.pic;
 }
 
-void CachePics_DeInit(void) 
+void CachePics_Shutdown(void)
 {
 	int i;
 	cachepic_node_t *cur = NULL, *nxt = NULL;
