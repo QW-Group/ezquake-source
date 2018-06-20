@@ -905,3 +905,22 @@ void TP_InitTriggers (void)
 	Cvar_Register (&tp_forceTriggers);
 	Cvar_ResetCurrentGroup();
 }
+
+void TP_ShutdownTriggers(void)
+{
+	pcre_internal_trigger_t* trigger;
+	pcre_internal_trigger_t* next_trigger;
+
+	for (trigger = internal_triggers; trigger; trigger = next_trigger) {
+		next_trigger = trigger->next;
+		if (trigger->regexp) {
+			(pcre_free)(trigger->regexp);
+		}
+
+		if (trigger->regexp_extra) {
+			(pcre_free)(trigger->regexp_extra);
+		}
+
+		Q_free(trigger);
+	}
+}
