@@ -142,6 +142,7 @@ static void InitFragDefs(qbool restart)
 	Q_free(fragdefs.author);
 	Q_free(fragdefs.email);
 	Q_free(fragdefs.webpage);
+	Q_free(fragdefs.description);
 
 	for (i = 0; i < fragdefs.num_fragmsgs; i++) 
 	{
