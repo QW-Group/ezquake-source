@@ -368,3 +368,9 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 
 	Q_free(buffer);
 }
+
+void GLM_DeleteBrushModelIndexBuffer(void)
+{
+	modelIndexMaximum = 0;
+	Q_free(modelIndexes);
+}

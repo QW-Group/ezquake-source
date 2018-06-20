@@ -1012,3 +1012,11 @@ void GL_InvalidateLightmapTextures(void)
 	last_lightmap_updated = 0;
 	lightmap_depth = 0;
 }
+
+void GL_LightmapShutdown(void)
+{
+	Q_free(lightmaps);
+	lightmap_array_size = 0;
+	Q_free(surfaceTodoData);
+	surfaceTodoLength = 0;
+}

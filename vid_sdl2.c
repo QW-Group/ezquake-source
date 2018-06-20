@@ -753,9 +753,14 @@ void VID_Shutdown(qbool restart)
 	if (GL_UseGLSL()) {
 		GLM_DeletePrograms(restart);
 	}
+	else {
+		GLC_FreeAliasPoseBuffer();
+	}
 
 	CachePics_DeInit();
 
+	GL_LightmapShutdown();
+	GLM_DeleteBrushModelIndexBuffer();
 	GL_DeleteVAOs();
 	GL_DeleteBuffers();
 	GL_DeleteTextures();

@@ -98,7 +98,7 @@ void GLC_AllocateAliasPoseBuffer(void)
 		}
 	}
 
-	if (temp_aliasmodel_buffer_size < max_verts) {
+	if (temp_aliasmodel_buffer == NULL || temp_aliasmodel_buffer_size < max_verts) {
 		Q_free(temp_aliasmodel_buffer);
 		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
 		temp_aliasmodel_buffer_size = max_verts;
@@ -115,6 +115,7 @@ void GLC_AllocateAliasPoseBuffer(void)
 void GLC_FreeAliasPoseBuffer(void)
 {
 	Q_free(temp_aliasmodel_buffer);
+	temp_aliasmodel_buffer_size = 0;
 }
 
 void GLC_DrawAliasFrame(model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
