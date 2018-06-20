@@ -410,6 +410,11 @@ void QMB_InitParticles (void)
 	qmb_initialized = true;
 }
 
+void QMB_ShutdownParticles(void)
+{
+	Q_free(particles);
+}
+
 void QMB_ClearParticles (void)
 {
 	int	i;

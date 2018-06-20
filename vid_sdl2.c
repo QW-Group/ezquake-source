@@ -782,7 +782,12 @@ void VID_Shutdown(qbool restart)
 	vid_hwgamma_enabled = false;
 	vid_initialized = false;
 
-	GL_InitialiseState();
+	if (restart) {
+		GL_InitialiseState();
+	}
+	else {
+		QMB_ShutdownParticles();
+	}
 }
 
 static int VID_SDL_InitSubSystem(void)

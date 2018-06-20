@@ -88,6 +88,7 @@ void QMB_InitParticles(void);
 void QMB_ClearParticles(void);
 void QMB_CalculateParticles(void);
 void QMB_DrawParticles(void);
+void QMB_ShutdownParticles(void);
 
 void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
 void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *, trail_type_t type);
