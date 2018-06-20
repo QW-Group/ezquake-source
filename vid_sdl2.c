@@ -754,6 +754,8 @@ void VID_Shutdown(qbool restart)
 		GLM_DeletePrograms(restart);
 	}
 
+	CachePics_DeInit();
+
 	GL_DeleteVAOs();
 	GL_DeleteBuffers();
 	GL_DeleteTextures();

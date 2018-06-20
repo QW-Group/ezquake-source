@@ -573,9 +573,8 @@ mpic_t *CachePic_Add(const char *path, mpic_t *pic)
 	}
 
 	/* We didn't find a matching entry, create a new one */
-	searchpos = Q_malloc(sizeof(cachepic_node_t));
-
-	searchpos->data.pic = Q_malloc(sizeof(mpic_t));
+	searchpos = Q_malloc_named(sizeof(cachepic_node_t), path);
+	searchpos->data.pic = Q_malloc_named(sizeof(mpic_t), path);
 	memcpy(searchpos->data.pic, pic, sizeof(mpic_t));
 	
 	strlcpy(searchpos->data.name, path, sizeof(searchpos->data.name));
