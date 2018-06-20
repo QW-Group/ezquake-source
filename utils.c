@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qtv.h"
 #include "teamplay.h"
 
-
 int TP_CategorizeMessage (const char *s, int *offset);
 
 /************************************** General Utils **************************************/
@@ -1210,10 +1209,9 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 			NULL);				// use default character tables.
 
 	// Check for an error compiling the regexp.
-	if(error)
-	{
+	if (error) {
 		if (re) {
-			free(re);
+			pcre_free(re);
 		}
 
 		return false;
@@ -1221,14 +1219,14 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 
 	// Check if we have a match.
 	if (re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0) {
-		free(re);
+		pcre_free(re);
 
 		return true;
 	}
 
 	// Make sure we clean up.
 	if (re) {
-		free(re);
+		pcre_free(re);
 	}
 	return false;
 }
@@ -1248,37 +1246,31 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 
-	if(error)
-	{
-		if(re)
-		{
-			Q_free(re);
+	if (error) {
+		if (re) {
+			pcre_free(re);
 		}
 
 		return false;
 	}
 
-	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
-	{
+	if (re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0) {
 		int substring_length = 0;
 		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
 
-		if (resultlength != NULL)
-		{
+		if (resultlength != NULL) {
 			(*resultlength) = substring_length;
 		}
 
-		if(re)
-		{
-			Q_free(re);
+		if (re) {
+			pcre_free(re);
 		}
 
 		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
 	}
 
-	if(re)
-	{
-		Q_free(re);
+	if (re) {
+		pcre_free(re);
 	}
 
 	return false;
@@ -1293,16 +1285,18 @@ pcre_extra	*wildcard_re_extra[4];
 
 qbool IsRegexp(const char *str)
 {
-	if (*str == '+' || *str == '-') // +/- aliases; valid regexp can not start with +/-
+	if (*str == '+' || *str == '-') {
+		// +/- aliases; valid regexp can not start with +/-
 		return false;
+	}
 
 	return (strcspn(str, "\\\"()[]{}.*+?^$|")) != strlen(str) ? true : false;
 }
 
 qbool ReSearchInit (const char *wildcard)
 {
-	const char	*error;
-	int		error_offset;
+	const char *error;
+	int error_offset;
 
 	if (wildcard_level == 4) {
 		Com_Printf("Error: Regexp commands nested too deep\n");

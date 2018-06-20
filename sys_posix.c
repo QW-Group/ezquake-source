@@ -185,14 +185,15 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		{
 			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
 			           ext, errbuf, r);
-			Q_free(preg);
+			pcre_free(preg);
 			return dir;
 		}
 
 	if (!(d = opendir(path)))
 	{
-		if (!all)
-			Q_free(preg);
+		if (!all) {
+			pcre_free(preg);
+		}
 		return dir;
 	}
 	while ((oneentry = readdir(d)))
@@ -209,7 +210,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			default:
 				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
 				           ext, oneentry->d_name, r);
-				Q_free(preg);
+				pcre_free(preg);
 				return dir;
 			}
 		}
@@ -234,8 +235,9 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			break;
 	}
 	closedir(d);
-	if (!all)
-		Q_free(preg);
+	if (!all) {
+		pcre_free(preg);
+	}
 
 	switch (sort_type)
 	{

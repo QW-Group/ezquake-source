@@ -323,20 +323,21 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 
 	dir.files = list;
 	all = !strncmp(ext, ".*", 3);
-	if (!all)
-		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL)))
-		{
+	if (!all) {
+		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL))) {
 			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
-			           ext, errbuf, r);
-			Q_free_untracked(preg);
+				ext, errbuf, r);
+			pcre_free(preg);
 			return dir;
 		}
+	}
 
 	snprintf(pathname, sizeof(pathname), "%s/*.*", path);
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
-		if (!all)
-			Q_free_untracked(preg);
+		if (!all) {
+			pcre_free(preg);
+		}
 		return dir;
 	}
 
@@ -354,20 +355,20 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			default:
 				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
 				           ext, fd.cFileName, r);
-				if (!all)
-					Q_free_untracked(preg);
+				if (!all) {
+					pcre_free(preg);
+				}
 				return dir;
 			}
 		}
 
-		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) //bliP: list dir
-		{
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			//bliP: list dir
 			dir.numdirs++;
 			list[dir.numfiles].isdir = true;
 			list[dir.numfiles].size = list[dir.numfiles].time = 0;
 		}
-		else
-		{
+		else {
 			list[dir.numfiles].isdir = false;
 			snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
 			list[dir.numfiles].time = 0; //Sys_FileTime(pathname);
@@ -375,15 +376,15 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		}
 		strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
 
-		if (++dir.numfiles == MAX_DIRFILES - 1)
+		if (++dir.numfiles == MAX_DIRFILES - 1) {
 			break;
-
-	}
-	while (FindNextFile(h, &fd));
+		}
+	} while (FindNextFile(h, &fd));
 
 	FindClose (h);
-	if (!all)
-		Q_free_untracked(preg);
+	if (!all) {
+		pcre_free(preg);
+	}
 
 	switch (sort_type)
 	{

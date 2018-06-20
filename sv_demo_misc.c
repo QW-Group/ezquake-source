@@ -363,14 +363,14 @@ void SV_DemoList (qbool use_regex)
 				{
 					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
 					           Cmd_Argv(j), errbuf, r);
-					Q_free(preg);
+					pcre_free(preg);
 					break;
 				}
 				switch (r = pcre_exec(preg, NULL, list->name,
 				                      strlen(list->name), 0, 0, NULL, 0))
 				{
 				case 0:
-					Q_free(preg);
+					pcre_free(preg);
 					continue;
 				case PCRE_ERROR_NOMATCH:
 					break;
@@ -378,7 +378,7 @@ void SV_DemoList (qbool use_regex)
 					Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
 					           Cmd_Argv(j), list->name, r);
 				}
-				Q_free(preg);
+				pcre_free(preg);
 				break;
 			}
 			else
