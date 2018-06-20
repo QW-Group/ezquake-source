@@ -2376,3 +2376,11 @@ char* escape_regex(char* string)
 	return out;
 }
 
+void Key_Shutdown(void)
+{
+	int i;
+
+	for (i = 0; i < sizeof(keybindings) / sizeof(keybindings[0]); ++i) {
+		Q_free(keybindings[i]);
+	}
+}

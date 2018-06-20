@@ -2541,6 +2541,7 @@ void CL_Shutdown (void)
 	SB_Shutdown();
 	Help_Shutdown();
 	Cmd_Shutdown();
+	Key_Shutdown();
 }
 
 void CL_UpdateCaption(qbool force)
