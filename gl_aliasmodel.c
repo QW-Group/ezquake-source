@@ -489,6 +489,10 @@ void R_AliasSetupLighting(entity_t *ent)
 	}
 	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
 		ambientlight = shadelight = 4096;
+		if (r_shadows.integer) {
+			// still need lightpoint...
+			R_LightPoint(ent->origin);
+		}
 	}
 	else {
 		ambientlight = shadelight = R_LightPoint(ent->origin);

@@ -699,7 +699,7 @@ qbool Rulesets_ToggleWhenFlashed(void)
 	return rulesetDef.ruleset == rs_mtfl;
 }
 
-qbool Rulesets_FullbrightModel(model_t* model, qbool local_singleplayer_game)
+qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game)
 {
 	qbool protected_model = (model->modhint == MOD_EYES || model->modhint == MOD_BACKPACK) && rulesetDef.ruleset != rs_default;
 	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !local_singleplayer_game;
