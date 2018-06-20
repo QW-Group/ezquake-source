@@ -620,8 +620,9 @@ typedef struct {
 	int         scoring_system;
 } clientState_t;
 
-#define SCORING_SYSTEM_DEFAULT 0
-#define SCORING_SYSTEM_TEAMFRAGS 1
+#define SCORING_SYSTEM_DEFAULT   0
+#define SCORING_SYSTEM_STANDARD  1
+#define SCORING_SYSTEM_TEAMFRAGS 2
 
 extern	clientState_t	cl;
 

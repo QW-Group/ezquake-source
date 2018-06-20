@@ -2402,7 +2402,8 @@ static void HUD_Sort_Scoreboard(int flags)
 	int i;
 	int team;
 	int active_player = -1;
-	
+	qbool common_fragcounts = cl.teamfortress && cl.teamplay && cl.scoring_system == SCORING_SYSTEM_DEFAULT;
+
 	active_player_position = -1;
 	active_team_position = -1;
 
@@ -2450,6 +2451,10 @@ static void HUD_Sort_Scoreboard(int flags)
 					else {
 						sorted_teams[team].name = cl.players[i].name;
 					}
+				}
+
+				if (sorted_teams[team].nplayers >= 1) {
+					common_fragcounts &= (sorted_teams[team].frags / sorted_teams[team].nplayers == cl.players[i].frags);
 				}
 
 				sorted_teams[team].nplayers++;
@@ -2523,6 +2528,15 @@ static void HUD_Sort_Scoreboard(int flags)
 	if (flags & HUD_SCOREBOARD_AVG_PING) {
 		for (team = 0; team < n_teams; team++) {
 			sorted_teams[team].avg_ping /= sorted_teams[team].nplayers;
+		}
+	}
+
+	// Adjust team scores for team fortress scoring (required so it matches +showteamscores)
+	if (cl.teamfortress && common_fragcounts) {
+		for (team = 0; team < n_teams; ++team) {
+			if (sorted_teams[team].nplayers) {
+				sorted_teams[team].frags /= sorted_teams[team].nplayers;
+			}
 		}
 	}
 
