@@ -2539,6 +2539,7 @@ void CL_Shutdown (void)
 	History_Shutdown();
 	Sys_CloseIPC();
 	SB_Shutdown();
+	MT_Shutdown();
 	Help_Shutdown();
 	Cmd_Shutdown();
 	Key_Shutdown();

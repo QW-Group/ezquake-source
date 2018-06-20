@@ -1287,8 +1287,6 @@ void MT_MapGroup_f(void) {
 		return;
 	}
 
-	
-
 	if (!group) {	
 		group = (mapgroup_t *) Q_calloc(1, sizeof(mapgroup_t));
 		strlcpy(group->groupname, groupname, sizeof(group->groupname));
@@ -1704,4 +1702,15 @@ void MT_Init(void)
 	Cvar_Register(&match_ladder_id);
 
 	Cvar_ResetCurrentGroup();
+}
+
+void MT_Shutdown(void)
+{
+	mapgroup_t* group = mapgroups;
+
+	while (group) {
+		mapgroup_t* next = group->next;
+		Q_free(group);
+		group = next;
+	}
 }

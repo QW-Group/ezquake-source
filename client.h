@@ -968,6 +968,7 @@ void MT_Disconnect(void);
 void MT_NewMap(void);
 char *MT_MatchName(void);
 char *MT_ShortStatus(void);
+void MT_Shutdown(void);
 
 // fragstats.c
 
