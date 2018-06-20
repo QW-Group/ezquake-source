@@ -116,9 +116,11 @@ typedef struct player_info_s
 	// Skin information.
 	unsigned char   topcolor;
 	unsigned char   bottomcolor;
+	qbool           teammate;
 
 	unsigned char   _topcolor;
 	unsigned char   _bottomcolor;
+	qbool           _teammate;
 
 	unsigned char   real_topcolor;
 	unsigned char   real_bottomcolor;

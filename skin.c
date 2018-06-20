@@ -51,8 +51,8 @@ cvar_t  teamforceskins      = {"teamforceskins", "0", 0, OnChangeSkinForcing};
 
 static cvar_t  baseskin = { "baseskin", "base" };
 static cvar_t  cl_name_as_skin     = {"cl_name_as_skin", "0", 0, OnChangeSkinForcing};
-static cvar_t  r_enemyskincolor    = {"r_enemyskincolor", "", CVAR_COLOR, OnChangeSkinForcing};
-static cvar_t  r_teamskincolor     = {"r_teamskincolor",  "", CVAR_COLOR, OnChangeSkinForcing};
+cvar_t  r_enemyskincolor    = {"r_enemyskincolor", "", CVAR_COLOR, OnChangeSkinForcing};
+cvar_t  r_teamskincolor     = {"r_teamskincolor",  "", CVAR_COLOR, OnChangeSkinForcing};
 static cvar_t  r_skincolormode     = {"r_skincolormode",  "0", 0, OnChangeSkinForcing};
 static cvar_t  r_skincolormodedead = {"r_skincolormodedead", "-1", 0, OnChangeSkinForcing};
 
@@ -670,16 +670,13 @@ void R_TranslatePlayerSkin(int playernum)
 		player->skin = NULL;
 	}
 
-	/*if (player->skin && (player->skin->colormode != r_skincolormode.integer || player->skin->colormode_dead != r_skincolormodedead.integer)) {
-		player->skin = NULL;
-	}*/
-
-	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin) {
+	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin && player->teammate == player->_teammate) {
 		return;
 	}
 
 	player->_topcolor = player->topcolor;
 	player->_bottomcolor = player->bottomcolor;
+	player->_teammate = player->teammate;
 
 	if (!player->skin) {
 		Skin_Find(player);

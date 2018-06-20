@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "tp_msgs.h"
 
-
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeSkinAndColorForcing(cvar_t *var, char *string, qbool *cancel);
@@ -1690,18 +1689,26 @@ void TP_UpdateSkins(void)
 	need_skin_refresh = false;
 }
 
+// Returns true if a change in player/team needs skins to be reloaded
 qbool TP_NeedRefreshSkins(void)
 {
-	if (cl.teamfortress)
+	extern cvar_t r_enemyskincolor, r_teamskincolor;
+
+	if (cl.teamfortress) {
 		return false;
+	}
 
 	if ((cl_enemyskin.string[0] || cl_teamskin.string[0] || cl_enemypentskin.string[0] || cl_teampentskin.string[0] ||
-	        cl_enemyquadskin.string[0] || cl_teamquadskin.string[0] || cl_enemybothskin.string[0] || cl_teambothskin.string[0])
-	        && !(cl.fpd & FPD_NO_FORCE_SKIN))
+	     cl_enemyquadskin.string[0] || cl_teamquadskin.string[0] || cl_enemybothskin.string[0] || cl_teambothskin.string[0])
+	     && !(cl.fpd & FPD_NO_FORCE_SKIN))
 		return true;
 
 	if ((cl_teamtopcolor.value >= 0 || cl_enemytopcolor.value >= 0) && !(cl.fpd & FPD_NO_FORCE_COLOR))
 		return true;
+
+	if ((r_enemyskincolor.string[0] || r_teamskincolor.string[0])) {
+		return true;
+	}
 
 	return false;
 }

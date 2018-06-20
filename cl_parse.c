@@ -1989,18 +1989,17 @@ void CL_NewTranslation (int slot)
 	}
 
 	player = &cl.players[slot];
-	if (!player->name[0] || player->spectator)
-	{
+	if (!player->name[0] || player->spectator) {
 		return;
 	}
 
-	player->topcolor	= player->real_topcolor;
+	player->topcolor = player->real_topcolor;
 	player->bottomcolor = player->real_bottomcolor;
+	player->teammate = false;
 
 	skinforcing_team = TP_SkinForcingTeam();
 
-	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
-	{
+	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
 		qbool lockedTeams = TP_TeamLockSpecified();
 		qbool teammate = false;
 
@@ -2015,19 +2014,23 @@ void CL_NewTranslation (int slot)
 			teammate = true;
 		}
 
-		if (teammate)
-		{
-			if (cl_teamtopcolor.integer != -1)
+		player->teammate = teammate;
+
+		if (teammate) {
+			if (cl_teamtopcolor.integer != -1) {
 				player->topcolor = cl_teamtopcolor.value;
-			if (cl_teambottomcolor.integer != -1)
+			}
+			if (cl_teambottomcolor.integer != -1) {
 				player->bottomcolor = cl_teambottomcolor.value;
+			}
 		}
-		else if (slot != cl.playernum)
-		{
-			if (cl_enemytopcolor.integer != -1)
+		else if (slot != cl.playernum) {
+			if (cl_enemytopcolor.integer != -1) {
 				player->topcolor = cl_enemytopcolor.value;
-			if (cl_enemybottomcolor.integer != -1)
+			}
+			if (cl_enemybottomcolor.integer != -1) {
 				player->bottomcolor = cl_enemybottomcolor.value;
+			}
 		}
 	}
 
