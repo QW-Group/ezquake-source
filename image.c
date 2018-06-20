@@ -1115,7 +1115,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 		}
 
 		// Allocate a byte array for the actual image data.
-		data = (byte *) Q_malloc(height * rowbytes );
+		data = (byte *) Q_malloc_named(height * rowbytes, filename);
 
 		// Even though we just allocated the memory for all the image data
 		// PNG lib wants this in the form of rowpointers.
@@ -1128,6 +1128,8 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 		// Read the actual image data.
 		png_read_image(png_ptr, rowpointers);
 		png_read_end(png_ptr, pnginfo);
+
+		Q_free(rowpointers);
 	}
 	
 	//
@@ -1167,7 +1169,6 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Clean up.
 	png_destroy_read_struct (&png_ptr, &pnginfo, NULL);
-	Q_free (rowpointers);
 	VFS_CLOSE(fin);
 	fin = NULL;
 
@@ -1199,6 +1200,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 		(*text_count) = pdata->text_count;
 		textchunks = pdata->textchunks;
 
+		Q_free(pdata->data);
 		Q_free(pdata);
 	}
 

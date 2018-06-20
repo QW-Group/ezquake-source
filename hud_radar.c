@@ -159,6 +159,9 @@ void HUD_NewRadarMap(void)
 					found_count++;
 				}
 
+				Q_free(txt[i].key);
+				Q_free(txt[i].text);
+
 				conversion_formula_found = (found_count == 4);
 			}
 
