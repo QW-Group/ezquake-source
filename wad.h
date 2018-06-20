@@ -48,6 +48,7 @@ typedef struct {
 
 void W_LoadWadFile(const char *filename);
 void* W_GetLumpName(const char *name);
+void W_FreeWadFile(void);
 
 void SwapPic(qpic_t *pic);
 

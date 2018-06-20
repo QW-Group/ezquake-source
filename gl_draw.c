@@ -525,6 +525,11 @@ static void Draw_Precache(void)
 
 void Draw_InitConback (void);
 
+void Draw_Shutdown(void)
+{
+	W_FreeWadFile();
+}
+
 void Draw_Init (void)
 {
 	extern void HUD_Common_Reset_Group_Pics(void);

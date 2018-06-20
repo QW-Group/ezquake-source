@@ -77,6 +77,12 @@ int					SYSINFO_MHz = 0;
 char				*SYSINFO_processor_description = NULL;
 char				*SYSINFO_3D_description        = NULL;
 
+static void SYSINFO_Shutdown(void)
+{
+	Q_free(SYSINFO_processor_description);
+	Q_free(SYSINFO_3D_description);
+}
+
 #ifdef _WIN32
 typedef BOOL (WINAPI *PGMSE)(LPMEMORYSTATUSEX);
 
@@ -744,6 +750,8 @@ void Host_Shutdown (void)
 	qtvlist_deinit();
 	Cvar_Shutdown();
 	FS_Shutdown();
+	SYSINFO_Shutdown();
+	Q_free(com_args_original);
 }
 
 void Host_Quit (void)

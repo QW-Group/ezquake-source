@@ -2547,6 +2547,9 @@ void CL_Shutdown (void)
 	TP_ShutdownTriggers();
 	M_Shutdown();
 	Stats_Shutdown();
+	Draw_Shutdown();
+	Q_free(host_basepal);
+	Q_free(host_colormap);
 }
 
 void CL_UpdateCaption(qbool force)

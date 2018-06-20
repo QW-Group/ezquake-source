@@ -86,7 +86,8 @@ float* COLOR_TO_FLOATVEC_PREMULT(color_t i, float rgba[4]);
 void Draw_SetOverallAlpha(float opacity);
 float Draw_MultiplyOverallAlpha(float alpha);
 
-void Draw_Init (void);
+void Draw_Init(void);
+void Draw_Shutdown(void);
 void Draw_Character (int x, int y, int num);
 void Draw_CharacterW (int x, int y, wchar num);
 void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
