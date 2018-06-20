@@ -1205,8 +1205,8 @@ qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
 	cmd->name = (char*)(cmd+1); // points to extra space created after the structure
 	strcpy(cmd->name, cmd_name);
 	cmd->function = function;
-	cmd->next = cmd_functions;
 	cmd->zmalloced = true;
+	cmd->next = cmd_functions;
 	cmd_functions = cmd;
 	cmd->hash_next = cmd_hash_array[key];
 	cmd_hash_array[key] = cmd;
@@ -2337,16 +2337,6 @@ void Cmd_Cvar_Out_f (void)
 // <-- QW262
 
 
-
-/*
-============
-Cmd_Shutdown
-============
-*/
-void Cmd_Shutdown(void)
-{
-}
-
 void Cmd_Init (void)
 {
 	// register our commands
@@ -2385,3 +2375,41 @@ void Cmd_Init (void)
 	      sizeof(msgtrigger_commands[0]),Commands_Compare_Func);
 }
 
+void Cmd_Shutdown(void)
+{
+	int i;
+	cmd_alias_t* alias;
+	cmd_alias_t* next_alias;
+	cmd_function_t* cmd;
+	cmd_function_t* next_cmd;
+	legacycmd_t* legacycmd;
+	legacycmd_t* next_legacycmd;
+
+	Sys_Printf("Cmd_Shutdown(aliases)\n");
+	for (i = 0; i < sizeof(cmd_alias_hash) / sizeof(cmd_alias_hash[0]); ++i) {
+		cmd_alias_hash[i] = NULL;
+	}
+
+	for (alias = cmd_alias; alias; alias = next_alias) {
+		next_alias = alias->next;
+		Q_free(alias->value);
+		Q_free(alias);
+	}
+	cmd_alias = NULL;
+
+	Sys_Printf("Cmd_Shutdown(functions)\n");
+	for (cmd = cmd_functions; cmd; cmd = next_cmd) {
+		next_cmd = cmd->next;
+
+		if (cmd->zmalloced) {
+			Q_free(cmd);
+		}
+	}
+	cmd_functions = NULL;
+
+	Sys_Printf("Cmd_Shutdown(legacy)\n");
+	for (legacycmd = legacycmds; legacycmd; legacycmd = next_legacycmd) {
+		next_legacycmd = legacycmd->next;
+		Q_free(legacycmd);
+	}
+}
