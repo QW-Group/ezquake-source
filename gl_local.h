@@ -1062,6 +1062,9 @@ void GLC_LoadMatrix(GLenum matrix);
 void GLC_AllocateAliasPoseBuffer(void);
 void R_SetupFrame(void);
 
+void GLC_BeginCausticsTextureMatrix(void);
+void GLC_EndCausticsTextureMatrix(void);
+
 void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
 

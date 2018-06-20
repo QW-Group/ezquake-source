@@ -395,3 +395,22 @@ void GLC_LoadMatrix(GLenum matrix)
 		GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));
 	}
 }
+
+void GLC_BeginCausticsTextureMatrix(void)
+{
+	GL_SelectTexture(GL_TEXTURE1);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glScalef(0.5, 0.5, 1);
+	glRotatef(r_refdef2.time * 10, 1, 0, 0);
+	glRotatef(r_refdef2.time * 10, 0, 1, 0);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void GLC_EndCausticsTextureMatrix(void)
+{
+	GL_SelectTexture(GL_TEXTURE1);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+}
