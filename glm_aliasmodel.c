@@ -207,6 +207,15 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 		}
 	}
 
+	// custom models are explicitly loaded by client, not notified by server
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
+
+		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			required_vbo_length += mod->vertsInVBO;
+		}
+	}
+
 	// Go back through all models, importing textures into arrays and creating new VBO
 	aliasModelData = Q_malloc(required_vbo_length * sizeof(vbo_model_vert_t));
 
@@ -223,6 +232,14 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
+		}
+	}
+
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
 
 		if (mod) {
 			GL_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);

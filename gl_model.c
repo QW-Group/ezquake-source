@@ -675,7 +675,7 @@ model_t* Mod_CustomModel(custom_model_id_t id, qbool crash)
 		case custom_model_beam:
 			return Mod_ForName("progs/beam.mdl", crash);
 		case custom_model_flame0:
-			return Mod_ForName("progs/flame0.mdl", crash);
+			return (cl_flame0_model = Mod_ForName("progs/flame0.mdl", crash));
 		default:
 			return NULL;
 	}

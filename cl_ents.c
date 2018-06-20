@@ -138,9 +138,6 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_2dhealth25]	= "sprites/s_health25.spr";
 	#endif
 
-	// FIXME, delay until map load time?
-	cl_flame0_model = Mod_CustomModel(custom_model_flame0, false);
-
 	for (i = 0; i < cl_num_modelindices; i++) {
 		if (!cl_modelnames[i]) {
 			Sys_Error("cl_modelnames[%d] not initialized", i);

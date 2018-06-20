@@ -362,7 +362,7 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	int pose, j, k, v;
 	
 	v = 0;
-	m->temp_vbo_buffer = vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(vbo_model_vert_t));
+	m->temp_vbo_buffer = vbo_buffer = Q_malloc_named(m->vertsInVBO * sizeof(vbo_model_vert_t), m->name);
 
 	// 
 	for (pose = 0; pose < hdr->numposes; ++pose) {
@@ -475,8 +475,10 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position)
 {
-	memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
+	if (mod->temp_vbo_buffer) {
+		memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
-	hdr->vertsOffset = mod->vbo_start = position;
-	Q_free(mod->temp_vbo_buffer);
+		hdr->vertsOffset = mod->vbo_start = position;
+		Q_free(mod->temp_vbo_buffer);
+	}
 }
