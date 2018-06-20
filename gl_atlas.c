@@ -33,9 +33,10 @@ typedef struct deleteable_texture_s {
 	qbool moved_to_atlas;
 } deleteable_texture_t;
 
-static byte buffer[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
+#define TEMP_BUFFER_SIZE (MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4)
 static byte atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
-static byte prev_atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
+static byte* buffer;
+static byte* prev_atlas_texels;
 static deleteable_texture_t atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS];
 static int atlas_allocated[MAXIMUM_ATLAS_TEXTURE_WIDTH];
 static int atlas_delete_count = 0;
@@ -181,7 +182,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = prev_atlas_texels;
 		}
 		else {
-			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, sizeof(buffer), buffer);
+			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, TEMP_BUFFER_SIZE, buffer);
 
 			input_image = buffer;
 		}
@@ -333,7 +334,8 @@ void CachePics_CreateAtlas(void)
 	double start_time = Sys_DoubleTime();
 
 	// Delete old atlas textures
-	memcpy(prev_atlas_texels, atlas_texels, sizeof(prev_atlas_texels));
+	prev_atlas_texels = Q_malloc(MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4);
+	memcpy(prev_atlas_texels, atlas_texels, MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4);
 	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
@@ -457,6 +459,7 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
+	buffer = Q_malloc(TEMP_BUFFER_SIZE);
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		texture_ref original = cur->data.pic->texnum;
 		if (CachePics_AddToAtlas(cur->data.pic) >= 0) {
@@ -470,6 +473,8 @@ void CachePics_CreateAtlas(void)
 
 	DeleteOldTextures();
 
+	Q_free(prev_atlas_texels);
+	Q_free(buffer);
 	Con_DPrintf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
 
 	// Make sure we don't reference any old textures
