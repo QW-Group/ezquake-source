@@ -94,6 +94,9 @@ void CL_Version_f (void)
 	}
 #endif
 
+#ifdef EZ_FREETYPE_SUPPORT
+	Con_Printf("Portions of this software are copyright (c) 2018 The FreeType Project(www.freetype.org). All rights reserved.\n");
+#endif
 }
 
 /*
