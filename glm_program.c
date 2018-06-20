@@ -350,6 +350,7 @@ qbool GLM_CreateVGFProgramWithInclude(
 	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
 	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
 	program->friendly_name = friendlyName;
+	Q_free(program->included_definitions);
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
 	if (GLM_CompileProgram(program)) {
