@@ -3248,11 +3248,20 @@ void SB_ProxyGetPings_f(void)
 
 void SB_Shutdown(void)
 {
+	int i;
+
 	SB_PingTree_Shutdown();
 
 	// FIXME - this probably never worked
 	// Serverinfo_Stop();
 	// Sys_MSleep(150);     // wait for thread to terminate
+
+	for (i = 0; i < sourcesn; ++i) {
+		Reset_Source(sources[i]);
+		Q_free(sources[i]);
+	}
+
+	// delete servers[0...serversn) ?
 }
 
 void Browser_Init (void)
