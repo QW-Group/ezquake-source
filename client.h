@@ -977,6 +977,7 @@ void Stats_Reset(void);
 void Stats_NewMap(void);
 void Stats_EnterSlot(int num);
 void Stats_ParsePrint(char *s, int level, cfrags_format *cff);
+void Stats_Shutdown(void);
 
 qbool Stats_IsActive(void);
 qbool Stats_IsFlagsParsed(void);

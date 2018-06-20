@@ -133,7 +133,7 @@ static void Build_FragMsg_Indices(void) {
 		fragmsg1_indexes[j] = -1;
 }
 
-static void InitFragDefs(void) 
+static void InitFragDefs(qbool restart)
 {
 	int i;
 
@@ -160,9 +160,11 @@ static void InitFragDefs(void)
 	memset(&fragdefs, 0, sizeof(fragdefs));
 	memset(wclasses, 0, sizeof(wclasses));
 
-	wclasses[0].name = Q_strdup("Unknown");
-	num_wclasses = 1;
-	VX_TrackerInit();
+	if (restart) {
+		wclasses[0].name = Q_strdup("Unknown");
+		num_wclasses = 1;
+		VX_TrackerInit();
+	}
 }
 
 #define _checkargs(x)		if (c != x) {																			\
@@ -193,7 +195,7 @@ static void LoadFragFile(char *filename, qbool quiet)
 	char save, *buffer = NULL, *start, *end, *token, fragfilename[MAX_OSPATH];
 	qbool gotversion = false, warned_flagmsg_overflow = false;
 
-	InitFragDefs();
+	InitFragDefs(true);
 
 	lowmark = Hunk_LowMark();
 	strlcpy(fragfilename, filename, sizeof(fragfilename));
@@ -752,7 +754,7 @@ void Stats_NewMap(void) {
 			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
 			LoadFragFile("fragfile", true);
 		} else {
-			InitFragDefs();
+			InitFragDefs(true);
 		}
 	}
 
@@ -811,7 +813,7 @@ qbool Stats_IsFlagsParsed(void) {
 }
 
 void Stats_Init(void) {
-	InitFragDefs();
+	InitFragDefs(true);
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register(&cl_parsefrags);
 	Cvar_Register(&cl_showFragsMessages);
@@ -856,4 +858,9 @@ const char* GetWeaponTextName(int num)
 	}
 
 	return NULL;
+}
+
+void Stats_Shutdown(void)
+{
+	InitFragDefs(false);
 }
