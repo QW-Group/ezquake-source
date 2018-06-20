@@ -584,6 +584,8 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				vert = GL_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
 				if (vert) {
+					vec3_t v;
+
 					if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
 						VectorCopy(p->org, neworg);
 					}
@@ -595,17 +597,21 @@ static void QMB_FillParticleVertexBuffer(void)
 					farColor[3] = 0;
 
 					QMB_BillboardAddVert(vert++, pt, point[0], point[1], point[2], ptex->coords[0][0], ptex->coords[0][1], p->color, -1);
-					for (j = 7; j >= 0; j--) {
-						vec3_t v;
-						for (k = 0; k < 3; k++) {
-							if (pt->drawtype == pd_spark) {
+					if (pt->drawtype == pd_spark) {
+						for (j = 7; j >= 0; j--) {
+							for (k = 0; k < 3; k++) {
 								v[k] = p->org[k] - p->vel[k] / 8 + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
 							}
-							else {
+							QMB_BillboardAddVert(vert++, pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor, -1);
+						}
+					}
+					else {
+						for (j = 7; j >= 0; j--) {
+							for (k = 0; k < 3; k++) {
 								v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
 							}
+							QMB_BillboardAddVert(vert++, pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor, -1);
 						}
-						QMB_BillboardAddVert(vert++, pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor, -1);
 					}
 				}
 			}
