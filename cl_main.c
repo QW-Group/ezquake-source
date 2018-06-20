@@ -1198,6 +1198,7 @@ void CL_Disconnect (void)
 	memset(&cls.netchan, 0, sizeof(cls.netchan));
 	memset(&cls.server_adr, 0, sizeof(cls.server_adr));
 	cls.state = ca_disconnected;
+	cls.fteprotocolextensions = cls.fteprotocolextensions2 = cls.mvdprotocolextensions1 = 0;
 	connect_time = 0;
 
 	Cam_Reset();

@@ -898,7 +898,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 	va_list		argptr;
 	char		string[2048];
 
-	if (cls.demoplayback) {
+	if (cls.demoplayback || cls.state == ca_disconnected) {
 		return;	// no point.
 	}
 
