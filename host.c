@@ -765,5 +765,8 @@ void Host_Quit (void)
 
 	// turn off
 	Host_Shutdown ();
+
+	Q_free(host_membase);
+
 	Sys_Quit ();
 }
