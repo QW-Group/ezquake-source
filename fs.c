@@ -100,7 +100,7 @@ void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
-searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
+static searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
 qbool Sys_PathProtection(const char *pattern);
 void FS_Dir_f (void);
@@ -370,7 +370,7 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	}
 	else if (usehunk == 5)
 	{
-		buf = Q_malloc (len + 1);
+		buf = Q_malloc_named(len + 1, path);
 	}
 	else
 	{
@@ -2104,7 +2104,7 @@ void FS_InitModuleFS (void)
  *
  *****************************************************************************/
 
-searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
+static searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
 {
 	searchpath_t *search;
 
@@ -2930,7 +2930,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 
 	// add the directory to the search path
 	size = strlen (dir) + 1;
-	p = Q_malloc (size);
+	p = Q_malloc_named(size, dir);
 	strlcpy (p, dir, size);
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
 	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
@@ -3320,6 +3320,15 @@ qbool FS_UnsafeFilename(const char* fileName)
 
 void FS_Shutdown(void)
 {
+	searchpath_t* path;
+	searchpath_t* next;
+
 	Hash_ShutdownTable(filesystemhash);
 	filesystemhash = NULL;
+
+	for (path = fs_searchpaths; path; path = next) {
+		path->funcs->ClosePath(path->handle);
+		next = path->next;
+		Q_free(path);
+	}
 }

@@ -162,5 +162,6 @@ typedef enum
 
 void FS_FlushFSHash(void);
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc);
+void FS_Shutdown(void);
 
 #endif /* __VFS_H__ */

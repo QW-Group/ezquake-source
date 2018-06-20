@@ -135,7 +135,7 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	if (!f)
 		return NULL;
 
-	file = Q_calloc(1, sizeof(vfsosfile_t));
+	file = Q_calloc_named(1, sizeof(vfsosfile_t), osname);
 
 	file->funcs.ReadBytes  = ( strchr(mode, 'r')                      ? VFSOS_ReadBytes  : NULL);
 	file->funcs.WriteBytes = ((strchr(mode, 'w') || strchr(mode, 'a'))? VFSOS_WriteBytes : NULL);
