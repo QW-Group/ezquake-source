@@ -133,6 +133,8 @@ void CI_Init(void)
 		CI_LoadTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
 		CI_LoadTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
 		CI_LoadTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 128, 64);
+		Q_free(temp_buffer);
+		Q_free(original);
 	}
 
 	ci_initialized = true;
