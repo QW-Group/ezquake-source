@@ -2544,7 +2544,7 @@ void CL_Shutdown (void)
 	HUD_Shutdown();
 	Cmd_Shutdown();
 	Key_Shutdown();
-	TP_ShutdownTriggers();
+	TP_Shutdown();
 	M_Shutdown();
 	Stats_Shutdown();
 	Draw_Shutdown();

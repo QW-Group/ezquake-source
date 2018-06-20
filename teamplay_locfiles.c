@@ -563,3 +563,8 @@ void TP_LocFiles_NewMap(void)
 		}
 	}
 }
+
+void TP_LocFiles_Shutdown(void)
+{
+	TP_ClearLocs();
+}

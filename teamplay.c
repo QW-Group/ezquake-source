@@ -3167,5 +3167,13 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgslipped", TP_Msg_Slipped_f);
 	//TF messages
 	Cmd_AddCommand ("tp_msgtfconced", TP_Msg_TFConced_f);
-	
+}
+
+extern void TP_ShutdownTriggers(void);
+
+void TP_Shutdown(void)
+{
+	TP_ShutdownTriggers();
+
+	TP_LocFiles_Shutdown();
 }

@@ -100,7 +100,8 @@ extern char *skinforcing_team;
 char *TP_SkinForcingTeam(void);
 qbool TP_TeamLockSpecified(void);
 
-void TP_Init (void);
+void TP_Init(void);
+void TP_Shutdown(void);
 
 //#define FPD_NO_TEAM_MACROS	1
 #define FPD_NO_TIMERS		2
@@ -231,5 +232,6 @@ char *Macro_PointName (void);
 char *TP_LocationName (vec3_t location);
 void TP_LocFiles_Init(void);
 void TP_LocFiles_NewMap(void);
+void TP_LocFiles_Shutdown(void);
 
 char *TP_ItemName(int item_flag);
