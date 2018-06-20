@@ -469,11 +469,26 @@ void Sys_Printf (char *fmt, ...)
 	return;
 #endif
 
-	va_start (argptr,fmt);
-	vsnprintf (text, sizeof(text), fmt, argptr);
-	va_end (argptr);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	if (houtput == NULL) {
+		houtput = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	WriteFile (houtput, text, strlen(text), &dummy, NULL);
+		if (houtput == NULL) {
+			/*if (AllocConsole()) {
+				houtput = GetStdHandle(STD_OUTPUT_HANDLE);
+			}*/
+			houtput = CreateFile("SysPrintf.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		}
+	}
+
+	if (houtput != NULL) {
+		va_start(argptr, fmt);
+		vsnprintf(text, sizeof(text), fmt, argptr);
+		va_end(argptr);
+
+		WriteFile(houtput, text, strlen(text), &dummy, NULL);
+	}
+#endif
 }
 
 void Sys_Quit (void) 
@@ -488,6 +503,13 @@ void Sys_Quit (void)
 	if (WinKeyHook_isActive)
 		UnhookWindowsHookEx(WinKeyHook);
 #endif
+
+	if (houtput) {
+		if (houtput != GetStdHandle(STD_OUTPUT_HANDLE)) {
+			CloseHandle(houtput);
+			houtput = NULL;
+		}
+	}
 
 	Sys_RestoreScreenSaving();
  
