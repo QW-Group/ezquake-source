@@ -1242,9 +1242,18 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 
         if (flags & HUD_PLUSMINUS)
         {
+			char cmdname[128];
+
+			strlcpy(cmdname, "+hud_", sizeof(cmdname));
+			strlcat(cmdname, name, sizeof(cmdname));
+			Cmd_AddRemCommand(cmdname, HUD_Plus_f);
+
+			cmdname[0] = '-';
+			Cmd_AddRemCommand(cmdname, HUD_Minus_f);
+
             // Add plus and minus commands.
-            Cmd_AddCommand(Q_strdup(va("+hud_%s", name)), HUD_Plus_f);
-            Cmd_AddCommand(Q_strdup(va("-hud_%s", name)), HUD_Minus_f);
+            //Cmd_AddCommand(Q_strdup(va("+hud_%s", name)), HUD_Plus_f);
+            //Cmd_AddCommand(Q_strdup(va("-hud_%s", name)), HUD_Minus_f);
         }
     }
     else
@@ -1305,45 +1314,25 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	}
 
 	//
-    // Create parameters.
+	// Create parameters.
 	//
-    subvar = params;
-    va_start (argptr, params);
+	subvar = params;
+	va_start (argptr, params);
 
-    while (subvar)
-    {
-        char *value = va_arg(argptr, char *);
-        if (value == NULL || hud->num_params >= HUD_MAX_PARAMS || hud->num_params >= num_params)
-		{
-            Sys_Error("HUD_Register: HUD_MAX_PARAMS overflow");
+	while (subvar) {
+		char *value = va_arg(argptr, char *);
+		if (value == NULL || hud->num_params >= HUD_MAX_PARAMS || hud->num_params >= num_params) {
+			Sys_Error("HUD_Register: HUD_MAX_PARAMS overflow");
 		}
 
-        hud->params[hud->num_params] = HUD_CreateVar(name, subvar, value);
-        hud->num_params ++;
-        subvar = va_arg(argptr, char *);
+		hud->params[hud->num_params] = HUD_CreateVar(name, subvar, value);
+		hud->num_params++;
+		subvar = va_arg(argptr, char *);
     }
 
-    va_end (argptr);
+	va_end (argptr);
 
-    return hud;
-}
-
-void HUD_ParamsCleanup(void)
-{
-	int i = 0;
-	hud_t *hud = hud_huds;
-
-    while (hud)
-    {
-        for (i=0; i < hud->num_params; i++)
-		{
-			Cvar_Delete(hud->params[i]->name);
-		}
-
-		Q_free(hud->params);
-
-        hud = hud->next;
-    }
+	return hud;
 }
 
 //
@@ -1544,4 +1533,39 @@ void HUD_Sort(void)
 
     // Recalculate elements so vars are parsed.
     HUD_Recalculate();
+}
+
+#define HUD_FreeVar(var) \
+	if ((var)) { \
+		Cvar_Delete(var->name); \
+	}
+
+void HUD_Shutdown(void)
+{
+	hud_t* hud = hud_huds;
+	int i;
+
+	while (hud) {
+		hud_t* next = hud->next;
+
+		Q_free(hud->description);
+		HUD_FreeVar(hud->order);
+		HUD_FreeVar(hud->place);
+		HUD_FreeVar(hud->show);
+		HUD_FreeVar(hud->pos_x);
+		HUD_FreeVar(hud->align_x);
+		HUD_FreeVar(hud->pos_y);
+		HUD_FreeVar(hud->align_y);
+
+		// don't delete hud->frame/frame_color/opacity, they're in params array
+		for (i = 0; i < hud->num_params; ++i) {
+			HUD_FreeVar(hud->params[i]);
+		}
+		Q_free(hud->params);
+		Q_free(hud->name);
+		Q_free(hud);
+
+		hud = next;
+	}
+	hud_huds = NULL;
 }

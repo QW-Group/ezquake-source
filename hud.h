@@ -168,6 +168,8 @@ qbool HUD_PrepareDrawByName(
 // Sort all HUD Elements.
 void HUD_Sort(void);
 
+void HUD_Shutdown(void);
+
 // Recalculate the position of all hud elements.
 void HUD_Recalculate(void);
 
