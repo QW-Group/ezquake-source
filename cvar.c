@@ -1552,6 +1552,7 @@ void Cvar_Shutdown(void)
 		next = cvar->next;
 
 #ifndef SERVERONLY
+		Q_free(cvar->latchedString);
 		Q_free(cvar->autoString);
 		Q_free(cvar->defaultvalue);
 #endif
