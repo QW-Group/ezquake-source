@@ -2314,6 +2314,7 @@ void CL_ProcessServerInfo (void)
 	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
 	cl.racing = !strcmp(Info_ValueForKey(cl.serverinfo, "ktxmode"), "race");
+	cl.scoring_system = atoi(Info_ValueForKey(cl.serverinfo, "scoring"));
 
 	// Update fakeshaft limits
 	{

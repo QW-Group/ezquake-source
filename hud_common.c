@@ -2453,7 +2453,17 @@ static void HUD_Sort_Scoreboard(int flags)
 				}
 
 				sorted_teams[team].nplayers++;
-				sorted_teams[team].frags += cl.players[i].frags;
+				if (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS) {
+					if (sorted_teams[team].nplayers == 1) {
+						sorted_teams[team].frags = cl.players[i].frags;
+					}
+					else {
+						sorted_teams[team].frags = max(cl.players[i].frags, sorted_teams[team].frags);
+					}
+				}
+				else {
+					sorted_teams[team].frags += cl.players[i].frags;
+				}
 				sorted_teams[team].avg_ping += cl.players[i].ping;
 				sorted_teams[team].min_ping = min(sorted_teams[team].min_ping, cl.players[i].ping);
 				sorted_teams[team].max_ping = max(sorted_teams[team].max_ping, cl.players[i].ping);

@@ -616,7 +616,12 @@ typedef struct {
 	int         sv_maxclients;
 
 	int         cif_flags;
+
+	int         scoring_system;
 } clientState_t;
+
+#define SCORING_SYSTEM_DEFAULT 0
+#define SCORING_SYSTEM_TEAMFRAGS 1
 
 extern	clientState_t	cl;
 

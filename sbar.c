@@ -524,7 +524,17 @@ static void Sbar_SortTeams (void) {
 			if (!strcmp(teams[j].team, t)) {
 				playertoteam[i] = j;
 
-				teams[j].frags += s->frags;
+				if (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS) {
+					if (teams[j].players == 0) {
+						teams[j].frags = s->frags;
+					}
+					else {
+						teams[j].frags = max(s->frags, teams[j].frags);
+					}
+				}
+				else {
+					teams[j].frags += s->frags;
+				}
 				teams[j].players++;
 				if (!cl.teamfortress && i == mynum) {
 					teams[j].topcolor = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
@@ -572,8 +582,7 @@ static void Sbar_SortTeams (void) {
 		}
 	}
 
-
-	if (cl.teamfortress) {
+	if (cl.teamfortress && (cl.scoring_system == SCORING_SYSTEM_DEFAULT)) {
 		for (i = 0; i < scoreboardteams; i++) {
 			float frags = (float) teams[i].frags / teams[i].players;
 
@@ -590,9 +599,9 @@ static void Sbar_SortTeams (void) {
 			}
 		}
 
-
-		for (i = 0; i < scoreboardteams; i++)
+		for (i = 0; i < scoreboardteams; i++) {
 			teams[i].frags /= teams[i].players;
+		}
 	}
 }
 
@@ -1586,7 +1595,12 @@ static void Sbar_TeamOverlay (void) {
 
 	x = xofs + rank_width * 0.1 + 8;
 
-	Draw_String(x, y, "low/avg/high team total players");
+	if (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS) {
+		Draw_String(x, y, "low/avg/high team score players");
+	}
+	else {
+		Draw_String(x, y, "low/avg/high team total players");
+	}
 
 	y += 10;
 
