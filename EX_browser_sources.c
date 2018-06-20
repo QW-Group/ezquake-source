@@ -241,8 +241,9 @@ static void curl_buf_deinit(struct curl_buf *curl_buf)
 	Q_free(curl_buf);
 }
 
-static size_t curl_write_func( void *ptr, size_t size, size_t nmemb, struct curl_buf *buf )
+static size_t curl_write_func( void *ptr, size_t size, size_t nmemb, void* buf_)
 {
+	struct curl_buf * buf = (struct curl_buf *)buf_;
 	size_t new_len = buf->len + size * nmemb;
 
 	// not checking for realloc errors since Q_realloc will exit on failure
