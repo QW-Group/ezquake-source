@@ -227,6 +227,9 @@ void TP_GetNeed(void);
 
 char *Macro_PointName (void);
 
+// Locations
 char *TP_LocationName (vec3_t location);
+void TP_LocFiles_Init(void);
+void TP_LocFiles_NewMap(void);
 
 char *TP_ItemName(int item_flag);

@@ -310,6 +310,7 @@ OBJS_c := \
     snd_ov.o \
     stats_grid.o \
     teamplay.o \
+    teamplay_locfiles.o \
     tp_msgs.o \
     tp_triggers.o \
     textencoding.o \
