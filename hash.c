@@ -45,6 +45,31 @@ hashtable_t *Hash_InitTable(int numbucks)
 	return table;
 }
 
+void Hash_ShutdownTable(hashtable_t* table)
+{
+	int i;
+
+	if (!table) {
+		return;
+	}
+
+	for (i = 0; i < table->numbuckets; ++i) {
+		bucket_t* list = table->bucket[i];
+
+		while (list) {
+			bucket_t* next = list->next;
+			if (list->flags & HASH_BUCKET_KEYSTRING_OWNED) {
+				Q_free(list->keystring);
+			}
+			Q_free(list);
+			list = next;
+		}
+	}
+
+	Q_free(table->bucket);
+	Q_free(table);
+}
+
 /* http://www.cse.yorku.ca/~oz/hash.html
  * djb2
  * This algorithm (k=33) was first reported by dan bernstein many years ago
@@ -61,6 +86,7 @@ int Hash_Key(char *name, int modulus) {
 
 	return (int) (key % modulus);
 }
+
 int Hash_KeyInsensitive(const char *name, int modulus) {
 	unsigned int key = 5381;
 
@@ -110,6 +136,7 @@ void *Hash_Get(hashtable_t *table, char *name)
 	}
 	return NULL;
 }
+
 void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
@@ -126,6 +153,7 @@ void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 	}
 	return NULL;
 }
+
 void *Hash_GetKey(hashtable_t *table, char *key)
 {
 	int bucknum = ((uintptr_t) key) % table->numbuckets;
@@ -142,6 +170,7 @@ void *Hash_GetKey(hashtable_t *table, char *key)
 	}
 	return NULL;
 }
+
 void *Hash_GetNext(hashtable_t *table, char *name, void *old)
 {
 	int bucknum = Hash_Key(name, table->numbuckets);
@@ -172,6 +201,7 @@ void *Hash_GetNext(hashtable_t *table, char *name, void *old)
 	}
 	return NULL;
 }
+
 void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old)
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
@@ -203,7 +233,6 @@ void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old)
 	return NULL;
 }
 
-
 void *Hash_Add(hashtable_t *table, char *name, void *data) 
 {
 	int bucknum = Hash_Key(name, table->numbuckets);
@@ -214,10 +243,12 @@ void *Hash_Add(hashtable_t *table, char *name, void *data)
 	buck->data = data;
 	buck->keystring = keystring;
 	buck->next = table->bucket[bucknum];
+	buck->flags = HASH_BUCKET_KEYSTRING_OWNED;
 	table->bucket[bucknum] = buck;
 
 	return buck;
 }
+
 void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data) 
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
@@ -228,10 +259,12 @@ void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data)
 	buck->data = data;
 	buck->keystring = keystring;
 	buck->next = table->bucket[bucknum];
+	buck->flags = HASH_BUCKET_KEYSTRING_OWNED;
 	table->bucket[bucknum] = buck;
 
 	return buck;
 }
+
 void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck)
 {
 	int bucknum = ((uintptr_t) key) % table->numbuckets;

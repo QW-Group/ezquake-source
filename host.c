@@ -742,6 +742,7 @@ void Host_Shutdown (void)
 	TCL_Shutdown ();
 #endif
 	qtvlist_deinit();
+	FS_Shutdown();
 }
 
 void Host_Quit (void)
