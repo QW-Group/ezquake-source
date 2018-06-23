@@ -133,12 +133,16 @@ float	FloatSwapPDP2Lit (float f);
 //======================= LINUX DEFINES ======================================
 #ifdef __linux__
 
+#if !defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__) && !defined(__PDP_ENDIAN__)
+
 #if __FLOAT_WORD_ORDER == __BIG_ENDIAN
 #define __BIG_ENDIAN__
 #elif __FLOAT_WORD_ORDER == __LITTLE_ENDIAN
 #define __LITTLE_ENDIAN__
 #elif __FLOAT_WORD_ORDER == __PDP_ENDIAN
 #define __PDP_ENDIAN__
+#endif
+
 #endif
 
 #endif
