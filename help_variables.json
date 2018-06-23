@@ -2394,7 +2394,7 @@
     "gl_anisotropy": {
       "group-id": "50",
       "desc": "Anisotropic filtering. Basically improved texture quality.",
-      "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have enabled \"Application controled\" in your Graphics card settings for Anisotropic filtering option.",
+      "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have enabled \"Application controlled\" in your Graphics card settings for Anisotropic filtering option.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "0 and 1 means turned off, 16 is usually the highest quality" }
