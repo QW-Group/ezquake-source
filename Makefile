@@ -199,8 +199,6 @@ HELP_OBJS := \
 OBJS_c := \
     $(COMMON_OBJS) \
     $(HELP_OBJS) \
-    ioapi.o \
-    unzip.o \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
@@ -373,6 +371,16 @@ ifdef CONFIG_OGG
     OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
     CFLAGS_c += $(OGG_CFLAGS)
     LIBS_c += $(OGG_LIBS)
+endif
+
+ifeq ($(USE_SYSTEM_MINIZIP),1)
+	MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)
+	MINIZIP_LIBS ?= $(shell pkg-config --libs minizip)
+	CFLAGS_c += $(MINIZIP_CFLAGS)
+	LIBS_c += $(MINIZIP_LIBS)
+else
+	OBJS_c += minizip/ioapi.o minizip/unzip.o
+	CFLAGS_c += -Iminizip
 endif
 
 ### Targets ###
