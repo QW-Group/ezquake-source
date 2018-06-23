@@ -481,7 +481,6 @@ qbool Cvar_Command (void)
 
 static void Cvar_Toggle_f_base (qbool use_regex)
 {
-	qbool re_search = false;
 	cvar_t *var;
 	char *name;
 	int i;
@@ -494,30 +493,27 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 	for (i = 1; i < Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name))) {
+		if (use_regex && IsRegexp(name)) {
 			if (!ReSearchInit(name)) {
 				continue;
 			}
-		}
 
-		if (use_regex && re_search) {
 			for (var = cvar_vars; var; var = var->next) {
 				if (ReSearchMatch(var->name)) {
 					Cvar_Set(var, var->value ? "0" : "1");
 				}
 			}
+
+			ReSearchDone();
 		}
 		else {
 			var = Cvar_Find(name);
 
 			if (!(var)) {
-				Con_Printf("Unknown variable \"%s\"\n", Cmd_Argv(1));
+				Con_Printf("Unknown variable \"%s\"\n", name);
 				continue;
 			}
 			Cvar_Set(var, var->value ? "0" : "1");
-		}
-		if (use_regex && re_search) {
-			ReSearchDone();
 		}
 	}
 }
