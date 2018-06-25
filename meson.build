@@ -50,6 +50,10 @@ c_args = [
 	'-Wno-pointer-to-int-cast',
 ]
 
+if meson.get_compiler('c').has_argument('-msse2')
+	c_args += '-msse2'
+endif
+
 png = dependency('libpng', required : false)
 if png.found()
 	deps += png
