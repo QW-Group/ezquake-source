@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_framebuffer.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
+#include "r_lighting.h"
 
 void GLM_UploadFrameConstants(void);
 

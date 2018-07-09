@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_texture.h"
 #include "r_lightmaps.h"
+#include "r_lighting.h"
 
 // Lightmap size
 #define	LIGHTMAP_WIDTH  128

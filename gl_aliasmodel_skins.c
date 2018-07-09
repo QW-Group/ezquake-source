@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #include "r_texture.h"
 
@@ -34,7 +33,7 @@ byte player_8bit_texels[256*256]; // Workaround for new player model, isn't prop
 static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, texture_ref *fb_texnum)
 {
 	char loadpath[64] = {0};
-	GLuint texmode = 0;
+	int texmode = 0;
 	texture_ref texnum;
 	qbool luma_allowed = Ruleset_IsLumaAllowed(loadmodel);
 

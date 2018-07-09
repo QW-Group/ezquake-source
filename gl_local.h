@@ -57,12 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#define GL_PARANOIA
 
-#define SKYSHIFT		7
-#define	SKYSIZE			(1 << SKYSHIFT)
-#define SKYMASK			(SKYSIZE - 1)
-
-#define BACKFACE_EPSILON	0.01
-
 void R_TimeRefresh_f (void);
 texture_t *R_TextureAnimation(entity_t* ent, texture_t *base);
 
@@ -131,15 +125,11 @@ extern  cvar_t  gl_waterfog_density;
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	gl_clear;
 extern	cvar_t	gl_polyblend;
-extern	cvar_t	gl_flashblend;
-extern	cvar_t	gl_rl_globe;
 extern	cvar_t	gl_nocolors;
 extern	cvar_t	gl_finish;
 extern	cvar_t	gl_fb_bmodels;
 extern	cvar_t	gl_fb_models;
-extern	cvar_t	gl_lightmode;
 extern	cvar_t	gl_playermip;
-
 
 extern  cvar_t gl_part_explosions;
 extern  cvar_t gl_part_trails;
@@ -158,9 +148,6 @@ extern	cvar_t gl_powerupshells;
 extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_gammacorrection;
-extern cvar_t gl_modulate;
-
-extern	int		lightmode;		// set to gl_lightmode on mapchange
 
 extern	float	r_world_matrix[16];
 
@@ -742,8 +729,6 @@ void GLM_StateBeginAliasModelBatch(qbool translucent);
 
 void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateEndWaterSurfaces(void);
-void GL_StateBeginEntities(visentlist_t* vislist);
-void GL_StateEndEntities(visentlist_t* vislist);
 void GL_StateBeginPolyBlend(void);
 void GL_StateEndPolyBlend(void);
 void GLC_StateBeginAlphaChain(void);

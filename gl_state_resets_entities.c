@@ -165,14 +165,6 @@ void R_InitialiseEntityStates(void)
 	aliasModelTranslucentBatchState.blendingEnabled = true;
 }
 
-void GL_StateBeginEntities(visentlist_t* vislist)
-{
-}
-
-void GL_StateEndEntities(visentlist_t* vislist)
-{
-}
-
 void GLC_StateBeginAliasPowerupShell(void)
 {
 	R_ApplyRenderingState(&powerupShellState);

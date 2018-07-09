@@ -591,9 +591,16 @@ typedef enum {
 
 model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
 
+// aliasmodels
 #define NUMVERTEXNORMALS    162
 #define SHADEDOT_QUANT       64
 
 #define MD3_INTERP_MAXDIST  300
+
+// brushmodel
+extern vec3_t modelorg;
+
+// sky
+#define BACKFACE_EPSILON	0.01
 
 #endif	// __MODEL__

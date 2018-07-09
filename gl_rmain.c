@@ -66,7 +66,6 @@ mleaf_t   *r_viewleaf;
 mleaf_t   *r_oldviewleaf;
 mleaf_t   *r_viewleaf2;                       // for watervis hack
 mleaf_t   *r_oldviewleaf2;                    // for watervis hack
-vec3_t    modelorg;
 vec3_t    vup, vpn, vright;                   // view origin
 vec3_t    r_origin; // view origin
 float     r_world_matrix[16];
@@ -408,8 +407,6 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 	int i;
 
 	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
-		GL_StateBeginEntities(vislist);
-
 		for (i = 0; i < vislist->count; i++) {
 			visentity_t* todraw = &vislist->list[i];
 

@@ -22,7 +22,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+//#include "gl_local.h"
 #include "teamplay.h"
 #include "rulesets.h"
 #include "wad.h"
@@ -33,6 +33,10 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "gl_sky.h"
 #include "r_texture.h"
 #include "r_matrix.h"
+#include "r_lighting.h"
+#include "r_framestats.h"
+
+vec3_t modelorg;
 
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
@@ -1437,7 +1441,7 @@ void R_DrawBrushModel(entity_t *e)
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
 	qbool glc_first_water_poly = true;
-	extern cvar_t r_fastturb;
+	extern cvar_t r_fastturb, r_drawflat, gl_caustics;
 
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
@@ -1496,7 +1500,7 @@ void R_DrawBrushModel(entity_t *e)
 						k = li*32 + lj;
 
 						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
-							R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+							R_MarkLights(&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
 						}
 					}
 				}
