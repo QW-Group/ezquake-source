@@ -173,7 +173,6 @@ sources = [
 	'ignore.c',
 	'image.c',
 	'in_sdl2.c',
-	'ioapi.c',
 	'irc.c',
 	'irc_filter.c',
 	'keys.c',
@@ -250,7 +249,6 @@ sources = [
 	'textencoding.c',
 	'tp_msgs.c',
 	'tp_triggers.c',
-	'unzip.c',
 	'utils.c',
 	'version.c',
 	'vfs_doomwad.c',
@@ -276,6 +274,18 @@ sources = [
 	'xsd_variable.c',
 	'zone.c',
 ]
+
+includes = []
+minizip = dependency('minizip', required : false)
+if minizip.found()
+	deps += minizip
+else
+	sources += [
+		'minizip/ioapi.c',
+		'minizip/unzip.c',
+	]
+	includes += include_directories('minizip')
+endif
 
 awk = find_program('awk')
 od = find_program('od')
@@ -330,6 +340,7 @@ endif
 
 executable('ezquake-' + host_machine.system() + '-' + host_machine.cpu(), sources,
 	dependencies : deps,
+	include_directories : includes,
 	c_args : c_args,
 	link_args : link_args,
 )
