@@ -30,10 +30,14 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "utils.h"
 #include "glsl/constants.glsl"
 #include "gl_sky.h"
+#include "r_local.h"
 #include "r_texture.h"
 #include "r_matrix.h"
 #include "r_lighting.h"
+#include "r_lightmaps.h"
 #include "r_framestats.h"
+#include "r_brushmodel.h"
+#include "r_trace.h"
 
 vec3_t modelorg;
 
@@ -1514,7 +1518,7 @@ void R_DrawBrushModel(entity_t *e)
 	R_ClearTextureChains(clmodel);
 
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
-		if (GL_UseImmediateMode()) {
+		if (R_UseImmediateOpenGL()) {
 			// find which side of the node we are on
 			pplane = psurf->plane;
 			dot = PlaneDiff(modelorg, pplane);
@@ -1631,7 +1635,7 @@ void R_DrawBrushModel(entity_t *e)
 			}
 		}
 
-		if (GL_UseGLSL()) {
+		if (R_UseModernOpenGL()) {
 			GLM_DrawBrushModel(e, clmodel, polygonOffset, caustics);
 
 			// TODO: DrawAlphaChain for brush models in modern

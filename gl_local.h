@@ -160,42 +160,14 @@ extern	const char *gl_extensions;
 //#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 #define TruePointContents(p) CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p) // ?TONIK?
 
-qbool R_PointIsUnderwater(vec3_t point);
-
-// gl_warp.c
-void GL_SubdivideSurface (msurface_t *fa);
-void GL_BuildSkySurfacePolys(msurface_t *fa);
-void EmitWaterPolys (msurface_t *fa);
-void R_DrawSky(void);
-void R_LoadSky_f(void);
-void R_InitSky(texture_t *mt);	// called at level load
-void R_AddSkyBoxSurface (msurface_t *fa);
-qbool R_DrawWorldOutlines(void);
-
-extern qbool	r_skyboxloaded;
-
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);
 qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
 void R_BrightenScreen (void);
 
-// gl_rlight.c
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
-void R_AnimateLight (void);
-void R_RenderDlights (void);
-int R_LightPoint (vec3_t p);
-
 // gl_refrag.c
 void R_StoreEfrags (efrag_t **ppefrag);
-
-// gl_rsurf.c
-
-void GLC_EmitDetailPolys(qbool use_vbo);
-void R_DrawBrushModel (entity_t *e);
-void R_DrawWorld (void);
-void R_DrawWaterSurfaces (void);
-void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType);
 
 extern int dlightcolor[NUM_DLIGHTTYPES][3];
 
@@ -464,7 +436,6 @@ void GL_CreateModelVBOs(qbool vid_restart);
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa);
 void R_DrawViewModel(void);
-void R_RenderAllDynamicLightmaps(model_t *model);
 void R_LightmapFrameInit(void);
 void R_UploadChangedLightmaps(void);
 
@@ -512,7 +483,6 @@ void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(qbool use_vbo);
 
 void GLC_DrawWaterSurfaces(void);
-void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 void GLC_DrawWorld(void);
 
 void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
@@ -521,7 +491,6 @@ void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, in
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair);
 void GLM_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor);
 void GLM_Draw_FadeScreen(float alpha);
-void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics);
 float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional);
 void GLM_Draw_ResetCharGLState(void);
 void GLM_Draw_SetColor(byte* rgba);
@@ -693,8 +662,6 @@ void GLM_PreRenderView(void);
 void GLC_SetupGL(void);
 void GLM_SetupGL(void);
 
-qbool GL_ExternalTexturesEnabled(qbool worldmodel);
-
 typedef struct glm_worldmodel_req_s {
 	// This is DrawElementsIndirectCmd, from OpenGL spec
 	GLuint count;           // Number of indexes to pull
@@ -723,13 +690,9 @@ void GLM_StateBeginAliasOutlineBatch(void);
 void GLM_StateEndAliasOutlineBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent);
 
-void GLC_StateBeginWaterSurfaces(void);
-void GLC_StateEndWaterSurfaces(void);
 void GL_StateBeginPolyBlend(void);
 void GL_StateEndPolyBlend(void);
-void GLC_StateBeginAlphaChain(void);
-void GLC_StateEndAlphaChain(void);
-void GLC_StateBeginAlphaChainSurface(msurface_t* s);
+
 void GLC_StateBeginBrightenScreen(void);
 void GLC_StateEndBrightenScreen(void);
 void GLC_StateBeginFastSky(void);
@@ -780,8 +743,6 @@ void GLC_StateBeginSceneBlur(void);
 void GLC_StateEndSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
 void GLC_StateEndCausticsPolys(void);
-void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
-void GL_StateEndDrawBrushModel(void);
 void GL_StateDefault2D(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);

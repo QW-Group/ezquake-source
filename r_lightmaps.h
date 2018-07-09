@@ -23,5 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void R_BuildLightmaps(void);
 qbool R_FullBrightAllowed(void);
 void R_CheckReloadLightmaps(void);
+void R_RenderAllDynamicLightmaps(model_t *model);
 
 #endif // EZQUAKE_R_LIGHTMAPS_HEADER
