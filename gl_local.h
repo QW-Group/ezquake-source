@@ -303,10 +303,6 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
-void GLM_TransformMatrix(float* matrix, float x, float y, float z);
-void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
-void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z);
 void GLM_GetMatrix(GLenum type, float* matrix);
 
 #define GLM_VERTEX_SHADER   0

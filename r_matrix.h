@@ -39,4 +39,9 @@ void GL_PopModelviewMatrix(const float* matrix);
 void GL_PushProjectionMatrix(float* matrix);
 void GL_PopProjectionMatrix(const float* matrix);
 
+void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
+void GLM_TransformMatrix(float* matrix, float x, float y, float z);
+void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
+void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z);
+
 #endif // EZQUAKE_R_MATRIX_HEADER

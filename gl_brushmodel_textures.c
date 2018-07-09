@@ -52,8 +52,9 @@ char *TranslateTextureName(texture_t *tx)
 	qbool checksum_done = false;
 
 	for (i = 0; translate_names[i].origname; i++) {
-		if (strcmp(tx->name, translate_names[i].origname))
+		if (strcmp(tx->name, translate_names[i].origname)) {
 			continue;
+		}
 		if (!checksum_done) {
 			checksum = Com_BlockChecksum(tx+1, tx->width*tx->height);
 			checksum_done = true;

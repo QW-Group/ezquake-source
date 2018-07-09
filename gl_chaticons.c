@@ -15,17 +15,16 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 */
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "glm_texture_arrays.h"
 #include "gl_sprite3d.h"
 #include "r_texture.h"
 #include "r_chaticons.h"
 #include "r_state.h"
+#include "r_matrix.h"
 
 // Chat icons
 typedef byte col_t[4]; // FIXME: why 4?
@@ -40,7 +39,6 @@ typedef struct ci_player_s {
 	float       distance;
 
 	player_info_t *player;
-
 } ci_player_t;
 
 typedef enum {
@@ -62,7 +60,7 @@ typedef struct ci_texture_s {
 	float        originalCoords[MAX_CITEX_COMPONENTS][4];
 } ci_texture_t;
 
-#define TEXTURE_DETAILS(x) (GL_UseGLSL() ? x.tex_array : x.texnum),(x.tex_index)
+#define TEXTURE_DETAILS(x) (R_UseModernOpenGL() ? x.tex_array : x.texnum),(x.tex_index)
 
 extern cvar_t r_chaticons_alpha;
 
