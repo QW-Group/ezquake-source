@@ -106,24 +106,3 @@ void GLM_DrawPolygons(int start, int end)
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
 	}
 }
-
-void GLC_DrawPolygons(int start, int end)
-{
-	int i, j;
-
-	GLC_StateBeginDrawPolygon();
-
-	for (i = start; i <= end; ++i) {
-		R_CustomColor(
-			polygonData.polygonColor[i][0],
-			polygonData.polygonColor[i][1],
-			polygonData.polygonColor[i][2],
-			polygonData.polygonColor[i][3]
-		);
-		glBegin(GL_TRIANGLE_STRIP);
-		for (j = 0; j < polygonData.polygonVerts[i]; j++) {
-			glVertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);
-		}
-		glEnd();
-	}
-}

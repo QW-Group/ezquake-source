@@ -122,7 +122,7 @@ void GL_StateBeginAlphaLineRGB(float thickness)
 {
 	R_ApplyRenderingState(&lineState);
 	if (thickness > 0.0) {
-		glLineWidth(thickness);
+		R_CustomLineWidth(thickness);
 	}
 }
 
@@ -131,7 +131,7 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 	// Same as lineState
 	R_ApplyRenderingState(&lineState);
 	if (thickness > 0.0) {
-		glLineWidth(thickness);
+		R_CustomLineWidth(thickness);
 	}
 }
 

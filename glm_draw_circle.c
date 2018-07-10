@@ -58,31 +58,6 @@ void GLM_DrawCircles(int start, int end)
 	}
 }
 
-void GLC_DrawCircles(int start, int end)
-{
-	// FIXME: Not very efficient (but rarely used either)
-	int i, j;
-
-	start = max(0, start);
-	end = min(end, circleData.circleCount - 1);
-
-	for (i = start; i <= end; ++i) {
-		GLC_StateBeginDrawAlphaPieSliceRGB(circleData.drawCircleThickness[i]);
-		R_CustomColor(
-			circleData.drawCircleColors[i][0],
-			circleData.drawCircleColors[i][1],
-			circleData.drawCircleColors[i][2],
-			circleData.drawCircleColors[i][3]
-		);
-
-		glBegin(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP);
-		for (j = 0; j < circleData.drawCirclePoints[i]; ++j) {
-			glVertex2fv(&circleData.drawCirclePointData[i * FLOATS_PER_CIRCLE + j * 2]);
-		}
-		glEnd();
-	}
-}
-
 void GLM_PrepareCircles(void)
 {
 	if (GL_UseGLSL()) {

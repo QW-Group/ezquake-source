@@ -289,7 +289,7 @@ void GLC_StateBeginDrawMapOutline(void)
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&mapOutlineState);
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	LEAVE_STATE;
 }
@@ -303,7 +303,7 @@ void GLM_StateBeginDrawWorldOutlines(void)
 	// FIXME: This was different for GLC & GLM, why?  // disable depth-test
 	R_ApplyRenderingState(&mapOutlineState);
 	// limit outline width, since even width == 3 can be considered as cheat.
-	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	LEAVE_STATE;
 }

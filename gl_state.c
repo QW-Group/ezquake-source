@@ -980,6 +980,23 @@ void R_CustomColor(float r, float g, float b, float a)
 	}
 }
 
+void R_CustomLineWidth(float width)
+{
+	if (width != opengl.rendering_state.line.width) {
+		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+			glLineWidth(opengl.rendering_state.line.width = width);
+			GL_LogAPICall("glLineWidth(%f)", width);
+		}
+		else if (R_UseVulkan()) {
+			// Requires VK_DYNAMIC_STATE_LINE_WIDTH
+			// Requires wide lines feature (if not, must be 1)
+
+			// vkCmdSetLineWidth(commandBuffer, width)
+			opengl.rendering_state.line.width = width;
+		}
+	}
+}
+
 void R_CustomColor4ubv(const byte* color)
 {
 	float r = color[0] / 255.0f;

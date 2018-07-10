@@ -25,6 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_lighting.h"
 
+static buffer_ref ubo_frameConstants;
+static uniform_block_frame_constants_t frameConstants;
+static qbool frameConstantsUploaded = false;
+
 void GLM_UploadFrameConstants(void);
 
 #define PASS_COLOR_AS_4F(target, cvar) \
@@ -57,10 +61,6 @@ void GLM_RenderSceneBlurDo(float alpha)
 {
 	// MEAG: TODO
 }
-
-static buffer_ref ubo_frameConstants;
-static uniform_block_frame_constants_t frameConstants;
-static qbool frameConstantsUploaded = false;
 
 void GLM_PreRenderView(void)
 {

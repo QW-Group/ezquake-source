@@ -164,6 +164,7 @@ void R_ApplyRenderingState(rendering_state_t* state);
 
 void R_CustomColor(float r, float g, float b, float a);
 void R_CustomColor4ubv(const byte* color);
+void R_CustomLineWidth(float width);
 void R_EnableScissorTest(int x, int y, int width, int height);
 void R_DisableScissorTest(void);
 void R_ClearColor(float r, float g, float b, float a);
