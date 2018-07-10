@@ -119,7 +119,7 @@ static void R_LoadChatIconTextureSubImage(ci_tex_t tex, const char* id, const by
 static void R_DrawChatIconBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex, ci_player_t* _p, vec3_t _coord[4])
 {
 	float coordinates[4][4];
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 	int i;
 
 	for (i = 0; i < 4; ++i) {

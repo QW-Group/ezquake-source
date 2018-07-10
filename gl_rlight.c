@@ -133,7 +133,7 @@ void R_RenderDlight(dlight_t *light)
 		float *bub_sin, *bub_cos;
 		GLubyte center_color[4] = { 255, 255, 255, 0 };
 		GLubyte outer_color[4] = { 0, 0, 0, 0 };
-		gl_sprite3d_vert_t* vert;
+		r_sprite3d_vert_t* vert;
 
 		VectorSubtract(light->origin, r_origin, v);
 		length = VectorNormalize(v);

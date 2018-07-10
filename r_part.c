@@ -57,7 +57,7 @@ typedef struct glm_particle_s {
 
 particle_t particles[ABSOLUTE_MAX_PARTICLES];
 glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
-gl_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
+r_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
 
 static int	ramp1[8] = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
 static int	ramp2[8] = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
@@ -594,7 +594,7 @@ void Classic_ReScaleParticles(void)
 	float r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	int i;
 	vec3_t up, right, scaled_vpn;
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 	float dist_precalc = 0;
 
 	if (particles_to_draw == 0) {
@@ -649,7 +649,7 @@ static void Classic_PrepareParticles(void)
 	for (i = 0; i < r_numactiveparticles; ++i, ++p) {
 		if (p->die >= r_refdef2.time) {
 			glm_particle_t* glpart;
-			gl_sprite3d_vert_t* vert;
+			r_sprite3d_vert_t* vert;
 
 			// hack a scale up to keep particles from disapearing
 			scale = dist_precalc + DotProduct(p->org, scaled_vpn);
@@ -698,7 +698,7 @@ static void Classic_PrepareParticles(void)
 // Performs all drawing of particles
 void Classic_DrawParticles(void)
 {
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 
 	if (particles_to_draw == 0) {
 		return;

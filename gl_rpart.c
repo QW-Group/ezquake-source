@@ -455,7 +455,7 @@ void QMB_ClearParticles (void)
 	ParticleCountHigh = 0;
 }
 
-static void QMB_BillboardAddVert(gl_sprite3d_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
+static void QMB_BillboardAddVert(r_sprite3d_vert_t* vert, particle_type_t* type, float x, float y, float z, float s, float t, col_t color, int texture_index)
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	col_t new_color;
@@ -470,7 +470,7 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	vec3_t verts[4];
 	float scale = p->size;
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 	col_t new_color;
 
 	vert = GL_Sprite3DAddEntry(type->billboard_type, 4);
@@ -558,7 +558,7 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
-					gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 6);
+					r_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 6);
 					if (vert) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
@@ -583,7 +583,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				float* point;
 				GLubyte farColor[4];
 				particle_texture_t* ptex = &particle_textures[ptex_none];
-				gl_sprite3d_vert_t* vert;
+				r_sprite3d_vert_t* vert;
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -681,7 +681,7 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				for (p = pt->start; p; p = p->next) {
 					float vector[4];
-					gl_sprite3d_vert_t* vert;
+					r_sprite3d_vert_t* vert;
 
 					if (particle_time < p->start || particle_time >= p->die) {
 						continue;

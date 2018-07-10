@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
-	gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
+	r_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
 	if (vert) {
 		GLM_RenderSprite(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
 	}
@@ -35,7 +35,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache

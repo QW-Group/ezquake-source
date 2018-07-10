@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // For drawing sprites in 3D space
 
 // FIXME: Now used by classic too.
-void GLM_RenderSprite(gl_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index)
+void GLM_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index)
 {
 	vec3_t points[4];
 
@@ -47,7 +47,7 @@ void GLM_RenderSprite(gl_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t
 
 void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale_, vec3_t up, vec3_t right)
 {
-	gl_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
+	r_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
 	if (vert) {
 		GLM_RenderSprite(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
 	}
@@ -58,7 +58,7 @@ void GLM_DrawSpriteModel(entity_t* e)
 	vec3_t right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
-	gl_sprite3d_vert_t* vert;
+	r_sprite3d_vert_t* vert;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache

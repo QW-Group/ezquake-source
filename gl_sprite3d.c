@@ -132,7 +132,7 @@ typedef struct gl_sprite3d_batch_s {
 
 #define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
 
-static gl_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
+static r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
 static gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
 static unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 static unsigned int batchCount;
@@ -174,7 +174,7 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s
 	batch->name = batch_type_names[type];
 }
 
-gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
+r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
@@ -204,17 +204,17 @@ gl_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int vert
 	return &verts[start];
 }
 
-gl_sprite3d_vert_t* GL_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
+r_sprite3d_vert_t* GL_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
 {
 	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-gl_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
+r_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
 {
 	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-void GL_Sprite3DSetVert(gl_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
+void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
 {
 	extern int particletexture_array_index;
 
@@ -330,11 +330,11 @@ static void GLM_Create3DSpriteVAO(void)
 		GL_BindBuffer(sprite3dIndexes);
 
 		// position
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position), 0);
 		// texture coordinates
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex), 0);
 		// color
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color), 0);
 
 		R_BindVertexArray(vao_none);
 	}
@@ -349,9 +349,9 @@ static void GLC_Create3DSpriteVAO(void)
 
 		GLC_VAOSetIndexBuffer(vao_3dsprites, sprite3dIndexes);
 		GLC_VAOSetVertexBuffer(vao_3dsprites, sprite3dVBO);
-		GLC_VAOEnableVertexPointer(vao_3dsprites, 3, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, position));
-		GLC_VAOEnableColorPointer(vao_3dsprites, 4, GL_UNSIGNED_BYTE, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, color));
-		GLC_VAOEnableTextureCoordPointer(vao_3dsprites, 0, 2, GL_FLOAT, sizeof(gl_sprite3d_vert_t), VBO_FIELDOFFSET(gl_sprite3d_vert_t, tex));
+		GLC_VAOEnableVertexPointer(vao_3dsprites, 3, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position));
+		GLC_VAOEnableColorPointer(vao_3dsprites, 4, GL_UNSIGNED_BYTE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color));
+		GLC_VAOEnableTextureCoordPointer(vao_3dsprites, 0, 2, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex));
 	}
 }
 
@@ -689,7 +689,7 @@ void GLC_Draw3DSprites(void)
 		}
 		else {
 			for (j = 0; j < batch->count; ++j) {
-				gl_sprite3d_vert_t* v;
+				r_sprite3d_vert_t* v;
 
 				if (GL_TextureReferenceIsValid(batch->textures[j])) {
 					R_TextureUnitBind(0, batch->textures[j]);
