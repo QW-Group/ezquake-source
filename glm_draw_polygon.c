@@ -87,20 +87,17 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 
 void GLM_DrawPolygons(int start, int end)
 {
-	float matrix[16];
 	int i;
 	uintptr_t offset = GL_BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
 	R_BindVertexArray(vao_hud_polygons);
 	GL_UseProgram(polygonProgram.program);
-	GLM_GetMatrix(GL_PROJECTION, matrix);
-	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, matrix);
+	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
 
 	GLM_StateBeginPolygonDraw();
 
 	for (i = start; i <= end; ++i) {
-		GLM_TransformMatrix(matrix, polygonData.polygonX[i], polygonData.polygonY[i], 0);
-
+		//GLM_TransformMatrix(GLM_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
 		GL_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);

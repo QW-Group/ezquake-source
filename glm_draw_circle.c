@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_draw.h"
 #include "glm_vao.h"
 #include "r_state.h"
+#include "r_matrix.h"
 
 static glm_program_t circleProgram;
 static buffer_ref circleVBO;
@@ -39,7 +40,6 @@ void GLM_DrawCircles(int start, int end)
 {
 	// FIXME: Not very efficient (but rarely used either)
 	int i;
-	float projectionMatrix[16];
 	uintptr_t offset = GL_BufferOffset(circleVBO) / (sizeof(float) * 2);
 
 	start = max(0, start);
@@ -48,8 +48,7 @@ void GLM_DrawCircles(int start, int end)
 	GL_UseProgram(circleProgram.program);
 	R_BindVertexArray(vao_hud_circles);
 
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, projectionMatrix);
+	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, GLM_ProjectionMatrix());
 
 	for (i = start; i <= end; ++i) {
 		GL_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);

@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sky.h"
 #include "r_brushmodel.h"
 #include "r_lighting.h"
+#include "glc_matrix.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -701,7 +702,7 @@ static void R_SetupGL(void)
 	GL_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 	GL_GetModelviewMatrix(r_world_matrix);
 	GLC_ResumeMatrixUpdate();
-	GLC_LoadMatrix(GL_MODELVIEW);
+	GLC_LoadModelviewMatrix();
 
 	GL_StateDefault3D();
 

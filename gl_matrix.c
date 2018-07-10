@@ -21,16 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_matrix.h"
+#include "glc_matrix.h"
 #include "r_draw.h"
 
 void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 void GLM_SetMatrix(float* target, const float* source);
 
 static qbool glc_pause_updates;
-static GLfloat projectionMatrix[16];
-static GLfloat modelMatrix[16];
-//static GLfloat viewMatrix[16];
-static GLfloat identityMatrix[16] = {
+static float projectionMatrix[16];
+static float modelMatrix[16];
+static float identityMatrix[16] = {
 	1, 0, 0, 0,
 	0, 1, 0, 0,
 	0, 0, 1, 0,
@@ -43,9 +43,9 @@ void GLM_SetIdentityMatrix(float* matrix)
 }
 
 // 
-static const GLfloat* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
+static const float* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
 {
-	static GLfloat matrix[16];
+	static float matrix[16];
 
 	memset(matrix, 0, sizeof(matrix));
 	matrix[0] = 2 / (right - left);
@@ -63,39 +63,6 @@ void GLM_OrthographicProjection(float left, float right, float top, float bottom
 {
 	// Deliberately inverting top & bottom here...
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
-}
-
-#ifdef WITH_OPENGL_TRACE
-static const char* NameForMatrix(GLenum mode)
-{
-	if (mode == GL_MODELVIEW || mode == GL_MODELVIEW_MATRIX) {
-		return "modelview";
-	}
-	if (mode == GL_PROJECTION || mode == GL_PROJECTION_MATRIX) {
-		return "projection";
-	}
-	return "(other)";
-}
-#endif
-
-float* GL_MatrixForMode(GLenum type)
-{
-	static float junk[16] = { 0 };
-
-	if (type == GL_PROJECTION || type == GL_PROJECTION_MATRIX) {
-		return projectionMatrix;
-	}
-	else if (type == GL_MODELVIEW || type == GL_MODELVIEW_MATRIX) {
-		return modelMatrix;
-	}
-	else {
-		return junk;
-	}
-}
-
-void GLM_GetMatrix(GLenum type, float* matrix)
-{
-	GLM_SetMatrix(matrix, GL_MatrixForMode(type));
 }
 
 float* GLM_ModelviewMatrix(void)
@@ -360,7 +327,6 @@ void GL_ScaleModelview(float xScale, float yScale, float zScale)
 void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
 	float perspective[16] = { 0 };
-	float projection[16];
 	float new_projection[16];
 
 	perspective[0] = (2 * zNear) / (right - left);
@@ -371,27 +337,13 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 	perspective[11] = -1;
 	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
 
-	GLM_GetMatrix(GL_PROJECTION, projection);
-	GLM_MultiplyMatrix(perspective, projection, new_projection);
-	GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
+	GLM_MultiplyMatrix(perspective, GLM_ProjectionMatrix(), new_projection);
+	GLM_SetMatrix(GLM_ProjectionMatrix(), new_projection);
 	
 	if (R_UseImmediateOpenGL()) {
 		GLC_Frustum(left, right, bottom, top, zNear, zFar);
 	}
 }
-/*
-void GLM_DebugMatrix(GLenum mode, const char* label)
-{
-	float matrix[16];
-	int i;
-
-	GL_GetMatrix(mode, matrix);
-
-	Con_Printf("%s\n", label);
-	for (i = 0; i < 4; ++i) {
-		Con_Printf("  [%5.3f %5.3f %5.3f %5.3f]\n", matrix[i], matrix[i + 4], matrix[i + 8], matrix[i + 12]);
-	}
-}*/
 
 void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 {
@@ -399,44 +351,6 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
 	result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
-}
-
-void GLC_PauseMatrixUpdate(void)
-{
-	glc_pause_updates = true;
-}
-
-void GLC_ResumeMatrixUpdate(void)
-{
-	glc_pause_updates = false;
-}
-
-void GLC_LoadMatrix(GLenum matrix)
-{
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(matrix);
-		glLoadMatrixf(GL_MatrixForMode(matrix));
-		GL_LogAPICall("glLoadMatrixf(%s)", NameForMatrix(matrix));
-	}
-}
-
-void GLC_BeginCausticsTextureMatrix(void)
-{
-	GL_SelectTexture(GL_TEXTURE1);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glScalef(0.5, 0.5, 1);
-	glRotatef(r_refdef2.time * 10, 1, 0, 0);
-	glRotatef(r_refdef2.time * 10, 0, 1, 0);
-	glMatrixMode(GL_MODELVIEW);
-}
-
-void GLC_EndCausticsTextureMatrix(void)
-{
-	GL_SelectTexture(GL_TEXTURE1);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
 }
 
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz)

@@ -96,17 +96,6 @@ void GLC_ResumeMatrixUpdate(void)
 	glc_pause_updates = false;
 }
 
-void GLC_LoadModelviewMatrix(void)
-{
-	float matrix[16];
-
-	GL_PushModelviewMatrix(matrix);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(matrix);
-	GL_LogAPICall("glLoadMatrixf(modelview)");
-}
-
 void GLC_BeginCausticsTextureMatrix(void)
 {
 	GL_SelectTexture(GL_TEXTURE1);
@@ -132,5 +121,14 @@ void GLC_TranslateModelview(float x, float y, float z)
 		glMatrixMode(GL_MODELVIEW);
 		glTranslatef(x, y, z);
 		GL_LogAPICall("GL_TranslateModelview()");
+	}
+}
+
+void GLC_LoadModelviewMatrix(void)
+{
+	if (GL_UseImmediateMode()) {
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(GLM_ModelviewMatrix());
+		GL_LogAPICall("glLoadMatrixf(modelview)");
 	}
 }

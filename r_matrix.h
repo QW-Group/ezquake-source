@@ -44,4 +44,13 @@ void GLM_TransformMatrix(float* matrix, float x, float y, float z);
 void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
 void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z);
 
+void GLM_SetIdentityMatrix(float* matrix);
+float* GLM_ModelviewMatrix(void);
+float* GLM_ProjectionMatrix(void);
+
+void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
+void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
+void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
+void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
+
 #endif // EZQUAKE_R_MATRIX_HEADER

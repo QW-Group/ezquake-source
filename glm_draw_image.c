@@ -548,13 +548,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 
 void GLM_Cache2DMatrix(void)
 {
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-
-	GLM_GetMatrix(GL_MODELVIEW, modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, projectionMatrix);
-
-	GLM_MultiplyMatrix(projectionMatrix, modelViewMatrix, cachedMatrix);
+	GLM_MultiplyMatrix(GLM_ProjectionMatrix(), GLM_ModelviewMatrix(), cachedMatrix);
 }
 
 void GLM_UndoLastCharacter(void)

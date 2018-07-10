@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_draw.h"
 #include "glm_vao.h"
 #include "r_state.h"
+#include "r_matrix.h"
 
 static glm_program_t line_program;
 static buffer_ref line_vbo;
@@ -95,13 +96,11 @@ void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, in
 void GLM_DrawLines(int start, int end)
 {
 	if (line_program.program && R_VertexArrayCreated(vao_hud_lines)) {
-		float matrix[16];
 		int i;
 		uintptr_t offset = GL_BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
 		GL_UseProgram(line_program.program);
-		GLM_GetMatrix(GL_PROJECTION, matrix);
-		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, matrix);
+		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
 		R_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {

@@ -275,8 +275,6 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-void GLM_GetMatrix(GLenum type, float* matrix);
-
 #define GLM_VERTEX_SHADER   0
 #define GLM_FRAGMENT_SHADER 1
 #define GLM_GEOMETRY_SHADER 2
@@ -424,10 +422,6 @@ void GL_EndDrawSprites(void);
 void GL_BeginDrawAliasModels(void);
 void GL_EndDrawAliasModels(void);
 
-void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
-void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
-void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
-void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 void GLM_DrawWaterSurfaces(void);
 
 void GL_BuildCommonTextureArrays(qbool vid_restart);
@@ -499,11 +493,6 @@ void GLM_PrepareImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Cache2DMatrix(void);
 void GLM_UndoLastCharacter(void);
-
-void GLM_SetIdentityMatrix(float* matrix);
-float* GLM_ModelviewMatrix(void);
-float* GLM_ProjectionMatrix(void);
-float* GL_MatrixForMode(GLenum type);
 
 #ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message);

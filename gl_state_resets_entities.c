@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_state.h"
 #include "r_vao.h"
+#include "glc_matrix.h"
 
 #include "gl_aliasmodel.h" // for shelltexture only
 
@@ -243,7 +244,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	GL_RotateModelview(e->angles[1], 0, 0, 1);
 	GL_RotateModelview(e->angles[0], 0, 1, 0);
 	GL_RotateModelview(e->angles[2], 1, 0, 0);
-	GLC_LoadMatrix(GL_MODELVIEW);
+	GLC_LoadModelviewMatrix();
 	GLC_ResumeMatrixUpdate();
 
 	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
@@ -281,7 +282,7 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 		GL_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	GLC_ResumeMatrixUpdate();
-	GLC_LoadMatrix(GL_MODELVIEW);
+	GLC_LoadModelviewMatrix();
 
 	LEAVE_STATE;
 }

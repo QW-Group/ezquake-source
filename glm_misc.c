@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "r_lighting.h"
+#include "r_matrix.h"
 
 static buffer_ref ubo_frameConstants;
 static uniform_block_frame_constants_t frameConstants;
@@ -156,8 +157,8 @@ void GLM_PreRenderView(void)
 
 void GLM_SetupGL(void)
 {
-	GLM_GetMatrix(GL_MODELVIEW, frameConstants.modelViewMatrix);
-	GLM_GetMatrix(GL_PROJECTION, frameConstants.projectionMatrix);
+	memcpy(frameConstants.modelViewMatrix, GLM_ModelviewMatrix(), sizeof(frameConstants.modelViewMatrix));
+	memcpy(frameConstants.projectionMatrix, GLM_ProjectionMatrix(), sizeof(frameConstants.projectionMatrix));
 	VectorCopy(r_refdef.vieworg, frameConstants.position);
 
 	frameConstantsUploaded = false;
