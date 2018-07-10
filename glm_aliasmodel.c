@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "glm_vao.h"
 #include "r_texture.h"
+#include "r_brushmodel.h" // R_PointIsUnderwater only
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -622,7 +623,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			);
 		}
 
-		GLM_StateEndAliasOutlineBatch();
 		GL_LeaveRegion();
 	}
 }

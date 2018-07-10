@@ -171,10 +171,6 @@ void GLC_StateBeginAliasPowerupShell(void)
 	R_TextureUnitBind(0, shelltexture);
 }
 
-void GLC_StateEndAliasPowerupShell(void)
-{
-}
-
 void GLC_StateBeginMD3Draw(float alpha, qbool textured)
 {
 	if (textured) {
@@ -193,10 +189,6 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured)
 			R_ApplyRenderingState(&aliasModelState[ALIASMODEL_NOTEXTURE_OPAQUE]);
 		}
 	}
-}
-
-void GLC_StateEndMD3Draw(void)
-{
 }
 
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model)
@@ -226,10 +218,6 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 	LEAVE_STATE;
 }
 
-void GLC_StateEndDrawAliasFrame(void)
-{
-}
-
 void GLC_StateBeginAliasModelShadow(void)
 {
 	ENTER_STATE;
@@ -237,18 +225,6 @@ void GLC_StateBeginAliasModelShadow(void)
 	R_ApplyRenderingState(&aliasModelShadowState);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndAliasModelShadow(void)
-{
-}
-
-void GLC_StateBeginDrawViewModel(float alpha)
-{
-}
-
-void GLC_StateEndDrawViewModel(void)
-{
 }
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
@@ -281,10 +257,6 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	LEAVE_STATE;
 }
 
-void GL_StateEndDrawBrushModel(void)
-{
-}
-
 void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
@@ -314,10 +286,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	LEAVE_STATE;
 }
 
-void GL_StateEndDrawAliasModel(void)
-{
-}
-
 void GLC_StateBeginAliasOutlineFrame(void)
 {
 	ENTER_STATE;
@@ -327,17 +295,9 @@ void GLC_StateBeginAliasOutlineFrame(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndAliasOutlineFrame(void)
-{
-}
-
 void GLM_StateBeginAliasOutlineBatch(void)
 {
 	R_ApplyRenderingState(&aliasModelOutlineState);
-}
-
-void GLM_StateEndAliasOutlineBatch(void)
-{
 }
 
 void GLM_StateBeginAliasModelBatch(qbool translucent)

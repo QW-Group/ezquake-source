@@ -37,6 +37,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_state.h"
 #include "gl_aliasmodel.h"
+#include "gl_sky.h"
+#include "r_brushmodel.h"
+#include "r_lighting.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -464,7 +467,6 @@ void R_PolyBlend(void)
 	else {
 		GLC_PolyBlend(v_blend);
 	}
-	GL_StateEndPolyBlend();
 }
 
 static int SignbitsForPlane(mplane_t *out)
@@ -931,10 +933,6 @@ static void R_RenderScene(void)
 			R_DrawViewModel();
 		}
 		GL_LeaveRegion();
-	}
-	
-	if (GL_UseImmediateMode()) {
-		GLC_StateEndRenderScene();
 	}
 }
 

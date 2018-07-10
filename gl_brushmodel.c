@@ -1610,10 +1610,6 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	if (!glc_first_water_poly) {
-		GLC_StateEndWaterSurfaces();
-	}
-
 	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model
@@ -1650,7 +1646,6 @@ void R_DrawBrushModel(entity_t *e)
 		// } END shaman FIX for no simple textures on world brush models
 	}
 
-	GL_StateEndDrawBrushModel();
 	GL_PopModelviewMatrix(oldMatrix);
 
 	GL_LeaveTracedRegion(true);

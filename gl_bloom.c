@@ -293,8 +293,6 @@ void R_Bloom_DrawEffect( void )
 	glTexCoord2f(  sampleText_tcw,             sampleText_tch  ); 
 	glVertex2f(    curView_x + curView_width,  curView_y   );             
 	glEnd();
-
-	GLC_StateEndBloomDraw();
 }
 
 // =================

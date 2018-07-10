@@ -67,10 +67,6 @@ void GLM_StateBeginDraw3DSprites(void)
 	LEAVE_STATE;
 }
 
-void GLM_StateEndDraw3DSprites(void)
-{
-}
-
 void GL_StateDefaultInit(void)
 {
 	ENTER_STATE;
@@ -78,20 +74,4 @@ void GL_StateDefaultInit(void)
 	R_ApplyRenderingState(&default3DState);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateBeginDraw3DSprites(void)
-{
-}
-
-void GLC_StateEndDraw3DSprites(void)
-{
-}
-
-void GL_StateEndFrame(void)
-{
-}
-
-void GLC_StateEndRenderScene(void)
-{
 }

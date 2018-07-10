@@ -30,6 +30,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_texture.h"
 #include "glc_state.h"
 #include "glc_vao.h"
+#include "r_brushmodel.h"
 
 extern buffer_ref brushModel_vbo;
 
@@ -333,8 +334,6 @@ static void GLC_DrawFlat(model_t *model)
 		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
-	GLC_StateEndDrawFlatModel();
-
 	// START shaman FIX /r_drawflat + /gl_caustics {
 	GLC_EmitCausticsPolys(use_vbo);
 	// } END shaman FIX /r_drawflat + /gl_caustics
@@ -415,7 +414,6 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 		GLC_EnsureVAOCreated(vao_brushmodel);
 	}
 
-	GLC_StateBeginDrawTextureChains();
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
@@ -583,9 +581,6 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 
 	GLC_EmitCausticsPolys(use_vbo);
 	GLC_EmitDetailPolys(use_vbo);
-
-	GLC_StateEndWorldTextureChains();
-	GLC_StateEndDrawTextureChains();
 }
 
 void GLC_DrawWorld(void)
@@ -792,8 +787,6 @@ static void GLC_BlendLightmaps(void)
 		}
 	}
 	GLC_ClearLightmapPolys();
-
-	GLC_StateEndBlendLightmaps();
 }
 
 //draws transparent textures for HL world and nonworld models
@@ -830,6 +823,4 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 	}
 
 	alphachain = NULL;
-
-	GLC_StateEndAlphaChain();
 }

@@ -116,7 +116,8 @@ void OnChange_r_skyname (cvar_t *v, char *skyname, qbool* cancel)
 	*cancel = R_SetSky(skyname);
 }
 
-void R_LoadSky_f(void) {
+void R_LoadSky_f(void)
+{
 	switch (Cmd_Argc()) {
 	case 1:
 		if (r_skyboxloaded) {

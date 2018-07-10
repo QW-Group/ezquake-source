@@ -108,8 +108,6 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		GLC_StateBeginFastTurbPoly(color);
 
 		EmitFlatWaterPoly(fa);
-
-		GLC_StateEndFastTurbPoly();
 	}
 	else {
 		glpoly_t *p;
@@ -214,8 +212,6 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 			glEnd();
 		}
 	}
-
-	GLC_StateEndCausticsPolys();
 
 	caustics_polys = NULL;
 }

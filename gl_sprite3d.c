@@ -596,7 +596,6 @@ void GLM_Draw3DSprites(void)
 
 		batch->count = 0;
 	}
-	GLM_StateEndDraw3DSprites();
 
 	GL_LeaveRegion();
 
@@ -718,6 +717,4 @@ void GLC_Draw3DSprites(void)
 
 		batch->count = 0;
 	}
-
-	GLC_StateEndDraw3DSprites();
 }

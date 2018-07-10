@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
+#include "r_brushmodel.h"
 
 extern msurface_t* waterchain;
 
@@ -44,7 +45,6 @@ void GLC_DrawWaterSurfaces(void)
 		EmitWaterPolys(s);
 	}
 
-	GLC_StateEndWaterSurfaces();
 	GL_LeaveTracedRegion(true);
 
 	waterchain = NULL;

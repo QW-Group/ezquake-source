@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "glm_vao.h"
 #include "r_texture.h"
+#include "r_brushmodel.h"
 
 #define GLM_DRAWCALL_INCREMENT 8
 
@@ -545,8 +546,6 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 
 	// Valid to reset the uniforms here as this is the only code that expects it
 	GL_Uniform1i(drawWorld_outlines, 0);
-
-	GLM_StateEndDrawWorldOutlines();
 }
 
 void GL_FlushWorldModelBatch(void)

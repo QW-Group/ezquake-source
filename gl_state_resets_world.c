@@ -150,26 +150,6 @@ void R_InitialiseWorldStates(void)
 	//	}
 }
 
-void GLC_StateBeginDrawFlatModel(void)
-{
-}
-
-void GLC_StateEndDrawFlatModel(void)
-{
-}
-
-void GLC_StateBeginDrawTextureChains(void)
-{
-}
-
-void GLC_StateEndWorldTextureChains(void)
-{
-}
-
-void GLC_StateEndDrawTextureChains(void)
-{
-}
-
 void GLC_StateBeginFastTurbPoly(byte color[4])
 {
 	float wateralpha = GL_WaterAlpha();
@@ -184,10 +164,6 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 	LEAVE_STATE;
 }
 
-void GLC_StateEndFastTurbPoly(void)
-{
-}
-
 void GLC_StateBeginBlendLightmaps(qbool use_buffers)
 {
 	ENTER_STATE;
@@ -197,10 +173,6 @@ void GLC_StateBeginBlendLightmaps(qbool use_buffers)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndBlendLightmaps(void)
-{
-}
-
 void GLC_StateBeginCausticsPolys(void)
 {
 	ENTER_STATE;
@@ -208,10 +180,6 @@ void GLC_StateBeginCausticsPolys(void)
 	R_ApplyRenderingState(&causticsState);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndCausticsPolys(void)
-{
 }
 
 // Alias models
@@ -263,10 +231,6 @@ void GLC_StateBeginWaterSurfaces(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndWaterSurfaces(void)
-{
-}
-
 void GLC_StateBeginAlphaChain(void)
 {
 	ENTER_STATE;
@@ -274,10 +238,6 @@ void GLC_StateBeginAlphaChain(void)
 	R_ApplyRenderingState(&alphaChainState);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndAlphaChain(void)
-{
 }
 
 void GLC_StateBeginAlphaChainSurface(msurface_t* s)
@@ -304,10 +264,6 @@ void GLC_StateBeginRenderFullbrights(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndRenderFullbrights(void)
-{
-}
-
 void GLC_StateBeginRenderLumas(void)
 {
 	ENTER_STATE;
@@ -317,10 +273,6 @@ void GLC_StateBeginRenderLumas(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndRenderLumas(void)
-{
-}
-
 void GLC_StateBeginEmitDetailPolys(void)
 {
 	ENTER_STATE;
@@ -328,10 +280,6 @@ void GLC_StateBeginEmitDetailPolys(void)
 	R_ApplyRenderingState(&detailPolyState);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndEmitDetailPolys(void)
-{
 }
 
 void GLC_StateBeginDrawMapOutline(void)
@@ -346,10 +294,6 @@ void GLC_StateBeginDrawMapOutline(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateBeginEndMapOutline(void)
-{
-}
-
 void GLM_StateBeginDrawWorldOutlines(void)
 {
 	extern cvar_t gl_outline_width;
@@ -362,10 +306,6 @@ void GLM_StateBeginDrawWorldOutlines(void)
 	glLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	LEAVE_STATE;
-}
-
-void GLM_StateEndDrawWorldOutlines(void)
-{
 }
 
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset)

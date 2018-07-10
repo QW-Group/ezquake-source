@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_vao.h"
 #include "glc_vao.h"
+#include "r_brushmodel.h" // R_PointIsUnderwater only
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
@@ -289,8 +290,6 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 		}
 	}
 
-	GLC_StateEndDrawAliasFrame();
-
 	if (outline) {
 		if (cache) {
 			GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
@@ -306,8 +305,6 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 	GLC_StateBeginAliasOutlineFrame();
 
 	GL_DrawArrays(primitive, 0, verts);
-
-	GLC_StateEndAliasOutlineFrame();
 }
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2)
@@ -361,8 +358,6 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 
 		glEnd();
 	}
-
-	GLC_StateEndAliasOutlineFrame();
 }
 
 static void GLC_SetPowerupShellColor(int layer_no, int effects)
@@ -518,7 +513,6 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 
 	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasShadow(ent, paliashdr, lastposenum, shadevector, lightspot);
-	GLC_StateEndAliasModelShadow();
 
 	GL_PopModelviewMatrix(oldMatrix);
 }

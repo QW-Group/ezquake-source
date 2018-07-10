@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_framestats.h"
 #include "r_trace.h"
+#include "r_lighting.h"
 
 texture_ref shelltexture;
 
@@ -374,7 +375,6 @@ void R_DrawAliasModel(entity_t *ent)
 		GL_AliasModelShadow(ent, paliashdr);
 	}
 
-	GL_StateEndDrawAliasModel();
 	GL_LeaveTracedRegion(true);
 
 	return;
@@ -661,47 +661,23 @@ void R_DrawViewModel(void)
 
 	gun.alpha = bound(0, cl_drawgun.value, 1);
 
-	if (R_UseImmediateOpenGL()) {
-		if (!gl_mtexable) {
-			gun.alpha = 0;
-		}
-
-		GL_EnterRegion("R_DrawViewModel");
-		GLC_StateBeginDrawViewModel(gun.alpha);
-
-		switch (gun.model->type) {
-			case mod_alias:
-				R_DrawAliasModel(&gun);
-				if (gun.effects) {
-					R_DrawAliasPowerupShell(&gun);
-				}
-				break;
-			case mod_alias3:
-				R_DrawAlias3Model(&gun);
-				break;
-			default:
-				Com_Printf("Not drawing view model of type %i\n", gun.model->type);
-				break;
-		}
-
-		GLC_StateEndDrawViewModel();
-		GL_LeaveRegion();
+	if (R_UseImmediateOpenGL() && !gl_mtexable) {
+		gun.alpha = 0;
 	}
-	else {
-		switch (gun.model->type) {
-			case mod_alias:
-				R_DrawAliasModel(&gun);
-				if (gun.effects) {
-					R_DrawAliasPowerupShell(&gun);
-				}
-				break;
-			case mod_alias3:
-				R_DrawAlias3Model(&gun);
-				break;
-			default:
-				Com_Printf("Not drawing view model of type %i\n", gun.model->type);
-				break;
-		}
+
+	switch (gun.model->type) {
+		case mod_alias:
+			R_DrawAliasModel(&gun);
+			if (gun.effects) {
+				R_DrawAliasPowerupShell(&gun);
+			}
+			break;
+		case mod_alias3:
+			R_DrawAlias3Model(&gun);
+			break;
+		default:
+			Com_Printf("Not drawing view model of type %i\n", gun.model->type);
+			break;
 	}
 }
 
@@ -956,7 +932,6 @@ static void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldfram
 
 		GLC_StateBeginAliasPowerupShell();
 		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-		GLC_StateEndAliasPowerupShell();
 	}
 }
 
@@ -1000,7 +975,6 @@ void R_DrawAliasPowerupShell(entity_t *ent)
 	GL_PushModelviewMatrix(oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 	GLC_AliasModelPowerupShell(ent, oldframe, frame);
-	GL_StateEndDrawAliasModel();
 	GL_PopModelviewMatrix(oldMatrix);
 	GL_LeaveTracedRegion(true);
 }

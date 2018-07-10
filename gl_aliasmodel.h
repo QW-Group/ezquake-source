@@ -62,14 +62,10 @@ extern qbool gl_mtexable;
 extern texture_ref shelltexture;
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured);
-void GLC_StateEndMD3Draw(void);
 void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
-void GL_StateEndDrawAliasModel(void);
 void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_StateEndUnderwaterCaustics(void);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
-void GLC_StateBeginDrawViewModel(float alpha);
-void GLC_StateEndDrawViewModel(void);
 
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
 void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
@@ -81,7 +77,6 @@ void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int p
 
 void GLC_StateBeginAliasPowerupShell(void);
 void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
-void GLC_StateEndAliasPowerupShell(void);
 
 void R_DrawAliasModel(entity_t *ent);
 void R_DrawAliasPowerupShell(entity_t *ent);

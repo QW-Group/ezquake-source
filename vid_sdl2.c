@@ -1385,8 +1385,6 @@ void GL_EndRendering (void)
 		r_swapInterval.modified = false;
     }
 
-	GL_StateEndFrame();
-
 	if (!scr_skipupdate || block_drawing) {
 		if (vid_vsync_lag_fix.integer > 0) {
 			GL_SwapBuffersWithVsyncFix();

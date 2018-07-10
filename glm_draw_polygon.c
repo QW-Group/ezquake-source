@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017 ezQuake team
+Copyright (C) 2017-2018 ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_draw.h"
 #include "glm_vao.h"
 #include "r_state.h"
+#include "r_matrix.h"
 
 static glm_program_t polygonProgram;
 static buffer_ref polygonVBO;

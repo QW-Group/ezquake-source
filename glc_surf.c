@@ -163,8 +163,6 @@ void GLC_RenderFullbrights(void)
 		}
 		fullbright_polys[i] = NULL;
 	}
-
-	GLC_StateEndRenderFullbrights();
 }
 
 void GLC_RenderLumas(void)
@@ -204,8 +202,6 @@ void GLC_RenderLumas(void)
 		}
 		luma_polys[i] = NULL;
 	}
-
-	GLC_StateEndRenderLumas();
 }
 
 void GLC_EmitDetailPolys(qbool use_vbo)
@@ -242,8 +238,6 @@ void GLC_EmitDetailPolys(qbool use_vbo)
 	if (index_count) {
 		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
-
-	GLC_StateEndEmitDetailPolys();
 
 	detail_polys = NULL;
 }

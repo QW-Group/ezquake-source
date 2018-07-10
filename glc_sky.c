@@ -93,8 +93,6 @@ void GLC_DrawSkyChain(void)
 				GLC_DrawFlatPoly(p);
 			}
 		}
-
-		GLC_StateEndFastSky();
 	}
 	else if (gl_mtexable) {
 		GLC_StateBeginMultiTextureSkyChain();
@@ -107,8 +105,6 @@ void GLC_DrawSkyChain(void)
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			GLC_EmitSkyPolys(fa, true);
 		}
-
-		GLC_StateEndMultiTextureSkyChain();
 	}
 	else {
 		GLC_StateBeginSingleTextureSkyPass();
@@ -128,8 +124,6 @@ void GLC_DrawSkyChain(void)
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			GLC_EmitSkyPolys(fa, false);
 		}
-
-		GLC_StateEndSingleTextureSky();
 	}
 
 	skychain = NULL;
@@ -153,8 +147,6 @@ void GLC_DrawSky(void)
 			}
 		}
 
-		GLC_StateEndFastSky();
-
 		skychain = NULL;
 		return;
 	}
@@ -162,9 +154,6 @@ void GLC_DrawSky(void)
 	if (!R_DetermineSkyLimits(&ignore_z)) {
 		return;
 	}
-
-	// turn off Z tests & writes to avoid problems on large maps
-	GLC_StateBeginSky();
 
 	// draw a skybox or classic quake clouds
 	if (r_skyboxloaded) {
@@ -186,11 +175,6 @@ void GLC_DrawSky(void)
 				GLC_DrawFlatPoly(p);
 			}
 		}
-
-		GLC_StateEndSkyZBufferPass();
-	}
-	else {
-		GLC_StateEndSkyNoZBufferPass();
 	}
 }
 

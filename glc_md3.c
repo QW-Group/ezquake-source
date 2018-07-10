@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
 #include "r_state.h"
+#include "gl_aliasmodel.h"
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
@@ -148,8 +149,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		//NEXT!   Getting cocky!
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
 	}
-
-	GLC_StateEndMD3Draw();
 
 	GL_PopModelviewMatrix(oldMatrix);
 }

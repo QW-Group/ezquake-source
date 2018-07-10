@@ -115,145 +115,73 @@ void GL_StateDefault2D(void)
 
 void GLC_StateBeginBrightenScreen(void)
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&brightenScreenState);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndBrightenScreen(void)
-{
 }
 
 void GL_StateBeginAlphaLineRGB(float thickness)
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&lineState);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
-
-	LEAVE_STATE;
-}
-
-void GL_StateEndAlphaLineRGB(void)
-{
 }
 
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 {
-	ENTER_STATE;
-
 	// Same as lineState
 	R_ApplyRenderingState(&lineState);
 	if (thickness > 0.0) {
 		glLineWidth(thickness);
 	}
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndDrawAlphaPieSliceRGB(float thickness)
-{
 }
 
 void GLC_StateBeginSceneBlur(void)
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&sceneBlurState);
 
 	GL_IdentityModelView();
 	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndSceneBlur(void)
-{
 }
 
 void GLC_StateBeginDrawPolygon(void)
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&lineState);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndDrawPolygon(int oldFlags)
-{
 }
 
 void GLC_StateBeginBloomDraw(texture_ref texture)
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&glcBloomState);
 	R_TextureUnitBind(0, texture);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndBloomDraw(void)
-{
 }
 
 void GLC_StateBeginPolyBlend(float v_blend[4])
 {
-	ENTER_STATE;
-
 	R_ApplyRenderingState(&polyBlendState);
-
-	LEAVE_STATE;
-}
-
-void GLC_StateEndPolyBlend(void)
-{
 }
 
 void GLC_StateBeginImageDraw(qbool is_text)
 {
 	extern cvar_t gl_alphafont;
 
-	ENTER_STATE;
 	if (is_text && !gl_alphafont.integer) {
 		R_ApplyRenderingState(&glcAlphaTestedImageDrawState);
 	}
 	else {
 		R_ApplyRenderingState(&glcImageDrawState);
 	}
-	LEAVE_STATE;
-}
-
-void GLC_StateEndImageDraw(void)
-{
 }
 
 void GL_StateBeginPolyBlend(void)
 {
-	ENTER_STATE;
 	R_ApplyRenderingState(&polyBlendState);
-	LEAVE_STATE;
-}
-
-void GL_StateEndPolyBlend(void)
-{
 }
 
 void GLM_StateBeginImageDraw(void)
 {
-	ENTER_STATE;
 	R_ApplyRenderingState(&glmImageDrawState);
-	LEAVE_STATE;
 }
 
 void GLM_StateBeginPolygonDraw(void)
 {
-	ENTER_STATE;
 	R_ApplyRenderingState(&glmImageDrawState);
-	LEAVE_STATE;
 }

@@ -23,5 +23,7 @@ extern cvar_t r_skyname;
 extern texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 
 void R_ClearSkyTextures(void);
+void R_LoadSky_f(void);
+extern qbool r_skyboxloaded;
 
 #endif

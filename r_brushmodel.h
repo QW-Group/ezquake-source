@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_BRUSHMODEL_HEADER
 #define R_BRUSHMODEL_HEADER
 
+#include "r_framestats.h"
+
 qbool GL_ExternalTexturesEnabled(qbool worldmodel);
 
 void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics);
@@ -27,13 +29,10 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 qbool R_PointIsUnderwater(vec3_t point);
 
 void GLC_StateBeginWaterSurfaces(void);
-void GLC_StateEndWaterSurfaces(void);
 void GLC_StateBeginAlphaChain(void);
-void GLC_StateEndAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
-void GL_StateEndDrawBrushModel(void);
 
 void EmitWaterPolys(msurface_t *fa);
 
@@ -48,10 +47,7 @@ void GL_SubdivideSurface(msurface_t *fa);
 void GL_BuildSkySurfacePolys(msurface_t *fa);
 void R_InitSky(texture_t *mt);	// called at level load
 void R_DrawSky(void);
-void R_LoadSky_f(void);
 void R_AddSkyBoxSurface(msurface_t *fa);
 qbool R_DrawWorldOutlines(void);
-
-extern qbool	r_skyboxloaded;
 
 #endif // R_BRUSHMODEL_HEADER

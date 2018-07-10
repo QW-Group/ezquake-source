@@ -36,8 +36,6 @@ void GLC_PolyBlend(float v_blend[4])
 	glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
 	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
 	glEnd();
-
-	GLC_StateEndPolyBlend();
 }
 
 void GLC_BrightenScreen(void)
@@ -74,8 +72,6 @@ void GLC_BrightenScreen(void)
 		f *= 0.5;
 	}
 	glEnd();
-
-	GLC_StateEndBrightenScreen();
 }
 
 /*
@@ -242,8 +238,6 @@ void GLC_RenderSceneBlurDo(float alpha)
 		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
 		GL_SetTextureFiltering(GL_TEXTURE0, sceneblur_texture, GL_LINEAR, GL_LINEAR);
 	}
-
-	GLC_StateEndSceneBlur();
 }
 
 void GLC_PreRenderView(void)

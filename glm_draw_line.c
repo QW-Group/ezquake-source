@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017 ezQuake team
+Copyright (C) 2017-2018 ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -107,7 +107,6 @@ void GLM_DrawLines(int start, int end)
 		for (i = start; i <= end; ++i) {
 			GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 			GL_DrawArrays(GL_LINES, offset + i * 2, 2);
-			GL_StateEndAlphaLineRGB();
 		}
 	}
 }
@@ -124,6 +123,5 @@ void GLC_DrawLines(int start, int end)
 		R_CustomColor4ubv(lineData.line_points[i * 2 + 1].color);
 		glVertex3fv(lineData.line_points[i * 2 + 1].position);
 		glEnd();
-		GL_StateEndAlphaLineRGB();
 	}
 }

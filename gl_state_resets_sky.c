@@ -93,14 +93,6 @@ void GLC_StateBeginFastSky(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndFastSky(void)
-{
-}
-
-void GLC_StateBeginSky(void)
-{
-}
-
 void GLC_StateBeginSkyZBufferPass(void)
 {
 	ENTER_STATE;
@@ -114,14 +106,6 @@ void GLC_StateBeginSkyZBufferPass(void)
 	}
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndSkyZBufferPass(void)
-{
-}
-
-void GLC_StateEndSkyNoZBufferPass(void)
-{
 }
 
 void GLC_StateBeginSingleTextureSkyDome(void)
@@ -155,10 +139,6 @@ void GLC_StateBeginMultiTextureSkyDome(void)
 	LEAVE_STATE;
 }
 
-void GLC_StateEndMultiTextureSkyDome(void)
-{
-}
-
 void GLC_StateBeginMultiTextureSkyChain(void)
 {
 	ENTER_STATE;
@@ -168,10 +148,6 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 	R_TextureUnitBind(1, alphaskytexture);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndMultiTextureSkyChain(void)
-{
 }
 
 void GLC_StateBeginSingleTextureSkyPass(void)
@@ -192,8 +168,4 @@ void GLC_StateBeginSingleTextureCloudPass(void)
 	R_TextureUnitBind(0, alphaskytexture);
 
 	LEAVE_STATE;
-}
-
-void GLC_StateEndSingleTextureSky(void)
-{
 }

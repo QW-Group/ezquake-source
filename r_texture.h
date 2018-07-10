@@ -72,7 +72,6 @@ int GL_TextureWidth(texture_ref ref);
 int GL_TextureHeight(texture_ref ref);
 int GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
-void GLC_StateEndRenderScene(void);
 
 void GL_InvalidateAllTextureReferences(void);
 const char* GL_TextureIdentifier(texture_ref ref);

@@ -684,85 +684,46 @@ typedef struct glm_worldmodel_req_s {
 struct custom_model_color_s;
 
 void GLC_StateBeginAliasOutlineFrame(void);
-void GLC_StateEndAliasOutlineFrame(void);
 
 void GLM_StateBeginAliasOutlineBatch(void);
-void GLM_StateEndAliasOutlineBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent);
 
 void GL_StateBeginPolyBlend(void);
-void GL_StateEndPolyBlend(void);
 
 void GLC_StateBeginBrightenScreen(void);
-void GLC_StateEndBrightenScreen(void);
 void GLC_StateBeginFastSky(void);
-void GLC_StateEndFastSky(void);
-void GLC_StateBeginSky(void);
 void GLC_StateBeginSkyZBufferPass(void);
-void GLC_StateEndSkyZBufferPass(void);
-void GLC_StateEndSkyNoZBufferPass(void);
 void GLC_StateBeginSingleTextureSkyDome(void);
 void GLC_StateBeginSingleTextureSkyDomeCloudPass(void);
 void GLC_StateBeginMultiTextureSkyDome(void);
-void GLC_StateEndMultiTextureSkyDome(void);
 void GLC_StateBeginMultiTextureSkyChain(void);
-void GLC_StateEndMultiTextureSkyChain(void);
 void GLC_StateBeginSingleTextureSkyPass(void);
 void GLC_StateBeginSingleTextureCloudPass(void);
-void GLC_StateEndSingleTextureSky(void);
 void GLC_StateBeginRenderFullbrights(void);
-void GLC_StateEndRenderFullbrights(void);
 void GLC_StateBeginRenderLumas(void);
-void GLC_StateEndRenderLumas(void);
 void GLC_StateBeginEmitDetailPolys(void);
-void GLC_StateEndEmitDetailPolys(void);
 void GLC_StateBeginDrawMapOutline(void);
-void GLC_StateBeginEndMapOutline(void);
 void GLM_StateBeginDraw3DSprites(void);
-void GLM_StateEndDraw3DSprites(void);
 void GLM_StateBeginDrawWorldOutlines(void);
-void GLM_StateEndDrawWorldOutlines(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 void GL_StateBeginAlphaLineRGB(float thickness);
-void GL_StateEndAlphaLineRGB(void);
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model);
-void GLC_StateEndDrawAliasFrame(void);
 void GLC_StateBeginAliasModelShadow(void);
-void GLC_StateEndAliasModelShadow(void);
-void GLC_StateBeginDrawFlatModel(void);
-void GLC_StateEndDrawFlatModel(void);
-void GLC_StateBeginDrawTextureChains(void);
-void GLC_StateEndWorldTextureChains(void);
-void GLC_StateEndDrawTextureChains(void);
-void GLC_StateEndFastTurbPoly(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
 
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);
-void GLC_StateEndBlendLightmaps(void);
 void GLC_StateBeginSceneBlur(void);
-void GLC_StateEndSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
-void GLC_StateEndCausticsPolys(void);
 void GL_StateDefault2D(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
 
-void GLC_StateBeginDraw3DSprites(void);
-void GLC_StateEndDraw3DSprites(void);
-
 void GLC_StateBeginBloomDraw(texture_ref texture);
-void GLC_StateEndBloomDraw(void);
-void GL_StateEndFrame(void);
-void GLC_StateEndRenderScene(void);
 
 void GLC_StateBeginImageDraw(qbool is_text);
-void GLC_StateEndImageDraw(void);
 void GLC_StateBeginPolyBlend(float v_blend[4]);
-void GLC_StateEndPolyBlend(void);
 void GLC_StateBeginDrawPolygon(void);
-void GLC_StateEndDrawPolygon(int oldFlags);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
-void GLC_StateEndDrawAlphaPieSliceRGB(float thickness);
 
 void GLC_PauseMatrixUpdate(void);
 void GLC_ResumeMatrixUpdate(void);

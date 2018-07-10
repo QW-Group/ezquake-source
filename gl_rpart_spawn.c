@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "utils.h"
 #include "qmb_particles.h"
+#include "r_brushmodel.h" // R_PointIsUnderwater only
 
 #define ONE_FRAME_ONLY	(0.0001)
 
@@ -1027,7 +1028,7 @@ void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_typ
 	switch (type) {
 		case GRENADE_TRAIL:
 			//VULT PARTICLES
-			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 			}
 			else {
@@ -1049,7 +1050,7 @@ void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_typ
 			AddParticleTrail(p_trailpart, start, end, 3.75, 0.5, color);
 			break;
 		case ALT_ROCKET_TRAIL:
-			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 			}
 			else {
@@ -1077,7 +1078,7 @@ void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_typ
 			break;
 			//VULT TRAILS
 		case TF_TRAIL:
-			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
 				if (amf_nailtrail_water.value) {
 					AddParticleTrail(p_bubble2, start, end, 1.5, 0.825, NULL);
 				}
@@ -1091,7 +1092,7 @@ void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_typ
 			break;
 			//VULT TRAILS
 		case LAVA_TRAIL:
-			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 				color[0] = 25;
 				color[1] = 102;
@@ -1108,7 +1109,7 @@ void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_typ
 			break;
 			//VULT TRAILS
 		case AMF_ROCKET_TRAIL:
-			if (amf_underwater_trails.value && R_PointIsUnderwater(start)) {
+			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
 				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 			}
 			else {
