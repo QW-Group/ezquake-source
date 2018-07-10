@@ -118,10 +118,8 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
 	GLM_Cache2DMatrix();
 
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(left, right, top, bottom, zNear, zFar);
+	if (R_UseImmediateOpenGL()) {
+		GLC_OrthographicProjection(left, right, top, bottom, zNear, zFar);
 	}
 }
 
@@ -269,10 +267,8 @@ void GL_IdentityModelView(void)
 {
 	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
 
-	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		GL_LogAPICall("GL_IdentityModelView(%s)", NameForMatrix(GL_MODELVIEW));
+	if (R_UseImmediateOpenGL()) {
+		GLC_IdentityModelview();
 	}
 }
 
@@ -290,10 +286,8 @@ void GL_RotateModelview(float angle, float x, float y, float z)
 {
 	GLM_RotateMatrix(modelMatrix, angle, x, y, z);
 
-	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(GL_MODELVIEW);
-		glRotatef(angle, x, y, z);
-		GL_LogAPICall("GL_RotateModelview()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_RotateModelview(angle, x, y, z);
 	}
 }
 
@@ -301,10 +295,8 @@ void GL_TranslateModelview(float x, float y, float z)
 {
 	GLM_TransformMatrix(modelMatrix, x, y, z);
 
-	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(GL_MODELVIEW);
-		glTranslatef(x, y, z);
-		GL_LogAPICall("GL_TranslateModelview()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_TranslateModelview(x, y, z);
 	}
 }
 
@@ -312,10 +304,8 @@ void GL_IdentityProjectionView(void)
 {
 	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
 
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		GL_LogAPICall("GL_Identity(%s)", NameForMatrix(GL_PROJECTION));
+	if (R_UseImmediateOpenGL()) {
+		GLC_IdentityProjectionView();
 	}
 }
 
@@ -344,10 +334,8 @@ void GL_PopModelviewMatrix(const float* matrix)
 {
 	memcpy(modelMatrix, matrix, sizeof(modelMatrix));
 
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(matrix);
-		GL_LogAPICall("GL_PopModelviewMatrix()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_PopModelviewMatrix(matrix);
 	}
 }
 
@@ -355,10 +343,8 @@ void GL_PopProjectionMatrix(const float* matrix)
 {
 	memcpy(projectionMatrix, matrix, sizeof(projectionMatrix));
 
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(matrix);
-		GL_LogAPICall("GL_PopProjectionMatrix()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_PopProjectionMatrix(matrix);
 	}
 }
 
@@ -366,10 +352,8 @@ void GL_ScaleModelview(float xScale, float yScale, float zScale)
 {
 	GLM_ScaleMatrix(modelMatrix, xScale, yScale, zScale);
 
-	if (GL_UseImmediateMode() && !glc_pause_updates) {
-		glMatrixMode(GL_MODELVIEW);
-		glScalef(xScale, yScale, zScale);
-		GL_LogAPICall("GL_ScaleModelviewMatrix()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_ScaleModelview(xScale, yScale, zScale);
 	}
 }
 
@@ -391,9 +375,8 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 	GLM_MultiplyMatrix(perspective, projection, new_projection);
 	GLM_SetMatrix(GL_MatrixForMode(GL_PROJECTION), new_projection);
 	
-	if (GL_UseImmediateMode()) {
-		glFrustum(left, right, bottom, top, zNear, zFar);
-		GL_LogAPICall("glFrustum()");
+	if (R_UseImmediateOpenGL()) {
+		GLC_Frustum(left, right, bottom, top, zNear, zFar);
 	}
 }
 /*
