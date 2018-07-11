@@ -60,7 +60,9 @@ static texture_ref GL_GenerateShellTexture(void)
 
 void R_InitOtherTextures(void)
 {
-	unsigned char solidtexels[] = { 255, 255, 255, 255 };
+	unsigned char solidwhitetexels[] = { 255, 255, 255, 255 };
+	unsigned char solidblacktexels[] = { 0, 0, 0, 255 };
+	unsigned char transparenttexels[] = { 0, 0, 0, 0 };
 	int flags = TEX_MIPMAP | TEX_ALPHA;
 	extern cvar_t gl_caustics, gl_detail, gl_powerupshells;
 
@@ -72,7 +74,9 @@ void R_InitOtherTextures(void)
 		shelltexture = GL_GenerateShellTexture();
 	}
 
-	solidtexture = GL_LoadTexture("billboard:solid", 1, 1, solidtexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	solidwhite_texture = GL_LoadTexture("billboard:solidwhite", 1, 1, solidwhitetexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	solidblack_texture = GL_LoadTexture("billboard:solidblack", 1, 1, solidblacktexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	transparent_texture = GL_LoadTexture("billboard:transparent", 1, 1, transparenttexels, TEX_ALPHA | TEX_NOSCALE, 4);
 }
 
 void R_InitTextures(void)

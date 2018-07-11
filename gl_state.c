@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "glm_local.h"
 
+static rendering_state_t states[r_state_count];
+
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 static glBindImageTexture_t     qglBindImageTexture;
@@ -110,8 +112,9 @@ static const char* txtAlphaTestModeValues[r_alphatest_func_count];
 static const char* txtTextureEnvModeValues[r_texunit_mode_count];
 #endif
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name, r_vao_id vao)
+rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, const char* name, r_vao_id vao)
 {
+	rendering_state_t* state = &states[id];
 	SDL_Window* window = SDL_GL_GetCurrentWindow();
 	int i;
 
@@ -190,11 +193,12 @@ void R_InitRenderingState(rendering_state_t* state, qbool default_state, const c
 	}
 
 	state->initialized = true;
+	return state;
 }
 
-void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
+rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name)
 {
-	R_InitRenderingState(state, true, name, vao_3dsprites);
+	rendering_state_t* state = R_InitRenderingState(id, true, name, vao_3dsprites);
 
 	state->fog.enabled = false;
 	state->blendingEnabled = true;
@@ -203,6 +207,8 @@ void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 	state->alphaTesting.enabled = false;
 	state->alphaTesting.func = r_alphatest_func_greater;
 	state->alphaTesting.value = 0.333f;
+
+	return state;
 }
 
 #define GL_ApplySimpleToggle(state, current, field, option) \
@@ -218,8 +224,9 @@ void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name)
 		current->field = state->field; \
 	}
 
-static void GL_ApplyRenderingState(rendering_state_t* state)
+static void GL_ApplyRenderingState(r_state_id id)
 {
+	rendering_state_t* state = &states[id];
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
@@ -343,9 +350,10 @@ static void GL_ApplyRenderingState(rendering_state_t* state)
 	GL_LeaveTracedRegion(true);
 }
 
-static void GLC_ApplyRenderingState(rendering_state_t* state)
+static void GLC_ApplyRenderingState(r_state_id id)
 {
 	rendering_state_t* current = &opengl.rendering_state;
+	rendering_state_t* state = &states[id];
 	int i;
 
 	// Alpha-testing
@@ -359,10 +367,10 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 	}
 
 	// Texture units
-	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]); ++i) {
+	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]) && i < glConfig.texture_units; ++i) {
 		if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
-			GL_SelectTexture(GL_TEXTURE0 + i);
 			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
+				GL_SelectTexture(GL_TEXTURE0 + i);
 				glEnable(GL_TEXTURE_2D);
 				GL_LogAPICall("Enabled texturing on unit %d", i);
 				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
@@ -371,6 +379,7 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 				}
 			}
 			else {
+				GL_SelectTexture(GL_TEXTURE0 + i);
 				glDisable(GL_TEXTURE_2D);
 				GL_LogAPICall("Disabled texturing on unit %d", i);
 			}
@@ -393,7 +402,7 @@ static void GLC_ApplyRenderingState(rendering_state_t* state)
 		current->colorValid = true;
 	}
 
-	GL_ApplyRenderingState(state);
+	GL_ApplyRenderingState(id);
 }
 
 // vid_common_gl.c
@@ -431,9 +440,9 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 	return;
 }
 
-static void GLM_ApplyRenderingState(rendering_state_t* state)
+static void GLM_ApplyRenderingState(r_state_id id)
 {
-	GL_ApplyRenderingState(state);
+	GL_ApplyRenderingState(id);
 }
 
 void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference)
@@ -529,7 +538,8 @@ void GL_InitialiseState(void)
 	txtTextureEnvModeValues[r_texunit_mode_add] = "add";
 #endif
 
-	R_InitRenderingState(&opengl.rendering_state, false, "opengl", vao_none);
+	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
+	R_ApplyRenderingState(r_state_default_opengl);
 	R_InitialiseBrushModelStates();
 	R_InitialiseStates();
 	R_Initialise2DStates();
@@ -708,6 +718,38 @@ static int glcVertsPerPrimitive = 0;
 static int glcBaseVertsPerPrimitive = 0;
 static int glcVertsSent = 0;
 static const char* glcPrimitiveName = "?";
+
+void GLC_EnableTextureUnit(int unit)
+{
+	rendering_state_t* current = &opengl.rendering_state;
+
+	if (unit < sizeof(current->textureUnits) / sizeof(current->textureUnits[0])) {
+		if (current->textureUnits[unit].enabled) {
+			return;
+		}
+		current->textureUnits[unit].enabled = true;
+	}
+
+	GL_SelectTexture(GL_TEXTURE0 + unit);
+	glEnable(GL_TEXTURE_2D);
+	GL_LogAPICall("Directly enabled texturing on unit %d", unit);
+}
+
+void GLC_DisableTextureUnit(int unit)
+{
+	rendering_state_t* current = &opengl.rendering_state;
+
+	if (unit < sizeof(current->textureUnits) / sizeof(current->textureUnits[0])) {
+		if (!current->textureUnits[unit].enabled) {
+			return;
+		}
+		current->textureUnits[unit].enabled = false;
+	}
+
+	GL_SelectTexture(GL_TEXTURE0 + unit);
+	glDisable(GL_TEXTURE_2D);
+	GL_LogAPICall("Directly disabled texturing on unit %d", unit);
+}
 
 void GLC_Begin(GLenum primitive)
 {
@@ -903,14 +945,14 @@ void GLC_ClientActiveTexture(GLenum texture_unit)
 	}
 }
 
-void R_ApplyRenderingState(rendering_state_t* state)
+void R_ApplyRenderingState(r_state_id state)
 {
-	assert(state);
+	assert(state != r_state_null);
 	if (!state) {
 		Con_Printf("ERROR: NULL rendering state\n");
 		return;
 	}
-	assert(state->initialized);
+	assert(states[state].initialized);
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_ApplyRenderingState(state);
@@ -996,10 +1038,14 @@ void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_
 	state->textureUnits[index].mode = mode;
 }
 
-void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name)
+rendering_state_t* R_CopyRenderingState(r_state_id dest_id, r_state_id source_id, const char* name)
 {
+	rendering_state_t* state = &states[dest_id];
+	const rendering_state_t* src = &states[source_id];
+
 	memcpy(state, src, sizeof(*state));
 	strlcpy(state->name, name, sizeof(state->name));
+	return state;
 }
 
 // VAOs

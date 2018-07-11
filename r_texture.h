@@ -50,6 +50,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t
 void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
 void R_Texture_Init(void);
+qbool R_TextureValid(texture_ref ref);
 
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
@@ -65,26 +66,23 @@ void GL_DeleteTextures(void);
 qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
 qbool GL_TextureValid(texture_ref ref);
 
-extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel, gl_mipmap_viewmodels;
-extern cvar_t gl_no24bit;
-
 int GL_TextureWidth(texture_ref ref);
 int GL_TextureHeight(texture_ref ref);
 int GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 
 void GL_InvalidateAllTextureReferences(void);
-
-#ifdef WITH_OPENGL_TRACE
-const char* R_TextureIdentifier(texture_ref ref);
-#endif
-
 void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 void R_TextureWrapModeClamp(texture_ref tex);
 
-extern texture_ref underwatertexture, detailtexture, solidtexture;
+#ifdef WITH_OPENGL_TRACE
+const char* R_TextureIdentifier(texture_ref ref);
+#endif
+
+extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel, gl_mipmap_viewmodels;
+extern cvar_t gl_no24bit;
+extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
 
 #endif	// EZQUAKE_R_TEXTURE_H
-

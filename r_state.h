@@ -157,10 +157,104 @@ typedef struct rendering_state_s {
 	char name[32];
 } rendering_state_t;
 
-void R_InitRenderingState(rendering_state_t* state, qbool default_state, const char* name, r_vao_id vao);
-void R_CopyRenderingState(rendering_state_t* state, const rendering_state_t* src, const char* name);
-void R_Init3DSpriteRenderingState(rendering_state_t* state, const char* name);
-void R_ApplyRenderingState(rendering_state_t* state);
+typedef enum {
+	r_state_null,
+
+	r_state_default_opengl,
+
+	r_state_default_3d,
+	r_state_sprites_textured,
+
+	r_state_default_2d,
+	r_state_brighten_screen,
+	r_state_line,
+	r_state_scene_blur,
+	r_state_hud_images_glc,
+	r_state_hud_images_alphatested_glc,
+	r_state_poly_blend,
+	r_state_hud_images_glm,
+
+	r_state_sky_fast,
+	r_state_sky_fast_fogged,
+	r_state_skydome_background_pass,
+	r_state_skydome_cloud_pass,
+	r_state_skydome_single_pass,
+	r_state_skydome_zbuffer_pass,
+	r_state_skydome_zbuffer_pass_fogged,
+
+	r_state_world_texture_chain,
+	r_state_world_texture_chain_fullbright,
+	r_state_world_blend_lightmaps,
+	r_state_world_caustics,
+
+	r_state_world_fast_opaque_water,
+	r_state_world_fast_translucent_water,
+	r_state_world_opaque_water,
+	r_state_world_translucent_water,
+	r_state_world_alpha_surfaces,
+	r_state_world_fullbrights,
+	r_state_world_lumas,
+	r_state_world_details,
+	r_state_world_outline,
+
+	r_state_world_singletexture_glc,
+	r_state_world_material_lightmap_fb,
+	r_state_world_material_lightmap_luma,
+	r_state_world_material_fb_lightmap,
+	r_state_world_material_luma_lightmap,
+
+	r_state_alpha_surfaces_offset_glm,
+	r_state_opaque_surfaces_offset_glm,
+	r_state_alpha_surfaces_glm,
+	r_state_opaque_surfaces_glm,
+
+	r_state_aliasmodel_caustics,
+
+	r_state_aliasmodel_powerupshell,
+
+	r_state_aliasmodel_notexture_opaque,
+	r_state_aliasmodel_notexture_transparent,
+	r_state_aliasmodel_singletexture_opaque,
+	r_state_aliasmodel_singletexture_transparent,
+	r_state_aliasmodel_multitexture_opaque,
+	r_state_aliasmodel_multitexture_transparent,
+	r_state_weaponmodel_singletexture_opaque,
+	r_state_weaponmodel_singletexture_transparent,
+	r_state_weaponmodel_multitexture_opaque,
+	r_state_weaponmodel_multitexture_transparent,
+
+	r_state_aliasmodel_shadows,
+	r_state_aliasmodel_outline,
+
+	r_state_brushmodel_opaque,
+	r_state_brushmodel_opaque_offset,
+	r_state_brushmodel_translucent,
+	r_state_brushmodel_translucent_offset,
+
+	r_state_aliasmodel_opaque_batch,
+	r_state_aliasmodel_translucent_batch,
+
+	r_state_postprocess_bloom,
+
+	r_state_light_bubble,
+	r_state_chaticon,
+	r_state_particles_classic,
+	r_state_particles_qmb_textured_blood,
+	r_state_particles_qmb_textured,
+	r_state_particles_qmb_untextured,
+	r_state_coronas,
+
+	r_state_drawflat_with_lightmaps_glc,
+	r_state_drawflat_without_lightmaps_glc,
+
+	r_state_count
+} r_state_id;
+
+rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, const char* name, r_vao_id vao);
+rendering_state_t* R_CopyRenderingState(r_state_id id, r_state_id original_id, const char* name);
+rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name);
+qbool R_StateInitialized(r_state_id id);
+void R_ApplyRenderingState(r_state_id id);
 
 void R_CustomColor(float r, float g, float b, float a);
 void R_CustomColor4ubv(const byte* color);

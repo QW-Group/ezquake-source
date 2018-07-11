@@ -48,8 +48,6 @@ typedef enum {
 	num_citextures,
 } ci_tex_t;
 
-static rendering_state_t chaticon_state;
-
 #define	MAX_CITEX_COMPONENTS		8
 typedef struct ci_texture_s {
 	texture_ref  texnum;
@@ -231,6 +229,7 @@ void R_SetupChatIcons(void)
 void R_InitChatIcons(void)
 {
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
+	rendering_state_t* state;
 
 	ci_initialized = false;
 
@@ -250,9 +249,9 @@ void R_InitChatIcons(void)
 		Q_free(original);
 	}
 
-	R_Init3DSpriteRenderingState(&chaticon_state, "chaticon_state");
-	chaticon_state.textureUnits[0].enabled = true;
-	chaticon_state.textureUnits[0].mode = r_texunit_mode_modulate;
+	state = R_Init3DSpriteRenderingState(r_state_chaticon, "chaticon_state");
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
 
 	ci_initialized = true;
 }
@@ -282,9 +281,9 @@ void R_DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, &chaticon_state, NULL, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, &chaticon_state, NULL, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, &chaticon_state, NULL, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

@@ -49,7 +49,6 @@ typedef struct corona_s
 
 static corona_t r_corona[MAX_CORONAS];
 static corona_t* r_corona_by_tex[CORONATEX_COUNT];
-static rendering_state_t coronaState;
 
 #define CORONA_SCALE 130
 #define CORONA_ALPHA 1
@@ -149,7 +148,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_Sprite3DInitialiseBatch(batch_id, &coronaState, NULL, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
+		GL_Sprite3DInitialiseBatch(batch_id, r_state_coronas, r_state_coronas, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			r_sprite3d_vert_t* vert;
@@ -478,6 +477,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 void InitCoronas(void)
 {
 	corona_t *c;
+	rendering_state_t* state;
 	int i;
 
 	//VULT STATS
@@ -490,9 +490,9 @@ void InitCoronas(void)
 		c->sighted = false;
 	}
 
-	R_Init3DSpriteRenderingState(&coronaState, "coronaState");
-	coronaState.depth.mask_enabled = false;
-	coronaState.depth.test_enabled = false;
+	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
+	state->depth.mask_enabled = false;
+	state->depth.test_enabled = false;
 }
 
 //NewStaticLightCorona

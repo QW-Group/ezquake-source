@@ -259,4 +259,17 @@ qbool GLM_CreateVGFProgramWithInclude(
 	(const char*)name##_fragment_glsl,\
 	name##_fragment_glsl_len
 
+typedef enum aliasmodel_draw_batch_s {
+	aliasmodel_batch_std_entities,
+	aliasmodel_batch_viewmodel
+} aliasmodel_draw_batch_t;
+
+typedef enum {
+	opaque_world,
+	alpha_surfaces
+} glm_brushmodel_drawcall_type;
+
+void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type);
+void GLM_DrawWorld(void);
+
 #endif // EZQUAKE_GLM_LOCAL_HEADER

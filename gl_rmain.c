@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lighting.h"
 #include "r_buffers.h"
 #include "r_draw.h"
+#include "r_aliasmodel.h"
 #include "glm_local.h"
 
 void GLM_ScreenDrawStart(void);
@@ -61,8 +62,6 @@ static void R_RenderTransparentWorld(void);
 
 void GLM_RenderView(void);
 
-static rendering_state_t sprite_entity_state;
-
 extern msurface_t *alphachain;
 extern vec3_t     lightspot;
 
@@ -82,7 +81,7 @@ int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking
 int       lightmode = 2;
 unsigned int d_lightstylevalue[256];             // 8.8 fraction of base light value
-texture_ref underwatertexture, detailtexture, solidtexture;
+texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
 
 void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 {
@@ -704,6 +703,8 @@ static void R_SetupGL(void)
 
 void R_Init(void)
 {
+	rendering_state_t* state;
+
 	Cmd_AddCommand("loadsky", R_LoadSky_f);
 	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
@@ -889,9 +890,9 @@ void R_Init(void)
 	R_InitBloomTextures();
 
 	// Init entity state
-	R_Init3DSpriteRenderingState(&sprite_entity_state, "sprite_entity_state");
-	sprite_entity_state.textureUnits[0].enabled = true;
-	sprite_entity_state.textureUnits[0].mode = r_texunit_mode_replace;
+	state = R_Init3DSpriteRenderingState(r_state_sprites_textured, "sprite_entity_state");
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
 }
 
 static void R_RenderScene(void)
@@ -902,7 +903,7 @@ static void R_RenderScene(void)
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
 
-	if (GL_WaterAlpha() == 1) {
+	if (R_WaterAlpha() == 1) {
 		R_RenderTransparentWorld();
 	}
 
@@ -913,7 +914,7 @@ static void R_RenderScene(void)
 	if (r_drawentities.integer) {
 		GL_EnterRegion("R_DrawEntities");
 
-		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, &sprite_entity_state, NULL, null_texture_reference, 0, r_primitive_triangle_strip);
+		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 			R_DrawEntitiesOnList(&cl_visents, ent_type);

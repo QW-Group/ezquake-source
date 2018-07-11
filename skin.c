@@ -856,7 +856,7 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 			*texture = playerskins[playernum].base;
 		}
 
-		if (is_player_model && GL_TextureReferenceEqual(*texture, solidtexture)) {
+		if (is_player_model && GL_TextureReferenceEqual(*texture, solidwhite_texture)) {
 			cvar_t* cv = &r_enemyskincolor;
 			if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
 				cv = &r_teamskincolor;

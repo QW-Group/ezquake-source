@@ -152,7 +152,8 @@ void R_AddEfrags (entity_t *ent) {
 	ent->topnode = r_pefragtopnode;
 }
 
-void R_StoreEfrags (efrag_t **ppefrag) {
+void R_StoreEfrags(efrag_t **ppefrag)
+{
 	entity_t *pent;
 	model_t *model;
 	efrag_t *pefrag;
@@ -167,19 +168,19 @@ void R_StoreEfrags (efrag_t **ppefrag) {
 		}
 
 		switch (model->type) {
-		case mod_alias:
-		case mod_alias3:
-		case mod_brush:
-		case mod_sprite:
-			if (pent->visframe != r_framecount) {
-				CL_AddEntity (pent);				
-				pent->visframe = r_framecount;	// mark that we've recorded this entity for this frame
-				pent->oldframe = pent->frame;
-			}
-			break;
+			case mod_alias:
+			case mod_alias3:
+			case mod_brush:
+			case mod_sprite:
+				if (pent->visframe != r_framecount) {
+					CL_AddEntity(pent);
+					pent->visframe = r_framecount;	// mark that we've recorded this entity for this frame
+					pent->oldframe = pent->frame;
+				}
+				break;
 
-		default:	
-			Sys_Error ("R_StoreEfrags: Bad entity type %d", model->type);
+			default:
+				Sys_Error("R_StoreEfrags: Bad entity type %d", model->type);
 		}
 	}
 }

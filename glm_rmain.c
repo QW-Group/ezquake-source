@@ -31,7 +31,7 @@ void GLM_RenderView(void)
 	GLM_PrepareAliasModelBatches();
 	R_Prepare3DSprites();
 
-	GL_DrawWorldModelBatch(opaque_world);
+	GLM_DrawWorldModelBatch(opaque_world);
 
 	GL_EnterRegion("GLM_DrawEntities");
 	GLM_DrawAliasModelBatches();
@@ -39,7 +39,7 @@ void GLM_RenderView(void)
 
 	GL_Draw3DSprites(false);
 
-	GL_DrawWorldModelBatch(alpha_surfaces);
+	GLM_DrawWorldModelBatch(alpha_surfaces);
 
 	GLM_DrawAliasModelPostSceneBatches();
 }

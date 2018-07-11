@@ -128,16 +128,12 @@ static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 	return &batches[index - 1];
 }
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s* textured_state, struct rendering_state_s* untextured_state, texture_ref texture, int index, r_primitive_id primitive_type)
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
-	assert(!textured_state || textured_state->initialized);
-	assert(!untextured_state || untextured_state->initialized);
-
-	if (!textured_state) {
-		textured_state = untextured_state;
-	}
+	assert(textured_state != r_state_null);
+	assert(untextured_state != r_state_null);
 
 	batch->textured_rendering_state = textured_state;
 	batch->untextured_rendering_state = untextured_state;

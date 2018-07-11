@@ -2,6 +2,8 @@
 #ifndef EZQUAKE_R_SPRITE3D_HEADER
 #define EZQUAKE_R_SPRITE3D_HEADER
 
+#include "r_state.h"
+
 // Billboards
 typedef enum {
 	SPRITE3D_ENTITIES,
@@ -82,7 +84,7 @@ typedef enum {
 	r_primitive_count
 } r_primitive_id;
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s* textured_state, struct rendering_state_s* untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
+void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
 r_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
 r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
 void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);

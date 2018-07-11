@@ -66,7 +66,6 @@ extern texture_ref shelltexture;
 void GLC_StateBeginMD3Draw(float alpha, qbool textured);
 void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GLC_StateBeginUnderwaterCaustics(void);
-void GLC_StateEndUnderwaterCaustics(void);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
 void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
@@ -87,5 +86,7 @@ void GLC_DrawAliasPowerupShell(entity_t *ent);
 
 qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
+
+void R_DrawAliasModel(entity_t *ent);
 
 #endif

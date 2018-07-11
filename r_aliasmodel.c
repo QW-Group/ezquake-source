@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "rulesets.h"
 #include "teamplay.h"
-#include "gl_aliasmodel.h"
+#include "r_aliasmodel.h"
 #include "crc.h"
 #include "qmb_particles.h"
 #include "r_matrix.h"

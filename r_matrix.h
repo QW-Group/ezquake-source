@@ -53,4 +53,6 @@ void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
 void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
 void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 
+void R_RotateForEntity(struct entity_s* e);
+
 #endif // EZQUAKE_R_MATRIX_HEADER

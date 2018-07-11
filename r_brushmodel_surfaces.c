@@ -30,6 +30,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h"
 #include "r_brushmodel_sky.h"
 #include "r_lightmaps.h"
+#include "r_trace.h"
+
+// gl_refrag.c
+void R_StoreEfrags(efrag_t **ppefrag);
 
 static void GL_EmitSurfaceParticleEffects(msurface_t* s);
 
@@ -179,7 +183,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
-	float wateralpha = GL_WaterAlpha();
+	float wateralpha = R_WaterAlpha();
 	extern cvar_t r_fastturb, r_drawflat, r_fastsky, gl_caustics;
 
 	int c, side, clipped, underwater;
@@ -273,7 +277,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
-				if (r_fastsky.integer || GL_UseGLSL()) {
+				if (r_fastsky.integer || R_UseModernOpenGL()) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
 				}
 				if (!r_fastsky.integer) {
@@ -284,7 +288,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				if (r_fastturb.integer && wateralpha == 1) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
 				}
-				else if (solidTexTurb && GL_UseGLSL()) {
+				else if (solidTexTurb && R_UseModernOpenGL()) {
 					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[0], surf);
 				}
 				else {
@@ -292,7 +296,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				GL_EmitSurfaceParticleEffects(surf);
 			}
-			else if (GL_UseImmediateMode() && alphaSurface) {
+			else if (R_UseImmediateOpenGL() && alphaSurface) {
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
@@ -338,23 +342,20 @@ void R_CreateWorldTextureChains(void)
 
 void R_DrawWorld(void)
 {
-	entity_t ent;
-
-	memset(&ent, 0, sizeof(ent));
-	ent.model = cl.worldmodel;
-
 	VectorCopy(r_refdef.vieworg, modelorg);
 
 	//draw the world sky
 	R_DrawSky();
 
 	GL_EnterRegion("DrawWorld");
-	if (GL_UseGLSL()) {
-		GLM_EnterBatchedWorldRegion();
-		GLM_DrawBrushModel(&ent, cl.worldmodel, false, false);
+	if (R_UseModernOpenGL()) {
+		GLM_DrawWorld();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_DrawWorld();
 	}
 	else {
-		GLC_DrawWorld();
+		//VK_DrawWorld();
 	}
 	GL_LeaveRegion();
 }

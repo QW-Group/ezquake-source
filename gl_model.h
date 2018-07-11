@@ -600,7 +600,6 @@ model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
 // brushmodel
 extern vec3_t modelorg;
 // 
-extern entity_t r_worldentity;
 extern int      r_visframecount;
 extern int      r_framecount;
 extern mplane_t frustum[4];

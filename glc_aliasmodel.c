@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
 #include "glc_local.h"
+#include "glc_matrix.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
@@ -488,9 +489,9 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	if (gl_caustics.integer && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
+		GLC_BeginCausticsTextureMatrix();
 		R_SetupAliasFrame(ent, clmodel, oldframe, frame, true, false, false, underwatertexture, null_texture_reference, 0, 0);
-
-		GLC_StateEndUnderwaterCaustics();
+		GLC_EndCausticsTextureMatrix();
 	}
 	// <-- Underwater caustics on alias models of QRACK
 }

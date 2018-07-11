@@ -119,7 +119,7 @@ typedef struct particle_type_s {
 	sprite3d_batch_id billboard_type;
 
 	int           particles;
-	rendering_state_t state;
+	r_state_id    state;
 } particle_type_t;
 
 #define	MAX_PTEX_COMPONENTS		8

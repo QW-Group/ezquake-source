@@ -154,9 +154,6 @@ qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
 void R_BrightenScreen (void);
 
-// gl_refrag.c
-void R_StoreEfrags (efrag_t **ppefrag);
-
 extern int dlightcolor[NUM_DLIGHTTYPES][3];
 
 // gl_ngraph.c
@@ -295,7 +292,6 @@ void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
 
-void GLM_EnterBatchedWorldRegion(void);
 void GLM_DrawSpriteModel(entity_t* e);
 void GLM_PolyBlend(float v_blend[4]);
 void GLM_DrawVelocity3D(void);
@@ -376,20 +372,6 @@ void R_SetupFrame(void);
 
 void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
-
-float GL_WaterAlpha(void);
-
-typedef enum aliasmodel_draw_batch_s {
-	aliasmodel_batch_std_entities,
-	aliasmodel_batch_viewmodel
-} aliasmodel_draw_batch_t;
-
-typedef enum {
-	opaque_world,
-	alpha_surfaces
-} glm_brushmodel_drawcall_type;
-
-void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type);
 
 // Rendering functions
 void GL_DrawArrays(GLenum mode, GLint first, GLsizei count);

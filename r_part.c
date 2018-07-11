@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_local.h"
 
-static rendering_state_t particle_state;
 texture_ref particletexture;
 const int default_size = 32;
 
@@ -156,6 +155,8 @@ void Classic_AllocParticles(void)
 
 void Classic_InitParticles(void)
 {
+	rendering_state_t* state;
+
 	if (!r_numparticles) {
 		Classic_AllocParticles();
 	}
@@ -165,10 +166,10 @@ void Classic_InitParticles(void)
 
 	Classic_LoadParticleTexures(default_size, default_size);
 
-	R_Init3DSpriteRenderingState(&particle_state, "particle_state");
-	particle_state.textureUnits[0].enabled = true;
-	particle_state.textureUnits[0].mode = r_texunit_mode_modulate;
-	particle_state.depth.mask_enabled = false;
+	state = R_Init3DSpriteRenderingState(r_state_particles_classic, "particle_state");
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
+	state->depth.mask_enabled = false;
 }
 
 void Classic_ClearParticles(void)
@@ -703,7 +704,7 @@ void Classic_DrawParticles(void)
 		return;
 	}
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, &particle_state, NULL, R_UseModernOpenGL() ? particletexture_array : particletexture, particletexture_array_index, r_primitive_triangles);
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, r_state_particles_classic, r_state_particles_classic, R_UseModernOpenGL() ? particletexture_array : particletexture, particletexture_array_index, r_primitive_triangles);
 	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));

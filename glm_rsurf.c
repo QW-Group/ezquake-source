@@ -406,7 +406,7 @@ void GLM_DrawWaterSurfaces(void)
 		return;
 	}
 
-	alpha = GL_WaterAlpha();
+	alpha = R_WaterAlpha();
 
 	// Waterchain has list of alpha-blended surfaces
 	GL_EnterRegion(__FUNCTION__);
@@ -611,7 +611,7 @@ void GLM_PrepareWorldModelBatch(void)
 	GL_LeaveRegion();
 }
 
-void GL_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
+void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
 	extern buffer_ref vbo_brushElements;
 	int draw;
@@ -769,4 +769,15 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		drawcall->calls[i].samplerBase = this->samplerMappingBase;
 		this->baseInstance = i;
 	}
+}
+
+void GLM_DrawWorld(void)
+{
+	entity_t ent;
+
+	memset(&ent, 0, sizeof(ent));
+	ent.model = cl.worldmodel;
+
+	GLM_EnterBatchedWorldRegion();
+	GLM_DrawBrushModel(&ent, cl.worldmodel, false, false);
 }

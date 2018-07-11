@@ -9,8 +9,8 @@
 #define INDEXES_MAX_SPARKS            16
 
 typedef struct gl_sprite3d_batch_s {
-	struct rendering_state_s* textured_rendering_state;
-	struct rendering_state_s* untextured_rendering_state;
+	r_state_id textured_rendering_state;
+	r_state_id untextured_rendering_state;
 	r_primitive_id primitive_id;
 	texture_ref texture;
 	int texture_index;
