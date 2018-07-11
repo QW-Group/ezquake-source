@@ -107,7 +107,7 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 		}
 	}
 
-	tex = GL_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
+	tex = R_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
 	if (GL_TextureReferenceIsValid(tex)) {
 		for (i = 0; i < 256; ++i) {
 			charset->glyphs[i].texnum = tex;
@@ -144,7 +144,7 @@ static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned 
 
 	// try first 24 bit, then 8 bit
 	char_mapping[num] = 0;
-	if (GL_LoadCharsetImage(texture, id, flags, &char_textures[num])) {
+	if (R_LoadCharsetImage(texture, id, flags, &char_textures[num])) {
 		char_mapping[num] = num;
 	}
 	else if (Load_LMP_Charset(lmp, flags, &char_textures[num])) {
@@ -168,7 +168,7 @@ static int Draw_LoadCharset(const char *name)
 		loaded = Load_LMP_Charset("charset", flags, &char_textures[0]);
 	}
 	else {
-		loaded = GL_LoadCharsetImage(va("textures/charsets/%s", name), "pic:charset", flags, &char_textures[0]);
+		loaded = R_LoadCharsetImage(va("textures/charsets/%s", name), "pic:charset", flags, &char_textures[0]);
 	}
 
 	if (!loaded) {

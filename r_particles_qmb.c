@@ -282,7 +282,7 @@ static void QMB_LoadTextureSubImage(part_tex_t tex, const char* id, const byte* 
 
 	QMB_PreMultiplyAlpha(temp_buffer, width, height);
 
-	tex_ref = GL_LoadTexture(id, width, height, temp_buffer, mode, 4);
+	tex_ref = R_LoadTexture(id, width, height, temp_buffer, mode, 4);
 
 	ADD_PARTICLE_TEXTURE(tex, tex_ref, texIndex, components, 0, 0, 256, 256);
 }
@@ -330,7 +330,7 @@ void QMB_InitParticles (void)
 		byte* original;
 		byte* temp_buffer;
 
-		original = GL_LoadImagePixels("textures/particles/particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, &real_width, &real_height);
+		original = R_LoadImagePixels("textures/particles/particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, &real_width, &real_height);
 		if (!original) {
 			return;
 		}

@@ -222,7 +222,7 @@ void CachePics_AtlasFrame(void)
 void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
-		atlas_texnum = GL_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 	}
 	atlas_dirty = 0;
 }
@@ -314,7 +314,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 		}
 
 		targPic = wad_pictures[i].pic = &sb_ib_ammo[num];
-		targPic->texnum = GL_LoadTexture(name, realwidth, realheight, target, TEX_NOCOMPRESS | TEX_ALPHA | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+		targPic->texnum = R_LoadTexture(name, realwidth, realheight, target, TEX_NOCOMPRESS | TEX_ALPHA | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
 		targPic->sl = 0;
 		targPic->sh = 1;
 		targPic->tl = 0;

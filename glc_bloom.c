@@ -143,7 +143,7 @@ static void GLC_Bloom_InitBackUpTexture( int width, int height )
 
 	r_screenbackuptexture_size = width;
 
-	r_bloombackuptexture = GL_LoadTexture("***r_bloombackuptexture***", width, height, data, 0, 4);
+	r_bloombackuptexture = R_LoadTexture("***r_bloombackuptexture***", width, height, data, 0, 4);
 
 	Q_free (data);
 }
@@ -187,7 +187,7 @@ static void GLC_Bloom_InitEffectTexture (void)
 
 	data = (unsigned char *) Q_calloc (BLOOM_SIZE * BLOOM_SIZE, sizeof (int));
 
-	r_bloomeffecttexture = GL_LoadTexture ("***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
+	r_bloomeffecttexture = R_LoadTexture ("***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
 
 	Q_free (data);
 }
@@ -244,7 +244,7 @@ static void GLC_Bloom_InitTextures( void )
 	{
 		r_screendownsamplingtexture_size = (int)(BLOOM_SIZE * 2);
 		data = Q_calloc (r_screendownsamplingtexture_size * r_screendownsamplingtexture_size, sizeof (int));
-		r_bloomdownsamplingtexture = GL_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
+		r_bloomdownsamplingtexture = R_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
 		Q_free (data);
 	}
 

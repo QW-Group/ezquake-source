@@ -44,10 +44,10 @@ typedef struct charset_s {
 	texture_ref master;
 } charset_t;
 
-mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
-byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
-void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
+mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
+byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
+void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
 typedef struct texture_api_s {
 	texture_ref (*Load)(const char *identifier, int width, int height, byte *data, int mode, int bpp);
@@ -83,11 +83,10 @@ typedef struct texture_api_s {
 extern texture_api_t textures;
 
 void R_Texture_Init(void);
-qbool R_TextureValid(texture_ref ref);
 
-texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
-texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
-texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode);
+texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
+texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
+texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode);
 texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
 texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
 texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode);
@@ -105,8 +104,8 @@ int R_TextureDepth(texture_ref ref);
 void R_GenerateMipmapsIfNeeded(texture_ref ref);
 
 void R_TexturesInvalidateAllReferences(void);
-void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
-void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
+void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
+void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 void R_TextureWrapModeClamp(texture_ref tex);
 void R_TextureAnisotropyChanged(texture_ref tex);

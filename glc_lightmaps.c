@@ -60,7 +60,7 @@ void GLC_CreateLightmapTextures(void)
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		if (!GL_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			GL_CreateTexture2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
+			R_CreateTexture2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
 		}
 	}
 }

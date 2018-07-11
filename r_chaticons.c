@@ -109,7 +109,7 @@ static void R_LoadChatIconTextureSubImage(ci_tex_t tex, const char* id, const by
 		}
 	}
 
-	tex_ref = GL_LoadTexture(id, width, height, temp_buffer, mode, 4);
+	tex_ref = R_LoadTexture(id, width, height, temp_buffer, mode, 4);
 
 	ADD_CICON_TEXTURE(tex, tex_ref, 0, 1, 0, 0, FONT_SIZE, FONT_SIZE);
 }
@@ -238,7 +238,7 @@ void R_InitChatIcons(void)
 		byte* original;
 		byte* temp_buffer;
 
-		original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
+		original = R_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
 		if (!original) {
 			return;
 		}

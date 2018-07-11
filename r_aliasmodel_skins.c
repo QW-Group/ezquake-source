@@ -125,10 +125,10 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 			gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
 			if (!GL_TextureReferenceIsValid(gl_texnum)) {
-				gl_texnum = GL_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode, 1);
+				gl_texnum = R_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode, 1);
 
 				if (Img_HasFullbrights((byte *)(pskintype + 1), pheader->skinwidth * pheader->skinheight)) {
-					fb_texnum = GL_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode | TEX_FULLBRIGHT, 1);
+					fb_texnum = R_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode | TEX_FULLBRIGHT, 1);
 				}
 			}
 
@@ -159,10 +159,10 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 				gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
 				if (!GL_TextureReferenceIsValid(gl_texnum)) {
-					gl_texnum = GL_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode, 1);
+					gl_texnum = R_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode, 1);
 
 					if (Img_HasFullbrights((byte *)(pskintype), pheader->skinwidth*pheader->skinheight)) {
-						fb_texnum = GL_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode | TEX_FULLBRIGHT, 1);
+						fb_texnum = R_LoadTexture(va("@fb_%s", identifier), pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode | TEX_FULLBRIGHT, 1);
 					}
 				}
 

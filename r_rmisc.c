@@ -55,7 +55,7 @@ static texture_ref GL_GenerateShellTexture(void)
 		}
 	}
 
-	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+	return R_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 }
 
 void R_InitOtherTextures(void)
@@ -74,9 +74,9 @@ void R_InitOtherTextures(void)
 		shelltexture = GL_GenerateShellTexture();
 	}
 
-	solidwhite_texture = GL_LoadTexture("billboard:solidwhite", 1, 1, solidwhitetexels, TEX_ALPHA | TEX_NOSCALE, 4);
-	solidblack_texture = GL_LoadTexture("billboard:solidblack", 1, 1, solidblacktexels, TEX_ALPHA | TEX_NOSCALE, 4);
-	transparent_texture = GL_LoadTexture("billboard:transparent", 1, 1, transparenttexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	solidwhite_texture = R_LoadTexture("billboard:solidwhite", 1, 1, solidwhitetexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	solidblack_texture = R_LoadTexture("billboard:solidblack", 1, 1, solidblacktexels, TEX_ALPHA | TEX_NOSCALE, 4);
+	transparent_texture = R_LoadTexture("billboard:transparent", 1, 1, transparenttexels, TEX_ALPHA | TEX_NOSCALE, 4);
 }
 
 void R_InitTextures(void)

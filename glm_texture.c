@@ -371,7 +371,7 @@ void GL_DeleteSamplers(void)
 }
 
 // meag: *RGBA is bit ugly, just trying to keep OpenGL enums out of the way for now
-void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
+void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
 {
 	GL_TexSubImage2D(GL_TEXTURE0, ref, 0, offsetx, offsety, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 }

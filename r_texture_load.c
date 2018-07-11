@@ -70,7 +70,7 @@ texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int
 	if (CheckTextureLoaded(gltexture)) {
 		return gltexture->reference;
 	}
-	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, mode, &image_width, &image_height))) {
+	if (!(data = R_LoadImagePixels(filename, matchwidth, matchheight, mode, &image_width, &image_height))) {
 		if (gltexture) {
 			reference = gltexture->reference;
 			R_DeleteTexture(&reference);
@@ -78,14 +78,14 @@ texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int
 		return invalid_texture_reference;
 	}
 	else {
-		reference = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
-		Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels.
+		reference = R_LoadTexturePixels(data, identifier, image_width, image_height, mode);
+		Q_free(data);	// Data was Q_malloc'ed by R_LoadImagePixels.
 	}
 
 	return reference;
 }
 
-void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
+void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
 {
 	// Pre-multiply alpha component
 	int pos;
@@ -102,7 +102,7 @@ void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
 	}
 }
 
-mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
+mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
 {
 	int width, height, i, real_width, real_height;
 	char identifier[MAX_QPATH] = "pic:";
@@ -117,7 +117,7 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	}
 
 	// Load the image data from file.
-	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, 0, &real_width, &real_height))) {
+	if (!(data = R_LoadImagePixels(filename, matchwidth, matchheight, 0, &real_width, &real_height))) {
 		return NULL;
 	}
 
@@ -136,7 +136,7 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	}
 
 	if (mode & TEX_ALPHA) {
-		GL_ImagePreMultiplyAlpha(data, real_width, real_height, false);
+		R_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 	}
 
 	if (gl_support_arb_texture_non_power_of_two) {
@@ -154,7 +154,7 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 	if (width == pic.width && height == pic.height) {
 		// Size of the image is scaled by the power of 2 so we can just
 		// load the texture as it is.
-		pic.texnum = GL_LoadTexture(identifier, pic.width, pic.height, data, mode, 4);
+		pic.texnum = R_LoadTexture(identifier, pic.width, pic.height, data, mode, 4);
 		pic.sl = 0;
 		pic.sh = 1;
 		pic.tl = 0;
@@ -176,7 +176,7 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 			dest += width * 4;		// Next line in the target.
 		}
 
-		pic.texnum = GL_LoadTexture(identifier, width, height, buf, mode, 4);
+		pic.texnum = R_LoadTexture(identifier, width, height, buf, mode, 4);
 		pic.sl = 0;
 		pic.sh = (float)pic.width / width;
 		pic.tl = 0;
@@ -184,11 +184,11 @@ mpic_t* GL_LoadPicImage(const char *filename, char *id, int matchwidth, int matc
 		Q_free(buf);
 	}
 
-	Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels
+	Q_free(data);	// Data was Q_malloc'ed by R_LoadImagePixels
 	return &pic;
 }
 
-qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic)
+qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic)
 {
 	int i, j, image_size, real_width, real_height;
 	byte *data, *buf = NULL, *dest, *src;
@@ -198,11 +198,11 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t
 		return false;
 	}
 
-	if (!(data = GL_LoadImagePixels(filename, 0, 0, flags, &real_width, &real_height))) {
+	if (!(data = R_LoadImagePixels(filename, 0, 0, flags, &real_width, &real_height))) {
 		return false;
 	}
 
-	GL_ImagePreMultiplyAlpha(data, real_width, real_height, false);
+	R_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 
 	if (!identifier) {
 		identifier = filename;
@@ -221,7 +221,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t
 		}
 	}
 
-	tex = GL_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
+	tex = R_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
 	Q_free(buf);
 	if (GL_TextureReferenceIsValid(tex)) {
 		memset(pic->glyphs, 0, sizeof(pic->glyphs));
@@ -241,7 +241,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t
 		}
 	}
 
-	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
+	Q_free(data);	// data was Q_malloc'ed by R_LoadImagePixels
 	return GL_TextureReferenceIsValid(tex);
 }
 
@@ -252,7 +252,7 @@ typedef struct image_load_format_s {
 	int filter_mask;
 } image_load_format_t;
 
-byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height)
+byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height)
 {
 	char basename[MAX_QPATH], name[MAX_QPATH];
 	byte *c, *data = NULL;
@@ -363,7 +363,7 @@ byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, 
 	return NULL;
 }
 
-texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode)
+texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode)
 {
 	int i, j, image_size;
 	qbool gamma;
@@ -388,7 +388,7 @@ texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, 
 	}
 
 	if ((mode & TEX_ALPHA) && (mode & TEX_PREMUL_ALPHA)) {
-		GL_ImagePreMultiplyAlpha(data, width, height, mode & TEX_ZERO_ALPHA);
+		R_ImagePreMultiplyAlpha(data, width, height, mode & TEX_ZERO_ALPHA);
 	}
 
 	if (gamma) {
@@ -399,10 +399,10 @@ texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, 
 		}
 	}
 
-	return GL_LoadTexture(identifier, width, height, data, mode, 4);
+	return R_LoadTexture(identifier, width, height, data, mode, 4);
 }
 
-texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
+texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 {
 	int glwidth, glheight, i;
 	char fullname[MAX_QPATH] = "pic:";
@@ -419,7 +419,7 @@ texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 
 	strlcpy(fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height) {
-		pic->texnum = GL_LoadTexture(fullname, glwidth, glheight, data, TEX_ALPHA, 1);
+		pic->texnum = R_LoadTexture(fullname, glwidth, glheight, data, TEX_ALPHA, 1);
 		pic->sl = 0;
 		pic->sh = 1;
 		pic->tl = 0;
@@ -435,7 +435,7 @@ texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 			src += pic->width;
 			dest += glwidth;
 		}
-		pic->texnum = GL_LoadTexture(fullname, glwidth, glheight, buf, TEX_ALPHA, 1);
+		pic->texnum = R_LoadTexture(fullname, glwidth, glheight, buf, TEX_ALPHA, 1);
 		pic->sl = 0;
 		pic->sh = (float)pic->width / glwidth;
 		pic->tl = 0;

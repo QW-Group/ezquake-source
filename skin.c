@@ -255,7 +255,7 @@ static byte* Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *
 	*max_w = *max_h = *bpp = 0;
 
 	// PCX skins loads different, so using TEX_NO_PCX
-	if ((pic = GL_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
+	if ((pic = R_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
 		// No limit in gl.
 		*max_w = *real_width;
 		*max_h = *real_height;
@@ -564,7 +564,7 @@ static texture_ref Skin_ApplyRGBColor(byte* original, int width, int height, byt
 		}
 	}
 
-	return GL_LoadTexture(texture_name, width, height, specific, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+	return R_LoadTexture(texture_name, width, height, specific, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 }
 
 static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
@@ -581,7 +581,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 	// If config says no color adjustments, load as normal skin
 	if ((!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0)) {
 		snprintf(texture_name, sizeof(texture_name), "%s-%02d", types[skin_base], skin_number);
-		skin->texnum[skin_base] = GL_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+		skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 		return;
 	}
 
@@ -595,7 +595,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 			// If no color adjustment required then we only need one version
 			if (i == skin_base) {
 				// Load normal texture
-				skin->texnum[skin_base] = GL_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+				skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 			}
 			continue;
 		}

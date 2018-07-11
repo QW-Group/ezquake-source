@@ -231,11 +231,11 @@ static void GL_LoadTextureData(gltexture_t* glt, int width, int height, byte *da
 		GL_Upload32(glt, (void *) data, width, height, mode);
 		break;
 	default:
-		Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
+		Sys_Error("R_LoadTexture: unknown bpp\n"); break;
 	}
 }
 
-texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
+texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
 {
 	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
 	qbool new_texture = false;
@@ -273,15 +273,6 @@ void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei 
 void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
 {
 	GL_CreateTexturesWithIdentifier(textureUnit, target, n, textures, NULL);
-}
-
-void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
-{
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, reference, name);
-	GL_TexStorage2D(GL_TEXTURE0, *reference, 1, GL_RGBA8, width, height);
-	GL_SetTextureFiltering(*reference, texture_minification_linear, texture_magnification_linear);
-	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)
@@ -341,7 +332,7 @@ void GL_TextureReplace2D(
 	if (tex->texture_width != width || tex->texture_height != height || tex->gl.target != target || GL_InternalFormat(tex->texmode) != internalformat) {
 		gltexture_t old = *tex;
 		R_DeleteTexture(ref);
-		*ref = GL_LoadTexturePixels(pixels, old.identifier, width, height, old.texmode);
+		*ref = R_LoadTexturePixels(pixels, old.identifier, width, height, old.texmode);
 	}
 	else {
 		GL_TexSubImage2D(textureUnit, *ref, 0, 0, 0, width, height, format, type, pixels);

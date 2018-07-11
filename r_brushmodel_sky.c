@@ -59,7 +59,7 @@ void R_InitSky (texture_t *mt) {
 	((byte *) &transpix)[2] = b / (128 * 128);
 	((byte *) &transpix)[3] = 0;
 
-	solidskytexture = GL_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, TEX_MIPMAP, 4);
+	solidskytexture = R_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, TEX_MIPMAP, 4);
 
 	for (i = 0; i < 128; i++) {
 		for (j = 0; j < 128; j++) {
@@ -68,7 +68,7 @@ void R_InitSky (texture_t *mt) {
 		}
 	}
 
-	alphaskytexture = GL_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
+	alphaskytexture = R_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
 }
 
 qbool R_LoadSkyboxTextures(const char* skyname)
@@ -433,18 +433,18 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 			strlcat(path, search_paths[j][1], sizeof(path));
 			strlcat(path, skybox_ext[i], sizeof(path));
 
-			data = GL_LoadImagePixels(path, 0, 0, 0, &width, &height);
+			data = R_LoadImagePixels(path, 0, 0, 0, &width, &height);
 			if (data) {
 				char id[16];
 
 				strlcpy(id, "skybox:", sizeof(id));
 				strlcat(id, skybox_ext[i], sizeof(id));
 
-				skyboxtextures[i] = GL_LoadTexture(
+				skyboxtextures[i] = R_LoadTexture(
 					id, width, height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4
 				);
 
-				// we should free data from GL_LoadImagePixels()
+				// we should free data from R_LoadImagePixels()
 				Q_free(data);
 
 				if (GL_TextureReferenceIsValid(skyboxtextures[i])) {

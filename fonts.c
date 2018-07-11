@@ -218,7 +218,7 @@ static qbool FontCreate(int grouping, const char* path)
 		original_height = texture_height = FONT_TEXTURE_SIZE * 2;
 		original_left = original_top = 0;
 
-		GL_CreateTexture2D(&charset->master, texture_width, texture_height, "font");
+		R_CreateTexture2D(&charset->master, texture_width, texture_height, "font");
 	}
 	base_font_width = texture_width / 16;
 	base_font_height = texture_height / 16;
@@ -326,7 +326,7 @@ static qbool FontCreate(int grouping, const char* path)
 		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
 		charset->glyphs[ch].texnum = charset->master;
 
-		GL_ReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
+		R_ReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
 

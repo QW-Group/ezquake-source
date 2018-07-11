@@ -177,7 +177,7 @@ void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
 	if (!s[0])
 		return;
 
-	if (!(pic_24bit = GL_LoadPicImage(va("gfx/%s", s), "conback", 0, 0, 0)))
+	if (!(pic_24bit = R_LoadPicImage(va("gfx/%s", s), "conback", 0, 0, 0)))
 	{
 		Com_Printf("Couldn't load image gfx/%s\n", s);
 		return;
@@ -242,7 +242,7 @@ void customCrosshair_Init(void)
 	}
 
 	VFS_CLOSE(f);
-	crosshairtexture_txt.texnum = GL_LoadTexture("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
+	crosshairtexture_txt.texnum = R_LoadTexture("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
 	crosshairtexture_txt.sl = crosshairtexture_txt.tl = 0;
 	crosshairtexture_txt.sh = crosshairtexture_txt.th = 1;
 	customcrosshair_loaded |= CROSSHAIR_TXT;
@@ -268,7 +268,7 @@ static void BuildBuiltinCrosshairs(void)
 	for (i = 0; i < NUMCROSSHAIRS; i++) {
 		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		CreateBuiltinCrosshair(crosshair_buffer, crosshair_size, i + 2);
-		crosshairs_builtin[i].texnum = GL_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
+		crosshairs_builtin[i].texnum = R_LoadTexture (str, crosshair_size, crosshair_size, crosshair_buffer, TEX_ALPHA, 1);
 		crosshairs_builtin[i].sl = crosshairs_builtin[i].tl = 0;
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
@@ -352,8 +352,8 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		wadpic->pic = pic;
 	}
 
-	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
-		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
+	if ((pic_24bit = R_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
+		(pic_24bit = R_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
 	{
 		// Only keep the size info from the lump. The other stuff is copied from the 24 bit image.
 		pic->sh		= pic_24bit->sh;
@@ -369,7 +369,7 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		return pic;
 	}
 
-	GL_LoadPicTexture(name, pic, p->data);
+	R_LoadPicTexture(name, pic, p->data);
 
 	if (code == WADPIC_SB_IBAR) {
 		CachePics_LoadAmmoPics(pic);
@@ -408,7 +408,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 
 	// Only load the 24-bit version of the picture.
 	if (only24bit) {
-		if (!(pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
+		if (!(pic_24bit = R_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
 			if(crash) {
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
 			}
@@ -437,7 +437,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 
 	// Try loading the 24-bit picture.
 	// If that fails load the data for the lmp instead.
-	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
+	if ((pic_24bit = R_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
 		// Only use the lmp-data if there was one.
 		if (lmp_found) {
 			pic_24bit->width = dat->width;
@@ -449,7 +449,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 		mpic_t tmp = {0};
 		tmp.width = dat->width;
 		tmp.height = dat->height;
-		GL_LoadPicTexture(path, &tmp, dat->data);
+		R_LoadPicTexture(path, &tmp, dat->data);
 		return CachePic_Add(path, &tmp);
 	}
 	else {
@@ -999,22 +999,22 @@ void Draw_InitConback (void)
 
 	start = Hunk_LowMark ();
 
-	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp", NULL)))
-		Sys_Error ("Couldn't load gfx/conback.lmp");
+	if (!(cb = (qpic_t *)FS_LoadHunkFile("gfx/conback.lmp", NULL))) {
+		Sys_Error("Couldn't load gfx/conback.lmp");
+	}
 	SwapPic (cb);
 
-	if (cb->width != 320 || cb->height != 200)
-		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
+	if (cb->width != 320 || cb->height != 200) {
+		Sys_Error("Draw_InitConback: conback.lmp size is not 320x200");
+	}
 
-	if ((pic_24bit = GL_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, 0)))
-	{
+	if ((pic_24bit = R_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, 0))) {
 		Draw_CopyMPICKeepSize(&conback, pic_24bit);
 	}
-	else
-	{
+	else {
 		conback.width = cb->width;
 		conback.height = cb->height;
-		GL_LoadPicTexture("conback", &conback, cb->data);
+		R_LoadPicTexture("conback", &conback, cb->data);
 	}
 
 	Draw_AdjustConback();

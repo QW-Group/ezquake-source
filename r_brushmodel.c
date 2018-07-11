@@ -371,7 +371,7 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	}
 	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
 		// Load a texture consisting of a single transparent pixel
-		alphaskytexture = GL_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
+		alphaskytexture = R_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
 	}
 	return true;
 }
@@ -1399,7 +1399,7 @@ void R_LoadBrushModelTextures(model_t *m)
 		if (m->bspversion == HL_BSPVERSION) {
 			if ((data = WAD3_LoadTexture(tx))) {
 				fs_netpath[0] = 0;
-				tx->gl_texturenum = GL_LoadTexturePixels (data, tx->name, tx->width, tx->height, texmode | alpha_flag);
+				tx->gl_texturenum = R_LoadTexturePixels(data, tx->name, tx->width, tx->height, texmode | alpha_flag);
 				Q_free(data);
 				tx->loaded = true; // mark as loaded
 				continue;
@@ -1421,9 +1421,9 @@ void R_LoadBrushModelTextures(model_t *m)
 			data     = (byte *) r_notexture_mip + r_notexture_mip->offsets[mipTexLevel];
 		}
 
-		tx->gl_texturenum = GL_LoadTexture(texname, width, height, data, texmode | brighten_flag | alpha_flag, 1);
+		tx->gl_texturenum = R_LoadTexture(texname, width, height, data, texmode | brighten_flag | alpha_flag, 1);
 		if (!Mod_IsTurbTextureName(m, tx->name) && Img_HasFullbrights(data, width * height)) {
-			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT | alpha_flag, 1);
+			tx->fb_texturenum = R_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT | alpha_flag, 1);
 		}
 		tx->loaded = true; // mark as loaded
 	}

@@ -461,7 +461,7 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 	}
 
 	if (!glt) {
-		Sys_Error("GL_LoadTexture: glt not initialized\n");
+		Sys_Error("R_LoadTexture: glt not initialized\n");
 	}
 
 	glt->image_width = width;
@@ -544,7 +544,7 @@ gltexture_t* GL_NextTextureSlot(GLenum target)
 		gltextures[slot].next_free = 0;
 	}
 	else if (numgltextures >= MAX_GLTEXTURES) {
-		Sys_Error("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+		Sys_Error("R_LoadTexture: numgltextures == MAX_GLTEXTURES");
 		return NULL;
 	}
 	else {
@@ -579,3 +579,13 @@ gltexture_t* R_FindTexture(const char *identifier)
 
 	return NULL;
 }
+
+void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
+{
+	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, reference, name);
+	GL_TexStorage2D(GL_TEXTURE0, *reference, 1, GL_RGBA8, width, height);
+	GL_SetTextureFiltering(*reference, texture_minification_linear, texture_magnification_linear);
+	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
