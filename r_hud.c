@@ -18,10 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
 #include "glm_draw.h"
 #include "r_draw.h"
+#include "r_local.h"
 #include "tr_types.h"
 
 #define MAX_2D_ELEMENTS 4096

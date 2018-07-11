@@ -18,8 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
 #include "common_draw.h"
 #include "glm_draw.h"
 #include "glm_vao.h"

@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "glm_texture_arrays.h"
 #include "r_sprite3d.h"
@@ -150,7 +149,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_Sprite3DInitialiseBatch(batch_id, &coronaState, NULL, GL_UseGLSL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
+		GL_Sprite3DInitialiseBatch(batch_id, &coronaState, NULL, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			r_sprite3d_vert_t* vert;

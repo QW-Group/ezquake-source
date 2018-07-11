@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // _WIN32
 #endif // __APPLE__
 
+#include "gl_model.h"
 #include "gl_texture.h"
 #include "r_framestats.h"
 #include "r_trace.h"

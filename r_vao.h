@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_VAO_HEADER
 #define EZQUAKE_R_VAO_HEADER
 
+#include "r_buffers.h"
+
 typedef enum {
 	vao_none,
 	vao_aliasmodel,

@@ -49,8 +49,6 @@ void Sys_ActiveAppChanged (void);
 #include "input.h"
 #include "rulesets.h"
 #include "utils.h"
-#include "gl_model.h"
-#include "gl_local.h"
 #include "textencoding.h"
 
 #include "gl_framebuffer.h"
@@ -1009,6 +1007,8 @@ static void VID_SDL_GL_DisableMSAA(void)
 
 static void VID_SDL_GL_SetupAttributes(void)
 {
+	extern cvar_t gl_gammacorrection;
+
 	if (gl_multisamples.integer > 0) {
 		VID_SDL_GL_EnableMSAA();
 	}

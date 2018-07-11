@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_GLC_VAO_HEADER
 #define EZQUAKE_GLC_VAO_HEADER
 
+#include "gl_local.h"
 #include "r_vao.h"
 
 void GLC_VAOEnableVertexPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer);
