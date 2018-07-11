@@ -149,8 +149,6 @@ extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_gammacorrection;
 
-extern	float	r_world_matrix[16];
-
 extern	const char *gl_vendor;
 extern	const char *gl_renderer;
 extern	const char *gl_version;

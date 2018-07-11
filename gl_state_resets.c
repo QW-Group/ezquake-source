@@ -23,8 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+//#include "gl_local.h"
 #include "r_state.h"
+#include "r_trace.h"
 #include "r_matrix.h"
 #include "glc_matrix.h"
 
@@ -63,7 +64,6 @@ void GL_StateDefault3D(void)
 		GLC_ResumeMatrixUpdate();
 		GLC_LoadModelviewMatrix();
 	}
-	GL_GetModelviewMatrix(r_world_matrix);
 
 	ENTER_STATE;
 

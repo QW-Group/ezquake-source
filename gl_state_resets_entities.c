@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_state_resets_entities.c
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "gl_aliasmodel.h"
 #include "r_matrix.h"
 #include "r_state.h"
 #include "r_vao.h"
+#include "r_trace.h"
 #include "glc_matrix.h"
 
 #include "gl_aliasmodel.h" // for shelltexture only

@@ -78,8 +78,6 @@ mleaf_t   *r_viewleaf2;                       // for watervis hack
 mleaf_t   *r_oldviewleaf2;                    // for watervis hack
 vec3_t    vup, vpn, vright;                   // view origin
 vec3_t    r_origin; // view origin
-float     r_world_matrix[16];
-float     r_base_world_matrix[16];
 float     clearColor[3] = {0, 0, 0};
 int       r_visframecount;                    // bumped when going to a new PVS
 int       r_framecount;                       // used for dlight push checking

@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_state_resets_sky.c
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "r_state.h"
+#include "r_trace.h"
 
 static rendering_state_t fastSkyState;
 static rendering_state_t fastSkyStateFogged;
@@ -80,6 +80,8 @@ void GLC_InitialiseSkyStates(void)
 
 void GLC_StateBeginFastSky(void)
 {
+	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
+
 	ENTER_STATE;
 
 	if (gl_fogsky.integer && gl_fogenable.integer) {
@@ -95,6 +97,8 @@ void GLC_StateBeginFastSky(void)
 
 void GLC_StateBeginSkyZBufferPass(void)
 {
+	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor, gl_fogred, gl_foggreen, gl_fogblue;
+
 	ENTER_STATE;
 
 	if (gl_fogenable.integer && gl_fogsky.integer) {
