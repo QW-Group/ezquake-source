@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
 #include "utils.h"
@@ -30,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "r_sprite3d.h"
 #include "r_performance.h"
-#include "qmb_particles.h"
 #include "r_chaticons.h"
 #include "r_matrix.h"
 #include "r_local.h"
@@ -41,13 +39,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "r_draw.h"
 #include "r_aliasmodel.h"
-#include "glm_local.h"
+#include "r_lightmaps.h"
+#include "r_trace.h"
+//#include "glm_local.h"
 
 void GLM_ScreenDrawStart(void);
+
 void GLM_SetupGL(void);
 void GLC_SetupGL(void);
 void GLM_PreRenderView(void);
 void GLC_PreRenderView(void);
+void GLM_DrawWaterSurfaces(void);
+void GLC_DrawWaterSurfaces(void);
+void GLM_RenderSceneBlurDo(float alpha);
+void GLC_RenderSceneBlurDo(float alpha);
+void GLM_PostProcessScene(void);
+void GLC_PostProcessScene(void);
+void GLM_PostProcessScreen(void);
+void GLC_PostProcessScreen(void);
+void GLM_DrawSpriteModel(entity_t *e);
+void GLC_DrawSpriteModel(entity_t *e);
+void GLM_PolyBlend(float v_blend[4]);
+void GLC_PolyBlend(float v_blend[4]);
+void GLM_InitialiseAliasModelBatches(void);
+void GLM_DrawSimpleItem(model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right);
+void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right);
+
+void R_TimeRefresh_f(void);
+static void R_DrawEntities(void);
+void R_InitOtherTextures(void);
+void R_DrawViewModel(void);
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
@@ -92,7 +113,7 @@ void OnSquareParticleChange(cvar_t *var, char *value, qbool *cancel)
 
 static void OnDynamicLightingChange(cvar_t* var, char* value, qbool* cancel)
 {
-	if (GL_UseImmediateMode() && atoi(value) > 1) {
+	if (R_UseImmediateOpenGL() && atoi(value) > 1) {
 		Con_Printf("Hardware lighting not supported when not using GLSL\n");
 		*cancel = true;
 		return;
@@ -227,248 +248,6 @@ qbool R_CullSphere(vec3_t centre, float radius)
 	return false;
 }
 
-void R_DrawSpriteModel(entity_t *e)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_DrawSpriteModel(e);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawSpriteModel(e);
-	}
-	else if (R_UseVulkan()) {
-		// VK_DrawSpriteModel(e);
-	}
-}
-
-qbool R_CanDrawSimpleItem(entity_t* e)
-{
-	int skin;
-
-	if (!gl_simpleitems.integer || !e || !e->model) {
-		return false;
-	}
-
-	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
-
-	if (GL_UseGLSL()) {
-		return GL_TextureReferenceIsValid(e->model->simpletexture_array[skin]);
-	}
-	else {
-		return GL_TextureReferenceIsValid(e->model->simpletexture[skin]);
-	}
-}
-
-static qbool R_DrawTrySimpleItem(entity_t* ent)
-{
-	int sprtype = gl_simpleitems_orientation.integer;
-	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
-	texture_ref simpletexture;
-	vec3_t right, up, org, offset, angles;
-	int skin;
-
-	if (!ent || !ent->model) {
-		return false;
-	}
-
-	skin = ent->skinnum >= 0 && ent->skinnum < MAX_SIMPLE_TEXTURES ? ent->skinnum : 0;
-	if (GL_UseGLSL()) {
-		simpletexture = ent->model->simpletexture_array[skin];
-	}
-	else {
-		simpletexture = ent->model->simpletexture[skin];
-	}
-	if (!GL_TextureReferenceIsValid(simpletexture)) {
-		return false;
-	}
-
-	autorotate = anglemod(100 * cl.time);
-	if (sprtype == SPR_ORIENTED) {
-		// bullet marks on walls
-		angles[0] = angles[2] = 0;
-		angles[1] = anglemod(autorotate);
-		AngleVectors(angles, NULL, right, up);
-	}
-	else if (sprtype == SPR_FACING_UPRIGHT) {
-		VectorSet(up, 0, 0, 1);
-		right[0] = ent->origin[1] - r_origin[1];
-		right[1] = -(ent->origin[0] - r_origin[0]);
-		right[2] = 0;
-		VectorNormalizeFast(right);
-		vectoangles(right, angles);
-	}
-	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT) {
-		VectorSet(up, 0, 0, 1);
-		VectorCopy(vright, right);
-		vectoangles(right, angles);
-	}
-	else {
-		// normal sprite
-		VectorCopy(vup, up);
-		VectorCopy(vright, right);
-		vectoangles(right, angles);
-	}
-
-	VectorCopy(ent->origin, org);
-	// brush models require some additional centering
-	if (ent->model->type == mod_brush) {
-		extern cvar_t cl_model_bobbing;
-
-		VectorSubtract(ent->model->maxs, ent->model->mins, offset);
-		offset[2] = 0;
-		VectorMA(org, 0.5, offset, org);
-
-		if (cl_model_bobbing.value) {
-			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
-		}
-	}
-	org[2] += sprsize;
-
-	if (GL_UseGLSL()) {
-		model_t* m = ent->model;
-
-		GLM_DrawSimpleItem(
-			m->simpletexture_array[skin],
-			m->simpletexture_indexes[skin],
-			m->simpletexture_scalingS[skin],
-			m->simpletexture_scalingT[skin],
-			org,
-			sprsize,
-			up,
-			right
-		);
-	}
-	else {
-		GLC_DrawSimpleItem(simpletexture, org, sprsize, up, right);
-	}
-	return true;
-}
-
-static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
-{
-	const visentity_t* lhs = (const visentity_t*) lhs_;
-	const visentity_t* rhs = (const visentity_t*) rhs_;
-
-	float alpha_lhs = lhs->type == mod_sprite ? 0.5 : lhs->ent.alpha == 0 ? 1 : lhs->ent.alpha;
-	float alpha_rhs = rhs->type == mod_sprite ? 0.5 : rhs->ent.alpha == 0 ? 1 : rhs->ent.alpha;
-
-	// Draw opaque entities first
-	if (alpha_lhs == 1 && alpha_rhs != 1) {
-		return -1;
-	}
-	else if (alpha_lhs != 1 && alpha_rhs == 1) {
-		return 1;
-	}
-
-	if (alpha_lhs != 1) {
-		// Furthest first
-		if (lhs->distance > rhs->distance) {
-			return -1;
-		}
-		else if (lhs->distance < rhs->distance) {
-			return 1;
-		}
-	}
-
-	// order by brush/alias/etc for batching
-	if (lhs->type != rhs->type) {
-		return lhs->type < rhs->type ? -1 : 1;
-	}
-
-	// Then by model
-	if ((uintptr_t)lhs->ent.model < (uintptr_t)rhs->ent.model) {
-		return -1;
-	}
-	if ((uintptr_t)lhs->ent.model > (uintptr_t)rhs->ent.model) {
-		return 1;
-	}
-
-	if (alpha_lhs == 1) {
-		// Closest first
-		if (lhs->distance < rhs->distance) {
-			return -1;
-		}
-		else if (lhs->distance > rhs->distance) {
-			return 1;
-		}
-	}
-
-	// Then by position
-	if ((uintptr_t)lhs < (uintptr_t)rhs) {
-		return -1;
-	}
-	if ((uintptr_t)lhs > (uintptr_t)rhs) {
-		return 1;
-	}
-	return 0;
-}
-
-static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type)
-{
-	int i;
-
-	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
-		for (i = 0; i < vislist->count; i++) {
-			visentity_t* todraw = &vislist->list[i];
-
-			if (!todraw->draw[type]) {
-				continue;
-			}
-
-			switch (todraw->type) {
-			case mod_brush:
-				R_DrawBrushModel(&todraw->ent);
-				break;
-			case mod_sprite:
-				if (todraw->ent.model->type == mod_sprite) {
-					R_DrawSpriteModel(&todraw->ent);
-				}
-				else {
-					R_DrawTrySimpleItem(&todraw->ent);
-				}
-				break;
-			case mod_alias:
-				if (type == visent_shells) {
-					if (R_UseImmediateOpenGL()) {
-						GLC_DrawAliasPowerupShell(&todraw->ent);
-					}
-				}
-				else {
-					R_DrawAliasModel(&todraw->ent);
-				}
-				break;
-			case mod_alias3:
-				R_DrawAlias3Model(&todraw->ent);
-				break;
-			case mod_unknown:
-				// keeps compiler happy
-				break;
-			}
-		}
-	}
-}
-
-void R_PolyBlend(void)
-{
-	extern cvar_t gl_hwblend;
-
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress) {
-		return;
-	}
-	if (!v_blend[3]) {
-		return;
-	}
-
-	if (R_UseModernOpenGL()) {
-		GLM_PolyBlend(v_blend);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_PolyBlend(v_blend);
-	}
-	else if (R_UseVulkan()) {
-		//VK_PolyBlend(v_blend);
-	}
-}
-
 static int SignbitsForPlane(mplane_t *out)
 {
 	int	bits, j;
@@ -551,9 +330,9 @@ void R_SetupFrame(void)
 	R_LightmapFrameInit();
 }
 
-void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
+static void MYgluPerspective(double fovy, double aspect, double zNear, double zFar)
 {
-	GLdouble xmin, xmax, ymin, ymax;
+	double xmin, xmax, ymin, ymax;
 
 	ymax = zNear * tan(fovy * M_PI / 360.0);
 	ymin = -ymax;
@@ -583,18 +362,18 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	// Setup Multiview-viewports
 	//
 	if (max == 1) {
-		GL_Viewport(glx + x, gly + y2, w, h);
+		R_Viewport(glx + x, gly + y2, w, h);
 		return;
 	}
 	else if (max == 2 && cl_mvinset.value) {
 		if (CL_MultiviewCurrentView() == 2) {
-			GL_Viewport(glx + x, gly + y2, w, h);
+			R_Viewport(glx + x, gly + y2, w, h);
 		}
 		else if (CL_MultiviewCurrentView() == 1 && !cl_sbar.value) {
-			GL_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (glheight / 3) * 2, w / 3, h / 3);
+			R_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (glheight / 3) * 2, w / 3, h / 3);
 		}
 		else if (CL_MultiviewCurrentView() == 1 && cl_sbar.value) {
-			GL_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (h / 3) * 2, w / 3, h / 3);
+			R_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (h / 3) * 2, w / 3, h / 3);
 		}
 		else {
 			Com_Printf("ERROR!\n");
@@ -603,10 +382,10 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 2 && !cl_mvinset.value) {
 		if (CL_MultiviewCurrentView() == 2) {
-			GL_Viewport(0, h / 2, w, h / 2);
+			R_Viewport(0, h / 2, w, h / 2);
 		}
 		else if (CL_MultiviewCurrentView() == 1) {
-			GL_Viewport(0, 0, w, h / 2 - 1);
+			R_Viewport(0, 0, w, h / 2 - 1);
 		}
 		else {
 			Com_Printf("ERROR!\n");
@@ -615,28 +394,28 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 3) {
 		if (CL_MultiviewCurrentView() == 2) {
-			GL_Viewport(0, h / 2, w, h / 2);
+			R_Viewport(0, h / 2, w, h / 2);
 		}
 		else if (CL_MultiviewCurrentView() == 3) {
-			GL_Viewport(0, 0, w / 2, h / 2 - 1);
+			R_Viewport(0, 0, w / 2, h / 2 - 1);
 		}
 		else {
-			GL_Viewport(w / 2, 0, w / 2, h / 2 - 1);
+			R_Viewport(w / 2, 0, w / 2, h / 2 - 1);
 		}
 		return;
 	}
 	else {
 		if (CL_MultiviewCurrentView() == 2) {
-			GL_Viewport(0, h / 2, w / 2, h / 2);
+			R_Viewport(0, h / 2, w / 2, h / 2);
 		}
 		else if (CL_MultiviewCurrentView() == 3) {
-			GL_Viewport(w / 2, h / 2, w / 2, h / 2);
+			R_Viewport(w / 2, h / 2, w / 2, h / 2);
 		}
 		else if (CL_MultiviewCurrentView() == 4) {
-			GL_Viewport(0, 0, w / 2, h / 2 - 1);
+			R_Viewport(0, 0, w / 2, h / 2 - 1);
 		}
 		else if (CL_MultiviewCurrentView() == 1) {
-			GL_Viewport(w / 2, 0, w / 2, h / 2 - 1);
+			R_Viewport(w / 2, 0, w / 2, h / 2 - 1);
 		}
 	}
 
@@ -647,6 +426,7 @@ void R_SetupViewport(void)
 {
 	float screenaspect;
 	extern int glwidth, glheight;
+	extern cvar_t r_nearclip;
 	int x, x2, y2, y, w, h, farclip;
 
 	// set up viewpoint
@@ -678,7 +458,7 @@ void R_SetupViewport(void)
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
 	if (!CL_MultiviewEnabled()) {
-		GL_Viewport(glx + x, gly + y2, w, h);
+		R_Viewport(glx + x, gly + y2, w, h);
 	}
 
 	farclip = max((int)r_farclip.value, 4096);
@@ -691,7 +471,7 @@ static void R_SetupGL(void)
 {
 	R_SetupViewport();
 
-	GL_StateDefault3D();
+	R_StateDefault3D();
 
 	if (R_UseModernOpenGL()) {
 		GLM_SetupGL();
@@ -881,12 +661,7 @@ void R_Init(void)
 	R_InitChatIcons();     // safe re-init
 
 	//VULT STUFF
-	if (qmb_initialized) {
-		InitVXStuff(); // safe re-init imo
-	}
-	else {
-		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
-	}
+	InitVXStuff(); // safe re-init imo
 
 	InitTracker();
 	R_InitOtherTextures(); // safe re-init
@@ -900,8 +675,6 @@ void R_Init(void)
 
 static void R_RenderScene(void)
 {
-	visentlist_entrytype_t ent_type;
-
 	GL_EnterRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
 	GL_LeaveRegion();
@@ -910,32 +683,19 @@ static void R_RenderScene(void)
 		R_RenderTransparentWorld();
 	}
 
-	if (GL_UseGLSL()) {
-		GLM_InitialiseAliasModelBatches();
-	}
-
-	if (r_drawentities.integer) {
-		GL_EnterRegion("R_DrawEntities");
-
-		GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
-		qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
-		for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
-			R_DrawEntitiesOnList(&cl_visents, ent_type);
-		}
-		if (GL_UseGLSL()) {
-			R_DrawViewModel();
-		}
-		GL_LeaveRegion();
-	}
+	R_DrawEntities();
 }
 
 static void R_RenderTransparentWorld(void)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_DrawWaterSurfaces();
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_DrawWaterSurfaces();
+	}
+	else if (R_UseVulkan()) {
+		//VK_DrawWaterSurfaces();
 	}
 }
 
@@ -988,15 +748,19 @@ static void R_Clear(void)
 static void GL_DrawVelocity3D(void)
 {
 	extern cvar_t show_velocity_3d;
+
 	if (!show_velocity_3d.integer) {
 		return;
 	}
 
-	if (GL_UseGLSL()) {
-		GLM_DrawVelocity3D();
+	if (R_UseModernOpenGL()) {
+		//GLM_DrawVelocity3D();
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		//GLC_DrawVelocity3D();
+	}
+	else if (R_UseVulkan()) {
+		//VK_DrawVelocity3D();
 	}
 }
 
@@ -1006,18 +770,20 @@ static void GL_DrawVelocity3D(void)
 */
 static void R_RenderSceneBlurDo(float alpha)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_RenderSceneBlurDo(alpha);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_RenderSceneBlurDo(alpha);
+	}
+	else if (R_UseVulkan()) {
+		//VK_RenderSceneBlurDo(alpha);
 	}
 }
 
 static void R_RenderSceneBlur(void)
 {
-	if (!gl_motion_blur.integer)
-	{
+	if (!gl_motion_blur.integer) {
 		// Motion blur disabled entirely.
 		return;
 	}
@@ -1025,33 +791,28 @@ static void R_RenderSceneBlur(void)
 	// FIXME: Actually here should be some smoothing code for transaction from one case to another,
 	// since for example if we turned off blur for everything but hurt, when we feel pain we use blur, but when
 	// pain is ended we saddenly turning blur off, that does not look natural.
-
-	if (gl_motion_blur_dead.value && cl.stats[STAT_HEALTH] < 1)
-	{
+	if (gl_motion_blur_dead.value && cl.stats[STAT_HEALTH] < 1) {
 		// We are dead.
 		R_RenderSceneBlurDo (gl_motion_blur_dead.value);
 	}
 	// We are alive, lets check different cases.
-	else if (gl_motion_blur_hurt.value && cl.hurtblur > cl.time)
-	{
+	else if (gl_motion_blur_hurt.value && cl.hurtblur > cl.time) {
 		// Hurt.
 		R_RenderSceneBlurDo (gl_motion_blur_hurt.value);
 	}
-	else if (gl_motion_blur_norm.value)
-	{
+	else if (gl_motion_blur_norm.value) {
 		// Plain case.
 		R_RenderSceneBlurDo (gl_motion_blur_norm.value);
 	}
-	else
-	{
-		// We do not really blur anything, just copy image, so if we start bluring it will be smooth transaction.
+	else {
+		// We do not really blur anything, just copy image, so if we start bluring it will be smooth transition.
 		R_RenderSceneBlurDo (-1);
 	}
 }
 
 void R_PostProcessScene(void)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
 	}
@@ -1059,22 +820,25 @@ void R_PostProcessScene(void)
 
 void R_PostProcessScreen(void)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_PostProcessScreen();
 	}
-	else {
-		GLC_BrightenScreen();
-		V_UpdatePalette();
+	else if (R_UseImmediateOpenGL()) {
+		GLC_PostProcessScreen();
+	}
+	else if (R_UseVulkan()) {
+
 	}
 }
 
 void R_ScreenDrawStart(void)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_ScreenDrawStart();
 	}
-	else {
-
+	else if (R_UseImmediateOpenGL()) {
+	}
+	else if (R_UseVulkan()) {
 	}
 }
 
@@ -1093,7 +857,7 @@ static void R_Render3DEffects(void)
 static void R_Render3DHud(void)
 {
 	// Draw the player's view model (gun)
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		R_DrawViewModel();
 	}
 
@@ -1167,4 +931,264 @@ qbool R_PointIsUnderwater(vec3_t point)
 	int contents = TruePointContents(point);
 
 	return ISUNDERWATER(contents);
+}
+
+void R_DrawSpriteModel(entity_t *e)
+{
+	if (R_UseModernOpenGL()) {
+		GLM_DrawSpriteModel(e);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_DrawSpriteModel(e);
+	}
+	else if (R_UseVulkan()) {
+		// VK_DrawSpriteModel(e);
+	}
+}
+
+qbool R_CanDrawSimpleItem(entity_t* e)
+{
+	int skin;
+
+	if (!gl_simpleitems.integer || !e || !e->model) {
+		return false;
+	}
+
+	skin = e->skinnum >= 0 && e->skinnum < MAX_SIMPLE_TEXTURES ? e->skinnum : 0;
+
+	if (R_UseModernOpenGL()) {
+		return R_TextureReferenceIsValid(e->model->simpletexture_array[skin]);
+	}
+	else {
+		return R_TextureReferenceIsValid(e->model->simpletexture[skin]);
+	}
+}
+
+static qbool R_DrawTrySimpleItem(entity_t* ent)
+{
+	int sprtype = gl_simpleitems_orientation.integer;
+	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
+	texture_ref simpletexture;
+	vec3_t right, up, org, offset, angles;
+	int skin;
+
+	if (!ent || !ent->model) {
+		return false;
+	}
+
+	skin = ent->skinnum >= 0 && ent->skinnum < MAX_SIMPLE_TEXTURES ? ent->skinnum : 0;
+	if (R_UseModernOpenGL()) {
+		simpletexture = ent->model->simpletexture_array[skin];
+	}
+	else {
+		simpletexture = ent->model->simpletexture[skin];
+	}
+	if (!R_TextureReferenceIsValid(simpletexture)) {
+		return false;
+	}
+
+	autorotate = anglemod(100 * cl.time);
+	if (sprtype == SPR_ORIENTED) {
+		// bullet marks on walls
+		angles[0] = angles[2] = 0;
+		angles[1] = anglemod(autorotate);
+		AngleVectors(angles, NULL, right, up);
+	}
+	else if (sprtype == SPR_FACING_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
+		right[0] = ent->origin[1] - r_origin[1];
+		right[1] = -(ent->origin[0] - r_origin[0]);
+		right[2] = 0;
+		VectorNormalizeFast(right);
+		vectoangles(right, angles);
+	}
+	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT) {
+		VectorSet(up, 0, 0, 1);
+		VectorCopy(vright, right);
+		vectoangles(right, angles);
+	}
+	else {
+		// normal sprite
+		VectorCopy(vup, up);
+		VectorCopy(vright, right);
+		vectoangles(right, angles);
+	}
+
+	VectorCopy(ent->origin, org);
+	// brush models require some additional centering
+	if (ent->model->type == mod_brush) {
+		extern cvar_t cl_model_bobbing;
+
+		VectorSubtract(ent->model->maxs, ent->model->mins, offset);
+		offset[2] = 0;
+		VectorMA(org, 0.5, offset, org);
+
+		if (cl_model_bobbing.value) {
+			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
+		}
+	}
+	org[2] += sprsize;
+
+	if (R_UseModernOpenGL()) {
+		model_t* m = ent->model;
+
+		GLM_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
+	}
+	else if (R_UseVulkan()) {
+		//VK_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
+	}
+	return true;
+}
+
+static int R_DrawEntitiesSorter(const void* lhs_, const void* rhs_)
+{
+	const visentity_t* lhs = (const visentity_t*)lhs_;
+	const visentity_t* rhs = (const visentity_t*)rhs_;
+
+	float alpha_lhs = lhs->type == mod_sprite ? 0.5 : lhs->ent.alpha == 0 ? 1 : lhs->ent.alpha;
+	float alpha_rhs = rhs->type == mod_sprite ? 0.5 : rhs->ent.alpha == 0 ? 1 : rhs->ent.alpha;
+
+	// Draw opaque entities first
+	if (alpha_lhs == 1 && alpha_rhs != 1) {
+		return -1;
+	}
+	else if (alpha_lhs != 1 && alpha_rhs == 1) {
+		return 1;
+	}
+
+	if (alpha_lhs != 1) {
+		// Furthest first
+		if (lhs->distance > rhs->distance) {
+			return -1;
+		}
+		else if (lhs->distance < rhs->distance) {
+			return 1;
+		}
+	}
+
+	// order by brush/alias/etc for batching
+	if (lhs->type != rhs->type) {
+		return lhs->type < rhs->type ? -1 : 1;
+	}
+
+	// Then by model
+	if ((uintptr_t)lhs->ent.model < (uintptr_t)rhs->ent.model) {
+		return -1;
+	}
+	if ((uintptr_t)lhs->ent.model >(uintptr_t)rhs->ent.model) {
+		return 1;
+	}
+
+	if (alpha_lhs == 1) {
+		// Closest first
+		if (lhs->distance < rhs->distance) {
+			return -1;
+		}
+		else if (lhs->distance > rhs->distance) {
+			return 1;
+		}
+	}
+
+	// Then by position
+	if ((uintptr_t)lhs < (uintptr_t)rhs) {
+		return -1;
+	}
+	if ((uintptr_t)lhs >(uintptr_t)rhs) {
+		return 1;
+	}
+	return 0;
+}
+
+static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t type)
+{
+	int i;
+
+	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
+		for (i = 0; i < vislist->count; i++) {
+			visentity_t* todraw = &vislist->list[i];
+
+			if (!todraw->draw[type]) {
+				continue;
+			}
+
+			switch (todraw->type) {
+				case mod_brush:
+					R_DrawBrushModel(&todraw->ent);
+					break;
+				case mod_sprite:
+					if (todraw->ent.model->type == mod_sprite) {
+						R_DrawSpriteModel(&todraw->ent);
+					}
+					else {
+						R_DrawTrySimpleItem(&todraw->ent);
+					}
+					break;
+				case mod_alias:
+					if (type == visent_shells) {
+						if (R_UseImmediateOpenGL()) {
+							GLC_DrawAliasPowerupShell(&todraw->ent);
+						}
+					}
+					else {
+						R_DrawAliasModel(&todraw->ent);
+					}
+					break;
+				case mod_alias3:
+					R_DrawAlias3Model(&todraw->ent);
+					break;
+				case mod_unknown:
+					// keeps compiler happy
+					break;
+			}
+		}
+	}
+}
+
+void R_PolyBlend(void)
+{
+	extern cvar_t gl_hwblend;
+
+	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress) {
+		return;
+	}
+	if (!v_blend[3]) {
+		return;
+	}
+
+	if (R_UseModernOpenGL()) {
+		GLM_PolyBlend(v_blend);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_PolyBlend(v_blend);
+	}
+	else if (R_UseVulkan()) {
+		//VK_PolyBlend(v_blend);
+	}
+}
+
+static void R_DrawEntities(void)
+{
+	visentlist_entrytype_t ent_type;
+
+	if (R_UseModernOpenGL()) {
+		GLM_InitialiseAliasModelBatches();
+	}
+	if (!r_drawentities.integer) {
+		return;
+	}
+
+	GL_EnterRegion("R_DrawEntities");
+
+	GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
+	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
+	for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
+		R_DrawEntitiesOnList(&cl_visents, ent_type);
+	}
+	if (R_UseModernOpenGL() || R_UseVulkan()) {
+		R_DrawViewModel();
+	}
+	GL_LeaveRegion();
 }

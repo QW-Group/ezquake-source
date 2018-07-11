@@ -428,7 +428,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 							index_count = 0;
 						}
 
-						GL_BindTextures(0, texture_unit_count, desired_textures);
+						R_BindTextures(0, texture_unit_count, desired_textures);
 
 						texture_change = false;
 					}

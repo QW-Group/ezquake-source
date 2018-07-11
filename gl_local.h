@@ -210,7 +210,6 @@ extern glClientActiveTexture_t qglClientActiveTexture;
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
-extern qbool gl_support_arb_texture_non_power_of_two;
 
 qbool GLM_LoadProgramFunctions(void);
 qbool GLM_LoadStateFunctions(void);
@@ -261,9 +260,6 @@ void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 
 // Functions
-void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale, vec3_t up, vec3_t right);
-void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
-
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
 void GL_BeginDrawAliasModels(void);
@@ -331,7 +327,6 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 struct custom_model_color_s;
 
 void GL_StateBeginAlphaLineRGB(float thickness);
-void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
 void R_SetupFrame(void);
 
@@ -361,7 +356,6 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
 
-void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_PopulateConfig(void);
 
 void VK_PrintGfxInfo(void);

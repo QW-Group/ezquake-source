@@ -182,18 +182,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 	// alpha more than 0.5 are wrong.
 	alpha = bound(0.1, alpha, 0.5);
 
-	if (gl_support_arb_texture_non_power_of_two)
-	{	//we can use any size, supposedly
-		vwidth = glwidth;
-		vheight = glheight;
-	}
-	else
-	{	//limit the texture size to square and use padding.
-		while (vwidth < glwidth)
-			vwidth *= 2;
-		while (vheight < glheight)
-			vheight *= 2;
-	}
+	R_TextureSizeRoundUp(glwidth, glheight, &vwidth, &vheight);
 
 	// go 2d
 	GL_PushProjectionMatrix(oldProjectionMatrix);
@@ -237,7 +226,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 		//copy the image into the texture so that we can play with it next frame too!
 		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
-		GL_SetTextureFiltering(sceneblur_texture, texture_minification_linear, texture_magnification_linear);
+		R_SetTextureFiltering(sceneblur_texture, texture_minification_linear, texture_magnification_linear);
 	}
 }
 

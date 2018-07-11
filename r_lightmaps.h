@@ -24,5 +24,6 @@ void R_BuildLightmaps(void);
 qbool R_FullBrightAllowed(void);
 void R_CheckReloadLightmaps(void);
 void R_RenderAllDynamicLightmaps(struct model_s* model);
+void R_LightmapFrameInit(void);
 
 #endif // EZQUAKE_R_LIGHTMAPS_HEADER

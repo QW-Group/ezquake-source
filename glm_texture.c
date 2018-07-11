@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 #include "tr_types.h"
 #include "r_texture_internal.h"
+#include "gl_texture_internal.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
@@ -124,7 +125,7 @@ void GL_LoadTextureManagementFunctions(void)
 }
 
 void GL_TexSubImage3D(
-	GLenum textureUnit, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	int unit, texture_ref texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
@@ -132,8 +133,9 @@ void GL_TexSubImage3D(
 		qglTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	else {
+		GLenum textureUnit = GL_TEXTURE0 + unit;
 		GLenum target = GL_TextureTargetFromReference(texture);
-		GL_BindTextureUnit(textureUnit, texture);
+		R_BindTextureUnit(textureUnit, texture);
 		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));

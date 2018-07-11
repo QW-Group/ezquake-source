@@ -31,6 +31,7 @@ void R_PolyBlend(void);
 void R_EnsureFinished(void);
 void R_PreRenderView(void);
 void R_OnDisconnect(void);
+void R_StateDefault3D(void);
 
 // 2d rendering
 void R_FlushImageDraw(void);
@@ -61,6 +62,7 @@ extern cvar_t vid_renderer;
 
 // textures
 void R_TextureUnitBind(int unit, texture_ref texture);
+void R_BindTextures(int first_unit, int num_textures, texture_ref* textures);
 
 // bloom.c
 void R_InitBloomTextures(void);

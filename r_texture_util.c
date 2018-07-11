@@ -10,14 +10,7 @@ void R_TextureUtil_ScaleDimensions(int width, int height, int *scaled_width, int
 	qbool scale = (mode & TEX_MIPMAP) && !(mode & TEX_NOSCALE);
 	extern cvar_t gl_picmip;
 
-	if (gl_support_arb_texture_non_power_of_two) {
-		*scaled_width = width;
-		*scaled_height = height;
-	}
-	else {
-		Q_ROUND_POWER2(width, *scaled_width);
-		Q_ROUND_POWER2(height, *scaled_height);
-	}
+	R_TextureSizeRoundUp(width, height, scaled_width, scaled_height);
 
 	if (scale) {
 		picmip = (int)bound(0, gl_picmip.value, 16);

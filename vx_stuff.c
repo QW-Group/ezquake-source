@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sbar.h"
 #include "fonts.h"
 #include "r_texture.h"
+#include "qmb_particles.h"
 
 corona_texture_t corona_textures[CORONATEX_COUNT];
 
@@ -298,6 +299,11 @@ void SCR_DrawAMFstats(void)
 void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
+
+	if (!qmb_initialized) {
+		// FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
+		return;
+	}
 
 	corona_textures[CORONATEX_STANDARD].texnum = R_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
 	corona_textures[CORONATEX_GUNFLASH].texnum = R_LoadTextureImage("textures/gunflash", NULL, 0, 0, flags);

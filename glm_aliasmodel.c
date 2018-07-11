@@ -598,7 +598,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			R_TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
 		}
 		else if (instr->num_textures[i]) {
-			GL_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
+			R_BindTextures(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
 		GL_MultiDrawArraysIndirect(

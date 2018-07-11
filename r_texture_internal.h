@@ -48,7 +48,6 @@ void R_TextureUtil_SetFiltering(texture_ref texture);
 gltexture_t* GL_NextTextureSlot(r_texture_type_id target);
 qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth);
 void GL_AllocateTextureNames(gltexture_t* glt);
-void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, texture_magnification_id mag_mode);
 gltexture_t* R_FindTexture(const char *identifier);
 
 void R_TextureRegisterCvars(void);

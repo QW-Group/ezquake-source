@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_particles.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "gl_texture_internal.h"
 
 extern texture_ref particletexture;
 texture_ref particletexture_array;
@@ -47,7 +48,7 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 			int height = R_TextureHeight(array_ref->ref);
 			byte* data = Classic_CreateParticleTexture(width, height);
 
-			GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			GL_TexSubImage3D(0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 			Q_free(data);
 		}
@@ -66,7 +67,7 @@ void GLM_LoadParticleTextures(void)
 		int height = R_TextureHeight(particletexture_array);
 		byte* data = Classic_CreateParticleTexture(width, height);
 
-		GL_TexSubImage3D(GL_TEXTURE0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GL_TexSubImage3D(0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		GL_GenerateMipmap(particletexture_array);
 
 		Q_free(data);

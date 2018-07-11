@@ -45,10 +45,15 @@ void GLM_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t 
 	GL_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
 }
 
-void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale_, vec3_t up, vec3_t right)
+void GLM_DrawSimpleItem(model_t* m, int skin, vec3_t origin, float scale_, vec3_t up, vec3_t right)
 {
-	r_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
-	if (vert) {
+	texture_ref texture_array = m->simpletexture_array[skin];
+	int texture_index = m->simpletexture_indexes[skin];
+	float scale_s = m->simpletexture_scalingS[skin];
+	float scale_t = m->simpletexture_scalingT[skin];
+	r_sprite3d_vert_t* vert;
+
+	if (vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index)) {
 		GLM_RenderSprite(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
 	}
 }

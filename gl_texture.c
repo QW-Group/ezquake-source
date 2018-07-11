@@ -32,6 +32,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "r_local.h"
 #include "r_aliasmodel.h" // for shelltexture only
 #include "r_lighting.h"
+#include "gl_texture_internal.h"
 
 const texture_ref null_texture_reference = { 0 };
 GLenum gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;

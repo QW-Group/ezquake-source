@@ -110,6 +110,10 @@ void R_TextureWrapModeClamp(texture_ref tex);
 void R_TextureAnisotropyChanged(texture_ref tex);
 qbool R_ExternalTexturesEnabled(qbool worldmodel);
 
+void R_SetNonPowerOfTwoSupport(qbool supported);
+void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* height);
+void R_CreateTextures(r_texture_type_id type, int count, texture_ref* texture);
+
 #ifdef WITH_OPENGL_TRACE
 const char* R_TextureIdentifier(texture_ref ref);
 #endif
@@ -144,5 +148,7 @@ typedef enum {
 	texture_type_cubemap,
 	texture_type_count
 } r_texture_type_id;
+
+void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, texture_magnification_id mag_mode);
 
 #endif	// EZQUAKE_R_TEXTURE_H

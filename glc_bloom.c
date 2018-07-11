@@ -304,7 +304,7 @@ static void GLC_Bloom_GeneratexDiamonds( void )
 	static float intensity;
 
 	// Setup sample size workspace
-	GL_Viewport( 0, 0, sample_width, sample_height );
+	R_Viewport( 0, 0, sample_width, sample_height );
 
 	GL_OrthographicProjection(0, sample_width, sample_height, 0, -10, 100);
 	GL_IdentityModelView();
@@ -398,7 +398,7 @@ static void GLC_Bloom_GeneratexDiamonds( void )
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, sample_width, sample_height);
 
 	// Restore full screen workspace.
-	GL_Viewport( 0, 0, glwidth, glheight );
+	R_Viewport( 0, 0, glwidth, glheight );
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	GL_IdentityModelView();
 }                                           
@@ -468,7 +468,7 @@ void GLC_BloomBlend(void)
 	}
 
 	// Set up full screen workspace.
-	GL_Viewport(0, 0, glwidth, glheight);
+	R_Viewport(0, 0, glwidth, glheight);
 	GL_Disable(GL_DEPTH_TEST);
 	GL_OrthographicProjection(0, glwidth, glheight, 0, -10, 100);
 	GL_IdentityModelView();

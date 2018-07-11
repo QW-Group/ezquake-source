@@ -229,7 +229,7 @@ static void GL_StartWorldBatch(void)
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
 		std_textures[TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE] = alphaskytexture;
 	}
-	GL_BindTextures(0, TEXTURE_UNIT_MATERIAL, std_textures);
+	R_BindTextures(0, TEXTURE_UNIT_MATERIAL, std_textures);
 }
 
 void GLM_EnterBatchedWorldRegion(void)
@@ -636,7 +636,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		}
 
 		// Bind texture units
-		GL_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		R_BindTextures(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
 		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
 			if (drawcall->polygonOffsetSplit) {

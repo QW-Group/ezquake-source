@@ -27,8 +27,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "r_brushmodel_sky.h"
 #include "r_trace.h"
+#include "r_state.h"
 
 static void R_AllocateTextureNames(gltexture_t* glt);
+
+// move to api
+void R_TextureLabel(unsigned int texnum, const char* identifier);
+void GL_BindTextures(int unit, int count, texture_ref* textures);
+void GL_TextureLabel(unsigned int texnum, const char* identifier);
+void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
+void GL_AllocateStorage(gltexture_t* glt);
+void GL_GenerateMipmap(texture_ref texture);
+void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
+void GL_TextureWrapModeClamp(texture_ref tex);
+void GL_DeleteTexture(texture_ref texture);
+void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
 
 gltexture_t  gltextures[MAX_GLTEXTURES];
 static int   numgltextures = 1;
@@ -280,10 +293,10 @@ void R_Texture_Init(void)
 	numgltextures = 1;
 	next_free_texture = 0;
 
-	GL_InitTextureState();
+	R_InitTextureState();
 
 	// Motion blur.
-	GL_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
+	R_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
 
 	// Powerup shells.
 	R_TextureReferenceInvalidate(shelltexture); // Force reload.
@@ -430,7 +443,7 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 				// so that we can be really sure this is the correct texture.
 				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
 					if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-						GL_BindTextureUnit(0, glt->reference);
+						R_TextureUnitBind(0, glt->reference);
 					}
 					*new_texture = false;
 					return glt;
@@ -500,7 +513,7 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 	}
 
 	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_BindTextureUnit(0, glt->reference);
+		R_TextureUnitBind(0, glt->reference);
 	}
 	return glt;
 }
@@ -606,5 +619,25 @@ void R_TextureLabel(unsigned int texnum, const char* identifier)
 	}
 	else if (R_UseVulkan()) {
 		// VK_TextureLabel(...);
+	}
+}
+
+void R_BindTextures(int unit, int count, texture_ref* textures)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_BindTextures(unit, count, textures);
+	}
+	else if (R_UseVulkan()) {
+		//VK_BindTextures(unit, count, textures);
+	}
+}
+
+void R_CreateTextures(r_texture_type_id type, int count, texture_ref* textures)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_CreateTextures(type, count, textures);
+	}
+	else if (R_UseVulkan()) {
+		//VK_BindTextures(unit, count, textures);
 	}
 }

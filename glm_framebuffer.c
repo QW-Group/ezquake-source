@@ -119,13 +119,13 @@ qbool GL_Framebuffer2DSwitch(void)
 {
 	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
 		if (VID_FramebufferInit(&framebuffer2d, glConfig.vidWidth, glConfig.vidHeight, false)) {
-			GL_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+			R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 			glClear(GL_COLOR_BUFFER_BIT);
 			return true;
 		}
 	}
 	
-	GL_Viewport(glx, gly, glwidth, glheight);
+	R_Viewport(glx, gly, glwidth, glheight);
 	return false;
 }
 
@@ -205,7 +205,7 @@ void GLM_FramebufferPostProcessScreen(void)
 	qbool framebuffer_active = (GL_FramebufferReferenceIsValid(framebuffer3d) || GL_FramebufferReferenceIsValid(framebuffer2d));
 
 	if (framebuffer_active) {
-		GL_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
+		R_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 
 		VID_FramebufferFlip();
 

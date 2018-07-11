@@ -53,7 +53,6 @@ cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SIL
 cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
 // GL_ARB_texture_non_power_of_two
-qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 /************************************* EXTENSIONS *************************************/
@@ -135,10 +134,14 @@ static void GL_CheckExtensions(void)
 	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
 	Cvar_ResetCurrentGroup();
 
-	gl_support_arb_texture_non_power_of_two =
-		gl_ext_arb_texture_non_power_of_two.integer && SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two");
-	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n",
-		gl_support_arb_texture_non_power_of_two ? "found" : "not found");
+	{
+		qbool supported = gl_ext_arb_texture_non_power_of_two.integer && SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two");
+
+		R_SetNonPowerOfTwoSupport(supported);
+
+		Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n",
+			supported ? "found" : "not found");
+	}
 }
 
 static void GL_CheckMultiTextureExtensions(void)

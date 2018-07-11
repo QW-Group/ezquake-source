@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_matrix.h"
 #include "r_draw.h"
+#include "gl_texture_internal.h"
 
 static qbool glc_pause_updates;
 

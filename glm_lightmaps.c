@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_lightmaps_internal.h"
 #include "glm_local.h"
+#include "gl_texture_internal.h"
 
 // Hardware lighting: flag surfaces as we add them
 static buffer_ref ssbo_surfacesTodo;
@@ -171,19 +172,19 @@ void GLM_RenderDynamicLightmaps(msurface_t* s, qbool world)
 void GLM_BuildLightmap(int i)
 {
 	GL_TexSubImage3D(
-		GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
+		0, lightmap_texture_array, 0, 0, 0, i,
 		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 		lightmaps[i].rawdata
 	);
 
 	GL_TexSubImage3D(
-		GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
+		0, lightmap_source_array, 0, 0, 0, i,
 		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
 		lightmaps[i].sourcedata
 	);
 
 	GL_TexSubImage3D(
-		GL_TEXTURE0, lightmap_data_array, 0, 0, 0, i,
+		0, lightmap_data_array, 0, 0, 0, i,
 		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_INT,
 		lightmaps[i].computeData
 	);
@@ -194,5 +195,5 @@ void GLM_UploadLightmap(int textureUnit, int lightmapnum)
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
-	GL_TexSubImage3D(GL_TEXTURE0 + textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 }

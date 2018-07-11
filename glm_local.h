@@ -156,7 +156,6 @@ void GLM_InitialiseProgramState(void);
 void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
 
-
 #define GLM_VERTEX_SHADER   0
 #define GLM_FRAGMENT_SHADER 1
 #define GLM_GEOMETRY_SHADER 2

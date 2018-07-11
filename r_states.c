@@ -29,7 +29,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_matrix.h"
 #include "tr_types.h"
 
+void GL_InitTextureState(void);
+
 extern texture_ref solidskytexture, alphaskytexture;
+static int currentViewportX, currentViewportY;
+static int currentViewportWidth, currentViewportHeight;
 
 void R_InitialiseWorldStates(void)
 {
@@ -318,7 +322,7 @@ float R_WaterAlpha(void)
 	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 }
 
-void GL_StateDefault3D(void)
+void R_StateDefault3D(void)
 {
 	GL_ResetRegion(false);
 
@@ -700,5 +704,15 @@ void GLM_StateBeginAliasModelBatch(qbool translucent)
 	}
 	else {
 		R_ApplyRenderingState(r_state_aliasmodel_opaque_batch);
+	}
+}
+
+void R_InitTextureState(void)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_InitTextureState();
+	}
+	else if (R_UseVulkan()) {
+		//VK_InitTextureState();
 	}
 }

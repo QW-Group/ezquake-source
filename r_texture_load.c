@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "image.h"
 #include "crc.h"
+#include "gl_texture.h"
 
 static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp);
 
@@ -35,6 +36,7 @@ static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *dat
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
 static const texture_ref invalid_texture_reference = { 0 };
+static qbool r_texture_support_non_power_of_two;
 
 #define Block24BitTextures (COM_CheckParm(cmdline_param_client_no24bittextures) || gl_no24bit.integer)
 #define ForceTextureReload (COM_CheckParm(cmdline_param_client_forcetexturereload))
@@ -143,14 +145,7 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 		R_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 	}
 
-	if (gl_support_arb_texture_non_power_of_two) {
-		width = pic.width;
-		height = pic.height;
-	}
-	else {
-		Q_ROUND_POWER2(pic.width, width);
-		Q_ROUND_POWER2(pic.height, height);
-	}
+	R_TextureSizeRoundUp(pic.width, pic.height, &width, &height);
 
 	strlcpy(identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 
@@ -412,14 +407,7 @@ texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 	char fullname[MAX_QPATH] = "pic:";
 	byte *src, *dest, *buf;
 
-	if (gl_support_arb_texture_non_power_of_two) {
-		glwidth = pic->width;
-		glheight = pic->height;
-	}
-	else {
-		Q_ROUND_POWER2(pic->width, glwidth);
-		Q_ROUND_POWER2(pic->height, glheight);
-	}
+	R_TextureSizeRoundUp(pic->width, pic->height, &glwidth, &glheight);
 
 	strlcpy(fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height) {
@@ -475,14 +463,7 @@ static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, 
 	int	tempwidth, tempheight, levels;
 	byte *newdata;
 
-	if (gl_support_arb_texture_non_power_of_two) {
-		tempwidth = width;
-		tempheight = height;
-	}
-	else {
-		Q_ROUND_POWER2(width, tempwidth);
-		Q_ROUND_POWER2(height, tempheight);
-	}
+	R_TextureSizeRoundUp(width, height, &tempwidth, &tempheight);
 
 	newdata = Q_malloc(tempwidth * tempheight * 4);
 
@@ -621,4 +602,21 @@ static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *dat
 			Sys_Error("R_LoadTexture: unknown bpp\n");
 			break;
 	}
+}
+
+void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* height)
+{
+	if (r_texture_support_non_power_of_two) {
+		*width = orig_width;
+		*height = orig_height;
+	}
+	else {
+		Q_ROUND_POWER2(orig_width, (*width));
+		Q_ROUND_POWER2(orig_height, (*height));
+	}
+}
+
+void R_SetNonPowerOfTwoSupport(qbool supported)
+{
+	r_texture_support_non_power_of_two = supported;
 }

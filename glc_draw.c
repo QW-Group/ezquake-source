@@ -46,7 +46,7 @@ void GLC_DrawDisc(void)
 void GLC_HudDrawComplete(void)
 {
 	if (R_TextureReferenceIsValid(glc_last_texture_used)) {
-		GL_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
+		R_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 }
 
@@ -274,7 +274,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	GL_IdentityProjectionView();
 
 	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
-		GL_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
+		R_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 	glc_last_texture_used = ref;
 

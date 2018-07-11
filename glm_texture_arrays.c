@@ -194,12 +194,12 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 #endif
 
 	// Clear
-	GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, 0, 0, index, final_width, final_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, emptyTextureBuffer);
+	GL_TexSubImage3D(0, arrayTexture, 0, 0, 0, index, final_width, final_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, emptyTextureBuffer);
 
 	// Might need to tile multiple times
 	for (x = 0; x < ratio_x; ++x) {
 		for (y = 0; y < ratio_y; ++y) {
-			GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBuffer);
+			GL_TexSubImage3D(0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
 				int array_width = R_TextureWidth(arrayTexture);

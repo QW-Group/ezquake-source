@@ -338,7 +338,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
 
-			GL_BindTextures(0, 2, textures);
+			R_BindTextures(0, 2, textures);
 		}
 		else {
 			R_TextureUnitBind(0, texture);

@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_buffers.h"
 #include "glm_local.h"
+#include "gl_texture_internal.h"
 
 static rendering_state_t states[r_state_count];
 
@@ -455,10 +456,15 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 	GL_BindTextureUnitImpl(unit, reference, true);
 }
 
-void GL_Viewport(int x, int y, int width, int height)
+void R_Viewport(int x, int y, int width, int height)
 {
 	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
-		glViewport(x, y, width, height);
+		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+			glViewport(x, y, width, height);
+		}
+		else if (R_UseVulkan()) {
+			//VK_Viewport(x, y, width, height);
+		}
 
 		currentViewportX = x;
 		currentViewportY = y;
