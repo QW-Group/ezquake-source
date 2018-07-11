@@ -20,16 +20,13 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 */
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
+#include "r_local.h"
 
-static void GL_Screenshot(byte* buffer)
-{
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-}
+void GL_Screenshot(byte* buffer, size_t size);
 
 void R_Screenshot(byte* buffer, size_t size)
 {
-	GL_Screenshot(buffer);
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_Screenshot(buffer, size);
+	}
 }

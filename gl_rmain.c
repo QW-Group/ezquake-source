@@ -1146,8 +1146,3 @@ qbool R_PointIsUnderwater(vec3_t point)
 
 	return ISUNDERWATER(contents);
 }
-
-void GL_EnsureFinished(void)
-{
-	glFinish();
-}

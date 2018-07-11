@@ -212,3 +212,14 @@ void GL_Clear(qbool clear_color)
 {
 	glClear((clear_color ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 }
+
+void GL_EnsureFinished(void)
+{
+	glFinish();
+}
+
+void GL_Screenshot(byte* buffer, size_t size)
+{
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+}

@@ -30,10 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "r_buffers.h"
 
-#ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
 static buffer_ref imageIndexBuffer;
-#endif
 
 static texture_ref glc_last_texture_used;
 
@@ -93,11 +91,7 @@ static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, 
 	targ->tex[1] = t + tex_height;
 }
 
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2)
-#else
 static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, int flags)
-#endif
 {
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
@@ -105,12 +99,6 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 	GLM_MultiplyVector(cachedMatrix, v1, v1);
 	GLM_MultiplyVector(cachedMatrix, v2, v2);
 
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-	targ->x1 = v1[0];
-	targ->y1 = v1[1];
-	targ->x2 = v2[0];
-	targ->y2 = v2[1];
-#else
 	// TL TL BR BR
 	targ[0].pos[0] = v1[0]; targ[0].tex[0] = s;
 	targ[1].pos[0] = v1[0]; targ[1].tex[0] = s;
@@ -123,7 +111,6 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 	targ[3].pos[1] = v2[1]; targ[3].tex[1] = t + t_height;
 
 	targ[0].flags = targ[1].flags = targ[2].flags = targ[3].flags = flags;
-#endif
 }
 
 void GLM_CreateMultiImageProgram(void)
@@ -133,14 +120,6 @@ void GLM_CreateMultiImageProgram(void)
 		(r_smoothcrosshair.integer ? GLM_HUDIMAGES_SMOOTHCROSSHAIR : 0) |
 		(r_smoothimages.integer ? GLM_HUDIMAGES_SMOOTHIMAGES : 0);
 
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
-		GL_VGFDeclare(hud_draw_image);
-
-		// Initialise program for drawing image
-		GLM_CreateVGFProgramWithInclude("Multi-image", GL_VGFParams(hud_draw_image), &multiImageProgram, "#define HUD_IMAGE_GEOMETRY_SHADER\n");
-	}
-#else
 	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
 		char included_definitions[512];
 
@@ -157,7 +136,6 @@ void GLM_CreateMultiImageProgram(void)
 
 		multiImageProgram.custom_options = program_flags;
 	}
-#endif
 
 	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
 		multiImageProgram.uniforms_found = true;
@@ -170,14 +148,6 @@ void GLM_CreateMultiImageProgram(void)
 	if (!R_VertexArrayCreated(vao_hud_images)) {
 		R_GenVertexArray(vao_hud_images);
 
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x1), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, x2), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, s1), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 3, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, s2), 0);
-		GL_ConfigureVertexAttribPointer(&imageVAO, imageVBO, 4, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
-		GL_ConfigureVertexAttribIPointer(&imageVAO, imageVBO, 5, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
-#else
 		if (!GL_BufferReferenceIsValid(imageIndexBuffer)) {
 			GLuint i;
 
@@ -198,7 +168,6 @@ void GLM_CreateMultiImageProgram(void)
 		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
 		GLM_ConfigureVertexAttribIPointer(vao_hud_images, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
 		R_BindVertexArray(vao_none);
-#endif
 	}
 }
 
@@ -219,11 +188,7 @@ void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 			R_TextureUnitBind(0, texture);
 		}
 	}
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-	GL_DrawArrays(GL_POINTS, offset + start, end - start + 1);
-#else
 	GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)index_offset, buffer_offset);
-#endif
 }
 
 static void GLC_CreateImageVAO(void)
@@ -336,11 +301,7 @@ void GLM_PrepareImages(void)
 		GLM_CreateMultiImageProgram();
 
 		if (imageData.imageCount) {
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-			buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
-#else
 			buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
-#endif
 			if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 				// Everything is GL_NEAREST
 				GLM_SamplerSetNearest(0);
@@ -399,15 +360,10 @@ void Draw_AdjustImages(int first, int last, float x_offset)
 
 	if (GL_UseGLSL()) {
 		for (i = first; i < last; ++i) {
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-			imageData.images[i].x1 += x_offset;
-			imageData.images[i].x2 += x_offset;
-#else
 			imageData.images[i * 4 + 0].pos[0] += x_offset;
 			imageData.images[i * 4 + 1].pos[0] += x_offset;
 			imageData.images[i * 4 + 2].pos[0] += x_offset;
 			imageData.images[i * 4 + 3].pos[0] += x_offset;
-#endif
 		}
 	}
 	else {
@@ -451,22 +407,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 
 	if (GL_UseGLSL()) {
 		float alpha = (color[3] * overall_alpha / 255.0f);
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-		imageData.images[imageData.imageCount].colour[0] = color[0] * alpha;
-		imageData.images[imageData.imageCount].colour[1] = color[1] * alpha;
-		imageData.images[imageData.imageCount].colour[2] = color[2] * alpha;
-		imageData.images[imageData.imageCount].colour[3] = color[3] * overall_alpha;
-		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
-
-		imageData.images[imageData.imageCount].s1 = tex_s;
-		imageData.images[imageData.imageCount].s2 = tex_s + tex_width;
-		imageData.images[imageData.imageCount].t1 = tex_t;
-		imageData.images[imageData.imageCount].t2 = tex_t + tex_height;
-
-		imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
-		imageData.images[imageData.imageCount].flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);
-		imageData.images[imageData.imageCount].flags |= (isText ? IMAGEPROG_FLAGS_TEXT : 0);
-#else
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
 
 		img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
@@ -475,7 +415,6 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 		GLM_SetCoordinates(img, x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags);
-#endif
 	}
 	else {
 		int imageIndex = imageData.imageCount * 4;
@@ -510,18 +449,6 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	}
 
 	if (GL_UseGLSL()) {
-#ifdef HUD_IMAGE_GEOMETRY_SHADER
-		float alpha = (color[3] * overall_alpha / 255.0f);
-
-		imageData.images[imageData.imageCount].colour[0] = color[0] * alpha;
-		imageData.images[imageData.imageCount].colour[1] = color[1] * alpha;
-		imageData.images[imageData.imageCount].colour[2] = color[2] * alpha;
-		imageData.images[imageData.imageCount].colour[3] = color[3] * overall_alpha;
-		GLM_SetCoordinates(&imageData.images[imageData.imageCount], x, y, x + width, y + height);
-		imageData.images[imageData.imageCount].s2 = imageData.images[imageData.imageCount].s1 = s;
-		imageData.images[imageData.imageCount].t2 = imageData.images[imageData.imageCount].t1 = t;
-		imageData.images[imageData.imageCount].flags = IMAGEPROG_FLAGS_TEXTURE;
-#else 
 		glm_image_t* img = &imageData.images[imageData.imageCount * 4];
 		float alpha = (color[3] * overall_alpha / 255.0f);
 
@@ -531,7 +458,6 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 		img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 		GLM_SetCoordinates(img, x, y, x + width, y + height, s, 0, t, 0, IMAGEPROG_FLAGS_TEXTURE);
-#endif
 	}
 	else {
 		int imageIndex = imageData.imageCount * 4;
