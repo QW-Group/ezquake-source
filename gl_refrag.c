@@ -21,11 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
-
+#include "r_local.h"
 
 mnode_t	*r_pefragtopnode;
-
 
 //===========================================================================
 
@@ -158,12 +156,13 @@ void R_StoreEfrags (efrag_t **ppefrag) {
 	entity_t *pent;
 	model_t *model;
 	efrag_t *pefrag;
+	extern cvar_t r_drawflame;
 
 	for (pefrag = *ppefrag; pefrag; pefrag = pefrag->leafnext) {
 		pent = pefrag->entity;
 		model = pent->model;
 
-		if ((model->modhint == MOD_FLAME || model->modhint == MOD_FLAME2) && !r_drawflame.value) {
+		if ((model->modhint == MOD_FLAME || model->modhint == MOD_FLAME2) && !r_drawflame.integer) {
 			continue;
 		}
 

@@ -93,10 +93,9 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 // num					= The character to draw.
 // scale				= The scale of the character.
 // apply_overall_alpha	= Should the overall alpha for all drawing apply to this char?
-// color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-float R_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+float R_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, qbool bigchar, qbool gl_statechange, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 

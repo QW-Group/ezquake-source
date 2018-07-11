@@ -21,7 +21,6 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "wad.h"
 #include "stats_grid.h"
 #include "utils.h"
@@ -237,12 +236,12 @@ qbool R_CharAvailable(wchar num)
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-static float Draw_CharacterBaseW(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+static float Draw_CharacterBaseW(float x, float y, wchar num, float scale, qbool apply_overall_alpha, qbool bigchar, qbool gl_statechange, qbool proportional)
 {
 	int original_x = x;
 
 	if (FontAlterCharCoords(&x, &y, num, bigchar, scale, proportional)) {
-		return R_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange, proportional);
+		return R_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, bigchar, gl_statechange, proportional);
 	}
 	return x - original_x;
 }
@@ -254,32 +253,32 @@ static void Draw_ResetCharGLState(void)
 
 void Draw_SCharacter(int x, int y, int num, float scale)
 {
-	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, false);
+	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 float Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
 {
-	float new_x = Draw_CharacterBaseW(x, y, char2wc(num), scale, true, color_white, false, true, proportional);
+	float new_x = Draw_CharacterBaseW(x, y, char2wc(num), scale, true, false, true, proportional);
 	Draw_ResetCharGLState();
 	return new_x;
 }
 
 void Draw_SCharacterW(int x, int y, wchar num, float scale)
 {
-	Draw_CharacterBaseW(x, y, num, scale, true, color_white, false, true, false);
+	Draw_CharacterBaseW(x, y, num, scale, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 void Draw_CharacterW(int x, int y, wchar num)
 {
-	Draw_CharacterBaseW(x, y, num, 1, true, color_white, false, true, false);
+	Draw_CharacterBaseW(x, y, num, 1, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
 void Draw_Character(int x, int y, int num)
 {
-	Draw_CharacterBaseW(x, y, char2wc(num), 1, true, color_white, false, true, false);
+	Draw_CharacterBaseW(x, y, char2wc(num), 1, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
@@ -306,7 +305,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
-	memcpy(rgba, color_white, sizeof(byte) * 4);
+	rgba[0] = rgba[1] = rgba[2] = rgba[3] = 255;
 	if (scr_coloredText.integer && color_count > 0) {
 		COLOR_TO_RGBA(color[0].c, rgba);
 	}
@@ -375,7 +374,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		char_width = Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
+		char_width = Draw_CharacterBaseW(x, y, curr_char, scale, false, bigchar, false, proportional);
 
 		if (max_x && x + char_width > max_x) {
 			R_UndoLastCharacter();
@@ -461,7 +460,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
-	memcpy(rgba, color_white, sizeof(byte) * 4);
+	rgba[0] = rgba[1] = rgba[2] = rgba[3] = 255;
 	if (scr_coloredText.integer && color_count > 0) {
 		COLOR_TO_RGBA(color[color_index].c, rgba);
 	}
@@ -530,7 +529,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
-		x += Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
+		x += Draw_CharacterBaseW(x, y, curr_char, scale, false, bigchar, false, proportional);
 	}
 	Draw_ResetCharGLState();
 
