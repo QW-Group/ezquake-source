@@ -235,7 +235,7 @@ static void GLC_DrawFlat(model_t *model)
 	byte w[3], f[3], sky[3], current[3], desired[3];
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
-	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+	qbool use_vbo = buffers.supported && modelIndexes;
 	int last_lightmap = -2;
 
 	GLC_EnsureVAOCreated(vao_brushmodel_drawflat);
@@ -359,7 +359,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool draw_details = GL_TextureReferenceIsValid(detailtexture) && gl_detail.value;
 	qbool isLumaTexture;
-	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+	qbool use_vbo = buffers.supported && modelIndexes;
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
@@ -752,7 +752,7 @@ static void GLC_BlendLightmaps(void)
 	float *v;
 	extern GLuint* modelIndexes;
 	extern GLuint modelIndexMaximum;
-	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+	qbool use_vbo = buffers.supported && modelIndexes;
 
 	GLC_StateBeginBlendLightmaps(use_vbo);
 

@@ -156,7 +156,7 @@ void R_NewMap(qbool vid_restart)
 		if (GL_UseGLSL()) {
 			GL_BuildCommonTextureArrays(vid_restart);
 		}
-		if (GL_BuffersSupported()) {
+		if (buffers.supported) {
 			GL_CreateModelVBOs(vid_restart);
 		}
 	}

@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 #include "glsl/constants.glsl"
+#include "r_buffers.h"
 
 static buffer_ref GL_CreateInstanceVBO(void)
 {
@@ -39,7 +40,7 @@ static buffer_ref GL_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	return GL_CreateFixedBuffer(buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
+	return buffers.Create(buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
 }
 
 void GL_CreateModelVBOs(qbool vid_restart)

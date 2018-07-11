@@ -2134,7 +2134,7 @@ void CL_Frame (double time)
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 	qbool need_server_frame = false;
-	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || R_BuffersReady();
+	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || buffers.FrameReady();
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2389,7 +2389,7 @@ void CL_Frame (double time)
 	if (render_frame) {
 		R_ParticleFrame();
 
-		R_BufferStartFrame();
+		buffers.StartFrame();
 
 		CachePics_AtlasFrame();
 
@@ -2406,8 +2406,8 @@ void CL_Frame (double time)
 				while (draw_next_view) {
 					draw_next_view = CL_MultiviewAdvanceView();
 					if (!first_view) {
-						R_BufferEndFrame();
-						R_BufferStartFrame();
+						buffers.EndFrame();
+						buffers.StartFrame();
 					}
 					first_view = false;
 

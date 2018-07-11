@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vao.h"
 #include "glc_vao.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
+#include "r_buffers.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
@@ -134,10 +135,10 @@ void GLC_AllocateAliasPoseBuffer(void)
 	}
 
 	if (GL_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
-		aliasmodel_pose_vbo = GL_ResizeBuffer(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
+		aliasmodel_pose_vbo = buffers.Resize(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
 	}
 	else {
-		aliasmodel_pose_vbo = GL_GenFixedBuffer(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, GL_STREAM_DRAW);
+		aliasmodel_pose_vbo = buffers.Create(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, bufferusage_reuse_per_frame);
 	}
 
 	GLC_ConfigureAliasModelState();
@@ -152,7 +153,7 @@ void GLC_FreeAliasPoseBuffer(void)
 void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbool mtex, qbool scrolldir, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
-	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
 	GLenum primitive = GL_TRIANGLE_STRIP;
 
@@ -282,7 +283,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 		} while (--count);
 
 		if (cache) {
-			GL_UpdateBuffer(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
+			buffers.Update(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
 			GL_DrawArrays(primitive, 0, position);
 		}
 		else {
@@ -390,7 +391,7 @@ void GLC_DrawPowerupShell(
 	float scroll[4];
 	float v[3];
 	float shell_size = bound(0, gl_powerupshells_size.value, 20);
-	qbool cache = GL_BuffersSupported() && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
 
 	if (!GL_TextureReferenceIsValid(shelltexture)) {

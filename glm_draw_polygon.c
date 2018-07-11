@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_state.h"
 #include "r_matrix.h"
+#include "r_buffers.h"
 
 static glm_program_t polygonProgram;
 static buffer_ref polygonVBO;
@@ -51,10 +52,10 @@ void GLM_PreparePolygons(void)
 		}
 
 		if (!GL_BufferReferenceIsValid(polygonVBO)) {
-			polygonVBO = GL_CreateFixedBuffer(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
+			polygonVBO = buffers.Create(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
 		}
 		else if (polygonData.polygonVerts[0]) {
-			GL_UpdateBuffer(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
+			buffers.Update(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
 		}
 
 		if (!R_VertexArrayCreated(vao_hud_polygons)) {
@@ -88,7 +89,7 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 void GLM_DrawPolygons(int start, int end)
 {
 	int i;
-	uintptr_t offset = GL_BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
+	uintptr_t offset = buffers.BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
 	R_BindVertexArray(vao_hud_polygons);
 	GL_UseProgram(polygonProgram.program);

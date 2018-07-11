@@ -173,7 +173,7 @@ void GLC_RenderLumas(void)
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
-	qbool use_vbo = GL_BuffersSupported() && modelIndexes;
+	qbool use_vbo = buffers.supported && modelIndexes;
 
 	GLC_StateBeginRenderLumas();
 

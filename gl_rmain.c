@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sky.h"
 #include "r_brushmodel.h"
 #include "r_lighting.h"
-#include "glc_matrix.h"
+#include "r_buffers.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -224,15 +224,6 @@ qbool R_CullSphere(vec3_t centre, float radius)
 	}
 
 	return false;
-}
-
-void R_RotateForEntity(entity_t *e)
-{
-	GL_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
-
-	GL_RotateModelview(e->angles[1], 0, 0, 1);
-	GL_RotateModelview(-e->angles[0], 0, 1, 0);
-	GL_RotateModelview(e->angles[2], 1, 0, 0);
 }
 
 void R_DrawSpriteModel(entity_t *e)
@@ -691,18 +682,6 @@ void R_SetupViewport(void)
 static void R_SetupGL(void)
 {
 	R_SetupViewport();
-
-	GLC_PauseMatrixUpdate();
-	GL_IdentityModelView();
-	GL_RotateModelview(-90, 1, 0, 0);	    // put Z going up
-	GL_RotateModelview(90, 0, 0, 1);	    // put Z going up
-	GL_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
-	GL_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
-	GL_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
-	GL_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
-	GL_GetModelviewMatrix(r_world_matrix);
-	GLC_ResumeMatrixUpdate();
-	GLC_LoadModelviewMatrix();
 
 	GL_StateDefault3D();
 
@@ -1172,19 +1151,4 @@ qbool R_PointIsUnderwater(vec3_t point)
 void R_EnsureFinished(void)
 {
 	glFinish();
-}
-
-void R_BufferStartFrame(void)
-{
-	GL_BufferStartFrame();
-}
-
-void R_BufferEndFrame(void)
-{
-	GL_BufferEndFrame();
-}
-
-qbool R_BuffersReady(void)
-{
-	return GL_BuffersReady();
 }

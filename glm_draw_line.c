@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_state.h"
 #include "r_matrix.h"
+#include "r_buffers.h"
 
 static glm_program_t line_program;
 static buffer_ref line_vbo;
@@ -36,10 +37,10 @@ void GLM_PrepareLines(void)
 {
 	if (GL_UseGLSL()) {
 		if (!GL_BufferReferenceIsValid(line_vbo)) {
-			line_vbo = GL_CreateFixedBuffer(buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
+			line_vbo = buffers.Create(buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
 		}
 		else if (lineData.lineCount) {
-			GL_UpdateBuffer(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
+			buffers.Update(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
 		}
 
 		if (!R_VertexArrayCreated(vao_hud_lines)) {
@@ -97,7 +98,7 @@ void GLM_DrawLines(int start, int end)
 {
 	if (line_program.program && R_VertexArrayCreated(vao_hud_lines)) {
 		int i;
-		uintptr_t offset = GL_BufferOffset(line_vbo) / sizeof(glm_line_point_t);
+		uintptr_t offset = buffers.BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
 		GL_UseProgram(line_program.program);
 		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());

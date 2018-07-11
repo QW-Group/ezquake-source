@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "vk_vao.h"
 #include "r_matrix.h"
+#include "r_buffers.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
@@ -44,10 +45,6 @@ void R_Initialise2DStates(void);
 void R_InitialiseEntityStates(void);
 void GLC_InitialiseSkyStates(void);
 void R_InitialiseWorldStates(void);
-
-void GL_BindBuffer(buffer_ref ref);
-void GL_SetElementArrayBuffer(buffer_ref buffer);
-const buffer_ref null_buffer_reference = { 0 };
 
 // FIXME: currentWidth & currentHeight should be initialised to dimensions of window
 GLint currentViewportX, currentViewportY;
@@ -546,7 +543,7 @@ void GL_InitialiseState(void)
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
 
-	GL_InitialiseBufferState();
+	buffers.InitialiseState();
 	GL_InitialiseProgramState();
 }
 
@@ -877,7 +874,7 @@ void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
 				GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
 			}
 		}
-		GL_PrintBufferState(debug_frame_out, debug_frame_depth);
+		buffers.PrintState(debug_frame_out, debug_frame_depth);
 		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
 	}
 }
@@ -1142,10 +1139,10 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 {
 	if (enabled) {
 		if (GL_BufferReferenceIsValid(buf)) {
-			GL_BindBuffer(buf);
+			buffers.Bind(buf);
 		}
 		else {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+			buffers.UnBind(GL_ARRAY_BUFFER);
 		}
 		glVertexPointer(size, type, stride, pointer_or_offset);
 		GL_LogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
@@ -1166,10 +1163,10 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 {
 	if (enabled) {
 		if (GL_BufferReferenceIsValid(buf)) {
-			GL_BindBuffer(buf);
+			buffers.Bind(buf);
 		}
 		else {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+			buffers.UnBind(GL_ARRAY_BUFFER);
 		}
 		glColorPointer(size, type, stride, pointer_or_offset);
 		GL_LogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
@@ -1196,10 +1193,10 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 
 	if (enabled) {
 		if (GL_BufferReferenceIsValid(buf)) {
-			GL_BindBuffer(buf);
+			buffers.Bind(buf);
 		}
 		else {
-			GL_UnBindBuffer(GL_ARRAY_BUFFER);
+			buffers.UnBind(GL_ARRAY_BUFFER);
 		}
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glTexCoordPointer(size, type, stride, pointer_or_offset);

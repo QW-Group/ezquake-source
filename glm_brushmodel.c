@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include <limits.h>
 #include "glm_vao.h"
+#include "r_buffers.h"
 
 typedef struct vbo_world_surface_s {
 	float normal[4];
@@ -275,7 +276,7 @@ static void GLM_CreateBrushModelVAO(buffer_ref instance_vbo)
 {
 	// Create vao
 	R_GenVertexArray(vao_brushmodel);
-	GL_BindBuffer(vbo_brushElements);
+	buffers.Bind(vbo_brushElements);
 
 	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
 	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
@@ -333,17 +334,17 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	}
 
 	indexes += max_entity_indexes * MAX_STANDARD_ENTITIES;
-	if (!GL_BufferReferenceIsValid(vbo_brushElements) || indexes > GL_BufferSize(vbo_brushElements) / sizeof(modelIndexes[0])) {
+	if (!GL_BufferReferenceIsValid(vbo_brushElements) || indexes > buffers.Size(vbo_brushElements) / sizeof(modelIndexes[0])) {
 		Q_free(modelIndexes);
 		modelIndexMaximum = indexes;
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
 
 		R_BindVertexArray(vao_none);
 		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
-			vbo_brushElements = GL_ResizeBuffer(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
+			vbo_brushElements = buffers.Resize(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {
-			vbo_brushElements = GL_CreateFixedBuffer(buffertype_index, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, bufferusage_once_per_frame);
+			vbo_brushElements = buffers.Create(buffertype_index, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, bufferusage_once_per_frame);
 		}
 	}
 
@@ -367,7 +368,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	}
 
 	// Copy VBO buffer across
-	brushModel_vbo = GL_CreateFixedBuffer(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
+	brushModel_vbo = buffers.Create(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
 	if (GL_UseGLSL()) {
 		GLM_CreateBrushModelVAO(instance_vbo);
@@ -383,9 +384,9 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 				memcpy(surfaces[i].tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
 				memcpy(surfaces[i].tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
 			}
-			worldModel_surfaces_ssbo = GL_CreateFixedBuffer(buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
+			worldModel_surfaces_ssbo = buffers.Create(buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
 			Q_free(surfaces);
-			GL_BindBufferBase(worldModel_surfaces_ssbo, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
+			buffers.BindBase(worldModel_surfaces_ssbo, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 		}
 	}
 

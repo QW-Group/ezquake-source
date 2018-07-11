@@ -241,8 +241,6 @@ void GL_LoadDrawFunctions(void);
 void GL_InitialiseDebugging(void);
 void GL_CheckMultiTextureExtensions(void);
 
-qbool GL_BuffersSupported(void);
-
 extern cvar_t vid_renderer;
 extern cvar_t vid_gl_core_profile;
 
@@ -502,7 +500,6 @@ void GL_ProcessErrors(const char* message);
 #endif
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
-void GL_DeleteBuffers(void);
 //void GL_DeleteVAOs(void);
 
 void GLC_FreeAliasPoseBuffer(void);
@@ -673,12 +670,9 @@ typedef struct glm_worldmodel_req_s {
 struct custom_model_color_s;
 
 void GLC_StateBeginAliasOutlineFrame(void);
-
 void GLM_StateBeginAliasOutlineBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent);
-
 void GL_StateBeginPolyBlend(void);
-
 void GLC_StateBeginBrightenScreen(void);
 void GLC_StateBeginFastSky(void);
 void GLC_StateBeginSkyZBufferPass(void);
@@ -699,29 +693,18 @@ void GL_StateBeginAlphaLineRGB(float thickness);
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model);
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
-
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
 void GL_StateDefault2D(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
-
 void GLC_StateBeginBloomDraw(texture_ref texture);
-
 void GLC_StateBeginImageDraw(qbool is_text);
 void GLC_StateBeginPolyBlend(float v_blend[4]);
 void GLC_StateBeginDrawPolygon(void);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
-
-void GLC_PauseMatrixUpdate(void);
-void GLC_ResumeMatrixUpdate(void);
-void GLC_LoadMatrix(GLenum matrix);
-void GLC_AllocateAliasPoseBuffer(void);
 void R_SetupFrame(void);
-
-void GLC_BeginCausticsTextureMatrix(void);
-void GLC_EndCausticsTextureMatrix(void);
 
 void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
@@ -753,45 +736,6 @@ void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indi
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride);
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
 qbool GL_DrawElementsBaseVertexAvailable(void);
-
-// Buffers
-typedef enum {
-	bufferusage_unknown,
-	bufferusage_once_per_frame,     // filled & used once per frame
-	bufferusage_reuse_per_frame,    // filled & used many times per frame
-	bufferusage_reuse_many_frames,  // filled once, expect to use many times over subsequent frames
-	bufferusage_constant_data       // filled once, never updated again
-} bufferusage_t;
-
-typedef enum {
-	buffertype_unknown,
-	buffertype_vertex,
-	buffertype_index,
-	buffertype_storage,
-	buffertype_uniform,
-	buffertype_indirect
-} buffertype_t;
-
-buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage);
-void GL_BufferStartFrame(void);
-void GL_BufferEndFrame(void);
-qbool GL_BuffersReady(void);
-uintptr_t GL_BufferOffset(buffer_ref ref);
-
-// gl_buffers.c
-void GL_InitialiseBufferHandling(void);
-void GL_InitialiseBufferState(void);
-buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, GLsizei size, void* data, GLenum usage);
-void GL_BindAndUpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_UpdateBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_UpdateBufferSection(buffer_ref vbo, GLintptr offset, GLsizei size, const GLvoid* data);
-void GL_BindBuffer(buffer_ref ref);
-void GL_BindBufferBase(buffer_ref ref, GLuint index);
-void GL_BindBufferRange(buffer_ref ref, GLuint index, GLintptr offset, GLsizeiptr size);
-void GL_UnBindBuffer(GLenum target);
-buffer_ref GL_ResizeBuffer(buffer_ref vbo, GLsizei size, void* data);
-void GL_EnsureBufferSize(buffer_ref ref, GLsizei size);
-size_t GL_BufferSize(buffer_ref vbo);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 

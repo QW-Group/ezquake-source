@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_state.h"
 #include "glc_vao.h"
+#include "glc_matrix.h"
 
 static rendering_state_t worldTextureChainState;
 static rendering_state_t worldTextureChainFullbrightState;

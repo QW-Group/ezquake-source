@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 #include "r_lighting.h"
 #include "r_matrix.h"
+#include "r_buffers.h"
 
 static buffer_ref ubo_frameConstants;
 static uniform_block_frame_constants_t frameConstants;
@@ -168,11 +169,11 @@ void GLM_UploadFrameConstants(void)
 {
 	if (!frameConstantsUploaded) {
 		if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
-			ubo_frameConstants = GL_CreateFixedBuffer(buffertype_uniform, "frameConstants", sizeof(frameConstants), &ubo_frameConstants, bufferusage_once_per_frame);
+			ubo_frameConstants = buffers.Create(buffertype_uniform, "frameConstants", sizeof(frameConstants), &ubo_frameConstants, bufferusage_once_per_frame);
 		}
 
-		GL_BindBufferRange(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS, GL_BufferOffset(ubo_frameConstants), sizeof(frameConstants));
-		GL_UpdateBuffer(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
+		buffers.BindRange(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS, buffers.BufferOffset(ubo_frameConstants), sizeof(frameConstants));
+		buffers.Update(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
 		frameConstantsUploaded = true;
 	}
 }

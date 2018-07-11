@@ -57,6 +57,7 @@ void Sys_ActiveAppChanged (void);
 #include "r_texture.h"
 #include "qmb_particles.h"
 #include "r_state.h"
+#include "r_buffers.h"
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -764,7 +765,7 @@ void VID_Shutdown(qbool restart)
 	GL_LightmapShutdown();
 	GLM_DeleteBrushModelIndexBuffer();
 	R_DeleteVAOs();
-	GL_DeleteBuffers();
+	buffers.Shutdown();
 	GL_DeleteTextures();
 	GL_DeleteSamplers();
 	GL_InvalidateAllTextureReferences();
@@ -1269,7 +1270,9 @@ static void VID_SDL_Init(void)
 
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
-	
+
+	R_InitialiseBufferHandling();
+
 	SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &r);
 	SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &g);
 	SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &b);
@@ -1394,7 +1397,7 @@ void GL_EndRendering (void)
 		}
 	}
 
-	GL_BufferEndFrame();
+	buffers.EndFrame();
 }
 
 void VID_SetCaption (char *text)

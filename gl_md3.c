@@ -265,7 +265,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	mod->flags = Mod_ReadFlagsFromMD1(mod->name, mem->flags);
 
-	if (GL_BuffersSupported()) {
+	if (buffers.supported) {
 		GLM_MakeAlias3DisplayLists(mod);
 	}
 }

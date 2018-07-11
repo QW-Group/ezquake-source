@@ -36,7 +36,6 @@ void GL_MarkEvent(const char* message, ...);
 qbool GL_LoggingEnabled(void);
 void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
 void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
-void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth);
 #else
 #define ENTER_STATE
 #define MIDDLE_STATE
@@ -53,7 +52,6 @@ void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth);
 #define GL_LoggingEnabled() (false)
 #define GL_ObjectLabel(...)
 #define GL_GetObjectLabel(...)
-#define GL_PrintBufferState(...)
 #endif
 
 #endif // EZQUAKE_R_TRACE_HEADER

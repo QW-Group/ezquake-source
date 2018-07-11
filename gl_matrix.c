@@ -353,6 +353,15 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
 
+void R_RotateForEntity(entity_t *e)
+{
+	GL_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
+
+	GL_RotateModelview(e->angles[1], 0, 0, 1);
+	GL_RotateModelview(-e->angles[0], 0, 1, 0);
+	GL_RotateModelview(e->angles[2], 1, 0, 0);
+}
+
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz)
 {
 	float model[16], proj[16];

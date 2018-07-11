@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_state.h"
 #include "glc_vao.h"
+#include "r_buffers.h"
 
 #ifndef HUD_IMAGE_GEOMETRY_SHADER
 static GLuint imageIndexData[MAX_MULTI_IMAGE_BATCH * 5];
@@ -163,7 +164,7 @@ void GLM_CreateMultiImageProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = GL_CreateFixedBuffer(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
+		imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 	}
 
 	if (!R_VertexArrayCreated(vao_hud_images)) {
@@ -188,10 +189,10 @@ void GLM_CreateMultiImageProgram(void)
 				imageIndexData[i * 5 + 4] = ~(GLuint)0;
 			}
 
-			imageIndexBuffer = GL_CreateFixedBuffer(buffertype_index, "image-indexes", sizeof(imageIndexData), imageIndexData, bufferusage_constant_data);
+			imageIndexBuffer = buffers.Create(buffertype_index, "image-indexes", sizeof(imageIndexData), imageIndexData, bufferusage_constant_data);
 		}
 
-		GL_BindBuffer(imageIndexBuffer);
+		buffers.Bind(imageIndexBuffer);
 		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
 		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
 		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
@@ -204,7 +205,7 @@ void GLM_CreateMultiImageProgram(void)
 void GLM_DrawImageArraySequence(texture_ref texture, int start, int end)
 {
 	uintptr_t index_offset = (start * 5 * sizeof(GLuint));
-	uintptr_t buffer_offset = GL_BufferOffset(imageVBO) / sizeof(imageData.images[0]);
+	uintptr_t buffer_offset = buffers.BufferOffset(imageVBO) / sizeof(imageData.images[0]);
 
 	GL_UseProgram(multiImageProgram.program);
 	GLM_StateBeginImageDraw();
@@ -256,7 +257,7 @@ void GLC_DrawImageArraySequence(texture_ref ref, int start, int end)
 	int i;
 	extern cvar_t scr_coloredText;
 
-	if (GL_BuffersSupported()) {
+	if (buffers.supported) {
 		if (!R_VertexArrayCreated(vao_hud_images)) {
 			GLC_CreateImageVAO();
 		}
@@ -336,9 +337,9 @@ void GLM_PrepareImages(void)
 
 		if (imageData.imageCount) {
 #ifdef HUD_IMAGE_GEOMETRY_SHADER
-			GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
+			buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount, imageData.images);
 #else
-			GL_UpdateBuffer(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
+			buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 #endif
 			if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 				// Everything is GL_NEAREST
@@ -350,12 +351,12 @@ void GLM_PrepareImages(void)
 			}
 		}
 	}
-	else if (GL_BuffersSupported()) {
+	else if (buffers.supported) {
 		if (!GL_BufferReferenceIsValid(imageVBO)) {
-			imageVBO = GL_GenFixedBuffer(buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, GL_STREAM_DRAW);
+			imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 		}
 		else {
-			GL_UpdateBuffer(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
+			buffers.Update(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
 		}
 	}
 	else {

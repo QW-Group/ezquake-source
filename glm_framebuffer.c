@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_framebuffer.h"
 #include "tr_types.h"
 #include "glm_vao.h"
+#include "r_buffers.h"
 
 static qbool GLM_CompilePostProcessProgram(void);
 
@@ -182,7 +183,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		verts[3][3] = 1;
 		verts[3][4] = 1;
 
-		post_process_vbo = GL_CreateFixedBuffer(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
+		post_process_vbo = buffers.Create(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
 	}
 
 	if (GL_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {

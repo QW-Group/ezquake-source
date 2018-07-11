@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_state.h"
 #include "r_matrix.h"
+#include "r_buffers.h"
 
 static glm_program_t circleProgram;
 static buffer_ref circleVBO;
@@ -40,7 +41,7 @@ void GLM_DrawCircles(int start, int end)
 {
 	// FIXME: Not very efficient (but rarely used either)
 	int i;
-	uintptr_t offset = GL_BufferOffset(circleVBO) / (sizeof(float) * 2);
+	uintptr_t offset = buffers.BufferOffset(circleVBO) / (sizeof(float) * 2);
 
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);
@@ -77,10 +78,10 @@ void GLM_PrepareCircles(void)
 
 		// Build VBO
 		if (!GL_BufferReferenceIsValid(circleVBO)) {
-			circleVBO = GL_CreateFixedBuffer(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
+			circleVBO = buffers.Create(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
 		}
 		else if (circleData.circleCount) {
-			GL_UpdateBuffer(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
+			buffers.Update(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
 		}
 
 		// Build VAO

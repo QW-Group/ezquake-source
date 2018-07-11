@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_lightmaps.h"
 #include "r_lighting.h"
+#include "r_buffers.h"
 
 // Lightmap size
 #define	LIGHTMAP_WIDTH  128
@@ -497,15 +498,15 @@ void R_UploadChangedLightmaps(void)
 			}
 
 			if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
-				ssbo_lightingData = GL_CreateFixedBuffer(buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
+				ssbo_lightingData = buffers.Create(buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
 			}
 			else {
-				GL_UpdateBuffer(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+				buffers.Update(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
 			}
-			GL_BindBufferRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, GL_BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
+			buffers.BindRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
 
-			GL_UpdateBuffer(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
-			GL_BindBufferRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, GL_BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
+			buffers.Update(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
+			buffers.BindRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
 
 			GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 			GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -808,10 +809,10 @@ void R_BuildLightmaps(void)
 		Q_free(surfaceTodoData);
 		surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
 		if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
-			ssbo_surfacesTodo = GL_CreateFixedBuffer(buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
+			ssbo_surfacesTodo = buffers.Create(buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
 		}
 		else {
-			GL_EnsureBufferSize(ssbo_surfacesTodo, surfaceTodoLength);
+			buffers.EnsureSize(ssbo_surfacesTodo, surfaceTodoLength);
 		}
 
 		GLM_CreateLightmapTextures();

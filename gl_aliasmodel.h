@@ -77,6 +77,7 @@ void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int p
 
 void GLC_StateBeginAliasPowerupShell(void);
 void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);
+void GLC_AllocateAliasPoseBuffer(void);
 
 void R_DrawAliasModel(entity_t *ent);
 void R_DrawAliasPowerupShell(entity_t *ent);

@@ -21,8 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "glm_vao.h"
-
-void GL_SetElementArrayBuffer(buffer_ref buffer);
+#include "r_buffers.h"
 
 typedef struct r_vao_s {
 	GLuint vao;
@@ -70,7 +69,7 @@ void GLM_BindVertexArray(r_vao_id vao)
 {
 	qglBindVertexArray(vaos[vao].vao);
 	if (vao) {
-		GL_SetElementArrayBuffer(vaos[vao].element_array_buffer);
+		buffers.SetElementArray(vaos[vao].element_array_buffer);
 	}
 }
 
@@ -81,10 +80,10 @@ void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index
 
 	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
+		buffers.Bind(vbo);
 	}
 	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		buffers.UnBind(GL_ARRAY_BUFFER);
 	}
 
 	qglEnableVertexAttribArray(index);
@@ -99,10 +98,10 @@ void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint inde
 
 	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(vbo)) {
-		GL_BindBuffer(vbo);
+		buffers.Bind(vbo);
 	}
 	else {
-		GL_UnBindBuffer(GL_ARRAY_BUFFER);
+		buffers.UnBind(GL_ARRAY_BUFFER);
 	}
 
 	qglEnableVertexAttribArray(index);
@@ -117,10 +116,10 @@ void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
 
 	R_BindVertexArray(vao);
 	if (GL_BufferReferenceIsValid(ibo)) {
-		GL_BindBuffer(ibo);
+		buffers.Bind(ibo);
 	}
 	else {
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		buffers.UnBind(GL_ELEMENT_ARRAY_BUFFER);
 	}
 }
 
@@ -132,7 +131,7 @@ void GLM_GenVertexArray(r_vao_id vao, const char* name)
 	qglGenVertexArrays(1, &vaos[vao].vao);
 	R_BindVertexArray(vao);
 	GL_ObjectLabel(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
-	GL_SetElementArrayBuffer(null_buffer_reference);
+	buffers.SetElementArray(null_buffer_reference);
 }
 
 void GLM_DeleteVAOs(void)

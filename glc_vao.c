@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vao.h"
 #include "glc_state.h"
 #include "glc_vao.h"
+#include "r_buffers.h"
 
 // GLC uses vertex array, all client state
 typedef struct {
@@ -68,10 +69,10 @@ void GLC_BindVertexArray(r_vao_id vao)
 	}
 
 	if (GL_BufferReferenceIsValid(vaos[vao].element_index_buffer)) {
-		GL_BindBuffer(vaos[vao].element_index_buffer);
+		buffers.Bind(vaos[vao].element_index_buffer);
 	}
 	else {
-		GL_UnBindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		buffers.UnBind(buffertype_index);
 	}
 }
 

@@ -25,18 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_state.h"
+#include "r_matrix.h"
+#include "glc_matrix.h"
 
 static rendering_state_t default3DState;
 static rendering_state_t spritesStateGLM;
-static rendering_state_t spritesStateGLC;
 
 void R_InitialiseStates(void)
 {
 	R_InitRenderingState(&default3DState, true, "default3DState", vao_none);
 
 	R_Init3DSpriteRenderingState(&spritesStateGLM, "spritesStateGLM");
-
-	R_Init3DSpriteRenderingState(&spritesStateGLC, "spritesStateGLC");
 }
 
 float GL_WaterAlpha(void)
@@ -50,6 +49,22 @@ void GL_StateDefault3D(void)
 {
 	GL_ResetRegion(false);
 
+	if (R_UseImmediateOpenGL()) {
+		GLC_PauseMatrixUpdate();
+	}
+	GL_IdentityModelView();
+	GL_RotateModelview(-90, 1, 0, 0);	    // put Z going up
+	GL_RotateModelview(90, 0, 0, 1);	    // put Z going up
+	GL_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
+	GL_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
+	GL_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
+	GL_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+	if (R_UseImmediateOpenGL()) {
+		GLC_ResumeMatrixUpdate();
+		GLC_LoadModelviewMatrix();
+	}
+	GL_GetModelviewMatrix(r_world_matrix);
+
 	ENTER_STATE;
 
 	R_ApplyRenderingState(&default3DState);
@@ -60,11 +75,6 @@ void GL_StateDefault3D(void)
 
 void GLM_StateBeginDraw3DSprites(void)
 {
-	ENTER_STATE;
-
-	R_ApplyRenderingState(&spritesStateGLM);
-
-	LEAVE_STATE;
 }
 
 void GL_StateDefaultInit(void)

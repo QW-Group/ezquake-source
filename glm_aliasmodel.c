@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_texture.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
+#include "r_buffers.h"
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -138,11 +139,11 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
-		vbo_aliasIndirectDraw = GL_CreateFixedBuffer(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
+		vbo_aliasIndirectDraw = buffers.Create(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
 	}
 
 	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
-		vbo_aliasDataBuffer = GL_CreateFixedBuffer(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
+		vbo_aliasDataBuffer = buffers.Create(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
 	}
 
 	return drawAliasModelProgram.program;
@@ -270,12 +271,12 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 		}
 	}
 
-	vbo = GL_CreateFixedBuffer(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 
 	if (GL_UseGLSL()) {
 		GL_CreateAliasModelVAO(vbo, instanceVBO);
-		aliasModel_ssbo = GL_CreateFixedBuffer(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
-		GL_BindBufferBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+		aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+		buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 	}
 	else {
 		GLC_AllocateAliasPoseBuffer();
@@ -537,8 +538,8 @@ void GLM_PrepareAliasModelBatches(void)
 	GL_EnterRegion(__FUNCTION__);
 
 	// Update VBO with data about each entity
-	GL_UpdateBuffer(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
-	GL_BindBufferRange(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, GL_BufferOffset(vbo_aliasDataBuffer), sizeof(aliasdata.models[0]) * alias_draw_count);
+	buffers.Update(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
+	buffers.BindRange(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, buffers.BufferOffset(vbo_aliasDataBuffer), sizeof(aliasdata.models[0]) * alias_draw_count);
 
 	// Build & update list of indirect calls
 	{
@@ -560,7 +561,7 @@ void GLM_PrepareAliasModelBatches(void)
 			}
 
 			size = sizeof(instr->indirect_buffer[0]) * total_cmds;
-			GL_UpdateBufferSection(vbo_aliasIndirectDraw, offset, size, instr->indirect_buffer);
+			buffers.UpdateSection(vbo_aliasIndirectDraw, offset, size, instr->indirect_buffer);
 			offset += size;
 		}
 	}
@@ -580,8 +581,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	}
 
 	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std);
-	GL_BindBuffer(vbo_aliasIndirectDraw);
-	extra_offset = GL_BufferOffset(vbo_aliasIndirectDraw);
+	buffers.Bind(vbo_aliasIndirectDraw);
+	extra_offset = buffers.BufferOffset(vbo_aliasIndirectDraw);
 
 	if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 		mode = EZQ_ALIAS_MODE_SHELLS;

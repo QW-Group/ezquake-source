@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_LOCAL_HEADER
 #define EZQUAKE_R_LOCAL_HEADER
 
+#include "r_buffers.h"
+
 extern int glx, gly, glwidth, glheight;
 
 void GL_BeginRendering(int *x, int *y, int *width, int *height);
@@ -37,19 +39,6 @@ void GL_EmptyImageQueue(void);
 // culling
 qbool R_CullBox(vec3_t mins, vec3_t maxs);
 qbool R_CullSphere(vec3_t centre, float radius);
-
-// buffers
-void R_BufferStartFrame(void);
-void R_BufferEndFrame(void);
-qbool R_BuffersReady(void);
-
-typedef struct gl_buffer_s {
-	int index;
-} buffer_ref;
-
-qbool GL_BufferValid(buffer_ref buffer);
-#define GL_BufferReferenceIsValid(x) (x.index && GL_BufferValid(x))
-extern const buffer_ref null_buffer_reference;
 
 // fog
 void R_AddWaterfog(int contents);

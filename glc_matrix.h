@@ -37,4 +37,7 @@ void GLC_ResumeMatrixUpdate(void);
 void GLC_BeginCausticsTextureMatrix(void);
 void GLC_EndCausticsTextureMatrix(void);
 
+void GLC_PauseMatrixUpdate(void);
+void GLC_ResumeMatrixUpdate(void);
+
 #endif // EZQUAKE_GLC_MATRIX_HEADER

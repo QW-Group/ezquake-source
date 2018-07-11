@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "glc_vao.h"
 #include "r_state.h"
+#include "r_buffers.h"
 
 void GLM_Draw3DSprites(void);
 void GLM_Prepare3DSprites(void);
@@ -164,6 +165,10 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s
 	assert(!textured_state || textured_state->initialized);
 	assert(!untextured_state || untextured_state->initialized);
 
+	if (!textured_state) {
+		textured_state = untextured_state;
+	}
+
 	batch->textured_rendering_state = textured_state;
 	batch->untextured_rendering_state = untextured_state;
 	batch->texture = texture;
@@ -191,7 +196,7 @@ r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts
 		return NULL;
 	}
 	batch->firstVertices[batch->count] = start;
-	batch->glFirstVertices[batch->count] = start + GL_BufferOffset(sprite3dVBO) / sizeof(verts[0]);
+	batch->glFirstVertices[batch->count] = start + buffers.BufferOffset(sprite3dVBO) / sizeof(verts[0]);
 	batch->numVertices[batch->count] = verts_required;
 	batch->textures[batch->count] = texture;
 	batch->textureIndexes[batch->count] = texture_index;
@@ -252,7 +257,7 @@ void GL_Draw3DSprites(void)
 static void GL_Create3DSpriteVBO(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
-		sprite3dVBO = GL_CreateFixedBuffer(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
+		sprite3dVBO = buffers.Create(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
 	}
 }
 
@@ -315,7 +320,7 @@ static void GL_Create3DSpriteIndexBuffer(void)
 			}
 		}
 
-		sprite3dIndexes = GL_CreateFixedBuffer(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
+		sprite3dIndexes = buffers.Create(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
 	}
 }
 
@@ -327,7 +332,7 @@ static void GLM_Create3DSpriteVAO(void)
 		R_GenVertexArray(vao_3dsprites);
 
 		GL_Create3DSpriteIndexBuffer();
-		GL_BindBuffer(sprite3dIndexes);
+		buffers.Bind(sprite3dIndexes);
 
 		// position
 		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position), 0);
@@ -342,7 +347,7 @@ static void GLM_Create3DSpriteVAO(void)
 
 static void GLC_Create3DSpriteVAO(void)
 {
-	if (GL_BuffersSupported()) {
+	if (buffers.supported) {
 		R_GenVertexArray(vao_3dsprites);
 		GL_Create3DSpriteVBO();
 		GL_Create3DSpriteIndexBuffer();
@@ -496,7 +501,7 @@ void GLM_Prepare3DSprites(void)
 	GLM_Create3DSpriteVAO();
 
 	if (GL_BufferReferenceIsValid(sprite3dVBO)) {
-		GL_UpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 
 	GL_LeaveRegion();
@@ -519,9 +524,7 @@ void GLM_Draw3DSprites(void)
 		return;
 	}
 
-	GLM_StateBeginDraw3DSprites();
 	GL_UseProgram(sprite3dProgram.program);
-	R_BindVertexArray(vao_3dsprites);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
@@ -537,22 +540,13 @@ void GLM_Draw3DSprites(void)
 		}
 		first_batch = false;
 
+		R_ApplyRenderingState(batch->textured_rendering_state);
 		if (GL_TextureReferenceIsValid(batch->texture)) {
-			if (!batch->textured_rendering_state) {
-				assert(false);
-				continue;
-			}
-			R_ApplyRenderingState(batch->textured_rendering_state);
 			R_TextureUnitBind(0, batch->texture);
 		}
 		else if (!GL_TextureReferenceIsValid(batch->textures[0])) {
 			extern texture_ref particletexture_array;
 
-			if (!batch->textured_rendering_state) {
-				assert(false);
-				continue;
-			}
-			R_ApplyRenderingState(batch->textured_rendering_state);
 			R_TextureUnitBind(0, batch->texture = particletexture_array);
 		}
 
@@ -611,11 +605,11 @@ void GLC_Draw3DSprites(void)
 		return;
 	}
 
-	if (GL_BuffersSupported()) {
+	if (buffers.supported) {
 		if (!R_VertexArrayCreated(vao_3dsprites)) {
 			GLC_Create3DSpriteVAO();
 		}
-		GL_UpdateBuffer(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 
 	for (i = 0; i < batchCount; ++i) {
@@ -625,7 +619,7 @@ void GLC_Draw3DSprites(void)
 			continue;
 		}
 
-		if (GL_BuffersSupported()) {
+		if (buffers.supported) {
 			if (batch->count == 1) {
 				if (GL_TextureReferenceIsValid(batch->textures[0])) {
 					R_TextureUnitBind(0, batch->textures[0]);
