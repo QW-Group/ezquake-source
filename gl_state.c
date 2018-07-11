@@ -892,46 +892,6 @@ qbool GLM_LoadStateFunctions(void)
 	return all_available;
 }
 
-void GL_CheckMultiTextureExtensions(void)
-{
-	extern cvar_t gl_maxtmu2;
-
-	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
-		if (strstr(gl_renderer, "Savage")) {
-			return;
-		}
-		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
-		if (!qglActiveTexture) {
-			qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
-		}
-		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
-		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
-			return;
-		}
-		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
-		gl_mtexable = true;
-
-		qglBindTextures = SDL_GL_GetProcAddress("glBindTextures");
-	}
-
-	gl_textureunits = min(glConfig.texture_units, 4);
-
-	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
-		gl_textureunits = min(gl_textureunits, 2);
-	}
-
-	if (gl_textureunits < 2) {
-		gl_mtexable = false;
-	}
-
-	if (!gl_mtexable) {
-		gl_textureunits = 1;
-	}
-	else {
-		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
-	}
-}
-
 void GLC_ClientActiveTexture(GLenum texture_unit)
 {
 	if (qglClientActiveTexture) {

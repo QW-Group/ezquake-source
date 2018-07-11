@@ -423,7 +423,11 @@ OBJS_c := \
     hud_tracking.o \
     hud_scores.o \
     fonts.o \
-    hud_performance.o
+    hud_performance.o \
+    r_palette.o \
+    glm_sdl.o \
+    glc_sdl.o \
+    vk_sdl.o
 
 ### Configuration Options ###
 

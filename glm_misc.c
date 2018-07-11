@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lighting.h"
 #include "r_matrix.h"
 #include "r_buffers.h"
+#include "glm_local.h"
 
 static buffer_ref ubo_frameConstants;
 static uniform_block_frame_constants_t frameConstants;
@@ -187,3 +188,9 @@ void GLM_PostProcessScreen(void)
 {
 	GLM_FramebufferPostProcessScreen();
 }
+
+void GLM_Shutdown(qbool restarting)
+{
+	GLM_DeletePrograms(restarting);
+}
+

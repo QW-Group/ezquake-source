@@ -2,6 +2,8 @@
 #ifndef GL_ALIASMODEL_HEADER
 #define GL_ALIASMODEL_HEADER
 
+#include "r_buffers.h"
+
 typedef struct custom_model_color_s {
 	cvar_t color_cvar;
 	cvar_t fullbright_cvar;
@@ -74,6 +76,7 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
 void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
+void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
 
 void GLC_StateBeginAliasPowerupShell(void);
 void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldframe, maliasframedesc_t *frame);

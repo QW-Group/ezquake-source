@@ -223,10 +223,6 @@ extern qbool gl_mtexable;
 extern int gl_textureunits;
 extern qbool gl_support_arb_texture_non_power_of_two;
 
-void Check_Gamma (unsigned char *pal);
-void VID_SetPalette (unsigned char *palette);
-void GL_Init (void);
-
 qbool GLM_LoadProgramFunctions(void);
 qbool GLM_LoadStateFunctions(void);
 qbool GLM_LoadTextureManagementFunctions(void);
@@ -234,7 +230,6 @@ void GL_LoadTextureManagementFunctions(void);
 qbool GLM_LoadDrawFunctions(void);
 void GL_LoadDrawFunctions(void);
 void GL_InitialiseDebugging(void);
-void GL_CheckMultiTextureExtensions(void);
 
 extern cvar_t vid_renderer;
 extern cvar_t vid_gl_core_profile;
@@ -417,8 +412,6 @@ void GL_EndDrawAliasModels(void);
 
 void GLM_DrawWaterSurfaces(void);
 
-void GL_BuildCommonTextureArrays(qbool vid_restart);
-
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world);
 void R_DrawViewModel(void);
@@ -487,15 +480,7 @@ void GL_ProcessErrors(const char* message);
 #else
 #define GL_Paranoid_Printf(...)
 #endif
-void GLM_DeletePrograms(qbool restarting);
-void GLM_InitPrograms(void);
 //void GL_DeleteVAOs(void);
-
-void GLC_FreeAliasPoseBuffer(void);
-void CachePics_Shutdown(void);
-
-void GL_LightmapShutdown(void);
-void GLM_DeleteBrushModelIndexBuffer(void);
 
 void GL_InitialiseState(void);
 
@@ -743,14 +728,7 @@ void GL_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
 void GL_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values);
 GLint GL_UniformGetLocation(GLuint program, const char* name);
 
-void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-void GL_MemoryBarrier(GLbitfield barriers);
-
 void GLC_ClientActiveTexture(GLenum texture_unit);
-
-void GLM_SamplerSetNearest(GLuint texture_unit_number);
-void GLM_SamplerClear(GLuint texture_unit_number);
-void GL_DeleteSamplers(void);
 
 void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
@@ -759,6 +737,9 @@ void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_PopulateConfig(void);
 
 void VK_PrintGfxInfo(void);
+
+void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+void GL_MemoryBarrier(GLbitfield barriers);
 
 #endif /* !__GL_LOCAL_H__ */
 

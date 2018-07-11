@@ -41,17 +41,11 @@ glMultiTexCoord2f_t qglMultiTexCoord2f = NULL;
 glActiveTexture_t qglActiveTexture = NULL;
 glClientActiveTexture_t qglClientActiveTexture = NULL;
 
-float vid_gamma = 1.0;
-byte vid_gamma_table[256];
-
-unsigned short d_8to16table[256];
-unsigned d_8to24table[256];
-unsigned d_8to24table2[256];
-
 byte color_white[4] = {255, 255, 255, 255};
 byte color_black[4] = {0, 0, 0, 255};
 
-void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
+static void GL_CheckMultiTextureExtensions(void);
+static void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
 extern cvar_t vid_renderer;
 
 cvar_t gl_strings                 = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
@@ -62,59 +56,49 @@ cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
-static qbool shaders_supported = false;
-
-qbool GL_ShadersSupported(void)
-{
-	return vid_renderer.integer == 1 && shaders_supported;
-}
-
-#define OPENGL_LOAD_SHADER_FUNCTION(x) \
-	if (shaders_supported) { \
-		x = (x ## _t)SDL_GL_GetProcAddress(#x); \
-		shaders_supported = (x != NULL); \
-	}
-
 /************************************* EXTENSIONS *************************************/
 
-static void GL_CheckShaderExtensions(void)
+static qbool R_InitialiseRenderer(void)
 {
-	shaders_supported = false;
+	qbool shaders_supported = false;
 
 	R_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
-	shaders_supported = GL_UseGLSL() && GLM_LoadProgramFunctions();
-
-	if (!GLM_LoadStateFunctions()) {
-		shaders_supported = false;
-	}
-	if (!GLM_LoadTextureManagementFunctions()) {
-		shaders_supported = false;
-	}
-	if (!GLM_LoadDrawFunctions()) {
-		shaders_supported &= false;
-	}
+	shaders_supported = GLM_LoadProgramFunctions();
+	shaders_supported = GLM_LoadStateFunctions() && shaders_supported;
+	shaders_supported = GLM_LoadTextureManagementFunctions() && shaders_supported;
+	shaders_supported = GLM_LoadDrawFunctions() && shaders_supported;
 
 	GL_LoadTextureManagementFunctions();
 	GL_LoadDrawFunctions();
 	GL_InitialiseDebugging();
 
-	if (GL_UseGLSL() && !shaders_supported) {
-		Con_Printf("&cf00Error&r: GLSL not available, missing extensions.\n");
-		Cvar_LatchedSetValue(&vid_renderer, 0);
-		Cvar_SetFlags(&vid_renderer, CVAR_ROM);
+	if (R_UseModernOpenGL() && shaders_supported) {
+		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
+		return true;
+	}
+	else if (R_UseImmediateOpenGL()) {
+		Con_Printf("&c0f0Renderer&r: OpenGL (classic)\n");
+		return true;
 	}
 
-	if (GL_UseGLSL()) {
-		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
-	}
-	else {
-		Con_Printf("&c0f0Renderer&r: OpenGL (classic)\n");
+	return false;
+}
+
+static void GL_CheckShaderExtensions(void)
+{
+	if (!R_InitialiseRenderer()) {
+		Con_Printf("Failed to initialised desired renderer, falling back to classic OpenGL\n");
+		Cvar_LatchedSetValue(&vid_renderer, 0);
+
+		if (!R_InitialiseRenderer()) {
+			Sys_Error("Failed to initialise graphics renderer");
+		}
 	}
 }
 
-void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
+static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
 	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8;
@@ -157,6 +141,44 @@ static void GL_CheckExtensions(void)
 		gl_support_arb_texture_non_power_of_two ? "found" : "not found");
 }
 
+static void GL_CheckMultiTextureExtensions(void)
+{
+	extern cvar_t gl_maxtmu2;
+
+	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+		if (strstr(gl_renderer, "Savage")) {
+			return;
+		}
+		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+		if (!qglActiveTexture) {
+			qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
+		}
+		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
+		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
+			return;
+		}
+		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
+		gl_mtexable = true;
+	}
+
+	gl_textureunits = min(glConfig.texture_units, 4);
+
+	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
+		gl_textureunits = min(gl_textureunits, 2);
+	}
+
+	if (gl_textureunits < 2) {
+		gl_mtexable = false;
+	}
+
+	if (!gl_mtexable) {
+		gl_textureunits = 1;
+	}
+	else {
+		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
+	}
+}
+
 void GL_Init(void)
 {
 	gl_vendor = (const char*)glGetString(GL_VENDOR);
@@ -189,84 +211,4 @@ void GL_Init(void)
 	GL_CheckShaderExtensions();
 	GL_StateDefaultInit();
 	GL_CheckExtensions();
-}
-
-/************************************* VID GAMMA *************************************/
-
-void Check_Gamma (unsigned char *pal) {
-	float inf;
-	unsigned char palette[768];
-	int i;
-
-	// we do not need this after host initialized
-	if (!host_initialized) {
-		float old = v_gamma.value;
-		char string = v_gamma.string[0];
-		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
-			vid_gamma = bound(0.3, Q_atof(COM_Argv(i + 1)), 1);
-		}
-		else {
-			vid_gamma = 1;
-		}
-
-		Cvar_SetDefault (&v_gamma, vid_gamma);
-		// Cvar_SetDefault set not only default value, but also reset to default, fix that
-		Cvar_SetValue(&v_gamma, old || string == '0' ? old : vid_gamma);
-	}
-
-	if (vid_gamma != 1) {
-		for (i = 0; i < 256; i++) {
-			inf = 255 * pow((i + 0.5) / 255.5, vid_gamma) + 0.5;
-			if (inf > 255) {
-				inf = 255;
-			}
-			vid_gamma_table[i] = inf;
-		}
-	}
-	else {
-		for (i = 0; i < 256; i++) {
-			vid_gamma_table[i] = i;
-		}
-	}
-
-	for (i = 0; i < 768; i++) {
-		palette[i] = vid_gamma_table[pal[i]];
-	}
-
-	memcpy (pal, palette, sizeof(palette));
-}
-
-/************************************* HW GAMMA *************************************/
-
-void VID_SetPalette (unsigned char *palette) {
-	int i;
-	byte *pal;
-	unsigned r,g,b, v, *table;
-
-	// 8 8 8 encoding
-	// Macintosh has different byte order
-	pal = palette;
-	table = d_8to24table;
-	for (i = 0; i < 256; i++) {
-		r = pal[0];
-		g = pal[1];
-		b = pal[2];
-		pal += 3;
-		v = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
-		*table++ = v;
-	}
-	d_8to24table[255] = 0;		// 255 is transparent
-
-	// Tonik: create a brighter palette for bmodel textures
-	pal = palette;
-	table = d_8to24table2;
-
-	for (i = 0; i < 256; i++) {
-		r = pal[0] * (2.0 / 1.5); if (r > 255) r = 255;
-		g = pal[1] * (2.0 / 1.5); if (g > 255) g = 255;
-		b = pal[2] * (2.0 / 1.5); if (b > 255) b = 255;
-		pal += 3;
-		*table++ = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
-	}
-	d_8to24table2[255] = 0;	// 255 is transparent
 }

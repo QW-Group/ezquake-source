@@ -71,6 +71,9 @@ void R_BloomBlend(void);
 
 // r_main.c
 void R_NewMapPrepare(qbool vid_restart);
+void R_Shutdown(qbool restart);
+void VID_GfxInfo_f(void);
+int VID_DisplayNumber(qbool fullscreen);
 
 // Shorthand
 #define ISUNDERWATER(contents) (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
@@ -79,7 +82,9 @@ void R_NewMapPrepare(qbool vid_restart);
 
 extern int r_framecount;
 
-void VID_GfxInfo_f(void);
-int VID_DisplayNumber(qbool fullscreen);
+// palette
+void Check_Gamma(unsigned char *pal);
+void VID_SetPalette(unsigned char *palette);
+void GL_Init(void);
 
 #endif // EZQUAKE_R_LOCAL_HEADER

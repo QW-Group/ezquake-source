@@ -51,11 +51,16 @@ void Sys_ActiveAppChanged (void);
 #include "utils.h"
 #include "textencoding.h"
 
+#include "r_local.h"
 #include "gl_framebuffer.h"
 #include "r_texture.h"
 #include "qmb_particles.h"
 #include "r_state.h"
 #include "r_buffers.h"
+
+void VK_SDL_SetupAttributes(void);
+void GLM_SDL_SetupAttributes(void);
+void GLC_SDL_SetupAttributes(void);
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -752,21 +757,7 @@ void VID_Shutdown(qbool restart)
 	}
 #endif
 
-	if (GL_UseGLSL()) {
-		GLM_DeletePrograms(restart);
-	}
-	else {
-		GLC_FreeAliasPoseBuffer();
-	}
-	CachePics_Shutdown();
-
-	GL_LightmapShutdown();
-	GLM_DeleteBrushModelIndexBuffer();
-	R_DeleteVAOs();
-	buffers.Shutdown();
-	GL_DeleteTextures();
-	GL_DeleteSamplers();
-	GL_InvalidateAllTextureReferences();
+	R_Shutdown(restart);
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -780,8 +771,9 @@ void VID_Shutdown(qbool restart)
 
 	SDL_GL_ResetAttributes();
 
-	if (SDL_WasInit(SDL_INIT_VIDEO) != 0)
+	if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
+	}
 
 	memset(&glConfig, 0, sizeof(glConfig));
 
@@ -1017,38 +1009,20 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 
 	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
-		Con_Printf("Invalid vid_renderer value detected, falling back to classic.\n");
+		Con_Printf("Invalid vid_renderer value detected, falling back to immediate-mode OpenGL.\n");
 		Cvar_LatchedSetValue(&vid_renderer, 0);
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
-	if (GL_UseGLSL()) {
-		int contextFlags = 0;
-
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-		if (GL_CoreProfileContext()) {
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-			if (GL_ForwardOnlyProfile()) {
-				contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-			}
-		}
-		else {
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-		}
-		if (R_DebugProfileContext()) {
-			contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
-		}
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
+	if (R_UseModernOpenGL()) {
+		GLM_SDL_SetupAttributes();
 	}
-	else {
-		// SDL defaults - take what we can get
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+	else if (R_UseImmediateOpenGL()) {
+		GLC_SDL_SetupAttributes();
+	}
+	else if (R_UseVulkan()) {
+		VK_SDL_SetupAttributes();
 	}
 
 	if (r_24bit_depth.integer == 1) {
@@ -1512,9 +1486,6 @@ static void VID_Restart_f(void)
 
 	// we need done something like for map reloading, for example reload textures for brush models
 	R_NewMap(true);
-
-	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
-	Mod_TouchModels();
 
 	// window may be re-created, so caption need to be forced to update
 	CL_UpdateCaption(true);

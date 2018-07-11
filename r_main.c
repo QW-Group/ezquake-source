@@ -1,7 +1,16 @@
 
 #include "quakedef.h"
+#include "common_draw.h"
 #include "r_local.h"
+#include "r_vao.h"
 #include "r_lightmaps.h"
+#include "glc_local.h"
+#include "glm_local.h"
+#include "r_texture.h"
+
+extern void CachePics_Shutdown(void);
+extern void GL_LightmapShutdown(void);
+extern void GLM_DeleteBrushModelIndexBuffer(void);
 
 void R_BuildCommonTextureFormats(qbool vid_restart)
 {
@@ -64,4 +73,25 @@ void VID_GfxInfo_f(void)
 	else if (R_UseVulkan()) {
 		VK_PrintGfxInfo();
 	}
+}
+
+void R_Shutdown(qbool restart)
+{
+	if (R_UseModernOpenGL()) {
+		GLM_Shutdown(restart);
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GLC_Shutdown(restart);
+	}
+	else if (R_UseVulkan()) {
+	}
+
+	CachePics_Shutdown();
+	GL_LightmapShutdown();
+	GLM_DeleteBrushModelIndexBuffer();
+	R_DeleteVAOs();
+	buffers.Shutdown();
+	GL_DeleteTextures();
+	GL_DeleteSamplers();
+	GL_InvalidateAllTextureReferences();
 }
