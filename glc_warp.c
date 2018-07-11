@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "glsl/constants.glsl"
 #include "r_texture.h"
+#include "glc_local.h"
 
 #define TURBSINSIZE 128
 #define TURBSCALE ((float) TURBSINSIZE / (2 * M_PI))

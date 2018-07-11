@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_brushmodel_sky.h"
+#include "glc_local.h"
 
 #define SUBDIVISIONS 10
 

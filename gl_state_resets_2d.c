@@ -166,7 +166,7 @@ void GLC_StateBeginImageDraw(qbool is_text)
 	}
 }
 
-void GL_StateBeginPolyBlend(void)
+void GLM_StateBeginPolyBlend(void)
 {
 	R_ApplyRenderingState(&polyBlendState);
 }

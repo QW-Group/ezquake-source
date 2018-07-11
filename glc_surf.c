@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_texture.h"
 #include "r_vao.h"
+#include "glc_local.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];

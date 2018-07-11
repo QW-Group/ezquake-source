@@ -31,6 +31,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "glc_state.h"
 #include "glc_vao.h"
 #include "r_brushmodel.h"
+#include "glc_local.h"
 
 extern buffer_ref brushModel_vbo;
 

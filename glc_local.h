@@ -5,4 +5,32 @@
 void GLC_FreeAliasPoseBuffer(void);
 void GLC_Shutdown(qbool restarting);
 
+void GLC_PreRenderView(void);
+void GLC_SetupGL(void);
+void GLC_StateBeginAliasOutlineFrame(void);
+void GLC_StateBeginBrightenScreen(void);
+void GLC_StateBeginFastSky(void);
+void GLC_StateBeginSkyZBufferPass(void);
+void GLC_StateBeginSingleTextureSkyDome(void);
+void GLC_StateBeginSingleTextureSkyDomeCloudPass(void);
+void GLC_StateBeginMultiTextureSkyDome(void);
+void GLC_StateBeginMultiTextureSkyChain(void);
+void GLC_StateBeginSingleTextureSkyPass(void);
+void GLC_StateBeginSingleTextureCloudPass(void);
+void GLC_StateBeginRenderFullbrights(void);
+void GLC_StateBeginRenderLumas(void);
+void GLC_StateBeginEmitDetailPolys(void);
+void GLC_StateBeginDrawMapOutline(void);
+void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model);
+void GLC_StateBeginAliasModelShadow(void);
+void GLC_StateBeginFastTurbPoly(byte color[4]);
+void GLC_StateBeginBlendLightmaps(qbool use_buffers);
+void GLC_StateBeginSceneBlur(void);
+void GLC_StateBeginCausticsPolys(void);
+void GLC_StateBeginBloomDraw(texture_ref texture);
+void GLC_StateBeginImageDraw(qbool is_text);
+void GLC_StateBeginPolyBlend(float v_blend[4]);
+void GLC_StateBeginDrawPolygon(void);
+void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
+
 #endif

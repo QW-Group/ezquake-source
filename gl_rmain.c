@@ -44,7 +44,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GLM_ScreenDrawStart(void);
 void GLM_SetupGL(void);
+void GLC_SetupGL(void);
 void GLM_PreRenderView(void);
+void GLC_PreRenderView(void);
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
@@ -454,12 +456,14 @@ void R_PolyBlend(void)
 		return;
 	}
 
-	GL_StateBeginPolyBlend();
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_PolyBlend(v_blend);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_PolyBlend(v_blend);
+	}
+	else if (R_UseVulkan()) {
+		//VK_PolyBlend(v_blend);
 	}
 }
 

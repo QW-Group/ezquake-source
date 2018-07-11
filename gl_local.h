@@ -468,12 +468,12 @@ void GL_ProcessErrors(const char* message);
 
 void GL_InitialiseState(void);
 
-void GL_ClearModelTextureData(void);
-void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);
-
 // --------------
 // Texture functions
 // --------------
+
+void GL_ClearModelTextureData(void);
+void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);
 
 void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
 void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references, const char* identifier);
@@ -498,45 +498,11 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
-void GLC_PreRenderView(void);
-void GLC_SetupGL(void);
-
 struct custom_model_color_s;
 
-void GLC_StateBeginAliasOutlineFrame(void);
-void GLM_StateBeginAliasOutlineBatch(void);
-void GLM_StateBeginAliasModelBatch(qbool translucent);
-void GL_StateBeginPolyBlend(void);
-void GLC_StateBeginBrightenScreen(void);
-void GLC_StateBeginFastSky(void);
-void GLC_StateBeginSkyZBufferPass(void);
-void GLC_StateBeginSingleTextureSkyDome(void);
-void GLC_StateBeginSingleTextureSkyDomeCloudPass(void);
-void GLC_StateBeginMultiTextureSkyDome(void);
-void GLC_StateBeginMultiTextureSkyChain(void);
-void GLC_StateBeginSingleTextureSkyPass(void);
-void GLC_StateBeginSingleTextureCloudPass(void);
-void GLC_StateBeginRenderFullbrights(void);
-void GLC_StateBeginRenderLumas(void);
-void GLC_StateBeginEmitDetailPolys(void);
-void GLC_StateBeginDrawMapOutline(void);
-void GLM_StateBeginDraw3DSprites(void);
-void GLM_StateBeginDrawWorldOutlines(void);
-void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 void GL_StateBeginAlphaLineRGB(float thickness);
-void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model);
-void GLC_StateBeginAliasModelShadow(void);
-void GLC_StateBeginFastTurbPoly(byte color[4]);
-void GLC_StateBeginBlendLightmaps(qbool use_buffers);
-void GLC_StateBeginSceneBlur(void);
-void GLC_StateBeginCausticsPolys(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
-void GLC_StateBeginBloomDraw(texture_ref texture);
-void GLC_StateBeginImageDraw(qbool is_text);
-void GLC_StateBeginPolyBlend(float v_blend[4]);
-void GLC_StateBeginDrawPolygon(void);
-void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
 void R_SetupFrame(void);
 
 void GL_FlushWorldModelBatch(void);
@@ -553,6 +519,13 @@ void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
 void GLM_DrawAliasModelPostSceneBatches(void);
+
+void GLM_StateBeginPolyBlend(void);
+void GLM_StateBeginAliasOutlineBatch(void);
+void GLM_StateBeginAliasModelBatch(qbool translucent);
+void GLM_StateBeginDraw3DSprites(void);
+void GLM_StateBeginDrawWorldOutlines(void);
+void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 
 typedef enum {
 	opaque_world,

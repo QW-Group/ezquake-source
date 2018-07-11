@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
+#include "glc_local.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);

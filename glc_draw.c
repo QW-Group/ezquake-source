@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "glc_vao.h"
 #include "glsl/constants.glsl" // FIXME: remove
+#include "glc_local.h"
 
 static texture_ref glc_last_texture_used;
 static buffer_ref imageVBO;

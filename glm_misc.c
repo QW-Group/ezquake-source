@@ -52,6 +52,7 @@ void GLM_PolyBlend(float v_blend[4])
 		bound(0, v_blend[3], 1) * 255
 	);
 
+	GLM_StateBeginPolyBlend();
 	Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
 }
 
