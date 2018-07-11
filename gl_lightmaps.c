@@ -21,25 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
-#include "glsl/constants.glsl"
+#include "r_local.h"
 #include "r_texture.h"
 #include "r_lightmaps.h"
 #include "r_lighting.h"
 #include "r_buffers.h"
-
-// Lightmap size
-#define	LIGHTMAP_WIDTH  128
-#define	LIGHTMAP_HEIGHT 128
-
-#define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
-#define LIGHTMAP_ARRAY_GROWTH 4
-
-typedef struct glRect_s {
-	unsigned char l, t, w, h;
-} glRect_t;
+#include "r_frameStats.h"
+#include "r_lightmaps_internal.h"
+#include "r_trace.h"
 
 typedef struct dlightinfo_s {
 	int local[2];
@@ -51,31 +42,9 @@ typedef struct dlightinfo_s {
 
 static unsigned int blocklights[MAX_LIGHTMAP_SIZE * 3];
 
-typedef struct lightmap_data_s {
-	byte rawdata[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
-	int computeData[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
-	unsigned int sourcedata[4 * LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT];
-	int allocated[LIGHTMAP_WIDTH];
-
-	texture_ref gl_texref;
-	glpoly_t* poly_chain;
-	glRect_t change_area;
-	qbool modified;
-} lightmap_data_t;
-
-static lightmap_data_t* lightmaps;
+lightmap_data_t* lightmaps;
 static unsigned int last_lightmap_updated;
-static unsigned int lightmap_array_size;
-static texture_ref lightmap_texture_array;
-static texture_ref lightmap_data_array;
-static texture_ref lightmap_source_array;
-static unsigned int lightmap_depth;
-
-// Hardware lighting: flag surfaces as we add them
-static buffer_ref ssbo_surfacesTodo;
-static int maximumSurfaceNumber;
-static unsigned int* surfaceTodoData;
-static int surfaceTodoLength;
+unsigned int lightmap_array_size;
 
 static qbool gl_invlightmaps = true;
 
@@ -331,11 +300,14 @@ static void R_UploadLightMap(int textureUnit, int lightmapnum)
 	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
 	lm->modified = false;
-	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(GL_TEXTURE0 + textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	if (R_UseModernOpenGL()) {
+		GLM_UploadLightmap(textureUnit, lightmapnum);
 	}
-	else {
-		GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	else if (R_UseImmediateOpenGL()) {
+		GLC_UploadLightmap(textureUnit, lightmapnum);
+	}
+	else if (R_UseVulkan()) {
+		VK_UploadLightmap(textureUnit, lightmapnum);
 	}
 	lm->change_area.l = LIGHTMAP_WIDTH;
 	lm->change_area.t = LIGHTMAP_HEIGHT;
@@ -344,7 +316,7 @@ static void R_UploadLightMap(int textureUnit, int lightmapnum)
 	++frameStats.lightmap_updates;
 }
 
-void R_RenderDynamicLightmaps(msurface_t *fa)
+void R_RenderDynamicLightmaps(msurface_t *fa, qbool world)
 {
 	byte *base;
 	int maps, smax, tmax;
@@ -414,7 +386,16 @@ void R_LightmapFrameInit(void)
 {
 	frameStats.lightmap_min_changed = lightmap_array_size;
 	frameStats.lightmap_max_changed = 0;
-	memset(surfaceTodoData, 0, surfaceTodoLength);
+
+	if (R_UseModernOpenGL()) {
+		GLM_LightmapFrameInit();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		//GLC_LightmapFrameInit();
+	}
+	else if (R_UseVulkan()) {
+		//VK_LightmapFrameInit();
+	}
 }
 
 static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world)
@@ -434,10 +415,14 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		++frameStats.classic.polycount[polyType];
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
-			R_RenderDynamicLightmaps(s);
-
-			if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
-				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+			if (R_UseModernOpenGL()) {
+				GLM_RenderDynamicLightmaps(s, world);
+			}
+			else if (R_UseImmediateOpenGL()) {
+				R_RenderDynamicLightmaps(s, world);
+			}
+			else if (R_UseVulkan()) {
+				R_RenderDynamicLightmaps(s, world);
 			}
 
 			if (lightmaps[k].modified) {
@@ -453,10 +438,14 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		++frameStats.classic.polycount[polyType];
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
-			R_RenderDynamicLightmaps(s);
-
-			if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
-				surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+			if (R_UseModernOpenGL()) {
+				GLM_RenderDynamicLightmaps(s, world);
+			}
+			else if (R_UseImmediateOpenGL()) {
+				R_RenderDynamicLightmaps(s, world);
+			}
+			else if (R_UseVulkan()) {
+				R_RenderDynamicLightmaps(s, world);
 			}
 
 			if (lightmaps[k].modified) {
@@ -471,9 +460,6 @@ void R_UploadChangedLightmaps(void)
 {
 	GL_EnterRegion(__FUNCTION__);
 	if (R_HardwareLighting()) {
-		static glm_program_t lightmap_program;
-		static buffer_ref ssbo_lightingData;
-
 		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
 			int i;
 
@@ -487,34 +473,8 @@ void R_UploadChangedLightmaps(void)
 			frameStats.lightmap_min_changed = lightmap_array_size;
 			frameStats.lightmap_max_changed = 0;
 		}
-		else {
-			if (GLM_ProgramRecompileNeeded(&lightmap_program, 0)) {
-				extern unsigned char lighting_compute_glsl[];
-				extern unsigned int lighting_compute_glsl_len;
-
-				if (!GLM_CompileComputeShaderProgram(&lightmap_program, (const char*)lighting_compute_glsl, lighting_compute_glsl_len)) {
-					return;
-				}
-			}
-
-			if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
-				ssbo_lightingData = buffers.Create(buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
-			}
-			else {
-				buffers.Update(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
-			}
-			buffers.BindRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
-
-			buffers.Update(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
-			buffers.BindRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
-
-			GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-			GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-			GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
-
-			GL_UseProgram(lightmap_program.program);
-			GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
-			GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+		else if (R_UseModernOpenGL()) {
+			GLM_ComputeLightmaps();
 		}
 	}
 	else if (frameStats.lightmap_min_changed < lightmap_array_size) {
@@ -548,7 +508,7 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], model->isworldmodel);
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], model->isworldmodel);
 
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		R_UploadChangedLightmaps();
 	}
 }
@@ -598,7 +558,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 
 	// Dynamically increase array
 	{
-		GLuint new_size = lightmap_array_size + LIGHTMAP_ARRAY_GROWTH;
+		unsigned int new_size = lightmap_array_size + LIGHTMAP_ARRAY_GROWTH;
 		lightmaps = Q_realloc(lightmaps, sizeof(lightmaps[0]) * new_size);
 		if (!lightmaps) {
 			Sys_Error("AllocBlock: full");
@@ -609,7 +569,8 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 	return LightmapAllocBlock(w, h, x, y);
 }
 
-void BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
+// 
+static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 {
 	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
@@ -667,7 +628,6 @@ void BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 
 		poly->verts[i][5] = s;
 		poly->verts[i][6] = t;
-
 
 		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s /= 128;
@@ -773,10 +733,9 @@ void R_BuildLightmaps(void)
 	}
 	last_lightmap_updated = 0;
 
-	gl_invlightmaps = GL_UseImmediateMode() && !COM_CheckParm(cmdline_param_client_noinverselightmaps);
+	gl_invlightmaps = R_UseImmediateOpenGL();
 
 	r_framecount = 1;		// no dlightcache
-	maximumSurfaceNumber = 0;
 	for (j = 1; j < MAX_MODELS; j++) {
 		if (!(m = cl.model_precache[j])) {
 			break;
@@ -794,31 +753,19 @@ void R_BuildLightmaps(void)
 			}
 
 			GL_CreateSurfaceLightmap(m->surfaces + i, m->isworldmodel ? i : -1);
-			BuildSurfaceDisplayList(m, m->surfaces + i);
-		}
-
-		if (m->isworldmodel) {
-			maximumSurfaceNumber = max(maximumSurfaceNumber, m->numsurfaces);
+			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}
 
 	// upload all lightmaps that were filled
-	if (GL_UseGLSL()) {
-		// Round up to nearest 32
-		surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
-		Q_free(surfaceTodoData);
-		surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
-		if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
-			ssbo_surfacesTodo = buffers.Create(buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
-		}
-		else {
-			buffers.EnsureSize(ssbo_surfacesTodo, surfaceTodoLength);
-		}
-
+	if (R_UseModernOpenGL()) {
 		GLM_CreateLightmapTextures();
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_CreateLightmapTextures();
+	}
+	else if (R_UseVulkan()) {
+		VK_CreateLightmapTextures();
 	}
 
 	for (i = 0; i < lightmap_array_size; i++) {
@@ -830,161 +777,27 @@ void R_BuildLightmaps(void)
 		lightmaps[i].change_area.t = LIGHTMAP_HEIGHT;
 		lightmaps[i].change_area.w = 0;
 		lightmaps[i].change_area.h = 0;
-		if (GL_UseGLSL()) {
-			GL_TexSubImage3D(
-				GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i,
-				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-				lightmaps[i].rawdata
-			);
-
-			GL_TexSubImage3D(
-				GL_TEXTURE0, lightmap_source_array, 0, 0, 0, i,
-				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
-				lightmaps[i].sourcedata
-			);
-
-			GL_TexSubImage3D(
-				GL_TEXTURE0, lightmap_data_array, 0, 0, 0, i,
-				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_INT,
-				lightmaps[i].computeData
-			);
+		if (R_UseModernOpenGL()) {
+			GLM_BuildLightmap(i);
 		}
-		else {
-			GL_TexSubImage2D(
-				GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
-				LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-				lightmaps[i].rawdata
-			);
+		else if (R_UseImmediateOpenGL()) {
+			GLC_BuildLightmap(i);
+		}
+		else if (R_UseVulkan()) {
+			VK_BuildLightmap(i);
 		}
 	}
-}
-
-void GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
-{
-	//update lightmap if it has been modified by dynamic lights
-	if (lightmaps[lightmap_num].modified) {
-		R_UploadLightMap(textureUnit, lightmap_num);
-	}
-	else {
-		R_TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
-	}
-}
-
-GLenum GLC_LightmapTexEnv(void)
-{
-	return gl_invlightmaps ? GL_BLEND : GL_MODULATE;
-}
-
-void GLC_ClearLightmapPolys(void)
-{
-	int i;
-
-	for (i = 0; i < lightmap_array_size; ++i) {
-		lightmaps[i].poly_chain = NULL;
-	}
-}
-
-texture_ref GLC_LightmapTexture(int index)
-{
-	if (index < 0 || index >= lightmap_array_size) {
-		return lightmaps[0].gl_texref;
-	}
-	return lightmaps[index].gl_texref;
-}
-
-void GLC_CreateLightmapTextures(void)
-{
-	int i;
-
-	for (i = 0; i < lightmap_array_size; ++i) {
-		if (!GL_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			GL_CreateTexture2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
-		}
-	}
-}
-
-void GLC_LightmapUpdate(int index)
-{
-	if (index >= 0 && index < lightmap_array_size) {
-		if (lightmaps[index].modified) {
-			R_UploadLightMap(0, index);
-		}
-	}
-}
-
-void GLC_AddToLightmapChain(msurface_t* s)
-{
-	s->polys->chain = lightmaps[s->lightmaptexturenum].poly_chain;
-	lightmaps[s->lightmaptexturenum].poly_chain = s->polys;
-}
-
-glpoly_t* GLC_LightmapChain(int i)
-{
-	if (i < 0 || i >= lightmap_array_size) {
-		return NULL;
-	}
-	return lightmaps[i].poly_chain;
-}
-
-int GLC_LightmapCount(void)
-{
-	return lightmap_array_size;
-}
-
-GLenum GLC_LightmapDestBlendFactor(void)
-{
-	return gl_invlightmaps ? GL_ONE_MINUS_SRC_COLOR : GL_SRC_COLOR;
-}
-
-void GLM_CreateLightmapTextures(void)
-{
-	int i;
-
-	if (GL_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
-		return;
-	}
-
-	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_DeleteTextureArray(&lightmap_texture_array);
-	}
-
-	if (GL_TextureReferenceIsValid(lightmap_data_array)) {
-		GL_DeleteTextureArray(&lightmap_data_array);
-	}
-
-	if (GL_TextureReferenceIsValid(lightmap_source_array)) {
-		GL_DeleteTextureArray(&lightmap_source_array);
-	}
-
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array, "lightmap_texture_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-	GL_SetTextureFiltering(GL_TEXTURE0, lightmap_texture_array, GL_LINEAR, GL_LINEAR);
-	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	lightmap_depth = lightmap_array_size;
-	for (i = 0; i < lightmap_array_size; ++i) {
-		lightmaps[i].gl_texref = lightmap_texture_array;
-	}
-
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array, "lightmap_source_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array, "lightmap_data_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
-}
-
-texture_ref GLM_LightmapArray(void)
-{
-	return lightmap_texture_array;
 }
 
 void GL_InvalidateLightmapTextures(void)
 {
 	int i;
 
-	GL_TextureReferenceInvalidate(lightmap_texture_array);
-	GL_TextureReferenceInvalidate(lightmap_data_array);
-	GL_TextureReferenceInvalidate(lightmap_source_array);
+	if (R_UseModernOpenGL()) {
+		GLM_InvalidateLightmapTextures();
+	}
+	//else if (...)
+
 	for (i = 0; i < lightmap_array_size; ++i) {
 		GL_TextureReferenceInvalidate(lightmaps[i].gl_texref);
 	}
@@ -992,15 +805,22 @@ void GL_InvalidateLightmapTextures(void)
 	Q_free(lightmaps);
 	lightmap_array_size = 0;
 	last_lightmap_updated = 0;
-	lightmap_depth = 0;
 }
 
 void GL_LightmapShutdown(void)
 {
 	Q_free(lightmaps);
 	lightmap_array_size = 0;
-	Q_free(surfaceTodoData);
-	surfaceTodoLength = 0;
+
+	if (R_UseModernOpenGL()) {
+		GLM_LightmapShutdown();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		//GLC_LightmapShutdown();
+	}
+	else if (R_UseVulkan()) {
+		//VK_LightmapShutdown();
+	}
 }
 
 // mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()
@@ -1028,6 +848,8 @@ static void R_ForceReloadLightMaps(void)
 
 qbool R_FullBrightAllowed(void)
 {
+	extern cvar_t r_fullbright;
+
 	return r_fullbright.value && r_refdef2.allow_cheats;
 }
 

@@ -19,13 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "pmove.h"
-#include "utils.h"
-#include "qsound.h"
-#include "tr_types.h"
 #include "glm_texture_arrays.h"
 #include "gl_rpart.h"
 #include "qmb_particles.h"
@@ -97,7 +92,7 @@ static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 };
 
 #define MAX_BEAM_TRAIL 10
-#define TEXTURE_DETAILS(x) (GL_UseGLSL() ? x->tex_array : x->texnum),(x->tex_index)
+#define TEXTURE_DETAILS(x) (R_UseModernOpenGL() ? x->tex_array : x->texnum),(x->tex_index)
 
 static float sint[7] = {0.000000, 0.781832, 0.974928, 0.433884, -0.433884, -0.974928, -0.781832};
 static float cost[7] = {1.000000, 0.623490, -0.222521, -0.900969, -0.900969, -0.222521, 0.623490};
@@ -435,7 +430,7 @@ void QMB_ClearParticles (void)
 		return;
 	}
 
-	Q_free (particles);		// free
+	Q_free(particles);		// free
 	QMB_AllocParticles ();	// and alloc again
 
 	particle_count = 0;
@@ -447,8 +442,9 @@ void QMB_ClearParticles (void)
 	}
 	particles[r_numparticles - 1].next = NULL;
 
-	for (i = 0; i < num_particletypes; i++)
+	for (i = 0; i < num_particletypes; i++) {
 		particle_types[i].start = NULL;
+	}
 
 	//VULT STATS
 	ParticleCount = 0;
@@ -581,7 +577,7 @@ static void QMB_FillParticleVertexBuffer(void)
 			for (p = pt->start; p; p = p->next) {
 				vec3_t neworg;
 				float* point;
-				GLubyte farColor[4];
+				byte farColor[4];
 				particle_texture_t* ptex = &particle_textures[ptex_none];
 				r_sprite3d_vert_t* vert;
 

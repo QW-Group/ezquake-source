@@ -72,6 +72,11 @@ void R_BloomBlend(void);
 // r_main.c
 void R_NewMapPrepare(qbool vid_restart);
 
+// Shorthand
+#define ISUNDERWATER(contents) (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
+//#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
+#define TruePointContents(p) CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p) // ?TONIK?
+
 extern int r_framecount;
 
 void VID_GfxInfo_f(void);

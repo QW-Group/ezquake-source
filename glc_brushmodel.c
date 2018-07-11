@@ -803,7 +803,7 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 	GLC_StateBeginAlphaChain();
 	for (s = alphachain; s; s = s->texturechain) {
 		++frameStats.classic.polycount[polyType];
-		R_RenderDynamicLightmaps(s);
+		R_RenderDynamicLightmaps(s, false);
 
 		GLC_StateBeginAlphaChainSurface(s);
 

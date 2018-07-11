@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "vx_stuff.h"
 #include "gl_rpart.h"
 #include "pmove.h"
@@ -932,6 +931,7 @@ void QMB_RunParticleEffect(vec3_t org, vec3_t dir, int col, int count)
 	int i, blastcount, blastsize, chunkcount, particlecount, bloodcount, z;
 	float scale;
 	float blasttime;
+	extern cvar_t gl_part_gunshots;
 
 	count = max(1, count);
 
@@ -1270,7 +1270,7 @@ void QMB_TeleportSplash(vec3_t org)
 	int i, j, k;
 	vec3_t neworg, angle;
 	col_t color;
-
+	extern cvar_t gl_part_telesplash;
 
 	for (i = -12; i <= 12; i += 6) {
 		for (j = -12; j <= 12; j += 6) {
@@ -1308,6 +1308,7 @@ void QMB_DetpackExplosion(vec3_t org)
 	int i, j, contents;
 	float theta;
 	vec3_t neworg, angle = { 0, 0, 0 };
+	extern cvar_t gl_part_detpackexplosion_fire_color, gl_part_detpackexplosion_ray_color;
 
 	byte *f_color = (gl_part_detpackexplosion_fire_color.string[0] ? gl_part_detpackexplosion_fire_color.color : ColorForParticle(p_inferno_flame));
 	byte *r_color = (gl_part_detpackexplosion_ray_color.string[0] ? gl_part_detpackexplosion_ray_color.color : NULL);
@@ -1826,7 +1827,6 @@ void VXBlood(vec3_t org, float count)
 			QMB_ParticleTrail(start, end, &trail, BLEEDING_TRAIL2);
 		}
 	}
-
 
 	//blue
 	if (amf_part_blood_color.value == 2) {

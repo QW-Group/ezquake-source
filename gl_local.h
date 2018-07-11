@@ -155,10 +155,6 @@ extern	const char *gl_renderer;
 extern	const char *gl_version;
 extern	const char *gl_extensions;
 
-#define ISUNDERWATER(contents) (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
-//#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
-#define TruePointContents(p) CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p) // ?TONIK?
-
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);
 qbool R_CullSphere (vec3_t centre, float radius);
@@ -423,7 +419,7 @@ void GLM_DrawWaterSurfaces(void);
 void GL_BuildCommonTextureArrays(qbool vid_restart);
 
 // 
-void R_RenderDynamicLightmaps(msurface_t *fa);
+void R_RenderDynamicLightmaps(msurface_t *fa, qbool world);
 void R_DrawViewModel(void);
 void R_LightmapFrameInit(void);
 void R_UploadChangedLightmaps(void);
@@ -450,9 +446,7 @@ texture_ref GLM_LightmapArray(void);
 void GLC_ClearLightmapPolys(void);
 void GLC_AddToLightmapChain(msurface_t* s);
 void GLC_LightmapUpdate(int index);
-GLenum GLC_LightmapDestBlendFactor(void);
 glpoly_t* GLC_LightmapChain(int i);
-GLenum GLC_LightmapTexEnv(void);
 int GLC_LightmapCount(void);
 void GLM_CreateLightmapTextures(void);
 void GLM_PostProcessScreen(void);
