@@ -324,10 +324,10 @@ OBJS_c := \
     gl_draw.o \
     r_draw_charset.o \
     gl_bloom.o \
-    gl_md3.o \
-    gl_mesh.o \
-    gl_model.o \
-    gl_ngraph.o \
+    r_aliasmodel_md3.o \
+    r_aliasmodel_mesh.o \
+    r_model.o \
+    r_netgraph.o \
     r_refrag.o \
     r_rlight.o \
     gl_rmain.o \
@@ -350,7 +350,7 @@ OBJS_c := \
     cl_multiview.o \
     snd_voip.o \
     gl_aliasmodel.o \
-    gl_aliasmodel_skins.o \
+    r_aliasmodel_skins.o \
     gl_atlas.o \
     r_brushmodel.o \
     r_brushmodel_bspx.o \

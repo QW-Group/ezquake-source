@@ -20,10 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_md3.h"
+#include "r_aliasmodel_md3.h"
 #include "vx_vertexlights.h" 
 #include "r_texture.h"
 #include "r_buffers.h"
+#include "r_local.h"
 
 void GLM_MakeAlias3DisplayLists(model_t* model);
 

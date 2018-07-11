@@ -571,7 +571,7 @@ float RadiusFromBounds(vec3_t mins, vec3_t maxs);
 void Mod_AddModelFlags(model_t *mod);
 void R_LoadBrushModelTextures(model_t *m);
 
-#include "gl_md3.h"
+#include "r_aliasmodel_md3.h"
 
 typedef struct bspx_header_s {
 	char id[4];  // 'BSPX'
