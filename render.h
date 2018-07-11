@@ -179,7 +179,4 @@ void Classic_TeleportSplash (vec3_t org);
 
 void R_PushDlights(void);
 
-int	D_SurfaceCacheForRes (int width, int height);
-void D_FlushCaches (void);
-void D_InitCaches (void *buffer, int size);
 void R_SetVrect (vrect_t *pvrect, vrect_t *pvrectin, int lineadj);

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2018 ezQuake team
+Copyright (C) 1996-1997 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,29 +15,39 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: r_part.c,v 1.19 2007-10-29 00:13:26 d3urk Exp $
+
 */
 
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
+#include "r_local.h"
 
-void GLM_RenderView(void)
+void GL_Clear(qbool clear_color);
+void GL_EnsureFinished(void);
+
+void R_ClearRenderingSurface(qbool clear_color)
 {
-	GLM_UploadFrameConstants();
-	R_UploadChangedLightmaps();
-	GLM_PrepareWorldModelBatch();
-	GLM_PrepareAliasModelBatches();
-	GLM_Prepare3DSprites();
+	if (R_UseImmediateOpenGL()) {
+		GL_Clear(clear_color);
+	}
+	else if (R_UseModernOpenGL()) {
+		GL_Clear(clear_color);
+	}
+	else if (R_UseVulkan()) {
+		// TODO
+	}
+}
 
-	GL_DrawWorldModelBatch(opaque_world);
-
-	GL_EnterRegion("GLM_DrawEntities");
-	GLM_DrawAliasModelBatches();
-	GL_LeaveRegion();
-
-	GL_Draw3DSprites(false);
-
-	GL_DrawWorldModelBatch(alpha_surfaces);
-
-	GLM_DrawAliasModelPostSceneBatches();
+void R_EnsureFinished(void)
+{
+	if (R_UseImmediateOpenGL()) {
+		GL_EnsureFinished();
+	}
+	else if (R_UseModernOpenGL()) {
+		GL_EnsureFinished();
+	}
+	else if (R_UseVulkan()) {
+		// TODO
+	}
 }

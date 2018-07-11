@@ -187,46 +187,27 @@ void R_NewMap(qbool vid_restart)
 
 void R_TimeRefresh_f(void)
 {
-	int i;
-	float start, stop, time;
-
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
 		return;
+	}
 
 	if (!Rulesets_AllowTimerefresh()) {
 		Com_Printf("Timerefresh is disabled during match\n");
 		return;
 	}
 
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL) {
-		// Causes the console to flicker on Intel cards.
-		glDrawBuffer(GL_FRONT);
+	if (R_UseImmediateOpenGL()) {
+		GLC_TimeRefresh();
 	}
-#endif
-	
-	glFinish ();
-
-	start = Sys_DoubleTime();
-	for (i = 0; i < 128; i++) {
-		r_refdef.viewangles[1] = i * (360.0 / 128.0);
-		R_SetupFrame();
-		R_RenderView();
+	else if (R_UseModernOpenGL()) {
+		GLM_TimeRefresh();
 	}
-
-	glFinish ();
-	stop = Sys_DoubleTime ();
-	time = stop-start;
-	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
-
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL) {
-		glDrawBuffer(GL_BACK);
+	else {
+		Con_Printf("Timerefresh not implemented for current renderer\n");
 	}
-#endif
-
-	GL_EndRendering ();
 }
 
-void D_FlushCaches (void) {}
-
+void GL_Clear(qbool clear_color)
+{
+	glClear((clear_color ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
+}

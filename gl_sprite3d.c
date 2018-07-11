@@ -22,26 +22,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_sprite3d.h"
+#include "gl_sprite3d_internal.h"
 #include "tr_types.h"
 #include "glm_vao.h"
 #include "glc_vao.h"
 #include "r_state.h"
 #include "r_buffers.h"
 
-void GLM_Draw3DSprites(void);
-void GLM_Prepare3DSprites(void);
-void GLC_Draw3DSprites(void);
+// batchCount = vertexCount = 0;
+// memset(batchMapping, 0, sizeof(batchMapping));
 
-#define MAX_3DSPRITES_PER_BATCH     1024  // Batches limited to this so they can't break other functionality
-#define INDEXES_MAX_QUADS            512
-#define INDEXES_MAX_FLASHBLEND         8
-#define INDEXES_MAX_SPARKS            16
-static int indexes_start_quads;
-static int indexes_start_flashblend;
-static int indexes_start_sparks;
-static GLuint indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
-
-static GLenum glPrimitiveTypes[r_primitive_count] = {
+GLenum glPrimitiveTypes[r_primitive_count] = {
 	GL_TRIANGLE_STRIP,
 	GL_TRIANGLE_FAN,
 	GL_TRIANGLES
@@ -113,24 +104,6 @@ static const char* batch_type_names[] = {
 	"MAX_BATCHES"
 };
 
-typedef struct gl_sprite3d_batch_s {
-	rendering_state_t* textured_rendering_state;
-	rendering_state_t* untextured_rendering_state;
-	r_primitive_id primitive_id;
-	texture_ref texture;
-	int texture_index;
-	qbool allSameNumber;
-
-	int firstVertices[MAX_3DSPRITES_PER_BATCH];
-	int glFirstVertices[MAX_3DSPRITES_PER_BATCH];
-	int numVertices[MAX_3DSPRITES_PER_BATCH];
-	texture_ref textures[MAX_3DSPRITES_PER_BATCH];
-	int textureIndexes[MAX_3DSPRITES_PER_BATCH];
-
-	const char* name;
-	unsigned int count;
-} gl_sprite3d_batch_t;
-
 #define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
 
 static r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
@@ -138,11 +111,10 @@ static gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
 static unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 static unsigned int batchCount;
 static unsigned int vertexCount;
+static GLuint indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 
-static buffer_ref sprite3dVBO;
-static buffer_ref sprite3dIndexes;
-static glm_program_t sprite3dProgram;
-static GLint sprite3dUniform_alpha_test;
+buffer_ref sprite3dVBO;
+buffer_ref sprite3dIndexes;
 
 static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 {
@@ -177,6 +149,7 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s
 	batch->allSameNumber = true;
 	batch->texture_index = index;
 	batch->name = batch_type_names[type];
+	batch->id = type;
 }
 
 r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
@@ -240,28 +213,31 @@ void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, floa
 	}
 }
 
-void GL_Draw3DSprites(void)
+void GL_Draw3DSprites(qbool inline_rendering)
 {
 	if (!batchCount || !vertexCount) {
 		return;
 	}
 
-	if (GL_UseImmediateMode()) {
-		GLC_Draw3DSprites();
-
-		batchCount = vertexCount = 0;
-		memset(batchMapping, 0, sizeof(batchMapping));
+	if (GL_UseImmediateMode() && inline_rendering) {
+		GLC_Draw3DSprites(batches, verts, batchCount, vertexCount);
 	}
+	else if (R_UseModernOpenGL() && !inline_rendering) {
+		GLM_Draw3DSprites(batches, verts, batchCount, vertexCount);
+	}
+
+	batchCount = vertexCount = 0;
+	memset(batchMapping, 0, sizeof(batchMapping));
 }
 
-static void GL_Create3DSpriteVBO(void)
+void GL_Create3DSpriteVBO(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
 		sprite3dVBO = buffers.Create(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
 	}
 }
 
-static void GL_Create3DSpriteIndexBuffer(void)
+void GL_Create3DSpriteIndexBuffer(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
 		// Meag: *3 is for case of primitive restart not being supported
@@ -324,67 +300,7 @@ static void GL_Create3DSpriteIndexBuffer(void)
 	}
 }
 
-static void GLM_Create3DSpriteVAO(void)
-{
-	GL_Create3DSpriteVBO();
-
-	if (!R_VertexArrayCreated(vao_3dsprites)) {
-		R_GenVertexArray(vao_3dsprites);
-
-		GL_Create3DSpriteIndexBuffer();
-		buffers.Bind(sprite3dIndexes);
-
-		// position
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position), 0);
-		// texture coordinates
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex), 0);
-		// color
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color), 0);
-
-		R_BindVertexArray(vao_none);
-	}
-}
-
-static void GLC_Create3DSpriteVAO(void)
-{
-	if (buffers.supported) {
-		R_GenVertexArray(vao_3dsprites);
-		GL_Create3DSpriteVBO();
-		GL_Create3DSpriteIndexBuffer();
-
-		GLC_VAOSetIndexBuffer(vao_3dsprites, sprite3dIndexes);
-		GLC_VAOSetVertexBuffer(vao_3dsprites, sprite3dVBO);
-		GLC_VAOEnableVertexPointer(vao_3dsprites, 3, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position));
-		GLC_VAOEnableColorPointer(vao_3dsprites, 4, GL_UNSIGNED_BYTE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color));
-		GLC_VAOEnableTextureCoordPointer(vao_3dsprites, 0, 2, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex));
-	}
-}
-
-static void GLM_Compile3DSpriteProgram(void)
-{
-	if (GLM_ProgramRecompileNeeded(&sprite3dProgram, 0)) {
-		GL_VFDeclare(draw_sprites);
-
-		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), &sprite3dProgram);
-	}
-
-	if (sprite3dProgram.program && !sprite3dProgram.uniforms_found) {
-		sprite3dUniform_alpha_test = GL_UniformGetLocation(sprite3dProgram.program, "alpha_test");
-
-		sprite3dProgram.uniforms_found = true;
-	}
-}
-
-static qbool GLM_3DSpritesInit(void)
-{
-	// Create program
-	GLM_Compile3DSpriteProgram();
-	GLM_Create3DSpriteVAO();
-
-	return (sprite3dProgram.program && R_VertexArrayCreated(vao_3dsprites));
-}
-
-static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
+void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size)
 {
 	int vertOffset = batch->glFirstVertices[first_batch];
 	int numVertices = batch->numVertices[first_batch];
@@ -402,313 +318,3 @@ static void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_bat
 	}
 }
 
-static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
-{
-	if (GL_TextureReferenceIsValid(batch->texture)) {
-		if (!batch->textured_rendering_state) {
-			assert(false);
-			return;
-		}
-		R_ApplyRenderingState(batch->textured_rendering_state);
-		R_TextureUnitBind(0, batch->texture);
-
-		// All batches are the same texture, so no issues
-		GL_DrawSequentialBatchImpl(batch, 0, batch->count, index_offset, maximum_batch_size);
-	}
-	else {
-		// Group by texture usage
-		int start = 0, end = 1;
-
-		if (GL_TextureReferenceIsValid(batch->textures[start])) {
-			if (!batch->textured_rendering_state) {
-				assert(false);
-				return;
-			}
-
-			R_ApplyRenderingState(batch->textured_rendering_state);
-			R_TextureUnitBind(0, batch->textures[start]);
-		}
-		else {
-			if (!batch->untextured_rendering_state) {
-				assert(false);
-				return;
-			}
-			R_ApplyRenderingState(batch->untextured_rendering_state);
-		}
-		for (end = 1; end < batch->count; ++end) {
-			if (!GL_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
-				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
-
-				if (GL_TextureReferenceIsValid(batch->textures[end])) {
-					if (!batch->textured_rendering_state) {
-						assert(false);
-						return;
-					}
-					R_TextureUnitBind(0, batch->textures[end]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else {
-					if (!batch->untextured_rendering_state) {
-						assert(false);
-						return;
-					}
-					R_ApplyRenderingState(batch->untextured_rendering_state);
-				}
-				start = end;
-			}
-		}
-
-		if (end > start) {
-			GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
-		}
-	}
-}
-
-static void GLM_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
-{
-	if (GL_TextureReferenceIsValid(batch->texture)) {
-		// All batches are the same texture, so no issues
-		GL_DrawSequentialBatchImpl(batch, 0, batch->count, index_offset, maximum_batch_size);
-	}
-	else {
-		// Group by texture usage
-		int start = 0, end = 1;
-
-		R_TextureUnitBind(0, batch->textures[start]);
-		for (end = 1; end < batch->count; ++end) {
-			if (!GL_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
-				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
-
-				R_TextureUnitBind(0, batch->textures[end]);
-				start = end;
-			}
-		}
-
-		if (end > start) {
-			GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
-		}
-	}
-}
-
-void GLM_Prepare3DSprites(void)
-{
-	if (!batchCount || !vertexCount) {
-		return;
-	}
-
-	GL_EnterRegion(__FUNCTION__);
-
-	GLM_Create3DSpriteVAO();
-
-	if (GL_BufferReferenceIsValid(sprite3dVBO)) {
-		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
-	}
-
-	GL_LeaveRegion();
-}
-
-void GLM_Draw3DSprites(void)
-{
-	unsigned int i;
-	qbool current_alpha_test = false;
-	qbool first_batch = true;
-
-	if (!batchCount || (batchCount == 1 && !batches[0].count)) {
-		return;
-	}
-
-	GL_EnterRegion(__FUNCTION__);
-
-	if (!GLM_3DSpritesInit()) {
-		GL_LeaveRegion();
-		return;
-	}
-
-	GL_UseProgram(sprite3dProgram.program);
-
-	for (i = 0; i < batchCount; ++i) {
-		gl_sprite3d_batch_t* batch = &batches[i];
-		qbool alpha_test = (i == batchMapping[SPRITE3D_ENTITIES] - 1);
-
-		if (!batch->count) {
-			continue;
-		}
-
-		GL_EnterRegion(batch->name);
-		if (first_batch || current_alpha_test != alpha_test) {
-			GL_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
-		}
-		first_batch = false;
-
-		R_ApplyRenderingState(batch->textured_rendering_state);
-		if (GL_TextureReferenceIsValid(batch->texture)) {
-			R_TextureUnitBind(0, batch->texture);
-		}
-		else if (!GL_TextureReferenceIsValid(batch->textures[0])) {
-			extern texture_ref particletexture_array;
-
-			R_TextureUnitBind(0, batch->texture = particletexture_array);
-		}
-
-		if (batch->count == 1) {
-			if (GL_TextureReferenceIsValid(batch->textures[0])) {
-				R_TextureUnitBind(0, batch->textures[0]);
-			}
-			GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
-		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
-			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
-		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
-			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
-		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
-			GLM_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
-		}
-		else {
-			if (GL_TextureReferenceIsValid(batch->texture)) {
-				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
-			}
-			else {
-				int first = 0, last = 1;
-				R_TextureUnitBind(0, batch->textures[0]);
-				while (last < batch->count) {
-					if (! GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-						GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-
-						R_TextureUnitBind(0, batch->textures[last]);
-						first = last;
-					}
-					++last;
-				}
-
-				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-			}
-		}
-
-		GL_LeaveRegion();
-
-		batch->count = 0;
-	}
-
-	GL_LeaveRegion();
-
-	batchCount = vertexCount = 0;
-	memset(batchMapping, 0, sizeof(batchMapping));
-}
-
-void GLC_Draw3DSprites(void)
-{
-	unsigned int i, j, k;
-
-	if (!batchCount) {
-		return;
-	}
-
-	if (buffers.supported) {
-		if (!R_VertexArrayCreated(vao_3dsprites)) {
-			GLC_Create3DSpriteVAO();
-		}
-		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
-	}
-
-	for (i = 0; i < batchCount; ++i) {
-		gl_sprite3d_batch_t* batch = &batches[i];
-
-		if (!batch->count) {
-			continue;
-		}
-
-		if (buffers.supported) {
-			if (batch->count == 1) {
-				if (GL_TextureReferenceIsValid(batch->textures[0])) {
-					R_TextureUnitBind(0, batch->textures[0]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else if (GL_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else {
-					R_ApplyRenderingState(batch->untextured_rendering_state);
-				}
-				GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4 && glPrimitiveTypes[batch->primitive_id] == GL_TRIANGLE_STRIP) {
-				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
-				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
-				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
-			}
-			else {
-				if (GL_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-
-					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
-				}
-				else {
-					int first = 0, last = 1;
-
-					if (GL_TextureReferenceIsValid(batch->textures[0])) {
-						R_TextureUnitBind(0, batch->textures[0]);
-						R_ApplyRenderingState(batch->textured_rendering_state);
-					}
-					else {
-						R_ApplyRenderingState(batch->untextured_rendering_state);
-					}
-
-					while (last < batch->count) {
-						if (!GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-							GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-
-							if (GL_TextureReferenceIsValid(batch->textures[last])) {
-								R_TextureUnitBind(0, batch->textures[last]);
-								R_ApplyRenderingState(batch->textured_rendering_state);
-							}
-							else {
-								R_ApplyRenderingState(batch->untextured_rendering_state);
-							}
-							first = last;
-						}
-						++last;
-					}
-
-					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-				}
-			}
-		}
-		else {
-			for (j = 0; j < batch->count; ++j) {
-				r_sprite3d_vert_t* v;
-
-				if (GL_TextureReferenceIsValid(batch->textures[j])) {
-					R_TextureUnitBind(0, batch->textures[j]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else if (GL_TextureReferenceIsValid(batch->texture)) {
-					R_TextureUnitBind(0, batch->texture);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else {
-					R_ApplyRenderingState(batch->untextured_rendering_state);
-				}
-
-				// Immediate mode
-				glBegin(glPrimitiveTypes[batch->primitive_id]);
-				v = &verts[batch->firstVertices[j]];
-				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
-					glTexCoord2fv(v->tex);
-					R_CustomColor4ubv(v->color);
-					glVertex3fv(v->position);
-				}
-				glEnd();
-			}
-		}
-
-		batch->count = 0;
-	}
-}

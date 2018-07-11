@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2018 ezQuake team
+Copyright (C) 1996-1997 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,29 +15,47 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: gl_rmisc.c,v 1.27 2007-09-17 19:37:55 qqshka Exp $
 */
+// gl_rmisc.c
 
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 
-void GLM_RenderView(void)
+void GLC_TimeRefresh(void)
 {
-	GLM_UploadFrameConstants();
-	R_UploadChangedLightmaps();
-	GLM_PrepareWorldModelBatch();
-	GLM_PrepareAliasModelBatches();
-	GLM_Prepare3DSprites();
+	int i;
+	float start, stop, time;
 
-	GL_DrawWorldModelBatch(opaque_world);
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL) {
+		// Causes the console to flicker on Intel cards.
+		glDrawBuffer(GL_FRONT);
+	}
+#endif
 
-	GL_EnterRegion("GLM_DrawEntities");
-	GLM_DrawAliasModelBatches();
-	GL_LeaveRegion();
+	R_EnsureFinished();
 
-	GL_Draw3DSprites(false);
+	start = Sys_DoubleTime();
+	for (i = 0; i < 128; i++) {
+		r_refdef.viewangles[1] = i * (360.0 / 128.0);
+		R_SetupFrame();
+		R_RenderView();
+	}
 
-	GL_DrawWorldModelBatch(alpha_surfaces);
+	R_EnsureFinished();
+	stop = Sys_DoubleTime();
+	time = stop - start;
+	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);
 
-	GLM_DrawAliasModelPostSceneBatches();
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL) {
+		glDrawBuffer(GL_BACK);
+	}
+#endif
+
+	GL_EndRendering();
 }

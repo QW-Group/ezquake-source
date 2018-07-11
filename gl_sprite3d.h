@@ -86,7 +86,18 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, struct rendering_state_s
 r_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
 r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
 void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);
-void GL_Draw3DSprites(void);
+void GL_Draw3DSprites(qbool inline_rendering);
 void GLM_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index);
+
+// GL only
+extern GLenum glPrimitiveTypes[r_primitive_count];
+
+void GL_Create3DSpriteVBO(void);
+void GL_Create3DSpriteIndexBuffer(void);
+void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size);
+
+extern int indexes_start_quads;
+extern int indexes_start_flashblend;
+extern int indexes_start_sparks;
 
 #endif // #ifndef EZQUAKE_GL_SPRITE3D_HEADER

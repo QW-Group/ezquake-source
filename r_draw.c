@@ -21,7 +21,6 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "wad.h"
 #include "stats_grid.h"
 #include "utils.h"
@@ -38,6 +37,8 @@ void CachePics_Init(void);
 void Draw_InitCharset(void);
 void CachePics_LoadAmmoPics(mpic_t* ibar);
 void Draw_SetCrosshairTextMode(qbool enabled);
+
+void GLC_DrawDisc(void);
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t con_shift, hud_faderankings;
@@ -1101,19 +1102,21 @@ void Draw_BeginDisc (void)
 	// will cause serialization. Be sure you are done altering the back buffer
 	// before you flip.
 #ifndef __APPLE__
-	if (glConfig.hardwareType == GLHW_INTEL)
+	if (glConfig.hardwareType == GLHW_INTEL) {
 		return;
+	}
 #endif
 
-	glDrawBuffer(GL_FRONT);
-	Draw_Pic(vid.width - 24, 0, draw_disc);
-	GL_EmptyImageQueue();
-	glDrawBuffer(GL_BACK);
+	if (R_UseImmediateOpenGL()) {
+		GLC_DrawDisc();
+	}
 }
 
 // Erases the disc icon.
 // Call after completing any disc IO
-void Draw_EndDisc (void) {}
+void Draw_EndDisc(void)
+{
+}
 
 //
 // Changes the projection to orthogonal (2D drawing).

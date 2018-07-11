@@ -941,19 +941,19 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 
 static void R_Clear(void)
 {
-	int clearbits = 0;
+	qbool clear_color = false;
 
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
 	if (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1))) {
-		clearbits |= GL_COLOR_BUFFER_BIT;
+		clear_color = true;
 	}
 
 	// If outside level or in wall, sky is usually visible
 	if (r_viewleaf->contents == CONTENTS_SOLID) {
-		if (GL_UseGLSL() || r_fastsky.integer) {
-			clearbits |= GL_COLOR_BUFFER_BIT;
+		if (R_UseModernOpenGL() || r_fastsky.integer) {
+			clear_color = true;
 		}
 	}
 
@@ -966,8 +966,7 @@ static void R_Clear(void)
 		}
 	}
 
-	clearbits |= GL_DEPTH_BUFFER_BIT;
-	glClear(clearbits);
+	R_ClearRenderingSurface(clear_color);
 }
 
 // player velocity is drawn on screen
@@ -1098,7 +1097,7 @@ void R_RenderView(void)
 
 	// Wait for previous commands to 'complete'
 	if (!r_speeds.integer && gl_finish.integer) {
-		glFinish();
+		R_EnsureFinished();
 	}
 
 	R_SetFrustum();
@@ -1118,7 +1117,7 @@ void R_RenderView(void)
 	R_RenderTransparentWorld();
 
 	// Render billboards
-	GL_Draw3DSprites();
+	GL_Draw3DSprites(true);
 
 	// Draw 3D hud elements
 	R_Render3DHud();
@@ -1147,7 +1146,7 @@ qbool R_PointIsUnderwater(vec3_t point)
 	return ISUNDERWATER(contents);
 }
 
-void R_EnsureFinished(void)
+void GL_EnsureFinished(void)
 {
 	glFinish();
 }

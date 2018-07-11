@@ -434,8 +434,6 @@ void R_UploadChangedLightmaps(void);
 void GLM_RenderView(void);
 void GLM_UploadFrameConstants(void);
 void GLM_PrepareWorldModelBatch(void);
-void GLM_Draw3DSprites(void);
-void GLM_Prepare3DSprites(void);
 
 void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);

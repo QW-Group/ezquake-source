@@ -1,0 +1,62 @@
+/*
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: gl_rmisc.c,v 1.27 2007-09-17 19:37:55 qqshka Exp $
+*/
+// gl_rmisc.c
+
+#include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
+#include "tr_types.h"
+
+void GLM_TimeRefresh(void)
+{
+	int i;
+	float start, stop, time;
+
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL) {
+		// Causes the console to flicker on Intel cards.
+		glDrawBuffer(GL_FRONT);
+	}
+#endif
+
+	R_EnsureFinished();
+
+	start = Sys_DoubleTime();
+	for (i = 0; i < 128; i++) {
+		r_refdef.viewangles[1] = i * (360.0 / 128.0);
+		R_SetupFrame();
+		R_RenderView();
+	}
+
+	R_EnsureFinished();
+	stop = Sys_DoubleTime();
+	time = stop - start;
+	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);
+
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL) {
+		glDrawBuffer(GL_BACK);
+	}
+#endif
+
+	GL_EndRendering();
+}
+

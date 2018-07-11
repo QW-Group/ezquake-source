@@ -452,9 +452,6 @@ void Host_InitMemory (int memsize)
 void Host_ClearMemory (void)
 {
 	// FIXME, move to CL_ClearState
-	D_FlushCaches ();
-
-	// FIXME, move to CL_ClearState
 	Mod_ClearAll ();
 
 	CM_InvalidateMap ();
