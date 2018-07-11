@@ -83,6 +83,9 @@ void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldfra
 void GLC_AllocateAliasPoseBuffer(void);
 
 void R_DrawAliasModel(entity_t *ent);
-void R_DrawAliasPowerupShell(entity_t *ent);
+void GLC_DrawAliasPowerupShell(entity_t *ent);
+
+qbool R_FilterEntity(entity_t* ent);
+qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
 #endif

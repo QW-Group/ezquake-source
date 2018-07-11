@@ -429,7 +429,9 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 				break;
 			case mod_alias:
 				if (type == visent_shells) {
-					R_DrawAliasPowerupShell(&todraw->ent);
+					if (R_UseImmediateOpenGL()) {
+						GLC_DrawAliasPowerupShell(&todraw->ent);
+					}
 				}
 				else {
 					R_DrawAliasModel(&todraw->ent);

@@ -185,7 +185,7 @@ static void R_RenderAliasModelEntity(
 	}
 }
 
-static qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
+qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
 	vec3_t mins, maxs;
 
@@ -416,7 +416,7 @@ void R_SetupAliasFrame(
 	if (R_UseModernOpenGL()) {
 		GLM_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_DrawAliasFrame(ent, model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
 	}
 }
@@ -668,7 +668,9 @@ void R_DrawViewModel(void)
 		case mod_alias:
 			R_DrawAliasModel(&gun);
 			if (gun.effects) {
-				R_DrawAliasPowerupShell(&gun);
+				if (R_UseImmediateOpenGL()) {
+					GLC_DrawAliasPowerupShell(&gun);
+				}
 			}
 			break;
 		case mod_alias3:
@@ -918,62 +920,10 @@ static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 	if (R_UseModernOpenGL()) {
 		GLM_AliasModelShadow(ent, paliashdr);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_AliasModelShadow(ent, paliashdr);
 	}
-}
-
-static void GLC_AliasModelPowerupShell(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
-{
-	// FIXME: think need put it after caustics
-	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
-		model_t* clmodel = ent->model;
-
-		GLC_StateBeginAliasPowerupShell();
-		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
+	else if (R_UseVulkan()) {
+		//VK_AliasModelShadow(ent, paliashdr);
 	}
-}
-
-void R_DrawAliasPowerupShell(entity_t *ent)
-{
-	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
-	maliasframedesc_t *oldframe, *frame;
-	float oldMatrix[16];
-
-	if (!R_UseImmediateOpenGL()) {
-		return;
-	}
-
-	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
-	if (R_FilterEntity(ent)) {
-		return;
-	}
-
-	if (!Ruleset_AllowPowerupShell(ent->model)) {
-		return;
-	}
-
-	ent->frame = bound(0, ent->frame, paliashdr->numframes - 1);
-	ent->oldframe = bound(0, ent->oldframe, paliashdr->numframes - 1);
-
-	frame = &paliashdr->frames[ent->frame];
-	oldframe = &paliashdr->frames[ent->oldframe];
-
-	r_framelerp = 1.0;
-	if (r_lerpframes.integer && ent->framelerp >= 0 && ent->oldframe != ent->frame) {
-		r_framelerp = min(ent->framelerp, 1);
-	}
-
-	if (R_CullAliasModel(ent, oldframe, frame)) {
-		return;
-	}
-
-	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
-
-	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	GL_PushModelviewMatrix(oldMatrix);
-	GL_StateBeginDrawAliasModel(ent, paliashdr);
-	GLC_AliasModelPowerupShell(ent, oldframe, frame);
-	GL_PopModelviewMatrix(oldMatrix);
-	GL_LeaveTracedRegion(true);
 }

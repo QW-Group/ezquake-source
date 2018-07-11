@@ -561,3 +561,51 @@ static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenu
 		GLC_End();
 	}	
 }
+
+void GLC_DrawAliasPowerupShell(entity_t *ent)
+{
+	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
+	maliasframedesc_t *oldframe, *frame;
+	float oldMatrix[16];
+
+	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
+	if (R_FilterEntity(ent)) {
+		return;
+	}
+
+	if (!Ruleset_AllowPowerupShell(ent->model)) {
+		return;
+	}
+
+	ent->frame = bound(0, ent->frame, paliashdr->numframes - 1);
+	ent->oldframe = bound(0, ent->oldframe, paliashdr->numframes - 1);
+
+	frame = &paliashdr->frames[ent->frame];
+	oldframe = &paliashdr->frames[ent->oldframe];
+
+	r_framelerp = 1.0;
+	if (r_lerpframes.integer && ent->framelerp >= 0 && ent->oldframe != ent->frame) {
+		r_framelerp = min(ent->framelerp, 1);
+	}
+
+	if (R_CullAliasModel(ent, oldframe, frame)) {
+		return;
+	}
+
+	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
+
+	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	GL_PushModelviewMatrix(oldMatrix);
+	GL_StateBeginDrawAliasModel(ent, paliashdr);
+
+	// FIXME: think need put it after caustics
+	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
+		model_t* clmodel = ent->model;
+
+		GLC_StateBeginAliasPowerupShell();
+		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
+	}
+
+	GL_PopModelviewMatrix(oldMatrix);
+	GL_LeaveTracedRegion(true);
+}
