@@ -1226,7 +1226,7 @@ void SCR_UpdateScreenPostPlayerView(void)
 
 	// Actual rendering...
 	GL_EnterRegion("GL_DrawHUD");
-	GL_FlushImageDraw();
+	R_FlushImageDraw();
 	GL_LeaveRegion();
 
 	R_PostProcessScreen();

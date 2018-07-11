@@ -480,7 +480,7 @@ void CachePics_CreateAtlas(void)
 	Con_DPrintf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
 
 	// Make sure we don't reference any old textures
-	GL_EmptyImageQueue();
+	R_EmptyImageQueue();
 
 	atlas_refresh = false;
 }

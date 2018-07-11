@@ -169,4 +169,6 @@ void R_EnableScissorTest(int x, int y, int width, int height);
 void R_DisableScissorTest(void);
 void R_ClearColor(float r, float g, float b, float a);
 
+void R_Hud_Initialise(void);
+
 #endif // EZQUAKE_R_STATE_HEADER

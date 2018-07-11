@@ -1272,6 +1272,7 @@ static void VID_SDL_Init(void)
 	r_swapInterval.modified = true;
 
 	R_InitialiseBufferHandling();
+	R_Hud_Initialise();
 
 	SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &r);
 	SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &g);

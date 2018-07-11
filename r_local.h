@@ -33,8 +33,8 @@ void R_PreRenderView(void);
 void R_OnDisconnect(void);
 
 // 2d rendering
-void GL_FlushImageDraw(void);
-void GL_EmptyImageQueue(void);
+void R_FlushImageDraw(void);
+void R_EmptyImageQueue(void);
 
 // culling
 qbool R_CullBox(vec3_t mins, vec3_t maxs);

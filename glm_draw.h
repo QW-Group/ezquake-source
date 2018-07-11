@@ -46,8 +46,10 @@ typedef enum {
 	imagetype_image,
 	imagetype_circle,
 	imagetype_polygon,
-	imagetype_line
-} glm_image_type_t;
+	imagetype_line,
+
+	imagetype_count
+} r_image_type_t;
 
 typedef struct glm_image_s {
 	float pos[2];
@@ -74,8 +76,8 @@ extern glm_image_framedata_t imageData;
 extern glm_polygon_framedata_t polygonData;
 extern glm_line_framedata_t lineData;
 
-qbool GLM_LogCustomImageType(glm_image_type_t type, int index);
-qbool GLM_LogCustomImageTypeWithTexture(glm_image_type_t type, int index, texture_ref texture);
+qbool GLM_LogCustomImageType(r_image_type_t type, int index);
+qbool GLM_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_ref texture);
 
 void GLM_PreparePolygons(void);
 void GLM_PrepareLines(void);

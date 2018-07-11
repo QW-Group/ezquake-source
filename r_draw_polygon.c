@@ -27,46 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_buffers.h"
 
-static glm_program_t polygonProgram;
-static buffer_ref polygonVBO;
-static GLint polygonUniforms_matrix;
-static GLint polygonUniforms_color;
-
 glm_polygon_framedata_t polygonData;
 
-void GLM_PreparePolygons(void)
-{
-	if (GL_UseGLSL()) {
-		if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
-			GL_VFDeclare(hud_draw_polygon);
-
-			if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(hud_draw_polygon), &polygonProgram)) {
-				return;
-			}
-		}
-
-		if (!polygonProgram.uniforms_found) {
-			polygonUniforms_matrix = GL_UniformGetLocation(polygonProgram.program, "matrix");
-			polygonUniforms_color = GL_UniformGetLocation(polygonProgram.program, "color");
-			polygonProgram.uniforms_found = true;
-		}
-
-		if (!GL_BufferReferenceIsValid(polygonVBO)) {
-			polygonVBO = buffers.Create(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
-		}
-		else if (polygonData.polygonVerts[0]) {
-			buffers.Update(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
-		}
-
-		if (!R_VertexArrayCreated(vao_hud_polygons)) {
-			R_GenVertexArray(vao_hud_polygons);
-			GLM_ConfigureVertexAttribPointer(vao_hud_polygons, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
-			R_BindVertexArray(vao_none);
-		}
-	}
-}
-
-void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
+void R_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
 	if (num_vertices < 0 || num_vertices > MAX_POLYGON_POINTS) {
 		return;
@@ -84,23 +47,4 @@ void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t 
 	polygonData.polygonY[polygonData.polygonCount] = y;
 	memcpy(polygonData.polygonVertices, vertices, sizeof(polygonData.polygonVertices[0]) * num_vertices);
 	++polygonData.polygonCount;
-}
-
-void GLM_DrawPolygons(int start, int end)
-{
-	int i;
-	uintptr_t offset = buffers.BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
-
-	R_BindVertexArray(vao_hud_polygons);
-	GL_UseProgram(polygonProgram.program);
-	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
-
-	GLM_StateBeginPolygonDraw();
-
-	for (i = start; i <= end; ++i) {
-		//GLM_TransformMatrix(GLM_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
-		GL_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
-
-		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
-	}
 }

@@ -58,9 +58,9 @@ typedef struct buffer_data_s {
 
 	// These set at creation
 	buffertype_t type;
+	bufferusage_t usage;
 	GLenum target;
 	GLsizei size;
-	GLuint usage;                // flags for BufferData()
 	GLuint storageFlags;         // flags for BufferStorage()
 
 	void* persistent_mapped_ptr;
@@ -361,15 +361,15 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 
 		buffer_data[vbo.index].next_free = next_free_buffer;
 
-		return GL_CreateFixedBuffer(buffer_data[vbo.index].type, buffer_data[vbo.index].name, size, data, bufferusage_once_per_frame);
+		return GL_CreateFixedBuffer(buffer_data[vbo.index].type, buffer_data[vbo.index].name, size, data, buffer_data[vbo.index].usage);
 	}
 	else {
 		if (qglNamedBufferData) {
-			qglNamedBufferData(buffer_data[vbo.index].glref, size, data, buffer_data[vbo.index].usage);
+			qglNamedBufferData(buffer_data[vbo.index].glref, size, data, GL_BufferUsageToGLUsage(buffer_data[vbo.index].usage));
 		}
 		else {
 			GL_BindBuffer(vbo);
-			qglBufferData(buffer_data[vbo.index].target, size, data, buffer_data[vbo.index].usage);
+			qglBufferData(buffer_data[vbo.index].target, size, data, GL_BufferUsageToGLUsage(buffer_data[vbo.index].usage));
 		}
 
 		buffer_data[vbo.index].size = size;

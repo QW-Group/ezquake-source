@@ -28,72 +28,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_buffers.h"
 
-static glm_program_t circleProgram;
 static buffer_ref circleVBO;
-static GLint drawCircleUniforms_matrix;
-static GLint drawCircleUniforms_color;
 
 glm_circle_framedata_t circleData;
 
 extern float overall_alpha;
 
-void GLM_DrawCircles(int start, int end)
-{
-	// FIXME: Not very efficient (but rarely used either)
-	int i;
-	uintptr_t offset = buffers.BufferOffset(circleVBO) / (sizeof(float) * 2);
-
-	start = max(0, start);
-	end = min(end, circleData.circleCount - 1);
-
-	GL_UseProgram(circleProgram.program);
-	R_BindVertexArray(vao_hud_circles);
-
-	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, GLM_ProjectionMatrix());
-
-	for (i = start; i <= end; ++i) {
-		GL_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
-
-		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, offset + i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
-	}
-}
-
-void GLM_PrepareCircles(void)
-{
-	if (GL_UseGLSL()) {
-		if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
-			GL_VFDeclare(hud_draw_circle);
-
-			if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(hud_draw_circle), &circleProgram)) {
-				return;
-			}
-		}
-
-		if (!circleProgram.uniforms_found) {
-			drawCircleUniforms_matrix = GL_UniformGetLocation(circleProgram.program, "matrix");
-			drawCircleUniforms_color = GL_UniformGetLocation(circleProgram.program, "color");
-
-			circleProgram.uniforms_found = true;
-		}
-
-		// Build VBO
-		if (!GL_BufferReferenceIsValid(circleVBO)) {
-			circleVBO = buffers.Create(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
-		}
-		else if (circleData.circleCount) {
-			buffers.Update(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
-		}
-
-		// Build VAO
-		if (!R_VertexArrayCreated(vao_hud_circles)) {
-			R_GenVertexArray(vao_hud_circles);
-
-			GLM_ConfigureVertexAttribPointer(vao_hud_circles, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
-		}
-	}
-}
-
-void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+void R_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
 	float* pointData;
 	double angle;

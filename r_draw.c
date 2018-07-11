@@ -652,7 +652,7 @@ void Draw_Crosshair (void)
 			ofs2 *= 0.5f;
 		}
 
-		GLM_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false, true);
+		R_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false, true);
 
 		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
@@ -758,7 +758,7 @@ void Draw_TileClear(int x, int y, int w, int h)
 {
 	byte white[4] = { 255, 255, 255, 255 };
 
-	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, white, false, draw_backtile->texnum, false, false);
+	R_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, white, false, draw_backtile->texnum, false, false);
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
@@ -773,7 +773,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	COLOR_TO_RGBA(color, bytecolor);
 	thickness = max(0, thickness);
 
-	GLM_DrawAlphaRectangleRGB(x, y, w, h, thickness, fill, bytecolor);
+	R_DrawAlphaRectangleRGB(x, y, w, h, thickness, fill, bytecolor);
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)
@@ -803,7 +803,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 
 	COLOR_TO_RGBA_PREMULT(color, bytecolor);
 
-	GLM_Draw_LineRGB(thickness, bytecolor, x_start, y_start, x_end, y_end);
+	R_Draw_LineRGB(thickness, bytecolor, x_start, y_start, x_end, y_end);
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)
@@ -814,12 +814,12 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 
 void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
 {
-	GLM_Draw_Polygon(x, y, vertices, num_vertices, color);
+	R_Draw_Polygon(x, y, vertices, num_vertices, color);
 }
 
 static void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
-	GLM_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
+	R_Draw_AlphaPieSliceRGB(x, y, radius, startangle, endangle, thickness, fill, color);
 }
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha)
@@ -881,7 +881,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 
 	alpha *= overall_alpha;
 
-	GLM_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
+	R_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 }
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
@@ -1068,7 +1068,7 @@ void Draw_FadeScreen(float alpha)
 		return;
 	}
 
-	GLM_Draw_FadeScreen(alpha);
+	R_Draw_FadeScreen(alpha);
 
 	Sbar_Changed();
 }

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fonts.h"
 #include "tr_types.h"
 #include "r_texture.h"
+#include "r_draw.h"
 
 extern charset_t char_textures[MAX_CHARSETS];
 extern int char_mapping[MAX_CHARSETS];
@@ -83,7 +84,7 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 	ch &= 0xFF;	// Only use the first byte.
 
 	pic = &texture->glyphs[ch];
-	GLM_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
+	R_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
 
 	return FontCharacterWidth(ch, proportional) * scale;
 }
@@ -95,7 +96,7 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
+float R_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
 
@@ -125,14 +126,12 @@ float GLM_Draw_CharacterBase(float x, float y, wchar num, float scale, qbool app
 	return Draw_TextCacheAddCharacter(x, y, num, scale, proportional);
 }
 
-void GLM_Draw_ResetCharGLState(void)
+void R_Draw_ResetCharGLState(void)
 {
-	//GL_AlphaBlendFlags(GL_ALPHATEST_ENABLED | GL_BLEND_DISABLED);
-	//GL_TextureEnvMode(GL_REPLACE);
 	Draw_TextCacheSetColor(color_white);
 }
 
-void GLM_Draw_SetColor(byte* rgba)
+void R_Draw_SetColor(byte* rgba)
 {
 	extern cvar_t scr_coloredText;
 
@@ -141,7 +140,7 @@ void GLM_Draw_SetColor(byte* rgba)
 	}
 }
 
-void GLM_Draw_StringBase_StartString(int x, int y, float scale)
+void R_Draw_StringBase_StartString(int x, int y, float scale)
 {
 	Draw_TextCacheInit(x, y, scale);
 }

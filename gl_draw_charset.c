@@ -242,14 +242,14 @@ static float Draw_CharacterBaseW(float x, float y, wchar num, float scale, qbool
 	int original_x = x;
 
 	if (FontAlterCharCoords(&x, &y, num, bigchar, scale, proportional)) {
-		return GLM_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange, proportional);
+		return R_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, color, bigchar, gl_statechange, proportional);
 	}
 	return x - original_x;
 }
 
 static void Draw_ResetCharGLState(void)
 {
-	GLM_Draw_ResetCharGLState();
+	R_Draw_ResetCharGLState();
 }
 
 void Draw_SCharacter(int x, int y, int num, float scale)
@@ -285,7 +285,7 @@ void Draw_Character(int x, int y, int num)
 
 void Draw_SetColor(byte *rgba)
 {
-	GLM_Draw_SetColor(rgba);
+	R_Draw_SetColor(rgba);
 }
 
 static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap, qbool proportional, float max_x)
@@ -312,7 +312,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 	}
 
 	// Draw the string.
-	GLM_Draw_StringBase_StartString(x, y, scale);
+	R_Draw_StringBase_StartString(x, y, scale);
 	for (i = 0; text[i]; i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
@@ -378,7 +378,7 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 		char_width = Draw_CharacterBaseW(x, y, curr_char, scale, false, rgba, bigchar, false, proportional);
 
 		if (max_x && x + char_width > max_x) {
-			GLM_UndoLastCharacter();
+			R_UndoLastCharacter();
 			break;
 		}
 
@@ -467,7 +467,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 	}
 
 	// Draw the string.
-	GLM_Draw_StringBase_StartString(x, y, scale);
+	R_Draw_StringBase_StartString(x, y, scale);
 	for (i = 0; (text_length ? i < text_length : text[i]); i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
