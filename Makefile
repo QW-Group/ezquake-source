@@ -332,7 +332,6 @@ OBJS_c := \
     r_rlight.o \
     gl_rmain.o \
     r_rmisc.o \
-    gl_rpart.o \
     gl_rsurf.o \
     gl_texture.o \
     r_brushmodel_warpsurfaces.o \
@@ -358,7 +357,10 @@ OBJS_c := \
     gl_buffers.o \
     r_chaticons.o \
     gl_framebuffer.o \
-    gl_lightmaps.o \
+    r_lightmaps.o \
+    glm_lightmaps.o \
+    glc_lightmaps.o \
+    vk_lightmaps.o \
     gl_matrix.o \
     gl_state.o \
     gl_state_resets.o \
@@ -404,7 +406,8 @@ OBJS_c := \
     gl_debug.o \
     hud_autoid.o \
     cl_screenshot.o \
-    gl_rpart_spawn.o \
+    r_particles_qmb.o \
+    r_particles_qmb_spawn.o \
     hud_clock.o \
     hud_ammo.o \
     hud_items.o \
