@@ -31,7 +31,9 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "r_texture.h"
 #include "r_matrix.h"
 #include "r_local.h"
+#include "r_draw.h"
 #include "r_state.h"
+#include "r_trace.h"
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);
@@ -271,14 +273,7 @@ static void BuildBuiltinCrosshairs(void)
 		crosshairs_builtin[i].sh = crosshairs_builtin[i].th = 1;
 		crosshairs_builtin[i].height = crosshairs_builtin[i].width = 16;
 
-		if (GL_VersionAtLeast(1, 2)) {
-			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
-		else {
-			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			GL_TexParameteri(GL_TEXTURE0, crosshairs_builtin[i].texnum, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		}
+		R_TextureWrapModeClamp(crosshairs_builtin[i].texnum);
 	}
 	Q_free(crosshair_buffer);
 	current_crosshair_pixel_size = crosshair_size;
@@ -761,7 +756,9 @@ void Draw_TextBox (int x, int y, int width, int lines)
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
 void Draw_TileClear(int x, int y, int w, int h)
 {
-	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, color_white, false, draw_backtile->texnum, false, false);
+	byte white[4] = { 255, 255, 255, 255 };
+
+	GLM_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, white, false, draw_backtile->texnum, false, false);
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
@@ -1126,7 +1123,7 @@ void GL_Set2D(void)
 	GL_Framebuffer2DSwitch();
 	GL_IdentityModelView();
 	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-	GL_StateDefault2D();
+	GL_ResetRegion(false);
 }
 
 void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha)

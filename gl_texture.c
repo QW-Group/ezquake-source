@@ -1609,3 +1609,14 @@ void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint mini
 	}
 }
 
+void R_TextureWrapModeClamp(texture_ref tex)
+{
+	if (GL_VersionAtLeast(1, 2)) {
+		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	else {
+		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
+}

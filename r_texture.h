@@ -79,6 +79,8 @@ const char* GL_TextureIdentifier(texture_ref ref);
 void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
+void R_TextureWrapModeClamp(texture_ref tex);
+
 extern texture_ref underwatertexture, detailtexture, solidtexture;
 
 #endif	// EZQUAKE_R_TEXTURE_H

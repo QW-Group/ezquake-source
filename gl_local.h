@@ -466,8 +466,6 @@ void GLC_BrightenScreen(void);
 //void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
-void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
-
 void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(qbool use_vbo);
@@ -475,7 +473,7 @@ void GLC_EmitCausticsPolys(qbool use_vbo);
 void GLC_DrawWaterSurfaces(void);
 void GLC_DrawWorld(void);
 
-void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
+/*void GLM_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
 void GLM_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void GLM_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, int x_end, int y_end);
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair);
@@ -489,6 +487,7 @@ void GLM_PrepareImageDraw(void);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Cache2DMatrix(void);
 void GLM_UndoLastCharacter(void);
+*/
 
 #ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message);
@@ -505,8 +504,6 @@ void CachePics_Shutdown(void);
 
 void GL_LightmapShutdown(void);
 void GLM_DeleteBrushModelIndexBuffer(void);
-
-#define NUMCROSSHAIRS  6
 
 void GL_InitialiseState(void);
 
@@ -694,7 +691,6 @@ void GLC_StateBeginFastTurbPoly(byte color[4]);
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
-void GL_StateDefault2D(void);
 void GL_StateDefault3D(void);
 void GL_StateDefaultInit(void);
 void GLC_StateBeginBloomDraw(texture_ref texture);

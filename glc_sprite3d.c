@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_state.h"
 #include "gl_sprite3d.h"
-#include "gl_sprite3d_internal.h"
+#include "r_sprite3d_internal.h"
 #include "glc_vao.h"
 #include "tr_types.h"
 

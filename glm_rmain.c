@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_sprite3d.h"
 
 void GLM_RenderView(void)
 {
@@ -27,7 +28,7 @@ void GLM_RenderView(void)
 	R_UploadChangedLightmaps();
 	GLM_PrepareWorldModelBatch();
 	GLM_PrepareAliasModelBatches();
-	GLM_Prepare3DSprites();
+	R_Prepare3DSprites();
 
 	GL_DrawWorldModelBatch(opaque_world);
 

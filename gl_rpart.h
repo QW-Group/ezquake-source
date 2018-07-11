@@ -2,7 +2,7 @@
 #ifndef EZQUAKE_GL_RPART_HEADER
 #define EZQUAKE_GL_RPART_HEADER
 
-#include "gl_sprite3d.h"
+#include "r_sprite3d.h"
 #include "r_state.h"
 
 #define ABSOLUTE_MIN_PARTICLES				256

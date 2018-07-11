@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "rulesets.h"
 #include "teamplay.h"
-#include "gl_sprite3d.h"
+#include "r_sprite3d.h"
 #include "r_performance.h"
 #include "qmb_particles.h"
 #include "r_chaticons.h"
@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h"
 #include "r_lighting.h"
 #include "r_buffers.h"
+#include "r_draw.h"
 
 void GLM_ScreenDrawStart(void);
 

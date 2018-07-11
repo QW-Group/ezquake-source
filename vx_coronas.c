@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_local.h"
 #include "vx_stuff.h"
 #include "glm_texture_arrays.h"
-#include "gl_sprite3d.h"
+#include "r_sprite3d.h"
 #include "r_state.h"
 
 //fixme: move to header

@@ -22,21 +22,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_sprite3d.h"
-#include "gl_sprite3d_internal.h"
+#include "r_sprite3d_internal.h"
 #include "tr_types.h"
 #include "glm_vao.h"
 #include "glc_vao.h"
 #include "r_state.h"
 #include "r_buffers.h"
 
-// batchCount = vertexCount = 0;
-// memset(batchMapping, 0, sizeof(batchMapping));
-
 GLenum glPrimitiveTypes[r_primitive_count] = {
 	GL_TRIANGLE_STRIP,
 	GL_TRIANGLE_FAN,
 	GL_TRIANGLES
 };
+int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks;
 
 static const char* batch_type_names[] = {
 	"ENTITIES",
@@ -318,3 +316,9 @@ void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int
 	}
 }
 
+void R_Prepare3DSprites(void)
+{
+	if (R_UseModernOpenGL()) {
+		GLM_Prepare3DSprites(verts, batchCount, vertexCount);
+	}
+}

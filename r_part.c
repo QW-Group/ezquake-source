@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 //#include "gl_local.h"
 #include "particles_classic.h"
-#include "gl_sprite3d.h"
+#include "r_sprite3d.h"
 #include "rulesets.h"
 #include "r_texture.h"
 #include "qmb_particles.h"

@@ -108,11 +108,6 @@ void R_Initialise2DStates(void)
 	glmImageDrawState.blendingEnabled = r_blendfunc_premultiplied_alpha;
 }
 
-void GL_StateDefault2D(void)
-{
-	GL_ResetRegion(false);
-}
-
 void GLC_StateBeginBrightenScreen(void)
 {
 	R_ApplyRenderingState(&brightenScreenState);

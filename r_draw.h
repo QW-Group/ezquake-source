@@ -15,5 +15,8 @@ void GLM_Draw_StringBase_StartString(int x, int y, float scale);
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos);
 void GLM_Cache2DMatrix(void);
 void GLM_UndoLastCharacter(void);
+void GLM_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
+
+void R_ClearRenderingSurface(qbool clear_color);
 
 #endif // EZQUAKE_R_DRAW_HEADER

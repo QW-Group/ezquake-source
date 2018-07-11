@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_draw.h"
 
 void GLM_DrawAccelBar(int x, int y, int length, int charsize, int pos)
 {

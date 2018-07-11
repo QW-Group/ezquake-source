@@ -24,7 +24,7 @@ typedef struct framebuffer_ref_s {
 } framebuffer_ref;
 
 void GL_InitialiseFramebufferHandling(void);
-framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool is3D);
+framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3D);
 void GL_FramebufferDelete(framebuffer_ref* pref);
 void GL_FramebufferStartUsing(framebuffer_ref ref);
 void GL_FramebufferStartUsingScreen(void);

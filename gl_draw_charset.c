@@ -29,6 +29,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "common_draw.h"
 #include "fonts.h"
 #include "r_texture.h"
+#include "r_draw.h"
 
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
 

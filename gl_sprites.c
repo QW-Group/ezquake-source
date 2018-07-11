@@ -113,8 +113,9 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	numframes = LittleLong (pingroup->numframes);
 
-	if (numframes < 1)
-		Host_Error ("Mod_LoadSpriteGroup: numframes < 1");
+	if (numframes < 1) {
+		Host_Error("Mod_LoadSpriteGroup: numframes < 1");
+	}
 
 	pspritegroup = (mspritegroup_t *) Hunk_AllocName (sizeof (mspritegroup_t) +
 		(numframes - 1) * sizeof (pspritegroup->frames[0]), loadname);
@@ -131,17 +132,18 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	for (i = 0; i < numframes; i++) {
 		*poutintervals = LittleFloat (pin_intervals->interval);
-		if (*poutintervals <= 0.0)
-			Host_Error ("Mod_LoadSpriteGroup: interval <= 0");
+		if (*poutintervals <= 0.0) {
+			Host_Error("Mod_LoadSpriteGroup: interval <= 0");
+		}
 
 		poutintervals++;
 		pin_intervals++;
 	}
 
 	ptemp = (void *) pin_intervals;
-
-	for (i = 0; i < numframes; i++)
-		ptemp = Mod_LoadSpriteFrame (ptemp, &pspritegroup->frames[i], framenum * 100 + i);
+	for (i = 0; i < numframes; i++) {
+		ptemp = Mod_LoadSpriteFrame(ptemp, &pspritegroup->frames[i], framenum * 100 + i);
+	}
 
 	return ptemp;
 }

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common_draw.h"
 #include "tr_types.h"
 #include "glm_draw.h"
+#include "r_draw.h"
 
 #define MAX_2D_ELEMENTS 4096
 

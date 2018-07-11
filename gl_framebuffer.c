@@ -130,7 +130,7 @@ void GL_InitialiseFramebufferHandling(void)
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
-framebuffer_ref GL_FramebufferCreate(GLsizei width, GLsizei height, qbool is3d)
+framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3d)
 {
 	framebuffer_data_t* fb = NULL;
 	framebuffer_ref ref;
