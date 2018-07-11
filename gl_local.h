@@ -764,25 +764,7 @@ void GLM_StateBeginPolygonDraw(void);
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_PopulateConfig(void);
 
-/*
-void GL_DepthFunc(GLenum func);
-void GL_DepthRange(double nearVal, double farVal);
-void GL_CullFace(GLenum mode);
-void GL_BlendFunc(GLenum sfactor, GLenum dfactor);
-void GL_DepthMask(GLboolean mask);
-void GL_PolygonMode(GLenum mode);
-int GL_AlphaBlendFlags(int modes);
-void GL_ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
-void GL_Enable(GLenum option);
-void GL_PolygonOffset(int options);
-void GL_Disable(GLenum option);
-void GL_AlphaFunc(GLenum func, GLclampf threshold);
-
-void GLC_DisableAllTexturing(void);
-void GLC_InitTextureUnitsNoBind1(GLenum envMode0);
-void GLC_InitTextureUnits1(texture_ref texture0, GLenum envMode0);
-void GLC_InitTextureUnits2(texture_ref texture0, GLenum envMode0, texture_ref texture1, GLenum envMode1);
-*/
+void VK_PrintGfxInfo(void);
 
 #endif /* !__GL_LOCAL_H__ */
 

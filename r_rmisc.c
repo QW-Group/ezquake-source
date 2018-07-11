@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vx_stuff.h"
 #include "vx_tracker.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #ifndef  __APPLE__
 #include "tr_types.h"
@@ -63,8 +62,9 @@ void R_InitOtherTextures(void)
 {
 	unsigned char solidtexels[] = { 255, 255, 255, 255 };
 	int flags = TEX_MIPMAP | TEX_ALPHA;
+	extern cvar_t gl_caustics, gl_detail, gl_powerupshells;
 
-	underwatertexture = GL_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));
+	underwatertexture = GL_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_caustics.value ? TEX_COMPLAIN : 0));
 	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = GL_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | TEX_PREMUL_ALPHA | TEX_ZERO_ALPHA | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
@@ -123,7 +123,7 @@ void R_NewMap(qbool vid_restart)
 	extern int R_SetSky(char *skyname);
 	extern void HUD_NewRadarMap(void); // hud_common.c
 
-	R_SetSky (r_skyname.string);
+	R_SetSky(r_skyname.string);
 
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++) {
@@ -151,19 +151,7 @@ void R_NewMap(qbool vid_restart)
 	}
 
 	Mod_ReloadModels(vid_restart);
-
-	if (cl.worldmodel) {
-		R_BuildLightmaps();
-		if (GL_UseGLSL()) {
-			GL_BuildCommonTextureArrays(vid_restart);
-		}
-		if (buffers.supported) {
-			GL_CreateModelVBOs(vid_restart);
-		}
-	}
-	if (GL_UseGLSL()) {
-		GLM_InitPrograms();
-	}
+	R_NewMapPrepare(vid_restart);
 
 	if (!vid_restart) {
 		// identify sky texture

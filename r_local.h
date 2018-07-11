@@ -69,6 +69,12 @@ void R_BloomBlend(void);
 // r_draw.c (here for atlas)
 #define NUMCROSSHAIRS 6
 
+// r_main.c
+void R_NewMapPrepare(qbool vid_restart);
+
 extern int r_framecount;
+
+void VID_GfxInfo_f(void);
+int VID_DisplayNumber(qbool fullscreen);
 
 #endif // EZQUAKE_R_LOCAL_HEADER

@@ -114,7 +114,16 @@ static void GL_CheckShaderExtensions(void)
 	}
 }
 
-void GL_CheckExtensions (void)
+void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
+	float newval = Q_atof(string);
+
+	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8;
+	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB8;
+}
+
+/************************************** GL INIT **************************************/
+
+static void GL_CheckExtensions(void)
 {
 	GL_CheckMultiTextureExtensions();
 
@@ -125,7 +134,7 @@ void GL_CheckExtensions (void)
 
 		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_anisotropy_factor_max);
 
-		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n",gl_anisotropy_factor_max);
+		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n", gl_anisotropy_factor_max);
 	}
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_texture_compression")) {
@@ -144,18 +153,9 @@ void GL_CheckExtensions (void)
 
 	gl_support_arb_texture_non_power_of_two =
 		gl_ext_arb_texture_non_power_of_two.integer && SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two");
-	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", 
+	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n",
 		gl_support_arb_texture_non_power_of_two ? "found" : "not found");
 }
-
-void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
-	float newval = Q_atof(string);
-
-	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8;
-	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB8;
-}
-
-/************************************** GL INIT **************************************/
 
 void GL_Init(void)
 {
@@ -187,9 +187,7 @@ void GL_Init(void)
 	Cvar_Register(&gl_maxtmu2);
 
 	GL_CheckShaderExtensions();
-
 	GL_StateDefaultInit();
-
 	GL_CheckExtensions();
 }
 

@@ -92,3 +92,59 @@ void GL_ProcessErrors(const char* message)
 	}
 }
 #endif
+
+void GL_PrintGfxInfo(void)
+{
+	SDL_DisplayMode current;
+	GLint num_extensions;
+	int i;
+
+	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string);
+	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string);
+	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string);
+	if (R_UseModernOpenGL()) {
+		Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
+		Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+	}
+
+	if (r_showextensions.integer) {
+		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
+		if (GL_VersionAtLeast(3, 0)) {
+			typedef const GLubyte* (APIENTRY *glGetStringi_t)(GLenum name, GLuint index);
+			glGetStringi_t glGetStringi = (glGetStringi_t)SDL_GL_GetProcAddress("glGetStringi");
+			if (glGetStringi) {
+				glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
+				for (i = 0; i < num_extensions; ++i) {
+					Com_Printf_State(PRINT_ALL, "%s%s", i ? " " : "", glGetStringi(GL_EXTENSIONS, i));
+				}
+				Com_Printf_State(PRINT_ALL, "\n");
+			}
+			else {
+				Com_Printf_State(PRINT_ALL, "(list unavailable)\n");
+			}
+		}
+		else {
+			Com_Printf_State(PRINT_ALL, "%s\n", (const char*)glGetString(GL_EXTENSIONS));
+		}
+	}
+
+	Com_Printf_State(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+
+	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {
+		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
+	}
+
+	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.gl_max_size_default);
+	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
+	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
+
+	if (r_fullscreen.integer) {
+		Com_Printf_State(PRINT_ALL, "[fullscreen]\n");
+	}
+	else {
+		Com_Printf_State(PRINT_ALL, "[windowed]\n");
+	}
+
+	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
+	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer);
+}

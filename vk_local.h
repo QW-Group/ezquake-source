@@ -77,4 +77,6 @@ typedef struct vk_options_s {
 
 extern vk_options_t vk_options;
 
+void VK_PrintGfxInfo(void);
+
 #endif
