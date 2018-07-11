@@ -31,10 +31,6 @@ void GL_TextureReplace2D(
 const char* GL_TextureIdentifierByGLReference(GLuint texnum);
 void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references);
 void GL_SelectTexture(GLenum target);
-void GLC_EnableTMU(GLenum target);
-void GLC_DisableTMU(GLenum target);
-void GLC_EnsureTMUEnabled(GLenum target);
-void GLC_EnsureTMUDisabled(GLenum target);
 extern GLenum gl_lightmap_format, gl_solid_format, gl_alpha_format;
 
 #endif // EZQUAKE_GL_TEXTURE_H

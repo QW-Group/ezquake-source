@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "rulesets.h"
 #include "utils.h"
 #include "r_performance.h"
@@ -181,7 +180,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
 	float wateralpha = GL_WaterAlpha();
-	extern cvar_t r_fastturb;
+	extern cvar_t r_fastturb, r_drawflat, r_fastsky, gl_caustics;
 
 	int c, side, clipped, underwater;
 	mplane_t *plane, *clipplane;
@@ -366,6 +365,7 @@ void R_MarkLeaves(void)
 	mnode_t *node;
 	int i;
 	byte solid[MAX_MAP_LEAFS / 8];
+	extern cvar_t r_novis;
 
 	if (!r_novis.value && r_oldviewleaf == r_viewleaf && r_oldviewleaf2 == r_viewleaf2) {
 		// watervis hack

@@ -49,7 +49,7 @@ byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, 
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
 void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
-void GL_Texture_Init(void);
+void R_Texture_Init(void);
 
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);

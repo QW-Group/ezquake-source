@@ -564,7 +564,7 @@ void Draw_Init (void)
 	CachePics_Shutdown();
 	HUD_Common_Reset_Group_Pics();
 
-	GL_Texture_Init();  // Probably safe to re-init now.
+	R_Texture_Init();  // Probably safe to re-init now.
 
 	// Clear the scrap, should be called ASAP after textures initialization
 	CachePics_Init();

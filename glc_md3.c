@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
 #include "r_state.h"
-#include "gl_aliasmodel.h"
+#include "r_aliasmodel.h"
 #include "glc_local.h"
 
 /*

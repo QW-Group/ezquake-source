@@ -63,12 +63,6 @@ texture_t *R_TextureAnimation(entity_t* ent, texture_t *base);
 
 //====================================================
 
-extern	entity_t	r_worldentity;
-extern	vec3_t		modelorg;
-extern	int			r_visframecount;
-extern	int			r_framecount;
-extern	mplane_t	frustum[4];
-
 // view origin
 extern	vec3_t	vup;
 extern	vec3_t	vpn;

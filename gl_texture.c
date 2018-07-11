@@ -29,7 +29,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "r_texture.h"
 #include "r_brushmodel_sky.h"
 #include "r_local.h"
-#include "gl_aliasmodel.h" // for shelltexture only
+#include "r_aliasmodel.h" // for shelltexture only
 #include "r_lighting.h"
 
 const texture_ref null_texture_reference = { 0 };
@@ -1069,7 +1069,7 @@ qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t
 	return GL_TextureReferenceIsValid(tex);
 }
 
-void GL_Texture_Init(void) 
+void R_Texture_Init(void) 
 {
 	cvar_t *cv;
 	int i;

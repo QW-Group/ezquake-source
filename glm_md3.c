@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "r_aliasmodel_md3.h"
-#include "gl_aliasmodel.h"
+#include "r_aliasmodel.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
 

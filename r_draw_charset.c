@@ -666,7 +666,7 @@ int Draw_CharacterFit(const char* text, float width, float scale, qbool proporti
 	return fit;
 }
 
-// Called during initialisation, before GL_Texture_Init
+// Called during initialisation, before R_Texture_Init
 void Draw_Charset_Init(void)
 {
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
@@ -684,7 +684,7 @@ void Draw_Charset_Init(void)
 	draw_chars = NULL;
 }
 
-// Called during initialisation, _after_ GL_Texture_Init, wad file loaded etc
+// Called during initialisation, _after_ R_Texture_Init, wad file loaded etc
 void Draw_InitCharset(void)
 {
 	int i;
