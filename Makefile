@@ -363,11 +363,6 @@ OBJS_c := \
     vk_lightmaps.o \
     gl_matrix.o \
     gl_state.o \
-    gl_state_resets.o \
-    gl_state_resets_2d.o \
-    gl_state_resets_entities.o \
-    gl_state_resets_sky.o \
-    gl_state_resets_world.o \
     r_brushmodel_sky.o \
     r_sprites.o \
     gl_vbo.o \
