@@ -76,7 +76,6 @@ extern	vec3_t	r_origin;
 
 // screen size info
 extern	texture_t	*r_notexture_mip;
-extern	unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	texture_ref netgraphtexture;
 
@@ -423,7 +422,6 @@ void GL_EndDrawAliasModels(void);
 void GLM_DrawWaterSurfaces(void);
 
 void GL_BuildCommonTextureArrays(qbool vid_restart);
-void GL_CreateModelVBOs(qbool vid_restart);
 
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa);
@@ -755,10 +753,6 @@ void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_gro
 void GL_MemoryBarrier(GLbitfield barriers);
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
-
-#define R_NoLighting() (r_dynamic.integer == 0)
-#define R_HardwareLighting() (r_dynamic.integer == 2 && GL_UseGLSL())
-#define R_SoftwareLighting() (r_dynamic.integer && !R_HardwareLighting())
 
 void GLM_SamplerSetNearest(GLuint texture_unit_number);
 void GLM_SamplerClear(GLuint texture_unit_number);

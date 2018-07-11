@@ -276,17 +276,6 @@ void GL_IdentityProjectionView(void)
 	}
 }
 
-#ifdef GL_PARANOIA
-void GL_ProcessErrors(const char* message)
-{
-	GLenum error = glGetError();
-	while (error != GL_NO_ERROR) {
-		Con_Printf("%s> = %X\n", message, error);
-		error = glGetError();
-	}
-}
-#endif
-
 void GL_PushModelviewMatrix(float* matrix)
 {
 	memcpy(matrix, modelMatrix, sizeof(modelMatrix));

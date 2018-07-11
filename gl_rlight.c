@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "r_sprite3d.h"
 #include "r_lightmaps.h"
 #include "r_state.h"
@@ -131,8 +130,8 @@ void R_RenderDlight(dlight_t *light)
 		float length;
 		float rad = light->radius * 0.35;
 		float *bub_sin, *bub_cos;
-		GLubyte center_color[4] = { 255, 255, 255, 0 };
-		GLubyte outer_color[4] = { 0, 0, 0, 0 };
+		byte center_color[4] = { 255, 255, 255, 0 };
+		byte outer_color[4] = { 0, 0, 0, 0 };
 		r_sprite3d_vert_t* vert;
 
 		VectorSubtract(light->origin, r_origin, v);
@@ -413,10 +412,12 @@ int R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	qbool		full_light;
+	extern cvar_t r_shadows;
 	
 	full_light = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
-	if (full_light && !r_shadows.value)
+	if (full_light && !r_shadows.value) {
 		goto skip_trace;  // go grab yourself a copy of "'GOTO Considered Harmful' Considered Harmful"
+	}
 
 	end[0] = p[0];
 	end[1] = p[1];

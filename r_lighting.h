@@ -33,4 +33,11 @@ void R_AnimateLight(void);
 void R_RenderDlights(void);
 int R_LightPoint(vec3_t p);
 
+extern unsigned int d_lightstylevalue[256];	// 8.8 fraction of base light value
+
+extern cvar_t r_dynamic;
+#define R_NoLighting()       (r_dynamic.integer == 0)
+#define R_HardwareLighting() (r_dynamic.integer == 2 && R_UseModernOpenGL())
+#define R_SoftwareLighting() (r_dynamic.integer && !R_HardwareLighting())
+
 #endif // EZQUAKE_R_LOCAL_HEADER

@@ -81,3 +81,14 @@ void GL_PopulateConfig(void)
 		glConfig.glsl_version = (unsigned char*)"0";
 	}
 }
+
+#ifdef GL_PARANOIA
+void GL_ProcessErrors(const char* message)
+{
+	GLenum error = glGetError();
+	while (error != GL_NO_ERROR) {
+		Con_Printf("%s> = %X\n", message, error);
+		error = glGetError();
+	}
+}
+#endif
