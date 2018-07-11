@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vk_vao.h"
 #include "r_matrix.h"
 #include "r_buffers.h"
+#include "glm_local.h"
 
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
@@ -544,7 +545,7 @@ void GL_InitialiseState(void)
 	memset(bound_images, 0, sizeof(bound_images));
 
 	buffers.InitialiseState();
-	GL_InitialiseProgramState();
+	GLM_InitialiseProgramState();
 }
 
 // These functions taken from gl_texture.c
@@ -708,9 +709,7 @@ static int glcBaseVertsPerPrimitive = 0;
 static int glcVertsSent = 0;
 static const char* glcPrimitiveName = "?";
 
-#undef glBegin
-
-void GL_Begin(GLenum primitive)
+void GLC_Begin(GLenum primitive)
 {
 	if (GL_UseGLSL()) {
 		return;
@@ -763,7 +762,7 @@ void GL_Begin(GLenum primitive)
 
 #undef glEnd
 
-void GL_End(void)
+void GLC_End(void)
 {
 #ifdef WITH_OPENGL_TRACE
 	int primitives;
@@ -786,23 +785,25 @@ void GL_End(void)
 #endif
 }
 
-#undef glVertex2f
-#undef glVertex3f
-#undef glVertex3fv
-
-void GL_Vertex2f(GLfloat x, GLfloat y)
+void GLC_Vertex2f(GLfloat x, GLfloat y)
 {
 	glVertex2f(x, y);
 	++glcVertsSent;
 }
 
-void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z)
+void GLC_Vertex2fv(const GLfloat* v)
+{
+	glVertex2fv(v);
+	++glcVertsSent;
+}
+
+void GLC_Vertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
 	glVertex3f(x, y, z);
 	++glcVertsSent;
 }
 
-void GL_Vertex3fv(const GLfloat* v)
+void GLC_Vertex3fv(const GLfloat* v)
 {
 	glVertex3fv(v);
 	++glcVertsSent;

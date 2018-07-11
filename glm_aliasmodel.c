@@ -89,7 +89,7 @@ static int cached_mode;
 static void SetAliasModelMode(int mode)
 {
 	if (cached_mode != mode) {
-		GL_Uniform1i(drawAliasModel_mode, mode);
+		GLM_Uniform1i(drawAliasModel_mode, mode);
 		cached_mode = mode;
 	}
 }
@@ -133,7 +133,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 
 	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
-		drawAliasModel_mode = GL_UniformGetLocation(drawAliasModelProgram.program, "mode");
+		drawAliasModel_mode = GLM_UniformGetLocation(drawAliasModelProgram.program, "mode");
 		cached_mode = 0;
 
 		drawAliasModelProgram.uniforms_found = true;
@@ -589,7 +589,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
-	GL_UseProgram(drawAliasModelProgram.program);
+	GLM_UseProgram(drawAliasModelProgram.program);
 	SetAliasModelMode(mode);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here

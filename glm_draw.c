@@ -100,14 +100,14 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 	uintptr_t offset = buffers.BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
 	R_BindVertexArray(vao_hud_polygons);
-	GL_UseProgram(polygonProgram.program);
-	GL_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
+	GLM_UseProgram(polygonProgram.program);
+	GLM_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
 
 	GLM_StateBeginPolygonDraw();
 
 	for (i = start; i <= end; ++i) {
 		//GLM_TransformMatrix(GLM_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
-		GL_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
+		GLM_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
 	}
@@ -124,8 +124,8 @@ void GLM_HudPreparePolygons(void)
 	}
 
 	if (!polygonProgram.uniforms_found) {
-		polygonUniforms_matrix = GL_UniformGetLocation(polygonProgram.program, "matrix");
-		polygonUniforms_color = GL_UniformGetLocation(polygonProgram.program, "color");
+		polygonUniforms_matrix = GLM_UniformGetLocation(polygonProgram.program, "matrix");
+		polygonUniforms_color = GLM_UniformGetLocation(polygonProgram.program, "color");
 		polygonProgram.uniforms_found = true;
 	}
 
@@ -173,7 +173,7 @@ void GLM_HudPrepareLines(void)
 	}
 
 	if (line_program.program && !line_program.uniforms_found) {
-		line_matrix = GL_UniformGetLocation(line_program.program, "matrix");
+		line_matrix = GLM_UniformGetLocation(line_program.program, "matrix");
 		line_program.uniforms_found = true;
 	}
 }
@@ -184,8 +184,8 @@ void GLM_HudDrawLines(int start, int end)
 		int i;
 		uintptr_t offset = buffers.BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
-		GL_UseProgram(line_program.program);
-		GL_UniformMatrix4fv(line_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
+		GLM_UseProgram(line_program.program);
+		GLM_UniformMatrix4fv(line_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
 		R_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {
@@ -332,7 +332,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 	uintptr_t index_offset = (start * 5 * sizeof(GLuint));
 	uintptr_t buffer_offset = buffers.BufferOffset(imageVBO) / sizeof(imageData.images[0]);
 
-	GL_UseProgram(multiImageProgram.program);
+	GLM_UseProgram(multiImageProgram.program);
 	GLM_StateBeginImageDraw();
 	if (GL_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
@@ -358,8 +358,8 @@ void GLM_HudPrepareCircles(void)
 	}
 
 	if (!circleProgram.uniforms_found) {
-		drawCircleUniforms_matrix = GL_UniformGetLocation(circleProgram.program, "matrix");
-		drawCircleUniforms_color = GL_UniformGetLocation(circleProgram.program, "color");
+		drawCircleUniforms_matrix = GLM_UniformGetLocation(circleProgram.program, "matrix");
+		drawCircleUniforms_color = GLM_UniformGetLocation(circleProgram.program, "color");
 
 		circleProgram.uniforms_found = true;
 	}
@@ -389,13 +389,13 @@ void GLM_HudDrawCircles(texture_ref texture, int start, int end)
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);
 
-	GL_UseProgram(circleProgram.program);
+	GLM_UseProgram(circleProgram.program);
 	R_BindVertexArray(vao_hud_circles);
 
-	GL_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, GLM_ProjectionMatrix());
+	GLM_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, GLM_ProjectionMatrix());
 
 	for (i = start; i <= end; ++i) {
-		GL_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
+		GLM_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);
 
 		GL_DrawArrays(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP, offset + i * FLOATS_PER_CIRCLE / 2, circleData.drawCirclePoints[i]);
 	}

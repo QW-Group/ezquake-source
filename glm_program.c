@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "glm_local.h"
 
 // Cached OpenGL state
 static GLuint currentProgram = 0;
@@ -427,7 +428,7 @@ void GLM_DeletePrograms(qbool restarting)
 {
 	glm_program_t* program = program_list;
 
-	GL_UseProgram(0);
+	GLM_UseProgram(0);
 	while (program) {
 		if (program->program) {
 			qglDeleteProgram(program->program);
@@ -574,7 +575,7 @@ qbool GLM_LoadProgramFunctions(void)
 	return all_available;
 }
 
-void GL_UseProgram(GLuint program)
+void GLM_UseProgram(GLuint program)
 {
 	if (program != currentProgram) {
 		qglUseProgram(program);
@@ -587,27 +588,27 @@ void GL_UseProgram(GLuint program)
 	}
 }
 
-void GL_InitialiseProgramState(void)
+void GLM_InitialiseProgramState(void)
 {
 	currentProgram = 0;
 }
 
-void GL_Uniform1i(GLint location, GLint value)
+void GLM_Uniform1i(GLint location, GLint value)
 {
 	qglUniform1i(location, value);
 }
 
-void GL_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
+void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
 {
 	qglUniform4fv(location, count, values);
 }
 
-void GL_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
+void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
 {
 	qglUniformMatrix4fv(location, count, transpose, values);
 }
 
-GLint GL_UniformGetLocation(GLuint program, const char* name)
+GLint GLM_UniformGetLocation(GLuint program, const char* name)
 {
 	return qglGetUniformLocation(program, name);
 }

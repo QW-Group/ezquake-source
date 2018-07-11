@@ -67,11 +67,11 @@ void GLC_HudDrawCircles(texture_ref texture, int start, int end)
 			circleData.drawCircleColors[i][3]
 		);
 
-		glBegin(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP);
+		GLC_Begin(circleData.drawCircleFill[i] ? GL_TRIANGLE_STRIP : GL_LINE_LOOP);
 		for (j = 0; j < circleData.drawCirclePoints[i]; ++j) {
-			glVertex2fv(&circleData.drawCirclePointData[i * FLOATS_PER_CIRCLE + j * 2]);
+			GLC_Vertex2fv(&circleData.drawCirclePointData[i * FLOATS_PER_CIRCLE + j * 2]);
 		}
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -93,12 +93,12 @@ void GLC_HudDrawLines(texture_ref texture, int start, int end)
 
 	for (i = start; i <= end; ++i) {
 		GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
-		glBegin(GL_LINES);
+		GLC_Begin(GL_LINES);
 		R_CustomColor4ubv(lineData.line_points[i * 2 + 0].color);
-		glVertex3fv(lineData.line_points[i * 2 + 0].position);
+		GLC_Vertex3fv(lineData.line_points[i * 2 + 0].position);
 		R_CustomColor4ubv(lineData.line_points[i * 2 + 1].color);
-		glVertex3fv(lineData.line_points[i * 2 + 1].position);
-		glEnd();
+		GLC_Vertex3fv(lineData.line_points[i * 2 + 1].position);
+		GLC_End();
 	}
 }
 
@@ -115,11 +115,11 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 			polygonData.polygonColor[i][2],
 			polygonData.polygonColor[i][3]
 		);
-		glBegin(GL_TRIANGLE_STRIP);
+		GLC_Begin(GL_TRIANGLE_STRIP);
 		for (j = 0; j < polygonData.polygonVerts[i]; j++) {
-			glVertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);
+			GLC_Vertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);
 		}
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -304,7 +304,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 
 		R_CustomColor4ubv(imageData.glc_images[start * 4].colour);
 		memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
-		GL_Begin(GL_QUADS);
+		GLC_Begin(GL_QUADS);
 
 		for (i = start * 4; i <= 4 * end + 3; ++i) {
 			glc_image_t* next = &imageData.glc_images[i];
@@ -312,21 +312,21 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 			R_CustomColor4ubv(next->colour);
 
 			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST)) {
-				GL_End();
+				GLC_End();
 
 				nearest = (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST);
 				start = i;
 
 				GL_SetTextureFiltering(GL_TEXTURE0, ref, nearest ? GL_NEAREST : GL_LINEAR, nearest ? GL_NEAREST : GL_LINEAR);
 
-				GL_Begin(GL_QUADS);
+				GLC_Begin(GL_QUADS);
 			}
 
 			glTexCoord2f(next->tex[0], next->tex[1]);
-			glVertex2f(next->pos[0], next->pos[1]);
+			GLC_Vertex2f(next->pos[0], next->pos[1]);
 		}
 
-		GL_End();
+		GLC_End();
 	}
 
 	GL_PopProjectionMatrix(projectionMatrix);

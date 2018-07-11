@@ -33,4 +33,11 @@ void GLC_StateBeginPolyBlend(float v_blend[4]);
 void GLC_StateBeginDrawPolygon(void);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
 
+void GLC_Begin(GLenum primitive);
+void GLC_End(void);
+void GLC_Vertex2f(GLfloat x, GLfloat y);
+void GLC_Vertex2fv(const GLfloat* v);
+void GLC_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
+void GLC_Vertex3fv(const GLfloat* v);
+
 #endif

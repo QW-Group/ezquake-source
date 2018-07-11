@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "tr_types.h"
 #include "r_state.h"
+#include "glm_local.h"
 
 static glm_program_t sprite3dProgram;
 static GLint sprite3dUniform_alpha_test;
@@ -60,7 +61,7 @@ static void GLM_Compile3DSpriteProgram(void)
 	}
 
 	if (sprite3dProgram.program && !sprite3dProgram.uniforms_found) {
-		sprite3dUniform_alpha_test = GL_UniformGetLocation(sprite3dProgram.program, "alpha_test");
+		sprite3dUniform_alpha_test = GLM_UniformGetLocation(sprite3dProgram.program, "alpha_test");
 
 		sprite3dProgram.uniforms_found = true;
 	}
@@ -135,7 +136,7 @@ void GLM_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 		return;
 	}
 
-	GL_UseProgram(sprite3dProgram.program);
+	GLM_UseProgram(sprite3dProgram.program);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
@@ -147,7 +148,7 @@ void GLM_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 
 		GL_EnterRegion(batch->name);
 		if (first_batch || current_alpha_test != alpha_test) {
-			GL_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
+			GLM_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
 		}
 		first_batch = false;
 

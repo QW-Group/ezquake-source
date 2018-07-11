@@ -31,12 +31,12 @@ void GLC_PolyBlend(float v_blend[4])
 {
 	GLC_StateBeginPolyBlend(v_blend);
 
-	glBegin(GL_QUADS);
-	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
-	glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
-	glVertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
-	glVertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
-	glEnd();
+	GLC_Begin(GL_QUADS);
+	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
+	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
+	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
+	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
+	GLC_End();
 }
 
 void GLC_BrightenScreen(void)
@@ -56,7 +56,7 @@ void GLC_BrightenScreen(void)
 
 	GLC_StateBeginBrightenScreen();
 
-	glBegin(GL_QUADS);
+	GLC_Begin(GL_QUADS);
 	while (f > 1) {
 		if (f >= 2) {
 			R_CustomColor(1, 1, 1, 1);
@@ -65,14 +65,14 @@ void GLC_BrightenScreen(void)
 			R_CustomColor(f - 1, f - 1, f - 1, 1);
 		}
 
-		glVertex2f(0, 0);
-		glVertex2f(vid.width, 0);
-		glVertex2f(vid.width, vid.height);
-		glVertex2f(0, vid.height);
+		GLC_Vertex2f(0, 0);
+		GLC_Vertex2f(vid.width, 0);
+		GLC_Vertex2f(vid.width, vid.height);
+		GLC_Vertex2f(0, vid.height);
 
 		f *= 0.5;
 	}
-	glEnd();
+	GLC_End();
 }
 
 /*
@@ -123,41 +123,41 @@ void GLC_DrawVelocity3D(void)
 		R_CustomLineWidth(stipple_line_width);
 
 		R_CustomColor(stipple_line_colour[0], stipple_line_colour[1], stipple_line_colour[2], stipple_line_colour[3]);
-		glBegin(GL_LINES);
-		glVertex3f(v_forward, v_side, 0.f);
-		glVertex3f(v_forward, v_side, v_up);
-		glEnd();
+		GLC_Begin(GL_LINES);
+		GLC_Vertex3f(v_forward, v_side, 0.f);
+		GLC_Vertex3f(v_forward, v_side, v_up);
+		GLC_End();
 
 		glDisable(GL_LINE_STIPPLE);
 		R_CustomLineWidth(line_width);
 		R_CustomColor(0.f, 1.f, 0.f, 1.0f);
 
-		glBegin(GL_LINES);
-		glVertex3fv(v3_zero);
-		glVertex3f(v_forward, v_side, v_up);
-		glEnd();
+		GLC_Begin(GL_LINES);
+		GLC_Vertex3fv(v3_zero);
+		GLC_Vertex3f(v_forward, v_side, v_up);
+		GLC_End();
 		//no break here
 
 	case 2:
 		//show horizontal velocity only
 		R_CustomColor(1.f, 0.f, 0.f, 1.0f);
 		R_CustomLineWidth(line_width);
-		glBegin(GL_LINES);
-		glVertex3fv(v3_zero);
+		GLC_Begin(GL_LINES);
+		GLC_Vertex3fv(v3_zero);
 		glVertex3f(v_forward, v_side, 0.f);
-		glEnd();
+		GLC_End();
 
 		glEnable(GL_LINE_STIPPLE);
 		glLineStipple(1, 0xFF00);
 		R_CustomColor(stipple_line_colour[0], stipple_line_colour[1], stipple_line_colour[2], stipple_line_colour[3]);
 		R_CustomLineWidth(stipple_line_width);
 
-		glBegin(GL_LINE_LOOP);
-		glVertex3fv(v3_zero);
-		glVertex3f(0.f, v_side, 0.f);
-		glVertex3f(v_forward, v_side, 0.f);
-		glVertex3f(v_forward, 0.f, 0.f);
-		glEnd();
+		GLC_Begin(GL_LINE_LOOP);
+		GLC_Vertex3fv(v3_zero);
+		GLC_Vertex3f(0.f, v_side, 0.f);
+		GLC_Vertex3f(v_forward, v_side, 0.f);
+		GLC_Vertex3f(v_forward, 0.f, 0.f);
+		GLC_End();
 
 	default:
 		break;
@@ -213,16 +213,16 @@ void GLC_RenderSceneBlurDo(float alpha)
 	R_CustomColor(alpha, alpha, alpha, alpha);
 	if (draw)
 	{
-		glBegin(GL_QUADS);
+		GLC_Begin(GL_QUADS);
 		glTexCoord2f(cs-vs, ct-vt);
-		glVertex2f(0, 0);
+		GLC_Vertex2f(0, 0);
 		glTexCoord2f(cs+vs, ct-vt);
-		glVertex2f(glwidth, 0);
+		GLC_Vertex2f(glwidth, 0);
 		glTexCoord2f(cs+vs, ct+vt);
-		glVertex2f(glwidth, glheight);
+		GLC_Vertex2f(glwidth, glheight);
 		glTexCoord2f(cs-vs, ct+vt);
-		glVertex2f(0, glheight);
-		glEnd();
+		GLC_Vertex2f(0, glheight);
+		GLC_End();
 	}
 
 	// Restore matrices.

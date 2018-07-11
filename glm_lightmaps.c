@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "glsl/constants.glsl"
 #include "r_lightmaps_internal.h"
+#include "glm_local.h"
 
 // Hardware lighting: flag surfaces as we add them
 static buffer_ref ssbo_surfacesTodo;
@@ -72,7 +73,7 @@ void GLM_ComputeLightmaps(void)
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
 
-	GL_UseProgram(lightmap_program.program);
+	GLM_UseProgram(lightmap_program.program);
 	GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
 	GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }

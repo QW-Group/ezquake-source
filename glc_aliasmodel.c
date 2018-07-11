@@ -191,7 +191,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 		}
 
 		if (!cache) {
-			glBegin(primitive);
+			GLC_Begin(primitive);
 		}
 
 		do {
@@ -275,7 +275,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 			}
 			else {
 				R_CustomColor(color[0], color[1], color[2], color[3]);
-				glVertex3fv(interpolated_verts);
+				GLC_Vertex3fv(interpolated_verts);
 			}
 
 			verts1++;
@@ -287,7 +287,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, qbo
 			GL_DrawArrays(primitive, 0, position);
 		}
 		else {
-			glEnd();
+			GLC_End();
 		}
 	}
 
@@ -338,10 +338,10 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 
 		if (count < 0) {
 			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
+			GLC_Begin(GL_TRIANGLE_FAN);
 		}
 		else {
-			glBegin(GL_TRIANGLE_STRIP);
+			GLC_Begin(GL_TRIANGLE_STRIP);
 		}
 
 		do {
@@ -351,13 +351,13 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-			glVertex3fv(interpolated_verts);
+			GLC_Vertex3fv(interpolated_verts);
 
 			verts1++;
 			verts2++;
 		} while (--count);
 
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -428,7 +428,7 @@ void GLC_DrawPowerupShell(
 			}
 
 			if (!cache) {
-				glBegin(drawMode);
+				GLC_Begin(drawMode);
 			}
 
 			do {
@@ -452,7 +452,7 @@ void GLC_DrawPowerupShell(
 				}
 				else {
 					glTexCoord2f(s, t);
-					glVertex3f(v[0], v[1], v[2]);
+					GLC_Vertex3f(v[0], v[1], v[2]);
 				}
 
 				verts1++;
@@ -476,7 +476,7 @@ void GLC_DrawPowerupShell(
 				++layer_no;
 			}
 			else {
-				glEnd();
+				GLC_End();
 			}
 		}
 	}
@@ -535,9 +535,9 @@ static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenu
 		// get the vertex count and primitive type
 		if (count < 0) {
 			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
+			GLC_Begin(GL_TRIANGLE_FAN);
 		} else {
-			glBegin (GL_TRIANGLE_STRIP);
+			GLC_Begin(GL_TRIANGLE_STRIP);
 		}
 
 		do {
@@ -553,11 +553,11 @@ static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenu
 			point[1] -= shadevector[1] * (point[2] + lheight);
 			point[2] = height;
 			//height -= 0.001;
-			glVertex3fv (point);
+			GLC_Vertex3fv (point);
 
 			verts++;
 		} while (--count);
 
-		glEnd ();
+		GLC_End();
 	}	
 }

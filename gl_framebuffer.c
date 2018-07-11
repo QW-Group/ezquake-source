@@ -239,25 +239,25 @@ void Framebuffer_Draw (fb_t *fbs)
 
 	GL_Bind(fbs->texture);
 
-	glBegin (GL_QUADS);
+	GLC_Begin (GL_QUADS);
 
 	// Top left corner.
 	glTexCoord2f (0, 0);
-	glVertex2f (fbs->x, fbs->y + fbs->realheight);
+	GLC_Vertex2f (fbs->x, fbs->y + fbs->realheight);
 
 	// Upper right corner.
 	glTexCoord2f (fbs->ratio_w, 0);
-	glVertex2f (fbs->x + fbs->realwidth, fbs->y + fbs->realheight);
+	GLC_Vertex2f (fbs->x + fbs->realwidth, fbs->y + fbs->realheight);
 
 	// Bottom right corner.
 	glTexCoord2f (fbs->ratio_w, fbs->ratio_h);
-	glVertex2f (fbs->x + fbs->realwidth, fbs->y);
+	GLC_Vertex2f (fbs->x + fbs->realwidth, fbs->y);
 
 	// Bottom left corner.
 	glTexCoord2f (0, fbs->ratio_h);
-	glVertex2f (fbs->x, fbs->y);
+	GLC_Vertex2f (fbs->x, fbs->y);
 	
-	glEnd();
+	GLC_End();
 }*/
 
 // OpenGL wrapper functions

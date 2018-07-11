@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glm_vao.h"
 #include "r_buffers.h"
+#include "glm_local.h"
 
 static qbool GLM_CompilePostProcessProgram(void);
 
@@ -60,7 +61,7 @@ static void VID_FramebufferFlip(void)
 		GL_FramebufferStartUsingScreen();
 
 		if (GLM_CompilePostProcessProgram()) {
-			GL_UseProgram(post_process_program.program);
+			GLM_UseProgram(post_process_program.program);
 			R_BindVertexArray(vao_postprocess);
 
 			if (flip2d && flip3d) {

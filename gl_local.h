@@ -263,136 +263,13 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-#define GLM_VERTEX_SHADER   0
-#define GLM_FRAGMENT_SHADER 1
-#define GLM_GEOMETRY_SHADER 2
-#define GLM_COMPUTE_SHADER  3
-#define GLM_SHADER_COUNT    4
-
-typedef struct glm_program_s {
-	GLuint vertex_shader;
-	GLuint geometry_shader;
-	GLuint fragment_shader;
-	GLuint compute_shader;
-	GLuint program;
-
-	struct glm_program_s* next;
-	const char* friendly_name;
-	const char* shader_text[GLM_SHADER_COUNT];
-	char* included_definitions;
-	GLuint shader_length[GLM_SHADER_COUNT];
-	qbool uniforms_found;
-
-	unsigned int custom_options;
-	qbool force_recompile;
-} glm_program_t;
-
-// Check if a program needs to be recompiled
-qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options);
-
-// Flags all programs to be recompiled
-// Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
-void GLM_ForceRecompile(void);
-
-qbool GLM_CreateVFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program
-);
-
-qbool GLM_CreateVFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program,
-	const char* included_definitions
-);
-
-qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length);
-
-#define GL_VFDeclare(name) \
-	extern unsigned char name##_vertex_glsl[];\
-	extern unsigned int name##_vertex_glsl_len;\
-	extern unsigned char name##_fragment_glsl[];\
-	extern unsigned int name##_fragment_glsl_len;
-
-#define GL_VFParams(name) \
-	(const char*)name##_vertex_glsl,\
-	name##_vertex_glsl_len,\
-	(const char*)name##_fragment_glsl,\
-	name##_fragment_glsl_len
-
-qbool GLM_CreateVGFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program
-);
-
-qbool GLM_CreateVGFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
-	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
-	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
-	glm_program_t* program,
-	const char* included_definitions
-);
-
-#define GL_VGFDeclare(name) \
-	extern unsigned char name##_vertex_glsl[];\
-	extern unsigned int name##_vertex_glsl_len;\
-	extern unsigned char name##_geometry_glsl[];\
-	extern unsigned int name##_geometry_glsl_len;\
-	extern unsigned char name##_fragment_glsl[];\
-	extern unsigned int name##_fragment_glsl_len;
-#define GL_VGFParams(name) \
-	(const char*)name##_vertex_glsl,\
-	name##_vertex_glsl_len,\
-	(const char*)name##_geometry_glsl,\
-	name##_geometry_glsl_len,\
-	(const char*)name##_fragment_glsl,\
-	name##_fragment_glsl_len
-
-//#define glEnable GL_Enable
-//#define glDisable GL_Disable
-#define glBegin GL_Begin
-#define glEnd GL_End
-#define glVertex2f GL_Vertex2f
-#define glVertex3f GL_Vertex3f
-#define glVertex3fv GL_Vertex3fv
-
-void GL_Begin(GLenum primitive);
-void GL_End(void);
-void GL_Vertex2f(GLfloat x, GLfloat y);
-void GL_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
-void GL_Vertex3fv(const GLfloat* v);
-
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos);
 int GL_MeasureVBOSizeForBrushModel(model_t* m);
 void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
 void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 
-void GL_UseProgram(GLuint program);
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
-
-// gl_fog.c
-void GL_EnableFog(void);
-void GL_DisableFog(void);
-void GL_ConfigureFog(void);
-void GL_EnableWaterFog(int contents);
 
 // 
 #define CHARSET_CHARS_PER_ROW	16
@@ -515,18 +392,6 @@ typedef enum aliasmodel_draw_batch_s {
 	aliasmodel_batch_viewmodel
 } aliasmodel_draw_batch_t;
 
-void GLM_InitialiseAliasModelBatches(void);
-void GLM_PrepareAliasModelBatches(void);
-void GLM_DrawAliasModelBatches(void);
-void GLM_DrawAliasModelPostSceneBatches(void);
-
-void GLM_StateBeginPolyBlend(void);
-void GLM_StateBeginAliasOutlineBatch(void);
-void GLM_StateBeginAliasModelBatch(qbool translucent);
-void GLM_StateBeginDraw3DSprites(void);
-void GLM_StateBeginDrawWorldOutlines(void);
-void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
-
 typedef enum {
 	opaque_world,
 	alpha_surfaces
@@ -555,18 +420,7 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 #define GL_UseDirectStateAccess() (false)
 #endif
 
-void GLM_UploadFrameConstants(void);
-void GL_InitialiseProgramState(void);
-
-void GL_Uniform1i(GLint location, GLint value);
-void GL_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
-void GL_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values);
-GLint GL_UniformGetLocation(GLuint program, const char* name);
-
 void GLC_ClientActiveTexture(GLenum texture_unit);
-
-void GLM_StateBeginImageDraw(void);
-void GLM_StateBeginPolygonDraw(void);
 
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void GL_PopulateConfig(void);

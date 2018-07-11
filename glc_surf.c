@@ -67,11 +67,11 @@ void GLC_DrawMapOutline(model_t *model)
 				VectorCopy(s->plane->normal, n);
 				VectorNormalize(n);
 
-				glBegin(GL_LINE_LOOP);
+				GLC_Begin(GL_LINE_LOOP);
 				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-					glVertex3fv(v);
+					GLC_Vertex3fv(v);
 				}
-				glEnd();
+				GLC_End();
 			}
 		}
 	}
@@ -82,13 +82,13 @@ static void DrawGLPoly(glpoly_t *p)
 	int i;
 	float *v;
 
-	glBegin(GL_POLYGON);
+	GLC_Begin(GL_POLYGON);
 	v = p->verts[0];
 	for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
 		glTexCoord2f(v[3], v[4]);
-		glVertex3fv(v);
+		GLC_Vertex3fv(v);
 	}
-	glEnd();
+	GLC_End();
 }
 
 GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count)
@@ -226,13 +226,13 @@ void GLC_EmitDetailPolys(qbool use_vbo)
 			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 		}
 		else {
-			glBegin(GL_POLYGON);
+			GLC_Begin(GL_POLYGON);
 			v = p->verts[0];
 			for (i = 0; i < p->numverts; i++, v += VERTEXSIZE) {
 				glTexCoord2f(v[7], v[8]);
-				glVertex3fv(v);
+				GLC_Vertex3fv(v);
 			}
-			glEnd();
+			GLC_End();
 		}
 	}
 

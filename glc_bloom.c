@@ -109,28 +109,28 @@ static float sampleText_tch;
 
 // This macro is in sample size workspace coordinates.
 #define GLC_Bloom_SamplePass( xpos, ypos )                         \
-	glBegin(GL_QUADS);                                             \
+	GLC_Begin(GL_QUADS);                                             \
 	glTexCoord2f(  0,                      sampleText_tch);        \
-	glVertex2f(    xpos,                   ypos);                  \
+	GLC_Vertex2f(    xpos,                   ypos);                  \
 	glTexCoord2f(  0,                      0);                     \
-	glVertex2f(    xpos,                   ypos+sample_height);    \
+	GLC_Vertex2f(    xpos,                   ypos+sample_height);    \
 	glTexCoord2f(  sampleText_tcw,         0);                     \
-	glVertex2f(    xpos+sample_width,      ypos+sample_height);    \
+	GLC_Vertex2f(    xpos+sample_width,      ypos+sample_height);    \
 	glTexCoord2f(  sampleText_tcw,         sampleText_tch);        \
-	glVertex2f(    xpos+sample_width,      ypos);                  \
-	glEnd();
+	GLC_Vertex2f(    xpos+sample_width,      ypos);                  \
+	GLC_End();
 
 #define GLC_Bloom_Quad( x, y, width, height, textwidth, textheight ) \
-	glBegin(GL_QUADS);                                             \
+	GLC_Begin(GL_QUADS);                                             \
 	glTexCoord2f(  0,          textheight);                        \
-	glVertex2f(    x,          y);                                 \
+	GLC_Vertex2f(    x,          y);                                 \
 	glTexCoord2f(  0,          0);                                 \
-	glVertex2f(    x,          y+height);                          \
+	GLC_Vertex2f(    x,          y+height);                          \
 	glTexCoord2f(  textwidth,  0);                                 \
-	glVertex2f(    x+width,    y+height);                          \
+	GLC_Vertex2f(    x+width,    y+height);                          \
 	glTexCoord2f(  textwidth,  textheight);                        \
-	glVertex2f(    x+width,    y);                                 \
-	glEnd();
+	GLC_Vertex2f(    x+width,    y);                                 \
+	GLC_End();
 
 //=================
 // GLC_Bloom_InitBackUpTexture
@@ -283,16 +283,16 @@ static void GLC_Bloom_DrawEffect( void )
 {
 	GLC_StateBeginBloomDraw(r_bloomeffecttexture);
 
-	glBegin(GL_QUADS);                         
+	GLC_Begin(GL_QUADS);
 	glTexCoord2f(  0,                          sampleText_tch  ); 
-	glVertex2f(    curView_x,                  curView_y   );             
+	GLC_Vertex2f(    curView_x,                  curView_y   );             
 	glTexCoord2f(  0,                          0   );             
-	glVertex2f(    curView_x,                  curView_y + curView_height  ); 
+	GLC_Vertex2f(    curView_x,                  curView_y + curView_height  ); 
 	glTexCoord2f(  sampleText_tcw,             0   );             
-	glVertex2f(    curView_x + curView_width,  curView_y + curView_height  ); 
+	GLC_Vertex2f(    curView_x + curView_width,  curView_y + curView_height  ); 
 	glTexCoord2f(  sampleText_tcw,             sampleText_tch  ); 
-	glVertex2f(    curView_x + curView_width,  curView_y   );             
-	glEnd();
+	GLC_Vertex2f(    curView_x + curView_width,  curView_y   );             
+	GLC_End();
 }
 
 // =================

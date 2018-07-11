@@ -133,4 +133,130 @@ typedef struct glm_worldmodel_req_s {
 	model_t* model;
 } glm_worldmodel_req_t;
 
+void GLM_InitialiseAliasModelBatches(void);
+void GLM_PrepareAliasModelBatches(void);
+void GLM_DrawAliasModelBatches(void);
+void GLM_DrawAliasModelPostSceneBatches(void);
+
+void GLM_StateBeginPolyBlend(void);
+void GLM_StateBeginAliasOutlineBatch(void);
+void GLM_StateBeginAliasModelBatch(qbool translucent);
+void GLM_StateBeginDraw3DSprites(void);
+void GLM_StateBeginDrawWorldOutlines(void);
+void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
+
+void GLM_UseProgram(GLuint program);
+void GLM_UploadFrameConstants(void);
+void GLM_Uniform1i(GLint location, GLint value);
+void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
+void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values);
+GLint GLM_UniformGetLocation(GLuint program, const char* name);
+void GLM_InitialiseProgramState(void);
+
+void GLM_StateBeginImageDraw(void);
+void GLM_StateBeginPolygonDraw(void);
+
+
+#define GLM_VERTEX_SHADER   0
+#define GLM_FRAGMENT_SHADER 1
+#define GLM_GEOMETRY_SHADER 2
+#define GLM_COMPUTE_SHADER  3
+#define GLM_SHADER_COUNT    4
+
+typedef struct glm_program_s {
+	GLuint vertex_shader;
+	GLuint geometry_shader;
+	GLuint fragment_shader;
+	GLuint compute_shader;
+	GLuint program;
+
+	struct glm_program_s* next;
+	const char* friendly_name;
+	const char* shader_text[GLM_SHADER_COUNT];
+	char* included_definitions;
+	GLuint shader_length[GLM_SHADER_COUNT];
+	qbool uniforms_found;
+
+	unsigned int custom_options;
+	qbool force_recompile;
+} glm_program_t;
+
+// Check if a program needs to be recompiled
+qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options);
+
+// Flags all programs to be recompiled
+// Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
+void GLM_ForceRecompile(void);
+
+qbool GLM_CreateVFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+);
+
+qbool GLM_CreateVFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
+);
+
+qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length);
+
+#define GL_VFDeclare(name) \
+	extern unsigned char name##_vertex_glsl[];\
+	extern unsigned int name##_vertex_glsl_len;\
+	extern unsigned char name##_fragment_glsl[];\
+	extern unsigned int name##_fragment_glsl_len;
+
+#define GL_VFParams(name) \
+	(const char*)name##_vertex_glsl,\
+	name##_vertex_glsl_len,\
+	(const char*)name##_fragment_glsl,\
+	name##_fragment_glsl_len
+
+qbool GLM_CreateVGFProgram(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program
+);
+
+qbool GLM_CreateVGFProgramWithInclude(
+	const char* friendlyName,
+	const char* vertex_shader_text,
+	GLuint vertex_shader_text_length,
+	const char* geometry_shader_text,
+	GLuint geometry_shader_text_length,
+	const char* fragment_shader_text,
+	GLuint fragment_shader_text_length,
+	glm_program_t* program,
+	const char* included_definitions
+);
+
+#define GL_VGFDeclare(name) \
+	extern unsigned char name##_vertex_glsl[];\
+	extern unsigned int name##_vertex_glsl_len;\
+	extern unsigned char name##_geometry_glsl[];\
+	extern unsigned int name##_geometry_glsl_len;\
+	extern unsigned char name##_fragment_glsl[];\
+	extern unsigned int name##_fragment_glsl_len;
+#define GL_VGFParams(name) \
+	(const char*)name##_vertex_glsl,\
+	name##_vertex_glsl_len,\
+	(const char*)name##_geometry_glsl,\
+	name##_geometry_glsl_len,\
+	(const char*)name##_fragment_glsl,\
+	name##_fragment_glsl_len
+
 #endif // EZQUAKE_GLM_LOCAL_HEADER

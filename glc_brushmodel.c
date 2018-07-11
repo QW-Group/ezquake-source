@@ -310,14 +310,14 @@ static void GLC_DrawFlat(model_t *model)
 						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
 					else {
-						glBegin(GL_POLYGON);
+						GLC_Begin(GL_POLYGON);
 						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
 							if (new_lightmap >= 0) {
 								glTexCoord2f(v[5], v[6]);
 							}
-							glVertex3fv(v);
+							GLC_Vertex3fv(v);
 						}
-						glEnd();
+						GLC_End();
 					}
 				}
 			}
@@ -494,7 +494,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 					index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
 				}
 				else {
-					glBegin(GL_POLYGON);
+					GLC_Begin(GL_POLYGON);
 					v = s->polys->verts[0];
 
 					if (!(s->texinfo->flags & TEX_SPECIAL)) {
@@ -517,10 +517,10 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 							else {
 								glTexCoord2f(tex_s, tex_t);
 							}
-							glVertex3fv(v);
+							GLC_Vertex3fv(v);
 						}
 					}
-					glEnd();
+					GLC_End();
 				}
 
 				if (draw_caustics && (waterline || caustics)) {
@@ -777,13 +777,13 @@ static void GLC_BlendLightmaps(void)
 		}
 		else {
 			for (; p; p = p->chain) {
-				glBegin(GL_POLYGON);
+				GLC_Begin(GL_POLYGON);
 				v = p->verts[0];
 				for (j = 0; j < p->numverts; j++, v += VERTEXSIZE) {
 					glTexCoord2f(v[5], v[6]);
-					glVertex3fv(v);
+					GLC_Vertex3fv(v);
 				}
-				glEnd();
+				GLC_End();
 			}
 		}
 	}
@@ -808,7 +808,7 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 
 		GLC_StateBeginAlphaChainSurface(s);
 
-		glBegin(GL_POLYGON);
+		GLC_Begin(GL_POLYGON);
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {
@@ -818,9 +818,9 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 			else {
 				glTexCoord2f(v[3], v[4]);
 			}
-			glVertex3fv(v);
+			GLC_Vertex3fv(v);
 		}
-		glEnd();
+		GLC_End();
 	}
 
 	alphachain = NULL;

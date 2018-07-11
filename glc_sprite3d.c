@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_sprite3d_internal.h"
 #include "glc_vao.h"
 #include "tr_types.h"
+#include "glc_local.h"
 
 static void GLC_Create3DSpriteVAO(void)
 {
@@ -206,14 +207,14 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 				}
 
 				// Immediate mode
-				glBegin(glPrimitiveTypes[batch->primitive_id]);
+				GLC_Begin(glPrimitiveTypes[batch->primitive_id]);
 				v = &verts[batch->firstVertices[j]];
 				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
 					glTexCoord2fv(v->tex);
 					R_CustomColor4ubv(v->color);
-					glVertex3fv(v->position);
+					GLC_Vertex3fv(v->position);
 				}
-				glEnd();
+				GLC_End();
 			}
 		}
 

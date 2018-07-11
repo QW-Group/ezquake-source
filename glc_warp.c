@@ -59,11 +59,11 @@ void GLC_DrawFlatPoly(glpoly_t* p)
 	float* v;
 	int i;
 
-	glBegin(GL_POLYGON);
+	GLC_Begin(GL_POLYGON);
 	for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-		glVertex3fv(v);
+		GLC_Vertex3fv(v);
 	}
-	glEnd();
+	GLC_End();
 }
 
 void GLC_EmitFlatWaterPoly(msurface_t* fa)
@@ -74,13 +74,13 @@ void GLC_EmitFlatWaterPoly(msurface_t* fa)
 	vec3_t nv;
 
 	for (p = fa->polys; p; p = p->next) {
-		glBegin(GL_POLYGON);
+		GLC_Begin(GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorCopy(v, nv);
 			nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0] * 0.02 + r_refdef2.time)*sin(v[1] * 0.02 + r_refdef2.time)*sin(v[2] * 0.02 + r_refdef2.time);
-			glVertex3fv(nv);
+			GLC_Vertex3fv(nv);
 		}
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -118,7 +118,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 
 		R_TextureUnitBind(0, fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
-			glBegin(GL_POLYGON);
+			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				os = v[3];
 				ot = v[4];
@@ -138,9 +138,9 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 				}
 
 				glTexCoord2f(s, t);
-				glVertex3fv(nv);
+				GLC_Vertex3fv(nv);
 			}
-			glEnd();
+			GLC_End();
 		}
 	}
 }
@@ -182,35 +182,34 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 
 				// Meag: this isn't using a VBO until we can move the texture co-ordinate calculation to an older opengl shader
 				//   in the meantime we just make sure we render as a triangle-strip so we don't have z-fighting with previous draw
-				glBegin(GL_TRIANGLE_STRIP);
+				GLC_Begin(GL_TRIANGLE_STRIP);
 				GLC_CalcCausticTexCoords(p->verts[0], &s, &t);
 				glTexCoord2f(s, t);
-				glVertex3fv(p->verts[0]);
+				GLC_Vertex3fv(p->verts[0]);
 
 				for (i = 1; i <= alt; i++, alt--) {
 					GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
 					glTexCoord2f(s, t);
-					glVertex3fv(p->verts[i]);
+					GLC_Vertex3fv(p->verts[i]);
 
 					if (i < alt) {
 						GLC_CalcCausticTexCoords(p->verts[alt], &s, &t);
 						glTexCoord2f(s, t);
-						glVertex3fv(p->verts[alt]);
+						GLC_Vertex3fv(p->verts[alt]);
 					}
 				}
-				glEnd();
+				GLC_End();
 			}
 		}
 		else {
-			glBegin(GL_POLYGON);
-
+			GLC_Begin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 				GLC_CalcCausticTexCoords(v, &s, &t);
 
 				glTexCoord2f(s, t);
-				glVertex3fv(v);
+				GLC_Vertex3fv(v);
 			}
-			glEnd();
+			GLC_End();
 		}
 	}
 

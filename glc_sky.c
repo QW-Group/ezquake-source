@@ -40,7 +40,7 @@ void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
 	vec3_t dir;
 
 	for (p = fa->polys; p; p = p->next) {
-		glBegin(GL_POLYGON);
+		GLC_Begin(GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorSubtract(v, r_origin, dir);
 			dir[2] *= 3;	// flatten the sphere
@@ -70,9 +70,9 @@ void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
 			else {
 				glTexCoord2f(s, t);
 			}
-			glVertex3fv(v);
+			GLC_Vertex3fv(v);
 		}
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -203,7 +203,7 @@ static void EmitSkyVert(vec3_t v, qbool multitexture)
 	else {
 		glTexCoord2f((speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));
 	}
-	glVertex3fv(v);
+	GLC_Vertex3fv(v);
 }
 
 static void GLC_MakeSkyVec2(float s, float t, int axis, float range, vec3_t v)
@@ -224,7 +224,7 @@ static void GLC_DrawSkyFace(int axis, qbool multitexture)
 	float fstep = 2.0 / SUBDIVISIONS;
 	float skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
 
-	glBegin(GL_QUADS);
+	GLC_Begin(GL_QUADS);
 	for (v = 0, i = 0; i < SUBDIVISIONS; i++, v++)
 	{
 		s = (float)(i*2 - SUBDIVISIONS) / SUBDIVISIONS;
@@ -251,7 +251,7 @@ static void GLC_DrawSkyFace(int axis, qbool multitexture)
 			EmitSkyVert(vecs[3], multitexture);
 		}
 	}
-	glEnd();
+	GLC_End();
 }
 
 static void GLC_DrawSkyDome(void)
@@ -314,12 +314,12 @@ static void GLC_DrawSkyBox(void)
 
 		R_TextureUnitBind(0, skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES - 1)]);
 
-		glBegin(GL_QUADS);
+		GLC_Begin(GL_QUADS);
 		GLC_MakeSkyVec(skymins[0][i], skymins[1][i], i);
 		GLC_MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
 		GLC_MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
 		GLC_MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
-		glEnd();
+		GLC_End();
 	}
 }
 
@@ -340,7 +340,7 @@ static void GLC_MakeSkyVec(float s, float t, int axis)
 
 	t = 1.0 - t;
 	glTexCoord2f(s, t);
-	glVertex3fv(v);
+	GLC_Vertex3fv(v);
 }
 
 qbool GLC_LoadSkyboxTextures(const char* skyname)

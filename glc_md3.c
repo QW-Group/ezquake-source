@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_matrix.h"
 #include "r_state.h"
 #include "gl_aliasmodel.h"
+#include "glc_local.h"
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
@@ -118,7 +119,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
 		numtris = surf->numTriangles * 3;
 
-		glBegin (GL_TRIANGLES);
+		GLC_Begin(GL_TRIANGLES);
 		for (i = 0; i < numtris; i++) {
 			float s, t;
 			float l;
@@ -139,11 +140,11 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
 			glTexCoord2f(s, t);
-			glVertex3fv(interpolated_verts);
+			GLC_Vertex3fv(interpolated_verts);
 
 			tris++;
 		}
-		glEnd();
+		GLC_End();
 
 		//NEXT!   Getting cocky!
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);

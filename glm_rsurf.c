@@ -183,7 +183,7 @@ static void Compile_DrawWorldProgram(void)
 	}
 
 	if (drawworld.program && !drawworld.uniforms_found) {
-		drawWorld_outlines = GL_UniformGetLocation(drawworld.program, "draw_outlines");
+		drawWorld_outlines = GLM_UniformGetLocation(drawworld.program, "draw_outlines");
 
 		ssbo_worldcvars = buffers.Create(buffertype_storage, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 		ssbo_worldsamplers = buffers.Create(buffertype_storage, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
@@ -207,7 +207,7 @@ static void GL_StartWorldBatch(void)
 {
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 
-	GL_UseProgram(drawworld.program);
+	GLM_UseProgram(drawworld.program);
 	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
@@ -512,7 +512,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	uintptr_t extra_offset = buffers.BufferOffset(vbo_worldIndirectDraw);
 
 	//
-	GL_Uniform1i(drawWorld_outlines, 1);
+	GLM_Uniform1i(drawWorld_outlines, 1);
 
 	GLM_StateBeginDrawWorldOutlines();
 
@@ -547,7 +547,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
-	GL_Uniform1i(drawWorld_outlines, 0);
+	GLM_Uniform1i(drawWorld_outlines, 0);
 }
 
 void GL_FlushWorldModelBatch(void)
