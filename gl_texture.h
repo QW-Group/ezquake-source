@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -23,52 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_texture.h"
 
-// Replaces top-level of a texture - if dimensions don't match then texture is reloaded
-extern GLenum gl_solid_format, gl_alpha_format;
-
-void GL_TextureReplace2D(
-	GLenum textureUnit, GLenum target, texture_ref* ref, GLint internalformat,
-	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid *pixels
-);
-const char* GL_TextureIdentifierByGLReference(GLuint texnum);
-void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references);
-void GL_SelectTexture(GLenum target);
-extern GLenum gl_solid_format, gl_alpha_format;
-
+// Private GL function to allocate names
+void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy);
+void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte* newdata);
+void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char* name);
 void GL_TextureWrapModeClamp(texture_ref tex);
 void GL_AllocateStorage(struct gltexture_s* texture);
-
-// Private GL function to allocate names
-void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
-void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy);
-
-// --------------
-// Texture functions
-// --------------
-
-void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
-
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
-void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references, const char* identifier);
-void GL_TexStorage2D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-void GL_GenerateMipmap(GLenum textureUnit, texture_ref reference);
-void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);
-
-void GL_TexParameterf(GLenum textureUnit, texture_ref reference, GLenum pname, GLfloat param);
-void GL_TexParameterfv(GLenum textureUnit, texture_ref reference, GLenum pname, const GLfloat *params);
-void GL_TexParameteri(GLenum textureUnit, texture_ref reference, GLenum pname, GLint param);
-void GL_TexParameteriv(GLenum textureUnit, texture_ref reference, GLenum pname, const GLint *params);
-void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref reference, GLint level, GLenum pname, GLint* params);
-
-void GL_TexSubImage2D(GLenum textureUnit, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_TexSubImage3D(GLenum textureUnit, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-void GL_GetTexImage(GLenum textureUnit, texture_ref reference, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
-
-void GL_BindTextureUnit(GLuint unit, texture_ref reference);
-void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference);
-void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
-
 void GL_TextureAnistropyChanged(texture_ref texture);
 void GL_DeleteTexture(texture_ref texture);
 

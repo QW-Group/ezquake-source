@@ -105,11 +105,11 @@ static void Compile_DrawWorldProgram(void)
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
 
-	qbool detail_textures = gl_detail.integer && GL_TextureReferenceIsValid(detailtexture);
-	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
+	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
 	qbool luma_textures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
-	qbool skydome = !skybox && !r_fastsky.integer && GL_TextureReferenceIsValid(solidskytexture);
+	qbool skydome = !skybox && !r_fastsky.integer && R_TextureReferenceIsValid(solidskytexture);
 
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
@@ -254,7 +254,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	}
 
 	for (i = 0; i < drawcalls[current_drawcall].material_samplers; ++i) {
-		if (GL_TextureReferenceEqual(texture->gl_texture_array, drawcalls[current_drawcall].allocated_samplers[i])) {
+		if (R_TextureReferenceEqual(texture->gl_texture_array, drawcalls[current_drawcall].allocated_samplers[i])) {
 			sampler = i;
 			break;
 		}
@@ -271,7 +271,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 
 	drawcalls[current_drawcall].mappings[index].samplerIndex = sampler;
 	drawcalls[current_drawcall].mappings[index].arrayIndex = texture->gl_texture_index;
-	drawcalls[current_drawcall].mappings[index].flags = GL_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcalls[current_drawcall].mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
 	return true;
 }
 
@@ -713,7 +713,7 @@ void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qboo
 	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
 		texture_t* tex = model->textures[i];
 
-		if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !GL_TextureReferenceIsValid(tex->gl_texture_array)) {
+		if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 

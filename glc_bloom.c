@@ -226,7 +226,7 @@ static void GLC_Bloom_InitTextures( void )
 		glinternalfmt = gl_solid_format;
 	}
 
-	if (!GL_TextureReferenceIsValid(r_bloomscreentexture)) {
+	if (!R_TextureReferenceIsValid(r_bloomscreentexture)) {
 		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &r_bloomscreentexture);
 	}
 	GL_TextureReplace2D(GL_TEXTURE0, GL_TEXTURE_2D, &r_bloomscreentexture, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -238,7 +238,7 @@ static void GLC_Bloom_InitTextures( void )
 	GLC_Bloom_InitEffectTexture();
 
 	// If screensize is more than 2x the bloom effect texture, set up for stepped downsampling.
-	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
+	R_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
 	r_screendownsamplingtexture_size = 0;
 	if( glwidth > (BLOOM_SIZE * 2) && !r_bloom_fast_sample.value )
 	{
@@ -268,10 +268,10 @@ void GLC_InitBloomTextures(void)
 	}
 
 	// This came from a vid_restart, where none of the textures are valid any more.
-	GL_TextureReferenceInvalidate(r_bloomscreentexture);
-	GL_TextureReferenceInvalidate(r_bloomeffecttexture);
-	GL_TextureReferenceInvalidate(r_bloombackuptexture);
-	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
+	R_TextureReferenceInvalidate(r_bloomscreentexture);
+	R_TextureReferenceInvalidate(r_bloomeffecttexture);
+	R_TextureReferenceInvalidate(r_bloombackuptexture);
+	R_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
 
 	GLC_Bloom_InitTextures();
 }

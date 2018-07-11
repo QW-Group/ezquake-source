@@ -86,40 +86,40 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 
 	if (loadmodel->isworldmodel) {
 		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag);
-		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
+		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
 			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 		else if (groupname) {
 			tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag);
-			if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
+			if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
 				tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 			}
 		}
 	}
 	else {
 		tx->gl_texturenum = R_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag);
-		if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
+		if (!R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
 			tx->fb_texturenum = R_LoadTextureImage(va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 	}
 
-	if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && altname) {
+	if (!R_TextureReferenceIsValid(tx->gl_texturenum) && altname) {
 		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", altname), altname, 0, 0, mode | brighten_flag);
-		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
+		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
 			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | luma_mode);
 		}
 	}
 
-	if (!GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+	if (!R_TextureReferenceIsValid(tx->gl_texturenum)) {
 		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", name), name, 0, 0, mode | brighten_flag);
-		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
+		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
 			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 	}
 
-	tx->isLumaTexture = GL_TextureReferenceIsValid(tx->fb_texturenum);
+	tx->isLumaTexture = R_TextureReferenceIsValid(tx->fb_texturenum);
 
-	return GL_TextureReferenceIsValid(tx->gl_texturenum);
+	return R_TextureReferenceIsValid(tx->gl_texturenum);
 }
 
 qbool Mod_IsTurbTextureName(model_t* model, const char* name)

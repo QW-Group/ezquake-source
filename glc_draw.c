@@ -45,7 +45,7 @@ void GLC_DrawDisc(void)
 
 void GLC_HudDrawComplete(void)
 {
-	if (GL_TextureReferenceIsValid(glc_last_texture_used)) {
+	if (R_TextureReferenceIsValid(glc_last_texture_used)) {
 		GL_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 }
@@ -239,7 +239,7 @@ static void GLC_CreateImageVAO(void)
 
 void GLC_HudPrepareImages(void)
 {
-	GL_TextureReferenceInvalidate(glc_last_texture_used);
+	R_TextureReferenceInvalidate(glc_last_texture_used);
 
 	if (buffers.supported) {
 		if (!GL_BufferReferenceIsValid(imageVBO)) {
@@ -273,7 +273,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	GL_IdentityModelView();
 	GL_IdentityProjectionView();
 
-	if (GL_TextureReferenceIsValid(glc_last_texture_used) && !GL_TextureReferenceEqual(glc_last_texture_used, ref)) {
+	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
 		GL_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
 	glc_last_texture_used = ref;
@@ -287,7 +287,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 		uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / sizeof(imageData.glc_images[0]);
 
 		for (i = start; i < end; ++i) {
-			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
+			if (R_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
 				GL_DrawArrays(GL_QUADS, offset + start * 4, (i - start + 1) * 4);
 
 				nearest = (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST);
@@ -311,7 +311,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 
 			R_CustomColor4ubv(next->colour);
 
-			if (GL_TextureReferenceIsValid(ref) && nearest != (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST)) {
+			if (R_TextureReferenceIsValid(ref) && nearest != (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST)) {
 				GLC_End();
 
 				nearest = (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST);

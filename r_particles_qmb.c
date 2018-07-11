@@ -173,7 +173,7 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 	particle_type_t* type = &particle_types[*count];
 
 	if (blend_options[blendtype].func == r_blendfunc_src_zero_dest_one_minus_src_color) {
-		if (GL_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
+		if (R_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
 			type->state = r_state_particles_qmb_textured_blood;
 		}
 		else {
@@ -181,7 +181,7 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 		}
 	}
 	else if (blend_options[blendtype].func == r_blendfunc_premultiplied_alpha) {
-		if (GL_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
+		if (R_TextureReferenceIsValid(particle_textures[texture_id].texnum)) {
 			type->state = r_state_particles_qmb_textured;
 		}
 		else {
@@ -353,15 +353,15 @@ void QMB_InitParticles (void)
 
 	//VULT PARTICLES
 	shockwave_texture = QMB_LoadTextureImage("textures/shockwavetex");
-	if (!GL_TextureReferenceIsValid(shockwave_texture)) {
+	if (!R_TextureReferenceIsValid(shockwave_texture)) {
 		return;
 	}
 	lightning_texture = QMB_LoadTextureImage("textures/zing1");
-	if (!GL_TextureReferenceIsValid(lightning_texture)) {
+	if (!R_TextureReferenceIsValid(lightning_texture)) {
 		return;
 	}
 	spark_texture = QMB_LoadTextureImage("textures/sparktex");
-	if (!GL_TextureReferenceIsValid(spark_texture)) {
+	if (!R_TextureReferenceIsValid(spark_texture)) {
 		return;
 	}
 	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 128, 128);
@@ -1042,7 +1042,7 @@ void QMB_ImportTextureArrayReferences(texture_flag_t* texture_flags)
 	int i;
 
 	for (tex = 0; tex < num_particletextures; ++tex) {
-		if (GL_TextureReferenceIsValid(particle_textures[tex].texnum)) {
+		if (R_TextureReferenceIsValid(particle_textures[tex].texnum)) {
 			texture_array_ref_t* array_ref = &texture_flags[particle_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
 
 			particle_textures[tex].tex_array = array_ref->ref;
@@ -1062,7 +1062,7 @@ void QMB_FlagTexturesForArray(texture_flag_t* texture_flags)
 	part_tex_t tex;
 
 	for (tex = 0; tex < num_particletextures; ++tex) {
-		if (GL_TextureReferenceIsValid(particle_textures[tex].texnum)) {
+		if (R_TextureReferenceIsValid(particle_textures[tex].texnum)) {
 			texture_flags[particle_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
 			memcpy(particle_textures[tex].coords, particle_textures[tex].originalCoords, sizeof(particle_textures[tex].coords));
 		}

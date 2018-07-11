@@ -43,7 +43,7 @@ static texture_ref Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
 	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
-	if (!GL_TextureReferenceIsValid(texnum)) {
+	if (!R_TextureReferenceIsValid(texnum)) {
 		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
@@ -90,7 +90,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 
 	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
 	texnum = Mod_LoadExternalSpriteSkin(identifier, framenum);
-	if (!GL_TextureReferenceIsValid(texnum)) {
+	if (!R_TextureReferenceIsValid(texnum)) {
 		texnum = R_LoadTexture(identifier, width, height, (byte *)(pinframe + 1), texmode, 1);
 	}
 

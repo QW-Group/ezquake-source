@@ -23,7 +23,6 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "r_local.h"
 #include "r_texture.h"
 #include "r_texture_internal.h"
-#include "gl_texture.h"
 #include "tr_types.h"
 
 void R_TextureModeForEach(void(*func)(texture_ref ref));

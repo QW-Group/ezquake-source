@@ -309,7 +309,7 @@ void R_ImportChatIconTextureArrayReferences(texture_flag_t* texture_flags)
 	int i;
 
 	for (tex = 0; tex < num_citextures; ++tex) {
-		if (GL_TextureReferenceIsValid(ci_textures[tex].texnum)) {
+		if (R_TextureReferenceIsValid(ci_textures[tex].texnum)) {
 			texture_array_ref_t* array_ref = &texture_flags[ci_textures[tex].texnum.index].array_ref[TEXTURETYPES_SPRITES];
 
 			ci_textures[tex].tex_array = array_ref->ref;
@@ -329,7 +329,7 @@ void R_FlagChatIconTexturesForArray(texture_flag_t* texture_flags)
 	ci_tex_t tex;
 
 	for (tex = 0; tex < num_citextures; ++tex) {
-		if (GL_TextureReferenceIsValid(ci_textures[tex].texnum)) {
+		if (R_TextureReferenceIsValid(ci_textures[tex].texnum)) {
 			texture_flags[ci_textures[tex].texnum.index].flags |= (1 << TEXTURETYPES_SPRITES);
 			memcpy(ci_textures[tex].coords, ci_textures[tex].originalCoords, sizeof(ci_textures[tex].coords));
 		}

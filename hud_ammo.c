@@ -183,7 +183,7 @@ void SCR_HUD_DrawAmmo(
 		}
 
 		x = x_;
-		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && GL_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
+		if (num >= 1 && num <= sizeof(sb_ib_ammo) / sizeof(sb_ib_ammo[0]) && R_TextureReferenceIsValid(sb_ib_ammo[num - 1].texnum)) {
 			Draw_SPic(x, y, &sb_ib_ammo[num - 1], scale);
 		}
 

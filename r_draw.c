@@ -215,7 +215,7 @@ void customCrosshair_Init(void)
 	int i = 0, c;
 
 	customcrosshair_loaded = CROSSHAIR_NONE;
-	GL_TextureReferenceInvalidate(crosshairtexture_txt.texnum);
+	R_TextureReferenceInvalidate(crosshairtexture_txt.texnum);
 
 	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY))) {
 		return;
@@ -973,10 +973,10 @@ void Draw_AdjustConback (void)
 
 static void Draw_DeleteOldLevelshot(mpic_t* pic)
 {
-	if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
+	if (pic && R_TextureReferenceIsValid(pic->texnum)) {
 		R_DeleteTexture(&pic->texnum);
 		if (!CachePic_RemoveByPic(pic)) {
-			GL_TextureReferenceInvalidate(pic->texnum);
+			R_TextureReferenceInvalidate(pic->texnum);
 		}
 	}
 }

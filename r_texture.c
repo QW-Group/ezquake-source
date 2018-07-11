@@ -19,12 +19,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // 
 #include "quakedef.h"
+#include "gl_model.h"
 #include "r_local.h"
 #include "r_texture.h"
 #include "r_texture_internal.h"
 #include "r_lighting.h"
 #include "r_aliasmodel.h"
 #include "r_brushmodel_sky.h"
+#include "r_trace.h"
 
 static void R_AllocateTextureNames(gltexture_t* glt);
 
@@ -36,10 +38,10 @@ static texture_ref invalid_texture_reference = { 0 };
 void R_TextureUnitBind(int unit, texture_ref texture)
 {
 	if (R_UseImmediateOpenGL()) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0 + unit, texture);
+		GL_EnsureTextureUnitBound(unit, texture);
 	}
 	else if (R_UseModernOpenGL()) {
-		GL_EnsureTextureUnitBound(GL_TEXTURE0 + unit, texture);
+		GL_EnsureTextureUnitBound(unit, texture);
 	}
 	else if (R_UseVulkan()) {
 		//
@@ -75,11 +77,11 @@ static void R_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 			texture_t* tex = mod->textures[j];
 			if (tex) {
 				if (all_textures) {
-					GL_TextureReferenceInvalidate(tex->fb_texturenum);
-					GL_TextureReferenceInvalidate(tex->gl_texturenum);
+					R_TextureReferenceInvalidate(tex->fb_texturenum);
+					R_TextureReferenceInvalidate(tex->gl_texturenum);
 				}
 				tex->gl_texture_scaleS = tex->gl_texture_scaleT = 0;
-				GL_TextureReferenceInvalidate(tex->gl_texture_array);
+				R_TextureReferenceInvalidate(tex->gl_texture_array);
 				tex->gl_texture_index = 0;
 			}
 		}
@@ -102,10 +104,10 @@ static void R_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 			frame = ((mspriteframe_t*)((byte*)psprite + offset));
 
 			if (all_textures) {
-				GL_TextureReferenceInvalidate(frame->gl_texturenum);
+				R_TextureReferenceInvalidate(frame->gl_texturenum);
 			}
 			frame->gl_scalingS = frame->gl_scalingT = 0;
-			GL_TextureReferenceInvalidate(frame->gl_arraynum);
+			R_TextureReferenceInvalidate(frame->gl_arraynum);
 			frame->gl_arrayindex = 0;
 		}
 	}
@@ -121,7 +123,7 @@ static void R_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 		surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
 
 		// One day there will be more than one of these...
-		GL_TextureReferenceInvalidate(surfaceInfo->texnum);
+		R_TextureReferenceInvalidate(surfaceInfo->texnum);
 	}
 }
 
@@ -173,7 +175,7 @@ void R_SetTextureFiltering(texture_ref texture, texture_minification_id minifica
 
 qbool R_TextureValid(texture_ref ref)
 {
-	return ref.index && ref.index < numgltextures && gltextures[ref.index].gl.texnum;
+	return ref.index && ref.index < numgltextures && gltextures[ref.index].texnum;
 }
 
 qbool R_TexturesAreSameSize(texture_ref tex1, texture_ref tex2)
@@ -224,7 +226,7 @@ void R_TextureModeForEach(void(*func)(texture_ref tex))
 
 	// Make sure we set the proper texture filters for textures.
 	for (i = 1, glt = gltextures + 1; i < numgltextures; i++, glt++) {
-		if (!GL_TextureReferenceIsValid(glt->reference)) {
+		if (!R_TextureReferenceIsValid(glt->reference)) {
 			continue;
 		}
 
@@ -267,8 +269,8 @@ void R_Texture_Init(void)
 
 	// Reset textures array and linked globals
 	for (i = 0; i < numgltextures; i++) {
-		if (!gltextures[i].gl.texnum) {
-			glDeleteTextures(1, &gltextures[i].gl.texnum);
+		if (gltextures[i].texnum) {
+			GL_DeleteTexture(gltextures[i].reference);
 		}
 		Q_free(gltextures[i].pathname);
 	}
@@ -281,10 +283,10 @@ void R_Texture_Init(void)
 	GL_InitTextureState();
 
 	// Motion blur.
-	GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, &sceneblur_texture);
+	GL_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
 
 	// Powerup shells.
-	GL_TextureReferenceInvalidate(shelltexture); // Force reload.
+	R_TextureReferenceInvalidate(shelltexture); // Force reload.
 
 	// Sky.
 	memset(skyboxtextures, 0, sizeof(skyboxtextures)); // Force reload.
@@ -294,7 +296,7 @@ void R_Texture_Init(void)
 
 void R_DeleteTexture(texture_ref* texture)
 {
-	if (!texture || !GL_TextureReferenceIsValid(*texture)) {
+	if (!texture || !R_TextureReferenceIsValid(*texture)) {
 		return;
 	}
 
@@ -334,7 +336,12 @@ void R_GenerateMipmapsIfNeeded(texture_ref ref)
 	}
 
 	if (!gltextures[ref.index].mipmaps_generated) {
-		GL_GenerateMipmap(GL_TEXTURE0, ref);
+		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+			GL_GenerateMipmap(ref);
+		}
+		else if (R_UseVulkan()) {
+			//VK_GenerateMipmap(ref);
+		}
 		gltextures[ref.index].mipmaps_generated = true;
 	}
 }
@@ -362,7 +369,7 @@ void R_DeleteTextures(void)
 texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode)
 {
 	qbool new_texture;
-	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_CUBE_MAP, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(texture_type_cubemap, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	int max_miplevels = 0;
 
 	if (!slot) {
@@ -378,7 +385,7 @@ texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int m
 	return slot->reference;
 }
 
-gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture)
+gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture)
 {
 	int gl_width, gl_height;
 	gltexture_t* glt = NULL;
@@ -416,13 +423,15 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 			if (!strncmp(identifier, glt->identifier, sizeof(glt->identifier) - 1)) {
 				qbool same_dimensions = (width == glt->image_width && height == glt->image_height && depth == glt->depth);
 				qbool same_scaling = (gl_width == glt->texture_width && gl_height == glt->texture_height);
-				qbool same_format = (glt->bpp == bpp && glt->gl.target == target);
+				qbool same_format = (glt->bpp == bpp && glt->type == type);
 				qbool same_options = (mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE));
 
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
 				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
-					GL_BindTextureUnit(GL_TEXTURE0, glt->reference);
+					if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+						GL_BindTextureUnit(0, glt->reference);
+					}
 					*new_texture = false;
 					return glt;
 				}
@@ -440,15 +449,15 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 	// with taking up a new texture slot, just load the new texture
 	// over the old one.
 	if (!load_over_existing) {
-		glt = GL_NextTextureSlot(target);
+		glt = GL_NextTextureSlot(type);
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
 		R_AllocateTextureNames(glt);
-		GL_ObjectLabel(GL_TEXTURE, glt->gl.texnum, -1, glt->identifier);
+		R_TextureLabel(glt->texnum, glt->identifier);
 	}
-	else if (glt && !glt->gl.texnum) {
+	else if (glt && !glt->texnum) {
 		R_AllocateTextureNames(glt);
-		GL_ObjectLabel(GL_TEXTURE, glt->gl.texnum, -1, glt->identifier);
+		R_TextureLabel(glt->texnum, glt->identifier);
 	}
 	else if (glt && glt->storage_allocated) {
 		if (gl_width != glt->texture_width || gl_height != glt->texture_height || glt->bpp != bpp) {
@@ -456,7 +465,7 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 
 			R_DeleteTexture(&ref);
 
-			return GL_AllocateTextureSlot(target, identifier, width, height, 0, bpp, mode, crc, new_texture);
+			return GL_AllocateTextureSlot(type, identifier, width, height, 0, bpp, mode, crc, new_texture);
 		}
 	}
 
@@ -480,7 +489,7 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 	}
 
 	// Allocate storage
-	if (!glt->storage_allocated && (target == GL_TEXTURE_2D || target == GL_TEXTURE_CUBE_MAP)) {
+	if (!glt->storage_allocated && !glt->is_array) {
 		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
 			GL_AllocateStorage(glt);
 		}
@@ -491,7 +500,7 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 	}
 
 	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_BindTextureUnit(GL_TEXTURE0, glt->reference);
+		GL_BindTextureUnit(0, glt->reference);
 	}
 	return glt;
 }
@@ -501,7 +510,7 @@ gltexture_t* GL_AllocateTextureSlot(GLenum target, const char* identifier, int w
 texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
 {
 	qbool new_texture = false;
-	gltexture_t* slot = GL_AllocateTextureSlot(GL_TEXTURE_2D_ARRAY, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot = GL_AllocateTextureSlot(texture_type_2d_array, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	texture_ref gl_texturenum;
 
 	if (!slot) {
@@ -532,7 +541,7 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 	return gl_texturenum;
 }
 
-gltexture_t* GL_NextTextureSlot(GLenum target)
+gltexture_t* GL_NextTextureSlot(r_texture_type_id type)
 {
 	int slot;
 	gltexture_t* glt;
@@ -553,14 +562,14 @@ gltexture_t* GL_NextTextureSlot(GLenum target)
 
 	glt = &gltextures[slot];
 	glt->reference.index = slot;
-	glt->gl.target = target;
+	glt->type = type;
 	return glt;
 }
 
 static void R_AllocateTextureNames(gltexture_t* glt)
 {
 	if (R_UseModernOpenGL() || R_UseImmediateOpenGL()) {
-		GL_CreateTextureNames(GL_TEXTURE0, glt->gl.target, 1, &glt->gl.texnum);
+		GL_AllocateTextureNames(glt);
 	}
 	else if (R_UseVulkan()) {
 		// VK_AllocateTextureNames(...);
@@ -582,10 +591,20 @@ gltexture_t* R_FindTexture(const char *identifier)
 
 void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name)
 {
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D, 1, reference, name);
-	GL_TexStorage2D(GL_TEXTURE0, *reference, 1, GL_RGBA8, width, height);
-	GL_SetTextureFiltering(*reference, texture_minification_linear, texture_magnification_linear);
-	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	GL_TexParameteri(GL_TEXTURE0, *reference, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_CreateTexture2D(reference, width, height, name);
+	}
+	else if (R_UseVulkan()) {
+		// VK_CreateTexture2D(reference, width, height, name);
+	}
 }
 
+void R_TextureLabel(unsigned int texnum, const char* identifier)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_TextureLabel(texnum, identifier);
+	}
+	else if (R_UseVulkan()) {
+		// VK_TextureLabel(...);
+	}
+}

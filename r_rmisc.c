@@ -70,7 +70,7 @@ void R_InitOtherTextures(void)
 	detailtexture = R_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = R_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | TEX_PREMUL_ALPHA | TEX_ZERO_ALPHA | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
-	if (!GL_TextureReferenceIsValid(shelltexture)) {
+	if (!R_TextureReferenceIsValid(shelltexture)) {
 		shelltexture = GL_GenerateShellTexture();
 	}
 

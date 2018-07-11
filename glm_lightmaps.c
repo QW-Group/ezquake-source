@@ -107,23 +107,23 @@ void GLM_CreateLightmapTextures(void)
 		buffers.EnsureSize(ssbo_surfacesTodo, surfaceTodoLength);
 	}
 
-	if (GL_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
+	if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
 		return;
 	}
 
-	if (GL_TextureReferenceIsValid(lightmap_texture_array)) {
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
 		R_DeleteTextureArray(&lightmap_texture_array);
 	}
 
-	if (GL_TextureReferenceIsValid(lightmap_data_array)) {
+	if (R_TextureReferenceIsValid(lightmap_data_array)) {
 		R_DeleteTextureArray(&lightmap_data_array);
 	}
 
-	if (GL_TextureReferenceIsValid(lightmap_source_array)) {
+	if (R_TextureReferenceIsValid(lightmap_source_array)) {
 		R_DeleteTextureArray(&lightmap_source_array);
 	}
 
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_texture_array, "lightmap_texture_array");
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 	GL_SetTextureFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
 	GL_TexParameteri(GL_TEXTURE0, lightmap_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -133,18 +133,18 @@ void GLM_CreateLightmapTextures(void)
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
 
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_source_array, "lightmap_source_array");
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 
-	GL_CreateTexturesWithIdentifier(GL_TEXTURE0, GL_TEXTURE_2D_ARRAY, 1, &lightmap_data_array, "lightmap_data_array");
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
 }
 
 void GLM_InvalidateLightmapTextures(void)
 {
-	GL_TextureReferenceInvalidate(lightmap_texture_array);
-	GL_TextureReferenceInvalidate(lightmap_data_array);
-	GL_TextureReferenceInvalidate(lightmap_source_array);
+	R_TextureReferenceInvalidate(lightmap_texture_array);
+	R_TextureReferenceInvalidate(lightmap_data_array);
+	R_TextureReferenceInvalidate(lightmap_source_array);
 	lightmap_depth = 0;
 }
 

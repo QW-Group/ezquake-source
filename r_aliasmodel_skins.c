@@ -37,8 +37,8 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	texture_ref texnum;
 	qbool luma_allowed = Ruleset_IsLumaAllowed(loadmodel);
 
-	GL_TextureReferenceInvalidate(texnum);
-	GL_TextureReferenceInvalidate(*fb_texnum);
+	R_TextureReferenceInvalidate(texnum);
+	R_TextureReferenceInvalidate(*fb_texnum);
 
 	if (RuleSets_DisallowExternalTexture(loadmodel)) {
 		return texnum;
@@ -54,7 +54,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	// try "textures/models/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (GL_TextureReferenceIsValid(texnum)) {
+	if (R_TextureReferenceIsValid(texnum)) {
 		if (luma_allowed) {
 			// not a luma actually, but which suffix use then? _fb or what?
 			snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
@@ -67,7 +67,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	// try "textures/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (GL_TextureReferenceIsValid(texnum)) {
+	if (R_TextureReferenceIsValid(texnum)) {
 		// not a luma actually, but which suffix use then? _fb or what?
 		if (luma_allowed) {
 			snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
@@ -120,11 +120,11 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 			snprintf(identifier, sizeof(identifier), "%s_%i", basename, i);
 
-			GL_TextureReferenceInvalidate(gl_texnum);
-			GL_TextureReferenceInvalidate(fb_texnum);
+			R_TextureReferenceInvalidate(gl_texnum);
+			R_TextureReferenceInvalidate(fb_texnum);
 
 			gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
-			if (!GL_TextureReferenceIsValid(gl_texnum)) {
+			if (!R_TextureReferenceIsValid(gl_texnum)) {
 				gl_texnum = R_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype + 1), texmode, 1);
 
 				if (Img_HasFullbrights((byte *)(pskintype + 1), pheader->skinwidth * pheader->skinheight)) {
@@ -154,11 +154,11 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 				snprintf(identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
 
-				GL_TextureReferenceInvalidate(gl_texnum);
-				GL_TextureReferenceInvalidate(fb_texnum);
+				R_TextureReferenceInvalidate(gl_texnum);
+				R_TextureReferenceInvalidate(fb_texnum);
 
 				gl_texnum = Mod_LoadExternalSkin(loadmodel, identifier, &fb_texnum);
-				if (!GL_TextureReferenceIsValid(gl_texnum)) {
+				if (!R_TextureReferenceIsValid(gl_texnum)) {
 					gl_texnum = R_LoadTexture(identifier, pheader->skinwidth, pheader->skinheight, (byte *)(pskintype), texmode, 1);
 
 					if (Img_HasFullbrights((byte *)(pskintype), pheader->skinwidth*pheader->skinheight)) {

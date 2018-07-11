@@ -32,14 +32,14 @@ byte* Classic_CreateParticleTexture(int width, int height);
 
 void Part_FlagTexturesForArray(texture_flag_t* texture_flags)
 {
-	if (GL_TextureReferenceIsValid(particletexture)) {
+	if (R_TextureReferenceIsValid(particletexture)) {
 		texture_flags[particletexture.index].flags |= (1 << TEXTURETYPES_SPRITES);
 	}
 }
 
 void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 {
-	if (GL_TextureReferenceIsValid(particletexture)) {
+	if (R_TextureReferenceIsValid(particletexture)) {
 		texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
 
 		if (!R_TexturesAreSameSize(array_ref->ref, particletexture)) {
@@ -61,13 +61,13 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 
 void GLM_LoadParticleTextures(void)
 {
-	if (GL_TextureReferenceIsValid(particletexture_array)) {
+	if (R_TextureReferenceIsValid(particletexture_array)) {
 		int width = R_TextureWidth(particletexture_array);
 		int height = R_TextureHeight(particletexture_array);
 		byte* data = Classic_CreateParticleTexture(width, height);
 
 		GL_TexSubImage3D(GL_TEXTURE0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		GL_GenerateMipmap(GL_TEXTURE0, particletexture_array);
+		GL_GenerateMipmap(particletexture_array);
 
 		Q_free(data);
 	}

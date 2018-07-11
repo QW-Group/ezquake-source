@@ -49,10 +49,10 @@ int Q_strlen(const char* s);
 typedef struct texture_ref_s { unsigned int index; } texture_ref;
 extern const texture_ref null_texture_reference;
 qbool R_TextureValid(texture_ref ref);
-#define GL_TextureReferenceIsValid(ref) ((ref).index && R_TextureValid(ref))
-#define GL_TextureReferenceInvalidate(ref) { (ref).index = 0; }
-#define GL_TextureReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
-#define GL_TextureReferenceCompare(ref1, ref2) (ref1.index < ref2.index ? -1 : ref1.index > ref2.index ? 1 : 0)
+#define R_TextureReferenceIsValid(ref) ((ref).index && R_TextureValid(ref))
+#define R_TextureReferenceInvalidate(ref) { (ref).index = 0; }
+#define R_TextureReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
+#define R_TextureReferenceCompare(ref1, ref2) (ref1.index < ref2.index ? -1 : ref1.index > ref2.index ? 1 : 0)
 
 typedef enum
 {

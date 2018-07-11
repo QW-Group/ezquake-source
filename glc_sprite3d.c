@@ -46,7 +46,7 @@ static void GLC_Create3DSpriteVAO(void)
 
 static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
-	if (GL_TextureReferenceIsValid(batch->texture)) {
+	if (R_TextureReferenceIsValid(batch->texture)) {
 		if (!batch->textured_rendering_state) {
 			assert(false);
 			return;
@@ -61,7 +61,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 		// Group by texture usage
 		int start = 0, end = 1;
 
-		if (GL_TextureReferenceIsValid(batch->textures[start])) {
+		if (R_TextureReferenceIsValid(batch->textures[start])) {
 			if (!batch->textured_rendering_state) {
 				assert(false);
 				return;
@@ -78,10 +78,10 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 			R_ApplyRenderingState(batch->untextured_rendering_state);
 		}
 		for (end = 1; end < batch->count; ++end) {
-			if (!GL_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
+			if (!R_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
 				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
 
-				if (GL_TextureReferenceIsValid(batch->textures[end])) {
+				if (R_TextureReferenceIsValid(batch->textures[end])) {
 					if (!batch->textured_rendering_state) {
 						assert(false);
 						return;
@@ -130,11 +130,11 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 
 		if (buffers.supported) {
 			if (batch->count == 1) {
-				if (GL_TextureReferenceIsValid(batch->textures[0])) {
+				if (R_TextureReferenceIsValid(batch->textures[0])) {
 					R_TextureUnitBind(0, batch->textures[0]);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
-				else if (GL_TextureReferenceIsValid(batch->texture)) {
+				else if (R_TextureReferenceIsValid(batch->texture)) {
 					R_TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
@@ -153,7 +153,7 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 			}
 			else {
-				if (GL_TextureReferenceIsValid(batch->texture)) {
+				if (R_TextureReferenceIsValid(batch->texture)) {
 					R_TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 
@@ -162,7 +162,7 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 				else {
 					int first = 0, last = 1;
 
-					if (GL_TextureReferenceIsValid(batch->textures[0])) {
+					if (R_TextureReferenceIsValid(batch->textures[0])) {
 						R_TextureUnitBind(0, batch->textures[0]);
 						R_ApplyRenderingState(batch->textured_rendering_state);
 					}
@@ -171,10 +171,10 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 					}
 
 					while (last < batch->count) {
-						if (!GL_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
+						if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
 							GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
 
-							if (GL_TextureReferenceIsValid(batch->textures[last])) {
+							if (R_TextureReferenceIsValid(batch->textures[last])) {
 								R_TextureUnitBind(0, batch->textures[last]);
 								R_ApplyRenderingState(batch->textured_rendering_state);
 							}
@@ -194,11 +194,11 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 			for (j = 0; j < batch->count; ++j) {
 				r_sprite3d_vert_t* v;
 
-				if (GL_TextureReferenceIsValid(batch->textures[j])) {
+				if (R_TextureReferenceIsValid(batch->textures[j])) {
 					R_TextureUnitBind(0, batch->textures[j]);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
-				else if (GL_TextureReferenceIsValid(batch->texture)) {
+				else if (R_TextureReferenceIsValid(batch->texture)) {
 					R_TextureUnitBind(0, batch->texture);
 					R_ApplyRenderingState(batch->textured_rendering_state);
 				}

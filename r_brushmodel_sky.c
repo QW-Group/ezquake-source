@@ -422,7 +422,7 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		// FIXME: Delete old textures?
-		GL_TextureReferenceInvalidate(skyboxtextures[i]);
+		R_TextureReferenceInvalidate(skyboxtextures[i]);
 		for (j = 0; j < sizeof(search_paths) / sizeof(search_paths[0]); ++j) {
 			char path[MAX_PATH];
 			byte* data;
@@ -447,13 +447,13 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 				// we should free data from R_LoadImagePixels()
 				Q_free(data);
 
-				if (GL_TextureReferenceIsValid(skyboxtextures[i])) {
+				if (R_TextureReferenceIsValid(skyboxtextures[i])) {
 					break;
 				}
 			}
 		}
 
-		if (!GL_TextureReferenceIsValid(skyboxtextures[i])) {
+		if (!R_TextureReferenceIsValid(skyboxtextures[i])) {
 			Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
 			return false;
 		}
@@ -464,6 +464,6 @@ qbool Sky_LoadSkyboxTextures(const char* skyname)
 
 void R_ClearSkyTextures(void)
 {
-	GL_TextureReferenceInvalidate(solidskytexture);
-	GL_TextureReferenceInvalidate(alphaskytexture);
+	R_TextureReferenceInvalidate(solidskytexture);
+	R_TextureReferenceInvalidate(alphaskytexture);
 }

@@ -395,7 +395,7 @@ void GLC_DrawPowerupShell(
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
 
-	if (!GL_TextureReferenceIsValid(shelltexture)) {
+	if (!R_TextureReferenceIsValid(shelltexture)) {
 		return;
 	}
 
@@ -486,7 +486,7 @@ void GLC_DrawPowerupShell(
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
 {
 	// Underwater caustics on alias models of QRACK -->
-	if (gl_caustics.integer && (GL_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
+	if (gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
 		GLC_StateBeginUnderwaterCaustics();
 
 		GLC_BeginCausticsTextureMatrix();
@@ -600,7 +600,7 @@ void GLC_DrawAliasPowerupShell(entity_t *ent)
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	// FIXME: think need put it after caustics
-	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && GL_TextureReferenceIsValid(shelltexture)) {
+	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && R_TextureReferenceIsValid(shelltexture)) {
 		model_t* clmodel = ent->model;
 
 		GLC_StateBeginAliasPowerupShell();

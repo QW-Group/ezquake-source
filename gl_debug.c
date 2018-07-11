@@ -223,6 +223,16 @@ void GL_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei*
 	}
 }
 
+void GL_TextureLabel(unsigned int name, const char* label)
+{
+	GL_ObjectLabel(GL_TEXTURE, name, -1, label);
+}
+
+void GL_GetTextureLabel(unsigned int name, int bufSize, int* length, char* label)
+{
+	GL_GetObjectLabel(GL_TEXTURE, name, bufSize, length, label);
+}
+
 void Dev_VidFrameTrace(void)
 {
 	dev_frame_debug_queued = true;

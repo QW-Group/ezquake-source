@@ -47,7 +47,7 @@ static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int 
 	}
 	Q_free(data);
 
-	GL_GenerateMipmap(GL_TEXTURE0, cubemap);
+	GL_GenerateMipmap(cubemap);
 }
 
 qbool GLM_LoadSkyboxTextures(const char* skyname)
@@ -57,7 +57,7 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 	int i;
 
 	// FIXME: Delete previous?
-	GL_TextureReferenceInvalidate(skybox_cubeMap);
+	R_TextureReferenceInvalidate(skybox_cubeMap);
 
 	if (!Sky_LoadSkyboxTextures(skyname)) {
 		return false;

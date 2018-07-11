@@ -205,7 +205,7 @@ static qbool FontCreate(int grouping, const char* path)
 	}
 
 	charset = &proportional_fonts[grouping];
-	if (GL_TextureReferenceIsValid(charset->master)) {
+	if (R_TextureReferenceIsValid(charset->master)) {
 		original_width = R_TextureWidth(charset->master);
 		original_height = R_TextureHeight(charset->master);
 		original_left = 0;
@@ -382,7 +382,7 @@ qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float
 //   might move around as content changes, which is probably not what is wanted
 int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proportional)
 {
-	if (!proportional || !GL_TextureReferenceIsValid(proportional_fonts[0].master)) {
+	if (!proportional || !R_TextureReferenceIsValid(proportional_fonts[0].master)) {
 		return max_length * 8 * scale;
 	}
 

@@ -334,7 +334,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 
 	GLM_UseProgram(multiImageProgram.program);
 	GLM_StateBeginImageDraw();
-	if (GL_TextureReferenceIsValid(texture)) {
+	if (R_TextureReferenceIsValid(texture)) {
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
 

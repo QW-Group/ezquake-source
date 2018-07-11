@@ -108,7 +108,7 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 	}
 
 	tex = R_LoadTexture(va("pic:%s", name), 256, 256, buf, flags, 1);
-	if (GL_TextureReferenceIsValid(tex)) {
+	if (R_TextureReferenceIsValid(tex)) {
 		for (i = 0; i < 256; ++i) {
 			charset->glyphs[i].texnum = tex;
 			charset->glyphs[i].width = 128 / 16;
@@ -701,11 +701,11 @@ void Draw_InitCharset(void)
 
 	Draw_LoadCharset(gl_consolefont.string);
 
-	if (!GL_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
+	if (!R_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
 		Cvar_Set(&gl_consolefont, "original");
 	}
 
-	if (!GL_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
+	if (!R_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 	}
 }

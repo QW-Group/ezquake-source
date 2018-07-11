@@ -55,13 +55,13 @@ static int SortFlaggedTextures(const void* lhs_, const void* rhs_)
 		return 1;
 	}
 
-	if (!GL_TextureReferenceIsValid(tex1->ref)) {
-		if (!GL_TextureReferenceIsValid(tex2->ref)) {
+	if (!R_TextureReferenceIsValid(tex1->ref)) {
+		if (!R_TextureReferenceIsValid(tex2->ref)) {
 			return 0;
 		}
 		return 1;
 	}
-	else if (!GL_TextureReferenceIsValid(tex2->ref)) {
+	else if (!R_TextureReferenceIsValid(tex2->ref)) {
 		return -1;
 	}
 
@@ -119,7 +119,7 @@ static void GL_DeleteExistingTextureArrays(qbool delete_textures)
 			}
 
 			for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
-				if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
+				if (R_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
 					R_DeleteTextureArray(&texture_flags[i].array_ref[j].ref);
 				}
 			}
@@ -221,7 +221,7 @@ static void GL_FlagTexturesForModel(model_t* mod)
 	case mod_alias:
 	case mod_alias3:
 		for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-			if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
+			if (R_TextureReferenceIsValid(mod->simpletexture[j])) {
 				texture_flags[mod->simpletexture[j].index].flags |= (1 << TEXTURETYPES_SPRITES);
 			}
 		}
@@ -241,7 +241,7 @@ static void GL_FlagTexturesForModel(model_t* mod)
 				}
 
 				frame = ((mspriteframe_t*)((byte*)psprite + offset));
-				if (GL_TextureReferenceIsValid(frame->gl_texturenum)) {
+				if (R_TextureReferenceIsValid(frame->gl_texturenum)) {
 					texture_flags[frame->gl_texturenum.index].flags |= (1 << TEXTURETYPES_SPRITES);
 				}
 				++count;
@@ -254,7 +254,7 @@ static void GL_FlagTexturesForModel(model_t* mod)
 
 			// Ammo-boxes etc can be replaced with simple textures
 			for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-				if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
+				if (R_TextureReferenceIsValid(mod->simpletexture[j])) {
 					texture_flags[mod->simpletexture[j].index].flags |= (1 << TEXTURETYPES_SPRITES);
 				}
 			}
@@ -264,17 +264,17 @@ static void GL_FlagTexturesForModel(model_t* mod)
 				texture_t* tx = mod->textures[i];
 				texture_type type = mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL;
 
-				if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+				if (GL_SkipTexture(mod, tx) || !R_TextureReferenceIsValid(tx->gl_texturenum)) {
 					continue;
 				}
 
-				if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !R_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
+				if (R_TextureReferenceIsValid(tx->fb_texturenum) && !R_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
 					Con_Printf("Warning: luma texture mismatch: %s (%dx%d vs %dx%d)\n", tx->name, R_TextureWidth(tx->gl_texturenum), R_TextureHeight(tx->gl_texturenum), R_TextureWidth(tx->fb_texturenum), R_TextureHeight(tx->fb_texturenum));
-					GL_TextureReferenceInvalidate(tx->fb_texturenum);
+					R_TextureReferenceInvalidate(tx->fb_texturenum);
 				}
 
 				texture_flags[tx->gl_texturenum.index].flags |= (1 << type);
-				if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
+				if (R_TextureReferenceIsValid(tx->fb_texturenum)) {
 					texture_flags[tx->gl_texturenum.index].subsequent = 1;
 				}
 			}
@@ -318,13 +318,13 @@ static int GLM_CountTextureArrays(model_t* mod)
 		texture_t* tex = mod->textures[i];
 		qbool seen_prev = false;
 
-		if (!tex || !tex->loaded || !GL_TextureReferenceIsValid(tex->gl_texture_array)) {
+		if (!tex || !tex->loaded || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 
 		for (j = 0; j < i; ++j) {
 			texture_t* prev_tex = mod->textures[j];
-			if (prev_tex && GL_TextureReferenceEqual(prev_tex->gl_texture_array, tex->gl_texture_array)) {
+			if (prev_tex && R_TextureReferenceEqual(prev_tex->gl_texture_array, tex->gl_texture_array)) {
 				seen_prev = true;
 				break;
 			}
@@ -352,13 +352,13 @@ static void GLM_SetTextureArrays(model_t* mod)
 		}
 
 		tex->next_same_size = -1;
-		if (!tex->loaded || !GL_TextureReferenceIsValid(tex->gl_texture_array)) {
+		if (!tex->loaded || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 
 		for (j = i - 1; j >= 0; --j) {
 			texture_t* prev_tex = mod->textures[j];
-			if (prev_tex && GL_TextureReferenceEqual(prev_tex->gl_texture_array, tex->gl_texture_array)) {
+			if (prev_tex && R_TextureReferenceEqual(prev_tex->gl_texture_array, tex->gl_texture_array)) {
 				seen_prev = true;
 				prev_tex->next_same_size = i;
 				break;
@@ -379,7 +379,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 	int j;
 
 	for (j = 0; j < MAX_SIMPLE_TEXTURES; ++j) {
-		if (GL_TextureReferenceIsValid(mod->simpletexture[j])) {
+		if (R_TextureReferenceIsValid(mod->simpletexture[j])) {
 			texture_array_ref_t* array_ref = &texture_flags[mod->simpletexture[j].index].array_ref[TEXTURETYPES_SPRITES];
 
 			mod->simpletexture_array[j] = array_ref->ref;
@@ -403,7 +403,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 
 			frame = ((mspriteframe_t*)((byte*)psprite + offset));
 
-			if (GL_TextureReferenceIsValid(frame->gl_texturenum)) {
+			if (R_TextureReferenceIsValid(frame->gl_texturenum)) {
 				texture_array_ref_t* array_ref = &texture_flags[frame->gl_texturenum.index].array_ref[TEXTURETYPES_SPRITES];
 
 				frame->gl_arraynum = array_ref->ref;
@@ -421,7 +421,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 			texture_t* tx = mod->textures[i];
 			texture_array_ref_t* array_ref;
 
-			if (GL_SkipTexture(mod, tx) || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+			if (GL_SkipTexture(mod, tx) || !R_TextureReferenceIsValid(tx->gl_texturenum)) {
 				continue;
 			}
 
@@ -432,7 +432,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 			tx->gl_texture_scaleT = array_ref->scale_t;
 
 			// fb has to be the same size and will be subsequent
-			if (GL_TextureReferenceIsValid(tx->fb_texturenum)) {
+			if (R_TextureReferenceIsValid(tx->fb_texturenum)) {
 				GL_AddTextureToArray(array_ref->ref, array_ref->index + 1, tx->fb_texturenum, false);
 
 				// flag so we delete the 2d version later
@@ -534,7 +534,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 				depth = same_size;
 				array_ref = R_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
-				if (!GL_TextureReferenceIsValid(array_ref)) {
+				if (!R_TextureReferenceIsValid(array_ref)) {
 					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
 				}
 
@@ -610,7 +610,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 		qbool any = false;
 
 		for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
-			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
+			if (R_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
 				R_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
 
 				if (j == TEXTURETYPES_BRUSHMODEL) {

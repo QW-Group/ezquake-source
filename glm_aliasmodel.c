@@ -100,7 +100,7 @@ static int TEXTURE_UNIT_CAUSTICS;
 
 static qbool GLM_CompileAliasModelProgram(void)
 {
-	qbool caustic_textures = gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture);
+	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
 	unsigned int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
 
 	if (GLM_ProgramRecompileNeeded(&drawAliasModelProgram, drawAlias_desiredOptions)) {
@@ -290,7 +290,7 @@ static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref text
 	int i;
 	texture_ref* allocated_samplers;
 
-	if (!GL_TextureReferenceIsValid(texture)) {
+	if (!R_TextureReferenceIsValid(texture)) {
 		return 0;
 	}
 	if (instr->current_call >= sizeof(instr->bound_textures) / sizeof(instr->bound_textures[0])) {
@@ -299,7 +299,7 @@ static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref text
 
 	allocated_samplers = instr->bound_textures[instr->current_call];
 	for (i = 0; i < instr->num_textures[instr->current_call]; ++i) {
-		if (GL_TextureReferenceEqual(texture, allocated_samplers[i])) {
+		if (R_TextureReferenceEqual(texture, allocated_samplers[i])) {
 			return i;
 		}
 	}
@@ -410,8 +410,8 @@ static void GLM_QueueAliasModelDrawImpl(
 		(effects & EF_RED ? AMF_SHELLMODEL_RED : 0) |
 		(effects & EF_GREEN ? AMF_SHELLMODEL_GREEN : 0) |
 		(effects & EF_BLUE ? AMF_SHELLMODEL_BLUE : 0) |
-		(GL_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
-		(GL_TextureReferenceIsValid(fb_texture) ? AMF_TEXTURE_LUMA : 0) |
+		(R_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
+		(R_TextureReferenceIsValid(fb_texture) ? AMF_TEXTURE_LUMA : 0) |
 		(render_effects & RF_CAUSTICS ? AMF_CAUSTICS : 0) |
 		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
 		(render_effects & RF_LIMITLERP ? AMF_LIMITLERP : 0);
@@ -447,7 +447,7 @@ static void GLM_QueueAliasModelDraw(
 )
 {
 	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
-	qbool shell = shell_effects && GL_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
+	qbool shell = shell_effects && R_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
 
 	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
 }
@@ -493,7 +493,7 @@ void GLM_DrawAliasModelFrame(
 		color[2] = custom_model->color_cvar.color[2] / 255.0f;
 
 		if (custom_model->fullbright_cvar.integer) {
-			GL_TextureReferenceInvalidate(texture);
+			R_TextureReferenceInvalidate(texture);
 		}
 	}
 	color[0] *= r_modelalpha;
@@ -501,7 +501,7 @@ void GLM_DrawAliasModelFrame(
 	color[2] *= r_modelalpha;
 	color[3] = r_modelalpha;
 
-	if (gl_caustics.integer && GL_TextureReferenceIsValid(underwatertexture)) {
+	if (gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture)) {
 		if (R_PointIsUnderwater(ent->origin)) {
 			render_effects |= RF_CAUSTICS;
 		}

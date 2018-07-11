@@ -178,13 +178,14 @@ void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsi
 }
 
 void GL_TexStorage2D(
-	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+	texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
 )
 {
 	if (qglTextureStorage2D) {
 		qglTextureStorage2D(GL_TextureNameFromReference(texture), levels, internalformat, width, height);
 	}
 	else {
+		GLenum textureUnit = GL_TEXTURE0;
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
 		if (qglTexStorage2D) {
@@ -337,9 +338,9 @@ void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* ne
 	}
 }
 
-void GL_GenerateMipmap(GLenum textureUnit, texture_ref texture)
+void GL_GenerateMipmap(texture_ref texture)
 {
-	GL_GenerateMipmapWithData(textureUnit, texture, NULL, 0, 0, 0);
+	GL_GenerateMipmapWithData(GL_TEXTURE0, texture, NULL, 0, 0, 0);
 }
 
 // Samplers

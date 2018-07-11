@@ -169,13 +169,13 @@ static void R_RenderAliasModelEntity(
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
-	else if (GL_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
+	else if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
 		R_SetupAliasFrame(ent, model, oldframe, frame, true, false, outline, texture, fb_texture, effects, ent->renderfx);
 	}
 	else {
 		R_SetupAliasFrame(ent, model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
 
-		if (GL_TextureReferenceIsValid(fb_texture)) {
+		if (R_TextureReferenceIsValid(fb_texture)) {
 			R_SetupAliasFrame(ent, model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
 		}
 	}
@@ -407,7 +407,7 @@ void R_SetupAliasFrame(
 	int oldpose, pose;
 
 	if (!gl_lumaTextures.integer) {
-		GL_TextureReferenceInvalidate(fb_texture);
+		R_TextureReferenceInvalidate(fb_texture);
 	}
 
 	oldpose = R_AliasFramePose(oldframe);

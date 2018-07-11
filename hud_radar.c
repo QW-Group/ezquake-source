@@ -398,7 +398,7 @@ static void Radar_DrawEntities(int x, int y, float scale, float player_size, int
 		else {
 			simpletexture = currententity->model->simpletexture[currententity->skinnum];
 		}
-		simple_valid = GL_TextureReferenceIsValid(simpletexture);
+		simple_valid = R_TextureReferenceIsValid(simpletexture);
 
 		// Get quake coordinates (times 8 to get them in the same format as .locs).
 		entity_q_x = currententity->origin[0] * 8;

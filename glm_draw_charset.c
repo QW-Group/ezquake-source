@@ -56,7 +56,7 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 	if (proportional) {
 		extern charset_t proportional_fonts[MAX_CHARSETS];
 
-		if (GL_TextureReferenceIsValid(proportional_fonts[new_charset].master) && GL_TextureReferenceIsValid(proportional_fonts[new_charset].glyphs[ch & 0xFF].texnum)) {
+		if (R_TextureReferenceIsValid(proportional_fonts[new_charset].master) && R_TextureReferenceIsValid(proportional_fonts[new_charset].glyphs[ch & 0xFF].texnum)) {
 			texture = &proportional_fonts[new_charset];
 		}
 		else {

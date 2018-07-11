@@ -799,7 +799,7 @@ void GL_InvalidateLightmapTextures(void)
 	//else if (...)
 
 	for (i = 0; i < lightmap_array_size; ++i) {
-		GL_TextureReferenceInvalidate(lightmaps[i].gl_texref);
+		R_TextureReferenceInvalidate(lightmaps[i].gl_texref);
 	}
 
 	Q_free(lightmaps);

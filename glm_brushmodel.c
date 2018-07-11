@@ -64,7 +64,7 @@ int R_ChainTexturesBySize(model_t* m)
 
 	for (i = 0; i < m->numtextures; ++i) {
 		tx = m->textures[i];
-		if (!tx || !tx->loaded || tx->next_same_size >= 0 || !tx->gl_width || !tx->gl_height || !GL_TextureReferenceIsValid(tx->gl_texturenum)) {
+		if (!tx || !tx->loaded || tx->next_same_size >= 0 || !tx->gl_width || !tx->gl_height || !R_TextureReferenceIsValid(tx->gl_texturenum)) {
 			continue; // not loaded or already processed
 		}
 
@@ -219,7 +219,7 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 			continue;
 		}
 
-		has_luma = GL_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
+		has_luma = R_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
 		for (j = 0; j < m->nummodelsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
 			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;

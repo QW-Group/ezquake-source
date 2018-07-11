@@ -445,9 +445,9 @@ static void GLM_ApplyRenderingState(r_state_id id)
 	GL_ApplyRenderingState(id);
 }
 
-void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference)
+void GL_EnsureTextureUnitBound(int unit, texture_ref reference)
 {
-	GL_BindTextureUnitImpl(unit, reference, false);
+	GL_BindTextureUnitImpl(GL_TEXTURE0 + unit, reference, false);
 }
 
 void GL_BindTextureUnit(GLuint unit, texture_ref reference)
@@ -692,7 +692,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 	}
 	else {
 		for (i = 0; i < count; ++i) {
-			if (GL_TextureReferenceIsValid(textures[i])) {
+			if (R_TextureReferenceIsValid(textures[i])) {
 				R_TextureUnitBind(first + i, textures[i]);
 			}
 		}
@@ -855,7 +855,7 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 {
 	GLuint glRef = 0;
 
-	if (GL_TextureReferenceIsValid(texture)) {
+	if (R_TextureReferenceIsValid(texture)) {
 		glRef = GL_TextureNameFromReference(texture);
 
 		if (unit < MAX_LOGGED_IMAGE_UNITS) {

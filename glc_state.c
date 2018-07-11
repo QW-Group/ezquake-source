@@ -158,10 +158,10 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 
 	ENTER_STATE;
 
-	if (!weapon_model && (!GL_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
+	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
 		state = alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque;
 	}
-	else if (custom_model == NULL && GL_TextureReferenceIsValid(fb_texture) && mtex) {
+	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture) && mtex) {
 		state = weapon_model ? (alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque) : (alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque);
 		R_TextureUnitBind(0, texture);
 		R_TextureUnitBind(1, fb_texture);

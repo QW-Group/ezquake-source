@@ -138,7 +138,7 @@ void Classic_LoadParticleTexures(int width, int height)
 	particletexture = R_LoadTexture("particles:classic", width, height, data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
 	Q_free(data);
 
-	if (!GL_TextureReferenceIsValid(particletexture)) {
+	if (!R_TextureReferenceIsValid(particletexture)) {
 		Sys_Error("Classic_LoadParticleTexures: can't load texture");
 		return;
 	}
@@ -640,7 +640,7 @@ static void Classic_PrepareParticles(void)
 	VectorScale(vpn, r_partscale, scaled_vpn);
 
 	// load texture if not done yet
-	if (!GL_TextureReferenceIsValid(particletexture)) {
+	if (!R_TextureReferenceIsValid(particletexture)) {
 		Classic_LoadParticleTexures(default_size, default_size);
 	}
 

@@ -185,7 +185,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 					Draw_AlphaCircleFillRGB(x + half_width, y + icon_offset + half_width, half_width, RGBA_TO_COLOR(background_color[0] * alpha, background_color[1] * alpha, background_color[2] * alpha, alpha * 255));
 				}
-				else if (background_tex && GL_TextureReferenceIsValid(background_tex->texnum)) {
+				else if (background_tex && R_TextureReferenceIsValid(background_tex->texnum)) {
 					Draw_FitPicAlpha(x, y + icon_offset, icon_size * hud_gamesummary_scale->value, icon_size * hud_gamesummary_scale->value, background_tex, alpha);
 				}
 

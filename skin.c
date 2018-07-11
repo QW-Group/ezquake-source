@@ -316,7 +316,7 @@ void Skins_PreCache(void)
 			continue;
 		}
 
-		if (GL_TextureReferenceIsValid(skins[i].texnum[skin_base])) {
+		if (R_TextureReferenceIsValid(skins[i].texnum[skin_base])) {
 			// seems skin alredy loaded, at least we have some texture
 			continue;
 		}
@@ -617,9 +617,9 @@ static void Skin_RemoveSkinsForPlayer(int playernum)
 	if (playerskins[playernum].owned[2]) {
 		R_DeleteTexture(&playerskins[playernum].dead);
 	}
-	GL_TextureReferenceInvalidate(playerskins[playernum].base);
-	GL_TextureReferenceInvalidate(playerskins[playernum].fb);
-	GL_TextureReferenceInvalidate(playerskins[playernum].dead);
+	R_TextureReferenceInvalidate(playerskins[playernum].base);
+	R_TextureReferenceInvalidate(playerskins[playernum].fb);
+	R_TextureReferenceInvalidate(playerskins[playernum].dead);
 	memset(playerskins[playernum].owned, 0, sizeof(playerskins[playernum].owned));
 }
 
@@ -688,22 +688,22 @@ void R_TranslatePlayerSkin(int playernum)
 
 	Skin_RemoveSkinsForPlayer(playernum);
 
-	if (GL_TextureReferenceIsValid(player->skin->texnum[skin_base]) && player->skin->bpp == 4 && !(r_enemyskincolor.string[0] || r_teamskincolor.string[0])) {
+	if (R_TextureReferenceIsValid(player->skin->texnum[skin_base]) && player->skin->bpp == 4 && !(r_enemyskincolor.string[0] || r_teamskincolor.string[0])) {
 		// do not even bother call Skin_Cache(), we have texture num already
-		if (teammate && GL_TextureReferenceIsValid(player->skin->texnum[skin_base_teammate])) {
+		if (teammate && R_TextureReferenceIsValid(player->skin->texnum[skin_base_teammate])) {
 			playerskins[playernum].base = player->skin->texnum[skin_base_teammate];
 		}
 		else {
 			playerskins[playernum].base = player->skin->texnum[skin_base];
 		}
 
-		if (teammate && GL_TextureReferenceIsValid(player->skin->texnum[skin_dead_teammate])) {
+		if (teammate && R_TextureReferenceIsValid(player->skin->texnum[skin_dead_teammate])) {
 			playerskins[playernum].dead = player->skin->texnum[skin_dead_teammate];
 		}
 		else {
 			playerskins[playernum].dead = player->skin->texnum[skin_dead];
 		}
-		if (!GL_TextureReferenceIsValid(playerskins[playernum].dead)) {
+		if (!R_TextureReferenceIsValid(playerskins[playernum].dead)) {
 			playerskins[playernum].dead = playerskins[playernum].base;
 		}
 		return;
@@ -848,7 +848,7 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 
 		*fb_texture = playerskins[playernum].fb;
 		if (ISDEAD(ent->frame) && r_skincolormodedead.integer != -1 && r_skincolormodedead.integer != r_skincolormode.integer) {
-			if (r_skincolormodedead.integer && GL_TextureReferenceIsValid(playerskins[playernum].dead)) {
+			if (r_skincolormodedead.integer && R_TextureReferenceIsValid(playerskins[playernum].dead)) {
 				*texture = playerskins[playernum].dead;
 			}
 		}
@@ -856,7 +856,7 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 			*texture = playerskins[playernum].base;
 		}
 
-		if (is_player_model && GL_TextureReferenceEqual(*texture, solidwhite_texture)) {
+		if (is_player_model && R_TextureReferenceEqual(*texture, solidwhite_texture)) {
 			cvar_t* cv = &r_enemyskincolor;
 			if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
 				cv = &r_teamskincolor;

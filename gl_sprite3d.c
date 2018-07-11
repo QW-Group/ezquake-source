@@ -154,7 +154,7 @@ r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts
 	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH) {
 		return NULL;
 	}
-	if (!GL_TextureReferenceIsValid(texture) && !GL_TextureReferenceIsValid(batch->texture) && !batch->untextured_rendering_state) {
+	if (!R_TextureReferenceIsValid(texture) && !R_TextureReferenceIsValid(batch->texture) && !batch->untextured_rendering_state) {
 		assert(false);
 		return NULL;
 	}

@@ -350,26 +350,26 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
 
 	solidskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
-	if (!GL_TextureReferenceIsValid(solidskytexture) && altname) {
+	if (!R_TextureReferenceIsValid(solidskytexture) && altname) {
 		snprintf(altsolidname, sizeof(altsolidname), "%s_solid", altname);
 		solidskytexture = R_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
 	}
-	if (!GL_TextureReferenceIsValid(solidskytexture)) {
+	if (!R_TextureReferenceIsValid(solidskytexture)) {
 		solidskytexture = R_LoadTextureImage(va("textures/%s", solidname), solidname, 0, 0, 0);
 	}
-	if (!GL_TextureReferenceIsValid(solidskytexture)) {
+	if (!R_TextureReferenceIsValid(solidskytexture)) {
 		return false;
 	}
 
 	alphaskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
-	if (!GL_TextureReferenceIsValid(alphaskytexture) && altname) {
+	if (!R_TextureReferenceIsValid(alphaskytexture) && altname) {
 		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
 		alphaskytexture = R_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
 	}
-	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
+	if (!R_TextureReferenceIsValid(alphaskytexture)) {
 		alphaskytexture = R_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
 	}
-	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
+	if (!R_TextureReferenceIsValid(alphaskytexture)) {
 		// Load a texture consisting of a single transparent pixel
 		alphaskytexture = R_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
 	}
@@ -1370,8 +1370,8 @@ void R_LoadBrushModelTextures(model_t *m)
 			continue; // seems already loaded
 		}
 
-		GL_TextureReferenceInvalidate(tx->gl_texturenum);
-		GL_TextureReferenceInvalidate(tx->fb_texturenum);
+		R_TextureReferenceInvalidate(tx->gl_texturenum);
+		R_TextureReferenceInvalidate(tx->fb_texturenum);
 
 		if (m->isworldmodel && m->bspversion != HL_BSPVERSION && Mod_IsSkyTextureName(m, tx->name)) {
 			if (!Mod_LoadExternalSkyTexture(tx)) {
@@ -1589,7 +1589,7 @@ void R_DrawBrushModel(entity_t *e)
 			}
 			else {
 				underwater = 0;
-				if (GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (psurf->flags & SURF_UNDERWATER)) {
+				if (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (psurf->flags & SURF_UNDERWATER)) {
 					underwater = 1;
 				}
 

@@ -101,8 +101,8 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
-	GLC_StateBeginMD3Draw(r_modelalpha, GL_TextureReferenceIsValid(sinf->texnum));
-	if (GL_TextureReferenceIsValid(sinf->texnum)) {
+	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum));
+	if (R_TextureReferenceIsValid(sinf->texnum)) {
 		R_TextureUnitBind(0, sinf->texnum);
 	}
 

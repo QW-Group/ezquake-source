@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #ifndef EZQUAKE_R_TEXTURE_H
-
 #define EZQUAKE_R_TEXTURE_H
 
 #define TEX_COMPLAIN        (1<<0)  // shout if texture missing while loading
@@ -141,7 +140,9 @@ typedef enum {
 
 typedef enum {
 	texture_type_2d,
-	texture_type_2d_array
-} r_texture_type_t;
+	texture_type_2d_array,
+	texture_type_cubemap,
+	texture_type_count
+} r_texture_type_id;
 
 #endif	// EZQUAKE_R_TEXTURE_H

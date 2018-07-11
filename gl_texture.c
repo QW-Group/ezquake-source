@@ -45,9 +45,11 @@ extern int anisotropy_ext;
 static GLint glTextureMinificationOptions[texture_minification_count] = {
 	GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR
 };
-
 static GLint glTextureMagnificationOptions[texture_magnification_count] = {
 	GL_NEAREST, GL_LINEAR
+};
+static GLenum glTextureTargetForType[texture_type_count] = {
+	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY
 };
 
 static int GL_InternalFormat(int mode)
@@ -73,206 +75,40 @@ static int GL_StorageFormat(int mode)
 	}
 }
 
-//
-// Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
-//
-static void GL_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
+void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte* newdata)
 {
-	// Tell OpenGL the texnum of the texture before uploading it.
-	extern cvar_t gl_lerpimages, gl_wicked_luma_level;
-	int	tempwidth, tempheight, levels;
-	unsigned int *newdata;
-
-	if (gl_support_arb_texture_non_power_of_two)
-	{
-		tempwidth = width;
-		tempheight = height;
-	}
-	else
-	{
-		Q_ROUND_POWER2(width, tempwidth);
-		Q_ROUND_POWER2(height, tempheight);
-	}
-
-	newdata = (unsigned int *) Q_malloc(tempwidth * tempheight * 4);
-
-	// Resample the image if it's not scaled to the power of 2,
-	// we take care of this when drawing using the texture coordinates.
-	if (width < tempwidth || height < tempheight) {
-		Image_Resample (data, width, height, newdata, tempwidth, tempheight, 4, !!gl_lerpimages.value);
-		width = tempwidth;
-		height = tempheight;
-	} 
-	else 
-	{
-		// Scale is a power of 2, just copy the data.
-		memcpy (newdata, data, width * height * 4);
-	}
-
-	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0) {
-		int i, cnt = width * height * 4, level = gl_wicked_luma_level.integer;
-		byte *bdata = (byte*)newdata;
-
-		for (i = 0; i < cnt; i += 4) {
-			if (bdata[i] < level && bdata[i + 1] < level && bdata[i + 2] < level) {
-				// make black pixels transparent, well not always black, depends of level...
-				bdata[i] = bdata[i + 1] = bdata[i + 2] = bdata[i + 3] = 0;
-			}
-		}
-	}
-
-	// Get the scaled dimension (scales according to gl_picmip and max allowed texture size).
-	R_TextureUtil_ScaleDimensions(width, height, &tempwidth, &tempheight, mode);
-
-	// If the image size is bigger than the max allowed size or 
-	// set picmip value we calculate it's next closest mip map.
-	while (width > tempwidth || height > tempheight) {
-		Image_MipReduce((byte *)newdata, (byte *)newdata, &width, &height, 4);
-	}
-
-	glt->texture_width = width;
-	glt->texture_height = height;
-
-	if (mode & TEX_MIPMAP) {
-		int largest = max(width, height);
-		levels = 0;
-		while (largest) {
-			++levels;
-			largest /= 2;
-		}
-	}
-	else {
-		levels = 1;
-	}
-
-	if (mode & TEX_BRIGHTEN) {
-		R_TextureUtil_Brighten32((byte *)newdata, width * height * 4);
-	}
-
 	// Upload the main texture to OpenGL.
-	GL_TexSubImage2D(GL_TEXTURE0, glt->reference, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
-
+	GL_TexSubImage2D(GL_TEXTURE0, texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 	if (mode & TEX_MIPMAP) {
-		GL_GenerateMipmapWithData(GL_TEXTURE0, glt->reference, (byte*)newdata, width, height, GL_InternalFormat(glt->texmode));
-	}
-
-	R_TextureUtil_SetFiltering(glt->reference);
-
-	Q_free(newdata);
-}
-
-static void GL_Upload8(gltexture_t* glt, byte *data, int width, int height, int mode)
-{
-	static unsigned trans[640 * 480];
-	int	i, image_size, p;
-	unsigned *table;
-
-	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
-	image_size = width * height;
-
-	if (image_size * 4 > sizeof(trans)) {
-		Sys_Error("GL_Upload8: image too big");
-	}
-
-	if (mode & TEX_FULLBRIGHT) {
-		qbool was_alpha = mode & TEX_ALPHA;
-
-		// This is a fullbright mask, so make all non-fullbright colors transparent.
-		mode |= TEX_ALPHA;
-	
-		for (i = 0; i < image_size; i++) {
-			p = data[i];
-			if (p < 224 || (p == 255 && was_alpha)) {
-				trans[i] = 0; // Transparent.
-			}
-			else {
-				trans[i] = (p == 255) ? LittleLong(0xff535b9f) : table[p]; // Fullbright. Disable transparancy on fullbright colors (255).
-			}
-		}
-	} 
-	else if (mode & TEX_ALPHA) {
-		// If there are no transparent pixels, make it a 3 component
-		// texture even if it was specified as otherwise
-		mode &= ~TEX_ALPHA;
-	
-		for (i = 0; i < image_size; i++) {
-			if ((p = data[i]) == 255) {
-				mode |= TEX_ALPHA;
-			}
-			trans[i] = table[p];
-		}
-	} 
-	else {
-		if (image_size & 3) {
-			Sys_Error("GL_Upload8: image_size & 3");
-		}
-
-		// Convert the 8-bit colors to 24-bit.
-		for (i = 0; i < image_size; i += 4) {
-			trans[i] = table[data[i]];
-			trans[i + 1] = table[data[i + 1]];
-			trans[i + 2] = table[data[i + 2]];
-			trans[i + 3] = table[data[i + 3]];
-		}
-	}
-
-	GL_Upload32(glt, trans, width, height, mode & ~TEX_BRIGHTEN);
-}
-
-static void GL_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp)
-{
-	// Upload the texture to OpenGL based on the bytes per pixel.
-	switch (bpp)
-	{
-	case 1:
-		GL_Upload8(glt, data, width, height, mode);
-		break;
-	case 4:
-		GL_Upload32(glt, (void *) data, width, height, mode);
-		break;
-	default:
-		Sys_Error("R_LoadTexture: unknown bpp\n"); break;
+		GL_GenerateMipmapWithData(GL_TEXTURE0, texture, (byte*)newdata, width, height, GL_InternalFormat(mode));
 	}
 }
 
-texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
+void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref* textures, const char* identifier)
 {
-	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
-	qbool new_texture = false;
-	gltexture_t *glt = GL_AllocateTextureSlot(GL_TEXTURE_2D, identifier, width, height, 0, bpp, mode, crc, &new_texture);
-
-	if (glt && !new_texture) {
-		return glt->reference;
-	}
-
-	GL_LoadTextureData(glt, width, height, data, mode, bpp);
-
-	return glt->reference;
-}
-
-void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures, const char* identifier)
-{
+	GLenum textureUnit = GL_TEXTURE0;
+	GLenum target = glTextureTargetForType[type];
 	GLsizei i;
 
 	for (i = 0; i < n; ++i) {
-		gltexture_t* glt = GL_NextTextureSlot(target);
+		gltexture_t* glt = GL_NextTextureSlot(type);
 
-		GL_CreateTextureNames(textureUnit, target, 1, &glt->gl.texnum);
-		glt->gl.target = target;
+		GL_CreateTextureNames(textureUnit, target, 1, &glt->texnum);
+		glt->type = type;
 		GL_BindTextureUnit(textureUnit, glt->reference);
 
 		textures[i] = glt->reference;
 
 		if (identifier) {
 			strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
-			GL_ObjectLabel(GL_TEXTURE, glt->gl.texnum, -1, identifier);
+			GL_ObjectLabel(GL_TEXTURE, glt->texnum, -1, identifier);
 		}
 	}
 }
 
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* textures)
+void GL_CreateTextures(r_texture_type_id type, int n, texture_ref* textures)
 {
-	GL_CreateTexturesWithIdentifier(textureUnit, target, n, textures, NULL);
+	GL_CreateTexturesWithIdentifier(type, n, textures, NULL);
 }
 
 void GL_AllocateTextureReferences(GLenum target, int width, int height, int mode, GLsizei number, texture_ref* references)
@@ -297,7 +133,7 @@ GLuint GL_TextureNameFromReference(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	return gltextures[ref.index].gl.texnum;
+	return gltextures[ref.index].texnum;
 }
 
 // For OpenGL wrapper functions
@@ -305,7 +141,7 @@ GLenum GL_TextureTargetFromReference(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	return gltextures[ref.index].gl.target;
+	return glTextureTargetForType[gltextures[ref.index].type];
 }
 
 const char* GL_TextureIdentifierByGLReference(GLuint texnum)
@@ -324,12 +160,12 @@ void GL_TextureReplace2D(
 {
 	gltexture_t* tex;
 
-	if (!GL_TextureReferenceIsValid(*ref)) {
-		GL_CreateTextures(GL_TEXTURE0, GL_TEXTURE_2D, 1, ref);
+	if (!R_TextureReferenceIsValid(*ref)) {
+		GL_CreateTextures(texture_type_2d, 1, ref);
 	}
 
 	tex = &gltextures[ref->index];
-	if (tex->texture_width != width || tex->texture_height != height || tex->gl.target != target || GL_InternalFormat(tex->texmode) != internalformat) {
+	if (tex->texture_width != width || tex->texture_height != height || glTextureTargetForType[tex->type] != target || GL_InternalFormat(tex->texmode) != internalformat) {
 		gltexture_t old = *tex;
 		R_DeleteTexture(ref);
 		*ref = R_LoadTexturePixels(pixels, old.identifier, width, height, old.texmode);
@@ -344,7 +180,7 @@ void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minific
 	assert(minification_filter >= 0 && minification_filter < texture_minification_count);
 	assert(magnification_filter >= 0 && magnification_filter < texture_magnification_count);
 
-	if (!GL_TextureReferenceIsValid(texture)) {
+	if (!R_TextureReferenceIsValid(texture)) {
 		return;
 	}
 
@@ -373,15 +209,15 @@ void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy)
 
 void GL_DeleteTexture(texture_ref texture)
 {
-	glDeleteTextures(1, &gltextures[texture.index].gl.texnum);
+	glDeleteTextures(1, &gltextures[texture.index].texnum);
 
 	// Might have been bound when deleted, update state
-	GL_InvalidateTextureReferences(gltextures[texture.index].gl.texnum);
+	GL_InvalidateTextureReferences(gltextures[texture.index].texnum);
 }
 
 void GL_AllocateStorage(gltexture_t* texture)
 {
-	GL_TexStorage2D(GL_TEXTURE0, texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height);
+	GL_TexStorage2D(texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height);
 }
 
 qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)
@@ -416,4 +252,17 @@ qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* 
 		break;
 	}
 	return true;
+}
+
+void GL_AllocateTextureNames(gltexture_t* glt)
+{
+	GL_CreateTextureNames(GL_TEXTURE0, glTextureTargetForType[glt->type], 1, &glt->texnum);
+}
+
+void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char* name)
+{
+	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, texture, name);
+	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
+	GL_SetTextureFiltering(*texture, texture_minification_linear, texture_magnification_linear);
+	GL_TextureWrapModeClamp(*texture);
 }

@@ -191,7 +191,7 @@ static void GLC_DrawFlat(model_t *model)
 	int waterline, k;
 	float *v;
 	byte w[3], f[3], sky[3], current[3], desired[3];
-	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
+	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
 	qbool use_vbo = buffers.supported && modelIndexes;
 	int last_lightmap = -2;
@@ -310,8 +310,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 	msurface_t *s;
 	float *v;
 
-	qbool draw_caustics = GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
-	qbool draw_details = GL_TextureReferenceIsValid(detailtexture) && gl_detail.value;
+	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
+	qbool draw_details = R_TextureReferenceIsValid(detailtexture) && gl_detail.value;
 	qbool isLumaTexture;
 	qbool use_vbo = buffers.supported && modelIndexes;
 
@@ -394,8 +394,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 		}
 
 		//bind the world texture
-		texture_change = !GL_TextureReferenceEqual(t->gl_texturenum, current_material);
-		texture_change |= !GL_TextureReferenceEqual(fb_texturenum, current_material_fb);
+		texture_change = !R_TextureReferenceEqual(t->gl_texturenum, current_material);
+		texture_change |= !R_TextureReferenceEqual(fb_texturenum, current_material_fb);
 
 		current_material = t->gl_texturenum;
 		current_material_fb = fb_texturenum;
@@ -475,7 +475,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 					detail_polys = s->polys;
 				}
 
-				if (GL_TextureReferenceIsValid(fb_texturenum) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
+				if (R_TextureReferenceIsValid(fb_texturenum) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
 					if (isLumaTexture) {
 						s->polys->luma_chain = luma_polys[fb_texturenum.index];
 						luma_polys[fb_texturenum.index] = s->polys;

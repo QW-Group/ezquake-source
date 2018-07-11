@@ -858,10 +858,10 @@ static void SCR_DrawCursor(void)
 		int x_coord = (int)scr_pointer_state.x;
 		int y_coord = (int)scr_pointer_state.y;
 
-		if (scr_cursor && GL_TextureReferenceIsValid(scr_cursor->texnum)) {
+		if (scr_cursor && R_TextureReferenceIsValid(scr_cursor->texnum)) {
 			Draw_SAlphaPic(x_coord, y_coord, scr_cursor, scr_cursor_alpha.value, scale);
 
-			if (scr_cursor_icon && GL_TextureReferenceIsValid(scr_cursor_icon->texnum)) {
+			if (scr_cursor_icon && R_TextureReferenceIsValid(scr_cursor_icon->texnum)) {
 				Draw_SAlphaPic(x_coord + scr_cursor_iconoffset_x.value, y_coord + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
 			}
 		}

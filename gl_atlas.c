@@ -76,7 +76,7 @@ static void ConfirmDeleteTexture(texture_ref tex)
 {
 	int i;
 	for (i = 0; i < atlas_delete_count; ++i) {
-		if (GL_TextureReferenceEqual(atlas_deletable_textures[i].original, tex)) {
+		if (R_TextureReferenceEqual(atlas_deletable_textures[i].original, tex)) {
 			atlas_deletable_textures[i].moved_to_atlas = true;
 		}
 	}
@@ -180,7 +180,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 		byte* input_image = NULL;
 
 		// Copy texture image
-		if (GL_TextureReferenceEqual(pic->texnum, atlas_texnum)) {
+		if (R_TextureReferenceEqual(pic->texnum, atlas_texnum)) {
 			input_image = prev_atlas_texels;
 		}
 		else {
@@ -377,9 +377,9 @@ void CachePics_CreateAtlas(void)
 		int j;
 
 		charset = &char_textures[i];
-		if (GL_TextureReferenceIsValid(charset->glyphs[0].texnum)) {
+		if (R_TextureReferenceIsValid(charset->glyphs[0].texnum)) {
 			for (j = 0; j < 256; ++j) {
-				if (GL_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+				if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
 					charsetpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
 					CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
@@ -389,9 +389,9 @@ void CachePics_CreateAtlas(void)
 
 #ifdef EZ_FREETYPE_SUPPORT
 		charset = &proportional_fonts[i];
-		if (GL_TextureReferenceIsValid(charset->master)) {
+		if (R_TextureReferenceIsValid(charset->master)) {
 			for (j = 0; j < 256; ++j) {
-				if (GL_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+				if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
 					fontpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
 					CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
@@ -407,14 +407,14 @@ void CachePics_CreateAtlas(void)
 		extern mpic_t crosshairpic;
 		extern mpic_t crosshairs_builtin[NUMCROSSHAIRS];
 
-		if (GL_TextureReferenceIsValid(crosshairtexture_txt.texnum)) {
+		if (R_TextureReferenceIsValid(crosshairtexture_txt.texnum)) {
 			crosshairpics[0].data.pic = &crosshairtexture_txt;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[0]);
 
 			AddToDeleteList(&crosshairtexture_txt);
 		}
 
-		if (GL_TextureReferenceIsValid(crosshairpic.texnum)) {
+		if (R_TextureReferenceIsValid(crosshairpic.texnum)) {
 			crosshairpics[1].data.pic = &crosshairpic;
 			CachePics_InsertBySize(&sized_list, &crosshairpics[1]);
 
@@ -422,7 +422,7 @@ void CachePics_CreateAtlas(void)
 		}
 
 		for (i = 0; i < NUMCROSSHAIRS; ++i) {
-			if (GL_TextureReferenceIsValid(crosshairs_builtin[i].texnum)) {
+			if (R_TextureReferenceIsValid(crosshairs_builtin[i].texnum)) {
 				crosshairpics[i + 2].data.pic = &crosshairs_builtin[i];
 				CachePics_InsertBySize(&sized_list, &crosshairpics[i + 2]);
 
@@ -439,7 +439,7 @@ void CachePics_CreateAtlas(void)
 
 			node->data.pic = pic;
 
-			if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
+			if (pic && R_TextureReferenceIsValid(pic->texnum)) {
 				CachePics_InsertBySize(&sized_list, node);
 
 				// Don't delete these, used for 3d sprites

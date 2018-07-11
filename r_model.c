@@ -370,7 +370,7 @@ void Mod_ReloadModelsTextures(void)
 			}
 
 			tx->loaded = false; // so texture will be reloaded
-			GL_TextureReferenceInvalidate(tx->gl_texture_array);
+			R_TextureReferenceInvalidate(tx->gl_texture_array);
 		}
 	}
 
@@ -625,12 +625,12 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		}
 	}
 
-	if (!GL_TextureReferenceIsValid(tex)) {
+	if (!R_TextureReferenceIsValid(tex)) {
 		tex = R_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
 	}
 
 	if (developer.value > 1) {
-		Com_DPrintf("%s\n", GL_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
+		Com_DPrintf("%s\n", R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {

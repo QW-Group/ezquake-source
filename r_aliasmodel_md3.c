@@ -219,10 +219,10 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 			}
 
 			//now work out which alternative is best, and load it.
-			if (*skinfileskinname && GL_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0))) {
+			if (*skinfileskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0))) {
 				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
 			}
-			else if (*specifiedskinname && GL_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
+			else if (*specifiedskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
 				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
 			}
 			else if (*tenebraeskinname) {
@@ -257,7 +257,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
 	for (i = 0; i < sizeof(mod->simpletexture) / sizeof(mod->simpletexture[0]); ++i) {
 		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
-		if (!GL_TextureReferenceIsValid(mod->simpletexture[i])) {
+		if (!R_TextureReferenceIsValid(mod->simpletexture[i])) {
 			break;
 		}
 	}

@@ -21,7 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_texture_internal.h"
+#include "r_local.h"
 #include "image.h"
+#include "crc.h"
+
+static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp);
 
 // 
 #define CHARSET_CHARS_PER_ROW	16
@@ -223,7 +227,7 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 
 	tex = R_LoadTexture(identifier, real_width * 2, real_height * 2, buf, flags, 4);
 	Q_free(buf);
-	if (GL_TextureReferenceIsValid(tex)) {
+	if (R_TextureReferenceIsValid(tex)) {
 		memset(pic->glyphs, 0, sizeof(pic->glyphs));
 		for (i = 0; i < 255; ++i) {
 			float char_height = 1.0f / (2 * CHARSET_CHARS_PER_ROW);
@@ -242,7 +246,7 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 	}
 
 	Q_free(data);	// data was Q_malloc'ed by R_LoadImagePixels
-	return GL_TextureReferenceIsValid(tex);
+	return R_TextureReferenceIsValid(tex);
 }
 
 typedef byte* (*ImageLoadFunction)(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height);
@@ -444,4 +448,177 @@ texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data)
 	}
 
 	return pic->texnum;
+}
+
+texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp)
+{
+	unsigned short crc = identifier[0] && data ? CRC_Block(data, width * height * bpp) : 0;
+	qbool new_texture = false;
+	gltexture_t *glt = GL_AllocateTextureSlot(texture_type_2d, identifier, width, height, 0, bpp, mode, crc, &new_texture);
+
+	if (glt && !new_texture) {
+		return glt->reference;
+	}
+
+	R_LoadTextureData(glt, width, height, data, mode, bpp);
+
+	return glt->reference;
+}
+
+//
+// Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
+//
+static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, int mode)
+{
+	// Tell OpenGL the texnum of the texture before uploading it.
+	extern cvar_t gl_lerpimages, gl_wicked_luma_level;
+	int	tempwidth, tempheight, levels;
+	byte *newdata;
+
+	if (gl_support_arb_texture_non_power_of_two) {
+		tempwidth = width;
+		tempheight = height;
+	}
+	else {
+		Q_ROUND_POWER2(width, tempwidth);
+		Q_ROUND_POWER2(height, tempheight);
+	}
+
+	newdata = Q_malloc(tempwidth * tempheight * 4);
+
+	// Resample the image if it's not scaled to the power of 2,
+	// we take care of this when drawing using the texture coordinates.
+	if (width < tempwidth || height < tempheight) {
+		Image_Resample(data, width, height, newdata, tempwidth, tempheight, 4, !!gl_lerpimages.value);
+		width = tempwidth;
+		height = tempheight;
+	}
+	else {
+		// Scale is a power of 2, just copy the data.
+		memcpy(newdata, data, width * height * 4);
+	}
+
+	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0) {
+		int i, cnt = width * height * 4, level = gl_wicked_luma_level.integer;
+
+		for (i = 0; i < cnt; i += 4) {
+			if (newdata[i] < level && newdata[i + 1] < level && newdata[i + 2] < level) {
+				// make black pixels transparent, well not always black, depends of level...
+				newdata[i] = newdata[i + 1] = newdata[i + 2] = newdata[i + 3] = 0;
+			}
+		}
+	}
+
+	// Get the scaled dimension (scales according to gl_picmip and max allowed texture size).
+	R_TextureUtil_ScaleDimensions(width, height, &tempwidth, &tempheight, mode);
+
+	// If the image size is bigger than the max allowed size or 
+	// set picmip value we calculate it's next closest mip map.
+	while (width > tempwidth || height > tempheight) {
+		Image_MipReduce(newdata, newdata, &width, &height, 4);
+	}
+
+	glt->texture_width = width;
+	glt->texture_height = height;
+
+	if (mode & TEX_MIPMAP) {
+		int largest = max(width, height);
+		levels = 0;
+		while (largest) {
+			++levels;
+			largest /= 2;
+		}
+	}
+	else {
+		levels = 1;
+	}
+
+	if (mode & TEX_BRIGHTEN) {
+		R_TextureUtil_Brighten32(newdata, width * height * 4);
+	}
+
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_UploadTexture(glt->reference, glt->texmode, width, height, newdata);
+	}
+	else if (R_UseVulkan()) {
+		//VK_UploadTexture(glt->reference, glt->texmode, width, height, newdata);
+	}
+
+	R_TextureUtil_SetFiltering(glt->reference);
+
+	Q_free(newdata);
+}
+
+static void R_Upload8(gltexture_t* glt, byte *data, int width, int height, int mode)
+{
+	static unsigned trans[640 * 480];
+	int	i, image_size, p;
+	unsigned *table;
+
+	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
+	image_size = width * height;
+
+	if (image_size * 4 > sizeof(trans)) {
+		Sys_Error("GL_Upload8: image too big");
+	}
+
+	if (mode & TEX_FULLBRIGHT) {
+		qbool was_alpha = mode & TEX_ALPHA;
+
+		// This is a fullbright mask, so make all non-fullbright colors transparent.
+		mode |= TEX_ALPHA;
+
+		for (i = 0; i < image_size; i++) {
+			p = data[i];
+			if (p < 224 || (p == 255 && was_alpha)) {
+				trans[i] = 0; // Transparent.
+			}
+			else {
+				trans[i] = (p == 255) ? LittleLong(0xff535b9f) : table[p]; // Fullbright. Disable transparancy on fullbright colors (255).
+			}
+		}
+	}
+	else if (mode & TEX_ALPHA) {
+		// If there are no transparent pixels, make it a 3 component
+		// texture even if it was specified as otherwise
+		mode &= ~TEX_ALPHA;
+
+		for (i = 0; i < image_size; i++) {
+			if ((p = data[i]) == 255) {
+				mode |= TEX_ALPHA;
+			}
+			trans[i] = table[p];
+		}
+	}
+	else {
+		if (image_size & 3) {
+			Sys_Error("GL_Upload8: image_size & 3");
+		}
+
+		// Convert the 8-bit colors to 24-bit.
+		for (i = 0; i < image_size; i += 4) {
+			trans[i] = table[data[i]];
+			trans[i + 1] = table[data[i + 1]];
+			trans[i + 2] = table[data[i + 2]];
+			trans[i + 3] = table[data[i + 3]];
+		}
+	}
+
+	R_Upload32(glt, trans, width, height, mode & ~TEX_BRIGHTEN);
+}
+
+static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp)
+{
+	// Upload the texture to OpenGL based on the bytes per pixel.
+	switch (bpp) {
+		case 1:
+			R_Upload8(glt, data, width, height, mode);
+			break;
+		case 4:
+			R_Upload32(glt, (void *)data, width, height, mode);
+			break;
+		default:
+			Sys_Error("R_LoadTexture: unknown bpp\n");
+			break;
+	}
 }

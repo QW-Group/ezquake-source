@@ -36,6 +36,8 @@ void GL_MarkEvent(const char* message, ...);
 qbool GL_LoggingEnabled(void);
 void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
 void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
+void GL_TextureLabel(unsigned int name, const char* label);
+void GL_GetTextureLabel(unsigned int name, int bufSize, int* length, char* label);
 #else
 #define ENTER_STATE
 #define MIDDLE_STATE

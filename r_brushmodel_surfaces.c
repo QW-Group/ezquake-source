@@ -301,7 +301,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			}
 			else {
 				underwater = 0;
-				if (GL_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (surf->flags & SURF_UNDERWATER)) {
+				if (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (surf->flags & SURF_UNDERWATER)) {
 					underwater = 1;
 				}
 

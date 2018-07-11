@@ -198,7 +198,7 @@ void GL_FramebufferDelete(framebuffer_ref* pref)
 		if (fb->depthBuffer) {
 			qglDeleteRenderbuffers(1, &fb->depthBuffer);
 		}
-		if (GL_TextureReferenceIsValid(fb->rgbaTexture)) {
+		if (R_TextureReferenceIsValid(fb->rgbaTexture)) {
 			R_DeleteTexture(&fb->rgbaTexture);
 		}
 		if (fb->glref) {
