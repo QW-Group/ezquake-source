@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vx_stuff.h"
 #include "pmove.h"
 #include "glm_texture_arrays.h"
-#include "gl_rpart.h"
+#include "r_particles_qmb.h"
 #include "qmb_particles.h"
 #include "r_texture.h"
 #include "r_matrix.h"
