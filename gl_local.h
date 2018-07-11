@@ -172,7 +172,6 @@ extern int dlightcolor[NUM_DLIGHTTYPES][3];
 
 // gl_ngraph.c
 //void R_NetGraph (void); // HUD -> hexum
-#define MAX_NET_GRAPHHEIGHT 256
 void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
                 int lost, int minping, int avgping, int maxping, int devping,
                 int posx, int posy, int width, int height, int revx, int revy);

@@ -43,7 +43,7 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "mvd_utils.h"
 #include "input.h"
 #include "qtv.h"
-#include "gl_sky.h"
+#include "r_brushmodel_sky.h"
 
 void R_TranslatePlayerSkin (int playernum);
 

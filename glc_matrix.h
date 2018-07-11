@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_GLC_MATRIX_HEADER
 #define EZQUAKE_GLC_MATRIX_HEADER
 
+#include "r_matrix.h"
+
 void GLC_IdentityModelview(void);
 void GLC_RotateModelview(float angle, float x, float y, float z);
 void GLC_TranslateModelview(float x, float y, float z);

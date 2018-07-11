@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+#include "r_local.h"
 
 /*
 =================================================================
@@ -35,72 +35,74 @@ static byte	used[8192];
 
 // the command list holds counts and s/t values that are valid for
 // every frame
-static int		commands[8192];
-static int		numcommands;
+static int commands[8192];
+static int numcommands;
 
 // all frames will have their vertexes rearranged and expanded
 // so they are in the order expected by the command list
-int		vertexorder[8192];
-int		numorder;
+static int vertexorder[8192];
+static int numorder;
 
-int		allverts, alltris;
+static int allverts, alltris;
 
-int		stripverts[128];
-int		striptris[128];
-int		stripcount;
+static int stripverts[128];
+static int striptris[128];
+static int stripcount;
 
 /*
 ================
 StripLength
 ================
 */
-int	StripLength (int starttri, int startv)
+static int StripLength(int starttri, int startv)
 {
-	int			m1, m2;
-	int			j;
-	mtriangle_t	*last, *check;
-	int			k;
+	int m1, m2, j, k;
+	mtriangle_t *last, *check;
 
 	used[starttri] = 2;
 
 	last = &triangles[starttri];
 
-	stripverts[0] = last->vertindex[(startv)%3];
-	stripverts[1] = last->vertindex[(startv+1)%3];
-	stripverts[2] = last->vertindex[(startv+2)%3];
+	stripverts[0] = last->vertindex[(startv) % 3];
+	stripverts[1] = last->vertindex[(startv + 1) % 3];
+	stripverts[2] = last->vertindex[(startv + 2) % 3];
 
 	striptris[0] = starttri;
 	stripcount = 1;
 
-	m1 = last->vertindex[(startv+2)%3];
-	m2 = last->vertindex[(startv+1)%3];
+	m1 = last->vertindex[(startv + 2) % 3];
+	m2 = last->vertindex[(startv + 1) % 3];
 
 	// look for a matching triangle
 nexttri:
-	for (j=starttri+1, check=&triangles[starttri+1] ; j<pheader->numtris ; j++, check++)
-	{
-		if (check->facesfront != last->facesfront)
+	for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++) {
+		if (check->facesfront != last->facesfront) {
 			continue;
-		for (k=0 ; k<3 ; k++)
-		{
-			if (check->vertindex[k] != m1)
+		}
+		for (k = 0; k < 3; k++) {
+			if (check->vertindex[k] != m1) {
 				continue;
-			if (check->vertindex[ (k+1)%3 ] != m2)
+			}
+			if (check->vertindex[(k + 1) % 3] != m2) {
 				continue;
+			}
 
 			// this is the next part of the fan
 
 			// if we can't use this triangle, this tristrip is done
-			if (used[j])
+			if (used[j]) {
 				goto done;
+			}
 
 			// the new edge
-			if (stripcount & 1)
-				m2 = check->vertindex[ (k+2)%3 ];
-			else
-				m1 = check->vertindex[ (k+2)%3 ];
+			if (stripcount & 1) {
+				m2 = check->vertindex[(k + 2) % 3];
+			}
+			else {
+				m1 = check->vertindex[(k + 2) % 3];
+			}
 
-			stripverts[stripcount+2] = check->vertindex[ (k+2)%3 ];
+			stripverts[stripcount + 2] = check->vertindex[(k + 2) % 3];
 			striptris[stripcount] = j;
 			stripcount++;
 
@@ -108,12 +110,14 @@ nexttri:
 			goto nexttri;
 		}
 	}
-done:
 
+done:
 	// clear the temp used flags
-	for (j=starttri+1 ; j<pheader->numtris ; j++)
-		if (used[j] == 2)
+	for (j = starttri + 1; j < pheader->numtris; j++) {
+		if (used[j] == 2) {
 			used[j] = 0;
+		}
+	}
 
 	return stripcount;
 }
@@ -123,51 +127,50 @@ done:
 FanLength
 ===========
 */
-int	FanLength (int starttri, int startv)
+static int FanLength(int starttri, int startv)
 {
-	int		m1, m2;
-	int		j;
+	int m1, m2, j, k;
 	mtriangle_t	*last, *check;
-	int		k;
 
 	used[starttri] = 2;
 
 	last = &triangles[starttri];
 
-	stripverts[0] = last->vertindex[(startv)%3];
-	stripverts[1] = last->vertindex[(startv+1)%3];
-	stripverts[2] = last->vertindex[(startv+2)%3];
+	stripverts[0] = last->vertindex[(startv) % 3];
+	stripverts[1] = last->vertindex[(startv + 1) % 3];
+	stripverts[2] = last->vertindex[(startv + 2) % 3];
 
 	striptris[0] = starttri;
 	stripcount = 1;
 
-	m1 = last->vertindex[(startv+0)%3];
-	m2 = last->vertindex[(startv+2)%3];
-
+	m1 = last->vertindex[(startv + 0) % 3];
+	m2 = last->vertindex[(startv + 2) % 3];
 
 	// look for a matching triangle
 nexttri:
-	for (j=starttri+1, check=&triangles[starttri+1] ; j<pheader->numtris ; j++, check++)
-	{
-		if (check->facesfront != last->facesfront)
+	for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++) {
+		if (check->facesfront != last->facesfront) {
 			continue;
-		for (k=0 ; k<3 ; k++)
-		{
-			if (check->vertindex[k] != m1)
+		}
+		for (k = 0; k < 3; k++) {
+			if (check->vertindex[k] != m1) {
 				continue;
-			if (check->vertindex[ (k+1)%3 ] != m2)
+			}
+			if (check->vertindex[(k + 1) % 3] != m2) {
 				continue;
+			}
 
 			// this is the next part of the fan
 
 			// if we can't use this triangle, this tristrip is done
-			if (used[j])
+			if (used[j]) {
 				goto done;
+			}
 
 			// the new edge
-			m2 = check->vertindex[ (k+2)%3 ];
+			m2 = check->vertindex[(k + 2) % 3];
 
-			stripverts[stripcount+2] = m2;
+			stripverts[stripcount + 2] = m2;
 			striptris[stripcount] = j;
 			stripcount++;
 
@@ -178,13 +181,14 @@ nexttri:
 done:
 
 	// clear the temp used flags
-	for (j=starttri+1 ; j<pheader->numtris ; j++)
-		if (used[j] == 2)
+	for (j = starttri + 1; j < pheader->numtris; j++) {
+		if (used[j] == 2) {
 			used[j] = 0;
+		}
+	}
 
 	return stripcount;
 }
-
 
 /*
 ================
@@ -194,7 +198,7 @@ Generate a list of trifans or strips
 for the model, which holds for all frames
 ================
 */
-void BuildTris (void)
+static void BuildTris(void)
 {
 	int		i, j, k;
 	int		startv;
@@ -210,7 +214,7 @@ void BuildTris (void)
 	//
 	numorder = 0;
 	numcommands = 0;
-	memset (used, 0, sizeof(used));
+	memset(used, 0, sizeof(used));
 	memset(commands, 0, sizeof(commands));
 
 	for (i = 0; i < pheader->numtris; i++) {
@@ -295,13 +299,13 @@ void BuildTris (void)
 
 	commands[numcommands++] = 0;		// end of list marker
 
-	Com_DPrintf ("%3i tri %3i vert %3i cmd\n", pheader->numtris, numorder, numcommands);
+	Com_DPrintf("%3i tri %3i vert %3i cmd\n", pheader->numtris, numorder, numcommands);
 
 	allverts += numorder;
 	alltris += pheader->numtris;
 }
 
-void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, vbo_model_vert_t* vbo_buffer)
+static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 {
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -311,7 +315,9 @@ void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, vbo_model_vert_t* 
 	int count = 0;
 	int total_vertices = paliashdr->vertsPerPose;
 	int pose = 0;
+	vbo_model_vert_t* vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(vbo_model_vert_t));
 
+	m->temp_vbo_buffer = vbo_buffer;
 	for (pose = 0; pose < paliashdr->numposes; ++pose) {
 		vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		vertices += pose * paliashdr->poseverts;
@@ -354,7 +360,7 @@ void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr, vbo_model_vert_t* 
 	}
 }
 
-void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
+static void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
@@ -362,6 +368,8 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	int pose, j, k, v;
 	
 	v = 0;
+	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
+	m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
 	m->temp_vbo_buffer = vbo_buffer = Q_malloc_named(m->vertsInVBO * sizeof(vbo_model_vert_t), m->name);
 
 	// 
@@ -399,6 +407,67 @@ void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	}
 }
 
+static void GLC_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
+{
+	int i, j;
+	int* cmds;
+	trivertx_t* verts;
+	int total_vertices = 0;
+
+	// Tonik: don't cache anything, because it seems just as fast
+	// (if not faster) to rebuild the tris instead of loading them from disk
+	BuildTris();		// trifans or lists
+
+	// save the data out
+	hdr->poseverts = numorder;
+
+	cmds = (int *)Hunk_Alloc(numcommands * 4);
+	hdr->commands = (byte *)cmds - (byte *)hdr;
+	memcpy(cmds, commands, numcommands * 4);
+
+	verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
+	hdr->posedata = (byte *)verts - (byte *)hdr;
+	for (i = 0; i < hdr->numposes; i++) {
+		for (j = 0; j < numorder; j++) {
+			//TODO: corrupted files may cause a crash here, sanity checks?
+			*verts++ = poseverts[i][vertexorder[j]];
+		}
+	}
+
+	// Measure vertices required
+	{
+		int* order = (int *)((byte *)hdr + hdr->commands);
+		int count = 0;
+
+		m->min_tex[0] = m->min_tex[1] = 9999;
+		m->max_tex[0] = m->max_tex[1] = -9999;
+
+		while ((count = *order++)) {
+			float s, t;
+
+			if (count < 0) {
+				count = -count;
+			}
+
+			while (count--) {
+				s = ((float *)order)[0];
+				t = ((float *)order)[1];
+				m->min_tex[0] = min(m->min_tex[0], s);
+				m->min_tex[1] = min(m->min_tex[1], t);
+				m->max_tex[0] = max(m->max_tex[0], s);
+				m->max_tex[1] = max(m->max_tex[1], t);
+				order += 2;
+				++total_vertices;
+			}
+		}
+
+		m->vertsInVBO = total_vertices * hdr->numposes;
+		hdr->vertsPerPose = total_vertices;
+	}
+
+	GLC_MakeAliasModelVBO(m, hdr);
+}
+
 /*
 ================
 GL_MakeAliasModelDisplayLists
@@ -406,70 +475,11 @@ GL_MakeAliasModelDisplayLists
 */
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
 {
-	int         i, j;
-	int         *cmds;
-	trivertx_t  *verts;
-	int total_vertices = 0;
-
-	if (GL_UseGLSL()) {
-		hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
-		m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
+	if (R_UseModernOpenGL() || R_UseVulkan()) {
 		GLM_MakeAliasModelDisplayLists(m, hdr);
 	}
-	else {
-		// Tonik: don't cache anything, because it seems just as fast
-		// (if not faster) to rebuild the tris instead of loading them from disk
-		BuildTris();		// trifans or lists
-
-		// save the data out
-		hdr->poseverts = numorder;
-
-		cmds = (int *)Hunk_Alloc(numcommands * 4);
-		hdr->commands = (byte *)cmds - (byte *)hdr;
-		memcpy(cmds, commands, numcommands * 4);
-
-		verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
-		hdr->posedata = (byte *)verts - (byte *)hdr;
-		for (i = 0; i < hdr->numposes; i++) {
-			for (j = 0; j < numorder; j++) {
-				//TODO: corrupted files may cause a crash here, sanity checks?
-				*verts++ = poseverts[i][vertexorder[j]];
-			}
-		}
-
-		// Measure vertices required
-		{
-			int* order = (int *)((byte *)hdr + hdr->commands);
-			int count = 0;
-
-			m->min_tex[0] = m->min_tex[1] = 9999;
-			m->max_tex[0] = m->max_tex[1] = -9999;
-
-			while ((count = *order++)) {
-				float s, t;
-
-				if (count < 0) {
-					count = -count;
-				}
-
-				while (count--) {
-					s = ((float *)order)[0];
-					t = ((float *)order)[1];
-					m->min_tex[0] = min(m->min_tex[0], s);
-					m->min_tex[1] = min(m->min_tex[1], t);
-					m->max_tex[0] = max(m->max_tex[0], s);
-					m->max_tex[1] = max(m->max_tex[1], t);
-					order += 2;
-					++total_vertices;
-				}
-			}
-
-			m->vertsInVBO = total_vertices * hdr->numposes;
-			hdr->vertsPerPose = total_vertices;
-		}
-
-		m->temp_vbo_buffer = Q_malloc(m->vertsInVBO * sizeof(vbo_model_vert_t));
-		GLC_MakeAliasModelVBO(m, hdr, (vbo_model_vert_t*)m->temp_vbo_buffer);
+	else if (R_UseImmediateOpenGL()) {
+		GLC_MakeAliasModelDisplayLists(m, hdr);
 	}
 }
 

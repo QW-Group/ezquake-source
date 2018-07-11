@@ -366,7 +366,7 @@ OBJS_c := \
     gl_state_resets_entities.o \
     gl_state_resets_sky.o \
     gl_state_resets_world.o \
-    gl_sky.o \
+    r_brushmodel_sky.o \
     gl_sprites.o \
     gl_vbo.o \
     glc_aliasmodel.o \

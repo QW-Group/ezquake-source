@@ -20,16 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
 #include "r_texture.h"
+#include "r_buffers.h"
 
 void GLM_MakeAlias3DisplayLists(model_t* model);
 
 typedef float m3by3_t[3][3];
 
-int Mod_ReadFlagsFromMD1(char *name, int md3version)
+static int Mod_ReadFlagsFromMD1(char *name, int md3version)
 {
 	mdl_t* pinmodel;
 	char fname[MAX_QPATH];
@@ -68,7 +68,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	char skinfileskinname[128];
 	char tenebraeskinname[128];
 	extern char loadname[];
-	int					start, end, total;
+	int start, end, total;
 	int numsurfs;
 	int surfn;
 
@@ -310,14 +310,18 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)
 
 void GLC_DrawAlias3Model(entity_t *ent);
 void GLM_DrawAlias3Model(entity_t *ent);
+void VK_DrawAlias3Model(entity_t* ent);
 
 void R_DrawAlias3Model(entity_t *ent)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_DrawAlias3Model(ent);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_DrawAlias3Model(ent);
+	}
+	else if (R_UseVulkan()) {
+		VK_DrawAlias3Model(ent);
 	}
 }
 

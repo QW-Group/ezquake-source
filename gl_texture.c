@@ -27,7 +27,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_local.h"
 #include "tr_types.h"
 #include "r_texture.h"
-#include "gl_sky.h"
+#include "r_brushmodel_sky.h"
 #include "r_local.h"
 #include "gl_aliasmodel.h" // for shelltexture only
 #include "r_lighting.h"

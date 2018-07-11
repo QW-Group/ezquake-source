@@ -29,7 +29,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "fmod.h"
 #include "utils.h"
 #include "glsl/constants.glsl"
-#include "gl_sky.h"
+#include "r_brushmodel_sky.h"
 #include "r_local.h"
 #include "r_texture.h"
 #include "r_matrix.h"

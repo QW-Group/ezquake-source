@@ -19,13 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
-#include "r_matrix.h"
+#include "r_local.h"
 #include "glc_matrix.h"
 #include "r_draw.h"
-
-void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
-void GLM_SetMatrix(float* target, const float* source);
 
 static qbool glc_pause_updates;
 static float projectionMatrix[16];
@@ -36,6 +32,11 @@ static float identityMatrix[16] = {
 	0, 0, 1, 0,
 	0, 0, 0, 1
 };
+
+static void GLM_SetMatrix(float* target, const float* source)
+{
+	memcpy(target, source, sizeof(float) * 16);
+}
 
 void GLM_SetIdentityMatrix(float* matrix)
 {
@@ -59,7 +60,7 @@ static const float* GL_OrthoMatrix(float left, float right, float top, float bot
 	return matrix;
 }
 
-void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
+static void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	// Deliberately inverting top & bottom here...
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
@@ -73,11 +74,6 @@ float* GLM_ModelviewMatrix(void)
 float* GLM_ProjectionMatrix(void)
 {
 	return projectionMatrix;
-}
-
-void GLM_SetMatrix(float* target, const float* source)
-{
-	memcpy(target, source, sizeof(float) * 16);
 }
 
 void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)

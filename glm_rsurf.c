@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "glm_brushmodel.h"
-#include "gl_sky.h"
+#include "r_brushmodel_sky.h"
 #include "r_matrix.h"
 #include "glm_vao.h"
 #include "r_texture.h"
