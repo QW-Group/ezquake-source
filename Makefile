@@ -335,7 +335,7 @@ OBJS_c := \
     gl_rpart.o \
     gl_rsurf.o \
     gl_texture.o \
-    gl_warp.o \
+    r_brushmodel_warpsurfaces.o \
     vx_camera.o \
     vx_coronas.o \
     vx_motiontrail.o \
@@ -352,11 +352,11 @@ OBJS_c := \
     gl_aliasmodel.o \
     gl_aliasmodel_skins.o \
     gl_atlas.o \
-    gl_brushmodel.o \
-    gl_brushmodel_bspx.o \
-    gl_brushmodel_textures.o \
+    r_brushmodel.o \
+    r_brushmodel_bspx.o \
+    r_brushmodel_textures.o \
     gl_buffers.o \
-    gl_chaticons.o \
+    r_chaticons.o \
     gl_framebuffer.o \
     gl_lightmaps.o \
     gl_matrix.o \
