@@ -77,4 +77,8 @@ void VK_Shutdown(void)
 	memset(&vk_options, 0, sizeof(vk_options));
 }
 
+void VK_PopulateConfig(void)
+{
+}
+
 #endif

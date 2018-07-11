@@ -688,8 +688,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 	}
 
 #ifdef WITH_OPENGL_TRACE
-	if (GL_LoggingEnabled())
-	{
+	if (GL_LoggingEnabled()) {
 		static char temp[1024];
 
 		temp[0] = '\0';
@@ -697,7 +696,7 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 			if (i) {
 				strlcat(temp, ",", sizeof(temp));
 			}
-			strlcat(temp, GL_TextureIdentifier(textures[i]), sizeof(temp));
+			strlcat(temp, R_TextureIdentifier(textures[i]), sizeof(temp));
 		}
 		GL_LogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
 	}
@@ -1212,5 +1211,20 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		GL_LogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
 		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
+	}
+}
+
+void R_PopulateConfig(void)
+{
+	if (R_UseImmediateOpenGL()) {
+		GL_PopulateConfig();
+	}
+	else if (R_UseModernOpenGL()) {
+		GL_PopulateConfig();
+	}
+	else if (R_UseVulkan()) {
+		extern void VK_PopulateConfig(void);
+
+		VK_PopulateConfig();
 	}
 }

@@ -768,6 +768,7 @@ void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
 
 void GL_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
+void GL_PopulateConfig(void);
 
 /*
 void GL_DepthFunc(GLenum func);

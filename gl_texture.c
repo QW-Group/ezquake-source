@@ -1349,7 +1349,7 @@ GLenum GL_TextureTargetFromReference(texture_ref ref)
 	return gltextures[ref.index].target;
 }
 
-const char* GL_TextureIdentifier(texture_ref ref)
+const char* R_TextureIdentifier(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 

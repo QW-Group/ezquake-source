@@ -1146,7 +1146,6 @@ static void VID_X11_GetGammaRampSize(void)
 static void VID_SDL_Init(void)
 {
 	int flags;
-	int r, g, b, a;
 	
 	if (glConfig.initialized == true) {
 		return;
@@ -1273,22 +1272,7 @@ static void VID_SDL_Init(void)
 
 	R_InitialiseBufferHandling();
 	R_Hud_Initialise();
-
-	SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &r);
-	SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &g);
-	SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &b);
-	SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &a);
-
-	glConfig.colorBits = r+g+b+a;
-	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &glConfig.depthBits);
-	SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &glConfig.stencilBits);
-
-	glConfig.vendor_string         = glGetString(GL_VENDOR);
-	glConfig.renderer_string       = glGetString(GL_RENDERER);
-	glConfig.version_string        = glGetString(GL_VERSION);
-
-	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &glConfig.majorVersion);
-	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glConfig.minorVersion);
+	R_PopulateConfig();
 
 #ifdef X11_GAMMA_WORKAROUND
 	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
@@ -1298,30 +1282,6 @@ static void VID_SDL_Init(void)
 		glConfig.gammacrap.size = 256;
 	}
 #endif
-
-	{
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
-		if (GL_VersionAtLeast(2, 0)) {
-			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
-		}
-		else {
-			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
-		}
-		if (GL_VersionAtLeast(4, 3)) {
-			glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
-			glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
-			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &glConfig.uniformBufferOffsetAlignment);
-			glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &glConfig.shaderStorageBufferOffsetAlignment);
-			glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
-		}
-		else {
-			glConfig.max_3d_texture_size = 0;
-			glConfig.max_texture_depth = 0;
-			glConfig.uniformBufferOffsetAlignment = 0;
-			glConfig.shaderStorageBufferOffsetAlignment = 0;
-			glConfig.glsl_version = (unsigned char*)"0";
-		}
-	}
 
 	GL_InitialiseState();
 

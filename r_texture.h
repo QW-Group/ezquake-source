@@ -74,7 +74,10 @@ int GL_TextureDepth(texture_ref ref);
 void GL_GenerateMipmapsIfNeeded(texture_ref ref);
 
 void GL_InvalidateAllTextureReferences(void);
-const char* GL_TextureIdentifier(texture_ref ref);
+
+#ifdef WITH_OPENGL_TRACE
+const char* R_TextureIdentifier(texture_ref ref);
+#endif
 
 void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
