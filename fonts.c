@@ -206,8 +206,8 @@ static qbool FontCreate(int grouping, const char* path)
 
 	charset = &proportional_fonts[grouping];
 	if (GL_TextureReferenceIsValid(charset->master)) {
-		original_width = GL_TextureWidth(charset->master);
-		original_height = GL_TextureHeight(charset->master);
+		original_width = R_TextureWidth(charset->master);
+		original_height = R_TextureHeight(charset->master);
 		original_left = 0;
 		original_top = 0;
 		texture_width = original_width;

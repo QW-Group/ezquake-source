@@ -229,11 +229,14 @@ qbool R_CullSphere(vec3_t centre, float radius)
 
 void R_DrawSpriteModel(entity_t *e)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_DrawSpriteModel(e);
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_DrawSpriteModel(e);
+	}
+	else if (R_UseVulkan()) {
+		// VK_DrawSpriteModel(e);
 	}
 }
 

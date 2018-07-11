@@ -291,7 +291,7 @@ static texture_ref QMB_LoadTextureImage(const char* path)
 {
 	const int mode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP | TEX_PREMUL_ALPHA;
 
-	return GL_LoadTextureImage(path, NULL, 0, 0, mode);
+	return R_LoadTextureImage(path, NULL, 0, 0, mode);
 }
 
 void QMB_InitParticles (void)
@@ -327,8 +327,10 @@ void QMB_InitParticles (void)
 	// Move particle fonts off atlas and into their own textures...
 	{
 		int real_width, real_height;
-		byte* original = GL_LoadImagePixels("textures/particles/particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, &real_width, &real_height);
+		byte* original;
 		byte* temp_buffer;
+
+		original = GL_LoadImagePixels("textures/particles/particlefont", 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP, &real_width, &real_height);
 		if (!original) {
 			return;
 		}

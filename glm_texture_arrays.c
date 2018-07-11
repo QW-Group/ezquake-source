@@ -65,8 +65,8 @@ static int SortFlaggedTextures(const void* lhs_, const void* rhs_)
 		return -1;
 	}
 
-	width_diff = GL_TextureWidth(tex1->ref) - GL_TextureWidth(tex2->ref);
-	height_diff = GL_TextureHeight(tex1->ref) - GL_TextureHeight(tex2->ref);
+	width_diff = R_TextureWidth(tex1->ref) - R_TextureWidth(tex2->ref);
+	height_diff = R_TextureHeight(tex1->ref) - R_TextureHeight(tex2->ref);
 
 	if (width_diff) {
 		return width_diff;
@@ -120,7 +120,7 @@ static void GL_DeleteExistingTextureArrays(qbool delete_textures)
 
 			for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
 				if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
-					GL_DeleteTextureArray(&texture_flags[i].array_ref[j].ref);
+					R_DeleteTextureArray(&texture_flags[i].array_ref[j].ref);
 				}
 			}
 		}
@@ -160,10 +160,10 @@ static qbool BrushModelIsAnySize(model_t* mod)
 
 void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2dname, qbool tile)
 {
-	int width = GL_TextureWidth(tex2dname);
-	int height = GL_TextureHeight(tex2dname);
-	int final_width = GL_TextureWidth(arrayTexture);
-	int final_height = GL_TextureHeight(arrayTexture);
+	int width = R_TextureWidth(tex2dname);
+	int height = R_TextureHeight(tex2dname);
+	int final_width = R_TextureWidth(arrayTexture);
+	int final_height = R_TextureHeight(arrayTexture);
 
 	int ratio_x = tile ? final_width / width : 0;
 	int ratio_y = tile ? final_height / height : 0;
@@ -202,9 +202,9 @@ void GL_AddTextureToArray(texture_ref arrayTexture, int index, texture_ref tex2d
 			GL_TexSubImage3D(GL_TEXTURE0, arrayTexture, 0, x * width, y * height, index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tempTextureBuffer);
 #ifdef GL_PARANOIA
 			if (glGetError() != GL_NO_ERROR) {
-				int array_width = GL_TextureWidth(arrayTexture);
-				int array_height = GL_TextureHeight(arrayTexture);
-				int array_depth = GL_TextureDepth(arrayTexture);
+				int array_width = R_TextureWidth(arrayTexture);
+				int array_height = R_TextureHeight(arrayTexture);
+				int array_depth = R_TextureDepth(arrayTexture);
 
 				GL_Paranoid_Printf("Failed to import texture %u to array %u[%d] (%d x %d x %d)\n", tex2dname, arrayTexture, index, array_width, array_height, array_depth);
 			}
@@ -268,8 +268,8 @@ static void GL_FlagTexturesForModel(model_t* mod)
 					continue;
 				}
 
-				if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !GL_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
-					Con_Printf("Warning: luma texture mismatch: %s (%dx%d vs %dx%d)\n", tx->name, GL_TextureWidth(tx->gl_texturenum), GL_TextureHeight(tx->gl_texturenum), GL_TextureWidth(tx->fb_texturenum), GL_TextureHeight(tx->fb_texturenum));
+				if (GL_TextureReferenceIsValid(tx->fb_texturenum) && !R_TexturesAreSameSize(tx->gl_texturenum, tx->fb_texturenum)) {
+					Con_Printf("Warning: luma texture mismatch: %s (%dx%d vs %dx%d)\n", tx->name, R_TextureWidth(tx->gl_texturenum), R_TextureHeight(tx->gl_texturenum), R_TextureWidth(tx->fb_texturenum), R_TextureHeight(tx->fb_texturenum));
 					GL_TextureReferenceInvalidate(tx->fb_texturenum);
 				}
 
@@ -457,7 +457,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 	int i;
 
 	GL_DeleteExistingTextureArrays(!vid_restart);
-	GL_ClearModelTextureData();
+	R_ClearModelTextureData();
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -505,8 +505,8 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 				continue;
 			}
 
-			width = GL_TextureWidth(texture_flags[i].ref);
-			height = GL_TextureHeight(texture_flags[i].ref);
+			width = R_TextureWidth(texture_flags[i].ref);
+			height = R_TextureHeight(texture_flags[i].ref);
 			same_size = 1 + texture_flags[i].subsequent;
 
 			// Count how many textures of the same size we have
@@ -516,10 +516,10 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 				}
 
 				if (flagged_type == TEXTURETYPES_SPRITES) {
-					width = max(width, GL_TextureWidth(texture_flags[j].ref));
-					height = max(height, GL_TextureHeight(texture_flags[j].ref));
+					width = max(width, R_TextureWidth(texture_flags[j].ref));
+					height = max(height, R_TextureHeight(texture_flags[j].ref));
 				}
-				else if (GL_TextureWidth(texture_flags[j].ref) != width || GL_TextureHeight(texture_flags[j].ref) != height) {
+				else if (R_TextureWidth(texture_flags[j].ref) != width || R_TextureHeight(texture_flags[j].ref) != height) {
 					break;
 				}
 
@@ -533,7 +533,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 				int k;
 
 				depth = same_size;
-				array_ref = GL_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
+				array_ref = R_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
 				if (!GL_TextureReferenceIsValid(array_ref)) {
 					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
 				}
@@ -551,14 +551,14 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 					GL_AddTextureToArray(array_ref, index, ref_2d, false);
 					texture_flags[k].array_ref[flagged_type].ref = array_ref;
 					texture_flags[k].array_ref[flagged_type].index = index++;
-					texture_flags[k].array_ref[flagged_type].scale_s = (GL_TextureWidth(ref_2d) * 1.0f) / width;
-					texture_flags[k].array_ref[flagged_type].scale_t = (GL_TextureHeight(ref_2d) * 1.0f) / height;
+					texture_flags[k].array_ref[flagged_type].scale_s = (R_TextureWidth(ref_2d) * 1.0f) / width;
+					texture_flags[k].array_ref[flagged_type].scale_t = (R_TextureHeight(ref_2d) * 1.0f) / height;
 
 					// Skip these and fill them in later
 					index += texture_flags[k].subsequent;
 				}
 
-				//GL_GenerateMipmapsIfNeeded(array_ref);
+				//R_GenerateMipmapsIfNeeded(array_ref);
 				same_size -= depth;
 				i = j;
 			}
@@ -611,10 +611,10 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 
 		for (j = 0; j < TEXTURETYPES_COUNT; ++j) {
 			if (GL_TextureReferenceIsValid(texture_flags[i].array_ref[j].ref)) {
-				GL_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
+				R_GenerateMipmapsIfNeeded(texture_flags[i].array_ref[j].ref);
 
 				if (j == TEXTURETYPES_BRUSHMODEL) {
-					GL_DeleteTexture(&texture_flags[i].ref);
+					R_DeleteTexture(&texture_flags[i].ref);
 				}
 				any = true;
 			}

@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_framestats.h"
 
-qbool GL_ExternalTexturesEnabled(qbool worldmodel);
-
 void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics);
 void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 qbool R_PointIsUnderwater(vec3_t point);

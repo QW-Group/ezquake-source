@@ -219,22 +219,22 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 			}
 
 			//now work out which alternative is best, and load it.
-			if (*skinfileskinname && GL_TextureReferenceIsValid(sinf->texnum = GL_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0))) {
+			if (*skinfileskinname && GL_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0))) {
 				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
 			}
-			else if (*specifiedskinname && GL_TextureReferenceIsValid(sinf->texnum = GL_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
+			else if (*specifiedskinname && GL_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
 				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
 			}
 			else if (*tenebraeskinname) {
-				sinf->texnum = GL_LoadTextureImage(tenebraeskinname, tenebraeskinname, 0, 0, 0);
+				sinf->texnum = R_LoadTextureImage(tenebraeskinname, tenebraeskinname, 0, 0, 0);
 				strlcpy(sinf->name, tenebraeskinname, sizeof(sinf->name));
 			}
 			else if (*skinfileskinname) {
-				sinf->texnum = GL_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0);
+				sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0);
 				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
 			}
 			else {
-				sinf->texnum = GL_LoadTextureImage("dummy", "dummy", 0, 0, 0);
+				sinf->texnum = R_LoadTextureImage("dummy", "dummy", 0, 0, 0);
 				strlcpy(sinf->name, "dummy", sizeof(sinf->name));
 			}
 

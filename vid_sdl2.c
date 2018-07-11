@@ -783,7 +783,7 @@ void VID_Shutdown(qbool restart)
 	vid_initialized = false;
 
 	if (restart) {
-		GL_InitialiseState();
+		R_Initialise();
 	}
 	else {
 		QMB_ShutdownParticles();
@@ -1257,7 +1257,7 @@ static void VID_SDL_Init(void)
 	}
 #endif
 
-	GL_InitialiseState();
+	R_Initialise();
 
 	glConfig.initialized = true;
 }

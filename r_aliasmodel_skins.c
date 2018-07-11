@@ -53,12 +53,12 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 
 	// try "textures/models/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	if (GL_TextureReferenceIsValid(texnum)) {
 		if (luma_allowed) {
 			// not a luma actually, but which suffix use then? _fb or what?
 			snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-			*fb_texnum = GL_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
+			*fb_texnum = R_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 		}
 
 		return texnum;
@@ -66,12 +66,12 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 
 	// try "textures/..." path
 	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	if (GL_TextureReferenceIsValid(texnum)) {
 		// not a luma actually, but which suffix use then? _fb or what?
 		if (luma_allowed) {
 			snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
-			*fb_texnum = GL_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
+			*fb_texnum = R_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 		}
 
 		return texnum;

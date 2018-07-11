@@ -609,13 +609,13 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 static void Skin_RemoveSkinsForPlayer(int playernum)
 {
 	if (playerskins[playernum].owned[0]) {
-		GL_DeleteTexture(&playerskins[playernum].base);
+		R_DeleteTexture(&playerskins[playernum].base);
 	}
 	if (playerskins[playernum].owned[1]) {
-		GL_DeleteTexture(&playerskins[playernum].fb);
+		R_DeleteTexture(&playerskins[playernum].fb);
 	}
 	if (playerskins[playernum].owned[2]) {
-		GL_DeleteTexture(&playerskins[playernum].dead);
+		R_DeleteTexture(&playerskins[playernum].dead);
 	}
 	GL_TextureReferenceInvalidate(playerskins[playernum].base);
 	GL_TextureReferenceInvalidate(playerskins[playernum].fb);

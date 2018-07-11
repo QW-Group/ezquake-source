@@ -93,9 +93,9 @@ void R_Shutdown(qbool restart)
 	GLM_DeleteBrushModelIndexBuffer();
 	R_DeleteVAOs();
 	buffers.Shutdown();
-	GL_DeleteTextures();
+	R_DeleteTextures();
 	GL_DeleteSamplers();
-	GL_InvalidateAllTextureReferences();
+	R_TexturesInvalidateAllReferences();
 }
 
 void R_Initialise(void)
@@ -109,4 +109,10 @@ void R_Initialise(void)
 	else if (R_UseVulkan()) {
 		//VK_InitialiseState();
 	}
+}
+
+// Called during disconnect
+void R_OnDisconnect(void)
+{
+	R_ClearModelTextureData();
 }

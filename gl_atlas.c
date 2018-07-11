@@ -87,7 +87,7 @@ static void DeleteOldTextures(void)
 	int i;
 	for (i = 0; i < atlas_delete_count; ++i) {
 		if (atlas_deletable_textures[i].moved_to_atlas) {
-			GL_DeleteTexture(&atlas_deletable_textures[i].original);
+			R_DeleteTexture(&atlas_deletable_textures[i].original);
 		}
 	}
 }
@@ -164,8 +164,8 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	int padding = 1;
 
 	// Find size of the source
-	texWidth = GL_TextureWidth(pic->texnum);
-	texHeight = GL_TextureHeight(pic->texnum);
+	texWidth = R_TextureWidth(pic->texnum);
+	texHeight = R_TextureHeight(pic->texnum);
 
 	width = (pic->sh - pic->sl) * texWidth;
 	height = (pic->th - pic->tl) * texHeight;
@@ -241,8 +241,8 @@ void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 	cachepic_node_t* current = *sized_list;
 	int size_this;
 
-	node->width = GL_TextureWidth(node->data.pic->texnum);
-	node->height = GL_TextureHeight(node->data.pic->texnum);
+	node->width = R_TextureWidth(node->data.pic->texnum);
+	node->height = R_TextureHeight(node->data.pic->texnum);
 
 	node->width *= (node->data.pic->sh - node->data.pic->sl);
 	node->height *= (node->data.pic->th - node->data.pic->tl);
@@ -279,8 +279,8 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	float newth, newtl;
 
 	// Find size of the source
-	texWidth = GL_TextureWidth(ibar->texnum);
-	texHeight = GL_TextureHeight(ibar->texnum);
+	texWidth = R_TextureWidth(ibar->texnum);
+	texHeight = R_TextureHeight(ibar->texnum);
 
 	source = Q_malloc(texWidth * texHeight * 4);
 	target = Q_malloc(texWidth * texHeight * 4);

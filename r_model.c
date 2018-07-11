@@ -613,20 +613,20 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	}
 
 	if (mod->type == mod_brush) {
-		tex = GL_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+		tex = R_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 	}
 	else if (mod->type == mod_alias || mod->type == mod_alias3) {
 		// hack for loading models saved as .bsp under /maps directory
 		if (Utils_RegExpMatch("^(?i)maps\\/b_(.*)\\.bsp", mod->name)) {
-			tex = GL_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+			tex = R_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 		}
 		else {
-			tex = GL_LoadTextureImage(va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
+			tex = R_LoadTextureImage(va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
 		}
 	}
 
 	if (!GL_TextureReferenceIsValid(tex)) {
-		tex = GL_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
+		tex = R_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
 	}
 
 	if (developer.value > 1) {

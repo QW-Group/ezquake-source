@@ -42,9 +42,9 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 	if (GL_TextureReferenceIsValid(particletexture)) {
 		texture_array_ref_t* array_ref = &texture_flags[particletexture.index].array_ref[TEXTURETYPES_SPRITES];
 
-		if (GL_TextureWidth(array_ref->ref) != GL_TextureWidth(particletexture) || GL_TextureHeight(array_ref->ref) != GL_TextureHeight(particletexture)) {
-			int width = GL_TextureWidth(array_ref->ref);
-			int height = GL_TextureHeight(array_ref->ref);
+		if (!R_TexturesAreSameSize(array_ref->ref, particletexture)) {
+			int width = R_TextureWidth(array_ref->ref);
+			int height = R_TextureHeight(array_ref->ref);
 			byte* data = Classic_CreateParticleTexture(width, height);
 
 			GL_TexSubImage3D(GL_TEXTURE0, array_ref->ref, 0, 0, 0, array_ref->index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -62,8 +62,8 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 void GLM_LoadParticleTextures(void)
 {
 	if (GL_TextureReferenceIsValid(particletexture_array)) {
-		int width = GL_TextureWidth(particletexture_array);
-		int height = GL_TextureHeight(particletexture_array);
+		int width = R_TextureWidth(particletexture_array);
+		int height = R_TextureHeight(particletexture_array);
 		byte* data = Classic_CreateParticleTexture(width, height);
 
 		GL_TexSubImage3D(GL_TEXTURE0, particletexture_array, 0, 0, 0, particletexture_array_index, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);

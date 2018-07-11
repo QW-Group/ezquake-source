@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // 3D sprites
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
+#include "gl_local.h" // temporary!
 #include "gl_sprite3d.h"
 #include "r_sprite3d_internal.h"
 #include "tr_types.h"

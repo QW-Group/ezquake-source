@@ -340,7 +340,7 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	char altsolidname[MAX_QPATH], altalphaname[MAX_QPATH];
 	byte alphapixel = 255;
 
-	if (!GL_ExternalTexturesEnabled(true)) {
+	if (!R_ExternalTexturesEnabled(true)) {
 		return false;
 	}
 
@@ -349,25 +349,25 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	snprintf (solidname, sizeof(solidname), "%s_solid", tx->name);
 	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
 
-	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
+	solidskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
 	if (!GL_TextureReferenceIsValid(solidskytexture) && altname) {
 		snprintf(altsolidname, sizeof(altsolidname), "%s_solid", altname);
-		solidskytexture = GL_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
+		solidskytexture = R_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
 	}
 	if (!GL_TextureReferenceIsValid(solidskytexture)) {
-		solidskytexture = GL_LoadTextureImage(va("textures/%s", solidname), solidname, 0, 0, 0);
+		solidskytexture = R_LoadTextureImage(va("textures/%s", solidname), solidname, 0, 0, 0);
 	}
 	if (!GL_TextureReferenceIsValid(solidskytexture)) {
 		return false;
 	}
 
-	alphaskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
+	alphaskytexture = R_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
 	if (!GL_TextureReferenceIsValid(alphaskytexture) && altname) {
 		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
-		alphaskytexture = GL_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
+		alphaskytexture = R_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
 	}
 	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
-		alphaskytexture = GL_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
+		alphaskytexture = R_LoadTextureImage(va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
 	}
 	if (!GL_TextureReferenceIsValid(alphaskytexture)) {
 		// Load a texture consisting of a single transparent pixel

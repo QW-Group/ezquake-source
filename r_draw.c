@@ -974,7 +974,7 @@ void Draw_AdjustConback (void)
 static void Draw_DeleteOldLevelshot(mpic_t* pic)
 {
 	if (pic && GL_TextureReferenceIsValid(pic->texnum)) {
-		GL_DeleteTexture(&pic->texnum);
+		R_DeleteTexture(&pic->texnum);
 		if (!CachePic_RemoveByPic(pic)) {
 			GL_TextureReferenceInvalidate(pic->texnum);
 		}

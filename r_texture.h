@@ -49,33 +49,68 @@ byte* GL_LoadImagePixels(const char *filename, int matchwidth, int matchheight, 
 qbool GL_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
 void GL_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
+typedef struct texture_api_s {
+	texture_ref (*Load)(const char *identifier, int width, int height, byte *data, int mode, int bpp);
+	texture_ref (*LoadPic)(const char *name, mpic_t *pic, byte *data);
+	texture_ref (*LoadFromPixels)(byte *data, const char *identifier, int width, int height, int mode);
+	texture_ref (*LoadFromFile)(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
+	texture_ref (*CreateArray)(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
+	texture_ref (*CreateCubeMap)(const char* identifier, int width, int height, int mode);
+	void (*DeleteArray)(texture_ref* texture);
+	void (*DeleteCubeMap)(texture_ref* texture);
+	void (*Delete)(texture_ref* texture);
+	void (*DeleteAll)(void);
+
+	qbool (*SameSize)(texture_ref tex1, texture_ref tex2);
+
+	int (*Width)(texture_ref ref);
+	int (*Height)(texture_ref ref);
+	int (*Depth)(texture_ref ref);
+	void (*GenerateMipmaps)(texture_ref ref);
+
+	void (*InvalidateAll)(void);
+	void (*CreateInternal)(texture_ref* reference, int width, int height, const char* name);
+	void (*ReplaceSubImageRGBA)(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
+
+	void (*R_TextureWrapModeClamp)(texture_ref tex);
+
+#ifdef WITH_OPENGL_TRACE
+	const char* (*Identifier)(texture_ref ref);
+#endif
+
+} texture_api_t;
+
+extern texture_api_t textures;
+
 void R_Texture_Init(void);
 qbool R_TextureValid(texture_ref ref);
 
 texture_ref GL_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref GL_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref GL_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode);
-texture_ref GL_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
-texture_ref GL_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
-texture_ref GL_CreateCubeMap(const char* identifier, int width, int height, int mode);
-void GL_DeleteTextureArray(texture_ref* texture);
-void GL_DeleteCubeMap(texture_ref* texture);
-void GL_DeleteTexture(texture_ref* texture);
-void GL_DeleteTextures(void);
+texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
+texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
+texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode);
+void R_DeleteTextureArray(texture_ref* texture);
+void R_DeleteCubeMap(texture_ref* texture);
+void R_DeleteTexture(texture_ref* texture);
+void R_DeleteTextures(void);
 
-qbool GL_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
-qbool GL_TextureValid(texture_ref ref);
+qbool R_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
+qbool R_TextureValid(texture_ref ref);
 
-int GL_TextureWidth(texture_ref ref);
-int GL_TextureHeight(texture_ref ref);
-int GL_TextureDepth(texture_ref ref);
-void GL_GenerateMipmapsIfNeeded(texture_ref ref);
+int R_TextureWidth(texture_ref ref);
+int R_TextureHeight(texture_ref ref);
+int R_TextureDepth(texture_ref ref);
+void R_GenerateMipmapsIfNeeded(texture_ref ref);
 
-void GL_InvalidateAllTextureReferences(void);
+void R_TexturesInvalidateAllReferences(void);
 void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 void R_TextureWrapModeClamp(texture_ref tex);
+void R_TextureAnisotropyChanged(texture_ref tex);
+qbool R_ExternalTexturesEnabled(qbool worldmodel);
 
 #ifdef WITH_OPENGL_TRACE
 const char* R_TextureIdentifier(texture_ref ref);
@@ -84,5 +119,30 @@ const char* R_TextureIdentifier(texture_ref ref);
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel, gl_mipmap_viewmodels;
 extern cvar_t gl_no24bit;
 extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
+
+void R_ClearModelTextureData(void);
+
+typedef enum {
+	texture_minification_nearest,
+	texture_minification_linear,
+	texture_minification_nearest_mipmap_nearest,
+	texture_minification_linear_mipmap_nearest,
+	texture_minification_nearest_mipmap_linear,
+	texture_minification_linear_mipmap_linear,
+
+	texture_minification_count
+} texture_minification_id;
+
+typedef enum {
+	texture_magnification_nearest,
+	texture_magnification_linear,
+
+	texture_magnification_count
+} texture_magnification_id;
+
+typedef enum {
+	texture_type_2d,
+	texture_type_2d_array
+} r_texture_type_t;
 
 #endif	// EZQUAKE_R_TEXTURE_H

@@ -163,47 +163,6 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup(a3);
 			elem->flags = HUD_STRING | HUD_ENABLED;
-			/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
-			if (!strcasecmp(a3, "lag"))
-			func = &Hud_LagmeterStr;
-			else if (!strcasecmp(a3, "fps"))
-			func = &Hud_FpsStr;
-			else if (!strcasecmp(a3, "clock"))
-			func = &Hud_ClockStr;
-			else if (!strcasecmp(a3, "speed"))
-			func = &Hud_SpeedStr;
-			else {
-			Com_Printf("\"%s\" is not a standard hud function\n", a3);
-			return;
-			}
-			elem = Hud_NewElement();
-			elem->contents = func;
-			elem->flags = HUD_FUNC | HUD_ENABLED;
-			} else if (!strcasecmp(a2, "img")) {
-			mpic_t *hud_image;
-			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
-			if (!texnum) {
-			Com_Printf("Unable to load hud image \"%s\"\n", a3);
-			return;
-			}
-			hud_image = (mpic_t *) Q_malloc (sizeof(mpic_t));
-			hud_image->texnum = texnum;
-			if (current_texture) {
-			hud_image->width = current_texture->width;
-			hud_image->height = current_texture->height;
-			}
-			else {
-			hud_image->width = image.width;
-			hud_image->height = image.height;
-			}
-			hud_image->sl = 0;
-			hud_image->sh = 1;
-			hud_image->tl = 0;
-			hud_image->th = 1;
-			elem = Hud_NewElement();
-			elem->contents = hud_image;
-			elem->flags = HUD_IMAGE | HUD_ENABLED;
-			*/
 		}
 		else {
 			Com_Printf("\"%s\" is not a valid hud type\n", a2);

@@ -66,10 +66,10 @@ void R_InitOtherTextures(void)
 	int flags = TEX_MIPMAP | TEX_ALPHA;
 	extern cvar_t gl_caustics, gl_detail, gl_powerupshells;
 
-	underwatertexture = GL_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_caustics.value ? TEX_COMPLAIN : 0));
-	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
+	underwatertexture = R_LoadTextureImage("textures/water_caustic", NULL, 0, 0, flags | (gl_caustics.value ? TEX_COMPLAIN : 0));
+	detailtexture = R_LoadTextureImage("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
-	shelltexture = GL_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | TEX_PREMUL_ALPHA | TEX_ZERO_ALPHA | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
+	shelltexture = R_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | TEX_PREMUL_ALPHA | TEX_ZERO_ALPHA | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
 	if (!GL_TextureReferenceIsValid(shelltexture)) {
 		shelltexture = GL_GenerateShellTexture();
 	}

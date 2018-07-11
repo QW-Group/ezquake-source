@@ -299,15 +299,15 @@ void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
 
-	corona_textures[CORONATEX_STANDARD].texnum = GL_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_GUNFLASH].texnum = GL_LoadTextureImage("textures/gunflash", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH1].texnum = GL_LoadTextureImage("textures/explosionflash1", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH2].texnum = GL_LoadTextureImage("textures/explosionflash2", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH3].texnum = GL_LoadTextureImage("textures/explosionflash3", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH4].texnum = GL_LoadTextureImage("textures/explosionflash4", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH5].texnum = GL_LoadTextureImage("textures/explosionflash5", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH6].texnum = GL_LoadTextureImage("textures/explosionflash6", NULL, 0, 0, flags);
-	corona_textures[CORONATEX_EXPLOSIONFLASH7].texnum = GL_LoadTextureImage("textures/explosionflash7", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_STANDARD].texnum = R_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_GUNFLASH].texnum = R_LoadTextureImage("textures/gunflash", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH1].texnum = R_LoadTextureImage("textures/explosionflash1", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH2].texnum = R_LoadTextureImage("textures/explosionflash2", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH3].texnum = R_LoadTextureImage("textures/explosionflash3", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH4].texnum = R_LoadTextureImage("textures/explosionflash4", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH5].texnum = R_LoadTextureImage("textures/explosionflash5", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH6].texnum = R_LoadTextureImage("textures/explosionflash6", NULL, 0, 0, flags);
+	corona_textures[CORONATEX_EXPLOSIONFLASH7].texnum = R_LoadTextureImage("textures/explosionflash7", NULL, 0, 0, flags);
 
 	InitCoronas(); // safe re-init
 

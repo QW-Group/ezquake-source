@@ -65,8 +65,8 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 
 	// Get the actual sizes (may have been rescaled)
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
-		widths[i] = GL_TextureWidth(skyboxtextures[i]);
-		heights[i] = GL_TextureHeight(skyboxtextures[i]);
+		widths[i] = R_TextureWidth(skyboxtextures[i]);
+		heights[i] = R_TextureHeight(skyboxtextures[i]);
 	}
 
 	// Check if they're all the same
@@ -80,7 +80,7 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 		return false;
 	}
 
-	skybox_cubeMap = GL_CreateCubeMap("skybox:cubemap", widths[0], heights[0], TEX_NOCOMPRESS | TEX_MIPMAP);
+	skybox_cubeMap = R_CreateCubeMap("skybox:cubemap", widths[0], heights[0], TEX_NOCOMPRESS | TEX_MIPMAP);
 
 	GLM_CopySkyboxTexturesToCubeMap(skybox_cubeMap, widths[0], heights[0]);
 

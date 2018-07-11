@@ -26,10 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "image.h"
 #include "tr_types.h"
+#include "r_texture_internal.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
-void GL_TextureSetDimensions(texture_ref ref, int width, int height);
 
 // <DSA-functions (4.5)>
 // These allow modification of textures without binding (-bind-to-edit)
@@ -202,7 +202,7 @@ void GL_TexStorage2D(
 			}
 		}
 	}
-	GL_TextureSetDimensions(texture, width, height);
+	R_TextureSetDimensions(texture, width, height);
 }
 
 void GL_TexStorage3D(

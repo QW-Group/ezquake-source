@@ -75,7 +75,7 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 	char *name, *altname, *mapname, *groupname;
 	int luma_mode = TEX_LUMA;
 
-	if (!GL_ExternalTexturesEnabled(loadmodel->isworldmodel)) {
+	if (!R_ExternalTexturesEnabled(loadmodel->isworldmodel)) {
 		return false;
 	}
 
@@ -85,35 +85,35 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 	groupname = TP_GetMapGroupName(mapname, NULL);
 
 	if (loadmodel->isworldmodel) {
-		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag);
+		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag);
 		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
+			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 		else if (groupname) {
-			tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag);
+			tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag);
 			if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-				tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
+				tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 			}
 		}
 	}
 	else {
-		tx->gl_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag);
+		tx->gl_texturenum = R_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag);
 		if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
+			tx->fb_texturenum = R_LoadTextureImage(va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 	}
 
 	if (!GL_TextureReferenceIsValid(tx->gl_texturenum) && altname) {
-		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", altname), altname, 0, 0, mode | brighten_flag);
+		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", altname), altname, 0, 0, mode | brighten_flag);
 		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | luma_mode);
+			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | luma_mode);
 		}
 	}
 
 	if (!GL_TextureReferenceIsValid(tx->gl_texturenum)) {
-		tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", name), name, 0, 0, mode | brighten_flag);
+		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", name), name, 0, 0, mode | brighten_flag);
 		if (GL_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = GL_LoadTextureImage(va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
+			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
 		}
 	}
 

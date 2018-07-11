@@ -41,11 +41,11 @@ static texture_ref Mod_LoadExternalSpriteSkin(char *identifier, int framenum)
 	}
 
 	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
-	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
 	if (!GL_TextureReferenceIsValid(texnum)) {
 		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+		texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
 
 	return texnum;

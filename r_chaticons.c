@@ -235,8 +235,10 @@ void R_InitChatIcons(void)
 
 	{
 		int real_width, real_height;
-		byte* original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
+		byte* original;
 		byte* temp_buffer;
+
+		original = GL_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
 		if (!original) {
 			return;
 		}

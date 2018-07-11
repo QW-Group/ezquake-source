@@ -47,10 +47,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // __APPLE__
 
 #include "gl_model.h"
-#include "gl_texture.h"
 #include "r_framestats.h"
 #include "r_trace.h"
 #include "r_local.h"
+#include "gl_texture.h"
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -260,13 +260,6 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 
-// 
-#define CHARSET_CHARS_PER_ROW	16
-#define CHARSET_WIDTH			1.0
-#define CHARSET_HEIGHT			1.0
-#define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
-#define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
-
 // Functions
 void GLM_DrawSimpleItem(texture_ref texture_array, int texture_index, float scale_s, float scale_t, vec3_t origin, float scale, vec3_t up, vec3_t right);
 void GLC_DrawSimpleItem(texture_ref simpletexture, vec3_t org, float sprsize, vec3_t up, vec3_t right);
@@ -332,34 +325,6 @@ void GL_ProcessErrors(const char* message);
 //void GL_DeleteVAOs(void);
 
 void GL_InitialiseState(void);
-
-// --------------
-// Texture functions
-// --------------
-
-void GL_ClearModelTextureData(void);
-void GL_SetTextureFiltering(GLenum texture_unit, texture_ref texture, GLint minification_filter, GLint magnification_filter);
-
-void GL_CreateTextures(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references);
-void GL_CreateTexturesWithIdentifier(GLenum textureUnit, GLenum target, GLsizei n, texture_ref* references, const char* identifier);
-void GL_TexStorage2D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-void GL_GenerateMipmap(GLenum textureUnit, texture_ref reference);
-void GL_GenerateMipmapWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);
-
-void GL_TexParameterf(GLenum textureUnit, texture_ref reference, GLenum pname, GLfloat param);
-void GL_TexParameterfv(GLenum textureUnit, texture_ref reference, GLenum pname, const GLfloat *params);
-void GL_TexParameteri(GLenum textureUnit, texture_ref reference, GLenum pname, GLint param);
-void GL_TexParameteriv(GLenum textureUnit, texture_ref reference, GLenum pname, const GLint *params);
-void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref reference, GLint level, GLenum pname, GLint* params);
-
-void GL_TexSubImage2D(GLenum textureUnit, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_TexSubImage3D(GLenum textureUnit, texture_ref reference, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-void GL_GetTexImage(GLenum textureUnit, texture_ref reference, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
-
-void GL_BindTextureUnit(GLuint unit, texture_ref reference);
-void GL_EnsureTextureUnitBound(GLuint unit, texture_ref reference);
-void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
