@@ -21,29 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-/*
-void GL_EnableFog(void)
-{
-	if (GL_UseImmediateMode() && gl_fogenable.integer) {
-		glEnable(GL_FOG);
-	}
-}
 
-void GL_DisableFog(void)
-{
-	if (GL_UseImmediateMode() && gl_fogenable.integer) {
-		glDisable(GL_FOG);
-	}
-}
-*/
-void GL_ConfigureFog(void)
+void GLC_ConfigureFog(void)
 {
 	vec3_t colors;
-
-	if (GL_UseGLSL()) {
-		// TODO
-		return;
-	}
 
 	// START shaman BUG fog was out of control when fogstart>fogend {
 	if (gl_fogenable.integer && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) {
@@ -62,7 +43,7 @@ void GL_ConfigureFog(void)
 	}
 }
 
-void GL_EnableWaterFog(int contents)
+void GLC_EnableWaterFog(int contents)
 {
 	extern cvar_t gl_waterfog_color_water;
 	extern cvar_t gl_waterfog_color_lava;
@@ -71,11 +52,6 @@ void GL_EnableWaterFog(int contents)
 	float colors[4];
 
 	if (!gl_waterfog.value || COM_CheckParm(cmdline_param_client_nomultitexturing) || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
-		return;
-	}
-
-	// TODO
-	if (GL_UseGLSL()) {
 		return;
 	}
 
@@ -111,19 +87,4 @@ void GL_EnableWaterFog(int contents)
 		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
 	}
 	glEnable(GL_FOG);
-}
-
-// FIXME: Move functions under here
-void R_AddWaterfog(int contents)
-{
-	if (GL_UseImmediateMode()) {
-		GL_EnableWaterFog(contents);
-	}
-}
-
-void R_ConfigureFog(void)
-{
-	if (GL_UseImmediateMode()) {
-		GL_ConfigureFog();
-	}
 }
