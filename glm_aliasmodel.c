@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "r_matrix.h"
 #include "glm_vao.h"
+#include "glm_local.h"
 #include "r_texture.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
@@ -647,7 +648,7 @@ void GLM_InitialiseAliasModelBatches(void)
 	memset(alias_draw_instructions, 0, sizeof(alias_draw_instructions));
 }
 
-void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot)
+void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
 	// MEAG: TODO
 }

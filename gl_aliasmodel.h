@@ -69,8 +69,8 @@ void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_StateEndUnderwaterCaustics(void);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
-void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
-void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot);
+void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
+void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 
 // gl_mesh.c
 void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);

@@ -916,10 +916,10 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
 	if (R_UseModernOpenGL()) {
-		GLM_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
+		GLM_AliasModelShadow(ent, paliashdr);
 	}
 	else {
-		GLC_AliasModelShadow(ent, paliashdr, shadevector, lightspot);
+		GLC_AliasModelShadow(ent, paliashdr);
 	}
 }
 

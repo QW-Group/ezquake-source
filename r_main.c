@@ -4,6 +4,7 @@
 #include "r_local.h"
 #include "r_vao.h"
 #include "r_lightmaps.h"
+#include "gl_local.h"
 #include "glc_local.h"
 #include "glm_local.h"
 #include "r_texture.h"
@@ -84,6 +85,7 @@ void R_Shutdown(qbool restart)
 		GLC_Shutdown(restart);
 	}
 	else if (R_UseVulkan()) {
+		//VK_Shutdown(restart);
 	}
 
 	CachePics_Shutdown();
@@ -94,4 +96,17 @@ void R_Shutdown(qbool restart)
 	GL_DeleteTextures();
 	GL_DeleteSamplers();
 	GL_InvalidateAllTextureReferences();
+}
+
+void R_Initialise(void)
+{
+	if (R_UseModernOpenGL()) {
+		GL_InitialiseState();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		GL_InitialiseState();
+	}
+	else if (R_UseVulkan()) {
+		//VK_InitialiseState();
+	}
 }

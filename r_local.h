@@ -87,4 +87,6 @@ void Check_Gamma(unsigned char *pal);
 void VID_SetPalette(unsigned char *palette);
 void GL_Init(void);
 
+void R_Initialise(void);
+
 #endif // EZQUAKE_R_LOCAL_HEADER

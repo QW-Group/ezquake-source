@@ -42,7 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
-static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot);
+static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
 
 // Which pose to use if shadow to be drawn
@@ -494,11 +494,12 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	// <-- Underwater caustics on alias models of QRACK
 }
 
-void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevector, vec3_t lightspot)
+void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
 {
 	float theta;
 	float oldMatrix[16];
 	static float shadescale = 0;
+	vec3_t shadevector;
 
 	if (!shadescale) {
 		shadescale = 1 / sqrt(2);
@@ -512,13 +513,14 @@ void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr, vec3_t shadevect
 	GL_RotateModelview(ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
-	GLC_DrawAliasShadow(ent, paliashdr, lastposenum, shadevector, lightspot);
+	GLC_DrawAliasShadow(ent, paliashdr, lastposenum, shadevector);
 
 	GL_PopModelviewMatrix(oldMatrix);
 }
 
-static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector, vec3_t lightspot)
+static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector)
 {
+	extern vec3_t lightspot;
 	int *order, count;
 	vec3_t point;
 	float lheight = ent->origin[2] - lightspot[2], height = 1 - lheight;

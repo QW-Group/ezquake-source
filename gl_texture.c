@@ -150,34 +150,30 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 	qbool mipmap;
 	gltexture_t	*glt;
 
-	for (i = 0; i < GLMODE_NUMODES; i++) 
-	{
-		if (!strcasecmp (modes[i].name, string))
+	for (i = 0; i < GLMODE_NUMODES; i++) {
+		if (!strcasecmp(modes[i].name, string)) {
 			break;
+		}
 	}
 
-	if (i == GLMODE_NUMODES) 
-	{
+	if (i == GLMODE_NUMODES) {
 		Com_Printf ("bad filter name: %s\n", string);
 		*cancel = true;
 		return;
 	}
 
-	if (var == &gl_texturemode)
-	{
+	if (var == &gl_texturemode) {
 		gl_filter_min = filter_min = modes[i].minimize;
 		gl_filter_max = filter_max = modes[i].maximize;
 		mipmap = true;
 	}
-	else
-	{
+	else {
 		Sys_Error("OnChange_gl_texturemode: unexpected cvar!");
 		return;
 	}
 
 	// Make sure we set the proper texture filters for textures.
-	for (i = 1, glt = gltextures + 1; i < numgltextures; i++, glt++)
-	{
+	for (i = 1, glt = gltextures + 1; i < numgltextures; i++, glt++) {
 		if (!GL_TextureReferenceIsValid(glt->reference)) {
 			continue;
 		}
@@ -188,8 +184,7 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 		}
 
 		// true == true or false == false
-		if ( mipmap == !!(glt->texmode & TEX_MIPMAP) )
-		{
+		if (mipmap == !!(glt->texmode & TEX_MIPMAP)) {
 			if (developer.integer > 100) {
 				Com_DPrintf("texturemode: %s\n", glt->identifier);
 			}
@@ -215,7 +210,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 		if (glt->texmode & TEX_NO_TEXTUREMODE) {
 			// This texture must NOT be affected by texture mode changes,
 			// for example charset which rather controlled by gl_smoothfont.
-			continue;	
+			continue;
 		}
 
 		if (glt->texmode & TEX_MIPMAP) {

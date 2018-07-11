@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_draw.h"
 
 void GLM_ScreenDrawStart(void);
+void GLM_SetupGL(void);
+void GLM_PreRenderView(void);
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
@@ -685,11 +687,14 @@ static void R_SetupGL(void)
 
 	GL_StateDefault3D();
 
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_SetupGL();
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_SetupGL();
+	}
+	else if (R_UseVulkan()) {
+		//VK_SetupGL();
 	}
 }
 
@@ -1123,8 +1128,14 @@ void R_RenderView(void)
 	// Draw 3D hud elements
 	R_Render3DHud();
 
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_RenderView();
+	}
+	else if (R_UseImmediateOpenGL()) {
+		//GLC_RenderView();
+	}
+	else if (R_UseVulkan()) {
+		//VK_RenderView();
 	}
 
 	R_PerformanceEndFrame();
@@ -1132,11 +1143,14 @@ void R_RenderView(void)
 
 void R_PreRenderView(void)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_PreRenderView();
 	}
-	else {
+	else if (R_UseImmediateOpenGL()) {
 		GLC_PreRenderView();
+	}
+	else if (R_UseVulkan()) {
+		//VK_PreRenderView();
 	}
 }
 
