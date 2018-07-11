@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 
-// gl_bloom.c: 2D lighting post process effect
+// glc_bloom.c: 2D lighting post process effect (immediate-mode OpenGL only)
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -108,7 +108,7 @@ static float sampleText_tcw;
 static float sampleText_tch;
 
 // This macro is in sample size workspace coordinates.
-#define R_Bloom_SamplePass( xpos, ypos )                           \
+#define GLC_Bloom_SamplePass( xpos, ypos )                         \
 	glBegin(GL_QUADS);                                             \
 	glTexCoord2f(  0,                      sampleText_tch);        \
 	glVertex2f(    xpos,                   ypos);                  \
@@ -120,7 +120,7 @@ static float sampleText_tch;
 	glVertex2f(    xpos+sample_width,      ypos);                  \
 	glEnd();
 
-#define R_Bloom_Quad( x, y, width, height, textwidth, textheight ) \
+#define GLC_Bloom_Quad( x, y, width, height, textwidth, textheight ) \
 	glBegin(GL_QUADS);                                             \
 	glTexCoord2f(  0,          textheight);                        \
 	glVertex2f(    x,          y);                                 \
@@ -133,9 +133,9 @@ static float sampleText_tch;
 	glEnd();
 
 //=================
-// R_Bloom_InitBackUpTexture
+// GLC_Bloom_InitBackUpTexture
 // =================
-void R_Bloom_InitBackUpTexture( int width, int height )
+static void GLC_Bloom_InitBackUpTexture( int width, int height )
 {
 	unsigned char *data;
 	
@@ -149,9 +149,9 @@ void R_Bloom_InitBackUpTexture( int width, int height )
 }
 
 // =================
-// R_Bloom_InitEffectTexture
+// GLC_Bloom_InitEffectTexture
 // =================
-void R_Bloom_InitEffectTexture (void)
+static void GLC_Bloom_InitEffectTexture (void)
 {
 	unsigned char *data;
 	float bloomsizecheck;
@@ -193,9 +193,9 @@ void R_Bloom_InitEffectTexture (void)
 }
 
 // =================
-// R_Bloom_InitTextures
+// GLC_Bloom_InitTextures
 // =================
-static void R_Bloom_InitTextures( void )
+static void GLC_Bloom_InitTextures( void )
 {
 	unsigned char *data;
 	int maxtexsize, glinternalfmt;
@@ -235,7 +235,7 @@ static void R_Bloom_InitTextures( void )
 	Q_free (data);
 
 	// Validate bloom size and init the bloom effect texture.
-	R_Bloom_InitEffectTexture();
+	GLC_Bloom_InitEffectTexture();
 
 	// If screensize is more than 2x the bloom effect texture, set up for stepped downsampling.
 	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
@@ -250,17 +250,17 @@ static void R_Bloom_InitTextures( void )
 
 	// Init the screen backup texture.
 	if (r_screendownsamplingtexture_size) {
-		R_Bloom_InitBackUpTexture(r_screendownsamplingtexture_size, r_screendownsamplingtexture_size);
+		GLC_Bloom_InitBackUpTexture(r_screendownsamplingtexture_size, r_screendownsamplingtexture_size);
 	}
 	else {
-		R_Bloom_InitBackUpTexture(BLOOM_SIZE, BLOOM_SIZE);
+		GLC_Bloom_InitBackUpTexture(BLOOM_SIZE, BLOOM_SIZE);
 	}
 }
 
 // =================
 // R_InitBloomTextures
 // =================
-void R_InitBloomTextures(void)
+void GLC_InitBloomTextures(void)
 {
 	BLOOM_SIZE = 0;
 	if (!r_bloom.value) {
@@ -273,13 +273,13 @@ void R_InitBloomTextures(void)
 	GL_TextureReferenceInvalidate(r_bloombackuptexture);
 	GL_TextureReferenceInvalidate(r_bloomdownsamplingtexture);
 
-	R_Bloom_InitTextures();
+	GLC_Bloom_InitTextures();
 }
 
 // =================
 // R_Bloom_DrawEffect
 // =================
-void R_Bloom_DrawEffect( void )
+static void GLC_Bloom_DrawEffect( void )
 {
 	GLC_StateBeginBloomDraw(r_bloomeffecttexture);
 
@@ -298,7 +298,7 @@ void R_Bloom_DrawEffect( void )
 // =================
 // R_Bloom_GeneratexDiamonds
 //=================
-void R_Bloom_GeneratexDiamonds( void )
+static void GLC_Bloom_GeneratexDiamonds( void )
 {
 	int         i, j;
 	static float intensity;
@@ -406,7 +406,7 @@ void R_Bloom_GeneratexDiamonds( void )
 // =================
 // R_Bloom_DownsampleView
 // =================
-void R_Bloom_DownsampleView( void )
+static void GLC_Bloom_DownsampleView( void )
 {
 	GL_AlphaBlendFlags(GL_BLEND_DISABLED);
 	R_CustomColor( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -451,7 +451,7 @@ void R_Bloom_DownsampleView( void )
 // =================
 // R_BloomBlend
 // =================
-void R_BloomBlend(void)
+void GLC_BloomBlend(void)
 {
 	extern vrect_t	scr_vrect;
 
@@ -523,16 +523,6 @@ void R_BloomBlend(void)
 	R_Bloom_DrawEffect();
 
 	GL_BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-#else // BLOOM_SUPPORTED
-
-void R_BloomBlend(void)
-{
-}
-
-void R_InitBloomTextures(void)
-{
 }
 
 #endif // BLOOM_SUPPORTED

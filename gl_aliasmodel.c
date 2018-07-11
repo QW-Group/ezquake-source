@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "hud.h"
 #include "hud_common.h"
-#include "gl_bloom.h"
 #include "rulesets.h"
 #include "teamplay.h"
 #include "gl_aliasmodel.h"

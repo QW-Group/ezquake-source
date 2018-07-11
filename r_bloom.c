@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011 ezQuake team
+Copyright (C) 1997-2001 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -13,17 +13,31 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-/**
-	
-	GL Bloom
-
-	Ported by Cokeman, June 2007
-	last edit:
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-void R_InitBloomTextures( void );
-void R_BloomBlend (void);
+#include "quakedef.h"
+#include "r_local.h"
 
+void GLC_BloomBlend(void);
+void GLC_InitBloomTextures(void);
+
+void R_BloomBlend(void)
+{
+#ifdef BLOOM_SUPPORTED
+	if (R_UseImmediateOpenGL()) {
+		GLC_BloomBlend();
+	}
+#endif
+}
+
+void R_InitBloomTextures(void)
+{
+#ifdef BLOOM_SUPPORTED
+	if (R_UseImmediateOpenGL()) {
+		GLC_InitBloomTextures();
+	}
+#endif
+}

@@ -62,4 +62,8 @@ extern cvar_t vid_renderer;
 // textures
 void R_TextureUnitBind(int unit, texture_ref texture);
 
+// bloom.c
+void R_InitBloomTextures(void);
+void R_BloomBlend(void);
+
 #endif // EZQUAKE_R_LOCAL_HEADER
