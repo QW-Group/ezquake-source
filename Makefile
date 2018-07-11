@@ -322,16 +322,16 @@ OBJS_c := \
     xsd_document.o \
     collision.o \
     gl_draw.o \
-    gl_draw_charset.o \
+    r_draw_charset.o \
     gl_bloom.o \
     gl_md3.o \
     gl_mesh.o \
     gl_model.o \
     gl_ngraph.o \
-    gl_refrag.o \
-    gl_rlight.o \
+    r_refrag.o \
+    r_rlight.o \
     gl_rmain.o \
-    gl_rmisc.o \
+    r_rmisc.o \
     gl_rpart.o \
     gl_rsurf.o \
     gl_texture.o \
