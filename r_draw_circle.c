@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "r_buffers.h"
 
-static buffer_ref circleVBO;
-
 glm_circle_framedata_t circleData;
 
 extern float overall_alpha;

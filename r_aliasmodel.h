@@ -22,7 +22,6 @@ void R_AliasSetupLighting(entity_t *ent);
 void GLC_DrawAliasFrame(
 	entity_t* ent,
 	model_t* model, int pose1, int pose2,
-	qbool mtex, qbool scrolldir,
 	texture_ref texture, texture_ref fb_texture,
 	qbool outline, int effects, qbool alpha_blend
 );
@@ -48,8 +47,7 @@ void R_SetupAliasFrame(
 	entity_t* ent,
 	model_t* model,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
-	qbool mtex, qbool scrolldir, qbool outline,
-	texture_ref texture, texture_ref fb_texture,
+	qbool outline, texture_ref texture, texture_ref fb_texture,
 	int effects, int render_effects
 );
 

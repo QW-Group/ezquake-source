@@ -273,7 +273,7 @@ void GLM_UploadFrameConstants(void);
 void GLM_PrepareWorldModelBatch(void);
 
 void GLC_DrawMapOutline(model_t *model);
-void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool mtex, qbool scrolldir, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
+void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 int R_AliasFramePose(maliasframedesc_t* frame);
 
 void GLM_DrawSpriteModel(entity_t* e);

@@ -80,7 +80,6 @@ static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenu
 static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
-static vec3_t    shadevector;
 static vec3_t    dlight_color;
 
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
@@ -164,18 +163,18 @@ static void R_RenderAliasModelEntity(
 			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(ent, model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(ent, model, oldframe, frame, true, false, outline, texture, fb_texture, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
 	}
 	else {
-		R_SetupAliasFrame(ent, model, oldframe, frame, false, false, outline, texture, null_texture_reference, effects, ent->renderfx);
+		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, null_texture_reference, effects, ent->renderfx);
 
 		if (R_TextureReferenceIsValid(fb_texture)) {
-			R_SetupAliasFrame(ent, model, oldframe, frame, false, false, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
+			R_SetupAliasFrame(ent, model, oldframe, frame, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
 		}
 	}
 
@@ -397,7 +396,7 @@ void R_SetupAliasFrame(
 	entity_t* ent,
 	model_t* model,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame,
-	qbool mtex, qbool scrolldir, qbool outline,
+	qbool outline,
 	texture_ref texture, texture_ref fb_texture,
 	int effects, int render_effects
 )
@@ -416,7 +415,10 @@ void R_SetupAliasFrame(
 		GLM_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawAliasFrame(ent, model, oldpose, pose, mtex, scrolldir, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
+		GLC_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
+	}
+	else if (R_UseVulkan()) {
+		//VK_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 	}
 }
 
