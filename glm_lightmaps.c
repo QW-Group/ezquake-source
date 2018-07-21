@@ -50,9 +50,6 @@ texture_ref GLM_LightmapArray(void)
 void GLM_ComputeLightmaps(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0)) {
-		extern unsigned char lighting_compute_glsl[];
-		extern unsigned int lighting_compute_glsl_len;
-
 		if (!R_ProgramCompile(r_program_lightmap_compute)) {
 			return;
 		}

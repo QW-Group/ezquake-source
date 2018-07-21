@@ -217,14 +217,14 @@ qbool GLM_LoadDrawFunctions(void);
 void GL_LoadDrawFunctions(void);
 void GL_InitialiseDebugging(void);
 
-extern cvar_t vid_renderer;
-extern cvar_t vid_gl_core_profile;
-
 // Which renderer to use
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
 // 
-#define GL_CoreProfileContext()   (vid_renderer.integer == 1 && vid_gl_core_profile.integer)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
+extern cvar_t vid_gl_core_profile;
+#define GL_CoreProfileContext()   (R_UseModernOpenGL() && vid_gl_core_profile.integer)
 
 #ifdef __APPLE__
 // https://www.khronos.org/opengl/wiki/OpenGL_Context
@@ -235,6 +235,13 @@ extern cvar_t vid_gl_core_profile;
 // There's no reason for this unless we need to check that we're not using deprecated functionality, so keep disabled
 #define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm(cmdline_param_client_forwardonlyprofile))
 #endif
+
+#else
+
+#define GL_CoreProfileContext() (0)
+#define GL_ForwardOnlyProfile() (0)
+
+#endif // RENDERER_OPTION_MODERN_OPENGL
 
 void GL_TextureEnvMode(GLenum mode);
 void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
@@ -252,8 +259,6 @@ void GL_InvalidateTextureReferences(GLuint texture);
 // Functions
 void GL_BeginDrawSprites(void);
 void GL_EndDrawSprites(void);
-void GL_BeginDrawAliasModels(void);
-void GL_EndDrawAliasModels(void);
 
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world);

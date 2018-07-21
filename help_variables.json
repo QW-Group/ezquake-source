@@ -21006,17 +21006,12 @@
     "vid_renderer": {
       "default": "0",
       "desc": "Selects which rendering mode to use",
+      "remarks": "(variable only available if multiple renderers available)",
       "group-id": "52",
       "type": "enum",
       "values": [
-        {
-          "description": "OpenGL, classic",
-          "name": "0"
-        },
-        {
-          "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)",
-          "name": "1"
-        }
+        { "description": "OpenGL, classic", "name": "0" },
+        { "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)", "name": "1" }
       ]
     },
     "vid_resetonswitch": {

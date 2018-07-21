@@ -210,7 +210,6 @@ static void R_Initialise2DStates(void)
 
 static void R_InitialiseEntityStates(void)
 {
-	extern cvar_t gl_outline_width;
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_none);

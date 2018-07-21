@@ -348,8 +348,8 @@ void GL_GenerateMipmap(texture_ref texture)
 }
 
 // Samplers
-static GLuint nearest_sampler;
-static GLuint linear_sampler;
+static unsigned int nearest_sampler;
+static unsigned int linear_sampler;
 
 void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 {
@@ -375,7 +375,7 @@ void GLM_SamplerSetLinear(unsigned int texture_unit_number)
 	qglBindSampler(texture_unit_number, linear_sampler);
 }
 
-void GLM_SamplerClear(GLuint texture_unit_number)
+void GLM_SamplerClear(unsigned int texture_unit_number)
 {
 	qglBindSampler(texture_unit_number, 0);
 }

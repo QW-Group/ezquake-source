@@ -46,6 +46,7 @@ void R_Shutdown(qbool restart)
 	R_TexturesInvalidateAllReferences();
 }
 
+#ifdef EZ_MULTIPLE_RENDERERS
 void R_SelectRenderer(void)
 {
 	int i;
@@ -72,6 +73,7 @@ void R_SelectRenderer(void)
 	Cvar_LatchedSetValue(&vid_renderer, renderer_options[0]);
 	return;
 }
+#endif // EZ_MULTIPLE_RENDERERS
 
 void R_Initialise(void)
 {

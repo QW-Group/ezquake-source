@@ -26,7 +26,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_local.h"
 #include "r_program.h"
 
+#define GLM_DefineProgram_VF(program_id, name, expect_params, sourcename) \
+	{ \
+		extern unsigned char sourcename##_vertex_glsl[]; \
+		extern unsigned int sourcename##_vertex_glsl_len; \
+		extern unsigned char sourcename##_fragment_glsl[]; \
+		extern unsigned int sourcename##_fragment_glsl_len; \
+		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
+		program_data[program_id].friendly_name = name; \
+		program_data[program_id].needs_params = expect_params; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
+		program_data[program_id].initialised = true; \
+	}
+
+#define GLM_DefineProgram_CS(program_id, name, expect_params, sourcename) \
+	{ \
+		extern unsigned char sourcename##_compute_glsl[]; \
+		extern unsigned int sourcename##_compute_glsl_len; \
+		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
+		program_data[program_id].friendly_name = name; \
+		program_data[program_id].needs_params = expect_params; \
+		program_data[program_id].shaders[GLM_COMPUTE_SHADER].text = (const char*)sourcename##_compute_glsl; \
+		program_data[program_id].shaders[GLM_COMPUTE_SHADER].length = sourcename##_compute_glsl_len; \
+		program_data[program_id].initialised = true; \
+	}
+
 static void GLM_BuildCoreDefinitions(void);
+static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
 
 static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
 	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
@@ -177,9 +206,6 @@ static void GLM_ConPrintShaderLog(GLuint shader)
 		buffer = Q_malloc(max(log_length, src_length));
 		qglGetShaderInfoLog(shader, log_length, &written, buffer);
 		Con_Printf(buffer);
-
-		//qglGetShaderSource(shader, src_length, &written, buffer);
-		//Con_Printf(buffer);
 
 		Q_free(buffer);
 	}
@@ -406,7 +432,7 @@ static qbool GLM_CompileProgram(
 	return false;
 }
 
-void GLM_CleanupShader(GLuint program, GLuint shader)
+static void GLM_CleanupShader(GLuint program, GLuint shader)
 {
 	if (shader) {
 		if (program) {
@@ -497,7 +523,7 @@ void GLM_CvarForceRecompile(void)
 	GLM_BuildCoreDefinitions();
 }
 
-qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
+static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
 {
 	glm_program_t* program = &program_data[program_id];
 	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
@@ -580,67 +606,10 @@ void R_ProgramUse(r_program_id program_id)
 		currentProgram = program;
 	}
 
-	if (program != 0) {
+	if (program != r_program_none) {
 		GLM_UploadFrameConstants();
 	}
 }
-
-#define GLSL_VertexShader(name) { (const char*)name##_vertex_glsl, name##_vertex_glsl_len }
-#define GLSL_GeometryShader(name) { (const char*)name##_geometry_glsl, name##_geometry_glsl_len }
-#define GLSL_FragmentShader(name) { (const char*)name##_fragment_glsl, name##_fragment_glsl_len }
-#define GLSL_ComputeShader(name) { (const char*)name##_compute_glsl, name##_compute_glsl_len }
-
-#define GLM_Source_VF(name) { GLSL_VertexShader(name), GLSL_FragmentShader(name) }
-#define GLM_Source_VGF(name) { GLSL_VertexShader(name), GLSL_FragmentShader(name), GLSL_GeometryShader(name) }
-#define GLM_Source_CS(name) { NULL, 0, NULL, 0, NULL, 0, GLSL_ComputeShader(name) }
-
-#define GLM_DefineProgram_VF(program_id, name, expect_params, sourcename) \
-	{ \
-		extern unsigned char sourcename##_vertex_glsl[]; \
-		extern unsigned int sourcename##_vertex_glsl_len; \
-		extern unsigned char sourcename##_fragment_glsl[]; \
-		extern unsigned int sourcename##_fragment_glsl_len; \
-		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
-		program_data[program_id].friendly_name = name; \
-		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
-		program_data[program_id].initialised = true; \
-	}
-
-#define GLM_DefineProgram_VGF(program_id, name, expect_params, sourcename) \
-	{ \
-		extern unsigned char sourcename##_vertex_glsl[]; \
-		extern unsigned int sourcename##_vertex_glsl_len; \
-		extern unsigned char sourcename##_geometry_glsl[]; \
-		extern unsigned int sourcename##_geometry_glsl_len; \
-		extern unsigned char sourcename##_fragment_glsl[]; \
-		extern unsigned int sourcename##_fragment_glsl_len; \
-		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
-		program_data[program_id].friendly_name = name; \
-		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
-		program_data[program_id].shaders[GLM_GEOMETRY_SHADER].text = (const char*)sourcename##_geometry_glsl; \
-		program_data[program_id].shaders[GLM_GEOMETRY_SHADER].length = sourcename##_geometry_glsl_len; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
-		program_data[program_id].initialised = true; \
-	}
-
-#define GLM_DefineProgram_CS(program_id, name, expect_params, sourcename) \
-	{ \
-		extern unsigned char sourcename##_compute_glsl[]; \
-		extern unsigned int sourcename##_compute_glsl_len; \
-		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
-		program_data[program_id].friendly_name = name; \
-		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[GLM_COMPUTE_SHADER].text = (const char*)sourcename##_compute_glsl; \
-		program_data[program_id].shaders[GLM_COMPUTE_SHADER].length = sourcename##_compute_glsl_len; \
-		program_data[program_id].initialised = true; \
-	}
 
 void R_ProgramInitialiseState(void)
 {

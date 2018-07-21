@@ -56,76 +56,10 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
 
+// Compiles a simple program
 qbool R_ProgramCompile(r_program_id program_id);
+
+// Compiles a program with custom includes based on user's config
 qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_definitions);
-
-#define GLM_DeclareGLSL(name) \
-	extern unsigned char name##_vertex_glsl[]; \
-	extern unsigned int name##_vertex_glsl_len; \
-	extern unsigned char name##_geometry_glsl[]; \
-	extern unsigned int name##_geometry_glsl_len; \
-	extern unsigned char name##_fragment_glsl[]; \
-	extern unsigned int name##_fragment_glsl_len; \
-	extern unsigned char name##_compute_glsl[]; \
-	extern unsigned int name##_compute_glsl_len;
-
-qbool GLM_CreateVFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id
-);
-
-qbool GLM_CreateVFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id,
-	const char* included_definitions
-);
-
-qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
-
-qbool GLM_CreateVGFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* geometry_shader_text,
-	unsigned int geometry_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program
-);
-
-qbool GLM_CreateVGFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* geometry_shader_text,
-	unsigned int geometry_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program,
-	const char* included_definitions
-);
-
-#define GL_VGFDeclare(name) \
-	extern unsigned char name##_vertex_glsl[];\
-	extern unsigned int name##_vertex_glsl_len;\
-	extern unsigned char name##_geometry_glsl[];\
-	extern unsigned int name##_geometry_glsl_len;\
-	extern unsigned char name##_fragment_glsl[];\
-	extern unsigned int name##_fragment_glsl_len;
-#define GL_VGFParams(name) \
-	(const char*)name##_vertex_glsl,\
-	name##_vertex_glsl_len,\
-	(const char*)name##_geometry_glsl,\
-	name##_geometry_glsl_len,\
-	(const char*)name##_fragment_glsl,\
-	name##_fragment_glsl_len
 
 #endif // EZQUAKE_R_PROGRAM_HEADER

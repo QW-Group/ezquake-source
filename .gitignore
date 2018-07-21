@@ -2,4 +2,5 @@
 !.travis.yml
 ezquake
 ezquake.exe
+ezquake-*.exe
 ezquake-*-*

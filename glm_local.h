@@ -84,23 +84,6 @@ typedef struct uniform_block_world_calldata_s {
 	int padding;
 } uniform_block_world_calldata_t;
 
-typedef struct uniform_block_aliasmodel_s {
-	float modelViewMatrix[16];
-	float color[4];
-	int amFlags;
-	float yaw_angle_rad;
-	float shadelight;
-	float ambientlight;
-	int materialSamplerMapping;
-	int lumaSamplerMapping;
-	int lerpBaseIndex;
-	float lerpFraction;
-} uniform_block_aliasmodel_t;
-
-typedef struct block_aliasmodels_s {
-	uniform_block_aliasmodel_t models[MAX_STANDARD_ENTITIES];
-} uniform_block_aliasmodels_t;
-
 typedef struct uniform_block_sprite_s {
 	float modelView[16];
 	float tex[2];
@@ -121,8 +104,6 @@ void GLM_DrawAliasModelBatches(void);
 void GLM_DrawAliasModelPostSceneBatches(void);
 
 void GLM_StateBeginPolyBlend(void);
-void GLM_StateBeginAliasOutlineBatch(void);
-void GLM_StateBeginAliasModelBatch(qbool translucent);
 void GLM_StateBeginDraw3DSprites(void);
 void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
@@ -131,11 +112,6 @@ void GLM_UploadFrameConstants(void);
 
 void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
-
-typedef enum aliasmodel_draw_batch_s {
-	aliasmodel_batch_std_entities,
-	aliasmodel_batch_viewmodel
-} aliasmodel_draw_batch_t;
 
 typedef enum {
 	opaque_world,

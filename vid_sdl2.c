@@ -153,8 +153,12 @@ cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CV
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
+#ifdef EZ_MULTIPLE_RENDERERS
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
+#endif
 
 #ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
@@ -820,8 +824,12 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_displayNumber);
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
+#ifdef EZ_MULTIPLE_RENDERERS
 	Cvar_Register(&vid_renderer);
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	Cvar_Register(&vid_gl_core_profile);
+#endif
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_palette);
 
@@ -1005,10 +1013,16 @@ static void VID_SDL_GL_SetupAttributes(void)
 		VID_SDL_GL_DisableMSAA();
 	}
 
+#ifdef EZ_MULTIPLE_RENDERERS
 	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 		Con_Printf("Invalid vid_renderer value detected, falling back to immediate-mode OpenGL.\n");
 		Cvar_LatchedSetValue(&vid_renderer, 0);
+#else
+		Sys_Error("Invalid vid_renderer value detected");
+#endif
 	}
+#endif
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
@@ -1160,7 +1174,8 @@ static void VID_SDL_Init(void)
 	VID_SetupModeList();
 	VID_SetupResolution();
 
-#ifdef SDL_WINDOW_VULKAN
+#if SDL_VERSION_ATLEAST(2,0,8)
+#ifdef RENDERER_OPTION_VULKAN
 	sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
 	{
 		extern qbool VK_Initialise(SDL_Window* window);
@@ -1171,6 +1186,7 @@ static void VID_SDL_Init(void)
 		}
 		SDL_DestroyWindow(sdl_window);
 	}
+#endif
 #endif
 
 	sdl_window = VID_SDL_CreateWindow(flags);
@@ -1232,7 +1248,9 @@ static void VID_SDL_Init(void)
 	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
 
 	sdl_context = SDL_GL_CreateContext(sdl_window);
-	if (!sdl_context && vid_renderer.integer == 1) {
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
+	// FIXME: Implement falling back from Vulkan too
+	if (!sdl_context && R_UseModernOpenGL()) {
 		Con_Printf("&cf00Error&r: failed to create glsl context, trying classic mode...\n");
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
@@ -1243,6 +1261,7 @@ static void VID_SDL_Init(void)
 
 		sdl_context = SDL_GL_CreateContext(sdl_window);
 	}
+#endif
 	if (!sdl_context) {
 		Com_Printf("Couldn't create OpenGL context: %s\n", SDL_GetError());
 		return;
@@ -1452,9 +1471,11 @@ static void VID_ParseCmdLine(void)
 		Cvar_SetIgnoreCallback(&r_conheight, COM_Argv(i + 1));
 	}
 
+#if defined(EZ_MULTIPLE_RENDERERS) && defined(RENDERER_OPTION_MODERN_OPENGL)
 	if (COM_CheckParm(cmdline_param_client_video_glsl_renderer)) {
 		Cvar_LatchedSetValue(&vid_renderer, 1);
 	}
+#endif
 }
 
 static void VID_Restart_f(void)

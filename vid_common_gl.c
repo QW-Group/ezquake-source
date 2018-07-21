@@ -42,7 +42,6 @@ byte color_black[4] = {0, 0, 0, 255};
 
 static void GL_CheckMultiTextureExtensions(void);
 static void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
-extern cvar_t vid_renderer;
 
 static cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
 static cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
@@ -225,7 +224,7 @@ void GL_Init(void)
 	Cvar_Register(&gl_maxtmu2);
 
 	if (!GL_InitialiseRenderer()) {
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+#if defined(EZ_MULTIPLE_RENDERERS) && defined(RENDERER_OPTION_CLASSIC_OPENGL)
 		Con_Printf("Failed to initialised desired renderer, falling back to classic OpenGL\n");
 		Cvar_LatchedSetValue(&vid_renderer, 0);
 

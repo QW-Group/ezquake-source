@@ -21,18 +21,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "r_aliasmodel.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
 #include "rulesets.h"
 #include "r_matrix.h"
 #include "glm_vao.h"
-#include "glm_local.h"
 #include "r_texture.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
 #include "r_program.h"
+
+void GLM_StateBeginAliasModelBatch(qbool translucent);
+void GLM_StateBeginAliasOutlineBatch(void);
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -74,6 +75,23 @@ static int alias_draw_count;
 
 static buffer_ref aliasModel_ssbo;
 
+typedef struct uniform_block_aliasmodel_s {
+	float modelViewMatrix[16];
+	float color[4];
+	int amFlags;
+	float yaw_angle_rad;
+	float shadelight;
+	float ambientlight;
+	int materialSamplerMapping;
+	int lumaSamplerMapping;
+	int lerpBaseIndex;
+	float lerpFraction;
+} uniform_block_aliasmodel_t;
+
+typedef struct block_aliasmodels_s {
+	uniform_block_aliasmodel_t models[MAX_STANDARD_ENTITIES];
+} uniform_block_aliasmodels_t;
+
 extern float r_framelerp;
 
 #define DRAW_DETAIL_TEXTURES 1
@@ -85,7 +103,7 @@ static buffer_ref vbo_aliasIndirectDraw;
 
 static int cached_mode;
 
-static void SetAliasModelMode(int mode)
+static void R_SetAliasModelUniform(int mode)
 {
 	if (cached_mode != mode) {
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_drawmode, mode);
@@ -440,14 +458,6 @@ static void GLM_QueueAliasModelDraw(
 	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
 }
 
-void GL_BeginDrawAliasModels(void)
-{
-}
-
-void GL_EndDrawAliasModels(void)
-{
-}
-
 // Called for .mdl & .md3
 void GLM_DrawAliasModelFrame(
 	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
@@ -578,7 +588,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	}
 
 	R_ProgramUse(r_program_aliasmodel);
-	SetAliasModelMode(mode);
+	R_SetAliasModelUniform(mode);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	for (i = 0; i < instr->num_calls; ++i) {
@@ -601,7 +611,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
 
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
-		SetAliasModelMode(EZQ_ALIAS_MODE_OUTLINES);
+		R_SetAliasModelUniform(EZQ_ALIAS_MODE_OUTLINES);
 		GLM_StateBeginAliasOutlineBatch();
 
 		for (i = 0; i < instr->num_calls; ++i) {
