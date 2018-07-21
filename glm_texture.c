@@ -135,10 +135,11 @@ void GL_TexSubImage3D(
 	else {
 		GLenum textureUnit = GL_TEXTURE0 + unit;
 		GLenum target = GL_TextureTargetFromReference(texture);
-		R_BindTextureUnit(textureUnit, texture);
+
+		R_TextureUnitBind(textureUnit, texture);
 		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
-	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
+	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
 }
 
 void GL_TexSubImage2D(

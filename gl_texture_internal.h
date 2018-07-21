@@ -27,8 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Texture functions
 // --------------
 
-extern GLenum gl_solid_format, gl_alpha_format;
-
 // Replaces top-level of a texture - if dimensions don't match then texture is reloaded
 void GL_TextureReplace2D(
 	GLenum textureUnit, GLenum target, texture_ref* ref, GLint internalformat,

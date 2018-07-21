@@ -45,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GLM_ScreenDrawStart(void);
 
+// Move to API
 void GLM_SetupGL(void);
 void GLC_SetupGL(void);
 void GLM_PreRenderView(void);
@@ -824,7 +825,7 @@ void R_PostProcessScreen(void)
 		GLM_PostProcessScreen();
 	}
 	else if (R_UseImmediateOpenGL()) {
-		GLC_PostProcessScreen();
+		//GLC_PostProcessScreen();
 	}
 	else if (R_UseVulkan()) {
 

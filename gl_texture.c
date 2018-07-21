@@ -35,7 +35,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_texture_internal.h"
 
 const texture_ref null_texture_reference = { 0 };
-GLenum gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;
+static GLenum gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;
 
 static const texture_ref invalid_texture_reference = { 0 };
 
@@ -266,4 +266,10 @@ void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char*
 	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
 	GL_SetTextureFiltering(*texture, texture_minification_linear, texture_magnification_linear);
 	GL_TextureWrapModeClamp(*texture);
+}
+
+void GL_SetTextureCompression(qbool enabled)
+{
+	gl_alpha_format = (enabled ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8);
+	gl_solid_format = (enabled ? GL_COMPRESSED_RGB_ARB : GL_RGB8);
 }

@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_texture_arrays.h"
 #include "r_texture.h"
 #include "r_chaticons.h"
+#include "gl_texture_internal.h"
 
 static const texture_array_ref_t zero_array_ref[TEXTURETYPES_COUNT];
 static texture_flag_t texture_flags[MAX_GLTEXTURES];
@@ -539,8 +540,7 @@ void GL_BuildCommonTextureArrays(qbool vid_restart)
 				}
 
 				if (flagged_type == TEXTURETYPES_SPRITES) {
-					GL_TexParameteri(GL_TEXTURE0, array_ref, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-					GL_TexParameteri(GL_TEXTURE0, array_ref, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+					R_TextureWrapModeClamp(array_ref);
 				}
 
 				// Copy the 2D textures across

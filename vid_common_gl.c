@@ -97,11 +97,9 @@ static void GL_CheckShaderExtensions(void)
 	}
 }
 
-static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
-	float newval = Q_atof(string);
-
-	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA8;
-	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB8;
+static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel)
+{
+	R_SetTextureCompression(Q_atof(string));
 }
 
 /************************************** GL INIT **************************************/

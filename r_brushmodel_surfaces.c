@@ -32,6 +32,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps.h"
 #include "r_trace.h"
 
+// Move to API
+void GLM_DrawWorld(void);
+void GLC_DrawWorld(void);
+void GLC_ClearTextureChains(void);
+
 // gl_refrag.c
 void R_StoreEfrags(efrag_t **ppefrag);
 

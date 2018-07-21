@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_framebuffer.h"
 #include "tr_types.h"
 #include "r_texture.h"
+#include "gl_texture_internal.h"
 
 // OpenGL functionality from elsewhere
 GLuint GL_TextureNameFromReference(texture_ref ref);
@@ -158,10 +159,9 @@ framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3d)
 
 	// Render to texture
 	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->rgbaTexture);
-	GL_ObjectLabel(GL_TEXTURE, GL_TextureNameFromReference(fb->rgbaTexture), -1, is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
-	GL_SetTextureFiltering(fb->rgbaTexture, texture_minification_linear, texture_minification_linear);
-	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	GL_TexParameteri(GL_TEXTURE0, fb->rgbaTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	GL_TextureLabel(GL_TextureNameFromReference(fb->rgbaTexture), is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
+	R_SetTextureFiltering(fb->rgbaTexture, texture_minification_linear, texture_minification_linear);
+	R_TextureWrapModeClamp(fb->rgbaTexture);
 
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);

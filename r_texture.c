@@ -42,6 +42,8 @@ void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
 void GL_TextureWrapModeClamp(texture_ref tex);
 void GL_DeleteTexture(texture_ref texture);
 void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
+void GL_CreateTextures(r_texture_type_id type, int count, texture_ref* textures);
+void GL_SetTextureCompression(qbool enabled);
 
 gltexture_t  gltextures[MAX_GLTEXTURES];
 static int   numgltextures = 1;
@@ -639,5 +641,15 @@ void R_CreateTextures(r_texture_type_id type, int count, texture_ref* textures)
 	}
 	else if (R_UseVulkan()) {
 		//VK_BindTextures(unit, count, textures);
+	}
+}
+
+void R_SetTextureCompression(qbool enabled)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_SetTextureCompression(enabled);
+	}
+	else if (R_UseVulkan()) {
+		//VK_SetTextureCompression(enabled);
 	}
 }
