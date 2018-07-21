@@ -711,6 +711,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 
 	host_everything_loaded = true;
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("event,init\n");
+#endif
 }
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
@@ -753,6 +756,10 @@ void Host_Shutdown (void)
 
 void Host_Quit (void)
 {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("event,quit\n");
+#endif
+
 	// execute user's trigger
 	TP_ExecTrigger ("f_exit");
 	Cbuf_Execute();

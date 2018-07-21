@@ -481,6 +481,7 @@ void Sys_Printf (char *fmt, ...)
 	if (houtput != NULL) {
 		va_list argptr;
 		char text[1024];
+		DWORD dummy;
 
 		va_start(argptr, fmt);
 		vsnprintf(text, sizeof(text), fmt, argptr);

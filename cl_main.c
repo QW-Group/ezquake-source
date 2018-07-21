@@ -348,6 +348,9 @@ int CL_ClientState (void)
 
 void CL_MakeActive(void) 
 {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("event,active (map=%s)\n", host_mapname.string);
+#endif
 	cls.state = ca_active;
 	if (cls.demoplayback) 
 	{
@@ -1358,6 +1361,9 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+			Sys_Printf("event,connected...\n");
+#endif
 			if ((!com_serveractive || developer.value) && !cls.demoplayback)
 				Com_Printf("&c1f1connected!&r\n");
 			allowremotecmd = false; // localid required now for remote cmds

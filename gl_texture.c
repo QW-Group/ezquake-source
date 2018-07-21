@@ -210,7 +210,13 @@ void GL_SetTextureAnisotropy(texture_ref texture, int anisotropy)
 
 void GL_DeleteTexture(texture_ref texture)
 {
-	glDeleteTextures(1, &gltextures[texture.index].texnum);
+	gltexture_t* slot = &gltextures[texture.index];
+
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("opengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * (slot->texmode & TEX_ALPHA ? 4 : 3), slot->identifier);
+#endif
+
+	glDeleteTextures(1, &slot->texnum);
 
 	// Might have been bound when deleted, update state
 	GL_InvalidateTextureReferences(gltextures[texture.index].texnum);
@@ -219,6 +225,9 @@ void GL_DeleteTexture(texture_ref texture)
 void GL_AllocateStorage(gltexture_t* texture)
 {
 	GL_TexStorage2D(texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->reference.index, texture->texture_width, texture->texture_height, texture->texture_width * texture->texture_height * (texture->texmode & TEX_ALPHA ? 4 : 3), texture->identifier);
+#endif
 }
 
 qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)

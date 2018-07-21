@@ -978,6 +978,9 @@ void CL_Changing_f (void) {
 			// drop to full console
 			// not active anymore, but not disconnected
 			cls.state = ca_connected;
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+			Sys_Printf("event,active(changing)\n");
+#endif
 
 			if (!com_serveractive) {
 				// notice mapname not valid yet
