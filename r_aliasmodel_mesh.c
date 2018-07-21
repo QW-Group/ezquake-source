@@ -51,9 +51,9 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				src = &poseverts[pose][vert];
 
 				l = src->lightnormalindex;
-				x = src->v[0];
-				y = src->v[1];
-				z = src->v[2];
+				x = src->v[0] * hdr->scale[0];
+				y = src->v[1] * hdr->scale[1];
+				z = src->v[2] * hdr->scale[2];
 				s = stverts[vert].s;
 				t = stverts[vert].t;
 

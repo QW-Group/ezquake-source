@@ -43,8 +43,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 
 	// Work out how many verts we are going to need to store in VBO
 	model->vertsInVBO = vertsPerFrame = 0;
-	MD3_ForEachSurface(pheader, surf, surfnum)
-	{
+	MD3_ForEachSurface(pheader, surf, surfnum) {
 		vertsPerFrame += 3 * surf[surfnum].numTriangles;
 	}
 	model->vertsInVBO = vertsPerFrame * pheader->numFrames;
@@ -74,10 +73,18 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 					t = texCoords[triangles[triangle].indexes[i]].t;
 
 					VectorScale(vert->xyz, MD3_XYZ_SCALE, vbo[v].position);
-					VectorCopy(r_avertexnormals[vert->normal >> 8], vbo[v].normal);
-					vbo[v].texture_coords[0] = s;
-					vbo[v].texture_coords[1] = t;
-					vbo[v].vert_index = v - base;
+					{
+						{
+							float lat = ((vert->normal >> 8) & 255) * (2.0 * M_PI) / 255.0;
+							float lng = (vert->normal & 255) * (2.0 * M_PI) / 255.0;
+							vbo[v].normal[0] = cos(lat) * sin(lng);
+							vbo[v].normal[1] = sin(lat) * sin(lng);
+							vbo[v].normal[2] = cos(lng);
+						}
+						vbo[v].texture_coords[0] = s;
+						vbo[v].texture_coords[1] = t;
+						vbo[v].vert_index = v - base;
+					}
 				}
 			}
 		}

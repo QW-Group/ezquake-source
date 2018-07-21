@@ -369,7 +369,7 @@ typedef struct aliashdr_s {
 
 	int          numposes;
 	int          poseverts;
-	int          posedata;	// numposes*poseverts trivert_t
+	int          posedata;	// numposes*poseverts ez_trivertx_t
 	int          commands;	// gl command list with embedded s/t
 	texture_ref  gl_texturenum[MAX_SKINS][4];
 	texture_ref  fb_texturenum[MAX_SKINS][4];

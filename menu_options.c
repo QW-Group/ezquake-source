@@ -194,7 +194,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void Sys_RegisterQWURLProtocol_f(void);
 #endif
-extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumatextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumatextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells,
 	scr_teaminfo
 ;
 
@@ -928,7 +928,6 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Player & Weapon Model"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
-	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 0, 10, 1),
 	ADDSET_NUMBER	("Weapon Opacity", cl_drawgun, 0, 1, 0.05),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Weapon Size", r_viewmodelsize, 0.1, 1, 0.05),

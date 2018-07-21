@@ -98,6 +98,11 @@ typedef struct {
 } trivertx_t;
 
 typedef struct {
+	vec3_t  v;
+	byte	lightnormalindex;
+} ez_trivertx_t;
+
+typedef struct {
 	trivertx_t	bboxmin;	// lightnormal isn't used
 	trivertx_t	bboxmax;	// lightnormal isn't used
 	char		name[16];	// frame name from grabbing

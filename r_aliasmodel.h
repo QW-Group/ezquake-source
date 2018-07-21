@@ -57,8 +57,11 @@ void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* al
 void R_AliasModelMD3PopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 void R_CreateAliasModelVBO(buffer_ref instance_vbo);
 
-void GLC_StateBeginAliasPowerupShell(void);
+void GLC_StateBeginAliasPowerupShell(qbool weapon);
 void GLC_AllocateAliasPoseBuffer(void);
+
+void GLC_BeginCausticsTextureMatrix(void);
+void GLC_EndCausticsTextureMatrix(void);
 
 void R_DrawAliasModel(entity_t *ent);
 

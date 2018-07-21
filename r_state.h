@@ -213,6 +213,7 @@ typedef enum {
 	r_state_aliasmodel_caustics,
 
 	r_state_aliasmodel_powerupshell,
+	r_state_weaponmodel_powerupshell,
 
 	r_state_aliasmodel_notexture_opaque,
 	r_state_aliasmodel_notexture_transparent,

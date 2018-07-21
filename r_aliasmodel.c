@@ -613,7 +613,10 @@ void R_DrawViewModel(void)
 	VectorCopy(cent->current.angles, gun.angles);
 	gun.colormap = vid.colormap;
 	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
-	if (r_lerpmuzzlehack.value) {
+	if (r_lerpmuzzlehack.integer) {
+		// These seem to be 'viewmodels that don't have muzzleflash'
+		// ... Models generally have the muzzleflash behind the gun when not firing, so
+		//     RF_LIMITLERP stops the muzzleflash slowly moving forward when smoothing
 		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
 			cent->current.modelindex != cl_modelindices[mi_vbio] &&
 			cent->current.modelindex != cl_modelindices[mi_vgrap] &&
@@ -814,8 +817,9 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	total = end - start;
 
 	Cache_Alloc(&mod->cache, total, loadname);
-	if (!mod->cache.data)
+	if (!mod->cache.data) {
 		return;
+	}
 	memcpy(mod->cache.data, pheader, total);
 
 	// try load simple textures

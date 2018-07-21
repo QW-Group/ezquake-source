@@ -51,16 +51,15 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	R_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity(ent);
+	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
+		// perform scalling for r_viewmodelsize
+		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
+	}
 
 	// 
 	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	if (ent->alpha) {
 		r_modelalpha = ent->alpha;
-	}
-
-	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
-		// perform scalling for r_viewmodelsize
-		R_ScaleModelview(bound(0.5, r_viewmodelsize.value, 1), 1, 1);
 	}
 
 	R_AliasSetupLighting(ent);

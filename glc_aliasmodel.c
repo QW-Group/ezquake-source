@@ -151,21 +151,73 @@ void GLC_FreeAliasPoseBuffer(void)
 	temp_aliasmodel_buffer_size = 0;
 }
 
+static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_t *verts1, ez_trivertx_t *verts2, float lerpfrac)
+{
+	float l;
+
+	// VULT VERTEX LIGHTING
+	if (amf_lighting_vertex.integer && !full_light) {
+		l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
+	}
+	else {
+		l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+		l = (l * shadelight + ambientlight) / 256.0;
+	}
+	l = min(l, 1);
+
+	//VULT COLOURED MODEL LIGHTS
+	if (amf_lighting_colour.integer && !full_light) {
+		int i;
+		vec3_t lc;
+
+		for (i = 0; i < 3; i++) {
+			lc[i] = lightcolor[i] / 256 + l;
+		}
+
+		if (r_modelcolor[0] < 0) {
+			// normal color
+			VectorCopy(lc, color);
+		}
+		else {
+			color[0] = r_modelcolor[0] * lc[0];
+			color[1] = r_modelcolor[1] * lc[1];
+			color[2] = r_modelcolor[2] * lc[2];
+		}
+	}
+	else if (custom_model == NULL) {
+		if (r_modelcolor[0] < 0) {
+			color[0] = color[1] = color[2] = l;
+		}
+		else {
+			color[0] = r_modelcolor[0] * l;
+			color[1] = r_modelcolor[1] * l;
+			color[2] = r_modelcolor[2] * l;
+		}
+	}
+	else {
+		color[0] = custom_model->color_cvar.color[0] / 255.0f;
+		color[1] = custom_model->color_cvar.color[1] / 255.0f;
+		color[2] = custom_model->color_cvar.color[2] / 255.0f;
+	}
+
+	color[0] *= r_modelalpha;
+	color[1] *= r_modelalpha;
+	color[2] *= r_modelalpha;
+	color[3] = r_modelalpha;
+}
+
 void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
-	int position = 0;
 	GLenum primitive = GL_TRIANGLE_STRIP;
 	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
+	int position = 0;
 
 	int *order, count;
 	vec3_t interpolated_verts;
-	float l, lerpfrac;
-	trivertx_t *verts1, *verts2;
-	//VULT COLOURED MODEL LIGHTS
-	int i;
-	vec3_t lc;
+	float lerpfrac;
+	ez_trivertx_t *verts1, *verts2;
 
 	if (render_effects & RF_CAUSTICS) {
 		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
@@ -177,7 +229,7 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
-	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (ez_trivertx_t *)((byte *) paliashdr + paliashdr->posedata);
 	verts1 += pose1 * paliashdr->poseverts;
 	verts2 += pose2 * paliashdr->poseverts;
 
@@ -203,73 +255,29 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 
 		do {
 			float color[4];
+			float s = ((float *)order)[0];
+			float t = ((float *)order)[1];
+			order += 2;
 
 			// texture coordinates come from the draw list
 			if (cache) {
-				temp_aliasmodel_buffer[position].texture_coords[0] = ((float *)order)[0];
-				temp_aliasmodel_buffer[position].texture_coords[1] = ((float *)order)[1];
+				temp_aliasmodel_buffer[position].texture_coords[0] = s;
+				temp_aliasmodel_buffer[position].texture_coords[1] = t;
 			}
 			else if (mtex) {
-				qglMultiTexCoord2f(GL_TEXTURE0, ((float *)order)[0], ((float *)order)[1]);
-				qglMultiTexCoord2f(GL_TEXTURE1, ((float *)order)[0], ((float *)order)[1]);
+				qglMultiTexCoord2f(GL_TEXTURE0, s, t);
+				qglMultiTexCoord2f(GL_TEXTURE1, s, t);
 			}
 			else {
-				glTexCoord2f(((float *)order)[0], ((float *)order)[1]);
+				glTexCoord2f(s, t);
 			}
-
-			order += 2;
 
 			if ((ent->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
-			// VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.integer && !full_light) {
-				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
-			}
-			else {
-				l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-				l = (l * shadelight + ambientlight) / 256.0;
-			}
-			l = min(l, 1);
-
-			//VULT COLOURED MODEL LIGHTS
-			if (amf_lighting_colour.integer && !full_light) {
-				for (i = 0; i < 3; i++) {
-					lc[i] = lightcolor[i] / 256 + l;
-				}
-
-				if (r_modelcolor[0] < 0) {
-					// normal color
-					VectorCopy(lc, color);
-				}
-				else {
-					color[0] = r_modelcolor[0] * lc[0];
-					color[1] = r_modelcolor[1] * lc[1];
-					color[2] = r_modelcolor[2] * lc[2];
-				}
-			}
-			else if (custom_model == NULL) {
-				if (r_modelcolor[0] < 0) {
-					color[0] = color[1] = color[2] = l;
-				}
-				else {
-					color[0] = r_modelcolor[0] * l;
-					color[1] = r_modelcolor[1] * l;
-					color[2] = r_modelcolor[2] * l;
-				}
-			}
-			else {
-				color[0] = custom_model->color_cvar.color[0] / 255.0f;
-				color[1] = custom_model->color_cvar.color[1] / 255.0f;
-				color[2] = custom_model->color_cvar.color[2] / 255.0f;
-			}
-
-			color[0] *= r_modelalpha;
-			color[1] *= r_modelalpha;
-			color[2] *= r_modelalpha;
-			color[3] = r_modelalpha;
+			GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
 
 			if (cache) {
 				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
@@ -348,8 +356,7 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 	int *order, count;
 	vec3_t interpolated_verts;
 	float lerpfrac;
-	trivertx_t* verts1;
-	trivertx_t* verts2;
+	ez_trivertx_t *verts1, *verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
 	GLC_StateBeginAliasOutlineFrame();
@@ -358,7 +365,7 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
-	verts2 = verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 
 	verts1 += pose1 * paliashdr->poseverts;
 	verts2 += pose2 * paliashdr->poseverts;
@@ -383,8 +390,9 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 		do {
 			order += 2;
 
-			if ((ent->renderfx & RF_LIMITLERP))
+			if ((ent->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+			}
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			GLC_Vertex3fv(interpolated_verts);
@@ -397,7 +405,7 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 	}
 }
 
-static void GLC_SetPowerupShellColor(int layer_no, int effects)
+void GLC_SetPowerupShellColor(int layer_no, int effects)
 {
 	// set color: alpha so we can see colour underneath still
 	float r_shellcolor[3];
@@ -413,20 +421,20 @@ static void GLC_SetPowerupShellColor(int layer_no, int effects)
 }
 
 static void GLC_DrawPowerupShell(
-	model_t* model, int effects,
+	entity_t* ent,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
 {
+	model_t* model = ent->model;
 	int pose1 = R_AliasFramePose(oldframe);
 	int pose2 = R_AliasFramePose(frame);
-	trivertx_t* verts1;
-	trivertx_t* verts2;
+	ez_trivertx_t* verts1;
+	ez_trivertx_t* verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	int layer_no;
 	int *order, count;
 	float scroll[4];
-	float v[3];
-	float shell_size = bound(0, gl_powerupshells_size.value, 20);
+	vec3_t v1, v2, v;
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
 
@@ -440,7 +448,7 @@ static void GLC_DrawPowerupShell(
 	for (layer_no = 0; layer_no <= 1; ++layer_no) {
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
-		verts1 = verts2 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		verts1 = verts2 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		verts1 += pose1 * paliashdr->poseverts;
 		verts2 += pose2 * paliashdr->poseverts;
 
@@ -458,7 +466,7 @@ static void GLC_DrawPowerupShell(
 			}
 
 			if (!cache) {
-				GLC_SetPowerupShellColor(layer_no, effects);
+				GLC_SetPowerupShellColor(layer_no, ent->effects);
 				GLC_Begin(drawMode);
 			}
 
@@ -468,12 +476,9 @@ static void GLC_DrawPowerupShell(
 
 				order += 2;
 
-				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
-				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
-				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
-				v[0] += r_framelerp * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
-				v[1] += r_framelerp * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
-				v[2] += r_framelerp * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
+				VectorMA(verts1->v, 0.5f, r_avertexnormals[verts1->lightnormalindex], v1);
+				VectorMA(verts2->v, 0.5f, r_avertexnormals[verts2->lightnormalindex], v2);
+				VectorInterpolate(v1, r_framelerp, v2, v);
 
 				if (cache) {
 					temp_aliasmodel_buffer[position].texture_coords[0] = s;
@@ -494,12 +499,11 @@ static void GLC_DrawPowerupShell(
 				int i;
 
 				R_BindVertexArray(vao_aliasmodel_powerupshell);
-
-				GLC_SetPowerupShellColor(0, effects);
+				GLC_SetPowerupShellColor(0, ent->effects);
 				GL_DrawArrays(drawMode, 0, position);
 
 				// And quickly update texture-coordinates and run again...
-				GLC_SetPowerupShellColor(1, effects);
+				GLC_SetPowerupShellColor(1, ent->effects);
 				for (i = 0; i < position; ++i) {
 					temp_aliasmodel_buffer[i].texture_coords[0] += scroll[2] - scroll[0];
 					temp_aliasmodel_buffer[i].texture_coords[1] += scroll[3] - scroll[1];
@@ -545,9 +549,9 @@ static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashd
 	int *order, count;
 	vec3_t point;
 	float lheight = ent->origin[2] - lightspot[2], height = 1 - lheight;
-	trivertx_t *verts;
+	ez_trivertx_t *verts;
 
-	verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts = (ez_trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
 	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
@@ -565,9 +569,9 @@ static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashd
 			order += 2;
 
 			// normals and vertexes come from the frame list
-			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+			point[0] = verts->v[0] + paliashdr->scale_origin[0];
+			point[1] = verts->v[1] + paliashdr->scale_origin[1];
+			point[2] = verts->v[2] + paliashdr->scale_origin[2];
 
 			point[0] -= shadevector[0] * (point[2] +lheight);
 			point[1] -= shadevector[1] * (point[2] + lheight);
@@ -619,8 +623,8 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	// FIXME: think need put it after caustics
 	R_PushModelviewMatrix(oldMatrix);
 	R_StateBeginDrawAliasModel(ent, paliashdr);
-	GLC_StateBeginAliasPowerupShell();
-	GLC_DrawPowerupShell(ent->model, ent->effects, oldframe, frame);
+	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
+	GLC_DrawPowerupShell(ent, oldframe, frame);
 	R_PopModelviewMatrix(oldMatrix);
 
 	R_TraceLeaveRegion(true);

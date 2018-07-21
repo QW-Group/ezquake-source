@@ -514,6 +514,11 @@ void R_InitialiseEntityStates(void)
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_modulate;
 
+	state = R_CopyRenderingState(r_state_weaponmodel_powerupshell, r_state_aliasmodel_powerupshell, "weaponmodel-shell");
+	if (R_UseImmediateOpenGL()) {
+		state->depth.farRange = 0.3f;
+	}
+
 	state = R_InitRenderingState(r_state_aliasmodel_notexture_opaque, true, "opaqueAliasModelNoTexture", vao_aliasmodel);
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->blendingEnabled = state->alphaTesting.enabled = false;
@@ -545,13 +550,21 @@ void R_InitialiseEntityStates(void)
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_opaque, r_state_aliasmodel_singletexture_opaque, "weaponModelSingleOpaque");
-	state->depth.farRange = 0.3f;
+	if (R_UseImmediateOpenGL()) {
+		state->depth.farRange = 0.3f;
+	}
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
-	state->depth.farRange = 0.3f;
+	if (R_UseImmediateOpenGL()) {
+		state->depth.farRange = 0.3f;
+	}
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_opaque, r_state_weaponmodel_singletexture_opaque, "weaponModelMultiOpaque");
-	state->depth.farRange = 0.3f;
+	if (R_UseImmediateOpenGL()) {
+		state->depth.farRange = 0.3f;
+	}
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiOpaque");
-	state->depth.farRange = 0.3f;
+	if (R_UseImmediateOpenGL()) {
+		state->depth.farRange = 0.3f;
+	}
 
 	state = R_InitRenderingState(r_state_aliasmodel_shadows, true, "aliasModelShadowState", vao_aliasmodel);
 	state->polygonOffset.option = r_polygonoffset_disabled;
@@ -640,17 +653,16 @@ void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	if (ent->model->modhint == MOD_EYES) {
 		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
 		// double size of eyes, since they are really hard to see in gl
-		R_ScaleModelview(paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+		R_ScaleModelview(2, 2, 2);
 	}
 	else if (ent->renderfx & RF_WEAPONMODEL) {
 		float scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
 
 		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		R_ScaleModelview(paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+		R_ScaleModelview(scale, 1, 1);
 	}
 	else {
 		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		R_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 
 	R_TraceLeaveFunctionRegion;

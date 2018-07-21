@@ -133,11 +133,11 @@ void GLC_StateBeginDrawMapOutline(void)
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
-void GLC_StateBeginAliasPowerupShell(void)
+void GLC_StateBeginAliasPowerupShell(qbool weapon)
 {
 	extern texture_ref shelltexture;
 
-	R_ApplyRenderingState(r_state_aliasmodel_powerupshell);
+	R_ApplyRenderingState(weapon ? r_state_weaponmodel_powerupshell : r_state_aliasmodel_powerupshell);
 	R_TextureUnitBind(0, shelltexture);
 }
 

@@ -7,7 +7,7 @@ qbool GLM_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
 
-static void GLM_AddWaterFog(int contents)
+static void GLM_ConfigureFog(int contents)
 {
 }
 
@@ -15,11 +15,7 @@ static void GLM_RenderSceneBlur(float alpha)
 {
 }
 
-static void GLM_DrawAliasModelShadow(entity_t* ent)
-{
-}
-
-static void GLM_DrawAliasModelPowerupShell(entity_t* ent)
+static void R_Stubs_NoOperationEntity(entity_t* ent)
 {
 }
 
@@ -32,7 +28,6 @@ static void R_Stubs_NoOperation(void)
 #define GLM_ClearRenderingSurface          GL_Clear
 #define GLM_EnsureFinished                 GL_EnsureFinished
 #define GLM_Screenshot                     GL_Screenshot
-#define GLM_ConfigureFog                   R_Stubs_NoOperation
 #define GLM_InitTextureState               GL_InitTextureState
 #define GLM_InitialiseVAOState             GL_InitialiseVAOState
 #define GLM_DescriptiveString              GL_DescriptiveString
@@ -41,6 +36,9 @@ static void R_Stubs_NoOperation(void)
 #define GLM_IsFramebufferEnabled3D         GL_FramebufferEnabled3D
 #define GLM_Begin2DRendering               GL_Framebuffer2DSwitch
 #define GLM_ApplyRenderingState            GL_ApplyRenderingState
+#define GLM_DrawAliasModelShadow           R_Stubs_NoOperationEntity
+#define GLM_DrawAliasModelPowerupShell     R_Stubs_NoOperationEntity
+#define GLM_DrawAlias3ModelPowerupShell    R_Stubs_NoOperationEntity
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

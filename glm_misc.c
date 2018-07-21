@@ -147,7 +147,7 @@ void GLM_PreRenderView(void)
 		extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;
 		extern cvar_t gl_powerupshells_effect1level, gl_powerupshells_effect2level;
 
-		frameConstants.shellSize = bound(0, gl_powerupshells_size.value, 20);
+		frameConstants.shellSize = 0.5f;
 		frameConstants.shell_base_level1 = gl_powerupshells_base1level.value;
 		frameConstants.shell_base_level2 = gl_powerupshells_base2level.value;
 		frameConstants.shell_effect_level1 = gl_powerupshells_effect1level.value;

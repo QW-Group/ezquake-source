@@ -23,6 +23,7 @@ RENDERER_METHOD(void, DrawAliasFrame, entity_t* ent, model_t* model, int pose1, 
 RENDERER_METHOD(void, DrawAlias3Model, entity_t *ent)
 RENDERER_METHOD(void, DrawAliasModelShadow, entity_t* ent)
 RENDERER_METHOD(void, DrawAliasModelPowerupShell, entity_t *ent)
+RENDERER_METHOD(void, DrawAlias3ModelPowerupShell, entity_t *ent)
 RENDERER_METHOD(void, DrawSpriteModel, entity_t *ent)
 RENDERER_METHOD(void, DrawSimpleItem, model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right)
 

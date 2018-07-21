@@ -289,7 +289,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 {
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
-	trivertx_t* vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	ez_trivertx_t* vertices = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	int* order = (int *)((byte *)paliashdr + paliashdr->commands);
 	int v = 0;
 	int count = 0;
@@ -299,7 +299,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 
 	m->temp_vbo_buffer = vbo_buffer;
 	for (pose = 0; pose < paliashdr->numposes; ++pose) {
-		vertices = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		vertices = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 		vertices += pose * paliashdr->poseverts;
 		v = pose * total_vertices;
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
@@ -344,7 +344,7 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	int i, j;
 	int* cmds;
-	trivertx_t* verts;
+	ez_trivertx_t* verts;
 	int total_vertices = 0;
 
 	// Tonik: don't cache anything, because it seems just as fast
@@ -358,12 +358,16 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	hdr->commands = (byte *)cmds - (byte *)hdr;
 	memcpy(cmds, commands, numcommands * 4);
 
-	verts = (trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(trivertx_t));
+	verts = (ez_trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(ez_trivertx_t));
 	hdr->posedata = (byte *)verts - (byte *)hdr;
 	for (i = 0; i < hdr->numposes; i++) {
 		for (j = 0; j < numorder; j++) {
 			//TODO: corrupted files may cause a crash here, sanity checks?
-			*verts++ = poseverts[i][vertexorder[j]];
+			verts->v[0] = poseverts[i][vertexorder[j]].v[0] * hdr->scale[0];
+			verts->v[1] = poseverts[i][vertexorder[j]].v[1] * hdr->scale[1];
+			verts->v[2] = poseverts[i][vertexorder[j]].v[2] * hdr->scale[2];
+			verts->lightnormalindex = poseverts[i][vertexorder[j]].lightnormalindex;
+			++verts;
 		}
 	}
 
