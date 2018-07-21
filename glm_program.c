@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "glm_local.h"
+#include "r_program.h"
+
+static void GLM_BuildCoreDefinitions(void);
 
 static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
 	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
@@ -36,7 +39,17 @@ static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
 #define GLM_COMPUTE_SHADER  3
 #define GLM_SHADER_COUNT    4
 
+typedef struct glm_shader_def_s {
+	const char* text;
+	unsigned int length;
+} glm_shader_def_t;
+
 typedef struct glm_program_s {
+	const char* friendly_name;
+	qbool needs_params;
+	qbool initialised;
+	glm_shader_def_t shaders[GLM_SHADER_COUNT];
+
 	GLuint vertex_shader;
 	GLuint geometry_shader;
 	GLuint fragment_shader;
@@ -44,10 +57,7 @@ typedef struct glm_program_s {
 	GLuint program;
 	GLbitfield memory_barrier;
 
-	const char* friendly_name;
-	const char* shader_text[GLM_SHADER_COUNT];
 	char* included_definitions;
-	GLuint shader_length[GLM_SHADER_COUNT];
 	qbool uniforms_found;
 
 	unsigned int custom_options;
@@ -96,6 +106,7 @@ typedef void (APIENTRY *glCompileShader_t)(GLuint shader);
 typedef void (APIENTRY *glDeleteShader_t)(GLuint shader);
 typedef void (APIENTRY *glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
 typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
+typedef void (APIENTRY *glGetShaderSource_t)(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* source);
 
 // Program functions
 typedef GLuint(APIENTRY *glCreateProgram_t)(void);
@@ -123,6 +134,7 @@ static glShaderSource_t      qglShaderSource = NULL;
 static glCompileShader_t     qglCompileShader = NULL;
 static glDeleteShader_t      qglDeleteShader = NULL;
 static glGetShaderInfoLog_t  qglGetShaderInfoLog = NULL;
+static glGetShaderSource_t   qglGetShaderSource = NULL;
 static glGetShaderiv_t       qglGetShaderiv = NULL;
 
 // Program functions
@@ -154,15 +166,21 @@ static char core_definitions[512];
 static void GLM_ConPrintShaderLog(GLuint shader)
 {
 	GLint log_length;
+	GLint src_length;
 	char* buffer;
 
 	qglGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
+	qglGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &src_length);
 	if (log_length) {
 		GLsizei written;
 
-		buffer = Q_malloc(log_length);
+		buffer = Q_malloc(max(log_length, src_length));
 		qglGetShaderInfoLog(shader, log_length, &written, buffer);
 		Con_Printf(buffer);
+
+		qglGetShaderSource(shader, src_length, &written, buffer);
+		Con_Printf(buffer);
+
 		Q_free(buffer);
 	}
 }
@@ -313,14 +331,14 @@ static qbool GLM_CompileProgram(
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shader_text[GLM_VERTEX_SHADER], "", "", "", "", "" };
-	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shader_length[GLM_VERTEX_SHADER], 0, 0, 0, 0, 0 };
+	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_VERTEX_SHADER].text, "", "", "", "", "" };
+	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_VERTEX_SHADER].length, 0, 0, 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shader_text[GLM_GEOMETRY_SHADER], "", "", "", "", "" };
-	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shader_length[GLM_GEOMETRY_SHADER], 0, 0, 0, 0, 0 };
+	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_GEOMETRY_SHADER].text, "", "", "", "", "" };
+	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_GEOMETRY_SHADER].length, 0, 0, 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shader_text[GLM_FRAGMENT_SHADER], "", "", "", "", "" };
-	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0, 0, 0 };
+	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_FRAGMENT_SHADER].text, "", "", "", "", "" };
+	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_FRAGMENT_SHADER].length, 0, 0, 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
 
@@ -388,97 +406,6 @@ static qbool GLM_CompileProgram(
 	return false;
 }
 
-qbool GLM_CreateVGFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* geometry_shader_text,
-	unsigned int geometry_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id
-)
-{
-	return GLM_CreateVGFProgramWithInclude(
-		friendlyName,
-		vertex_shader_text,
-		vertex_shader_text_length,
-		geometry_shader_text,
-		geometry_shader_text_length,
-		fragment_shader_text,
-		fragment_shader_text_length,
-		program_id,
-		NULL
-	);
-}
-
-qbool GLM_CreateVGFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* geometry_shader_text,
-	unsigned int geometry_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id,
-	const char* included_definitions
-)
-{
-	glm_program_t* program = &program_data[program_id];
-
-	program->program = 0;
-	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
-	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
-	program->shader_length[GLM_VERTEX_SHADER] = vertex_shader_text_length;
-	program->shader_text[GLM_GEOMETRY_SHADER] = geometry_shader_text;
-	program->shader_length[GLM_GEOMETRY_SHADER] = geometry_shader_text_length;
-	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
-	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
-	program->friendly_name = friendlyName;
-	Q_free(program->included_definitions);
-	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
-
-	return GLM_CompileProgram(program);
-}
-
-qbool GLM_CreateVFProgram(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id
-)
-{
-	return GLM_CreateVFProgramWithInclude(friendlyName, vertex_shader_text, vertex_shader_text_length, fragment_shader_text, fragment_shader_text_length, program_id, NULL);
-}
-
-qbool GLM_CreateVFProgramWithInclude(
-	const char* friendlyName,
-	const char* vertex_shader_text,
-	unsigned int vertex_shader_text_length,
-	const char* fragment_shader_text,
-	unsigned int fragment_shader_text_length,
-	r_program_id program_id,
-	const char* included_definitions
-)
-{
-	glm_program_t* program = &program_data[program_id];
-
-	program->program = 0;
-	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
-	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
-	program->shader_length[GLM_VERTEX_SHADER] = vertex_shader_text_length;
-	program->shader_text[GLM_GEOMETRY_SHADER] = NULL;
-	program->shader_length[GLM_GEOMETRY_SHADER] = 0;
-	program->shader_text[GLM_FRAGMENT_SHADER] = fragment_shader_text;
-	program->shader_length[GLM_FRAGMENT_SHADER] = fragment_shader_text_length;
-	program->friendly_name = friendlyName;
-	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
-
-	return GLM_CompileProgram(program);
-}
-
 void GLM_CleanupShader(GLuint program, GLuint shader)
 {
 	if (shader) {
@@ -530,12 +457,6 @@ void GLM_DeletePrograms(qbool restarting)
 	}
 }
 
-static void GLM_BuildCoreDefinitions(void)
-{
-	// Set common definitions here (none yet)
-	memset(core_definitions, 0, sizeof(core_definitions));
-}
-
 // Called during vid_restart, as starting up again
 void GLM_InitPrograms(void)
 {
@@ -544,10 +465,9 @@ void GLM_InitPrograms(void)
 	GLM_BuildCoreDefinitions();
 
 	for (p = r_program_none; p < r_program_count; ++p) {
-		// FIXME: At the moment we need the name to be set to know if we should compile...
-		if (!program_data[p].program && program_data[p].friendly_name) {
-			if (program_data[p].shader_text[GLM_COMPUTE_SHADER]) {
-				GLM_CompileComputeShaderProgram(p, program_data[p].shader_text[GLM_COMPUTE_SHADER], program_data[p].shader_length[GLM_COMPUTE_SHADER]);
+		if (!program_data[p].program && !program_data[p].needs_params && program_data[p].initialised) {
+			if (program_data[p].shaders[GLM_COMPUTE_SHADER].length) {
+				GLM_CompileComputeShaderProgram(p, program_data[p].shaders[GLM_COMPUTE_SHADER].text, program_data[p].shaders[GLM_COMPUTE_SHADER].length);
 				R_ProgramFindUniformsForProgram(p);
 			}
 			else {
@@ -586,10 +506,6 @@ qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shade
 	GLuint shader;
 
 	program->program = 0;
-	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
-	memset(program->shader_length, 0, sizeof(program->shader_length));
-	program->shader_text[GLM_COMPUTE_SHADER] = shadertext;
-	program->shader_length[GLM_COMPUTE_SHADER] = length;
 
 	components = GLM_InsertDefinitions(shader_text, shader_text_length, "");
 	if (GLM_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
@@ -628,6 +544,7 @@ qbool GLM_LoadProgramFunctions(void)
 	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
 	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
 	GL_LoadMandatoryFunctionExtension(glShaderSource, all_available);
+	GL_LoadMandatoryFunctionExtension(glGetShaderSource, all_available);
 	GL_LoadMandatoryFunctionExtension(glCompileShader, all_available);
 	GL_LoadMandatoryFunctionExtension(glDeleteShader, all_available);
 	GL_LoadMandatoryFunctionExtension(glGetShaderInfoLog, all_available);
@@ -668,9 +585,68 @@ void R_ProgramUse(r_program_id program_id)
 	}
 }
 
+#define GLSL_VertexShader(name) { (const char*)name##_vertex_glsl, name##_vertex_glsl_len }
+#define GLSL_GeometryShader(name) { (const char*)name##_geometry_glsl, name##_geometry_glsl_len }
+#define GLSL_FragmentShader(name) { (const char*)name##_fragment_glsl, name##_fragment_glsl_len }
+#define GLSL_ComputeShader(name) { (const char*)name##_compute_glsl, name##_compute_glsl_len }
+
+#define GLM_Source_VF(name) { GLSL_VertexShader(name), GLSL_FragmentShader(name) }
+#define GLM_Source_VGF(name) { GLSL_VertexShader(name), GLSL_FragmentShader(name), GLSL_GeometryShader(name) }
+#define GLM_Source_CS(name) { NULL, 0, NULL, 0, NULL, 0, GLSL_ComputeShader(name) }
+
+#define GLM_DefineProgram_VF(program_id, name, expect_params, sourcename) \
+	{ \
+		extern unsigned char sourcename##_vertex_glsl[]; \
+		extern unsigned int sourcename##_vertex_glsl_len; \
+		extern unsigned char sourcename##_fragment_glsl[]; \
+		extern unsigned int sourcename##_fragment_glsl_len; \
+		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
+		program_data[program_id].friendly_name = name; \
+		program_data[program_id].needs_params = expect_params; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
+		program_data[program_id].initialised = true; \
+	}
+
+#define GLM_DefineProgram_VGF(program_id, name, expect_params, sourcename) \
+	{ \
+		extern unsigned char sourcename##_vertex_glsl[]; \
+		extern unsigned int sourcename##_vertex_glsl_len; \
+		extern unsigned char sourcename##_geometry_glsl[]; \
+		extern unsigned int sourcename##_geometry_glsl_len; \
+		extern unsigned char sourcename##_fragment_glsl[]; \
+		extern unsigned int sourcename##_fragment_glsl_len; \
+		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
+		program_data[program_id].friendly_name = name; \
+		program_data[program_id].needs_params = expect_params; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
+		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
+		program_data[program_id].shaders[GLM_GEOMETRY_SHADER].text = (const char*)sourcename##_geometry_glsl; \
+		program_data[program_id].shaders[GLM_GEOMETRY_SHADER].length = sourcename##_geometry_glsl_len; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
+		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
+		program_data[program_id].initialised = true; \
+	}
+
+#define GLM_DefineProgram_CS(program_id, name, expect_params, sourcename) \
+	{ \
+		extern unsigned char sourcename##_compute_glsl[]; \
+		extern unsigned int sourcename##_compute_glsl_len; \
+		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
+		program_data[program_id].friendly_name = name; \
+		program_data[program_id].needs_params = expect_params; \
+		program_data[program_id].shaders[GLM_COMPUTE_SHADER].text = (const char*)sourcename##_compute_glsl; \
+		program_data[program_id].shaders[GLM_COMPUTE_SHADER].length = sourcename##_compute_glsl_len; \
+		program_data[program_id].initialised = true; \
+	}
+
 void R_ProgramInitialiseState(void)
 {
 	currentProgram = 0;
+
+	GLM_BuildCoreDefinitions();
 }
 
 static void GLM_Uniform1i(GLint location, GLint value)
@@ -752,4 +728,36 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values)
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id)
 {
 	return program_uniforms[uniform_id].int_value;
+}
+
+qbool R_ProgramCompile(r_program_id program_id)
+{
+	return R_ProgramCompileWithInclude(program_id, NULL);
+}
+
+qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_definitions)
+{
+	glm_program_t* program = &program_data[program_id];
+
+	program->compute_shader = program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
+	Q_free(program->included_definitions);
+	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
+
+	return GLM_CompileProgram(program);
+}
+
+static void GLM_BuildCoreDefinitions(void)
+{
+	// Set common definitions here (none yet)
+	memset(core_definitions, 0, sizeof(core_definitions));
+
+	GLM_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel);
+	GLM_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world);
+	GLM_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites);
+	GLM_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon);
+	GLM_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line);
+	GLM_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image);
+	GLM_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle);
+	GLM_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen);
+	GLM_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting);
 }

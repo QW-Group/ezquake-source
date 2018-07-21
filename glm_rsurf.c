@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_brushmodel.h"
 #include "r_buffers.h"
+#include "r_program.h"
 
 #define GLM_DRAWCALL_INCREMENT 8
 
@@ -138,7 +139,6 @@ static void Compile_DrawWorldProgram(void)
 	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
 		int samplers = 0;
-		GL_VFDeclare(draw_world);
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (detail_textures) {
@@ -191,7 +191,7 @@ static void Compile_DrawWorldProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(draw_world), r_program_brushmodel, included_definitions);
+		R_ProgramCompileWithInclude(r_program_brushmodel, included_definitions);
 
 		R_ProgramSetCustomOptions(r_program_brushmodel, drawworld_desiredOptions);
 	}

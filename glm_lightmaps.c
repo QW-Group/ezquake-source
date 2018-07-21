@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps_internal.h"
 #include "glm_local.h"
 #include "gl_texture_internal.h"
+#include "r_program.h"
 
 // Hardware lighting: flag surfaces as we add them
 static buffer_ref ssbo_surfacesTodo;
@@ -52,7 +53,7 @@ void GLM_ComputeLightmaps(void)
 		extern unsigned char lighting_compute_glsl[];
 		extern unsigned int lighting_compute_glsl_len;
 
-		if (!GLM_CompileComputeShaderProgram(r_program_lightmap_compute, (const char*)lighting_compute_glsl, lighting_compute_glsl_len)) {
+		if (!R_ProgramCompile(r_program_lightmap_compute)) {
 			return;
 		}
 

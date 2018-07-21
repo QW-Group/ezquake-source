@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "glm_local.h"
 #include "r_state.h"
+#include "r_program.h"
 
 static qbool GLM_CompilePostProcessProgram(void);
 
@@ -147,7 +148,6 @@ static qbool GLM_CompilePostProcessProgram(void)
 
 	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
 		static char included_definitions[512];
-		GL_VFDeclare(post_process_screen);
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (post_process_flags & POST_PROCESS_PALETTE) {
@@ -158,7 +158,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("post-process-screen", GL_VFParams(post_process_screen), r_program_post_process, included_definitions);
+		R_ProgramCompileWithInclude(r_program_post_process, included_definitions);
 
 		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
 	}

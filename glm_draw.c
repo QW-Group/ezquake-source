@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "glsl/constants.glsl"
 #include "glm_local.h"
+#include "r_program.h"
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 static void GLM_CreateMultiImageProgram(void);
@@ -105,12 +106,8 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 
 void GLM_HudPreparePolygons(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_hud_polygon, 0)) {
-		GL_VFDeclare(hud_draw_polygon);
-
-		if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(hud_draw_polygon), r_program_hud_polygon)) {
-			return;
-		}
+	if (R_ProgramRecompileNeeded(r_program_hud_polygon, 0) && !R_ProgramCompile(r_program_hud_polygon)) {
+		return;
 	}
 
 	if (!R_BufferReferenceIsValid(polygonVBO)) {
@@ -146,10 +143,7 @@ void GLM_HudPrepareLines(void)
 	}
 
 	if (R_ProgramRecompileNeeded(r_program_hud_line, 0)) {
-		GL_VFDeclare(hud_draw_line);
-
-		// Very simple line-drawing
-		GLM_CreateVFProgram("LineDrawing", GL_VFParams(hud_draw_line), r_program_hud_line);
+		R_ProgramCompile(r_program_hud_line);
 	}
 }
 
@@ -254,7 +248,6 @@ static void GLM_CreateMultiImageProgram(void)
 	if (R_ProgramRecompileNeeded(r_program_hud_images, program_flags)) {
 		char included_definitions[512];
 
-		GL_VFDeclare(hud_draw_image);
 		included_definitions[0] = '\0';
 
 		if (program_flags != 0 && program_flags != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
@@ -263,7 +256,7 @@ static void GLM_CreateMultiImageProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("Multi-image", GL_VFParams(hud_draw_image), r_program_hud_images, included_definitions);
+		R_ProgramCompileWithInclude(r_program_hud_images, included_definitions);
 
 		R_ProgramSetCustomOptions(r_program_hud_images, program_flags);
 	}
@@ -324,9 +317,7 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 void GLM_HudPrepareCircles(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_hud_circles, 0)) {
-		GL_VFDeclare(hud_draw_circle);
-
-		if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(hud_draw_circle), r_program_hud_circles)) {
+		if (!R_ProgramCompile(r_program_hud_circles)) {
 			return;
 		}
 	}

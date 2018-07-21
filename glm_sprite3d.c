@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_state.h"
 #include "glm_local.h"
+#include "r_program.h"
 
 static void GLM_Create3DSpriteVAO(void)
 {
@@ -52,9 +53,7 @@ static void GLM_Create3DSpriteVAO(void)
 static void GLM_Compile3DSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
-		GL_VFDeclare(draw_sprites);
-
-		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), r_program_sprite3d);
+		R_ProgramCompile(r_program_sprite3d);
 	}
 }
 

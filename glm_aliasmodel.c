@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
+#include "r_program.h"
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
@@ -104,7 +105,6 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
-		GL_VFDeclare(draw_aliasmodel);
 
 		included_definitions[0] = '\0';
 		if (caustic_textures) {
@@ -126,7 +126,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(draw_aliasmodel), r_program_aliasmodel, included_definitions);
+		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);
 
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
