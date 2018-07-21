@@ -35,7 +35,7 @@ typedef struct deleteable_texture_s {
 } deleteable_texture_t;
 
 #define TEMP_BUFFER_SIZE (MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4)
-static byte atlas_texels[MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4];
+static byte* atlas_texels;
 static byte* buffer;
 static byte* prev_atlas_texels;
 static deleteable_texture_t atlas_deletable_textures[WADPIC_PIC_COUNT + NUMCROSSHAIRS + 2 + MAX_CHARSETS];
@@ -60,14 +60,19 @@ static float solid_t;
 static texture_ref atlas_texnum;
 static qbool atlas_refresh = false;
 
+static void AddTextureToDeleteList(texture_ref tex)
+{
+	if (R_TextureReferenceIsValid(tex) && atlas_delete_count < sizeof(atlas_deletable_textures) / sizeof(atlas_deletable_textures[0])) {
+		atlas_deletable_textures[atlas_delete_count].original = tex;
+		atlas_deletable_textures[atlas_delete_count].moved_to_atlas = false;
+		atlas_delete_count++;
+	}
+}
+
 static void AddToDeleteList(mpic_t* src)
 {
 	if (src->sl == 0 && src->tl == 0 && src->th == 1 && src->sh == 1) {
-		if (atlas_delete_count < sizeof(atlas_deletable_textures) / sizeof(atlas_deletable_textures[0])) {
-			atlas_deletable_textures[atlas_delete_count].original = src->texnum;
-			atlas_deletable_textures[atlas_delete_count].moved_to_atlas = false;
-			atlas_delete_count++;
-		}
+		AddTextureToDeleteList(src->texnum);
 	}
 }
 
@@ -99,7 +104,7 @@ void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 }
 
 // Returns false if allocation failed.
-static qbool CachePics_AllocBlock(int w, int h, int *x, int *y)
+static qbool Atlas_AllocBlock(int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
 
@@ -145,7 +150,7 @@ static void CachePics_AllocateSolidTexture(void)
 {
 	int x_pos, y_pos, y;
 
-	CachePics_AllocBlock(atlas_chunk_size, atlas_chunk_size, &x_pos, &y_pos);
+	Atlas_AllocBlock(atlas_chunk_size, atlas_chunk_size, &x_pos, &y_pos);
 
 	for (y = 0; y < atlas_chunk_size; ++y) {
 		memset(atlas_texels + (x_pos + (y_pos + y) * atlas_texture_width) * 4, 0xFF, atlas_chunk_size * 4);
@@ -174,7 +179,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	}
 
 	// Allocate space in an atlas texture
-	if (CachePics_AllocBlock(width + (width == atlas_texture_width ? 0 : padding), height + (height == atlas_texture_height ? 0 : padding), &x_pos, &y_pos)) {
+	if (Atlas_AllocBlock(width + (width == atlas_texture_width ? 0 : padding), height + (height == atlas_texture_height ? 0 : padding), &x_pos, &y_pos)) {
 		int yOffset;
 		byte* input_image = NULL;
 
@@ -224,12 +229,12 @@ void CachePics_AtlasUpload(void)
 		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 		R_SetTextureFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
 	}
-	atlas_dirty = 0;
+	atlas_dirty = false;
 }
 
 void CachePics_Init(void)
 {
-	atlas_dirty = ~0;
+	atlas_dirty = true;
 	atlas_texture_width = atlas_texture_height = min(glConfig.gl_max_size_default, MAXIMUM_ATLAS_TEXTURE_WIDTH);
 
 	CachePics_AtlasUpload();
@@ -325,6 +330,8 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 
 	Q_free(target);
 	Q_free(source);
+
+	AddToDeleteList(ibar);
 }
 
 void CachePics_CreateAtlas(void)
@@ -336,8 +343,12 @@ void CachePics_CreateAtlas(void)
 	double start_time = Sys_DoubleTime();
 
 	// Delete old atlas textures
-	prev_atlas_texels = Q_malloc(MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4);
-	memcpy(prev_atlas_texels, atlas_texels, MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4);
+	atlas_texels = Q_malloc(TEMP_BUFFER_SIZE);
+	prev_atlas_texels = Q_malloc(TEMP_BUFFER_SIZE);
+	if (R_TextureReferenceIsValid(atlas_texnum)) {
+		R_TextureGet(atlas_texnum, TEMP_BUFFER_SIZE, prev_atlas_texels);
+	}
+	//memcpy(prev_atlas_texels, atlas_texels, TEMP_BUFFER_SIZE);
 	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
@@ -386,6 +397,8 @@ void CachePics_CreateAtlas(void)
 				}
 			}
 		}
+		AddTextureToDeleteList(charset->master);
+		R_TextureReferenceInvalidate(charset->master);
 
 #ifdef EZ_FREETYPE_SUPPORT
 		charset = &proportional_fonts[i];
@@ -398,6 +411,8 @@ void CachePics_CreateAtlas(void)
 				}
 			}
 		}
+		AddTextureToDeleteList(charset->master);
+		R_TextureReferenceInvalidate(charset->master);
 #endif
 	}
 
@@ -475,6 +490,7 @@ void CachePics_CreateAtlas(void)
 
 	DeleteOldTextures();
 
+	Q_free(atlas_texels);
 	Q_free(prev_atlas_texels);
 	Q_free(buffer);
 	Con_DPrintf("Atlas build time: %f\n", Sys_DoubleTime() - start_time);
