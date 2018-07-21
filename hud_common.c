@@ -221,8 +221,10 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 //
 
 // status numbers
-void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
-		float scale, int style, int digits, char *s_align, qbool proportional)
+void SCR_HUD_DrawNum(
+	hud_t *hud, int num, qbool low,
+	float scale, int style, int digits, char *s_align, qbool proportional
+)
 {
 	extern mpic_t *sb_nums[2][11];
 
@@ -244,15 +246,17 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	}
 
 	align = 2;
-	switch (tolower(s_align[0]))
-	{
+	switch (tolower(s_align[0])) {
 		default:
 		case 'l':   // 'l'eft
-			align = 0; break;
+			align = 0;
+			break;
 		case 'c':   // 'c'enter
-			align = 1; break;
+			align = 1;
+			break;
 		case 'r':   // 'r'ight
-			align = 2; break;
+			align = 2;
+			break;
 	}
 
 	snprintf(buf, sizeof (buf), "%d", (style == 2 || style == 3) ? num : abs(num));
@@ -314,7 +318,12 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 		}
 	}
 	else {
-		width = FontFixedWidth(len, scale, true, proportional);
+		if (size == 8) {
+			width = FontFixedWidth(len, scale, true, proportional);
+		}
+		else {
+			width = len * size * scale;
+		}
 	}
 
 	height = size * scale;
