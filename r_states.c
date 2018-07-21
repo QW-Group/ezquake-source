@@ -27,11 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_matrix.h"
 #include "glc_matrix.h"
+#include "glc_state.h"
 #include "tr_types.h"
 
-extern texture_ref solidskytexture, alphaskytexture;
-
-void R_InitialiseWorldStates(void)
+static void R_InitialiseWorldStates(void)
 {
 	rendering_state_t* state;
 
@@ -137,221 +136,7 @@ void R_InitialiseWorldStates(void)
 	R_InitRenderingState(r_state_opaque_surfaces_glm, true, "glmWorldState", vao_brushmodel);
 }
 
-void GLM_StateBeginDrawWorldOutlines(void)
-{
-	extern cvar_t gl_outline_width;
-
-	R_TraceEnterFunctionRegion;
-
-	// FIXME: This was different for GLC & GLM, why?  // disable depth-test
-	R_ApplyRenderingState(r_state_world_outline);
-	// limit outline width, since even width == 3 can be considered as cheat.
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset)
-{
-	if (alpha_surfaces && polygon_offset) {
-		R_ApplyRenderingState(r_state_alpha_surfaces_offset_glm);
-	}
-	else if (alpha_surfaces) {
-		R_ApplyRenderingState(r_state_alpha_surfaces_glm);
-	}
-	else if (polygon_offset) {
-		R_ApplyRenderingState(r_state_opaque_surfaces_offset_glm);
-	}
-	else {
-		R_ApplyRenderingState(r_state_opaque_surfaces_glm);
-	}
-}
-
-void GLC_InitialiseSkyStates(void)
-{
-	rendering_state_t* state;
-
-	state = R_InitRenderingState(r_state_sky_fast, true, "fastSkyState", vao_brushmodel);
-	state->depth.test_enabled = false;
-
-	state = R_InitRenderingState(r_state_sky_fast_fogged, true, "fastSkyStateFogged", vao_brushmodel);
-	state->depth.test_enabled = false;
-	state->fog.enabled = true;
-
-	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_none);
-	state->depth.test_enabled = true;
-	state->blendingEnabled = true;
-	state->fog.enabled = false;
-	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
-	state->blendFunc = r_blendfunc_src_zero_dest_one;
-
-	state = R_InitRenderingState(r_state_skydome_zbuffer_pass_fogged, true, "skyDomeZPassFoggedState", vao_none);
-	state->depth.test_enabled = true;
-	state->blendingEnabled = true;
-	state->fog.enabled = true;
-	state->blendFunc = r_blendfunc_src_one_dest_zero;
-
-	state = R_InitRenderingState(r_state_skydome_background_pass, true, "skyDomeFirstPassState", vao_none);
-	state->depth.test_enabled = false;
-	state->blendingEnabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
-
-	state = R_InitRenderingState(r_state_skydome_cloud_pass, true, "skyDomeCloudPassState", vao_none);
-	state->depth.test_enabled = false;
-	state->blendingEnabled = true;
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
-
-	state = R_InitRenderingState(r_state_skydome_single_pass, true, "skyDomeSinglePassState", vao_none);
-	state->depth.test_enabled = false;
-	state->blendingEnabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
-	state->textureUnits[1].enabled = true;
-	state->textureUnits[1].mode = r_texunit_mode_decal;
-}
-
-void GLC_StateBeginFastSky(void)
-{
-	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
-
-	R_TraceEnterFunctionRegion;
-
-	if (gl_fogsky.integer && gl_fogenable.integer) {
-		R_ApplyRenderingState(r_state_sky_fast_fogged);
-	}
-	else {
-		R_ApplyRenderingState(r_state_sky_fast);
-	}
-	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginSkyZBufferPass(void)
-{
-	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor, gl_fogred, gl_foggreen, gl_fogblue;
-
-	R_TraceEnterFunctionRegion;
-
-	if (gl_fogenable.integer && gl_fogsky.integer) {
-		R_ApplyRenderingState(r_state_skydome_zbuffer_pass_fogged);
-		R_CustomColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
-	}
-	else {
-		R_ApplyRenderingState(r_state_skydome_zbuffer_pass);
-	}
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginSingleTextureSkyDome(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_background_pass);
-	R_TextureUnitBind(0, solidskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_cloud_pass);
-	R_TextureUnitBind(0, alphaskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginMultiTextureSkyDome(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_single_pass);
-	R_TextureUnitBind(0, solidskytexture);
-	R_TextureUnitBind(1, alphaskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginMultiTextureSkyChain(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_single_pass);
-	R_TextureUnitBind(0, solidskytexture);
-	R_TextureUnitBind(1, alphaskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginSingleTextureSkyPass(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_background_pass);
-	R_TextureUnitBind(0, solidskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginSingleTextureCloudPass(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_skydome_cloud_pass);
-	R_TextureUnitBind(0, alphaskytexture);
-
-	R_TraceLeaveFunctionRegion;
-}
-
-void R_InitialiseStates(void)
-{
-	R_InitRenderingState(r_state_default_3d, true, "default3DState", vao_none);
-}
-
-float R_WaterAlpha(void)
-{
-	extern cvar_t r_wateralpha;
-
-	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-}
-
-void R_StateDefault3D(void)
-{
-	R_TraceResetRegion(false);
-
-	R_TraceEnterFunctionRegion;
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	if (R_UseImmediateOpenGL()) {
-		GLC_PauseMatrixUpdate();
-	}
-#endif
-	R_IdentityModelView();
-	R_RotateModelview(-90, 1, 0, 0);	    // put Z going up
-	R_RotateModelview(90, 0, 0, 1);	    // put Z going up
-	R_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
-	R_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
-	R_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
-	R_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	if (R_UseImmediateOpenGL()) {
-		GLC_ResumeMatrixUpdate();
-		GLC_LoadModelviewMatrix();
-	}
-#endif
-	R_TraceLeaveFunctionRegion;
-}
-
-void GLM_StateBeginDraw3DSprites(void)
-{
-}
-
-void R_Initialise2DStates(void)
+static void R_Initialise2DStates(void)
 {
 	rendering_state_t* state;
 
@@ -423,80 +208,7 @@ void R_Initialise2DStates(void)
 	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
 }
 
-void GLC_StateBeginBrightenScreen(void)
-{
-	R_ApplyRenderingState(r_state_brighten_screen);
-}
-
-void R_StateBeginAlphaLineRGB(float thickness)
-{
-	R_ApplyRenderingState(r_state_line);
-	if (thickness > 0.0) {
-		R_CustomLineWidth(thickness);
-	}
-}
-
-void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
-{
-	// Same as lineState
-	R_ApplyRenderingState(r_state_line);
-	if (thickness > 0.0) {
-		R_CustomLineWidth(thickness);
-	}
-}
-
-void GLC_StateBeginSceneBlur(void)
-{
-	R_ApplyRenderingState(r_state_scene_blur);
-
-	R_IdentityModelView();
-	R_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-}
-
-void GLC_StateBeginDrawPolygon(void)
-{
-	R_ApplyRenderingState(r_state_line);
-}
-
-void GLC_StateBeginBloomDraw(texture_ref texture)
-{
-	R_ApplyRenderingState(r_state_postprocess_bloom);
-	R_TextureUnitBind(0, texture);
-}
-
-void GLC_StateBeginPolyBlend(float v_blend[4])
-{
-	R_ApplyRenderingState(r_state_poly_blend);
-}
-
-void GLC_StateBeginImageDraw(qbool is_text)
-{
-	extern cvar_t gl_alphafont;
-
-	if (is_text && !gl_alphafont.integer) {
-		R_ApplyRenderingState(r_state_hud_images_alphatested_glc);
-	}
-	else {
-		R_ApplyRenderingState(r_state_hud_images_glc);
-	}
-}
-
-void GLM_StateBeginPolyBlend(void)
-{
-	R_ApplyRenderingState(r_state_poly_blend);
-}
-
-void GLM_StateBeginImageDraw(void)
-{
-	R_ApplyRenderingState(r_state_hud_images_glm);
-}
-
-void GLM_StateBeginPolygonDraw(void)
-{
-	R_ApplyRenderingState(r_state_hud_images_glm);
-}
-
-void R_InitialiseEntityStates(void)
+static void R_InitialiseEntityStates(void)
 {
 	extern cvar_t gl_outline_width;
 	rendering_state_t* state;
@@ -622,6 +334,108 @@ void R_InitialiseEntityStates(void)
 	state->blendingEnabled = true;
 }
 
+static void R_InitialiseBrushModelStates(void)
+{
+	rendering_state_t* current;
+
+	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
+	current->fog.enabled = true;
+
+	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lightmap_pass);
+	current->fog.enabled = true;
+	current->textureUnits[0].enabled = true;
+	current->textureUnits[0].mode = r_texunit_mode_blend;
+
+	// Single-texture: all of these are the same so we don't need to bother about others
+	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+
+	// material * lightmap
+	current = R_InitRenderingState(r_state_world_material_lightmap, true, "r_state_world_material_lightmap", vao_brushmodel_lm_unit1);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+
+	// material * lightmap + luma
+	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
+
+	current = R_InitRenderingState(r_state_world_material_lightmap_fb, true, "r_state_world_material_lightmap_fb", vao_brushmodel_lm_unit1);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_decal);
+
+	// no fullbrights, 3 units: blend(material + luma, lightmap) 
+	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
+
+	// lumas enabled, 3 units
+	current = R_InitRenderingState(r_state_world_material_luma_lightmap, true, "r_state_world_material_luma_lightmap", vao_brushmodel);
+	current->fog.enabled = true;
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
+}
+
+void R_InitialiseStates(void)
+{
+	R_InitRenderingState(r_state_default_3d, true, "default3DState", vao_none);
+
+	R_InitialiseBrushModelStates();
+	R_Initialise2DStates();
+	R_InitialiseEntityStates();
+	R_InitialiseWorldStates();
+}
+
+float R_WaterAlpha(void)
+{
+	extern cvar_t r_wateralpha;
+
+	return bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
+}
+
+void R_StateDefault3D(void)
+{
+	R_TraceResetRegion(false);
+
+	R_TraceEnterFunctionRegion;
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	if (R_UseImmediateOpenGL()) {
+		GLC_PauseMatrixUpdate();
+	}
+#endif
+	R_IdentityModelView();
+	R_RotateModelview(-90, 1, 0, 0);	    // put Z going up
+	R_RotateModelview(90, 0, 0, 1);	    // put Z going up
+	R_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
+	R_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
+	R_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
+	R_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	if (R_UseImmediateOpenGL()) {
+		GLC_ResumeMatrixUpdate();
+		GLC_LoadModelviewMatrix();
+	}
+#endif
+	R_TraceLeaveFunctionRegion;
+}
+
+void R_StateBeginAlphaLineRGB(float thickness)
+{
+	R_ApplyRenderingState(r_state_line);
+	if (thickness > 0.0) {
+		R_CustomLineWidth(thickness);
+	}
+}
+
 void R_StateBrushModelBeginDraw(entity_t* e, qbool polygonOffset)
 {
 	static r_state_id brushModelStates[] = {
@@ -664,24 +478,4 @@ void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	}
 
 	R_TraceLeaveFunctionRegion;
-}
-
-void GLC_StateBeginAliasOutlineFrame(void)
-{
-	R_ApplyRenderingState(r_state_aliasmodel_outline);
-}
-
-void GLM_StateBeginAliasOutlineBatch(void)
-{
-	R_ApplyRenderingState(r_state_aliasmodel_outline);
-}
-
-void GLM_StateBeginAliasModelBatch(qbool translucent)
-{
-	if (translucent) {
-		R_ApplyRenderingState(r_state_aliasmodel_translucent_batch);
-	}
-	else {
-		R_ApplyRenderingState(r_state_aliasmodel_opaque_batch);
-	}
 }

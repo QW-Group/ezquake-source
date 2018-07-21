@@ -233,6 +233,7 @@ MODERN_OPENGL_OBJS := \
     glm_sky.o \
     glm_sprite.o \
     glm_sprite3d.o \
+    glm_state.o \
     glm_texture_arrays.o \
     glm_vao.o
 

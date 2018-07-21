@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "r_trace.h"
 #include "r_aliasmodel.h"
+#include "r_matrix.h"
+
+extern texture_ref solidskytexture, alphaskytexture;
 
 void GLC_StateBeginFastTurbPoly(byte color[4])
 {
@@ -295,4 +298,201 @@ void GLC_Vertex3fv(const GLfloat* v)
 #ifdef WITH_RENDERING_TRACE
 	++glcVertsSent;
 #endif
+}
+
+void GLC_InitialiseSkyStates(void)
+{
+	rendering_state_t* state;
+
+	state = R_InitRenderingState(r_state_sky_fast, true, "fastSkyState", vao_brushmodel);
+	state->depth.test_enabled = false;
+
+	state = R_InitRenderingState(r_state_sky_fast_fogged, true, "fastSkyStateFogged", vao_brushmodel);
+	state->depth.test_enabled = false;
+	state->fog.enabled = true;
+
+	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_none);
+	state->depth.test_enabled = true;
+	state->blendingEnabled = true;
+	state->fog.enabled = false;
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
+	state->blendFunc = r_blendfunc_src_zero_dest_one;
+
+	state = R_InitRenderingState(r_state_skydome_zbuffer_pass_fogged, true, "skyDomeZPassFoggedState", vao_none);
+	state->depth.test_enabled = true;
+	state->blendingEnabled = true;
+	state->fog.enabled = true;
+	state->blendFunc = r_blendfunc_src_one_dest_zero;
+
+	state = R_InitRenderingState(r_state_skydome_background_pass, true, "skyDomeFirstPassState", vao_none);
+	state->depth.test_enabled = false;
+	state->blendingEnabled = false;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
+
+	state = R_InitRenderingState(r_state_skydome_cloud_pass, true, "skyDomeCloudPassState", vao_none);
+	state->depth.test_enabled = false;
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
+
+	state = R_InitRenderingState(r_state_skydome_single_pass, true, "skyDomeSinglePassState", vao_none);
+	state->depth.test_enabled = false;
+	state->blendingEnabled = false;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
+	state->textureUnits[1].enabled = true;
+	state->textureUnits[1].mode = r_texunit_mode_decal;
+}
+
+void GLC_StateBeginFastSky(void)
+{
+	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
+
+	R_TraceEnterFunctionRegion;
+
+	if (gl_fogsky.integer && gl_fogenable.integer) {
+		R_ApplyRenderingState(r_state_sky_fast_fogged);
+	}
+	else {
+		R_ApplyRenderingState(r_state_sky_fast);
+	}
+	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginSkyZBufferPass(void)
+{
+	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor, gl_fogred, gl_foggreen, gl_fogblue;
+
+	R_TraceEnterFunctionRegion;
+
+	if (gl_fogenable.integer && gl_fogsky.integer) {
+		R_ApplyRenderingState(r_state_skydome_zbuffer_pass_fogged);
+		R_CustomColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+	}
+	else {
+		R_ApplyRenderingState(r_state_skydome_zbuffer_pass);
+	}
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginSingleTextureSkyDome(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_background_pass);
+	R_TextureUnitBind(0, solidskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_cloud_pass);
+	R_TextureUnitBind(0, alphaskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginMultiTextureSkyDome(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_single_pass);
+	R_TextureUnitBind(0, solidskytexture);
+	R_TextureUnitBind(1, alphaskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginMultiTextureSkyChain(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_single_pass);
+	R_TextureUnitBind(0, solidskytexture);
+	R_TextureUnitBind(1, alphaskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginSingleTextureSkyPass(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_background_pass);
+	R_TextureUnitBind(0, solidskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginSingleTextureCloudPass(void)
+{
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(r_state_skydome_cloud_pass);
+	R_TextureUnitBind(0, alphaskytexture);
+
+	R_TraceLeaveFunctionRegion;
+}
+
+void GLC_StateBeginBrightenScreen(void)
+{
+	R_ApplyRenderingState(r_state_brighten_screen);
+}
+
+void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
+{
+	// Same as lineState
+	R_ApplyRenderingState(r_state_line);
+	if (thickness > 0.0) {
+		R_CustomLineWidth(thickness);
+	}
+}
+
+void GLC_StateBeginSceneBlur(void)
+{
+	R_ApplyRenderingState(r_state_scene_blur);
+
+	R_IdentityModelView();
+	R_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
+}
+
+void GLC_StateBeginDrawPolygon(void)
+{
+	R_ApplyRenderingState(r_state_line);
+}
+
+void GLC_StateBeginBloomDraw(texture_ref texture)
+{
+	R_ApplyRenderingState(r_state_postprocess_bloom);
+	R_TextureUnitBind(0, texture);
+}
+
+void GLC_StateBeginPolyBlend(float v_blend[4])
+{
+	R_ApplyRenderingState(r_state_poly_blend);
+}
+
+void GLC_StateBeginImageDraw(qbool is_text)
+{
+	extern cvar_t gl_alphafont;
+
+	if (is_text && !gl_alphafont.integer) {
+		R_ApplyRenderingState(r_state_hud_images_alphatested_glc);
+	}
+	else {
+		R_ApplyRenderingState(r_state_hud_images_glc);
+	}
+}
+
+void GLC_StateBeginAliasOutlineFrame(void)
+{
+	R_ApplyRenderingState(r_state_aliasmodel_outline);
 }
