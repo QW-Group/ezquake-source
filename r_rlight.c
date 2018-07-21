@@ -61,7 +61,6 @@ float bubble_sintable[17], bubble_costable[17];
 void R_InitBubble(void)
 {
 	float a, *bub_sin, *bub_cos;
-	rendering_state_t* state;
 	int i;
 
 	bub_sin = bubble_sintable;
@@ -72,10 +71,6 @@ void R_InitBubble(void)
 		*bub_sin++ = sin(a);
 		*bub_cos++ = cos(a);
 	}
-
-	state = R_Init3DSpriteRenderingState(r_state_light_bubble, "bubble-state");
-	state->depth.test_enabled = true;
-	state->depth.mask_enabled = false;
 }
 
 //VULT LIGHTS

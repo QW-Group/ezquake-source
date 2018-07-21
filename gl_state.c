@@ -45,14 +45,7 @@ static glBindImageTexture_t     qglBindImageTexture;
 static glBindTextures_t         qglBindTextures;
 glActiveTexture_t               qglActiveTexture;
 
-void R_BrushModelInitialiseStates(void);
 void R_InitialiseStates(void);
-void R_Initialise2DStates(void);
-void R_InitialiseEntityStates(void);
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
-void GLC_InitialiseSkyStates(void);
-#endif
-void R_InitialiseWorldStates(void);
 
 // VAOs
 static r_vao_id currentVAO = vao_none;
@@ -486,9 +479,6 @@ void GL_InitialiseState(void)
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
 	R_ApplyRenderingState(r_state_default_opengl);
 	R_InitialiseStates();
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GLC_InitialiseSkyStates();
-#endif
 
 	R_SetIdentityMatrix(R_ProjectionMatrix());
 	R_SetIdentityMatrix(R_ModelviewMatrix());

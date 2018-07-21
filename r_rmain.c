@@ -471,8 +471,6 @@ static void R_SetupGL(void)
 
 void R_Init(void)
 {
-	rendering_state_t* state;
-
 	Cmd_AddCommand("loadsky", R_LoadSky_f);
 	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
@@ -650,11 +648,6 @@ void R_Init(void)
 	InitTracker();
 	R_InitOtherTextures(); // safe re-init
 	R_InitBloomTextures();
-
-	// Init entity state
-	state = R_Init3DSpriteRenderingState(r_state_sprites_textured, "sprite_entity_state");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_replace;
 }
 
 static void R_RenderScene(void)

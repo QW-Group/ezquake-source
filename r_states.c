@@ -208,6 +208,57 @@ static void R_Initialise2DStates(void)
 	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
 }
 
+static void R_InitialiseSpriteStates(void)
+{
+	rendering_state_t* state;
+
+	// Simple items
+	state = R_Init3DSpriteRenderingState(r_state_sprites_textured, "sprite_entity_state");
+	state->alphaTesting.enabled = true;
+	state->alphaTesting.func = r_alphatest_func_greater;
+	state->alphaTesting.value = 0.333f;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
+
+	// Standard particles
+	state = R_Init3DSpriteRenderingState(r_state_particles_classic, "particle_state");
+	state->depth.mask_enabled = false;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
+
+	// QMB particles
+	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured_blood, "qmb-textured-blood");
+	state->blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
+	state->depth.mask_enabled = false;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
+
+	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured, "qmb-textured");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->depth.mask_enabled = false;
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
+
+	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_untextured, "qmb-untextured");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->depth.mask_enabled = false;
+
+	// Flashblend bubbles
+	state = R_Init3DSpriteRenderingState(r_state_light_bubble, "bubble-state");
+	state->depth.test_enabled = true;
+	state->depth.mask_enabled = false;
+
+	// Chaticons
+	state = R_Init3DSpriteRenderingState(r_state_chaticon, "chaticon_state");
+	state->textureUnits[0].enabled = true;
+	state->textureUnits[0].mode = r_texunit_mode_modulate;
+
+	// Coronas
+	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
+	state->depth.mask_enabled = false;
+	state->depth.test_enabled = false;
+}
+
 static void R_InitialiseEntityStates(void)
 {
 	rendering_state_t* state;
@@ -388,10 +439,15 @@ void R_InitialiseStates(void)
 {
 	R_InitRenderingState(r_state_default_3d, true, "default3DState", vao_none);
 
+	R_InitialiseSpriteStates();
 	R_InitialiseBrushModelStates();
 	R_Initialise2DStates();
 	R_InitialiseEntityStates();
 	R_InitialiseWorldStates();
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	GLC_InitialiseSkyStates();
+#endif
 }
 
 float R_WaterAlpha(void)

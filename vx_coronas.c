@@ -477,7 +477,6 @@ void NewCorona(coronatype_t type, vec3_t origin)
 void InitCoronas(void)
 {
 	corona_t *c;
-	rendering_state_t* state;
 	int i;
 
 	//VULT STATS
@@ -489,10 +488,6 @@ void InitCoronas(void)
 		c->los = false;
 		c->sighted = false;
 	}
-
-	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
-	state->depth.mask_enabled = false;
-	state->depth.test_enabled = false;
 }
 
 //NewStaticLightCorona

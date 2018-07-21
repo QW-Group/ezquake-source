@@ -227,7 +227,6 @@ void R_SetupChatIcons(void)
 void R_InitChatIcons(void)
 {
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;
-	rendering_state_t* state;
 
 	ci_initialized = false;
 
@@ -248,10 +247,6 @@ void R_InitChatIcons(void)
 		Q_free(temp_buffer);
 		Q_free(original);
 	}
-
-	state = R_Init3DSpriteRenderingState(r_state_chaticon, "chaticon_state");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
 
 	ci_initialized = true;
 }

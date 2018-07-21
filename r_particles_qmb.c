@@ -298,7 +298,6 @@ void QMB_InitParticles(void)
 {
 	int	i, count = 0;
 	texture_ref shockwave_texture, lightning_texture, spark_texture;
-	rendering_state_t* state;
 
 	Cvar_Register(&amf_part_fulldetail);
 	Cvar_Register(&gl_part_cache);
@@ -427,20 +426,6 @@ void QMB_InitParticles(void)
 		QMB_AddParticleType(p_streaktrail, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 128, 0, 0, pm_die, 0, 4, &count, "part:streaktrail");
 	}
 	QMB_SortParticleTypes();
-
-	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured_blood, "qmb-textured-blood");
-	state->blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
-	state->depth.mask_enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
-	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_textured, "qmb-textured");
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->depth.mask_enabled = false;
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
-	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_untextured, "qmb-untextured");
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->depth.mask_enabled = false;
 
 	qmb_initialized = true;
 }

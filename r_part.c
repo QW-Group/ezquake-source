@@ -32,10 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_renderer.h"
 
-// move to api
-void GLC_DrawClassicParticles(int particle_count);
-void GLM_DrawClassicParticles(int particle_count);
-
 #ifndef RENDERER_OPTION_MODERN_OPENGL
 int particletexture_array_index = 0;
 #endif
@@ -166,8 +162,6 @@ void Classic_AllocParticles(void)
 
 void Classic_InitParticles(void)
 {
-	rendering_state_t* state;
-
 	if (!r_numparticles) {
 		Classic_AllocParticles();
 	}
@@ -176,11 +170,6 @@ void Classic_InitParticles(void)
 	}
 
 	Classic_LoadParticleTexures(default_size, default_size);
-
-	state = R_Init3DSpriteRenderingState(r_state_particles_classic, "particle_state");
-	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_modulate;
-	state->depth.mask_enabled = false;
 }
 
 void Classic_ClearParticles(void)
