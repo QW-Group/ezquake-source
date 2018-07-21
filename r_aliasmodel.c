@@ -107,7 +107,6 @@ extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
 
-//static void GL_DrawAliasOutlineFrame(aliashdr_t *paliashdr, int pose1, int pose2);
 void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {

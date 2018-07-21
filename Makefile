@@ -365,6 +365,7 @@ OBJS_c := \
     gl_state.o \
     r_brushmodel_sky.o \
     r_sprites.o \
+    r_sprite3d.o \
     gl_vbo.o \
     glc_aliasmodel.o \
     glc_brushmodel.o \
