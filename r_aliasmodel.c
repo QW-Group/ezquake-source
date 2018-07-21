@@ -390,10 +390,10 @@ void R_SetupAliasFrame(
 	int effects, int render_effects
 )
 {
-	extern cvar_t gl_lumaTextures;
+	extern cvar_t gl_lumatextures;
 	int oldpose, pose;
 
-	if (!gl_lumaTextures.integer) {
+	if (!gl_lumatextures.integer) {
 		R_TextureReferenceInvalidate(fb_texture);
 	}
 

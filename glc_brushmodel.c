@@ -223,7 +223,7 @@ static void GLC_DrawFlat(model_t *model)
 
 static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 {
-	extern cvar_t gl_lumaTextures;
+	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
 	int index_count = 0;
 	r_state_id state = r_state_world_singletexture_glc;
@@ -239,7 +239,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
-	qbool useLumaTextures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
+	qbool useLumaTextures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
@@ -266,7 +266,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 		texture_unit_count = gl_textureunits >= 3 ? 3 : 2;
 
 		if (useLumaTextures && !gl_fb_bmodels.integer) {
-			// blend(material + fb) * lightmap
+			// blend(material + fb, lightmap)
 			state = r_state_world_material_fb_lightmap;
 			null_fb_texture = solidblack_texture;
 			fbTextureUnit = 1;
@@ -280,8 +280,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 			null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
 		}
 		else {
-			// blend(material + luma, lightmap) 
-			state = r_state_world_material_lightmap_luma;
+			// blend(material, lightmap) 
+			state = r_state_world_material_lightmap;
 			lmTextureUnit = 1;
 			fbTextureUnit = -1;
 			null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
@@ -397,7 +397,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 					detail_polys = s->polys;
 				}
 
-				if (R_TextureReferenceIsValid(fb_texturenum) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
+				if (!R_TextureReferenceEqual(fb_texturenum, null_fb_texture) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
 					if (isLumaTexture) {
 						s->polys->luma_chain = luma_polys[fb_texturenum.index];
 						luma_polys[fb_texturenum.index] = s->polys;

@@ -377,6 +377,11 @@ void R_BrushModelInitialiseStates(void)
 	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 
+	// material * lightmap
+	current = R_InitRenderingState(r_state_world_material_lightmap, true, "r_state_world_material_lightmap", vao_brushmodel_lm_unit1);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+
 	// material * lightmap + luma
 	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);

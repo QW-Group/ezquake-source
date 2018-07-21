@@ -155,7 +155,7 @@ cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
 cvar_t gl_waterfog_color_water             = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
 cvar_t gl_waterfog_color_lava              = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
 cvar_t gl_waterfog_color_slime             = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
-cvar_t gl_lumaTextures                     = {"gl_lumaTextures", "1"};
+cvar_t gl_lumatextures                     = {"gl_lumatextures", "1"};
 cvar_t gl_subdivide_size                   = {"gl_subdivide_size", "64"};
 cvar_t gl_clear                            = {"gl_clear", "0"};
 cvar_t gl_clearColor                       = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};
@@ -581,7 +581,7 @@ void R_Init(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register(&gl_playermip);
 	Cvar_Register(&gl_subdivide_size);
-	Cvar_Register(&gl_lumaTextures);
+	Cvar_Register(&gl_lumatextures);
 	Cvar_Register(&r_drawflat);
 	Cvar_Register(&r_wallcolor);
 	Cvar_Register(&r_floorcolor);

@@ -194,7 +194,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void Sys_RegisterQWURLProtocol_f(void);
 #endif
-extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumatextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
 ;
 
@@ -919,7 +919,7 @@ setting settfps_arr[] = {
 
 	ADDSET_ADVANCED_SECTION(),	
 	ADDSET_SEPARATOR("Textures"),
-	ADDSET_BOOL		("Luma", gl_lumaTextures),
+	ADDSET_BOOL		("Luma", gl_lumatextures),
 	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),

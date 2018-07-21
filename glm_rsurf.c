@@ -100,12 +100,12 @@ static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static void Compile_DrawWorldProgram(void)
 {
-	extern cvar_t gl_lumaTextures;
+	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
 
 	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
-	qbool luma_textures = gl_lumaTextures.integer && r_refdef2.allow_lumas;
+	qbool luma_textures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !skybox && !r_fastsky.integer && R_TextureReferenceIsValid(solidskytexture);
 

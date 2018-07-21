@@ -4858,7 +4858,7 @@
         }
       ]
     },
-    "gl_lumaTextures": {
+    "gl_lumatextures": {
       "default": "1",
       "desc": "Turns using of luma textures (named *_luma) ON when set to 1 and allowed by server.",
       "group-id": "50",
