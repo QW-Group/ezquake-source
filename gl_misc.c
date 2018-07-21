@@ -153,3 +153,8 @@ void GL_Viewport(int x, int y, int width, int height)
 {
 	glViewport(x, y, width, height);
 }
+
+const char* GL_DescriptiveString(void)
+{
+	return (const char*)glGetString(GL_RENDERER);
+}

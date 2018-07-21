@@ -50,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "config_manager.h"
 #include "EX_qtvlist.h"
+#include "r_renderer.h"
 
 double		curtime;
 
@@ -91,7 +92,7 @@ void SYSINFO_Init(void)
 	HKEY  hKey;
 	PGMSE pGMSE;
 
-	extern const char *gl_renderer;
+	const char *gl_renderer = renderer.DescriptiveString();
 
 	// Get memory size.
 	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL) {
@@ -181,7 +182,7 @@ void SYSINFO_Init(void)
 	char *match;
 	FILE *f;
 
-	extern const char *gl_renderer;
+	const char *gl_renderer = renderer.DescriptiveString();
 
 	// MEM
 	f = fopen("/proc/meminfo", "r");
@@ -265,7 +266,7 @@ void SYSINFO_Init(void)
 	char cpu_brand_string[100] = {0};
 	size_t cpu_brand_string_len = sizeof(cpu_brand_string) - 1; /* Don't trust Apple, make sure its NULL terminated */
 
-	extern const char *gl_renderer;
+	const char *gl_renderer = renderer.DescriptiveString();
 
 	if (sysctl(mib, 2, &memsize_value, &length, NULL, 0) != -1) {
 		SYSINFO_memory = memsize_value;
@@ -314,7 +315,7 @@ void SYSINFO_Init(void)
 	size_t len;
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
-	extern const char *gl_renderer;
+	const char *gl_renderer = renderer.DescriptiveString();
 
 	mib[0] = CTL_HW;
 	mib[1] =

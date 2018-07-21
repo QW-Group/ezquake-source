@@ -5712,12 +5712,6 @@
       "group-id": "36",
       "type": "boolean"
     },
-    "gl_strings": {
-      "default": "",
-      "desc": "Read-only variable with info about your OpenGL renderer",
-      "group-id": "22",
-      "type": "string"
-    },
     "gl_subdivide_size": {
       "default": "64",
       "desc": "This variable sets the division value for the sky brushes. The higher the value \nthe better the performance, but the smoothness of the sky suffers.",

@@ -353,15 +353,6 @@ void GLM_StateBeginDraw3DSprites(void)
 {
 }
 
-void GL_StateDefaultInit(void)
-{
-	ENTER_STATE;
-
-	R_ApplyRenderingState(r_state_default_3d);
-
-	LEAVE_STATE;
-}
-
 void R_Initialise2DStates(void)
 {
 	rendering_state_t* state;

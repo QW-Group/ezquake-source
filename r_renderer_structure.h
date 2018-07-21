@@ -1,7 +1,9 @@
 
+// Meta
 RENDERER_METHOD(void, Shutdown, qbool restart)
 RENDERER_METHOD(void, CvarForceRecompile, cvar_t* cvar)
 RENDERER_METHOD(void, PrintGfxInfo, void)
+RENDERER_METHOD(const char*, DescriptiveString, void)
 
 // Config/State
 RENDERER_METHOD(void, Viewport, int x, int y, int width, int height)
@@ -70,7 +72,5 @@ RENDERER_METHOD(void, InitTextureState, void)
 RENDERER_METHOD(void, DeleteVAOs, void)
 RENDERER_METHOD(void, GenVertexArray, r_vao_id vao, const char* name)
 RENDERER_METHOD(void, BindVertexArray, r_vao_id vao)
-RENDERER_METHOD(void, InitialiseVAOState, void)
-RENDERER_METHOD(qbool, VAOBound, void)
 RENDERER_METHOD(void, BindVertexArrayElementBuffer, r_vao_id vao, buffer_ref ref)
 RENDERER_METHOD(qbool, VertexArrayCreated, r_vao_id vao)

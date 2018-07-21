@@ -29,11 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 #include "r_texture.h"
 
-const char *gl_vendor;
-const char *gl_renderer;
-const char *gl_version;
-const char *gl_extensions;
-
 int anisotropy_ext = 0;
 
 qbool gl_mtexable = false;
@@ -49,16 +44,15 @@ static void GL_CheckMultiTextureExtensions(void);
 static void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
 extern cvar_t vid_renderer;
 
-cvar_t gl_strings                 = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
-cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
-cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
+static cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
+static cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
 // GL_ARB_texture_non_power_of_two
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 /************************************* EXTENSIONS *************************************/
 
-static qbool R_InitialiseRenderer(void)
+static qbool GL_InitialiseRenderer(void)
 {
 	qbool shaders_supported = false;
 
@@ -83,18 +77,6 @@ static qbool R_InitialiseRenderer(void)
 	}
 
 	return false;
-}
-
-static void GL_CheckShaderExtensions(void)
-{
-	if (!R_InitialiseRenderer()) {
-		Con_Printf("Failed to initialised desired renderer, falling back to classic OpenGL\n");
-		Cvar_LatchedSetValue(&vid_renderer, 0);
-
-		if (!R_InitialiseRenderer()) {
-			Sys_Error("Failed to initialise graphics renderer");
-		}
-	}
 }
 
 static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel)
@@ -126,12 +108,6 @@ static void GL_CheckExtensions(void)
 	}
 
 	// GL_ARB_texture_non_power_of_two
-	// NOTE: we always register cvar even if ext is not supported.
-	// cvar added just to be able force OFF an extension.
-	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
-	Cvar_ResetCurrentGroup();
-
 	{
 		qbool supported = gl_ext_arb_texture_non_power_of_two.integer && SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two");
 
@@ -144,10 +120,8 @@ static void GL_CheckExtensions(void)
 
 static void GL_CheckMultiTextureExtensions(void)
 {
-	extern cvar_t gl_maxtmu2;
-
 	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
-		if (strstr(gl_renderer, "Savage")) {
+		if (strstr((const char*)glGetString(GL_RENDERER), "Savage")) {
 			return;
 		}
 		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
@@ -164,7 +138,7 @@ static void GL_CheckMultiTextureExtensions(void)
 
 	gl_textureunits = min(glConfig.texture_units, 4);
 
-	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value) {
+	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) || gl_maxtmu2.value) {
 		gl_textureunits = min(gl_textureunits, 2);
 	}
 
@@ -182,34 +156,44 @@ static void GL_CheckMultiTextureExtensions(void)
 
 void GL_Init(void)
 {
-	gl_vendor = (const char*)glGetString(GL_VENDOR);
-	gl_renderer = (const char*)glGetString(GL_RENDERER);
-	gl_version = (const char*)glGetString(GL_VERSION);
-	if (R_UseModernOpenGL()) {
-		gl_extensions = "(using modern OpenGL)\n";
-	}
-	else {
-		gl_extensions = (const char*)glGetString(GL_EXTENSIONS);
-	}
-
-#if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
-	/* FIXME/TODO: FreeBSD too? */
-	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n", gl_vendor);
-	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
-	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
-#endif
-
-	if (COM_CheckParm(cmdline_param_client_printopenglextensions)) {
-		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
-	}
-
-	Cvar_Register(&gl_strings);
-	Cvar_ForceSet(&gl_strings,
-		va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
-		   "GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
+	// NOTE: we always register cvar even if ext is not supported.
+	// cvar added just to be able force OFF an extension.
+	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
+	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
+	Cvar_ResetCurrentGroup();
 	Cvar_Register(&gl_maxtmu2);
 
-	GL_CheckShaderExtensions();
-	GL_StateDefaultInit();
+	if (!GL_InitialiseRenderer()) {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+		Con_Printf("Failed to initialised desired renderer, falling back to classic OpenGL\n");
+		Cvar_LatchedSetValue(&vid_renderer, 0);
+
+		if (!GL_InitialiseRenderer()) {
+			Sys_Error("Failed to initialise graphics renderer");
+		}
+#else
+		Sys_Error("Failed to initialise graphics renderer");
+#endif
+	}
+
 	GL_CheckExtensions();
+
+#if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
+	{
+		/* FIXME/TODO: FreeBSD too? */
+		Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n", (const char*)glGetString(GL_VENDOR));
+		Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", (const char*)glGetString(GL_RENDERER));
+		Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", (const char*)glGetString(GL_VERSION));
+		if (COM_CheckParm(cmdline_param_client_printopenglextensions)) {
+			const char* gl_extensions = "";
+			if (R_UseModernOpenGL()) {
+				gl_extensions = "(using modern OpenGL)\n";
+			}
+			else {
+				gl_extensions = (const char*)glGetString(GL_EXTENSIONS);
+			}
+			Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
+		}
+	}
+#endif
 }

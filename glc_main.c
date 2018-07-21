@@ -12,6 +12,10 @@ void GLC_NoOperation(void)
 {
 }
 
+void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
+{
+}
+
 #define GLC_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLC_Viewport                       GL_Viewport
 #define GLC_RenderDynamicLightmaps         R_RenderDynamicLightmaps
@@ -27,8 +31,7 @@ void GLC_NoOperation(void)
 #define GLC_Screenshot                     GL_Screenshot
 #define GLC_InitTextureState               GL_InitTextureState
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
-#define GLC_VAOBound                       GL_VAOBound
-#define GLC_BindVertexArrayElementBuffer   GL_BindVertexArrayElementBuffer
+#define GLC_DescriptiveString              GL_DescriptiveString
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
@@ -39,6 +42,12 @@ void GLC_NoOperation(void)
 void GLC_Initialise(void)
 {
 	#include "r_renderer_structure.h"
+
+	GL_Init();
+	GL_PopulateConfig();
+	GLC_InitialiseVAOHandling();
+	GL_InitialiseBufferHandling(&buffers);
+	GL_InitialiseState();
 }
 
 void GLC_PrepareModelRendering(qbool vid_restart)

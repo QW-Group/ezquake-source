@@ -776,10 +776,8 @@ void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
 		fprintf(debug_frame_out, "%.*s   vao: %s\n", debug_frame_depth, "                                                          ", vaoNames[currentVAO]);
-		if (renderer.VAOBound()) {
-			if (R_UseImmediateOpenGL()) {
-				GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
-			}
+		if (R_VAOBound() && R_UseImmediateOpenGL()) {
+			GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
 		}
 		buffers.PrintState(debug_frame_out, debug_frame_depth);
 		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
@@ -916,8 +914,6 @@ rendering_state_t* R_CopyRenderingState(r_state_id dest_id, r_state_id source_id
 void R_InitialiseVAOState(void)
 {
 	currentVAO = vao_none;
-
-	renderer.InitialiseVAOState();
 }
 
 qbool R_VertexArrayCreated(r_vao_id vao)
