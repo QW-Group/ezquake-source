@@ -625,7 +625,7 @@ void R_DrawViewModel(void)
 			cent->current.modelindex != cl_modelindices[mi_vmedi] &&
 			cent->current.modelindex != cl_modelindices[mi_vspan]) {
 			gun.renderfx |= RF_LIMITLERP;
-			r_lerpdistance = 135;
+			r_lerpdistance = 15;
 		}
 	}
 

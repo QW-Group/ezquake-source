@@ -39,7 +39,7 @@ void main()
 
 	if (lerpFrac > 0 && lerpFrac <= 1) {
 		vec3 position2 = vec3(lerpVertices[lerpIndex + vertexIndex].x, lerpVertices[lerpIndex + vertexIndex].y, lerpVertices[lerpIndex + vertexIndex].z);
-		if ((fsFlags & AMF_LIMITLERP) != 0 && distance(position, position2) >= 135) {
+		if ((fsFlags & AMF_LIMITLERP) != 0 && distance(position, position2) >= 15) {
 			lerpFrac = 1;
 		}
 		vec2 tex2 = vec2(lerpVertices[lerpIndex + vertexIndex].s, lerpVertices[lerpIndex + vertexIndex].t);

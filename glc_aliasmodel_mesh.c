@@ -351,7 +351,7 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	// (if not faster) to rebuild the tris instead of loading them from disk
 	BuildTris();		// trifans or lists
 
-						// save the data out
+	// save the data out
 	hdr->poseverts = numorder;
 
 	cmds = (int *)Hunk_Alloc(numcommands * 4);
@@ -363,10 +363,13 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	for (i = 0; i < hdr->numposes; i++) {
 		for (j = 0; j < numorder; j++) {
 			//TODO: corrupted files may cause a crash here, sanity checks?
-			verts->v[0] = poseverts[i][vertexorder[j]].v[0] * hdr->scale[0];
-			verts->v[1] = poseverts[i][vertexorder[j]].v[1] * hdr->scale[1];
-			verts->v[2] = poseverts[i][vertexorder[j]].v[2] * hdr->scale[2];
-			verts->lightnormalindex = poseverts[i][vertexorder[j]].lightnormalindex;
+			trivertx_t* src = &poseverts[i][vertexorder[j]];
+
+			verts->v[0] = src->v[0] * hdr->scale[0];
+			verts->v[1] = src->v[1] * hdr->scale[1];
+			verts->v[2] = src->v[2] * hdr->scale[2];
+			verts->lightnormalindex = src->lightnormalindex;
+
 			++verts;
 		}
 	}

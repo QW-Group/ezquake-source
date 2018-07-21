@@ -445,7 +445,8 @@ static void GLC_DrawPowerupShell(
 	scroll[2] = cos(cl.time * -0.5);
 	scroll[3] = sin(cl.time * -0.5);
 
-	for (layer_no = 0; layer_no <= 1; ++layer_no) {
+	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
+	for (position = 0, layer_no = 0; layer_no <= 1; ++layer_no) {
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
 		verts1 = verts2 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
@@ -623,7 +624,6 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	// FIXME: think need put it after caustics
 	R_PushModelviewMatrix(oldMatrix);
 	R_StateBeginDrawAliasModel(ent, paliashdr);
-	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	GLC_DrawPowerupShell(ent, oldframe, frame);
 	R_PopModelviewMatrix(oldMatrix);
 
