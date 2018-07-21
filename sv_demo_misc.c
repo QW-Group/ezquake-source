@@ -517,11 +517,11 @@ char *SV_MVDName2Txt (const char *name)
 	{
 		Con_Printf("SV_MVDName2Txt: pcre_compile(%s) error: %s at offset %d\n",
 					sv_demoRegexp.string, errbuf, r);
-		Q_free(preg);
+		pcre_free(preg);
 		return NULL;
 	}
 	r = pcre_exec(preg, NULL, s, len, 0, 0, ovector, OVECCOUNT);
-	Q_free(preg);
+	pcre_free(preg);
 	if (r < 0)
 	{
 		switch (r)

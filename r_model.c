@@ -608,10 +608,6 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 
 	snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
 
-	if (developer.value > 1) {
-		Com_DPrintf("Mod_LoadSimpleTexture: %s ", indentifier);
-	}
-
 	if (mod->type == mod_brush) {
 		tex = R_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 	}
@@ -629,8 +625,8 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		tex = R_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
 	}
 
+	Com_Printf("Mod_LoadSimpleTexture: %s %s\n", indentifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	if (developer.value > 1) {
-		Com_DPrintf("%s\n", R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
