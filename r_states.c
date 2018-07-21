@@ -142,14 +142,14 @@ void GLM_StateBeginDrawWorldOutlines(void)
 {
 	extern cvar_t gl_outline_width;
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	// FIXME: This was different for GLC & GLM, why?  // disable depth-test
 	R_ApplyRenderingState(r_state_world_outline);
 	// limit outline width, since even width == 3 can be considered as cheat.
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset)
@@ -218,7 +218,7 @@ void GLC_StateBeginFastSky(void)
 {
 	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	if (gl_fogsky.integer && gl_fogenable.integer) {
 		R_ApplyRenderingState(r_state_sky_fast_fogged);
@@ -228,14 +228,14 @@ void GLC_StateBeginFastSky(void)
 	}
 	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSkyZBufferPass(void)
 {
 	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor, gl_fogred, gl_foggreen, gl_fogblue;
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	if (gl_fogenable.integer && gl_fogsky.integer) {
 		R_ApplyRenderingState(r_state_skydome_zbuffer_pass_fogged);
@@ -245,69 +245,69 @@ void GLC_StateBeginSkyZBufferPass(void)
 		R_ApplyRenderingState(r_state_skydome_zbuffer_pass);
 	}
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSingleTextureSkyDome(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_background_pass);
 	R_TextureUnitBind(0, solidskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_cloud_pass);
 	R_TextureUnitBind(0, alphaskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginMultiTextureSkyDome(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_single_pass);
 	R_TextureUnitBind(0, solidskytexture);
 	R_TextureUnitBind(1, alphaskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginMultiTextureSkyChain(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_single_pass);
 	R_TextureUnitBind(0, solidskytexture);
 	R_TextureUnitBind(1, alphaskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSingleTextureSkyPass(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_background_pass);
 	R_TextureUnitBind(0, solidskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSingleTextureCloudPass(void)
 {
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_skydome_cloud_pass);
 	R_TextureUnitBind(0, alphaskytexture);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void R_InitialiseStates(void)
@@ -324,7 +324,7 @@ float R_WaterAlpha(void)
 
 void R_StateDefault3D(void)
 {
-	GL_ResetRegion(false);
+	R_TraceResetRegion(false);
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
@@ -345,12 +345,12 @@ void R_StateDefault3D(void)
 	}
 #endif
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_default_3d);
-	GL_DebugState();
+	R_TraceDebugState();
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLM_StateBeginDraw3DSprites(void)
@@ -627,21 +627,21 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 		r_state_brushmodel_translucent_offset
 	};
 
-	GL_EnterTracedRegion("GL_StateBeginDrawBrushModel", true);
+	R_TraceEnterRegion("GL_StateBeginDrawBrushModel", true);
 	R_RotateForEntity(e);
 	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
 	if (e->alpha) {
 		R_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
 	}
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 
-	GL_EnterTracedRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__FUNCTION__, true);
 
 	R_RotateForEntity(ent);
 	if (ent->model->modhint == MOD_EYES) {
@@ -660,7 +660,7 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 		R_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginAliasOutlineFrame(void)

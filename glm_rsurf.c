@@ -409,7 +409,7 @@ void GLM_DrawWaterSurfaces(void)
 	alpha = R_WaterAlpha();
 
 	// Waterchain has list of alpha-blended surfaces
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 
 	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
@@ -438,7 +438,7 @@ void GLM_DrawWaterSurfaces(void)
 		}
 	}
 
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	waterchain = NULL;
 }
@@ -573,7 +573,7 @@ void GLM_PrepareWorldModelBatch(void)
 	int batchOffset = 0;
 	int draw, i;
 
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 	buffers.Update(vbo_brushElements, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	buffers.EnsureSize(vbo_worldIndirectDraw, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	buffers.EnsureSize(ssbo_worldcvars, sizeof(drawcalls[0].calls) * maximum_drawcalls);
@@ -608,7 +608,7 @@ void GLM_PrepareWorldModelBatch(void)
 		samplerMappingOffset += drawcall->sampler_mappings;
 	}
 
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }
 
 void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
@@ -626,7 +626,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		}
 
 		if (first) {
-			GL_EnterRegion(__FUNCTION__);
+			R_TraceEnterNamedRegion(__FUNCTION__);
 			GL_StartWorldBatch();
 			buffers.Bind(vbo_brushElements);
 			buffers.Bind(vbo_worldIndirectDraw);
@@ -685,7 +685,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	}
 
 	if (!first) {
-		GL_LeaveRegion();
+		R_TraceLeaveNamedRegion();
 	}
 }
 

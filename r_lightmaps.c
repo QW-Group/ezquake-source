@@ -427,7 +427,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 
 void R_UploadChangedLightmaps(void)
 {
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 	if (R_HardwareLighting()) {
 		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
 			int i;
@@ -460,7 +460,7 @@ void R_UploadChangedLightmaps(void)
 		frameStats.lightmap_min_changed = lightmap_array_size;
 		frameStats.lightmap_max_changed = 0;
 	}
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }
 
 void R_RenderAllDynamicLightmaps(model_t *model)

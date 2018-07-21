@@ -29,13 +29,13 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 	float wateralpha = R_WaterAlpha();
 	wateralpha = bound(0, wateralpha, 1);
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	// START shaman FIX /gl_turbalpha + /r_fastturb {
 	R_CustomColor(color[0] * wateralpha / 255.0f, color[1] * wateralpha / 255.0f, color[2] * wateralpha / 255.0f, wateralpha);
 	// END shaman FIX /gl_turbalpha + /r_fastturb {
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginBlendLightmaps(qbool use_buffers)
@@ -90,7 +90,7 @@ void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 {
 	texture_t* t = s->texinfo->texture;
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	//bind the world texture
 	R_TextureUnitBind(0, t->gl_texturenum);
@@ -98,7 +98,7 @@ void GLC_StateBeginAlphaChainSurface(msurface_t* s)
 		R_TextureUnitBind(1, GLC_LightmapTexture(s->lightmaptexturenum));
 	}
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginRenderFullbrights(void)
@@ -156,7 +156,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 {
 	r_state_id state;
 
-	ENTER_STATE;
+	R_TraceEnterFunctionRegion;
 
 	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
 		state = alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque;
@@ -173,7 +173,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 
 	R_ApplyRenderingState(state);
 
-	LEAVE_STATE;
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginAliasModelShadow(void)
@@ -188,7 +188,7 @@ static const char* glcPrimitiveName = "?";
 
 void GLC_Begin(GLenum primitive)
 {
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	glcVertsSent = 0;
 	glcVertsPerPrimitive = 0;
 	glcBaseVertsPerPrimitive = 0;
@@ -230,27 +230,27 @@ void GLC_Begin(GLenum primitive)
 
 	++frameStats.draw_calls;
 	glBegin(primitive);
-	GL_LogAPICall("glBegin(%s...)", glcPrimitiveName);
+	R_TraceLogAPICall("glBegin(%s...)", glcPrimitiveName);
 }
 
 #undef glEnd
 
 void GLC_End(void)
 {
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	int primitives;
 	const char* count_name = "vertices";
 #endif
 
 	glEnd();
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	primitives = max(0, glcVertsSent - glcBaseVertsPerPrimitive);
 	if (glcVertsPerPrimitive) {
 		primitives = glcVertsSent / glcVertsPerPrimitive;
 		count_name = "primitives";
 	}
-	GL_LogAPICall("glEnd(%s: %d %s)", glcPrimitiveName, primitives, count_name);
+	R_TraceLogAPICall("glEnd(%s: %d %s)", glcPrimitiveName, primitives, count_name);
 #endif
 }
 

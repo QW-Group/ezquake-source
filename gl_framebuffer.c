@@ -159,13 +159,13 @@ framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3d)
 
 	// Render to texture
 	GL_AllocateTextureReferences(GL_TEXTURE_2D, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->rgbaTexture);
-	GL_TextureLabel(GL_TextureNameFromReference(fb->rgbaTexture), is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
+	R_TraceTextureLabelSet(GL_TextureNameFromReference(fb->rgbaTexture), is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
 	R_SetTextureFiltering(fb->rgbaTexture, texture_minification_linear, texture_minification_linear);
 	R_TextureWrapModeClamp(fb->rgbaTexture);
 
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);
-	GL_ObjectLabel(GL_FRAMEBUFFER, fb->glref, -1, is3d ? "framebuffer(3D)" : "framebuffer(2D)");
+	R_TraceObjectLabelSet(GL_FRAMEBUFFER, fb->glref, -1, is3d ? "framebuffer(3D)" : "framebuffer(2D)");
 
 	// Depth buffer
 	if (is3d) {
@@ -173,7 +173,7 @@ framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3d)
 		GLenum depthFormat = r_24bit_depth.integer ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT;
 
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
-		GL_ObjectLabel(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
+		R_TraceObjectLabelSet(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
 		GL_RenderBufferStorage(fb->depthBuffer, depthFormat, width, height);
 		GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
 	}

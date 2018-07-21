@@ -39,7 +39,7 @@ void GLC_BindVertexArray(r_vao_id vao);
 qbool GLC_InitialiseVAOHandling(void);
 void GLC_EnsureVAOCreated(r_vao_id vao);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao);
 #endif
 

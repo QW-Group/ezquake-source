@@ -146,7 +146,7 @@ void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref)
 	vaos[vao].element_index_buffer = ref;
 }
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao)
 {
 	int i;

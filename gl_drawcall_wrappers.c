@@ -94,7 +94,7 @@ void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primc
 		qglMultiDrawArrays(mode, first, count, primcount);
 		++frameStats.draw_calls;
 		frameStats.subdraw_calls += primcount;
-		GL_LogAPICall("glMultiDrawElements(%d sub-draws)", primcount);
+		R_TraceLogAPICall("glMultiDrawElements(%d sub-draws)", primcount);
 	}
 	else {
 		int i;
@@ -113,7 +113,7 @@ void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 	}
 	glDrawArrays(mode, first, count);
 	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawArrays(%d verts)", count);
+	R_TraceLogAPICall("glDrawArrays(%d verts)", count);
 }
 
 void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
@@ -128,7 +128,7 @@ void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* 
 		glDrawElements(mode, count, type, indices);
 	}
 	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawElements(%d verts)", count);
+	R_TraceLogAPICall("glDrawElements(%d verts)", count);
 }
 
 qbool GL_DrawElementsBaseVertexAvailable(void)
@@ -140,7 +140,7 @@ void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indi
 {
 	glDrawElements(mode, count, type, indices);
 	++frameStats.draw_calls;
-	GL_LogAPICall("glDrawElements(%d verts)", count);
+	R_TraceLogAPICall("glDrawElements(%d verts)", count);
 }
 
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
@@ -148,7 +148,7 @@ void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawc
 	qglMultiDrawArraysIndirect(mode, indirect, drawcount, stride);
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
-	GL_LogAPICall("glMultiDrawArraysIndirect(%d subdraws)", drawcount);
+	R_TraceLogAPICall("glMultiDrawArraysIndirect(%d subdraws)", drawcount);
 }
 
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
@@ -156,5 +156,5 @@ void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect
 	qglMultiDrawElementsIndirect(mode, type, indirect, drawcount, stride);
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
-	GL_LogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
+	R_TraceLogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
 }

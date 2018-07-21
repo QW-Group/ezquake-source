@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 typedef void (APIENTRY *glPushDebugGroup_t)(GLenum source, GLuint id, GLsizei length, const char* message);
 typedef void (APIENTRY *glPopDebugGroup_t)(void);
 typedef void (APIENTRY *glObjectLabel_t)(GLenum identifier, GLuint name, GLsizei length, const char* label);
@@ -93,7 +93,7 @@ void GL_InitialiseDebugging(void)
 		}
 	}
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	qglObjectLabel = (glObjectLabel_t)SDL_GL_GetProcAddress("glObjectLabel");
 	qglGetObjectLabel = (glGetObjectLabel_t)SDL_GL_GetProcAddress("glGetObjectLabel");
 	qglPushDebugGroup = (glPushDebugGroup_t)SDL_GL_GetProcAddress("glPushDebugGroup");
@@ -101,7 +101,7 @@ void GL_InitialiseDebugging(void)
 #endif
 }
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 static int debug_frame_depth = 0;
 static unsigned long regions_trace_only;
 static qbool dev_frame_debug_queued;
@@ -109,7 +109,7 @@ static FILE* debug_frame_out;
 
 #define DEBUG_FRAME_DEPTH_CHARS 2
 
-void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
+void R_TraceEnterRegion(const char* regionName, qbool trace_only)
 {
 	if (R_UseModernOpenGL()) {
 		if (!trace_only && qglPushDebugGroup) {
@@ -125,7 +125,7 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 	regions_trace_only &= (trace_only ? 1 : 0);
 }
 
-void GL_LeaveTracedRegion(qbool trace_only)
+void R_TraceLeaveRegion(qbool trace_only)
 {
 	if (R_UseModernOpenGL()) {
 		if (!trace_only && qglPopDebugGroup) {
@@ -139,12 +139,12 @@ void GL_LeaveTracedRegion(qbool trace_only)
 	}
 }
 
-qbool GL_LoggingEnabled(void)
+qbool R_TraceLoggingEnabled(void)
 {
 	return debug_frame_out != NULL;
 }
 
-void GL_LogAPICall2(const char* format, ...)
+void R_TraceLogAPICallDirect(const char* format, ...)
 {
 	if (debug_frame_out) {
 		va_list argptr;
@@ -158,7 +158,7 @@ void GL_LogAPICall2(const char* format, ...)
 	}
 }
 
-void GL_ResetRegion(qbool start)
+void R_TraceResetRegion(qbool start)
 {
 	if (start && debug_frame_out) {
 		fclose(debug_frame_out);
@@ -192,28 +192,28 @@ void GL_ResetRegion(qbool start)
 	}
 }
 
-void GL_ObjectLabel(GLenum identifier, GLuint name, GLsizei length, const char* label)
+void R_TraceObjectLabelSet(GLenum identifier, GLuint name, GLsizei length, const char* label)
 {
 	if (qglObjectLabel) {
 		qglObjectLabel(identifier, name, length, label ? label : "?");
 	}
 }
 
-void GL_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label)
+void R_TraceObjectLabelGet(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label)
 {
 	if (qglGetObjectLabel) {
 		qglGetObjectLabel(identifier, name, bufSize, length, label);
 	}
 }
 
-void GL_TextureLabel(unsigned int name, const char* label)
+void R_TraceTextureLabelSet(unsigned int name, const char* label)
 {
-	GL_ObjectLabel(GL_TEXTURE, name, -1, label);
+	R_TraceObjectLabelSet(GL_TEXTURE, name, -1, label);
 }
 
-void GL_GetTextureLabel(unsigned int name, int bufSize, int* length, char* label)
+void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* label)
 {
-	GL_GetObjectLabel(GL_TEXTURE, name, bufSize, length, label);
+	R_TraceObjectLabelGet(GL_TEXTURE, name, bufSize, length, label);
 }
 
 void Dev_VidFrameTrace(void)
@@ -221,10 +221,10 @@ void Dev_VidFrameTrace(void)
 	dev_frame_debug_queued = true;
 }
 
-void GL_DebugState(void)
+void R_TraceDebugState(void)
 {
 	if (debug_frame_out) {
-		GL_PrintState(debug_frame_out, debug_frame_depth);
+		R_TracePrintState(debug_frame_out, debug_frame_depth);
 	}
 }
 #endif

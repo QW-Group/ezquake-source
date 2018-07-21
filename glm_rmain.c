@@ -34,9 +34,9 @@ void GLM_RenderView(void)
 
 	GLM_DrawWorldModelBatch(opaque_world);
 
-	GL_EnterRegion("GLM_DrawEntities");
+	R_TraceEnterNamedRegion("GLM_DrawEntities");
 	GLM_DrawAliasModelBatches();
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	renderer.Draw3DSprites();
 

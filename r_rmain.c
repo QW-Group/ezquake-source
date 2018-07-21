@@ -661,9 +661,9 @@ void R_Init(void)
 
 static void R_RenderScene(void)
 {
-	GL_EnterRegion("R_DrawWorld");
+	R_TraceEnterNamedRegion("R_DrawWorld");
 	R_DrawWorld();		// adds static entities to the list
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	if (R_WaterAlpha() == 1) {
 		renderer.DrawWaterSurfaces();
@@ -1065,7 +1065,7 @@ static void R_DrawEntities(void)
 		return;
 	}
 
-	GL_EnterRegion("R_DrawEntities");
+	R_TraceEnterNamedRegion("R_DrawEntities");
 
 	GL_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
@@ -1075,5 +1075,5 @@ static void R_DrawEntities(void)
 	if (R_UseModernOpenGL() || R_UseVulkan()) {
 		R_DrawViewModel();
 	}
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }

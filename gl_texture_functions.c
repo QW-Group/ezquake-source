@@ -140,7 +140,7 @@ void GL_TexSubImage3D(
 		R_TextureUnitBind(textureUnit, texture);
 		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
-	GL_LogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
+	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
 }
 
 void GL_TexSubImage2D(
@@ -156,7 +156,7 @@ void GL_TexSubImage2D(
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
-	GL_LogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
+	R_TraceLogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
 }
 
 void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)

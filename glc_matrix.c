@@ -31,7 +31,7 @@ void GLC_RotateModelview(float angle, float x, float y, float z)
 	if (!glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glRotatef(angle, x, y, z);
-		GL_LogAPICall("GL_RotateModelview()");
+		R_TraceLogAPICall("GL_RotateModelview()");
 	}
 }
 
@@ -40,7 +40,7 @@ void GLC_IdentityModelview(void)
 	if (!glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		GL_LogAPICall("GL_IdentityModelView(modelview)");
+		R_TraceLogAPICall("GL_IdentityModelView(modelview)");
 	}
 }
 
@@ -55,21 +55,21 @@ void GLC_IdentityProjectionView(void)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	GL_LogAPICall("GL_Identity(projection)");
+	R_TraceLogAPICall("GL_Identity(projection)");
 }
 
 void GLC_PopModelviewMatrix(const float* matrix)
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(matrix);
-	GL_LogAPICall("R_PopModelviewMatrix()");
+	R_TraceLogAPICall("R_PopModelviewMatrix()");
 }
 
 void GLC_PopProjectionMatrix(const float* matrix)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(matrix);
-	GL_LogAPICall("R_PopProjectionMatrix()");
+	R_TraceLogAPICall("R_PopProjectionMatrix()");
 }
 
 void GLC_ScaleModelview(float xScale, float yScale, float zScale)
@@ -77,14 +77,14 @@ void GLC_ScaleModelview(float xScale, float yScale, float zScale)
 	if (!glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glScalef(xScale, yScale, zScale);
-		GL_LogAPICall("GL_ScaleModelviewMatrix()");
+		R_TraceLogAPICall("GL_ScaleModelviewMatrix()");
 	}
 }
 
 void GLC_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
 	glFrustum(left, right, bottom, top, zNear, zFar);
-	GL_LogAPICall("glFrustum()");
+	R_TraceLogAPICall("glFrustum()");
 }
 
 void GLC_PauseMatrixUpdate(void)
@@ -121,7 +121,7 @@ void GLC_TranslateModelview(float x, float y, float z)
 	if (!glc_pause_updates) {
 		glMatrixMode(GL_MODELVIEW);
 		glTranslatef(x, y, z);
-		GL_LogAPICall("GL_TranslateModelview()");
+		R_TraceLogAPICall("GL_TranslateModelview()");
 	}
 }
 
@@ -129,5 +129,5 @@ void GLC_LoadModelviewMatrix(void)
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(R_ModelviewMatrix());
-	GL_LogAPICall("glLoadMatrixf(modelview)");
+	R_TraceLogAPICall("glLoadMatrixf(modelview)");
 }

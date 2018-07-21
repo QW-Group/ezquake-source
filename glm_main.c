@@ -2,6 +2,12 @@
 #include "quakedef.h"
 #include "r_renderer.h"
 
+void GL_Init(void);
+void GL_PopulateConfig(void);
+qbool GLM_InitialiseVAOHandling(void);
+void GL_InitialiseBufferHandling(api_buffers_t* api);
+void GL_InitialiseState(void);
+
 static void GLM_AddWaterFog(int contents)
 {
 }

@@ -69,7 +69,7 @@ typedef struct texture_api_s {
 
 	void (*R_TextureWrapModeClamp)(texture_ref tex);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	const char* (*Identifier)(texture_ref ref);
 #endif
 
@@ -115,7 +115,7 @@ qbool R_ExternalTexturesEnabled(qbool worldmodel);
 void R_SetNonPowerOfTwoSupport(qbool supported);
 void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* height);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 const char* R_TextureIdentifier(texture_ref ref);
 #endif
 

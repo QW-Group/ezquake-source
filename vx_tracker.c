@@ -1104,8 +1104,7 @@ void VXSCR_DrawTrackerString (void)
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
 	y = vid.height * 0.2 / scale + amf_tracker_y.value;
-	for (i = 0; i < max_active_tracks; i++)
-	{
+	for (i = 0; i < max_active_tracks; i++) {
 		// Time expired for this tracker, don't draw it.
 		if (trackermsg[i].die < r_refdef2.time) {
 			continue;

@@ -422,7 +422,7 @@ void GLM_PrepareAliasModelBatches(void)
 		return;
 	}
 
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 
 	// Update VBO with data about each entity
 	buffers.Update(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
@@ -453,7 +453,7 @@ void GLM_PrepareAliasModelBatches(void)
 		}
 	}
 
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }
 
 static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
@@ -498,7 +498,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines].num_calls) {
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
 
-		GL_EnterRegion("GLM_DrawOutlineBatch");
+		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
 		SetAliasModelMode(EZQ_ALIAS_MODE_OUTLINES);
 		GLM_StateBeginAliasOutlineBatch();
 
@@ -511,7 +511,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			);
 		}
 
-		GL_LeaveRegion();
+		R_TraceLeaveNamedRegion();
 	}
 }
 

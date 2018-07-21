@@ -213,7 +213,7 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 
 	buffer->persistent_mapped_ptr = NULL;
 	GL_BindBufferImpl(target, buffer->glref);
-	GL_ObjectLabel(GL_BUFFER, buffer->glref, -1, name);
+	R_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 	qglBufferData(target, size, data, glUsage);
 	result.index = buffer - buffer_data;
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
@@ -280,7 +280,7 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 		buffer->size = size = ((size + (alignment - 1)) / alignment) * alignment;
 	}
 
-	GL_ObjectLabel(GL_BUFFER, buffer->glref, -1, name);
+	R_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 
 	if (tripleBuffer) {
 		qglBufferStorage(target, size * 3, NULL, storageFlags);
@@ -319,7 +319,7 @@ static void GL_UpdateBuffer(buffer_ref vbo, int size, void* data)
 
 		memcpy(start, data, size);
 
-		GL_LogAPICall("GL_UpdateBuffer[memcpy](%s)", buffer_data[vbo.index].name);
+		R_TraceLogAPICall("GL_UpdateBuffer[memcpy](%s)", buffer_data[vbo.index].name);
 	}
 	else {
 		if (qglNamedBufferSubData) {
@@ -330,7 +330,7 @@ static void GL_UpdateBuffer(buffer_ref vbo, int size, void* data)
 			qglBufferSubData(buffer_data[vbo.index].target, 0, (GLsizeiptr)size, data);
 		}
 
-		GL_LogAPICall("GL_UpdateBuffer(%s)", buffer_data[vbo.index].name);
+		R_TraceLogAPICall("GL_UpdateBuffer(%s)", buffer_data[vbo.index].name);
 	}
 }
 
@@ -372,7 +372,7 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 		}
 
 		buffer_data[vbo.index].size = size;
-		GL_LogAPICall("GL_ResizeBuffer(%s)", buffer_data[vbo.index].name);
+		R_TraceLogAPICall("GL_ResizeBuffer(%s)", buffer_data[vbo.index].name);
 		return vbo;
 	}
 }
@@ -400,7 +400,7 @@ static void GL_UpdateBufferSection(buffer_ref vbo, ptrdiff_t offset, int size, c
 			qglBufferSubData(buffer_data[vbo.index].target, offset, size, data);
 		}
 	}
-	GL_LogAPICall("GL_UpdateBufferSection(%s)", buffer_data[vbo.index].name);
+	R_TraceLogAPICall("GL_UpdateBufferSection(%s)", buffer_data[vbo.index].name);
 }
 
 static void GL_BufferShutdown(void)
@@ -486,7 +486,7 @@ static void GL_BindBuffer(buffer_ref ref)
 	qbool switched;
 
 	if (!(GL_BufferReferenceIsValid(ref) && buffer_data[ref.index].glref)) {
-		GL_LogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffer_data[ref.index].name);
+		R_TraceLogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffer_data[ref.index].name);
 		return;
 	}
 
@@ -496,7 +496,7 @@ static void GL_BindBuffer(buffer_ref ref)
 	}
 
 	if (switched) {
-		GL_LogAPICall("GL_BindBuffer(%s)", buffer_data[ref.index].name);
+		R_TraceLogAPICall("GL_BindBuffer(%s)", buffer_data[ref.index].name);
 	}
 }
 
@@ -511,7 +511,7 @@ static void GL_UnBindBuffer(buffertype_t type)
 {
 	GLenum target = GL_BufferTypeToTarget(type);
 	GL_BindBufferImpl(target, 0);
-	GL_LogAPICall("GL_UnBindBuffer(%s)", target == GL_ARRAY_BUFFER ? "array-buffer" : (target == GL_ELEMENT_ARRAY_BUFFER ? "element-array" : "?"));
+	R_TraceLogAPICall("GL_UnBindBuffer(%s)", target == GL_ARRAY_BUFFER ? "array-buffer" : (target == GL_ELEMENT_ARRAY_BUFFER ? "element-array" : "?"));
 }
 
 static qbool GL_BufferValid(buffer_ref buffer)
@@ -577,17 +577,17 @@ static qbool GL_BuffersReady(void)
 	return true;
 }
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 static void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
 {
 	char label[64];
 
 	if (currentArrayBuffer) {
-		GL_GetObjectLabel(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
+		R_TraceObjectLabelGet(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
 		fprintf(debug_frame_out, "%.*s   ArrayBuffer: %u (%s)\n", debug_frame_depth, "                                                          ", currentArrayBuffer, label);
 	}
 	if (currentElementArrayBuffer) {
-		GL_GetObjectLabel(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
+		R_TraceObjectLabelGet(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
 		fprintf(debug_frame_out, "%.*s   ElementArray: %u (%s)\n", debug_frame_depth, "                                                          ", currentElementArrayBuffer, label);
 	}
 }
@@ -671,7 +671,7 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 		api->Shutdown = GL_BufferShutdown;
 		api->SetElementArray = GL_SetElementArrayBuffer;
 		api->IsValid = GL_BufferValid;
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 		api->PrintState = GL_PrintBufferState;
 #endif
 		api->supported = true;

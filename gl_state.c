@@ -101,7 +101,7 @@ static GLenum glPolygonModeValues[r_polygonmode_count];
 static GLenum glAlphaTestModeValues[r_alphatest_func_count];
 static GLenum glTextureEnvModeValues[r_texunit_mode_count];
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 static const char* txtDepthFunctions[r_depthfunc_count];
 static const char* txtCullFaceValues[r_cullface_count];
 static const char* txtBlendFuncNames[r_blendfunc_count];
@@ -213,11 +213,11 @@ rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name)
 	if (state->field != current->field) { \
 		if (state->field) { \
 			glEnable(option); \
-			GL_LogAPICall("glEnable(" # option ")"); \
+			R_TraceLogAPICall("glEnable(" # option ")"); \
 		} \
 		else { \
 			glDisable(option); \
-			GL_LogAPICall("glDisable(" # option ")"); \
+			R_TraceLogAPICall("glDisable(" # option ")"); \
 		} \
 		current->field = state->field; \
 	}
@@ -228,22 +228,22 @@ static void GL_ApplyRenderingState(r_state_id id)
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
-	GL_EnterTracedRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
+	R_TraceEnterRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
 
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
-		GL_LogAPICall("glDepthFunc(%s)", txtDepthFunctions[current->depth.func]);
+		R_TraceLogAPICall("glDepthFunc(%s)", txtDepthFunctions[current->depth.func]);
 	}
 	if (state->depth.nearRange != current->depth.nearRange || state->depth.farRange != current->depth.farRange) {
 		glDepthRange(
 			current->depth.nearRange = state->depth.nearRange,
 			current->depth.farRange = state->depth.farRange
 		);
-		GL_LogAPICall("glDepthRange(%f,%f)", state->depth.nearRange, state->depth.farRange);
+		R_TraceLogAPICall("glDepthRange(%f,%f)", state->depth.nearRange, state->depth.farRange);
 	}
 	if (state->cullface.mode != current->cullface.mode) {
 		glCullFace(glCullFaceValues[current->cullface.mode = state->cullface.mode]);
-		GL_LogAPICall("glCullFace(%s)", txtCullFaceValues[state->cullface.mode]);
+		R_TraceLogAPICall("glCullFace(%s)", txtCullFaceValues[state->cullface.mode]);
 	}
 	if (state->blendFunc != current->blendFunc) {
 		current->blendFunc = state->blendFunc;
@@ -251,16 +251,16 @@ static void GL_ApplyRenderingState(r_state_id id)
 			glBlendFuncValuesSource[state->blendFunc],
 			glBlendFuncValuesDestination[state->blendFunc]
 		);
-		GL_LogAPICall("glBlendFunc(%s)", txtBlendFuncNames[state->blendFunc]);
+		R_TraceLogAPICall("glBlendFunc(%s)", txtBlendFuncNames[state->blendFunc]);
 	}
 	if (state->line.width != current->line.width) {
 		glLineWidth(current->line.width = state->line.width);
-		GL_LogAPICall("glLineWidth(%f)", current->line.width);
+		R_TraceLogAPICall("glLineWidth(%f)", current->line.width);
 	}
 	GL_ApplySimpleToggle(state, current, depth.test_enabled, GL_DEPTH_TEST);
 	if (state->depth.mask_enabled != current->depth.mask_enabled) {
 		glDepthMask((current->depth.mask_enabled = state->depth.mask_enabled) ? GL_TRUE : GL_FALSE);
-		GL_LogAPICall("glDepthMask(%s)", current->depth.mask_enabled ? "on" : "off");
+		R_TraceLogAPICall("glDepthMask(%s)", current->depth.mask_enabled ? "on" : "off");
 	}
 	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
@@ -270,7 +270,7 @@ static void GL_ApplyRenderingState(r_state_id id)
 	}
 	else if (current->fog.enabled) {
 		glDisable(GL_FOG);
-		GL_LogAPICall("glDisable(GL_FOG)");
+		R_TraceLogAPICall("glDisable(GL_FOG)");
 		current->fog.enabled = false;
 	}
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
@@ -281,18 +281,18 @@ static void GL_ApplyRenderingState(r_state_id id)
 		if (enabled) {
 			if (!current->polygonOffset.fillEnabled) {
 				glEnable(GL_POLYGON_OFFSET_FILL);
-				GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
+				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
 				current->polygonOffset.fillEnabled = true;
 			}
 			if (!current->polygonOffset.lineEnabled) {
 				glEnable(GL_POLYGON_OFFSET_LINE);
-				GL_LogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
+				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
 				current->polygonOffset.lineEnabled = true;
 			}
 
 			if (current->polygonOffset.factor != factor || current->polygonOffset.units != units) {
 				glPolygonOffset(factor, units);
-				GL_LogAPICall("glPolygonOffset(factor %f, units %f)", factor, units);
+				R_TraceLogAPICall("glPolygonOffset(factor %f, units %f)", factor, units);
 
 				current->polygonOffset.factor = factor;
 				current->polygonOffset.units = units;
@@ -301,12 +301,12 @@ static void GL_ApplyRenderingState(r_state_id id)
 		else {
 			if (current->polygonOffset.fillEnabled) {
 				glDisable(GL_POLYGON_OFFSET_FILL);
-				GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
+				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
 				current->polygonOffset.fillEnabled = false;
 			}
 			if (current->polygonOffset.lineEnabled) {
 				glDisable(GL_POLYGON_OFFSET_LINE);
-				GL_LogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
+				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
 				current->polygonOffset.lineEnabled = false;
 			}
 		}
@@ -317,7 +317,7 @@ static void GL_ApplyRenderingState(r_state_id id)
 	if (state->polygonMode != current->polygonMode) {
 		glPolygonMode(GL_FRONT_AND_BACK, glPolygonModeValues[current->polygonMode = state->polygonMode]);
 
-		GL_LogAPICall("glPolygonMode(%s)", txtPolygonModeValues[state->polygonMode]);
+		R_TraceLogAPICall("glPolygonMode(%s)", txtPolygonModeValues[state->polygonMode]);
 	}
 	if (state->clearColor[0] != current->clearColor[0] || state->clearColor[1] != current->clearColor[1] || state->clearColor[2] != current->clearColor[2] || state->clearColor[3] != current->clearColor[3]) {
 		glClearColor(
@@ -326,7 +326,7 @@ static void GL_ApplyRenderingState(r_state_id id)
 			current->clearColor[2] = state->clearColor[2],
 			current->clearColor[3] = state->clearColor[3]
 		);
-		GL_LogAPICall("glClearColor(...)");
+		R_TraceLogAPICall("glClearColor(...)");
 	}
 	GL_ApplySimpleToggle(state, current, blendingEnabled, GL_BLEND);
 	if (state->colorMask[0] != current->colorMask[0] || state->colorMask[1] != current->colorMask[1] || state->colorMask[2] != current->colorMask[2] || state->colorMask[3] != current->colorMask[3]) {
@@ -336,16 +336,16 @@ static void GL_ApplyRenderingState(r_state_id id)
 			(current->colorMask[2] = state->colorMask[2]) ? GL_TRUE : GL_FALSE,
 			(current->colorMask[3] = state->colorMask[3]) ? GL_TRUE : GL_FALSE
 		);
-		GL_LogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
+		R_TraceLogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
 	if (state->vao_id != currentVAO) {
 		R_BindVertexArray(state->vao_id);
 	}
 
-#ifdef WITH_OPENGL_TRACE
-	GL_DebugState();
+#ifdef WITH_RENDERING_TRACE
+	R_TraceDebugState();
 #endif
-	GL_LeaveTracedRegion(true);
+	R_TraceLeaveRegion(true);
 }
 
 static void GLC_ApplyRenderingState(r_state_id id)
@@ -361,7 +361,7 @@ static void GLC_ApplyRenderingState(r_state_id id)
 			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
 			current->alphaTesting.value = state->alphaTesting.value
 		);
-		GL_LogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
+		R_TraceLogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
 	}
 
 	// Texture units
@@ -370,22 +370,22 @@ static void GLC_ApplyRenderingState(r_state_id id)
 			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
 				GL_SelectTexture(GL_TEXTURE0 + i);
 				glEnable(GL_TEXTURE_2D);
-				GL_LogAPICall("Enabled texturing on unit %d", i);
+				R_TraceLogAPICall("Enabled texturing on unit %d", i);
 				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
 					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-					GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+					R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 				}
 			}
 			else {
 				GL_SelectTexture(GL_TEXTURE0 + i);
 				glDisable(GL_TEXTURE_2D);
-				GL_LogAPICall("Disabled texturing on unit %d", i);
+				R_TraceLogAPICall("Disabled texturing on unit %d", i);
 			}
 		}
 		else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
 			GL_SelectTexture(GL_TEXTURE0 + i);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-			GL_LogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 		}
 	}
 
@@ -513,7 +513,7 @@ void GL_InitialiseState(void)
 	glTextureEnvModeValues[r_texunit_mode_modulate] = GL_MODULATE;
 	glTextureEnvModeValues[r_texunit_mode_decal] = GL_DECAL;
 	glTextureEnvModeValues[r_texunit_mode_add] = GL_ADD;
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	txtDepthFunctions[r_depthfunc_less] = "<";
 	txtDepthFunctions[r_depthfunc_equal] = "=";
 	txtDepthFunctions[r_depthfunc_lessorequal] = "<=";
@@ -586,7 +586,7 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
@@ -595,12 +595,12 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 
 	++frameStats.texture_binds;
@@ -627,7 +627,7 @@ void GL_SelectTexture(GLenum textureUnit)
 #endif
 
 	currentTextureUnit = textureUnit;
-	GL_LogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
+	R_TraceLogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
 
 void GL_InitTextureState(void)
@@ -704,8 +704,8 @@ void GL_BindTextures(int first, int count, texture_ref* textures)
 		}
 	}
 
-#ifdef WITH_OPENGL_TRACE
-	if (GL_LoggingEnabled()) {
+#ifdef WITH_RENDERING_TRACE
+	if (R_TraceLoggingEnabled()) {
 		static char temp[1024];
 
 		temp[0] = '\0';
@@ -715,7 +715,7 @@ void GL_BindTextures(int first, int count, texture_ref* textures)
 			}
 			strlcat(temp, R_TextureIdentifier(textures[i]), sizeof(temp));
 		}
-		GL_LogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
+		R_TraceLogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
 	}
 #endif
 }
@@ -749,8 +749,8 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 	qglBindImageTexture(unit, glRef, level, layered, layer, access, format);
 }
 
-#ifdef WITH_OPENGL_TRACE
-void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
+#ifdef WITH_RENDERING_TRACE
+void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 {
 	int i;
 
@@ -854,7 +854,7 @@ void R_CustomLineWidth(float width)
 	if (width != opengl.rendering_state.line.width) {
 		if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
 			glLineWidth(opengl.rendering_state.line.width = width);
-			GL_LogAPICall("glLineWidth(%f)", width);
+			R_TraceLogAPICall("glLineWidth(%f)", width);
 		}
 		else if (R_UseVulkan()) {
 			// Requires VK_DYNAMIC_STATE_LINE_WIDTH
@@ -935,7 +935,7 @@ void R_BindVertexArray(r_vao_id vao)
 		renderer.BindVertexArray(vao);
 
 		currentVAO = vao;
-		GL_LogAPICall("BindVertexArray(%s)", vaoNames[vao]);
+		R_TraceLogAPICall("BindVertexArray(%s)", vaoNames[vao]);
 	}
 }
 
@@ -971,16 +971,16 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 			buffers.UnBind(GL_ARRAY_BUFFER);
 		}
 		glVertexPointer(size, type, stride, pointer_or_offset);
-		GL_LogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_vertex_array_enabled) {
 			glEnableClientState(GL_VERTEX_ARRAY);
-			GL_LogAPICall("glEnableClientState(GL_VERTEX_ARRAY)");
+			R_TraceLogAPICall("glEnableClientState(GL_VERTEX_ARRAY)");
 			opengl.rendering_state.glc_vertex_array_enabled = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_vertex_array_enabled) {
 		glDisableClientState(GL_VERTEX_ARRAY);
-		GL_LogAPICall("glDisableClientState(GL_VERTEX_ARRAY)");
+		R_TraceLogAPICall("glDisableClientState(GL_VERTEX_ARRAY)");
 		opengl.rendering_state.glc_vertex_array_enabled = false;
 	}
 }
@@ -995,17 +995,17 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 			buffers.UnBind(GL_ARRAY_BUFFER);
 		}
 		glColorPointer(size, type, stride, pointer_or_offset);
-		GL_LogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_color_array_enabled) {
 			glEnableClientState(GL_COLOR_ARRAY);
-			GL_LogAPICall("glEnableClientState(GL_COLOR_ARRAY)");
+			R_TraceLogAPICall("glEnableClientState(GL_COLOR_ARRAY)");
 			opengl.rendering_state.colorValid = false;
 			opengl.rendering_state.glc_color_array_enabled = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_color_array_enabled) {
 		glDisableClientState(GL_COLOR_ARRAY);
-		GL_LogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
+		R_TraceLogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
 		opengl.rendering_state.colorValid = false;
 		opengl.rendering_state.glc_color_array_enabled = false;
 	}
@@ -1026,17 +1026,17 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		}
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glTexCoordPointer(size, type, stride, pointer_or_offset);
-		GL_LogAPICall("glTexCoordPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		R_TraceLogAPICall("glTexCoordPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		if (!opengl.rendering_state.glc_texture_array_enabled[unit]) {
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			GL_LogAPICall("glEnableClientState(GL_TEXTURE_COORD_ARRAY)");
+			R_TraceLogAPICall("glEnableClientState(GL_TEXTURE_COORD_ARRAY)");
 			opengl.rendering_state.glc_texture_array_enabled[unit] = true;
 		}
 	}
 	else if (!enabled && opengl.rendering_state.glc_texture_array_enabled[unit]) {
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		GL_LogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
+		R_TraceLogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
 		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
 	}
 }

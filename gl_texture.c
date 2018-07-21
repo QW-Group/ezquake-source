@@ -102,7 +102,7 @@ void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref*
 
 		if (identifier) {
 			strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
-			GL_ObjectLabel(GL_TEXTURE, glt->texnum, -1, identifier);
+			R_TraceObjectLabelSet(GL_TEXTURE, glt->texnum, -1, identifier);
 		}
 	}
 }
@@ -149,7 +149,7 @@ const char* GL_TextureIdentifierByGLReference(GLuint texnum)
 {
 	static char name[256];
 
-	GL_GetObjectLabel(GL_TEXTURE, texnum, sizeof(name), NULL, name);
+	R_TraceObjectLabelGet(GL_TEXTURE, texnum, sizeof(name), NULL, name);
 
 	return name;
 }

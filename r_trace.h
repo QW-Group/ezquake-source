@@ -20,37 +20,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_TRACE_HEADER
 #define EZQUAKE_R_TRACE_HEADER
 
-#ifdef WITH_OPENGL_TRACE
-#define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
-#define LEAVE_STATE GL_LeaveTracedRegion(true)
-#define GL_EnterRegion(x) GL_EnterTracedRegion(x, false)
-#define GL_LeaveRegion() GL_LeaveTracedRegion(false)
-void GL_EnterTracedRegion(const char* regionName, qbool trace_only);
-void GL_LeaveTracedRegion(qbool trace_only);
-void GL_PrintState(FILE* output, int indent);
-void GL_DebugState(void);
-void GL_ResetRegion(qbool start);
-void GL_LogAPICall2(const char* message, ...);
-#define GL_LogAPICall(...) { if (R_UseImmediateOpenGL()) { GL_LogAPICall2(__VA_ARGS__); }}
-qbool GL_LoggingEnabled(void);
-void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
-void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
-void GL_TextureLabel(unsigned int name, const char* label);
-void GL_GetTextureLabel(unsigned int name, int bufSize, int* length, char* label);
+#ifdef WITH_RENDERING_TRACE
+#define R_TraceEnterFunctionRegion R_TraceEnterRegion(__FUNCTION__, true)
+#define R_TraceLeaveFunctionRegion R_TraceLeaveRegion(true)
+#define R_TraceEnterNamedRegion(x) R_TraceEnterRegion(x, false)
+#define R_TraceLeaveNamedRegion() R_TraceLeaveRegion(false)
+void R_TraceEnterRegion(const char* regionName, qbool trace_only);
+void R_TraceLeaveRegion(qbool trace_only);
+void R_TracePrintState(FILE* output, int indent);
+void R_TraceDebugState(void);
+void R_TraceResetRegion(qbool start);
+void R_TraceLogAPICallDirect(const char* message, ...);
+#define R_TraceLogAPICall(...) { if (R_UseImmediateOpenGL()) { R_TraceLogAPICallDirect(__VA_ARGS__); }}
+qbool R_TraceLoggingEnabled(void);
+void R_TraceObjectLabelSet(unsigned int identifier, unsigned int name, int length, const char* label);
+void R_TraceObjectLabelGet(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
+void R_TraceTextureLabelSet(unsigned int name, const char* label);
+void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* label);
 #else
-#define ENTER_STATE
-#define LEAVE_STATE
-#define GL_EnterTracedRegion(...)
-#define GL_LeaveTracedRegion(...)
-#define GL_EnterRegion(x)
-#define GL_LeaveRegion()
-#define GL_ResetRegion(x)
-#define GL_LogAPICall(...)
-#define GL_PrintState(...)
-#define GL_DebugState()
-#define GL_LoggingEnabled() (false)
-#define GL_ObjectLabel(...)
-#define GL_GetObjectLabel(...)
+#define R_TraceEnterFunctionRegion
+#define R_TraceLeaveFunctionRegion
+#define R_TraceEnterRegion(...)
+#define R_TraceLeaveRegion(...)
+#define R_TraceEnterNamedRegion(x)
+#define R_TraceLeaveNamedRegion()
+#define R_TraceResetRegion(x)
+#define R_TraceLogAPICall(...)
+#define R_TracePrintState(...)
+#define R_TraceDebugState()
+#define R_TraceLoggingEnabled() (false)
+#define R_TraceObjectLabelSet(...)
+#define R_TraceObjectLabelGet(...)
 #endif
 
 #endif // EZQUAKE_R_TRACE_HEADER

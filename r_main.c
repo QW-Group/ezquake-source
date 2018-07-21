@@ -10,9 +10,13 @@
 #include "r_texture.h"
 #include "r_renderer.h"
 
-extern void CachePics_Shutdown(void);
-extern void R_LightmapShutdown(void);
-extern void GL_DeleteBrushModelIndexBuffer(void);
+void GLM_Initialise(void);
+void GLC_Initialise(void);
+
+void CachePics_Shutdown(void);
+void R_LightmapShutdown(void);
+void R_Hud_Initialise(void);
+void GL_DeleteBrushModelIndexBuffer(void);
 
 renderer_api_t renderer;
 
@@ -76,11 +80,6 @@ void R_Initialise(void)
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_Initialise();
-		GL_Init();
-		GL_PopulateConfig();
-		GLM_InitialiseVAOHandling();
-		GL_InitialiseBufferHandling(&buffers);
-		GL_InitialiseState();
 	}
 #endif
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

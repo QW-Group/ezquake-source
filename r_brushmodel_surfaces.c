@@ -356,9 +356,9 @@ void R_DrawWorld(void)
 	//draw the world sky
 	R_DrawSky();
 
-	GL_EnterRegion("DrawWorld");
+	R_TraceEnterNamedRegion("DrawWorld");
 	renderer.DrawWorld();
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }
 
 void R_MarkLeaves(void)

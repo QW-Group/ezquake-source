@@ -602,7 +602,7 @@ void R_CreateTexture2D(texture_ref* reference, int width, int height, const char
 void R_TextureLabel(unsigned int texnum, const char* identifier)
 {
 	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_TextureLabel(texnum, identifier);
+		R_TraceTextureLabelSet(texnum, identifier);
 	}
 	else if (R_UseVulkan()) {
 		// VK_TextureLabel(...);

@@ -1801,7 +1801,7 @@ void CL_InitLocal (void)
 	Cmd_AddMacro(macro_conwidth, CL_Macro_Conwidth);
 	Cmd_AddMacro(macro_conheight, CL_Macro_Conheight);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	if (R_DebugProfileContext()) {
 		extern void Dev_VidFrameTrace(void);
 
@@ -2129,13 +2129,13 @@ static void CL_ServerFrame(double frametime)
 #endif
 }
 
-void CL_Frame (double time) 
+void CL_Frame(double time)
 {
 	static double extratime = 0.001;
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 	qbool need_server_frame = false;
-	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || buffers.FrameReady();
+	qbool render_frame = true; // Movie_IsCapturing() || !cl_bufferwait.integer || buffers.FrameReady();
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();

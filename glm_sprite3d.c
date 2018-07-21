@@ -108,7 +108,7 @@ void GLM_Prepare3DSprites(void)
 		return;
 	}
 
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 
 	GLM_Create3DSpriteVAO();
 
@@ -116,7 +116,7 @@ void GLM_Prepare3DSprites(void)
 		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 }
 
 void GLM_Draw3DSprites()
@@ -129,10 +129,10 @@ void GLM_Draw3DSprites()
 		return;
 	}
 
-	GL_EnterRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__FUNCTION__);
 
 	if (!GLM_3DSpritesInit()) {
-		GL_LeaveRegion();
+		R_TraceLeaveNamedRegion();
 		return;
 	}
 
@@ -146,7 +146,7 @@ void GLM_Draw3DSprites()
 			continue;
 		}
 
-		GL_EnterRegion(batch->name);
+		R_TraceEnterNamedRegion(batch->name);
 		if (first_batch || current_alpha_test != alpha_test) {
 			GLM_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
 		}
@@ -198,12 +198,12 @@ void GLM_Draw3DSprites()
 			}
 		}
 
-		GL_LeaveRegion();
+		R_TraceLeaveNamedRegion();
 
 		batch->count = 0;
 	}
 
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	batchCount = vertexCount = 0;
 	memset(batchMapping, 0, sizeof(batchMapping));

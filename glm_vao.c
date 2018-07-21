@@ -130,7 +130,7 @@ void GLM_GenVertexArray(r_vao_id vao, const char* name)
 	}
 	qglGenVertexArrays(1, &vaos[vao].vao);
 	R_BindVertexArray(vao);
-	GL_ObjectLabel(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
+	R_TraceObjectLabelSet(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
 	buffers.SetElementArray(null_buffer_reference);
 }
 

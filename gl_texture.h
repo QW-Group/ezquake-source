@@ -40,7 +40,7 @@ void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 // Internal
-void GL_TextureLabel(unsigned int texnum, const char* identifier);
+void R_TraceTextureLabelSet(unsigned int texnum, const char* identifier);
 qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth);
 void GL_AllocateStorage(gltexture_t* texture);
 void GL_AllocateTextureNames(gltexture_t* glt);

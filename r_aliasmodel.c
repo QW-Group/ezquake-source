@@ -326,7 +326,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	R_PushModelviewMatrix(oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
@@ -361,7 +361,7 @@ void R_DrawAliasModel(entity_t *ent)
 		renderer.DrawAliasModelShadow(ent);
 	}
 
-	GL_LeaveTracedRegion(true);
+	R_TraceLeaveRegion(true);
 
 	return;
 }

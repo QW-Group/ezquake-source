@@ -37,7 +37,7 @@ void GLC_DrawWaterSurfaces(void)
 		return;
 	}
 
-	GL_EnterTracedRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__FUNCTION__, true);
 	GLC_StateBeginWaterSurfaces();
 
 	for (s = waterchain; s; s = s->texturechain) {
@@ -46,7 +46,7 @@ void GLC_DrawWaterSurfaces(void)
 		GLC_EmitWaterPoly(s);
 	}
 
-	GL_LeaveTracedRegion(true);
+	R_TraceLeaveRegion(true);
 
 	waterchain = NULL;
 }

@@ -1122,7 +1122,7 @@ void GL_Set2D(void)
 	renderer.Begin2DRendering();
 	R_IdentityModelView();
 	R_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
-	GL_ResetRegion(false);
+	R_TraceResetRegion(false);
 }
 
 void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha)

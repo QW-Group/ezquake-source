@@ -167,7 +167,7 @@ static void VK_BufferShutdown(void)
 	return;
 }
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 static void VK_PrintBufferState(FILE* output, int depth)
 {
 }
@@ -201,7 +201,7 @@ void VK_InitialiseBufferHandling(api_buffers_t* api)
 	api->SetElementArray = VK_BufferSetElementArray;
 	api->Shutdown = VK_BufferShutdown;
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	api->PrintState = VK_PrintBufferState;
 #endif
 }

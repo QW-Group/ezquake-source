@@ -41,6 +41,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_renderer.h"
 #include "r_state.h"
 #include "tr_types.h"
+#include "glc_state.h"
 
 vec3_t modelorg;
 
@@ -1469,7 +1470,7 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
 
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
 	if (rotated) {
@@ -1535,7 +1536,7 @@ void R_DrawBrushModel(entity_t *e)
 
 	R_PopModelviewMatrix(oldMatrix);
 
-	GL_LeaveTracedRegion(true);
+	R_TraceLeaveRegion(true);
 }
 
 void R_InitialiseBrushModelStates(void)

@@ -386,9 +386,9 @@ void R_DrawSky (void)
 		return;
 	}
 
-	GL_EnterRegion("R_DrawSky");
+	R_TraceEnterNamedRegion("R_DrawSky");
 	renderer.DrawSky();
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	skychain = NULL;
 	skychain_tail = &skychain;

@@ -53,7 +53,7 @@ typedef struct api_buffers_t {
 	void (*SetElementArray)(buffer_ref);
 	void (*Shutdown)(void);
 
-#ifdef WITH_OPENGL_TRACE
+#ifdef WITH_RENDERING_TRACE
 	void (*PrintState)(FILE* debug_frame_out, int debug_frame_depth);
 #endif
 

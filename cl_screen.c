@@ -1135,7 +1135,7 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 
 void SCR_UpdateScreenPlayerView(int flags)
 {
-	GL_ResetRegion(true);
+	R_TraceResetRegion(true);
 
 	R_CheckReloadLightmaps();
 
@@ -1207,18 +1207,18 @@ void SCR_UpdateScreenPostPlayerView(void)
 	extern qbool  sb_showscores, sb_showteamscores;
 	extern cvar_t scr_menudrawhud;
 
-	GL_EnterRegion("HUD");
+	R_TraceEnterNamedRegion("HUD");
 	if (scr_newHud.value != 1) {
 		SCR_DrawNewHudElements();
 	}
 
 	SCR_DrawElements();
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	// Actual rendering...
-	GL_EnterRegion("GL_DrawHUD");
+	R_TraceEnterNamedRegion("GL_DrawHUD");
 	R_FlushImageDraw();
-	GL_LeaveRegion();
+	R_TraceLeaveNamedRegion();
 
 	renderer.PostProcessScreen();
 
