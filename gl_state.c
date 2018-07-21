@@ -51,10 +51,6 @@ void R_InitialiseEntityStates(void);
 void GLC_InitialiseSkyStates(void);
 void R_InitialiseWorldStates(void);
 
-// FIXME: currentWidth & currentHeight should be initialised to dimensions of window
-GLint currentViewportX, currentViewportY;
-GLsizei currentViewportWidth, currentViewportHeight;
-
 // VAOs
 static r_vao_id currentVAO = vao_none;
 static const char* vaoNames[vao_count] = {
@@ -459,22 +455,26 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 
 void R_Viewport(int x, int y, int width, int height)
 {
-	if (x != currentViewportX || y != currentViewportY || width != currentViewportWidth || height != currentViewportHeight) {
+	rendering_state_t* state = &opengl.rendering_state;
+
+	if (x != state->currentViewportX || y != state->currentViewportY || width != state->currentViewportWidth || height != state->currentViewportHeight) {
 		renderer.Viewport(x, y, width, height);
 
-		currentViewportX = x;
-		currentViewportY = y;
-		currentViewportWidth = width;
-		currentViewportHeight = height;
+		state->currentViewportX = x;
+		state->currentViewportY = y;
+		state->currentViewportWidth = width;
+		state->currentViewportHeight = height;
 	}
 }
 
 void R_GetViewport(int* view)
 {
-	view[0] = opengl.rendering_state.currentViewportX;
-	view[1] = opengl.rendering_state.currentViewportY;
-	view[2] = opengl.rendering_state.currentViewportWidth;
-	view[3] = opengl.rendering_state.currentViewportHeight;
+	rendering_state_t* state = &opengl.rendering_state;
+
+	view[0] = state->currentViewportX;
+	view[1] = state->currentViewportY;
+	view[2] = state->currentViewportWidth;
+	view[3] = state->currentViewportHeight;
 }
 
 void GL_InitialiseState(void)

@@ -77,14 +77,17 @@ void SCR_SetupAutoID(void)
 
 	autoid_count = 0;
 
-	if (!scr_autoid.value)
+	if (!scr_autoid.value) {
 		return;
+	}
 
-	if (cls.state != ca_active || !cl.validsequence || cl.intermission)
+	if (cls.state != ca_active || !cl.validsequence || cl.intermission) {
 		return;
+	}
 
-	if (!cls.demoplayback && !cl.spectator)
+	if (!cls.demoplayback && !cl.spectator) {
 		return;
+	}
 
 	if (cl.spectator) {
 		tracknum = Cam_TrackNum();
@@ -100,19 +103,22 @@ void SCR_SetupAutoID(void)
 	cent = &cl_entities[1];
 
 	for (j = 0; j < MAX_CLIENTS; j++, info++, state++, cent++) {
-		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
+		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator) {
 			continue;
+		}
 
 		if ((state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)) ||
-			state->modelindex == cl_modelindices[mi_h_player])
+			state->modelindex == cl_modelindices[mi_h_player]) {
 			continue;
+		}
 
 		origin = cent->lerp_origin;
 
 		// FIXME: In multiview, this will detect some players being outside of the view even though
 		// he's visible on screen, this only happens in some cases.
-		if (R_CullSphere(origin, 0))
+		if (R_CullSphere(origin, 0)) {
 			continue;
+		}
 
 		VectorCopy(origin, visitem.entorg);
 		visitem.entorg[2] += 27;
@@ -120,8 +126,9 @@ void SCR_SetupAutoID(void)
 		visitem.dist = DotProduct(visitem.dir, visitem.forward);
 		visitem.radius = 25;
 
-		if (!TP_IsItemVisible(&visitem))
+		if (!TP_IsItemVisible(&visitem)) {
 			continue;
+		}
 
 		id = &autoids[autoid_count];
 		id->player = info;
