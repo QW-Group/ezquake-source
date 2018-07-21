@@ -222,6 +222,7 @@ void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
 		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		R_SetTextureFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
 	}
 	atlas_dirty = 0;
 }

@@ -30,7 +30,8 @@ void GL_LeaveTracedRegion(qbool trace_only);
 void GL_PrintState(FILE* output, int indent);
 void GL_DebugState(void);
 void GL_ResetRegion(qbool start);
-void GL_LogAPICall(const char* message, ...);
+void GL_LogAPICall2(const char* message, ...);
+#define GL_LogAPICall(...) { if (R_UseImmediateOpenGL()) { GL_LogAPICall2(__VA_ARGS__); }}
 qbool GL_LoggingEnabled(void);
 void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
 void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);

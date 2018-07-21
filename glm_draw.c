@@ -255,7 +255,7 @@ void GLM_HudPrepareImages(void)
 	if (imageData.imageCount) {
 		buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
-			// Everything is GL_NEAREST
+			// Everything is GL_NEAREST, no smoothing
 			GLM_SamplerSetNearest(0);
 		}
 		else if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
@@ -304,7 +304,8 @@ static void GLM_CreateMultiImageProgram(void)
 
 		if (!GL_BufferReferenceIsValid(imageIndexBuffer)) {
 			GLuint i;
-			GLuint* imageIndexData = Q_malloc(MAX_MULTI_IMAGE_BATCH * 5 * sizeof(GLuint));
+			int imageIndexLength = MAX_MULTI_IMAGE_BATCH * 5 * sizeof(GLuint);
+			GLuint* imageIndexData = Q_malloc(imageIndexLength);
 
 			for (i = 0; i < MAX_MULTI_IMAGE_BATCH; ++i) {
 				imageIndexData[i * 5 + 0] = i * 4;
@@ -314,7 +315,7 @@ static void GLM_CreateMultiImageProgram(void)
 				imageIndexData[i * 5 + 4] = ~(GLuint)0;
 			}
 
-			imageIndexBuffer = buffers.Create(buffertype_index, "image-indexes", sizeof(imageIndexData), imageIndexData, bufferusage_constant_data);
+			imageIndexBuffer = buffers.Create(buffertype_index, "image-indexes", imageIndexLength, imageIndexData, bufferusage_constant_data);
 			Q_free(imageIndexData);
 		}
 

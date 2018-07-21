@@ -144,9 +144,9 @@ qbool GL_LoggingEnabled(void)
 	return debug_frame_out != NULL;
 }
 
-void GL_LogAPICall(const char* format, ...)
+void GL_LogAPICall2(const char* format, ...)
 {
-	if (R_UseImmediateOpenGL() && debug_frame_out) {
+	if (debug_frame_out) {
 		va_list argptr;
 		char msg[4096];
 

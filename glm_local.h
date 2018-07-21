@@ -8,6 +8,7 @@ void GLM_InitPrograms(void);
 void GLM_Shutdown(qbool restarting);
 
 void GLM_SamplerSetNearest(unsigned int texture_unit_number);
+void GLM_SamplerSetLinear(unsigned int texture_unit_number);
 void GLM_SamplerClear(unsigned int texture_unit_number);
 void GL_DeleteSamplers(void);
 

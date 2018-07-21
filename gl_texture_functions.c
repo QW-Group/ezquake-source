@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_texture_internal.h"
 #include "gl_texture_internal.h"
+#include "r_trace.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
@@ -348,8 +349,9 @@ void GL_GenerateMipmap(texture_ref texture)
 
 // Samplers
 static GLuint nearest_sampler;
+static GLuint linear_sampler;
 
-void GLM_SamplerSetNearest(GLuint texture_unit_number)
+void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 {
 	if (!nearest_sampler) {
 		qglGenSamplers(1, &nearest_sampler);
@@ -359,6 +361,18 @@ void GLM_SamplerSetNearest(GLuint texture_unit_number)
 	}
 
 	qglBindSampler(texture_unit_number, nearest_sampler);
+}
+
+void GLM_SamplerSetLinear(unsigned int texture_unit_number)
+{
+	if (!linear_sampler) {
+		qglGenSamplers(1, &linear_sampler);
+
+		qglSamplerParameterf(linear_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		qglSamplerParameterf(linear_sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+
+	qglBindSampler(texture_unit_number, linear_sampler);
 }
 
 void GLM_SamplerClear(GLuint texture_unit_number)
