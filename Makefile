@@ -219,7 +219,6 @@ MODERN_OPENGL_OBJS := \
     glm_aliasmodel.o \
     glm_brushmodel.o \
     glm_draw.o \
-    glm_draw_charset.o \
     glm_framebuffer.o \
     glm_lightmaps.o \
     glm_md3.o \
@@ -233,7 +232,6 @@ MODERN_OPENGL_OBJS := \
     glm_sky.o \
     glm_sprite.o \
     glm_sprite3d.o \
-    glm_texture.o \
     glm_texture_arrays.o \
     glm_vao.o
 
@@ -271,6 +269,7 @@ COMMON_OPENGL_OBJS := \
     gl_sprite3d.o \
     gl_state.o \
     gl_texture.o \
+    gl_texture_functions.o \
     vid_common_gl.o
 
 COMMON_RENDERER_OBJS := \
