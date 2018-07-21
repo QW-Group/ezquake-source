@@ -151,7 +151,7 @@ void GLC_FreeAliasPoseBuffer(void)
 	temp_aliasmodel_buffer_size = 0;
 }
 
-void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, qbool alpha_blend)
+void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
@@ -167,7 +167,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 	int i;
 	vec3_t lc;
 
-	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, alpha_blend || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
+	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -497,12 +497,13 @@ void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* 
 	// <-- Underwater caustics on alias models of QRACK
 }
 
-void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
+void GLC_AliasModelShadow(entity_t* ent)
 {
 	float theta;
 	float oldMatrix[16];
 	static float shadescale = 0;
 	vec3_t shadevector;
+	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 
 	if (!shadescale) {
 		shadescale = 1 / sqrt(2);
@@ -561,10 +562,10 @@ static void GLC_DrawAliasShadow(entity_t* ent, aliashdr_t *paliashdr, int posenu
 		} while (--count);
 
 		GLC_End();
-	}	
+	}
 }
 
-void GLC_DrawAliasPowerupShell(entity_t *ent)
+void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 {
 	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	maliasframedesc_t *oldframe, *frame;

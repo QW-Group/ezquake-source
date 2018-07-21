@@ -69,6 +69,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vx_tracker.h"
 #include "menu_demo.h"
 #include "r_local.h"
+#include "r_renderer.h"
 
 extern qbool ActiveApp, Minimized;
 
@@ -2401,7 +2402,7 @@ void CL_Frame (double time)
 			qbool first_view = true;
 
 			if (SCR_UpdateScreenPrePlayerView()) {
-				R_ScreenDrawStart();
+				renderer.ScreenDrawStart();
 
 				while (draw_next_view) {
 					draw_next_view = CL_MultiviewAdvanceView();

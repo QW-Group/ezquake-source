@@ -215,17 +215,6 @@ byte* SurfaceFlatTurbColor(texture_t* texture)
 	return (byte *)&texture->flatcolor3ub;
 }
 
-//Does a water warp on the pre-fragmented glpoly_t chain
-void EmitWaterPolys(msurface_t *fa)
-{
-	if (R_UseImmediateOpenGL()) {
-		GLC_EmitWaterPoly(fa);
-	}
-	else {
-		// MEAG: FIXME: Can still be called when drawing brush model (halflife maps?)
-	}
-}
-
 //Tei, add fire to lava
 void EmitParticleEffect(msurface_t *fa, void(*fun)(vec3_t nv))
 {

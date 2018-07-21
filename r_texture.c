@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_state.h"
 #include "gl_texture.h"
+#include "r_renderer.h"
 
 static void R_AllocateTextureNames(gltexture_t* glt);
 
@@ -284,7 +285,7 @@ void R_Texture_Init(void)
 	numgltextures = 1;
 	next_free_texture = 0;
 
-	R_InitTextureState();
+	renderer.InitTextureState();
 
 	// Motion blur.
 	R_CreateTextures(texture_type_2d, 1, &sceneblur_texture);

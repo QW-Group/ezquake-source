@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize);
 struct entity_s;	//whoops
-void R_DrawAlias3Model (struct entity_s *ent);
 
 //structures from Tenebrae
 typedef struct {

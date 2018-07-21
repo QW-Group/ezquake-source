@@ -42,6 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps.h"
 #include "r_trace.h"
 //#include "glm_local.h"
+#include "r_renderer.h"
 
 void GLM_ScreenDrawStart(void);
 
@@ -63,8 +64,6 @@ void GLC_DrawSpriteModel(entity_t *e);
 void GLM_PolyBlend(float v_blend[4]);
 void GLC_PolyBlend(float v_blend[4]);
 void GLM_InitialiseAliasModelBatches(void);
-void GLM_DrawSimpleItem(model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right);
-void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right);
 
 void R_TimeRefresh_f(void);
 static void R_DrawEntities(void);
@@ -474,15 +473,7 @@ static void R_SetupGL(void)
 
 	R_StateDefault3D();
 
-	if (R_UseModernOpenGL()) {
-		GLM_SetupGL();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_SetupGL();
-	}
-	else if (R_UseVulkan()) {
-		//VK_SetupGL();
-	}
+	renderer.SetupGL();
 }
 
 void R_Init(void)
@@ -681,23 +672,10 @@ static void R_RenderScene(void)
 	GL_LeaveRegion();
 
 	if (R_WaterAlpha() == 1) {
-		R_RenderTransparentWorld();
+		renderer.RenderTransparentWorld();
 	}
 
 	R_DrawEntities();
-}
-
-static void R_RenderTransparentWorld(void)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_DrawWaterSurfaces();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawWaterSurfaces();
-	}
-	else if (R_UseVulkan()) {
-		//VK_DrawWaterSurfaces();
-	}
 }
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
@@ -741,7 +719,7 @@ static void R_Clear(void)
 		}
 	}
 
-	R_ClearRenderingSurface(clear_color);
+	renderer.ClearRenderingSurface(clear_color);
 }
 
 // player velocity is drawn on screen
@@ -769,19 +747,6 @@ static void GL_DrawVelocity3D(void)
    Motion blur effect.
    Stolen from FTE engine.
 */
-static void R_RenderSceneBlurDo(float alpha)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_RenderSceneBlurDo(alpha);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_RenderSceneBlurDo(alpha);
-	}
-	else if (R_UseVulkan()) {
-		//VK_RenderSceneBlurDo(alpha);
-	}
-}
-
 static void R_RenderSceneBlur(void)
 {
 	if (!gl_motion_blur.integer) {
@@ -794,20 +759,20 @@ static void R_RenderSceneBlur(void)
 	// pain is ended we saddenly turning blur off, that does not look natural.
 	if (gl_motion_blur_dead.value && cl.stats[STAT_HEALTH] < 1) {
 		// We are dead.
-		R_RenderSceneBlurDo (gl_motion_blur_dead.value);
+		renderer.RenderSceneBlur(gl_motion_blur_dead.value);
 	}
 	// We are alive, lets check different cases.
 	else if (gl_motion_blur_hurt.value && cl.hurtblur > cl.time) {
 		// Hurt.
-		R_RenderSceneBlurDo (gl_motion_blur_hurt.value);
+		renderer.RenderSceneBlur(gl_motion_blur_hurt.value);
 	}
 	else if (gl_motion_blur_norm.value) {
 		// Plain case.
-		R_RenderSceneBlurDo (gl_motion_blur_norm.value);
+		renderer.RenderSceneBlur(gl_motion_blur_norm.value);
 	}
 	else {
 		// We do not really blur anything, just copy image, so if we start bluring it will be smooth transition.
-		R_RenderSceneBlurDo (-1);
+		renderer.RenderSceneBlur(-1);
 	}
 }
 
@@ -816,30 +781,6 @@ void R_PostProcessScene(void)
 	if (R_UseImmediateOpenGL()) {
 		R_RenderSceneBlur();
 		R_BloomBlend();
-	}
-}
-
-void R_PostProcessScreen(void)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_PostProcessScreen();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		//GLC_PostProcessScreen();
-	}
-	else if (R_UseVulkan()) {
-
-	}
-}
-
-void R_ScreenDrawStart(void)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_ScreenDrawStart();
-	}
-	else if (R_UseImmediateOpenGL()) {
-	}
-	else if (R_UseVulkan()) {
 	}
 }
 
@@ -876,7 +817,7 @@ void R_RenderView(void)
 
 	// Wait for previous commands to 'complete'
 	if (!r_speeds.integer && gl_finish.integer) {
-		R_EnsureFinished();
+		renderer.EnsureFinished();
 	}
 
 	R_SetFrustum();
@@ -893,7 +834,7 @@ void R_RenderView(void)
 	R_Render3DEffects();
 
 	// Draws transparent world surfaces
-	R_RenderTransparentWorld();
+	renderer.RenderTransparentWorld();
 
 	// Render billboards
 	GL_Draw3DSprites(true);
@@ -901,30 +842,9 @@ void R_RenderView(void)
 	// Draw 3D hud elements
 	R_Render3DHud();
 
-	if (R_UseModernOpenGL()) {
-		GLM_RenderView();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		//GLC_RenderView();
-	}
-	else if (R_UseVulkan()) {
-		//VK_RenderView();
-	}
+	renderer.RenderView();
 
 	R_PerformanceEndFrame();
-}
-
-void R_PreRenderView(void)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_PreRenderView();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_PreRenderView();
-	}
-	else if (R_UseVulkan()) {
-		//VK_PreRenderView();
-	}
 }
 
 qbool R_PointIsUnderwater(vec3_t point)
@@ -932,19 +852,6 @@ qbool R_PointIsUnderwater(vec3_t point)
 	int contents = TruePointContents(point);
 
 	return ISUNDERWATER(contents);
-}
-
-void R_DrawSpriteModel(entity_t *e)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_DrawSpriteModel(e);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawSpriteModel(e);
-	}
-	else if (R_UseVulkan()) {
-		// VK_DrawSpriteModel(e);
-	}
 }
 
 qbool R_CanDrawSimpleItem(entity_t* e)
@@ -1030,15 +937,7 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 	}
 	org[2] += sprsize;
 
-	if (R_UseModernOpenGL()) {
-		GLM_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
-	}
-	else if (R_UseVulkan()) {
-		//VK_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
-	}
+	renderer.DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
 	return true;
 }
 
@@ -1119,7 +1018,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 					break;
 				case mod_sprite:
 					if (todraw->ent.model->type == mod_sprite) {
-						R_DrawSpriteModel(&todraw->ent);
+						renderer.DrawSpriteModel(&todraw->ent);
 					}
 					else {
 						R_DrawTrySimpleItem(&todraw->ent);
@@ -1127,16 +1026,14 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 					break;
 				case mod_alias:
 					if (type == visent_shells) {
-						if (R_UseImmediateOpenGL()) {
-							GLC_DrawAliasPowerupShell(&todraw->ent);
-						}
+						renderer.DrawAliasModelPowerupShell(&todraw->ent);
 					}
 					else {
 						R_DrawAliasModel(&todraw->ent);
 					}
 					break;
 				case mod_alias3:
-					R_DrawAlias3Model(&todraw->ent);
+					renderer.DrawAlias3Model(&todraw->ent);
 					break;
 				case mod_unknown:
 					// keeps compiler happy
@@ -1157,15 +1054,7 @@ void R_PolyBlend(void)
 		return;
 	}
 
-	if (R_UseModernOpenGL()) {
-		GLM_PolyBlend(v_blend);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_PolyBlend(v_blend);
-	}
-	else if (R_UseVulkan()) {
-		//VK_PolyBlend(v_blend);
-	}
+	renderer.PolyBlend(v_blend);
 }
 
 static void R_DrawEntities(void)

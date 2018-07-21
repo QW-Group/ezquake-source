@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel_sky.h"
 #include "r_texture.h"
 #include "gl_texture_internal.h"
+#include "r_renderer.h"
 
 texture_ref skybox_cubeMap;
 
@@ -60,7 +61,7 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 	// FIXME: Delete previous?
 	R_TextureReferenceInvalidate(skybox_cubeMap);
 
-	if (!Sky_LoadSkyboxTextures(skyname)) {
+	if (!renderer.LoadSkyboxTextures(skyname)) {
 		return false;
 	}
 

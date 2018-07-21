@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lighting.h"
 #include "r_performance.h"
 #include "r_aliasmodel.h" // shelltexture only
+#include "r_renderer.h"
 
 static texture_ref GL_GenerateShellTexture(void)
 {
@@ -193,13 +194,5 @@ void R_TimeRefresh_f(void)
 		return;
 	}
 
-	if (R_UseImmediateOpenGL()) {
-		GLC_TimeRefresh();
-	}
-	else if (R_UseModernOpenGL()) {
-		GLM_TimeRefresh();
-	}
-	else {
-		Con_Printf("Timerefresh not implemented for current renderer\n");
-	}
+	renderer.TimeRefresh();
 }

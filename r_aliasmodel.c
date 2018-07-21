@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_framestats.h"
 #include "r_trace.h"
 #include "r_lighting.h"
+#include "r_renderer.h"
 
 texture_ref shelltexture;
 
@@ -77,7 +78,6 @@ extern cvar_t     maxclients;
 
 static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
-static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
 static vec3_t    dlight_color;
@@ -369,7 +369,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	// VULT MOTION TRAILS - No shadows on motion trails
 	if (R_CanDrawModelShadow(ent)) {
-		GL_AliasModelShadow(ent, paliashdr);
+		renderer.DrawAliasModelShadow(ent);
 	}
 
 	GL_LeaveTracedRegion(true);
@@ -411,15 +411,7 @@ void R_SetupAliasFrame(
 	oldpose = R_AliasFramePose(oldframe);
 	pose = R_AliasFramePose(frame);
 
-	if (R_UseModernOpenGL()) {
-		GLM_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects & RF_ALPHABLEND);
-	}
-	else if (R_UseVulkan()) {
-		//VK_DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
-	}
+	renderer.DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects);
 }
 
 static void R_AliasModelColoredLighting(entity_t* ent)
@@ -669,13 +661,11 @@ void R_DrawViewModel(void)
 		case mod_alias:
 			R_DrawAliasModel(&gun);
 			if (gun.effects) {
-				if (R_UseImmediateOpenGL()) {
-					GLC_DrawAliasPowerupShell(&gun);
-				}
+				renderer.DrawAliasModelPowerupShell(&gun);
 			}
 			break;
 		case mod_alias3:
-			R_DrawAlias3Model(&gun);
+			renderer.DrawAlias3Model(&gun);
 			break;
 		default:
 			Com_Printf("Not drawing view model of type %i\n", gun.model->type);
@@ -828,7 +818,7 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	mod->type = mod_alias;
 
 	// build the draw lists
-	GL_MakeAliasModelDisplayLists(mod, pheader);
+	renderer.PrepareAliasModel(mod, pheader);
 
 	// move the complete, relocatable alias model to the cache
 	end = Hunk_LowMark();
@@ -914,17 +904,4 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 	}
 
 	return ptemp;
-}
-
-static void GL_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_AliasModelShadow(ent, paliashdr);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_AliasModelShadow(ent, paliashdr);
-	}
-	else if (R_UseVulkan()) {
-		//VK_AliasModelShadow(ent, paliashdr);
-	}
 }

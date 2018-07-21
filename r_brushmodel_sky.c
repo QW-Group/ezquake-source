@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_local.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 texture_ref solidskytexture, alphaskytexture;
 texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
@@ -71,16 +72,6 @@ void R_InitSky (texture_t *mt) {
 	alphaskytexture = R_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
 }
 
-qbool R_LoadSkyboxTextures(const char* skyname)
-{
-	if (R_UseModernOpenGL()) {
-		return GLM_LoadSkyboxTextures(skyname);
-	}
-	else {
-		return GLC_LoadSkyboxTextures(skyname);
-	}
-}
-
 int R_SetSky(char *skyname)
 {
 	char *groupname;
@@ -97,7 +88,7 @@ int R_SetSky(char *skyname)
 		return 1;
 	}
 
-	if (!R_LoadSkyboxTextures(skyname)) {
+	if (!renderer.LoadSkyboxTextures(skyname)) {
 		return 1;
 	}
 
@@ -396,12 +387,7 @@ void R_DrawSky (void)
 	}
 
 	GL_EnterRegion("R_DrawSky");
-	if (R_UseModernOpenGL()) {
-		GLM_DrawSky();
-	}
-	else {
-		GLC_DrawSky();
-	}
+	renderer.DrawSky();
 	GL_LeaveRegion();
 
 	skychain = NULL;

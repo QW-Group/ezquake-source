@@ -43,3 +43,16 @@ void GLM_RenderView(void)
 
 	GLM_DrawAliasModelPostSceneBatches();
 }
+
+void GLM_PrepareModelRendering(qbool vid_restart)
+{
+	buffer_ref instance_vbo = R_CreateInstanceVBO();
+
+	GLM_BuildCommonTextureArrays(vid_restart);
+
+	GL_CreateAliasModelVBO(instance_vbo);
+	GL_CreateBrushModelVBO(instance_vbo);
+
+	GLM_InitPrograms();
+}
+

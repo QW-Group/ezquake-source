@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_frameStats.h"
 #include "r_lightmaps_internal.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 typedef struct dlightinfo_s {
 	int local[2];
@@ -300,15 +301,7 @@ static void R_UploadLightMap(int textureUnit, int lightmapnum)
 	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
 	lm->modified = false;
-	if (R_UseModernOpenGL()) {
-		GLM_UploadLightmap(textureUnit, lightmapnum);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_UploadLightmap(textureUnit, lightmapnum);
-	}
-	else if (R_UseVulkan()) {
-		VK_UploadLightmap(textureUnit, lightmapnum);
-	}
+	renderer.UploadLightmap(textureUnit, lightmapnum);
 	lm->change_area.l = LIGHTMAP_WIDTH;
 	lm->change_area.t = LIGHTMAP_HEIGHT;
 	lm->change_area.h = 0;
@@ -387,15 +380,7 @@ void R_LightmapFrameInit(void)
 	frameStats.lightmap_min_changed = lightmap_array_size;
 	frameStats.lightmap_max_changed = 0;
 
-	if (R_UseModernOpenGL()) {
-		GLM_LightmapFrameInit();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		//GLC_LightmapFrameInit();
-	}
-	else if (R_UseVulkan()) {
-		//VK_LightmapFrameInit();
-	}
+	renderer.LightmapFrameInit();
 }
 
 static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world)
@@ -415,15 +400,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		++frameStats.classic.polycount[polyType];
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
-			if (R_UseModernOpenGL()) {
-				GLM_RenderDynamicLightmaps(s, world);
-			}
-			else if (R_UseImmediateOpenGL()) {
-				R_RenderDynamicLightmaps(s, world);
-			}
-			else if (R_UseVulkan()) {
-				R_RenderDynamicLightmaps(s, world);
-			}
+			renderer.RenderDynamicLightmaps(s, world);
 
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
@@ -438,15 +415,7 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		++frameStats.classic.polycount[polyType];
 
 		if (k >= 0 && !(s->flags & (SURF_DRAWTURB | SURF_DRAWSKY))) {
-			if (R_UseModernOpenGL()) {
-				GLM_RenderDynamicLightmaps(s, world);
-			}
-			else if (R_UseImmediateOpenGL()) {
-				R_RenderDynamicLightmaps(s, world);
-			}
-			else if (R_UseVulkan()) {
-				R_RenderDynamicLightmaps(s, world);
-			}
+			renderer.RenderDynamicLightmaps(s, world);
 
 			if (lightmaps[k].modified) {
 				frameStats.lightmap_min_changed = min(k, frameStats.lightmap_min_changed);
@@ -758,15 +727,7 @@ void R_BuildLightmaps(void)
 	}
 
 	// upload all lightmaps that were filled
-	if (R_UseModernOpenGL()) {
-		GLM_CreateLightmapTextures();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_CreateLightmapTextures();
-	}
-	else if (R_UseVulkan()) {
-		VK_CreateLightmapTextures();
-	}
+	renderer.CreateLightmapTextures();
 
 	for (i = 0; i < lightmap_array_size; i++) {
 		if (!lightmaps[i].allocated[0]) {
@@ -777,15 +738,7 @@ void R_BuildLightmaps(void)
 		lightmaps[i].change_area.t = LIGHTMAP_HEIGHT;
 		lightmaps[i].change_area.w = 0;
 		lightmaps[i].change_area.h = 0;
-		if (R_UseModernOpenGL()) {
-			GLM_BuildLightmap(i);
-		}
-		else if (R_UseImmediateOpenGL()) {
-			GLC_BuildLightmap(i);
-		}
-		else if (R_UseVulkan()) {
-			VK_BuildLightmap(i);
-		}
+		renderer.BuildLightmap(i);
 	}
 }
 
@@ -793,10 +746,7 @@ void GL_InvalidateLightmapTextures(void)
 {
 	int i;
 
-	if (R_UseModernOpenGL()) {
-		GLM_InvalidateLightmapTextures();
-	}
-	//else if (...)
+	renderer.InvalidateLightmapTextures();
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		R_TextureReferenceInvalidate(lightmaps[i].gl_texref);
@@ -807,20 +757,12 @@ void GL_InvalidateLightmapTextures(void)
 	last_lightmap_updated = 0;
 }
 
-void GL_LightmapShutdown(void)
+void R_LightmapShutdown(void)
 {
 	Q_free(lightmaps);
 	lightmap_array_size = 0;
 
-	if (R_UseModernOpenGL()) {
-		GLM_LightmapShutdown();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		//GLC_LightmapShutdown();
-	}
-	else if (R_UseVulkan()) {
-		//VK_LightmapShutdown();
-	}
+	renderer.LightmapShutdown();
 }
 
 // mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()

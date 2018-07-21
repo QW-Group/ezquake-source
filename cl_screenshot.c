@@ -28,8 +28,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #endif
 #include "utils.h"
 #include "r_local.h"
-
-void R_Screenshot(byte* buffer, size_t size);
+#include "r_renderer.h"
 
 #define	DEFAULT_SSHOT_FORMAT "png"
 
@@ -141,7 +140,7 @@ int SCR_Screenshot(char *name)
 		target_params->freeMemory = true;
 	}
 
-	R_Screenshot(target_params->buffer, glwidth * glheight * 3);
+	renderer.Screenshot(target_params->buffer, glwidth * glheight * 3);
 
 	if (Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
@@ -347,7 +346,7 @@ void SCR_RSShot_f(void)
 	base = (byte *)Q_malloc((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
-	R_Screenshot(base, glwidth * glheight * 3);
+	renderer.Screenshot(base, glwidth * glheight * 3);
 	Image_Resample(base, glwidth, glheight, pixels, width, height, 3, 0);
 #ifdef WITH_JPEG
 #ifndef WITH_JPEG_STATIC
@@ -430,7 +429,7 @@ void SCR_CheckAutoScreenshot(void)
 	snprintf(savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
-	R_EnsureFinished();
+	renderer.EnsureFinished();
 
 	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS) {
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
@@ -460,7 +459,7 @@ void SCR_Movieshot(char *name)
 
 		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
 		buffer = (byte *)Q_malloc(size);
-		R_Screenshot(buffer, size);
+		renderer.Screenshot(buffer, size);
 		applyHWGamma(buffer, size);
 
 		// We now have a byte buffer with RGB values, but

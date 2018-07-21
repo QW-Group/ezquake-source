@@ -534,7 +534,8 @@ void GLM_InitialiseAliasModelBatches(void)
 	memset(alias_draw_instructions, 0, sizeof(alias_draw_instructions));
 }
 
-void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr)
+void GLM_AliasModelShadow(entity_t* ent)
 {
 	// MEAG: TODO
+	// aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 }

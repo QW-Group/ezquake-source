@@ -4,10 +4,6 @@
 
 qbool R_DetermineSkyLimits(qbool *ignore_z);
 void Sky_MakeSkyVec2(float s, float t, int axis, vec3_t v);
-qbool R_LoadSkyboxTextures(const char* skyname);
-qbool GLC_LoadSkyboxTextures(const char* skyname);
-qbool GLM_LoadSkyboxTextures(const char* skyname);
-qbool Sky_LoadSkyboxTextures(const char* skyname);
 
 void GLM_DrawSky(void);
 void GLC_DrawSkyChain(void);

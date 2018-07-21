@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_framestats.h"
 #include "r_local.h"
+#include "r_renderer.h"
 
 static cvar_t* framestats_shown;
 
@@ -36,7 +37,7 @@ void R_PerformanceBeginFrame(void)
 	frameStatsVisible = framestats_shown && framestats_shown->integer;
 
 	if (r_speeds.integer) {
-		R_EnsureFinished();
+		renderer.EnsureFinished();
 	}
 
 	memset(&frameStats, 0, sizeof(frameStats));

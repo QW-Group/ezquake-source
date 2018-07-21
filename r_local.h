@@ -28,8 +28,6 @@ void GL_BeginRendering(int *x, int *y, int *width, int *height);
 void GL_EndRendering(void);
 void GL_Set2D(void);
 void R_PolyBlend(void);
-void R_EnsureFinished(void);
-void R_PreRenderView(void);
 void R_OnDisconnect(void);
 void R_StateDefault3D(void);
 

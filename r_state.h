@@ -267,6 +267,5 @@ void R_Hud_Initialise(void);
 
 void R_PopulateConfig(void);
 void R_Viewport(int x, int y, int width, int height);
-void R_InitTextureState(void);
 
 #endif // EZQUAKE_R_STATE_HEADER

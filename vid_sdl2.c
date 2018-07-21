@@ -1245,10 +1245,6 @@ static void VID_SDL_Init(void)
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 
-	R_InitialiseBufferHandling();
-	R_Hud_Initialise();
-	R_PopulateConfig();
-
 #ifdef X11_GAMMA_WORKAROUND
 	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
 	if (vid_gamma_workaround.integer != 0) {

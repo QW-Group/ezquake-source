@@ -42,7 +42,7 @@ void GLC_DrawWaterSurfaces(void)
 	for (s = waterchain; s; s = s->texturechain) {
 		R_TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
 
-		EmitWaterPolys(s);
+		GLC_EmitWaterPoly(s);
 	}
 
 	GL_LeaveTracedRegion(true);

@@ -19,18 +19,6 @@ extern float     shadelight;
 extern float     ambientlight;
 
 void R_AliasSetupLighting(entity_t *ent);
-void GLC_DrawAliasFrame(
-	entity_t* ent,
-	model_t* model, int pose1, int pose2,
-	texture_ref texture, texture_ref fb_texture,
-	qbool outline, int effects, qbool alpha_blend
-);
-void GLM_DrawAliasFrame(
-	entity_t* ent,
-	model_t* model, int pose1, int pose2,
-	texture_ref texture, texture_ref fb_texture,
-	qbool outline, int effects, int render_effects
-);
 
 void GLM_DrawAliasModelFrame(
 	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
@@ -66,11 +54,7 @@ void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GLC_StateBeginUnderwaterCaustics(void);
 void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr);
 
-void GLM_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
-void GLC_AliasModelShadow(entity_t* ent, aliashdr_t* paliashdr);
-
 // gl_mesh.c
-void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
 void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
@@ -80,7 +64,6 @@ void GLC_DrawPowerupShell(model_t* model, int effects, maliasframedesc_t *oldfra
 void GLC_AllocateAliasPoseBuffer(void);
 
 void R_DrawAliasModel(entity_t *ent);
-void GLC_DrawAliasPowerupShell(entity_t *ent);
 
 qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);

@@ -193,5 +193,6 @@ void GLM_PostProcessScreen(void)
 void GLM_Shutdown(qbool restarting)
 {
 	GLM_DeletePrograms(restarting);
+	GL_DeleteSamplers();
 }
 

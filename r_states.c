@@ -706,13 +706,3 @@ void GLM_StateBeginAliasModelBatch(qbool translucent)
 		R_ApplyRenderingState(r_state_aliasmodel_opaque_batch);
 	}
 }
-
-void R_InitTextureState(void)
-{
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		GL_InitTextureState();
-	}
-	else if (R_UseVulkan()) {
-		//VK_InitTextureState();
-	}
-}

@@ -45,6 +45,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "r_lightmaps.h"
 #include "r_local.h"
 #include "r_chaticons.h"
+#include "r_renderer.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -526,16 +527,6 @@ void SCR_ZoomOut_f(void)
 /********************************** ELEMENTS **********************************/
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
-static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_DrawAccelBar(x, y, length, charsize, pos);
-	}
-	else {
-		GLC_DrawAccelBar(x, y, length, charsize, pos);
-	}
-}
-
 void SCR_DrawAccel (void) {
 	extern qbool player_in_air;
 	extern float cosinus_val;
@@ -552,12 +543,12 @@ void SCR_DrawAccel (void) {
 
 	pos = (int) ((cosinus_val + 1) * length / 2);
 
-	draw_accel_bar(x, y, length, charsize, pos);
+	hud.draw_accel_bar(x, y, length, charsize, pos);
 
 	//scale: show most interesting
 	pos = (int) ((cosinus_val * scale_factor + 1) * length / 2);
 
-	draw_accel_bar(x, y - 2 * charsize, length, charsize, pos);
+	hud.draw_accel_bar(x, y - 2 * charsize, length, charsize, pos);
 
 	cosinus_str[0] = '\0';
 	sprintf(cosinus_str,"%.3f", cosinus_val);
@@ -1229,7 +1220,7 @@ void SCR_UpdateScreenPostPlayerView(void)
 	R_FlushImageDraw();
 	GL_LeaveRegion();
 
-	R_PostProcessScreen();
+	renderer.PostProcessScreen();
 
 	SCR_CheckAutoScreenshot();
 
@@ -1247,7 +1238,7 @@ qbool SCR_UpdateScreen(void)
 		return false;
 	}
 
-	R_ScreenDrawStart();
+	renderer.ScreenDrawStart();
 
 	SCR_UpdateScreenPlayerView(UPDATESCREEN_POSTPROCESS);
 

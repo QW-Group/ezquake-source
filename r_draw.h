@@ -16,6 +16,4 @@ void R_Cache2DMatrix(void);
 void R_UndoLastCharacter(void);
 void R_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color);
 
-void R_ClearRenderingSurface(qbool clear_color);
-
 #endif // EZQUAKE_R_DRAW_HEADER

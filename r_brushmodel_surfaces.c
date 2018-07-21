@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel_sky.h"
 #include "r_lightmaps.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 // Move to API
 void GLM_DrawWorld(void);
@@ -353,15 +354,7 @@ void R_DrawWorld(void)
 	R_DrawSky();
 
 	GL_EnterRegion("DrawWorld");
-	if (R_UseModernOpenGL()) {
-		GLM_DrawWorld();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawWorld();
-	}
-	else {
-		//VK_DrawWorld();
-	}
+	renderer.DrawWorld();
 	GL_LeaveRegion();
 }
 

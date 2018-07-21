@@ -309,23 +309,6 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)
 	return false;
 }*/
 
-void GLC_DrawAlias3Model(entity_t *ent);
-void GLM_DrawAlias3Model(entity_t *ent);
-void VK_DrawAlias3Model(entity_t* ent);
-
-void R_DrawAlias3Model(entity_t *ent)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_DrawAlias3Model(ent);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawAlias3Model(ent);
-	}
-	else if (R_UseVulkan()) {
-		VK_DrawAlias3Model(ent);
-	}
-}
-
 // Helper functions to simplify logic
 md3Surface_t* MD3_NextSurface(md3Surface_t* surf)
 {

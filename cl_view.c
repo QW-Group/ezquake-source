@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #endif
 #include "r_local.h"
+#include "r_renderer.h"
 
 /*
 The view is allowed to move slightly from its true position for bobbing,
@@ -1018,7 +1019,7 @@ qbool V_PreRenderView(void)
 		}
 	}
 
-	R_PreRenderView();
+	renderer.PreRenderView();
 
 	return cls.state == ca_active;
 }

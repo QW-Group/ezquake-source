@@ -27,13 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "glc_vao.h"
 #include "r_buffers.h"
+#include "r_renderer.h"
 
 extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 float cachedMatrix[16];
-
-void GLM_AdjustImages(int first, int last, float x_offset);
-void GLC_AdjustImages(int first, int last, float x_offset);
-void VK_AdjustImages(int first, int last, float x_offset);
 
 void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
 void GLC_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
@@ -59,15 +56,7 @@ void Draw_AdjustImages(int first, int last, float x_offset)
 
 	x_offset = v1[0] - v2[0];
 
-	if (R_UseModernOpenGL()) {
-		GLM_AdjustImages(first, last, x_offset);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_AdjustImages(first, last, x_offset);
-	}
-	else if (R_UseVulkan()) {
-		VK_AdjustImages(first, last, x_offset);
-	}
+	renderer.AdjustImages(first, last, x_offset);
 }
 
 void R_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair)

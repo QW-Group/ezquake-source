@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_particles.h"
 #include "r_state.h"
 #include "r_local.h"
+#include "r_renderer.h"
 
 // move to api
 void GLC_DrawClassicParticles(int particle_count);
@@ -703,22 +704,6 @@ static void Classic_PrepareParticles(void)
 	}
 }
 
-// Performs all drawing of particles
-void R_DrawClassicParticles(void)
-{
-	if (R_UseImmediateOpenGL()) {
-		GLC_DrawClassicParticles(particles_to_draw);
-	}
-	else if (R_UseModernOpenGL()) {
-		GLM_DrawClassicParticles(particles_to_draw);
-	}
-	else if (R_UseVulkan()) {
-		//VK_DrawClassicParticles();
-	}
-
-	return;
-}
-
 void R_InitParticles(void)
 {
 	if (!host_initialized) {
@@ -765,7 +750,7 @@ void R_DrawParticles(void)
 	}
 
 	if (particles_to_draw) {
-		R_DrawClassicParticles();
+		renderer.DrawClassicParticles(particles_to_draw);
 	}
 	QMB_DrawParticles();
 }

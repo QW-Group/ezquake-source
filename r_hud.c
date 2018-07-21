@@ -36,8 +36,8 @@ typedef struct hud_api_s {
 		void(*Prepare)(void);
 		void(*Draw)(texture_ref texture, int start, int end);
 	} types[imagetype_count];
-
 	void(*OnComplete)(void);
+	//void(*DrawAccelBar)(int x, int y, int length, int charsize, int pos);
 
 	draw_hud_element_t elements[MAX_2D_ELEMENTS];
 	int count;

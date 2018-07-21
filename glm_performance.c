@@ -24,6 +24,7 @@ $Id: gl_rmisc.c,v 1.27 2007-09-17 19:37:55 qqshka Exp $
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_renderer.h"
 
 void GLM_TimeRefresh(void)
 {
@@ -37,7 +38,7 @@ void GLM_TimeRefresh(void)
 	}
 #endif
 
-	R_EnsureFinished();
+	renderer.EnsureFinished();
 
 	start = Sys_DoubleTime();
 	for (i = 0; i < 128; i++) {
@@ -46,7 +47,7 @@ void GLM_TimeRefresh(void)
 		R_RenderView();
 	}
 
-	R_EnsureFinished();
+	renderer.EnsureFinished();
 	stop = Sys_DoubleTime();
 	time = stop - start;
 	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);

@@ -22,32 +22,3 @@ $Id: r_part.c,v 1.19 2007-10-29 00:13:26 d3urk Exp $
 
 #include "quakedef.h"
 #include "r_local.h"
-
-void GL_Clear(qbool clear_color);
-void GL_EnsureFinished(void);
-
-void R_ClearRenderingSurface(qbool clear_color)
-{
-	if (R_UseImmediateOpenGL()) {
-		GL_Clear(clear_color);
-	}
-	else if (R_UseModernOpenGL()) {
-		GL_Clear(clear_color);
-	}
-	else if (R_UseVulkan()) {
-		// TODO
-	}
-}
-
-void R_EnsureFinished(void)
-{
-	if (R_UseImmediateOpenGL()) {
-		GL_EnsureFinished();
-	}
-	else if (R_UseModernOpenGL()) {
-		GL_EnsureFinished();
-	}
-	else if (R_UseVulkan()) {
-		// TODO
-	}
-}

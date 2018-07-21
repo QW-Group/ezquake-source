@@ -148,3 +148,8 @@ void GL_PrintGfxInfo(void)
 	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer);
 }
+
+void GL_Viewport(int x, int y, int width, int height)
+{
+	glViewport(x, y, width, height);
+}

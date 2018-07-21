@@ -360,7 +360,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 	}
 }
 
-static void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
+static void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
@@ -407,7 +407,7 @@ static void GLM_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	}
 }
 
-static void GLC_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
+void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	int i, j;
 	int* cmds;
@@ -466,21 +466,6 @@ static void GLC_MakeAliasModelDisplayLists(model_t* m, aliashdr_t* hdr)
 	}
 
 	GLC_MakeAliasModelVBO(m, hdr);
-}
-
-/*
-================
-GL_MakeAliasModelDisplayLists
-================
-*/
-void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
-{
-	if (R_UseModernOpenGL() || R_UseVulkan()) {
-		GLM_MakeAliasModelDisplayLists(m, hdr);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_MakeAliasModelDisplayLists(m, hdr);
-	}
 }
 
 void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position)
