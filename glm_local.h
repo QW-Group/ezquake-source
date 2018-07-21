@@ -2,6 +2,23 @@
 #ifndef EZQUAKE_GLM_LOCAL_HEADER
 #define EZQUAKE_GLM_LOCAL_HEADER
 
+typedef enum {
+	r_program_none,
+
+	r_program_aliasmodel,
+	r_program_brushmodel,
+	r_program_sprite3d,
+	r_program_hud_polygon,
+	r_program_hud_line,
+	r_program_hud_images,
+	r_program_hud_circles,
+	r_program_post_process,
+
+	r_program_lightmap_compute,
+
+	r_program_count
+} r_program_id;
+
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
@@ -146,7 +163,6 @@ void GLM_StateBeginDraw3DSprites(void);
 void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 
-void GLM_UseProgram(GLuint program);
 void GLM_UploadFrameConstants(void);
 void GLM_Uniform1i(GLint location, GLint value);
 void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
@@ -157,32 +173,18 @@ void GLM_InitialiseProgramState(void);
 void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
 
-#define GLM_VERTEX_SHADER   0
-#define GLM_FRAGMENT_SHADER 1
-#define GLM_GEOMETRY_SHADER 2
-#define GLM_COMPUTE_SHADER  3
-#define GLM_SHADER_COUNT    4
+int R_ProgramCustomOptions(r_program_id program_id);
+qbool R_ProgramReady(r_program_id program_id);
+qbool R_ProgramUniformsFound(r_program_id program_id);
+void GLM_UseProgram(r_program_id program_id);
+int R_ProgramCustomOptions(r_program_id program_id);
+void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
-typedef struct glm_program_s {
-	GLuint vertex_shader;
-	GLuint geometry_shader;
-	GLuint fragment_shader;
-	GLuint compute_shader;
-	GLuint program;
-
-	struct glm_program_s* next;
-	const char* friendly_name;
-	const char* shader_text[GLM_SHADER_COUNT];
-	char* included_definitions;
-	GLuint shader_length[GLM_SHADER_COUNT];
-	qbool uniforms_found;
-
-	unsigned int custom_options;
-	qbool force_recompile;
-} glm_program_t;
+// FIXME: Get rid...
+void R_ProgramSetUniformsFound(r_program_id program_id);
 
 // Check if a program needs to be recompiled
-qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options);
+qbool GLM_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
 
 // Flags all programs to be recompiled
 // Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
@@ -194,7 +196,7 @@ qbool GLM_CreateVFProgram(
 	GLuint vertex_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program
+	r_program_id program_id
 );
 
 qbool GLM_CreateVFProgramWithInclude(
@@ -203,11 +205,11 @@ qbool GLM_CreateVFProgramWithInclude(
 	GLuint vertex_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program,
+	r_program_id program_id,
 	const char* included_definitions
 );
 
-qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length);
+qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, GLint length);
 
 #define GL_VFDeclare(name) \
 	extern unsigned char name##_vertex_glsl[];\
@@ -229,7 +231,7 @@ qbool GLM_CreateVGFProgram(
 	GLuint geometry_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program
+	r_program_id program
 );
 
 qbool GLM_CreateVGFProgramWithInclude(
@@ -240,7 +242,7 @@ qbool GLM_CreateVGFProgramWithInclude(
 	GLuint geometry_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program,
+	r_program_id program,
 	const char* included_definitions
 );
 

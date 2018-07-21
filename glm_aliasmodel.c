@@ -78,7 +78,6 @@ extern float r_framelerp;
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
-static glm_program_t drawAliasModelProgram;
 static GLint drawAliasModel_mode;
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
@@ -104,7 +103,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
 	unsigned int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
 
-	if (GLM_ProgramRecompileNeeded(&drawAliasModelProgram, drawAlias_desiredOptions)) {
+	if (GLM_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
 		GL_VFDeclare(draw_aliasmodel);
 
@@ -128,16 +127,16 @@ static qbool GLM_CompileAliasModelProgram(void)
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(draw_aliasmodel), &drawAliasModelProgram, included_definitions);
+		GLM_CreateVFProgramWithInclude("AliasModel", GL_VFParams(draw_aliasmodel), r_program_aliasmodel, included_definitions);
 
-		drawAliasModelProgram.custom_options = drawAlias_desiredOptions;
+		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
 
-	if (drawAliasModelProgram.program && !drawAliasModelProgram.uniforms_found) {
-		drawAliasModel_mode = GLM_UniformGetLocation(drawAliasModelProgram.program, "mode");
+	if (R_ProgramReady(r_program_aliasmodel) && !R_ProgramUniformsFound(r_program_aliasmodel)) {
+		drawAliasModel_mode = GLM_UniformGetLocation(r_program_aliasmodel, "mode");
 		cached_mode = 0;
 
-		drawAliasModelProgram.uniforms_found = true;
+		R_ProgramSetUniformsFound(r_program_aliasmodel);
 	}
 
 	if (!R_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
@@ -148,7 +147,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		vbo_aliasDataBuffer = buffers.Create(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
 	}
 
-	return drawAliasModelProgram.program;
+	return R_ProgramReady(r_program_aliasmodel);
 }
 
 static void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
@@ -318,7 +317,7 @@ static qbool GLM_NextAliasModelDrawCall(aliasmodel_draw_instructions_t* instr, q
 	instr->num_calls++;
 	instr->num_textures[instr->current_call] = 0;
 	if (bind_default_textures) {
-		if (drawAliasModelProgram.custom_options & DRAW_CAUSTIC_TEXTURES) {
+		if (R_ProgramCustomOptions(r_program_aliasmodel) & DRAW_CAUSTIC_TEXTURES) {
 			instr->bound_textures[instr->current_call][0] = underwatertexture;
 			instr->num_textures[instr->current_call]++;
 		}
@@ -585,7 +584,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
-	GLM_UseProgram(drawAliasModelProgram.program);
+	GLM_UseProgram(r_program_aliasmodel);
 	SetAliasModelMode(mode);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here

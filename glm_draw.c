@@ -36,22 +36,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 static void GLM_CreateMultiImageProgram(void);
 
-static glm_program_t polygonProgram;
 static buffer_ref polygonVBO;
 static GLint polygonUniforms_matrix;
 static GLint polygonUniforms_color;
 
-static glm_program_t line_program;
 static buffer_ref line_vbo;
 static GLint line_matrix;
 
-static glm_program_t multiImageProgram;
 static buffer_ref imageIndexBuffer;
 static buffer_ref imageVBO;
 extern float overall_alpha;
 extern float cachedMatrix[16];
 
-static glm_program_t circleProgram;
 static buffer_ref circleVBO;
 static GLint drawCircleUniforms_matrix;
 static GLint drawCircleUniforms_color;
@@ -86,10 +82,10 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 
 void GLM_HudDrawComplete(void)
 {
-	if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
+	if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 		GLM_SamplerClear(0);
 	}
-	else if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+	else if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 		GLM_SamplerClear(1);
 	}
 }
@@ -100,7 +96,7 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 	uintptr_t offset = buffers.BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
 
 	R_BindVertexArray(vao_hud_polygons);
-	GLM_UseProgram(polygonProgram.program);
+	GLM_UseProgram(r_program_hud_polygon);
 	GLM_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, R_ProjectionMatrix());
 
 	GLM_StateBeginPolygonDraw();
@@ -115,18 +111,19 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 
 void GLM_HudPreparePolygons(void)
 {
-	if (GLM_ProgramRecompileNeeded(&polygonProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(r_program_hud_polygon, 0)) {
 		GL_VFDeclare(hud_draw_polygon);
 
-		if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(hud_draw_polygon), &polygonProgram)) {
+		if (!GLM_CreateVFProgram("polygon-draw", GL_VFParams(hud_draw_polygon), r_program_hud_polygon)) {
 			return;
 		}
 	}
 
-	if (!polygonProgram.uniforms_found) {
-		polygonUniforms_matrix = GLM_UniformGetLocation(polygonProgram.program, "matrix");
-		polygonUniforms_color = GLM_UniformGetLocation(polygonProgram.program, "color");
-		polygonProgram.uniforms_found = true;
+	if (!R_ProgramUniformsFound(r_program_hud_polygon)) {
+		polygonUniforms_matrix = GLM_UniformGetLocation(r_program_hud_polygon, "matrix");
+		polygonUniforms_color = GLM_UniformGetLocation(r_program_hud_polygon, "color");
+
+		R_ProgramSetUniformsFound(r_program_hud_polygon);
 	}
 
 	if (!R_BufferReferenceIsValid(polygonVBO)) {
@@ -161,30 +158,27 @@ void GLM_HudPrepareLines(void)
 		R_BindVertexArray(vao_none);
 	}
 
-	if (GLM_ProgramRecompileNeeded(&line_program, 0)) {
+	if (GLM_ProgramRecompileNeeded(r_program_hud_line, 0)) {
 		GL_VFDeclare(hud_draw_line);
 
 		// Very simple line-drawing
-		GLM_CreateVFProgram(
-			"LineDrawing",
-			GL_VFParams(hud_draw_line),
-			&line_program
-		);
+		GLM_CreateVFProgram("LineDrawing", GL_VFParams(hud_draw_line), r_program_hud_line);
 	}
 
-	if (line_program.program && !line_program.uniforms_found) {
-		line_matrix = GLM_UniformGetLocation(line_program.program, "matrix");
-		line_program.uniforms_found = true;
+	if (R_ProgramReady(r_program_hud_line) && !R_ProgramUniformsFound(r_program_hud_line)) {
+		line_matrix = GLM_UniformGetLocation(r_program_hud_line, "matrix");
+
+		R_ProgramSetUniformsFound(r_program_hud_line);
 	}
 }
 
 void GLM_HudDrawLines(int start, int end)
 {
-	if (line_program.program && R_VertexArrayCreated(vao_hud_lines)) {
+	if (R_ProgramReady(r_program_hud_line) && R_VertexArrayCreated(vao_hud_lines)) {
 		int i;
 		uintptr_t offset = buffers.BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
-		GLM_UseProgram(line_program.program);
+		GLM_UseProgram(r_program_hud_line);
 		GLM_UniformMatrix4fv(line_matrix, 1, GL_FALSE, R_ProjectionMatrix());
 		R_BindVertexArray(vao_hud_lines);
 
@@ -256,11 +250,11 @@ void GLM_HudPrepareImages(void)
 
 	if (imageData.imageCount) {
 		buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
-		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
+		if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 			// Everything is GL_NEAREST, no smoothing
 			GLM_SamplerSetNearest(0);
 		}
-		else if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+		else if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			// Mixed, second texture unit for GL_NEAREST
 			GLM_SamplerSetNearest(1);
 		}
@@ -276,7 +270,7 @@ static void GLM_CreateMultiImageProgram(void)
 		(r_smoothcrosshair.integer ? GLM_HUDIMAGES_SMOOTHCROSSHAIR : 0) |
 		(r_smoothimages.integer ? GLM_HUDIMAGES_SMOOTHIMAGES : 0);
 
-	if (GLM_ProgramRecompileNeeded(&multiImageProgram, program_flags)) {
+	if (GLM_ProgramRecompileNeeded(r_program_hud_images, program_flags)) {
 		char included_definitions[512];
 
 		GL_VFDeclare(hud_draw_image);
@@ -288,13 +282,9 @@ static void GLM_CreateMultiImageProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("Multi-image", GL_VFParams(hud_draw_image), &multiImageProgram, included_definitions);
+		GLM_CreateVFProgramWithInclude("Multi-image", GL_VFParams(hud_draw_image), r_program_hud_images, included_definitions);
 
-		multiImageProgram.custom_options = program_flags;
-	}
-
-	if (multiImageProgram.program && !multiImageProgram.uniforms_found) {
-		multiImageProgram.uniforms_found = true;
+		R_ProgramSetCustomOptions(r_program_hud_images, program_flags);
 	}
 
 	if (!R_BufferReferenceIsValid(imageVBO)) {
@@ -335,10 +325,10 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 	uintptr_t index_offset = (start * 5 * sizeof(GLuint));
 	uintptr_t buffer_offset = buffers.BufferOffset(imageVBO) / sizeof(imageData.images[0]);
 
-	GLM_UseProgram(multiImageProgram.program);
+	GLM_UseProgram(r_program_hud_images);
 	GLM_StateBeginImageDraw();
 	if (R_TextureReferenceIsValid(texture)) {
-		if ((multiImageProgram.custom_options & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+		if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			texture_ref textures[] = { texture, texture };
 
 			R_BindTextures(0, 2, textures);
@@ -352,19 +342,19 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 
 void GLM_HudPrepareCircles(void)
 {
-	if (GLM_ProgramRecompileNeeded(&circleProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(r_program_hud_circles, 0)) {
 		GL_VFDeclare(hud_draw_circle);
 
-		if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(hud_draw_circle), &circleProgram)) {
+		if (!GLM_CreateVFProgram("circle-draw", GL_VFParams(hud_draw_circle), r_program_hud_circles)) {
 			return;
 		}
 	}
 
-	if (!circleProgram.uniforms_found) {
-		drawCircleUniforms_matrix = GLM_UniformGetLocation(circleProgram.program, "matrix");
-		drawCircleUniforms_color = GLM_UniformGetLocation(circleProgram.program, "color");
+	if (!R_ProgramUniformsFound(r_program_hud_circles)) {
+		drawCircleUniforms_matrix = GLM_UniformGetLocation(r_program_hud_circles, "matrix");
+		drawCircleUniforms_color = GLM_UniformGetLocation(r_program_hud_circles, "color");
 
-		circleProgram.uniforms_found = true;
+		R_ProgramSetUniformsFound(r_program_hud_circles);
 	}
 
 	// Build VBO
@@ -392,7 +382,7 @@ void GLM_HudDrawCircles(texture_ref texture, int start, int end)
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);
 
-	GLM_UseProgram(circleProgram.program);
+	GLM_UseProgram(r_program_hud_circles);
 	R_BindVertexArray(vao_hud_circles);
 
 	GLM_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, R_ProjectionMatrix());

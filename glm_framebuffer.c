@@ -36,7 +36,6 @@ static qbool GLM_CompilePostProcessProgram(void);
 
 static framebuffer_ref framebuffer3d;
 static framebuffer_ref framebuffer2d;
-static glm_program_t post_process_program;
 static buffer_ref post_process_vbo;
 
 extern cvar_t vid_framebuffer;
@@ -62,7 +61,7 @@ static void VID_FramebufferFlip(void)
 		GL_FramebufferStartUsingScreen();
 
 		if (GLM_CompilePostProcessProgram()) {
-			GLM_UseProgram(post_process_program.program);
+			GLM_UseProgram(r_program_post_process);
 			R_BindVertexArray(vao_postprocess);
 
 			if (flip2d && flip3d) {
@@ -146,7 +145,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		return false;
 	}
 
-	if (GLM_ProgramRecompileNeeded(&post_process_program, post_process_flags)) {
+	if (GLM_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
 		static char included_definitions[512];
 		GL_VFDeclare(post_process_screen);
 
@@ -159,12 +158,12 @@ static qbool GLM_CompilePostProcessProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("post-process-screen", GL_VFParams(post_process_screen), &post_process_program, included_definitions);
+		GLM_CreateVFProgramWithInclude("post-process-screen", GL_VFParams(post_process_screen), r_program_post_process, included_definitions);
 
-		post_process_program.custom_options = post_process_flags;
+		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
 	}
 
-	post_process_program.uniforms_found = true;
+	R_ProgramSetUniformsFound(r_program_post_process);
 
 	if (!R_BufferReferenceIsValid(post_process_vbo)) {
 		float verts[4][5] = { { 0 } };
@@ -197,7 +196,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		R_BindVertexArray(vao_none);
 	}
 
-	return post_process_program.program && R_VertexArrayCreated(vao_postprocess);
+	return R_ProgramReady(r_program_post_process) && R_VertexArrayCreated(vao_postprocess);
 }
 
 void GLM_FramebufferPostProcessScreen(void)

@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "glm_local.h"
 
-static glm_program_t sprite3dProgram;
 static GLint sprite3dUniform_alpha_test;
 
 static void GLM_Create3DSpriteVAO(void)
@@ -54,16 +53,16 @@ static void GLM_Create3DSpriteVAO(void)
 
 static void GLM_Compile3DSpriteProgram(void)
 {
-	if (GLM_ProgramRecompileNeeded(&sprite3dProgram, 0)) {
+	if (GLM_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
 		GL_VFDeclare(draw_sprites);
 
-		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), &sprite3dProgram);
+		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), r_program_sprite3d);
 	}
 
-	if (sprite3dProgram.program && !sprite3dProgram.uniforms_found) {
-		sprite3dUniform_alpha_test = GLM_UniformGetLocation(sprite3dProgram.program, "alpha_test");
+	if (R_ProgramReady(r_program_sprite3d) && !R_ProgramUniformsFound(r_program_sprite3d)) {
+		sprite3dUniform_alpha_test = GLM_UniformGetLocation(r_program_sprite3d, "alpha_test");
 
-		sprite3dProgram.uniforms_found = true;
+		R_ProgramSetUniformsFound(r_program_sprite3d);
 	}
 }
 
@@ -73,7 +72,7 @@ static qbool GLM_3DSpritesInit(void)
 	GLM_Compile3DSpriteProgram();
 	GLM_Create3DSpriteVAO();
 
-	return (sprite3dProgram.program && R_VertexArrayCreated(vao_3dsprites));
+	return (R_ProgramReady(r_program_sprite3d) && R_VertexArrayCreated(vao_3dsprites));
 }
 
 static void GLM_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
@@ -136,7 +135,7 @@ void GLM_Draw3DSprites()
 		return;
 	}
 
-	GLM_UseProgram(sprite3dProgram.program);
+	GLM_UseProgram(r_program_sprite3d);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];

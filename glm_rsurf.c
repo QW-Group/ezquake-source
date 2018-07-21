@@ -75,7 +75,6 @@ static void GLM_CheckDrawCallSize(void)
 	}
 }
 
-static glm_program_t drawworld;
 static GLint drawWorld_outlines;
 
 #define DRAW_DETAIL_TEXTURES       1
@@ -119,7 +118,7 @@ static void Compile_DrawWorldProgram(void)
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
 
-	if (GLM_ProgramRecompileNeeded(&drawworld, drawworld_desiredOptions)) {
+	if (GLM_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
 		int samplers = 0;
 		GL_VFDeclare(draw_world);
@@ -175,18 +174,18 @@ static void Compile_DrawWorldProgram(void)
 		}
 
 		// Initialise program for drawing image
-		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(draw_world), &drawworld, included_definitions);
+		GLM_CreateVFProgramWithInclude("DrawWorld", GL_VFParams(draw_world), r_program_brushmodel, included_definitions);
 
-		drawworld.custom_options = drawworld_desiredOptions;
+		R_ProgramSetCustomOptions(r_program_brushmodel, drawworld_desiredOptions);
 	}
 
-	if (drawworld.program && !drawworld.uniforms_found) {
-		drawWorld_outlines = GLM_UniformGetLocation(drawworld.program, "draw_outlines");
+	if (R_ProgramReady(r_program_brushmodel) && !R_ProgramUniformsFound(r_program_brushmodel)) {
+		drawWorld_outlines = GLM_UniformGetLocation(r_program_brushmodel, "draw_outlines");
 
 		ssbo_worldcvars = buffers.Create(buffertype_storage, "ssbo_worldcvars", sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 		ssbo_worldsamplers = buffers.Create(buffertype_storage, "ssbo_worldsamplers", sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 
-		drawworld.uniforms_found = true;
+		R_ProgramSetUniformsFound(r_program_brushmodel);
 	}
 
 	if (!R_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
@@ -204,24 +203,25 @@ static glm_worldmodel_req_t* GLM_CurrentRequest(void)
 static void GL_StartWorldBatch(void)
 {
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
+	int options = R_ProgramCustomOptions(r_program_brushmodel);
 
-	GLM_UseProgram(drawworld.program);
+	GLM_UseProgram(r_program_brushmodel);
 	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
 	std_textures[TEXTURE_UNIT_LIGHTMAPS] = GLM_LightmapArray();
-	if (drawworld.custom_options & DRAW_DETAIL_TEXTURES) {
+	if (options & DRAW_DETAIL_TEXTURES) {
 		std_textures[TEXTURE_UNIT_DETAIL] = detailtexture;
 	}
-	if (drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) {
+	if (options & DRAW_CAUSTIC_TEXTURES) {
 		std_textures[TEXTURE_UNIT_CAUSTICS] = underwatertexture;
 	}
-	if (drawworld.custom_options & DRAW_SKYBOX) {
+	if (options & DRAW_SKYBOX) {
 		extern texture_ref skybox_cubeMap;
 
 		std_textures[TEXTURE_UNIT_SKYBOX] = skybox_cubeMap;
 	}
-	else if (drawworld.custom_options & DRAW_SKYDOME) {
+	else if (options & DRAW_SKYDOME) {
 		extern texture_ref solidskytexture, alphaskytexture;
 
 		std_textures[TEXTURE_UNIT_SKYDOME_TEXTURE] = solidskytexture;
@@ -282,7 +282,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
-		caustics &= ((drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
+		caustics &= ((R_ProgramCustomOptions(r_program_brushmodel) & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
 	}
 
 	// See if previous batch has same texture & matrix, if so just continue
@@ -321,7 +321,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
-		caustics &= ((drawworld.custom_options & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
+		caustics &= ((R_ProgramCustomOptions(r_program_brushmodel) & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
 	}
 
 	// See if previous batch has same texture & matrix, if so just continue

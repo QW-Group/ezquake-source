@@ -25,6 +25,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "glm_local.h"
 
+#define GLM_VERTEX_SHADER   0
+#define GLM_FRAGMENT_SHADER 1
+#define GLM_GEOMETRY_SHADER 2
+#define GLM_COMPUTE_SHADER  3
+#define GLM_SHADER_COUNT    4
+
+typedef struct glm_program_s {
+	GLuint vertex_shader;
+	GLuint geometry_shader;
+	GLuint fragment_shader;
+	GLuint compute_shader;
+	GLuint program;
+
+	const char* friendly_name;
+	const char* shader_text[GLM_SHADER_COUNT];
+	char* included_definitions;
+	GLuint shader_length[GLM_SHADER_COUNT];
+	qbool uniforms_found;
+
+	unsigned int custom_options;
+	qbool force_recompile;
+} glm_program_t;
+
+static glm_program_t program_data[r_program_count];
+
 // Cached OpenGL state
 static GLuint currentProgram = 0;
 
@@ -87,23 +112,7 @@ static glMemoryBarrier_t           qglMemoryBarrier;
 #define MAX_SHADER_COMPONENTS 6
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
-// Linked list of all compiled programs
-static glm_program_t* program_list;
 static char core_definitions[512];
-
-static void GLM_AddToProgramList(glm_program_t* program)
-{
-	glm_program_t* pos;
-
-	for (pos = program_list; pos; pos = pos->next) {
-		if (pos == program) {
-			return;
-		}
-	}
-
-	program->next = program_list;
-	program_list = program;
-}
 
 // GLM Utility functions
 static void GLM_ConPrintShaderLog(GLuint shader)
@@ -326,7 +335,7 @@ qbool GLM_CreateVGFProgram(
 	GLuint geometry_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program
+	r_program_id program_id
 )
 {
 	return GLM_CreateVGFProgramWithInclude(
@@ -337,7 +346,7 @@ qbool GLM_CreateVGFProgram(
 		geometry_shader_text_length,
 		fragment_shader_text,
 		fragment_shader_text_length,
-		program,
+		program_id,
 		NULL
 	);
 }
@@ -350,10 +359,12 @@ qbool GLM_CreateVGFProgramWithInclude(
 	GLuint geometry_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program,
+	r_program_id program_id,
 	const char* included_definitions
 )
 {
+	glm_program_t* program = &program_data[program_id];
+
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
 	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
@@ -366,13 +377,7 @@ qbool GLM_CreateVGFProgramWithInclude(
 	Q_free(program->included_definitions);
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
-	if (GLM_CompileProgram(program)) {
-		GLM_AddToProgramList(program);
-
-		return true;
-	}
-
-	return false;
+	return GLM_CompileProgram(program);
 }
 
 qbool GLM_CreateVFProgram(
@@ -381,10 +386,10 @@ qbool GLM_CreateVFProgram(
 	GLuint vertex_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program
+	r_program_id program_id
 )
 {
-	return GLM_CreateVFProgramWithInclude(friendlyName, vertex_shader_text, vertex_shader_text_length, fragment_shader_text, fragment_shader_text_length, program, NULL);
+	return GLM_CreateVFProgramWithInclude(friendlyName, vertex_shader_text, vertex_shader_text_length, fragment_shader_text, fragment_shader_text_length, program_id, NULL);
 }
 
 qbool GLM_CreateVFProgramWithInclude(
@@ -393,10 +398,12 @@ qbool GLM_CreateVFProgramWithInclude(
 	GLuint vertex_shader_text_length,
 	const char* fragment_shader_text,
 	GLuint fragment_shader_text_length,
-	glm_program_t* program,
+	r_program_id program_id,
 	const char* included_definitions
 )
 {
+	glm_program_t* program = &program_data[program_id];
+
 	program->program = 0;
 	program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
 	program->shader_text[GLM_VERTEX_SHADER] = vertex_shader_text;
@@ -408,43 +415,35 @@ qbool GLM_CreateVFProgramWithInclude(
 	program->friendly_name = friendlyName;
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
-	if (GLM_CompileProgram(program)) {
-		GLM_AddToProgramList(program);
-
-		return true;
-	}
-
-	return false;
+	return GLM_CompileProgram(program);
 }
 
 // Called during vid_shutdown
 void GLM_DeletePrograms(qbool restarting)
 {
-	glm_program_t* program = program_list;
+	r_program_id p;
 
-	GLM_UseProgram(0);
-	while (program) {
-		if (program->program) {
-			qglDeleteProgram(program->program);
-			program->program = 0;
+	GLM_UseProgram(r_program_none);
+	for (p = r_program_none; p < r_program_count; ++p) {
+		if (program_data[p].program) {
+			qglDeleteProgram(program_data[p].program);
+			program_data[p].program = 0;
 		}
-		if (program->fragment_shader) {
-			qglDeleteShader(program->fragment_shader);
-			program->fragment_shader = 0;
+		if (program_data[p].fragment_shader) {
+			qglDeleteShader(program_data[p].fragment_shader);
+			program_data[p].fragment_shader = 0;
 		}
-		if (program->vertex_shader) {
-			qglDeleteShader(program->vertex_shader);
-			program->vertex_shader = 0;
+		if (program_data[p].vertex_shader) {
+			qglDeleteShader(program_data[p].vertex_shader);
+			program_data[p].vertex_shader = 0;
 		}
-		if (program->geometry_shader) {
-			qglDeleteShader(program->geometry_shader);
-			program->geometry_shader = 0;
+		if (program_data[p].geometry_shader) {
+			qglDeleteShader(program_data[p].geometry_shader);
+			program_data[p].geometry_shader = 0;
 		}
-		if (!restarting && program->included_definitions) {
-			Q_free(program->included_definitions);
+		if (!restarting && program_data[p].included_definitions) {
+			Q_free(program_data[p].included_definitions);
 		}
-
-		program = program->next;
 	}
 }
 
@@ -457,45 +456,45 @@ static void GLM_BuildCoreDefinitions(void)
 // Called during vid_restart, as starting up again
 void GLM_InitPrograms(void)
 {
-	glm_program_t* program = program_list;
+	r_program_id p;
 
 	GLM_BuildCoreDefinitions();
 
-	while (program) {
-		if (!program->program) {
-			if (program->shader_text[GLM_COMPUTE_SHADER]) {
-				GLM_CompileComputeShaderProgram(program, program->shader_text[GLM_COMPUTE_SHADER], program->shader_length[GLM_COMPUTE_SHADER]);
+	for (p = r_program_none; p < r_program_count; ++p) {
+		// FIXME: At the moment we need the name to be set to know if we should compile...
+		if (!program_data[p].program && program_data[p].friendly_name) {
+			if (program_data[p].shader_text[GLM_COMPUTE_SHADER]) {
+				GLM_CompileComputeShaderProgram(p, program_data[p].shader_text[GLM_COMPUTE_SHADER], program_data[p].shader_length[GLM_COMPUTE_SHADER]);
 			}
 			else {
-				GLM_CompileProgram(program);
+				GLM_CompileProgram(&program_data[p]);
 			}
 		}
-
-		program = program->next;
 	}
 }
 
-qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int options)
+qbool GLM_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 {
 	//
+	const glm_program_t* program = &program_data[program_id];
+
 	return (!program->program) || program->force_recompile || program->custom_options != options;
 }
 
 void GLM_CvarForceRecompile(void)
 {
-	glm_program_t* program = program_list;
+	r_program_id p;
 
-	while (program) {
-		program->force_recompile = true;
-
-		program = program->next;
+	for (p = r_program_none; p < r_program_count; ++p) {
+		program_data[p].force_recompile = true;
 	}
 
 	GLM_BuildCoreDefinitions();
 }
 
-qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shadertext, GLint length)
+qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, GLint length)
 {
+	glm_program_t* program = &program_data[program_id];
 	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
@@ -523,7 +522,6 @@ qbool GLM_CompileComputeShaderProgram(glm_program_t* program, const char* shader
 				program->program = shader_program;
 				program->uniforms_found = false;
 				program->force_recompile = false;
-				GLM_AddToProgramList(program);
 
 				R_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
 				return true;
@@ -569,8 +567,10 @@ qbool GLM_LoadProgramFunctions(void)
 	return all_available;
 }
 
-void GLM_UseProgram(GLuint program)
+void GLM_UseProgram(r_program_id program_id)
 {
+	GLuint program = program_data[program_id].program;
+
 	if (program != currentProgram) {
 		qglUseProgram(program);
 
@@ -617,3 +617,31 @@ void GL_MemoryBarrier(GLbitfield barriers)
 {
 	qglMemoryBarrier(barriers);
 }
+
+// Wrappers
+int R_ProgramCustomOptions(r_program_id program_id)
+{
+	return program_data[program_id].custom_options;
+}
+
+void R_ProgramSetCustomOptions(r_program_id program_id, int options)
+{
+	program_data[program_id].custom_options = options;
+}
+
+qbool R_ProgramReady(r_program_id program_id)
+{
+	return program_data[program_id].program != 0;
+}
+
+qbool R_ProgramUniformsFound(r_program_id program_id)
+{
+	return program_data[program_id].uniforms_found;
+}
+
+// FIXME: Get rid of this
+void R_ProgramSetUniformsFound(r_program_id program_id)
+{
+	program_data[program_id].uniforms_found = true;
+}
+
