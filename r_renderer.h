@@ -3,6 +3,7 @@
 #define EZQUAKE_R_RENDERER_HEADER
 
 #include "gl_model.h"
+#include "r_state.h"
 #include "r_vao.h"
 
 #ifdef RENDERER_METHOD

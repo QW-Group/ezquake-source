@@ -7,6 +7,7 @@ RENDERER_METHOD(const char*, DescriptiveString, void)
 
 // Config/State
 RENDERER_METHOD(void, Viewport, int x, int y, int width, int height)
+RENDERER_METHOD(void, ApplyRenderingState, r_state_id state)
 
 // Called after map has been loaded
 RENDERER_METHOD(void, PrepareModelRendering, qbool vid_restart)

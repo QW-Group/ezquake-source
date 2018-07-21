@@ -222,13 +222,13 @@ rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name)
 		current->field = state->field; \
 	}
 
-static void GL_ApplyRenderingState(r_state_id id)
+void GL_ApplyRenderingState(r_state_id id)
 {
 	rendering_state_t* state = &states[id];
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 
-	R_TraceEnterRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
+	R_TraceEnterRegion(va("GL_ApplyRenderingState(%s)", state->name), true);
 
 	if (state->depth.func != current->depth.func) {
 		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
@@ -346,61 +346,6 @@ static void GL_ApplyRenderingState(r_state_id id)
 	R_TraceDebugState();
 #endif
 	R_TraceLeaveRegion(true);
-}
-
-static void GLC_ApplyRenderingState(r_state_id id)
-{
-	rendering_state_t* current = &opengl.rendering_state;
-	rendering_state_t* state = &states[id];
-	int i;
-
-	// Alpha-testing
-	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
-	if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
-		glAlphaFunc(
-			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
-			current->alphaTesting.value = state->alphaTesting.value
-		);
-		R_TraceLogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
-	}
-
-	// Texture units
-	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]) && i < glConfig.texture_units; ++i) {
-		if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
-			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
-				GL_SelectTexture(GL_TEXTURE0 + i);
-				glEnable(GL_TEXTURE_2D);
-				R_TraceLogAPICall("Enabled texturing on unit %d", i);
-				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
-					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-					R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-				}
-			}
-			else {
-				GL_SelectTexture(GL_TEXTURE0 + i);
-				glDisable(GL_TEXTURE_2D);
-				R_TraceLogAPICall("Disabled texturing on unit %d", i);
-			}
-		}
-		else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
-			GL_SelectTexture(GL_TEXTURE0 + i);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-		}
-	}
-
-	// Color
-	if (!current->colorValid || current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
-		glColor4f(
-			current->color[0] = state->color[0],
-			current->color[1] = state->color[1],
-			current->color[2] = state->color[2],
-			current->color[3] = state->color[3]
-		);
-		current->colorValid = true;
-	}
-
-	GL_ApplyRenderingState(id);
 }
 
 // vid_common_gl.c
@@ -825,15 +770,7 @@ void R_ApplyRenderingState(r_state_id state)
 	}
 	assert(states[state].initialized);
 
-	if (R_UseImmediateOpenGL()) {
-		GLC_ApplyRenderingState(state);
-	}
-	else if (R_UseModernOpenGL()) {
-		GLM_ApplyRenderingState(state);
-	}
-	else if (R_UseVulkan()) {
-
-	}
+	renderer.ApplyRenderingState(state);
 }
 
 void R_CustomColor(float r, float g, float b, float a)
@@ -903,12 +840,6 @@ void R_ClearColor(float r, float g, float b, float a)
 	}
 }
 
-void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode)
-{
-	state->textureUnits[index].enabled = enabled;
-	state->textureUnits[index].mode = mode;
-}
-
 rendering_state_t* R_CopyRenderingState(r_state_id dest_id, r_state_id source_id, const char* name)
 {
 	rendering_state_t* state = &states[dest_id];
@@ -958,6 +889,7 @@ void R_BindVertexArrayElementBuffer(buffer_ref ref)
 	}
 }
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
@@ -1037,3 +969,63 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
 	}
 }
+
+void GLC_ApplyRenderingState(r_state_id id)
+{
+	rendering_state_t* current = &opengl.rendering_state;
+	rendering_state_t* state = &states[id];
+	int i;
+
+	// Alpha-testing
+	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
+	if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
+		glAlphaFunc(
+			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
+			current->alphaTesting.value = state->alphaTesting.value
+		);
+		R_TraceLogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
+	}
+
+	// Texture units
+	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]) && i < glConfig.texture_units; ++i) {
+		if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
+			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				glEnable(GL_TEXTURE_2D);
+				R_TraceLogAPICall("Enabled texturing on unit %d", i);
+				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
+					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+					R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+				}
+			}
+			else {
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				glDisable(GL_TEXTURE_2D);
+				R_TraceLogAPICall("Disabled texturing on unit %d", i);
+			}
+		}
+		else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
+			GL_SelectTexture(GL_TEXTURE0 + i);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
+			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+		}
+	}
+
+	// Color
+	if (!current->colorValid || current->color[0] != state->color[0] || current->color[1] != state->color[1] || current->color[2] != state->color[2] || current->color[3] != state->color[3]) {
+		glColor4f(
+			current->color[0] = state->color[0],
+			current->color[1] = state->color[1],
+			current->color[2] = state->color[2],
+			current->color[3] = state->color[3]
+		);
+		current->colorValid = true;
+	}
+
+	if (state->vao_id) {
+		GLC_EnsureVAOCreated(state->vao_id);
+	}
+
+	GL_ApplyRenderingState(id);
+}
+#endif // RENDERER_OPTION_CLASSIC_OPENGL
