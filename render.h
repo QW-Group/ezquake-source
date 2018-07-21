@@ -112,6 +112,7 @@ typedef struct {
 //	int				viewplayernum;  // don't draw own glow when gl_flashblend 1
 
 //	lightstyle_t    *lightstyles;
+	qbool           fog_enabled;    // fog is enabled
 } refdef2_t;
 
 

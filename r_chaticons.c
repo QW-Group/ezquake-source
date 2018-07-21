@@ -224,8 +224,6 @@ void R_SetupChatIcons(void)
 	}
 }
 
-
-
 void R_InitChatIcons(void)
 {
 	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE | TEX_MIPMAP;

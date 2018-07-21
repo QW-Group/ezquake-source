@@ -57,12 +57,14 @@ RENDERER_METHOD(void, EnsureFinished, void)
 RENDERER_METHOD(void, Begin2DRendering, void)
 RENDERER_METHOD(qbool, IsFramebufferEnabled3D, void)
 
+// Pre-processing
+RENDERER_METHOD(void, ConfigureFog, int contents)
+
 // Post-processing (scene)
 RENDERER_METHOD(void, RenderSceneBlur, float alpha)
 RENDERER_METHOD(void, RenderView, void)
 RENDERER_METHOD(void, PreRenderView, void)
-RENDERER_METHOD(void, AddWaterFog, int contents)
-RENDERER_METHOD(void, ConfigureFog, void)
+
 // Post-processing (screen)
 RENDERER_METHOD(void, PostProcessScreen, void)
 RENDERER_METHOD(void, PolyBlend, float v_blend[4])

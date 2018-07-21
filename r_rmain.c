@@ -316,7 +316,7 @@ void R_SetupFrame(void)
 	}
 
 	V_SetContentsColor(r_viewleaf->contents);
-	renderer.AddWaterFog(r_viewleaf->contents);
+	renderer.ConfigureFog(r_viewleaf->contents);
 	V_CalcBlend();
 
 	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));

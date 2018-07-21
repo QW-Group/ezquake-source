@@ -19,10 +19,6 @@ static void GLC_NoOperation(void)
 {
 }
 
-static void GLC_AddWaterFog(int contents)
-{
-}
-
 static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
 {
 }

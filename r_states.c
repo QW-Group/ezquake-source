@@ -111,6 +111,7 @@ void R_InitialiseWorldStates(void)
 	state->textureUnits[0].mode = r_texunit_mode_replace;
 
 	state = R_InitRenderingState(r_state_world_details, true, "detailPolyState", vao_brushmodel_details);
+	state->fog.enabled = true;
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_decal;
 	state->blendingEnabled = true;
@@ -326,6 +327,7 @@ void R_StateDefault3D(void)
 {
 	R_TraceResetRegion(false);
 
+	R_TraceEnterFunctionRegion;
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_PauseMatrixUpdate();
@@ -344,11 +346,6 @@ void R_StateDefault3D(void)
 		GLC_LoadModelviewMatrix();
 	}
 #endif
-
-	R_TraceEnterFunctionRegion;
-
-	R_ApplyRenderingState(r_state_default_3d);
-
 	R_TraceLeaveFunctionRegion;
 }
 
@@ -507,6 +504,7 @@ void R_InitialiseEntityStates(void)
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_none);
+	state->fog.enabled = true;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
 	state->alphaTesting.enabled = false;
@@ -561,7 +559,7 @@ void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
-	state->fog.enabled = false;
+	state->fog.enabled = true;
 	state->alphaTesting.enabled = false;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -571,7 +569,7 @@ void R_InitialiseEntityStates(void)
 	state = R_InitRenderingState(r_state_aliasmodel_outline, true, "aliasModelOutlineState", vao_aliasmodel);
 	state->alphaTesting.enabled = false;
 	state->blendingEnabled = false;
-	state->fog.enabled = false;
+	state->fog.enabled = true;
 	state->polygonOffset.option = r_polygonoffset_outlines;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_back;

@@ -625,8 +625,8 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		tex = R_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
 	}
 
-	Com_Printf("Mod_LoadSimpleTexture: %s %s\n", indentifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	if (developer.value > 1) {
+		Com_Printf("Mod_LoadSimpleTexture: %s %s\n", indentifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {

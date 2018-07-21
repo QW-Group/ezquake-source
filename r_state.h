@@ -254,7 +254,6 @@ typedef enum {
 rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, const char* name, r_vao_id vao);
 rendering_state_t* R_CopyRenderingState(r_state_id id, r_state_id original_id, const char* name);
 rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name);
-qbool R_StateInitialized(r_state_id id);
 void R_ApplyRenderingState(r_state_id id);
 
 void R_CustomColor(float r, float g, float b, float a);
