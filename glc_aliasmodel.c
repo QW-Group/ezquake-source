@@ -400,7 +400,7 @@ static void GLC_SetPowerupShellColor(int layer_no, int effects)
 	R_CustomColor(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
 }
 
-void GLC_DrawPowerupShell(
+static void GLC_DrawPowerupShell(
 	model_t* model, int effects,
 	maliasframedesc_t *oldframe, maliasframedesc_t *frame
 )
@@ -418,10 +418,6 @@ void GLC_DrawPowerupShell(
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	int position = 0;
 
-	if (!R_TextureReferenceIsValid(shelltexture)) {
-		return;
-	}
-
 	lastposenum = (r_framelerp >= 0.5) ? pose2 : pose1;
 
 	scroll[0] = cos(cl.time * 1.5);
@@ -430,8 +426,6 @@ void GLC_DrawPowerupShell(
 	scroll[3] = sin(cl.time * -0.5);
 
 	for (layer_no = 0; layer_no <= 1; ++layer_no) {
-		GLC_SetPowerupShellColor(layer_no, effects);
-
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
 		verts1 = verts2 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
@@ -452,6 +446,7 @@ void GLC_DrawPowerupShell(
 			}
 
 			if (!cache) {
+				GLC_SetPowerupShellColor(layer_no, effects);
 				GLC_Begin(drawMode);
 			}
 
@@ -488,6 +483,7 @@ void GLC_DrawPowerupShell(
 
 				R_BindVertexArray(vao_aliasmodel_powerupshell);
 
+				GLC_SetPowerupShellColor(0, effects);
 				GL_DrawArrays(drawMode, 0, position);
 
 				// And quickly update texture-coordinates and run again...
@@ -497,7 +493,8 @@ void GLC_DrawPowerupShell(
 					temp_aliasmodel_buffer[i].texture_coords[1] += scroll[3] - scroll[1];
 				}
 				GL_DrawArrays(drawMode, 0, position);
-				++layer_no;
+
+				return;
 			}
 			else {
 				GLC_End();
@@ -579,12 +576,12 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	maliasframedesc_t *oldframe, *frame;
 	float oldMatrix[16];
 
-	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here... 
-	if (R_FilterEntity(ent)) {
+	if (!(ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) || !R_TextureReferenceIsValid(shelltexture)) {
 		return;
 	}
 
-	if (!Ruleset_AllowPowerupShell(ent->model)) {
+	// FIXME: This is all common with R_DrawAliasModel(), and if passed there, don't need to be run here...
+	if (!Ruleset_AllowPowerupShell(ent->model) || R_FilterEntity(ent)) {
 		return;
 	}
 
@@ -606,17 +603,13 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	R_PushModelviewMatrix(oldMatrix);
-	R_StateBeginDrawAliasModel(ent, paliashdr);
 
 	// FIXME: think need put it after caustics
-	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && R_TextureReferenceIsValid(shelltexture)) {
-		model_t* clmodel = ent->model;
-
-		GLC_StateBeginAliasPowerupShell();
-		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
-	}
-
+	R_PushModelviewMatrix(oldMatrix);
+	R_StateBeginDrawAliasModel(ent, paliashdr);
+	GLC_StateBeginAliasPowerupShell();
+	GLC_DrawPowerupShell(ent->model, ent->effects, oldframe, frame);
 	R_PopModelviewMatrix(oldMatrix);
+
 	R_TraceLeaveRegion(true);
 }

@@ -346,7 +346,6 @@ void R_StateDefault3D(void)
 	R_TraceEnterFunctionRegion;
 
 	R_ApplyRenderingState(r_state_default_3d);
-	R_TraceDebugState();
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -505,16 +504,13 @@ void R_InitialiseEntityStates(void)
 	extern cvar_t gl_outline_width;
 	rendering_state_t* state;
 
-	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_aliasmodel);
-	state->polygonOffset.option = r_polygonoffset_disabled;
+	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_none);
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
-	state->polygonMode = r_polygonmode_fill;
-	state->line.smooth = false;
-	state->fog.enabled = false;
 	state->alphaTesting.enabled = false;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_additive_blending;
+
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_modulate;
 
