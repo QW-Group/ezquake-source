@@ -28,7 +28,8 @@ typedef struct gl_sprite3d_batch_s {
 } gl_sprite3d_batch_t;
 
 // FIXME: Bit ugly with these externs here
-#define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
+#define MAX_VERTS_PER_BATCH (MAX_3DSPRITES_PER_BATCH * 4)
+#define MAX_VERTS_PER_SCENE (MAX_VERTS_PER_BATCH * MAX_SPRITE3D_BATCHES)
 
 extern r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
 extern gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];

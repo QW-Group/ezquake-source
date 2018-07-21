@@ -95,8 +95,6 @@ static const char* batch_type_names[] = {
 	"MAX_BATCHES"
 };
 
-#define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
-
 r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
 gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
 unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
@@ -144,7 +142,7 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
 
-	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH) {
+	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH || (batch->count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
 		return NULL;
 	}
 	if (!R_TextureReferenceIsValid(texture) && !R_TextureReferenceIsValid(batch->texture) && !batch->untextured_rendering_state) {
