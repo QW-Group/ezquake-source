@@ -25,6 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "glm_local.h"
 
+static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
+	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
+	GL_TEXTURE_FETCH_BARRIER_BIT
+};
+
 #define GLM_VERTEX_SHADER   0
 #define GLM_FRAGMENT_SHADER 1
 #define GLM_GEOMETRY_SHADER 2
@@ -37,6 +42,7 @@ typedef struct glm_program_s {
 	GLuint fragment_shader;
 	GLuint compute_shader;
 	GLuint program;
+	GLbitfield memory_barrier;
 
 	const char* friendly_name;
 	const char* shader_text[GLM_SHADER_COUNT];
@@ -385,11 +391,11 @@ static qbool GLM_CompileProgram(
 qbool GLM_CreateVGFProgram(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
+	unsigned int geometry_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id
 )
 {
@@ -409,11 +415,11 @@ qbool GLM_CreateVGFProgram(
 qbool GLM_CreateVGFProgramWithInclude(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
+	unsigned int geometry_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id,
 	const char* included_definitions
 )
@@ -438,9 +444,9 @@ qbool GLM_CreateVGFProgramWithInclude(
 qbool GLM_CreateVFProgram(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id
 )
 {
@@ -450,9 +456,9 @@ qbool GLM_CreateVFProgram(
 qbool GLM_CreateVFProgramWithInclude(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id,
 	const char* included_definitions
 )
@@ -571,7 +577,7 @@ void GLM_CvarForceRecompile(void)
 	GLM_BuildCoreDefinitions();
 }
 
-qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, GLint length)
+qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
 {
 	glm_program_t* program = &program_data[program_id];
 	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
@@ -683,14 +689,23 @@ static void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose,
 }
 
 // Compute shaders
-void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
+void GLM_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
 {
+	R_ProgramUse(program_id);
 	qglDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
+	if (program_data[program_id].memory_barrier) {
+		qglMemoryBarrier(program_data[program_id].memory_barrier);
+	}
 }
 
-void GL_MemoryBarrier(GLbitfield barriers)
+void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
 {
-	qglMemoryBarrier(barriers);
+	GLM_ProgramComputeDispatch(program_id, num_groups_x, num_groups_y, num_groups_z);
+}
+
+void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id)
+{
+	program_data[program_id].memory_barrier |= glBarrierFlags[barrier_id];
 }
 
 // Wrappers
@@ -738,15 +753,3 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id)
 {
 	return program_uniforms[uniform_id].int_value;
 }
-
-// FIXME: Get rid of this
-qbool R_ProgramUniformsFound(r_program_id program_id)
-{
-	return program_data[program_id].uniforms_found;
-}
-
-void R_ProgramSetUniformsFound(r_program_id program_id)
-{
-	program_data[program_id].uniforms_found = true;
-}
-

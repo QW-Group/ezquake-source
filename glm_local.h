@@ -32,6 +32,12 @@ typedef enum {
 	r_program_uniform_count
 } r_program_uniform_id;
 
+typedef enum {
+	r_program_memory_barrier_image_access,
+	r_program_memory_barrier_texture_access,
+	r_program_memory_barrier_count
+} r_program_memory_barrier_id;
+
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
@@ -145,25 +151,6 @@ typedef struct uniform_block_spritedata_s {
 void GLM_PreRenderView(void);
 void GLM_SetupGL(void);
 
-typedef struct glm_worldmodel_req_s {
-	// This is DrawElementsIndirectCmd, from OpenGL spec
-	GLuint count;           // Number of indexes to pull
-	GLuint instanceCount;   // Always 1... ?
-	GLuint firstIndex;      // Position of first index in array
-	GLuint baseVertex;      // Offset of vertices in VBO
-	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
-
-	float mvMatrix[16];
-	int flags;
-	int samplerMappingBase;
-	int samplerMappingCount;
-	int firstTexture;
-	float alpha;
-	qbool polygonOffset;
-	qbool worldmodel;
-	model_t* model;
-} glm_worldmodel_req_t;
-
 void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
@@ -188,6 +175,9 @@ void R_ProgramUse(r_program_id program_id);
 int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
+void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z);
+void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id);
+
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
@@ -196,30 +186,26 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
 
-// Flags all programs to be recompiled
-// Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
-void GLM_CvarForceRecompile(void);
-
 qbool GLM_CreateVFProgram(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id
 );
 
 qbool GLM_CreateVFProgramWithInclude(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program_id,
 	const char* included_definitions
 );
 
-qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, GLint length);
+qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
 
 #define GL_VFDeclare(name) \
 	extern unsigned char name##_vertex_glsl[];\
@@ -236,22 +222,22 @@ qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shade
 qbool GLM_CreateVGFProgram(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
+	unsigned int geometry_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program
 );
 
 qbool GLM_CreateVGFProgramWithInclude(
 	const char* friendlyName,
 	const char* vertex_shader_text,
-	GLuint vertex_shader_text_length,
+	unsigned int vertex_shader_text_length,
 	const char* geometry_shader_text,
-	GLuint geometry_shader_text_length,
+	unsigned int geometry_shader_text_length,
 	const char* fragment_shader_text,
-	GLuint fragment_shader_text_length,
+	unsigned int fragment_shader_text_length,
 	r_program_id program,
 	const char* included_definitions
 );

@@ -55,6 +55,9 @@ void GLM_ComputeLightmaps(void)
 		if (!GLM_CompileComputeShaderProgram(r_program_lightmap_compute, (const char*)lighting_compute_glsl, lighting_compute_glsl_len)) {
 			return;
 		}
+
+		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_image_access);
+		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_texture_access);
 	}
 
 	if (!R_BufferReferenceIsValid(ssbo_lightingData)) {
@@ -71,9 +74,7 @@ void GLM_ComputeLightmaps(void)
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
 
-	R_ProgramUse(r_program_lightmap_compute);
-	GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
-	GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+	R_ProgramComputeDispatch(r_program_lightmap_compute, LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
 }
 
 void GLM_CreateLightmapTextures(void)

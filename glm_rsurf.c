@@ -44,6 +44,25 @@ static buffer_ref vbo_worldIndirectDraw;
 static buffer_ref ssbo_worldcvars;
 static buffer_ref ssbo_worldsamplers;
 
+typedef struct glm_worldmodel_req_s {
+	// This is DrawElementsIndirectCmd, from OpenGL spec
+	GLuint count;           // Number of indexes to pull
+	GLuint instanceCount;   // Always 1... ?
+	GLuint firstIndex;      // Position of first index in array
+	GLuint baseVertex;      // Offset of vertices in VBO
+	GLuint baseInstance;    // We use this to pull from array of uniforms in shader
+
+	float mvMatrix[16];
+	int flags;
+	int samplerMappingBase;
+	int samplerMappingCount;
+	int firstTexture;
+	float alpha;
+	qbool polygonOffset;
+	qbool worldmodel;
+	model_t* model;
+} glm_worldmodel_req_t;
+
 typedef struct glm_brushmodel_drawcall_s {
 	uniform_block_world_calldata_t calls[MAX_WORLDMODEL_BATCH];
 	sampler_mapping_t mappings[MAX_SAMPLER_MAPPINGS];
