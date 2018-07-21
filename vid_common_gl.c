@@ -62,7 +62,6 @@ static qbool R_InitialiseRenderer(void)
 {
 	qbool shaders_supported = false;
 
-	R_InitialiseBufferHandling();
 	GL_InitialiseFramebufferHandling();
 
 	shaders_supported = GLM_LoadProgramFunctions();

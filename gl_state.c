@@ -582,7 +582,7 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
@@ -591,12 +591,12 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 
 		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
 		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 	else {
 		// No caching...
 		glBindTexture(targetType, texnum);
-		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_UseGLSL() ? "" : GL_TextureIdentifierByGLReference(texnum));
+		GL_LogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
 	}
 
 	++frameStats.texture_binds;
@@ -776,7 +776,7 @@ void GL_PrintState(FILE* debug_frame_out, int debug_frame_depth)
 		fprintf(debug_frame_out, "]\n");
 		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
 		fprintf(debug_frame_out, "%.*s   vao: %s\n", debug_frame_depth, "                                                          ", vaoNames[currentVAO]);
-		if (R_VAOBound()) {
+		if (renderer.VAOBound()) {
 			if (R_UseImmediateOpenGL()) {
 				GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
 			}
@@ -832,7 +832,7 @@ void R_ApplyRenderingState(r_state_id state)
 
 void R_CustomColor(float r, float g, float b, float a)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		if (!opengl.rendering_state.colorValid || opengl.rendering_state.color[0] != r || opengl.rendering_state.color[1] != g || opengl.rendering_state.color[2] != b || opengl.rendering_state.color[3] != a) {
 			glColor4f(
 				opengl.rendering_state.color[0] = r,
@@ -874,7 +874,7 @@ void R_CustomColor4ubv(const byte* color)
 
 void R_EnableScissorTest(int x, int y, int width, int height)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(x, y, width, height);
 	}
@@ -882,17 +882,17 @@ void R_EnableScissorTest(int x, int y, int width, int height)
 
 void R_DisableScissorTest(void)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		glDisable(GL_SCISSOR_TEST);
 	}
 }
 
 void R_ClearColor(float r, float g, float b, float a)
 {
-	if (GL_UseImmediateMode()) {
+	if (R_UseImmediateOpenGL()) {
 		glClearColor(r, g, b, a);
 	}
-	else if (GL_UseGLSL()) {
+	else if (R_UseModernOpenGL()) {
 		glClearColor(r, g, b, a);
 	}
 }
@@ -913,39 +913,16 @@ rendering_state_t* R_CopyRenderingState(r_state_id dest_id, r_state_id source_id
 	return state;
 }
 
-// VAOs
-qbool R_InitialiseVAOHandling(void)
-{
-	if (R_UseModernOpenGL()) {
-		return GLM_InitialiseVAOHandling();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		return GLC_InitialiseVAOHandling();
-	}
-	else if (R_UseVulkan()) {
-		return VK_InitialiseVAOHandling();
-	}
-
-	return false;
-}
-
 void R_InitialiseVAOState(void)
 {
 	currentVAO = vao_none;
+
+	renderer.InitialiseVAOState();
 }
 
 qbool R_VertexArrayCreated(r_vao_id vao)
 {
-	if (R_UseModernOpenGL()) {
-		return GLM_VertexArrayCreated(vao);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		return GLC_VertexArrayCreated(vao);
-	}
-	else if (R_UseVulkan()) {
-		return VK_VertexArrayCreated(vao);
-	}
-	return false;
+	return renderer.VertexArrayCreated(vao);
 }
 
 void R_BindVertexArray(r_vao_id vao)
@@ -953,16 +930,7 @@ void R_BindVertexArray(r_vao_id vao)
 	if (currentVAO != vao) {
 		assert(vao == vao_none || R_VertexArrayCreated(vao));
 
-		//vaos.Bind(vao);
-		if (R_UseModernOpenGL()) {
-			GLM_BindVertexArray(vao);
-		}
-		else if (R_UseImmediateOpenGL()) {
-			GLC_BindVertexArray(vao);
-		}
-		else if (R_UseVulkan()) {
-			VK_BindVertexArray(vao);
-		}
+		renderer.BindVertexArray(vao);
 
 		currentVAO = vao;
 		GL_LogAPICall("BindVertexArray(%s)", vaoNames[vao]);
@@ -971,28 +939,12 @@ void R_BindVertexArray(r_vao_id vao)
 
 void R_GenVertexArray(r_vao_id vao)
 {
-	if (R_UseModernOpenGL()) {
-		GLM_GenVertexArray(vao, vaoNames[vao]);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_GenVertexArray(vao, vaoNames[vao]);
-	}
-	else if (R_UseVulkan()) {
-		VK_GenVertexArray(vao, vaoNames[vao]);
-	}
+	renderer.GenVertexArray(vao, vaoNames[vao]);
 }
 
 void R_DeleteVAOs(void)
 {
-	if (R_UseModernOpenGL()) {
-		GLM_DeleteVAOs();
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DeleteVAOs();
-	}
-	else if (R_UseVulkan()) {
-		VK_DeleteVAOs();
-	}
+	renderer.DeleteVAOs();
 }
 
 qbool R_VAOBound(void)
@@ -1002,8 +954,8 @@ qbool R_VAOBound(void)
 
 void R_BindVertexArrayElementBuffer(buffer_ref ref)
 {
-	if (R_UseModernOpenGL() && currentVAO != vao_none) {
-		GLM_BindVertexArrayElementBuffer(currentVAO, ref);
+	if (currentVAO != vao_none) {
+		renderer.BindVertexArrayElementBuffer(currentVAO, ref);
 	}
 }
 
@@ -1084,20 +1036,5 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		GL_LogAPICall("glDisableClientState(GL_TEXTURE_COORD_ARRAY)");
 		opengl.rendering_state.glc_texture_array_enabled[unit] = false;
-	}
-}
-
-void R_PopulateConfig(void)
-{
-	if (R_UseImmediateOpenGL()) {
-		GL_PopulateConfig();
-	}
-	else if (R_UseModernOpenGL()) {
-		GL_PopulateConfig();
-	}
-	else if (R_UseVulkan()) {
-		extern void VK_PopulateConfig(void);
-
-		VK_PopulateConfig();
 	}
 }

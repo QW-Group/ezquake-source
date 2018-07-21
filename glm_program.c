@@ -239,6 +239,7 @@ static qbool GLM_CompileProgram(
 	GLuint fragment_shader = 0;
 	GLuint geometry_shader = 0;
 	GLuint shader_program = 0;
+	GLint result = 0;
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
@@ -252,61 +253,54 @@ static qbool GLM_CompileProgram(
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shader_length[GLM_FRAGMENT_SHADER], 0, 0, 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
-	if (GL_UseGLSL()) {
-		GLint result = 0;
 
-		vertex_components = GLM_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
-		geometry_components = GLM_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
-		fragment_components = GLM_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
+	vertex_components = GLM_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
+	geometry_components = GLM_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
+	fragment_components = GLM_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
 
-		if (GLM_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
-			if (geometry_shader_text[0] == NULL || GLM_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
-				if (GLM_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
-					Con_DPrintf("Shader compilation completed successfully\n");
+	if (GLM_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
+		if (geometry_shader_text[0] == NULL || GLM_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
+			if (GLM_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
+				Con_DPrintf("Shader compilation completed successfully\n");
 
-					shader_program = qglCreateProgram();
-					if (shader_program) {
-						qglAttachShader(shader_program, fragment_shader);
-						qglAttachShader(shader_program, vertex_shader);
-						if (geometry_shader) {
-							qglAttachShader(shader_program, geometry_shader);
-						}
-						qglLinkProgram(shader_program);
-						qglGetProgramiv(shader_program, GL_LINK_STATUS, &result);
-
-						if (result) {
-							Con_DPrintf("ShaderProgram.Link() was successful\n");
-							program->geometry_shader = geometry_shader;
-							program->fragment_shader = fragment_shader;
-							program->vertex_shader = vertex_shader;
-							program->program = shader_program;
-							program->uniforms_found = false;
-							program->force_recompile = false;
-
-							GL_ObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
-							return true;
-						}
-						else {
-							Con_Printf("ShaderProgram.Link() failed\n");
-							GLM_ConPrintProgramLog(shader_program);
-						}
+				shader_program = qglCreateProgram();
+				if (shader_program) {
+					qglAttachShader(shader_program, fragment_shader);
+					qglAttachShader(shader_program, vertex_shader);
+					if (geometry_shader) {
+						qglAttachShader(shader_program, geometry_shader);
 					}
-				}
-				else {
-					Con_Printf("FragmentShader.Compile() failed\n");
+					qglLinkProgram(shader_program);
+					qglGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+
+					if (result) {
+						Con_DPrintf("ShaderProgram.Link() was successful\n");
+						program->geometry_shader = geometry_shader;
+						program->fragment_shader = fragment_shader;
+						program->vertex_shader = vertex_shader;
+						program->program = shader_program;
+						program->uniforms_found = false;
+						program->force_recompile = false;
+
+						GL_ObjectLabel(GL_PROGRAM, program->program, -1, program->friendly_name);
+						return true;
+					}
+					else {
+						Con_Printf("ShaderProgram.Link() failed\n");
+						GLM_ConPrintProgramLog(shader_program);
+					}
 				}
 			}
 			else {
-				Con_Printf("GeometryShader.Compile() failed\n");
+				Con_Printf("FragmentShader.Compile() failed\n");
 			}
 		}
 		else {
-			Con_Printf("VertexShader.Compile() failed\n");
+			Con_Printf("GeometryShader.Compile() failed\n");
 		}
 	}
 	else {
-		Con_Printf("Shaders not supported\n");
-		return false;
+		Con_Printf("VertexShader.Compile() failed\n");
 	}
 
 	if (shader_program) {

@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_framestats.h"
 
-void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics);
-void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics);
 qbool R_PointIsUnderwater(vec3_t point);
 
 void GLC_StateBeginWaterSurfaces(void);
@@ -31,8 +29,6 @@ void GLC_StateBeginAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
 
 void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
-
-void EmitWaterPolys(msurface_t *fa);
 
 // gl_rsurf.c
 void GLC_EmitDetailPolys(qbool use_vbo);
@@ -47,5 +43,14 @@ void R_InitSky(texture_t *mt);	// called at level load
 void R_DrawSky(void);
 void R_AddSkyBoxSurface(msurface_t *fa);
 qbool R_DrawWorldOutlines(void);
+
+// internal
+#define CHAIN_SURF_B2F(surf, chain) 			\
+	{											\
+		(surf)->texturechain = (chain);			\
+		(chain) = (surf);						\
+	}
+void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
+void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
 
 #endif // R_BRUSHMODEL_HEADER

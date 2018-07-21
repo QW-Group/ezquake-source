@@ -188,10 +188,6 @@ static const char* glcPrimitiveName = "?";
 
 void GLC_Begin(GLenum primitive)
 {
-	if (GL_UseGLSL()) {
-		return;
-	}
-
 #ifdef WITH_OPENGL_TRACE
 	glcVertsSent = 0;
 	glcVertsPerPrimitive = 0;
@@ -245,10 +241,6 @@ void GLC_End(void)
 	int primitives;
 	const char* count_name = "vertices";
 #endif
-
-	if (GL_UseGLSL()) {
-		return;
-	}
 
 	glEnd();
 

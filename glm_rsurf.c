@@ -689,10 +689,11 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	}
 }
 
-void GLM_DrawBrushModel(entity_t* ent, model_t* model, qbool polygonOffset, qbool caustics)
+void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 {
 	int i;
 	glm_worldmodel_req_t* req = NULL;
+	model_t* model = ent->model;
 
 	if (GLM_DuplicatePreviousRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics)) {
 		return;
@@ -779,5 +780,5 @@ void GLM_DrawWorld(void)
 	ent.model = cl.worldmodel;
 
 	GLM_EnterBatchedWorldRegion();
-	GLM_DrawBrushModel(&ent, cl.worldmodel, false, false);
+	GLM_DrawBrushModel(&ent, false, false);
 }

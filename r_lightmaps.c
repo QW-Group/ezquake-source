@@ -742,7 +742,7 @@ void R_BuildLightmaps(void)
 	}
 }
 
-void GL_InvalidateLightmapTextures(void)
+void R_InvalidateLightmapTextures(void)
 {
 	int i;
 

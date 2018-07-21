@@ -110,7 +110,7 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	}
 
 	// Create vbo buffer
-	buffer_size = size * (GL_UseGLSL() ? sizeof(vbo_world_vert_t) : sizeof(glc_vbo_world_vert_t));
+	buffer_size = size * (R_UseModernOpenGL() ? sizeof(vbo_world_vert_t) : sizeof(glc_vbo_world_vert_t));
 	buffer = Q_malloc(buffer_size);
 
 	// Copy data into buffer

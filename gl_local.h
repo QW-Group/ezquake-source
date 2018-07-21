@@ -218,9 +218,6 @@ extern cvar_t vid_renderer;
 extern cvar_t vid_gl_core_profile;
 
 // Which renderer to use
-#define GL_UseGLSL()              (vid_renderer.integer == 1)
-#define GL_UseImmediateMode()     (vid_renderer.integer == 0)
-
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
 // 
@@ -260,8 +257,6 @@ void GL_EndDrawSprites(void);
 void GL_BeginDrawAliasModels(void);
 void GL_EndDrawAliasModels(void);
 
-void GLM_DrawWaterSurfaces(void);
-
 // 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world);
 void R_DrawViewModel(void);
@@ -300,11 +295,9 @@ void GLC_BrightenScreen(void);
 //void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
 
-void GLC_EmitWaterPoly(msurface_t* fa);
 void GLC_DrawFlatPoly(glpoly_t* p);
 void GLC_EmitCausticsPolys(qbool use_vbo);
 
-void GLC_DrawWaterSurfaces(void);
 void GLC_DrawWorld(void);
 
 #ifdef GL_PARANOIA

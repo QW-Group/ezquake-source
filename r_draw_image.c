@@ -32,13 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 float cachedMatrix[16];
 
-void GLM_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
-void GLC_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
-void VK_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
-void GLM_DrawRectangle(float x, float y, float width, float height, byte* color);
-void GLC_DrawRectangle(float x, float y, float width, float height, byte* color);
-void VK_DrawRectangle(float x, float y, float width, float height, byte* color);
-
 glm_image_framedata_t imageData;
 
 int Draw_ImagePosition(void)
@@ -88,30 +81,14 @@ void R_DrawImage(float x, float y, float width, float height, float tex_s, float
 		}
 	}
 
-	if (R_UseModernOpenGL()) {
-		GLM_DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
-	}
-	else if (R_UseImmediateOpenGL()) {
-		GLC_DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
-	}
-	else if (R_UseVulkan()) {
-		VK_DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
-	}
+	renderer.DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
 
 	++imageData.imageCount;
 }
 
 void R_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
-	if (R_UseImmediateOpenGL()) {
-		GLC_DrawRectangle(x, y, width, height, color);
-	}
-	else if (R_UseModernOpenGL()) {
-		GLM_DrawRectangle(x, y, width, height, color);
-	}
-	else if (R_UseVulkan()) {
-		VK_DrawRectangle(x, y, width, height, color);
-	}
+	renderer.DrawRectangle(x, y, width, height, color);
 }
 
 void R_Cache2DMatrix(void)

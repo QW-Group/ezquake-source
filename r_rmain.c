@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "r_lightmaps.h"
 #include "r_trace.h"
-//#include "glm_local.h"
 #include "r_renderer.h"
 
 void GLM_ScreenDrawStart(void);
@@ -51,14 +50,10 @@ void GLM_SetupGL(void);
 void GLC_SetupGL(void);
 void GLM_PreRenderView(void);
 void GLC_PreRenderView(void);
-void GLM_DrawWaterSurfaces(void);
-void GLC_DrawWaterSurfaces(void);
 void GLM_RenderSceneBlurDo(float alpha);
 void GLC_RenderSceneBlurDo(float alpha);
 void GLM_PostProcessScene(void);
 void GLC_PostProcessScene(void);
-void GLM_PostProcessScreen(void);
-void GLC_PostProcessScreen(void);
 void GLM_DrawSpriteModel(entity_t *e);
 void GLC_DrawSpriteModel(entity_t *e);
 void GLM_PolyBlend(float v_blend[4]);
@@ -79,7 +74,6 @@ void R_InitBubble(void);
 void R_InitAliasModelCvars(void);
 void R_CreateWorldTextureChains(void);
 static void R_SetupGL(void);
-static void R_RenderTransparentWorld(void);
 
 void GLM_RenderView(void);
 
@@ -672,7 +666,7 @@ static void R_RenderScene(void)
 	GL_LeaveRegion();
 
 	if (R_WaterAlpha() == 1) {
-		renderer.RenderTransparentWorld();
+		renderer.DrawWaterSurfaces();
 	}
 
 	R_DrawEntities();
@@ -834,7 +828,7 @@ void R_RenderView(void)
 	R_Render3DEffects();
 
 	// Draws transparent world surfaces
-	renderer.RenderTransparentWorld();
+	renderer.DrawWaterSurfaces();
 
 	// Render billboards
 	GL_Draw3DSprites(true);

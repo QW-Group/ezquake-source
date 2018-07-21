@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern model_t *loadmodel;
 static msurface_t *warpface;
-void GLC_EmitWaterPoly(msurface_t* fa);
 
 static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
 {

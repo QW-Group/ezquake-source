@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_OPENGL_TRACE
 #define ENTER_STATE GL_EnterTracedRegion(__FUNCTION__, true)
-#define MIDDLE_STATE GL_MarkEvent(__FUNCTION__)
 #define LEAVE_STATE GL_LeaveTracedRegion(true)
 #define GL_EnterRegion(x) GL_EnterTracedRegion(x, false)
 #define GL_LeaveRegion() GL_LeaveTracedRegion(false)
@@ -32,7 +31,6 @@ void GL_PrintState(FILE* output, int indent);
 void GL_DebugState(void);
 void GL_ResetRegion(qbool start);
 void GL_LogAPICall(const char* message, ...);
-void GL_MarkEvent(const char* message, ...);
 qbool GL_LoggingEnabled(void);
 void GL_ObjectLabel(unsigned int identifier, unsigned int name, int length, const char* label);
 void GL_GetObjectLabel(unsigned int identifier, unsigned int name, int bufSize, int* length, char* label);
@@ -40,14 +38,12 @@ void GL_TextureLabel(unsigned int name, const char* label);
 void GL_GetTextureLabel(unsigned int name, int bufSize, int* length, char* label);
 #else
 #define ENTER_STATE
-#define MIDDLE_STATE
 #define LEAVE_STATE
 #define GL_EnterTracedRegion(...)
 #define GL_LeaveTracedRegion(...)
 #define GL_EnterRegion(x)
 #define GL_LeaveRegion()
 #define GL_ResetRegion(x)
-#define GL_MarkEvent(...)
 #define GL_LogAPICall(...)
 #define GL_PrintState(...)
 #define GL_DebugState()

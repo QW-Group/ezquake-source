@@ -62,7 +62,6 @@ typedef struct api_buffers_t {
 
 extern api_buffers_t buffers;
 
-void R_InitialiseBufferHandling(void);
 buffer_ref R_CreateInstanceVBO(void);
 
 #endif // EZQUAKE_R_BUFFERS_HEADER

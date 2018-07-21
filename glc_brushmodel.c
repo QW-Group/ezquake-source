@@ -34,6 +34,8 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "glc_local.h"
 #include "tr_types.h"
 
+void GLC_DrawSkyChain(void);
+
 extern buffer_ref brushModel_vbo;
 
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -41,33 +43,6 @@ extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
-
-enum {
-	fb_lumas,
-	fb_only,
-	fb_none,
-
-	fb_options
-};
-
-enum {
-	tex_lightmap_and_luma,
-	tex_no_lightmap_or_luma,
-	tex_no_lightmap,
-	tex_no_luma,
-
-	tex_options
-};
-
-enum {
-	multitexture_none,
-	multitexture_2units,
-	multitexture_3units,
-
-	multitexture_options
-};
-
-//static rendering_state_t brushModelStates[multitexture_options][fb_options][tex_options];
 
 void R_InitialiseBrushModelStates(void)
 {
@@ -547,8 +522,11 @@ void GLC_DrawWorld(void)
 	GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
 }
 
-void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
+void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 {
+	extern msurface_t* alphachain;
+	model_t* clmodel = e->model;
+
 	if (r_drawflat.integer && clmodel->isworldmodel) {
 		if (r_drawflat.integer == 1) {
 			GLC_DrawFlat(clmodel);
@@ -565,6 +543,9 @@ void GLC_DrawBrushModel(entity_t* e, model_t* clmodel, qbool caustics)
 	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {
 		GLC_DrawMapOutline(clmodel);
 	}
+
+	GLC_DrawSkyChain();
+	GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 }
 
 /*
@@ -789,4 +770,57 @@ int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	}
 
 	return position + 1;
+}
+
+void GLC_ChainBrushModelSurfaces(model_t* clmodel)
+{
+	extern void GLC_EmitWaterPoly(msurface_t* fa);
+	qbool glc_first_water_poly = true;
+	msurface_t* psurf;
+	int i;
+	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	extern msurface_t* skychain;
+	extern msurface_t* alphachain;
+
+	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
+	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
+		// find which side of the node we are on
+		mplane_t* pplane = psurf->plane;
+		float dot = PlaneDiff(modelorg, pplane);
+
+		//draw the water surfaces now, and setup sky/normal chains
+		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON))) {
+			if (psurf->flags & SURF_DRAWSKY) {
+				CHAIN_SURF_B2F(psurf, skychain);
+			}
+			else if (psurf->flags & SURF_DRAWTURB) {
+				if (glc_first_water_poly) {
+					GLC_StateBeginWaterSurfaces();
+					glc_first_water_poly = false;
+				}
+				GLC_EmitWaterPoly(psurf);
+			}
+			else if (psurf->flags & SURF_DRAWALPHA) {
+				CHAIN_SURF_B2F(psurf, alphachain);
+			}
+			else {
+				int underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
+
+				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				}
+				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				}
+				else {
+					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
+
+					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+				}
+			}
+		}
+	}
 }

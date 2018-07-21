@@ -633,22 +633,10 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	};
 
 	GL_EnterTracedRegion("GL_StateBeginDrawBrushModel", true);
-
-	if (R_UseImmediateOpenGL()) {
-		GLC_PauseMatrixUpdate();
-	}
 	R_RotateForEntity(e);
-	if (R_UseImmediateOpenGL()) {
-		GLC_LoadModelviewMatrix();
-		GLC_ResumeMatrixUpdate();
-	}
-
 	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
-
-	if (R_UseImmediateOpenGL()) {
-		if (e->alpha) {
-			R_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
-		}
+	if (e->alpha) {
+		R_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
 	}
 
 	LEAVE_STATE;
@@ -660,9 +648,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 
 	GL_EnterTracedRegion(__FUNCTION__, true);
 
-	if (R_UseImmediateOpenGL()) {
-		GLC_PauseMatrixUpdate();
-	}
 	R_RotateForEntity(ent);
 	if (ent->model->modhint == MOD_EYES) {
 		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
@@ -678,10 +663,6 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	else {
 		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
 		GL_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
-	}
-	if (R_UseImmediateOpenGL()) {
-		GLC_ResumeMatrixUpdate();
-		GLC_LoadModelviewMatrix();
 	}
 
 	LEAVE_STATE;

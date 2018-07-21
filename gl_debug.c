@@ -111,7 +111,7 @@ static FILE* debug_frame_out;
 
 void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		if (!trace_only && qglPushDebugGroup) {
 			qglPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, regionName);
 		}
@@ -127,7 +127,7 @@ void GL_EnterTracedRegion(const char* regionName, qbool trace_only)
 
 void GL_LeaveTracedRegion(qbool trace_only)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		if (!trace_only && qglPopDebugGroup) {
 			qglPopDebugGroup();
 		}
@@ -139,23 +139,6 @@ void GL_LeaveTracedRegion(qbool trace_only)
 	}
 }
 
-void GL_MarkEvent(const char* format, ...)
-{
-	va_list argptr;
-	char msg[4096];
-
-	va_start(argptr, format);
-	vsnprintf(msg, sizeof(msg), format, argptr);
-	va_end(argptr);
-
-	if (GL_UseGLSL()) {
-		//nvtxMark(va(msg));
-	}
-	else if (debug_frame_out) {
-		fprintf(debug_frame_out, "Event: %.*s %s\n", debug_frame_depth, "                                                          ", msg);
-	}
-}
-
 qbool GL_LoggingEnabled(void)
 {
 	return debug_frame_out != NULL;
@@ -163,7 +146,7 @@ qbool GL_LoggingEnabled(void)
 
 void GL_LogAPICall(const char* format, ...)
 {
-	if (GL_UseImmediateMode() && debug_frame_out) {
+	if (R_UseImmediateOpenGL() && debug_frame_out) {
 		va_list argptr;
 		char msg[4096];
 
@@ -203,7 +186,7 @@ void GL_ResetRegion(qbool start)
 		dev_frame_debug_queued = false;
 	}
 
-	if (GL_UseImmediateMode() && debug_frame_out) {
+	if (R_UseImmediateOpenGL() && debug_frame_out) {
 		fprintf(debug_frame_out, "---Reset---\n");
 		debug_frame_depth = 0;
 	}

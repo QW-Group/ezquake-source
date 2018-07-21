@@ -354,10 +354,10 @@ void R_GenerateMipmapsIfNeeded(texture_ref ref)
 // Called during vid_shutdown
 void R_DeleteTextures(void)
 {
-	extern void GL_InvalidateLightmapTextures(void);
+	extern void R_InvalidateLightmapTextures(void);
 	int i;
 
-	GL_InvalidateLightmapTextures();
+	R_InvalidateLightmapTextures();
 	Skin_InvalidateTextures();
 
 	for (i = 0; i < numgltextures; ++i) {

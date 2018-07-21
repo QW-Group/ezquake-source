@@ -42,28 +42,34 @@ void R_Shutdown(qbool restart)
 
 void R_Initialise(void)
 {
-	R_InitialiseBufferHandling();
-	R_Hud_Initialise();
-	R_PopulateConfig();
-
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_Initialise();
+		GL_PopulateConfig();
+		GLM_InitialiseVAOHandling();
+		GL_InitialiseBufferHandling(&buffers);
 		GL_InitialiseState();
 	}
 #endif
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_Initialise();
+		GL_PopulateConfig();
+		GLC_InitialiseVAOHandling();
+		GL_InitialiseBufferHandling(&buffers);
 		GL_InitialiseState();
 	}
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
 		VK_Initialise();
+		VK_PopulateConfig();
+		VK_InitialiseVAOHandling();
+		VK_InitialiseBufferHandling(&buffers);
 		VK_InitialiseState();
 	}
 #endif
+	R_Hud_Initialise();
 }
 
 // Called during disconnect

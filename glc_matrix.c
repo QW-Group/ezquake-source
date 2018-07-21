@@ -127,9 +127,7 @@ void GLC_TranslateModelview(float x, float y, float z)
 
 void GLC_LoadModelviewMatrix(void)
 {
-	if (GL_UseImmediateMode()) {
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(GLM_ModelviewMatrix());
-		GL_LogAPICall("glLoadMatrixf(modelview)");
-	}
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(GLM_ModelviewMatrix());
+	GL_LogAPICall("glLoadMatrixf(modelview)");
 }

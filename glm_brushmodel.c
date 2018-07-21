@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <limits.h>
 #include "glm_vao.h"
 #include "r_buffers.h"
+#include "r_brushmodel.h"
 
 typedef struct vbo_world_surface_s {
 	float normal[4];
@@ -160,4 +161,65 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	target->surface_num = mod->isworldmodel ? surf - mod->surfaces : 0;
 
 	return position + 1;
+}
+
+void GLM_ChainBrushModelSurfaces(model_t* clmodel)
+{
+	int i;
+	extern texture_ref underwatertexture;
+	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
+	msurface_t* psurf;
+	extern msurface_t* skychain;
+	extern msurface_t* alphachain;
+	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+
+	// GLSL mode - always render the whole model, the surfaces will be re-used if there is
+	//   another entity with the same model later in the scene
+	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
+	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
+		if (psurf->flags & SURF_DRAWSKY) {
+			// FIXME: Find an example...
+			CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+
+			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+		}
+		else if (psurf->flags & SURF_DRAWTURB) {
+			extern cvar_t r_fastturb;
+			// FIXME: Find an example...
+			if (r_fastturb.integer) {
+				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+			}
+			else {
+				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[0]);
+			}
+
+			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+		}
+		else if (psurf->flags & SURF_DRAWALPHA) {
+			// FIXME: Find an example...
+			CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
+		}
+		else {
+			int underwater = 0;
+			if ((psurf->flags & SURF_UNDERWATER) && draw_caustics) {
+				underwater = 1;
+			}
+
+			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+				chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+			}
+			else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+				chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+			}
+			else {
+				chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
+
+				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
+			}
+		}
+	}
 }

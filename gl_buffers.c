@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_vao.h"
 #include "r_trace.h"
 #include "r_buffers.h"
+#include "r_renderer.h"
 
 static void GL_BufferStartFrame(void);
 static void GL_BufferEndFrame(void);
@@ -594,7 +595,7 @@ static void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
 
 void GL_InitialiseBufferHandling(api_buffers_t* api)
 {
-	qbool buffers_supported = R_InitialiseVAOHandling();
+	qbool buffers_supported = renderer.vaos_supported;
 
 	memset(api, 0, sizeof(*api));
 

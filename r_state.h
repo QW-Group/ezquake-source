@@ -265,7 +265,6 @@ void R_ClearColor(float r, float g, float b, float a);
 
 void R_Hud_Initialise(void);
 
-void R_PopulateConfig(void);
 void R_Viewport(int x, int y, int width, int height);
 
 #endif // EZQUAKE_R_STATE_HEADER

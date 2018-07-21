@@ -38,17 +38,9 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_framestats.h"
 #include "r_brushmodel.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 vec3_t modelorg;
-
-void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
-void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
-
-#define CHAIN_SURF_B2F(surf, chain) 			\
-	{											\
-		(surf)->texturechain = (chain);			\
-		(chain) = (surf);						\
-	}
 
 extern msurface_t* skychain;
 extern msurface_t* alphachain;
@@ -1431,13 +1423,10 @@ void R_LoadBrushModelTextures(model_t *m)
 
 void R_DrawBrushModel(entity_t *e)
 {
-	int i, k, underwater;
+	int k;
 	unsigned int li;
 	unsigned int lj;
 	vec3_t mins, maxs;
-	msurface_t *psurf;
-	float dot;
-	mplane_t *pplane;
 	model_t *clmodel;
 	qbool rotated;
 	float oldMatrix[16];
@@ -1492,8 +1481,6 @@ void R_DrawBrushModel(entity_t *e)
 		modelorg[2] = DotProduct (temp, up);
 	}
 
-	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
-
 	// calculate dynamic lighting for bmodel if it's not an instanced model
 	if (clmodel->firstmodelsurface) {
 		for (li = 0; li < MAX_DLIGHTS/32; li++) {
@@ -1517,98 +1504,7 @@ void R_DrawBrushModel(entity_t *e)
 
 	R_ClearTextureChains(clmodel);
 
-	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
-		if (R_UseImmediateOpenGL()) {
-			// find which side of the node we are on
-			pplane = psurf->plane;
-			dot = PlaneDiff(modelorg, pplane);
-
-			//draw the water surfaces now, and setup sky/normal chains
-			if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
-				(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON))) {
-				if (psurf->flags & SURF_DRAWSKY) {
-					CHAIN_SURF_B2F(psurf, skychain);
-				}
-				else if (psurf->flags & SURF_DRAWTURB) {
-					if (glc_first_water_poly) {
-						GLC_StateBeginWaterSurfaces();
-						glc_first_water_poly = false;
-					}
-					EmitWaterPolys(psurf);
-				}
-				else if (psurf->flags & SURF_DRAWALPHA) {
-					CHAIN_SURF_B2F(psurf, alphachain);
-				}
-				else {
-					underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
-
-					if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-						chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
-					}
-					else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-						chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
-					}
-					else {
-						chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
-
-						clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-						clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-					}
-					//clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-					//clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-					//CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
-				}
-			}
-		}
-		else {
-			// GLSL mode - always render the whole model, the surfaces will be re-used if there is
-			//   another entity with the same model later in the scene
-			if (psurf->flags & SURF_DRAWSKY) {
-				// FIXME: Find an example...
-				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
-
-				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-			}
-			else if (psurf->flags & SURF_DRAWTURB) {
-				extern cvar_t r_fastturb;
-				// FIXME: Find an example...
-				if (r_fastturb.integer) {
-					CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
-				}
-				else {
-					CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[0]);
-				}
-
-				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-			}
-			else if (psurf->flags & SURF_DRAWALPHA) {
-				// FIXME: Find an example...
-				CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
-			}
-			else {
-				underwater = 0;
-				if (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value && (psurf->flags & SURF_UNDERWATER)) {
-					underwater = 1;
-				}
-
-				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
-				}
-				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
-				}
-				else {
-					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
-
-					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
-					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-				}
-				//CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[underwater]);
-			}
-		}
-	}
+	renderer.ChainBrushModelSurfaces(clmodel);
 
 	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
 		// START shaman FIX for no simple textures on world brush models {
@@ -1631,18 +1527,7 @@ void R_DrawBrushModel(entity_t *e)
 			}
 		}
 
-		if (R_UseModernOpenGL()) {
-			GLM_DrawBrushModel(e, clmodel, polygonOffset, caustics);
-
-			// TODO: DrawAlphaChain for brush models in modern
-		}
-		else {
-			GLC_DrawBrushModel(e, clmodel, caustics);
-
-			GLC_DrawSkyChain();
-
-			GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
-		}
+		renderer.DrawBrushModel(e, polygonOffset, caustics);
 		// } END shaman FIX for no simple textures on world brush models
 	}
 

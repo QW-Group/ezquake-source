@@ -72,7 +72,7 @@ void GL_LoadDrawFunctions(void)
 	GL_LoadOptionalFunction(glDrawElementsBaseVertex);
 
 	glConfig.primitiveRestartSupported = false;
-	if (GL_UseGLSL() || GL_VersionAtLeast(3, 1)) {
+	if (R_UseModernOpenGL() || GL_VersionAtLeast(3, 1)) {
 		GL_LoadOptionalFunction(glPrimitiveRestartIndex);
 		if (qglPrimitiveRestartIndex) {
 			glEnable(GL_PRIMITIVE_RESTART);

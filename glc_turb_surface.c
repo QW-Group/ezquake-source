@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h"
 
 extern msurface_t* waterchain;
+void GLC_EmitWaterPoly(msurface_t* fa);
 
 void GLC_DrawWaterSurfaces(void)
 {
