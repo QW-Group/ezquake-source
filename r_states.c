@@ -30,8 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 
 extern texture_ref solidskytexture, alphaskytexture;
-static int currentViewportX, currentViewportY;
-static int currentViewportWidth, currentViewportHeight;
 
 void R_InitialiseWorldStates(void)
 {

@@ -244,6 +244,7 @@ CLASSIC_OPENGL_OBJS := \
     glc_draw.o \
     glc_fog.o \
     glc_lightmaps.o \
+    glc_main.o \
     glc_matrix.o \
     glc_md3.o \
     glc_misc.o \
@@ -463,6 +464,11 @@ OBJS_c := \
     fonts.o
 
 ### Configuration Options ###
+OBJS_c += $(COMMON_OPENGL_OBJS)
+OBJS_c += $(MODERN_OPENGL_OBJS)
+OBJS_c += $(CLASSIC_OPENGL_OBJS)
+CFLAGS += -DRENDERER_OPTION_CLASSIC_OPENGL
+CFLAGS += -DRENDERER_OPTION_MODERN_OPENGL
 
 ifndef CLIENT_ONLY
     OBJS_c += $(SERVER_OBJS)

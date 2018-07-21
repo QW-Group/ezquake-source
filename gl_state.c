@@ -376,10 +376,12 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 	return;
 }
 
-static void GLM_ApplyRenderingState(r_state_id id)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+void GLM_ApplyRenderingState(r_state_id id)
 {
 	GL_ApplyRenderingState(id);
 }
+#endif
 
 void GL_EnsureTextureUnitBound(int unit, texture_ref reference)
 {

@@ -178,8 +178,6 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 	int frame1 = ent->oldframe, frame2 = ent->frame;
 	md3XyzNormal_t *verts, *v1, *v2;
 
-	surfinf_t *sinf;
-
 	unsigned int	*tris;
 	md3St_t *tc;
 
@@ -214,7 +212,6 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	mhead = (md3model_t *)Mod_Extradata(mod);
-	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
 	pheader = (md3Header_t *)((char *)mhead + mhead->md3model);
 
 	frame1 = bound(0, frame1, pheader->numFrames - 1);

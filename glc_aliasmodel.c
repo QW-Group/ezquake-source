@@ -129,6 +129,18 @@ void GLC_AllocateAliasPoseBuffer(void)
 		}
 	}
 
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
+
+		if (mod && mod->type == mod_alias) {
+			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+
+			if (hdr) {
+				max_verts = max(max_verts, hdr->vertsPerPose);
+			}
+		}
+	}
+
 	if (temp_aliasmodel_buffer == NULL || temp_aliasmodel_buffer_size < max_verts) {
 		Q_free(temp_aliasmodel_buffer);
 		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);

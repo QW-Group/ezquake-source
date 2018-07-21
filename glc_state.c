@@ -190,10 +190,12 @@ void GLC_StateBeginAliasModelShadow(void)
 	R_ApplyRenderingState(r_state_aliasmodel_shadows);
 }
 
+#ifdef WITH_RENDERING_TRACE
 static int glcVertsPerPrimitive = 0;
 static int glcBaseVertsPerPrimitive = 0;
 static int glcVertsSent = 0;
 static const char* glcPrimitiveName = "?";
+#endif
 
 void GLC_Begin(GLenum primitive)
 {
@@ -266,23 +268,31 @@ void GLC_End(void)
 void GLC_Vertex2f(GLfloat x, GLfloat y)
 {
 	glVertex2f(x, y);
+#ifdef WITH_RENDERING_TRACE
 	++glcVertsSent;
+#endif
 }
 
 void GLC_Vertex2fv(const GLfloat* v)
 {
 	glVertex2fv(v);
+#ifdef WITH_RENDERING_TRACE
 	++glcVertsSent;
+#endif
 }
 
 void GLC_Vertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
 	glVertex3f(x, y, z);
+#ifdef WITH_RENDERING_TRACE
 	++glcVertsSent;
+#endif
 }
 
 void GLC_Vertex3fv(const GLfloat* v)
 {
 	glVertex3fv(v);
+#ifdef WITH_RENDERING_TRACE
 	++glcVertsSent;
+#endif
 }

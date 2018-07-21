@@ -295,10 +295,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 
 static void R_UploadLightMap(int textureUnit, int lightmapnum)
 {
-	const void* data_source;
 	lightmap_data_t* lm = &lightmaps[lightmapnum];
-
-	data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
 	lm->modified = false;
 	renderer.UploadLightmap(textureUnit, lightmapnum);

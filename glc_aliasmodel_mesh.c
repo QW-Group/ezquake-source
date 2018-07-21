@@ -102,6 +102,7 @@ done:
 	return stripcount;
 }
 
+#if 0
 /*
 ===========
 FanLength
@@ -169,6 +170,7 @@ done:
 
 	return stripcount;
 }
+#endif
 
 /*
 ================
@@ -405,5 +407,5 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 		hdr->vertsPerPose = total_vertices;
 	}
 
-	GLC_MakeAliasModelVBO(m, hdr);
+	//GLC_MakeAliasModelVBO(m, hdr);
 }

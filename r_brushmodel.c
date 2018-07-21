@@ -257,8 +257,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
-	qbool glc_first_water_poly = true;
-	extern cvar_t r_fastturb, r_drawflat, gl_caustics, gl_flashblend;
+	extern cvar_t r_drawflat, gl_caustics, gl_flashblend;
 
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);

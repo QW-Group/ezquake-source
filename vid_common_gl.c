@@ -109,7 +109,7 @@ static void GL_PopulateConfig(void)
 	if (glConfig.majorVersion == 2 && glConfig.minorVersion == 1) {
 		// Could be lower than this...
 		if (glConfig.version_string) {
-			float version = atof(glConfig.version_string);
+			float version = Q_atof((const char*)glConfig.version_string);
 			if (version < 2) {
 				glConfig.majorVersion = (int)version;
 				glConfig.minorVersion = (int)(version * 10) % 10;

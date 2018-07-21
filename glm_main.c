@@ -35,7 +35,6 @@ static void R_Stubs_NoOperation(void)
 #define GLM_DrawDisc                       R_Stubs_NoOperation
 #define GLM_IsFramebufferEnabled3D         GL_FramebufferEnabled3D
 #define GLM_Begin2DRendering               GL_Framebuffer2DSwitch
-#define GLM_ApplyRenderingState            GL_ApplyRenderingState
 #define GLM_DrawAliasModelShadow           R_Stubs_NoOperationEntity
 #define GLM_DrawAliasModelPowerupShell     R_Stubs_NoOperationEntity
 #define GLM_DrawAlias3ModelPowerupShell    R_Stubs_NoOperationEntity

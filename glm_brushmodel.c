@@ -169,7 +169,6 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel)
 	extern texture_ref underwatertexture;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
 	msurface_t* psurf;
-	extern msurface_t* skychain;
 	extern msurface_t* alphachain;
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);

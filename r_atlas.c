@@ -348,8 +348,6 @@ void CachePics_CreateAtlas(void)
 	if (R_TextureReferenceIsValid(atlas_texnum)) {
 		R_TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels);
 	}
-	//memcpy(prev_atlas_texels, atlas_texels, TEMP_BUFFER_SIZE);
-	memset(atlas_texels, 0, sizeof(atlas_texels));
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));
 	atlas_delete_count = 0;

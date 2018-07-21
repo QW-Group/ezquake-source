@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_matrix.h"
 #include "r_draw.h"
 
-static qbool glc_pause_updates;
 static float projectionMatrix[16];
 static float modelMatrix[16];
 static float identityMatrix[16] = {
