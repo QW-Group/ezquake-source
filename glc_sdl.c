@@ -29,7 +29,5 @@ void GLC_SDL_SetupAttributes(void)
 {
 	// SDL defaults - take what we can get
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 }

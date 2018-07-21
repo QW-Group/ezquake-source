@@ -59,13 +59,31 @@ void GL_PopulateConfig(void)
 	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &glConfig.majorVersion);
 	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glConfig.minorVersion);
 
+	if (glConfig.majorVersion == 2 && glConfig.minorVersion == 1) {
+		// Could be lower than this...
+		if (glConfig.version_string) {
+			float version = atof(glConfig.version_string);
+			if (version < 2) {
+				glConfig.majorVersion = (int)version;
+				glConfig.minorVersion = (int)(version * 10) % 10;
+			}
+		}
+	}
+
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);
-	if (GL_VersionAtLeast(2, 0)) {
-		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
+	if (R_UseImmediateOpenGL()) {
+		if (GL_VersionAtLeast(2, 1)) {
+			glGetIntegerv(GL_MAX_TEXTURE_UNITS, &glConfig.texture_units);
+		}
+		else {
+			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
+		}
 	}
 	else {
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.texture_units);
 	}
+	glConfig.texture_units = max(glConfig.texture_units, 1);
+
 	if (GL_VersionAtLeast(4, 3)) {
 		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
 		glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
