@@ -429,9 +429,6 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 				// Identifier matches, make sure everything else is the same
 				// so that we can be really sure this is the correct texture.
 				if (same_dimensions && same_scaling && same_format && same_options && crc == glt->crc) {
-					if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-						R_TextureUnitBind(0, glt->reference);
-					}
 					*new_texture = false;
 					return glt;
 				}
@@ -499,9 +496,6 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 		glt->storage_allocated = true;
 	}
 
-	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
-		R_TextureUnitBind(0, glt->reference);
-	}
 	return glt;
 }
 

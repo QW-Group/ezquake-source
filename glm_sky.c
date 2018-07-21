@@ -54,6 +54,7 @@ static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int 
 
 qbool GLM_LoadSkyboxTextures(const char* skyname)
 {
+	extern qbool Sky_LoadSkyboxTextures(const char* skyname);
 	int widths[MAX_SKYBOXTEXTURES], heights[MAX_SKYBOXTEXTURES];
 	qbool all_same = true;
 	int i;
@@ -61,7 +62,7 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 	// FIXME: Delete previous?
 	R_TextureReferenceInvalidate(skybox_cubeMap);
 
-	if (!renderer.LoadSkyboxTextures(skyname)) {
+	if (!Sky_LoadSkyboxTextures(skyname)) {
 		return false;
 	}
 

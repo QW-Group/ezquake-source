@@ -50,7 +50,7 @@ static GLint glTextureMagnificationOptions[texture_magnification_count] = {
 	GL_NEAREST, GL_LINEAR
 };
 static GLenum glTextureTargetForType[texture_type_count] = {
-	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY
+	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
 };
 
 static int GL_InternalFormat(int mode)

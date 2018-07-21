@@ -448,7 +448,9 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 		return glt->reference;
 	}
 
-	R_LoadTextureData(glt, width, height, data, mode, bpp);
+	if (data) {
+		R_LoadTextureData(glt, width, height, data, mode, bpp);
+	}
 
 	return glt->reference;
 }
