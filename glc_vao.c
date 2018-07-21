@@ -68,7 +68,7 @@ void GLC_BindVertexArray(r_vao_id vao)
 		R_GLC_TexturePointer(buf, i, textures->enabled, textures->size, textures->type, textures->stride, textures->pointer_or_offset);
 	}
 
-	if (GL_BufferReferenceIsValid(vaos[vao].element_index_buffer)) {
+	if (R_BufferReferenceIsValid(vaos[vao].element_index_buffer)) {
 		buffers.Bind(vaos[vao].element_index_buffer);
 	}
 	else {

@@ -121,7 +121,7 @@ static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 	return &batches[index - 1];
 }
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type)
+void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
@@ -139,7 +139,7 @@ void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_stat
 	batch->id = type;
 }
 
-r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
+r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
@@ -169,17 +169,17 @@ r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts
 	return &verts[start];
 }
 
-r_sprite3d_vert_t* GL_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
+r_sprite3d_vert_t* R_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
 {
-	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-r_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
+r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
 {
-	return GL_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
 }
 
-void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
+void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
 {
 	extern int particletexture_array_index;
 
@@ -200,16 +200,16 @@ void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, floa
 	}
 }
 
-void GL_Create3DSpriteVBO(void)
+void R_Sprite3DCreateVBO(void)
 {
-	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
+	if (!R_BufferReferenceIsValid(sprite3dVBO)) {
 		sprite3dVBO = buffers.Create(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
 	}
 }
 
-void GL_Create3DSpriteIndexBuffer(void)
+void R_Sprite3DCreateIndexBuffer(void)
 {
-	if (!GL_BufferReferenceIsValid(sprite3dIndexes)) {
+	if (!R_BufferReferenceIsValid(sprite3dIndexes)) {
 		// Meag: *3 is for case of primitive restart not being supported
 		int i, j;
 		int pos = 0;
@@ -268,4 +268,25 @@ void GL_Create3DSpriteIndexBuffer(void)
 
 		sprite3dIndexes = buffers.Create(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
 	}
+}
+
+void R_Sprite3DRender(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index)
+{
+	static byte color_white[4] = { 255, 255, 255, 255 };
+	vec3_t points[4];
+
+
+	VectorMA(origin, scale_up, up, points[0]);
+	VectorMA(points[0], scale_left, right, points[0]);
+	VectorMA(origin, scale_down, up, points[1]);
+	VectorMA(points[1], scale_left, right, points[1]);
+	VectorMA(origin, scale_up, up, points[2]);
+	VectorMA(points[2], scale_right, right, points[2]);
+	VectorMA(origin, scale_down, up, points[3]);
+	VectorMA(points[3], scale_right, right, points[3]);
+
+	R_Sprite3DSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, index);
+	R_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, t, color_white, index);
+	R_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], s, 0, color_white, index);
+	R_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
 }

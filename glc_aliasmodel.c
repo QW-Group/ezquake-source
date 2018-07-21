@@ -135,7 +135,7 @@ void GLC_AllocateAliasPoseBuffer(void)
 		temp_aliasmodel_buffer_size = max_verts;
 	}
 
-	if (GL_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
+	if (R_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
 		aliasmodel_pose_vbo = buffers.Resize(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
 	}
 	else {

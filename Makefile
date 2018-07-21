@@ -310,7 +310,6 @@ COMMON_RENDERER_OBJS := \
     r_rlight.o \
     r_rmain.o \
     r_rmisc.o \
-    r_screenshot.o \
     r_sprite3d.o \
     r_sprites.o \
     r_states.o \

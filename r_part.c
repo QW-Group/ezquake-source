@@ -622,9 +622,9 @@ void Classic_ReScaleParticles(void)
 		glm_particle_t* glpart = &glparticles[i];
 		float scale = glpart->gl_scale = dist_precalc + DotProduct(glpart->gl_org, scaled_vpn);
 
-		GL_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
-		GL_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
-		GL_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
 	}
 }
 

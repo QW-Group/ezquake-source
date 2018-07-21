@@ -50,7 +50,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		return;
 	}
 
-	if (!GL_BufferReferenceIsValid(brushModel_vbo)) {
+	if (!R_BufferReferenceIsValid(brushModel_vbo)) {
 		// TODO: vbo data in client memory
 		return;
 	}

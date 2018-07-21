@@ -170,7 +170,7 @@ void GLM_SetupGL(void)
 void GLM_UploadFrameConstants(void)
 {
 	if (!frameConstantsUploaded) {
-		if (!GL_BufferReferenceIsValid(ubo_frameConstants)) {
+		if (!R_BufferReferenceIsValid(ubo_frameConstants)) {
 			ubo_frameConstants = buffers.Create(buffertype_uniform, "frameConstants", sizeof(frameConstants), &ubo_frameConstants, bufferusage_once_per_frame);
 		}
 

@@ -129,7 +129,7 @@ void GLM_HudPreparePolygons(void)
 		polygonProgram.uniforms_found = true;
 	}
 
-	if (!GL_BufferReferenceIsValid(polygonVBO)) {
+	if (!R_BufferReferenceIsValid(polygonVBO)) {
 		polygonVBO = buffers.Create(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
 	}
 	else if (polygonData.polygonVerts[0]) {
@@ -145,7 +145,7 @@ void GLM_HudPreparePolygons(void)
 
 void GLM_HudPrepareLines(void)
 {
-	if (!GL_BufferReferenceIsValid(line_vbo)) {
+	if (!R_BufferReferenceIsValid(line_vbo)) {
 		line_vbo = buffers.Create(buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
 	}
 	else if (lineData.lineCount) {
@@ -297,14 +297,14 @@ static void GLM_CreateMultiImageProgram(void)
 		multiImageProgram.uniforms_found = true;
 	}
 
-	if (!GL_BufferReferenceIsValid(imageVBO)) {
+	if (!R_BufferReferenceIsValid(imageVBO)) {
 		imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 	}
 
 	if (!R_VertexArrayCreated(vao_hud_images)) {
 		R_GenVertexArray(vao_hud_images);
 
-		if (!GL_BufferReferenceIsValid(imageIndexBuffer)) {
+		if (!R_BufferReferenceIsValid(imageIndexBuffer)) {
 			GLuint i;
 			int imageIndexLength = MAX_MULTI_IMAGE_BATCH * 5 * sizeof(GLuint);
 			GLuint* imageIndexData = Q_malloc(imageIndexLength);
@@ -368,7 +368,7 @@ void GLM_HudPrepareCircles(void)
 	}
 
 	// Build VBO
-	if (!GL_BufferReferenceIsValid(circleVBO)) {
+	if (!R_BufferReferenceIsValid(circleVBO)) {
 		circleVBO = buffers.Create(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
 	}
 	else if (circleData.circleCount) {

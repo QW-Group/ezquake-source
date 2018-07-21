@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // 3D sprites
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h" // temporary!
+#include "gl_local.h"
 #include "gl_sprite3d.h"
 #include "r_sprite3d_internal.h"
 #include "tr_types.h"
@@ -47,23 +47,4 @@ void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int
 	if (batch_count) {
 		GL_DrawElementsBaseVertex(glPrimitiveTypes[batch->primitive_id], batch_count * numVertices + (batch_count - 1) * terminators, GL_UNSIGNED_INT, indexes, vertOffset);
 	}
-}
-
-void GL_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index)
-{
-	vec3_t points[4];
-
-	VectorMA(origin, scale_up, up, points[0]);
-	VectorMA(points[0], scale_left, right, points[0]);
-	VectorMA(origin, scale_down, up, points[1]);
-	VectorMA(points[1], scale_left, right, points[1]);
-	VectorMA(origin, scale_up, up, points[2]);
-	VectorMA(points[2], scale_right, right, points[2]);
-	VectorMA(origin, scale_down, up, points[3]);
-	VectorMA(points[3], scale_right, right, points[3]);
-
-	GL_Sprite3DSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, t, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], s, 0, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
 }

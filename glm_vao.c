@@ -79,7 +79,7 @@ void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index
 	assert(vaos[vao].vao);
 
 	R_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
+	if (R_BufferReferenceIsValid(vbo)) {
 		buffers.Bind(vbo);
 	}
 	else {
@@ -97,7 +97,7 @@ void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint inde
 	assert(vaos[vao].vao);
 
 	R_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(vbo)) {
+	if (R_BufferReferenceIsValid(vbo)) {
 		buffers.Bind(vbo);
 	}
 	else {
@@ -115,7 +115,7 @@ void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
 	assert(vaos[vao].vao);
 
 	R_BindVertexArray(vao);
-	if (GL_BufferReferenceIsValid(ibo)) {
+	if (R_BufferReferenceIsValid(ibo)) {
 		buffers.Bind(ibo);
 	}
 	else {

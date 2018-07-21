@@ -84,11 +84,15 @@ typedef enum {
 	r_primitive_count
 } r_primitive_id;
 
-void GL_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
-r_sprite3d_vert_t* GL_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
-r_sprite3d_vert_t* GL_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
-void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);
-void GL_Draw3DSprites(qbool inline_rendering);
-void GL_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index);
+void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
+r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
+r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
+void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);
+void R_Sprite3DDraw(qbool inline_rendering);
+void R_Sprite3DRender(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index);
+
+// Internal for renderers
+void R_Sprite3DCreateIndexBuffer(void);
+void R_Sprite3DCreateVBO(void);
 
 #endif // EZQUAKE_R_SPRITE3D_HEADER

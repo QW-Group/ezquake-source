@@ -33,8 +33,8 @@ static void GLC_Create3DSpriteVAO(void)
 {
 	if (buffers.supported) {
 		R_GenVertexArray(vao_3dsprites);
-		GL_Create3DSpriteVBO();
-		GL_Create3DSpriteIndexBuffer();
+		R_Sprite3DCreateVBO();
+		R_Sprite3DCreateIndexBuffer();
 
 		GLC_VAOSetIndexBuffer(vao_3dsprites, sprite3dIndexes);
 		GLC_VAOSetVertexBuffer(vao_3dsprites, sprite3dVBO);

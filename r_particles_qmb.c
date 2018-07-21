@@ -486,7 +486,7 @@ static void QMB_BillboardAddVert(r_sprite3d_vert_t* vert, particle_type_t* type,
 
 	blend->color_transform(color, new_color);
 
-	GL_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
+	R_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
 
 __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
@@ -497,7 +497,7 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 	r_sprite3d_vert_t* vert;
 	col_t new_color;
 
-	vert = GL_Sprite3DAddEntry(type->billboard_type, 4);
+	vert = R_Sprite3DAddEntry(type->billboard_type, 4);
 	if (!vert) {
 		return;
 	}
@@ -527,10 +527,10 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 	// Set color
 	blend->color_transform(p->color, new_color);
 
-	GL_Sprite3DSetVert(vert++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
-	GL_Sprite3DSetVert(vert++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
-	GL_Sprite3DSetVert(vert++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
-	GL_Sprite3DSetVert(vert++, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
+	R_Sprite3DSetVert(vert++, verts[0][0], verts[0][1], verts[0][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
+	R_Sprite3DSetVert(vert++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
+	R_Sprite3DSetVert(vert++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
+	R_Sprite3DSetVert(vert++, verts[3][0], verts[3][1], verts[3][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][3], new_color, ptex->tex_index);
 
 	return;
 }
@@ -576,13 +576,13 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 					first = false;
 				}
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
-					r_sprite3d_vert_t* vert = GL_Sprite3DAddEntry(pt->billboard_type, 6);
+					r_sprite3d_vert_t* vert = R_Sprite3DAddEntry(pt->billboard_type, 6);
 					if (vert) {
 						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
@@ -614,11 +614,11 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					GL_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
+					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 					first = false;
 				}
 
-				vert = GL_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
+				vert = R_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
 				if (vert) {
 					vec3_t v;
 
@@ -664,7 +664,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 						first = false;
 					}
 
@@ -712,11 +712,11 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						GL_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 						first = false;
 					}
 
-					vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
+					vert = R_Sprite3DAddEntry(pt->billboard_type, 4);
 					if (vert) {
 						R_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
 						R_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
@@ -733,7 +733,7 @@ static void QMB_FillParticleVertexBuffer(void)
 						R_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 
-						vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
+						vert = R_Sprite3DAddEntry(pt->billboard_type, 4);
 						if (vert) {
 							R_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 

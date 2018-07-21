@@ -485,7 +485,7 @@ static void GL_BindBuffer(buffer_ref ref)
 {
 	qbool switched;
 
-	if (!(GL_BufferReferenceIsValid(ref) && buffer_data[ref.index].glref)) {
+	if (!(R_BufferReferenceIsValid(ref) && buffer_data[ref.index].glref)) {
 		R_TraceLogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffer_data[ref.index].name);
 		return;
 	}

@@ -166,7 +166,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 
 	post_process_program.uniforms_found = true;
 
-	if (!GL_BufferReferenceIsValid(post_process_vbo)) {
+	if (!R_BufferReferenceIsValid(post_process_vbo)) {
 		float verts[4][5] = { { 0 } };
 
 		VectorSet(verts[0], -1, -1, 0);
@@ -188,7 +188,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		post_process_vbo = buffers.Create(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
 	}
 
-	if (GL_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {
+	if (R_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {
 		R_GenVertexArray(vao_postprocess);
 
 		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);

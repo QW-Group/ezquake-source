@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
 	texture_ref simpletexture = model->simpletexture[skin];
-	r_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
+	r_sprite3d_vert_t* vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
 
 	if (vert) {
-		GL_RenderSprite(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
+		R_Sprite3DRender(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
 	}
 }
 
@@ -67,7 +67,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_texturenum, 0);
+	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_texturenum, 0);
 	if (vert) {
 		vec3_t points[4];
 
@@ -80,9 +80,9 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorMA(e->origin, frame->down, up, points[3]);
 		VectorMA(points[3], frame->right, right, points[3]);
 
-		GL_Sprite3DSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, 0);
-		GL_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, 1, color_white, 0);
-		GL_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], 1, 0, color_white, 0);
-		GL_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], 1, 1, color_white, 0);
+		R_Sprite3DSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, 0);
+		R_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, 1, color_white, 0);
+		R_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], 1, 0, color_white, 0);
+		R_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], 1, 1, color_white, 0);
 	}
 }

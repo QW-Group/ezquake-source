@@ -964,7 +964,7 @@ void R_BindVertexArrayElementBuffer(buffer_ref ref)
 void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
-		if (GL_BufferReferenceIsValid(buf)) {
+		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {
@@ -988,7 +988,7 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
-		if (GL_BufferReferenceIsValid(buf)) {
+		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {
@@ -1018,7 +1018,7 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 	}
 
 	if (enabled) {
-		if (GL_BufferReferenceIsValid(buf)) {
+		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);
 		}
 		else {

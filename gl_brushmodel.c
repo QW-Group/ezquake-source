@@ -92,13 +92,13 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	}
 
 	indexes += max_entity_indexes * MAX_STANDARD_ENTITIES;
-	if (!GL_BufferReferenceIsValid(vbo_brushElements) || indexes > buffers.Size(vbo_brushElements) / sizeof(modelIndexes[0])) {
+	if (!R_BufferReferenceIsValid(vbo_brushElements) || indexes > buffers.Size(vbo_brushElements) / sizeof(modelIndexes[0])) {
 		Q_free(modelIndexes);
 		modelIndexMaximum = indexes;
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
 
 		R_BindVertexArray(vao_none);
-		if (GL_BufferReferenceIsValid(vbo_brushElements)) {
+		if (R_BufferReferenceIsValid(vbo_brushElements)) {
 			vbo_brushElements = buffers.Resize(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {

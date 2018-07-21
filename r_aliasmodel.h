@@ -1,6 +1,6 @@
 
-#ifndef GL_ALIASMODEL_HEADER
-#define GL_ALIASMODEL_HEADER
+#ifndef EZQUAKE_R_ALIASMODEL_HEADER
+#define EZQUAKE_R_ALIASMODEL_HEADER
 
 #include "r_buffers.h"
 
@@ -69,4 +69,4 @@ qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframede
 
 void R_DrawAliasModel(entity_t *ent);
 
-#endif
+#endif // EZQUAKE_R

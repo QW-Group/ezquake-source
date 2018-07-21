@@ -244,7 +244,7 @@ void GLC_HudPrepareImages(void)
 	R_TextureReferenceInvalidate(glc_last_texture_used);
 
 	if (buffers.supported) {
-		if (!GL_BufferReferenceIsValid(imageVBO)) {
+		if (!R_BufferReferenceIsValid(imageVBO)) {
 			imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, bufferusage_once_per_frame);
 		}
 		else {

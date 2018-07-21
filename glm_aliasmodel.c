@@ -140,11 +140,11 @@ static qbool GLM_CompileAliasModelProgram(void)
 		drawAliasModelProgram.uniforms_found = true;
 	}
 
-	if (!GL_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
+	if (!R_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
 		vbo_aliasIndirectDraw = buffers.Create(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
 	}
 
-	if (!GL_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
+	if (!R_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
 		vbo_aliasDataBuffer = buffers.Create(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
 	}
 

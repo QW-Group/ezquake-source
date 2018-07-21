@@ -59,7 +59,7 @@ void GLM_ComputeLightmaps(void)
 		}
 	}
 
-	if (!GL_BufferReferenceIsValid(ssbo_lightingData)) {
+	if (!R_BufferReferenceIsValid(ssbo_lightingData)) {
 		ssbo_lightingData = buffers.Create(buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
 	}
 	else {
@@ -101,7 +101,7 @@ void GLM_CreateLightmapTextures(void)
 	surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
 	Q_free(surfaceTodoData);
 	surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
-	if (!GL_BufferReferenceIsValid(ssbo_surfacesTodo)) {
+	if (!R_BufferReferenceIsValid(ssbo_surfacesTodo)) {
 		ssbo_surfacesTodo = buffers.Create(buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
 	}
 	else {

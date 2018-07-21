@@ -33,12 +33,12 @@ static GLint sprite3dUniform_alpha_test;
 
 static void GLM_Create3DSpriteVAO(void)
 {
-	GL_Create3DSpriteVBO();
+	R_Sprite3DCreateVBO();
 
 	if (!R_VertexArrayCreated(vao_3dsprites)) {
 		R_GenVertexArray(vao_3dsprites);
 
-		GL_Create3DSpriteIndexBuffer();
+		R_Sprite3DCreateIndexBuffer();
 		buffers.Bind(sprite3dIndexes);
 
 		// position
@@ -112,7 +112,7 @@ void GLM_Prepare3DSprites(void)
 
 	GLM_Create3DSpriteVAO();
 
-	if (GL_BufferReferenceIsValid(sprite3dVBO)) {
+	if (R_BufferReferenceIsValid(sprite3dVBO)) {
 		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
 	}
 

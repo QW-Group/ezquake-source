@@ -8,8 +8,6 @@
 // GL only
 extern GLenum glPrimitiveTypes[r_primitive_count];
 
-void GL_Create3DSpriteVBO(void);
-void GL_Create3DSpriteIndexBuffer(void);
 void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int last_batch, int index_offset, GLuint maximum_batch_size);
 
 extern int indexes_start_quads;

@@ -118,7 +118,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		GL_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
+		R_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
 
 		first_dlight = false;
 	}
@@ -142,7 +142,7 @@ void R_RenderDlight(dlight_t *light)
 			return;
 		}
 
-		vert = GL_Sprite3DAddEntry(SPRITE3D_FLASHBLEND_LIGHTS, 18);
+		vert = R_Sprite3DAddEntry(SPRITE3D_FLASHBLEND_LIGHTS, 18);
 		if (!vert) {
 			return;
 		}
@@ -169,7 +169,7 @@ void R_RenderDlight(dlight_t *light)
 			center_color[2] = bubblecolor[light->type][2] * 255;
 		}
 
-		GL_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
+		R_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, center_color, -1);
 
 		bub_sin = bubble_sintable;
 		bub_cos = bubble_costable;
@@ -181,7 +181,7 @@ void R_RenderDlight(dlight_t *light)
 			bub_sin++;
 			bub_cos++;
 
-			GL_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, outer_color, -1);
+			R_Sprite3DSetVert(vert++, v[0], v[1], v[2], 1, 1, outer_color, -1);
 		}
 	}
 }

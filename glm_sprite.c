@@ -32,9 +32,9 @@ void GLM_DrawSimpleItem(model_t* m, int skin, vec3_t origin, float scale_, vec3_
 	float scale_t = m->simpletexture_scalingT[skin];
 	r_sprite3d_vert_t* vert;
 
-	vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
+	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
 	if (vert) {
-		GL_RenderSprite(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
+		R_Sprite3DRender(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
 	}
 }
 
@@ -74,9 +74,9 @@ void GLM_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);
+	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);
 	if (vert) {
-		GL_RenderSprite(vert, e->origin, up, right, frame->up, frame->down, frame->left, frame->right, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);
+		R_Sprite3DRender(vert, e->origin, up, right, frame->up, frame->down, frame->left, frame->right, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);
 	}
 }
 

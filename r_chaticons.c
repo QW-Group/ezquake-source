@@ -128,12 +128,12 @@ static void R_DrawChatIconBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}
 
-	vert = GL_Sprite3DAddEntry(batch, 4);
+	vert = R_Sprite3DAddEntry(batch, 4);
 	if (vert) {
-		GL_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
-		GL_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		R_Sprite3DSetVert(vert++, coordinates[0][0], coordinates[0][1], coordinates[0][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		R_Sprite3DSetVert(vert++, coordinates[1][0], coordinates[1][1], coordinates[1][2], _ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
+		R_Sprite3DSetVert(vert++, coordinates[3][0], coordinates[3][1], coordinates[3][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3], _p->color, _ptex->tex_index);
+		R_Sprite3DSetVert(vert++, coordinates[2][0], coordinates[2][1], coordinates[2][2], _ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1], _p->color, _ptex->tex_index);
 	}
 }
 
@@ -283,9 +283,9 @@ void R_DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
-	GL_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

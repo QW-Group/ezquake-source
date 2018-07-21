@@ -148,7 +148,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		GL_Sprite3DInitialiseBatch(batch_id, r_state_coronas, r_state_coronas, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
+		R_Sprite3DInitialiseBatch(batch_id, r_state_coronas, r_state_coronas, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			r_sprite3d_vert_t* vert;
@@ -179,12 +179,12 @@ void R_DrawCoronas(void)
 			color[2] = (c->color[2] * alpha) * 255;
 			color[3] = 0;
 
-			vert = GL_Sprite3DAddEntry(batch_id, 4);
+			vert = R_Sprite3DAddEntry(batch_id, 4);
 			if (!vert) {
 				break;
 			}
 
-			GL_Sprite3DSetVert(
+			R_Sprite3DSetVert(
 				vert++,
 				// Left/Up
 				c->origin[0] + up[0] * (scale / 2) + (right[0] * (scale / 2)*-1),
@@ -192,7 +192,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + up[2] * (scale / 2) + (right[2] * (scale / 2)*-1),
 				0, 0, color, texture->array_index
 			);
-			GL_Sprite3DSetVert(
+			R_Sprite3DSetVert(
 				vert++,
 				// Right/Up
 				c->origin[0] + right[0] * (scale / 2) + up[0] * (scale / 2),
@@ -200,7 +200,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + right[2] * (scale / 2) + up[2] * (scale / 2),
 				texture->array_scale_s, 0, color, texture->array_index
 			);
-			GL_Sprite3DSetVert(
+			R_Sprite3DSetVert(
 				vert++,
 				// Left/Down
 				c->origin[0] + (right[0] * (scale / 2)*-1) + (up[0] * (scale / 2)*-1),
@@ -208,7 +208,7 @@ void R_DrawCoronas(void)
 				c->origin[2] + (right[2] * (scale / 2)*-1) + (up[2] * (scale / 2)*-1),
 				0, texture->array_scale_t, color, texture->array_index
 			);
-			GL_Sprite3DSetVert(
+			R_Sprite3DSetVert(
 				vert++,
 				// Right/Down
 				c->origin[0] + right[0] * (scale / 2) + (up[0] * (scale / 2)*-1),
@@ -222,12 +222,12 @@ void R_DrawCoronas(void)
 				int a;
 
 				for (a = 0; a < 5; a++) {
-					vert = GL_Sprite3DAddEntry(batch_id, 4);
+					vert = R_Sprite3DAddEntry(batch_id, 4);
 					if (!vert) {
 						break;
 					}
 
-					GL_Sprite3DSetVert(
+					R_Sprite3DSetVert(
 						vert++,
 						// Left/Up
 						c->origin[0] + up[0] * (scale / 30) + (right[0] * (scale)*-1),
@@ -235,7 +235,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + up[2] * (scale / 30) + (right[2] * (scale)*-1),
 						0, 0, color, texture->array_index
 					);
-					GL_Sprite3DSetVert(
+					R_Sprite3DSetVert(
 						vert++,
 						// Right/Up
 						c->origin[0] + right[0] * (scale)+up[0] * (scale / 30),
@@ -243,7 +243,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + right[2] * (scale)+up[2] * (scale / 30),
 						texture->array_scale_s, 0, color, texture->array_index
 					);
-					GL_Sprite3DSetVert(
+					R_Sprite3DSetVert(
 						vert++,
 						// Left/Down
 						c->origin[0] + (right[0] * (scale)*-1) + (up[0] * (scale / 30)*-1),
@@ -251,7 +251,7 @@ void R_DrawCoronas(void)
 						c->origin[2] + (right[2] * (scale)*-1) + (up[2] * (scale / 30)*-1),
 						0, texture->array_scale_t, color, texture->array_index
 					);
-					GL_Sprite3DSetVert(
+					R_Sprite3DSetVert(
 						vert++,
 						// Right/Down
 						c->origin[0] + right[0] * (scale)+(up[0] * (scale / 30)*-1),

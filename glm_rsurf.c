@@ -191,7 +191,7 @@ static void Compile_DrawWorldProgram(void)
 		drawworld.uniforms_found = true;
 	}
 
-	if (!GL_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
+	if (!R_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
 		vbo_worldIndirectDraw = buffers.Create(buffertype_indirect, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 	}
 }
