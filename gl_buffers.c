@@ -63,6 +63,7 @@ typedef struct buffer_data_s {
 	GLenum target;
 	GLsizei size;
 	GLuint storageFlags;         // flags for BufferStorage()
+	qbool using_storage;
 
 	void* persistent_mapped_ptr;
 
@@ -212,6 +213,7 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 	buffer_ref result;
 
 	buffer->persistent_mapped_ptr = NULL;
+	buffer->using_storage = false;
 	GL_BindBufferImpl(target, buffer->glref);
 	R_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 	qglBufferData(target, size, data, glUsage);
@@ -302,6 +304,7 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 		qglBufferStorage(target, size, data, storageFlags);
 	}
 
+	buffer->using_storage = true;
 	buffer->storageFlags = storageFlags;
 	ref.index = buffer - buffer_data;
 	return ref;
@@ -348,13 +351,15 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 	assert(vbo.index);
 	assert(buffer_data[vbo.index].glref);
 
-	if (buffer_data[vbo.index].persistent_mapped_ptr) {
-		if (qglUnmapNamedBuffer) {
-			qglUnmapNamedBuffer(buffer_data[vbo.index].glref);
-		}
-		else {
-			GL_BindBuffer(vbo);
-			qglUnmapBuffer(buffer_data[vbo.index].target);
+	if (buffer_data[vbo.index].using_storage) {
+		if (buffer_data[vbo.index].persistent_mapped_ptr) {
+			if (qglUnmapNamedBuffer) {
+				qglUnmapNamedBuffer(buffer_data[vbo.index].glref);
+			}
+			else {
+				GL_BindBuffer(vbo);
+				qglUnmapBuffer(buffer_data[vbo.index].target);
+			}
 		}
 		qglDeleteBuffers(1, &buffer_data[vbo.index].glref);
 
@@ -607,6 +612,11 @@ qbool R_Stub_False(void)
 	return false;
 }
 
+uintptr_t R_Stub_BufferZero(buffer_ref ref)
+{
+	return 0;
+}
+
 void GL_InitialiseBufferHandling(api_buffers_t* api)
 {
 	qbool buffers_supported = renderer.vaos_supported;
@@ -646,6 +656,8 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 		api->FrameReady = R_Stub_True;
 		api->InitialiseState = api->Shutdown = R_Stub_NoOperation;
 		api->StartFrame = api->EndFrame = R_Stub_NoOperation;
+		api->BufferOffset = R_Stub_BufferZero;
+
 		Con_Printf("Using GL buffers: disabled\n");
 	}
 	else {
