@@ -4,6 +4,7 @@
 #include "r_buffers.h"
 #include "glc_vao.h"
 #include "r_brushmodel.h"
+#include "r_aliasmodel.h"
 
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
@@ -72,8 +73,7 @@ void GLC_PrepareModelRendering(qbool vid_restart)
 	if (buffers.supported) {
 		buffer_ref instance_vbo = R_CreateInstanceVBO();
 
-		GL_CreateAliasModelVBO(instance_vbo);
+		R_CreateAliasModelVBO(instance_vbo);
 		R_BrushModelCreateVBO(instance_vbo);
 	}
 }
-

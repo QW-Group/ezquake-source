@@ -247,8 +247,6 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
-
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 
