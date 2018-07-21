@@ -187,3 +187,10 @@ qbool R_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_re
 	hud.count++;
 	return true;
 }
+
+void R_HudUndoLastElement(void)
+{
+	if (hud.count) {
+		--hud.count;
+	}
+}

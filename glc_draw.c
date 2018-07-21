@@ -203,6 +203,7 @@ void GLC_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height);
 
 	imageData.images[imageData.imageCount].flags = flags;
+	++imageData.imageCount;
 }
 
 void GLC_AdjustImages(int first, int last, float x_offset)

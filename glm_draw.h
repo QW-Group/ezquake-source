@@ -78,6 +78,7 @@ extern glm_line_framedata_t lineData;
 
 qbool R_LogCustomImageType(r_image_type_t type, int index);
 qbool R_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_ref texture);
+void R_HudUndoLastElement(void);
 
 void GLM_PreparePolygons(void);
 void GLM_PrepareLines(void);

@@ -82,8 +82,6 @@ void R_DrawImage(float x, float y, float width, float height, float tex_s, float
 	}
 
 	renderer.DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
-
-	++imageData.imageCount;
 }
 
 void R_DrawRectangle(float x, float y, float width, float height, byte* color)
@@ -100,5 +98,6 @@ void R_UndoLastCharacter(void)
 {
 	if (imageData.imageCount) {
 		--imageData.imageCount;
+		R_HudUndoLastElement();
 	}
 }

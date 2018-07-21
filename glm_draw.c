@@ -234,6 +234,8 @@ void GLM_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
 
 	GLM_SetCoordinates(img, x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags);
+
+	++imageData.imageCount;
 }
 
 void GLM_AdjustImages(int first, int last, float x_offset)
