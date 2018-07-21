@@ -75,8 +75,6 @@ static void GLM_CheckDrawCallSize(void)
 	}
 }
 
-static GLint drawWorld_outlines;
-
 #define DRAW_DETAIL_TEXTURES       1
 #define DRAW_CAUSTIC_TEXTURES      2
 #define DRAW_LUMA_TEXTURES         4
@@ -118,7 +116,7 @@ static void Compile_DrawWorldProgram(void)
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
 
-	if (GLM_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
+	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
 		int samplers = 0;
 		GL_VFDeclare(draw_world);
@@ -179,13 +177,11 @@ static void Compile_DrawWorldProgram(void)
 		R_ProgramSetCustomOptions(r_program_brushmodel, drawworld_desiredOptions);
 	}
 
-	if (R_ProgramReady(r_program_brushmodel) && !R_ProgramUniformsFound(r_program_brushmodel)) {
-		drawWorld_outlines = GLM_UniformGetLocation(r_program_brushmodel, "draw_outlines");
-
+	if (!R_BufferReferenceIsValid(ssbo_worldcvars)) {
 		ssbo_worldcvars = buffers.Create(buffertype_storage, "ssbo_worldcvars", sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
+	}
+	if (!R_BufferReferenceIsValid(ssbo_worldsamplers)) {
 		ssbo_worldsamplers = buffers.Create(buffertype_storage, "ssbo_worldsamplers", sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
-
-		R_ProgramSetUniformsFound(r_program_brushmodel);
 	}
 
 	if (!R_BufferReferenceIsValid(vbo_worldIndirectDraw)) {
@@ -205,7 +201,7 @@ static void GL_StartWorldBatch(void)
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
 	int options = R_ProgramCustomOptions(r_program_brushmodel);
 
-	GLM_UseProgram(r_program_brushmodel);
+	R_ProgramUse(r_program_brushmodel);
 	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
@@ -510,7 +506,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	uintptr_t extra_offset = buffers.BufferOffset(vbo_worldIndirectDraw);
 
 	//
-	GLM_Uniform1i(drawWorld_outlines, 1);
+	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 1);
 
 	GLM_StateBeginDrawWorldOutlines();
 
@@ -545,7 +541,7 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	}
 
 	// Valid to reset the uniforms here as this is the only code that expects it
-	GLM_Uniform1i(drawWorld_outlines, 0);
+	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 0);
 }
 
 void GL_FlushWorldModelBatch(void)

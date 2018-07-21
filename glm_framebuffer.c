@@ -61,7 +61,7 @@ static void VID_FramebufferFlip(void)
 		GL_FramebufferStartUsingScreen();
 
 		if (GLM_CompilePostProcessProgram()) {
-			GLM_UseProgram(r_program_post_process);
+			R_ProgramUse(r_program_post_process);
 			R_BindVertexArray(vao_postprocess);
 
 			if (flip2d && flip3d) {
@@ -145,7 +145,7 @@ static qbool GLM_CompilePostProcessProgram(void)
 		return false;
 	}
 
-	if (GLM_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
+	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
 		static char included_definitions[512];
 		GL_VFDeclare(post_process_screen);
 
@@ -162,8 +162,6 @@ static qbool GLM_CompilePostProcessProgram(void)
 
 		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
 	}
-
-	R_ProgramSetUniformsFound(r_program_post_process);
 
 	if (!R_BufferReferenceIsValid(post_process_vbo)) {
 		float verts[4][5] = { { 0 } };

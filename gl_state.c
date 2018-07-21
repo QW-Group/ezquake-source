@@ -500,7 +500,7 @@ void GL_InitialiseState(void)
 		buffers.InitialiseState();
 	}
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	GLM_InitialiseProgramState();
+	R_ProgramInitialiseState();
 #endif
 }
 

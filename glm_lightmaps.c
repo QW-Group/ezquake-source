@@ -39,6 +39,7 @@ static unsigned int lightmap_depth;
 static unsigned int* surfaceTodoData;
 static int surfaceTodoLength;
 static int maximumSurfaceNumber;
+static buffer_ref ssbo_lightingData;
 
 texture_ref GLM_LightmapArray(void)
 {
@@ -47,9 +48,7 @@ texture_ref GLM_LightmapArray(void)
 
 void GLM_ComputeLightmaps(void)
 {
-	static buffer_ref ssbo_lightingData;
-
-	if (GLM_ProgramRecompileNeeded(r_program_lightmap_compute, 0)) {
+	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0)) {
 		extern unsigned char lighting_compute_glsl[];
 		extern unsigned int lighting_compute_glsl_len;
 
@@ -65,7 +64,6 @@ void GLM_ComputeLightmaps(void)
 		buffers.Update(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
 	}
 	buffers.BindRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
-
 	buffers.Update(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
 	buffers.BindRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
 
@@ -73,7 +71,7 @@ void GLM_ComputeLightmaps(void)
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
 
-	GLM_UseProgram(r_program_lightmap_compute);
+	R_ProgramUse(r_program_lightmap_compute);
 	GL_DispatchCompute(LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
 	GL_MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }

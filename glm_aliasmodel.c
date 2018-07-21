@@ -78,7 +78,6 @@ extern float r_framelerp;
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
 #define DRAW_LUMA_TEXTURES 4
-static GLint drawAliasModel_mode;
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
 static buffer_ref vbo_aliasIndirectDraw;
@@ -88,7 +87,7 @@ static int cached_mode;
 static void SetAliasModelMode(int mode)
 {
 	if (cached_mode != mode) {
-		GLM_Uniform1i(drawAliasModel_mode, mode);
+		R_ProgramUniform1i(r_program_uniform_aliasmodel_drawmode, mode);
 		cached_mode = mode;
 	}
 }
@@ -103,7 +102,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
 	unsigned int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
 
-	if (GLM_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
 		GL_VFDeclare(draw_aliasmodel);
 
@@ -131,13 +130,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
-
-	if (R_ProgramReady(r_program_aliasmodel) && !R_ProgramUniformsFound(r_program_aliasmodel)) {
-		drawAliasModel_mode = GLM_UniformGetLocation(r_program_aliasmodel, "mode");
-		cached_mode = 0;
-
-		R_ProgramSetUniformsFound(r_program_aliasmodel);
-	}
+	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode);
 
 	if (!R_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
 		vbo_aliasIndirectDraw = buffers.Create(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
@@ -584,7 +577,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		mode = EZQ_ALIAS_MODE_SHELLS;
 	}
 
-	GLM_UseProgram(r_program_aliasmodel);
+	R_ProgramUse(r_program_aliasmodel);
 	SetAliasModelMode(mode);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here

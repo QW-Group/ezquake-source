@@ -28,8 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "glm_local.h"
 
-static GLint sprite3dUniform_alpha_test;
-
 static void GLM_Create3DSpriteVAO(void)
 {
 	R_Sprite3DCreateVBO();
@@ -53,16 +51,10 @@ static void GLM_Create3DSpriteVAO(void)
 
 static void GLM_Compile3DSpriteProgram(void)
 {
-	if (GLM_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
+	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
 		GL_VFDeclare(draw_sprites);
 
 		GLM_CreateVFProgram("3d-sprites", GL_VFParams(draw_sprites), r_program_sprite3d);
-	}
-
-	if (R_ProgramReady(r_program_sprite3d) && !R_ProgramUniformsFound(r_program_sprite3d)) {
-		sprite3dUniform_alpha_test = GLM_UniformGetLocation(r_program_sprite3d, "alpha_test");
-
-		R_ProgramSetUniformsFound(r_program_sprite3d);
 	}
 }
 
@@ -135,7 +127,7 @@ void GLM_Draw3DSprites()
 		return;
 	}
 
-	GLM_UseProgram(r_program_sprite3d);
+	R_ProgramUse(r_program_sprite3d);
 
 	for (i = 0; i < batchCount; ++i) {
 		gl_sprite3d_batch_t* batch = &batches[i];
@@ -147,7 +139,7 @@ void GLM_Draw3DSprites()
 
 		R_TraceEnterNamedRegion(batch->name);
 		if (first_batch || current_alpha_test != alpha_test) {
-			GLM_Uniform1i(sprite3dUniform_alpha_test, current_alpha_test = alpha_test);
+			R_ProgramUniform1i(r_program_uniform_sprite3d_alpha_test, current_alpha_test = alpha_test);
 		}
 		first_batch = false;
 

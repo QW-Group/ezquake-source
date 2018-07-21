@@ -19,6 +19,19 @@ typedef enum {
 	r_program_count
 } r_program_id;
 
+typedef enum {
+	r_program_uniform_aliasmodel_drawmode,
+	r_program_uniform_brushmodel_outlines,
+	r_program_uniform_sprite3d_alpha_test,
+	r_program_uniform_hud_polygon_color,
+	r_program_uniform_hud_polygon_matrix,
+	r_program_uniform_hud_line_matrix,
+	r_program_uniform_hud_circle_matrix,
+	r_program_uniform_hud_circle_color,
+
+	r_program_uniform_count
+} r_program_uniform_id;
+
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
@@ -164,27 +177,24 @@ void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 
 void GLM_UploadFrameConstants(void);
-void GLM_Uniform1i(GLint location, GLint value);
-void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values);
-void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values);
-GLint GLM_UniformGetLocation(GLuint program, const char* name);
-void GLM_InitialiseProgramState(void);
 
 void GLM_StateBeginImageDraw(void);
 void GLM_StateBeginPolygonDraw(void);
 
+void R_ProgramInitialiseState(void);
 int R_ProgramCustomOptions(r_program_id program_id);
 qbool R_ProgramReady(r_program_id program_id);
-qbool R_ProgramUniformsFound(r_program_id program_id);
-void GLM_UseProgram(r_program_id program_id);
+void R_ProgramUse(r_program_id program_id);
 int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
-// FIXME: Get rid...
-void R_ProgramSetUniformsFound(r_program_id program_id);
+void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
+void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
+void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
+int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
 
 // Check if a program needs to be recompiled
-qbool GLM_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
+qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
 
 // Flags all programs to be recompiled
 // Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc

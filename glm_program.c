@@ -48,6 +48,36 @@ typedef struct glm_program_s {
 	qbool force_recompile;
 } glm_program_t;
 
+typedef struct {
+	r_program_id program_id;
+	const char* name;
+	int count;
+	qbool transpose;
+
+	qbool found;
+	int location;
+	int int_value;
+} r_program_uniform_t;
+
+static r_program_uniform_t program_uniforms[r_program_uniform_count] = {
+	// r_program_uniform_aliasmodel_drawmode
+	{ r_program_aliasmodel, "mode", 1, false },
+	// r_program_uniform_brushmodel_outlines
+	{ r_program_brushmodel, "draw_outlines", 1, false },
+	// r_program_uniform_sprite3d_alpha_test
+	{ r_program_sprite3d, "alpha_test", 1, false },
+	// r_program_uniform_hud_polygon_color
+	{ r_program_hud_polygon, "color", 1, false },
+	// r_program_uniform_hud_polygon_matrix
+	{ r_program_hud_polygon, "matrix", 1, false },
+	// r_program_uniform_hud_line_matrix
+	{ r_program_hud_line, "matrix", 1, false },
+	// r_program_uniform_hud_circle_matrix
+	{ r_program_hud_circles, "matrix", 1, false },
+	// r_program_uniform_hud_circle_color
+	{ r_program_hud_circles, "color", 1, false }
+};
+
 static glm_program_t program_data[r_program_count];
 
 // Cached OpenGL state
@@ -147,6 +177,31 @@ static void GLM_ConPrintProgramLog(GLuint program)
 	}
 }
 
+// Uniform utility functions
+static r_program_uniform_t* GLM_ProgramUniformFind(r_program_uniform_id uniform_id)
+{
+	r_program_uniform_t* uniform = &program_uniforms[uniform_id];
+	r_program_id program_id = uniform->program_id;
+
+	if (program_data[program_id].program && !uniform->found) {
+		uniform->location = qglGetUniformLocation(program_data[program_id].program, uniform->name);
+		uniform->found = true;
+	}
+
+	return uniform;
+}
+
+static void R_ProgramFindUniformsForProgram(r_program_id program_id)
+{
+	r_program_uniform_id u;
+
+	for (u = 0; u < r_program_uniform_count; ++u) {
+		if (program_uniforms[u].program_id == program_id) {
+			GLM_ProgramUniformFind(u);
+		}
+	}
+}
+
 static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[], GLint shaderTextLength[], GLenum shaderType, GLuint* shaderId)
 {
 	GLuint shader;
@@ -175,7 +230,7 @@ static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[
 
 // Couldn't find standard library call to do this (!?)
 // Search for <search_string> in non-nul-terminated <source>
-const char* safe_strstr(const char* source, size_t max_length, const char* search_string)
+static const char* safe_strstr(const char* source, size_t max_length, const char* search_string)
 {
 	size_t search_length = strlen(search_string);
 	const char* position;
@@ -418,32 +473,54 @@ qbool GLM_CreateVFProgramWithInclude(
 	return GLM_CompileProgram(program);
 }
 
+void GLM_CleanupShader(GLuint program, GLuint shader)
+{
+	if (shader) {
+		if (program) {
+			qglDetachShader(program, shader);
+		}
+		qglDeleteShader(shader);
+	}
+}
+
 // Called during vid_shutdown
 void GLM_DeletePrograms(qbool restarting)
 {
 	r_program_id p;
+	r_program_uniform_id u;
+	glm_program_t* prog;
 
-	GLM_UseProgram(r_program_none);
-	for (p = r_program_none; p < r_program_count; ++p) {
-		if (program_data[p].program) {
-			qglDeleteProgram(program_data[p].program);
-			program_data[p].program = 0;
+	R_ProgramUse(r_program_none);
+
+	// Detach & delete shaders
+	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
+		GLM_CleanupShader(prog->program, prog->fragment_shader);
+		GLM_CleanupShader(prog->program, prog->vertex_shader);
+		GLM_CleanupShader(prog->program, prog->geometry_shader);
+		GLM_CleanupShader(prog->program, prog->compute_shader);
+
+		program_data[p].fragment_shader = 0;
+		program_data[p].vertex_shader = 0;
+		program_data[p].geometry_shader = 0;
+		program_data[p].compute_shader = 0;
+	}
+
+	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
+		if (prog->program) {
+			qglDeleteProgram(prog->program);
+			prog->program = 0;
 		}
-		if (program_data[p].fragment_shader) {
-			qglDeleteShader(program_data[p].fragment_shader);
-			program_data[p].fragment_shader = 0;
+
+		if (!restarting) {
+			// Keep definitions if we're about to recompile after restart
+			Q_free(prog->included_definitions);
 		}
-		if (program_data[p].vertex_shader) {
-			qglDeleteShader(program_data[p].vertex_shader);
-			program_data[p].vertex_shader = 0;
-		}
-		if (program_data[p].geometry_shader) {
-			qglDeleteShader(program_data[p].geometry_shader);
-			program_data[p].geometry_shader = 0;
-		}
-		if (!restarting && program_data[p].included_definitions) {
-			Q_free(program_data[p].included_definitions);
-		}
+	}
+
+	for (u = 0; u < r_program_uniform_count; ++u) {
+		program_uniforms[u].found = false;
+		program_uniforms[u].location = -1;
+		program_uniforms[u].int_value = 0;
 	}
 }
 
@@ -465,15 +542,17 @@ void GLM_InitPrograms(void)
 		if (!program_data[p].program && program_data[p].friendly_name) {
 			if (program_data[p].shader_text[GLM_COMPUTE_SHADER]) {
 				GLM_CompileComputeShaderProgram(p, program_data[p].shader_text[GLM_COMPUTE_SHADER], program_data[p].shader_length[GLM_COMPUTE_SHADER]);
+				R_ProgramFindUniformsForProgram(p);
 			}
 			else {
 				GLM_CompileProgram(&program_data[p]);
+				R_ProgramFindUniformsForProgram(p);
 			}
 		}
 	}
 }
 
-qbool GLM_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
+qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 {
 	//
 	const glm_program_t* program = &program_data[program_id];
@@ -532,6 +611,7 @@ qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shade
 			}
 		}
 	}
+
 	return false;
 }
 
@@ -567,7 +647,7 @@ qbool GLM_LoadProgramFunctions(void)
 	return all_available;
 }
 
-void GLM_UseProgram(r_program_id program_id)
+void R_ProgramUse(r_program_id program_id)
 {
 	GLuint program = program_data[program_id].program;
 
@@ -582,29 +662,24 @@ void GLM_UseProgram(r_program_id program_id)
 	}
 }
 
-void GLM_InitialiseProgramState(void)
+void R_ProgramInitialiseState(void)
 {
 	currentProgram = 0;
 }
 
-void GLM_Uniform1i(GLint location, GLint value)
+static void GLM_Uniform1i(GLint location, GLint value)
 {
 	qglUniform1i(location, value);
 }
 
-void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
+static void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
 {
 	qglUniform4fv(location, count, values);
 }
 
-void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
+static void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
 {
 	qglUniformMatrix4fv(location, count, transpose, values);
-}
-
-GLint GLM_UniformGetLocation(GLuint program, const char* name)
-{
-	return qglGetUniformLocation(program, name);
 }
 
 // Compute shaders
@@ -634,12 +709,42 @@ qbool R_ProgramReady(r_program_id program_id)
 	return program_data[program_id].program != 0;
 }
 
+void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
+{
+	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+
+	R_ProgramUse(uniform->program_id);
+	GLM_Uniform1i(uniform->location, value);
+	uniform->int_value = value;
+}
+
+void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
+{
+	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+
+	R_ProgramUse(uniform->program_id);
+	GLM_Uniform4fv(uniform->location, uniform->count, values);
+}
+
+void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values)
+{
+	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+
+	R_ProgramUse(uniform->program_id);
+	GLM_UniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+}
+
+int R_ProgramUniformGet1i(r_program_uniform_id uniform_id)
+{
+	return program_uniforms[uniform_id].int_value;
+}
+
+// FIXME: Get rid of this
 qbool R_ProgramUniformsFound(r_program_id program_id)
 {
 	return program_data[program_id].uniforms_found;
 }
 
-// FIXME: Get rid of this
 void R_ProgramSetUniformsFound(r_program_id program_id)
 {
 	program_data[program_id].uniforms_found = true;
