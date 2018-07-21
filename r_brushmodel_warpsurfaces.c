@@ -129,7 +129,7 @@ static void SubdividePolygon (int numverts, float *verts)
 }
 
 // Breaks a polygon up along axial 64 unit boundaries so that turbulent and sky warps can be done reasonably.
-void GL_SubdivideSurface(msurface_t *fa)
+void R_TurbSurfacesSubdivide(msurface_t *fa)
 {
 	vec3_t verts[64];
 	int numverts, i, lindex;
@@ -156,7 +156,7 @@ void GL_SubdivideSurface(msurface_t *fa)
 }
 
 // Just build the gl polys, don't subdivide
-void GL_BuildSkySurfacePolys(msurface_t *fa)
+void R_SkySurfacesBuildPolys(msurface_t *fa)
 {
 	vec3_t		verts[64];
 	int			numverts;

@@ -1268,12 +1268,12 @@ static void VID_SDL_Init(void)
 	glConfig.initialized = true;
 }
 
-static void GL_SwapBuffers (void)
+static void VID_SwapBuffers (void)
 {
 	SDL_GL_SwapWindow(sdl_window);
 }
 
-static void GL_SwapBuffersWithVsyncFix(void)
+static void VID_SwapBuffersWithVsyncFix(void)
 {
 	double time_before_swap;
 
@@ -1285,7 +1285,7 @@ static void GL_SwapBuffersWithVsyncFix(void)
 	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 }
 
-void GL_BeginRendering (int *x, int *y, int *width, int *height)
+void R_BeginRendering(int *x, int *y, int *width, int *height)
 {
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
@@ -1302,11 +1302,11 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	}
 
 	if (cls.state != ca_active) {
-		glClear(GL_COLOR_BUFFER_BIT);
+		renderer.ClearRenderingSurface(true);
 	}
 }
 
-void GL_EndRendering (void)
+void R_EndRendering(void)
 {
 	if (r_swapInterval.modified) {
 		if (r_swapInterval.integer == 0) {
@@ -1331,10 +1331,10 @@ void GL_EndRendering (void)
 
 	if (!scr_skipupdate || block_drawing) {
 		if (vid_vsync_lag_fix.integer > 0) {
-			GL_SwapBuffersWithVsyncFix();
+			VID_SwapBuffersWithVsyncFix();
 		}
 		else {
-			GL_SwapBuffers(); 
+			VID_SwapBuffers(); 
 		}
 	}
 
@@ -1364,7 +1364,8 @@ void VID_NotifyActivity(void)
 		if (info.subsystem == SDL_SYSWM_WINDOWS) {
 			FlashWindow(info.info.win.window, TRUE);
 		}
-	} else {
+	}
+	else {
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 	}
 #endif
@@ -1380,7 +1381,8 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps)
 		if (vid_hwgammacontrol.integer > 0) {
 			VID_SetDeviceGammaRampReal(ramps);
 		}
-	} else {
+	}
+	else {
 		if (vid_hwgammacontrol.integer >= 2) {
 			VID_SetDeviceGammaRampReal(ramps);
 		}
@@ -1398,8 +1400,9 @@ void VID_Minimize (void)
 
 void VID_Restore (void)
 {
-	if (!sdl_window)
+	if (!sdl_window) {
 		return;
+	}
 
 	SDL_RestoreWindow(sdl_window);
 	SDL_RaiseWindow(sdl_window);
@@ -1437,7 +1440,8 @@ static void VID_ParseCmdLine(void)
 		if (COM_CheckParm(cmdline_param_client_windowedmode)) {
 			Cvar_LatchedSetValue(&vid_win_width,  w);
 			Cvar_LatchedSetValue(&vid_win_height, h);
-		} else {
+		}
+		else {
 			Cvar_LatchedSetValue(&vid_width, w);
 			Cvar_LatchedSetValue(&vid_height, h);
 		}
@@ -1641,9 +1645,8 @@ static void conres_changed_callback(cvar_t *var, char *string, qbool *cancel)
 	*cancel = true;
 }
 
-
-void VID_Init(unsigned char *palette) {
-
+void VID_Init(unsigned char *palette)
+{
 	vid.colormap = host_colormap;
 
 	Check_Gamma(palette);
@@ -1665,8 +1668,6 @@ void VID_Init(unsigned char *palette) {
 	}
 
 	VID_UpdateConRes();
-
-	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
 
 	vid_initialized = true;
 }

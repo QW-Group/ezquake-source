@@ -19,17 +19,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "r_vao.h"
-#include "glm_brushmodel.h"
 #include "r_renderer.h"
+#include "r_state.h"
+#include "tr_types.h"
+#include "rulesets.h"
+#include "r_trace.h"
+#include "r_matrix.h"
+#include "r_brushmodel.h"
+#include "r_lightmaps.h"
+#include "r_lighting.h"
+#include "glc_state.h"
 
 buffer_ref brushModel_vbo;
 buffer_ref vbo_brushElements;
-GLuint* modelIndexes;
-GLuint modelIndexMaximum;
+unsigned int* modelIndexes;
+unsigned int modelIndexMaximum;
 
-static int GL_MeasureIndexSizeForBrushModel(model_t* m)
+static int R_BrushModelMeasureVBOSize(model_t* m);
+static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos);
+void R_BrushModelClearTextureChains(model_t *clmodel);
+
+static int R_BrushModelMeasureIndexSize(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
@@ -51,7 +62,7 @@ static int GL_MeasureIndexSizeForBrushModel(model_t* m)
 	return (total_surf_verts)+(total_surfaces - 1);
 }
 
-void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
+void R_BrushModelCreateVBO(buffer_ref instance_vbo)
 {
 	int i;
 	int size = 0;
@@ -59,14 +70,14 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	int indexes = 0;
 	int max_entity_indexes = 0;
 	void* buffer = NULL;
-	GLsizei buffer_size;
+	unsigned int buffer_size;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			int index_count = GL_MeasureIndexSizeForBrushModel(mod);
+			int index_count = R_BrushModelMeasureIndexSize(mod);
 
-			size += GL_MeasureVBOSizeForBrushModel(mod);
+			size += R_BrushModelMeasureVBOSize(mod);
 			if (mod->isworldmodel) {
 				indexes += index_count;
 			}
@@ -79,9 +90,9 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			int index_count = GL_MeasureIndexSizeForBrushModel(mod);
+			int index_count = R_BrushModelMeasureIndexSize(mod);
 
-			size += GL_MeasureVBOSizeForBrushModel(mod);
+			size += R_BrushModelMeasureVBOSize(mod);
 			if (mod->isworldmodel) {
 				indexes += index_count;
 			}
@@ -114,36 +125,24 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			position = GL_PopulateVBOForBrushModel(mod, buffer, position);
+			position = R_BrushModelPopulateVBO(mod, buffer, position);
 		}
 	}
 
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
 		model_t* mod = cl.vw_model_precache[i];
 		if (mod && mod->type == mod_brush) {
-			position = GL_PopulateVBOForBrushModel(mod, buffer, position);
+			position = R_BrushModelPopulateVBO(mod, buffer, position);
 		}
 	}
 
 	// Copy VBO buffer across
 	brushModel_vbo = buffers.Create(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-	if (R_UseModernOpenGL()) {
-		GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
-	}
-#endif
-
 	Q_free(buffer);
 }
 
-void GL_DeleteBrushModelIndexBuffer(void)
-{
-	modelIndexMaximum = 0;
-	Q_free(modelIndexes);
-}
-
-int GL_MeasureVBOSizeForBrushModel(model_t* m)
+static int R_BrushModelMeasureVBOSize(model_t* m)
 {
 	int j, total_surf_verts = 0, total_surfaces = 0;
 
@@ -174,7 +173,7 @@ int GL_MeasureVBOSizeForBrushModel(model_t* m)
 }
 
 // Create VBO, ordering by texture array
-int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
+static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 {
 	int i, j;
 
@@ -239,4 +238,165 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 	}
 
 	return vbo_pos;
+}
+
+void R_BrushModelFreeMemory(void)
+{
+	modelIndexMaximum = 0;
+	Q_free(modelIndexes);
+}
+
+void R_BrushModelDrawEntity(entity_t *e)
+{
+	int k;
+	unsigned int li;
+	unsigned int lj;
+	vec3_t mins, maxs;
+	model_t *clmodel;
+	qbool rotated;
+	float oldMatrix[16];
+	extern cvar_t gl_brush_polygonoffset;
+	qbool caustics = false;
+	qbool glc_first_water_poly = true;
+	extern cvar_t r_fastturb, r_drawflat, gl_caustics, gl_flashblend;
+
+	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+
+	// Get rid of Z-fighting for textures by offsetting the
+	// drawing of entity models compared to normal polygons.
+	// dimman: disabled for qcon
+	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
+
+	clmodel = e->model;
+	if (!clmodel->nummodelsurfaces) {
+		return;
+	}
+
+	drawFlatFloors &= clmodel->isworldmodel;
+	drawFlatWalls &= clmodel->isworldmodel;
+
+	if (e->angles[0] || e->angles[1] || e->angles[2]) {
+		rotated = true;
+		if (R_CullSphere(e->origin, clmodel->radius)) {
+			return;
+		}
+	}
+	else {
+		rotated = false;
+		VectorAdd(e->origin, clmodel->mins, mins);
+		VectorAdd(e->origin, clmodel->maxs, maxs);
+
+		if (R_CullBox(mins, maxs)) {
+			return;
+		}
+	}
+
+	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
+
+	VectorSubtract(r_refdef.vieworg, e->origin, modelorg);
+	if (rotated) {
+		vec3_t	temp;
+		vec3_t	forward, right, up;
+
+		VectorCopy(modelorg, temp);
+		AngleVectors(e->angles, forward, right, up);
+		modelorg[0] = DotProduct(temp, forward);
+		modelorg[1] = -DotProduct(temp, right);
+		modelorg[2] = DotProduct(temp, up);
+	}
+
+	// calculate dynamic lighting for bmodel if it's not an instanced model
+	if (clmodel->firstmodelsurface) {
+		for (li = 0; li < MAX_DLIGHTS / 32; li++) {
+			if (cl_dlight_active[li]) {
+				for (lj = 0; lj < 32; lj++) {
+					if ((cl_dlight_active[li] & (1 << lj)) && li * 32 + lj < MAX_DLIGHTS) {
+						k = li * 32 + lj;
+
+						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
+							R_MarkLights(&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	R_PushModelviewMatrix(oldMatrix);
+
+	R_StateBrushModelBeginDraw(e, polygonOffset);
+
+	R_BrushModelClearTextureChains(clmodel);
+
+	renderer.ChainBrushModelSurfaces(clmodel);
+
+	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
+		// START shaman FIX for no simple textures on world brush models {
+		//draw the textures chains for the model
+		R_RenderAllDynamicLightmaps(clmodel);
+
+		//R00k added contents point for underwater bmodels
+		if (gl_caustics.integer) {
+			if (clmodel->isworldmodel) {
+				vec3_t midpoint;
+
+				VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
+				VectorScale(midpoint, 0.5f, midpoint);
+				VectorAdd(midpoint, e->origin, midpoint);
+
+				caustics = R_PointIsUnderwater(midpoint);
+			}
+			else {
+				caustics = R_PointIsUnderwater(e->origin);
+			}
+		}
+
+		renderer.DrawBrushModel(e, polygonOffset, caustics);
+		// } END shaman FIX for no simple textures on world brush models
+	}
+
+	R_PopModelviewMatrix(oldMatrix);
+
+	R_TraceLeaveRegion(true);
+}
+
+void R_BrushModelInitialiseStates(void)
+{
+	rendering_state_t* current;
+
+	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
+	current->fog.enabled = true;
+
+	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lm_unit1);
+	current->fog.enabled = true;
+	current->textureUnits[0].enabled = true;
+	current->textureUnits[0].mode = r_texunit_mode_blend;
+
+	// Single-texture: all of these are the same so we don't need to bother about others
+	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+
+	// material * lightmap + luma
+	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
+
+	current = R_InitRenderingState(r_state_world_material_lightmap_fb, true, "r_state_world_material_lightmap_fb", vao_brushmodel_lm_unit1);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_decal);
+
+	// no fullbrights, 3 units: blend(material + luma, lightmap) 
+	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
+
+	// lumas enabled, 3 units
+	current = R_InitRenderingState(r_state_world_material_luma_lightmap, true, "r_state_world_material_luma_lightmap", vao_brushmodel);
+	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
+	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
 }

@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_vao.h"
 #include "glc_local.h"
+#include "r_brushmodel.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -91,7 +92,7 @@ static void DrawGLPoly(glpoly_t *p)
 	GLC_End();
 }
 
-GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count)
+unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count)
 {
 	int k;
 
@@ -130,9 +131,6 @@ GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexM
 
 void GLC_RenderFullbrights(void)
 {
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
-
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
@@ -168,9 +166,6 @@ void GLC_RenderFullbrights(void)
 
 void GLC_RenderLumas(void)
 {
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
-
 	int i;
 	glpoly_t *p;
 	texture_ref texture;
@@ -207,9 +202,6 @@ void GLC_RenderLumas(void)
 
 void GLC_EmitDetailPolys(qbool use_vbo)
 {
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
-
 	glpoly_t *p;
 	int i;
 	float *v;

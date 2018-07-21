@@ -328,7 +328,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	R_PushModelviewMatrix(oldMatrix);
-	GL_StateBeginDrawAliasModel(ent, paliashdr);
+	R_StateBeginDrawAliasModel(ent, paliashdr);
 
 	//get lighting information
 	R_AliasSetupLighting(ent);

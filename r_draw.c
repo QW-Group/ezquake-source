@@ -1117,7 +1117,7 @@ void Draw_EndDisc(void)
 //
 // Changes the projection to orthogonal (2D drawing).
 //
-void GL_Set2D(void)
+void R_Set2D(void)
 {
 	renderer.Begin2DRendering();
 	R_IdentityModelView();

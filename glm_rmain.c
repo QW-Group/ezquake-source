@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_sprite3d.h"
 #include "glm_local.h"
 #include "r_renderer.h"
+#include "glm_brushmodel.h"
 
 void GLM_RenderView(void)
 {
@@ -47,12 +48,15 @@ void GLM_RenderView(void)
 
 void GLM_PrepareModelRendering(qbool vid_restart)
 {
+	extern buffer_ref brushModel_vbo, vbo_brushElements;
+
 	buffer_ref instance_vbo = R_CreateInstanceVBO();
 
 	GLM_BuildCommonTextureArrays(vid_restart);
 
 	GL_CreateAliasModelVBO(instance_vbo);
-	GL_CreateBrushModelVBO(instance_vbo);
+	R_BrushModelCreateVBO(instance_vbo);
+	GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
 
 	GLM_InitPrograms();
 }

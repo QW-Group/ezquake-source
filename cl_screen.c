@@ -1146,7 +1146,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 
 	R_SetupChatIcons();
 
-	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+	R_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
 	if (V_PreRenderView()) {
 		R_SetupFrame();
@@ -1158,7 +1158,7 @@ void SCR_UpdateScreenPlayerView(int flags)
 		}
 	}
 
-	GL_Set2D();
+	R_Set2D();
 
 	R_PolyBlend();
 
@@ -1213,10 +1213,8 @@ void SCR_UpdateScreenPostPlayerView(void)
 	}
 
 	SCR_DrawElements();
-	R_TraceLeaveNamedRegion();
 
 	// Actual rendering...
-	R_TraceEnterNamedRegion("GL_DrawHUD");
 	R_FlushImageDraw();
 	R_TraceLeaveNamedRegion();
 
@@ -1226,7 +1224,7 @@ void SCR_UpdateScreenPostPlayerView(void)
 
 	VID_RenderFrameEnd();
 
-	GL_EndRendering();
+	R_EndRendering();
 }
 
 // This is called every frame, and can also be called explicitly to flush text to the screen.

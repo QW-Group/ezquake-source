@@ -114,12 +114,10 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 static void GLC_BlendLightmaps(void);
 void GLC_RenderFullbrights(void);
 void GLC_RenderLumas(void);
-GLuint GLC_DrawIndexedPoly(glpoly_t* p, GLuint* modelIndexes, GLuint modelIndexMaximum, GLuint index_count);
+unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
 
 static void GLC_DrawFlat(model_t *model)
 {
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
 	int index_count = 0;
 
 	msurface_t *s;
@@ -236,8 +234,6 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 {
 	extern cvar_t gl_lumaTextures;
 	extern cvar_t gl_textureless;
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
 	int index_count = 0;
 	r_state_id state = r_state_world_singletexture_glc;
 	texture_ref fb_texturenum = null_texture_reference;
@@ -636,8 +632,6 @@ static void GLC_BlendLightmaps(void)
 	int i, j;
 	glpoly_t *p;
 	float *v;
-	extern GLuint* modelIndexes;
-	extern GLuint modelIndexMaximum;
 	qbool use_vbo = buffers.supported && modelIndexes;
 
 	GLC_StateBeginBlendLightmaps(use_vbo);

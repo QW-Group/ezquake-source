@@ -43,7 +43,6 @@ typedef enum {
 	vao_count
 } r_vao_id;
 
-void R_DeleteVAOs(void);
 void R_GenVertexArray(r_vao_id vao);
 void R_BindVertexArray(r_vao_id vao);
 qbool R_VertexArrayCreated(r_vao_id vao);

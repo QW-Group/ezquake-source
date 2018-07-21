@@ -44,7 +44,7 @@ static glBindImageTexture_t     qglBindImageTexture;
 static glBindTextures_t         qglBindTextures;
 glActiveTexture_t               qglActiveTexture;
 
-void R_InitialiseBrushModelStates(void);
+void R_BrushModelInitialiseStates(void);
 void R_InitialiseStates(void);
 void R_Initialise2DStates(void);
 void R_InitialiseEntityStates(void);
@@ -542,7 +542,7 @@ void GL_InitialiseState(void)
 
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
 	R_ApplyRenderingState(r_state_default_opengl);
-	R_InitialiseBrushModelStates();
+	R_BrushModelInitialiseStates();
 	R_InitialiseStates();
 	R_Initialise2DStates();
 	R_InitialiseEntityStates();
@@ -942,11 +942,6 @@ void R_BindVertexArray(r_vao_id vao)
 void R_GenVertexArray(r_vao_id vao)
 {
 	renderer.GenVertexArray(vao, vaoNames[vao]);
-}
-
-void R_DeleteVAOs(void)
-{
-	renderer.DeleteVAOs();
 }
 
 qbool R_VAOBound(void)

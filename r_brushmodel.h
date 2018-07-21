@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_BRUSHMODEL_HEADER
 #define R_BRUSHMODEL_HEADER
 
+#include "r_buffers.h"
 #include "r_framestats.h"
 
 qbool R_PointIsUnderwater(vec3_t point);
@@ -28,17 +29,17 @@ void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateBeginAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
 
-void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset);
+void R_StateBrushModelBeginDraw(entity_t* e, qbool polygonOffset);
 
 // gl_rsurf.c
 void GLC_EmitDetailPolys(qbool use_vbo);
-void R_DrawBrushModel(entity_t *e);
+void R_BrushModelDrawEntity(entity_t *e);
 void R_DrawWorld(void);
 void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType);
 
 // gl_warp.c
-void GL_SubdivideSurface(msurface_t *fa);
-void GL_BuildSkySurfacePolys(msurface_t *fa);
+void R_TurbSurfacesSubdivide(msurface_t *fa);
+void R_SkySurfacesBuildPolys(msurface_t *fa);
 void R_InitSky(texture_t *mt);	// called at level load
 void R_DrawSky(void);
 void R_AddSkyBoxSurface(msurface_t *fa);
@@ -52,5 +53,8 @@ qbool R_DrawWorldOutlines(void);
 	}
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
+extern unsigned int* modelIndexes;
+extern unsigned int modelIndexMaximum;
+void R_BrushModelCreateVBO(buffer_ref instance_vbo);
 
 #endif // R_BRUSHMODEL_HEADER

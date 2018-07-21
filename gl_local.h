@@ -247,10 +247,7 @@ void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
 #define GL_BLEND_ENABLED  4
 #define GL_BLEND_DISABLED 8
 
-int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos);
-int GL_MeasureVBOSizeForBrushModel(model_t* m);
 void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
-void GL_CreateBrushModelVBO(buffer_ref instance_vbo);
 
 void GL_InitTextureState(void);
 void GL_InvalidateTextureReferences(GLuint texture);

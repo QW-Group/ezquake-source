@@ -41,7 +41,7 @@ void GLC_ClearTextureChains(void);
 // gl_refrag.c
 void R_StoreEfrags(efrag_t **ppefrag);
 
-static void GL_EmitSurfaceParticleEffects(msurface_t* s);
+static void R_TurbSurfacesEmitParticleEffects(msurface_t* s);
 
 msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
@@ -72,7 +72,7 @@ void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 	*chain_head = surf;
 }
 
-// Order by lightmap# then by floor/ceiling... seems faster to switch colour than GL_Bind(lightmap tex)
+// Order by lightmap# then by floor/ceiling... seems faster to switch colour than Bind(lightmap tex)
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
@@ -142,7 +142,7 @@ texture_t *R_TextureAnimation(entity_t* ent, texture_t *base)
 	return base;
 }
 
-void R_ClearTextureChains(model_t *clmodel)
+void R_BrushModelClearTextureChains(model_t *clmodel)
 {
 	int i, waterline;
 	texture_t *texture;
@@ -303,7 +303,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				else {
 					chain_surfaces_by_lightmap(&waterchain, surf);
 				}
-				GL_EmitSurfaceParticleEffects(surf);
+				R_TurbSurfacesEmitParticleEffects(surf);
 			}
 			else if (R_UseImmediateOpenGL() && alphaSurface) {
 				CHAIN_SURF_B2F(surf, alphachain);
@@ -335,7 +335,7 @@ void R_CreateWorldTextureChains(void)
 	R_PerformanceBeginFrame();
 
 	if (cl.worldmodel) {
-		R_ClearTextureChains(cl.worldmodel);
+		R_BrushModelClearTextureChains(cl.worldmodel);
 
 		VectorCopy(r_refdef.vieworg, modelorg);
 
@@ -413,7 +413,7 @@ void R_MarkLeaves(void)
 	}
 }
 
-static void GL_EmitSurfaceParticleEffects(msurface_t* s)
+static void R_TurbSurfacesEmitParticleEffects(msurface_t* s)
 {
 #define ESHADER(eshadername)  extern void eshadername (vec3_t org)
 	extern void EmitParticleEffect(msurface_t *fa, void (*fun)(vec3_t nv));

@@ -16,7 +16,7 @@ void GLC_Initialise(void);
 void CachePics_Shutdown(void);
 void R_LightmapShutdown(void);
 void R_Hud_Initialise(void);
-void GL_DeleteBrushModelIndexBuffer(void);
+void R_BrushModelFreeMemory(void);
 
 renderer_api_t renderer;
 
@@ -39,8 +39,8 @@ void R_Shutdown(qbool restart)
 
 	CachePics_Shutdown();
 	R_LightmapShutdown();
-	GL_DeleteBrushModelIndexBuffer();
-	R_DeleteVAOs();
+	R_BrushModelFreeMemory();
+	renderer.DeleteVAOs();
 	buffers.Shutdown();
 	R_DeleteTextures();
 	R_TexturesInvalidateAllReferences();

@@ -41,13 +41,11 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_renderer.h"
 #include "r_state.h"
 #include "tr_types.h"
-#include "glc_state.h"
 
 vec3_t modelorg;
 
 extern msurface_t* skychain;
 extern msurface_t* alphachain;
-void R_ClearTextureChains(model_t *clmodel);
 char* TranslateTextureName(texture_t *tx);
 qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int brighten_flag);
 void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char *lumpname, int *plumpsize, byte* mod_base);
@@ -65,7 +63,7 @@ static void SetTextureFlags(model_t* mod, msurface_t* out)
 	// sky, turb and alpha should be mutually exclusive
 	if (Mod_IsSkyTextureName(mod, out->texinfo->texture->name)) {	// sky
 		out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-		GL_BuildSkySurfacePolys(out);	// build gl polys
+		R_SkySurfacesBuildPolys(out);	// build gl polys
 		out->texinfo->skippable = false;
 		return;
 	}
@@ -76,7 +74,7 @@ static void SetTextureFlags(model_t* mod, msurface_t* out)
 			out->extents[i] = 16384;
 			out->texturemins[i] = -8192;
 		}
-		GL_SubdivideSurface (out);	// cut up polygon for warps
+		R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
 		out->texinfo->skippable = false;
 		return;
 	}
@@ -1422,159 +1420,4 @@ void R_LoadBrushModelTextures(model_t *m)
 		}
 		tx->loaded = true; // mark as loaded
 	}
-}
-
-void R_DrawBrushModel(entity_t *e)
-{
-	int k;
-	unsigned int li;
-	unsigned int lj;
-	vec3_t mins, maxs;
-	model_t *clmodel;
-	qbool rotated;
-	float oldMatrix[16];
-	extern cvar_t gl_brush_polygonoffset;
-	qbool caustics = false;
-	qbool glc_first_water_poly = true;
-	extern cvar_t r_fastturb, r_drawflat, gl_caustics;
-
-	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
-	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
-
-	// Get rid of Z-fighting for textures by offsetting the
-	// drawing of entity models compared to normal polygons.
-	// dimman: disabled for qcon
-	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
-
-	clmodel = e->model;
-	if (!clmodel->nummodelsurfaces) {
-		return;
-	}
-
-	drawFlatFloors &= clmodel->isworldmodel;
-	drawFlatWalls &= clmodel->isworldmodel;
-
-	if (e->angles[0] || e->angles[1] || e->angles[2]) {
-		rotated = true;
-		if (R_CullSphere(e->origin, clmodel->radius)) {
-			return;
-		}
-	}
-	else {
-		rotated = false;
-		VectorAdd (e->origin, clmodel->mins, mins);
-		VectorAdd (e->origin, clmodel->maxs, maxs);
-
-		if (R_CullBox(mins, maxs)) {
-			return;
-		}
-	}
-
-	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
-
-	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
-	if (rotated) {
-		vec3_t	temp;
-		vec3_t	forward, right, up;
-
-		VectorCopy (modelorg, temp);
-		AngleVectors (e->angles, forward, right, up);
-		modelorg[0] = DotProduct (temp, forward);
-		modelorg[1] = -DotProduct (temp, right);
-		modelorg[2] = DotProduct (temp, up);
-	}
-
-	// calculate dynamic lighting for bmodel if it's not an instanced model
-	if (clmodel->firstmodelsurface) {
-		for (li = 0; li < MAX_DLIGHTS/32; li++) {
-			if (cl_dlight_active[li]) {
-				for (lj = 0; lj < 32; lj++) {
-					if ((cl_dlight_active[li]&(1 << lj)) && li*32 + lj < MAX_DLIGHTS) {
-						k = li*32 + lj;
-
-						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
-							R_MarkLights(&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	R_PushModelviewMatrix(oldMatrix);
-
-	GL_StateBeginDrawBrushModel(e, polygonOffset);
-
-	R_ClearTextureChains(clmodel);
-
-	renderer.ChainBrushModelSurfaces(clmodel);
-
-	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
-		// START shaman FIX for no simple textures on world brush models {
-		//draw the textures chains for the model
-		R_RenderAllDynamicLightmaps(clmodel);
-
-		//R00k added contents point for underwater bmodels
-		if (gl_caustics.integer) {
-			if (clmodel->isworldmodel) {
-				vec3_t midpoint;
-
-				VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
-				VectorScale(midpoint, 0.5f, midpoint);
-				VectorAdd(midpoint, e->origin, midpoint);
-
-				caustics = R_PointIsUnderwater(midpoint);
-			}
-			else {
-				caustics = R_PointIsUnderwater(e->origin);
-			}
-		}
-
-		renderer.DrawBrushModel(e, polygonOffset, caustics);
-		// } END shaman FIX for no simple textures on world brush models
-	}
-
-	R_PopModelviewMatrix(oldMatrix);
-
-	R_TraceLeaveRegion(true);
-}
-
-void R_InitialiseBrushModelStates(void)
-{
-	rendering_state_t* current;
-
-	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
-	current->fog.enabled = true;
-
-	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lm_unit1);
-	current->fog.enabled = true;
-	current->textureUnits[0].enabled = true;
-	current->textureUnits[0].mode = r_texunit_mode_blend;
-
-	// Single-texture: all of these are the same so we don't need to bother about others
-	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
-	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-
-	// material * lightmap + luma
-	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
-	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
-	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
-
-	current = R_InitRenderingState(r_state_world_material_lightmap_fb, true, "r_state_world_material_lightmap_fb", vao_brushmodel_lm_unit1);
-	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
-	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_decal);
-
-	// no fullbrights, 3 units: blend(material + luma, lightmap) 
-	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
-	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
-	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
-
-	// lumas enabled, 3 units
-	current = R_InitRenderingState(r_state_world_material_luma_lightmap, true, "r_state_world_material_luma_lightmap", vao_brushmodel);
-	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
-	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
-	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
 }

@@ -24,9 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern int glx, gly, glwidth, glheight;
 
-void GL_BeginRendering(int *x, int *y, int *width, int *height);
-void GL_EndRendering(void);
-void GL_Set2D(void);
+void R_BeginRendering(int *x, int *y, int *width, int *height);
+void R_EndRendering(void);
+void R_Set2D(void);
 void R_PolyBlend(void);
 void R_OnDisconnect(void);
 void R_StateDefault3D(void);
@@ -82,7 +82,6 @@ extern int r_framecount;
 // palette
 void Check_Gamma(unsigned char *pal);
 void VID_SetPalette(unsigned char *palette);
-void GL_Init(void);
 
 void R_Initialise(void);
 float R_WaterAlpha(void);

@@ -618,7 +618,7 @@ void R_InitialiseEntityStates(void)
 	state->blendingEnabled = true;
 }
 
-void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
+void R_StateBrushModelBeginDraw(entity_t* e, qbool polygonOffset)
 {
 	static r_state_id brushModelStates[] = {
 		r_state_brushmodel_opaque,
@@ -627,7 +627,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 		r_state_brushmodel_translucent_offset
 	};
 
-	R_TraceEnterRegion("GL_StateBeginDrawBrushModel", true);
+	R_TraceEnterRegion("R_StateBrushModelBeginDraw", true);
 	R_RotateForEntity(e);
 	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
 	if (e->alpha) {
@@ -637,7 +637,7 @@ void GL_StateBeginDrawBrushModel(entity_t* e, qbool polygonOffset)
 	R_TraceLeaveFunctionRegion;
 }
 
-void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
+void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 

@@ -50,7 +50,7 @@ extern qbool gl_mtexable;
 extern texture_ref shelltexture;
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured);
-void GL_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
+void R_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GLC_StateBeginUnderwaterCaustics(void);
 
 // gl_mesh.c

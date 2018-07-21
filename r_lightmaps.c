@@ -660,7 +660,7 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 	}
 }
 
-static void GL_CreateSurfaceLightmap(msurface_t *surf, int surfnum)
+static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
 {
 	int smax, tmax;
 	byte *base;
@@ -669,13 +669,13 @@ static void GL_CreateSurfaceLightmap(msurface_t *surf, int surfnum)
 	tmax = (surf->extents[1] >> 4) + 1;
 
 	if (smax > LIGHTMAP_WIDTH) {
-		Host_Error("GL_CreateSurfaceLightmap: smax = %d > BLOCK_WIDTH", smax);
+		Host_Error("%s: smax = %d > BLOCK_WIDTH", __FUNCTION__, smax);
 	}
 	if (tmax > LIGHTMAP_HEIGHT) {
-		Host_Error("GL_CreateSurfaceLightmap: tmax = %d > BLOCK_HEIGHT", tmax);
+		Host_Error("%s: tmax = %d > BLOCK_HEIGHT", __FUNCTION__, tmax);
 	}
 	if (smax * tmax > MAX_LIGHTMAP_SIZE) {
-		Host_Error("GL_CreateSurfaceLightmap: smax * tmax = %d > MAX_LIGHTMAP_SIZE", smax * tmax);
+		Host_Error("%s: smax * tmax = %d > MAX_LIGHTMAP_SIZE", __FUNCTION__, smax * tmax);
 	}
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
@@ -723,7 +723,7 @@ void R_BuildLightmaps(void)
 				continue;
 			}
 
-			GL_CreateSurfaceLightmap(m->surfaces + i, m->isworldmodel ? i : -1);
+			R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? i : -1);
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}

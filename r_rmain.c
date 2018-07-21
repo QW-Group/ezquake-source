@@ -1008,7 +1008,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 
 			switch (todraw->type) {
 				case mod_brush:
-					R_DrawBrushModel(&todraw->ent);
+					R_BrushModelDrawEntity(&todraw->ent);
 					break;
 				case mod_sprite:
 					if (todraw->ent.model->type == mod_sprite) {

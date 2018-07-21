@@ -1,6 +1,6 @@
 
-#ifndef GL_SKY_HEADER
-#define GL_SKY_HEADER
+#ifndef EZQUAKE_R_SKY_HEADER
+#define EZQUAKE_R_SKY_HEADER
 
 qbool R_DetermineSkyLimits(qbool *ignore_z);
 void Sky_MakeSkyVec2(float s, float t, int axis, vec3_t v);
@@ -22,4 +22,4 @@ void R_ClearSkyTextures(void);
 void R_LoadSky_f(void);
 extern qbool r_skyboxloaded;
 
-#endif
+#endif // EZQUAKE_R_SKY_HEADER
