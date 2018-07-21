@@ -60,7 +60,6 @@ typedef struct buffer_data_s {
 	// These set at creation
 	buffertype_t type;
 	bufferusage_t usage;
-	GLenum target;
 	GLsizei size;
 	GLuint storageFlags;         // flags for BufferStorage()
 	qbool using_storage;
@@ -159,10 +158,12 @@ static GLuint currentUniformBuffer;
 static GLuint currentDrawIndirectBuffer;
 static GLuint currentElementArrayBuffer;
 
-static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, GLenum target, const char* name, GLsizei size, GLenum usage)
+static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, const char* name, GLsizei size, bufferusage_t usage)
 {
 	buffer_data_t* buffer = NULL;
 	int i;
+
+	assert(usage < bufferusage_count);
 
 	if (name && name[0]) {
 		for (i = 0; i < buffer_count; ++i) {
@@ -170,6 +171,9 @@ static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, GLenum target, co
 				buffer = &buffer_data[i];
 				if (buffer->glref) {
 					qglDeleteBuffers(1, &buffer->glref);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+					Sys_Printf("buffer,free,%s,%u\n", name, buffer->size);
+#endif
 				}
 				break;
 			}
@@ -197,7 +201,6 @@ static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, GLenum target, co
 		}
 	}
 
-	buffer->target = target;
 	buffer->size = size;
 	buffer->usage = usage;
 	buffer->type = type;
@@ -209,7 +212,7 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 {
 	GLenum target = GL_BufferTypeToTarget(type);
 	GLenum glUsage = GL_BufferUsageToGLUsage(usage);
-	buffer_data_t* buffer = GL_BufferAllocateSlot(type, target, name, size, glUsage);
+	buffer_data_t* buffer = GL_BufferAllocateSlot(type, name, size, usage);
 	buffer_ref result;
 
 	buffer->persistent_mapped_ptr = NULL;
@@ -221,13 +224,16 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 	if (target == GL_ELEMENT_ARRAY_BUFFER) {
 		R_BindVertexArrayElementBuffer(result);
 	}
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("buffer,alloc,%s,%u\n", name, size);
+#endif
 	return result;
 }
 
 static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
 {
 	GLenum target = GL_BufferTypeToTarget(type);
-	buffer_data_t* buffer = GL_BufferAllocateSlot(type, target, name, size, usage);
+	buffer_data_t* buffer = GL_BufferAllocateSlot(type, name, size, usage);
 	buffer_ref ref;
 
 	qbool tripleBuffer = false;
@@ -294,6 +300,9 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 
 				memcpy(base, data, size);
 			}
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+			Sys_Printf("buffer,alloc,%s,%u\n", name, size * 3);
+#endif
 		}
 		else {
 			Con_Printf("\20opengl\21 triple-buffered allocation failed (%dKB)\n", (size * 3) / 1024);
@@ -302,6 +311,9 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 	}
 	else {
 		qglBufferStorage(target, size, data, storageFlags);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+		Sys_Printf("buffer,alloc,%s,%u\n", name, size);
+#endif
 	}
 
 	buffer->using_storage = true;
@@ -330,7 +342,7 @@ static void GL_UpdateBuffer(buffer_ref vbo, int size, void* data)
 		}
 		else {
 			GL_BindBuffer(vbo);
-			qglBufferSubData(buffer_data[vbo.index].target, 0, (GLsizeiptr)size, data);
+			qglBufferSubData(GL_BufferTypeToTarget(buffer_data[vbo.index].type), 0, (GLsizeiptr)size, data);
 		}
 
 		R_TraceLogAPICall("GL_UpdateBuffer(%s)", buffer_data[vbo.index].name);
@@ -358,11 +370,13 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 			}
 			else {
 				GL_BindBuffer(vbo);
-				qglUnmapBuffer(buffer_data[vbo.index].target);
+				qglUnmapBuffer(GL_BufferTypeToTarget(buffer_data[vbo.index].type));
 			}
 		}
 		qglDeleteBuffers(1, &buffer_data[vbo.index].glref);
-
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+		Sys_Printf("buffer,free-resize,%s,%u\n", buffer_data[vbo.index].name, buffer_data[vbo.index].size);
+#endif
 		buffer_data[vbo.index].next_free = next_free_buffer;
 
 		return GL_CreateFixedBuffer(buffer_data[vbo.index].type, buffer_data[vbo.index].name, size, data, buffer_data[vbo.index].usage);
@@ -373,8 +387,12 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 		}
 		else {
 			GL_BindBuffer(vbo);
-			qglBufferData(buffer_data[vbo.index].target, size, data, GL_BufferUsageToGLUsage(buffer_data[vbo.index].usage));
+			qglBufferData(GL_BufferTypeToTarget(buffer_data[vbo.index].type), size, data, GL_BufferUsageToGLUsage(buffer_data[vbo.index].usage));
 		}
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+		Sys_Printf("buffer,free-resize,%s,%u\n", buffer_data[vbo.index].name, buffer_data[vbo.index].size);
+		Sys_Printf("buffer,alloc-resize,%s,%u\n", buffer_data[vbo.index].name, size);
+#endif
 
 		buffer_data[vbo.index].size = size;
 		R_TraceLogAPICall("GL_ResizeBuffer(%s)", buffer_data[vbo.index].name);
@@ -402,7 +420,7 @@ static void GL_UpdateBufferSection(buffer_ref vbo, ptrdiff_t offset, int size, c
 		}
 		else {
 			GL_BindBuffer(vbo);
-			qglBufferSubData(buffer_data[vbo.index].target, offset, size, data);
+			qglBufferSubData(GL_BufferTypeToTarget(buffer_data[vbo.index].type), offset, size, data);
 		}
 	}
 	R_TraceLogAPICall("GL_UpdateBufferSection(%s)", buffer_data[vbo.index].name);
@@ -416,6 +434,9 @@ static void GL_BufferShutdown(void)
 		if (buffer_data[i].glref) {
 			if (qglDeleteBuffers) {
 				qglDeleteBuffers(1, &buffer_data[i].glref);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+				Sys_Printf("buffer,free,%s,%u\n", buffer_data[i].name, buffer_data[i].size);
+#endif
 			}
 		}
 	}
@@ -435,7 +456,7 @@ static void GL_BindBufferBase(buffer_ref ref, unsigned int index)
 	assert(ref.index);
 	assert(buffer_data[ref.index].glref);
 
-	qglBindBufferBase(buffer_data[ref.index].target, index, buffer_data[ref.index].glref);
+	qglBindBufferBase(GL_BufferTypeToTarget(buffer_data[ref.index].type), index, buffer_data[ref.index].glref);
 }
 
 static void GL_BindBufferRange(buffer_ref ref, unsigned int index, ptrdiff_t offset, int size)
@@ -450,7 +471,7 @@ static void GL_BindBufferRange(buffer_ref ref, unsigned int index, ptrdiff_t off
 	assert(offset >= 0);
 	assert(offset + size <= buffer_data[ref.index].size * (buffer_data[ref.index].persistent_mapped_ptr ? 3 : 1));
 
-	qglBindBufferRange(buffer_data[ref.index].target, index, buffer_data[ref.index].glref, offset, size);
+	qglBindBufferRange(GL_BufferTypeToTarget(buffer_data[ref.index].type), index, buffer_data[ref.index].glref, offset, size);
 }
 
 static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
@@ -489,14 +510,16 @@ static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
 static void GL_BindBuffer(buffer_ref ref)
 {
 	qbool switched;
+	GLenum glTarget;
 
 	if (!(R_BufferReferenceIsValid(ref) && buffer_data[ref.index].glref)) {
 		R_TraceLogAPICall("GL_BindBuffer(<invalid-reference:%s>)", buffer_data[ref.index].name);
 		return;
 	}
 
-	switched = GL_BindBufferImpl(buffer_data[ref.index].target, buffer_data[ref.index].glref);
-	if (buffer_data[ref.index].target == GL_ELEMENT_ARRAY_BUFFER) {
+	glTarget = GL_BufferTypeToTarget(buffer_data[ref.index].type);
+	switched = GL_BindBufferImpl(glTarget, buffer_data[ref.index].glref);
+	if (buffer_data[ref.index].type == buffertype_index) {
 		R_BindVertexArrayElementBuffer(ref);
 	}
 
