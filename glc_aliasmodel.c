@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
+void R_GLC_DisableColorPointer(void);
 
 // Which pose to use if shadow to be drawn
 static int lastposenum;
@@ -334,6 +335,11 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 {
 	GLC_StateBeginAliasOutlineFrame();
 
+	// Limit outline width, since even width == 3 can be considered as cheat.
+	R_GLC_DisableColorPointer();
+	R_CustomColor(0, 0, 0, 1);
+	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
+
 	GL_DrawArrays(primitive, 0, verts);
 }
 
@@ -347,6 +353,7 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 
 	GLC_StateBeginAliasOutlineFrame();
+	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;

@@ -265,14 +265,7 @@ void GL_ApplyRenderingState(r_state_id id)
 	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
 	GL_ApplySimpleToggle(state, current, line.smooth, GL_LINE_SMOOTH);
-	if (gl_fogenable.integer) {
-		GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
-	}
-	else if (current->fog.enabled) {
-		glDisable(GL_FOG);
-		R_TraceLogAPICall("glDisable(GL_FOG)");
-		current->fog.enabled = false;
-	}
+
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
 		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
 		float units = (state->polygonOffset.option == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
@@ -338,7 +331,7 @@ void GL_ApplyRenderingState(r_state_id id)
 		);
 		R_TraceLogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
-	if (buffers.supported && state->vao_id != currentVAO) {
+	if (buffers.supported && (state->vao_id != currentVAO || current->glc_vao_force_rebind)) {
 		R_BindVertexArray(state->vao_id);
 	}
 
@@ -862,13 +855,14 @@ qbool R_VertexArrayCreated(r_vao_id vao)
 
 void R_BindVertexArray(r_vao_id vao)
 {
-	if (currentVAO != vao) {
+	if (currentVAO != vao || opengl.rendering_state.glc_vao_force_rebind) {
 		assert(vao == vao_none || R_VertexArrayCreated(vao));
 
 		renderer.BindVertexArray(vao);
 
 		currentVAO = vao;
 		R_TraceLogAPICall("BindVertexArray(%s)", vaoNames[vao]);
+		opengl.rendering_state.glc_vao_force_rebind = false;
 	}
 }
 
@@ -940,6 +934,17 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 	}
 }
 
+void R_GLC_DisableColorPointer(void)
+{
+	if (opengl.rendering_state.glc_color_array_enabled) {
+		glDisableClientState(GL_COLOR_ARRAY);
+		R_TraceLogAPICall("glDisableClientState(GL_COLOR_ARRAY)");
+		opengl.rendering_state.colorValid = false;
+		opengl.rendering_state.glc_color_array_enabled = false;
+		opengl.rendering_state.glc_vao_force_rebind = true;
+	}
+}
+
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (unit < 0 || unit >= sizeof(opengl.rendering_state.glc_texture_array_enabled) / sizeof(opengl.rendering_state.glc_texture_array_enabled[0])) {
@@ -975,6 +980,8 @@ void GLC_ApplyRenderingState(r_state_id id)
 	rendering_state_t* current = &opengl.rendering_state;
 	rendering_state_t* state = &states[id];
 	int i;
+
+	R_TraceEnterRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
 
 	// Alpha-testing
 	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
@@ -1019,7 +1026,18 @@ void GLC_ApplyRenderingState(r_state_id id)
 			current->color[2] = state->color[2],
 			current->color[3] = state->color[3]
 		);
+		R_TraceLogAPICall("glColor4f(%f %f %f %f)", state->color[0], state->color[1], state->color[2], state->color[3]);
 		current->colorValid = true;
+	}
+
+	// Fog
+	if (r_refdef2.fog_enabled) {
+		GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
+	}
+	else {
+		current->fog.enabled = false;
+		glDisable(GL_FOG);
+		R_TraceLogAPICall("glDisable(GL_FOG)");
 	}
 
 	if (state->vao_id) {
@@ -1027,5 +1045,14 @@ void GLC_ApplyRenderingState(r_state_id id)
 	}
 
 	GL_ApplyRenderingState(id);
+
+	R_TraceLeaveRegion(true);
 }
+
+void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode)
+{
+	state->textureUnits[index].enabled = enabled;
+	state->textureUnits[index].mode = mode;
+}
+
 #endif // RENDERER_OPTION_CLASSIC_OPENGL

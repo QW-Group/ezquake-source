@@ -574,8 +574,7 @@ void R_InitialiseEntityStates(void)
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_back;
 	state->polygonMode = r_polygonmode_line;
-	// limit outline width, since even width == 3 can be considered as cheat.
-	state->line.width = bound(0.1, gl_outline_width.value, 3.0);
+	state->line.width = 0.1;
 	state->line.flexible_width = true;
 	state->line.smooth = true;
 	state->color[0] = state->color[1] = state->color[2] = 0;
