@@ -35,7 +35,6 @@ typedef enum {
 
 	// non-shader (classic OpenGL) only
 	vao_aliasmodel_powerupshell,
-	vao_brushmodel_drawflat,
 	vao_brushmodel_details,
 	vao_brushmodel_lightmap_pass,
 	vao_brushmodel_lm_unit1,

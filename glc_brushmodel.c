@@ -78,14 +78,6 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			break;
 		}
-		case vao_brushmodel_drawflat:
-		{
-			// tmus: [lightmap]
-			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
-			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
-			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
-			break;
-		}
 		case vao_brushmodel_details:
 		{
 			// tmus: [details]
@@ -128,7 +120,7 @@ static void GLC_DrawFlat(model_t *model)
 	qbool use_vbo = buffers.supported && modelIndexes;
 	int last_lightmap = -2;
 
-	GLC_EnsureVAOCreated(vao_brushmodel_drawflat);
+	GLC_EnsureVAOCreated(vao_brushmodel_lightmap_pass);
 
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;

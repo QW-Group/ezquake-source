@@ -368,7 +368,7 @@ void R_BrushModelInitialiseStates(void)
 	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
 	current->fog.enabled = true;
 
-	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lm_unit1);
+	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lightmap_pass);
 	current->fog.enabled = true;
 	current->textureUnits[0].enabled = true;
 	current->textureUnits[0].mode = r_texunit_mode_blend;
