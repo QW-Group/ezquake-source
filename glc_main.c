@@ -39,7 +39,7 @@ qbool GLC_False(void)
 #define GLC_EnsureFinished                 GL_EnsureFinished
 #define GLC_RenderSceneBlur                GLC_RenderSceneBlurDo
 #define GLC_RenderView                     GLC_NoOperation
-#define GLC_PostProcessScreen              GLC_NoOperation
+#define GLC_PostProcessScreen              V_UpdatePalette
 #define GLC_Screenshot                     GL_Screenshot
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
