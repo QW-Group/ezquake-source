@@ -34,7 +34,6 @@ typedef struct deleteable_texture_s {
 	qbool moved_to_atlas;
 } deleteable_texture_t;
 
-#define TEMP_BUFFER_SIZE (MAXIMUM_ATLAS_TEXTURE_WIDTH * MAXIMUM_ATLAS_TEXTURE_HEIGHT * 4)
 static byte* atlas_texels;
 static byte* buffer;
 static byte* prev_atlas_texels;
@@ -47,6 +46,7 @@ static int atlas_block_width = 0;
 static int atlas_block_height = 0;
 static int atlas_chunk_size = 64;
 static qbool atlas_dirty;
+#define ATLAS_SIZE_IN_BYTES (atlas_texture_width * atlas_texture_height * 4)
 
 static cachepic_node_t wadpics[WADPIC_PIC_COUNT];
 static cachepic_node_t charsetpics[MAX_CHARSETS * 256];
@@ -188,7 +188,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = prev_atlas_texels;
 		}
 		else {
-			R_TextureGet(pic->texnum, TEMP_BUFFER_SIZE, buffer);
+			R_TextureGet(pic->texnum, ATLAS_SIZE_IN_BYTES, buffer);
 
 			input_image = buffer;
 		}
@@ -343,10 +343,10 @@ void CachePics_CreateAtlas(void)
 	double start_time = Sys_DoubleTime();
 
 	// Delete old atlas textures
-	atlas_texels = Q_malloc(TEMP_BUFFER_SIZE);
-	prev_atlas_texels = Q_malloc(TEMP_BUFFER_SIZE);
+	atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
+	prev_atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	if (R_TextureReferenceIsValid(atlas_texnum)) {
-		R_TextureGet(atlas_texnum, TEMP_BUFFER_SIZE, prev_atlas_texels);
+		R_TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels);
 	}
 	//memcpy(prev_atlas_texels, atlas_texels, TEMP_BUFFER_SIZE);
 	memset(atlas_texels, 0, sizeof(atlas_texels));
@@ -476,7 +476,7 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
-	buffer = Q_malloc(TEMP_BUFFER_SIZE);
+	buffer = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		texture_ref original = cur->data.pic->texnum;
 		if (CachePics_AddToAtlas(cur->data.pic) >= 0) {
