@@ -152,9 +152,11 @@ void Classic_LoadParticleTexures(int width, int height)
 		return;
 	}
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_LoadParticleTextures();
 	}
+#endif
 }
 
 void Classic_AllocParticles(void)

@@ -123,7 +123,7 @@ static void R_DrawChatIconBillboard(sprite3d_batch_id batch, ci_texture_t* _ptex
 	for (i = 0; i < 4; ++i) {
 		VectorScale(_coord[i], _p->size, coordinates[i]);
 		if (_p->rotangle) {
-			GLM_RotateVector(coordinates[i], _p->rotangle, vpn[0], vpn[1], vpn[2]);
+			R_RotateVector(coordinates[i], _p->rotangle, vpn[0], vpn[1], vpn[2]);
 		}
 		VectorAdd(coordinates[i], _p->org, coordinates[i]);
 	}

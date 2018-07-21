@@ -512,13 +512,13 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 
 	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
-	GL_PushModelviewMatrix(oldMatrix);
-	GL_TranslateModelview(ent->origin[0], ent->origin[1], ent->origin[2]);
-	GL_RotateModelview(ent->angles[1], 0, 0, 1);
+	R_PushModelviewMatrix(oldMatrix);
+	R_TranslateModelview(ent->origin[0], ent->origin[1], ent->origin[2]);
+	R_RotateModelview(ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasModelShadowDrawCall(ent, paliashdr, lastposenum, shadevector);
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 }
 
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector)
@@ -597,7 +597,7 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	GL_PushModelviewMatrix(oldMatrix);
+	R_PushModelviewMatrix(oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	// FIXME: think need put it after caustics
@@ -608,6 +608,6 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 		GLC_DrawPowerupShell(clmodel, ent->effects, oldframe, frame);
 	}
 
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 	GL_LeaveTracedRegion(true);
 }

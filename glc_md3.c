@@ -63,7 +63,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	mod = ent->model;
 
-	GL_PushModelviewMatrix(oldMatrix);
+	R_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity (ent);
 
 	// 
@@ -74,7 +74,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
-	GL_ScaleModelview(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
+	R_ScaleModelview(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	R_CustomColor(r_modelalpha, r_modelalpha, r_modelalpha, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
@@ -150,5 +150,5 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
 	}
 
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 }

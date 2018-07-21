@@ -338,7 +338,7 @@ void R_DrawAliasModel(entity_t *ent)
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
 	GL_EnterTracedRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
-	GL_PushModelviewMatrix(oldMatrix);
+	R_PushModelviewMatrix(oldMatrix);
 	GL_StateBeginDrawAliasModel(ent, paliashdr);
 
 	//get lighting information
@@ -365,7 +365,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
 
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
 	if (R_CanDrawModelShadow(ent)) {

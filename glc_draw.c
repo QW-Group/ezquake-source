@@ -130,8 +130,8 @@ static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, 
 	float v2[4] = { x2, y2, 0, 1 };
 	byte color[4];
 
-	GLM_MultiplyVector(cachedMatrix, v1, v1);
-	GLM_MultiplyVector(cachedMatrix, v2, v2);
+	R_MultiplyVector(cachedMatrix, v1, v1);
+	R_MultiplyVector(cachedMatrix, v2, v2);
 
 	memcpy(color, targ->colour, 4);
 	targ->pos[0] = v1[0];
@@ -266,11 +266,11 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 		}
 	}
 
-	GL_PushModelviewMatrix(modelviewMatrix);
-	GL_PushProjectionMatrix(projectionMatrix);
+	R_PushModelviewMatrix(modelviewMatrix);
+	R_PushProjectionMatrix(projectionMatrix);
 
-	GL_IdentityModelView();
-	GL_IdentityProjectionView();
+	R_IdentityModelView();
+	R_IdentityProjectionView();
 
 	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
 		R_SetTextureFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
@@ -328,6 +328,6 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 		GLC_End();
 	}
 
-	GL_PopProjectionMatrix(projectionMatrix);
-	GL_PopModelviewMatrix(modelviewMatrix);
+	R_PopProjectionMatrix(projectionMatrix);
+	R_PopModelviewMatrix(modelviewMatrix);
 }

@@ -206,7 +206,11 @@ extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 qbool GLM_LoadProgramFunctions(void);
+#else
+#define GLM_LoadProgramFunctions() (false)
+#endif
 qbool GLM_LoadStateFunctions(void);
 qbool GLM_LoadTextureManagementFunctions(void);
 void GL_LoadTextureManagementFunctions(void);

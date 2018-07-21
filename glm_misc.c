@@ -160,8 +160,8 @@ void GLM_PreRenderView(void)
 
 void GLM_SetupGL(void)
 {
-	memcpy(frameConstants.modelViewMatrix, GLM_ModelviewMatrix(), sizeof(frameConstants.modelViewMatrix));
-	memcpy(frameConstants.projectionMatrix, GLM_ProjectionMatrix(), sizeof(frameConstants.projectionMatrix));
+	memcpy(frameConstants.modelViewMatrix, R_ModelviewMatrix(), sizeof(frameConstants.modelViewMatrix));
+	memcpy(frameConstants.projectionMatrix, R_ProjectionMatrix(), sizeof(frameConstants.projectionMatrix));
 	VectorCopy(r_refdef.vieworg, frameConstants.position);
 
 	frameConstantsUploaded = false;

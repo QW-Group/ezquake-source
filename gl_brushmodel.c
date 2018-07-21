@@ -22,10 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_vao.h"
 #include "glm_brushmodel.h"
-
-typedef int(*CopyVertToBufferFunc_t)(model_t* mod, void* vbo_buffer, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture);
-int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture);
-int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture);
+#include "r_renderer.h"
 
 buffer_ref brushModel_vbo;
 buffer_ref vbo_brushElements;
@@ -131,9 +128,11 @@ void GL_CreateBrushModelVBO(buffer_ref instance_vbo)
 	// Copy VBO buffer across
 	brushModel_vbo = buffers.Create(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
 	}
+#endif
 
 	Q_free(buffer);
 }
@@ -178,7 +177,6 @@ int GL_MeasureVBOSizeForBrushModel(model_t* m)
 int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 {
 	int i, j;
-	CopyVertToBufferFunc_t addVertFunc = R_UseModernOpenGL() ? GLM_BrushModelCopyVertToBuffer : GLC_BrushModelCopyVertToBuffer;
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
@@ -215,18 +213,18 @@ int GL_PopulateVBOForBrushModel(model_t* m, void* vbo_buffer, int vbo_pos)
 
 				// Store position for drawing individual polys
 				poly->vbo_start = vbo_pos;
-				vbo_pos = addVertFunc(m, vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf, has_luma);
+				vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[0], lightmap, material, scaleS, scaleT, surf, has_luma);
 				++output;
 
 				start_vert = 1;
 				end_vert = poly->numverts - 1;
 
 				while (start_vert <= end_vert) {
-					vbo_pos = addVertFunc(m, vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
+					vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[start_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
 					++output;
 
 					if (start_vert < end_vert) {
-						vbo_pos = addVertFunc(m, vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
+						vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[end_vert], lightmap, material, scaleS, scaleT, surf, has_luma);
 						++output;
 					}
 

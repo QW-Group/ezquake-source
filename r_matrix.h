@@ -22,36 +22,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz);
 
-void GL_GetModelviewMatrix(float* matrix);
-void GL_GetProjectionMatrix(float* matrix);
-void GL_GetViewport(int* view);
+void R_GetModelviewMatrix(float* matrix);
+void R_GetProjectionMatrix(float* matrix);
+void R_GetViewport(int* view);
 
-void GL_IdentityProjectionView(void);
-void GL_IdentityModelView(void);
-void GL_RotateModelview(float angle, float x, float y, float z);
-void GL_ScaleModelview(float xScale, float yScale, float zScale);
-void GL_TranslateModelview(float x, float y, float z);
-void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar);
-void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
+void R_IdentityProjectionView(void);
+void R_IdentityModelView(void);
+void R_RotateModelview(float angle, float x, float y, float z);
+void R_ScaleModelview(float xScale, float yScale, float zScale);
+void R_TranslateModelview(float x, float y, float z);
+void R_Frustum(double left, double right, double bottom, double top, double zNear, double zFar);
+void R_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar);
 
-void GL_PushModelviewMatrix(float* matrix);
-void GL_PopModelviewMatrix(const float* matrix);
-void GL_PushProjectionMatrix(float* matrix);
-void GL_PopProjectionMatrix(const float* matrix);
+void R_PushModelviewMatrix(float* matrix);
+void R_PopModelviewMatrix(const float* matrix);
+void R_PushProjectionMatrix(float* matrix);
+void R_PopProjectionMatrix(const float* matrix);
 
-void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
-void GLM_TransformMatrix(float* matrix, float x, float y, float z);
-void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z);
-void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z);
+void R_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale);
+void R_TransformMatrix(float* matrix, float x, float y, float z);
+void R_RotateMatrix(float* matrix, float angle, float x, float y, float z);
+void R_RotateVector(vec3_t vector, float angle, float x, float y, float z);
 
-void GLM_SetIdentityMatrix(float* matrix);
-float* GLM_ModelviewMatrix(void);
-float* GLM_ProjectionMatrix(void);
+void R_SetIdentityMatrix(float* matrix);
+float* R_ModelviewMatrix(void);
+float* R_ProjectionMatrix(void);
 
-void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
-void GLM_MultiplyVector(const float* matrix, const float* vector, float* result);
-void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
-void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
+void R_MultiplyMatrix(const float* lhs, const float* rhs, float* target);
+void R_MultiplyVector(const float* matrix, const float* vector, float* result);
+void R_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result);
+void R_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 
 void R_RotateForEntity(struct entity_s* e);
 

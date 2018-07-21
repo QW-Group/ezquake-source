@@ -11,15 +11,21 @@ const buffer_ref null_buffer_reference = { 0 };
 
 void R_InitialiseBufferHandling(void)
 {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GL_InitialiseBufferHandling(&buffers);
 	}
-	else if (R_UseModernOpenGL()) {
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	if (R_UseModernOpenGL()) {
 		GL_InitialiseBufferHandling(&buffers);
 	}
-	else if (R_UseVulkan()) {
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
 		VK_InitialiseBufferHandling(&buffers);
 	}
+#endif
 }
 
 buffer_ref R_CreateInstanceVBO(void)

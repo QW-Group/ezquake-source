@@ -102,7 +102,7 @@ static void GLM_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 	}
 }
 
-void GLM_Prepare3DSprites(r_sprite3d_vert_t* verts, int batchCount, int vertexCount)
+void GLM_Prepare3DSprites(void)
 {
 	if (!batchCount || !vertexCount) {
 		return;
@@ -119,13 +119,13 @@ void GLM_Prepare3DSprites(r_sprite3d_vert_t* verts, int batchCount, int vertexCo
 	GL_LeaveRegion();
 }
 
-void GLM_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, int batchCount, int vertexCount)
+void GLM_Draw3DSprites()
 {
 	unsigned int i;
 	qbool current_alpha_test = false;
 	qbool first_batch = true;
 
-	if (!batchCount || (batchCount == 1 && !batches[0].count)) {
+	if (!batchCount || !vertexCount || (batchCount == 1 && !batches[0].count)) {
 		return;
 	}
 
@@ -204,4 +204,7 @@ void GLM_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 	}
 
 	GL_LeaveRegion();
+
+	batchCount = vertexCount = 0;
+	memset(batchMapping, 0, sizeof(batchMapping));
 }

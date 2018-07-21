@@ -67,8 +67,8 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
 
-	GLM_MultiplyVector(cachedMatrix, v1, v1);
-	GLM_MultiplyVector(cachedMatrix, v2, v2);
+	R_MultiplyVector(cachedMatrix, v1, v1);
+	R_MultiplyVector(cachedMatrix, v2, v2);
 
 	// TL TL BR BR
 	targ[0].pos[0] = v1[0]; targ[0].tex[0] = s;
@@ -101,12 +101,12 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 
 	R_BindVertexArray(vao_hud_polygons);
 	GLM_UseProgram(polygonProgram.program);
-	GLM_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
+	GLM_UniformMatrix4fv(polygonUniforms_matrix, 1, GL_FALSE, R_ProjectionMatrix());
 
 	GLM_StateBeginPolygonDraw();
 
 	for (i = start; i <= end; ++i) {
-		//GLM_TransformMatrix(GLM_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
+		//R_TransformMatrix(R_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
 		GLM_Uniform4fv(polygonUniforms_color, 1, polygonData.polygonColor[i]);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
@@ -185,7 +185,7 @@ void GLM_HudDrawLines(int start, int end)
 		uintptr_t offset = buffers.BufferOffset(line_vbo) / sizeof(glm_line_point_t);
 
 		GLM_UseProgram(line_program.program);
-		GLM_UniformMatrix4fv(line_matrix, 1, GL_FALSE, GLM_ProjectionMatrix());
+		GLM_UniformMatrix4fv(line_matrix, 1, GL_FALSE, R_ProjectionMatrix());
 		R_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {
@@ -392,7 +392,7 @@ void GLM_HudDrawCircles(texture_ref texture, int start, int end)
 	GLM_UseProgram(circleProgram.program);
 	R_BindVertexArray(vao_hud_circles);
 
-	GLM_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, GLM_ProjectionMatrix());
+	GLM_UniformMatrix4fv(drawCircleUniforms_matrix, 1, false, R_ProjectionMatrix());
 
 	for (i = start; i <= end; ++i) {
 		GLM_Uniform4fv(drawCircleUniforms_color, 1, circleData.drawCircleColors[i]);

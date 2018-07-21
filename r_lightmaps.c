@@ -442,9 +442,11 @@ void R_UploadChangedLightmaps(void)
 			frameStats.lightmap_min_changed = lightmap_array_size;
 			frameStats.lightmap_max_changed = 0;
 		}
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 		else if (R_UseModernOpenGL()) {
 			GLM_ComputeLightmaps();
 		}
+#endif
 	}
 	else if (frameStats.lightmap_min_changed < lightmap_array_size) {
 		unsigned int i;

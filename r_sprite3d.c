@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_buffers.h"
 #include "tr_types.h"
+#include "r_renderer.h"
 
 int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks;
 
@@ -96,11 +97,11 @@ static const char* batch_type_names[] = {
 
 #define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
 
-static r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
-static gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
-static unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
-static unsigned int batchCount;
-static unsigned int vertexCount;
+r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
+gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
+unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
+unsigned int batchCount;
+unsigned int vertexCount;
 static unsigned int indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 
 buffer_ref sprite3dVBO;
@@ -199,23 +200,6 @@ void GL_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, floa
 	}
 }
 
-void GL_Draw3DSprites(qbool inline_rendering)
-{
-	if (!batchCount || !vertexCount) {
-		return;
-	}
-
-	if (R_UseImmediateOpenGL() && inline_rendering) {
-		GLC_Draw3DSprites(batches, verts, batchCount, vertexCount);
-	}
-	else if (R_UseModernOpenGL() && !inline_rendering) {
-		GLM_Draw3DSprites(batches, verts, batchCount, vertexCount);
-	}
-
-	batchCount = vertexCount = 0;
-	memset(batchMapping, 0, sizeof(batchMapping));
-}
-
 void GL_Create3DSpriteVBO(void)
 {
 	if (!GL_BufferReferenceIsValid(sprite3dVBO)) {
@@ -283,12 +267,5 @@ void GL_Create3DSpriteIndexBuffer(void)
 		}
 
 		sprite3dIndexes = buffers.Create(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
-	}
-}
-
-void R_Prepare3DSprites(void)
-{
-	if (R_UseModernOpenGL()) {
-		GLM_Prepare3DSprites(verts, batchCount, vertexCount);
 	}
 }

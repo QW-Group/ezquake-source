@@ -593,6 +593,20 @@ static void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
 }
 #endif
 
+void R_Stub_NoOperation(void)
+{
+}
+
+qbool R_Stub_True(void)
+{
+	return true;
+}
+
+qbool R_Stub_False(void)
+{
+	return false;
+}
+
 void GL_InitialiseBufferHandling(api_buffers_t* api)
 {
 	qbool buffers_supported = renderer.vaos_supported;
@@ -629,6 +643,9 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 
 	api->supported = buffers_supported;
 	if (!api->supported) {
+		api->FrameReady = R_Stub_True;
+		api->InitialiseState = api->Shutdown = R_Stub_NoOperation;
+		api->StartFrame = api->EndFrame = R_Stub_NoOperation;
 		Con_Printf("Using GL buffers: disabled\n");
 	}
 	else {

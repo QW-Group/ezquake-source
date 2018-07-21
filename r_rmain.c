@@ -335,18 +335,18 @@ static void MYgluPerspective(double fovy, double aspect, double zNear, double zF
 	xmax = ymax * aspect;
 
 	if (cl_multiview.value == 2 && !cl_mvinset.value && cls.mvdplayback) {
-		GL_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
+		R_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
 	}
 	else if (CL_MultiviewActiveViews() == 3) {
 		if (CL_MultiviewCurrentView() == 2) {
-			GL_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
+			R_Frustum(xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
 		}
 		else {
-			GL_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
+			R_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
 		}
 	}
 	else {
-		GL_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
+		R_Frustum(xmin, xmax, ymin, ymax, zNear, zFar);
 	}
 }
 
@@ -447,7 +447,7 @@ void R_SetupViewport(void)
 	h = y - y2;
 
 	// Multiview
-	GL_IdentityProjectionView();
+	R_IdentityProjectionView();
 	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
@@ -831,7 +831,7 @@ void R_RenderView(void)
 	renderer.DrawWaterSurfaces();
 
 	// Render billboards
-	GL_Draw3DSprites(true);
+	renderer.Draw3DSpritesInline();
 
 	// Draw 3D hud elements
 	R_Render3DHud();
@@ -1055,9 +1055,12 @@ static void R_DrawEntities(void)
 {
 	visentlist_entrytype_t ent_type;
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_InitialiseAliasModelBatches();
 	}
+#endif
+
 	if (!r_drawentities.integer) {
 		return;
 	}

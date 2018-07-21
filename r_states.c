@@ -329,13 +329,13 @@ void R_StateDefault3D(void)
 	if (R_UseImmediateOpenGL()) {
 		GLC_PauseMatrixUpdate();
 	}
-	GL_IdentityModelView();
-	GL_RotateModelview(-90, 1, 0, 0);	    // put Z going up
-	GL_RotateModelview(90, 0, 0, 1);	    // put Z going up
-	GL_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
-	GL_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
-	GL_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
-	GL_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+	R_IdentityModelView();
+	R_RotateModelview(-90, 1, 0, 0);	    // put Z going up
+	R_RotateModelview(90, 0, 0, 1);	    // put Z going up
+	R_RotateModelview(-r_refdef.viewangles[2], 1, 0, 0);
+	R_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
+	R_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
+	R_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 	if (R_UseImmediateOpenGL()) {
 		GLC_ResumeMatrixUpdate();
 		GLC_LoadModelviewMatrix();
@@ -451,8 +451,8 @@ void GLC_StateBeginSceneBlur(void)
 {
 	R_ApplyRenderingState(r_state_scene_blur);
 
-	GL_IdentityModelView();
-	GL_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
+	R_IdentityModelView();
+	R_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 }
 
 void GLC_StateBeginDrawPolygon(void)
@@ -641,19 +641,19 @@ void GL_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 
 	R_RotateForEntity(ent);
 	if (ent->model->modhint == MOD_EYES) {
-		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
 		// double size of eyes, since they are really hard to see in gl
-		GL_ScaleModelview(paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+		R_ScaleModelview(paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
 	}
 	else if (ent->renderfx & RF_WEAPONMODEL) {
 		float scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
 
-		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_ScaleModelview(paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		R_ScaleModelview(paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	else {
-		GL_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		GL_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		R_ScaleModelview(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 
 	LEAVE_STATE;

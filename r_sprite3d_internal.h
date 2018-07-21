@@ -27,9 +27,15 @@ typedef struct gl_sprite3d_batch_s {
 	unsigned int count;
 } gl_sprite3d_batch_t;
 
-void GLM_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, int batchCount, int vertexCount);
-void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, int batchCount, int vertexCount);
-void GLM_Prepare3DSprites(r_sprite3d_vert_t* verts, int batchCount, int vertexCount);
+// FIXME: Bit ugly with these externs here
+#define MAX_VERTS_PER_SCENE (MAX_3DSPRITES_PER_BATCH * MAX_SPRITE3D_BATCHES * 18)
+
+extern r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
+extern gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
+extern unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
+
+extern unsigned int batchCount;
+extern unsigned int vertexCount;
 
 extern buffer_ref sprite3dVBO;
 extern buffer_ref sprite3dIndexes;

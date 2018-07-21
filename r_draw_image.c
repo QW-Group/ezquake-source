@@ -44,8 +44,8 @@ void Draw_AdjustImages(int first, int last, float x_offset)
 	float v1[4] = { x_offset, 0, 0, 1 };
 	float v2[4] = { 0, 0, 0, 1 };
 
-	GLM_MultiplyVector(cachedMatrix, v1, v1);
-	GLM_MultiplyVector(cachedMatrix, v2, v2);
+	R_MultiplyVector(cachedMatrix, v1, v1);
+	R_MultiplyVector(cachedMatrix, v2, v2);
 
 	x_offset = v1[0] - v2[0];
 
@@ -93,7 +93,7 @@ void R_DrawRectangle(float x, float y, float width, float height, byte* color)
 
 void R_Cache2DMatrix(void)
 {
-	GLM_MultiplyMatrix(GLM_ProjectionMatrix(), GLM_ModelviewMatrix(), cachedMatrix);
+	R_MultiplyMatrix(R_ProjectionMatrix(), R_ModelviewMatrix(), cachedMatrix);
 }
 
 void R_UndoLastCharacter(void)

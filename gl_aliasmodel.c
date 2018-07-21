@@ -137,11 +137,15 @@ void GL_CreateAliasModelVBO(buffer_ref instanceVBO)
 	}
 
 	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_CreateAliasModelVBO(vbo, instanceVBO, required_vbo_length, aliasModelData);
 	}
-	else if (R_UseImmediateOpenGL()) {
+#endif
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	if (R_UseImmediateOpenGL()) {
 		GLC_AllocateAliasPoseBuffer();
 	}
+#endif
 	Q_free(aliasModelData);
 }

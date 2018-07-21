@@ -220,7 +220,7 @@ void M_Unscale_Menu(void)
 	{
 		menuwidth = vid.width;
 		menuheight = vid.height;
-		GL_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
+		R_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
 	}
 }
 
@@ -1320,60 +1320,68 @@ void M_Shutdown(void)
 	Menu_MultiPlayer_Shutdown();
 }
 
-void M_Draw (void) {
-	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy)
+void M_Draw(void)
+{
+	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy) {
 		return;
+	}
 
 	if (!m_recursiveDraw) {
 		scr_copyeverything = 1;
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
-			Draw_ConsoleBackground (scr_con_current);
-		} else {
+			Draw_ConsoleBackground(scr_con_current);
+		}
+		else {
 			// if you don't like fade in ingame menu, uncomment this
 			// if (m_state != m_ingame && m_state != m_democtrl)
-			Draw_FadeScreen (scr_menualpha.value);
+			Draw_FadeScreen(scr_menualpha.value);
 		}
 
 		scr_fullupdate = 0;
-	} else {
+	}
+	else {
 		m_recursiveDraw = false;
 	}
 
 	if (scr_scaleMenu.value) {
 		if (vid.aspect > 1.0) {
-			menuheight = bound (240, (int)((vid.height / scr_scaleMenu.value) + 0.5f), 960);
-			menuwidth  = (int) ((menuheight * vid.aspect) + 0.5f);
-		} else {
-			menuwidth  = bound (320, (int)((vid.width / scr_scaleMenu.value) + 0.5f), 960);
-			menuheight = (int) ((menuwidth / vid.aspect) + 0.5f);
+			menuheight = bound(240, (int)((vid.height / scr_scaleMenu.value) + 0.5f), 960);
+			menuwidth = (int)((menuheight * vid.aspect) + 0.5f);
 		}
-		
-		GL_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
-	} else {
+		else {
+			menuwidth = bound(320, (int)((vid.width / scr_scaleMenu.value) + 0.5f), 960);
+			menuheight = (int)((menuwidth / vid.aspect) + 0.5f);
+		}
+
+		R_OrthographicProjection(0, menuwidth, menuheight, 0, -99999, 99999);
+	}
+	else {
 		menuwidth = vid.width;
 		menuheight = vid.height;
 	}
 
-	if (scr_centerMenu.value)
+	if (scr_centerMenu.value) {
 		m_yofs = (menuheight - 200) / 2;
-	else
+	}
+	else {
 		m_yofs = 0;
+	}
 
 	switch (m_state) {
 		case m_none: break;
-		case m_main:			M_Main_Draw (); break;
-		case m_singleplayer:	M_SinglePlayer_Draw (); break;
+		case m_main:			M_Main_Draw(); break;
+		case m_singleplayer:	M_SinglePlayer_Draw(); break;
 #ifndef CLIENTONLY
-		case m_load:			M_Load_Draw (); break;
-		case m_save:			M_Save_Draw (); break;
+		case m_load:			M_Load_Draw(); break;
+		case m_save:			M_Save_Draw(); break;
 #else
-		// keeps gcc happy
+			// keeps gcc happy
 		case m_load:
 		case m_save:
 			break;
 #endif
-		case m_multiplayer:		Menu_MultiPlayer_Draw (); break;
+		case m_multiplayer:		Menu_MultiPlayer_Draw(); break;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Draw(); break;
 		case m_options:			M_Options_Draw(); break;
 		case m_proxy:			Menu_Proxy_Draw(); break;
@@ -1388,11 +1396,11 @@ void M_Draw (void) {
 	}
 
 	if (scr_scaleMenu.value) {
-		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+		R_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 
 	if (m_entersound) {
-		S_LocalSound ("misc/menu2.wav");
+		S_LocalSound("misc/menu2.wav");
 		m_entersound = false;
 	}
 }

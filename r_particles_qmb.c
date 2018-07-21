@@ -545,7 +545,7 @@ static void QMB_FillParticleVertexBuffer(void)
 	int l;
 	int pos = 0;
 
-	GL_GetModelviewMatrix(oldMatrix);
+	R_GetModelviewMatrix(oldMatrix);
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
@@ -718,32 +718,32 @@ static void QMB_FillParticleVertexBuffer(void)
 
 					vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
 					if (vert) {
-						GLM_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
-						GLM_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
-						GLM_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
-						GLM_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
-						GLM_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
+						R_TransformMatrix(oldMatrix, p->org[0], p->org[1], p->org[2]);
+						R_ScaleMatrix(oldMatrix, p->size, p->size, p->size);
+						R_RotateMatrix(oldMatrix, p->endorg[0], 0, 1, 0);
+						R_RotateMatrix(oldMatrix, p->endorg[1], 0, 0, 1);
+						R_RotateMatrix(oldMatrix, p->endorg[2], 1, 0, 0);
 
-						GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+						R_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
-						GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+						R_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
-						GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+						R_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
-						GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+						R_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
 						QMB_BillboardAddVert(vert++, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 
 						vert = GL_Sprite3DAddEntry(pt->billboard_type, 4);
 						if (vert) {
-							GLM_RotateMatrix(oldMatrix, 180, 1, 0, 0);
+							R_RotateMatrix(oldMatrix, 180, 1, 0, 0);
 
-							GLM_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
+							R_MultiplyVector3f(oldMatrix, -p->size, -p->size, 0, vector);
 							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
-							GLM_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
+							R_MultiplyVector3f(oldMatrix, p->size, -p->size, 0, vector);
 							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
-							GLM_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
+							R_MultiplyVector3f(oldMatrix, p->size, p->size, 0, vector);
 							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
-							GLM_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
+							R_MultiplyVector3f(oldMatrix, -p->size, p->size, 0, vector);
 							QMB_BillboardAddVert(vert, pt, vector[0], vector[1], vector[2], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
 						}
 					}

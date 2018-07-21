@@ -469,7 +469,7 @@ void R_Viewport(int x, int y, int width, int height)
 	}
 }
 
-void GL_GetViewport(int* view)
+void R_GetViewport(int* view)
 {
 	view[0] = opengl.rendering_state.currentViewportX;
 	view[1] = opengl.rendering_state.currentViewportY;
@@ -549,15 +549,19 @@ void GL_InitialiseState(void)
 	GLC_InitialiseSkyStates();
 	R_InitialiseWorldStates();
 
-	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
-	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
+	R_SetIdentityMatrix(R_ProjectionMatrix());
+	R_SetIdentityMatrix(R_ModelviewMatrix());
 
 	memset(bound_textures, 0, sizeof(bound_textures));
 	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
 
-	buffers.InitialiseState();
+	if (buffers.supported) {
+		buffers.InitialiseState();
+	}
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	GLM_InitialiseProgramState();
+#endif
 }
 
 // These functions taken from gl_texture.c

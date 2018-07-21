@@ -106,11 +106,11 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 	}
 }
 
-void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, int batchCount, int vertexCount)
+void GLC_Draw3DSpritesInline(void)
 {
 	unsigned int i, j, k;
 
-	if (!batchCount) {
+	if (!batchCount || !vertexCount || (batchCount == 1 && !batches[0].count)) {
 		return;
 	}
 
@@ -220,4 +220,7 @@ void GLC_Draw3DSprites(gl_sprite3d_batch_t* batches, r_sprite3d_vert_t* verts, i
 
 		batch->count = 0;
 	}
+
+	batchCount = vertexCount = 0;
+	memset(batchMapping, 0, sizeof(batchMapping));
 }

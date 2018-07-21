@@ -16,6 +16,11 @@ void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
 {
 }
 
+qbool GLC_False(void)
+{
+	return false;
+}
+
 #define GLC_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLC_Viewport                       GL_Viewport
 #define GLC_RenderDynamicLightmaps         R_RenderDynamicLightmaps
@@ -32,6 +37,10 @@ void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
 #define GLC_InitTextureState               GL_InitTextureState
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
+#define GLC_Draw3DSprites                  GLC_NoOperation
+#define GLC_Prepare3DSprites               GLC_NoOperation
+#define GLC_Begin2DRendering               GLC_NoOperation    // GL_Framebuffer2DSwitch
+#define GLC_IsFramebufferEnabled3D         GLC_False
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
@@ -45,7 +54,7 @@ void GLC_Initialise(void)
 
 	GL_Init();
 	GL_PopulateConfig();
-	GLC_InitialiseVAOHandling();
+	renderer.vaos_supported = GLC_InitialiseVAOHandling();
 	GL_InitialiseBufferHandling(&buffers);
 	GL_InitialiseState();
 }

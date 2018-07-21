@@ -93,5 +93,5 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		surfaceInfo[0].texnum, null_texture_reference, false, ent->effects, ent->renderfx
 	);
 
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 }

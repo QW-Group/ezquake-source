@@ -34,6 +34,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "r_draw.h"
 #include "r_state.h"
 #include "r_trace.h"
+#include "r_renderer.h"
 
 void CachePics_Init(void);
 void Draw_InitCharset(void);
@@ -614,7 +615,7 @@ void Draw_Crosshair (void)
 			return;
 		}
 
-		GL_OrthographicProjection(0, width2d, height2d, 0, -99999, 99999);
+		R_OrthographicProjection(0, width2d, height2d, 0, -99999, 99999);
 
 		x += (crosshairscalemethod.integer ? 1 : (float)width2d / vid.width) * cl_crossx.value;
 		y += (crosshairscalemethod.integer ? 1 : (float)height2d / vid.height) * cl_crossy.value;
@@ -654,7 +655,7 @@ void Draw_Crosshair (void)
 
 		R_DrawImage(x - ofs1, y - ofs1, ofs1 + ofs2, ofs1 + ofs2, sl, tl, sh - sl, th - tl, col, false, texnum, false, true);
 
-		GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+		R_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
 	else if (crosshair.value) {
 		// Multiview
@@ -1120,9 +1121,9 @@ void Draw_EndDisc(void)
 //
 void GL_Set2D(void)
 {
-	GL_Framebuffer2DSwitch();
-	GL_IdentityModelView();
-	GL_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
+	renderer.Begin2DRendering();
+	R_IdentityModelView();
+	R_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	GL_ResetRegion(false);
 }
 

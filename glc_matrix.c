@@ -62,14 +62,14 @@ void GLC_PopModelviewMatrix(const float* matrix)
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(matrix);
-	GL_LogAPICall("GL_PopModelviewMatrix()");
+	GL_LogAPICall("R_PopModelviewMatrix()");
 }
 
 void GLC_PopProjectionMatrix(const float* matrix)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(matrix);
-	GL_LogAPICall("GL_PopProjectionMatrix()");
+	GL_LogAPICall("R_PopProjectionMatrix()");
 }
 
 void GLC_ScaleModelview(float xScale, float yScale, float zScale)
@@ -128,6 +128,6 @@ void GLC_TranslateModelview(float x, float y, float z)
 void GLC_LoadModelviewMatrix(void)
 {
 	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(GLM_ModelviewMatrix());
+	glLoadMatrixf(R_ModelviewMatrix());
 	GL_LogAPICall("glLoadMatrixf(modelview)");
 }

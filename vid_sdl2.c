@@ -57,6 +57,7 @@ void Sys_ActiveAppChanged (void);
 #include "qmb_particles.h"
 #include "r_state.h"
 #include "r_buffers.h"
+#include "r_renderer.h"
 
 void VK_SDL_SetupAttributes(void);
 void GLM_SDL_SetupAttributes(void);
@@ -1014,15 +1015,21 @@ static void VID_SDL_GL_SetupAttributes(void)
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_SDL_SetupAttributes();
 	}
-	else if (R_UseImmediateOpenGL()) {
+#endif
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	if (R_UseImmediateOpenGL()) {
 		GLC_SDL_SetupAttributes();
 	}
-	else if (R_UseVulkan()) {
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
 		VK_SDL_SetupAttributes();
 	}
+#endif
 
 	if (r_24bit_depth.integer == 1) {
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -1282,7 +1289,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
 
-	if (GL_FramebufferEnabled3D()) {
+	if (renderer.IsFramebufferEnabled3D()) {
 		int scaled_width = VID_ScaledWidth3D();
 		int scaled_height = VID_ScaledHeight3D();
 

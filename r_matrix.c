@@ -38,7 +38,7 @@ static void GLM_SetMatrix(float* target, const float* source)
 	memcpy(target, source, sizeof(float) * 16);
 }
 
-void GLM_SetIdentityMatrix(float* matrix)
+void R_SetIdentityMatrix(float* matrix)
 {
 	GLM_SetMatrix(matrix, identityMatrix);
 }
@@ -66,17 +66,17 @@ static void GLM_OrthographicProjection(float left, float right, float top, float
 	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 }
 
-float* GLM_ModelviewMatrix(void)
+float* R_ModelviewMatrix(void)
 {
 	return modelMatrix;
 }
 
-float* GLM_ProjectionMatrix(void)
+float* R_ProjectionMatrix(void)
 {
 	return projectionMatrix;
 }
 
-void GL_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
+void R_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
 	R_Cache2DMatrix();
@@ -86,7 +86,7 @@ void GL_OrthographicProjection(float left, float right, float top, float bottom,
 	}
 }
 
-void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z)
+void R_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 {
 	vec3_t vec = { x, y, z };
 	double s = sin(angle * M_PI / 180);
@@ -115,11 +115,11 @@ void GLM_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 	rotation[3] = rotation[7] = rotation[11] = 0;
 	rotation[15] = 1;
 
-	GLM_MultiplyMatrix(rotation, matrix, result);
+	R_MultiplyMatrix(rotation, matrix, result);
 	GLM_SetMatrix(matrix, result);
 }
 
-void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z)
+void R_RotateVector(vec3_t vector, float angle, float x, float y, float z)
 {
 	vec3_t vec = { x, y, z };
 	double s = sin(angle * M_PI / 180);
@@ -149,11 +149,11 @@ void GLM_RotateVector(vec3_t vector, float angle, float x, float y, float z)
 	rotation[3] = rotation[7] = rotation[11] = 0;
 	rotation[15] = 1;
 
-	GLM_MultiplyVector(rotation, input, output);
+	R_MultiplyVector(rotation, input, output);
 	VectorCopy(output, vector);
 }
 
-void GLM_TransformMatrix(float* matrix, float x, float y, float z)
+void R_TransformMatrix(float* matrix, float x, float y, float z)
 {
 	matrix[12] += matrix[0] * x + matrix[4] * y + matrix[8] * z;
 	matrix[13] += matrix[1] * x + matrix[5] * y + matrix[9] * z;
@@ -161,7 +161,7 @@ void GLM_TransformMatrix(float* matrix, float x, float y, float z)
 	matrix[15] += matrix[3] * x + matrix[7] * y + matrix[11] * z;
 }
 
-void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
+void R_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
 {
 	matrix[0] *= x_scale;
 	matrix[1] *= x_scale;
@@ -177,7 +177,7 @@ void GLM_ScaleMatrix(float* matrix, float x_scale, float y_scale, float z_scale)
 	matrix[11] *= z_scale;
 }
 
-void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target)
+void R_MultiplyMatrix(const float* lhs, const float* rhs, float* target)
 {
 	target[0] = lhs[0] * rhs[0] + lhs[1] * rhs[4] + lhs[2] * rhs[8] + lhs[3] * rhs[12];
 	target[1] = lhs[0] * rhs[1] + lhs[1] * rhs[5] + lhs[2] * rhs[9] + lhs[3] * rhs[13];
@@ -200,7 +200,7 @@ void GLM_MultiplyMatrix(const float* lhs, const float* rhs, float* target)
 	target[15] = lhs[12] * rhs[3] + lhs[13] * rhs[7] + lhs[14] * rhs[11] + lhs[15] * rhs[15];
 }
 
-void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result)
+void R_MultiplyVector3f(const float* matrix, float x, float y, float z, float* result)
 {
 	const float vector[4] = { x, y, z, 1 };
 
@@ -210,7 +210,7 @@ void GLM_MultiplyVector3f(const float* matrix, float x, float y, float z, float*
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
 
-void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
+void R_MultiplyVector(const float* matrix, const float* vector, float* result)
 {
 	result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
@@ -218,7 +218,7 @@ void GLM_MultiplyVector(const float* matrix, const float* vector, float* result)
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
 
-void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result)
+void R_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result)
 {
 	result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12];
 	result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13];
@@ -226,63 +226,63 @@ void GLM_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* resu
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15];
 }
 
-void GL_IdentityModelView(void)
+void R_IdentityModelView(void)
 {
-	GLM_SetIdentityMatrix(GLM_ModelviewMatrix());
+	R_SetIdentityMatrix(R_ModelviewMatrix());
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_IdentityModelview();
 	}
 }
 
-void GL_GetModelviewMatrix(float* matrix)
+void R_GetModelviewMatrix(float* matrix)
 {
 	memcpy(matrix, modelMatrix, sizeof(modelMatrix));
 }
 
-void GL_GetProjectionMatrix(float* matrix)
+void R_GetProjectionMatrix(float* matrix)
 {
 	memcpy(matrix, projectionMatrix, sizeof(projectionMatrix));
 }
 
-void GL_RotateModelview(float angle, float x, float y, float z)
+void R_RotateModelview(float angle, float x, float y, float z)
 {
-	GLM_RotateMatrix(modelMatrix, angle, x, y, z);
+	R_RotateMatrix(modelMatrix, angle, x, y, z);
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_RotateModelview(angle, x, y, z);
 	}
 }
 
-void GL_TranslateModelview(float x, float y, float z)
+void R_TranslateModelview(float x, float y, float z)
 {
-	GLM_TransformMatrix(modelMatrix, x, y, z);
+	R_TransformMatrix(modelMatrix, x, y, z);
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_TranslateModelview(x, y, z);
 	}
 }
 
-void GL_IdentityProjectionView(void)
+void R_IdentityProjectionView(void)
 {
-	GLM_SetIdentityMatrix(GLM_ProjectionMatrix());
+	R_SetIdentityMatrix(R_ProjectionMatrix());
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_IdentityProjectionView();
 	}
 }
 
-void GL_PushModelviewMatrix(float* matrix)
+void R_PushModelviewMatrix(float* matrix)
 {
 	memcpy(matrix, modelMatrix, sizeof(modelMatrix));
 }
 
-void GL_PushProjectionMatrix(float* matrix)
+void R_PushProjectionMatrix(float* matrix)
 {
 	memcpy(matrix, projectionMatrix, sizeof(projectionMatrix));
 }
 
-void GL_PopModelviewMatrix(const float* matrix)
+void R_PopModelviewMatrix(const float* matrix)
 {
 	memcpy(modelMatrix, matrix, sizeof(modelMatrix));
 
@@ -291,7 +291,7 @@ void GL_PopModelviewMatrix(const float* matrix)
 	}
 }
 
-void GL_PopProjectionMatrix(const float* matrix)
+void R_PopProjectionMatrix(const float* matrix)
 {
 	memcpy(projectionMatrix, matrix, sizeof(projectionMatrix));
 
@@ -300,16 +300,16 @@ void GL_PopProjectionMatrix(const float* matrix)
 	}
 }
 
-void GL_ScaleModelview(float xScale, float yScale, float zScale)
+void R_ScaleModelview(float xScale, float yScale, float zScale)
 {
-	GLM_ScaleMatrix(modelMatrix, xScale, yScale, zScale);
+	R_ScaleMatrix(modelMatrix, xScale, yScale, zScale);
 
 	if (R_UseImmediateOpenGL()) {
 		GLC_ScaleModelview(xScale, yScale, zScale);
 	}
 }
 
-void GL_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
+void R_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
 	float perspective[16] = { 0 };
 	float new_projection[16];
@@ -322,8 +322,8 @@ void GL_Frustum(double left, double right, double bottom, double top, double zNe
 	perspective[11] = -1;
 	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
 
-	GLM_MultiplyMatrix(perspective, GLM_ProjectionMatrix(), new_projection);
-	GLM_SetMatrix(GLM_ProjectionMatrix(), new_projection);
+	R_MultiplyMatrix(perspective, R_ProjectionMatrix(), new_projection);
+	GLM_SetMatrix(R_ProjectionMatrix(), new_projection);
 	
 	if (R_UseImmediateOpenGL()) {
 		GLC_Frustum(left, right, bottom, top, zNear, zFar);
@@ -340,11 +340,11 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 
 void R_RotateForEntity(entity_t *e)
 {
-	GL_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
+	R_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
 
-	GL_RotateModelview(e->angles[1], 0, 0, 1);
-	GL_RotateModelview(-e->angles[0], 0, 1, 0);
-	GL_RotateModelview(e->angles[2], 1, 0, 0);
+	R_RotateModelview(e->angles[1], 0, 0, 1);
+	R_RotateModelview(-e->angles[0], 0, 1, 0);
+	R_RotateModelview(e->angles[2], 1, 0, 0);
 }
 
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz)
@@ -355,9 +355,9 @@ qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, fl
 	int view[4];
 	int i;
 
-	GL_GetModelviewMatrix(model);
-	GL_GetProjectionMatrix(proj);
-	GL_GetViewport(view);
+	R_GetModelviewMatrix(model);
+	R_GetProjectionMatrix(proj);
+	R_GetViewport(view);
 
 	for (i = 0; i < 4; i++) {
 		out[i] = in[0] * model[0 * 4 + i] + in[1] * model[1 * 4 + i] + in[2] * model[2 * 4 + i] + in[3] * model[3 * 4 + i];

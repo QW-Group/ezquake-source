@@ -164,7 +164,7 @@ void GLC_DrawVelocity3D(void)
 		break;
 	}
 	glPopAttrib();
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 }*/
 
 void GLC_RenderSceneBlurDo(float alpha)
@@ -186,8 +186,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	R_TextureSizeRoundUp(glwidth, glheight, &vwidth, &vheight);
 
 	// go 2d
-	GL_PushProjectionMatrix(oldProjectionMatrix);
-	GL_PushModelviewMatrix(oldModelviewMatrix);
+	R_PushProjectionMatrix(oldProjectionMatrix);
+	R_PushModelviewMatrix(oldModelviewMatrix);
 
 	GLC_StateBeginSceneBlur();
 
@@ -216,8 +216,8 @@ void GLC_RenderSceneBlurDo(float alpha)
 	}
 
 	// Restore matrices.
-	GL_PopProjectionMatrix(oldProjectionMatrix);
-	GL_PopModelviewMatrix(oldModelviewMatrix);
+	R_PopProjectionMatrix(oldProjectionMatrix);
+	R_PopModelviewMatrix(oldModelviewMatrix);
 
 	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
 	// so I copy frame not every frame.

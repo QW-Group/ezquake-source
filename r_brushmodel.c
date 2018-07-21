@@ -1498,7 +1498,7 @@ void R_DrawBrushModel(entity_t *e)
 		}
 	}
 
-	GL_PushModelviewMatrix(oldMatrix);
+	R_PushModelviewMatrix(oldMatrix);
 
 	GL_StateBeginDrawBrushModel(e, polygonOffset);
 
@@ -1531,7 +1531,7 @@ void R_DrawBrushModel(entity_t *e)
 		// } END shaman FIX for no simple textures on world brush models
 	}
 
-	GL_PopModelviewMatrix(oldMatrix);
+	R_PopModelviewMatrix(oldMatrix);
 
 	GL_LeaveTracedRegion(true);
 }
