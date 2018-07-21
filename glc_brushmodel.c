@@ -120,8 +120,6 @@ static void GLC_DrawFlat(model_t *model)
 	qbool use_vbo = buffers.supported && modelIndexes;
 	int last_lightmap = -2;
 
-	GLC_EnsureVAOCreated(vao_brushmodel_lightmap_pass);
-
 	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
 		return;
 	}
@@ -287,12 +285,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 			null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
 			texture_unit_count = 2;
 		}
-
-		GLC_EnsureVAOCreated(vao_brushmodel);
-		GLC_EnsureVAOCreated(vao_brushmodel_lm_unit1);
 	}
 	else {
-		GLC_EnsureVAOCreated(vao_brushmodel);
 		state = r_state_world_singletexture_glc;
 	}
 

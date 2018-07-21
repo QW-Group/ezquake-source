@@ -40,13 +40,11 @@ void GLC_StateBeginFastTurbPoly(byte color[4])
 
 void GLC_StateBeginBlendLightmaps(qbool use_buffers)
 {
-	GLC_EnsureVAOCreated(vao_brushmodel_lightmap_pass);
 	R_ApplyRenderingState(r_state_world_blend_lightmaps);
 }
 
 void GLC_StateBeginCausticsPolys(void)
 {
-	GLC_EnsureVAOCreated(vao_brushmodel);
 	R_ApplyRenderingState(r_state_world_caustics);
 }
 
@@ -113,7 +111,10 @@ void GLC_StateBeginRenderLumas(void)
 
 void GLC_StateBeginEmitDetailPolys(void)
 {
+	extern texture_ref detailtexture;
+
 	R_ApplyRenderingState(r_state_world_details);
+	R_TextureUnitBind(0, detailtexture);
 }
 
 void GLC_StateBeginDrawMapOutline(void)
