@@ -44,9 +44,9 @@ extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
 extern cvar_t allow_scripts;
 
-cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
-cvar_t	cvar_viewhelp    = {"cvar_viewhelp",    "1"};
-cvar_t  cvar_viewlatched = {"cvar_viewlatched", "1"};
+static cvar_t cvar_viewdefault = {"cvar_viewdefault", "1"};
+static cvar_t cvar_viewhelp    = {"cvar_viewhelp",    "1"};
+static cvar_t cvar_viewlatched = {"cvar_viewlatched", "1"};
 
 #define VAR_HASHPOOL_SIZE 1024
 
@@ -58,15 +58,17 @@ cvar_t *cvar_vars;
 static char	*cvar_null_string = "";
 
 // Use this to walk through all vars
-cvar_t *Cvar_Next (cvar_t *var)
+cvar_t* Cvar_Next(cvar_t *var)
 {
-	if (var)
+	if (var) {
 		return var->next;
-	else
+	}
+	else {
 		return cvar_vars;
+	}
 }
 
-cvar_t *Cvar_Find (const char *var_name)
+cvar_t *Cvar_Find(const char *var_name)
 {
 	cvar_t *var;
 	int key = Com_HashKey (var_name) % VAR_HASHPOOL_SIZE;
@@ -84,8 +86,9 @@ float Cvar_Value (const char *var_name)
 {
 	cvar_t *var = Cvar_Find (var_name);
 
-	if (!var)
+	if (!var) {
 		return 0;
+	}
 	return Q_atof (var->string);
 }
 
@@ -302,36 +305,36 @@ void Cvar_SetValue (cvar_t *var, const float value)
 	Cvar_Set (var, val);
 }
 
-void Cvar_SetValueByName (const char *var_name, const float value)
+void Cvar_SetValueByName(const char *var_name, const float value)
 {
 	char val[32];
 
-	snprintf (val, sizeof (val), "%.8g", value);
-	Cvar_SetByName (var_name, val);
+	snprintf(val, sizeof(val), "%.8g", value);
+	Cvar_SetByName(var_name, val);
 }
 
-void Cvar_Register (cvar_t *var)
+void Cvar_Register(cvar_t *var)
 {
 	int key;
-	cvar_t *old = Cvar_Find (var->name);
+	cvar_t *old = Cvar_Find(var->name);
 
 #ifdef SERVERONLY
 	char* value;
 
 	// first check to see if it has already been defined
 	if (old) {
-		Con_Printf ("Can't register variable %s, already defined\n", var->name);
+		Con_Printf("Can't register variable %s, already defined\n", var->name);
 		return;
 	}
 
 	// check for overlap with a command
-	if (Cmd_Exists (var->name)) {
-		Con_Printf ("Cvar_Register: %s is a command\n", var->name);
+	if (Cmd_Exists(var->name)) {
+		Con_Printf("Cvar_Register: %s is a command\n", var->name);
 		return;
 	}
 
 	// link the variable in
-	key = Com_HashKey (var->name);
+	key = Com_HashKey(var->name);
 	var->hash_next = cvar_hash[key];
 	cvar_hash[key] = var;
 	var->next = cvar_vars;
@@ -340,23 +343,20 @@ void Cvar_Register (cvar_t *var)
 	// set it through the function to be consistent
 	value = var->string;
 	var->string = Q_strdup("");
-	Cvar_SetROM (var, value);
+	Cvar_SetROM(var, value);
 #else
 	// we already register cvar, warn about it
-	if (old && !(old->flags & CVAR_USER_CREATED))
-	{
+	if (old && !(old->flags & CVAR_USER_CREATED)) {
 		// allow re-register latched cvar
-		if (old->flags & CVAR_LATCH)
-		{
+		if (old->flags & CVAR_LATCH) {
 			// if we have a latched string, take that value now
-			if ( old->latchedString )
-			{
+			if (old->latchedString) {
 				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
 				Q_free(old->string);
-				old->string  = old->latchedString;
+				old->string = old->latchedString;
 				old->latchedString = NULL;
-				old->value   = Q_atof (old->string);
-				old->integer = Q_atoi (old->string);
+				old->value = Q_atof(old->string);
+				old->integer = Q_atoi(old->string);
 				StringToRGB_W(old->string, old->color);
 				old->modified = true;
 			}
@@ -367,47 +367,47 @@ void Cvar_Register (cvar_t *var)
 
 		// warn if CVAR_SILENT is not set
 		if (!(old->flags & CVAR_SILENT))
-			Com_Printf ("Can't register variable %s, already defined\n", var->name);
+			Com_Printf("Can't register variable %s, already defined\n", var->name);
 
 		return;
 	}
 
-	if (old && old == var)
+	if (old && old == var) {
 		Sys_Error("Cvar_Register: something wrong with %s", var->name);
+	}
 
-	if (var->defaultvalue)
+	if (var->defaultvalue) {
 		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
+	}
 
 	var->defaultvalue = Q_strdup_named(var->string, var->name);
-	if (old)
-	{
+	if (old) {
 		char string[512];
 
-		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
-		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
-		Cvar_Delete (old->name);
+		var->flags |= old->flags & ~(CVAR_USER_CREATED | CVAR_TEMP);
+		strlcpy(string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
+		Cvar_Delete(old->name);
 		var->string = Q_strdup_named(string, var->name);
 	}
-	else
-	{
+	else {
 		// allocate the string on zone because future sets will Q_free it
 		var->string = Q_strdup_named(var->string, var->name);
 	}
 
-	var->value = Q_atof (var->string);
-	var->integer = Q_atoi (var->string);
+	var->value = Q_atof(var->string);
+	var->integer = Q_atoi(var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
 	// link the variable in
-	key = Com_HashKey (var->name) % VAR_HASHPOOL_SIZE;
+	key = Com_HashKey(var->name) % VAR_HASHPOOL_SIZE;
 	var->hash_next = cvar_hash[key];
 	cvar_hash[key] = var;
 	var->next = cvar_vars;
 	cvar_vars = var;
 
 #ifdef WITH_TCL
-	TCL_RegisterVariable (var);
+	TCL_RegisterVariable(var);
 #endif
 
 	Cvar_AddCvarToGroup(var);
@@ -667,13 +667,13 @@ cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 	v->hash_next = cvar_hash[key];
 	cvar_hash[key] = v;
 
-	v->name = Q_strdup(name);
-	v->string = Q_strdup(string);
+	v->name = Q_strdup_named(name, name);
+	v->string = Q_strdup_named(string, name);
 	v->value = Q_atof(v->string);
 	v->flags = cvarflags;
 #ifndef SERVERONLY
 	v->flags |= CVAR_USER_CREATED;
-	v->defaultvalue = Q_strdup(string);
+	v->defaultvalue = Q_strdup_named(string, name);
 	if (cbuf_current == &cbuf_server) {
 		v->flags |= CVAR_MOD_CREATED;
 	}
@@ -973,36 +973,38 @@ void Cvar_AutoReset(cvar_t *var)
 }
 
 // silently set value for latched cvar
-void Cvar_LatchedSet (cvar_t *var, char *value)
+void Cvar_LatchedSet(cvar_t *var, char *value)
 {
 	// yea, do not mess things
-	if ( !(var->flags & CVAR_LATCH) )
+	if (!(var->flags & CVAR_LATCH)) {
 		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
+	}
 
 	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
 	Cvar_Set(var, value);
 	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
 	var->flags &= ~CVAR_SILENT;
 	// actually set value
-	Cvar_Register( var );
+	Cvar_Register(var);
 }
 
 // silently set value for latched cvar
-void Cvar_LatchedSetValue (cvar_t *var, float value)
+void Cvar_LatchedSetValue(cvar_t *var, float value)
 {
 	// yea, do not mess things
-	if ( !(var->flags & CVAR_LATCH) )
+	if (!(var->flags & CVAR_LATCH)) {
 		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
+	}
 
 	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
 	Cvar_SetValue(var, value);
 	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
 	var->flags &= ~CVAR_SILENT;
 	// actually set value
-	Cvar_Register( var );
+	Cvar_Register(var);
 }
 
-void Cvar_SetFlags (cvar_t *var, int flags)
+void Cvar_SetFlags(cvar_t *var, int flags)
 {
 	var->flags = flags;
 }
@@ -1509,32 +1511,32 @@ void Cvar_CleanUpTempVars (void)
 }
 #endif
 
-void Cvar_Init (void)
+void Cvar_Init(void)
 {
-	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
-	Cmd_AddCommand ("cvaredit", Cvar_CvarEdit_f);
-	Cmd_AddCommand ("cvarlist_re", Cvar_CvarList_re_f);
-	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
-	Cmd_AddCommand ("set", Cvar_Set_f);
-	Cmd_AddCommand ("inc", Cvar_Inc_f);
+	Cmd_AddCommand("cvarlist", Cvar_CvarList_f);
+	Cmd_AddCommand("cvaredit", Cvar_CvarEdit_f);
+	Cmd_AddCommand("cvarlist_re", Cvar_CvarList_re_f);
+	Cmd_AddCommand("toggle", Cvar_Toggle_f);
+	Cmd_AddCommand("set", Cvar_Set_f);
+	Cmd_AddCommand("inc", Cvar_Inc_f);
 
 #ifndef SERVERONLY
-	Cmd_AddCommand ("set_tp", Cvar_Set_tp_f);
-	Cmd_AddCommand ("set_ex", Cvar_Set_ex_f);
-	Cmd_AddCommand ("set_alias_str", Cvar_Set_Alias_Str_f);
-	Cmd_AddCommand ("set_bind_str", Cvar_Set_Bind_Str_f);
-	Cmd_AddCommand ("unset", Cvar_UnSet_f);
-	Cmd_AddCommand ("unset_re", Cvar_UnSet_re_f);
-	Cmd_AddCommand ("toggle_re", Cvar_Toggle_re_f);
-	Cmd_AddCommand ("cvar_reset", Cvar_Reset_f);
-	Cmd_AddCommand ("cvar_reset_re", Cvar_Reset_re_f);
-	Cmd_AddCommand ("set_calc", Cvar_Set_Calc_f);
-	Cmd_AddCommand ("set_eval", Cvar_Set_Eval_f);
+	Cmd_AddCommand("set_tp", Cvar_Set_tp_f);
+	Cmd_AddCommand("set_ex", Cvar_Set_ex_f);
+	Cmd_AddCommand("set_alias_str", Cvar_Set_Alias_Str_f);
+	Cmd_AddCommand("set_bind_str", Cvar_Set_Bind_Str_f);
+	Cmd_AddCommand("unset", Cvar_UnSet_f);
+	Cmd_AddCommand("unset_re", Cvar_UnSet_re_f);
+	Cmd_AddCommand("toggle_re", Cvar_Toggle_re_f);
+	Cmd_AddCommand("cvar_reset", Cvar_Reset_f);
+	Cmd_AddCommand("cvar_reset_re", Cvar_Reset_re_f);
+	Cmd_AddCommand("set_calc", Cvar_Set_Calc_f);
+	Cmd_AddCommand("set_eval", Cvar_Set_Eval_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register (&cvar_viewdefault);
-	Cvar_Register (&cvar_viewhelp);
-	Cvar_Register (&cvar_viewlatched);
+	Cvar_Register(&cvar_viewdefault);
+	Cvar_Register(&cvar_viewhelp);
+	Cvar_Register(&cvar_viewlatched);
 
 	Cvar_ResetCurrentGroup();
 #endif
@@ -1559,6 +1561,7 @@ void Cvar_Shutdown(void)
 
 #ifndef SERVERONLY
 		if (cvar->flags & CVAR_USER_CREATED) {
+			Q_free(cvar->name);
 			Q_free(cvar);
 		}
 #endif
