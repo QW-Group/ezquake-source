@@ -315,7 +315,7 @@ byte* SurfaceFlatTurbColor(texture_t* texture);
 
 struct custom_model_color_s;
 
-void GL_StateBeginAlphaLineRGB(float thickness);
+void R_StateBeginAlphaLineRGB(float thickness);
 void R_SetupFrame(void);
 
 void GL_FlushWorldModelBatch(void);

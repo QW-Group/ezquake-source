@@ -83,11 +83,3 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 		}
 	}
 }
-
-void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelData, int position)
-{
-	memcpy(aliasModelData + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
-
-	mod->vbo_start = position;
-	Q_free(mod->temp_vbo_buffer);
-}

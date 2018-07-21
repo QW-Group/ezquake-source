@@ -2,6 +2,8 @@
 #ifndef EZQUAKE_GLM_BRUSHMODEL_HEADER
 #define EZQUAKE_GLM_BRUSHMODEL_HEADER
 
+#include "r_brushmodel.h"
+
 // Our limit, user's limit will be dictated by graphics card (glConfig.texture_units set during startup)
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 

@@ -29,8 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_matrix.h"
 #include "tr_types.h"
 
-void GL_InitTextureState(void);
-
 extern texture_ref solidskytexture, alphaskytexture;
 static int currentViewportX, currentViewportY;
 static int currentViewportWidth, currentViewportHeight;
@@ -434,7 +432,7 @@ void GLC_StateBeginBrightenScreen(void)
 	R_ApplyRenderingState(r_state_brighten_screen);
 }
 
-void GL_StateBeginAlphaLineRGB(float thickness)
+void R_StateBeginAlphaLineRGB(float thickness)
 {
 	R_ApplyRenderingState(r_state_line);
 	if (thickness > 0.0) {

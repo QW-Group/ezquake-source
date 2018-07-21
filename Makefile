@@ -238,6 +238,7 @@ MODERN_OPENGL_OBJS := \
 
 CLASSIC_OPENGL_OBJS := \
     glc_aliasmodel.o \
+    glc_aliasmodel_mesh.o \
     glc_bloom.o \
     glc_brushmodel.o \
     glc_draw.o \

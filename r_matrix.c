@@ -44,7 +44,7 @@ void R_SetIdentityMatrix(float* matrix)
 }
 
 // 
-static const float* GL_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
+static const float* R_OrthoMatrix(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	static float matrix[16];
 
@@ -73,7 +73,7 @@ float* R_ProjectionMatrix(void)
 void R_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
 	// Deliberately inverting top & bottom here...
-	R_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
+	R_SetMatrix(projectionMatrix, R_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 	R_Cache2DMatrix();
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

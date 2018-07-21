@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h" // shelltexture only
 #include "r_renderer.h"
 
-static texture_ref GL_GenerateShellTexture(void)
+static texture_ref R_GenerateShellTexture(void)
 {
 	int x, y, d;
 	byte data[32][32][4];
@@ -72,7 +72,7 @@ void R_InitOtherTextures(void)
 
 	shelltexture = R_LoadTextureImage("textures/shellmap", NULL, 0, 0, flags | TEX_PREMUL_ALPHA | TEX_ZERO_ALPHA | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
 	if (!R_TextureReferenceIsValid(shelltexture)) {
-		shelltexture = GL_GenerateShellTexture();
+		shelltexture = R_GenerateShellTexture();
 	}
 
 	solidwhite_texture = R_LoadTexture("billboard:solidwhite", 1, 1, solidwhitetexels, TEX_ALPHA | TEX_NOSCALE, 4);

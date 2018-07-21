@@ -57,11 +57,11 @@ static void GL_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data,
 	if (mod->type == mod_alias) {
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
-		GL_AliasModelAddToVBO(mod, paliashdr, aliasmodel_data, *new_vbo_position);
+		R_AliasModelPopulateVBO(mod, paliashdr, aliasmodel_data, *new_vbo_position);
 		*new_vbo_position += mod->vertsInVBO;
 	}
 	else if (mod->type == mod_alias3) {
-		GL_MD3ModelAddToVBO(mod, aliasmodel_data, *new_vbo_position);
+		R_AliasModelMD3PopulateVBO(mod, aliasmodel_data, *new_vbo_position);
 
 		*new_vbo_position += mod->vertsInVBO;
 	}

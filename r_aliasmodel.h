@@ -54,8 +54,8 @@ void R_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
 void GLC_StateBeginUnderwaterCaustics(void);
 
 // gl_mesh.c
-void GL_AliasModelAddToVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
-void GL_MD3ModelAddToVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
+void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
+void R_AliasModelMD3PopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 void GL_CreateAliasModelVBO(buffer_ref instance_vbo);
 
 void GLC_StateBeginAliasPowerupShell(void);

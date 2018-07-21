@@ -189,7 +189,7 @@ void GLM_HudDrawLines(int start, int end)
 		R_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {
-			GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
+			R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 			GL_DrawArrays(GL_LINES, offset + i * 2, 2);
 		}
 	}
