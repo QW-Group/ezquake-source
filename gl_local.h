@@ -344,8 +344,6 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
 
-void GL_PopulateConfig(void);
-
 void VK_PrintGfxInfo(void);
 
 void GL_DispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);

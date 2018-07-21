@@ -3,7 +3,6 @@
 #include "r_renderer.h"
 
 void GL_Init(void);
-void GL_PopulateConfig(void);
 qbool GLM_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
@@ -53,7 +52,6 @@ void GLM_Initialise(void)
 #include "r_renderer_structure.h"
 
 	GL_Init();
-	GL_PopulateConfig();
 	renderer.vaos_supported = GLM_InitialiseVAOHandling();
 	GL_InitialiseBufferHandling(&buffers);
 	GL_InitialiseState();

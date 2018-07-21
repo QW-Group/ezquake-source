@@ -6,7 +6,6 @@
 #include "r_brushmodel.h"
 
 void GL_Init(void);
-void GL_PopulateConfig(void);
 qbool GLC_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* buffers);
 void GL_InitialiseState(void);
@@ -63,7 +62,6 @@ void GLC_Initialise(void)
 	#include "r_renderer_structure.h"
 
 	GL_Init();
-	GL_PopulateConfig();
 	renderer.vaos_supported = GLC_InitialiseVAOHandling();
 	GL_InitialiseBufferHandling(&buffers);
 	GL_InitialiseState();
