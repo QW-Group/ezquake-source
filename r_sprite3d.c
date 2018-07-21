@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_buffers.h"
 #include "tr_types.h"
-//#include "glm_vao.h"
-//#include "glc_vao.h"
 
 int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks;
 

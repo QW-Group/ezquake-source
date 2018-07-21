@@ -151,5 +151,6 @@ typedef enum {
 void R_SetTextureFiltering(texture_ref tex, texture_minification_id min_mode, texture_magnification_id mag_mode);
 void R_CreateTextures(r_texture_type_id type, int count, texture_ref* texture);
 void R_SetTextureCompression(qbool enabled);
+void R_TextureGet(texture_ref tex, int buffer_size, byte* buffer);
 
 #endif	// EZQUAKE_R_TEXTURE_H

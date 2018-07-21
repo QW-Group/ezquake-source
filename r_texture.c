@@ -653,3 +653,13 @@ void R_SetTextureCompression(qbool enabled)
 		//VK_SetTextureCompression(enabled);
 	}
 }
+
+void R_TextureGet(texture_ref tex, int buffer_size, byte* buffer)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_TextureGet(tex, buffer_size, buffer);
+	}
+	else if (R_UseVulkan()) {
+		//VK_TextureGet(tex, buffer_size, buffer);
+	}
+}

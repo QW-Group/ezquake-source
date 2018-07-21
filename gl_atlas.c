@@ -21,11 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "common_draw.h"
 #include "gl_model.h"
-#include "gl_local.h"
 #include "tr_types.h"
 #include "r_texture.h"
 #include "r_local.h"
-#include "gl_texture_internal.h"
 
 #define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
 #define MAXIMUM_ATLAS_TEXTURE_HEIGHT 4096
@@ -185,7 +183,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = prev_atlas_texels;
 		}
 		else {
-			GL_GetTexImage(GL_TEXTURE0, pic->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, TEMP_BUFFER_SIZE, buffer);
+			R_TextureGet(pic->texnum, TEMP_BUFFER_SIZE, buffer);
 
 			input_image = buffer;
 		}
@@ -270,7 +268,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	extern mpic_t sb_ib_ammo[4];
 	mpic_t* targPic;
 	int i;
-	GLint texWidth, texHeight;
+	int texWidth, texHeight;
 	float sRatio = (ibar->sh - ibar->sl) / (float)ibar->width;
 	float tRatio = (ibar->th - ibar->tl) / (float)ibar->height;
 	byte* source;
@@ -286,7 +284,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	source = Q_malloc(texWidth * texHeight * 4);
 	target = Q_malloc(texWidth * texHeight * 4);
 
-	GL_GetTexImage(GL_TEXTURE0, ibar->texnum, 0, GL_RGBA, GL_UNSIGNED_BYTE, texWidth * texHeight * 4, source);
+	R_TextureGet(ibar->texnum, texWidth * texHeight * 4, source);
 	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
 		int num = i - WADPIC_SB_IBAR_AMMO1;
 		int y;
