@@ -823,11 +823,10 @@ static void Classic_MoveParticles(void)
 	p = particles;
 	for (i = 0; i < r_numactiveparticles; ++i, ++p) {
 		while (p->die < r_refdef2.time) {
-			if (i == r_numactiveparticles - 1) {
+			if (i >= r_numactiveparticles - 1) {
 				goto finished;
 			}
 
-			// move it to the back
 			*p = particles[r_numactiveparticles - 1];
 			--r_numactiveparticles;
 		}
@@ -857,9 +856,7 @@ static void Classic_MoveParticles(void)
 				else {
 					p->color = ramp1[(int)p->ramp];
 				}
-				for (i = 0; i < 3; i++) {
-					p->vel[i] += p->vel[i] * dvel;
-				}
+				VectorMA(p->vel, dvel, p->vel, p->vel);
 				p->vel[2] -= grav * 30;
 				break;
 			case pt_explode2:
@@ -870,21 +867,15 @@ static void Classic_MoveParticles(void)
 				else {
 					p->color = ramp2[(int)p->ramp];
 				}
-				for (i = 0; i < 3; i++) {
-					p->vel[i] -= p->vel[i] * frametime;
-				}
+				VectorMA(p->vel, -frametime, p->vel, p->vel);
 				p->vel[2] -= grav * 30;
 				break;
 			case pt_blob:
-				for (i = 0; i < 3; i++) {
-					p->vel[i] += p->vel[i] * dvel;
-				}
+				VectorMA(p->vel, dvel, p->vel, p->vel);
 				p->vel[2] -= grav;
 				break;
 			case pt_blob2:
-				for (i = 0; i < 2; i++) {
-					p->vel[i] -= p->vel[i] * dvel;
-				}
+				VectorMA(p->vel, -dvel, p->vel, p->vel);
 				p->vel[2] -= grav;
 				break;
 			case pt_slowgrav:
