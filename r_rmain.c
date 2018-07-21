@@ -477,7 +477,7 @@ void R_Init(void)
 	Cmd_AddCommand("loadsky", R_LoadSky_f);
 	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
-	Cmd_AddCommand("pointfile", R_ReadPointFile_f);
+	Cmd_AddCommand("dev_pointfile", R_ReadPointFile_f);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);

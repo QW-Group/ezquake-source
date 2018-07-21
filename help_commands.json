@@ -452,6 +452,10 @@
   "dev_hunk_print": {
     "system-generated": true
   },
+  "dev_pointfile": {
+    "description": "If qbsp generates a non-zero .pts file a leak exists in the level. This file is created in the maps directory. By using the pointfile command, it will load the .pts file and give a dotted line indicating where the leak(s) are on the level.",
+    "syntax": "(filename)"
+  },
   "devmap": {
     "description": "Try it in cheats mode, start a map (devmap dm6) and type fly."
   },
@@ -1180,10 +1184,6 @@
   },
   "playvol": {
     "description": "Plays a sound at a given volume.  Examples:  playvol items/protect.wav .5  playvol items/protect.wav 2",
-    "syntax": "(filename)"
-  },
-  "pointfile": {
-    "description": "If qbsp generates a non-zero .pts file a leak exists in the level. This file is created in the maps directory. By using the pointfile command, it will load the .pts file and give a dotted line indicating where the leak(s) are on the level.",
     "syntax": "(filename)"
   },
   "profile": {
