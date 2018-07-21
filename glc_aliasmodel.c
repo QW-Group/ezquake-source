@@ -79,15 +79,14 @@ static void GLC_ConfigureAliasModelState(void)
 {
 	extern cvar_t gl_vbo_clientmemory;
 
+	R_GenVertexArray(vao_aliasmodel);
 	if (gl_vbo_clientmemory.integer) {
-		R_GenVertexArray(vao_aliasmodel);
 		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position[0]);
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
 		GLC_VAOEnableColorPointer(vao_aliasmodel, 4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color[0]);
 	}
 	else {
-		R_GenVertexArray(vao_aliasmodel);
 		GLC_VAOSetVertexBuffer(vao_aliasmodel, aliasmodel_pose_vbo);
 		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
@@ -97,7 +96,7 @@ static void GLC_ConfigureAliasModelState(void)
 
 	R_GenVertexArray(vao_aliasmodel_powerupshell);
 	GLC_VAOEnableVertexPointer(vao_aliasmodel_powerupshell, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
-	GLC_VAOEnableTextureCoordPointer(vao_aliasmodel_powerupshell, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
+	GLC_VAOEnableTextureCoordPointer(vao_aliasmodel_powerupshell, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
 }
 
 void GLC_AllocateAliasPoseBuffer(void)
@@ -312,7 +311,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, null_texture_reference, outline, effects, render_effects);
 
 		if (R_TextureReferenceIsValid(fb_texture)) {
-			GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, fb_texture, null_texture_reference, false, effects, render_effects);
+			GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, fb_texture, null_texture_reference, false, effects, render_effects | RF_ALPHABLEND);
 		}
 	}
 

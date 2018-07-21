@@ -31,10 +31,9 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "glc_state.h"
 #include "glc_vao.h"
 #include "r_brushmodel.h"
+#include "r_brushmodel_sky.h"
 #include "glc_local.h"
 #include "tr_types.h"
-
-void GLC_DrawSkyChain(void);
 
 extern buffer_ref brushModel_vbo;
 
@@ -426,32 +425,30 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 	}
 
-	if (developer.integer) {
-		if (gl_fb_bmodels.integer) {
-			if (lmTextureUnit < 0) {
-				GLC_BlendLightmaps();
-			}
-			if (drawfullbrights) {
-				GLC_RenderFullbrights();
-				drawfullbrights = false;
-			}
-			if (drawlumas) {
-				GLC_RenderLumas();
-				drawlumas = false;
-			}
+	if (gl_fb_bmodels.integer) {
+		if (lmTextureUnit < 0) {
+			GLC_BlendLightmaps();
 		}
-		else {
-			if (drawlumas) {
-				GLC_RenderLumas();
-				drawlumas = false;
-			}
-			if (lmTextureUnit < 0) {
-				GLC_BlendLightmaps();
-			}
-			if (drawfullbrights) {
-				GLC_RenderFullbrights();
-				drawfullbrights = false;
-			}
+		if (drawfullbrights) {
+			GLC_RenderFullbrights();
+			drawfullbrights = false;
+		}
+		if (drawlumas) {
+			GLC_RenderLumas();
+			drawlumas = false;
+		}
+	}
+	else {
+		if (drawlumas) {
+			GLC_RenderLumas();
+			drawlumas = false;
+		}
+		if (lmTextureUnit < 0) {
+			GLC_BlendLightmaps();
+		}
+		if (drawfullbrights) {
+			GLC_RenderFullbrights();
+			drawfullbrights = false;
 		}
 	}
 

@@ -33,7 +33,13 @@ static void GLC_MakeSkyVec(float s, float t, int axis);
 
 static float speedscale, speedscale2;		// for top sky and bottom sky
 
-void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
+typedef enum {
+	skypoly_mode_mtex,
+	skypoly_mode_sky,
+	skypoly_mode_clouds,
+} skypoly_mode_id;
+
+static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 {
 	glpoly_t *p;
 	float *v, s, t, ss = 0.0, tt = 0.0, length;
@@ -52,25 +58,25 @@ void GLC_EmitSkyPolys(msurface_t *fa, qbool mtex)
 			dir[0] *= length;
 			dir[1] *= length;
 
-			if (mtex) {
-				s = (speedscale + dir[0]) * (1.0 / 128);
-				t = (speedscale + dir[1]) * (1.0 / 128);
+			s = (speedscale + dir[0]) * (1.0 / 128);
+			t = (speedscale + dir[1]) * (1.0 / 128);
 
-				ss = (speedscale2 + dir[0]) * (1.0 / 128);
-				tt = (speedscale2 + dir[1]) * (1.0 / 128);
-			}
-			else {
-				s = (speedscale + dir[0]) * (1.0 / 128);
-				t = (speedscale + dir[1]) * (1.0 / 128);
+			ss = (speedscale2 + dir[0]) * (1.0 / 128);
+			tt = (speedscale2 + dir[1]) * (1.0 / 128);
+
+			switch (mode) {
+				case skypoly_mode_mtex:
+					qglMultiTexCoord2f(GL_TEXTURE0, s, t);
+					qglMultiTexCoord2f(GL_TEXTURE1, ss, tt);
+					break;
+				case skypoly_mode_sky:
+					glTexCoord2f(s, t);
+					break;
+				case skypoly_mode_clouds:
+					glTexCoord2f(ss, tt);
+					break;
 			}
 
-			if (mtex) {
-				qglMultiTexCoord2f(GL_TEXTURE0, s, t);
-				qglMultiTexCoord2f(GL_TEXTURE1, ss, tt);
-			}
-			else {
-				glTexCoord2f(s, t);
-			}
 			GLC_Vertex3fv(v);
 		}
 		GLC_End();
@@ -105,7 +111,7 @@ void GLC_DrawSkyChain(void)
 		speedscale2 -= (int)speedscale2 & ~127;
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, true);
+			GLC_EmitSkyPolys(fa, skypoly_mode_mtex);
 		}
 	}
 	else {
@@ -115,7 +121,7 @@ void GLC_DrawSkyChain(void)
 		speedscale -= (int)speedscale & ~127;
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, false);
+			GLC_EmitSkyPolys(fa, skypoly_mode_sky);
 		}
 
 		GLC_StateBeginSingleTextureCloudPass();
@@ -124,7 +130,7 @@ void GLC_DrawSkyChain(void)
 		speedscale -= (int)speedscale & ~127;
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, false);
+			GLC_EmitSkyPolys(fa, skypoly_mode_clouds);
 		}
 	}
 

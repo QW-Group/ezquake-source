@@ -69,7 +69,9 @@ void GLC_BindVertexArray(r_vao_id vao)
 	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
 		glc_va_element* textures = &vaos[vao].texture_array[i];
 
-		R_GLC_TexturePointer(buf, i, textures->enabled, textures->size, textures->type, textures->stride, textures->pointer_or_offset);
+		if (i < gl_textureunits) {
+			R_GLC_TexturePointer(buf, i, textures->enabled, textures->size, textures->type, textures->stride, textures->pointer_or_offset);
+		}
 	}
 
 	if (R_BufferReferenceIsValid(vaos[vao].element_index_buffer)) {
