@@ -27,6 +27,8 @@ void GLC_StateBeginFastTurbPoly(byte color[4]);
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);
 void GLC_StateBeginSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
+void GLC_StateBeginUnderwaterAliasModelCaustics(texture_ref base_texture, texture_ref caustics_texture);
+void GLC_StateEndUnderwaterAliasModelCaustics(void);
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateBeginImageDraw(qbool is_text);
 void GLC_StateBeginPolyBlend(float v_blend[4]);

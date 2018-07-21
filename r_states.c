@@ -67,7 +67,9 @@ void R_InitialiseWorldStates(void)
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	state->blendingEnabled = true;
 	state->textureUnits[0].enabled = true;
-	state->textureUnits[0].mode = r_texunit_mode_decal;
+	state->textureUnits[0].mode = r_texunit_mode_replace;
+	state->textureUnits[1].enabled = true;
+	state->textureUnits[1].mode = r_texunit_mode_decal;
 
 	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel);
 	state->depth.test_enabled = true;

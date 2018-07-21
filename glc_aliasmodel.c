@@ -166,7 +166,12 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 	int i;
 	vec3_t lc;
 
-	GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
+	if (render_effects & RF_CAUSTICS) {
+		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
+	}
+	else {
+		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
+	}
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
@@ -292,6 +297,9 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 		}
 	}
 
+	if (render_effects & RF_CAUSTICS) {
+		GLC_StateEndUnderwaterAliasModelCaustics();
+	}
 	if (outline) {
 		if (cache) {
 			GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
@@ -304,6 +312,8 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 
 void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
 {
+	qbool draw_caustics = gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin));
+
 	if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
 		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects);
 	}
@@ -315,14 +325,9 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 		}
 	}
 
-	// Underwater caustics on alias models of QRACK -->
-	if (gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
-		GLC_StateBeginUnderwaterCaustics();
-		GLC_BeginCausticsTextureMatrix();
-		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, underwatertexture, null_texture_reference, false, 0, 0);
-		GLC_EndCausticsTextureMatrix();
+	if (draw_caustics) {
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, underwatertexture, false, 0, RF_ALPHABLEND | RF_CAUSTICS);
 	}
-	// <-- Underwater caustics on alias models of QRACK
 }
 
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)

@@ -49,9 +49,17 @@ void GLC_StateBeginCausticsPolys(void)
 }
 
 // Alias models
-void GLC_StateBeginUnderwaterCaustics(void)
+void GLC_StateBeginUnderwaterAliasModelCaustics(texture_ref base_texture, texture_ref caustics_texture)
 {
 	R_ApplyRenderingState(r_state_aliasmodel_caustics);
+	R_TextureUnitBind(0, base_texture);
+	GLC_BeginCausticsTextureMatrix();
+	R_TextureUnitBind(1, caustics_texture);
+}
+
+void GLC_StateEndUnderwaterAliasModelCaustics(void)
+{
+	GLC_EndCausticsTextureMatrix();
 }
 
 void GLC_StateBeginWaterSurfaces(void)

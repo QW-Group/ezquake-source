@@ -51,7 +51,6 @@ extern texture_ref shelltexture;
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured);
 void R_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
-void GLC_StateBeginUnderwaterCaustics(void);
 
 // gl_mesh.c
 void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
