@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern model_t *loadmodel;
 static msurface_t *warpface;
 
-static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
+static void R_WarpSurfaceBoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
 {
 	int i, j;
 	float *v;
@@ -49,7 +49,7 @@ static void BoundPoly(int numverts, float *verts, vec3_t mins, vec3_t maxs)
 	}
 }
 
-static void SubdividePolygon (int numverts, float *verts)
+static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 {
 	int i, j, k, f, b;
 	vec3_t mins, maxs, front[64], back[64];
@@ -63,7 +63,7 @@ static void SubdividePolygon (int numverts, float *verts)
 	}
 
 	subdivide_size = max(1, gl_subdivide_size.value);
-	BoundPoly (numverts, verts, mins, maxs);
+	R_WarpSurfaceBoundPoly(numverts, verts, mins, maxs);
 
 	for (i = 0; i < 3; i++) {
 		m = (mins[i] + maxs[i]) * 0.5;
@@ -110,8 +110,8 @@ static void SubdividePolygon (int numverts, float *verts)
 				b++;
 			}
 		}
-		SubdividePolygon (f, front[0]);
-		SubdividePolygon (b, back[0]);
+		R_WarpSurfaceSubdividePolygon(f, front[0]);
+		R_WarpSurfaceSubdividePolygon(b, back[0]);
 		return;
 	}
 
@@ -152,7 +152,7 @@ void R_TurbSurfacesSubdivide(msurface_t *fa)
 		numverts++;
 	}
 
-	SubdividePolygon(numverts, verts[0]);
+	R_WarpSurfaceSubdividePolygon(numverts, verts[0]);
 }
 
 // Just build the gl polys, don't subdivide

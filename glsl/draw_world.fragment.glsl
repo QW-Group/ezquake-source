@@ -80,8 +80,13 @@ void main()
 	vec4 lumaColor = texture(materialTex[SamplerNumber], LumaCoord);
 #endif
 
+	vec3 tex = TextureCoord;
+
+	tex.s = mix(TextureCoord.s, TextureCoord.s + (sin((TextureCoord.t + time) * 1.5) * 0.125), min(1, Flags & EZQ_SURFACE_TYPE));
+	tex.t = mix(TextureCoord.t, TextureCoord.t + (sin((TextureCoord.s + time) * 1.5) * 0.125), min(1, Flags & EZQ_SURFACE_TYPE));
+
 	lmColor = texture(lightmapTex, TexCoordLightmap);
-	texColor = texture(materialTex[SamplerNumber], TextureCoord);
+	texColor = texture(materialTex[SamplerNumber], tex);
 
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.333) {
 		discard;

@@ -544,6 +544,7 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 	medge_t *pedges, *r_pedge;
 	float *vec, s, t;
 	glpoly_t *poly;
+	qbool isTurb = (fa->flags & SURF_DRAWTURB);
 
 	// reconstruct the polygon
 	pedges = currentmodel->edges;
@@ -571,43 +572,62 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 			r_pedge = &pedges[-lindex];
 			vec = currentmodel->vertexes[r_pedge->v[1]].position;
 		}
-		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
-		s /= fa->texinfo->texture->width;
 
-		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
-		t /= fa->texinfo->texture->height;
+		s = DotProduct(vec, fa->texinfo->vecs[0]);
+		if (!isTurb) {
+			s += fa->texinfo->vecs[0][3];
+			s /= fa->texinfo->texture->width;
+		}
+		else {
+			s /= 64;
+		}
+
+		t = DotProduct(vec, fa->texinfo->vecs[1]);
+		if (!isTurb) {
+			t += fa->texinfo->vecs[1][3];
+			t /= fa->texinfo->texture->height;
+		}
+		else {
+			t /= 64;
+		}
 
 		VectorCopy(vec, poly->verts[i]);
+
+		// material
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 
 		// lightmap texture coordinates
-		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
-		s -= fa->texturemins[0];
-		s += fa->light_s * 16;
-		s += 8;
-		s /= LIGHTMAP_WIDTH * 16; //fa->texinfo->texture->width;
+		if (isTurb) {
+			poly->verts[i][5] = poly->verts[i][6] = 0;
+			poly->verts[i][7] = poly->verts[i][8] = 0;
+		}
+		else {
+			s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+			s -= fa->texturemins[0];
+			s += fa->light_s * 16;
+			s += 8;
+			s /= LIGHTMAP_WIDTH * 16; //fa->texinfo->texture->width;
 
-		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
-		t -= fa->texturemins[1];
-		t += fa->light_t * 16;
-		t += 8;
-		t /= LIGHTMAP_HEIGHT * 16; //fa->texinfo->texture->height;
+			t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+			t -= fa->texturemins[1];
+			t += fa->light_t * 16;
+			t += 8;
+			t /= LIGHTMAP_HEIGHT * 16; //fa->texinfo->texture->height;
 
-		poly->verts[i][5] = s;
-		poly->verts[i][6] = t;
+			poly->verts[i][5] = s;
+			poly->verts[i][6] = t;
 
-		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
-		s /= 128;
+			s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+			s /= 128;
 
-		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
-		t /= 128;
+			t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+			t /= 128;
 
-		VectorCopy(vec, poly->verts[i]);
-
-		// Detail textures
-		poly->verts[i][7] = 18 * s;
-		poly->verts[i][8] = 18 * t;
+			// Detail textures
+			poly->verts[i][7] = 18 * s;
+			poly->verts[i][8] = 18 * t;
+		}
 	}
 
 	poly->numverts = lnumverts;
@@ -712,15 +732,20 @@ void R_BuildLightmaps(void)
 			continue;
 		}
 		for (i = 0; i < m->numsurfaces; i++) {
+			qbool isTurb = (m->surfaces[i].flags & SURF_DRAWTURB);
+			qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
+
 			m->surfaces[i].surfacenum = i;
-			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY)) {
+			if (isSky || (R_UseImmediateOpenGL() && isTurb)) {
 				continue;
 			}
-			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL) {
+			if (!isTurb && (m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {
 				continue;
 			}
 
-			R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? i : -1);
+			if (!isTurb) {
+				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? i : -1);
+			}
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}

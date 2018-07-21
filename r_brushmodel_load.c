@@ -70,12 +70,15 @@ static void SetTextureFlags(model_t* mod, msurface_t* out)
 
 	if (Mod_IsTurbTextureName(mod, out->texinfo->texture->name)) {	// turbulent
 		out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
-		for (i = 0; i < 2; i++) {
-			out->extents[i] = 16384;
-			out->texturemins[i] = -8192;
-		}
-		R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
 		out->texinfo->skippable = false;
+
+		if (R_UseImmediateOpenGL()) {
+			for (i = 0; i < 2; i++) {
+				out->extents[i] = 16384;
+				out->texturemins[i] = -8192;
+			}
+			R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
+		}
 		return;
 	}
 

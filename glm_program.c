@@ -178,8 +178,8 @@ static void GLM_ConPrintShaderLog(GLuint shader)
 		qglGetShaderInfoLog(shader, log_length, &written, buffer);
 		Con_Printf(buffer);
 
-		qglGetShaderSource(shader, src_length, &written, buffer);
-		Con_Printf(buffer);
+		//qglGetShaderSource(shader, src_length, &written, buffer);
+		//Con_Printf(buffer);
 
 		Q_free(buffer);
 	}
