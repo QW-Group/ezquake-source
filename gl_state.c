@@ -338,7 +338,7 @@ static void GL_ApplyRenderingState(r_state_id id)
 		);
 		R_TraceLogAPICall("glColorMask(%s,%s,%s,%s)", state->colorMask[0] ? "on" : "off", state->colorMask[1] ? "on" : "off", state->colorMask[2] ? "on" : "off", state->colorMask[3] ? "on" : "off");
 	}
-	if (state->vao_id != currentVAO) {
+	if (buffers.supported && state->vao_id != currentVAO) {
 		R_BindVertexArray(state->vao_id);
 	}
 
@@ -522,13 +522,13 @@ void GL_InitialiseState(void)
 	txtBlendFuncNames[r_blendfunc_overwrite] = "overwrite";
 	txtBlendFuncNames[r_blendfunc_additive_blending] = "additive";
 	txtBlendFuncNames[r_blendfunc_premultiplied_alpha] = "premul-alpha";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_zero] = "r_blendfunc_src_dst_color_dest_zero";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_one] = "r_blendfunc_src_dst_color_dest_one";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_src_color] = "r_blendfunc_src_dst_color_dest_src_color";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_one_minus_src_color] = "r_blendfunc_src_zero_dest_one_minus_src_color";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_src_color] = "r_blendfunc_src_zero_dest_src_color";
-	txtBlendFuncNames[r_blendfunc_src_one_dest_zero] = "r_blendfunc_src_one_dest_zero";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_one] = "r_blendfunc_src_zero_dest_one";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_zero] = "src_dst_color_dest_zero";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_one] = "src_dst_color_dest_one";
+	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_src_color] = "src_dst_color_dest_src_color";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_one_minus_src_color] = "src_zero_dest_one_minus_src_color";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_src_color] = "src_zero_dest_src_color";
+	txtBlendFuncNames[r_blendfunc_src_one_dest_zero] = "src_one_dest_zero";
+	txtBlendFuncNames[r_blendfunc_src_zero_dest_one] = "src_zero_dest_one";
 	txtPolygonModeValues[r_polygonmode_fill] = "fill";
 	txtPolygonModeValues[r_polygonmode_line] = "line";
 	txtAlphaTestModeValues[r_alphatest_func_always] = "always";
@@ -785,7 +785,9 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 			GLC_PrintVAOState(debug_frame_out, debug_frame_depth, currentVAO);
 		}
 #endif
-		buffers.PrintState(debug_frame_out, debug_frame_depth);
+		if (buffers.PrintState) {
+			buffers.PrintState(debug_frame_out, debug_frame_depth);
+		}
 		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
 	}
 }
