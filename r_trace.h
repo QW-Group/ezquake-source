@@ -51,6 +51,8 @@ void R_TraceTextureLabelGet(unsigned int name, int bufSize, int* length, char* l
 #define R_TraceLoggingEnabled() (false)
 #define R_TraceObjectLabelSet(...)
 #define R_TraceObjectLabelGet(...)
+#define R_TraceTextureLabelSet(...)
+#define R_TraceTextureLabelGet(...)
 #endif
 
 #endif // EZQUAKE_R_TRACE_HEADER

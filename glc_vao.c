@@ -25,6 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "r_buffers.h"
 
+void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+
 // GLC uses vertex array, all client state
 typedef struct {
 	qbool enabled;

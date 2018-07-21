@@ -3,16 +3,27 @@
 #include "r_renderer.h"
 #include "r_buffers.h"
 #include "glc_vao.h"
+#include "r_brushmodel.h"
+
+void GL_Init(void);
+void GL_PopulateConfig(void);
+qbool GLC_InitialiseVAOHandling(void);
+void GL_InitialiseBufferHandling(api_buffers_t* buffers);
+void GL_InitialiseState(void);
 
 static void GLC_CvarForceRecompile(cvar_t* cvar)
 {
 }
 
-void GLC_NoOperation(void)
+static void GLC_NoOperation(void)
 {
 }
 
-void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
+static void GLC_AddWaterFog(int contents)
+{
+}
+
+static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
 {
 }
 
@@ -64,7 +75,7 @@ void GLC_PrepareModelRendering(qbool vid_restart)
 		buffer_ref instance_vbo = R_CreateInstanceVBO();
 
 		GL_CreateAliasModelVBO(instance_vbo);
-		GL_CreateBrushModelVBO(instance_vbo);
+		R_BrushModelCreateVBO(instance_vbo);
 	}
 }
 

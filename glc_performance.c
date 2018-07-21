@@ -58,5 +58,5 @@ void GLC_TimeRefresh(void)
 	}
 #endif
 
-	GL_EndRendering();
+	R_EndRendering();
 }

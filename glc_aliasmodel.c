@@ -608,7 +608,7 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 
 	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
 	R_PushModelviewMatrix(oldMatrix);
-	GL_StateBeginDrawAliasModel(ent, paliashdr);
+	R_StateBeginDrawAliasModel(ent, paliashdr);
 
 	// FIXME: think need put it after caustics
 	if ((ent->effects & (EF_RED | EF_GREEN | EF_BLUE)) && R_TextureReferenceIsValid(shelltexture)) {

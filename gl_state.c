@@ -963,7 +963,7 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 			buffers.Bind(buf);
 		}
 		else {
-			buffers.UnBind(GL_ARRAY_BUFFER);
+			buffers.UnBind(buffertype_vertex);
 		}
 		glVertexPointer(size, type, stride, pointer_or_offset);
 		R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
@@ -987,7 +987,7 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 			buffers.Bind(buf);
 		}
 		else {
-			buffers.UnBind(GL_ARRAY_BUFFER);
+			buffers.UnBind(buffertype_vertex);
 		}
 		glColorPointer(size, type, stride, pointer_or_offset);
 		R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
@@ -1017,7 +1017,7 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 			buffers.Bind(buf);
 		}
 		else {
-			buffers.UnBind(GL_ARRAY_BUFFER);
+			buffers.UnBind(buffertype_vertex);
 		}
 		GLC_ClientActiveTexture(GL_TEXTURE0 + unit);
 		glTexCoordPointer(size, type, stride, pointer_or_offset);

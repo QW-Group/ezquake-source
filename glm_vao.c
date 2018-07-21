@@ -83,7 +83,7 @@ void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index
 		buffers.Bind(vbo);
 	}
 	else {
-		buffers.UnBind(GL_ARRAY_BUFFER);
+		buffers.UnBind(buffertype_vertex);
 	}
 
 	qglEnableVertexAttribArray(index);
@@ -101,7 +101,7 @@ void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint inde
 		buffers.Bind(vbo);
 	}
 	else {
-		buffers.UnBind(GL_ARRAY_BUFFER);
+		buffers.UnBind(buffertype_vertex);
 	}
 
 	qglEnableVertexAttribArray(index);
@@ -119,7 +119,7 @@ void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
 		buffers.Bind(ibo);
 	}
 	else {
-		buffers.UnBind(GL_ELEMENT_ARRAY_BUFFER);
+		buffers.UnBind(buffertype_index);
 	}
 }
 

@@ -76,9 +76,9 @@ void GLC_BrightenScreen(void)
 	GLC_End();
 }
 
-/*
 void GLC_DrawVelocity3D(void)
 {
+	/*
 	extern cvar_t show_velocity_3d_offset_forward;
 	extern cvar_t show_velocity_3d_offset_down;
 	extern cvar_t show_velocity_3d;
@@ -165,7 +165,8 @@ void GLC_DrawVelocity3D(void)
 	}
 	glPopAttrib();
 	R_PopModelviewMatrix(oldMatrix);
-}*/
+	*/
+}
 
 void GLC_RenderSceneBlurDo(float alpha)
 {

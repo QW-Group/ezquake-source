@@ -93,7 +93,7 @@ void GLC_HudDrawLines(texture_ref texture, int start, int end)
 	int i;
 
 	for (i = start; i <= end; ++i) {
-		GL_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
+		R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 		GLC_Begin(GL_LINES);
 		R_CustomColor4ubv(lineData.line_points[i * 2 + 0].color);
 		GLC_Vertex3fv(lineData.line_points[i * 2 + 0].position);
