@@ -261,7 +261,6 @@ CLASSIC_OPENGL_OBJS := \
 COMMON_OPENGL_OBJS := \
     gl_aliasmodel.o \
     gl_aliasmodel_md3.o \
-    gl_brushmodel.o \
     gl_buffers.o \
     gl_debug.o \
     gl_drawcall_wrappers.o \
@@ -282,6 +281,7 @@ COMMON_RENDERER_OBJS := \
     r_bloom.o \
     r_brushmodel.o \
     r_brushmodel_bspx.o \
+    r_brushmodel_load.o \
     r_brushmodel_sky.o \
     r_brushmodel_surfaces.o \
     r_brushmodel_textures.o \
