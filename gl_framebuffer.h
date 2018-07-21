@@ -43,7 +43,6 @@ extern const framebuffer_ref null_framebuffer_ref;
 void GLM_FramebufferScreenDrawStart(void);
 qbool GL_Framebuffer2DSwitch(void);
 void GLM_FramebufferPostProcessScreen(void);
-qbool GL_FramebufferEnabled3D(void);
 qbool GL_FramebufferEnabled2D(void);
 
 #define USE_FRAMEBUFFER_SCREEN    1

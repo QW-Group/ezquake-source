@@ -481,7 +481,7 @@ qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int opti
 	return (!program->program) || program->force_recompile || program->custom_options != options;
 }
 
-void GLM_ForceRecompile(void)
+void GLM_CvarForceRecompile(void)
 {
 	glm_program_t* program = program_list;
 

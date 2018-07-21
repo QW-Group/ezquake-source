@@ -167,19 +167,8 @@ static void R_RenderAliasModelEntity(
 
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
-	else if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
-	}
 	else {
-		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, null_texture_reference, effects, ent->renderfx);
-
-		if (R_TextureReferenceIsValid(fb_texture)) {
-			R_SetupAliasFrame(ent, model, oldframe, frame, false, fb_texture, null_texture_reference, 0, ent->renderfx | RF_ALPHABLEND);
-		}
-	}
-
-	if (R_UseImmediateOpenGL()) {
-		GLC_UnderwaterCaustics(ent, model, oldframe, frame, paliashdr);
+		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
 	}
 }
 

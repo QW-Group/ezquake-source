@@ -162,7 +162,7 @@ void R_FlushImageDraw(void)
 	hud.OnComplete();
 }
 
-qbool GLM_LogCustomImageType(r_image_type_t type, int index)
+qbool R_LogCustomImageType(r_image_type_t type, int index)
 {
 	if (hud.count >= MAX_2D_ELEMENTS) {
 		return false;
@@ -175,7 +175,7 @@ qbool GLM_LogCustomImageType(r_image_type_t type, int index)
 	return true;
 }
 
-qbool GLM_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_ref texture)
+qbool R_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_ref texture)
 {
 	if (hud.count >= MAX_2D_ELEMENTS) {
 		return false;

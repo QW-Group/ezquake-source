@@ -35,7 +35,7 @@ void R_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t co
 	if (polygonData.polygonCount >= MAX_POLYGONS_PER_FRAME) {
 		return;
 	}
-	if (!GLM_LogCustomImageType(imagetype_polygon, 0)) {
+	if (!R_LogCustomImageType(imagetype_polygon, 0)) {
 		return;
 	}
 

@@ -206,7 +206,7 @@ void GLM_DrawRectangle(float x, float y, float width, float height, byte* color)
 	}
 
 	Atlas_SolidTextureCoordinates(&solid_texture, &s, &t);
-	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, solid_texture)) {
+	if (!R_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, solid_texture)) {
 		return;
 	}
 

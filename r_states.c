@@ -326,9 +326,11 @@ void R_StateDefault3D(void)
 {
 	GL_ResetRegion(false);
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_PauseMatrixUpdate();
 	}
+#endif
 	R_IdentityModelView();
 	R_RotateModelview(-90, 1, 0, 0);	    // put Z going up
 	R_RotateModelview(90, 0, 0, 1);	    // put Z going up
@@ -336,10 +338,12 @@ void R_StateDefault3D(void)
 	R_RotateModelview(-r_refdef.viewangles[0], 0, 1, 0);
 	R_RotateModelview(-r_refdef.viewangles[1], 0, 0, 1);
 	R_TranslateModelview(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_ResumeMatrixUpdate();
 		GLC_LoadModelviewMatrix();
 	}
+#endif
 
 	ENTER_STATE;
 

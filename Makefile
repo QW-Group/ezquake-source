@@ -226,6 +226,7 @@ MODERN_OPENGL_OBJS := \
     glm_particles.o \
     glm_performance.o \
     glm_program.o \
+    glm_main.o \
     glm_rmain.o \
     glm_rsurf.o \
     glm_sdl.o \
@@ -293,7 +294,6 @@ COMMON_RENDERER_OBJS := \
     r_draw_image.o \
     r_draw_line.o \
     r_draw_polygon.o \
-    r_fog.o \
     r_hud.o \
     r_lightmaps.o \
     r_main.o \

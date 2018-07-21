@@ -59,7 +59,7 @@ void R_DrawImage(float x, float y, float width, float height, float tex_s, float
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
 	}
-	if (!GLM_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, texnum)) {
+	if (!R_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, texnum)) {
 		return;
 	}
 

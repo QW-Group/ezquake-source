@@ -185,7 +185,7 @@ qbool GLM_ProgramRecompileNeeded(const glm_program_t* program, unsigned int opti
 
 // Flags all programs to be recompiled
 // Doesn't immediately recompile, so safe to call during /exec, /cfg_load etc
-void GLM_ForceRecompile(void);
+void GLM_CvarForceRecompile(void);
 
 qbool GLM_CreateVFProgram(
 	const char* friendlyName,

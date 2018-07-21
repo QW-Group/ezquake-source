@@ -33,14 +33,14 @@ static float identityMatrix[16] = {
 	0, 0, 0, 1
 };
 
-static void GLM_SetMatrix(float* target, const float* source)
+static void R_SetMatrix(float* target, const float* source)
 {
 	memcpy(target, source, sizeof(float) * 16);
 }
 
 void R_SetIdentityMatrix(float* matrix)
 {
-	GLM_SetMatrix(matrix, identityMatrix);
+	R_SetMatrix(matrix, identityMatrix);
 }
 
 // 
@@ -60,12 +60,6 @@ static const float* GL_OrthoMatrix(float left, float right, float top, float bot
 	return matrix;
 }
 
-static void GLM_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
-{
-	// Deliberately inverting top & bottom here...
-	GLM_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
-}
-
 float* R_ModelviewMatrix(void)
 {
 	return modelMatrix;
@@ -78,12 +72,15 @@ float* R_ProjectionMatrix(void)
 
 void R_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
-	GLM_OrthographicProjection(left, right, top, bottom, zNear, zFar);
+	// Deliberately inverting top & bottom here...
+	R_SetMatrix(projectionMatrix, GL_OrthoMatrix(left, right, bottom, top, zNear, zFar));
 	R_Cache2DMatrix();
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_OrthographicProjection(left, right, top, bottom, zNear, zFar);
 	}
+#endif
 }
 
 void R_RotateMatrix(float* matrix, float angle, float x, float y, float z)
@@ -116,7 +113,7 @@ void R_RotateMatrix(float* matrix, float angle, float x, float y, float z)
 	rotation[15] = 1;
 
 	R_MultiplyMatrix(rotation, matrix, result);
-	GLM_SetMatrix(matrix, result);
+	R_SetMatrix(matrix, result);
 }
 
 void R_RotateVector(vec3_t vector, float angle, float x, float y, float z)
@@ -230,9 +227,11 @@ void R_IdentityModelView(void)
 {
 	R_SetIdentityMatrix(R_ModelviewMatrix());
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_IdentityModelview();
 	}
+#endif
 }
 
 void R_GetModelviewMatrix(float* matrix)
@@ -249,27 +248,33 @@ void R_RotateModelview(float angle, float x, float y, float z)
 {
 	R_RotateMatrix(modelMatrix, angle, x, y, z);
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_RotateModelview(angle, x, y, z);
 	}
+#endif
 }
 
 void R_TranslateModelview(float x, float y, float z)
 {
 	R_TransformMatrix(modelMatrix, x, y, z);
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_TranslateModelview(x, y, z);
 	}
+#endif
 }
 
 void R_IdentityProjectionView(void)
 {
 	R_SetIdentityMatrix(R_ProjectionMatrix());
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_IdentityProjectionView();
 	}
+#endif
 }
 
 void R_PushModelviewMatrix(float* matrix)
@@ -286,27 +291,33 @@ void R_PopModelviewMatrix(const float* matrix)
 {
 	memcpy(modelMatrix, matrix, sizeof(modelMatrix));
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_PopModelviewMatrix(matrix);
 	}
+#endif
 }
 
 void R_PopProjectionMatrix(const float* matrix)
 {
 	memcpy(projectionMatrix, matrix, sizeof(projectionMatrix));
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_PopProjectionMatrix(matrix);
 	}
+#endif
 }
 
 void R_ScaleModelview(float xScale, float yScale, float zScale)
 {
 	R_ScaleMatrix(modelMatrix, xScale, yScale, zScale);
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_ScaleModelview(xScale, yScale, zScale);
 	}
+#endif
 }
 
 void R_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
@@ -323,11 +334,13 @@ void R_Frustum(double left, double right, double bottom, double top, double zNea
 	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
 
 	R_MultiplyMatrix(perspective, R_ProjectionMatrix(), new_projection);
-	GLM_SetMatrix(R_ProjectionMatrix(), new_projection);
-	
+	R_SetMatrix(R_ProjectionMatrix(), new_projection);
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_Frustum(left, right, bottom, top, zNear, zFar);
 	}
+#endif
 }
 
 void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)

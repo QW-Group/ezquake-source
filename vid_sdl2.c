@@ -1048,11 +1048,11 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
                 0x000000FF,0x0000FF00,0x00FF0000,0xFF000000);
 
-        if (icon_surface) {
-            SDL_SetWindowIcon(sdl_window, icon_surface);
-            SDL_FreeSurface(icon_surface);
-	    return 0;
-        }
+	if (icon_surface) {
+		SDL_SetWindowIcon(sdl_window, icon_surface);
+		SDL_FreeSurface(icon_surface);
+		return 0;
+	}
 
 	return -1;
 #endif
@@ -1081,7 +1081,8 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 			windowY = bounds.y;
 			windowWidth = bounds.w;
 			windowHeight = bounds.h;
-		} else {
+		}
+		else {
 			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
 		}
 
@@ -1132,6 +1133,7 @@ static void VID_SDL_Init(void)
 	}
 
 	VID_SDL_InitSubSystem();
+	R_SelectRenderer();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 

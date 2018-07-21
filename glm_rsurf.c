@@ -296,7 +296,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
 
 			memcpy(newreq, req, sizeof(*newreq));
-			GL_GetModelviewMatrix(newreq->mvMatrix);
+			R_GetModelviewMatrix(newreq->mvMatrix);
 			newreq->alpha = alpha;
 			newreq->flags = flags;
 			newreq->polygonOffset = polygonOffset;
@@ -319,7 +319,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
 	float mvMatrix[16];
 
-	GL_GetModelviewMatrix(mvMatrix);
+	R_GetModelviewMatrix(mvMatrix);
 
 	// If user has switched off caustics (or no texture), ignore
 	if (caustics) {
@@ -335,7 +335,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
 
 			memcpy(newreq, req, sizeof(*newreq));
-			GL_GetModelviewMatrix(newreq->mvMatrix);
+			R_GetModelviewMatrix(newreq->mvMatrix);
 			newreq->alpha = alpha;
 			newreq->flags = flags;
 			newreq->polygonOffset = polygonOffset;

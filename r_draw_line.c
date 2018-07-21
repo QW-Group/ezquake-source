@@ -39,7 +39,7 @@ void R_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, int 
 	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;
 	}
-	if (!GLM_LogCustomImageType(imagetype_line, lineData.lineCount)) {
+	if (!R_LogCustomImageType(imagetype_line, lineData.lineCount)) {
 		return;
 	}
 

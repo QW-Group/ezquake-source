@@ -43,7 +43,7 @@ void R_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float
 	if (circleData.circleCount >= CIRCLES_PER_FRAME) {
 		return;
 	}
-	if (!GLM_LogCustomImageType(imagetype_circle, circleData.circleCount)) {
+	if (!R_LogCustomImageType(imagetype_circle, circleData.circleCount)) {
 		return;
 	}
 

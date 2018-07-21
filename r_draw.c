@@ -1105,9 +1105,7 @@ void Draw_BeginDisc (void)
 	}
 #endif
 
-	if (R_UseImmediateOpenGL()) {
-		GLC_DrawDisc();
-	}
+	renderer.DrawDisc();
 }
 
 // Erases the disc icon.

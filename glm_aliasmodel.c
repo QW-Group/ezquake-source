@@ -291,7 +291,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	// Store static data ready for upload
 	memset(&aliasdata.models[alias_draw_count], 0, sizeof(aliasdata.models[alias_draw_count]));
 	uniform = &aliasdata.models[alias_draw_count];
-	GL_GetModelviewMatrix(uniform->modelViewMatrix);
+	R_GetModelviewMatrix(uniform->modelViewMatrix);
 	uniform->amFlags =
 		(effects & EF_RED ? AMF_SHELLMODEL_RED : 0) |
 		(effects & EF_GREEN ? AMF_SHELLMODEL_GREEN : 0) |

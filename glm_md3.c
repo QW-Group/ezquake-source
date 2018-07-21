@@ -49,7 +49,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		vertsPerFrame += 3 * surf[surfnum].numTriangles;
 	}
 
-	GL_PushModelviewMatrix(oldMatrix);
+	R_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity(ent);
 
 	// 
@@ -60,7 +60,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
 		// perform scalling for r_viewmodelsize
-		GL_ScaleModelview(bound(0.5, r_viewmodelsize.value, 1), 1, 1);
+		R_ScaleModelview(bound(0.5, r_viewmodelsize.value, 1), 1, 1);
 	}
 
 	R_AliasSetupLighting(ent);

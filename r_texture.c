@@ -268,7 +268,6 @@ void R_TextureSetDimensions(texture_ref ref, int width, int height)
 void R_Texture_Init(void)
 {
 	int i;
-	extern texture_ref sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
 
@@ -286,9 +285,6 @@ void R_Texture_Init(void)
 	next_free_texture = 0;
 
 	renderer.InitTextureState();
-
-	// Motion blur.
-	R_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
 
 	// Powerup shells.
 	R_TextureReferenceInvalidate(shelltexture); // Force reload.

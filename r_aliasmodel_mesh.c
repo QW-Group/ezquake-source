@@ -360,7 +360,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 	}
 }
 
-static void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
+void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];

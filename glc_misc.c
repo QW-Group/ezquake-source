@@ -244,3 +244,11 @@ void GLC_Shutdown(qbool restarting)
 {
 	GLC_FreeAliasPoseBuffer();
 }
+
+void GLC_InitTextureState(void)
+{
+	GL_InitTextureState();
+
+	// Motion blur.
+	R_CreateTextures(texture_type_2d, 1, &sceneblur_texture);
+}

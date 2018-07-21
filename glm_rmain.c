@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_sprite3d.h"
 #include "glm_local.h"
+#include "r_renderer.h"
 
 void GLM_RenderView(void)
 {
@@ -37,7 +38,7 @@ void GLM_RenderView(void)
 	GLM_DrawAliasModelBatches();
 	GL_LeaveRegion();
 
-	R_Draw3DSprites();
+	renderer.Draw3DSprites();
 
 	GLM_DrawWorldModelBatch(alpha_surfaces);
 

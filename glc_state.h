@@ -22,10 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_state.h"
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 void R_GLC_TextureUnitSet(rendering_state_t* state, int index, qbool enabled, r_texunit_mode_t mode);
 
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+#else
+#define R_GLC_TextureUnitSet(...)
+#endif // RENDERER_OPTION_CLASSIC_OPENGL
 
 #endif // EZQUAKE_GLC_STATE_HEADER

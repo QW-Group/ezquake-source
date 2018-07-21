@@ -151,7 +151,7 @@ void GLC_FreeAliasPoseBuffer(void)
 	temp_aliasmodel_buffer_size = 0;
 }
 
-void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
+void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
@@ -301,6 +301,29 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 			GLC_DrawAliasOutlineFrame(ent, model, pose1, pose2);
 		}
 	}
+}
+
+void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
+{
+	if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects);
+	}
+	else {
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, null_texture_reference, outline, effects, render_effects);
+
+		if (R_TextureReferenceIsValid(fb_texture)) {
+			GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, fb_texture, null_texture_reference, false, effects, render_effects);
+		}
+	}
+
+	// Underwater caustics on alias models of QRACK -->
+	if (gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
+		GLC_StateBeginUnderwaterCaustics();
+		GLC_BeginCausticsTextureMatrix();
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, underwatertexture, null_texture_reference, false, 0, 0);
+		GLC_EndCausticsTextureMatrix();
+	}
+	// <-- Underwater caustics on alias models of QRACK
 }
 
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)
@@ -482,19 +505,6 @@ void GLC_DrawPowerupShell(
 			}
 		}
 	}
-}
-
-void GLC_UnderwaterCaustics(entity_t* ent, model_t* clmodel, maliasframedesc_t* oldframe, maliasframedesc_t* frame, aliashdr_t* paliashdr)
-{
-	// Underwater caustics on alias models of QRACK -->
-	if (gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin))) {
-		GLC_StateBeginUnderwaterCaustics();
-
-		GLC_BeginCausticsTextureMatrix();
-		R_SetupAliasFrame(ent, clmodel, oldframe, frame, false, underwatertexture, null_texture_reference, 0, 0);
-		GLC_EndCausticsTextureMatrix();
-	}
-	// <-- Underwater caustics on alias models of QRACK
 }
 
 void GLC_DrawAliasModelShadow(entity_t* ent)

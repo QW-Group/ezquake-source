@@ -142,11 +142,14 @@ texture_t *R_TextureAnimation(entity_t* ent, texture_t *base)
 	return base;
 }
 
-void R_ClearTextureChains(model_t *clmodel) {
+void R_ClearTextureChains(model_t *clmodel)
+{
 	int i, waterline;
 	texture_t *texture;
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	GLC_ClearTextureChains();
+#endif
 
 	for (i = 0; i < clmodel->numtextures; i++) {
 		if ((texture = clmodel->textures[i])) {

@@ -34,7 +34,6 @@ qbool GLC_False(void)
 #define GLC_RenderView                     GLC_NoOperation
 #define GLC_PostProcessScreen              GLC_NoOperation
 #define GLC_Screenshot                     GL_Screenshot
-#define GLC_InitTextureState               GL_InitTextureState
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
 #define GLC_Draw3DSprites                  GLC_NoOperation

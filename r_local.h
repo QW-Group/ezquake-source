@@ -39,9 +39,6 @@ void R_EmptyImageQueue(void);
 qbool R_CullBox(vec3_t mins, vec3_t maxs);
 qbool R_CullSphere(vec3_t centre, float radius);
 
-// fog
-void R_AddWaterfog(int contents);
-
 // vis
 extern refdef_t	r_refdef;
 extern struct mleaf_s* r_viewleaf;
@@ -89,8 +86,5 @@ void GL_Init(void);
 
 void R_Initialise(void);
 float R_WaterAlpha(void);
-
-// cvar notification
-void R_CvarForceRecompile(cvar_t* var);
 
 #endif // EZQUAKE_R_LOCAL_HEADER
