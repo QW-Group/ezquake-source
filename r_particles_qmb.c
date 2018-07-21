@@ -294,7 +294,7 @@ static texture_ref QMB_LoadTextureImage(const char* path)
 	return R_LoadTextureImage(path, NULL, 0, 0, mode);
 }
 
-void QMB_InitParticles (void)
+void QMB_InitParticles(void)
 {
 	int	i, count = 0;
 	texture_ref shockwave_texture, lightning_texture, spark_texture;

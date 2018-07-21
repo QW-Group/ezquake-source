@@ -213,7 +213,7 @@ void GL_DeleteTexture(texture_ref texture)
 	gltexture_t* slot = &gltextures[texture.index];
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("opengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * (slot->texmode & TEX_ALPHA ? 4 : 3), slot->identifier);
+	Sys_Printf("opengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * max(slot->depth,1) * slot->bpp, slot->identifier);
 #endif
 
 	glDeleteTextures(1, &slot->texnum);
@@ -226,7 +226,7 @@ void GL_AllocateStorage(gltexture_t* texture)
 {
 	GL_TexStorage2D(texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->reference.index, texture->texture_width, texture->texture_height, texture->texture_width * texture->texture_height * (texture->texmode & TEX_ALPHA ? 4 : 3), texture->identifier);
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->reference.index, texture->texture_width, texture->texture_height, texture->texture_width * texture->texture_height * texture->bpp, texture->identifier);
 #endif
 }
 
@@ -261,6 +261,10 @@ qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* 
 		}
 		break;
 	}
+
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", slot->reference.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * slot->depth * (slot->texmode & TEX_ALPHA ? 4 : 3), slot->identifier);
+#endif
 	return true;
 }
 
@@ -275,6 +279,9 @@ void GL_CreateTexture2D(texture_ref* texture, int width, int height, const char*
 	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
 	GL_SetTextureFiltering(*texture, texture_minification_linear, texture_magnification_linear);
 	GL_TextureWrapModeClamp(*texture);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->index, width, height, width * height * 4, name);
+#endif
 }
 
 void GL_SetTextureCompression(qbool enabled)

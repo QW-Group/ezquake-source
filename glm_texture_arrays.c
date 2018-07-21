@@ -532,9 +532,18 @@ void GLM_BuildCommonTextureArrays(qbool vid_restart)
 				texture_ref array_ref;
 				int index = 0;
 				int k;
+				char name[64];
+				const char* textureTypeNames[] = {
+					"aliasmodel",
+					"brushmodel",
+					"worldmodel",
+					"sprites",
+				};
+
+				snprintf(name, sizeof(name), "%s[%dx%dx%d]", textureTypeNames[flagged_type], width, height, same_size);
 
 				depth = same_size;
-				array_ref = R_CreateTextureArray("", width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
+				array_ref = R_CreateTextureArray(name, width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
 				if (!R_TextureReferenceIsValid(array_ref)) {
 					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
 				}

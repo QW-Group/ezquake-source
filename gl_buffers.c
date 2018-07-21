@@ -172,12 +172,15 @@ static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, const char* name,
 				if (buffer->glref) {
 					qglDeleteBuffers(1, &buffer->glref);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-					Sys_Printf("buffer,free,%s,%u\n", name, buffer->size);
+					Sys_Printf("buffer,free,%d,%s,%u\n", i, name, buffer->size * (buffer->persistent_mapped_ptr ? 3 : 1));
 #endif
 				}
 				break;
 			}
 		}
+	}
+	else {
+		name = "?";
 	}
 
 	if (buffer_count == 0) {
@@ -225,7 +228,7 @@ static buffer_ref GL_GenFixedBuffer(buffertype_t type, const char* name, int siz
 		R_BindVertexArrayElementBuffer(result);
 	}
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("buffer,alloc,%s,%u\n", name, size);
+	Sys_Printf("buffer,alloc,%d,%s,%u\n", result.index, name, size);
 #endif
 	return result;
 }
@@ -307,7 +310,7 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 				memcpy(base, data, size);
 			}
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-			Sys_Printf("buffer,alloc,%s,%u\n", name, size * 3);
+			Sys_Printf("buffer,alloc,%d,%s,%u\n", ref.index, name, size * 3);
 #endif
 		}
 		else {
@@ -318,7 +321,7 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 	else {
 		qglBufferStorage(target, size, data, storageFlags);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-		Sys_Printf("buffer,alloc,%s,%u\n", name, size);
+		Sys_Printf("buffer,alloc,%d,%s,%u\n", ref.index, name, size);
 #endif
 	}
 
@@ -379,8 +382,9 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 			}
 		}
 		qglDeleteBuffers(1, &buffer_data[vbo.index].glref);
+		buffer_data[vbo.index].glref = 0;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-		Sys_Printf("buffer,free-resize,%s,%u\n", buffer_data[vbo.index].name, buffer_data[vbo.index].size);
+		Sys_Printf("buffer,free-resize,%d,%s,%u\n", vbo.index, buffer_data[vbo.index].name, buffer_data[vbo.index].size * (buffer_data[vbo.index].persistent_mapped_ptr ? 3 : 1));
 #endif
 		buffer_data[vbo.index].next_free = next_free_buffer;
 
@@ -395,8 +399,8 @@ static buffer_ref GL_ResizeBuffer(buffer_ref vbo, int size, void* data)
 			qglBufferData(GL_BufferTypeToTarget(buffer_data[vbo.index].type), size, data, GL_BufferUsageToGLUsage(buffer_data[vbo.index].usage));
 		}
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-		Sys_Printf("buffer,free-resize,%s,%u\n", buffer_data[vbo.index].name, buffer_data[vbo.index].size);
-		Sys_Printf("buffer,alloc-resize,%s,%u\n", buffer_data[vbo.index].name, size);
+		Sys_Printf("buffer,free-resize,%d,%s,%u\n", vbo.index, buffer_data[vbo.index].name, buffer_data[vbo.index].size);
+		Sys_Printf("buffer,alloc-resize,%d,%s,%u\n", vbo.index, buffer_data[vbo.index].name, size);
 #endif
 
 		buffer_data[vbo.index].size = size;
@@ -440,7 +444,7 @@ static void GL_BufferShutdown(void)
 			if (qglDeleteBuffers) {
 				qglDeleteBuffers(1, &buffer_data[i].glref);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-				Sys_Printf("buffer,free,%s,%u\n", buffer_data[i].name, buffer_data[i].size);
+				Sys_Printf("buffer,free,%d,%s,%u\n", i, buffer_data[i].name, buffer_data[i].size * (buffer_data[i].persistent_mapped_ptr ? 3 : 1));
 #endif
 			}
 		}

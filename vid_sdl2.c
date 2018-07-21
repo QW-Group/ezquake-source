@@ -782,10 +782,7 @@ void VID_Shutdown(qbool restart)
 	vid_hwgamma_enabled = false;
 	vid_initialized = false;
 
-	if (restart) {
-		R_Initialise();
-	}
-	else {
+	if (!restart) {
 		QMB_ShutdownParticles();
 	}
 }

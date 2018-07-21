@@ -93,16 +93,8 @@ void GL_PrintGfxInfo(void)
 
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.gl_max_size_default);
 	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
-	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
-
-	if (r_fullscreen.integer) {
-		Com_Printf_State(PRINT_ALL, "[fullscreen]\n");
-	}
-	else {
-		Com_Printf_State(PRINT_ALL, "[windowed]\n");
-	}
-
-	Com_Printf_State(PRINT_ALL, "RATIO: %f ", vid.aspect);
+	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz [%s]\n", current.w, current.h, current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
+	Com_Printf_State(PRINT_ALL, "RATIO: %f\n", vid.aspect);
 	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer);
 }
 

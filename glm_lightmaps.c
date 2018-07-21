@@ -126,6 +126,10 @@ void GLM_CreateLightmapTextures(void)
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
+#endif
 	R_SetTextureFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
 	R_TextureWrapModeClamp(lightmap_texture_array);
 	lightmap_depth = lightmap_array_size;
@@ -135,9 +139,17 @@ void GLM_CreateLightmapTextures(void)
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	R_SetTextureArraySize(lightmap_source_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_source_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_source_array");
+#endif
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	R_SetTextureArraySize(lightmap_data_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_data_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_data_array");
+#endif
 }
 
 void GLM_InvalidateLightmapTextures(void)

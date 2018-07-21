@@ -183,8 +183,8 @@ static void Compile_DrawWorldProgram(void)
 	if (drawworld.program && !drawworld.uniforms_found) {
 		drawWorld_outlines = GLM_UniformGetLocation(drawworld.program, "draw_outlines");
 
-		ssbo_worldcvars = buffers.Create(buffertype_storage, NULL, sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
-		ssbo_worldsamplers = buffers.Create(buffertype_storage, NULL, sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
+		ssbo_worldcvars = buffers.Create(buffertype_storage, "ssbo_worldcvars", sizeof(drawcalls[0].calls) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
+		ssbo_worldsamplers = buffers.Create(buffertype_storage, "ssbo_worldsamplers", sizeof(drawcalls[0].mappings) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 
 		drawworld.uniforms_found = true;
 	}

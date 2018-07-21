@@ -499,6 +499,14 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 	return glt;
 }
 
+void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp)
+{
+	gltextures[tex.index].bpp = bpp;
+	gltextures[tex.index].texture_width = width;
+	gltextures[tex.index].texture_height = height;
+	gltextures[tex.index].depth = depth;
+}
+
 // We could flag the textures as they're created and then move all 2d>3d to this module?
 // FIXME: Ensure not called in immediate-mode OpenGL
 texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
