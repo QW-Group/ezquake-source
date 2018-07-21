@@ -215,10 +215,151 @@ HELP_OBJS := \
 GLSL_OBJS := \
     $(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
 
+MODERN_OPENGL_OBJS := \
+    glm_aliasmodel.o \
+    glm_brushmodel.o \
+    glm_draw.o \
+    glm_draw_charset.o \
+    glm_framebuffer.o \
+    glm_lightmaps.o \
+    glm_md3.o \
+    glm_misc.o \
+    glm_particles.o \
+    glm_performance.o \
+    glm_program.o \
+    glm_rmain.o \
+    glm_rsurf.o \
+    glm_sdl.o \
+    glm_sky.o \
+    glm_sprite.o \
+    glm_sprite3d.o \
+    glm_texture.o \
+    glm_texture_arrays.o \
+    glm_vao.o
+
+CLASSIC_OPENGL_OBJS := \
+    glc_aliasmodel.o \
+    glc_bloom.o \
+    glc_brushmodel.o \
+    glc_draw.o \
+    glc_fog.o \
+    glc_lightmaps.o \
+    glc_matrix.o \
+    glc_md3.o \
+    glc_misc.o \
+    glc_particles.o \
+    glc_performance.o \
+    glc_sdl.o \
+    glc_sky.o \
+    glc_sprite.o \
+    glc_sprite3d.o \
+    glc_state.o \
+    glc_surf.o \
+    glc_turb_surface.o \
+    glc_vao.o \
+    glc_warp.o
+
+COMMON_OPENGL_OBJS := \
+    gl_aliasmodel.o \
+    gl_aliasmodel_md3.o \
+    gl_brushmodel.o \
+    gl_buffers.o \
+    gl_debug.o \
+    gl_drawcall_wrappers.o \
+    gl_framebuffer.o \
+    gl_misc.o \
+    gl_sprite3d.o \
+    gl_state.o \
+    gl_texture.o \
+    vid_common_gl.o
+
+COMMON_RENDERER_OBJS := \
+    r_aliasmodel.o \
+    r_aliasmodel_md3.o \
+    r_aliasmodel_mesh.o \
+    r_aliasmodel_skins.o \
+    r_atlas.o \
+    r_bloom.o \
+    r_brushmodel.o \
+    r_brushmodel_bspx.o \
+    r_brushmodel_sky.o \
+    r_brushmodel_surfaces.o \
+    r_brushmodel_textures.o \
+    r_brushmodel_warpsurfaces.o \
+    r_buffers.o \
+    r_chaticons.o \
+    r_draw.o \
+    r_draw_charset.o \
+    r_draw_circle.o \
+    r_draw_image.o \
+    r_draw_line.o \
+    r_draw_polygon.o \
+    r_fog.o \
+    r_hud.o \
+    r_lightmaps.o \
+    r_main.o \
+    r_matrix.o \
+    r_misc.o \
+    r_model.o \
+    r_netgraph.o \
+    r_palette.o \
+    r_part.o \
+    r_particles_qmb.o \
+    r_particles_qmb_spawn.o \
+    r_performance.o \
+    r_refrag.o \
+    r_rlight.o \
+    r_rmain.o \
+    r_rmisc.o \
+    r_screenshot.o \
+    r_sprite3d.o \
+    r_sprites.o \
+    r_states.o \
+    r_texture.o \
+    r_texture_cvars.o \
+    r_texture_load.o \
+    r_texture_util.o \
+    vx_camera.o \
+    vx_coronas.o \
+    vx_motiontrail.o \
+    vx_stuff.o \
+    vx_vertexlights.o
+
+HUD_OBJS := \
+    hud.o \
+    hud_262.o \
+    hud_common.o \
+    hud_editor.o \
+    hud_radar.o \
+    hud_speed.o \
+    hud_teaminfo.o \
+    hud_weapon_stats.o \
+    hud_autoid.o \
+    hud_clock.o \
+    hud_ammo.o \
+    hud_items.o \
+    hud_mp3.o \
+    hud_net.o \
+    hud_guns.o \
+    hud_groups.o \
+    hud_armor.o \
+    hud_health.o \
+    hud_gamesummary.o \
+    hud_face.o \
+    hud_frags.o \
+    hud_tracking.o \
+    hud_scores.o \
+    hud_performance.o
+
 OBJS_c := \
     $(COMMON_OBJS) \
     $(HELP_OBJS) \
     $(GLSL_OBJS) \
+    $(HUD_OBJS) \
+    $(COMMON_RENDERER_OBJS) \
+    $(COMMON_OPENGL_OBJS) \
+    $(MODERN_OPENGL_OBJS) \
+    $(CLASSIC_OPENGL_OBJS) \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
@@ -263,14 +404,6 @@ OBJS_c := \
     fragstats.o \
     help.o \
     help_files.o \
-    hud.o \
-    hud_262.o \
-    hud_common.o \
-    hud_editor.o \
-    hud_radar.o \
-    hud_speed.o \
-    hud_teaminfo.o \
-    hud_weapon_stats.o \
     ignore.o \
     image.o \
     irc_filter.o \
@@ -299,7 +432,6 @@ OBJS_c := \
     mvd_xmlstats.o \
     parser.o \
     qtv.o \
-    r_part.o \
     rulesets.o \
     sbar.o \
     settings_page.o \
@@ -321,26 +453,6 @@ OBJS_c := \
     xsd.o \
     xsd_document.o \
     collision.o \
-    gl_draw.o \
-    r_draw_charset.o \
-    gl_bloom.o \
-    r_aliasmodel_md3.o \
-    r_aliasmodel_mesh.o \
-    r_model.o \
-    r_netgraph.o \
-    r_refrag.o \
-    r_rlight.o \
-    gl_rmain.o \
-    r_rmisc.o \
-    gl_rsurf.o \
-    gl_texture.o \
-    r_brushmodel_warpsurfaces.o \
-    vx_camera.o \
-    vx_coronas.o \
-    vx_motiontrail.o \
-    vx_stuff.o \
-    vx_vertexlights.o \
-    vid_common_gl.o \
     vid_vsync.o \
     cd_null.o \
     vid_sdl2.o \
@@ -348,82 +460,8 @@ OBJS_c := \
     in_sdl2.o \
     cl_multiview.o \
     snd_voip.o \
-    gl_aliasmodel.o \
-    r_aliasmodel_skins.o \
-    gl_atlas.o \
-    r_brushmodel.o \
-    r_brushmodel_bspx.o \
-    r_brushmodel_textures.o \
-    gl_buffers.o \
-    r_chaticons.o \
-    gl_framebuffer.o \
-    r_lightmaps.o \
-    glm_lightmaps.o \
-    glc_lightmaps.o \
-    vk_lightmaps.o \
-    gl_matrix.o \
-    gl_state.o \
-    r_brushmodel_sky.o \
-    r_sprites.o \
-    r_sprite3d.o \
-    gl_vbo.o \
-    glc_aliasmodel.o \
-    glc_brushmodel.o \
-    glc_md3.o \
-    glc_misc.o \
-    glc_screen.o \
-    glc_sky.o \
-    glc_sprite.o \
-    glc_surf.o \
-    glc_turb_surface.o \
-    glc_warp.o \
-    glm_aliasmodel.o \
-    gl_sprite3d.o \
-    glm_brushmodel.o \
-    glm_md3.o \
-    glm_misc.o \
-    glm_program.o \
-    glm_rsurf.o \
-    glm_screen.o \
-    glm_sky.o \
-    glm_sprite.o \
-    glm_texture_arrays.o \
-    glm_draw.o \
-    glm_draw_charset.o \
-    glm_draw_circle.o \
-    glm_draw_image.o \
-    glm_draw_line.o \
-    glm_draw_polygon.o \
-    glm_rmain.o \
-    r_performance.o \
-    glm_framebuffer.o \
-    glm_texture.o \
-    gl_drawcall_wrappers.o \
-    gl_debug.o \
-    hud_autoid.o \
     cl_screenshot.o \
-    r_particles_qmb.o \
-    r_particles_qmb_spawn.o \
-    hud_clock.o \
-    hud_ammo.o \
-    hud_items.o \
-    hud_mp3.o \
-    hud_net.o \
-    hud_guns.o \
-    hud_groups.o \
-    hud_armor.o \
-    hud_health.o \
-    hud_gamesummary.o \
-    hud_face.o \
-    hud_frags.o \
-    hud_tracking.o \
-    hud_scores.o \
-    fonts.o \
-    hud_performance.o \
-    r_palette.o \
-    glm_sdl.o \
-    glc_sdl.o \
-    vk_sdl.o
+    fonts.o
 
 ### Configuration Options ###
 

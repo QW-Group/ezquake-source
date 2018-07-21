@@ -24,27 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_sprite3d.h"
 
 // For drawing sprites in 3D space
-
-// FIXME: Now used by classic too.
-void GLM_RenderSprite(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index)
-{
-	vec3_t points[4];
-
-	VectorMA(origin, scale_up, up, points[0]);
-	VectorMA(points[0], scale_left, right, points[0]);
-	VectorMA(origin, scale_down, up, points[1]);
-	VectorMA(points[1], scale_left, right, points[1]);
-	VectorMA(origin, scale_up, up, points[2]);
-	VectorMA(points[2], scale_right, right, points[2]);
-	VectorMA(origin, scale_down, up, points[3]);
-	VectorMA(points[3], scale_right, right, points[3]);
-
-	GL_Sprite3DSetVert(vert++, points[0][0], points[0][1], points[0][2], 0, 0, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, t, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], s, 0, color_white, index);
-	GL_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
-}
-
 void GLM_DrawSimpleItem(model_t* m, int skin, vec3_t origin, float scale_, vec3_t up, vec3_t right)
 {
 	texture_ref texture_array = m->simpletexture_array[skin];
@@ -53,8 +32,9 @@ void GLM_DrawSimpleItem(model_t* m, int skin, vec3_t origin, float scale_, vec3_
 	float scale_t = m->simpletexture_scalingT[skin];
 	r_sprite3d_vert_t* vert;
 
-	if (vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index)) {
-		GLM_RenderSprite(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
+	vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, texture_array, texture_index);
+	if (vert) {
+		GL_RenderSprite(vert, origin, up, right, scale_, -scale_, -scale_, scale_, scale_s, scale_t, texture_index);
 	}
 }
 
@@ -96,7 +76,7 @@ void GLM_DrawSpriteModel(entity_t* e)
 
 	vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);
 	if (vert) {
-		GLM_RenderSprite(vert, e->origin, up, right, frame->up, frame->down, frame->left, frame->right, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);
+		GL_RenderSprite(vert, e->origin, up, right, frame->up, frame->down, frame->left, frame->right, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);
 	}
 }
 

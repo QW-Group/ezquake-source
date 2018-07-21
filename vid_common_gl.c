@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "image.h"
+#include "r_texture.h"
 
 const char *gl_vendor;
 const char *gl_renderer;

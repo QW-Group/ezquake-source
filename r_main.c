@@ -16,7 +16,7 @@ extern void GLM_DeleteBrushModelIndexBuffer(void);
 void R_BuildCommonTextureFormats(qbool vid_restart)
 {
 	if (R_UseModernOpenGL()) {
-		GL_BuildCommonTextureArrays(vid_restart);
+		GLM_BuildCommonTextureArrays(vid_restart);
 	}
 	else if (R_UseImmediateOpenGL()) {
 
@@ -115,4 +115,17 @@ void R_Initialise(void)
 void R_OnDisconnect(void)
 {
 	R_ClearModelTextureData();
+}
+
+void R_CvarForceRecompile(cvar_t* var)
+{
+	if (R_UseImmediateOpenGL()) {
+
+	}
+	else if (R_UseModernOpenGL()) {
+		GLM_ForceRecompile();
+	}
+	else if (R_UseVulkan()) {
+
+	}
 }

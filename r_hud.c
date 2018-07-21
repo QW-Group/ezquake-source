@@ -70,15 +70,21 @@ static hud_api_t hud;
 
 void R_Hud_Initialise(void)
 {
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		HudSetFunctionPointers(GLM);
 	}
-	else if (R_UseImmediateOpenGL()) {
+#endif
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	if (R_UseImmediateOpenGL()) {
 		HudSetFunctionPointers(GLC);
 	}
-	else if (R_UseVulkan()) {
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
 		HudSetFunctionPointers(VK);
 	}
+#endif
 }
 
 static void R_PrepareImageDraw(void)

@@ -205,7 +205,7 @@ void GL_Draw3DSprites(qbool inline_rendering)
 		return;
 	}
 
-	if (GL_UseImmediateMode() && inline_rendering) {
+	if (R_UseImmediateOpenGL() && inline_rendering) {
 		GLC_Draw3DSprites(batches, verts, batchCount, vertexCount);
 	}
 	else if (R_UseModernOpenGL() && !inline_rendering) {

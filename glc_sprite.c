@@ -28,7 +28,7 @@ void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t org, float sprsize, vec
 	r_sprite3d_vert_t* vert = GL_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
 
 	if (vert) {
-		GLM_RenderSprite(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
+		GL_RenderSprite(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
 	}
 }
 

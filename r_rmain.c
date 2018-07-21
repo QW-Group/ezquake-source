@@ -1031,8 +1031,6 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 	org[2] += sprsize;
 
 	if (R_UseModernOpenGL()) {
-		model_t* m = ent->model;
-
 		GLM_DrawSimpleItem(ent->model, skin, org, sprsize, up, right);
 	}
 	else if (R_UseImmediateOpenGL()) {

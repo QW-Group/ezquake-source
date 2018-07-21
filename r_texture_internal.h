@@ -34,7 +34,6 @@ typedef struct gltexture_s {
 } gltexture_t;
 
 extern gltexture_t gltextures[MAX_GLTEXTURES];
-extern int numgltextures;
 
 void R_TextureSetDimensions(texture_ref ref, int width, int height);
 gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifier, int width, int height, int depth, int bpp, int mode, unsigned short crc, qbool* new_texture);
@@ -45,9 +44,7 @@ void R_TextureUtil_ImageDimensionsToTexture(int imageWidth, int imageHeight, int
 
 void R_TextureUtil_SetFiltering(texture_ref texture);
 
-gltexture_t* GL_NextTextureSlot(r_texture_type_id target);
-qbool GL_AllocateTextureArrayStorage(gltexture_t* slot, int minimum_depth, int* depth);
-void GL_AllocateTextureNames(gltexture_t* glt);
+gltexture_t* R_NextTextureSlot(r_texture_type_id target);
 gltexture_t* R_FindTexture(const char *identifier);
 
 void R_TextureRegisterCvars(void);

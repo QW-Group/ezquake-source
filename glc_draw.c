@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_draw.h"
 #include "r_state.h"
 #include "r_matrix.h"
+#include "r_texture.h"
 #include "glc_vao.h"
 #include "glsl/constants.glsl" // FIXME: remove
 #include "glc_local.h"
@@ -256,10 +257,8 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	float modelviewMatrix[16];
 	float projectionMatrix[16];
 	byte current_color[4];
-	qbool alpha_test = false;
 	qbool nearest = imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST;
 	int i;
-	extern cvar_t scr_coloredText;
 
 	if (buffers.supported) {
 		if (!R_VertexArrayCreated(vao_hud_images)) {

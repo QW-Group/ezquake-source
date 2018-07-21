@@ -667,7 +667,7 @@ void GL_InvalidateTextureReferences(GLuint texture)
 	}
 }
 
-void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
+void GL_BindTextures(int first, int count, texture_ref* textures)
 {
 	int i;
 
@@ -718,143 +718,6 @@ void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures)
 		GL_LogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
 	}
 #endif
-}
-
-static int glcVertsPerPrimitive = 0;
-static int glcBaseVertsPerPrimitive = 0;
-static int glcVertsSent = 0;
-static const char* glcPrimitiveName = "?";
-
-void GLC_EnableTextureUnit(int unit)
-{
-	rendering_state_t* current = &opengl.rendering_state;
-
-	if (unit < sizeof(current->textureUnits) / sizeof(current->textureUnits[0])) {
-		if (current->textureUnits[unit].enabled) {
-			return;
-		}
-		current->textureUnits[unit].enabled = true;
-	}
-
-	GL_SelectTexture(GL_TEXTURE0 + unit);
-	glEnable(GL_TEXTURE_2D);
-	GL_LogAPICall("Directly enabled texturing on unit %d", unit);
-}
-
-void GLC_DisableTextureUnit(int unit)
-{
-	rendering_state_t* current = &opengl.rendering_state;
-
-	if (unit < sizeof(current->textureUnits) / sizeof(current->textureUnits[0])) {
-		if (!current->textureUnits[unit].enabled) {
-			return;
-		}
-		current->textureUnits[unit].enabled = false;
-	}
-
-	GL_SelectTexture(GL_TEXTURE0 + unit);
-	glDisable(GL_TEXTURE_2D);
-	GL_LogAPICall("Directly disabled texturing on unit %d", unit);
-}
-
-void GLC_Begin(GLenum primitive)
-{
-	if (GL_UseGLSL()) {
-		return;
-	}
-
-#ifdef WITH_OPENGL_TRACE
-	glcVertsSent = 0;
-	glcVertsPerPrimitive = 0;
-	glcBaseVertsPerPrimitive = 0;
-	glcPrimitiveName = "?";
-
-	switch (primitive) {
-	case GL_QUADS:
-		glcVertsPerPrimitive = 4;
-		glcBaseVertsPerPrimitive = 0;
-		glcPrimitiveName = "GL_QUADS";
-		break;
-	case GL_POLYGON:
-		glcVertsPerPrimitive = 0;
-		glcBaseVertsPerPrimitive = 0;
-		glcPrimitiveName = "GL_POLYGON";
-		break;
-	case GL_TRIANGLE_FAN:
-		glcVertsPerPrimitive = 1;
-		glcBaseVertsPerPrimitive = 2;
-		glcPrimitiveName = "GL_TRIANGLE_FAN";
-		break;
-	case GL_TRIANGLE_STRIP:
-		glcVertsPerPrimitive = 1;
-		glcBaseVertsPerPrimitive = 2;
-		glcPrimitiveName = "GL_TRIANGLE_STRIP";
-		break;
-	case GL_LINE_LOOP:
-		glcVertsPerPrimitive = 1;
-		glcBaseVertsPerPrimitive = 1;
-		glcPrimitiveName = "GL_LINE_LOOP";
-		break;
-	case GL_LINES:
-		glcVertsPerPrimitive = 2;
-		glcBaseVertsPerPrimitive = 0;
-		glcPrimitiveName = "GL_LINES";
-		break;
-	}
-#endif
-
-	++frameStats.draw_calls;
-	glBegin(primitive);
-	GL_LogAPICall("glBegin(%s...)", glcPrimitiveName);
-}
-
-#undef glEnd
-
-void GLC_End(void)
-{
-#ifdef WITH_OPENGL_TRACE
-	int primitives;
-	const char* count_name = "vertices";
-#endif
-
-	if (GL_UseGLSL()) {
-		return;
-	}
-
-	glEnd();
-
-#ifdef WITH_OPENGL_TRACE
-	primitives = max(0, glcVertsSent - glcBaseVertsPerPrimitive);
-	if (glcVertsPerPrimitive) {
-		primitives = glcVertsSent / glcVertsPerPrimitive;
-		count_name = "primitives";
-	}
-	GL_LogAPICall("glEnd(%s: %d %s)", glcPrimitiveName, primitives, count_name);
-#endif
-}
-
-void GLC_Vertex2f(GLfloat x, GLfloat y)
-{
-	glVertex2f(x, y);
-	++glcVertsSent;
-}
-
-void GLC_Vertex2fv(const GLfloat* v)
-{
-	glVertex2fv(v);
-	++glcVertsSent;
-}
-
-void GLC_Vertex3f(GLfloat x, GLfloat y, GLfloat z)
-{
-	glVertex3f(x, y, z);
-	++glcVertsSent;
-}
-
-void GLC_Vertex3fv(const GLfloat* v)
-{
-	glVertex3fv(v);
-	++glcVertsSent;
 }
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
@@ -1094,6 +957,7 @@ void R_BindVertexArray(r_vao_id vao)
 	if (currentVAO != vao) {
 		assert(vao == vao_none || R_VertexArrayCreated(vao));
 
+		//vaos.Bind(vao);
 		if (R_UseModernOpenGL()) {
 			GLM_BindVertexArray(vao);
 		}

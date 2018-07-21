@@ -10,4 +10,6 @@
 // Currently lightmaps + detail + caustics + (2*skydome|1*skybox) = 5
 #define MAX_STANDARD_TEXTURES 5
 
+void GLM_CreateBrushModelVAO(buffer_ref brushModel_vbo, buffer_ref vbo_brushElements, buffer_ref instance_vbo);
+
 #endif

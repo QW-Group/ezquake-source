@@ -28,27 +28,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel_sky.h"
 #include "r_trace.h"
 #include "r_state.h"
+#include "gl_texture.h"
 
 static void R_AllocateTextureNames(gltexture_t* glt);
-
-// move to api
-void R_TextureLabel(unsigned int texnum, const char* identifier);
-void GL_BindTextures(int unit, int count, texture_ref* textures);
-void GL_TextureLabel(unsigned int texnum, const char* identifier);
-void GL_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
-void GL_AllocateStorage(gltexture_t* glt);
-void GL_GenerateMipmap(texture_ref texture);
-void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
-void GL_TextureWrapModeClamp(texture_ref tex);
-void GL_DeleteTexture(texture_ref texture);
-void GL_SetTextureFiltering(texture_ref texture, texture_minification_id minification_filter, texture_magnification_id magnification_filter);
-void GL_CreateTextures(r_texture_type_id type, int count, texture_ref* textures);
-void GL_SetTextureCompression(qbool enabled);
 
 gltexture_t  gltextures[MAX_GLTEXTURES];
 static int   numgltextures = 1;
 static int   next_free_texture = 0;
 static texture_ref invalid_texture_reference = { 0 };
+
+void R_TextureLabel(unsigned int texnum, const char* identifier);
 
 void R_TextureUnitBind(int unit, texture_ref texture)
 {
@@ -385,7 +374,6 @@ texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int m
 {
 	qbool new_texture;
 	gltexture_t* slot = GL_AllocateTextureSlot(texture_type_cubemap, identifier, width, height, 0, 4, mode | TEX_NOSCALE, 0, &new_texture);
-	int max_miplevels = 0;
 
 	if (!slot) {
 		return invalid_texture_reference;
@@ -464,7 +452,7 @@ gltexture_t* GL_AllocateTextureSlot(r_texture_type_id type, const char* identifi
 	// with taking up a new texture slot, just load the new texture
 	// over the old one.
 	if (!load_over_existing) {
-		glt = GL_NextTextureSlot(type);
+		glt = R_NextTextureSlot(type);
 
 		strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
 		R_AllocateTextureNames(glt);
@@ -556,7 +544,7 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 	return gl_texturenum;
 }
 
-gltexture_t* GL_NextTextureSlot(r_texture_type_id type)
+gltexture_t* R_NextTextureSlot(r_texture_type_id type)
 {
 	int slot;
 	gltexture_t* glt;
@@ -661,5 +649,16 @@ void R_TextureGet(texture_ref tex, int buffer_size, byte* buffer)
 	}
 	else if (R_UseVulkan()) {
 		//VK_TextureGet(tex, buffer_size, buffer);
+	}
+}
+
+// meag: *RGBA is bit ugly, just trying to keep OpenGL enums out of the way for now
+void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
+{
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
+		GL_ReplaceSubImageRGBA(ref, offsetx, offsety, width, height, buffer);
+	}
+	else if (R_UseVulkan()) {
+		//VK_ReplaceSubImageRGBA(ref, offsetx, offsety, width, height, buffer);
 	}
 }

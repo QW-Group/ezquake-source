@@ -77,7 +77,6 @@ static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
 static void GrabMouse(qbool grab, qbool raw);
-static void GfxInfo_f(void);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
 void IN_Restart_f(void);
@@ -1155,6 +1154,7 @@ static void VID_SDL_Init(void)
 	VID_SetupModeList();
 	VID_SetupResolution();
 
+#ifdef SDL_WINDOW_VULKAN
 	sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
 	{
 		extern qbool VK_Initialise(SDL_Window* window);
@@ -1165,6 +1165,7 @@ static void VID_SDL_Init(void)
 		}
 		SDL_DestroyWindow(sdl_window);
 	}
+#endif
 
 	sdl_window = VID_SDL_CreateWindow(flags);
 	if (!sdl_window) {

@@ -453,7 +453,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 }
 
 // Called from R_NewMap
-void GL_BuildCommonTextureArrays(qbool vid_restart)
+void GLM_BuildCommonTextureArrays(qbool vid_restart)
 {
 	int i;
 

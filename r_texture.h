@@ -43,11 +43,7 @@ typedef struct charset_s {
 	texture_ref master;
 } charset_t;
 
-mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
-byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
-qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
-void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
-
+/*
 typedef struct texture_api_s {
 	texture_ref (*Load)(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 	texture_ref (*LoadPic)(const char *name, mpic_t *pic, byte *data);
@@ -80,8 +76,17 @@ typedef struct texture_api_s {
 } texture_api_t;
 
 extern texture_api_t textures;
+*/
 
 void R_Texture_Init(void);
+
+void R_TextureAnisotropyChanged(texture_ref tex);
+void R_TextureWrapModeClamp(texture_ref tex);
+
+mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
+byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
+void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);
 
 texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *data, int mode, int bpp);
 texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
@@ -96,7 +101,6 @@ void R_DeleteTextures(void);
 
 qbool R_TexturesAreSameSize(texture_ref tex1, texture_ref tex2);
 qbool R_TextureValid(texture_ref ref);
-
 int R_TextureWidth(texture_ref ref);
 int R_TextureHeight(texture_ref ref);
 int R_TextureDepth(texture_ref ref);
@@ -106,8 +110,6 @@ void R_TexturesInvalidateAllReferences(void);
 void R_CreateTexture2D(texture_ref* reference, int width, int height, const char* name);
 void R_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
-void R_TextureWrapModeClamp(texture_ref tex);
-void R_TextureAnisotropyChanged(texture_ref tex);
 qbool R_ExternalTexturesEnabled(qbool worldmodel);
 
 void R_SetNonPowerOfTwoSupport(qbool supported);

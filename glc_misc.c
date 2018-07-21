@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_local.h"
 #include "r_matrix.h"
 #include "r_state.h"
+#include "r_texture.h"
 
 // motion blur.
 texture_ref sceneblur_texture;

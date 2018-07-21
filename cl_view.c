@@ -441,7 +441,7 @@ void V_BonusFlash_f (void) {
 //Underwater, lava, etc each has a color shift
 void V_SetContentsColor (int contents)
 {
-	extern cvar_t gl_polyblend, gl_waterfog;
+	extern cvar_t gl_polyblend;
 
 	if (!v_contentblend.value) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;

@@ -92,7 +92,7 @@ void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref*
 	GLsizei i;
 
 	for (i = 0; i < n; ++i) {
-		gltexture_t* glt = GL_NextTextureSlot(type);
+		gltexture_t* glt = R_NextTextureSlot(type);
 
 		GL_CreateTextureNames(textureUnit, target, 1, &glt->texnum);
 		glt->type = type;

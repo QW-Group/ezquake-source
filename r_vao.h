@@ -52,4 +52,8 @@ qbool R_InitialiseVAOHandling(void);
 qbool R_VAOBound(void);
 void R_BindVertexArrayElementBuffer(buffer_ref ref);
 
+typedef struct r_vaos_api_s {
+	void(*Bind)(r_vao_id vao);
+} r_vaos_api_t;
+
 #endif // EZQUAKE_R_VAO_HEADER

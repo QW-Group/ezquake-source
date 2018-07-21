@@ -87,17 +87,15 @@ static GLenum GL_BufferTypeToTarget(buffertype_t type)
 			return GL_ARRAY_BUFFER;
 		case buffertype_uniform:
 			return GL_UNIFORM_BUFFER;
+		default:
+			assert(false);
+			return 0;
 	}
-
-	assert(false);
-	return 0;
 }
 
 static GLenum GL_BufferUsageToGLUsage(bufferusage_t usage)
 {
 	switch (usage) {
-		case bufferusage_unknown:
-			return 0;
 		case bufferusage_once_per_frame:
 			return GL_STREAM_DRAW;
 		case bufferusage_reuse_per_frame:
@@ -106,10 +104,10 @@ static GLenum GL_BufferUsageToGLUsage(bufferusage_t usage)
 			return GL_STATIC_DRAW;
 		case bufferusage_constant_data:
 			return GL_STATIC_COPY;
+		default:
+			assert(false);
+			return 0;
 	}
-
-	assert(false);
-	return 0;
 }
 
 typedef void (APIENTRY *glBindBuffer_t)(GLenum target, GLuint buffer);

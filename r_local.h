@@ -92,4 +92,7 @@ void GL_Init(void);
 void R_Initialise(void);
 float R_WaterAlpha(void);
 
+// cvar notification
+void R_CvarForceRecompile(cvar_t* var);
+
 #endif // EZQUAKE_R_LOCAL_HEADER

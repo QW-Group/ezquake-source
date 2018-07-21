@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
 extern void Help_DescribeCvar (cvar_t *v);
+void R_CvarForceRecompile(cvar_t* var);
 
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
@@ -241,9 +242,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 		CL_UserinfoChanged(var->name, var->string);
 	}
 	if (var->flags & CVAR_RECOMPILE_PROGS) {
-		extern void GLM_ForceRecompile(void);
-
-		GLM_ForceRecompile();
+		R_CvarForceRecompile(var);
 	}
 #endif
 }

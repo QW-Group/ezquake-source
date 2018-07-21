@@ -2,7 +2,7 @@
 #ifndef EZQUAKE_GLM_LOCAL_HEADER
 #define EZQUAKE_GLM_LOCAL_HEADER
 
-void GL_BuildCommonTextureArrays(qbool vid_restart);
+void GLM_BuildCommonTextureArrays(qbool vid_restart);
 void GLM_DeletePrograms(qbool restarting);
 void GLM_InitPrograms(void);
 void GLM_Shutdown(qbool restarting);

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef GL_TEXTURE_INTERNAL_HEADER
 #define GL_TEXTURE_INTERNAL_HEADER
 
+#include "r_texture.h"
 #include "gl_model.h"
 #include "gl_local.h"
 
@@ -57,7 +58,6 @@ void GL_GetTexImage(GLenum textureUnit, texture_ref reference, GLint level, GLen
 
 void GL_BindTextureUnit(GLuint unit, texture_ref reference);
 void GL_EnsureTextureUnitBound(int unit, texture_ref reference);
-void GL_BindTextures(GLuint first, GLsizei count, const texture_ref* textures);
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
 

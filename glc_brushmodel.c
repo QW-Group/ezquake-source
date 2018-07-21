@@ -769,3 +769,24 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 
 	alphachain = NULL;
 }
+
+int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture)
+{
+	glc_vbo_world_vert_t* target = (glc_vbo_world_vert_t*)vbo_buffer_ + position;
+
+	VectorCopy(source, target->position);
+	target->material_coords[0] = source[3];
+	target->material_coords[1] = source[4];
+	target->lightmap_coords[0] = source[5];
+	target->lightmap_coords[1] = source[6];
+	target->detail_coords[0] = source[7];
+	target->detail_coords[1] = source[8];
+	if (scaleS) {
+		target->material_coords[0] *= scaleS;
+	}
+	if (scaleT) {
+		target->material_coords[1] *= scaleT;
+	}
+
+	return position + 1;
+}

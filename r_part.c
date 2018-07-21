@@ -31,6 +31,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_local.h"
 
+// move to api
+void GLC_DrawClassicParticles(int particle_count);
+void GLM_DrawClassicParticles(int particle_count);
+
+#ifndef RENDERER_OPTION_MODERN_OPENGL
+int particletexture_array_index = 0;
+#endif
+
 texture_ref particletexture;
 const int default_size = 32;
 
@@ -696,18 +704,16 @@ static void Classic_PrepareParticles(void)
 }
 
 // Performs all drawing of particles
-void Classic_DrawParticles(void)
+void R_DrawClassicParticles(void)
 {
-	r_sprite3d_vert_t* vert;
-
-	if (particles_to_draw == 0) {
-		return;
+	if (R_UseImmediateOpenGL()) {
+		GLC_DrawClassicParticles(particles_to_draw);
 	}
-
-	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, r_state_particles_classic, r_state_particles_classic, R_UseModernOpenGL() ? particletexture_array : particletexture, particletexture_array_index, r_primitive_triangles);
-	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
-	if (vert) {
-		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
+	else if (R_UseModernOpenGL()) {
+		GLM_DrawClassicParticles(particles_to_draw);
+	}
+	else if (R_UseVulkan()) {
+		//VK_DrawClassicParticles();
 	}
 
 	return;
@@ -758,7 +764,9 @@ void R_DrawParticles(void)
 		Classic_ReScaleParticles();
 	}
 
-	Classic_DrawParticles();
+	if (particles_to_draw) {
+		R_DrawClassicParticles();
+	}
 	QMB_DrawParticles();
 }
 

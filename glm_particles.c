@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "gl_texture_internal.h"
+#include "gl_sprite3d.h"
+#include "particles_classic.h"
 
 extern texture_ref particletexture;
 texture_ref particletexture_array;
@@ -71,5 +73,18 @@ void GLM_LoadParticleTextures(void)
 		GL_GenerateMipmap(particletexture_array);
 
 		Q_free(data);
+	}
+}
+
+void GLM_DrawClassicParticles(int particles_to_draw)
+{
+	r_sprite3d_vert_t* vert;
+
+	GL_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, r_state_particles_classic, r_state_particles_classic, particletexture_array, particletexture_array_index, r_primitive_triangles);
+	vert = GL_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
+	if (vert) {
+		extern r_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
+
+		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
 	}
 }
