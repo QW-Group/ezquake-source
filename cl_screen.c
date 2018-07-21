@@ -528,7 +528,7 @@ void SCR_ZoomOut_f(void)
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
 {
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		GLM_DrawAccelBar(x, y, length, charsize, pos);
 	}
 	else {

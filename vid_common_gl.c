@@ -185,7 +185,7 @@ void GL_Init(void)
 	gl_vendor = (const char*)glGetString(GL_VENDOR);
 	gl_renderer = (const char*)glGetString(GL_RENDERER);
 	gl_version = (const char*)glGetString(GL_VERSION);
-	if (GL_UseGLSL()) {
+	if (R_UseModernOpenGL()) {
 		gl_extensions = "(using modern OpenGL)\n";
 	}
 	else {

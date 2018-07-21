@@ -143,11 +143,6 @@ extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_gammacorrection;
 
-extern	const char *gl_vendor;
-extern	const char *gl_renderer;
-extern	const char *gl_version;
-extern	const char *gl_extensions;
-
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);
 qbool R_CullSphere (vec3_t centre, float radius);
