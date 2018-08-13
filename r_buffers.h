@@ -7,6 +7,7 @@ typedef struct gl_buffer_s {
 } buffer_ref;
 
 #define R_BufferReferenceIsValid(x) ((x).index && buffers.IsValid(x))
+#define R_BufferReferencesEqual(x,y) ((x).index == (y).index)
 extern const buffer_ref null_buffer_reference;
 
 // Buffers

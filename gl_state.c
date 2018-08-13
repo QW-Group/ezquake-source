@@ -896,7 +896,7 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 			buffers.UnBind(buffertype_vertex);
 		}
 
-		if (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
+		if (!R_BufferReferencesEqual(buf, array->buf) || size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
 			glVertexPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
 			R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		}
@@ -925,7 +925,7 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 			buffers.UnBind(buffertype_vertex);
 		}
 
-		if (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
+		if (!R_BufferReferencesEqual(buf, array->buf) || size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
 			glColorPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
 			R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		}
@@ -977,7 +977,7 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 
 	if (enabled) {
 		glc_vertex_array_element_t* array = &opengl.rendering_state.textureUnits[unit].va;
-		qbool pointer_call_needed = (size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset);
+		qbool pointer_call_needed = (!R_BufferReferencesEqual(buf, array->buf) || size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset);
 
 		if (R_BufferReferenceIsValid(buf)) {
 			buffers.Bind(buf);

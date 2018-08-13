@@ -90,6 +90,8 @@ typedef enum {
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 typedef struct glc_vertex_array_element_s {
 	qbool enabled;
+
+	buffer_ref buf;
 	int size;
 	unsigned int type;
 	int stride;
