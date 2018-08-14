@@ -237,18 +237,19 @@ static buffer_ref GL_CreateFixedBuffer(buffertype_t type, const char* name, int 
 {
 	GLenum target = GL_BufferTypeToTarget(type);
 	buffer_data_t* buffer;
-	buffer_ref ref;
+	buffer_ref ref = null_buffer_reference;
 
 	qbool tripleBuffer = false;
 	qbool useStorage = false;
 	GLbitfield storageFlags = 0;
 	GLsizei alignment = 1;
 
-	buffer = GL_BufferAllocateSlot(type, name, size, usage);
-	ref.index = buffer - buffer_data;
 	if (!size) {
 		return ref;
 	}
+
+	buffer = GL_BufferAllocateSlot(type, name, size, usage);
+	ref.index = buffer - buffer_data;
 
 	if (usage == bufferusage_once_per_frame) {
 		useStorage = tripleBuffer = tripleBuffer_supported;
