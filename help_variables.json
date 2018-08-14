@@ -5616,6 +5616,21 @@
         }
       ]
     },
+    "gl_scaleModelSimpleTextures": {
+      "default": "0",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "gl_max_size doesn't affect sprites drawn when gl_simpleitems enabled.",
+          "name": "false"
+        },
+        {
+          "description": "gl_max_size affects simple item sprites",
+          "name": "true"
+        }
+      ]
+    },
     "gl_scaleTurbTextures": {
       "default": "1",
       "group-id": "50",
@@ -21010,8 +21025,14 @@
       "group-id": "52",
       "type": "enum",
       "values": [
-        { "description": "OpenGL, classic", "name": "0" },
-        { "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)", "name": "1" }
+        {
+          "description": "OpenGL, classic",
+          "name": "0"
+        },
+        {
+          "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)",
+          "name": "1"
+        }
       ]
     },
     "vid_resetonswitch": {

@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 #include "r_texture.h"
+#include "r_renderer.h"
 
 model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
@@ -584,7 +585,7 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 {
 	texture_ref tex = null_texture_reference;
 	int texmode = 0;
-	char basename[64], indentifier[64];
+	char basename[64], identifier[64];
 
 	if (!mod) {
 		return null_texture_reference;
@@ -602,31 +603,31 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 
 	texmode = TEX_MIPMAP | TEX_ALPHA | TEX_PREMUL_ALPHA;
-	if (!gl_scaleModelTextures.value) {
+	if (!gl_scaleModelSimpleTextures.integer) {
 		texmode |= TEX_NOSCALE;
 	}
 
-	snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
+	snprintf(identifier, sizeof(identifier), "simple_%s_%d", basename, skinnum);
 
 	if (mod->type == mod_brush) {
-		tex = R_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+		tex = R_LoadTextureImage(va("textures/bmodels/%s", identifier), identifier, 0, 0, texmode);
 	}
 	else if (mod->type == mod_alias || mod->type == mod_alias3) {
 		// hack for loading models saved as .bsp under /maps directory
 		if (Utils_RegExpMatch("^(?i)maps\\/b_(.*)\\.bsp", mod->name)) {
-			tex = R_LoadTextureImage(va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+			tex = R_LoadTextureImage(va("textures/bmodels/%s", identifier), identifier, 0, 0, texmode);
 		}
 		else {
-			tex = R_LoadTextureImage(va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
+			tex = R_LoadTextureImage(va("textures/models/%s", identifier), identifier, 0, 0, texmode);
 		}
 	}
 
 	if (!R_TextureReferenceIsValid(tex)) {
-		tex = R_LoadTextureImage(va("textures/%s", indentifier), indentifier, 0, 0, texmode);
+		tex = R_LoadTextureImage(va("textures/%s", identifier), identifier, 0, 0, texmode);
 	}
 
 	if (developer.value > 1) {
-		Com_Printf("Mod_LoadSimpleTexture: %s %s\n", indentifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
+		Com_Printf("Mod_LoadSimpleTexture: %s %s\n", identifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
 	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
@@ -640,6 +641,9 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		CachePics_MarkAtlasDirty();
 	}
 
+	if (R_TextureReferenceIsValid(tex)) {
+		renderer.TextureWrapModeClamp(tex);
+	}
 	return tex;
 }
 
