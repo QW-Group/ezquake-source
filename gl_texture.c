@@ -178,6 +178,9 @@ void GL_TextureWrapModeClamp(texture_ref tex)
 	if (GL_VersionAtLeast(1, 2)) {
 		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		if (R_TextureType(tex) == texture_type_cubemap) {
+			GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		}
 	}
 	else {
 		GL_TexParameteri(GL_TEXTURE0, tex, GL_TEXTURE_WRAP_S, GL_CLAMP);

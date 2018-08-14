@@ -103,6 +103,7 @@ qbool R_TextureValid(texture_ref ref);
 int R_TextureWidth(texture_ref ref);
 int R_TextureHeight(texture_ref ref);
 int R_TextureDepth(texture_ref ref);
+r_texture_type_id R_TextureType(texture_ref ref);
 void R_GenerateMipmapsIfNeeded(texture_ref ref);
 
 void R_TexturesInvalidateAllReferences(void);

@@ -341,6 +341,7 @@ texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int m
 	}
 
 	R_TextureUtil_SetFiltering(slot->reference);
+	renderer.TextureWrapModeClamp(slot->reference);
 
 	return slot->reference;
 }
@@ -573,4 +574,9 @@ void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int heigh
 			references[i] = null_texture_reference;
 		}
 	}
+}
+
+r_texture_type_id R_TextureType(texture_ref ref)
+{
+	return gltextures[ref.index].type;
 }
