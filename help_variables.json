@@ -11856,6 +11856,11 @@
         { "name": "2", "description": "Print the volume in left/right speakers, name of sound file playing, and number of sounds playing." }
       ]
     },
+    "s_silent_racing": {
+      "group-id": "45",
+      "desc": "Toggles whether or not you can hear other players when racing.",
+      "type": "boolean"
+    },
     "s_spec_file": {
       "group-id": "45",
       "desc": "You can specify notification sound for spectator messages.",
@@ -11865,16 +11870,6 @@
       "group-id": "45",
       "desc": "You can specify volume of notification sound for spectator messages.",
       "type": "float"
-    },
-    "s_stereo": {
-      "group-id": "26",
-      "desc": "Use stereo or mono sound",
-      "remarks": "Linux only.\nUse s_restart after you change it.",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "mono" },
-        { "name": "true", "description": "stereo" }
-      ]
     },
     "s_swapstereo": {
       "group-id": "45",

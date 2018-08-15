@@ -218,6 +218,7 @@ void S_PaintChannels(int endtime)
 	unsigned int i;
 	sfxcache_t *sc;
 	channel_t *ch;
+	extern cvar_t s_silent_racing;
 
 	while (shw->paintedtime < endtime) {
 		// if paintbuffer is smaller than DMA buffer
@@ -235,6 +236,22 @@ void S_PaintChannels(int endtime)
 				continue;
 			if (!ch->leftvol && !ch->rightvol)
 				continue;
+			if (cl.racing && s_silent_racing.integer && ch->entnum > 0 && ch->entnum <= MAX_CLIENTS) {
+				if (cl.spectator) {
+					if (Cam_TrackNum() < 0) {
+						// silence all racers
+						continue;
+					}
+					else if (ch->entnum - 1 != Cam_TrackNum()) {
+						// not the tracked player
+						continue;
+					}
+				}
+				else if (ch->entnum - 1 != cl.playernum) {
+					// a different player
+					continue;
+				}
+			}
 			sc = S_LoadSound (ch->sfx);
 			if (!sc)
 				continue;

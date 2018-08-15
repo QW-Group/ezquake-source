@@ -96,6 +96,7 @@ cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
 cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_AUTO, OnChange_s_desiredsamples };
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH};
+cvar_t s_silent_racing = { "s_silent_racing", "0" };
 
 SDL_mutex *smutex;
 soundhw_t *shw;
@@ -437,6 +438,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_Register(&s_swapstereo);
 	Cvar_Register(&s_linearresample_stream);
 	Cvar_Register(&s_desiredsamples);
+	Cvar_Register(&s_silent_racing);
 
 	Cvar_ResetCurrentGroup();
 
