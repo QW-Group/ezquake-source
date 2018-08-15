@@ -410,7 +410,7 @@ void Util_Process_Filename(char *string) {
 }
 
 qbool Util_Is_Valid_FilenameEx(char *s, qbool drive_prefix_valid) {
-	static char badchars[] = {'?', '*', ':', '<', '>', '"'};
+	static char badchars[] = {'?', '*', ':', '<', '>', '"', '\0'};
 
 	if (!s || !*s)
 		return false;
