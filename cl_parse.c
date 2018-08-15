@@ -2920,17 +2920,17 @@ void CL_ProcessPrint (int level, char* s0)
 
 		if (s[0])  // KT sometimes sends empty strings
 		{
-			if (con_timestamps.value != 0) // @CHECKME@
-			{
+			// @CHECKME@
+			if (con_timestamps.integer) {
 				SYSTEMTIME lt;
 				char tmpbuf[16];
 				GetLocalTime (&lt);
-				if (con_timestamps.value == 1) {
-					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+				if (con_timestamps.integer == 2 && (cl.spectator || cls.demoplayback || cl.standby)) {
+					snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
 					Com_Printf(tmpbuf);
 				}
 				else {
-					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
+					snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
 					Com_Printf(tmpbuf);
 				}
 			}
