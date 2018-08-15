@@ -111,7 +111,7 @@ static int tarOperationIndexFiles(vfsfile_t *in, packfile_t *files) {
 
 		if (getheader == HEADER_SHORTNAME)
 		{
-			strncpy(fname,buffer.header.name,SHORTNAMESIZE);
+			strlcpy(fname,buffer.header.name,sizeof(fname));
 			if (fname[SHORTNAMESIZE-1] != 0)
 				fname[SHORTNAMESIZE] = 0;
 		}

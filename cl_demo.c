@@ -3727,7 +3727,7 @@ static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPat
 	else if (searchpaks)
 	{
 		// Search demo on quake file system, even in paks.
-		strncpy(fullname, name, MAX_OSPATH);
+		strlcpy(fullname, name, sizeof(fullname));
 		file = FS_OpenVFS(name, "rb", FS_ANY);
 	}
 
@@ -3741,7 +3741,7 @@ static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPat
 	// Check the full system path (Run a demo anywhere on the file system).
 	if (!file)
 	{
-		strncpy(fullname, name, MAX_OSPATH);
+		strlcpy(fullname, name, sizeof(fullname));
 		file = FS_OpenVFS(name, "rb", FS_NONE_OS);
 	}
 

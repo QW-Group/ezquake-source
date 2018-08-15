@@ -493,7 +493,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		gpath = "";
 	*apath = '\0';
 
-	strncpy(apath, match, sizeof(apath));
+	strlcpy(apath, match, sizeof(apath));
 	for (s = apath+strlen(apath)-1; s >= apath; s--)
 	{
 		if (*s == '/')
