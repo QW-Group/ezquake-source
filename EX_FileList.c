@@ -1718,7 +1718,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 	for (i = 0; i < listsize; i++)
 	{
 		filedesc_t *entry;
-		DWORD dwsize;
+		unsigned long dwsize;
 		char size[COL_SIZE+1], date[COL_DATE+1], time[COL_TIME+1];
 		char name[MAX_PATH];
 		int filenum = fl->display_entry + i;
@@ -1751,15 +1751,17 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 			{
 				dwsize /= 1024;
 				dwsize = min(dwsize, 999);
-				snprintf(size, sizeof(size), "%3dm", dwsize);
-				if (filenum == fl->current_entry)
-					snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
+				snprintf(size, sizeof(size), "%3lum", dwsize);
+				if (filenum == fl->current_entry) {
+					snprintf(ssize, sizeof(ssize), "%lu mb", dwsize);
+				}
 			}
 			else
 			{
-				snprintf(size, sizeof(size), "%4d", dwsize);
-				if (filenum == fl->current_entry)
-					snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
+				snprintf(size, sizeof(size), "%4lu", dwsize);
+				if (filenum == fl->current_entry) {
+					snprintf(ssize, sizeof(ssize), "%lu kb", dwsize);
+				}
 			}
 		}
 
