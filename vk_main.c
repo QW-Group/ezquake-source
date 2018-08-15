@@ -67,6 +67,8 @@ qbool VK_Initialise(SDL_Window* window)
 void VK_Shutdown(void)
 {
 	VK_DestroySwapChain();
+
+	VK_RenderPassDelete();
 	
 	if (vk_options.instance) {
 		VK_DestroyWindowSurface(vk_options.instance, vk_options.surface);

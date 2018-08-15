@@ -49,6 +49,9 @@ void VK_DestroyWindowSurface(VkInstance instance, VkSurfaceKHR surface);
 qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR surface);
 void VK_DestroySwapChain(void);
 
+// vk_blending.c
+void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineColorBlendAttachmentState* blending, r_blendfunc_t func);
+
 // (common)
 typedef struct vk_options_s {
 	VkInstance instance;
@@ -78,5 +81,7 @@ typedef struct vk_options_s {
 extern vk_options_t vk_options;
 
 void VK_PrintGfxInfo(void);
+
+#define VK_Initialise(x) { memset(&x, 0, sizeof(x)); }
 
 #endif

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "r_local.h"
 #include "r_vao.h"
+#include "r_state.h"
 
 #include "vk_local.h"
 
@@ -35,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	VkVertexInputBindingDescription bindings[MAX_VAO_BINDINGS];
 	VkVertexInputAttributeDescription attributes[MAX_VAO_BINDINGS];
+	VkPipelineVertexInputStateCreateInfo vertexInfo;
 } vk_vao_t;
 
 static vk_vao_t vaos[vao_count];
@@ -59,26 +61,40 @@ void VK_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, uint32_t inde
 	attribute->offset = offset;
 }
 
-void VK_CreateAliasModelPipeline(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
+qbool VK_CreateAliasModelPipeline(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
 {
-	VkPipelineVertexInputStateCreateInfo vertexInfo = { 0 };
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = { 0 };
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkViewport viewport = { 0 };
 	VkRect2D scissor = { 0 };
-	VkPipelineViewportStateCreateInfo viewportState = { 0 };
-	VkPipelineRasterizationStateCreateInfo rasterizer = { 0 };
+	VkPipelineViewportStateCreateInfo viewportState;
+	VkPipelineRasterizationStateCreateInfo rasterizer;
+	VkPipelineDepthStencilStateCreateInfo depthStencil;
+	VkPipelineMultisampleStateCreateInfo multisampling;
+	VkPipelineColorBlendAttachmentState blending;
+	VkPipelineColorBlendStateCreateInfo colorBlending;
+	VkPipeline pipelineLayout;
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+
+	VK_InitialiseStructure(inputAssembly);
+	VK_InitialiseStructure(viewport);
+	VK_InitialiseStructure(scissor);
+	VK_InitialiseStructure(viewportState);
+	VK_InitialiseStructure(rasterizer);
+	VK_InitialiseStructure(depthStencil);
+	VK_InitialiseStructure(multisampling);
+	VK_InitialiseStructure(blending);
+	VK_InitialiseStructure(pipelineLayoutInfo);
+
+	VK_InitialiseStructure(vaos[vao_aliasmodel].vertexInfo);
+	vaos[vao_aliasmodel].vertexInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vaos[vao_aliasmodel].vertexInfo.pVertexBindingDescriptions = vaos[vao_aliasmodel].bindings;
+	vaos[vao_aliasmodel].vertexInfo.pVertexAttributeDescriptions = vaos[vao_aliasmodel].attributes;
 
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, position), false);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), false);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, normal), false);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, instanceVBO, 3, VK_FORMAT_R32_UINT, sizeof(uint32_t), 0, true);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, VK_FORMAT_R32_SINT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), false);
-
-	vertexInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInfo.vertexBindingDescriptionCount = 5;
-	vertexInfo.pVertexBindingDescriptions = vaos[vao_aliasmodel].bindings;
-	vertexInfo.vertexAttributeDescriptionCount = 5;
-	vertexInfo.pVertexAttributeDescriptions = vaos[vao_aliasmodel].attributes;
 	
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -107,6 +123,35 @@ void VK_CreateAliasModelPipeline(buffer_ref aliasModelVBO, buffer_ref instanceVB
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+	rasterizer.depthBiasClamp = 0.0f; // Optional
+	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.sampleShadingEnable = VK_FALSE;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.minSampleShading = 1.0f; // Optional
+	multisampling.pSampleMask = NULL; // Optional
+	multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
+	multisampling.alphaToOneEnable = VK_FALSE; // Optional
+
+	// depth-buffer: todo
+
+	// blending modes
+	VK_BlendingConfigure(&colorBlending, &blending, r_blendfunc_premultiplied_alpha);
+
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 0; // Optional
+	pipelineLayoutInfo.pSetLayouts = NULL; // Optional
+	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+	pipelineLayoutInfo.pPushConstantRanges = NULL; // Optional
+
+	if (vkCreatePipelineLayout(vk_options.logicalDevice, &pipelineLayoutInfo, NULL, &pipelineLayout) != VK_SUCCESS) {
+		return false;
+	}
+
+	return true;
 }
 
 void VK_DeleteVAOs(void)
