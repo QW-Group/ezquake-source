@@ -215,7 +215,7 @@ static int MP3_CheckFunction(qbool PrintWarning) {
 		}
 		return -1;
 	}
-	else if (Rulesets_RestrictSound()) {
+	else if (Rulesets_RestrictSound(NULL)) {
 		if (PrintWarning) {
 			Com_Printf("MP3 functionality disabled by ruleset\n");
 		}

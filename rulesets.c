@@ -120,9 +120,21 @@ qbool Rulesets_RestrictTriggers(void)
 	return rulesetDef.restrictTriggers;
 }
 
-qbool Rulesets_RestrictSound(void)
+qbool Rulesets_RestrictSound(const char* name)
 {
-	return rulesetDef.restrictSound && cbuf_current != &cbuf_svc;
+	if (!rulesetDef.restrictSound) {
+		return false;
+	}
+
+	if (name == NULL || cbuf_current != &cbuf_svc) {
+		return true;
+	}
+
+	if (strstr(name, "ktsound")) {
+		return true;
+	}
+
+	return false;
 }
 
 qbool Rulesets_RestrictPacket(void)

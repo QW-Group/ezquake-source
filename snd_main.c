@@ -987,19 +987,18 @@ static void S_Play_f (void)
 	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
 
-	if (Rulesets_RestrictSound() == true) {
-		return;
-	}
-
 	for (i = 1; i < Cmd_Argc(); ++i) {
 		float vol = 1.0f;                 // Set by playvol command
 		float attenuation = 0.0f;         // full volume regardless of distance
 		vec3_t sound_origin;
 		int entity = SELF_SOUND_ENTITY;   // ezhfan: pnum+1 changed to SELF_SOUND to make sound not to disappear
 
-		VectorCopy (listener_origin, sound_origin);
-
 		strlcpy (name, Cmd_Argv(i), sizeof(name));
+		if (Rulesets_RestrictSound(name)) {
+			continue;
+		}
+
+		VectorCopy(listener_origin, sound_origin);
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		if (playvol)
