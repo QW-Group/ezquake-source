@@ -16979,6 +16979,12 @@
         }
       ]
     },
+    "s_silent_racing": {
+      "default": "0",
+      "group-id": "45",
+      "desc": "Toggles whether or not you can hear other players when racing.",
+      "type": "boolean"
+    },
     "s_spec_file": {
       "default": "misc/talk.wav",
       "desc": "You can specify notification sound for spectator messages.",
