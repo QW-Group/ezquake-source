@@ -982,7 +982,7 @@ void NQD_LinkEntities (void)
 		// calculate origin
 		for (i = 0; i < 3; i++)
 		{
-			if (abs(cent->current.origin[i] - cent->old_origin[i]) > 128) {
+			if (fabsf(cent->current.origin[i] - cent->old_origin[i]) > 128) {
 				// teleport or something, don't lerp
 				VectorCopy (cur_origin, ent.origin);
 				if (num == nq_viewentity)
@@ -1050,7 +1050,7 @@ void NQD_LinkEntities (void)
 				VectorCopy (cent->lerp_origin, old_origin);
 
 				for (i=0 ; i<3 ; i++)
-					if ( abs(old_origin[i] - ent.origin[i]) > 128)
+					if ( fabsf(old_origin[i] - ent.origin[i]) > 128)
 					{	// no trail if too far
 						VectorCopy (ent.origin, old_origin);
 						break;
