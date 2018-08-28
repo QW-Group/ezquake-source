@@ -803,7 +803,62 @@ char *Macro_Point_LED(void)
 		return tp_name_status_blue.string;
 }
 
+char *Macro_Team1(void)
+{
+	static char buffer[MAX_MACRO_VALUE];
+	int i;
+	const char* team1 = "team1";
 
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
+		if (cl.players[i].name[0] && !cl.players[i].spectator) {
+			if (cl.teamplay && cl.players[i].team[0]) {
+				team1 = cl.players[i].team;
+				break;
+			}
+			else if (!cl.teamplay) {
+				team1 = cl.players[i].name;
+				break;
+			}
+		}
+	}
+
+	strlcpy(buffer, team1, sizeof(buffer));
+	return buffer;
+}
+
+char *Macro_Team2(void)
+{
+	int i;
+	static char buffer[MAX_MACRO_VALUE];
+	const char* team1 = NULL;
+	const char* team2 = "team2";
+
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
+		if (cl.players[i].name[0] && !cl.players[i].spectator) {
+			if (cl.teamplay && cl.players[i].team[0]) {
+				if (team1 && strcmp(team1, cl.players[i].team)) {
+					team2 = cl.players[i].team;
+					break;
+				}
+				else if (!team1) {
+					team1 = cl.players[i].team;
+				}
+			}
+			else if (!cl.teamplay) {
+				if (team1) {
+					team2 = cl.players[i].name;
+					break;
+				}
+				else {
+					team1 = cl.players[i].name;
+				}
+			}
+		}
+	}
+
+	strlcpy(buffer, team2, sizeof(buffer));
+	return buffer;
+}
 
 char *Macro_MyStatus_LED(void)
 {
@@ -1093,6 +1148,8 @@ void TP_AddMacros (void)
 	Cmd_AddMacro ("ping", Macro_Latency);
 	Cmd_AddMacro ("time", Macro_Time);
 	Cmd_AddMacro ("date", Macro_Date);
+	Cmd_AddMacro ("team1", Macro_Team1);
+	Cmd_AddMacro ("team2", Macro_Team2);
 
 	Cmd_AddMacroEx ("health", Macro_Health, teamplay);
 	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
