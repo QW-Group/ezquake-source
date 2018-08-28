@@ -994,6 +994,11 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	if (cls.demoplayback)
 		return;
 
+	// Player is ignoring themselves
+	if (cl.players[cl.playernum].ignored) {
+		return;
+	}
+
 	name = Info_ValueForKey (cl.players[cl.playernum].userinfo, "name");
 	if (strlen(name) >= 32)
 		name[31] = 0;
