@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2014 Petri Lehtinen <petri@digip.org>
+ * Copyright (c) 2009-2016 Petri Lehtinen <petri@digip.org>
  *
  * Jansson is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -12,7 +12,7 @@
 #include <stdlib.h>  /* for size_t */
 #include <stdarg.h>
 
-#include <jansson_config.h>
+#include "jansson_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,11 +21,11 @@ extern "C" {
 /* version */
 
 #define JANSSON_MAJOR_VERSION  2
-#define JANSSON_MINOR_VERSION  7
+#define JANSSON_MINOR_VERSION  11
 #define JANSSON_MICRO_VERSION  0
 
 /* Micro version is omitted if it's 0 */
-#define JANSSON_VERSION  "2.7"
+#define JANSSON_VERSION  "2.11"
 
 /* Version as a 3-byte hex number, e.g. 0x010201 == 1.2.1. Use this
    for numeric comparisons, e.g. #if JANSSON_VERSION_HEX >= ... */
@@ -33,6 +33,11 @@ extern "C" {
                               (JANSSON_MINOR_VERSION << 8)  |   \
                               (JANSSON_MICRO_VERSION << 0))
 
+/* If __atomic or __sync builtins are available the library is thread
+ * safe for all read-only functions plus reference counting. */
+#if JSON_HAVE_ATOMIC_BUILTINS || JSON_HAVE_SYNC_BUILTINS
+#define JANSSON_THREAD_SAFE_REFCOUNT 1
+#endif
 
 /* types */
 
@@ -49,7 +54,7 @@ typedef enum {
 
 typedef struct json_t {
     json_type type;
-    size_t refcount;
+    volatile size_t refcount;
 } json_t;
 
 #ifndef JANSSON_USING_CMAKE /* disabled if using cmake */
@@ -94,11 +99,23 @@ json_t *json_false(void);
 #define json_boolean(val)      ((val) ? json_true() : json_false())
 json_t *json_null(void);
 
+/* do not call JSON_INTERNAL_INCREF or JSON_INTERNAL_DECREF directly */
+#if JSON_HAVE_ATOMIC_BUILTINS
+#define JSON_INTERNAL_INCREF(json) __atomic_add_fetch(&json->refcount, 1, __ATOMIC_ACQUIRE)
+#define JSON_INTERNAL_DECREF(json) __atomic_sub_fetch(&json->refcount, 1, __ATOMIC_RELEASE)
+#elif JSON_HAVE_SYNC_BUILTINS
+#define JSON_INTERNAL_INCREF(json) __sync_add_and_fetch(&json->refcount, 1)
+#define JSON_INTERNAL_DECREF(json) __sync_sub_and_fetch(&json->refcount, 1)
+#else
+#define JSON_INTERNAL_INCREF(json) (++json->refcount)
+#define JSON_INTERNAL_DECREF(json) (--json->refcount)
+#endif
+
 static JSON_INLINE
 json_t *json_incref(json_t *json)
 {
     if(json && json->refcount != (size_t)-1)
-        ++json->refcount;
+        JSON_INTERNAL_INCREF(json);
     return json;
 }
 
@@ -108,9 +125,22 @@ void json_delete(json_t *json);
 static JSON_INLINE
 void json_decref(json_t *json)
 {
-    if(json && json->refcount != (size_t)-1 && --json->refcount == 0)
+    if(json && json->refcount != (size_t)-1 && JSON_INTERNAL_DECREF(json) == 0)
         json_delete(json);
 }
+
+#if defined(__GNUC__) || defined(__clang__)
+static JSON_INLINE
+void json_decrefp(json_t **json)
+{
+    if(json) {
+        json_decref(*json);
+	*json = NULL;
+    }
+}
+
+#define json_auto_t json_t __attribute__((cleanup(json_decrefp)))
+#endif
 
 
 /* error reporting */
@@ -118,7 +148,7 @@ void json_decref(json_t *json)
 #define JSON_ERROR_TEXT_LENGTH    160
 #define JSON_ERROR_SOURCE_LENGTH   80
 
-typedef struct {
+typedef struct json_error_t {
     int line;
     int column;
     int position;
@@ -126,6 +156,30 @@ typedef struct {
     char text[JSON_ERROR_TEXT_LENGTH];
 } json_error_t;
 
+enum json_error_code {
+    json_error_unknown,
+    json_error_out_of_memory,
+    json_error_stack_overflow,
+    json_error_cannot_open_file,
+    json_error_invalid_argument,
+    json_error_invalid_utf8,
+    json_error_premature_end_of_input,
+    json_error_end_of_input_expected,
+    json_error_invalid_syntax,
+    json_error_invalid_format,
+    json_error_wrong_type,
+    json_error_null_character,
+    json_error_null_value,
+    json_error_null_byte_in_key,
+    json_error_duplicate_key,
+    json_error_numeric_overflow,
+    json_error_item_not_found,
+    json_error_index_out_of_range
+};
+
+static JSON_INLINE enum json_error_code json_error_code(const json_error_t *e) {
+    return (enum json_error_code)e->text[JSON_ERROR_TEXT_LENGTH - 1];
+}
 
 /* getters, setters, manipulation */
 
@@ -151,6 +205,13 @@ int json_object_iter_set_new(json_t *object, void *iter, json_t *value);
     for(key = json_object_iter_key(json_object_iter(object)); \
         key && (value = json_object_iter_value(json_object_key_to_iter(key))); \
         key = json_object_iter_key(json_object_iter_next(object, json_object_key_to_iter(key))))
+
+#define json_object_foreach_safe(object, n, key, value)     \
+    for(key = json_object_iter_key(json_object_iter(object)), \
+            n = json_object_iter_next(object, json_object_key_to_iter(key)); \
+        key && (value = json_object_iter_value(json_object_key_to_iter(key))); \
+        key = json_object_iter_key(n), \
+            n = json_object_iter_next(object, json_object_key_to_iter(key)))
 
 #define json_array_foreach(array, index, value) \
 	for(index = 0; \
@@ -228,10 +289,15 @@ int json_unpack(json_t *root, const char *fmt, ...);
 int json_unpack_ex(json_t *root, json_error_t *error, size_t flags, const char *fmt, ...);
 int json_vunpack_ex(json_t *root, json_error_t *error, size_t flags, const char *fmt, va_list ap);
 
+/* sprintf */
+
+json_t *json_sprintf(const char *fmt, ...);
+json_t *json_vsprintf(const char *fmt, va_list ap);
+
 
 /* equality */
 
-int json_equal(json_t *value1, json_t *value2);
+int json_equal(const json_t *value1, const json_t *value2);
 
 
 /* copying */
@@ -253,6 +319,7 @@ typedef size_t (*json_load_callback_t)(void *buffer, size_t buflen, void *data);
 json_t *json_loads(const char *input, size_t flags, json_error_t *error);
 json_t *json_loadb(const char *buffer, size_t buflen, size_t flags, json_error_t *error);
 json_t *json_loadf(FILE *input, size_t flags, json_error_t *error);
+json_t *json_loadfd(int input, size_t flags, json_error_t *error);
 json_t *json_load_file(const char *path, size_t flags, json_error_t *error);
 json_t *json_load_callback(json_load_callback_t callback, void *data, size_t flags, json_error_t *error);
 
@@ -268,11 +335,14 @@ json_t *json_load_callback(json_load_callback_t callback, void *data, size_t fla
 #define JSON_ENCODE_ANY         0x200
 #define JSON_ESCAPE_SLASH       0x400
 #define JSON_REAL_PRECISION(n)  (((n) & 0x1F) << 11)
+#define JSON_EMBED              0x10000
 
 typedef int (*json_dump_callback_t)(const char *buffer, size_t size, void *data);
 
 char *json_dumps(const json_t *json, size_t flags);
+size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
 int json_dumpf(const json_t *json, FILE *output, size_t flags);
+int json_dumpfd(const json_t *json, int output, size_t flags);
 int json_dump_file(const json_t *json, const char *path, size_t flags);
 int json_dump_callback(const json_t *json, json_dump_callback_t callback, void *data, size_t flags);
 
@@ -282,6 +352,7 @@ typedef void *(*json_malloc_t)(size_t);
 typedef void (*json_free_t)(void *);
 
 void json_set_alloc_funcs(json_malloc_t malloc_fn, json_free_t free_fn);
+void json_get_alloc_funcs(json_malloc_t *malloc_fn, json_free_t *free_fn);
 
 #ifdef __cplusplus
 }
