@@ -62,5 +62,7 @@ MACRO_DEF(weapon),
 MACRO_DEF(tf_skin),
 MACRO_DEF(gamedir),
 MACRO_DEF(triggermatch),
+MACRO_DEF(team1),
+MACRO_DEF(team2),
 
 // leave trailing ,
