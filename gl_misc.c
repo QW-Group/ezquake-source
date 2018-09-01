@@ -22,9 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
+#include "r_renderer.h"
 
 void GL_Clear(qbool clear_color)
 {
+	R_ApplyRenderingState(r_state_default_3d);
 	glClear((clear_color ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 }
 
