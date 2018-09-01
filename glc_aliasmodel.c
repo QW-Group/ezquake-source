@@ -59,7 +59,6 @@ extern cvar_t    gl_outline_width;
 
 extern float     r_framelerp;
 extern float     r_lerpdistance;
-extern qbool     full_light;
 extern vec3_t    lightcolor;
 
 // Temporary r_lerpframes fix, unless we go for shaders-in-classic...
@@ -168,17 +167,17 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 	float l;
 
 	// VULT VERTEX LIGHTING
-	if (amf_lighting_vertex.integer && !full_light) {
+	if (amf_lighting_vertex.integer && !ent->full_light) {
 		l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
 	}
 	else {
 		l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-		l = (l * shadelight + ambientlight) / 256.0;
+		l = (l * ent->shadelight + ent->ambientlight) / 256.0;
 	}
 	l = min(l, 1);
 
 	//VULT COLOURED MODEL LIGHTS
-	if (amf_lighting_colour.integer && !full_light) {
+	if (amf_lighting_colour.integer && !ent->full_light) {
 		int i;
 		vec3_t lc;
 
@@ -186,36 +185,36 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 			lc[i] = lightcolor[i] / 256 + l;
 		}
 
-		if (r_modelcolor[0] < 0) {
+		if (ent->r_modelcolor[0] < 0) {
 			// normal color
 			VectorCopy(lc, color);
 		}
 		else {
-			color[0] = r_modelcolor[0] * lc[0];
-			color[1] = r_modelcolor[1] * lc[1];
-			color[2] = r_modelcolor[2] * lc[2];
+			color[0] = ent->r_modelcolor[0] * lc[0];
+			color[1] = ent->r_modelcolor[1] * lc[1];
+			color[2] = ent->r_modelcolor[2] * lc[2];
 		}
 	}
-	else if (custom_model == NULL) {
-		if (r_modelcolor[0] < 0) {
+	else if (ent->custom_model == NULL) {
+		if (ent->r_modelcolor[0] < 0) {
 			color[0] = color[1] = color[2] = l;
 		}
 		else {
-			color[0] = r_modelcolor[0] * l;
-			color[1] = r_modelcolor[1] * l;
-			color[2] = r_modelcolor[2] * l;
+			color[0] = ent->r_modelcolor[0] * l;
+			color[1] = ent->r_modelcolor[1] * l;
+			color[2] = ent->r_modelcolor[2] * l;
 		}
 	}
 	else {
-		color[0] = custom_model->color_cvar.color[0] / 255.0f;
-		color[1] = custom_model->color_cvar.color[1] / 255.0f;
-		color[2] = custom_model->color_cvar.color[2] / 255.0f;
+		color[0] = ent->custom_model->color_cvar.color[0] / 255.0f;
+		color[1] = ent->custom_model->color_cvar.color[1] / 255.0f;
+		color[2] = ent->custom_model->color_cvar.color[2] / 255.0f;
 	}
 
-	color[0] *= r_modelalpha;
-	color[1] *= r_modelalpha;
-	color[2] *= r_modelalpha;
-	color[3] = r_modelalpha;
+	color[0] *= ent->r_modelalpha;
+	color[1] *= ent->r_modelalpha;
+	color[2] *= ent->r_modelalpha;
+	color[3] = ent->r_modelalpha;
 }
 
 static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
@@ -234,7 +233,7 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
 	}
 	else {
-		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
+		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
 	}
 
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;

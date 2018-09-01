@@ -4,19 +4,7 @@
 
 #include "r_buffers.h"
 
-typedef struct custom_model_color_s {
-	cvar_t color_cvar;
-	cvar_t fullbright_cvar;
-	cvar_t* amf_cvar;
-	int model_hint;
-} custom_model_color_t;
-
-extern float     r_modelcolor[3];
-extern float     r_modelalpha;
-extern custom_model_color_t* custom_model;
 extern byte      *shadedots;
-extern float     shadelight;
-extern float     ambientlight;
 
 void R_AliasSetupLighting(entity_t *ent);
 

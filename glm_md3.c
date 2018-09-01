@@ -56,24 +56,19 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
 	}
 
-	// 
-	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	//
+	ent->r_modelcolor[0] = -1;
+	ent->r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	if (ent->alpha) {
-		r_modelalpha = ent->alpha;
+		ent->r_modelalpha = ent->alpha;
 	}
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
-	if (gl_fb_models.integer) {
-		ambientlight = 999999;
-	}
-	if (frame1 >= pHeader->numFrames) {
-		frame1 = pHeader->numFrames - 1;
-	}
-	if (frame2 >= pHeader->numFrames) {
-		frame2 = pHeader->numFrames - 1;
-	}
+	ent->ambientlight = (gl_fb_models.integer ? 999999 : ent->ambientlight);
+	frame1 = min(frame1, pHeader->numFrames - 1);
+	frame2 = min(frame2, pHeader->numFrames - 1);
 
 	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame) {
 		lerpfrac = 1.0;

@@ -40,6 +40,13 @@ typedef struct efrag_s {
 #define RF_CAUSTICS     32
 #define RF_ALPHABLEND   64   // bit of a hack - always enable blending (used for 2nd pass when multi-texturing disabled)
 
+typedef struct custom_model_color_s {
+	cvar_t color_cvar;
+	cvar_t fullbright_cvar;
+	cvar_t* amf_cvar;
+	int model_hint;
+} custom_model_color_t;
+
 typedef struct entity_s {
 	vec3_t					origin;
 	vec3_t					angles;	
@@ -69,6 +76,14 @@ typedef struct entity_s {
 	// FIXME: could turn these into a union
 	int						trivial_accept;
 	struct mnode_s			*topnode;		// for bmodels, first world node that splits bmodel, or NULL if not split
+
+	qbool     full_light;
+
+	float     r_modelcolor[3];
+	float     r_modelalpha;
+	float     shadelight;
+	float     ambientlight;
+	custom_model_color_t* custom_model;
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!

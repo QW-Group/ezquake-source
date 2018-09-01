@@ -373,11 +373,11 @@ static void GLM_QueueDrawCall(aliasmodel_draw_type_t type, int vbo_start, int vb
 }
 
 static void GLM_QueueAliasModelDrawImpl(
-	model_t* model, float* color, int vbo_start, int vbo_count, texture_ref texture,
-	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
-	float lerpFraction, int lerpFrameVertOffset, qbool outline, qbool shell, int render_effects
+	entity_t* ent, model_t* model, float* color, int vbo_start, int vbo_count, texture_ref texture,
+	int effects, float lerpFraction, int lerpFrameVertOffset, qbool outline, int render_effects
 )
 {
+	qbool shell = (effects & (EF_RED | EF_BLUE | EF_GREEN)) && R_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
 	uniform_block_aliasmodel_t* uniform;
 	aliasmodel_draw_type_t type = aliasmodel_draw_std;
 	aliasmodel_draw_type_t shelltype = aliasmodel_draw_shells;
@@ -432,9 +432,9 @@ static void GLM_QueueAliasModelDrawImpl(
 		(render_effects & RF_CAUSTICS ? AMF_CAUSTICS : 0) |
 		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
 		(render_effects & RF_LIMITLERP ? AMF_LIMITLERP : 0);
-	uniform->yaw_angle_rad = yaw_angle_radians;
-	uniform->shadelight = shadelight;
-	uniform->ambientlight = ambientlight;
+	uniform->yaw_angle_rad = ent->angles[YAW] * M_PI / 180.0;
+	uniform->shadelight = ent->shadelight;
+	uniform->ambientlight = ent->ambientlight;
 	uniform->lerpFraction = lerpFraction;
 	uniform->lerpBaseIndex = lerpFrameVertOffset;
 	uniform->color[0] = color[0];
@@ -442,11 +442,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->color[2] = color[2];
 	uniform->color[3] = color[3];
 	uniform->materialSamplerMapping = textureSampler;
-	{
-		extern qbool full_light;
-
-		uniform->minLumaMix = 1.0f - (full_light ? bound(0, gl_fb_models.integer, 1) : 0);
-	}
+	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
 
 	// Add to queues
 	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
@@ -458,19 +454,6 @@ static void GLM_QueueAliasModelDrawImpl(
 	}
 
 	alias_draw_count++;
-}
-
-static void GLM_QueueAliasModelDraw(
-	model_t* model, float* color, int start, int count,
-	texture_ref texture,
-	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
-	float lerpFraction, int lerpFrameVertOffset, qbool outline, int render_effects
-)
-{
-	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
-	qbool shell = shell_effects && R_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
-
-	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
 }
 
 // Called for .mdl & .md3
@@ -488,30 +471,30 @@ void GLM_DrawAliasModelFrame(
 
 	// TODO: Vertex lighting etc
 	// TODO: Coloured lighting per-vertex?
-	if (custom_model == NULL) {
-		if (r_modelcolor[0] < 0) {
+	if (ent->custom_model == NULL) {
+		if (ent->r_modelcolor[0] < 0) {
 			// normal color
 			color[0] = color[1] = color[2] = 1.0f;
 		}
 		else {
-			color[0] = r_modelcolor[0];
-			color[1] = r_modelcolor[1];
-			color[2] = r_modelcolor[2];
+			color[0] = ent->r_modelcolor[0];
+			color[1] = ent->r_modelcolor[1];
+			color[2] = ent->r_modelcolor[2];
 		}
 	}
 	else {
-		color[0] = custom_model->color_cvar.color[0] / 255.0f;
-		color[1] = custom_model->color_cvar.color[1] / 255.0f;
-		color[2] = custom_model->color_cvar.color[2] / 255.0f;
+		color[0] = ent->custom_model->color_cvar.color[0] / 255.0f;
+		color[1] = ent->custom_model->color_cvar.color[1] / 255.0f;
+		color[2] = ent->custom_model->color_cvar.color[2] / 255.0f;
 
-		if (custom_model->fullbright_cvar.integer) {
+		if (ent->custom_model->fullbright_cvar.integer) {
 			R_TextureReferenceInvalidate(texture);
 		}
 	}
-	color[0] *= r_modelalpha;
-	color[1] *= r_modelalpha;
-	color[2] *= r_modelalpha;
-	color[3] = r_modelalpha;
+	color[0] *= ent->r_modelalpha;
+	color[1] *= ent->r_modelalpha;
+	color[2] *= ent->r_modelalpha;
+	color[3] = ent->r_modelalpha;
 
 	if (gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture)) {
 		if (R_PointIsUnderwater(ent->origin)) {
@@ -519,13 +502,13 @@ void GLM_DrawAliasModelFrame(
 		}
 	}
 
-	GLM_QueueAliasModelDraw(
-		model, color, poseVertIndex, vertsPerPose,
-		texture, effects,
-		ent->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline, render_effects
+	GLM_QueueAliasModelDrawImpl(
+		ent, model, color, poseVertIndex, vertsPerPose,
+		texture, effects, lerp_fraction, poseVertIndex2, outline, render_effects
 	);
 }
 
+// .mdl rendering
 void GLM_DrawAliasFrame(
 	entity_t* ent, model_t* model, int pose1, int pose2,
 	texture_ref texture, texture_ref fb_texture,

@@ -81,6 +81,7 @@ static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenu
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
 static vec3_t    dlight_color;
+extern vec3_t    lightcolor;
 
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
@@ -91,15 +92,7 @@ cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" }
 
 float     r_framelerp;
 float     r_lerpdistance;
-qbool     full_light;
 
-float     r_modelcolor[3];
-float     r_modelalpha;
-float     shadelight;
-float     ambientlight;
-custom_model_color_t* custom_model = NULL;
-
-extern vec3_t    lightcolor;
 extern float     bubblecolor[NUM_DLIGHTTYPES][4];
 
 extern cvar_t    r_lerpframes;
@@ -155,17 +148,15 @@ static void R_RenderAliasModelEntity(
 	int i;
 	model_t* model = ent->model;
 
-	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+	ent->r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	if (color32bit) {
 		// force some color for such model
 		for (i = 0; i < 3; i++) {
-			r_modelcolor[i] = (float)color32bit[i] / 255.0;
-			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
+			ent->r_modelcolor[i] = color32bit[i] / 255.0;
+			ent->r_modelcolor[i] = bound(0, ent->r_modelcolor[i], 1);
 		}
 
 		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, null_texture_reference, effects, ent->renderfx);
-
-		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else {
 		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
@@ -273,14 +264,14 @@ void R_OverrideModelTextures(entity_t* ent, texture_ref* texture, texture_ref* f
 	}
 	// TODO: Can we move the custom_model logic to here?  If fullbright, nullify textures and set color?
 
-	if (full_light || !gl_fb_models.integer) {
+	if (ent->full_light || !gl_fb_models.integer) {
 		*fb_texture = null_texture_reference;
 	}
 }
 
 static qbool R_CanDrawModelShadow(entity_t* ent)
 {
-	return (r_shadows.integer && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
+	return (r_shadows.integer && !ent->full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
 }
 
 void R_DrawAliasModel(entity_t *ent)
@@ -333,7 +324,7 @@ void R_DrawAliasModel(entity_t *ent)
 	//get lighting information
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-	r_modelalpha = (ent->alpha ? ent->alpha : 1);
+	ent->r_modelalpha = (ent->alpha ? ent->alpha : 1);
 
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
@@ -350,7 +341,7 @@ void R_DrawAliasModel(entity_t *ent)
 	// Check for outline on models.
 	// We don't support outline for transparent models,
 	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = ((gl_outline.integer & 1) && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
+	outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
 
@@ -496,7 +487,7 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 					add = cl_dlights[lnum].radius - VectorLength(dist);
 
 					if (add > 0) {
-						ambientlight += add;
+						ent->ambientlight += add;
 					}
 				}
 			}
@@ -508,72 +499,70 @@ void R_AliasSetupLighting(entity_t *ent)
 {
 	float fbskins;
 	unsigned int i;
-	model_t *clmodel;
+	model_t* clmodel = ent->model;
 
 	//VULT COLOURED MODEL LIGHTING
-	clmodel = ent->model;
-
-	custom_model = NULL;
+	ent->custom_model = NULL;
 	for (i = 0; i < sizeof(custom_model_colors) / sizeof(custom_model_colors[0]); ++i) {
 		custom_model_color_t* test = &custom_model_colors[i];
 		if (test->model_hint == clmodel->modhint) {
 			if (test->color_cvar.string[0] && (test->amf_cvar == NULL || test->amf_cvar->integer == 0)) {
-				custom_model = &custom_model_colors[i];
+				ent->custom_model = &custom_model_colors[i];
 			}
 			break;
 		}
 	}
 
-	if (custom_model && custom_model->fullbright_cvar.integer) {
-		ambientlight = 4096;
-		shadelight = 0;
-		full_light = true;
+	if (ent->custom_model && ent->custom_model->fullbright_cvar.integer) {
+		ent->ambientlight = 4096;
+		ent->shadelight = 0;
+		ent->full_light = true;
 		return;
 	}
 
 	// make thunderbolt and torches full light
 	if (clmodel->modhint == MOD_THUNDERBOLT) {
-		ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
-		shadelight = 0;
-		full_light = true;
+		ent->ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
+		ent->shadelight = 0;
+		ent->full_light = true;
 		return;
 	}
 	else if (clmodel->modhint == MOD_FLAME || clmodel->modhint == MOD_FLAME2) {
-		ambientlight = 255;
-		shadelight = 0;
-		full_light = true;
+		ent->ambientlight = 255;
+		ent->shadelight = 0;
+		ent->full_light = true;
 		return;
 	}
 
 	//normal lighting
-	full_light = false;
+	ent->full_light = false;
 
 	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
 		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
 		if (fbskins == 1 && gl_fb_models.integer == 1) {
-			ambientlight = shadelight = 4096;
-			full_light = true;
+			ent->ambientlight = ent->shadelight = 4096;
+			ent->full_light = true;
 		}
 		else if (fbskins == 0) {
-			ambientlight = max(ambientlight, 8);
-			shadelight = max(shadelight, 8);
-			full_light = false;
+			ent->ambientlight = max(ent->ambientlight, 8);
+			ent->shadelight = max(ent->shadelight, 8);
+			ent->full_light = false;
 		}
 		else if (fbskins) {
-			ambientlight = max(ambientlight, 8 + fbskins * 120);
-			shadelight = max(shadelight, 8 + fbskins * 120);
-			full_light = true;
+			ent->ambientlight = max(ent->ambientlight, 8 + fbskins * 120);
+			ent->shadelight = max(ent->shadelight, 8 + fbskins * 120);
+			ent->full_light = true;
 		}
 	}
 	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
-		ambientlight = shadelight = 4096;
+		ent->ambientlight = ent->shadelight = 4096;
 		if (r_shadows.integer) {
 			// still need lightpoint...
 			R_LightPoint(ent->origin);
 		}
 	}
 	else {
-		ambientlight = shadelight = R_LightPoint(ent->origin);
+		ent->ambientlight = ent->shadelight = R_LightPoint(ent->origin);
 
 		if (amf_lighting_colour.integer) {
 			R_AliasModelColoredLighting(ent);
@@ -583,28 +572,26 @@ void R_AliasSetupLighting(entity_t *ent)
 		}
 
 		// clamp lighting so it doesn't overbright as much
-		if (ambientlight > 128) {
-			ambientlight = 128;
-		}
-		if (ambientlight + shadelight > 192) {
-			shadelight = 192 - ambientlight;
+		ent->ambientlight = min(ent->ambientlight, 128);
+		if (ent->ambientlight + ent->shadelight > 192) {
+			ent->shadelight = 192 - ent->ambientlight;
 		}
 	}
 
 	// always give the gun some light
-	if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24) {
-		ambientlight = shadelight = 24;
+	if ((ent->renderfx & RF_WEAPONMODEL) && ent->ambientlight < 24) {
+		ent->ambientlight = ent->shadelight = 24;
 	}
 
 	// never allow players to go totally black
 	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-		if (ambientlight < 8) {
-			ambientlight = shadelight = 8;
+		if (ent->ambientlight < 8) {
+			ent->ambientlight = ent->shadelight = 8;
 		}
 	}
 
-	if (ambientlight < cl.minlight) {
-		ambientlight = shadelight = cl.minlight;
+	if (ent->ambientlight < cl.minlight) {
+		ent->ambientlight = ent->shadelight = cl.minlight;
 	}
 }
 

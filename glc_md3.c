@@ -81,9 +81,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-	if (gl_fb_models.integer) {
-		ambientlight = 999999;
-	}
+	ent->ambientlight = (gl_fb_models.integer ? 999999 : ent->ambientlight);
 
 	mhead = (md3model_t *)Mod_Extradata (mod);
 	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
@@ -135,7 +133,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
 
 			l = FloatInterpolate(shadedots[v1->normal >> 8], lerpfrac, shadedots[v2->normal >> 8]);
-			l = (l * shadelight + ambientlight) / 256;
+			l = (l * ent->shadelight + ent->ambientlight) / 256;
 			l = min(l, 1);
 
 			R_CustomColor(l, l, l, r_modelalpha);
