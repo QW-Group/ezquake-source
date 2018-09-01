@@ -327,13 +327,20 @@ typedef struct cache_system_s {
 	int						size; // including this header
 	cache_user_t			*user;
 	char					name[16];
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	int                     alloc_number;
+#endif
 	struct cache_system_s	*prev, *next;
 	struct cache_system_s	*lru_prev, *lru_next; // for LRU flushing
 } cache_system_t;
 
-cache_system_t *Cache_TryAlloc(int size, qbool nobottom);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+static int allocation_id = 0;
+#endif
 
-cache_system_t cache_head;
+static cache_system_t *Cache_TryAlloc(int size, qbool nobottom);
+
+static cache_system_t cache_head;
 
 /*
 ===========
@@ -443,7 +450,7 @@ Looks for a free block of memory between the high and low hunk marks
 Size should already include the header and padding
 ============
 */
-cache_system_t *Cache_TryAlloc(int size, qbool nobottom)
+static cache_system_t *Cache_TryAlloc(int size, qbool nobottom)
 {
 	cache_system_t *cs, *new_block;
 
@@ -593,10 +600,16 @@ void Cache_Free(cache_user_t *c)
 	cache_system_t *cs;
 
 	if (!c->data) {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+		Sys_Printf("cache,free-error,%p\n", c);
+#endif
 		Sys_Error("Cache_Free: not allocated");
 	}
 
 	cs = ((cache_system_t *)c->data) - 1;
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("cache,free,%d,%s,%d,%p\n", cs->alloc_number, cs->name, cs->size, cs->user);
+#endif
 
 	cs->prev->next = cs->next;
 	cs->next->prev = cs->prev;
@@ -605,6 +618,13 @@ void Cache_Free(cache_user_t *c)
 	c->data = NULL;
 
 	Cache_UnlinkLRU(cs);
+}
+
+void Cache_FreeSafe(cache_user_t* c)
+{
+	if (c && c->data) {
+		Cache_Free(c);
+	}
 }
 
 /*
@@ -652,6 +672,10 @@ void *Cache_Alloc(cache_user_t *c, int size, const char *name)
 	while (1) {
 		cs = Cache_TryAlloc(size, false);
 		if (cs) {
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+			cs->alloc_number = allocation_id++;
+			Sys_Printf("cache,alloc,%d,%s,%d,%p\n", cs->alloc_number, name, size, c);
+#endif
 			strlcpy(cs->name, name, sizeof(cs->name));
 			c->data = (void *)(cs + 1);
 			cs->user = c;

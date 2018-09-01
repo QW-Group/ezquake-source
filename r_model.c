@@ -223,7 +223,7 @@ void Mod_ReloadModels(qbool vid_restart)
 			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
 				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
 					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
+					Cache_FreeSafe(&mod->cache);
 				}
 			}
 			Mod_LoadModel(mod, true);
@@ -237,7 +237,7 @@ void Mod_ReloadModels(qbool vid_restart)
 			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
 				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
 					// Invalidate cache so VBO buffer gets refilled
-					Cache_Free(&mod->cache);
+					Cache_FreeSafe(&mod->cache);
 				}
 			}
 			Mod_LoadModel(mod, true);
