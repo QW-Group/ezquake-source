@@ -529,15 +529,18 @@ done_locmacros:
 
 void TP_LocFiles_Init(void)
 {
-	if (IsDeveloperMode()) {
-		Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
-		Cmd_AddCommand("loadloc", TP_LoadLocFile_f);
-		Cmd_AddCommand("saveloc", TP_SaveLocFile_f);
-		Cmd_AddCommand("addloc", TP_AddLoc_f);
-		Cmd_AddCommand("removeloc", TP_RemoveLoc_f);
-		Cmd_AddCommand("clearlocs", TP_ClearLocs_f);
-		Cvar_ResetCurrentGroup();
-	}
+	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
+	Cmd_AddCommand("locations_loadfile", TP_LoadLocFile_f);
+	Cmd_AddLegacyCommand("loadloc", "locations_loadfile");
+	Cmd_AddCommand("locations_savefile", TP_SaveLocFile_f);
+	Cmd_AddLegacyCommand("saveloc", "locations_savefile");
+	Cmd_AddCommand("locations_add", TP_AddLoc_f);
+	Cmd_AddLegacyCommand("addloc", "locations_add");
+	Cmd_AddCommand("locations_remove", TP_RemoveLoc_f);
+	Cmd_AddLegacyCommand("removeloc", "locations_remove");
+	Cmd_AddCommand("locations_clearall", TP_ClearLocs_f);
+	Cmd_AddLegacyCommand("clearlocs", "locations_clearall");
+	Cvar_ResetCurrentGroup();
 }
 
 void TP_LocFiles_NewMap(void)
