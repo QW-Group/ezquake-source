@@ -142,6 +142,10 @@ static void R_Initialise2DStates(void)
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->line.flexible_width = true;
 
+	if (R_UseImmediateOpenGL()) {
+		state->vao_id = vao_none;
+	}
+
 	state = R_InitRenderingState(r_state_scene_blur, true, "sceneBlurState", vao_postprocess);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;

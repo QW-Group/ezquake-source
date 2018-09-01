@@ -148,7 +148,7 @@ void GLM_HudPrepareLines(void)
 	}
 }
 
-void GLM_HudDrawLines(int start, int end)
+void GLM_HudDrawLines(texture_ref texture, int start, int end)
 {
 	if (R_ProgramReady(r_program_hud_line) && R_VertexArrayCreated(vao_hud_lines)) {
 		int i;

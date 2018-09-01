@@ -141,7 +141,7 @@ void R_FlushImageDraw(void)
 			qbool texture_changed = (R_TextureReferenceIsValid(currentTexture) && R_TextureReferenceIsValid(hud.elements[i].texture) && !R_TextureReferenceEqual(currentTexture, hud.elements[i].texture));
 
 			if (i && (hud.elements[i].type != type || texture_changed)) {
-				hud.types[type].Draw(currentTexture, start, i - 1);
+				hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[i - 1].index);
 
 				start = i;
 			}
@@ -153,7 +153,7 @@ void R_FlushImageDraw(void)
 		}
 
 		if (hud.count - start) {
-			hud.types[type].Draw(currentTexture, start, hud.count - 1);
+			hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[hud.count - 1].index);
 		}
 	}
 
