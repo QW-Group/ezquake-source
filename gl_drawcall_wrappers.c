@@ -93,7 +93,7 @@ void GL_LoadDrawFunctions(void)
 			else {
 				qglPrimitiveRestartIndex(~(GLuint)0);
 			}
-			glConfig.supported_features |= ~R_SUPPORT_PRIMITIVERESTART;
+			glConfig.supported_features |= R_SUPPORT_PRIMITIVERESTART;
 		}
 	}
 }
