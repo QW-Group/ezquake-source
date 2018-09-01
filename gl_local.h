@@ -335,7 +335,9 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 
 #ifndef EZ_OPENGL_NO_EXTENSIONS
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadMandatoryFunctionExtensionByVersion(majorVersion, minorVersion, functionName, testFlag) { if (GL_VersionAtLeast((majorVersion), (minorVersion))) { GL_LoadMandatoryFunctionExtension(functionName, (testFlag)); } else { (testFlag) = false; } }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_LoadOptionalFunctionByVersion(majorVersion, minorVersion, functionName) { if (GL_VersionAtLeast((majorVersion), (minorVersion))) { GL_LoadOptionalFunction(functionName); } }
 #define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #else
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName = NULL; testFlag = false; }

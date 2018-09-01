@@ -105,18 +105,14 @@ static void GL_PopulateConfig(void)
 	glConfig.renderer_string = glGetString(GL_RENDERER);
 	glConfig.version_string = glGetString(GL_VERSION);
 
-	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &glConfig.majorVersion);
-	SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glConfig.minorVersion);
-
-	if (glConfig.majorVersion == 2 && glConfig.minorVersion == 1) {
-		// Could be lower than this...
-		if (glConfig.version_string) {
-			float version = Q_atof((const char*)glConfig.version_string);
-			if (version < 2) {
-				glConfig.majorVersion = (int)version;
-				glConfig.minorVersion = (int)(version * 10) % 10;
-			}
-		}
+	if (glConfig.version_string) {
+		const char* dot = strchr(glConfig.version_string, '.');
+		glConfig.majorVersion = atoi(glConfig.version_string);
+		glConfig.minorVersion = (dot ? atoi(dot + 1) : 0);
+	}
+	else {
+		glConfig.majorVersion = 2;
+		glConfig.minorVersion = 1;
 	}
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.gl_max_size_default);

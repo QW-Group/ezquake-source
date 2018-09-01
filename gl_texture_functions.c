@@ -90,14 +90,25 @@ qbool GLM_LoadTextureManagementFunctions(void)
 	qbool all_available = true;
 
 	GL_LoadMandatoryFunctionExtension(glTexSubImage3D, all_available);
-	GL_LoadMandatoryFunctionExtension(glTexStorage2D, all_available);
-	GL_LoadMandatoryFunctionExtension(glTexStorage3D, all_available);
 	GL_LoadMandatoryFunctionExtension(glGenerateMipmap, all_available);
 
-	GL_LoadMandatoryFunctionExtension(glGenSamplers, all_available);
-	GL_LoadMandatoryFunctionExtension(glDeleteSamplers, all_available);
-	GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
-	GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
+	if (SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
+		GL_LoadMandatoryFunctionExtension(glTexStorage2D, all_available);
+		GL_LoadMandatoryFunctionExtension(glTexStorage3D, all_available);
+	}
+	else {
+		all_available = false;
+	}
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
+		GL_LoadMandatoryFunctionExtension(glGenSamplers, all_available);
+		GL_LoadMandatoryFunctionExtension(glDeleteSamplers, all_available);
+		GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
+		GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
+	}
+	else {
+		all_available = false;
+	}
 
 	return all_available;
 }

@@ -664,16 +664,33 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	GL_LoadMandatoryFunctionExtension(glUnmapBuffer, buffers_supported);
 
 	// OpenGL 3.0 onwards, for 4.3+ support only
-	GL_LoadOptionalFunction(glBindBufferBase);
-	GL_LoadOptionalFunction(glBindBufferRange);
+	if (GL_VersionAtLeast(3, 0)) {
+		GL_LoadOptionalFunction(glBindBufferBase);
+		GL_LoadOptionalFunction(glBindBufferRange);
+	}
 
 	// OpenGL 4.4, persistent mapping of buffers
 	tripleBuffer_supported = !COM_CheckParm(cmdline_param_client_notriplebuffering);
-	GL_LoadMandatoryFunctionExtension(glFenceSync, tripleBuffer_supported);
-	GL_LoadMandatoryFunctionExtension(glClientWaitSync, tripleBuffer_supported);
-	GL_LoadMandatoryFunctionExtension(glBufferStorage, tripleBuffer_supported);
-	GL_LoadMandatoryFunctionExtension(glMapBufferRange, tripleBuffer_supported);
-	GL_LoadMandatoryFunctionExtension(glDeleteSync, tripleBuffer_supported);
+	if (SDL_GL_ExtensionSupported("GL_ARB_sync")) {
+		GL_LoadMandatoryFunctionExtension(glFenceSync, tripleBuffer_supported);
+		GL_LoadMandatoryFunctionExtension(glClientWaitSync, tripleBuffer_supported);
+		GL_LoadMandatoryFunctionExtension(glDeleteSync, tripleBuffer_supported);
+	}
+	else {
+		tripleBuffer_supported = false;
+	}
+	if (SDL_GL_ExtensionSupported("GL_ARB_buffer_storage")) {
+		GL_LoadMandatoryFunctionExtension(glBufferStorage, tripleBuffer_supported);
+	}
+	else {
+		tripleBuffer_supported = false;
+	}
+	if (GL_VersionAtLeast(3, 0)) {
+		GL_LoadMandatoryFunctionExtension(glMapBufferRange, tripleBuffer_supported);
+	}
+	else {
+		tripleBuffer_supported = false;
+	}
 
 	// OpenGL 4.5 onwards, update directly
 	if (GL_UseDirectStateAccess()) {

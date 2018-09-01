@@ -35,13 +35,19 @@ void VID_GfxInfo_f(void)
 
 void R_Shutdown(qbool restart)
 {
-	renderer.Shutdown(restart);
+	if (renderer.Shutdown) {
+		renderer.Shutdown(restart);
+	}
 
 	CachePics_Shutdown();
 	R_LightmapShutdown();
 	R_BrushModelFreeMemory();
-	renderer.DeleteVAOs();
-	buffers.Shutdown();
+	if (renderer.DeleteVAOs) {
+		renderer.DeleteVAOs();
+	}
+	if (buffers.Shutdown) {
+		buffers.Shutdown();
+	}
 	R_DeleteTextures();
 	R_TexturesInvalidateAllReferences();
 }

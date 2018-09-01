@@ -737,7 +737,9 @@ qbool GLM_LoadStateFunctions(void)
 	GL_LoadMandatoryFunctionExtension(glBindImageTexture, all_available);
 
 	// 4.4 - binds textures to consecutive texture units
-	GL_LoadOptionalFunction(glBindTextures);
+	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind")) {
+		GL_LoadOptionalFunction(glBindTextures);
+	}
 
 	return all_available;
 }
