@@ -756,6 +756,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 	vec3_t oldorg, stop, normal, movement;
 	int contents;
 	float bounce;
+	float lifetime;
 
 	p->size += p->growth * cls.frametime;
 
@@ -765,20 +766,20 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 	}
 
 	//VULT PARTICLE
-	if (pt->id == p_streaktrail || pt->id == p_lightningbeam) {
-		p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
-	}
-	else {
-		p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
-	}
+	lifetime = ((p->die - particle_time) / (p->die - p->start));
+	p->color[3] = p->initial_alpha * lifetime;
 
 	if (p->color[3] <= 0) {
 		p->die = 0;
 		return;
 	}
 
-	p->rotangle += p->rotspeed * cls.frametime;
+	if (pt->move == pm_static) {
+		// velocity isn't used, accel etc is irrelevant...
+		return;
+	}
 
+	p->rotangle += p->rotspeed * cls.frametime;
 	if (p->hit) {
 		return;
 	}

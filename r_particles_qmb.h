@@ -97,6 +97,7 @@ typedef struct particle_s {
 	byte        hit;
 	byte        texindex;
 	byte        bounces;
+	byte        initial_alpha;
 
 	int         cached_contents;
 	vec3_t      cached_movement;

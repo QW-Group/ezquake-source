@@ -109,6 +109,7 @@ static byte *ColorForParticle(part_type_t type)
 		_p->rotspeed = 0;									\
 		_p->texindex = (rand() % particle_textures[_pt->texture].components);	\
 		_p->bounces = 0;									\
+		_p->initial_alpha = _pt->startalpha;                \
 		memcpy(_p->color, _color, sizeof(_p->color));		\
 		_p->cached_contents = 0;                            \
 		_p->cached_distance = 0;                            \
@@ -256,7 +257,7 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 					p->size = size * 3;
 				VectorClear(p->vel);
 				p->growth = -p->size / time;
-				p->bounces = color[3];
+				p->initial_alpha = color[3];
 				break;
 				//VULT PARTICLES
 			case p_streak:
