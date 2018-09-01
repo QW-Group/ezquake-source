@@ -1376,8 +1376,8 @@ void WeatherEffect(void)
 	int i;
 	col_t colour = { 128, 128, 128, 75 };
 
-	if ((int)amf_weather_rain.value) {
-		for (i = 0; i <= (int)amf_weather_rain.value; i++) {
+	if (amf_weather_rain.integer) {
+		for (i = 0; i <= amf_weather_rain.integer; i++) {
 			VectorCopy(r_refdef.vieworg, org);
 			org[0] = org[0] + (rand() % 3000) - 1500;
 			org[1] = org[1] + (rand() % 3000) - 1500;
@@ -1397,13 +1397,12 @@ void WeatherEffect(void)
 				AddParticle(p_rain, org, 1, 1, 15, colour, zerodir);
 			}
 		}
-
 	}
 
 	//Tei, lavafire on 2 or superior 
 	// this can be more better for some users than "eshaders"
-	if (tei_lavafire.value > 2) {
-		for (i = 0; i < (int)tei_lavafire.value; i++) {
+	if (tei_lavafire.integer > 2) {
+		for (i = 0; i < tei_lavafire.integer; i++) {
 			VectorCopy(r_refdef.vieworg, org);
 			org[0] = org[0] + (rand() % 3000) - 1500;
 			org[1] = org[1] + (rand() % 3000) - 1500;

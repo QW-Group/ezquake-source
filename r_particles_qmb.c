@@ -553,6 +553,11 @@ static void QMB_FillParticleVertexBuffer(void)
 				particle_texture_t* ptex = &particle_textures[ptex_lightning];
 				vec3_t right1, right2;
 				float half_t = (ptex->coords[0][1] + ptex->coords[0][3]) * 0.5f;
+				int trail_parts = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL);
+
+				if (i != particle_type_index[p_lightningbeam]) {
+					trail_parts = 1;
+				}
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -564,7 +569,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
-				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
+				for (l = trail_parts; l > 0; l--) {
 					r_sprite3d_vert_t* vert = R_Sprite3DAddEntry(pt->billboard_type, 6);
 					if (!vert) {
 						break;
