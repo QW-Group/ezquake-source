@@ -479,6 +479,7 @@ void GLC_StateBeginBloomDraw(texture_ref texture)
 void GLC_StateBeginPolyBlend(float v_blend[4])
 {
 	R_ApplyRenderingState(r_state_poly_blend);
+	R_CustomColor(v_blend[0] * v_blend[3], v_blend[1] * v_blend[3], v_blend[2] * v_blend[3], v_blend[3]);
 }
 
 void GLC_StateBeginImageDraw(qbool is_text)

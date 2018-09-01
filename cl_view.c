@@ -466,8 +466,9 @@ void V_SetContentsColor (int contents)
 			break;
 	}
 
-	if (v_contentblend.value > 0 && v_contentblend.value < 1 && contents != CONTENTS_EMPTY)
+	if (v_contentblend.value > 0 && v_contentblend.value < 1 && contents != CONTENTS_EMPTY) {
 		cl.cshifts[CSHIFT_CONTENTS].percent *= v_contentblend.value;
+	}
 
 	if (!gl_polyblend.value && !cl.teamfortress) {
 		cl.cshifts[CSHIFT_CONTENTS].percent = 0;
@@ -476,10 +477,12 @@ void V_SetContentsColor (int contents)
 		// ignore gl_cshiftpercent on custom cshifts (set with v_cshift
 		// command) to avoid cheating in TF
 		if (contents != CONTENTS_EMPTY) {
-			if (!gl_polyblend.value)
+			if (!gl_polyblend.value) {
 				cl.cshifts[CSHIFT_CONTENTS].percent = 0;
-			else
+			}
+			else {
 				cl.cshifts[CSHIFT_CONTENTS].percent *= gl_cshiftpercent.value;
+			}
 		}
 		else {
 			cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
@@ -487,7 +490,8 @@ void V_SetContentsColor (int contents)
 	}
 }
 
-void V_CalcPowerupCshift (void) {
+void V_CalcPowerupCshift(void)
+{
 	float fraction;
 
 	if (cl.stats[STAT_ITEMS] & IT_QUAD)	{

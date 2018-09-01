@@ -123,12 +123,13 @@ static void R_InitialiseWorldStates(void)
 static void R_Initialise2DStates(void)
 {
 	rendering_state_t* state;
+	r_vao_id postprocess_vao = R_UseImmediateOpenGL() ? vao_none : vao_postprocess;
 
 	state = R_InitRenderingState(r_state_default_2d, true, "default2DState", vao_none);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 
-	state = R_InitRenderingState(r_state_brighten_screen, true, "brightenScreenState", vao_postprocess);
+	state = R_InitRenderingState(r_state_brighten_screen, true, "brightenScreenState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 	R_GLC_EnableAlphaTesting(state); // really?
@@ -146,7 +147,7 @@ static void R_Initialise2DStates(void)
 		state->vao_id = vao_none;
 	}
 
-	state = R_InitRenderingState(r_state_scene_blur, true, "sceneBlurState", vao_postprocess);
+	state = R_InitRenderingState(r_state_scene_blur, true, "sceneBlurState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 	R_GLC_DisableAlphaTesting(state);
@@ -165,7 +166,7 @@ static void R_Initialise2DStates(void)
 	R_GLC_EnableAlphaTesting(state);
 
 #ifdef BLOOM_SUPPORTED
-	state = R_InitRenderingState(&glcBloomState, true, "glcBloomState", vao_postprocess);
+	state = R_InitRenderingState(&glcBloomState, true, "glcBloomState", postprocess_vao);
 	glcBloomState.depth.test_enabled = false;
 	glcBloomState.cullface.enabled = false;
 	R_GLC_EnableAlphaTesting(state);
@@ -176,15 +177,11 @@ static void R_Initialise2DStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 #endif
 
-	state = R_InitRenderingState(r_state_poly_blend, true, "polyBlendState", vao_postprocess);
+	state = R_InitRenderingState(r_state_poly_blend, true, "polyBlendState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->color[0] = v_blend[0] * v_blend[3];
-	state->color[1] = v_blend[1] * v_blend[3];
-	state->color[2] = v_blend[2] * v_blend[3];
-	state->color[3] = v_blend[3];
 
 	state = R_InitRenderingState(r_state_hud_images_glm, true, "glmImageDrawState", vao_hud_images);
 	state->depth.test_enabled = false;
