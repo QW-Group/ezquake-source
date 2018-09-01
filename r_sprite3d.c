@@ -216,7 +216,7 @@ void R_Sprite3DCreateIndexBuffer(void)
 		indexes_start_quads = pos;
 		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
 			if (i) {
-				if (glConfig.primitiveRestartSupported) {
+				if (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) {
 					indexData[pos++] = ~(unsigned int)0;
 				}
 				else {
@@ -233,7 +233,7 @@ void R_Sprite3DCreateIndexBuffer(void)
 		indexes_start_flashblend = pos;
 		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
 			if (i) {
-				if (glConfig.primitiveRestartSupported) {
+				if (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) {
 					indexData[pos++] = ~(unsigned int)0;
 				}
 				else {
@@ -250,7 +250,7 @@ void R_Sprite3DCreateIndexBuffer(void)
 		indexes_start_sparks = pos;
 		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_SPARKS; ++i) {
 			if (i) {
-				if (glConfig.primitiveRestartSupported) {
+				if (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) {
 					indexData[pos++] = ~(unsigned int)0;
 				}
 				else {

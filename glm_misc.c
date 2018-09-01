@@ -182,12 +182,12 @@ void GLM_UploadFrameConstants(void)
 
 void GLM_ScreenDrawStart(void)
 {
-	GLM_FramebufferScreenDrawStart();
+	GL_FramebufferScreenDrawStart();
 }
 
 void GLM_PostProcessScreen(void)
 {
-	GLM_FramebufferPostProcessScreen();
+	GL_FramebufferPostProcessScreen();
 }
 
 void GLM_Shutdown(qbool restarting)

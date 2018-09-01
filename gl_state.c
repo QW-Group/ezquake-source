@@ -488,9 +488,7 @@ void GL_InitialiseState(void)
 	if (buffers.supported) {
 		buffers.InitialiseState();
 	}
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 	R_ProgramInitialiseState();
-#endif
 }
 
 // These functions taken from gl_texture.c
@@ -729,25 +727,22 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 }
 #endif
 
-qbool GLM_LoadStateFunctions(void)
+void GL_LoadStateFunctions(void)
 {
-	qbool all_available = true;
+	glConfig.supported_features &= ~(R_SUPPORT_MULTITEXTURING | R_SUPPORT_IMAGE_PROCESSING);
 
-	GL_LoadMandatoryFunctionExtension(glActiveTexture, all_available);
+	GL_LoadOptionalFunction(glActiveTexture);
+	glConfig.supported_features |= (qglActiveTexture != NULL ? R_SUPPORT_MULTITEXTURING : 0);
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
-		GL_LoadMandatoryFunctionExtension(glBindImageTexture, all_available);
-	}
-	else {
-		all_available = false;
+		GL_LoadOptionalFunction(glBindImageTexture);
+		glConfig.supported_features |= (qglBindImageTexture != NULL ? R_SUPPORT_IMAGE_PROCESSING : 0);
 	}
 
 	// 4.4 - binds textures to consecutive texture units
 	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind")) {
 		GL_LoadOptionalFunction(glBindTextures);
 	}
-
-	return all_available;
 }
 
 void GLC_ClientActiveTexture(GLenum texture_unit)

@@ -97,7 +97,7 @@ unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsign
 {
 	int k;
 
-	if (glConfig.primitiveRestartSupported) {
+	if (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) {
 		if (index_count + 1 + p->numverts > modelIndexMaximum) {
 			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 			index_count = 0;

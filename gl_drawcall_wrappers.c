@@ -51,32 +51,29 @@ static glDrawElementsInstancedBaseInstance_t             qglDrawElementsInstance
 static glDrawElementsInstancedBaseVertexBaseInstance_t   qglDrawElementsInstancedBaseVertexBaseInstance;
 // </draw-functions>
 
-qbool GLM_LoadDrawFunctions(void)
+void GL_LoadDrawFunctions(void)
 {
-	qbool all_available = true;
+	glConfig.supported_features &= ~(R_SUPPORT_INDIRECT_RENDERING | R_SUPPORT_INSTANCED_RENDERING | R_SUPPORT_PRIMITIVERESTART);
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_multi_draw_indirect")) {
+		qbool all_available = true;
+
 		GL_LoadMandatoryFunctionExtension(glMultiDrawArraysIndirect, all_available);
 		GL_LoadMandatoryFunctionExtension(glMultiDrawElementsIndirect, all_available);
-	}
-	else {
-		all_available = false;
+
+		glConfig.supported_features |= (all_available ? R_SUPPORT_INDIRECT_RENDERING : 0);
 	}
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_base_instance")) {
+		qbool all_available = true;
+
 		GL_LoadMandatoryFunctionExtension(glDrawArraysInstancedBaseInstance, all_available);
 		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseInstance, all_available);
 		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseVertexBaseInstance, all_available);
-	}
-	else {
-		all_available = false;
+
+		glConfig.supported_features |= (all_available ? R_SUPPORT_INSTANCED_RENDERING : 0);
 	}
 
-	return all_available;
-}
-
-void GL_LoadDrawFunctions(void)
-{
 	// Draw functions used for modern & classic
 	GL_LoadOptionalFunction(glMultiDrawArrays);
 	GL_LoadOptionalFunction(glMultiDrawElements);
@@ -85,7 +82,7 @@ void GL_LoadDrawFunctions(void)
 		GL_LoadOptionalFunction(glDrawElementsBaseVertex);
 	}
 
-	glConfig.primitiveRestartSupported = false;
+	glConfig.supported_features &= ~R_SUPPORT_PRIMITIVERESTART;
 	if (R_UseModernOpenGL() || GL_VersionAtLeast(3, 1)) {
 		GL_LoadOptionalFunction(glPrimitiveRestartIndex);
 		if (qglPrimitiveRestartIndex) {
@@ -96,7 +93,7 @@ void GL_LoadDrawFunctions(void)
 			else {
 				qglPrimitiveRestartIndex(~(GLuint)0);
 			}
-			glConfig.primitiveRestartSupported = true;
+			glConfig.supported_features |= ~R_SUPPORT_PRIMITIVERESTART;
 		}
 	}
 }

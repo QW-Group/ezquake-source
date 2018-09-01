@@ -45,6 +45,24 @@ typedef enum {
 	              // http://www.intel.com/cd/ids/developer/asmo-na/eng/168252.htm?page=7
 } glHardwareType_t;
 
+#define R_SUPPORT_FRAMEBUFFERS        (1 << 0)      // rendering to framebuffers
+#define R_SUPPORT_RENDERING_SHADERS   (1 << 1)      // rendering using shaders
+#define R_SUPPORT_COMPUTE_SHADERS     (1 << 2)      // non-rendering shaders
+#define R_SUPPORT_PRIMITIVERESTART    (1 << 3)      // primitive restart indexes
+#define R_SUPPORT_MULTITEXTURING      (1 << 4)      // multi-texturing (some people still disable this...)
+#define R_SUPPORT_IMAGE_PROCESSING    (1 << 5)      // reading/writing to images
+#define R_SUPPORT_TEXTURE_SAMPLERS    (1 << 6)      // samplers
+#define R_SUPPORT_TEXTURE_ARRAYS      (1 << 7)      // 3D images (texture arrays)
+#define R_SUPPORT_INDIRECT_RENDERING  (1 << 8)      // indirect rendering (api parameters stored in buffer)
+#define R_SUPPORT_INSTANCED_RENDERING (1 << 9)      // instanced rendering
+#define R_SUPPORT_FRAMEBUFFERS_BLIT   (1 << 10)     // blit from one framebuffer to another
+
+#define R_SUPPORT_MODERN_OPENGL_REQUIREMENTS ( \
+	R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_RENDERING_SHADERS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_PRIMITIVERESTART | \
+	R_SUPPORT_MULTITEXTURING | R_SUPPORT_IMAGE_PROCESSING | R_SUPPORT_TEXTURE_SAMPLERS | R_SUPPORT_TEXTURE_ARRAYS | \
+	R_SUPPORT_INDIRECT_RENDERING | R_SUPPORT_INSTANCED_RENDERING \
+)
+
 typedef struct {
 	const unsigned char                     *renderer_string;
 	const unsigned char                     *vendor_string;
@@ -78,7 +96,7 @@ typedef struct {
 	int uniformBufferOffsetAlignment;
 	int shaderStorageBufferOffsetAlignment;
 
-	qbool primitiveRestartSupported;
+	unsigned long supported_features;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

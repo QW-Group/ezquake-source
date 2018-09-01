@@ -212,11 +212,14 @@ SERVER_OBJS := \
 HELP_OBJS := \
     $(patsubst help_%.json,help_%.o,$(wildcard help_*.json))
 
-GLSL_OBJS := \
+MODERN_GLSL_OBJS := \
     $(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
 
+CLASSIC_GLSL_OBJS := \
+    $(patsubst glsl/glc/%.glsl,glsl_%.glsl.o,$(wildcard glsl/glc/*.glsl))
+
 MODERN_OPENGL_OBJS := \
-    $(GLSL_OBJS) \
+    $(MODERN_GLSL_OBJS) \
     glm_aliasmodel.o \
     glm_brushmodel.o \
     glm_draw.o \
@@ -226,7 +229,6 @@ MODERN_OPENGL_OBJS := \
     glm_misc.o \
     glm_particles.o \
     glm_performance.o \
-    glm_program.o \
     glm_main.o \
     glm_rmain.o \
     glm_rsurf.o \
@@ -239,12 +241,14 @@ MODERN_OPENGL_OBJS := \
     glm_vao.o
 
 CLASSIC_OPENGL_OBJS := \
+    $(CLASSIC_GLSL_OBJS) \
     glc_aliasmodel.o \
     glc_aliasmodel_mesh.o \
     glc_bloom.o \
     glc_brushmodel.o \
     glc_draw.o \
     glc_fog.o \
+    glc_framebuffer.o \
     glc_lightmaps.o \
     glc_main.o \
     glc_matrix.o \
@@ -274,6 +278,7 @@ COMMON_OPENGL_OBJS := \
     gl_state.o \
     gl_texture.o \
     gl_texture_functions.o \
+    glm_program.o \
     vid_common_gl.o
 
 COMMON_RENDERER_OBJS := \
@@ -585,6 +590,11 @@ strip: $(TARG_c)
 # ------
 
 $(BUILD_c)/glsl_%.glsl.o: glsl/%.glsl
+	$(E) [GLSL] $@
+	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
+
+$(BUILD_c)/glsl_%.glsl.o: glsl/glc/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c

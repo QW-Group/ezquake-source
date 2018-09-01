@@ -5,6 +5,7 @@
 #include "gl_model.h"
 #include "r_state.h"
 #include "r_vao.h"
+#include "gl_framebuffer.h"
 
 #ifdef RENDERER_METHOD
 #undef RENDERER_METHOD

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "glm_local.h"
 #include "r_program.h"
+#include "tr_types.h"
 
 #define GLM_DefineProgram_VF(program_id, name, expect_params, sourcename) \
 	{ \
@@ -120,7 +121,17 @@ static r_program_uniform_t program_uniforms[r_program_uniform_count] = {
 	// r_program_uniform_hud_circle_matrix
 	{ r_program_hud_circles, "matrix", 1, false },
 	// r_program_uniform_hud_circle_color
-	{ r_program_hud_circles, "color", 1, false }
+	{ r_program_hud_circles, "color", 1, false },
+	// r_program_uniform_post_process_glc_gamma
+	{ r_program_post_process_glc, "gamma", 1, false },
+	// r_program_uniform_post_process_glc_base,
+	{ r_program_post_process_glc, "base", 1, false },
+	// r_program_uniform_post_process_glc_overlay,
+	{ r_program_post_process_glc, "overlay", 1, false },
+	// r_program_uniform_post_process_glc_v_blend,
+	{ r_program_post_process_glc, "v_blend", 1, false },
+	// r_program_uniform_post_process_glc_contrast,
+	{ r_program_post_process_glc, "contrast", 1, false },
 };
 
 static glm_program_t program_data[r_program_count];
@@ -150,6 +161,7 @@ typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* p
 // Uniforms
 typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
+typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat value);
 typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
@@ -179,6 +191,7 @@ static glDetachShader_t      qglDetachShader = NULL;
 // Uniform functions
 static glGetUniformLocation_t      qglGetUniformLocation = NULL;
 static glUniform1i_t               qglUniform1i;
+static glUniform1f_t               qglUniform1f;
 static glUniformMatrix4fv_t        qglUniformMatrix4fv;
 static glUniform4fv_t              qglUniform4fv;
 
@@ -247,6 +260,7 @@ static void R_ProgramFindUniformsForProgram(r_program_id program_id)
 
 	for (u = 0; u < r_program_uniform_count; ++u) {
 		if (program_uniforms[u].program_id == program_id) {
+			program_uniforms[u].found = false;
 			GLM_ProgramUniformFind(u);
 		}
 	}
@@ -314,8 +328,13 @@ static int GLM_InsertDefinitions(
 	const char* definitions
 )
 {
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	extern unsigned char constants_glsl[], common_glsl[];
 	extern unsigned int constants_glsl_len, common_glsl_len;
+#else
+	unsigned char constants_glsl[] = "", common_glsl[] = "";
+	unsigned int constants_glsl_len = 0, common_glsl_len = 0;
+#endif
 	const char* break_point;
 
 	if (!strings[0] || !strings[0][0]) {
@@ -386,6 +405,20 @@ static qbool GLM_CompileProgram(
 					}
 					qglLinkProgram(shader_program);
 					qglGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+					
+#if 0
+					{
+						int length = 0;
+						char* src;
+
+						qglGetShaderiv(fragment_shader, GL_SHADER_SOURCE_LENGTH, &length);
+						src = Q_malloc(length + 1);
+						qglGetShaderSource(fragment_shader, length, NULL, src);
+
+						Con_Printf("Fragment-shader\n%s", src);
+						Q_free(src);
+					}
+#endif
 
 					if (result) {
 						Con_DPrintf("ShaderProgram.Link() was successful\n");
@@ -563,48 +596,47 @@ static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char
 	return false;
 }
 
-qbool GLM_LoadProgramFunctions(void)
+void GL_LoadProgramFunctions(void)
 {
-	qbool all_available = true;
+	qbool rendering_shaders_support = true;
 
-	// These are all core in OpenGL 2.0
-	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
-	GL_LoadMandatoryFunctionExtension(glShaderSource, all_available);
-	GL_LoadMandatoryFunctionExtension(glGetShaderSource, all_available);
-	GL_LoadMandatoryFunctionExtension(glCompileShader, all_available);
-	GL_LoadMandatoryFunctionExtension(glDeleteShader, all_available);
-	GL_LoadMandatoryFunctionExtension(glGetShaderInfoLog, all_available);
-	GL_LoadMandatoryFunctionExtension(glGetShaderiv, all_available);
+	glConfig.supported_features &= ~(R_SUPPORT_RENDERING_SHADERS | R_SUPPORT_COMPUTE_SHADERS);
+	{
+		// These are all core in OpenGL 2.0
+		GL_LoadMandatoryFunctionExtension(glCreateShader, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glShaderSource, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glGetShaderSource, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glCompileShader, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glDeleteShader, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glGetShaderInfoLog, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glGetShaderiv, rendering_shaders_support);
 
-	GL_LoadMandatoryFunctionExtension(glCreateProgram, all_available);
-	GL_LoadMandatoryFunctionExtension(glLinkProgram, all_available);
-	GL_LoadMandatoryFunctionExtension(glDeleteProgram, all_available);
-	GL_LoadMandatoryFunctionExtension(glUseProgram, all_available);
-	GL_LoadMandatoryFunctionExtension(glAttachShader, all_available);
-	GL_LoadMandatoryFunctionExtension(glDetachShader, all_available);
-	GL_LoadMandatoryFunctionExtension(glGetProgramInfoLog, all_available);
-	GL_LoadMandatoryFunctionExtension(glGetProgramiv, all_available);
+		GL_LoadMandatoryFunctionExtension(glCreateProgram, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glLinkProgram, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glDeleteProgram, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUseProgram, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glAttachShader, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glDetachShader, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glGetProgramInfoLog, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glGetProgramiv, rendering_shaders_support);
 
-	GL_LoadMandatoryFunctionExtension(glGetUniformLocation, all_available);
-	GL_LoadMandatoryFunctionExtension(glUniform1i, all_available);
-	GL_LoadMandatoryFunctionExtension(glUniform4fv, all_available);
-	GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, all_available);
+		GL_LoadMandatoryFunctionExtension(glGetUniformLocation, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUniform1i, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUniform1f, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUniform4fv, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, rendering_shaders_support);
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader")) {
-		GL_LoadMandatoryFunctionExtension(glDispatchCompute, all_available);
-	}
-	else {
-		all_available = false;
-	}
-
-	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
-		GL_LoadMandatoryFunctionExtension(glMemoryBarrier, all_available);
-	}
-	else {
-		all_available = false;
+		glConfig.supported_features |= (rendering_shaders_support ? R_SUPPORT_RENDERING_SHADERS : 0);
 	}
 
-	return all_available;
+	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+		qbool compute_shaders_support = true;
+
+		GL_LoadMandatoryFunctionExtension(glDispatchCompute, compute_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glMemoryBarrier, compute_shaders_support);
+
+		glConfig.supported_features |= (compute_shaders_support ? R_SUPPORT_COMPUTE_SHADERS : 0);
+	}
 }
 
 void R_ProgramUse(r_program_id program_id)
@@ -617,9 +649,11 @@ void R_ProgramUse(r_program_id program_id)
 		currentProgram = program;
 	}
 
-	if (program != r_program_none) {
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	if (R_UseModernOpenGL() && program != r_program_none) {
 		GLM_UploadFrameConstants();
 	}
+#endif
 }
 
 void R_ProgramInitialiseState(void)
@@ -632,6 +666,11 @@ void R_ProgramInitialiseState(void)
 static void GLM_Uniform1i(GLint location, GLint value)
 {
 	qglUniform1i(location, value);
+}
+
+static void GLM_Uniform1f(GLint location, GLfloat value)
+{
+	qglUniform1f(location, value);
 }
 
 static void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
@@ -689,6 +728,15 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 	uniform->int_value = value;
 }
 
+void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
+{
+	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+
+	R_ProgramUse(uniform->program_id);
+	GLM_Uniform1f(uniform->location, value);
+	uniform->int_value = value;
+}
+
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
 {
 	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
@@ -723,7 +771,11 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 	Q_free(program->included_definitions);
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
-	return GLM_CompileProgram(program);
+	if (GLM_CompileProgram(program)) {
+		R_ProgramFindUniformsForProgram(program_id);
+		return true;
+	}
+	return false;
 }
 
 static void GLM_BuildCoreDefinitions(void)
@@ -731,6 +783,7 @@ static void GLM_BuildCoreDefinitions(void)
 	// Set common definitions here (none yet)
 	memset(core_definitions, 0, sizeof(core_definitions));
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 	GLM_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel);
 	GLM_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world);
 	GLM_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites);
@@ -740,4 +793,9 @@ static void GLM_BuildCoreDefinitions(void)
 	GLM_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle);
 	GLM_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen);
 	GLM_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting);
+#endif
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	GLM_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen);
+#endif
 }

@@ -25,29 +25,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "glc_local.h"
 #include "gl_framebuffer.h"
 #include "tr_types.h"
-#include "glm_vao.h"
 #include "r_buffers.h"
-#include "glm_local.h"
 #include "r_state.h"
 #include "r_program.h"
 #include "r_renderer.h"
-
-static buffer_ref post_process_vbo;
+#include "r_matrix.h"
 
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
 
-// If this returns false then the framebuffer will be blitted instead
-static qbool GLM_CompilePostProcessProgram(void)
+static qbool GLC_CompilePostProcessProgram(void)
 {
 	extern cvar_t vid_framebuffer_palette, vid_framebuffer;
 	int post_process_flags =
 		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
 		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0);
 
-	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
+	if (R_ProgramRecompileNeeded(r_program_post_process_glc, post_process_flags)) {
 		static char included_definitions[512];
 
 		memset(included_definitions, 0, sizeof(included_definitions));
@@ -58,65 +55,76 @@ static qbool GLM_CompilePostProcessProgram(void)
 			strlcat(included_definitions, "#define EZ_USE_OVERLAY\n", sizeof(included_definitions));
 		}
 
+		Con_Printf("included_definitions:\n%s\n", included_definitions);
+
 		// Initialise program for drawing image
-		R_ProgramCompileWithInclude(r_program_post_process, included_definitions);
+		R_ProgramCompileWithInclude(r_program_post_process_glc, included_definitions);
 
-		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
+		R_ProgramSetCustomOptions(r_program_post_process_glc, post_process_flags);
 	}
 
-	if (!R_BufferReferenceIsValid(post_process_vbo)) {
-		float verts[4][5] = { { 0 } };
-
-		VectorSet(verts[0], -1, -1, 0);
-		verts[0][3] = 0;
-		verts[0][4] = 0;
-
-		VectorSet(verts[1], -1, 1, 0);
-		verts[1][3] = 0;
-		verts[1][4] = 1;
-
-		VectorSet(verts[2], 1, -1, 0);
-		verts[2][3] = 1;
-		verts[2][4] = 0;
-
-		VectorSet(verts[3], 1, 1, 0);
-		verts[3][3] = 1;
-		verts[3][4] = 1;
-
-		post_process_vbo = buffers.Create(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
-	}
-
-	if (R_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {
-		R_GenVertexArray(vao_postprocess);
-
-		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);
-		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3), 0);
-
-		R_BindVertexArray(vao_none);
-	}
-
-	return R_ProgramReady(r_program_post_process) && R_VertexArrayCreated(vao_postprocess);
+	return R_ProgramReady(r_program_post_process_glc);
 }
 
-void GLM_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
+void GLC_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
 {
 	qbool flip2d = GL_FramebufferReferenceIsValid(fb_2d);
 	qbool flip3d = GL_FramebufferReferenceIsValid(fb_3d);
 
-	if (GLM_CompilePostProcessProgram()) {
-		R_ProgramUse(r_program_post_process);
-		R_BindVertexArray(vao_postprocess);
+	if (GLC_CompilePostProcessProgram()) {
+		extern cvar_t gl_hwblend;
+
+		float blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
+		float blend_values[4] = {
+			v_blend[0] * blend_alpha,
+			v_blend[1] * blend_alpha,
+			v_blend[2] * blend_alpha,
+			1 - blend_alpha
+		};
+
+		R_ProgramUse(r_program_post_process_glc);
+		R_ProgramUniform1f(r_program_uniform_post_process_glc_gamma, v_gamma.value);
+		R_ProgramUniform4fv(r_program_uniform_post_process_glc_v_blend, blend_values);
+		R_ProgramUniform1f(r_program_uniform_post_process_glc_contrast, bound(1, v_contrast.value, 3));
 
 		if (flip2d && flip3d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
 			renderer.TextureUnitBind(1, GL_FramebufferTextureReference(fb_2d, 0));
+
+			R_ProgramUniform1i(r_program_uniform_post_process_glc_base, 0);
+			R_ProgramUniform1i(r_program_uniform_post_process_glc_overlay, 1);
 		}
 		else if (flip3d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
+
+			R_ProgramUniform1i(r_program_uniform_post_process_glc_base, 0);
 		}
 		else if (flip2d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_2d, 0));
+
+			R_ProgramUniform1i(r_program_uniform_post_process_glc_overlay, 0);
 		}
-		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		R_IdentityModelView();
+		R_IdentityProjectionView();
+		GLC_Begin(GL_TRIANGLE_STRIP);
+		// Top left corner.
+		glTexCoord2f(0, 0);
+		GLC_Vertex2f(-1, -1);
+
+		// Upper right corner.
+		glTexCoord2f(0, 1);
+		GLC_Vertex2f(-1, 1);
+
+		// Bottom right corner.
+		glTexCoord2f(1, 0);
+		GLC_Vertex2f(1, -1);
+
+		// Bottom left corner.
+		glTexCoord2f(1, 1);
+		GLC_Vertex2f(1, 1);
+		GLC_End();
+
+		R_ProgramUse(r_program_none);
 	}
 }

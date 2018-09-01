@@ -200,7 +200,7 @@ static void GLC_Bloom_InitEffectTexture(void)
 static void GLC_Bloom_InitTextures(void)
 {
 	unsigned char *data;
-	int maxtexsize;
+	int maxtexsize = glConfig.gl_max_size_default;
 	size_t size;
 
 	// Find closer power of 2 to screen size.
@@ -208,7 +208,6 @@ static void GLC_Bloom_InitTextures(void)
 	for (screen_texture_height = 1; screen_texture_height < glheight; screen_texture_height *= 2);
 
 	// Disable blooms if we can't handle a texture of that size.
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxtexsize);
 	if (screen_texture_width > maxtexsize || screen_texture_height > maxtexsize) {
 		screen_texture_width = screen_texture_height = 0;
 		Cvar_SetValue(&r_bloom, 0);

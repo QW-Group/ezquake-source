@@ -57,15 +57,13 @@ static qbool GL_InitialiseRenderer(void)
 	qbool shaders_supported = false;
 
 	GL_InitialiseFramebufferHandling();
-
-	shaders_supported = GLM_LoadProgramFunctions();
-	shaders_supported = GLM_LoadStateFunctions() && shaders_supported;
-	shaders_supported = GLM_LoadTextureManagementFunctions() && shaders_supported;
-	shaders_supported = GLM_LoadDrawFunctions() && shaders_supported;
-
+	GL_LoadProgramFunctions();
+	GL_LoadStateFunctions();
 	GL_LoadTextureManagementFunctions();
 	GL_LoadDrawFunctions();
 	GL_InitialiseDebugging();
+
+	shaders_supported = (glConfig.supported_features & R_SUPPORT_MODERN_OPENGL_REQUIREMENTS);
 
 	if (R_UseModernOpenGL() && shaders_supported) {
 		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
@@ -106,8 +104,8 @@ static void GL_PopulateConfig(void)
 	glConfig.version_string = glGetString(GL_VERSION);
 
 	if (glConfig.version_string) {
-		const char* dot = strchr(glConfig.version_string, '.');
-		glConfig.majorVersion = atoi(glConfig.version_string);
+		const char* dot = strchr((const char*)glConfig.version_string, '.');
+		glConfig.majorVersion = atoi((const char*)glConfig.version_string);
 		glConfig.minorVersion = (dot ? atoi(dot + 1) : 0);
 	}
 	else {
@@ -129,19 +127,26 @@ static void GL_PopulateConfig(void)
 	}
 	glConfig.texture_units = max(glConfig.texture_units, 1);
 
-	if (GL_VersionAtLeast(4, 3)) {
+	glConfig.max_3d_texture_size = 0;
+	glConfig.glsl_version = (unsigned char*)"0";
+	glConfig.max_texture_depth = 0;
+	glConfig.uniformBufferOffsetAlignment = 0;
+	glConfig.shaderStorageBufferOffsetAlignment = 0;
+	if (GL_VersionAtLeast(2, 0)) {
 		glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &glConfig.max_3d_texture_size);
-		glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &glConfig.uniformBufferOffsetAlignment);
-		glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &glConfig.shaderStorageBufferOffsetAlignment);
 		glConfig.glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
-	}
-	else {
-		glConfig.max_3d_texture_size = 0;
-		glConfig.max_texture_depth = 0;
-		glConfig.uniformBufferOffsetAlignment = 0;
-		glConfig.shaderStorageBufferOffsetAlignment = 0;
-		glConfig.glsl_version = (unsigned char*)"0";
+
+		if (GL_VersionAtLeast(3, 0)) {
+			glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.max_texture_depth);
+
+			if (GL_VersionAtLeast(3, 1)) {
+				glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &glConfig.uniformBufferOffsetAlignment);
+
+				if (GL_VersionAtLeast(4, 3)) {
+					glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &glConfig.shaderStorageBufferOffsetAlignment);
+				}
+			}
+		}
 	}
 }
 
@@ -172,18 +177,18 @@ static void GL_CheckExtensions(void)
 
 		R_SetNonPowerOfTwoSupport(supported);
 
-		Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n",
-			supported ? "found" : "not found");
+		Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", supported ? "found" : "not found");
 	}
 }
 
 static void GL_CheckMultiTextureExtensions(void)
 {
 	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
-		if (strstr((const char*)glGetString(GL_RENDERER), "Savage")) {
-			return;
+		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2f");
+		if (!qglMultiTexCoord2f) {
+			qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
 		}
-		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+		qglActiveTexture = SDL_GL_GetProcAddress("glActiveTexture");
 		if (!qglActiveTexture) {
 			qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
 		}

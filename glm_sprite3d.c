@@ -162,10 +162,10 @@ void GLM_Draw3DSprites(void)
 		else if (batch->allSameNumber && batch->numVertices[0] == 4) {
 			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
+		else if (batch->allSameNumber && batch->numVertices[0] == 9 && (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART)) {
 			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 		}
-		else if (batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
+		else if (batch->allSameNumber && batch->numVertices[0] == 18 && (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART)) {
 			GLM_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 		}
 		else {

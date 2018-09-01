@@ -37,7 +37,7 @@ void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int
 	int numVertices = batch->numVertices[first_batch];
 	int batch_count = last_batch - first_batch;
 	void* indexes = (void*)(index_offset * sizeof(GLuint));
-	int terminators = glConfig.primitiveRestartSupported ? 1 : (numVertices % 2 == 0 ? 2 : 3);
+	int terminators = (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) ? 1 : (numVertices % 2 == 0 ? 2 : 3);
 
 	while (batch_count > maximum_batch_size) {
 		GL_DrawElementsBaseVertex(glPrimitiveTypes[batch->primitive_id], maximum_batch_size * numVertices + (maximum_batch_size - 1) * terminators, GL_UNSIGNED_INT, indexes, vertOffset);

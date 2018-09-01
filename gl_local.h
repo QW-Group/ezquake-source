@@ -205,15 +205,9 @@ extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-qbool GLM_LoadProgramFunctions(void);
-#else
-#define GLM_LoadProgramFunctions() (false)
-#endif
-qbool GLM_LoadStateFunctions(void);
-qbool GLM_LoadTextureManagementFunctions(void);
+void GL_LoadProgramFunctions(void);
+void GL_LoadStateFunctions(void);
 void GL_LoadTextureManagementFunctions(void);
-qbool GLM_LoadDrawFunctions(void);
 void GL_LoadDrawFunctions(void);
 void GL_InitialiseDebugging(void);
 
@@ -266,40 +260,38 @@ void R_DrawViewModel(void);
 void R_LightmapFrameInit(void);
 void R_UploadChangedLightmaps(void);
 
-void GLM_RenderView(void);
-void GLM_UploadFrameConstants(void);
-void GLM_PrepareWorldModelBatch(void);
-
-void GLC_DrawMapOutline(model_t *model);
 void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
 
-void GLM_DrawSpriteModel(entity_t* e);
-void GLM_PolyBlend(float v_blend[4]);
-void GLM_DrawVelocity3D(void);
-void GLM_RenderSceneBlurDo(float alpha);
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
-void GLC_ClearTextureChains(void);
-void GLC_SetTextureLightmap(int textureUnit, int lightmap_num);
-texture_ref GLC_LightmapTexture(int index);
-texture_ref GLM_LightmapArray(void);
-void GLC_ClearLightmapPolys(void);
-void GLC_AddToLightmapChain(msurface_t* s);
-void GLC_LightmapUpdate(int index);
-glpoly_t* GLC_LightmapChain(int i);
-int GLC_LightmapCount(void);
-void GLM_CreateLightmapTextures(void);
-void GLM_PostProcessScreen(void);
 void GLC_CreateLightmapTextures(void);
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
 //void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
-
 void GLC_EmitCausticsPolys(qbool use_vbo);
-
 void GLC_DrawWorld(void);
+void GLC_ClearTextureChains(void);
+void GLC_SetTextureLightmap(int textureUnit, int lightmap_num);
+texture_ref GLC_LightmapTexture(int index);
+void GLC_ClearLightmapPolys(void);
+void GLC_AddToLightmapChain(msurface_t* s);
+void GLC_LightmapUpdate(int index);
+glpoly_t* GLC_LightmapChain(int i);
+int GLC_LightmapCount(void);
+void GLC_DrawMapOutline(model_t *model);
+
+void GLM_DrawSpriteModel(entity_t* e);
+void GLM_PolyBlend(float v_blend[4]);
+void GLM_DrawVelocity3D(void);
+void GLM_RenderSceneBlurDo(float alpha);
+texture_ref GLM_LightmapArray(void);
+void GLM_CreateLightmapTextures(void);
+void GLM_PostProcessScreen(void);
+void GLM_RenderView(void);
+void GLM_UploadFrameConstants(void);
+void GLM_PrepareWorldModelBatch(void);
 
 #ifdef GL_PARANOIA
 void GL_ProcessErrors(const char* message);
@@ -333,12 +325,19 @@ qbool GL_DrawElementsBaseVertexAvailable(void);
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
 #ifndef EZ_OPENGL_NO_EXTENSIONS
+#define GL_LoadRequiredFunction(varName, functionName) (((varName) = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL)
+#define GL_LoadMandatoryFunction(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT")) != NULL); }
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_LoadOptionalFunctionEXT(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
 #define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #else
+#define GL_LoadMandatoryFunction(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
+#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
 #define GL_LoadOptionalFunction(functionName) { q##functionName = NULL; }
+#define GL_LoadOptionalFunctionEXT() { q##functionName = NULL; }
 #define GL_UseDirectStateAccess() (false)
 #endif
 

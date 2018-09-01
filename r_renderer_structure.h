@@ -103,3 +103,6 @@ RENDERER_METHOD(qbool, VertexArrayCreated, r_vao_id vao)
 RENDERER_METHOD(void, Prepare3DSprites, void)
 RENDERER_METHOD(void, Draw3DSprites, void)
 RENDERER_METHOD(void, Draw3DSpritesInline, void)   // FIXME get rid of this and all other inline rendering
+
+// Framebuffers
+RENDERER_METHOD(void, RenderFramebuffers, framebuffer_ref fb_3d, framebuffer_ref fb_2d)

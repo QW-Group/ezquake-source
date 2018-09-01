@@ -106,27 +106,57 @@ static qbool framebuffers_supported;
 //
 void GL_InitialiseFramebufferHandling(void)
 {
+	glConfig.supported_features &= ~(R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_FRAMEBUFFERS_BLIT);
 	framebuffers_supported = true;
 
-	GL_LoadMandatoryFunctionExtension(glGenFramebuffers, framebuffers_supported);
-	GL_LoadMandatoryFunctionExtension(glDeleteFramebuffers, framebuffers_supported);
-	GL_LoadMandatoryFunctionExtension(glBindFramebuffer, framebuffers_supported);
+	if (GL_VersionAtLeast(3,0) || SDL_GL_ExtensionSupported("GL_ARB_framebuffer_object")) {
+		GL_LoadMandatoryFunction(glGenFramebuffers, framebuffers_supported);
+		GL_LoadMandatoryFunction(glDeleteFramebuffers, framebuffers_supported);
+		GL_LoadMandatoryFunction(glBindFramebuffer, framebuffers_supported);
 
-	GL_LoadMandatoryFunctionExtension(glGenRenderbuffers, framebuffers_supported);
-	GL_LoadMandatoryFunctionExtension(glDeleteRenderbuffers, framebuffers_supported);
-	GL_LoadMandatoryFunctionExtension(glBindRenderbuffer, framebuffers_supported);
-	GL_LoadMandatoryFunctionExtension(glRenderbufferStorage, framebuffers_supported);
-	GL_LoadOptionalFunction(glNamedRenderbufferStorage);
-	GL_LoadMandatoryFunctionExtension(glFramebufferRenderbuffer, framebuffers_supported);
-	GL_LoadOptionalFunction(glNamedFramebufferRenderbuffer);
-	GL_LoadMandatoryFunctionExtension(glBlitFramebuffer, framebuffers_supported);
-	GL_LoadOptionalFunction(glBlitNamedFramebuffer);
+		GL_LoadMandatoryFunction(glGenRenderbuffers, framebuffers_supported);
+		GL_LoadMandatoryFunction(glDeleteRenderbuffers, framebuffers_supported);
+		GL_LoadMandatoryFunction(glBindRenderbuffer, framebuffers_supported);
+		GL_LoadMandatoryFunction(glRenderbufferStorage, framebuffers_supported);
+		GL_LoadMandatoryFunction(glFramebufferRenderbuffer, framebuffers_supported);
+		GL_LoadMandatoryFunction(glBlitFramebuffer, framebuffers_supported);
 
-	GL_LoadMandatoryFunctionExtension(glFramebufferTexture, framebuffers_supported);
-	GL_LoadOptionalFunction(glNamedFramebufferTexture);
+		GL_LoadMandatoryFunction(glFramebufferTexture, framebuffers_supported);
+		GL_LoadMandatoryFunction(glCheckFramebufferStatus, framebuffers_supported);
 
-	GL_LoadMandatoryFunctionExtension(glCheckFramebufferStatus, framebuffers_supported);
-	GL_LoadOptionalFunction(glCheckNamedFramebufferStatus);
+		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+	}
+	else if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object")) {
+		GL_LoadMandatoryFunctionEXT(glGenFramebuffers, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glDeleteFramebuffers, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glBindFramebuffer, framebuffers_supported);
+
+		GL_LoadMandatoryFunctionEXT(glGenRenderbuffers, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glDeleteRenderbuffers, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glBindRenderbuffer, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glRenderbufferStorage, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glFramebufferRenderbuffer, framebuffers_supported);
+		if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_blit")) {
+			GL_LoadOptionalFunctionEXT(glBlitFramebuffer);
+		}
+
+		GL_LoadMandatoryFunctionEXT(glFramebufferTexture, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glCheckFramebufferStatus, framebuffers_supported);
+
+		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS) : 0);
+		glConfig.supported_features |= (framebuffers_supported && (qglBlitFramebuffer != NULL) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+	}
+	else {
+		framebuffers_supported = false;
+	}
+
+	if (GL_UseDirectStateAccess()) {
+		GL_LoadOptionalFunction(glNamedRenderbufferStorage);
+		GL_LoadOptionalFunction(glNamedFramebufferRenderbuffer);
+		GL_LoadOptionalFunction(glBlitNamedFramebuffer);
+		GL_LoadOptionalFunction(glNamedFramebufferTexture);
+		GL_LoadOptionalFunction(glCheckNamedFramebufferStatus);
+	}
 
 	framebuffers = 1;
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
@@ -375,7 +405,8 @@ void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destinatio
 			GL_COLOR_BUFFER_BIT, filter
 		);
 	}
-	else {
+	else if (qglBlitFramebuffer) {
+		// ARB_framebuffer
 		qglBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer_data[source.index].glref);
 		qglBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer_data[destination.index].glref);
 
@@ -384,5 +415,122 @@ void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destinatio
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
 			GL_COLOR_BUFFER_BIT, filter
 		);
+	}
+	else {
+		// Shouldn't have been called, not supported
+	}
+}
+
+// --- Wrapper functionality over, rendering logic below ---
+static framebuffer_ref framebuffer3d;
+static framebuffer_ref framebuffer2d;
+
+extern cvar_t vid_framebuffer;
+extern cvar_t vid_framebuffer_palette;
+
+qbool GL_FramebufferEnabled3D(void)
+{
+	return vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer3d);
+}
+
+qbool GL_FramebufferEnabled2D(void)
+{
+	return GL_FramebufferReferenceIsValid(framebuffer2d);
+}
+
+static void VID_FramebufferFlip(void)
+{
+	qbool flip3d = vid_framebuffer.integer && GL_FramebufferReferenceIsValid(framebuffer3d);
+	qbool flip2d = vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY && GL_FramebufferReferenceIsValid(framebuffer2d);
+
+	if (flip3d || flip2d) {
+		extern cvar_t vid_framebuffer_blit;
+
+		// Screen-wide framebuffer without any processing required, so we can just blit
+		qbool should_blit = (
+			vid_framebuffer_palette.integer == 0 &&
+			vid_framebuffer.integer != USE_FRAMEBUFFER_3DONLY &&
+			vid_framebuffer_blit.integer &&
+			(glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS_BLIT)
+		);
+
+		// render to screen from now on
+		GL_FramebufferStartUsingScreen();
+
+		if (should_blit && flip3d) {
+			// Blit to screen
+			GL_FramebufferBlitSimple(framebuffer3d, null_framebuffer_ref);
+		}
+		else {
+			renderer.RenderFramebuffers(flip3d ? framebuffer3d : null_framebuffer_ref, flip2d ? framebuffer2d : null_framebuffer_ref);
+		}
+	}
+}
+
+static qbool VID_FramebufferInit(framebuffer_ref* framebuffer, int effective_width, int effective_height, qbool is3D)
+{
+	if (effective_width && effective_height) {
+		if (!GL_FramebufferReferenceIsValid(*framebuffer)) {
+			*framebuffer = GL_FramebufferCreate(effective_width, effective_height, is3D);
+		}
+		else if (GL_FrameBufferWidth(*framebuffer) != effective_width || GL_FrameBufferHeight(*framebuffer) != effective_height) {
+			GL_FramebufferDelete(framebuffer);
+
+			*framebuffer = GL_FramebufferCreate(effective_width, effective_height, is3D);
+		}
+
+		if (GL_FramebufferReferenceIsValid(*framebuffer)) {
+			GL_FramebufferStartUsing(*framebuffer);
+			return true;
+		}
+	}
+	else {
+		if (GL_FramebufferReferenceIsValid(*framebuffer)) {
+			GL_FramebufferDelete(framebuffer);
+		}
+	}
+
+	return false;
+}
+
+void GL_FramebufferScreenDrawStart(void)
+{
+	if (vid_framebuffer.integer) {
+		VID_FramebufferInit(&framebuffer3d, VID_ScaledWidth3D(), VID_ScaledHeight3D(), true);
+	}
+}
+
+qbool GL_Framebuffer2DSwitch(void)
+{
+	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
+		if (VID_FramebufferInit(&framebuffer2d, glConfig.vidWidth, glConfig.vidHeight, false)) {
+			R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+			glClear(GL_COLOR_BUFFER_BIT);
+			return true;
+		}
+	}
+
+	R_Viewport(glx, gly, glwidth, glheight);
+	return false;
+}
+
+void GL_FramebufferPostProcessScreen(void)
+{
+	extern cvar_t vid_framebuffer, vid_framebuffer_palette;
+	qbool framebuffer_active = (GL_FramebufferReferenceIsValid(framebuffer3d) || GL_FramebufferReferenceIsValid(framebuffer2d));
+
+	if (framebuffer_active) {
+		R_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
+
+		VID_FramebufferFlip();
+
+		if (!vid_framebuffer_palette.integer) {
+			// Hardware palette changes
+			V_UpdatePalette();
+		}
+	}
+	else {
+		// Hardware palette changes
+		V_UpdatePalette();
 	}
 }

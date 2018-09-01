@@ -147,10 +147,10 @@ void GLC_Draw3DSpritesInline(void)
 			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4 && glPrimitiveTypes[batch->primitive_id] == GL_TRIANGLE_STRIP) {
 				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && glConfig.primitiveRestartSupported) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART)) {
 				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && glConfig.primitiveRestartSupported) {
+			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART)) {
 				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
 			}
 			else {

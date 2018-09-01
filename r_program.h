@@ -13,6 +13,7 @@ typedef enum {
 	r_program_hud_images,
 	r_program_hud_circles,
 	r_program_post_process,
+	r_program_post_process_glc,
 
 	r_program_lightmap_compute,
 
@@ -28,6 +29,11 @@ typedef enum {
 	r_program_uniform_hud_line_matrix,
 	r_program_uniform_hud_circle_matrix,
 	r_program_uniform_hud_circle_color,
+	r_program_uniform_post_process_glc_gamma,
+	r_program_uniform_post_process_glc_base,
+	r_program_uniform_post_process_glc_overlay,
+	r_program_uniform_post_process_glc_v_blend,
+	r_program_uniform_post_process_glc_contrast,
 
 	r_program_uniform_count
 } r_program_uniform_id;
@@ -49,6 +55,7 @@ void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id);
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
+void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);

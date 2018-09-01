@@ -2,6 +2,7 @@
 #include "quakedef.h"
 #include "glm_vao.h"
 #include "r_renderer.h"
+#include "gl_framebuffer.h"
 
 void GL_Init(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
@@ -27,6 +28,11 @@ static void GLM_TextureLabelSetNull(texture_ref texture, const char* name)
 {
 }
 
+static void GLM_Begin2DRendering(void)
+{
+	GL_Framebuffer2DSwitch();
+}
+
 #define GLM_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLM_Viewport                       GL_Viewport
 #define GLM_ClearRenderingSurface          GL_Clear
@@ -37,7 +43,6 @@ static void GLM_TextureLabelSetNull(texture_ref texture, const char* name)
 #define GLM_Draw3DSpritesInline            R_Stubs_NoOperation
 #define GLM_DrawDisc                       R_Stubs_NoOperation
 #define GLM_IsFramebufferEnabled3D         GL_FramebufferEnabled3D
-#define GLM_Begin2DRendering               GL_Framebuffer2DSwitch
 #define GLM_DrawAliasModelShadow           R_Stubs_NoOperationEntity
 #define GLM_DrawAliasModelPowerupShell     R_Stubs_NoOperationEntity
 #define GLM_DrawAlias3ModelPowerupShell    R_Stubs_NoOperationEntity

@@ -5,6 +5,7 @@
 #include "glc_vao.h"
 #include "r_brushmodel.h"
 #include "r_aliasmodel.h"
+#include "tr_types.h"
 
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
@@ -32,6 +33,21 @@ qbool GLC_False(void)
 	return false;
 }
 
+static void GLC_ScreenDrawStart(void)
+{
+	GL_FramebufferScreenDrawStart();
+}
+
+static void GLC_PostProcessScreen(void)
+{
+	GL_FramebufferPostProcessScreen();
+}
+
+static void GLC_Begin2DRendering(void)
+{
+	GL_Framebuffer2DSwitch();
+}
+
 #define GLC_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLC_Viewport                       GL_Viewport
 #define GLC_RenderDynamicLightmaps         R_RenderDynamicLightmaps
@@ -39,18 +55,15 @@ qbool GLC_False(void)
 #define GLC_LightmapFrameInit              GLC_NoOperation
 #define GLC_LightmapShutdown               GLC_NoOperation
 #define GLC_ClearRenderingSurface          GL_Clear
-#define GLC_ScreenDrawStart                GLC_NoOperation
 #define GLC_EnsureFinished                 GL_EnsureFinished
 #define GLC_RenderSceneBlur                GLC_RenderSceneBlurDo
 #define GLC_RenderView                     GLC_NoOperation
-#define GLC_PostProcessScreen              V_UpdatePalette
 #define GLC_Screenshot                     GL_Screenshot
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
 #define GLC_Draw3DSprites                  GLC_NoOperation
 #define GLC_Prepare3DSprites               GLC_NoOperation
-#define GLC_Begin2DRendering               GLC_NoOperation    // GL_Framebuffer2DSwitch
-#define GLC_IsFramebufferEnabled3D         GLC_False
+#define GLC_IsFramebufferEnabled3D         GL_FramebufferEnabled3D
 #define GLC_TextureDelete                  GL_TextureDelete
 #define GLC_TextureMipmapGenerate          GL_TextureMipmapGenerate
 #define GLC_TextureWrapModeClamp           GL_TextureWrapModeClamp
@@ -92,5 +105,9 @@ void GLC_PrepareModelRendering(qbool vid_restart)
 
 		R_CreateAliasModelVBO(instance_vbo);
 		R_BrushModelCreateVBO(instance_vbo);
+	}
+
+	if (glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS) {
+		GLM_InitPrograms();
 	}
 }

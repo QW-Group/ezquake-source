@@ -85,36 +85,43 @@ static glDeleteSamplers_t qglDeleteSamplers;
 static glSamplerParameterf_t qglSamplerParameterf;
 static glBindSampler_t qglBindSampler;
 
-qbool GLM_LoadTextureManagementFunctions(void)
+void GL_LoadTextureManagementFunctions(void)
 {
-	qbool all_available = true;
-
-	GL_LoadMandatoryFunctionExtension(glTexSubImage3D, all_available);
-	GL_LoadMandatoryFunctionExtension(glGenerateMipmap, all_available);
+	glConfig.supported_features &= ~(R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_TEXTURE_SAMPLERS);
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
-		GL_LoadMandatoryFunctionExtension(glTexStorage2D, all_available);
-		GL_LoadMandatoryFunctionExtension(glTexStorage3D, all_available);
-	}
-	else {
-		all_available = false;
+		GL_LoadOptionalFunction(glTexStorage2D);
+		GL_LoadOptionalFunction(glTexStorage3D);
 	}
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
+		qbool all_available = true;
+
+		// OpenGL 1.2
+		GL_LoadMandatoryFunctionExtension(glTexSubImage3D, all_available);
+
+		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_ARRAYS : 0);
+
+		// Texture samplers in 3.3
+		all_available = true;
 		GL_LoadMandatoryFunctionExtension(glGenSamplers, all_available);
 		GL_LoadMandatoryFunctionExtension(glDeleteSamplers, all_available);
 		GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
 		GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
-	}
-	else {
-		all_available = false;
+		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_SAMPLERS : 0);
 	}
 
-	return all_available;
-}
+	if (GL_VersionAtLeast(3, 0)) {
+		// Core in 3.0
+		GL_LoadOptionalFunction(glGenerateMipmap);
+	}
+	else if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object")) {
+		qglGenerateMipmap = (glGenerateMipmap_t)SDL_GL_GetProcAddress("glGenerateMipmap");
+		if (!qglGenerateMipmap) {
+			qglGenerateMipmap = (glGenerateMipmap_t)SDL_GL_GetProcAddress("glGenerateMipmapEXT");
+		}
+	}
 
-void GL_LoadTextureManagementFunctions(void)
-{
 	if (GL_UseDirectStateAccess()) {
 		GL_LoadOptionalFunction(glGenerateTextureMipmap);
 		GL_LoadOptionalFunction(glGetTextureImage);
