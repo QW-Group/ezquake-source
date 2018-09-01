@@ -74,7 +74,9 @@ typedef struct aliasmodel_draw_data_s {
 static aliasmodel_draw_instructions_t alias_draw_instructions[aliasmodel_draw_max];
 static int alias_draw_count;
 
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
 static buffer_ref aliasModel_ssbo;
+#endif
 
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
@@ -170,13 +172,21 @@ static void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanc
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
 	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
 	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), 0);
+#else
+	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction), 0);
+#endif
 
 	R_BindVertexArray(vao_none);
 }
 
 static void R_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
 {
+	verts = &verts[*position];
+
+	memset(verts, 0, sizeof(vbo_model_vert_t) * 4);
+
 	VectorSet(verts[0].position, 0, -1, -1);
 	verts[0].texture_coords[0] = 1;
 	verts[0].texture_coords[1] = 1;
@@ -197,7 +207,7 @@ static void R_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
 	verts[3].texture_coords[1] = 1;
 	verts[3].vert_index = 3;
 
-	*position += sizeof(verts) / sizeof(verts[0]);
+	*position += 4;
 }
 
 static void R_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
@@ -285,11 +295,15 @@ void GLM_CreateAliasModelVBO(buffer_ref instanceVBO)
 	}
 
 	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
 	aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+#endif
 	Q_free(aliasModelData);
 
 	GLM_CreateAliasModelVAO(vbo, instanceVBO);
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
 	buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+#endif
 }
 
 static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref texture)
@@ -462,10 +476,9 @@ static void GLM_QueueAliasModelDraw(
 // Called for .mdl & .md3
 void GLM_DrawAliasModelFrame(
 	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
-	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects
+	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerp_fraction
 )
 {
-	float lerp_fraction = r_framelerp;
 	float color[4];
 
 	if (lerp_fraction == 1) {
@@ -516,7 +529,7 @@ void GLM_DrawAliasModelFrame(
 void GLM_DrawAliasFrame(
 	entity_t* ent, model_t* model, int pose1, int pose2,
 	texture_ref texture, texture_ref fb_texture,
-	qbool outline, int effects, int render_effects
+	qbool outline, int effects, int render_effects, float lerpfrac
 )
 {
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
@@ -525,7 +538,7 @@ void GLM_DrawAliasFrame(
 
 	GLM_DrawAliasModelFrame(
 		ent, model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
-		texture, fb_texture, outline, effects, render_effects
+		texture, fb_texture, outline, effects, render_effects, lerpfrac
 	);
 }
 

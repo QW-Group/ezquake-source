@@ -151,11 +151,9 @@ typedef struct glc_vbo_world_vert_s {
 typedef struct vbo_model_vert_s {
 	vec3_t position;
 	vec3_t normal;
+	vec3_t direction;
 	float texture_coords[2];
 	int vert_index;
-	int sprite_sampler;  // temporary
-	float sprite_index;  // temporary
-	int padding;
 } vbo_model_vert_t;
 
 typedef struct glpoly_s {
@@ -330,6 +328,9 @@ typedef struct maliasframedesc_s {
 	float				radius;
 	int					frame;
 	char				name[16];
+	char                groupname[16];
+	int                 groupnumber;
+	int                 nextpose;
 } maliasframedesc_t;
 
 typedef struct maliasgroupframedesc_s {

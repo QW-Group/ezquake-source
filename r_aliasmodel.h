@@ -22,7 +22,7 @@ void R_AliasSetupLighting(entity_t *ent);
 
 void GLM_DrawAliasModelFrame(
 	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
-	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects
+	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerp_fraction
 );
 
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype);
@@ -69,5 +69,7 @@ qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
 void R_DrawAliasModel(entity_t *ent);
+int R_AliasFramePose(maliasframedesc_t* frame);
+maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);
 
 #endif // EZQUAKE_R

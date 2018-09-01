@@ -71,6 +71,7 @@ struct SamplerMapping {
 struct AliasModelVert {
 	float x, y, z;
 	float nx, ny, nz;
+	float dx, dy, dz;
 	float s, t;
 	int padding;
 };

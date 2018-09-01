@@ -2,6 +2,7 @@
 #include "quakedef.h"
 #include "gl_model.h"
 #include "r_local.h"
+#include "r_aliasmodel.h"
 
 /*
 =================================================================
@@ -348,6 +349,7 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	int* cmds;
 	ez_trivertx_t* verts;
 	int total_vertices = 0;
+	int f1;
 
 	// Tonik: don't cache anything, because it seems just as fast
 	// (if not faster) to rebuild the tris instead of loading them from disk
@@ -373,6 +375,27 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 			verts->lightnormalindex = src->lightnormalindex;
 
 			++verts;
+		}
+	}
+
+	// Go back through and set directions
+	for (f1 = 0; f1 < hdr->numframes; ++f1) {
+		maliasframedesc_t* frame = &hdr->frames[f1];
+		qbool found = false;
+
+		if (frame->numposes > 1) {
+			// This frame has animated poses, so link them all together
+		}
+		else {
+			// Find next frame's pose
+			maliasframedesc_t* frame2 = R_AliasModelFindFrame(hdr, frame->groupname, frame->groupnumber + 1);
+			if (!frame2) {
+				frame2 = R_AliasModelFindFrame(hdr, frame->groupname, 1);
+			}
+
+			if (frame2) {
+				frame->nextpose = frame2->firstpose;
+			}
 		}
 	}
 

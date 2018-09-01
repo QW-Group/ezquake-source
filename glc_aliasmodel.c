@@ -218,7 +218,7 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 	color[3] = r_modelalpha;
 }
 
-void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
+static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
@@ -228,7 +228,6 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 
 	int *order, count;
 	vec3_t interpolated_verts;
-	float lerpfrac;
 	ez_trivertx_t *verts1, *verts2;
 
 	if (render_effects & RF_CAUSTICS) {
@@ -238,7 +237,6 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || r_modelalpha < 1, custom_model, ent->renderfx & RF_WEAPONMODEL);
 	}
 
-	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
 	verts2 = verts1 = (ez_trivertx_t *)((byte *) paliashdr + paliashdr->posedata);
@@ -331,23 +329,23 @@ void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2,
 	}
 }
 
-void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects)
+void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
 	qbool draw_caustics = gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin));
 
 	if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
-		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects);
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects, lerpfrac);
 	}
 	else {
-		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, null_texture_reference, outline, effects, render_effects);
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, null_texture_reference, outline, effects, render_effects, lerpfrac);
 
 		if (R_TextureReferenceIsValid(fb_texture)) {
-			GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, fb_texture, null_texture_reference, false, effects, render_effects | RF_ALPHABLEND);
+			GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, fb_texture, null_texture_reference, false, effects, render_effects | RF_ALPHABLEND, lerpfrac);
 		}
 	}
 
 	if (draw_caustics) {
-		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, underwatertexture, false, 0, RF_ALPHABLEND | RF_CAUSTICS);
+		GLC_DrawAliasFrameImpl(ent, model, pose1, pose2, texture, underwatertexture, false, 0, RF_ALPHABLEND | RF_CAUSTICS, lerpfrac);
 	}
 }
 
@@ -432,10 +430,7 @@ void GLC_SetPowerupShellColor(int layer_no, int effects)
 	R_CustomColor(r_shellcolor[0] * bound(0, gl_powerupshells.value, 1), r_shellcolor[1] * bound(0, gl_powerupshells.value, 1), r_shellcolor[2] * bound(0, gl_powerupshells.value, 1), bound(0, gl_powerupshells.value, 1));
 }
 
-static void GLC_DrawPowerupShell(
-	entity_t* ent,
-	maliasframedesc_t *oldframe, maliasframedesc_t *frame
-)
+static void GLC_DrawPowerupShell(entity_t* ent, maliasframedesc_t *oldframe, maliasframedesc_t *frame)
 {
 	model_t* model = ent->model;
 	int pose1 = R_AliasFramePose(oldframe);
