@@ -251,8 +251,9 @@ void Classic_ParticleExplosion(vec3_t org)
 		CL_ExplosionSprite(org);
 	}
 
-	if (r_explosiontype.value == 1)
+	if (r_explosiontype.value == 1) {
 		return;
+	}
 
 	for (i = 0; i < 1024; i++) {
 		if (r_numactiveparticles >= r_numparticles) {
@@ -630,7 +631,7 @@ static void Classic_PrepareParticles(void)
 	vec3_t scaled_vpn;
 
 	particles_to_draw = 0;
-	if (r_numactiveparticles == 0 || !r_drawparticles.integer) {
+	if (r_numactiveparticles == 0 || (!r_drawparticles.integer && !Rulesets_RestrictParticles())) {
 		return;
 	}
 
@@ -831,9 +832,7 @@ static void Classic_MoveParticles(void)
 			--r_numactiveparticles;
 		}
 
-		p->org[0] += p->vel[0] * frametime;
-		p->org[1] += p->vel[1] * frametime;
-		p->org[2] += p->vel[2] * frametime;
+		VectorMA(p->org, frametime, p->vel, p->org);
 
 		switch (p->type) {
 			case pt_static:
