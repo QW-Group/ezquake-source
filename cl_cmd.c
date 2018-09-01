@@ -33,8 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fs.h"
 
 
-extern qbool Match_Running ;
-
 void SCR_RSShot_f (void);
 void CL_ProcessServerInfo (void);
 void SV_Serverinfo_f (void);

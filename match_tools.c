@@ -36,7 +36,6 @@ void MT_Challenge_Cancel(void);
 void MT_Challenge_InitCvars(void);
 
 #define MAX_STATIC_STRING 1024
-qbool Match_Running;
 
 cvar_t match_format_solo = {"match_format_solo", "solo/%n - [%M]"};
 cvar_t match_format_coop = {"match_format_coop", "coop/%n - [%C_player_coop] - [%M]"};
@@ -660,9 +659,9 @@ static void MT_EndMatch(void) {
 }
 
 static void MT_CancelMatch(void) {
-	Match_Running = 0;
-	if (matchstate.endtime)
+	if (matchstate.endtime) {
 		MT_Delayed_EndMatch();
+	}
 
 	if (!matchstate.status)
 		return;
@@ -676,8 +675,8 @@ static void MT_CancelMatch(void) {
 	MT_Challenge_Cancel();
 }
 
-static void MT_StartMatch(void) {
-	Match_Running = 1;
+static void MT_StartMatch(void)
+{
 	if (matchstate.endtime) {
 		MT_Delayed_EndMatch();
 	}
