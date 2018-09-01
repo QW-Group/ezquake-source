@@ -630,7 +630,7 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		Com_Printf("Mod_LoadSimpleTexture: %s %s\n", identifier, R_TextureReferenceIsValid(tex) ? "OK" : "FAIL");
 	}
 
-	if (mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
+	if (R_TextureReferenceIsValid(tex) && mod->modhint >= 0 && mod->modhint < MOD_NUMBER_HINTS && skinnum >= 0 && skinnum < MAX_SIMPLE_TEXTURES) {
 		mpic_t* pic = &simpleitem_textures[mod->modhint][skinnum];
 		pic->texnum = tex;
 		pic->width = 16;
