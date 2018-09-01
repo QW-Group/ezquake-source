@@ -59,7 +59,6 @@ extern cvar_t    gl_outline_width;
 
 extern float     r_framelerp;
 extern float     r_lerpdistance;
-extern vec3_t    lightcolor;
 
 // Temporary r_lerpframes fix, unless we go for shaders-in-classic...
 //   After all models loaded, this needs to be allocated enough space to hold a complete pose of verts
@@ -182,7 +181,7 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 		vec3_t lc;
 
 		for (i = 0; i < 3; i++) {
-			lc[i] = lightcolor[i] / 256 + l;
+			lc[i] = ent->lightcolor[i] / 256 + l;
 		}
 
 		if (ent->r_modelcolor[0] < 0) {

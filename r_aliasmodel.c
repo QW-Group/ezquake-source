@@ -81,7 +81,6 @@ static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenu
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
 static vec3_t    dlight_color;
-extern vec3_t    lightcolor;
 
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
@@ -445,20 +444,20 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 					}
 
 					for (k = 0; k < 3; k++) {
-						lightcolor[k] = lightcolor[k] + (dlight_color[k] * add) * 2;
-						if (lightcolor[k] > 256) {
+						ent->lightcolor[k] = ent->lightcolor[k] + (dlight_color[k] * add) * 2;
+						if (ent->lightcolor[k] >= 256) {
 							switch (k) {
 								case 0:
-									lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-									lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+									ent->lightcolor[1] = ent->lightcolor[1] - (1 * ent->lightcolor[1] / 3);
+									ent->lightcolor[2] = ent->lightcolor[2] - (1 * ent->lightcolor[2] / 3);
 									break;
 								case 1:
-									lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
-									lightcolor[2] = lightcolor[2] - (1 * lightcolor[2] / 3);
+									ent->lightcolor[0] = ent->lightcolor[0] - (1 * ent->lightcolor[0] / 3);
+									ent->lightcolor[2] = ent->lightcolor[2] - (1 * ent->lightcolor[2] / 3);
 									break;
 								case 2:
-									lightcolor[1] = lightcolor[1] - (1 * lightcolor[1] / 3);
-									lightcolor[0] = lightcolor[0] - (1 * lightcolor[0] / 3);
+									ent->lightcolor[1] = ent->lightcolor[1] - (1 * ent->lightcolor[1] / 3);
+									ent->lightcolor[0] = ent->lightcolor[0] - (1 * ent->lightcolor[0] / 3);
 									break;
 							}
 						}
@@ -558,11 +557,11 @@ void R_AliasSetupLighting(entity_t *ent)
 		ent->ambientlight = ent->shadelight = 4096;
 		if (r_shadows.integer) {
 			// still need lightpoint...
-			R_LightPoint(ent->origin);
+			R_LightEntity(ent);
 		}
 	}
 	else {
-		ent->ambientlight = ent->shadelight = R_LightPoint(ent->origin);
+		R_LightEntity(ent);
 
 		if (amf_lighting_colour.integer) {
 			R_AliasModelColoredLighting(ent);

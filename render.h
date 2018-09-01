@@ -84,6 +84,7 @@ typedef struct entity_s {
 	float     shadelight;
 	float     ambientlight;
 	custom_model_color_t* custom_model;
+	vec3_t    lightcolor; // LordHavoc: used by model rendering
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!

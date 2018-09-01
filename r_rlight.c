@@ -306,7 +306,7 @@ mplane_t		*lightplane;
 vec3_t			lightspot;
 // LordHavoc: .lit support begin
 // LordHavoc: original code replaced entirely
-int RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
+int RecursiveLightPoint(vec3_t color, mnode_t *node, const vec3_t start, const vec3_t end)
 {
 	float		front, back, frac;
 	vec3_t		mid;
@@ -401,8 +401,7 @@ loc0:
 	}
 }
 
-vec3_t lightcolor; // LordHavoc: used by model rendering
-int R_LightPoint (vec3_t p)
+void R_LightEntity(entity_t* ent)
 {
 	vec3_t		end;
 	qbool		full_light;
@@ -410,20 +409,23 @@ int R_LightPoint (vec3_t p)
 	
 	full_light = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
 	if (full_light && !r_shadows.value) {
-		goto skip_trace;  // go grab yourself a copy of "'GOTO Considered Harmful' Considered Harmful"
+		ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 255;
+		ent->ambientlight = ent->shadelight = 255;
 	}
+	else {
+		end[0] = ent->origin[0];
+		end[1] = ent->origin[1];
+		end[2] = ent->origin[2] - 8192;
 
-	end[0] = p[0];
-	end[1] = p[1];
-	end[2] = p[2] - 8192;
-
-	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
-	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);
-	if (full_light) {
-skip_trace:
-		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
-		return 255;
+		ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 0;
+		RecursiveLightPoint(ent->lightcolor, cl.worldmodel->nodes, ent->origin, end);
+		if (!full_light) {
+			ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 255;
+			ent->ambientlight = ent->shadelight = 255;
+		}
+		else {
+			ent->ambientlight = ent->shadelight = ((ent->lightcolor[0] + ent->lightcolor[1] + ent->lightcolor[2]) * (1.0f / 3.0f));
+		}
 	}
-	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
 }
 // LordHavoc: .lit support end
