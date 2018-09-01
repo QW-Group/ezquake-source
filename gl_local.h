@@ -355,4 +355,3 @@ void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* le
 #endif
 
 #endif /* !__GL_LOCAL_H__ */
-

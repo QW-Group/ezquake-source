@@ -59,6 +59,6 @@ void GLM_PrepareModelRendering(qbool vid_restart)
 	R_BrushModelCreateVBO(instance_vbo);
 
 	GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
-	GLM_InitPrograms();
+	renderer.ProgramsInitialise();
 }
 

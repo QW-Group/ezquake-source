@@ -12,10 +12,6 @@ qbool GLC_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* buffers);
 void GL_InitialiseState(void);
 
-static void GLC_CvarForceRecompile(cvar_t* cvar)
-{
-}
-
 static void GLC_NoOperation(void)
 {
 }
@@ -81,6 +77,9 @@ static void GLC_Begin2DRendering(void)
 #define GLC_TextureReplaceSubImageRGBA     GL_TextureReplaceSubImageRGBA
 #define GLC_TextureSetAnisotropy           GL_TextureSetAnisotropy
 #define GLC_TextureSetFiltering            GL_TextureSetFiltering
+#define GLC_CvarForceRecompile             GL_CvarForceRecompile
+#define GLC_ProgramsInitialise             GL_ProgramsInitialise
+#define GLC_ProgramsShutdown               GL_ProgramsShutdown
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
@@ -107,7 +106,5 @@ void GLC_PrepareModelRendering(qbool vid_restart)
 		R_BrushModelCreateVBO(instance_vbo);
 	}
 
-	if (glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS) {
-		GLM_InitPrograms();
-	}
+	renderer.ProgramsInitialise();
 }

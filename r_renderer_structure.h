@@ -106,3 +106,7 @@ RENDERER_METHOD(void, Draw3DSpritesInline, void)   // FIXME get rid of this and 
 
 // Framebuffers
 RENDERER_METHOD(void, RenderFramebuffers, framebuffer_ref fb_3d, framebuffer_ref fb_2d)
+
+// Programs
+RENDERER_METHOD(void, ProgramsInitialise, void)
+RENDERER_METHOD(void, ProgramsShutdown, qbool restarting)

@@ -55,8 +55,6 @@ static qbool GLC_CompilePostProcessProgram(void)
 			strlcat(included_definitions, "#define EZ_USE_OVERLAY\n", sizeof(included_definitions));
 		}
 
-		Con_Printf("included_definitions:\n%s\n", included_definitions);
-
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_post_process_glc, included_definitions);
 
@@ -107,6 +105,7 @@ void GLC_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
 
 		R_IdentityModelView();
 		R_IdentityProjectionView();
+
 		GLC_Begin(GL_TRIANGLE_STRIP);
 		// Top left corner.
 		glTexCoord2f(0, 0);

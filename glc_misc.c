@@ -245,7 +245,7 @@ void GLC_SetupGL(void)
 void GLC_Shutdown(qbool restarting)
 {
 	GLC_FreeAliasPoseBuffer();
-	GLM_DeletePrograms(restarting);
+	renderer.ProgramsShutdown(restarting);
 }
 
 void GLC_TextureInitialiseState(void)

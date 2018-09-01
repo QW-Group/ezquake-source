@@ -274,11 +274,11 @@ COMMON_OPENGL_OBJS := \
     gl_drawcall_wrappers.o \
     gl_framebuffer.o \
     gl_misc.o \
+    gl_program.o \
     gl_sprite3d.o \
     gl_state.o \
     gl_texture.o \
     gl_texture_functions.o \
-    glm_program.o \
     vid_common_gl.o
 
 COMMON_RENDERER_OBJS := \

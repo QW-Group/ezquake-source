@@ -3,8 +3,6 @@
 #define EZQUAKE_GLM_LOCAL_HEADER
 
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
-void GLM_DeletePrograms(qbool restarting);
-void GLM_InitPrograms(void);
 void GLM_Shutdown(qbool restarting);
 
 void GLM_SamplerSetNearest(unsigned int texture_unit_number);

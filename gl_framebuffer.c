@@ -256,41 +256,6 @@ texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index)
 	return framebuffer_data[ref.index].rgbaTexture;
 }
 
-/*
-//
-// Draws the specified frame buffer object onto a polygon
-// with the coordinates / bounds specified in it.
-//
-void Framebuffer_Draw (fb_t *fbs)
-{
-	if (!framebuffer.value)
-	{
-		return;
-	}
-
-	GL_Bind(fbs->texture);
-
-	GLC_Begin (GL_QUADS);
-
-	// Top left corner.
-	glTexCoord2f (0, 0);
-	GLC_Vertex2f (fbs->x, fbs->y + fbs->realheight);
-
-	// Upper right corner.
-	glTexCoord2f (fbs->ratio_w, 0);
-	GLC_Vertex2f (fbs->x + fbs->realwidth, fbs->y + fbs->realheight);
-
-	// Bottom right corner.
-	glTexCoord2f (fbs->ratio_w, fbs->ratio_h);
-	GLC_Vertex2f (fbs->x + fbs->realwidth, fbs->y);
-
-	// Bottom left corner.
-	glTexCoord2f (0, fbs->ratio_h);
-	GLC_Vertex2f (fbs->x, fbs->y);
-	
-	GLC_End();
-}*/
-
 // OpenGL wrapper functions
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height)
 {

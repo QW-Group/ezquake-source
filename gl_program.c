@@ -17,17 +17,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-// GLM_program.c
+// GL_program.c
 // - All glsl program-related code
 
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-#include "glm_local.h"
 #include "r_program.h"
 #include "tr_types.h"
 
-#define GLM_DefineProgram_VF(program_id, name, expect_params, sourcename) \
+#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename) \
 	{ \
 		extern unsigned char sourcename##_vertex_glsl[]; \
 		extern unsigned int sourcename##_vertex_glsl_len; \
@@ -36,54 +35,54 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
 		program_data[program_id].friendly_name = name; \
 		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].text = (const char*)sourcename##_vertex_glsl; \
-		program_data[program_id].shaders[GLM_VERTEX_SHADER].length = sourcename##_vertex_glsl_len; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].text = (const char*)sourcename##_fragment_glsl; \
-		program_data[program_id].shaders[GLM_FRAGMENT_SHADER].length = sourcename##_fragment_glsl_len; \
+		program_data[program_id].shaders[shadertype_vertex].text = (const char*)sourcename##_vertex_glsl; \
+		program_data[program_id].shaders[shadertype_vertex].length = sourcename##_vertex_glsl_len; \
+		program_data[program_id].shaders[shadertype_fragment].text = (const char*)sourcename##_fragment_glsl; \
+		program_data[program_id].shaders[shadertype_fragment].length = sourcename##_fragment_glsl_len; \
 		program_data[program_id].initialised = true; \
 	}
 
-#define GLM_DefineProgram_CS(program_id, name, expect_params, sourcename) \
+#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename) \
 	{ \
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
 		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
 		program_data[program_id].friendly_name = name; \
 		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[GLM_COMPUTE_SHADER].text = (const char*)sourcename##_compute_glsl; \
-		program_data[program_id].shaders[GLM_COMPUTE_SHADER].length = sourcename##_compute_glsl_len; \
+		program_data[program_id].shaders[shadertype_compute].text = (const char*)sourcename##_compute_glsl; \
+		program_data[program_id].shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
 		program_data[program_id].initialised = true; \
 	}
 
-static void GLM_BuildCoreDefinitions(void);
-static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
+static void GL_BuildCoreDefinitions(void);
+static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
 
 static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
 	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
 	GL_TEXTURE_FETCH_BARRIER_BIT
 };
 
-#define GLM_VERTEX_SHADER   0
-#define GLM_FRAGMENT_SHADER 1
-#define GLM_GEOMETRY_SHADER 2
-#define GLM_COMPUTE_SHADER  3
-#define GLM_SHADER_COUNT    4
+enum {
+	shadertype_vertex,
+	shadertype_fragment,
+	shadertype_geometry,
+	shadertype_compute,
 
-typedef struct glm_shader_def_s {
+	shadertype_count
+};
+
+typedef struct gl_shader_def_s {
 	const char* text;
 	unsigned int length;
-} glm_shader_def_t;
+} gl_shader_def_t;
 
-typedef struct glm_program_s {
+typedef struct gl_program_s {
 	const char* friendly_name;
 	qbool needs_params;
 	qbool initialised;
-	glm_shader_def_t shaders[GLM_SHADER_COUNT];
+	gl_shader_def_t shaders[shadertype_count];
 
-	GLuint vertex_shader;
-	GLuint geometry_shader;
-	GLuint fragment_shader;
-	GLuint compute_shader;
+	GLuint shader_handles[shadertype_count];
 	GLuint program;
 	GLbitfield memory_barrier;
 
@@ -92,7 +91,7 @@ typedef struct glm_program_s {
 
 	unsigned int custom_options;
 	qbool force_recompile;
-} glm_program_t;
+} gl_program_t;
 
 typedef struct {
 	r_program_id program_id;
@@ -134,7 +133,7 @@ static r_program_uniform_t program_uniforms[r_program_uniform_count] = {
 	{ r_program_post_process_glc, "contrast", 1, false },
 };
 
-static glm_program_t program_data[r_program_count];
+static gl_program_t program_data[r_program_count];
 
 // Cached OpenGL state
 static GLuint currentProgram = 0;
@@ -164,6 +163,10 @@ typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat value);
 typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLuint location, GLint v0);
+typedef void (APIENTRY *glProgramUniform1f_t)(GLuint program, GLuint location, GLfloat value);
+typedef void (APIENTRY *glProgramUniform4fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY *glProgramUniformMatrix4fv_t)(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
 // Compute shaders
 typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
@@ -192,8 +195,12 @@ static glDetachShader_t      qglDetachShader = NULL;
 static glGetUniformLocation_t      qglGetUniformLocation = NULL;
 static glUniform1i_t               qglUniform1i;
 static glUniform1f_t               qglUniform1f;
-static glUniformMatrix4fv_t        qglUniformMatrix4fv;
 static glUniform4fv_t              qglUniform4fv;
+static glUniformMatrix4fv_t        qglUniformMatrix4fv;
+static glProgramUniform1i_t        qglProgramUniform1i;
+static glProgramUniform1f_t        qglProgramUniform1f;
+static glProgramUniform4fv_t       qglProgramUniform4fv;
+static glProgramUniformMatrix4fv_t qglProgramUniformMatrix4fv;
 
 // Compute shaders
 static glDispatchCompute_t         qglDispatchCompute;
@@ -205,7 +212,7 @@ static glMemoryBarrier_t           qglMemoryBarrier;
 static char core_definitions[512];
 
 // GLM Utility functions
-static void GLM_ConPrintShaderLog(GLuint shader)
+static void GL_ConPrintShaderLog(GLuint shader)
 {
 	GLint log_length;
 	GLint src_length;
@@ -224,7 +231,7 @@ static void GLM_ConPrintShaderLog(GLuint shader)
 	}
 }
 
-static void GLM_ConPrintProgramLog(GLuint program)
+static void GL_ConPrintProgramLog(GLuint program)
 {
 	GLint log_length;
 	char* buffer;
@@ -241,7 +248,7 @@ static void GLM_ConPrintProgramLog(GLuint program)
 }
 
 // Uniform utility functions
-static r_program_uniform_t* GLM_ProgramUniformFind(r_program_uniform_id uniform_id)
+static r_program_uniform_t* GL_ProgramUniformFind(r_program_uniform_id uniform_id)
 {
 	r_program_uniform_t* uniform = &program_uniforms[uniform_id];
 	r_program_id program_id = uniform->program_id;
@@ -261,12 +268,12 @@ static void R_ProgramFindUniformsForProgram(r_program_id program_id)
 	for (u = 0; u < r_program_uniform_count; ++u) {
 		if (program_uniforms[u].program_id == program_id) {
 			program_uniforms[u].found = false;
-			GLM_ProgramUniformFind(u);
+			GL_ProgramUniformFind(u);
 		}
 	}
 }
 
-static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[], GLint shaderTextLength[], GLenum shaderType, GLuint* shaderId)
+static qbool GL_CompileShader(GLsizei shaderComponents, const char* shaderText[], GLint shaderTextLength[], GLenum shaderType, GLuint* shaderId)
 {
 	GLuint shader;
 	GLint result;
@@ -283,7 +290,7 @@ static qbool GLM_CompileShader(GLsizei shaderComponents, const char* shaderText[
 		}
 
 		Con_Printf("Shader->Compile(%X) failed\n", shaderType);
-		GLM_ConPrintShaderLog(shader);
+		GL_ConPrintShaderLog(shader);
 		qglDeleteShader(shader);
 	}
 	else {
@@ -322,7 +329,7 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 	return NULL;
 }
 
-static int GLM_InsertDefinitions(
+static int GL_InsertDefinitions(
 	const char* strings[],
 	GLint lengths[],
 	const char* definitions
@@ -364,48 +371,47 @@ static int GLM_InsertDefinitions(
 	return 1;
 }
 
-static qbool GLM_CompileProgram(
-	glm_program_t* program
+static qbool GL_CompileProgram(
+	gl_program_t* program
 )
 {
-	GLuint vertex_shader = 0;
-	GLuint fragment_shader = 0;
-	GLuint geometry_shader = 0;
-	GLuint shader_program = 0;
+	GLuint shaders[shadertype_count] = { 0 };
+	GLuint program_handle = 0;
 	GLint result = 0;
+	int i;
 
 	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_VERTEX_SHADER].text, "", "", "", "", "" };
-	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_VERTEX_SHADER].length, 0, 0, 0, 0, 0 };
+	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "" };
+	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_GEOMETRY_SHADER].text, "", "", "", "", "" };
-	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_GEOMETRY_SHADER].length, 0, 0, 0, 0, 0 };
+	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].text, "", "", "", "", "" };
+	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].length, 0, 0, 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_FRAGMENT_SHADER].text, "", "", "", "", "" };
-	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[GLM_FRAGMENT_SHADER].length, 0, 0, 0, 0, 0 };
+	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
+	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
 
 	Con_Printf("Compiling: %s\n", friendlyName);
 
-	vertex_components = GLM_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
-	geometry_components = GLM_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
-	fragment_components = GLM_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
+	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
+	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
+	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
 
-	if (GLM_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &vertex_shader)) {
-		if (geometry_shader_text[0] == NULL || GLM_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &geometry_shader)) {
-			if (GLM_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &fragment_shader)) {
+	if (GL_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &shaders[shadertype_vertex])) {
+		if (geometry_shader_text[0] == NULL || GL_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &shaders[shadertype_geometry])) {
+			if (GL_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &shaders[shadertype_fragment])) {
 				Con_DPrintf("Shader compilation completed successfully\n");
 
-				shader_program = qglCreateProgram();
-				if (shader_program) {
-					qglAttachShader(shader_program, fragment_shader);
-					qglAttachShader(shader_program, vertex_shader);
-					if (geometry_shader) {
-						qglAttachShader(shader_program, geometry_shader);
+				program_handle = qglCreateProgram();
+				if (program_handle) {
+					qglAttachShader(program_handle, shaders[shadertype_fragment]);
+					qglAttachShader(program_handle, shaders[shadertype_vertex]);
+					if (shaders[shadertype_geometry]) {
+						qglAttachShader(program_handle, shaders[shadertype_geometry]);
 					}
-					qglLinkProgram(shader_program);
-					qglGetProgramiv(shader_program, GL_LINK_STATUS, &result);
-					
+					qglLinkProgram(program_handle);
+					qglGetProgramiv(program_handle, GL_LINK_STATUS, &result);
+
 #if 0
 					{
 						int length = 0;
@@ -422,10 +428,8 @@ static qbool GLM_CompileProgram(
 
 					if (result) {
 						Con_DPrintf("ShaderProgram.Link() was successful\n");
-						program->geometry_shader = geometry_shader;
-						program->fragment_shader = fragment_shader;
-						program->vertex_shader = vertex_shader;
-						program->program = shader_program;
+						memcpy(program->shader_handles, shaders, sizeof(shaders));
+						program->program = program_handle;
 						program->uniforms_found = false;
 						program->force_recompile = false;
 
@@ -434,7 +438,7 @@ static qbool GLM_CompileProgram(
 					}
 					else {
 						Con_Printf("ShaderProgram.Link() failed\n");
-						GLM_ConPrintProgramLog(shader_program);
+						GL_ConPrintProgramLog(program_handle);
 					}
 				}
 			}
@@ -450,22 +454,18 @@ static qbool GLM_CompileProgram(
 		Con_Printf("VertexShader.Compile() failed\n");
 	}
 
-	if (shader_program) {
-		qglDeleteProgram(shader_program);
+	if (program_handle) {
+		qglDeleteProgram(program_handle);
 	}
-	if (fragment_shader) {
-		qglDeleteShader(fragment_shader);
-	}
-	if (vertex_shader) {
-		qglDeleteShader(vertex_shader);
-	}
-	if (geometry_shader) {
-		qglDeleteShader(geometry_shader);
+	for (i = 0; i < sizeof(shaders) / sizeof(shaders[0]); ++i) {
+		if (shaders[i]) {
+			qglDeleteShader(shaders[i]);
+		}
 	}
 	return false;
 }
 
-static void GLM_CleanupShader(GLuint program, GLuint shader)
+static void GL_CleanupShader(GLuint program, GLuint shader)
 {
 	if (shader) {
 		if (program) {
@@ -476,25 +476,22 @@ static void GLM_CleanupShader(GLuint program, GLuint shader)
 }
 
 // Called during vid_shutdown
-void GLM_DeletePrograms(qbool restarting)
+void GL_ProgramsShutdown(qbool restarting)
 {
 	r_program_id p;
 	r_program_uniform_id u;
-	glm_program_t* prog;
+	gl_program_t* prog;
 
 	R_ProgramUse(r_program_none);
 
 	// Detach & delete shaders
 	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
-		GLM_CleanupShader(prog->program, prog->fragment_shader);
-		GLM_CleanupShader(prog->program, prog->vertex_shader);
-		GLM_CleanupShader(prog->program, prog->geometry_shader);
-		GLM_CleanupShader(prog->program, prog->compute_shader);
+		int i;
 
-		program_data[p].fragment_shader = 0;
-		program_data[p].vertex_shader = 0;
-		program_data[p].geometry_shader = 0;
-		program_data[p].compute_shader = 0;
+		for (i = 0; i < sizeof(prog->shaders) / sizeof(prog->shaders[0]); ++i) {
+			GL_CleanupShader(prog->program, prog->shader_handles[i]);
+			prog->shader_handles[i] = 0;
+		}
 	}
 
 	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
@@ -517,20 +514,25 @@ void GLM_DeletePrograms(qbool restarting)
 }
 
 // Called during vid_restart, as starting up again
-void GLM_InitPrograms(void)
+void GL_ProgramsInitialise(void)
 {
 	r_program_id p;
 
-	GLM_BuildCoreDefinitions();
+	if (!(glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS)) {
+		return;
+	}
+
+	GL_BuildCoreDefinitions();
 
 	for (p = r_program_none; p < r_program_count; ++p) {
 		if (!program_data[p].program && !program_data[p].needs_params && program_data[p].initialised) {
-			if (program_data[p].shaders[GLM_COMPUTE_SHADER].length) {
-				GLM_CompileComputeShaderProgram(p, program_data[p].shaders[GLM_COMPUTE_SHADER].text, program_data[p].shaders[GLM_COMPUTE_SHADER].length);
+			gl_shader_def_t* compute = &program_data[p].shaders[shadertype_compute];
+			if (compute->length) {
+				GL_CompileComputeShaderProgram(p, compute->text, compute->length);
 				R_ProgramFindUniformsForProgram(p);
 			}
 			else {
-				GLM_CompileProgram(&program_data[p]);
+				GL_CompileProgram(&program_data[p]);
 				R_ProgramFindUniformsForProgram(p);
 			}
 		}
@@ -540,12 +542,12 @@ void GLM_InitPrograms(void)
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 {
 	//
-	const glm_program_t* program = &program_data[program_id];
+	const gl_program_t* program = &program_data[program_id];
 
 	return (!program->program) || program->force_recompile || program->custom_options != options;
 }
 
-void GLM_CvarForceRecompile(void)
+void GL_CvarForceRecompile(void)
 {
 	r_program_id p;
 
@@ -553,12 +555,12 @@ void GLM_CvarForceRecompile(void)
 		program_data[p].force_recompile = true;
 	}
 
-	GLM_BuildCoreDefinitions();
+	GL_BuildCoreDefinitions();
 }
 
-static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
+static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
 {
-	glm_program_t* program = &program_data[program_id];
+	gl_program_t* program = &program_data[program_id];
 	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
@@ -566,8 +568,8 @@ static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char
 
 	program->program = 0;
 
-	components = GLM_InsertDefinitions(shader_text, shader_text_length, "");
-	if (GLM_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
+	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
+	if (GL_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
 		GLuint shader_program = qglCreateProgram();
 		if (shader_program) {
 			GLint result;
@@ -578,7 +580,7 @@ static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char
 
 			if (result) {
 				Con_DPrintf("ShaderProgram.Link() was successful\n");
-				program->compute_shader = shader;
+				program->shader_handles[shadertype_compute] = shader;
 				program->program = shader_program;
 				program->uniforms_found = false;
 				program->force_recompile = false;
@@ -588,7 +590,7 @@ static qbool GLM_CompileComputeShaderProgram(r_program_id program_id, const char
 			}
 			else {
 				Con_Printf("ShaderProgram.Link() failed\n");
-				GLM_ConPrintProgramLog(shader_program);
+				GL_ConPrintProgramLog(shader_program);
 			}
 		}
 	}
@@ -629,6 +631,13 @@ void GL_LoadProgramFunctions(void)
 		glConfig.supported_features |= (rendering_shaders_support ? R_SUPPORT_RENDERING_SHADERS : 0);
 	}
 
+	if (GL_UseDirectStateAccess() || GL_VersionAtLeast(4, 1)) {
+		GL_LoadOptionalFunction(glProgramUniform1i);
+		GL_LoadOptionalFunction(glProgramUniform1f);
+		GL_LoadOptionalFunction(glProgramUniform4fv);
+		GL_LoadOptionalFunction(glProgramUniformMatrix4fv);
+	}
+
 	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
 		qbool compute_shaders_support = true;
 
@@ -660,31 +669,11 @@ void R_ProgramInitialiseState(void)
 {
 	currentProgram = 0;
 
-	GLM_BuildCoreDefinitions();
-}
-
-static void GLM_Uniform1i(GLint location, GLint value)
-{
-	qglUniform1i(location, value);
-}
-
-static void GLM_Uniform1f(GLint location, GLfloat value)
-{
-	qglUniform1f(location, value);
-}
-
-static void GLM_Uniform4fv(GLint location, GLsizei count, GLfloat* values)
-{
-	qglUniform4fv(location, count, values);
-}
-
-static void GLM_UniformMatrix4fv(GLint location, GLsizei count, qbool transpose, GLfloat* values)
-{
-	qglUniformMatrix4fv(location, count, transpose, values);
+	GL_BuildCoreDefinitions();
 }
 
 // Compute shaders
-void GLM_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
+static void GL_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
 {
 	R_ProgramUse(program_id);
 	qglDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
@@ -695,7 +684,7 @@ void GLM_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups
 
 void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
 {
-	GLM_ProgramComputeDispatch(program_id, num_groups_x, num_groups_y, num_groups_z);
+	GL_ProgramComputeDispatch(program_id, num_groups_x, num_groups_y, num_groups_z);
 }
 
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id)
@@ -721,36 +710,56 @@ qbool R_ProgramReady(r_program_id program_id)
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 {
-	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	R_ProgramUse(uniform->program_id);
-	GLM_Uniform1i(uniform->location, value);
+	if (qglProgramUniform1i) {
+		qglProgramUniform1i(program_data[uniform->program_id].program, uniform->location, value);
+	}
+	else {
+		R_ProgramUse(uniform->program_id);
+		qglUniform1i(uniform->location, value);
+	}
 	uniform->int_value = value;
 }
 
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 {
-	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	R_ProgramUse(uniform->program_id);
-	GLM_Uniform1f(uniform->location, value);
+	if (qglProgramUniform1f) {
+		qglProgramUniform1f(program_data[uniform->program_id].program, uniform->location, value);
+	}
+	else {
+		R_ProgramUse(uniform->program_id);
+		qglUniform1f(uniform->location, value);
+	}
 	uniform->int_value = value;
 }
 
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
 {
-	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	R_ProgramUse(uniform->program_id);
-	GLM_Uniform4fv(uniform->location, uniform->count, values);
+	if (qglProgramUniform4fv) {
+		qglProgramUniform4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+	}
+	else {
+		R_ProgramUse(uniform->program_id);
+		qglUniform4fv(uniform->location, uniform->count, values);
+	}
 }
 
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values)
 {
-	r_program_uniform_t* uniform = GLM_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	R_ProgramUse(uniform->program_id);
-	GLM_UniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+	if (qglProgramUniformMatrix4fv) {
+		qglProgramUniformMatrix4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, uniform->transpose, values);
+	}
+	else {
+		R_ProgramUse(uniform->program_id);
+		qglUniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+	}
 }
 
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id)
@@ -765,37 +774,37 @@ qbool R_ProgramCompile(r_program_id program_id)
 
 qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_definitions)
 {
-	glm_program_t* program = &program_data[program_id];
+	gl_program_t* program = &program_data[program_id];
 
-	program->compute_shader = program->fragment_shader = program->vertex_shader = program->geometry_shader = 0;
+	memset(program->shader_handles, 0, sizeof(program->shader_handles));
 	Q_free(program->included_definitions);
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
-	if (GLM_CompileProgram(program)) {
+	if (GL_CompileProgram(program)) {
 		R_ProgramFindUniformsForProgram(program_id);
 		return true;
 	}
 	return false;
 }
 
-static void GLM_BuildCoreDefinitions(void)
+static void GL_BuildCoreDefinitions(void)
 {
 	// Set common definitions here (none yet)
 	memset(core_definitions, 0, sizeof(core_definitions));
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	GLM_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel);
-	GLM_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world);
-	GLM_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites);
-	GLM_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon);
-	GLM_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line);
-	GLM_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image);
-	GLM_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle);
-	GLM_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen);
-	GLM_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting);
+	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel);
+	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world);
+	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites);
+	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon);
+	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line);
+	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image);
+	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle);
+	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen);
+	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GLM_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen);
+	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen);
 #endif
 }
