@@ -51,10 +51,24 @@ void R_InitialiseStates(void);
 // VAOs
 static r_vao_id currentVAO = vao_none;
 static const char* vaoNames[vao_count] = {
-	"none", "aliasmodel", "brushmodel", "3d-sprites",
-	"hud:circles", "hud:images", "hud:lines", "hud:polygons",
-	"post-process"
+	"none",
+	"aliasmodel",
+	"brushmodel",
+	"3d-sprites",
+	"hud:circles",
+	"hud:images",
+	"hud:lines",
+	"hud:polygons",
+	"post-process",
+	"powerupshell",
+	"brushmodel_details",
+	"brushmodel_lightmap_pass",
+	"brushmodel_lm_unit1"
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(vaoNames) / sizeof(vaoNames[0]) == vao_count);
+#endif
 
 #define MAX_LOGGED_TEXTURE_UNITS 32
 #define MAX_LOGGED_IMAGE_UNITS   32
@@ -711,6 +725,22 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 			}
 		}
 		fprintf(debug_frame_out, "]\n");
+		{
+			float matrix[16];
+			int i;
+
+			R_GetModelviewMatrix(matrix);
+			fprintf(debug_frame_out, "%.*s   Modelview matrix:\n", debug_frame_depth, "                                                          ");
+			for (i = 0; i < 16; i += 4) {
+				fprintf(debug_frame_out, "%.*s       [%8.5f %8.5f %8.5f %8.5f]\n", debug_frame_depth, "                                                          ", matrix[i + 0], matrix[i + 1], matrix[i + 2], matrix[i + 3]);
+			}
+
+			R_GetProjectionMatrix(matrix);
+			fprintf(debug_frame_out, "%.*s   Projection matrix:\n", debug_frame_depth, "                                                          ");
+			for (i = 0; i < 16; i += 4) {
+				fprintf(debug_frame_out, "%.*s       [%8.5f %8.5f %8.5f %8.5f]\n", debug_frame_depth, "                                                          ", matrix[i + 0], matrix[i + 1], matrix[i + 2], matrix[i + 3]);
+			}
+		}
 #endif
 		fprintf(debug_frame_out, "%.*s   glPolygonMode: %s\n", debug_frame_depth, "                                                          ", txtPolygonModeValues[current->polygonMode]);
 		fprintf(debug_frame_out, "%.*s   vao: %s\n", debug_frame_depth, "                                                          ", vaoNames[currentVAO]);

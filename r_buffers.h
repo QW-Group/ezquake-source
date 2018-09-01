@@ -27,7 +27,9 @@ typedef enum {
 	buffertype_index,
 	buffertype_storage,
 	buffertype_uniform,
-	buffertype_indirect
+	buffertype_indirect,
+
+	buffertype_count
 } buffertype_t;
 
 typedef struct api_buffers_t {

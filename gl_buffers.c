@@ -343,7 +343,7 @@ static void GL_UpdateBuffer(buffer_ref vbo, int size, void* data)
 
 		memcpy(start, data, size);
 
-		R_TraceLogAPICall("GL_UpdateBuffer[memcpy](%s)", buffer_data[vbo.index].name);
+		R_TraceLogAPICall("GL_UpdateBuffer[memcpy](%s, %u)", buffer_data[vbo.index].name, size);
 	}
 	else {
 		if (qglNamedBufferSubData) {
