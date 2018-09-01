@@ -265,7 +265,6 @@ sources = [
 	'vid_sdl2.c',
 	'vx_camera.c',
 	'vx_coronas.c',
-	'vx_motiontrail.c',
 	'vx_stuff.c',
 	'vx_tracker.c',
 	'vx_vertexlights.c',

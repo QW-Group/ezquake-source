@@ -66,8 +66,6 @@ cvar_t		cl_camera_tpp = { "cl_camera_tpp", "0" };
 cvar_t		amf_camera_chase_dist = { "cl_camera_tpp_distance", "-56" };
 cvar_t		amf_camera_chase_height = { "cl_camera_tpp_height", "24" };
 cvar_t		amf_camera_death = { "cl_camera_death", "0" }; // 1
-cvar_t		amf_motiontrails = { "gl_motiontrails", "0" };
-cvar_t		amf_motiontrails_wtf = { "gl_motiontrails_wtf", "0" };
 cvar_t		amf_nailtrail_water = { "gl_nailtrail_turb", "0" };
 cvar_t		amf_nailtrail_plasma = { "gl_nailtrail_plasma", "0" };
 cvar_t		amf_nailtrail = { "gl_nailtrail", "0" }; // 1
@@ -284,16 +282,6 @@ void SCR_DrawAMFstats(void)
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
-
-	snprintf(st, sizeof(st), "Motion Trails: %3d ", MotionBlurCount);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = y + 8;
-	Draw_String(x, y, st);
-
-	snprintf(st, sizeof(st), "Highest: %3d ", MotionBlurCountHigh);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = y + 8;
-	Draw_String(x, y, st);
 }
 
 void InitVXStuff(void)
@@ -394,8 +382,6 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_lightning_size);
 	Cvar_Register(&amf_lightning_sparks);
 	Cvar_Register(&amf_lightning_sparks_size);
-	Cvar_Register(&amf_motiontrails);
-	Cvar_Register(&amf_motiontrails_wtf);
 	Cvar_Register(&amf_inferno_trail);
 	Cvar_Register(&amf_inferno_speed);
 	Cvar_Register(&amf_cutf_tesla_effect);

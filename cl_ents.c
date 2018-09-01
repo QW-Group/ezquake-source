@@ -803,57 +803,52 @@ static int fix_trail_num_for_grens(int trail_num)
 
 static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, entity_t* ent, centity_t *cent)
 {
-	if (trail_num == 1)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, ROCKET_TRAIL);
-	else if (trail_num == 2)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
-	else if (trail_num == 3)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
-	else if (trail_num == 4)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, BLOOD_TRAIL);
-	else if (trail_num == 5)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-	else if (trail_num == 6)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
-	else if (trail_num == 7)
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
-	else if (trail_num == 8)
-	{
+	if (trail_num == 1) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, ROCKET_TRAIL);
+	}
+	else if (trail_num == 2) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
+	}
+	else if (trail_num == 3) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
+	}
+	else if (trail_num == 4) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BLOOD_TRAIL);
+	}
+	else if (trail_num == 5) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
+	}
+	else if (trail_num == 6) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
+	}
+	else if (trail_num == 7) {
+		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
+	}
+	else if (trail_num == 8) {
 		// VULT PARTICLES
 		byte color[3];
 		color[0] = 0; color[1] = 70; color[2] = 255;
 		FireballTrail (*old_origin, ent->origin, &cent->trail_origin, color, 2, 0.5);
 	}
-	else if (trail_num == 9)
-	{
+	else if (trail_num == 9) {
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, LAVA_TRAIL);
 	}
-	else if (trail_num == 10)
-	{
+	else if (trail_num == 10) {
 		// VULT PARTICLES
 		FuelRodGunTrail (*old_origin, ent->origin, ent->angles, &cent->trail_origin);
 	}
-	else if (trail_num == 11)
-	{
+	else if (trail_num == 11) {
 		byte color[3];
 		color[0] = 255; color[1] = 70; color[2] = 5;
 		FireballTrailWave (*old_origin, ent->origin, &cent->trail_origin, color, 2, 0.5, ent->angles);
 	}
-	else if (trail_num == 12)
-	{
+	else if (trail_num == 12) {
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, AMF_ROCKET_TRAIL);
 	}
-	else if (trail_num == 13)
-	{
-		CL_CreateBlurs (*old_origin, ent->origin, ent);
-		VectorCopy(ent->origin, cent->trail_origin);		
-	}
-	else if (trail_num == 14)
-	{
+	else if (trail_num == 14) {
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, RAIL_TRAIL);
 	}
-	else
-	{
+	else {
 		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
 	}
 }
@@ -1914,10 +1909,6 @@ void CL_LinkPlayers (void)
 
 		VectorCopy (ent.origin, cent->lerp_origin);
 
-		// VULT MOTION TRAILS
-		if (amf_motiontrails_wtf.value)
-			CL_CreateBlurs (state->origin, ent.origin, &ent);
-
 		// VULT DEATH EFFECT
 		if (amf_part_deatheffect.value)
 		{
@@ -2411,22 +2402,16 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 		}
 		else if (model->flags & EF_GRENADE)
 		{
-			if (model->modhint == MOD_BUILDINGGIBS)
-			{
+			if (model->modhint == MOD_BUILDINGGIBS) {
 				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
 			}
-			else if (r_grenadetrail.value && model->modhint != MOD_RAIL)
-			{
-				missile_trail(fix_trail_num_for_grens(r_grenadetrail.integer),
-					model, old_origin, ent, cent);
+			else if (r_grenadetrail.value && model->modhint != MOD_RAIL) {
+				missile_trail(fix_trail_num_for_grens(r_grenadetrail.integer), model, old_origin, ent, cent);
 			}
-			else if (r_railtrail.value && model->modhint == MOD_RAIL)
-			{
-				missile_trail(fix_trail_num_for_grens(r_railtrail.integer),
-					model, old_origin, ent, cent);
+			else if (r_railtrail.value && model->modhint == MOD_RAIL) {
+				missile_trail(fix_trail_num_for_grens(r_railtrail.integer), model, old_origin, ent, cent);
 			}
-			else
-			{
+			else {
 				VectorCopy(ent->origin, cent->trail_origin);
 			}
 		}
@@ -2544,17 +2529,6 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			if (amf_coronas.value)
 				NewCorona(C_BLUESPARK, liteorg);
 		}
-		// VULT MOTION TRAILS
-		if (model->modhint == MOD_FLAG && amf_motiontrails.value)
-		{
-			CL_CreateBlurs(*old_origin, ent->origin, ent);
-		}
-		// VULT MOTION TRAILS - Demon in pouncing animation
-		if (model->modhint == MOD_DEMON && amf_motiontrails.value)
-		{
-			if (ent->frame >= 27 && ent->frame <= 38)
-				CL_CreateBlurs(*old_origin, ent->origin, ent);
-		}
 
 		// VULT TESLA CHARGE - Tesla or shambler in charging animation
 		if (((model->modhint == MOD_TESLA && ent->frame >= 7 && ent->frame <= 12) ||
@@ -2567,7 +2541,4 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			VX_TeslaCharge(liteorg);
 		}
 	}
-
-	if (amf_motiontrails_wtf.value)
-		CL_CreateBlurs(ent->origin, ent->origin, ent);
 }

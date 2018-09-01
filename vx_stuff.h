@@ -95,8 +95,6 @@ extern cvar_t amf_lightning_color;
 extern cvar_t amf_lightning_size;
 extern cvar_t amf_lightning_sparks;
 extern cvar_t amf_lightning_sparks_size;
-extern cvar_t amf_motiontrails;
-extern cvar_t amf_motiontrails_wtf;
 extern cvar_t amf_waterripple;
 extern cvar_t cl_camera_tpp;
 extern cvar_t amf_camera_chase_dist;
@@ -141,9 +139,7 @@ extern cvar_t amf_part_trailwidth;
 extern cvar_t amf_part_trailtype;
 
 void SCR_DrawAMFstats(void);
-int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh, MotionBlurCount, MotionBlurCountHigh;
-void CL_CreateBlurs(vec3_t start, vec3_t end, entity_t *ent);
-void CL_UpdateBlurs(void);
+int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
 
 void ParticleAlphaTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, float size, float life);
 
@@ -173,7 +169,6 @@ void ParticleFire(vec3_t org);
 void VX_TeslaCharge(vec3_t org);
 
 void VX_LightningBeam(vec3_t start, vec3_t end);
-void CL_ClearBlurs(void);
 void VX_DeathEffect(vec3_t org);
 void VX_GibEffect(vec3_t org);
 void VX_DetpackExplosion(vec3_t org);

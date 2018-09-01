@@ -174,8 +174,6 @@ void R_NewMap(qbool vid_restart)
 		InitCoronas();
 		//VULT NAMES
 		VX_TrackerClear();
-		//VULT MOTION TRAILS
-		CL_ClearBlurs();
 	}
 	else {
 		// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model

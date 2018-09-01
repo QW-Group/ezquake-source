@@ -935,12 +935,9 @@ void CL_UpdateExplosions (void) {
 	}
 }
 
-void CL_UpdateTEnts (void) {
+void CL_UpdateTEnts (void)
+{
 	CL_UpdateBeams ();
 	CL_UpdateExplosions ();
-
-	//VULT MOTION TRAILS
-	if (amf_motiontrails.value || MotionBlurCount) //dont stop removing trails if we have 'em
-		CL_UpdateBlurs();
 }
 

@@ -4958,18 +4958,6 @@
       "group-id": "8",
       "type": "float"
     },
-    "gl_motiontrails": {
-      "default": "0",
-      "desc": "When enabled, flags and keys leave behind a kind of after-image.\nFiends also leave trails when they pounce.",
-      "group-id": "35",
-      "type": "float"
-    },
-    "gl_motiontrails_wtf": {
-      "default": "0",
-      "desc": "Same as gl_motiontrails but works for all players and creatures.",
-      "group-id": "35",
-      "type": "float"
-    },
     "gl_multisamples": {
       "default": "0",
       "desc": "The number of samples used around each pixel for anti-aliasing.  Range 0-16",
@@ -15529,10 +15517,6 @@
         {
           "description": "Similar to 3, but with a white line and less smoke.",
           "name": "12"
-        },
-        {
-          "description": "Motion trail rocket. Need gl_motiontrails 1.",
-          "name": "13"
         }
       ]
     },
@@ -15879,10 +15863,6 @@
         {
           "description": "Similar to 3, but with a white line and less smoke.",
           "name": "12"
-        },
-        {
-          "description": "Motion trail rocket. Need gl_motiontrails 1.",
-          "name": "13"
         }
       ]
     },
@@ -16017,10 +15997,6 @@
         {
           "description": "Similar to 3, but with a white line and less smoke.",
           "name": "12"
-        },
-        {
-          "description": "Motion trail rocket. Need gl_motiontrails 1.",
-          "name": "13"
         }
       ]
     },

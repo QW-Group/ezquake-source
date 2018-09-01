@@ -363,13 +363,13 @@ const char* rocketmodel_enum[] =
 { "rocket", "grenade" };
 
 const char* rockettrail_enum[] =
-{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2", "motion trail" };
+{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2" };
 
 const char* powerupglow_enum[] =
 { "off", "on", "own off" };
 
 const char* grenadetrail_enum[] =
-{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2", "motion trail" };
+{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2" };
 
 extern cvar_t cl_maxfps;
 const char* FpslimitRead(void) {

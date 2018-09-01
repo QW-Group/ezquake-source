@@ -328,7 +328,6 @@ COMMON_RENDERER_OBJS := \
     r_texture_util.o \
     vx_camera.o \
     vx_coronas.o \
-    vx_motiontrail.o \
     vx_stuff.o \
     vx_vertexlights.o
 
