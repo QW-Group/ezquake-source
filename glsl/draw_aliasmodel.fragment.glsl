@@ -14,9 +14,8 @@ in vec2 fsAltTextureCoord;
 in vec4 fsBaseColor;
 flat in int fsFlags;
 flat in int fsTextureEnabled;
-flat in int fsTextureLuma;
 flat in int fsMaterialSampler;
-flat in int fsLumaSampler;
+flat in float fsMinLumaMix;
 
 out vec4 frag_colour;
 
@@ -27,7 +26,6 @@ void main()
 	if (mode != EZQ_ALIAS_MODE_OUTLINES) {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
 		vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
-		vec4 luma = texture(samplers[fsLumaSampler], fsTextureCoord.st);
 #ifdef DRAW_CAUSTIC_TEXTURES
 		vec4 caustic = texture(
 			causticsTex,
@@ -57,15 +55,9 @@ void main()
 			frag_colour = shell_alpha * color1 * tex + shell_alpha * color2 * altTex;
 		}
 		else {
+			frag_colour = fsBaseColor;
 			if (fsTextureEnabled != 0) {
-				frag_colour = tex * fsBaseColor;
-				if (fsTextureLuma != 0) {
-					frag_colour = vec4(mix(frag_colour.rgb, luma.rgb, luma.a), frag_colour.a);
-				}
-			}
-			else {
-				// Solid
-				frag_colour = fsBaseColor;
+				frag_colour = vec4(mix(tex.rgb, tex.rgb * fsBaseColor.rgb, max(fsMinLumaMix, tex.a)), fsBaseColor.a);
 			}
 
 #ifdef DRAW_CAUSTIC_TEXTURES

@@ -86,9 +86,9 @@ typedef struct uniform_block_aliasmodel_s {
 	float shadelight;
 	float ambientlight;
 	int materialSamplerMapping;
-	int lumaSamplerMapping;
 	int lerpBaseIndex;
 	float lerpFraction;
+	float minLumaMix;
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
@@ -99,7 +99,6 @@ extern float r_framelerp;
 
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
-#define DRAW_LUMA_TEXTURES 4
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
 static buffer_ref vbo_aliasIndirectDraw;
@@ -374,7 +373,7 @@ static void GLM_QueueDrawCall(aliasmodel_draw_type_t type, int vbo_start, int vb
 }
 
 static void GLM_QueueAliasModelDrawImpl(
-	model_t* model, float* color, int vbo_start, int vbo_count, texture_ref texture, texture_ref fb_texture,
+	model_t* model, float* color, int vbo_start, int vbo_count, texture_ref texture,
 	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
 	float lerpFraction, int lerpFrameVertOffset, qbool outline, qbool shell, int render_effects
 )
@@ -383,7 +382,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	aliasmodel_draw_type_t type = aliasmodel_draw_std;
 	aliasmodel_draw_type_t shelltype = aliasmodel_draw_shells;
 	aliasmodel_draw_instructions_t* instr;
-	int textureSampler = -1, lumaSampler = -1;
+	int textureSampler = -1;
 
 	// Compile here so we can work out how many samplers we have free to allocate per draw-call
 	if (!GLM_CompileAliasModelProgram()) {
@@ -413,14 +412,12 @@ static void GLM_QueueAliasModelDrawImpl(
 
 	// Assign samplers - if we're over limit, need to flush and try again
 	textureSampler = AssignSampler(instr, texture);
-	lumaSampler = AssignSampler(instr, fb_texture);
-	if (textureSampler < 0 || lumaSampler < 0) {
+	if (textureSampler < 0) {
 		if (!GLM_NextAliasModelDrawCall(instr, true)) {
 			return;
 		}
 
 		textureSampler = AssignSampler(instr, texture);
-		lumaSampler = AssignSampler(instr, fb_texture);
 	}
 
 	// Store static data ready for upload
@@ -432,7 +429,6 @@ static void GLM_QueueAliasModelDrawImpl(
 		(effects & EF_GREEN ? AMF_SHELLMODEL_GREEN : 0) |
 		(effects & EF_BLUE ? AMF_SHELLMODEL_BLUE : 0) |
 		(R_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
-		(R_TextureReferenceIsValid(fb_texture) ? AMF_TEXTURE_LUMA : 0) |
 		(render_effects & RF_CAUSTICS ? AMF_CAUSTICS : 0) |
 		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
 		(render_effects & RF_LIMITLERP ? AMF_LIMITLERP : 0);
@@ -446,7 +442,11 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->color[2] = color[2];
 	uniform->color[3] = color[3];
 	uniform->materialSamplerMapping = textureSampler;
-	uniform->lumaSamplerMapping = lumaSampler;
+	{
+		extern qbool full_light;
+
+		uniform->minLumaMix = 1.0f - (full_light ? bound(0, gl_fb_models.integer, 1) : 0);
+	}
 
 	// Add to queues
 	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
@@ -462,7 +462,7 @@ static void GLM_QueueAliasModelDrawImpl(
 
 static void GLM_QueueAliasModelDraw(
 	model_t* model, float* color, int start, int count,
-	texture_ref texture, texture_ref fb_texture,
+	texture_ref texture,
 	int effects, float yaw_angle_radians, float shadelight, float ambientlight,
 	float lerpFraction, int lerpFrameVertOffset, qbool outline, int render_effects
 )
@@ -470,13 +470,13 @@ static void GLM_QueueAliasModelDraw(
 	int shell_effects = effects & (EF_RED | EF_BLUE | EF_GREEN);
 	qbool shell = shell_effects && R_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
 
-	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, fb_texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
+	GLM_QueueAliasModelDrawImpl(model, color, start, count, texture, effects, yaw_angle_radians, shadelight, ambientlight, lerpFraction, lerpFrameVertOffset, outline, shell, render_effects);
 }
 
 // Called for .mdl & .md3
 void GLM_DrawAliasModelFrame(
 	entity_t* ent, model_t* model, int poseVertIndex, int poseVertIndex2, int vertsPerPose,
-	texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerp_fraction
+	texture_ref texture, qbool outline, int effects, int render_effects, float lerp_fraction
 )
 {
 	float color[4];
@@ -521,7 +521,7 @@ void GLM_DrawAliasModelFrame(
 
 	GLM_QueueAliasModelDraw(
 		model, color, poseVertIndex, vertsPerPose,
-		texture, fb_texture, effects,
+		texture, effects,
 		ent->angles[YAW] * M_PI / 180.0, shadelight, ambientlight, lerp_fraction, poseVertIndex2, outline, render_effects
 	);
 }
@@ -538,7 +538,7 @@ void GLM_DrawAliasFrame(
 
 	GLM_DrawAliasModelFrame(
 		ent, model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,
-		texture, fb_texture, outline, effects, render_effects, lerpfrac
+		texture, outline, effects, render_effects, lerpfrac
 	);
 }
 

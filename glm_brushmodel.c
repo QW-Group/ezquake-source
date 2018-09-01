@@ -37,49 +37,6 @@ typedef struct vbo_world_surface_s {
 } vbo_world_surface_t;
 
 buffer_ref worldModel_surfaces_ssbo;
-/*
-// Sets tex->next_same_size to link up all textures of common size
-int R_ChainTexturesBySize(model_t* m)
-{
-	texture_t* tx;
-	int i, j;
-	int num_sizes = 0;
-
-	// Initialise chain
-	for (i = 0; i < m->numtextures; ++i) {
-		tx = m->textures[i];
-		if (!tx || !tx->loaded) {
-			continue;
-		}
-
-		tx->next_same_size = -1;
-		tx->size_start = false;
-	}
-
-	for (i = 0; i < m->numtextures; ++i) {
-		tx = m->textures[i];
-		if (!tx || !tx->loaded || tx->next_same_size >= 0 || !tx->gl_width || !tx->gl_height || !R_TextureReferenceIsValid(tx->gl_texturenum)) {
-			continue; // not loaded or already processed
-		}
-
-		++num_sizes;
-		tx->size_start = true;
-		for (j = i + 1; j < m->numtextures; ++j) {
-			texture_t* next = m->textures[j];
-			if (!next || !next->loaded || next->next_same_size >= 0) {
-				continue; // not loaded or already processed
-			}
-
-			if (tx->gl_width == next->gl_width && tx->gl_height == next->gl_height) {
-				tx->next_same_size = j;
-				tx = next;
-				next->next_same_size = m->numtextures;
-			}
-		}
-	}
-
-	return num_sizes;
-}*/
 
 void GLM_CreateBrushModelVAO(buffer_ref brushModel_vbo, buffer_ref vbo_brushElements, buffer_ref instance_vbo)
 {

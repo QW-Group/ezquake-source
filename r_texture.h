@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_NO_TEXTUREMODE  (1<<9)  // ignore gl_texturemode* changes for texture
 #define TEX_PREMUL_ALPHA    (1<<10) // pre-multiply alpha
 #define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
+#define TEX_MERGED_LUMA     (1<<12) // alpha channel signifies luma %
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 #define MAX_CHARSETS 256
@@ -124,6 +125,7 @@ extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidbl
 void R_ClearModelTextureData(void);
 
 void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references);
+void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);

@@ -24,18 +24,65 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "rulesets.h"
 #include "r_texture.h"
+#include "r_local.h"
+#include "image.h"
 
 static void Mod_FloodFillSkin(byte *skin, int skinwidth, int skinheight);
 
 //byte player_8bit_texels[320 * 200];
 byte player_8bit_texels[256*256]; // Workaround for new player model, isn't proper for "real" quake skins
 
+void R_CompressFullbrightTexture(byte* skin_pixels, int skin_width, int skin_height, byte* fb_pixels, int fb_width, int fb_height)
+{
+	int x, y;
+
+	// adjust fb-texture to add alpha (this is from (TEX_FULLBRIGHT | TEX_LUMA) processing)
+	for (x = 0; x < skin_width; ++x) {
+		for (y = 0; y < skin_height; ++y) {
+			int base = (x + y * skin_width) * 4;
+			extern cvar_t gl_wicked_luma_level;
+
+			// For luma textures that don't have alpha component (or are just incorrect)
+			if (fb_pixels[base] < gl_wicked_luma_level.integer && fb_pixels[base + 1] < gl_wicked_luma_level.integer && fb_pixels[base + 2] < gl_wicked_luma_level.integer) {
+				fb_pixels[base] = fb_pixels[base + 1] = fb_pixels[base + 2] = fb_pixels[base + 3] = 0;
+			}
+		}
+	}
+
+	// re-scale fb texture to match underlying skin
+	R_TextureRescaleOverlay(&fb_pixels, &fb_width, &fb_height, skin_width, skin_height);
+
+	// Merge the fb texture with the original
+	for (x = 0; x < skin_width; ++x) {
+		for (y = 0; y < skin_height; ++y) {
+			int base = (x + y * skin_width) * 4;
+
+			skin_pixels[base + 3] = 255;
+			if (fb_pixels[base + 3]) {
+				float a = fb_pixels[base + 3] / 255.0f;
+				int orig = skin_pixels[base];
+
+				skin_pixels[base] = (byte)bound(0, (int)orig * (1 - a) + (int)fb_pixels[base] * a, 255);
+				skin_pixels[base + 1] = (byte)bound(0, (int)orig * (1 - a) + (int)fb_pixels[base + 1] * a, 255);
+				skin_pixels[base + 2] = (byte)bound(0, (int)orig * (1 - a) + (int)fb_pixels[base + 2] * a, 255);
+				skin_pixels[base + 3] = (1 - a) * 255;
+			}
+		}
+	}
+
+	Q_free(fb_pixels);
+}
+
 static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, texture_ref *fb_texnum)
 {
-	char loadpath[64] = {0};
-	int texmode = 0;
+	char loadpath[MAX_OSPATH] = {0};
+	int texmode = 0, luma_texmode;
 	texture_ref texnum;
 	qbool luma_allowed = Ruleset_IsLumaAllowed(loadmodel);
+	int skin_width = 0, skin_height = 0;
+	int luma_width = 0, luma_height = 0;
+	byte* skin_pixels = NULL;
+	byte* luma_pixels = NULL;
 
 	R_TextureReferenceInvalidate(texnum);
 	R_TextureReferenceInvalidate(*fb_texnum);
@@ -50,34 +97,46 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	if (!gl_scaleModelTextures.value) {
 		texmode |= TEX_NOSCALE;
 	}
+	luma_texmode = texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA;
 
 	// try "textures/models/..." path
-	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
-	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (R_TextureReferenceIsValid(texnum)) {
-		if (luma_allowed) {
-			// not a luma actually, but which suffix use then? _fb or what?
-			snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-			*fb_texnum = R_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-		}
+	strlcpy(loadpath, "textures/models/", sizeof(loadpath));
+	strlcat(loadpath, identifier, sizeof(loadpath));
+	skin_pixels = R_LoadImagePixels(loadpath, 0, 0, texmode, &skin_width, &skin_height);
 
-		return texnum;
+	if (!skin_pixels) {
+		// try "textures/..." path
+		strlcpy(loadpath, "textures/", sizeof(loadpath));
+		strlcat(loadpath, identifier, sizeof(loadpath));
+
+		skin_pixels = R_LoadImagePixels(loadpath, 0, 0, texmode, &skin_width, &skin_height);
 	}
 
-	// try "textures/..." path
-	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-	texnum = R_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
-	if (R_TextureReferenceIsValid(texnum)) {
+	if (skin_pixels && luma_allowed) {
 		// not a luma actually, but which suffix use then? _fb or what?
-		if (luma_allowed) {
-			snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
-			*fb_texnum = R_LoadTextureImage(loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
-		}
+		strlcat(loadpath, "_luma", sizeof(loadpath));
 
-		return texnum;
+		luma_pixels = R_LoadImagePixels(loadpath, 0, 0, luma_texmode, &luma_width, &luma_height);
 	}
 
-	return texnum; // we failed miserable
+	if (R_CompressFullbrightTextures() && skin_pixels && luma_pixels) {
+		R_CompressFullbrightTexture(skin_pixels, skin_width, skin_height, luma_pixels, luma_width, luma_height);
+
+		texmode |= (TEX_ALPHA | TEX_MERGED_LUMA);
+		luma_pixels = NULL;
+	}
+
+	if (skin_pixels) {
+		texnum = R_LoadTexturePixels(skin_pixels, identifier, skin_width, skin_height, texmode);
+		if (luma_pixels) {
+			*fb_texnum = R_LoadTexturePixels(luma_pixels, va("@fb_%s", identifier), luma_width, luma_height, luma_texmode);
+			Q_free(luma_pixels);
+		}
+
+		Q_free(skin_pixels);
+	}
+
+	return texnum;
 }
 
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype)
@@ -92,19 +151,15 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 	skin = (byte *)(pskintype + 1);
 
 	if (numskins < 1 || numskins > MAX_SKINS) {
-		Host_Error("Mod_LoadAllSkins: Invalid # of skins: %d\n", numskins);
+		Host_Error("Mod_LoadAllSkins: Invalid # of skins: %d (model %s)\n", numskins, loadmodel->name);
 	}
 
 	s = pheader->skinwidth * pheader->skinheight;
 
 	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
-	if (!(loadmodel->modhint & MOD_VMODEL) || gl_mipmap_viewmodels.integer) {
-		texmode = TEX_MIPMAP;
-	}
-	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) {
-		texmode |= TEX_NOSCALE;
-	}
+	texmode |= (!(loadmodel->modhint & MOD_VMODEL) || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
+	texmode |= (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : 0;
 
 	for (i = 0; i < numskins; i++) {
 		if (pskintype->type == ALIAS_SKIN_SINGLE) {
@@ -113,7 +168,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 			// save 8 bit texels for the player model to remap
 			if (loadmodel->modhint == MOD_PLAYER) {
 				if (s > sizeof(player_8bit_texels)) {
-					Host_Error("Mod_LoadAllSkins: Player skin too large");
+					Host_Error("Mod_LoadAllSkins: Player skin too large (model %s)", loadmodel->name);
 				}
 				memcpy(player_8bit_texels, (byte *)(pskintype + 1), s);
 			}
@@ -132,11 +187,8 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 				}
 			}
 
-			pheader->gl_texturenum[i][0] = pheader->gl_texturenum[i][1] =
-				pheader->gl_texturenum[i][2] = pheader->gl_texturenum[i][3] = gl_texnum;
-
-			pheader->fb_texturenum[i][0] = pheader->fb_texturenum[i][1] =
-				pheader->fb_texturenum[i][2] = pheader->fb_texturenum[i][3] = fb_texnum;
+			pheader->gl_texturenum[i][0] = pheader->gl_texturenum[i][1] = pheader->gl_texturenum[i][2] = pheader->gl_texturenum[i][3] = gl_texnum;
+			pheader->glc_fb_texturenum[i][0] = pheader->glc_fb_texturenum[i][1] = pheader->glc_fb_texturenum[i][2] = pheader->glc_fb_texturenum[i][3] = fb_texnum;
 
 			pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + s);
 		}
@@ -167,14 +219,14 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 				}
 
 				pheader->gl_texturenum[i][j & 3] = gl_texnum;
-				pheader->fb_texturenum[i][j & 3] = fb_texnum;
+				pheader->glc_fb_texturenum[i][j & 3] = fb_texnum;
 
 				pskintype = (daliasskintype_t *)((byte *)(pskintype)+s);
 			}
 
 			for (k = j; j < 4; j++) {
 				pheader->gl_texturenum[i][j & 3] = pheader->gl_texturenum[i][j - k];
-				pheader->fb_texturenum[i][j & 3] = pheader->fb_texturenum[i][j - k];
+				pheader->glc_fb_texturenum[i][j & 3] = pheader->glc_fb_texturenum[i][j - k];
 			}
 		}
 	}

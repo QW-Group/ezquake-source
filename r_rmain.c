@@ -691,16 +691,10 @@ static void R_Clear(void)
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	if (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1))) {
-		clear_color = true;
-	}
+	clear_color |= (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1)));
 
 	// If outside level or in wall, sky is usually visible
-	if (r_viewleaf->contents == CONTENTS_SOLID) {
-		if (R_UseModernOpenGL() || r_fastsky.integer) {
-			clear_color = true;
-		}
-	}
+	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
 
 	if (gl_clear.integer) {
 		if (gl_fogenable.integer) {

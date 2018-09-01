@@ -1026,8 +1026,7 @@ qbool V_PreRenderView(void)
 		}
 		else {
 			r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
-			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) :
-				cl.teamfortress ? 0 : 1;
+			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) : (cl.teamfortress ? 0 : 1);
 			r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
 		}
 	}

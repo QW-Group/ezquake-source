@@ -249,9 +249,7 @@ static void R_InitialiseEntityStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_CopyRenderingState(r_state_weaponmodel_powerupshell, r_state_aliasmodel_powerupshell, "weaponmodel-shell");
-	if (R_UseImmediateOpenGL()) {
-		state->depth.farRange = 0.3f;
-	}
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
 	state = R_InitRenderingState(r_state_aliasmodel_notexture_opaque, true, "opaqueAliasModelNoTexture", vao_aliasmodel);
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -282,21 +280,16 @@ static void R_InitialiseEntityStates(void)
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_opaque, r_state_aliasmodel_singletexture_opaque, "weaponModelSingleOpaque");
-	if (R_UseImmediateOpenGL()) {
-		state->depth.farRange = 0.3f;
-	}
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
-	if (R_UseImmediateOpenGL()) {
-		state->depth.farRange = 0.3f;
-	}
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_opaque, r_state_weaponmodel_singletexture_opaque, "weaponModelMultiOpaque");
-	if (R_UseImmediateOpenGL()) {
-		state->depth.farRange = 0.3f;
-	}
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiOpaque");
-	if (R_UseImmediateOpenGL()) {
-		state->depth.farRange = 0.3f;
-	}
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
 	state = R_InitRenderingState(r_state_aliasmodel_shadows, true, "aliasModelShadowState", vao_aliasmodel);
 	state->polygonOffset.option = r_polygonoffset_disabled;

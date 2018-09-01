@@ -28,9 +28,8 @@ out vec2 fsAltTextureCoord;
 out vec4 fsBaseColor;
 flat out int fsFlags;
 flat out int fsTextureEnabled;
-flat out int fsTextureLuma;
 flat out int fsMaterialSampler;
-flat out int fsLumaSampler;
+flat out float fsMinLumaMix;
 
 void main()
 {
@@ -42,6 +41,7 @@ void main()
 	vec3 normalCoords = vboNormalCoords;
 
 	fsFlags = models[_instanceId].flags;
+	fsMinLumaMix = models[_instanceId].minLumaMix;
 
 	if (lerpFrac > 0 && lerpFrac <= 1) {
 #ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
@@ -67,14 +67,12 @@ void main()
 	}
 
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
-	fsLumaSampler = models[_instanceId].lumaTextureMapping;
 
 	if (mode == EZQ_ALIAS_MODE_NORMAL) {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
 
 		fsAltTextureCoord = fsTextureCoord = vec2(tex.s, tex.t);
 		fsTextureEnabled = (models[_instanceId].flags & AMF_TEXTURE_MATERIAL);
-		fsTextureLuma = (models[_instanceId].flags & AMF_TEXTURE_LUMA);
 
 		// Lighting: this is rough approximation
 		//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983

@@ -89,7 +89,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	GLM_DrawAliasModelFrame(
 		ent, mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
-		surfaceInfo[0].texnum, null_texture_reference, false, ent->effects, ent->renderfx, lerpfrac
+		surfaceInfo[0].texnum, false, ent->effects, ent->renderfx, lerpfrac
 	);
 
 	R_PopModelviewMatrix(oldMatrix);

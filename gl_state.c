@@ -110,7 +110,13 @@ static GLenum glBlendFuncValuesSource[r_blendfunc_count];
 static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
 static GLenum glPolygonModeValues[r_polygonmode_count];
 static GLenum glAlphaTestModeValues[r_alphatest_func_count];
-static GLenum glTextureEnvModeValues[r_texunit_mode_count];
+static GLenum glTextureEnvModeValues[] = {
+	GL_BLEND, GL_REPLACE, GL_MODULATE, GL_DECAL, GL_ADD
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]) == r_texunit_mode_count);
+#endif
 
 #ifdef WITH_RENDERING_TRACE
 static const char* txtDepthFunctions[r_depthfunc_count];
@@ -118,7 +124,13 @@ static const char* txtCullFaceValues[r_cullface_count];
 static const char* txtBlendFuncNames[r_blendfunc_count];
 static const char* txtPolygonModeValues[r_polygonmode_count];
 static const char* txtAlphaTestModeValues[r_alphatest_func_count];
-static const char* txtTextureEnvModeValues[r_texunit_mode_count];
+static const char* txtTextureEnvModeValues[] = {
+	"GL_BLEND", "GL_REPLACE", "GL_MODULATE", "GL_DECAL", "GL_ADD"
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(txtTextureEnvModeValues) / sizeof(txtTextureEnvModeValues[0]) == r_texunit_mode_count);
+#endif
 #endif
 
 rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, const char* name, r_vao_id vao)
@@ -456,11 +468,6 @@ void GL_InitialiseState(void)
 	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
 	glAlphaTestModeValues[r_alphatest_func_always] = GL_ALWAYS;
 	glAlphaTestModeValues[r_alphatest_func_greater] = GL_GREATER;
-	glTextureEnvModeValues[r_texunit_mode_blend] = GL_BLEND;
-	glTextureEnvModeValues[r_texunit_mode_replace] = GL_REPLACE;
-	glTextureEnvModeValues[r_texunit_mode_modulate] = GL_MODULATE;
-	glTextureEnvModeValues[r_texunit_mode_decal] = GL_DECAL;
-	glTextureEnvModeValues[r_texunit_mode_add] = GL_ADD;
 #ifdef WITH_RENDERING_TRACE
 	txtDepthFunctions[r_depthfunc_less] = "<";
 	txtDepthFunctions[r_depthfunc_equal] = "=";
@@ -481,11 +488,6 @@ void GL_InitialiseState(void)
 	txtPolygonModeValues[r_polygonmode_line] = "line";
 	txtAlphaTestModeValues[r_alphatest_func_always] = "always";
 	txtAlphaTestModeValues[r_alphatest_func_greater] = "greater";
-	txtTextureEnvModeValues[r_texunit_mode_blend] = "blend";
-	txtTextureEnvModeValues[r_texunit_mode_replace] = "replace";
-	txtTextureEnvModeValues[r_texunit_mode_modulate] = "modulate";
-	txtTextureEnvModeValues[r_texunit_mode_decal] = "decal";
-	txtTextureEnvModeValues[r_texunit_mode_add] = "add";
 #endif
 
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);

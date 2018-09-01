@@ -298,7 +298,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	//VULT CORONAS
-	if (amf_coronas.value) {
+	if (amf_coronas.integer) {
 		if (IsFlameModel(ent->model)) {
 			//FIXME: This is slow and pathetic as hell, really we should just check the entity
 			//alternativley add some kind of permanent client side TE for the torch
@@ -343,7 +343,7 @@ void R_DrawAliasModel(entity_t *ent)
 	}
 
 	texture = paliashdr->gl_texturenum[skinnum][anim];
-	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
+	fb_texture = paliashdr->glc_fb_texturenum[skinnum][anim];
 
 	R_OverrideModelTextures(ent, &texture, &fb_texture, &color32bit);
 
@@ -550,7 +550,7 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
 		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
-		if (fbskins == 1 && gl_fb_models.value == 1) {
+		if (fbskins == 1 && gl_fb_models.integer == 1) {
 			ambientlight = shadelight = 4096;
 			full_light = true;
 		}
@@ -679,6 +679,9 @@ void R_DrawViewModel(void)
 			break;
 		case mod_alias3:
 			renderer.DrawAlias3Model(&gun);
+			if (gun.effects) {
+				renderer.DrawAlias3ModelPowerupShell(&gun);
+			}
 			break;
 		default:
 			Com_Printf("Not drawing view model of type %i\n", gun.model->type);

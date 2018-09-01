@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "gl_texture.h"
 #include "r_renderer.h"
+#include "image.h"
 
 static void R_AllocateTextureNames(gltexture_t* glt);
 
@@ -106,7 +107,7 @@ static void R_ClearModelTextureReferences(model_t* mod, qbool all_textures)
 		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
 
 		memset(paliashdr->gl_texturenum, 0, sizeof(paliashdr->gl_texturenum));
-		memset(paliashdr->fb_texturenum, 0, sizeof(paliashdr->fb_texturenum));
+		memset(paliashdr->glc_fb_texturenum, 0, sizeof(paliashdr->glc_fb_texturenum));
 	}
 	else if (mod->type == mod_alias3 && all_textures) {
 		md3model_t* md3Model = (md3model_t *)Mod_Extradata(mod);
@@ -579,4 +580,19 @@ void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int heigh
 r_texture_type_id R_TextureType(texture_ref ref)
 {
 	return gltextures[ref.index].type;
+}
+
+// re-scale texture to match underlying (useful for fullbrights/lumas etc)
+void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height)
+{
+	if (underlying_width != *overlay_width || underlying_height != *overlay_height) {
+		byte* new_pixels = Q_malloc(underlying_width * underlying_height * 4);
+
+		Image_Resample(*overlay_pixels, *overlay_width, *overlay_height, new_pixels, underlying_width, underlying_height, 4, true);
+
+		Q_free(*overlay_pixels);
+		*overlay_pixels = new_pixels;
+		*overlay_width = underlying_width;
+		*overlay_height = underlying_height;
+	}
 }

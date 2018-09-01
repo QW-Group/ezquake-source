@@ -79,6 +79,8 @@ void R_SelectRenderer(void);
 
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
 #define R_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_r_debug))
+#define R_CompressFullbrightTextures() (!R_UseImmediateOpenGL())
+#define R_LumaTexturesMustMatchDimensions() (!R_UseImmediateOpenGL())
 
 // bloom.c
 void R_InitBloomTextures(void);
