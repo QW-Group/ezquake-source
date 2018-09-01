@@ -1146,11 +1146,8 @@ static void VID_SDL_Init(void)
 	VID_SDL_InitSubSystem();
 	R_SelectRenderer();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 
-#ifdef SDL_WINDOW_ALLOW_HIGHDPI
-	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
-#endif
 	if (r_fullscreen.integer > 0) {
 		if (vid_usedesktopres.integer == 1) {
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;

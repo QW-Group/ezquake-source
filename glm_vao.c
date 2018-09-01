@@ -53,14 +53,27 @@ qbool GLM_InitialiseVAOHandling(void)
 {
 	qbool vaos_supported = true;
 
-	// VAOs
-	GL_LoadMandatoryFunctionExtension(glGenVertexArrays, vaos_supported);
-	GL_LoadMandatoryFunctionExtension(glBindVertexArray, vaos_supported);
-	GL_LoadMandatoryFunctionExtension(glDeleteVertexArrays, vaos_supported);
+	// VAOs: OpenGL 3.0
+	if (SDL_GL_ExtensionSupported("GL_ARB_vertex_array_object")) {
+		GL_LoadMandatoryFunctionExtension(glGenVertexArrays, vaos_supported);
+		GL_LoadMandatoryFunctionExtension(glBindVertexArray, vaos_supported);
+		GL_LoadMandatoryFunctionExtension(glDeleteVertexArrays, vaos_supported);
+	}
+	else {
+		vaos_supported = false;
+	}
+
+	// OpenGL 2.0
 	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, vaos_supported);
 	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, vaos_supported);
 	GL_LoadMandatoryFunctionExtension(glVertexAttribIPointer, vaos_supported);
-	GL_LoadMandatoryFunctionExtension(glVertexAttribDivisor, vaos_supported);
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_instanced_arrays")) {
+		GL_LoadMandatoryFunctionExtension(glVertexAttribDivisor, vaos_supported);
+	}
+	else {
+		vaos_supported = false;
+	}
 
 	return vaos_supported;
 }

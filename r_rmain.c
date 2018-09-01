@@ -52,8 +52,6 @@ void GLM_PreRenderView(void);
 void GLC_PreRenderView(void);
 void GLM_RenderSceneBlurDo(float alpha);
 void GLC_RenderSceneBlurDo(float alpha);
-void GLM_PostProcessScene(void);
-void GLC_PostProcessScene(void);
 void GLM_DrawSpriteModel(entity_t *e);
 void GLC_DrawSpriteModel(entity_t *e);
 void GLM_PolyBlend(float v_blend[4]);

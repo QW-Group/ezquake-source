@@ -567,7 +567,7 @@ qbool GLM_LoadProgramFunctions(void)
 {
 	qbool all_available = true;
 
-	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
+	// These are all core in OpenGL 2.0
 	GL_LoadMandatoryFunctionExtension(glCreateShader, all_available);
 	GL_LoadMandatoryFunctionExtension(glShaderSource, all_available);
 	GL_LoadMandatoryFunctionExtension(glGetShaderSource, all_available);
@@ -590,8 +590,19 @@ qbool GLM_LoadProgramFunctions(void)
 	GL_LoadMandatoryFunctionExtension(glUniform4fv, all_available);
 	GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, all_available);
 
-	GL_LoadMandatoryFunctionExtension(glDispatchCompute, all_available);
-	GL_LoadMandatoryFunctionExtension(glMemoryBarrier, all_available);
+	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader")) {
+		GL_LoadMandatoryFunctionExtension(glDispatchCompute, all_available);
+	}
+	else {
+		all_available = false;
+	}
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+		GL_LoadMandatoryFunctionExtension(glMemoryBarrier, all_available);
+	}
+	else {
+		all_available = false;
+	}
 
 	return all_available;
 }

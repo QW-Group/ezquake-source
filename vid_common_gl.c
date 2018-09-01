@@ -219,8 +219,8 @@ void GL_Init(void)
 	// cvar added just to be able force OFF an extension.
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
-	Cvar_ResetCurrentGroup();
 	Cvar_Register(&gl_maxtmu2);
+	Cvar_ResetCurrentGroup();
 
 	if (!GL_InitialiseRenderer()) {
 #if defined(EZ_MULTIPLE_RENDERERS) && defined(RENDERER_OPTION_CLASSIC_OPENGL)

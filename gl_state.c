@@ -734,7 +734,13 @@ qbool GLM_LoadStateFunctions(void)
 	qbool all_available = true;
 
 	GL_LoadMandatoryFunctionExtension(glActiveTexture, all_available);
-	GL_LoadMandatoryFunctionExtension(glBindImageTexture, all_available);
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+		GL_LoadMandatoryFunctionExtension(glBindImageTexture, all_available);
+	}
+	else {
+		all_available = false;
+	}
 
 	// 4.4 - binds textures to consecutive texture units
 	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind")) {

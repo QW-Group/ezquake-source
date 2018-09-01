@@ -1,9 +1,9 @@
 
 #include "quakedef.h"
+#include "glm_vao.h"
 #include "r_renderer.h"
 
 void GL_Init(void);
-qbool GLM_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
 

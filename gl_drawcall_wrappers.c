@@ -55,11 +55,22 @@ qbool GLM_LoadDrawFunctions(void)
 {
 	qbool all_available = true;
 
-	GL_LoadMandatoryFunctionExtension(glMultiDrawArraysIndirect, all_available);
-	GL_LoadMandatoryFunctionExtension(glMultiDrawElementsIndirect, all_available);
-	GL_LoadMandatoryFunctionExtension(glDrawArraysInstancedBaseInstance, all_available);
-	GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseInstance, all_available);
-	GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseVertexBaseInstance, all_available);
+	if (SDL_GL_ExtensionSupported("GL_ARB_multi_draw_indirect")) {
+		GL_LoadMandatoryFunctionExtension(glMultiDrawArraysIndirect, all_available);
+		GL_LoadMandatoryFunctionExtension(glMultiDrawElementsIndirect, all_available);
+	}
+	else {
+		all_available = false;
+	}
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_base_instance")) {
+		GL_LoadMandatoryFunctionExtension(glDrawArraysInstancedBaseInstance, all_available);
+		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseInstance, all_available);
+		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseVertexBaseInstance, all_available);
+	}
+	else {
+		all_available = false;
+	}
 
 	return all_available;
 }
@@ -69,7 +80,10 @@ void GL_LoadDrawFunctions(void)
 	// Draw functions used for modern & classic
 	GL_LoadOptionalFunction(glMultiDrawArrays);
 	GL_LoadOptionalFunction(glMultiDrawElements);
-	GL_LoadOptionalFunction(glDrawElementsBaseVertex);
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_draw_elements_base_vertex")) {
+		GL_LoadOptionalFunction(glDrawElementsBaseVertex);
+	}
 
 	glConfig.primitiveRestartSupported = false;
 	if (R_UseModernOpenGL() || GL_VersionAtLeast(3, 1)) {
