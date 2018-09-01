@@ -391,28 +391,28 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
-static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
+static int VID_SetDeviceGammaRampReal(unsigned short *ramps)
 {
 #ifdef X11_GAMMA_WORKAROUND
 	static short once = 1;
 	static short gamma_works = 0;
 
 	if (!vid_gamma_workaround.integer) {
-		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+4096,ramps+(2*4096));
+		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 4096, ramps + (2 * 4096));
 		vid_hwgamma_enabled = true;
-		return;
+		return 0;
 	}
 
 	if (once) {
 		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
 			Com_Printf("error: gamma size is broken, gamma won't work\n");
 			once = 0;
-			return;
+			return 0;
 		}
-		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps+4096, sysramps+(2*4096))) {
+		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps + 4096, sysramps + (2 * 4096))) {
 			Com_Printf("error: cannot get system gamma ramps, gamma won't work\n");
 			once = 0;
-			return;
+			return 0;
 		}
 		once = 0;
 		gamma_works = 1;
@@ -426,14 +426,16 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 			vid_hwgamma_enabled = false;
 		}
 		/* It returns true unconditionally ... */
-		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps+4096, ramps+(2*4096));
+		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps + 4096, ramps + (2 * 4096));
 		vid_hwgamma_enabled = true;
 	}
-	return;
+	return 0;
 #else
-	/* SDL2 uses 256 entries in the API so this is correct */
-	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-	vid_hwgamma_enabled = true;
+	if (SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 256, ramps + 512) == 0) {
+		vid_hwgamma_enabled = true;
+		return 0;
+	}
+	return -1;
 #endif
 }
 
@@ -1384,22 +1386,24 @@ void VID_NotifyActivity(void)
 #endif
 }
 
-void VID_SetDeviceGammaRamp(unsigned short *ramps)
+int VID_SetDeviceGammaRamp(unsigned short *ramps)
 {
 	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
-		return;
+		return 0;
 	}
 
 	if (r_fullscreen.integer > 0) {
 		if (vid_hwgammacontrol.integer > 0) {
-			VID_SetDeviceGammaRampReal(ramps);
+			return VID_SetDeviceGammaRampReal(ramps);
 		}
 	}
 	else {
 		if (vid_hwgammacontrol.integer >= 2) {
-			VID_SetDeviceGammaRampReal(ramps);
+			return VID_SetDeviceGammaRampReal(ramps);
 		}
 	}
+
+	return 0;
 }
 
 void VID_Minimize (void) 

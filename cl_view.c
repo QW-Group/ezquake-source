@@ -650,34 +650,41 @@ void V_UpdatePalette (void)
 		a = 0;
 	}
 
-	rgb[0] = 255 * v_blend[0] * a;
-	rgb[1] = 255 * v_blend[1] * a;
-	rgb[2] = 255 * v_blend[2] * a;
-
-	a = 1 - a;
 	if (vid_gamma != 1.0) {
-		current_contrast = pow (current_contrast, vid_gamma);
-		current_gamma = current_gamma/vid_gamma;
+		current_contrast = pow(current_contrast, vid_gamma);
+		current_gamma = current_gamma / vid_gamma;
 	}
+
+	do {
+		float std_alpha;
+
+		rgb[0] = 255 * v_blend[0] * a;
+		rgb[1] = 255 * v_blend[1] * a;
+		rgb[2] = 255 * v_blend[2] * a;
+
+		std_alpha = 1 - a;
 
 #ifdef X11_GAMMA_WORKAROUND
-	a *= 256.0/glConfig.gammacrap.size;
-	for (i = 0; i < glConfig.gammacrap.size; i++) {
+		std_alpha *= 256.0 / glConfig.gammacrap.size;
+		for (i = 0; i < glConfig.gammacrap.size; i++) {
 #else
-	for (i = 0; i < 256; i++) {
+		for (i = 0; i < 256; i++) {
 #endif
-		for (j = 0; j < 3; j++) {
-			// apply blend and contrast
-			c = (i * a + rgb[j]) * current_contrast;
-			if (c > 255)
-				c = 255;
-			// apply gamma
-			c = 255 * pow(c / 255.5, current_gamma) + 0.5;
-			c = bound (0, c, 255);
-			ramps[j][i] = c << 8;
+			for (j = 0; j < 3; j++) {
+				// apply blend and contrast
+				c = (i * std_alpha + rgb[j]) * current_contrast;
+				if (c > 255) {
+					c = 255;
+				}
+				// apply gamma
+				c = 255 * pow(c / 255.5, current_gamma) + 0.5;
+				c = bound(0, c, 255);
+				ramps[j][i] = c << 8;
+			}
 		}
-	}
-	VID_SetDeviceGammaRamp ((unsigned short *) ramps);
+
+		a *= 0.8;
+	} while (VID_SetDeviceGammaRamp((unsigned short *)ramps) && a > 0.1);
 }
 
 // BorisU -->
