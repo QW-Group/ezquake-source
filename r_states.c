@@ -216,7 +216,6 @@ static void R_InitialiseSpriteStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_Init3DSpriteRenderingState(r_state_particles_qmb_untextured, "qmb-untextured");
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->depth.mask_enabled = false;
 
 	// Flashblend bubbles
@@ -230,8 +229,10 @@ static void R_InitialiseSpriteStates(void)
 
 	// Coronas
 	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
+	state->blendFunc = r_blendfunc_additive_blending;
 	state->depth.mask_enabled = false;
 	state->depth.test_enabled = false;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 }
 
 static void R_InitialiseEntityStates(void)

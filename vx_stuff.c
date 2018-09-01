@@ -287,10 +287,19 @@ void SCR_DrawAMFstats(void)
 void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
+	int i;
 
 	if (!qmb_initialized) {
 		// FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
 		return;
+	}
+
+	for (i = 0; i < CORONATEX_COUNT; ++i) {
+		corona_textures[i].array_scale_s = 1;
+		corona_textures[i].array_scale_t = 1;
+		corona_textures[i].array_index = 0;
+		R_TextureReferenceInvalidate(corona_textures[i].array_tex);
+		R_TextureReferenceInvalidate(corona_textures[i].texnum);
 	}
 
 	corona_textures[CORONATEX_STANDARD].texnum = R_LoadTextureImage("textures/flash", NULL, 0, 0, flags);
