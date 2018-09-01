@@ -552,6 +552,7 @@ static void QMB_FillParticleVertexBuffer(void)
 			for (p = pt->start; p; p = p->next) {
 				particle_texture_t* ptex = &particle_textures[ptex_lightning];
 				vec3_t right1, right2;
+				float half_t = (ptex->coords[0][1] + ptex->coords[0][3]) * 0.5f;
 
 				if (particle_time < p->start || particle_time >= p->die) {
 					continue;
@@ -565,20 +566,22 @@ static void QMB_FillParticleVertexBuffer(void)
 				R_PreCalcBeamVerts(p->org, p->endorg, right1, right2);
 				for (l = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL); l > 0; l--) {
 					r_sprite3d_vert_t* vert = R_Sprite3DAddEntry(pt->billboard_type, 6);
-					if (vert) {
-						R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
-
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], 1, 0.5, p->color, ptex->tex_index);
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], 0, 0.5, p->color, ptex->tex_index);
-
-						// near center
-						QMB_BillboardAddVert(vert++, pt, (varray_vertex[0] + varray_vertex[4]) / 2, (varray_vertex[1] + varray_vertex[5]) / 2, (varray_vertex[2] + varray_vertex[6]) / 2, 1.0, 0.25, p->color, ptex->tex_index);
-						// far center
-						QMB_BillboardAddVert(vert++, pt, (varray_vertex[8] + varray_vertex[12]) / 2, (varray_vertex[9] + varray_vertex[13]) / 2, (varray_vertex[10] + varray_vertex[14]) / 2, 0, 0.25, p->color, ptex->tex_index);
-
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], 1, 0, p->color, ptex->tex_index);
-						QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], 0, 0, p->color, ptex->tex_index);
+					if (!vert) {
+						break;
 					}
+
+					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
+
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
+
+					// near center
+					QMB_BillboardAddVert(vert++, pt, (varray_vertex[0] + varray_vertex[4]) / 2, (varray_vertex[1] + varray_vertex[5]) / 2, (varray_vertex[2] + varray_vertex[6]) / 2, ptex->coords[0][2], half_t, p->color, ptex->tex_index);
+					// far center
+					QMB_BillboardAddVert(vert++, pt, (varray_vertex[8] + varray_vertex[12]) / 2, (varray_vertex[9] + varray_vertex[13]) / 2, (varray_vertex[10] + varray_vertex[14]) / 2, ptex->coords[0][0], half_t, p->color, ptex->tex_index);
+
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
 				}
 			}
 			break;
@@ -651,7 +654,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (pt->drawtype == pd_billboard) {
-						if (gl_clipparticles.value) {
+						if (gl_clipparticles.integer) {
 							if (drawncount >= 3 && VectorSupCompare(p->org, r_origin, 30)) {
 								continue;
 							}
@@ -762,6 +765,11 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 	}
 	else {
 		p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
+	}
+
+	if (p->color[3] <= 0) {
+		p->die = 0;
+		return;
 	}
 
 	p->rotangle += p->rotspeed * cls.frametime;
