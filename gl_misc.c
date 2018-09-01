@@ -50,18 +50,34 @@ void GL_ProcessErrors(const char* message)
 }
 #endif
 
+static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
+{
+	va_list argptr;
+	char msg[128];
+
+	va_start(argptr, fmt);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+
+	Com_Printf_State(PRINT_ALL, "  %-*s ", labelsize, label);
+	con_margin = labelsize + 3;
+	Com_Printf_State(PRINT_ALL, "%s", msg);
+	con_margin = 0;
+	Com_Printf_State(PRINT_ALL, "\n");
+}
+
 void GL_PrintGfxInfo(void)
 {
 	SDL_DisplayMode current;
 	GLint num_extensions;
 	int i;
 
-	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string);
-	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string);
-	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string);
+	Com_Printf_State(PRINT_ALL, "\nOpenGL (%s)\n", R_UseImmediateOpenGL() ? "classic" : "glsl");
+	GL_PrintInfoLine("Vendor:", 9, "%s", (const char*)glConfig.vendor_string);
+	GL_PrintInfoLine("Renderer:", 9, "%s", (const char*)glConfig.renderer_string);
+	GL_PrintInfoLine("Version:", 9, "%s", (const char*)glConfig.version_string);
 	if (R_UseModernOpenGL()) {
-		Com_Printf_State(PRINT_ALL, "GLSL_VERSION: %s\n", glConfig.glsl_version);
-		Com_Printf_State(PRINT_ALL, "MAX_3D_TEXTURE_SIZE: %d (depth %d)\n", glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+		GL_PrintInfoLine("GLSL:", 9, "%s", (const char*)glConfig.version_string);
 	}
 
 	if (r_showextensions.integer) {
@@ -85,17 +101,33 @@ void GL_PrintGfxInfo(void)
 		}
 	}
 
-	Com_Printf_State(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+	Com_Printf_State(PRINT_ALL, "Limits:\n");
+	GL_PrintInfoLine("Texture Units:", 14, "%d", glConfig.texture_units);
+	GL_PrintInfoLine("Texture Size:", 14, "%d", glConfig.gl_max_size_default);
+	if (R_UseModernOpenGL()) {
+		GL_PrintInfoLine("3D Textures:", 14, "%dx%dx%d\n", glConfig.max_3d_texture_size, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+	}
+
+	Com_Printf_State(PRINT_ALL, "Supported features:\n");
+	GL_PrintInfoLine("Shaders:", 15, "%s", glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Compute:", 15, "%s", glConfig.supported_features & R_SUPPORT_COMPUTE_SHADERS ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Framebuffers:", 15, "%s", glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Texture arrays:", 15, "%s", glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("HW lighting:", 15, "%s", glConfig.supported_features & R_SUPPORT_FEATURE_HW_LIGHTING ? "&c0f0available&r" : "&cf00unsupported&r");
 
 	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
-	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_SIZE: %d\n", glConfig.gl_max_size_default);
-	Com_Printf_State(PRINT_ALL, "MAX_TEXTURE_IMAGE_UNITS: %d\n", glConfig.texture_units);
-	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz [%s]\n", current.w, current.h, current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
-	Com_Printf_State(PRINT_ALL, "RATIO: %f\n", vid.aspect);
-	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer);
+	Com_Printf_State(PRINT_ALL, "Video\n");
+	GL_PrintInfoLine("Resolution:", 12, "%dx%d@%dhz [%s]", current.w, current.h, current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
+	GL_PrintInfoLine("Format:", 12, "%2d-bit color\n%2d-bit z-buffer\n%2d-bit stencil", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+	if (vid.aspect) {
+		GL_PrintInfoLine("Aspect:", 12, "%f%%", vid.aspect);
+	}
+	if (r_conwidth.integer || r_conheight.integer) {
+		GL_PrintInfoLine("Console Res:", 12,"%d x %d", r_conwidth.integer, r_conheight.integer);
+	}
 }
 
 void GL_Viewport(int x, int y, int width, int height)
