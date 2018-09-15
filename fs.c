@@ -1679,7 +1679,7 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 //
 qbool FS_IsArchive (char *zip_path)
 {
-	return (!strcmp (COM_FileExtension (zip_path), "zip"));
+	return (!strcasecmp(COM_FileExtension (zip_path), "zip"));
 }
 #else
 // VFS-FIXME: exts should be placed somewhere obvious so it can be updated
@@ -1692,7 +1692,7 @@ qbool FS_IsArchive(char *arch_path)
 	char **e;
 
 	for (e = exts; *e; e++) {
-		if (strcmp(ext, *e) == 0) {
+		if (strcasecmp(ext, *e) == 0) {
 			return true;
 		}
 	}
