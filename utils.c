@@ -1453,6 +1453,10 @@ qbool Util_GetNextWordwrapString(const char *input, char *target, int start_inde
 	return retval;
 }
 
-
-
+void Utils_RegExpFreeSubstring(char* substring)
+{
+	if (substring) {
+		pcre_free_substring(substring);
+	}
+}
 

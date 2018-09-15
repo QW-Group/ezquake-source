@@ -130,6 +130,7 @@ void CharsToWhite(char* start, char* end);
 
 qbool Utils_RegExpMatch(char *regexp, char *matchstring);
 qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group);
+void Utils_RegExpFreeSubstring(char* substring);
 
 // regexp match support for group operations in scripts
 qbool IsRegexp(const char *str);

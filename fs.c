@@ -1661,14 +1661,14 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 		if (Utils_RegExpGetGroup (regexp, path, (const char **) &inzip_path_found, &result_length, 3))
 		{
 			strlcpy (inzip_path, inzip_path_found, inzip_path_size);
-			Q_free (archive_path_found);
-			Q_free (inzip_path_found);
+			Utils_RegExpFreeSubstring(archive_path_found);
+			Utils_RegExpFreeSubstring(inzip_path_found);
 			return 1;
 		}
 	}
 
-	Q_free (archive_path_found);
-	Q_free (inzip_path_found);
+	Utils_RegExpFreeSubstring(archive_path_found);
+	Utils_RegExpFreeSubstring(inzip_path_found);
 
 	return -1;
 }
