@@ -49,7 +49,7 @@ typedef struct uniform_block_frame_constants_s {
 	int r_fastsky;
 	int r_textureless;
 
-	int r_texture_luma_fb;
+	float unused_r_texture_luma_fb_bmodels;
 
 	// powerup shells round alias models
 	float shellSize;

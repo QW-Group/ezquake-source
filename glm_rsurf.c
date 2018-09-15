@@ -130,8 +130,8 @@ static void Compile_DrawWorldProgram(void)
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
-		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
-		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
+		(r_drawflat.integer != 1 && luma_textures ? DRAW_LUMA_TEXTURES : 0) |
+		(r_drawflat.integer != 1 && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
@@ -154,8 +154,10 @@ static void Compile_DrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
-		if (luma_textures && r_drawflat.integer != 1) {
-			strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
+		if (r_drawflat.integer != 1) {
+			if (luma_textures) {
+				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
+			}
 			if (gl_fb_bmodels.integer) {
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES_FB\n", sizeof(included_definitions));
 			}

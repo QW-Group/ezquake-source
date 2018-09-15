@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "r_texture.h"
 #include "r_brushmodel.h"
+#include "image.h"
+#include "r_renderer.h"
 
 /* Some id maps have textures with identical names but different looks.
 We hardcode a list of names, checksums and alternative names to provide a way
@@ -74,6 +76,14 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 {
 	char *name, *altname, *mapname, *groupname;
 	int luma_mode = TEX_LUMA;
+	int material_width = 0;
+	int material_height = 0;
+	int luma_width = 0;
+	int luma_height = 0;
+	byte* material_pixels = NULL;
+	byte* luma_pixels = NULL;
+	char texture_path[MAX_OSPATH];
+	extern cvar_t gl_lumatextures;
 
 	if (!R_ExternalTexturesEnabled(loadmodel->isworldmodel)) {
 		return false;
@@ -83,38 +93,67 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 	altname = TranslateTextureName(tx);
 	mapname = TP_MapName();
 	groupname = TP_GetMapGroupName(mapname, NULL);
+	texture_path[0] = '\0';
 
 	if (loadmodel->isworldmodel) {
-		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag);
-		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
-		}
-		else if (groupname) {
-			tx->gl_texturenum = R_LoadTextureImage(va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag);
-			if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-				tx->fb_texturenum = R_LoadTextureImage(va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | luma_mode);
-			}
+		strlcpy(texture_path, "textures/", sizeof(texture_path));
+		strlcat(texture_path, mapname, sizeof(texture_path));
+		strlcat(texture_path, "/", sizeof(texture_path));
+		strlcat(texture_path, name, sizeof(texture_path));
+
+		material_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | brighten_flag, &material_width, &material_height);
+		if (!material_pixels && groupname) {
+			strlcpy(texture_path, "textures/", sizeof(texture_path));
+			strlcat(texture_path, groupname, sizeof(texture_path));
+			strlcat(texture_path, "/", sizeof(texture_path));
+			strlcat(texture_path, name, sizeof(texture_path));
+
+			material_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | brighten_flag, &material_width, &material_height);
 		}
 	}
 	else {
-		tx->gl_texturenum = R_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag);
-		if (!R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = R_LoadTextureImage(va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
-		}
+		strlcpy(texture_path, "textures/bmodels/", sizeof(texture_path));
+		strlcat(texture_path, name, sizeof(texture_path));
+
+		material_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | brighten_flag, &material_width, &material_height);
 	}
 
-	if (!R_TextureReferenceIsValid(tx->gl_texturenum) && altname) {
-		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", altname), altname, 0, 0, mode | brighten_flag);
-		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | luma_mode);
-		}
+	if (!material_pixels && altname) {
+		strlcpy(texture_path, "textures/", sizeof(texture_path));
+		strlcat(texture_path, altname, sizeof(texture_path));
+
+		material_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | brighten_flag, &material_width, &material_height);
 	}
 
-	if (!R_TextureReferenceIsValid(tx->gl_texturenum)) {
-		tx->gl_texturenum = R_LoadTextureImage(va("textures/%s", name), name, 0, 0, mode | brighten_flag);
-		if (R_TextureReferenceIsValid(tx->gl_texturenum) && !Mod_IsTurbTextureName(loadmodel, name)) {
-			tx->fb_texturenum = R_LoadTextureImage(va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | luma_mode);
+	if (!material_pixels) {
+		strlcpy(texture_path, "textures/", sizeof(texture_path));
+		strlcat(texture_path, name, sizeof(texture_path));
+
+		material_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | brighten_flag, &material_width, &material_height);
+	}
+
+	// Try and load the corresponding luma
+	if (material_pixels && !Mod_IsTurbTextureName(loadmodel, name)) {
+		strlcat(texture_path, "_luma", sizeof(texture_path));
+
+		luma_pixels = R_LoadImagePixels(texture_path, 0, 0, mode | luma_mode, &luma_width, &luma_height);
+	}
+
+	// resize luma if dimensions don't match material
+	if (R_LumaTexturesMustMatchDimensions() && material_pixels && luma_pixels) {
+		// make sure sizes match (so they fit in array): the shader still has to read from both alpha-material & luma
+		R_TextureRescaleOverlay(&luma_pixels, &luma_width, &luma_height, material_width, material_height);
+	}
+
+	// Load into renderer
+	if (material_pixels) {
+		tx->gl_texturenum = R_LoadTexturePixels(material_pixels, name, material_width, material_height, mode);
+		if (luma_pixels) {
+			tx->fb_texturenum = R_LoadTexturePixels(luma_pixels, va("@fb_%s", name), luma_width, luma_height, mode | luma_mode);
+			Q_free(luma_pixels);
 		}
+
+		Q_free(material_pixels);
 	}
 
 	tx->isLumaTexture = R_TextureReferenceIsValid(tx->fb_texturenum);

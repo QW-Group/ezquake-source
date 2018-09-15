@@ -13,12 +13,9 @@ layout(location = 7) in int vboFlags;
 layout(location = 8) in vec3 flatColor;
 layout(location = 9) in int surfaceNumber;
 
-#define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
-#define EZQ_SURFACE_DETAIL     64   // surface should have detail texture applied
-
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
-#ifdef DRAW_LUMA_TEXTURES
+#if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 out vec3 LumaCoord;
 #endif
 #ifdef DRAW_DETAIL_TEXTURES
@@ -57,7 +54,7 @@ void main()
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif
-#ifdef DRAW_LUMA_TEXTURES
+#if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 		LumaCoord = TextureCoord;
 #endif
 	}
@@ -68,7 +65,7 @@ void main()
 		TextureCoord = vec3(tex, materialArrayIndex);
 #endif
 
-#ifdef DRAW_LUMA_TEXTURES
+#if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 		LumaCoord = (Flags & EZQ_SURFACE_HAS_LUMA) == EZQ_SURFACE_HAS_LUMA ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
 #endif
 		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);

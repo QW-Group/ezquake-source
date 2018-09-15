@@ -141,8 +141,6 @@ void GLM_PreRenderView(void)
 
 	PASS_COLOR_AS_4F(frameConstants.r_skycolor, r_skycolor);
 
-	frameConstants.r_texture_luma_fb = gl_fb_bmodels.integer ? 1 : 0;
-
 	// Alias models
 	{
 		extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;
