@@ -2146,7 +2146,6 @@ static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel)
 	}
 
 	// Change to the new folder in the demo browser.
-	// FIXME: this did't work
 	Menu_Demo_NewHome(string);
 }
 

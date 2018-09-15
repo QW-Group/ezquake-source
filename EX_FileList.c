@@ -129,13 +129,34 @@ void FL_SetCurrentDir(filelist_t *fl, const char *dir)
 {
 	char buf[MAX_PATH+1];
 
-	if (Sys_fullpath(buf, dir, MAX_PATH+1) == NULL)
+	if (Sys_fullpath(buf, dir, MAX_PATH + 1) == NULL) {
 		return;
+	}
 
-	if (strlen(buf) > MAX_PATH)    // Should never fail in this
+	if (strlen(buf) > MAX_PATH) {
+		// Should never fail in this
 		return;
+	}
 
-	strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
+	// Try changing directory, block if this fails
+	{
+		char olddir[MAX_PATH + 1];
+
+		// Save the current directory. (we want to restore this later)
+		if (Sys_getcwd(olddir, MAX_PATH + 1) == NULL) {
+			return;
+		}
+
+		// Change to the new dir.
+		if (!Sys_chdir(buf)) {
+			return;
+		}
+
+		// restore
+		Sys_chdir(olddir);
+	}
+
+	strlcpy(fl->current_dir, buf, sizeof(fl->current_dir));
 	fl->need_refresh = true;
 }
 
