@@ -51,6 +51,7 @@ typedef enum {
 	r_blendfunc_src_zero_dest_src_color,
 	r_blendfunc_src_one_dest_zero,
 	r_blendfunc_src_zero_dest_one,
+	r_blendfunc_src_one_dest_one_minus_src_color,
 
 	r_blendfunc_count
 } r_blendfunc_t;
@@ -255,7 +256,14 @@ typedef enum {
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
 
-	r_state_postprocess_bloom,
+	r_state_postprocess_bloom1,
+	r_state_postprocess_bloom2,
+	r_state_postprocess_bloom_darkenpass,
+	r_state_postprocess_bloom_blurpass,
+	r_state_postprocess_bloom_downsample,
+	r_state_postprocess_bloom_downsample_blend,
+	r_state_postprocess_bloom_restore,
+	r_state_postprocess_bloom_draweffect,
 
 	r_state_light_bubble,
 	r_state_chaticon,

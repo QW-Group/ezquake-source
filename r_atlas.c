@@ -212,7 +212,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 			input_image = prev_atlas_texels;
 		}
 		else {
-			renderer.TextureGet(pic->texnum, ATLAS_SIZE_IN_BYTES, buffer);
+			renderer.TextureGet(pic->texnum, ATLAS_SIZE_IN_BYTES, buffer, 4);
 
 			input_image = buffer;
 		}
@@ -313,7 +313,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	source = Q_malloc(texWidth * texHeight * 4);
 	target = Q_malloc(texWidth * texHeight * 4);
 
-	renderer.TextureGet(ibar->texnum, texWidth * texHeight * 4, source);
+	renderer.TextureGet(ibar->texnum, texWidth * texHeight * 4, source, 4);
 	for (i = WADPIC_SB_IBAR_AMMO1; i <= WADPIC_SB_IBAR_AMMO4; ++i) {
 		int num = i - WADPIC_SB_IBAR_AMMO1;
 		int y;
@@ -369,7 +369,7 @@ void CachePics_CreateAtlas(void)
 	atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	prev_atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	if (R_TextureReferenceIsValid(atlas_texnum)) {
-		renderer.TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels);
+		renderer.TextureGet(atlas_texnum, ATLAS_SIZE_IN_BYTES, prev_atlas_texels, 4);
 	}
 	memset(atlas_allocated, 0, sizeof(atlas_allocated));
 	memset(wadpics, 0, sizeof(wadpics));

@@ -486,13 +486,9 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 #ifdef BLOOM_SUPPORTED
-	Cvar_Register(&r_bloom);
-	Cvar_Register(&r_bloom_darken);
-	Cvar_Register(&r_bloom_alpha);
-	Cvar_Register(&r_bloom_diamond_size);
-	Cvar_Register(&r_bloom_intensity);
-	Cvar_Register(&r_bloom_sample_size);
-	Cvar_Register(&r_bloom_fast_sample);
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	GLC_BloomRegisterCvars();
+#endif
 #endif
 	Cvar_Register(&r_drawentities);
 	Cvar_Register(&r_lerpframes);

@@ -166,7 +166,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 			applyHWGamma(buffer, buffersize);
 			success = Image_WritePNG(
 				name, image_png_compression_level.value,
-				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
 			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_PNG_STATIC
 		}
@@ -192,7 +192,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 			applyHWGamma(buffer, buffersize);
 			success = Image_WriteJPEG(
 				name, image_jpeg_quality_level.value,
-				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
 			) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #ifndef WITH_JPEG_STATIC
 		}
@@ -218,7 +218,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 			buffer[i + 2] = temp;
 		}
 		applyHWGamma(buffer, buffersize);
-		success = Image_WriteTGA(name, buffer, glwidth, glheight) ? SSHOT_SUCCESS : SSHOT_FAILED;
+		success = Image_WriteTGA(name, buffer, target_params->width, target_params->height) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
 	if (target_params->freeMemory) {

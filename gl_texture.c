@@ -281,7 +281,7 @@ void GL_TextureCompressionSet(qbool enabled)
 	gl_solid_format = (enabled ? GL_COMPRESSED_RGB_ARB : GL_RGB8);
 }
 
-void GL_TextureGet(texture_ref texture, int buffer_size, byte* buffer)
+void GL_TextureGet(texture_ref texture, int buffer_size, byte* buffer, int bpp)
 {
-	GL_GetTexImage(GL_TEXTURE0, texture, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer_size, buffer);
+	GL_GetTexImage(GL_TEXTURE0, texture, 0, bpp == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, buffer_size, buffer);
 }

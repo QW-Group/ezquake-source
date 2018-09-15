@@ -166,14 +166,34 @@ static void R_Initialise2DStates(void)
 	R_GLC_EnableAlphaTesting(state);
 
 #ifdef BLOOM_SUPPORTED
-	state = R_InitRenderingState(&glcBloomState, true, "glcBloomState", postprocess_vao);
-	glcBloomState.depth.test_enabled = false;
-	glcBloomState.cullface.enabled = false;
+	state = R_InitRenderingState(r_state_postprocess_bloom1, true, "glcBloomState", postprocess_vao);
+	state->depth.test_enabled = false;
+	state->cullface.enabled = false;
 	R_GLC_EnableAlphaTesting(state);
-	glcBloomState.blendingEnabled = true;
-	glcBloomState.blendFunc = r_blendfunc_additive_blending;
-	glcBloomState.color[0] = glcBloomState.color[1] = glcBloomState.color[2] = r_bloom_alpha.value;
-	glcBloomState.color[3] = 1.0f;
+	state->blendingEnabled = false;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_darkenpass, r_state_postprocess_bloom1, "glcBloomState-darken");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_src_dst_color_dest_zero;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_blurpass, r_state_postprocess_bloom1, "glcBloomState-blur");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_src_one_dest_one_minus_src_color;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_downsample, r_state_postprocess_bloom1, "glcBloomState-downsamp");
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_downsample_blend, r_state_postprocess_bloom1, "glcBloomState-downsamp-blend");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_restore, r_state_postprocess_bloom1, "glcBloomState-restore");
+
+	state = R_CopyRenderingState(r_state_postprocess_bloom_draweffect, r_state_postprocess_bloom1, "glcBloomState-restore");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 #endif
 

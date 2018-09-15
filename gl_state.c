@@ -106,8 +106,32 @@ static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 static opengl_state_t opengl;
 static GLenum glDepthFunctions[r_depthfunc_count];
 static GLenum glCullFaceValues[r_cullface_count];
-static GLenum glBlendFuncValuesSource[r_blendfunc_count];
-static GLenum glBlendFuncValuesDestination[r_blendfunc_count];
+static GLenum glBlendFuncValuesSource[] = {
+	GL_ONE, // r_blendfunc_overwrite,
+	GL_ONE, // r_blendfunc_additive_blending,
+	GL_ONE, // r_blendfunc_premultiplied_alpha,
+	GL_DST_COLOR, // r_blendfunc_src_dst_color_dest_zero,
+	GL_DST_COLOR, // r_blendfunc_src_dst_color_dest_one,
+	GL_DST_COLOR, // r_blendfunc_src_dst_color_dest_src_color,
+	GL_ZERO, // r_blendfunc_src_zero_dest_one_minus_src_color,
+	GL_ZERO, // r_blendfunc_src_zero_dest_src_color,
+	GL_ONE, // r_blendfunc_src_one_dest_zero,
+	GL_ZERO, // r_blendfunc_src_zero_dest_one,
+	GL_ONE, // r_blendfunc_src_one_dest_one_minus_src_color,
+};
+static GLenum glBlendFuncValuesDestination[] = {
+	GL_ZERO, // r_blendfunc_overwrite,
+	GL_ONE, // r_blendfunc_additive_blending,
+	GL_ONE_MINUS_SRC_ALPHA, // r_blendfunc_premultiplied_alpha,
+	GL_ZERO, // r_blendfunc_src_dst_color_dest_zero,
+	GL_ONE, // r_blendfunc_src_dst_color_dest_one,
+	GL_SRC_COLOR, // r_blendfunc_src_dst_color_dest_src_color,
+	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_zero_dest_one_minus_src_color,
+	GL_SRC_COLOR, // r_blendfunc_src_zero_dest_src_color,
+	GL_ZERO, // r_blendfunc_src_one_dest_zero,
+	GL_ONE, // r_blendfunc_src_zero_dest_one,
+	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_one_dest_one_minus_src_color,
+};
 static GLenum glPolygonModeValues[r_polygonmode_count];
 static GLenum glAlphaTestModeValues[r_alphatest_func_count];
 static GLenum glTextureEnvModeValues[] = {
@@ -115,6 +139,8 @@ static GLenum glTextureEnvModeValues[] = {
 };
 
 #ifdef C_ASSERT
+C_ASSERT(sizeof(glBlendFuncValuesSource) / sizeof(glBlendFuncValuesSource[0]) == r_blendfunc_count);
+C_ASSERT(sizeof(glBlendFuncValuesDestination) / sizeof(glBlendFuncValuesDestination[0]) == r_blendfunc_count);
 C_ASSERT(sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]) == r_texunit_mode_count);
 #endif
 
@@ -444,26 +470,6 @@ void GL_InitialiseState(void)
 	glDepthFunctions[r_depthfunc_lessorequal] = GL_LEQUAL;
 	glCullFaceValues[r_cullface_back] = GL_BACK;
 	glCullFaceValues[r_cullface_front] = GL_FRONT;
-	glBlendFuncValuesSource[r_blendfunc_overwrite] = GL_ONE;
-	glBlendFuncValuesSource[r_blendfunc_additive_blending] = GL_ONE;
-	glBlendFuncValuesSource[r_blendfunc_premultiplied_alpha] = GL_ONE;
-	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_zero] = GL_DST_COLOR;
-	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_one] = GL_DST_COLOR;
-	glBlendFuncValuesSource[r_blendfunc_src_dst_color_dest_src_color] = GL_DST_COLOR;
-	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ZERO;
-	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_src_color] = GL_ZERO;
-	glBlendFuncValuesSource[r_blendfunc_src_one_dest_zero] = GL_ONE;
-	glBlendFuncValuesSource[r_blendfunc_src_zero_dest_one] = GL_ZERO;
-	glBlendFuncValuesDestination[r_blendfunc_overwrite] = GL_ZERO;
-	glBlendFuncValuesDestination[r_blendfunc_additive_blending] = GL_ONE;
-	glBlendFuncValuesDestination[r_blendfunc_premultiplied_alpha] = GL_ONE_MINUS_SRC_ALPHA;
-	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_zero] = GL_ZERO;
-	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_one] = GL_ONE;
-	glBlendFuncValuesDestination[r_blendfunc_src_dst_color_dest_src_color] = GL_SRC_COLOR;
-	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_one_minus_src_color] = GL_ONE_MINUS_SRC_COLOR;
-	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_src_color] = GL_SRC_COLOR;
-	glBlendFuncValuesDestination[r_blendfunc_src_one_dest_zero] = GL_ZERO;
-	glBlendFuncValuesDestination[r_blendfunc_src_zero_dest_one] = GL_ONE;
 	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
 	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
 	glAlphaTestModeValues[r_alphatest_func_always] = GL_ALWAYS;

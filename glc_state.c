@@ -472,7 +472,8 @@ void GLC_StateBeginDrawPolygon(void)
 
 void GLC_StateBeginBloomDraw(texture_ref texture)
 {
-	R_ApplyRenderingState(r_state_postprocess_bloom);
+	R_ApplyRenderingState(r_state_postprocess_bloom_draweffect);
+	R_CustomColor(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
 	renderer.TextureUnitBind(0, texture);
 }
 
