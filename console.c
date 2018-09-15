@@ -883,21 +883,14 @@ void Con_DrawNotify(void)
 // Draws the last few lines of output as a custom HUD element.
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols, qbool proportional)
 {
-	int v, i, j, k, idx, draw, offset;
+	int v, i, idx;
 	wchar *text;
 	wchar buf[1024];
-	clrinfo_t clr[sizeof(buf)];
 	float time;
 	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
 	float indent = 0;
 
-	if (notifyCols > (con_linewidth)) {
-		notifyCols = con_linewidth;
-	}
-
-	if (notifyCols < 10) {
-		notifyCols = 10;
-	}
+	notifyCols = bound(10, notifyCols, con_linewidth);
 
 	v = 0;
 	if (notifyLines) {
@@ -906,78 +899,21 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 			if (i < 0) {
 				continue;
 			}
-
 			time = con_times[i % NUM_CON_TIMES];
 			if (time == 0) {
 				continue;
 			}
-
 			time = cls.realtime - time;
 			if (time > timeout) {
 				continue;
 			}
-
-			idx = (i % con_totallines)*con_linewidth;
-			text = con.text + idx;
+			idx = (i % con_totallines) * con_linewidth;
 
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			// Copy current line to buffer
-			offset = 0;
-			draw = 0;
-			for (j = 0; j < con_linewidth; j++) {
-				// each new line of a notify hud element
-				if ((j % notifyCols) == 0 && j != 0) {
-					for (k = 0; k < (j - offset); ++k) {
-						if (buf[k] != ' ') {
-							draw = 1;
-							break;
-						}
-					}
-
-					buf[j - offset] = '\0';
-					offset = j;
-				}
-				else if (j == (con_linewidth - 1)) {
-					// Ending of the string.
-					for (k = 0; k < (j - offset); ++k) {
-						if (buf[k] != ' ') {
-							draw = 1;
-							break;
-						}
-					}
-
-					buf[j - offset] = '\0';
-				}
-
-				// Output.
-				if (draw) {
-					Draw_ConsoleString(
-						posX,
-						v + posY,
-						buf,
-						clr,
-						notifyCols,
-						0,
-						scale,
-						proportional
-					);
-
-					// move text down
-					v += (8 * scale);
-
-					if (v > (notifyLines * scale)) {
-						notifyLines = v;
-					}
-
-					draw = 0;
-				}
-
-				buf[j - offset] = text[j];
-				clr[j - offset] = con.clr[idx + j]; // copy whole color struct
-				clr[j - offset].i = j; // set proper index
-			}
+			Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, notifyCols, 0, scale, proportional);
+			v += (8 * scale);
 		}
 	}
 
