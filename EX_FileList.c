@@ -56,18 +56,19 @@ static double last_search_enter_time = 0.0;
 
 static void OnChange_file_browser_sort_mode(cvar_t *var, char *string, qbool *cancel);
 
-cvar_t  file_browser_show_size       = {"file_browser_show_size",      "1"};
-cvar_t  file_browser_show_date       = {"file_browser_show_date",      "1"};
-cvar_t  file_browser_show_time       = {"file_browser_show_time",      "0"};
-cvar_t  file_browser_sort_mode       = {"file_browser_sort_mode",      "1",	CVAR_NONE, OnChange_file_browser_sort_mode};
-cvar_t  file_browser_show_status     = {"file_browser_show_status",    "1"};
-cvar_t  file_browser_strip_names     = {"file_browser_strip_names",    "1"};
-cvar_t  file_browser_interline       = {"file_browser_interline",      "0"};
-cvar_t  file_browser_scrollnames     = {"file_browser_scrollnames" ,   "1"};
-cvar_t	file_browser_selected_color  = {"file_browser_selected_color", "0 150 235 255", CVAR_COLOR};
-cvar_t  file_browser_file_color      = {"file_browser_file_color",     "255 255 255 255", CVAR_COLOR};
-cvar_t  file_browser_dir_color       = {"file_browser_dir_color",	   "170 80 0 255", CVAR_COLOR};
-cvar_t  file_browser_archive_color   = {"file_browser_archive_color",  "255 170 0 255", CVAR_COLOR};
+static cvar_t  file_browser_show_size       = {"file_browser_show_size",      "1"};
+static cvar_t  file_browser_show_date       = {"file_browser_show_date",      "1"};
+static cvar_t  file_browser_show_time       = {"file_browser_show_time",      "0"};
+static cvar_t  file_browser_sort_mode       = {"file_browser_sort_mode",      "1",	CVAR_NONE, OnChange_file_browser_sort_mode};
+static cvar_t  file_browser_show_status     = {"file_browser_show_status",    "1"};
+static cvar_t  file_browser_strip_names     = {"file_browser_strip_names",    "1"};
+static cvar_t  file_browser_interline       = {"file_browser_interline",      "0"};
+static cvar_t  file_browser_scrollnames     = {"file_browser_scrollnames" ,   "1"};
+static cvar_t  file_browser_selected_color  = {"file_browser_selected_color", "0 150 235 255", CVAR_COLOR};
+static cvar_t  file_browser_file_color      = {"file_browser_file_color",     "255 255 255 255", CVAR_COLOR};
+static cvar_t  file_browser_dir_color       = {"file_browser_dir_color",      "170 80 0 255", CVAR_COLOR};
+static cvar_t  file_browser_archive_color   = {"file_browser_archive_color",  "255 170 0 255", CVAR_COLOR};
+static cvar_t  file_browser_sort_archives   = {"file_browser_sort_archives",  "0",	CVAR_NONE, OnChange_file_browser_sort_mode };
 
 void EX_FileList_Init(void)
 {
@@ -84,6 +85,7 @@ void EX_FileList_Init(void)
 	Cvar_Register(&file_browser_selected_color);
 	Cvar_Register(&file_browser_dir_color);
 	Cvar_Register(&file_browser_archive_color);
+	Cvar_Register(&file_browser_sort_archives);
 	Cvar_ResetCurrentGroup();
 }
 
@@ -422,7 +424,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 		return -1;
 	if (d2->is_archive  && !d1->is_archive)
 		return 1;
-	if (d1->is_archive && d2->is_archive)
+	if (!file_browser_sort_archives.integer && d1->is_archive && d2->is_archive)
 		return strcasecmp(d1->name, d2->name);
 #endif // WITH_ZIP
 
@@ -1994,8 +1996,7 @@ static void OnChange_file_browser_sort_mode(cvar_t *var, char *string, qbool *ca
 	extern filelist_t configs_filelist;
 	extern filelist_t skins_filelist;
 
-	if(host_everything_loaded)
-	{
+	if (host_everything_loaded) {
 		demo_filelist.need_resort		= true;
 		help_index_fl.need_resort		= true;
 		help_tutorials_fl.need_resort	= true;
