@@ -832,51 +832,8 @@ static qbool Con_NotifyMessageLine(float posX, float posY, float width, float he
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify(void)
 {
-	int v, i, idx;
-	float time;
-	float timeout = bound(0, con_notifytime.value, MAX_NOTIFICATION_TIME);
-	float indent = 8;
-	qbool proportional = con_proportional.integer;
-
-	if (!con_notify.value) {
-		return;
-	}
-
-	v = 0;
-	if (_con_notifylines.integer) {
-		int first_line = Con_FirstNotifyLine(_con_notifylines.integer, timeout);
-		if (first_line < 0) {
-			first_line = 0;
-		}
-
-		for (i = first_line; i <= con.current; i++) {
-			if (i < 0) {
-				continue;
-			}
-			time = con_times[i % NUM_CON_TIMES];
-			if (time == 0) {
-				continue;
-			}
-			time = cls.realtime - time;
-			if (time > timeout) {
-				continue;
-			}
-			idx = (i % con_totallines) * con_linewidth;
-
-			clearnotify = 0;
-			scr_copytop = 1;
-
-			Draw_ConsoleString(8, v + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, proportional);
-			v += 8;
-		}
-	}
-
-	if (Con_NotifyMessageLine(indent, v, vid.width - indent, vid.height, 1, proportional)) {
-		v += 8;
-	}
-
-	if (v > con_notifylines) {
-		con_notifylines = v + bound(0, con_shift.value, 8);
+	if (con_notify.integer) {
+		SCR_DrawNotify(8, bound(0, con_shift.value, 8), 1.0f, con_notifytime.value, _con_notifylines.integer, con_linewidth, con_proportional.integer);
 	}
 }
 
@@ -884,8 +841,6 @@ void Con_DrawNotify(void)
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols, qbool proportional)
 {
 	int v, i, idx;
-	wchar *text;
-	wchar buf[1024];
 	float time;
 	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
 	float indent = 0;
