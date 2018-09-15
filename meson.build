@@ -104,6 +104,7 @@ sources = [
 	'cl_parse.c',
 	'cl_pred.c',
 	'cl_screen.c',
+	'cl_skygroups.c',
 	'cl_slist.c',
 	'cl_tcl.c',
 	'cl_tent.c',

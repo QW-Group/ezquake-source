@@ -463,7 +463,8 @@ OBJS_c := \
     cl_multiview.o \
     snd_voip.o \
     cl_screenshot.o \
-    fonts.o
+    fonts.o \
+    cl_skygroups.o
 
 ### Configuration Options ###
 
