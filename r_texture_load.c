@@ -542,7 +542,7 @@ static void R_Upload8(gltexture_t* glt, byte *data, int width, int height, int m
 	image_size = width * height;
 
 	if (image_size * 4 > sizeof(trans)) {
-		Sys_Error("GL_Upload8: image too big");
+		Sys_Error("GL_Upload8: image too big (%s: %dx%d)", glt->identifier[0] ? glt->identifier : "?unknown?", width, height);
 	}
 
 	if (mode & TEX_FULLBRIGHT) {
