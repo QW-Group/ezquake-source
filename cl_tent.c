@@ -751,6 +751,7 @@ void CL_UpdateBeams(void)
 	int beamstodraw, j, k;
 	qbool sparks = false;
 	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
+	vec3_t furthest_sparks;
 	beamstodraw = bound(1, amf_lightning.value, MAX_LIGHTNINGBEAMS);	
 
 	memset (&ent, 0, sizeof(entity_t));
@@ -759,20 +760,20 @@ void CL_UpdateBeams(void)
 	fakeshaft = bound(0, cl_fakeshaft.value, fakeshaft_policy());
 
 	// Update lightning.
-	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)	
-	{
-		if (!b->model || b->endtime < cl.time)
+	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++) {
+		sparks = false;
+
+		if (!b->model || b->endtime < cl.time) {
 			continue;
+		}
 
 		// if coming from the player, update the start position
-		if (b->entity == cl.viewplayernum + 1) 
-		{
+		if (b->entity == cl.viewplayernum + 1) {
 			VectorCopy (cl.simorg, b->start);
 			b->start[2] += cl.crouch + bound(-7, v_viewheight.value, 4);
 			VectorMA(b->start, r_shiftbeam.value, vright, b->start);
 
-			if (fakeshaft && (cl_fakeshaft_extra_updates.value || playerbeam_update))
-			{
+			if (fakeshaft && (cl_fakeshaft_extra_updates.value || playerbeam_update)) {
 				vec3_t	forward, v, org, ang, target_angles, target_origin;
 				float	delta;
 				trace_t	trace;
@@ -784,7 +785,8 @@ void CL_UpdateBeams(void)
 					frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
 					VectorCopy(frame->cmd.angles, target_angles);
 					VectorCopy(frame->playerstate[cl.viewplayernum].origin, target_origin);
-				} else {
+				}
+				else {
 					VectorCopy(cl.simangles, target_angles);
 					VectorCopy(cl.simorg, target_origin);
 				}
@@ -795,16 +797,19 @@ void CL_UpdateBeams(void)
 
 				// Lerp pitch.
 				ang[0] = -ang[0];
-				if (ang[0] < -180)
+				if (ang[0] < -180) {
 					ang[0] += 360;
+				}
 				ang[0] += (target_angles[0] - ang[0]) * fakeshaft;
 
 				// Lerp yaw.
 				delta = target_angles[1] - ang[1];
-				if (delta > 180)
+				if (delta > 180) {
 					delta -= 360;
-				if (delta < -180)
+				}
+				if (delta < -180) {
 					delta += 360;
+				}
 				ang[1] += delta * fakeshaft;
 				ang[2] = 0;
 
@@ -815,44 +820,44 @@ void CL_UpdateBeams(void)
 				VectorAdd (org, forward, b->end);
 
 				trace = PM_TraceLine (org, b->end);
-				if (trace.fraction < 1)
-					VectorCopy (trace.endpos, b->end);
+				if (trace.fraction < 1) {
+					VectorCopy(trace.endpos, b->end);
+				}
 			}
 		}
 
 		// Calculate pitch and yaw.
 		VectorSubtract (b->end, b->start, dist);
 
-		if (dist[1] == 0 && dist[0] == 0) 
-		{
+		if (dist[1] == 0 && dist[0] == 0) {
 			yaw = 0;
 			pitch = (dist[2] > 0) ? 90 : 270;
 		}
-		else 
-		{
+		else {
 			yaw = atan2(dist[1], dist[0]) * 180 / M_PI;
-			if (yaw < 0)
+			if (yaw < 0) {
 				yaw += 360;
+			}
 	
 			forward = sqrt (dist[0]*dist[0] + dist[1]*dist[1]);
 			pitch = atan2(dist[2], forward) * 180 / M_PI;
-			if (pitch < 0)
+			if (pitch < 0) {
 				pitch += 360;
+			}
 		}
 
 		// Add new entities for the lightning.
 		VectorCopy (b->start, org);
 		
-		for (k = 0; k < beamstodraw; k++)
-			VectorCopy (b->start, beamstart[k]);
+		for (k = 0; k < beamstodraw; k++) {
+			VectorCopy(b->start, beamstart[k]);
+		}
 		
 		d = VectorNormalize(dist);
 		VectorScale (dist, 30, dist);
 
-		for ( ; d > 0; d -= 30) 
-		{
-			if (!amf_lightning.value || Rulesets_RestrictParticles())
-			{
+		for ( ; d > 0; d -= 30) {
+			if (!amf_lightning.value || Rulesets_RestrictParticles()) {
 				VectorCopy (org, ent.origin);
 				ent.model = b->model;
 				ent.angles[0] = pitch;
@@ -864,49 +869,47 @@ void CL_UpdateBeams(void)
 
 				CL_AddEntity (&ent);
 			}
-			else
-			{
-				if (!ISPAUSED)
-				{
-					//VULT - Some people might like their lightning beams thicker
-					for (k=0;k<beamstodraw;k++)
-					{
-						VectorAdd (org, dist, beamend[k]);
-						if (!cl.racing) {
-							for (j = 0; j < 3; j++)
-								beamend[k][j] += f_rnd(-lg_size, lg_size);
+			else if (!ISPAUSED) {
+				//VULT - Some people might like their lightning beams thicker
+				for (k = 0; k < beamstodraw; k++) {
+					VectorAdd(org, dist, beamend[k]);
+					if (!cl.racing) {
+						for (j = 0; j < 3; j++) {
+							beamend[k][j] += f_rnd(-lg_size, lg_size);
 						}
-						VX_LightningBeam (beamstart[k], beamend[k]);
-						VectorCopy (beamend[k], beamstart[k]);
 					}
+					VX_LightningBeam(beamstart[k], beamend[k]);
+					VectorCopy(beamend[k], beamstart[k]);
 				}
 			}
 
 			// The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore.
-			if (amf_coronas.value && amf_lightning.value && !ISPAUSED)
-			{
-				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && cl_camera_tpp.integer))
-					NewCorona (C_SMALLLIGHTNING, org);
-				else
-					NewCorona (C_LIGHTNING, org);
+			if (amf_coronas.value && amf_lightning.value && !ISPAUSED) {
+				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && cl_camera_tpp.integer)) {
+					NewCorona(C_SMALLLIGHTNING, org);
+				}
+				else {
+					NewCorona(C_LIGHTNING, org);
+				}
 			}
 
 			VectorAdd (org, dist, org);
 
 			// LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !sparks && !ISPAUSED && !gl_no24bit.integer)
-			{
+			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !ISPAUSED && !gl_no24bit.integer) {
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);
-				if (trace.fraction < 1)
-				{
-					//byte col[3] = {60,100,240};
-					SparkGen (trace.endpos, amf_lightning_color.color, (int)(3*amf_lightning_sparks.value), amf_lightning_sparks_size.value, 0.25);
+				if (trace.fraction < 1) {
+					VectorCopy(trace.endpos, furthest_sparks);
 					sparks = true;
 				}
 			}
 		}
-	}	
+
+		if (sparks) {
+			SparkGen(furthest_sparks, amf_lightning_color.color, (int)(3 * amf_lightning_sparks.value), amf_lightning_sparks_size.value, 0.25);
+		}
+	}
 }
 
 void CL_UpdateExplosions (void) {
