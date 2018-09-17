@@ -23,6 +23,7 @@ typedef enum {
 typedef enum {
 	r_program_uniform_aliasmodel_drawmode,
 	r_program_uniform_brushmodel_outlines,
+	r_program_uniform_brushmodel_sampler,
 	r_program_uniform_sprite3d_alpha_test,
 	r_program_uniform_hud_polygon_color,
 	r_program_uniform_hud_polygon_matrix,

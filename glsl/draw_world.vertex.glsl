@@ -23,7 +23,9 @@ out vec2 DetailCoord;
 #endif
 out vec3 FlatColor;
 out flat int Flags;
+#ifdef DRAW_DYNAMICSAMPLERINDEX
 out flat int SamplerNumber;
+#endif
 out vec3 Direction;
 
 layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
@@ -35,7 +37,6 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMa
 
 void main()
 {
-	int materialSampler = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].sampler;
 	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
 	int drawCallFlags = drawInfo[_instanceId].drawFlags;
 	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
@@ -45,7 +46,9 @@ void main()
 	FlatColor = flatColor;
 	Flags = vboFlags | drawCallFlags | textureFlags;
 
-	SamplerNumber = materialSampler;
+#ifdef DRAW_DYNAMICSAMPLERINDEX
+	SamplerNumber = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].sampler;
+#endif
 
 	if (lightmapNumber < 0) {
 		TextureCoord = vec3(tex, materialArrayIndex);

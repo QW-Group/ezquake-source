@@ -286,6 +286,7 @@ void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* 
 void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride);
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
+void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
 qbool GL_DrawElementsBaseVertexAvailable(void);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);

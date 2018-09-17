@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "r_renderer.h"
 
+// Thought this was okay on ARB_gpu_shader5 (4.0) but it only on nvidia, artifacts on AMD
+// "Note that the NV_gpu_shader5 extension similarly lifts the restriction but does not require non-divergent indexing." - ARB_gpu_shader5
+// Seems to slow down nvidia though, so just ignore for the moment...
+const qbool dynamic_sampler_index = false;
+
 #define GLM_DRAWCALL_INCREMENT 8
 
 void GL_StartWaterSurfaceBatch(void);
@@ -105,6 +110,7 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_FLATWALLS            64
 #define DRAW_LUMA_TEXTURES_FB    128
 #define DRAW_TEXTURELESS         256
+#define DRAW_DYNAMICSAMPLERINDEX 512
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -135,7 +141,8 @@ static void Compile_DrawWorldProgram(void)
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
-		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
+		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
+		(dynamic_sampler_index ? DRAW_DYNAMICSAMPLERINDEX : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
@@ -191,6 +198,9 @@ static void Compile_DrawWorldProgram(void)
 		}
 		if (gl_textureless.integer) {
 			strlcat(included_definitions, "#define DRAW_TEXTURELESS\n", sizeof(included_definitions));
+		}
+		if (dynamic_sampler_index) {
+			strlcat(included_definitions, "#define DRAW_DYNAMICSAMPLERINDEX\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image
@@ -627,6 +637,34 @@ void GLM_PrepareWorldModelBatch(void)
 	R_TraceLeaveNamedRegion();
 }
 
+static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintptr_t offset, int begin, int count)
+{
+	if (dynamic_sampler_index) {
+		GL_MultiDrawElementsIndirect(
+			GL_TRIANGLE_STRIP,
+			GL_UNSIGNED_INT,
+			(void*)offset,
+			count,
+			sizeof(drawcall->worldmodel_requests[0])
+		);
+	}
+	else {
+		int i;
+		for (i = begin; i < begin + count; ++i) {
+			R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, drawcall->mappings[i].samplerIndex);
+			GL_DrawElementsInstancedBaseVertexBaseInstance(
+				GL_TRIANGLE_STRIP,
+				drawcall->worldmodel_requests[i].count,
+				GL_UNSIGNED_INT,
+				(void*)(drawcall->worldmodel_requests[i].firstIndex * sizeof(GLuint)),
+				drawcall->worldmodel_requests[i].instanceCount,
+				drawcall->worldmodel_requests[i].baseVertex,
+				drawcall->worldmodel_requests[i].baseInstance
+			);
+		}
+	}
+}
+
 void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
 	extern buffer_ref vbo_brushElements;
@@ -655,39 +693,20 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
 		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
+			uintptr_t normal_offset = drawcall->indirectDrawOffset + extra_offset;
+			uintptr_t polygonOffset_offset = (extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit);
+
 			if (drawcall->polygonOffsetSplit) {
 				GLM_BeginDrawWorld(type == alpha_surfaces, false);
-				GL_MultiDrawElementsIndirect(
-					GL_TRIANGLE_STRIP,
-					GL_UNSIGNED_INT,
-					(void*)(drawcall->indirectDrawOffset + extra_offset),
-					drawcall->polygonOffsetSplit,
-					sizeof(drawcall->worldmodel_requests[0])
-				);
+				GLM_DrawWorldExecuteCalls(drawcall, normal_offset, 0, drawcall->polygonOffsetSplit);
 			}
 
 			GLM_BeginDrawWorld(type == alpha_surfaces, true);
-			GL_MultiDrawElementsIndirect(
-				GL_TRIANGLE_STRIP,
-				GL_UNSIGNED_INT,
-				(void*)(extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit),
-				drawcall->batch_count - drawcall->polygonOffsetSplit,
-				sizeof(drawcall->worldmodel_requests[0])
-			);
-
-			frameStats.draw_calls += 2;
+			GLM_DrawWorldExecuteCalls(drawcall, polygonOffset_offset, drawcall->polygonOffsetSplit, drawcall->batch_count - drawcall->polygonOffsetSplit);
 		}
 		else {
 			GLM_BeginDrawWorld(type == alpha_surfaces, false);
-			GL_MultiDrawElementsIndirect(
-				GL_TRIANGLE_STRIP,
-				GL_UNSIGNED_INT,
-				(void*)(extra_offset + drawcall->indirectDrawOffset),
-				drawcall->batch_count,
-				sizeof(drawcall->worldmodel_requests[0])
-			);
-
-			frameStats.draw_calls++;
+			GLM_DrawWorldExecuteCalls(drawcall, extra_offset + drawcall->indirectDrawOffset, 0, drawcall->batch_count);
 		}
 
 		if (R_DrawWorldOutlines()) {
@@ -726,22 +745,43 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 		return;
 	}
 
-	req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics, false);
-	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
-		texture_t* tex = model->textures[i];
+	if (dynamic_sampler_index) {
+		req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics, false);
+		for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+			texture_t* tex = model->textures[i];
 
-		if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
-			continue;
+			if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
+				continue;
+			}
+
+			tex = R_TextureAnimation(ent, tex);
+			if (!GLM_AssignTexture(i, tex)) {
+				req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
+				GLM_AssignTexture(i, tex);
+			}
+
+			req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0], tex, i);
+			req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1], tex, i);
 		}
+	}
+	else {
+		for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+			texture_t* tex = model->textures[i];
 
-		tex = R_TextureAnimation(ent, tex);
-		if (!GLM_AssignTexture(i, tex)) {
-			req = GLM_NextBatchRequest(model, 1.0f, model->last_texture_chained - i + 1, i, polygonOffset, caustics, false);
-			GLM_AssignTexture(i, tex);
+			if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
+				continue;
+			}
+
+			req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false);
+			tex = R_TextureAnimation(ent, tex);
+			if (!GLM_AssignTexture(i, tex)) {
+				req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false);
+				GLM_AssignTexture(i, tex);
+			}
+
+			req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0], tex, i);
+			req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1], tex, i);
 		}
-
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0], tex, i);
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1], tex, i);
 	}
 }
 

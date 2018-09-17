@@ -36,7 +36,11 @@ in vec3 LumaCoord;
 #endif
 in vec3 FlatColor;
 in flat int Flags;
+#ifdef DRAW_DYNAMICSAMPLERINDEX
 in flat int SamplerNumber;
+#else
+uniform int SamplerNumber;
+#endif
 in vec3 Direction;
 
 out vec4 frag_colour;

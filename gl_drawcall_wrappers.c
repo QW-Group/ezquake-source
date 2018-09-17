@@ -169,3 +169,10 @@ void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect
 	frameStats.subdraw_calls += drawcount;
 	R_TraceLogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
 }
+
+void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance)
+{
+	qglDrawElementsInstancedBaseVertexBaseInstance(mode, count, type, indices, primcount, basevertex, baseinstance);
+	++frameStats.draw_calls;
+	R_TraceLogAPICall("glDrawElementsInstancedBaseVertexBaseInstance()");
+}

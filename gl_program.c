@@ -64,10 +64,14 @@ typedef enum {
 static void GL_BuildCoreDefinitions(void);
 static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
 
-static const GLenum glBarrierFlags[r_program_memory_barrier_count] = {
+static const GLenum glBarrierFlags[] = {
 	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
 	GL_TEXTURE_FETCH_BARRIER_BIT
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(glBarrierFlags) / sizeof(glBarrierFlags[0]) == r_program_memory_barrier_count);
+#endif
 
 enum {
 	shadertype_vertex,
@@ -112,11 +116,13 @@ typedef struct {
 	int int_value;
 } r_program_uniform_t;
 
-static r_program_uniform_t program_uniforms[r_program_uniform_count] = {
+static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_aliasmodel_drawmode
 	{ r_program_aliasmodel, "mode", 1, false },
 	// r_program_uniform_brushmodel_outlines
 	{ r_program_brushmodel, "draw_outlines", 1, false },
+	// r_program_uniform_brushmodel_sampler
+	{ r_program_brushmodel, "SamplerNumber", 1, false },
 	// r_program_uniform_sprite3d_alpha_test
 	{ r_program_sprite3d, "alpha_test", 1, false },
 	// r_program_uniform_hud_polygon_color
@@ -140,6 +146,10 @@ static r_program_uniform_t program_uniforms[r_program_uniform_count] = {
 	// r_program_uniform_post_process_glc_contrast,
 	{ r_program_post_process_glc, "contrast", 1, false },
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(program_uniforms) / sizeof(program_uniforms[0]) == r_program_uniform_count);
+#endif
 
 static gl_program_t program_data[r_program_count];
 
