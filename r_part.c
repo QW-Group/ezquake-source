@@ -58,7 +58,7 @@ typedef struct glm_particle_s {
 	byte        gl_color[4];
 } glm_particle_t;
 
-particle_t particles[ABSOLUTE_MAX_PARTICLES];
+qparticle_t particles[ABSOLUTE_MAX_PARTICLES];
 glm_particle_t glparticles[ABSOLUTE_MAX_PARTICLES];
 r_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];
 
@@ -191,7 +191,7 @@ void R_ReadPointFile_f(void)
 	char *s;
 	vec3_t org;
 	int c;
-	particle_t *p;
+	qparticle_t *p;
 	char name[MAX_OSPATH];
 
 	if (!com_serveractive)
@@ -245,7 +245,7 @@ void R_ReadPointFile_f(void)
 void Classic_ParticleExplosion(vec3_t org)
 {
 	int	i, j;
-	particle_t	*p;
+	qparticle_t	*p;
 
 	if (r_explosiontype.value != 9) {
 		CL_ExplosionSprite(org);
@@ -284,7 +284,7 @@ void Classic_ParticleExplosion(vec3_t org)
 void Classic_BlobExplosion(vec3_t org)
 {
 	int i, j;
-	particle_t *p;
+	qparticle_t *p;
 
 	for (i = 0; i < 1024; i++) {
 		if (r_numactiveparticles >= r_numparticles) {
@@ -316,7 +316,7 @@ void Classic_BlobExplosion(vec3_t org)
 void Classic_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
 {
 	int i, j, scale;
-	particle_t *p;
+	qparticle_t *p;
 
 	scale = (count > 130) ? 3 : (count > 20) ? 2 : 1;
 
@@ -342,7 +342,7 @@ void Classic_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
 void Classic_LavaSplash(vec3_t org)
 {
 	int i, j, k;
-	particle_t *p;
+	qparticle_t *p;
 	float vel;
 	vec3_t dir;
 
@@ -377,7 +377,7 @@ void Classic_LavaSplash(vec3_t org)
 void Classic_TeleportSplash(vec3_t org)
 {
 	int i, j, k;
-	particle_t *p;
+	qparticle_t *p;
 	float vel;
 	vec3_t dir;
 
@@ -414,7 +414,7 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail
 	vec3_t point, delta, dir;
 	float len;
 	int i, j, num_particles;
-	particle_t *p;
+	qparticle_t *p;
 	static int tracercount;
 
 	VectorCopy(start, point);
@@ -519,7 +519,7 @@ void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color)
 	vec3_t          move, vec, right, up, dir;
 	float           len, dec, d, c, s;
 	int             i, j;
-	particle_t      *p;
+	qparticle_t      *p;
 
 	VectorCopy(start, move);
 	VectorSubtract(end, start, vec);
@@ -621,7 +621,7 @@ void Classic_ReScaleParticles(void)
 // Prepares particles to be drawn this frame
 static void Classic_PrepareParticles(void)
 {
-	particle_t* p;
+	qparticle_t* p;
 	unsigned char *at;
 	float theAlpha;
 	float scale, r_partscale;
@@ -803,7 +803,7 @@ ParticleFunction(telesplash, TeleportSplash);
 // Moves particles into new locations this frame
 static void Classic_MoveParticles(void)
 {
-	particle_t *p;
+	qparticle_t *p;
 	int i;
 	float time2, time3, time1, dvel, frametime, grav;
 

@@ -69,12 +69,8 @@ typedef struct entity_s {
 
 	//VULT MOTION TRAILS
 	float alpha;
-	
-	//FootStep sounds
-	//int	stepframe;//disabled
 
 	// FIXME: could turn these into a union
-	int						trivial_accept;
 	struct mnode_s			*topnode;		// for bmodels, first world node that splits bmodel, or NULL if not split
 
 	qbool     full_light;
@@ -88,6 +84,7 @@ typedef struct entity_s {
 
 	int       entity_id;
 	int       corona_id;
+	double    particle_time;
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!

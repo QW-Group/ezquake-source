@@ -228,19 +228,19 @@ qbool R_FilterEntity(entity_t* ent)
 		else if (amf_part_fire.integer) {
 			if (ent->model->modhint == MOD_FLAME0) {
 				if (!ISPAUSED) {
-					ParticleFire(ent->origin);
+					ParticleTorchFire(ent);
 				}
 			}
 			else if (ent->model->modhint == MOD_FLAME && cl_flame0_model) {
 				// do we have progs/flame0.mdl?
 				if (!ISPAUSED) {
-					ParticleFire(ent->origin);
+					ParticleTorchFire(ent);
 				}
 				ent->model = cl_flame0_model;
 			}
 			else if (ent->model->modhint == MOD_FLAME2 || ent->model->modhint == MOD_FLAME3) {
 				if (!ISPAUSED) {
-					ParticleFire(ent->origin);
+					ParticleTorchFire(ent);
 				}
 				return true;
 			}

@@ -31,6 +31,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //VULT
 static float varray_vertex[16];
 
+#define FLAME_FRAME_TOTAL      50  // how many sequences we have, per lifetime
+#define FLAME_GRAVITY          10  // how quickly it increases
+
+typedef struct flame_s {
+	vec3_t pos;
+	unsigned char alpha;
+	float size;
+} flame_t;
+
+static flame_t flame_frames[FLAME_FRAME_TOTAL][FLAME_FRAME_TOTAL];
+
+static void R_ParticleFlamePrecalculate(void)
+{
+	for (int i = 0; i < FLAME_FRAME_TOTAL; ++i) {
+		// Create first frame
+		float vel_x = lhrandom(-3, 3); // (rand() % 6) - 3;
+		float vel_y = lhrandom(-3, 3); // (rand() % 6) - 3;
+
+		for (int p = 0; p < FLAME_FRAME_TOTAL; ++p) {
+			float t = (1.0f / FLAME_FRAME_TOTAL) * p;
+			flame_t* f = &flame_frames[(p + i) % FLAME_FRAME_TOTAL][p];
+
+			f->pos[0] = vel_x * t;
+			f->pos[1] = vel_y * t;
+			f->pos[2] = (1 + FLAME_GRAVITY * t * t) * 4;
+			f->alpha = (unsigned char)((1 - (p * 1.0f / FLAME_FRAME_TOTAL)) * 200.0f);
+			f->size = 7 - 3.5 * t * 0.8f;
+		}
+	}
+}
+
 //VULT PARTICLES
 void RainSplash(vec3_t org);
 void ParticleStats (int change);
@@ -429,8 +460,10 @@ void QMB_InitParticles(void)
 
 	// meag: new, 'simple' trails following entities, updated as entity moves
 	QMB_AddParticleType(p_nailtrail, pd_dynamictrail, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_none, R_SIMPLETRAIL_NEAR_ALPHA, 0, 0, pm_trail, 0, 8, &count, "part:entitytrail");
+	QMB_AddParticleType(p_flametorch, pd_torch, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 200, 10, 0, pm_static, 0, 4, &count, "part:flame");
 
 	QMB_SortParticleTypes();
+	R_ParticleFlamePrecalculate();
 
 	qmb_initialized = true;
 }
@@ -449,7 +482,7 @@ void QMB_ClearParticles (void)
 	}
 
 	Q_free(particles);		// free
-	QMB_AllocParticles ();	// and alloc again
+	QMB_AllocParticles();	// and alloc again
 
 	particle_count = 0;
 	memset(particles, 0, r_numparticles * sizeof(particle_t));
@@ -479,7 +512,7 @@ static void QMB_BillboardAddVert(r_sprite3d_vert_t* vert, particle_type_t* type,
 	R_Sprite3DSetVert(vert, x, y, z, s, t, new_color, texture_index);
 }
 
-__inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4], int pos)
+__inline static qbool CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, particle_type_t* type, particle_t * p, vec3_t coord[4])
 {
 	part_blend_info_t* blend = &blend_options[type->blendtype];
 	vec3_t verts[4];
@@ -489,7 +522,7 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 
 	vert = R_Sprite3DAddEntry(type->billboard_type, 4);
 	if (!vert) {
-		return;
+		return false;
 	}
 
 	if (p->rotspeed) {
@@ -522,7 +555,7 @@ __inline static void CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, part
 	R_Sprite3DSetVert(vert++, verts[1][0], verts[1][1], verts[1][2], ptex->coords[p->texindex][0], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
 	R_Sprite3DSetVert(vert++, verts[2][0], verts[2][1], verts[2][2], ptex->coords[p->texindex][2], ptex->coords[p->texindex][1], new_color, ptex->tex_index);
 
-	return;
+	return true;
 }
 
 static void QMB_FillParticleVertexBuffer(void)
@@ -532,7 +565,6 @@ static void QMB_FillParticleVertexBuffer(void)
 	particle_t* p;
 	int i, j, k;
 	int l;
-	int pos = 0;
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
@@ -671,7 +703,7 @@ static void QMB_FillParticleVertexBuffer(void)
 							drawncount++;
 						}
 
-						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, billboard, pos);
+						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, billboard);
 					}
 					else if (pt->drawtype == pd_billboard_vel) {
 						vec3_t up, right;
@@ -686,7 +718,7 @@ static void QMB_FillParticleVertexBuffer(void)
 						VectorNegate(velcoord[2], velcoord[0]);
 						VectorNegate(velcoord[3], velcoord[1]);
 
-						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, velcoord, pos);
+						CALCULATE_PARTICLE_BILLBOARD(ptex, pt, p, velcoord);
 					}
 				}
 			}
@@ -794,6 +826,42 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 			}
 			break;
+		case pd_torch:
+			{
+				particle_texture_t* ptex = &particle_textures[pt->texture];
+
+				for (p = pt->start; p; p = p->next) {
+					int frame = (int)(particle_time * 100) % FLAME_FRAME_TOTAL;
+					int i;
+
+					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					if (first) {
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						first = false;
+					}
+
+					// render multiple billboards
+					for (i = 0; i < FLAME_FRAME_TOTAL; ++i) {
+						particle_t part = *p;
+						flame_t* flame = &flame_frames[frame][i];
+
+						VectorAdd(part.org, flame->pos, part.org);
+						if (amf_part_firecolor.string[0]) {
+							VectorCopy(amf_part_firecolor.color, part.color);
+						}
+						part.color[3] = flame->alpha;
+						part.size = flame->size;
+
+						if (!CALCULATE_PARTICLE_BILLBOARD(ptex, pt, &part, billboard)) {
+							break;
+						}
+					}
+				}
+			}
+			break;
 		default:
 			assert(!"QMB_DrawParticles: unexpected drawtype");
 			break;
@@ -825,9 +893,21 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 		return;
 	}
 
-	if (pt->move == pm_trail) {
+	if (pt->move == pm_trail || pt->drawtype == pd_torch) {
+		extern cvar_t r_drawflame;
+		qbool remove = false;
+
+		remove |= (pt->drawtype == pd_torch && (!amf_part_fire.integer || !r_drawflame.integer));
+		remove |= (p->entity_ref && cls.state != ca_active);
+
+		if (remove) {
+			p->entity_ref = 0;
+			p->start = p->die = 0;
+			return;
+		}
+
 		// velocity isn't used, accel etc is irrelevant...
-		if (p->entity_ref) {
+		if (p->entity_ref > 0) {
 			centity_t* cent = &cl_entities[p->entity_ref];
 
 			if (cent->trailnumber == p->entity_trailnumber && cent->sequence == cl.validsequence) {
@@ -851,6 +931,19 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 				// length should be reducing as it dies
 				//p->size = p->;
 				//VectorMA(p->endorg, p->size, diff, p->org);
+			}
+		}
+		else if (p->entity_ref < 0) {
+			entity_t* sent = &cl_static_entities[-p->entity_ref - 1];
+
+			if (sent->visframe >= r_framecount - 1) {
+				sent->particle_time = particle_time;
+				p->start = particle_time;
+				p->die = particle_time + 0.8f;
+			}
+			else {
+				// kill it immediately
+				p->start = p->die = 0;
 			}
 		}
 		return;
@@ -1037,10 +1130,12 @@ static void QMB_UpdateParticles(void)
 				ParticleStats(-1);
 				p = *prev;
 			}
-			else if (particle_time >= p->start) {
-				particle_count++;
+			else {
+				if (particle_time >= p->start) {
+					particle_count++;
 
-				QMB_ProcessParticle(pt, p);
+					QMB_ProcessParticle(pt, p);
+				}
 
 				prev = &p->next;
 				p = p->next;

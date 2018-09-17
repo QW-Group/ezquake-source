@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 
+#define MIN_ENTITY_PARTICLE_FRAMETIME (0.1)
 #define ONE_FRAME_ONLY	(0.0001)
 
 static float alphatrail_s;
@@ -122,7 +123,7 @@ static byte *ColorForParticle(part_type_t type)
 		_p->entity_trailnumber = 0;                         \
 		ParticleStats(1);		//VULT PARTICLES
 
-__inline static void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir)
+__inline static void AddParticleEnt(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir, int entity_id)
 {
 	byte *color;
 	int i, j;
@@ -147,6 +148,8 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 	for (i = 0; i < count && free_particles; i++) {
 		color = col ? col : ColorForParticle(type);
 		INIT_NEW_PARTICLE(pt, p, color, size, time);
+		p->entity_ref = entity_id;
+		p->entity_trailnumber = 0;
 
 		switch (type) {
 			case p_spark:
@@ -329,6 +332,10 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 				VectorCopy(org, p->org);
 				VectorCopy(dir, p->vel);
 				break;
+			case p_flametorch:
+				VectorCopy(org, p->org);
+				VectorCopy(dir, p->vel);
+				break;
 			default:
 				assert(!"AddParticle: unexpected type");
 				break;
@@ -336,6 +343,11 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 
 		QMB_ProcessParticle(pt, p);
 	}
+}
+
+__inline static void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir)
+{
+	AddParticleEnt(type, org, count, size, time, col, dir, 0);
 }
 
 __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end, float size, float time, col_t col, int entity_ref)
@@ -727,6 +739,39 @@ void FuelRodExplosion(vec3_t org)
 
 //VULT PARTICLES
 //Not much, but anything is better than that alias torch
+void ParticleTorchFire(entity_t* ent)
+{
+	col_t color = { 255,100,25, 128 };
+	int	contents;
+
+	if (ent->entity_id) {
+		entity_t* sent = &cl_static_entities[ent->entity_id - 1];
+		if (r_refdef2.time - sent->particle_time < MIN_ENTITY_PARTICLE_FRAMETIME) {
+			return;
+		}
+		sent->particle_time = r_refdef2.time;
+
+		AddParticleEnt(p_flametorch, ent->origin, 1, 7, 0.8f, color, zerodir, -ent->entity_id);
+	}
+	else {
+		contents = TruePointContents(ent->origin);
+		if (ISUNDERWATER(contents)) {
+			AddParticle(p_bubble, ent->origin, 1, 2.8, 2.5, NULL, zerodir);
+		}
+		else {
+			vec3_t end;
+			trace_t trace;
+
+			VectorCopy(ent->origin, end);
+			end[2] += 32;
+			trace = PM_TraceLine(ent->origin, end);
+
+			AddParticle(p_flame, ent->origin, 1, 7, 0.8 * trace.fraction, amf_part_firecolor.string[0] ? StringToRGB(amf_part_firecolor.string) : color, zerodir);
+		}
+	}
+}
+
+// This is only used by lava surface effect now
 void ParticleFire(vec3_t org)
 {
 	col_t color = { 255,100,25, 128 };
@@ -1517,8 +1562,6 @@ void ParticleAlphaTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, float si
 }
 
 //MEAG: Draw thin trail for nails etc
-#define MIN_ENTITY_PARTICLE_FRAMETIME (0.1)
-
 void ParticleNailTrail(vec3_t start, vec3_t end, centity_t* client_ent, float size, float life)
 {
 	if (r_refdef2.time - client_ent->particle_time < MIN_ENTITY_PARTICLE_FRAMETIME) {

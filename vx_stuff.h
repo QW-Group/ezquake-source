@@ -168,6 +168,7 @@ void VXNailhit(vec3_t org, float count);
 void FuelRodExplosion(vec3_t org);
 void Init_VLights(void);
 void ParticleFire(vec3_t org);
+void ParticleTorchFire(entity_t* ent);
 void VX_TeslaCharge(vec3_t org);
 
 void VX_LightningBeam(vec3_t start, vec3_t end);

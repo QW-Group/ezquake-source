@@ -1071,6 +1071,7 @@ void CL_ClearState (void)
 	memset(cl_dlight_active, 0, sizeof(cl_dlight_active));
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
+	memset(cl_static_entities, 0, sizeof(cl_static_entities));
 
 	// Set default viewheight for mvd, we copy cl.players[].stats[] to cl_stats[] in Cam_Lock() when pov changes.
 	for (i = 0; i < MAX_CLIENTS; i++)

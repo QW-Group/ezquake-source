@@ -79,6 +79,7 @@ static const char* batch_type_names[] = {
 	"PARTICLES_NEW_p_slimebubble",
 	"PARTICLES_NEW_p_blacklavasmoke",
 	"PARTICLES_NEW_p_entitytrail",
+	"PARTICLES_NEW_p_flametorch",
 	"FLASHBLEND_LIGHTS",
 	"CORONATEX_STANDARD",
 	"CORONATEX_GUNFLASH",
