@@ -257,4 +257,6 @@ extern cvar_t	con_bindphysical;
 extern unsigned int windows_keys_down, windows_keys_up;
 #endif
 
+qbool Key_IsConsoleToggle(int key);
+
 #endif // _KEYS_H_ 

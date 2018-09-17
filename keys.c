@@ -1981,7 +1981,7 @@ void Mouse_MoveEvent(void)
 	Mouse_EventDispatch();  // so just dispatch the message with new state
 }
 
-static qbool Key_IsConsoleToggle (int key)
+qbool Key_IsConsoleToggle (int key)
 {
 	return (key == '`' || key == '~');
 }

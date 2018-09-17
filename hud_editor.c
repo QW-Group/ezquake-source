@@ -2563,8 +2563,8 @@ void HUD_Editor_Key(int key, int unichar, qbool down)
 	EZ_tree_KeyEvent(&help_control_tree, key, unichar, down);
 
 	M_FindKeysForCommand("toggleconsole", togglekeys);
-	if ((key == togglekeys[0]) || (key == togglekeys[1]))
-	{
+	if (Key_IsConsoleToggle(key) || (key == togglekeys[0]) || (key == togglekeys[1])) {
+		HUD_Editor_Toggle_f();
 		Con_ToggleConsole_f();
 		return;
 	}
