@@ -44,15 +44,21 @@ extern unsigned d_8to24table2[256];
 
 extern int anisotropy_ext;
 
-static GLint glTextureMinificationOptions[texture_minification_count] = {
+static GLint glTextureMinificationOptions[] = {
 	GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR
 };
-static GLint glTextureMagnificationOptions[texture_magnification_count] = {
+static GLint glTextureMagnificationOptions[] = {
 	GL_NEAREST, GL_LINEAR
 };
-static GLenum glTextureTargetForType[texture_type_count] = {
+static GLenum glTextureTargetForType[] = {
 	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(glTextureMinificationOptions) / sizeof(glTextureMinificationOptions[0]) == texture_minification_count);
+C_ASSERT(sizeof(glTextureMagnificationOptions) / sizeof(glTextureMagnificationOptions[0]) == texture_magnification_count);
+C_ASSERT(sizeof(glTextureTargetForType) / sizeof(glTextureTargetForType[0]) == texture_type_count);
+#endif
 
 static int GL_InternalFormat(int mode)
 {

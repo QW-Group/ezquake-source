@@ -1153,6 +1153,7 @@ static void VID_SDL_Init(void)
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
 	{
+		extern cvar_t gl_gammacorrection;
 		int i;
 		int vid_options[] = {
 			// Try to get everything they ask for...
@@ -1173,8 +1174,6 @@ static void VID_SDL_Init(void)
 
 		while (true) {
 			for (i = 0, sdl_window = NULL; sdl_window == NULL && i < sizeof(vid_options) / sizeof(vid_options[0]); ++i) {
-				extern cvar_t gl_gammacorrection;
-
 				if ((vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer <= 0) {
 					continue;
 				}
@@ -1239,6 +1238,11 @@ static void VID_SDL_Init(void)
 
 		if (!(vid_options[i] & VID_ACCELERATED) && !COM_CheckParm(cmdline_param_client_unaccelerated_visuals)) {
 			Com_Printf("WARNING: Using unaccelerated graphics\n");
+		}
+
+		if (gl_gammacorrection.integer && !(vid_options[i] & VID_GAMMACORRECTED)) {
+			Com_Printf("WARNING: Not able to apply gamma-correction\n");
+			Cvar_LatchedSetValue(&gl_gammacorrection, 0);
 		}
 	}
 

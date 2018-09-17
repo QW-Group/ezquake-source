@@ -281,8 +281,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		state->polygonMode = r_polygonmode_fill;
 		state->blendFunc = r_blendfunc_premultiplied_alpha;
 		R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
-
-		state->framebuffer_srgb = (gl_gammacorrection.integer > 0);
+		state->framebuffer_srgb = true;
 	}
 
 	state->initialized = true;
@@ -355,7 +354,9 @@ void GL_ApplyRenderingState(r_state_id id)
 		glDepthMask((current->depth.mask_enabled = state->depth.mask_enabled) ? GL_TRUE : GL_FALSE);
 		R_TraceLogAPICall("glDepthMask(%s)", current->depth.mask_enabled ? "on" : "off");
 	}
-	GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
+	if (gl_gammacorrection.integer) {
+		GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
+	}
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);
 	GL_ApplySimpleToggle(state, current, line.smooth, GL_LINE_SMOOTH);
 
