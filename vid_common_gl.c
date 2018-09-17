@@ -45,10 +45,6 @@ static void GL_CheckMultiTextureExtensions(void);
 static void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
 
 static cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
-static cvar_t gl_maxtmu2                 = {"gl_maxtmu2", "0", CVAR_LATCH};
-
-// GL_ARB_texture_non_power_of_two
-cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
 /************************************* EXTENSIONS *************************************/
 
@@ -161,11 +157,11 @@ static void GL_PopulateConfig(void)
 	}
 }
 
-static void GL_CheckExtensions(void)
+// meag: EXT => ARB didn't change value of constants, so still using _EXT versions
+static void GL_CheckAnisotropyExtensions(void)
 {
-	GL_CheckMultiTextureExtensions();
-
-	if (SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
+	anisotropy_ext = 0;
+	if (GL_VersionAtLeast(4, 6) || SDL_GL_ExtensionSupported("GL_ARB_texture_filter_anisotropic") || SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;
 
 		anisotropy_ext = 1;
@@ -174,22 +170,28 @@ static void GL_CheckExtensions(void)
 
 		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n", gl_anisotropy_factor_max);
 	}
+}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_texture_compression")) {
+static void GL_CheckTextureCompressionExtensions(void)
+{
+	if (GL_VersionAtLeast(1, 3) || SDL_GL_ExtensionSupported("GL_ARB_texture_compression")) {
 		Com_Printf_State(PRINT_OK, "Texture compression extensions found\n");
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 		Cvar_Register(&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
 	}
+}
 
-	// GL_ARB_texture_non_power_of_two
-	{
-		qbool supported = gl_ext_arb_texture_non_power_of_two.integer && SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two");
+static void GL_CheckNPOTTextureExtensions(void)
+{
+	qbool supported = false;
 
-		R_SetNonPowerOfTwoSupport(supported);
-
-		Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", supported ? "found" : "not found");
+	if (!COM_CheckParm(cmdline_param_client_no_npot_textures)) {
+		supported = (GL_VersionAtLeast(2, 0) || SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two"));
 	}
+
+	R_SetNonPowerOfTwoSupport(supported);
+	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", supported ? "found" : "not found");
 }
 
 static void GL_CheckMultiTextureExtensions(void)
@@ -213,7 +215,7 @@ static void GL_CheckMultiTextureExtensions(void)
 
 	gl_textureunits = min(glConfig.texture_units, 4);
 
-	if (COM_CheckParm(cmdline_param_client_maximum2textureunits) || gl_maxtmu2.value) {
+	if (COM_CheckParm(cmdline_param_client_maximum2textureunits)) {
 		gl_textureunits = min(gl_textureunits, 2);
 	}
 
@@ -229,21 +231,21 @@ static void GL_CheckMultiTextureExtensions(void)
 	}
 }
 
+static void GL_CheckExtensions(void)
+{
+	GL_CheckMultiTextureExtensions();
+	GL_CheckAnisotropyExtensions();
+	GL_CheckTextureCompressionExtensions();
+	GL_CheckNPOTTextureExtensions();
+}
+
 void GL_Init(void)
 {
-	// NOTE: we always register cvar even if ext is not supported.
-	// cvar added just to be able force OFF an extension.
-	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register(&gl_ext_arb_texture_non_power_of_two);
-	Cvar_Register(&gl_maxtmu2);
-	Cvar_ResetCurrentGroup();
-
 	if (!GL_InitialiseRenderer()) {
 		Sys_Error("Failed to initialise graphics renderer");
 	}
 
 	GL_PopulateConfig();
-
 	GL_CheckExtensions();
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
