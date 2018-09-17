@@ -98,8 +98,13 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glGetInternalformativ);
 
 		if (qglGetInternalformativ) {
-			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_FORMAT, 1, &glConfig.preferred_format);
-			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1, &glConfig.preferred_type);
+			GLint tempFormat = 0, tempType = 0;
+
+			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_FORMAT, 1, &tempFormat);
+			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1, &tempType);
+
+			glConfig.preferred_format = tempFormat;
+			glConfig.preferred_type = tempType;
 		}
 	}
 

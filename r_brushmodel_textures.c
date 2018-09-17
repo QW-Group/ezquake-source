@@ -83,7 +83,6 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 	byte* material_pixels = NULL;
 	byte* luma_pixels = NULL;
 	char texture_path[MAX_OSPATH];
-	extern cvar_t gl_lumatextures;
 
 	if (!R_ExternalTexturesEnabled(loadmodel->isworldmodel)) {
 		return false;

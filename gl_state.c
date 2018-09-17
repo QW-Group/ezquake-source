@@ -1078,7 +1078,6 @@ void GLC_ApplyRenderingState(r_state_id id)
 	rendering_state_t* current = &opengl.rendering_state;
 	rendering_state_t* state = &states[id];
 	int i;
-	int mode, desired;
 
 	GL_ProcessErrors("Pre-GLC_ApplyRenderingState()");
 	R_TraceEnterRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
@@ -1103,9 +1102,6 @@ void GLC_ApplyRenderingState(r_state_id id)
 				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
 					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
 					R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-					glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &mode);
-					desired = glTextureEnvModeValues[current->textureUnits[i].mode];
-					assert(mode == desired);
 				}
 			}
 			else {
@@ -1118,9 +1114,6 @@ void GLC_ApplyRenderingState(r_state_id id)
 			GL_SelectTexture(GL_TEXTURE0 + i);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
 			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
-			glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &mode);
-			desired = glTextureEnvModeValues[current->textureUnits[i].mode];
-			assert(mode == desired);
 		}
 	}
 	GL_ProcessErrors("Post-GLC_ApplyRenderingState(texture-units)");

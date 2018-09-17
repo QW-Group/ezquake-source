@@ -288,6 +288,7 @@ static void BuildTris(void)
 	alltris += pheader->numtris;
 }
 
+#if 0
 static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 {
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
@@ -342,6 +343,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 		}
 	}
 }
+#endif
 
 void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
@@ -381,7 +383,6 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	// Go back through and set directions
 	for (f1 = 0; f1 < hdr->numframes; ++f1) {
 		maliasframedesc_t* frame = &hdr->frames[f1];
-		qbool found = false;
 
 		if (frame->numposes > 1) {
 			// This frame has animated poses, so link them all together
