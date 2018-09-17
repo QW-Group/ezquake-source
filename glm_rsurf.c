@@ -131,7 +131,7 @@ static void Compile_DrawWorldProgram(void)
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(r_drawflat.integer != 1 && luma_textures ? DRAW_LUMA_TEXTURES : 0) |
-		(r_drawflat.integer != 1 && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
+		(r_drawflat.integer != 1 && luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
