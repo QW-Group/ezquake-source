@@ -25,12 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "quakedef.h"
 #include "gl_local.h"
 
-typedef struct opengl_version_s {
-	int majorVersion;
-	int minorVersion;
-	qbool core;
-} opengl_version_t;
-
 static opengl_version_t versions[] = {
 	{ 4, 6, false },
 	{ 4, 5, false },
@@ -42,41 +36,7 @@ static opengl_version_t versions[] = {
 	{ 4, 3, true },
 };
 
-qbool GLM_SDL_SetupAttributes(int attempt)
+SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window)
 {
-	int contextFlags = 0;
-	extern cvar_t vid_gl_core_profile;
-
-	// This will make some modes be attempted multiple times (int* attempt?)
-	if (vid_gl_core_profile.integer) {
-		while (attempt < sizeof(versions) / sizeof(versions[0]) && !versions[attempt].core) {
-			++attempt;
-		}
-	}
-
-	if (attempt >= sizeof(versions) / sizeof(versions[0])) {
-		return false;
-	}
-
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, versions[attempt].majorVersion);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, versions[attempt].minorVersion);
-	if (versions[attempt].core) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-#ifdef __APPLE__
-		// https://www.khronos.org/opengl/wiki/OpenGL_Context
-		// Recommendation: You should use the forward compatibility bit only if you need compatibility with MacOS.
-		// That API requires the forward compatibility bit to create any core profile context.
-		contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-#else
-		contextFlags |= COM_CheckParm(cmdline_param_client_forwardonlyprofile) ? SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG : 0;
-#endif
-	}
-	else {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-	}
-	contextFlags |= R_DebugProfileContext() ? SDL_GL_CONTEXT_DEBUG_FLAG : 0;
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
-
-	return true;
+	return GL_SDL_CreateBestContext(window, versions, sizeof(versions) / sizeof(versions[0]));
 }

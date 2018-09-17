@@ -320,4 +320,14 @@ void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* le
 #define GL_TraceObjectLabelGet(...)
 #endif
 
+// For context creation
+typedef struct opengl_version_s {
+	int majorVersion;
+	int minorVersion;
+	qbool core;
+	qbool legacy;
+} opengl_version_t;
+
+SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_t* versions, int count);
+
 #endif /* !__GL_LOCAL_H__ */

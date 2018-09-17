@@ -59,18 +59,18 @@ void Sys_ActiveAppChanged (void);
 #include "r_buffers.h"
 #include "r_renderer.h"
 
-qbool VK_SDL_SetupAttributes(int attempt);
-qbool GLM_SDL_SetupAttributes(int attempt);
-qbool GLC_SDL_SetupAttributes(int attempt);
+SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
+SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
 #define VID_RENDERER_MIN 0
 #define VID_RENDERER_MAX 1
 
-#define VID_MULTISAMPLED  1
-#define VID_ACCELERATED   2
-#define VID_DEPTHBUFFER24 4
+#define VID_MULTISAMPLED   1
+#define VID_ACCELERATED    2
+#define VID_DEPTHBUFFER24  4
+#define VID_GAMMACORRECTED 8
 
 /* FIXME: This should be in a header file and it probably shouldn't be called TP_
  *        since there are a lot of triggers that has nothing to do with teamplay.
@@ -995,50 +995,46 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 	return &modelist[index];
 }
 
-static qbool VID_SDL_GL_SetupAttributes(int attempt, int options)
+static void VID_SDL_GL_SetupWindowAttributes(int options)
 {
-	extern cvar_t gl_gammacorrection;
-
+	SDL_GL_ResetAttributes();
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, options & VID_MULTISAMPLED ? 1 : 0);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, options & VID_MULTISAMPLED ? bound(2, gl_multisamples.integer, 16) : 0);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, options & VID_ACCELERATED ? 1 : 0);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, options & VID_DEPTHBUFFER24 ? 24 : 16);
+	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, options & VID_GAMMACORRECTED ? 1 : 0);
+}
 
+static SDL_GLContext VID_SDL_GL_SetupContextAttributes(void)
+{
 #ifdef EZ_MULTIPLE_RENDERERS
 	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-		Con_Printf("Invalid vid_renderer value detected, falling back to immediate-mode OpenGL.\n");
-		Cvar_LatchedSetValue(&vid_renderer, 0);
+		Con_Printf("Invalid vid_renderer value detected, falling back to default.\n");
+		Cvar_LatchedSetValue(&vid_renderer, VID_RENDERER_MIN);
 #else
 		Sys_Error("Invalid vid_renderer value detected");
 #endif
 	}
 #endif
 
-	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		if (!GLM_SDL_SetupAttributes(attempt)) {
-			return false;
-		}
+		return GLM_SDL_CreateContext(sdl_window);
 	}
 #endif
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
-		if (!GLC_SDL_SetupAttributes(attempt)) {
-			return false;
-		}
+		return GLC_SDL_CreateContext(sdl_window);
 	}
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		if (!VK_SDL_SetupAttributes(attempt)) {
-			return false;
-		}
+		//return VK_SDL_CreateContext(sdl_window);
 	}
 #endif
 
-	return true;
+	return NULL;
 }
 
 static int VID_SetWindowIcon(SDL_Window *sdl_window)
@@ -1129,34 +1125,6 @@ static void VID_X11_GetGammaRampSize(void)
 }
 #endif
 
-static void VID_CreateContext(int flags, int options)
-{
-	int attempt;
-
-	sdl_window = NULL;
-	for (attempt = 0; sdl_window == NULL && VID_SDL_GL_SetupAttributes(attempt, options); ++attempt) {
-		VID_SetupModeList();
-		VID_SetupResolution();
-
-#if SDL_VERSION_ATLEAST(2,0,8)
-#ifdef RENDERER_OPTION_VULKAN
-		sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
-		{
-			extern qbool VK_Initialise(SDL_Window* window);
-			extern void VK_Shutdown(void);
-
-			if (VK_Initialise(sdl_window)) {
-				VK_Shutdown();
-			}
-			SDL_DestroyWindow(sdl_window);
-		}
-#endif
-#endif
-
-		sdl_window = VID_SDL_CreateWindow(flags);
-	}
-}
-
 static void VID_SDL_Init(void)
 {
 	int flags;
@@ -1166,7 +1134,6 @@ static void VID_SDL_Init(void)
 	}
 
 	VID_SDL_InitSubSystem();
-	R_SelectRenderer();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 	if (r_fullscreen.integer > 0) {
@@ -1186,15 +1153,26 @@ static void VID_SDL_Init(void)
 	{
 		int i;
 		int vid_options[] = {
+			// Try to get everything they ask for...
+			VID_MULTISAMPLED | VID_ACCELERATED | VID_DEPTHBUFFER24 | VID_GAMMACORRECTED,
+			// ... multisampled off
+			VID_ACCELERATED | VID_DEPTHBUFFER24 | VID_GAMMACORRECTED,
+			// ... give up on gamma corrected
 			VID_MULTISAMPLED | VID_ACCELERATED | VID_DEPTHBUFFER24,
 			VID_ACCELERATED | VID_DEPTHBUFFER24,
-			VID_ACCELERATED,
+			// 
+			VID_ACCELERATED | VID_DEPTHBUFFER24 | VID_GAMMACORRECTED,
+			VID_ACCELERATED | VID_GAMMACORRECTED,
+			// Un-accelerated and at this point we're desperate
 			VID_DEPTHBUFFER24,
+			VID_GAMMACORRECTED,
 			0
 		};
 
 		while (true) {
 			for (i = 0, sdl_window = NULL; sdl_window == NULL && i < sizeof(vid_options) / sizeof(vid_options[0]); ++i) {
+				extern cvar_t gl_gammacorrection;
+
 				if ((vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer <= 0) {
 					continue;
 				}
@@ -1204,23 +1182,26 @@ static void VID_SDL_Init(void)
 				if ((vid_options[i] & VID_ACCELERATED) && COM_CheckParm(cmdline_param_client_unaccelerated_visuals)) {
 					continue;
 				}
+				if ((vid_options[i] & VID_GAMMACORRECTED) && gl_gammacorrection.integer == 0) {
+					continue;
+				}
+				if (!(vid_options[i] & VID_GAMMACORRECTED) && gl_gammacorrection.integer == 2) {
+					continue;
+				}
+				Con_Printf("Creating window: %s %s %s %s\n", vid_options[i] & VID_MULTISAMPLED ? "msamp" : "...", vid_options[i] & VID_DEPTHBUFFER24 ? "depth24" : "depth16", vid_options[i] & VID_ACCELERATED ? "accel" : "sw", vid_options[i] & VID_GAMMACORRECTED ? "sRGB" : "RGB");
 
-				VID_CreateContext(flags, vid_options[i]);
+				sdl_window = NULL;
+				VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
+				VID_SetupModeList();
+				VID_SetupResolution();
+				sdl_window = VID_SDL_CreateWindow(flags);
+
 				if (sdl_window) {
-					sdl_context = SDL_GL_CreateContext(sdl_window);
-#ifdef _WIN32
-					if (sdl_context && (vid_options[i] & VID_ACCELERATED)) {
-						// SDL2 falls back to not even asking if it's accelerated, so we might get software :(
-						if (strstr((const char*)glGetString(GL_VENDOR), "Microsoft") != NULL) {
-							SDL_GL_DeleteContext(sdl_context);
-							sdl_context = NULL;
-						}
-					}
-#endif
-					if (sdl_context) {
-						break;
-					}
-					else {
+					// Try to create context and see what we get
+					Con_Printf("... window created, trying context\n");
+					sdl_context = VID_SDL_GL_SetupContextAttributes();
+
+					if (!sdl_context) {
 						SDL_DestroyWindow(sdl_window);
 						sdl_window = NULL;
 					}

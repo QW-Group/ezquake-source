@@ -275,6 +275,7 @@ COMMON_OPENGL_OBJS := \
     gl_framebuffer.o \
     gl_misc.o \
     gl_program.o \
+    gl_sdl.o \
     gl_sprite3d.o \
     gl_state.o \
     gl_texture.o \

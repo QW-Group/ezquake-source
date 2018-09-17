@@ -239,16 +239,7 @@ void GL_Init(void)
 	Cvar_ResetCurrentGroup();
 
 	if (!GL_InitialiseRenderer()) {
-#if defined(EZ_MULTIPLE_RENDERERS) && defined(RENDERER_OPTION_CLASSIC_OPENGL)
-		Con_Printf("Failed to initialised desired renderer, falling back to classic OpenGL\n");
-		Cvar_LatchedSetValue(&vid_renderer, 0);
-
-		if (!GL_InitialiseRenderer()) {
-			Sys_Error("Failed to initialise graphics renderer");
-		}
-#else
 		Sys_Error("Failed to initialise graphics renderer");
-#endif
 	}
 
 	GL_PopulateConfig();
