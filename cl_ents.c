@@ -41,6 +41,13 @@ static float VectorDistance(const vec3_t x, const vec3_t y)
 	return VectorLength(diff);
 }
 
+static float VectorDistanceQuick(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+}
+
 static struct predicted_player {
 	int flags;
 	qbool active;
@@ -168,7 +175,7 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 	if (list->count < sizeof(list->list) / sizeof(list->list[0])) {
 		list->list[cl_visents.count].ent = *ent;
 		list->list[cl_visents.count].type = type;
-		list->list[cl_visents.count].distance = VectorDistance(cl.simorg, ent->origin);
+		list->list[cl_visents.count].distance = VectorDistanceQuick(cl.simorg, ent->origin);
 		list->list[cl_visents.count].draw[vistype] = true;
 
 		++list->typecount[vistype];
