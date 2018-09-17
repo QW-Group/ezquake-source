@@ -222,10 +222,10 @@ qbool R_FilterEntity(entity_t* ent)
 
 	// Handle flame/flame0 model changes
 	if (qmb_initialized) {
-		if (!amf_part_fire.value && ent->model->modhint == MOD_FLAME0) {
+		if (!amf_part_fire.integer && ent->model->modhint == MOD_FLAME0) {
 			ent->model = cl.model_precache[cl_modelindices[mi_flame]];
 		}
-		else if (amf_part_fire.value) {
+		else if (amf_part_fire.integer) {
 			if (ent->model->modhint == MOD_FLAME0) {
 				if (!ISPAUSED) {
 					ParticleFire(ent->origin);
@@ -277,7 +277,7 @@ void R_DrawAliasModel(entity_t *ent)
 {
 	int anim, skinnum;
 	texture_ref texture, fb_texture;
-	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
+	aliashdr_t* paliashdr;
 	maliasframedesc_t *oldframe, *frame;
 	byte *color32bit = NULL;
 	qbool outline = false;
@@ -286,6 +286,9 @@ void R_DrawAliasModel(entity_t *ent)
 	if (R_FilterEntity(ent)) {
 		return;
 	}
+
+	// Meag: Do not move this above R_FilterEntity(), it might change the model... :(
+	paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 
 	//VULT CORONAS
 	if (amf_coronas.integer) {
@@ -901,13 +904,10 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 	frame->radius = RadiusFromBounds(frame->bboxmin, frame->bboxmax);
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
-
 	frame->interval = LittleFloat(pin_intervals->interval);
-
 	pin_intervals += numframes;
 
 	ptemp = (void *)pin_intervals;
-
 	for (i = 0; i < numframes; i++) {
 		poseverts[*posenum] = (trivertx_t *)((daliasframe_t *)ptemp + 1);
 		(*posenum)++;
