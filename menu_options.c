@@ -967,7 +967,9 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Lighting"),
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	ADDSET_BOOL		("GL Bloom", r_bloom),
+#endif
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_ADVANCED_SECTION(),

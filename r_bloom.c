@@ -26,14 +26,18 @@ void GLC_InitBloomTextures(void);
 
 void R_BloomBlend(void)
 {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_BloomBlend();
 	}
+#endif
 }
 
 void R_InitBloomTextures(void)
 {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
 		GLC_InitBloomTextures();
 	}
+#endif
 }
