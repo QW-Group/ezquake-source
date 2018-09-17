@@ -23,6 +23,54 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "tr_types.h"
 #include "r_renderer.h"
+#include "r_lightmaps_internal.h"
+#include "gl_texture_internal.h"
+
+typedef struct gl_enum_value_s {
+	GLenum value;
+	const char* name;
+	int benchmark_bpp;
+} gl_enum_value_t;
+
+static gl_enum_value_t image_formats[] = {
+	{ GL_RED, "RED", 0 },
+	{ GL_RG, "RG", 0 },
+	{ GL_RGB, "RGB", 0 },
+	{ GL_BGR, "BGR", 0 },
+	{ GL_RGBA, "RGBA", 4 },
+	{ GL_BGRA, "BGRA", 4 },
+	{ GL_RED_INTEGER, "RED_INT" },
+	{ GL_RG_INTEGER, "RG_INT" },
+	{ GL_RGB_INTEGER, "RGB_INT" },
+	{ GL_BGR_INTEGER, "BGR_INT" },
+	{ GL_RGBA_INTEGER, "RGBA_INT" },
+	{ GL_BGRA_INTEGER, "BGRA_INT" },
+	{ GL_STENCIL_INDEX, "STENCIL_INDEX" },
+	{ GL_DEPTH_COMPONENT, "DEPTH_COMPONENT" },
+	{ GL_DEPTH_STENCIL, "DEPTH_STENCIL" }
+};
+static gl_enum_value_t image_types[] = {
+	{ GL_UNSIGNED_BYTE, "UBYTE", 3 },
+	{ GL_BYTE, "BYTE", 3 },
+	{ GL_UNSIGNED_SHORT, "USHORT", 0 },
+	{ GL_SHORT, "SHORT", 0 },
+	{ GL_UNSIGNED_INT, "UINT", 4 },
+	{ GL_INT, "INT", 4 },
+	{ GL_FLOAT, "FLOAT", 0 },
+	{ GL_UNSIGNED_BYTE_3_3_2, "UBYTE_332", 0 },
+	{ GL_UNSIGNED_BYTE_2_3_3_REV, "UBYTE_233R", 0 },
+	{ GL_UNSIGNED_SHORT_5_6_5, "USHORT_565", 0 },
+	{ GL_UNSIGNED_SHORT_5_6_5_REV, "USHORT_565R", 0 },
+	{ GL_UNSIGNED_SHORT_4_4_4_4, "USHORT_4444", 0 },
+	{ GL_UNSIGNED_SHORT_4_4_4_4_REV, "USHORT_4444R", 0 },
+	{ GL_UNSIGNED_SHORT_5_5_5_1, "USHORT_5551", 0 },
+	{ GL_UNSIGNED_SHORT_1_5_5_5_REV, "USHORT_1555R", 0 },
+	{ GL_UNSIGNED_INT_8_8_8_8, "UINT_8888", 4 },
+	{ GL_UNSIGNED_INT_8_8_8_8_REV, "UINT_8888R", 4 },
+	{ GL_UNSIGNED_INT_10_10_10_2, "UINT_101010_2", 4 },
+	{ GL_UNSIGNED_INT_2_10_10_10_REV, "UINT_2_101010R", 4 }
+};
+
 
 void GL_Clear(qbool clear_color)
 {
@@ -68,11 +116,6 @@ static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, 
 	Com_Printf_State(PRINT_ALL, "\n");
 }
 
-typedef struct gl_enum_value_s {
-	GLenum value;
-	const char* name;
-} gl_enum_value_t;
-
 void GL_PrintGfxInfo(void)
 {
 	SDL_DisplayMode current;
@@ -108,12 +151,34 @@ void GL_PrintGfxInfo(void)
 		}
 	}
 
-	Com_Printf_State(PRINT_ALL, "Limits:\n");
-	GL_PrintInfoLine("Texture Units:", 14, "%d", glConfig.texture_units);
-	GL_PrintInfoLine("Texture Size:", 14, "%d", glConfig.gl_max_size_default);
+	Com_Printf_State(PRINT_ALL, "Textures:\n");
+	GL_PrintInfoLine("Units:", 14, "%d", glConfig.texture_units);
+	GL_PrintInfoLine("Size:", 14, "%d", glConfig.gl_max_size_default);
 	if (R_UseModernOpenGL()) {
-		GL_PrintInfoLine("3D Textures:", 14, "%dx%dx%d\n", glConfig.max_3d_texture_size, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+		GL_PrintInfoLine("3D Sizes:", 14, "%dx%dx%d\n", glConfig.max_3d_texture_size, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	}
+	if (glConfig.preferred_format || glConfig.preferred_type) {
+		Com_Printf_State(PRINT_ALL, "Preferences\n");
+		const char* format = "?";
+		const char* type = "?";
+
+		for (i = 0; i < sizeof(image_formats) / sizeof(image_formats[0]); ++i) {
+			if (image_formats[i].value == glConfig.preferred_format) {
+				format = image_formats[i].name;
+				break;
+			}
+		}
+		for (i = 0; i < sizeof(image_types) / sizeof(image_types[0]); ++i) {
+			if (image_types[i].value == glConfig.preferred_type) {
+				type = image_types[i].name;
+				break;
+			}
+		}
+
+		GL_PrintInfoLine("Image Format:", 14, "0x%x (%s)", glConfig.preferred_format, format);
+		GL_PrintInfoLine("Image Type:", 14, "0x%x (%s)", glConfig.preferred_type, type);
+	}
+	GL_PrintInfoLine("Lightmaps:", 14, "%s/%s", glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS ? "BGRA" : "RGBA", glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS ? "INT8888R" : "UBYTE");
 
 	Com_Printf_State(PRINT_ALL, "Supported features:\n");
 	GL_PrintInfoLine("Shaders:", 15, "%s", glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS ? "&c0f0available&r" : "&cf00unsupported&r");
@@ -135,66 +200,6 @@ void GL_PrintGfxInfo(void)
 	if (r_conwidth.integer || r_conheight.integer) {
 		GL_PrintInfoLine("Console Res:", 12,"%d x %d", r_conwidth.integer, r_conheight.integer);
 	}
-
-	if (glConfig.preferred_format || glConfig.preferred_type) {
-		Com_Printf_State(PRINT_ALL, "Preferences\n");
-		gl_enum_value_t formats[] = {
-			{ GL_RED, "RED" },
-			{ GL_RG, "RG" },
-			{ GL_RGB, "RGB" },
-			{ GL_BGR, "BGR" },
-			{ GL_RGBA, "RGBA" },
-			{ GL_BGRA, "BGRA" },
-			{ GL_RED_INTEGER, "RED_INT" },
-			{ GL_RG_INTEGER, "RG_INT" },
-			{ GL_RGB_INTEGER, "RGB_INT" },
-			{ GL_BGR_INTEGER, "BGR_INT" },
-			{ GL_RGBA_INTEGER, "RGBA_INT" },
-			{ GL_BGRA_INTEGER, "BGRA_INT" },
-			{ GL_STENCIL_INDEX, "STENCIL_INDEX" },
-			{ GL_DEPTH_COMPONENT, "DEPTH_COMPONENT" },
-			{ GL_DEPTH_STENCIL, "DEPTH_STENCIL" }
-		};
-		gl_enum_value_t types[] = {
-			{ GL_UNSIGNED_BYTE, "UBYTE" },
-			{ GL_BYTE, "BYTE" },
-			{ GL_UNSIGNED_SHORT, "USHORT" },
-			{ GL_SHORT, "SHORT" },
-			{ GL_UNSIGNED_INT, "UINT" },
-			{ GL_INT, "INT" },
-			{ GL_FLOAT, "FLOAT" },
-			{ GL_UNSIGNED_BYTE_3_3_2, "UBYTE_332" },
-			{ GL_UNSIGNED_BYTE_2_3_3_REV, "UBYTE_233R" },
-			{ GL_UNSIGNED_SHORT_5_6_5, "USHORT_565" },
-			{ GL_UNSIGNED_SHORT_5_6_5_REV, "USHORT_565R" },
-			{ GL_UNSIGNED_SHORT_4_4_4_4, "USHORT_4444" },
-			{ GL_UNSIGNED_SHORT_4_4_4_4_REV, "USHORT_4444R" },
-			{ GL_UNSIGNED_SHORT_5_5_5_1, "USHORT_5551" },
-			{ GL_UNSIGNED_SHORT_1_5_5_5_REV, "USHORT_1555R" },
-			{ GL_UNSIGNED_INT_8_8_8_8, "UINT_8888" },
-			{ GL_UNSIGNED_INT_8_8_8_8_REV, "UINT_8888R" },
-			{ GL_UNSIGNED_INT_10_10_10_2, "UINT_101010_2" },
-			{ GL_UNSIGNED_INT_2_10_10_10_REV, "UINT_2_101010R" }
-		};
-		const char* format = "?";
-		const char* type = "?";
-
-		for (i = 0; i < sizeof(formats) / sizeof(formats[0]); ++i) {
-			if (formats[i].value == glConfig.preferred_format) {
-				format = formats[i].name;
-				break;
-			}
-		}
-		for (i = 0; i < sizeof(types) / sizeof(types[0]); ++i) {
-			if (types[i].value == glConfig.preferred_type) {
-				type = types[i].name;
-				break;
-			}
-		}
-
-		GL_PrintInfoLine("Image Format:", 14, "0x%x (%s)", glConfig.preferred_format, format);
-		GL_PrintInfoLine("Image Type:", 14, "0x%x (%s)", glConfig.preferred_type, type);
-	}
 }
 
 void GL_Viewport(int x, int y, int width, int height)
@@ -205,4 +210,101 @@ void GL_Viewport(int x, int y, int width, int height)
 const char* GL_DescriptiveString(void)
 {
 	return (const char*)glGetString(GL_RENDERER);
+}
+
+typedef struct {
+	int format;
+	int type;
+	float result;
+} lightmap_benchmark_t;
+
+int LightmapBenchmarkComparison(const void* lhs_, const void* rhs_)
+{
+	lightmap_benchmark_t* lhs = (lightmap_benchmark_t*)lhs_;
+	lightmap_benchmark_t* rhs = (lightmap_benchmark_t*)rhs_;
+
+	if (lhs->result < rhs->result) {
+		return -1;
+	}
+	if (lhs->result > rhs->result) {
+		return 1;
+	}
+	return (uintptr_t)lhs < (uintptr_t)rhs ? -1 : 1;
+}
+
+void GL_BenchmarkLightmapFormats(void)
+{
+	texture_ref texture;
+	int format;
+	int type;
+	byte data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
+	lightmap_benchmark_t results[(sizeof(image_formats) / sizeof(image_formats[0])) * (sizeof(image_types) / sizeof(image_types[0]))];
+	int count = 0, i;
+
+	while (glGetError() != GL_NO_ERROR) {
+	}
+
+	for (format = 0; format < sizeof(image_formats) / sizeof(image_formats[0]); ++format) {
+		for (type = 0; type < sizeof(image_types) / sizeof(image_types[0]); ++type) {
+			double started;
+			double finished;
+
+			if (!image_formats[format].benchmark_bpp || !image_types[type].benchmark_bpp || image_types[type].benchmark_bpp > image_formats[format].benchmark_bpp) {
+				continue;
+			}
+
+			memset(data, 255, sizeof(data));
+
+			GL_ProcessErrors("Pre-init");
+
+			GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &texture, "lightmap-benchmark");
+			renderer.TextureUnitBind(0, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, image_formats[format].value, image_types[type].value, data);
+			if (glGetError() != GL_NO_ERROR) {
+				Con_Printf("%s/%s: error\n", image_formats[format].name, image_types[type].name);
+				continue;
+			}
+			renderer.TextureSetFiltering(texture, texture_minification_linear, texture_magnification_linear);
+			renderer.TextureWrapModeClamp(texture);
+			glFinish();
+
+			memset(data, 0, sizeof(data));
+			started = Sys_DoubleTime();
+			for (i = 0; i < 1000; ++i) {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, image_formats[format].value, image_types[type].value, data);
+			}
+			glFinish();
+			finished = Sys_DoubleTime();
+
+			GL_ProcessErrors("Post-test");
+			renderer.TextureDelete(texture);
+
+			results[count].format = format;
+			results[count].type = type;
+			results[count].result = (finished - started) * 1000.0f;
+			++count;
+		}
+	}
+
+	qsort(results, count, sizeof(results[0]), LightmapBenchmarkComparison);
+
+	Con_Printf("Results:\n");
+	for (i = 0; i < count; ++i) {
+		qbool preferred;
+		qbool current;
+		char label[20];
+
+		format = results[i].format;
+		type = results[i].type;
+
+		strlcpy(label, image_formats[format].name, sizeof(label));
+		strlcat(label, "/", sizeof(label));
+		strlcat(label, image_types[type].name, sizeof(label));
+
+		preferred = (image_formats[format].value == glConfig.preferred_format && image_types[type].value == glConfig.preferred_type);
+		current = (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS ? GL_BGRA : GL_RGBA) == image_formats[format].value &&
+			(glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE) == image_types[type].value;
+
+		Con_Printf("%s %02d %-20s: %8.3fms%s&r\n", current ? "&c0f0>>>" : "   ", i + 1, label, results[i].result, current && preferred ? " <<< preferred" : preferred ? " &cff0<<< preferred" : "");
+	}
 }

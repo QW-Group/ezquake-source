@@ -219,7 +219,7 @@ static qbool FontCreate(int grouping, const char* path)
 		original_height = texture_height = FONT_TEXTURE_SIZE * 2;
 		original_left = original_top = 0;
 
-		renderer.TextureCreate2D(&charset->master, texture_width, texture_height, "font");
+		renderer.TextureCreate2D(&charset->master, texture_width, texture_height, "font", false);
 	}
 	base_font_width = texture_width / 16;
 	base_font_height = texture_height / 16;

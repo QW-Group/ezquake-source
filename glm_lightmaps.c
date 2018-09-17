@@ -204,5 +204,5 @@ void GLM_UploadLightmap(int textureUnit, int lightmapnum)
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
-	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE), data_source);
 }

@@ -485,7 +485,11 @@ void R_Init(void)
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GLC_BloomRegisterCvars();
+	{
+		void GLC_BloomRegisterCvars(void);
+
+		GLC_BloomRegisterCvars();
+	}
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);

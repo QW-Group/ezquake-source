@@ -37,7 +37,7 @@ const char* GL_TextureIdentifierByGLReference(GLuint texnum);
 void GL_SelectTexture(GLenum target);
 
 void GL_CreateTexturesWithIdentifier(r_texture_type_id type, int n, texture_ref* references, const char* identifier);
-void GL_TexStorage2D(texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+void GL_TexStorage2D(texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, qbool is_lightmap);
 void GL_TexStorage3D(GLenum textureUnit, texture_ref reference, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 void GL_TextureMipmapGenerate(texture_ref reference);
 void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format);

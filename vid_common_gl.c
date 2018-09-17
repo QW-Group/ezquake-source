@@ -58,9 +58,6 @@ static qbool GL_InitialiseRenderer(void)
 
 	glConfig.supported_features = 0;
 
-	// FIXME: newer OpenGL functions lets us check the optimal format for the system
-	glConfig.supported_features |= (GL_VersionAtLeast(1, 2) ? R_SUPPORT_BGRA_LIGHTMAPS : 0);
-
 	GL_InitialiseFramebufferHandling();
 	GL_LoadProgramFunctions();
 	GL_LoadStateFunctions();
@@ -69,6 +66,12 @@ static qbool GL_InitialiseRenderer(void)
 	GL_InitialiseDebugging();
 
 	shaders_supported = (glConfig.supported_features & R_SUPPORT_MODERN_OPENGL_REQUIREMENTS);
+	if ((glConfig.preferred_format == 0 && GL_VersionAtLeast(1, 2)) || glConfig.preferred_format == GL_BGRA) {
+		glConfig.supported_features |= R_SUPPORT_BGRA_LIGHTMAPS;
+	}
+	if ((glConfig.preferred_type == 0 && GL_VersionAtLeast(1, 2)) || glConfig.preferred_type == GL_UNSIGNED_INT_8_8_8_8_REV) {
+		glConfig.supported_features |= R_SUPPORT_INT8888R_LIGHTMAPS;
+	}
 
 	if (R_UseModernOpenGL() && shaders_supported) {
 		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");

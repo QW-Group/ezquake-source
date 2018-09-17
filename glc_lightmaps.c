@@ -60,10 +60,13 @@ texture_ref GLC_LightmapTexture(int index)
 void GLC_CreateLightmapTextures(void)
 {
 	int i;
+	char name[64];
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, va("lightmap-%03d", i));
+			snprintf(name, sizeof(name), "lightmap-%03d", i);
+
+			renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, name, true);
 		}
 	}
 }
@@ -100,7 +103,7 @@ void GLC_BuildLightmap(int i)
 {
 	GL_TexSubImage2D(
 		GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE,
+		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE,
 		lightmaps[i].rawdata
 	);
 }
@@ -110,5 +113,5 @@ void GLC_UploadLightmap(int textureUnit, int lightmapnum)
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
-	GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE, data_source);
+	GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE, data_source);
 }

@@ -1826,6 +1826,12 @@ void CL_InitLocal (void)
 		Cmd_AddCommand("dev_gfxtexturelist", Dev_TextureList);
 	}
 #endif
+
+	{
+		extern void GL_BenchmarkLightmapFormats(void);
+
+		Cmd_AddCommand("dev_gfxbenchmarklightmaps", GL_BenchmarkLightmapFormats);
+	}
 }
 
 void GFX_Init (void) 

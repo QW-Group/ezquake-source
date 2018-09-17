@@ -218,7 +218,7 @@ void GL_TextureDelete(texture_ref texture)
 
 void GL_AllocateStorage(gltexture_t* texture)
 {
-	GL_TexStorage2D(texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height);
+	GL_TexStorage2D(texture->reference, texture->miplevels, GL_StorageFormat(texture->texmode), texture->texture_width, texture->texture_height, false);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("opengl-texture,alloc,%u,%d,%d,%d,%s\n", texture->reference.index, texture->texture_width, texture->texture_height, texture->texture_width * texture->texture_height * texture->bpp, texture->identifier);
 #endif
@@ -233,7 +233,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 		Com_Printf("Prior-texture-array-creation: OpenGL error %u\n", error);
 	}
 	while (*depth >= minimum_depth) {
-		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", width, height, *depth, max_miplevels);
+		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
 		GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth);
 
 		error = glGetError();
@@ -249,7 +249,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 			array_height = R_TextureHeight(slot->reference);
 			array_depth = R_TextureDepth(slot->reference);
 
-			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, max_miplevels, width, height, *depth);
+			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
 			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 #endif
 			return false;
@@ -271,10 +271,10 @@ void GL_AllocateTextureNames(gltexture_t* glt)
 	GL_CreateTextureNames(GL_TEXTURE0, glTextureTargetForType[glt->type], 1, &glt->texnum);
 }
 
-void GL_TextureCreate2D(texture_ref* texture, int width, int height, const char* name)
+void GL_TextureCreate2D(texture_ref* texture, int width, int height, const char* name, qbool is_lightmap)
 {
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, texture, name);
-	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height);
+	GL_TexStorage2D(*texture, 1, GL_RGBA8, width, height, is_lightmap);
 	renderer.TextureSetFiltering(*texture, texture_minification_linear, texture_magnification_linear);
 	GL_TextureWrapModeClamp(*texture);
 #ifdef DEBUG_MEMORY_ALLOCATIONS

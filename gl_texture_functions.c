@@ -211,7 +211,7 @@ void GL_TexSubImage2D(
 }
 
 void GL_TexStorage2D(
-	texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
+	texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, qbool is_lightmap
 )
 {
 	int tempWidth = width;
@@ -237,9 +237,15 @@ void GL_TexStorage2D(
 			int level;
 			GLsizei level_width = width;
 			GLsizei level_height = height;
+			GLenum format = GL_RGBA;
+			GLenum type = GL_UNSIGNED_BYTE;
+
+			// this might be completely useless (we don't upload data anyway) but just to keep all calls to the texture consistent
+			format = (is_lightmap & (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
+			type = (is_lightmap & (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
 
 			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, level_width, level_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				glTexImage2D(target, level, internalformat, level_width, level_height, 0, format, type, NULL);
 				GL_ProcessErrors("post-TexImage2D");
 
 				level_width = max(1, level_width / 2);
