@@ -52,7 +52,7 @@ static qbool GLC_CompilePostProcessProgram(void)
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
 		}
 		if (post_process_flags & POST_PROCESS_3DONLY) {
-			strlcat(included_definitions, "#define EZ_USE_OVERLAY\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define EZ_POSTPROCESS_OVERLAY\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image

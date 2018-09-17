@@ -33,7 +33,7 @@ typedef enum {
 } fbtex_id;
 
 void GL_InitialiseFramebufferHandling(void);
-qbool GL_FramebufferCreate(framebuffer_id id, int width, int height, qbool is3D);
+qbool GL_FramebufferCreate(framebuffer_id id, int width, int height);
 void GL_FramebufferDelete(framebuffer_id id);
 void GL_FramebufferStartUsing(framebuffer_id id);
 void GL_FramebufferStartUsingScreen(void);

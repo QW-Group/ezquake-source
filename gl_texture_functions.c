@@ -246,8 +246,8 @@ void GL_TexStorage2D(
 			int level;
 			GLsizei level_width = width;
 			GLsizei level_height = height;
-			GLenum format = GL_RGBA;
-			GLenum type = GL_UNSIGNED_BYTE;
+			GLenum format = (internalformat == GL_RGBA8 || internalformat == GL_SRGB8_ALPHA8 || internalformat == GL_RGBA16F ? GL_RGBA : GL_RGB);
+			GLenum type = (internalformat == GL_RGBA16F || internalformat == GL_RGB16F ? GL_FLOAT : GL_UNSIGNED_BYTE);
 
 			// this might be completely useless (we don't upload data anyway) but just to keep all calls to the texture consistent
 			format = (is_lightmap & GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);

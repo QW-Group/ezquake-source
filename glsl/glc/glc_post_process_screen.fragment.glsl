@@ -3,7 +3,7 @@
 #ezquake-definitions
 
 uniform sampler2D base;
-#ifdef EZ_USE_OVERLAY
+#ifdef EZ_POSTPROCESS_OVERLAY
 uniform sampler2D overlay;
 #endif
 
@@ -17,7 +17,7 @@ void main()
 {
 	vec4 frag_colour = texture2D(base, TextureCoord);
 
-#ifdef EZ_USE_OVERLAY
+#ifdef EZ_POSTPROCESS_OVERLAY
 	vec4 add = texture2D(overlay, TextureCoord);
 	frag_colour *= 1 - add.a;
 	frag_colour += add;

@@ -43,7 +43,6 @@ static void GL_GenFramebuffers(GLsizei n, GLuint* buffers);
 
 typedef struct framebuffer_data_s {
 	GLuint glref;
-
 	texture_ref texture[fbtex_count];
 	GLuint depthBuffer;
 	GLenum depthFormat;
@@ -52,6 +51,21 @@ typedef struct framebuffer_data_s {
 	GLsizei height;
 	GLenum status;
 } framebuffer_data_t;
+
+static const char* framebuffer_names[] = {
+	"none", // framebuffer_none
+	"std", // framebuffer_std
+	"hud", // framebuffer_hud
+};
+static const char* framebuffer_texture_names[] = {
+	"std", // fbtex_standard,
+	"env", // fbtex_bloom,
+};
+static qbool framebuffer_depth_buffer[] = {
+	false, // framebuffer_none
+	true, // framebuffer_std
+	false, // framebuffer_hud
+};
 
 static framebuffer_data_t framebuffer_data[framebuffer_count];
 static int framebuffers;
@@ -104,10 +118,14 @@ static GLenum glDepthFormats[] = { 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24
 typedef enum { r_depthformat_best, r_depthformat_16bit, r_depthformat_24bit, r_depthformat_32bit, r_depthformat_32bit_float, r_depthformat_count } r_depthformat;
 
 #ifdef C_ASSERT
+C_ASSERT(sizeof(framebuffer_names) / sizeof(framebuffer_names[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_texture_names) / sizeof(framebuffer_texture_names[0]) == fbtex_count);
+C_ASSERT(sizeof(framebuffer_depth_buffer) / sizeof(framebuffer_depth_buffer[0]) == framebuffer_count);
 C_ASSERT(sizeof(glDepthFormats) / sizeof(glDepthFormats[0]) == r_depthformat_count);
 #endif
 
 extern cvar_t vid_framebuffer_depthformat;
+extern cvar_t vid_framebuffer_hdr;
 
 //
 // Initialize framebuffer stuff, Loads procadresses and such.
@@ -179,9 +197,11 @@ void GL_InitialiseFramebufferHandling(void)
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
-qbool GL_FramebufferCreate(framebuffer_id id, int width, int height, qbool is3d)
+qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 {
 	framebuffer_data_t* fb = NULL;
+	char label[128];
+	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && id == framebuffer_std);
 
 	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
 		return false;
@@ -195,17 +215,33 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height, qbool is3d)
 	memset(fb, 0, sizeof(*fb));
 
 	// Render to texture
-	R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | (is3d ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
-	renderer.TextureLabelSet(fb->texture[fbtex_standard], is3d ? "framebuffer-texture(3d)" : "framebuffer-texture(2d)");
+	strlcpy(label, framebuffer_names[id], sizeof(label));
+	strlcat(label, "/", sizeof(label));
+	strlcat(label, framebuffer_texture_names[fbtex_standard], sizeof(label));
+
+	//R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
+	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
+	GL_TexStorage2D(fb->texture[fbtex_standard], 1, hdr ? GL_RGB16F : (id == framebuffer_std ? GL_RGB8 : GL_RGBA8), width, height, false);
 	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
 
+	/*if (id == framebuffer_std) {
+		strlcpy(label, framebuffer_names[id], sizeof(label));
+		strlcat(label, "/", sizeof(label));
+		strlcat(label, framebuffer_texture_names[fbtex_bloom], sizeof(label));
+
+		R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | TEX_MIPMAP, 1, &fb->texture[fbtex_bloom]);
+		renderer.TextureLabelSet(fb->texture[fbtex_bloom], label);
+		renderer.TextureSetFiltering(fb->texture[fbtex_bloom], texture_minification_linear, texture_minification_linear);
+		renderer.TextureWrapModeClamp(fb->texture[fbtex_bloom]);
+	}*/
+
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);
-	GL_TraceObjectLabelSet(GL_FRAMEBUFFER, fb->glref, -1, is3d ? "framebuffer(3D)" : "framebuffer(2D)");
+	GL_TraceObjectLabelSet(GL_FRAMEBUFFER, fb->glref, -1, framebuffer_names[id]);
 
 	// Depth buffer
-	if (is3d) {
+	if (framebuffer_depth_buffer[id]) {
 		GLenum depthFormat = glDepthFormats[bound(0, vid_framebuffer_depthformat.integer, r_depthformat_count - 1)];
 		if (depthFormat == 0) {
 			depthFormat = qglClipControl ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
@@ -465,18 +501,18 @@ static void VID_FramebufferFlip(void)
 	}
 }
 
-static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height, qbool is3D)
+static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height)
 {
 	framebuffer_data_t* fb = &framebuffer_data[id];
 
 	if (effective_width && effective_height) {
 		if (!fb->glref) {
-			GL_FramebufferCreate(id, effective_width, effective_height, is3D);
+			GL_FramebufferCreate(id, effective_width, effective_height);
 		}
 		else if (fb->width != effective_width || fb->height != effective_height) {
 			GL_FramebufferDelete(id);
 
-			GL_FramebufferCreate(id, effective_width, effective_height, is3D);
+			GL_FramebufferCreate(id, effective_width, effective_height);
 		}
 
 		if (fb->glref) {
@@ -494,7 +530,7 @@ static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int eff
 void GL_FramebufferScreenDrawStart(void)
 {
 	if (vid_framebuffer.integer) {
-		VID_FramebufferInit(framebuffer_std, VID_ScaledWidth3D(), VID_ScaledHeight3D(), true);
+		VID_FramebufferInit(framebuffer_std, VID_ScaledWidth3D(), VID_ScaledHeight3D());
 	}
 }
 
@@ -502,7 +538,7 @@ qbool GL_Framebuffer2DSwitch(void)
 {
 	if (vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY) {
 
-		if (VID_FramebufferInit(framebuffer_hud, glConfig.vidWidth, glConfig.vidHeight, false)) {
+		if (VID_FramebufferInit(framebuffer_hud, glConfig.vidWidth, glConfig.vidHeight)) {
 			R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 			glClear(GL_COLOR_BUFFER_BIT);
 			return true;

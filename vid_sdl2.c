@@ -182,13 +182,15 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 
-cvar_t vid_framebuffer            = {"vid_framebuffer",            "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
-cvar_t vid_framebuffer_blit       = {"vid_framebuffer_blit",       "0",       CVAR_NO_RESET };
-cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
-cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
-cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1",       CVAR_NO_RESET, conres_changed_callback };
-cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0",       CVAR_NO_RESET | CVAR_LATCH };
-cvar_t vid_framebuffer_depthformat = { "vid_framebuffer_depthformat",  "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
+cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
+cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
+cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
+cvar_t vid_framebuffer_palette     = {"vid_framebuffer_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 
 //
 // function declaration
@@ -834,6 +836,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
+	Cvar_Register(&vid_framebuffer_hdr);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -865,6 +868,7 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_width);
 	Cvar_Register(&vid_framebuffer_height);
 	Cvar_Register(&vid_framebuffer_scale);
+	Cvar_Register(&vid_framebuffer_hdr_tonemap);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -998,7 +1002,12 @@ static void VID_SDL_GL_SetupWindowAttributes(int options)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, options & VID_MULTISAMPLED ? 1 : 0);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, options & VID_MULTISAMPLED ? bound(2, gl_multisamples.integer, 16) : 0);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, options & VID_ACCELERATED ? 1 : 0);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, options & VID_DEPTHBUFFER24 ? 24 : 16);
+	if (vid_framebuffer.integer) {
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+	}
+	else {
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, options & VID_DEPTHBUFFER24 ? 24 : 16);
+	}
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, options & VID_GAMMACORRECTED ? 1 : 0);
 }
 
@@ -1588,8 +1597,6 @@ void VID_RegisterCommands(void)
 
 static void VID_UpdateConRes(void)
 {
-	extern cvar_t vid_framebuffer;
-
 	qbool set_width = false;
 	qbool set_height = false;
 

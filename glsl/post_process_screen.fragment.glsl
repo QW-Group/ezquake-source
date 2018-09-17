@@ -3,7 +3,7 @@
 #ezquake-definitions
 
 layout(binding = 0) uniform sampler2D base;
-#ifdef EZ_USE_OVERLAY
+#ifdef EZ_POSTPROCESS_OVERLAY
 layout(binding = 1) uniform sampler2D overlay;
 #endif
 
@@ -12,18 +12,25 @@ out vec4 frag_colour;
 
 void main()
 {
-	frag_colour = texture(base, TextureCoord);
-#ifdef EZ_USE_OVERLAY
+	vec4 result = texture(base, TextureCoord);
+#ifdef EZ_POSTPROCESS_TONEMAP
+	result.r = result.r / (result.r + 1);
+	result.g = result.g / (result.g + 1);
+	result.b = result.b / (result.b + 1);
+#endif
+#ifdef EZ_POSTPROCESS_OVERLAY
 	vec4 add = texture(overlay, TextureCoord);
-	frag_colour *= 1 - add.a;
-	frag_colour += add;
+	result *= 1 - add.a;
+	result += add;
 #endif
 
 #ifdef EZ_POSTPROCESS_PALETTE
 	// apply blend & contrast
-	frag_colour = vec4((frag_colour.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
+	result = vec4((result.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
 
 	// apply gamma
-	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma)), 1);
+	result = vec4(pow(result.rgb, vec3(gamma)), 1);
 #endif
+
+	frag_colour = result;
 }

@@ -106,7 +106,7 @@ RENDERER_METHOD(void, Draw3DSpritesInline, void)   // FIXME get rid of this and 
 
 // Framebuffers
 RENDERER_METHOD(void, RenderFramebuffers, void)
-RENDERER_METHOD(qbool, FramebufferCreate, framebuffer_id id, int width, int height, qbool is3d)
+RENDERER_METHOD(qbool, FramebufferCreate, framebuffer_id id, int width, int height)
 
 // Programs
 RENDERER_METHOD(void, ProgramsInitialise, void)
