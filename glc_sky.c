@@ -403,6 +403,8 @@ static void GLC_DrawSkyBox(void)
 	static int skytexorder[MAX_SKYBOXTEXTURES] = {0,2,1,3,4,5};
 	int i;
 
+	R_ApplyRenderingState(r_state_skybox);
+
 	for (i = 0; i < MAX_SKYBOXTEXTURES; i++) {
 		if ((skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])) {
 			continue;

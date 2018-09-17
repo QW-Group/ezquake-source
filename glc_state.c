@@ -304,6 +304,9 @@ void GLC_InitialiseSkyStates(void)
 	state = R_InitRenderingState(r_state_sky_fast, true, "fastSkyState", vao_brushmodel);
 	state->depth.test_enabled = false;
 
+	state = R_InitRenderingState(r_state_skybox, true, "glcSkyBox", vao_brushmodel);
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
+
 	state = R_InitRenderingState(r_state_sky_fast_fogged, true, "fastSkyStateFogged", vao_brushmodel);
 	state->depth.test_enabled = false;
 	state->fog.enabled = true;

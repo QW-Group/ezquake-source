@@ -201,6 +201,7 @@ typedef enum {
 	r_state_skydome_single_pass,
 	r_state_skydome_zbuffer_pass,
 	r_state_skydome_zbuffer_pass_fogged,
+	r_state_skybox,
 
 	r_state_world_texture_chain,
 	r_state_world_texture_chain_fullbright,
