@@ -44,12 +44,14 @@ static flame_t flame_frames[FLAME_FRAME_TOTAL][FLAME_FRAME_TOTAL];
 
 static void R_ParticleFlamePrecalculate(void)
 {
-	for (int i = 0; i < FLAME_FRAME_TOTAL; ++i) {
+	int i, p;
+
+	for (i = 0; i < FLAME_FRAME_TOTAL; ++i) {
 		// Create first frame
 		float vel_x = lhrandom(-3, 3); // (rand() % 6) - 3;
 		float vel_y = lhrandom(-3, 3); // (rand() % 6) - 3;
 
-		for (int p = 0; p < FLAME_FRAME_TOTAL; ++p) {
+		for (p = 0; p < FLAME_FRAME_TOTAL; ++p) {
 			float t = (1.0f / FLAME_FRAME_TOTAL) * p;
 			flame_t* f = &flame_frames[(p + i) % FLAME_FRAME_TOTAL][p];
 
