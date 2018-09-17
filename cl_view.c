@@ -53,7 +53,7 @@ cvar_t	v_gunkick = {"v_gunkick", "0"};
 cvar_t	v_viewheight = {"v_viewheight", "0"};
 
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
-cvar_t  r_nearclip = {"r_nearclip", "1", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 1.f, 4.f, 0.1f};
+cvar_t  r_nearclip = {"r_nearclip", "2", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 2.0f, 4.0f, 2.0f};
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
 cvar_t  r_viewpreselgun = {"r_viewpreselgun", "0"};
