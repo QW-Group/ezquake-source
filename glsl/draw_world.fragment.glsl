@@ -151,11 +151,7 @@ void main()
 #if defined(DRAW_LUMA_TEXTURES) && !defined(DRAW_LUMA_TEXTURES_FB)
 		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
-#if defined(DRAW_LIGHTMAPS)
-		frag_colour = vec4(lmColor.rgb, 1);
-#else
 		frag_colour = vec4(lmColor.rgb, 1) * texColor;
-#endif
 #if defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
 #endif
