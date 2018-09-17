@@ -95,6 +95,7 @@ cvar_t		amf_part_trailwidth = { "gl_particle_trail_width",  "3" };
 cvar_t		amf_part_traildetail = { "gl_particle_trail_detail", "1" };
 cvar_t		amf_part_trailtype = { "gl_particle_trail_type",   "1" };
 
+static int vxdamagepov;
 static int vxdamagecount;
 static int vxdamagecount_oldhealth;
 static int vxdamagecount_time;
@@ -104,6 +105,7 @@ static int vxdamagecountarmour_time;
 
 void Amf_Reset_DamageStats(void)
 {
+	vxdamagepov = cl.spectator ? Cam_TrackNum() : -1;
 	vxdamagecount = 0;
 	vxdamagecount_time = 0;
 	vxdamagecount_oldhealth = 0;
@@ -208,6 +210,10 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		align = HUD_FindVar(hud, "align");
 		duration = HUD_FindVar(hud, "duration");
 		proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	if (cl.spectator && Cam_TrackNum() != vxdamagepov) {
+		Amf_Reset_DamageStats();
 	}
 
 	if (stat == STAT_HEALTH) {
