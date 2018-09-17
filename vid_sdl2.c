@@ -1131,7 +1131,13 @@ static void VID_SDL_Init(void)
 
 	VID_SDL_InitSubSystem();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	// MEAG: deliberately not specifying SDL_WINDOW_ALLOW_HIGHDPI as in our current workflow, it
+	//          breaks retina devices (we ask for display resolution and get told lower value)
+	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
+	//          BLooD_DoG tried that and it didn't help.  No OSX device to test on, so removed
+	//          for the moment.
+	//       Flag has no effect on Windows (see SetProcessDpiAwarenessFunc in sys_win.c)
 	if (r_fullscreen.integer > 0) {
 		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	}
@@ -1184,7 +1190,6 @@ static void VID_SDL_Init(void)
 				if (!(vid_options[i] & VID_GAMMACORRECTED) && gl_gammacorrection.integer == 2) {
 					continue;
 				}
-				Con_Printf("Creating window: %s %s %s %s\n", vid_options[i] & VID_MULTISAMPLED ? "msamp" : "...", vid_options[i] & VID_DEPTHBUFFER24 ? "depth24" : "depth16", vid_options[i] & VID_ACCELERATED ? "accel" : "sw", vid_options[i] & VID_GAMMACORRECTED ? "sRGB" : "RGB");
 
 				sdl_window = NULL;
 				VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
