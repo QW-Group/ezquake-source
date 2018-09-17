@@ -971,10 +971,10 @@ qbool LoadCfg(FILE *f)
 	}
 	fileBuffer[size] = 0;
 
-	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
-	Cbuf_AddText ("con_bindphysical 1\n");
-	Cbuf_AddText (fileBuffer);
-	Cbuf_AddText (reset_bindphysical);
+	snprintf(reset_bindphysical, sizeof(reset_bindphysical), "\ncon_bindphysical %d\n", con_bindphysical.integer);
+	Cbuf_AddText("con_bindphysical 1\n");
+	Cbuf_AddText(fileBuffer);
+	Cbuf_AddText(reset_bindphysical);
 	Q_free(fileBuffer);
 	return true;
 }

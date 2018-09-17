@@ -1216,10 +1216,28 @@
     },
     "cl_clock_format": {
       "default": "%H:%M:%S",
-      "desc": "Changes the format of the clock which is displayed if cl_clock is non-zero.  Special chars are prefixed with %",
+      "desc": "Changes the format of the clock which is displayed if cl_clock is non-zero.",
       "group-id": "40",
-      "remarks": "%H represents hours, %M minutes, %S seconds. There are many other flags you can use. See strftime (C language) documentation for closer info.",
-      "type": "string"
+      "remarks": "This was changed to an enumerated type in ezQuake 3.5, to match hud_clock_format.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "24hr time with seconds",
+          "name": "0"
+        },
+        {
+          "description": "12hr time (AM/PM) without seconds",
+          "name": "1"
+        },
+        {
+          "description": "12hr time (AM/PM) with seconds",
+          "name": "2"
+        },
+        {
+          "description": "24hr time without seconds",
+          "name": "3"
+        }
+      ]
     },
     "cl_clock_x": {
       "default": "0",

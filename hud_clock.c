@@ -178,11 +178,9 @@ static void SCR_HUD_DrawDemoClock(hud_t *hud)
 ///
 /// cl_screen.c clock module: to be merged
 ///
-static void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel);
-
 // non-static for menu
 cvar_t scr_clock = { "cl_clock", "0" };
-static cvar_t scr_clock_format = { "cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format };
+static cvar_t scr_clock_format = { "cl_clock_format", "0" };
 static cvar_t scr_clock_x = { "cl_clock_x", "0" };
 static cvar_t scr_clock_y = { "cl_clock_y", "-1" };
 
@@ -195,20 +193,6 @@ static cvar_t scr_gameclock_offset = { "cl_gameclock_offset", "0" };
 static cvar_t scr_democlock = { "cl_democlock", "0" };
 static cvar_t scr_democlock_x = { "cl_democlock_x", "0" };
 static cvar_t scr_democlock_y = { "cl_democlock_y", "-2" };
-
-static void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
-{
-	if (!host_initialized) {
-		return; // we in progress of initialization, allow
-	}
-
-	// MEAG: You what now?
-	if (cls.state == ca_active) {
-		Com_Printf("Can't change %s while connected\n", var->name);
-		*cancel = true; // prevent stick notes
-		return;
-	}
-}
 
 static void SCR_DrawClock(void)
 {
@@ -225,7 +209,7 @@ static void SCR_DrawClock(void)
 	if (scr_clock.value == 2) {
 		time(&t);
 		if ((ptm = localtime(&t))) {
-			strftime(str, sizeof(str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
+			strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 		}
 		else {
 			strlcpy(str, "#bad date#", sizeof(str));
@@ -253,7 +237,7 @@ static void SCR_DrawGameClock(void)
 	}
 
 	if (scr_gameclock.value == 2 || scr_gameclock.value == 4) {
-		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
+		timelimit = 60 * cl.timelimit + 1;
 	}
 	else {
 		timelimit = 0;

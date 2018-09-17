@@ -33,10 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static void Update_TeamInfo(void);
 mpic_t* SCR_GetWeaponIconByFlag(int flag);
 
-// MEAG: Why?
-void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel);
-
-cvar_t scr_shownick_order           = { "scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format };
+cvar_t scr_shownick_order           = { "scr_shownick_order", "%p%n %a/%H %w" };
 cvar_t scr_shownick_frame_color     = { "scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR };
 cvar_t scr_shownick_scale           = { "scr_shownick_scale",		"1" };
 cvar_t scr_shownick_y               = { "scr_shownick_y",			"0" };

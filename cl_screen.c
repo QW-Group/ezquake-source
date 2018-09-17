@@ -122,20 +122,6 @@ cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
-void OnChange_scr_clock_format(cvar_t *var, char *value, qbool *cancel)
-{
-	if (!host_initialized) {
-		return; // we in progress of initialization, allow
-	}
-
-	// MEAG: You what now?
-	if (cls.state == ca_active) {
-		Com_Printf("Can't change %s while connected\n", var->name);
-		*cancel = true; // prevent stick notes
-		return;
-	}
-}
-
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
 cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
