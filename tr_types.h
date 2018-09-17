@@ -56,6 +56,7 @@ typedef enum {
 #define R_SUPPORT_INDIRECT_RENDERING  (1 << 8)      // indirect rendering (api parameters stored in buffer)
 #define R_SUPPORT_INSTANCED_RENDERING (1 << 9)      // instanced rendering
 #define R_SUPPORT_FRAMEBUFFERS_BLIT   (1 << 10)     // blit from one framebuffer to another
+#define R_SUPPORT_BGRA_LIGHTMAPS      (1 << 11)     // BGRA lightmaps (should be optimal format on Windows)
 
 #define R_SUPPORT_FEATURE_HW_LIGHTING (R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_IMAGE_PROCESSING)
 

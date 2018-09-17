@@ -38,10 +38,12 @@ void R_TextureUtil_Brighten32(byte *data, int size)
 	}
 }
 
-void R_TextureUtil_ImageDimensionsToTexture(int imageWidth, int imageHeight, int* textureWidth, int* textureHeight, int mode)
+void R_TextureUtil_ImageDimensionsToTexture(int imageWidth_, int imageHeight_, int* textureWidth, int* textureHeight, int mode)
 {
+	int imageWidth, imageHeight;
 	int scaledWidth, scaledHeight;
 
+	R_TextureSizeRoundUp(imageWidth_, imageHeight_, &imageWidth, &imageHeight);
 	R_TextureUtil_ScaleDimensions(imageWidth, imageHeight, &scaledWidth, &scaledHeight, mode);
 	while (imageWidth > scaledWidth || imageHeight > scaledHeight) {
 		imageWidth = max(1, imageWidth / 2);
@@ -55,8 +57,6 @@ void R_TextureUtil_SetFiltering(texture_ref texture)
 {
 	int mode = gltextures[texture.index].texmode;
 
-	if (mode & TEX_MIPMAP) {
-		R_TextureModeChanged(texture);
-		R_TextureAnisotropyChanged(texture);
-	}
+	R_TextureModeChanged(texture, mode & TEX_MIPMAP);
+	R_TextureAnisotropyChanged(texture, mode & TEX_MIPMAP);
 }

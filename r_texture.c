@@ -32,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "image.h"
 
+#ifdef WITH_RENDERING_TRACE
+#include "utils.h"
+#endif
+
 static void R_AllocateTextureNames(gltexture_t* glt);
 
 gltexture_t  gltextures[MAX_GLTEXTURES];
@@ -190,7 +194,7 @@ int R_TextureDepth(texture_ref ref)
 	return gltextures[ref.index].depth;
 }
 
-void R_TextureModeForEach(void(*func)(texture_ref tex))
+void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap))
 {
 	int i;
 	gltexture_t* glt;
@@ -206,9 +210,7 @@ void R_TextureModeForEach(void(*func)(texture_ref tex))
 						// for example charset which rather controlled by gl_smoothfont.
 		}
 
-		if (glt->texmode & TEX_MIPMAP) {
-			func(glt->reference);
-		}
+		func(glt->reference, glt->texmode & TEX_MIPMAP);
 	}
 }
 
@@ -582,6 +584,20 @@ r_texture_type_id R_TextureType(texture_ref ref)
 	return gltextures[ref.index].type;
 }
 
+void R_TextureFindIdentifierByReference(unsigned int ref, char* label, int labelsize)
+{
+	int i;
+
+	for (i = 0; i < numgltextures; ++i) {
+		if (gltextures[i].texnum == ref) {
+			strlcpy(label, gltextures[i].identifier, labelsize);
+			return;
+		}
+	}
+
+	label[0] = '\0';
+}
+
 // re-scale texture to match underlying (useful for fullbrights/lumas etc)
 void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height)
 {
@@ -596,3 +612,25 @@ void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* ove
 		*overlay_height = underlying_height;
 	}
 }
+
+int R_TextureCount(void)
+{
+	return numgltextures;
+}
+
+#ifdef WITH_RENDERING_TRACE
+void Dev_TextureList(void)
+{
+	int i = 0;
+
+	for (i = 1; i < numgltextures; ++i) {
+		if (Cmd_Argc() > 1 && !Utils_RegExpMatch(Cmd_Argv(1), gltextures[i].identifier)) {
+			continue;
+		}
+
+		if (gltextures[i].texnum && gltextures[i].texture_width) {
+			Con_Printf("%03d: %s, %d (%dx%d %d)\n", i, gltextures[i].identifier, gltextures[i].texture_width, gltextures[i].texture_height, gltextures[i].texmode);
+		}
+	}
+}
+#endif

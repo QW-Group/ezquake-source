@@ -149,6 +149,7 @@ void GL_TexSubImage3D(
 	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels
 )
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
 	if (qglTextureSubImage3D) {
 		qglTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
@@ -160,6 +161,7 @@ void GL_TexSubImage3D(
 		qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexSubImage2D(
@@ -167,52 +169,55 @@ void GL_TexSubImage2D(
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
 	if (qglTextureSubImage2D) {
 		qglTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
+#ifdef GL_PARANOIA
+		{
+			int glWidth, glHeight;
+			int fullWidth, fullHeight;
+
+			glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &fullWidth);
+			glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &fullHeight);
+
+			glGetTexLevelParameteriv(target, level, GL_TEXTURE_WIDTH, &glWidth);
+			glGetTexLevelParameteriv(target, level, GL_TEXTURE_HEIGHT, &glHeight);
+
+			assert(glWidth >= width && glHeight >= height);
+		}
+#endif
 		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	R_TraceLogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
-}
-
-void GL_TexStorage2DImpl(GLenum textureUnit, GLenum target, GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
-{
-	if (qglTextureStorage2D) {
-		qglTextureStorage2D(texture, levels, internalformat, width, height);
-	}
-	else {
-		glBindTexture(textureUnit, target);
-		if (qglTexStorage2D) {
-			qglTexStorage2D(target, levels, internalformat, width, height);
-		}
-		else {
-			int level;
-			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				width = max(1, width / 2);
-				height = max(1, height / 2);
-			}
-		}
-		GL_BindTextureUnit(textureUnit, null_texture_reference);
-	}
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexStorage2D(
 	texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height
 )
 {
+	int tempWidth = width;
+	int tempHeight = height;
+
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
+	R_TextureSizeRoundUp(tempWidth, tempHeight, &width, &height);
+
 	if (qglTextureStorage2D) {
 		qglTextureStorage2D(GL_TextureNameFromReference(texture), levels, internalformat, width, height);
 	}
 	else {
 		GLenum textureUnit = GL_TEXTURE0;
 		GLenum target = GL_TextureTargetFromReference(texture);
+
 		GL_BindTextureUnit(textureUnit, texture);
 		if (qglTexStorage2D) {
 			qglTexStorage2D(target, levels, internalformat, width, height);
+			GL_ProcessErrors("post-glTexStorage2D");
 		}
 		else {
 			int level;
@@ -221,18 +226,24 @@ void GL_TexStorage2D(
 
 			for (level = 0; level < levels; ++level) {
 				glTexImage2D(target, level, internalformat, level_width, level_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				GL_ProcessErrors("post-TexImage2D");
+
 				level_width = max(1, level_width / 2);
 				level_height = max(1, level_height / 2);
 			}
 		}
 	}
 	R_TextureSetDimensions(texture, width, height);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexStorage3D(
 	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
 )
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglTextureStorage3D) {
 		qglTextureStorage3D(GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
 	}
@@ -241,6 +252,8 @@ void GL_TexStorage3D(
 		GL_BindTextureUnit(textureUnit, texture);
 		qglTexStorage3D(target, levels, internalformat, width, height, depth);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameterf(GLenum textureUnit, texture_ref texture, GLenum pname, GLfloat param)
@@ -253,10 +266,14 @@ void GL_TexParameterf(GLenum textureUnit, texture_ref texture, GLenum pname, GLf
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameterf(target, pname, param);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameterfv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLfloat *params)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglTextureParameterfv) {
 		qglTextureParameterfv(GL_TextureNameFromReference(texture), pname, params);
 	}
@@ -265,10 +282,14 @@ void GL_TexParameterfv(GLenum textureUnit, texture_ref texture, GLenum pname, co
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameterfv(target, pname, params);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameteri(GLenum textureUnit, texture_ref texture, GLenum pname, GLint param)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglTextureParameteri) {
 		qglTextureParameteri(GL_TextureNameFromReference(texture), pname, param);
 	}
@@ -277,10 +298,14 @@ void GL_TexParameteri(GLenum textureUnit, texture_ref texture, GLenum pname, GLi
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameteri(target, pname, param);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLint *params)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglTextureParameteriv) {
 		qglTextureParameteriv(GL_TextureNameFromReference(texture), pname, params);
 	}
@@ -289,10 +314,14 @@ void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, co
 		GL_BindTextureUnit(textureUnit, texture);
 		glTexParameteriv(target, pname, params);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglCreateTextures) {
 		qglCreateTextures(target, n, textures);
 	}
@@ -305,10 +334,14 @@ void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint*
 			glBindTexture(target, textures[i]);
 		}
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint level, GLenum pname, GLint* params)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglGetTextureLevelParameteriv) {
 		qglGetTextureLevelParameteriv(GL_TextureNameFromReference(texture), level, pname, params);
 	}
@@ -317,10 +350,14 @@ void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint le
 		GL_BindTextureUnit(textureUnit, texture);
 		glGetTexLevelParameteriv(target, level, pname, params);
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglGetTextureImage) {
 		qglGetTextureImage(GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
 	}
@@ -334,10 +371,14 @@ void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum
 			glGetTexImage(target, level, format, type, buffer);
 		}
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglGenerateTextureMipmap) {
 		qglGenerateTextureMipmap(GL_TextureNameFromReference(texture));
 	}
@@ -358,11 +399,17 @@ void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, b
 			}
 		}
 	}
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TextureMipmapGenerate(texture_ref texture)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	GL_TextureMipmapGenerateWithData(GL_TEXTURE0, texture, NULL, 0, 0, 0);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 // Samplers
@@ -371,6 +418,8 @@ static unsigned int linear_sampler;
 
 void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (!nearest_sampler) {
 		qglGenSamplers(1, &nearest_sampler);
 
@@ -379,10 +428,14 @@ void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 	}
 
 	qglBindSampler(texture_unit_number, nearest_sampler);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GLM_SamplerSetLinear(unsigned int texture_unit_number)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (!linear_sampler) {
 		qglGenSamplers(1, &linear_sampler);
 
@@ -391,23 +444,37 @@ void GLM_SamplerSetLinear(unsigned int texture_unit_number)
 	}
 
 	qglBindSampler(texture_unit_number, linear_sampler);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GLM_SamplerClear(unsigned int texture_unit_number)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	qglBindSampler(texture_unit_number, 0);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_DeleteSamplers(void)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	if (qglDeleteSamplers) {
 		qglDeleteSamplers(1, &nearest_sampler);
 	}
 	nearest_sampler = 0;
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 // meag: *RGBA is bit ugly, just trying to keep OpenGL enums out of the way for now
 void GL_TextureReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
 {
+	GL_ProcessErrors("pre-" __FUNCTION__);
+
 	GL_TexSubImage2D(GL_TEXTURE0, ref, 0, offsetx, offsety, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+	GL_ProcessErrors("post-" __FUNCTION__);
 }

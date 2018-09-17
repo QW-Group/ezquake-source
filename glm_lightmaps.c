@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture_internal.h"
 #include "r_program.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 // Hardware lighting: flag surfaces as we add them
 static buffer_ref ssbo_surfacesTodo;
@@ -181,7 +182,7 @@ void GLM_BuildLightmap(int i)
 {
 	GL_TexSubImage3D(
 		0, lightmap_texture_array, 0, 0, 0, i,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV,
 		lightmaps[i].rawdata
 	);
 
@@ -203,5 +204,5 @@ void GLM_UploadLightmap(int textureUnit, int lightmapnum)
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
-	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
 }

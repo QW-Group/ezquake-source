@@ -81,7 +81,7 @@ extern texture_api_t textures;
 
 void R_Texture_Init(void);
 
-void R_TextureAnisotropyChanged(texture_ref tex);
+void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap);
 
 mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
@@ -126,6 +126,8 @@ void R_ClearModelTextureData(void);
 
 void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int height, int mode, int number, texture_ref* references);
 void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height);
+int R_TextureCount(void);
+void R_TextureFindIdentifierByReference(unsigned int ref, char* label, int labelsize);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);

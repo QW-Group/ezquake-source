@@ -93,8 +93,11 @@ void GLC_Initialise(void)
 
 	GL_Init();
 	renderer.vaos_supported = GLC_InitialiseVAOHandling();
+	GL_ProcessErrors("post-GLC_InitialiseVAOHandling");
 	GL_InitialiseBufferHandling(&buffers);
+	GL_ProcessErrors("post-GL_InitialiseBufferHandling");
 	GL_InitialiseState();
+	GL_ProcessErrors("post-GL_InitialiseState");
 }
 
 void GLC_PrepareModelRendering(qbool vid_restart)

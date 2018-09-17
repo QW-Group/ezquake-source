@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_texture.h"
+#include "r_renderer.h"
+#include "utils.h"
 
 GLuint GL_TextureNameFromReference(texture_ref ref);
 
@@ -206,6 +209,9 @@ void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* le
 	if (qglGetObjectLabel) {
 		qglGetObjectLabel(identifier, name, bufSize, length, label);
 	}
+	else {
+		label[0] = '\0';
+	}
 }
 
 void GL_TextureLabelSet(texture_ref ref, const char* label)
@@ -228,5 +234,77 @@ void R_TraceDebugState(void)
 	if (debug_frame_out) {
 		R_TracePrintState(debug_frame_out, debug_frame_depth);
 	}
+}
+
+void Dev_VidTextureDump(void)
+{
+	char folder[MAX_PATH];
+	byte* buffer = NULL;
+	int buffer_size = 0;
+	int i;
+#ifndef _WIN32
+	time_t t;
+	struct tm date;
+	t = time(NULL);
+	localtime_r(&t, &date);
+
+	snprintf(folder, sizeof(folder), "%s/qw/textures_%04d-%02d-%02d_%02d-%02d-%02d",
+		com_basedir, 1900 + date.tm_year, 1 + date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
+#else
+	SYSTEMTIME date;
+	GetLocalTime(&date);
+
+	snprintf(folder, sizeof(folder), "%s/qw/textures_%04d-%02d-%02d_%02d-%02d-%02d",
+		com_basedir, date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
+#endif
+
+	strlcat(folder, "/", sizeof(folder));
+	FS_CreatePath(folder);
+
+	for (i = 0; i < R_TextureCount(); ++i) {
+		texture_ref ref = { i };
+
+		if (R_TextureReferenceIsValid(ref)) {
+			int size = R_TextureWidth(ref) * R_TextureHeight(ref) * 4;
+			if (size > buffer_size) {
+				Q_free(buffer);
+				buffer = Q_malloc(size);
+				buffer_size = size;
+			}
+			else if (buffer_size) {
+				memset(buffer, 0, buffer_size);
+			}
+
+			if (!size) {
+				continue;
+			}
+
+			if (size && R_TextureType(ref) == texture_type_2d) {
+				scr_sshot_target_t* sshot_params = Q_malloc(sizeof(scr_sshot_target_t));
+				char reftext[10];
+				char filename[MAX_OSPATH];
+
+				snprintf(reftext, sizeof(reftext), "%03d", i);
+				strlcpy(filename, reftext, sizeof(filename));
+				strlcat(filename, "-", sizeof(filename));
+				strlcat(filename, R_TextureIdentifier(ref), sizeof(filename));
+				COM_ForceExtension(filename, ".jpg");
+				Util_ToValidFileName(filename, filename, sizeof(filename));
+
+				renderer.TextureGet(ref, buffer_size, buffer, 3);
+
+				sshot_params->buffer = buffer;
+				sshot_params->freeMemory = false;
+				sshot_params->format = IMAGE_JPEG;
+				strlcpy(sshot_params->fileName, folder, sizeof(sshot_params->fileName));
+				strlcat(sshot_params->fileName, filename, sizeof(sshot_params->fileName));
+				sshot_params->width = R_TextureWidth(ref);
+				sshot_params->height = R_TextureHeight(ref);
+				SCR_ScreenshotWrite(sshot_params);
+			}
+		}
+	}
+
+	Q_free(buffer);
 }
 #endif

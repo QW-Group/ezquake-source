@@ -48,6 +48,6 @@ gltexture_t* R_NextTextureSlot(r_texture_type_id target);
 gltexture_t* R_FindTexture(const char *identifier);
 
 void R_TextureRegisterCvars(void);
-void R_TextureModeChanged(texture_ref tex);
+void R_TextureModeChanged(texture_ref tex, qbool mipmap);
 
 #endif // EZQUAKE_R_TEXTURE_HEADER

@@ -135,6 +135,10 @@ const char* GL_TextureIdentifierByGLReference(GLuint texnum)
 
 	GL_TraceObjectLabelGet(GL_TEXTURE, texnum, sizeof(name), NULL, name);
 
+	if (!name[0]) {
+		R_TextureFindIdentifierByReference(texnum, name, sizeof(name));
+	}
+
 	return name;
 }
 
@@ -168,6 +172,9 @@ void GL_TextureSetFiltering(texture_ref texture, texture_minification_id minific
 	if (!R_TextureReferenceIsValid(texture)) {
 		return;
 	}
+
+	gltextures[texture.index].minification_filter = minification_filter;
+	gltextures[texture.index].magnification_filter = magnification_filter;
 
 	GL_TexParameteri(GL_TEXTURE0, texture, GL_TEXTURE_MIN_FILTER, glTextureMinificationOptions[minification_filter]);
 	GL_TexParameteri(GL_TEXTURE0, texture, GL_TEXTURE_MAG_FILTER, glTextureMagnificationOptions[magnification_filter]);

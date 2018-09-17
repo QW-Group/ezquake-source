@@ -91,12 +91,8 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 		return texnum;
 	}
 
-	if (!(loadmodel->modhint & MOD_VMODEL) || gl_mipmap_viewmodels.integer) {
-		texmode |= TEX_MIPMAP;
-	}
-	if (!gl_scaleModelTextures.value) {
-		texmode |= TEX_NOSCALE;
-	}
+	texmode |= (loadmodel->modhint != MOD_VMODEL || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
+	texmode |= (!gl_scaleModelTextures.value ? TEX_NOSCALE : 0);
 	luma_texmode = texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA;
 
 	// try "textures/models/..." path
@@ -158,7 +154,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
-	texmode |= (!(loadmodel->modhint & MOD_VMODEL) || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
+	texmode |= (loadmodel->modhint != MOD_VMODEL || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
 	texmode |= (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : 0;
 
 	for (i = 0; i < numskins; i++) {

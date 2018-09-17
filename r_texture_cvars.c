@@ -27,7 +27,7 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_texture.h"
 #include "r_renderer.h"
 
-void R_TextureModeForEach(void(*func)(texture_ref ref));
+void R_TextureModeForEach(void(*func)(texture_ref ref, qbool mipmap));
 
 static void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel);
 static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel);
@@ -72,9 +72,11 @@ void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
-void R_TextureAnisotropyChanged(texture_ref tex)
+void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap)
 {
-	renderer.TextureSetAnisotropy(tex, anisotropy_tap);
+	if (mipmap) {
+		renderer.TextureSetAnisotropy(tex, anisotropy_tap);
+	}
 }
 
 void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel)
@@ -115,9 +117,14 @@ static texture_minification_id gl_filter_min = texture_minification_linear_mipma
 static texture_magnification_id gl_filter_max = texture_magnification_linear;
 static const texture_magnification_id gl_filter_max_2d = texture_magnification_linear;   // no longer controlled by cvar
 
-void R_TextureModeChanged(texture_ref tex)
+void R_TextureModeChanged(texture_ref tex, qbool mipmap)
 {
-	renderer.TextureSetFiltering(tex, gl_filter_min, gl_filter_max);
+	if (mipmap) {
+		renderer.TextureSetFiltering(tex, gl_filter_min, gl_filter_max);
+	}
+	else {
+		renderer.TextureSetFiltering(tex, gl_filter_max_2d, gl_filter_max_2d);
+	}
 }
 
 static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel)

@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps_internal.h"
 #include "r_trace.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 typedef struct dlightinfo_s {
 	int local[2];
@@ -277,14 +278,28 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 				b = (b >> 8) * s;
 			}
 			if (gl_invlightmaps) {
-				dest[2] = 255 - (r >> 16);
-				dest[1] = 255 - (g >> 16);
-				dest[0] = 255 - (b >> 16);
+				if (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) {
+					dest[2] = 255 - (r >> 16);
+					dest[1] = 255 - (g >> 16);
+					dest[0] = 255 - (b >> 16);
+				}
+				else {
+					dest[0] = 255 - (r >> 16);
+					dest[1] = 255 - (g >> 16);
+					dest[2] = 255 - (b >> 16);
+				}
 			}
 			else {
-				dest[2] = r >> 16;
-				dest[1] = g >> 16;
-				dest[0] = b >> 16;
+				if (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) {
+					dest[2] = r >> 16;
+					dest[1] = g >> 16;
+					dest[0] = b >> 16;
+				}
+				else {
+					dest[0] = r >> 16;
+					dest[1] = g >> 16;
+					dest[2] = b >> 16;
+				}
 			}
 			dest[3] = 255;
 			bl += 3;

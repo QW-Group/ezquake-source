@@ -56,6 +56,11 @@ static qbool GL_InitialiseRenderer(void)
 {
 	qbool shaders_supported = false;
 
+	glConfig.supported_features = 0;
+
+	// FIXME: newer OpenGL functions lets us check the optimal format for the system
+	glConfig.supported_features |= (GL_VersionAtLeast(1, 2) ? R_SUPPORT_BGRA_LIGHTMAPS : 0);
+
 	GL_InitialiseFramebufferHandling();
 	GL_LoadProgramFunctions();
 	GL_LoadStateFunctions();
@@ -118,8 +123,11 @@ static void GL_PopulateConfig(void)
 		if (GL_VersionAtLeast(2, 1)) {
 			glGetIntegerv(GL_MAX_TEXTURE_UNITS, &glConfig.texture_units);
 		}
-		else {
+		else if (SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
 			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.texture_units);
+		}
+		else {
+			glConfig.texture_units = 1;
 		}
 	}
 	else {

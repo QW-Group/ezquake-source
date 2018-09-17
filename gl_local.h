@@ -264,6 +264,7 @@ void GLM_PrepareWorldModelBatch(void);
 void GL_ProcessErrors(const char* message);
 #define GL_Paranoid_Printf(...) Con_Printf(__VA_ARGS__)
 #else
+#define GL_ProcessErrors(...)
 #define GL_Paranoid_Printf(...)
 #endif
 //void GL_DeleteVAOs(void);

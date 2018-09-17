@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 void GLC_UploadLightmap(int textureUnit, int lightmapnum);
 
@@ -99,7 +100,7 @@ void GLC_BuildLightmap(int i)
 {
 	GL_TexSubImage2D(
 		GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE,
 		lightmaps[i].rawdata
 	);
 }
@@ -109,5 +110,5 @@ void GLC_UploadLightmap(int textureUnit, int lightmapnum)
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
 
-	GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data_source);
+	GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE, data_source);
 }
