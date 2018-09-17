@@ -30,9 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static const float particle_emit_time = 0.01; // 100 fps
 static vec3_t zerodir = { 22, 22, 22 };
 
-static float alphatrail_s;
-static float alphatrail_l;
-
 byte *ColorForParticle(part_type_t type)
 {
 	int lambda;

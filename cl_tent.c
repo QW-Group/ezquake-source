@@ -169,14 +169,14 @@ static void CL_ParseBeam(int type)
                 180 /* green */, 35 /* light blue */, 224 /* red */,
                 133 /* magenta... kinda */, 192 /* yellow */, 6 /* white */};
         int color;
-        int pnum, cnum;
+        int cnum;
 
         // -512..-257 are colored trails assigned to a specific
         // player, so overrides can be applied; encoded as follows:
         // 7654321076543210
         // 1111111nnnnnnccc  (n = player num, c = color code)
         cnum = ent & 7;
-        pnum = (ent >> 3) & 63;
+        //pnum = (ent >> 3) & 63;
         color = colors[cnum];
 
 		//color is ignored by most of trails
