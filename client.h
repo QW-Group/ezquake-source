@@ -211,6 +211,7 @@ typedef struct
 
 	double          particle_time;
 	int             trailnumber;
+	int             corona_id;
 } centity_t;
 
 #define CENT_TRAILDRAWN		1

@@ -108,7 +108,6 @@ void R_UpdateCoronas(void)
 		else if (c->client_entity_id > 0) {
 			c->los = (cl_entities[c->client_entity_id - 1].sequence == cl.validsequence);
 		}
-		//c->los = true;
 		if (c->los) {
 			CL_TraceLine(r_refdef.vieworg, c->origin, impact, normal);
 			c->los = VectorCompare(impact, c->origin);
@@ -178,12 +177,9 @@ void R_DrawCoronas(void)
 
 			VectorSubtract(r_refdef.vieworg, c->origin, dist);
 			fdist = VectorLength(dist);
-			if (fdist <= 24) {
-				// It's like being fired into the sun
-				continue;
-			}
 
-			scale = (1 - 1 / fdist)*c->scale;
+			fdist = max(fdist, 24);
+			scale = (1 - 1 / fdist) * c->scale;
 			alpha = c->alpha;
 
 			color[0] = (c->color[0] * alpha) * 255;
@@ -277,28 +273,38 @@ void R_DrawCoronas(void)
 	}
 }
 
-static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_ref)
+static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_id)
 {
 	corona_t *c = NULL;
 	int i;
 	qbool corona_found = false;
+	int corona_id = 0;
 	customlight_t cst_lt = { 0 };
 
 	if (ISPAUSED || !amf_coronas.integer) {
 		return;
 	}
 
-	if (entity_ref) {
-		entity_ref = bound(0, entity_ref, CL_MAX_EDICTS);
+	if (entity_id) {
+		entity_id = bound(0, entity_id, CL_MAX_EDICTS);
+
+		corona_id = cl_entities[entity_id - 1].corona_id;
+		if (corona_id >= 0 && corona_id < MAX_CORONAS) {
+			if (r_corona[corona_id].client_entity_id == entity_id) {
+				c = &r_corona[corona_id];
+				corona_found = true;
+			}
+		}
 	}
 
-	c = r_corona;
-
-	for (i = 0; i < MAX_CORONAS; i++, c++) {
-		if (c->type == C_FREE) {
-			memset(c, 0, sizeof(*c));
-			corona_found = true;
-			break;
+	if (!c) {
+		c = r_corona;
+		for (i = 0; i < MAX_CORONAS; i++, c++) {
+			if (c->type == C_FREE) {
+				memset(c, 0, sizeof(*c));
+				corona_found = true;
+				break;
+			}
 		}
 	}
 
@@ -326,7 +332,10 @@ static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_ref)
 	c->type = type;
 	c->los = false;
 	c->texture = CORONATEX_STANDARD;
-	c->client_entity_id = entity_ref;
+	c->client_entity_id = entity_id;
+	if (entity_id) {
+		cl_entities[entity_id - 1].corona_id = c - r_corona;
+	}
 
 	if (type == C_FLASH || type == C_BLUEFLASH) {
 		if (type == C_BLUEFLASH) {

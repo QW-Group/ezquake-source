@@ -2381,7 +2381,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 				{
 					dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, cst_lt);
 					CL_NewDlightEx(state->number, ent->origin, rocketlightsize, 0.1, cst_lt, bubble);
-					if (!ISPAUSED && amf_coronas.value) {
+					if (!ISPAUSED && amf_coronas.integer) {
 						//VULT CORONAS
 						R_CoronasEntityNew(C_ROCKETLIGHT, cent);
 					}
@@ -2439,7 +2439,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_green, true);
 			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasNew(C_WIZLIGHT, ent->origin);
+				R_CoronasEntityNew(C_WIZLIGHT, cent);
 			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
@@ -2450,7 +2450,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
 			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasNew(C_KNIGHTLIGHT, ent->origin);
+				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
 			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
@@ -2461,7 +2461,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_blue, true);
 			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasNew(C_VORELIGHT, ent->origin);
+				R_CoronasEntityNew(C_VORELIGHT, cent);
 			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, VOOR_TRAIL);
@@ -2487,8 +2487,8 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 		{
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
-			if (!ISPAUSED && amf_coronas.value) {
-				R_CoronasNew(C_KNIGHTLIGHT, ent->origin);
+			if (!ISPAUSED && amf_coronas.integer) {
+				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
 			}
 			VX_LightningTrail(*old_origin, ent->origin);
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);

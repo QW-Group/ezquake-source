@@ -3177,12 +3177,10 @@ void CL_MuzzleFlash (void)
 		// A monster firing
 		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
 
-		for (j = 0; j < num_ent; j++) 
-		{
+		for (j = 0; j < num_ent; j++) {
 			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
 
-			if (ent->number == i) 
-			{
+			if (ent->number == i) {
 				mod = cl.model_precache[ent->modelindex];
 
 				// Special muzzleflashes for some enemies.
@@ -3192,10 +3190,9 @@ void CL_MuzzleFlash (void)
 					VectorMA(org, 10, right, org);
 					VectorMA(org, 12, up, org);
 
-					if (amf_part_muzzleflash.value)
-					{
+					if (amf_part_muzzleflash.integer) {
 						if (!ISPAUSED && amf_coronas.integer) {
-							R_CoronasNew(C_SMALLFLASH, org);
+							R_CoronasEntityNew(C_SMALLFLASH, &cl_entities[ent->number]);
 						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
@@ -3207,7 +3204,7 @@ void CL_MuzzleFlash (void)
 					VectorMA(org, 12, up, org);
 					if (amf_part_muzzleflash.integer) {
 						if (amf_coronas.integer) {
-							R_CoronasNew(C_SMALLFLASH, org);
+							R_CoronasEntityNew(C_SMALLFLASH, &cl_entities[ent->number]);
 						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
@@ -3219,7 +3216,7 @@ void CL_MuzzleFlash (void)
 					VectorMA(org, 14, up, org);
 					if (amf_part_muzzleflash.integer) {
 						if (amf_coronas.integer) {
-							R_CoronasNew(C_SMALLFLASH, org);
+							R_CoronasEntityNew(C_SMALLFLASH, &cl_entities[ent->number]);
 						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
@@ -3277,10 +3274,8 @@ void CL_MuzzleFlash (void)
 	dl->die = cl.time + 0.1;
 	dl->type = lt_muzzleflash;
 
-	if (amf_part_muzzleflash.value)
-	{
-		if (((i - 1) != cl.viewplayernum) || (cameratype != C_NORMAL))
-		{
+	if (amf_part_muzzleflash.integer) {
+		if (((i - 1) != cl.viewplayernum) || (cameratype != C_NORMAL)) {
 			if (amf_coronas.integer) {
 				R_CoronasNew(C_SMALLFLASH, dl->origin);
 			}
